@@ -42,7 +42,7 @@ export interface CreateTradeDto {
   tradedAt?: string;
 }
 
-export interface UpdateTradeDto extends Partial<CreateTradeDto> {}
+export type UpdateTradeDto = Partial<CreateTradeDto>;
 
 export interface TradeFilters {
   page?: number;

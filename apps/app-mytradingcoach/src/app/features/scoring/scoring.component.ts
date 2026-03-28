@@ -28,7 +28,7 @@ function computeScore(trades: Trade[]): ScoreAxis[] {
   const winRateScore = Math.min(100, winRate * 1.4);
   const revengeCount = trades.filter((t) => t.emotion === 'REVENGE').length;
   const disciplineScore = Math.max(0, 100 - (revengeCount / trades.length) * 200);
-  const rrValues = closed.filter((t) => t.riskReward !== null).map((t) => t.riskReward!);
+  const rrValues = closed.filter((t): t is typeof t & { riskReward: number } => t.riskReward != null).map((t) => t.riskReward);
   const avgRR = rrValues.length ? rrValues.reduce((a, b) => a + b, 0) / rrValues.length : 0;
   const riskScore = Math.min(100, avgRR * 33);
   const setups = [...new Set(trades.map((t) => t.setup))];
