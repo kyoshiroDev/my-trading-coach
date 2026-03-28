@@ -100,7 +100,7 @@ interface Summary {
             </div>
           </div>
           <div class="premium-banner-right">
-            <span class="premium-price">$19/mois</span>
+            <span class="premium-price">29€/mois</span>
             <span class="premium-trial">14 jours gratuits · sans CB</span>
           </div>
         </div>
@@ -263,9 +263,9 @@ interface Summary {
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(139,92,246,0.08));
-      border: 1px solid rgba(99,155,255,0.2);
-      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1));
+      border: 1px solid rgba(139,92,246,0.2);
+      border-radius: 10px;
       padding: 16px 20px;
       margin-bottom: 24px;
     }
