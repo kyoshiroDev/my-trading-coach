@@ -8,18 +8,15 @@ import {
   Sparkles,
   CalendarDays,
   Trophy,
-  Settings,
   LogOut,
-  TrendingUp,
 } from 'lucide-angular';
 import { UserStore } from '../../../core/stores/user.store';
 import { AuthService } from '../../../core/auth/auth.service';
-import { TopbarComponent } from '../topbar/topbar.component';
 
 @Component({
   selector: 'mtc-sidebar',
   standalone: true,
-  imports: [RouterModule, RouterLink, RouterLinkActive, LucideAngularModule, TopbarComponent],
+  imports: [RouterModule, RouterLink, RouterLinkActive, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="app-layout">
@@ -28,14 +25,17 @@ import { TopbarComponent } from '../topbar/topbar.component';
         <!-- Logo -->
         <div class="logo">
           <div class="logo-icon">
-            <lucide-icon [img]="TrendingUpIcon" [size]="16" color="white" />
+            <svg viewBox="0 0 20 20" width="18" height="18" fill="none">
+              <polyline points="0,10 3,10 5,4 7,16 9,7 11,13 13,10 20,10"
+                stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
           </div>
           <div class="logo-text">MyTrading<span>Coach</span></div>
         </div>
 
         <!-- Nav -->
         <nav class="nav">
-          <div class="nav-section">Overview</div>
+          <div class="nav-section">TRADING</div>
 
           <a routerLink="/dashboard" routerLinkActive="active" class="nav-item">
             <span class="nav-icon"><lucide-icon [img]="LayoutDashboardIcon" [size]="14" /></span>
@@ -52,7 +52,7 @@ import { TopbarComponent } from '../topbar/topbar.component';
             Analytics
           </a>
 
-          <div class="nav-section">Premium</div>
+          <div class="nav-section">PREMIUM</div>
 
           <a routerLink="/ai-insights" routerLinkActive="active" class="nav-item">
             <span class="nav-icon"><lucide-icon [img]="SparklesIcon" [size]="14" /></span>
@@ -66,7 +66,7 @@ import { TopbarComponent } from '../topbar/topbar.component';
             <span class="badge">PRO</span>
           </a>
 
-          <div class="nav-section">Account</div>
+          <div class="nav-section">ACCOUNT</div>
 
           <a routerLink="/scoring" routerLinkActive="active" class="nav-item">
             <span class="nav-icon"><lucide-icon [img]="TrophyIcon" [size]="14" /></span>
@@ -171,8 +171,8 @@ import { TopbarComponent } from '../topbar/topbar.component';
       font-family: var(--font-mono);
       font-size: 10px;
       font-weight: 500;
-      letter-spacing: 1.2px;
-      color: var(--text-3);
+      letter-spacing: 1.1px;
+      color: #4a6080;
       text-transform: uppercase;
       padding: 12px 8px 6px;
       margin-top: 4px;
@@ -187,7 +187,7 @@ import { TopbarComponent } from '../topbar/topbar.component';
       cursor: pointer;
       font-size: 13.5px;
       font-weight: 400;
-      color: var(--text-2);
+      color: #4a6080;
       transition: all 0.15s;
       position: relative;
       text-decoration: none;
@@ -195,11 +195,11 @@ import { TopbarComponent } from '../topbar/topbar.component';
 
     .nav-item:hover {
       background: var(--blue-glow);
-      color: var(--text);
+      color: var(--text-2);
     }
 
     .nav-item.active {
-      background: var(--blue-glow);
+      background: rgba(59, 130, 246, 0.12);
       color: var(--blue-bright);
       font-weight: 500;
     }
@@ -210,7 +210,7 @@ import { TopbarComponent } from '../topbar/topbar.component';
       left: 0; top: 50%;
       transform: translateY(-50%);
       width: 3px; height: 20px;
-      background: var(--blue);
+      background: #3b82f6;
       border-radius: 0 3px 3px 0;
     }
 
@@ -304,7 +304,6 @@ export class SidebarComponent {
   protected readonly userStore = inject(UserStore);
   private readonly auth = inject(AuthService);
 
-  protected readonly TrendingUpIcon = TrendingUp;
   protected readonly LayoutDashboardIcon = LayoutDashboard;
   protected readonly BookOpenIcon = BookOpen;
   protected readonly BarChart2Icon = BarChart2;
