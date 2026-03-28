@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#05080f"/>
+      <stop offset="100%" stop-color="#0d1420"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Fond -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Glow central -->
+  <ellipse cx="600" cy="315" rx="400" ry="250" fill="url(#glow)"/>
+
+  <!-- Grille subtile -->
+  <line x1="0" y1="210" x2="1200" y2="210" stroke="rgba(99,155,255,0.06)" stroke-width="1"/>
+  <line x1="0" y1="420" x2="1200" y2="420" stroke="rgba(99,155,255,0.06)" stroke-width="1"/>
+  <line x1="400" y1="0" x2="400" y2="630" stroke="rgba(99,155,255,0.06)" stroke-width="1"/>
+  <line x1="800" y1="0" x2="800" y2="630" stroke="rgba(99,155,255,0.06)" stroke-width="1"/>
+
+  <!-- Logo icône grand -->
+  <circle cx="340" cy="315" r="110" fill="url(#g)"/>
+  <polyline
+    points="230,315 248,315 258,275 268,355 278,240 288,345 298,295 308,315 450,315"
+    fill="none"
+    stroke="white"
+    stroke-width="8"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <!-- Texte principal -->
+  <text
+    x="490"
+    y="280"
+    font-family="'Syne', -apple-system, sans-serif"
+    font-size="72"
+    font-weight="800"
+    letter-spacing="-2"
+    fill="#e2e8f0"
+  >MyTrading</text>
+  <text
+    x="490"
+    y="360"
+    font-family="'Syne', -apple-system, sans-serif"
+    font-size="72"
+    font-weight="800"
+    letter-spacing="-2"
+    fill="#60a5fa"
+  >Coach</text>
+
+  <!-- Tagline -->
+  <text
+    x="490"
+    y="410"
+    font-family="-apple-system, sans-serif"
+    font-size="24"
+    letter-spacing="3"
+    fill="#3b5580"
+  >AI TRADING JOURNAL</text>
+
+  <!-- Séparateur -->
+  <line x1="490" y1="435" x2="760" y2="435" stroke="rgba(59,130,246,0.2)" stroke-width="1"/>
+
+  <!-- Sous-tagline -->
+  <text
+    x="490"
+    y="468"
+    font-family="-apple-system, sans-serif"
+    font-size="20"
+    fill="#4a6080"
+    font-style="italic"
+  >Track. Analyze. Improve.</text>
+
+  <!-- URL -->
+  <text
+    x="600"
+    y="560"
+    font-family="-apple-system, sans-serif"
+    font-size="18"
+    fill="#2d3f55"
+    text-anchor="middle"
+    letter-spacing="1"
+  >mytradingcoach.app</text>
+
+  <!-- Bordure subtile -->
+  <rect x="2" y="2" width="1196" height="626" rx="0" fill="none" stroke="rgba(99,155,255,0.08)" stroke-width="2"/>
+</svg>

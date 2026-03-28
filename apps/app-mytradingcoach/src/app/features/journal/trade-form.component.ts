@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TitleCasePipe } from '@angular/common';
 import { LucideAngularModule, X } from 'lucide-angular';
 import { Trade } from '../../core/stores/trades.store';
 import { CreateTradeDto } from '../../core/api/trades.api';
@@ -18,7 +19,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
 @Component({
   selector: 'mtc-trade-form',
   standalone: true,
-  imports: [FormsModule, LucideAngularModule],
+  imports: [FormsModule, TitleCasePipe, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (open()) {
@@ -93,7 +94,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
                     type="button"
                     class="emotion-btn"
                     [class.selected]="form.emotion === e"
-                    (click)="form.emotion = e"
+                    (click)="form.emotion = $any(e)"
                   >
                     {{ EMOTION_EMOJIS[e] }} {{ e | titlecase }}
                   </button>
@@ -391,9 +392,9 @@ export class TradeFormComponent implements OnChanges {
         takeProfit: this.editTrade.takeProfit ?? undefined,
         pnl: this.editTrade.pnl ?? undefined,
         riskReward: this.editTrade.riskReward ?? undefined,
-        emotion: this.editTrade.emotion,
-        setup: this.editTrade.setup,
-        session: this.editTrade.session,
+        emotion: this.editTrade.emotion as CreateTradeDto['emotion'],
+        setup: this.editTrade.setup as CreateTradeDto['setup'],
+        session: this.editTrade.session as CreateTradeDto['session'],
         timeframe: this.editTrade.timeframe,
         notes: this.editTrade.notes ?? undefined,
       };

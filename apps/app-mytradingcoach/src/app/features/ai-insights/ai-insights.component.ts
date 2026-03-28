@@ -537,5 +537,3 @@ export class AiInsightsComponent implements AfterViewChecked {
     }
   }
 }
-
-type InsightVariant = 'warn' | 'info' | 'tip' | 'alert';

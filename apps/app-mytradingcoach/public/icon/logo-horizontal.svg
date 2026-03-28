@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 40" width="220" height="40">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Icône cercle pulse -->
+  <circle cx="20" cy="20" r="18" fill="url(#g)"/>
+  <polyline
+    points="5,20 8,20 10,14 12,26 14,9 16,23 18,15 20,20 35,20"
+    fill="none"
+    stroke="white"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <!-- Texte MyTradingCoach -->
+  <text
+    x="46"
+    y="15"
+    font-family="'Syne', -apple-system, sans-serif"
+    font-size="15"
+    font-weight="700"
+    letter-spacing="-0.3"
+    fill="#e2e8f0"
+  >MyTrading</text>
+  <text
+    x="46"
+    y="31"
+    font-family="'Syne', -apple-system, sans-serif"
+    font-size="15"
+    font-weight="700"
+    letter-spacing="-0.3"
+    fill="#60a5fa"
+  >Coach</text>
+</svg>

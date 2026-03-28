@@ -160,7 +160,7 @@ type FilterSide = 'ALL' | 'LONG' | 'SHORT';
                       type="button"
                       class="emotion-btn"
                       [class.selected]="form.emotion === e"
-                      (click)="form.emotion = e"
+                      (click)="form.emotion = $any(e)"
                     >
                       <span>{{ EMOTION_EMOJIS[e] }}</span>
                       <span>{{ e }}</span>
