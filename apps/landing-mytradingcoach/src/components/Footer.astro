@@ -1,0 +1,87 @@
+---
+---
+<footer>
+  <div class="footer-brand">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24"><polyline points="2,14 7,9 11,13 16,6 22,10"/></svg>
+    </div>
+    <span class="footer-name">MyTradingCoach</span>
+    <span class="footer-copy">© 2026</span>
+  </div>
+
+  <nav class="footer-links">
+    <a href="/mentions-legales">Mentions légales</a>
+    <a href="/confidentialite">Confidentialité</a>
+    <a href="/cgu">CGU</a>
+    <a href="mailto:hello@mytradingcoach.app">Contact</a>
+  </nav>
+
+  <span class="footer-host">Hébergé en France 🇫🇷 · Données chiffrées</span>
+</footer>
+
+<style>
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 48px 5%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--text3);
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .footer-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-mark {
+    width: 24px; height: 24px;
+    background: var(--blue);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .logo-mark svg {
+    width: 14px; height: 14px;
+    stroke: white; fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .footer-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text);
+    font-family: var(--display);
+  }
+
+  .footer-copy { color: var(--text3); }
+
+  .footer-links {
+    display: flex;
+    gap: 24px;
+  }
+
+  .footer-links a {
+    color: var(--text3);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover { color: var(--text2); }
+
+  .footer-host { color: var(--text3); font-size: 12px; }
+
+  @media (max-width: 640px) {
+    footer { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .footer-links { flex-wrap: wrap; gap: 12px 20px; }
+  }
+</style>
