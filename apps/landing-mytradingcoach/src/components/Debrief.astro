@@ -1,0 +1,320 @@
+---
+---
+<section class="debrief-section" id="debrief">
+  <div class="debrief-layout">
+    <!-- Left: Text -->
+    <div>
+      <span class="section-label">La feature principale</span>
+      <h2>Ton coach <em>personnel</em> chaque dimanche soir</h2>
+      <p class="section-sub">Chaque semaine, l'IA analyse l'intégralité de tes trades, détecte ce que tu aurais du mal à voir toi-même, et te fixe 3 objectifs concrets pour la semaine suivante.</p>
+
+      <div class="benefits">
+        <div class="benefit-item">
+          <div class="benefit-icon" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2)">✓</div>
+          <div>
+            <div class="benefit-title">Résumé en langage naturel</div>
+            <div class="benefit-desc">Pas des stats brutes — une analyse rédigée qui nomme tes vraies failles.</div>
+          </div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2)">🎯</div>
+          <div>
+            <div class="benefit-title">3 objectifs personnalisés</div>
+            <div class="benefit-desc">Générés depuis tes propres patterns. Pas des conseils génériques de YouTube.</div>
+          </div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon" style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.2)">📈</div>
+          <div>
+            <div class="benefit-title">Boucle semaine après semaine</div>
+            <div class="benefit-desc">Les objectifs de la semaine N deviennent le bilan de la semaine N+1. Tu mesures ta progression.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Mock debrief -->
+    <div>
+      <div class="debrief-mock">
+        <div class="debrief-week">Rapport hebdomadaire — Semaine 12</div>
+        <div class="debrief-title">Weekly Debrief IA</div>
+        <div class="debrief-sub">28 trades analysés · généré dim. 23h00</div>
+
+        <div class="debrief-stats">
+          <div class="ds">
+            <div class="ds-val" style="color:#10b981">+$1 840</div>
+            <div class="ds-label">P&amp;L net</div>
+          </div>
+          <div class="ds">
+            <div class="ds-val" style="color:#60a5fa">67%</div>
+            <div class="ds-label">Win rate</div>
+          </div>
+          <div class="ds">
+            <div class="ds-val">74<span class="ds-sub">/100</span></div>
+            <div class="ds-label">Score</div>
+          </div>
+        </div>
+
+        <div class="ai-block-mock">
+          <div class="ai-block-label">
+            <div class="ai-dot"></div>
+            Analyse IA
+          </div>
+          <div class="ai-text">
+            Tu as <strong>respecté tes stops à 100%</strong> — une première en 6 semaines.
+            Ton talon d'Achille reste le <span class="warn">jeudi après 15h</span> : 4 trades sur 5 perdants.
+            Si tu corriges ce seul créneau, ton win rate structurel dépasse <strong>72%</strong>.
+          </div>
+        </div>
+
+        <div class="obj-header">Objectifs semaine prochaine</div>
+        <div class="obj-row">
+          <div class="obj-dot todo">○</div>
+          Stopper toute activité le jeudi après 15h
+        </div>
+        <div class="obj-row">
+          <div class="obj-dot todo">○</div>
+          Max 4 trades le vendredi matin
+        </div>
+        <div class="obj-row">
+          <div class="obj-dot todo">○</div>
+          Éviter GBP/USD — 3ème semaine en perte
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .debrief-section {
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 100px 5%;
+  }
+
+  .debrief-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--pulse);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  h2 {
+    font-size: clamp(32px, 5vw, 54px);
+    font-weight: 700;
+    letter-spacing: -2px;
+    line-height: 1.05;
+    margin-bottom: 20px;
+    font-family: var(--display);
+    color: var(--text);
+  }
+
+  h2 em {
+    font-style: italic;
+    font-family: var(--serif);
+    font-weight: 400;
+    color: var(--blue2);
+  }
+
+  .section-sub {
+    font-size: 18px;
+    color: var(--text2);
+    font-weight: 300;
+    max-width: 520px;
+    line-height: 1.6;
+    margin-bottom: 32px;
+  }
+
+  .benefits {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .benefit-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .benefit-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 16px;
+  }
+
+  .benefit-title {
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: var(--text);
+    font-family: var(--display);
+  }
+
+  .benefit-desc {
+    font-size: 14px;
+    color: var(--text2);
+    font-weight: 300;
+    line-height: 1.5;
+  }
+
+  /* ─── Mock ─── */
+  .debrief-mock {
+    background: var(--card);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  .debrief-week {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .debrief-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+    font-family: var(--display);
+    color: var(--text);
+  }
+
+  .debrief-sub {
+    font-size: 12px;
+    color: var(--text3);
+    margin-bottom: 20px;
+    font-family: var(--mono);
+  }
+
+  .debrief-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .ds {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 10px;
+    text-align: center;
+  }
+
+  .ds-val {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    font-family: var(--mono);
+    color: var(--text);
+  }
+
+  .ds-sub {
+    font-size: 12px;
+    color: var(--text3);
+  }
+
+  .ds-label {
+    font-size: 9px;
+    font-family: var(--mono);
+    color: var(--text3);
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .ai-block-mock {
+    background: linear-gradient(135deg, rgba(59,130,246,0.06), rgba(34,211,238,0.04));
+    border: 1px solid rgba(59,130,246,0.15);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+
+  .ai-block-label {
+    font-size: 9px;
+    font-family: var(--mono);
+    color: var(--pulse);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .ai-dot {
+    width: 5px; height: 5px;
+    background: var(--pulse);
+    border-radius: 50%;
+    animation: blink 2s infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .ai-text {
+    font-size: 12.5px;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+
+  .ai-text strong { color: var(--blue2); font-weight: 500; }
+  .warn { color: var(--yellow); }
+
+  .obj-header {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 8px;
+  }
+
+  .obj-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(56,139,255,0.05);
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .obj-row:last-child { border-bottom: none; }
+
+  .obj-dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px;
+  }
+
+  .obj-dot.todo { background: var(--bg3); color: var(--text3); }
+
+  @media (max-width: 768px) {
+    .debrief-layout { grid-template-columns: 1fr; gap: 40px; }
+  }
+</style>

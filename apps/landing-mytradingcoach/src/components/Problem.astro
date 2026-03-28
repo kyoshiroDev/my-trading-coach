@@ -1,0 +1,140 @@
+---
+const problems = [
+  {
+    icon: '😤',
+    iconBg: 'rgba(244,63,94,0.1)',
+    title: 'Le revenge trading',
+    description: "Après une perte, tu reviens trop vite avec une position trop grande. Tu le sais. Mais sans données, tu ne vois pas à quel point c'est systématique.",
+  },
+  {
+    icon: '⏰',
+    iconBg: 'rgba(251,191,36,0.1)',
+    title: 'Les mauvais créneaux',
+    description: "Ton win rate à 09h30 est de 74%. Après 20h il tombe à 38%. Tu n'as jamais calculé ça — et tu continues de trader le soir.",
+  },
+  {
+    icon: '🔁',
+    iconBg: 'rgba(59,130,246,0.1)',
+    title: 'Les patterns invisibles',
+    description: "Tu perds presque toujours sur GBP/USD le jeudi. Tu overstrades le vendredi matin après une bonne série. Ces patterns existent. Tu ne les vois pas.",
+  },
+];
+---
+
+<section class="problem" id="problem">
+  <div class="inner">
+    <span class="section-label">Le vrai problème</span>
+    <h2>Ton journal ne te dit pas <em>l'essentiel</em></h2>
+    <p class="section-sub">Les spreadsheets te montrent tes chiffres. MyTradingCoach te montre <strong>pourquoi</strong> tu prends les mauvaises décisions.</p>
+
+    <div class="problem-grid">
+      {problems.map(p => (
+        <div class="problem-item">
+          <div class="problem-icon" style={`background:${p.iconBg}`}>{p.icon}</div>
+          <h3>{p.title}</h3>
+          <p>{p.description}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .problem {
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 100px 5%;
+  }
+
+  .inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--pulse);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  h2 {
+    font-size: clamp(32px, 5vw, 54px);
+    font-weight: 700;
+    letter-spacing: -2px;
+    line-height: 1.05;
+    margin-bottom: 20px;
+    font-family: var(--display);
+    color: var(--text);
+  }
+
+  h2 em {
+    font-style: italic;
+    font-family: var(--serif);
+    font-weight: 400;
+    color: var(--blue2);
+  }
+
+  .section-sub {
+    font-size: 18px;
+    color: var(--text2);
+    font-weight: 300;
+    max-width: 520px;
+    line-height: 1.6;
+  }
+
+  .section-sub strong { color: var(--text); font-weight: 500; }
+
+  .problem-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-top: 60px;
+  }
+
+  .problem-item {
+    background: var(--bg2);
+    padding: 36px 32px;
+    transition: background 0.2s;
+  }
+
+  .problem-item:hover { background: var(--bg3); }
+
+  .problem-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+
+  .problem-item h3 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    margin-bottom: 10px;
+    font-family: var(--display);
+    color: var(--text);
+  }
+
+  .problem-item p {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.6;
+    font-weight: 300;
+    margin: 0;
+  }
+
+  @media (max-width: 768px) {
+    .problem-grid { grid-template-columns: 1fr; }
+    .problem-item { padding: 28px 24px; }
+  }
+</style>
