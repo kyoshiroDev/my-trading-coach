@@ -24,13 +24,7 @@ import { AuthService } from '../../../core/auth/auth.service';
       <aside class="sidebar">
         <!-- Logo -->
         <div class="logo">
-          <div class="logo-icon">
-            <svg viewBox="0 0 20 20" width="18" height="18" fill="none">
-              <polyline points="0,10 3,10 5,4 7,16 9,7 11,13 13,10 20,10"
-                stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-          <div class="logo-text">MyTrading<span>Coach</span></div>
+          <img src="/icon/logo-horizontal.svg" alt="MyTradingCoach" height="40" />
         </div>
 
         <!-- Nav -->
@@ -132,31 +126,18 @@ import { AuthService } from '../../../core/auth/auth.service';
 
     /* ─── LOGO ─── */
     .logo {
-      padding: 24px 20px 20px;
+      padding: 20px 20px 16px;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
-      gap: 10px;
       flex-shrink: 0;
     }
 
-    .logo-icon {
-      width: 32px; height: 32px;
-      background: linear-gradient(135deg, var(--blue), #8b5cf6);
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
+    .logo img {
+      display: block;
+      height: 40px;
+      width: auto;
     }
-
-    .logo-text {
-      font-family: var(--font-display);
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: -0.3px;
-      color: var(--text);
-    }
-
-    .logo-text span { color: var(--blue-bright); }
 
     /* ─── NAV ─── */
     .nav {

@@ -2,10 +2,7 @@
 ---
 <footer>
   <div class="footer-brand">
-    <div class="logo-mark">
-      <svg viewBox="0 0 24 24"><polyline points="2,14 7,9 11,13 16,6 22,10"/></svg>
-    </div>
-    <span class="footer-name">MyTradingCoach</span>
+    <img src="/icon/logo-navbar.svg" alt="MyTradingCoach" class="footer-logo" />
     <span class="footer-copy">© 2026</span>
   </div>
 
@@ -38,29 +35,11 @@
     gap: 10px;
   }
 
-  .logo-mark {
-    width: 24px; height: 24px;
-    background: var(--blue);
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .footer-logo {
+    display: block;
+    height: 24px;
+    width: auto;
     flex-shrink: 0;
-  }
-
-  .logo-mark svg {
-    width: 14px; height: 14px;
-    stroke: white; fill: none;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  .footer-name {
-    font-weight: 600;
-    font-size: 14px;
-    color: var(--text);
-    font-family: var(--display);
   }
 
   .footer-copy { color: var(--text3); }
