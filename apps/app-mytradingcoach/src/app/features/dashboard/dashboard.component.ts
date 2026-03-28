@@ -206,12 +206,12 @@ interface Summary {
     }
 
     .stat-label {
-      font-size: 11px;
+      font-size: 9px;
       font-family: var(--font-mono);
-      font-weight: 400;
+      font-weight: 500;
       color: var(--text-3);
       text-transform: uppercase;
-      letter-spacing: 0.8px;
+      letter-spacing: 0.7px;
       margin-bottom: 10px;
     }
 
@@ -250,6 +250,7 @@ interface Summary {
       font-size: 40px;
       opacity: 0.05;
       pointer-events: none;
+      user-select: none;
     }
 
     .text-green { color: var(--green); }
