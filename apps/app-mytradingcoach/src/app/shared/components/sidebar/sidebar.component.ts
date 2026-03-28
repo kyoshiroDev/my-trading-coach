@@ -1,113 +1,318 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterModule, RouterLink, RouterLinkActive } from '@angular/router';
+import {
+  LucideAngularModule,
+  LayoutDashboard,
+  BookOpen,
+  BarChart2,
+  Sparkles,
+  CalendarDays,
+  Trophy,
+  Settings,
+  LogOut,
+  TrendingUp,
+} from 'lucide-angular';
 import { UserStore } from '../../../core/stores/user.store';
 import { AuthService } from '../../../core/auth/auth.service';
+import { TopbarComponent } from '../topbar/topbar.component';
 
 @Component({
   selector: 'mtc-sidebar',
   standalone: true,
-  imports: [RouterModule, RouterLink, RouterLinkActive],
+  imports: [RouterModule, RouterLink, RouterLinkActive, LucideAngularModule, TopbarComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="app-layout">
+      <!-- ─── SIDEBAR ─── -->
       <aside class="sidebar">
-        <div class="sidebar-header">
-          <div>
-            <span class="logo">MyTradingCoach</span>
-            <span class="logo-sub">Journal de trading intelligent</span>
+        <!-- Logo -->
+        <div class="logo">
+          <div class="logo-icon">
+            <lucide-icon [img]="TrendingUpIcon" [size]="16" color="white" />
           </div>
-          @if (userStore.isPremium()) {
-            <span class="premium-badge">✦ PREMIUM</span>
-          }
+          <div class="logo-text">MyTrading<span>Coach</span></div>
         </div>
-        <nav class="sidebar-nav">
+
+        <!-- Nav -->
+        <nav class="nav">
+          <div class="nav-section">Overview</div>
+
           <a routerLink="/dashboard" routerLinkActive="active" class="nav-item">
-            📊 Dashboard
+            <span class="nav-icon"><lucide-icon [img]="LayoutDashboardIcon" [size]="14" /></span>
+            Dashboard
           </a>
+
           <a routerLink="/journal" routerLinkActive="active" class="nav-item">
-            📓 Journal
+            <span class="nav-icon"><lucide-icon [img]="BookOpenIcon" [size]="14" /></span>
+            Journal
           </a>
-          @if (userStore.isPremium()) {
-            <a routerLink="/analytics" routerLinkActive="active" class="nav-item">
-              📈 Analytics
-            </a>
-            <a routerLink="/ai-insights" routerLinkActive="active" class="nav-item">
-              🤖 IA Insights
-            </a>
-            <a routerLink="/debrief" routerLinkActive="active" class="nav-item">
-              📋 Debrief
-            </a>
-          }
+
+          <a routerLink="/analytics" routerLinkActive="active" class="nav-item">
+            <span class="nav-icon"><lucide-icon [img]="BarChart2Icon" [size]="14" /></span>
+            Analytics
+          </a>
+
+          <div class="nav-section">Premium</div>
+
+          <a routerLink="/ai-insights" routerLinkActive="active" class="nav-item">
+            <span class="nav-icon"><lucide-icon [img]="SparklesIcon" [size]="14" /></span>
+            IA Insights
+            <span class="badge">AI</span>
+          </a>
+
+          <a routerLink="/debrief" routerLinkActive="active" class="nav-item">
+            <span class="nav-icon"><lucide-icon [img]="CalendarDaysIcon" [size]="14" /></span>
+            Weekly Debrief
+            <span class="badge">PRO</span>
+          </a>
+
+          <div class="nav-section">Account</div>
+
           <a routerLink="/scoring" routerLinkActive="active" class="nav-item">
-            🏆 Score
+            <span class="nav-icon"><lucide-icon [img]="TrophyIcon" [size]="14" /></span>
+            Scoring
           </a>
-        </nav>
-        <div class="sidebar-footer">
-          <div class="user-info">
-            <span class="user-label">Connecté en tant que</span>
-            <span class="user-name">{{ userStore.displayName() }}</span>
+
+          <div class="nav-item settings-item" (click)="logout()">
+            <span class="nav-icon"><lucide-icon [img]="LogOutIcon" [size]="14" /></span>
+            Déconnexion
           </div>
-          <button class="logout-btn" (click)="logout()">Déconnexion</button>
+        </nav>
+
+        <!-- User card -->
+        <div class="sidebar-footer">
+          <div class="user-card">
+            <div class="avatar">{{ userStore.initials() }}</div>
+            <div class="user-info">
+              <div class="user-name">{{ userStore.displayName() }}</div>
+              <div class="user-plan">
+                @if (userStore.isPremium()) { ★ PREMIUM } @else { FREE }
+              </div>
+            </div>
+          </div>
         </div>
       </aside>
+
+      <!-- ─── MAIN ─── -->
       <main class="main-content">
         <router-outlet />
       </main>
     </div>
   `,
   styles: [`
-    .app-layout { display: flex; min-height: 100vh; background: var(--bg-primary); }
+    .app-layout {
+      display: flex;
+      height: 100vh;
+      background: var(--bg);
+      overflow: hidden;
+    }
+
+    /* ─── SIDEBAR ─── */
     .sidebar {
-      width: 240px; min-height: 100vh;
-      background: linear-gradient(180deg, #080d18 0%, #05080f 100%);
-      border-right: 1px solid rgba(56,139,255,0.1);
-      display: flex; flex-direction: column; padding: 1.5rem 1rem;
+      width: 240px;
+      min-width: 240px;
+      background: var(--bg-2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
       position: relative;
+      z-index: 10;
+      overflow-y: auto;
     }
+
     .sidebar::after {
-      content: ''; position: absolute; top: 0; right: 0; width: 1px; height: 100%;
-      background: linear-gradient(180deg, rgba(56,139,255,0.3) 0%, rgba(56,139,255,0.05) 50%, transparent 100%);
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 1px; height: 100%;
+      background: linear-gradient(180deg, transparent, var(--blue) 40%, var(--blue) 60%, transparent);
+      opacity: 0.12;
+      pointer-events: none;
     }
-    .sidebar-header { display: flex; flex-direction: column; gap: 0.625rem; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid rgba(56,139,255,0.08); }
+
+    /* ─── LOGO ─── */
     .logo {
-      font-size: 1rem; font-weight: 800;
-      background: linear-gradient(135deg, #3b82f6, #22d3ee);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
     }
-    .logo-sub { font-size: 0.7rem; color: var(--text3); font-weight: 400; -webkit-text-fill-color: var(--text3); }
-    .premium-badge {
-      font-size: 0.65rem; background: linear-gradient(135deg, #3b82f6, #9333ea);
-      color: white; padding: 2px 10px; border-radius: 9999px; width: fit-content;
-      box-shadow: 0 2px 12px rgba(59,130,246,0.3); font-weight: 700; letter-spacing: 0.04em;
+
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--blue), #8b5cf6);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
     }
-    .sidebar-nav { display: flex; flex-direction: column; gap: 0.25rem; flex: 1; }
+
+    .logo-text {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: var(--text);
+    }
+
+    .logo-text span { color: var(--blue-bright); }
+
+    /* ─── NAV ─── */
+    .nav {
+      flex: 1;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-section {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 1.2px;
+      color: var(--text-3);
+      text-transform: uppercase;
+      padding: 12px 8px 6px;
+      margin-top: 4px;
+    }
+
     .nav-item {
-      padding: 0.625rem 0.875rem; border-radius: 0.5rem; color: var(--text2);
-      font-size: 0.875rem; transition: all 0.15s; text-decoration: none;
-      display: flex; align-items: center; gap: 0.5rem;
-    }
-    .nav-item:hover { background: rgba(56,139,255,0.08); color: var(--text); }
-    .nav-item.active {
-      background: rgba(59,130,246,0.12);
-      color: #60a5fa;
-      border: 1px solid rgba(59,130,246,0.2);
-    }
-    .sidebar-footer { display: flex; flex-direction: column; gap: 0.5rem; margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(56,139,255,0.08); }
-    .user-info { display: flex; flex-direction: column; gap: 0.125rem; }
-    .user-label { font-size: 0.68rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
-    .user-name { font-size: 0.8rem; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .logout-btn {
-      background: none; border: 1px solid rgba(56,139,255,0.12); color: var(--text2);
-      border-radius: 0.5rem; padding: 0.4rem 0.75rem; font-size: 0.8rem; cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13.5px;
+      font-weight: 400;
+      color: var(--text-2);
       transition: all 0.15s;
+      position: relative;
+      text-decoration: none;
     }
-    .logout-btn:hover { border-color: var(--color-loss); color: var(--color-loss); background: rgba(244,63,94,0.05); }
-    .main-content { flex: 1; overflow: auto; }
+
+    .nav-item:hover {
+      background: var(--blue-glow);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: var(--blue-glow);
+      color: var(--blue-bright);
+      font-weight: 500;
+    }
+
+    .nav-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 50%;
+      transform: translateY(-50%);
+      width: 3px; height: 20px;
+      background: var(--blue);
+      border-radius: 0 3px 3px 0;
+    }
+
+    .nav-icon {
+      width: 16px;
+      text-align: center;
+      font-size: 14px;
+      opacity: 0.8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .badge {
+      margin-left: auto;
+      background: linear-gradient(135deg, var(--blue), #8b5cf6);
+      color: white;
+      font-size: 9px;
+      font-family: var(--font-mono);
+      font-weight: 500;
+      padding: 2px 6px;
+      border-radius: 10px;
+      letter-spacing: 0.5px;
+    }
+
+    .settings-item {
+      margin-top: auto;
+    }
+
+    /* ─── FOOTER ─── */
+    .sidebar-footer {
+      padding: 16px 12px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .user-card:hover { background: var(--bg-3); }
+
+    .avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: var(--font-display);
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .user-info { flex: 1; min-width: 0; }
+
+    .user-name {
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text);
+    }
+
+    .user-plan {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      color: var(--yellow);
+      letter-spacing: 0.5px;
+    }
+
+    /* ─── MAIN ─── */
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
   `],
 })
 export class SidebarComponent {
   protected readonly userStore = inject(UserStore);
   private readonly auth = inject(AuthService);
+
+  protected readonly TrendingUpIcon = TrendingUp;
+  protected readonly LayoutDashboardIcon = LayoutDashboard;
+  protected readonly BookOpenIcon = BookOpen;
+  protected readonly BarChart2Icon = BarChart2;
+  protected readonly SparklesIcon = Sparkles;
+  protected readonly CalendarDaysIcon = CalendarDays;
+  protected readonly TrophyIcon = Trophy;
+  protected readonly SettingsIcon = Settings;
+  protected readonly LogOutIcon = LogOut;
 
   logout() {
     this.auth.logout();
