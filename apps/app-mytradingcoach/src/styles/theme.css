@@ -1,13 +1,13 @@
 :root {
   /* ─── Backgrounds ─── */
-  --bg: #080c14;
-  --bg-2: #0d1420;
-  --bg-3: #111b2e;
-  --bg-card: #0f1824;
+  --bg: #060a10;
+  --bg-2: #0b1220;
+  --bg-3: #111d30;
+  --bg-card: #162538;
 
   /* ─── Borders ─── */
-  --border: rgba(99, 155, 255, 0.1);
-  --border-hover: rgba(99, 155, 255, 0.25);
+  --border: rgba(99, 155, 255, 0.14);
+  --border-hover: rgba(99, 155, 255, 0.32);
 
   /* ─── Blue palette ─── */
   --blue: #3b82f6;
