@@ -159,7 +159,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
                     {{ a.winRate.toFixed(0) }}%
                   </td>
                   <td class="mono" [class.text-green]="a.pnl >= 0" [class.text-red]="a.pnl < 0">
-                    {{ a.pnl >= 0 ? '+' : '' }}${{ Math.abs(a.pnl).toFixed(2) }}
+                    {{ a.pnl >= 0 ? '+' : '' }}\${{ Math.abs(a.pnl).toFixed(2) }}
                   </td>
                 </tr>
               }
@@ -274,22 +274,27 @@ const EMOTION_EMOJIS: Record<string, string> = {
     .empty-td { text-align: center; color: var(--text-3); padding: 1rem 0; font-size: 13px; }
 
     /* ─── Heatmap ─── */
+    .heat-days { display: flex; justify-content: space-around; margin-bottom: 4px; }
+    .heat-day { font-size: 9px; font-family: var(--font-mono); color: var(--text-3); text-align: center; }
     .heatmap {
       display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 4px;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
     }
     .heat-cell {
-      border-radius: 6px;
-      padding: 8px 4px;
+      height: 28px;
+      border-radius: 4px;
+      background: var(--bg-3);
       display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 2px;
-      cursor: default;
-      transition: opacity 0.15s;
+      justify-content: center;
+      font-size: 9px;
+      font-family: var(--font-mono);
+      color: var(--text-3);
+      cursor: pointer;
+      transition: transform 0.1s;
     }
-    .heat-cell:hover { opacity: 0.75; }
+    .heat-cell:hover { transform: scale(1.15); }
     .heat-hour { font-size: 9px; font-family: var(--font-mono); color: var(--text-3); }
     .heat-wr { font-size: 9px; font-weight: 700; color: white; font-family: var(--font-mono); }
     .heatmap-legend {

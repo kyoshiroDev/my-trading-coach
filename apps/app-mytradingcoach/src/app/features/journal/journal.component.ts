@@ -442,7 +442,7 @@ type FilterSide = 'ALL' | 'LONG' | 'SHORT';
     /* ─── Emotion selector ─── */
     .emotion-selector {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 8px;
     }
 

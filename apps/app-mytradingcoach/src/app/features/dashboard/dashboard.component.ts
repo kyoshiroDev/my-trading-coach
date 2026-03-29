@@ -206,12 +206,12 @@ interface Summary {
     }
 
     .stat-label {
-      font-size: 9px;
+      font-size: 11px;
       font-family: var(--font-mono);
-      font-weight: 500;
+      font-weight: 400;
       color: var(--text-3);
       text-transform: uppercase;
-      letter-spacing: 0.7px;
+      letter-spacing: 0.8px;
       margin-bottom: 10px;
     }
 
