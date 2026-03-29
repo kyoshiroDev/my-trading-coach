@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String          @id @default(cuid())
+  email     String          @unique
+  password  String
+  name      String?
+  plan        Plan            @default(FREE)
+  trialEndsAt DateTime?
+  trialUsed   Boolean         @default(false)
+  trades      Trade[]
+  debriefs  WeeklyDebrief[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model Trade {
+  id         String         @id @default(cuid())
+  userId     String
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  asset      String
+  side       TradeSide
+  entry      Float
+  exit       Float?
+  stopLoss   Float?
+  takeProfit Float?
+  pnl        Float?
+  riskReward Float?
+  emotion    EmotionState
+  setup      SetupType
+  session    TradingSession
+  timeframe  String
+  notes      String?
+  tags       String[]
+  tradedAt   DateTime       @default(now())
+  createdAt  DateTime       @default(now())
+
+  @@index([userId, tradedAt])
+  @@index([userId, emotion])
+  @@index([userId, setup])
+}
+
+model WeeklyDebrief {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weekNumber  Int
+  year        Int
+  startDate   DateTime
+  endDate     DateTime
+  aiSummary   String
+  insights    Json
+  objectives  Json
+  stats       Json
+  generatedAt DateTime @default(now())
+
+  @@unique([userId, weekNumber, year])
+  @@index([userId, year, weekNumber])
+}
+
+enum Plan {
+  FREE
+  PREMIUM
+}
+
+enum TradeSide {
+  LONG
+  SHORT
+}
+
+enum EmotionState {
+  CONFIDENT
+  STRESSED
+  REVENGE
+  FEAR
+  FOCUSED
+  NEUTRAL
+}
+
+enum SetupType {
+  BREAKOUT
+  PULLBACK
+  RANGE
+  REVERSAL
+  SCALPING
+  NEWS
+}
+
+enum TradingSession {
+  LONDON
+  NEW_YORK
+  ASIAN
+  PRE_MARKET
+  OVERLAP
+}
