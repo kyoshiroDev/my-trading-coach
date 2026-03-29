@@ -1,0 +1,28 @@
+services:
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: mtc_postgres_dev
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: mytradingcoach_dev
+      POSTGRES_USER: mtc_user
+      POSTGRES_PASSWORD: devpassword
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mtc_user -d mytradingcoach_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: mtc_redis_dev
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass devredispass
+
+volumes:
+  postgres_dev_data:
