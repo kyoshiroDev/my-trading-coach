@@ -1,0 +1,122 @@
+---
+import Base from './Base.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  publishDate: Date;
+  updatedDate?: Date;
+  tags?: string[];
+}
+
+const { title, description, publishDate, updatedDate, tags = [] } = Astro.props;
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": title,
+  "description": description,
+  "datePublished": publishDate.toISOString(),
+  "dateModified": updatedDate?.toISOString() ?? publishDate.toISOString(),
+  "author": { "@type": "Organization", "name": "MyTradingCoach" },
+  "publisher": {
+    "@type": "Organization",
+    "name": "MyTradingCoach",
+    "logo": { "@type": "ImageObject", "url": "https://mytradingcoach.app/logo.png" },
+  },
+  "mainEntityOfPage": { "@type": "WebPage", "@id": Astro.url.href },
+};
+---
+
+<Base title={`${title} | MyTradingCoach Blog`} description={description} schema={schema}>
+  <header style="background:var(--bg2); border-bottom:1px solid var(--border); padding:1rem 0;">
+    <div style="max-width:48rem; margin:0 auto; padding:0 1.5rem;">
+      <a href="/" style="color:var(--blue); text-decoration:none; font-size:0.875rem;">← Retour</a>
+    </div>
+  </header>
+
+  <main style="max-width:48rem; margin:3rem auto; padding:0 1.5rem;">
+    <article>
+      <header style="margin-bottom:2rem;">
+        {tags.length > 0 && (
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1rem;">
+            {tags.map(tag => (
+              <span style="background:rgba(59,130,246,0.1); color:var(--blue2); padding:0.25rem 0.75rem; border-radius:9999px; font-size:0.75rem; font-family:var(--mono);">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+        <h1 style="font-size:2rem; font-weight:800; line-height:1.2; margin:0 0 1rem; color:var(--text);">{title}</h1>
+        <p style="color:var(--text2); font-size:0.875rem;">
+          Publié le {publishDate.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}
+          {updatedDate && ` · Mis à jour le ${updatedDate.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}`}
+        </p>
+      </header>
+
+      <div class="prose">
+        <slot />
+      </div>
+
+      <div style="margin-top:3rem; padding:2rem; background:linear-gradient(135deg,rgba(59,130,246,0.1),rgba(34,211,238,0.05)); border:1px solid var(--border2); border-radius:1rem; text-align:center;">
+        <p style="font-size:1.125rem; font-weight:700; margin:0 0 0.5rem; color:var(--text);">Prêt à améliorer ton trading ?</p>
+        <p style="color:var(--text2); margin:0 0 1.5rem; font-size:0.875rem;">Rejoins les traders qui utilisent MyTradingCoach pour identifier leurs patterns.</p>
+        <a href="https://app.mytradingcoach.app/register" style="display:inline-block; background:linear-gradient(135deg,#3b82f6,#22d3ee); color:white; padding:0.75rem 2rem; border-radius:0.5rem; font-weight:700; text-decoration:none;">
+          Essayer gratuitement →
+        </a>
+      </div>
+    </article>
+  </main>
+</Base>
+
+<style>
+  .prose {
+    color: var(--text2);
+    line-height: 1.8;
+    font-size: 1.0625rem;
+  }
+  .prose h2 {
+    color: var(--text);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 2rem 0 1rem;
+  }
+  .prose h3 {
+    color: var(--text);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 1.5rem 0 0.75rem;
+  }
+  .prose p {
+    margin: 0 0 1rem;
+  }
+  .prose ul, .prose ol {
+    margin: 0 0 1rem 1.5rem;
+  }
+  .prose li {
+    margin-bottom: 0.5rem;
+  }
+  .prose strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .prose a {
+    color: var(--blue2);
+    text-decoration: underline;
+  }
+  .prose blockquote {
+    border-left: 3px solid var(--blue);
+    padding-left: 1rem;
+    color: var(--text2);
+    font-style: italic;
+    margin: 1.5rem 0;
+  }
+  .prose code {
+    background: rgba(255,255,255,0.05);
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-family: var(--mono);
+    font-size: 0.875em;
+    color: var(--pulse);
+  }
+</style>

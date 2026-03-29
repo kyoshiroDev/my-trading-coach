@@ -1,0 +1,66 @@
+---
+import BlogPost from '../../layouts/BlogPost.astro';
+---
+
+<BlogPost
+  title="Win rate en trading : ce que votre chiffre cache vraiment"
+  description="Un win rate de 70% peut être moins rentable qu'un win rate de 40%. Comprendre les métriques qui comptent vraiment pour un trader profitable."
+  publishDate={new Date('2026-03-15')}
+  tags={['win rate', 'statistiques', 'performance', 'risk reward']}
+>
+  <p>
+    "Mon win rate est de 70%." Ça semble excellent. Mais si tu gagnes en moyenne $50 sur tes trades gagnants et tu perds $200 sur tes trades perdants, tu es en train de perdre de l'argent. Le win rate seul ne signifie rien. Voici ce qui compte vraiment.
+  </p>
+
+  <h2>Le win rate sans le Risk/Reward, c'est incomplet</h2>
+  <p>
+    La formule de l'espérance mathématique d'un trader :
+  </p>
+  <p style="font-family:var(--mono); background:rgba(255,255,255,0.03); padding:1rem; border-radius:0.5rem; border:1px solid var(--border);">
+    Espérance = (Win Rate × Gain moyen) - ((1 - Win Rate) × Perte moyenne)
+  </p>
+  <p>
+    Exemples concrets :
+  </p>
+  <ul>
+    <li>Win rate 70% avec R/R de 0.5 : espérance = (0.7 × 1) - (0.3 × 2) = 0.7 - 0.6 = <strong>+0.1R</strong> (légèrement positif)</li>
+    <li>Win rate 40% avec R/R de 2 : espérance = (0.4 × 2) - (0.6 × 1) = 0.8 - 0.6 = <strong>+0.2R</strong> (plus profitable)</li>
+    <li>Win rate 60% avec R/R de 0.3 : espérance = (0.6 × 0.3) - (0.4 × 1) = 0.18 - 0.4 = <strong>-0.22R</strong> (perdant)</li>
+  </ul>
+
+  <h2>Les 5 métriques qui comptent vraiment</h2>
+
+  <h3>1. L'espérance mathématique (Expected Value)</h3>
+  <p>
+    C'est la combinaison win rate + R/R. Si ton espérance est positive, tu es profitable sur le long terme, quelle que soit ta série en cours.
+  </p>
+
+  <h3>2. Le R/R moyen réalisé</h3>
+  <p>
+    La différence entre le R/R planifié et le R/R réalisé révèle un problème fréquent : les traders coupent leurs gains trop tôt et laissent courir leurs pertes. Si tu planifies du 1:2 mais réalises du 1:0.8 en moyenne, tu as un problème de gestion de position.
+  </p>
+
+  <h3>3. Le Profit Factor</h3>
+  <p>
+    Total des gains / Total des pertes. Sous 1 = perdant. Entre 1 et 1.5 = marginalement rentable. Au-dessus de 1.5 = système solide. Au-dessus de 2 = excellent.
+  </p>
+
+  <h3>4. Le Max Drawdown</h3>
+  <p>
+    La perte maximale depuis un pic. Un trader avec 60% de win rate peut avoir un drawdown catastrophique s'il n'a pas de gestion des risques. Le max drawdown détermine si tu peux psychologiquement tenir ton système.
+  </p>
+
+  <h3>5. Le win rate par setup</h3>
+  <p>
+    Ton win rate global est une moyenne. Masqué dedans : peut-être que tes BREAKOUT ont 75% de win rate et tes REVERSAL ont 35%. Si tu ne segmentes pas par setup, tu ne sais pas lesquels abandonner.
+  </p>
+
+  <h2>Comment analyser ses propres métriques</h2>
+  <p>
+    MyTradingCoach calcule automatiquement toutes ces métriques à partir de tes trades enregistrés. La vue Analytics décompose ton win rate par setup, par émotion, par session de trading et par heure. En quelques minutes, tu sais exactement quelles conditions de trading sont profitables pour toi — et lesquelles ne le sont pas.
+  </p>
+
+  <blockquote>
+    "Un trader avec 40% de win rate et une bonne gestion du risque surpasse régulièrement un trader avec 70% de win rate et une gestion catastrophique."
+  </blockquote>
+</BlogPost>
