@@ -21,16 +21,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
 
       - name: Install commitlint
-        run: npm install --save-dev @commitlint/cli @commitlint/config-conventional
+        run: pnpm add -D @commitlint/cli @commitlint/config-conventional
 
       - name: Validate PR commits
-        run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+        run: pnpm dlx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
 
   # ── Lint ──────────────────────────────────────────────────────────────────
   lint:
@@ -39,29 +43,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
 
-      - name: Cache npm store
+      - name: Cache pnpm store
         uses: actions/cache@v4
         with:
-          path: ~/.npm
-          key: npm-${{ hashFiles('package-lock.json') }}
-          restore-keys: npm-
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Lint Angular
-        run: npx nx lint app-mytradingcoach
+        run: pnpm nx lint app-mytradingcoach
 
       - name: Lint NestJS
-        run: npx nx lint api-mytradingcoach
+        run: pnpm nx lint api-mytradingcoach
 
       - name: Lint Landing
-        run: npx nx lint landing-mytradingcoach || true
+        run: pnpm nx lint landing-mytradingcoach || true
 
   # ── Build ─────────────────────────────────────────────────────────────────
   build:
@@ -105,17 +113,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
 
-      - name: Cache npm store
+      - name: Cache pnpm store
         uses: actions/cache@v4
         with:
-          path: ~/.npm
-          key: npm-${{ hashFiles('package-lock.json') }}
-          restore-keys: npm-
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-
 
       - name: Cache Angular build
         uses: actions/cache@v4
@@ -127,22 +139,22 @@ jobs:
             angular-
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Prisma generate
-        run: npx prisma generate --schema=./prisma/schema.prisma
+        run: pnpm dlx prisma generate --schema=./prisma/schema.prisma
 
       - name: Prisma migrate (test DB)
-        run: npx prisma migrate deploy --schema=./prisma/schema.prisma
+        run: pnpm dlx prisma migrate deploy --schema=./prisma/schema.prisma
 
       - name: Build NestJS
-        run: npx nx build api-mytradingcoach
+        run: pnpm nx build api-mytradingcoach
 
       - name: Build Angular
-        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true npx nx build app-mytradingcoach --configuration=production
+        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=production
 
       - name: Build Astro landing
-        run: npx nx build landing-mytradingcoach
+        run: pnpm nx build landing-mytradingcoach
 
       - name: Upload Angular dist
         uses: actions/upload-artifact@v4
@@ -200,29 +212,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
 
-      - name: Cache npm store
+      - name: Cache pnpm store
         uses: actions/cache@v4
         with:
-          path: ~/.npm
-          key: npm-${{ hashFiles('package-lock.json') }}
-          restore-keys: npm-
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Prisma generate
-        run: npx prisma generate --schema=./prisma/schema.prisma
+        run: pnpm dlx prisma generate --schema=./prisma/schema.prisma
 
       - name: Prisma migrate (test DB)
-        run: npx prisma migrate deploy --schema=./prisma/schema.prisma
+        run: pnpm dlx prisma migrate deploy --schema=./prisma/schema.prisma
 
       - name: Test NestJS
-        run: npx nx test api-mytradingcoach --passWithNoTests
+        run: pnpm nx test api-mytradingcoach --passWithNoTests
 
       - name: Test Angular
-        run: npx nx test app-mytradingcoach --passWithNoTests --watch=false
+        run: pnpm nx test app-mytradingcoach --passWithNoTests --watch=false

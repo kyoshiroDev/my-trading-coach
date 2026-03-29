@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "prepare": "husky"
+    "prepare": "husky",
+    "postinstall": "prisma generate --schema=./prisma/schema.prisma"
   },
   "private": true,
   "devDependencies": {
@@ -51,11 +52,23 @@
     "vitest": "^4.0.8",
     "webpack-cli": "^5.1.4"
   },
-  "workspaces": [
-    "apps/*",
-    "libs/*",
-    "packages/*"
-  ],
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@nestjs/core",
+      "@parcel/watcher",
+      "@prisma/engines",
+      "@swc/core",
+      "argon2",
+      "esbuild",
+      "less",
+      "lmdb",
+      "msgpackr-extract",
+      "nx",
+      "prisma",
+      "sharp",
+      "unrs-resolver"
+    ]
+  },
   "dependencies": {
     "@angular/common": "~21.2.0",
     "@angular/compiler": "~21.2.0",
@@ -68,6 +81,8 @@
     "@nestjs/mapped-types": "^2.1.0",
     "@nestjs/platform-express": "^11.0.0",
     "axios": "^1.6.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
     "lucide-angular": "^1.0.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "~7.8.0"

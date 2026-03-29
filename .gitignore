@@ -31,6 +31,7 @@ node_modules
 /libpeerconnection.log
 npm-debug.log
 yarn-error.log
+package-lock.json
 testem.log
 /typings
 
@@ -46,3 +47,10 @@ Thumbs.db
 .claude/worktrees
 .claude/settings.local.json
 .nx/polygraph
+.angular
+
+__screenshots__/
+
+test-output
+.env
+.env.production
