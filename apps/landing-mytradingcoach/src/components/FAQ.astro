@@ -1,0 +1,115 @@
+---
+---
+
+<section class="faq-section" id="faq">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="reveal" style="text-align:center">
+      <span class="sec-label">FAQ</span>
+      <h2>Questions <em>fréquentes</em></h2>
+    </div>
+    <div class="faq-wrap reveal" style="transition-delay:.1s">
+      <div class="faq-item">
+        <button class="faq-q">C'est quoi exactement MyTradingCoach ?<span class="faq-arrow">+</span></button>
+        <div class="faq-a">MyTradingCoach est un journal de trading intelligent. Tu enregistres tes trades et ton état émotionnel, et l'IA analyse tout ça pour identifier tes patterns comportementaux — les heures où tu perds, les émotions qui précèdent tes mauvaises décisions, tes stratégies gagnantes. Chaque dimanche, tu reçois un debrief complet avec 3 objectifs pour la semaine suivante.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Quels marchés sont supportés ?<span class="faq-arrow">+</span></button>
+        <div class="faq-a">MyTradingCoach fonctionne pour tous les marchés : crypto (BTC, ETH, SOL...), forex (EUR/USD, GBP/USD...), actions (AAPL, TSLA...) et indices. Tu saisis les données manuellement — pas de connexion à un broker requise, ce qui garantit ta confidentialité.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">L'IA est-elle vraiment personnalisée ?<span class="faq-arrow">+</span></button>
+        <div class="faq-a">Oui. L'IA analyse uniquement tes données — pas des moyennes génériques. Plus tu l'utilises, plus les insights sont précis. Le debrief hebdomadaire référence tes trades spécifiques avec les heures et les montants réels.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Pourquoi 29 €/mois ?<span class="faq-arrow">+</span></button>
+        <div class="faq-a">On a voulu un prix accessible pour tous les traders, pas réservé aux pros avec 10 000$ de capital. Si l'IA t'aide à éviter un seul revenge trade à 300 €, MyTradingCoach est rentabilisé pour 13 mois. On préfère grandir avec toi plutôt que facturer cher dès le départ.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Mes données sont-elles sécurisées ?<span class="faq-arrow">+</span></button>
+        <div class="faq-a">Tes données sont stockées sur des serveurs OVH en France, chiffrées au repos et en transit. Nous ne vendons ni ne partageons jamais tes données de trading. Tu peux exporter ou supprimer ton compte à tout moment.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">MyTradingCoach est-il un produit établi ?<span class="faq-arrow">+</span></button>
+        <div class="faq-a">Non, soyons honnêtes : MyTradingCoach est un projet indépendant en early access. Ce n'est pas une entreprise financée par des VCs avec 50 employés. C'est un outil construit par un développeur passionné de trading, hébergé en France, qui évolue activement. En échange, tu bénéficies d'un tarif avantageux et ton feedback a un impact direct sur les prochaines fonctionnalités.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .faq-section {
+    background: var(--bg2);
+    border-top: 1px solid var(--b);
+  }
+
+  .faq-wrap {
+    max-width: 700px;
+    margin: 52px auto 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .faq-item {
+    background: var(--card);
+    border: 1px solid var(--b);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .faq-q {
+    width: 100%;
+    padding: 18px 22px;
+    background: none;
+    border: none;
+    color: var(--txt);
+    font-size: 14px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--disp);
+    gap: 14px;
+    letter-spacing: -.1px;
+  }
+
+  .faq-q:hover { color: var(--blue2); }
+
+  .faq-arrow {
+    font-size: 18px;
+    color: var(--txt3);
+    transition: transform .2s;
+    flex-shrink: 0;
+  }
+
+  .faq-item.open .faq-arrow { transform: rotate(45deg); }
+
+  .faq-a {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height .3s ease;
+    padding: 0 22px;
+    font-size: 13px;
+    color: var(--txt2);
+    line-height: 1.75;
+    font-weight: 300;
+  }
+
+  .faq-item.open .faq-a {
+    max-height: 220px;
+    padding: 0 22px 18px;
+  }
+</style>
+
+<script>
+  document.querySelectorAll('.faq-q').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.faq-item');
+      const wasOpen = item?.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(x => x.classList.remove('open'));
+      if (!wasOpen) item?.classList.add('open');
+    });
+  });
+</script>
