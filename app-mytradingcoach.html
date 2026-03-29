@@ -1,0 +1,2166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MyTradingCoach — AI Trading Journal</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c14;
+    --bg-2: #0d1420;
+    --bg-3: #111b2e;
+    --bg-card: #0f1824;
+    --border: rgba(99,155,255,0.1);
+    --border-hover: rgba(99,155,255,0.25);
+    --blue: #3b82f6;
+    --blue-bright: #60a5fa;
+    --blue-glow: rgba(59,130,246,0.15);
+    --green: #10b981;
+    --green-dim: rgba(16,185,129,0.12);
+    --red: #ef4444;
+    --red-dim: rgba(239,68,68,0.12);
+    --yellow: #f59e0b;
+    --text: #e2eaf5;
+    --text-2: #8fa3bf;
+    --text-3: #4a6080;
+    --accent: #3b82f6;
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 2px; }
+
+  /* ─── LAYOUT ─── */
+  .app { display: flex; height: 100vh; }
+
+  /* ─── SIDEBAR ─── */
+  .sidebar {
+    width: 240px;
+    min-width: 240px;
+    background: var(--bg-2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    position: relative;
+    z-index: 10;
+  }
+
+  .sidebar::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 1px; height: 100%;
+    background: linear-gradient(180deg, transparent, var(--blue) 40%, var(--blue) 60%, transparent);
+    opacity: 0.12;
+  }
+
+  .logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--blue), #8b5cf6);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  .logo-text {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+
+  .logo-text span { color: var(--blue-bright); }
+
+  .nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; }
+
+  .nav-section {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 1.2px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    padding: 12px 8px 6px;
+    margin-top: 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 400;
+    color: var(--text-2);
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .nav-item:hover { background: var(--blue-glow); color: var(--text); }
+
+  .nav-item.active {
+    background: var(--blue-glow);
+    color: var(--blue-bright);
+    font-weight: 500;
+  }
+
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 3px; height: 20px;
+    background: var(--blue);
+    border-radius: 0 3px 3px 0;
+  }
+
+  .nav-icon { width: 16px; text-align: center; font-size: 14px; opacity: 0.8; }
+
+  .badge {
+    margin-left: auto;
+    background: linear-gradient(135deg, var(--blue), #8b5cf6);
+    color: white;
+    font-size: 9px;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: 10px;
+    letter-spacing: 0.5px;
+  }
+
+  .sidebar-footer {
+    padding: 16px 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .user-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .user-card:hover { background: var(--bg-3); }
+
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: var(--font-display);
+    flex-shrink: 0;
+  }
+
+  .user-info { flex: 1; min-width: 0; }
+  .user-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-plan {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--yellow);
+    letter-spacing: 0.5px;
+  }
+
+  /* ─── MAIN ─── */
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .topbar {
+    position: sticky; top: 0;
+    background: rgba(8,12,20,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    height: 56px;
+    display: flex; align-items: center; gap: 16px;
+    z-index: 5;
+  }
+
+  .page-title {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    flex: 1;
+  }
+
+  .topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    font-family: var(--font-body);
+  }
+
+  .btn-primary {
+    background: var(--blue);
+    color: white;
+    box-shadow: 0 0 20px rgba(59,130,246,0.3);
+  }
+
+  .btn-primary:hover {
+    background: var(--blue-bright);
+    box-shadow: 0 0 28px rgba(59,130,246,0.45);
+    transform: translateY(-1px);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-2);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost:hover { background: var(--bg-3); color: var(--text); border-color: var(--border-hover); }
+
+  .content { padding: 28px; flex: 1; }
+
+  /* ─── VIEWS ─── */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ─── STATS ROW ─── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: default;
+  }
+
+  .stat-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--blue), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .stat-card:hover::before { opacity: 0.4; }
+
+  .stat-label {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    font-weight: 400;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 10px;
+  }
+
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .stat-sub {
+    font-size: 12px;
+    color: var(--text-3);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .stat-sub .change {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .change.up { color: var(--green); background: var(--green-dim); }
+  .change.down { color: var(--red); background: var(--red-dim); }
+
+  .stat-bg-icon {
+    position: absolute;
+    right: 16px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 40px;
+    opacity: 0.05;
+    pointer-events: none;
+  }
+
+  /* ─── GRID ─── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
+
+  .card:hover { border-color: var(--border-hover); }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .card-title {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+  }
+
+  .card-action {
+    font-size: 11px;
+    color: var(--blue-bright);
+    cursor: pointer;
+    font-family: var(--font-mono);
+    opacity: 0.8;
+    transition: opacity 0.15s;
+  }
+
+  .card-action:hover { opacity: 1; }
+
+  /* ─── EQUITY CURVE ─── */
+  .chart-container {
+    position: relative;
+    height: 160px;
+  }
+
+  canvas { width: 100% !important; }
+
+  /* ─── TRADE LIST ─── */
+  .trade-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .trade-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .trade-row:hover { border-color: var(--border-hover); background: var(--bg-3); }
+
+  .trade-side {
+    width: 46px; height: 22px;
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.8px;
+    flex-shrink: 0;
+  }
+
+  .trade-side.long { background: var(--green-dim); color: var(--green); }
+  .trade-side.short { background: var(--red-dim); color: var(--red); }
+
+  .trade-asset { font-weight: 600; font-size: 13px; min-width: 64px; font-family: var(--font-mono); }
+  .trade-setup { font-size: 11px; color: var(--text-3); flex: 1; }
+
+  .trade-pnl {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 80px;
+    text-align: right;
+  }
+
+  .trade-pnl.pos { color: var(--green); }
+  .trade-pnl.neg { color: var(--red); }
+
+  .trade-emotion {
+    font-size: 14px;
+    title: 'emotion';
+  }
+
+  /* ─── EMOTION BARS ─── */
+  .emotion-grid { display: flex; flex-direction: column; gap: 12px; }
+
+  .emotion-row { display: flex; flex-direction: column; gap: 5px; }
+  .emotion-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-2);
+  }
+
+  .emotion-label span:last-child {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-3);
+  }
+
+  .bar-track {
+    height: 6px;
+    background: var(--bg-3);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* ─── WIN RATE DONUT ─── */
+  .donut-wrap {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .donut-svg { flex-shrink: 0; }
+
+  .donut-legend { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .legend-val { margin-left: auto; font-family: var(--font-mono); font-size: 12px; color: var(--text); }
+
+  /* ─── PERFORMANCE TABLE ─── */
+  .perf-table { width: 100%; }
+  .perf-table th {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 0 0 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .perf-table td {
+    padding: 10px 0;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(99,155,255,0.05);
+    color: var(--text-2);
+  }
+
+  .perf-table td:last-child { text-align: right; }
+  .perf-table tr:last-child td { border-bottom: none; }
+
+  /* ─── AI INSIGHT ─── */
+  .insight-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .insight-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    transition: border-color 0.2s;
+  }
+
+  .insight-item:hover { border-color: var(--border-hover); }
+
+  .insight-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+
+  .insight-icon.warn { background: rgba(245,158,11,0.12); }
+  .insight-icon.info { background: rgba(59,130,246,0.12); }
+  .insight-icon.tip { background: rgba(16,185,129,0.12); }
+  .insight-icon.alert { background: rgba(239,68,68,0.12); }
+
+  .insight-content { flex: 1; }
+  .insight-title { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+  .insight-desc { font-size: 12px; color: var(--text-3); line-height: 1.5; }
+
+  .insight-tag {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    padding: 2px 8px;
+    border-radius: 4px;
+    align-self: flex-start;
+    margin-top: 1px;
+  }
+
+  .insight-tag.warn { background: rgba(245,158,11,0.12); color: var(--yellow); }
+  .insight-tag.info { background: rgba(59,130,246,0.12); color: var(--blue-bright); }
+  .insight-tag.tip { background: rgba(16,185,129,0.12); color: var(--green); }
+  .insight-tag.alert { background: rgba(239,68,68,0.12); color: var(--red); }
+
+  /* ─── JOURNAL VIEW ─── */
+  .journal-filters {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .filter-chip {
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    background: transparent;
+    transition: all 0.15s;
+  }
+
+  .filter-chip:hover, .filter-chip.active { background: var(--blue-glow); border-color: var(--blue); color: var(--blue-bright); }
+
+  .journal-table { width: 100%; border-collapse: separate; border-spacing: 0 6px; }
+  .journal-table th {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 6px 14px;
+    text-align: left;
+  }
+
+  .journal-table td {
+    padding: 13px 14px;
+    font-size: 13px;
+    color: var(--text-2);
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  .journal-table td:first-child {
+    border-left: 1px solid var(--border);
+    border-radius: 10px 0 0 10px;
+  }
+
+  .journal-table td:last-child {
+    border-right: 1px solid var(--border);
+    border-radius: 0 10px 10px 0;
+  }
+
+  .journal-table tr:hover td { background: var(--bg-3); }
+
+  .mono { font-family: var(--font-mono); }
+  .text-green { color: var(--green); }
+  .text-red { color: var(--red); }
+  .text-blue { color: var(--blue-bright); }
+  .text-yellow { color: var(--yellow); }
+
+  /* ─── ADD TRADE MODAL ─── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.open { display: flex; animation: fadeIn 0.2s; }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .modal {
+    background: var(--bg-2);
+    border: 1px solid var(--border-hover);
+    border-radius: 16px;
+    width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.25s;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.6);
+  }
+
+  .modal-header {
+    padding: 22px 24px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .modal-title {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+
+  .modal-close {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    transition: all 0.15s;
+  }
+
+  .modal-close:hover { background: var(--red-dim); color: var(--red); }
+
+  .modal-body { padding: 22px 24px; }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-full { grid-column: 1 / -1; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  .field input, .field select, .field textarea {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-size: 13.5px;
+    font-family: var(--font-body);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    width: 100%;
+  }
+
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+  }
+
+  .field textarea { resize: vertical; min-height: 72px; }
+  .field select option { background: var(--bg-2); }
+
+  .emotion-selector {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .emotion-btn {
+    padding: 10px 6px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    cursor: pointer;
+    text-align: center;
+    font-size: 18px;
+    transition: all 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .emotion-btn span:last-child {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--text-3);
+    letter-spacing: 0.5px;
+  }
+
+  .emotion-btn:hover, .emotion-btn.selected {
+    border-color: var(--blue);
+    background: var(--blue-glow);
+  }
+
+  .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  /* ─── ANALYTICS VIEW ─── */
+  .analytics-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .heatmap { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+  .heat-cell {
+    height: 28px;
+    border-radius: 4px;
+    background: var(--bg-3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px;
+    font-family: var(--font-mono);
+    color: var(--text-3);
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+
+  .heat-cell:hover { transform: scale(1.15); }
+  .heat-days { display: flex; justify-content: space-around; margin-bottom: 4px; }
+  .heat-day { font-size: 9px; font-family: var(--font-mono); color: var(--text-3); text-align: center; }
+
+  /* ─── SCORER ─── */
+  .score-ring {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+
+  .score-items { display: flex; flex-direction: column; gap: 10px; }
+  .score-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--text-2);
+  }
+
+  .score-row .bar-track { flex: 1; }
+
+  /* ─── PREMIUM BANNER ─── */
+  .premium-banner {
+    background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(139,92,246,0.08));
+    border: 1px solid rgba(139,92,246,0.25);
+    border-radius: 12px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .premium-icon { font-size: 32px; flex-shrink: 0; }
+
+  .premium-text { flex: 1; }
+  .premium-title { font-family: var(--font-display); font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .premium-desc { font-size: 12px; color: var(--text-2); }
+
+  .btn-premium {
+    background: linear-gradient(135deg, var(--blue), #8b5cf6);
+    color: white;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    white-space: nowrap;
+    transition: opacity 0.15s;
+    font-family: var(--font-body);
+  }
+
+  .btn-premium:hover { opacity: 0.85; }
+
+  /* ─── NOTIFICATIONS ─── */
+  .notif {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--bg-3);
+    border: 1px solid var(--border-hover);
+    border-radius: 10px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    z-index: 200;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  .notif.show { transform: translateY(0); opacity: 1; }
+  .notif .notif-icon { font-size: 16px; }
+
+  /* ─── DEBRIEF VIEW ─── */
+  .debrief-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 16px;
+  }
+
+  .week-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+
+  .week-tab {
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    background: transparent;
+    transition: all 0.15s;
+  }
+
+  .week-tab.active {
+    background: var(--blue-glow);
+    border-color: var(--blue);
+    color: var(--blue-bright);
+  }
+
+  .week-tab:hover:not(.active) { background: var(--bg-3); color: var(--text); }
+
+  .ai-summary-block {
+    background: linear-gradient(135deg, rgba(59,130,246,0.06), rgba(139,92,246,0.06));
+    border: 1px solid rgba(99,155,255,0.15);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ai-summary-block::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--blue), #8b5cf6, transparent);
+    opacity: 0.4;
+  }
+
+  .ai-summary-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--blue-bright);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .ai-pulse {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--blue);
+    animation: pulse 2s infinite;
+  }
+
+  .ai-summary-text {
+    font-size: 13.5px;
+    color: var(--text);
+    line-height: 1.7;
+  }
+
+  .ai-summary-text strong { color: var(--blue-bright); font-weight: 600; }
+  .ai-summary-text .warn { color: var(--yellow); font-weight: 500; }
+  .ai-summary-text .good { color: var(--green); font-weight: 500; }
+
+  .debrief-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .obj-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 11px 0;
+    border-bottom: 1px solid rgba(99,155,255,0.06);
+  }
+
+  .obj-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+  .obj-status {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px;
+    margin-top: 1px;
+  }
+
+  .obj-status.done { background: var(--green-dim); color: var(--green); }
+  .obj-status.fail { background: var(--red-dim); color: var(--red); }
+  .obj-status.pending { background: var(--bg-3); color: var(--text-3); }
+
+  .obj-content { flex: 1; }
+  .obj-title { font-size: 13px; color: var(--text); line-height: 1.4; margin-bottom: 3px; }
+  .obj-meta { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
+
+  .debrief-badge {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    align-self: flex-start;
+    margin-top: 1px;
+  }
+
+  .debrief-badge.red { background: var(--red-dim); color: var(--red); }
+  .debrief-badge.amber { background: rgba(245,158,11,0.12); color: var(--yellow); }
+  .debrief-badge.green { background: var(--green-dim); color: var(--green); }
+  .debrief-badge.blue { background: var(--blue-glow); color: var(--blue-bright); }
+
+  .next-week-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 14px 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--font-body);
+    color: var(--text);
+    font-size: 13.5px;
+    margin-top: 8px;
+  }
+
+  .next-week-btn:hover { border-color: var(--border-hover); background: var(--bg-3); }
+
+  .export-btn-debrief {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-2);
+    font-size: 13px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    transition: all 0.15s;
+  }
+
+  .export-btn-debrief:hover { background: var(--bg-3); color: var(--text); border-color: var(--border-hover); }
+
+  /* Animations */
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+  .pulse { animation: pulse 2s infinite; }
+
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .view.active > * { animation: fadeSlideIn 0.3s ease forwards; }
+  .view.active > *:nth-child(2) { animation-delay: 0.05s; }
+  .view.active > *:nth-child(3) { animation-delay: 0.1s; }
+  .view.active > *:nth-child(4) { animation-delay: 0.15s; }
+
+  /* Glow effects */
+  .glow-green { text-shadow: 0 0 20px rgba(16,185,129,0.4); }
+  .glow-red { text-shadow: 0 0 20px rgba(239,68,68,0.4); }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ─── SIDEBAR ─── -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
+          <polyline points="3,16 6,16 8,10 10,22 12,6 14,20 16,12 18,16 29,16"
+            stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="logo-text">MyTrading<span>Coach</span></div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-section">Overview</div>
+      <div class="nav-item active" onclick="showView('dashboard', this)">
+        <span class="nav-icon">⬛</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="showView('journal', this)">
+        <span class="nav-icon">📋</span> Journal
+      </div>
+      <div class="nav-item" onclick="showView('analytics', this)">
+        <span class="nav-icon">📊</span> Analytics
+      </div>
+
+      <div class="nav-section">Premium</div>
+      <div class="nav-item" onclick="showView('ai', this)">
+        <span class="nav-icon">🤖</span> IA Insights
+        <span class="badge">AI</span>
+      </div>
+      <div class="nav-item" onclick="showView('debrief', this)">
+        <span class="nav-icon">📅</span> Weekly Debrief
+        <span class="badge">PRO</span>
+      </div>
+
+      <div class="nav-section">Account</div>
+      <div class="nav-item" onclick="showView('scoring', this)">
+        <span class="nav-icon">🏆</span> Scoring
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">⚙️</span> Paramètres
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="avatar">AX</div>
+        <div class="user-info">
+          <div class="user-name">Alexandre</div>
+          <div class="user-plan">★ PREMIUM</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ─── MAIN ─── -->
+  <main class="main">
+    <div class="topbar">
+      <div class="page-title" id="pageTitle">Dashboard</div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost" onclick="openModal()">+ Nouveau trade</button>
+        <button class="btn btn-primary" onclick="openModal()">⚡ Ajouter trade</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ─── DASHBOARD ─── -->
+      <div class="view active" id="view-dashboard">
+
+        <!-- Greeting -->
+        <div style="margin-bottom: 28px;">
+          <h1 style="
+            font-family: var(--font-display);
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            color: var(--text);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+          ">Bonjour, Alexandre 👋</h1>
+          <p style="
+            font-size: 14px;
+            color: var(--text-2);
+            font-weight: 400;
+          ">Voici un résumé de tes performances</p>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-label">P&L Total</div>
+            <div class="stat-value text-green glow-green">+$8,420</div>
+            <div class="stat-sub">
+              <span class="change up">▲ +12.3%</span>
+              <span>ce mois</span>
+            </div>
+            <div class="stat-bg-icon">💰</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Win Rate</div>
+            <div class="stat-value text-blue">67.4%</div>
+            <div class="stat-sub">
+              <span class="change up">▲ +3.2%</span>
+              <span>vs mois précédent</span>
+            </div>
+            <div class="stat-bg-icon">🎯</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Drawdown Max</div>
+            <div class="stat-value text-red glow-red">-$1,240</div>
+            <div class="stat-sub">
+              <span class="change down">▼ -4.8%</span>
+              <span>sur capital</span>
+            </div>
+            <div class="stat-bg-icon">📉</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Trades</div>
+            <div class="stat-value">142</div>
+            <div class="stat-sub">
+              <span class="change up">▲ +18</span>
+              <span>cette semaine</span>
+            </div>
+            <div class="stat-bg-icon">🔢</div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="card" style="grid-column: 1 / -1">
+            <div class="card-header">
+              <div class="card-title">Equity Curve</div>
+              <div style="display:flex;gap:12px;align-items:center">
+                <span style="font-size:11px;color:var(--text-3);font-family:var(--font-mono)">1M</span>
+                <span style="font-size:11px;color:var(--blue-bright);font-family:var(--font-mono);cursor:pointer">3M</span>
+                <span style="font-size:11px;color:var(--text-3);font-family:var(--font-mono)">All</span>
+                <div class="card-action">Détails →</div>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="equityCanvas"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Win Rate par stratégie</div>
+              <div class="card-action">Tout voir →</div>
+            </div>
+            <div class="donut-wrap">
+              <svg class="donut-svg" width="100" height="100" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--bg-3)" stroke-width="12"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--green)" stroke-width="12"
+                  stroke-dasharray="160 79" stroke-dashoffset="0" stroke-linecap="round"
+                  transform="rotate(-90 50 50)"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--blue)" stroke-width="12"
+                  stroke-dasharray="57 182" stroke-dashoffset="-160" stroke-linecap="round"
+                  transform="rotate(-90 50 50)"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--red)" stroke-width="12"
+                  stroke-dasharray="22 217" stroke-dashoffset="-217" stroke-linecap="round"
+                  transform="rotate(-90 50 50)"/>
+                <text x="50" y="53" text-anchor="middle" font-family="Syne" font-weight="700" font-size="14" fill="var(--text)">67%</text>
+              </svg>
+              <div class="donut-legend">
+                <div class="legend-item">
+                  <div class="legend-dot" style="background:var(--green)"></div>
+                  Breakout <span class="legend-val">74%</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot" style="background:var(--blue)"></div>
+                  Pullback <span class="legend-val">62%</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot" style="background:var(--yellow)"></div>
+                  Range <span class="legend-val">58%</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot" style="background:var(--red)"></div>
+                  Reversal <span class="legend-val">41%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">États émotionnels</div>
+              <div class="card-action">Détails →</div>
+            </div>
+            <div class="emotion-grid">
+              <div class="emotion-row">
+                <div class="emotion-label">
+                  <span>😤 Revenge trading</span>
+                  <span>23%</span>
+                </div>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width:23%;background:var(--red)"></div>
+                </div>
+              </div>
+              <div class="emotion-row">
+                <div class="emotion-label">
+                  <span>😰 Stress élevé</span>
+                  <span>31%</span>
+                </div>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width:31%;background:var(--yellow)"></div>
+                </div>
+              </div>
+              <div class="emotion-row">
+                <div class="emotion-label">
+                  <span>😌 Confiance</span>
+                  <span>68%</span>
+                </div>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width:68%;background:var(--blue)"></div>
+                </div>
+              </div>
+              <div class="emotion-row">
+                <div class="emotion-label">
+                  <span>🎯 Focus optimal</span>
+                  <span>52%</span>
+                </div>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width:52%;background:var(--green)"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Derniers trades</div>
+            <div class="card-action" onclick="showView('journal', document.querySelector('.nav-item:nth-child(3))'))">Tout voir →</div>
+          </div>
+          <div class="trade-list" id="recentTrades"></div>
+        </div>
+      </div>
+
+      <!-- ─── JOURNAL ─── -->
+      <div class="view" id="view-journal">
+        <div class="journal-filters">
+          <button class="filter-chip active">Tous</button>
+          <button class="filter-chip">Long</button>
+          <button class="filter-chip">Short</button>
+          <button class="filter-chip">Crypto</button>
+          <button class="filter-chip">Forex</button>
+          <button class="filter-chip">Actions</button>
+          <button class="filter-chip">Cette semaine</button>
+          <button class="filter-chip">Gagnants</button>
+          <button class="filter-chip">Perdants</button>
+        </div>
+
+        <div class="card">
+          <table class="journal-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Actif</th>
+                <th>Direction</th>
+                <th>Setup</th>
+                <th>Entrée</th>
+                <th>Sortie</th>
+                <th>R:R</th>
+                <th>Émotion</th>
+                <th>P&L</th>
+              </tr>
+            </thead>
+            <tbody id="journalBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ─── ANALYTICS ─── -->
+      <div class="view" id="view-analytics">
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-label">Ratio Gain/Perte</div>
+            <div class="stat-value text-green">2.34</div>
+            <div class="stat-sub"><span class="change up">▲ optimal</span></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Session top</div>
+            <div class="stat-value text-blue">London</div>
+            <div class="stat-sub">74% win rate</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Heure top</div>
+            <div class="stat-value">09:30</div>
+            <div class="stat-sub">ouverture NY</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Streak actuel</div>
+            <div class="stat-value text-green glow-green">+7</div>
+            <div class="stat-sub"><span class="change up">série gagnante</span></div>
+          </div>
+        </div>
+
+        <div class="analytics-grid">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Heatmap — Performance horaire</div>
+            </div>
+            <div class="heat-days">
+              <div class="heat-day">Lun</div><div class="heat-day">Mar</div>
+              <div class="heat-day">Mer</div><div class="heat-day">Jeu</div>
+              <div class="heat-day">Ven</div><div class="heat-day">Sam</div>
+              <div class="heat-day">Dim</div>
+            </div>
+            <div class="heatmap" id="heatmap"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Top actifs</div>
+            </div>
+            <table class="perf-table">
+              <thead>
+                <tr>
+                  <th>Actif</th>
+                  <th>Trades</th>
+                  <th>Win%</th>
+                  <th>P&L</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td class="mono text-blue">BTC/USDT</td><td>38</td><td class="text-green">71%</td><td class="mono text-green">+$3,240</td></tr>
+                <tr><td class="mono text-blue">EUR/USD</td><td>29</td><td class="text-green">66%</td><td class="mono text-green">+$1,820</td></tr>
+                <tr><td class="mono text-blue">ETH/USDT</td><td>24</td><td class="text-green">62%</td><td class="mono text-green">+$980</td></tr>
+                <tr><td class="mono text-blue">AAPL</td><td>18</td><td class="text-yellow">55%</td><td class="mono text-green">+$440</td></tr>
+                <tr><td class="mono text-blue">GBP/USD</td><td>15</td><td class="text-red">46%</td><td class="mono text-red">-$180</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Courbe de drawdown</div>
+          </div>
+          <div class="chart-container">
+            <canvas id="drawdownCanvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── AI INSIGHTS ─── -->
+      <div class="view" id="view-ai">
+        <div class="premium-banner">
+          <div class="premium-icon">🤖</div>
+          <div class="premium-text">
+            <div class="premium-title">IA d'analyse — Powered by Claude</div>
+            <div class="premium-desc">Analyse comportementale et patterns cachés détectés automatiquement dans vos 142 trades.</div>
+          </div>
+          <button class="btn-premium" onclick="generateInsights()">⚡ Générer insights</button>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🎯 Insights personnalisés</div>
+              <div class="card-action">Actualiser →</div>
+            </div>
+            <div class="insight-list">
+              <div class="insight-item">
+                <div class="insight-icon alert">🔴</div>
+                <div class="insight-content">
+                  <div class="insight-title">Pattern : Revenge Trading détecté</div>
+                  <div class="insight-desc">Après 2 trades perdants consécutifs, votre taux de perte grimpe à 78%. Pause recommandée.</div>
+                </div>
+                <span class="insight-tag alert">CRITIQUE</span>
+              </div>
+              <div class="insight-item">
+                <div class="insight-icon warn">⚠️</div>
+                <div class="insight-content">
+                  <div class="insight-title">Soirée : performances dégradées</div>
+                  <div class="insight-desc">Entre 20h et 23h, win rate = 38%. Vos meilleurs trades sont avant 16h.</div>
+                </div>
+                <span class="insight-tag warn">TIMING</span>
+              </div>
+              <div class="insight-item">
+                <div class="insight-icon tip">✅</div>
+                <div class="insight-content">
+                  <div class="insight-title">Setup Breakout : votre point fort</div>
+                  <div class="insight-desc">74% de win rate sur les breakouts avec confirmation de volume. Continuez à les prioriser.</div>
+                </div>
+                <span class="insight-tag tip">FORCE</span>
+              </div>
+              <div class="insight-item">
+                <div class="insight-icon info">💡</div>
+                <div class="insight-content">
+                  <div class="insight-title">Taille de position inconstante</div>
+                  <div class="insight-desc">Vous augmentez votre risk après une série gagnante. Risque de overconfidence détecté.</div>
+                </div>
+                <span class="insight-tag info">RISQUE</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">💬 Coach IA</div>
+            </div>
+            <div id="aiChat" style="height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;margin-bottom:14px;padding-right:4px">
+              <div style="background:var(--bg-3);border-radius:10px;padding:12px 14px;font-size:12.5px;line-height:1.6;color:var(--text-2);border:1px solid var(--border)">
+                <strong style="color:var(--blue-bright);font-family:var(--font-display);display:block;margin-bottom:6px">🤖 MyTradingCoach</strong>
+                Analyse de vos 142 trades complète. Je détecte 3 patterns comportementaux importants. Votre principale faiblesse est le <strong style="color:var(--red)">revenge trading</strong> post-perte. Souhaitez-vous un plan d'amélioration ?
+              </div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <input id="aiInput" type="text" placeholder="Posez une question à votre coach..." 
+                style="flex:1;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);outline:none"
+                onkeydown="if(event.key==='Enter') sendAI()">
+              <button class="btn btn-primary" onclick="sendAI()" style="padding:9px 16px">→</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📊 Recommendations automatiques</div>
+          </div>
+          <div class="grid-3">
+            <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:16px">
+              <div style="font-size:24px;margin-bottom:10px">🛡️</div>
+              <div style="font-size:13px;font-weight:600;margin-bottom:6px">Réduire le risque</div>
+              <div style="font-size:12px;color:var(--text-3);line-height:1.5">Après une perte, passez de 2% à 1% par trade pendant 3 sessions.</div>
+            </div>
+            <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:16px">
+              <div style="font-size:24px;margin-bottom:10px">⏰</div>
+              <div style="font-size:13px;font-weight:600;margin-bottom:6px">Optimiser les horaires</div>
+              <div style="font-size:12px;color:var(--text-3);line-height:1.5">Concentrez 80% de vos trades entre 8h–12h et 14h–17h.</div>
+            </div>
+            <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:16px">
+              <div style="font-size:24px;margin-bottom:10px">🎯</div>
+              <div style="font-size:13px;font-weight:600;margin-bottom:6px">Focus Breakout</div>
+              <div style="font-size:12px;color:var(--text-3);line-height:1.5">Ignorez temporairement le Reversal trading (41% win rate).</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── WEEKLY DEBRIEF ─── -->
+      <div class="view" id="view-debrief">
+
+        <div class="debrief-header">
+          <div>
+            <div style="font-size:11px;font-family:var(--font-mono);color:var(--text-3);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:6px">Rapport hebdomadaire</div>
+            <div style="font-family:var(--font-display);font-size:22px;font-weight:700;letter-spacing:-0.5px;margin-bottom:4px">Semaine 12 — 17–23 mars 2025</div>
+            <div style="font-size:13px;color:var(--text-3)">Basé sur <strong style="color:var(--text-2)">28 trades</strong> · 6 sessions · généré dimanche à 23h00</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-shrink:0">
+            <button class="export-btn-debrief" onclick="notify('📄', 'Export PDF en cours...')">📄 Exporter PDF</button>
+            <button class="btn btn-primary" onclick="generateDebrief()">⚡ Générer S13</button>
+          </div>
+        </div>
+
+        <div class="week-tabs">
+          <button class="week-tab active" onclick="setWeekTab(this)">Semaine 12</button>
+          <button class="week-tab" onclick="setWeekTab(this)">Semaine 11</button>
+          <button class="week-tab" onclick="setWeekTab(this)">Semaine 10</button>
+          <button class="week-tab" onclick="setWeekTab(this)">4 semaines</button>
+        </div>
+
+        <div class="stats-row" style="margin-bottom:20px">
+          <div class="stat-card">
+            <div class="stat-label">P&L net</div>
+            <div class="stat-value text-green glow-green">+$1 840</div>
+            <div class="stat-sub"><span class="change up">▲ +14%</span><span>vs sem. préc.</span></div>
+            <div class="stat-bg-icon">💰</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Win rate</div>
+            <div class="stat-value text-blue">67%</div>
+            <div class="stat-sub"><span class="change up">▲ +3pts</span><span>vs sem. préc.</span></div>
+            <div class="stat-bg-icon">🎯</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Trades passés</div>
+            <div class="stat-value">28</div>
+            <div class="stat-sub" style="gap:8px">
+              <span style="color:var(--green);font-family:var(--font-mono);font-size:11px">19W</span>
+              <span style="color:var(--red);font-family:var(--font-mono);font-size:11px">9L</span>
+            </div>
+            <div class="stat-bg-icon">📋</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Score trader</div>
+            <div class="stat-value">74<span style="font-size:14px;font-weight:400;color:var(--text-3)">/100</span></div>
+            <div class="stat-sub"><span class="change up">▲ +2 pts</span></div>
+            <div class="stat-bg-icon">🏆</div>
+          </div>
+        </div>
+
+        <div class="ai-summary-block">
+          <div class="ai-summary-label">
+            <div class="ai-pulse"></div>
+            Analyse IA — résumé de semaine
+          </div>
+          <div class="ai-summary-text" id="debriefAiText">
+            Bonne semaine dans l'ensemble. Tu as <strong>respecté tes stops à 100%</strong> — c'est une première en 6 semaines, et ça se voit directement dans le drawdown max qui tombe à $340. Ton talon d'Achille reste le <span class="warn">jeudi après-midi</span> : 4 trades sur 5 perdants entre 15h et 17h — fatigue de fin de session détectée. Le pattern <span class="warn">overtrading post-gain</span> est toujours présent le vendredi matin avec 3 trades superflus. Si tu corriges ces deux créneaux, ton win rate structurel dépasse <span class="good">72%</span> dès la semaine prochaine.
+          </div>
+        </div>
+
+        <div class="debrief-two-col">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">✅ Points forts</div>
+            </div>
+            <div>
+              <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid rgba(99,155,255,0.06)">
+                <span class="debrief-badge green">Force</span>
+                <div style="font-size:13px;color:var(--text-2);line-height:1.5;flex:1">Stops respectés sur <strong style="color:var(--text)">100%</strong> des 28 trades — discipline maximale.</div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid rgba(99,155,255,0.06)">
+                <span class="debrief-badge green">Force</span>
+                <div style="font-size:13px;color:var(--text-2);line-height:1.5;flex:1">Breakouts BTC avec RR moyen de <strong style="color:var(--text)">2.4</strong> — ton meilleur setup confirme.</div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0">
+                <span class="debrief-badge green">Force</span>
+                <div style="font-size:13px;color:var(--text-2);line-height:1.5;flex:1">Session London : <strong style="color:var(--text)">78% win rate</strong> sur 9 trades cette semaine.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">⚠️ Points faibles</div>
+            </div>
+            <div>
+              <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid rgba(99,155,255,0.06)">
+                <span class="debrief-badge red">Critique</span>
+                <div style="font-size:13px;color:var(--text-2);line-height:1.5;flex:1">Jeudi 15h–17h : <strong style="color:var(--text)">1W / 4L</strong>. Fatigue de fin de session.</div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid rgba(99,155,255,0.06)">
+                <span class="debrief-badge amber">Attention</span>
+                <div style="font-size:13px;color:var(--text-2);line-height:1.5;flex:1">Vendredi matin : overtrading après une bonne série — <strong style="color:var(--text)">3 trades inutiles</strong>.</div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0">
+                <span class="debrief-badge amber">Attention</span>
+                <div style="font-size:13px;color:var(--text-2);line-height:1.5;flex:1">GBP/USD : 3ème semaine consécutive en perte. <strong style="color:var(--text)">À éviter</strong>.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="debrief-two-col">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📊 Performance émotionnelle</div>
+            </div>
+            <div class="emotion-grid">
+              <div class="emotion-row">
+                <div class="emotion-label"><span>😌 Confiant</span><span>71%</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:71%;background:var(--green)"></div></div>
+              </div>
+              <div class="emotion-row">
+                <div class="emotion-label"><span>😰 Stressé</span><span>18%</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:18%;background:var(--yellow)"></div></div>
+              </div>
+              <div class="emotion-row">
+                <div class="emotion-label"><span>😤 Revenge</span><span>7%</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:7%;background:var(--red)"></div></div>
+              </div>
+              <div class="emotion-row">
+                <div class="emotion-label"><span>😱 Peur</span><span>4%</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:4%;background:var(--text-3)"></div></div>
+              </div>
+            </div>
+            <div style="margin-top:14px;padding:10px 12px;background:var(--bg-2);border-radius:8px;border:1px solid var(--border)">
+              <div style="font-size:11px;font-family:var(--font-mono);color:var(--text-3);margin-bottom:4px">CORRÉLATION IA</div>
+              <div style="font-size:12px;color:var(--text-2);line-height:1.5">En état <strong style="color:var(--green)">Confiant</strong> → RR moyen 2.3 · En état <strong style="color:var(--yellow)">Stressé</strong> → RR moyen 0.8</div>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="card">
+              <div class="card-header" style="margin-bottom:14px">
+                <div class="card-title">☑️ Objectifs semaine 11</div>
+                <span style="font-size:11px;font-family:var(--font-mono);color:var(--green)">2/3 atteints</span>
+              </div>
+              <div>
+                <div class="obj-row">
+                  <div class="obj-status done">✓</div>
+                  <div class="obj-content">
+                    <div class="obj-title">Ne pas trader GBP/USD</div>
+                    <div class="obj-meta">Respecté — 0 trade sur cet actif</div>
+                  </div>
+                </div>
+                <div class="obj-row">
+                  <div class="obj-status done">✓</div>
+                  <div class="obj-content">
+                    <div class="obj-title">Respecter tous les stop-loss</div>
+                    <div class="obj-meta">Atteint — 28/28 stops tenus</div>
+                  </div>
+                </div>
+                <div class="obj-row">
+                  <div class="obj-status fail">✕</div>
+                  <div class="obj-content">
+                    <div class="obj-title">Max 4 trades par jour</div>
+                    <div class="obj-meta">Échoué — vendredi : 7 trades</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header">
+            <div class="card-title">🎯 Objectifs pour la semaine 13</div>
+            <div style="font-size:11px;font-family:var(--font-mono);color:var(--text-3)">Générés par IA · Basés sur tes patterns</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+            <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:14px">
+              <div class="obj-status pending" style="margin-bottom:10px;width:28px;height:28px;font-size:13px">○</div>
+              <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:5px">Stopper après 15h le jeudi</div>
+              <div style="font-size:11px;color:var(--text-3);line-height:1.5">Pattern 1W/4L détecté chaque jeudi après-midi depuis 3 semaines.</div>
+            </div>
+            <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:14px">
+              <div class="obj-status pending" style="margin-bottom:10px;width:28px;height:28px;font-size:13px">○</div>
+              <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:5px">Max 4 trades le vendredi matin</div>
+              <div style="font-size:11px;color:var(--text-3);line-height:1.5">Prévenir l'overtrading post-gain du vendredi — 2ème tentative.</div>
+            </div>
+            <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:14px">
+              <div class="obj-status pending" style="margin-bottom:10px;width:28px;height:28px;font-size:13px">○</div>
+              <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:5px">Éviter GBP/USD</div>
+              <div style="font-size:11px;color:var(--text-3);line-height:1.5">Win rate structural trop faible — 3ème semaine consécutive en perte.</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="next-week-btn" onclick="notify('🤖', 'Analyse approfondie en cours...')">
+          <span style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:16px">🤖</span>
+            <span>Analyser l'overtrading du vendredi en profondeur avec l'IA</span>
+          </span>
+          <span style="color:var(--text-3);font-size:18px">→</span>
+        </button>
+
+      </div>
+
+      <!-- ─── SCORING ─── -->
+      <div class="view" id="view-scoring">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🏆 Score global du trader</div>
+            </div>
+            <div class="score-ring">
+              <svg width="160" height="160" viewBox="0 0 160 160">
+                <circle cx="80" cy="80" r="65" fill="none" stroke="var(--bg-3)" stroke-width="14"/>
+                <circle cx="80" cy="80" r="65" fill="none"
+                  stroke="url(#scoreGrad)" stroke-width="14"
+                  stroke-dasharray="285 123" stroke-dashoffset="0" stroke-linecap="round"
+                  transform="rotate(-90 80 80)"/>
+                <defs>
+                  <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%">
+                    <stop offset="0%" stop-color="#3b82f6"/>
+                    <stop offset="100%" stop-color="#10b981"/>
+                  </linearGradient>
+                </defs>
+                <text x="80" y="72" text-anchor="middle" font-family="Syne" font-weight="800" font-size="34" fill="var(--text)">73</text>
+                <text x="80" y="92" text-anchor="middle" font-family="DM Mono" font-size="11" fill="var(--text-3)">/100</text>
+                <text x="80" y="112" text-anchor="middle" font-family="Syne" font-weight="600" font-size="12" fill="var(--blue-bright)">Bon trader</text>
+              </svg>
+            </div>
+            <div class="score-items">
+              <div class="score-row">
+                <span style="font-size:12px;min-width:90px">Discipline</span>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width:68%;background:linear-gradient(90deg,var(--blue),var(--green))"></div>
+                </div>
+                <span class="mono" style="font-size:12px;min-width:28px;text-align:right">68</span>
+              </div>
+              <div class="score-row">
+                <span style="font-size:12px;min-width:90px">Performance</span>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width:82%;background:linear-gradient(90deg,var(--blue),var(--green))"></div>
+                </div>
+                <span class="mono" style="font-size:12px;min-width:28px;text-align:right">82</span>
+              </div>
+              <div class="score-row">
+                <span style="font-size:12px;min-width:90px">Psychologie</span>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width:55%;background:linear-gradient(90deg,var(--yellow),var(--red))"></div>
+                </div>
+                <span class="mono" style="font-size:12px;min-width:28px;text-align:right">55</span>
+              </div>
+              <div class="score-row">
+                <span style="font-size:12px;min-width:90px">Gestion risque</span>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width:74%;background:linear-gradient(90deg,var(--blue),var(--green))"></div>
+                </div>
+                <span class="mono" style="font-size:12px;min-width:28px;text-align:right">74</span>
+              </div>
+              <div class="score-row">
+                <span style="font-size:12px;min-width:90px">Consistance</span>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width:61%;background:linear-gradient(90deg,var(--yellow),var(--blue))"></div>
+                </div>
+                <span class="mono" style="font-size:12px;min-width:28px;text-align:right">61</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div class="card">
+              <div class="card-title" style="margin-bottom:14px">🎖 Badges obtenus</div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+                <div style="text-align:center;padding:12px;background:var(--bg-2);border-radius:8px;border:1px solid var(--border)">
+                  <div style="font-size:24px;margin-bottom:6px">🔥</div>
+                  <div style="font-size:10px;color:var(--text-3)">Streak 7</div>
+                </div>
+                <div style="text-align:center;padding:12px;background:var(--bg-2);border-radius:8px;border:1px solid var(--border)">
+                  <div style="font-size:24px;margin-bottom:6px">🎯</div>
+                  <div style="font-size:10px;color:var(--text-3)">100 trades</div>
+                </div>
+                <div style="text-align:center;padding:12px;background:var(--bg-2);border-radius:8px;border:1px solid var(--border)">
+                  <div style="font-size:24px;margin-bottom:6px">📈</div>
+                  <div style="font-size:10px;color:var(--text-3)">+$5k</div>
+                </div>
+                <div style="text-align:center;padding:12px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px dashed var(--border);opacity:0.4">
+                  <div style="font-size:24px;margin-bottom:6px">🏅</div>
+                  <div style="font-size:10px;color:var(--text-3)">Zen trader</div>
+                </div>
+                <div style="text-align:center;padding:12px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px dashed var(--border);opacity:0.4">
+                  <div style="font-size:24px;margin-bottom:6px">🧘</div>
+                  <div style="font-size:10px;color:var(--text-3)">No revenge</div>
+                </div>
+                <div style="text-align:center;padding:12px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px dashed var(--border);opacity:0.4">
+                  <div style="font-size:24px;margin-bottom:6px">💎</div>
+                  <div style="font-size:10px;color:var(--text-3)">Elite</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="flex:1">
+              <div class="card-title" style="margin-bottom:14px">📅 Streak & activité</div>
+              <div style="display:flex;gap:3px;flex-wrap:wrap">
+                <script>
+                  for(let i=0;i<35;i++){
+                    const v=Math.random();
+                    const colors=['#1a2535','#1a3a2a','#1e5c3a','#1a7a4a','#10b981'];
+                    document.write(`<div style="width:18px;height:18px;border-radius:3px;background:${colors[Math.floor(v*5)]}" title="Jour ${i+1}"></div>`);
+                  }
+                </script>
+              </div>
+              <div style="margin-top:12px;font-size:12px;color:var(--text-3)">🔥 Série actuelle : <strong style="color:var(--green)">7 jours</strong> consécutifs</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ─── MODAL ─── -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">⚡ Nouveau trade</div>
+      <div class="modal-close" onclick="closeModal()">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field">
+          <label>Actif</label>
+          <input type="text" placeholder="BTC/USDT, EUR/USD…" id="f-asset">
+        </div>
+        <div class="field">
+          <label>Direction</label>
+          <select id="f-side">
+            <option value="long">🟢 Long</option>
+            <option value="short">🔴 Short</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Prix d'entrée</label>
+          <input type="number" placeholder="42100" id="f-entry">
+        </div>
+        <div class="field">
+          <label>Prix de sortie</label>
+          <input type="number" placeholder="43900" id="f-exit">
+        </div>
+        <div class="field">
+          <label>Stop Loss</label>
+          <input type="number" placeholder="41200" id="f-sl">
+        </div>
+        <div class="field">
+          <label>Take Profit</label>
+          <input type="number" placeholder="44500" id="f-tp">
+        </div>
+        <div class="field">
+          <label>Setup</label>
+          <select id="f-setup">
+            <option>Breakout</option>
+            <option>Pullback</option>
+            <option>Range</option>
+            <option>Reversal</option>
+            <option>Scalping</option>
+            <option>News</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Session</label>
+          <select id="f-session">
+            <option>London</option>
+            <option>New York</option>
+            <option>Asian</option>
+            <option>Pre-market</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>P&L ($)</label>
+          <input type="number" placeholder="340" id="f-pnl">
+        </div>
+        <div class="field">
+          <label>Timeframe</label>
+          <select id="f-tf">
+            <option>5m</option>
+            <option>15m</option>
+            <option>1h</option>
+            <option selected>4h</option>
+            <option>Daily</option>
+          </select>
+        </div>
+        <div class="field form-full">
+          <label>État émotionnel</label>
+          <div class="emotion-selector">
+            <div class="emotion-btn selected" onclick="selectEmotion(this)">
+              😌<span>Confiant</span>
+            </div>
+            <div class="emotion-btn" onclick="selectEmotion(this)">
+              😰<span>Stressé</span>
+            </div>
+            <div class="emotion-btn" onclick="selectEmotion(this)">
+              😤<span>Revenge</span>
+            </div>
+            <div class="emotion-btn" onclick="selectEmotion(this)">
+              😱<span>Peur</span>
+            </div>
+          </div>
+        </div>
+        <div class="field form-full">
+          <label>Notes mentales</label>
+          <textarea placeholder="Setup clair, volume confirmé. J'ai attendu le retour sur support avant d'entrer. Pas de précipitation cette fois." id="f-notes"></textarea>
+        </div>
+        <div class="field form-full">
+          <label>Tags personnalisés</label>
+          <input type="text" placeholder="trend-following, high-volume, morning…" id="f-tags">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveTrade()">💾 Enregistrer le trade</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── NOTIFICATION ─── -->
+<div class="notif" id="notif">
+  <span class="notif-icon" id="notifIcon">✅</span>
+  <span id="notifText">Trade enregistré avec succès</span>
+</div>
+
+<script>
+// ─── DATA ───
+const trades = [
+  { date:'26 Mar', asset:'BTC/USDT', side:'long', setup:'Breakout', entry:67800, exit:69200, pnl:1400, emotion:'😌', rr:2.1 },
+  { date:'26 Mar', asset:'EUR/USD', side:'short', setup:'Pullback', entry:1.0842, exit:1.0791, pnl:510, emotion:'🎯', rr:1.8 },
+  { date:'25 Mar', asset:'ETH/USDT', side:'long', setup:'Breakout', entry:3480, exit:3390, pnl:-280, emotion:'😰', rr:-0.9 },
+  { date:'25 Mar', asset:'AAPL', side:'long', setup:'Range', entry:218.4, exit:221.1, pnl:270, emotion:'😌', rr:1.5 },
+  { date:'24 Mar', asset:'GBP/USD', side:'short', setup:'Reversal', entry:1.2941, exit:1.2988, pnl:-470, emotion:'😤', rr:-1.2 },
+  { date:'24 Mar', asset:'SOL/USDT', side:'long', setup:'Breakout', entry:148.2, exit:156.8, pnl:860, emotion:'🔥', rr:2.8 },
+];
+
+// ─── VIEWS ───
+function showView(id, el) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  if (el) el.classList.add('active');
+  const titles = {
+    dashboard:'Dashboard', journal:'Journal de trading', analytics:'Analytics',
+    ai:'IA Insights', debrief:'Weekly Debrief', scoring:'Scoring du trader'
+  };
+  document.getElementById('pageTitle').textContent = titles[id] || id;
+}
+
+// ─── RENDER TRADES ───
+function renderRecentTrades() {
+  const el = document.getElementById('recentTrades');
+  el.innerHTML = trades.slice(0,5).map(t => `
+    <div class="trade-row">
+      <div class="trade-side ${t.side}">${t.side.toUpperCase()}</div>
+      <div class="trade-asset">${t.asset}</div>
+      <div class="trade-setup">${t.setup} · ${t.date}</div>
+      <div class="trade-pnl ${t.pnl>=0?'pos':'neg'}">${t.pnl>=0?'+':''}$${Math.abs(t.pnl).toLocaleString()}</div>
+      <div class="trade-emotion">${t.emotion}</div>
+    </div>
+  `).join('');
+}
+
+function renderJournal() {
+  const el = document.getElementById('journalBody');
+  el.innerHTML = trades.map(t => `
+    <tr>
+      <td class="mono" style="color:var(--text-3)">${t.date}</td>
+      <td class="mono text-blue">${t.asset}</td>
+      <td><span class="trade-side ${t.side}" style="display:inline-flex">${t.side.toUpperCase()}</span></td>
+      <td style="color:var(--text-2)">${t.setup}</td>
+      <td class="mono">${t.entry}</td>
+      <td class="mono">${t.exit}</td>
+      <td class="mono ${t.rr>=0?'text-green':'text-red'}">${t.rr}R</td>
+      <td>${t.emotion}</td>
+      <td class="mono ${t.pnl>=0?'text-green':'text-red'}">${t.pnl>=0?'+':''}$${Math.abs(t.pnl)}</td>
+    </tr>
+  `).join('');
+}
+
+// ─── CHARTS ───
+function drawEquity() {
+  const canvas = document.getElementById('equityCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth; const H = 160;
+  canvas.width = W; canvas.height = H;
+
+  const pts = [0,320,180,540,420,780,620,510,820,760,940,1100,980,1240,1380,1520,1410,1680,1820,1900,1750,2100,2280,2440,2380,2600,2740,2820,2900,3100];
+  const max = Math.max(...pts), min = Math.min(...pts);
+  const x = i => (i/(pts.length-1))*W;
+  const y = v => H - 20 - ((v-min)/(max-min))*(H-40);
+
+  // Gradient fill
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'rgba(59,130,246,0.2)');
+  grad.addColorStop(1,'rgba(59,130,246,0)');
+
+  ctx.beginPath();
+  ctx.moveTo(x(0), y(pts[0]));
+  for (let i=1;i<pts.length;i++) {
+    const cpx = (x(i-1)+x(i))/2;
+    ctx.bezierCurveTo(cpx, y(pts[i-1]), cpx, y(pts[i]), x(i), y(pts[i]));
+  }
+  ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  ctx.moveTo(x(0), y(pts[0]));
+  for (let i=1;i<pts.length;i++) {
+    const cpx = (x(i-1)+x(i))/2;
+    ctx.bezierCurveTo(cpx, y(pts[i-1]), cpx, y(pts[i]), x(i), y(pts[i]));
+  }
+  ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2;
+  ctx.shadowColor = '#3b82f6'; ctx.shadowBlur = 8;
+  ctx.stroke();
+
+  // Dot
+  const lx = x(pts.length-1), ly = y(pts[pts.length-1]);
+  ctx.beginPath(); ctx.arc(lx, ly, 5, 0, Math.PI*2);
+  ctx.fillStyle = '#3b82f6'; ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+  ctx.shadowBlur = 0; ctx.stroke();
+}
+
+function drawDrawdown() {
+  const canvas = document.getElementById('drawdownCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth; const H = 160;
+  canvas.width = W; canvas.height = H;
+
+  const pts = [0,-80,-40,-180,-120,-60,-220,-180,-100,-50,-290,-240,-180,-80,-30,-180,-140,-60,-20,-100,-80,-40,-10];
+  const min = Math.min(...pts);
+  const x = i => (i/(pts.length-1))*W;
+  const y = v => 10 + (1-(v/min))*(H-20);
+
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'rgba(239,68,68,0.25)');
+  grad.addColorStop(1,'rgba(239,68,68,0)');
+
+  ctx.beginPath();
+  ctx.moveTo(x(0), y(0));
+  for (let i=1;i<pts.length;i++) ctx.lineTo(x(i), y(pts[i]));
+  ctx.lineTo(W, y(0)); ctx.lineTo(0, y(0));
+  ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(x(0), y(0));
+  for (let i=1;i<pts.length;i++) ctx.lineTo(x(i), y(pts[i]));
+  ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1.5;
+  ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 6;
+  ctx.stroke();
+}
+
+// ─── HEATMAP ───
+function renderHeatmap() {
+  const el = document.getElementById('heatmap');
+  if (!el) return;
+  const colors = ['#1a2535','#1a3525','#1a5030','#1a7040','#10b981','#16a34a','#ef4444'];
+  for (let i=0; i<35; i++) {
+    const r = Math.random();
+    let bg, text;
+    if (r < 0.15) { bg = '#2d1a1a'; text = '#ef4444'; }
+    else if (r < 0.35) { bg = '#1a2535'; text = '#4a6080'; }
+    else { bg = `rgba(16,185,129,${r*0.5})`; text = '#10b981'; }
+    const cell = document.createElement('div');
+    cell.className = 'heat-cell';
+    cell.style.background = bg;
+    cell.style.color = text;
+    cell.textContent = r < 0.15 ? '-' : r < 0.35 ? '' : '+';
+    el.appendChild(cell);
+  }
+}
+
+// ─── MODAL ───
+function openModal() {
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+
+function selectEmotion(btn) {
+  document.querySelectorAll('.emotion-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function saveTrade() {
+  closeModal();
+  notify('✅', 'Trade enregistré avec succès !');
+  renderRecentTrades();
+}
+
+// ─── FILTER CHIPS ───
+document.querySelectorAll('.filter-chip').forEach(chip => {
+  chip.addEventListener('click', function() {
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+// ─── NOTIFICATION ───
+function notify(icon, text) {
+  const n = document.getElementById('notif');
+  document.getElementById('notifIcon').textContent = icon;
+  document.getElementById('notifText').textContent = text;
+  n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), 3000);
+}
+
+// ─── DEBRIEF ───
+function setWeekTab(tab) {
+  document.querySelectorAll('.week-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+}
+
+function generateDebrief() {
+  const el = document.getElementById('debriefAiText');
+  el.style.opacity = '0.4';
+  notify('🤖', 'Génération du rapport semaine 13...');
+  setTimeout(() => {
+    el.textContent = '';
+    el.style.opacity = '1';
+    const text = "Semaine 13 en cours d'analyse... Les données seront disponibles dimanche soir après clôture des marchés. En attendant, consulte tes objectifs fixés en semaine 12 pour rester focus.";
+    el.innerHTML = text;
+  }, 1800);
+}
+
+// ─── AI CHAT ───
+const aiResponses = [
+  "📊 D'après vos données, votre win rate sur BTC est de 71%, mais chute à 38% après 20h. Je recommande d'éviter de trader BTC le soir.",
+  "🧠 Pattern détecté : après une série de 3 gains, vous augmentez votre position de 40%. Ce comportement augmente votre drawdown. Gardez une taille fixe.",
+  "🎯 Vos trades Breakout avec confirmation de volume ont un win rate de 74%. C'est votre edge principal. Concentrez-vous dessus.",
+  "⚠️ Attention : vos 5 derniers trades en revenge trading ont tous été perdants. Implémentez une règle : pause de 30min après 2 pertes consécutives.",
+];
+
+let aiIdx = 0;
+
+function sendAI() {
+  const input = document.getElementById('aiInput');
+  const chat = document.getElementById('aiChat');
+  if (!input.value.trim()) return;
+
+  chat.innerHTML += `<div style="background:var(--blue-glow);border:1px solid rgba(59,130,246,0.2);border-radius:10px;padding:10px 14px;font-size:12.5px;color:var(--text);align-self:flex-end;max-width:80%">${input.value}</div>`;
+  input.value = '';
+
+  setTimeout(() => {
+    const resp = aiResponses[aiIdx % aiResponses.length]; aiIdx++;
+    chat.innerHTML += `<div style="background:var(--bg-3);border-radius:10px;padding:12px 14px;font-size:12.5px;line-height:1.6;color:var(--text-2);border:1px solid var(--border)"><strong style="color:var(--blue-bright);font-family:var(--font-display);display:block;margin-bottom:6px">🤖 MyTradingCoach</strong>${resp}</div>`;
+    chat.scrollTop = chat.scrollHeight;
+  }, 800);
+}
+
+function generateInsights() {
+  notify('🤖', 'Analyse IA en cours… 142 trades traités !');
+}
+
+// ─── INIT ───
+window.addEventListener('load', () => {
+  renderRecentTrades();
+  renderJournal();
+  setTimeout(drawEquity, 100);
+  setTimeout(drawDrawdown, 100);
+  renderHeatmap();
+});
+
+window.addEventListener('resize', () => {
+  drawEquity();
+  drawDrawdown();
+});
+
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+</body>
+</html>
