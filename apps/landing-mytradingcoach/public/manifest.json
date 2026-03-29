@@ -1,0 +1,13 @@
+{
+  "name": "MyTradingCoach",
+  "short_name": "MyTradingCoach",
+  "description": "Journal de trading intelligent avec coach IA",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#05080f",
+  "theme_color": "#3b82f6",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "/logo.svg", "sizes": "64x64", "type": "image/svg+xml" }
+  ]
+}
