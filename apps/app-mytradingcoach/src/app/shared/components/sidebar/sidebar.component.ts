@@ -23,9 +23,9 @@ import { AuthService } from '../../../core/auth/auth.service';
       <!-- ─── SIDEBAR ─── -->
       <aside class="sidebar">
         <!-- Logo -->
-        <div class="logo">
-          <img src="/icon/logo-horizontal.svg" alt="MyTradingCoach" height="40" />
-        </div>
+        <a routerLink="/dashboard" class="logo">
+          <img src="logo-horizontal.svg" alt="MyTradingCoach" height="40" style="display:block;max-width:100%">
+        </a>
 
         <!-- Nav -->
         <nav class="nav">
@@ -126,15 +126,14 @@ import { AuthService } from '../../../core/auth/auth.service';
 
     /* ─── LOGO ─── */
     .logo {
-      padding: 20px 20px 16px;
+      display: block;
+      padding: 20px 16px 16px;
       border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
       flex-shrink: 0;
+      text-decoration: none;
     }
 
     .logo img {
-      display: block;
       height: 40px;
       width: auto;
     }
@@ -291,7 +290,6 @@ export class SidebarComponent {
   protected readonly SparklesIcon = Sparkles;
   protected readonly CalendarDaysIcon = CalendarDays;
   protected readonly TrophyIcon = Trophy;
-  protected readonly SettingsIcon = Settings;
   protected readonly LogOutIcon = LogOut;
 
   logout() {
