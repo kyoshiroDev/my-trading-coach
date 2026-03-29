@@ -24,7 +24,7 @@ import { AuthService } from '../../../core/auth/auth.service';
       <aside class="sidebar">
         <!-- Logo -->
         <a routerLink="/dashboard" class="logo">
-          <img src="logo-horizontal.svg" alt="MyTradingCoach" height="40" style="display:block;max-width:100%">
+          <img src="icon/logo-horizontal.svg" alt="MyTradingCoach" height="40" style="display:block;max-width:100%">
         </a>
 
         <!-- Nav -->
