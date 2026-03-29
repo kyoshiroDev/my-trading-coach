@@ -1,0 +1,56 @@
+---
+---
+
+<section class="cta-final">
+  <div class="reveal">
+    <span class="sec-label">Prêt à voir la vérité ?</span>
+    <h2>Rejoins les premiers <em>early adopters</em></h2>
+    <p>Sois parmi les premiers à tester MyTradingCoach. Ton feedback construit directement le produit.</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <a href="https://app.mytradingcoach.app/register" class="btn-p" style="font-size:15px;padding:14px 30px">
+        Commencer gratuitement →
+      </a>
+    </div>
+    <p style="margin-top:16px;font-size:12px;color:var(--txt3)">Pas de CB · Pas d'engagement · Données en France 🇫🇷 · Indépendant & bootstrappé</p>
+  </div>
+</section>
+
+<style>
+  .cta-final {
+    text-align: center;
+    padding: 120px 5%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-final::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 500px; height: 250px;
+    background: radial-gradient(ellipse, rgba(59,130,246,.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .cta-final h2 { max-width: 650px; margin: 0 auto 18px; }
+  .cta-final p { color: var(--txt2); font-size: 17px; font-weight: 300; max-width: 460px; margin: 0 auto 44px; }
+
+  .btn-p {
+    background: var(--blue);
+    color: #fff;
+    padding: 13px 26px;
+    border-radius: 9px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 0 28px rgba(59,130,246,.4);
+    transition: all .2s;
+    font-family: var(--disp);
+  }
+
+  .btn-p:hover { background: var(--blue2); transform: translateY(-2px); box-shadow: 0 0 44px rgba(59,130,246,.55); }
+</style>
