@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { LucideAngularModule, TrendingUp, Eye, EyeOff, Check } from 'lucide-angular';
+import { LucideAngularModule, Eye, EyeOff, Check } from 'lucide-angular';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
@@ -16,10 +16,7 @@ import { AuthService } from '../../core/auth/auth.service';
       <div class="auth-card">
         <!-- Logo -->
         <div class="auth-logo">
-          <div class="logo-icon">
-            <lucide-icon [img]="TrendingUpIcon" [size]="18" color="#3b82f6" />
-          </div>
-          <span class="logo-text">MyTrading<strong>Coach</strong></span>
+          <img src="logo.svg" alt="MyTradingCoach" width="44" height="44" style="border-radius:10px">
         </div>
 
         <h1 class="auth-title">Commence gratuitement</h1>
@@ -136,32 +133,9 @@ import { AuthService } from '../../core/auth/auth.service';
     .auth-logo {
       display: flex;
       align-items: center;
-      gap: 10px;
       justify-content: center;
       margin-bottom: 24px;
     }
-
-    .logo-icon {
-      width: 34px;
-      height: 34px;
-      background: linear-gradient(135deg, #1d4ed8, #2563eb);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 0 16px rgba(59,130,246,0.35);
-      flex-shrink: 0;
-    }
-
-    .logo-text {
-      font-family: var(--font-display);
-      font-size: 17px;
-      font-weight: 500;
-      color: var(--text);
-      letter-spacing: -0.3px;
-    }
-
-    .logo-text strong { font-weight: 800; }
 
     /* ─── Headings ─── */
     .auth-title {
@@ -337,7 +311,6 @@ export class RegisterComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
-  protected readonly TrendingUpIcon = TrendingUp;
   protected readonly EyeIcon = Eye;
   protected readonly EyeOffIcon = EyeOff;
   protected readonly CheckIcon = Check;
