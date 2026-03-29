@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { LucideAngularModule, CalendarDays, RefreshCw, Download, CheckCircle2, XCircle, Clock } from 'lucide-angular';
+import { LucideAngularModule, CalendarDays, RefreshCw, Download } from 'lucide-angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { environment } from '../../../environments/environment';
 
@@ -94,7 +94,7 @@ function badgeClass(badge: string): string {
           <div class="stat-card">
             <div class="stat-label">P&amp;L</div>
             <div class="stat-value" [class.text-green]="debrief()!.stats.totalPnl >= 0" [class.text-red]="debrief()!.stats.totalPnl < 0">
-              {{ debrief()!.stats.totalPnl >= 0 ? '+' : '' }}${{ debrief()!.stats.totalPnl.toFixed(2) }}
+              {{ debrief()!.stats.totalPnl >= 0 ? '+' : '' }}\${{ debrief()!.stats.totalPnl.toFixed(2) }}
             </div>
           </div>
         </div>
@@ -120,7 +120,7 @@ function badgeClass(badge: string): string {
                 <p class="item-text">{{ s.text }}</p>
               </div>
             }
-            @if (!debrief()!.insights.strengths?.length) {
+            @if (!debrief()!.insights.strengths.length) {
               <p class="empty">Aucune force identifiée</p>
             }
           </div>
@@ -135,7 +135,7 @@ function badgeClass(badge: string): string {
                 <p class="item-text">{{ w.text }}</p>
               </div>
             }
-            @if (!debrief()!.insights.weaknesses?.length) {
+            @if (!debrief()!.insights.weaknesses.length) {
               <p class="empty">Aucun point d'amélioration identifié</p>
             }
           </div>
@@ -166,7 +166,7 @@ function badgeClass(badge: string): string {
               </div>
             </div>
           }
-          @if (!debrief()!.objectives?.length) {
+          @if (!debrief()?.objectives?.length) {
             <p class="empty">Aucun objectif défini</p>
           }
         </div>

@@ -16,7 +16,7 @@ import { AuthService } from '../../core/auth/auth.service';
       <div class="auth-card">
         <!-- Logo -->
         <div class="auth-logo">
-          <img src="icon/logo-horizontal.svg" alt="MyTradingCoach" height="40" style="display:block;max-width:100%">
+          <img src="icon/logo-navbar.svg" alt="MyTradingCoach">
         </div>
 
         <h1 class="auth-title">Commence gratuitement</h1>
@@ -74,7 +74,7 @@ import { AuthService } from '../../core/auth/auth.service';
                 autocomplete="new-password"
               />
               <button type="button" class="eye-btn" (click)="showPassword.set(!showPassword())">
-                <lucide-icon [img]="showPassword() ? EyeOffIcon : EyeIcon" [size]="15" color="var(--text-3)" />
+                <lucide-icon [img]="showPassword() ? EyeOffIcon : EyeIcon" [size]="15" color="var(--text-2)" />
               </button>
             </div>
           </div>
@@ -131,10 +131,15 @@ import { AuthService } from '../../core/auth/auth.service';
 
     /* ─── Logo ─── */
     .auth-logo {
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      text-align: center;
       margin-bottom: 24px;
+    }
+
+    .auth-logo img {
+      max-width: 100%;
+      height: 80px;
+      width: auto;
+      margin-left: 10px;
     }
 
     /* ─── Headings ─── */

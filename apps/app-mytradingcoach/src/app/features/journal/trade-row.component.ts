@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
 import { LucideAngularModule, Trash2, Edit2 } from 'lucide-angular';
 import { Trade } from '../../core/stores/trades.store';
 import { PnlColorPipe } from '../../shared/pipes/pnl-color.pipe';
@@ -8,7 +8,7 @@ import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
 @Component({
   selector: '[mtc-trade-row]',
   standalone: true,
-  imports: [DatePipe, LucideAngularModule, PnlColorPipe, EmotionEmojiPipe],
+  imports: [DatePipe, DecimalPipe, TitleCasePipe, LucideAngularModule, PnlColorPipe, EmotionEmojiPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'trade-row-host' },
   template: `
@@ -22,7 +22,7 @@ import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
     <td class="td-num">{{ trade.exit != null ? (trade.exit | number:'1.2-5') : '—' }}</td>
     <td class="td-num" [class]="trade.pnl | pnlColor">
       @if (trade.pnl != null) {
-        {{ trade.pnl >= 0 ? '+' : '' }}${{ trade.pnl | number:'1.2-2' }}
+        {{ trade.pnl >= 0 ? '+' : '' }}\${{ trade.pnl | number:'1.2-2' }}
       } @else {
         <span class="neutral">—</span>
       }
