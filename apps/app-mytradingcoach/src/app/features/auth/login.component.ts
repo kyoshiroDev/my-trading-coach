@@ -17,7 +17,7 @@ import { AuthService } from '../../core/auth/auth.service';
       <div class="auth-card">
         <!-- Logo -->
         <div class="auth-logo">
-          <img src="logo.svg" alt="MyTradingCoach" width="44" height="44" style="border-radius:10px">
+          <img src="logo-horizontal.svg" alt="MyTradingCoach" height="40" style="display:block;max-width:100%">
         </div>
 
         <h1 class="auth-title">Bon retour 👋</h1>
