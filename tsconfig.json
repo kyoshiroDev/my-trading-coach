@@ -2,5 +2,18 @@
   "extends": "./tsconfig.base.json",
   "compileOnSave": false,
   "files": [],
-  "references": []
+  "references": [
+    {
+      "path": "./apps/app-mytradingcoach-e2e"
+    },
+    {
+      "path": "./apps/api-mytradingcoach-e2e"
+    },
+    {
+      "path": "./apps/api-mytradingcoach"
+    },
+    {
+      "path": "./apps/app-mytradingcoach"
+    }
+  ]
 }

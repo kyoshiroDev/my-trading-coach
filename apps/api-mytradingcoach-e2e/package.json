@@ -1,0 +1,27 @@
+{
+  "name": "@org/api-mytradingcoach-e2e",
+  "version": "0.0.1",
+  "private": true,
+  "nx": {
+    "name": "api-mytradingcoach-e2e",
+    "implicitDependencies": [
+      "api-mytradingcoach"
+    ],
+    "targets": {
+      "e2e": {
+        "executor": "@nx/jest:jest",
+        "outputs": [
+          "{projectRoot}/test-output/jest/coverage"
+        ],
+        "options": {
+          "jestConfig": "apps/api-mytradingcoach-e2e/jest.config.cts",
+          "passWithNoTests": true
+        },
+        "dependsOn": [
+          "api-mytradingcoach:build",
+          "api-mytradingcoach:serve"
+        ]
+      }
+    }
+  }
+}
