@@ -20,7 +20,7 @@ WORKDIR /app
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY prisma ./prisma
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts
-RUN pnpm dlx prisma generate --schema=./prisma/schema.prisma --config=./prisma/prisma.config.ts 2>/dev/null || true
+RUN pnpm exec prisma generate --config=./prisma/prisma.config.ts 2>/dev/null || true
 
 # Stage 3 — Runtime minimal
 FROM node:22-alpine AS runtime
@@ -36,4 +36,4 @@ USER nestjs
 EXPOSE 3000
 
 # Applique les migrations puis démarre
-CMD ["sh", "-c", "npx prisma migrate deploy --schema=./prisma/schema.prisma && node main.js"]
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy --config=./prisma/prisma.config.ts && node main.js"]
