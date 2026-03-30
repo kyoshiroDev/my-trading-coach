@@ -63,7 +63,9 @@
     },
     "test": {
       "executor": "@angular/build:unit-test",
-      "options": {}
+      "options": {
+        "tsConfig": "apps/app-mytradingcoach/tsconfig.spec.json"
+      }
     },
     "serve-static": {
       "continuous": true,
