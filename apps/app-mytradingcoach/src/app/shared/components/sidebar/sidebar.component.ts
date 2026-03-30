@@ -67,10 +67,10 @@ import { AuthService } from '../../../core/auth/auth.service';
             Scoring
           </a>
 
-          <div class="nav-item settings-item" (click)="logout()">
+          <button class="nav-item settings-item" (click)="logout()">
             <span class="nav-icon"><lucide-icon [img]="LogOutIcon" [size]="14" /></span>
             Déconnexion
-          </div>
+          </button>
         </nav>
 
         <!-- User card -->
@@ -219,6 +219,10 @@ import { AuthService } from '../../../core/auth/auth.service';
 
     .settings-item {
       margin-top: auto;
+      background: none;
+      border: none;
+      width: 100%;
+      text-align: left;
     }
 
     /* ─── FOOTER ─── */

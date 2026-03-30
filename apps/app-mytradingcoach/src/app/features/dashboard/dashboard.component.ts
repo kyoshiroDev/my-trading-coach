@@ -129,7 +129,7 @@ interface Summary {
                 <span class="trade-setup">{{ trade.setup }}</span>
                 <span class="trade-emotion">{{ trade.emotion | emotionEmoji }}</span>
                 <span class="trade-pnl" [class]="trade.pnl | pnlColor">
-                  {{ trade.pnl != null ? formatPnl(trade.pnl) : '—' }}
+                  {{ trade.pnl !== null ? formatPnl(trade.pnl) : '—' }}
                 </span>
               </div>
             }

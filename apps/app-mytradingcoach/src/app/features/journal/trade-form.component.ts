@@ -23,12 +23,12 @@ const EMOTION_EMOJIS: Record<string, string> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (open()) {
-      <div class="overlay" (click)="onOverlayClick($event)">
+      <div class="overlay" role="presentation" (click)="onOverlayClick($event)" (keydown.escape)="dismissed.emit()">
         <div class="modal" role="dialog" aria-modal="true">
           <!-- Header -->
           <div class="modal-header">
             <h2 class="modal-title">{{ editTrade ? 'Modifier le trade' : 'Nouveau trade' }}</h2>
-            <button class="close-btn" (click)="cancel.emit()">
+            <button class="close-btn" (click)="dismissed.emit()">
               <lucide-icon [img]="XIcon" [size]="16" />
             </button>
           </div>
@@ -37,11 +37,11 @@ const EMOTION_EMOJIS: Record<string, string> = {
             <!-- Row 1: Asset + Side -->
             <div class="form-row">
               <div class="form-group">
-                <label>Actif</label>
-                <input type="text" [(ngModel)]="form.asset" name="asset" required placeholder="BTC/USDT" />
+                <label for="tf-asset">Actif</label>
+                <input id="tf-asset" type="text" [(ngModel)]="form.asset" name="asset" required placeholder="BTC/USDT" />
               </div>
               <div class="form-group">
-                <label>Direction</label>
+                <span class="field-label">Direction</span>
                 <div class="side-toggle">
                   <button type="button" class="side-btn" [class.active-long]="form.side === 'LONG'" (click)="form.side = 'LONG'">LONG</button>
                   <button type="button" class="side-btn" [class.active-short]="form.side === 'SHORT'" (click)="form.side = 'SHORT'">SHORT</button>
@@ -52,42 +52,42 @@ const EMOTION_EMOJIS: Record<string, string> = {
             <!-- Row 2: Entry + Exit -->
             <div class="form-row">
               <div class="form-group">
-                <label>Entry</label>
-                <input type="number" [(ngModel)]="form.entry" name="entry" required placeholder="0.00" step="any" />
+                <label for="tf-entry">Entry</label>
+                <input id="tf-entry" type="number" [(ngModel)]="form.entry" name="entry" required placeholder="0.00" step="any" />
               </div>
               <div class="form-group">
-                <label>Exit <span class="optional">(optionnel)</span></label>
-                <input type="number" [(ngModel)]="form.exit" name="exit" placeholder="0.00" step="any" />
+                <label for="tf-exit">Exit <span class="optional">(optionnel)</span></label>
+                <input id="tf-exit" type="number" [(ngModel)]="form.exit" name="exit" placeholder="0.00" step="any" />
               </div>
             </div>
 
             <!-- Row 3: SL + TP -->
             <div class="form-row">
               <div class="form-group">
-                <label>Stop Loss <span class="optional">(optionnel)</span></label>
-                <input type="number" [(ngModel)]="form.stopLoss" name="stopLoss" placeholder="0.00" step="any" />
+                <label for="tf-sl">Stop Loss <span class="optional">(optionnel)</span></label>
+                <input id="tf-sl" type="number" [(ngModel)]="form.stopLoss" name="stopLoss" placeholder="0.00" step="any" />
               </div>
               <div class="form-group">
-                <label>Take Profit <span class="optional">(optionnel)</span></label>
-                <input type="number" [(ngModel)]="form.takeProfit" name="takeProfit" placeholder="0.00" step="any" />
+                <label for="tf-tp">Take Profit <span class="optional">(optionnel)</span></label>
+                <input id="tf-tp" type="number" [(ngModel)]="form.takeProfit" name="takeProfit" placeholder="0.00" step="any" />
               </div>
             </div>
 
             <!-- Row 4: PnL + RR -->
             <div class="form-row">
               <div class="form-group">
-                <label>P&amp;L ($) <span class="optional">(optionnel)</span></label>
-                <input type="number" [(ngModel)]="form.pnl" name="pnl" placeholder="0.00" step="any" />
+                <label for="tf-pnl">P&amp;L ($) <span class="optional">(optionnel)</span></label>
+                <input id="tf-pnl" type="number" [(ngModel)]="form.pnl" name="pnl" placeholder="0.00" step="any" />
               </div>
               <div class="form-group">
-                <label>R/R <span class="optional">(optionnel)</span></label>
-                <input type="number" [(ngModel)]="form.riskReward" name="riskReward" placeholder="0.00" step="any" />
+                <label for="tf-rr">R/R <span class="optional">(optionnel)</span></label>
+                <input id="tf-rr" type="number" [(ngModel)]="form.riskReward" name="riskReward" placeholder="0.00" step="any" />
               </div>
             </div>
 
             <!-- Emotion selector -->
             <div class="form-group">
-              <label>État émotionnel</label>
+              <span class="field-label">État émotionnel</span>
               <div class="emotion-grid">
                 @for (e of EMOTIONS; track e) {
                   <button
@@ -105,24 +105,24 @@ const EMOTION_EMOJIS: Record<string, string> = {
             <!-- Row: Setup + Session + Timeframe -->
             <div class="form-row trio">
               <div class="form-group">
-                <label>Setup</label>
-                <select [(ngModel)]="form.setup" name="setup">
+                <label for="tf-setup">Setup</label>
+                <select id="tf-setup" [(ngModel)]="form.setup" name="setup">
                   @for (s of SETUPS; track s) {
                     <option [value]="s">{{ s }}</option>
                   }
                 </select>
               </div>
               <div class="form-group">
-                <label>Session</label>
-                <select [(ngModel)]="form.session" name="session">
+                <label for="tf-session">Session</label>
+                <select id="tf-session" [(ngModel)]="form.session" name="session">
                   @for (s of SESSIONS; track s) {
                     <option [value]="s">{{ s }}</option>
                   }
                 </select>
               </div>
               <div class="form-group">
-                <label>Timeframe</label>
-                <select [(ngModel)]="form.timeframe" name="timeframe">
+                <label for="tf-timeframe">Timeframe</label>
+                <select id="tf-timeframe" [(ngModel)]="form.timeframe" name="timeframe">
                   @for (tf of TIMEFRAMES; track tf) {
                     <option [value]="tf">{{ tf }}</option>
                   }
@@ -132,13 +132,13 @@ const EMOTION_EMOJIS: Record<string, string> = {
 
             <!-- Notes -->
             <div class="form-group">
-              <label>Notes <span class="optional">(optionnel)</span></label>
-              <textarea [(ngModel)]="form.notes" name="notes" rows="3" placeholder="Contexte, raison du trade, leçons apprises..."></textarea>
+              <label for="tf-notes">Notes <span class="optional">(optionnel)</span></label>
+              <textarea id="tf-notes" [(ngModel)]="form.notes" name="notes" rows="3" placeholder="Contexte, raison du trade, leçons apprises..."></textarea>
             </div>
 
             <!-- Footer -->
             <div class="modal-footer">
-              <button type="button" class="btn-cancel" (click)="cancel.emit()">Annuler</button>
+              <button type="button" class="btn-cancel" (click)="dismissed.emit()">Annuler</button>
               <button type="submit" class="btn-save" [disabled]="isSaving()">
                 @if (isSaving()) {
                   <span class="spinner"></span> Enregistrement...
@@ -220,7 +220,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
 
     .form-group { display: flex; flex-direction: column; gap: 6px; }
 
-    label {
+    label, .field-label {
       font-size: 11px;
       font-family: var(--font-mono);
       color: var(--text-2);
@@ -369,8 +369,8 @@ export class TradeFormComponent implements OnChanges {
   @Input() open = signal(false);
   @Input() editTrade: Trade | null = null;
   @Input() isSaving = signal(false);
-  @Output() cancel = new EventEmitter<void>();
-  @Output() save = new EventEmitter<CreateTradeDto>();
+  @Output() dismissed = new EventEmitter<void>();
+  @Output() formSave = new EventEmitter<CreateTradeDto>();
 
   protected readonly XIcon = X;
   protected readonly EMOTIONS = EMOTIONS;
@@ -405,13 +405,13 @@ export class TradeFormComponent implements OnChanges {
 
   onOverlayClick(event: MouseEvent) {
     if ((event.target as HTMLElement).classList.contains('overlay')) {
-      this.cancel.emit();
+      this.dismissed.emit();
     }
   }
 
   onSubmit() {
     if (!this.form.asset || !this.form.entry || !this.form.emotion || !this.form.setup || !this.form.session || !this.form.side) return;
-    this.save.emit(this.form as CreateTradeDto);
+    this.formSave.emit(this.form as CreateTradeDto);
   }
 
   private emptyForm(): Partial<CreateTradeDto> {

@@ -86,9 +86,9 @@ type FilterSide = 'ALL' | 'LONG' | 'SHORT';
                 <td class="mono">{{ trade.entry }}</td>
                 <td class="mono">{{ trade.exit ?? '—' }}</td>
                 <td class="mono" [class]="trade.pnl | pnlColor">
-                  {{ trade.pnl != null ? ((trade.pnl >= 0 ? '+' : '') + trade.pnl.toFixed(2)) : '—' }}
+                  {{ trade.pnl !== null ? ((trade.pnl >= 0 ? '+' : '') + trade.pnl.toFixed(2)) : '—' }}
                 </td>
-                <td class="mono">{{ trade.riskReward != null ? trade.riskReward.toFixed(2) : '—' }}</td>
+                <td class="mono">{{ trade.riskReward !== null ? trade.riskReward.toFixed(2) : '—' }}</td>
                 <td class="td-emotion">
                   {{ trade.emotion | emotionEmoji }} <span class="emotion-text">{{ trade.emotion }}</span>
                 </td>
@@ -112,8 +112,8 @@ type FilterSide = 'ALL' | 'LONG' | 'SHORT';
 
     <!-- ─── Modal ─── -->
     @if (showModal()) {
-      <div class="modal-overlay" (click)="closeModal()">
-        <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-overlay" role="presentation" (click)="closeModal()" (keydown.escape)="closeModal()">
+        <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
           <div class="modal-header">
             <span class="modal-title">Nouveau Trade</span>
             <button class="modal-close" (click)="closeModal()">
@@ -124,36 +124,36 @@ type FilterSide = 'ALL' | 'LONG' | 'SHORT';
           <div class="modal-body">
             <form (ngSubmit)="submitTrade()" class="form-grid">
               <div class="field">
-                <label>Asset</label>
-                <input [(ngModel)]="form.asset" name="asset" required placeholder="BTC/USDT, EUR/USD..." />
+                <label for="f-asset">Asset</label>
+                <input id="f-asset" [(ngModel)]="form.asset" name="asset" required placeholder="BTC/USDT, EUR/USD..." />
               </div>
               <div class="field">
-                <label>Sens</label>
-                <select [(ngModel)]="form.side" name="side">
+                <label for="f-side">Sens</label>
+                <select id="f-side" [(ngModel)]="form.side" name="side">
                   <option value="LONG">LONG</option>
                   <option value="SHORT">SHORT</option>
                 </select>
               </div>
               <div class="field">
-                <label>Entry</label>
-                <input type="number" [(ngModel)]="form.entry" name="entry" required step="any" />
+                <label for="f-entry">Entry</label>
+                <input id="f-entry" type="number" [(ngModel)]="form.entry" name="entry" required step="any" />
               </div>
               <div class="field">
-                <label>Exit (optionnel)</label>
-                <input type="number" [(ngModel)]="form.exit" name="exit" step="any" />
+                <label for="f-exit">Exit (optionnel)</label>
+                <input id="f-exit" type="number" [(ngModel)]="form.exit" name="exit" step="any" />
               </div>
               <div class="field">
-                <label>Stop Loss</label>
-                <input type="number" [(ngModel)]="form.stopLoss" name="stopLoss" step="any" />
+                <label for="f-sl">Stop Loss</label>
+                <input id="f-sl" type="number" [(ngModel)]="form.stopLoss" name="stopLoss" step="any" />
               </div>
               <div class="field">
-                <label>Take Profit</label>
-                <input type="number" [(ngModel)]="form.takeProfit" name="takeProfit" step="any" />
+                <label for="f-tp">Take Profit</label>
+                <input id="f-tp" type="number" [(ngModel)]="form.takeProfit" name="takeProfit" step="any" />
               </div>
 
               <!-- Emotion selector -->
               <div class="field form-full">
-                <label>État émotionnel</label>
+                <span class="field-label">État émotionnel</span>
                 <div class="emotion-selector">
                   @for (e of EMOTIONS; track e) {
                     <button
@@ -170,28 +170,28 @@ type FilterSide = 'ALL' | 'LONG' | 'SHORT';
               </div>
 
               <div class="field">
-                <label>Setup</label>
-                <select [(ngModel)]="form.setup" name="setup">
+                <label for="f-setup">Setup</label>
+                <select id="f-setup" [(ngModel)]="form.setup" name="setup">
                   @for (s of SETUPS; track s) { <option [value]="s">{{ s }}</option> }
                 </select>
               </div>
               <div class="field">
-                <label>Session</label>
-                <select [(ngModel)]="form.session" name="session">
+                <label for="f-session">Session</label>
+                <select id="f-session" [(ngModel)]="form.session" name="session">
                   @for (s of SESSIONS; track s) { <option [value]="s">{{ s }}</option> }
                 </select>
               </div>
               <div class="field">
-                <label>Timeframe</label>
-                <input [(ngModel)]="form.timeframe" name="timeframe" placeholder="15m, 1h, 4h..." />
+                <label for="f-tf">Timeframe</label>
+                <input id="f-tf" [(ngModel)]="form.timeframe" name="timeframe" placeholder="15m, 1h, 4h..." />
               </div>
               <div class="field">
-                <label>P&amp;L ($)</label>
-                <input type="number" [(ngModel)]="form.pnl" name="pnl" step="any" placeholder="Optionnel" />
+                <label for="f-pnl">P&amp;L ($)</label>
+                <input id="f-pnl" type="number" [(ngModel)]="form.pnl" name="pnl" step="any" placeholder="Optionnel" />
               </div>
               <div class="field form-full">
-                <label>Notes</label>
-                <textarea [(ngModel)]="form.notes" name="notes" rows="3" placeholder="Contexte, raison du trade, observations..."></textarea>
+                <label for="f-notes">Notes</label>
+                <textarea id="f-notes" [(ngModel)]="form.notes" name="notes" rows="3" placeholder="Contexte, raison du trade, observations..."></textarea>
               </div>
 
               @if (modalError()) {
@@ -409,7 +409,7 @@ type FilterSide = 'ALL' | 'LONG' | 'SHORT';
 
     .field { display: flex; flex-direction: column; gap: 6px; }
 
-    .field label {
+    .field label, .field .field-label {
       font-size: 11px;
       font-family: var(--font-mono);
       font-weight: 500;

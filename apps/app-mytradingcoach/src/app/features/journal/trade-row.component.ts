@@ -5,6 +5,7 @@ import { Trade } from '../../core/stores/trades.store';
 import { PnlColorPipe } from '../../shared/pipes/pnl-color.pipe';
 import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
 
+/* eslint-disable @angular-eslint/component-selector */
 @Component({
   selector: '[mtc-trade-row]',
   standalone: true,
@@ -19,16 +20,16 @@ import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
       </span>
     </td>
     <td class="td-num">{{ trade.entry | number:'1.2-5' }}</td>
-    <td class="td-num">{{ trade.exit != null ? (trade.exit | number:'1.2-5') : '—' }}</td>
+    <td class="td-num">{{ trade.exit !== null ? (trade.exit | number:'1.2-5') : '—' }}</td>
     <td class="td-num" [class]="trade.pnl | pnlColor">
-      @if (trade.pnl != null) {
+      @if (trade.pnl !== null) {
         {{ trade.pnl >= 0 ? '+' : '' }}\${{ trade.pnl | number:'1.2-2' }}
       } @else {
         <span class="neutral">—</span>
       }
     </td>
     <td class="td-num">
-      {{ trade.riskReward != null ? (trade.riskReward | number:'1.2-2') : '—' }}
+      {{ trade.riskReward !== null ? (trade.riskReward | number:'1.2-2') : '—' }}
     </td>
     <td>
       <span class="emotion-cell">
