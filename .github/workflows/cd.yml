@@ -8,15 +8,36 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NX_NO_CLOUD: true
 
 jobs:
-  deploy:
-    name: Deploy Production
+  # ── Deploy API → OVH VPS (Docker) ────────────────────────────────────────
+  deploy-api:
+    name: Deploy API to VPS
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     environment: production
-    env:
-      NX_NO_CLOUD: true
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /opt/mytradingcoach
+            git pull origin main
+            docker compose build api
+            docker compose up -d --no-deps api
+            echo "API deployment complete at $(date)"
+
+  # ── Deploy Angular → Vercel ───────────────────────────────────────────────
+  deploy-angular:
+    name: Deploy Angular to Vercel
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    environment: production
 
     steps:
       - uses: actions/checkout@v4
@@ -39,31 +60,59 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build Angular (production)
+      - name: Build Angular
         run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=production
         env:
-          SUPABASE_URL: ''
+          API_URL: ${{ secrets.API_URL }}
 
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            cd /opt/mytradingcoach
-            git pull origin main
-            docker compose build api
-            docker compose up -d --no-deps api
-            docker compose restart nginx
-            echo "Deployment complete at $(date)"
+      - name: Deploy to Vercel
+        run: |
+          pnpm dlx vercel --prod \
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --yes \
+            --cwd dist/apps/app-mytradingcoach/browser \
+            --local-config ../../../../apps/app-mytradingcoach/vercel.json
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_APP_PROJECT_ID }}
 
-      - name: Copy Angular dist to VPS
-        uses: appleboy/scp-action@v0.1.7
+  # ── Deploy Astro Landing → Vercel ─────────────────────────────────────────
+  deploy-landing:
+    name: Deploy Landing to Vercel
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          source: dist/apps/app-mytradingcoach/browser/
-          target: /opt/mytradingcoach/dist/apps/app-mytradingcoach/
-          strip_components: 4
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Astro landing
+        run: pnpm nx build landing-mytradingcoach
+
+      - name: Deploy to Vercel
+        run: |
+          pnpm dlx vercel --prod \
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --yes \
+            --cwd apps/landing-mytradingcoach
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_LANDING_PROJECT_ID }}
