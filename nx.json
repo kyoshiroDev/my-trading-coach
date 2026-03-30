@@ -49,7 +49,6 @@
     }
   ],
   "packageManager": "pnpm",
-  "nxCloudId": "69c62a80a336a67f9b644c41",
   "analytics": false,
   "targetDefaults": {
     "@angular/build:application": {

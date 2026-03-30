@@ -40,6 +40,8 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    env:
+      NX_NO_CLOUD: true
     steps:
       - uses: actions/checkout@v4
 
@@ -77,6 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
     env:
+      NX_NO_CLOUD: true
       DATABASE_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_test
       REDIS_HOST: localhost
       REDIS_PORT: 6379
@@ -176,6 +179,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     env:
+      NX_NO_CLOUD: true
       DATABASE_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_test
       REDIS_HOST: localhost
       REDIS_PORT: 6379
