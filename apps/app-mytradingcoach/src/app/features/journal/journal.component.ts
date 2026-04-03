@@ -86,7 +86,7 @@ type FilterSide = 'ALL' | 'LONG' | 'SHORT';
                 </td>
                 <td class="mono">{{ trade.entry }}</td>
                 <td class="mono">{{ trade.exit ?? '—' }}</td>
-                <td class="mono" [class]="trade.pnl | pnlColor">
+                <td class="mono" [style.color]="trade.pnl | pnlColor">
                   {{ trade.pnl !== null ? ((trade.pnl >= 0 ? '+' : '') + trade.pnl.toFixed(2)) : '—' }}
                 </td>
                 <td class="mono">{{ trade.riskReward !== null ? trade.riskReward.toFixed(2) : '—' }}</td>

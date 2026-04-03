@@ -16,6 +16,9 @@ import { TradesStore } from '../../core/stores/trades.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PnlColorPipe } from '../../shared/pipes/pnl-color.pipe';
 import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
+import { EmotionLabelPipe } from '../../shared/pipes/emotion-label.pipe';
+import { EmotionColorPipe } from '../../shared/pipes/emotion-color.pipe';
+import { SetupColorPipe } from '../../shared/pipes/setup-color.pipe';
 import { environment } from '../../../environments/environment';
 
 interface Summary {
@@ -30,7 +33,7 @@ interface BySetup { setup: string; winRate: number; avgRR: number; count: number
 interface ByEmotion { emotion: string; winRate: number; avgRR: number; count: number; }
 interface EquityPoint { date: string; cumulativePnl: number; }
 
-const SETUP_COLORS: Record<string, string> = {
+const SETUP_COLORS_MAP: Record<string, string> = {
   BREAKOUT: '#10b981',
   PULLBACK: '#3b82f6',
   RANGE: '#f59e0b',
@@ -39,28 +42,10 @@ const SETUP_COLORS: Record<string, string> = {
   NEWS: '#60a5fa',
 };
 
-const EMOTION_COLORS: Record<string, string> = {
-  CONFIDENT: '#10b981',
-  FOCUSED: '#3b82f6',
-  NEUTRAL: '#6b7280',
-  STRESSED: '#f59e0b',
-  FEAR: '#ef4444',
-  REVENGE: '#dc2626',
-};
-
-const EMOTION_LABELS: Record<string, string> = {
-  CONFIDENT: '😌 Confiance',
-  FOCUSED: '🎯 Focus optimal',
-  NEUTRAL: '😐 Neutre',
-  STRESSED: '😰 Stress élevé',
-  FEAR: '😨 Peur',
-  REVENGE: '😤 Revenge trading',
-};
-
 @Component({
   selector: 'mtc-dashboard',
   standalone: true,
-  imports: [RouterLink, TitleCasePipe, TopbarComponent, PnlColorPipe, EmotionEmojiPipe],
+  imports: [RouterLink, TitleCasePipe, TopbarComponent, PnlColorPipe, EmotionEmojiPipe, EmotionLabelPipe, EmotionColorPipe, SetupColorPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './dashboard.component.css',
   template: `
@@ -170,6 +155,7 @@ const EMOTION_LABELS: Record<string, string> = {
                 <circle cx="50" cy="50" r="38" fill="none"
                   [attr.stroke]="seg.color"
                   stroke-width="12"
+                        
                   [attr.stroke-dasharray]="seg.dash"
                   [attr.stroke-dashoffset]="seg.offset"
                   stroke-linecap="round"
@@ -182,7 +168,7 @@ const EMOTION_LABELS: Record<string, string> = {
             <div class="donut-legend">
               @for (s of bySetup().slice(0, 4); track s.setup) {
                 <div class="legend-item">
-                  <div class="legend-dot" [style.background]="setupColor(s.setup)"></div>
+                  <div class="legend-dot" [style.background]="s.setup | setupColor"></div>
                   {{ s.setup | titlecase }}
                   <span class="legend-val">{{ s.winRate.toFixed(0) }}%</span>
                 </div>
@@ -210,11 +196,11 @@ const EMOTION_LABELS: Record<string, string> = {
             @for (e of displayEmotions(); track e.emotion) {
               <div class="emotion-row">
                 <div class="emotion-label">
-                  <span>{{ emotionLabel(e.emotion) }}</span>
+                  <span>{{ e.emotion | emotionLabel }}</span>
                   <span>{{ e.winRate.toFixed(0) }}%</span>
                 </div>
                 <div class="bar-track">
-                  <div class="bar-fill" [style.width.%]="e.winRate" [style.background]="emotionColor(e.emotion)"></div>
+                  <div class="bar-fill" [style.width.%]="e.winRate" [style.background]="e.emotion | emotionColor"></div>
                 </div>
               </div>
             }
@@ -257,7 +243,7 @@ const EMOTION_LABELS: Record<string, string> = {
                 <span class="trade-asset">{{ trade.asset }}</span>
                 <span class="trade-setup">{{ trade.setup }}</span>
                 <span class="trade-emotion">{{ trade.emotion | emotionEmoji }}</span>
-                <span class="trade-pnl" [class]="trade.pnl | pnlColor">
+                <span class="trade-pnl" [style.color]="trade.pnl | pnlColor">
                   {{ trade.pnl !== null ? formatPnl(trade.pnl) : '—' }}
                 </span>
               </div>
@@ -346,7 +332,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     return setups.map((s) => {
       const fraction = s.count / setups.reduce((a, b) => a + b.count, 0);
       const dash = fraction * circumference;
-      const seg = { label: s.setup, color: SETUP_COLORS[s.setup] ?? '#6b7280', dash: `${dash} ${circumference - dash}`, offset: -offset };
+      const seg = { label: s.setup, color: SETUP_COLORS_MAP[s.setup] ?? '#6b7280', dash: `${dash} ${circumference - dash}`, offset: -offset };
       offset += dash;
       return seg;
     });
@@ -355,18 +341,6 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   protected displayEmotions(): { emotion: string; winRate: number }[] {
     if (this.byEmotion().length) return this.byEmotion().slice(0, 4);
     return [];
-  }
-
-  protected setupColor(setup: string): string {
-    return SETUP_COLORS[setup] ?? '#6b7280';
-  }
-
-  protected emotionColor(emotion: string): string {
-    return EMOTION_COLORS[emotion] ?? '#6b7280';
-  }
-
-  protected emotionLabel(emotion: string): string {
-    return EMOTION_LABELS[emotion] ?? emotion;
   }
 
   formatPnl(v: number): string {

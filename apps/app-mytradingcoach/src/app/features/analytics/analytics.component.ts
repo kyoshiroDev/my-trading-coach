@@ -10,6 +10,8 @@ import {
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
+import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
+import { EmotionColorPipe } from '../../shared/pipes/emotion-color.pipe';
 import { environment } from '../../../environments/environment';
 
 interface ByEmotion { emotion: string; winRate: number; avgRR: number; count: number; }
@@ -18,18 +20,10 @@ interface ByHour { hour: number; winRate: number; count: number; }
 interface EquityPoint { date: string; cumulativePnl: number; }
 interface TopAsset { asset: string; winRate: number; pnl: number; count: number; }
 
-const EMOTION_COLORS: Record<string, string> = {
-  CONFIDENT: '#10b981', FOCUSED: '#3b82f6', NEUTRAL: '#6b7280',
-  STRESSED: '#f59e0b', FEAR: '#ef4444', REVENGE: '#dc2626',
-};
-const EMOTION_EMOJIS: Record<string, string> = {
-  CONFIDENT: '😎', FOCUSED: '🎯', NEUTRAL: '😐', STRESSED: '😰', FEAR: '😨', REVENGE: '🤬',
-};
-
 @Component({
   selector: 'mtc-analytics',
   standalone: true,
-  imports: [TopbarComponent],
+  imports: [TopbarComponent, EmotionEmojiPipe, EmotionColorPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './analytics.component.css',
   template: `
@@ -66,11 +60,11 @@ const EMOTION_EMOJIS: Record<string, string> = {
               @for (e of byEmotion(); track e.emotion) {
                 <div class="emotion-row">
                   <div class="emotion-label">
-                    <span>{{ EMOTION_EMOJIS[e.emotion] }} {{ e.emotion }}</span>
+                    <span>{{ e.emotion | emotionEmoji }} {{ e.emotion }}</span>
                     <span>{{ e.winRate.toFixed(0) }}%</span>
                   </div>
                   <div class="bar-track">
-                    <div class="bar-fill" [style.width.%]="e.winRate" [style.background]="EMOTION_COLORS[e.emotion]"></div>
+                    <div class="bar-fill" [style.width.%]="e.winRate" [style.background]="e.emotion | emotionColor"></div>
                   </div>
                 </div>
               }
@@ -177,8 +171,6 @@ const EMOTION_EMOJIS: Record<string, string> = {
 export class AnalyticsComponent implements OnInit, AfterViewInit {
   @ViewChild('equityCanvas') canvasRef!: ElementRef<HTMLCanvasElement>;
 
-  protected readonly EMOTION_EMOJIS = EMOTION_EMOJIS;
-  protected readonly EMOTION_COLORS = EMOTION_COLORS;
   protected readonly allHours = Array.from({ length: 24 }, (_, i) => i);
   protected readonly Math = Math;
 
