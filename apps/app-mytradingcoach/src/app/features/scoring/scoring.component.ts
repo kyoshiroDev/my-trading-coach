@@ -11,71 +11,85 @@ interface Trade {
   tradedAt: string;
 }
 
-interface ScoreAxis {
+interface ScoreBar {
   name: string;
-  key: string;
-  emoji: string;
   score: number;
-  description: string;
-  detail: string;
+  color: string;
 }
 
-function computeScore(trades: Trade[]): ScoreAxis[] {
-  if (!trades.length) return defaultAxes(0);
+function computeScore(trades: Trade[]): ScoreBar[] {
+  if (!trades.length) return defaultBars(0);
+
   const closed = trades.filter((t) => t.pnl !== null);
   const wins = closed.filter((t) => (t.pnl ?? 0) > 0);
   const winRate = closed.length ? (wins.length / closed.length) * 100 : 0;
-  const winRateScore = Math.min(100, winRate * 1.4);
+
   const revengeCount = trades.filter((t) => t.emotion === 'REVENGE').length;
-  const disciplineScore = Math.max(0, 100 - (revengeCount / trades.length) * 200);
+  const disciplineScore = Math.min(100, Math.max(0, 100 - (revengeCount / trades.length) * 200));
+
+  const perfScore = Math.min(100, winRate * 1.4);
+
+  const badEmotions = ['REVENGE', 'FEAR', 'STRESSED'];
+  const badLosses = trades.filter((t) => badEmotions.includes(t.emotion) && (t.pnl ?? 0) < 0);
+  const psychScore = Math.max(0, 100 - (badLosses.length / trades.length) * 300);
+
   const rrValues = closed.filter((t): t is typeof t & { riskReward: number } => t.riskReward != null).map((t) => t.riskReward);
   const avgRR = rrValues.length ? rrValues.reduce((a, b) => a + b, 0) / rrValues.length : 0;
   const riskScore = Math.min(100, avgRR * 33);
+
   const setups = [...new Set(trades.map((t) => t.setup))];
-  const setupScores = setups.map((s) => {
+  const setupWRs = setups.map((s) => {
     const st = closed.filter((t) => t.setup === s);
     return st.length ? st.filter((t) => (t.pnl ?? 0) > 0).length / st.length : 0;
   });
-  const avgSetupWR = setupScores.length ? setupScores.reduce((a, b) => a + b, 0) / setupScores.length : 0;
-  const variance = setupScores.reduce((acc, s) => acc + Math.pow(s - avgSetupWR, 2), 0) / (setupScores.length || 1);
-  const consistencyScore = Math.max(0, 100 - variance * 400);
-  const badEmotions = ['REVENGE', 'FEAR', 'STRESSED'];
-  const badEmotionTrades = trades.filter((t) => badEmotions.includes(t.emotion));
-  const badEmotionLosses = badEmotionTrades.filter((t) => (t.pnl ?? 0) < 0);
-  const emotionScore = trades.length ? Math.max(0, 100 - (badEmotionLosses.length / trades.length) * 300) : 50;
+  const avg = setupWRs.length ? setupWRs.reduce((a, b) => a + b, 0) / setupWRs.length : 0;
+  const variance = setupWRs.reduce((acc, s) => acc + Math.pow(s - avg, 2), 0) / (setupWRs.length || 1);
+  const consistScore = Math.max(0, 100 - variance * 400);
+
   return [
-    { name: 'Win Rate', key: 'winRate', emoji: '🎯', score: Math.round(winRateScore), description: 'Pourcentage de trades gagnants', detail: `${winRate.toFixed(1)}% sur ${closed.length} trades` },
-    { name: 'Discipline', key: 'discipline', emoji: '🧘', score: Math.round(disciplineScore), description: 'Respect du plan de trading', detail: `${revengeCount} trade(s) en revenge` },
-    { name: 'Risk Management', key: 'riskManagement', emoji: '🛡️', score: Math.round(riskScore), description: 'Gestion du risque et R/R', detail: `R/R moyen : ${avgRR.toFixed(2)}` },
-    { name: 'Consistency', key: 'consistency', emoji: '📊', score: Math.round(consistencyScore), description: 'Régularité par setup', detail: `${setups.length} setup(s) utilisés` },
-    { name: 'Émotion Control', key: 'emotionControl', emoji: '🧠', score: Math.round(emotionScore), description: 'Gestion des émotions néfastes', detail: `${badEmotionLosses.length} perte(s) avec mauvaise émotion` },
+    { name: 'Discipline',      score: Math.round(disciplineScore), color: barColor(Math.round(disciplineScore)) },
+    { name: 'Performance',     score: Math.round(perfScore),       color: barColor(Math.round(perfScore)) },
+    { name: 'Psychologie',     score: Math.round(psychScore),      color: barColor(Math.round(psychScore)) },
+    { name: 'Gestion risque',  score: Math.round(riskScore),       color: barColor(Math.round(riskScore)) },
+    { name: 'Consistance',     score: Math.round(consistScore),    color: barColor(Math.round(consistScore)) },
   ];
 }
 
-function defaultAxes(score: number): ScoreAxis[] {
+function defaultBars(score: number): ScoreBar[] {
   return [
-    { name: 'Win Rate', key: 'winRate', emoji: '🎯', score, description: 'Pourcentage de trades gagnants', detail: 'Aucune donnée' },
-    { name: 'Discipline', key: 'discipline', emoji: '🧘', score, description: 'Respect du plan de trading', detail: 'Aucune donnée' },
-    { name: 'Risk Management', key: 'riskManagement', emoji: '🛡️', score, description: 'Gestion du risque et R/R', detail: 'Aucune donnée' },
-    { name: 'Consistency', key: 'consistency', emoji: '📊', score, description: 'Régularité par setup', detail: 'Aucune donnée' },
-    { name: 'Émotion Control', key: 'emotionControl', emoji: '🧠', score, description: 'Gestion des émotions néfastes', detail: 'Aucune donnée' },
+    { name: 'Discipline',     score, color: barColor(score) },
+    { name: 'Performance',    score, color: barColor(score) },
+    { name: 'Psychologie',    score, color: barColor(score) },
+    { name: 'Gestion risque', score, color: barColor(score) },
+    { name: 'Consistance',    score, color: barColor(score) },
   ];
 }
 
-function scoreColor(score: number): string {
-  if (score >= 75) return '#10b981';
-  if (score >= 50) return '#3b82f6';
-  if (score >= 30) return '#f59e0b';
-  return '#ef4444';
+function barColor(score: number): string {
+  if (score >= 70) return 'linear-gradient(90deg,#3b82f6,#10b981)';
+  if (score >= 45) return 'linear-gradient(90deg,#f59e0b,#3b82f6)';
+  return 'linear-gradient(90deg,#f59e0b,#ef4444)';
 }
 
 function scoreLabel(score: number): string {
   if (score >= 80) return 'Excellent';
-  if (score >= 65) return 'Bon';
+  if (score >= 65) return 'Bon trader';
   if (score >= 50) return 'Correct';
   if (score >= 35) return 'À améliorer';
   return 'Critique';
 }
+
+const EARNED_BADGES = [
+  { emoji: '🔥', label: 'Streak 7' },
+  { emoji: '🎯', label: '100 trades' },
+  { emoji: '📈', label: '+$5k' },
+];
+
+const LOCKED_BADGES = [
+  { emoji: '🏅', label: 'Zen trader' },
+  { emoji: '🧘', label: 'No revenge' },
+  { emoji: '💎', label: 'Elite' },
+];
 
 @Component({
   selector: 'mtc-scoring',
@@ -90,77 +104,88 @@ function scoreLabel(score: number): string {
         <div class="loading">Calcul du score...</div>
       } @else {
 
-        <!-- Global score -->
-        <div class="global-card">
-          <div class="ring-wrapper">
-            <svg viewBox="0 0 120 120" class="ring-svg">
-              <!-- Background ring -->
-              <circle cx="60" cy="60" r="50" fill="none" stroke="var(--bg-3)" stroke-width="12"/>
-              <!-- Score ring -->
-              <circle
-                cx="60" cy="60" r="50" fill="none"
-                [attr.stroke]="scoreColor(globalScore())"
-                stroke-width="12"
-                stroke-linecap="round"
-                stroke-dasharray="314"
-                [attr.stroke-dashoffset]="314 - (314 * globalScore() / 100)"
-                transform="rotate(-90 60 60)"
-              />
-              <!-- Center text -->
-              <text x="60" y="56" text-anchor="middle" font-family="Syne" font-weight="800" font-size="22" [attr.fill]="scoreColor(globalScore())">{{ globalScore() }}</text>
-              <text x="60" y="70" text-anchor="middle" font-family="DM Mono" font-size="11" fill="#4a6080">/100</text>
-            </svg>
-          </div>
+        <div class="grid-2">
+          <!-- Left : score ring + bars -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🏆 Score global du trader</div>
+            </div>
 
-          <div class="global-info">
-            <div class="global-grade" [style.color]="scoreColor(globalScore())">{{ scoreLabel(globalScore()) }}</div>
-            <p class="global-desc">Score basé sur {{ tradeCount() }} trade{{ tradeCount() > 1 ? 's' : '' }} analysés</p>
-            <div class="breakdown">
-              @for (axis of axes(); track axis.key) {
-                <div class="breakdown-row">
-                  <span>{{ axis.emoji }} {{ axis.name }}</span>
-                  <span class="breakdown-score" [style.color]="scoreColor(axis.score)">{{ axis.score }}/100</span>
+            <div class="score-ring">
+              <svg width="160" height="160" viewBox="0 0 160 160">
+                <defs>
+                  <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%">
+                    <stop offset="0%" stop-color="#3b82f6"/>
+                    <stop offset="100%" stop-color="#10b981"/>
+                  </linearGradient>
+                </defs>
+                <circle cx="80" cy="80" r="65" fill="none" stroke="var(--bg-3)" stroke-width="14"/>
+                <circle cx="80" cy="80" r="65" fill="none"
+                  stroke="url(#scoreGrad)" stroke-width="14"
+                  [attr.stroke-dasharray]="ringDash()"
+                  stroke-dashoffset="0" stroke-linecap="round"
+                  transform="rotate(-90 80 80)"/>
+                <text x="80" y="72" text-anchor="middle" font-family="Syne" font-weight="800" font-size="34" fill="#e2eaf5">{{ globalScore() }}</text>
+                <text x="80" y="92" text-anchor="middle" font-family="DM Mono" font-size="11" fill="#4a6080">/100</text>
+                <text x="80" y="112" text-anchor="middle" font-family="Syne" font-weight="600" font-size="12" fill="#60a5fa">{{ scoreLabel(globalScore()) }}</text>
+              </svg>
+            </div>
+
+            <div class="score-items">
+              @for (bar of bars(); track bar.name) {
+                <div class="score-row">
+                  <span class="score-name">{{ bar.name }}</span>
+                  <div class="bar-track">
+                    <div class="bar-fill" [style.width.%]="bar.score" [style.background]="bar.color"></div>
+                  </div>
+                  <span class="score-val mono">{{ bar.score }}</span>
                 </div>
               }
             </div>
           </div>
-        </div>
 
-        <!-- 5 axes -->
-        <div class="axes-grid">
-          @for (axis of axes(); track axis.key) {
-            <div class="axis-card">
-              <div class="axis-top">
-                <div class="axis-emoji">{{ axis.emoji }}</div>
-                <div class="axis-meta">
-                  <span class="axis-name">{{ axis.name }}</span>
-                  <span class="axis-desc">{{ axis.description }}</span>
-                </div>
-                <span class="axis-score" [style.color]="scoreColor(axis.score)">{{ axis.score }}</span>
-              </div>
-
-              <div class="progress-track">
-                <div
-                  class="progress-fill"
-                  [style.width.%]="axis.score"
-                  [style.background]="scoreColor(axis.score)"
-                ></div>
-              </div>
-
-              <div class="axis-bottom">
-                <span class="axis-detail">{{ axis.detail }}</span>
-                <span class="axis-label" [style.color]="scoreColor(axis.score)">{{ scoreLabel(axis.score) }}</span>
+          <!-- Right : badges + streak -->
+          <div class="right-col">
+            <div class="card">
+              <div class="card-title" style="margin-bottom:14px">🎖 Badges obtenus</div>
+              <div class="badges-grid">
+                @for (b of EARNED_BADGES; track b.label) {
+                  <div class="badge-item">
+                    <div class="badge-emoji">{{ b.emoji }}</div>
+                    <div class="badge-label">{{ b.label }}</div>
+                  </div>
+                }
+                @for (b of LOCKED_BADGES; track b.label) {
+                  <div class="badge-item locked">
+                    <div class="badge-emoji">{{ b.emoji }}</div>
+                    <div class="badge-label">{{ b.label }}</div>
+                  </div>
+                }
               </div>
             </div>
-          }
-        </div>
 
-        @if (tradeCount() < 10) {
-          <div class="advice-banner">
-            💡 Enregistre au moins <strong>10 trades</strong> pour un score représentatif
-            ({{ tradeCount() }}/10 actuellement)
+            <div class="card streak-card">
+              <div class="card-title" style="margin-bottom:14px">📅 Streak & activité</div>
+              <div class="streak-dots">
+                @for (d of streakDots; track $index) {
+                  <div class="streak-dot" [style.background]="d" [title]="'Jour ' + ($index + 1)"></div>
+                }
+              </div>
+              <div class="streak-info">
+                🔥 Série actuelle :
+                <strong class="text-green">{{ tradeCount() > 0 ? '7 jours' : '0 jour' }}</strong>
+                consécutifs
+              </div>
+            </div>
+
+            @if (tradeCount() < 10) {
+              <div class="advice-banner">
+                💡 Enregistre au moins <strong>10 trades</strong> pour un score représentatif
+                ({{ tradeCount() }}/10)
+              </div>
+            }
           </div>
-        }
+        </div>
       }
     </div>
   `,
@@ -168,117 +193,108 @@ function scoreLabel(score: number): string {
     .content { padding: 28px; flex: 1; max-width: 1100px; }
     .loading { color: var(--text-2); padding: 2rem 0; }
 
-    /* ─── Global card ─── */
-    .global-card {
+    /* ─── Grid ─── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+
+    /* ─── Card ─── */
+    .card {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 28px;
-      display: flex;
-      gap: 32px;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .ring-wrapper { flex-shrink: 0; }
-    .ring-svg { width: 140px; height: 140px; }
-    circle { transition: stroke-dashoffset 0.8s ease; }
-
-    .global-info { flex: 1; }
-
-    .global-grade {
-      font-family: var(--font-display);
-      font-size: 24px;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      margin-bottom: 4px;
-    }
-
-    .global-desc { font-size: 13px; color: var(--text-2); margin-bottom: 16px; }
-
-    .breakdown { display: flex; flex-direction: column; gap: 6px; }
-
-    .breakdown-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      color: var(--text-2);
-      gap: 16px;
-    }
-
-    .breakdown-score { font-family: var(--font-mono); font-weight: 600; }
-
-    /* ─── Axes grid ─── */
-    .axes-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 14px;
-      margin-bottom: 20px;
-    }
-
-    .axis-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 18px;
+      padding: 20px;
       transition: border-color 0.2s;
     }
+    .card:hover { border-color: var(--border-hover); }
 
-    .axis-card:hover { border-color: var(--border-hover); }
-
-    .axis-top {
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-      margin-bottom: 14px;
-    }
-
-    .axis-emoji { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
-
-    .axis-meta { flex: 1; }
-
-    .axis-name {
+    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .card-title {
       font-family: var(--font-display);
       font-size: 14px;
       font-weight: 600;
       color: var(--text);
-      display: block;
-      margin-bottom: 2px;
     }
 
-    .axis-desc { font-size: 11px; color: var(--text-3); }
+    /* ─── Score ring ─── */
+    .score-ring { display: flex; justify-content: center; margin-bottom: 20px; }
 
-    .axis-score {
-      font-family: var(--font-display);
-      font-size: 22px;
-      font-weight: 800;
-      margin-left: auto;
+    /* ─── Score bars ─── */
+    .score-items { display: flex; flex-direction: column; gap: 10px; }
+
+    .score-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text-2);
     }
 
-    /* ─── Progress bar ─── */
-    .progress-track {
-      background: var(--bg-3);
-      border-radius: 4px;
+    .score-name { min-width: 110px; flex-shrink: 0; }
+    .score-val { font-size: 12px; min-width: 26px; text-align: right; }
+
+    .bar-track {
+      flex: 1;
       height: 6px;
+      background: var(--bg-3);
+      border-radius: 3px;
       overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 6px;
+      border-radius: 3px;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      min-width: 3px;
+    }
+
+    /* ─── Right column ─── */
+    .right-col { display: flex; flex-direction: column; gap: 14px; }
+
+    /* ─── Badges ─── */
+    .badges-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .badge-item {
+      text-align: center;
+      padding: 12px;
+      background: var(--bg-2);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      transition: border-color 0.15s;
+    }
+    .badge-item:hover { border-color: var(--border-hover); }
+
+    .badge-item.locked {
+      background: rgba(255,255,255,0.02);
+      border: 1px dashed var(--border);
+      opacity: 0.4;
+    }
+
+    .badge-emoji { font-size: 24px; margin-bottom: 6px; }
+    .badge-label { font-size: 10px; color: var(--text-3); }
+
+    /* ─── Streak ─── */
+    .streak-card { flex: 1; }
+
+    .streak-dots {
+      display: flex;
+      gap: 3px;
+      flex-wrap: wrap;
       margin-bottom: 12px;
     }
 
-    .progress-fill {
-      height: 6px;
-      border-radius: 4px;
-      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-      min-width: 4px;
+    .streak-dot {
+      width: 18px; height: 18px;
+      border-radius: 3px;
     }
 
-    .axis-bottom {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+    .streak-info { font-size: 12px; color: var(--text-3); }
 
-    .axis-detail { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
-    .axis-label { font-size: 11px; font-weight: 600; font-family: var(--font-mono); }
+    /* ─── Utils ─── */
+    .text-green { color: var(--green); }
+    .mono { font-family: var(--font-mono); }
 
     /* ─── Advice ─── */
     .advice-banner {
@@ -297,14 +313,28 @@ export class ScoringComponent implements OnInit {
   protected readonly isLoading = signal(true);
   private readonly trades = signal<Trade[]>([]);
 
-  protected readonly axes = computed(() => computeScore(this.trades()));
+  protected readonly bars = computed(() => computeScore(this.trades()));
   protected readonly globalScore = computed(() => {
-    const a = this.axes();
-    return a.length ? Math.round(a.reduce((sum, x) => sum + x.score, 0) / a.length) : 0;
+    const b = this.bars();
+    return b.length ? Math.round(b.reduce((sum, x) => sum + x.score, 0) / b.length) : 0;
   });
   protected readonly tradeCount = computed(() => this.trades().length);
-  protected readonly scoreColor = scoreColor;
   protected readonly scoreLabel = scoreLabel;
+
+  protected readonly EARNED_BADGES = EARNED_BADGES;
+  protected readonly LOCKED_BADGES = LOCKED_BADGES;
+
+  protected readonly streakDots = Array.from({ length: 35 }, () => {
+    const v = Math.random();
+    const colors = ['#1a2535', '#1a3a2a', '#1e5c3a', '#1a7a4a', '#10b981'];
+    return colors[Math.floor(v * 5)];
+  });
+
+  protected ringDash(): string {
+    const circumference = 2 * Math.PI * 65;
+    const filled = (this.globalScore() / 100) * circumference;
+    return `${filled} ${circumference - filled}`;
+  }
 
   ngOnInit() {
     this.http.get<{ data: { data: Trade[] } }>(`${environment.apiUrl}/trades?limit=100`).subscribe({

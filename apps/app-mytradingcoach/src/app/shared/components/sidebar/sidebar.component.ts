@@ -29,7 +29,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 
         <!-- Nav -->
         <nav class="nav">
-          <div class="nav-section">TRADING</div>
+          <div class="nav-section">OVERVIEW</div>
 
           <a routerLink="/dashboard" routerLinkActive="active" class="nav-item">
             <span class="nav-icon"><lucide-icon [img]="LayoutDashboardIcon" [size]="14" /></span>
