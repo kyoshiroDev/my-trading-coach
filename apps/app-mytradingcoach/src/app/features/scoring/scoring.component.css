@@ -1,0 +1,115 @@
+.content { padding: 28px; flex: 1; max-width: 1100px; }
+.loading { color: var(--text-2); padding: 2rem 0; }
+
+/* ─── Grid ─── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+
+/* ─── Card ─── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  transition: border-color 0.2s;
+}
+.card:hover { border-color: var(--border-hover); }
+
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.card-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ─── Score ring ─── */
+.score-ring { display: flex; justify-content: center; margin-bottom: 20px; }
+
+/* ─── Score bars ─── */
+.score-items { display: flex; flex-direction: column; gap: 10px; }
+
+.score-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.score-name { min-width: 110px; flex-shrink: 0; }
+.score-val { font-size: 12px; min-width: 26px; text-align: right; }
+
+.bar-track {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 6px;
+  border-radius: 3px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 3px;
+}
+
+/* ─── Right column ─── */
+.right-col { display: flex; flex-direction: column; gap: 14px; }
+
+/* ─── Badges ─── */
+.badges-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.badge-item {
+  text-align: center;
+  padding: 12px;
+  background: var(--bg-2);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  transition: border-color 0.15s;
+}
+.badge-item:hover { border-color: var(--border-hover); }
+
+.badge-item.locked {
+  background: rgba(255,255,255,0.02);
+  border: 1px dashed var(--border);
+  opacity: 0.4;
+}
+
+.badge-emoji { font-size: 24px; margin-bottom: 6px; }
+.badge-label { font-size: 10px; color: var(--text-3); }
+
+/* ─── Streak ─── */
+.streak-card { flex: 1; }
+
+.streak-dots {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.streak-dot {
+  width: 18px; height: 18px;
+  border-radius: 3px;
+}
+
+.streak-info { font-size: 12px; color: var(--text-3); }
+
+/* ─── Utils ─── */
+.text-green { color: var(--green); }
+.mono { font-family: var(--font-mono); }
+
+/* ─── Advice ─── */
+.advice-banner {
+  background: rgba(245,158,11,0.08);
+  border: 1px solid rgba(245,158,11,0.2);
+  color: var(--yellow);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 13px;
+}
