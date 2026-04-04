@@ -16,7 +16,7 @@
 
 **Plans :**
 - FREE : 50 trades/mois, historique 30 jours, stats de base
-- PREMIUM ($19/mois ou $190/an) : trades illimités, analytics avancés, IA Insights & Chat, Weekly Debrief automatique, Score trader, Export PDF — essai 14 jours sans CB
+- PREMIUM (29€/mois ou 290€/an) : trades illimités, analytics avancés, IA Insights & Chat, Weekly Debrief automatique, Score trader, Export PDF — essai 14 jours sans CB
 
 ---
 
@@ -458,7 +458,7 @@ pnpm nx e2e  app-mytradingcoach-e2e
 
 ```
 mytradingcoach.app              ← Landing Astro (Vercel)
-app.mytradingcoach.app          ← App Angular (VPS OVH)
+app.mytradingcoach.app          ← App Angular (Vercel)
 api.mytradingcoach.app          ← NestJS (Docker interne)
 ```
 
@@ -466,7 +466,7 @@ api.mytradingcoach.app          ← NestJS (Docker interne)
 // environment.production.ts
 export const environment = {
   production: true,
-  apiUrl: 'https://app.mytradingcoach.app/api',
+  apiUrl: 'https://api.mytradingcoach.app',
   appName: 'MyTradingCoach',
   appUrl: 'https://app.mytradingcoach.app',
   landingUrl: 'https://mytradingcoach.app',
@@ -574,18 +574,21 @@ volumes:
 ### `apps/api-mytradingcoach/Dockerfile`
 ```dockerfile
 FROM node:22-alpine AS builder
+RUN npm install -g pnpm
 WORKDIR /app
-COPY package*.json nx.json tsconfig*.json ./
-RUN npm ci
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY apps/api-mytradingcoach/package.json ./apps/api-mytradingcoach/
+RUN pnpm install --frozen-lockfile
 COPY . .
-RUN npx nx build api-mytradingcoach --configuration=production
+RUN pnpm nx build api-mytradingcoach --configuration=production
 
 FROM node:22-alpine AS migrator
+RUN npm install -g pnpm
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci --omit=dev
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod
 COPY prisma ./prisma
-RUN npx prisma generate
+RUN pnpm dlx prisma generate
 
 FROM node:22-alpine AS runtime
 RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001
@@ -595,7 +598,7 @@ COPY --from=migrator --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=migrator --chown=nestjs:nodejs /app/prisma ./prisma
 USER nestjs
 EXPOSE 3000
-CMD ["sh", "-c", "npx prisma migrate deploy && node main.js"]
+CMD ["sh", "-c", "pnpm dlx prisma migrate deploy && node main.js"]
 ```
 
 ---
