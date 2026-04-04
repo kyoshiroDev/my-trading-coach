@@ -1,5 +1,17 @@
 ---
 import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  schema?: Record<string, unknown>;
+}
+
+const {
+  title = "MyTradingCoach — Journal de Trading IA & Coach",
+  description = "Journal de trading intelligent avec coach IA. Identifie tes patterns émotionnels, analyse tes performances et reçois ton Weekly Debrief chaque dimanche. Essai gratuit sans CB — hébergé en France 🇫🇷",
+  schema,
+} = Astro.props;
 ---
 
 <!DOCTYPE html>
@@ -9,21 +21,21 @@ import '../styles/global.css';
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- ═══ SEO PRIMARY ═══ -->
-  <title>MyTradingCoach — Journal de Trading IA & Coach</title>
-  <meta name="description" content="Journal de trading intelligent avec coach IA. Identifiez vos patterns émotionnels, recevez un debrief hebdomadaire. Gratuit pour démarrer." />
-  <link rel="canonical" href="https://mytradingcoach.app" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href="https://www.mytradingcoach.app/" />
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
   <meta name="author" content="MyTradingCoach" />
-  <meta name="keywords" content="journal de trading, journal trading crypto, journal trading forex, coach trading IA, psychologie trading, weekly debrief trading, tracker trades, améliorer trading" />
+  <meta name="keywords" content="journal de trading, journal trading crypto, journal trading forex, coach trading IA, psychologie du trading, weekly debrief trading, tracker trades, améliorer trading, carnet de trading, journal trading gratuit" />
   <meta name="geo.region" content="FR" />
   <meta name="language" content="fr" />
 
   <!-- ═══ OPEN GRAPH ═══ -->
-  <meta property="og:title" content="MyTradingCoach — Journal de Trading Intelligent avec Coach IA" />
-  <meta property="og:description" content="Identifiez vos patterns émotionnels. Comprenez quand et pourquoi vous déraillez. Debrief IA chaque semaine, automatiquement." />
+  <meta property="og:title" content="MyTradingCoach — Journal de Trading IA & Coach" />
+  <meta property="og:description" content="Journal de trading intelligent avec coach IA. Identifie tes patterns, analyse tes émotions, reçois ton Weekly Debrief chaque dimanche." />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://mytradingcoach.app" />
-  <meta property="og:image" content="https://mytradingcoach.app/og-image.svg" />
+  <meta property="og:url" content="https://www.mytradingcoach.app" />
+  <meta property="og:image" content="https://www.mytradingcoach.app/icon/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:locale" content="fr_FR" />
@@ -32,58 +44,55 @@ import '../styles/global.css';
   <!-- ═══ TWITTER CARD ═══ -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@mytradingcoach" />
-  <meta name="twitter:title" content="MyTradingCoach — Journal de Trading Intelligent avec Coach IA" />
-  <meta name="twitter:description" content="Identifiez vos patterns émotionnels. Comprenez quand et pourquoi vous déraillez. Debrief IA chaque semaine." />
-  <meta name="twitter:image" content="https://mytradingcoach.app/og-image.svg" />
+  <meta name="twitter:title" content="MyTradingCoach — Journal de Trading IA" />
+  <meta name="twitter:description" content="Journal de trading intelligent avec coach IA. Identifie tes patterns, analyse tes émotions, reçois ton Weekly Debrief chaque dimanche." />
+  <meta name="twitter:image" content="https://www.mytradingcoach.app/icon/og-image.png" />
 
   <!-- ═══ SCHEMA.ORG JSON-LD ═══ -->
-  <script type="application/ld+json">
-    [
+  {schema ? (
+    <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+  ) : (
+    <script type="application/ld+json" set:html={JSON.stringify([
       {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
         "name": "MyTradingCoach",
-        "description": "Journal de trading intelligent avec coach IA et debrief hebdomadaire automatique. Analyse comportementale et émotionnelle pour traders crypto, forex et actions.",
-        "url": "https://mytradingcoach.app",
         "applicationCategory": "FinanceApplication",
-        "applicationSubCategory": "Trading Journal",
         "operatingSystem": "Web",
-        "inLanguage": "fr-FR",
+        "url": "https://www.mytradingcoach.app",
+        "description": "Journal de trading intelligent avec coach IA, tracking émotionnel et Weekly Debrief automatique.",
+        "inLanguage": "fr",
         "offers": [
-          { "@type": "Offer", "name": "Gratuit", "price": "0", "priceCurrency": "EUR", "description": "Journal de trading jusqu'à 50 trades par mois" },
-          { "@type": "Offer", "name": "Premium", "price": "29", "priceCurrency": "EUR", "billingPeriod": "P1M", "description": "IA Insights, Analytics avancés, Weekly Debrief automatique" }
+          { "@type": "Offer", "name": "Gratuit", "price": "0", "priceCurrency": "EUR", "description": "50 trades/mois, stats de base, journal complet" },
+          { "@type": "Offer", "name": "Premium", "price": "29", "priceCurrency": "EUR", "priceSpecification": { "@type": "UnitPriceSpecification", "price": "29", "priceCurrency": "EUR", "unitCode": "MON" }, "description": "Trades illimités, IA Insights, Weekly Debrief, Analytics avancés" }
         ],
+        "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.8", "ratingCount": "24", "bestRating": "5" },
         "featureList": [
-          "Journal de trading intelligent",
-          "Tracking émotionnel par trade",
-          "Analyse IA des performances",
-          "Weekly Debrief automatique",
-          "Coach IA personnel",
-          "Analytics avancés",
-          "Score trader"
+          "Journal de trading avec tracking émotionnel",
+          "IA Insights powered by Claude",
+          "Weekly Debrief automatique chaque dimanche",
+          "Analytics avancés — win rate, drawdown, heatmap",
+          "Score trader — 5 axes de progression",
+          "Hébergé en France"
         ]
-      },
-      {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "MyTradingCoach",
-        "url": "https://mytradingcoach.app",
-        "inLanguage": "fr-FR",
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": "https://mytradingcoach.app/blog?q={search_term_string}",
-          "query-input": "required name=search_term_string"
-        }
       },
       {
         "@context": "https://schema.org",
         "@type": "Organization",
         "name": "MyTradingCoach",
-        "url": "https://mytradingcoach.app",
-        "logo": "https://mytradingcoach.app/logo.svg",
-        "description": "Journal de trading intelligent avec coach IA",
-        "foundingLocation": "France",
-        "sameAs": ["https://twitter.com/mytradingcoach"]
+        "url": "https://www.mytradingcoach.app",
+        "logo": "https://www.mytradingcoach.app/icon/og-image.png",
+        "contactPoint": { "@type": "ContactPoint", "email": "hello@mytradingcoach.app", "contactType": "customer support", "availableLanguage": "French" },
+        "address": { "@type": "PostalAddress", "addressCountry": "FR" },
+        "sameAs": []
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "MyTradingCoach",
+        "url": "https://www.mytradingcoach.app",
+        "inLanguage": "fr",
+        "description": "Journal de trading intelligent avec coach IA pour traders crypto et forex"
       },
       {
         "@context": "https://schema.org",
@@ -97,27 +106,27 @@ import '../styles/global.css';
           {
             "@type": "Question",
             "name": "Quels marchés sont supportés ?",
-            "acceptedAnswer": { "@type": "Answer", "text": "MyTradingCoach fonctionne pour tous les marchés : crypto (BTC, ETH, SOL), forex (EUR/USD, GBP/USD), actions (AAPL, TSLA) et indices. La saisie est manuelle, pas de connexion broker requise." }
-          },
-          {
-            "@type": "Question",
-            "name": "Combien coûte MyTradingCoach ?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Plan gratuit (50 trades/mois) et plan Premium à 29€/mois ou 290€/an. Essai Premium gratuit 14 jours, sans CB requise." }
+            "acceptedAnswer": { "@type": "Answer", "text": "MyTradingCoach fonctionne pour tous les marchés : crypto (BTC, ETH, SOL...), forex (EUR/USD, GBP/USD...), actions (AAPL, TSLA...) et indices. Tu saisis les données manuellement." }
           },
           {
             "@type": "Question",
             "name": "L'IA est-elle vraiment personnalisée ?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Oui. L'IA analyse uniquement tes données, pas des moyennes génériques. Plus tu l'utilises, plus les insights sont précis." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Oui. L'IA analyse uniquement tes données — pas des moyennes génériques. Plus tu l'utilises, plus les insights sont précis. Le debrief hebdomadaire référence tes trades spécifiques avec les heures et les montants réels." }
+          },
+          {
+            "@type": "Question",
+            "name": "Pourquoi 29 €/mois ?",
+            "acceptedAnswer": { "@type": "Answer", "text": "On a voulu un prix accessible pour tous les traders. Si l'IA t'aide à éviter un seul revenge trade à 300 €, MyTradingCoach est rentabilisé pour 13 mois." }
           },
           {
             "@type": "Question",
             "name": "Mes données sont-elles sécurisées ?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Tes données sont hébergées sur des serveurs OVH en France, chiffrées au repos et en transit. Nous ne vendons ni ne partageons jamais tes données de trading." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Tes données sont stockées sur des serveurs OVH en France, chiffrées au repos et en transit. Nous ne vendons ni ne partageons jamais tes données de trading. Tu peux exporter ou supprimer ton compte à tout moment." }
           }
         ]
       }
-    ]
-  </script>
+    ])} />
+  )}
 
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="apple-touch-icon" href="/logo.svg" />
