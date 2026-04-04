@@ -80,7 +80,7 @@ const ICON_COLOR_MAP: Record<InsightType, string> = {
       font-weight: 600;
       color: var(--text);
       margin-bottom: 4px;
-      font-family: var(--font-display);
+      font-family: var(--font-display, 'Syne', sans-serif);
     }
 
     .insight-desc {
@@ -94,7 +94,7 @@ const ICON_COLOR_MAP: Record<InsightType, string> = {
 
     .insight-tag {
       font-size: 10px;
-      font-family: var(--font-mono);
+      font-family: var(--font-mono, 'DM Mono', monospace);
       padding: 2px 8px;
       border-radius: 4px;
     }

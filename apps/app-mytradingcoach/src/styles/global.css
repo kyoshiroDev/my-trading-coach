@@ -13,7 +13,7 @@ html {
 body {
   background-color: var(--bg);
   color: var(--text);
-  font-family: var(--font-body);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
@@ -31,10 +31,10 @@ a {
 }
 
 button {
-  font-family: var(--font-body);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   cursor: pointer;
 }
 
 input, select, textarea {
-  font-family: var(--font-body);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
 }

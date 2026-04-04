@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -80,7 +80,27 @@ import { AuthService } from '../../core/auth/auth.service';
               </button>
             </div>
           </div>
-          <button type="submit" [disabled]="isLoading()" class="btn-submit">
+          <div class="form-group">
+            <label for="confirm-password">Confirmer le mot de passe</label>
+            <div class="input-wrapper" [class.input-error]="confirmMismatch()">
+              <input
+                id="confirm-password"
+                [type]="showConfirm() ? 'text' : 'password'"
+                [(ngModel)]="confirmPassword"
+                name="confirmPassword"
+                required
+                placeholder="••••••••"
+                autocomplete="new-password"
+              />
+              <button type="button" class="eye-btn" (click)="showConfirm.set(!showConfirm())">
+                <lucide-icon [img]="showConfirm() ? EyeOffIcon : EyeIcon" [size]="15" color="var(--text-2)" />
+              </button>
+            </div>
+            @if (confirmMismatch()) {
+              <span class="field-error">Les mots de passe ne correspondent pas</span>
+            }
+          </div>
+          <button type="submit" [disabled]="isLoading() || confirmMismatch()" class="btn-submit">
             @if (isLoading()) {
               <span class="spinner"></span> Création...
             } @else {
@@ -116,12 +136,18 @@ export class RegisterComponent {
   protected name = '';
   protected email = '';
   protected password = '';
+  protected confirmPassword = '';
   protected readonly isLoading = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly showPassword = signal(false);
+  protected readonly showConfirm = signal(false);
+  protected readonly confirmMismatch = computed(
+    () => !!this.confirmPassword && this.password !== this.confirmPassword
+  );
 
   onRegister() {
     if (!this.email || !this.password) return;
+    if (this.password !== this.confirmPassword) return;
     this.isLoading.set(true);
     this.error.set(null);
 

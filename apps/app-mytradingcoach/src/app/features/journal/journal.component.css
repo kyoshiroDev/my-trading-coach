@@ -13,7 +13,7 @@
   padding: 6px 14px;
   border-radius: 100px;
   font-size: 12px;
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, 'DM Mono', monospace);
   cursor: pointer;
   border: 1px solid var(--border);
   color: var(--text-2);
@@ -36,7 +36,7 @@
 
 .journal-table th {
   font-size: 10px;
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-weight: 500;
   color: var(--text-3);
   text-transform: uppercase;
@@ -67,8 +67,9 @@
 
 .journal-table tr:hover td { background: var(--bg-3); }
 
-.td-asset { font-weight: 600; font-family: var(--font-mono); color: var(--text); }
-.td-emotion { display: flex; align-items: center; gap: 6px; }
+.td-asset { font-weight: 600; font-family: var(--font-mono, 'DM Mono', monospace); color: var(--text); }
+.td-emotion { }
+.emotion-cell { display: inline-flex; align-items: center; gap: 6px; }
 .td-date { color: var(--text-3); font-size: 12px; }
 .emotion-text { font-size: 11px; color: var(--text-3); }
 
@@ -78,7 +79,7 @@
   justify-content: center;
   width: 46px; height: 22px;
   border-radius: 5px;
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.8px;
@@ -89,7 +90,7 @@
 
 .setup-badge {
   font-size: 11px;
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, 'DM Mono', monospace);
   background: var(--bg-3);
   border: 1px solid var(--border);
   padding: 2px 7px;
@@ -97,7 +98,7 @@
   color: var(--text-2);
 }
 
-.mono { font-family: var(--font-mono); font-size: 13px; }
+.mono { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 13px; }
 
 .btn-delete {
   background: none;
@@ -167,7 +168,7 @@
 }
 
 .modal-title {
-  font-family: var(--font-display);
+  font-family: var(--font-display, 'Syne', sans-serif);
   font-size: 17px;
   font-weight: 700;
   letter-spacing: -0.3px;
@@ -196,7 +197,7 @@
 
 .field label, .field .field-label {
   font-size: 11px;
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-weight: 500;
   color: var(--text-3);
   text-transform: uppercase;
@@ -210,7 +211,7 @@
   padding: 9px 12px;
   color: var(--text);
   font-size: 13.5px;
-  font-family: var(--font-body);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
   width: 100%;
@@ -249,7 +250,7 @@
 
 .emotion-btn span:last-child {
   font-size: 9px;
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, 'DM Mono', monospace);
   color: var(--text-3);
   letter-spacing: 0.5px;
 }
@@ -278,7 +279,7 @@
   padding: 9px 18px;
   font-size: 13px;
   cursor: pointer;
-  font-family: var(--font-body);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   transition: all 0.15s;
 }
 
@@ -293,7 +294,7 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  font-family: var(--font-body);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
   transition: all 0.15s;
 }

@@ -6,7 +6,7 @@
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
   padding: 0 28px;
-  height: 56px;
+  height: 77px;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -14,7 +14,7 @@
 }
 
 .page-title {
-  font-family: var(--font-display);
+  font-family: var(--font-display, 'Syne', sans-serif);
   font-size: 17px;
   font-weight: 700;
   letter-spacing: -0.3px;
@@ -39,7 +39,7 @@
   cursor: pointer;
   border: none;
   transition: all 0.15s;
-  font-family: var(--font-body);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
 }
 
 .btn-primary {

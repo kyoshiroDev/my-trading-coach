@@ -1,5 +1,5 @@
 import {
-  ChangeDetectionStrategy, ChangeDetectorRef, Component, effect, inject, input, output, signal,
+  ChangeDetectionStrategy, ChangeDetectorRef, Component, effect, inject, input, output,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TitleCasePipe } from '@angular/common';
@@ -192,7 +192,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
     }
 
     .modal-title {
-      font-family: var(--font-display);
+      font-family: var(--font-display, 'Syne', sans-serif);
       font-size: 16px;
       font-weight: 700;
       color: var(--text);
@@ -223,7 +223,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
 
     label, .field-label {
       font-size: 11px;
-      font-family: var(--font-mono);
+      font-family: var(--font-mono, 'DM Mono', monospace);
       color: var(--text-2);
       display: flex;
       align-items: center;
@@ -239,7 +239,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
       border-radius: 8px;
       padding: 9px 12px;
       font-size: 13px;
-      font-family: var(--font-body);
+      font-family: var(--font-body, 'DM Sans', sans-serif);
       outline: none;
       transition: border-color 0.15s;
       width: 100%;
@@ -273,7 +273,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
       border: none;
       border-radius: 5px;
       font-size: 11px;
-      font-family: var(--font-mono);
+      font-family: var(--font-mono, 'DM Mono', monospace);
       font-weight: 600;
       cursor: pointer;
       background: transparent;
@@ -298,7 +298,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
       background: var(--bg-2);
       color: var(--text-2);
       font-size: 11px;
-      font-family: var(--font-body);
+      font-family: var(--font-body, 'DM Sans', sans-serif);
       cursor: pointer;
       transition: all 0.15s;
       text-align: center;
@@ -328,7 +328,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
       border-radius: 8px;
       color: var(--text-2);
       font-size: 13px;
-      font-family: var(--font-body);
+      font-family: var(--font-body, 'DM Sans', sans-serif);
       cursor: pointer;
       transition: all 0.15s;
     }
@@ -343,7 +343,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
       color: #fff;
       font-size: 13px;
       font-weight: 600;
-      font-family: var(--font-body);
+      font-family: var(--font-body, 'DM Sans', sans-serif);
       cursor: pointer;
       transition: all 0.15s;
       display: flex;

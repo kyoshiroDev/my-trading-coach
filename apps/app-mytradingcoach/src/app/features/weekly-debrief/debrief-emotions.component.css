@@ -17,8 +17,8 @@
 
 .emotion-info { display: flex; flex-direction: column; }
 
-.emotion-name { font-size: 12px; color: var(--text); font-family: var(--font-display); font-weight: 500; }
-.emotion-count { font-size: 10px; color: var(--text-3); font-family: var(--font-mono); }
+.emotion-name { font-size: 12px; color: var(--text); font-family: var(--font-display, 'Syne', sans-serif); font-weight: 500; }
+.emotion-count { font-size: 10px; color: var(--text-3); font-family: var(--font-mono, 'DM Mono', monospace); }
 
 .emotion-right {
   flex: 1;
@@ -44,7 +44,7 @@
 
 .emotion-wr {
   font-size: 11px;
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-weight: 600;
   min-width: 36px;
   text-align: right;
@@ -52,7 +52,7 @@
 
 .emotion-pnl {
   font-size: 11px;
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, 'DM Mono', monospace);
   min-width: 60px;
   text-align: right;
 }

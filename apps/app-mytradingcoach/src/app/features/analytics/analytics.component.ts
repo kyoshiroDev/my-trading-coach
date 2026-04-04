@@ -1,12 +1,10 @@
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   ElementRef,
   ViewChild,
+  afterRenderEffect,
   computed,
-  effect,
-  signal,
 } from '@angular/core';
 import { httpResource } from '@angular/common/http';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
@@ -45,6 +43,31 @@ interface TopAsset { asset: string; winRate: number; pnl: number; count: number;
             @if (equityCurve().length === 0) {
               <div class="empty-chart">Aucun trade enregistré</div>
             }
+          </div>
+        </div>
+
+        <!-- Heatmap -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header">
+            <div class="card-title">Heatmap horaire — Win Rate par heure</div>
+          </div>
+          <div class="heatmap">
+            @for (h of allHours; track h) {
+              @let cell = hourMap()[h];
+              <div
+                class="heat-cell"
+                [style.background]="cell ? heatColor(cell.winRate) : 'var(--bg-3)'"
+                [title]="cell ? (h + 'h — ' + cell.winRate.toFixed(0) + '% (' + cell.count + ' trades)') : (h + 'h — aucun trade')"
+              >
+                <span class="heat-hour">{{ h }}h</span>
+                @if (cell) { <span class="heat-wr">{{ cell.winRate.toFixed(0) }}%</span> }
+              </div>
+            }
+          </div>
+          <div class="heatmap-legend">
+            <span>0%</span>
+            <div class="legend-gradient"></div>
+            <span>100%</span>
           </div>
         </div>
 
@@ -110,31 +133,6 @@ interface TopAsset { asset: string; winRate: number; pnl: number; count: number;
           </div>
         </div>
 
-        <!-- Heatmap -->
-        <div class="card" style="margin-bottom:16px">
-          <div class="card-header">
-            <div class="card-title">Heatmap horaire — Win Rate par heure</div>
-          </div>
-          <div class="heatmap">
-            @for (h of allHours; track h) {
-              @let cell = hourMap()[h];
-              <div
-                class="heat-cell"
-                [style.background]="cell ? heatColor(cell.winRate) : 'var(--bg-3)'"
-                [title]="cell ? (h + 'h — ' + cell.winRate.toFixed(0) + '% (' + cell.count + ' trades)') : (h + 'h — aucun trade')"
-              >
-                <span class="heat-hour">{{ h }}h</span>
-                @if (cell) { <span class="heat-wr">{{ cell.winRate.toFixed(0) }}%</span> }
-              </div>
-            }
-          </div>
-          <div class="heatmap-legend">
-            <span>0%</span>
-            <div class="legend-gradient"></div>
-            <span>100%</span>
-          </div>
-        </div>
-
         <!-- Top Assets -->
         <div class="card">
           <div class="card-header">
@@ -168,7 +166,7 @@ interface TopAsset { asset: string; winRate: number; pnl: number; count: number;
     </div>
   `,
 })
-export class AnalyticsComponent implements AfterViewInit {
+export class AnalyticsComponent {
   @ViewChild('equityCanvas') canvasRef!: ElementRef<HTMLCanvasElement>;
 
   protected readonly allHours = Array.from({ length: 24 }, (_, i) => i);
@@ -208,18 +206,12 @@ export class AnalyticsComponent implements AfterViewInit {
     this.topAssetsResource.isLoading()
   );
 
-  private readonly canDraw = signal(false);
-
   constructor() {
-    effect(() => {
-      if (!this.isLoading() && this.canDraw() && this.equityCurve().length >= 2) {
+    afterRenderEffect(() => {
+      if (!this.isLoading() && this.equityCurve().length >= 2) {
         this.drawEquityCurve();
       }
     });
-  }
-
-  ngAfterViewInit() {
-    this.canDraw.set(true);
   }
 
   protected heatColor(winRate: number): string {

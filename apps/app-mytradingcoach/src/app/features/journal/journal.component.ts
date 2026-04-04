@@ -92,8 +92,10 @@ type FilterSide = 'ALL' | 'LONG' | 'SHORT';
                   {{ trade.pnl !== null ? ((trade.pnl >= 0 ? '+' : '') + trade.pnl.toFixed(2)) : '—' }}
                 </td>
                 <td class="mono">{{ trade.riskReward !== null ? trade.riskReward.toFixed(2) : '—' }}</td>
-                <td class="td-emotion">
-                  {{ trade.emotion | emotionEmoji }} <span class="emotion-text">{{ trade.emotion }}</span>
+                <td>
+                  <span class="emotion-cell">
+                    {{ trade.emotion | emotionEmoji }} <span class="emotion-text">{{ trade.emotion }}</span>
+                  </span>
                 </td>
                 <td><span class="setup-badge">{{ trade.setup }}</span></td>
                 <td class="mono td-date">{{ trade.tradedAt | date:'dd/MM/yy' }}</td>

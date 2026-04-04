@@ -24,7 +24,7 @@
 }
 
 .panel-title {
-  font-family: var(--font-display);
+  font-family: var(--font-display, 'Syne', sans-serif);
   font-size: 14px;
   font-weight: 600;
   color: var(--text);
@@ -35,7 +35,7 @@
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, 'DM Mono', monospace);
   color: var(--blue-bright);
 }
 
@@ -74,7 +74,7 @@
   align-items: center;
   gap: 6px;
   font-size: 10px;
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, 'DM Mono', monospace);
   color: var(--blue-bright);
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -126,7 +126,7 @@
 
 .insight-tag {
   font-size: 10px;
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, 'DM Mono', monospace);
   padding: 2px 8px;
   border-radius: 4px;
   align-self: flex-start;
@@ -167,7 +167,7 @@
 }
 
 .chat-title {
-  font-family: var(--font-display);
+  font-family: var(--font-display, 'Syne', sans-serif);
   font-size: 14px;
   font-weight: 600;
   color: var(--text);
@@ -202,7 +202,7 @@
   font-size: 12px;
   cursor: pointer;
   text-align: left;
-  font-family: var(--font-body);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   transition: all 0.15s;
 }
 
@@ -270,7 +270,7 @@
   padding: 9px 12px;
   font-size: 13px;
   outline: none;
-  font-family: var(--font-body);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   transition: border-color 0.15s;
 }
 

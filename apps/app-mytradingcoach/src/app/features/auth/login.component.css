@@ -46,7 +46,7 @@
 
 /* ─── Headings ─── */
 .auth-title {
-  font-family: var(--font-display);
+  font-family: var(--font-display, 'Syne', sans-serif);
   font-size: 22px;
   font-weight: 700;
   color: var(--text);
@@ -84,7 +84,7 @@
 
 label {
   font-size: 12px;
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, 'DM Mono', monospace);
   color: var(--text-2);
   letter-spacing: 0.3px;
 }
@@ -96,7 +96,7 @@ input {
   border-radius: 8px;
   padding: 10px 14px;
   font-size: 14px;
-  font-family: var(--font-body);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   outline: none;
   transition: border-color 0.15s;
   width: 100%;
@@ -132,7 +132,7 @@ input::placeholder { color: var(--text-3); }
   padding: 12px;
   font-size: 14px;
   font-weight: 600;
-  font-family: var(--font-body);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   cursor: pointer;
   margin-top: 8px;
   transition: all 0.15s;
