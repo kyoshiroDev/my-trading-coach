@@ -7,7 +7,13 @@ export class UserStore {
 
   readonly user = this.auth.currentUser;
   readonly isAuthenticated = this.auth.isAuthenticated;
-  readonly isPremium = computed(() => this.user()?.plan === 'PREMIUM');
+  readonly isPremium = computed(() => {
+    const user = this.user();
+    if (!user) return false;
+    if (user.plan === 'PREMIUM') return true;
+    if (user.trialEndsAt && new Date() < new Date(user.trialEndsAt)) return true;
+    return false;
+  });
   readonly displayName = computed(() => this.user()?.name ?? this.user()?.email ?? '');
   readonly initials = computed(() => {
     const name = this.user()?.name ?? this.user()?.email ?? '?';

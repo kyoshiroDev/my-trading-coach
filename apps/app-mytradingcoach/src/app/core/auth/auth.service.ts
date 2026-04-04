@@ -9,6 +9,7 @@ export interface AuthUser {
   email: string;
   name?: string;
   plan: 'FREE' | 'PREMIUM';
+  trialEndsAt?: string | null;
 }
 
 interface AuthResponse {

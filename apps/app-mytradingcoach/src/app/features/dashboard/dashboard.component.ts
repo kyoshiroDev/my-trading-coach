@@ -64,6 +64,29 @@ const SETUP_COLORS_MAP: Record<string, string> = {
         <p class="greeting-sub">Voici un résumé de tes performances</p>
       </div>
 
+      <!-- Premium upsell banner -->
+      @if (!userStore.isPremium()) {
+        <div class="premium-banner">
+          <div class="premium-banner-left">
+            <span class="premium-banner-icon">⚡</span>
+            <div>
+              <div class="premium-banner-title">Passe à Premium</div>
+              <div class="premium-banner-sub">Analytics avancés, IA Insights, Weekly Debrief automatique</div>
+            </div>
+          </div>
+          <div class="premium-banner-right">
+            <div class="premium-banner-price">
+              <span class="premium-banner-amount">29€</span>
+              <span class="premium-banner-period">/mois</span>
+              <div class="premium-banner-trial">14 jours gratuits · sans CB</div>
+            </div>
+            <button class="premium-banner-btn" routerLink="/upgrade">
+              Essayer gratuitement
+            </button>
+          </div>
+        </div>
+      }
+
       <!-- Stats row -->
       @if (!isLoading()) {
         <div class="stats-row">
