@@ -5,5 +5,13 @@
       "source": "/_astro/(.*)",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     }
+  ],
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "mytradingcoach.app" }],
+      "destination": "https://www.mytradingcoach.app/$1",
+      "permanent": true
+    }
   ]
 }
