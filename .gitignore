@@ -56,4 +56,6 @@ __screenshots__/
 
 test-output
 .env
+.env.local
 .env.production
+SECRETS.md
