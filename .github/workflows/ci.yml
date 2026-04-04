@@ -30,7 +30,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
 
       - name: Install commitlint
@@ -54,7 +54,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
 
       - name: Cache pnpm store
@@ -125,7 +125,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
 
       - name: Cache pnpm store
@@ -173,7 +173,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: astro-dist
-          path: dist/apps/landing-mytradingcoach/
+          path: apps/landing-mytradingcoach/dist/
           retention-days: 1
 
   # ── Tests ─────────────────────────────────────────────────────────────────
@@ -225,7 +225,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
 
       - name: Cache pnpm store
