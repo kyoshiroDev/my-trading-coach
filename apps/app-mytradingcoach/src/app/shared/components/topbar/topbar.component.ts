@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, Output, EventEmitter } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { LucideAngularModule, Plus, Bell } from 'lucide-angular';
 
 @Component({
@@ -9,15 +9,15 @@ import { LucideAngularModule, Plus, Bell } from 'lucide-angular';
   styleUrl: './topbar.component.css',
   template: `
     <header class="topbar">
-      <h1 class="page-title">{{ title }}</h1>
+      <h1 class="page-title">{{ title() }}</h1>
       <div class="topbar-actions">
-        @if (showAddButton) {
+        @if (showAddButton()) {
           <button class="btn btn-primary" (click)="addClick.emit()">
             <lucide-icon [img]="PlusIcon" [size]="14" />
-            {{ addLabel }}
+            {{ addLabel() }}
           </button>
         }
-        @if (showNotifications) {
+        @if (showNotifications()) {
           <button class="btn btn-ghost icon-btn" title="Notifications">
             <lucide-icon [img]="BellIcon" [size]="16" />
           </button>
@@ -27,11 +27,11 @@ import { LucideAngularModule, Plus, Bell } from 'lucide-angular';
   `,
 })
 export class TopbarComponent {
-  @Input() title = '';
-  @Input() showAddButton = false;
-  @Input() addLabel = 'Nouveau';
-  @Input() showNotifications = false;
-  @Output() addClick = new EventEmitter<void>();
+  title = input('');
+  showAddButton = input(false);
+  addLabel = input('Nouveau');
+  showNotifications = input(false);
+  addClick = output<void>();
 
   protected readonly PlusIcon = Plus;
   protected readonly BellIcon = Bell;

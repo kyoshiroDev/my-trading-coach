@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 
 export interface EmotionDebrief {
@@ -27,7 +27,7 @@ function emotionColor(winRate: number): string {
   styleUrl: './debrief-emotions.component.css',
   template: `
     <div class="emotions-list">
-      @for (e of emotions; track e.emotion) {
+      @for (e of emotions(); track e.emotion) {
         <div class="emotion-row">
           <div class="emotion-left">
             <span class="emotion-emoji">{{ EMOTION_EMOJIS[e.emotion] || '😐' }}</span>
@@ -47,14 +47,14 @@ function emotionColor(winRate: number): string {
           </span>
         </div>
       }
-      @if (!emotions.length) {
+      @if (!emotions().length) {
         <p class="empty">Pas assez de données</p>
       }
     </div>
   `,
 })
 export class DebriefEmotionsComponent {
-  @Input({ required: true }) emotions: EmotionDebrief[] = [];
+  emotions = input.required<EmotionDebrief[]>();
 
   protected readonly EMOTION_EMOJIS = EMOTION_EMOJIS;
   protected color(winRate: number): string { return emotionColor(winRate); }

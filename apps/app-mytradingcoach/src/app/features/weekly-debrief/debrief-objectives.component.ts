@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 export interface Objective {
   title: string;
@@ -13,7 +13,7 @@ export interface Objective {
   styleUrl: './debrief-objectives.component.css',
   template: `
     <div class="objectives">
-      @for (obj of objectives; track obj.title; let i = $index) {
+      @for (obj of objectives(); track obj.title; let i = $index) {
         <div class="obj-row">
           <div class="obj-num" [class.done]="obj.done">{{ i + 1 }}</div>
           <div class="obj-content">
@@ -25,12 +25,12 @@ export interface Objective {
           }
         </div>
       }
-      @if (!objectives.length) {
+      @if (!objectives().length) {
         <p class="empty">Aucun objectif défini</p>
       }
     </div>
   `,
 })
 export class DebriefObjectivesComponent {
-  @Input({ required: true }) objectives: Objective[] = [];
+  objectives = input.required<Objective[]>();
 }

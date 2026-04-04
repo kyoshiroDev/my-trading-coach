@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, linkedSignal, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, httpResource } from '@angular/common/http';
 import { LucideAngularModule, CalendarDays, RefreshCw, Download } from 'lucide-angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { environment } from '../../../environments/environment';
@@ -175,32 +176,34 @@ function badgeClass(badge: string): string {
     </div>
   `,
 })
-export class DebriefComponent implements OnInit {
+export class DebriefComponent {
   private readonly http = inject(HttpClient);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly CalendarDaysIcon = CalendarDays;
   protected readonly RefreshCwIcon = RefreshCw;
   protected readonly DownloadIcon = Download;
 
-  protected readonly debrief = signal<WeeklyDebrief | null>(null);
-  protected readonly isLoading = signal(true);
+  private readonly debriefResource = httpResource<{ data: WeeklyDebrief | null }>(
+    () => `${environment.apiUrl}/debrief/current`
+  );
+
+  protected readonly debrief = linkedSignal<WeeklyDebrief | null>(
+    () => this.debriefResource.value()?.data ?? null
+  );
+  protected readonly isLoading = computed(() => this.debriefResource.isLoading());
   protected readonly isGenerating = signal(false);
   protected readonly error = signal<string | null>(null);
 
   protected getBadgeClass(badge: string): string { return badgeClass(badge); }
 
-  ngOnInit() {
-    this.http.get<{ data: WeeklyDebrief | null }>(`${environment.apiUrl}/debrief/current`).subscribe({
-      next: (res) => { this.debrief.set(res.data); this.isLoading.set(false); },
-      error: () => this.isLoading.set(false),
-    });
-  }
-
   generateDebrief() {
     if (this.isGenerating()) return;
     this.isGenerating.set(true);
     this.error.set(null);
-    this.http.post<{ data: WeeklyDebrief }>(`${environment.apiUrl}/debrief/generate`, {}).subscribe({
+    this.http.post<{ data: WeeklyDebrief }>(`${environment.apiUrl}/debrief/generate`, {})
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: (res) => { this.debrief.set(res.data); this.isGenerating.set(false); },
       error: (err) => {
         this.error.set(err.error?.message ?? 'Erreur lors de la génération du débrief');

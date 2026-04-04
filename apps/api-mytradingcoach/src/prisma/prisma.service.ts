@@ -1,10 +1,12 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(PrismaService.name);
+
   constructor() {
     const pool = new Pool({
       connectionString:
@@ -15,7 +17,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       max: 10,
     });
     pool.on('error', (err) => {
-      console.error('[PrismaService] idle client error:', err.message);
+      this.logger.error(`idle client error: ${err.message}`);
     });
     const adapter = new PrismaPg(pool);
     super({ adapter } as ConstructorParameters<typeof PrismaClient>[0]);

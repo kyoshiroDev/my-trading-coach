@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   UnauthorizedException,
@@ -60,6 +61,22 @@ export class AuthService {
 
     const tokens = await this.generateTokens(user.id, user.email);
     return { ...tokens, user };
+  }
+
+  async startTrial(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('Utilisateur introuvable');
+    if (user.trialUsed) throw new BadRequestException('Essai déjà utilisé');
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+        trialUsed: true,
+      },
+      select: { id: true, email: true, name: true, plan: true, trialEndsAt: true, trialUsed: true },
+    });
+    return updated;
   }
 
   private async generateTokens(userId: string, email: string) {

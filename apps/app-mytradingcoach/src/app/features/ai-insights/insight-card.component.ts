@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { LucideAngularModule, Lightbulb, AlertCircle, Info, TrendingUp } from 'lucide-angular';
 
 export type InsightType = 'tip' | 'warning' | 'info' | 'strength';
@@ -38,16 +38,16 @@ const ICON_COLOR_MAP: Record<InsightType, string> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="insight-item">
-      <div class="insight-icon" [style.background]="iconBg">
-        <lucide-icon [img]="icon" [size]="16" [color]="iconColor" />
+      <div class="insight-icon" [style.background]="iconBg()">
+        <lucide-icon [img]="icon()" [size]="16" [color]="iconColor()" />
       </div>
       <div class="insight-content">
-        <div class="insight-title">{{ insight.title }}</div>
-        <p class="insight-desc">{{ insight.description }}</p>
-        @if (insight.tags?.length) {
+        <div class="insight-title">{{ insight().title }}</div>
+        <p class="insight-desc">{{ insight().description }}</p>
+        @if (insight().tags?.length) {
           <div class="insight-tags">
-            @for (tag of insight.tags!; track tag) {
-              <span class="insight-tag" [class]="insight.type">{{ tag }}</span>
+            @for (tag of insight().tags!; track tag) {
+              <span class="insight-tag" [class]="insight().type">{{ tag }}</span>
             }
           </div>
         }
@@ -106,9 +106,9 @@ const ICON_COLOR_MAP: Record<InsightType, string> = {
   `],
 })
 export class InsightCardComponent {
-  @Input({ required: true }) insight!: Insight;
+  insight = input.required<Insight>();
 
-  get icon() { return ICON_MAP[this.insight.type]; }
-  get iconBg() { return COLOR_MAP[this.insight.type]; }
-  get iconColor() { return ICON_COLOR_MAP[this.insight.type]; }
+  protected readonly icon = computed(() => ICON_MAP[this.insight().type]);
+  protected readonly iconBg = computed(() => COLOR_MAP[this.insight().type]);
+  protected readonly iconColor = computed(() => ICON_COLOR_MAP[this.insight().type]);
 }

@@ -3,14 +3,15 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  OnInit,
   ViewChild,
+  computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
 import { TradesStore } from '../../core/stores/trades.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
@@ -155,7 +156,6 @@ const SETUP_COLORS_MAP: Record<string, string> = {
                 <circle cx="50" cy="50" r="38" fill="none"
                   [attr.stroke]="seg.color"
                   stroke-width="12"
-                        
                   [attr.stroke-dasharray]="seg.dash"
                   [attr.stroke-dashoffset]="seg.offset"
                   stroke-linecap="round"
@@ -254,18 +254,38 @@ const SETUP_COLORS_MAP: Record<string, string> = {
     </div>
   `,
 })
-export class DashboardComponent implements OnInit, AfterViewInit {
+export class DashboardComponent implements AfterViewInit {
   @ViewChild('equityCanvas') canvasRef?: ElementRef<HTMLCanvasElement>;
 
   protected readonly userStore = inject(UserStore);
   protected readonly tradesStore = inject(TradesStore);
-  private readonly http = inject(HttpClient);
 
-  protected readonly summary = signal<Summary | null>(null);
-  protected readonly isLoading = signal(true);
-  protected readonly equityCurve = signal<EquityPoint[]>([]);
-  protected readonly bySetup = signal<BySetup[]>([]);
-  protected readonly byEmotion = signal<ByEmotion[]>([]);
+  private readonly summaryResource = httpResource<{ data: Summary }>(
+    () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/summary` : undefined
+  );
+  private readonly equityCurveResource = httpResource<{ data: EquityPoint[] }>(
+    () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/equity-curve` : undefined
+  );
+  private readonly bySetupResource = httpResource<{ data: BySetup[] }>(
+    () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/by-setup` : undefined
+  );
+  private readonly byEmotionResource = httpResource<{ data: ByEmotion[] }>(
+    () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/by-emotion` : undefined
+  );
+
+  protected readonly summary = computed(() => this.summaryResource.value()?.data ?? null);
+  protected readonly equityCurve = computed(() => this.equityCurveResource.value()?.data ?? []);
+  protected readonly bySetup = computed(() => this.bySetupResource.value()?.data ?? []);
+  protected readonly byEmotion = computed(() => this.byEmotionResource.value()?.data ?? []);
+
+  protected readonly isLoading = computed(() =>
+    this.userStore.isPremium() && (
+      this.summaryResource.isLoading() ||
+      this.equityCurveResource.isLoading() ||
+      this.bySetupResource.isLoading() ||
+      this.byEmotionResource.isLoading()
+    )
+  );
 
   protected readonly DEFAULT_SETUPS = [
     { name: 'Breakout', color: '#10b981' },
@@ -281,47 +301,19 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     { emotion: 'FOCUSED', label: '🎯 Focus optimal', pct: 52, color: '#10b981' },
   ];
 
-  private canDraw = false;
+  private readonly canDraw = signal(false);
 
-  ngOnInit() {
+  constructor() {
     this.tradesStore.loadTrades({ limit: '6' });
-
-    if (this.userStore.isPremium()) {
-      const base = environment.apiUrl;
-      let pending = 4;
-      const done = () => {
-        if (--pending === 0) {
-          this.isLoading.set(false);
-          if (this.canDraw) this.drawEquityCurve();
-        }
-      };
-
-      this.http.get<{ data: Summary }>(`${base}/analytics/summary`).subscribe({
-        next: (res) => { this.summary.set(res.data); done(); },
-        error: () => done(),
-      });
-      this.http.get<{ data: EquityPoint[] }>(`${base}/analytics/equity-curve`).subscribe({
-        next: (res) => { this.equityCurve.set(res.data); done(); },
-        error: () => done(),
-      });
-      this.http.get<{ data: BySetup[] }>(`${base}/analytics/by-setup`).subscribe({
-        next: (res) => { this.bySetup.set(res.data); done(); },
-        error: () => done(),
-      });
-      this.http.get<{ data: ByEmotion[] }>(`${base}/analytics/by-emotion`).subscribe({
-        next: (res) => { this.byEmotion.set(res.data); done(); },
-        error: () => done(),
-      });
-    } else {
-      this.isLoading.set(false);
-    }
+    effect(() => {
+      if (!this.isLoading() && this.canDraw() && this.equityCurve().length > 0) {
+        this.drawEquityCurve();
+      }
+    });
   }
 
   ngAfterViewInit() {
-    this.canDraw = true;
-    if (!this.isLoading() && this.equityCurve().length > 0) {
-      this.drawEquityCurve();
-    }
+    this.canDraw.set(true);
   }
 
   protected donutSegments() {

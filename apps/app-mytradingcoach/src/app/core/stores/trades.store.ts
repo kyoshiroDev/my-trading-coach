@@ -1,4 +1,5 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
@@ -31,6 +32,7 @@ interface TradesPage {
 @Injectable({ providedIn: 'root' })
 export class TradesStore {
   private readonly http = inject(HttpClient);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly baseUrl = `${environment.apiUrl}/trades`;
 
   readonly trades$ = signal<Trade[]>([]);
@@ -53,18 +55,20 @@ export class TradesStore {
     this.error$.set(null);
 
     const params = new URLSearchParams(filters ?? {});
-    this.http.get<{ data: TradesPage }>(`${this.baseUrl}?${params}`).subscribe({
-      next: (res) => {
-        this.trades$.set(res.data.data);
-        this.nextCursor$.set(res.data.nextCursor);
-        this.hasNextPage$.set(res.data.hasNextPage);
-        this.isLoading$.set(false);
-      },
-      error: (err) => {
-        this.error$.set(err.message);
-        this.isLoading$.set(false);
-      },
-    });
+    this.http.get<{ data: TradesPage }>(`${this.baseUrl}?${params}`)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.trades$.set(res.data.data);
+          this.nextCursor$.set(res.data.nextCursor);
+          this.hasNextPage$.set(res.data.hasNextPage);
+          this.isLoading$.set(false);
+        },
+        error: (err) => {
+          this.error$.set(err.message);
+          this.isLoading$.set(false);
+        },
+      });
   }
 
   // Charge la page suivante (APPEND — ne remplace pas)
@@ -74,18 +78,20 @@ export class TradesStore {
 
     this.isLoadingMore$.set(true);
     const params = new URLSearchParams({ cursor });
-    this.http.get<{ data: TradesPage }>(`${this.baseUrl}?${params}`).subscribe({
-      next: (res) => {
-        this.trades$.update((existing) => [...existing, ...res.data.data]);
-        this.nextCursor$.set(res.data.nextCursor);
-        this.hasNextPage$.set(res.data.hasNextPage);
-        this.isLoadingMore$.set(false);
-      },
-      error: (err) => {
-        this.error$.set(err.message);
-        this.isLoadingMore$.set(false);
-      },
-    });
+    this.http.get<{ data: TradesPage }>(`${this.baseUrl}?${params}`)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.trades$.update((existing) => [...existing, ...res.data.data]);
+          this.nextCursor$.set(res.data.nextCursor);
+          this.hasNextPage$.set(res.data.hasNextPage);
+          this.isLoadingMore$.set(false);
+        },
+        error: (err) => {
+          this.error$.set(err.message);
+          this.isLoadingMore$.set(false);
+        },
+      });
   }
 
   addTrade(trade: Trade) {

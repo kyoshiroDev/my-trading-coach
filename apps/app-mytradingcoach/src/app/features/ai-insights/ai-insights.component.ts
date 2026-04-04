@@ -2,11 +2,13 @@ import {
   AfterViewChecked,
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   ViewChild,
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { LucideAngularModule, Sparkles, AlertTriangle, Info, Lightbulb, AlertCircle, Send } from 'lucide-angular';
@@ -182,6 +184,7 @@ export class AiInsightsComponent implements AfterViewChecked {
   ];
 
   private readonly http = inject(HttpClient);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly insights = signal<InsightsResponse | null>(null);
   protected readonly insightsLoading = signal(false);
@@ -198,7 +201,9 @@ export class AiInsightsComponent implements AfterViewChecked {
     if (this.insightsLoading()) return;
     this.insightsLoading.set(true);
     this.insightsError.set(null);
-    this.http.post<{ data: InsightsResponse }>(`${environment.apiUrl}/ai/insights`, {}).subscribe({
+    this.http.post<{ data: InsightsResponse }>(`${environment.apiUrl}/ai/insights`, {})
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: (res) => { this.insights.set(res.data); this.insightsLoading.set(false); },
       error: (err) => {
         this.insightsError.set(err.error?.message ?? 'Erreur lors de l\'analyse IA');
@@ -221,7 +226,7 @@ export class AiInsightsComponent implements AfterViewChecked {
     this.http.post<{ data: { response: string } }>(`${environment.apiUrl}/ai/chat`, {
       message: msg,
       history: history.slice(-6),
-    }).subscribe({
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.chatHistory.update((h) => [...h, { role: 'assistant', content: res.data.response }]);
         this.chatLoading.set(false);

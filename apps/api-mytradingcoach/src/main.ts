@@ -1,14 +1,15 @@
-import { ConsoleLogger, ValidationPipe } from '@nestjs/common';
+import { ConsoleLogger, Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 import { AppModule } from './app/app.module';
 
 const REQUIRED_ENV_VARS = ['JWT_SECRET', 'JWT_REFRESH_SECRET', 'ANTHROPIC_API_KEY', 'DATABASE_URL'];
+const logger = new Logger('Bootstrap');
 
 function validateEnv() {
   const missing = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
   if (missing.length > 0) {
-    console.error(`[Bootstrap] Variables d'environnement manquantes : ${missing.join(', ')}`);
+    logger.error(`Variables d'environnement manquantes : ${missing.join(', ')}`);
     process.exit(1);
   }
 }
@@ -40,7 +41,7 @@ async function bootstrap() {
 
   const port = process.env['PORT'] ?? 3000;
   await app.listen(port);
-  console.log(`Application running on: http://localhost:${port}/api`);
+  logger.log(`Application running on: http://localhost:${port}/api`);
 }
 
 bootstrap();

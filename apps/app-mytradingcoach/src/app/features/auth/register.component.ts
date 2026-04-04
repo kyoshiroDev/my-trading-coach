@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { LucideAngularModule, Eye, EyeOff, Check } from 'lucide-angular';
@@ -100,6 +101,7 @@ import { AuthService } from '../../core/auth/auth.service';
 export class RegisterComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly EyeIcon = Eye;
   protected readonly EyeOffIcon = EyeOff;
@@ -123,7 +125,7 @@ export class RegisterComponent {
     this.isLoading.set(true);
     this.error.set(null);
 
-    this.auth.register(this.email, this.password, this.name || undefined).subscribe({
+    this.auth.register(this.email, this.password, this.name || undefined).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => this.router.navigate(['/dashboard']),
       error: (err) => {
         this.error.set(err.error?.message ?? "Erreur lors de l'inscription");

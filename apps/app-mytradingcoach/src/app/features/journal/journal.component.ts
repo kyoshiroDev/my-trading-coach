@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -7,6 +8,7 @@ import { TradesStore, Trade } from '../../core/stores/trades.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PnlColorPipe } from '../../shared/pipes/pnl-color.pipe';
 import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
+import { CreateTradeSchema } from '../../core/schemas/trade.schema';
 import { environment } from '../../../environments/environment';
 
 const EMOTIONS = ['CONFIDENT', 'FOCUSED', 'NEUTRAL', 'STRESSED', 'FEAR', 'REVENGE'];
@@ -215,6 +217,7 @@ type FilterSide = 'ALL' | 'LONG' | 'SHORT';
 export class JournalComponent implements OnInit {
   protected readonly tradesStore = inject(TradesStore);
   private readonly http = inject(HttpClient);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly EMOTIONS = EMOTIONS;
   protected readonly SETUPS = SETUPS;
@@ -254,11 +257,17 @@ export class JournalComponent implements OnInit {
   }
 
   submitTrade() {
-    if (!this.form.asset || !this.form.entry) return;
+    const result = CreateTradeSchema.safeParse(this.form);
+    if (!result.success) {
+      this.modalError.set(result.error.issues[0]?.message ?? 'Formulaire invalide');
+      return;
+    }
     this.isSubmitting.set(true);
     this.modalError.set(null);
 
-    this.http.post<{ data: Trade }>(`${environment.apiUrl}/trades`, this.form).subscribe({
+    this.http.post<{ data: Trade }>(`${environment.apiUrl}/trades`, result.data)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: (res) => {
         this.tradesStore.addTrade(res.data);
         this.closeModal();
@@ -272,7 +281,9 @@ export class JournalComponent implements OnInit {
   }
 
   deleteTrade(id: string) {
-    this.http.delete(`${environment.apiUrl}/trades/${id}`).subscribe({
+    this.http.delete(`${environment.apiUrl}/trades/${id}`)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: () => this.tradesStore.removeTrade(id),
     });
   }

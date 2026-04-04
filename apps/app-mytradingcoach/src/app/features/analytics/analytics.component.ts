@@ -3,12 +3,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  OnInit,
   ViewChild,
-  inject,
+  computed,
+  effect,
   signal,
 } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { httpResource } from '@angular/common/http';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
 import { EmotionColorPipe } from '../../shared/pipes/emotion-color.pipe';
@@ -168,50 +168,58 @@ interface TopAsset { asset: string; winRate: number; pnl: number; count: number;
     </div>
   `,
 })
-export class AnalyticsComponent implements OnInit, AfterViewInit {
+export class AnalyticsComponent implements AfterViewInit {
   @ViewChild('equityCanvas') canvasRef!: ElementRef<HTMLCanvasElement>;
 
   protected readonly allHours = Array.from({ length: 24 }, (_, i) => i);
   protected readonly Math = Math;
 
-  private readonly http = inject(HttpClient);
-  protected readonly isLoading = signal(true);
-  protected readonly byEmotion = signal<ByEmotion[]>([]);
-  protected readonly bySetup = signal<BySetup[]>([]);
-  protected readonly equityCurve = signal<EquityPoint[]>([]);
-  protected readonly topAssets = signal<TopAsset[]>([]);
-  protected readonly hourMap = signal<Record<number, ByHour>>({});
+  private readonly byEmotionResource = httpResource<{ data: ByEmotion[] }>(
+    () => `${environment.apiUrl}/analytics/by-emotion`
+  );
+  private readonly bySetupResource = httpResource<{ data: BySetup[] }>(
+    () => `${environment.apiUrl}/analytics/by-setup`
+  );
+  private readonly byHourResource = httpResource<{ data: ByHour[] }>(
+    () => `${environment.apiUrl}/analytics/by-hour`
+  );
+  private readonly equityCurveResource = httpResource<{ data: EquityPoint[] }>(
+    () => `${environment.apiUrl}/analytics/equity-curve`
+  );
+  private readonly topAssetsResource = httpResource<{ data: TopAsset[] }>(
+    () => `${environment.apiUrl}/analytics/top-assets`
+  );
 
-  private canDraw = false;
+  protected readonly byEmotion = computed(() => this.byEmotionResource.value()?.data ?? []);
+  protected readonly bySetup = computed(() => this.bySetupResource.value()?.data ?? []);
+  protected readonly topAssets = computed(() => this.topAssetsResource.value()?.data ?? []);
+  protected readonly equityCurve = computed(() => this.equityCurveResource.value()?.data ?? []);
+  protected readonly hourMap = computed<Record<number, ByHour>>(() => {
+    const map: Record<number, ByHour> = {};
+    (this.byHourResource.value()?.data ?? []).forEach((h) => (map[h.hour] = h));
+    return map;
+  });
 
-  ngOnInit() {
-    const base = environment.apiUrl;
-    let remaining = 5;
-    const done = () => {
-      if (--remaining === 0) {
-        this.isLoading.set(false);
-        if (this.canDraw) this.drawEquityCurve();
+  protected readonly isLoading = computed(() =>
+    this.byEmotionResource.isLoading() ||
+    this.bySetupResource.isLoading() ||
+    this.byHourResource.isLoading() ||
+    this.equityCurveResource.isLoading() ||
+    this.topAssetsResource.isLoading()
+  );
+
+  private readonly canDraw = signal(false);
+
+  constructor() {
+    effect(() => {
+      if (!this.isLoading() && this.canDraw() && this.equityCurve().length >= 2) {
+        this.drawEquityCurve();
       }
-    };
-
-    this.http.get<{ data: ByEmotion[] }>(`${base}/analytics/by-emotion`).subscribe({ next: (r) => { this.byEmotion.set(r.data); done(); }, error: done });
-    this.http.get<{ data: BySetup[] }>(`${base}/analytics/by-setup`).subscribe({ next: (r) => { this.bySetup.set(r.data); done(); }, error: done });
-    this.http.get<{ data: ByHour[] }>(`${base}/analytics/by-hour`).subscribe({
-      next: (r) => {
-        const map: Record<number, ByHour> = {};
-        r.data.forEach((h) => (map[h.hour] = h));
-        this.hourMap.set(map);
-        done();
-      },
-      error: done,
     });
-    this.http.get<{ data: EquityPoint[] }>(`${base}/analytics/equity-curve`).subscribe({ next: (r) => { this.equityCurve.set(r.data); done(); }, error: done });
-    this.http.get<{ data: TopAsset[] }>(`${base}/analytics/top-assets`).subscribe({ next: (r) => { this.topAssets.set(r.data); done(); }, error: done });
   }
 
   ngAfterViewInit() {
-    this.canDraw = true;
-    if (!this.isLoading()) this.drawEquityCurve();
+    this.canDraw.set(true);
   }
 
   protected heatColor(winRate: number): string {

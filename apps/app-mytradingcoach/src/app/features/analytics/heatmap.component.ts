@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { HourStat } from '../../core/api/analytics.api';
 
 function heatColor(winRate: number, count: number): string {
@@ -78,12 +78,12 @@ function heatColor(winRate: number, count: number): string {
   `],
 })
 export class HeatmapComponent {
-  @Input() stats: HourStat[] = [];
+  stats = input<HourStat[]>([]);
 
   protected readonly hours = Array.from({ length: 24 }, (_, i) => i);
 
   protected statByHour(h: number): HourStat | undefined {
-    return this.stats.find((s) => s.hour === h);
+    return this.stats().find((s) => s.hour === h);
   }
 
   protected cellColor(h: number): string {

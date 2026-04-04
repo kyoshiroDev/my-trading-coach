@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, computed } from '@angular/core';
+import { httpResource } from '@angular/common/http';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { environment } from '../../../environments/environment';
 
@@ -191,11 +191,13 @@ const LOCKED_BADGES = [
     </div>
   `,
 })
-export class ScoringComponent implements OnInit {
-  private readonly http = inject(HttpClient);
+export class ScoringComponent {
+  private readonly tradesResource = httpResource<{ data: { data: Trade[] } }>(
+    () => `${environment.apiUrl}/trades?limit=100`
+  );
 
-  protected readonly isLoading = signal(true);
-  private readonly trades = signal<Trade[]>([]);
+  protected readonly isLoading = computed(() => this.tradesResource.isLoading());
+  private readonly trades = computed(() => this.tradesResource.value()?.data.data ?? []);
 
   protected readonly bars = computed(() => computeScore(this.trades()));
   protected readonly globalScore = computed(() => {
@@ -218,12 +220,5 @@ export class ScoringComponent implements OnInit {
     const circumference = 2 * Math.PI * 65;
     const filled = (this.globalScore() / 100) * circumference;
     return `${filled} ${circumference - filled}`;
-  }
-
-  ngOnInit() {
-    this.http.get<{ data: { data: Trade[] } }>(`${environment.apiUrl}/trades?limit=100`).subscribe({
-      next: (res) => { this.trades.set(res.data.data); this.isLoading.set(false); },
-      error: () => this.isLoading.set(false),
-    });
   }
 }

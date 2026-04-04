@@ -1,11 +1,12 @@
 import {
-  ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, signal,
+  ChangeDetectionStrategy, ChangeDetectorRef, Component, effect, inject, input, output, signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TitleCasePipe } from '@angular/common';
 import { LucideAngularModule, X } from 'lucide-angular';
 import { Trade } from '../../core/stores/trades.store';
 import { CreateTradeDto } from '../../core/api/trades.api';
+import { CreateTradeSchema } from '../../core/schemas/trade.schema';
 
 const EMOTIONS: Trade['emotion'][] = ['CONFIDENT', 'FOCUSED', 'NEUTRAL', 'STRESSED', 'FEAR', 'REVENGE'];
 const SETUPS: Trade['setup'][] = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS'];
@@ -27,7 +28,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
         <div class="modal" role="dialog" aria-modal="true">
           <!-- Header -->
           <div class="modal-header">
-            <h2 class="modal-title">{{ editTrade ? 'Modifier le trade' : 'Nouveau trade' }}</h2>
+            <h2 class="modal-title">{{ editTrade() ? 'Modifier le trade' : 'Nouveau trade' }}</h2>
             <button class="close-btn" (click)="dismissed.emit()">
               <lucide-icon [img]="XIcon" [size]="16" />
             </button>
@@ -143,7 +144,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
                 @if (isSaving()) {
                   <span class="spinner"></span> Enregistrement...
                 } @else {
-                  {{ editTrade ? 'Modifier' : 'Enregistrer' }}
+                  {{ editTrade() ? 'Modifier' : 'Enregistrer' }}
                 }
               </button>
             </div>
@@ -365,12 +366,12 @@ const EMOTION_EMOJIS: Record<string, string> = {
     @keyframes spin { to { transform: rotate(360deg); } }
   `],
 })
-export class TradeFormComponent implements OnChanges {
-  @Input() open = signal(false);
-  @Input() editTrade: Trade | null = null;
-  @Input() isSaving = signal(false);
-  @Output() dismissed = new EventEmitter<void>();
-  @Output() formSave = new EventEmitter<CreateTradeDto>();
+export class TradeFormComponent {
+  open = input(false);
+  editTrade = input<Trade | null>(null);
+  isSaving = input(false);
+  dismissed = output<void>();
+  formSave = output<CreateTradeDto>();
 
   protected readonly XIcon = X;
   protected readonly EMOTIONS = EMOTIONS;
@@ -379,28 +380,33 @@ export class TradeFormComponent implements OnChanges {
   protected readonly TIMEFRAMES = TIMEFRAMES;
   protected readonly EMOTION_EMOJIS = EMOTION_EMOJIS;
 
+  private readonly cdr = inject(ChangeDetectorRef);
   protected form: Partial<CreateTradeDto & { pnl?: number; riskReward?: number }> = this.emptyForm();
 
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes['editTrade'] && this.editTrade) {
-      this.form = {
-        asset: this.editTrade.asset,
-        side: this.editTrade.side,
-        entry: this.editTrade.entry,
-        exit: this.editTrade.exit ?? undefined,
-        stopLoss: this.editTrade.stopLoss ?? undefined,
-        takeProfit: this.editTrade.takeProfit ?? undefined,
-        pnl: this.editTrade.pnl ?? undefined,
-        riskReward: this.editTrade.riskReward ?? undefined,
-        emotion: this.editTrade.emotion as CreateTradeDto['emotion'],
-        setup: this.editTrade.setup as CreateTradeDto['setup'],
-        session: this.editTrade.session as CreateTradeDto['session'],
-        timeframe: this.editTrade.timeframe,
-        notes: this.editTrade.notes ?? undefined,
-      };
-    } else if (changes['editTrade'] && !this.editTrade) {
-      this.form = this.emptyForm();
-    }
+  constructor() {
+    effect(() => {
+      const t = this.editTrade();
+      if (t) {
+        this.form = {
+          asset: t.asset,
+          side: t.side,
+          entry: t.entry,
+          exit: t.exit ?? undefined,
+          stopLoss: t.stopLoss ?? undefined,
+          takeProfit: t.takeProfit ?? undefined,
+          pnl: t.pnl ?? undefined,
+          riskReward: t.riskReward ?? undefined,
+          emotion: t.emotion as CreateTradeDto['emotion'],
+          setup: t.setup as CreateTradeDto['setup'],
+          session: t.session as CreateTradeDto['session'],
+          timeframe: t.timeframe,
+          notes: t.notes ?? undefined,
+        };
+      } else {
+        this.form = this.emptyForm();
+      }
+      this.cdr.markForCheck();
+    });
   }
 
   onOverlayClick(event: MouseEvent) {
@@ -410,8 +416,9 @@ export class TradeFormComponent implements OnChanges {
   }
 
   onSubmit() {
-    if (!this.form.asset || !this.form.entry || !this.form.emotion || !this.form.setup || !this.form.session || !this.form.side) return;
-    this.formSave.emit(this.form as CreateTradeDto);
+    const result = CreateTradeSchema.safeParse(this.form);
+    if (!result.success) return;
+    this.formSave.emit(result.data as CreateTradeDto);
   }
 
   private emptyForm(): Partial<CreateTradeDto> {
