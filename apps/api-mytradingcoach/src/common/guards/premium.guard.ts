@@ -6,9 +6,21 @@ export class PremiumGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
-    if (!user || user.plan !== Plan.PREMIUM) {
-      throw new ForbiddenException('Cette fonctionnalité nécessite un abonnement Premium');
+
+    if (!user) {
+      throw new ForbiddenException({ code: 'PREMIUM_REQUIRED', trialAvailable: true });
     }
+
+    const isPremium = user.plan === Plan.PREMIUM;
+    const isInTrial = user.trialEndsAt && new Date() < new Date(user.trialEndsAt);
+
+    if (!isPremium && !isInTrial) {
+      throw new ForbiddenException({
+        code: 'PREMIUM_REQUIRED',
+        trialAvailable: !user.trialUsed,
+      });
+    }
+
     return true;
   }
 }

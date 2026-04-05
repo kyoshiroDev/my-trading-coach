@@ -1,9 +1,11 @@
 import {
   ForbiddenException,
+  HttpException,
+  HttpStatus,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Plan, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
@@ -13,7 +15,8 @@ import { TradeFiltersDto } from './dto/trade-filters.dto';
 export class TradesService {
   constructor(private prisma: PrismaService) {}
 
-  async create(userId: string, dto: CreateTradeDto) {
+  async create(userId: string, dto: CreateTradeDto, plan: Plan = Plan.FREE) {
+    await this.checkMonthlyLimit(userId, plan);
     const pnl = this.calculatePnl(dto);
     const riskReward = this.calculateRiskReward(dto);
     return this.prisma.trade.create({
@@ -75,6 +78,25 @@ export class TradesService {
   async remove(userId: string, id: string) {
     await this.findOne(userId, id);
     await this.prisma.trade.delete({ where: { id } });
+  }
+
+  async checkMonthlyLimit(userId: string, plan: Plan): Promise<void> {
+    if (plan !== Plan.FREE) return;
+
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const count = await this.prisma.trade.count({
+      where: { userId, createdAt: { gte: startOfMonth } },
+    });
+
+    if (count >= 50) {
+      throw new HttpException(
+        { code: 'FREE_LIMIT_REACHED', message: 'Limite de 50 trades/mois atteinte' },
+        HttpStatus.FORBIDDEN,
+      );
+    }
   }
 
   private calculatePnl(dto: CreateTradeDto): number | undefined {

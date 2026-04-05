@@ -23,10 +23,10 @@ export class TradesController {
 
   @Post()
   create(
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string; plan: string },
     @Body() dto: CreateTradeDto,
   ) {
-    return this.tradesService.create(user.id, dto);
+    return this.tradesService.create(user.id, dto, user.plan as any);
   }
 
   @Get()
