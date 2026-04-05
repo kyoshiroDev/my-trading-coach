@@ -489,4 +489,67 @@
   .fcard-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
   .fcard-t { font-family: var(--disp); font-size: 12px; font-weight: 600; letter-spacing: -.1px; }
   .fgrid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+
+  /* ── Mobile ── */
+  @media (max-width: 767px) {
+    /* FIX 3 — Hero content : z-index et centrage explicites */
+    .hero {
+      padding: 100px 16px 60px;
+      overflow: visible;
+    }
+
+    .hero-badge,
+    .hero h1,
+    .hero-sub,
+    .hero-actions,
+    .hero-trust {
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-actions {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .hero-actions a {
+      text-align: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    /* FIX 2 — Mockup hero : sidebar masquée, grille 1 colonne */
+    .hero-screen {
+      overflow: hidden;
+      margin-top: 40px;
+    }
+
+    .full-sidebar {
+      display: none;
+    }
+
+    .full-body {
+      grid-template-columns: 1fr;
+      min-height: unset;
+    }
+
+    .full-content {
+      padding: 14px;
+    }
+
+    .fstats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .fstat-val {
+      font-size: 18px;
+    }
+
+    .fgrid2 {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>

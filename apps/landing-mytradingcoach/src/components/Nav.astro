@@ -140,7 +140,7 @@
       border: none;
       cursor: pointer;
       padding: 8px;
-      z-index: 201;
+      z-index: 10000;
       position: relative;
     }
 
@@ -167,24 +167,21 @@
     /* Menu mobile — caché par défaut */
     .nav-links {
       display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(6, 9, 15, 0.98);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 36px;
-      z-index: 100;
     }
 
     /* Menu mobile — visible quand .open */
     .nav-links.open {
       display: flex;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(8, 12, 20, 0.99);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 36px;
     }
 
     .nav-links a {
