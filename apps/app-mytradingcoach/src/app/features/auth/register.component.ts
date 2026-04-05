@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signa
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { LucideAngularModule, Eye, EyeOff, Check } from 'lucide-angular';
+import { LucideAngularModule, Eye, EyeOff } from 'lucide-angular';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
@@ -23,16 +23,6 @@ import { AuthService } from '../../core/auth/auth.service';
 
         <h1 class="auth-title">Commence gratuitement</h1>
         <p class="auth-subtitle">Rejoins les traders qui progressent avec l'IA</p>
-
-        <!-- Free plan benefits -->
-        <div class="benefits">
-          @for (benefit of benefits; track benefit) {
-            <div class="benefit-row">
-              <lucide-icon [img]="CheckIcon" [size]="13" color="var(--green)" />
-              <span>{{ benefit }}</span>
-            </div>
-          }
-        </div>
 
         @if (error()) {
           <div class="error-msg">{{ error() }}</div>
@@ -125,13 +115,6 @@ export class RegisterComponent {
 
   protected readonly EyeIcon = Eye;
   protected readonly EyeOffIcon = EyeOff;
-  protected readonly CheckIcon = Check;
-
-  protected readonly benefits = [
-    '50 trades/mois inclus',
-    'Statistiques de base',
-    'Journal illimité en lecture',
-  ];
 
   protected name = '';
   protected email = '';
