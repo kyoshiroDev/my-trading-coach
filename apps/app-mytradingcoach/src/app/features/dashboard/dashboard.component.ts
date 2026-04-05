@@ -78,7 +78,7 @@ const SETUP_COLORS_MAP: Record<string, string> = {
             <div class="premium-banner-price">
               <span class="premium-banner-amount">29€</span>
               <span class="premium-banner-period">/mois</span>
-              <div class="premium-banner-trial">14 jours gratuits · sans CB</div>
+              <div class="premium-banner-trial">7 jours gratuits · sans CB</div>
             </div>
             <button class="premium-banner-btn" routerLink="/upgrade">
               Essayer gratuitement
