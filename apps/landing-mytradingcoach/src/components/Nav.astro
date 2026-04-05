@@ -1,31 +1,75 @@
 ---
 ---
-<nav>
+<div class="nav-bar">
   <a href="/" class="nav-logo">
     <img src="/icon/logo-navbar.svg" alt="MyTradingCoach — Journal de trading IA" height="32" style="display:block" />
   </a>
-  <ul class="nav-links">
-    <li><a href="#features">Fonctionnalités</a></li>
-    <li><a href="#showcase">Aperçu</a></li>
-    <li><a href="#debrief">Debrief IA</a></li>
-    <li><a href="#pricing">Tarifs</a></li>
-    <li><a href="/blog">Blog</a></li>
-    <li><a href="https://app.mytradingcoach.app/register" class="nav-cta">Essayer gratuitement →</a></li>
-  </ul>
-  <button class="nav-mobile-btn" aria-label="Menu">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <line x1="3" y1="6" x2="21" y2="6"/>
-      <line x1="3" y1="12" x2="21" y2="12"/>
-      <line x1="3" y1="18" x2="21" y2="18"/>
-    </svg>
+
+  <nav id="nav-links" class="nav-links">
+    <a href="#features">Fonctionnalités</a>
+    <a href="#showcase">Aperçu</a>
+    <a href="#debrief">Debrief IA</a>
+    <a href="#pricing">Tarifs</a>
+    <a href="/blog">Blog</a>
+    <a href="https://app.mytradingcoach.app/register" class="nav-cta">Essayer gratuitement →</a>
+  </nav>
+
+  <button
+    id="nav-toggle"
+    class="nav-hamburger"
+    aria-label="Ouvrir le menu"
+    aria-expanded="false"
+  >
+    <span></span>
+    <span></span>
+    <span></span>
   </button>
-</nav>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const toggle = document.getElementById('nav-toggle');
+    const navLinks = document.getElementById('nav-links');
+    const body = document.body;
+
+    if (!toggle || !navLinks) return;
+
+    toggle.addEventListener('click', () => {
+      const isOpen = navLinks.classList.contains('open');
+      if (isOpen) {
+        navLinks.classList.remove('open');
+        toggle.setAttribute('aria-expanded', 'false');
+        body.style.overflow = '';
+      } else {
+        navLinks.classList.add('open');
+        toggle.setAttribute('aria-expanded', 'true');
+        body.style.overflow = 'hidden';
+      }
+    });
+
+    navLinks.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        navLinks.classList.remove('open');
+        toggle.setAttribute('aria-expanded', 'false');
+        body.style.overflow = '';
+      });
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && navLinks.classList.contains('open')) {
+        navLinks.classList.remove('open');
+        toggle.setAttribute('aria-expanded', 'false');
+        body.style.overflow = '';
+      }
+    });
+  });
+</script>
 
 <style>
-  nav {
+  .nav-bar {
     position: fixed;
     top: 0; left: 0; right: 0;
-    z-index: 100;
+    z-index: 200;
     height: 60px;
     padding: 0 5%;
     display: flex;
@@ -43,15 +87,14 @@
     text-decoration: none;
     color: var(--txt);
     flex-shrink: 0;
+    z-index: 201;
   }
 
+  /* ── Desktop nav ── */
   .nav-links {
-    display: none;
+    display: flex;
     align-items: center;
     gap: 28px;
-    list-style: none;
-    margin: 0;
-    padding: 0;
   }
 
   .nav-links a {
@@ -80,20 +123,89 @@
     transform: translateY(-1px);
   }
 
-  .nav-mobile-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: 1px solid var(--b);
-    border-radius: 6px;
-    padding: 6px 8px;
-    color: var(--txt2);
-    cursor: pointer;
+  /* ── Hamburger — masqué sur desktop ── */
+  .nav-hamburger {
+    display: none;
   }
 
-  @media (min-width: 768px) {
-    .nav-links { display: flex; }
-    .nav-mobile-btn { display: none; }
+  /* ── Mobile ── */
+  @media (max-width: 767px) {
+    /* Hamburger visible */
+    .nav-hamburger {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 5px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      z-index: 201;
+      position: relative;
+    }
+
+    .nav-hamburger span {
+      display: block;
+      width: 22px;
+      height: 2px;
+      background: #e2eaf5;
+      border-radius: 2px;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+
+    /* Croix quand ouvert */
+    .nav-hamburger[aria-expanded="true"] span:nth-child(1) {
+      transform: translateY(7px) rotate(45deg);
+    }
+    .nav-hamburger[aria-expanded="true"] span:nth-child(2) {
+      opacity: 0;
+    }
+    .nav-hamburger[aria-expanded="true"] span:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg);
+    }
+
+    /* Menu mobile — caché par défaut */
+    .nav-links {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(6, 9, 15, 0.98);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 36px;
+      z-index: 100;
+    }
+
+    /* Menu mobile — visible quand .open */
+    .nav-links.open {
+      display: flex;
+    }
+
+    .nav-links a {
+      font-size: 22px;
+      font-weight: 600;
+      color: #e2eaf5;
+      font-family: 'Inter', sans-serif;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: #60a5fa;
+    }
+
+    .nav-links .nav-cta {
+      background: #3b82f6 !important;
+      color: #fff !important;
+      padding: 12px 28px;
+      border-radius: 8px;
+      font-size: 16px !important;
+      font-weight: 500 !important;
+    }
   }
 </style>

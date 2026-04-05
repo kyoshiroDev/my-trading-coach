@@ -23,8 +23,8 @@
 }
 
 *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
-html { scroll-behavior: smooth; }
-body { background:var(--bg); color:var(--txt); font-family:var(--body); overflow-x:hidden; -webkit-font-smoothing:antialiased; }
+html { scroll-behavior: smooth; overflow-x: hidden; max-width: 100%; }
+body { background:var(--bg); color:var(--txt); font-family:var(--body); overflow-x:hidden; max-width:100%; -webkit-font-smoothing:antialiased; }
 ::-webkit-scrollbar { width:3px; }
 ::-webkit-scrollbar-thumb { background:var(--blue); border-radius:2px; }
 
@@ -55,3 +55,29 @@ h2 em { font-style:italic; font-family:'DM Sans',sans-serif; font-weight:300; co
 @keyframes fup { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:none} }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
 @keyframes rpulse { 0%,100%{opacity:1;transform:translate(-50%,-50%) scale(1)} 50%{opacity:.5;transform:translate(-50%,-50%) scale(1.04)} }
+
+@media (max-width: 767px) {
+  section {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .container {
+    padding-left: 16px;
+    padding-right: 16px;
+    max-width: 100%;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 0 8px;
+  }
+
+  .hero-actions a {
+    text-align: center;
+    width: 100%;
+    justify-content: center;
+  }
+}

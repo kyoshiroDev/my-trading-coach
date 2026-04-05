@@ -424,6 +424,76 @@
   .pts-row { display: flex; gap: 8px; padding: 9px 0; border-bottom: 1px solid rgba(99,155,255,.05); align-items: flex-start; }
   .pts-row:last-child { border: none; }
   .pts-txt { font-size: 11px; color: var(--txt2); line-height: 1.5; flex: 1; }
+
+  /* ── Mobile ── */
+  @media (max-width: 767px) {
+    .showcase {
+      padding: 48px 0;
+      overflow: hidden;
+    }
+
+    .showcase > div > .reveal:first-child {
+      padding: 0 16px;
+    }
+
+    .showcase-tabs {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      width: calc(100% - 32px);
+      margin-left: 16px;
+      margin-right: 16px;
+      box-sizing: border-box;
+    }
+
+    .showcase-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .stab {
+      flex-shrink: 0;
+      font-size: 11px;
+      padding: 6px 12px;
+      white-space: nowrap;
+    }
+
+    .showcase-panel {
+      padding: 0 16px;
+    }
+
+    .full-body {
+      grid-template-columns: 1fr;
+      min-height: unset;
+    }
+
+    .full-sidebar {
+      display: none;
+    }
+
+    .full-content {
+      padding: 14px;
+    }
+
+    .fstats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .fstat-val {
+      font-size: 18px;
+    }
+
+    .fgrid2 {
+      grid-template-columns: 1fr;
+    }
+
+    .ai-banner {
+      flex-wrap: wrap;
+    }
+
+    .ai-banner button {
+      margin-left: 0 !important;
+    }
+  }
 </style>
 
 <script>
