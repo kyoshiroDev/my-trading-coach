@@ -7,7 +7,6 @@ import {
   computed,
   inject,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { httpResource } from '@angular/common/http';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
@@ -25,7 +24,7 @@ interface TopAsset { asset: string; winRate: number; pnl: number; count: number;
 @Component({
   selector: 'mtc-analytics',
   standalone: true,
-  imports: [RouterLink, TopbarComponent, EmotionEmojiPipe, EmotionColorPipe],
+  imports: [TopbarComponent, EmotionEmojiPipe, EmotionColorPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './analytics.component.css',
   template: `
