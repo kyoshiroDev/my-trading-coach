@@ -181,7 +181,7 @@ const SETUP_COLORS_MAP: Record<string, string> = {
             </div>
           } @else {
             <div class="trade-list-compact">
-              @for (trade of tradesStore.trades$().slice(0, 5); track trade.id) {
+              @for (trade of tradesStore.trades$().slice(0, 3); track trade.id) {
                 <div class="trade-row-compact">
                   <div class="trade-row-top">
                     <span class="trade-side" [class]="trade.side === 'LONG' ? 'long' : 'short'">
