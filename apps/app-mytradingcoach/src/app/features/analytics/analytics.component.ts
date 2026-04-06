@@ -69,7 +69,7 @@ export class AnalyticsComponent implements OnInit {
   ngOnInit(): void {
     this.analyticsApi.getSummary().subscribe({
       next: (res) => this.summary.set(res.data),
-      error: () => {},
+      error: (_e: unknown) => { /* silently ignore */ },
     });
 
     if (this.userStore.isPremium()) {
@@ -80,19 +80,19 @@ export class AnalyticsComponent implements OnInit {
   private loadPremiumData(): void {
     this.analyticsApi.getEquityCurve().subscribe({
       next: (res) => this.equityCurve.set(res.data),
-      error: () => {},
+      error: (_e: unknown) => { /* silently ignore */ },
     });
     this.analyticsApi.getByHour().subscribe({
       next: (res) => this.heatmapData.set(res.data),
-      error: () => {},
+      error: (_e: unknown) => { /* silently ignore */ },
     });
     this.analyticsApi.getTopAssets().subscribe({
       next: (res) => this.topAssets.set(res.data),
-      error: () => {},
+      error: (_e: unknown) => { /* silently ignore */ },
     });
     this.analyticsApi.getBySetup().subscribe({
       next: (res) => this.setupData.set(res.data),
-      error: () => {},
+      error: (_e: unknown) => { /* silently ignore */ },
     });
   }
 
