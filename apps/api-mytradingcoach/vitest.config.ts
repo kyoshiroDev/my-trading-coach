@@ -15,6 +15,15 @@ export default defineConfig({
   plugins: [
     swc.vite({
       module: { type: 'es6' },
+      jsc: {
+        parser: {
+          syntax: 'typescript',
+          decorators: true,
+        },
+        transform: {
+          decoratorMetadata: true,
+        },
+      },
     }),
   ],
 });
