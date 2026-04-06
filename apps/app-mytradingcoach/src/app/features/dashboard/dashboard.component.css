@@ -262,7 +262,18 @@ canvas { width: 100% !important; height: 100% !important; }
   display: grid;
   grid-template-columns: 3fr 1fr;
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
+}
+
+.equity-trades-row .card {
+  display: flex;
+  flex-direction: column;
+}
+
+.equity-trades-row .chart-container {
+  flex: 1;
+  height: auto;
+  min-height: 80px;
 }
 
 /* ─── Recent trades compact (colonne 1/4) ─── */
