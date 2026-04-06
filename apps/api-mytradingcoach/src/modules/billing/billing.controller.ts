@@ -1,6 +1,5 @@
-import { Body, Controller, Get, Headers, Post, RawBodyRequest, Req } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Post, Req } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Request } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { BillingService } from './billing.service';
@@ -39,7 +38,8 @@ export class BillingController {
   @Public()
   @Post('webhook')
   async webhook(
-    @Req() req: RawBodyRequest<Request>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    @Req() req: any,
     @Headers('stripe-signature') signature: string,
   ) {
     return this.billing.handleWebhook(req.rawBody!, signature);

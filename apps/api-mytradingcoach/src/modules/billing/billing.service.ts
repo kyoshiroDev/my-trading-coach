@@ -4,18 +4,44 @@ import Stripe from 'stripe';
 import { Plan } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
+// Stripe v22 CJS exports StripeConstructor (function), not a class.
+// ReturnType<typeof Stripe> gives us the proper instance type.
+type StripeClient = ReturnType<typeof Stripe>;
+
+// Minimal local types for webhook event objects (avoids Stripe namespace issues)
+interface StripeCheckoutSession {
+  mode: string;
+  subscription: string | null;
+}
+
+interface StripeSubscription {
+  id: string;
+  status: string;
+  customer: string | { id: string };
+  items: { data: Array<{ price: { id: string } }> };
+  current_period_end: number;
+}
+
+interface StripeInvoice {
+  customer: string | { id: string } | null;
+}
+
 @Injectable()
 export class BillingService {
-  private readonly stripe: Stripe;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private readonly stripe: StripeClient;
   private readonly logger = new Logger(BillingService.name);
 
   constructor(
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
   ) {
-    this.stripe = new Stripe(this.config.get<string>('STRIPE_SECRET_KEY') ?? '', {
-      apiVersion: '2024-06-20',
-    });
+    // Stripe v22 CJS: function-style constructor requires cast
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.stripe = new (Stripe as any)(
+      this.config.get<string>('STRIPE_SECRET_KEY') ?? '',
+      { apiVersion: '2024-06-20' },
+    ) as StripeClient;
   }
 
   // ── Créer une session checkout ────────────────────────────────────────────
@@ -51,8 +77,8 @@ export class BillingService {
         trial_period_days: 7,
         metadata: { userId },
       },
-      success_url: `${returnUrl}/settings?success=true`,
-      cancel_url: `${returnUrl}/settings?canceled=true`,
+      success_url: `${returnUrl}/settings?checkout=success`,
+      cancel_url: `${returnUrl}/settings?checkout=canceled`,
       locale: 'fr',
       allow_promotion_codes: true,
     });
@@ -82,14 +108,15 @@ export class BillingService {
 
   // ── Gérer les webhooks Stripe ─────────────────────────────────────────────
   async handleWebhook(payload: Buffer, signature: string): Promise<{ received: boolean }> {
-    let event: Stripe.Event;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let event: { type: string; data: { object: any } };
 
     try {
       event = this.stripe.webhooks.constructEvent(
         payload,
         signature,
         this.config.get<string>('STRIPE_WEBHOOK_SECRET') ?? '',
-      );
+      ) as typeof event;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'erreur inconnue';
       throw new BadRequestException(`Webhook signature invalide: ${msg}`);
@@ -99,22 +126,22 @@ export class BillingService {
 
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data.object as Stripe.CheckoutSession;
+        const session = event.data.object as StripeCheckoutSession;
         if (session.mode === 'subscription' && session.subscription) {
-          await this.syncSubscription(session.subscription as string);
+          await this.syncSubscription(session.subscription);
         }
         break;
       }
 
       case 'customer.subscription.created':
       case 'customer.subscription.updated': {
-        const subscription = event.data.object as Stripe.Subscription;
+        const subscription = event.data.object as StripeSubscription;
         await this.syncSubscription(subscription.id);
         break;
       }
 
       case 'customer.subscription.deleted': {
-        const subscription = event.data.object as Stripe.Subscription;
+        const subscription = event.data.object as StripeSubscription;
         await this.prisma.user.updateMany({
           where: { stripeSubscriptionId: subscription.id },
           data: {
@@ -128,10 +155,13 @@ export class BillingService {
       }
 
       case 'invoice.payment_failed': {
-        const invoice = event.data.object as Stripe.Invoice;
-        if (invoice.customer) {
+        const invoice = event.data.object as StripeInvoice;
+        const customerId = typeof invoice.customer === 'string'
+          ? invoice.customer
+          : invoice.customer?.id ?? null;
+        if (customerId) {
           await this.prisma.user.updateMany({
-            where: { stripeCustomerId: invoice.customer as string },
+            where: { stripeCustomerId: customerId },
             data: { plan: Plan.FREE },
           });
         }
@@ -146,9 +176,12 @@ export class BillingService {
   private async syncSubscription(subscriptionId: string): Promise<void> {
     const subscription = await this.stripe.subscriptions.retrieve(subscriptionId, {
       expand: ['default_payment_method'],
-    });
+    }) as unknown as StripeSubscription;
 
-    const customerId = subscription.customer as string;
+    const customerId = typeof subscription.customer === 'string'
+      ? subscription.customer
+      : subscription.customer.id;
+
     const user = await this.prisma.user.findUnique({
       where: { stripeCustomerId: customerId },
     });
