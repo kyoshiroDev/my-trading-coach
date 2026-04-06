@@ -178,6 +178,7 @@ canvas { width: 100% !important; height: 100% !important; }
   border-radius: 12px;
   overflow: hidden;
   position: relative;
+  min-height: 200px;
 }
 .locked-preview {
   padding: 20px;
@@ -266,7 +267,7 @@ canvas { width: 100% !important; height: 100% !important; }
 }
 .mock-bar-track {
   flex: 1;
-  height: 6px;
+  height: 10px;
   background: var(--bg-3);
   border-radius: 3px;
   overflow: hidden;

@@ -212,7 +212,12 @@ interface TopAsset { asset: string; winRate: number; pnl: number; count: number;
             <div class="locked-preview">
               <div class="bars-preview-mock">
                 @for (bar of mockBars; track $index) {
-                  <div class="mock-bar" [style.width.%]="bar"></div>
+                  <div class="mock-bar-row">
+                    <div class="mock-bar-label"></div>
+                    <div class="mock-bar-track">
+                      <div class="mock-bar" [style.width.%]="bar"></div>
+                    </div>
+                  </div>
                 }
               </div>
             </div>
