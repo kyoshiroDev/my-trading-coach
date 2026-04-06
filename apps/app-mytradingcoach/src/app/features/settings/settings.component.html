@@ -2,13 +2,13 @@
 
 <div class="content">
 
-  @if (successParam()) {
+  @if (checkoutParam() === 'success') {
     <div class="alert alert-success">
       ✓ Abonnement activé — bienvenue dans Premium !
     </div>
   }
 
-  @if (canceledParam()) {
+  @if (checkoutParam() === 'canceled') {
     <div class="alert alert-cancel">
       Paiement annulé. Tu peux réessayer quand tu veux.
     </div>

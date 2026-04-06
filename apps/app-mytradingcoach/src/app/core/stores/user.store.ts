@@ -7,6 +7,7 @@ export class UserStore {
 
   readonly user = this.auth.currentUser;
   readonly isAuthenticated = this.auth.isAuthenticated;
+  readonly isLoggedIn = computed(() => !!this.user());
   readonly isPremium = computed(() => {
     const user = this.user();
     if (!user) return false;
@@ -19,4 +20,10 @@ export class UserStore {
     const name = this.user()?.name ?? this.user()?.email ?? '?';
     return name.slice(0, 2).toUpperCase();
   });
+
+  refreshUser() {
+    this.auth.refreshUser().subscribe({
+      error: (_e: unknown) => { /* silently ignore — user stays logged in with cached data */ },
+    });
+  }
 }

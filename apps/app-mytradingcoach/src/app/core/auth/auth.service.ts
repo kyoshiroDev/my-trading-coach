@@ -82,6 +82,10 @@ export class AuthService {
     return this.currentUser()?.plan === 'PREMIUM';
   }
 
+  refreshUser() {
+    return this.refreshToken();
+  }
+
   private handleAuthResponse(res: AuthResponse) {
     const { access_token, refresh_token, user } = res.data;
     localStorage.setItem('access_token', access_token);

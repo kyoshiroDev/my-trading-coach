@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LucideAngularModule, Eye, EyeOff } from 'lucide-angular';
 import { AuthService } from '../../core/auth/auth.service';
+import { BillingApi } from '../../core/api/billing.api';
 
 @Component({
   selector: 'mtc-register',
@@ -21,8 +22,16 @@ import { AuthService } from '../../core/auth/auth.service';
           <img src="icon/logo-navbar.svg" alt="MyTradingCoach">
         </div>
 
-        <h1 class="auth-title">Commence gratuitement</h1>
-        <p class="auth-subtitle">Rejoins les traders qui progressent avec l'IA</p>
+        <h1 class="auth-title">
+          @if (isPremiumFlow()) { Créer ton compte Premium } @else { Commence gratuitement }
+        </h1>
+        <p class="auth-subtitle">
+          @if (isPremiumFlow()) {
+            Tu seras redirigé vers le paiement après l'inscription
+          } @else {
+            Rejoins les traders qui progressent avec l'IA
+          }
+        </p>
 
         @if (error()) {
           <div class="error-msg">{{ error() }}</div>
@@ -92,14 +101,25 @@ import { AuthService } from '../../core/auth/auth.service';
           </div>
           <button type="submit" [disabled]="isLoading() || confirmMismatch()" class="btn-submit">
             @if (isLoading()) {
-              <span class="spinner"></span> Création...
+              <span class="spinner"></span>
+              @if (isPremiumFlow()) { Création et redirection... } @else { Création... }
             } @else {
-              Créer mon compte gratuit
+              @if (isPremiumFlow()) {
+                Créer mon compte et continuer vers le paiement →
+              } @else {
+                Créer mon compte gratuit
+              }
             }
           </button>
         </form>
 
-        <p class="free-note">Aucune CB requise · 50 trades/mois · Annuler à tout moment</p>
+        <p class="free-note">
+          @if (isPremiumFlow()) {
+            Essai 7 jours gratuit · Sans CB requise · Annuler à tout moment
+          } @else {
+            Aucune CB requise · 50 trades/mois · Annuler à tout moment
+          }
+        </p>
 
         <p class="auth-link">
           Déjà un compte ? <a routerLink="/login">Se connecter</a>
@@ -110,7 +130,9 @@ import { AuthService } from '../../core/auth/auth.service';
 })
 export class RegisterComponent {
   private readonly auth = inject(AuthService);
+  private readonly billingApi = inject(BillingApi);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly EyeIcon = Eye;
@@ -127,6 +149,9 @@ export class RegisterComponent {
   protected readonly confirmMismatch = computed(
     () => !!this.confirmPassword && this.password !== this.confirmPassword
   );
+  protected readonly isPremiumFlow = signal(
+    this.route.snapshot.queryParamMap.get('plan') === 'premium'
+  );
 
   onRegister() {
     if (!this.email || !this.password) return;
@@ -134,12 +159,28 @@ export class RegisterComponent {
     this.isLoading.set(true);
     this.error.set(null);
 
-    this.auth.register(this.email, this.password, this.name || undefined).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => this.router.navigate(['/dashboard']),
-      error: (err) => {
-        this.error.set(err.error?.message ?? "Erreur lors de l'inscription");
-        this.isLoading.set(false);
-      },
-    });
+    this.auth.register(this.email, this.password, this.name || undefined)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          if (this.isPremiumFlow()) {
+            this.billingApi.checkout('monthly')
+              .pipe(takeUntilDestroyed(this.destroyRef))
+              .subscribe({
+                next: (res) => { window.location.href = res.data.url; },
+                error: () => {
+                  this.isLoading.set(false);
+                  this.router.navigate(['/dashboard']);
+                },
+              });
+          } else {
+            this.router.navigate(['/dashboard']);
+          }
+        },
+        error: (err) => {
+          this.error.set(err.error?.message ?? "Erreur lors de l'inscription");
+          this.isLoading.set(false);
+        },
+      });
   }
 }

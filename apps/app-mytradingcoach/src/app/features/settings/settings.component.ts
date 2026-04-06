@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -15,17 +15,20 @@ import { BillingApi } from '../../core/api/billing.api';
   styleUrl: './settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SettingsComponent {
+export class SettingsComponent implements OnInit {
   protected readonly userStore = inject(UserStore);
   private readonly billingApi = inject(BillingApi);
   private readonly route = inject(ActivatedRoute);
 
-  protected readonly successParam = toSignal(
-    this.route.queryParamMap.pipe(map((p) => p.get('success'))),
+  protected readonly checkoutParam = toSignal(
+    this.route.queryParamMap.pipe(map((p) => p.get('checkout'))),
   );
-  protected readonly canceledParam = toSignal(
-    this.route.queryParamMap.pipe(map((p) => p.get('canceled'))),
-  );
+
+  ngOnInit(): void {
+    if (this.route.snapshot.queryParamMap.get('checkout') === 'success') {
+      this.userStore.refreshUser();
+    }
+  }
 
   protected startTrial(plan: 'monthly' | 'yearly' = 'monthly') {
     this.billingApi.checkout(plan).subscribe({

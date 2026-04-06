@@ -16,6 +16,10 @@ export const premiumGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   if (auth.isAuthenticated() && auth.isPremium()) return true;
-  router.navigate(['/dashboard']);
+  if (auth.isAuthenticated()) {
+    router.navigate(['/settings']);
+  } else {
+    router.navigate(['/login']);
+  }
   return false;
 };

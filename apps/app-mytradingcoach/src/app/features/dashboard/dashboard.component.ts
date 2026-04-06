@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { BillingApi } from '../../core/api/billing.api';
 import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
 import { TradesStore } from '../../core/stores/trades.store';
@@ -75,11 +76,11 @@ const SETUP_COLORS_MAP: Record<string, string> = {
           </div>
           <div class="premium-banner-right">
             <div class="premium-banner-price">
-              <span class="premium-banner-amount">29€</span>
+              <span class="premium-banner-amount">39€</span>
               <span class="premium-banner-period">/mois</span>
               <div class="premium-banner-trial">7 jours gratuits · sans CB</div>
             </div>
-            <button class="premium-banner-btn" routerLink="/upgrade">
+            <button class="premium-banner-btn" (click)="startTrial()">
               Essayer gratuitement
             </button>
           </div>
@@ -289,6 +290,7 @@ export class DashboardComponent implements AfterViewInit {
 
   protected readonly userStore = inject(UserStore);
   protected readonly tradesStore = inject(TradesStore);
+  private readonly billingApi = inject(BillingApi);
 
   private readonly summaryResource = httpResource<{ data: Summary }>(
     () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/summary` : undefined
@@ -378,6 +380,13 @@ export class DashboardComponent implements AfterViewInit {
 
   goToJournal() {
     // handled by router in topbar routerLink — noop
+  }
+
+  protected startTrial() {
+    this.billingApi.checkout('monthly').subscribe({
+      next: (res) => { window.location.href = res.data.url; },
+      error: () => console.error('Erreur checkout'),
+    });
   }
 
   private drawEquityCurve() {
