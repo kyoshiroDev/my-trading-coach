@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { HourStat } from '../../core/api/analytics.api';
+import { HeatmapCell } from '../../core/api/analytics.api';
+
+type HourStat = HeatmapCell;
 
 function heatColor(winRate: number, count: number): string {
   if (count === 0) return 'var(--bg-3)';

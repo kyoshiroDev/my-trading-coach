@@ -9,12 +9,12 @@ export class AnalyticsService {
   async getSummary(userId: string) {
     const trades = await this.prisma.trade.findMany({
       where: { userId, exit: { not: null } },
-      select: { pnl: true, tradedAt: true },
+      select: { pnl: true, tradedAt: true, session: true },
       orderBy: { tradedAt: 'asc' },
     });
 
     if (!trades.length) {
-      return { winRate: 0, totalPnl: 0, totalTrades: 0, maxDrawdown: 0, streak: 0 };
+      return { winRate: 0, totalPnl: 0, totalTrades: 0, maxDrawdown: 0, streak: 0, topSession: '—', topSessionWinRate: 0, topHour: '—' };
     }
 
     const totalTrades = trades.length;
@@ -42,7 +42,41 @@ export class AnalyticsService {
     }
     if (!direction) streak = -streak;
 
-    return { winRate, totalPnl, totalTrades, maxDrawdown, streak };
+    // Top session
+    const sessionMap = new Map<string, { wins: number; count: number }>();
+    for (const t of trades) {
+      const s = t.session as string;
+      const g = sessionMap.get(s) ?? { wins: 0, count: 0 };
+      g.count++;
+      if ((t.pnl ?? 0) > 0) g.wins++;
+      sessionMap.set(s, g);
+    }
+    let topSession = '—';
+    let topSessionWinRate = 0;
+    for (const [session, g] of sessionMap.entries()) {
+      const wr = (g.wins / g.count) * 100;
+      if (wr > topSessionWinRate) { topSessionWinRate = wr; topSession = session; }
+    }
+
+    // Top hour
+    const hourMap = new Map<number, { wins: number; count: number }>();
+    for (const t of trades) {
+      const h = new Date(t.tradedAt).getHours();
+      const g = hourMap.get(h) ?? { wins: 0, count: 0 };
+      g.count++;
+      if ((t.pnl ?? 0) > 0) g.wins++;
+      hourMap.set(h, g);
+    }
+    let topHourNum = -1;
+    let topHourWr = 0;
+    for (const [h, g] of hourMap.entries()) {
+      if (g.count < 2) continue;
+      const wr = (g.wins / g.count) * 100;
+      if (wr > topHourWr) { topHourWr = wr; topHourNum = h; }
+    }
+    const topHour = topHourNum >= 0 ? `${String(topHourNum).padStart(2, '0')}:00` : '—';
+
+    return { winRate, totalPnl, totalTrades, maxDrawdown, streak, topSession, topSessionWinRate: Math.round(topSessionWinRate), topHour };
   }
 
   async getBySetup(userId: string) {
@@ -100,17 +134,22 @@ export class AnalyticsService {
       select: { tradedAt: true, pnl: true },
     });
 
-    const grouped = new Map<number, { count: number; wins: number }>();
+    const DAY_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+    const grouped = new Map<string, { count: number; wins: number; day: string; hour: number }>();
     for (const t of trades) {
-      const hour = new Date(t.tradedAt).getHours();
-      const g = grouped.get(hour) ?? { count: 0, wins: 0 };
+      const d = new Date(t.tradedAt);
+      const day = DAY_LABELS[d.getDay()];
+      const hour = d.getHours();
+      const key = `${day}:${hour}`;
+      const g = grouped.get(key) ?? { count: 0, wins: 0, day, hour };
       g.count++;
       if ((t.pnl ?? 0) > 0) g.wins++;
-      grouped.set(hour, g);
+      grouped.set(key, g);
     }
 
-    return Array.from(grouped.entries()).map(([hour, g]) => ({
-      hour,
+    return Array.from(grouped.values()).map((g) => ({
+      day: g.day,
+      hour: g.hour,
       winRate: (g.wins / g.count) * 100,
       count: g.count,
     }));

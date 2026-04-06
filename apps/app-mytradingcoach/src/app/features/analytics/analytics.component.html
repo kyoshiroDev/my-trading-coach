@@ -1,0 +1,306 @@
+<mtc-topbar title="Analytics" />
+
+<div class="content">
+
+  <!-- ── 4 Stats FREE (visibles par tous) ── -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">WIN RATE GLOBAL</div>
+      <div class="stat-value" [class.text-green]="(summary()?.winRate ?? 0) >= 50"
+                              [class.text-red]="(summary()?.winRate ?? 0) < 50 && summary() !== null">
+        {{ summary() ? (summary()!.winRate).toFixed(1) + '%' : '—' }}
+      </div>
+      <div class="stat-sub">{{ summary()?.totalTrades ?? 0 }} trades</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">P&amp;L TOTAL</div>
+      <div class="stat-value" [class.text-green]="(summary()?.totalPnl ?? 0) > 0"
+                              [class.text-red]="(summary()?.totalPnl ?? 0) < 0">
+        {{ summary() ? formatPnl(summary()!.totalPnl) : '—' }}
+      </div>
+      <div class="stat-sub">P&amp;L cumulé</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">TOP SESSION</div>
+      <div class="stat-value text-blue">
+        {{ summary() ? formatSession(summary()!.topSession) : '—' }}
+      </div>
+      <div class="stat-sub">{{ summary()?.topSessionWinRate ?? 0 }}% win rate</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">HEURE TOP</div>
+      <div class="stat-value text-blue">
+        {{ summary()?.topHour ?? '—' }}
+      </div>
+      <div class="stat-sub">meilleure heure</div>
+    </div>
+  </div>
+
+  <!-- ── Séparateur PREMIUM ── -->
+  <div class="premium-separator">
+    <div class="separator-line"></div>
+    <span class="separator-label">ANALYTICS AVANCÉS — PREMIUM</span>
+    <div class="separator-line"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       CONTENU PREMIUM
+  ══════════════════════════════════════════ -->
+  @if (userStore.isPremium()) {
+
+    <!-- Equity Curve + Drawdown côte à côte -->
+    <div class="grid-2 mb-16">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Equity Curve</div>
+          @if (summary()) {
+            <span class="card-meta" [class.text-green]="(summary()!.totalPnl) >= 0"
+                                    [class.text-red]="(summary()!.totalPnl) < 0">
+              {{ formatPnl(summary()!.totalPnl) }}
+            </span>
+          }
+        </div>
+        <div class="chart-container">
+          <canvas #equityCanvas class="chart-canvas"></canvas>
+          @if (equityCurve().length === 0) {
+            <div class="empty-chart">Aucun trade clôturé</div>
+          }
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Courbe de Drawdown</div>
+          @if (summary()) {
+            <span class="card-meta text-red">
+              {{ formatPnl(-(summary()!.maxDrawdown)) }} max
+            </span>
+          }
+        </div>
+        <div class="chart-container">
+          <canvas #drawdownCanvas class="chart-canvas"></canvas>
+          @if (equityCurve().length === 0) {
+            <div class="empty-chart">Aucun trade clôturé</div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Heatmap : jours (lignes) × heures (colonnes) -->
+    <div class="card mb-16">
+      <div class="card-header">
+        <div class="card-title">Heatmap horaire — Win Rate par heure</div>
+        <div class="heatmap-legend">
+          <span class="legend-dot dot-red"></span><span class="legend-txt">&lt;50%</span>
+          <span class="legend-dot dot-orange"></span><span class="legend-txt">50–65%</span>
+          <span class="legend-dot dot-green"></span><span class="legend-txt">&gt;65%</span>
+        </div>
+      </div>
+      <div class="heatmap-wrapper">
+        <table class="heatmap-table">
+          <thead>
+            <tr>
+              <th class="heatmap-corner"></th>
+              @for (hour of hours; track hour) {
+                <th class="heatmap-hour-th">{{ hour }}h</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (day of days; track day) {
+              <tr>
+                <td class="heatmap-day-td">{{ day }}</td>
+                @for (hour of hours; track hour) {
+                  @let cell = getHeatmapCell(day, hour);
+                  <td [class]="cell ? cellClass(cell.winRate) : 'heatmap-cell cell-empty'"
+                      [title]="cell ? (day + ' ' + hour + 'h — ' + cell.winRate.toFixed(0) + '% (' + cell.count + ' trades)') : ''">
+                    @if (cell) { {{ cell.winRate.toFixed(0) }}% }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Top Actifs + Performance par Setup côte à côte -->
+    <div class="grid-2">
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Top actifs</div>
+        </div>
+        <table class="perf-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>ASSET</th>
+              <th>TRADES</th>
+              <th>WIN RATE</th>
+              <th>P&amp;L</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (asset of topAssets(); track asset.asset; let i = $index) {
+              <tr>
+                <td class="mono text-3">#{{ i + 1 }}</td>
+                <td class="td-asset">{{ asset.asset }}</td>
+                <td class="mono">{{ asset.count }}</td>
+                <td class="mono"
+                    [class.text-green]="asset.winRate >= 60"
+                    [class.text-yellow]="asset.winRate >= 45 && asset.winRate < 60"
+                    [class.text-red]="asset.winRate < 45">
+                  {{ asset.winRate.toFixed(0) }}%
+                </td>
+                <td class="mono"
+                    [class.text-green]="asset.pnl > 0"
+                    [class.text-red]="asset.pnl < 0">
+                  {{ formatPnl(asset.pnl) }}
+                </td>
+              </tr>
+            }
+            @if (topAssets().length === 0) {
+              <tr><td colspan="5" class="empty-td">Aucune donnée</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Performance par setup</div>
+        </div>
+        <table class="perf-table">
+          <thead>
+            <tr>
+              <th>SETUP</th>
+              <th>TRADES</th>
+              <th>WIN RATE</th>
+              <th>RR MOY.</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (setup of setupData(); track setup.setup) {
+              <tr>
+                <td class="td-asset">{{ setup.setup }}</td>
+                <td class="mono">{{ setup.count }}</td>
+                <td class="mono"
+                    [class.text-green]="setup.winRate >= 60"
+                    [class.text-yellow]="setup.winRate >= 45 && setup.winRate < 60"
+                    [class.text-red]="setup.winRate < 45">
+                  {{ setup.winRate.toFixed(0) }}%
+                </td>
+                <td class="mono"
+                    [class.text-green]="setup.avgRR >= 1"
+                    [class.text-red]="setup.avgRR < 1">
+                  {{ setup.avgRR.toFixed(2) }}
+                </td>
+              </tr>
+            }
+            @if (setupData().length === 0) {
+              <tr><td colspan="4" class="empty-td">Aucune donnée</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+  }
+
+  <!-- ══════════════════════════════════════════
+       BLOCS VERROUILLÉS — FREE
+  ══════════════════════════════════════════ -->
+  @if (!userStore.isPremium()) {
+
+    <div class="locked-blocks">
+
+      <!-- Bloc 1 — Equity Curve & Drawdown -->
+      <div class="locked-feature">
+        <div class="locked-preview">
+          <div class="preview-curves">
+            <svg viewBox="0 0 400 100" class="preview-svg" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="gGreen" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#10b981" stop-opacity="0.3"/>
+                  <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="gRed" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#ef4444" stop-opacity="0.3"/>
+                  <stop offset="100%" stop-color="#ef4444" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <!-- Equity curve (green) -->
+              <path d="M0,80 C40,70 80,50 120,40 C160,30 200,20 240,15 C280,10 320,18 360,12 L400,8 L400,100 L0,100 Z" fill="url(#gGreen)"/>
+              <path d="M0,80 C40,70 80,50 120,40 C160,30 200,20 240,15 C280,10 320,18 360,12 L400,8" fill="none" stroke="#10b981" stroke-width="2"/>
+              <!-- Drawdown (red, smaller) -->
+              <path d="M0,20 C40,22 80,28 120,35 C160,28 200,25 240,30 C280,36 320,28 360,32 L400,30 L400,0 L0,0 Z" fill="url(#gRed)" opacity="0.5"/>
+              <path d="M0,20 C40,22 80,28 120,35 C160,28 200,25 240,30 C280,36 320,28 360,32 L400,30" fill="none" stroke="#ef4444" stroke-width="1.5" opacity="0.7"/>
+            </svg>
+          </div>
+        </div>
+        <div class="locked-overlay">
+          <span class="locked-icon">🔒</span>
+          <h3 class="locked-title">Equity Curve &amp; Drawdown</h3>
+          <p class="locked-desc">
+            Visualise l'évolution de ton capital et tes périodes de drawdown pour identifier tes biais comportementaux.
+          </p>
+          <a href="/pricing" class="locked-cta">Essayer 7 jours gratuit →</a>
+        </div>
+      </div>
+
+      <!-- Bloc 2 — Heatmap horaire -->
+      <div class="locked-feature">
+        <div class="locked-preview">
+          <div class="heatmap-preview-mock">
+            @for (cell of mockCells; track $index) {
+              <div class="mock-cell"
+                   [style.background]="cell > 0.66 ? '#10b981' : cell > 0.5 ? '#f59e0b' : '#ef4444'"
+                   [style.opacity]="0.15 + cell * 0.5">
+              </div>
+            }
+          </div>
+        </div>
+        <div class="locked-overlay">
+          <span class="locked-icon">🔒</span>
+          <h3 class="locked-title">Heatmap de performance horaire</h3>
+          <p class="locked-desc">
+            Découvre tes meilleures heures — quand tu gagnes vraiment et quand tu perds le plus.
+          </p>
+          <a href="/pricing" class="locked-cta">Essayer 7 jours gratuit →</a>
+        </div>
+      </div>
+
+      <!-- Bloc 3 — Top Actifs & Setup -->
+      <div class="locked-feature">
+        <div class="locked-preview">
+          <div class="bars-preview-mock">
+            @for (bar of mockBars; track $index) {
+              <div class="mock-bar-row">
+                <div class="mock-bar-label"></div>
+                <div class="mock-bar-track">
+                  <div class="mock-bar" [style.width.%]="bar"></div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+        <div class="locked-overlay">
+          <span class="locked-icon">🔒</span>
+          <h3 class="locked-title">Top Actifs &amp; Performance par Setup</h3>
+          <p class="locked-desc">
+            Découvre tes actifs les plus profitables et tes setups gagnants. Win rate par émotion, par session et par actif.
+          </p>
+          <a href="/pricing" class="locked-cta">Essayer 7 jours gratuit →</a>
+        </div>
+      </div>
+
+    </div>
+
+  }
+
+</div>

@@ -9,6 +9,9 @@ export interface AnalyticsSummary {
   totalTrades: number;
   maxDrawdown: number;
   streak: number;
+  topSession: string;
+  topSessionWinRate: number;
+  topHour: string;
 }
 
 export interface SetupStat {
@@ -25,7 +28,8 @@ export interface EmotionStat {
   count: number;
 }
 
-export interface HourStat {
+export interface HeatmapCell {
+  day: string;
   hour: number;
   winRate: number;
   count: number;
@@ -60,8 +64,8 @@ export class AnalyticsApi {
     return this.http.get<{ data: EmotionStat[] }>(`${this.base}/by-emotion`);
   }
 
-  getByHour(): Observable<{ data: HourStat[] }> {
-    return this.http.get<{ data: HourStat[] }>(`${this.base}/by-hour`);
+  getByHour(): Observable<{ data: HeatmapCell[] }> {
+    return this.http.get<{ data: HeatmapCell[] }>(`${this.base}/by-hour`);
   }
 
   getEquityCurve(): Observable<{ data: EquityPoint[] }> {
