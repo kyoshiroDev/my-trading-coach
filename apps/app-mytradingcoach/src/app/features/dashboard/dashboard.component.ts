@@ -61,7 +61,6 @@ const SETUP_COLORS_MAP: Record<string, string> = {
       <!-- Greeting -->
       <div class="greeting">
         <h1 class="greeting-title">Bonjour, {{ userStore.displayName() }} 👋</h1>
-        <p class="greeting-sub">Voici un résumé de tes performances</p>
       </div>
 
       <!-- Premium upsell banner -->
