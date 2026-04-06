@@ -142,23 +142,62 @@ const SETUP_COLORS_MAP: Record<string, string> = {
         </div>
       }
 
-      <!-- Equity Curve — full width -->
-      <div class="card grid-full" style="margin-bottom:16px">
-        <div class="card-header">
-          <div class="card-title">Equity Curve</div>
-          <div style="display:flex;gap:12px;align-items:center">
-            <span class="chart-filter">1M</span>
-            <span class="chart-filter active">3M</span>
-            <span class="chart-filter">All</span>
-            <a routerLink="/analytics" class="card-action">Détails →</a>
+      <!-- Equity Curve + Derniers trades -->
+      <div class="equity-trades-row" style="margin-bottom:16px">
+
+        <!-- Equity Curve — 3/4 -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Equity Curve</div>
+            <div style="display:flex;gap:12px;align-items:center">
+              <span class="chart-filter">1M</span>
+              <span class="chart-filter active">3M</span>
+              <span class="chart-filter">All</span>
+              <a routerLink="/analytics" class="card-action">Détails →</a>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas #equityCanvas width="900" height="160"></canvas>
+            @if (!userStore.isPremium() || equityCurve().length === 0) {
+              <div class="empty-chart">
+                @if (!userStore.isPremium()) { Courbe disponible en Premium }
+                @else { Aucun trade enregistré }
+              </div>
+            }
           </div>
         </div>
-        <div class="chart-container">
-          <canvas #equityCanvas width="900" height="160"></canvas>
-          @if (!userStore.isPremium() || equityCurve().length === 0) {
-            <div class="empty-chart">
-              @if (!userStore.isPremium()) { Courbe disponible en Premium }
-              @else { Aucun trade enregistré }
+
+        <!-- Derniers trades — 1/4 -->
+        <div class="card recent-trades-card">
+          <div class="card-header">
+            <div class="card-title">Derniers trades</div>
+            <a routerLink="/journal" class="card-action">Voir →</a>
+          </div>
+
+          @if (tradesStore.trades$().length === 0) {
+            <div class="empty-state">
+              <p>Aucun trade</p>
+              <small>Enregistre ton premier trade</small>
+            </div>
+          } @else {
+            <div class="trade-list-compact">
+              @for (trade of tradesStore.trades$().slice(0, 7); track trade.id) {
+                <div class="trade-row-compact">
+                  <div class="trade-row-top">
+                    <span class="trade-side" [class]="trade.side === 'LONG' ? 'long' : 'short'">
+                      {{ trade.side }}
+                    </span>
+                    <span class="trade-asset-compact">{{ trade.asset }}</span>
+                    <span class="trade-emotion">{{ trade.emotion | emotionEmoji }}</span>
+                  </div>
+                  <div class="trade-row-bottom">
+                    <span class="trade-setup-compact">{{ trade.setup }}</span>
+                    <span class="trade-pnl" [style.color]="trade.pnl | pnlColor">
+                      {{ trade.pnl !== null ? formatPnl(trade.pnl) : '—' }}
+                    </span>
+                  </div>
+                </div>
+              }
             </div>
           }
         </div>
@@ -242,37 +281,6 @@ const SETUP_COLORS_MAP: Record<string, string> = {
             }
           </div>
         </div>
-      </div>
-
-      <!-- Recent trades -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Derniers trades</div>
-          <a routerLink="/journal" class="card-action">Tout voir →</a>
-        </div>
-
-        @if (tradesStore.trades$().length === 0) {
-          <div class="empty-state">
-            <p>Aucun trade enregistré</p>
-            <small>Commence par enregistrer ton premier trade dans le journal</small>
-          </div>
-        } @else {
-          <div class="trade-list">
-            @for (trade of tradesStore.trades$().slice(0, 6); track trade.id) {
-              <div class="trade-row">
-                <span class="trade-side" [class]="trade.side === 'LONG' ? 'long' : 'short'">
-                  {{ trade.side }}
-                </span>
-                <span class="trade-asset">{{ trade.asset }}</span>
-                <span class="trade-setup">{{ trade.setup }}</span>
-                <span class="trade-emotion">{{ trade.emotion | emotionEmoji }}</span>
-                <span class="trade-pnl" [style.color]="trade.pnl | pnlColor">
-                  {{ trade.pnl !== null ? formatPnl(trade.pnl) : '—' }}
-                </span>
-              </div>
-            }
-          </div>
-        }
       </div>
     </div>
   `,

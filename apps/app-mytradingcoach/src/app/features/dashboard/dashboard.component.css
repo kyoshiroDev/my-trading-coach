@@ -257,29 +257,56 @@ canvas { width: 100% !important; height: 100% !important; }
   margin-top: 4px;
 }
 
-/* ─── Trade List ─── */
-.trade-list { display: flex; flex-direction: column; gap: 8px; }
-
-.trade-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  background: var(--bg-2);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.15s;
+/* ─── Equity + Trades row ─── */
+.equity-trades-row {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: 16px;
+  align-items: start;
 }
 
-.trade-row:hover { border-color: var(--border-hover); background: var(--bg-3); }
+/* ─── Recent trades compact (colonne 1/4) ─── */
+.recent-trades-card { display: flex; flex-direction: column; }
+
+.trade-list-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.trade-row-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 9px 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.trade-row-compact:hover { border-color: var(--border-hover); background: var(--bg-3); }
+
+.trade-row-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.trade-row-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 
 .trade-side {
-  width: 46px; height: 22px;
-  border-radius: 5px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 4px;
   display: flex; align-items: center; justify-content: center;
   font-family: var(--font-mono, 'DM Mono', monospace);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 500;
   letter-spacing: 0.8px;
   flex-shrink: 0;
@@ -288,24 +315,32 @@ canvas { width: 100% !important; height: 100% !important; }
 .trade-side.long { background: var(--green-dim); color: var(--green); }
 .trade-side.short { background: var(--red-dim); color: var(--red); }
 
-.trade-asset {
+.trade-asset-compact {
   font-weight: 600;
-  font-size: 13px;
-  min-width: 64px;
+  font-size: 12px;
   font-family: var(--font-mono, 'DM Mono', monospace);
   color: var(--blue-bright);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.trade-setup { font-size: 11px; color: var(--text-3); flex: 1; }
-.trade-emotion { font-size: 14px; }
+.trade-setup-compact {
+  font-size: 10px;
+  color: var(--text-3);
+  font-family: var(--font-mono, 'DM Mono', monospace);
+}
+
+.trade-emotion { font-size: 13px; flex-shrink: 0; }
 
 .trade-pnl {
   font-family: var(--font-mono, 'DM Mono', monospace);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
-  min-width: 80px;
   text-align: right;
   color: var(--text-2);
+  flex-shrink: 0;
 }
 
 /* ─── Premium upsell banner ─── */
