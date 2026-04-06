@@ -8,6 +8,7 @@ import {
   Sparkles,
   CalendarDays,
   Trophy,
+  Settings,
   LogOut,
 } from 'lucide-angular';
 import { UserStore } from '../../../core/stores/user.store';
@@ -68,6 +69,11 @@ import { AuthService } from '../../../core/auth/auth.service';
             Scoring
           </a>
 
+          <a routerLink="/settings" routerLinkActive="active" class="nav-item">
+            <span class="nav-icon"><lucide-icon [img]="SettingsIcon" [size]="14" /></span>
+            Paramètres
+          </a>
+
           <button class="nav-item settings-item" (click)="logout()">
             <span class="nav-icon"><lucide-icon [img]="LogOutIcon" [size]="14" /></span>
             Déconnexion
@@ -105,6 +111,7 @@ export class SidebarComponent {
   protected readonly SparklesIcon = Sparkles;
   protected readonly CalendarDaysIcon = CalendarDays;
   protected readonly TrophyIcon = Trophy;
+  protected readonly SettingsIcon = Settings;
   protected readonly LogOutIcon = LogOut;
 
   logout() {

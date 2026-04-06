@@ -10,6 +10,7 @@ export interface AuthUser {
   name?: string;
   plan: 'FREE' | 'PREMIUM';
   trialEndsAt?: string | null;
+  stripeCurrentPeriodEnd?: string | null;
 }
 
 interface AuthResponse {

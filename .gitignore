@@ -4,6 +4,10 @@
 dist
 tmp
 
+# template
+app-mytradingcoach.html
+landing-mytradingcoach.html
+
 # Vercel
 .vercel
 out-tsc

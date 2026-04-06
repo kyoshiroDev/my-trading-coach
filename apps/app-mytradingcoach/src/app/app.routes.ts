@@ -51,6 +51,11 @@ export const appRoutes: Routes = [
         loadComponent: () =>
           import('./features/scoring/scoring.component').then((m) => m.ScoringComponent),
       },
+      {
+        path: 'settings',
+        loadComponent: () =>
+          import('./features/settings/settings.component').then((m) => m.SettingsComponent),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

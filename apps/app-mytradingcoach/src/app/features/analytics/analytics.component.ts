@@ -19,6 +19,7 @@ import {
   SetupStat,
   TopAsset,
 } from '../../core/api/analytics.api';
+import { BillingApi } from '../../core/api/billing.api';
 
 @Component({
   selector: 'mtc-analytics',
@@ -34,6 +35,7 @@ export class AnalyticsComponent implements OnInit {
 
   protected readonly userStore = inject(UserStore);
   private readonly analyticsApi = inject(AnalyticsApi);
+  private readonly billingApi = inject(BillingApi);
 
   protected readonly summary = signal<AnalyticsSummary | null>(null);
   protected readonly equityCurve = signal<EquityPoint[]>([]);
@@ -109,6 +111,13 @@ export class AnalyticsComponent implements OnInit {
     const sign = value >= 0 ? '+' : '-';
     if (abs >= 1000) return `${sign}$${(abs / 1000).toFixed(1)}k`;
     return `${sign}$${abs.toFixed(0)}`;
+  }
+
+  protected startTrial(plan: 'monthly' | 'yearly' = 'monthly'): void {
+    this.billingApi.checkout(plan).subscribe({
+      next: (res) => { window.location.href = res.data.url; },
+      error: () => console.error('Erreur checkout'),
+    });
   }
 
   protected formatSession(session: string): string {

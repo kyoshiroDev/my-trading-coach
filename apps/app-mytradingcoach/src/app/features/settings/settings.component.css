@@ -1,0 +1,163 @@
+.content {
+  padding: 28px;
+  flex: 1;
+  max-width: 700px;
+}
+
+.alert {
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.alert-success {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: var(--green);
+}
+
+.alert-cancel {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--yellow);
+}
+
+.section-title {
+  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 12px;
+}
+
+/* ── Plan card ── */
+.plan-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.plan-header { display: flex; flex-direction: column; gap: 10px; }
+
+.badge {
+  display: inline-block;
+  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.badge-premium {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--blue-bright);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.badge-free {
+  background: rgba(99, 155, 255, 0.08);
+  color: var(--text-3);
+  border: 1px solid var(--border);
+}
+
+.plan-desc {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+.plan-renewal {
+  font-size: 12px;
+  font-family: var(--font-mono, 'DM Mono', monospace);
+  color: var(--text-3);
+  margin-top: 6px;
+}
+
+.plan-upgrade-hint {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+.plan-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Buttons ── */
+.btn {
+  border-radius: 9px;
+  padding: 11px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body, 'DM Sans', sans-serif);
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.btn-primary {
+  background: var(--blue, #3b82f6);
+  color: #fff;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:hover {
+  background: var(--blue-bright, #60a5fa);
+  transform: translateY(-1px);
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+}
+
+.btn-secondary {
+  background: var(--bg-3);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  border-color: var(--border-hover);
+  color: var(--text);
+}
+
+/* ── Account card ── */
+.account-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.account-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(99, 155, 255, 0.06);
+}
+
+.account-row:last-child { border-bottom: none; }
+
+.account-label {
+  font-size: 12px;
+  font-family: var(--font-mono, 'DM Mono', monospace);
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.account-value {
+  font-size: 13px;
+  color: var(--text-2);
+}

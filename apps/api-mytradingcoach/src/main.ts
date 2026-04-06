@@ -17,6 +17,7 @@ function validateEnv() {
 async function bootstrap() {
   validateEnv();
   const app = await NestFactory.create(AppModule, {
+    rawBody: true,
     logger:
       process.env['NODE_ENV'] === 'production'
         ? new ConsoleLogger({ json: true })
