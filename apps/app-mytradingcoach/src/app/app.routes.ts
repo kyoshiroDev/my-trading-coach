@@ -31,7 +31,6 @@ export const appRoutes: Routes = [
       },
       {
         path: 'analytics',
-        canActivate: [premiumGuard],
         loadComponent: () =>
           import('./features/analytics/analytics.component').then((m) => m.AnalyticsComponent),
       },

@@ -4,7 +4,7 @@ import { PremiumGuard } from '../../common/guards/premium.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AnalyticsService } from './analytics.service';
 
-@UseGuards(JwtAuthGuard, PremiumGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('analytics')
 export class AnalyticsController {
   constructor(private analyticsService: AnalyticsService) {}
@@ -14,26 +14,31 @@ export class AnalyticsController {
     return this.analyticsService.getSummary(user.id);
   }
 
+  @UseGuards(PremiumGuard)
   @Get('by-setup')
   getBySetup(@CurrentUser() user: { id: string }) {
     return this.analyticsService.getBySetup(user.id);
   }
 
+  @UseGuards(PremiumGuard)
   @Get('by-emotion')
   getByEmotion(@CurrentUser() user: { id: string }) {
     return this.analyticsService.getByEmotion(user.id);
   }
 
+  @UseGuards(PremiumGuard)
   @Get('by-hour')
   getByHour(@CurrentUser() user: { id: string }) {
     return this.analyticsService.getByHour(user.id);
   }
 
+  @UseGuards(PremiumGuard)
   @Get('equity-curve')
   getEquityCurve(@CurrentUser() user: { id: string }) {
     return this.analyticsService.getEquityCurve(user.id);
   }
 
+  @UseGuards(PremiumGuard)
   @Get('top-assets')
   getTopAssets(@CurrentUser() user: { id: string }) {
     return this.analyticsService.getTopAssets(user.id);

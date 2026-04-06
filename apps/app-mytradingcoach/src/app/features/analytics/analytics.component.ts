@@ -37,7 +37,7 @@ interface TopAsset { asset: string; winRate: number; pnl: number; count: number;
           <div class="stat-label">WIN RATE GLOBAL</div>
           <div class="stat-value" [class.text-green]="(summary()?.winRate ?? 0) >= 50"
                                   [class.text-red]="(summary()?.winRate ?? 0) < 50 && (summary()?.winRate ?? 0) > 0">
-            {{ userStore.isPremium() ? (summary()?.winRate ?? 0).toFixed(1) + '%' : '—' }}
+            {{ summary() ? (summary()!.winRate).toFixed(1) + '%' : '—' }}
           </div>
         </div>
         <div class="stat-card">
@@ -45,13 +45,13 @@ interface TopAsset { asset: string; winRate: number; pnl: number; count: number;
           <div class="stat-value"
                [class.text-green]="(summary()?.totalPnl ?? 0) > 0"
                [class.text-red]="(summary()?.totalPnl ?? 0) < 0">
-            {{ userStore.isPremium() ? formatPnl(summary()?.totalPnl ?? 0) : '—' }}
+            {{ summary() ? formatPnl(summary()!.totalPnl) : '—' }}
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-label">DRAWDOWN MAX</div>
           <div class="stat-value text-red">
-            {{ userStore.isPremium() ? formatPnl(summary()?.maxDrawdown ?? 0) : '—' }}
+            {{ summary() ? formatPnl(summary()!.maxDrawdown) : '—' }}
           </div>
         </div>
       </div>
@@ -244,7 +244,7 @@ export class AnalyticsComponent {
   protected readonly mockBars = [74, 68, 55, 38, 22];
 
   private readonly summaryResource = httpResource<{ data: Summary }>(
-    () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/summary` : undefined
+    () => `${environment.apiUrl}/analytics/summary`
   );
   private readonly byEmotionResource = httpResource<{ data: ByEmotion[] }>(
     () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/by-emotion` : undefined
@@ -274,7 +274,6 @@ export class AnalyticsComponent {
   });
 
   protected readonly isLoading = computed(() =>
-    this.summaryResource.isLoading() ||
     this.byEmotionResource.isLoading() ||
     this.bySetupResource.isLoading() ||
     this.byHourResource.isLoading() ||
