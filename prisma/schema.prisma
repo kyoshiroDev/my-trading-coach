@@ -7,21 +7,22 @@ datasource db {
 }
 
 model User {
-  id        String          @id @default(cuid())
-  email     String          @unique
-  password  String
-  name      String?
-  plan        Plan            @default(FREE)
+  id          String    @id @default(cuid())
+  email       String    @unique
+  password    String
+  name        String?
+  plan        Plan      @default(FREE)
   trialEndsAt DateTime?
-  trialUsed   Boolean         @default(false)
+  trialUsed   Boolean   @default(false)
 
   // ── Stripe ──────────────────────────────────────
-  stripeCustomerId       String?   @unique
-  stripeSubscriptionId   String?   @unique
-  stripePriceId          String?
-  stripeCurrentPeriodEnd DateTime?
+  stripeCustomerId         String?   @unique
+  stripeSubscriptionId     String?   @unique
+  stripePriceId            String?
+  stripeCurrentPeriodEnd   DateTime?
+  stripeSubscriptionStatus String?   // 'active' | 'trialing' | 'past_due' | 'unpaid' | 'canceled'
 
-  trades      Trade[]
+  trades    Trade[]
   debriefs  WeeklyDebrief[]
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
@@ -69,6 +70,15 @@ model WeeklyDebrief {
 
   @@unique([userId, weekNumber, year])
   @@index([userId, year, weekNumber])
+}
+
+// ── Idempotence webhooks Stripe ─────────────────────────────────────────────
+model StripeEvent {
+  id          String   @id // Stripe event ID (evt_...)
+  type        String
+  processedAt DateTime @default(now())
+
+  @@index([processedAt])
 }
 
 enum Plan {

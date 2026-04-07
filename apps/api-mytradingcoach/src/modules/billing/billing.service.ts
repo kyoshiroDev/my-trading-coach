@@ -1,18 +1,45 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Prisma, Plan } from '@prisma/client';
 import Stripe from 'stripe';
-import { Plan } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
-// ── Helpers de typage ────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Stripe peut renvoyer un ID string ou l'objet expandé — extrait toujours l'ID. */
+/**
+ * Stripe peut renvoyer un ID string ou l'objet expandé.
+ * Extrait toujours l'ID string.
+ */
 function extractId(
   resource: string | { id: string } | null | undefined,
 ): string | null {
   if (!resource) return null;
   return typeof resource === 'string' ? resource : resource.id;
 }
+
+/**
+ * Détecte une violation de contrainte unique Prisma (code P2002).
+ * Utilisé pour l'idempotence des webhooks.
+ */
+function isUniqueConstraintError(err: unknown): boolean {
+  return (
+    err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002'
+  );
+}
+
+// ── Types ────────────────────────────────────────────────────────────────────
+
+/** Statuts Stripe qui confèrent l'accès PREMIUM */
+const ACTIVE_STATUSES = new Set<Stripe.Subscription['status']>([
+  'active',
+  'trialing',
+]);
 
 // ── Service ──────────────────────────────────────────────────────────────────
 
@@ -42,46 +69,68 @@ export class BillingService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new BadRequestException('Utilisateur introuvable');
 
+    // ── Vérification abonnement actif (double check côté Stripe) ─────────────
     if (user.stripeSubscriptionId) {
-      throw new BadRequestException('Un abonnement actif existe déjà');
+      const existing = await this.stripe.subscriptions
+        .retrieve(user.stripeSubscriptionId)
+        .catch(() => null);
+
+      if (existing && ACTIVE_STATUSES.has(existing.status)) {
+        throw new ConflictException(
+          'Un abonnement actif existe déjà. Utilisez le portail de facturation pour le modifier.',
+        );
+      }
     }
 
-    // Créer le customer Stripe si inexistant (idempotent)
-    let customerId = user.stripeCustomerId;
-    if (!customerId) {
-      const customer = await this.stripe.customers.create({
-        email: userEmail,
-        metadata: { userId },
-      });
-      customerId = customer.id;
-      await this.prisma.user.update({
-        where: { id: userId },
-        data: { stripeCustomerId: customerId },
-      });
+    // ── Réutiliser une session checkout en attente ────────────────────────────
+    if (user.stripeCustomerId) {
+      const openSessions = await this.stripe.checkout.sessions
+        .list({ customer: user.stripeCustomerId, status: 'open', limit: 1 })
+        .catch(() => null);
+
+      if (openSessions?.data[0]?.url) {
+        this.logger.log(`Session checkout existante réutilisée pour user ${userId}`);
+        return { url: openSessions.data[0].url };
+      }
     }
 
-    // Trial seulement si non encore utilisé
+    // ── Créer ou récupérer le customer Stripe (idempotent) ────────────────────
+    const customerId = await this.ensureStripeCustomer(userId, userEmail);
+
+    // ── Trial (seulement si pas encore utilisé) ───────────────────────────────
     const subscriptionData = user.trialUsed
       ? { metadata: { userId } }
       : { trial_period_days: 7, metadata: { userId } };
 
-    const session = await this.stripe.checkout.sessions.create({
-      customer: customerId,
-      line_items: [{ price: priceId, quantity: 1 }],
-      mode: 'subscription',
-      subscription_data: subscriptionData,
-      success_url: `${returnUrl}/settings?checkout=success`,
-      cancel_url: `${returnUrl}/settings?checkout=canceled`,
-      locale: 'fr',
-      allow_promotion_codes: true,
-      client_reference_id: userId,
-    });
+    const session = await this.stripe.checkout.sessions.create(
+      {
+        customer: customerId,
+        line_items: [{ price: priceId, quantity: 1 }],
+        mode: 'subscription',
+        subscription_data: subscriptionData,
+        success_url: `${returnUrl}/settings?checkout=success`,
+        cancel_url: `${returnUrl}/settings?checkout=canceled`,
+        locale: 'fr',
+        allow_promotion_codes: true,
+        client_reference_id: userId,
+        // Session expire après 30 min (min Stripe = 30 min, max = 24h)
+        expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
+      },
+      // Idempotency key : évite les doublons en cas de retry réseau côté client
+      // Se renouvelle toutes les 30 min (= durée de la session)
+      {
+        idempotencyKey: `checkout-${userId}-${priceId}-${Math.floor(Date.now() / (30 * 60 * 1000))}`,
+      },
+    );
 
     if (!session.url) {
-      throw new BadRequestException('Impossible de créer la session Stripe');
+      throw new InternalServerErrorException('Impossible de créer la session Stripe');
     }
 
-    this.logger.log(`Checkout créé pour user ${userId} (trial: ${!user.trialUsed})`);
+    this.logger.log(
+      `Checkout créé — user: ${userId}, trial: ${!user.trialUsed}, price: ${priceId}`,
+    );
+
     return { url: session.url };
   }
 
@@ -93,8 +142,11 @@ export class BillingService {
   ): Promise<{ url: string }> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new BadRequestException('Utilisateur introuvable');
+
     if (!user.stripeCustomerId) {
-      throw new BadRequestException('Aucun compte Stripe associé à cet utilisateur');
+      throw new BadRequestException(
+        'Aucun compte Stripe associé à cet utilisateur. Souscrivez d\'abord un abonnement.',
+      );
     }
 
     const session = await this.stripe.billingPortal.sessions.create({
@@ -121,35 +173,58 @@ export class BillingService {
       );
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'signature invalide';
-      this.logger.warn(`Webhook rejeté (${message})`);
+      this.logger.warn(`Webhook rejeté — ${message}`);
       throw new BadRequestException(`Webhook invalide : ${message}`);
     }
 
     this.logger.log(`Webhook reçu : ${event.type} [${event.id}]`);
 
+    // ── Idempotence vraie (race-condition safe) ───────────────────────────────
+    //    On insère l'event ID en DB avant traitement.
+    //    Si l'INSERT échoue (P2002 = unique constraint), c'est un doublon → on skip.
+    const alreadyProcessed = await this.markEventAsProcessing(event);
+    if (alreadyProcessed) {
+      this.logger.debug(`Event ${event.id} (${event.type}) déjà traité — skip`);
+      return { received: true };
+    }
+
     try {
       await this.processEvent(event);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      this.logger.error(`Erreur traitement ${event.type} [${event.id}] : ${msg}`);
+      this.logger.error(
+        `Erreur traitement ${event.type} [${event.id}] : ${msg}`,
+        err instanceof Error ? err.stack : undefined,
+      );
 
-      // Renvoyer l'erreur seulement si ce n'est pas une erreur métier connue
+      // Supprimer l'enregistrement pour permettre un retry Stripe (72h)
+      await this.prisma.stripeEvent
+        .delete({ where: { id: event.id } })
+        .catch(() => null);
+
+      // Erreurs métier : 200 pour éviter les retry infinis de Stripe
       if (err instanceof BadRequestException) return { received: true };
+
+      // Erreurs techniques : laisser Stripe retenter
       throw err;
     }
 
     return { received: true };
   }
 
-  // ── Dispatcher d'events (idempotent par nature) ──────────────────────────────
+  // ── Dispatcher d'events ──────────────────────────────────────────────────────
 
   private async processEvent(event: Stripe.Event): Promise<void> {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
         const subscriptionId = extractId(session.subscription);
+
         if (session.mode === 'subscription' && subscriptionId) {
           await this.syncSubscription(subscriptionId);
+          this.logger.log(
+            `Checkout complété — subscription: ${subscriptionId}, user: ${session.client_reference_id ?? 'unknown'}`,
+          );
         }
         break;
       }
@@ -163,6 +238,7 @@ export class BillingService {
 
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
+
         await this.prisma.user.updateMany({
           where: { stripeSubscriptionId: subscription.id },
           data: {
@@ -170,34 +246,47 @@ export class BillingService {
             stripeSubscriptionId: null,
             stripePriceId: null,
             stripeCurrentPeriodEnd: null,
+            stripeSubscriptionStatus: null,
           },
         });
-        this.logger.log(`Abonnement ${subscription.id} résilié → FREE`);
+
+        this.logger.log(`Abonnement résilié ${subscription.id} → plan FREE`);
         break;
       }
 
       case 'invoice.payment_failed': {
+        // ⚠️ NE PAS dégrader vers FREE ici.
+        //
+        // Stripe gère le dunning automatiquement : il retente le paiement
+        // plusieurs fois sur plusieurs jours avant de passer en past_due/unpaid.
+        // La dégradation est gérée par customer.subscription.updated
+        // (qui sera émis quand status → past_due ou unpaid).
+        //
+        // Downgrader ici = mauvaise UX sur le 1er échec de paiement.
         const invoice = event.data.object as Stripe.Invoice;
         const customerId = extractId(invoice.customer);
-        if (customerId) {
-          await this.prisma.user.updateMany({
-            where: { stripeCustomerId: customerId },
-            data: { plan: Plan.FREE },
-          });
-          this.logger.warn(`Paiement échoué customer ${customerId} → FREE`);
-        }
+        const attemptCount = invoice.attempt_count;
+
+        this.logger.warn(
+          `Paiement échoué — customer: ${customerId ?? 'unknown'}, tentative: ${attemptCount ?? '?'} — Stripe va retenter`,
+        );
+        // 📌 TODO production : envoyer un email de notification à l'utilisateur
+        //    via un service mail (Resend) ou une queue BullMQ
         break;
       }
 
       case 'invoice.payment_succeeded': {
-        // Restaure PREMIUM après un paiement qui avait échoué
+        // Sync après paiement réussi (renouvellement ou récupération après échec)
         const invoice = event.data.object as Stripe.Invoice;
         const subscriptionId = extractId(
           invoice.parent?.subscription_details?.subscription,
         );
+
         if (subscriptionId) {
           await this.syncSubscription(subscriptionId);
-          this.logger.log(`Paiement récupéré → sync subscription ${subscriptionId}`);
+          this.logger.log(
+            `Paiement réussi — subscription: ${subscriptionId} synchronisée`,
+          );
         }
         break;
       }
@@ -207,7 +296,7 @@ export class BillingService {
     }
   }
 
-  // ── Sync DB ← Stripe (idempotent) ───────────────────────────────────────────
+  // ── Sync DB ← Stripe ────────────────────────────────────────────────────────
 
   private async syncSubscription(subscriptionId: string): Promise<void> {
     let subscription: Stripe.Subscription;
@@ -224,7 +313,7 @@ export class BillingService {
 
     const customerId = extractId(subscription.customer);
     if (!customerId) {
-      this.logger.warn(`Subscription ${subscriptionId} sans customer ID`);
+      this.logger.warn(`Subscription ${subscriptionId} — customer ID manquant`);
       return;
     }
 
@@ -233,30 +322,21 @@ export class BillingService {
     });
 
     if (!user) {
-      this.logger.warn(`Aucun user pour stripeCustomerId: ${customerId}`);
+      this.logger.warn(
+        `Aucun user trouvé pour stripeCustomerId: ${customerId} (subscription: ${subscriptionId})`,
+      );
       return;
     }
 
-    const isActive =
-      subscription.status === 'active' || subscription.status === 'trialing';
-    const isTrialing = subscription.status === 'trialing';
+    const status: Stripe.Subscription['status'] = subscription.status;
+    const isActive = ACTIVE_STATUSES.has(status);
+    const isTrialing = status === 'trialing';
 
     const firstItem = subscription.items.data[0];
     const priceId = firstItem?.price.id ?? null;
     const periodEnd = firstItem?.current_period_end
       ? new Date(firstItem.current_period_end * 1000)
       : null;
-
-    // Idempotence : skip si aucun changement significatif
-    const alreadySynced =
-      user.stripeSubscriptionId === subscription.id &&
-      user.plan === (isActive ? Plan.PREMIUM : Plan.FREE) &&
-      user.stripePriceId === priceId;
-
-    if (alreadySynced) {
-      this.logger.debug(`Subscription ${subscriptionId} déjà synchronisée — skip`);
-      return;
-    }
 
     await this.prisma.user.update({
       where: { id: user.id },
@@ -265,12 +345,77 @@ export class BillingService {
         stripeSubscriptionId: subscription.id,
         stripePriceId: priceId,
         stripeCurrentPeriodEnd: periodEnd,
-        trialUsed: !isTrialing,
+        stripeSubscriptionStatus: status,
+        // trialUsed ne se réinitialise JAMAIS une fois à true
+        trialUsed: user.trialUsed || !isTrialing,
       },
     });
 
     this.logger.log(
-      `User ${user.id} → ${isActive ? 'PREMIUM' : 'FREE'} (${subscription.status})`,
+      `Sync — user: ${user.id}, plan: ${isActive ? 'PREMIUM' : 'FREE'}, status: ${status}`,
     );
+  }
+
+  // ── Helpers privés ───────────────────────────────────────────────────────────
+
+  /**
+   * Crée ou récupère le Stripe Customer pour un utilisateur.
+   * Idempotent : cherche d'abord via stripeCustomerId en DB,
+   * puis via recherche Stripe par email+userId, puis crée si nécessaire.
+   * Sauvegarde le customerId en DB après création.
+   */
+  private async ensureStripeCustomer(
+    userId: string,
+    userEmail: string,
+  ): Promise<string> {
+    // Recharger pour avoir la valeur la plus fraîche (évite les race conditions)
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+
+    if (user.stripeCustomerId) return user.stripeCustomerId;
+
+    // Chercher un customer existant sur Stripe pour éviter les doublons
+    // (protection contre échec de la mise à jour DB au précédent appel)
+    const searchResult = await this.stripe.customers
+      .search({ query: `metadata['userId']:"${userId}"`, limit: 1 })
+      .catch(() => null);
+
+    let customerId: string;
+
+    if (searchResult?.data[0]) {
+      customerId = searchResult.data[0].id;
+      this.logger.debug(`Customer Stripe récupéré (existant) : ${customerId}`);
+    } else {
+      const customer = await this.stripe.customers.create(
+        { email: userEmail, metadata: { userId } },
+        { idempotencyKey: `customer-create-${userId}` },
+      );
+      customerId = customer.id;
+      this.logger.log(`Customer Stripe créé : ${customerId} pour user ${userId}`);
+    }
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { stripeCustomerId: customerId },
+    });
+
+    return customerId;
+  }
+
+  /**
+   * Insère l'event Stripe en DB de façon atomique (race-condition safe).
+   * Retourne `true` si l'event a déjà été traité (doublon).
+   */
+  private async markEventAsProcessing(event: Stripe.Event): Promise<boolean> {
+    try {
+      await this.prisma.stripeEvent.create({
+        data: { id: event.id, type: event.type },
+      });
+      return false; // Premier traitement
+    } catch (err: unknown) {
+      if (isUniqueConstraintError(err)) {
+        return true; // Doublon — déjà traité
+      }
+      throw err; // Erreur inattendue
+    }
   }
 }
