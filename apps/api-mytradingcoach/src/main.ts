@@ -12,6 +12,7 @@ const REQUIRED_ENV_VARS = [
   'STRIPE_WEBHOOK_SECRET',
   'STRIPE_PRICE_MONTHLY',
   'STRIPE_PRICE_YEARLY',
+  'RESEND_API_KEY',
 ];
 const logger = new Logger('Bootstrap');
 

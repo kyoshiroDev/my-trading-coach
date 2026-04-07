@@ -1,12 +1,19 @@
 import { Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
+import { PrismaModule } from '../../prisma/prisma.module';
+import { MailModule } from '../mail/mail.module';
 import { BillingController } from './billing.controller';
 import { BillingService } from './billing.service';
-import { PrismaModule } from '../../prisma/prisma.module';
+import { BillingProcessor } from './billing.processor';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [
+    BullModule.registerQueue({ name: 'billing' }),
+    PrismaModule,
+    MailModule,
+  ],
   controllers: [BillingController],
-  providers: [BillingService],
+  providers: [BillingService, BillingProcessor],
   exports: [BillingService],
 })
 export class BillingModule {}
