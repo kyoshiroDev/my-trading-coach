@@ -12,8 +12,8 @@ export class UserStore {
     const user = this.user();
     if (!user) return false;
     if (user.plan === 'PREMIUM') return true;
-    if (user.trialEndsAt && new Date() < new Date(user.trialEndsAt)) return true;
-    return false;
+    return !!(user.trialEndsAt && new Date() < new Date(user.trialEndsAt));
+
   });
   readonly displayName = computed(() => this.user()?.name ?? this.user()?.email ?? '');
   readonly initials = computed(() => {

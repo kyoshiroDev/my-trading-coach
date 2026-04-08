@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { PrismaModule } from '../../prisma/prisma.module';
-import { MailModule } from '../mail/mail.module';
+import { ResendModule } from '../resend/resend.module';
 import { BillingController } from './billing.controller';
 import { BillingService } from './billing.service';
 import { BillingProcessor } from './billing.processor';
@@ -10,7 +10,7 @@ import { BillingProcessor } from './billing.processor';
   imports: [
     BullModule.registerQueue({ name: 'billing' }),
     PrismaModule,
-    MailModule,
+    ResendModule,
   ],
   controllers: [BillingController],
   providers: [BillingService, BillingProcessor],

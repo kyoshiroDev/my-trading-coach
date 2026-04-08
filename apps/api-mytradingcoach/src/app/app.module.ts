@@ -11,7 +11,7 @@ import { AnalyticsModule } from '../modules/analytics/analytics.module';
 import { AiModule } from '../modules/ai/ai.module';
 import { DebriefModule } from '../modules/debrief/debrief.module';
 import { UsersModule } from '../modules/users/users.module';
-import { BillingModule } from '../modules/billing/billing.module';
+import { BillingModule } from '../modules/stripe/billing.module';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { HttpExceptionFilter } from '../common/filters/http-exception.filter';
 import { ResponseInterceptor } from '../common/interceptors/response.interceptor';

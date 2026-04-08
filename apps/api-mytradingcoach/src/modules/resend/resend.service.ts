@@ -10,11 +10,11 @@ import {
 // ── Service Mail (Resend) ─────────────────────────────────────────────────────
 
 @Injectable()
-export class MailService {
+export class ResendService {
   private readonly resend: Resend;
   private readonly from: string;
   private readonly frontendUrl: string;
-  private readonly logger = new Logger(MailService.name);
+  private readonly logger = new Logger(ResendService.name);
 
   constructor(private readonly config: ConfigService) {
     this.resend = new Resend(this.config.getOrThrow<string>('RESEND_API_KEY'));

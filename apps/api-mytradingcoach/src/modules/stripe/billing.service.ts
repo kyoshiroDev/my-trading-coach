@@ -13,7 +13,7 @@ import { Prisma, Plan } from '@prisma/client';
 import Stripe from 'stripe';
 import Redis from 'ioredis';
 import { PrismaService } from '../../prisma/prisma.service';
-import { MailService } from '../mail/mail.service';
+import { ResendService } from '../resend/resend.service';
 import {
   BillingStatusResponse,
   CachedBillingStatus,
@@ -58,7 +58,7 @@ export class BillingService implements OnModuleDestroy {
   constructor(
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
-    private readonly mail: MailService,
+    private readonly resend: ResendService,
     @InjectQueue(BILLING_QUEUE) private readonly webhookQueue: Queue<WebhookJobPayload>,
   ) {
     this.stripe = new Stripe(
@@ -276,7 +276,7 @@ export class BillingService implements OnModuleDestroy {
         if (session.mode === 'subscription' && subscriptionId) {
           const user = await this.syncSubscription(subscriptionId);
           if (user && session.client_reference_id) {
-            await this.mail.sendWelcomePremium({
+            await this.resend.sendWelcomePremium({
               to: user.email,
               userName: user.name ?? '',
               isTrial: user.stripeSubscriptionStatus === 'trialing',
@@ -331,7 +331,7 @@ export class BillingService implements OnModuleDestroy {
         if (customerId) await this.invalidateCacheByCustomerId(customerId);
 
         if (user) {
-          await this.mail.sendSubscriptionCanceled({
+          await this.resend.sendSubscriptionCanceled({
             to: user.email,
             userName: user.name ?? '',
           });
@@ -360,7 +360,7 @@ export class BillingService implements OnModuleDestroy {
           });
 
           if (user) {
-            await this.mail.sendPaymentFailed({
+            await this.resend.sendPaymentFailed({
               to: user.email,
               userName: user.name ?? '',
               attemptCount,

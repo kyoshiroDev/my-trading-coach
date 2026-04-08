@@ -64,7 +64,7 @@
     font-family="-apple-system, sans-serif"
     font-size="24"
     letter-spacing="3"
-    fill="#3b5580"
+    fill="#fff"
   >AI TRADING JOURNAL</text>
 
   <!-- Séparateur -->
@@ -76,17 +76,17 @@
     y="468"
     font-family="-apple-system, sans-serif"
     font-size="20"
-    fill="#4a6080"
+    fill="#fff"
     font-style="italic"
   >Track. Analyze. Improve.</text>
 
   <!-- URL -->
   <text
-    x="600"
-    y="560"
+    x="584"
+    y="510"
     font-family="-apple-system, sans-serif"
     font-size="18"
-    fill="#2d3f55"
+    fill="#fff"
     text-anchor="middle"
     letter-spacing="1"
   >mytradingcoach.app</text>

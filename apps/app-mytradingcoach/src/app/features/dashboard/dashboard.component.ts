@@ -16,11 +16,11 @@ import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
 import { TradesStore } from '../../core/stores/trades.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
-import { PnlColorPipe } from '../../shared/pipes/pnl-color.pipe';
-import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
-import { EmotionLabelPipe } from '../../shared/pipes/emotion-label.pipe';
-import { EmotionColorPipe } from '../../shared/pipes/emotion-color.pipe';
-import { SetupColorPipe } from '../../shared/pipes/setup-color.pipe';
+import { PnlColorPipe } from '../../shared/pipes';
+import { EmotionEmojiPipe } from '../../shared/pipes';
+import { EmotionLabelPipe } from '../../shared/pipes';
+import { EmotionColorPipe } from '../../shared/pipes';
+import { SetupColorPipe } from '../../shared/pipes';
 import { environment } from '../../../environments/environment';
 
 interface Summary {
@@ -337,6 +337,11 @@ export class DashboardComponent implements AfterViewInit {
 
   constructor() {
     this.tradesStore.loadTrades({ limit: '6' });
+
+    window.addEventListener('focus', () => {
+      this.userStore.refreshUser();
+    });
+
     effect(() => {
       if (!this.isLoading() && this.canDraw() && this.equityCurve().length > 0) {
         this.drawEquityCurve();
