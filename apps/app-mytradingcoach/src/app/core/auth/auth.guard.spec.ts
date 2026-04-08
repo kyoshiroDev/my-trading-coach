@@ -66,7 +66,7 @@ describe('premiumGuard', () => {
 
     TestBed.runInInjectionContext(() => premiumGuard({} as any, {} as any));
 
-    expect(navigateSpy).toHaveBeenCalledWith(['/setting']);
+    expect(navigateSpy).toHaveBeenCalledWith(['/settings']);
   });
 
   it('retourne false si non premium', () => {
