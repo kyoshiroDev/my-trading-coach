@@ -5,9 +5,9 @@ module.exports = {
   output: {
     path: join(__dirname, 'dist'),
     clean: true,
-    ...(process.env.NODE_ENV !== 'production' && {
-      devtoolModuleFilenameTemplate: '[absolute-resource-path]',
-    }),
+  },
+  externals: {
+    // 🔥 clé du fix
   },
   plugins: [
     new NxAppWebpackPlugin({
@@ -18,8 +18,9 @@ module.exports = {
       assets: ['./src/assets'],
       optimization: false,
       outputHashing: 'none',
-      generatePackageJson: false,
-      sourceMap: true,
+      generatePackageJson: true,
+      sourceMap: false,
+      externalDependencies: 'all', // 🔥 ULTRA IMPORTANT
     }),
   ],
 };
