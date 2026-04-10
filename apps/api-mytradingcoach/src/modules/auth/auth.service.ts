@@ -2,19 +2,24 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ResendService } from '../resend/resend.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private resend: ResendService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -28,6 +33,11 @@ export class AuthService {
     });
 
     const tokens = await this.generateTokens(user.id, user.email);
+
+    // Email de bienvenue — ne pas bloquer si Resend est down
+    this.resend.sendWelcomeFree({ to: user.email, userName: user.name ?? '' })
+      .catch((err: unknown) => this.logger.error(`Welcome email failed: ${String(err)}`));
+
     return { ...tokens, user };
   }
 

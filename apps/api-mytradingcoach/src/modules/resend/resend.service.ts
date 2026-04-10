@@ -3,7 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
 import {
   paymentFailedTemplate,
+  resetPasswordTemplate,
   subscriptionCanceledTemplate,
+  welcomeFreeTemplate,
   welcomePremiumTemplate,
 } from './templates';
 
@@ -16,10 +18,43 @@ export class ResendService {
   private readonly frontendUrl: string;
   private readonly logger = new Logger(ResendService.name);
 
+  private readonly replyTo: string;
+
   constructor(private readonly config: ConfigService) {
     this.resend = new Resend(this.config.getOrThrow<string>('RESEND_API_KEY'));
-    this.from = this.config.get<string>('MAIL_FROM') ?? 'noreply@mytradingcoach.app';
+    const mailFrom = this.config.get<string>('MAIL_FROM') ?? 'noreply@mytradingcoach.app';
+    this.from = `MyTradingCoach <${mailFrom}>`;
+    this.replyTo = this.config.get<string>('MAIL_SAV') ?? 'hello@mytradingcoach.app';
     this.frontendUrl = this.config.get<string>('FRONTEND_URL') ?? 'https://app.mytradingcoach.app';
+  }
+
+  // ── Bienvenue FREE ─────────────────────────────────────────────────────────
+
+  async sendWelcomeFree(params: {
+    to: string;
+    userName: string;
+  }): Promise<void> {
+    const { subject, html } = welcomeFreeTemplate({
+      userName: params.userName,
+      appUrl: this.frontendUrl,
+    });
+    await this.send({ to: params.to, subject, html });
+  }
+
+  // ── Reset mot de passe ─────────────────────────────────────────────────────
+
+  async sendResetPassword(params: {
+    to: string;
+    userName: string;
+    resetUrl: string;
+    expiresIn?: string;
+  }): Promise<void> {
+    const { subject, html } = resetPasswordTemplate({
+      userName: params.userName,
+      resetUrl: params.resetUrl,
+      expiresIn: params.expiresIn ?? '1 heure',
+    });
+    await this.send({ to: params.to, subject, html });
   }
 
   // ── Paiement échoué ────────────────────────────────────────────────────────
@@ -83,6 +118,7 @@ export class ResendService {
       to: params.to,
       subject: params.subject,
       html: params.html,
+      reply_to: this.replyTo,
     });
 
     if (error) {
