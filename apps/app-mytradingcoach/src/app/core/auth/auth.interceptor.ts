@@ -11,22 +11,26 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
   const router = inject(Router);
   const token = auth.getAccessToken();
 
-  // Ne pas ajouter le Bearer sur la route refresh (évite boucle infinie)
   const isRefreshCall = req.url.includes('/auth/refresh');
+  const isAuthCall = req.url.includes('/auth/login') || req.url.includes('/auth/register') || req.url.includes('/auth/logout');
 
-  const authReq = token && !isRefreshCall
-    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
-    : req;
+  // Toujours envoyer les cookies (pour le refresh_token httpOnly)
+  const baseReq = req.clone({ withCredentials: true });
+
+  const authReq = token && !isRefreshCall && !isAuthCall
+    ? baseReq.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+    : baseReq;
 
   return next(authReq).pipe(
     catchError((err) => {
-      if (err.status === 401 && !isRefreshCall && !isRefreshing && auth.getRefreshToken()) {
+      if (err.status === 401 && !isRefreshCall && !isRefreshing) {
         isRefreshing = true;
         return auth.refreshToken().pipe(
           switchMap(() => {
             isRefreshing = false;
             const newToken = auth.getAccessToken();
             const retryReq = req.clone({
+              withCredentials: true,
               setHeaders: { Authorization: `Bearer ${newToken}` },
             });
             return next(retryReq);

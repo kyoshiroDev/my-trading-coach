@@ -1,0 +1,112 @@
+name: CD — Deploy to Dev
+
+on:
+  push:
+    branches: [develop]
+
+env:
+  NX_NO_CLOUD: true
+
+jobs:
+  # ── Deploy API dev → OVH VPS (port 3001) ─────────────────────────────────
+  deploy-api-dev:
+    name: Deploy API dev to VPS
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /opt/mytradingcoach-dev
+            git pull origin develop
+            docker compose -f docker-compose.dev.yml build api
+            docker compose -f docker-compose.dev.yml up -d --no-deps api
+            echo "API dev deployment complete at $(date)"
+
+  # ── Deploy Angular dev → Vercel ──────────────────────────────────────────
+  deploy-angular-dev:
+    name: Deploy Angular dev to Vercel
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Angular (dev)
+        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=production
+        env:
+          API_URL: ${{ secrets.DEV_API_URL }}
+
+      - name: Deploy to Vercel (dev)
+        run: |
+          pnpm dlx vercel \
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --yes \
+            --cwd dist/apps/app-mytradingcoach/browser \
+            --local-config ../../../../apps/app-mytradingcoach/vercel.json
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_APP_PROJECT_ID }}
+
+  # ── Deploy Astro Landing dev → Vercel ────────────────────────────────────
+  deploy-landing-dev:
+    name: Deploy Landing dev to Vercel
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Astro landing
+        run: pnpm nx build landing-mytradingcoach
+
+      - name: Deploy to Vercel (dev)
+        run: |
+          pnpm dlx vercel \
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --yes \
+            --cwd apps/landing-mytradingcoach
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_LANDING_PROJECT_ID }}

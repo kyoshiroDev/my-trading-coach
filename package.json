@@ -8,6 +8,7 @@
   },
   "private": true,
   "devDependencies": {
+    "@analogjs/vite-plugin-angular": "^2.4.5",
     "@angular-devkit/core": "~21.2.0",
     "@angular-devkit/schematics": "~21.2.0",
     "@angular/build": "~21.2.0",

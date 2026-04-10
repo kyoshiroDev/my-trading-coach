@@ -57,7 +57,7 @@ export class AuthService {
     let payload: { sub: string; email: string };
     try {
       payload = await this.jwtService.verifyAsync(refreshToken, {
-        secret: process.env['JWT_REFRESH_SECRET'] ?? 'dev-refresh-secret',
+        secret: process.env['JWT_REFRESH_SECRET'],
       });
     } catch {
       throw new UnauthorizedException('Refresh token invalide ou expiré');
@@ -70,7 +70,7 @@ export class AuthService {
     if (!user) throw new UnauthorizedException('Utilisateur introuvable');
 
     const tokens = await this.generateTokens(user.id, user.email);
-    return { ...tokens, user };
+    return { ...tokens, user: { id: user.id, email: user.email, name: user.name, plan: user.plan } };
   }
 
   async startTrial(userId: string) {
@@ -94,7 +94,7 @@ export class AuthService {
     const [access_token, refresh_token] = await Promise.all([
       this.jwtService.signAsync(payload, { expiresIn: '15m' }),
       this.jwtService.signAsync(payload, {
-        secret: process.env['JWT_REFRESH_SECRET'] ?? 'dev-refresh-secret',
+        secret: process.env['JWT_REFRESH_SECRET'],
         expiresIn: '7d',
       }),
     ]);

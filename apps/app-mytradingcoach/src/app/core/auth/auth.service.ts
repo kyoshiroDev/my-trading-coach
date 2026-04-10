@@ -16,7 +16,6 @@ export interface AuthUser {
 interface AuthResponse {
   data: {
     access_token: string;
-    refresh_token: string;
     user: AuthUser;
   };
 }
@@ -35,19 +34,19 @@ export class AuthService {
 
   register(email: string, password: string, name?: string) {
     return this.http
-      .post<AuthResponse>(`${environment.apiUrl}/auth/register`, { email, password, name })
+      .post<AuthResponse>(`${environment.apiUrl}/auth/register`, { email, password, name }, { withCredentials: true })
       .pipe(tap((res) => this.handleAuthResponse(res)));
   }
 
   login(email: string, password: string) {
     return this.http
-      .post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password })
+      .post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }, { withCredentials: true })
       .pipe(tap((res) => this.handleAuthResponse(res)));
   }
 
   logout() {
+    this.http.post(`${environment.apiUrl}/auth/logout`, {}, { withCredentials: true }).subscribe();
     localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
     this.currentUser.set(null);
     this.isAuthenticated.set(false);
@@ -58,18 +57,13 @@ export class AuthService {
     return localStorage.getItem('access_token');
   }
 
-  getRefreshToken(): string | null {
-    return localStorage.getItem('refresh_token');
-  }
-
   refreshToken() {
-    const refresh_token = this.getRefreshToken();
+    // Le refresh_token est envoyé automatiquement via le cookie httpOnly
     return this.http
-      .post<AuthResponse>(`${environment.apiUrl}/auth/refresh`, { refresh_token })
+      .post<AuthResponse>(`${environment.apiUrl}/auth/refresh`, {}, { withCredentials: true })
       .pipe(
         tap((res) => {
           localStorage.setItem('access_token', res.data.access_token);
-          localStorage.setItem('refresh_token', res.data.refresh_token);
           if (res.data.user) {
             localStorage.setItem('user', JSON.stringify(res.data.user));
             this.currentUser.set(res.data.user);
@@ -87,9 +81,8 @@ export class AuthService {
   }
 
   private handleAuthResponse(res: AuthResponse) {
-    const { access_token, refresh_token, user } = res.data;
+    const { access_token, user } = res.data;
     localStorage.setItem('access_token', access_token);
-    localStorage.setItem('refresh_token', refresh_token);
     localStorage.setItem('user', JSON.stringify(user));
     this.currentUser.set(user);
     this.isAuthenticated.set(true);

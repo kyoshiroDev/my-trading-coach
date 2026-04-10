@@ -22,6 +22,8 @@ WORKDIR /app
 COPY --from=builder /app/apps/api-mytradingcoach/dist ./
 COPY --from=migrator --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=migrator --chown=nestjs:nodejs /app/prisma ./prisma
+COPY --chown=nestjs:nodejs apps/api-mytradingcoach/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
 USER nestjs
 EXPOSE 3000
-CMD ["sh", "-c", "node main.js"]
+CMD ["sh", "entrypoint.sh"]

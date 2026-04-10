@@ -1,6 +1,7 @@
 import { ConsoleLogger, Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
+import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app/app.module';
 
 const REQUIRED_ENV_VARS = [
@@ -35,6 +36,7 @@ async function bootstrap() {
   });
 
   app.use(helmet());
+  app.use(cookieParser());
   app.setGlobalPrefix('api');
 
   const corsOrigins =

@@ -9,9 +9,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   constructor() {
     const pool = new Pool({
-      connectionString:
-        process.env['DATABASE_URL'] ??
-        'postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_dev',
+      connectionString: process.env['DATABASE_URL'],
       keepAlive: true,
       idleTimeoutMillis: 20000,
       max: 10,

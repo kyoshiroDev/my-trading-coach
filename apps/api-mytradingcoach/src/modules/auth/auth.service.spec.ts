@@ -67,6 +67,7 @@ describe('AuthService', () => {
 
       expect(result.user.plan).toBe('FREE');
       expect(result.access_token).toBeDefined();
+      // refresh_token géré par cookie httpOnly dans le controller — service retourne les deux tokens
       expect(result.refresh_token).toBeDefined();
     });
 

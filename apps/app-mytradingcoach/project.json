@@ -43,7 +43,7 @@
           "sourceMap": true
         }
       },
-      "defaultConfiguration": "production"
+      "defaultConfiguration": "development"
     },
     "serve": {
       "continuous": true,
@@ -54,7 +54,13 @@
         },
         "development": {
           "buildTarget": "app-mytradingcoach:build:development"
-        }
+        },
+        "fileReplacements": [
+          {
+            "replace": "src/environments/environment.ts",
+            "with": "src/environments/environment.dev.ts"
+          }
+        ]
       },
       "defaultConfiguration": "development"
     },
