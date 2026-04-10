@@ -118,7 +118,7 @@ export class ResendService {
       to: params.to,
       subject: params.subject,
       html: params.html,
-      reply_to: this.replyTo,
+      replyTo: this.replyTo,
     });
 
     if (error) {
