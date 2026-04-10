@@ -1,0 +1,99 @@
+---
+import Base from '../layouts/Base.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Base
+  title="Politique de confidentialité — MyTradingCoach"
+  description="Politique de confidentialité de MyTradingCoach. Comment nous collectons, utilisons et protégeons vos données personnelles conformément au RGPD."
+  canonical="https://www.mytradingcoach.app/confidentialite"
+  ogUrl="https://www.mytradingcoach.app/confidentialite"
+>
+  <Nav />
+
+  <main style="max-width:48rem; margin:0 auto; padding:4rem 1.5rem;">
+    <h1 style="font-size:2rem; font-weight:800; color:var(--text); margin:0 0 2rem;">Politique de confidentialité</h1>
+
+    <div style="color:var(--text2); line-height:1.8; font-size:1rem;">
+
+      <p>
+        MyTradingCoach s'engage à protéger la confidentialité de vos données personnelles,
+        conformément au Règlement Général sur la Protection des Données (RGPD) et à la loi
+        Informatique et Libertés.
+      </p>
+
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">1. Responsable du traitement</h2>
+      <p>
+        Gregory Tahir — MyTradingCoach<br />
+        Contact DPO : <a href="mailto:hello@mytradingcoach.app" style="color:var(--blue2);">hello@mytradingcoach.app</a>
+      </p>
+
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">2. Données collectées</h2>
+      <p>Nous collectons uniquement les données nécessaires au fonctionnement du service :</p>
+      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+        <li><strong>Compte :</strong> adresse email, nom (optionnel), mot de passe hashé (argon2)</li>
+        <li><strong>Trades :</strong> actif, sens, prix d'entrée/sortie, P&L, état émotionnel, notes</li>
+        <li><strong>Navigation :</strong> logs techniques d'erreurs (pas de tracking publicitaire)</li>
+        <li><strong>Paiement :</strong> géré exclusivement par Stripe — nous ne stockons aucune donnée bancaire</li>
+      </ul>
+
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">3. Finalités du traitement</h2>
+      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+        <li>Fournir les fonctionnalités du journal de trading</li>
+        <li>Générer les analyses IA personnalisées (Weekly Debrief, Insights)</li>
+        <li>Gérer votre abonnement et la facturation</li>
+        <li>Vous envoyer les notifications transactionnelles (confirmation, rappels)</li>
+        <li>Améliorer le service via des statistiques agrégées et anonymisées</li>
+      </ul>
+
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">4. Base légale</h2>
+      <p>
+        Le traitement est fondé sur l'exécution du contrat (CGU) pour les données nécessaires
+        au service, et sur votre consentement pour les communications marketing optionnelles.
+      </p>
+
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">5. Durée de conservation</h2>
+      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+        <li>Données de compte : jusqu'à la suppression du compte + 30 jours</li>
+        <li>Données de trading : jusqu'à la suppression du compte</li>
+        <li>Logs techniques : 90 jours glissants</li>
+      </ul>
+
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">6. Sous-traitants</h2>
+      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+        <li><strong>OVH (France)</strong> — hébergement des serveurs et base de données</li>
+        <li><strong>Stripe</strong> — traitement des paiements (certifié PCI-DSS)</li>
+        <li><strong>Anthropic</strong> — modèle IA pour les analyses (données traitées sans conservation par Anthropic)</li>
+        <li><strong>Resend</strong> — envoi des emails transactionnels</li>
+        <li><strong>Vercel</strong> — hébergement du site et de l'application</li>
+      </ul>
+
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">7. Vos droits</h2>
+      <p>Conformément au RGPD, vous disposez des droits suivants :</p>
+      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+        <li><strong>Accès</strong> — consulter vos données personnelles</li>
+        <li><strong>Rectification</strong> — corriger des données inexactes</li>
+        <li><strong>Effacement</strong> — supprimer votre compte et toutes vos données</li>
+        <li><strong>Portabilité</strong> — exporter vos données au format JSON/CSV</li>
+        <li><strong>Opposition</strong> — vous opposer à certains traitements</li>
+      </ul>
+      <p>
+        Pour exercer ces droits : <a href="mailto:hello@mytradingcoach.app" style="color:var(--blue2);">hello@mytradingcoach.app</a>.
+        Réponse sous 30 jours. En cas de désaccord, vous pouvez saisir la CNIL (cnil.fr).
+      </p>
+
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">8. Sécurité</h2>
+      <p>
+        Vos données sont chiffrées en transit (TLS 1.3) et au repos. Les mots de passe sont
+        hashés avec argon2. Les accès aux données de production sont strictement limités et journalisés.
+      </p>
+
+      <p style="margin-top:3rem; font-size:0.875rem; color:var(--text3);">
+        Dernière mise à jour : avril 2026
+      </p>
+    </div>
+  </main>
+
+  <Footer />
+</Base>

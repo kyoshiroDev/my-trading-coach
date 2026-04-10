@@ -9,13 +9,30 @@ export default defineConfig({
       changefreq: 'weekly',
       priority: 0.7,
       lastmod: new Date(),
-      customPages: [
-        'https://www.mytradingcoach.app/',
-        'https://www.mytradingcoach.app/blog/',
-        'https://www.mytradingcoach.app/mentions-legales',
-        'https://www.mytradingcoach.app/confidentialite',
-        'https://www.mytradingcoach.app/cgu',
-      ],
+      filter: (page) => !page.includes('/404'),
+      serialize: (item) => {
+        // Homepage — priorité maximale
+        if (item.url === 'https://www.mytradingcoach.app/') {
+          return { ...item, priority: 1.0, changefreq: 'daily' };
+        }
+        // Page blog index
+        if (item.url === 'https://www.mytradingcoach.app/blog/') {
+          return { ...item, priority: 0.8, changefreq: 'weekly' };
+        }
+        // Articles de blog
+        if (item.url.includes('/blog/')) {
+          return { ...item, priority: 0.8, changefreq: 'monthly' };
+        }
+        // Pages légales — basse priorité
+        if (
+          item.url.includes('/mentions-legales') ||
+          item.url.includes('/confidentialite') ||
+          item.url.includes('/cgu')
+        ) {
+          return { ...item, priority: 0.3, changefreq: 'yearly' };
+        }
+        return { ...item, priority: 0.7, changefreq: 'weekly' };
+      },
     }),
   ],
   output: 'static',

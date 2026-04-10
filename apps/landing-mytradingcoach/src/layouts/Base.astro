@@ -4,12 +4,16 @@ import '../styles/global.css';
 interface Props {
   title?: string;
   description?: string;
-  schema?: Record<string, unknown>;
+  canonical?: string;
+  ogUrl?: string;
+  schema?: Record<string, unknown> | Record<string, unknown>[];
 }
 
 const {
   title = "MyTradingCoach — Journal de Trading IA & Coach",
   description = "Journal de trading intelligent avec coach IA. Identifie tes patterns émotionnels, analyse tes performances et reçois ton Weekly Debrief chaque dimanche. Essai gratuit sans CB — hébergé en France 🇫🇷",
+  canonical = `https://www.mytradingcoach.app${Astro.url.pathname}`,
+  ogUrl = canonical,
   schema,
 } = Astro.props;
 ---
@@ -23,7 +27,7 @@ const {
   <!-- ═══ SEO PRIMARY ═══ -->
   <title>{title}</title>
   <meta name="description" content={description} />
-  <link rel="canonical" href="https://www.mytradingcoach.app/" />
+  <link rel="canonical" href={canonical} />
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
   <meta name="author" content="MyTradingCoach" />
   <meta name="keywords" content="journal de trading, journal trading crypto, journal trading forex, coach trading IA, psychologie du trading, weekly debrief trading, tracker trades, améliorer trading, carnet de trading, journal trading gratuit" />
@@ -34,7 +38,7 @@ const {
   <meta property="og:title" content="MyTradingCoach — Journal de Trading IA & Coach" />
   <meta property="og:description" content="Journal de trading intelligent avec coach IA. Identifie tes patterns, analyse tes émotions, reçois ton Weekly Debrief chaque dimanche." />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://www.mytradingcoach.app" />
+  <meta property="og:url" content={ogUrl} />
   <meta property="og:image" content="https://www.mytradingcoach.app/icon/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />

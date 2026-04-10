@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
-Disallow: /api/
 
-Sitemap: https://www.mytradingcoach.app/sitemap-index.xml
-Host: https://www.mytradingcoach.app
+Disallow: /api/
+Disallow: /_assets/
+
+Sitemap: https://www.mytradingcoach.app/sitemap-0.xml
