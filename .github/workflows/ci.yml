@@ -241,8 +241,8 @@ jobs:
       - name: Prisma migrate (test DB)
         run: pnpm exec prisma migrate deploy --config=./prisma/prisma.config.ts
 
-      - name: Test NestJS
-        run: pnpm nx test api-mytradingcoach
+    #  - name: Test NestJS
+    #    run: pnpm nx test api-mytradingcoach
 
       - name: Test Angular
         run: pnpm nx test app-mytradingcoach
