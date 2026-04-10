@@ -293,7 +293,7 @@ export class DashboardComponent implements AfterViewInit {
   private readonly billingApi = inject(BillingApi);
 
   private readonly summaryResource = httpResource<{ data: Summary }>(
-    () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/summary` : undefined
+    () => `${environment.apiUrl}/analytics/summary`
   );
   private readonly equityCurveResource = httpResource<{ data: EquityPoint[] }>(
     () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/equity-curve` : undefined

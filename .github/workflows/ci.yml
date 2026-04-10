@@ -246,3 +246,83 @@ jobs:
 
       - name: Test Angular
         run: pnpm nx test app-mytradingcoach
+
+  # ── E2E Playwright ────────────────────────────────────────────────────────
+  e2e:
+    name: E2E Playwright
+    runs-on: ubuntu-latest
+    needs: test
+    env:
+      NX_NO_CLOUD: true
+      DATABASE_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_test
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: testpassword
+      JWT_SECRET: test-jwt-secret-64-chars-minimum-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      JWT_REFRESH_SECRET: test-refresh-secret-64-chars-minimum-xxxxxxxxxxxxxxxxxxxxxxxxx
+      ANTHROPIC_API_KEY: sk-ant-test
+      STRIPE_SECRET_KEY: sk_test_placeholder
+      STRIPE_WEBHOOK_SECRET: whsec_placeholder
+      STRIPE_PRICE_MONTHLY: price_placeholder
+      STRIPE_PRICE_YEARLY: price_placeholder
+      RESEND_API_KEY: re_placeholder
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: mytradingcoach_test
+          POSTGRES_USER: mtc_user
+          POSTGRES_PASSWORD: devpassword
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7.4-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm dlx playwright install --with-deps chromium
+
+      - name: Build Angular (dev)
+        run: pnpm nx build app-mytradingcoach
+
+      - name: Prisma migrate (test DB)
+        run: pnpm exec prisma migrate deploy --config=./prisma/prisma.config.ts
+
+      - name: Start API (background)
+        run: node dist/apps/api-mytradingcoach/main.js &
+        env:
+          PORT: 3000
+          NODE_ENV: test
+
+      - name: Run E2E tests
+        run: pnpm nx e2e app-mytradingcoach-e2e

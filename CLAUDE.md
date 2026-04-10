@@ -567,7 +567,7 @@ Dev
 // environment.production.ts
 export const environment = {
     production: true,
-    apiUrl: 'https://api.mytradingcoach.app',
+    apiUrl: 'https://app.mytradingcoach.app/api', // nginx proxy /api/ → NestJS :3000
     appName: 'MyTradingCoach',
     appUrl: 'https://app.mytradingcoach.app',
     landingUrl: 'https://mytradingcoach.app',

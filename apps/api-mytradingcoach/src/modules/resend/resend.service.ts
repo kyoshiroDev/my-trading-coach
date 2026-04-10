@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
 import {
   paymentFailedTemplate,
+  resetPasswordTemplate,
   subscriptionCanceledTemplate,
   welcomeFreeTemplate,
   welcomePremiumTemplate,
@@ -86,6 +87,22 @@ export class ResendService {
       appUrl,
     });
 
+    await this.send({ to: params.to, subject, html });
+  }
+
+  // ── Réinitialisation mot de passe ─────────────────────────────────────────
+
+  async sendResetPassword(params: {
+    to: string;
+    userName: string;
+    resetToken: string;
+  }): Promise<void> {
+    const resetUrl = `${this.frontendUrl}/reset-password?token=${params.resetToken}`;
+    const { subject, html } = resetPasswordTemplate({
+      userName: params.userName,
+      resetUrl,
+      expiresIn: '1 heure',
+    });
     await this.send({ to: params.to, subject, html });
   }
 

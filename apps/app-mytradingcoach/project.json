@@ -23,6 +23,12 @@
       },
       "configurations": {
         "production": {
+          "fileReplacements": [
+            {
+              "replace": "apps/app-mytradingcoach/src/environments/environment.ts",
+              "with": "apps/app-mytradingcoach/src/environments/environment.production.ts"
+            }
+          ],
           "budgets": [
             {
               "type": "initial",
@@ -54,13 +60,7 @@
         },
         "development": {
           "buildTarget": "app-mytradingcoach:build:development"
-        },
-        "fileReplacements": [
-          {
-            "replace": "src/environments/environment.ts",
-            "with": "src/environments/environment.dev.ts"
-          }
-        ]
+        }
       },
       "defaultConfiguration": "development"
     },
@@ -68,9 +68,9 @@
       "executor": "@nx/eslint:lint"
     },
     "test": {
-      "executor": "@angular/build:unit-test",
+      "executor": "@nx/vite:test",
       "options": {
-        "tsConfig": "apps/app-mytradingcoach/tsconfig.spec.json"
+        "configFile": "apps/app-mytradingcoach/vitest.config.ts"
       }
     },
     "serve-static": {
