@@ -1,46 +1,46 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
-import { BillingService } from './billing.service';
-import { WebhookJobPayload } from './billing.types';
+import { StripeService } from './stripe.service';
+import { StripeWebhookJobPayload } from './stripe.types';
 
 // ── Processor BullMQ — Traitement async des webhooks Stripe ──────────────────
 //
 // Ce processor tourne en arrière-plan et traite les events Stripe de façon
 // asynchrone. BullMQ gère automatiquement les retries avec backoff exponentiel.
 //
-// Retry policy (définie dans BillingService.handleWebhook) :
+// Retry policy (définie dans StripeService.handleWebhook) :
 //   - Jusqu'à 5 tentatives
 //   - Backoff exponentiel à partir de 5s (5s → 10s → 20s → 40s → 80s)
 //   - removeOnFail: false → les jobs échoués restent dans la queue pour inspection
 
-@Processor('billing')
-export class BillingProcessor extends WorkerHost {
-  private readonly logger = new Logger(BillingProcessor.name);
+@Processor('stripe')
+export class StripeProcessor extends WorkerHost {
+  private readonly logger = new Logger(StripeProcessor.name);
 
-  constructor(private readonly billingService: BillingService) {
+  constructor(private readonly stripeService: StripeService) {
     super();
   }
 
-  async process(job: Job<WebhookJobPayload>): Promise<void> {
+  async process(job: Job<StripeWebhookJobPayload>): Promise<void> {
     const { event } = job.data;
 
     this.logger.log(
       `Processing webhook — type: ${event.type}, id: ${event.id}, attempt: ${job.attemptsMade + 1}`,
     );
 
-    await this.billingService.processWebhookEvent(event);
+    await this.stripeService.processWebhookEvent(event);
   }
 
   @OnWorkerEvent('completed')
-  onCompleted(job: Job<WebhookJobPayload>): void {
+  onCompleted(job: Job<StripeWebhookJobPayload>): void {
     this.logger.log(
       `Webhook traité avec succès — type: ${job.data.event.type}, id: ${job.data.event.id}`,
     );
   }
 
   @OnWorkerEvent('failed')
-  onFailed(job: Job<WebhookJobPayload> | undefined, error: Error): void {
+  onFailed(job: Job<StripeWebhookJobPayload> | undefined, error: Error): void {
     if (!job) return;
     const { event } = job.data;
 
@@ -55,7 +55,13 @@ export class BillingProcessor extends WorkerHost {
       this.logger.error(
         `[MONITORING CRITIQUE] Job ${job.id} définitivement échoué — event: ${event.type} [${event.id}]. Inspection manuelle requise.`,
       );
-      // 📌 TODO production : Sentry.captureException(error) ou alerte Slack
+      if (process.env['SENTRY_DSN']) {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const Sentry = require('@sentry/nestjs') as typeof import('@sentry/nestjs');
+        Sentry.captureException(error, {
+          tags: { eventType: event.type, eventId: event.id },
+        });
+      }
     }
   }
 }

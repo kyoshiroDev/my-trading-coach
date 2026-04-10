@@ -15,14 +15,14 @@ import Redis from 'ioredis';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
 import {
-  BillingStatusResponse,
-  CachedBillingStatus,
-  WebhookJobPayload,
-} from './billing.types';
+  StripeStatusResponse,
+  CachedStripeStatus,
+  StripeWebhookJobPayload,
+} from './stripe.types';
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
-const BILLING_QUEUE = 'billing';
+const STRIPE_QUEUE = 'stripe';
 const CACHE_TTL_SECONDS = 300; // 5 min
 const cacheKey = (userId: string) => `billing:status:${userId}`;
 
@@ -50,16 +50,16 @@ function isUniqueConstraintError(err: unknown): boolean {
 // ── Service ──────────────────────────────────────────────────────────────────
 
 @Injectable()
-export class BillingService implements OnModuleDestroy {
+export class StripeService implements OnModuleDestroy {
   private readonly stripe: Stripe;
   private readonly redis: Redis;
-  private readonly logger = new Logger(BillingService.name);
+  private readonly logger = new Logger(StripeService.name);
 
   constructor(
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
     private readonly resend: ResendService,
-    @InjectQueue(BILLING_QUEUE) private readonly webhookQueue: Queue<WebhookJobPayload>,
+    @InjectQueue(STRIPE_QUEUE) private readonly webhookQueue: Queue<StripeWebhookJobPayload>,
   ) {
     this.stripe = new Stripe(
       this.config.getOrThrow<string>('STRIPE_SECRET_KEY'),
@@ -80,12 +80,12 @@ export class BillingService implements OnModuleDestroy {
 
   // ── Billing Status (avec cache Redis) ───────────────────────────────────────
 
-  async getBillingStatus(userId: string): Promise<BillingStatusResponse> {
+  async getBillingStatus(userId: string): Promise<StripeStatusResponse> {
     // 1. Tenter le cache Redis
     const cached = await this.redis.get(cacheKey(userId)).catch(() => null);
     if (cached) {
       this.logger.debug(`Cache hit billing status — user: ${userId}`);
-      const parsed = JSON.parse(cached) as CachedBillingStatus;
+      const parsed = JSON.parse(cached) as CachedStripeStatus;
       return {
         ...parsed,
         subscriptionStatus:
@@ -107,7 +107,7 @@ export class BillingService implements OnModuleDestroy {
 
     if (!user) throw new BadRequestException('Utilisateur introuvable');
 
-    const status: BillingStatusResponse = {
+    const status: StripeStatusResponse = {
       plan: user.plan,
       subscriptionStatus:
         (user.stripeSubscriptionStatus as Stripe.Subscription['status'] | null) ?? null,
@@ -265,7 +265,7 @@ export class BillingService implements OnModuleDestroy {
     return { received: true };
   }
 
-  // ── Traitement de l'event (appelé par BillingProcessor) ──────────────────────
+  // ── Traitement de l'event (appelé par StripeProcessor) ──────────────────────
 
   async processWebhookEvent(event: Stripe.Event): Promise<void> {
     switch (event.type) {
@@ -300,7 +300,14 @@ export class BillingService implements OnModuleDestroy {
           this.logger.error(
             `[MONITORING] Subscription ${subscription.id} — status: ${subscription.status} — customer: ${customerId ?? 'unknown'}`,
           );
-          // 📌 TODO production : envoyer alerte Slack/PagerDuty/Sentry ici
+          if (process.env['SENTRY_DSN']) {
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            const Sentry = require('@sentry/nestjs') as typeof import('@sentry/nestjs');
+            Sentry.captureMessage(
+              `Subscription ${subscription.status}: ${subscription.id}`,
+              { level: 'warning', tags: { customerId: customerId ?? 'unknown' } },
+            );
+          }
         }
         break;
       }
