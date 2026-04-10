@@ -1,4 +1,4 @@
-name: CD — Deploy to Production
+name: CD — Smart Deploy Production
 
 on:
   workflow_run:
@@ -6,40 +6,31 @@ on:
     types: [completed]
     branches: [main]
 
+concurrency:
+  group: production
+  cancel-in-progress: true
+
 env:
   NX_NO_CLOUD: true
 
 jobs:
-  # ── Deploy API → OVH VPS (Docker) ────────────────────────────────────────
-  deploy-api:
-    name: Deploy API to VPS
+  detect-changes:
+    name: Detect affected apps
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    environment: production
 
-    steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            cd /opt/mytradingcoach
-            git pull origin main
-            docker compose build api
-            docker compose up -d --no-deps api
-            echo "API deployment complete at $(date)"
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push'
 
-  # ── Deploy Angular → Vercel ───────────────────────────────────────────────
-  deploy-angular:
-    name: Deploy Angular to Vercel
-    runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    environment: production
+    outputs:
+      api: ${{ steps.set.outputs.api }}
+      angular: ${{ steps.set.outputs.angular }}
+      landing: ${{ steps.set.outputs.landing }}
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - uses: pnpm/action-setup@v4
         with:
@@ -48,70 +39,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
 
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm install --frozen-lockfile
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build Angular
-        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=production
-        env:
-          API_URL: ${{ secrets.API_URL }}
-
-      - name: Deploy to Vercel
+      - name: Detect affected projects
+        id: affected
         run: |
-          pnpm dlx vercel --prod \
-            --token=${{ secrets.VERCEL_TOKEN }} \
-            --yes \
-            --cwd dist/apps/app-mytradingcoach/browser \
-            --local-config ../../../../apps/app-mytradingcoach/vercel.json
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_APP_PROJECT_ID }}
+          npx nx print-affected --base=origin/main~1 --head=HEAD --select=projects > affected.txt
+          cat affected.txt
 
-  # ── Deploy Astro Landing → Vercel ─────────────────────────────────────────
-  deploy-landing:
-    name: Deploy Landing to Vercel
-    runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    environment: production
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build Astro landing
-        run: pnpm nx build landing-mytradingcoach
-
-      - name: Deploy to Vercel
+      - name: Set outputs
+        id: set
         run: |
-          pnpm dlx vercel --prod \
-            --token=${{ secrets.VERCEL_TOKEN }} \
-            --yes \
-            --cwd apps/landing-mytradingcoach
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_LANDING_PROJECT_ID }}
+          if grep -q "api" affected.txt; then echo "api=true" >> $GITHUB_OUTPUT; else echo "api=false" >> $GITHUB_OUTPUT; fi
+          if grep -q "app-mytradingcoach" affected.txt; then echo "angular=true" >> $GITHUB_OUTPUT; else echo "angular=false" >> $GITHUB_OUTPUT; fi
+          if grep -q "landing-mytradingcoach" affected.txt; then echo "landing=true" >> $GITHUB_OUTPUT; else echo "landing=false" >> $GITHUB_OUTPUT; fi
