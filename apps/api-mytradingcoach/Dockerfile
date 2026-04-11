@@ -17,7 +17,7 @@ RUN pnpm install --frozen-lockfile
 RUN pnpm dlx prisma generate
 
 FROM node:22-alpine AS runtime
-RUN groupadd -g 1001 nodejs && useradd -u 1001 -g nodejs -m nestjs
+RUN addgroup -g 1001 -S nodejs && adduser -u 1001 -S nestjs -G nodejs
 WORKDIR /app
 COPY --from=builder /app/apps/api-mytradingcoach/dist ./
 COPY --from=migrator --chown=nestjs:nodejs /app/node_modules ./node_modules
