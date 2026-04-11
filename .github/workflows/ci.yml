@@ -5,6 +5,8 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -264,10 +266,9 @@ jobs:
     needs: [build, test]
     env:
       NX_NO_CLOUD: true
-      DATABASE_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_test
+      DATABASE_URL: postgresql://mtc_user:testpassword@localhost:5432/mytradingcoach_test
       REDIS_HOST: localhost
       REDIS_PORT: 6379
-      REDIS_PASSWORD: testpassword
       JWT_SECRET: test-jwt-secret-64-chars-minimum-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
       JWT_REFRESH_SECRET: test-refresh-secret-64-chars-minimum-xxxxxxxxxxxxxxxxxxxxxxxxx
       ANTHROPIC_API_KEY: sk-ant-test
@@ -276,14 +277,17 @@ jobs:
       STRIPE_PRICE_MONTHLY: price_placeholder
       STRIPE_PRICE_YEARLY: price_placeholder
       RESEND_API_KEY: re_placeholder
+      PORT: 3000
+      NODE_ENV: test
+      FRONTEND_URL: http://localhost:4200
 
     services:
       postgres:
         image: postgres:17-alpine
         env:
-          POSTGRES_DB: mytradingcoach_test
           POSTGRES_USER: mtc_user
-          POSTGRES_PASSWORD: devpassword
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: mytradingcoach_test
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -292,7 +296,7 @@ jobs:
         ports:
           - 5432:5432
       redis:
-        image: redis:7.4-alpine
+        image: redis:7-alpine
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -343,9 +347,6 @@ jobs:
 
       - name: Start API (background)
         run: node apps/api-mytradingcoach/dist/main.js &
-        env:
-          PORT: 3000
-          NODE_ENV: test
 
       - name: Wait for API to be ready
         run: |
@@ -357,6 +358,32 @@ jobs:
             sleep 1
           done
           echo "API did not start in time" && exit 1
+
+      - name: Seed test users (FREE + PREMIUM)
+        run: |
+          curl -sf -X POST http://localhost:3000/api/auth/register \
+            -H "Content-Type: application/json" \
+            -d '{"email":"free@test.com","password":"Password123!","name":"Free User"}' || true
+          curl -sf -X POST http://localhost:3000/api/auth/register \
+            -H "Content-Type: application/json" \
+            -d '{"email":"premium@test.com","password":"Password123!","name":"Premium User"}' || true
+          curl -sf -X POST http://localhost:3000/api/test/upgrade-user \
+            -H "Content-Type: application/json" \
+            -d '{"email":"premium@test.com"}' || true
+
+      - name: Serve Angular (background)
+        run: pnpm nx serve-static app-mytradingcoach &
+
+      - name: Wait for Angular to be ready
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:4200 > /dev/null 2>&1; then
+              echo "Angular ready after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Angular did not start in time" && exit 1
 
       - name: Run E2E tests
         run: pnpm nx e2e app-mytradingcoach-e2e

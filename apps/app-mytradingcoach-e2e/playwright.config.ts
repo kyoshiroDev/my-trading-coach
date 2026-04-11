@@ -26,7 +26,7 @@ export default defineConfig({
   webServer: {
     command: 'pnpm nx run app-mytradingcoach:serve',
     url: 'http://localhost:4200',
-    reuseExistingServer: !process.env['CI'],
+    reuseExistingServer: true,
     timeout: 120000,
     cwd: workspaceRoot,
   },
