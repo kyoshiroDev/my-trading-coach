@@ -164,13 +164,15 @@ jobs:
         with:
           name: angular-dist
           path: dist/apps/app-mytradingcoach/
+          if-no-files-found: error
           retention-days: 1
 
       - name: Upload API dist
         uses: actions/upload-artifact@v4
         with:
           name: api-dist
-          path: dist/apps/api-mytradingcoach/
+          path: apps/api-mytradingcoach/dist/
+          if-no-files-found: error
           retention-days: 1
 
       - name: Upload Astro dist
@@ -178,6 +180,7 @@ jobs:
         with:
           name: astro-dist
           path: apps/landing-mytradingcoach/dist/
+          if-no-files-found: error
           retention-days: 1
 
   # ── Tests ─────────────────────────────────────────────────────────────────
@@ -258,7 +261,7 @@ jobs:
   e2e:
     name: E2E Playwright
     runs-on: ubuntu-latest
-    needs: test
+    needs: [build, test]
     env:
       NX_NO_CLOUD: true
       DATABASE_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_test
@@ -333,13 +336,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: api-dist
-          path: dist/apps/api-mytradingcoach/
+          path: apps/api-mytradingcoach/dist/
 
       - name: Prisma migrate (test DB)
         run: pnpm exec prisma migrate deploy --config=./prisma/prisma.config.ts
 
       - name: Start API (background)
-        run: node dist/apps/api-mytradingcoach/main.js &
+        run: node apps/api-mytradingcoach/dist/main.js &
         env:
           PORT: 3000
           NODE_ENV: test
