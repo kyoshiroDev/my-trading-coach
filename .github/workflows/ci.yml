@@ -371,8 +371,11 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"email":"premium@test.com"}' || true
 
+      - name: Install serve
+        run: npm install -g serve
+
       - name: Serve Angular (background)
-        run: pnpm nx serve-static app-mytradingcoach &
+        run: npx serve dist/apps/app-mytradingcoach/browser -p 4200 &
 
       - name: Wait for Angular to be ready
         run: |
