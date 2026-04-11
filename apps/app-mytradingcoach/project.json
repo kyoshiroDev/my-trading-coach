@@ -74,7 +74,7 @@
       "executor": "@nx/eslint:lint"
     },
     "test": {
-      "executor": "@nx/vite:test",
+      "executor": "@nx/vitest:test",
       "options": {
         "configFile": "apps/app-mytradingcoach/vitest.config.ts"
       }

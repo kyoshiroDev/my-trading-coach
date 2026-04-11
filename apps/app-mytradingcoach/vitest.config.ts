@@ -1,13 +1,16 @@
 import { defineConfig } from 'vitest/config';
-import angular from '@analogjs/vite-plugin-angular';
+import { resolve } from 'path';
 
 export default defineConfig({
-  plugins: [angular()],
+  esbuild: {
+    target: 'es2022',
+  },
   test: {
     globals: true,
     environment: 'jsdom',
+    root: resolve(__dirname),
     include: ['src/**/*.spec.ts'],
-    setupFiles: [],
+    setupFiles: ['src/test-setup.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
