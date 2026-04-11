@@ -27,9 +27,12 @@ test.describe('Journal de trading', () => {
     await expect(page).not.toHaveURL(/\/login/);
   });
 
-  test('le formulaire d\'ajout de trade est visible', async ({ page }) => {
+  test('le formulaire d\'ajout de trade est accessible via le bouton', async ({ page }) => {
     await page.goto('/journal');
-    await expect(page.locator('form, [data-testid="trade-form"]')).toBeVisible();
+    const addBtn = page.locator('button:has-text("Nouveau"), button:has-text("Ajouter"), button:has-text("+ Trade")').first();
+    await expect(addBtn).toBeVisible();
+    await addBtn.click();
+    await expect(page.locator('form')).toBeVisible();
   });
 
   test('peut ouvrir le formulaire d\'ajout de trade', async ({ page }) => {

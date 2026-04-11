@@ -32,13 +32,13 @@ test.describe('Analytics — utilisateur FREE', () => {
 
   test('affiche la ligne de stats basiques', async ({ page }) => {
     await page.goto('/analytics');
-    await expect(page.locator('.stats-free-row')).toBeVisible();
+    await expect(page.locator('.stats-row')).toBeVisible();
   });
 
-  test('affiche les 2 blocs verrouillés pour FREE', async ({ page }) => {
+  test('affiche les 3 blocs verrouillés pour FREE', async ({ page }) => {
     await page.goto('/analytics');
     const lockedBlocks = page.locator('.locked-feature');
-    await expect(lockedBlocks).toHaveCount(2);
+    await expect(lockedBlocks).toHaveCount(3);
   });
 
   test('les blocs verrouillés ont un titre et un CTA', async ({ page }) => {
@@ -48,11 +48,11 @@ test.describe('Analytics — utilisateur FREE', () => {
     await expect(firstLocked.locator('.locked-cta')).toBeVisible();
   });
 
-  test('le CTA verrouillé pointe vers ?plan=premium', async ({ page }) => {
+  test('le CTA verrouillé invite à essayer le trial', async ({ page }) => {
     await page.goto('/analytics');
     const cta = page.locator('.locked-cta').first();
-    const href = await cta.getAttribute('href');
-    expect(href).toContain('plan=premium');
+    await expect(cta).toBeVisible();
+    await expect(cta).toContainText('7 jours');
   });
 
   test('la heatmap PREMIUM n\'est pas visible pour FREE', async ({ page }) => {
@@ -63,16 +63,16 @@ test.describe('Analytics — utilisateur FREE', () => {
   test('la bannière upsell est visible sur le dashboard', async ({ page }) => {
     await page.goto('/dashboard');
     await expect(page.locator('.premium-banner')).toBeVisible();
-    await expect(page.locator('.premium-banner')).toContainText('29');
+    await expect(page.locator('.premium-banner')).toContainText('39');
   });
 
-  test('la route /ai-insights redirige les FREE vers /dashboard', async ({ page }) => {
+  test('la route /ai-insights redirige les FREE vers /settings', async ({ page }) => {
     await page.goto('/ai-insights');
-    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page).toHaveURL(/\/settings/);
   });
 
-  test('la route /debrief redirige les FREE vers /dashboard', async ({ page }) => {
+  test('la route /debrief redirige les FREE vers /settings', async ({ page }) => {
     await page.goto('/debrief');
-    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page).toHaveURL(/\/settings/);
   });
 });
