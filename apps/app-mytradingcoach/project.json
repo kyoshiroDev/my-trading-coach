@@ -44,6 +44,12 @@
           "outputHashing": "all"
         },
         "development": {
+          "fileReplacements": [
+            {
+              "replace": "apps/app-mytradingcoach/src/environments/environment.ts",
+              "with": "apps/app-mytradingcoach/src/environments/environment.dev.ts"
+            }
+          ],
           "optimization": false,
           "extractLicenses": false,
           "sourceMap": true

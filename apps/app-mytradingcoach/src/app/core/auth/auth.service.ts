@@ -72,6 +72,14 @@ export class AuthService {
       );
   }
 
+  forgotPassword(email: string) {
+    return this.http.post(`${environment.apiUrl}/auth/forgot-password`, { email });
+  }
+
+  resetPassword(token: string, password: string) {
+    return this.http.post(`${environment.apiUrl}/auth/reset-password`, { token, password });
+  }
+
   isPremium(): boolean {
     return this.currentUser()?.plan === 'PREMIUM';
   }

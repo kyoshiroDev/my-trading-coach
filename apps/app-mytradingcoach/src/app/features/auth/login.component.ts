@@ -59,6 +59,9 @@ import { AuthService } from '../../core/auth/auth.service';
               </button>
             </div>
           </div>
+          <div class="forgot-link-row">
+            <a routerLink="/forgot-password" class="forgot-link">Mot de passe oublié ?</a>
+          </div>
           <button type="submit" [disabled]="isLoading()" class="btn-submit">
             @if (isLoading()) {
               <span class="spinner"></span> Connexion...

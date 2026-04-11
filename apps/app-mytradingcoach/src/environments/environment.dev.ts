@@ -1,7 +1,7 @@
 export const environment = {
     production: false,
-    apiUrl: 'https://api-dev.mytradingcoach.app',
+    apiUrl: 'https://dev.api.mytradingcoach.app',
     appName: 'MyTradingCoach DEV',
-    appUrl: 'https://app-mytradingcoach-git-dev-kyoshiros-projects.vercel.app/',
-    landingUrl: 'https://landing-mytradingcoach-git-dev-kyoshiros-projects.vercel.app/',
+    appUrl: 'https://dev.app.mytradingcoach.app/',
+    landingUrl: 'https://dev.mytradingcoach.app/',
 };

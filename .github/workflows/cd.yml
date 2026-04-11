@@ -61,8 +61,6 @@ jobs:
 
       - name: Build Angular
         run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=production
-        env:
-          API_URL: ${{ secrets.API_URL }}
 
       - name: Deploy to Vercel
         run: |

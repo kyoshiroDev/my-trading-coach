@@ -4,6 +4,7 @@ import { ConflictException, UnauthorizedException, BadRequestException } from '@
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ResendService } from '../resend/resend.service';
 
 // Mock argon2 globally for all tests
 vi.mock('argon2', () => ({
@@ -26,6 +27,7 @@ const mockUser = {
 const mockPrisma = {
   user: {
     findUnique: vi.fn(),
+    findFirst: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
   },
@@ -33,6 +35,11 @@ const mockPrisma = {
 
 const mockJwt = {
   signAsync: vi.fn().mockResolvedValue('mock_token'),
+};
+
+const mockResend = {
+  sendWelcomeFree: vi.fn().mockResolvedValue(undefined),
+  sendResetPassword: vi.fn().mockResolvedValue(undefined),
 };
 
 describe('AuthService', () => {
@@ -46,6 +53,7 @@ describe('AuthService', () => {
         AuthService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: JwtService, useValue: mockJwt },
+        { provide: ResendService, useValue: mockResend },
       ],
     }).compile();
 
@@ -150,6 +158,94 @@ describe('AuthService', () => {
 
       await expect(service.startTrial('unknown-id'))
         .rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('forgotPassword', () => {
+    it('ne fait rien si l\'email n\'existe pas (anti-énumération)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+
+      await expect(service.forgotPassword('unknown@test.com')).resolves.toBeUndefined();
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+      expect(mockResend.sendResetPassword).not.toHaveBeenCalled();
+    });
+
+    it('stocke un token hashé SHA256 et envoie l\'email', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.update.mockResolvedValue(mockUser);
+
+      await service.forgotPassword('test@test.com');
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: mockUser.id },
+          data: expect.objectContaining({
+            resetPasswordToken: expect.any(String),
+            resetPasswordExpires: expect.any(Date),
+          }),
+        }),
+      );
+      // Le token stocké est un hash (64 hex chars), pas le token brut
+      const stored = mockPrisma.user.update.mock.calls[0][0].data.resetPasswordToken as string;
+      expect(stored).toHaveLength(64);
+      expect(mockResend.sendResetPassword).toHaveBeenCalledWith(
+        expect.objectContaining({ to: mockUser.email }),
+      );
+    });
+
+    it('l\'expiration est dans ~1 heure', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.update.mockResolvedValue(mockUser);
+
+      const before = Date.now();
+      await service.forgotPassword('test@test.com');
+      const after = Date.now();
+
+      const expires: Date = mockPrisma.user.update.mock.calls[0][0].data.resetPasswordExpires;
+      const diffMs = expires.getTime() - before;
+      expect(diffMs).toBeGreaterThanOrEqual(60 * 60 * 1000 - (after - before));
+      expect(diffMs).toBeLessThanOrEqual(60 * 60 * 1000 + 1000);
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('lance BadRequestException si token invalide ou expiré', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(null);
+
+      await expect(service.resetPassword('invalid-token', 'newpassword123'))
+        .rejects.toThrow(BadRequestException);
+    });
+
+    it('met à jour le mot de passe et efface le token', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
+      mockPrisma.user.update.mockResolvedValue(mockUser);
+
+      await service.resetPassword('valid-raw-token', 'newpassword123');
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: mockUser.id },
+          data: expect.objectContaining({
+            password: 'hashed_password',
+            resetPasswordToken: null,
+            resetPasswordExpires: null,
+          }),
+        }),
+      );
+    });
+
+    it('cherche par le hash SHA256 du token brut, pas le token brut', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
+      mockPrisma.user.update.mockResolvedValue(mockUser);
+
+      const rawToken = 'my-raw-token';
+      await service.resetPassword(rawToken, 'newpassword123');
+
+      const query = mockPrisma.user.findFirst.mock.calls[0][0];
+      // Le token passé à prisma ne doit pas être le token brut
+      expect(query.where.resetPasswordToken).not.toBe(rawToken);
+      // Doit être une string hexadécimale de 64 chars (SHA256)
+      expect(query.where.resetPasswordToken).toMatch(/^[a-f0-9]{64}$/);
     });
   });
 });

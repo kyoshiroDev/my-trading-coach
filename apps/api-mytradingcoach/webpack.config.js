@@ -6,9 +6,6 @@ module.exports = {
     path: join(__dirname, 'dist'),
     clean: true,
   },
-  externals: {
-    // 🔥 clé du fix
-  },
   plugins: [
     new NxAppWebpackPlugin({
       target: 'node',

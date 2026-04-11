@@ -1,5 +1,5 @@
 FROM node:22-slim AS builder
-RUN npm install -g pnpm
+RUN corepack enable && corepack prepare pnpm@10 --activate
 WORKDIR /app
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/api-mytradingcoach/package.json ./apps/api-mytradingcoach/
@@ -9,7 +9,7 @@ COPY . .
 RUN pnpm nx build api-mytradingcoach --configuration=production
 
 FROM node:22-alpine AS migrator
-RUN npm install -g pnpm
+RUN corepack enable && corepack prepare pnpm@10 --activate
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma

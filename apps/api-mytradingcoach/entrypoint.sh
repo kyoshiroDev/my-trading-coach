@@ -2,6 +2,6 @@
 set -e
 
 echo "[entrypoint] Running Prisma migrations..."
-npx prisma migrate deploy
+node ./node_modules/.bin/prisma migrate deploy
 echo "[entrypoint] Migrations complete. Starting NestJS..."
 exec node main.js
