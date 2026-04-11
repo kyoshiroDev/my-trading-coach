@@ -166,6 +166,13 @@ jobs:
           path: dist/apps/app-mytradingcoach/
           retention-days: 1
 
+      - name: Upload API dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-dist
+          path: dist/apps/api-mytradingcoach/
+          retention-days: 1
+
       - name: Upload Astro dist
         uses: actions/upload-artifact@v4
         with:
@@ -279,6 +286,8 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        ports:
+          - 5432:5432
       redis:
         image: redis:7.4-alpine
         options: >-
@@ -286,6 +295,8 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        ports:
+          - 6379:6379
 
     steps:
       - uses: actions/checkout@v4
@@ -312,8 +323,17 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm dlx playwright install --with-deps chromium
 
-      - name: Build Angular (dev)
-        run: pnpm nx build app-mytradingcoach
+      - name: Download Angular dist
+        uses: actions/download-artifact@v4
+        with:
+          name: angular-dist
+          path: dist/apps/app-mytradingcoach/
+
+      - name: Download API dist
+        uses: actions/download-artifact@v4
+        with:
+          name: api-dist
+          path: dist/apps/api-mytradingcoach/
 
       - name: Prisma migrate (test DB)
         run: pnpm exec prisma migrate deploy --config=./prisma/prisma.config.ts
