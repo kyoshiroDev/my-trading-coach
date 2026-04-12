@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -34,7 +34,7 @@ jobs:
           cache: pnpm
 
       - name: Install commitlint
-        run: pnpm add -D @commitlint/cli @commitlint/config-conventional
+        run: pnpm add -D @commitlint/cli @commitlint/config-conventional -w
 
       - name: Validate PR commits
         run: pnpm dlx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
@@ -46,7 +46,7 @@ jobs:
     env:
       NX_NO_CLOUD: true
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
         with:
@@ -117,7 +117,7 @@ jobs:
           - 6379:6379
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
         with:
@@ -227,7 +227,7 @@ jobs:
           - 6379:6379
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
         with:
