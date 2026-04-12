@@ -2,7 +2,7 @@ name: CD — Deploy to Dev
 
 on:
   push:
-    branches: [develop]
+    branches: [dev]
 
 env:
   NX_NO_CLOUD: true
@@ -23,7 +23,7 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /opt/apps/mytradingcoach/dev
-            git pull origin develop
+            git pull origin dev
             docker compose --env-file .env.dev build api
             docker compose --env-file .env.dev run --rm api sh -c "npx prisma migrate deploy"
             docker compose --env-file .env.dev up -d --no-deps api
@@ -57,7 +57,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build Angular (dev)
-        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=production
+        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=development
         env:
           API_URL: ${{ secrets.DEV_API_URL }}
 
@@ -66,8 +66,7 @@ jobs:
           pnpm dlx vercel \
             --token=${{ secrets.VERCEL_TOKEN }} \
             --yes \
-            --cwd dist/apps/app-mytradingcoach/browser \
-            --local-config ${{ github.workspace }}/apps/app-mytradingcoach/vercel.json
+            --local-config apps/app-mytradingcoach/vercel.json
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_APP_PROJECT_ID }}
