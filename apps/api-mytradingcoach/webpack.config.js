@@ -2,6 +2,7 @@ const { NxAppWebpackPlugin } = require('@nx/webpack/app-plugin');
 const { join } = require('path');
 
 module.exports = {
+  cache: false, // Désactive le cache filesystem webpack 5 (requis en CI/Docker)
   output: {
     path: join(__dirname, 'dist'),
     clean: true,
