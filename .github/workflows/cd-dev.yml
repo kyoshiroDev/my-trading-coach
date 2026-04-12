@@ -1,21 +1,18 @@
-name: CD — Deploy to Production
+name: CD — Deploy to Dev
 
 on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
-    branches: [main]
+  push:
+    branches: [develop]
 
 env:
   NX_NO_CLOUD: true
 
 jobs:
-  # ── Deploy API → OVH VPS (Docker) ────────────────────────────────────────
-  deploy-api:
-    name: Deploy API to VPS
+  # ── Deploy API dev → OVH VPS ──────────────────────────────────────────────
+  deploy-api-dev:
+    name: Deploy API dev to VPS
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    environment: production
+    environment: development
 
     steps:
       - name: Deploy via SSH
@@ -25,19 +22,18 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            cd /opt/apps/mytradingcoach/prod
-            git pull origin main
-            docker compose --env-file .env.production build api
-            docker compose --env-file .env.production run --rm api sh -c "npx prisma migrate deploy"
-            docker compose --env-file .env.production up -d --no-deps api
-            echo "API prod deployment complete at $(date)"
+            cd /opt/apps/mytradingcoach/dev
+            git pull origin develop
+            docker compose --env-file .env.dev build api
+            docker compose --env-file .env.dev run --rm api sh -c "npx prisma migrate deploy"
+            docker compose --env-file .env.dev up -d --no-deps api
+            echo "API dev deployment complete at $(date)"
 
-  # ── Deploy Angular → Vercel ───────────────────────────────────────────────
-  deploy-angular:
-    name: Deploy Angular to Vercel
+  # ── Deploy Angular dev → Vercel ──────────────────────────────────────────
+  deploy-angular-dev:
+    name: Deploy Angular dev to Vercel
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    environment: production
+    environment: development
 
     steps:
       - uses: actions/checkout@v4
@@ -60,12 +56,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build Angular
+      - name: Build Angular (dev)
         run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=production
+        env:
+          API_URL: ${{ secrets.DEV_API_URL }}
 
-      - name: Deploy to Vercel
+      - name: Deploy to Vercel (dev)
         run: |
-          pnpm dlx vercel --prod \
+          pnpm dlx vercel \
             --token=${{ secrets.VERCEL_TOKEN }} \
             --yes \
             --cwd dist/apps/app-mytradingcoach/browser \
@@ -74,12 +72,11 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_APP_PROJECT_ID }}
 
-  # ── Deploy Astro Landing → Vercel ─────────────────────────────────────────
-  deploy-landing:
-    name: Deploy Landing to Vercel
+  # ── Deploy Astro Landing dev → Vercel ────────────────────────────────────
+  deploy-landing-dev:
+    name: Deploy Landing dev to Vercel
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    environment: production
+    environment: development
 
     steps:
       - uses: actions/checkout@v4
@@ -105,9 +102,9 @@ jobs:
       - name: Build Astro landing
         run: pnpm nx build landing-mytradingcoach
 
-      - name: Deploy to Vercel
+      - name: Deploy to Vercel (dev)
         run: |
-          pnpm dlx vercel --prod \
+          pnpm dlx vercel \
             --token=${{ secrets.VERCEL_TOKEN }} \
             --yes \
             --cwd apps/landing-mytradingcoach
