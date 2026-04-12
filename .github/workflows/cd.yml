@@ -25,11 +25,12 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            cd /opt/mytradingcoach
+            cd /opt/apps/mytradingcoach/prod
             git pull origin main
-            docker compose build api
-            docker compose up -d --no-deps api
-            echo "API deployment complete at $(date)"
+            docker compose --env-file .env.production build api
+            docker compose --env-file .env.production run --rm api sh -c "npx prisma migrate deploy"
+            docker compose --env-file .env.production up -d --no-deps api
+            echo "API prod deployment complete at $(date)"
 
   # ── Deploy Angular → Vercel ───────────────────────────────────────────────
   deploy-angular:

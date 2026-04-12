@@ -22,6 +22,11 @@
         "styles": ["apps/app-mytradingcoach/src/styles.css"]
       },
       "configurations": {
+        "local": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        },
         "production": {
           "fileReplacements": [
             {
@@ -60,7 +65,13 @@
     "serve": {
       "continuous": true,
       "executor": "@angular/build:dev-server",
+      "options": {
+        "buildTarget": "app-mytradingcoach:build:local"
+      },
       "configurations": {
+        "local": {
+          "buildTarget": "app-mytradingcoach:build:local"
+        },
         "production": {
           "buildTarget": "app-mytradingcoach:build:production"
         },
@@ -68,7 +79,7 @@
           "buildTarget": "app-mytradingcoach:build:development"
         }
       },
-      "defaultConfiguration": "development"
+      "defaultConfiguration": "local"
     },
     "lint": {
       "executor": "@nx/eslint:lint"

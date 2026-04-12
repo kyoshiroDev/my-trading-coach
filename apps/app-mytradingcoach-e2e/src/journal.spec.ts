@@ -1,10 +1,6 @@
-import { test, expect } from '@playwright/test';
+import {test, expect, Page} from '@playwright/test';
 
-async function loginAs(
-  page: Parameters<typeof test>[1] extends { page: infer P } ? P : never,
-  email: string,
-  password: string,
-) {
+async function loginAs(page: Page, email: string, password: string) {
   await page.goto('/login');
   await page.fill('input[type="email"]', email);
   await page.fill('input[type="password"]', password);
@@ -53,17 +49,17 @@ test.describe('Journal de trading', () => {
 
   test('la pagination ou le scroll infini est présent si des trades existent', async ({ page }) => {
     await page.goto('/journal');
-    // On vérifie simplement que la page se charge sans erreur
+    // On vérifie simplement que la page se charge sans erreurs
     await expect(page.locator('body')).toBeVisible();
     const hasError = await page.locator('text=/500|Internal Server Error/').isVisible();
     expect(hasError).toBe(false);
   });
 
-  test('la page /journal est inaccessible sans connexion', async ({ page }) => {
-    // Aller directement sans être connecté
-    await page.context().clearCookies();
-    await page.evaluate(() => localStorage.clear());
+  test('la page /journal est inaccessible sans connexion', async ({ browser }) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
     await page.goto('/journal');
     await expect(page).toHaveURL(/\/login/);
+    await context.close();
   });
 });
