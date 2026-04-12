@@ -9,9 +9,11 @@ COPY . .
 RUN pnpm nx build api-mytradingcoach --configuration=production
 
 FROM node:22-alpine AS migrator
+RUN apk add --no-cache python3 make g++
 RUN corepack enable && corepack prepare pnpm@10 --activate
 WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY apps/api-mytradingcoach/package.json ./apps/api-mytradingcoach/
 COPY prisma ./prisma
 RUN pnpm install --frozen-lockfile
 RUN pnpm dlx prisma generate
