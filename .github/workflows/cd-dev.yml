@@ -2,7 +2,7 @@ name: CD — Deploy to Dev
 
 on:
   push:
-    branches: [develop]
+    branches: [dev]
 
 env:
   NX_NO_CLOUD: true
