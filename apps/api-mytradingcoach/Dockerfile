@@ -23,9 +23,13 @@ RUN addgroup -g 1001 -S nodejs && adduser -u 1001 -S nestjs -G nodejs
 WORKDIR /app
 COPY --from=builder /app/apps/api-mytradingcoach/dist ./
 COPY --from=migrator --chown=nestjs:nodejs /app/node_modules ./node_modules
+# Dépendances api-spécifiques (helmet, ioredis, argon2…) hoisté dans le workspace package
+COPY --from=migrator --chown=nestjs:nodejs /app/apps/api-mytradingcoach/node_modules ./apps/api-mytradingcoach/node_modules
 COPY --from=migrator --chown=nestjs:nodejs /app/prisma ./prisma
 COPY --chown=nestjs:nodejs apps/api-mytradingcoach/entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
+# NODE_PATH permet à Node.js de résoudre les deps api depuis apps/api-mytradingcoach/node_modules
+ENV NODE_PATH=/app/apps/api-mytradingcoach/node_modules
 USER nestjs
 EXPOSE 3000
 CMD ["sh", "entrypoint.sh"]
