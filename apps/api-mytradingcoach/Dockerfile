@@ -6,7 +6,7 @@ COPY apps/api-mytradingcoach/package.json ./apps/api-mytradingcoach/
 COPY prisma ./prisma
 RUN pnpm install --frozen-lockfile
 COPY . .
-RUN pnpm nx build api-mytradingcoach --configuration=production --skip-nx-cache
+RUN cat apps/api-mytradingcoach/webpack.config.js | head -5 && node_modules/.bin/webpack-cli build --node-env=production --config apps/api-mytradingcoach/webpack.config.js
 
 FROM node:22-alpine AS migrator
 RUN apk add --no-cache python3 make g++
