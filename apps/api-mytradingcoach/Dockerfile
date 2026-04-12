@@ -6,7 +6,7 @@ COPY apps/api-mytradingcoach/package.json ./apps/api-mytradingcoach/
 COPY prisma ./prisma
 RUN pnpm install --frozen-lockfile
 COPY . .
-RUN pnpm nx build api-mytradingcoach --configuration=production
+RUN pnpm nx build api-mytradingcoach --configuration=production --skip-nx-cache
 
 FROM node:22-alpine AS migrator
 RUN apk add --no-cache python3 make g++
