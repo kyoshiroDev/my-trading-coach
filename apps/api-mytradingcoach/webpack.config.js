@@ -1,22 +1,31 @@
 const { NxAppWebpackPlugin } = require('@nx/webpack/app-plugin');
 const { join } = require('path');
 
+// Plugin qui ajoute nos externals APRÈS que NxAppWebpackPlugin ait fini
+// Nécessaire car NxAppWebpackPlugin écrase la config externals du module.exports
+class NodeModulesExternalsPlugin {
+  apply(compiler) {
+    compiler.hooks.afterEnvironment.tap('NodeModulesExternalsPlugin', () => {
+      const existing = compiler.options.externals ?? [];
+      const arr = Array.isArray(existing) ? existing : [existing];
+      arr.push(({ request }, callback) => {
+        // Externalise tout ce qui est un package node_modules
+        if (/^[^./]/.test(request)) {
+          return callback(null, 'commonjs ' + request);
+        }
+        callback();
+      });
+      compiler.options.externals = arr;
+    });
+  }
+}
+
 module.exports = {
-  cache: false, // Désactive le cache filesystem webpack 5 (requis en CI/Docker)
+  cache: false,
   output: {
     path: join(__dirname, 'dist'),
     clean: true,
   },
-  // Externalise TOUS les modules node_modules (tout ce qui ne commence pas par . ou /)
-  // Garantit le bon fonctionnement en Docker sans dépendre du contexte Nx workspace
-  externals: [
-    function ({ request }, callback) {
-      if (/^[^./]/.test(request)) {
-        return callback(null, 'commonjs ' + request);
-      }
-      callback();
-    },
-  ],
   plugins: [
     new NxAppWebpackPlugin({
       target: 'node',
@@ -28,7 +37,9 @@ module.exports = {
       outputHashing: 'none',
       generatePackageJson: true,
       sourceMap: false,
-      externalDependencies: 'all', // 🔥 ULTRA IMPORTANT
+      externalDependencies: 'all', // Nx externalise ce qu'il peut
     }),
+    // Doit être après NxAppWebpackPlugin pour ne pas être écrasé
+    new NodeModulesExternalsPlugin(),
   ],
 };
