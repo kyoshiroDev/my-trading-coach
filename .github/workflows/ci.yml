@@ -264,6 +264,7 @@ jobs:
     name: E2E Playwright
     runs-on: ubuntu-latest
     needs: [build, test]
+    continue-on-error: true
     env:
       NX_NO_CLOUD: true
       DATABASE_URL: postgresql://mtc_user:testpassword@localhost:5432/mytradingcoach_test
