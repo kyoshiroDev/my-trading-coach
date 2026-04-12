@@ -24,11 +24,10 @@ export default defineConfig({
   },
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'pnpm nx run app-mytradingcoach:serve',
+    command: 'npx serve dist/apps/app-mytradingcoach/browser -p 4200',
     url: 'http://localhost:4200',
-    reuseExistingServer: !process.env['CI'],
-    timeout: 120000,
-    cwd: workspaceRoot,
+    reuseExistingServer: true,
+    timeout: 60_000,
   },
   projects: [
     {

@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main, dev]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -17,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -27,7 +30,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
 
       - name: Install commitlint
@@ -43,7 +46,7 @@ jobs:
     env:
       NX_NO_CLOUD: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: pnpm/action-setup@v4
         with:
@@ -51,7 +54,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
 
       - name: Cache pnpm store
@@ -114,7 +117,7 @@ jobs:
           - 6379:6379
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: pnpm/action-setup@v4
         with:
@@ -122,7 +125,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
 
       - name: Cache pnpm store
@@ -164,6 +167,15 @@ jobs:
         with:
           name: angular-dist
           path: dist/apps/app-mytradingcoach/
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload API dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-dist
+          path: apps/api-mytradingcoach/dist/
+          if-no-files-found: error
           retention-days: 1
 
       - name: Upload Astro dist
@@ -171,6 +183,7 @@ jobs:
         with:
           name: astro-dist
           path: apps/landing-mytradingcoach/dist/
+          if-no-files-found: error
           retention-days: 1
 
   # ── Tests ─────────────────────────────────────────────────────────────────
@@ -214,7 +227,7 @@ jobs:
           - 6379:6379
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: pnpm/action-setup@v4
         with:
@@ -222,7 +235,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
 
       - name: Cache pnpm store
@@ -241,8 +254,12 @@ jobs:
       - name: Prisma migrate (test DB)
         run: pnpm exec prisma migrate deploy --config=./prisma/prisma.config.ts
 
-    #  - name: Test NestJS
-    #    run: pnpm nx test api-mytradingcoach
+      - name: Test NestJS
+        run: pnpm nx test api-mytradingcoach
 
       - name: Test Angular
         run: pnpm nx test app-mytradingcoach
+
+  # ── E2E Playwright — désactivé temporairement ────────────────────────────
+  # À réactiver après le lancement en production
+  # e2e: ...

@@ -7,10 +7,13 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
+import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 heure
 
 @Injectable()
 export class AuthService {
@@ -57,7 +60,7 @@ export class AuthService {
     let payload: { sub: string; email: string };
     try {
       payload = await this.jwtService.verifyAsync(refreshToken, {
-        secret: process.env['JWT_REFRESH_SECRET'] ?? 'dev-refresh-secret',
+        secret: process.env['JWT_REFRESH_SECRET'],
       });
     } catch {
       throw new UnauthorizedException('Refresh token invalide ou expiré');
@@ -70,7 +73,7 @@ export class AuthService {
     if (!user) throw new UnauthorizedException('Utilisateur introuvable');
 
     const tokens = await this.generateTokens(user.id, user.email);
-    return { ...tokens, user };
+    return { ...tokens, user: { id: user.id, email: user.email, name: user.name, plan: user.plan } };
   }
 
   async startTrial(userId: string) {
@@ -89,12 +92,58 @@ export class AuthService {
     return updated;
   }
 
+  async forgotPassword(email: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    // Réponse identique que l'utilisateur existe ou non (anti-énumération)
+    if (!user) return;
+
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetPasswordToken: hashedToken,
+        resetPasswordExpires: new Date(Date.now() + RESET_TOKEN_TTL_MS),
+      },
+    });
+
+    this.resend.sendResetPassword({
+      to: user.email,
+      userName: user.name ?? '',
+      resetToken: rawToken,
+    }).catch((err: unknown) => this.logger.error(`Reset password email failed: ${String(err)}`));
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await this.prisma.user.findFirst({
+      where: {
+        resetPasswordToken: hashedToken,
+        resetPasswordExpires: { gt: new Date() },
+      },
+    });
+
+    if (!user) throw new BadRequestException('Token invalide ou expiré');
+
+    const hashedPassword = await argon2.hash(newPassword);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetPasswordToken: null,
+        resetPasswordExpires: null,
+      },
+    });
+  }
+
   private async generateTokens(userId: string, email: string) {
     const payload = { sub: userId, email };
     const [access_token, refresh_token] = await Promise.all([
       this.jwtService.signAsync(payload, { expiresIn: '15m' }),
       this.jwtService.signAsync(payload, {
-        secret: process.env['JWT_REFRESH_SECRET'] ?? 'dev-refresh-secret',
+        secret: process.env['JWT_REFRESH_SECRET'],
         expiresIn: '7d',
       }),
     ]);

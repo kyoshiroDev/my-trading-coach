@@ -22,7 +22,18 @@
         "styles": ["apps/app-mytradingcoach/src/styles.css"]
       },
       "configurations": {
+        "local": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        },
         "production": {
+          "fileReplacements": [
+            {
+              "replace": "apps/app-mytradingcoach/src/environments/environment.ts",
+              "with": "apps/app-mytradingcoach/src/environments/environment.production.ts"
+            }
+          ],
           "budgets": [
             {
               "type": "initial",
@@ -38,17 +49,29 @@
           "outputHashing": "all"
         },
         "development": {
+          "fileReplacements": [
+            {
+              "replace": "apps/app-mytradingcoach/src/environments/environment.ts",
+              "with": "apps/app-mytradingcoach/src/environments/environment.dev.ts"
+            }
+          ],
           "optimization": false,
           "extractLicenses": false,
           "sourceMap": true
         }
       },
-      "defaultConfiguration": "production"
+      "defaultConfiguration": "development"
     },
     "serve": {
       "continuous": true,
       "executor": "@angular/build:dev-server",
+      "options": {
+        "buildTarget": "app-mytradingcoach:build:local"
+      },
       "configurations": {
+        "local": {
+          "buildTarget": "app-mytradingcoach:build:local"
+        },
         "production": {
           "buildTarget": "app-mytradingcoach:build:production"
         },
@@ -56,15 +79,15 @@
           "buildTarget": "app-mytradingcoach:build:development"
         }
       },
-      "defaultConfiguration": "development"
+      "defaultConfiguration": "local"
     },
     "lint": {
       "executor": "@nx/eslint:lint"
     },
     "test": {
-      "executor": "@angular/build:unit-test",
+      "executor": "@nx/vitest:test",
       "options": {
-        "tsConfig": "apps/app-mytradingcoach/tsconfig.spec.json"
+        "configFile": "apps/app-mytradingcoach/vitest.config.ts"
       }
     },
     "serve-static": {

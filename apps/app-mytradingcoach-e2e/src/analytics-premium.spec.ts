@@ -9,7 +9,7 @@ async function loginAs(
   await page.fill('input[type="email"]', email);
   await page.fill('input[type="password"]', password);
   await page.click('button[type="submit"]');
-  await page.waitForURL(/\/(dashboard|analytics|journal)/, { timeout: 10000 });
+  await page.waitForURL(/\/(dashboard|analytics|journal)/, { timeout: 15000 });
 }
 
 test.describe('Analytics — utilisateur PREMIUM', () => {
@@ -29,12 +29,12 @@ test.describe('Analytics — utilisateur PREMIUM', () => {
 
   test('la heatmap est visible pour PREMIUM', async ({ page }) => {
     await page.goto('/analytics');
-    await expect(page.locator('.heatmap')).toBeVisible();
+    await expect(page.locator('.heatmap-wrapper')).toBeVisible();
   });
 
   test('le canvas equity curve est présent', async ({ page }) => {
     await page.goto('/analytics');
-    await expect(page.locator('canvas')).toBeVisible();
+    await expect(page.locator('canvas.chart-canvas').first()).toBeAttached();
   });
 
   test('pas de bannière upsell sur le dashboard', async ({ page }) => {

@@ -63,6 +63,18 @@
   line-height: 1.5;
 }
 
+/* ─── Success ─── */
+.success-msg {
+  background: rgba(16,185,129,.1);
+  border: 1px solid var(--green);
+  color: var(--green);
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 /* ─── Error ─── */
 .error-msg {
   background: var(--red-dim);
@@ -161,6 +173,20 @@ input::placeholder { color: var(--text-3); }
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── Forgot password link ─── */
+.forgot-link-row {
+  text-align: right;
+  margin-bottom: 4px;
+}
+
+.forgot-link {
+  font-size: 12px;
+  color: var(--text-3);
+  text-decoration: none;
+}
+
+.forgot-link:hover { color: var(--blue-bright); }
 
 /* ─── Footer link ─── */
 .auth-link {

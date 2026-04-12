@@ -15,6 +15,10 @@ model User {
   trialEndsAt DateTime?
   trialUsed   Boolean   @default(false)
 
+  // ── Reset mot de passe ──────────────────────────────────────────────────
+  resetPasswordToken   String?   @unique
+  resetPasswordExpires DateTime?
+
   // ── Stripe ──────────────────────────────────────
   stripeCustomerId         String?   @unique
   stripeSubscriptionId     String?   @unique

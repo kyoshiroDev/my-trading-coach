@@ -8,6 +8,7 @@
   },
   "private": true,
   "devDependencies": {
+    "@analogjs/vite-plugin-angular": "^2.4.5",
     "@angular-devkit/core": "~21.2.0",
     "@angular-devkit/schematics": "~21.2.0",
     "@angular/build": "~21.2.0",
@@ -27,6 +28,8 @@
     "@nx/nest": "^22.6.1",
     "@nx/node": "22.6.1",
     "@nx/playwright": "22.6.1",
+    "@nx/vite": "^22.6.5",
+    "@nx/vitest": "^22.6.5",
     "@nx/web": "22.6.1",
     "@nx/webpack": "22.6.1",
     "@playwright/test": "^1.36.0",

@@ -30,6 +30,14 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - STRIPE_PRICE_MONTHLY=${STRIPE_PRICE_MONTHLY}
+      - STRIPE_PRICE_YEARLY=${STRIPE_PRICE_YEARLY}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - MAIL_FROM=${MAIL_FROM:-noreply@mytradingcoach.app}
+      - MAIL_SAV=${MAIL_SAV:-support@mytradingcoach.app}
+      - SENTRY_DSN=${SENTRY_DSN:-}
       - FRONTEND_URL=${FRONTEND_URL:-https://app.mytradingcoach.app}
       - CORS_ORIGINS=${CORS_ORIGINS:-https://app.mytradingcoach.app,https://mytradingcoach.app}
       - PORT=3000
