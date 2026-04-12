@@ -69,7 +69,7 @@ jobs:
             --token=${{ secrets.VERCEL_TOKEN }} \
             --yes \
             --cwd dist/apps/app-mytradingcoach/browser \
-            --local-config ../../../../apps/app-mytradingcoach/vercel.json
+            --local-config ${{ github.workspace }}/apps/app-mytradingcoach/vercel.json
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_APP_PROJECT_ID }}
