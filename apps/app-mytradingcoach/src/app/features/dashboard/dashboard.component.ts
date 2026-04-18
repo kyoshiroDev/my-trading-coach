@@ -2,6 +2,7 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   ViewChild,
   computed,
@@ -9,18 +10,27 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TitleCasePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { BillingApi } from '../../core/api/billing.api';
 import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
-import { TradesStore } from '../../core/stores/trades.store';
+import { TradesStore, Trade } from '../../core/stores/trades.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
-import { PnlColorPipe } from '../../shared/pipes';
-import { EmotionEmojiPipe } from '../../shared/pipes';
-import { EmotionLabelPipe } from '../../shared/pipes';
-import { EmotionColorPipe } from '../../shared/pipes';
-import { SetupColorPipe } from '../../shared/pipes';
+import { TradeFormComponent } from '../journal/trade-form.component';
+import { CreateTradeDto } from '../../core/api/trades.api';
+import {
+  EmotionColorPipe,
+  EmotionEmojiPipe,
+  EmotionLabelPipe,
+  PnlClassPipe,
+  PnlColorPipe,
+  PnlFormatPipe,
+  SetupColorPipe,
+  SetupColorsMapPipe,
+} from '../../shared/pipes';
 import { environment } from '../../../environments/environment';
 
 interface Summary {
@@ -35,19 +45,15 @@ interface BySetup { setup: string; winRate: number; avgRR: number; count: number
 interface ByEmotion { emotion: string; winRate: number; avgRR: number; count: number; }
 interface EquityPoint { date: string; cumulativePnl: number; }
 
-const SETUP_COLORS_MAP: Record<string, string> = {
-  BREAKOUT: '#10b981',
-  PULLBACK: '#3b82f6',
-  RANGE: '#f59e0b',
-  REVERSAL: '#ef4444',
-  SCALPING: '#8b5cf6',
-  NEWS: '#60a5fa',
-};
-
 @Component({
   selector: 'mtc-dashboard',
   standalone: true,
-  imports: [RouterLink, TitleCasePipe, TopbarComponent, PnlColorPipe, EmotionEmojiPipe, EmotionLabelPipe, EmotionColorPipe, SetupColorPipe],
+  imports: [
+    RouterLink, TitleCasePipe, TopbarComponent, TradeFormComponent,
+    PnlColorPipe, PnlFormatPipe, PnlClassPipe,
+    EmotionEmojiPipe, EmotionLabelPipe, EmotionColorPipe,
+    SetupColorPipe, SetupColorsMapPipe,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './dashboard.component.css',
   template: `
@@ -92,8 +98,8 @@ const SETUP_COLORS_MAP: Record<string, string> = {
         <div class="stats-row">
           <div class="stat-card">
             <div class="stat-label">P&amp;L Total</div>
-            <div class="stat-value" [class]="pnlClass(summary()?.totalPnl ?? 0)">
-              {{ formatPnl(summary()?.totalPnl ?? 0) }}
+            <div class="stat-value" [class]="(summary()?.totalPnl ?? 0) | pnlClass">
+              {{ summary()?.totalPnl ?? 0 | pnlFormat }}
             </div>
             <div class="stat-sub">
               <span class="change" [class]="(summary()?.totalPnl ?? 0) >= 0 ? 'up' : 'down'">
@@ -115,7 +121,7 @@ const SETUP_COLORS_MAP: Record<string, string> = {
 
           <div class="stat-card">
             <div class="stat-label">Drawdown Max</div>
-            <div class="stat-value text-red">{{ formatPnl(summary()?.maxDrawdown ?? 0) }}</div>
+            <div class="stat-value text-red">{{ summary()?.maxDrawdown ?? 0 | pnlFormat }}</div>
             <div class="stat-sub">
               <span class="change down">▼ -4.8%</span>
               <span>sur capital</span>
@@ -193,7 +199,7 @@ const SETUP_COLORS_MAP: Record<string, string> = {
                   <div class="trade-row-bottom">
                     <span class="trade-setup-compact">{{ trade.setup }}</span>
                     <span class="trade-pnl" [style.color]="trade.pnl | pnlColor">
-                      {{ trade.pnl !== null ? formatPnl(trade.pnl) : '—' }}
+                      {{ trade.pnl | pnlFormat:trade.entry }}
                     </span>
                   </div>
                 </div>
@@ -202,6 +208,14 @@ const SETUP_COLORS_MAP: Record<string, string> = {
           }
         </div>
       </div>
+
+      <!-- Trade form modal -->
+      <mtc-trade-form
+        [open]="showTradeForm()"
+        [isSaving]="isSavingTrade()"
+        (dismissed)="showTradeForm.set(false)"
+        (formSave)="saveTrade($event)"
+      />
 
       <!-- Win Rate + Emotions -->
       <div class="grid-2" style="margin-bottom:16px">
@@ -214,9 +228,9 @@ const SETUP_COLORS_MAP: Record<string, string> = {
           <div class="donut-wrap">
             <svg class="donut-svg" width="100" height="100" viewBox="0 0 100 100">
               <circle cx="50" cy="50" r="38" fill="none" stroke="var(--bg-3)" stroke-width="12"/>
-              @for (seg of donutSegments(); track seg.label) {
+              @for (seg of segments(); track seg.label) {
                 <circle cx="50" cy="50" r="38" fill="none"
-                  [attr.stroke]="seg.color"
+                  [attr.stroke]="seg.label | setupColorMap"
                   stroke-width="12"
                   [attr.stroke-dasharray]="seg.dash"
                   [attr.stroke-dashoffset]="seg.offset"
@@ -291,6 +305,11 @@ export class DashboardComponent implements AfterViewInit {
   protected readonly userStore = inject(UserStore);
   protected readonly tradesStore = inject(TradesStore);
   private readonly billingApi = inject(BillingApi);
+  private readonly http = inject(HttpClient);
+  private readonly destroyRef = inject(DestroyRef);
+
+  readonly showTradeForm = signal(false);
+  readonly isSavingTrade = signal(false);
 
   private readonly summaryResource = httpResource<{ data: Summary }>(
     () => `${environment.apiUrl}/analytics/summary`
@@ -353,38 +372,43 @@ export class DashboardComponent implements AfterViewInit {
     this.canDraw.set(true);
   }
 
-  protected donutSegments() {
+  /** Segments du donut SVG — recalculés uniquement quand bySetup() change grâce à computed() */
+  protected readonly segments = computed(() => {
     const setups = this.bySetup().slice(0, 4);
     if (!setups.length) return [];
     const circumference = 2 * Math.PI * 38; // r=38
+    const total = setups.reduce((a, b) => a + b.count, 0);
     let offset = 0;
     return setups.map((s) => {
-      const fraction = s.count / setups.reduce((a, b) => a + b.count, 0);
-      const dash = fraction * circumference;
-      const seg = { label: s.setup, color: SETUP_COLORS_MAP[s.setup] ?? '#6b7280', dash: `${dash} ${circumference - dash}`, offset: -offset };
+      const dash = (s.count / total) * circumference;
+      const seg = { label: s.setup, dash: `${dash} ${circumference - dash}`, offset: -offset };
       offset += dash;
       return seg;
     });
-  }
+  });
 
   protected displayEmotions(): { emotion: string; winRate: number }[] {
     if (this.byEmotion().length) return this.byEmotion().slice(0, 4);
     return [];
   }
 
-  formatPnl(v: number): string {
-    const sign = v >= 0 ? '+' : '';
-    return `${sign}$${Math.abs(v).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  }
-
-  pnlClass(v: number): string {
-    if (v > 0) return 'stat-value text-green';
-    if (v < 0) return 'stat-value text-red';
-    return 'stat-value';
-  }
-
   goToJournal() {
-    // handled by router in topbar routerLink — noop
+    this.showTradeForm.set(true);
+  }
+
+  protected saveTrade(dto: CreateTradeDto) {
+    this.isSavingTrade.set(true);
+    this.http.post<{ data: Trade }>(`${environment.apiUrl}/trades`, dto)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.tradesStore.addTrade(res.data);
+          this.showTradeForm.set(false);
+          this.isSavingTrade.set(false);
+          this.summaryResource.reload();
+        },
+        error: () => this.isSavingTrade.set(false),
+      });
   }
 
   protected startTrial() {
@@ -442,8 +466,4 @@ export class DashboardComponent implements AfterViewInit {
     ctx.stroke();
   }
 
-  // make titlecase for template
-  protected titlecase(s: string): string {
-    return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
-  }
 }

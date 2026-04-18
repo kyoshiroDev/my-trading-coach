@@ -17,7 +17,7 @@
       <div class="stat-label">P&amp;L TOTAL</div>
       <div class="stat-value" [class.text-green]="(summary()?.totalPnl ?? 0) > 0"
                               [class.text-red]="(summary()?.totalPnl ?? 0) < 0">
-        {{ summary() ? formatPnl(summary()!.totalPnl) : '—' }}
+        {{ summary() ? (summary()!.totalPnl | pnlFormat) : '—' }}
       </div>
       <div class="stat-sub">P&amp;L cumulé</div>
     </div>
@@ -25,7 +25,7 @@
     <div class="stat-card">
       <div class="stat-label">TOP SESSION</div>
       <div class="stat-value text-blue">
-        {{ summary() ? formatSession(summary()!.topSession) : '—' }}
+        {{ summary() ? (summary()!.topSession | sessionLabel) : '—' }}
       </div>
       <div class="stat-sub">{{ summary()?.topSessionWinRate ?? 0 }}% win rate</div>
     </div>
@@ -59,7 +59,7 @@
           @if (summary()) {
             <span class="card-meta" [class.text-green]="(summary()!.totalPnl) >= 0"
                                     [class.text-red]="(summary()!.totalPnl) < 0">
-              {{ formatPnl(summary()!.totalPnl) }}
+              {{ summary()!.totalPnl | pnlFormat }}
             </span>
           }
         </div>
@@ -76,7 +76,7 @@
           <div class="card-title">Courbe de Drawdown</div>
           @if (summary()) {
             <span class="card-meta text-red">
-              {{ formatPnl(-(summary()!.maxDrawdown)) }} max
+              {{ -(summary()!.maxDrawdown) | pnlFormat }} max
             </span>
           }
         </div>
@@ -159,7 +159,7 @@
                 <td class="mono"
                     [class.text-green]="asset.pnl > 0"
                     [class.text-red]="asset.pnl < 0">
-                  {{ formatPnl(asset.pnl) }}
+                  {{ asset.pnl | pnlFormat }}
                 </td>
               </tr>
             }

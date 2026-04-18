@@ -1,29 +1,23 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { LucideAngularModule, Plus, X, Filter } from 'lucide-angular';
+import { LucideAngularModule, X } from 'lucide-angular';
 import { TradesStore, Trade } from '../../core/stores/trades.store';
+import { CreateTradeDto } from '../../core/api/trades.api';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
-import { PnlColorPipe } from '../../shared/pipes/pnl-color.pipe';
-import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
-import { CreateTradeSchema } from '../../core/schemas/trade.schema';
+import { TradeFormComponent } from './trade-form.component';
+import { PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe } from '../../shared/pipes';
 import { environment } from '../../../environments/environment';
 
-const EMOTIONS = ['CONFIDENT', 'FOCUSED', 'NEUTRAL', 'STRESSED', 'FEAR', 'REVENGE'];
-const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS'];
-const SESSIONS = ['LONDON', 'NEW_YORK', 'ASIAN', 'PRE_MARKET', 'OVERLAP'];
-const EMOTION_EMOJIS: Record<string, string> = {
-  CONFIDENT: '😎', FOCUSED: '🎯', NEUTRAL: '😐', STRESSED: '😰', FEAR: '😨', REVENGE: '🤬',
-};
-
 type FilterSide = 'ALL' | 'LONG' | 'SHORT';
+
+const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS'];
 
 @Component({
   selector: 'mtc-journal',
   standalone: true,
-  imports: [FormsModule, DatePipe, LucideAngularModule, TopbarComponent, PnlColorPipe, EmotionEmojiPipe],
+  imports: [DatePipe, LucideAngularModule, TopbarComponent, TradeFormComponent, PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './journal.component.css',
   template: `
@@ -35,7 +29,7 @@ type FilterSide = 'ALL' | 'LONG' | 'SHORT';
     />
 
     <div class="content">
-      <!-- Filters -->
+      <!-- Filtres -->
       <div class="journal-filters">
         <button class="filter-chip" [class.active]="filterSide() === 'ALL'" (click)="filterSide.set('ALL')">
           Tous
@@ -53,7 +47,7 @@ type FilterSide = 'ALL' | 'LONG' | 'SHORT';
         }
       </div>
 
-      <!-- Table -->
+      <!-- Tableau -->
       @if (tradesStore.isLoading$()) {
         <div class="loading-state">Chargement des trades...</div>
       } @else if (filteredTrades().length === 0) {
@@ -89,7 +83,7 @@ type FilterSide = 'ALL' | 'LONG' | 'SHORT';
                 <td class="mono">{{ trade.entry }}</td>
                 <td class="mono">{{ trade.exit ?? '—' }}</td>
                 <td class="mono" [style.color]="trade.pnl | pnlColor">
-                  {{ trade.pnl !== null ? ((trade.pnl >= 0 ? '+' : '') + trade.pnl.toFixed(2)) : '—' }}
+                  {{ trade.pnl | pnlFormat:trade.entry }}
                 </td>
                 <td class="mono">{{ trade.riskReward !== null ? trade.riskReward.toFixed(2) : '—' }}</td>
                 <td>
@@ -115,105 +109,17 @@ type FilterSide = 'ALL' | 'LONG' | 'SHORT';
       }
     </div>
 
-    <!-- ─── Modal ─── -->
-    @if (showModal()) {
-      <div class="modal-overlay" role="presentation" (click)="closeModal()" (keydown.escape)="closeModal()">
-        <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
-          <div class="modal-header">
-            <span class="modal-title">Nouveau Trade</span>
-            <button class="modal-close" (click)="closeModal()">
-              <lucide-icon [img]="XIcon" [size]="14" />
-            </button>
-          </div>
-
-          <div class="modal-body">
-            <form (ngSubmit)="submitTrade()" class="form-grid">
-              <div class="field">
-                <label for="f-asset">Asset</label>
-                <input id="f-asset" [(ngModel)]="form.asset" name="asset" required placeholder="BTC/USDT, EUR/USD..." />
-              </div>
-              <div class="field">
-                <label for="f-side">Sens</label>
-                <select id="f-side" [(ngModel)]="form.side" name="side">
-                  <option value="LONG">LONG</option>
-                  <option value="SHORT">SHORT</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="f-entry">Entry</label>
-                <input id="f-entry" type="number" [(ngModel)]="form.entry" name="entry" required step="any" />
-              </div>
-              <div class="field">
-                <label for="f-exit">Exit (optionnel)</label>
-                <input id="f-exit" type="number" [(ngModel)]="form.exit" name="exit" step="any" />
-              </div>
-              <div class="field">
-                <label for="f-sl">Stop Loss</label>
-                <input id="f-sl" type="number" [(ngModel)]="form.stopLoss" name="stopLoss" step="any" />
-              </div>
-              <div class="field">
-                <label for="f-tp">Take Profit</label>
-                <input id="f-tp" type="number" [(ngModel)]="form.takeProfit" name="takeProfit" step="any" />
-              </div>
-
-              <!-- Emotion selector -->
-              <div class="field form-full">
-                <span class="field-label">État émotionnel</span>
-                <div class="emotion-selector">
-                  @for (e of EMOTIONS; track e) {
-                    <button
-                      type="button"
-                      class="emotion-btn"
-                      [class.selected]="form.emotion === e"
-                      (click)="form.emotion = $any(e)"
-                    >
-                      <span>{{ EMOTION_EMOJIS[e] }}</span>
-                      <span>{{ e }}</span>
-                    </button>
-                  }
-                </div>
-              </div>
-
-              <div class="field">
-                <label for="f-setup">Setup</label>
-                <select id="f-setup" [(ngModel)]="form.setup" name="setup">
-                  @for (s of SETUPS; track s) { <option [value]="s">{{ s }}</option> }
-                </select>
-              </div>
-              <div class="field">
-                <label for="f-session">Session</label>
-                <select id="f-session" [(ngModel)]="form.session" name="session">
-                  @for (s of SESSIONS; track s) { <option [value]="s">{{ s }}</option> }
-                </select>
-              </div>
-              <div class="field">
-                <label for="f-tf">Timeframe</label>
-                <input id="f-tf" [(ngModel)]="form.timeframe" name="timeframe" placeholder="15m, 1h, 4h..." />
-              </div>
-              <div class="field">
-                <label for="f-pnl">P&amp;L ($)</label>
-                <input id="f-pnl" type="number" [(ngModel)]="form.pnl" name="pnl" step="any" placeholder="Optionnel" />
-              </div>
-              <div class="field form-full">
-                <label for="f-notes">Notes</label>
-                <textarea id="f-notes" [(ngModel)]="form.notes" name="notes" rows="3" placeholder="Contexte, raison du trade, observations..."></textarea>
-              </div>
-
-              @if (modalError()) {
-                <div class="error-msg form-full">{{ modalError() }}</div>
-              }
-
-              <div class="form-actions form-full">
-                <button type="button" class="btn-cancel" (click)="closeModal()">Annuler</button>
-                <button type="submit" class="btn-submit" [disabled]="isSubmitting()">
-                  {{ isSubmitting() ? 'Enregistrement...' : 'Enregistrer le trade' }}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    }
+    <!--
+      TradeFormComponent (Smart/Dumb pattern) :
+      - Journal = composant "Smart" : gère l'état (showModal, isSubmitting) et les appels API
+      - TradeFormComponent = composant "Dumb" : reçoit des inputs, émet des outputs, pas d'état métier
+    -->
+    <mtc-trade-form
+      [open]="showModal()"
+      [isSaving]="isSubmitting()"
+      (dismissed)="closeModal()"
+      (formSave)="submitTrade($event)"
+    />
   `,
 })
 export class JournalComponent implements OnInit {
@@ -221,91 +127,61 @@ export class JournalComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly EMOTIONS = EMOTIONS;
   protected readonly SETUPS = SETUPS;
-  protected readonly SESSIONS = SESSIONS;
-  protected readonly EMOTION_EMOJIS = EMOTION_EMOJIS;
-
   protected readonly XIcon = X;
-  protected readonly PlusIcon = Plus;
-  protected readonly FilterIcon = Filter;
 
   protected readonly showModal = signal(false);
   protected readonly isSubmitting = signal(false);
-  protected readonly modalError = signal<string | null>(null);
   protected readonly filterSide = signal<FilterSide>('ALL');
   protected readonly filterSetup = signal<string | null>(null);
 
-  protected form = this.defaultForm();
-
-  protected filteredTrades() {
+  /** computed() : recalculé uniquement quand les trades ou les filtres changent */
+  protected readonly filteredTrades = computed(() => {
     let trades = this.tradesStore.trades$();
     const side = this.filterSide();
     const setup = this.filterSetup();
     if (side !== 'ALL') trades = trades.filter(t => t.side === side);
     if (setup) trades = trades.filter(t => t.setup === setup);
     return trades;
-  }
+  });
 
   ngOnInit() {
     this.tradesStore.loadTrades();
   }
 
-  openModal() { this.form = this.defaultForm(); this.showModal.set(true); }
-  closeModal() { this.showModal.set(false); this.modalError.set(null); }
+  openModal() { this.showModal.set(true); }
+  closeModal() { this.showModal.set(false); }
 
   toggleSetupFilter(setup: string) {
     this.filterSetup.set(this.filterSetup() === setup ? null : setup);
   }
 
-  submitTrade() {
-    const result = CreateTradeSchema.safeParse(this.form);
-    if (!result.success) {
-      this.modalError.set(result.error.issues[0]?.message ?? 'Formulaire invalide');
-      return;
-    }
+  /**
+   * Reçoit un CreateTradeDto déjà validé depuis TradeFormComponent.
+   * Le journal n'a plus besoin de connaître la logique de validation du formulaire.
+   */
+  submitTrade(dto: CreateTradeDto) {
     this.isSubmitting.set(true);
-    this.modalError.set(null);
 
-    this.http.post<{ data: Trade }>(`${environment.apiUrl}/trades`, result.data)
+    this.http.post<{ data: Trade }>(`${environment.apiUrl}/trades`, dto)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-      next: (res) => {
-        this.tradesStore.addTrade(res.data);
-        this.closeModal();
-        this.isSubmitting.set(false);
-      },
-      error: (err) => {
-        this.modalError.set(err.error?.message ?? 'Erreur lors de l\'enregistrement');
-        this.isSubmitting.set(false);
-      },
-    });
+        next: (res) => {
+          this.tradesStore.addTrade(res.data);
+          this.closeModal();
+          this.isSubmitting.set(false);
+        },
+        error: () => this.isSubmitting.set(false),
+      });
   }
 
   deleteTrade(id: string) {
     this.http.delete(`${environment.apiUrl}/trades/${id}`)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-      next: () => this.tradesStore.removeTrade(id),
-    });
+        next: () => this.tradesStore.removeTrade(id),
+      });
   }
 
   loadMore() { this.tradesStore.loadMore(); }
-
-  private defaultForm() {
-    return {
-      asset: '',
-      side: 'LONG' as const,
-      entry: 0,
-      exit: null as number | null,
-      stopLoss: null as number | null,
-      takeProfit: null as number | null,
-      pnl: null as number | null,
-      emotion: 'NEUTRAL' as const,
-      setup: 'BREAKOUT' as const,
-      session: 'LONDON' as const,
-      timeframe: '1h',
-      notes: '',
-    };
-  }
 }
