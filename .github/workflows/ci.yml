@@ -149,10 +149,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Prisma generate
-        run: pnpm exec prisma generate --config=./prisma.config.ts
+        run: pnpm exec prisma generate --config=./prisma/prisma.config.ts
 
       - name: Prisma migrate (test DB)
-        run: pnpm exec prisma migrate deploy --config=./prisma.config.ts
+        run: pnpm exec prisma migrate deploy --config=./prisma/prisma.config.ts
 
       - name: Build NestJS
         run: pnpm nx build api-mytradingcoach
@@ -250,10 +250,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Prisma generate
-        run: pnpm exec prisma generate --config=./prisma.config.ts
+        run: pnpm exec prisma generate --config=./prisma/prisma.config.ts
 
       - name: Prisma migrate (test DB)
-        run: pnpm exec prisma migrate deploy --config=./prisma.config.ts
+        run: pnpm exec prisma migrate deploy --config=./prisma/prisma.config.ts
 
       - name: Test NestJS
         run: pnpm nx test api-mytradingcoach
