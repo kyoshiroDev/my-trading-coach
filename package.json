@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "prepare": "husky",
-    "postinstall": "prisma generate --schema=./prisma/schema.prisma"
+    "postinstall": "echo skip prisma generate"
   },
   "private": true,
   "devDependencies": {
