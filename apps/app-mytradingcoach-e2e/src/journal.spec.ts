@@ -1,20 +1,9 @@
-import {test, expect, Page} from '@playwright/test';
-
-async function loginAs(page: Page, email: string, password: string) {
-  await page.goto('/login');
-  await page.fill('input[type="email"]', email);
-  await page.fill('input[type="password"]', password);
-  await page.click('button[type="submit"]');
-  await page.waitForURL(/\/(dashboard|journal)/, { timeout: 15000 });
-}
+import { test, expect } from '@playwright/test';
+import { loginAs, FREE_USER } from './helpers/auth.helper';
 
 test.describe('Journal de trading', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAs(
-      page,
-      process.env['E2E_FREE_EMAIL'] ?? 'free@test.com',
-      process.env['E2E_FREE_PASSWORD'] ?? 'Password123!',
-    );
+    await loginAs(page, FREE_USER.email, FREE_USER.password);
   });
 
   test('la page /journal est accessible après connexion', async ({ page }) => {
@@ -23,36 +12,24 @@ test.describe('Journal de trading', () => {
     await expect(page).not.toHaveURL(/\/login/);
   });
 
-  test('le formulaire d\'ajout de trade est accessible via le bouton', async ({ page }) => {
+  test('le bouton "Nouveau trade" ouvre le formulaire', async ({ page }) => {
     await page.goto('/journal');
-    const addBtn = page.locator('button:has-text("Nouveau"), button:has-text("Ajouter"), button:has-text("+ Trade")').first();
+    const addBtn = page.locator('button:has-text("Nouveau trade")');
     await expect(addBtn).toBeVisible();
     await addBtn.click();
     await expect(page.locator('form')).toBeVisible();
   });
 
-  test('peut ouvrir le formulaire d\'ajout de trade', async ({ page }) => {
+  test('affiche la liste des trades ou l\'état vide', async ({ page }) => {
     await page.goto('/journal');
-    const addBtn = page.locator('button[data-testid="add-trade"], button:has-text("Nouveau"), button:has-text("Ajouter")').first();
-    if (await addBtn.isVisible()) {
-      await addBtn.click();
-      await expect(page.locator('form')).toBeVisible();
-    }
+    const list = page.locator('table.journal-table, .empty-state');
+    await expect(list).toBeVisible({ timeout: 5000 });
   });
 
-  test('affiche la liste des trades (vide ou avec données)', async ({ page }) => {
+  test('les filtres LONG/SHORT sont présents', async ({ page }) => {
     await page.goto('/journal');
-    // La liste doit exister dans le DOM même si elle est vide
-    const list = page.locator('[data-testid="trades-list"], table, .trades-list, .trade-list');
-    await expect(list.or(page.locator('text=/Aucun trade|No trades|journal vide/i'))).toBeVisible({ timeout: 5000 });
-  });
-
-  test('la pagination ou le scroll infini est présent si des trades existent', async ({ page }) => {
-    await page.goto('/journal');
-    // On vérifie simplement que la page se charge sans erreurs
-    await expect(page.locator('body')).toBeVisible();
-    const hasError = await page.locator('text=/500|Internal Server Error/').isVisible();
-    expect(hasError).toBe(false);
+    await expect(page.locator('button.filter-chip:has-text("LONG")')).toBeVisible();
+    await expect(page.locator('button.filter-chip:has-text("SHORT")')).toBeVisible();
   });
 
   test('la page /journal est inaccessible sans connexion', async ({ browser }) => {
@@ -61,5 +38,11 @@ test.describe('Journal de trading', () => {
     await page.goto('/journal');
     await expect(page).toHaveURL(/\/login/);
     await context.close();
+  });
+
+  test('pas d\'erreur 500 au chargement', async ({ page }) => {
+    await page.goto('/journal');
+    await expect(page.locator('body')).toBeVisible();
+    await expect(page.locator('text=/500|Internal Server Error/i')).not.toBeVisible();
   });
 });
