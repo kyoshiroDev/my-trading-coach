@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "prepare": "husky",
-    "postinstall": "prisma generate --schema=./prisma/schema.prisma"
+    "postinstall": "echo skip prisma generate"
   },
   "private": true,
   "devDependencies": {
@@ -50,6 +50,7 @@
     "prettier": "^2.6.2",
     "prisma": "^7.6.0",
     "tslib": "^2.3.0",
+    "tsx": "^4.21.0",
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.40.0",
     "vitest": "^4.0.8",

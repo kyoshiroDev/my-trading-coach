@@ -24,7 +24,7 @@ model User {
   stripeSubscriptionId     String?   @unique
   stripePriceId            String?
   stripeCurrentPeriodEnd   DateTime?
-  stripeSubscriptionStatus String?   // 'active' | 'trialing' | 'past_due' | 'unpaid' | 'canceled'
+  stripeSubscriptionStatus String? // 'active' | 'trialing' | 'past_due' | 'unpaid' | 'canceled'
 
   trades    Trade[]
   debriefs  WeeklyDebrief[]

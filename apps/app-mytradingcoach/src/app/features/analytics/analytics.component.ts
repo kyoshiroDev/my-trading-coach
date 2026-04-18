@@ -10,6 +10,7 @@ import {
   signal,
 } from '@angular/core';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
+import { PnlFormatPipe, SessionLabelPipe } from '../../shared/pipes';
 import { UserStore } from '../../core/stores/user.store';
 import {
   AnalyticsApi,
@@ -24,7 +25,7 @@ import { BillingApi } from '../../core/api/billing.api';
 @Component({
   selector: 'mtc-analytics',
   standalone: true,
-  imports: [TopbarComponent],
+  imports: [TopbarComponent, PnlFormatPipe, SessionLabelPipe],
   templateUrl: './analytics.component.html',
   styleUrl: './analytics.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -106,29 +107,11 @@ export class AnalyticsComponent implements OnInit {
     return 'heatmap-cell cell-red';
   }
 
-  protected formatPnl(value: number): string {
-    const abs = Math.abs(value);
-    const sign = value >= 0 ? '+' : '-';
-    if (abs >= 1000) return `${sign}$${(abs / 1000).toFixed(1)}k`;
-    return `${sign}$${abs.toFixed(0)}`;
-  }
-
   protected startTrial(plan: 'monthly' | 'yearly' = 'monthly'): void {
     this.billingApi.checkout(plan).subscribe({
       next: (res) => { window.location.href = res.data.url; },
       error: () => console.error('Erreur checkout'),
     });
-  }
-
-  protected formatSession(session: string): string {
-    const labels: Record<string, string> = {
-      LONDON: 'London',
-      NEW_YORK: 'New York',
-      ASIAN: 'Asian',
-      PRE_MARKET: 'Pre-Market',
-      OVERLAP: 'Overlap',
-    };
-    return labels[session] ?? session;
   }
 
   private drawEquityCanvas(points: EquityPoint[]): void {

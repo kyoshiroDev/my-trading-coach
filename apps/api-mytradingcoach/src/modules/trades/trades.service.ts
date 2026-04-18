@@ -100,18 +100,24 @@ export class TradesService {
   }
 
   private calculatePnl(dto: CreateTradeDto): number | undefined {
-    if (dto.entry && dto.exit) {
-      const diff = dto.exit - dto.entry;
-      return dto.side === 'LONG' ? diff : -diff;
+    if (dto.entry != null && dto.entry > 0 && dto.exit != null && dto.exit > 0) {
+      // P&L en dollars : LONG = exit - entry | SHORT = entry - exit
+      const dollars = dto.side === 'LONG'
+        ? (dto.exit - dto.entry)
+        : (dto.entry - dto.exit);
+      return +dollars.toFixed(2);
     }
     return undefined;
   }
 
   private calculateRiskReward(dto: CreateTradeDto): number | undefined {
-    if (dto.entry && dto.exit && dto.stopLoss) {
-      const profit = Math.abs(dto.exit - dto.entry);
+    // R/R calculé depuis takeProfit (objectif prévu), pas exit (sortie réelle)
+    if (dto.entry != null && dto.takeProfit != null && dto.stopLoss != null) {
+      const reward = dto.side === 'LONG'
+        ? dto.takeProfit - dto.entry
+        : dto.entry - dto.takeProfit;
       const risk = Math.abs(dto.entry - dto.stopLoss);
-      return risk > 0 ? profit / risk : undefined;
+      return risk > 0 && reward > 0 ? +(reward / risk).toFixed(2) : undefined;
     }
     return undefined;
   }

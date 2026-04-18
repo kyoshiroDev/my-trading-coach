@@ -1,20 +1,9 @@
 import { test, expect } from '@playwright/test';
-
-async function loginAs(
-  page: Parameters<typeof test>[1] extends { page: infer P } ? P : any,
-  email: string,
-  password: string,
-) {
-  await page.goto('/login');
-  await page.fill('input[type="email"]', email);
-  await page.fill('input[type="password"]', password);
-  await page.click('button[type="submit"]');
-  await page.waitForURL(/\/(dashboard|analytics|journal)/, { timeout: 15000 });
-}
+import { loginAs, PREMIUM_USER } from './helpers/auth.helper';
 
 test.describe('Analytics — utilisateur PREMIUM', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAs(page, process.env['E2E_PREMIUM_EMAIL'] ?? 'premium@test.com', process.env['E2E_PREMIUM_PASSWORD'] ?? 'Password123!');
+    await loginAs(page, PREMIUM_USER.email, PREMIUM_USER.password);
   });
 
   test('la page /analytics est accessible', async ({ page }) => {

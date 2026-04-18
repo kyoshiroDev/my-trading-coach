@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { loginAs, FREE_USER } from './helpers/auth.helper';
 
 test.describe('Authentification', () => {
   test('redirect vers /login si non connecté', async ({ page }) => {
@@ -34,7 +35,11 @@ test.describe('Authentification', () => {
     await page.fill('input[type="password"]', 'mauvais_mdp');
     await page.click('button[type="submit"]');
 
-    // Attendre le message d'erreur
-    await expect(page.locator('.error-message, [class*="error"], [role="alert"]')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.error-msg')).toBeVisible({ timeout: 5000 });
+  });
+
+  test('connexion réussie redirige vers le dashboard', async ({ page }) => {
+    await loginAs(page, FREE_USER.email, FREE_USER.password);
+    await expect(page).toHaveURL(/\/dashboard/);
   });
 });

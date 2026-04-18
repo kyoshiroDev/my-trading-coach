@@ -45,6 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NX_NO_CLOUD: true
+      DATABASE_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_test
     steps:
       - uses: actions/checkout@v4
 

@@ -1,26 +1,9 @@
 import { test, expect } from '@playwright/test';
-
-/**
- * Helper — Login as a specific user.
- * Expects the API to be running at /api (via proxy or baseURL).
- */
-async function loginAs(
-  page: Parameters<typeof test>[1] extends { page: infer P } ? P : any,
-  email: string,
-  password: string,
-) {
-  await page.goto('/login');
-  await page.fill('input[type="email"]', email);
-  await page.fill('input[type="password"]', password);
-  await page.click('button[type="submit"]');
-  await page.waitForURL(/\/(dashboard|analytics|journal)/, { timeout: 15000 });
-}
+import { loginAs, FREE_USER } from './helpers/auth.helper';
 
 test.describe('Analytics — utilisateur FREE', () => {
   test.beforeEach(async ({ page }) => {
-    // Ce test nécessite un compte FREE existant dans la base de données
-    // En CI, créer via POST /api/test/seed-free-user ou utiliser un compte de test
-    await loginAs(page, process.env['E2E_FREE_EMAIL'] ?? 'free@test.com', process.env['E2E_FREE_PASSWORD'] ?? 'Password123!');
+    await loginAs(page, FREE_USER.email, FREE_USER.password);
   });
 
   test('la page /analytics est accessible (pas de redirect)', async ({ page }) => {
@@ -48,7 +31,7 @@ test.describe('Analytics — utilisateur FREE', () => {
     await expect(firstLocked.locator('.locked-cta')).toBeVisible();
   });
 
-  test('le CTA verrouillé invite à essayer le trial', async ({ page }) => {
+  test('le CTA verrouillé mentionne les 7 jours gratuits', async ({ page }) => {
     await page.goto('/analytics');
     const cta = page.locator('.locked-cta').first();
     await expect(cta).toBeVisible();
@@ -57,7 +40,7 @@ test.describe('Analytics — utilisateur FREE', () => {
 
   test('la heatmap PREMIUM n\'est pas visible pour FREE', async ({ page }) => {
     await page.goto('/analytics');
-    await expect(page.locator('.heatmap')).not.toBeVisible();
+    await expect(page.locator('.heatmap-wrapper')).not.toBeVisible();
   });
 
   test('la bannière upsell est visible sur le dashboard', async ({ page }) => {
