@@ -1,5 +1,7 @@
 {
-  "framework": "astro",
+  "buildCommand": "pnpm nx build landing-mytradingcoach",
+  "outputDirectory": "apps/landing-mytradingcoach/dist",
+  "installCommand": "pnpm install --frozen-lockfile",
   "headers": [
     {
       "source": "/_astro/(.*)",
