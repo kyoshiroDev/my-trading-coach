@@ -1,5 +1,5 @@
 FROM node:22-slim AS builder
-RUN corepack enable && corepack prepare pnpm@10 --activate
+RUN npm install -g pnpm@10 --no-fund --no-audit
 WORKDIR /app
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/api-mytradingcoach/package.json ./apps/api-mytradingcoach/
@@ -10,11 +10,12 @@ RUN pnpm nx build api-mytradingcoach --configuration=production --skip-nx-cache
 
 FROM node:22-alpine AS migrator
 RUN apk add --no-cache python3 make g++
-RUN corepack enable && corepack prepare pnpm@10 --activate
+RUN npm install -g pnpm@10 --no-fund --no-audit
 WORKDIR /app
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/api-mytradingcoach/package.json ./apps/api-mytradingcoach/
 COPY prisma ./prisma
+COPY prisma.config.ts ./prisma/prisma.config.ts
 RUN pnpm install --frozen-lockfile
 RUN pnpm dlx prisma generate
 

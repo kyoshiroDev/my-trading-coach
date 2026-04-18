@@ -89,7 +89,7 @@
   color: var(--red);
   padding: 10px 14px;
   border-radius: 8px;
-  margin-bottom: 16px;
+  margin-top: 12px;
   font-size: 13px;
 }
 
@@ -156,7 +156,8 @@ input::placeholder { color: var(--text-3); }
   font-family: var(--font-mono, 'DM Mono', monospace);
 }
 
-.input-error input {
+.input-error input,
+.form-group.input-error input {
   border-color: var(--red);
   box-shadow: 0 0 0 3px rgba(239,68,68,0.1);
 }

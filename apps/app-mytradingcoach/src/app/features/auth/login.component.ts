@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -13,11 +13,9 @@ import { AuthService } from '../../core/auth/auth.service';
   styleUrl: './login.component.css',
   template: `
     <div class="auth-page">
-      <!-- Background glow -->
       <div class="bg-glow"></div>
 
       <div class="auth-card">
-        <!-- Logo -->
         <div class="auth-logo">
           <img src="icon/logo-navbar.svg" alt="MyTradingCoach">
         </div>
@@ -25,43 +23,50 @@ import { AuthService } from '../../core/auth/auth.service';
         <h1 class="auth-title">Bon retour 👋</h1>
         <p class="auth-subtitle">Connecte-toi pour accéder à ton journal de trading</p>
 
-        @if (error()) {
-          <div class="error-msg">{{ error() }}</div>
-        }
-
-        <form (ngSubmit)="onLogin()" #form="ngForm">
-          <div class="form-group">
+        <form (ngSubmit)="onLogin()">
+          <div class="form-group" [class.input-error]="emailError()">
             <label for="email">Email</label>
             <input
               id="email"
               type="email"
-              [(ngModel)]="email"
+              [ngModel]="email()"
+              (ngModelChange)="email.set($event)"
               name="email"
-              required
               placeholder="trader@email.com"
               autocomplete="email"
+              (blur)="emailTouched.set(true)"
             />
+            @if (emailError()) {
+              <span class="field-error">{{ emailError() }}</span>
+            }
           </div>
-          <div class="form-group">
+
+          <div class="form-group" [class.input-error]="passwordError()">
             <label for="password">Mot de passe</label>
             <div class="input-wrapper">
               <input
                 id="password"
                 [type]="showPassword() ? 'text' : 'password'"
-                [(ngModel)]="password"
+                [ngModel]="password()"
+                (ngModelChange)="password.set($event)"
                 name="password"
-                required
                 placeholder="••••••••"
                 autocomplete="current-password"
+                (blur)="passwordTouched.set(true)"
               />
               <button type="button" class="eye-btn" (click)="showPassword.set(!showPassword())">
                 <lucide-icon [img]="showPassword() ? EyeOffIcon : EyeIcon" [size]="15" color="var(--text-2)" />
               </button>
             </div>
+            @if (passwordError()) {
+              <span class="field-error">{{ passwordError() }}</span>
+            }
           </div>
+
           <div class="forgot-link-row">
             <a routerLink="/forgot-password" class="forgot-link">Mot de passe oublié ?</a>
           </div>
+
           <button type="submit" [disabled]="isLoading()" class="btn-submit">
             @if (isLoading()) {
               <span class="spinner"></span> Connexion...
@@ -69,6 +74,10 @@ import { AuthService } from '../../core/auth/auth.service';
               Se connecter
             }
           </button>
+
+          @if (apiError()) {
+            <div class="error-msg">{{ apiError() }}</div>
+          }
         </form>
 
         <p class="auth-link">
@@ -86,21 +95,42 @@ export class LoginComponent {
   protected readonly EyeIcon = Eye;
   protected readonly EyeOffIcon = EyeOff;
 
-  protected email = '';
-  protected password = '';
+  protected readonly email = signal('');
+  protected readonly password = signal('');
   protected readonly isLoading = signal(false);
-  protected readonly error = signal<string | null>(null);
+  protected readonly apiError = signal<string | null>(null);
   protected readonly showPassword = signal(false);
+  protected readonly submitted = signal(false);
+  protected readonly emailTouched = signal(false);
+  protected readonly passwordTouched = signal(false);
+
+  protected readonly emailError = computed(() => {
+    if (!this.submitted() && !this.emailTouched()) return null;
+    if (!this.email()) return "L'adresse email est requise";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email())) return 'Veuillez saisir une adresse email valide';
+    return null;
+  });
+
+  protected readonly passwordError = computed(() => {
+    if (!this.submitted() && !this.passwordTouched()) return null;
+    if (!this.password()) return 'Le mot de passe est requis';
+    return null;
+  });
 
   onLogin() {
-    if (!this.email || !this.password) return;
-    this.isLoading.set(true);
-    this.error.set(null);
+    this.submitted.set(true);
+    if (this.emailError() || this.passwordError()) return;
 
-    this.auth.login(this.email, this.password).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.isLoading.set(true);
+    this.apiError.set(null);
+
+    this.auth.login(this.email(), this.password()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => this.router.navigate(['/dashboard']),
       error: (err) => {
-        this.error.set(err.error?.message ?? 'Identifiants invalides');
+        const status = err.status;
+        if (status === 401) this.apiError.set('Email ou mot de passe incorrect');
+        else if (status === 404) this.apiError.set('Aucun compte trouvé avec cette adresse email');
+        else this.apiError.set('Une erreur est survenue, veuillez réessayer');
         this.isLoading.set(false);
       },
     });
