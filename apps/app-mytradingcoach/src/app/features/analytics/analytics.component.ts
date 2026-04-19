@@ -211,11 +211,12 @@ export class AnalyticsComponent implements OnInit {
 
     ctx.clearRect(0, 0, W, H);
 
-    // Compute drawdown series
+    // Compute absolute dollar drawdown from peak (always <= 0)
+    // peak starts at 0 so even an immediately-negative curve is captured
     let peak = 0;
     const drawdowns = points.map((p) => {
       if (p.cumulativePnl > peak) peak = p.cumulativePnl;
-      return peak > 0 ? -((peak - p.cumulativePnl) / peak) * 100 : 0;
+      return p.cumulativePnl - peak;
     });
 
     const minD = Math.min(...drawdowns, -1);
@@ -268,11 +269,16 @@ export class AnalyticsComponent implements OnInit {
     }
     ctx.stroke();
 
-    // Y labels
+    // Y labels (absolute dollar drawdown)
+    const fmtDD = (v: number) => {
+      if (v === 0) return '$0';
+      const abs = Math.abs(v);
+      return abs >= 1000 ? `-$${(abs / 1000).toFixed(1)}k` : `-$${abs.toFixed(0)}`;
+    };
     ctx.fillStyle = 'rgba(122,147,187,0.7)';
     ctx.font = '10px "DM Mono", monospace';
     ctx.textAlign = 'right';
-    ctx.fillText('0%', PAD.left - 6, toY(0) + 4);
-    ctx.fillText(`${minD.toFixed(1)}%`, PAD.left - 6, toY(minD) + 4);
+    ctx.fillText('$0', PAD.left - 6, toY(0) + 4);
+    ctx.fillText(fmtDD(minD), PAD.left - 6, toY(minD) + 4);
   }
 }

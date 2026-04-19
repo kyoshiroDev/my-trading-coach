@@ -84,6 +84,18 @@ export class AuthService {
     return this.currentUser()?.plan === 'PREMIUM';
   }
 
+  fetchMe() {
+    return this.http
+      .get<{ data: AuthUser }>(`${environment.apiUrl}/auth/me`)
+      .pipe(
+        tap((res) => {
+          const user = res.data;
+          localStorage.setItem('user', JSON.stringify(user));
+          this.currentUser.set(user);
+        }),
+      );
+  }
+
   refreshUser() {
     return this.refreshToken();
   }

@@ -357,10 +357,6 @@ export class DashboardComponent implements AfterViewInit {
   constructor() {
     this.tradesStore.loadTrades({ limit: '6' });
 
-    window.addEventListener('focus', () => {
-      this.userStore.refreshUser();
-    });
-
     effect(() => {
       if (!this.isLoading() && this.canDraw() && this.equityCurve().length > 0) {
         this.drawEquityCurve();
