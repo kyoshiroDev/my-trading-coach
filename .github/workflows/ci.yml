@@ -362,10 +362,7 @@ jobs:
           EOF
 
       - name: Deploy to Vercel (dev, prebuilt)
-        run: |
-          pnpm dlx vercel deploy --prebuilt \
-            --token=${{ secrets.VERCEL_TOKEN }} \
-            --yes
+        run: npx vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_LANDING_PROJECT_ID }}
