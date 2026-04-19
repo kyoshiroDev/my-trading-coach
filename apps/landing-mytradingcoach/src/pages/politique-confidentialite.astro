@@ -1,0 +1,175 @@
+---
+import Base from '../layouts/Base.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Base
+  title="Politique de confidentialité — MyTradingCoach"
+  description="Politique de confidentialité de MyTradingCoach. Comment nous collectons, utilisons et protégeons vos données personnelles conformément au RGPD."
+  canonical="https://www.mytradingcoach.app/politique-confidentialite"
+  ogUrl="https://www.mytradingcoach.app/politique-confidentialite"
+>
+  <Nav />
+
+  <main style="max-width:48rem; margin:0 auto; padding:4rem 1.5rem;">
+    <a href="/" style="display:inline-flex;align-items:center;gap:6px;color:var(--txt3);font-size:13px;text-decoration:none;margin-bottom:2rem;">
+      ← Retour à l'accueil
+    </a>
+
+    <h1 style="font-size:2rem; font-weight:800; color:var(--text); margin:0 0 0.5rem;">Politique de confidentialité</h1>
+    <p style="font-size:0.875rem; color:var(--txt3); margin:0 0 2rem;">
+      Dernière mise à jour : Avril 2026 &nbsp;·&nbsp;
+      Responsable du traitement : Grégory Tahir (My Trading Coach) —
+      <a href="mailto:hello@mytradingcoach.app" style="color:var(--blue2);">hello@mytradingcoach.app</a>
+    </p>
+
+    <div style="color:var(--text2); line-height:1.8; font-size:1rem;">
+
+      <p>
+        MyTradingCoach s'engage à protéger la confidentialité de vos données personnelles,
+        conformément au Règlement Général sur la Protection des Données (RGPD — Règlement
+        UE 2016/679) et à la loi Informatique et Libertés.
+      </p>
+
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">1. Données collectées</h2>
+
+      <h3 style="color:var(--text); font-size:1.0625rem; font-weight:600; margin:1.5rem 0 0.5rem;">a) Données de compte</h3>
+      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+        <li>Prénom, nom</li>
+        <li>Adresse email</li>
+        <li>Mot de passe (hashé argon2, jamais stocké en clair)</li>
+        <li>Date d'inscription</li>
+      </ul>
+
+      <h3 style="color:var(--text); font-size:1.0625rem; font-weight:600; margin:1.5rem 0 0.5rem;">b) Données de trading (saisies par l'utilisateur)</h3>
+      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+        <li>Actifs tradés (BTC/USDT, EUR/USD, etc.)</li>
+        <li>Prix d'entrée et de sortie, stop loss, take profit</li>
+        <li>P&L déclaré par l'utilisateur</li>
+        <li>État émotionnel au moment du trade</li>
+        <li>Notes et observations personnelles</li>
+        <li>Session de trading, setup utilisé</li>
+      </ul>
+
+      <h3 style="color:var(--text); font-size:1.0625rem; font-weight:600; margin:1.5rem 0 0.5rem;">c) Données comportementales (générées par l'application)</h3>
+      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+        <li>Patterns identifiés dans vos propres données</li>
+        <li>Scores et métriques calculés à partir de vos saisies</li>
+        <li>Rapports hebdomadaires générés par l'IA</li>
+      </ul>
+
+      <h3 style="color:var(--text); font-size:1.0625rem; font-weight:600; margin:1.5rem 0 0.5rem;">d) Données techniques</h3>
+      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+        <li>Adresse IP (anonymisée après 30 jours)</li>
+        <li>Type de navigateur et système d'exploitation</li>
+        <li>Pages visitées et durée de visite</li>
+        <li>Cookies de session et d'authentification</li>
+      </ul>
+
+      <h3 style="color:var(--text); font-size:1.0625rem; font-weight:600; margin:1.5rem 0 0.5rem;">e) Données de facturation</h3>
+      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+        <li>Historique des abonnements via Stripe</li>
+        <li>Statut d'abonnement</li>
+        <li>Aucune donnée de carte bancaire (gérée exclusivement par Stripe PCI-DSS)</li>
+      </ul>
+
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">2. Finalités et bases légales</h2>
+      <table style="width:100%;border-collapse:collapse;font-size:0.9rem;margin:0.5rem 0 1rem;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--b);">
+            <th style="text-align:left;padding:8px 12px;color:var(--text);font-weight:600;">Finalité</th>
+            <th style="text-align:left;padding:8px 12px;color:var(--text);font-weight:600;">Base légale</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--b);"><td style="padding:8px 12px;">Fourniture du service</td><td style="padding:8px 12px;">Exécution du contrat (Art. 6.1.b RGPD)</td></tr>
+          <tr style="border-bottom:1px solid var(--b);"><td style="padding:8px 12px;">Génération des analyses IA</td><td style="padding:8px 12px;">Exécution du contrat (Art. 6.1.b RGPD)</td></tr>
+          <tr style="border-bottom:1px solid var(--b);"><td style="padding:8px 12px;">Facturation et abonnement</td><td style="padding:8px 12px;">Obligation légale (Art. 6.1.c RGPD)</td></tr>
+          <tr style="border-bottom:1px solid var(--b);"><td style="padding:8px 12px;">Amélioration du service</td><td style="padding:8px 12px;">Intérêt légitime (Art. 6.1.f RGPD)</td></tr>
+          <tr style="border-bottom:1px solid var(--b);"><td style="padding:8px 12px;">Communications marketing</td><td style="padding:8px 12px;">Consentement (Art. 6.1.a RGPD)</td></tr>
+          <tr><td style="padding:8px 12px;">Sécurité et prévention fraude</td><td style="padding:8px 12px;">Intérêt légitime (Art. 6.1.f RGPD)</td></tr>
+        </tbody>
+      </table>
+
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">3. Durée de conservation</h2>
+      <table style="width:100%;border-collapse:collapse;font-size:0.9rem;margin:0.5rem 0 1rem;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--b);">
+            <th style="text-align:left;padding:8px 12px;color:var(--text);font-weight:600;">Données</th>
+            <th style="text-align:left;padding:8px 12px;color:var(--text);font-weight:600;">Durée</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--b);"><td style="padding:8px 12px;">Compte et trades</td><td style="padding:8px 12px;">Durée de l'abonnement + 3 ans</td></tr>
+          <tr style="border-bottom:1px solid var(--b);"><td style="padding:8px 12px;">Données de facturation</td><td style="padding:8px 12px;">10 ans (obligation comptable)</td></tr>
+          <tr style="border-bottom:1px solid var(--b);"><td style="padding:8px 12px;">Logs techniques</td><td style="padding:8px 12px;">12 mois</td></tr>
+          <tr style="border-bottom:1px solid var(--b);"><td style="padding:8px 12px;">IP anonymisées</td><td style="padding:8px 12px;">30 jours</td></tr>
+          <tr><td style="padding:8px 12px;">Données marketing</td><td style="padding:8px 12px;">Jusqu'au retrait du consentement</td></tr>
+        </tbody>
+      </table>
+
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">4. Destinataires des données</h2>
+      <p>Vos données sont partagées avec les sous-traitants suivants :</p>
+      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+        <li><strong>Anthropic (USA)</strong> — traitement IA des insights. Base : clauses contractuelles types (CCT). Données transmises : trades anonymisés pour analyse.</li>
+        <li><strong>Stripe (USA)</strong> — gestion des paiements. Base : CCT. Certifié PCI-DSS.</li>
+        <li><strong>OVH (France)</strong> — hébergement API et base de données. Sous-traitant EU, RGPD compliant.</li>
+        <li><strong>Vercel (USA)</strong> — hébergement frontend. Base : CCT.</li>
+        <li><strong>Resend (USA)</strong> — envoi d'emails transactionnels. Base : CCT.</li>
+      </ul>
+      <p>Aucune vente de données à des tiers.</p>
+
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">5. Vos droits (Art. 15 à 22 RGPD)</h2>
+      <p>Vous disposez des droits suivants :</p>
+      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+        <li><strong>Droit d'accès</strong> — obtenir une copie de vos données</li>
+        <li><strong>Droit de rectification</strong> — corriger des données inexactes</li>
+        <li><strong>Droit à l'effacement</strong> — supprimer votre compte et vos données</li>
+        <li><strong>Droit à la portabilité</strong> — recevoir vos données en format CSV</li>
+        <li><strong>Droit d'opposition</strong> — vous opposer au traitement marketing</li>
+        <li><strong>Droit à la limitation</strong> — restreindre certains traitements</li>
+      </ul>
+      <p>
+        Pour exercer ces droits : <a href="mailto:hello@mytradingcoach.app" style="color:var(--blue2);">hello@mytradingcoach.app</a> — délai de réponse : 30 jours maximum.
+      </p>
+      <p>
+        Vous pouvez également introduire une réclamation auprès de la <strong>CNIL</strong> :
+        <a href="https://www.cnil.fr" target="_blank" rel="noopener" style="color:var(--blue2);">www.cnil.fr</a> — 3 Place de Fontenoy, 75007 Paris.
+      </p>
+
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">6. Cookies</h2>
+      <table style="width:100%;border-collapse:collapse;font-size:0.9rem;margin:0.5rem 0 1rem;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--b);">
+            <th style="text-align:left;padding:8px 12px;color:var(--text);font-weight:600;">Cookie</th>
+            <th style="text-align:left;padding:8px 12px;color:var(--text);font-weight:600;">Type</th>
+            <th style="text-align:left;padding:8px 12px;color:var(--text);font-weight:600;">Durée</th>
+            <th style="text-align:left;padding:8px 12px;color:var(--text);font-weight:600;">Finalité</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--b);"><td style="padding:8px 12px;">mtc_session</td><td style="padding:8px 12px;">Nécessaire</td><td style="padding:8px 12px;">Session</td><td style="padding:8px 12px;">Authentification JWT</td></tr>
+          <tr style="border-bottom:1px solid var(--b);"><td style="padding:8px 12px;">mtc_refresh</td><td style="padding:8px 12px;">Nécessaire</td><td style="padding:8px 12px;">7 jours</td><td style="padding:8px 12px;">Renouvellement token</td></tr>
+          <tr><td style="padding:8px 12px;">_ga</td><td style="padding:8px 12px;">Analytics</td><td style="padding:8px 12px;">2 ans</td><td style="padding:8px 12px;">Google Analytics (si activé)</td></tr>
+        </tbody>
+      </table>
+      <p>Cookies nécessaires : pas de consentement requis. Cookies analytics : consentement requis via bandeau.</p>
+
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">7. Sécurité</h2>
+      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+        <li>Chiffrement TLS 1.3 sur toutes les communications</li>
+        <li>Mots de passe hashés avec argon2</li>
+        <li>Tokens JWT avec expiration courte (15 minutes)</li>
+        <li>Base de données non exposée publiquement</li>
+        <li>Sauvegardes chiffrées quotidiennes</li>
+      </ul>
+
+      <p style="margin-top:3rem; font-size:0.875rem; color:var(--txt3);">
+        Dernière mise à jour : Avril 2026
+      </p>
+    </div>
+  </main>
+
+  <Footer />
+</Base>

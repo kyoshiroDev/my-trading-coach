@@ -141,6 +141,10 @@ const {
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
 </head>
 <body>
+  <div style="background:#1a1a2e;border-bottom:2px solid #f59e0b;padding:8px 20px;text-align:center;font-size:12px;color:#f59e0b;position:sticky;top:0;z-index:9999;">
+    ⚠️ MyTradingCoach est un outil de journal et d'analyse comportementale. Il ne fournit aucun conseil en investissement. Le trading comporte un risque élevé de perte en capital.
+    <a href="/disclaimer" style="color:#f59e0b;text-decoration:underline;margin-left:8px">En savoir plus →</a>
+  </div>
   <slot />
   <script>
     const obs = new IntersectionObserver(entries => {

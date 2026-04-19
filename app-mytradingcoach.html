@@ -229,7 +229,7 @@
   <div class="main-content">
     <header class="topbar">
       <span class="topbar-title" id="page-title">Dashboard</span>
-      <button class="btn-topbar" id="topbar-btn" onclick="openModal()">+ ⚡ Ajouter trade</button>
+      <button class="btn-topbar" id="topbar-btn" onclick="topbarAction()">+ ⚡ Ajouter trade</button>
     </header>
     <div class="scroll-area">
 
@@ -239,24 +239,6 @@
           <div class="greeting">
             <h1 class="greeting-title">Bonjour, Grégory 👋</h1>
             <p class="greeting-sub">Voici un résumé de tes performances</p>
-          </div>
-
-          <!-- Bannière upsell FREE → Premium -->
-          <div class="premium-banner">
-            <div class="premium-banner-left">
-              <span class="premium-banner-icon">⚡</span>
-              <div>
-                <div class="premium-banner-title">Passe à Premium</div>
-                <div class="premium-banner-sub">Analytics avancés, IA Insights, Chat coach, Weekly Debrief — tout en Premium</div>
-              </div>
-            </div>
-            <div class="premium-banner-right">
-              <div class="premium-banner-price">
-                <div class="premium-banner-amount">39€<span class="premium-banner-period">/mois</span></div>
-                <div class="premium-banner-trial">7 jours gratuits · sans CB</div>
-              </div>
-              <button class="premium-banner-btn" onclick="return false">Essayer gratuitement</button>
-            </div>
           </div>
 
           <div class="stats-row">
@@ -509,16 +491,9 @@
             </div>
           </div>
 
-          <!-- ── Séparateur PREMIUM ── -->
-          <div class="premium-separator">
-            <div class="separator-line"></div>
-            <span class="separator-label">ANALYTICS AVANCÉS — PREMIUM</span>
-            <div class="separator-line"></div>
-          </div>
-
-          <!-- ── SECTION 2 : Equity Curve + Drawdown (verrouillé FREE) ── -->
-          <div class="locked-feature">
-            <div class="locked-preview" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <!-- ── SECTION 2 : Equity Curve + Drawdown ── -->
+          <div style="margin-bottom:16px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
               <div class="card" style="border:none">
                 <div class="card-header"><div class="card-title">Equity Curve</div></div>
                 <svg width="100%" height="120" viewBox="0 0 500 120" preserveAspectRatio="none">
@@ -536,17 +511,11 @@
                 </svg>
               </div>
             </div>
-            <div class="locked-overlay">
-              <span class="locked-icon">🔒</span>
-              <div class="locked-title">Equity Curve &amp; Drawdown</div>
-              <div class="locked-desc">Visualise l'évolution de ton capital et tes périodes de drawdown au fil du temps.</div>
-              <button class="locked-cta" onclick="showPage('register')">Essayer 7 jours gratuit →</button>
-            </div>
           </div>
 
-          <!-- ── SECTION 3 : Heatmap (verrouillée FREE) ── -->
-          <div class="locked-feature">
-            <div class="locked-preview heatmap-wrapper">
+          <!-- ── SECTION 3 : Heatmap ── -->
+          <div style="margin-bottom:16px;border:1px solid var(--border);border-radius:12px;padding:20px">
+            <div class="heatmap-wrapper">
               <div style="font-family:var(--font-display);font-size:14px;font-weight:600;margin-bottom:12px;color:var(--text)">Heatmap horaire — Win Rate par heure</div>
               <table style="width:100%;border-collapse:separate;border-spacing:3px">
                 <thead><tr>
@@ -558,43 +527,69 @@
                 </tbody>
               </table>
             </div>
-            <div class="locked-overlay">
-              <span class="locked-icon">🔒</span>
-              <div class="locked-title">Heatmap de performance horaire</div>
-              <div class="locked-desc">Tu trades mieux le matin — débloque pour voir exactement quand tu performes et quand tu perds.</div>
-              <button class="locked-cta" onclick="showPage('register')">Essayer 7 jours gratuit →</button>
-            </div>
           </div>
 
-          <!-- ── SECTION 4 : Top Actifs + Setup (verrouillés FREE) ── -->
-          <div class="locked-feature" style="margin-bottom:0">
-            <div class="locked-preview" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-              <div>
-                <div style="font-family:var(--font-display);font-size:14px;font-weight:600;margin-bottom:12px;color:var(--text)">Top actifs</div>
-                <div style="display:flex;flex-direction:column;gap:8px">
-                  <div style="height:10px;background:var(--bg-3);border-radius:4px;width:90%"></div>
-                  <div style="height:10px;background:var(--bg-3);border-radius:4px;width:80%"></div>
-                  <div style="height:10px;background:var(--bg-3);border-radius:4px;width:70%"></div>
-                  <div style="height:10px;background:var(--bg-3);border-radius:4px;width:85%"></div>
-                  <div style="height:10px;background:var(--bg-3);border-radius:4px;width:60%"></div>
+          <!-- ── SECTION 4 : Top Actifs + Setup ── -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:0">
+            <div class="card">
+              <div class="card-header"><div class="card-title">Top actifs</div></div>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="font-size:12px;font-family:var(--font-mono);color:var(--text-2);width:80px">BTC/USDT</span>
+                  <div style="flex:1;height:8px;background:var(--bg-3);border-radius:4px;overflow:hidden"><div style="height:100%;width:82%;background:var(--green);border-radius:4px"></div></div>
+                  <span style="font-size:12px;font-family:var(--font-mono);color:var(--green);width:40px;text-align:right">82%</span>
                 </div>
-              </div>
-              <div>
-                <div style="font-family:var(--font-display);font-size:14px;font-weight:600;margin-bottom:12px;color:var(--text)">Performance par setup</div>
-                <div style="display:flex;flex-direction:column;gap:8px">
-                  <div style="height:10px;background:var(--bg-3);border-radius:4px;width:95%"></div>
-                  <div style="height:10px;background:var(--bg-3);border-radius:4px;width:75%"></div>
-                  <div style="height:10px;background:var(--bg-3);border-radius:4px;width:85%"></div>
-                  <div style="height:10px;background:var(--bg-3);border-radius:4px;width:65%"></div>
-                  <div style="height:10px;background:var(--bg-3);border-radius:4px;width:70%"></div>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="font-size:12px;font-family:var(--font-mono);color:var(--text-2);width:80px">EUR/USD</span>
+                  <div style="flex:1;height:8px;background:var(--bg-3);border-radius:4px;overflow:hidden"><div style="height:100%;width:74%;background:var(--green);border-radius:4px"></div></div>
+                  <span style="font-size:12px;font-family:var(--font-mono);color:var(--green);width:40px;text-align:right">74%</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="font-size:12px;font-family:var(--font-mono);color:var(--text-2);width:80px">ETH/USDT</span>
+                  <div style="flex:1;height:8px;background:var(--bg-3);border-radius:4px;overflow:hidden"><div style="height:100%;width:68%;background:var(--blue-bright);border-radius:4px"></div></div>
+                  <span style="font-size:12px;font-family:var(--font-mono);color:var(--blue-bright);width:40px;text-align:right">68%</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="font-size:12px;font-family:var(--font-mono);color:var(--text-2);width:80px">GBP/JPY</span>
+                  <div style="flex:1;height:8px;background:var(--bg-3);border-radius:4px;overflow:hidden"><div style="height:100%;width:55%;background:var(--yellow);border-radius:4px"></div></div>
+                  <span style="font-size:12px;font-family:var(--font-mono);color:var(--yellow);width:40px;text-align:right">55%</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="font-size:12px;font-family:var(--font-mono);color:var(--text-2);width:80px">XAU/USD</span>
+                  <div style="flex:1;height:8px;background:var(--bg-3);border-radius:4px;overflow:hidden"><div style="height:100%;width:42%;background:var(--red);border-radius:4px"></div></div>
+                  <span style="font-size:12px;font-family:var(--font-mono);color:var(--red);width:40px;text-align:right">42%</span>
                 </div>
               </div>
             </div>
-            <div class="locked-overlay">
-              <span class="locked-icon">🔒</span>
-              <div class="locked-title">Top Actifs &amp; Performance par Setup</div>
-              <div class="locked-desc">Découvre tes actifs les plus profitables et tes setups gagnants pour affiner ta stratégie.</div>
-              <button class="locked-cta" onclick="showPage('register')">Essayer 7 jours gratuit →</button>
+            <div class="card">
+              <div class="card-header"><div class="card-title">Performance par setup</div></div>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="font-size:12px;font-family:var(--font-mono);color:var(--text-2);width:80px">Breakout</span>
+                  <div style="flex:1;height:8px;background:var(--bg-3);border-radius:4px;overflow:hidden"><div style="height:100%;width:74%;background:var(--green);border-radius:4px"></div></div>
+                  <span style="font-size:12px;font-family:var(--font-mono);color:var(--green);width:40px;text-align:right">74%</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="font-size:12px;font-family:var(--font-mono);color:var(--text-2);width:80px">Pullback</span>
+                  <div style="flex:1;height:8px;background:var(--bg-3);border-radius:4px;overflow:hidden"><div style="height:100%;width:80%;background:var(--blue-bright);border-radius:4px"></div></div>
+                  <span style="font-size:12px;font-family:var(--font-mono);color:var(--blue-bright);width:40px;text-align:right">80%</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="font-size:12px;font-family:var(--font-mono);color:var(--text-2);width:80px">Reversal</span>
+                  <div style="flex:1;height:8px;background:var(--bg-3);border-radius:4px;overflow:hidden"><div style="height:100%;width:65%;background:var(--yellow);border-radius:4px"></div></div>
+                  <span style="font-size:12px;font-family:var(--font-mono);color:var(--yellow);width:40px;text-align:right">65%</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="font-size:12px;font-family:var(--font-mono);color:var(--text-2);width:80px">Scalping</span>
+                  <div style="flex:1;height:8px;background:var(--bg-3);border-radius:4px;overflow:hidden"><div style="height:100%;width:48%;background:var(--yellow);border-radius:4px"></div></div>
+                  <span style="font-size:12px;font-family:var(--font-mono);color:var(--yellow);width:40px;text-align:right">48%</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="font-size:12px;font-family:var(--font-mono);color:var(--text-2);width:80px">Range</span>
+                  <div style="flex:1;height:8px;background:var(--bg-3);border-radius:4px;overflow:hidden"><div style="height:100%;width:38%;background:var(--red);border-radius:4px"></div></div>
+                  <span style="font-size:12px;font-family:var(--font-mono);color:var(--red);width:40px;text-align:right">38%</span>
+                </div>
+              </div>
             </div>
           </div>
         </div><!-- end .content -->
@@ -934,12 +929,15 @@
 </div>
 
 <script>
+var currentView = 'dashboard';
+
 function showPage(p){
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   const target = document.getElementById('page-'+p);
   if(target) target.classList.add('active');
 }
 function showView(v,btn){
+  currentView = v;
   document.querySelectorAll('.view').forEach(el=>{
     el.classList.remove('active');
     el.style.display='none';
@@ -957,6 +955,19 @@ function showView(v,btn){
   if(ti) ti.textContent=t[v]||v;
   const tb=document.getElementById('topbar-btn');
   if(tb){ tb.textContent=btn_t[v]||''; tb.style.display=btn_t[v]?'flex':'none'; }
+}
+function topbarAction(){
+  if(currentView==='ai') analyzeNow();
+  else if(currentView==='debrief') generateDebrief();
+  else openModal();
+}
+function analyzeNow(){
+  // Appel API POST /api/ai/insights — PREMIUM
+  alert('Analyse IA en cours…');
+}
+function generateDebrief(){
+  // Appel API POST /api/debrief/generate — PREMIUM
+  alert('Génération du débrief en cours…');
 }
 function openModal(){ document.getElementById('modal').classList.add('open'); }
 function closeModal(){ document.getElementById('modal').classList.remove('open'); }

@@ -8,9 +8,14 @@
   </div>
   <div class="footer-links">
     <a href="/mentions-legales">Mentions légales</a>
-    <a href="/confidentialite">Confidentialité</a>
+    <a href="/politique-confidentialite">Politique de confidentialité</a>
     <a href="/cgu">CGU</a>
+    <a href="/disclaimer">Avertissement financier</a>
+    <a href="https://www.mediateur-du-numerique.fr" target="_blank" rel="noopener">La Médiation du Numérique</a>
     <a href="mailto:hello@mytradingcoach.app">Contact</a>
+  </div>
+  <div class="footer-disclaimer">
+    ⚠️ MyTradingCoach est un outil de journal et d'analyse comportementale pour traders. Il ne constitue pas un conseil en investissement et ne remplace pas l'avis d'un professionnel agréé. Le trading comporte un risque élevé de perte en capital. Les performances passées ne préjugent pas des performances futures.
   </div>
   <span>Hébergé en France 🇫🇷 · Données chiffrées · Indépendant & bootstrappé</span>
 </footer>
@@ -20,12 +25,32 @@
     border-top: 1px solid var(--b);
     padding: 44px 5%;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
     gap: 18px;
     font-size: 12px;
     color: var(--txt3);
+    text-align: center;
+  }
+
+  .footer-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 18px;
+  }
+
+  .footer-disclaimer {
+    font-size: 11px;
+    color: var(--txt3);
+    max-width: 700px;
+    line-height: 1.6;
+    border-top: 1px solid var(--b);
+    padding-top: 16px;
+    width: 100%;
+    text-align: center;
   }
 
   .footer-logo {

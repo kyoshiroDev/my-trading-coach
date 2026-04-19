@@ -13,62 +13,74 @@ import Footer from '../components/Footer.astro';
   <Nav />
 
   <main style="max-width:48rem; margin:0 auto; padding:4rem 1.5rem;">
-    <h1 style="font-size:2rem; font-weight:800; color:var(--text); margin:0 0 2rem;">Mentions légales</h1>
+    <a href="/" style="display:inline-flex;align-items:center;gap:6px;color:var(--txt3);font-size:13px;text-decoration:none;margin-bottom:2rem;">
+      ← Retour à l'accueil
+    </a>
+
+    <h1 style="font-size:2rem; font-weight:800; color:var(--text); margin:0 0 0.5rem;">Mentions légales</h1>
+    <p style="font-size:0.875rem; color:var(--txt3); margin:0 0 2rem;">
+      Conformément aux dispositions de la loi n°2004-575 du 21 juin 2004 pour la Confiance en l'Économie Numérique.
+    </p>
 
     <div style="color:var(--text2); line-height:1.8; font-size:1rem;">
 
       <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">1. Éditeur du site</h2>
       <p>
-        Le site <strong>mytradingcoach.app</strong> est édité par Gregory Tahir, entrepreneur individuel,
-        domicilié en France.
-      </p>
-      <p>
-        Contact : <a href="mailto:hello@mytradingcoach.app" style="color:var(--blue2);">hello@mytradingcoach.app</a>
+        <strong>Grégory Tahir</strong><br />
+        Entrepreneur individuel<br />
+        Exerçant sous le nom commercial : My Trading Coach<br />
+        SIRET : 512 926 460 00027<br />
+        Code NAF : 6201Z — Programmation informatique<br />
+        Siège social : 26 rue des Tiphoines, 91240 Saint-Michel-sur-Orge<br />
+        Email : <a href="mailto:hello@mytradingcoach.app" style="color:var(--blue2);">hello@mytradingcoach.app</a><br />
+        Non assujetti à la TVA — Art. 293B du CGI<br />
+        Directeur de la publication : Grégory Tahir
       </p>
 
       <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">2. Hébergement</h2>
-      <p>
-        Le site est hébergé par <strong>Vercel Inc.</strong> pour la partie front-end (landing page et application web).
-        Les données utilisateurs sont stockées sur des serveurs <strong>OVH</strong> situés en France.
-      </p>
+      <p><strong>API et base de données :</strong></p>
       <ul style="padding-left:1.5rem; margin:0.5rem 0;">
-        <li>Vercel Inc., 340 Pine Street, Suite 701, San Francisco, CA 94104, USA</li>
-        <li>OVH SAS, 2 rue Kellermann, 59100 Roubaix, France</li>
+        <li>OVH SAS — 2 rue Kellermann, 59100 Roubaix, France</li>
+        <li>Tél. : +33 9 72 10 10 07 — <a href="https://www.ovhcloud.com" target="_blank" rel="noopener" style="color:var(--blue2);">www.ovhcloud.com</a></li>
+      </ul>
+      <p><strong>Frontend / Landing :</strong></p>
+      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+        <li>Vercel Inc. — 340 Pine Street, Suite 701, San Francisco, CA 94104, USA</li>
+        <li><a href="https://www.vercel.com" target="_blank" rel="noopener" style="color:var(--blue2);">www.vercel.com</a></li>
       </ul>
 
       <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">3. Propriété intellectuelle</h2>
       <p>
-        L'ensemble des contenus présents sur le site (textes, images, logos, icônes, code source)
-        est protégé par le droit d'auteur et appartient à MyTradingCoach ou à ses ayants droit.
-        Toute reproduction, distribution ou exploitation sans autorisation écrite préalable est strictement interdite.
+        L'ensemble du contenu du site mytradingcoach.app (textes, images, graphiques, logo,
+        icônes, sons, logiciels) est la propriété exclusive de Grégory Tahir (My Trading Coach)
+        ou de ses partenaires. Toute reproduction, distribution, modification, adaptation,
+        retransmission ou publication de ces éléments est strictement interdite sans l'accord
+        exprès de Grégory Tahir (My Trading Coach).
       </p>
 
-      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">4. Responsabilité</h2>
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">4. Limitation de responsabilité</h2>
       <p>
-        MyTradingCoach est un outil de journal et d'analyse de trading. Les informations et analyses
-        fournies par la plateforme, notamment via l'intelligence artificielle, ont une vocation
-        éducative et ne constituent en aucun cas des conseils en investissement au sens de la
-        réglementation financière en vigueur.
-      </p>
-      <p>
-        L'utilisateur est seul responsable de ses décisions de trading. MyTradingCoach ne saurait
-        être tenu responsable des pertes financières résultant de l'utilisation de la plateforme.
+        Grégory Tahir (My Trading Coach) ne saurait être tenu responsable des dommages directs
+        ou indirects causés au matériel de l'utilisateur lors de l'accès au site mytradingcoach.app,
+        résultant notamment de l'utilisation d'un matériel non adapté, de bugs ou d'incompatibilités.
       </p>
 
-      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">5. Liens hypertextes</h2>
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">5. Avertissement financier</h2>
       <p>
-        Le site peut contenir des liens vers des sites tiers. MyTradingCoach n'est pas responsable
-        du contenu de ces sites et n'exerce aucun contrôle sur leur nature ou leur contenu.
+        MyTradingCoach n'est pas un prestataire de services d'investissement (PSI) au sens de la
+        directive MiFID II. L'application ne fournit pas de conseil en investissement, d'analyse
+        financière, ni de gestion de portefeuille.
+        Voir notre <a href="/disclaimer" style="color:var(--blue2);">Avertissement financier complet</a>.
       </p>
 
-      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">6. Droit applicable</h2>
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">6. Droit applicable et juridiction</h2>
       <p>
-        Les présentes mentions légales sont soumises au droit français. Tout litige relatif
-        à l'utilisation du site sera soumis à la juridiction des tribunaux compétents de France.
+        Les présentes mentions légales sont soumises au droit français. En cas de litige,
+        les tribunaux français seront seuls compétents.
       </p>
 
-      <p style="margin-top:3rem; font-size:0.875rem; color:var(--text3);">
-        Dernière mise à jour : avril 2026
+      <p style="margin-top:3rem; font-size:0.875rem; color:var(--txt3);">
+        Dernière mise à jour : Avril 2026
       </p>
     </div>
   </main>

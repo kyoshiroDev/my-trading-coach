@@ -1,0 +1,102 @@
+---
+import Base from '../layouts/Base.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Base
+  title="Avertissement financier — MyTradingCoach"
+  description="Avertissement important : MyTradingCoach est un outil de journal et d'analyse comportementale. Il ne fournit aucun conseil en investissement financier."
+  canonical="https://www.mytradingcoach.app/disclaimer"
+  ogUrl="https://www.mytradingcoach.app/disclaimer"
+>
+  <Nav />
+
+  <main style="max-width:48rem; margin:0 auto; padding:4rem 1.5rem;">
+    <a href="/" style="display:inline-flex;align-items:center;gap:6px;color:var(--txt3);font-size:13px;text-decoration:none;margin-bottom:2rem;">
+      ← Retour à l'accueil
+    </a>
+
+    <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:20px 24px;margin-bottom:2rem;">
+      <p style="color:#f59e0b;font-weight:700;font-size:1rem;margin:0 0 6px;">⚠️ AVERTISSEMENT IMPORTANT — À LIRE AVANT TOUTE UTILISATION</p>
+      <p style="color:var(--text2);font-size:0.9rem;margin:0;">MyTradingCoach est une application de journal de trading et d'analyse comportementale destinée exclusivement à des fins d'auto-documentation et d'amélioration de la discipline personnelle.</p>
+    </div>
+
+    <h1 style="font-size:2rem; font-weight:800; color:var(--text); margin:0 0 2rem;">Avertissement financier</h1>
+
+    <div style="color:var(--text2); line-height:1.8; font-size:1rem;">
+
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">1. Absence de conseil en investissement</h2>
+      <p>
+        MyTradingCoach n'est pas un conseiller en investissement financier (CIF), ne dispose
+        d'aucun agrément AMF, et n'est soumis à aucune réglementation financière au titre de
+        la directive MiFID II ou de toute autre réglementation équivalente.
+      </p>
+      <p>
+        Les analyses, insights et rapports générés par l'intelligence artificielle de
+        MyTradingCoach sont basés <strong>exclusivement sur les données que vous avez
+        vous-même enregistrées</strong>. Ils ne constituent en aucun cas :
+      </p>
+      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+        <li>Des conseils en investissement</li>
+        <li>Des recommandations d'achat ou de vente de valeurs mobilières</li>
+        <li>Des analyses financières au sens réglementaire</li>
+        <li>Des prévisions de performance future</li>
+      </ul>
+
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">2. Risque de perte en capital</h2>
+      <p>
+        Le trading sur les marchés financiers (actions, forex, crypto-actifs, matières premières,
+        CFD, etc.) comporte un risque élevé de perte totale du capital investi.
+        <strong>Les performances passées ne préjugent pas des performances futures.</strong>
+        Vous pouvez perdre tout ou partie du capital investi.
+      </p>
+
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">3. Usage éducatif et comportemental uniquement</h2>
+      <p>MyTradingCoach est un outil de productivité personnelle permettant de :</p>
+      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+        <li>Journaliser vos propres activités de trading</li>
+        <li>Analyser vos comportements et patterns personnels</li>
+        <li>Améliorer votre discipline et votre gestion émotionnelle</li>
+        <li>Visualiser vos propres données historiques</li>
+      </ul>
+      <p>Il ne remplace en aucun cas l'avis d'un professionnel agréé.</p>
+
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">4. Responsabilité utilisateur</h2>
+      <p>
+        L'utilisateur est seul responsable de ses décisions de trading et d'investissement.
+        MyTradingCoach (Grégory Tahir, entrepreneur individuel) ne saurait être tenu responsable
+        des pertes financières résultant d'une utilisation de l'application, directement ou indirectement.
+      </p>
+
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">5. Crypto-actifs</h2>
+      <p>
+        Les crypto-actifs ne sont pas des instruments financiers au sens de la directive MiFID II.
+        Leur acquisition et leur détention comportent des risques spécifiques non couverts par
+        les mécanismes de protection des investisseurs.
+      </p>
+
+      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">6. Données illustratives</h2>
+      <p>
+        Les captures d'écran, exemples de trades et données chiffrées visibles sur le site
+        mytradingcoach.app sont présentées <strong>à titre illustratif uniquement</strong>.
+        Elles ne constituent pas une promesse de résultats ni une projection de gains.
+      </p>
+
+      <div style="background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:20px 24px;margin-top:2.5rem;">
+        <p style="color:var(--text);font-weight:600;margin:0 0 8px;">En résumé</p>
+        <p style="color:var(--text2);font-size:0.9rem;margin:0;">
+          MyTradingCoach vous aide à mieux vous connaître en tant que trader — pas à trader mieux.
+          La différence est essentielle. Utilisez cet outil pour documenter, analyser et améliorer
+          votre discipline. Les décisions de trading restent entièrement sous votre responsabilité.
+        </p>
+      </div>
+
+      <p style="margin-top:3rem; font-size:0.875rem; color:var(--txt3);">
+        Dernière mise à jour : Avril 2026
+      </p>
+    </div>
+  </main>
+
+  <Footer />
+</Base>
