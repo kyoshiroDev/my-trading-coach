@@ -356,12 +356,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build Astro landing (dev)
+        run: pnpm nx build landing-mytradingcoach
+
       - name: Deploy to Vercel (dev)
         run: |
           pnpm dlx vercel \
             --token=${{ secrets.VERCEL_TOKEN }} \
             --yes \
-            --local-config apps/landing-mytradingcoach/vercel.json
+            --cwd apps/landing-mytradingcoach/dist \
+            --local-config ${{ github.workspace }}/apps/landing-mytradingcoach/vercel.json
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_LANDING_PROJECT_ID }}

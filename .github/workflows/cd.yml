@@ -110,7 +110,8 @@ jobs:
           pnpm dlx vercel --prod \
             --token=${{ secrets.VERCEL_TOKEN }} \
             --yes \
-            --local-config apps/landing-mytradingcoach/vercel.json
+            --cwd apps/landing-mytradingcoach/dist \
+            --local-config ${{ github.workspace }}/apps/landing-mytradingcoach/vercel.json
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_LANDING_PROJECT_ID }}
