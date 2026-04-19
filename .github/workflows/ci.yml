@@ -331,37 +331,38 @@ jobs:
 
   deploy-landing-dev:
     name: Deploy Landing dev to Vercel
-    needs: [lint, build, test]
+    needs: [ lint, build, test ]
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: development
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
+      - name: Download Astro dist artifact
+        uses: actions/download-artifact@v4
         with:
-          version: 10
+          name: astro-dist
+          path: apps/landing-mytradingcoach/dist/
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Deploy to Vercel (dev)
+      - name: Prepare Vercel output (prebuilt)
         run: |
-          pnpm dlx vercel \
-            --token=${{ secrets.VERCEL_TOKEN }} \
-            --yes \
-            --local-config apps/landing-mytradingcoach/vercel.json
+          mkdir -p .vercel/output/static
+          cp -r apps/landing-mytradingcoach/dist/* .vercel/output/static/
+          cat > .vercel/output/config.json << 'EOF'
+          {
+            "version": 3,
+            "routes": [
+              {
+                "src": "/_astro/(.*)",
+                "headers": { "Cache-Control": "public, max-age=31536000, immutable" },
+                "continue": true
+              }
+            ]
+          }
+          EOF
+
+      - name: Deploy to Vercel (dev, prebuilt)
+        run: npx vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_LANDING_PROJECT_ID }}

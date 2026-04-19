@@ -105,12 +105,31 @@ jobs:
       - name: Build Astro landing
         run: pnpm nx build landing-mytradingcoach
 
-      - name: Deploy to Vercel
+      - name: Prepare Vercel output (prebuilt)
         run: |
-          pnpm dlx vercel --prod \
-            --token=${{ secrets.VERCEL_TOKEN }} \
-            --yes \
-            --cwd apps/landing-mytradingcoach
+          mkdir -p .vercel/output/static
+          cp -r apps/landing-mytradingcoach/dist/* .vercel/output/static/
+          cat > .vercel/output/config.json << 'EOF'
+          {
+            "version": 3,
+            "routes": [
+              {
+                "src": "/_astro/(.*)",
+                "headers": { "Cache-Control": "public, max-age=31536000, immutable" },
+                "continue": true
+              },
+              {
+                "src": "/(.*)",
+                "has": [{ "type": "host", "value": "mytradingcoach.app" }],
+                "status": 308,
+                "headers": { "Location": "https://www.mytradingcoach.app/$1" }
+              }
+            ]
+          }
+          EOF
+
+      - name: Deploy to Vercel (prebuilt)
+        run: npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_LANDING_PROJECT_ID }}
