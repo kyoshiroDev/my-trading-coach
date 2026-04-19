@@ -24,7 +24,7 @@
 
 *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
 html { scroll-behavior: smooth; overflow-x: hidden; max-width: 100%; }
-body { background:var(--bg); color:var(--txt); font-family:var(--body); overflow-x:hidden; max-width:100%; -webkit-font-smoothing:antialiased; padding-top:90px; }
+body { background:var(--bg); color:var(--txt); font-family:var(--body); overflow-x:hidden; max-width:100%; -webkit-font-smoothing:antialiased; }
 ::-webkit-scrollbar { width:3px; }
 ::-webkit-scrollbar-thumb { background:var(--blue); border-radius:2px; }
 
