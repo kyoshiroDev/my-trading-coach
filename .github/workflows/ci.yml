@@ -331,33 +331,18 @@ jobs:
 
   deploy-landing-dev:
     name: Deploy Landing dev to Vercel
-    needs: [lint, build, test]
+    needs: [ lint, build, test ]
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: development
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
+      - name: Download Astro dist artifact
+        uses: actions/download-artifact@v4
         with:
-          version: 10
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build Astro landing (dev)
-        run: pnpm nx build landing-mytradingcoach
+          name: astro-dist
+          path: apps/landing-mytradingcoach/dist/
 
       - name: Prepare Vercel output (prebuilt)
         run: |
