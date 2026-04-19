@@ -68,7 +68,7 @@
 <style>
   .nav-bar {
     position: fixed;
-    top: 0; left: 0; right: 0;
+    top: 36px; left: 0; right: 0;
     z-index: 200;
     height: 60px;
     padding: 0 5%;
@@ -131,6 +131,7 @@
 
   /* ── Mobile ── */
   @media (max-width: 767px) {
+    .nav-bar { top: 54px; } /* disclaimer wraps to ~54px on mobile */
 
     /* État fermé — caché */
     .nav-links {

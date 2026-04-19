@@ -24,7 +24,7 @@
 
 *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
 html { scroll-behavior: smooth; overflow-x: hidden; max-width: 100%; }
-body { background:var(--bg); color:var(--txt); font-family:var(--body); overflow-x:hidden; max-width:100%; -webkit-font-smoothing:antialiased; }
+body { background:var(--bg); color:var(--txt); font-family:var(--body); overflow-x:hidden; max-width:100%; -webkit-font-smoothing:antialiased; padding-top:96px; }
 ::-webkit-scrollbar { width:3px; }
 ::-webkit-scrollbar-thumb { background:var(--blue); border-radius:2px; }
 
@@ -57,6 +57,8 @@ h2 em { font-style:italic; font-family:'DM Sans',sans-serif; font-weight:300; co
 @keyframes rpulse { 0%,100%{opacity:1;transform:translate(-50%,-50%) scale(1)} 50%{opacity:.5;transform:translate(-50%,-50%) scale(1.04)} }
 
 @media (max-width: 767px) {
+  body { padding-top: 114px; } /* disclaimer (~54px mobile) + nav (60px) */
+
   section {
     padding-left: 16px;
     padding-right: 16px;
