@@ -286,17 +286,12 @@ jobs:
 
   deploy-angular-dev:
     name: Deploy Angular dev to Vercel
-    needs: [ lint, build, test ]
+    needs: [lint, build, test]
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: development
-
     steps:
       - uses: actions/checkout@v6
-
-      - uses: pnpm/action-setup@v6
-        with:
-          version: 10
 
       - uses: pnpm/action-setup@v6
         with:
@@ -307,18 +302,25 @@ jobs:
           node-version: 24
           cache: pnpm
 
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Vercel CLI
-        run: pnpm add -g vercel
+      - name: Build Angular (dev)
+        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=development
+        env:
+          API_URL: ${{ secrets.DEV_API_URL }}
 
-      - name: Deploy Angular
+      - name: Deploy to Vercel (dev)
         run: |
-          vercel deploy \
-            --prod \
-            --yes \
+          pnpm dlx vercel \
             --token=${{ secrets.VERCEL_TOKEN }} \
+            --yes \
             --local-config apps/app-mytradingcoach/vercel.json
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -330,41 +332,34 @@ jobs:
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: development
-
     steps:
-      - uses: pnpm/action-setup@v6
-        with:
-          version: 10
+      - uses: actions/checkout@v6
 
-      - name: Download Astro dist
+      - name: Download Astro dist artifact
         uses: actions/download-artifact@v8
         with:
           name: astro-dist
-          path: dist
+          path: apps/landing-mytradingcoach/dist/
 
-      - name: Prepare Vercel output
+      - name: Prepare Vercel output (prebuilt)
         run: |
           mkdir -p .vercel/output/static
-          cp -r dist/* .vercel/output/static/
-
-          # IMPORTANT : root index
-          cp .vercel/output/static/index.html .vercel/output/index.html
-
+          cp -r apps/landing-mytradingcoach/dist/* .vercel/output/static/
           cat > .vercel/output/config.json << 'EOF'
           {
             "version": 3,
             "routes": [
-              { "handle": "filesystem" },
-              { "src": "/(.*)", "dest": "/$1" }
+              {
+                "src": "/_astro/(.*)",
+                "headers": { "Cache-Control": "public, max-age=31536000, immutable" },
+                "continue": true
+              }
             ]
           }
           EOF
 
-      - name: Install Vercel CLI
-        run: pnpm add -g vercel
-
-      - name: Deploy Landing (prebuilt)
-        run: vercel deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy to Vercel (dev, prebuilt)
+        run: npx vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_LANDING_PROJECT_ID }}

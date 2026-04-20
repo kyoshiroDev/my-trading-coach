@@ -48,7 +48,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version-file: ".nvmrc"
+          node-version: 24
           cache: pnpm
 
       - name: Cache pnpm store
@@ -90,7 +90,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version-file: ".nvmrc"
+          node-version: 24
           cache: pnpm
 
       - name: Cache pnpm store
@@ -129,7 +129,7 @@ jobs:
           EOF
 
       - name: Deploy to Vercel (prebuilt)
-        run: pnpm dlx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
+        run: npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_LANDING_PROJECT_ID }}
