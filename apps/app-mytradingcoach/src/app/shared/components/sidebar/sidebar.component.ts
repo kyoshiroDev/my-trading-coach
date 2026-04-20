@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject } from '@angular/core';
 import { RouterModule, RouterLink, RouterLinkActive } from '@angular/router';
 import {
   LucideAngularModule,
@@ -104,6 +104,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 export class SidebarComponent {
   protected readonly userStore = inject(UserStore);
   private readonly auth = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly LayoutDashboardIcon = LayoutDashboard;
   protected readonly BookOpenIcon = BookOpen;
@@ -113,6 +114,15 @@ export class SidebarComponent {
   protected readonly TrophyIcon = Trophy;
   protected readonly SettingsIcon = Settings;
   protected readonly LogOutIcon = LogOut;
+
+  constructor() {
+    const onFocus = () => {
+      if (!this.auth.isAuthenticated()) return;
+      this.auth.fetchMe().subscribe({ error: () => { /* silently ignore */ } });
+    };
+    window.addEventListener('focus', onFocus);
+    this.destroyRef.onDestroy(() => window.removeEventListener('focus', onFocus));
+  }
 
   logout() {
     this.auth.logout();
