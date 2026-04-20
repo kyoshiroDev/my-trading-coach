@@ -1,0 +1,36 @@
+{
+  "extends": ["config:recommended"],
+
+  "schedule": ["before 6am"],
+
+  "labels": ["dependencies"],
+
+  "rangeStrategy": "bump",
+
+  "node": {
+    "supportPolicy": ["lts"]
+  },
+
+  "packageRules": [
+    {
+      "matchManagers": ["npm"],
+      "groupName": "all npm dependencies",
+      "groupSlug": "npm-all"
+    },
+    {
+      "matchDatasources": ["node-version"],
+      "groupName": "node.js",
+      "automerge": true
+    },
+    {
+      "matchPackageNames": ["pnpm"],
+      "groupName": "pnpm",
+      "automerge": true
+    }
+  ],
+
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": true
+  }
+}
