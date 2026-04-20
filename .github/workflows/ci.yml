@@ -93,19 +93,16 @@ jobs:
 
       - run: pnpm install --frozen-lockfile --prefer-offline
 
-      # 🔥 Angular (safe affected)
-      - name: Build Angular
+      - name: Build Angular (safe)
         run: |
           pnpm nx affected --target=build --base=origin/main --head=HEAD \
           || pnpm nx build app-mytradingcoach --configuration=production
 
-      # 🔥 Astro (safe affected)
-      - name: Build Astro
+      - name: Build Astro (safe)
         run: |
           pnpm nx affected --target=build --base=origin/main --head=HEAD \
           || pnpm nx build landing-mytradingcoach
 
-      # 🔥 Toujours upload (jamais de crash)
       - name: Upload Angular dist
         uses: actions/upload-artifact@v7
         with:
@@ -148,12 +145,20 @@ jobs:
 
       - run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: Test Nx (safe)
+      # ⚡ rapide
+      - name: Tests affected
         run: |
           pnpm nx affected --target=test --base=origin/main --head=HEAD --parallel \
-          || pnpm nx run-many --target=test --all
+          || true
 
-  # ✅ VPS CONSERVÉ
+      # 🔒 sécurisé (TOUJOURS exécuté)
+      - name: Tests Angular
+        run: pnpm nx test app-mytradingcoach
+
+      - name: Tests API
+        run: pnpm nx test api-mytradingcoach
+
+  # 🔥 VPS (inchangé)
   deploy-api-dev:
     name: Deploy API dev to VPS
     needs: [lint, build, test]
