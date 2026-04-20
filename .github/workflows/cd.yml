@@ -6,16 +6,10 @@ on:
     types: [completed]
     branches: [main]
 
-env:
-  NX_NO_CLOUD: true
-
 jobs:
-  # ── Deploy API → OVH VPS (Docker) ────────────────────────────────────────
   deploy-api:
-    name: Deploy API to VPS
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    environment: production
 
     steps:
       - name: Deploy via SSH
@@ -27,109 +21,54 @@ jobs:
           script: |
             cd /opt/apps/mytradingcoach/prod
             git pull origin main
-            docker compose --env-file .env.production build api
+            docker compose --env-file .env.production up -d --build api
             docker compose --env-file .env.production run --rm api sh -c "npx prisma migrate deploy"
-            docker compose --env-file .env.dev up -d --build --force-recreate api
-            echo "API prod deployment complete at $(date)"
 
-  # ── Deploy Angular → Vercel ───────────────────────────────────────────────
   deploy-angular:
-    name: Deploy Angular to Vercel
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    environment: production
 
     steps:
-      - uses: actions/checkout@v6
-
-      - uses: pnpm/action-setup@v6
+      - uses: actions/download-artifact@v8
         with:
-          version: 10
+          name: angular-dist
+          path: dist
 
-      - uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
-          cache: pnpm
+      - run: npm install -g vercel
 
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build Angular
-        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=production
-
-      - name: Deploy to Vercel
-        run: |
-          pnpm dlx vercel --prod \
-            --token=${{ secrets.VERCEL_TOKEN }} \
-            --yes \
-            --cwd dist/apps/app-mytradingcoach/browser \
-            --local-config ${{ github.workspace }}/apps/app-mytradingcoach/vercel.json
+      - run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_APP_PROJECT_ID }}
 
-  # ── Deploy Astro Landing → Vercel ─────────────────────────────────────────
   deploy-landing:
-    name: Deploy Landing to Vercel
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    environment: production
 
     steps:
-      - uses: actions/checkout@v6
-
-      - uses: pnpm/action-setup@v6
+      - uses: actions/download-artifact@v8
         with:
-          version: 10
+          name: astro-dist
+          path: dist
 
-      - uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
-          cache: pnpm
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build Astro landing
-        run: pnpm nx build landing-mytradingcoach
-
-      - name: Prepare Vercel output (prebuilt)
-        run: |
+      - run: |
           mkdir -p .vercel/output/static
-          cp -r apps/landing-mytradingcoach/dist/* .vercel/output/static/
+          cp -r dist/* .vercel/output/static/
+          cp .vercel/output/static/index.html .vercel/output/index.html
+
           cat > .vercel/output/config.json << 'EOF'
           {
             "version": 3,
             "routes": [
-              {
-                "src": "/_astro/(.*)",
-                "headers": { "Cache-Control": "public, max-age=31536000, immutable" },
-                "continue": true
-              },
-              {
-                "src": "/(.*)",
-                "has": [{ "type": "host", "value": "mytradingcoach.app" }],
-                "status": 308,
-                "headers": { "Location": "https://www.mytradingcoach.app/$1" }
-              }
+              { "handle": "filesystem" },
+              { "src": "/(.*)", "dest": "/index.html" }
             ]
           }
           EOF
 
-      - name: Deploy to Vercel (prebuilt)
-        run: npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
+      - run: npm install -g vercel
+
+      - run: vercel deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_LANDING_PROJECT_ID }}
