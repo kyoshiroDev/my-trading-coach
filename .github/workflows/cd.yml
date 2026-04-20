@@ -56,16 +56,6 @@ jobs:
           cp -r dist/* .vercel/output/static/
           cp .vercel/output/static/index.html .vercel/output/index.html
 
-          cat > .vercel/output/config.json << 'EOF'
-          {
-            "version": 3,
-            "routes": [
-              { "handle": "filesystem" },
-              { "src": "/(.*)", "dest": "/index.html" }
-            ]
-          }
-          EOF
-
       - run: npm install -g vercel
 
       - run: vercel deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }}

@@ -53,7 +53,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: Lint Nx
+      - name: Lint Nx (safe)
         run: |
           pnpm nx affected --target=lint --base=origin/main --head=HEAD --parallel \
           || pnpm nx run-many --target=lint --all
@@ -93,27 +93,37 @@ jobs:
 
       - run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: Build Nx
+      # 🔥 Angular (safe affected)
+      - name: Build Angular
         run: |
-          pnpm nx affected --target=build --base=origin/main --head=HEAD --parallel \
-          || pnpm nx run-many --target=build --all
+          pnpm nx affected --target=build --base=origin/main --head=HEAD \
+          || pnpm nx build app-mytradingcoach --configuration=production
 
+      # 🔥 Astro (safe affected)
+      - name: Build Astro
+        run: |
+          pnpm nx affected --target=build --base=origin/main --head=HEAD \
+          || pnpm nx build landing-mytradingcoach
+
+      # 🔥 Toujours upload (jamais de crash)
       - name: Upload Angular dist
         uses: actions/upload-artifact@v7
         with:
           name: angular-dist
           path: dist/apps/app-mytradingcoach/
+          if-no-files-found: warn
 
       - name: Upload Astro dist
         uses: actions/upload-artifact@v7
         with:
           name: astro-dist
           path: apps/landing-mytradingcoach/dist/
+          if-no-files-found: warn
 
   test:
     name: Tests
     runs-on: ubuntu-latest
-    needs: lint
+    needs: build
 
     steps:
       - uses: actions/checkout@v6
@@ -138,7 +148,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: Test Nx
+      - name: Test Nx (safe)
         run: |
           pnpm nx affected --target=test --base=origin/main --head=HEAD --parallel \
           || pnpm nx run-many --target=test --all
