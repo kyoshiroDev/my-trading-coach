@@ -23,7 +23,7 @@ export class UserStore {
 
   refreshUser() {
     this.auth.refreshUser().subscribe({
-      error: (_e: unknown) => { /* silently ignore — user stays logged in with cached data */ },
+      error: () => { /* silently ignore — user stays logged in with cached data */ },
     });
   }
 }

@@ -118,7 +118,7 @@ export class SidebarComponent {
   constructor() {
     const onFocus = () => {
       if (!this.auth.isAuthenticated()) return;
-      this.auth.fetchMe().subscribe({ error: () => {} });
+      this.auth.fetchMe().subscribe({ error: () => { /* silently ignore */ } });
     };
     window.addEventListener('focus', onFocus);
     this.destroyRef.onDestroy(() => window.removeEventListener('focus', onFocus));
