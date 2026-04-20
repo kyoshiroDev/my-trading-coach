@@ -298,6 +298,10 @@ jobs:
         with:
           version: 10
 
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
       - uses: actions/setup-node@v6
         with:
           node-version: 24
@@ -319,6 +323,7 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_APP_PROJECT_ID }}
+
   deploy-landing-dev:
     name: Deploy Landing dev to Vercel
     needs: [ lint, build, test ]
@@ -327,6 +332,10 @@ jobs:
     environment: development
 
     steps:
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
       - name: Download Astro dist
         uses: actions/download-artifact@v8
         with:
