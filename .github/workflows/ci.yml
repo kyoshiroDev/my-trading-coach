@@ -8,6 +8,7 @@ on:
 
 env:
   NX_NO_CLOUD: true
+  DATABASE_URL: postgresql://test:test@localhost:5432/test
 
 jobs:
   ci:
