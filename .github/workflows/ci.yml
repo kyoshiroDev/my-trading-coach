@@ -53,9 +53,6 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: clean nx cache
-        run: rm -rf .nx/cache
-
       - name: lint nx
         run: |
           pnpm nx affected --target=lint --base=origin/main --head=HEAD --parallel=3 \
@@ -83,9 +80,6 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
-
-      - name: clean nx cache
-        run: rm -rf .nx/cache
 
       - name: build nx
         run: |
@@ -129,9 +123,6 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: clean nx cache
-        run: rm -rf .nx/cache
-
       - name: test angular
         run: pnpm nx test app-mytradingcoach --parallel=2
 
@@ -157,9 +148,6 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
-
-      - name: clean nx cache
-        run: rm -rf .nx/cache
 
       - name: prisma generate
         run: pnpm exec prisma generate
