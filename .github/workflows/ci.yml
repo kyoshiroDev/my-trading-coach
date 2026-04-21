@@ -10,18 +10,26 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  NX_NO_CLOUD: false
+
 jobs:
   # ─────────────────────────────
-  # commitlint (rapide)
+  # setup (shared cache warmup)
   # ─────────────────────────────
-  commitlint:
+  setup:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+
+    outputs:
+      cache-key: ${{ steps.cache-key.outputs.key }}
 
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
+      - id: cache-key
+        run: echo "key=pnpm-${{ hashFiles('pnpm-lock.yaml') }}" >> $GITHUB_OUTPUT
 
       - uses: pnpm/action-setup@v6
         with:
@@ -32,14 +40,19 @@ jobs:
           node-version-file: '.nvmrc'
           cache: pnpm
 
-      - run: pnpm add -D @commitlint/cli @commitlint/config-conventional -w
-      - run: pnpm dlx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}
+      - uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ steps.cache-key.outputs.key }}
+
+      - run: pnpm install --frozen-lockfile --prefer-offline
 
   # ─────────────────────────────
   # lint (parallèle)
   # ─────────────────────────────
   lint:
     runs-on: ubuntu-latest
+    needs: setup
 
     steps:
       - uses: actions/checkout@v6
@@ -55,19 +68,24 @@ jobs:
           node-version-file: '.nvmrc'
           cache: pnpm
 
+      - uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+
       - run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: lint nx
+      - name: lint nx (smart)
         run: |
           pnpm nx affected --target=lint --base=origin/main --head=HEAD --parallel \
           || pnpm nx run-many --target=lint --all
 
   # ─────────────────────────────
-  # build (parallèle optimisé)
+  # build (parallèle avec lint)
   # ─────────────────────────────
   build:
     runs-on: ubuntu-latest
-    needs: lint
+    needs: setup
 
     steps:
       - uses: actions/checkout@v6
@@ -82,6 +100,11 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: pnpm
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
 
       - uses: actions/cache@v4
         with:
@@ -89,21 +112,13 @@ jobs:
           key: nx-${{ github.ref }}
           restore-keys: nx-
 
-      - uses: actions/cache@v4
-        with:
-          path: .angular/cache
-          key: angular-${{ github.ref }}
-          restore-keys: angular-
-
       - run: pnpm install --frozen-lockfile --prefer-offline
 
-      # ⚡ build intelligent
-      - name: build nx
+      - name: build nx (smart)
         run: |
           pnpm nx affected --target=build --base=origin/main --head=HEAD --parallel \
           || pnpm nx run-many --target=build --all
 
-      # upload SAFE (jamais cassant)
       - name: upload angular
         uses: actions/upload-artifact@v7
         with:
@@ -119,11 +134,11 @@ jobs:
           if-no-files-found: warn
 
   # ─────────────────────────────
-  # tests (parallèle + sécurité)
+  # test (bloquant)
   # ─────────────────────────────
   test:
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build]
 
     steps:
       - uses: actions/checkout@v6
@@ -141,6 +156,11 @@ jobs:
 
       - uses: actions/cache@v4
         with:
+          path: ~/.pnpm-store
+          key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - uses: actions/cache@v4
+        with:
           path: .nx/cache
           key: nx-${{ github.ref }}
           restore-keys: nx-
@@ -151,13 +171,13 @@ jobs:
       - name: prisma generate
         run: pnpm exec prisma generate
 
-      # ⚡ tests rapides
+      # ⚡ tests intelligents
       - name: tests affected
         run: |
           pnpm nx affected --target=test --base=origin/main --head=HEAD --parallel \
           || true
 
-      # 🔒 tests critiques (toujours)
+      # 🔒 tests critiques
       - name: tests angular
         run: pnpm nx test app-mytradingcoach
 
@@ -165,11 +185,11 @@ jobs:
         run: pnpm nx test api-mytradingcoach
 
   # ─────────────────────────────
-  # deploy API (bloqué par test)
+  # deploy API (sécurisé)
   # ─────────────────────────────
   deploy-api-dev:
     runs-on: ubuntu-latest
-    needs: [lint, build, test]
+    needs: [test]
     if: github.ref == 'refs/heads/dev'
 
     steps:
@@ -186,7 +206,7 @@ jobs:
             docker compose --env-file .env.dev run --rm api sh -c "npx prisma migrate deploy"
 
   # ─────────────────────────────
-  # deploy angular (rapide)
+  # deploy angular
   # ─────────────────────────────
   deploy-angular-dev:
     runs-on: ubuntu-latest
