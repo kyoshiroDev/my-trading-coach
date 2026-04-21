@@ -80,10 +80,7 @@
   },
   "tasksRunnerOptions": {
     "default": {
-      "runner": "nx-cloud",
-      "options": {
-        "accessToken": ""
-      }
+      "runner": "nx-cloud"
     }
   }
 }
