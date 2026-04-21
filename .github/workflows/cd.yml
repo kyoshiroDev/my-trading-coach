@@ -10,7 +10,7 @@ jobs:
   deploy-api:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-
+    environment: production
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
@@ -27,7 +27,7 @@ jobs:
   deploy-angular:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-
+    environment: production
     steps:
       - uses: actions/download-artifact@v8
         with:
@@ -44,7 +44,7 @@ jobs:
   deploy-landing:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-
+    environment: production
     steps:
       - uses: actions/download-artifact@v8
         with:

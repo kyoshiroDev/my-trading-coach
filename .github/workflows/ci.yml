@@ -171,7 +171,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test-angular, test-api]
     if: github.ref == 'refs/heads/dev'
-
+    environment: development
     steps:
       - name: deploy vps
         uses: appleboy/ssh-action@v1.2.0
@@ -189,7 +189,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test-angular, test-api]
     if: github.ref == 'refs/heads/dev'
-
+    environment: development
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -207,7 +207,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test-angular, test-api]
     if: github.ref == 'refs/heads/dev'
-
+    environment: development
     steps:
       - uses: actions/download-artifact@v4
         with:
