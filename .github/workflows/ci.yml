@@ -11,8 +11,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # ─────────────────────────────
+  # commitlint (rapide)
+  # ─────────────────────────────
   commitlint:
-    name: Commitlint
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
 
@@ -31,10 +33,12 @@ jobs:
           cache: pnpm
 
       - run: pnpm add -D @commitlint/cli @commitlint/config-conventional -w
-      - run: pnpm dlx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+      - run: pnpm dlx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}
 
+  # ─────────────────────────────
+  # lint (parallèle)
+  # ─────────────────────────────
   lint:
-    name: Lint
     runs-on: ubuntu-latest
 
     steps:
@@ -53,13 +57,15 @@ jobs:
 
       - run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: Lint Nx (safe)
+      - name: lint nx
         run: |
           pnpm nx affected --target=lint --base=origin/main --head=HEAD --parallel \
           || pnpm nx run-many --target=lint --all
 
+  # ─────────────────────────────
+  # build (parallèle optimisé)
+  # ─────────────────────────────
   build:
-    name: Build
     runs-on: ubuntu-latest
     needs: lint
 
@@ -77,15 +83,13 @@ jobs:
           node-version-file: '.nvmrc'
           cache: pnpm
 
-      - name: Cache Nx
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: .nx/cache
           key: nx-${{ github.ref }}
           restore-keys: nx-
 
-      - name: Cache Angular
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: .angular/cache
           key: angular-${{ github.ref }}
@@ -93,32 +97,31 @@ jobs:
 
       - run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: Build Angular (safe)
+      # ⚡ build intelligent
+      - name: build nx
         run: |
-          pnpm nx affected --target=build --base=origin/main --head=HEAD \
-          || pnpm nx build app-mytradingcoach --configuration=production
+          pnpm nx affected --target=build --base=origin/main --head=HEAD --parallel \
+          || pnpm nx run-many --target=build --all
 
-      - name: Build Astro (safe)
-        run: |
-          pnpm nx affected --target=build --base=origin/main --head=HEAD \
-          || pnpm nx build landing-mytradingcoach
-
-      - name: Upload Angular dist
+      # upload SAFE (jamais cassant)
+      - name: upload angular
         uses: actions/upload-artifact@v7
         with:
           name: angular-dist
           path: dist/apps/app-mytradingcoach/
           if-no-files-found: warn
 
-      - name: Upload Astro dist
+      - name: upload astro
         uses: actions/upload-artifact@v7
         with:
           name: astro-dist
           path: apps/landing-mytradingcoach/dist/
           if-no-files-found: warn
 
+  # ─────────────────────────────
+  # tests (parallèle + sécurité)
+  # ─────────────────────────────
   test:
-    name: Tests
     runs-on: ubuntu-latest
     needs: build
 
@@ -136,8 +139,7 @@ jobs:
           node-version-file: '.nvmrc'
           cache: pnpm
 
-      - name: Cache Nx
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: .nx/cache
           key: nx-${{ github.ref }}
@@ -145,28 +147,33 @@ jobs:
 
       - run: pnpm install --frozen-lockfile --prefer-offline
 
-      # ⚡ rapide
-      - name: Tests affected
+      # 🔥 FIX PRISMA
+      - name: prisma generate
+        run: pnpm exec prisma generate
+
+      # ⚡ tests rapides
+      - name: tests affected
         run: |
           pnpm nx affected --target=test --base=origin/main --head=HEAD --parallel \
           || true
 
-      # 🔒 sécurisé (TOUJOURS exécuté)
-      - name: Tests Angular
+      # 🔒 tests critiques (toujours)
+      - name: tests angular
         run: pnpm nx test app-mytradingcoach
 
-      - name: Tests API
+      - name: tests api
         run: pnpm nx test api-mytradingcoach
 
-  # 🔥 VPS (inchangé)
+  # ─────────────────────────────
+  # deploy API (bloqué par test)
+  # ─────────────────────────────
   deploy-api-dev:
-    name: Deploy API dev to VPS
-    needs: [lint, build, test]
-    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    needs: [lint, build, test]
+    if: github.ref == 'refs/heads/dev'
 
     steps:
-      - name: Deploy via SSH
+      - name: deploy vps
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -178,11 +185,13 @@ jobs:
             docker compose --env-file .env.dev up -d --build api
             docker compose --env-file .env.dev run --rm api sh -c "npx prisma migrate deploy"
 
+  # ─────────────────────────────
+  # deploy angular (rapide)
+  # ─────────────────────────────
   deploy-angular-dev:
-    name: Deploy Angular dev
-    needs: [build]
-    if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
+    needs: [test]
+    if: github.ref == 'refs/heads/dev'
 
     steps:
       - uses: actions/download-artifact@v8
@@ -197,11 +206,13 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_APP_PROJECT_ID }}
 
+  # ─────────────────────────────
+  # deploy landing
+  # ─────────────────────────────
   deploy-landing-dev:
-    name: Deploy Landing dev
-    needs: [build]
-    if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
+    needs: [test]
+    if: github.ref == 'refs/heads/dev'
 
     steps:
       - uses: actions/download-artifact@v8
