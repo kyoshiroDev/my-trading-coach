@@ -163,7 +163,7 @@ interface EquityPoint { date: string; cumulativePnl: number; }
             </div>
           </div>
           <div class="chart-container">
-            <canvas #equityCanvas style="width:100%;height:120px;display:block;"></canvas>
+            <canvas #equityCanvas style="width:100%;height:100%;display:block;position:absolute;inset:0;"></canvas>
             @if (!userStore.isPremium() || equityCurve().length === 0) {
               <div class="empty-chart">
                 @if (!userStore.isPremium()) { Courbe disponible en Premium }

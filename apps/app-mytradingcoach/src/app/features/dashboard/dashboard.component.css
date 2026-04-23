@@ -272,6 +272,12 @@ canvas { width: 100% !important; height: 100% !important; }
   flex-direction: column;
 }
 
+.equity-card .chart-container {
+  flex: 1;
+  height: auto;
+  min-height: 80px;
+}
+
 /* ─── Recent trades compact ─── */
 .recent-trades-card { display: flex; flex-direction: column; }
 
