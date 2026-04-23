@@ -163,7 +163,7 @@ interface EquityPoint { date: string; cumulativePnl: number; }
             </div>
           </div>
           <div class="chart-container">
-            <canvas #equityCanvas width="900" height="160"></canvas>
+            <canvas #equityCanvas style="width:100%;height:160px;display:block;"></canvas>
             @if (!userStore.isPremium() || equityCurve().length === 0) {
               <div class="empty-chart">
                 @if (!userStore.isPremium()) { Courbe disponible en Premium }
@@ -422,8 +422,16 @@ export class DashboardComponent implements AfterViewInit {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const W = canvas.width;
-    const H = canvas.height;
+    // DPR — sharp on retina screens
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = canvas.offsetWidth || 900;
+    const cssH = canvas.offsetHeight || 160;
+    canvas.width = cssW * dpr;
+    canvas.height = cssH * dpr;
+    ctx.scale(dpr, dpr);
+
+    const W = cssW;
+    const H = cssH;
     const PAD = { top: 10, right: 20, bottom: 20, left: 10 };
     const cW = W - PAD.left - PAD.right;
     const cH = H - PAD.top - PAD.bottom;
@@ -441,16 +449,28 @@ export class DashboardComponent implements AfterViewInit {
     const lastVal = values[values.length - 1] ?? 0;
     const rgb = lastVal >= 0 ? '59,130,246' : '239,68,68';
 
+    // Smooth monotone bezier path
+    const smoothPath = (vs: number[], closePath: boolean) => {
+      ctx.moveTo(toX(0), toY(vs[0]));
+      for (let i = 1; i < vs.length; i++) {
+        const x0 = toX(i - 1), y0 = toY(vs[i - 1]);
+        const x1 = toX(i),     y1 = toY(vs[i]);
+        const cpx = (x0 + x1) / 2;
+        ctx.bezierCurveTo(cpx, y0, cpx, y1, x1, y1);
+      }
+      if (closePath) {
+        ctx.lineTo(toX(vs.length - 1), PAD.top + cH);
+        ctx.lineTo(toX(0), PAD.top + cH);
+        ctx.closePath();
+      }
+    };
+
     // Fill gradient
     const grad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + cH);
-    grad.addColorStop(0, `rgba(${rgb},0.3)`);
+    grad.addColorStop(0, `rgba(${rgb},0.25)`);
     grad.addColorStop(1, `rgba(${rgb},0)`);
     ctx.beginPath();
-    ctx.moveTo(toX(0), toY(values[0]));
-    values.forEach((v, i) => { if (i > 0) ctx.lineTo(toX(i), toY(v)); });
-    ctx.lineTo(toX(values.length - 1), PAD.top + cH);
-    ctx.lineTo(toX(0), PAD.top + cH);
-    ctx.closePath();
+    smoothPath(values, true);
     ctx.fillStyle = grad;
     ctx.fill();
 
@@ -458,7 +478,9 @@ export class DashboardComponent implements AfterViewInit {
     ctx.beginPath();
     ctx.strokeStyle = lastVal >= 0 ? '#3b82f6' : '#ef4444';
     ctx.lineWidth = 2;
-    values.forEach((v, i) => { if (i === 0) ctx.moveTo(toX(0), toY(v)); else ctx.lineTo(toX(i), toY(v)); });
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    smoothPath(values, false);
     ctx.stroke();
   }
 
