@@ -430,12 +430,13 @@ export class DashboardComponent implements AfterViewInit {
 
     ctx.clearRect(0, 0, W, H);
 
-    const values = points.map((p) => p.cumulativePnl);
+    // Prepend 0 so the curve always starts from the baseline
+    const values = [0, ...points.map((p) => p.cumulativePnl)];
     const minV = Math.min(0, ...values);
     const maxV = Math.max(0, ...values);
     const range = maxV - minV || 1;
 
-    const toX = (i: number) => PAD.left + (i / (points.length - 1)) * cW;
+    const toX = (i: number) => PAD.left + (i / (values.length - 1)) * cW;
     const toY = (v: number) => PAD.top + cH - ((v - minV) / range) * cH;
 
     const lastVal = values[values.length - 1] ?? 0;
