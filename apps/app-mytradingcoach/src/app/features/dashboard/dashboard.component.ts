@@ -148,11 +148,11 @@ interface EquityPoint { date: string; cumulativePnl: number; }
         </div>
       }
 
-      <!-- Equity Curve + Derniers trades -->
-      <div class="equity-trades-row" style="margin-bottom:16px">
+      <!-- Equity · Trades · Winrate · Emotions — même ligne -->
+      <div class="four-col-row">
 
-        <!-- Equity Curve — 3/4 -->
-        <div class="card">
+        <!-- Equity Curve -->
+        <div class="card equity-card">
           <div class="card-header">
             <div class="card-title">Equity Curve</div>
             <div style="display:flex;gap:12px;align-items:center">
@@ -163,7 +163,7 @@ interface EquityPoint { date: string; cumulativePnl: number; }
             </div>
           </div>
           <div class="chart-container">
-            <canvas #equityCanvas style="width:100%;height:160px;display:block;"></canvas>
+            <canvas #equityCanvas style="width:100%;height:120px;display:block;"></canvas>
             @if (!userStore.isPremium() || equityCurve().length === 0) {
               <div class="empty-chart">
                 @if (!userStore.isPremium()) { Courbe disponible en Premium }
@@ -173,13 +173,12 @@ interface EquityPoint { date: string; cumulativePnl: number; }
           </div>
         </div>
 
-        <!-- Derniers trades — 1/4 -->
+        <!-- Derniers trades -->
         <div class="card recent-trades-card">
           <div class="card-header">
             <div class="card-title">Derniers trades</div>
             <a routerLink="/journal" class="card-action">Voir →</a>
           </div>
-
           @if (tradesStore.trades$().length === 0) {
             <div class="empty-state">
               <p>Aucun trade</p>
@@ -190,43 +189,28 @@ interface EquityPoint { date: string; cumulativePnl: number; }
               @for (trade of tradesStore.trades$().slice(0, 4); track trade.id) {
                 <div class="trade-row-compact">
                   <div class="trade-row-top">
-                    <span class="trade-side" [class]="trade.side === 'LONG' ? 'long' : 'short'">
-                      {{ trade.side }}
-                    </span>
+                    <span class="trade-side" [class]="trade.side === 'LONG' ? 'long' : 'short'">{{ trade.side }}</span>
                     <span class="trade-asset-compact">{{ trade.asset }}</span>
                     <span class="trade-emotion">{{ trade.emotion | emotionEmoji }}</span>
                   </div>
                   <div class="trade-row-bottom">
                     <span class="trade-setup-compact">{{ trade.setup }}</span>
-                    <span class="trade-pnl" [style.color]="trade.pnl | pnlColor">
-                      {{ trade.pnl | pnlFormat:trade.entry }}
-                    </span>
+                    <span class="trade-pnl" [style.color]="trade.pnl | pnlColor">{{ trade.pnl | pnlFormat:trade.entry }}</span>
                   </div>
                 </div>
               }
             </div>
           }
         </div>
-      </div>
 
-      <!-- Trade form modal -->
-      <mtc-trade-form
-        [open]="showTradeForm()"
-        [isSaving]="isSavingTrade()"
-        (dismissed)="showTradeForm.set(false)"
-        (formSave)="saveTrade($event)"
-      />
-
-      <!-- Win Rate + Emotions -->
-      <div class="grid-2" style="margin-bottom:16px">
-        <!-- Win Rate Donut -->
+        <!-- Win Rate par stratégie -->
         <div class="card">
           <div class="card-header">
-            <div class="card-title">Win Rate par stratégie</div>
-            <a routerLink="/analytics" class="card-action">Tout voir →</a>
+            <div class="card-title">Win Rate / stratégie</div>
+            <a routerLink="/analytics" class="card-action">Voir →</a>
           </div>
           <div class="donut-wrap">
-            <svg class="donut-svg" width="100" height="100" viewBox="0 0 100 100">
+            <svg class="donut-svg" width="80" height="80" viewBox="0 0 100 100">
               <circle cx="50" cy="50" r="38" fill="none" stroke="var(--bg-3)" stroke-width="12"/>
               @for (seg of segments(); track seg.label) {
                 <circle cx="50" cy="50" r="38" fill="none"
@@ -262,7 +246,7 @@ interface EquityPoint { date: string; cumulativePnl: number; }
           </div>
         </div>
 
-        <!-- Emotion bars -->
+        <!-- États émotionnels -->
         <div class="card">
           <div class="card-header">
             <div class="card-title">États émotionnels</div>
@@ -296,6 +280,14 @@ interface EquityPoint { date: string; cumulativePnl: number; }
           </div>
         </div>
       </div>
+
+      <!-- Trade form modal -->
+      <mtc-trade-form
+        [open]="showTradeForm()"
+        [isSaving]="isSavingTrade()"
+        (dismissed)="showTradeForm.set(false)"
+        (formSave)="saveTrade($event)"
+      />
     </div>
   `,
 })
