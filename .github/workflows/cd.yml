@@ -88,7 +88,7 @@ jobs:
       - name: Prepare Vercel output (prebuilt)
         run: |
           mkdir -p .vercel/output/static
-          cp -r dist/apps/landing-mytradingcoach/* .vercel/output/static/
+          cp -r apps/landing-mytradingcoach/dist/* .vercel/output/static/
           cat > .vercel/output/config.json << 'EOF'
           {
             "version": 3,
