@@ -1,16 +1,9 @@
 ---
-const cellCls = (wr: number) => wr >= 66 ? 'hc-grn' : wr >= 50 ? 'hc-ora' : 'hc-red';
-const heatDays = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
-const heatHours = ['8h','9h','10h','11h','12h','13h','14h','15h','16h','20h','21h','22h'];
-const heatData: number[][] = [
-  [75,50,74,55,38,48,62,68,55,35,32,28],
-  [75,50,80,58,45,50,64,55,58,38,35,30],
-  [38,44,76,65,42,46,58,62,52,40,38,32],
-  [43,88,68,52,35,38,60,30,42,32,28,25],
-  [88,89,47,48,32,44,52,48,38,28,25,22],
-  [57,57,78,52,44,48,55,50,48,42,38,35],
-  [58,100,55,45,30,28,38,35,32,25,22,20],
-];
+import MockupShell from './mockup/MockupShell.astro';
+import MockupDashboard from './mockup/MockupDashboard.astro';
+import MockupAnalytics from './mockup/MockupAnalytics.astro';
+import MockupAiInsights from './mockup/MockupAiInsights.astro';
+import MockupDebrief from './mockup/MockupDebrief.astro';
 ---
 
 <section class="showcase" id="showcase">
@@ -28,291 +21,28 @@ const heatData: number[][] = [
       <button class="stab" data-tab="debrief">Weekly Debrief</button>
     </div>
 
-    <!-- DASHBOARD -->
     <div class="showcase-panel active reveal" id="tab-dash">
-      <div class="full-screen">
-        <div class="full-bar"><div class="sdot" style="background:#ef4444"></div><div class="sdot" style="background:#f59e0b"></div><div class="sdot" style="background:#10b981"></div><span class="screen-url" style="margin-left:10px">Dashboard</span></div>
-        <div class="full-body">
-          <div class="full-sidebar">
-            <div class="flogo"><div class="flogo-ic"><svg width="14" height="14" viewBox="0 0 32 32" fill="none"><polyline points="3,16 6,16 8,10 10,22 12,6 14,20 16,12 18,16 29,16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="flogo-txt">MyTrading<span>Coach</span></div></div>
-            <div class="fsec">Trading</div>
-            <div class="fnav act">⬛ Dashboard</div>
-            <div class="fnav">📋 Journal</div>
-            <div class="fnav">📊 Analytics</div>
-            <div class="fsec">Intelligence</div>
-            <div class="fnav">🤖 IA Insights <span class="fbadge">AI</span></div>
-            <div class="fnav">📅 Weekly Debrief <span class="fbadge">PRO</span></div>
-            <div class="fsec">Compte</div>
-            <div class="fnav">🏆 Scoring</div>
-            <div class="fuser"><div class="favatar">AX</div><div><div class="funame">Alexandre</div><div class="fuplan">★ PREMIUM</div></div></div>
-          </div>
-          <div class="full-content">
-            <div class="ftopbar">
-              <div><h3>Bonjour, Alexandre 👋</h3><div style="font-size:12px;color:var(--txt3);margin-top:3px">Voici un résumé de ton activité de trading</div></div>
-              <div style="display:flex;gap:8px"><button class="btn-p" style="font-size:12px;padding:7px 14px">⚡ Ajouter trade</button></div>
-            </div>
-            <div class="fstats">
-              <div class="fstat"><div class="fstat-lbl">P&amp;L Total</div><div class="fstat-val text-g">+$8,420</div><div class="fstat-sub"><span class="fup">▲ +12.3%</span><span>ce mois</span></div></div>
-              <div class="fstat"><div class="fstat-lbl">Win Rate</div><div class="fstat-val text-b">67.4%</div><div class="fstat-sub"><span class="fup">▲ +3.2%</span><span>vs préc.</span></div></div>
-              <div class="fstat"><div class="fstat-lbl">Drawdown</div><div class="fstat-val text-r">-$1,240</div><div class="fstat-sub"><span class="fdn">▼ -4.8%</span><span>sur cap.</span></div></div>
-              <div class="fstat"><div class="fstat-lbl">Trades</div><div class="fstat-val">142</div><div class="fstat-sub"><span class="fup">▲ +18</span><span>sem.</span></div></div>
-            </div>
-            <div class="fcard">
-              <div class="fcard-h"><div class="fcard-t">Equity Curve</div><div style="display:flex;gap:10px"><span style="font-size:10px;color:var(--blue2);font-family:var(--mono);cursor:pointer">3M</span><span style="font-size:10px;color:var(--txt3);font-family:var(--mono)">All</span></div></div>
-              <svg width="100%" height="80" viewBox="0 0 600 80" preserveAspectRatio="none">
-                <defs><linearGradient id="ecg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3b82f6" stop-opacity=".25"/><stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/></linearGradient></defs>
-                <path d="M0,72 C40,64 70,56 100,50 C130,44 155,38 185,30 C215,22 235,34 260,26 C285,18 310,12 340,9 C370,6 390,14 420,10 C450,6 480,4 520,3 C550,2 575,2 600,2" fill="none" stroke="#3b82f6" stroke-width="2"/>
-                <path d="M0,72 C40,64 70,56 100,50 C130,44 155,38 185,30 C215,22 235,34 260,26 C285,18 310,12 340,9 C370,6 390,14 420,10 C450,6 480,4 520,3 C550,2 575,2 600,2 L600,80 L0,80Z" fill="url(#ecg)"/>
-                <circle cx="600" cy="2" r="4" fill="#3b82f6"/>
-              </svg>
-            </div>
-            <div class="fgrid2">
-              <div class="fcard" style="margin:0">
-                <div class="fcard-h"><div class="fcard-t">Win Rate par stratégie</div></div>
-                <div style="display:flex;gap:14px;align-items:center">
-                  <svg width="72" height="72" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="#111b2e" stroke-width="10"/><circle cx="50" cy="50" r="38" fill="none" stroke="#10b981" stroke-width="10" stroke-dasharray="160 79" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 50 50)"/><circle cx="50" cy="50" r="38" fill="none" stroke="#3b82f6" stroke-width="10" stroke-dasharray="57 182" stroke-dashoffset="-160" stroke-linecap="round" transform="rotate(-90 50 50)"/><circle cx="50" cy="50" r="38" fill="none" stroke="#ef4444" stroke-width="10" stroke-dasharray="22 217" stroke-dashoffset="-217" stroke-linecap="round" transform="rotate(-90 50 50)"/><text x="50" y="54" text-anchor="middle" font-family="Inter" font-weight="700" font-size="16" fill="#e2eaf5">67%</text></svg>
-                  <div style="flex:1;display:flex;flex-direction:column;gap:7px;font-size:11px">
-                    <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0"></div>Breakout<span style="margin-left:auto;font-family:var(--mono);color:var(--txt)">74%</span></div>
-                    <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:var(--blue);flex-shrink:0"></div>Pullback<span style="margin-left:auto;font-family:var(--mono);color:var(--txt)">62%</span></div>
-                    <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:var(--yel);flex-shrink:0"></div>Range<span style="margin-left:auto;font-family:var(--mono);color:var(--txt)">58%</span></div>
-                    <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0"></div>Reversal<span style="margin-left:auto;font-family:var(--mono);color:var(--txt)">41%</span></div>
-                  </div>
-                </div>
-              </div>
-              <div class="fcard" style="margin:0">
-                <div class="fcard-h"><div class="fcard-t">États émotionnels</div></div>
-                <div style="display:flex;flex-direction:column;gap:10px">
-                  <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>😤 Revenge</span><span style="font-family:var(--mono);font-size:10px;color:var(--txt3)">23%</span></div><div style="height:5px;background:var(--bg3);border-radius:3px"><div style="width:23%;height:100%;background:var(--red);border-radius:3px"></div></div></div>
-                  <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>😰 Stress</span><span style="font-family:var(--mono);font-size:10px;color:var(--txt3)">31%</span></div><div style="height:5px;background:var(--bg3);border-radius:3px"><div style="width:31%;height:100%;background:var(--yel);border-radius:3px"></div></div></div>
-                  <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>😌 Confiant</span><span style="font-family:var(--mono);font-size:10px;color:var(--txt3)">68%</span></div><div style="height:5px;background:var(--bg3);border-radius:3px"><div style="width:68%;height:100%;background:var(--blue);border-radius:3px"></div></div></div>
-                  <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>🎯 Focus</span><span style="font-family:var(--mono);font-size:10px;color:var(--txt3)">52%</span></div><div style="height:5px;background:var(--bg3);border-radius:3px"><div style="width:52%;height:100%;background:var(--green);border-radius:3px"></div></div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <MockupShell url="app.mytradingcoach.app — Dashboard" active="dashboard">
+        <MockupDashboard />
+      </MockupShell>
     </div>
 
-    <!-- ANALYTICS -->
     <div class="showcase-panel" id="tab-analytics">
-      <div class="full-screen">
-        <div class="full-bar"><div class="sdot" style="background:#ef4444"></div><div class="sdot" style="background:#f59e0b"></div><div class="sdot" style="background:#10b981"></div><span class="screen-url" style="margin-left:10px">Analytics avancés</span></div>
-        <div class="full-body">
-          <div class="full-sidebar">
-            <div class="flogo"><div class="flogo-ic"><svg width="14" height="14" viewBox="0 0 32 32" fill="none"><polyline points="3,16 6,16 8,10 10,22 12,6 14,20 16,12 18,16 29,16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="flogo-txt">MyTrading<span>Coach</span></div></div>
-            <div class="fsec">Trading</div>
-            <div class="fnav">⬛ Dashboard</div>
-            <div class="fnav">📋 Journal</div>
-            <div class="fnav act">📊 Analytics</div>
-            <div class="fsec">Intelligence</div>
-            <div class="fnav">🤖 IA Insights <span class="fbadge">AI</span></div>
-            <div class="fnav">📅 Weekly Debrief <span class="fbadge">PRO</span></div>
-            <div class="fsec">Compte</div>
-            <div class="fnav">🏆 Scoring</div>
-            <div class="fuser"><div class="favatar">AX</div><div><div class="funame">Alexandre</div><div class="fuplan">★ PREMIUM</div></div></div>
-          </div>
-          <div class="full-content">
-            <div class="ftopbar"><h3>Analytics</h3></div>
-            <!-- 4 stats FREE -->
-            <div class="fstats" style="margin-bottom:12px">
-              <div class="fstat"><div class="fstat-lbl">WIN RATE GLOBAL</div><div class="fstat-val text-g">67.4%</div><div class="fstat-sub">142 trades</div></div>
-              <div class="fstat"><div class="fstat-lbl">P&amp;L TOTAL</div><div class="fstat-val text-g" style="font-size:18px">+$9 829</div><div class="fstat-sub">P&amp;L cumulé</div></div>
-              <div class="fstat"><div class="fstat-lbl">TOP SESSION</div><div class="fstat-val text-b" style="font-size:15px">London</div><div class="fstat-sub">74% win rate</div></div>
-              <div class="fstat"><div class="fstat-lbl">HEURE TOP</div><div class="fstat-val text-b" style="font-size:18px">09:30</div><div class="fstat-sub">ouverture NY</div></div>
-            </div>
-            <!-- Separator PREMIUM -->
-            <div class="an-sep">
-              <div class="an-sep-line"></div>
-              <span class="an-sep-lbl">ANALYTICS AVANCÉS — PREMIUM</span>
-              <div class="an-sep-line"></div>
-            </div>
-            <!-- Heatmap pleine largeur -->
-            <div class="fcard an-heatmap-card">
-              <div class="fcard-h"><div class="fcard-t">Heatmap horaire — Win Rate par heure</div></div>
-              <div style="overflow-x:auto">
-                <table class="hmtable">
-                  <thead>
-                    <tr>
-                      <th class="hm-corner"></th>
-                      {heatHours.map(h => <th class="hm-hour">{h}</th>)}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {heatDays.map((day, di) => (
-                      <tr>
-                        <td class="hm-day">{day}</td>
-                        {heatData[di].map(wr => (
-                          <td class={`hm-cell ${cellCls(wr)}`}>{wr}%</td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <!-- Top Actifs + Setup côte à côte -->
-            <div class="fgrid2">
-              <div class="fcard" style="margin:0">
-                <div class="fcard-h"><div class="fcard-t">Top actifs</div></div>
-                <table class="ftable">
-                  <thead><tr><th>#</th><th>ASSET</th><th>W%</th><th>P&amp;L</th></tr></thead>
-                  <tbody>
-                    <tr><td style="color:var(--txt3);font-family:var(--mono)">#1</td><td style="font-family:var(--mono);color:var(--blue2)">NQ</td><td style="color:var(--green);font-family:var(--mono)">69%</td><td style="font-family:var(--mono);color:var(--green)">+$2 598</td></tr>
-                    <tr><td style="color:var(--txt3);font-family:var(--mono)">#2</td><td style="font-family:var(--mono);color:var(--blue2)">ETH/USDT</td><td style="color:var(--green);font-family:var(--mono)">73%</td><td style="font-family:var(--mono);color:var(--green)">+$2 203</td></tr>
-                    <tr><td style="color:var(--txt3);font-family:var(--mono)">#3</td><td style="font-family:var(--mono);color:var(--blue2)">BTC/USDT</td><td style="color:var(--green);font-family:var(--mono)">100%</td><td style="font-family:var(--mono);color:var(--green)">+$2 000</td></tr>
-                    <tr><td style="color:var(--txt3);font-family:var(--mono)">#4</td><td style="font-family:var(--mono);color:var(--blue2)">ES</td><td style="color:var(--green);font-family:var(--mono)">69%</td><td style="font-family:var(--mono);color:var(--green)">+$1 934</td></tr>
-                    <tr><td style="color:var(--txt3);font-family:var(--mono)">#5</td><td style="font-family:var(--mono);color:var(--blue2)">SOL/USDT</td><td style="color:var(--yel);font-family:var(--mono)">53%</td><td style="font-family:var(--mono);color:var(--green)">+$1 696</td></tr>
-                  </tbody>
-                </table>
-              </div>
-              <div class="fcard" style="margin:0">
-                <div class="fcard-h"><div class="fcard-t">Performance par setup</div></div>
-                <table class="ftable">
-                  <thead><tr><th>SETUP</th><th>W%</th><th>P&amp;L</th></tr></thead>
-                  <tbody>
-                    <tr><td style="font-weight:600">BREAKOUT</td><td style="color:var(--yel);font-family:var(--mono)">48%</td><td style="font-family:var(--mono);color:var(--green)">+$544</td></tr>
-                    <tr><td style="font-weight:600">PULLBACK</td><td style="color:var(--green);font-family:var(--mono)">80%</td><td style="font-family:var(--mono);color:var(--green)">+$3 389</td></tr>
-                    <tr><td style="font-weight:600">REVERSAL</td><td style="color:var(--green);font-family:var(--mono)">65%</td><td style="font-family:var(--mono);color:var(--green)">+$2 595</td></tr>
-                    <tr><td style="font-weight:600">SCALPING</td><td style="color:var(--green);font-family:var(--mono)">70%</td><td style="font-family:var(--mono);color:var(--green)">+$3 937</td></tr>
-                    <tr><td style="font-weight:600">RANGE</td><td style="color:var(--yel);font-family:var(--mono)">56%</td><td style="font-family:var(--mono);color:var(--green)">+$1 741</td></tr>
-                    <tr><td style="font-weight:600">NEWS</td><td style="color:var(--red);font-family:var(--mono)">20%</td><td style="font-family:var(--mono);color:var(--red)">-$2 379</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <MockupShell url="app.mytradingcoach.app — Analytics" active="analytics">
+        <MockupAnalytics />
+      </MockupShell>
     </div>
 
-    <!-- IA INSIGHTS -->
     <div class="showcase-panel" id="tab-ai">
-      <div class="full-screen">
-        <div class="full-bar"><div class="sdot" style="background:#ef4444"></div><div class="sdot" style="background:#f59e0b"></div><div class="sdot" style="background:#10b981"></div><span class="screen-url" style="margin-left:10px">IA Insights — Powered by Claude</span></div>
-        <div class="full-body">
-          <div class="full-sidebar">
-            <div class="flogo"><div class="flogo-ic"><svg width="14" height="14" viewBox="0 0 32 32" fill="none"><polyline points="3,16 6,16 8,10 10,22 12,6 14,20 16,12 18,16 29,16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="flogo-txt">MyTrading<span>Coach</span></div></div>
-            <div class="fsec">Trading</div>
-            <div class="fnav">⬛ Dashboard</div>
-            <div class="fnav">📋 Journal</div>
-            <div class="fnav">📊 Analytics</div>
-            <div class="fsec">Intelligence</div>
-            <div class="fnav act">🤖 IA Insights <span class="fbadge">AI</span></div>
-            <div class="fnav">📅 Weekly Debrief <span class="fbadge">PRO</span></div>
-            <div class="fsec">Compte</div>
-            <div class="fnav">🏆 Scoring</div>
-            <div class="fuser"><div class="favatar">AX</div><div><div class="funame">Alexandre</div><div class="fuplan">★ PREMIUM</div></div></div>
-          </div>
-          <div class="full-content">
-            <div class="ai-banner">
-              <div class="ai-banner-icon">🤖</div>
-              <div><div class="ai-banner-t">IA d'analyse — Powered by Claude</div><div class="ai-banner-d">Analyse comportementale et patterns cachés détectés dans 142 trades.</div></div>
-              <button class="btn-p" style="font-size:11px;padding:7px 14px;margin-left:auto;flex-shrink:0">⚡ Générer insights</button>
-            </div>
-            <div class="fgrid2">
-              <div style="display:flex;flex-direction:column;gap:0">
-                <div style="font-family:var(--disp);font-size:12px;font-weight:600;margin-bottom:10px">🎯 Insights personnalisés</div>
-                <div class="insight-row">
-                  <div class="i-ico" style="background:rgba(239,68,68,.1)">🔴</div>
-                  <div style="flex:1"><div class="i-t">Pattern : Revenge Trading détecté</div><div class="i-d">Après 2 pertes consécutives, ton taux de perte grimpe à 78%.</div></div>
-                  <span class="i-tag" style="background:rgba(239,68,68,.1);color:var(--red)">CRITIQUE</span>
-                </div>
-                <div class="insight-row">
-                  <div class="i-ico" style="background:rgba(245,158,11,.1)">⚠️</div>
-                  <div style="flex:1"><div class="i-t">Soirée : performances dégradées</div><div class="i-d">Entre 20h et 23h, win rate = 38%. Tes meilleurs trades sont avant 16h.</div></div>
-                  <span class="i-tag" style="background:rgba(245,158,11,.1);color:var(--yel)">TIMING</span>
-                </div>
-                <div class="insight-row">
-                  <div class="i-ico" style="background:rgba(16,185,129,.1)">✅</div>
-                  <div style="flex:1"><div class="i-t">Setup Breakout : ton point fort</div><div class="i-d">74% win rate sur les breakouts avec confirmation volume.</div></div>
-                  <span class="i-tag" style="background:rgba(16,185,129,.1);color:var(--green)">FORCE</span>
-                </div>
-                <div class="insight-row">
-                  <div class="i-ico" style="background:rgba(59,130,246,.1)">💡</div>
-                  <div style="flex:1"><div class="i-t">Taille de position inconstante</div><div class="i-d">Tu augmentes ton risk après une série de trades positifs enregistrés. Overconfidence détectée.</div></div>
-                  <span class="i-tag" style="background:rgba(59,130,246,.1);color:var(--blue2)">RISQUE</span>
-                </div>
-              </div>
-              <div class="fcard" style="margin:0">
-                <div class="fcard-h"><div class="fcard-t">💬 Coach IA</div></div>
-                <div style="background:var(--bg3);border-radius:9px;padding:12px;border:1px solid var(--b);margin-bottom:12px">
-                  <div style="font-size:11px;font-weight:600;color:var(--blue2);font-family:var(--disp);margin-bottom:6px">🤖 MyTradingCoach</div>
-                  <div style="font-size:12px;color:var(--txt2);line-height:1.7">Analyse de tes 142 trades complète. Je détecte 3 patterns comportementaux. Ta principale faiblesse : le <strong style="color:var(--red)">revenge trading</strong> post-perte. Veux-tu un plan d'amélioration ?</div>
-                </div>
-                <div style="background:rgba(16,185,129,.05);border-radius:9px;padding:10px 12px;border:1px solid rgba(16,185,129,.1);margin-bottom:12px;text-align:right">
-                  <div style="font-size:11px;font-weight:600;color:var(--green);margin-bottom:4px">Toi</div>
-                  <div style="font-size:12px;color:var(--txt2)">Pourquoi je perds autant après une série de pertes ?</div>
-                </div>
-                <div style="display:flex;gap:8px">
-                  <input type="text" placeholder="Pose une question à ton coach..." style="flex:1;background:var(--bg3);border:1px solid var(--b);border-radius:8px;padding:8px 11px;color:var(--txt);font-size:12px;font-family:var(--body);outline:none" />
-                  <button class="btn-p" style="font-size:12px;padding:8px 14px">→</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <MockupShell url="app.mytradingcoach.app — IA Insights" active="ai">
+        <MockupAiInsights />
+      </MockupShell>
     </div>
 
-    <!-- WEEKLY DEBRIEF -->
     <div class="showcase-panel" id="tab-debrief">
-      <div class="full-screen">
-        <div class="full-bar"><div class="sdot" style="background:#ef4444"></div><div class="sdot" style="background:#f59e0b"></div><div class="sdot" style="background:#10b981"></div><span class="screen-url" style="margin-left:10px">Weekly Debrief — Semaine 12</span></div>
-        <div class="full-body">
-          <div class="full-sidebar">
-            <div class="flogo"><div class="flogo-ic"><svg width="14" height="14" viewBox="0 0 32 32" fill="none"><polyline points="3,16 6,16 8,10 10,22 12,6 14,20 16,12 18,16 29,16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="flogo-txt">MyTrading<span>Coach</span></div></div>
-            <div class="fsec">Trading</div>
-            <div class="fnav">⬛ Dashboard</div>
-            <div class="fnav">📋 Journal</div>
-            <div class="fnav">📊 Analytics</div>
-            <div class="fsec">Intelligence</div>
-            <div class="fnav">🤖 IA Insights <span class="fbadge">AI</span></div>
-            <div class="fnav act">📅 Weekly Debrief <span class="fbadge">PRO</span></div>
-            <div class="fsec">Compte</div>
-            <div class="fnav">🏆 Scoring</div>
-            <div class="fuser"><div class="favatar">AX</div><div><div class="funame">Alexandre</div><div class="fuplan">★ PREMIUM</div></div></div>
-          </div>
-          <div class="full-content">
-            <div class="ftopbar">
-              <div><h3>Semaine 12 — 17–23 mars 2026</h3><div style="font-size:11px;color:var(--txt3);margin-top:3px">28 trades · généré dim. 23h00</div></div>
-              <button class="btn-p" style="font-size:11px;padding:7px 14px">📄 Export PDF</button>
-            </div>
-            <div class="fstats" style="margin-bottom:14px">
-              <div class="fstat"><div class="fstat-lbl">P&amp;L net</div><div class="fstat-val text-g">+$1 840</div><div class="fstat-sub"><span class="fup">▲ +14%</span></div></div>
-              <div class="fstat"><div class="fstat-lbl">Win rate</div><div class="fstat-val text-b">67%</div><div class="fstat-sub"><span class="fup">▲ +3pts</span></div></div>
-              <div class="fstat"><div class="fstat-lbl">Trades</div><div class="fstat-val">28</div><div class="fstat-sub"><span style="color:var(--green);font-family:var(--mono);font-size:9px">19W</span><span style="color:var(--red);font-family:var(--mono);font-size:9px">9L</span></div></div>
-              <div class="fstat"><div class="fstat-lbl">Score</div><div class="fstat-val">74<span style="font-size:12px;color:var(--txt3)">/100</span></div><div class="fstat-sub"><span class="fup">▲ +2pts</span></div></div>
-            </div>
-            <div class="deb-ai">
-              <div class="deb-ai-lbl"><div class="ai-dot-anim"></div>Analyse IA — résumé de semaine</div>
-              <div class="deb-ai-txt">Bonne semaine. Tu as <strong>respecté tes stops à 100%</strong> — une première en 6 semaines. Ton talon d'Achille reste le <span class="warn">jeudi après-midi</span> : 4 trades sur 5 perdants entre 15h–17h. Si tu corriges ce créneau, ton win rate structurel dépasse <span class="good">72%</span> dès la semaine prochaine.</div>
-            </div>
-            <div class="fgrid2">
-              <div>
-                <div style="font-size:11px;font-family:var(--mono);color:var(--txt3);letter-spacing:.7px;text-transform:uppercase;margin-bottom:8px">✅ Points forts</div>
-                <div class="pts-row"><span class="dbadge-g">Force</span><div class="pts-txt" style="margin-left:8px">Stops respectés sur <strong style="color:var(--txt)">100%</strong> des 28 trades.</div></div>
-                <div class="pts-row"><span class="dbadge-g">Force</span><div class="pts-txt" style="margin-left:8px">Breakouts BTC avec RR moyen de <strong style="color:var(--txt)">2.4</strong>.</div></div>
-                <div class="pts-row"><span class="dbadge-g">Force</span><div class="pts-txt" style="margin-left:8px">Session London : <strong style="color:var(--txt)">78% win rate</strong> cette semaine.</div></div>
-              </div>
-              <div>
-                <div style="font-size:11px;font-family:var(--mono);color:var(--txt3);letter-spacing:.7px;text-transform:uppercase;margin-bottom:8px">⚠️ Points faibles</div>
-                <div class="pts-row"><span class="dbadge-r">Critique</span><div class="pts-txt" style="margin-left:8px">Jeudi 15h–17h : <strong style="color:var(--txt)">1W / 4L</strong>. Fatigue fin de session.</div></div>
-                <div class="pts-row"><span class="dbadge-y">Attention</span><div class="pts-txt" style="margin-left:8px">Vendredi matin : overtrading — <strong style="color:var(--txt)">3 trades inutiles</strong>.</div></div>
-                <div class="pts-row"><span class="dbadge-y">Attention</span><div class="pts-txt" style="margin-left:8px">GBP/USD : 3ème semaine en perte. <strong style="color:var(--txt)">À éviter</strong>.</div></div>
-              </div>
-            </div>
-            <div style="margin-top:12px">
-              <div style="font-size:11px;font-family:var(--mono);color:var(--txt3);letter-spacing:.7px;text-transform:uppercase;margin-bottom:8px">🎯 Objectifs semaine 13 — générés par IA</div>
-              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-                <div class="obj-box"><div class="obj-circle">○</div><div><div class="obj-title">Stopper après 15h le jeudi</div><div class="obj-meta">Pattern 1W/4L détecté 3 semaines.</div></div></div>
-                <div class="obj-box"><div class="obj-circle">○</div><div><div class="obj-title">Max 4 trades le vendredi matin</div><div class="obj-meta">Prévenir l'overtrading post-gain.</div></div></div>
-                <div class="obj-box"><div class="obj-circle">○</div><div><div class="obj-title">Éviter GBP/USD</div><div class="obj-meta">Win rate trop faible — 3ème semaine.</div></div></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <MockupShell url="app.mytradingcoach.app — Weekly Debrief" active="debrief">
+        <MockupDebrief />
+      </MockupShell>
     </div>
   </div>
 </section>
@@ -358,126 +88,6 @@ const heatData: number[][] = [
   .showcase-panel { display: none; max-width: 1100px; margin: 0 auto; }
   .showcase-panel.active { display: block; }
 
-  .full-screen {
-    background: var(--card);
-    border: 1px solid var(--b2);
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 24px 80px rgba(0,0,0,.6);
-  }
-
-  .full-bar {
-    background: var(--bg3);
-    border-bottom: 1px solid var(--b);
-    padding: 10px 14px;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-  }
-
-  .sdot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-  .screen-url { font-size: 11px; color: var(--txt3); font-family: var(--mono); }
-
-  .full-body {
-    display: grid;
-    grid-template-columns: 220px 1fr;
-    min-height: 480px;
-  }
-
-  .full-sidebar {
-    background: var(--bg3);
-    border-right: 1px solid var(--b);
-    padding: 14px 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .flogo { display: flex; align-items: center; gap: 8px; padding: 8px; margin-bottom: 8px; border-bottom: 1px solid var(--b); padding-bottom: 14px; }
-  .flogo-ic { width: 26px; height: 26px; background: linear-gradient(135deg,#3b82f6,#8b5cf6); border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .flogo-txt { font-family: var(--disp); font-size: 13px; font-weight: 700; letter-spacing: -.2px; }
-  .flogo-txt span { color: var(--blue2); }
-  .fsec { font-size: 9px; font-family: var(--mono); color: var(--txt3); letter-spacing: 1.1px; text-transform: uppercase; padding: 12px 10px 5px; }
-  .fnav { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 7px; font-size: 12px; color: var(--txt3); cursor: pointer; transition: all .15s; }
-  .fnav:hover { background: rgba(59,130,246,.08); color: var(--txt2); }
-  .fnav.act { background: rgba(59,130,246,.12); color: var(--blue2); font-weight: 500; position: relative; }
-  .fnav.act::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 18px; background: var(--blue); border-radius: 0 3px 3px 0; }
-  .fbadge { margin-left: auto; background: linear-gradient(135deg,#3b82f6,#8b5cf6); color: #fff; font-size: 8px; font-family: var(--mono); padding: 2px 6px; border-radius: 8px; }
-  .fuser { display: flex; align-items: center; gap: 8px; padding: 10px; border-radius: 8px; margin-top: auto; border-top: 1px solid var(--b); padding-top: 14px; }
-  .favatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg,#3b82f6,#8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; font-family: var(--disp); flex-shrink: 0; color: #fff; }
-  .funame { font-size: 12px; font-weight: 500; }
-  .fuplan { font-size: 9px; font-family: var(--mono); color: var(--yel); letter-spacing: .4px; }
-
-  .full-content { padding: 24px; overflow: hidden; }
-  .ftopbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
-  .ftopbar h3 { font-family: var(--disp); font-size: 16px; font-weight: 700; letter-spacing: -.3px; }
-  .fstats { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
-  .fstat { background: var(--bg3); border: 1px solid var(--b); border-radius: 9px; padding: 14px; position: relative; overflow: hidden; }
-  .fstat::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg,transparent,var(--blue),transparent); opacity: 0; transition: opacity .2s; }
-  .fstat:hover::before { opacity: .4; }
-  .fstat-lbl { font-size: 9px; font-family: var(--mono); color: var(--txt3); letter-spacing: .7px; text-transform: uppercase; margin-bottom: 7px; }
-  .fstat-val { font-family: var(--disp); font-size: 22px; font-weight: 700; letter-spacing: -.3px; }
-  .fstat-sub { font-size: 10px; color: var(--txt3); margin-top: 5px; display: flex; gap: 5px; }
-  .fup { color: var(--green); background: rgba(16,185,129,.1); font-family: var(--mono); font-size: 9px; padding: 1.5px 5px; border-radius: 3px; }
-  .fdn { color: var(--red); background: rgba(239,68,68,.1); font-family: var(--mono); font-size: 9px; padding: 1.5px 5px; border-radius: 3px; }
-  .text-g { color: var(--green); }
-  .text-b { color: var(--blue2); }
-  .text-r { color: var(--red); }
-  .fcard { background: var(--card); border: 1px solid var(--b); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
-  .fcard-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-  .fcard-t { font-family: var(--disp); font-size: 12px; font-weight: 600; letter-spacing: -.1px; }
-  .fgrid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-
-  /* analytics heatmap */
-  .an-sep { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
-  .an-sep-line { flex:1; height:1px; background:rgba(99,155,255,.1); }
-  .an-sep-lbl { font-size:7px; font-family:var(--mono); color:var(--txt3); letter-spacing:.8px; white-space:nowrap; }
-  .an-heatmap-card { margin-bottom:10px; }
-  .hmtable { border-collapse:separate; border-spacing:2px; width:100%; }
-  .hm-corner { width:24px; }
-  .hm-hour { font-size:8px; color:var(--txt3); font-family:var(--mono); text-align:center; padding:0 1px 4px; font-weight:400; }
-  .hm-day { font-size:8px; color:var(--txt3); font-family:var(--mono); padding:0 4px 0 0; white-space:nowrap; }
-  .hm-cell { border-radius:3px; padding:3px 1px; text-align:center; font-size:8px; font-family:var(--mono); font-weight:600; }
-  .hc-grn { background:#1e3a2f; color:#10b981; }
-  .hc-ora { background:#3a2a0a; color:#f59e0b; }
-  .hc-red { background:#3a0f0f; color:#ef4444; }
-  .ftable { width: 100%; font-size: 11px; border-collapse: collapse; }
-  .ftable th { font-family: var(--mono); font-size: 9px; color: var(--txt3); text-transform: uppercase; letter-spacing: .6px; padding-bottom: 7px; text-align: left; border-bottom: 1px solid var(--b); }
-  .ftable td { padding: 7px 0; color: var(--txt2); border-bottom: 1px solid rgba(99,155,255,.04); text-align: left; }
-  .ftable tr:last-child td { border: none; }
-
-  /* ai panel */
-  .ai-banner { background: linear-gradient(135deg,rgba(59,130,246,.1),rgba(139,92,246,.1)); border: 1px solid rgba(139,92,246,.2); border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-  .ai-banner-icon { font-size: 22px; flex-shrink: 0; }
-  .ai-banner-t { font-family: var(--disp); font-size: 13px; font-weight: 600; margin-bottom: 3px; }
-  .ai-banner-d { font-size: 11px; color: var(--txt2); line-height: 1.5; }
-  .insight-row { display: flex; gap: 10px; padding: 10px 12px; background: var(--bg3); border: 1px solid var(--b); border-radius: 8px; margin-bottom: 7px; }
-  .i-ico { width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
-  .i-t { font-size: 12px; font-weight: 500; margin-bottom: 2px; }
-  .i-d { font-size: 11px; color: var(--txt3); line-height: 1.5; }
-  .i-tag { font-size: 9px; font-family: var(--mono); padding: 2px 6px; border-radius: 3px; align-self: flex-start; margin-top: 1px; flex-shrink: 0; }
-  .btn-p { background: var(--blue); color: #fff; padding: 13px 26px; border-radius: 9px; font-size: 14px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 0 28px rgba(59,130,246,.4); transition: all .2s; border: none; cursor: pointer; font-family: var(--disp); }
-  .btn-p:hover { background: var(--blue2); transform: translateY(-2px); box-shadow: 0 0 44px rgba(59,130,246,.55); }
-
-  /* debrief panel */
-  .deb-ai { background: linear-gradient(135deg,rgba(59,130,246,.08),rgba(139,92,246,.08)); border: 1px solid rgba(139,92,246,.15); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
-  .deb-ai-lbl { display: flex; align-items: center; gap: 7px; font-size: 10px; font-family: var(--mono); color: var(--blue2); letter-spacing: .5px; margin-bottom: 10px; }
-  .ai-dot-anim { width: 6px; height: 6px; background: var(--blue); border-radius: 50%; animation: blink 2s ease infinite; flex-shrink: 0; }
-  .deb-ai-txt { font-size: 12px; color: var(--txt2); line-height: 1.75; }
-  .deb-ai-txt strong { color: var(--txt); }
-  .deb-ai-txt .warn { color: var(--yel); }
-  .deb-ai-txt .good { color: var(--green); }
-  .obj-box { background: var(--bg3); border: 1px solid var(--b); border-radius: 8px; padding: 10px 12px; display: flex; gap: 9px; align-items: flex-start; margin-bottom: 6px; }
-  .obj-circle { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--txt3); display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--txt3); flex-shrink: 0; margin-top: 1px; }
-  .obj-title { font-size: 12px; font-weight: 500; margin-bottom: 2px; }
-  .obj-meta { font-size: 10px; color: var(--txt3); }
-  .dbadge-g { background: rgba(16,185,129,.1); color: var(--green); border: 1px solid rgba(16,185,129,.2); font-size: 9px; font-family: var(--mono); padding: 2px 7px; border-radius: 4px; flex-shrink: 0; }
-  .dbadge-r { background: rgba(239,68,68,.1); color: var(--red); border: 1px solid rgba(239,68,68,.2); font-size: 9px; font-family: var(--mono); padding: 2px 7px; border-radius: 4px; flex-shrink: 0; }
-  .dbadge-y { background: rgba(245,158,11,.1); color: var(--yel); border: 1px solid rgba(245,158,11,.2); font-size: 9px; font-family: var(--mono); padding: 2px 7px; border-radius: 4px; flex-shrink: 0; }
-  .pts-row { display: flex; gap: 8px; padding: 9px 0; border-bottom: 1px solid rgba(99,155,255,.05); align-items: flex-start; }
-  .pts-row:last-child { border: none; }
-  .pts-txt { font-size: 11px; color: var(--txt2); line-height: 1.5; flex: 1; }
-
   /* ── Mobile ── */
   @media (max-width: 767px) {
     .showcase {
@@ -513,44 +123,10 @@ const heatData: number[][] = [
     .showcase-panel {
       padding: 0 16px;
     }
-
-    .full-body {
-      grid-template-columns: 1fr;
-      min-height: unset;
-    }
-
-    .full-sidebar {
-      display: none;
-    }
-
-    .full-content {
-      padding: 14px;
-    }
-
-    .fstats {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    .fstat-val {
-      font-size: 18px;
-    }
-
-    .fgrid2 {
-      grid-template-columns: 1fr;
-    }
-
-    .ai-banner {
-      flex-wrap: wrap;
-    }
-
-    .ai-banner button {
-      margin-left: 0 !important;
-    }
   }
 </style>
 
 <script>
-  // Tab switching
   document.querySelectorAll('.stab').forEach(btn => {
     btn.addEventListener('click', () => {
       const tab = (btn as HTMLElement).dataset.tab;
@@ -561,18 +137,4 @@ const heatData: number[][] = [
       if (panel) panel.classList.add('active');
     });
   });
-
-  // Heatmap
-  const hvals = [.9,.7,.5,.3,.2,.4,.8,.6,.7,.5,.3,.8,.7,.4,.2,.6,.5,.4,.3,.2,.1,.3,.7,.8,.4,.3,.2,.1,.2,.4,.5,.6,.8,.7,.6,.5,.4,.3,.2,.1];
-  const heatContainer = document.getElementById('heatmap-cells');
-  if (heatContainer) {
-    hvals.forEach(v => {
-      const c = v > .7 ? '#10b981' : v > .5 ? '#1e5c3a' : v > .3 ? '#1a3a2a' : '#1a2535';
-      const cell = document.createElement('div');
-      cell.className = 'hcell';
-      cell.style.background = c;
-      cell.title = Math.round(v * 100) + '%';
-      heatContainer.appendChild(cell);
-    });
-  }
 </script>

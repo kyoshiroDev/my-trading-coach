@@ -1,4 +1,6 @@
 ---
+import MockupShell from './mockup/MockupShell.astro';
+import MockupDashboard from './mockup/MockupDashboard.astro';
 ---
 
 <!-- BANNER -->
@@ -42,108 +44,9 @@
 
   <!-- App screenshot -->
   <div class="hero-screen">
-    <div class="full-screen" style="border-radius:16px;box-shadow:0 48px 120px rgba(0,0,0,.85),0 0 0 1px rgba(56,139,255,.08)">
-      <div class="full-bar">
-        <div class="sdot" style="background:#ef4444"></div>
-        <div class="sdot" style="background:#f59e0b"></div>
-        <div class="sdot" style="background:#10b981"></div>
-        <span class="screen-url" style="margin-left:12px">app.mytradingcoach.app — Dashboard</span>
-      </div>
-      <div class="full-body">
-        <div class="full-sidebar">
-          <div class="flogo">
-            <div class="flogo-ic"><svg width="14" height="14" viewBox="0 0 32 32" fill="none"><polyline points="3,16 6,16 8,10 10,22 12,6 14,20 16,12 18,16 29,16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-            <div class="flogo-txt">MyTrading<span>Coach</span></div>
-          </div>
-          <div class="fsec">Trading</div>
-          <div class="fnav act">⬛ Dashboard</div>
-          <div class="fnav">📋 Journal</div>
-          <div class="fnav">📊 Analytics</div>
-          <div class="fsec">Intelligence</div>
-          <div class="fnav">🤖 IA Insights <span class="fbadge">AI</span></div>
-          <div class="fnav">📅 Weekly Debrief <span class="fbadge">PRO</span></div>
-          <div class="fsec">Compte</div>
-          <div class="fnav">🏆 Scoring</div>
-          <div class="fnav">⚙️ Paramètres</div>
-          <div class="fuser">
-            <div class="favatar">AX</div>
-            <div><div class="funame">Alexandre</div><div class="fuplan">★ PREMIUM</div></div>
-          </div>
-        </div>
-        <div class="full-content">
-          <div class="ftopbar">
-            <div>
-              <h3>Bonjour, Alexandre 👋</h3>
-              <div style="font-size:12px;color:var(--txt3);margin-top:3px">Voici un résumé de ton activité de trading</div>
-            </div>
-            <div style="display:flex;gap:8px">
-              <button class="btn-p" style="font-size:12px;padding:7px 14px">⚡ Ajouter trade</button>
-            </div>
-          </div>
-          <div class="fstats">
-            <div class="fstat"><div class="fstat-lbl">P&amp;L Total</div><div class="fstat-val text-g">+$8,420</div><div class="fstat-sub"><span class="fup">▲ +12.3%</span><span>ce mois</span></div></div>
-            <div class="fstat"><div class="fstat-lbl">Win Rate</div><div class="fstat-val text-b">67.4%</div><div class="fstat-sub"><span class="fup">▲ +3.2%</span><span>vs préc.</span></div></div>
-            <div class="fstat"><div class="fstat-lbl">Drawdown</div><div class="fstat-val text-r">-$1,240</div><div class="fstat-sub"><span class="fdn">▼ -4.8%</span><span>sur cap.</span></div></div>
-            <div class="fstat"><div class="fstat-lbl">Trades</div><div class="fstat-val">142</div><div class="fstat-sub"><span class="fup">▲ +18</span><span>sem.</span></div></div>
-          </div>
-          <div class="fcard">
-            <div class="fcard-h"><div class="fcard-t">Equity Curve</div><div style="display:flex;gap:10px"><span style="font-size:10px;color:var(--blue2);font-family:var(--mono);cursor:pointer">3M</span><span style="font-size:10px;color:var(--txt3);font-family:var(--mono)">All</span></div></div>
-            <svg width="100%" height="80" viewBox="0 0 600 80" preserveAspectRatio="none">
-              <defs><linearGradient id="cg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3b82f6" stop-opacity=".25"/><stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/></linearGradient></defs>
-              <path d="M0,72 C40,64 70,56 100,50 C130,44 155,38 185,30 C215,22 235,34 260,26 C285,18 310,12 340,9 C370,6 390,14 420,10 C450,6 480,4 520,3 C550,2 575,2 600,2" fill="none" stroke="#3b82f6" stroke-width="2"/>
-              <path d="M0,72 C40,64 70,56 100,50 C130,44 155,38 185,30 C215,22 235,34 260,26 C285,18 310,12 340,9 C370,6 390,14 420,10 C450,6 480,4 520,3 C550,2 575,2 600,2 L600,80 L0,80Z" fill="url(#cg2)"/>
-              <circle cx="600" cy="2" r="4" fill="#3b82f6"/>
-            </svg>
-          </div>
-          <div class="fgrid2">
-            <div class="fcard" style="margin:0">
-              <div class="fcard-h"><div class="fcard-t">Win Rate par stratégie</div></div>
-              <div style="display:flex;gap:14px;align-items:center">
-                <svg width="72" height="72" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="#111b2e" stroke-width="10"/><circle cx="50" cy="50" r="38" fill="none" stroke="#10b981" stroke-width="10" stroke-dasharray="160 79" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 50 50)"/><circle cx="50" cy="50" r="38" fill="none" stroke="#3b82f6" stroke-width="10" stroke-dasharray="57 182" stroke-dashoffset="-160" stroke-linecap="round" transform="rotate(-90 50 50)"/><circle cx="50" cy="50" r="38" fill="none" stroke="#ef4444" stroke-width="10" stroke-dasharray="22 217" stroke-dashoffset="-217" stroke-linecap="round" transform="rotate(-90 50 50)"/><text x="50" y="54" text-anchor="middle" font-family="Inter" font-weight="700" font-size="16" fill="#e2eaf5">67%</text></svg>
-                <div style="flex:1;display:flex;flex-direction:column;gap:7px;font-size:11px">
-                  <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0"></div>Breakout<span style="margin-left:auto;font-family:var(--mono);color:var(--txt)">74%</span></div>
-                  <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:var(--blue);flex-shrink:0"></div>Pullback<span style="margin-left:auto;font-family:var(--mono);color:var(--txt)">62%</span></div>
-                  <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:var(--yel);flex-shrink:0"></div>Range<span style="margin-left:auto;font-family:var(--mono);color:var(--txt)">58%</span></div>
-                  <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0"></div>Reversal<span style="margin-left:auto;font-family:var(--mono);color:var(--txt)">41%</span></div>
-                </div>
-              </div>
-            </div>
-            <div class="fcard" style="margin:0">
-              <div class="fcard-h"><div class="fcard-t">États émotionnels</div></div>
-              <div style="display:flex;flex-direction:column;gap:10px">
-                <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>😤 Revenge</span><span style="font-family:var(--mono);font-size:10px;color:var(--txt3)">23%</span></div><div style="height:5px;background:var(--bg3);border-radius:3px"><div style="width:23%;height:100%;background:var(--red);border-radius:3px"></div></div></div>
-                <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>😰 Stress</span><span style="font-family:var(--mono);font-size:10px;color:var(--txt3)">31%</span></div><div style="height:5px;background:var(--bg3);border-radius:3px"><div style="width:31%;height:100%;background:var(--yel);border-radius:3px"></div></div></div>
-                <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>😌 Confiant</span><span style="font-family:var(--mono);font-size:10px;color:var(--txt3)">68%</span></div><div style="height:5px;background:var(--bg3);border-radius:3px"><div style="width:68%;height:100%;background:var(--blue);border-radius:3px"></div></div></div>
-                <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>🎯 Focus</span><span style="font-family:var(--mono);font-size:10px;color:var(--txt3)">52%</span></div><div style="height:5px;background:var(--bg3);border-radius:3px"><div style="width:52%;height:100%;background:var(--green);border-radius:3px"></div></div></div>
-              </div>
-            </div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px">
-            <div style="display:flex;align-items:center;gap:9px;background:var(--bg3);border:1px solid var(--b);border-radius:8px;padding:9px 12px;font-size:11px">
-              <span style="background:rgba(16,185,129,.12);color:var(--green);font-family:var(--mono);font-size:9px;padding:2.5px 6px;border-radius:3px;flex-shrink:0">LONG</span>
-              <span style="color:var(--blue2);font-family:var(--mono);min-width:60px;font-weight:500">BTC/USDT</span>
-              <span style="color:var(--txt3);flex:1;font-size:10px">Breakout · London</span>
-              <span style="font-size:12px">😌</span>
-              <span style="color:var(--green);font-family:var(--mono);font-weight:500;font-size:12px">+$1 400</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:9px;background:var(--bg3);border:1px solid var(--b);border-radius:8px;padding:9px 12px;font-size:11px">
-              <span style="background:rgba(239,68,68,.12);color:var(--red);font-family:var(--mono);font-size:9px;padding:2.5px 6px;border-radius:3px;flex-shrink:0">SHORT</span>
-              <span style="color:var(--blue2);font-family:var(--mono);min-width:60px;font-weight:500">EUR/USD</span>
-              <span style="color:var(--txt3);flex:1;font-size:10px">Pullback · NY</span>
-              <span style="font-size:12px">😤</span>
-              <span style="color:var(--red);font-family:var(--mono);font-weight:500;font-size:12px">-$280</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:9px;background:var(--bg3);border:1px solid var(--b);border-radius:8px;padding:9px 12px;font-size:11px">
-              <span style="background:rgba(16,185,129,.12);color:var(--green);font-family:var(--mono);font-size:9px;padding:2.5px 6px;border-radius:3px;flex-shrink:0">LONG</span>
-              <span style="color:var(--blue2);font-family:var(--mono);min-width:60px;font-weight:500">ETH/USDT</span>
-              <span style="color:var(--txt3);flex:1;font-size:10px">Range · Asian</span>
-              <span style="font-size:12px">🎯</span>
-              <span style="color:var(--green);font-family:var(--mono);font-weight:500;font-size:12px">+$620</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <MockupShell url="app.mytradingcoach.app — Dashboard" active="dashboard" style="border-radius:16px;box-shadow:0 48px 120px rgba(0,0,0,.85),0 0 0 1px rgba(56,139,255,.08)">
+      <MockupDashboard />
+    </MockupShell>
   </div>
 </section>
 
@@ -337,162 +240,8 @@
     animation: fup .8s .5s ease both;
   }
 
-  .full-screen {
-    background: var(--card);
-    border: 1px solid var(--b2);
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 24px 80px rgba(0,0,0,.6);
-  }
-
-  .full-bar {
-    background: var(--bg3);
-    border-bottom: 1px solid var(--b);
-    padding: 10px 14px;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-  }
-
-  .sdot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-  .screen-url { font-size: 11px; color: var(--txt3); font-family: var(--mono); }
-
-  .full-body {
-    display: grid;
-    grid-template-columns: 220px 1fr;
-    min-height: 480px;
-  }
-
-  .full-sidebar {
-    background: var(--bg3);
-    border-right: 1px solid var(--b);
-    padding: 14px 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .flogo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px;
-    margin-bottom: 8px;
-    border-bottom: 1px solid var(--b);
-    padding-bottom: 14px;
-  }
-
-  .flogo-ic {
-    width: 26px; height: 26px;
-    background: linear-gradient(135deg,#3b82f6,#8b5cf6);
-    border-radius: 7px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-
-  .flogo-txt { font-family: var(--disp); font-size: 13px; font-weight: 700; letter-spacing: -.2px; }
-  .flogo-txt span { color: var(--blue2); }
-
-  .fsec { font-size: 9px; font-family: var(--mono); color: var(--txt3); letter-spacing: 1.1px; text-transform: uppercase; padding: 12px 10px 5px; }
-
-  .fnav {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
-    border-radius: 7px;
-    font-size: 12px;
-    color: var(--txt3);
-    transition: all .15s;
-  }
-
-  .fnav:hover { background: rgba(59,130,246,.08); color: var(--txt2); }
-
-  .fnav.act {
-    background: rgba(59,130,246,.12);
-    color: var(--blue2);
-    font-weight: 500;
-    position: relative;
-  }
-
-  .fnav.act::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 50%;
-    transform: translateY(-50%);
-    width: 3px; height: 18px;
-    background: var(--blue);
-    border-radius: 0 3px 3px 0;
-  }
-
-  .fbadge {
-    margin-left: auto;
-    background: linear-gradient(135deg,#3b82f6,#8b5cf6);
-    color: #fff;
-    font-size: 8px;
-    font-family: var(--mono);
-    padding: 2px 6px;
-    border-radius: 8px;
-  }
-
-  .fuser {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px;
-    border-radius: 8px;
-    margin-top: auto;
-    border-top: 1px solid var(--b);
-    padding-top: 14px;
-  }
-
-  .favatar {
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    background: linear-gradient(135deg,#3b82f6,#8b5cf6);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 700; font-family: var(--disp);
-    flex-shrink: 0;
-    color: #fff;
-  }
-
-  .funame { font-size: 12px; font-weight: 500; }
-  .fuplan { font-size: 9px; font-family: var(--mono); color: var(--yel); letter-spacing: .4px; }
-
-  .full-content { padding: 24px; overflow: hidden; background: var(--bg2); }
-
-  .ftopbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
-  .ftopbar h3 { font-family: var(--disp); font-size: 16px; font-weight: 700; letter-spacing: -.3px; }
-
-  .fstats { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
-
-  .fstat {
-    background: var(--bg3);
-    border: 1px solid var(--b);
-    border-radius: 9px;
-    padding: 14px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .fstat-lbl { font-size: 9px; font-family: var(--mono); color: var(--txt3); letter-spacing: .7px; text-transform: uppercase; margin-bottom: 7px; }
-  .fstat-val { font-family: var(--disp); font-size: 22px; font-weight: 700; letter-spacing: -.3px; }
-  .fstat-sub { font-size: 10px; color: var(--txt3); margin-top: 5px; display: flex; gap: 5px; }
-  .fup { color: var(--green); background: rgba(16,185,129,.1); font-family: var(--mono); font-size: 9px; padding: 1.5px 5px; border-radius: 3px; }
-  .fdn { color: var(--red); background: rgba(239,68,68,.1); font-family: var(--mono); font-size: 9px; padding: 1.5px 5px; border-radius: 3px; }
-
-  .text-g { color: var(--green); }
-  .text-b { color: var(--blue2); }
-  .text-r { color: var(--red); }
-
-  .fcard { background: var(--card); border: 1px solid var(--b); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
-  .fcard-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-  .fcard-t { font-family: var(--disp); font-size: 12px; font-weight: 600; letter-spacing: -.1px; }
-  .fgrid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-
   /* ── Mobile ── */
   @media (max-width: 767px) {
-    /* FIX 3 — Hero content : z-index et centrage explicites */
     .hero {
       padding: 100px 16px 60px;
       overflow: visible;
@@ -521,35 +270,9 @@
       width: 100%;
     }
 
-    /* FIX 2 — Mockup hero : sidebar masquée, grille 1 colonne */
     .hero-screen {
       overflow: hidden;
       margin-top: 40px;
-    }
-
-    .full-sidebar {
-      display: none;
-    }
-
-    .full-body {
-      grid-template-columns: 1fr;
-      min-height: unset;
-    }
-
-    .full-content {
-      padding: 14px;
-    }
-
-    .fstats {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    .fstat-val {
-      font-size: 18px;
-    }
-
-    .fgrid2 {
-      grid-template-columns: 1fr;
     }
   }
 </style>
