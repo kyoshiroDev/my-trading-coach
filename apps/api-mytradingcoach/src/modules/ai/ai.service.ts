@@ -50,22 +50,27 @@ export class AiService implements OnModuleDestroy {
 
     const tradesJson = JSON.stringify(trades);
 
-    const response = await this.anthropic.messages.create({
-      model: MODEL,
-      max_tokens: 1024,
-      system: [
-        { type: 'text', text: INSIGHTS_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
-      ],
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: tradesJson, cache_control: { type: 'ephemeral' } },
-            { type: 'text', text: buildInsightsUserPrompt(tradesJson) },
-          ],
-        },
-      ],
-    });
+    let response: Anthropic.Message;
+    try {
+      response = await this.anthropic.messages.create({
+        model: MODEL,
+        max_tokens: 1024,
+        system: [
+          { type: 'text', text: INSIGHTS_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
+        ],
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: tradesJson, cache_control: { type: 'ephemeral' } },
+              { type: 'text', text: buildInsightsUserPrompt(tradesJson) },
+            ],
+          },
+        ],
+      });
+    } catch (err) {
+      this.handleAnthropicError(err);
+    }
 
     await this.incrementQuota(userId);
     const content = response.content[0];
@@ -105,12 +110,17 @@ export class AiService implements OnModuleDestroy {
       { role: 'user', content: message },
     ];
 
-    const response = await this.anthropic.messages.create({
-      model: MODEL,
-      max_tokens: 512,
-      system: [{ type: 'text', text: INSIGHTS_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
-      messages,
-    });
+    let response: Anthropic.Message;
+    try {
+      response = await this.anthropic.messages.create({
+        model: MODEL,
+        max_tokens: 512,
+        system: [{ type: 'text', text: INSIGHTS_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
+        messages,
+      });
+    } catch (err) {
+      this.handleAnthropicError(err);
+    }
 
     await this.incrementQuota(userId);
     const content = response.content[0];
@@ -119,16 +129,52 @@ export class AiService implements OnModuleDestroy {
   }
 
   async generateDebrief(data: Parameters<typeof buildDebriefPrompt>[0]) {
-    const response = await this.anthropic.messages.create({
-      model: MODEL,
-      max_tokens: 2048,
-      system: [{ type: 'text', text: DEBRIEF_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
-      messages: [{ role: 'user', content: buildDebriefPrompt(data) }],
-    });
+    let response: Anthropic.Message;
+    try {
+      response = await this.anthropic.messages.create({
+        model: MODEL,
+        max_tokens: 2048,
+        system: [{ type: 'text', text: DEBRIEF_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
+        messages: [{ role: 'user', content: buildDebriefPrompt(data) }],
+      });
+    } catch (err) {
+      this.handleAnthropicError(err);
+    }
 
     const content = response.content[0];
-    if (content.type !== 'text') throw new Error('Réponse IA invalide');
+    if (content.type !== 'text') throw new HttpException('Réponse IA invalide', HttpStatus.INTERNAL_SERVER_ERROR);
     return JSON.parse(content.text);
+  }
+
+  private handleAnthropicError(err: unknown): never {
+    if (err instanceof Anthropic.APIError) {
+      const type = (err.error as { error?: { type?: string } } | null)?.error?.type;
+      switch (type) {
+        case 'overloaded_error':
+          throw new HttpException(
+            "L'IA est momentanément surchargée, réessaie dans quelques minutes.",
+            HttpStatus.SERVICE_UNAVAILABLE,
+          );
+        case 'rate_limit_error':
+          throw new HttpException(
+            'Trop de requêtes, réessaie dans quelques secondes.',
+            HttpStatus.TOO_MANY_REQUESTS,
+          );
+        case 'invalid_request_error':
+          throw new HttpException(
+            'Crédit API insuffisant, contacte le support.',
+            HttpStatus.PAYMENT_REQUIRED,
+          );
+        default:
+          this.logger.error(`Anthropic API error [${type ?? err.status}]: ${err.message}`);
+          throw new HttpException(
+            "L'IA est temporairement indisponible.",
+            HttpStatus.BAD_GATEWAY,
+          );
+      }
+    }
+    this.logger.error('Unknown AI error', err);
+    throw new HttpException("L'IA est temporairement indisponible.", HttpStatus.BAD_GATEWAY);
   }
 
   private async checkQuota(userId: string) {
