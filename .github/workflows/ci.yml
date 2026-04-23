@@ -17,180 +17,134 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v4
         with:
           version: 10
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
           cache: pnpm
 
-      - name: Install commitlint
-        run: pnpm add -D @commitlint/cli @commitlint/config-conventional -w
+      - run: pnpm install --frozen-lockfile
 
       - name: Validate PR commits
         run: pnpm dlx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
 
-  # ── Lint ──────────────────────────────────────────────────────────────────
+  # ── Lint (Nx Cloud affected) ──────────────────────────────────────────────
   lint:
-    name: Lint
     runs-on: ubuntu-latest
     env:
-      NX_NO_CLOUD: true
-      DATABASE_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_test
-    steps:
-      - uses: actions/checkout@v6
+      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+      NX_BRANCH: ${{ github.ref_name }}
 
-      - uses: pnpm/action-setup@v6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
         with:
           version: 10
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
           cache: pnpm
 
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: pnpm-store-
+      - run: pnpm install --frozen-lockfile
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: lint nx affected
+        run: |
+          pnpm nx affected --target=lint --base=origin/main --head=HEAD --parallel=3 \
+          || pnpm nx run-many --target=lint --all --parallel=3
 
-      - name: Lint Angular
-        run: pnpm nx lint app-mytradingcoach
-
-      - name: Lint NestJS
-        run: pnpm nx lint api-mytradingcoach
-
-      - name: Lint Landing
-        run: pnpm nx lint landing-mytradingcoach || true
-
-  # ── Build ─────────────────────────────────────────────────────────────────
+  # ── Build (Nx Cloud affected) ─────────────────────────────────────────────
   build:
-    name: Build
     runs-on: ubuntu-latest
     needs: lint
     env:
-      NX_NO_CLOUD: true
-      DATABASE_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_test
-      REDIS_HOST: localhost
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: testpassword
-      JWT_SECRET: test-jwt-secret-64-chars-minimum-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-      JWT_REFRESH_SECRET: test-refresh-secret-64-chars-minimum-xxxxxxxxxxxxxxxxxxxxxxxxx
-      ANTHROPIC_API_KEY: sk-ant-test
-
-    services:
-      postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_DB: mytradingcoach_test
-          POSTGRES_USER: mtc_user
-          POSTGRES_PASSWORD: devpassword
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-      redis:
-        image: redis:7.4-alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 3
-        ports:
-          - 6379:6379
+      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+      NX_BRANCH: ${{ github.ref_name }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v4
         with:
           version: 10
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
           cache: pnpm
 
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: pnpm-store-
-
-      - name: Cache Angular build
-        uses: actions/cache@v4
-        with:
-          path: .angular/cache
-          key: angular-${{ github.ref }}-${{ github.sha }}
-          restore-keys: |
-            angular-${{ github.ref }}-
-            angular-
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
 
       - name: Prisma generate
         run: pnpm exec prisma generate --config=./prisma/prisma.config.ts
 
-      - name: Prisma migrate (test DB)
-        run: pnpm exec prisma migrate deploy --config=./prisma/prisma.config.ts
+      - name: build nx affected
+        run: |
+          pnpm nx affected --target=build --base=origin/main --head=HEAD --parallel=3 \
+          || pnpm nx run-many --target=build --all --parallel=3
 
-      - name: Build NestJS
-        run: pnpm nx build api-mytradingcoach
-
-      - name: Build Angular
-        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=production
-
-      - name: Build Astro landing
-        run: pnpm nx build landing-mytradingcoach
-
-      - name: Upload Angular dist
-        uses: actions/upload-artifact@v7
+      - name: upload angular
+        uses: actions/upload-artifact@v4
         with:
           name: angular-dist
           path: dist/apps/app-mytradingcoach/
-          if-no-files-found: error
+          if-no-files-found: ignore
           retention-days: 1
 
-      - name: Upload API dist
-        uses: actions/upload-artifact@v7
-        with:
-          name: api-dist
-          path: apps/api-mytradingcoach/dist/
-          if-no-files-found: error
-          retention-days: 1
-
-      - name: Upload Astro dist
-        uses: actions/upload-artifact@v7
+      - name: upload astro
+        uses: actions/upload-artifact@v4
         with:
           name: astro-dist
-          path: apps/landing-mytradingcoach/dist/
-          if-no-files-found: error
+          path: dist/apps/landing-mytradingcoach/
+          if-no-files-found: ignore
           retention-days: 1
 
-  # ── Tests ─────────────────────────────────────────────────────────────────
-  test:
-    name: Tests
+  # ── Tests Angular ─────────────────────────────────────────────────────────
+  test-angular:
     runs-on: ubuntu-latest
     needs: build
     env:
-      NX_NO_CLOUD: true
+      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+      NX_BRANCH: ${{ github.ref_name }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: test angular
+        run: pnpm nx test app-mytradingcoach --parallel=2
+
+  # ── Tests API (NestJS + Prisma + services) ────────────────────────────────
+  test-api:
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+      NX_BRANCH: ${{ github.ref_name }}
       DATABASE_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_test
       REDIS_HOST: localhost
       REDIS_PORT: 6379
@@ -225,26 +179,20 @@ jobs:
           - 6379:6379
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v4
         with:
           version: 10
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
           cache: pnpm
 
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: pnpm-store-
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
 
       - name: Prisma generate
         run: pnpm exec prisma generate --config=./prisma/prisma.config.ts
@@ -252,22 +200,14 @@ jobs:
       - name: Prisma migrate (test DB)
         run: pnpm exec prisma migrate deploy --config=./prisma/prisma.config.ts
 
-      - name: Test NestJS
-        run: pnpm nx test api-mytradingcoach
+      - name: test api
+        run: pnpm nx test api-mytradingcoach --parallel=2
 
-      - name: Test Angular
-        run: pnpm nx test app-mytradingcoach
-
-  # ── E2E Playwright — désactivé temporairement ────────────────────────────
-  # À réactiver après le lancement en production
-  # e2e: ...
-
-  # ── Deploy Dev — déclenché uniquement sur push dev après CI verte ─────────
+  # ── Deploy API dev → VPS ──────────────────────────────────────────────────
   deploy-api-dev:
-    name: Deploy API dev to VPS
-    needs: [lint, build, test]
-    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    needs: [test-angular, test-api]
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     environment: development
     steps:
       - name: Deploy via SSH
@@ -284,32 +224,25 @@ jobs:
             docker compose --env-file .env.dev up -d --build --force-recreate api
             echo "API dev deployment complete at $(date)"
 
+  # ── Deploy Angular dev → Vercel ───────────────────────────────────────────
   deploy-angular-dev:
-    name: Deploy Angular dev to Vercel
-    needs: [lint, build, test]
-    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    needs: [test-angular, test-api]
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     environment: development
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v4
         with:
           version: 10
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
           cache: pnpm
 
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
 
       - name: Build Angular (dev)
         run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=development
@@ -326,17 +259,14 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_APP_PROJECT_ID }}
 
+  # ── Deploy Landing dev → Vercel ───────────────────────────────────────────
   deploy-landing-dev:
-    name: Deploy Landing dev to Vercel
-    needs: [ lint, build, test ]
-    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    needs: [test-angular, test-api]
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     environment: development
     steps:
-      - uses: actions/checkout@v6
-
-      - name: Download Astro dist artifact
-        uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@v4
         with:
           name: astro-dist
           path: apps/landing-mytradingcoach/dist/

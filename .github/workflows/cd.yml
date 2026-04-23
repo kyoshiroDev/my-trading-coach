@@ -6,9 +6,6 @@ on:
     types: [completed]
     branches: [main]
 
-env:
-  NX_NO_CLOUD: true
-
 jobs:
   # ── Deploy API → OVH VPS (Docker) ────────────────────────────────────────
   deploy-api:
@@ -16,7 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     environment: production
-
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
@@ -29,7 +25,7 @@ jobs:
             git pull origin main
             docker compose --env-file .env.production build api
             docker compose --env-file .env.production run --rm api sh -c "npx prisma migrate deploy"
-            docker compose --env-file .env.dev up -d --build --force-recreate api
+            docker compose --env-file .env.production up -d --build --force-recreate api
             echo "API prod deployment complete at $(date)"
 
   # ── Deploy Angular → Vercel ───────────────────────────────────────────────
@@ -38,27 +34,19 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     environment: production
-
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v4
         with:
           version: 10
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
           cache: pnpm
 
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
 
       - name: Build Angular
         run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=production
@@ -80,27 +68,19 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     environment: production
-
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v4
         with:
           version: 10
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
           cache: pnpm
 
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
 
       - name: Build Astro landing
         run: pnpm nx build landing-mytradingcoach
@@ -108,7 +88,7 @@ jobs:
       - name: Prepare Vercel output (prebuilt)
         run: |
           mkdir -p .vercel/output/static
-          cp -r apps/landing-mytradingcoach/dist/* .vercel/output/static/
+          cp -r dist/apps/landing-mytradingcoach/* .vercel/output/static/
           cat > .vercel/output/config.json << 'EOF'
           {
             "version": 3,
@@ -129,7 +109,7 @@ jobs:
           EOF
 
       - name: Deploy to Vercel (prebuilt)
-        run: npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
+        run: npx vercel deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_LANDING_PROJECT_ID }}
