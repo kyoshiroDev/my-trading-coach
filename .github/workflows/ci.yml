@@ -231,6 +231,8 @@ jobs:
     needs: [test-angular, test-api]
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     environment: development
+    env:
+      NX_NO_CLOUD: true
     steps:
       - uses: actions/checkout@v4
 
@@ -266,16 +268,29 @@ jobs:
     needs: [test-angular, test-api]
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     environment: development
+    env:
+      NX_NO_CLOUD: true
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
         with:
-          name: astro-dist
-          path: apps/landing-mytradingcoach/dist/
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build Astro landing (dev)
+        run: pnpm nx build landing-mytradingcoach
 
       - name: Prepare Vercel output (prebuilt)
         run: |
           mkdir -p .vercel/output/static
-          cp -r apps/landing-mytradingcoach/dist/* .vercel/output/static/
+          cp -r dist/apps/landing-mytradingcoach/* .vercel/output/static/
           cat > .vercel/output/config.json << 'EOF'
           {
             "version": 3,
@@ -290,7 +305,7 @@ jobs:
           EOF
 
       - name: Deploy to Vercel (dev, prebuilt)
-        run: npx vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} --yes
+        run: pnpm dlx vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_LANDING_PROJECT_ID }}
