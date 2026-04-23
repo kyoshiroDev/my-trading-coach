@@ -77,7 +77,12 @@ export class AiService implements OnModuleDestroy {
     if (content.type !== 'text') throw new HttpException('Réponse IA invalide', HttpStatus.INTERNAL_SERVER_ERROR);
 
     try {
-      return JSON.parse(content.text);
+      const cleaned = content.text
+        .replace(/^```json\s*/i, '')
+        .replace(/^```\s*/i, '')
+        .replace(/```\s*$/i, '')
+        .trim();
+      return JSON.parse(cleaned);
     } catch {
       this.logger.error('Failed to parse AI response', content.text);
       throw new HttpException('Réponse IA invalide', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -143,7 +148,12 @@ export class AiService implements OnModuleDestroy {
 
     const content = response.content[0];
     if (content.type !== 'text') throw new HttpException('Réponse IA invalide', HttpStatus.INTERNAL_SERVER_ERROR);
-    return JSON.parse(content.text);
+    const cleaned = content.text
+      .replace(/^```json\s*/i, '')
+      .replace(/^```\s*/i, '')
+      .replace(/```\s*$/i, '')
+      .trim();
+    return JSON.parse(cleaned);
   }
 
   private handleAnthropicError(err: unknown): never {
