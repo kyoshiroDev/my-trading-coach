@@ -15,6 +15,33 @@ import { DEBRIEF_SYSTEM_PROMPT, buildDebriefPrompt } from './prompts/debrief.pro
 const MODEL = 'claude-sonnet-4-6';
 const AI_MONTHLY_QUOTA = 100;
 
+function parseAnthropicJson(raw: string): unknown {
+  const stripped = raw
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/```\s*$/i, '')
+    .trim();
+
+  try {
+    return JSON.parse(stripped);
+  } catch {}
+
+  // Second pass: escape literal control chars inside JSON string values
+  let inString = false;
+  let escaped = false;
+  let sanitized = '';
+  for (const char of stripped) {
+    if (escaped) { sanitized += char; escaped = false; continue; }
+    if (char === '\\' && inString) { sanitized += char; escaped = true; continue; }
+    if (char === '"') { inString = !inString; sanitized += char; continue; }
+    if (inString && char === '\n') { sanitized += '\\n'; continue; }
+    if (inString && char === '\r') { sanitized += '\\r'; continue; }
+    if (inString && char === '\t') { sanitized += '\\t'; continue; }
+    sanitized += char;
+  }
+  return JSON.parse(sanitized);
+}
+
 @Injectable()
 export class AiService implements OnModuleDestroy {
   private readonly anthropic = new Anthropic({
@@ -54,7 +81,7 @@ export class AiService implements OnModuleDestroy {
     try {
       response = await this.anthropic.messages.create({
         model: MODEL,
-        max_tokens: 1024,
+        max_tokens: 2048,
         system: [
           { type: 'text', text: INSIGHTS_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
         ],
@@ -77,12 +104,7 @@ export class AiService implements OnModuleDestroy {
     if (content.type !== 'text') throw new HttpException('Réponse IA invalide', HttpStatus.INTERNAL_SERVER_ERROR);
 
     try {
-      const cleaned = content.text
-        .replace(/^```json\s*/i, '')
-        .replace(/^```\s*/i, '')
-        .replace(/```\s*$/i, '')
-        .trim();
-      return JSON.parse(cleaned);
+      return parseAnthropicJson(content.text);
     } catch {
       this.logger.error('Failed to parse AI response', content.text);
       throw new HttpException('Réponse IA invalide', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -148,12 +170,12 @@ export class AiService implements OnModuleDestroy {
 
     const content = response.content[0];
     if (content.type !== 'text') throw new HttpException('Réponse IA invalide', HttpStatus.INTERNAL_SERVER_ERROR);
-    const cleaned = content.text
-      .replace(/^```json\s*/i, '')
-      .replace(/^```\s*/i, '')
-      .replace(/```\s*$/i, '')
-      .trim();
-    return JSON.parse(cleaned);
+    try {
+      return parseAnthropicJson(content.text);
+    } catch {
+      this.logger.error('Failed to parse debrief AI response', content.text);
+      throw new HttpException('Réponse IA invalide', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   private handleAnthropicError(err: unknown): never {
