@@ -1,0 +1,153 @@
+---
+interface Props {
+  url?: string;
+  active?: 'dashboard' | 'journal' | 'analytics' | 'ai' | 'debrief' | 'scoring';
+  style?: string;
+}
+const { url = 'app.mytradingcoach.app', active = 'dashboard', style } = Astro.props;
+
+const nav = [
+  { id: 'dashboard', icon: '⬛', label: 'Dashboard',      section: 'Trading' },
+  { id: 'journal',   icon: '📋', label: 'Journal',         section: null },
+  { id: 'analytics', icon: '📊', label: 'Analytics',       section: null },
+  { id: 'ai',        icon: '🤖', label: 'IA Insights',     section: 'Intelligence', badge: 'AI' },
+  { id: 'debrief',   icon: '📅', label: 'Weekly Debrief',  section: null,           badge: 'PRO' },
+  { id: 'scoring',   icon: '🏆', label: 'Scoring',         section: 'Compte' },
+];
+---
+
+<div class="full-screen" style={style}>
+  <div class="full-bar">
+    <div class="sdot" style="background:#ef4444"></div>
+    <div class="sdot" style="background:#f59e0b"></div>
+    <div class="sdot" style="background:#10b981"></div>
+    <span class="screen-url" style="margin-left:12px">{url}</span>
+  </div>
+  <div class="full-body">
+    <div class="full-sidebar">
+      <div class="flogo">
+        <div class="flogo-ic">
+          <svg width="14" height="14" viewBox="0 0 32 32" fill="none">
+            <polyline points="3,16 6,16 8,10 10,22 12,6 14,20 16,12 18,16 29,16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="flogo-txt">MyTrading<span>Coach</span></div>
+      </div>
+
+      {nav.map((item) => (
+        <>
+          {item.section && <div class="fsec">{item.section}</div>}
+          <div class:list={['fnav', { act: active === item.id }]}>
+            {item.icon} {item.label}
+            {item.badge && <span class="fbadge">{item.badge}</span>}
+          </div>
+        </>
+      ))}
+
+      <div class="fuser">
+        <div class="favatar">AX</div>
+        <div>
+          <div class="funame">Alexandre</div>
+          <div class="fuplan">★ PREMIUM</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="full-content">
+      <slot />
+    </div>
+  </div>
+</div>
+
+<style is:global>
+  .full-screen {
+    background: var(--card);
+    border: 1px solid var(--b2);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,.6);
+  }
+
+  .full-bar {
+    background: var(--bg3);
+    border-bottom: 1px solid var(--b);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .sdot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .screen-url { font-size: 11px; color: var(--txt3); font-family: var(--mono); }
+
+  .full-body {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: 480px;
+  }
+
+  .full-sidebar {
+    background: var(--bg3);
+    border-right: 1px solid var(--b);
+    padding: 14px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .flogo { display: flex; align-items: center; gap: 8px; padding: 8px; margin-bottom: 8px; border-bottom: 1px solid var(--b); padding-bottom: 14px; }
+  .flogo-ic { width: 26px; height: 26px; background: linear-gradient(135deg,#3b82f6,#8b5cf6); border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .flogo-txt { font-family: var(--disp); font-size: 13px; font-weight: 700; letter-spacing: -.2px; }
+  .flogo-txt span { color: var(--blue2); }
+
+  .fsec { font-size: 9px; font-family: var(--mono); color: var(--txt3); letter-spacing: 1.1px; text-transform: uppercase; padding: 12px 10px 5px; }
+
+  .fnav { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 7px; font-size: 12px; color: var(--txt3); cursor: pointer; transition: all .15s; }
+  .fnav:hover { background: rgba(59,130,246,.08); color: var(--txt2); }
+  .fnav.act { background: rgba(59,130,246,.12); color: var(--blue2); font-weight: 500; position: relative; }
+  .fnav.act::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 18px; background: var(--blue); border-radius: 0 3px 3px 0; }
+
+  .fbadge { margin-left: auto; background: linear-gradient(135deg,#3b82f6,#8b5cf6); color: #fff; font-size: 8px; font-family: var(--mono); padding: 2px 6px; border-radius: 8px; }
+
+  .fuser { display: flex; align-items: center; gap: 8px; padding: 10px; border-radius: 8px; margin-top: auto; border-top: 1px solid var(--b); padding-top: 14px; }
+  .favatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg,#3b82f6,#8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; font-family: var(--disp); flex-shrink: 0; color: #fff; }
+  .funame { font-size: 12px; font-weight: 500; }
+  .fuplan { font-size: 9px; font-family: var(--mono); color: var(--yel); letter-spacing: .4px; }
+
+  .full-content { padding: 24px; overflow: hidden; background: var(--bg2); }
+
+  /* Shared mockup atoms */
+  .ftopbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+  .ftopbar h3 { font-family: var(--disp); font-size: 16px; font-weight: 700; letter-spacing: -.3px; }
+
+  .fstats { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
+  .fstat { background: var(--bg3); border: 1px solid var(--b); border-radius: 9px; padding: 14px; position: relative; overflow: hidden; }
+  .fstat::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg,transparent,var(--blue),transparent); opacity: 0; transition: opacity .2s; }
+  .fstat:hover::before { opacity: .4; }
+  .fstat-lbl { font-size: 9px; font-family: var(--mono); color: var(--txt3); letter-spacing: .7px; text-transform: uppercase; margin-bottom: 7px; }
+  .fstat-val { font-family: var(--disp); font-size: 22px; font-weight: 700; letter-spacing: -.3px; }
+  .fstat-sub { font-size: 10px; color: var(--txt3); margin-top: 5px; display: flex; gap: 5px; }
+  .fup { color: var(--green); background: rgba(16,185,129,.1); font-family: var(--mono); font-size: 9px; padding: 1.5px 5px; border-radius: 3px; }
+  .fdn { color: var(--red); background: rgba(239,68,68,.1); font-family: var(--mono); font-size: 9px; padding: 1.5px 5px; border-radius: 3px; }
+  .text-g { color: var(--green); }
+  .text-b { color: var(--blue2); }
+  .text-r { color: var(--red); }
+
+  .fcard { background: var(--card); border: 1px solid var(--b); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+  .fcard-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .fcard-t { font-family: var(--disp); font-size: 12px; font-weight: 600; letter-spacing: -.1px; }
+  .fgrid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+
+  .btn-p { background: var(--blue); color: #fff; padding: 13px 26px; border-radius: 9px; font-size: 14px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 0 28px rgba(59,130,246,.4); transition: all .2s; border: none; cursor: pointer; font-family: var(--disp); }
+  .btn-p:hover { background: var(--blue2); transform: translateY(-2px); box-shadow: 0 0 44px rgba(59,130,246,.55); }
+
+  /* Mobile */
+  @media (max-width: 767px) {
+    .full-sidebar { display: none; }
+    .full-body { grid-template-columns: 1fr; min-height: unset; }
+    .full-content { padding: 14px; }
+    .fstats { grid-template-columns: repeat(2,1fr); }
+    .fstat-val { font-size: 18px; }
+    .fgrid2 { grid-template-columns: 1fr; }
+  }
+</style>

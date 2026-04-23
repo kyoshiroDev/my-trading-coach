@@ -1,0 +1,97 @@
+---
+---
+<div class="ftopbar">
+  <div>
+    <h3>Bonjour, Alexandre 👋</h3>
+    <div style="font-size:12px;color:var(--txt3);margin-top:3px">Voici un résumé de ton activité de trading</div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="btn-p" style="font-size:12px;padding:7px 14px">⚡ Ajouter trade</button>
+  </div>
+</div>
+
+<div class="fstats">
+  <div class="fstat"><div class="fstat-lbl">P&L Total</div><div class="fstat-val text-g">+$8,420</div><div class="fstat-sub"><span class="fup">▲ +12.3%</span><span>ce mois</span></div></div>
+  <div class="fstat"><div class="fstat-lbl">Win Rate</div><div class="fstat-val text-b">67.4%</div><div class="fstat-sub"><span class="fup">▲ +3.2%</span><span>vs préc.</span></div></div>
+  <div class="fstat"><div class="fstat-lbl">Drawdown</div><div class="fstat-val text-r">-$1,240</div><div class="fstat-sub"><span class="fdn">▼ -4.8%</span><span>sur cap.</span></div></div>
+  <div class="fstat"><div class="fstat-lbl">Trades</div><div class="fstat-val">142</div><div class="fstat-sub"><span class="fup">▲ +18</span><span>sem.</span></div></div>
+</div>
+
+<!-- Equity Curve -->
+<div class="fcard">
+  <div class="fcard-h">
+    <div class="fcard-t">Equity Curve</div>
+    <div style="display:flex;gap:10px">
+      <span style="font-size:10px;color:var(--blue2);font-family:var(--mono);cursor:pointer">3M</span>
+      <span style="font-size:10px;color:var(--txt3);font-family:var(--mono)">All</span>
+    </div>
+  </div>
+  <svg width="100%" height="80" viewBox="0 0 600 80" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="ecg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#3b82f6" stop-opacity=".25"/>
+        <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="M0,78 C30,72 60,65 100,55 C140,45 160,40 190,32 C220,24 240,36 265,28 C290,20 315,13 345,9 C375,5 395,13 425,9 C455,5 485,3 525,2 C555,1 578,1 600,1" fill="none" stroke="#3b82f6" stroke-width="2"/>
+    <path d="M0,78 C30,72 60,65 100,55 C140,45 160,40 190,32 C220,24 240,36 265,28 C290,20 315,13 345,9 C375,5 395,13 425,9 C455,5 485,3 525,2 C555,1 578,1 600,1 L600,80 L0,80Z" fill="url(#ecg)"/>
+    <circle cx="600" cy="1" r="4" fill="#3b82f6"/>
+  </svg>
+</div>
+
+<!-- Win Rate + Emotions -->
+<div class="fgrid2">
+  <div class="fcard" style="margin:0">
+    <div class="fcard-h"><div class="fcard-t">Win Rate / stratégie</div></div>
+    <div style="display:flex;gap:14px;align-items:center">
+      <svg width="72" height="72" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="38" fill="none" stroke="#111b2e" stroke-width="10"/>
+        <circle cx="50" cy="50" r="38" fill="none" stroke="#10b981" stroke-width="10" stroke-dasharray="160 79" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+        <circle cx="50" cy="50" r="38" fill="none" stroke="#3b82f6" stroke-width="10" stroke-dasharray="57 182" stroke-dashoffset="-160" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+        <circle cx="50" cy="50" r="38" fill="none" stroke="#ef4444" stroke-width="10" stroke-dasharray="22 217" stroke-dashoffset="-217" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+        <text x="50" y="54" text-anchor="middle" font-family="Syne" font-weight="700" font-size="16" fill="#e2eaf5">67%</text>
+      </svg>
+      <div style="flex:1;display:flex;flex-direction:column;gap:7px;font-size:11px">
+        <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0"></div>Breakout<span style="margin-left:auto;font-family:var(--mono);color:var(--txt)">74%</span></div>
+        <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:var(--blue);flex-shrink:0"></div>Pullback<span style="margin-left:auto;font-family:var(--mono);color:var(--txt)">62%</span></div>
+        <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:var(--yel);flex-shrink:0"></div>Range<span style="margin-left:auto;font-family:var(--mono);color:var(--txt)">58%</span></div>
+        <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0"></div>Reversal<span style="margin-left:auto;font-family:var(--mono);color:var(--txt)">41%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fcard" style="margin:0">
+    <div class="fcard-h"><div class="fcard-t">États émotionnels</div></div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>😤 Revenge</span><span style="font-family:var(--mono);font-size:10px;color:var(--txt3)">23%</span></div><div style="height:5px;background:var(--bg3);border-radius:3px"><div style="width:23%;height:100%;background:var(--red);border-radius:3px"></div></div></div>
+      <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>😰 Stress</span><span style="font-family:var(--mono);font-size:10px;color:var(--txt3)">31%</span></div><div style="height:5px;background:var(--bg3);border-radius:3px"><div style="width:31%;height:100%;background:var(--yel);border-radius:3px"></div></div></div>
+      <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>😌 Confiant</span><span style="font-family:var(--mono);font-size:10px;color:var(--txt3)">68%</span></div><div style="height:5px;background:var(--bg3);border-radius:3px"><div style="width:68%;height:100%;background:var(--blue);border-radius:3px"></div></div></div>
+      <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>🎯 Focus</span><span style="font-family:var(--mono);font-size:10px;color:var(--txt3)">52%</span></div><div style="height:5px;background:var(--bg3);border-radius:3px"><div style="width:52%;height:100%;background:var(--green);border-radius:3px"></div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Derniers trades -->
+<div style="display:flex;flex-direction:column;gap:6px">
+  <div style="display:flex;align-items:center;gap:9px;background:var(--bg3);border:1px solid var(--b);border-radius:8px;padding:9px 12px;font-size:11px">
+    <span style="background:rgba(16,185,129,.12);color:var(--green);font-family:var(--mono);font-size:9px;padding:2.5px 6px;border-radius:3px;flex-shrink:0">LONG</span>
+    <span style="color:var(--blue2);font-family:var(--mono);min-width:60px;font-weight:500">BTC/USDT</span>
+    <span style="color:var(--txt3);flex:1;font-size:10px">Breakout · London</span>
+    <span style="font-size:12px">😌</span>
+    <span style="color:var(--green);font-family:var(--mono);font-weight:500;font-size:12px">+$1 400</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:9px;background:var(--bg3);border:1px solid var(--b);border-radius:8px;padding:9px 12px;font-size:11px">
+    <span style="background:rgba(239,68,68,.12);color:var(--red);font-family:var(--mono);font-size:9px;padding:2.5px 6px;border-radius:3px;flex-shrink:0">SHORT</span>
+    <span style="color:var(--blue2);font-family:var(--mono);min-width:60px;font-weight:500">EUR/USD</span>
+    <span style="color:var(--txt3);flex:1;font-size:10px">Pullback · NY</span>
+    <span style="font-size:12px">😤</span>
+    <span style="color:var(--red);font-family:var(--mono);font-weight:500;font-size:12px">-$280</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:9px;background:var(--bg3);border:1px solid var(--b);border-radius:8px;padding:9px 12px;font-size:11px">
+    <span style="background:rgba(16,185,129,.12);color:var(--green);font-family:var(--mono);font-size:9px;padding:2.5px 6px;border-radius:3px;flex-shrink:0">LONG</span>
+    <span style="color:var(--blue2);font-family:var(--mono);min-width:60px;font-weight:500">ETH/USDT</span>
+    <span style="color:var(--txt3);flex:1;font-size:10px">Range · Asian</span>
+    <span style="font-size:12px">🎯</span>
+    <span style="color:var(--green);font-family:var(--mono);font-weight:500;font-size:12px">+$620</span>
+  </div>
+</div>

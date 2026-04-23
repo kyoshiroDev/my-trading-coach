@@ -1,0 +1,64 @@
+---
+---
+<div class="ai-banner">
+  <div class="ai-banner-icon">🤖</div>
+  <div>
+    <div class="ai-banner-t">IA d'analyse — Powered by Claude</div>
+    <div class="ai-banner-d">Analyse comportementale et patterns cachés détectés dans 142 trades.</div>
+  </div>
+  <button class="btn-p" style="font-size:11px;padding:7px 14px;margin-left:auto;flex-shrink:0">⚡ Générer insights</button>
+</div>
+
+<div class="fgrid2">
+  <div style="display:flex;flex-direction:column;gap:0">
+    <div style="font-family:var(--disp);font-size:12px;font-weight:600;margin-bottom:10px">🎯 Insights personnalisés</div>
+    <div class="insight-row">
+      <div class="i-ico" style="background:rgba(239,68,68,.1)">🔴</div>
+      <div style="flex:1"><div class="i-t">Pattern : Revenge Trading détecté</div><div class="i-d">Après 2 pertes consécutives, ton taux de perte grimpe à 78%.</div></div>
+      <span class="i-tag" style="background:rgba(239,68,68,.1);color:var(--red)">CRITIQUE</span>
+    </div>
+    <div class="insight-row">
+      <div class="i-ico" style="background:rgba(245,158,11,.1)">⚠️</div>
+      <div style="flex:1"><div class="i-t">Soirée : performances dégradées</div><div class="i-d">Entre 20h et 23h, win rate = 38%. Tes meilleurs trades sont avant 16h.</div></div>
+      <span class="i-tag" style="background:rgba(245,158,11,.1);color:var(--yel)">TIMING</span>
+    </div>
+    <div class="insight-row">
+      <div class="i-ico" style="background:rgba(16,185,129,.1)">✅</div>
+      <div style="flex:1"><div class="i-t">Setup Breakout : ton point fort</div><div class="i-d">74% win rate sur les breakouts avec confirmation volume.</div></div>
+      <span class="i-tag" style="background:rgba(16,185,129,.1);color:var(--green)">FORCE</span>
+    </div>
+    <div class="insight-row">
+      <div class="i-ico" style="background:rgba(59,130,246,.1)">💡</div>
+      <div style="flex:1"><div class="i-t">Taille de position inconstante</div><div class="i-d">Tu augmentes ton risk après une série positive. Overconfidence détectée.</div></div>
+      <span class="i-tag" style="background:rgba(59,130,246,.1);color:var(--blue2)">RISQUE</span>
+    </div>
+  </div>
+
+  <div class="fcard" style="margin:0">
+    <div class="fcard-h"><div class="fcard-t">💬 Coach IA</div></div>
+    <div style="background:var(--bg3);border-radius:9px;padding:12px;border:1px solid var(--b);margin-bottom:12px">
+      <div style="font-size:11px;font-weight:600;color:var(--blue2);font-family:var(--disp);margin-bottom:6px">🤖 MyTradingCoach</div>
+      <div style="font-size:12px;color:var(--txt2);line-height:1.7">Analyse de tes 142 trades complète. Je détecte 3 patterns comportementaux. Ta principale faiblesse : le <strong style="color:var(--red)">revenge trading</strong> post-perte. Veux-tu un plan d'amélioration ?</div>
+    </div>
+    <div style="background:rgba(16,185,129,.05);border-radius:9px;padding:10px 12px;border:1px solid rgba(16,185,129,.1);margin-bottom:12px;text-align:right">
+      <div style="font-size:11px;font-weight:600;color:var(--green);margin-bottom:4px">Toi</div>
+      <div style="font-size:12px;color:var(--txt2)">Pourquoi je perds autant après une série de pertes ?</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <input type="text" placeholder="Pose une question à ton coach..." style="flex:1;background:var(--bg3);border:1px solid var(--b);border-radius:8px;padding:8px 11px;color:var(--txt);font-size:12px;font-family:var(--body);outline:none" />
+      <button class="btn-p" style="font-size:12px;padding:8px 14px">→</button>
+    </div>
+  </div>
+</div>
+
+<style is:global>
+  .ai-banner { background:linear-gradient(135deg,rgba(59,130,246,.1),rgba(139,92,246,.1)); border:1px solid rgba(139,92,246,.2); border-radius:10px; padding:14px 16px; display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  .ai-banner-icon { font-size:22px; flex-shrink:0; }
+  .ai-banner-t { font-family:var(--disp); font-size:13px; font-weight:600; margin-bottom:3px; }
+  .ai-banner-d { font-size:11px; color:var(--txt2); line-height:1.5; }
+  .insight-row { display:flex; gap:10px; padding:10px 12px; background:var(--bg3); border:1px solid var(--b); border-radius:8px; margin-bottom:7px; }
+  .i-ico { width:28px; height:28px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }
+  .i-t { font-size:12px; font-weight:500; margin-bottom:2px; }
+  .i-d { font-size:11px; color:var(--txt3); line-height:1.5; }
+  .i-tag { font-size:9px; font-family:var(--mono); padding:2px 6px; border-radius:3px; align-self:flex-start; margin-top:1px; flex-shrink:0; }
+</style>

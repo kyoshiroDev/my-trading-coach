@@ -120,6 +120,15 @@
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .grid-full { grid-column: 1 / -1; }
 
+/* ─── Four-col row (equity · trades · winrate · emotions) ─── */
+.four-col-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+  align-items: stretch;
+}
+
 /* ─── Card ─── */
 .card {
   background: var(--bg-card);
@@ -170,7 +179,7 @@
 .chart-filter:hover { color: var(--text-2); }
 
 /* ─── Chart container ─── */
-.chart-container { position: relative; height: 160px; }
+.chart-container { position: relative; height: 120px; }
 canvas { width: 100% !important; height: 100% !important; }
 
 .empty-chart {
@@ -257,26 +266,19 @@ canvas { width: 100% !important; height: 100% !important; }
   margin-top: 4px;
 }
 
-/* ─── Equity + Trades row ─── */
-.equity-trades-row {
-  display: grid;
-  grid-template-columns: 3fr 1fr;
-  gap: 16px;
-  align-items: stretch;
-}
-
-.equity-trades-row .card {
+/* ─── Equity card ─── */
+.equity-card {
   display: flex;
   flex-direction: column;
 }
 
-.equity-trades-row .chart-container {
+.equity-card .chart-container {
   flex: 1;
   height: auto;
   min-height: 80px;
 }
 
-/* ─── Recent trades compact (colonne 1/4) ─── */
+/* ─── Recent trades compact ─── */
 .recent-trades-card { display: flex; flex-direction: column; }
 
 .trade-list-compact {

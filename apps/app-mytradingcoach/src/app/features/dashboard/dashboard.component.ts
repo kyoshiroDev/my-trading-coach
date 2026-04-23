@@ -148,11 +148,11 @@ interface EquityPoint { date: string; cumulativePnl: number; }
         </div>
       }
 
-      <!-- Equity Curve + Derniers trades -->
-      <div class="equity-trades-row" style="margin-bottom:16px">
+      <!-- Equity · Trades · Winrate · Emotions — même ligne -->
+      <div class="four-col-row">
 
-        <!-- Equity Curve — 3/4 -->
-        <div class="card">
+        <!-- Equity Curve -->
+        <div class="card equity-card">
           <div class="card-header">
             <div class="card-title">Equity Curve</div>
             <div style="display:flex;gap:12px;align-items:center">
@@ -163,7 +163,7 @@ interface EquityPoint { date: string; cumulativePnl: number; }
             </div>
           </div>
           <div class="chart-container">
-            <canvas #equityCanvas width="900" height="160"></canvas>
+            <canvas #equityCanvas style="width:100%;height:100%;display:block;position:absolute;inset:0;"></canvas>
             @if (!userStore.isPremium() || equityCurve().length === 0) {
               <div class="empty-chart">
                 @if (!userStore.isPremium()) { Courbe disponible en Premium }
@@ -173,13 +173,12 @@ interface EquityPoint { date: string; cumulativePnl: number; }
           </div>
         </div>
 
-        <!-- Derniers trades — 1/4 -->
+        <!-- Derniers trades -->
         <div class="card recent-trades-card">
           <div class="card-header">
             <div class="card-title">Derniers trades</div>
             <a routerLink="/journal" class="card-action">Voir →</a>
           </div>
-
           @if (tradesStore.trades$().length === 0) {
             <div class="empty-state">
               <p>Aucun trade</p>
@@ -190,43 +189,28 @@ interface EquityPoint { date: string; cumulativePnl: number; }
               @for (trade of tradesStore.trades$().slice(0, 4); track trade.id) {
                 <div class="trade-row-compact">
                   <div class="trade-row-top">
-                    <span class="trade-side" [class]="trade.side === 'LONG' ? 'long' : 'short'">
-                      {{ trade.side }}
-                    </span>
+                    <span class="trade-side" [class]="trade.side === 'LONG' ? 'long' : 'short'">{{ trade.side }}</span>
                     <span class="trade-asset-compact">{{ trade.asset }}</span>
                     <span class="trade-emotion">{{ trade.emotion | emotionEmoji }}</span>
                   </div>
                   <div class="trade-row-bottom">
                     <span class="trade-setup-compact">{{ trade.setup }}</span>
-                    <span class="trade-pnl" [style.color]="trade.pnl | pnlColor">
-                      {{ trade.pnl | pnlFormat:trade.entry }}
-                    </span>
+                    <span class="trade-pnl" [style.color]="trade.pnl | pnlColor">{{ trade.pnl | pnlFormat:trade.entry }}</span>
                   </div>
                 </div>
               }
             </div>
           }
         </div>
-      </div>
 
-      <!-- Trade form modal -->
-      <mtc-trade-form
-        [open]="showTradeForm()"
-        [isSaving]="isSavingTrade()"
-        (dismissed)="showTradeForm.set(false)"
-        (formSave)="saveTrade($event)"
-      />
-
-      <!-- Win Rate + Emotions -->
-      <div class="grid-2" style="margin-bottom:16px">
-        <!-- Win Rate Donut -->
+        <!-- Win Rate par stratégie -->
         <div class="card">
           <div class="card-header">
-            <div class="card-title">Win Rate par stratégie</div>
-            <a routerLink="/analytics" class="card-action">Tout voir →</a>
+            <div class="card-title">Win Rate / stratégie</div>
+            <a routerLink="/analytics" class="card-action">Voir →</a>
           </div>
           <div class="donut-wrap">
-            <svg class="donut-svg" width="100" height="100" viewBox="0 0 100 100">
+            <svg class="donut-svg" width="80" height="80" viewBox="0 0 100 100">
               <circle cx="50" cy="50" r="38" fill="none" stroke="var(--bg-3)" stroke-width="12"/>
               @for (seg of segments(); track seg.label) {
                 <circle cx="50" cy="50" r="38" fill="none"
@@ -262,7 +246,7 @@ interface EquityPoint { date: string; cumulativePnl: number; }
           </div>
         </div>
 
-        <!-- Emotion bars -->
+        <!-- États émotionnels -->
         <div class="card">
           <div class="card-header">
             <div class="card-title">États émotionnels</div>
@@ -296,6 +280,14 @@ interface EquityPoint { date: string; cumulativePnl: number; }
           </div>
         </div>
       </div>
+
+      <!-- Trade form modal -->
+      <mtc-trade-form
+        [open]="showTradeForm()"
+        [isSaving]="isSavingTrade()"
+        (dismissed)="showTradeForm.set(false)"
+        (formSave)="saveTrade($event)"
+      />
     </div>
   `,
 })
@@ -422,35 +414,56 @@ export class DashboardComponent implements AfterViewInit {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const W = canvas.width;
-    const H = canvas.height;
+    // DPR — sharp on retina screens
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = canvas.offsetWidth || 900;
+    const cssH = canvas.offsetHeight || 160;
+    canvas.width = cssW * dpr;
+    canvas.height = cssH * dpr;
+    ctx.scale(dpr, dpr);
+
+    const W = cssW;
+    const H = cssH;
     const PAD = { top: 10, right: 20, bottom: 20, left: 10 };
     const cW = W - PAD.left - PAD.right;
     const cH = H - PAD.top - PAD.bottom;
 
     ctx.clearRect(0, 0, W, H);
 
-    const values = points.map((p) => p.cumulativePnl);
+    // Prepend 0 so the curve always starts from the baseline
+    const values = [0, ...points.map((p) => p.cumulativePnl)];
     const minV = Math.min(0, ...values);
     const maxV = Math.max(0, ...values);
     const range = maxV - minV || 1;
 
-    const toX = (i: number) => PAD.left + (i / (points.length - 1)) * cW;
+    const toX = (i: number) => PAD.left + (i / (values.length - 1)) * cW;
     const toY = (v: number) => PAD.top + cH - ((v - minV) / range) * cH;
 
     const lastVal = values[values.length - 1] ?? 0;
     const rgb = lastVal >= 0 ? '59,130,246' : '239,68,68';
 
+    // Smooth monotone bezier path
+    const smoothPath = (vs: number[], closePath: boolean) => {
+      ctx.moveTo(toX(0), toY(vs[0]));
+      for (let i = 1; i < vs.length; i++) {
+        const x0 = toX(i - 1), y0 = toY(vs[i - 1]);
+        const x1 = toX(i),     y1 = toY(vs[i]);
+        const cpx = (x0 + x1) / 2;
+        ctx.bezierCurveTo(cpx, y0, cpx, y1, x1, y1);
+      }
+      if (closePath) {
+        ctx.lineTo(toX(vs.length - 1), PAD.top + cH);
+        ctx.lineTo(toX(0), PAD.top + cH);
+        ctx.closePath();
+      }
+    };
+
     // Fill gradient
     const grad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + cH);
-    grad.addColorStop(0, `rgba(${rgb},0.3)`);
+    grad.addColorStop(0, `rgba(${rgb},0.25)`);
     grad.addColorStop(1, `rgba(${rgb},0)`);
     ctx.beginPath();
-    ctx.moveTo(toX(0), toY(values[0]));
-    values.forEach((v, i) => { if (i > 0) ctx.lineTo(toX(i), toY(v)); });
-    ctx.lineTo(toX(values.length - 1), PAD.top + cH);
-    ctx.lineTo(toX(0), PAD.top + cH);
-    ctx.closePath();
+    smoothPath(values, true);
     ctx.fillStyle = grad;
     ctx.fill();
 
@@ -458,7 +471,9 @@ export class DashboardComponent implements AfterViewInit {
     ctx.beginPath();
     ctx.strokeStyle = lastVal >= 0 ? '#3b82f6' : '#ef4444';
     ctx.lineWidth = 2;
-    values.forEach((v, i) => { if (i === 0) ctx.moveTo(toX(0), toY(v)); else ctx.lineTo(toX(i), toY(v)); });
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    smoothPath(values, false);
     ctx.stroke();
   }
 
