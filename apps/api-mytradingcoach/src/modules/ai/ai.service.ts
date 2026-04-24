@@ -132,7 +132,7 @@ export class AiService implements OnModuleDestroy {
       where: { userId },
       orderBy: { tradedAt: 'desc' },
       take: 30,
-      select: { asset: true, side: true, pnl: true, emotion: true, setup: true, tradedAt: true },
+      select: { asset: true, side: true, pnl: true, emotion: true, setup: true, session: true, tradedAt: true },
     });
 
     const contextText = `Contexte trader :\n${this.buildTradesSummary(recentTrades)}`;
