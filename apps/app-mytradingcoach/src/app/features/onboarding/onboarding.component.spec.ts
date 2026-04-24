@@ -36,7 +36,7 @@ describe('OnboardingComponent', () => {
     }).compileComponents();
   });
 
-  it('affiche le wizard à l'étape 1 par défaut', () => {
+  it('affiche le wizard a la step 1 par defaut', () => {
     const fixture = TestBed.createComponent(OnboardingComponent);
     fixture.detectChanges();
 
@@ -44,7 +44,7 @@ describe('OnboardingComponent', () => {
     expect(text).toContain('Quel marché trades-tu');
   });
 
-  it('le bouton Continuer est désactivé sans sélection de marché', () => {
+  it('le bouton Continuer est desactive sans selection de marche', () => {
     const fixture = TestBed.createComponent(OnboardingComponent);
     fixture.detectChanges();
 
@@ -52,7 +52,7 @@ describe('OnboardingComponent', () => {
     expect(btn.disabled).toBe(true);
   });
 
-  it('le bouton Continuer s'active après sélection de marché', fakeAsync(() => {
+  it('le bouton Continuer s active apres selection de marche', fakeAsync(() => {
     const fixture = TestBed.createComponent(OnboardingComponent);
     fixture.detectChanges();
 
@@ -65,7 +65,7 @@ describe('OnboardingComponent', () => {
     expect(btn.disabled).toBe(false);
   }));
 
-  it('passe à l'étape 2 après nextStep()', fakeAsync(() => {
+  it('passe a step 2 apres nextStep()', fakeAsync(() => {
     const fixture = TestBed.createComponent(OnboardingComponent);
     fixture.detectChanges();
 
@@ -82,7 +82,7 @@ describe('OnboardingComponent', () => {
     expect(text).toContain('objectif principal');
   }));
 
-  it('le bouton Continuer est désactivé à l'étape 2 sans sélection d'objectif', fakeAsync(() => {
+  it('le bouton Continuer est desactive a step 2 sans selection objectif', fakeAsync(() => {
     const fixture = TestBed.createComponent(OnboardingComponent);
     fixture.detectChanges();
 
@@ -99,7 +99,7 @@ describe('OnboardingComponent', () => {
     expect(btn.disabled).toBe(true);
   }));
 
-  it('affiche TradeFormComponent à l'étape 3', fakeAsync(() => {
+  it('affiche TradeFormComponent a step 3', fakeAsync(() => {
     const fixture = TestBed.createComponent(OnboardingComponent);
     fixture.detectChanges();
 
@@ -122,7 +122,7 @@ describe('OnboardingComponent', () => {
     expect(tradeForm).toBeTruthy();
   }));
 
-  it('skip() appelle completeOnboarding avec null', fakeAsync(() => {
+  it('skip appelle completeOnboarding avec null', fakeAsync(() => {
     const fixture = TestBed.createComponent(OnboardingComponent);
     fixture.detectChanges();
 

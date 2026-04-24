@@ -74,7 +74,7 @@ describe('ResendService', () => {
   });
 
   describe('sendRenewalReminder', () => {
-    it('envoie un email avec la date d'expiration', async () => {
+    it("envoie un email avec la date d'expiration", async () => {
       const expiresAt = new Date('2026-05-01');
 
       await service.sendRenewalReminder({
