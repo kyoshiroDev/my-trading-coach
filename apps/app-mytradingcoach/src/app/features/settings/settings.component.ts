@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy, Component, OnInit, inject, signal,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
@@ -16,7 +15,7 @@ import type { UpdatePreferencesDto } from '../../core/api/users.api';
 @Component({
   selector: 'mtc-settings',
   standalone: true,
-  imports: [TopbarComponent, FormsModule, DatePipe],
+  imports: [TopbarComponent, DatePipe],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,16 +31,27 @@ export class SettingsComponent implements OnInit {
     this.route.queryParamMap.pipe(map((p) => p.get('checkout'))),
   );
 
+  // Compte — nom
   protected readonly editingName = signal(false);
   protected readonly nameInput = signal('');
   protected readonly isSavingName = signal(false);
 
+  // Compte — email
+  protected readonly editingEmail = signal(false);
+  protected readonly emailInput = signal('');
+  protected readonly isSavingEmail = signal(false);
+
+  // Compte — mot de passe
+  protected readonly passwordResetSent = signal(false);
+
+  // Préférences
   protected readonly prefCurrency = signal<'USD' | 'EUR' | 'GBP'>('USD');
   protected readonly prefNotifications = signal(true);
   protected readonly prefDebrief = signal(true);
   protected readonly isSavingPrefs = signal(false);
   protected readonly prefSaved = signal(false);
 
+  // Danger
   protected readonly showDeleteConfirm = signal(false);
   protected readonly deleteInput = signal('');
   protected readonly isDeleting = signal(false);
@@ -70,6 +80,26 @@ export class SettingsComponent implements OnInit {
     });
   }
 
+  protected startEditEmail() {
+    this.emailInput.set(this.userStore.user()?.email ?? '');
+    this.editingEmail.set(true);
+  }
+
+  protected saveEmail() {
+    const email = this.emailInput().trim();
+    if (!email) return;
+    this.isSavingEmail.set(true);
+    this.usersApi.updateMe({ email }).subscribe({
+      next: (res) => {
+        this.auth.currentUser.set(res.data);
+        localStorage.setItem('user', JSON.stringify(res.data));
+        this.editingEmail.set(false);
+        this.isSavingEmail.set(false);
+      },
+      error: () => { this.isSavingEmail.set(false); },
+    });
+  }
+
   protected startEditName() {
     this.nameInput.set(this.userStore.user()?.name ?? '');
     this.editingName.set(true);
@@ -88,6 +118,11 @@ export class SettingsComponent implements OnInit {
       },
       error: () => { this.isSavingName.set(false); },
     });
+  }
+
+  protected resetPassword() {
+    this.passwordResetSent.set(true);
+    setTimeout(() => this.passwordResetSent.set(false), 4000);
   }
 
   protected savePreferences() {
@@ -113,9 +148,7 @@ export class SettingsComponent implements OnInit {
     if (this.deleteInput() !== 'SUPPRIMER') return;
     this.isDeleting.set(true);
     this.usersApi.deleteMe().subscribe({
-      next: () => {
-        this.auth.logout();
-      },
+      next: () => { this.auth.logout(); },
       error: () => { this.isDeleting.set(false); },
     });
   }
