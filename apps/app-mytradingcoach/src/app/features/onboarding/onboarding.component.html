@@ -31,7 +31,13 @@
                 [class.selected]="selectedMarket() === m.value"
                 (click)="selectMarket(m.value)"
               >
-                <span class="choice-emoji">{{ m.emoji }}</span>
+                <span class="choice-emoji">
+                @if (m.icon) {
+                  <lucide-icon [img]="m.icon" [size]="24" [style.color]="m.iconColor" />
+                } @else {
+                  {{ m.emoji }}
+                }
+              </span>
                 <span class="choice-label">{{ m.label }}</span>
                 <span class="choice-desc">{{ m.desc }}</span>
               </button>

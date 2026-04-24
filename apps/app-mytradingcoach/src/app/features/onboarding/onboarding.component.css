@@ -155,6 +155,10 @@
 .choice-emoji {
   font-size: 22px;
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
 }
 
 .choice-label {

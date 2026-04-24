@@ -7,13 +7,16 @@ import { UsersApi, CompleteOnboardingDto } from '../../core/api/users.api';
 import { TradesApi, CreateTradeDto } from '../../core/api/trades.api';
 import { TradesStore } from '../../core/stores/trades.store';
 import { AuthService } from '../../core/auth/auth.service';
+import { LucideAngularModule, Bitcoin } from 'lucide-angular';
 import { TradeFormComponent } from '../journal/trade-form.component';
 
 type Market = 'CRYPTO' | 'FOREX' | 'ACTIONS' | 'MULTI';
 type Goal = 'DISCIPLINE' | 'PERFORMANCE' | 'PSYCHOLOGIE';
 
-const MARKETS: { value: Market; label: string; emoji: string; desc: string }[] = [
-  { value: 'CRYPTO', label: 'Crypto', emoji: '₿', desc: 'Bitcoin, Ethereum, altcoins' },
+type MarketOption = { value: Market; label: string; emoji?: string; icon?: typeof Bitcoin; iconColor?: string; desc: string };
+
+const MARKETS: MarketOption[] = [
+  { value: 'CRYPTO', label: 'Crypto', icon: Bitcoin, iconColor: '#F7931A', desc: 'Bitcoin, Ethereum, altcoins' },
   { value: 'FOREX', label: 'Forex', emoji: '💱', desc: 'EUR/USD, paires de devises' },
   { value: 'ACTIONS', label: 'Actions', emoji: '📈', desc: 'Actions, ETF, indices' },
   { value: 'MULTI', label: 'Multi-marchés', emoji: '🌐', desc: 'Je trade plusieurs marchés' },
@@ -28,7 +31,7 @@ const GOALS: { value: Goal; label: string; emoji: string; desc: string }[] = [
 @Component({
   selector: 'mtc-onboarding',
   standalone: true,
-  imports: [TradeFormComponent],
+  imports: [LucideAngularModule, TradeFormComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './onboarding.component.html',
   styleUrl: './onboarding.component.css',
