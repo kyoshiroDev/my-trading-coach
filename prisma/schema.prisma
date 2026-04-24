@@ -26,6 +26,16 @@ model User {
   stripeCurrentPeriodEnd   DateTime?
   stripeSubscriptionStatus String? // 'active' | 'trialing' | 'past_due' | 'unpaid' | 'canceled'
 
+  // ── Onboarding ─────────────────────────────────────────────────────────────
+  onboardingCompleted Boolean @default(false)
+  market              String?
+  goal                String?
+
+  // ── Préférences ─────────────────────────────────────────────────────────────
+  currency             String  @default("USD")
+  notificationsEmail   Boolean @default(true)
+  debriefAutomatic     Boolean @default(true)
+
   trades    Trade[]
   debriefs  WeeklyDebrief[]
   createdAt DateTime        @default(now())
