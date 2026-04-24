@@ -12,8 +12,17 @@ import { LucideAngularModule, Plus, Bell } from 'lucide-angular';
       <h1 class="page-title">{{ title() }}</h1>
       <div class="topbar-actions">
         @if (showAddButton()) {
-          <button class="btn btn-primary" (click)="addClick.emit()">
-            <lucide-icon [img]="PlusIcon" [size]="14" />
+          <button
+            class="btn btn-primary"
+            [class.btn-loading]="addLoading()"
+            [disabled]="addDisabled() || addLoading()"
+            (click)="addClick.emit()"
+          >
+            @if (addLoading()) {
+              <span class="btn-spinner"></span>
+            } @else {
+              <lucide-icon [img]="PlusIcon" [size]="14" />
+            }
             {{ addLabel() }}
           </button>
         }
@@ -30,6 +39,8 @@ export class TopbarComponent {
   title = input('');
   showAddButton = input(false);
   addLabel = input('Nouveau');
+  addDisabled = input(false);
+  addLoading = input(false);
   showNotifications = input(false);
   addClick = output<void>();
 

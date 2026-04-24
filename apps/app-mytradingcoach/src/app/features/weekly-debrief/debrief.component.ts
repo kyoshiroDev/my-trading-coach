@@ -45,7 +45,8 @@ function badgeClass(badge: string): string {
     <mtc-topbar
       title="Weekly Debrief"
       [showAddButton]="true"
-      addLabel="Générer le débrief"
+      [addLabel]="isGenerating() ? 'Analyse en cours...' : 'Générer le débrief'"
+      [addLoading]="isGenerating()"
       (addClick)="generateDebrief()"
     />
 
@@ -54,7 +55,13 @@ function badgeClass(badge: string): string {
         <div class="error-msg">{{ error() }}</div>
       }
 
-      @if (isLoading()) {
+      @if (isGenerating()) {
+        <div class="generating-state">
+          <div class="generating-spinner"></div>
+          <p class="generating-title">Analyse en cours...</p>
+          <p class="generating-desc">L'IA analyse tes trades, émotions et patterns de la semaine.</p>
+        </div>
+      } @else if (isLoading()) {
         <div class="loading">Chargement du débrief...</div>
       } @else if (!debrief()) {
         <div class="empty-state">
