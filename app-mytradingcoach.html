@@ -78,7 +78,9 @@
 .trade-asset-compact{font-weight:600;font-size:12px;font-family:var(--font-mono,"DM Mono",monospace);color:var(--blue-bright);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .trade-setup-compact{font-size:10px;color:var(--text-3);font-family:var(--font-mono,"DM Mono",monospace)}
 .trade-pnl-compact{font-family:var(--font-mono,"DM Mono",monospace);font-size:12px;font-weight:500;flex-shrink:0}
-.equity-trades-row{display:grid;grid-template-columns:3fr 1fr;gap:16px;align-items:stretch;margin-bottom:16px}
+.four-col-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:16px;margin-bottom:16px;align-items:stretch}
+.equity-card{display:flex;flex-direction:column}
+.equity-card .chart-container{flex:1;height:auto;min-height:80px}
 
 /* ═══ LOCKED FEATURE (analytics) ═══ */
 .locked-feature{position:relative;border-radius:12px;overflow:hidden;margin-bottom:16px;border:1px solid var(--border)}
@@ -236,68 +238,90 @@
       <!-- ═══ DASHBOARD ═══ -->
       <div id="view-dashboard" class="view active">
         <div class="content">
+          <!-- Greeting -->
           <div class="greeting">
             <h1 class="greeting-title">Bonjour, Grégory 👋</h1>
-            <p class="greeting-sub">Voici un résumé de tes performances</p>
           </div>
 
+          <!-- Premium upsell banner (utilisateurs FREE) -->
+          <div class="premium-banner">
+            <div class="premium-banner-left">
+              <span class="premium-banner-icon">⚡</span>
+              <div>
+                <div class="premium-banner-title">Passe à Premium</div>
+                <div class="premium-banner-sub">Analytics avancés, IA Insights, Weekly Debrief automatique</div>
+              </div>
+            </div>
+            <div class="premium-banner-right">
+              <div class="premium-banner-price">
+                <span class="premium-banner-amount">39€</span><span class="premium-banner-period">/mois</span>
+                <div class="premium-banner-trial">7 jours gratuits · sans CB</div>
+              </div>
+              <button class="premium-banner-btn">Essayer gratuitement</button>
+            </div>
+          </div>
+
+          <!-- Stats row -->
           <div class="stats-row">
             <div class="stat-card">
-              <div class="stat-label">P&L TOTAL</div>
+              <div class="stat-label">P&amp;L Total</div>
               <div class="stat-value text-green">+$9 829,44</div>
               <div class="stat-sub"><span class="change up">▲ +12.3% ce mois</span></div>
               <div class="stat-bg-icon">💰</div>
             </div>
             <div class="stat-card">
-              <div class="stat-label">WIN RATE</div>
-              <div class="stat-value">58.7%</div>
-              <div class="stat-sub"><span class="change up">▲ +3.2% vs mois précédent</span></div>
+              <div class="stat-label">Win Rate</div>
+              <div class="stat-value text-blue">58.7%</div>
+              <div class="stat-sub"><span class="change up">▲ +3.2%</span><span>vs mois précédent</span></div>
               <div class="stat-bg-icon">🎯</div>
             </div>
             <div class="stat-card">
-              <div class="stat-label">DRAWDOWN MAX</div>
-              <div class="stat-value text-red">+$3 732,58</div>
-              <div class="stat-sub"><span class="change down">▼ -4.8% sur capital</span></div>
+              <div class="stat-label">Drawdown Max</div>
+              <div class="stat-value text-red">-$3 732,58</div>
+              <div class="stat-sub"><span class="change down">▼ -4.8%</span><span>sur capital</span></div>
               <div class="stat-bg-icon">📉</div>
             </div>
             <div class="stat-card">
-              <div class="stat-label">TRADES</div>
+              <div class="stat-label">Trades</div>
               <div class="stat-value">104</div>
               <div class="stat-sub"><span class="change up">▲ +1 streak</span></div>
               <div class="stat-bg-icon">🔢</div>
             </div>
           </div>
 
-          <!-- Equity curve + Recent trades compact -->
-          <div class="equity-trades-row">
-            <div class="card">
+          <!-- four-col-row : equity · derniers trades · win rate · émotions -->
+          <div class="four-col-row">
+
+            <!-- Equity Curve -->
+            <div class="card equity-card">
               <div class="card-header">
-                <span class="card-title">Equity Curve</span>
-                <div style="display:flex;gap:8px;align-items:center">
+                <div class="card-title">Equity Curve</div>
+                <div style="display:flex;gap:12px;align-items:center">
                   <span class="chart-filter">1M</span>
                   <span class="chart-filter active">3M</span>
                   <span class="chart-filter">All</span>
-                  <a class="card-action" href="#" onclick="return false">Détails →</a>
+                  <a href="#" onclick="showView('analytics',null);return false" class="card-action">Détails →</a>
                 </div>
               </div>
               <div class="chart-container">
-                <svg width="100%" height="100%" viewBox="0 0 1200 140" preserveAspectRatio="none">
+                <svg width="100%" height="100%" viewBox="0 0 1200 120" preserveAspectRatio="none" style="position:absolute;inset:0">
                   <defs>
-                    <linearGradient id="eg" x1="0" x2="0" y1="0" y2="1">
+                    <linearGradient id="eg2" x1="0" x2="0" y1="0" y2="1">
                       <stop offset="0%" stop-color="#3b82f6" stop-opacity=".25"/>
                       <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
                     </linearGradient>
                   </defs>
-                  <path d="M0,130 C50,125 100,120 150,115 C200,110 220,125 270,118 C320,111 350,108 400,100 C450,92 480,98 530,88 C580,78 610,82 660,70 C710,58 730,62 780,48 C830,34 860,40 910,25 C960,10 990,15 1040,5 L1200,2 L1200,140 L0,140 Z" fill="url(#eg)"/>
-                  <path d="M0,130 C50,125 100,120 150,115 C200,110 220,125 270,118 C320,111 350,108 400,100 C450,92 480,98 530,88 C580,78 610,82 660,70 C710,58 730,62 780,48 C830,34 860,40 910,25 C960,10 990,15 1040,5 L1200,2" fill="none" stroke="#3b82f6" stroke-width="2"/>
+                  <path d="M0,110 C100,100 200,90 300,80 C400,70 500,78 600,60 C700,42 800,38 900,20 C1000,5 1100,8 1200,2 L1200,120 L0,120 Z" fill="url(#eg2)"/>
+                  <path d="M0,110 C100,100 200,90 300,80 C400,70 500,78 600,60 C700,42 800,38 900,20 C1000,5 1100,8 1200,2" fill="none" stroke="#3b82f6" stroke-width="2"/>
                 </svg>
               </div>
             </div>
-            <!-- Recent trades compact column -->
+
+            <!-- Derniers trades -->
             <div class="card recent-trades-card">
               <div class="card-header">
-                <span class="card-title">Derniers trades</span>
-                <a class="card-action" href="#" onclick="showView('journal',null);return false">Tout voir →</a>
+                <div class="card-title">Derniers trades</div>
+                <a href="#" onclick="showView('journal',null);return false" class="card-action">Voir →</a>
               </div>
               <div class="trade-list-compact">
                 <div class="trade-row-compact">
@@ -346,48 +370,58 @@
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Win Rate + Emotions -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-            <!-- Win Rate donut -->
-            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-                <div style="font-family:var(--font-display);font-size:14px;font-weight:600">Win Rate par stratégie</div>
-                <div style="font-size:11px;font-family:var(--font-mono);color:var(--blue-bright);cursor:pointer">Tout voir →</div>
+            <!-- Win Rate / stratégie -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Win Rate / stratégie</div>
+                <a href="#" onclick="showView('analytics',null);return false" class="card-action">Voir →</a>
               </div>
-              <div style="display:flex;align-items:center;gap:20px">
-                <svg width="100" height="100" viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r="38" fill="none" stroke="var(--bg-3)" stroke-width="10"/>
-                  <circle cx="50" cy="50" r="38" fill="none" stroke="#10b981" stroke-width="10" stroke-dasharray="57 182" stroke-dashoffset="0" transform="rotate(-90 50 50)"/>
-                  <circle cx="50" cy="50" r="38" fill="none" stroke="#3b82f6" stroke-width="10" stroke-dasharray="96 182" stroke-dashoffset="-57" transform="rotate(-90 50 50)"/>
-                  <circle cx="50" cy="50" r="38" fill="none" stroke="#ef4444" stroke-width="10" stroke-dasharray="78 182" stroke-dashoffset="-153" transform="rotate(-90 50 50)"/>
-                  <circle cx="50" cy="50" r="38" fill="none" stroke="#8b5cf6" stroke-width="10" stroke-dasharray="84 182" stroke-dashoffset="-231" transform="rotate(-90 50 50)"/>
-                  <text x="50" y="46" text-anchor="middle" font-family="Syne,sans-serif" font-size="16" font-weight="700" fill="var(--text)">59%</text>
-                  <text x="50" y="60" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="var(--text-3)">Win Rate</text>
+              <div class="donut-wrap">
+                <svg class="donut-svg" width="80" height="80" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="38" fill="none" stroke="var(--bg-3)" stroke-width="12"/>
+                  <circle cx="50" cy="50" r="38" fill="none" stroke="#10b981" stroke-width="12" stroke-dasharray="57 182" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+                  <circle cx="50" cy="50" r="38" fill="none" stroke="#3b82f6" stroke-width="12" stroke-dasharray="96 182" stroke-dashoffset="-57" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+                  <circle cx="50" cy="50" r="38" fill="none" stroke="#ef4444" stroke-width="12" stroke-dasharray="78 182" stroke-dashoffset="-153" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+                  <circle cx="50" cy="50" r="38" fill="none" stroke="#8b5cf6" stroke-width="12" stroke-dasharray="29 182" stroke-dashoffset="-231" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+                  <text x="50" y="53" text-anchor="middle" font-family="Syne" font-weight="700" font-size="14" fill="#e2eaf5">59%</text>
                 </svg>
-                <div style="display:flex;flex-direction:column;gap:8px;flex:1">
-                  <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-2)"><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981;margin-right:6px"></span>Breakout</span><span style="font-family:var(--font-mono)">48%</span></div>
-                  <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-2)"><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3b82f6;margin-right:6px"></span>Pullback</span><span style="font-family:var(--font-mono)">80%</span></div>
-                  <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-2)"><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;margin-right:6px"></span>Reversal</span><span style="font-family:var(--font-mono)">65%</span></div>
-                  <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-2)"><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#8b5cf6;margin-right:6px"></span>Scalping</span><span style="font-family:var(--font-mono)">70%</span></div>
+                <div class="donut-legend">
+                  <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>Breakout<span class="legend-val">48%</span></div>
+                  <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>Pullback<span class="legend-val">80%</span></div>
+                  <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Reversal<span class="legend-val">65%</span></div>
+                  <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div>Scalping<span class="legend-val">70%</span></div>
                 </div>
               </div>
             </div>
-            <!-- Emotions -->
-            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-                <div style="font-family:var(--font-display);font-size:14px;font-weight:600">États émotionnels</div>
-                <div style="font-size:11px;font-family:var(--font-mono);color:var(--blue-bright);cursor:pointer">Détails →</div>
+
+            <!-- États émotionnels -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">États émotionnels</div>
+                <a href="#" onclick="showView('analytics',null);return false" class="card-action">Détails →</a>
               </div>
               <div class="emotion-grid">
-                <div class="emotion-row"><div class="emotion-label"><span>😌 Confiance</span><span style="font-family:var(--font-mono)">74%</span></div><div class="bar-track"><div class="bar-fill" style="width:74%;background:var(--green)"></div></div></div>
-                <div class="emotion-row"><div class="emotion-label"><span>😨 Peur</span><span style="font-family:var(--font-mono)">59%</span></div><div class="bar-track"><div class="bar-fill" style="width:59%;background:var(--red)"></div></div></div>
-                <div class="emotion-row"><div class="emotion-label"><span>😰 Stress élevé</span><span style="font-family:var(--font-mono)">50%</span></div><div class="bar-track"><div class="bar-fill" style="width:50%;background:var(--yellow)"></div></div></div>
-                <div class="emotion-row"><div class="emotion-label"><span>😤 Revenge trading</span><span style="font-family:var(--font-mono)">80%</span></div><div class="bar-track"><div class="bar-fill" style="width:80%;background:var(--red)"></div></div></div>
+                <div class="emotion-row">
+                  <div class="emotion-label"><span>😤 Revenge trading</span><span>23%</span></div>
+                  <div class="bar-track"><div class="bar-fill" style="width:23%;background:#ef4444"></div></div>
+                </div>
+                <div class="emotion-row">
+                  <div class="emotion-label"><span>😰 Stress élevé</span><span>31%</span></div>
+                  <div class="bar-track"><div class="bar-fill" style="width:31%;background:#f59e0b"></div></div>
+                </div>
+                <div class="emotion-row">
+                  <div class="emotion-label"><span>😌 Confiance</span><span>68%</span></div>
+                  <div class="bar-track"><div class="bar-fill" style="width:68%;background:#3b82f6"></div></div>
+                </div>
+                <div class="emotion-row">
+                  <div class="emotion-label"><span>🎯 Focus optimal</span><span>52%</span></div>
+                  <div class="bar-track"><div class="bar-fill" style="width:52%;background:#10b981"></div></div>
+                </div>
               </div>
             </div>
-          </div>
+
+          </div><!-- .four-col-row -->
 
         </div>
       </div>
