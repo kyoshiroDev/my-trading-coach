@@ -55,7 +55,6 @@
             [value]="nameInput()"
             (input)="nameInput.set($any($event.target).value)"
             placeholder="Ton nom"
-            autofocus
           />
           <button class="btn-inline-save" (click)="saveName()" [disabled]="isSavingName() || !nameInput().trim()">
             @if (isSavingName()) { … } @else { Sauvegarder }
