@@ -1,7 +1,25 @@
 .content {
   padding: 28px;
-  flex: 1;
-  max-width: 700px;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.col-left,
+.col-right {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 720px) {
+  .settings-grid { grid-template-columns: 1fr; }
 }
 
 .alert {
