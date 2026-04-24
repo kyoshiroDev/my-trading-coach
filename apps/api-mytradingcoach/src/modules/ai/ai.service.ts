@@ -24,7 +24,7 @@ function parseAnthropicJson(raw: string): unknown {
 
   try {
     return JSON.parse(stripped);
-  } catch {}
+  } catch { /* falls through to sanitizer pass */ }
 
   // Second pass: escape literal control chars inside JSON string values
   let inString = false;
