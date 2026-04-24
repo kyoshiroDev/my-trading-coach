@@ -1,6 +1,8 @@
 import {
-  ChangeDetectionStrategy, Component, inject, output, signal,
+  ChangeDetectionStrategy, Component, DestroyRef, inject, output, signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { switchMap, tap } from 'rxjs/operators';
 import { UsersApi, CompleteOnboardingDto } from '../../core/api/users.api';
 import { TradesApi, CreateTradeDto } from '../../core/api/trades.api';
 import { TradesStore } from '../../core/stores/trades.store';
@@ -38,6 +40,7 @@ export class OnboardingComponent {
   private readonly tradesApi = inject(TradesApi);
   private readonly tradesStore = inject(TradesStore);
   private readonly auth = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly MARKETS = MARKETS;
   protected readonly GOALS = GOALS;
@@ -46,15 +49,9 @@ export class OnboardingComponent {
   protected readonly selectedMarket = signal<Market | null>(null);
   protected readonly selectedGoal = signal<Goal | null>(null);
   protected readonly isSaving = signal(false);
-  protected readonly showTradeForm = signal(true);
 
-  protected selectMarket(m: Market) {
-    this.selectedMarket.set(m);
-  }
-
-  protected selectGoal(g: Goal) {
-    this.selectedGoal.set(g);
-  }
+  protected selectMarket(m: Market) { this.selectedMarket.set(m); }
+  protected selectGoal(g: Goal) { this.selectedGoal.set(g); }
 
   protected nextStep() {
     const s = this.step();
@@ -63,30 +60,27 @@ export class OnboardingComponent {
   }
 
   protected skip() {
-    this.finishOnboarding(null, null, null);
+    this.finishOnboarding(null, null);
   }
 
   protected onTradeFormSave(dto: CreateTradeDto) {
     this.isSaving.set(true);
-    const dto2: CompleteOnboardingDto = {
+    const onboardingDto: CompleteOnboardingDto = {
       market: this.selectedMarket(),
       goal: this.selectedGoal(),
     };
-    this.usersApi.completeOnboarding(dto2).subscribe({
-      next: (res) => {
+    this.usersApi.completeOnboarding(onboardingDto).pipe(
+      tap((res) => {
         this.auth.currentUser.set(res.data);
         localStorage.setItem('user', JSON.stringify(res.data));
-        this.tradesApi.create(dto).subscribe({
-          next: () => {
-            this.tradesStore.loadTrades();
-            this.isSaving.set(false);
-            this.completed.emit();
-          },
-          error: () => {
-            this.isSaving.set(false);
-            this.completed.emit();
-          },
-        });
+      }),
+      switchMap(() => this.tradesApi.create(dto)),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
+      next: () => {
+        this.tradesStore.loadTrades();
+        this.isSaving.set(false);
+        this.completed.emit();
       },
       error: () => {
         this.isSaving.set(false);
@@ -96,13 +90,14 @@ export class OnboardingComponent {
   }
 
   protected onTradeFormDismissed() {
-    this.finishOnboarding(this.selectedMarket(), this.selectedGoal(), null);
+    this.finishOnboarding(this.selectedMarket(), this.selectedGoal());
   }
 
-  private finishOnboarding(market: Market | null, goal: Goal | null, _trade: CreateTradeDto | null) {
+  private finishOnboarding(market: Market | null, goal: Goal | null) {
     this.isSaving.set(true);
-    const dto: CompleteOnboardingDto = { market, goal };
-    this.usersApi.completeOnboarding(dto).subscribe({
+    this.usersApi.completeOnboarding({ market, goal }).pipe(
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
       next: (res) => {
         this.auth.currentUser.set(res.data);
         localStorage.setItem('user', JSON.stringify(res.data));
