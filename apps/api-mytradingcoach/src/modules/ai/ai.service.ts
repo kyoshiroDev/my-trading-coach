@@ -9,7 +9,7 @@ import {
 import Anthropic from '@anthropic-ai/sdk';
 import Redis from 'ioredis';
 import { PrismaService } from '../../prisma/prisma.service';
-import { INSIGHTS_SYSTEM_PROMPT, buildInsightsUserPrompt } from './prompts/insights.prompt';
+import { INSIGHTS_SYSTEM_PROMPT, INSIGHTS_USER_PROMPT } from './prompts/insights.prompt';
 import { DEBRIEF_SYSTEM_PROMPT, buildDebriefPrompt } from './prompts/debrief.prompt';
 
 const MODEL = 'claude-sonnet-4-6';
@@ -41,6 +41,16 @@ function parseAnthropicJson(raw: string): unknown {
   }
   return JSON.parse(sanitized);
 }
+
+type TradeSummaryInput = {
+  asset: string;
+  side: string;
+  pnl: number | null;
+  emotion: string;
+  setup: string;
+  session: string;
+  tradedAt: Date;
+};
 
 @Injectable()
 export class AiService implements OnModuleDestroy {
@@ -75,7 +85,7 @@ export class AiService implements OnModuleDestroy {
       },
     });
 
-    const tradesJson = JSON.stringify(trades);
+    const summary = this.buildTradesSummary(trades);
 
     let response: Anthropic.Message;
     try {
@@ -89,8 +99,8 @@ export class AiService implements OnModuleDestroy {
           {
             role: 'user',
             content: [
-              { type: 'text', text: tradesJson, cache_control: { type: 'ephemeral' } },
-              { type: 'text', text: buildInsightsUserPrompt(tradesJson) },
+              { type: 'text', text: summary, cache_control: { type: 'ephemeral' } },
+              { type: 'text', text: INSIGHTS_USER_PROMPT },
             ],
           },
         ],
@@ -125,7 +135,7 @@ export class AiService implements OnModuleDestroy {
       select: { asset: true, side: true, pnl: true, emotion: true, setup: true, tradedAt: true },
     });
 
-    const contextText = `Contexte trader (30 derniers trades) :\n${JSON.stringify(recentTrades)}`;
+    const contextText = `Contexte trader :\n${this.buildTradesSummary(recentTrades)}`;
 
     const messages: Anthropic.MessageParam[] = [
       {
@@ -176,6 +186,47 @@ export class AiService implements OnModuleDestroy {
       this.logger.error('Failed to parse debrief AI response', content.text);
       throw new HttpException('Réponse IA invalide', HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  private buildTradesSummary(trades: TradeSummaryInput[]): string {
+    const closed = trades.filter((t): t is TradeSummaryInput & { pnl: number } => t.pnl !== null);
+    const wins = closed.filter(t => t.pnl > 0);
+    const winRate = closed.length ? (wins.length / closed.length * 100).toFixed(1) : '0';
+    const totalPnl = closed.reduce((s, t) => s + t.pnl, 0).toFixed(2);
+
+    const groupStats = (key: keyof TradeSummaryInput): string => {
+      const groups = trades.reduce<Record<string, TradeSummaryInput[]>>((acc, t) => {
+        const k = String(t[key]);
+        (acc[k] ??= []).push(t);
+        return acc;
+      }, {});
+      return Object.entries(groups)
+        .map(([k, ts]) => {
+          const w = ts.filter(t => (t.pnl ?? 0) > 0).length;
+          return `${k}:${w}W/${ts.length - w}L`;
+        })
+        .join(', ');
+    };
+
+    const top5 = [...closed]
+      .sort((a, b) => Math.abs(b.pnl) - Math.abs(a.pnl))
+      .slice(0, 5)
+      .map(t => `${t.asset} ${t.side} ${t.setup} ${t.emotion} ${t.pnl >= 0 ? '+' : ''}${t.pnl}$`)
+      .join(' | ');
+
+    const sorted = [...trades].sort((a, b) => a.tradedAt.getTime() - b.tradedAt.getTime());
+    let revengeSeq = 0;
+    for (let i = 1; i < sorted.length; i++) {
+      if ((sorted[i - 1].pnl ?? 0) < 0 && sorted[i].emotion === 'REVENGE') revengeSeq++;
+    }
+
+    return `RÉSUMÉ TRADES (${trades.length} total, ${closed.length} clôturés)
+Win Rate: ${winRate}% | PnL: $${totalPnl}
+Par émotion: ${groupStats('emotion')}
+Par setup: ${groupStats('setup')}
+Par session: ${groupStats('session')}
+Séquences revenge (perte→REVENGE): ${revengeSeq}
+Top 5 trades significatifs: ${top5}`;
   }
 
   private handleAnthropicError(err: unknown): never {
