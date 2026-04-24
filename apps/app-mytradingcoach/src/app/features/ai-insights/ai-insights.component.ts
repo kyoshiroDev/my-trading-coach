@@ -43,7 +43,13 @@ function insightVariant(type: string): InsightVariant {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './ai-insights.component.css',
   template: `
-    <mtc-topbar title="IA Insights" [showAddButton]="true" addLabel="Analyser maintenant" (addClick)="loadInsights()" />
+    <mtc-topbar
+      title="IA Insights"
+      [showAddButton]="true"
+      [addLabel]="insightsLoading() ? 'Analyse en cours...' : 'Analyser maintenant'"
+      [addLoading]="insightsLoading()"
+      (addClick)="loadInsights()"
+    />
 
     <div class="content">
       <div class="layout">
