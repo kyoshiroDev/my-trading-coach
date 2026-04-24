@@ -6,6 +6,7 @@ import { AuthUser } from '../auth/auth.service';
 
 export interface UpdateMeDto {
   name?: string;
+  email?: string;
 }
 
 export interface CompleteOnboardingDto {
