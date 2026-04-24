@@ -210,6 +210,110 @@ export function resetPasswordTemplate(params: {
   };
 }
 
+// ── Débrief prêt ────────────────────────────────────────────────────────────
+
+export function debriefReadyTemplate(params: {
+  userName: string;
+  weekNumber: number;
+  winRate: number;
+  totalPnl: number;
+  totalTrades: number;
+  appUrl: string;
+}): { subject: string; html: string } {
+  const { userName, weekNumber, winRate, totalPnl, totalTrades, appUrl } = params;
+  const pnlColor = totalPnl >= 0 ? '#10b981' : '#ef4444';
+  const pnlSign = totalPnl >= 0 ? '+' : '';
+
+  return {
+    subject: `Ton débrief semaine ${weekNumber} est prêt 📅`,
+    html: `
+      <div style="${BASE_STYLE}">
+        <h1 style="color:#e2eaf5; font-size:22px; margin-bottom:8px;">
+          📅 Ton débrief semaine ${weekNumber} est prêt
+        </h1>
+        <p style="color:#8fa3bf; margin-top:0;">MyTradingCoach — Weekly Debrief</p>
+
+        <div style="${CARD_STYLE}">
+          <p>Bonjour ${userName || 'Trader'},</p>
+          <p>Ton analyse de la semaine ${weekNumber} vient d'être générée. Voici un aperçu :</p>
+
+          <div style="display:flex; gap:24px; margin:20px 0; flex-wrap:wrap;">
+            <div style="text-align:center;">
+              <div style="font-size:24px; font-weight:700; color:#60a5fa; font-family:'DM Mono',monospace;">
+                ${winRate.toFixed(1)}%
+              </div>
+              <div style="font-size:12px; color:#8fa3bf; margin-top:4px;">Win Rate</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:24px; font-weight:700; color:${pnlColor}; font-family:'DM Mono',monospace;">
+                ${pnlSign}${totalPnl.toFixed(2)}$
+              </div>
+              <div style="font-size:12px; color:#8fa3bf; margin-top:4px;">P&amp;L</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:24px; font-weight:700; color:#e2eaf5; font-family:'DM Mono',monospace;">
+                ${totalTrades}
+              </div>
+              <div style="font-size:12px; color:#8fa3bf; margin-top:4px;">Trades</div>
+            </div>
+          </div>
+
+          <a href="${appUrl}/debrief" style="${BTN_STYLE}">
+            Voir mon débrief complet →
+          </a>
+        </div>
+
+        <p style="${MUTED_STYLE}">MyTradingCoach — Ton journal de trading intelligent</p>
+      </div>
+    `,
+  };
+}
+
+// ── Rappel renouvellement ────────────────────────────────────────────────────
+
+export function renewalReminderTemplate(params: {
+  userName: string;
+  expiresAt: Date;
+  portalUrl: string;
+}): { subject: string; html: string } {
+  const { userName, expiresAt, portalUrl } = params;
+  const dateStr = expiresAt.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+
+  return {
+    subject: 'Ton abonnement Premium expire dans 7 jours ⚠️',
+    html: `
+      <div style="${BASE_STYLE}">
+        <h1 style="color:#e2eaf5; font-size:22px; margin-bottom:8px;">
+          ⚠️ Ton abonnement expire bientôt
+        </h1>
+        <p style="color:#8fa3bf; margin-top:0;">MyTradingCoach — Facturation</p>
+
+        <div style="${CARD_STYLE}">
+          <p>Bonjour ${userName || 'Trader'},</p>
+          <p>
+            Ton abonnement PREMIUM expire le <strong style="color:#e2eaf5;">${dateStr}</strong>,
+            soit dans <strong>7 jours</strong>.
+          </p>
+          <p style="color:#8fa3bf;">
+            Si tu ne fais rien, tu basculeras automatiquement sur le plan gratuit
+            et perdras l'accès aux analytics avancés, à l'IA Coach et aux Weekly Debriefs.
+          </p>
+          <a href="${portalUrl}" style="${BTN_STYLE}">
+            Renouveler mon abonnement →
+          </a>
+        </div>
+
+        <p style="${MUTED_STYLE}">
+          Pour toute question :
+          <a href="mailto:support@mytradingcoach.app" style="color:#60a5fa;">
+            support@mytradingcoach.app
+          </a>
+        </p>
+      </div>
+    `,
+  };
+}
+
 // ── Bienvenue PREMIUM ────────────────────────────────────────────────────────
 
 export function welcomePremiumTemplate(params: {

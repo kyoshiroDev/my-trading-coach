@@ -6,12 +6,14 @@ import { DebriefCron } from './debrief.cron';
 import { DebriefProcessor } from './debrief.processor';
 import { AiModule } from '../ai/ai.module';
 import { AnalyticsModule } from '../analytics/analytics.module';
+import { ResendModule } from '../resend/resend.module';
 
 @Module({
   imports: [
     BullModule.registerQueue({ name: 'debrief' }),
     AiModule,
     AnalyticsModule,
+    ResendModule,
   ],
   controllers: [DebriefController],
   providers: [DebriefService, DebriefCron, DebriefProcessor],
