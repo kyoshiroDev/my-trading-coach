@@ -126,6 +126,166 @@
 .account-row:last-child{border-bottom:none}
 .account-label{font-size:12px;font-family:var(--font-mono,"DM Mono",monospace);color:var(--text-3);text-transform:uppercase;letter-spacing:.5px}
 .account-value{font-size:13px;color:var(--text-2)}
+
+/* ═══ ONBOARDING WIZARD ═══ */
+#onboarding-wizard {
+  position:fixed;inset:0;background:rgba(8,12,20,.95);
+  backdrop-filter:blur(8px);z-index:1000;
+  display:flex;align-items:center;justify-content:center;padding:24px;
+}
+.wizard-card {
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:16px;width:100%;max-width:520px;overflow:hidden;
+  animation:slideUp .3s ease;
+}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+.wizard-progress {
+  height:3px;background:var(--bg-3);position:relative;
+}
+.wizard-progress-bar {
+  height:100%;background:linear-gradient(90deg,var(--blue),#8b5cf6);
+  border-radius:0 3px 3px 0;transition:width .4s ease;
+}
+.wizard-header {
+  padding:28px 28px 0;text-align:center;
+}
+.wizard-icon {
+  font-size:40px;margin-bottom:12px;display:block;
+}
+.wizard-title {
+  font-family:var(--font-display,"Syne",sans-serif);
+  font-size:20px;font-weight:700;color:var(--text);
+  letter-spacing:-.3px;margin-bottom:8px;
+}
+.wizard-subtitle {
+  font-size:13px;color:var(--text-3);line-height:1.6;
+}
+.wizard-body {
+  padding:24px 28px;
+}
+.wizard-step { display:none; }
+.wizard-step.active { display:block; }
+
+/* Options grille */
+.wizard-options {
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;
+}
+.wizard-option {
+  padding:14px;background:var(--bg-2);border:1px solid var(--border);
+  border-radius:10px;cursor:pointer;text-align:center;
+  transition:all .15s;display:flex;flex-direction:column;gap:6px;align-items:center;
+}
+.wizard-option:hover { border-color:var(--border-hover);background:var(--bg-3); }
+.wizard-option.selected { background:var(--blue-glow);border-color:var(--blue);color:var(--blue-bright); }
+.wizard-option-icon { font-size:22px; }
+.wizard-option-label { font-size:12px;font-weight:500;color:var(--text-2); }
+.wizard-option.selected .wizard-option-label { color:var(--blue-bright); }
+
+/* Objectifs (3 colonnes) */
+.wizard-options.three { grid-template-columns:1fr 1fr 1fr; }
+
+/* Mini trade form */
+.wizard-form { display:flex;flex-direction:column;gap:12px; }
+.wizard-field { display:flex;flex-direction:column;gap:5px; }
+.wizard-label {
+  font-size:11px;font-family:var(--font-mono,"DM Mono",monospace);
+  color:var(--text-3);letter-spacing:.5px;
+}
+.wizard-input {
+  background:var(--bg-2);border:1px solid var(--border);
+  color:var(--text);border-radius:8px;padding:9px 12px;
+  font-size:13px;font-family:var(--font-body,"DM Sans",sans-serif);
+  outline:none;transition:border-color .15s;
+}
+.wizard-input:focus { border-color:var(--blue); }
+.wizard-row { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
+
+.wizard-footer {
+  padding:0 28px 28px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+.wizard-skip {
+  font-size:12px;color:var(--text-3);background:none;border:none;
+  cursor:pointer;font-family:var(--font-body,"DM Sans",sans-serif);
+  transition:color .15s;
+}
+.wizard-skip:hover { color:var(--text-2); }
+.wizard-next {
+  flex:1;background:var(--blue);color:#fff;border:none;
+  border-radius:8px;padding:11px 20px;font-size:13px;font-weight:600;
+  font-family:var(--font-body,"DM Sans",sans-serif);cursor:pointer;
+  transition:all .15s;box-shadow:0 0 20px rgba(59,130,246,.25);
+}
+.wizard-next:hover { background:var(--blue-bright);transform:translateY(-1px); }
+.wizard-next:disabled { opacity:.5;cursor:not-allowed;transform:none; }
+
+.wizard-steps-indicator {
+  display:flex;gap:6px;align-items:center;
+}
+.wizard-dot {
+  width:6px;height:6px;border-radius:50%;
+  background:var(--border);transition:all .2s;
+}
+.wizard-dot.active { background:var(--blue);width:18px;border-radius:3px; }
+.wizard-dot.done { background:var(--green); }
+
+/* ═══ SETTINGS AMÉLIORÉS ═══ */
+.settings-grid { display:grid;grid-template-columns:1fr;gap:24px; }
+.settings-section { display:flex;flex-direction:column;gap:12px; }
+
+.settings-card-row {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;border-bottom:1px solid rgba(99,155,255,.06);gap:16px;
+}
+.settings-card-row:last-child { border-bottom:none; }
+.settings-card-row-left { display:flex;flex-direction:column;gap:3px;flex:1; }
+.settings-card-row-label {
+  font-size:12px;font-family:var(--font-mono,"DM Mono",monospace);
+  color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;
+}
+.settings-card-row-value { font-size:13px;color:var(--text-2); }
+.settings-card-row-hint { font-size:11px;color:var(--text-3);margin-top:2px; }
+
+.settings-edit-btn {
+  background:transparent;border:1px solid var(--border);
+  color:var(--text-3);border-radius:7px;padding:6px 14px;
+  font-size:12px;font-family:var(--font-body,"DM Sans",sans-serif);
+  cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0;
+}
+.settings-edit-btn:hover { border-color:var(--blue);color:var(--blue-bright);background:var(--blue-glow); }
+.settings-edit-btn.danger { border-color:rgba(239,68,68,.3);color:var(--red); }
+.settings-edit-btn.danger:hover { background:var(--red-dim); }
+
+/* Toggle switch */
+.settings-toggle { position:relative;display:inline-block;width:40px;height:22px;cursor:pointer;flex-shrink:0; }
+.settings-toggle input { opacity:0;width:0;height:0; }
+.toggle-track {
+  position:absolute;inset:0;
+  background:var(--bg-3);border:1px solid var(--border);
+  border-radius:22px;transition:all .2s;
+}
+.toggle-track::before {
+  content:'';position:absolute;width:16px;height:16px;
+  left:2px;top:2px;background:var(--text-3);
+  border-radius:50%;transition:all .2s;
+}
+.settings-toggle input:checked + .toggle-track { background:rgba(59,130,246,.2);border-color:var(--blue); }
+.settings-toggle input:checked + .toggle-track::before { transform:translateX(18px);background:var(--blue-bright); }
+
+/* Plan actif badge */
+.plan-active-badge {
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--font-mono,"DM Mono",monospace);font-size:11px;font-weight:600;
+  padding:4px 12px;border-radius:20px;letter-spacing:.5px;margin-bottom:10px;
+}
+.plan-active-badge.premium { background:rgba(59,130,246,.15);color:var(--blue-bright);border:1px solid rgba(59,130,246,.3); }
+.plan-active-badge.free { background:rgba(99,155,255,.08);color:var(--text-3);border:1px solid var(--border); }
+.plan-active-badge::before { content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0; }
+
+.danger-zone-card {
+  background:var(--bg-card);border:1px solid rgba(239,68,68,.2);border-radius:12px;overflow:hidden;
+}
+
 </style>
 </head>
 <body>
@@ -199,6 +359,143 @@
 <!-- ═══════════════════════════════
      APP SHELL
 ═══════════════════════════════ -->
+<!-- ═══ ONBOARDING WIZARD ═══ -->
+<div id="onboarding-wizard">
+  <div class="wizard-card">
+
+    <!-- Header global — logo + skip -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#3b82f6,#8b5cf6)"></div>
+        <span style="font-family:var(--font-display,'Syne',sans-serif);font-size:15px;font-weight:700;color:var(--text)">MyTradingCoach</span>
+      </div>
+      <button class="wizard-skip" onclick="skipWizard()">Passer</button>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="wizard-progress">
+      <div class="wizard-progress-bar" id="wizard-progress-bar" style="width:33%"></div>
+    </div>
+
+    <!-- Step 1 — Marché -->
+    <div class="wizard-step active" id="wizard-step-1">
+      <div class="wizard-body">
+        <div style="font-family:var(--font-mono,'DM Mono',monospace);font-size:10px;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--blue-bright);margin-bottom:10px">Étape 1 sur 3</div>
+        <h2 class="wizard-title" style="text-align:left;font-size:20px;margin-bottom:6px">Quel marché trades-tu ?</h2>
+        <p class="wizard-subtitle" style="text-align:left;margin-bottom:20px">Je vais personnaliser tes insights en fonction de ton marché principal.</p>
+        <div class="wizard-options">
+          <div class="wizard-option" onclick="selectWizardOption(this,'market','CRYPTO')">
+            <span class="wizard-option-icon">₿</span>
+            <span class="wizard-option-label">Crypto</span>
+            <span style="font-size:10px;color:var(--text-3)">Bitcoin, Ethereum, altcoins</span>
+          </div>
+          <div class="wizard-option" onclick="selectWizardOption(this,'market','FOREX')">
+            <span class="wizard-option-icon">💱</span>
+            <span class="wizard-option-label">Forex</span>
+            <span style="font-size:10px;color:var(--text-3)">EUR/USD, paires de devises</span>
+          </div>
+          <div class="wizard-option" onclick="selectWizardOption(this,'market','ACTIONS')">
+            <span class="wizard-option-icon">📈</span>
+            <span class="wizard-option-label">Actions</span>
+            <span style="font-size:10px;color:var(--text-3)">Actions, ETF, indices</span>
+          </div>
+          <div class="wizard-option" onclick="selectWizardOption(this,'market','MULTI')">
+            <span class="wizard-option-icon">🌐</span>
+            <span class="wizard-option-label">Multi-marchés</span>
+            <span style="font-size:10px;color:var(--text-3)">Je trade plusieurs marchés</span>
+          </div>
+        </div>
+      </div>
+      <div class="wizard-footer" style="justify-content:flex-end">
+        <button class="wizard-next" id="wizard-btn-1" disabled onclick="goWizardStep(2)">Continuer →</button>
+      </div>
+    </div>
+
+    <!-- Step 2 — Objectif -->
+    <div class="wizard-step" id="wizard-step-2">
+      <div class="wizard-body">
+        <div style="font-family:var(--font-mono,'DM Mono',monospace);font-size:10px;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--blue-bright);margin-bottom:10px">Étape 2 sur 3</div>
+        <h2 class="wizard-title" style="text-align:left;font-size:20px;margin-bottom:6px">Quel est ton objectif principal ?</h2>
+        <p class="wizard-subtitle" style="text-align:left;margin-bottom:20px">Ton coach IA va se concentrer sur ce qui compte le plus pour toi.</p>
+        <div class="wizard-options" style="grid-template-columns:1fr">
+          <div class="wizard-option" style="flex-direction:row;gap:14px;text-align:left;align-items:center" onclick="selectWizardOption(this,'goal','DISCIPLINE')">
+            <span class="wizard-option-icon">🎯</span>
+            <div><span class="wizard-option-label">Discipline</span><div style="font-size:10px;color:var(--text-3);margin-top:2px">Respecter mon plan de trading et mes règles</div></div>
+          </div>
+          <div class="wizard-option" style="flex-direction:row;gap:14px;text-align:left;align-items:center" onclick="selectWizardOption(this,'goal','PERFORMANCE')">
+            <span class="wizard-option-icon">🚀</span>
+            <div><span class="wizard-option-label">Performance</span><div style="font-size:10px;color:var(--text-3);margin-top:2px">Améliorer mon win rate et ma rentabilité</div></div>
+          </div>
+          <div class="wizard-option" style="flex-direction:row;gap:14px;text-align:left;align-items:center" onclick="selectWizardOption(this,'goal','PSYCHOLOGIE')">
+            <span class="wizard-option-icon">🧠</span>
+            <div><span class="wizard-option-label">Psychologie</span><div style="font-size:10px;color:var(--text-3);margin-top:2px">Gérer mes émotions et éviter les revenge trades</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="wizard-footer" style="justify-content:flex-end">
+        <button class="wizard-next" id="wizard-btn-2" disabled onclick="goWizardStep(3)">Continuer →</button>
+      </div>
+    </div>
+
+    <!-- Step 3 — Premier trade -->
+    <div class="wizard-step" id="wizard-step-3">
+      <div class="wizard-header">
+        <span class="wizard-icon">⚡</span>
+        <h2 class="wizard-title">Ajoute ton premier trade</h2>
+        <p class="wizard-subtitle">Juste les infos essentielles — tu pourras compléter plus tard</p>
+      </div>
+      <div class="wizard-body">
+        <div class="wizard-form">
+          <div class="wizard-row">
+            <div class="wizard-field">
+              <label class="wizard-label">Actif</label>
+              <input type="text" class="wizard-input" id="wiz-asset" placeholder="BTC/USDT" oninput="checkWizardForm()">
+            </div>
+            <div class="wizard-field">
+              <label class="wizard-label">Direction</label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:4px">
+                <button type="button" id="wiz-long" class="side-btn active-long" onclick="setWizardSide('LONG')">LONG</button>
+                <button type="button" id="wiz-short" class="side-btn" onclick="setWizardSide('SHORT')">SHORT</button>
+              </div>
+            </div>
+          </div>
+          <div class="wizard-row">
+            <div class="wizard-field">
+              <label class="wizard-label">Entry</label>
+              <input type="number" class="wizard-input" id="wiz-entry" placeholder="0.00" oninput="checkWizardForm()">
+            </div>
+            <div class="wizard-field">
+              <label class="wizard-label">P&L ($) <span style="color:var(--text-3);font-size:10px">(optionnel)</span></label>
+              <input type="number" class="wizard-input" id="wiz-pnl" placeholder="0.00">
+            </div>
+          </div>
+          <div class="wizard-field">
+            <label class="wizard-label">État émotionnel</label>
+            <div class="emotion-selector" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+              <button class="emotion-btn selected" data-emotion="CONFIDENT" onclick="selectWizardEmotion(this)">😎 Confident</button>
+              <button class="emotion-btn" data-emotion="FOCUSED" onclick="selectWizardEmotion(this)">🎯 Focused</button>
+              <button class="emotion-btn" data-emotion="NEUTRAL" onclick="selectWizardEmotion(this)">😐 Neutral</button>
+              <button class="emotion-btn" data-emotion="STRESSED" onclick="selectWizardEmotion(this)">😰 Stressed</button>
+              <button class="emotion-btn" data-emotion="FEAR" onclick="selectWizardEmotion(this)">😨 Fear</button>
+              <button class="emotion-btn" data-emotion="REVENGE" onclick="selectWizardEmotion(this)">🤬 Revenge</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="wizard-footer">
+        <div class="wizard-steps-indicator">
+          <div class="wizard-dot done"></div>
+          <div class="wizard-dot done"></div>
+          <div class="wizard-dot active"></div>
+        </div>
+        <button class="wizard-skip" onclick="skipWizard()">Passer →</button>
+        <button class="wizard-next" id="wizard-btn-3" disabled onclick="finishWizard()">Commencer 🚀</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <div id="page-dashboard" class="page">
 <div class="app-layout">
 
@@ -947,31 +1244,117 @@
 
       <!-- ═══ SETTINGS ═══ -->
       <div id="view-settings" class="view" style="display:none">
-        <div class="content" style="padding:28px;flex:1;max-width:700px">
+        <div class="content" style="max-width:680px">
 
-          <!-- Abonnement -->
+          <!-- ── Abonnement ── -->
           <div class="section-title">Abonnement</div>
-          <div class="plan-card">
-            <div class="plan-header">
-              <div>
-                <span class="badge-plan premium">★ PREMIUM</span>
-                <div class="plan-desc">Accès à toutes les fonctionnalités — IA, analytics avancés, Weekly Debrief.</div>
-                <div class="plan-renewal">Prochain renouvellement : 24/05/2026</div>
+          <div class="plan-card" style="margin-bottom:28px">
+            <!-- État PREMIUM (affiché par défaut) -->
+            <div id="settings-premium-block">
+              <span class="plan-active-badge premium">★ PREMIUM</span>
+              <div class="plan-desc">Accès à toutes les fonctionnalités — IA, analytics avancés, Weekly Debrief automatique.</div>
+              <div class="plan-renewal" style="margin-top:6px">Prochain renouvellement : <strong style="color:var(--text)">24/05/2026</strong></div>
+              <div class="plan-actions" style="margin-top:14px">
+                <button class="btn-settings secondary" onclick="alert('Portail Stripe...')">Gérer mon abonnement →</button>
               </div>
             </div>
-            <button class="btn-settings secondary">Gérer mon abonnement →</button>
+            <!-- État FREE (masqué par défaut) -->
+            <div id="settings-free-block" style="display:none">
+              <span class="plan-active-badge free">FREE</span>
+              <div class="plan-desc">50 trades/mois · Journal complet · Stats de base · Historique illimité.</div>
+              <div class="plan-upgrade-hint">Passe à Premium pour débloquer l'IA, les analytics avancés et le Weekly Debrief.</div>
+              <div class="plan-actions" style="margin-top:14px">
+                <button class="btn-settings primary" onclick="alert('Stripe Checkout...')">Essayer 7 jours gratuit — 39 €/mois →</button>
+                <button class="btn-settings secondary" onclick="alert('Stripe Checkout...')">Annuel — 349 €/an <span style="color:var(--green);font-size:11px">(économise 119 €)</span></button>
+              </div>
+            </div>
           </div>
 
-          <!-- Compte -->
-          <div class="section-title" style="margin-top:28px">Compte</div>
-          <div class="account-card">
-            <div class="account-row">
-              <span class="account-label">Email</span>
-              <span class="account-value">tahir.gregory@gmail.com</span>
+          <!-- ── Compte ── -->
+          <div class="section-title">Compte</div>
+          <div class="account-card" style="margin-bottom:28px">
+            <div class="settings-card-row">
+              <span class="settings-card-row-label">Email</span>
+              <span class="settings-card-row-value">tahir.gregory@gmail.com</span>
             </div>
-            <div class="account-row">
-              <span class="account-label">Nom</span>
-              <span class="account-value">Grégory Tahir</span>
+            <!-- Nom — état affichage -->
+            <div class="settings-card-row" id="s-name-display-row">
+              <span class="settings-card-row-label">Nom</span>
+              <div style="display:flex;align-items:center;gap:12px">
+                <span class="settings-card-row-value" id="s-name-val">Grégory Tahir</span>
+                <button class="settings-edit-btn" onclick="document.getElementById('s-name-display-row').style.display='none';document.getElementById('s-name-edit-row').style.display='flex'">Modifier</button>
+              </div>
+            </div>
+            <!-- Nom — état édition (caché) -->
+            <div class="settings-card-row" id="s-name-edit-row" style="display:none">
+              <span class="settings-card-row-label">Nom</span>
+              <div style="display:flex;align-items:center;gap:8px">
+                <input id="s-name-input" type="text" value="Grégory Tahir" style="background:var(--bg-2);border:1px solid var(--blue);border-radius:7px;padding:6px 10px;font-size:13px;color:var(--text);outline:none;width:180px">
+                <button class="btn-settings primary" style="padding:7px 14px;font-size:12px" onclick="document.getElementById('s-name-val').textContent=document.getElementById('s-name-input').value;document.getElementById('s-name-edit-row').style.display='none';document.getElementById('s-name-display-row').style.display='flex'">Sauvegarder</button>
+                <button class="btn-settings secondary" style="padding:7px 12px;font-size:12px" onclick="document.getElementById('s-name-edit-row').style.display='none';document.getElementById('s-name-display-row').style.display='flex'">Annuler</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Préférences ── -->
+          <div class="section-title">Préférences</div>
+          <div class="account-card" style="margin-bottom:28px">
+            <div class="settings-card-row">
+              <div>
+                <span class="settings-card-row-label">Devise d'affichage</span>
+                <span class="settings-card-row-hint">Utilisée pour l'affichage du P&amp;L dans l'interface.</span>
+              </div>
+              <select style="background:var(--bg-2);border:1px solid var(--border);color:var(--text-2);border-radius:7px;padding:6px 12px;font-size:12px;font-family:var(--font-mono,monospace);outline:none;cursor:pointer;min-width:100px">
+                <option>USD ($)</option>
+                <option>EUR (€)</option>
+                <option>GBP (£)</option>
+              </select>
+            </div>
+            <div class="settings-card-row">
+              <div>
+                <span class="settings-card-row-label">Notifications email</span>
+                <span class="settings-card-row-hint">Reçois les debriefs hebdomadaires et alertes importantes.</span>
+              </div>
+              <label class="settings-toggle">
+                <input type="checkbox" checked onchange="var t=this.nextElementSibling,d=t.firstElementChild;t.style.background=this.checked?'rgba(59,130,246,.2)':'var(--bg-3)';t.style.borderColor=this.checked?'var(--blue)':'var(--border)';d.style.transform=this.checked?'translateX(18px)':'translateX(0)';d.style.background=this.checked?'var(--blue-bright)':'var(--text-3)'">
+                <span class="toggle-track"><span style="position:absolute;width:16px;height:16px;left:2px;top:2px;background:var(--blue-bright);border-radius:50%;transition:all .2s;transform:translateX(18px)"></span></span>
+              </label>
+            </div>
+            <div class="settings-card-row">
+              <div>
+                <span class="settings-card-row-label">Weekly Debrief automatique</span>
+                <span class="settings-card-row-hint">Génération automatique du debrief chaque dimanche. Premium uniquement.</span>
+              </div>
+              <label class="settings-toggle">
+                <input type="checkbox" checked onchange="var t=this.nextElementSibling,d=t.firstElementChild;t.style.background=this.checked?'rgba(59,130,246,.2)':'var(--bg-3)';t.style.borderColor=this.checked?'var(--blue)':'var(--border)';d.style.transform=this.checked?'translateX(18px)':'translateX(0)';d.style.background=this.checked?'var(--blue-bright)':'var(--text-3)'">
+                <span class="toggle-track"><span style="position:absolute;width:16px;height:16px;left:2px;top:2px;background:var(--blue-bright);border-radius:50%;transition:all .2s;transform:translateX(18px)"></span></span>
+              </label>
+            </div>
+            <div style="padding:14px 20px;border-top:1px solid rgba(99,155,255,.06);display:flex;justify-content:flex-end">
+              <button class="btn-settings primary" onclick="this.textContent='✓ Sauvegardé';setTimeout(()=>this.textContent='Sauvegarder les préférences',2500)">Sauvegarder les préférences</button>
+            </div>
+          </div>
+
+          <!-- ── Zone de danger ── -->
+          <div class="section-title" style="color:var(--red)">Zone de danger</div>
+          <div class="danger-zone-card">
+            <!-- État initial -->
+            <div id="s-delete-initial" class="settings-card-row">
+              <div>
+                <div class="settings-card-row-label" style="color:var(--red)">Supprimer mon compte</div>
+                <span class="settings-card-row-hint">Supprime définitivement ton compte, tous tes trades et debriefs. Irréversible.</span>
+              </div>
+              <button class="settings-edit-btn danger" onclick="document.getElementById('s-delete-initial').style.display='none';document.getElementById('s-delete-confirm').style.display='block'">Supprimer</button>
+            </div>
+            <!-- Confirmation -->
+            <div id="s-delete-confirm" style="display:none;padding:20px">
+              <div class="settings-card-row-label" style="color:var(--red);margin-bottom:6px">Confirme la suppression</div>
+              <div class="settings-card-row-hint" style="margin-bottom:14px">Tape <strong style="color:var(--text)">SUPPRIMER</strong> pour confirmer. Toutes tes données seront effacées immédiatement.</div>
+              <input id="s-delete-input" type="text" placeholder="SUPPRIMER" oninput="document.getElementById('s-delete-btn').disabled=this.value!=='SUPPRIMER'" style="width:100%;background:var(--bg-2);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:9px 12px;font-size:13px;font-family:var(--font-mono,monospace);color:var(--text);outline:none;box-sizing:border-box;margin-bottom:14px">
+              <div style="display:flex;gap:8px;justify-content:flex-end">
+                <button class="btn-settings secondary" onclick="document.getElementById('s-delete-confirm').style.display='none';document.getElementById('s-delete-initial').style.display='flex';document.getElementById('s-delete-input').value='';document.getElementById('s-delete-btn').disabled=true">Annuler</button>
+                <button id="s-delete-btn" class="settings-edit-btn danger" disabled onclick="alert('Désactivé en démo')">Confirmer la suppression</button>
+              </div>
             </div>
           </div>
 
@@ -1078,6 +1461,72 @@ function selectEmotion(btn){
   btn.classList.add('selected');
 }
 function saveTrade(){ closeModal(); }
+
+// ═══ ONBOARDING WIZARD ═══
+var wizardData = { market: null, goal: null, side: 'LONG' };
+
+function selectWizardOption(el, type, val) {
+  el.closest('.wizard-options').querySelectorAll('.wizard-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  wizardData[type] = val;
+  var step = type === 'market' ? 1 : 2;
+  var btn = document.getElementById('wizard-btn-' + step);
+  if (btn) btn.disabled = false;
+}
+
+function setWizardSide(side) {
+  wizardData.side = side;
+  document.getElementById('wiz-long').className = 'side-btn' + (side === 'LONG' ? ' active-long' : '');
+  document.getElementById('wiz-short').className = 'side-btn' + (side === 'SHORT' ? ' active-short' : '');
+}
+
+function selectWizardEmotion(btn) {
+  btn.closest('.emotion-selector').querySelectorAll('.emotion-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function checkWizardForm() {
+  var asset = document.getElementById('wiz-asset').value.trim();
+  var entry = document.getElementById('wiz-entry').value;
+  var btn = document.getElementById('wizard-btn-3');
+  if (btn) btn.disabled = !(asset && entry);
+}
+
+function goWizardStep(step) {
+  document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('wizard-step-' + step).classList.add('active');
+  var pct = step === 1 ? 33 : step === 2 ? 66 : 100;
+  document.getElementById('wizard-progress-bar').style.width = pct + '%';
+}
+
+function skipWizard() {
+  document.getElementById('onboarding-wizard').style.display = 'none';
+}
+
+function finishWizard() {
+  var asset = document.getElementById('wiz-asset').value.trim();
+  var entry = document.getElementById('wiz-entry').value;
+  var pnl = document.getElementById('wiz-pnl').value;
+  var emotion = (document.querySelector('#wizard-step-3 .emotion-btn.selected') || {}).dataset?.emotion || 'CONFIDENT';
+  if (asset && entry) {
+    console.log('Premier trade wizard:', { asset, entry, pnl, side: wizardData.side, emotion });
+  }
+  document.getElementById('onboarding-wizard').style.display = 'none';
+  // Afficher message de bienvenue sur le dashboard
+  showWelcomeBanner();
+}
+
+function showWelcomeBanner() {
+  var dashboard = document.getElementById('view-dashboard');
+  if (!dashboard) return;
+  var content = dashboard.querySelector('.content');
+  if (!content) return;
+  var banner = document.createElement('div');
+  banner.style.cssText = 'background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(139,92,246,.08));border:1px solid rgba(59,130,246,.2);border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:16px';
+  banner.innerHTML = '<div style="display:flex;align-items:center;gap:12px"><span style="font-size:22px">🎉</span><div><div style="font-size:14px;font-weight:600;color:var(--text);font-family:var(--font-display,Syne,sans-serif)">Bienvenue sur MyTradingCoach !</div><div style="font-size:12px;color:var(--text-3);margin-top:3px">Ajoute <strong style="color:var(--blue-bright)">10 trades</strong> pour obtenir tes premiers insights IA personnalisés</div></div></div><button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--text-3);cursor:pointer;font-size:16px;padding:4px">✕</button>';
+  content.insertBefore(banner, content.firstChild);
+}
+
 </script>
 </body>
 </html>
