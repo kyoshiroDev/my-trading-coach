@@ -11,6 +11,12 @@ export interface AuthUser {
   plan: 'FREE' | 'PREMIUM';
   trialEndsAt?: string | null;
   stripeCurrentPeriodEnd?: string | null;
+  onboardingCompleted?: boolean;
+  market?: string | null;
+  goal?: string | null;
+  currency?: string;
+  notificationsEmail?: boolean;
+  debriefAutomatic?: boolean;
 }
 
 interface AuthResponse {
