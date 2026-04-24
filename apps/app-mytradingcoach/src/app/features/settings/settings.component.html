@@ -11,38 +11,9 @@
 
   <div class="settings-grid">
 
-    <!-- ── Colonne gauche ── -->
-    <div class="col-left">
-
-      <!-- Abonnement -->
-      <div class="section-title">Abonnement</div>
-      <div class="plan-card">
-        @if (userStore.isPremium()) {
-          <div class="plan-header">
-            <span class="badge badge-premium">★ PREMIUM</span>
-            <div class="plan-desc">Accès à toutes les fonctionnalités — IA, analytics avancés, Weekly Debrief.</div>
-            @if (userStore.user()?.stripeCurrentPeriodEnd) {
-              <div class="plan-renewal">
-                Prochain renouvellement : {{ userStore.user()!.stripeCurrentPeriodEnd | date:'dd/MM/yyyy' }}
-              </div>
-            }
-          </div>
-          <button class="btn btn-secondary" (click)="openPortal()">Gérer mon abonnement →</button>
-        } @else {
-          <div class="plan-header">
-            <span class="badge badge-free">FREE</span>
-            <div class="plan-desc">50 trades/mois · Journal complet · Stats de base · Historique illimité.</div>
-            <div class="plan-upgrade-hint">Passe à Premium pour débloquer l'IA, les analytics avancés et le Weekly Debrief.</div>
-          </div>
-          <div class="plan-actions">
-            <button class="btn btn-primary" (click)="startTrial('monthly')">Essayer 7 jours gratuit — 39 €/mois →</button>
-            <button class="btn btn-secondary" (click)="startTrial('yearly')">Annuel — 349 €/an (économise 119 €)</button>
-          </div>
-        }
-      </div>
-
-      <!-- Compte -->
-      <div class="section-title" style="margin-top:24px">Compte</div>
+    <!-- ── Col 1 — Compte ── -->
+    <div class="col">
+      <div class="section-title">Compte</div>
       <div class="account-card">
         <div class="account-row">
           <span class="account-label">Email</span>
@@ -110,13 +81,10 @@
           </div>
         }
       </div>
-
     </div>
 
-    <!-- ── Colonne droite ── -->
-    <div class="col-right">
-
-      <!-- Préférences -->
+    <!-- ── Col 2 — Préférences ── -->
+    <div class="col">
       <div class="section-title">Préférences</div>
       <div class="account-card">
         <div class="account-row">
@@ -158,7 +126,35 @@
           </button>
         </div>
       </div>
+    </div>
 
+    <!-- ── Col 3 — Abonnement ── -->
+    <div class="col">
+      <div class="section-title">Abonnement</div>
+      <div class="plan-card">
+        @if (userStore.isPremium()) {
+          <div class="plan-header">
+            <span class="badge badge-premium">★ PREMIUM</span>
+            <div class="plan-desc">Accès à toutes les fonctionnalités — IA, analytics avancés, Weekly Debrief.</div>
+            @if (userStore.user()?.stripeCurrentPeriodEnd) {
+              <div class="plan-renewal">
+                Prochain renouvellement : {{ userStore.user()!.stripeCurrentPeriodEnd | date:'dd/MM/yyyy' }}
+              </div>
+            }
+          </div>
+          <button class="btn btn-secondary" (click)="openPortal()">Gérer mon abonnement →</button>
+        } @else {
+          <div class="plan-header">
+            <span class="badge badge-free">FREE</span>
+            <div class="plan-desc">50 trades/mois · Journal complet · Stats de base · Historique illimité.</div>
+            <div class="plan-upgrade-hint">Passe à Premium pour débloquer l'IA, les analytics avancés et le Weekly Debrief.</div>
+          </div>
+          <div class="plan-actions">
+            <button class="btn btn-primary" (click)="startTrial('monthly')">Essayer 7 jours gratuit — 39 €/mois →</button>
+            <button class="btn btn-secondary" (click)="startTrial('yearly')">Annuel — 349 €/an (économise 119 €)</button>
+          </div>
+        }
+      </div>
     </div>
 
   </div>

@@ -1244,119 +1244,122 @@
 
       <!-- ═══ SETTINGS ═══ -->
       <div id="view-settings" class="view" style="display:none">
-        <div class="content" style="max-width:680px">
+        <div class="content" style="max-width:1200px">
 
-          <!-- ── Abonnement ── -->
-          <div class="section-title">Abonnement</div>
-          <div class="plan-card" style="margin-bottom:28px">
-            <!-- État PREMIUM (affiché par défaut) -->
-            <div id="settings-premium-block">
-              <span class="plan-active-badge premium">★ PREMIUM</span>
-              <div class="plan-desc">Accès à toutes les fonctionnalités — IA, analytics avancés, Weekly Debrief automatique.</div>
-              <div class="plan-renewal" style="margin-top:6px">Prochain renouvellement : <strong style="color:var(--text)">24/05/2026</strong></div>
-              <div class="plan-actions" style="margin-top:14px">
-                <button class="btn-settings secondary" onclick="alert('Portail Stripe...')">Gérer mon abonnement →</button>
-              </div>
-            </div>
-            <!-- État FREE (masqué par défaut) -->
-            <div id="settings-free-block" style="display:none">
-              <span class="plan-active-badge free">FREE</span>
-              <div class="plan-desc">50 trades/mois · Journal complet · Stats de base · Historique illimité.</div>
-              <div class="plan-upgrade-hint">Passe à Premium pour débloquer l'IA, les analytics avancés et le Weekly Debrief.</div>
-              <div class="plan-actions" style="margin-top:14px">
-                <button class="btn-settings primary" onclick="alert('Stripe Checkout...')">Essayer 7 jours gratuit — 39 €/mois →</button>
-                <button class="btn-settings secondary" onclick="alert('Stripe Checkout...')">Annuel — 349 €/an <span style="color:var(--green);font-size:11px">(économise 119 €)</span></button>
-              </div>
-            </div>
-          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;align-items:start">
 
-          <!-- ── Compte ── -->
-          <div class="section-title">Compte</div>
-          <div class="account-card" style="margin-bottom:28px">
-            <div class="settings-card-row">
-              <span class="settings-card-row-label">Email</span>
-              <span class="settings-card-row-value">tahir.gregory@gmail.com</span>
-            </div>
-            <!-- Nom — état affichage -->
-            <div class="settings-card-row" id="s-name-display-row">
-              <span class="settings-card-row-label">Nom</span>
-              <div style="display:flex;align-items:center;gap:12px">
-                <span class="settings-card-row-value" id="s-name-val">Grégory Tahir</span>
-                <button class="settings-edit-btn" onclick="document.getElementById('s-name-display-row').style.display='none';document.getElementById('s-name-edit-row').style.display='flex'">Modifier</button>
+            <!-- ── Col 1 — Compte ── -->
+            <div>
+              <div class="section-title">Compte</div>
+              <div class="account-card" style="margin-bottom:24px">
+                <div class="settings-card-row">
+                  <span class="settings-card-row-label">Email</span>
+                  <span class="settings-card-row-value">tahir.gregory@gmail.com</span>
+                </div>
+                <div class="settings-card-row" id="s-name-display-row">
+                  <span class="settings-card-row-label">Nom</span>
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <span class="settings-card-row-value" id="s-name-val">Grégory Tahir</span>
+                    <button class="settings-edit-btn" onclick="document.getElementById('s-name-display-row').style.display='none';document.getElementById('s-name-edit-row').style.display='flex'">Modifier</button>
+                  </div>
+                </div>
+                <div class="settings-card-row" id="s-name-edit-row" style="display:none">
+                  <span class="settings-card-row-label">Nom</span>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <input id="s-name-input" type="text" value="Grégory Tahir" style="background:var(--bg-2);border:1px solid var(--blue);border-radius:7px;padding:6px 10px;font-size:13px;color:var(--text);outline:none;width:160px">
+                    <button class="btn-settings primary" style="padding:7px 14px;font-size:12px" onclick="document.getElementById('s-name-val').textContent=document.getElementById('s-name-input').value;document.getElementById('s-name-edit-row').style.display='none';document.getElementById('s-name-display-row').style.display='flex'">Sauvegarder</button>
+                    <button class="btn-settings secondary" style="padding:7px 12px;font-size:12px" onclick="document.getElementById('s-name-edit-row').style.display='none';document.getElementById('s-name-display-row').style.display='flex'">Annuler</button>
+                  </div>
+                </div>
               </div>
-            </div>
-            <!-- Nom — état édition (caché) -->
-            <div class="settings-card-row" id="s-name-edit-row" style="display:none">
-              <span class="settings-card-row-label">Nom</span>
-              <div style="display:flex;align-items:center;gap:8px">
-                <input id="s-name-input" type="text" value="Grégory Tahir" style="background:var(--bg-2);border:1px solid var(--blue);border-radius:7px;padding:6px 10px;font-size:13px;color:var(--text);outline:none;width:180px">
-                <button class="btn-settings primary" style="padding:7px 14px;font-size:12px" onclick="document.getElementById('s-name-val').textContent=document.getElementById('s-name-input').value;document.getElementById('s-name-edit-row').style.display='none';document.getElementById('s-name-display-row').style.display='flex'">Sauvegarder</button>
-                <button class="btn-settings secondary" style="padding:7px 12px;font-size:12px" onclick="document.getElementById('s-name-edit-row').style.display='none';document.getElementById('s-name-display-row').style.display='flex'">Annuler</button>
-              </div>
-            </div>
-          </div>
 
-          <!-- ── Préférences ── -->
-          <div class="section-title">Préférences</div>
-          <div class="account-card" style="margin-bottom:28px">
-            <div class="settings-card-row">
-              <div>
-                <span class="settings-card-row-label">Devise d'affichage</span>
-                <span class="settings-card-row-hint">Utilisée pour l'affichage du P&amp;L dans l'interface.</span>
+              <div class="section-title" style="color:var(--red)">Zone de danger</div>
+              <div class="danger-zone-card">
+                <div id="s-delete-initial" class="settings-card-row">
+                  <div>
+                    <div class="settings-card-row-label" style="color:var(--red)">Supprimer mon compte</div>
+                    <span class="settings-card-row-hint">Supprime définitivement ton compte, tous tes trades et debriefs. Irréversible.</span>
+                  </div>
+                  <button class="settings-edit-btn danger" onclick="document.getElementById('s-delete-initial').style.display='none';document.getElementById('s-delete-confirm').style.display='block'">Supprimer</button>
+                </div>
+                <div id="s-delete-confirm" style="display:none;padding:20px">
+                  <div class="settings-card-row-label" style="color:var(--red);margin-bottom:6px">Confirme la suppression</div>
+                  <div class="settings-card-row-hint" style="margin-bottom:14px">Tape <strong style="color:var(--text)">SUPPRIMER</strong> pour confirmer. Toutes tes données seront effacées immédiatement.</div>
+                  <input id="s-delete-input" type="text" placeholder="SUPPRIMER" oninput="document.getElementById('s-delete-btn').disabled=this.value!=='SUPPRIMER'" style="width:100%;background:var(--bg-2);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:9px 12px;font-size:13px;font-family:var(--font-mono,monospace);color:var(--text);outline:none;box-sizing:border-box;margin-bottom:14px">
+                  <div style="display:flex;gap:8px;justify-content:flex-end">
+                    <button class="btn-settings secondary" onclick="document.getElementById('s-delete-confirm').style.display='none';document.getElementById('s-delete-initial').style.display='flex';document.getElementById('s-delete-input').value='';document.getElementById('s-delete-btn').disabled=true">Annuler</button>
+                    <button id="s-delete-btn" class="settings-edit-btn danger" disabled onclick="alert('Désactivé en démo')">Confirmer la suppression</button>
+                  </div>
+                </div>
               </div>
-              <select style="background:var(--bg-2);border:1px solid var(--border);color:var(--text-2);border-radius:7px;padding:6px 12px;font-size:12px;font-family:var(--font-mono,monospace);outline:none;cursor:pointer;min-width:100px">
-                <option>USD ($)</option>
-                <option>EUR (€)</option>
-                <option>GBP (£)</option>
-              </select>
             </div>
-            <div class="settings-card-row">
-              <div>
-                <span class="settings-card-row-label">Notifications email</span>
-                <span class="settings-card-row-hint">Reçois les debriefs hebdomadaires et alertes importantes.</span>
-              </div>
-              <label class="settings-toggle">
-                <input type="checkbox" checked onchange="var t=this.nextElementSibling,d=t.firstElementChild;t.style.background=this.checked?'rgba(59,130,246,.2)':'var(--bg-3)';t.style.borderColor=this.checked?'var(--blue)':'var(--border)';d.style.transform=this.checked?'translateX(18px)':'translateX(0)';d.style.background=this.checked?'var(--blue-bright)':'var(--text-3)'">
-                <span class="toggle-track"><span style="position:absolute;width:16px;height:16px;left:2px;top:2px;background:var(--blue-bright);border-radius:50%;transition:all .2s;transform:translateX(18px)"></span></span>
-              </label>
-            </div>
-            <div class="settings-card-row">
-              <div>
-                <span class="settings-card-row-label">Weekly Debrief automatique</span>
-                <span class="settings-card-row-hint">Génération automatique du debrief chaque dimanche. Premium uniquement.</span>
-              </div>
-              <label class="settings-toggle">
-                <input type="checkbox" checked onchange="var t=this.nextElementSibling,d=t.firstElementChild;t.style.background=this.checked?'rgba(59,130,246,.2)':'var(--bg-3)';t.style.borderColor=this.checked?'var(--blue)':'var(--border)';d.style.transform=this.checked?'translateX(18px)':'translateX(0)';d.style.background=this.checked?'var(--blue-bright)':'var(--text-3)'">
-                <span class="toggle-track"><span style="position:absolute;width:16px;height:16px;left:2px;top:2px;background:var(--blue-bright);border-radius:50%;transition:all .2s;transform:translateX(18px)"></span></span>
-              </label>
-            </div>
-            <div style="padding:14px 20px;border-top:1px solid rgba(99,155,255,.06);display:flex;justify-content:flex-end">
-              <button class="btn-settings primary" onclick="this.textContent='✓ Sauvegardé';setTimeout(()=>this.textContent='Sauvegarder les préférences',2500)">Sauvegarder les préférences</button>
-            </div>
-          </div>
 
-          <!-- ── Zone de danger ── -->
-          <div class="section-title" style="color:var(--red)">Zone de danger</div>
-          <div class="danger-zone-card">
-            <!-- État initial -->
-            <div id="s-delete-initial" class="settings-card-row">
-              <div>
-                <div class="settings-card-row-label" style="color:var(--red)">Supprimer mon compte</div>
-                <span class="settings-card-row-hint">Supprime définitivement ton compte, tous tes trades et debriefs. Irréversible.</span>
+            <!-- ── Col 2 — Préférences ── -->
+            <div>
+              <div class="section-title">Préférences</div>
+              <div class="account-card">
+                <div class="settings-card-row">
+                  <div>
+                    <span class="settings-card-row-label">Devise d'affichage</span>
+                    <span class="settings-card-row-hint">Utilisée pour l'affichage du P&amp;L dans l'interface.</span>
+                  </div>
+                  <select style="background:var(--bg-2);border:1px solid var(--border);color:var(--text-2);border-radius:7px;padding:6px 12px;font-size:12px;font-family:var(--font-mono,monospace);outline:none;cursor:pointer;min-width:100px">
+                    <option>USD ($)</option>
+                    <option>EUR (€)</option>
+                    <option>GBP (£)</option>
+                  </select>
+                </div>
+                <div class="settings-card-row">
+                  <div>
+                    <span class="settings-card-row-label">Notifications email</span>
+                    <span class="settings-card-row-hint">Reçois les debriefs hebdomadaires et alertes importantes.</span>
+                  </div>
+                  <label class="settings-toggle">
+                    <input type="checkbox" checked onchange="var t=this.nextElementSibling,d=t.firstElementChild;t.style.background=this.checked?'rgba(59,130,246,.2)':'var(--bg-3)';t.style.borderColor=this.checked?'var(--blue)':'var(--border)';d.style.transform=this.checked?'translateX(18px)':'translateX(0)';d.style.background=this.checked?'var(--blue-bright)':'var(--text-3)'">
+                    <span class="toggle-track"><span style="position:absolute;width:16px;height:16px;left:2px;top:2px;background:var(--blue-bright);border-radius:50%;transition:all .2s;transform:translateX(18px)"></span></span>
+                  </label>
+                </div>
+                <div class="settings-card-row">
+                  <div>
+                    <span class="settings-card-row-label">Weekly Debrief automatique</span>
+                    <span class="settings-card-row-hint">Génération automatique du debrief chaque dimanche. Premium uniquement.</span>
+                  </div>
+                  <label class="settings-toggle">
+                    <input type="checkbox" checked onchange="var t=this.nextElementSibling,d=t.firstElementChild;t.style.background=this.checked?'rgba(59,130,246,.2)':'var(--bg-3)';t.style.borderColor=this.checked?'var(--blue)':'var(--border)';d.style.transform=this.checked?'translateX(18px)':'translateX(0)';d.style.background=this.checked?'var(--blue-bright)':'var(--text-3)'">
+                    <span class="toggle-track"><span style="position:absolute;width:16px;height:16px;left:2px;top:2px;background:var(--blue-bright);border-radius:50%;transition:all .2s;transform:translateX(18px)"></span></span>
+                  </label>
+                </div>
+                <div style="padding:14px 20px;border-top:1px solid rgba(99,155,255,.06);display:flex;justify-content:flex-end">
+                  <button class="btn-settings primary" onclick="this.textContent='✓ Sauvegardé';setTimeout(()=>this.textContent='Sauvegarder les préférences',2500)">Sauvegarder les préférences</button>
+                </div>
               </div>
-              <button class="settings-edit-btn danger" onclick="document.getElementById('s-delete-initial').style.display='none';document.getElementById('s-delete-confirm').style.display='block'">Supprimer</button>
             </div>
-            <!-- Confirmation -->
-            <div id="s-delete-confirm" style="display:none;padding:20px">
-              <div class="settings-card-row-label" style="color:var(--red);margin-bottom:6px">Confirme la suppression</div>
-              <div class="settings-card-row-hint" style="margin-bottom:14px">Tape <strong style="color:var(--text)">SUPPRIMER</strong> pour confirmer. Toutes tes données seront effacées immédiatement.</div>
-              <input id="s-delete-input" type="text" placeholder="SUPPRIMER" oninput="document.getElementById('s-delete-btn').disabled=this.value!=='SUPPRIMER'" style="width:100%;background:var(--bg-2);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:9px 12px;font-size:13px;font-family:var(--font-mono,monospace);color:var(--text);outline:none;box-sizing:border-box;margin-bottom:14px">
-              <div style="display:flex;gap:8px;justify-content:flex-end">
-                <button class="btn-settings secondary" onclick="document.getElementById('s-delete-confirm').style.display='none';document.getElementById('s-delete-initial').style.display='flex';document.getElementById('s-delete-input').value='';document.getElementById('s-delete-btn').disabled=true">Annuler</button>
-                <button id="s-delete-btn" class="settings-edit-btn danger" disabled onclick="alert('Désactivé en démo')">Confirmer la suppression</button>
+
+            <!-- ── Col 3 — Abonnement ── -->
+            <div>
+              <div class="section-title">Abonnement</div>
+              <div class="plan-card">
+                <div id="settings-premium-block">
+                  <span class="plan-active-badge premium">★ PREMIUM</span>
+                  <div class="plan-desc">Accès à toutes les fonctionnalités — IA, analytics avancés, Weekly Debrief automatique.</div>
+                  <div class="plan-renewal" style="margin-top:6px">Prochain renouvellement : <strong style="color:var(--text)">24/05/2026</strong></div>
+                  <div class="plan-actions" style="margin-top:14px">
+                    <button class="btn-settings secondary" onclick="alert('Portail Stripe...')">Gérer mon abonnement →</button>
+                  </div>
+                </div>
+                <div id="settings-free-block" style="display:none">
+                  <span class="plan-active-badge free">FREE</span>
+                  <div class="plan-desc">50 trades/mois · Journal complet · Stats de base · Historique illimité.</div>
+                  <div class="plan-upgrade-hint">Passe à Premium pour débloquer l'IA, les analytics avancés et le Weekly Debrief.</div>
+                  <div class="plan-actions" style="margin-top:14px">
+                    <button class="btn-settings primary" onclick="alert('Stripe Checkout...')">Essayer 7 jours gratuit — 39 €/mois →</button>
+                    <button class="btn-settings secondary" onclick="alert('Stripe Checkout...')">Annuel — 349 €/an <span style="color:var(--green);font-size:11px">(économise 119 €)</span></button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+
+          </div><!-- end 3-col grid -->
 
         </div>
       </div><!-- end view-settings -->
