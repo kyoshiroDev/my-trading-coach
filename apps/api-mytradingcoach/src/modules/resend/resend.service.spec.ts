@@ -6,9 +6,11 @@ import { ResendService } from './resend.service';
 const mockSend = vi.fn().mockResolvedValue({ data: { id: 'email-id' }, error: null });
 
 vi.mock('resend', () => ({
-  Resend: vi.fn().mockImplementation(() => ({
-    emails: { send: mockSend },
-  })),
+  Resend: vi.fn().mockImplementation(function () {
+    return {
+      emails: { send: mockSend },
+    };
+  }),
 }));
 
 describe('ResendService', () => {
