@@ -47,7 +47,7 @@ client.on('interactionCreate', async (interaction) => {
     }
 
     const member = interaction.member;
-    await member.roles.remove([ROLE_MEMBRE, ROLE_PREMIUM].filter(Boolean)).catch(() => {});
+    await member.roles.remove([ROLE_MEMBRE, ROLE_PREMIUM].filter(Boolean)).catch(() => undefined);
 
     if (data.data.plan === 'PREMIUM') {
       await member.roles.add(ROLE_PREMIUM);
