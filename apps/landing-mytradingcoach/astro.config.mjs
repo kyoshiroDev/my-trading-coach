@@ -2,7 +2,7 @@ import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
-  site: 'https://www.mytradingcoach.app',
+  site: 'https://mytradingcoach.app',
   integrations: [
     sitemap({
       changefreq: 'weekly',
@@ -11,11 +11,11 @@ export default defineConfig({
       filter: (page) => !page.includes('/404'),
       serialize: (item) => {
         // Homepage — priorité maximale
-        if (item.url === 'https://www.mytradingcoach.app/') {
+        if (item.url === 'https://mytradingcoach.app/') {
           return { ...item, priority: 1.0, changefreq: 'daily' };
         }
         // Page blog index
-        if (item.url === 'https://www.mytradingcoach.app/blog/') {
+        if (item.url === 'https://mytradingcoach.app/blog/') {
           return { ...item, priority: 0.8, changefreq: 'weekly' };
         }
         // Articles de blog
