@@ -98,33 +98,43 @@ interface EquityPoint { date: string; cumulativePnl: number; }
         <div class="stats-row">
           <div class="stat-card">
             <div class="stat-label">P&amp;L Total</div>
-            <div class="stat-value" [class]="(summary()?.totalPnl ?? 0) | pnlClass">
+            <div class="stat-value" [style.color]="pnlColor()">
               {{ summary()?.totalPnl ?? 0 | pnlFormat }}
             </div>
             <div class="stat-sub">
-              <span class="change" [class]="(summary()?.totalPnl ?? 0) >= 0 ? 'up' : 'down'">
-                {{ (summary()?.totalPnl ?? 0) >= 0 ? '▲ +12.3%' : '▼' }} ce mois
-              </span>
+              @if ((summary()?.totalTrades ?? 0) > 0) {
+                <span class="change" [class]="(summary()?.totalPnl ?? 0) >= 0 ? 'up' : 'down'">
+                  {{ (summary()?.totalPnl ?? 0) >= 0 ? '▲' : '▼' }} ce mois
+                </span>
+              } @else {
+                <span style="color:var(--text-3)">Aucune donnée</span>
+              }
             </div>
             <div class="stat-bg-icon">💰</div>
           </div>
 
           <div class="stat-card">
             <div class="stat-label">Win Rate</div>
-            <div class="stat-value text-blue">{{ (summary()?.winRate ?? 0).toFixed(1) }}%</div>
+            <div class="stat-value" [style.color]="winRateColor()">{{ (summary()?.winRate ?? 0).toFixed(1) }}%</div>
             <div class="stat-sub">
-              <span class="change up">▲ +3.2%</span>
-              <span>vs mois précédent</span>
+              @if ((summary()?.totalTrades ?? 0) > 0) {
+                <span>vs mois précédent</span>
+              } @else {
+                <span style="color:var(--text-3)">Aucune donnée</span>
+              }
             </div>
             <div class="stat-bg-icon">🎯</div>
           </div>
 
           <div class="stat-card">
             <div class="stat-label">Drawdown Max</div>
-            <div class="stat-value text-red">{{ drawdownDisplay() | pnlFormat }}</div>
+            <div class="stat-value" [style.color]="drawdownColor()">{{ drawdownDisplay() | pnlFormat }}</div>
             <div class="stat-sub">
-              <span class="change down">▼ -4.8%</span>
-              <span>sur capital</span>
+              @if ((summary()?.totalTrades ?? 0) > 0) {
+                <span>sur capital</span>
+              } @else {
+                <span style="color:var(--text-3)">Aucune donnée</span>
+              }
             </div>
             <div class="stat-bg-icon">📉</div>
           </div>
@@ -133,7 +143,9 @@ interface EquityPoint { date: string; cumulativePnl: number; }
             <div class="stat-label">Trades</div>
             <div class="stat-value">{{ summary()?.totalTrades ?? tradesStore.trades$().length }}</div>
             <div class="stat-sub">
-              @if ((summary()?.streak ?? 0) > 0) {
+              @if ((summary()?.totalTrades ?? 0) === 0) {
+                <span style="color:var(--text-3)">Aucune donnée</span>
+              } @else if ((summary()?.streak ?? 0) > 0) {
                 <span class="change up">▲ +{{ summary()?.streak }} streak</span>
               } @else if ((summary()?.streak ?? 0) < 0) {
                 <span class="change down">▼ {{ summary()?.streak }} streak</span>
@@ -213,41 +225,38 @@ interface EquityPoint { date: string; cumulativePnl: number; }
             <div class="card-title">Win Rate / stratégie</div>
             <a routerLink="/analytics" class="card-action">Voir →</a>
           </div>
-          <div class="donut-wrap">
-            <svg class="donut-svg" width="80" height="80" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="38" fill="none" stroke="var(--bg-3)" stroke-width="12"/>
-              @for (seg of segments(); track seg.label) {
-                <circle cx="50" cy="50" r="38" fill="none"
-                  [attr.stroke]="seg.label | setupColorMap"
-                  stroke-width="12"
-                  [attr.stroke-dasharray]="seg.dash"
-                  [attr.stroke-dashoffset]="seg.offset"
-                  stroke-linecap="round"
-                  transform="rotate(-90 50 50)"/>
-              }
-              <text x="50" y="53" text-anchor="middle" font-family="Syne" font-weight="700" font-size="14" fill="#e2eaf5">
-                {{ (summary()?.winRate ?? 0).toFixed(0) }}%
-              </text>
-            </svg>
-            <div class="donut-legend">
-              @for (s of bySetup().slice(0, 4); track s.setup) {
-                <div class="legend-item">
-                  <div class="legend-dot" [style.background]="s.setup | setupColor"></div>
-                  {{ s.setup | titlecase }}
-                  <span class="legend-val">{{ s.winRate.toFixed(0) }}%</span>
-                </div>
-              }
-              @if (bySetup().length === 0) {
-                @for (s of DEFAULT_SETUPS; track s.name) {
+          @if (bySetup().length === 0) {
+            <p class="empty-widget-msg">
+              Tes setups apparaîtront<br>après tes premiers trades
+            </p>
+          } @else {
+            <div class="donut-wrap">
+              <svg class="donut-svg" width="80" height="80" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--bg-3)" stroke-width="12"/>
+                @for (seg of segments(); track seg.label) {
+                  <circle cx="50" cy="50" r="38" fill="none"
+                    [attr.stroke]="seg.label | setupColorMap"
+                    stroke-width="12"
+                    [attr.stroke-dasharray]="seg.dash"
+                    [attr.stroke-dashoffset]="seg.offset"
+                    stroke-linecap="round"
+                    transform="rotate(-90 50 50)"/>
+                }
+                <text x="50" y="53" text-anchor="middle" font-family="Syne" font-weight="700" font-size="14" fill="#e2eaf5">
+                  {{ (summary()?.winRate ?? 0).toFixed(0) }}%
+                </text>
+              </svg>
+              <div class="donut-legend">
+                @for (s of bySetup().slice(0, 4); track s.setup) {
                   <div class="legend-item">
-                    <div class="legend-dot" [style.background]="s.color"></div>
-                    {{ s.name }}
-                    <span class="legend-val">—</span>
+                    <div class="legend-dot" [style.background]="s.setup | setupColor"></div>
+                    {{ s.setup | titlecase }}
+                    <span class="legend-val">{{ s.winRate.toFixed(0) }}%</span>
                   </div>
                 }
-              }
+              </div>
             </div>
-          </div>
+          }
         </div>
 
         <!-- États émotionnels -->
@@ -256,32 +265,25 @@ interface EquityPoint { date: string; cumulativePnl: number; }
             <div class="card-title">États émotionnels</div>
             <a routerLink="/analytics" class="card-action">Détails →</a>
           </div>
-          <div class="emotion-grid">
-            @for (e of displayEmotions(); track e.emotion) {
-              <div class="emotion-row">
-                <div class="emotion-label">
-                  <span>{{ e.emotion | emotionLabel }}</span>
-                  <span>{{ e.winRate.toFixed(0) }}%</span>
-                </div>
-                <div class="bar-track">
-                  <div class="bar-fill" [style.width.%]="e.winRate" [style.background]="e.emotion | emotionColor"></div>
-                </div>
-              </div>
-            }
-            @if (byEmotion().length === 0) {
-              @for (e of DEFAULT_EMOTIONS; track e.emotion) {
+          @if (emotionStats().length === 0) {
+            <p class="empty-widget-msg">
+              Enregistre tes premiers trades<br>pour voir tes états émotionnels
+            </p>
+          } @else {
+            <div class="emotion-grid">
+              @for (e of emotionStats(); track e.emotion) {
                 <div class="emotion-row">
                   <div class="emotion-label">
-                    <span>{{ e.label }}</span>
+                    <span>{{ e.emotion | emotionLabel }}</span>
                     <span>{{ e.pct }}%</span>
                   </div>
                   <div class="bar-track">
-                    <div class="bar-fill" [style.width]="e.pct + '%'" [style.background]="e.color"></div>
+                    <div class="bar-fill" [style.width.%]="e.pct" [style.background]="e.emotion | emotionColor"></div>
                   </div>
                 </div>
               }
-            }
-          </div>
+            </div>
+          }
         </div>
       </div>
 
@@ -326,6 +328,24 @@ export class DashboardComponent implements AfterViewInit {
     const dd = this.summary()?.maxDrawdown ?? 0;
     return dd > 0 ? -dd : dd;
   });
+
+  protected readonly pnlColor = computed(() => {
+    const pnl = this.summary()?.totalPnl ?? 0;
+    if (pnl === 0) return 'var(--text-2)';
+    return pnl > 0 ? 'var(--green)' : 'var(--red)';
+  });
+
+  protected readonly winRateColor = computed(() => {
+    const wr = this.summary()?.winRate ?? 0;
+    if (wr === 0) return 'var(--text-2)';
+    return 'var(--blue-bright)';
+  });
+
+  protected readonly drawdownColor = computed(() => {
+    const dd = this.summary()?.maxDrawdown ?? 0;
+    if (dd === 0) return 'var(--text-2)';
+    return 'var(--red)';
+  });
   protected readonly equityCurve = computed(() => this.equityCurveResource.value()?.data ?? []);
   protected readonly bySetup = computed(() => this.bySetupResource.value()?.data ?? []);
   protected readonly byEmotion = computed(() => this.byEmotionResource.value()?.data ?? []);
@@ -339,19 +359,6 @@ export class DashboardComponent implements AfterViewInit {
     )
   );
 
-  protected readonly DEFAULT_SETUPS = [
-    { name: 'Breakout', color: '#10b981' },
-    { name: 'Pullback', color: '#3b82f6' },
-    { name: 'Range', color: '#f59e0b' },
-    { name: 'Reversal', color: '#ef4444' },
-  ];
-
-  protected readonly DEFAULT_EMOTIONS = [
-    { emotion: 'REVENGE', label: '😤 Revenge trading', pct: 23, color: '#ef4444' },
-    { emotion: 'STRESSED', label: '😰 Stress élevé', pct: 31, color: '#f59e0b' },
-    { emotion: 'CONFIDENT', label: '😌 Confiance', pct: 68, color: '#3b82f6' },
-    { emotion: 'FOCUSED', label: '🎯 Focus optimal', pct: 52, color: '#10b981' },
-  ];
 
   private readonly canDraw = signal(false);
 
@@ -384,10 +391,20 @@ export class DashboardComponent implements AfterViewInit {
     });
   });
 
-  protected displayEmotions(): { emotion: string; winRate: number }[] {
-    if (this.byEmotion().length) return this.byEmotion().slice(0, 4);
-    return [];
-  }
+  /** Pourcentage de trades par émotion, calculé depuis les trades locaux (pas d'appel API). */
+  protected readonly emotionStats = computed(() => {
+    const trades = this.tradesStore.trades$();
+    if (!trades.length) return [];
+    const total = trades.length;
+    return (['REVENGE', 'STRESSED', 'CONFIDENT', 'FOCUSED', 'FEAR', 'NEUTRAL'] as const)
+      .map(emotion => ({
+        emotion,
+        pct: Math.round(trades.filter(t => t.emotion === emotion).length / total * 100),
+      }))
+      .filter(e => e.pct > 0)
+      .sort((a, b) => b.pct - a.pct)
+      .slice(0, 4);
+  });
 
   goToJournal() {
     this.showTradeForm.set(true);
