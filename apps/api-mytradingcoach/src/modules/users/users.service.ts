@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
@@ -9,6 +10,7 @@ const USER_SELECT = {
   email: true,
   name: true,
   plan: true,
+  role: true,
   trialEndsAt: true,
   trialUsed: true,
   onboardingCompleted: true,
@@ -35,8 +37,24 @@ export class UsersService {
   async findActivePremium() {
     const now = new Date();
     return this.prisma.user.findMany({
-      where: { OR: [{ plan: 'PREMIUM' }, { trialEndsAt: { gt: now } }] },
-      select: { id: true, email: true, name: true, plan: true, trialEndsAt: true },
+      where: {
+        OR: [
+          { plan: 'PREMIUM' },
+          { trialEndsAt: { gt: now } },
+          { role: Role.BETA_TESTER },
+        ],
+      },
+      select: { id: true, email: true, name: true, plan: true, role: true, trialEndsAt: true },
+    });
+  }
+
+  async setRole(targetUserId: string, role: Role): Promise<void> {
+    if (role === Role.ADMIN) {
+      throw new ForbiddenException('Impossible de promouvoir un utilisateur au rôle ADMIN via API');
+    }
+    await this.prisma.user.update({
+      where: { id: targetUserId },
+      data: { role },
     });
   }
 
