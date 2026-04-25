@@ -80,8 +80,8 @@ export class OnboardingComponent {
       switchMap(() => this.tradesApi.create(dto)),
       takeUntilDestroyed(this.destroyRef),
     ).subscribe({
-      next: () => {
-        this.tradesStore.loadTrades();
+      next: (res) => {
+        this.tradesStore.addTrade(res.data);
         this.isSaving.set(false);
         this.completed.emit();
       },

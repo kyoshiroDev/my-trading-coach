@@ -25,7 +25,6 @@ import {
   EmotionColorPipe,
   EmotionEmojiPipe,
   EmotionLabelPipe,
-  PnlClassPipe,
   PnlColorPipe,
   PnlFormatPipe,
   SetupColorPipe,
@@ -50,7 +49,7 @@ interface EquityPoint { date: string; cumulativePnl: number; }
   standalone: true,
   imports: [
     RouterLink, TitleCasePipe, UpperCasePipe, TopbarComponent, TradeFormComponent,
-    PnlColorPipe, PnlFormatPipe, PnlClassPipe,
+    PnlColorPipe, PnlFormatPipe,
     EmotionEmojiPipe, EmotionLabelPipe, EmotionColorPipe,
     SetupColorPipe, SetupColorsMapPipe,
   ],
@@ -361,9 +360,21 @@ export class DashboardComponent implements AfterViewInit {
 
 
   private readonly canDraw = signal(false);
+  private readonly knownTradesCount = signal(-1);
 
   constructor() {
     this.tradesStore.loadTrades({ limit: '6' });
+
+    // Recharge la summary quand un nouveau trade apparaît dans le store
+    // (cas du wizard : le trade est ajouté via addTrade sans passer par le dashboard)
+    effect(() => {
+      const count = this.tradesStore.totalTrades();
+      const known = this.knownTradesCount();
+      if (known !== -1 && count > known) {
+        this.summaryResource.reload();
+      }
+      this.knownTradesCount.set(count);
+    });
 
     effect(() => {
       if (!this.isLoading() && this.canDraw() && this.equityCurve().length > 0) {
