@@ -1,6 +1,19 @@
 .settings-content {
   padding: 28px;
-  max-width: 680px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.settings-col {
+  display: flex;
+  flex-direction: column;
 }
 
 /* ── Alerts ── */
@@ -416,6 +429,10 @@
 }
 
 /* ── Responsive ── */
+@media (max-width: 768px) {
+  .settings-grid { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 600px) {
   .settings-content { padding: 16px; }
   .settings-input { width: 140px; }

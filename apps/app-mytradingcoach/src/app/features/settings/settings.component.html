@@ -9,208 +9,222 @@
     <div class="alert alert-cancel">Paiement annulé. Tu peux réessayer quand tu veux.</div>
   }
 
-  <!-- ── 1. ABONNEMENT ── -->
-  <div class="settings-section">
-    <div class="settings-section-label">Abonnement</div>
-    <div class="settings-card">
-      <div class="plan-inner">
-        @if (userStore.isPremium()) {
-          <span class="plan-badge premium">
-            <span class="plan-badge-dot"></span>
-            ★ PREMIUM
-          </span>
-          <div class="plan-desc">Accès à toutes les fonctionnalités — IA, analytics avancés, Weekly Debrief.</div>
-          @if (userStore.user()?.stripeCurrentPeriodEnd) {
-            <div class="plan-renewal">
-              Prochain renouvellement : {{ userStore.user()!.stripeCurrentPeriodEnd | date:'dd/MM/yyyy' }}
-            </div>
-          }
-          <div class="plan-actions">
-            <button class="btn btn-secondary" (click)="openPortal()">Gérer mon abonnement →</button>
+  <div class="settings-grid">
+
+    <!-- ── Colonne gauche : Abonnement + Zone de danger ── -->
+    <div class="settings-col">
+
+      <!-- ── 1. ABONNEMENT ── -->
+      <div class="settings-section">
+        <div class="settings-section-label">Abonnement</div>
+        <div class="settings-card">
+          <div class="plan-inner">
+            @if (userStore.isPremium()) {
+              <span class="plan-badge premium">
+                <span class="plan-badge-dot"></span>
+                ★ PREMIUM
+              </span>
+              <div class="plan-desc">Accès à toutes les fonctionnalités — IA, analytics avancés, Weekly Debrief.</div>
+              @if (userStore.user()?.stripeCurrentPeriodEnd) {
+                <div class="plan-renewal">
+                  Prochain renouvellement : {{ userStore.user()!.stripeCurrentPeriodEnd | date:'dd/MM/yyyy' }}
+                </div>
+              }
+              <div class="plan-actions">
+                <button class="btn btn-secondary" (click)="openPortal()">Gérer mon abonnement →</button>
+              </div>
+            } @else {
+              <span class="plan-badge free">
+                <span class="plan-badge-dot"></span>
+                FREE
+              </span>
+              <div class="plan-desc">50 trades/mois · Journal complet · Stats de base · Historique illimité.</div>
+              <div class="plan-upgrade-hint">Passe à Premium pour débloquer l'IA, les analytics avancés et le Weekly Debrief.</div>
+              <div class="plan-actions">
+                <button class="btn btn-primary" (click)="startTrial('monthly')">⚡ Essayer 7 jours gratuit — 39 €/mois →</button>
+                <button class="btn btn-secondary" (click)="startTrial('yearly')">Annuel — 349 €/an (économise 119 €)</button>
+              </div>
+            }
           </div>
-        } @else {
-          <span class="plan-badge free">
-            <span class="plan-badge-dot"></span>
-            FREE
-          </span>
-          <div class="plan-desc">50 trades/mois · Journal complet · Stats de base · Historique illimité.</div>
-          <div class="plan-upgrade-hint">Passe à Premium pour débloquer l'IA, les analytics avancés et le Weekly Debrief.</div>
-          <div class="plan-actions">
-            <button class="btn btn-primary" (click)="startTrial('monthly')">⚡ Essayer 7 jours gratuit — 39 €/mois →</button>
-            <button class="btn btn-secondary" (click)="startTrial('yearly')">Annuel — 349 €/an (économise 119 €)</button>
-          </div>
-        }
+        </div>
       </div>
-    </div>
-  </div>
 
-  <!-- ── 2. COMPTE ── -->
-  <div class="settings-section">
-    <div class="settings-section-label">Compte</div>
-    <div class="settings-card">
+      <!-- ── 2. ZONE DE DANGER ── -->
+      <div class="settings-section">
+        <div class="settings-section-label danger-label">Zone de danger</div>
+        <div class="settings-card danger-card">
 
-      <!-- Email -->
-      <div class="settings-row">
-        <div class="settings-row-left">
-          <span class="settings-row-label">Email</span>
-          @if (editingEmail()) {
-            <div class="inline-edit">
-              <input
-                class="settings-input"
-                type="email"
-                [value]="emailInput()"
-                (input)="emailInput.set($any($event.target).value)"
-                placeholder="Nouvel email"
-              />
-              <button class="btn-inline-save" (click)="saveEmail()" [disabled]="isSavingEmail() || !emailInput().trim()">
-                @if (isSavingEmail()) { … } @else { Sauvegarder }
-              </button>
-              <button class="btn-inline-cancel" (click)="editingEmail.set(false)">Annuler</button>
+          @if (!showDeleteConfirm()) {
+            <div class="settings-row">
+              <div class="settings-row-left">
+                <span class="settings-row-label danger-row-label">Supprimer mon compte</span>
+                <span class="settings-row-hint">Supprime définitivement ton compte, tous tes trades et debriefs. Irréversible.</span>
+              </div>
+              <button class="settings-edit-btn danger-btn" (click)="showDeleteConfirm.set(true)">Supprimer</button>
             </div>
           } @else {
-            <span class="settings-row-value">{{ userStore.user()?.email }}</span>
-          }
-        </div>
-        @if (!editingEmail()) {
-          <button class="settings-edit-btn" (click)="startEditEmail()">Modifier</button>
-        }
-      </div>
-
-      <!-- Nom -->
-      <div class="settings-row">
-        <div class="settings-row-left">
-          <span class="settings-row-label">Nom</span>
-          @if (editingName()) {
-            <div class="inline-edit">
+            <div class="delete-confirm">
+              <div class="delete-confirm-title">Confirme la suppression</div>
+              <div class="delete-confirm-hint">
+                Tape <strong>SUPPRIMER</strong> pour confirmer. Toutes tes données seront effacées immédiatement.
+              </div>
               <input
-                class="settings-input"
+                class="delete-input"
                 type="text"
-                [value]="nameInput()"
-                (input)="nameInput.set($any($event.target).value)"
-                placeholder="Ton nom"
+                placeholder="SUPPRIMER"
+                [value]="deleteInput()"
+                (input)="deleteInput.set($any($event.target).value)"
               />
-              <button class="btn-inline-save" (click)="saveName()" [disabled]="isSavingName() || !nameInput().trim()">
-                @if (isSavingName()) { … } @else { Sauvegarder }
-              </button>
-              <button class="btn-inline-cancel" (click)="editingName.set(false)">Annuler</button>
+              <div class="delete-actions">
+                <button class="btn btn-secondary" (click)="showDeleteConfirm.set(false); deleteInput.set('')">Annuler</button>
+                <button
+                  class="btn btn-danger"
+                  [disabled]="deleteInput() !== 'SUPPRIMER' || isDeleting()"
+                  (click)="confirmDelete()"
+                >
+                  @if (isDeleting()) { Suppression… } @else { Confirmer la suppression }
+                </button>
+              </div>
             </div>
-          } @else {
-            <span class="settings-row-value">{{ userStore.user()?.name ?? '—' }}</span>
           }
-        </div>
-        @if (!editingName()) {
-          <button class="settings-edit-btn" (click)="startEditName()">Modifier</button>
-        }
-      </div>
 
-      <!-- Mot de passe -->
-      <div class="settings-row">
-        <div class="settings-row-left">
-          <span class="settings-row-label">Mot de passe</span>
-          @if (passwordResetSent()) {
-            <span class="settings-row-hint success-hint">Email de réinitialisation envoyé.</span>
-          } @else {
-            <span class="settings-row-value">••••••••••••</span>
-          }
         </div>
-        <button class="settings-edit-btn" (click)="resetPassword()" [disabled]="passwordResetSent()">Modifier</button>
       </div>
 
     </div>
-  </div>
 
-  <!-- ── 3. PRÉFÉRENCES ── -->
-  <div class="settings-section">
-    <div class="settings-section-label">Préférences</div>
-    <div class="settings-card">
+    <!-- ── Colonne droite : Compte + Préférences ── -->
+    <div class="settings-col">
 
-      <!-- Devise -->
-      <div class="settings-row">
-        <div class="settings-row-left">
-          <span class="settings-row-label">Devise d'affichage</span>
-          <span class="settings-row-hint">Utilisée pour l'affichage du P&amp;L</span>
-        </div>
-        <select class="settings-select" [value]="prefCurrency()" (change)="prefCurrency.set($any($event.target).value)">
-          <option value="USD">USD ($)</option>
-          <option value="EUR">EUR (€)</option>
-          <option value="GBP">GBP (£)</option>
-        </select>
-      </div>
+      <!-- ── 3. COMPTE ── -->
+      <div class="settings-section">
+        <div class="settings-section-label">Compte</div>
+        <div class="settings-card">
 
-      <!-- Notifications email -->
-      <div class="settings-row">
-        <div class="settings-row-left">
-          <span class="settings-row-label">Notifications email</span>
-          <span class="settings-row-hint">Reçois les debriefs hebdomadaires et alertes importantes</span>
-        </div>
-        <label class="settings-toggle">
-          <input type="checkbox" [checked]="prefNotifications()" (change)="prefNotifications.set($any($event.target).checked)" />
-          <span class="toggle-track"></span>
-        </label>
-      </div>
-
-      <!-- Weekly Debrief automatique -->
-      <div class="settings-row">
-        <div class="settings-row-left">
-          <span class="settings-row-label">Weekly Debrief automatique</span>
-          <span class="settings-row-hint">Génération automatique chaque dimanche. Premium uniquement.</span>
-        </div>
-        <label class="settings-toggle">
-          <input type="checkbox" [checked]="prefDebrief()" (change)="prefDebrief.set($any($event.target).checked)" [disabled]="!userStore.isPremium()" />
-          <span class="toggle-track" [class.disabled]="!userStore.isPremium()"></span>
-        </label>
-      </div>
-
-    </div>
-    <div class="pref-save">
-      <button class="btn btn-primary" (click)="savePreferences()" [disabled]="isSavingPrefs()">
-        @if (isSavingPrefs()) { Enregistrement… }
-        @else if (prefSaved()) { ✓ Sauvegardé }
-        @else { Sauvegarder les préférences }
-      </button>
-    </div>
-  </div>
-
-  <!-- ── 4. ZONE DE DANGER ── -->
-  <div class="settings-section">
-    <div class="settings-section-label danger-label">Zone de danger</div>
-    <div class="settings-card danger-card">
-
-      @if (!showDeleteConfirm()) {
-        <div class="settings-row">
-          <div class="settings-row-left">
-            <span class="settings-row-label danger-row-label">Supprimer mon compte</span>
-            <span class="settings-row-hint">Supprime définitivement ton compte, tous tes trades et debriefs. Irréversible.</span>
+          <!-- Email -->
+          <div class="settings-row">
+            <div class="settings-row-left">
+              <span class="settings-row-label">Email</span>
+              @if (editingEmail()) {
+                <div class="inline-edit">
+                  <input
+                    class="settings-input"
+                    type="email"
+                    [value]="emailInput()"
+                    (input)="emailInput.set($any($event.target).value)"
+                    placeholder="Nouvel email"
+                  />
+                  <button class="btn-inline-save" (click)="saveEmail()" [disabled]="isSavingEmail() || !emailInput().trim()">
+                    @if (isSavingEmail()) { … } @else { Sauvegarder }
+                  </button>
+                  <button class="btn-inline-cancel" (click)="editingEmail.set(false)">Annuler</button>
+                </div>
+              } @else {
+                <span class="settings-row-value">{{ userStore.user()?.email }}</span>
+              }
+            </div>
+            @if (!editingEmail()) {
+              <button class="settings-edit-btn" (click)="startEditEmail()">Modifier</button>
+            }
           </div>
-          <button class="settings-edit-btn danger-btn" (click)="showDeleteConfirm.set(true)">Supprimer</button>
-        </div>
-      } @else {
-        <div class="delete-confirm">
-          <div class="delete-confirm-title">Confirme la suppression</div>
-          <div class="delete-confirm-hint">
-            Tape <strong>SUPPRIMER</strong> pour confirmer. Toutes tes données seront effacées immédiatement.
+
+          <!-- Nom -->
+          <div class="settings-row">
+            <div class="settings-row-left">
+              <span class="settings-row-label">Nom</span>
+              @if (editingName()) {
+                <div class="inline-edit">
+                  <input
+                    class="settings-input"
+                    type="text"
+                    [value]="nameInput()"
+                    (input)="nameInput.set($any($event.target).value)"
+                    placeholder="Ton nom"
+                  />
+                  <button class="btn-inline-save" (click)="saveName()" [disabled]="isSavingName() || !nameInput().trim()">
+                    @if (isSavingName()) { … } @else { Sauvegarder }
+                  </button>
+                  <button class="btn-inline-cancel" (click)="editingName.set(false)">Annuler</button>
+                </div>
+              } @else {
+                <span class="settings-row-value">{{ userStore.user()?.name ?? '—' }}</span>
+              }
+            </div>
+            @if (!editingName()) {
+              <button class="settings-edit-btn" (click)="startEditName()">Modifier</button>
+            }
           </div>
-          <input
-            class="delete-input"
-            type="text"
-            placeholder="SUPPRIMER"
-            [value]="deleteInput()"
-            (input)="deleteInput.set($any($event.target).value)"
-          />
-          <div class="delete-actions">
-            <button class="btn btn-secondary" (click)="showDeleteConfirm.set(false); deleteInput.set('')">Annuler</button>
-            <button
-              class="btn btn-danger"
-              [disabled]="deleteInput() !== 'SUPPRIMER' || isDeleting()"
-              (click)="confirmDelete()"
-            >
-              @if (isDeleting()) { Suppression… } @else { Confirmer la suppression }
-            </button>
+
+          <!-- Mot de passe -->
+          <div class="settings-row">
+            <div class="settings-row-left">
+              <span class="settings-row-label">Mot de passe</span>
+              @if (passwordResetSent()) {
+                <span class="settings-row-hint success-hint">Email de réinitialisation envoyé.</span>
+              } @else {
+                <span class="settings-row-value">••••••••••••</span>
+              }
+            </div>
+            <button class="settings-edit-btn" (click)="resetPassword()" [disabled]="passwordResetSent()">Modifier</button>
           </div>
+
         </div>
-      }
+      </div>
+
+      <!-- ── 4. PRÉFÉRENCES ── -->
+      <div class="settings-section">
+        <div class="settings-section-label">Préférences</div>
+        <div class="settings-card">
+
+          <!-- Devise -->
+          <div class="settings-row">
+            <div class="settings-row-left">
+              <span class="settings-row-label">Devise d'affichage</span>
+              <span class="settings-row-hint">Utilisée pour l'affichage du P&amp;L</span>
+            </div>
+            <select class="settings-select" [value]="prefCurrency()" (change)="prefCurrency.set($any($event.target).value)">
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="GBP">GBP (£)</option>
+            </select>
+          </div>
+
+          <!-- Notifications email -->
+          <div class="settings-row">
+            <div class="settings-row-left">
+              <span class="settings-row-label">Notifications email</span>
+              <span class="settings-row-hint">Reçois les debriefs hebdomadaires et alertes importantes</span>
+            </div>
+            <label class="settings-toggle">
+              <input type="checkbox" [checked]="prefNotifications()" (change)="prefNotifications.set($any($event.target).checked)" />
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+
+          <!-- Weekly Debrief automatique -->
+          <div class="settings-row">
+            <div class="settings-row-left">
+              <span class="settings-row-label">Weekly Debrief automatique</span>
+              <span class="settings-row-hint">Génération automatique chaque dimanche. Premium uniquement.</span>
+            </div>
+            <label class="settings-toggle">
+              <input type="checkbox" [checked]="prefDebrief()" (change)="prefDebrief.set($any($event.target).checked)" [disabled]="!userStore.isPremium()" />
+              <span class="toggle-track" [class.disabled]="!userStore.isPremium()"></span>
+            </label>
+          </div>
+
+        </div>
+        <div class="pref-save">
+          <button class="btn btn-primary" (click)="savePreferences()" [disabled]="isSavingPrefs()">
+            @if (isSavingPrefs()) { Enregistrement… }
+            @else if (prefSaved()) { ✓ Sauvegardé }
+            @else { Sauvegarder les préférences }
+          </button>
+        </div>
+      </div>
 
     </div>
+
   </div>
 
 </div>
