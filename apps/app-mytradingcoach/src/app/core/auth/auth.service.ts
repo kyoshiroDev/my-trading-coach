@@ -4,11 +4,14 @@ import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
+export type UserRole = 'ADMIN' | 'USER' | 'BETA_TESTER';
+
 export interface AuthUser {
   id: string;
   email: string;
   name?: string;
   plan: 'FREE' | 'PREMIUM';
+  role?: UserRole;
   trialEndsAt?: string | null;
   stripeCurrentPeriodEnd?: string | null;
   onboardingCompleted?: boolean;
@@ -89,8 +92,13 @@ export class AuthService {
   isPremium(): boolean {
     const user = this.currentUser();
     if (!user) return false;
+    if (user.role === 'ADMIN' || user.role === 'BETA_TESTER') return true;
     if (user.plan === 'PREMIUM') return true;
     return !!(user.trialEndsAt && new Date() < new Date(user.trialEndsAt));
+  }
+
+  isAdmin(): boolean {
+    return this.currentUser()?.role === 'ADMIN';
   }
 
   fetchMe() {
