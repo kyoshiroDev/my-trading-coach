@@ -58,7 +58,8 @@ import { AdminApi, AdminUser } from '../../core/api/admin.api';
                 <th>Utilisateur</th>
                 <th>Rôle</th>
                 <th>Plan</th>
-                <th>Trades</th>
+                <th>Abonnement</th>
+                <th>Premium depuis</th>
                 <th>Inscrit</th>
                 <th></th>
               </tr>
@@ -85,7 +86,34 @@ import { AdminApi, AdminUser } from '../../core/api/admin.api';
                       {{ user.plan }}
                     </span>
                   </td>
-                  <td class="mono td-center">{{ user._count.trades }}</td>
+                  <td>
+                    @if (user.plan === 'PREMIUM') {
+                      @if (user.trialEndsAt && isFuture(user.trialEndsAt)) {
+                        <span class="sub-type trial">Essai gratuit</span>
+                      } @else if (user.stripeInterval === 'year') {
+                        <span class="sub-type annual">Annuel</span>
+                      } @else if (user.stripeInterval === 'month') {
+                        <span class="sub-type monthly">Mensuel</span>
+                      } @else {
+                        <span class="sub-type manual">Manuel</span>
+                      }
+                    } @else {
+                      <span class="mono" style="color:var(--text-3)">—</span>
+                    }
+                  </td>
+                  <td class="mono td-date">
+                    @if (user.plan === 'PREMIUM') {
+                      @if (user.trialEndsAt && isFuture(user.trialEndsAt)) {
+                        <span style="color:var(--yellow)">Trial → {{ user.trialEndsAt | date:'dd/MM/yy' }}</span>
+                      } @else if (user.stripeCurrentPeriodEnd) {
+                        {{ premiumSince(user) | date:'dd/MM/yyyy' }}
+                      } @else {
+                        <span style="color:var(--text-3)">—</span>
+                      }
+                    } @else {
+                      <span style="color:var(--text-3)">—</span>
+                    }
+                  </td>
                   <td class="mono td-date">{{ user.createdAt | date:'dd/MM/yyyy' }}</td>
                   <td>
                     <div class="row-actions">
@@ -240,6 +268,18 @@ export class AdminUsersComponent implements OnInit {
 
   protected initials(user: AdminUser): string {
     return (user.name ?? user.email).slice(0, 2).toUpperCase();
+  }
+
+  protected isFuture(dateStr: string | null): boolean {
+    return !!dateStr && new Date(dateStr) > new Date();
+  }
+
+  /** Approxime la date de début du plan premium depuis la date de fin de période. */
+  protected premiumSince(user: AdminUser): Date | null {
+    if (!user.stripeCurrentPeriodEnd) return null;
+    const end = new Date(user.stripeCurrentPeriodEnd);
+    const days = user.stripeInterval === 'year' ? 365 : 30;
+    return new Date(end.getTime() - days * 24 * 60 * 60 * 1000);
   }
 
   protected closeIfBackdrop(event: MouseEvent, modal: 'edit' | 'delete') {

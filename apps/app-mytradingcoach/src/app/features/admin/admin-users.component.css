@@ -362,3 +362,19 @@
 
 .btn-danger:hover:not(:disabled) { background: rgba(239, 68, 68, 0.2); border-color: var(--red); }
 .btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
+
+
+/* ── Subscription type badges ── */
+.sub-type {
+  font-size: 11px;
+  font-family: var(--font-mono, 'DM Mono', monospace);
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.sub-type.monthly { background: rgba(59,130,246,0.12); color: var(--blue-bright); border: 1px solid rgba(59,130,246,0.25); }
+.sub-type.annual  { background: rgba(139,92,246,0.12); color: #a78bfa; border: 1px solid rgba(139,92,246,0.25); }
+.sub-type.trial   { background: rgba(245,158,11,0.12); color: var(--yellow); border: 1px solid rgba(245,158,11,0.25); }
+.sub-type.manual  { background: var(--bg-3); color: var(--text-3); border: 1px solid var(--border); }
