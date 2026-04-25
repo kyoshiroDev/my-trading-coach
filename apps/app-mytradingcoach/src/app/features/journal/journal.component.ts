@@ -25,6 +25,7 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
       title="Journal"
       [showAddButton]="true"
       addLabel="Nouveau trade"
+      addTestId="add-trade-btn"
       (addClick)="openModal()"
     />
 
@@ -34,10 +35,10 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
         <button class="filter-chip" [class.active]="filterSide() === 'ALL'" (click)="filterSide.set('ALL')">
           Tous
         </button>
-        <button class="filter-chip" [class.active]="filterSide() === 'LONG'" (click)="filterSide.set('LONG')">
+        <button class="filter-chip" data-testid="filter-long" [class.active]="filterSide() === 'LONG'" (click)="filterSide.set('LONG')">
           LONG
         </button>
-        <button class="filter-chip" [class.active]="filterSide() === 'SHORT'" (click)="filterSide.set('SHORT')">
+        <button class="filter-chip" data-testid="filter-short" [class.active]="filterSide() === 'SHORT'" (click)="filterSide.set('SHORT')">
           SHORT
         </button>
         @for (setup of SETUPS; track setup) {
@@ -51,7 +52,7 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
       @if (tradesStore.isLoading$()) {
         <div class="loading-state">Chargement des trades...</div>
       } @else if (filteredTrades().length === 0) {
-        <div class="empty-state">
+        <div class="empty-state" data-testid="empty-state">
           <div class="empty-state-icon">📖</div>
           <h3 class="empty-state-title">Aucun trade enregistré</h3>
           <p class="empty-state-desc">
@@ -80,7 +81,7 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
           </thead>
           <tbody>
             @for (trade of filteredTrades(); track trade.id) {
-              <tr>
+              <tr data-testid="trade-row">
                 <td class="td-asset">{{ trade.asset }}</td>
                 <td>
                   <span class="trade-side" [class]="trade.side === 'LONG' ? 'long' : 'short'">
@@ -89,7 +90,7 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
                 </td>
                 <td class="mono">{{ trade.entry }}</td>
                 <td class="mono">{{ trade.exit ?? '—' }}</td>
-                <td class="mono" [style.color]="trade.pnl | pnlColor">
+                <td class="mono" data-testid="trade-pnl" [style.color]="trade.pnl | pnlColor">
                   {{ trade.pnl | pnlFormat:trade.entry }}
                 </td>
                 <td class="mono">{{ trade.riskReward !== null ? trade.riskReward.toFixed(2) : '—' }}</td>
@@ -101,7 +102,7 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
                 <td><span class="setup-badge">{{ trade.setup }}</span></td>
                 <td class="mono td-date">{{ trade.tradedAt | date:'dd/MM/yy' }}</td>
                 <td>
-                  <button class="btn-delete" (click)="deleteTrade(trade.id)" title="Supprimer">
+                  <button class="btn-delete" data-testid="trade-delete" (click)="deleteTrade(trade.id)" title="Supprimer">
                     <lucide-icon [img]="XIcon" [size]="12" />
                   </button>
                 </td>

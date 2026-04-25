@@ -25,7 +25,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
   template: `
     @if (open()) {
       <div class="overlay" role="presentation" (click)="onOverlayClick($event)" (keydown.escape)="dismissed.emit()">
-        <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal" role="dialog" aria-modal="true" data-testid="trade-modal">
           <!-- Header -->
           <div class="modal-header">
             <h2 class="modal-title">{{ editTrade() ? 'Modifier le trade' : 'Nouveau trade' }}</h2>
@@ -39,7 +39,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
             <div class="form-row">
               <div class="form-group">
                 <label for="tf-asset">Actif</label>
-                <input id="tf-asset" type="text" [(ngModel)]="form.asset" name="asset" required
+                <input id="tf-asset" data-testid="trade-asset" type="text" [(ngModel)]="form.asset" name="asset" required
                   placeholder="BTC/USDT" [class.input-error]="submitted() && (!form.asset || zodErrors()['asset'])" />
                 @if (submitted() && (!form.asset || zodErrors()['asset'])) {
                   <span class="field-error">{{ zodErrors()['asset'] || 'Asset requis' }}</span>
@@ -48,8 +48,8 @@ const EMOTION_EMOJIS: Record<string, string> = {
               <div class="form-group">
                 <span class="field-label">Direction</span>
                 <div class="side-toggle" [class.input-error]="submitted() && zodErrors()['side']">
-                  <button type="button" class="side-btn" [class.active-long]="form.side === 'LONG'" (click)="setSide('LONG')">LONG</button>
-                  <button type="button" class="side-btn" [class.active-short]="form.side === 'SHORT'" (click)="setSide('SHORT')">SHORT</button>
+                  <button type="button" data-testid="trade-side-long" class="side-btn" [class.active-long]="form.side === 'LONG'" (click)="setSide('LONG')">LONG</button>
+                  <button type="button" data-testid="trade-side-short" class="side-btn" [class.active-short]="form.side === 'SHORT'" (click)="setSide('SHORT')">SHORT</button>
                 </div>
                 @if (submitted() && zodErrors()['side']) {
                   <span class="field-error">Direction requise (LONG ou SHORT)</span>
@@ -61,7 +61,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
             <div class="form-row">
               <div class="form-group">
                 <label for="tf-entry">Entry</label>
-                <input id="tf-entry" type="number" [(ngModel)]="form.entry" name="entry" required
+                <input id="tf-entry" data-testid="trade-entry" type="number" [(ngModel)]="form.entry" name="entry" required
                   placeholder="0.00" step="any" (ngModelChange)="recalculate()"
                   [class.input-error]="submitted() && (!form.entry || zodErrors()['entry'])" />
                 @if (submitted() && (!form.entry || zodErrors()['entry'])) {
@@ -120,6 +120,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
                   <button
                     type="button"
                     class="emotion-btn"
+                    [attr.data-testid]="'emotion-' + e.toLowerCase()"
                     [class.selected]="form.emotion === e"
                     (click)="form.emotion = $any(e)"
                   >
@@ -166,7 +167,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
             <!-- Footer -->
             <div class="modal-footer">
               <button type="button" class="btn-cancel" (click)="dismissed.emit()">Annuler</button>
-              <button type="submit" class="btn-save" [disabled]="isSaving()">
+              <button type="submit" data-testid="trade-submit" class="btn-save" [disabled]="isSaving()">
                 @if (isSaving()) {
                   <span class="spinner"></span> Enregistrement...
                 } @else {
