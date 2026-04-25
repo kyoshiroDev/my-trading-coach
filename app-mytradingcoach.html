@@ -772,7 +772,16 @@
             <button class="filter-chip">SCALPING</button>
             <button class="filter-chip">NEWS</button>
           </div>
-          <table class="journal-table">
+
+          <!-- ── Empty state (aucun trade) ── -->
+          <div id="journal-empty" class="empty-state" style="display:none">
+            <div class="empty-state-icon">📖</div>
+            <h3 class="empty-state-title">Aucun trade enregistré</h3>
+            <p class="empty-state-desc">Commence à journaliser tes trades pour obtenir des analyses IA personnalisées</p>
+            <button class="btn-primary" onclick="openModal()">+ Ajouter mon premier trade</button>
+          </div>
+
+          <table class="journal-table" id="journal-table">
             <thead>
               <tr>
                 <th>Asset</th>
