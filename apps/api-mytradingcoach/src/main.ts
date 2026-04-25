@@ -1,3 +1,5 @@
+import cluster from 'node:cluster';
+import { availableParallelism } from 'node:os';
 import { ConsoleLogger, Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
@@ -54,7 +56,21 @@ async function bootstrap() {
 
   const port = process.env['PORT'] ?? 3000;
   await app.listen(port);
-  logger.log(`Application running on: http://localhost:${port}/api`);
+  logger.log(`Worker ${process.pid} running on: http://localhost:${port}/api`);
 }
 
-bootstrap();
+if (cluster.isPrimary) {
+  const numWorkers = availableParallelism();
+  logger.log(`Primary ${process.pid} starting ${numWorkers} workers...`);
+
+  for (let i = 0; i < numWorkers; i++) {
+    cluster.fork();
+  }
+
+  cluster.on('exit', (worker, code) => {
+    logger.warn(`Worker ${worker.process.pid} died (code ${code}). Restarting...`);
+    cluster.fork();
+  });
+} else {
+  bootstrap();
+}
