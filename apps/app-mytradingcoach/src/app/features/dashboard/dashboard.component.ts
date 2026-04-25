@@ -25,6 +25,7 @@ import {
   EmotionColorPipe,
   EmotionEmojiPipe,
   EmotionLabelPipe,
+  PnlClassPipe,
   PnlColorPipe,
   PnlFormatPipe,
   SetupColorPipe,
@@ -49,7 +50,7 @@ interface EquityPoint { date: string; cumulativePnl: number; }
   standalone: true,
   imports: [
     RouterLink, TitleCasePipe, UpperCasePipe, TopbarComponent, TradeFormComponent,
-    PnlColorPipe, PnlFormatPipe, PnlClassPipe,
+    PnlClassPipe, PnlColorPipe, PnlFormatPipe,
     EmotionEmojiPipe, EmotionLabelPipe, EmotionColorPipe,
     SetupColorPipe, SetupColorsMapPipe,
   ],
