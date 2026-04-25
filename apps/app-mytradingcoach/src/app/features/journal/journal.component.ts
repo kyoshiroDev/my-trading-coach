@@ -52,8 +52,15 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
         <div class="loading-state">Chargement des trades...</div>
       } @else if (filteredTrades().length === 0) {
         <div class="empty-state">
-          <p>Aucun trade trouvé</p>
-          <small>Modifie les filtres ou ajoute ton premier trade</small>
+          <div class="empty-state-icon">📖</div>
+          <h3 class="empty-state-title">Aucun trade enregistré</h3>
+          <p class="empty-state-desc">
+            Commence à journaliser tes trades pour obtenir
+            des analyses IA personnalisées
+          </p>
+          <button class="btn-primary" (click)="openModal()">
+            + Ajouter mon premier trade
+          </button>
         </div>
       } @else {
         <table class="journal-table">

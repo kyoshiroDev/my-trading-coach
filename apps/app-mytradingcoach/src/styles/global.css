@@ -33,6 +33,18 @@ a {
 button {
   font-family: var(--font-body, 'DM Sans', sans-serif);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+button lucide-icon,
+button lucide-icon svg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 input, select, textarea {

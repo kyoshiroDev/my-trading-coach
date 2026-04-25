@@ -100,13 +100,19 @@
 
 .nav-icon {
   width: 16px;
-  text-align: center;
-  font-size: 14px;
-  opacity: 0.8;
+  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.nav-icon lucide-icon,
+.nav-icon lucide-icon svg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .badge {
