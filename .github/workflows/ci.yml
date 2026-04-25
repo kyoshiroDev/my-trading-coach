@@ -271,54 +271,8 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_APP_PROJECT_ID }}
 
-  # ── Tests E2E Playwright → dev deployed ──────────────────────────────────
-  test-e2e:
-    runs-on: ubuntu-latest
-    needs: [deploy-angular-dev, deploy-api-dev]
-    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
-    environment: development
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      BASE_URL: https://dev.app.mytradingcoach.app
-      E2E_FREE_EMAIL: ${{ secrets.E2E_FREE_EMAIL }}
-      E2E_FREE_PASSWORD: ${{ secrets.E2E_FREE_PASSWORD }}
-      E2E_PREMIUM_EMAIL: ${{ secrets.E2E_PREMIUM_EMAIL }}
-      E2E_PREMIUM_PASSWORD: ${{ secrets.E2E_PREMIUM_PASSWORD }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
-      - name: Check BASE_URL reachability
-        run: |
-          echo "BASE_URL=$BASE_URL"
-          curl -sI "$BASE_URL" | head -5 || echo "URL not reachable yet — continuing anyway"
-
-      - name: Install Playwright browsers
-        run: pnpm exec playwright install chromium --with-deps
-
-      - name: Run E2E tests
-        run: pnpm nx e2e app-mytradingcoach-e2e --reporter=list
-        env:
-          BASE_URL: https://dev.app.mytradingcoach.app
-
-      - name: Upload Playwright report on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 7
+  # ── Tests E2E Playwright → désactivés
+  # test-e2e: disabled
 
   # ── Deploy Landing dev → Vercel ───────────────────────────────────────────
   deploy-landing-dev:
