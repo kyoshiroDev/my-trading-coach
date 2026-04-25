@@ -1,0 +1,53 @@
+<div class="plan-modal-overlay" (click)="close()" (keydown.escape)="close()" role="dialog" aria-modal="true" tabindex="-1">
+  <div class="plan-modal-card" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="plan-modal-header">
+      <h2>Passe à Premium ⚡</h2>
+      <p>Analytics avancés · IA Insights · Weekly Debrief automatique</p>
+      <button class="plan-modal-close" (click)="close()" aria-label="Fermer">✕</button>
+    </div>
+
+    <!-- Plans -->
+    <div class="plan-modal-options">
+
+      <!-- Annuel — recommandé -->
+      <div class="plan-option" [class.recommended]="selectedPlan() === 'yearly'"
+           (click)="selectPlan('yearly')" role="button" tabindex="0"
+           (keydown.enter)="selectPlan('yearly')">
+        <div class="plan-option-badge">⭐ Recommandé</div>
+        <div class="plan-option-price">
+          <span class="price">29€</span>
+          <span class="period">/mois</span>
+        </div>
+        <div class="plan-option-detail">Facturé 349€/an</div>
+        <div class="plan-option-saving">Économise 119€ vs mensuel</div>
+      </div>
+
+      <!-- Mensuel -->
+      <div class="plan-option" [class.selected]="selectedPlan() === 'monthly'"
+           (click)="selectPlan('monthly')" role="button" tabindex="0"
+           (keydown.enter)="selectPlan('monthly')">
+        <div class="plan-option-badge">&nbsp;</div>
+        <div class="plan-option-price">
+          <span class="price">39€</span>
+          <span class="period">/mois</span>
+        </div>
+        <div class="plan-option-detail">Facturé chaque mois</div>
+        <div class="plan-option-saving">&nbsp;</div>
+      </div>
+
+    </div>
+
+    <!-- CTA -->
+    <button class="plan-modal-cta" (click)="confirmPlan()" [disabled]="isLoading()">
+      @if (isLoading()) {
+        <span class="btn-spinner"></span> Redirection...
+      } @else {
+        Essayer 7 jours gratuit →
+      }
+    </button>
+    <p class="plan-modal-hint">Sans CB · Annulation à tout moment</p>
+
+  </div>
+</div>
