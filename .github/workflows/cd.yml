@@ -60,7 +60,6 @@ jobs:
           pnpm dlx vercel --prod \
             --token=${{ secrets.VERCEL_TOKEN }} \
             --yes \
-            --cwd dist/apps/app-mytradingcoach/browser \
             --local-config ${{ github.workspace }}/apps/app-mytradingcoach/vercel.json
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
