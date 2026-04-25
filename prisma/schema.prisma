@@ -11,6 +11,7 @@ model User {
   email       String    @unique
   password    String
   name        String?
+  role        Role      @default(USER)
   plan        Plan      @default(FREE)
   trialEndsAt DateTime?
   trialUsed   Boolean   @default(false)
@@ -93,6 +94,12 @@ model StripeEvent {
   processedAt DateTime @default(now())
 
   @@index([processedAt])
+}
+
+enum Role {
+  ADMIN
+  USER
+  BETA_TESTER
 }
 
 enum Plan {
