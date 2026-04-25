@@ -1,10 +1,18 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Patch, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, UseGuards } from '@nestjs/common';
+import { IsEnum } from 'class-validator';
+import { Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { AdminGuard } from '../../common/guards/admin.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UsersService } from './users.service';
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
+
+class SetRoleDto {
+  @IsEnum(Role)
+  role!: Role;
+}
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -35,5 +43,12 @@ export class UsersController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteMe(@CurrentUser() user: { id: string }) {
     await this.usersService.deleteMe(user.id);
+  }
+
+  @UseGuards(AdminGuard)
+  @Patch('admin/:id/role')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async setRole(@Param('id') id: string, @Body() dto: SetRoleDto) {
+    await this.usersService.setRole(id, dto.role);
   }
 }
