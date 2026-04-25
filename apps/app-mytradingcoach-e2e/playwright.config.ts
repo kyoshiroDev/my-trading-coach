@@ -5,20 +5,20 @@ const isCI = !!process.env.CI;
 
 export default defineConfig({
   testDir: './src',
-  fullyParallel: false,
+  fullyParallel: true,
   forbidOnly: isCI,
-  retries: isCI ? 2 : 0,
-  workers: 1,
-  timeout: isCI ? 60000 : 30000,
+  retries: 1,
+  workers: 2,
+  timeout: 15000,
   expect: {
-    timeout: 10000,
+    timeout: 8000,
   },
   use: {
     baseURL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    actionTimeout: isCI ? 20000 : 15000,
-    navigationTimeout: isCI ? 30000 : 20000,
+    actionTimeout: 10000,
+    navigationTimeout: 15000,
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   ...(!isCI && {
