@@ -108,12 +108,7 @@
   opacity: 0.8;
 }
 
-.nav-icon lucide-icon,
-.nav-icon lucide-icon svg {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+/* lucide-icon alignment handled globally in global.css */
 
 .badge {
   margin-left: auto;

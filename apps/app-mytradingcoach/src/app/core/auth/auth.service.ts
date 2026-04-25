@@ -87,7 +87,10 @@ export class AuthService {
   }
 
   isPremium(): boolean {
-    return this.currentUser()?.plan === 'PREMIUM';
+    const user = this.currentUser();
+    if (!user) return false;
+    if (user.plan === 'PREMIUM') return true;
+    return !!(user.trialEndsAt && new Date() < new Date(user.trialEndsAt));
   }
 
   fetchMe() {
