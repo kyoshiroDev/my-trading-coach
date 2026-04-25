@@ -85,9 +85,22 @@ const schema = [
 
 <style>
   .article-wrap {
-    max-width: 680px;
+    max-width: 800px;
     margin: 0 auto;
-    padding: 48px 5%;
+    padding: 60px 40px;
+  }
+
+  @media (min-width: 1200px) {
+    .article-wrap {
+      max-width: 860px;
+      padding: 60px 0;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .article-wrap {
+      padding: 40px 20px;
+    }
   }
 
   /* ── Back button ── */
@@ -131,12 +144,18 @@ const schema = [
 
   .article-title {
     font-family: var(--disp);
-    font-size: 2rem;
+    font-size: 42px;
     font-weight: 800;
     line-height: 1.2;
-    margin: 0 0 1rem;
-    color: var(--txt);
     letter-spacing: -0.5px;
+    color: var(--txt);
+    margin-bottom: 12px;
+  }
+
+  @media (max-width: 768px) {
+    .article-title {
+      font-size: 28px;
+    }
   }
 
   .article-date {
@@ -190,9 +209,8 @@ const schema = [
 <style is:global>
   .prose {
     color: var(--txt2);
-    line-height: 1.8;
-    font-size: 15px;
-    max-width: 680px;
+    line-height: 1.85;
+    font-size: 16px;
   }
 
   .prose h1 {
@@ -206,7 +224,7 @@ const schema = [
 
   .prose h2 {
     font-family: var(--disp);
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 700;
     color: var(--txt);
     margin: 28px 0 10px;
@@ -214,7 +232,7 @@ const schema = [
 
   .prose h3 {
     font-family: var(--disp);
-    font-size: 16px;
+    font-size: 19px;
     font-weight: 600;
     color: var(--txt);
     margin: 20px 0 8px;
