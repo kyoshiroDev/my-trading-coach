@@ -29,7 +29,8 @@ import { AppController } from './app.controller';
         password: process.env['REDIS_PASSWORD'],
       },
     }),
-    ScheduleModule.forRoot(),
+    // Crons uniquement sur le worker désigné (IS_CRON_WORKER=true) ou en dev
+    ...(process.env['IS_CRON_WORKER'] !== 'false' ? [ScheduleModule.forRoot()] : []),
     PrismaModule,
     AuthModule,
     TradesModule,

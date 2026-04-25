@@ -59,18 +59,24 @@ async function bootstrap() {
   logger.log(`Worker ${process.pid} running on: http://localhost:${port}/api`);
 }
 
-if (cluster.isPrimary) {
+// Clustering uniquement en production — en dev, process unique pour le debug
+if (cluster.isPrimary && process.env['NODE_ENV'] === 'production') {
   const numWorkers = availableParallelism();
   logger.log(`Primary ${process.pid} starting ${numWorkers} workers...`);
 
-  for (let i = 0; i < numWorkers; i++) {
-    cluster.fork();
+  function forkWorker(isCronWorker: boolean) {
+    const worker = cluster.fork({ IS_CRON_WORKER: String(isCronWorker) });
+    worker.on('exit', (code) => {
+      logger.warn(`Worker ${worker.process.pid} died (code ${code}). Restarting...`);
+      forkWorker(isCronWorker);
+    });
   }
 
-  cluster.on('exit', (worker, code) => {
-    logger.warn(`Worker ${worker.process.pid} died (code ${code}). Restarting...`);
-    cluster.fork();
-  });
+  // 1 seul worker gère les crons pour éviter les doublons
+  forkWorker(true);
+  for (let i = 1; i < numWorkers; i++) {
+    forkWorker(false);
+  }
 } else {
   bootstrap();
 }
