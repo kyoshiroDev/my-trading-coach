@@ -12,6 +12,7 @@ import { AiModule } from '../modules/ai/ai.module';
 import { DebriefModule } from '../modules/debrief/debrief.module';
 import { UsersModule } from '../modules/users/users.module';
 import { StripeModule } from '../modules/stripe/stripe.module';
+import { DiscordModule } from '../modules/discord/discord.module';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { HttpExceptionFilter } from '../common/filters/http-exception.filter';
 import { ResponseInterceptor } from '../common/interceptors/response.interceptor';
@@ -39,6 +40,7 @@ import { AppController } from './app.controller';
     DebriefModule,
     UsersModule,
     StripeModule,
+    DiscordModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
