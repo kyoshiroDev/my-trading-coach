@@ -10,6 +10,7 @@ import {
   Trophy,
   Settings,
   LogOut,
+  ShieldCheck,
 } from 'lucide-angular';
 import { UserStore } from '../../../core/stores/user.store';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -78,6 +79,14 @@ import { OnboardingComponent } from '../../../features/onboarding/onboarding.com
             Paramètres
           </a>
 
+          @if (userStore.isAdmin()) {
+            <div class="nav-section admin-section">ADMIN</div>
+            <a routerLink="/admin" routerLinkActive="active" class="nav-item admin-item">
+              <span class="nav-icon"><lucide-icon [img]="ShieldCheckIcon" [size]="14" /></span>
+              Utilisateurs
+            </a>
+          }
+
           <button class="nav-item settings-item" data-testid="logout-btn" (click)="logout()">
             <span class="nav-icon"><lucide-icon [img]="LogOutIcon" [size]="14" /></span>
             Déconnexion
@@ -91,7 +100,9 @@ import { OnboardingComponent } from '../../../features/onboarding/onboarding.com
             <div class="user-info">
               <div class="user-name">{{ userStore.displayName() }}</div>
               <div class="user-plan">
-                @if (userStore.isPremium()) { ★ PREMIUM } @else { FREE }
+                @if (userStore.isAdmin()) { ⚡ ADMIN }
+                @else if (userStore.isPremium()) { ★ PREMIUM }
+                @else { FREE }
               </div>
             </div>
           </div>
@@ -123,6 +134,7 @@ export class SidebarComponent {
   protected readonly TrophyIcon = Trophy;
   protected readonly SettingsIcon = Settings;
   protected readonly LogOutIcon = LogOut;
+  protected readonly ShieldCheckIcon = ShieldCheck;
 
   constructor() {
     const onFocus = () => {

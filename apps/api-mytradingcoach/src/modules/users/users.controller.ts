@@ -1,6 +1,7 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, UseGuards } from '@nestjs/common';
-import { IsEnum } from 'class-validator';
-import { Role } from '@prisma/client';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Query, UseGuards } from '@nestjs/common';
+import { IsEnum, IsOptional, IsString, Min } from 'class-validator';
+import { Type } from 'class-transformer';
+import { Plan, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -12,6 +13,18 @@ import { UpdatePreferencesDto } from './dto/update-preferences.dto';
 class SetRoleDto {
   @IsEnum(Role)
   role!: Role;
+}
+
+class AdminUpdateUserDto {
+  @IsOptional() @IsString() name?: string;
+  @IsOptional() @IsEnum(Plan) plan?: Plan;
+  @IsOptional() @IsEnum(Role) role?: Role;
+}
+
+class AdminListQueryDto {
+  @IsOptional() @IsString() search?: string;
+  @IsOptional() @Type(() => Number) @Min(1) page?: number;
+  @IsOptional() @Type(() => Number) @Min(1) limit?: number;
 }
 
 @Controller('users')
@@ -45,10 +58,31 @@ export class UsersController {
     await this.usersService.deleteMe(user.id);
   }
 
+  // ── Admin routes ──────────────────────────────────────────────────────────
+
+  @UseGuards(AdminGuard)
+  @Get('admin')
+  adminList(@Query() query: AdminListQueryDto) {
+    return this.usersService.adminFindAll(query.page, query.limit, query.search);
+  }
+
+  @UseGuards(AdminGuard)
+  @Patch('admin/:id')
+  adminUpdate(@Param('id') id: string, @Body() dto: AdminUpdateUserDto) {
+    return this.usersService.adminUpdate(id, dto);
+  }
+
   @UseGuards(AdminGuard)
   @Patch('admin/:id/role')
   @HttpCode(HttpStatus.NO_CONTENT)
   async setRole(@Param('id') id: string, @Body() dto: SetRoleDto) {
     await this.usersService.setRole(id, dto.role);
+  }
+
+  @UseGuards(AdminGuard)
+  @Delete('admin/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async adminDelete(@Param('id') id: string) {
+    await this.usersService.adminDelete(id);
   }
 }

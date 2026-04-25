@@ -1,5 +1,5 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Plan, Role, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
@@ -20,6 +20,17 @@ const USER_SELECT = {
   notificationsEmail: true,
   debriefAutomatic: true,
   createdAt: true,
+} as const;
+
+const ADMIN_USER_SELECT = {
+  id: true,
+  email: true,
+  name: true,
+  plan: true,
+  role: true,
+  trialEndsAt: true,
+  createdAt: true,
+  _count: { select: { trades: true } },
 } as const;
 
 @Injectable()
@@ -48,14 +59,69 @@ export class UsersService {
     });
   }
 
+  // ── Admin — liste paginée ─────────────────────────────────────────────────
+
+  async adminFindAll(page = 1, limit = 20, search?: string) {
+    const where: Prisma.UserWhereInput = search
+      ? {
+          OR: [
+            { email: { contains: search, mode: 'insensitive' } },
+            { name: { contains: search, mode: 'insensitive' } },
+          ],
+        }
+      : {};
+
+    const skip = (page - 1) * limit;
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        select: ADMIN_USER_SELECT,
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return { users, total, page, limit };
+  }
+
+  // ── Admin — update plan/role/name ─────────────────────────────────────────
+
+  async adminUpdate(targetId: string, dto: { name?: string; plan?: Plan; role?: Role }) {
+    const target = await this.prisma.user.findUnique({ where: { id: targetId }, select: { role: true } });
+    if (!target) throw new NotFoundException('Utilisateur introuvable');
+    if (target.role === Role.ADMIN) {
+      throw new ForbiddenException('Impossible de modifier un administrateur');
+    }
+    if (dto.role === Role.ADMIN) {
+      throw new ForbiddenException('Promotion au rôle ADMIN impossible via API');
+    }
+    return this.prisma.user.update({
+      where: { id: targetId },
+      data: dto,
+      select: ADMIN_USER_SELECT,
+    });
+  }
+
+  // ── Admin — suppression ───────────────────────────────────────────────────
+
+  async adminDelete(targetId: string): Promise<void> {
+    const target = await this.prisma.user.findUnique({ where: { id: targetId }, select: { role: true } });
+    if (!target) throw new NotFoundException('Utilisateur introuvable');
+    if (target.role === Role.ADMIN) {
+      throw new ForbiddenException('Impossible de supprimer un administrateur');
+    }
+    await this.prisma.user.delete({ where: { id: targetId } });
+  }
+
+  // ── Rôle ──────────────────────────────────────────────────────────────────
+
   async setRole(targetUserId: string, role: Role): Promise<void> {
     if (role === Role.ADMIN) {
       throw new ForbiddenException('Impossible de promouvoir un utilisateur au rôle ADMIN via API');
     }
-    await this.prisma.user.update({
-      where: { id: targetUserId },
-      data: { role },
-    });
+    await this.prisma.user.update({ where: { id: targetUserId }, data: { role } });
   }
 
   async activateTrial(userId: string) {
@@ -100,11 +166,7 @@ export class UsersService {
   }
 
   async updatePreferences(userId: string, dto: UpdatePreferencesDto) {
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: dto,
-      select: USER_SELECT,
-    });
+    return this.prisma.user.update({ where: { id: userId }, data: dto, select: USER_SELECT });
   }
 
   async deleteMe(userId: string): Promise<void> {
