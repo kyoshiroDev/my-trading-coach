@@ -57,6 +57,8 @@ export class DebriefService {
       ? (previousDebrief.objectives as unknown[])
       : [];
 
+    await this.aiService.checkDailyLimit(userId, 'debrief', 1);
+
     const aiResult = await this.aiService.generateDebrief({
       trades,
       stats,

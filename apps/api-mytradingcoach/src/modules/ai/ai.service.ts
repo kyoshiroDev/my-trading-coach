@@ -44,6 +44,7 @@ export class AiService implements OnModuleDestroy {
 
   async getInsights(userId: string) {
     await this.checkQuota(userId);
+    await this.checkInsightsCooldown(userId);
     const result = await this.orchestrator.runInsightsFlow(userId);
     await this.incrementQuota(userId);
     return result;
@@ -57,6 +58,7 @@ export class AiService implements OnModuleDestroy {
     history: Array<{ role: 'user' | 'assistant'; content: string }>,
   ) {
     await this.checkQuota(userId);
+    await this.checkDailyLimit(userId, 'chat', 50);
 
     const recentTrades = await this.prisma.trade.findMany({
       where: { userId },
@@ -101,6 +103,35 @@ export class AiService implements OnModuleDestroy {
 
   async generateDebrief(data: Parameters<typeof buildDebriefPrompt>[0]) {
     return this.debriefAgent.generate(data);
+  }
+
+  // ── Cooldown / Daily limits ───────────────────────────────────────────────
+
+  async checkInsightsCooldown(userId: string): Promise<void> {
+    const key = `ai:cooldown:insights:${userId}`;
+    const exists = await this.redis.get(key);
+    if (exists) {
+      const ttl = await this.redis.ttl(key);
+      const minutes = Math.ceil(ttl / 60);
+      throw new HttpException(
+        `Analyse déjà effectuée. Réessaie dans ${minutes} minute(s).`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+    await this.redis.set(key, '1', 'EX', 60 * 60 * 4);
+  }
+
+  async checkDailyLimit(userId: string, action: string, max: number): Promise<void> {
+    const today = new Date().toISOString().slice(0, 10);
+    const key = `ai:limit:${userId}:${action}:${today}`;
+    const count = await this.redis.incr(key);
+    await this.redis.expire(key, 60 * 60 * 24);
+    if (count > max) {
+      throw new HttpException(
+        `Limite atteinte : ${max} ${action} par jour. Reviens demain.`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
   }
 
   // ── Quota management ──────────────────────────────────────────────────────
