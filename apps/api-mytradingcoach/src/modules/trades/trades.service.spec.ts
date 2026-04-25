@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ForbiddenException, HttpException, NotFoundException } from '@nestjs/common';
-import { Plan, TradeSide, EmotionState, SetupType, TradingSession } from '@prisma/client';
+import { Plan, Role, TradeSide, EmotionState, SetupType, TradingSession } from '@prisma/client';
 import { TradesService } from './trades.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
@@ -185,6 +185,20 @@ describe('TradesService', () => {
       mockPrisma.trade.count.mockResolvedValue(999);
 
       await expect(service.checkMonthlyLimit('user-123', Plan.PREMIUM))
+        .resolves.toBeUndefined();
+    });
+
+    it('ADMIN → aucune limite de trades', async () => {
+      mockPrisma.trade.count.mockResolvedValue(999);
+
+      await expect(service.checkMonthlyLimit('user-123', Plan.FREE, Role.ADMIN))
+        .resolves.toBeUndefined();
+    });
+
+    it('BETA_TESTER → aucune limite de trades', async () => {
+      mockPrisma.trade.count.mockResolvedValue(999);
+
+      await expect(service.checkMonthlyLimit('user-123', Plan.FREE, Role.BETA_TESTER))
         .resolves.toBeUndefined();
     });
 
