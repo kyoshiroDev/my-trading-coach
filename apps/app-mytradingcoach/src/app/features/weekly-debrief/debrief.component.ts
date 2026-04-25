@@ -82,7 +82,7 @@ function badgeClass(badge: string): string {
               · Généré le {{ debrief()!.generatedAt | date:'d MMM à HH:mm' }}
             </div>
           </div>
-          <button class="export-btn">
+          <button class="export-btn" disabled title="Bientôt disponible">
             <lucide-icon [img]="DownloadIcon" [size]="13" />
             Export PDF
           </button>

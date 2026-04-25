@@ -121,8 +121,15 @@ export class SettingsComponent implements OnInit {
   }
 
   protected resetPassword() {
-    this.passwordResetSent.set(true);
-    setTimeout(() => this.passwordResetSent.set(false), 4000);
+    const user = this.userStore.user();
+    if (!user) return;
+    this.auth.forgotPassword(user.email).subscribe({
+      next: () => {
+        this.passwordResetSent.set(true);
+        setTimeout(() => this.passwordResetSent.set(false), 4000);
+      },
+      error: () => {},
+    });
   }
 
   protected savePreferences() {
