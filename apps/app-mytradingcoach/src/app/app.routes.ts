@@ -47,13 +47,11 @@ export const appRoutes: Routes = [
       },
       {
         path: 'ai-insights',
-        canActivate: [premiumGuard],
         loadComponent: () =>
           import('./features/ai-insights/ai-insights.component').then((m) => m.AiInsightsComponent),
       },
       {
         path: 'debrief',
-        canActivate: [premiumGuard],
         loadComponent: () =>
           import('./features/weekly-debrief/debrief.component').then((m) => m.DebriefComponent),
       },
