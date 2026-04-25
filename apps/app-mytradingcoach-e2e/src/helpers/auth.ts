@@ -12,10 +12,12 @@ export const TEST_USER_PREMIUM = {
 
 export async function loginUser(page: Page, user = TEST_USER_FREE): Promise<void> {
   await page.goto('/login');
+  // Attendre que le formulaire Angular soit rendu (zoneless peut être async)
+  await page.waitForSelector('[data-testid="login-email"]');
   await page.fill('[data-testid="login-email"]', user.email);
   await page.fill('[data-testid="login-password"]', user.password);
   await page.click('[data-testid="login-submit"]');
-  await page.waitForURL('/dashboard', { timeout: 15000 });
+  await page.waitForURL('/dashboard');
 }
 
 export async function logoutUser(page: Page): Promise<void> {
