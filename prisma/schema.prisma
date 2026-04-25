@@ -24,6 +24,7 @@ model User {
   stripeCustomerId         String?   @unique
   stripeSubscriptionId     String?   @unique
   stripePriceId            String?
+  stripeInterval           String?   // 'month' | 'year'
   stripeCurrentPeriodEnd   DateTime?
   stripeSubscriptionStatus String? // 'active' | 'trialing' | 'past_due' | 'unpaid' | 'canceled'
 

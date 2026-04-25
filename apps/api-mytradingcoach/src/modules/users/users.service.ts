@@ -29,8 +29,9 @@ const ADMIN_USER_SELECT = {
   plan: true,
   role: true,
   trialEndsAt: true,
+  stripeInterval: true,
+  stripeCurrentPeriodEnd: true,
   createdAt: true,
-  _count: { select: { trades: true } },
 } as const;
 
 @Injectable()

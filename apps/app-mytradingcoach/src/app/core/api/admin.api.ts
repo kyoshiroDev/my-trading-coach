@@ -9,8 +9,9 @@ export interface AdminUser {
   plan: 'FREE' | 'PREMIUM';
   role: 'ADMIN' | 'USER' | 'BETA_TESTER';
   trialEndsAt: string | null;
+  stripeInterval: 'month' | 'year' | null;
+  stripeCurrentPeriodEnd: string | null;
   createdAt: string;
-  _count: { trades: number };
 }
 
 export interface AdminListResponse {

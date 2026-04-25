@@ -441,6 +441,7 @@ export class StripeService implements OnModuleDestroy {
 
     const firstItem = subscription.items.data[0];
     const priceId = firstItem?.price.id ?? null;
+    const interval = firstItem?.price.recurring?.interval ?? null; // 'month' | 'year'
     const periodEnd = firstItem?.current_period_end
       ? new Date(firstItem.current_period_end * 1000)
       : null;
@@ -451,6 +452,7 @@ export class StripeService implements OnModuleDestroy {
         plan: isActive ? Plan.PREMIUM : Plan.FREE,
         stripeSubscriptionId: subscription.id,
         stripePriceId: priceId,
+        stripeInterval: interval,
         stripeCurrentPeriodEnd: periodEnd,
         stripeSubscriptionStatus: status,
         trialUsed: user.trialUsed || !isTrialing,
