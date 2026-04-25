@@ -590,7 +590,7 @@
                 <span class="premium-banner-amount">39€</span><span class="premium-banner-period">/mois</span>
                 <div class="premium-banner-trial">7 jours gratuits · sans CB</div>
               </div>
-              <button class="premium-banner-btn">Essayer gratuitement</button>
+              <button class="premium-banner-btn" onclick="openPlanModal()">Essayer gratuitement</button>
             </div>
           </div>
 
@@ -1277,7 +1277,7 @@
                   <div class="plan-desc">50 trades/mois · Journal complet · Stats de base · Historique illimité.</div>
                   <div class="plan-upgrade-hint">Passe à Premium pour débloquer l'IA, les analytics avancés et le Weekly Debrief.</div>
                   <div class="plan-actions" style="margin-top:14px">
-                    <button class="btn-settings primary" onclick="alert('Stripe Checkout...')">⚡ Essayer 7 jours gratuit — 39 €/mois →</button>
+                    <button class="btn-settings primary" onclick="openPlanModal()">⚡ Essayer 7 jours gratuit →</button>
                     <button class="btn-settings secondary" onclick="alert('Stripe Checkout...')">Annuel — 349 €/an <span style="color:var(--green);font-size:11px">(économise 119 €)</span></button>
                   </div>
                 </div>
@@ -1435,6 +1435,26 @@
 <script>
 var currentView = 'dashboard';
 
+
+function openPlanModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'plan-modal-overlay';
+  overlay.innerHTML = `<div class="plan-modal-card">
+    <div class="plan-modal-header">
+      <h2>Passe à Premium ⚡</h2>
+      <p>Analytics avancés · IA Insights · Weekly Debrief automatique</p>
+      <button class="plan-modal-close" onclick="this.closest('.plan-modal-overlay').remove()">✕</button>
+    </div>
+    <div class="plan-modal-options">
+      <div class="plan-option recommended"><div class="plan-option-badge">⭐ Recommandé</div><div class="plan-option-price"><span class="price">29€</span><span class="period">/mois</span></div><div class="plan-option-detail">Facturé 349€/an</div><div class="plan-option-saving">Économise 119€</div></div>
+      <div class="plan-option"><div class="plan-option-badge">&nbsp;</div><div class="plan-option-price"><span class="price">39€</span><span class="period">/mois</span></div><div class="plan-option-detail">Facturé chaque mois</div><div class="plan-option-saving">&nbsp;</div></div>
+    </div>
+    <button class="plan-modal-cta">Essayer 7 jours gratuit →</button>
+    <p class="plan-modal-hint">Sans CB · Annulation à tout moment</p>
+  </div>`;
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
 function showPage(p){
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   const target = document.getElementById('page-'+p);
