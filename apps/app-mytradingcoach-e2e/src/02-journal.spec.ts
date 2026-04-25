@@ -8,8 +8,14 @@ test.describe('02 — Journal de trading', () => {
     await page.goto('/journal');
   });
 
-  test('dashboard vide → empty state visible', async ({ page }) => {
-    // This test expects the journal to be empty for a fresh test user
+  test('empty state visible quand aucun trade ne correspond', async ({ page }) => {
+    // Mocke l'API pour simuler une réponse vide — isole du state réel du compte de test
+    // Format attendu par TradesStore: { data: { data: [], nextCursor: null, hasNextPage: false } }
+    await page.route('**/api/trades*', route => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ data: { data: [], nextCursor: null, hasNextPage: false } }),
+    }));
     await page.goto('/journal');
     await expect(page.locator('[data-testid="empty-state"]')).toBeVisible({ timeout: 5000 });
   });
@@ -37,12 +43,15 @@ test.describe('02 — Journal de trading', () => {
     await expect(page.locator('[data-testid="trade-modal"]')).toBeVisible();
   });
 
-  test('supprimer trade → disparaît de la liste', async ({ page }) => {
+  test('supprimer trade → le nombre de trades diminue de 1', async ({ page }) => {
+    // Attendre que les trades soient chargés
+    await page.waitForSelector('[data-testid="trade-row"], [data-testid="empty-state"]', { timeout: 5000 });
+    const initialCount = await page.locator('[data-testid="trade-row"]').count();
     await createTestTrade(page);
-    const row = page.locator('[data-testid="trade-row"]').first();
-    await expect(row).toBeVisible({ timeout: 5000 });
-    await row.locator('[data-testid="trade-delete"]').click();
-    await expect(page.locator('[data-testid="trade-row"]')).toHaveCount(0, { timeout: 5000 });
+    await expect(page.locator('[data-testid="trade-row"]')).toHaveCount(initialCount + 1, { timeout: 8000 });
+    const firstRow = page.locator('[data-testid="trade-row"]').first();
+    await firstRow.locator('[data-testid="trade-delete"]').click();
+    await expect(page.locator('[data-testid="trade-row"]')).toHaveCount(initialCount, { timeout: 5000 });
   });
 
   test('filtrer par LONG → seuls les LONG visibles', async ({ page }) => {

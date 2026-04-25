@@ -49,13 +49,15 @@ test.describe('Analytics — utilisateur FREE', () => {
     await expect(page.locator('.premium-banner')).toContainText('39');
   });
 
-  test('la route /ai-insights redirige les FREE vers /settings', async ({ page }) => {
+  test('la route /ai-insights affiche un paywall pour FREE', async ({ page }) => {
     await page.goto('/ai-insights');
-    await expect(page).toHaveURL(/\/settings/);
+    await expect(page).toHaveURL(/\/ai-insights/);
+    await expect(page.locator('[data-testid="ai-paywall"]')).toBeVisible({ timeout: 5000 });
   });
 
-  test('la route /debrief redirige les FREE vers /settings', async ({ page }) => {
+  test('la route /debrief affiche un paywall pour FREE', async ({ page }) => {
     await page.goto('/debrief');
-    await expect(page).toHaveURL(/\/settings/);
+    await expect(page).toHaveURL(/\/debrief/);
+    await expect(page.locator('[data-testid="debrief-paywall"]')).toBeVisible({ timeout: 5000 });
   });
 });
