@@ -108,10 +108,15 @@
   right: 16px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 32px;
-  opacity: 0.06;
+  font-size: 36px;
+  opacity: 0.12;
   pointer-events: none;
   user-select: none;
+  filter: grayscale(30%);
+}
+
+.stat-card:hover .stat-bg-icon {
+  opacity: 0.18;
 }
 
 .text-green { color: var(--green); }
