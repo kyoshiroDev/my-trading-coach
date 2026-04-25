@@ -50,6 +50,7 @@ import { BillingApi } from '../../core/api/billing.api';
             <label for="email">Email</label>
             <input
               id="email"
+              data-testid="register-email"
               type="email"
               [ngModel]="email()"
               (ngModelChange)="email.set($event)"
@@ -68,6 +69,7 @@ import { BillingApi } from '../../core/api/billing.api';
             <div class="input-wrapper">
               <input
                 id="password"
+                data-testid="register-password"
                 [type]="showPassword() ? 'text' : 'password'"
                 [ngModel]="password()"
                 (ngModelChange)="password.set($event)"
@@ -90,6 +92,7 @@ import { BillingApi } from '../../core/api/billing.api';
             <div class="input-wrapper">
               <input
                 id="confirm-password"
+                data-testid="register-confirm"
                 [type]="showConfirm() ? 'text' : 'password'"
                 [ngModel]="confirmPassword()"
                 (ngModelChange)="confirmPassword.set($event)"
@@ -107,7 +110,7 @@ import { BillingApi } from '../../core/api/billing.api';
             }
           </div>
 
-          <button type="submit" [disabled]="isLoading()" class="btn-submit">
+          <button type="submit" data-testid="register-submit" [disabled]="isLoading()" class="btn-submit">
             @if (isLoading()) {
               <span class="spinner"></span>
               @if (isPremiumFlow()) { Création et redirection... } @else { Création... }
@@ -121,7 +124,7 @@ import { BillingApi } from '../../core/api/billing.api';
           </button>
 
           @if (apiError()) {
-            <div class="error-msg">{{ apiError() }}</div>
+            <div class="error-msg" data-testid="error-message">{{ apiError() }}</div>
           }
         </form>
 

@@ -17,6 +17,7 @@ import { LucideAngularModule, Plus, Bell } from 'lucide-angular';
             class="btn btn-primary"
             [class.btn-loading]="addLoading()"
             [disabled]="addDisabled() || addLoading()"
+            [attr.data-testid]="addTestId() || null"
             (click)="addClick.emit()"
           >
             @if (addLoading()) {
@@ -42,6 +43,7 @@ export class TopbarComponent {
   addLabel = input('Nouveau');
   addDisabled = input(false);
   addLoading = input(false);
+  addTestId = input('');
   showNotifications = input(false);
   addClick = output<void>();
 
