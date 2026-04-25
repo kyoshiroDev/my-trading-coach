@@ -597,20 +597,20 @@
           <div class="stats-row">
             <div class="stat-card">
               <div class="stat-label">P&amp;L Total</div>
-              <div class="stat-value text-green">+$9 829,44</div>
-              <div class="stat-sub"><span class="change up">▲ +12.3% ce mois</span></div>
+              <div class="stat-value" style="color:var(--green)">+$9 829,44</div>
+              <div class="stat-sub"><span class="change up">▲ ce mois</span></div>
               <div class="stat-bg-icon">💰</div>
             </div>
             <div class="stat-card">
               <div class="stat-label">Win Rate</div>
-              <div class="stat-value text-blue">58.7%</div>
-              <div class="stat-sub"><span class="change up">▲ +3.2%</span><span>vs mois précédent</span></div>
+              <div class="stat-value" style="color:var(--blue-bright)">58.7%</div>
+              <div class="stat-sub"><span class="change up">vs mois précédent</span></div>
               <div class="stat-bg-icon">🎯</div>
             </div>
             <div class="stat-card">
               <div class="stat-label">Drawdown Max</div>
-              <div class="stat-value text-red">-$3,732.58</div>
-              <div class="stat-sub"><span class="change down">▼ -4.8%</span><span>sur capital</span></div>
+              <div class="stat-value" style="color:var(--red)">-$3,732.58</div>
+              <div class="stat-sub"><span class="change down">sur capital</span></div>
               <div class="stat-bg-icon">📉</div>
             </div>
             <div class="stat-card">
@@ -733,22 +733,23 @@
                 <div class="card-title">États émotionnels</div>
                 <a href="#" onclick="showView('analytics',null);return false" class="card-action">Détails →</a>
               </div>
+              <!-- émotions calculées depuis vrais trades — empty state si 0 trades -->
               <div class="emotion-grid">
                 <div class="emotion-row">
-                  <div class="emotion-label"><span>😤 Revenge trading</span><span>23%</span></div>
-                  <div class="bar-track"><div class="bar-fill" style="width:23%;background:#ef4444"></div></div>
+                  <div class="emotion-label"><span>😤 Revenge</span><span>18%</span></div>
+                  <div class="bar-track"><div class="bar-fill" style="width:18%;background:#ef4444"></div></div>
                 </div>
                 <div class="emotion-row">
-                  <div class="emotion-label"><span>😰 Stress élevé</span><span>31%</span></div>
-                  <div class="bar-track"><div class="bar-fill" style="width:31%;background:#f59e0b"></div></div>
+                  <div class="emotion-label"><span>😎 Confiant</span><span>42%</span></div>
+                  <div class="bar-track"><div class="bar-fill" style="width:42%;background:#3b82f6"></div></div>
                 </div>
                 <div class="emotion-row">
-                  <div class="emotion-label"><span>😌 Confiance</span><span>68%</span></div>
-                  <div class="bar-track"><div class="bar-fill" style="width:68%;background:#3b82f6"></div></div>
+                  <div class="emotion-label"><span>🎯 Focalisé</span><span>28%</span></div>
+                  <div class="bar-track"><div class="bar-fill" style="width:28%;background:#10b981"></div></div>
                 </div>
                 <div class="emotion-row">
-                  <div class="emotion-label"><span>🎯 Focus optimal</span><span>52%</span></div>
-                  <div class="bar-track"><div class="bar-fill" style="width:52%;background:#10b981"></div></div>
+                  <div class="emotion-label"><span>😰 Stressé</span><span>12%</span></div>
+                  <div class="bar-track"><div class="bar-fill" style="width:12%;background:#f59e0b"></div></div>
                 </div>
               </div>
             </div>
@@ -852,7 +853,7 @@
             <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center">
               <div style="font-size:10px;font-family:var(--font-mono);color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">P&L Total</div>
               <div style="font-size:26px;font-weight:700;font-family:var(--font-mono);color:var(--green)">+$9 829</div>
-              <div style="font-size:10px;color:var(--text-3);margin-top:2px;font-family:var(--font-mono)">▲ +12.3% ce mois</div>
+              <div style="font-size:10px;color:var(--text-3);margin-top:2px;font-family:var(--font-mono)">▲ ce mois</div>
             </div>
             <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center">
               <div style="font-size:10px;font-family:var(--font-mono);color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Top Session</div>
@@ -1102,11 +1103,11 @@
             </div>
             <div class="stat-card">
               <div class="stat-label">Win Rate</div>
-              <div class="stat-value text-green">66.7%</div>
+              <div class="stat-value" style="color:var(--green)">66.7%</div>
             </div>
             <div class="stat-card">
               <div class="stat-label">P&amp;L</div>
-              <div class="stat-value text-green">+$842.50</div>
+              <div class="stat-value" style="color:var(--green)">+$842.50</div>
             </div>
           </div>
 
