@@ -279,7 +279,7 @@ jobs:
     environment: development
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      BASE_URL: ${{ secrets.DEV_APP_URL }}
+      BASE_URL: https://dev.app.mytradingcoach.app
       E2E_FREE_EMAIL: ${{ secrets.E2E_FREE_EMAIL }}
       E2E_FREE_PASSWORD: ${{ secrets.E2E_FREE_PASSWORD }}
       E2E_PREMIUM_EMAIL: ${{ secrets.E2E_PREMIUM_EMAIL }}
@@ -299,13 +299,18 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Check BASE_URL reachability
+        run: |
+          echo "BASE_URL=$BASE_URL"
+          curl -sI "$BASE_URL" | head -5 || echo "URL not reachable yet — continuing anyway"
+
       - name: Install Playwright browsers
         run: pnpm exec playwright install chromium --with-deps
 
       - name: Run E2E tests
         run: pnpm nx e2e app-mytradingcoach-e2e --reporter=list
         env:
-          BASE_URL: ${{ secrets.DEV_APP_URL }}
+          BASE_URL: https://dev.app.mytradingcoach.app
 
       - name: Upload Playwright report on failure
         if: failure()
