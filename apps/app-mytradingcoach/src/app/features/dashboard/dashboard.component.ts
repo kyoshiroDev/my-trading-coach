@@ -49,7 +49,7 @@ interface EquityPoint { date: string; cumulativePnl: number; }
   standalone: true,
   imports: [
     RouterLink, TitleCasePipe, UpperCasePipe, TopbarComponent, TradeFormComponent,
-    PnlColorPipe, PnlFormatPipe,
+    PnlColorPipe, PnlFormatPipe, PnlClassPipe,
     EmotionEmojiPipe, EmotionLabelPipe, EmotionColorPipe,
     SetupColorPipe, SetupColorsMapPipe,
   ],

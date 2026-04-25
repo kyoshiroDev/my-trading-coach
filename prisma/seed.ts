@@ -124,43 +124,7 @@ async function main() {
       onboardingCompleted: true,
     },
   });
-  console.log('✓ Utilisateur PREMIUM (manuel) créé : premium-e2e@test.com');
-
-  const periodEnd = new Date();
-  periodEnd.setDate(periodEnd.getDate() + 20);
-
-  await prisma.user.upsert({
-    where: { email: 'monthly-e2e@test.com' },
-    update: {},
-    create: {
-      email: 'monthly-e2e@test.com',
-      password: e2ePassword,
-      name: 'Monthly E2E',
-      plan: Plan.PREMIUM,
-      onboardingCompleted: true,
-      stripeInterval: 'month',
-      stripeCurrentPeriodEnd: periodEnd,
-    },
-  });
-  console.log('✓ Utilisateur PREMIUM (mensuel) créé : monthly-e2e@test.com');
-
-  const annualEnd = new Date();
-  annualEnd.setDate(annualEnd.getDate() + 300);
-
-  await prisma.user.upsert({
-    where: { email: 'annual-e2e@test.com' },
-    update: {},
-    create: {
-      email: 'annual-e2e@test.com',
-      password: e2ePassword,
-      name: 'Annual E2E',
-      plan: Plan.PREMIUM,
-      onboardingCompleted: true,
-      stripeInterval: 'year',
-      stripeCurrentPeriodEnd: annualEnd,
-    },
-  });
-  console.log('✓ Utilisateur PREMIUM (annuel) créé : annual-e2e@test.com');
+  console.log('✓ Utilisateur PREMIUM créé : premium-e2e@test.com');
 }
 
 main()

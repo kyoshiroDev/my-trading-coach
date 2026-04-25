@@ -263,36 +263,58 @@ jobs:
 
       - name: Prepare Vercel output (Angular prebuilt)
         run: |
-          mkdir -p .vercel/output/static
-          cp -r dist/apps/app-mytradingcoach/browser/. .vercel/output/static/
-          cat > .vercel/output/config.json << 'EOF'
-          {
-            "version": 3,
-            "routes": [
-              {
-                "src": "/assets/(.*)",
-                "headers": { "Cache-Control": "public, max-age=31536000, immutable" },
-                "continue": true
-              },
-              {
-                "handle": "filesystem"
-              },
-              {
-                "src": "/(.*)",
-                "dest": "/index.html"
-              }
-            ]
-          }
-          EOF
-
-      - name: Deploy Angular to Vercel (dev, prebuilt)
-        run: pnpm dlx vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} --yes
+          pnpm dlx vercel \
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --yes \
+            --cwd dist/apps/app-mytradingcoach/browser \
+            --local-config ${{ github.workspace }}/apps/app-mytradingcoach/vercel.json
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_APP_PROJECT_ID }}
 
-  # ── Tests E2E Playwright → désactivés
-  # test-e2e: disabled
+  # ── Tests E2E Playwright → dev deployed ──────────────────────────────────
+  test-e2e:
+    runs-on: ubuntu-latest
+    needs: [deploy-angular-dev, deploy-api-dev]
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+    environment: development
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      BASE_URL: ${{ secrets.DEV_APP_URL }}
+      E2E_FREE_EMAIL: ${{ secrets.E2E_FREE_EMAIL }}
+      E2E_FREE_PASSWORD: ${{ secrets.E2E_FREE_PASSWORD }}
+      E2E_PREMIUM_EMAIL: ${{ secrets.E2E_PREMIUM_EMAIL }}
+      E2E_PREMIUM_PASSWORD: ${{ secrets.E2E_PREMIUM_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium --with-deps
+
+      - name: Run E2E tests
+        run: pnpm nx e2e app-mytradingcoach-e2e --reporter=list
+        env:
+          BASE_URL: ${{ secrets.DEV_APP_URL }}
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
 
   # ── Deploy Landing dev → Vercel ───────────────────────────────────────────
   deploy-landing-dev:
