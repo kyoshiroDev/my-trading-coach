@@ -77,17 +77,17 @@ import { AdminApi, AdminUser } from '../../core/api/admin.api';
                     </div>
                   </td>
                   <td>
-                    <span class="badge role-badge" [class]="'role-' + user.role.toLowerCase()">
+                    <span [class]="'badge role-badge role-' + user.role.toLowerCase()">
                       {{ user.role }}
                     </span>
                   </td>
                   <td>
-                    <span class="badge plan-badge" [class]="'plan-' + user.plan.toLowerCase()">
+                    <span [class]="'badge plan-badge plan-' + user.plan.toLowerCase()">
                       {{ user.plan }}
                     </span>
                   </td>
                   <td>
-                    @if (user.plan === 'PREMIUM') {
+                    @if (user.plan === 'PREMIUM' && subType(user) !== 'manual') {
                       <span [class]="'sub-badge sub-badge--' + subType(user)">
                         {{ subLabel(user) }}
                       </span>
