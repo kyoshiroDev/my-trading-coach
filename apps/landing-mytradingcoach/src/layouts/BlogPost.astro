@@ -85,9 +85,9 @@ const schema = [
 
 <style>
   .article-wrap {
-    max-width: 720px;
+    max-width: 680px;
     margin: 0 auto;
-    padding: 60px 5%;
+    padding: 48px 5%;
   }
 
   /* ── Back button ── */
@@ -184,45 +184,47 @@ const schema = [
     opacity: 0.9;
   }
 
-  /* ════════════════════════════════
-     PROSE — article content styles
-     ════════════════════════════════ */
+</style>
+
+<!-- is:global requis : le slot injecte des éléments depuis un scope Astro différent -->
+<style is:global>
   .prose {
     color: var(--txt2);
     line-height: 1.8;
-    font-size: 16px;
-    max-width: 720px;
+    font-size: 15px;
+    max-width: 680px;
   }
 
   .prose h1 {
     font-family: var(--disp);
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 700;
     color: var(--txt);
-    margin: 40px 0 16px;
-    letter-spacing: -0.5px;
+    margin: 32px 0 14px;
+    letter-spacing: -0.3px;
   }
 
   .prose h2 {
     font-family: var(--disp);
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 700;
-    color: var(--txt);
-    margin: 36px 0 12px;
-    letter-spacing: -0.3px;
-  }
-
-  .prose h3 {
-    font-family: var(--disp);
-    font-size: 18px;
-    font-weight: 600;
     color: var(--txt);
     margin: 28px 0 10px;
   }
 
+  .prose h3 {
+    font-family: var(--disp);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--txt);
+    margin: 20px 0 8px;
+  }
+
   .prose p {
-    margin-bottom: 18px;
+    font-size: 15px;
+    line-height: 1.8;
     color: var(--txt2);
+    margin-bottom: 16px;
   }
 
   .prose strong {
@@ -232,30 +234,27 @@ const schema = [
 
   .prose ul,
   .prose ol {
-    padding-left: 24px;
-    margin-bottom: 18px;
+    padding-left: 22px;
+    margin-bottom: 16px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
   }
 
   .prose li {
-    color: var(--txt2);
+    font-size: 15px;
     line-height: 1.7;
+    color: var(--txt2);
   }
 
   .prose a {
     color: var(--blue2);
     text-decoration: underline;
-    text-decoration-color: rgba(96,165,250,0.3);
+    text-underline-offset: 3px;
   }
 
   .prose a:visited {
     color: var(--blue2);
-  }
-
-  .prose a:hover {
-    text-decoration-color: var(--blue2);
   }
 
   .prose blockquote {
@@ -263,7 +262,7 @@ const schema = [
     padding: 12px 20px;
     background: var(--bg2);
     border-radius: 0 8px 8px 0;
-    margin: 24px 0;
+    margin: 20px 0;
     color: var(--txt2);
     font-style: italic;
   }
@@ -276,5 +275,11 @@ const schema = [
     padding: 2px 6px;
     border-radius: 4px;
     color: var(--blue2);
+  }
+
+  .prose hr {
+    border: none;
+    border-top: 1px solid var(--b);
+    margin: 32px 0;
   }
 </style>
