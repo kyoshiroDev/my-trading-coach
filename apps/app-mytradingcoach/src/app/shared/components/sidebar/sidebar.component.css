@@ -129,6 +129,13 @@
   text-align: left;
 }
 
+.admin-section { color: rgba(239, 68, 68, 0.55); }
+
+.admin-item { color: #f87171; }
+.admin-item:hover { background: rgba(239, 68, 68, 0.08); color: var(--red); }
+.admin-item.active { background: rgba(239, 68, 68, 0.12); color: var(--red); }
+.admin-item.active::before { background: var(--red); }
+
 /* ─── FOOTER ─── */
 .sidebar-footer {
   padding: 16px 12px;
