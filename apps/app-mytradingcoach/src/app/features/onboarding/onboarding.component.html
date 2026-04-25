@@ -1,0 +1,96 @@
+<!-- Steps 1 & 2 — wizard overlay -->
+@if (step() !== 3) {
+  <div class="overlay">
+    <div class="wizard">
+
+      <!-- Header -->
+      <div class="wizard-header">
+        <div class="wizard-logo">
+          <div class="logo-mark"></div>
+          <span class="logo-text">MyTradingCoach</span>
+        </div>
+        <button class="skip-btn" (click)="skip()" [disabled]="isSaving()">Passer</button>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="progress"></div>
+      </div>
+
+      <!-- Step 1 — Marché -->
+      @if (step() === 1) {
+        <div class="wizard-body">
+          <div class="step-label">Étape 1 sur 3</div>
+          <h2 class="step-title">Quel marché trades-tu ?</h2>
+          <p class="step-desc">Je vais personnaliser tes insights en fonction de ton marché principal.</p>
+
+          <div class="choice-grid">
+            @for (m of MARKETS; track m.value) {
+              <button
+                class="choice-card"
+                [class.selected]="selectedMarket() === m.value"
+                (click)="selectMarket(m.value)"
+              >
+                <span class="choice-emoji">
+                @if (m.icon) {
+                  <lucide-icon [img]="m.icon" [size]="24" [style.color]="m.iconColor" />
+                } @else {
+                  {{ m.emoji }}
+                }
+              </span>
+                <span class="choice-label">{{ m.label }}</span>
+                <span class="choice-desc">{{ m.desc }}</span>
+              </button>
+            }
+          </div>
+
+          <div class="wizard-footer">
+            <button class="btn-next" (click)="nextStep()" [disabled]="!selectedMarket()">
+              Continuer →
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Step 2 — Objectif -->
+      @if (step() === 2) {
+        <div class="wizard-body">
+          <div class="step-label">Étape 2 sur 3</div>
+          <h2 class="step-title">Quel est ton objectif principal ?</h2>
+          <p class="step-desc">Ton coach IA va se concentrer sur ce qui compte le plus pour toi.</p>
+
+          <div class="choice-grid goal-grid">
+            @for (g of GOALS; track g.value) {
+              <button
+                class="choice-card"
+                [class.selected]="selectedGoal() === g.value"
+                (click)="selectGoal(g.value)"
+              >
+                <span class="choice-emoji">{{ g.emoji }}</span>
+                <span class="choice-label">{{ g.label }}</span>
+                <span class="choice-desc">{{ g.desc }}</span>
+              </button>
+            }
+          </div>
+
+          <div class="wizard-footer">
+            <button class="btn-next" (click)="nextStep()" [disabled]="!selectedGoal()">
+              Continuer →
+            </button>
+          </div>
+        </div>
+      }
+
+    </div>
+  </div>
+}
+
+<!-- Step 3 — premier trade (TradeForm gère son propre overlay) -->
+@if (step() === 3) {
+  <mtc-trade-form
+    [open]="true"
+    [isSaving]="isSaving()"
+    (formSave)="onTradeFormSave($event)"
+    (dismissed)="onTradeFormDismissed()"
+  />
+}

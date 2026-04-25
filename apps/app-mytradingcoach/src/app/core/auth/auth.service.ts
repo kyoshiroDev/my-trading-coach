@@ -11,6 +11,12 @@ export interface AuthUser {
   plan: 'FREE' | 'PREMIUM';
   trialEndsAt?: string | null;
   stripeCurrentPeriodEnd?: string | null;
+  onboardingCompleted?: boolean;
+  market?: string | null;
+  goal?: string | null;
+  currency?: string;
+  notificationsEmail?: boolean;
+  debriefAutomatic?: boolean;
 }
 
 interface AuthResponse {
@@ -81,7 +87,10 @@ export class AuthService {
   }
 
   isPremium(): boolean {
-    return this.currentUser()?.plan === 'PREMIUM';
+    const user = this.currentUser();
+    if (!user) return false;
+    if (user.plan === 'PREMIUM') return true;
+    return !!(user.trialEndsAt && new Date() < new Date(user.trialEndsAt));
   }
 
   fetchMe() {

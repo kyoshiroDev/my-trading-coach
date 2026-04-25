@@ -3,11 +3,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HttpException } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { OrchestratorAgent } from './agents/orchestrator.agent';
+import { DebriefAgent } from './agents/debrief.agent';
 
-// Références partagées hoistées — disponibles dans les factories vi.mock
 const mockMessagesCreate = vi.hoisted(() =>
   vi.fn().mockResolvedValue({
-    content: [{ type: 'text', text: '{"insights": []}' }],
+    content: [{ type: 'text', text: 'Voici mon analyse...' }],
   }),
 );
 
@@ -19,9 +20,7 @@ const mockRedisQuit = vi.hoisted(() => vi.fn().mockResolvedValue('OK'));
 // Mock Anthropic SDK — function() obligatoire (arrow function incompatible avec new)
 vi.mock('@anthropic-ai/sdk', () => ({
   default: vi.fn().mockImplementation(function () {
-    return {
-      messages: { create: mockMessagesCreate },
-    };
+    return { messages: { create: mockMessagesCreate } };
   }),
 }));
 
@@ -39,34 +38,26 @@ vi.mock('ioredis', () => ({
 }));
 
 const mockTrades = [
-  {
-    asset: 'BTC',
-    side: 'LONG',
-    pnl: 100,
-    riskReward: 2,
-    emotion: 'CONFIDENT',
-    setup: 'BREAKOUT',
-    session: 'LONDON',
-    timeframe: '1h',
-    notes: '',
-    tradedAt: new Date(),
-  },
-  {
-    asset: 'ETH',
-    side: 'SHORT',
-    pnl: -50,
-    riskReward: 1.5,
-    emotion: 'STRESSED',
-    setup: 'PULLBACK',
-    session: 'NEW_YORK',
-    timeframe: '4h',
-    notes: '',
-    tradedAt: new Date(),
-  },
+  { asset: 'BTC', side: 'LONG', pnl: 100, emotion: 'CONFIDENT', setup: 'BREAKOUT', session: 'LONDON', tradedAt: new Date() },
+  { asset: 'ETH', side: 'SHORT', pnl: -50, emotion: 'STRESSED', setup: 'PULLBACK', session: 'NEW_YORK', tradedAt: new Date() },
 ];
+
+const mockInsightsResult = {
+  insights: [{ type: 'weakness', title: 'Revenge', description: 'Test', badge: 'Attention' }],
+  topPattern: 'Revenge trading',
+  emotionInsight: 'STRESSED → mauvais.',
+};
 
 const mockPrisma = {
   trade: { findMany: vi.fn().mockResolvedValue(mockTrades) },
+};
+
+const mockOrchestrator = {
+  runInsightsFlow: vi.fn().mockResolvedValue(mockInsightsResult),
+};
+
+const mockDebriefAgent = {
+  generate: vi.fn().mockResolvedValue({ summary: 'Semaine correcte.' }),
 };
 
 describe('AiService', () => {
@@ -75,54 +66,59 @@ describe('AiService', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    // Restaurer les implémentations par défaut après clearAllMocks
-    mockMessagesCreate.mockResolvedValue({
-      content: [{ type: 'text', text: '{"insights": []}' }],
-    });
+    mockMessagesCreate.mockResolvedValue({ content: [{ type: 'text', text: 'Voici mon analyse...' }] });
     mockRedisGet.mockResolvedValue(null);
     mockRedisIncr.mockResolvedValue(1);
     mockRedisExpire.mockResolvedValue(1);
     mockRedisQuit.mockResolvedValue('OK');
     mockPrisma.trade.findMany.mockResolvedValue(mockTrades);
+    mockOrchestrator.runInsightsFlow.mockResolvedValue(mockInsightsResult);
+    mockDebriefAgent.generate.mockResolvedValue({ summary: 'Semaine correcte.' });
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AiService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        AiService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: OrchestratorAgent, useValue: mockOrchestrator },
+        { provide: DebriefAgent, useValue: mockDebriefAgent },
+      ],
     }).compile();
 
     service = module.get<AiService>(AiService);
   });
 
   describe('getInsights', () => {
-    it('retourne les insights parsés depuis la réponse IA', async () => {
+    it('délègue à l orchestrateur et retourne les insights', async () => {
       const result = await service.getInsights('user-123');
-      expect(result).toBeDefined();
+
+      expect(mockOrchestrator.runInsightsFlow).toHaveBeenCalledWith('user-123');
       expect(result).toHaveProperty('insights');
+      expect(result).toHaveProperty('topPattern');
     });
 
-    it("lance HttpException si la réponse IA n'est pas du JSON valide", async () => {
-      mockMessagesCreate.mockResolvedValueOnce({
-        content: [{ type: 'text', text: 'invalid json' }],
-      });
-
-      await expect(service.getInsights('user-123')).rejects.toThrow(HttpException);
-    });
-
-    it("vérifie le quota avant d'appeler l'IA", async () => {
+    it('vérifie le quota avant d appeler l orchestrateur', async () => {
       mockRedisGet.mockResolvedValueOnce('100');
 
       await expect(service.getInsights('user-123')).rejects.toThrow(HttpException);
+      expect(mockOrchestrator.runInsightsFlow).not.toHaveBeenCalled();
     });
   });
 
   describe('chat', () => {
-    it("retourne une réponse string depuis l'IA", async () => {
-      mockMessagesCreate.mockResolvedValueOnce({
-        content: [{ type: 'text', text: 'Voici mon analyse...' }],
-      });
-
+    it('retourne une réponse string depuis l IA', async () => {
       const result = await service.chat('user-123', 'Analyse mon week', []);
-      expect(result).toBeDefined();
+
       expect(result).toHaveProperty('response');
+      expect(typeof result.response).toBe('string');
+    });
+  });
+
+  describe('generateDebrief', () => {
+    it('délègue au DebriefAgent', async () => {
+      const data = { trades: [], stats: {}, previousObjectives: [], weekNumber: 17, year: 2026 };
+      await service.generateDebrief(data);
+
+      expect(mockDebriefAgent.generate).toHaveBeenCalledWith(data);
     });
   });
 });

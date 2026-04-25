@@ -8,21 +8,16 @@ Règles importantes :
 - Réponds TOUJOURS en JSON valide selon le format demandé
 - Ton est encourageant mais honnête`;
 
-export const buildInsightsUserPrompt = (tradesJson: string) => `
-Voici les ${JSON.parse(tradesJson).length} derniers trades du trader :
-
-${tradesJson}
-
-Analyse ces trades et retourne un JSON avec cette structure exacte :
+export const INSIGHTS_USER_PROMPT = `Analyse le résumé de trading ci-dessus et retourne un JSON avec cette structure exacte :
 {
   "insights": [
     {
       "type": "strength" | "weakness" | "pattern",
       "title": "string (court, percutant)",
-      "description": "string (2-3 phrases max)",
+      "description": "string (2-3 phrases max, sans saut de ligne)",
       "badge": "Force" | "Attention" | "Pattern"
     }
   ],
-  "topPattern": "string (le pattern principal identifié)",
-  "emotionInsight": "string (corrélation émotion → performance en 1-2 phrases)"
+  "topPattern": "string (le pattern principal identifié, sans saut de ligne)",
+  "emotionInsight": "string (corrélation émotion → performance en 1-2 phrases, sans saut de ligne)"
 }`;

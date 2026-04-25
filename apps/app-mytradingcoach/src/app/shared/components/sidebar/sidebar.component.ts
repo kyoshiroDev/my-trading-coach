@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject } from '@angular/core';
 import { RouterModule, RouterLink, RouterLinkActive } from '@angular/router';
 import {
   LucideAngularModule,
@@ -13,14 +13,18 @@ import {
 } from 'lucide-angular';
 import { UserStore } from '../../../core/stores/user.store';
 import { AuthService } from '../../../core/auth/auth.service';
+import { OnboardingComponent } from '../../../features/onboarding/onboarding.component';
 
 @Component({
   selector: 'mtc-sidebar',
   standalone: true,
-  imports: [RouterModule, RouterLink, RouterLinkActive, LucideAngularModule],
+  imports: [RouterModule, RouterLink, RouterLinkActive, LucideAngularModule, OnboardingComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './sidebar.component.css',
   template: `
+    @if (showOnboarding()) {
+      <mtc-onboarding (completed)="onOnboardingCompleted()" />
+    }
     <div class="app-layout">
       <!-- ─── SIDEBAR ─── -->
       <aside class="sidebar">
@@ -106,6 +110,11 @@ export class SidebarComponent {
   private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
 
+  protected readonly showOnboarding = computed(() => {
+    const user = this.userStore.user();
+    return !!user && user.onboardingCompleted === false;
+  });
+
   protected readonly LayoutDashboardIcon = LayoutDashboard;
   protected readonly BookOpenIcon = BookOpen;
   protected readonly BarChart2Icon = BarChart2;
@@ -122,6 +131,13 @@ export class SidebarComponent {
     };
     window.addEventListener('focus', onFocus);
     this.destroyRef.onDestroy(() => window.removeEventListener('focus', onFocus));
+  }
+
+  onOnboardingCompleted() {
+    const user = this.userStore.user();
+    if (user) {
+      this.auth.currentUser.set({ ...user, onboardingCompleted: true });
+    }
   }
 
   logout() {

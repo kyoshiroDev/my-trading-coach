@@ -33,6 +33,26 @@ a {
 button {
   font-family: var(--font-body, 'DM Sans', sans-serif);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* ─── Lucide icons — centrage vertical global ─── */
+/* lucide-icon est inline par défaut → baseline du texte.            */
+/* inline-flex + line-height:0 corrige l'alignement dans tous les   */
+/* contextes : boutons, nav-items, insight-icons, topbar, etc.       */
+lucide-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+lucide-icon svg {
+  display: block;
 }
 
 input, select, textarea {

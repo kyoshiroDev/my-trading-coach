@@ -129,8 +129,52 @@
 
 .btn-load-more:hover { border-color: var(--blue); color: var(--blue-bright); }
 
-.loading-state, .empty-state { color: var(--text-2); padding: 3rem; text-align: center; }
-.empty-state small { display: block; font-size: 12px; color: var(--text-3); margin-top: 4px; }
+.loading-state { color: var(--text-2); padding: 3rem; text-align: center; }
+
+/* ─── Empty state ─── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 40px;
+  text-align: center;
+  gap: 12px;
+}
+
+.empty-state-icon { font-size: 48px; opacity: 0.4; margin-bottom: 8px; }
+
+.empty-state-title {
+  font-family: var(--font-display, 'Syne', sans-serif);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.empty-state-desc {
+  font-size: 13px;
+  color: var(--text-3);
+  max-width: 320px;
+  line-height: 1.6;
+}
+
+.empty-state .btn-primary {
+  margin-top: 4px;
+  background: var(--blue);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  transition: all 0.15s;
+}
+
+.empty-state .btn-primary:hover {
+  background: var(--blue-bright);
+  transform: translateY(-1px);
+}
 
 /* ─── Modal ─── */
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

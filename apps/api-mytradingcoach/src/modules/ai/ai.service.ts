@@ -8,45 +8,20 @@ import {
 } from '@nestjs/common';
 import Anthropic from '@anthropic-ai/sdk';
 import Redis from 'ioredis';
+import { OrchestratorAgent } from './agents/orchestrator.agent';
+import { DebriefAgent } from './agents/debrief.agent';
+import { INSIGHTS_SYSTEM_PROMPT } from './prompts/insights.prompt';
+import { buildDebriefPrompt } from './prompts/debrief.prompt';
+import { parseAnthropicJson } from './agents/parse-json.util';
+import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
-import { INSIGHTS_SYSTEM_PROMPT, buildInsightsUserPrompt } from './prompts/insights.prompt';
-import { DEBRIEF_SYSTEM_PROMPT, buildDebriefPrompt } from './prompts/debrief.prompt';
 
 const MODEL = 'claude-sonnet-4-6';
 const AI_MONTHLY_QUOTA = 100;
 
-function parseAnthropicJson(raw: string): unknown {
-  const stripped = raw
-    .replace(/^```json\s*/i, '')
-    .replace(/^```\s*/i, '')
-    .replace(/```\s*$/i, '')
-    .trim();
-
-  try {
-    return JSON.parse(stripped);
-  } catch {}
-
-  // Second pass: escape literal control chars inside JSON string values
-  let inString = false;
-  let escaped = false;
-  let sanitized = '';
-  for (const char of stripped) {
-    if (escaped) { sanitized += char; escaped = false; continue; }
-    if (char === '\\' && inString) { sanitized += char; escaped = true; continue; }
-    if (char === '"') { inString = !inString; sanitized += char; continue; }
-    if (inString && char === '\n') { sanitized += '\\n'; continue; }
-    if (inString && char === '\r') { sanitized += '\\r'; continue; }
-    if (inString && char === '\t') { sanitized += '\\t'; continue; }
-    sanitized += char;
-  }
-  return JSON.parse(sanitized);
-}
-
 @Injectable()
 export class AiService implements OnModuleDestroy {
-  private readonly anthropic = new Anthropic({
-    apiKey: process.env['ANTHROPIC_API_KEY'],
-  });
+  private readonly anthropic = new Anthropic({ apiKey: process.env['ANTHROPIC_API_KEY'] });
   private readonly logger = new Logger(AiService.name);
   private readonly redis = new Redis({
     host: process.env['REDIS_HOST'] ?? 'localhost',
@@ -55,61 +30,26 @@ export class AiService implements OnModuleDestroy {
     lazyConnect: true,
   });
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly orchestrator: OrchestratorAgent,
+    private readonly debriefAgent: DebriefAgent,
+  ) {}
 
   async onModuleDestroy() {
     await this.redis.quit();
   }
 
+  // ── Insights — delegates to orchestrator ──────────────────────────────────
+
   async getInsights(userId: string) {
     await this.checkQuota(userId);
-
-    const trades = await this.prisma.trade.findMany({
-      where: { userId },
-      orderBy: { tradedAt: 'desc' },
-      take: 50,
-      select: {
-        asset: true, side: true, pnl: true, riskReward: true,
-        emotion: true, setup: true, session: true, timeframe: true,
-        notes: true, tradedAt: true,
-      },
-    });
-
-    const tradesJson = JSON.stringify(trades);
-
-    let response: Anthropic.Message;
-    try {
-      response = await this.anthropic.messages.create({
-        model: MODEL,
-        max_tokens: 2048,
-        system: [
-          { type: 'text', text: INSIGHTS_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
-        ],
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: tradesJson, cache_control: { type: 'ephemeral' } },
-              { type: 'text', text: buildInsightsUserPrompt(tradesJson) },
-            ],
-          },
-        ],
-      });
-    } catch (err) {
-      this.handleAnthropicError(err);
-    }
-
+    const result = await this.orchestrator.runInsightsFlow(userId);
     await this.incrementQuota(userId);
-    const content = response.content[0];
-    if (content.type !== 'text') throw new HttpException('Réponse IA invalide', HttpStatus.INTERNAL_SERVER_ERROR);
-
-    try {
-      return parseAnthropicJson(content.text);
-    } catch {
-      this.logger.error('Failed to parse AI response', content.text);
-      throw new HttpException('Réponse IA invalide', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    return result;
   }
+
+  // ── Chat — direct Anthropic call with trader context ─────────────────────
 
   async chat(
     userId: string,
@@ -122,15 +62,17 @@ export class AiService implements OnModuleDestroy {
       where: { userId },
       orderBy: { tradedAt: 'desc' },
       take: 30,
-      select: { asset: true, side: true, pnl: true, emotion: true, setup: true, tradedAt: true },
+      select: { asset: true, side: true, pnl: true, emotion: true, setup: true, session: true, tradedAt: true },
     });
 
-    const contextText = `Contexte trader (30 derniers trades) :\n${JSON.stringify(recentTrades)}`;
+    const contextSummary = recentTrades.length
+      ? `Contexte trader (${recentTrades.length} trades récents) : win rate et émotions connues.`
+      : 'Aucun trade enregistré.';
 
     const messages: Anthropic.MessageParam[] = [
       {
         role: 'user',
-        content: [{ type: 'text', text: contextText, cache_control: { type: 'ephemeral' } }],
+        content: [{ type: 'text', text: contextSummary, cache_control: { type: 'ephemeral' } }],
       },
       { role: 'assistant', content: "Bien compris, j'ai analysé tes trades récents. Comment puis-je t'aider ?" },
       ...history.map((h) => ({ role: h.role, content: h.content })),
@@ -146,7 +88,7 @@ export class AiService implements OnModuleDestroy {
         messages,
       });
     } catch (err) {
-      this.handleAnthropicError(err);
+      handleAnthropicError(err, this.logger);
     }
 
     await this.incrementQuota(userId);
@@ -155,59 +97,13 @@ export class AiService implements OnModuleDestroy {
     return { response: content.text };
   }
 
+  // ── Debrief — delegates to debrief agent ──────────────────────────────────
+
   async generateDebrief(data: Parameters<typeof buildDebriefPrompt>[0]) {
-    let response: Anthropic.Message;
-    try {
-      response = await this.anthropic.messages.create({
-        model: MODEL,
-        max_tokens: 2048,
-        system: [{ type: 'text', text: DEBRIEF_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
-        messages: [{ role: 'user', content: buildDebriefPrompt(data) }],
-      });
-    } catch (err) {
-      this.handleAnthropicError(err);
-    }
-
-    const content = response.content[0];
-    if (content.type !== 'text') throw new HttpException('Réponse IA invalide', HttpStatus.INTERNAL_SERVER_ERROR);
-    try {
-      return parseAnthropicJson(content.text);
-    } catch {
-      this.logger.error('Failed to parse debrief AI response', content.text);
-      throw new HttpException('Réponse IA invalide', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    return this.debriefAgent.generate(data);
   }
 
-  private handleAnthropicError(err: unknown): never {
-    if (err instanceof Anthropic.APIError) {
-      const type = (err.error as { error?: { type?: string } } | null)?.error?.type;
-      switch (type) {
-        case 'overloaded_error':
-          throw new HttpException(
-            "L'IA est momentanément surchargée, réessaie dans quelques minutes.",
-            HttpStatus.SERVICE_UNAVAILABLE,
-          );
-        case 'rate_limit_error':
-          throw new HttpException(
-            'Trop de requêtes, réessaie dans quelques secondes.',
-            HttpStatus.TOO_MANY_REQUESTS,
-          );
-        case 'invalid_request_error':
-          throw new HttpException(
-            'Crédit API insuffisant, contacte le support.',
-            HttpStatus.PAYMENT_REQUIRED,
-          );
-        default:
-          this.logger.error(`Anthropic API error [${type ?? err.status}]: ${err.message}`);
-          throw new HttpException(
-            "L'IA est temporairement indisponible.",
-            HttpStatus.BAD_GATEWAY,
-          );
-      }
-    }
-    this.logger.error('Unknown AI error', err);
-    throw new HttpException("L'IA est temporairement indisponible.", HttpStatus.BAD_GATEWAY);
-  }
+  // ── Quota management ──────────────────────────────────────────────────────
 
   private async checkQuota(userId: string) {
     const count = await this.getQuotaCount(userId);
@@ -226,7 +122,9 @@ export class AiService implements OnModuleDestroy {
       return val ? parseInt(val) : 0;
     } catch {
       this.logger.error('Redis unavailable — quota check failed, blocking AI call');
-      throw new ServiceUnavailableException('Service IA temporairement indisponible, veuillez réessayer dans quelques instants');
+      throw new ServiceUnavailableException(
+        'Service IA temporairement indisponible, veuillez réessayer dans quelques instants',
+      );
     }
   }
 
@@ -235,7 +133,6 @@ export class AiService implements OnModuleDestroy {
     try {
       const count = await this.redis.incr(key);
       if (count === 1) {
-        // Premier appel du mois — TTL jusqu'à fin du mois (31 jours max)
         await this.redis.expire(key, 60 * 60 * 24 * 31);
       }
     } catch {

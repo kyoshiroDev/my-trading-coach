@@ -2,7 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
 import {
+  debriefReadyTemplate,
   paymentFailedTemplate,
+  renewalReminderTemplate,
   resetPasswordTemplate,
   subscriptionCanceledTemplate,
   welcomeFreeTemplate,
@@ -103,6 +105,35 @@ export class ResendService {
       resetUrl,
       expiresIn: '1 heure',
     });
+    await this.send({ to: params.to, subject, html });
+  }
+
+  // ── Débrief prêt ──────────────────────────────────────────────────────────
+
+  async sendDebriefReady(params: {
+    to: string;
+    userName: string;
+    weekNumber: number;
+    winRate: number;
+    totalPnl: number;
+    totalTrades: number;
+  }): Promise<void> {
+    const { subject, html } = debriefReadyTemplate({
+      ...params,
+      appUrl: this.frontendUrl,
+    });
+    await this.send({ to: params.to, subject, html });
+  }
+
+  // ── Rappel renouvellement ──────────────────────────────────────────────────
+
+  async sendRenewalReminder(params: {
+    to: string;
+    userName: string;
+    expiresAt: Date;
+  }): Promise<void> {
+    const portalUrl = `${this.frontendUrl}/settings`;
+    const { subject, html } = renewalReminderTemplate({ ...params, portalUrl });
     await this.send({ to: params.to, subject, html });
   }
 

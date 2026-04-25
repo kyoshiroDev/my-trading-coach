@@ -45,7 +45,8 @@ function badgeClass(badge: string): string {
     <mtc-topbar
       title="Weekly Debrief"
       [showAddButton]="true"
-      addLabel="Générer le débrief"
+      [addLabel]="isGenerating() ? 'Analyse en cours...' : 'Générer le débrief'"
+      [addLoading]="isGenerating()"
       (addClick)="generateDebrief()"
     />
 
@@ -54,7 +55,13 @@ function badgeClass(badge: string): string {
         <div class="error-msg">{{ error() }}</div>
       }
 
-      @if (isLoading()) {
+      @if (isGenerating()) {
+        <div class="generating-state">
+          <div class="generating-spinner"></div>
+          <p class="generating-title">Analyse en cours...</p>
+          <p class="generating-desc">L'IA analyse tes trades, émotions et patterns de la semaine.</p>
+        </div>
+      } @else if (isLoading()) {
         <div class="loading">Chargement du débrief...</div>
       } @else if (!debrief()) {
         <div class="empty-state">
@@ -75,7 +82,7 @@ function badgeClass(badge: string): string {
               · Généré le {{ debrief()!.generatedAt | date:'d MMM à HH:mm' }}
             </div>
           </div>
-          <button class="export-btn">
+          <button class="export-btn" disabled title="Bientôt disponible">
             <lucide-icon [img]="DownloadIcon" [size]="13" />
             Export PDF
           </button>
@@ -89,7 +96,10 @@ function badgeClass(badge: string): string {
           </div>
           <div class="stat-card">
             <div class="stat-label">Win Rate</div>
-            <div class="stat-value" [class.text-green]="debrief()!.stats.winRate >= 50" [class.text-red]="debrief()!.stats.winRate < 50">
+            <div class="stat-value"
+              [class.text-green]="debrief()!.stats.winRate >= 50"
+              [class.text-red]="debrief()!.stats.winRate > 0 && debrief()!.stats.winRate < 50"
+              [class.text-muted]="!debrief()!.stats.winRate">
               {{ debrief()!.stats.winRate.toFixed(1) }}%
             </div>
           </div>
