@@ -8,11 +8,11 @@ import {
 } from '@nestjs/common';
 import Anthropic from '@anthropic-ai/sdk';
 import Redis from 'ioredis';
+import { Role } from '@prisma/client';
 import { OrchestratorAgent } from './agents/orchestrator.agent';
 import { DebriefAgent } from './agents/debrief.agent';
 import { INSIGHTS_SYSTEM_PROMPT } from './prompts/insights.prompt';
 import { buildDebriefPrompt } from './prompts/debrief.prompt';
-import { parseAnthropicJson } from './agents/parse-json.util';
 import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -42,11 +42,13 @@ export class AiService implements OnModuleDestroy {
 
   // ── Insights — delegates to orchestrator ──────────────────────────────────
 
-  async getInsights(userId: string) {
-    await this.checkQuota(userId);
-    await this.checkInsightsCooldown(userId);
+  async getInsights(userId: string, role: Role) {
+    if (role !== Role.ADMIN) {
+      await this.checkQuota(userId);
+      await this.checkInsightsCooldown(userId);
+    }
     const result = await this.orchestrator.runInsightsFlow(userId);
-    await this.incrementQuota(userId);
+    if (role !== Role.ADMIN) await this.incrementQuota(userId);
     return result;
   }
 
@@ -54,11 +56,14 @@ export class AiService implements OnModuleDestroy {
 
   async chat(
     userId: string,
+    userRole: Role,
     message: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }>,
   ) {
-    await this.checkQuota(userId);
-    await this.checkDailyLimit(userId, 'chat', 50);
+    if (userRole !== Role.ADMIN) {
+      await this.checkQuota(userId);
+      await this.checkDailyLimit(userId, 'chat', 50);
+    }
 
     const recentTrades = await this.prisma.trade.findMany({
       where: { userId },
@@ -93,7 +98,7 @@ export class AiService implements OnModuleDestroy {
       handleAnthropicError(err, this.logger);
     }
 
-    await this.incrementQuota(userId);
+    if (userRole !== Role.ADMIN) await this.incrementQuota(userId);
     const content = response.content[0];
     if (content.type !== 'text') throw new HttpException('Réponse IA invalide', HttpStatus.INTERNAL_SERVER_ERROR);
     return { response: content.text };
