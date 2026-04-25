@@ -88,17 +88,11 @@ import { AdminApi, AdminUser } from '../../core/api/admin.api';
                   </td>
                   <td>
                     @if (user.plan === 'PREMIUM') {
-                      @if (user.trialEndsAt && isFuture(user.trialEndsAt)) {
-                        <span class="sub-type trial">Essai gratuit</span>
-                      } @else if (user.stripeInterval === 'year') {
-                        <span class="sub-type annual">Annuel</span>
-                      } @else if (user.stripeInterval === 'month') {
-                        <span class="sub-type monthly">Mensuel</span>
-                      } @else {
-                        <span class="sub-type manual">Manuel</span>
-                      }
+                      <span [class]="'sub-badge sub-badge--' + subType(user)">
+                        {{ subLabel(user) }}
+                      </span>
                     } @else {
-                      <span class="mono" style="color:var(--text-3)">—</span>
+                      <span class="td-none">—</span>
                     }
                   </td>
                   <td class="mono td-date">
@@ -272,6 +266,20 @@ export class AdminUsersComponent implements OnInit {
 
   protected isFuture(dateStr: string | null): boolean {
     return !!dateStr && new Date(dateStr) > new Date();
+  }
+
+  protected subType(user: AdminUser): string {
+    if (user.trialEndsAt && this.isFuture(user.trialEndsAt)) return 'trial';
+    if (user.stripeInterval === 'year')  return 'annual';
+    if (user.stripeInterval === 'month') return 'monthly';
+    return 'manual';
+  }
+
+  protected subLabel(user: AdminUser): string {
+    const map: Record<string, string> = {
+      trial: 'Essai gratuit', annual: 'Annuel', monthly: 'Mensuel', manual: 'Manuel',
+    };
+    return map[this.subType(user)];
   }
 
   /** Approxime la date de début du plan premium depuis la date de fin de période. */

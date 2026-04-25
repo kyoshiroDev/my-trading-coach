@@ -365,16 +365,39 @@
 
 
 /* ── Subscription type badges ── */
-.sub-type {
+.td-none { font-family: var(--font-mono); font-size: 12px; color: var(--text-3); }
+
+.sub-badge {
+  display: inline-block;
   font-size: 11px;
   font-family: var(--font-mono, 'DM Mono', monospace);
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: 3px 9px;
+  border-radius: 5px;
   letter-spacing: 0.3px;
   white-space: nowrap;
+  font-weight: 500;
 }
 
-.sub-type.monthly { background: rgba(59,130,246,0.12); color: var(--blue-bright); border: 1px solid rgba(59,130,246,0.25); }
-.sub-type.annual  { background: rgba(139,92,246,0.12); color: #a78bfa; border: 1px solid rgba(139,92,246,0.25); }
-.sub-type.trial   { background: rgba(245,158,11,0.12); color: var(--yellow); border: 1px solid rgba(245,158,11,0.25); }
-.sub-type.manual  { background: var(--bg-3); color: var(--text-3); border: 1px solid var(--border); }
+.sub-badge--monthly {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.sub-badge--annual {
+  background: rgba(139, 92, 246, 0.15);
+  color: #c4b5fd;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.sub-badge--trial {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.sub-badge--manual {
+  background: rgba(99, 155, 255, 0.06);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+}
