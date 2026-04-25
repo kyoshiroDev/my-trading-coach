@@ -38,6 +38,9 @@ model User {
   notificationsEmail   Boolean @default(true)
   debriefAutomatic     Boolean @default(true)
 
+  // ── Discord ──────────────────────────────────────────────────────────────────
+  discordId String? @unique
+
   trades    Trade[]
   debriefs  WeeklyDebrief[]
   createdAt DateTime        @default(now())
