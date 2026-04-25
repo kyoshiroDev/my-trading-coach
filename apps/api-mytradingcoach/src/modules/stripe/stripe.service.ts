@@ -295,7 +295,7 @@ export class StripeService implements OnModuleDestroy {
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
         const synced = await this.syncSubscription(subscription.id);
-        if (synced?.id) await this.discord.syncDiscordRole(synced.id).catch(() => {});
+        if (synced?.id) await this.discord.syncDiscordRole(synced.id).catch(() => undefined);
 
         // 🔴 Monitoring : alerter si status passe à past_due ou unpaid
         if (subscription.status === 'past_due' || subscription.status === 'unpaid') {
@@ -345,7 +345,7 @@ export class StripeService implements OnModuleDestroy {
             to: user.email,
             userName: user.name ?? '',
           });
-          await this.discord.syncDiscordRole(user.id).catch(() => {});
+          await this.discord.syncDiscordRole(user.id).catch(() => undefined);
         }
 
         this.logger.log(`Abonnement résilié ${subscription.id} → plan FREE`);
