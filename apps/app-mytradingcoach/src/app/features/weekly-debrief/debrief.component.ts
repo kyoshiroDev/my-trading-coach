@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, linkedSignal, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UserStore } from '../../core/stores/user.store';
 import { DatePipe } from '@angular/common';
@@ -40,7 +41,7 @@ function badgeClass(badge: string): string {
 @Component({
   selector: 'mtc-debrief',
   standalone: true,
-  imports: [DatePipe, RouterLink, LucideAngularModule, TopbarComponent],
+  imports: [DatePipe, RouterLink, LucideAngularModule, TopbarComponent, PlanModalComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './debrief.component.css',
   template: `
@@ -59,8 +60,11 @@ function badgeClass(badge: string): string {
           <div class="paywall-icon">📅</div>
           <h3 class="paywall-title">Fonctionnalité Premium</h3>
           <p class="paywall-desc">Le Weekly Debrief est disponible avec le plan Premium.<br>Reçois chaque dimanche un rapport IA complet de ta semaine.</p>
-          <a routerLink="/settings" class="paywall-cta">Essayer 7 jours gratuit →</a>
+          <button class="paywall-cta" (click)="showPlanModal.set(true)">Essayer 7 jours gratuit →</button>
         </div>
+        @if (showPlanModal()) {
+          <mtc-plan-modal (closed)="showPlanModal.set(false)" />
+        }
       } @else {
 
       @if (error()) {
@@ -203,6 +207,7 @@ export class DebriefComponent {
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly userStore = inject(UserStore);
+  protected readonly showPlanModal = signal(false);
 
   protected readonly CalendarDaysIcon = CalendarDays;
   protected readonly RefreshCwIcon = RefreshCw;

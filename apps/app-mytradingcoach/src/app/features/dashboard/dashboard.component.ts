@@ -20,6 +20,7 @@ import { UserStore } from '../../core/stores/user.store';
 import { TradesStore, Trade } from '../../core/stores/trades.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { TradeFormComponent } from '../journal/trade-form.component';
+import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { CreateTradeDto } from '../../core/api/trades.api';
 import {
   EmotionColorPipe,
@@ -49,7 +50,7 @@ interface EquityPoint { date: string; cumulativePnl: number; }
   selector: 'mtc-dashboard',
   standalone: true,
   imports: [
-    RouterLink, TitleCasePipe, UpperCasePipe, TopbarComponent, TradeFormComponent,
+    RouterLink, TitleCasePipe, UpperCasePipe, TopbarComponent, TradeFormComponent, PlanModalComponent,
     PnlClassPipe, PnlColorPipe, PnlFormatPipe,
     EmotionEmojiPipe, EmotionLabelPipe, EmotionColorPipe,
     SetupColorPipe, SetupColorsMapPipe,
@@ -86,7 +87,7 @@ interface EquityPoint { date: string; cumulativePnl: number; }
               <span class="premium-banner-period">/mois</span>
               <div class="premium-banner-trial">7 jours gratuits · sans CB</div>
             </div>
-            <button class="premium-banner-btn" (click)="startTrial()">
+            <button class="premium-banner-btn" (click)="showPlanModal.set(true)">
               Essayer gratuitement
             </button>
           </div>
@@ -294,6 +295,10 @@ interface EquityPoint { date: string; cumulativePnl: number; }
         (dismissed)="showTradeForm.set(false)"
         (formSave)="saveTrade($event)"
       />
+
+      @if (showPlanModal()) {
+        <mtc-plan-modal (closed)="showPlanModal.set(false)" />
+      }
     </div>
   `,
 })
@@ -307,6 +312,7 @@ export class DashboardComponent implements AfterViewInit {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly showTradeForm = signal(false);
+  readonly showPlanModal = signal(false);
   readonly isSavingTrade = signal(false);
 
   private readonly summaryResource = httpResource<{ data: Summary }>(
