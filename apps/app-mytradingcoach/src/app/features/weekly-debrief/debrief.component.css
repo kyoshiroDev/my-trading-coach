@@ -146,6 +146,7 @@
 
 .text-green { color: var(--green); }
 .text-red { color: var(--red); }
+.text-muted { color: var(--text-2); }
 
 /* ─── AI summary ─── */
 .ai-summary-block {
@@ -283,3 +284,7 @@
 .obj-meta { font-size: 11px; color: var(--text-3); font-family: var(--font-mono, 'DM Mono', monospace); }
 
 .empty { font-size: 13px; color: var(--text-3); padding: 8px 0; }
+
+@media (max-width: 768px) {
+  .two-cols { grid-template-columns: 1fr; }
+}

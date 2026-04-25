@@ -7,6 +7,7 @@ import { LucideAngularModule, Plus, Bell } from 'lucide-angular';
   imports: [LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './topbar.component.css',
+  host: { '[attr.title]': 'null' },
   template: `
     <header class="topbar">
       <h1 class="page-title">{{ title() }}</h1>

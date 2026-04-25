@@ -96,7 +96,10 @@ function badgeClass(badge: string): string {
           </div>
           <div class="stat-card">
             <div class="stat-label">Win Rate</div>
-            <div class="stat-value" [class.text-green]="debrief()!.stats.winRate >= 50" [class.text-red]="debrief()!.stats.winRate < 50">
+            <div class="stat-value"
+              [class.text-green]="debrief()!.stats.winRate >= 50"
+              [class.text-red]="debrief()!.stats.winRate > 0 && debrief()!.stats.winRate < 50"
+              [class.text-muted]="!debrief()!.stats.winRate">
               {{ debrief()!.stats.winRate.toFixed(1) }}%
             </div>
           </div>
