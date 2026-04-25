@@ -11,7 +11,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TitleCasePipe } from '@angular/common';
+import { TitleCasePipe, UpperCasePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { BillingApi } from '../../core/api/billing.api';
@@ -49,7 +49,7 @@ interface EquityPoint { date: string; cumulativePnl: number; }
   selector: 'mtc-dashboard',
   standalone: true,
   imports: [
-    RouterLink, TitleCasePipe, TopbarComponent, TradeFormComponent,
+    RouterLink, TitleCasePipe, UpperCasePipe, TopbarComponent, TradeFormComponent,
     PnlColorPipe, PnlFormatPipe, PnlClassPipe,
     EmotionEmojiPipe, EmotionLabelPipe, EmotionColorPipe,
     SetupColorPipe, SetupColorsMapPipe,
@@ -121,7 +121,7 @@ interface EquityPoint { date: string; cumulativePnl: number; }
 
           <div class="stat-card">
             <div class="stat-label">Drawdown Max</div>
-            <div class="stat-value text-red">{{ summary()?.maxDrawdown ?? 0 | pnlFormat }}</div>
+            <div class="stat-value text-red">{{ drawdownDisplay() | pnlFormat }}</div>
             <div class="stat-sub">
               <span class="change down">▼ -4.8%</span>
               <span>sur capital</span>
@@ -133,9 +133,13 @@ interface EquityPoint { date: string; cumulativePnl: number; }
             <div class="stat-label">Trades</div>
             <div class="stat-value">{{ summary()?.totalTrades ?? tradesStore.trades$().length }}</div>
             <div class="stat-sub">
-              <span class="change" [class]="(summary()?.streak ?? 0) >= 0 ? 'up' : 'down'">
-                {{ (summary()?.streak ?? 0) >= 0 ? '▲ +' : '▼ ' }}{{ summary()?.streak ?? 0 }} streak
-              </span>
+              @if ((summary()?.streak ?? 0) > 0) {
+                <span class="change up">▲ +{{ summary()?.streak }} streak</span>
+              } @else if ((summary()?.streak ?? 0) < 0) {
+                <span class="change down">▼ {{ summary()?.streak }} streak</span>
+              } @else {
+                <span class="change">— pas de streak</span>
+              }
             </div>
             <div class="stat-bg-icon">🔢</div>
           </div>
@@ -190,7 +194,7 @@ interface EquityPoint { date: string; cumulativePnl: number; }
                 <div class="trade-row-compact">
                   <div class="trade-row-top">
                     <span class="trade-side" [class]="trade.side === 'LONG' ? 'long' : 'short'">{{ trade.side }}</span>
-                    <span class="trade-asset-compact">{{ trade.asset }}</span>
+                    <span class="trade-asset-compact">{{ trade.asset | uppercase }}</span>
                     <span class="trade-emotion">{{ trade.emotion | emotionEmoji }}</span>
                   </div>
                   <div class="trade-row-bottom">
@@ -317,6 +321,11 @@ export class DashboardComponent implements AfterViewInit {
   );
 
   protected readonly summary = computed(() => this.summaryResource.value()?.data ?? null);
+
+  protected readonly drawdownDisplay = computed(() => {
+    const dd = this.summary()?.maxDrawdown ?? 0;
+    return dd > 0 ? -dd : dd;
+  });
   protected readonly equityCurve = computed(() => this.equityCurveResource.value()?.data ?? []);
   protected readonly bySetup = computed(() => this.bySetupResource.value()?.data ?? []);
   protected readonly byEmotion = computed(() => this.byEmotionResource.value()?.data ?? []);
