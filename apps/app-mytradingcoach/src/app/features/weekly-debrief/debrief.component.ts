@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, linkedSignal, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UserStore } from '../../core/stores/user.store';
@@ -41,7 +40,7 @@ function badgeClass(badge: string): string {
 @Component({
   selector: 'mtc-debrief',
   standalone: true,
-  imports: [DatePipe, RouterLink, LucideAngularModule, TopbarComponent, PlanModalComponent],
+  imports: [DatePipe, LucideAngularModule, TopbarComponent, PlanModalComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './debrief.component.css',
   template: `

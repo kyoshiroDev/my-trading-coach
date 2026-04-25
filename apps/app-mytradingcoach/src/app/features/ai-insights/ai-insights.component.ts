@@ -11,7 +11,6 @@ import {
 import { UserStore } from '../../core/stores/user.store';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { HttpClient } from '@angular/common/http';
 import { LucideAngularModule, Sparkles, AlertTriangle, Info, Lightbulb, AlertCircle, Send } from 'lucide-angular';
@@ -42,7 +41,7 @@ function insightVariant(type: string): InsightVariant {
 @Component({
   selector: 'mtc-ai-insights',
   standalone: true,
-  imports: [FormsModule, RouterLink, LucideAngularModule, TopbarComponent, PlanModalComponent],
+  imports: [FormsModule, LucideAngularModule, TopbarComponent, PlanModalComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './ai-insights.component.css',
   template: `
