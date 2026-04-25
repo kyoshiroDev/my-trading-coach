@@ -32,7 +32,7 @@ export class AuthService {
     const hashedPassword = await argon2.hash(dto.password);
     const user = await this.prisma.user.create({
       data: { email: dto.email, password: hashedPassword, name: dto.name },
-      select: { id: true, email: true, name: true, plan: true, onboardingCompleted: true, createdAt: true },
+      select: { id: true, email: true, name: true, plan: true, role: true, onboardingCompleted: true, createdAt: true },
     });
 
     const tokens = await this.generateTokens(user.id, user.email);
@@ -51,7 +51,7 @@ export class AuthService {
     const valid = await argon2.verify(user.password, dto.password);
     if (!valid) throw new UnauthorizedException('Identifiants invalides');
 
-    const safeUser = { id: user.id, email: user.email, name: user.name, plan: user.plan, onboardingCompleted: user.onboardingCompleted };
+    const safeUser = { id: user.id, email: user.email, name: user.name, plan: user.plan, role: user.role, onboardingCompleted: user.onboardingCompleted };
     const tokens = await this.generateTokens(user.id, user.email);
     return { ...tokens, user: safeUser };
   }
@@ -68,12 +68,12 @@ export class AuthService {
 
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
-      select: { id: true, email: true, name: true, plan: true, onboardingCompleted: true },
+      select: { id: true, email: true, name: true, plan: true, role: true, onboardingCompleted: true },
     });
     if (!user) throw new UnauthorizedException('Utilisateur introuvable');
 
     const tokens = await this.generateTokens(user.id, user.email);
-    return { ...tokens, user: { id: user.id, email: user.email, name: user.name, plan: user.plan, onboardingCompleted: user.onboardingCompleted } };
+    return { ...tokens, user: { id: user.id, email: user.email, name: user.name, plan: user.plan, role: user.role, onboardingCompleted: user.onboardingCompleted } };
   }
 
   async startTrial(userId: string) {

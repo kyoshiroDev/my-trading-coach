@@ -85,7 +85,7 @@ export class AuthController {
   }
 
   @Get('me')
-  getMe(@CurrentUser() user: { id: string; email: string; name: string | null; plan: string; trialEndsAt: Date | null; trialUsed: boolean }) {
+  getMe(@CurrentUser() user: { id: string; email: string; name: string | null; plan: string; role: string; trialEndsAt: Date | null; trialUsed: boolean }) {
     return user;
   }
 

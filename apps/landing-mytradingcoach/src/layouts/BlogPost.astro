@@ -1,5 +1,7 @@
 ---
 import Base from './Base.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
 
 interface Props {
   title: string;
@@ -43,26 +45,22 @@ const schema = [
 ---
 
 <Base title={`${title} | MyTradingCoach Blog`} description={description} canonical={canonical} ogUrl={canonical} schema={schema as unknown as Record<string, unknown>}>
-  <header style="background:var(--bg2); border-bottom:1px solid var(--border); padding:1rem 0;">
-    <div style="max-width:48rem; margin:0 auto; padding:0 1.5rem;">
-      <a href="/" style="color:var(--blue); text-decoration:none; font-size:0.875rem;">← Retour</a>
-    </div>
-  </header>
+  <Nav />
 
-  <main style="max-width:48rem; margin:3rem auto; padding:0 1.5rem;">
+  <main class="article-wrap">
+    <a href="/blog" class="back-btn">← Retour au blog</a>
+
     <article>
-      <header style="margin-bottom:2rem;">
+      <header class="article-header">
         {tags.length > 0 && (
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1rem;">
+          <div class="article-tags">
             {tags.map(tag => (
-              <span style="background:rgba(59,130,246,0.1); color:var(--blue2); padding:0.25rem 0.75rem; border-radius:9999px; font-size:0.75rem; font-family:var(--mono);">
-                {tag}
-              </span>
+              <span class="article-tag">{tag}</span>
             ))}
           </div>
         )}
-        <h1 style="font-size:2rem; font-weight:800; line-height:1.2; margin:0 0 1rem; color:var(--text);">{title}</h1>
-        <p style="color:var(--text2); font-size:0.875rem;">
+        <h1 class="article-title">{title}</h1>
+        <p class="article-date">
           Publié le {publishDate.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}
           {updatedDate && ` · Mis à jour le ${updatedDate.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}`}
         </p>
@@ -72,65 +70,234 @@ const schema = [
         <slot />
       </div>
 
-      <div style="margin-top:3rem; padding:2rem; background:linear-gradient(135deg,rgba(59,130,246,0.1),rgba(34,211,238,0.05)); border:1px solid var(--border2); border-radius:1rem; text-align:center;">
-        <p style="font-size:1.125rem; font-weight:700; margin:0 0 0.5rem; color:var(--text);">Prêt à améliorer ton trading ?</p>
-        <p style="color:var(--text2); margin:0 0 1.5rem; font-size:0.875rem;">Rejoins les traders qui utilisent MyTradingCoach pour identifier leurs patterns.</p>
-        <a href="https://app.mytradingcoach.app/register" style="display:inline-block; background:linear-gradient(135deg,#3b82f6,#22d3ee); color:white; padding:0.75rem 2rem; border-radius:0.5rem; font-weight:700; text-decoration:none;">
+      <div class="article-cta">
+        <p>Prêt à améliorer ton trading ?</p>
+        <p class="article-cta-sub">Rejoins les traders qui utilisent MyTradingCoach pour identifier leurs patterns.</p>
+        <a href="https://app.mytradingcoach.app/register" class="article-cta-btn">
           Essayer gratuitement →
         </a>
       </div>
     </article>
   </main>
+
+  <Footer />
 </Base>
 
 <style>
-  .prose {
-    color: var(--text2);
-    line-height: 1.8;
-    font-size: 1.0625rem;
+  .article-wrap {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 60px 40px;
   }
-  .prose h2 {
-    color: var(--text);
-    font-size: 1.5rem;
+
+  @media (min-width: 1200px) {
+    .article-wrap {
+      max-width: 860px;
+      padding: 60px 0;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .article-wrap {
+      padding: 40px 20px;
+    }
+  }
+
+  /* ── Back button ── */
+  .back-btn {
+    display: inline-block;
+    color: var(--txt2);
+    text-decoration: none;
+    font-size: 0.875rem;
+    margin-bottom: 2rem;
+    transition: color 0.2s;
+  }
+
+  .back-btn:visited {
+    color: var(--txt2);
+  }
+
+  .back-btn:hover {
+    color: var(--txt);
+  }
+
+  /* ── Article header ── */
+  .article-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .article-tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+
+  .article-tag {
+    background: rgba(59,130,246,0.1);
+    color: var(--blue2);
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-family: var(--mono);
+  }
+
+  .article-title {
+    font-family: var(--disp);
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+    color: var(--txt);
+    margin-bottom: 12px;
+  }
+
+  @media (max-width: 768px) {
+    .article-title {
+      font-size: 28px;
+    }
+  }
+
+  .article-date {
+    color: var(--txt2);
+    font-size: 0.875rem;
+    font-family: var(--mono);
+  }
+
+  /* ── CTA ── */
+  .article-cta {
+    margin-top: 3rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(34,211,238,0.05));
+    border: 1px solid var(--b2);
+    border-radius: 1rem;
+    text-align: center;
+  }
+
+  .article-cta p {
+    font-size: 1.125rem;
     font-weight: 700;
-    margin: 2rem 0 1rem;
+    margin: 0 0 0.5rem;
+    color: var(--txt);
   }
+
+  .article-cta-sub {
+    color: var(--txt2);
+    font-size: 0.875rem !important;
+    font-weight: 400 !important;
+    margin: 0 0 1.5rem !important;
+  }
+
+  .article-cta-btn {
+    display: inline-block;
+    background: linear-gradient(135deg, #3b82f6, #22d3ee);
+    color: #fff;
+    padding: 0.75rem 2rem;
+    border-radius: 0.5rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+
+  .article-cta-btn:hover {
+    opacity: 0.9;
+  }
+
+</style>
+
+<!-- is:global requis : le slot injecte des éléments depuis un scope Astro différent -->
+<style is:global>
+  .prose {
+    color: var(--txt2);
+    line-height: 1.85;
+    font-size: 16px;
+  }
+
+  .prose h1 {
+    font-family: var(--disp);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--txt);
+    margin: 32px 0 14px;
+    letter-spacing: -0.3px;
+  }
+
+  .prose h2 {
+    font-family: var(--disp);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--txt);
+    margin: 28px 0 10px;
+  }
+
   .prose h3 {
-    color: var(--text);
-    font-size: 1.25rem;
+    font-family: var(--disp);
+    font-size: 19px;
     font-weight: 600;
-    margin: 1.5rem 0 0.75rem;
+    color: var(--txt);
+    margin: 20px 0 8px;
   }
+
   .prose p {
-    margin: 0 0 1rem;
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--txt2);
+    margin-bottom: 16px;
   }
-  .prose ul, .prose ol {
-    margin: 0 0 1rem 1.5rem;
-  }
-  .prose li {
-    margin-bottom: 0.5rem;
-  }
+
   .prose strong {
-    color: var(--text);
+    color: var(--txt);
     font-weight: 600;
   }
+
+  .prose ul,
+  .prose ol {
+    padding-left: 22px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .prose li {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--txt2);
+  }
+
   .prose a {
     color: var(--blue2);
     text-decoration: underline;
+    text-underline-offset: 3px;
   }
+
+  .prose a:visited {
+    color: var(--blue2);
+  }
+
   .prose blockquote {
     border-left: 3px solid var(--blue);
-    padding-left: 1rem;
-    color: var(--text2);
+    padding: 12px 20px;
+    background: var(--bg2);
+    border-radius: 0 8px 8px 0;
+    margin: 20px 0;
+    color: var(--txt2);
     font-style: italic;
-    margin: 1.5rem 0;
   }
+
   .prose code {
-    background: rgba(255,255,255,0.05);
-    padding: 0.125rem 0.375rem;
-    border-radius: 0.25rem;
     font-family: var(--mono);
-    font-size: 0.875em;
-    color: var(--pulse);
+    font-size: 13px;
+    background: var(--bg2);
+    border: 1px solid var(--b);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--blue2);
+  }
+
+  .prose hr {
+    border: none;
+    border-top: 1px solid var(--b);
+    margin: 32px 0;
   }
 </style>

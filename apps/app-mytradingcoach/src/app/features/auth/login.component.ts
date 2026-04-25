@@ -29,6 +29,7 @@ import { AuthService } from '../../core/auth/auth.service';
             <input
               id="email"
               type="email"
+              data-testid="login-email"
               [ngModel]="email()"
               (ngModelChange)="email.set($event)"
               name="email"
@@ -46,6 +47,7 @@ import { AuthService } from '../../core/auth/auth.service';
             <div class="input-wrapper">
               <input
                 id="password"
+                data-testid="login-password"
                 [type]="showPassword() ? 'text' : 'password'"
                 [ngModel]="password()"
                 (ngModelChange)="password.set($event)"
@@ -67,7 +69,7 @@ import { AuthService } from '../../core/auth/auth.service';
             <a routerLink="/forgot-password" class="forgot-link">Mot de passe oublié ?</a>
           </div>
 
-          <button type="submit" [disabled]="isLoading()" class="btn-submit">
+          <button type="submit" data-testid="login-submit" [disabled]="isLoading()" class="btn-submit">
             @if (isLoading()) {
               <span class="spinner"></span> Connexion...
             } @else {
@@ -76,7 +78,7 @@ import { AuthService } from '../../core/auth/auth.service';
           </button>
 
           @if (apiError()) {
-            <div class="error-msg">{{ apiError() }}</div>
+            <div class="error-msg" data-testid="error-message">{{ apiError() }}</div>
           }
         </form>
 

@@ -1,4 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Role } from '@prisma/client';
+
+interface DebriefAiResult {
+  summary: string;
+  insights: unknown;
+  objectives: { title: string; reason: string }[];
+}
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { AnalyticsService } from '../analytics/analytics.service';
@@ -35,7 +42,7 @@ export class DebriefService {
     });
   }
 
-  async generate(userId: string) {
+  async generate(userId: string, role: Role = Role.USER) {
     const now = new Date();
     const { weekNumber, year, startDate, endDate } = this.getWeekInfo(now);
 
@@ -57,13 +64,17 @@ export class DebriefService {
       ? (previousDebrief.objectives as unknown[])
       : [];
 
+    if (role !== Role.ADMIN) {
+      await this.aiService.checkDailyLimit(userId, 'debrief', 1);
+    }
+
     const aiResult = await this.aiService.generateDebrief({
       trades,
       stats,
       previousObjectives,
       weekNumber,
       year,
-    });
+    }) as DebriefAiResult;
 
     return this.prisma.weeklyDebrief.upsert({
       where: { userId_weekNumber_year: { userId, weekNumber, year } },
@@ -74,13 +85,13 @@ export class DebriefService {
         startDate,
         endDate,
         aiSummary: aiResult.summary,
-        insights: aiResult,
+        insights: JSON.parse(JSON.stringify(aiResult)),
         objectives: aiResult.objectives,
         stats,
       },
       update: {
         aiSummary: aiResult.summary,
-        insights: aiResult,
+        insights: JSON.parse(JSON.stringify(aiResult)),
         objectives: aiResult.objectives,
         stats,
         generatedAt: new Date(),

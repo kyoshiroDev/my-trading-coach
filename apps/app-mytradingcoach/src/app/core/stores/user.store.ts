@@ -11,10 +11,12 @@ export class UserStore {
   readonly isPremium = computed(() => {
     const user = this.user();
     if (!user) return false;
+    if (user.role === 'ADMIN' || user.role === 'BETA_TESTER') return true;
     if (user.plan === 'PREMIUM') return true;
     return !!(user.trialEndsAt && new Date() < new Date(user.trialEndsAt));
-
   });
+
+  readonly isAdmin = computed(() => this.user()?.role === 'ADMIN');
   readonly displayName = computed(() => this.user()?.name ?? this.user()?.email ?? '');
   readonly initials = computed(() => {
     const name = this.user()?.name ?? this.user()?.email ?? '?';

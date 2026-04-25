@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, linkedSignal, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { UserStore } from '../../core/stores/user.store';
 import { DatePipe } from '@angular/common';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { LucideAngularModule, CalendarDays, RefreshCw, Download } from 'lucide-angular';
@@ -38,19 +40,29 @@ function badgeClass(badge: string): string {
 @Component({
   selector: 'mtc-debrief',
   standalone: true,
-  imports: [DatePipe, LucideAngularModule, TopbarComponent],
+  imports: [DatePipe, RouterLink, LucideAngularModule, TopbarComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './debrief.component.css',
   template: `
     <mtc-topbar
       title="Weekly Debrief"
-      [showAddButton]="true"
+      [showAddButton]="userStore.isPremium()"
       [addLabel]="isGenerating() ? 'Analyse en cours...' : 'Générer le débrief'"
       [addLoading]="isGenerating()"
+      addTestId="debrief-generate-btn"
       (addClick)="generateDebrief()"
     />
 
     <div class="content">
+      @if (!userStore.isPremium()) {
+        <div data-testid="debrief-paywall" class="premium-paywall">
+          <div class="paywall-icon">📅</div>
+          <h3 class="paywall-title">Fonctionnalité Premium</h3>
+          <p class="paywall-desc">Le Weekly Debrief est disponible avec le plan Premium.<br>Reçois chaque dimanche un rapport IA complet de ta semaine.</p>
+          <a routerLink="/settings" class="paywall-cta">Essayer 7 jours gratuit →</a>
+        </div>
+      } @else {
+
       @if (error()) {
         <div class="error-msg">{{ error() }}</div>
       }
@@ -112,7 +124,7 @@ function badgeClass(badge: string): string {
         </div>
 
         <!-- AI Summary -->
-        <div class="ai-summary-block">
+        <div class="ai-summary-block" data-testid="debrief-summary">
           <div class="ai-summary-label">
             <span class="ai-pulse"></span>
             Résumé IA de ta semaine
@@ -122,7 +134,7 @@ function badgeClass(badge: string): string {
 
         <!-- Strengths / Weaknesses -->
         <div class="two-cols">
-          <div class="card">
+          <div class="card" data-testid="debrief-strengths">
             <div class="card-header">
               <div class="card-title">Forces de la semaine</div>
             </div>
@@ -137,7 +149,7 @@ function badgeClass(badge: string): string {
             }
           </div>
 
-          <div class="card">
+          <div class="card" data-testid="debrief-weaknesses">
             <div class="card-header">
               <div class="card-title">Points d'amélioration</div>
             </div>
@@ -165,7 +177,7 @@ function badgeClass(badge: string): string {
         }
 
         <!-- Objectives -->
-        <div class="card">
+        <div class="card" data-testid="debrief-objectives">
           <div class="card-header">
             <div class="card-title">Objectifs semaine prochaine</div>
           </div>
@@ -183,12 +195,14 @@ function badgeClass(badge: string): string {
           }
         </div>
       }
+      } <!-- end @else (premium) -->
     </div>
   `,
 })
 export class DebriefComponent {
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly userStore = inject(UserStore);
 
   protected readonly CalendarDaysIcon = CalendarDays;
   protected readonly RefreshCwIcon = RefreshCw;

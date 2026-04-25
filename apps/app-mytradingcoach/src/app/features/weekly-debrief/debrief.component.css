@@ -289,3 +289,34 @@
 @media (max-width: 768px) {
   .two-cols { grid-template-columns: 1fr; }
 }
+
+/* ─── Paywall FREE ─── */
+.premium-paywall {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 40px;
+  text-align: center;
+  gap: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.paywall-icon { font-size: 48px; margin-bottom: 8px; }
+.paywall-title { font-family: var(--font-display, 'Syne', sans-serif); font-size: 20px; font-weight: 700; color: var(--text); }
+.paywall-desc { font-size: 14px; color: var(--text-2); max-width: 380px; line-height: 1.6; }
+.paywall-cta {
+  margin-top: 8px;
+  display: inline-block;
+  background: var(--blue);
+  color: white;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 0 20px rgba(59,130,246,0.3);
+  transition: all 0.15s;
+}
+.paywall-cta:hover { background: var(--blue-bright); transform: translateY(-1px); }

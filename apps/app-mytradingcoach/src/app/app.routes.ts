@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, premiumGuard } from './core/auth/auth.guard';
+import { authGuard, premiumGuard, adminGuard } from './core/auth/auth.guard';
 import { NotFoundComponent } from './shared/components/not-found/not-found.component';
 
 export const appRoutes: Routes = [
@@ -47,13 +47,11 @@ export const appRoutes: Routes = [
       },
       {
         path: 'ai-insights',
-        canActivate: [premiumGuard],
         loadComponent: () =>
           import('./features/ai-insights/ai-insights.component').then((m) => m.AiInsightsComponent),
       },
       {
         path: 'debrief',
-        canActivate: [premiumGuard],
         loadComponent: () =>
           import('./features/weekly-debrief/debrief.component').then((m) => m.DebriefComponent),
       },
@@ -67,6 +65,12 @@ export const appRoutes: Routes = [
         path: 'settings',
         loadComponent: () =>
           import('./features/settings/settings.component').then((m) => m.SettingsComponent),
+      },
+      {
+        path: 'admin',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/admin/admin-users.component').then((m) => m.AdminUsersComponent),
       },
     ],
   },

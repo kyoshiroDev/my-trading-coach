@@ -39,6 +39,7 @@ const mockAiService = {
     weaknesses: [],
     objectives: [],
   }),
+  checkDailyLimit: vi.fn().mockResolvedValue(undefined),
 };
 
 const mockAnalyticsService = {

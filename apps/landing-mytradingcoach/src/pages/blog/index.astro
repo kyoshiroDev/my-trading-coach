@@ -3,7 +3,6 @@ import Base from '../../layouts/Base.astro';
 import Nav from '../../components/Nav.astro';
 import Footer from '../../components/Footer.astro';
 
-// Static blog posts listing (no content collections to keep it simple)
 const posts = [
   {
     slug: 'journal-trading-debutant',
@@ -51,30 +50,30 @@ const posts = [
 >
   <Nav />
 
-  <main style="max-width:56rem; margin:0 auto; padding:4rem 1.5rem;">
-    <div style="margin-bottom:3rem;">
-      <p style="font-size:0.875rem; color:var(--blue2); font-family:var(--mono); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.75rem;">Blog</p>
-      <h1 style="font-size:2.5rem; font-weight:800; margin:0 0 1rem; color:var(--text);">Articles sur le trading</h1>
-      <p style="color:var(--text2); font-size:1rem; max-width:32rem; margin:0;">
+  <main class="blog-index">
+    <div class="blog-header">
+      <p class="blog-label">Blog</p>
+      <h1 class="blog-title">Articles sur le trading</h1>
+      <p class="blog-desc">
         Psychologie, méthodes, analyse de performance — pour progresser en tant que trader.
       </p>
     </div>
 
-    <div style="display:flex; flex-direction:column; gap:1.5rem;">
+    <div class="blog-list">
       {posts.map(post => (
-        <a href={`/blog/${post.slug}`} style="display:block; background:var(--card); border:1px solid var(--border); border-radius:1rem; padding:1.5rem; text-decoration:none; transition:border-color 0.2s;">
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+        <a href={`/blog/${post.slug}`} class="blog-card">
+          <div class="card-tags">
             {post.tags.map(tag => (
-              <span style="background:rgba(59,130,246,0.1); color:var(--blue2); padding:0.125rem 0.625rem; border-radius:9999px; font-size:0.75rem; font-family:var(--mono);">{tag}</span>
+              <span class="card-tag">{tag}</span>
             ))}
           </div>
-          <h2 style="font-size:1.25rem; font-weight:700; color:var(--text); margin:0 0 0.5rem; line-height:1.3;">{post.title}</h2>
-          <p style="color:var(--text2); font-size:0.9375rem; margin:0 0 1rem; line-height:1.6;">{post.description}</p>
-          <div style="display:flex; align-items:center; justify-content:space-between;">
-            <span style="font-size:0.8125rem; color:var(--text3);">
+          <h2 class="card-title">{post.title}</h2>
+          <p class="card-desc">{post.description}</p>
+          <div class="card-footer">
+            <span class="card-date">
               {new Date(post.date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}
             </span>
-            <span style="color:var(--blue2); font-size:0.875rem;">Lire →</span>
+            <span class="card-read">Lire →</span>
           </div>
         </a>
       ))}
@@ -83,3 +82,120 @@ const posts = [
 
   <Footer />
 </Base>
+
+<style>
+  .blog-index {
+    max-width: 56rem;
+    margin: 0 auto;
+    padding: 4rem 1.5rem;
+  }
+
+  .blog-header {
+    margin-bottom: 3rem;
+  }
+
+  .blog-label {
+    font-size: 0.875rem;
+    color: var(--blue2);
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.75rem;
+  }
+
+  .blog-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 0 0 1rem;
+    color: var(--txt);
+    font-family: var(--disp);
+    letter-spacing: -0.5px;
+  }
+
+  .blog-desc {
+    color: var(--txt2);
+    font-size: 1rem;
+    max-width: 32rem;
+    margin: 0;
+  }
+
+  .blog-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  /* ── Card link reset ── */
+  .blog-card {
+    display: block;
+    background: var(--card);
+    border: 1px solid var(--b);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s;
+  }
+
+  .blog-card:visited {
+    color: inherit;
+  }
+
+  .blog-card:hover {
+    border-color: var(--blue2);
+    color: inherit;
+  }
+
+  /* ── Tags ── */
+  .card-tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+  }
+
+  .card-tag {
+    background: var(--card2);
+    color: var(--txt3);
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-family: var(--mono);
+  }
+
+  /* ── Title ── */
+  .card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--txt);
+    font-family: var(--disp);
+    margin: 0 0 0.5rem;
+    line-height: 1.3;
+  }
+
+  /* ── Description ── */
+  .card-desc {
+    color: var(--txt2);
+    font-size: 0.9375rem;
+    margin: 0 0 1rem;
+    line-height: 1.6;
+  }
+
+  /* ── Footer row ── */
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-date {
+    font-size: 0.8125rem;
+    color: var(--txt3);
+    font-family: var(--mono);
+  }
+
+  .card-read {
+    color: var(--blue2);
+    font-size: 0.875rem;
+  }
+</style>

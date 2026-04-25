@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { Plan, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { TradesService } from './trades.service';
@@ -23,10 +24,10 @@ export class TradesController {
 
   @Post()
   create(
-    @CurrentUser() user: { id: string; plan: string },
+    @CurrentUser() user: { id: string; plan: Plan; role: Role },
     @Body() dto: CreateTradeDto,
   ) {
-    return this.tradesService.create(user.id, dto, user.plan as any);
+    return this.tradesService.create(user.id, dto, user.plan, user.role);
   }
 
   @Get()

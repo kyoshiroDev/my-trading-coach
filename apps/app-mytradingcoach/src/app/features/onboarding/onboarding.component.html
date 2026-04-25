@@ -1,6 +1,6 @@
 <!-- Steps 1 & 2 — wizard overlay -->
 @if (step() !== 3) {
-  <div class="overlay">
+  <div class="overlay" data-testid="onboarding-wizard">
     <div class="wizard">
 
       <!-- Header -->
@@ -9,7 +9,7 @@
           <div class="logo-mark"></div>
           <span class="logo-text">MyTradingCoach</span>
         </div>
-        <button class="skip-btn" (click)="skip()" [disabled]="isSaving()">Passer</button>
+        <button class="skip-btn" data-testid="wizard-skip" (click)="skip()" [disabled]="isSaving()">Passer</button>
       </div>
 
       <!-- Progress bar -->

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpException } from '@nestjs/common';
+import { Role } from '@prisma/client';
 import { AiService } from './ai.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OrchestratorAgent } from './agents/orchestrator.agent';
@@ -89,7 +90,7 @@ describe('AiService', () => {
 
   describe('getInsights', () => {
     it('délègue à l orchestrateur et retourne les insights', async () => {
-      const result = await service.getInsights('user-123');
+      const result = await service.getInsights('user-123', Role.USER);
 
       expect(mockOrchestrator.runInsightsFlow).toHaveBeenCalledWith('user-123');
       expect(result).toHaveProperty('insights');
@@ -99,14 +100,14 @@ describe('AiService', () => {
     it('vérifie le quota avant d appeler l orchestrateur', async () => {
       mockRedisGet.mockResolvedValueOnce('100');
 
-      await expect(service.getInsights('user-123')).rejects.toThrow(HttpException);
+      await expect(service.getInsights('user-123', Role.USER)).rejects.toThrow(HttpException);
       expect(mockOrchestrator.runInsightsFlow).not.toHaveBeenCalled();
     });
   });
 
   describe('chat', () => {
     it('retourne une réponse string depuis l IA', async () => {
-      const result = await service.chat('user-123', 'Analyse mon week', []);
+      const result = await service.chat('user-123', Role.USER, 'Analyse mon week', []);
 
       expect(result).toHaveProperty('response');
       expect(typeof result.response).toBe('string');

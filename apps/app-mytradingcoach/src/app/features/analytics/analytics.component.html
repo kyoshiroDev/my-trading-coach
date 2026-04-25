@@ -6,16 +6,16 @@
   <div class="stats-row">
     <div class="stat-card">
       <div class="stat-label">WIN RATE GLOBAL</div>
-      <div class="stat-value" [class.text-green]="(summary()?.winRate ?? 0) >= 50"
+      <div class="stat-value" data-testid="analytics-win-rate" [class.text-green]="(summary()?.winRate ?? 0) >= 50"
                               [class.text-red]="(summary()?.winRate ?? 0) < 50 && summary() !== null">
         {{ summary() ? (summary()!.winRate).toFixed(1) + '%' : '—' }}
       </div>
-      <div class="stat-sub">{{ summary()?.totalTrades ?? 0 }} trades</div>
+      <div class="stat-sub" data-testid="analytics-trades">{{ summary()?.totalTrades ?? 0 }} trades</div>
     </div>
 
     <div class="stat-card">
       <div class="stat-label">P&amp;L TOTAL</div>
-      <div class="stat-value" [class.text-green]="(summary()?.totalPnl ?? 0) > 0"
+      <div class="stat-value" data-testid="analytics-pnl" [class.text-green]="(summary()?.totalPnl ?? 0) > 0"
                               [class.text-red]="(summary()?.totalPnl ?? 0) < 0">
         {{ summary() ? (summary()!.totalPnl | pnlFormat) : '—' }}
       </div>
@@ -64,7 +64,7 @@
           }
         </div>
         <div class="chart-container">
-          <canvas #equityCanvas class="chart-canvas"></canvas>
+          <canvas #equityCanvas class="chart-canvas" data-testid="equity-curve"></canvas>
           @if (equityCurve().length === 0) {
             <div class="empty-chart">Aucun trade clôturé</div>
           }
@@ -99,7 +99,7 @@
           <span class="legend-dot dot-green"></span><span class="legend-txt">&gt;65%</span>
         </div>
       </div>
-      <div class="heatmap-wrapper">
+      <div class="heatmap-wrapper" data-testid="heatmap">
         <table class="heatmap-table">
           <thead>
             <tr>
@@ -243,13 +243,13 @@
             </svg>
           </div>
         </div>
-        <div class="locked-overlay">
+        <div class="locked-overlay" data-testid="locked-overlay">
           <span class="locked-icon">🔒</span>
           <h3 class="locked-title">Equity Curve &amp; Drawdown</h3>
           <p class="locked-desc">
             Visualise l'évolution de ton capital et tes périodes de drawdown pour identifier tes biais comportementaux.
           </p>
-          <button class="locked-cta" (click)="startTrial('monthly')">Essayer 7 jours gratuit →</button>
+          <button class="locked-cta" data-testid="upgrade-cta" (click)="startTrial('monthly')">Essayer 7 jours gratuit →</button>
         </div>
       </div>
 
@@ -265,13 +265,13 @@
             }
           </div>
         </div>
-        <div class="locked-overlay">
+        <div class="locked-overlay" data-testid="locked-overlay">
           <span class="locked-icon">🔒</span>
           <h3 class="locked-title">Heatmap de performance horaire</h3>
           <p class="locked-desc">
             Découvre tes meilleures heures — quand tu gagnes vraiment et quand tu perds le plus.
           </p>
-          <button class="locked-cta" (click)="startTrial('monthly')">Essayer 7 jours gratuit →</button>
+          <button class="locked-cta" data-testid="upgrade-cta" (click)="startTrial('monthly')">Essayer 7 jours gratuit →</button>
         </div>
       </div>
 
@@ -289,13 +289,13 @@
             }
           </div>
         </div>
-        <div class="locked-overlay">
+        <div class="locked-overlay" data-testid="locked-overlay">
           <span class="locked-icon">🔒</span>
           <h3 class="locked-title">Top Actifs &amp; Performance par Setup</h3>
           <p class="locked-desc">
             Découvre tes actifs les plus profitables et tes setups gagnants. Win rate par émotion, par session et par actif.
           </p>
-          <button class="locked-cta" (click)="startTrial('monthly')">Essayer 7 jours gratuit →</button>
+          <button class="locked-cta" data-testid="upgrade-cta" (click)="startTrial('monthly')">Essayer 7 jours gratuit →</button>
         </div>
       </div>
 

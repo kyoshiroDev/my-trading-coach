@@ -4,6 +4,7 @@
 dist
 tmp
 VPS.md
+.claude/prompts
 
 # template
 app-mytradingcoach.html
@@ -62,7 +63,11 @@ Thumbs.db
 
 __screenshots__/
 
+# Playwright
 test-output
+playwright-report
+blob-report
+playwright/.cache
 .env
 .env.local
 .env.dev

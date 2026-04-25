@@ -8,8 +8,10 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { UserStore } from '../../core/stores/user.store';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { LucideAngularModule, Sparkles, AlertTriangle, Info, Lightbulb, AlertCircle, Send } from 'lucide-angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
@@ -39,19 +41,28 @@ function insightVariant(type: string): InsightVariant {
 @Component({
   selector: 'mtc-ai-insights',
   standalone: true,
-  imports: [FormsModule, LucideAngularModule, TopbarComponent],
+  imports: [FormsModule, RouterLink, LucideAngularModule, TopbarComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './ai-insights.component.css',
   template: `
     <mtc-topbar
       title="IA Insights"
-      [showAddButton]="true"
+      [showAddButton]="userStore.isPremium()"
       [addLabel]="insightsLoading() ? 'Analyse en cours...' : 'Analyser maintenant'"
       [addLoading]="insightsLoading()"
+      addTestId="analyze-btn"
       (addClick)="loadInsights()"
     />
 
     <div class="content">
+      @if (!userStore.isPremium()) {
+        <div data-testid="ai-paywall" class="premium-paywall">
+          <div class="paywall-icon">✨</div>
+          <h3 class="paywall-title">Fonctionnalité Premium</h3>
+          <p class="paywall-desc">Les IA Insights sont disponibles avec le plan Premium.<br>Analyse tes patterns comportementaux avec le coach IA.</p>
+          <a routerLink="/settings" class="paywall-cta">Essayer 7 jours gratuit →</a>
+        </div>
+      } @else {
       <div class="layout">
 
         <!-- Left: insights -->
@@ -91,10 +102,10 @@ function insightVariant(type: string): InsightVariant {
               </div>
             }
 
-            <div class="insight-list">
+            <div class="insight-list" data-testid="insights-list">
               @for (insight of insights()!.insights; track insight.title) {
                 @let variant = getVariant(insight.type);
-                <div class="insight-item">
+                <div class="insight-item" data-testid="insight-card">
                   <div class="insight-icon" [class]="variant">
                     @switch (variant) {
                       @case ('tip') { <lucide-icon [img]="LightbulbIcon" [size]="15" color="#10b981" /> }
@@ -142,7 +153,7 @@ function insightVariant(type: string): InsightVariant {
               </div>
             }
             @for (msg of chatHistory(); track $index) {
-              <div class="msg" [class.user]="msg.role === 'user'" [class.assistant]="msg.role === 'assistant'">
+              <div class="msg" data-testid="chat-message" [class.user]="msg.role === 'user'" [class.assistant]="msg.role === 'assistant'">
                 <div class="msg-bubble">{{ msg.content }}</div>
               </div>
             }
@@ -157,23 +168,27 @@ function insightVariant(type: string): InsightVariant {
 
           <div class="chat-input-row">
             <input
+              data-testid="chat-input"
               [(ngModel)]="chatInput"
               placeholder="Pose ta question..."
               (keydown.enter)="sendMessage()"
               [disabled]="chatLoading()"
               class="chat-input"
             />
-            <button class="btn-send" (click)="sendMessage()" [disabled]="chatLoading() || !chatInput.trim()">
+            <button class="btn-send" data-testid="chat-send" (click)="sendMessage()" [disabled]="chatLoading() || !chatInput.trim()">
               <lucide-icon [img]="SendIcon" [size]="14" />
             </button>
           </div>
         </div>
       </div>
+      } <!-- end @else (premium) -->
     </div>
   `,
 })
 export class AiInsightsComponent implements AfterViewChecked {
   @ViewChild('chatContainer') chatContainer!: ElementRef<HTMLDivElement>;
+
+  protected readonly userStore = inject(UserStore);
 
   protected readonly SparklesIcon = Sparkles;
   protected readonly AlertTriangleIcon = AlertTriangle;

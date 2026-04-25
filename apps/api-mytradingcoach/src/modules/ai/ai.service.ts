@@ -8,11 +8,11 @@ import {
 } from '@nestjs/common';
 import Anthropic from '@anthropic-ai/sdk';
 import Redis from 'ioredis';
+import { Role } from '@prisma/client';
 import { OrchestratorAgent } from './agents/orchestrator.agent';
 import { DebriefAgent } from './agents/debrief.agent';
 import { INSIGHTS_SYSTEM_PROMPT } from './prompts/insights.prompt';
 import { buildDebriefPrompt } from './prompts/debrief.prompt';
-import { parseAnthropicJson } from './agents/parse-json.util';
 import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -42,10 +42,13 @@ export class AiService implements OnModuleDestroy {
 
   // ── Insights — delegates to orchestrator ──────────────────────────────────
 
-  async getInsights(userId: string) {
-    await this.checkQuota(userId);
+  async getInsights(userId: string, role: Role) {
+    if (role !== Role.ADMIN) {
+      await this.checkQuota(userId);
+      await this.checkInsightsCooldown(userId);
+    }
     const result = await this.orchestrator.runInsightsFlow(userId);
-    await this.incrementQuota(userId);
+    if (role !== Role.ADMIN) await this.incrementQuota(userId);
     return result;
   }
 
@@ -53,10 +56,14 @@ export class AiService implements OnModuleDestroy {
 
   async chat(
     userId: string,
+    userRole: Role,
     message: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }>,
   ) {
-    await this.checkQuota(userId);
+    if (userRole !== Role.ADMIN) {
+      await this.checkQuota(userId);
+      await this.checkDailyLimit(userId, 'chat', 50);
+    }
 
     const recentTrades = await this.prisma.trade.findMany({
       where: { userId },
@@ -91,7 +98,7 @@ export class AiService implements OnModuleDestroy {
       handleAnthropicError(err, this.logger);
     }
 
-    await this.incrementQuota(userId);
+    if (userRole !== Role.ADMIN) await this.incrementQuota(userId);
     const content = response.content[0];
     if (content.type !== 'text') throw new HttpException('Réponse IA invalide', HttpStatus.INTERNAL_SERVER_ERROR);
     return { response: content.text };
@@ -101,6 +108,35 @@ export class AiService implements OnModuleDestroy {
 
   async generateDebrief(data: Parameters<typeof buildDebriefPrompt>[0]) {
     return this.debriefAgent.generate(data);
+  }
+
+  // ── Cooldown / Daily limits ───────────────────────────────────────────────
+
+  async checkInsightsCooldown(userId: string): Promise<void> {
+    const key = `ai:cooldown:insights:${userId}`;
+    const exists = await this.redis.get(key);
+    if (exists) {
+      const ttl = await this.redis.ttl(key);
+      const minutes = Math.ceil(ttl / 60);
+      throw new HttpException(
+        `Analyse déjà effectuée. Réessaie dans ${minutes} minute(s).`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+    await this.redis.set(key, '1', 'EX', 60 * 60 * 4);
+  }
+
+  async checkDailyLimit(userId: string, action: string, max: number): Promise<void> {
+    const today = new Date().toISOString().slice(0, 10);
+    const key = `ai:limit:${userId}:${action}:${today}`;
+    const count = await this.redis.incr(key);
+    await this.redis.expire(key, 60 * 60 * 24);
+    if (count > max) {
+      throw new HttpException(
+        `Limite atteinte : ${max} ${action} par jour. Reviens demain.`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
   }
 
   // ── Quota management ──────────────────────────────────────────────────────
