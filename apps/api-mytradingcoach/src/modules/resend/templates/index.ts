@@ -162,7 +162,7 @@ export function welcomeFreeTemplate(params: {
             Rejoindre le Discord →
           </a>
           <p style="color:#8fa3bf; font-size:12px; margin-top:12px;">
-            Une fois connecté, tape <code>/verify</code> dans #verification pour activer ton accès.
+            Une fois connecté, tape <code>/verify</code> dans #👋-bienvenue pour activer ton accès.
           </p>
         </div>
 
@@ -380,7 +380,7 @@ export function welcomePremiumTemplate(params: {
             Rejoindre le Discord →
           </a>
           <p style="color:#8fa3bf; font-size:12px; margin-top:12px;">
-            Tape <code>/verify</code> dans #verification pour débloquer ton accès Premium.
+            Tape <code>/verify</code> dans #👋-bienvenue pour débloquer ton accès Premium.
           </p>
         </div>
 

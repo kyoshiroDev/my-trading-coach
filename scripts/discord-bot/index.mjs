@@ -15,7 +15,7 @@ client.on('guildMemberAdd', async (member) => {
     await member.send(
       '👋 Bienvenue sur le Discord MyTradingCoach !\n\n' +
       'Pour accéder aux salons, vérifie ton compte :\n' +
-      'Tape dans **#verification** :\n' +
+      'Tape dans **#👋-bienvenue** :\n' +
       '```/verify email:ton@email.com```\n' +
       'Ton rôle sera attribué automatiquement.\n\n' +
       '➡️ Pas encore inscrit ? https://app.mytradingcoach.app/register',
