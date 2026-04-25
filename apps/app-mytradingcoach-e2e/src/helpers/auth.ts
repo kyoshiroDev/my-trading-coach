@@ -10,14 +10,30 @@ export const TEST_USER_PREMIUM = {
   password: 'TestPassword123!',
 };
 
+async function dismissWizard(page: Page): Promise<void> {
+  try {
+    const wizard = page.locator('[data-testid="onboarding-wizard"]');
+    const isVisible = await wizard.isVisible({ timeout: 3000 });
+    if (isVisible) {
+      await page.click('[data-testid="wizard-skip"]');
+      await page.waitForSelector('[data-testid="onboarding-wizard"]', {
+        state: 'hidden',
+        timeout: 5000,
+      });
+    }
+  } catch {
+    // wizard absent — continuer
+  }
+}
+
 export async function loginUser(page: Page, user = TEST_USER_FREE): Promise<void> {
   await page.goto('/login');
-  // Attendre que le formulaire Angular soit rendu (zoneless peut être async)
   await page.waitForSelector('[data-testid="login-email"]');
   await page.fill('[data-testid="login-email"]', user.email);
   await page.fill('[data-testid="login-password"]', user.password);
   await page.click('[data-testid="login-submit"]');
-  await page.waitForURL('/dashboard');
+  await page.waitForURL('**/dashboard');
+  await dismissWizard(page);
 }
 
 export async function logoutUser(page: Page): Promise<void> {
