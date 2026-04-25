@@ -128,7 +128,7 @@ export class SettingsComponent implements OnInit {
         this.passwordResetSent.set(true);
         setTimeout(() => this.passwordResetSent.set(false), 4000);
       },
-      error: () => {},
+      error: () => { /* silently ignore — user stays on page */ },
     });
   }
 
