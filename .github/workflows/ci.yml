@@ -16,6 +16,8 @@ jobs:
     name: Commitlint
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,6 +41,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
       NX_BRANCH: ${{ github.ref_name }}
 
@@ -68,6 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
     env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
       NX_BRANCH: ${{ github.ref_name }}
       DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
@@ -117,6 +121,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
       NX_BRANCH: ${{ github.ref_name }}
 
@@ -144,6 +149,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
       NX_BRANCH: ${{ github.ref_name }}
       DATABASE_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_test
@@ -210,6 +216,8 @@ jobs:
     needs: [test-angular, test-api]
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     environment: development
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
@@ -232,6 +240,7 @@ jobs:
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     environment: development
     env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       NX_NO_CLOUD: true
     steps:
       - uses: actions/checkout@v4
@@ -270,6 +279,7 @@ jobs:
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     environment: development
     env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       BASE_URL: ${{ secrets.DEV_APP_URL }}
       E2E_FREE_EMAIL: ${{ secrets.E2E_FREE_EMAIL }}
       E2E_FREE_PASSWORD: ${{ secrets.E2E_FREE_PASSWORD }}
@@ -313,6 +323,7 @@ jobs:
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     environment: development
     env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       NX_NO_CLOUD: true
     steps:
       - uses: actions/checkout@v4
