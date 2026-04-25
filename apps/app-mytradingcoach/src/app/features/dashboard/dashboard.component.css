@@ -75,7 +75,8 @@
 }
 
 .stat-value {
-  font-family: var(--font-display, 'Syne', sans-serif);
+  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-variant-numeric: tabular-nums;
   font-size: 28px;
   font-weight: 700;
   letter-spacing: -1px;
@@ -104,10 +105,11 @@
 
 .stat-bg-icon {
   position: absolute;
-  right: 16px; top: 50%;
+  right: 16px;
+  top: 50%;
   transform: translateY(-50%);
-  font-size: 40px;
-  opacity: 1;
+  font-size: 32px;
+  opacity: 0.06;
   pointer-events: none;
   user-select: none;
 }
