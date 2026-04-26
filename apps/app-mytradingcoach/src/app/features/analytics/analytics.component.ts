@@ -53,6 +53,13 @@ export class AnalyticsComponent implements OnInit {
   protected readonly mockCells = Array.from({ length: 42 }, () => Math.random() * 0.7 + 0.15);
   protected readonly mockBars = [88, 72, 65, 54, 38];
 
+  protected readonly winRateColor = computed(() => {
+    const wr = this.summary()?.winRate;
+    if (!wr || wr === 0) return 'var(--text-2)';
+    if (wr >= 50) return 'var(--green)';
+    return 'var(--red)';
+  });
+
   private readonly heatmapMap = computed<Map<string, HeatmapCell>>(() => {
     const m = new Map<string, HeatmapCell>();
     this.heatmapData().forEach((c) => m.set(`${c.day}:${c.hour}`, c));

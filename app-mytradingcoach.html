@@ -849,6 +849,7 @@
             <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center">
               <div style="font-size:10px;font-family:var(--font-mono);color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Win Rate Global</div>
               <div style="font-size:26px;font-weight:700;font-family:var(--font-mono);color:var(--green)">67.4%</div>
+              <!-- win rate = 0 → color:var(--text-2) | <50 → var(--red) | ≥50 → var(--green) -->
               <div style="font-size:10px;color:var(--text-3);margin-top:2px;font-family:var(--font-mono)">▲ +3.2% vs préc.</div>
             </div>
             <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center">
@@ -1199,6 +1200,17 @@
       <!-- ═══ SCORING ═══ -->
       <div id="view-scoring" class="view" style="display:none">
         <div class="content">
+
+          <!-- ── Paywall FREE ── -->
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 40px;gap:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:16px;margin:28px">
+            <div style="font-size:48px;margin-bottom:8px">🏆</div>
+            <h2 style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--text);margin:0">Fonctionnalité Premium</h2>
+            <p style="font-size:13px;color:var(--text-3);max-width:380px;line-height:1.7;margin:0">Le Trader Score analyse tes performances globales et te donne un score de 0 à 100 basé sur ta discipline, ta rentabilité et ta gestion du risque.</p>
+            <button style="background:var(--blue);color:white;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 0 20px rgba(59,130,246,.3)">Essayer 7 jours gratuit →</button>
+            <p style="font-size:11px;color:var(--text-3);font-family:var(--font-mono);margin:0">Sans CB · Annulation à tout moment</p>
+          </div>
+
+          <!-- ── Contenu PREMIUM (visible si isPremium) ── -->
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
             <!-- Score global -->
             <div class="card">

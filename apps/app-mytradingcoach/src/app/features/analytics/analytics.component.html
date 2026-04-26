@@ -6,8 +6,7 @@
   <div class="stats-row">
     <div class="stat-card">
       <div class="stat-label">WIN RATE GLOBAL</div>
-      <div class="stat-value" data-testid="analytics-win-rate" [class.text-green]="(summary()?.winRate ?? 0) >= 50"
-                              [class.text-red]="(summary()?.winRate ?? 0) < 50 && summary() !== null">
+      <div class="stat-value" data-testid="analytics-win-rate" [style.color]="winRateColor()">
         {{ summary() ? (summary()!.winRate).toFixed(1) + '%' : '—' }}
       </div>
       <div class="stat-sub" data-testid="analytics-trades">{{ summary()?.totalTrades ?? 0 }} trades</div>
