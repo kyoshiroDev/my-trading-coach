@@ -1,0 +1,21 @@
+services:
+  discord-bot:
+    build:
+      context: scripts/discord-bot
+      dockerfile: Dockerfile
+    container_name: ${DISCORD_BOT_CONTAINER_NAME:-mtc_discord_bot}
+    environment:
+      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
+      - DISCORD_ROLE_MEMBRE_ID=${DISCORD_ROLE_MEMBRE_ID}
+      - DISCORD_ROLE_PREMIUM_ID=${DISCORD_ROLE_PREMIUM_ID}
+      - DISCORD_BOT_SECRET=${DISCORD_BOT_SECRET}
+      - API_URL=${API_URL:-https://api.mytradingcoach.app}
+    restart: unless-stopped
+    networks:
+      - mtc_network
+    mem_limit: 128m
+    memswap_limit: 128m
+
+networks:
+  mtc_network:
+    external: true

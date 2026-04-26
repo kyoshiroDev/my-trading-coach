@@ -225,12 +225,13 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /opt/apps/mytradingcoach/dev
-            git pull origin dev
+            git fetch origin
+            git checkout origin/dev -- apps/api-mytradingcoach/ libs/ prisma/ scripts/discord-bot/ docker-compose.discord-bot.yml
             docker compose --env-file .env.dev build api
             docker compose --env-file .env.dev run --rm api sh -c "npx prisma migrate deploy"
             docker compose --env-file .env.dev up -d --force-recreate api
-            docker compose --env-file .env.dev build discord-bot
-            docker compose --env-file .env.dev up -d --force-recreate discord-bot
+            DISCORD_BOT_CONTAINER_NAME=mtc_discord_bot_dev docker compose -f docker-compose.discord-bot.yml --env-file .env.dev build discord-bot
+            DISCORD_BOT_CONTAINER_NAME=mtc_discord_bot_dev docker compose -f docker-compose.discord-bot.yml --env-file .env.dev up -d --force-recreate discord-bot
             echo "Dev deployment complete at $(date)"
 
   # ── Deploy Angular dev → Vercel ───────────────────────────────────────────

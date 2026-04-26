@@ -25,13 +25,14 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /opt/apps/mytradingcoach/prod
-            git pull origin main
+            git fetch origin
+            git checkout origin/main -- apps/api-mytradingcoach/ libs/ prisma/ scripts/discord-bot/ docker-compose.discord-bot.yml
             docker compose --env-file .env.production build api
             docker compose --env-file .env.production run --rm api sh -c "npx prisma migrate deploy"
             docker compose --env-file .env.production up -d --force-recreate api
-            docker compose --env-file .env.production build discord-bot
-            docker compose --env-file .env.production up -d --force-recreate discord-bot
-            echo "Deployment complete at $(date)"
+            docker compose -f docker-compose.discord-bot.yml --env-file .env.production build discord-bot
+            docker compose -f docker-compose.discord-bot.yml --env-file .env.production up -d --force-recreate discord-bot
+            echo "Production deployment complete at $(date)"
 
   # ── Deploy Angular → Vercel ───────────────────────────────────────────────
   deploy-angular:
