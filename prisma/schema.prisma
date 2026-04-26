@@ -24,7 +24,7 @@ model User {
   stripeCustomerId         String?   @unique
   stripeSubscriptionId     String?   @unique
   stripePriceId            String?
-  stripeInterval           String?   // 'month' | 'year'
+  stripeInterval           String? // 'month' | 'year'
   stripeCurrentPeriodEnd   DateTime?
   stripeSubscriptionStatus String? // 'active' | 'trialing' | 'past_due' | 'unpaid' | 'canceled'
 
@@ -34,9 +34,9 @@ model User {
   goal                String?
 
   // ── Préférences ─────────────────────────────────────────────────────────────
-  currency             String  @default("USD")
-  notificationsEmail   Boolean @default(true)
-  debriefAutomatic     Boolean @default(true)
+  currency           String  @default("USD")
+  notificationsEmail Boolean @default(true)
+  debriefAutomatic   Boolean @default(true)
 
   // ── Discord ──────────────────────────────────────────────────────────────────
   discordId String? @unique
@@ -138,6 +138,4 @@ enum TradingSession {
   LONDON
   NEW_YORK
   ASIAN
-  PRE_MARKET
-  OVERLAP
 }
