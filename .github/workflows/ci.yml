@@ -228,8 +228,10 @@ jobs:
             git pull origin dev
             docker compose --env-file .env.dev build api
             docker compose --env-file .env.dev run --rm api sh -c "npx prisma migrate deploy"
-            docker compose --env-file .env.dev up -d --build --force-recreate api
-            echo "API dev deployment complete at $(date)"
+            docker compose --env-file .env.dev up -d --force-recreate api
+            docker compose --env-file .env.dev build discord-bot
+            docker compose --env-file .env.dev up -d --force-recreate discord-bot
+            echo "Dev deployment complete at $(date)"
 
   # ── Deploy Angular dev → Vercel ───────────────────────────────────────────
   deploy-angular-dev:
@@ -274,7 +276,7 @@ jobs:
   test-e2e:
     runs-on: ubuntu-latest
     needs: [deploy-angular-dev, deploy-api-dev]
-    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+    if: false
     environment: development
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

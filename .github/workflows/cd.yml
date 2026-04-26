@@ -28,8 +28,10 @@ jobs:
             git pull origin main
             docker compose --env-file .env.production build api
             docker compose --env-file .env.production run --rm api sh -c "npx prisma migrate deploy"
-            docker compose --env-file .env.production up -d --build --force-recreate api
-            echo "API prod deployment complete at $(date)"
+            docker compose --env-file .env.production up -d --force-recreate api
+            docker compose --env-file .env.production build discord-bot
+            docker compose --env-file .env.production up -d --force-recreate discord-bot
+            echo "Deployment complete at $(date)"
 
   # ── Deploy Angular → Vercel ───────────────────────────────────────────────
   deploy-angular:
