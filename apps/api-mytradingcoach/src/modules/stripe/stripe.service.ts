@@ -14,6 +14,7 @@ import Stripe from 'stripe';
 import Redis from 'ioredis';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
+import { DiscordService } from '../discord/discord.service';
 import {
   StripeStatusResponse,
   CachedStripeStatus,
@@ -59,6 +60,7 @@ export class StripeService implements OnModuleDestroy {
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
     private readonly resend: ResendService,
+    private readonly discord: DiscordService,
     @InjectQueue(STRIPE_QUEUE) private readonly webhookQueue: Queue<StripeWebhookJobPayload>,
   ) {
     this.stripe = new Stripe(
@@ -292,7 +294,8 @@ export class StripeService implements OnModuleDestroy {
       case 'customer.subscription.created':
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
-        await this.syncSubscription(subscription.id);
+        const synced = await this.syncSubscription(subscription.id);
+        if (synced?.id) await this.discord.syncDiscordRole(synced.id).catch(() => undefined);
 
         // 🔴 Monitoring : alerter si status passe à past_due ou unpaid
         if (subscription.status === 'past_due' || subscription.status === 'unpaid') {
@@ -318,7 +321,7 @@ export class StripeService implements OnModuleDestroy {
         // Récupérer l'user avant de supprimer ses données
         const user = await this.prisma.user.findFirst({
           where: { stripeSubscriptionId: subscription.id },
-          select: { email: true, name: true },
+          select: { id: true, email: true, name: true },
         });
 
         await this.prisma.user.updateMany({
@@ -342,6 +345,7 @@ export class StripeService implements OnModuleDestroy {
             to: user.email,
             userName: user.name ?? '',
           });
+          await this.discord.syncDiscordRole(user.id).catch(() => undefined);
         }
 
         this.logger.log(`Abonnement résilié ${subscription.id} → plan FREE`);
@@ -405,7 +409,7 @@ export class StripeService implements OnModuleDestroy {
    */
   async syncSubscription(
     subscriptionId: string,
-  ): Promise<{ email: string; name: string | null; stripeSubscriptionStatus: string | null } | null> {
+  ): Promise<{ id: string; email: string; name: string | null; stripeSubscriptionStatus: string | null } | null> {
     let subscription: Stripe.Subscription;
 
     try {
@@ -466,7 +470,7 @@ export class StripeService implements OnModuleDestroy {
       `Sync — user: ${user.id}, plan: ${isActive ? 'PREMIUM' : 'FREE'}, status: ${status}`,
     );
 
-    return { email: user.email, name: user.name, stripeSubscriptionStatus: status };
+    return { id: user.id, email: user.email, name: user.name, stripeSubscriptionStatus: status };
   }
 
   // ── Helpers privés ────────────────────────────────────────────────────────────

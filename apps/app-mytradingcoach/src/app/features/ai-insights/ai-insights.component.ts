@@ -11,7 +11,7 @@ import {
 import { UserStore } from '../../core/stores/user.store';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { HttpClient } from '@angular/common/http';
 import { LucideAngularModule, Sparkles, AlertTriangle, Info, Lightbulb, AlertCircle, Send } from 'lucide-angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
@@ -41,7 +41,7 @@ function insightVariant(type: string): InsightVariant {
 @Component({
   selector: 'mtc-ai-insights',
   standalone: true,
-  imports: [FormsModule, RouterLink, LucideAngularModule, TopbarComponent],
+  imports: [FormsModule, LucideAngularModule, TopbarComponent, PlanModalComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './ai-insights.component.css',
   template: `
@@ -60,8 +60,11 @@ function insightVariant(type: string): InsightVariant {
           <div class="paywall-icon">✨</div>
           <h3 class="paywall-title">Fonctionnalité Premium</h3>
           <p class="paywall-desc">Les IA Insights sont disponibles avec le plan Premium.<br>Analyse tes patterns comportementaux avec le coach IA.</p>
-          <a routerLink="/settings" class="paywall-cta">Essayer 7 jours gratuit →</a>
+          <button class="paywall-cta" (click)="showPlanModal.set(true)">Essayer 7 jours gratuit →</button>
         </div>
+        @if (showPlanModal()) {
+          <mtc-plan-modal (closed)="showPlanModal.set(false)" />
+        }
       } @else {
       <div class="layout">
 
@@ -189,6 +192,7 @@ export class AiInsightsComponent implements AfterViewChecked {
   @ViewChild('chatContainer') chatContainer!: ElementRef<HTMLDivElement>;
 
   protected readonly userStore = inject(UserStore);
+  protected readonly showPlanModal = signal(false);
 
   protected readonly SparklesIcon = Sparkles;
   protected readonly AlertTriangleIcon = AlertTriangle;

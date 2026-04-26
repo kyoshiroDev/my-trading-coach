@@ -46,6 +46,13 @@ export class UsersService {
     return this.prisma.user.findUnique({ where: { email } });
   }
 
+  async updateDiscordId(userId: string, discordId: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { discordId },
+    });
+  }
+
   async findActivePremium() {
     const now = new Date();
     return this.prisma.user.findMany({

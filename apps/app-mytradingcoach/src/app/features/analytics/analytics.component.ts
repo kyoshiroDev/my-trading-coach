@@ -21,11 +21,12 @@ import {
   TopAsset,
 } from '../../core/api/analytics.api';
 import { BillingApi } from '../../core/api/billing.api';
+import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 
 @Component({
   selector: 'mtc-analytics',
   standalone: true,
-  imports: [TopbarComponent, PnlFormatPipe, SessionLabelPipe],
+  imports: [TopbarComponent, PnlFormatPipe, SessionLabelPipe, PlanModalComponent],
   templateUrl: './analytics.component.html',
   styleUrl: './analytics.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -38,6 +39,7 @@ export class AnalyticsComponent implements OnInit {
   private readonly analyticsApi = inject(AnalyticsApi);
   private readonly billingApi = inject(BillingApi);
 
+  protected readonly showPlanModal = signal(false);
   protected readonly summary = signal<AnalyticsSummary | null>(null);
   protected readonly equityCurve = signal<EquityPoint[]>([]);
   protected readonly heatmapData = signal<HeatmapCell[]>([]);

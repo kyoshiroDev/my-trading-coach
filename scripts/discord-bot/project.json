@@ -1,0 +1,15 @@
+{
+  "name": "mtc-discord-bot",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "scripts/discord-bot",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "eslint .",
+        "cwd": "scripts/discord-bot"
+      }
+    }
+  }
+}

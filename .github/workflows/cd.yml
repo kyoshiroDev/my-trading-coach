@@ -15,6 +15,7 @@ jobs:
     environment: production
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      NX_NO_CLOUD: true
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
@@ -24,11 +25,14 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /opt/apps/mytradingcoach/prod
-            git pull origin main
+            git fetch origin
+            git checkout origin/main -- apps/api-mytradingcoach/ libs/ prisma/ scripts/discord-bot/ docker-compose.discord-bot.yml
             docker compose --env-file .env.production build api
             docker compose --env-file .env.production run --rm api sh -c "npx prisma migrate deploy"
-            docker compose --env-file .env.production up -d --build --force-recreate api
-            echo "API prod deployment complete at $(date)"
+            docker compose --env-file .env.production up -d --force-recreate api
+            docker compose -f docker-compose.discord-bot.yml --env-file .env.production build discord-bot
+            docker compose -f docker-compose.discord-bot.yml --env-file .env.production up -d --force-recreate discord-bot
+            echo "Production deployment complete at $(date)"
 
   # ── Deploy Angular → Vercel ───────────────────────────────────────────────
   deploy-angular:
@@ -38,6 +42,7 @@ jobs:
     environment: production
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      NX_NO_CLOUD: true
     steps:
       - uses: actions/checkout@v4
 
@@ -60,7 +65,6 @@ jobs:
           pnpm dlx vercel --prod \
             --token=${{ secrets.VERCEL_TOKEN }} \
             --yes \
-            --cwd dist/apps/app-mytradingcoach/browser \
             --local-config ${{ github.workspace }}/apps/app-mytradingcoach/vercel.json
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -74,6 +78,7 @@ jobs:
     environment: production
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      NX_NO_CLOUD: true
     steps:
       - uses: actions/checkout@v4
 

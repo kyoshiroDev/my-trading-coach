@@ -249,7 +249,7 @@
           <p class="locked-desc">
             Visualise l'évolution de ton capital et tes périodes de drawdown pour identifier tes biais comportementaux.
           </p>
-          <button class="locked-cta" data-testid="upgrade-cta" (click)="startTrial('monthly')">Essayer 7 jours gratuit →</button>
+          <button class="locked-cta" data-testid="upgrade-cta" (click)="showPlanModal.set(true)">Essayer 7 jours gratuit →</button>
         </div>
       </div>
 
@@ -271,7 +271,7 @@
           <p class="locked-desc">
             Découvre tes meilleures heures — quand tu gagnes vraiment et quand tu perds le plus.
           </p>
-          <button class="locked-cta" data-testid="upgrade-cta" (click)="startTrial('monthly')">Essayer 7 jours gratuit →</button>
+          <button class="locked-cta" data-testid="upgrade-cta" (click)="showPlanModal.set(true)">Essayer 7 jours gratuit →</button>
         </div>
       </div>
 
@@ -295,7 +295,7 @@
           <p class="locked-desc">
             Découvre tes actifs les plus profitables et tes setups gagnants. Win rate par émotion, par session et par actif.
           </p>
-          <button class="locked-cta" data-testid="upgrade-cta" (click)="startTrial('monthly')">Essayer 7 jours gratuit →</button>
+          <button class="locked-cta" data-testid="upgrade-cta" (click)="showPlanModal.set(true)">Essayer 7 jours gratuit →</button>
         </div>
       </div>
 
@@ -304,3 +304,7 @@
   }
 
 </div>
+
+@if (showPlanModal()) {
+  <mtc-plan-modal (closed)="showPlanModal.set(false)" />
+}

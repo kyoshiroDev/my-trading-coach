@@ -46,6 +46,9 @@
 - ❌ 14 jours de trial → ✅ 7 jours
 - ❌ Filtre 30 jours sur historique FREE → ✅ historique illimité
 - ❌ `PremiumGuard` sur la route `/analytics` → ✅ guard dans le composant uniquement
+- ❌ `DATABASE_URL` pointant vers Postgres directement en prod → ✅ vers PgBouncer (`mtc_pgbouncer:6432?pgbouncer=true&connection_limit=1`)
+- ❌ Migrations Prisma via `DATABASE_URL` (PgBouncer) → ✅ via `DATABASE_DIRECT_URL` (Postgres direct)
+- ❌ Ajouter `ScheduleModule.forRoot()` inconditionnellement → ✅ conditionnel sur `IS_CRON_WORKER !== 'false'`
 
 ---
 
@@ -105,7 +108,8 @@ mytradingcoach/
 ### NestJS (`api-mytradingcoach`) — NestJS 11 (v11.1+)
 - Architecture modulaire par domaine
 - **Prisma 7** (v7.3+) — Query Compiler TypeScript pur, sans Rust
-- **PostgreSQL 17** (`postgres:17-alpine`)
+- **PostgreSQL 17** (`postgres:17-alpine`) — tuné : `shared_buffers=1920MB`, `work_mem=16MB`
+- **PgBouncer** (`mtc_pgbouncer:6432`) — pooling entre NestJS et Postgres (transaction mode, 200 clients → 25 connexions)
 - **Argon2** pour les mots de passe (pas Bcrypt)
 - **JWT** : Passport (`@nestjs/passport`, `passport-jwt`) — access_token 15min, refresh_token 7j httpOnly cookie
 - **`@nestjs/bullmq`** pour les queues (pas `@nestjs/bull`, déprécié)
@@ -114,6 +118,7 @@ mytradingcoach/
 - **Helmet** : `app.use(helmet())` dans `main.ts`
 - **Rate limiting** : `@nestjs/throttler` v6+ — max 20 req/min sur routes IA
 - **Tests : Vitest** (pas Jest) — `pnpm nx test api-mytradingcoach`
+- **Clustering** : 4 workers Node.js en production (`NODE_ENV=production`) — 1 seul worker gère les crons (`IS_CRON_WORKER=true`)
 
 ### Astro (`landing-mytradingcoach`) — Astro 5 (v5.18+) + Tailwind 4
 - `output: 'static'` — HTML pur, zéro JS client par défaut

@@ -119,6 +119,15 @@ describe('AuthService', () => {
         .rejects.toThrow(UnauthorizedException);
     });
 
+    it('lance UnauthorizedException si mot de passe incorrect', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      const argon2 = await import('argon2');
+      vi.mocked(argon2.verify).mockResolvedValueOnce(false);
+
+      await expect(service.login({ email: 'test@test.com', password: 'wrong' }))
+        .rejects.toThrow(UnauthorizedException);
+    });
+
     it('ne retourne jamais le hash du mot de passe', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
 

@@ -6,6 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
+import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { UserStore } from '../../core/stores/user.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { BillingApi } from '../../core/api/billing.api';
@@ -15,7 +16,7 @@ import type { UpdatePreferencesDto } from '../../core/api/users.api';
 @Component({
   selector: 'mtc-settings',
   standalone: true,
-  imports: [TopbarComponent, DatePipe],
+  imports: [TopbarComponent, DatePipe, PlanModalComponent],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,6 +53,7 @@ export class SettingsComponent implements OnInit {
   protected readonly prefSaved = signal(false);
 
   // Danger
+  protected readonly showPlanModal = signal(false);
   protected readonly showDeleteConfirm = signal(false);
   protected readonly deleteInput = signal('');
   protected readonly isDeleting = signal(false);

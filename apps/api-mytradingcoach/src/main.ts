@@ -1,3 +1,5 @@
+import cluster from 'node:cluster';
+import { availableParallelism } from 'node:os';
 import { ConsoleLogger, Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
@@ -54,7 +56,27 @@ async function bootstrap() {
 
   const port = process.env['PORT'] ?? 3000;
   await app.listen(port);
-  logger.log(`Application running on: http://localhost:${port}/api`);
+  logger.log(`Worker ${process.pid} running on: http://localhost:${port}/api`);
 }
 
-bootstrap();
+// Clustering uniquement en production — en dev, process unique pour le debug
+if (cluster.isPrimary && process.env['NODE_ENV'] === 'production') {
+  const numWorkers = availableParallelism();
+  logger.log(`Primary ${process.pid} starting ${numWorkers} workers...`);
+
+  function forkWorker(isCronWorker: boolean) {
+    const worker = cluster.fork({ IS_CRON_WORKER: String(isCronWorker) });
+    worker.on('exit', (code) => {
+      logger.warn(`Worker ${worker.process.pid} died (code ${code}). Restarting...`);
+      forkWorker(isCronWorker);
+    });
+  }
+
+  // 1 seul worker gère les crons pour éviter les doublons
+  forkWorker(true);
+  for (let i = 1; i < numWorkers; i++) {
+    forkWorker(false);
+  }
+} else {
+  bootstrap();
+}

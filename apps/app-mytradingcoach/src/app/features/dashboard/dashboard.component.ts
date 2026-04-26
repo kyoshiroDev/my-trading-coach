@@ -20,12 +20,12 @@ import { UserStore } from '../../core/stores/user.store';
 import { TradesStore, Trade } from '../../core/stores/trades.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { TradeFormComponent } from '../journal/trade-form.component';
+import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { CreateTradeDto } from '../../core/api/trades.api';
 import {
   EmotionColorPipe,
   EmotionEmojiPipe,
   EmotionLabelPipe,
-  PnlClassPipe,
   PnlColorPipe,
   PnlFormatPipe,
   SetupColorPipe,
@@ -49,8 +49,8 @@ interface EquityPoint { date: string; cumulativePnl: number; }
   selector: 'mtc-dashboard',
   standalone: true,
   imports: [
-    RouterLink, TitleCasePipe, UpperCasePipe, TopbarComponent, TradeFormComponent,
-    PnlColorPipe, PnlFormatPipe, PnlClassPipe,
+    RouterLink, TitleCasePipe, UpperCasePipe, TopbarComponent, TradeFormComponent, PlanModalComponent,
+    PnlColorPipe, PnlFormatPipe,
     EmotionEmojiPipe, EmotionLabelPipe, EmotionColorPipe,
     SetupColorPipe, SetupColorsMapPipe,
   ],
@@ -86,7 +86,7 @@ interface EquityPoint { date: string; cumulativePnl: number; }
               <span class="premium-banner-period">/mois</span>
               <div class="premium-banner-trial">7 jours gratuits · sans CB</div>
             </div>
-            <button class="premium-banner-btn" (click)="startTrial()">
+            <button class="premium-banner-btn" (click)="showPlanModal.set(true)">
               Essayer gratuitement
             </button>
           </div>
@@ -294,6 +294,10 @@ interface EquityPoint { date: string; cumulativePnl: number; }
         (dismissed)="showTradeForm.set(false)"
         (formSave)="saveTrade($event)"
       />
+
+      @if (showPlanModal()) {
+        <mtc-plan-modal (closed)="showPlanModal.set(false)" />
+      }
     </div>
   `,
 })
@@ -307,6 +311,7 @@ export class DashboardComponent implements AfterViewInit {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly showTradeForm = signal(false);
+  readonly showPlanModal = signal(false);
   readonly isSavingTrade = signal(false);
 
   private readonly summaryResource = httpResource<{ data: Summary }>(
@@ -361,9 +366,21 @@ export class DashboardComponent implements AfterViewInit {
 
 
   private readonly canDraw = signal(false);
+  private readonly knownTradesCount = signal(-1);
 
   constructor() {
     this.tradesStore.loadTrades({ limit: '6' });
+
+    // Recharge la summary quand un nouveau trade apparaît dans le store
+    // (cas du wizard : le trade est ajouté via addTrade sans passer par le dashboard)
+    effect(() => {
+      const count = this.tradesStore.totalTrades();
+      const known = this.knownTradesCount();
+      if (known !== -1 && count > known) {
+        this.summaryResource.reload();
+      }
+      this.knownTradesCount.set(count);
+    });
 
     effect(() => {
       if (!this.isLoading() && this.canDraw() && this.equityCurve().length > 0) {

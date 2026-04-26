@@ -41,8 +41,7 @@
               <div class="plan-desc">50 trades/mois · Journal complet · Stats de base · Historique illimité.</div>
               <div class="plan-upgrade-hint">Passe à Premium pour débloquer l'IA, les analytics avancés et le Weekly Debrief.</div>
               <div class="plan-actions">
-                <button class="btn btn-primary" (click)="startTrial('monthly')">⚡ Essayer 7 jours gratuit — 39 €/mois →</button>
-                <button class="btn btn-secondary" (click)="startTrial('yearly')">Annuel — 349 €/an (économise 119 €)</button>
+                <button class="btn btn-primary" (click)="showPlanModal.set(true)">⚡ Essayer 7 jours gratuit →</button>
               </div>
             }
           </div>
@@ -228,3 +227,7 @@
   </div>
 
 </div>
+
+@if (showPlanModal()) {
+  <mtc-plan-modal (closed)="showPlanModal.set(false)" />
+}

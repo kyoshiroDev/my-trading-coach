@@ -152,6 +152,20 @@ export function welcomeFreeTemplate(params: {
           </a>
         </div>
 
+        <div style="${CARD_STYLE}">
+          <p style="margin:0 0 8px 0;">👥 <strong>Rejoins la communauté Discord</strong></p>
+          <p style="color:#8fa3bf; margin:0 0 12px 0;">
+            Échange avec d'autres traders, pose tes questions
+            et suis ta progression avec la communauté.
+          </p>
+          <a href="https://discord.gg/zSPD9pv4eB" style="${BTN_STYLE}">
+            Rejoindre le Discord →
+          </a>
+          <p style="color:#8fa3bf; font-size:12px; margin-top:12px;">
+            Une fois connecté, tape <code>/verify</code> dans #👋-bienvenue pour activer ton accès.
+          </p>
+        </div>
+
         <p style="color:#8fa3bf; font-size:13px; margin-top:24px;">
           Tu veux aller plus loin ? Essaie le Premium 7 jours gratuits —
           analytics avancés, IA Coach et Weekly Debrief automatique.
@@ -354,6 +368,20 @@ export function welcomePremiumTemplate(params: {
           <a href="${appUrl}" style="${BTN_STYLE}">
             Accéder à mon tableau de bord →
           </a>
+        </div>
+
+        <div style="${CARD_STYLE}">
+          <p style="margin:0 0 8px 0;">👥 <strong>Accède au salon ⭐ Premium sur Discord</strong></p>
+          <p style="color:#8fa3bf; margin:0 0 12px 0;">
+            Réservé aux membres Premium — stratégies avancées,
+            support prioritaire et échanges exclusifs.
+          </p>
+          <a href="https://discord.gg/zSPD9pv4eB" style="${BTN_STYLE}">
+            Rejoindre le Discord →
+          </a>
+          <p style="color:#8fa3bf; font-size:12px; margin-top:12px;">
+            Tape <code>/verify</code> dans #👋-bienvenue pour débloquer ton accès Premium.
+          </p>
         </div>
 
         <p style="${MUTED_STYLE}">

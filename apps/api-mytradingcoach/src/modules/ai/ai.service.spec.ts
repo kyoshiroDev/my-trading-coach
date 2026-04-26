@@ -26,13 +26,17 @@ vi.mock('@anthropic-ai/sdk', () => ({
 }));
 
 // Mock ioredis — function() obligatoire (arrow function incompatible avec new)
+const mockRedisTtl = vi.hoisted(() => vi.fn().mockResolvedValue(14400));
+const mockRedisSet = vi.hoisted(() => vi.fn().mockResolvedValue('OK'));
+
 vi.mock('ioredis', () => ({
   default: vi.fn().mockImplementation(function () {
     return {
       get: mockRedisGet,
       incr: mockRedisIncr,
       expire: mockRedisExpire,
-      set: vi.fn().mockResolvedValue('OK'),
+      set: mockRedisSet,
+      ttl: mockRedisTtl,
       quit: mockRedisQuit,
     };
   }),
@@ -102,6 +106,28 @@ describe('AiService', () => {
 
       await expect(service.getInsights('user-123', Role.USER)).rejects.toThrow(HttpException);
       expect(mockOrchestrator.runInsightsFlow).not.toHaveBeenCalled();
+    });
+
+    it('cooldown 4h actif → HttpException 429', async () => {
+      // get appelé 2× : quota (null = ok), puis cooldown ('1' = fenêtre active)
+      mockRedisGet
+        .mockResolvedValueOnce(null)  // quota → 0 appels ce mois
+        .mockResolvedValueOnce('1'); // cooldown → fenêtre 4h en cours
+      mockRedisTtl.mockResolvedValueOnce(14000);
+
+      await expect(service.getInsights('user-123', Role.USER)).rejects.toMatchObject({
+        status: 429,
+      });
+    });
+
+    it('ADMIN → bypass cooldown et quota', async () => {
+      // Même si Redis retourne une valeur (cooldown actif), ADMIN passe quand même
+      mockRedisGet.mockResolvedValue('1');
+
+      const result = await service.getInsights('user-admin', Role.ADMIN);
+      expect(result).toHaveProperty('insights');
+      // Le quota n'est pas incrémenté pour ADMIN
+      expect(mockRedisIncr).not.toHaveBeenCalled();
     });
   });
 

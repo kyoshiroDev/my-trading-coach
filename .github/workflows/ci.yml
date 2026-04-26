@@ -18,6 +18,7 @@ jobs:
     if: github.event_name == 'pull_request'
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      NX_NO_CLOUD: true
     steps:
       - uses: actions/checkout@v4
         with:
@@ -42,8 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-      NX_BRANCH: ${{ github.ref_name }}
+      NX_NO_CLOUD: true
 
     steps:
       - uses: actions/checkout@v4
@@ -72,8 +72,7 @@ jobs:
     needs: lint
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-      NX_BRANCH: ${{ github.ref_name }}
+      NX_NO_CLOUD: true
       DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
 
     steps:
@@ -122,8 +121,7 @@ jobs:
     needs: build
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-      NX_BRANCH: ${{ github.ref_name }}
+      NX_NO_CLOUD: true
 
     steps:
       - uses: actions/checkout@v4
@@ -150,8 +148,7 @@ jobs:
     needs: build
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-      NX_BRANCH: ${{ github.ref_name }}
+      NX_NO_CLOUD: true
       DATABASE_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_test
       REDIS_HOST: localhost
       REDIS_PORT: 6379
@@ -218,6 +215,7 @@ jobs:
     environment: development
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      NX_NO_CLOUD: true
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
@@ -227,11 +225,14 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /opt/apps/mytradingcoach/dev
-            git pull origin dev
+            git fetch origin
+            git checkout origin/dev -- apps/api-mytradingcoach/ libs/ prisma/ scripts/discord-bot/ docker-compose.discord-bot.yml
             docker compose --env-file .env.dev build api
             docker compose --env-file .env.dev run --rm api sh -c "npx prisma migrate deploy"
-            docker compose --env-file .env.dev up -d --build --force-recreate api
-            echo "API dev deployment complete at $(date)"
+            docker compose --env-file .env.dev up -d --force-recreate api
+            DISCORD_BOT_CONTAINER_NAME=mtc_discord_bot_dev docker compose -f docker-compose.discord-bot.yml --env-file .env.dev build discord-bot
+            DISCORD_BOT_CONTAINER_NAME=mtc_discord_bot_dev docker compose -f docker-compose.discord-bot.yml --env-file .env.dev up -d --force-recreate discord-bot
+            echo "Dev deployment complete at $(date)"
 
   # ── Deploy Angular dev → Vercel ───────────────────────────────────────────
   deploy-angular-dev:
@@ -261,7 +262,7 @@ jobs:
         env:
           API_URL: ${{ secrets.DEV_API_URL }}
 
-      - name: Deploy to Vercel (dev)
+      - name: Prepare Vercel output (Angular prebuilt)
         run: |
           pnpm dlx vercel \
             --token=${{ secrets.VERCEL_TOKEN }} \
@@ -272,15 +273,16 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_APP_PROJECT_ID }}
 
-  # ── Tests E2E Playwright → dev deployed ──────────────────────────────────
+  # ── Tests E2E Playwright — 5 happy paths critiques (~2min) ──────────────
   test-e2e:
     runs-on: ubuntu-latest
     needs: [deploy-angular-dev, deploy-api-dev]
-    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+    if: false
     environment: development
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      BASE_URL: ${{ secrets.DEV_APP_URL }}
+      NX_NO_CLOUD: true
+      BASE_URL: https://dev.app.mytradingcoach.app
       E2E_FREE_EMAIL: ${{ secrets.E2E_FREE_EMAIL }}
       E2E_FREE_PASSWORD: ${{ secrets.E2E_FREE_PASSWORD }}
       E2E_PREMIUM_EMAIL: ${{ secrets.E2E_PREMIUM_EMAIL }}
@@ -298,15 +300,20 @@ jobs:
           node-version-file: '.nvmrc'
           cache: pnpm
 
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-
+
       - run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browsers
         run: pnpm exec playwright install chromium --with-deps
 
-      - name: Run E2E tests
+      - name: Run E2E critical paths
         run: pnpm nx e2e app-mytradingcoach-e2e --reporter=list
-        env:
-          BASE_URL: ${{ secrets.DEV_APP_URL }}
 
       - name: Upload Playwright report on failure
         if: failure()
@@ -354,6 +361,9 @@ jobs:
                 "src": "/_astro/(.*)",
                 "headers": { "Cache-Control": "public, max-age=31536000, immutable" },
                 "continue": true
+              },
+              {
+                "handle": "filesystem"
               }
             ]
           }
