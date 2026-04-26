@@ -15,6 +15,7 @@ jobs:
     environment: production
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      NX_NO_CLOUD: true
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
@@ -38,6 +39,7 @@ jobs:
     environment: production
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      NX_NO_CLOUD: true
     steps:
       - uses: actions/checkout@v4
 
@@ -73,6 +75,7 @@ jobs:
     environment: production
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      NX_NO_CLOUD: true
     steps:
       - uses: actions/checkout@v4
 

@@ -18,6 +18,7 @@ jobs:
     if: github.event_name == 'pull_request'
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      NX_NO_CLOUD: true
     steps:
       - uses: actions/checkout@v4
         with:
@@ -42,8 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-      NX_BRANCH: ${{ github.ref_name }}
+      NX_NO_CLOUD: true
 
     steps:
       - uses: actions/checkout@v4
@@ -72,8 +72,7 @@ jobs:
     needs: lint
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-      NX_BRANCH: ${{ github.ref_name }}
+      NX_NO_CLOUD: true
       DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
 
     steps:
@@ -122,8 +121,7 @@ jobs:
     needs: build
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-      NX_BRANCH: ${{ github.ref_name }}
+      NX_NO_CLOUD: true
 
     steps:
       - uses: actions/checkout@v4
@@ -150,8 +148,7 @@ jobs:
     needs: build
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-      NX_BRANCH: ${{ github.ref_name }}
+      NX_NO_CLOUD: true
       DATABASE_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_test
       REDIS_HOST: localhost
       REDIS_PORT: 6379
@@ -218,6 +215,7 @@ jobs:
     environment: development
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      NX_NO_CLOUD: true
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
@@ -280,6 +278,7 @@ jobs:
     environment: development
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      NX_NO_CLOUD: true
       BASE_URL: https://dev.app.mytradingcoach.app
       E2E_FREE_EMAIL: ${{ secrets.E2E_FREE_EMAIL }}
       E2E_FREE_PASSWORD: ${{ secrets.E2E_FREE_PASSWORD }}
