@@ -105,6 +105,53 @@
 .text-green { color: var(--green); }
 .mono { font-family: var(--font-mono, 'DM Mono', monospace); }
 
+/* ─── Paywall FREE ─── */
+.premium-paywall {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 80px 40px;
+  gap: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  margin: 28px;
+}
+.paywall-icon { font-size: 48px; margin-bottom: 8px; }
+.paywall-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+.paywall-desc {
+  font-size: 13px;
+  color: var(--text-3);
+  max-width: 380px;
+  line-height: 1.7;
+}
+.paywall-hint {
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+}
+.btn-primary {
+  background: var(--blue);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-body);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  transition: all 0.15s;
+}
+.btn-primary:hover { background: var(--blue-bright); transform: translateY(-1px); }
+
 /* ─── Advice ─── */
 .advice-banner {
   background: rgba(245,158,11,0.08);
