@@ -16,7 +16,7 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/api-mytradingcoach/package.json ./apps/api-mytradingcoach/
 COPY prisma ./prisma
 RUN pnpm install --frozen-lockfile
-RUN pnpm dlx prisma generate --config=./prisma/prisma.config.ts
+RUN pnpm exec prisma generate --config=./prisma/prisma.config.ts
 
 FROM node:22-alpine AS runtime
 RUN addgroup -g 1001 -S nodejs && adduser -u 1001 -S nestjs -G nodejs
