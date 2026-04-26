@@ -24,6 +24,10 @@ export class PlanModalComponent {
     this.closed.emit();
   }
 
+  protected onOverlayClick(event: MouseEvent) {
+    if (event.target === event.currentTarget) this.close();
+  }
+
   protected confirmPlan() {
     this.isLoading.set(true);
     this.billingApi.checkout(this.selectedPlan()).subscribe({

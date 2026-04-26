@@ -1,5 +1,11 @@
-<div class="plan-modal-overlay" (click)="close()" (keydown.escape)="close()" role="dialog" aria-modal="true" tabindex="-1">
-  <div class="plan-modal-card" (click)="$event.stopPropagation()">
+<div class="plan-modal-overlay"
+     role="button"
+     tabindex="0"
+     aria-label="Fermer le modal"
+     (click)="onOverlayClick($event)"
+     (keydown.enter)="close()"
+     (keydown.escape)="close()">
+  <div class="plan-modal-card" role="dialog" aria-modal="true">
 
     <!-- Header -->
     <div class="plan-modal-header">
