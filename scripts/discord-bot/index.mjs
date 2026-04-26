@@ -70,7 +70,7 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
-client.once('ready', () => {
+client.once('clientReady', () => {
   console.log(`[Bot] Connecté en tant que ${client.user?.tag}`);
 });
 
