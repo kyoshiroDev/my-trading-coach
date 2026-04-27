@@ -1,12 +1,15 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, linkedSignal, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
+import { PnlFormatPipe } from '../../shared/pipes/pnl-format.pipe';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UserStore } from '../../core/stores/user.store';
 import { DatePipe } from '@angular/common';
-import { HttpClient, httpResource } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { LucideAngularModule, CalendarDays, RefreshCw, Download } from 'lucide-angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { environment } from '../../../environments/environment';
+import { timer } from 'rxjs';
+import { switchMap, map, takeWhile } from 'rxjs/operators';
 
 interface DebriefItem { badge: string; text: string; }
 interface Objective { title: string; reason: string; }
@@ -40,7 +43,7 @@ function badgeClass(badge: string): string {
 @Component({
   selector: 'mtc-debrief',
   standalone: true,
-  imports: [DatePipe, LucideAngularModule, TopbarComponent, PlanModalComponent],
+  imports: [DatePipe, LucideAngularModule, TopbarComponent, PlanModalComponent, PnlFormatPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './debrief.component.css',
   template: `
@@ -121,7 +124,7 @@ function badgeClass(badge: string): string {
           <div class="stat-card">
             <div class="stat-label">P&amp;L</div>
             <div class="stat-value" [class.text-green]="debrief()!.stats.totalPnl >= 0" [class.text-red]="debrief()!.stats.totalPnl < 0">
-              {{ debrief()!.stats.totalPnl >= 0 ? '+' : '' }}\${{ debrief()!.stats.totalPnl.toFixed(2) }}
+              {{ debrief()!.stats.totalPnl | pnlFormat }}
             </div>
           </div>
         </div>
@@ -212,16 +215,30 @@ export class DebriefComponent {
   protected readonly RefreshCwIcon = RefreshCw;
   protected readonly DownloadIcon = Download;
 
-  private readonly debriefResource = httpResource<{ data: WeeklyDebrief | null }>(
-    () => `${environment.apiUrl}/debrief/current`
-  );
-
-  protected readonly debrief = linkedSignal<WeeklyDebrief | null>(
-    () => this.debriefResource.value()?.data ?? null
-  );
-  protected readonly isLoading = computed(() => this.debriefResource.isLoading());
+  protected readonly debrief = signal<WeeklyDebrief | null>(null);
+  protected readonly isLoading = signal(true);
   protected readonly isGenerating = signal(false);
   protected readonly error = signal<string | null>(null);
+
+  constructor() {
+    // Poll toutes les 15s tant qu'aucun débrief n'est disponible.
+    // S'arrête automatiquement dès qu'un débrief est trouvé.
+    timer(0, 15_000).pipe(
+      switchMap(() =>
+        this.http.get<{ data: WeeklyDebrief | null }>(`${environment.apiUrl}/debrief/current`).pipe(
+          map(res => res.data),
+        )
+      ),
+      takeWhile(d => d === null, true),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
+      next: data => {
+        this.debrief.set(data);
+        this.isLoading.set(false);
+      },
+      error: () => this.isLoading.set(false),
+    });
+  }
 
   protected getBadgeClass(badge: string): string { return badgeClass(badge); }
 

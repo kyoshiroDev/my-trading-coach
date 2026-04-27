@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
+import { PnlFormatPipe } from '../../shared/pipes/pnl-format.pipe';
 
 export interface EmotionDebrief {
   emotion: string;
@@ -22,7 +23,7 @@ function emotionColor(winRate: number): string {
 @Component({
   selector: 'mtc-debrief-emotions',
   standalone: true,
-  imports: [TitleCasePipe],
+  imports: [TitleCasePipe, PnlFormatPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './debrief-emotions.component.css',
   template: `
@@ -43,7 +44,7 @@ function emotionColor(winRate: number): string {
             <span class="emotion-wr" [style.color]="color(e.winRate)">{{ e.winRate.toFixed(0) }}%</span>
           </div>
           <span class="emotion-pnl" [class.pos]="e.pnl >= 0" [class.neg]="e.pnl < 0">
-            {{ e.pnl >= 0 ? '+' : '' }}\${{ e.pnl.toFixed(0) }}
+            {{ e.pnl | pnlFormat }}
           </span>
         </div>
       }

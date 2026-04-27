@@ -19,6 +19,7 @@ export interface AuthUser {
   market?: string | null;
   goal?: string | null;
   currency?: string;
+  currencyRate?: number;
   notificationsEmail?: boolean;
   debriefAutomatic?: boolean;
 }

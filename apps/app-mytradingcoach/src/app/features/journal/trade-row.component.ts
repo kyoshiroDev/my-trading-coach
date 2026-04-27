@@ -3,13 +3,14 @@ import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
 import { LucideAngularModule, Trash2, Edit2 } from 'lucide-angular';
 import { Trade } from '../../core/stores/trades.store';
 import { PnlColorPipe } from '../../shared/pipes/pnl-color.pipe';
+import { PnlFormatPipe } from '../../shared/pipes/pnl-format.pipe';
 import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
 
 /* eslint-disable @angular-eslint/component-selector */
 @Component({
   selector: '[mtc-trade-row]',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, TitleCasePipe, LucideAngularModule, PnlColorPipe, EmotionEmojiPipe],
+  imports: [DatePipe, DecimalPipe, TitleCasePipe, LucideAngularModule, PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'trade-row-host' },
   template: `
@@ -22,11 +23,7 @@ import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
     <td class="td-num">{{ trade().entry | number:'1.2-5' }}</td>
     <td class="td-num">{{ trade().exit !== null ? (trade().exit | number:'1.2-5') : '—' }}</td>
     <td class="td-num" [class]="trade().pnl | pnlColor">
-      @if (trade().pnl !== null) {
-        {{ trade().pnl! >= 0 ? '+' : '' }}\${{ trade().pnl | number:'1.2-2' }}
-      } @else {
-        <span class="neutral">—</span>
-      }
+      {{ trade().pnl | pnlFormat }}
     </td>
     <td class="td-num">
       {{ trade().riskReward !== null ? (trade().riskReward | number:'1.2-2') : '—' }}
