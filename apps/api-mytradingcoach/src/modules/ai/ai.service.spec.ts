@@ -6,6 +6,7 @@ import { AiService } from './ai.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OrchestratorAgent } from './agents/orchestrator.agent';
 import { DebriefAgent } from './agents/debrief.agent';
+import { DataAgent } from './agents/data.agent';
 
 const mockMessagesCreate = vi.hoisted(() =>
   vi.fn().mockResolvedValue({
@@ -65,6 +66,10 @@ const mockDebriefAgent = {
   generate: vi.fn().mockResolvedValue({ summary: 'Semaine correcte.' }),
 };
 
+const mockDataAgent = {
+  buildTradesSummary: vi.fn().mockReturnValue('Win Rate: 66.7% | PnL: $50.00'),
+};
+
 describe('AiService', () => {
   let service: AiService;
 
@@ -86,6 +91,7 @@ describe('AiService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: OrchestratorAgent, useValue: mockOrchestrator },
         { provide: DebriefAgent, useValue: mockDebriefAgent },
+        { provide: DataAgent, useValue: mockDataAgent },
       ],
     }).compile();
 
