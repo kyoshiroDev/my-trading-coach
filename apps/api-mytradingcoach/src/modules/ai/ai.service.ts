@@ -11,7 +11,7 @@ import Redis from 'ioredis';
 import { Role } from '@prisma/client';
 import { OrchestratorAgent } from './agents/orchestrator.agent';
 import { DebriefAgent } from './agents/debrief.agent';
-import { INSIGHTS_SYSTEM_PROMPT } from './prompts/insights.prompt';
+import { INSIGHTS_SYSTEM_PROMPT, CHAT_SYSTEM_PROMPT } from './prompts/insights.prompt';
 import { buildDebriefPrompt } from './prompts/debrief.prompt';
 import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -91,7 +91,7 @@ export class AiService implements OnModuleDestroy {
       response = await this.anthropic.messages.create({
         model: MODEL,
         max_tokens: 512,
-        system: [{ type: 'text', text: INSIGHTS_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
+        system: [{ type: 'text', text: CHAT_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
         messages,
       });
     } catch (err) {
@@ -112,14 +112,19 @@ export class AiService implements OnModuleDestroy {
 
   // ── Cooldown / Daily limits ───────────────────────────────────────────────
 
+  async getInsightsCooldown(userId: string): Promise<{ cooldownSeconds: number }> {
+    const key = `ai:cooldown:insights:${userId}`;
+    const ttl = await this.redis.ttl(key);
+    return { cooldownSeconds: Math.max(0, ttl) };
+  }
+
   async checkInsightsCooldown(userId: string): Promise<void> {
     const key = `ai:cooldown:insights:${userId}`;
     const exists = await this.redis.get(key);
     if (exists) {
       const ttl = await this.redis.ttl(key);
-      const minutes = Math.ceil(ttl / 60);
       throw new HttpException(
-        `Analyse déjà effectuée. Réessaie dans ${minutes} minute(s).`,
+        { message: `Analyse déjà effectuée. Réessaie dans ${Math.ceil(ttl / 60)} minute(s).`, cooldownSeconds: ttl },
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }
