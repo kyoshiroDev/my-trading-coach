@@ -103,7 +103,7 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   transition: border-color 0.2s;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .insight-item:hover { border-color: var(--border-hover); }
