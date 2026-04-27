@@ -78,7 +78,7 @@
         <!-- Toggle SL/TP — visible uniquement si exit a été touché puis laissé vide -->
         @if (exitTouched() && !form.exit) {
           <div class="form-group">
-            <label>Sorti sur</label>
+            <span class="field-label">Sorti sur</span>
             <div class="side-toggle">
               <button type="button" class="side-btn"
                 [class.active-tp]="exitMode() === 'TP'" (click)="setExitMode('TP')">TP</button>
