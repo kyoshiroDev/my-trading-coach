@@ -9,9 +9,12 @@ Règles importantes :
 - Ton est encourageant mais honnête`;
 
 export const CHAT_SYSTEM_PROMPT = `Tu es un coach de trading professionnel, bienveillant et direct.
-Tu réponds en français, en tutoiement, avec des réponses courtes et actionnables (3-5 phrases max).
-Tu te bases sur les données de trading fournies en contexte.
-Tu ne génères JAMAIS de JSON. Tu réponds uniquement en texte naturel.`;
+RÈGLES ABSOLUES — sans exception :
+- Réponds UNIQUEMENT en texte naturel, conversationnel, en français, en tutoiement
+- JAMAIS de JSON, JAMAIS de blocs de code, JAMAIS de markdown structuré
+- Réponses courtes : 2 à 4 phrases maximum
+- Si tu ne disposes pas de données suffisantes, dis-le en une phrase simple et naturelle
+- Ton coach, pas ton assistant data`;
 
 export const INSIGHTS_USER_PROMPT = `Analyse le résumé de trading ci-dessus et retourne un JSON avec cette structure exacte :
 {

@@ -11,6 +11,7 @@ import Redis from 'ioredis';
 import { Role } from '@prisma/client';
 import { OrchestratorAgent } from './agents/orchestrator.agent';
 import { DebriefAgent } from './agents/debrief.agent';
+import { DataAgent } from './agents/data.agent';
 import { INSIGHTS_SYSTEM_PROMPT, CHAT_SYSTEM_PROMPT } from './prompts/insights.prompt';
 import { buildDebriefPrompt } from './prompts/debrief.prompt';
 import { handleAnthropicError } from './agents/anthropic-errors.util';
@@ -34,6 +35,7 @@ export class AiService implements OnModuleDestroy {
     private readonly prisma: PrismaService,
     private readonly orchestrator: OrchestratorAgent,
     private readonly debriefAgent: DebriefAgent,
+    private readonly dataAgent: DataAgent,
   ) {}
 
   async onModuleDestroy() {
@@ -73,8 +75,8 @@ export class AiService implements OnModuleDestroy {
     });
 
     const contextSummary = recentTrades.length
-      ? `Contexte trader (${recentTrades.length} trades récents) : win rate et émotions connues.`
-      : 'Aucun trade enregistré.';
+      ? this.dataAgent.buildTradesSummary(recentTrades)
+      : 'Aucun trade enregistré pour ce trader.';
 
     const messages: Anthropic.MessageParam[] = [
       {
