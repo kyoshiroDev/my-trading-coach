@@ -21,8 +21,16 @@ export class DebriefService {
   async getCurrent(userId: string) {
     const now = new Date();
     const { weekNumber, year } = this.getWeekInfo(now);
-    return this.prisma.weeklyDebrief.findUnique({
+
+    const current = await this.prisma.weeklyDebrief.findUnique({
       where: { userId_weekNumber_year: { userId, weekNumber, year } },
+    });
+    if (current) return current;
+
+    // Pas encore de débrief cette semaine → retourner le plus récent
+    return this.prisma.weeklyDebrief.findFirst({
+      where: { userId },
+      orderBy: [{ year: 'desc' }, { weekNumber: 'desc' }],
     });
   }
 

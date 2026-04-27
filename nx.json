@@ -50,6 +50,7 @@
   ],
   "packageManager": "pnpm",
   "analytics": false,
+  "useDaemonProcess": false,
   "targetDefaults": {
     "@angular/build:application": {
       "cache": true,

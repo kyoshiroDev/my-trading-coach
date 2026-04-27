@@ -103,7 +103,7 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   transition: border-color 0.2s;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .insight-item:hover { border-color: var(--border-hover); }
@@ -129,7 +129,6 @@
   font-family: var(--font-mono, 'DM Mono', monospace);
   padding: 2px 8px;
   border-radius: 4px;
-  align-self: flex-start;
   white-space: nowrap;
 }
 
@@ -166,6 +165,13 @@
   border-bottom: 1px solid var(--border);
 }
 
+.chat-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
 .chat-title {
   font-family: var(--font-display, 'Syne', sans-serif);
   font-size: 14px;
@@ -174,7 +180,31 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 2px;
+}
+
+.quota-badge {
+  font-size: 11px;
+  font-family: var(--font-mono, 'DM Mono', monospace);
+  color: var(--blue-bright);
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 4px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.quota-exhausted {
+  color: var(--text-3);
+  background: rgba(74, 96, 128, 0.08);
+  border-color: rgba(74, 96, 128, 0.2);
+}
+
+.quota-admin {
+  color: var(--yellow);
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.25);
+  font-size: 14px;
+  padding: 1px 8px;
 }
 
 .chat-sub { font-size: 11px; color: var(--text-3); }

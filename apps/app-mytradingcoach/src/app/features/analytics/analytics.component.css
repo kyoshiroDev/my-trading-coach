@@ -241,6 +241,7 @@
 .text-red    { color: var(--red); }
 .text-yellow { color: var(--yellow); }
 .text-blue   { color: var(--blue-bright); }
+.text-muted  { color: var(--text-3); }
 .text-3      { color: var(--text-3); }
 
 /* ── Locked blocks container ── */

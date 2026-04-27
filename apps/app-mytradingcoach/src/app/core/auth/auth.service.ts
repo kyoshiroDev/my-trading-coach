@@ -1,7 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { tap } from 'rxjs/operators';
+import { EMPTY, fromEvent, interval } from 'rxjs';
+import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 export type UserRole = 'ADMIN' | 'USER' | 'BETA_TESTER';
@@ -39,6 +40,23 @@ export class AuthService {
 
   constructor() {
     this.loadFromStorage();
+    this.startUserSync();
+  }
+
+  private startUserSync(): void {
+    const refresh$ = this.fetchMe().pipe(catchError(() => EMPTY));
+
+    // Toutes les 30s quand connecté
+    interval(30_000).pipe(
+      filter(() => this.isAuthenticated()),
+      switchMap(() => refresh$),
+    ).subscribe();
+
+    // Immédiatement quand l'onglet redevient visible
+    fromEvent(document, 'visibilitychange').pipe(
+      filter(() => !document.hidden && this.isAuthenticated()),
+      switchMap(() => refresh$),
+    ).subscribe();
   }
 
   register(email: string, password: string, name?: string) {

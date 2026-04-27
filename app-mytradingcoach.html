@@ -849,6 +849,7 @@
             <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center">
               <div style="font-size:10px;font-family:var(--font-mono);color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Win Rate Global</div>
               <div style="font-size:26px;font-weight:700;font-family:var(--font-mono);color:var(--green)">67.4%</div>
+              <!-- win rate = 0 → color:var(--text-2) | <50 → var(--red) | ≥50 → var(--green) -->
               <div style="font-size:10px;color:var(--text-3);margin-top:2px;font-family:var(--font-mono)">▲ +3.2% vs préc.</div>
             </div>
             <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center">
@@ -1046,9 +1047,15 @@
             <!-- Panel Coach IA droite -->
             <div class="chat-panel">
               <div class="chat-header">
-                <div class="chat-title">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--blue-bright)" stroke-width="2"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>
-                  Coach IA
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+                  <div class="chat-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--blue-bright)" stroke-width="2"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>
+                    Coach IA
+                  </div>
+                  <!-- quota normal -->
+                  <span style="font-size:11px;font-family:var(--font-mono);color:var(--blue-bright);background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);border-radius:4px;padding:2px 8px">47/50</span>
+                  <!-- quota épuisé (exemple) -->
+                  <!-- <span style="font-size:11px;font-family:var(--font-mono);color:var(--text-3);background:rgba(74,96,128,.08);border:1px solid rgba(74,96,128,.2);border-radius:4px;padding:2px 8px">Disponible dans 06:23:41</span> -->
                 </div>
                 <span class="chat-sub">Pose tes questions sur ton trading</span>
               </div>
@@ -1199,6 +1206,17 @@
       <!-- ═══ SCORING ═══ -->
       <div id="view-scoring" class="view" style="display:none">
         <div class="content">
+
+          <!-- ── Paywall FREE ── -->
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 40px;gap:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:16px;margin:28px">
+            <div style="font-size:48px;margin-bottom:8px">🏆</div>
+            <h2 style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--text);margin:0">Fonctionnalité Premium</h2>
+            <p style="font-size:13px;color:var(--text-3);max-width:380px;line-height:1.7;margin:0">Le Trader Score analyse tes performances globales et te donne un score de 0 à 100 basé sur ta discipline, ta rentabilité et ta gestion du risque.</p>
+            <button style="background:var(--blue);color:white;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 0 20px rgba(59,130,246,.3)">Essayer 7 jours gratuit →</button>
+            <p style="font-size:11px;color:var(--text-3);font-family:var(--font-mono);margin:0">Sans CB · Annulation à tout moment</p>
+          </div>
+
+          <!-- ── Contenu PREMIUM (visible si isPremium) ── -->
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
             <!-- Score global -->
             <div class="card">

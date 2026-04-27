@@ -5,17 +5,21 @@ import {
   DestroyRef,
   ElementRef,
   ViewChild,
+  computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
 import { UserStore } from '../../core/stores/user.store';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { HttpClient } from '@angular/common/http';
 import { LucideAngularModule, Sparkles, AlertTriangle, Info, Lightbulb, AlertCircle, Send } from 'lucide-angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { environment } from '../../../environments/environment';
+import { interval } from 'rxjs';
+import { map, startWith } from 'rxjs/operators';
 
 interface Insight {
   type: 'strength' | 'weakness' | 'pattern';
@@ -48,8 +52,9 @@ function insightVariant(type: string): InsightVariant {
     <mtc-topbar
       title="IA Insights"
       [showAddButton]="userStore.isPremium()"
-      [addLabel]="insightsLoading() ? 'Analyse en cours...' : 'Analyser maintenant'"
+      [addLabel]="insightsLoading() ? 'Analyse en cours...' : (!userStore.isAdmin() && cooldownLabel() ? 'Disponible dans ' + cooldownLabel() : 'Analyser maintenant')"
       [addLoading]="insightsLoading()"
+      [addDisabled]="!userStore.isAdmin() && !!cooldownLabel() && !insightsLoading()"
       addTestId="analyze-btn"
       (addClick)="loadInsights()"
     />
@@ -137,9 +142,18 @@ function insightVariant(type: string): InsightVariant {
         <!-- Right: chat -->
         <div class="chat-panel">
           <div class="chat-header">
-            <div class="chat-title">
-              <lucide-icon [img]="SparklesIcon" [size]="14" color="var(--blue-bright)" />
-              Coach IA
+            <div class="chat-title-row">
+              <div class="chat-title">
+                <lucide-icon [img]="SparklesIcon" [size]="14" color="var(--blue-bright)" />
+                Coach IA
+              </div>
+              @if (userStore.isAdmin()) {
+                <span class="quota-badge quota-admin">∞</span>
+              } @else if (quotaExhausted()) {
+                <span class="quota-badge quota-exhausted">Disponible dans {{ chatQuotaCountdown() }}</span>
+              } @else {
+                <span class="quota-badge">{{ chatQuota() }}/{{ QUOTA_MAX }}</span>
+              }
             </div>
             <span class="chat-sub">Pose tes questions sur ton trading</span>
           </div>
@@ -175,10 +189,10 @@ function insightVariant(type: string): InsightVariant {
               [(ngModel)]="chatInput"
               placeholder="Pose ta question..."
               (keydown.enter)="sendMessage()"
-              [disabled]="chatLoading()"
+              [disabled]="chatLoading() || (!userStore.isAdmin() && quotaExhausted())"
               class="chat-input"
             />
-            <button class="btn-send" data-testid="chat-send" (click)="sendMessage()" [disabled]="chatLoading() || !chatInput.trim()">
+            <button class="btn-send" data-testid="chat-send" (click)="sendMessage()" [disabled]="chatLoading() || !chatInput.trim() || (!userStore.isAdmin() && quotaExhausted())">
               <lucide-icon [img]="SendIcon" [size]="14" />
             </button>
           </div>
@@ -218,19 +232,109 @@ export class AiInsightsComponent implements AfterViewChecked {
   protected readonly chatLoading = signal(false);
   protected chatInput = '';
 
+  protected readonly QUOTA_MAX = 50;
+  protected readonly chatQuota = signal(this.QUOTA_MAX);
+  protected readonly quotaExhausted = computed(() => this.chatQuota() <= 0);
+  private readonly chatQuotaResetAt = signal(0);
+
+  // Timestamp (ms) à partir duquel le cooldown est écoulé
+  private readonly cooldownUntil = signal(0);
+
+  // Horloge à la seconde
+  private readonly now = toSignal(
+    interval(1000).pipe(startWith(0), map(() => Date.now())),
+    { initialValue: Date.now() },
+  );
+
+  // "3h 42min" ou "12min" ou null si disponible
+  protected readonly cooldownLabel = computed(() => {
+    const remaining = this.cooldownUntil() - this.now();
+    if (remaining <= 0) return null;
+    const h = Math.floor(remaining / 3_600_000);
+    const m = Math.ceil((remaining % 3_600_000) / 60_000);
+    return h > 0 ? `${h}h ${m}min` : `${m}min`;
+  });
+
+  // HH:MM:SS jusqu'au reset minuit du quota chat
+  protected readonly chatQuotaCountdown = computed(() => {
+    const remaining = this.chatQuotaResetAt() - this.now();
+    if (remaining <= 0) return '00:00:00';
+    const h = Math.floor(remaining / 3_600_000);
+    const m = Math.floor((remaining % 3_600_000) / 60_000);
+    const s = Math.floor((remaining % 60_000) / 1_000);
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  });
+
   private shouldScrollToBottom = false;
+
+  constructor() {
+    // Initialiser le quota chat depuis localStorage
+    this.chatQuota.set(this.loadChatQuota());
+    this.chatQuotaResetAt.set(this.getNextMidnight());
+
+    // Reset automatique à minuit
+    effect(() => {
+      if (this.now() >= this.chatQuotaResetAt()) {
+        const fresh = this.QUOTA_MAX;
+        this.chatQuota.set(fresh);
+        this.saveChatQuota(fresh);
+        this.chatQuotaResetAt.set(this.getNextMidnight());
+      }
+    });
+
+    // Vérifier le cooldown au chargement de la page
+    this.http.get<{ data: { cooldownSeconds: number } }>(`${environment.apiUrl}/ai/cooldown`)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          const secs = res.data?.cooldownSeconds ?? 0;
+          if (secs > 0) this.cooldownUntil.set(Date.now() + secs * 1000);
+        },
+      });
+  }
+
+  private getQuotaKey(): string {
+    return `mtc_chat_quota_${new Date().toISOString().slice(0, 10)}`;
+  }
+
+  private loadChatQuota(): number {
+    try {
+      const stored = localStorage.getItem(this.getQuotaKey());
+      return stored !== null ? Math.max(0, parseInt(stored, 10)) : this.QUOTA_MAX;
+    } catch { return this.QUOTA_MAX; }
+  }
+
+  private saveChatQuota(value: number): void {
+    try { localStorage.setItem(this.getQuotaKey(), String(value)); } catch { /* ignore */ }
+  }
+
+  private getNextMidnight(): number {
+    const d = new Date();
+    d.setHours(24, 0, 0, 0);
+    return d.getTime();
+  }
 
   protected getVariant(type: string): InsightVariant { return insightVariant(type); }
 
   loadInsights() {
-    if (this.insightsLoading()) return;
+    if (this.insightsLoading() || (!this.userStore.isAdmin() && this.cooldownLabel())) return;
     this.insightsLoading.set(true);
     this.insightsError.set(null);
     this.http.post<{ data: InsightsResponse }>(`${environment.apiUrl}/ai/insights`, {})
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-      next: (res) => { this.insights.set(res.data); this.insightsLoading.set(false); },
+      next: (res) => {
+        this.insights.set(res.data);
+        this.insightsLoading.set(false);
+        // Cooldown 4h démarre maintenant
+        this.cooldownUntil.set(Date.now() + 4 * 3_600_000);
+      },
       error: (err) => {
+        // Si 429, extraire le TTL renvoyé par le backend
+        if (err.status === 429) {
+          const secs = err.error?.cooldownSeconds;
+          if (secs) this.cooldownUntil.set(Date.now() + secs * 1000);
+        }
         this.insightsError.set(err.error?.message ?? 'Erreur lors de l\'analyse IA');
         this.insightsLoading.set(false);
       },
@@ -241,12 +345,19 @@ export class AiInsightsComponent implements AfterViewChecked {
 
   sendMessage() {
     const msg = this.chatInput.trim();
-    if (!msg || this.chatLoading()) return;
+    if (!msg || this.chatLoading() || (!this.userStore.isAdmin() && this.quotaExhausted())) return;
     this.chatInput = '';
     const history = this.chatHistory();
     this.chatHistory.update((h) => [...h, { role: 'user', content: msg }]);
     this.chatLoading.set(true);
     this.shouldScrollToBottom = true;
+
+    // Décrémenter le quota (pas pour les admins)
+    if (!this.userStore.isAdmin()) {
+      const newQuota = Math.max(0, this.chatQuota() - 1);
+      this.chatQuota.set(newQuota);
+      this.saveChatQuota(newQuota);
+    }
 
     this.http.post<{ data: { response: string } }>(`${environment.apiUrl}/ai/chat`, {
       message: msg,
@@ -258,6 +369,16 @@ export class AiInsightsComponent implements AfterViewChecked {
         this.shouldScrollToBottom = true;
       },
       error: (err) => {
+        if (err.status === 429) {
+          // Serveur confirme quota épuisé
+          this.chatQuota.set(0);
+          this.saveChatQuota(0);
+        } else {
+          // Autre erreur : restaurer le message consommé
+          const restored = Math.min(this.QUOTA_MAX, this.chatQuota() + 1);
+          this.chatQuota.set(restored);
+          this.saveChatQuota(restored);
+        }
         this.chatHistory.update((h) => [...h, { role: 'assistant', content: err.error?.message ?? 'Erreur IA.' }]);
         this.chatLoading.set(false);
         this.shouldScrollToBottom = true;

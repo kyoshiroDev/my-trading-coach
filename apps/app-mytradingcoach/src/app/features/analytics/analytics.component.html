@@ -6,8 +6,7 @@
   <div class="stats-row">
     <div class="stat-card">
       <div class="stat-label">WIN RATE GLOBAL</div>
-      <div class="stat-value" data-testid="analytics-win-rate" [class.text-green]="(summary()?.winRate ?? 0) >= 50"
-                              [class.text-red]="(summary()?.winRate ?? 0) < 50 && summary() !== null">
+      <div class="stat-value" data-testid="analytics-win-rate" [style.color]="winRateColor()">
         {{ summary() ? (summary()!.winRate).toFixed(1) + '%' : '—' }}
       </div>
       <div class="stat-sub" data-testid="analytics-trades">{{ summary()?.totalTrades ?? 0 }} trades</div>
@@ -150,15 +149,10 @@
                 <td class="mono text-3">#{{ i + 1 }}</td>
                 <td class="td-asset">{{ asset.asset }}</td>
                 <td class="mono">{{ asset.count }}</td>
-                <td class="mono"
-                    [class.text-green]="asset.winRate >= 60"
-                    [class.text-yellow]="asset.winRate >= 45 && asset.winRate < 60"
-                    [class.text-red]="asset.winRate < 45">
+                <td class="mono" [style.color]="rateColor(asset.winRate)">
                   {{ asset.winRate.toFixed(0) }}%
                 </td>
-                <td class="mono"
-                    [class.text-green]="asset.pnl > 0"
-                    [class.text-red]="asset.pnl < 0">
+                <td class="mono" [style.color]="pnlColor(asset.pnl)">
                   {{ asset.pnl | pnlFormat }}
                 </td>
               </tr>
@@ -188,10 +182,7 @@
               <tr>
                 <td class="td-asset">{{ setup.setup }}</td>
                 <td class="mono">{{ setup.count }}</td>
-                <td class="mono"
-                    [class.text-green]="setup.winRate >= 60"
-                    [class.text-yellow]="setup.winRate >= 45 && setup.winRate < 60"
-                    [class.text-red]="setup.winRate < 45">
+                <td class="mono" [style.color]="rateColor(setup.winRate)">
                   {{ setup.winRate.toFixed(0) }}%
                 </td>
                 <td class="mono"

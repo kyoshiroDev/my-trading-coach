@@ -76,6 +76,21 @@ export class AuthService {
     return { ...tokens, user: { id: user.id, email: user.email, name: user.name, plan: user.plan, role: user.role, onboardingCompleted: user.onboardingCompleted } };
   }
 
+  async getMe(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true, email: true, name: true, plan: true, role: true,
+        trialEndsAt: true, onboardingCompleted: true,
+        market: true, goal: true, currency: true,
+        notificationsEmail: true, debriefAutomatic: true,
+        stripeCurrentPeriodEnd: true,
+      },
+    });
+    if (!user) throw new UnauthorizedException('Utilisateur introuvable');
+    return user;
+  }
+
   async startTrial(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new UnauthorizedException('Utilisateur introuvable');

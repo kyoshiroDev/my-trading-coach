@@ -53,6 +53,13 @@ export class AnalyticsComponent implements OnInit {
   protected readonly mockCells = Array.from({ length: 42 }, () => Math.random() * 0.7 + 0.15);
   protected readonly mockBars = [88, 72, 65, 54, 38];
 
+  protected readonly winRateColor = computed(() => {
+    const wr = this.summary()?.winRate;
+    if (!wr || wr === 0) return 'var(--text-2)';
+    if (wr >= 50) return 'var(--green)';
+    return 'var(--red)';
+  });
+
   private readonly heatmapMap = computed<Map<string, HeatmapCell>>(() => {
     const m = new Map<string, HeatmapCell>();
     this.heatmapData().forEach((c) => m.set(`${c.day}:${c.hour}`, c));
@@ -107,6 +114,18 @@ export class AnalyticsComponent implements OnInit {
     if (winRate >= 66) return 'heatmap-cell cell-green';
     if (winRate >= 50) return 'heatmap-cell cell-orange';
     return 'heatmap-cell cell-red';
+  }
+
+  protected rateColor(rate: number): string {
+    if (rate > 65) return 'var(--green)';
+    if (rate >= 50) return 'var(--yellow)';
+    return 'var(--red)';
+  }
+
+  protected pnlColor(pnl: number): string {
+    if (pnl > 0) return 'var(--green)';
+    if (pnl < 0) return 'var(--red)';
+    return 'var(--text-2)';
   }
 
   protected startTrial(plan: 'monthly' | 'yearly' = 'monthly'): void {

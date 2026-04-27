@@ -85,8 +85,8 @@ export class AuthController {
   }
 
   @Get('me')
-  getMe(@CurrentUser() user: { id: string; email: string; name: string | null; plan: string; role: string; trialEndsAt: Date | null; trialUsed: boolean }) {
-    return user;
+  getMe(@CurrentUser() user: { id: string }) {
+    return this.authService.getMe(user.id);
   }
 
   @Post('start-trial')
