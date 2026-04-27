@@ -53,6 +53,7 @@ export class TradeFormComponent {
 
   constructor() {
     effect(() => {
+      this.open(); // dépendance : reset à chaque ouverture/fermeture
       const t = this.editTrade();
       if (t) {
         this.form = {
