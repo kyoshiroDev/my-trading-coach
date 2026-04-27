@@ -129,7 +129,6 @@
   font-family: var(--font-mono, 'DM Mono', monospace);
   padding: 2px 8px;
   border-radius: 4px;
-  align-self: flex-start;
   white-space: nowrap;
 }
 
