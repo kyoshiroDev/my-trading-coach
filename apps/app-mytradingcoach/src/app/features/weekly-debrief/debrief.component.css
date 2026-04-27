@@ -221,7 +221,7 @@
 /* ─── Item rows ─── */
 .item-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
   padding: 11px 0;
   border-bottom: 1px solid rgba(99,155,255,0.06);
@@ -236,7 +236,6 @@
   border-radius: 4px;
   white-space: nowrap;
   flex-shrink: 0;
-  margin-top: 1px;
 }
 
 .debrief-badge.red { background: var(--red-dim); color: var(--red); }
@@ -258,7 +257,7 @@
 /* ─── Objectives ─── */
 .obj-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   padding: 11px 0;
   border-bottom: 1px solid rgba(99,155,255,0.06);
