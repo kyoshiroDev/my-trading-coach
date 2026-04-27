@@ -74,8 +74,19 @@ describe('DebriefService', () => {
       expect(mockPrisma.weeklyDebrief.findUnique).toHaveBeenCalledOnce();
     });
 
-    it('retourne null si aucun débrief pour la semaine courante', async () => {
+    it('retourne le débrief le plus récent en fallback si aucun pour la semaine courante', async () => {
       mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(null);
+      mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(mockDebrief);
+
+      const result = await service.getCurrent('user-123');
+
+      expect(result).toEqual(mockDebrief);
+      expect(mockPrisma.weeklyDebrief.findFirst).toHaveBeenCalledOnce();
+    });
+
+    it('retourne null si aucun débrief disponible', async () => {
+      mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(null);
+      mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
 
       const result = await service.getCurrent('user-123');
 
