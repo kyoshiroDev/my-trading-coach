@@ -35,6 +35,7 @@ model User {
 
   // ── Préférences ─────────────────────────────────────────────────────────────
   currency           String  @default("USD")
+  currencyRate       Float   @default(1)
   notificationsEmail Boolean @default(true)
   debriefAutomatic   Boolean @default(true)
 

@@ -17,6 +17,7 @@ const USER_SELECT = {
   market: true,
   goal: true,
   currency: true,
+  currencyRate: true,
   notificationsEmail: true,
   debriefAutomatic: true,
   createdAt: true,
@@ -174,7 +175,27 @@ export class UsersService {
   }
 
   async updatePreferences(userId: string, dto: UpdatePreferencesDto) {
-    return this.prisma.user.update({ where: { id: userId }, data: dto, select: USER_SELECT });
+    let currencyRate: number | undefined;
+    if (dto.currency === 'EUR') {
+      currencyRate = await this.fetchEurUsdRate();
+    } else if (dto.currency === 'USD') {
+      currencyRate = 1;
+    }
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { ...dto, ...(currencyRate !== undefined ? { currencyRate } : {}) },
+      select: USER_SELECT,
+    });
+  }
+
+  private async fetchEurUsdRate(): Promise<number> {
+    try {
+      const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+      const data = await res.json() as { rates: Record<string, number> };
+      return data.rates['EUR'] ?? 0.92;
+    } catch {
+      return 0.92; // fallback si API indisponible
+    }
   }
 
   async deleteMe(userId: string): Promise<void> {
