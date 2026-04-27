@@ -47,6 +47,7 @@ export class TradeFormComponent {
   protected readonly autoRR = signal<number | undefined>(undefined);
   protected readonly zodErrors = signal<Record<string, string>>({});
   protected readonly exitMode = signal<'SL' | 'TP' | null>(null);
+  protected readonly exitTouched = signal(false);
 
   protected form: Partial<CreateTradeDto> = this.emptyForm();
 
@@ -79,6 +80,7 @@ export class TradeFormComponent {
         this.autoRR.set(undefined);
       }
       this.exitMode.set(null);
+      this.exitTouched.set(false);
       this.submitted.set(false);
       this.zodErrors.set({});
     });
@@ -93,6 +95,16 @@ export class TradeFormComponent {
   protected setSide(side: 'LONG' | 'SHORT'): void {
     this.form.side = side;
     this.recalculate();
+  }
+
+  protected onExitBlur(): void {
+    if (!this.form.exit) {
+      this.exitTouched.set(true);
+      if (this.exitMode() === null) {
+        this.exitMode.set('TP');
+        this.recalculate();
+      }
+    }
   }
 
   protected setExitMode(mode: 'SL' | 'TP'): void {

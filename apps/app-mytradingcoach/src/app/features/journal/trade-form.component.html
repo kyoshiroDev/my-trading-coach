@@ -54,6 +54,7 @@
             <label for="tf-exit">Exit <span class="optional">(optionnel)</span></label>
             <input id="tf-exit" type="text"
               [value]="form.exit ?? ''" (input)="filterNumeric($event, 'exit')"
+              (blur)="onExitBlur()"
               name="exit" placeholder="0.00" />
           </div>
         </div>
@@ -74,8 +75,8 @@
           </div>
         </div>
 
-        <!-- Toggle SL/TP — visible uniquement quand exit est vide -->
-        @if (!form.exit) {
+        <!-- Toggle SL/TP — visible uniquement si exit a été touché puis laissé vide -->
+        @if (exitTouched() && !form.exit) {
           <div class="form-group">
             <label>Sorti sur</label>
             <div class="side-toggle">
