@@ -90,9 +90,14 @@ describe('UsersService', () => {
 
   describe('updatePreferences', () => {
     it('met à jour currency et notificationsEmail', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        json: vi.fn().mockResolvedValue({ rates: { EUR: 0.92 } }),
+      }));
+
       mockPrisma.user.update.mockResolvedValue({
         ...mockUser,
         currency: 'EUR',
+        currencyRate: 0.92,
         notificationsEmail: false,
       });
 
@@ -104,11 +109,17 @@ describe('UsersService', () => {
       expect(mockPrisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: 'user-1' },
-          data: { currency: 'EUR', notificationsEmail: false },
+          data: expect.objectContaining({
+            currency: 'EUR',
+            notificationsEmail: false,
+            currencyRate: expect.any(Number),
+          }),
         }),
       );
       expect(result.currency).toBe('EUR');
       expect(result.notificationsEmail).toBe(false);
+
+      vi.unstubAllGlobals();
     });
 
     it('met à jour debriefAutomatic seul', async () => {
