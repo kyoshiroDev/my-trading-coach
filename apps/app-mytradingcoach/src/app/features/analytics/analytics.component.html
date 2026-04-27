@@ -150,9 +150,9 @@
                 <td class="td-asset">{{ asset.asset }}</td>
                 <td class="mono">{{ asset.count }}</td>
                 <td class="mono"
-                    [class.text-green]="asset.winRate >= 60"
-                    [class.text-yellow]="asset.winRate >= 45 && asset.winRate < 60"
-                    [class.text-red]="asset.winRate < 45">
+                    [class.text-green]="asset.winRate > 65"
+                    [class.text-yellow]="asset.winRate >= 50 && asset.winRate <= 65"
+                    [class.text-red]="asset.winRate < 50">
                   {{ asset.winRate.toFixed(0) }}%
                 </td>
                 <td class="mono"
@@ -188,9 +188,9 @@
                 <td class="td-asset">{{ setup.setup }}</td>
                 <td class="mono">{{ setup.count }}</td>
                 <td class="mono"
-                    [class.text-green]="setup.winRate >= 60"
-                    [class.text-yellow]="setup.winRate >= 45 && setup.winRate < 60"
-                    [class.text-red]="setup.winRate < 45">
+                    [class.text-green]="setup.winRate > 65"
+                    [class.text-yellow]="setup.winRate >= 50 && setup.winRate <= 65"
+                    [class.text-red]="setup.winRate < 50">
                   {{ setup.winRate.toFixed(0) }}%
                 </td>
                 <td class="mono"
