@@ -200,6 +200,14 @@
   border-color: rgba(74, 96, 128, 0.2);
 }
 
+.quota-admin {
+  color: var(--yellow);
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.25);
+  font-size: 14px;
+  padding: 1px 8px;
+}
+
 .chat-sub { font-size: 11px; color: var(--text-3); }
 
 .chat-messages {

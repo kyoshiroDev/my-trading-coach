@@ -52,9 +52,9 @@ function insightVariant(type: string): InsightVariant {
     <mtc-topbar
       title="IA Insights"
       [showAddButton]="userStore.isPremium()"
-      [addLabel]="insightsLoading() ? 'Analyse en cours...' : (cooldownLabel() ? 'Disponible dans ' + cooldownLabel() : 'Analyser maintenant')"
+      [addLabel]="insightsLoading() ? 'Analyse en cours...' : (!userStore.isAdmin() && cooldownLabel() ? 'Disponible dans ' + cooldownLabel() : 'Analyser maintenant')"
       [addLoading]="insightsLoading()"
-      [addDisabled]="!!cooldownLabel() && !insightsLoading()"
+      [addDisabled]="!userStore.isAdmin() && !!cooldownLabel() && !insightsLoading()"
       addTestId="analyze-btn"
       (addClick)="loadInsights()"
     />
@@ -147,7 +147,9 @@ function insightVariant(type: string): InsightVariant {
                 <lucide-icon [img]="SparklesIcon" [size]="14" color="var(--blue-bright)" />
                 Coach IA
               </div>
-              @if (quotaExhausted()) {
+              @if (userStore.isAdmin()) {
+                <span class="quota-badge quota-admin">∞</span>
+              } @else if (quotaExhausted()) {
                 <span class="quota-badge quota-exhausted">Disponible dans {{ chatQuotaCountdown() }}</span>
               } @else {
                 <span class="quota-badge">{{ chatQuota() }}/{{ QUOTA_MAX }}</span>
@@ -187,10 +189,10 @@ function insightVariant(type: string): InsightVariant {
               [(ngModel)]="chatInput"
               placeholder="Pose ta question..."
               (keydown.enter)="sendMessage()"
-              [disabled]="chatLoading() || quotaExhausted()"
+              [disabled]="chatLoading() || (!userStore.isAdmin() && quotaExhausted())"
               class="chat-input"
             />
-            <button class="btn-send" data-testid="chat-send" (click)="sendMessage()" [disabled]="chatLoading() || !chatInput.trim() || quotaExhausted()">
+            <button class="btn-send" data-testid="chat-send" (click)="sendMessage()" [disabled]="chatLoading() || !chatInput.trim() || (!userStore.isAdmin() && quotaExhausted())">
               <lucide-icon [img]="SendIcon" [size]="14" />
             </button>
           </div>
@@ -315,7 +317,7 @@ export class AiInsightsComponent implements AfterViewChecked {
   protected getVariant(type: string): InsightVariant { return insightVariant(type); }
 
   loadInsights() {
-    if (this.insightsLoading() || this.cooldownLabel()) return;
+    if (this.insightsLoading() || (!this.userStore.isAdmin() && this.cooldownLabel())) return;
     this.insightsLoading.set(true);
     this.insightsError.set(null);
     this.http.post<{ data: InsightsResponse }>(`${environment.apiUrl}/ai/insights`, {})
@@ -343,17 +345,19 @@ export class AiInsightsComponent implements AfterViewChecked {
 
   sendMessage() {
     const msg = this.chatInput.trim();
-    if (!msg || this.chatLoading() || this.quotaExhausted()) return;
+    if (!msg || this.chatLoading() || (!this.userStore.isAdmin() && this.quotaExhausted())) return;
     this.chatInput = '';
     const history = this.chatHistory();
     this.chatHistory.update((h) => [...h, { role: 'user', content: msg }]);
     this.chatLoading.set(true);
     this.shouldScrollToBottom = true;
 
-    // Décrémenter le quota de façon optimiste
-    const newQuota = Math.max(0, this.chatQuota() - 1);
-    this.chatQuota.set(newQuota);
-    this.saveChatQuota(newQuota);
+    // Décrémenter le quota (pas pour les admins)
+    if (!this.userStore.isAdmin()) {
+      const newQuota = Math.max(0, this.chatQuota() - 1);
+      this.chatQuota.set(newQuota);
+      this.saveChatQuota(newQuota);
+    }
 
     this.http.post<{ data: { response: string } }>(`${environment.apiUrl}/ai/chat`, {
       message: msg,
