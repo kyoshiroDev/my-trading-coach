@@ -116,6 +116,18 @@ export class AnalyticsComponent implements OnInit {
     return 'heatmap-cell cell-red';
   }
 
+  protected rateColor(rate: number): string {
+    if (rate > 65) return 'var(--green)';
+    if (rate >= 50) return 'var(--yellow)';
+    return 'var(--red)';
+  }
+
+  protected pnlColor(pnl: number): string {
+    if (pnl > 0) return 'var(--green)';
+    if (pnl < 0) return 'var(--red)';
+    return 'var(--text-2)';
+  }
+
   protected startTrial(plan: 'monthly' | 'yearly' = 'monthly'): void {
     this.billingApi.checkout(plan).subscribe({
       next: (res) => { window.location.href = res.data.url; },

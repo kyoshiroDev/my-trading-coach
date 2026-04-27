@@ -237,11 +237,11 @@
 
 /* ── Color utils ── */
 .mono { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 13px; }
-.text-green,  td.text-green  { color: var(--green); }
-.text-red,    td.text-red    { color: var(--red); }
-.text-yellow, td.text-yellow { color: var(--yellow); }
-.text-blue,   td.text-blue   { color: var(--blue-bright); }
-.text-muted,  td.text-muted  { color: var(--text-3); }
+.text-green  { color: var(--green); }
+.text-red    { color: var(--red); }
+.text-yellow { color: var(--yellow); }
+.text-blue   { color: var(--blue-bright); }
+.text-muted  { color: var(--text-3); }
 .text-3      { color: var(--text-3); }
 
 /* ── Locked blocks container ── */

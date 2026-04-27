@@ -149,15 +149,10 @@
                 <td class="mono text-3">#{{ i + 1 }}</td>
                 <td class="td-asset">{{ asset.asset }}</td>
                 <td class="mono">{{ asset.count }}</td>
-                <td class="mono"
-                    [class.text-green]="asset.winRate > 65"
-                    [class.text-yellow]="asset.winRate >= 50 && asset.winRate <= 65"
-                    [class.text-red]="asset.winRate < 50">
+                <td class="mono" [style.color]="rateColor(asset.winRate)">
                   {{ asset.winRate.toFixed(0) }}%
                 </td>
-                <td class="mono"
-                    [class.text-green]="asset.pnl > 0"
-                    [class.text-red]="asset.pnl < 0">
+                <td class="mono" [style.color]="pnlColor(asset.pnl)">
                   {{ asset.pnl | pnlFormat }}
                 </td>
               </tr>
@@ -187,10 +182,7 @@
               <tr>
                 <td class="td-asset">{{ setup.setup }}</td>
                 <td class="mono">{{ setup.count }}</td>
-                <td class="mono"
-                    [class.text-green]="setup.winRate > 65"
-                    [class.text-yellow]="setup.winRate >= 50 && setup.winRate <= 65"
-                    [class.text-red]="setup.winRate < 50">
+                <td class="mono" [style.color]="rateColor(setup.winRate)">
                   {{ setup.winRate.toFixed(0) }}%
                 </td>
                 <td class="mono"
