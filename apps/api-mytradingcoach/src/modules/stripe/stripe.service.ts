@@ -352,6 +352,34 @@ export class StripeService implements OnModuleDestroy {
         break;
       }
 
+      case 'customer.deleted': {
+        const customer = event.data.object as Stripe.Customer;
+
+        const user = await this.prisma.user.findUnique({
+          where: { stripeCustomerId: customer.id },
+          select: { id: true, email: true, name: true },
+        });
+
+        if (user) {
+          await this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+              plan: Plan.FREE,
+              stripeCustomerId: null,
+              stripeSubscriptionId: null,
+              stripePriceId: null,
+              stripeInterval: null,
+              stripeCurrentPeriodEnd: null,
+              stripeSubscriptionStatus: null,
+            },
+          });
+          await this.redis.del(cacheKey(user.id)).catch(() => null);
+          await this.discord.syncDiscordRole(user.id).catch(() => undefined);
+          this.logger.log(`Customer ${customer.id} supprimé → plan FREE, données Stripe effacées`);
+        }
+        break;
+      }
+
       case 'invoice.payment_failed': {
         // ⚠️ Ne pas dégrader vers FREE — Stripe retry via dunning automatique.
         // La dégradation est gérée par customer.subscription.updated (status → past_due).
