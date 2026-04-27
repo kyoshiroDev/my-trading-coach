@@ -12,7 +12,6 @@ import { Role } from '@prisma/client';
 import { OrchestratorAgent } from './agents/orchestrator.agent';
 import { DebriefAgent } from './agents/debrief.agent';
 import { DataAgent } from './agents/data.agent';
-import { INSIGHTS_SYSTEM_PROMPT, CHAT_SYSTEM_PROMPT } from './prompts/insights.prompt';
 import { buildDebriefPrompt } from './prompts/debrief.prompt';
 import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -74,9 +73,28 @@ export class AiService implements OnModuleDestroy {
       select: { asset: true, side: true, pnl: true, emotion: true, setup: true, session: true, tradedAt: true },
     });
 
-    const contextSummary = recentTrades.length
-      ? this.dataAgent.buildTradesSummary(recentTrades)
-      : 'Aucun trade enregistré pour ce trader.';
+    const CHAT_SYSTEM = `Tu es un coach de trading professionnel, bienveillant et direct.
+Tutoiement. Réponds en texte naturel uniquement — jamais de JSON, jamais de markdown, pas de ** ni de tirets listes.
+Sois concis (3-5 phrases). Si le trader a des données, base-toi dessus pour répondre précisément.`;
+
+    let contextSummary: string;
+    if (recentTrades.length === 0) {
+      contextSummary = "Ce trader n'a encore enregistré aucun trade.";
+    } else {
+      const wins = recentTrades.filter(t => (t.pnl ?? 0) > 0).length;
+      const winRate = Math.round((wins / recentTrades.length) * 100);
+      const totalPnl = recentTrades.reduce((sum, t) => sum + (t.pnl ?? 0), 0);
+      const emotions = [...new Set(recentTrades.map(t => t.emotion).filter(Boolean))].join(', ');
+      const setups = [...new Set(recentTrades.map(t => t.setup).filter(Boolean))].join(', ');
+      const sessions = [...new Set(recentTrades.map(t => t.session).filter(Boolean))].join(', ');
+
+      contextSummary = `Données trader (${recentTrades.length} trades récents) :
+- Win rate : ${winRate}%
+- P&L total : ${totalPnl.toFixed(2)}$
+- Émotions : ${emotions || 'non renseignées'}
+- Setups : ${setups || 'non renseignés'}
+- Sessions : ${sessions || 'non renseignées'}`;
+    }
 
     const messages: Anthropic.MessageParam[] = [
       {
@@ -93,7 +111,7 @@ export class AiService implements OnModuleDestroy {
       response = await this.anthropic.messages.create({
         model: MODEL,
         max_tokens: 512,
-        system: [{ type: 'text', text: CHAT_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
+        system: [{ type: 'text', text: CHAT_SYSTEM, cache_control: { type: 'ephemeral' } }],
         messages,
       });
     } catch (err) {
