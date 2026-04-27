@@ -126,7 +126,8 @@ textarea { resize: vertical; min-height: 72px; }
 
 .side-btn.active-long  { background: rgba(16,185,129,0.15); color: var(--green); }
 .side-btn.active-short { background: rgba(239,68,68,0.15);  color: var(--red); }
-.side-btn.active       { background: rgba(59,130,246,0.15); color: var(--blue-bright); }
+.side-btn.active-tp    { background: rgba(16,185,129,0.15); color: var(--green); }
+.side-btn.active-sl    { background: rgba(239,68,68,0.15);  color: var(--red); }
 
 /* ─── Emotion grid ─── */
 .emotion-grid {

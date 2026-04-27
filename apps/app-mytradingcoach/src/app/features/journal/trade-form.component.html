@@ -80,9 +80,9 @@
             <label>Sorti sur</label>
             <div class="side-toggle">
               <button type="button" class="side-btn"
-                [class.active]="exitMode() === 'SL'" (click)="setExitMode('SL')">SL</button>
+                [class.active-tp]="exitMode() === 'TP'" (click)="setExitMode('TP')">TP</button>
               <button type="button" class="side-btn"
-                [class.active]="exitMode() === 'TP'" (click)="setExitMode('TP')">TP</button>
+                [class.active-sl]="exitMode() === 'SL'" (click)="setExitMode('SL')">SL</button>
             </div>
           </div>
         }
