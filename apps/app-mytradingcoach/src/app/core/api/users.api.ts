@@ -18,6 +18,7 @@ export interface CompleteOnboardingDto {
 
 export interface UpdatePreferencesDto {
   currency?: 'USD' | 'EUR' | 'GBP';
+  startingCapital?: number;
   notificationsEmail?: boolean;
   debriefAutomatic?: boolean;
 }

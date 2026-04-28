@@ -499,11 +499,16 @@ export class DashboardComponent implements AfterViewInit {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const W = canvas.offsetWidth || 400;
-    const H = 140;
-    canvas.width = W;
-    canvas.height = H;
+    // DPR — rendu net sur écrans retina
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = canvas.offsetWidth || 400;
+    const cssH = 140;
+    canvas.width  = cssW * dpr;
+    canvas.height = cssH * dpr;
+    ctx.scale(dpr, dpr);
 
+    const W = cssW;
+    const H = cssH;
     const PAD = { top: 12, right: 12, bottom: 20, left: 52 };
     const cW = W - PAD.left - PAD.right;
     const cH = H - PAD.top - PAD.bottom;
@@ -520,6 +525,20 @@ export class DashboardComponent implements AfterViewInit {
     const toX = (i: number) => PAD.left + (i / (values.length - 1)) * cW;
     const toY = (v: number) => PAD.top + cH - ((v - minV) / range) * cH;
 
+    // Tracé bezier lissé
+    const bezierPath = (close: boolean) => {
+      ctx.moveTo(toX(0), toY(values[0]));
+      for (let i = 1; i < values.length; i++) {
+        const cpx = (toX(i - 1) + toX(i)) / 2;
+        ctx.bezierCurveTo(cpx, toY(values[i - 1]), cpx, toY(values[i]), toX(i), toY(values[i]));
+      }
+      if (close) {
+        ctx.lineTo(toX(values.length - 1), PAD.top + cH);
+        ctx.lineTo(toX(0), PAD.top + cH);
+        ctx.closePath();
+      }
+    };
+
     // Grid lines
     ctx.strokeStyle = 'rgba(99,155,255,0.06)';
     ctx.lineWidth = 1;
@@ -531,7 +550,7 @@ export class DashboardComponent implements AfterViewInit {
       ctx.stroke();
     }
 
-    // Baseline
+    // Baseline pointillée
     ctx.strokeStyle = 'rgba(99,155,255,0.2)';
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
@@ -540,30 +559,22 @@ export class DashboardComponent implements AfterViewInit {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Toujours bleu
-    const rgb = '59,130,246';
-
-    // Fill gradient
+    // Fill gradient bleu
     const grad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + cH);
-    grad.addColorStop(0, `rgba(${rgb},0.2)`);
-    grad.addColorStop(1, `rgba(${rgb},0)`);
+    grad.addColorStop(0, 'rgba(59,130,246,0.2)');
+    grad.addColorStop(1, 'rgba(59,130,246,0)');
     ctx.beginPath();
-    ctx.moveTo(toX(0), toY(values[0]));
-    for (let i = 1; i < values.length; i++) ctx.lineTo(toX(i), toY(values[i]));
-    ctx.lineTo(toX(values.length - 1), PAD.top + cH);
-    ctx.lineTo(toX(0), PAD.top + cH);
-    ctx.closePath();
+    bezierPath(true);
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // Line bleue
+    // Ligne bleue lissée
     ctx.beginPath();
     ctx.strokeStyle = '#3b82f6';
     ctx.lineWidth = 2;
-    for (let i = 0; i < values.length; i++) {
-      if (i === 0) ctx.moveTo(toX(0), toY(values[0]));
-      else ctx.lineTo(toX(i), toY(values[i]));
-    }
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    bezierPath(false);
     ctx.stroke();
 
     // Y labels
@@ -571,9 +582,7 @@ export class DashboardComponent implements AfterViewInit {
     ctx.font = '10px "DM Mono", monospace';
     ctx.textAlign = 'right';
     [minV, maxV].forEach((v) => {
-      const label = Math.abs(v) >= 1000
-        ? `$${(v / 1000).toFixed(1)}k`
-        : `$${v.toFixed(0)}`;
+      const label = Math.abs(v) >= 1000 ? `$${(v / 1000).toFixed(1)}k` : `$${v.toFixed(0)}`;
       ctx.fillText(label, PAD.left - 6, toY(v) + 4);
     });
   }

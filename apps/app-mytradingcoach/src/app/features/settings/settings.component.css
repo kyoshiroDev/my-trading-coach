@@ -422,6 +422,62 @@
   justify-content: flex-end;
 }
 
+/* ─── Capital de départ ─── */
+.capital-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.capital-symbol {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text-2);
+  flex-shrink: 0;
+}
+
+.settings-inline-input {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 14px;
+  font-family: var(--font-mono);
+  outline: none;
+  width: 140px;
+  transition: border-color 0.15s;
+}
+.settings-inline-input:focus { border-color: var(--blue); }
+
+.settings-save-btn {
+  padding: 6px 14px;
+  background: var(--blue);
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.settings-save-btn:hover:not(:disabled) { background: var(--blue-bright); }
+.settings-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.settings-cancel-btn {
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-2);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.settings-cancel-btn:hover { background: var(--bg-3); }
+
 /* ── Animation ── */
 @keyframes pulse {
   0%, 100% { opacity: 1; transform: scale(1); }

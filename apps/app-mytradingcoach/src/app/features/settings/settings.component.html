@@ -167,6 +167,41 @@
             <button class="settings-edit-btn" (click)="resetPassword()" [disabled]="passwordResetSent()">Modifier</button>
           </div>
 
+          <!-- Capital de départ -->
+          <div class="settings-row">
+            <div class="settings-row-left">
+              <span class="settings-row-label">Capital de départ</span>
+              @if (!editingCapital()) {
+                <span class="settings-row-value mono">
+                  @if (userStore.startingCapital() > 0) {
+                    {{ userStore.user()?.currency === 'EUR' ? '€' : '$' }}{{ userStore.startingCapital().toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}
+                  } @else {
+                    <span style="color:var(--text-3)">Non défini</span>
+                  }
+                </span>
+              } @else {
+                <div class="capital-edit-row">
+                  <span class="capital-symbol">{{ userStore.user()?.currency === 'EUR' ? '€' : '$' }}</span>
+                  <input
+                    type="text"
+                    class="settings-inline-input"
+                    [value]="capitalInput()"
+                    (input)="filterCapital($event)"
+                    placeholder="ex : 5000"
+                    autofocus
+                  />
+                  <button class="settings-save-btn" (click)="saveCapital()" [disabled]="isSavingCapital()">
+                    {{ isSavingCapital() ? '...' : 'Sauvegarder' }}
+                  </button>
+                  <button class="settings-cancel-btn" (click)="editingCapital.set(false)">Annuler</button>
+                </div>
+              }
+            </div>
+            @if (!editingCapital()) {
+              <button class="settings-edit-btn" (click)="startEditCapital()">Modifier</button>
+            }
+          </div>
+
         </div>
       </div>
 

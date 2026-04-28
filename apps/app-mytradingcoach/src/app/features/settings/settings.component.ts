@@ -45,6 +45,11 @@ export class SettingsComponent implements OnInit {
   // Compte — mot de passe
   protected readonly passwordResetSent = signal(false);
 
+  // Compte — capital de départ
+  protected readonly editingCapital = signal(false);
+  protected readonly capitalInput = signal('');
+  protected readonly isSavingCapital = signal(false);
+
   // Préférences
   protected readonly prefCurrency = signal<'USD' | 'EUR' | 'GBP'>('USD');
   protected readonly prefNotifications = signal(true);
@@ -131,6 +136,34 @@ export class SettingsComponent implements OnInit {
         setTimeout(() => this.passwordResetSent.set(false), 4000);
       },
       error: () => { /* silently ignore — user stays on page */ },
+    });
+  }
+
+  protected startEditCapital() {
+    const current = this.userStore.startingCapital();
+    this.capitalInput.set(current > 0 ? String(current) : '');
+    this.editingCapital.set(true);
+  }
+
+  protected filterCapital(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    input.value = input.value.replace(/[^\d.,]/g, '');
+    this.capitalInput.set(input.value);
+  }
+
+  protected saveCapital() {
+    const raw = this.capitalInput().replace(',', '.');
+    const parsed = parseFloat(raw);
+    const capital = isNaN(parsed) || parsed < 0 ? 0 : parsed;
+    this.isSavingCapital.set(true);
+    this.usersApi.updatePreferences({ startingCapital: capital }).subscribe({
+      next: (res) => {
+        this.auth.currentUser.set(res.data);
+        localStorage.setItem('user', JSON.stringify(res.data));
+        this.isSavingCapital.set(false);
+        this.editingCapital.set(false);
+      },
+      error: () => { this.isSavingCapital.set(false); },
     });
   }
 

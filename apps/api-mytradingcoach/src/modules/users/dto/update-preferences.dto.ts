@@ -1,4 +1,4 @@
-import { IsBoolean, IsEnum, IsOptional } from 'class-validator';
+import { IsBoolean, IsEnum, IsNumber, IsOptional, Min } from 'class-validator';
 
 export enum Currency {
   USD = 'USD',
@@ -10,6 +10,11 @@ export class UpdatePreferencesDto {
   @IsEnum(Currency)
   @IsOptional()
   currency?: Currency;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  startingCapital?: number;
 
   @IsBoolean()
   @IsOptional()
