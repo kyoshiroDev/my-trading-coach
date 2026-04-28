@@ -18,6 +18,7 @@ const USER_SELECT = {
   goal: true,
   currency: true,
   currencyRate: true,
+  startingCapital: true,
   notificationsEmail: true,
   debriefAutomatic: true,
   createdAt: true,
@@ -159,9 +160,23 @@ export class UsersService {
   }
 
   async completeOnboarding(userId: string, dto: CompleteOnboardingDto) {
+    let currencyRate: number | undefined;
+    if (dto.currency === 'EUR') {
+      currencyRate = await this.fetchEurUsdRate();
+    } else if (dto.currency === 'USD') {
+      currencyRate = 1;
+    }
+
     return this.prisma.user.update({
       where: { id: userId },
-      data: { onboardingCompleted: true, market: dto.market ?? null, goal: dto.goal ?? null },
+      data: {
+        onboardingCompleted: true,
+        market: dto.market ?? null,
+        goal: dto.goal ?? null,
+        ...(dto.startingCapital != null ? { startingCapital: dto.startingCapital } : {}),
+        ...(dto.currency ? { currency: dto.currency } : {}),
+        ...(currencyRate !== undefined ? { currencyRate } : {}),
+      },
       select: USER_SELECT,
     });
   }

@@ -48,22 +48,38 @@ export class OnboardingComponent {
   protected readonly MARKETS = MARKETS;
   protected readonly GOALS = GOALS;
 
-  protected readonly step = signal<1 | 2 | 3>(1);
+  protected readonly step = signal<1 | 2 | 3 | 4>(1);
   protected readonly selectedMarket = signal<Market | null>(null);
   protected readonly selectedGoal = signal<Goal | null>(null);
+  protected readonly selectedCurrency = signal<'USD' | 'EUR'>('USD');
+  protected readonly capitalInput = signal('');
   protected readonly isSaving = signal(false);
 
   protected selectMarket(m: Market) { this.selectedMarket.set(m); }
   protected selectGoal(g: Goal) { this.selectedGoal.set(g); }
+  protected selectCurrency(c: 'USD' | 'EUR') { this.selectedCurrency.set(c); }
+
+  protected filterCapital(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    input.value = input.value.replace(/[^\d.,]/g, '');
+    this.capitalInput.set(input.value);
+  }
 
   protected nextStep() {
     const s = this.step();
     if (s === 1) this.step.set(2);
     else if (s === 2) this.step.set(3);
+    else if (s === 3) this.step.set(4);
   }
 
   protected skip() {
     this.finishOnboarding(null, null);
+  }
+
+  private parseCapital(): number {
+    const raw = this.capitalInput().replace(',', '.');
+    const parsed = parseFloat(raw);
+    return isNaN(parsed) || parsed < 0 ? 0 : parsed;
   }
 
   protected onTradeFormSave(dto: CreateTradeDto) {
@@ -71,6 +87,8 @@ export class OnboardingComponent {
     const onboardingDto: CompleteOnboardingDto = {
       market: this.selectedMarket(),
       goal: this.selectedGoal(),
+      startingCapital: this.parseCapital(),
+      currency: this.selectedCurrency(),
     };
     this.usersApi.completeOnboarding(onboardingDto).pipe(
       tap((res) => {
@@ -98,7 +116,12 @@ export class OnboardingComponent {
 
   private finishOnboarding(market: Market | null, goal: Goal | null) {
     this.isSaving.set(true);
-    this.usersApi.completeOnboarding({ market, goal }).pipe(
+    this.usersApi.completeOnboarding({
+      market,
+      goal,
+      startingCapital: this.parseCapital(),
+      currency: this.selectedCurrency(),
+    }).pipe(
       takeUntilDestroyed(this.destroyRef),
     ).subscribe({
       next: (res) => {
@@ -115,6 +138,7 @@ export class OnboardingComponent {
   }
 
   protected get progress(): number {
-    return this.step() === 1 ? 33 : this.step() === 2 ? 66 : 100;
+    const s = this.step();
+    return s === 1 ? 25 : s === 2 ? 50 : s === 3 ? 75 : 100;
   }
 }

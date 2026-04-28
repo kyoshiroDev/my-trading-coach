@@ -12,6 +12,8 @@ export interface UpdateMeDto {
 export interface CompleteOnboardingDto {
   market?: 'CRYPTO' | 'FOREX' | 'ACTIONS' | 'MULTI' | null;
   goal?: 'DISCIPLINE' | 'PERFORMANCE' | 'PSYCHOLOGIE' | null;
+  startingCapital?: number;
+  currency?: 'USD' | 'EUR';
 }
 
 export interface UpdatePreferencesDto {
