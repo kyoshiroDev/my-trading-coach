@@ -189,12 +189,7 @@ interface EquityPoint { date: string; cumulativePnl: number; }
         <div class="card equity-card">
           <div class="card-header">
             <div class="card-title">Equity Curve</div>
-            <div style="display:flex;gap:12px;align-items:center">
-              <span class="chart-filter">1M</span>
-              <span class="chart-filter active">3M</span>
-              <span class="chart-filter">All</span>
-              <a routerLink="/analytics" class="card-action">Détails →</a>
-            </div>
+            <a routerLink="/analytics" class="card-action">Détails →</a>
           </div>
           <div class="chart-container">
             <canvas #equityCanvas style="width:100%;height:100%;display:block;position:absolute;inset:0;"></canvas>
@@ -504,69 +499,83 @@ export class DashboardComponent implements AfterViewInit {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // DPR — sharp on retina screens
-    const dpr = window.devicePixelRatio || 1;
-    const cssW = canvas.offsetWidth || 900;
-    const cssH = canvas.offsetHeight || 160;
-    canvas.width = cssW * dpr;
-    canvas.height = cssH * dpr;
-    ctx.scale(dpr, dpr);
+    const W = canvas.offsetWidth || 400;
+    const H = 140;
+    canvas.width = W;
+    canvas.height = H;
 
-    const W = cssW;
-    const H = cssH;
-    const PAD = { top: 10, right: 20, bottom: 20, left: 10 };
+    const PAD = { top: 12, right: 12, bottom: 20, left: 52 };
     const cW = W - PAD.left - PAD.right;
     const cH = H - PAD.top - PAD.bottom;
 
     ctx.clearRect(0, 0, W, H);
 
-    // Partir du capital de départ si défini, sinon 0
     const capital = this.userStore.startingCapital();
     const base = capital > 0 ? capital : 0;
     const values = [base, ...points.map((p) => base + p.cumulativePnl)];
-    const minV = Math.min(0, ...values);
-    const maxV = Math.max(0, ...values);
+    const minV = Math.min(base, ...values);
+    const maxV = Math.max(base, ...values);
     const range = maxV - minV || 1;
 
     const toX = (i: number) => PAD.left + (i / (values.length - 1)) * cW;
     const toY = (v: number) => PAD.top + cH - ((v - minV) / range) * cH;
 
-    const lastVal = values[values.length - 1] ?? 0;
-    const rgb = lastVal >= 0 ? '59,130,246' : '239,68,68';
+    // Grid lines
+    ctx.strokeStyle = 'rgba(99,155,255,0.06)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 3; i++) {
+      const y = PAD.top + (cH / 3) * i;
+      ctx.beginPath();
+      ctx.moveTo(PAD.left, y);
+      ctx.lineTo(PAD.left + cW, y);
+      ctx.stroke();
+    }
 
-    // Smooth monotone bezier path
-    const smoothPath = (vs: number[], closePath: boolean) => {
-      ctx.moveTo(toX(0), toY(vs[0]));
-      for (let i = 1; i < vs.length; i++) {
-        const x0 = toX(i - 1), y0 = toY(vs[i - 1]);
-        const x1 = toX(i),     y1 = toY(vs[i]);
-        const cpx = (x0 + x1) / 2;
-        ctx.bezierCurveTo(cpx, y0, cpx, y1, x1, y1);
-      }
-      if (closePath) {
-        ctx.lineTo(toX(vs.length - 1), PAD.top + cH);
-        ctx.lineTo(toX(0), PAD.top + cH);
-        ctx.closePath();
-      }
-    };
+    // Baseline
+    ctx.strokeStyle = 'rgba(99,155,255,0.2)';
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(PAD.left, toY(base));
+    ctx.lineTo(PAD.left + cW, toY(base));
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Toujours bleu
+    const rgb = '59,130,246';
 
     // Fill gradient
     const grad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + cH);
-    grad.addColorStop(0, `rgba(${rgb},0.25)`);
+    grad.addColorStop(0, `rgba(${rgb},0.2)`);
     grad.addColorStop(1, `rgba(${rgb},0)`);
     ctx.beginPath();
-    smoothPath(values, true);
+    ctx.moveTo(toX(0), toY(values[0]));
+    for (let i = 1; i < values.length; i++) ctx.lineTo(toX(i), toY(values[i]));
+    ctx.lineTo(toX(values.length - 1), PAD.top + cH);
+    ctx.lineTo(toX(0), PAD.top + cH);
+    ctx.closePath();
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // Line
+    // Line bleue
     ctx.beginPath();
-    ctx.strokeStyle = lastVal >= 0 ? '#3b82f6' : '#ef4444';
+    ctx.strokeStyle = '#3b82f6';
     ctx.lineWidth = 2;
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-    smoothPath(values, false);
+    for (let i = 0; i < values.length; i++) {
+      if (i === 0) ctx.moveTo(toX(0), toY(values[0]));
+      else ctx.lineTo(toX(i), toY(values[i]));
+    }
     ctx.stroke();
+
+    // Y labels
+    ctx.fillStyle = 'rgba(122,147,187,0.7)';
+    ctx.font = '10px "DM Mono", monospace';
+    ctx.textAlign = 'right';
+    [minV, maxV].forEach((v) => {
+      const label = Math.abs(v) >= 1000
+        ? `$${(v / 1000).toFixed(1)}k`
+        : `$${v.toFixed(0)}`;
+      ctx.fillText(label, PAD.left - 6, toY(v) + 4);
+    });
   }
 
 }
