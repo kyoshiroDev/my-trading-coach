@@ -11,7 +11,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TitleCasePipe, UpperCasePipe } from '@angular/common';
+import { DecimalPipe, TitleCasePipe, UpperCasePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { BillingApi } from '../../core/api/billing.api';
@@ -49,7 +49,7 @@ interface EquityPoint { date: string; cumulativePnl: number; }
   selector: 'mtc-dashboard',
   standalone: true,
   imports: [
-    RouterLink, TitleCasePipe, UpperCasePipe, TopbarComponent, TradeFormComponent, PlanModalComponent,
+    RouterLink, DecimalPipe, TitleCasePipe, UpperCasePipe, TopbarComponent, TradeFormComponent, PlanModalComponent,
     PnlColorPipe, PnlFormatPipe,
     EmotionEmojiPipe, EmotionLabelPipe, EmotionColorPipe,
     SetupColorPipe, SetupColorsMapPipe,
@@ -95,7 +95,25 @@ interface EquityPoint { date: string; cumulativePnl: number; }
 
       <!-- Stats row -->
       @if (!isLoading()) {
-        <div class="stats-row">
+        <div class="stats-row has-capital">
+
+          <div class="stat-card">
+            <div class="stat-label">Capital</div>
+            <div class="stat-value mono" [style.color]="capitalColor()">
+              {{ capitalDisplay() }}
+            </div>
+            <div class="stat-sub">
+              @if (capitalPct() !== 0) {
+                <span class="change" [class]="capitalPct() > 0 ? 'up' : 'down'">
+                  {{ capitalPct() > 0 ? '▲' : '▼' }} {{ capitalPct() | number:'1.1-1' }}%
+                </span>
+              } @else {
+                <span style="color:var(--text-3)">base</span>
+              }
+            </div>
+            <div class="stat-bg-icon">💼</div>
+          </div>
+
           <div class="stat-card">
             <div class="stat-label">P&amp;L Total</div>
             <div class="stat-value" [style.color]="pnlColor()">
@@ -344,6 +362,35 @@ export class DashboardComponent implements AfterViewInit {
     const wr = this.summary()?.winRate ?? 0;
     if (wr === 0) return 'var(--text-2)';
     return 'var(--blue-bright)';
+  });
+
+  protected readonly currentCapital = computed(() => {
+    const start = this.userStore.startingCapital();
+    const pnl = this.summary()?.totalPnl ?? 0;
+    return start + pnl;
+  });
+
+  protected readonly capitalDisplay = computed(() => {
+    const capital = this.currentCapital();
+    const rate = this.userStore.user()?.currencyRate ?? 1;
+    const currency = this.userStore.user()?.currency ?? 'USD';
+    const converted = capital * rate;
+    const symbol = currency === 'EUR' ? '€' : '$';
+    return `${symbol}${Math.abs(converted).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  });
+
+  protected readonly capitalPct = computed(() => {
+    const start = this.userStore.startingCapital();
+    if (start <= 0) return 0;
+    return ((this.summary()?.totalPnl ?? 0) / start) * 100;
+  });
+
+  protected readonly capitalColor = computed(() => {
+    const start = this.userStore.startingCapital();
+    if (start <= 0) return 'var(--text-2)';
+    const pnl = this.summary()?.totalPnl ?? 0;
+    if (pnl === 0) return 'var(--text-2)';
+    return pnl > 0 ? 'var(--green)' : 'var(--red)';
   });
 
   protected readonly drawdownColor = computed(() => {

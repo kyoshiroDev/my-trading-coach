@@ -27,6 +27,8 @@
   margin-bottom: 24px;
 }
 
+.stats-row.has-capital { grid-template-columns: repeat(5, 1fr); }
+
 .stat-card {
   background: var(--bg-card);
   border: 1px solid var(--border);

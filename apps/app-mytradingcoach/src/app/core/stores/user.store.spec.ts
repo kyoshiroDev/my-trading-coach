@@ -84,4 +84,28 @@ describe('UserStore', () => {
       expect(store.initials()).toBe('TH');
     });
   });
+
+  describe('startingCapital', () => {
+    it('retourne 0 si aucun utilisateur', () => {
+      expect(store.startingCapital()).toBe(0);
+    });
+
+    it('retourne 0 si startingCapital non défini', () => {
+      mockAuth.currentUser.set({ id: '1', email: 'test@test.com', plan: 'FREE' });
+      expect(store.startingCapital()).toBe(0);
+    });
+
+    it('retourne la valeur du capital de départ', () => {
+      mockAuth.currentUser.set({ id: '1', email: 'test@test.com', plan: 'FREE', startingCapital: 5000 });
+      expect(store.startingCapital()).toBe(5000);
+    });
+
+    it('est réactif : se met à jour quand le capital change', () => {
+      mockAuth.currentUser.set({ id: '1', email: 'test@test.com', plan: 'FREE', startingCapital: 1000 });
+      expect(store.startingCapital()).toBe(1000);
+
+      mockAuth.currentUser.set({ id: '1', email: 'test@test.com', plan: 'FREE', startingCapital: 10000 });
+      expect(store.startingCapital()).toBe(10000);
+    });
+  });
 });

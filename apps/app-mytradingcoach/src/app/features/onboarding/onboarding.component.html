@@ -1,5 +1,5 @@
-<!-- Steps 1 & 2 — wizard overlay -->
-@if (step() !== 3) {
+<!-- Steps 1, 2 & 3 — wizard overlay -->
+@if (step() !== 4) {
   <div class="overlay" data-testid="onboarding-wizard">
     <div class="wizard">
 
@@ -20,7 +20,7 @@
       <!-- Step 1 — Marché -->
       @if (step() === 1) {
         <div class="wizard-body">
-          <div class="step-label">Étape 1 sur 3</div>
+          <div class="step-label">Étape 1 sur 4</div>
           <h2 class="step-title">Quel marché trades-tu ?</h2>
           <p class="step-desc">Je vais personnaliser tes insights en fonction de ton marché principal.</p>
 
@@ -55,7 +55,7 @@
       <!-- Step 2 — Objectif -->
       @if (step() === 2) {
         <div class="wizard-body">
-          <div class="step-label">Étape 2 sur 3</div>
+          <div class="step-label">Étape 2 sur 4</div>
           <h2 class="step-title">Quel est ton objectif principal ?</h2>
           <p class="step-desc">Ton coach IA va se concentrer sur ce qui compte le plus pour toi.</p>
 
@@ -81,12 +81,45 @@
         </div>
       }
 
+      <!-- Step 3 — Capital de départ -->
+      @if (step() === 3) {
+        <div class="wizard-body">
+          <div class="step-label">Étape 3 sur 4</div>
+          <h2 class="step-title">Quel est ton capital de départ ?</h2>
+          <p class="step-desc">Je l'utiliserai pour calculer ton equity curve, ton drawdown et tes performances réelles.</p>
+
+          <div class="capital-field">
+            <div class="currency-toggle">
+              <button type="button" class="currency-btn" [class.active-usd]="selectedCurrency() === 'USD'" (click)="selectCurrency('USD')">$ USD</button>
+              <button type="button" class="currency-btn" [class.active-eur]="selectedCurrency() === 'EUR'" (click)="selectCurrency('EUR')">€ EUR</button>
+            </div>
+            <input
+              type="text"
+              class="capital-input"
+              [value]="capitalInput()"
+              (input)="filterCapital($event)"
+              placeholder="ex : 5000"
+              data-testid="capital-input"
+            />
+          </div>
+
+          <p class="capital-hint">Tu pourras modifier ce montant dans tes paramètres à tout moment.</p>
+
+          <div class="wizard-footer">
+            <button class="btn-skip-capital" type="button" (click)="nextStep()">Passer cette étape</button>
+            <button class="btn-next" (click)="nextStep()" [disabled]="!capitalInput()">
+              Continuer →
+            </button>
+          </div>
+        </div>
+      }
+
     </div>
   </div>
 }
 
-<!-- Step 3 — premier trade (TradeForm gère son propre overlay) -->
-@if (step() === 3) {
+<!-- Step 4 — premier trade (TradeForm gère son propre overlay) -->
+@if (step() === 4) {
   <mtc-trade-form
     [open]="true"
     [isSaving]="isSaving()"

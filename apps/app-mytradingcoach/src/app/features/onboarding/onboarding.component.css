@@ -204,7 +204,79 @@
   cursor: not-allowed;
 }
 
-/* Step 3 — trade form override: hide the overlay from TradeForm, show inline */
+/* Step 3 — Capital de départ */
+.capital-field {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.currency-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.currency-btn {
+  padding: 8px;
+  border: none;
+  border-radius: 5px;
+  font-size: 13px;
+  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-3);
+  transition: all 0.15s;
+}
+
+.currency-btn.active-usd { background: rgba(59,130,246,0.15); color: var(--blue-bright); }
+.currency-btn.active-eur { background: rgba(59,130,246,0.15); color: var(--blue-bright); }
+
+.capital-input {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 20px;
+  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-weight: 600;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.capital-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+.capital-input::placeholder { color: var(--text-3); font-weight: 400; }
+
+.capital-hint {
+  font-size: 11px;
+  color: var(--text-3);
+  margin: 0 0 24px;
+}
+
+.btn-skip-capital {
+  font-size: 12px;
+  font-family: var(--font-mono, 'DM Mono', monospace);
+  color: var(--text-3);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: color 0.15s;
+  margin-right: auto;
+}
+.btn-skip-capital:hover { color: var(--text-2); }
+
+/* Step 4 — trade form override: hide the overlay from TradeForm, show inline */
 .wizard-body.step3 :host-context(mtc-trade-form) .overlay {
   position: static;
   background: none;

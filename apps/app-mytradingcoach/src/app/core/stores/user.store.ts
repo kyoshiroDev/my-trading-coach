@@ -17,6 +17,7 @@ export class UserStore {
   });
 
   readonly isAdmin = computed(() => this.user()?.role === 'ADMIN');
+  readonly startingCapital = computed(() => this.user()?.startingCapital ?? 0);
   readonly displayName = computed(() => this.user()?.name ?? this.user()?.email ?? '');
   readonly initials = computed(() => {
     const name = this.user()?.name ?? this.user()?.email ?? '?';

@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 export enum Market {
   CRYPTO = 'CRYPTO',
@@ -21,4 +21,13 @@ export class CompleteOnboardingDto {
   @IsEnum(Goal)
   @IsOptional()
   goal?: Goal;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  startingCapital?: number;
+
+  @IsString()
+  @IsOptional()
+  currency?: string;
 }
