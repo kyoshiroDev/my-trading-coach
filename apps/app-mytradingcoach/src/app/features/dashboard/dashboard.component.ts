@@ -520,8 +520,10 @@ export class DashboardComponent implements AfterViewInit {
 
     ctx.clearRect(0, 0, W, H);
 
-    // Prepend 0 so the curve always starts from the baseline
-    const values = [0, ...points.map((p) => p.cumulativePnl)];
+    // Partir du capital de départ si défini, sinon 0
+    const capital = this.userStore.startingCapital();
+    const base = capital > 0 ? capital : 0;
+    const values = [base, ...points.map((p) => base + p.cumulativePnl)];
     const minV = Math.min(0, ...values);
     const maxV = Math.max(0, ...values);
     const range = maxV - minV || 1;

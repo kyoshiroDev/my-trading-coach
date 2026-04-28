@@ -68,12 +68,15 @@ export class AuthService {
 
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
-      select: { id: true, email: true, name: true, plan: true, role: true, onboardingCompleted: true },
+      select: {
+        id: true, email: true, name: true, plan: true, role: true,
+        onboardingCompleted: true, currency: true, currencyRate: true, startingCapital: true,
+      },
     });
     if (!user) throw new UnauthorizedException('Utilisateur introuvable');
 
     const tokens = await this.generateTokens(user.id, user.email);
-    return { ...tokens, user: { id: user.id, email: user.email, name: user.name, plan: user.plan, role: user.role, onboardingCompleted: user.onboardingCompleted } };
+    return { ...tokens, user: { id: user.id, email: user.email, name: user.name, plan: user.plan, role: user.role, onboardingCompleted: user.onboardingCompleted, currency: user.currency, currencyRate: user.currencyRate, startingCapital: user.startingCapital } };
   }
 
   async getMe(userId: string) {
@@ -82,7 +85,8 @@ export class AuthService {
       select: {
         id: true, email: true, name: true, plan: true, role: true,
         trialEndsAt: true, onboardingCompleted: true,
-        market: true, goal: true, currency: true,
+        market: true, goal: true,
+        currency: true, currencyRate: true, startingCapital: true,
         notificationsEmail: true, debriefAutomatic: true,
         stripeCurrentPeriodEnd: true,
       },
