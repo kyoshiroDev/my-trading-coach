@@ -95,9 +95,8 @@ interface EquityPoint { date: string; cumulativePnl: number; }
 
       <!-- Stats row -->
       @if (!isLoading()) {
-        <div class="stats-row" [class.has-capital]="userStore.startingCapital() > 0">
+        <div class="stats-row has-capital">
 
-          @if (userStore.startingCapital() > 0) {
           <div class="stat-card">
             <div class="stat-label">Capital</div>
             <div class="stat-value" [style.color]="capitalColor()">
@@ -114,7 +113,6 @@ interface EquityPoint { date: string; cumulativePnl: number; }
             </div>
             <div class="stat-bg-icon">💼</div>
           </div>
-          }
 
           <div class="stat-card">
             <div class="stat-label">P&amp;L Total</div>
