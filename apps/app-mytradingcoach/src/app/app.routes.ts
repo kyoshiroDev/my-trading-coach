@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, premiumGuard, adminGuard } from './core/auth/auth.guard';
+import { authGuard, adminGuard } from './core/auth/auth.guard';
 import { NotFoundComponent } from './shared/components/not-found/not-found.component';
 
 export const appRoutes: Routes = [
@@ -57,7 +57,6 @@ export const appRoutes: Routes = [
       },
       {
         path: 'scoring',
-        canActivate: [premiumGuard],
         loadComponent: () =>
           import('./features/scoring/scoring.component').then((m) => m.ScoringComponent),
       },

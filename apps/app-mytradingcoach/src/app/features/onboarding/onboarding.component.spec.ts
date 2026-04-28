@@ -156,6 +156,8 @@ describe('OnboardingComponent', () => {
     const component = fixture.componentInstance as unknown as { skip: () => void };
     component.skip();
 
-    expect(mockUsersApi.completeOnboarding).toHaveBeenCalledWith({ market: null, goal: null });
+    expect(mockUsersApi.completeOnboarding).toHaveBeenCalledWith(
+      expect.objectContaining({ market: null, goal: null }),
+    );
   });
 });

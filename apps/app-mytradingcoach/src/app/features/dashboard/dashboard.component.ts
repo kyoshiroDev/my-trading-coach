@@ -99,8 +99,8 @@ interface EquityPoint { date: string; cumulativePnl: number; }
 
           <div class="stat-card">
             <div class="stat-label">Capital</div>
-            <div class="stat-value" [style.color]="capitalColor()">
-              {{ currentCapital() | pnlFormat }}
+            <div class="stat-value mono" [style.color]="capitalColor()">
+              {{ capitalDisplay() }}
             </div>
             <div class="stat-sub">
               @if (capitalPct() !== 0) {
@@ -370,10 +370,19 @@ export class DashboardComponent implements AfterViewInit {
     return start + pnl;
   });
 
+  protected readonly capitalDisplay = computed(() => {
+    const capital = this.currentCapital();
+    const rate = this.userStore.user()?.currencyRate ?? 1;
+    const currency = this.userStore.user()?.currency ?? 'USD';
+    const converted = capital * rate;
+    const symbol = currency === 'EUR' ? '€' : '$';
+    return `${symbol}${Math.abs(converted).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  });
+
   protected readonly capitalPct = computed(() => {
     const start = this.userStore.startingCapital();
     if (start <= 0) return 0;
-    return (( this.summary()?.totalPnl ?? 0) / start) * 100;
+    return ((this.summary()?.totalPnl ?? 0) / start) * 100;
   });
 
   protected readonly capitalColor = computed(() => {
