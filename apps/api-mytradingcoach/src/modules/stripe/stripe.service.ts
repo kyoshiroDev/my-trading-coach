@@ -177,8 +177,8 @@ export class StripeService implements OnModuleDestroy {
         line_items: [{ price: priceId, quantity: 1 }],
         mode: 'subscription',
         subscription_data: subscriptionData,
-        success_url: `${returnUrl}/settings?checkout=success`,
-        cancel_url: `${returnUrl}/settings?checkout=canceled`,
+        success_url: `${returnUrl}/dashboard?checkout=success`,
+        cancel_url: `${returnUrl}/dashboard?checkout=canceled`,
         locale: 'fr',
         allow_promotion_codes: true,
         client_reference_id: userId,
@@ -217,7 +217,7 @@ export class StripeService implements OnModuleDestroy {
 
     const session = await this.stripe.billingPortal.sessions.create({
       customer: user.stripeCustomerId,
-      return_url: `${returnUrl}/settings`,
+      return_url: `${returnUrl}/dashboard`,
     });
 
     return { url: session.url };

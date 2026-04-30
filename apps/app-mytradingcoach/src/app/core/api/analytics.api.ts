@@ -40,6 +40,11 @@ export interface EquityPoint {
   cumulativePnl: number;
 }
 
+export interface EquityCurveResponse {
+  points: EquityPoint[];
+  startingCapital: number | null;
+}
+
 export interface TopAsset {
   asset: string;
   winRate: number;
@@ -68,8 +73,8 @@ export class AnalyticsApi {
     return this.http.get<{ data: HeatmapCell[] }>(`${this.base}/by-hour`);
   }
 
-  getEquityCurve(): Observable<{ data: EquityPoint[] }> {
-    return this.http.get<{ data: EquityPoint[] }>(`${this.base}/equity-curve`);
+  getEquityCurve(): Observable<{ data: EquityCurveResponse }> {
+    return this.http.get<{ data: EquityCurveResponse }>(`${this.base}/equity-curve`);
   }
 
   getTopAssets(): Observable<{ data: TopAsset[] }> {

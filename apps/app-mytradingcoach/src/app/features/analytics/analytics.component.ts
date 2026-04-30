@@ -42,6 +42,7 @@ export class AnalyticsComponent implements OnInit {
   protected readonly showPlanModal = signal(false);
   protected readonly summary = signal<AnalyticsSummary | null>(null);
   protected readonly equityCurve = signal<EquityPoint[]>([]);
+  private readonly equityStartingCapital = signal<number | null>(null);
   protected readonly heatmapData = signal<HeatmapCell[]>([]);
   protected readonly topAssets = signal<TopAsset[]>([]);
   protected readonly setupData = signal<SetupStat[]>([]);
@@ -89,7 +90,10 @@ export class AnalyticsComponent implements OnInit {
 
   private loadPremiumData(): void {
     this.analyticsApi.getEquityCurve().subscribe({
-      next: (res) => this.equityCurve.set(res.data),
+      next: (res) => {
+        this.equityCurve.set(res.data.points);
+        this.equityStartingCapital.set(res.data.startingCapital);
+      },
       error: () => { /* silently ignore */ },
     });
     this.analyticsApi.getByHour().subscribe({
@@ -152,12 +156,14 @@ export class AnalyticsComponent implements OnInit {
 
     ctx.clearRect(0, 0, W, H);
 
-    const values = points.map((p) => p.cumulativePnl);
-    const minV = Math.min(0, ...values);
-    const maxV = Math.max(0, ...values);
+    const capital = this.equityStartingCapital();
+    const base = capital != null && capital > 0 ? capital : 0;
+    const values = [base, ...points.map((p) => base + p.cumulativePnl)];
+    const minV = Math.min(base, ...values);
+    const maxV = Math.max(base, ...values);
     const range = maxV - minV || 1;
 
-    const toX = (i: number) => PAD.left + (i / (points.length - 1)) * cW;
+    const toX = (i: number) => PAD.left + (i / (values.length - 1)) * cW;
     const toY = (v: number) => PAD.top + cH - ((v - minV) / range) * cH;
 
     // Grid lines
@@ -171,17 +177,17 @@ export class AnalyticsComponent implements OnInit {
       ctx.stroke();
     }
 
-    // Zero line
+    // Baseline (capital de départ ou 0)
     ctx.strokeStyle = 'rgba(99,155,255,0.2)';
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
-    ctx.moveTo(PAD.left, toY(0));
-    ctx.lineTo(PAD.left + cW, toY(0));
+    ctx.moveTo(PAD.left, toY(base));
+    ctx.lineTo(PAD.left + cW, toY(base));
     ctx.stroke();
     ctx.setLineDash([]);
 
-    const lastVal = values[values.length - 1] ?? 0;
-    const rgb = lastVal >= 0 ? '16,185,129' : '239,68,68';
+    const lastVal = values[values.length - 1] ?? base;
+    const rgb = lastVal >= base ? '16,185,129' : '239,68,68';
 
     // Fill gradient
     const grad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + cH);
@@ -198,7 +204,7 @@ export class AnalyticsComponent implements OnInit {
 
     // Line
     ctx.beginPath();
-    ctx.strokeStyle = lastVal >= 0 ? '#10b981' : '#ef4444';
+    ctx.strokeStyle = lastVal >= base ? '#10b981' : '#ef4444';
     ctx.lineWidth = 2;
     for (let i = 0; i < values.length; i++) {
       if (i === 0) ctx.moveTo(toX(0), toY(values[0]));

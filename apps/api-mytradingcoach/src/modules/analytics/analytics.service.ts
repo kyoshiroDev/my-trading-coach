@@ -156,17 +156,29 @@ export class AnalyticsService {
   }
 
   async getEquityCurve(userId: string) {
-    const trades = await this.prisma.trade.findMany({
-      where: { userId, exit: { not: null } },
-      select: { tradedAt: true, pnl: true },
-      orderBy: { tradedAt: 'asc' },
-    });
+    const [trades, user] = await Promise.all([
+      this.prisma.trade.findMany({
+        where: { userId, exit: { not: null } },
+        select: { tradedAt: true, pnl: true },
+        orderBy: { tradedAt: 'asc' },
+      }),
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { startingCapital: true },
+      }),
+    ]);
+
+    const startingCapital = user?.startingCapital && user.startingCapital > 0
+      ? user.startingCapital
+      : null;
 
     let cumPnl = 0;
-    return trades.map((t) => {
+    const points = trades.map((t) => {
       cumPnl += t.pnl ?? 0;
       return { date: t.tradedAt, cumulativePnl: cumPnl };
     });
+
+    return { points, startingCapital };
   }
 
   async getTopAssets(userId: string) {
