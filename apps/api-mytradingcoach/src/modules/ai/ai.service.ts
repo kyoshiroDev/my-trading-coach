@@ -11,7 +11,6 @@ import Redis from 'ioredis';
 import { Role } from '@prisma/client';
 import { OrchestratorAgent } from './agents/orchestrator.agent';
 import { DebriefAgent } from './agents/debrief.agent';
-import { DataAgent } from './agents/data.agent';
 import { buildDebriefPrompt } from './prompts/debrief.prompt';
 import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -34,7 +33,6 @@ export class AiService implements OnModuleDestroy {
     private readonly prisma: PrismaService,
     private readonly orchestrator: OrchestratorAgent,
     private readonly debriefAgent: DebriefAgent,
-    private readonly dataAgent: DataAgent,
   ) {}
 
   async onModuleDestroy() {
