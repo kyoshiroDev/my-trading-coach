@@ -119,8 +119,8 @@ Sois concis (3-5 phrases). Si le trader a des données, base-toi dessus pour ré
     }
 
     if (userRole !== Role.ADMIN) await this.incrementQuota(userId);
-    const content = response.content[0];
-    if (content.type !== 'text') throw new HttpException('Réponse IA invalide', HttpStatus.INTERNAL_SERVER_ERROR);
+    const content = response?.content?.[0];
+    if (!content || content.type !== 'text') throw new HttpException('Réponse IA invalide', HttpStatus.INTERNAL_SERVER_ERROR);
     return { response: content.text };
   }
 

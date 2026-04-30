@@ -98,8 +98,7 @@ export class SettingsComponent implements OnInit {
     this.isSavingEmail.set(true);
     this.usersApi.updateMe({ email }).subscribe({
       next: (res) => {
-        this.auth.currentUser.set(res.data);
-        localStorage.setItem('user', JSON.stringify(res.data));
+        this.auth.setCurrentUser(res.data);
         this.editingEmail.set(false);
         this.isSavingEmail.set(false);
       },
@@ -118,8 +117,7 @@ export class SettingsComponent implements OnInit {
     this.isSavingName.set(true);
     this.usersApi.updateMe({ name }).subscribe({
       next: (res) => {
-        this.auth.currentUser.set(res.data);
-        localStorage.setItem('user', JSON.stringify(res.data));
+        this.auth.setCurrentUser(res.data);
         this.editingName.set(false);
         this.isSavingName.set(false);
       },
@@ -158,8 +156,7 @@ export class SettingsComponent implements OnInit {
     this.isSavingCapital.set(true);
     this.usersApi.updatePreferences({ startingCapital: capital }).subscribe({
       next: (res) => {
-        this.auth.currentUser.set(res.data);
-        localStorage.setItem('user', JSON.stringify(res.data));
+        this.auth.setCurrentUser(res.data);
         this.isSavingCapital.set(false);
         this.editingCapital.set(false);
       },
@@ -176,8 +173,7 @@ export class SettingsComponent implements OnInit {
     };
     this.usersApi.updatePreferences(dto).subscribe({
       next: (res) => {
-        this.auth.currentUser.set(res.data);
-        localStorage.setItem('user', JSON.stringify(res.data));
+        this.auth.setCurrentUser(res.data);
         this.isSavingPrefs.set(false);
         this.prefSaved.set(true);
         setTimeout(() => this.prefSaved.set(false), 2500);

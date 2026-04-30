@@ -86,6 +86,12 @@ export class AuthService {
     return localStorage.getItem('access_token');
   }
 
+  /** Met à jour le signal user ET le localStorage en une seule opération. */
+  setCurrentUser(user: AuthUser): void {
+    this.currentUser.set(user);
+    localStorage.setItem('user', JSON.stringify(user));
+  }
+
   refreshToken() {
     // Le refresh_token est envoyé automatiquement via le cookie httpOnly
     return this.http

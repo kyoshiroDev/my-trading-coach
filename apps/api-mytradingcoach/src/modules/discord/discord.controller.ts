@@ -1,4 +1,4 @@
-import { Controller, Get, Headers, Query, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Headers, Query, UnauthorizedException } from '@nestjs/common';
 import { Public } from '../../common/decorators/public.decorator';
 import { UsersService } from '../users/users.service';
 import { DiscordService } from './discord.service';
@@ -19,6 +19,10 @@ export class DiscordController {
   ) {
     if (!secret || secret !== process.env['DISCORD_BOT_SECRET']) {
       throw new UnauthorizedException();
+    }
+
+    if (!email || !email.includes('@') || !discordId) {
+      throw new BadRequestException('email et discordId sont requis');
     }
 
     const user = await this.usersService.findByEmail(email);
