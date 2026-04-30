@@ -11,13 +11,37 @@ import Pricing from '../components/Pricing.astro';
 import FAQ from '../components/FAQ.astro';
 import CtaFinal from '../components/CtaFinal.astro';
 import Footer from '../components/Footer.astro';
+
+const ARTICLES = [
+  {
+    slug: "revenge-trading",
+    title: "Revenge Trading : Comment l’Identifier et l’Arrêter",
+    desc: "Le revenge trading détruit les comptes. Apprenez à identifier ce comportement et les techniques pour l’éliminer.",
+    tags: ["Psychologie", "Discipline"],
+    date: "10 Avr 2026",
+  },
+  {
+    slug: "win-rate-trading",
+    title: "Win Rate en Trading : Ce que Votre Taux de Réussite Cache",
+    desc: "Un win rate de 40 % peut être plus rentable qu’un win rate de 70 %. Comprendre ce chiffre change tout.",
+    tags: ["Analyse", "Performance"],
+    date: "12 Avr 2026",
+  },
+  {
+    slug: "psychologie-trading",
+    title: "Psychologie du Trading : Les 7 Biais qui Détruisent vos Trades",
+    desc: "Biais de confirmation, excès de confiance, aversion aux pertes — identifier ces biais est la première étape.",
+    tags: ["Psychologie", "Biais cognitifs"],
+    date: "15 Avr 2026",
+  },
+];
 ---
 
 <Base
   title="MyTradingCoach — Journal de trading IA pour progresser"
   description="Analysez vos trades, maîtrisez vos émotions et progressez avec un coach IA. Journal de trading intelligent pour crypto, forex et actions."
-  canonical="https://mytradingcoach.app/"
-  ogUrl="https://mytradingcoach.app/"
+  canonical="https://www.mytradingcoach.app/"
+  ogUrl="https://www.mytradingcoach.app/"
 >
   <Nav />
   <Hero />
@@ -29,5 +53,47 @@ import Footer from '../components/Footer.astro';
   <Pricing />
   <FAQ />
   <CtaFinal />
+
+  <!-- Section blog — liens internes pour le SEO -->
+  <section style="padding:80px 5%;background:var(--bg2);border-top:1px solid var(--b);">
+    <div style="max-width:1100px;margin:0 auto;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:40px;">
+        <div>
+          <span style="font-size:11px;font-family:var(--mono);color:var(--pulse);letter-spacing:2px;text-transform:uppercase;display:block;margin-bottom:10px;">Blog</span>
+          <h2 style="font-family:var(--disp);font-size:clamp(24px,4vw,36px);font-weight:700;letter-spacing:-0.5px;color:var(--txt);margin:0;">
+            Ressources pour <em style="font-style:italic;font-family:'DM Sans',sans-serif;font-weight:300;color:var(--blue2);">mieux trader</em>
+          </h2>
+        </div>
+        <a href="/blog" style="font-size:13px;color:var(--blue2);text-decoration:none;font-family:var(--mono);white-space:nowrap;flex-shrink:0;">
+          Voir tous les articles →
+        </a>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+        {ARTICLES.map((article) => (
+          <a href={`/blog/${article.slug}`}
+             style="background:var(--card);border:1px solid var(--b);border-radius:14px;padding:24px;text-decoration:none;display:flex;flex-direction:column;gap:12px;transition:border-color .2s;"
+             onmouseover="this.style.borderColor='rgba(99,155,255,.3)'"
+             onmouseout="this.style.borderColor='var(--b)'">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              {article.tags.map((tag) => (
+                <span style="font-size:10px;font-family:var(--mono);color:var(--pulse);background:rgba(34,211,238,.07);border:1px solid rgba(34,211,238,.2);padding:2px 8px;border-radius:100px;">
+                  {tag}
+                </span>
+              ))}
+            </div>
+            <h3 style="font-family:var(--disp);font-size:16px;font-weight:700;color:var(--txt);margin:0;line-height:1.3;">
+              {article.title}
+            </h3>
+            <p style="font-size:13px;color:var(--txt2);margin:0;line-height:1.6;font-weight:300;flex:1;">
+              {article.desc}
+            </p>
+            <span style="font-size:11px;color:var(--txt3);font-family:var(--mono);">{article.date}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
   <Footer />
 </Base>

@@ -12,7 +12,7 @@ interface Props {
 const {
   title = "MyTradingCoach — Journal de trading IA pour progresser",
   description = "Journal de trading intelligent avec coach IA. Identifie tes patterns émotionnels, analyse tes performances et reçois ton Weekly Debrief chaque dimanche. Essai gratuit sans CB — hébergé en France 🇫🇷",
-  canonical = `https://mytradingcoach.app${Astro.url.pathname}`,
+  canonical = `https://www.mytradingcoach.app${Astro.url.pathname}`,
   ogUrl = canonical,
   schema,
 } = Astro.props;
@@ -39,7 +39,7 @@ const {
   <meta property="og:description" content={description} />
   <meta property="og:type" content="website" />
   <meta property="og:url" content={ogUrl} />
-  <meta property="og:image" content="https://mytradingcoach.app/icon/og-image.png" />
+  <meta property="og:image" content="https://www.mytradingcoach.app/icon/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:locale" content="fr_FR" />
@@ -50,7 +50,7 @@ const {
   <meta name="twitter:site" content="@mytradingcoach" />
   <meta name="twitter:title" content={title} />
   <meta name="twitter:description" content={description} />
-  <meta name="twitter:image" content="https://mytradingcoach.app/icon/og-image.png" />
+  <meta name="twitter:image" content="https://www.mytradingcoach.app/icon/og-image.png" />
 
   <!-- ═══ SCHEMA.ORG JSON-LD ═══ -->
   {schema ? (
@@ -63,7 +63,7 @@ const {
         "name": "MyTradingCoach",
         "applicationCategory": "FinanceApplication",
         "operatingSystem": "Web",
-        "url": "https://mytradingcoach.app",
+        "url": "https://www.mytradingcoach.app",
         "description": "Journal de trading intelligent avec coach IA, tracking émotionnel et Weekly Debrief automatique.",
         "inLanguage": "fr",
         "offers": [
@@ -84,8 +84,8 @@ const {
         "@context": "https://schema.org",
         "@type": "Organization",
         "name": "MyTradingCoach",
-        "url": "https://mytradingcoach.app",
-        "logo": "https://mytradingcoach.app/icon/og-image.png",
+        "url": "https://www.mytradingcoach.app",
+        "logo": "https://www.mytradingcoach.app/icon/og-image.png",
         "contactPoint": { "@type": "ContactPoint", "email": "hello@mytradingcoach.app", "contactType": "customer support", "availableLanguage": "French" },
         "address": { "@type": "PostalAddress", "addressCountry": "FR" },
         "sameAs": []
@@ -94,7 +94,7 @@ const {
         "@context": "https://schema.org",
         "@type": "WebSite",
         "name": "MyTradingCoach",
-        "url": "https://mytradingcoach.app",
+        "url": "https://www.mytradingcoach.app",
         "inLanguage": "fr",
         "description": "Journal de trading intelligent avec coach IA pour traders crypto et forex"
       },
