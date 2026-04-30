@@ -394,7 +394,7 @@ export class DashboardComponent implements AfterViewInit {
     return 'var(--red)';
   });
   protected readonly equityCurve = computed(() => this.equityCurveResource.value()?.data?.points ?? []);
-  private readonly equityStartingCapital = computed(() => this.equityCurveResource.value()?.data?.startingCapital ?? null);
+  private readonly initialCapitalFromCurve = computed(() => this.equityCurveResource.value()?.data?.startingCapital ?? null);
   protected readonly bySetup = computed(() => this.bySetupResource.value()?.data ?? []);
   protected readonly byEmotion = computed(() => this.byEmotionResource.value()?.data ?? []);
 
@@ -500,92 +500,140 @@ export class DashboardComponent implements AfterViewInit {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // DPR — rendu net sur écrans retina
+    const cssW = canvas.getBoundingClientRect().width || canvas.offsetWidth || 800;
+    const cssH = canvas.getBoundingClientRect().height || canvas.offsetHeight || 200;
     const dpr = window.devicePixelRatio || 1;
-    const cssW = canvas.offsetWidth || 400;
-    const cssH = 140;
     canvas.width  = cssW * dpr;
     canvas.height = cssH * dpr;
     ctx.scale(dpr, dpr);
 
     const W = cssW;
     const H = cssH;
-    const PAD = { top: 12, right: 12, bottom: 20, left: 52 };
+    const PAD = { top: 16, right: 24, bottom: 32, left: 62 };
     const cW = W - PAD.left - PAD.right;
     const cH = H - PAD.top - PAD.bottom;
 
     ctx.clearRect(0, 0, W, H);
 
-    const capital = this.equityStartingCapital();
-    const base = capital != null && capital > 0 ? capital : 0;
+    const base = this.initialCapitalFromCurve() ?? 0;
     const values = [base, ...points.map((p) => base + p.cumulativePnl)];
-    const minV = Math.min(base, ...values);
-    const maxV = Math.max(base, ...values);
-    const range = maxV - minV || 1;
+
+    const rawMin = Math.min(...values);
+    const rawMax = Math.max(...values);
+    const padding = (rawMax - rawMin) * 0.1 || rawMax * 0.05 || 1;
+    const minV = rawMin - padding;
+    const maxV = rawMax + padding;
+    const range = maxV - minV;
 
     const toX = (i: number) => PAD.left + (i / (values.length - 1)) * cW;
     const toY = (v: number) => PAD.top + cH - ((v - minV) / range) * cH;
 
-    // Tracé bezier lissé
-    const bezierPath = (close: boolean) => {
-      ctx.moveTo(toX(0), toY(values[0]));
-      for (let i = 1; i < values.length; i++) {
+    const lastVal  = values[values.length - 1] ?? 0;
+    const firstVal = values[0] ?? 0;
+    const isPositive = lastVal >= firstVal;
+    const rgb   = isPositive ? '59,130,246'  : '239,68,68';
+    const color = isPositive ? '#3b82f6'     : '#ef4444';
+
+    // Grille horizontale (5 niveaux) — lignes sans labels
+    const gridCount = 4;
+    for (let i = 0; i <= gridCount; i++) {
+      const v = minV + (range / gridCount) * i;
+      const y = toY(v);
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(99,155,255,0.08)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 8]);
+      ctx.moveTo(PAD.left, y);
+      ctx.lineTo(PAD.left + cW, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    const fmtVal = (v: number) => Math.abs(v) >= 1000
+      ? '$' + (v / 1000).toFixed(1) + 'k'
+      : '$' + v.toFixed(0);
+
+    ctx.font = '500 10px "DM Mono", "Courier New", monospace';
+    ctx.textBaseline = 'middle';
+
+    // Label bas-gauche : capital de départ (là où la courbe commence)
+    ctx.fillStyle = 'rgba(112,144,176,0.75)';
+    ctx.textAlign = 'right';
+    ctx.fillText(fmtVal(firstVal), PAD.left - 8, toY(firstVal));
+
+    // Label haut-droite : capital + P&L (valeur finale, près du dot)
+    const lastX = toX(values.length - 1);
+    const lastY = toY(lastVal);
+    ctx.fillStyle = color;
+    ctx.textAlign = 'right';
+    const labelY = lastY > PAD.top + 14 ? lastY - 14 : lastY + 14;
+    ctx.fillText(fmtVal(lastVal), lastX + 6, labelY);
+
+    // Labels X : premier, milieu, dernier
+    const xIndices = [1, Math.floor((values.length - 1) / 2), values.length - 1];
+    for (const idx of xIndices) {
+      const pt = points[idx - 1];
+      if (!pt) continue;
+      const d = new Date(pt.date);
+      const label = d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+      ctx.fillStyle = 'rgba(112,144,176,0.6)';
+      ctx.font = '400 9px "DM Mono", "Courier New", monospace';
+      ctx.textAlign = idx === values.length - 1 ? 'right' : idx === 1 ? 'left' : 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(label, toX(idx), PAD.top + cH + 8);
+    }
+
+    // Bezier smooth helper
+    const smoothPath = (vs: number[], close: boolean) => {
+      ctx.moveTo(toX(0), toY(vs[0]));
+      for (let i = 1; i < vs.length; i++) {
         const cpx = (toX(i - 1) + toX(i)) / 2;
-        ctx.bezierCurveTo(cpx, toY(values[i - 1]), cpx, toY(values[i]), toX(i), toY(values[i]));
+        ctx.bezierCurveTo(cpx, toY(vs[i - 1]), cpx, toY(vs[i]), toX(i), toY(vs[i]));
       }
       if (close) {
-        ctx.lineTo(toX(values.length - 1), PAD.top + cH);
-        ctx.lineTo(toX(0), PAD.top + cH);
+        ctx.lineTo(toX(vs.length - 1), PAD.top + cH);
+        ctx.lineTo(PAD.left, PAD.top + cH);
         ctx.closePath();
       }
     };
 
-    // Grid lines
-    ctx.strokeStyle = 'rgba(99,155,255,0.06)';
-    ctx.lineWidth = 1;
-    for (let i = 0; i <= 3; i++) {
-      const y = PAD.top + (cH / 3) * i;
-      ctx.beginPath();
-      ctx.moveTo(PAD.left, y);
-      ctx.lineTo(PAD.left + cW, y);
-      ctx.stroke();
-    }
-
-    // Baseline pointillée
-    ctx.strokeStyle = 'rgba(99,155,255,0.2)';
-    ctx.setLineDash([4, 4]);
-    ctx.beginPath();
-    ctx.moveTo(PAD.left, toY(base));
-    ctx.lineTo(PAD.left + cW, toY(base));
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Fill gradient bleu
+    // Gradient fill
     const grad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + cH);
-    grad.addColorStop(0, 'rgba(59,130,246,0.2)');
-    grad.addColorStop(1, 'rgba(59,130,246,0)');
+    grad.addColorStop(0,   `rgba(${rgb}, 0.4)`);
+    grad.addColorStop(0.5, `rgba(${rgb}, 0.12)`);
+    grad.addColorStop(1,   `rgba(${rgb}, 0.0)`);
     ctx.beginPath();
-    bezierPath(true);
+    smoothPath(values, true);
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // Ligne bleue lissée
+    // Ligne principale avec glow
     ctx.beginPath();
-    ctx.strokeStyle = '#3b82f6';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
     ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-    bezierPath(false);
+    ctx.lineCap  = 'round';
+    ctx.shadowColor = color;
+    ctx.shadowBlur  = 8;
+    smoothPath(values, false);
     ctx.stroke();
+    ctx.shadowBlur = 0;
 
-    // Y labels
-    ctx.fillStyle = 'rgba(122,147,187,0.7)';
-    ctx.font = '10px "DM Mono", monospace';
-    ctx.textAlign = 'right';
-    [minV, maxV].forEach((v) => {
-      const label = Math.abs(v) >= 1000 ? `$${(v / 1000).toFixed(1)}k` : `$${v.toFixed(0)}`;
-      ctx.fillText(label, PAD.left - 6, toY(v) + 4);
-    });
+    // Dot final
+    const lx = toX(values.length - 1);
+    const ly = toY(lastVal);
+    ctx.beginPath();
+    ctx.arc(lx, ly, 7, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(${rgb}, 0.3)`;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(lx, ly, 4, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur  = 12;
+    ctx.fill();
+    ctx.shadowBlur = 0;
   }
 
 }

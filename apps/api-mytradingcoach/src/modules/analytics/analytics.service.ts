@@ -8,7 +8,7 @@ export class AnalyticsService {
 
   async getSummary(userId: string) {
     const trades = await this.prisma.trade.findMany({
-      where: { userId, exit: { not: null } },
+      where: { userId, pnl: { not: null } },
       select: { pnl: true, tradedAt: true, session: true },
       orderBy: { tradedAt: 'asc' },
     });
@@ -81,7 +81,7 @@ export class AnalyticsService {
 
   async getBySetup(userId: string) {
     const trades = await this.prisma.trade.findMany({
-      where: { userId, exit: { not: null } },
+      where: { userId, pnl: { not: null } },
       select: { setup: true, pnl: true, riskReward: true },
     });
 
@@ -106,7 +106,7 @@ export class AnalyticsService {
 
   async getByEmotion(userId: string) {
     const trades = await this.prisma.trade.findMany({
-      where: { userId, exit: { not: null } },
+      where: { userId, pnl: { not: null } },
       select: { emotion: true, pnl: true, riskReward: true },
     });
 
@@ -130,7 +130,7 @@ export class AnalyticsService {
 
   async getByHour(userId: string) {
     const trades = await this.prisma.trade.findMany({
-      where: { userId, exit: { not: null } },
+      where: { userId, pnl: { not: null } },
       select: { tradedAt: true, pnl: true },
     });
 
@@ -158,7 +158,7 @@ export class AnalyticsService {
   async getEquityCurve(userId: string) {
     const [trades, user] = await Promise.all([
       this.prisma.trade.findMany({
-        where: { userId, exit: { not: null } },
+        where: { userId, pnl: { not: null } },
         select: { tradedAt: true, pnl: true },
         orderBy: { tradedAt: 'asc' },
       }),
@@ -183,7 +183,7 @@ export class AnalyticsService {
 
   async getTopAssets(userId: string) {
     const trades = await this.prisma.trade.findMany({
-      where: { userId, exit: { not: null } },
+      where: { userId, pnl: { not: null } },
       select: { asset: true, pnl: true },
     });
 
