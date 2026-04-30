@@ -330,7 +330,7 @@ export class DashboardComponent implements AfterViewInit {
   private readonly summaryResource = httpResource<{ data: Summary }>(
     () => `${environment.apiUrl}/analytics/summary`
   );
-  private readonly equityCurveResource = httpResource<{ data: EquityPoint[] }>(
+  private readonly equityCurveResource = httpResource<{ data: { points: EquityPoint[]; startingCapital: number | null } }>(
     () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/equity-curve` : undefined
   );
   private readonly bySetupResource = httpResource<{ data: BySetup[] }>(
@@ -393,7 +393,8 @@ export class DashboardComponent implements AfterViewInit {
     if (dd === 0) return 'var(--text-2)';
     return 'var(--red)';
   });
-  protected readonly equityCurve = computed(() => this.equityCurveResource.value()?.data ?? []);
+  protected readonly equityCurve = computed(() => this.equityCurveResource.value()?.data?.points ?? []);
+  private readonly equityStartingCapital = computed(() => this.equityCurveResource.value()?.data?.startingCapital ?? null);
   protected readonly bySetup = computed(() => this.bySetupResource.value()?.data ?? []);
   protected readonly byEmotion = computed(() => this.byEmotionResource.value()?.data ?? []);
 
@@ -515,8 +516,8 @@ export class DashboardComponent implements AfterViewInit {
 
     ctx.clearRect(0, 0, W, H);
 
-    const capital = this.userStore.startingCapital();
-    const base = capital > 0 ? capital : 0;
+    const capital = this.equityStartingCapital();
+    const base = capital != null && capital > 0 ? capital : 0;
     const values = [base, ...points.map((p) => base + p.cumulativePnl)];
     const minV = Math.min(base, ...values);
     const maxV = Math.max(base, ...values);

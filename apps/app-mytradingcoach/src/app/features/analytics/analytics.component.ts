@@ -42,6 +42,7 @@ export class AnalyticsComponent implements OnInit {
   protected readonly showPlanModal = signal(false);
   protected readonly summary = signal<AnalyticsSummary | null>(null);
   protected readonly equityCurve = signal<EquityPoint[]>([]);
+  private readonly equityStartingCapital = signal<number | null>(null);
   protected readonly heatmapData = signal<HeatmapCell[]>([]);
   protected readonly topAssets = signal<TopAsset[]>([]);
   protected readonly setupData = signal<SetupStat[]>([]);
@@ -89,7 +90,10 @@ export class AnalyticsComponent implements OnInit {
 
   private loadPremiumData(): void {
     this.analyticsApi.getEquityCurve().subscribe({
-      next: (res) => this.equityCurve.set(res.data),
+      next: (res) => {
+        this.equityCurve.set(res.data.points);
+        this.equityStartingCapital.set(res.data.startingCapital);
+      },
       error: () => { /* silently ignore */ },
     });
     this.analyticsApi.getByHour().subscribe({
@@ -152,8 +156,8 @@ export class AnalyticsComponent implements OnInit {
 
     ctx.clearRect(0, 0, W, H);
 
-    const capital = this.userStore.startingCapital();
-    const base = capital > 0 ? capital : 0;
+    const capital = this.equityStartingCapital();
+    const base = capital != null && capital > 0 ? capital : 0;
     const values = [base, ...points.map((p) => base + p.cumulativePnl)];
     const minV = Math.min(base, ...values);
     const maxV = Math.max(base, ...values);

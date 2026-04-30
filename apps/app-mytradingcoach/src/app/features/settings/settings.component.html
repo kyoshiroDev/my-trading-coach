@@ -188,7 +188,6 @@
                     [value]="capitalInput()"
                     (input)="filterCapital($event)"
                     placeholder="ex : 5000"
-                    autofocus
                   />
                   <button class="settings-save-btn" (click)="saveCapital()" [disabled]="isSavingCapital()">
                     {{ isSavingCapital() ? '...' : 'Sauvegarder' }}
