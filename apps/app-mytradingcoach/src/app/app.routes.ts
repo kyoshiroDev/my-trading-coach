@@ -47,16 +47,19 @@ export const appRoutes: Routes = [
       },
       {
         path: 'ai-insights',
+        // Pas de premiumGuard — paywall inline intentionnel (preview + UX conversion)
         loadComponent: () =>
           import('./features/ai-insights/ai-insights.component').then((m) => m.AiInsightsComponent),
       },
       {
         path: 'debrief',
+        // Pas de premiumGuard — paywall inline intentionnel (preview + UX conversion)
         loadComponent: () =>
           import('./features/weekly-debrief/debrief.component').then((m) => m.DebriefComponent),
       },
       {
         path: 'scoring',
+        // Pas de premiumGuard — paywall inline intentionnel (preview + UX conversion)
         loadComponent: () =>
           import('./features/scoring/scoring.component').then((m) => m.ScoringComponent),
       },

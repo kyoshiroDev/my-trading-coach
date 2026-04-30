@@ -35,15 +35,15 @@ export class TradesStore {
   private readonly destroyRef = inject(DestroyRef);
   private readonly baseUrl = `${environment.apiUrl}/trades`;
 
-  readonly trades$ = signal<Trade[]>([]);
-  readonly isLoading$ = signal(false);
-  readonly isLoadingMore$ = signal(false);
-  readonly error$ = signal<string | null>(null);
-  readonly nextCursor$ = signal<string | null>(null);
-  readonly hasNextPage$ = signal(false);
+  readonly trades = signal<Trade[]>([]);
+  readonly isLoading = signal(false);
+  readonly isLoadingMore = signal(false);
+  readonly error = signal<string | null>(null);
+  readonly nextCursor = signal<string | null>(null);
+  readonly hasNextPage = signal(false);
 
-  readonly totalTrades = computed(() => this.trades$().length);
-  readonly winningTrades = computed(() => this.trades$().filter((t) => (t.pnl ?? 0) > 0).length);
+  readonly totalTrades = computed(() => this.trades().length);
+  readonly winningTrades = computed(() => this.trades().filter((t) => (t.pnl ?? 0) > 0).length);
   readonly winRate = computed(() => {
     const total = this.totalTrades();
     return total > 0 ? (this.winningTrades() / total) * 100 : 0;
@@ -51,66 +51,66 @@ export class TradesStore {
 
   // Charge une première page (remplace les trades existants)
   loadTrades(filters?: Record<string, string>) {
-    this.isLoading$.set(true);
-    this.error$.set(null);
+    this.isLoading.set(true);
+    this.error.set(null);
 
     const params = new URLSearchParams(filters ?? {});
     this.http.get<{ data: TradesPage }>(`${this.baseUrl}?${params}`)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
-          this.trades$.set(res.data.data);
-          this.nextCursor$.set(res.data.nextCursor);
-          this.hasNextPage$.set(res.data.hasNextPage);
-          this.isLoading$.set(false);
+          this.trades.set(res.data.data);
+          this.nextCursor.set(res.data.nextCursor);
+          this.hasNextPage.set(res.data.hasNextPage);
+          this.isLoading.set(false);
         },
         error: (err) => {
-          this.error$.set(err.message);
-          this.isLoading$.set(false);
+          this.error.set(err.message);
+          this.isLoading.set(false);
         },
       });
   }
 
   // Charge la page suivante (APPEND — ne remplace pas)
   loadMore() {
-    const cursor = this.nextCursor$();
-    if (!cursor || this.isLoadingMore$()) return;
+    const cursor = this.nextCursor();
+    if (!cursor || this.isLoadingMore()) return;
 
-    this.isLoadingMore$.set(true);
+    this.isLoadingMore.set(true);
     const params = new URLSearchParams({ cursor });
     this.http.get<{ data: TradesPage }>(`${this.baseUrl}?${params}`)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
-          this.trades$.update((existing) => [...existing, ...res.data.data]);
-          this.nextCursor$.set(res.data.nextCursor);
-          this.hasNextPage$.set(res.data.hasNextPage);
-          this.isLoadingMore$.set(false);
+          this.trades.update((existing) => [...existing, ...res.data.data]);
+          this.nextCursor.set(res.data.nextCursor);
+          this.hasNextPage.set(res.data.hasNextPage);
+          this.isLoadingMore.set(false);
         },
         error: (err) => {
-          this.error$.set(err.message);
-          this.isLoadingMore$.set(false);
+          this.error.set(err.message);
+          this.isLoadingMore.set(false);
         },
       });
   }
 
   addTrade(trade: Trade) {
-    this.trades$.update((trades) => [trade, ...trades]);
+    this.trades.update((trades) => [trade, ...trades]);
   }
 
   updateTrade(updated: Trade) {
-    this.trades$.update((trades) =>
+    this.trades.update((trades) =>
       trades.map((t) => (t.id === updated.id ? updated : t)),
     );
   }
 
   removeTrade(id: string) {
-    this.trades$.update((trades) => trades.filter((t) => t.id !== id));
+    this.trades.update((trades) => trades.filter((t) => t.id !== id));
   }
 
   reset() {
-    this.trades$.set([]);
-    this.nextCursor$.set(null);
-    this.hasNextPage$.set(false);
+    this.trades.set([]);
+    this.nextCursor.set(null);
+    this.hasNextPage.set(false);
   }
 }

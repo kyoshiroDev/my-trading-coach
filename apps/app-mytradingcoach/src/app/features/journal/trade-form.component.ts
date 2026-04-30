@@ -189,10 +189,10 @@ export class TradeFormComponent {
 
   private emptyForm(): Partial<CreateTradeDto> {
     return {
-      side: 'LONG',
-      emotion: 'FOCUSED',
-      setup: 'BREAKOUT',
-      session: 'LONDON',
+      side:      'LONG'     as const,
+      emotion:   'FOCUSED'  as const,
+      setup:     'BREAKOUT' as const,
+      session:   'LONDON'   as const,
       timeframe: '1h',
     };
   }

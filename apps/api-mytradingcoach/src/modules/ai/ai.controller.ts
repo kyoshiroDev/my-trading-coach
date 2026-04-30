@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -20,6 +20,11 @@ class ChatDto {
 @Controller('ai')
 export class AiController {
   constructor(private aiService: AiService) {}
+
+  @Get('cooldown')
+  getCooldown(@CurrentUser() user: { id: string }) {
+    return this.aiService.getInsightsCooldown(user.id);
+  }
 
   @Throttle({ default: { ttl: 60000, limit: 20 } })
   @Post('insights')

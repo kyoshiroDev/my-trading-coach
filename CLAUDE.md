@@ -45,7 +45,14 @@
 - ❌ Prisma dans les controllers → ✅ passer par les services
 - ❌ 14 jours de trial → ✅ 7 jours
 - ❌ Filtre 30 jours sur historique FREE → ✅ historique illimité
-- ❌ `PremiumGuard` sur la route `/analytics` → ✅ guard dans le composant uniquement
+- ❌ `PremiumGuard` sur `/analytics`, `/ai-insights`, `/debrief`, `/scoring` → ✅ paywall inline intentionnel dans le composant
+- ❌ `subscribe()` sans `takeUntilDestroyed` dans les composants → ✅ toujours `.pipe(takeUntilDestroyed(this.destroyRef))`
+- ❌ Variables module-level dans les interceptors → ✅ encapsuler dans un `@Injectable`
+- ❌ `isPremium()` / `isAdmin()` dans `AuthService` → ✅ utiliser `UserStore.isPremium()` / `UserStore.isAdmin()` (computed signal réactif)
+- ❌ Interfaces de types dupliquées dans les composants → ✅ importer depuis `core/api/*.api.ts`
+- ❌ `HttpClient` injecté directement dans les composants → ✅ passer par les classes `*Api` dans `core/api/`
+- ❌ Suffixe `$` sur les signals Angular → ✅ réservé aux Observables RxJS uniquement
+- ❌ `ngOnInit` pour lire des signals → ✅ `effect()` dans le constructeur pour la réactivité
 - ❌ `DATABASE_URL` pointant vers Postgres directement en prod → ✅ vers PgBouncer (`mtc_pgbouncer:6432?pgbouncer=true&connection_limit=1`)
 - ❌ Migrations Prisma via `DATABASE_URL` (PgBouncer) → ✅ via `DATABASE_DIRECT_URL` (Postgres direct)
 - ❌ Ajouter `ScheduleModule.forRoot()` inconditionnellement → ✅ conditionnel sur `IS_CRON_WORKER !== 'false'`
@@ -101,6 +108,9 @@ mytradingcoach/
 - **`@defer`** pour le lazy loading des composants lourds
 - **`DestroyRef`** à la place de `ngOnDestroy`
 - **`inject()`** plutôt que constructeur
+- **Visibilité signals** : template-only → `protected`, interne → `private`, exposé → `readonly`
+- **Couche API** : tout appel HTTP passe par les classes `*Api` dans `core/api/` (jamais `HttpClient` directement dans les composants)
+- **Pas de suffixe `$`** sur les signals — réservé aux Observables RxJS
 - Prefix composants : `mtc-` — TypeScript 5.8+, Node.js 20.11.1+
 - Icônes : `lucide-angular` exclusivement
 - **Tests : Vitest** (pas Jest) — `pnpm nx test app-mytradingcoach`

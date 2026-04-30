@@ -49,7 +49,7 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
       </div>
 
       <!-- Tableau -->
-      @if (tradesStore.isLoading$()) {
+      @if (tradesStore.isLoading()) {
         <div class="loading-state">Chargement des trades...</div>
       } @else if (filteredTrades().length === 0) {
         <div class="empty-state" data-testid="empty-state">
@@ -111,7 +111,7 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
           </tbody>
         </table>
 
-        @if (tradesStore.hasNextPage$()) {
+        @if (tradesStore.hasNextPage()) {
           <button class="btn-load-more" (click)="loadMore()">Charger plus de trades</button>
         }
       }
@@ -145,7 +145,7 @@ export class JournalComponent implements OnInit {
 
   /** computed() : recalculé uniquement quand les trades ou les filtres changent */
   protected readonly filteredTrades = computed(() => {
-    let trades = this.tradesStore.trades$();
+    let trades = this.tradesStore.trades();
     const side = this.filterSide();
     const setup = this.filterSetup();
     if (side !== 'ALL') trades = trades.filter(t => t.side === side);

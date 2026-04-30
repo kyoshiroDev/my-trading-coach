@@ -3,15 +3,18 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { signal } from '@angular/core';
 import { authGuard, premiumGuard } from './auth.guard';
-import { AuthService } from './auth.service';
+import { AuthService, AuthUser } from './auth.service';
+import { UserStore } from '../stores/user.store';
 import { provideHttpClient } from '@angular/common/http';
 
 const makeAuthMock = (authenticated: boolean, premium: boolean) => ({
-  currentUser: signal(
+  currentUser: signal<AuthUser | null>(
     authenticated ? { id: '1', email: 'test@test.com', plan: premium ? 'PREMIUM' : 'FREE' } : null,
   ),
   isAuthenticated: signal(authenticated),
-  isPremium: vi.fn().mockReturnValue(premium),
+  fetchMe: vi.fn(),
+  refreshUser: vi.fn(),
+  setCurrentUser: vi.fn(),
 });
 
 const setupTestBed = (authMock: ReturnType<typeof makeAuthMock>) => {
@@ -20,6 +23,7 @@ const setupTestBed = (authMock: ReturnType<typeof makeAuthMock>) => {
       provideRouter([]),
       provideHttpClient(),
       { provide: AuthService, useValue: authMock },
+      UserStore,
     ],
   });
 };
@@ -54,12 +58,11 @@ describe('authGuard', () => {
 describe('premiumGuard', () => {
   it('retourne true si authentifié ET premium', () => {
     setupTestBed(makeAuthMock(true, true));
-
     const result = TestBed.runInInjectionContext(() => premiumGuard({} as unknown as ActivatedRouteSnapshot, {} as unknown as RouterStateSnapshot));
     expect(result).toBe(true);
   });
 
-  it('redirige vers /dashboard si authentifié mais pas premium', () => {
+  it('redirige vers /settings si authentifié mais pas premium', () => {
     setupTestBed(makeAuthMock(true, false));
     const router = TestBed.inject(Router);
     const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);

@@ -10,6 +10,8 @@ const makeAuthServiceMock = (initialUser: AuthUser | null = null) => {
     currentUser,
     isAuthenticated: signal(initialUser !== null),
     isPremium: () => currentUser()?.plan === 'PREMIUM',
+    fetchMe: vi.fn(),
+    setCurrentUser: vi.fn((user: AuthUser) => currentUser.set(user)),
   };
 };
 

@@ -19,6 +19,7 @@ export interface SetupStat {
   winRate: number;
   avgRR: number;
   count: number;
+  pnl: number;
 }
 
 export interface EmotionStat {

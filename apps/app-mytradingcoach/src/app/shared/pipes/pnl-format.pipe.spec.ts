@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { PnlFormatPipe } from './pnl-format.pipe';
 import { UserStore } from '../../core/stores/user.store';
@@ -13,7 +13,7 @@ const mockUser = (currency = 'USD', currencyRate = 1) => ({
 });
 
 function makePipe(currency = 'USD', currencyRate = 1): PnlFormatPipe {
-  const mockAuthService = { currentUser: signal(mockUser(currency, currencyRate)), isAuthenticated: signal(true) };
+  const mockAuthService = { currentUser: signal(mockUser(currency, currencyRate)), isAuthenticated: signal(true), fetchMe: vi.fn(), setCurrentUser: vi.fn() };
   TestBed.configureTestingModule({
     providers: [
       PnlFormatPipe,

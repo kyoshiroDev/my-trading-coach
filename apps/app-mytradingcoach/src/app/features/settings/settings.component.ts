@@ -1,5 +1,5 @@
 import {
-  ChangeDetectionStrategy, Component, OnInit, inject, signal,
+  ChangeDetectionStrategy, Component, OnInit, effect, inject, signal,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
@@ -63,15 +63,20 @@ export class SettingsComponent implements OnInit {
   protected readonly deleteInput = signal('');
   protected readonly isDeleting = signal(false);
 
-  ngOnInit(): void {
-    if (this.route.snapshot.queryParamMap.get('checkout') === 'success') {
-      this.userStore.refreshUser();
-    }
-    const user = this.userStore.user();
-    if (user) {
+  constructor() {
+    // Sync réactive : se met à jour si le user change (retour d'onglet, refresh)
+    effect(() => {
+      const user = this.userStore.user();
+      if (!user) return;
       this.prefCurrency.set((user.currency as 'USD' | 'EUR' | 'GBP') ?? 'USD');
       this.prefNotifications.set(user.notificationsEmail ?? true);
       this.prefDebrief.set(user.debriefAutomatic ?? true);
+    });
+  }
+
+  ngOnInit(): void {
+    if (this.route.snapshot.queryParamMap.get('checkout') === 'success') {
+      this.userStore.refreshUser();
     }
   }
 
