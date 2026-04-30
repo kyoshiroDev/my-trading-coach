@@ -534,7 +534,7 @@ export class DashboardComponent implements AfterViewInit {
     const rgb   = isPositive ? '59,130,246'  : '239,68,68';
     const color = isPositive ? '#3b82f6'     : '#ef4444';
 
-    // Grille horizontale (5 niveaux)
+    // Grille horizontale (5 niveaux) — lignes sans labels
     const gridCount = 4;
     for (let i = 0; i <= gridCount; i++) {
       const v = minV + (range / gridCount) * i;
@@ -547,15 +547,27 @@ export class DashboardComponent implements AfterViewInit {
       ctx.lineTo(PAD.left + cW, y);
       ctx.stroke();
       ctx.setLineDash([]);
-      const formatted = Math.abs(v) >= 1000
-        ? '$' + (v / 1000).toFixed(1) + 'k'
-        : '$' + v.toFixed(0);
-      ctx.fillStyle = 'rgba(112,144,176,0.75)';
-      ctx.font = '500 10px "DM Mono", "Courier New", monospace';
-      ctx.textAlign = 'right';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(formatted, PAD.left - 8, y);
     }
+
+    const fmtVal = (v: number) => Math.abs(v) >= 1000
+      ? '$' + (v / 1000).toFixed(1) + 'k'
+      : '$' + v.toFixed(0);
+
+    ctx.font = '500 10px "DM Mono", "Courier New", monospace';
+    ctx.textBaseline = 'middle';
+
+    // Label bas-gauche : capital de départ (là où la courbe commence)
+    ctx.fillStyle = 'rgba(112,144,176,0.75)';
+    ctx.textAlign = 'right';
+    ctx.fillText(fmtVal(firstVal), PAD.left - 8, toY(firstVal));
+
+    // Label haut-droite : capital + P&L (valeur finale, près du dot)
+    const lastX = toX(values.length - 1);
+    const lastY = toY(lastVal);
+    ctx.fillStyle = color;
+    ctx.textAlign = 'right';
+    const labelY = lastY > PAD.top + 14 ? lastY - 14 : lastY + 14;
+    ctx.fillText(fmtVal(lastVal), lastX + 6, labelY);
 
     // Labels X : premier, milieu, dernier
     const xIndices = [1, Math.floor((values.length - 1) / 2), values.length - 1];
