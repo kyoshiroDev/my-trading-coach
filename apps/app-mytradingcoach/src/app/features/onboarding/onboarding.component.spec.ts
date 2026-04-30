@@ -47,6 +47,7 @@ const mockTradesStore = {
 };
 const mockAuth = {
   currentUser: signal(null as unknown),
+  setCurrentUser: vi.fn(),
 };
 
 describe('OnboardingComponent', () => {

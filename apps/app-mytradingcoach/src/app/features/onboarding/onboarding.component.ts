@@ -92,8 +92,7 @@ export class OnboardingComponent {
     };
     this.usersApi.completeOnboarding(onboardingDto).pipe(
       tap((res) => {
-        this.auth.currentUser.set(res.data);
-        localStorage.setItem('user', JSON.stringify(res.data));
+        this.auth.setCurrentUser(res.data);
       }),
       switchMap(() => this.tradesApi.create(dto)),
       takeUntilDestroyed(this.destroyRef),
@@ -125,8 +124,7 @@ export class OnboardingComponent {
       takeUntilDestroyed(this.destroyRef),
     ).subscribe({
       next: (res) => {
-        this.auth.currentUser.set(res.data);
-        localStorage.setItem('user', JSON.stringify(res.data));
+        this.auth.setCurrentUser(res.data);
         this.isSaving.set(false);
         this.completed.emit();
       },

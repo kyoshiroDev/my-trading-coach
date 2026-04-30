@@ -54,7 +54,7 @@ export class AnalyticsService {
     let topSession = '—';
     let topSessionWinRate = 0;
     for (const [session, g] of sessionMap.entries()) {
-      const wr = (g.wins / g.count) * 100;
+      const wr = g.count > 0 ? (g.wins / g.count) * 100 : 0;
       if (wr > topSessionWinRate) { topSessionWinRate = wr; topSession = session; }
     }
 
@@ -71,7 +71,7 @@ export class AnalyticsService {
     let topHourWr = 0;
     for (const [h, g] of hourMap.entries()) {
       if (g.count < 2) continue;
-      const wr = (g.wins / g.count) * 100;
+      const wr = g.count > 0 ? (g.wins / g.count) * 100 : 0;
       if (wr > topHourWr) { topHourWr = wr; topHourNum = h; }
     }
     const topHour = topHourNum >= 0 ? `${String(topHourNum).padStart(2, '0')}:00` : '—';
@@ -97,7 +97,7 @@ export class AnalyticsService {
 
     return Array.from(grouped.entries()).map(([setup, g]) => ({
       setup,
-      winRate: (g.wins / g.count) * 100,
+      winRate: g.count > 0 ? (g.wins / g.count) * 100 : 0,
       avgRR: g.rr.length ? g.rr.reduce((a, b) => a + b, 0) / g.rr.length : 0,
       count: g.count,
       pnl: g.pnl,
@@ -122,7 +122,7 @@ export class AnalyticsService {
 
     return Array.from(grouped.entries()).map(([emotion, g]) => ({
       emotion,
-      winRate: (g.wins / g.count) * 100,
+      winRate: g.count > 0 ? (g.wins / g.count) * 100 : 0,
       avgRR: g.rr.length ? g.rr.reduce((a, b) => a + b, 0) / g.rr.length : 0,
       count: g.count,
     }));
@@ -150,7 +150,7 @@ export class AnalyticsService {
     return Array.from(grouped.values()).map((g) => ({
       day: g.day,
       hour: g.hour,
-      winRate: (g.wins / g.count) * 100,
+      winRate: g.count > 0 ? (g.wins / g.count) * 100 : 0,
       count: g.count,
     }));
   }
@@ -199,7 +199,7 @@ export class AnalyticsService {
     return Array.from(grouped.entries())
       .map(([asset, g]) => ({
         asset,
-        winRate: (g.wins / g.count) * 100,
+        winRate: g.count > 0 ? (g.wins / g.count) * 100 : 0,
         pnl: g.pnl,
         count: g.count,
       }))

@@ -21,11 +21,12 @@ export interface PatternAnalysis {
 const PATTERN_SYSTEM = `Tu es un analyste quantitatif de trading.
 Tu identifies les patterns comportementaux significatifs et les corrélations émotion/performance.
 Réponds TOUJOURS en JSON valide. Jamais de markdown.
+LONGUEUR STRICTE : chaque champ texte = 1 seule phrase, 12 mots maximum, pas de saut de ligne.
 Format :
 {
-  "patterns": [{ "type": "strength"|"weakness"|"pattern", "title": "string", "description": "string (2-3 phrases max, sans saut de ligne)", "badge": "Force"|"Attention"|"Pattern" }],
-  "topPattern": "string (le pattern principal identifié en 1 phrase)",
-  "emotionInsight": "string (corrélation émotion → performance en 1-2 phrases)"
+  "patterns": [{ "type": "strength"|"weakness"|"pattern", "title": "string (5 mots max)", "description": "string (1 phrase, 12 mots max)", "badge": "Force"|"Attention"|"Pattern" }],
+  "topPattern": "string (1 phrase, 12 mots max)",
+  "emotionInsight": "string (1 phrase, 12 mots max)"
 }`;
 
 @Injectable()

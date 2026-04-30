@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   OnInit,
   ViewChild,
@@ -9,6 +10,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PnlFormatPipe, SessionLabelPipe } from '../../shared/pipes';
 import { UserStore } from '../../core/stores/user.store';
@@ -22,6 +24,16 @@ import {
 } from '../../core/api/analytics.api';
 import { BillingApi } from '../../core/api/billing.api';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
+
+const MOCK_HEATMAP_CELLS = [
+  0.75, 0.45, 0.80, 0.30, 0.65, 0.55, 0.20,
+  0.60, 0.70, 0.35, 0.85, 0.50, 0.40, 0.72,
+  0.25, 0.68, 0.45, 0.78, 0.33, 0.61, 0.48,
+  0.82, 0.37, 0.56, 0.43, 0.71, 0.29, 0.64,
+  0.53, 0.77, 0.38, 0.59, 0.44, 0.83, 0.27,
+  0.66, 0.41, 0.74, 0.32, 0.57, 0.47, 0.69,
+] as const;
+const MOCK_SETUP_BARS = [88, 72, 65, 54, 38] as const;
 
 @Component({
   selector: 'mtc-analytics',
@@ -38,6 +50,7 @@ export class AnalyticsComponent implements OnInit {
   protected readonly userStore = inject(UserStore);
   private readonly analyticsApi = inject(AnalyticsApi);
   private readonly billingApi = inject(BillingApi);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly showPlanModal = signal(false);
   protected readonly summary = signal<AnalyticsSummary | null>(null);
@@ -51,8 +64,8 @@ export class AnalyticsComponent implements OnInit {
   protected readonly hours = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
   protected readonly Math = Math;
 
-  protected readonly mockCells = Array.from({ length: 42 }, () => Math.random() * 0.7 + 0.15);
-  protected readonly mockBars = [88, 72, 65, 54, 38];
+  protected readonly mockCells = MOCK_HEATMAP_CELLS;
+  protected readonly mockBars = MOCK_SETUP_BARS;
 
   protected readonly winRateColor = computed(() => {
     const wr = this.summary()?.winRate;
@@ -78,10 +91,12 @@ export class AnalyticsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.analyticsApi.getSummary().subscribe({
-      next: (res) => this.summary.set(res.data),
-      error: () => { /* silently ignore */ },
-    });
+    this.analyticsApi.getSummary()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => this.summary.set(res.data),
+        error: () => { /* silently ignore */ },
+      });
 
     if (this.userStore.isPremium()) {
       this.loadPremiumData();
@@ -89,25 +104,33 @@ export class AnalyticsComponent implements OnInit {
   }
 
   private loadPremiumData(): void {
-    this.analyticsApi.getEquityCurve().subscribe({
-      next: (res) => {
-        this.equityCurve.set(res.data.points);
-        this.equityStartingCapital.set(res.data.startingCapital);
-      },
-      error: () => { /* silently ignore */ },
-    });
-    this.analyticsApi.getByHour().subscribe({
-      next: (res) => this.heatmapData.set(res.data),
-      error: () => { /* silently ignore */ },
-    });
-    this.analyticsApi.getTopAssets().subscribe({
-      next: (res) => this.topAssets.set(res.data),
-      error: () => { /* silently ignore */ },
-    });
-    this.analyticsApi.getBySetup().subscribe({
-      next: (res) => this.setupData.set(res.data),
-      error: () => { /* silently ignore */ },
-    });
+    this.analyticsApi.getEquityCurve()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.equityCurve.set(res.data.points);
+          this.equityStartingCapital.set(res.data.startingCapital);
+        },
+        error: () => { /* silently ignore */ },
+      });
+    this.analyticsApi.getByHour()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => this.heatmapData.set(res.data),
+        error: () => { /* silently ignore */ },
+      });
+    this.analyticsApi.getTopAssets()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => this.topAssets.set(res.data),
+        error: () => { /* silently ignore */ },
+      });
+    this.analyticsApi.getBySetup()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => this.setupData.set(res.data),
+        error: () => { /* silently ignore */ },
+      });
   }
 
   protected getHeatmapCell(day: string, hour: number): HeatmapCell | null {
@@ -133,10 +156,12 @@ export class AnalyticsComponent implements OnInit {
   }
 
   protected startTrial(plan: 'monthly' | 'yearly' = 'monthly'): void {
-    this.billingApi.checkout(plan).subscribe({
-      next: (res) => { window.location.href = res.data.url; },
-      error: () => console.error('Erreur checkout'),
-    });
+    this.billingApi.checkout(plan)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => { window.location.href = res.data.url; },
+        error: () => { /* billing error — user stays on page */ },
+      });
   }
 
   private drawEquityCanvas(points: EquityPoint[]): void {

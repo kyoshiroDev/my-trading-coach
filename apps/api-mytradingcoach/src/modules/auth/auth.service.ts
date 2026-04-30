@@ -88,7 +88,8 @@ export class AuthService {
         market: true, goal: true,
         currency: true, currencyRate: true, startingCapital: true,
         notificationsEmail: true, debriefAutomatic: true,
-        stripeCurrentPeriodEnd: true,
+        trialEndsAt: true, trialUsed: true,
+        stripeSubscriptionStatus: true, stripeCurrentPeriodEnd: true,
       },
     });
     if (!user) throw new UnauthorizedException('Utilisateur introuvable');

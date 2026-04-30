@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Plan, Role, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
@@ -38,6 +38,7 @@ const ADMIN_USER_SELECT = {
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
   constructor(private readonly prisma: PrismaService) {}
 
   async findById(id: string) {
@@ -204,12 +205,14 @@ export class UsersService {
   }
 
   private async fetchEurUsdRate(): Promise<number> {
+    const FALLBACK_RATE = 0.92;
     try {
       const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
       const data = await res.json() as { rates: Record<string, number> };
-      return data.rates['EUR'] ?? 0.92;
-    } catch {
-      return 0.92; // fallback si API indisponible
+      return data.rates['EUR'] ?? FALLBACK_RATE;
+    } catch (err) {
+      this.logger.warn(`Exchange rate API unavailable, using fallback ${FALLBACK_RATE} — ${(err as Error).message}`);
+      return FALLBACK_RATE;
     }
   }
 

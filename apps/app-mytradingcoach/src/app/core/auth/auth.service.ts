@@ -86,6 +86,12 @@ export class AuthService {
     return localStorage.getItem('access_token');
   }
 
+  /** Met à jour le signal user ET le localStorage en une seule opération. */
+  setCurrentUser(user: AuthUser): void {
+    this.currentUser.set(user);
+    localStorage.setItem('user', JSON.stringify(user));
+  }
+
   refreshToken() {
     // Le refresh_token est envoyé automatiquement via le cookie httpOnly
     return this.http
@@ -109,18 +115,6 @@ export class AuthService {
     return this.http.post(`${environment.apiUrl}/auth/reset-password`, { token, password });
   }
 
-  isPremium(): boolean {
-    const user = this.currentUser();
-    if (!user) return false;
-    if (user.role === 'ADMIN' || user.role === 'BETA_TESTER') return true;
-    if (user.plan === 'PREMIUM') return true;
-    return !!(user.trialEndsAt && new Date() < new Date(user.trialEndsAt));
-  }
-
-  isAdmin(): boolean {
-    return this.currentUser()?.role === 'ADMIN';
-  }
-
   fetchMe() {
     return this.http
       .get<{ data: AuthUser }>(`${environment.apiUrl}/auth/me`)
@@ -133,8 +127,9 @@ export class AuthService {
       );
   }
 
+  /** @deprecated — utiliser fetchMe() directement */
   refreshUser() {
-    return this.refreshToken();
+    return this.fetchMe();
   }
 
   private handleAuthResponse(res: AuthResponse) {

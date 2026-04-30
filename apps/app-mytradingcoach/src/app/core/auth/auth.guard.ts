@@ -1,34 +1,30 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { AuthService } from './auth.service';
+import { UserStore } from '../stores/user.store';
 
 export const authGuard: CanActivateFn = () => {
-  const auth = inject(AuthService);
+  const store  = inject(UserStore);
   const router = inject(Router);
 
-  if (auth.isAuthenticated()) return true;
+  if (store.isLoggedIn()) return true;
   router.navigate(['/login']);
   return false;
 };
 
 export const premiumGuard: CanActivateFn = () => {
-  const auth = inject(AuthService);
+  const store  = inject(UserStore);
   const router = inject(Router);
 
-  if (auth.isAuthenticated() && auth.isPremium()) return true;
-  if (auth.isAuthenticated()) {
-    router.navigate(['/settings']);
-  } else {
-    router.navigate(['/login']);
-  }
+  if (store.isPremium()) return true;
+  router.navigate(store.isLoggedIn() ? ['/settings'] : ['/login']);
   return false;
 };
 
 export const adminGuard: CanActivateFn = () => {
-  const auth = inject(AuthService);
+  const store  = inject(UserStore);
   const router = inject(Router);
 
-  if (auth.isAuthenticated() && auth.isAdmin()) return true;
+  if (store.isAdmin()) return true;
   router.navigate(['/dashboard']);
   return false;
 };

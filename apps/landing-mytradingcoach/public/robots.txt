@@ -4,4 +4,4 @@ Allow: /
 Disallow: /api/
 Disallow: /_assets/
 
-Sitemap: https://mytradingcoach.app/sitemap-index.xml
+Sitemap: https://www.mytradingcoach.app/sitemap-index.xml

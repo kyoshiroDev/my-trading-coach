@@ -25,7 +25,7 @@ export class UserStore {
   });
 
   refreshUser() {
-    this.auth.refreshUser().subscribe({
+    this.auth.fetchMe().subscribe({
       error: () => { /* silently ignore — user stays logged in with cached data */ },
     });
   }

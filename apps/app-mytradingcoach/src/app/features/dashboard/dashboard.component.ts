@@ -13,15 +13,15 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe, TitleCasePipe, UpperCasePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { BillingApi } from '../../core/api/billing.api';
 import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
-import { TradesStore, Trade } from '../../core/stores/trades.store';
+import { TradesStore } from '../../core/stores/trades.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { TradeFormComponent } from '../journal/trade-form.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
-import { CreateTradeDto } from '../../core/api/trades.api';
+import { CreateTradeDto, TradesApi } from '../../core/api/trades.api';
+import { AnalyticsSummary, EquityPoint, SetupStat, EmotionStat } from '../../core/api/analytics.api';
 import {
   EmotionColorPipe,
   EmotionEmojiPipe,
@@ -32,18 +32,6 @@ import {
   SetupColorsMapPipe,
 } from '../../shared/pipes';
 import { environment } from '../../../environments/environment';
-
-interface Summary {
-  winRate: number;
-  totalPnl: number;
-  totalTrades: number;
-  maxDrawdown: number;
-  streak: number;
-}
-
-interface BySetup { setup: string; winRate: number; avgRR: number; count: number; pnl: number; }
-interface ByEmotion { emotion: string; winRate: number; avgRR: number; count: number; }
-interface EquityPoint { date: string; cumulativePnl: number; }
 
 @Component({
   selector: 'mtc-dashboard',
@@ -159,7 +147,7 @@ interface EquityPoint { date: string; cumulativePnl: number; }
 
           <div class="stat-card">
             <div class="stat-label">Trades</div>
-            <div class="stat-value">{{ summary()?.totalTrades ?? tradesStore.trades$().length }}</div>
+            <div class="stat-value">{{ summary()?.totalTrades ?? tradesStore.trades().length }}</div>
             <div class="stat-sub">
               @if ((summary()?.totalTrades ?? 0) === 0) {
                 <span style="color:var(--text-3)">Aucune donnée</span>
@@ -208,14 +196,14 @@ interface EquityPoint { date: string; cumulativePnl: number; }
             <div class="card-title">Derniers trades</div>
             <a routerLink="/journal" class="card-action">Voir →</a>
           </div>
-          @if (tradesStore.trades$().length === 0) {
+          @if (tradesStore.trades().length === 0) {
             <div class="empty-state">
               <p>Aucun trade</p>
               <small>Enregistre ton premier trade</small>
             </div>
           } @else {
             <div class="trade-list-compact">
-              @for (trade of tradesStore.trades$().slice(0, 4); track trade.id) {
+              @for (trade of tradesStore.trades().slice(0, 4); track trade.id) {
                 <div class="trade-row-compact">
                   <div class="trade-row-top">
                     <span class="trade-side" [class]="trade.side === 'LONG' ? 'long' : 'short'">{{ trade.side }}</span>
@@ -320,23 +308,23 @@ export class DashboardComponent implements AfterViewInit {
   protected readonly userStore = inject(UserStore);
   protected readonly tradesStore = inject(TradesStore);
   private readonly billingApi = inject(BillingApi);
-  private readonly http = inject(HttpClient);
+  private readonly tradesApi = inject(TradesApi);
   private readonly destroyRef = inject(DestroyRef);
 
-  readonly showTradeForm = signal(false);
-  readonly showPlanModal = signal(false);
-  readonly isSavingTrade = signal(false);
+  protected readonly showTradeForm = signal(false);
+  protected readonly showPlanModal = signal(false);
+  protected readonly isSavingTrade = signal(false);
 
-  private readonly summaryResource = httpResource<{ data: Summary }>(
+  private readonly summaryResource = httpResource<{ data: AnalyticsSummary }>(
     () => `${environment.apiUrl}/analytics/summary`
   );
   private readonly equityCurveResource = httpResource<{ data: { points: EquityPoint[]; startingCapital: number | null } }>(
     () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/equity-curve` : undefined
   );
-  private readonly bySetupResource = httpResource<{ data: BySetup[] }>(
+  private readonly bySetupResource = httpResource<{ data: SetupStat[] }>(
     () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/by-setup` : undefined
   );
-  private readonly byEmotionResource = httpResource<{ data: ByEmotion[] }>(
+  private readonly byEmotionResource = httpResource<{ data: EmotionStat[] }>(
     () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/by-emotion` : undefined
   );
 
@@ -409,6 +397,7 @@ export class DashboardComponent implements AfterViewInit {
 
 
   private readonly canDraw = signal(false);
+  private resizeObserver?: ResizeObserver;
   private readonly knownTradesCount = signal(-1);
 
   constructor() {
@@ -434,6 +423,15 @@ export class DashboardComponent implements AfterViewInit {
 
   ngAfterViewInit() {
     this.canDraw.set(true);
+
+    const container = this.canvasRef?.nativeElement?.parentElement;
+    if (container) {
+      this.resizeObserver = new ResizeObserver(() => {
+        if (this.equityCurve().length > 1) this.drawEquityCurve();
+      });
+      this.resizeObserver.observe(container);
+      this.destroyRef.onDestroy(() => this.resizeObserver?.disconnect());
+    }
   }
 
   /** Segments du donut SVG — recalculés uniquement quand bySetup() change grâce à computed() */
@@ -453,7 +451,7 @@ export class DashboardComponent implements AfterViewInit {
 
   /** Pourcentage de trades par émotion, calculé depuis les trades locaux (pas d'appel API). */
   protected readonly emotionStats = computed(() => {
-    const trades = this.tradesStore.trades$();
+    const trades = this.tradesStore.trades();
     if (!trades.length) return [];
     const total = trades.length;
     return (['REVENGE', 'STRESSED', 'CONFIDENT', 'FOCUSED', 'FEAR', 'NEUTRAL'] as const)
@@ -472,7 +470,7 @@ export class DashboardComponent implements AfterViewInit {
 
   protected saveTrade(dto: CreateTradeDto) {
     this.isSavingTrade.set(true);
-    this.http.post<{ data: Trade }>(`${environment.apiUrl}/trades`, dto)
+    this.tradesApi.create(dto)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
@@ -486,10 +484,12 @@ export class DashboardComponent implements AfterViewInit {
   }
 
   protected startTrial() {
-    this.billingApi.checkout('monthly').subscribe({
-      next: (res) => { window.location.href = res.data.url; },
-      error: () => console.error('Erreur checkout'),
-    });
+    this.billingApi.checkout('monthly')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => { window.location.href = res.data.url; },
+        error: () => { /* billing error — user stays on page */ },
+      });
   }
 
   private drawEquityCurve() {

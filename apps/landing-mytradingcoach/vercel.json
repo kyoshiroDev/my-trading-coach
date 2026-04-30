@@ -8,6 +8,11 @@
   ],
   "redirects": [
     {
+      "source": "/confidentialite",
+      "destination": "/politique-confidentialite",
+      "permanent": true
+    },
+    {
       "source": "/(.*)",
       "has": [{ "type": "host", "value": "mytradingcoach.app" }],
       "destination": "https://www.mytradingcoach.app/$1",
