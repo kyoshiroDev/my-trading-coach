@@ -3,7 +3,6 @@ import {
   Component,
   DestroyRef,
   ElementRef,
-  OnInit,
   ViewChild,
   afterRenderEffect,
   computed,
@@ -11,12 +10,13 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { httpResource } from '@angular/common/http';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PnlFormatPipe, SessionLabelPipe } from '../../shared/pipes';
 import { UserStore } from '../../core/stores/user.store';
 import {
-  AnalyticsApi,
   AnalyticsSummary,
+  EquityCurveResponse,
   EquityPoint,
   HeatmapCell,
   SetupStat,
@@ -24,6 +24,7 @@ import {
 } from '../../core/api/analytics.api';
 import { BillingApi } from '../../core/api/billing.api';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
+import { environment } from '../../../environments/environment';
 
 const MOCK_HEATMAP_CELLS = [
   0.75, 0.45, 0.80, 0.30, 0.65, 0.55, 0.20,
@@ -43,22 +44,46 @@ const MOCK_SETUP_BARS = [88, 72, 65, 54, 38] as const;
   styleUrl: './analytics.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AnalyticsComponent implements OnInit {
+export class AnalyticsComponent {
   @ViewChild('equityCanvas') equityCanvasRef?: ElementRef<HTMLCanvasElement>;
   @ViewChild('drawdownCanvas') drawdownCanvasRef?: ElementRef<HTMLCanvasElement>;
 
   protected readonly userStore = inject(UserStore);
-  private readonly analyticsApi = inject(AnalyticsApi);
   private readonly billingApi = inject(BillingApi);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly showPlanModal = signal(false);
-  protected readonly summary = signal<AnalyticsSummary | null>(null);
-  protected readonly equityCurve = signal<EquityPoint[]>([]);
-  private readonly equityStartingCapital = signal<number | null>(null);
-  protected readonly heatmapData = signal<HeatmapCell[]>([]);
-  protected readonly topAssets = signal<TopAsset[]>([]);
-  protected readonly setupData = signal<SetupStat[]>([]);
+
+  // ── httpResource — pattern déclaratif, cancel auto, loading state natif ──
+  private readonly summaryResource = httpResource<{ data: AnalyticsSummary }>(
+    () => `${environment.apiUrl}/analytics/summary`,
+  );
+  private readonly equityCurveResource = httpResource<{ data: EquityCurveResponse }>(
+    () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/equity-curve` : undefined,
+  );
+  private readonly heatmapResource = httpResource<{ data: HeatmapCell[] }>(
+    () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/by-hour` : undefined,
+  );
+  private readonly topAssetsResource = httpResource<{ data: TopAsset[] }>(
+    () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/top-assets` : undefined,
+  );
+  private readonly setupResource = httpResource<{ data: SetupStat[] }>(
+    () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/by-setup` : undefined,
+  );
+
+  // ── Computed dérivés des resources ──────────────────────────────────────
+  protected readonly summary = computed(() => this.summaryResource.value()?.data ?? null);
+  protected readonly equityCurve = computed(() => this.equityCurveResource.value()?.data?.points ?? []);
+  private readonly equityStartingCapital = computed(() => this.equityCurveResource.value()?.data?.startingCapital ?? null);
+  protected readonly heatmapData = computed(() => this.heatmapResource.value()?.data ?? []);
+  protected readonly topAssets = computed(() => this.topAssetsResource.value()?.data ?? []);
+  protected readonly setupData = computed(() => this.setupResource.value()?.data ?? []);
+
+  protected readonly isLoading = computed(() =>
+    this.summaryResource.isLoading() ||
+    this.equityCurveResource.isLoading() ||
+    this.heatmapResource.isLoading(),
+  );
 
   protected readonly days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
   protected readonly hours = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
@@ -88,49 +113,6 @@ export class AnalyticsComponent implements OnInit {
         this.drawDrawdownCanvas(curve);
       }
     });
-  }
-
-  ngOnInit(): void {
-    this.analyticsApi.getSummary()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => this.summary.set(res.data),
-        error: () => { /* silently ignore */ },
-      });
-
-    if (this.userStore.isPremium()) {
-      this.loadPremiumData();
-    }
-  }
-
-  private loadPremiumData(): void {
-    this.analyticsApi.getEquityCurve()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => {
-          this.equityCurve.set(res.data.points);
-          this.equityStartingCapital.set(res.data.startingCapital);
-        },
-        error: () => { /* silently ignore */ },
-      });
-    this.analyticsApi.getByHour()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => this.heatmapData.set(res.data),
-        error: () => { /* silently ignore */ },
-      });
-    this.analyticsApi.getTopAssets()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => this.topAssets.set(res.data),
-        error: () => { /* silently ignore */ },
-      });
-    this.analyticsApi.getBySetup()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => this.setupData.set(res.data),
-        error: () => { /* silently ignore */ },
-      });
   }
 
   protected getHeatmapCell(day: string, hour: number): HeatmapCell | null {

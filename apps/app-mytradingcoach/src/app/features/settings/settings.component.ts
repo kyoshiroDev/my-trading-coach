@@ -1,6 +1,7 @@
 import {
-  ChangeDetectionStrategy, Component, OnInit, effect, inject, signal,
+  ChangeDetectionStrategy, Component, DestroyRef, OnInit, WritableSignal, effect, inject, signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -11,7 +12,7 @@ import { UserStore } from '../../core/stores/user.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { BillingApi } from '../../core/api/billing.api';
 import { UsersApi } from '../../core/api/users.api';
-import type { UpdatePreferencesDto } from '../../core/api/users.api';
+import type { UpdateMeDto, UpdatePreferencesDto } from '../../core/api/users.api';
 
 @Component({
   selector: 'mtc-settings',
@@ -27,6 +28,7 @@ export class SettingsComponent implements OnInit {
   private readonly billingApi = inject(BillingApi);
   private readonly usersApi = inject(UsersApi);
   private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly checkoutParam = toSignal(
     this.route.queryParamMap.pipe(map((p) => p.get('checkout'))),
@@ -81,15 +83,15 @@ export class SettingsComponent implements OnInit {
   }
 
   protected startTrial(plan: 'monthly' | 'yearly' = 'monthly') {
-    this.billingApi.checkout(plan).subscribe({
-      next: (res) => { window.location.href = res.data.url; },
-    });
+    this.billingApi.checkout(plan)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: (res) => { window.location.href = res.data.url; } });
   }
 
   protected openPortal() {
-    this.billingApi.portal().subscribe({
-      next: (res) => { window.location.href = res.data.url; },
-    });
+    this.billingApi.portal()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: (res) => { window.location.href = res.data.url; } });
   }
 
   protected startEditEmail() {
@@ -100,15 +102,7 @@ export class SettingsComponent implements OnInit {
   protected saveEmail() {
     const email = this.emailInput().trim();
     if (!email) return;
-    this.isSavingEmail.set(true);
-    this.usersApi.updateMe({ email }).subscribe({
-      next: (res) => {
-        this.auth.setCurrentUser(res.data);
-        this.editingEmail.set(false);
-        this.isSavingEmail.set(false);
-      },
-      error: () => { this.isSavingEmail.set(false); },
-    });
+    this.saveUserField({ email }, this.isSavingEmail, () => this.editingEmail.set(false));
   }
 
   protected startEditName() {
@@ -119,21 +113,31 @@ export class SettingsComponent implements OnInit {
   protected saveName() {
     const name = this.nameInput().trim();
     if (!name) return;
-    this.isSavingName.set(true);
-    this.usersApi.updateMe({ name }).subscribe({
-      next: (res) => {
-        this.auth.setCurrentUser(res.data);
-        this.editingName.set(false);
-        this.isSavingName.set(false);
-      },
-      error: () => { this.isSavingName.set(false); },
-    });
+    this.saveUserField({ name }, this.isSavingName, () => this.editingName.set(false));
+  }
+
+  private saveUserField(
+    dto: UpdateMeDto,
+    loadingSig: WritableSignal<boolean>,
+    done: () => void,
+  ): void {
+    loadingSig.set(true);
+    this.usersApi.updateMe(dto)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.auth.setCurrentUser(res.data);
+          done();
+          loadingSig.set(false);
+        },
+        error: () => loadingSig.set(false),
+      });
   }
 
   protected resetPassword() {
     const user = this.userStore.user();
     if (!user) return;
-    this.auth.forgotPassword(user.email).subscribe({
+    this.auth.forgotPassword(user.email).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.passwordResetSent.set(true);
         setTimeout(() => this.passwordResetSent.set(false), 4000);
@@ -159,7 +163,7 @@ export class SettingsComponent implements OnInit {
     const parsed = parseFloat(raw);
     const capital = isNaN(parsed) || parsed < 0 ? 0 : parsed;
     this.isSavingCapital.set(true);
-    this.usersApi.updatePreferences({ startingCapital: capital }).subscribe({
+    this.usersApi.updatePreferences({ startingCapital: capital }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.auth.setCurrentUser(res.data);
         this.isSavingCapital.set(false);
@@ -176,7 +180,7 @@ export class SettingsComponent implements OnInit {
       notificationsEmail: this.prefNotifications(),
       debriefAutomatic: this.prefDebrief(),
     };
-    this.usersApi.updatePreferences(dto).subscribe({
+    this.usersApi.updatePreferences(dto).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.auth.setCurrentUser(res.data);
         this.isSavingPrefs.set(false);
@@ -190,7 +194,7 @@ export class SettingsComponent implements OnInit {
   protected confirmDelete() {
     if (this.deleteInput() !== 'SUPPRIMER') return;
     this.isDeleting.set(true);
-    this.usersApi.deleteMe().subscribe({
+    this.usersApi.deleteMe().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => { this.auth.logout(); },
       error: () => { this.isDeleting.set(false); },
     });
