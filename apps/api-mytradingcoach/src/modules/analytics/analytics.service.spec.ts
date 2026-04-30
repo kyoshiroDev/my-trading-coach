@@ -28,6 +28,9 @@ const mockPrisma = {
     findMany: vi.fn(),
     count: vi.fn(),
   },
+  user: {
+    findUnique: vi.fn().mockResolvedValue({ startingCapital: null }),
+  },
 };
 
 describe('AnalyticsService', () => {
@@ -157,9 +160,10 @@ describe('AnalyticsService', () => {
 
       const result = await service.getEquityCurve('user-123');
 
-      expect(result[0].cumulativePnl).toBe(100);
-      expect(result[1].cumulativePnl).toBe(50);
-      expect(result[2].cumulativePnl).toBe(250);
+      expect(result.points[0].cumulativePnl).toBe(100);
+      expect(result.points[1].cumulativePnl).toBe(50);
+      expect(result.points[2].cumulativePnl).toBe(250);
+      expect(result.startingCapital).toBeNull();
     });
   });
 });
