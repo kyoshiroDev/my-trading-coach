@@ -401,3 +401,48 @@
   color: var(--text-2);
   border: 1px solid var(--border);
 }
+
+/* ── Stats MRR grid ─────────────────────────────────────────────────────── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-block {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  transition: border-color 0.15s;
+}
+
+.stat-block:hover { border-color: var(--border-hover); }
+
+.stat-block-label {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  margin-bottom: 8px;
+}
+
+.stat-block-value {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.stat-block-sub {
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.text-green { color: var(--green); }
+.text-red   { color: var(--red);   }
+.text-blue  { color: var(--blue-bright); }

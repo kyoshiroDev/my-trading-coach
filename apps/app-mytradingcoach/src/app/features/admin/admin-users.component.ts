@@ -13,7 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { LucideAngularModule, Search, Trash2, Pencil, X, ShieldCheck, Users } from 'lucide-angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
-import { AdminApi, AdminUser } from '../../core/api/admin.api';
+import { AdminApi, AdminUser, AdminStats } from '../../core/api/admin.api';
 
 @Component({
   selector: 'mtc-admin-users',
@@ -25,6 +25,37 @@ import { AdminApi, AdminUser } from '../../core/api/admin.api';
     <mtc-topbar title="Administration — Utilisateurs" />
 
     <div class="content">
+
+      <!-- MRR stats grid -->
+      @if (stats(); as s) {
+        <div class="stats-grid">
+          <div class="stat-block">
+            <div class="stat-block-label">MRR</div>
+            <div class="stat-block-value text-green">{{ s.mrr }}€</div>
+            <div class="stat-block-sub">ARR {{ s.arr }}€</div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-block-label">Premium actifs</div>
+            <div class="stat-block-value">{{ s.totalPremium }}</div>
+            <div class="stat-block-sub">{{ s.monthly }} mensuel · {{ s.annual }} annuel</div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-block-label">Trials actifs</div>
+            <div class="stat-block-value text-blue">{{ s.trials }}</div>
+            <div class="stat-block-sub">En période d'essai</div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-block-label">Nouveaux ce mois</div>
+            <div class="stat-block-value">{{ s.newThisMonth }}</div>
+            <div class="stat-block-sub">Inscrits en {{ getMonthLabel() }}</div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-block-label">Churns ce mois</div>
+            <div class="stat-block-value text-red">{{ s.churnedThisMonth }}</div>
+            <div class="stat-block-sub">Passés en FREE</div>
+          </div>
+        </div>
+      }
 
       <!-- Stats + search -->
       <div class="admin-toolbar">
@@ -238,6 +269,8 @@ export class AdminUsersComponent implements OnInit {
   protected readonly page = signal(1);
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
+  protected readonly stats = signal<AdminStats | null>(null);
+  protected readonly statsLoading = signal(false);
   protected readonly search = signal('');
   protected readonly editUser = signal<AdminUser | null>(null);
   protected readonly deleteUser = signal<AdminUser | null>(null);
@@ -250,6 +283,7 @@ export class AdminUsersComponent implements OnInit {
 
   ngOnInit() {
     this.load();
+    this.loadStats();
     this.search$.pipe(
       debounceTime(300),
       distinctUntilChanged(),
@@ -307,6 +341,20 @@ export class AdminUsersComponent implements OnInit {
         },
         error: () => this.loading.set(false),
       });
+  }
+
+  private loadStats() {
+    this.statsLoading.set(true);
+    this.api.stats()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => { this.stats.set(res.data); this.statsLoading.set(false); },
+        error: () => this.statsLoading.set(false),
+      });
+  }
+
+  protected getMonthLabel(): string {
+    return new Date().toLocaleDateString('fr-FR', { month: 'long' });
   }
 
   protected openEdit(user: AdminUser) {
