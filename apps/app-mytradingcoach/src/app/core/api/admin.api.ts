@@ -29,6 +29,18 @@ export interface AdminUpdateDto {
   role?: 'USER' | 'BETA_TESTER';
 }
 
+export interface AdminStats {
+  mrr: number;
+  arr: number;
+  totalPremium: number;
+  monthly: number;
+  annual: number;
+  trials: number;
+  freeUsers: number;
+  newThisMonth: number;
+  churnedThisMonth: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminApi {
   private readonly http = inject(HttpClient);
@@ -46,5 +58,9 @@ export class AdminApi {
 
   delete(id: string) {
     return this.http.delete<void>(`${this.base}/${id}`);
+  }
+
+  stats() {
+    return this.http.get<{ data: AdminStats }>(`${this.base}/stats`);
   }
 }
