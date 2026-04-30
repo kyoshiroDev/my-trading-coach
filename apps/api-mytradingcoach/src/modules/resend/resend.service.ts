@@ -137,6 +137,21 @@ export class ResendService {
     await this.send({ to: params.to, subject, html });
   }
 
+  // ── Alerte admin ──────────────────────────────────────────────────────────
+
+  async sendAdminAlert(subject: string, body: string): Promise<void> {
+    try {
+      await this.resend.emails.send({
+        from: 'noreply@mytradingcoach.app',
+        to: 'hello@mytradingcoach.app',
+        subject,
+        html: `<pre style="font-family:monospace;font-size:14px">${body}</pre>`,
+      });
+    } catch (err) {
+      this.logger.error('Erreur sendAdminAlert', err);
+    }
+  }
+
   // ── Envoi générique ────────────────────────────────────────────────────────
 
   private async send(params: {
