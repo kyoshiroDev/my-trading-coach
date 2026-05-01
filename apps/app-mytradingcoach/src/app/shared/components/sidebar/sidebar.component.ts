@@ -31,10 +31,12 @@ import { OnboardingComponent } from '../../../features/onboarding/onboarding.com
       <span></span><span></span><span></span>
     </button>
 
-    <div class="sidebar-overlay"
-         [class.open]="sidebarOpen()"
-         (click)="closeSidebar()">
-    </div>
+    <button class="sidebar-overlay"
+            [class.open]="sidebarOpen()"
+            (click)="closeSidebar()"
+            aria-label="Fermer le menu"
+            tabindex="-1">
+    </button>
 
     <div class="app-layout">
       <!-- ─── SIDEBAR ─── -->
