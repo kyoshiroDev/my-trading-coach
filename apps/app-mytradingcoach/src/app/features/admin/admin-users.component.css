@@ -446,3 +446,49 @@
 .text-green { color: var(--green); }
 .text-red   { color: var(--red);   }
 .text-blue  { color: var(--blue-bright); }
+
+@media (max-width: 768px) {
+  .content { padding: 16px; padding-top: 70px; }
+
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .table-wrap {
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .admin-table {
+    min-width: 560px;
+  }
+
+  /* Masquer Rôle (2) et Premium depuis (5) */
+  .admin-table th:nth-child(2),
+  .admin-table td:nth-child(2),
+  .admin-table th:nth-child(5),
+  .admin-table td:nth-child(5) {
+    display: none;
+  }
+
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal, .modal-sm {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
