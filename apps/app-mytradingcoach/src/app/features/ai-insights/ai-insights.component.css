@@ -358,3 +358,16 @@
   transition: all 0.15s;
 }
 .paywall-cta:hover { background: var(--blue-bright); transform: translateY(-1px); }
+
+@media (max-width: 768px) {
+  .content { padding: 16px; padding-top: 70px; }
+
+  .layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .chat-messages {
+    max-height: 300px;
+  }
+}
