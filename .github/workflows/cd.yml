@@ -62,7 +62,7 @@ jobs:
 
       - name: Deploy to Vercel
         run: |
-          pnpm dlx vercel --prod \
+          pnpm dlx vercel@latest --prod \
             --token=${{ secrets.VERCEL_TOKEN }} \
             --yes \
             --local-config ${{ github.workspace }}/apps/app-mytradingcoach/vercel.json
@@ -120,7 +120,7 @@ jobs:
           EOF
 
       - name: Deploy to Vercel (prebuilt)
-        run: npx vercel deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+        run: pnpm dlx vercel@latest deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_LANDING_PROJECT_ID }}

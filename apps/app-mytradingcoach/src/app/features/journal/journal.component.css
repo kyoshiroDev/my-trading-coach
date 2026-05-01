@@ -354,3 +354,34 @@
   border-radius: 8px;
   font-size: 12px;
 }
+
+@media (max-width: 768px) {
+  .content { padding: 16px; padding-top: 70px; }
+
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+
+  .journal-table {
+    min-width: 600px;
+  }
+
+  .journal-table th:nth-child(6),
+  .journal-table td:nth-child(6),
+  .journal-table th:nth-child(8),
+  .journal-table td:nth-child(8) {
+    display: none;
+  }
+
+  .journal-filters {
+    gap: 6px;
+  }
+
+  .filter-chip {
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+}

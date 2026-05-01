@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { RouterModule, RouterLink, RouterLinkActive } from '@angular/router';
 import {
   LucideAngularModule,
@@ -26,9 +26,21 @@ import { OnboardingComponent } from '../../../features/onboarding/onboarding.com
     @if (showOnboarding()) {
       <mtc-onboarding (completed)="onOnboardingCompleted()" />
     }
+
+    <button class="burger" (click)="toggleSidebar()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+
+    <button class="sidebar-overlay"
+            [class.open]="sidebarOpen()"
+            (click)="closeSidebar()"
+            aria-label="Fermer le menu"
+            tabindex="-1">
+    </button>
+
     <div class="app-layout">
       <!-- ─── SIDEBAR ─── -->
-      <aside class="sidebar">
+      <aside class="sidebar" [class.open]="sidebarOpen()">
         <!-- Logo -->
         <a routerLink="/dashboard" class="logo">
           <img src="icon/logo-horizontal.svg" alt="MyTradingCoach" height="40" style="display:block;max-width:100%">
@@ -38,30 +50,30 @@ import { OnboardingComponent } from '../../../features/onboarding/onboarding.com
         <nav class="nav">
           <div class="nav-section">OVERVIEW</div>
 
-          <a routerLink="/dashboard" routerLinkActive="active" class="nav-item" data-testid="nav-dashboard">
+          <a routerLink="/dashboard" routerLinkActive="active" class="nav-item" data-testid="nav-dashboard" (click)="closeSidebar()">
             <span class="nav-icon"><lucide-icon [img]="LayoutDashboardIcon" [size]="14" /></span>
             Dashboard
           </a>
 
-          <a routerLink="/journal" routerLinkActive="active" class="nav-item" data-testid="nav-journal">
+          <a routerLink="/journal" routerLinkActive="active" class="nav-item" data-testid="nav-journal" (click)="closeSidebar()">
             <span class="nav-icon"><lucide-icon [img]="BookOpenIcon" [size]="14" /></span>
             Journal
           </a>
 
-          <a routerLink="/analytics" routerLinkActive="active" class="nav-item" data-testid="nav-analytics">
+          <a routerLink="/analytics" routerLinkActive="active" class="nav-item" data-testid="nav-analytics" (click)="closeSidebar()">
             <span class="nav-icon"><lucide-icon [img]="BarChart2Icon" [size]="14" /></span>
             Analytics
           </a>
 
           <div class="nav-section">PREMIUM</div>
 
-          <a routerLink="/ai-insights" routerLinkActive="active" class="nav-item" data-testid="nav-ai-insights">
+          <a routerLink="/ai-insights" routerLinkActive="active" class="nav-item" data-testid="nav-ai-insights" (click)="closeSidebar()">
             <span class="nav-icon"><lucide-icon [img]="SparklesIcon" [size]="14" /></span>
             IA Insights
             <span class="badge">AI</span>
           </a>
 
-          <a routerLink="/debrief" routerLinkActive="active" class="nav-item" data-testid="nav-debrief">
+          <a routerLink="/debrief" routerLinkActive="active" class="nav-item" data-testid="nav-debrief" (click)="closeSidebar()">
             <span class="nav-icon"><lucide-icon [img]="CalendarDaysIcon" [size]="14" /></span>
             Weekly Debrief
             <span class="badge">PRO</span>
@@ -69,25 +81,25 @@ import { OnboardingComponent } from '../../../features/onboarding/onboarding.com
 
           <div class="nav-section">ACCOUNT</div>
 
-          <a routerLink="/scoring" routerLinkActive="active" class="nav-item" data-testid="nav-scoring">
+          <a routerLink="/scoring" routerLinkActive="active" class="nav-item" data-testid="nav-scoring" (click)="closeSidebar()">
             <span class="nav-icon"><lucide-icon [img]="TrophyIcon" [size]="14" /></span>
             Scoring
           </a>
 
-          <a routerLink="/settings" routerLinkActive="active" class="nav-item" data-testid="nav-settings">
+          <a routerLink="/settings" routerLinkActive="active" class="nav-item" data-testid="nav-settings" (click)="closeSidebar()">
             <span class="nav-icon"><lucide-icon [img]="SettingsIcon" [size]="14" /></span>
             Paramètres
           </a>
 
           @if (userStore.isAdmin()) {
             <div class="nav-section admin-section">ADMIN</div>
-            <a routerLink="/admin" routerLinkActive="active" class="nav-item admin-item">
+            <a routerLink="/admin" routerLinkActive="active" class="nav-item admin-item" (click)="closeSidebar()">
               <span class="nav-icon"><lucide-icon [img]="ShieldCheckIcon" [size]="14" /></span>
               Utilisateurs
             </a>
           }
 
-          <button class="nav-item settings-item" data-testid="logout-btn" (click)="logout()">
+          <button class="nav-item settings-item" data-testid="logout-btn" (click)="closeSidebar(); logout()">
             <span class="nav-icon"><lucide-icon [img]="LogOutIcon" [size]="14" /></span>
             Déconnexion
           </button>
@@ -120,6 +132,11 @@ export class SidebarComponent {
   protected readonly userStore = inject(UserStore);
   private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
+
+  protected readonly sidebarOpen = signal(false);
+
+  protected toggleSidebar(): void { this.sidebarOpen.update(v => !v); }
+  protected closeSidebar(): void  { this.sidebarOpen.set(false); }
 
   protected readonly showOnboarding = computed(() => {
     const user = this.userStore.user();

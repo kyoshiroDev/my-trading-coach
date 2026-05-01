@@ -384,3 +384,16 @@
   border-radius: 3px;
   background: linear-gradient(90deg, rgba(59, 130, 246, 0.5), rgba(139, 92, 246, 0.35));
 }
+
+@media (max-width: 768px) {
+  .content { padding: 16px; padding-top: 70px; }
+
+  .stats-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}

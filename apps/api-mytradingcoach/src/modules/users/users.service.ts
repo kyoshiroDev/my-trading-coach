@@ -126,6 +126,37 @@ export class UsersService {
     await this.prisma.user.delete({ where: { id: targetId } });
   }
 
+  async adminStats() {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [monthly, annual, trials, freeUsers, newThisMonth, churnedThisMonth] =
+      await Promise.all([
+        this.prisma.user.count({
+          where: { plan: 'PREMIUM', stripeInterval: 'month',
+                   stripeSubscriptionStatus: { in: ['active', 'trialing'] } },
+        }),
+        this.prisma.user.count({
+          where: { plan: 'PREMIUM', stripeInterval: 'year',
+                   stripeSubscriptionStatus: { in: ['active', 'trialing'] } },
+        }),
+        this.prisma.user.count({
+          where: { plan: 'PREMIUM', trialEndsAt: { gt: now } },
+        }),
+        this.prisma.user.count({ where: { plan: 'FREE' } }),
+        this.prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
+        this.prisma.user.count({
+          where: { plan: 'FREE', trialUsed: true, updatedAt: { gte: startOfMonth } },
+        }),
+      ]);
+
+    const mrr = monthly * 39 + Math.round((annual * 349) / 12);
+    const arr = mrr * 12;
+    const totalPremium = monthly + annual;
+
+    return { mrr, arr, totalPremium, monthly, annual, trials, freeUsers, newThisMonth, churnedThisMonth };
+  }
+
   // ── Rôle ──────────────────────────────────────────────────────────────────
 
   async setRole(targetUserId: string, role: Role): Promise<void> {

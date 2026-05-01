@@ -347,6 +347,13 @@ export class StripeService implements OnModuleDestroy {
             userName: user.name ?? '',
           });
           await this.discord.syncDiscordRole(user.id).catch(() => undefined);
+          const amount = subscription.items.data[0]?.price?.recurring?.interval === 'year'
+            ? '349€/an'
+            : '39€/mois';
+          await this.resend.sendAdminAlert(
+            `🔴 Churn — ${user.email}`,
+            `Email   : ${user.email}\nPlan    : Premium ${amount}\nDate    : ${new Date().toLocaleDateString('fr-FR')}`,
+          ).catch(() => undefined);
         }
 
         this.logger.log(`Abonnement résilié ${subscription.id} → plan FREE`);
@@ -405,6 +412,10 @@ export class StripeService implements OnModuleDestroy {
               userName: user.name ?? '',
               attemptCount,
             });
+            await this.resend.sendAdminAlert(
+              `⚠️ Paiement échoué — ${user.email}`,
+              `Email     : ${user.email}\nTentative : ${attemptCount}/3\nDate      : ${new Date().toLocaleDateString('fr-FR')}`,
+            ).catch(() => undefined);
           }
         }
         break;

@@ -64,6 +64,7 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
           </button>
         </div>
       } @else {
+        <div class="table-wrap">
         <table class="journal-table">
           <thead>
             <tr>
@@ -110,6 +111,7 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
             }
           </tbody>
         </table>
+        </div>
 
         @if (tradesStore.hasNextPage()) {
           <button class="btn-load-more" (click)="loadMore()">Charger plus de trades</button>
