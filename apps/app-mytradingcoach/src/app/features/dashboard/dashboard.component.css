@@ -438,3 +438,27 @@ canvas { width: 100% !important; height: 100% !important; }
   box-shadow: 0 0 24px rgba(59, 130, 246, .5);
   transform: translateY(-1px);
 }
+
+@media (max-width: 768px) {
+  .content { padding: 16px; padding-top: 70px; }
+
+  .stats-row,
+  .stats-row.has-capital {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .four-col-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .equity-card .chart-container {
+    min-height: 120px;
+  }
+
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
