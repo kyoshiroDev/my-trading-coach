@@ -1,11 +1,13 @@
 import {
-  ChangeDetectionStrategy, Component, effect, input, output, signal,
+  ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TitleCasePipe } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs/operators';
 import { LucideAngularModule, X } from 'lucide-angular';
 import { Trade } from '../../core/stores/trades.store';
-import { CreateTradeDto } from '../../core/api/trades.api';
+import { CreateTradeDto, InstrumentDto, TradesApi } from '../../core/api/trades.api';
 import { CreateTradeSchema } from '../../core/schemas/trade.schema';
 
 const EMOTIONS: Trade['emotion'][] = ['CONFIDENT', 'FOCUSED', 'NEUTRAL', 'STRESSED', 'FEAR', 'REVENGE'];
@@ -17,7 +19,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
   CONFIDENT: '😎', FOCUSED: '🎯', NEUTRAL: '😐', STRESSED: '😰', FEAR: '😨', REVENGE: '🤬',
 };
 
-type NumericField = 'entry' | 'exit' | 'stopLoss' | 'takeProfit';
+type NumericField = 'entry' | 'exit' | 'stopLoss' | 'takeProfit' | 'quantity';
 
 @Component({
   selector: 'mtc-trade-form',
@@ -49,11 +51,41 @@ export class TradeFormComponent {
   protected readonly exitMode = signal<'SL' | 'TP' | null>(null);
   protected readonly exitTouched = signal(false);
 
+  // ── Autocomplete instruments ──────────────────────────────────────────────
+  private readonly tradesApi = inject(TradesApi);
+
+  protected readonly instruments = toSignal(
+    this.tradesApi.getInstruments().pipe(map((r) => r.data)),
+    { initialValue: [] as InstrumentDto[] },
+  );
+
+  protected readonly assetSearch = signal('');
+
+  protected readonly filteredInstruments = computed(() => {
+    const search = this.assetSearch().toLowerCase().trim();
+    if (search.length < 1) return [];
+    return this.instruments()
+      .filter(
+        (i) =>
+          i.symbol.toLowerCase().includes(search) ||
+          i.label.toLowerCase().includes(search),
+      )
+      .slice(0, 8);
+  });
+
+  protected readonly selectedInstrument = computed(
+    () =>
+      this.instruments().find(
+        (i) => i.symbol.toLowerCase() === (this.form.asset ?? '').toLowerCase(),
+      ) ?? null,
+  );
+  // ─────────────────────────────────────────────────────────────────────────
+
   protected form: Partial<CreateTradeDto> = this.emptyForm();
 
   constructor() {
     effect(() => {
-      this.open(); // dépendance : reset à chaque ouverture/fermeture
+      this.open();
       const t = this.editTrade();
       if (t) {
         this.form = {
@@ -65,17 +97,20 @@ export class TradeFormComponent {
           takeProfit: t.takeProfit ?? undefined,
           pnl: t.pnl ?? undefined,
           riskReward: t.riskReward ?? undefined,
+          quantity: (t as any).quantity ?? 1,
           emotion: t.emotion as CreateTradeDto['emotion'],
           setup: t.setup as CreateTradeDto['setup'],
           session: t.session as CreateTradeDto['session'],
           timeframe: t.timeframe,
           notes: t.notes ?? undefined,
         };
+        this.assetSearch.set(t.asset);
         this.autoPnl.set(t.pnl ?? undefined);
         this.autoPnlPct.set(t.pnl != null && t.entry > 0 ? +(t.pnl / t.entry * 100).toFixed(2) : undefined);
         this.autoRR.set(t.riskReward ?? undefined);
       } else {
         this.form = this.emptyForm();
+        this.assetSearch.set('');
         this.autoPnl.set(undefined);
         this.autoPnlPct.set(undefined);
         this.autoRR.set(undefined);
@@ -121,16 +156,30 @@ export class TradeFormComponent {
     this.recalculate();
   }
 
+  protected onAssetInput(event: Event): void {
+    const val = (event.target as HTMLInputElement).value;
+    this.assetSearch.set(val);
+    this.form.asset = val;
+    this.recalculate();
+  }
+
+  protected selectInstrument(instrument: InstrumentDto): void {
+    this.form.asset = instrument.symbol;
+    this.assetSearch.set(instrument.symbol);
+    this.recalculate();
+  }
+
   protected recalculate(): void {
     const { entry, exit, stopLoss, takeProfit, side } = this.form;
     const mode = this.exitMode();
+    const instrument = this.selectedInstrument();
+    const tickValue = instrument?.tickValue ?? null;
+    const qty = this.form.quantity ?? 1;
 
-    // Reset exitMode si exit est renseigné
     if (exit != null && exit > 0 && mode !== null) {
       this.exitMode.set(null);
     }
 
-    // P&L : priorité à exit, sinon SL/TP selon exitMode
     let effectiveExit: number | undefined;
     if (exit != null && exit > 0) {
       effectiveExit = exit;
@@ -141,19 +190,26 @@ export class TradeFormComponent {
     }
 
     if (entry != null && entry > 0 && effectiveExit != null && side) {
-      const dollars = side === 'LONG' ? (effectiveExit - entry) : (entry - effectiveExit);
-      const pct = (dollars / entry) * 100;
-      this.autoPnl.set(+dollars.toFixed(2));
+      const points = side === 'LONG'
+        ? effectiveExit - entry
+        : entry - effectiveExit;
+
+      const pnl = tickValue != null
+        ? points * tickValue * qty
+        : points * qty;
+
+      const pct = (points / entry) * 100;
+      this.autoPnl.set(+pnl.toFixed(2));
       this.autoPnlPct.set(+pct.toFixed(2));
-      this.form.pnl = +dollars.toFixed(2);
+      this.form.pnl = +pnl.toFixed(2);
     } else {
       this.autoPnl.set(undefined);
       this.autoPnlPct.set(undefined);
       this.form.pnl = undefined;
     }
 
-    // R/R : toujours planifié (reward/risk depuis SL+TP+entry), jamais affecté par exitMode
-    if (entry != null && entry > 0 && stopLoss != null && stopLoss > 0 && takeProfit != null && takeProfit > 0 && side) {
+    if (entry != null && entry > 0 && stopLoss != null && stopLoss > 0
+        && takeProfit != null && takeProfit > 0 && side) {
       const risk = Math.abs(entry - stopLoss);
       const reward = side === 'LONG' ? takeProfit - entry : entry - takeProfit;
       if (risk > 0 && reward > 0) {
@@ -176,7 +232,7 @@ export class TradeFormComponent {
     const result = CreateTradeSchema.safeParse(this.form);
     if (!result.success) {
       const errors: Record<string, string> = {};
-      result.error.issues.forEach(e => {
+      result.error.issues.forEach((e) => {
         const field = String(e.path[0] ?? 'form');
         if (!errors[field]) errors[field] = e.message;
       });
@@ -194,6 +250,7 @@ export class TradeFormComponent {
       setup:     'BREAKOUT' as const,
       session:   'LONDON'   as const,
       timeframe: '1h',
+      quantity:  1,
     };
   }
 }

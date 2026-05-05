@@ -3,6 +3,13 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
+export interface InstrumentDto {
+  symbol: string;
+  label: string;
+  category: 'FUTURES_US' | 'CRYPTO' | 'FOREX' | 'INDICES' | 'ACTIONS';
+  tickValue: number | null;
+}
+
 export interface Trade {
   id: string;
   userId: string;
@@ -14,6 +21,7 @@ export interface Trade {
   takeProfit: number | null;
   pnl: number | null;
   riskReward: number | null;
+  quantity: number | null;
   emotion: 'CONFIDENT' | 'STRESSED' | 'REVENGE' | 'FEAR' | 'FOCUSED' | 'NEUTRAL';
   setup: 'BREAKOUT' | 'PULLBACK' | 'RANGE' | 'REVERSAL' | 'SCALPING' | 'NEWS';
   session: 'LONDON' | 'NEW_YORK' | 'ASIAN' | 'PRE_MARKET' | 'OVERLAP';
@@ -33,6 +41,7 @@ export interface CreateTradeDto {
   takeProfit?: number;
   pnl?: number;
   riskReward?: number;
+  quantity?: number;
   emotion: Trade['emotion'];
   setup: Trade['setup'];
   session: Trade['session'];
@@ -92,5 +101,9 @@ export class TradesApi {
 
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);
+  }
+
+  getInstruments(): Observable<{ data: InstrumentDto[] }> {
+    return this.http.get<{ data: InstrumentDto[] }>(`${this.base}/instruments`);
   }
 }
