@@ -30,13 +30,13 @@
             @if (filteredInstruments().length > 0) {
               <div class="asset-dropdown">
                 @for (inst of filteredInstruments(); track inst.symbol) {
-                  <div class="asset-option" (click)="selectInstrument(inst)">
+                  <button type="button" class="asset-option" (click)="selectInstrument(inst)">
                     <span class="asset-symbol">{{ inst.symbol }}</span>
                     <span class="asset-label">{{ inst.label }}</span>
                     @if (inst.tickValue !== null) {
                       <span class="asset-tick">{{ inst.tickValue }}$/pt</span>
                     }
-                  </div>
+                  </button>
                 }
               </div>
             }

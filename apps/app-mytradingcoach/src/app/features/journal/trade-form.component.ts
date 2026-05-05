@@ -97,7 +97,7 @@ export class TradeFormComponent {
           takeProfit: t.takeProfit ?? undefined,
           pnl: t.pnl ?? undefined,
           riskReward: t.riskReward ?? undefined,
-          quantity: (t as any).quantity ?? 1,
+          quantity: t.quantity ?? 1,
           emotion: t.emotion as CreateTradeDto['emotion'],
           setup: t.setup as CreateTradeDto['setup'],
           session: t.session as CreateTradeDto['session'],
