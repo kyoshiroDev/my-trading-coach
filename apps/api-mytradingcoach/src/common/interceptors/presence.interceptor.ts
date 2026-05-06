@@ -21,7 +21,7 @@ export class PresenceInterceptor implements NestInterceptor {
         this.lastUpdated.set(userId, now);
         this.prisma.user
           .update({ where: { id: userId }, data: { lastSeenAt: new Date() } })
-          .catch(() => {});
+          .catch((_err: unknown) => undefined);
       }
     }
 
