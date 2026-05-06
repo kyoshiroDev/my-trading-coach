@@ -436,7 +436,7 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
   private loadOnline() {
     this.api.online()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: (res) => this.onlineUsers.set(res.data), error: () => {} });
+      .subscribe({ next: (res) => this.onlineUsers.set(res.data), error: (_err: unknown) => undefined });
   }
 
   protected getMonthLabel(): string {
