@@ -219,6 +219,7 @@ input[readonly] { background: var(--bg-3); cursor: default; color: var(--text-2)
 
 /* ─── Autocomplete instruments ─── */
 .asset-group { position: relative; }
+.asset-group input { text-transform: uppercase; }
 
 .asset-dropdown {
   position: absolute;

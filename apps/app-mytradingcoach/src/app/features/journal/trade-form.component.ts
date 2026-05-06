@@ -4,7 +4,8 @@ import {
 import { FormsModule } from '@angular/forms';
 import { TitleCasePipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
+import { map, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { LucideAngularModule, X } from 'lucide-angular';
 import { Trade } from '../../core/stores/trades.store';
 import { CreateTradeDto, InstrumentDto, TradesApi } from '../../core/api/trades.api';
@@ -55,7 +56,10 @@ export class TradeFormComponent {
   private readonly tradesApi = inject(TradesApi);
 
   protected readonly instruments = toSignal(
-    this.tradesApi.getInstruments().pipe(map((r) => r.data)),
+    this.tradesApi.getInstruments().pipe(
+      map((r) => r.data),
+      catchError(() => of([] as InstrumentDto[])),
+    ),
     { initialValue: [] as InstrumentDto[] },
   );
 
@@ -157,7 +161,9 @@ export class TradeFormComponent {
   }
 
   protected onAssetInput(event: Event): void {
-    const val = (event.target as HTMLInputElement).value;
+    const input = event.target as HTMLInputElement;
+    const val = input.value.toUpperCase();
+    input.value = val;
     this.assetSearch.set(val);
     this.form.asset = val;
     this.recalculate();
