@@ -33,6 +33,8 @@ const ADMIN_USER_SELECT = {
   trialEndsAt: true,
   stripeInterval: true,
   stripeCurrentPeriodEnd: true,
+  lastSeenAt: true,
+  lastLoginAt: true,
   createdAt: true,
 } as const;
 
@@ -67,6 +69,25 @@ export class UsersService {
         ],
       },
       select: { id: true, email: true, name: true, plan: true, role: true, trialEndsAt: true },
+    });
+  }
+
+  // ── Admin — utilisateurs en ligne (actifs < 5min) ─────────────────────────
+
+  async getOnlineUsers() {
+    const threshold = new Date(Date.now() - 5 * 60 * 1000);
+    return this.prisma.user.findMany({
+      where: { lastSeenAt: { gte: threshold } },
+      orderBy: { lastSeenAt: 'desc' },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        plan: true,
+        role: true,
+        lastSeenAt: true,
+        lastLoginAt: true,
+      },
     });
   }
 

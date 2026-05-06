@@ -3,6 +3,7 @@ import {
   Component,
   DestroyRef,
   OnInit,
+  OnDestroy,
   computed,
   inject,
   signal,
@@ -11,9 +12,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
-import { LucideAngularModule, Search, Trash2, Pencil, X, ShieldCheck, Users } from 'lucide-angular';
+import { LucideAngularModule, Search, Trash2, Pencil, X, ShieldCheck, Users, Wifi } from 'lucide-angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
-import { AdminApi, AdminUser, AdminStats } from '../../core/api/admin.api';
+import { AdminApi, AdminUser, AdminStats, AdminOnlineUser } from '../../core/api/admin.api';
 
 @Component({
   selector: 'mtc-admin-users',
@@ -57,6 +58,37 @@ import { AdminApi, AdminUser, AdminStats } from '../../core/api/admin.api';
         </div>
       }
 
+      <!-- Connectés maintenant -->
+      <div class="online-panel">
+        <div class="online-panel-header">
+          <lucide-icon [img]="WifiIcon" [size]="13" />
+          <span>Connectés maintenant</span>
+          <span class="online-count">{{ onlineUsers().length }}</span>
+        </div>
+        @if (onlineUsers().length === 0) {
+          <div class="online-empty">Aucun utilisateur actif</div>
+        } @else {
+          <div class="online-list">
+            @for (u of onlineUsers(); track u.id) {
+              <div class="online-card">
+                <div class="online-avatar">
+                  <span>{{ (u.name ?? u.email).slice(0, 2).toUpperCase() }}</span>
+                  <span class="online-dot"></span>
+                </div>
+                <div class="online-info">
+                  <span class="online-name">{{ u.name ?? u.email }}</span>
+                  @if (u.name) { <span class="online-email">{{ u.email }}</span> }
+                </div>
+                <div class="online-meta">
+                  <span class="online-plan" [class]="'plan-' + u.plan.toLowerCase()">{{ u.plan }}</span>
+                  <span class="online-session">⏱ {{ sessionDuration(u) }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
       <!-- Stats + search -->
       <div class="admin-toolbar">
         <div class="search-wrap">
@@ -91,6 +123,8 @@ import { AdminApi, AdminUser, AdminStats } from '../../core/api/admin.api';
                 <th>Plan</th>
                 <th>Abonnement</th>
                 <th>Premium depuis</th>
+                <th>Activité</th>
+                <th>Session</th>
                 <th>Inscrit</th>
                 <th></th>
               </tr>
@@ -100,7 +134,10 @@ import { AdminApi, AdminUser, AdminStats } from '../../core/api/admin.api';
                 <tr>
                   <td>
                     <div class="user-cell">
-                      <div class="avatar">{{ initials(user) }}</div>
+                      <div class="avatar">
+                        {{ initials(user) }}
+                        @if (isOnline(user)) { <span class="avatar-dot"></span> }
+                      </div>
                       <div class="user-info">
                         <span class="user-name">{{ user.name ?? '—' }}</span>
                         <span class="user-email">{{ user.email }}</span>
@@ -138,6 +175,14 @@ import { AdminApi, AdminUser, AdminStats } from '../../core/api/admin.api';
                     } @else {
                       <span style="color:var(--text-3)">—</span>
                     }
+                  </td>
+                  <td class="mono td-date" [class.text-green]="isOnline(user)">
+                    {{ relativeTime(user.lastSeenAt) }}
+                  </td>
+                  <td class="mono td-date">
+                    @if (user.lastLoginAt) {
+                      {{ sessionDuration({ lastLoginAt: user.lastLoginAt, lastSeenAt: user.lastSeenAt ?? '', id: user.id, email: user.email, name: user.name, plan: user.plan, role: user.role }) }}
+                    } @else { — }
                   </td>
                   <td class="mono td-date">{{ user.createdAt | date:'dd/MM/yyyy' }}</td>
                   <td>
@@ -252,13 +297,14 @@ import { AdminApi, AdminUser, AdminStats } from '../../core/api/admin.api';
     }
   `,
 })
-export class AdminUsersComponent implements OnInit {
+export class AdminUsersComponent implements OnInit, OnDestroy {
   protected readonly SearchIcon = Search;
   protected readonly Trash2Icon = Trash2;
   protected readonly PencilIcon = Pencil;
   protected readonly XIcon = X;
   protected readonly ShieldCheckIcon = ShieldCheck;
   protected readonly UsersIcon = Users;
+  protected readonly WifiIcon = Wifi;
 
   private readonly api = inject(AdminApi);
   private readonly destroyRef = inject(DestroyRef);
@@ -274,8 +320,10 @@ export class AdminUsersComponent implements OnInit {
   protected readonly search = signal('');
   protected readonly editUser = signal<AdminUser | null>(null);
   protected readonly deleteUser = signal<AdminUser | null>(null);
+  protected readonly onlineUsers = signal<AdminOnlineUser[]>([]);
 
   protected readonly totalPages = computed(() => Math.ceil(this.total() / 20) || 1);
+  private onlineInterval?: ReturnType<typeof setInterval>;
 
   protected editName = '';
   protected editPlan: 'FREE' | 'PREMIUM' = 'FREE';
@@ -284,6 +332,8 @@ export class AdminUsersComponent implements OnInit {
   ngOnInit() {
     this.load();
     this.loadStats();
+    this.loadOnline();
+    this.onlineInterval = setInterval(() => this.loadOnline(), 30_000);
     this.search$.pipe(
       debounceTime(300),
       distinctUntilChanged(),
@@ -291,8 +341,38 @@ export class AdminUsersComponent implements OnInit {
     ).subscribe(() => { this.page.set(1); this.load(); });
   }
 
+  ngOnDestroy() {
+    clearInterval(this.onlineInterval);
+  }
+
   protected onSearch(value: string) { this.search.set(value); this.search$.next(value); }
   protected changePage(p: number) { this.page.set(p); this.load(); }
+
+  protected sessionDuration(user: AdminOnlineUser): string {
+    if (!user.lastLoginAt) return '—';
+    const ms = Date.now() - new Date(user.lastLoginAt).getTime();
+    const totalMin = Math.floor(ms / 60_000);
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    if (h === 0) return `${m}min`;
+    return `${h}h${m > 0 ? m + 'min' : ''}`;
+  }
+
+  protected relativeTime(dateStr: string | null): string {
+    if (!dateStr) return 'Jamais';
+    const ms = Date.now() - new Date(dateStr).getTime();
+    const min = Math.floor(ms / 60_000);
+    if (min < 1) return 'à l\'instant';
+    if (min < 60) return `il y a ${min}min`;
+    const h = Math.floor(min / 60);
+    if (h < 24) return `il y a ${h}h`;
+    return `il y a ${Math.floor(h / 24)}j`;
+  }
+
+  protected isOnline(user: AdminUser): boolean {
+    if (!user.lastSeenAt) return false;
+    return Date.now() - new Date(user.lastSeenAt).getTime() < 5 * 60_000;
+  }
 
   protected initials(user: AdminUser): string {
     return (user.name ?? user.email).slice(0, 2).toUpperCase();
@@ -351,6 +431,12 @@ export class AdminUsersComponent implements OnInit {
         next: (res) => { this.stats.set(res.data); this.statsLoading.set(false); },
         error: () => this.statsLoading.set(false),
       });
+  }
+
+  private loadOnline() {
+    this.api.online()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: (res) => this.onlineUsers.set(res.data), error: () => {} });
   }
 
   protected getMonthLabel(): string {
