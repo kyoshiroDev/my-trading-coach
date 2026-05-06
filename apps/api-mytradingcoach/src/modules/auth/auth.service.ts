@@ -36,10 +36,21 @@ export class AuthService {
     });
 
     const tokens = await this.generateTokens(user.id, user.email);
+    const now = new Date();
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: now, lastSeenAt: now },
+    });
 
-    // Email de bienvenue — ne pas bloquer si Resend est down
+    // Email de bienvenue à l'utilisateur — fire-and-forget
     this.resend.sendWelcomeFree({ to: user.email, userName: user.name ?? '' })
       .catch((err: unknown) => this.logger.error(`Welcome email failed: ${String(err)}`));
+
+    // Notification admin — fire-and-forget
+    this.resend.sendAdminAlert(
+      `🆕 Nouvel inscrit — ${user.email}`,
+      `Nom : ${user.name ?? '(non renseigné)'}\nEmail : ${user.email}\nDate : ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}`,
+    ).catch((err: unknown) => this.logger.error(`Admin alert failed: ${String(err)}`));
 
     return { ...tokens, user };
   }
@@ -50,6 +61,12 @@ export class AuthService {
 
     const valid = await argon2.verify(user.password, dto.password);
     if (!valid) throw new UnauthorizedException('Identifiants invalides');
+
+    const now = new Date();
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: now, lastSeenAt: now },
+    });
 
     const safeUser = { id: user.id, email: user.email, name: user.name, plan: user.plan, role: user.role, onboardingCompleted: user.onboardingCompleted };
     const tokens = await this.generateTokens(user.id, user.email);
