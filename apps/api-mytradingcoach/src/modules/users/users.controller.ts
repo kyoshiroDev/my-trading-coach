@@ -60,12 +60,17 @@ export class UsersController {
 
   // ── Admin routes ──────────────────────────────────────────────────────────
 
-  // IMPORTANT : /admin/stats DOIT être avant /admin/:id pour éviter que NestJS
-  // interprète "stats" comme un paramètre :id
+  // IMPORTANT : routes /admin/<literal> DOIVENT être avant /admin/:id
   @UseGuards(AdminGuard)
   @Get('admin/stats')
   adminStats() {
     return this.usersService.adminStats();
+  }
+
+  @UseGuards(AdminGuard)
+  @Get('admin/online')
+  adminOnline() {
+    return this.usersService.getOnlineUsers();
   }
 
   @UseGuards(AdminGuard)

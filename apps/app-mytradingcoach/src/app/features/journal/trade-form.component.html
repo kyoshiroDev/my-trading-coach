@@ -14,16 +14,40 @@
 
         <!-- Row 1: Asset + Side -->
         <div class="form-row">
-          <div class="form-group">
+          <!-- Actif avec autocomplete -->
+          <div class="form-group asset-group">
             <label for="tf-asset">Actif</label>
-            <input id="tf-asset" data-testid="trade-asset" type="text"
-              [(ngModel)]="form.asset" name="asset" required
-              placeholder="BTC/USDT"
-              [class.input-error]="submitted() && (!form.asset || zodErrors()['asset'])" />
+            <input
+              id="tf-asset"
+              data-testid="trade-asset"
+              type="text"
+              [value]="assetSearch()"
+              (input)="onAssetInput($event)"
+              placeholder="BTC/USDT, MNQ, EUR/USD..."
+              autocomplete="off"
+              [class.input-error]="submitted() && (!form.asset || zodErrors()['asset'])"
+            />
+            @if (filteredInstruments().length > 0) {
+              <div class="asset-dropdown">
+                @for (inst of filteredInstruments(); track inst.symbol) {
+                  <button type="button" class="asset-option" (click)="selectInstrument(inst)">
+                    <span class="asset-symbol">{{ inst.symbol }}</span>
+                    <span class="asset-label">{{ inst.label }}</span>
+                    @if (inst.tickValue !== null) {
+                      <span class="asset-tick">{{ inst.tickValue }}$/pt</span>
+                    }
+                  </button>
+                }
+              </div>
+            }
+            @if (selectedInstrument() !== null && selectedInstrument()!.tickValue !== null) {
+              <div class="tick-badge">⚡ {{ selectedInstrument()!.tickValue }}$ par point</div>
+            }
             @if (submitted() && (!form.asset || zodErrors()['asset'])) {
               <span class="field-error">{{ zodErrors()['asset'] || 'Asset requis' }}</span>
             }
           </div>
+
           <div class="form-group">
             <span class="field-label">Direction</span>
             <div class="side-toggle" [class.input-error]="submitted() && zodErrors()['side']">
@@ -38,8 +62,8 @@
           </div>
         </div>
 
-        <!-- Row 2: Entry + Exit -->
-        <div class="form-row">
+        <!-- Row 2: Entry + Exit + Quantité -->
+        <div class="form-row trio">
           <div class="form-group">
             <label for="tf-entry">Entry</label>
             <input id="tf-entry" data-testid="trade-entry" type="text"
@@ -56,6 +80,12 @@
               [value]="form.exit ?? ''" (input)="filterNumeric($event, 'exit')"
               (blur)="onExitBlur()"
               name="exit" placeholder="0.00" />
+          </div>
+          <div class="form-group">
+            <label for="tf-qty">Quantité</label>
+            <input id="tf-qty" type="text"
+              [value]="form.quantity ?? 1" (input)="filterNumeric($event, 'quantity')"
+              name="quantity" placeholder="1" />
           </div>
         </div>
 
@@ -75,7 +105,7 @@
           </div>
         </div>
 
-        <!-- Toggle SL/TP — visible uniquement si exit a été touché puis laissé vide -->
+        <!-- Toggle SL/TP -->
         @if (exitTouched() && !form.exit) {
           <div class="form-group">
             <span class="field-label">Sorti sur</span>

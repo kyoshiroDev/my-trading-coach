@@ -43,10 +43,12 @@ model User {
   // ── Discord ──────────────────────────────────────────────────────────────────
   discordId String? @unique
 
-  trades    Trade[]
-  debriefs  WeeklyDebrief[]
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  trades       Trade[]
+  debriefs     WeeklyDebrief[]
+  lastSeenAt   DateTime?
+  lastLoginAt  DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 }
 
 model Trade {
@@ -61,6 +63,7 @@ model Trade {
   takeProfit Float?
   pnl        Float?
   riskReward Float?
+  quantity   Float?
   emotion    EmotionState
   setup      SetupType
   session    TradingSession

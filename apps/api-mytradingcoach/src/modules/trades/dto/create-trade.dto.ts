@@ -43,6 +43,11 @@ export class CreateTradeDto {
   @IsOptional()
   riskReward?: number;
 
+  @IsNumber()
+  @Min(0.01)
+  @IsOptional()
+  quantity?: number;
+
   @IsEnum(EmotionState)
   emotion!: EmotionState;
 

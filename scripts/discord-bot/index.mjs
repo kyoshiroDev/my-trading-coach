@@ -20,6 +20,11 @@ client.on('error', (err) => {
   console.error('[Bot] Erreur client Discord :', err.message);
 });
 
+// Empêche Node 22 de crasher sur une rejection non catchée
+process.on('unhandledRejection', (err) => {
+  console.error('[Bot] Unhandled rejection (process protégé) :', err?.message ?? err);
+});
+
 // DM de bienvenue automatique
 client.on('guildMemberAdd', async (member) => {
   try {
@@ -82,20 +87,29 @@ client.on('interactionCreate', async (interaction) => {
   const member = interaction.member;
   await member.roles.remove([ROLE_MEMBRE, ROLE_PREMIUM].filter(Boolean)).catch(() => undefined);
 
-  if (data.data.plan === 'PREMIUM') {
-    await member.roles.add(ROLE_PREMIUM);
+  try {
+    if (data.data.plan === 'PREMIUM') {
+      await member.roles.add(ROLE_PREMIUM);
+      await interaction.editReply({
+        content:
+          `✅ Vérifié **${data.data.name}** ! 🎉\n` +
+          `Rôle ⭐ Premium attribué — salon Premium débloqué.`,
+      });
+    } else {
+      await member.roles.add(ROLE_MEMBRE);
+      await interaction.editReply({
+        content:
+          `✅ Vérifié **${data.data.name}** ! 👋\n` +
+          `Rôle 👋 Membre attribué.\n` +
+          `💡 Passe à Premium → https://app.mytradingcoach.app/settings`,
+      });
+    }
+  } catch (err) {
+    console.error(`[Bot] /verify — Impossible d'attribuer le rôle (${err.message}) — vérifier : 1) permission "Gérer les rôles" activée, 2) rôle du bot au-dessus des rôles Membre/Premium dans la hiérarchie`);
     await interaction.editReply({
       content:
-        `✅ Vérifié **${data.data.name}** ! 🎉\n` +
-        `Rôle ⭐ Premium attribué — salon Premium débloqué.`,
-    });
-  } else {
-    await member.roles.add(ROLE_MEMBRE);
-    await interaction.editReply({
-      content:
-        `✅ Vérifié **${data.data.name}** ! 👋\n` +
-        `Rôle 👋 Membre attribué.\n` +
-        `💡 Passe à Premium → https://app.mytradingcoach.app/settings`,
+        `✅ Compte vérifié **${data.data.name}** !\n` +
+        `⚠️ Impossible d'attribuer le rôle automatiquement — contacte un administrateur.`,
     });
   }
 });

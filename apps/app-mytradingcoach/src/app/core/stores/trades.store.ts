@@ -13,6 +13,7 @@ export interface Trade {
   takeProfit: number | null;
   pnl: number | null;
   riskReward: number | null;
+  quantity: number | null;
   emotion: string;
   setup: string;
   session: string;

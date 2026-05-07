@@ -120,9 +120,14 @@ export class AuthService {
       .get<{ data: AuthUser }>(`${environment.apiUrl}/auth/me`)
       .pipe(
         tap((res) => {
-          const user = res.data;
-          localStorage.setItem('user', JSON.stringify(user));
-          this.currentUser.set(user);
+          const incoming = res.data;
+          // Si le client a déjà onboardingCompleted=true (ex: completeOnboarding en vol),
+          // ne pas l'écraser avec false venant de la DB (race condition réseau)
+          if (this.currentUser()?.onboardingCompleted === true && !incoming.onboardingCompleted) {
+            incoming.onboardingCompleted = true;
+          }
+          localStorage.setItem('user', JSON.stringify(incoming));
+          this.currentUser.set(incoming);
         }),
       );
   }

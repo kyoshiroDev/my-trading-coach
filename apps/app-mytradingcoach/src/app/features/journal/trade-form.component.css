@@ -217,6 +217,67 @@ textarea { resize: vertical; min-height: 72px; }
 input[readonly] { background: var(--bg-3); cursor: default; color: var(--text-2); }
 .pnl-pct { font-size: 11px; font-family: var(--font-mono, 'DM Mono', monospace); margin-top: 2px; }
 
+/* ─── Autocomplete instruments ─── */
+.asset-group { position: relative; }
+.asset-group input { text-transform: uppercase; }
+
+.asset-dropdown {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  background: var(--bg-2);
+  border: 1px solid var(--border-hover, rgba(99,155,255,.25));
+  border-radius: 10px;
+  z-index: 100;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.asset-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid var(--border);
+}
+
+.asset-option:last-child { border-bottom: none; }
+.asset-option:hover { background: rgba(59,130,246,0.08); }
+
+.asset-symbol {
+  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blue-bright);
+  min-width: 72px;
+}
+
+.asset-label {
+  font-size: 12px;
+  color: var(--text-2);
+  flex: 1;
+}
+
+.asset-tick {
+  font-size: 10px;
+  font-family: var(--font-mono, 'DM Mono', monospace);
+  color: var(--green);
+  background: var(--green-dim);
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.tick-badge {
+  font-size: 11px;
+  font-family: var(--font-mono, 'DM Mono', monospace);
+  color: var(--green);
+  margin-top: 4px;
+}
+
 @media (max-width: 768px) {
   .overlay {
     align-items: flex-end;

@@ -40,6 +40,7 @@ const mockJwt = {
 const mockResend = {
   sendWelcomeFree: vi.fn().mockResolvedValue(undefined),
   sendResetPassword: vi.fn().mockResolvedValue(undefined),
+  sendAdminAlert: vi.fn().mockResolvedValue(undefined),
 };
 
 describe('AuthService', () => {

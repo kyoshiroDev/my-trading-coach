@@ -10,6 +10,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
+import { getTickValue } from './instruments.const';
 
 @Injectable()
 export class TradesService {
@@ -24,6 +25,7 @@ export class TradesService {
         ...dto,
         pnl: dto.pnl ?? pnl,
         riskReward: dto.riskReward ?? riskReward,
+        quantity: dto.quantity ?? 1,
         userId,
         tradedAt: dto.tradedAt ? new Date(dto.tradedAt) : new Date(),
       },
@@ -100,14 +102,29 @@ export class TradesService {
   }
 
   private calculatePnl(dto: CreateTradeDto): number | undefined {
-    if (dto.entry != null && dto.entry > 0 && dto.exit != null && dto.exit > 0) {
-      // P&L en dollars : LONG = exit - entry | SHORT = entry - exit
-      const dollars = dto.side === 'LONG'
-        ? (dto.exit - dto.entry)
-        : (dto.entry - dto.exit);
-      return +dollars.toFixed(2);
+    if (dto.entry == null || dto.entry <= 0) return undefined;
+
+    let effectiveExit: number | undefined;
+    if (dto.exit != null && dto.exit > 0) {
+      effectiveExit = dto.exit;
+    } else if (dto.pnl != null) {
+      return dto.pnl;
     }
-    return undefined;
+
+    if (effectiveExit == null) return undefined;
+
+    const points = dto.side === 'LONG'
+      ? effectiveExit - dto.entry
+      : dto.entry - effectiveExit;
+
+    const quantity = dto.quantity ?? 1;
+    const tickValue = getTickValue(dto.asset);
+
+    const pnl = tickValue != null
+      ? points * tickValue * quantity
+      : points * quantity;
+
+    return +pnl.toFixed(2);
   }
 
   private calculateRiskReward(dto: CreateTradeDto): number | undefined {

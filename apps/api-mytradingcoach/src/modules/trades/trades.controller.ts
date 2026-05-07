@@ -16,11 +16,17 @@ import { TradesService } from './trades.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
+import { INSTRUMENTS } from './instruments.const';
 
 @UseGuards(JwtAuthGuard)
 @Controller('trades')
 export class TradesController {
   constructor(private tradesService: TradesService) {}
+
+  @Get('instruments')
+  getInstruments() {
+    return { data: INSTRUMENTS };
+  }
 
   @Post()
   create(

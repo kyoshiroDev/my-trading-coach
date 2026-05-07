@@ -11,7 +11,19 @@ export interface AdminUser {
   trialEndsAt: string | null;
   stripeInterval: 'month' | 'year' | null;
   stripeCurrentPeriodEnd: string | null;
+  lastSeenAt: string | null;
+  lastLoginAt: string | null;
   createdAt: string;
+}
+
+export interface AdminOnlineUser {
+  id: string;
+  email: string;
+  name: string | null;
+  plan: 'FREE' | 'PREMIUM';
+  role: 'ADMIN' | 'USER' | 'BETA_TESTER';
+  lastSeenAt: string;
+  lastLoginAt: string | null;
 }
 
 export interface AdminListResponse {
@@ -62,5 +74,9 @@ export class AdminApi {
 
   stats() {
     return this.http.get<{ data: AdminStats }>(`${this.base}/stats`);
+  }
+
+  online() {
+    return this.http.get<{ data: AdminOnlineUser[] }>(`${this.base}/online`);
   }
 }
