@@ -138,7 +138,12 @@ export class SidebarComponent {
   protected toggleSidebar(): void { this.sidebarOpen.update(v => !v); }
   protected closeSidebar(): void  { this.sidebarOpen.set(false); }
 
+  // Signal local — une fois mis à true, le wizard ne peut plus revenir dans la session
+  // même si fetchMe() renvoie onboardingCompleted: false (race condition réseau)
+  private readonly onboardingDismissed = signal(false);
+
   protected readonly showOnboarding = computed(() => {
+    if (this.onboardingDismissed()) return false;
     const user = this.userStore.user();
     return !!user && user.onboardingCompleted === false;
   });
@@ -163,9 +168,11 @@ export class SidebarComponent {
   }
 
   onOnboardingCompleted() {
+    this.onboardingDismissed.set(true);
     const user = this.userStore.user();
     if (user) {
-      this.auth.currentUser.set({ ...user, onboardingCompleted: true });
+      // setCurrentUser (et non currentUser.set) pour persister dans le localStorage
+      this.auth.setCurrentUser({ ...user, onboardingCompleted: true });
     }
   }
 
