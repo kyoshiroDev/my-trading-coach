@@ -212,6 +212,7 @@ textarea { resize: vertical; min-height: 72px; }
 
 .input-error { border-color: var(--red) !important; box-shadow: 0 0 0 3px rgba(239,68,68,0.1) !important; }
 .field-error { font-size: 11px; color: var(--red); margin-top: 2px; }
+.api-error { background: var(--red-dim); border: 1px solid rgba(239,68,68,0.3); color: var(--red); font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; }
 .pnl-positive { color: var(--green); font-weight: 600; }
 .pnl-negative { color: var(--red); font-weight: 600; }
 input[readonly] { background: var(--bg-3); cursor: default; color: var(--text-2); }
