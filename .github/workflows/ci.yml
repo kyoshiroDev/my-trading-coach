@@ -261,13 +261,27 @@ jobs:
         env:
           API_URL: ${{ secrets.DEV_API_URL }}
 
-      - name: Prepare Vercel output (Angular prebuilt)
+      - name: Prepare Vercel output (prebuilt)
         run: |
-          pnpm dlx vercel@latest \
-            --token=${{ secrets.VERCEL_TOKEN }} \
-            --yes \
-            --cwd dist/apps/app-mytradingcoach/browser \
-            --local-config ${{ github.workspace }}/apps/app-mytradingcoach/vercel.json
+          mkdir -p .vercel/output/static
+          cp -r dist/apps/app-mytradingcoach/browser/* .vercel/output/static/
+          cat > .vercel/output/config.json << 'EOF'
+          {
+            "version": 3,
+            "routes": [
+              {
+                "src": "/assets/(.*)",
+                "headers": { "Cache-Control": "public, max-age=31536000, immutable" },
+                "continue": true
+              },
+              { "handle": "filesystem" },
+              { "src": "/(.*)", "dest": "/index.html" }
+            ]
+          }
+          EOF
+
+      - name: Deploy to Vercel (dev, prebuilt)
+        run: pnpm dlx vercel@latest deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_APP_PROJECT_ID }}
