@@ -191,6 +191,9 @@
         </div>
 
         <!-- Footer -->
+        @if (apiError()) {
+          <div class="api-error">{{ apiError() }}</div>
+        }
         <div class="modal-footer">
           <button type="button" class="btn-cancel" (click)="dismissed.emit()">Annuler</button>
           <button type="submit" data-testid="trade-submit" class="btn-save" [disabled]="isSaving()">

@@ -127,6 +127,7 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
     <mtc-trade-form
       [open]="showModal()"
       [isSaving]="isSubmitting()"
+      [apiError]="submitError()"
       (dismissed)="closeModal()"
       (formSave)="submitTrade($event)"
     />
@@ -142,6 +143,7 @@ export class JournalComponent implements OnInit {
 
   protected readonly showModal = signal(false);
   protected readonly isSubmitting = signal(false);
+  protected readonly submitError = signal<string | null>(null);
   protected readonly filterSide = signal<FilterSide>('ALL');
   protected readonly filterSetup = signal<string | null>(null);
 
@@ -159,8 +161,8 @@ export class JournalComponent implements OnInit {
     this.tradesStore.loadTrades();
   }
 
-  openModal() { this.showModal.set(true); }
-  closeModal() { this.showModal.set(false); }
+  openModal() { this.showModal.set(true); this.submitError.set(null); }
+  closeModal() { this.showModal.set(false); this.submitError.set(null); }
 
   toggleSetupFilter(setup: string) {
     this.filterSetup.set(this.filterSetup() === setup ? null : setup);
@@ -172,6 +174,7 @@ export class JournalComponent implements OnInit {
    */
   submitTrade(dto: CreateTradeDto) {
     this.isSubmitting.set(true);
+    this.submitError.set(null);
 
     this.http.post<{ data: Trade }>(`${environment.apiUrl}/trades`, dto)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -181,7 +184,11 @@ export class JournalComponent implements OnInit {
           this.closeModal();
           this.isSubmitting.set(false);
         },
-        error: () => this.isSubmitting.set(false),
+        error: (err) => {
+          const msg = err?.error?.message ?? "Erreur lors de l'enregistrement du trade";
+          this.submitError.set(Array.isArray(msg) ? msg.join(', ') : String(msg));
+          this.isSubmitting.set(false);
+        },
       });
   }
 

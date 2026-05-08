@@ -24,7 +24,7 @@ export interface Trade {
   quantity: number | null;
   emotion: 'CONFIDENT' | 'STRESSED' | 'REVENGE' | 'FEAR' | 'FOCUSED' | 'NEUTRAL';
   setup: 'BREAKOUT' | 'PULLBACK' | 'RANGE' | 'REVERSAL' | 'SCALPING' | 'NEWS';
-  session: 'LONDON' | 'NEW_YORK' | 'ASIAN' | 'PRE_MARKET' | 'OVERLAP';
+  session: 'LONDON' | 'NEW_YORK' | 'ASIAN';
   timeframe: string;
   notes: string | null;
   tags: string[];

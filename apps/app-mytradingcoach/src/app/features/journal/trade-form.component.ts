@@ -34,6 +34,7 @@ export class TradeFormComponent {
   readonly open = input(false);
   readonly editTrade = input<Trade | null>(null);
   readonly isSaving = input(false);
+  readonly apiError = input<string | null>(null);
   readonly dismissed = output<void>();
   readonly formSave = output<CreateTradeDto>();
 
