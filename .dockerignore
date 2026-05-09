@@ -1,0 +1,13 @@
+node_modules
+dist
+.angular
+.nx
+.git
+.github
+coverage
+*.log
+.env
+.env.*
+!.env.example
+apps/app-mytradingcoach
+apps/landing-mytradingcoach

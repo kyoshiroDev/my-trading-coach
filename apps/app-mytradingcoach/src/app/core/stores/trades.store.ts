@@ -14,6 +14,7 @@ export interface Trade {
   pnl: number | null;
   riskReward: number | null;
   quantity: number | null;
+  capitalEngaged: number | null;
   emotion: string;
   setup: string;
   session: string;

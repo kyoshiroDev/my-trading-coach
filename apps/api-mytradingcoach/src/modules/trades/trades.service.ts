@@ -26,6 +26,7 @@ export class TradesService {
         pnl: dto.pnl ?? pnl,
         riskReward: dto.riskReward ?? riskReward,
         quantity: dto.quantity ?? 1,
+        capitalEngaged: dto.capitalEngaged ?? null,
         userId,
         tradedAt: dto.tradedAt ? new Date(dto.tradedAt) : new Date(),
       },
@@ -120,9 +121,14 @@ export class TradesService {
     const quantity = dto.quantity ?? 1;
     const tickValue = getTickValue(dto.asset);
 
-    const pnl = tickValue != null
-      ? points * tickValue * quantity
-      : points * quantity;
+    let pnl: number;
+    if (tickValue != null) {
+      pnl = points * tickValue * quantity;
+    } else if (dto.capitalEngaged != null && dto.capitalEngaged > 0) {
+      pnl = (points / dto.entry) * dto.capitalEngaged;
+    } else {
+      pnl = points * quantity;
+    }
 
     return +pnl.toFixed(2);
   }

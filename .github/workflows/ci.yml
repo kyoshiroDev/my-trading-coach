@@ -100,6 +100,35 @@ jobs:
           || pnpm nx run-many --target=build --all --parallel=3
 
 
+  # ── Build & Check Astro Landing (toujours, pas affected) ─────────────────
+  build-landing:
+    name: Build Astro Landing
+    runs-on: ubuntu-latest
+    needs: lint
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      NX_NO_CLOUD: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Astro check (typecheck)
+        run: pnpm nx lint landing-mytradingcoach
+
+      - name: Astro build
+        run: pnpm nx build landing-mytradingcoach
+
   # ── Tests Angular ─────────────────────────────────────────────────────────
   test-angular:
     runs-on: ubuntu-latest

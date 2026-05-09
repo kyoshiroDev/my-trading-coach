@@ -23,7 +23,7 @@ jobs:
         uses: burnett01/rsync-deployments@7.0.1
         with:
           switches: -az --delete
-          path: apps/api-mytradingcoach/ libs/ prisma/ scripts/discord-bot/ docker-compose.discord-bot.yml
+          path: apps/api-mytradingcoach/ libs/ prisma/ scripts/discord-bot/ docker-compose.prod.yml docker-compose.discord-bot.yml
           remote_path: /opt/apps/mytradingcoach/prod/
           remote_host: ${{ secrets.VPS_HOST }}
           remote_user: ${{ secrets.VPS_USER }}
@@ -38,8 +38,8 @@ jobs:
           script: |
             set -e
             cd /opt/apps/mytradingcoach/prod
-            docker compose --env-file .env.production build api
-            docker compose --env-file .env.production up -d --force-recreate api
+            docker compose -f docker-compose.prod.yml --env-file .env.production build api
+            docker compose -f docker-compose.prod.yml --env-file .env.production up -d --force-recreate api
             docker compose -f docker-compose.discord-bot.yml --env-file .env.production build discord-bot
             docker compose -f docker-compose.discord-bot.yml --env-file .env.production up -d --force-recreate discord-bot
             echo "Production deployment complete at $(date)"

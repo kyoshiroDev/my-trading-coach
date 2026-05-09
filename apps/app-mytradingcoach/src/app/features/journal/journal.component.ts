@@ -2,9 +2,9 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, injec
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { LucideAngularModule, X } from 'lucide-angular';
+import { LucideAngularModule, X, Pencil } from 'lucide-angular';
 import { TradesStore, Trade } from '../../core/stores/trades.store';
-import { CreateTradeDto } from '../../core/api/trades.api';
+import { CreateTradeDto, TradesApi } from '../../core/api/trades.api';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { TradeFormComponent } from './trade-form.component';
 import { PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe } from '../../shared/pipes';
@@ -73,6 +73,7 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
               <th>Entry</th>
               <th>Exit</th>
               <th>P&amp;L</th>
+              <th class="col-qty">Qté</th>
               <th>R/R</th>
               <th>Émotion</th>
               <th>Setup</th>
@@ -94,6 +95,7 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
                 <td class="mono" data-testid="trade-pnl" [style.color]="trade.pnl | pnlColor">
                   {{ trade.pnl | pnlFormat:trade.entry }}
                 </td>
+                <td class="mono col-qty">{{ trade.quantity ?? 1 }}</td>
                 <td class="mono">{{ trade.riskReward !== null ? trade.riskReward.toFixed(2) : '—' }}</td>
                 <td>
                   <span class="emotion-cell">
@@ -103,9 +105,14 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
                 <td><span class="setup-badge">{{ trade.setup }}</span></td>
                 <td class="mono td-date">{{ trade.tradedAt | date:'dd/MM/yy' }}</td>
                 <td>
-                  <button class="btn-delete" data-testid="trade-delete" (click)="deleteTrade(trade.id)" title="Supprimer">
-                    <lucide-icon [img]="XIcon" [size]="12" />
-                  </button>
+                  <div class="td-actions">
+                    <button class="btn-edit" (click)="openEditModal(trade)" title="Modifier">
+                      <lucide-icon [img]="PencilIcon" [size]="12" />
+                    </button>
+                    <button class="btn-delete" data-testid="trade-delete" (click)="deleteTrade(trade.id)" title="Supprimer">
+                      <lucide-icon [img]="XIcon" [size]="12" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             }
@@ -119,13 +126,9 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
       }
     </div>
 
-    <!--
-      TradeFormComponent (Smart/Dumb pattern) :
-      - Journal = composant "Smart" : gère l'état (showModal, isSubmitting) et les appels API
-      - TradeFormComponent = composant "Dumb" : reçoit des inputs, émet des outputs, pas d'état métier
-    -->
     <mtc-trade-form
       [open]="showModal()"
+      [editTrade]="selectedTrade()"
       [isSaving]="isSubmitting()"
       [apiError]="submitError()"
       (dismissed)="closeModal()"
@@ -135,19 +138,21 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
 })
 export class JournalComponent implements OnInit {
   protected readonly tradesStore = inject(TradesStore);
+  private readonly tradesApi = inject(TradesApi);
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly SETUPS = SETUPS;
   protected readonly XIcon = X;
+  protected readonly PencilIcon = Pencil;
 
   protected readonly showModal = signal(false);
   protected readonly isSubmitting = signal(false);
   protected readonly submitError = signal<string | null>(null);
+  protected readonly selectedTrade = signal<Trade | null>(null);
   protected readonly filterSide = signal<FilterSide>('ALL');
   protected readonly filterSetup = signal<string | null>(null);
 
-  /** computed() : recalculé uniquement quand les trades ou les filtres changent */
   protected readonly filteredTrades = computed(() => {
     let trades = this.tradesStore.trades();
     const side = this.filterSide();
@@ -161,35 +166,64 @@ export class JournalComponent implements OnInit {
     this.tradesStore.loadTrades();
   }
 
-  openModal() { this.showModal.set(true); this.submitError.set(null); }
-  closeModal() { this.showModal.set(false); this.submitError.set(null); }
+  openModal() {
+    this.selectedTrade.set(null);
+    this.showModal.set(true);
+    this.submitError.set(null);
+  }
+
+  protected openEditModal(trade: Trade): void {
+    this.selectedTrade.set(trade);
+    this.showModal.set(true);
+    this.submitError.set(null);
+  }
+
+  closeModal(): void {
+    this.showModal.set(false);
+    this.selectedTrade.set(null);
+    this.submitError.set(null);
+  }
 
   toggleSetupFilter(setup: string) {
     this.filterSetup.set(this.filterSetup() === setup ? null : setup);
   }
 
-  /**
-   * Reçoit un CreateTradeDto déjà validé depuis TradeFormComponent.
-   * Le journal n'a plus besoin de connaître la logique de validation du formulaire.
-   */
-  submitTrade(dto: CreateTradeDto) {
+  submitTrade(dto: CreateTradeDto): void {
+    const edit = this.selectedTrade();
     this.isSubmitting.set(true);
     this.submitError.set(null);
 
-    this.http.post<{ data: Trade }>(`${environment.apiUrl}/trades`, dto)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => {
-          this.tradesStore.addTrade(res.data);
-          this.closeModal();
-          this.isSubmitting.set(false);
-        },
-        error: (err) => {
-          const msg = err?.error?.message ?? "Erreur lors de l'enregistrement du trade";
-          this.submitError.set(Array.isArray(msg) ? msg.join(', ') : String(msg));
-          this.isSubmitting.set(false);
-        },
-      });
+    if (edit) {
+      this.tradesApi.update(edit.id, dto)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (res) => {
+            this.tradesStore.updateTrade(res.data);
+            this.closeModal();
+            this.isSubmitting.set(false);
+          },
+          error: (err) => {
+            const msg = err?.error?.message ?? 'Erreur lors de la modification';
+            this.submitError.set(Array.isArray(msg) ? msg.join(', ') : String(msg));
+            this.isSubmitting.set(false);
+          },
+        });
+    } else {
+      this.http.post<{ data: Trade }>(`${environment.apiUrl}/trades`, dto)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (res) => {
+            this.tradesStore.addTrade(res.data);
+            this.closeModal();
+            this.isSubmitting.set(false);
+          },
+          error: (err) => {
+            const msg = err?.error?.message ?? "Erreur lors de l'enregistrement du trade";
+            this.submitError.set(Array.isArray(msg) ? msg.join(', ') : String(msg));
+            this.isSubmitting.set(false);
+          },
+        });
+    }
   }
 
   deleteTrade(id: string) {
