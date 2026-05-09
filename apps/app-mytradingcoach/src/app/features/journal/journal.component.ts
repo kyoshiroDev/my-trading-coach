@@ -73,6 +73,7 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
               <th>Entry</th>
               <th>Exit</th>
               <th>P&amp;L</th>
+              <th class="col-qty">Qté</th>
               <th>R/R</th>
               <th>Émotion</th>
               <th>Setup</th>
@@ -94,6 +95,7 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
                 <td class="mono" data-testid="trade-pnl" [style.color]="trade.pnl | pnlColor">
                   {{ trade.pnl | pnlFormat:trade.entry }}
                 </td>
+                <td class="mono col-qty">{{ trade.quantity ?? 1 }}</td>
                 <td class="mono">{{ trade.riskReward !== null ? trade.riskReward.toFixed(2) : '—' }}</td>
                 <td>
                   <span class="emotion-cell">

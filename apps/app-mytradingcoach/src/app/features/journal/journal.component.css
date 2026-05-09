@@ -369,6 +369,8 @@
     min-width: 600px;
   }
 
+  .col-qty { display: none; }
+
   .journal-table th:nth-child(6),
   .journal-table td:nth-child(6),
   .journal-table th:nth-child(8),
