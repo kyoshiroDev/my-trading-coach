@@ -18,7 +18,7 @@ export const CreateTradeSchema = z.object({
   riskReward: optNumber,
   emotion: z.enum(['CONFIDENT', 'STRESSED', 'REVENGE', 'FEAR', 'FOCUSED', 'NEUTRAL']),
   setup: z.enum(['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']),
-  session: z.enum(['LONDON', 'NEW_YORK', 'ASIAN', 'PRE_MARKET', 'OVERLAP']),
+  session: z.enum(['LONDON', 'NEW_YORK', 'ASIAN']),
   timeframe: z.string().min(1),
   quantity: z.preprocess(nullToUndef, z.number().positive().optional()),
   notes: z.preprocess(nullToUndef, z.string().optional()),
