@@ -89,6 +89,10 @@ export class TradeFormComponent {
       ) ?? null,
   );
 
+  protected readonly todayMax = computed(() =>
+    new Date().toISOString().slice(0, 16),
+  );
+
   protected readonly unknownInstrumentWarning = computed(() => {
     const asset = this.form().asset;
     if (!asset || asset.length < 2) return null;
@@ -124,6 +128,9 @@ export class TradeFormComponent {
           session: t.session as CreateTradeDto['session'],
           timeframe: t.timeframe,
           notes: t.notes ?? undefined,
+          tradedAt: t.tradedAt
+            ? new Date(t.tradedAt).toISOString().slice(0, 16)
+            : new Date().toISOString().slice(0, 16),
         });
         this.assetSearch.set(t.asset);
         this.autoPnl.set(t.pnl ?? undefined);
@@ -283,6 +290,7 @@ export class TradeFormComponent {
       session:   'LONDON'   as const,
       timeframe: '1h',
       quantity:  1,
+      tradedAt:  new Date().toISOString().slice(0, 16),
     };
   }
 }

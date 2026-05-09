@@ -203,6 +203,19 @@
             placeholder="Contexte, raison du trade, leçons apprises..."></textarea>
         </div>
 
+        <!-- Date du trade -->
+        <div class="form-group">
+          <label for="tf-date">Date du trade <span class="optional">(aujourd'hui par défaut)</span></label>
+          <input
+            id="tf-date"
+            type="datetime-local"
+            name="tradedAt"
+            [ngModel]="form().tradedAt"
+            (ngModelChange)="form.update(f => ({...f, tradedAt: $event}))"
+            [max]="todayMax()"
+          />
+        </div>
+
         <!-- Footer -->
         @if (apiError()) {
           <div class="api-error">{{ apiError() }}</div>
