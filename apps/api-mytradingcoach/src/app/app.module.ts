@@ -22,7 +22,10 @@ import { AppController } from './app.controller';
 @Module({
   controllers: [AppController],
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: process.env['NODE_ENV'] === 'development' ? '.env.development' : '.env.local',
+    }),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }]),
     BullModule.forRoot({
       connection: {

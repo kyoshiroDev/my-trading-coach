@@ -71,5 +71,6 @@ playwright/.cache
 .env
 .env.local
 .env.dev
+.env.development
 .env.production
 SECRETS.md
