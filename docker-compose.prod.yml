@@ -1,0 +1,29 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api-mytradingcoach/Dockerfile
+    image: mtc_api_prod:latest
+    container_name: mtc_api_prod
+    restart: unless-stopped
+    env_file: .env.production
+    networks:
+      - mtc_network
+    mem_limit: 512m
+    memswap_limit: 512m
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api-prod.rule=Host(`api.mytradingcoach.app`)"
+      - "traefik.http.routers.api-prod.entrypoints=websecure"
+      - "traefik.http.routers.api-prod.tls.certresolver=letsencrypt"
+      - "traefik.http.services.api-prod.loadbalancer.server.port=3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  mtc_network:
+    external: true
