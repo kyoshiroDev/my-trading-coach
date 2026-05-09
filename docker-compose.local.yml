@@ -70,6 +70,25 @@ services:
     restart: unless-stopped
     networks: [mtc_local]
 
+  discord-bot:
+    build:
+      context: scripts/discord-bot
+      dockerfile: Dockerfile
+    container_name: mtc_discord_bot_local
+    environment:
+      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
+      - DISCORD_ROLE_MEMBRE_ID=${DISCORD_ROLE_MEMBRE_ID}
+      - DISCORD_ROLE_PREMIUM_ID=${DISCORD_ROLE_PREMIUM_ID}
+      - DISCORD_BOT_SECRET=${DISCORD_BOT_SECRET}
+      - API_URL=http://mtc_api_local:3000
+    restart: unless-stopped
+    mem_limit: 128m
+    memswap_limit: 128m
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [mtc_local]
+
 volumes:
   postgres_local_data:
 
