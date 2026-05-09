@@ -21,6 +21,7 @@ export const CreateTradeSchema = z.object({
   session: z.enum(['LONDON', 'NEW_YORK', 'ASIAN']),
   timeframe: z.string().min(1),
   quantity: z.preprocess(nullToUndef, z.number().positive().optional()),
+  capitalEngaged: z.preprocess(nullToUndef, z.number().positive().optional()),
   notes: z.preprocess(nullToUndef, z.string().optional()),
   tags: z.array(z.string()).optional(),
   tradedAt: z.string().optional(),

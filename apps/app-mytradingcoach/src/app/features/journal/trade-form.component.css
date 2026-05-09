@@ -219,6 +219,12 @@ input[readonly] { background: var(--bg-3); cursor: default; color: var(--text-2)
 
 input[type="datetime-local"] { color-scheme: dark; }
 
+.field-hint {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+
 /* ─── Autocomplete instruments ─── */
 .asset-group { position: relative; }
 .asset-group input { text-transform: uppercase; }

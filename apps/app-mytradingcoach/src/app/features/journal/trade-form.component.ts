@@ -20,7 +20,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
   CONFIDENT: '😎', FOCUSED: '🎯', NEUTRAL: '😐', STRESSED: '😰', FEAR: '😨', REVENGE: '🤬',
 };
 
-type NumericField = 'entry' | 'exit' | 'stopLoss' | 'takeProfit' | 'quantity';
+type NumericField = 'entry' | 'exit' | 'stopLoss' | 'takeProfit' | 'quantity' | 'capitalEngaged';
 
 @Component({
   selector: 'mtc-trade-form',
@@ -233,14 +233,25 @@ export class TradeFormComponent {
         ? effectiveExit - entry
         : entry - effectiveExit;
 
-      const pnl = tickValue != null
-        ? points * tickValue * qty
-        : points * qty;
-
-      const pct = (points / entry) * 100;
-      this.autoPnl.set(+pnl.toFixed(2));
-      this.autoPnlPct.set(+pct.toFixed(2));
-      this.form.update(f => ({ ...f, pnl: +pnl.toFixed(2) }));
+      if (tickValue !== null) {
+        const pnl = points * tickValue * qty;
+        this.autoPnl.set(+pnl.toFixed(2));
+        this.autoPnlPct.set(undefined);
+        this.form.update(f => ({ ...f, pnl: +pnl.toFixed(2) }));
+      } else {
+        const capital = this.form().capitalEngaged;
+        if (capital != null && capital > 0) {
+          const pnl = (points / entry) * capital;
+          const pct = (points / entry) * 100;
+          this.autoPnl.set(+pnl.toFixed(2));
+          this.autoPnlPct.set(+pct.toFixed(2));
+          this.form.update(f => ({ ...f, pnl: +pnl.toFixed(2) }));
+        } else {
+          this.autoPnl.set(undefined);
+          this.autoPnlPct.set(undefined);
+          this.form.update(f => ({ ...f, pnl: undefined }));
+        }
+      }
     } else {
       this.autoPnl.set(undefined);
       this.autoPnlPct.set(undefined);
@@ -288,9 +299,10 @@ export class TradeFormComponent {
       emotion:   'FOCUSED'  as const,
       setup:     'BREAKOUT' as const,
       session:   'LONDON'   as const,
-      timeframe: '1h',
-      quantity:  1,
-      tradedAt:  new Date().toISOString().slice(0, 16),
+      timeframe:      '1h',
+      quantity:       1,
+      capitalEngaged: undefined,
+      tradedAt:       new Date().toISOString().slice(0, 16),
     };
   }
 }

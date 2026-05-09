@@ -123,6 +123,24 @@
           </div>
         }
 
+        <!-- Capital engagé — crypto/forex uniquement -->
+        @if (selectedInstrument() === null || selectedInstrument()!.tickValue === null) {
+          <div class="form-group">
+            <label for="tf-capital">
+              Capital engagé ($) <span class="optional">(pour calculer ton P&amp;L)</span>
+            </label>
+            <input
+              id="tf-capital"
+              type="text"
+              [value]="form().capitalEngaged ?? ''"
+              (input)="filterNumeric($event, 'capitalEngaged')"
+              name="capitalEngaged"
+              placeholder="Ex: 1000"
+            />
+            <span class="field-hint">P&amp;L = variation% × capital engagé</span>
+          </div>
+        }
+
         <!-- Row 4: PnL + RR (calculés auto) -->
         <div class="form-row">
           <div class="form-group">

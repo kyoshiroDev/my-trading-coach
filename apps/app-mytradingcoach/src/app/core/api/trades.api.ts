@@ -22,6 +22,7 @@ export interface Trade {
   pnl: number | null;
   riskReward: number | null;
   quantity: number | null;
+  capitalEngaged: number | null;
   emotion: 'CONFIDENT' | 'STRESSED' | 'REVENGE' | 'FEAR' | 'FOCUSED' | 'NEUTRAL';
   setup: 'BREAKOUT' | 'PULLBACK' | 'RANGE' | 'REVERSAL' | 'SCALPING' | 'NEWS';
   session: 'LONDON' | 'NEW_YORK' | 'ASIAN';
@@ -42,6 +43,7 @@ export interface CreateTradeDto {
   pnl?: number;
   riskReward?: number;
   quantity?: number;
+  capitalEngaged?: number;
   emotion: Trade['emotion'];
   setup: Trade['setup'];
   session: Trade['session'];
