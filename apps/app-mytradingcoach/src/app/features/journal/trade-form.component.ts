@@ -88,6 +88,20 @@ export class TradeFormComponent {
         (i) => i.symbol.toLowerCase() === (this.form().asset ?? '').toLowerCase(),
       ) ?? null,
   );
+
+  protected readonly unknownInstrumentWarning = computed(() => {
+    const asset = this.form().asset;
+    if (!asset || asset.length < 2) return null;
+    const found = this.instruments().find(
+      (i) => i.symbol.toLowerCase() === asset.toLowerCase(),
+    );
+    const looksLikeFuture = !asset.includes('/') &&
+      !asset.includes('USD') && asset.length <= 5;
+    if (!found && looksLikeFuture) {
+      return `"${asset}" non reconnu — sélectionne depuis la liste pour un P&L correct`;
+    }
+    return null;
+  });
   // ─────────────────────────────────────────────────────────────────────────
 
   constructor() {

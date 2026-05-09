@@ -45,6 +45,9 @@
             @if (selectedInstrument() !== null && selectedInstrument()!.tickValue !== null) {
               <div class="tick-badge">⚡ {{ selectedInstrument()!.tickValue }}$ par point</div>
             }
+            @if (unknownInstrumentWarning()) {
+              <div class="asset-warning">⚠ {{ unknownInstrumentWarning() }}</div>
+            }
             @if (submitted() && (!form().asset || zodErrors()['asset'])) {
               <span class="field-error">{{ zodErrors()['asset'] || 'Asset requis' }}</span>
             }
