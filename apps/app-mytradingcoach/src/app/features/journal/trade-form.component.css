@@ -102,24 +102,22 @@ textarea { resize: vertical; min-height: 72px; }
 
 /* ─── Side toggle ─── */
 .side-toggle {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-  background: var(--bg-2);
+  display: flex;
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 4px;
+  overflow: hidden;
 }
 
 .side-btn {
-  padding: 7px;
+  flex: 1;
+  padding: 9px;
   border: none;
-  border-radius: 5px;
   font-size: 11px;
   font-family: var(--font-mono, 'DM Mono', monospace);
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: 0.8px;
   cursor: pointer;
-  background: transparent;
+  background: var(--bg-2);
   color: var(--text-3);
   transition: all 0.15s;
 }
@@ -161,8 +159,9 @@ textarea { resize: vertical; min-height: 72px; }
 .modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 10px;
   padding-top: 8px;
+  margin-top: 4px;
   border-top: 1px solid var(--border);
 }
 
@@ -213,9 +212,9 @@ textarea { resize: vertical; min-height: 72px; }
 .input-error { border-color: var(--red) !important; box-shadow: 0 0 0 3px rgba(239,68,68,0.1) !important; }
 .field-error { font-size: 11px; color: var(--red); margin-top: 2px; }
 .api-error { background: var(--red-dim); border: 1px solid rgba(239,68,68,0.3); color: var(--red); font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; }
-.pnl-positive { color: var(--green); font-weight: 600; }
-.pnl-negative { color: var(--red); font-weight: 600; }
 input[readonly] { background: var(--bg-3); cursor: default; color: var(--text-2); }
+.pnl-positive { color: var(--green) !important; font-weight: 600; }
+.pnl-negative { color: var(--red) !important; font-weight: 600; }
 .pnl-pct { font-size: 11px; font-family: var(--font-mono, 'DM Mono', monospace); margin-top: 2px; }
 
 /* ─── Autocomplete instruments ─── */
@@ -242,7 +241,11 @@ input[readonly] { background: var(--bg-3); cursor: default; color: var(--text-2)
   padding: 9px 14px;
   cursor: pointer;
   transition: background 0.15s;
+  border: none;
   border-bottom: 1px solid var(--border);
+  background: transparent;
+  width: 100%;
+  text-align: left;
 }
 
 .asset-option:last-child { border-bottom: none; }
