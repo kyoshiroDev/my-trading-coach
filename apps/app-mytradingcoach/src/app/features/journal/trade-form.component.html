@@ -23,11 +23,13 @@
               type="text"
               [value]="assetSearch()"
               (input)="onAssetInput($event)"
+              (focus)="showDropdown.set(true)"
+              (blur)="onAssetBlur()"
               placeholder="BTC/USDT, MNQ, EUR/USD..."
               autocomplete="off"
               [class.input-error]="submitted() && (!form.asset || zodErrors()['asset'])"
             />
-            @if (filteredInstruments().length > 0) {
+            @if (filteredInstruments().length > 0 && showDropdown()) {
               <div class="asset-dropdown">
                 @for (inst of filteredInstruments(); track inst.symbol) {
                   <button type="button" class="asset-option" (click)="selectInstrument(inst)">
@@ -126,7 +128,7 @@
               placeholder="—"
               [class.pnl-positive]="(autoPnl() ?? 0) > 0"
               [class.pnl-negative]="(autoPnl() ?? 0) < 0" />
-            @if (autoPnlPct() !== undefined) {
+            @if (autoPnlPct() !== undefined && selectedInstrument()?.tickValue === null) {
               <span class="pnl-pct"
                 [class.pnl-positive]="(autoPnlPct() ?? 0) > 0"
                 [class.pnl-negative]="(autoPnlPct() ?? 0) < 0">
