@@ -114,6 +114,24 @@
 
 .btn-delete:hover { color: var(--red); background: var(--red-dim); }
 
+.btn-edit {
+  background: transparent;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  color: var(--text-3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+}
+
+.btn-edit:hover { background: var(--blue-glow); color: var(--blue-bright); }
+
+.td-actions { display: flex; align-items: center; gap: 2px; }
+
 .btn-load-more {
   width: 100%;
   background: none;
