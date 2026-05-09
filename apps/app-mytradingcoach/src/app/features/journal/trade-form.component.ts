@@ -65,6 +65,7 @@ export class TradeFormComponent {
   );
 
   protected readonly assetSearch = signal('');
+  protected readonly showDropdown = signal(false);
 
   protected readonly filteredInstruments = computed(() => {
     const search = this.assetSearch().toLowerCase().trim();
@@ -170,9 +171,14 @@ export class TradeFormComponent {
     this.recalculate();
   }
 
+  protected onAssetBlur(): void {
+    setTimeout(() => this.showDropdown.set(false), 150);
+  }
+
   protected selectInstrument(instrument: InstrumentDto): void {
     this.form.asset = instrument.symbol;
     this.assetSearch.set(instrument.symbol);
+    this.showDropdown.set(false);
     this.recalculate();
   }
 
