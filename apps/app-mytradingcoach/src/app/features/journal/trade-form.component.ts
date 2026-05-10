@@ -79,7 +79,7 @@ export class TradeFormComponent {
       .slice(0, 8);
   });
 
-  // ── Form signal (résout OnPush + mutation non détectée) ───────────────────
+  // ── Form signal ────────────────────────────────────────────────────────────
   protected readonly form = signal<Partial<CreateTradeDto>>(this.emptyForm());
 
   protected readonly selectedInstrument = computed(
@@ -90,23 +90,9 @@ export class TradeFormComponent {
   );
 
   protected readonly todayMax = computed(() =>
-    new Date().toISOString().slice(0, 16),
+    new Date().toLocaleDateString('sv-SE'),
   );
-
-  protected readonly unknownInstrumentWarning = computed(() => {
-    const asset = this.form().asset;
-    if (!asset || asset.length < 2) return null;
-    const found = this.instruments().find(
-      (i) => i.symbol.toLowerCase() === asset.toLowerCase(),
-    );
-    const looksLikeFuture = !asset.includes('/') &&
-      !asset.includes('USD') && asset.length <= 5;
-    if (!found && looksLikeFuture) {
-      return `"${asset}" non reconnu — sélectionne depuis la liste pour un P&L correct`;
-    }
-    return null;
-  });
-  // ─────────────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────────────────
 
   constructor() {
     effect(() => {
@@ -123,14 +109,15 @@ export class TradeFormComponent {
           pnl: t.pnl ?? undefined,
           riskReward: t.riskReward ?? undefined,
           quantity: t.quantity ?? 1,
+          capitalEngaged: t.capitalEngaged ?? undefined,
           emotion: t.emotion as CreateTradeDto['emotion'],
           setup: t.setup as CreateTradeDto['setup'],
           session: t.session as CreateTradeDto['session'],
           timeframe: t.timeframe,
           notes: t.notes ?? undefined,
           tradedAt: t.tradedAt
-            ? new Date(t.tradedAt).toISOString().slice(0, 16)
-            : new Date().toISOString().slice(0, 16),
+            ? new Date(t.tradedAt).toLocaleDateString('sv-SE')
+            : new Date().toLocaleDateString('sv-SE'),
         });
         this.assetSearch.set(t.asset);
         this.autoPnl.set(t.pnl ?? undefined);
@@ -278,7 +265,17 @@ export class TradeFormComponent {
 
   onSubmit(): void {
     this.submitted.set(true);
-    this.form.update(f => ({ ...f, pnl: this.autoPnl(), riskReward: this.autoRR() }));
+    // Convertit YYYY-MM-DD en ISO datetime pour le backend
+    const tradedAt = this.form().tradedAt;
+    const tradedAtIso = tradedAt
+      ? new Date(tradedAt + 'T12:00:00').toISOString()
+      : new Date().toISOString();
+    this.form.update(f => ({
+      ...f,
+      pnl: this.autoPnl(),
+      riskReward: this.autoRR(),
+      tradedAt: tradedAtIso,
+    }));
     const result = CreateTradeSchema.safeParse(this.form());
     if (!result.success) {
       const errors: Record<string, string> = {};
@@ -295,14 +292,14 @@ export class TradeFormComponent {
 
   private emptyForm(): Partial<CreateTradeDto> {
     return {
-      side:      'LONG'     as const,
-      emotion:   'FOCUSED'  as const,
-      setup:     'BREAKOUT' as const,
-      session:   'LONDON'   as const,
+      side:           'LONG'     as const,
+      emotion:        'FOCUSED'  as const,
+      setup:          'BREAKOUT' as const,
+      session:        'LONDON'   as const,
       timeframe:      '1h',
       quantity:       1,
       capitalEngaged: undefined,
-      tradedAt:       new Date().toISOString().slice(0, 16),
+      tradedAt:       new Date().toLocaleDateString('sv-SE'),
     };
   }
 }
