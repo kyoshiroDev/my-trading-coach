@@ -4,7 +4,10 @@
   "license": "MIT",
   "scripts": {
     "prepare": "husky",
-    "postinstall": "echo skip prisma generate"
+    "postinstall": "echo skip prisma generate",
+    "clean": "rm -rf .angular/cache .nx/cache",
+    "dev": "rm -rf .angular/cache && nx serve app-mytradingcoach",
+    "dev:api": "NODE_ENV=development nx serve api-mytradingcoach"
   },
   "private": true,
   "devDependencies": {
