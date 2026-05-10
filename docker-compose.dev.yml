@@ -9,8 +9,8 @@ services:
     env_file: .env.dev
     networks:
       - mtc_network
-    mem_limit: 256m
-    memswap_limit: 256m
+    mem_limit: 512m
+    memswap_limit: 512m
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api-dev.rule=Host(`dev.api.mytradingcoach.app`)"
