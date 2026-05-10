@@ -239,7 +239,7 @@ jobs:
         uses: burnett01/rsync-deployments@7.0.1
         with:
           switches: -az --delete
-          path: apps/api-mytradingcoach/ libs/ prisma/ scripts/ docker-compose.dev.yml
+          path: apps/api-mytradingcoach/ prisma/ scripts/ docker-compose.dev.yml
           remote_path: /opt/apps/mytradingcoach/dev/
           remote_host: ${{ secrets.VPS_HOST }}
           remote_user: ${{ secrets.VPS_USER }}
