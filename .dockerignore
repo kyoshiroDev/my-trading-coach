@@ -12,3 +12,4 @@ coverage
 apps/app-mytradingcoach
 apps/app-mytradingcoach-e2e
 apps/landing-mytradingcoach
+project.json
