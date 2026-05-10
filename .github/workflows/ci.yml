@@ -227,7 +227,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test-angular, test-api]
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
-    environment: development
+    environment: production
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       NX_NO_CLOUD: true
@@ -264,7 +264,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test-angular, test-api]
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
-    environment: development
+    environment: production
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       NX_NO_CLOUD: true
@@ -317,7 +317,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-landing]
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
-    environment: development
+    environment: production
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       NX_NO_CLOUD: true
