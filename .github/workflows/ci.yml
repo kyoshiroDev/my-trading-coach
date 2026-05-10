@@ -233,18 +233,6 @@ jobs:
       NX_NO_CLOUD: true
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Sync code to VPS (dev)
-        uses: burnett01/rsync-deployments@7.0.1
-        with:
-          switches: -az
-          path: apps/api-mytradingcoach/ prisma/ scripts/ docker-compose.dev.yml
-          remote_path: /opt/apps/mytradingcoach/dev/
-          remote_host: ${{ secrets.VPS_HOST }}
-          remote_user: ${{ secrets.VPS_USER }}
-          remote_key: ${{ secrets.VPS_SSH_KEY }}
-
       - name: Deploy via SSH (dev)
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -254,6 +242,8 @@ jobs:
           script: |
             set -e
             cd /opt/apps/mytradingcoach/dev
+            git fetch origin
+            git reset --hard origin/dev
             docker compose -f docker-compose.dev.yml --env-file .env.dev build api
             docker compose -f docker-compose.dev.yml --env-file .env.dev up -d --force-recreate api
             echo "Dev API deployment complete at $(date)"
