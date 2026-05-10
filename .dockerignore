@@ -10,4 +10,5 @@ coverage
 .env.*
 !.env.example
 apps/app-mytradingcoach
+apps/app-mytradingcoach-e2e
 apps/landing-mytradingcoach
