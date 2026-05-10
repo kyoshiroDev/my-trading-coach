@@ -7,6 +7,7 @@ COPY prisma ./prisma
 RUN pnpm install --frozen-lockfile
 COPY . .
 RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm exec prisma generate --config=./prisma/prisma.config.ts
+RUN NX_DAEMON=false NX_NO_CLOUD=true pnpm nx sync --yes 2>/dev/null || true
 RUN NX_DAEMON=false NX_NO_CLOUD=true pnpm nx build api-mytradingcoach --configuration=production --skip-nx-cache
 
 FROM node:22-alpine AS migrator

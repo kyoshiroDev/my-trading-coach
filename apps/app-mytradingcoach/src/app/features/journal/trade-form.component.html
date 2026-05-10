@@ -1,244 +1,235 @@
 @if (open()) {
   <div class="overlay" role="presentation" (click)="onOverlayClick($event)" (keydown.escape)="dismissed.emit()">
-    <div class="modal" role="dialog" aria-modal="true" data-testid="trade-modal">
+    <div class="sheet" role="dialog" aria-modal="true" data-testid="trade-modal">
+
+      <div class="sheet-handle"></div>
 
       <!-- Header -->
-      <div class="modal-header">
-        <h2 class="modal-title">{{ editTrade() ? 'Modifier le trade' : 'Nouveau trade' }}</h2>
+      <div class="sheet-header">
+        <h2 class="sheet-title">{{ editTrade() ? 'Modifier le trade' : 'Nouveau trade' }}</h2>
         <button class="close-btn" (click)="dismissed.emit()">
           <lucide-icon [img]="XIcon" [size]="16" />
         </button>
       </div>
 
-      <form (ngSubmit)="onSubmit()" class="modal-body">
+      <!-- Form = body scrollable + footer sticky -->
+      <form (ngSubmit)="onSubmit()" class="sheet-form">
+        <div class="sheet-body">
 
-        <!-- Row 1: Asset + Side -->
-        <div class="form-row">
-          <!-- Actif avec autocomplete -->
-          <div class="form-group asset-group">
-            <label for="tf-asset">Actif</label>
-            <input
-              id="tf-asset"
-              data-testid="trade-asset"
-              type="text"
-              [value]="assetSearch()"
-              (input)="onAssetInput($event)"
-              (focus)="showDropdown.set(true)"
-              (blur)="onAssetBlur()"
-              placeholder="BTC/USDT, MNQ, EUR/USD..."
-              autocomplete="off"
-              [class.input-error]="submitted() && (!form().asset || zodErrors()['asset'])"
+          <!-- 1. Date du trade -->
+          <div class="form-group">
+            <label class="section-label" for="tf-date">Date du trade</label>
+            <input id="tf-date" type="date" name="tradedAt"
+              [ngModel]="form().tradedAt"
+              (ngModelChange)="form.update(f => ({...f, tradedAt: $event}))"
+              [max]="todayMax()"
             />
-            @if (filteredInstruments().length > 0 && showDropdown()) {
-              <div class="asset-dropdown">
-                @for (inst of filteredInstruments(); track inst.symbol) {
-                  <button type="button" class="asset-option" (click)="selectInstrument(inst)">
-                    <span class="asset-symbol">{{ inst.symbol }}</span>
-                    <span class="asset-label">{{ inst.label }}</span>
-                    @if (inst.tickValue !== null) {
-                      <span class="asset-tick">{{ inst.tickValue }}$/pt</span>
-                    }
-                  </button>
+          </div>
+
+          <!-- 2. Actif + Direction -->
+          <div class="row-asset-side">
+            <!-- Actif autocomplete -->
+            <div class="form-group asset-group">
+              <label class="section-label" for="tf-asset">Actif</label>
+              <input
+                id="tf-asset"
+                data-testid="trade-asset"
+                type="text"
+                [value]="assetSearch()"
+                (input)="onAssetInput($event)"
+                (focus)="showDropdown.set(true)"
+                (blur)="onAssetBlur()"
+                placeholder="BTC/USDT, MNQ..."
+                autocomplete="off"
+              />
+              @if (filteredInstruments().length > 0 && showDropdown()) {
+                <div class="asset-dropdown">
+                  @for (inst of filteredInstruments(); track inst.symbol) {
+                    <button type="button" class="asset-option" (click)="selectInstrument(inst)">
+                      <span class="asset-symbol">{{ inst.symbol }}</span>
+                      <span class="asset-label-text">{{ inst.label }}</span>
+                      @if (inst.tickValue !== null) {
+                        <span class="asset-tick">{{ inst.tickValue }}$/pt</span>
+                      }
+                    </button>
+                  }
+                </div>
+              }
+              @if (selectedInstrument() !== null && selectedInstrument()!.tickValue !== null) {
+                <div class="tick-badge">⚡ {{ selectedInstrument()!.tickValue }}$ / point</div>
+              }
+            </div>
+
+            <!-- Direction -->
+            <div class="form-group direction-group">
+              <span class="section-label">Direction</span>
+              <div class="side-toggle">
+                <button type="button" data-testid="trade-side-long" class="side-btn"
+                  [class.active-long]="form().side === 'LONG'" (click)="setSide('LONG')">LONG</button>
+                <button type="button" data-testid="trade-side-short" class="side-btn"
+                  [class.active-short]="form().side === 'SHORT'" (click)="setSide('SHORT')">SHORT</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Entry / Exit / Quantité -->
+          <div class="form-group">
+            <span class="section-label">Prix</span>
+            <div class="form-row trio">
+              <div class="price-field">
+                <label class="field-label-small" for="tf-entry">Entry *</label>
+                <input id="tf-entry" data-testid="trade-entry" type="text"
+                  [value]="form().entry ?? ''" (input)="filterNumeric($event, 'entry')"
+                  name="entry" placeholder="0.00"
+                  [class.input-error]="submitted() && zodErrors()['entry']" />
+              </div>
+              <div class="price-field">
+                <label class="field-label-small" for="tf-exit">Exit</label>
+                <input id="tf-exit" type="text"
+                  [value]="form().exit ?? ''" (input)="filterNumeric($event, 'exit')"
+                  (blur)="onExitBlur()"
+                  name="exit" placeholder="—" />
+              </div>
+              <div class="price-field">
+                <label class="field-label-small" for="tf-qty">Quantité</label>
+                <input id="tf-qty" type="text"
+                  [value]="form().quantity ?? 1" (input)="filterNumeric($event, 'quantity')"
+                  name="quantity" placeholder="1" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Stop Loss / Take Profit -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="field-label-small label-sl" for="tf-sl">Stop Loss</label>
+              <input id="tf-sl" type="text"
+                [value]="form().stopLoss ?? ''" (input)="filterNumeric($event, 'stopLoss')"
+                name="stopLoss" placeholder="—" class="input-sl" />
+            </div>
+            <div class="form-group">
+              <label class="field-label-small label-tp" for="tf-tp">Take Profit</label>
+              <input id="tf-tp" type="text"
+                [value]="form().takeProfit ?? ''" (input)="filterNumeric($event, 'takeProfit')"
+                name="takeProfit" placeholder="—" class="input-tp" />
+            </div>
+          </div>
+
+          <!-- Toggle SL/TP sorti sur -->
+          @if (exitTouched() && !form().exit) {
+            <div class="form-group">
+              <span class="section-label">Sorti sur</span>
+              <div class="side-toggle">
+                <button type="button" class="side-btn"
+                  [class.active-tp]="exitMode() === 'TP'" (click)="setExitMode('TP')">TP</button>
+                <button type="button" class="side-btn"
+                  [class.active-sl]="exitMode() === 'SL'" (click)="setExitMode('SL')">SL</button>
+              </div>
+            </div>
+          }
+
+          <!-- 5. Capital engagé (crypto/forex uniquement) -->
+          @if (selectedInstrument() === null || selectedInstrument()!.tickValue === null) {
+            <div class="form-group">
+              <label class="field-label-small" for="tf-capital">
+                Capital engagé ($) <span class="optional">pour calculer le P&amp;L</span>
+              </label>
+              <input id="tf-capital" type="text"
+                [value]="form().capitalEngaged ?? ''"
+                (input)="filterNumeric($event, 'capitalEngaged')"
+                name="capitalEngaged" placeholder="Ex: 1000" />
+              <span class="field-hint">P&amp;L = variation% × capital engagé</span>
+            </div>
+          }
+
+          <!-- 6. P&L card -->
+          <div class="pnl-card" [class.pnl-win]="(autoPnl() ?? 0) > 0" [class.pnl-loss]="(autoPnl() ?? 0) < 0">
+            <div class="pnl-main">
+              <div class="pnl-label">P&amp;L estimé</div>
+              <div class="pnl-value">
+                @if (autoPnl() !== undefined) {
+                  {{ autoPnl()! >= 0 ? '+' : '' }}${{ autoPnl()!.toFixed(2) }}
+                  @if (autoPnlPct() !== undefined) {
+                    <span class="pnl-pct">{{ autoPnlPct()! >= 0 ? '+' : '' }}{{ autoPnlPct()!.toFixed(2) }}%</span>
+                  }
+                } @else {
+                  —
                 }
               </div>
-            }
-            @if (selectedInstrument() !== null && selectedInstrument()!.tickValue !== null) {
-              <div class="tick-badge">⚡ {{ selectedInstrument()!.tickValue }}$ par point</div>
-            }
-            @if (unknownInstrumentWarning()) {
-              <div class="asset-warning">⚠ {{ unknownInstrumentWarning() }}</div>
-            }
-            @if (submitted() && (!form().asset || zodErrors()['asset'])) {
-              <span class="field-error">{{ zodErrors()['asset'] || 'Asset requis' }}</span>
-            }
-          </div>
-
-          <div class="form-group">
-            <span class="field-label">Direction</span>
-            <div class="side-toggle" [class.input-error]="submitted() && zodErrors()['side']">
-              <button type="button" data-testid="trade-side-long" class="side-btn"
-                [class.active-long]="form().side === 'LONG'" (click)="setSide('LONG')">LONG</button>
-              <button type="button" data-testid="trade-side-short" class="side-btn"
-                [class.active-short]="form().side === 'SHORT'" (click)="setSide('SHORT')">SHORT</button>
             </div>
-            @if (submitted() && zodErrors()['side']) {
-              <span class="field-error">Direction requise (LONG ou SHORT)</span>
-            }
-          </div>
-        </div>
-
-        <!-- Row 2: Entry + Exit + Quantité -->
-        <div class="form-row trio">
-          <div class="form-group">
-            <label for="tf-entry">Entry</label>
-            <input id="tf-entry" data-testid="trade-entry" type="text"
-              [value]="form().entry ?? ''" (input)="filterNumeric($event, 'entry')"
-              name="entry" placeholder="0.00"
-              [class.input-error]="submitted() && (!form().entry || zodErrors()['entry'])" />
-            @if (submitted() && (!form().entry || zodErrors()['entry'])) {
-              <span class="field-error">{{ zodErrors()['entry'] || 'Entry requis (doit être > 0)' }}</span>
-            }
-          </div>
-          <div class="form-group">
-            <label for="tf-exit">Exit <span class="optional">(optionnel)</span></label>
-            <input id="tf-exit" type="text"
-              [value]="form().exit ?? ''" (input)="filterNumeric($event, 'exit')"
-              (blur)="onExitBlur()"
-              name="exit" placeholder="0.00" />
-          </div>
-          <div class="form-group">
-            <label for="tf-qty">Quantité</label>
-            <input id="tf-qty" type="text"
-              [value]="form().quantity ?? 1" (input)="filterNumeric($event, 'quantity')"
-              name="quantity" placeholder="1" />
-          </div>
-        </div>
-
-        <!-- Row 3: SL + TP -->
-        <div class="form-row">
-          <div class="form-group">
-            <label for="tf-sl">Stop Loss <span class="optional">(optionnel)</span></label>
-            <input id="tf-sl" type="text"
-              [value]="form().stopLoss ?? ''" (input)="filterNumeric($event, 'stopLoss')"
-              name="stopLoss" placeholder="0.00" />
-          </div>
-          <div class="form-group">
-            <label for="tf-tp">Take Profit <span class="optional">(optionnel)</span></label>
-            <input id="tf-tp" type="text"
-              [value]="form().takeProfit ?? ''" (input)="filterNumeric($event, 'takeProfit')"
-              name="takeProfit" placeholder="0.00" />
-          </div>
-        </div>
-
-        <!-- Toggle SL/TP -->
-        @if (exitTouched() && !form().exit) {
-          <div class="form-group">
-            <span class="field-label">Sorti sur</span>
-            <div class="side-toggle">
-              <button type="button" class="side-btn"
-                [class.active-tp]="exitMode() === 'TP'" (click)="setExitMode('TP')">TP</button>
-              <button type="button" class="side-btn"
-                [class.active-sl]="exitMode() === 'SL'" (click)="setExitMode('SL')">SL</button>
+            <div class="rr-badge" [class.rr-win]="(autoRR() ?? 0) >= 1">
+              <div class="rr-label">R/R</div>
+              <div class="rr-value">{{ autoRR() !== undefined ? autoRR()!.toFixed(1) : '—' }}</div>
             </div>
           </div>
-        }
 
-        <!-- Capital engagé — crypto/forex uniquement -->
-        @if (selectedInstrument() === null || selectedInstrument()!.tickValue === null) {
+          <!-- 7. État émotionnel -->
           <div class="form-group">
-            <label for="tf-capital">
-              Capital engagé ($) <span class="optional">(pour calculer ton P&amp;L)</span>
-            </label>
-            <input
-              id="tf-capital"
-              type="text"
-              [value]="form().capitalEngaged ?? ''"
-              (input)="filterNumeric($event, 'capitalEngaged')"
-              name="capitalEngaged"
-              placeholder="Ex: 1000"
-            />
-            <span class="field-hint">P&amp;L = variation% × capital engagé</span>
+            <span class="section-label">État émotionnel</span>
+            <div class="emotion-grid">
+              @for (e of EMOTIONS; track e) {
+                <button type="button" class="emotion-btn"
+                  [attr.data-testid]="'emotion-' + e.toLowerCase()"
+                  [class.selected]="form().emotion === e"
+                  (click)="setEmotion($any(e))">
+                  {{ EMOTION_EMOJIS[e] }} {{ e | titlecase }}
+                </button>
+              }
+            </div>
           </div>
-        }
 
-        <!-- Row 4: PnL + RR (calculés auto) -->
-        <div class="form-row">
+          <!-- 8. Setup -->
           <div class="form-group">
-            <label for="tf-pnl">P&amp;L ($) <span class="optional">(calculé auto)</span></label>
-            <input id="tf-pnl" type="text" [value]="autoPnl() ?? ''" name="pnl" readonly
-              placeholder="—"
-              [class.pnl-positive]="(autoPnl() ?? 0) > 0"
-              [class.pnl-negative]="(autoPnl() ?? 0) < 0" />
-            @if (autoPnlPct() !== undefined && selectedInstrument()?.tickValue === null) {
-              <span class="pnl-pct"
-                [class.pnl-positive]="(autoPnlPct() ?? 0) > 0"
-                [class.pnl-negative]="(autoPnlPct() ?? 0) < 0">
-                {{ (autoPnlPct() ?? 0) >= 0 ? '+' : '' }}{{ autoPnlPct()?.toFixed(2) }}%
-              </span>
-            }
-          </div>
-          <div class="form-group">
-            <label for="tf-rr">R/R <span class="optional">(calculé auto)</span></label>
-            <input id="tf-rr" type="text" [value]="autoRR() ?? ''" name="riskReward" readonly placeholder="—" />
-          </div>
-        </div>
-
-        <!-- Emotion selector -->
-        <div class="form-group">
-          <span class="field-label">État émotionnel</span>
-          <div class="emotion-grid">
-            @for (e of EMOTIONS; track e) {
-              <button type="button" class="emotion-btn"
-                [attr.data-testid]="'emotion-' + e.toLowerCase()"
-                [class.selected]="form().emotion === e"
-                (click)="setEmotion($any(e))">
-                {{ EMOTION_EMOJIS[e] }} {{ e | titlecase }}
-              </button>
-            }
-          </div>
-        </div>
-
-        <!-- Row: Setup + Session + Timeframe -->
-        <div class="form-row trio">
-          <div class="form-group">
-            <label for="tf-setup">Setup</label>
-            <select id="tf-setup" name="setup"
-              [ngModel]="form().setup"
-              (ngModelChange)="form.update(f => ({...f, setup: $any($event)}))">
+            <span class="section-label">Setup</span>
+            <div class="chips-group">
               @for (s of SETUPS; track s) {
-                <option [value]="s">{{ s }}</option>
+                <button type="button" class="chip" [class.active]="form().setup === s"
+                  (click)="form.update(f => ({...f, setup: $any(s)}))">{{ s }}</button>
               }
-            </select>
+            </div>
           </div>
+
+          <!-- 9. Session -->
           <div class="form-group">
-            <label for="tf-session">Session</label>
-            <select id="tf-session" name="session"
-              [ngModel]="form().session"
-              (ngModelChange)="form.update(f => ({...f, session: $any($event)}))">
+            <span class="section-label">Session</span>
+            <div class="chips-group">
               @for (s of SESSIONS; track s) {
-                <option [value]="s">{{ s }}</option>
+                <button type="button" class="chip" [class.active]="form().session === s"
+                  (click)="form.update(f => ({...f, session: $any(s)}))">{{ s }}</button>
               }
-            </select>
+            </div>
           </div>
+
+          <!-- 10. Timeframe -->
           <div class="form-group">
-            <label for="tf-timeframe">Timeframe</label>
-            <select id="tf-timeframe" name="timeframe"
-              [ngModel]="form().timeframe"
-              (ngModelChange)="form.update(f => ({...f, timeframe: $any($event)}))">
+            <span class="section-label">Timeframe</span>
+            <div class="chips-group">
               @for (tf of TIMEFRAMES; track tf) {
-                <option [value]="tf">{{ tf }}</option>
+                <button type="button" class="chip" [class.active]="form().timeframe === tf"
+                  (click)="form.update(f => ({...f, timeframe: tf}))">{{ tf }}</button>
               }
-            </select>
+            </div>
           </div>
+
+          <!-- 11. Notes -->
+          <div class="form-group">
+            <label class="section-label" for="tf-notes">
+              Notes <span class="optional">optionnel</span>
+            </label>
+            <textarea id="tf-notes" name="notes" rows="3"
+              [ngModel]="form().notes"
+              (ngModelChange)="form.update(f => ({...f, notes: $event}))"
+              placeholder="Contexte, raison du trade, leçons apprises..."></textarea>
+          </div>
+
+          @if (apiError()) {
+            <div class="api-error">{{ apiError() }}</div>
+          }
+
         </div>
 
-        <!-- Notes -->
-        <div class="form-group">
-          <label for="tf-notes">Notes <span class="optional">(optionnel)</span></label>
-          <textarea id="tf-notes" name="notes" rows="3"
-            [ngModel]="form().notes"
-            (ngModelChange)="form.update(f => ({...f, notes: $event}))"
-            placeholder="Contexte, raison du trade, leçons apprises..."></textarea>
-        </div>
-
-        <!-- Date du trade -->
-        <div class="form-group">
-          <label for="tf-date">Date du trade <span class="optional">(aujourd'hui par défaut)</span></label>
-          <input
-            id="tf-date"
-            type="datetime-local"
-            name="tradedAt"
-            [ngModel]="form().tradedAt"
-            (ngModelChange)="form.update(f => ({...f, tradedAt: $event}))"
-            [max]="todayMax()"
-          />
-        </div>
-
-        <!-- Footer -->
-        @if (apiError()) {
-          <div class="api-error">{{ apiError() }}</div>
-        }
-        <div class="modal-footer">
+        <!-- Footer collé en bas du sheet -->
+        <div class="sheet-footer">
           <button type="button" class="btn-cancel" (click)="dismissed.emit()">Annuler</button>
           <button type="submit" data-testid="trade-submit" class="btn-save" [disabled]="isSaving()">
             @if (isSaving()) {
