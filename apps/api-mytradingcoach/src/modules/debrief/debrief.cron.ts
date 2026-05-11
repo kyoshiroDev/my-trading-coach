@@ -14,7 +14,7 @@ export class DebriefCron {
     @InjectQueue('debrief') private debriefQueue: Queue,
   ) {}
 
-  @Cron('0 23 * * 0')
+  @Cron('0 23 * * 0', { timeZone: 'Europe/Paris' })
   async scheduledDebriefs() {
     this.logger.log('Starting weekly debrief generation...');
 
