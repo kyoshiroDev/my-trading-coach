@@ -25,7 +25,7 @@ export class TradesController {
 
   @Get('instruments')
   getInstruments() {
-    return { data: INSTRUMENTS };
+    return INSTRUMENTS;
   }
 
   @Post()
