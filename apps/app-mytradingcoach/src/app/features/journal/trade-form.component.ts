@@ -2,7 +2,7 @@ import {
   ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TitleCasePipe } from '@angular/common';
+import { DecimalPipe, TitleCasePipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -25,7 +25,7 @@ type NumericField = 'entry' | 'exit' | 'stopLoss' | 'takeProfit' | 'quantity' | 
 @Component({
   selector: 'mtc-trade-form',
   standalone: true,
-  imports: [FormsModule, TitleCasePipe, LucideAngularModule],
+  imports: [FormsModule, TitleCasePipe, DecimalPipe, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './trade-form.component.html',
   styleUrl: './trade-form.component.css',
@@ -52,6 +52,7 @@ export class TradeFormComponent {
   protected readonly zodErrors = signal<Record<string, string>>({});
   protected readonly exitMode = signal<'SL' | 'TP' | null>(null);
   protected readonly exitTouched = signal(false);
+  protected readonly leverage = signal<number>(1);
 
   // ── Autocomplete instruments ──────────────────────────────────────────────
   private readonly tradesApi = inject(TradesApi);
@@ -88,6 +89,25 @@ export class TradeFormComponent {
         (i) => i.symbol.toLowerCase() === (this.form().asset ?? '').toLowerCase(),
       ) ?? null,
   );
+
+  protected readonly calculationMode = computed<'futures' | 'crypto-spot' | 'crypto-leverage'>(() => {
+    const instr = this.selectedInstrument();
+    if (!instr) return 'crypto-spot';
+    if (instr.tickValue !== null) return 'futures';
+    return this.leverage() > 1 ? 'crypto-leverage' : 'crypto-spot';
+  });
+
+  protected readonly showCapital = computed(() => this.calculationMode() !== 'futures');
+
+  protected readonly liquidationPrice = computed(() => {
+    const f = this.form();
+    const entry = f.entry ?? 0;
+    const lev = this.leverage();
+    if (!entry || lev <= 1 || this.calculationMode() === 'futures') return null;
+    return f.side === 'LONG'
+      ? entry * (1 - 1 / lev)
+      : entry * (1 + 1 / lev);
+  });
 
   protected readonly todayMax = computed(() =>
     new Date().toLocaleDateString('sv-SE'),
@@ -130,6 +150,7 @@ export class TradeFormComponent {
         this.autoPnlPct.set(undefined);
         this.autoRR.set(undefined);
       }
+      this.leverage.set(1);
       this.exitMode.set(null);
       this.exitTouched.set(false);
       this.submitted.set(false);
@@ -195,71 +216,86 @@ export class TradeFormComponent {
     this.recalculate();
   }
 
-  protected recalculate(): void {
-    const { entry, exit, stopLoss, takeProfit, side, quantity } = this.form();
-    const mode = this.exitMode();
-    const instrument = this.selectedInstrument();
-    const tickValue = instrument?.tickValue ?? null;
-    const qty = quantity ?? 1;
+  protected onLeverageInput(e: Event): void {
+    const val = (e.target as HTMLInputElement).value;
+    const n = parseFloat(val.replace(',', '.'));
+    this.leverage.set(isNaN(n) || n < 1 ? 1 : n);
+    this.recalculate();
+  }
 
-    if (exit != null && exit > 0 && mode !== null) {
+  protected recalculate(): void {
+    const f = this.form();
+    const exitMode = this.exitMode();
+    const entry = f.entry ?? 0;
+    const exit = f.exit ?? 0;
+    const sl = f.stopLoss ?? 0;
+    const tp = f.takeProfit ?? 0;
+    const qty = f.quantity ?? 1;
+    const capital = f.capitalEngaged ?? 0;
+    const lev = this.leverage();
+    const isLong = f.side === 'LONG';
+    const calcMode = this.calculationMode();
+    const instr = this.selectedInstrument();
+
+    if (exit > 0 && exitMode !== null) {
       this.exitMode.set(null);
     }
 
-    let effectiveExit: number | undefined;
-    if (exit != null && exit > 0) {
+    let effectiveExit = 0;
+    if (exit > 0) {
       effectiveExit = exit;
-    } else if (mode === 'SL' && stopLoss != null && stopLoss > 0) {
-      effectiveExit = stopLoss;
-    } else if (mode === 'TP' && takeProfit != null && takeProfit > 0) {
-      effectiveExit = takeProfit;
+    } else if (exitMode === 'SL' && sl > 0) {
+      effectiveExit = sl;
+    } else if (exitMode === 'TP' && tp > 0) {
+      effectiveExit = tp;
     }
 
-    if (entry != null && entry > 0 && effectiveExit != null && side) {
-      const points = side === 'LONG'
-        ? effectiveExit - entry
-        : entry - effectiveExit;
-
-      if (tickValue !== null) {
-        const pnl = points * tickValue * qty;
-        this.autoPnl.set(+pnl.toFixed(2));
-        this.autoPnlPct.set(undefined);
-        this.form.update(f => ({ ...f, pnl: +pnl.toFixed(2) }));
-      } else {
-        const capital = this.form().capitalEngaged;
-        if (capital != null && capital > 0) {
-          const pnl = (points / entry) * capital;
-          const pct = (points / entry) * 100;
-          this.autoPnl.set(+pnl.toFixed(2));
-          this.autoPnlPct.set(+pct.toFixed(2));
-          this.form.update(f => ({ ...f, pnl: +pnl.toFixed(2) }));
-        } else {
-          this.autoPnl.set(undefined);
-          this.autoPnlPct.set(undefined);
-          this.form.update(f => ({ ...f, pnl: undefined }));
-        }
-      }
-    } else {
-      this.autoPnl.set(undefined);
-      this.autoPnlPct.set(undefined);
-      this.form.update(f => ({ ...f, pnl: undefined }));
-    }
-
-    if (entry != null && entry > 0 && stopLoss != null && stopLoss > 0
-        && takeProfit != null && takeProfit > 0 && side) {
-      const risk = Math.abs(entry - stopLoss);
-      const reward = side === 'LONG' ? takeProfit - entry : entry - takeProfit;
-      if (risk > 0 && reward > 0) {
+    // R/R (commun à tous les modes)
+    if (entry > 0 && sl > 0 && tp > 0) {
+      const reward = Math.abs(tp - entry);
+      const risk = Math.abs(entry - sl);
+      if (risk > 0) {
         const rr = +(reward / risk).toFixed(2);
         this.autoRR.set(rr);
-        this.form.update(f => ({ ...f, riskReward: rr }));
+        this.form.update(ff => ({ ...ff, riskReward: rr }));
       } else {
         this.autoRR.set(undefined);
-        this.form.update(f => ({ ...f, riskReward: undefined }));
+        this.form.update(ff => ({ ...ff, riskReward: undefined }));
       }
     } else {
       this.autoRR.set(undefined);
-      this.form.update(f => ({ ...f, riskReward: undefined }));
+      this.form.update(ff => ({ ...ff, riskReward: undefined }));
+    }
+
+    // P&L
+    if (!entry || !effectiveExit) {
+      this.autoPnl.set(undefined);
+      this.autoPnlPct.set(undefined);
+      this.form.update(ff => ({ ...ff, pnl: undefined }));
+      return;
+    }
+
+    if (calcMode === 'futures' && instr?.tickValue) {
+      const points = isLong ? effectiveExit - entry : entry - effectiveExit;
+      const pnl = +(points * instr.tickValue * qty).toFixed(2);
+      this.autoPnl.set(pnl);
+      this.autoPnlPct.set(undefined);
+      this.form.update(ff => ({ ...ff, pnl }));
+    } else {
+      const variation = isLong
+        ? (effectiveExit - entry) / entry
+        : (entry - effectiveExit) / entry;
+      if (capital > 0) {
+        const pnl = +(variation * capital * lev).toFixed(2);
+        const pct = +(variation * lev * 100).toFixed(2);
+        this.autoPnl.set(pnl);
+        this.autoPnlPct.set(pct);
+        this.form.update(ff => ({ ...ff, pnl }));
+      } else {
+        this.autoPnl.set(undefined);
+        this.autoPnlPct.set(undefined);
+        this.form.update(ff => ({ ...ff, pnl: undefined }));
+      }
     }
   }
 

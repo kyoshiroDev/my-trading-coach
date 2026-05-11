@@ -284,6 +284,44 @@ input[type="date"] { color-scheme: dark; }
   margin-top: 4px;
 }
 
+/* ─── Capital + Levier ─── */
+.capital-leverage-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+
+.input-prefix-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-prefix {
+  position: absolute;
+  left: 10px;
+  font-size: 12px;
+  font-family: var(--font-mono, 'DM Mono', monospace);
+  color: var(--text-3);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.input-prefix-wrap input {
+  padding-left: 24px;
+}
+
+.liquidation-warning {
+  font-size: 12px;
+  color: var(--red);
+  background: var(--red-dim);
+  border: 1px solid rgba(239,68,68,0.2);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
 /* ─── Hints / errors ─── */
 .field-hint { font-size: 11px; color: var(--text-3); margin-top: 2px; }
 .api-error {

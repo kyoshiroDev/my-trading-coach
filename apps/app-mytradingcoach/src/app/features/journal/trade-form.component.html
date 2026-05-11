@@ -128,18 +128,36 @@
             </div>
           }
 
-          <!-- 5. Capital engagé (crypto/forex uniquement) -->
-          @if (selectedInstrument() === null || selectedInstrument()!.tickValue === null) {
-            <div class="form-group">
-              <label class="field-label-small" for="tf-capital">
-                Capital engagé ($) <span class="optional">pour calculer le P&amp;L</span>
-              </label>
-              <input id="tf-capital" type="text"
-                [value]="form().capitalEngaged ?? ''"
-                (input)="filterNumeric($event, 'capitalEngaged')"
-                name="capitalEngaged" placeholder="Ex: 1000" />
-              <span class="field-hint">P&amp;L = variation% × capital engagé</span>
+          <!-- 5. Capital + Levier (crypto/forex uniquement) -->
+          @if (showCapital()) {
+            <div class="capital-leverage-row">
+              <div class="field">
+                <label class="field-label-small" for="tf-capital">Capital ($)</label>
+                <div class="input-prefix-wrap">
+                  <span class="input-prefix">$</span>
+                  <input id="tf-capital" type="text" inputmode="decimal"
+                    [value]="form().capitalEngaged ?? ''"
+                    (input)="filterNumeric($event, 'capitalEngaged')"
+                    name="capitalEngaged" placeholder="0" />
+                </div>
+              </div>
+              <div class="field">
+                <label class="field-label-small" for="tf-leverage">Levier</label>
+                <div class="input-prefix-wrap">
+                  <span class="input-prefix">×</span>
+                  <input id="tf-leverage" type="text" inputmode="decimal"
+                    [value]="leverage()"
+                    (input)="onLeverageInput($event)"
+                    placeholder="1" />
+                </div>
+              </div>
             </div>
+            @if (liquidationPrice(); as liq) {
+              <div class="liquidation-warning">
+                ⚠ Liquidation {{ form().side === 'LONG' ? 'sous' : 'au-dessus de' }}
+                <strong>{{ liq | number:'1.2-2' }}</strong>
+              </div>
+            }
           }
 
           <!-- 6. P&L card -->
