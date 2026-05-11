@@ -12,7 +12,7 @@ export class ResendCron {
     private readonly resend: ResendService,
   ) {}
 
-  @Cron('0 10 * * *')
+  @Cron('0 10 * * *', { timeZone: 'Europe/Paris' })
   async checkRenewalReminders() {
     const in7days = new Date();
     in7days.setDate(in7days.getDate() + 7);
