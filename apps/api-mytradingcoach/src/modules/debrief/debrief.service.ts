@@ -50,7 +50,7 @@ export class DebriefService {
     });
   }
 
-  async generate(userId: string, role: Role = Role.USER) {
+  async generate(userId: string, role: Role = Role.USER, skipLimit = false) {
     const now = new Date();
     const { weekNumber, year, startDate, endDate } = this.getWeekInfo(now);
 
@@ -72,7 +72,7 @@ export class DebriefService {
       ? (previousDebrief.objectives as unknown[])
       : [];
 
-    if (role !== Role.ADMIN) {
+    if (role !== Role.ADMIN && !skipLimit) {
       await this.aiService.checkDailyLimit(userId, 'debrief', 1);
     }
 
@@ -108,7 +108,7 @@ export class DebriefService {
   }
 
   async generateForUser(userId: string) {
-    return this.generate(userId);
+    return this.generate(userId, Role.USER, true);
   }
 
   private getWeekInfo(date: Date) {
