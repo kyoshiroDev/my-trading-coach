@@ -16,7 +16,7 @@
 
 .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
 .card-title {
-  font-family: var(--font-display, 'Syne', sans-serif);
+  font-family: var(--font-display);
   font-size: 14px;
   font-weight: 600;
   color: var(--text);
@@ -103,7 +103,7 @@
 
 /* ─── Utils ─── */
 .text-green { color: var(--green); }
-.mono { font-family: var(--font-mono, 'DM Mono', monospace); }
+.mono { font-family: var(--font-mono); }
 
 /* ─── Paywall FREE ─── */
 .premium-paywall {

@@ -46,7 +46,7 @@
 
 /* ─── Headings ─── */
 .auth-title {
-  font-family: var(--font-display, 'Syne', sans-serif);
+  font-family: var(--font-display);
   font-size: 22px;
   font-weight: 700;
   color: var(--text);
@@ -90,7 +90,7 @@
 .field-error {
   font-size: 11px;
   color: var(--red);
-  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-family: var(--font-mono);
 }
 
 .form-group.input-error input {
@@ -108,7 +108,7 @@
 
 label {
   font-size: 12px;
-  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-family: var(--font-mono);
   color: var(--text-2);
   letter-spacing: 0.3px;
 }
@@ -120,7 +120,7 @@ input {
   border-radius: 8px;
   padding: 10px 14px;
   font-size: 14px;
-  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-family: var(--font-body);
   outline: none;
   transition: border-color 0.15s;
   width: 100%;
@@ -156,7 +156,7 @@ input::placeholder { color: var(--text-3); }
   padding: 12px;
   font-size: 14px;
   font-weight: 600;
-  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-family: var(--font-body);
   cursor: pointer;
   margin-top: 8px;
   transition: all 0.15s;
@@ -215,3 +215,37 @@ input::placeholder { color: var(--text-3); }
 }
 
 .auth-link a:hover { text-decoration: underline; }
+
+@media (max-width: 480px) {
+  .auth-page {
+    padding: 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    align-items: flex-start;
+    padding-top: calc(40px + env(safe-area-inset-top));
+  }
+
+  .auth-card {
+    padding: 24px 20px;
+    border-radius: 12px;
+  }
+
+  .auth-logo img {
+    margin-left: 0;
+    height: 60px;
+  }
+
+  .auth-title {
+    font-size: 20px;
+  }
+
+  input {
+    font-size: 16px;
+    padding: 12px 14px;
+  }
+
+  .btn-submit {
+    padding: 14px;
+    font-size: 15px;
+    min-height: 48px;
+  }
+}

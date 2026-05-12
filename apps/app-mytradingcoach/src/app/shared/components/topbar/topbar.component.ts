@@ -14,7 +14,7 @@ import { LucideAngularModule, Plus, Bell } from 'lucide-angular';
       <div class="topbar-actions">
         @if (showAddButton()) {
           <button
-            class="btn btn-primary"
+            class="btn btn-primary btn-add-desktop"
             [class.btn-loading]="addLoading()"
             [disabled]="addDisabled() || addLoading()"
             [attr.data-testid]="addTestId() || null"
@@ -35,6 +35,23 @@ import { LucideAngularModule, Plus, Bell } from 'lucide-angular';
         }
       </div>
     </header>
+
+    @if (showAddButton()) {
+      <button
+        class="floating-add-btn"
+        [class.btn-loading]="addLoading()"
+        [disabled]="addDisabled() || addLoading()"
+        [attr.data-testid]="addTestId() ? addTestId() + '-floating' : null"
+        [attr.aria-label]="addLabel()"
+        (click)="addClick.emit()"
+      >
+        @if (addLoading()) {
+          <span class="btn-spinner"></span>
+        } @else {
+          <lucide-icon [img]="PlusIcon" [size]="24" />
+        }
+      </button>
+    }
   `,
 })
 export class TopbarComponent {

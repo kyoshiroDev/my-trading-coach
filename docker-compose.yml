@@ -19,6 +19,17 @@ services:
     restart: unless-stopped
     networks: [mtc_local]
 
+  redis:
+    image: redis:7.4-alpine
+    container_name: mtc_redis_local
+    command: redis-server --requirepass devredispass --maxmemory 128mb --maxmemory-policy noeviction
+    environment:
+      - TZ=Europe/Paris
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks: [mtc_local]
+
   discord-bot:
     build:
       context: scripts/discord-bot

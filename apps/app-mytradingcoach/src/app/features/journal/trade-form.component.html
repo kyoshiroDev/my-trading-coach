@@ -48,15 +48,9 @@
                     <button type="button" class="asset-option" (click)="selectInstrument(inst)">
                       <span class="asset-symbol">{{ inst.symbol }}</span>
                       <span class="asset-label-text">{{ inst.label }}</span>
-                      @if (inst.tickValue !== null) {
-                        <span class="asset-tick">{{ inst.tickValue }}$/pt</span>
-                      }
                     </button>
                   }
                 </div>
-              }
-              @if (selectedInstrument() !== null && selectedInstrument()!.tickValue !== null) {
-                <div class="tick-badge">⚡ {{ selectedInstrument()!.tickValue }}$ / point</div>
               }
             </div>
 
@@ -128,18 +122,36 @@
             </div>
           }
 
-          <!-- 5. Capital engagé (crypto/forex uniquement) -->
-          @if (selectedInstrument() === null || selectedInstrument()!.tickValue === null) {
-            <div class="form-group">
-              <label class="field-label-small" for="tf-capital">
-                Capital engagé ($) <span class="optional">pour calculer le P&amp;L</span>
-              </label>
-              <input id="tf-capital" type="text"
-                [value]="form().capitalEngaged ?? ''"
-                (input)="filterNumeric($event, 'capitalEngaged')"
-                name="capitalEngaged" placeholder="Ex: 1000" />
-              <span class="field-hint">P&amp;L = variation% × capital engagé</span>
+          <!-- 5. Capital + Levier (crypto/forex uniquement) -->
+          @if (showCapital()) {
+            <div class="capital-leverage-row">
+              <div class="field">
+                <label class="field-label-small" for="tf-capital">Capital ($)</label>
+                <div class="input-prefix-wrap">
+                  <span class="input-prefix">$</span>
+                  <input id="tf-capital" type="text" inputmode="decimal"
+                    [value]="form().capitalEngaged ?? ''"
+                    (input)="filterNumeric($event, 'capitalEngaged')"
+                    name="capitalEngaged" placeholder="0" />
+                </div>
+              </div>
+              <div class="field">
+                <label class="field-label-small" for="tf-leverage">Levier</label>
+                <div class="input-prefix-wrap">
+                  <span class="input-prefix">×</span>
+                  <input id="tf-leverage" type="text" inputmode="decimal"
+                    [value]="leverage()"
+                    (input)="onLeverageInput($event)"
+                    placeholder="1" />
+                </div>
+              </div>
             </div>
+            @if (liquidationPrice(); as liq) {
+              <div class="liquidation-warning">
+                ⚠ Liquidation {{ form().side === 'LONG' ? 'sous' : 'au-dessus de' }}
+                <strong>{{ liq | number:'1.2-2' }}</strong>
+              </div>
+            }
           }
 
           <!-- 6. P&L card -->
@@ -156,6 +168,11 @@
                   —
                 }
               </div>
+              @if (autoPoints() !== undefined && selectedInstrument()?.tickValue) {
+                <div class="pnl-formula">
+                  {{ autoPoints()! >= 0 ? '+' : '' }}{{ autoPoints()!.toFixed(2) }} pts × ${{ selectedInstrument()!.tickValue }}/pt
+                </div>
+              }
             </div>
             <div class="rr-badge" [class.rr-win]="(autoRR() ?? 0) >= 1">
               <div class="rr-label">R/R</div>

@@ -129,7 +129,9 @@ jobs:
                 "has": [{ "type": "host", "value": "mytradingcoach.app" }],
                 "status": 308,
                 "headers": { "Location": "https://www.mytradingcoach.app/$1" }
-              }
+              },
+              { "handle": "filesystem" },
+              { "src": "/(.*)", "dest": "/404.html", "status": 404 }
             ]
           }
           EOF

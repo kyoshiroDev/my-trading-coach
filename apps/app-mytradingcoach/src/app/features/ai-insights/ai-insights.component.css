@@ -24,7 +24,7 @@
 }
 
 .panel-title {
-  font-family: var(--font-display, 'Syne', sans-serif);
+  font-family: var(--font-display);
   font-size: 14px;
   font-weight: 600;
   color: var(--text);
@@ -35,7 +35,7 @@
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-family: var(--font-mono);
   color: var(--blue-bright);
 }
 
@@ -74,7 +74,7 @@
   align-items: center;
   gap: 6px;
   font-size: 10px;
-  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-family: var(--font-mono);
   color: var(--blue-bright);
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -126,7 +126,7 @@
 
 .insight-tag {
   font-size: 10px;
-  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-family: var(--font-mono);
   padding: 2px 8px;
   border-radius: 4px;
   white-space: nowrap;
@@ -173,7 +173,7 @@
 }
 
 .chat-title {
-  font-family: var(--font-display, 'Syne', sans-serif);
+  font-family: var(--font-display);
   font-size: 14px;
   font-weight: 600;
   color: var(--text);
@@ -184,7 +184,7 @@
 
 .quota-badge {
   font-size: 11px;
-  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-family: var(--font-mono);
   color: var(--blue-bright);
   background: rgba(59, 130, 246, 0.1);
   border: 1px solid rgba(59, 130, 246, 0.2);
@@ -232,7 +232,7 @@
   font-size: 12px;
   cursor: pointer;
   text-align: left;
-  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-family: var(--font-body);
   transition: all 0.15s;
 }
 
@@ -300,7 +300,7 @@
   padding: 9px 12px;
   font-size: 13px;
   outline: none;
-  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-family: var(--font-body);
   transition: border-color 0.15s;
 }
 
@@ -342,7 +342,7 @@
   margin: 28px;
 }
 .paywall-icon { font-size: 48px; margin-bottom: 8px; }
-.paywall-title { font-family: var(--font-display, 'Syne', sans-serif); font-size: 20px; font-weight: 700; color: var(--text); }
+.paywall-title { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--text); }
 .paywall-desc { font-size: 14px; color: var(--text-2); max-width: 380px; line-height: 1.6; }
 .paywall-cta {
   margin-top: 8px;
