@@ -93,3 +93,24 @@
 .icon-btn {
   padding: 7px 10px;
 }
+
+@media (max-width: 768px) {
+  .topbar {
+    height: 56px;
+    padding: 0 16px;
+    padding-right: 64px;
+  }
+
+  .page-title {
+    font-size: 15px;
+  }
+
+  .btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .btn-ghost .btn-text {
+    display: none;
+  }
+}

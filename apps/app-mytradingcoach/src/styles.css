@@ -21,7 +21,7 @@ body {
   color: var(--text);
   font-family: var(--font-body, 'DM Sans', sans-serif);
   line-height: 1.6;
-  min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
 }
 
@@ -60,4 +60,10 @@ lucide-icon svg {
 
 input, select, textarea {
   font-family: var(--font-body, 'DM Sans', sans-serif);
+}
+
+@media (max-width: 768px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
 }

@@ -215,3 +215,37 @@ input::placeholder { color: var(--text-3); }
 }
 
 .auth-link a:hover { text-decoration: underline; }
+
+@media (max-width: 480px) {
+  .auth-page {
+    padding: 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    align-items: flex-start;
+    padding-top: calc(40px + env(safe-area-inset-top));
+  }
+
+  .auth-card {
+    padding: 24px 20px;
+    border-radius: 12px;
+  }
+
+  .auth-logo img {
+    margin-left: 0;
+    height: 60px;
+  }
+
+  .auth-title {
+    font-size: 20px;
+  }
+
+  input {
+    font-size: 16px;
+    padding: 12px 14px;
+  }
+
+  .btn-submit {
+    padding: 14px;
+    font-size: 15px;
+    min-height: 48px;
+  }
+}

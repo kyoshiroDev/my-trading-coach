@@ -1,6 +1,6 @@
 .app-layout {
   display: flex;
-  height: 100vh;
+  height: 100dvh;
   background: var(--bg);
   overflow: hidden;
 }
@@ -212,7 +212,7 @@
 .burger {
   display: none;
   position: fixed;
-  top: 16px;
+  top: calc(env(safe-area-inset-top) + 16px);
   right: 16px;
   z-index: 200;
   width: 40px;
@@ -239,13 +239,17 @@
 @media (max-width: 768px) {
   .burger { display: flex; }
 
-  .sidebar-overlay.open { display: block; }
+  .sidebar-overlay.open {
+    display: block;
+    touch-action: none;
+  }
 
   .sidebar {
     position: fixed;
     top: 0;
     left: 0;
-    height: 100vh;
+    height: 100dvh;
+    padding-top: env(safe-area-inset-top);
     z-index: 100;
     transform: translateX(-100%);
     transition: transform 0.25s ease;
