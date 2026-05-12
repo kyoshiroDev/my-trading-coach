@@ -444,9 +444,26 @@ canvas { width: 100% !important; height: 100% !important; }
 
   .stats-row,
   .stats-row.has-capital {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 10px;
     margin-bottom: 16px;
+  }
+
+  .stat-card {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .stat-value {
+    font-size: 24px;
+    margin-bottom: 0;
+  }
+
+  .stat-label {
+    margin-bottom: 0;
   }
 
   .four-col-row {
