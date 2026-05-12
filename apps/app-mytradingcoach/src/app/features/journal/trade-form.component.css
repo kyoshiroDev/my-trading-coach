@@ -94,6 +94,7 @@
 .sheet-body {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   padding: 20px;
   display: flex;
@@ -173,10 +174,11 @@ input[type="date"] { color-scheme: dark; }
 /* ─── Form groups ─── */
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.form-row.trio { grid-template-columns: 1fr 1fr 1fr; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; min-width: 0; }
+.form-row.trio { grid-template-columns: 1fr 1fr 1fr; min-width: 0; }
+.form-row > *, .form-row.trio > * { min-width: 0; }
 
-.price-field { display: flex; flex-direction: column; gap: 5px; }
+.price-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 
 /* ─── Asset + Direction row ─── */
 .row-asset-side {
@@ -187,7 +189,7 @@ input[type="date"] { color-scheme: dark; }
 
 .asset-group { flex: 1; min-width: 0; }
 
-.direction-group { flex-shrink: 0; width: 116px; }
+.direction-group { flex-shrink: 0; width: 116px; min-width: 0; }
 
 /* ─── Side toggle ─── */
 .side-toggle {
@@ -225,13 +227,16 @@ input[type="date"] { color-scheme: dark; }
   top: calc(100% + 2px);
   left: 0;
   right: 0;
+  max-width: 100%;
   background: var(--bg-2);
   border: 1px solid var(--border-hover, rgba(99,155,255,.25));
   border-radius: 10px;
   z-index: 300;
   overflow-y: auto;
+  overflow-x: hidden;
   max-height: 220px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  box-sizing: border-box;
 }
 
 .asset-option {
@@ -245,7 +250,10 @@ input[type="date"] { color-scheme: dark; }
   border-bottom: 1px solid var(--border);
   background: transparent;
   width: 100%;
+  max-width: 100%;
   text-align: left;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .asset-option:last-child { border-bottom: none; }
@@ -274,7 +282,9 @@ input[type="date"] { color-scheme: dark; }
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+  min-width: 0;
 }
+.capital-leverage-row > * { min-width: 0; }
 
 .field { display: flex; flex-direction: column; gap: 6px; }
 
@@ -282,6 +292,7 @@ input[type="date"] { color-scheme: dark; }
   position: relative;
   display: flex;
   align-items: center;
+  min-width: 0;
 }
 
 .input-prefix {
@@ -513,10 +524,15 @@ input[type="date"] { color-scheme: dark; }
   .row-asset-side {
     flex-direction: row;
     gap: 8px;
+    min-width: 0;
   }
   .direction-group {
     width: 100px;
     flex-shrink: 0;
+  }
+  .asset-group {
+    flex: 1;
+    min-width: 0;
   }
 
   /* Entry pleine largeur, Exit + Qty en ligne */
@@ -526,10 +542,16 @@ input[type="date"] { color-scheme: dark; }
   .form-row.trio .price-field:first-child {
     grid-column: 1 / -1;
   }
+  .form-row.trio > * {
+    min-width: 0;
+  }
 
   /* SL/TP restent en 2 colonnes */
   .form-row {
     grid-template-columns: 1fr 1fr;
+  }
+  .form-row > * {
+    min-width: 0;
   }
 
   /* Emotions en 2 colonnes */
@@ -541,6 +563,7 @@ input[type="date"] { color-scheme: dark; }
   .sheet-body {
     padding: 14px 16px;
     gap: 14px;
+    overflow-x: hidden;
   }
 
   /* Chips plus touchables */
