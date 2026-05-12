@@ -459,17 +459,51 @@ canvas {
 
   .stats-row,
   .stats-row.has-capital {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 10px;
     margin-bottom: 16px;
   }
 
-  .stat-value {
-    font-size: 22px;
+  .stat-card {
+    padding: 14px 18px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 12px;
+    min-height: 64px;
   }
 
-  .stat-card {
-    padding: 14px;
+  .stat-card:hover {
+    transform: none;
+  }
+
+  .stat-label {
+    margin-bottom: 4px;
+    font-size: 10px;
+  }
+
+  .stat-sub {
+    grid-column: 1;
+    grid-row: 2;
+    margin-top: 2px;
+  }
+
+  .stat-value {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    font-size: 22px;
+    margin-bottom: 0;
+    text-align: right;
+    align-self: center;
+  }
+
+  .stat-bg-icon {
+    display: none;
+  }
+
+  .change {
+    font-size: 10px;
+    padding: 2px 5px;
   }
 
   .four-col-row {
