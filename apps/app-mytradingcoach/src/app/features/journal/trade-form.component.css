@@ -60,7 +60,7 @@
 }
 
 .sheet-title {
-  font-family: var(--font-display, 'Syne', sans-serif);
+  font-family: var(--font-display);
   font-size: 16px;
   font-weight: 700;
   color: var(--text);
@@ -115,7 +115,7 @@
 /* ─── Labels ─── */
 .section-label {
   font-size: 10px;
-  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-family: var(--font-mono);
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -127,7 +127,7 @@
 
 .field-label-small {
   font-size: 11px;
-  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-family: var(--font-mono);
   color: var(--text-2);
   display: flex;
   align-items: center;
@@ -147,7 +147,7 @@ input, textarea, select {
   border-radius: 8px;
   padding: 9px 12px;
   font-size: 16px;
-  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-family: var(--font-body);
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
   width: 100%;
@@ -202,7 +202,7 @@ input[type="date"] { color-scheme: dark; }
   flex: 1;
   border: none;
   font-size: 11px;
-  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-family: var(--font-mono);
   font-weight: 600;
   letter-spacing: 0.06em;
   cursor: pointer;
@@ -252,7 +252,7 @@ input[type="date"] { color-scheme: dark; }
 .asset-option:hover { background: rgba(59,130,246,0.08); }
 
 .asset-symbol {
-  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 600;
   color: var(--blue-bright);
@@ -270,7 +270,7 @@ input[type="date"] { color-scheme: dark; }
 
 .asset-tick {
   font-size: 10px;
-  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-family: var(--font-mono);
   color: var(--green);
   background: var(--green-dim);
   padding: 2px 6px;
@@ -281,7 +281,7 @@ input[type="date"] { color-scheme: dark; }
 
 .tick-badge {
   font-size: 11px;
-  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-family: var(--font-mono);
   color: var(--green);
   margin-top: 4px;
 }
@@ -305,7 +305,7 @@ input[type="date"] { color-scheme: dark; }
   position: absolute;
   left: 10px;
   font-size: 12px;
-  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-family: var(--font-mono);
   color: var(--text-3);
   pointer-events: none;
   z-index: 1;
@@ -355,14 +355,14 @@ input[type="date"] { color-scheme: dark; }
 
 .pnl-label {
   font-size: 10px;
-  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-family: var(--font-mono);
   color: var(--text-3);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
 .pnl-value {
-  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-family: var(--font-mono);
   font-size: 22px;
   font-weight: 500;
   color: var(--text-2);
@@ -392,7 +392,7 @@ input[type="date"] { color-scheme: dark; }
 
 .rr-label {
   font-size: 9px;
-  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-family: var(--font-mono);
   color: var(--text-3);
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -400,7 +400,7 @@ input[type="date"] { color-scheme: dark; }
 }
 
 .rr-value {
-  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-family: var(--font-mono);
   font-size: 20px;
   font-weight: 500;
   color: var(--text-2);
@@ -422,7 +422,7 @@ input[type="date"] { color-scheme: dark; }
   background: var(--bg-2);
   color: var(--text-2);
   font-size: 11px;
-  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-family: var(--font-body);
   cursor: pointer;
   transition: all 0.15s;
   text-align: center;
@@ -448,7 +448,7 @@ input[type="date"] { color-scheme: dark; }
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 6px 11px;
-  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-family: var(--font-mono);
   font-size: 11px;
   color: var(--text-3);
   cursor: pointer;
@@ -475,7 +475,7 @@ input[type="date"] { color-scheme: dark; }
   border-radius: 12px;
   color: var(--text-2);
   font-size: 14px;
-  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-family: var(--font-body);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
@@ -493,7 +493,7 @@ input[type="date"] { color-scheme: dark; }
   color: #fff;
   font-size: 14px;
   font-weight: 700;
-  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-family: var(--font-body);
   cursor: pointer;
   transition: opacity 0.15s;
   display: flex;

@@ -13,7 +13,7 @@ html {
 body {
   background-color: var(--bg);
   color: var(--text);
-  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
@@ -31,7 +31,7 @@ a {
 }
 
 button {
-  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-family: var(--font-body);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -56,5 +56,5 @@ lucide-icon svg {
 }
 
 input, select, textarea {
-  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-family: var(--font-body);
 }

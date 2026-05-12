@@ -52,7 +52,7 @@
 }
 
 .nav-section {
-  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 1.1px;
@@ -114,7 +114,7 @@
   background: linear-gradient(135deg, var(--blue), #8b5cf6);
   color: white;
   font-size: 9px;
-  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-family: var(--font-mono);
   font-weight: 500;
   padding: 2px 6px;
   border-radius: 10px;
@@ -162,7 +162,7 @@
   display: flex; align-items: center; justify-content: center;
   font-size: 13px;
   font-weight: 700;
-  font-family: var(--font-display, 'Syne', sans-serif);
+  font-family: var(--font-display);
   color: white;
   flex-shrink: 0;
 }
@@ -180,7 +180,7 @@
 
 .user-plan {
   font-size: 10px;
-  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-family: var(--font-mono);
   color: var(--yellow);
   letter-spacing: 0.5px;
 }
