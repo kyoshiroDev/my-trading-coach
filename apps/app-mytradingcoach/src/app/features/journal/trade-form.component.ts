@@ -109,6 +109,33 @@ export class TradeFormComponent {
       : entry * (1 + 1 / lev);
   });
 
+  protected readonly autoPoints = computed<number | undefined>(() => {
+    const instr = this.selectedInstrument();
+    if (!instr || instr.tickValue === null) return undefined;
+
+    const f = this.form();
+    const entry = f.entry ?? 0;
+    const exit = f.exit ?? 0;
+    const sl = f.stopLoss ?? 0;
+    const tp = f.takeProfit ?? 0;
+    const mode = this.exitMode();
+    const isLong = f.side === 'LONG';
+
+    if (!entry) return undefined;
+
+    let effectiveExit = 0;
+    if (exit > 0) {
+      effectiveExit = exit;
+    } else if (mode === 'SL' && sl > 0) {
+      effectiveExit = sl;
+    } else if (mode === 'TP' && tp > 0) {
+      effectiveExit = tp;
+    }
+
+    if (!effectiveExit) return undefined;
+    return isLong ? effectiveExit - entry : entry - effectiveExit;
+  });
+
   protected readonly todayMax = computed(() =>
     new Date().toLocaleDateString('sv-SE'),
   );

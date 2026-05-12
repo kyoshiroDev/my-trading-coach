@@ -48,15 +48,9 @@
                     <button type="button" class="asset-option" (click)="selectInstrument(inst)">
                       <span class="asset-symbol">{{ inst.symbol }}</span>
                       <span class="asset-label-text">{{ inst.label }}</span>
-                      @if (inst.tickValue !== null) {
-                        <span class="asset-tick">{{ inst.tickValue }}$/pt</span>
-                      }
                     </button>
                   }
                 </div>
-              }
-              @if (selectedInstrument() !== null && selectedInstrument()!.tickValue !== null) {
-                <div class="tick-badge">⚡ {{ selectedInstrument()!.tickValue }}$ / point</div>
               }
             </div>
 
@@ -174,6 +168,11 @@
                   —
                 }
               </div>
+              @if (autoPoints() !== undefined && selectedInstrument()?.tickValue) {
+                <div class="pnl-formula">
+                  {{ autoPoints()! >= 0 ? '+' : '' }}{{ autoPoints()!.toFixed(2) }} pts × ${{ selectedInstrument()!.tickValue }}/pt
+                </div>
+              }
             </div>
             <div class="rr-badge" [class.rr-win]="(autoRR() ?? 0) >= 1">
               <div class="rr-label">R/R</div>

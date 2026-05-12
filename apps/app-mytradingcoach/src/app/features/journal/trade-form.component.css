@@ -268,23 +268,6 @@ input[type="date"] { color-scheme: dark; }
   text-overflow: ellipsis;
 }
 
-.asset-tick {
-  font-size: 10px;
-  font-family: var(--font-mono);
-  color: var(--green);
-  background: var(--green-dim);
-  padding: 2px 6px;
-  border-radius: 4px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.tick-badge {
-  font-size: 11px;
-  font-family: var(--font-mono);
-  color: var(--green);
-  margin-top: 4px;
-}
 
 /* ─── Capital + Levier ─── */
 .capital-leverage-row {
@@ -375,6 +358,15 @@ input[type="date"] { color-scheme: dark; }
 .pnl-card.pnl-loss .pnl-value { color: var(--red); }
 
 .pnl-pct { font-size: 13px; opacity: 0.8; }
+
+.pnl-formula {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-3);
+  margin-top: 4px;
+  letter-spacing: 0.02em;
+  opacity: 0.7;
+}
 
 .rr-badge {
   background: var(--bg-3);
