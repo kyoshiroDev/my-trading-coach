@@ -10,7 +10,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
-import { getTickValue } from './instruments.const';
+import { getTickValue, getTickSize } from './instruments.const';
 
 @Injectable()
 export class TradesService {
@@ -120,10 +120,12 @@ export class TradesService {
 
     const quantity = dto.quantity ?? 1;
     const tickValue = getTickValue(dto.asset);
+    const tickSize = getTickSize(dto.asset);
 
     let pnl: number;
     if (tickValue != null) {
-      pnl = points * tickValue * quantity;
+      const ticks = tickSize && tickSize > 0 ? points / tickSize : points;
+      pnl = ticks * tickValue * quantity;
     } else if (dto.capitalEngaged != null && dto.capitalEngaged > 0) {
       pnl = (points / dto.entry) * dto.capitalEngaged;
     } else {

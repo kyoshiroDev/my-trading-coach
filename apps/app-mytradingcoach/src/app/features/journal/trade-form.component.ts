@@ -142,10 +142,13 @@ export class TradeFormComponent {
     if (!effectiveExit) return undefined;
 
     const rawPoints = isLong ? effectiveExit - entry : entry - effectiveExit;
+
     if (calcMode === 'forex') {
-      const pipDecimals = instr.pipDecimals ?? 4;
-      const pipSize = Math.pow(10, -pipDecimals);
+      const pipSize = Math.pow(10, -(instr.pipDecimals ?? 4));
       return rawPoints / pipSize;
+    }
+    if (instr.tickSize && instr.tickSize > 0) {
+      return rawPoints / instr.tickSize;
     }
     return rawPoints;
   });
@@ -318,13 +321,19 @@ export class TradeFormComponent {
 
     if ((calcMode === 'futures' || calcMode === 'forex') && instr?.tickValue) {
       const rawPoints = isLong ? effectiveExit - entry : entry - effectiveExit;
-      let points = rawPoints;
+      let pnl: number;
+
       if (calcMode === 'forex') {
-        const pipDecimals = instr.pipDecimals ?? 4;
-        const pipSize = Math.pow(10, -pipDecimals);
-        points = rawPoints / pipSize;
+        const pipSize = Math.pow(10, -(instr.pipDecimals ?? 4));
+        const pips = rawPoints / pipSize;
+        pnl = +(pips * instr.tickValue * qty).toFixed(2);
+      } else if (instr.tickSize && instr.tickSize > 0) {
+        const ticks = rawPoints / instr.tickSize;
+        pnl = +(ticks * instr.tickValue * qty).toFixed(2);
+      } else {
+        pnl = +(rawPoints * instr.tickValue * qty).toFixed(2);
       }
-      const pnl = +(points * instr.tickValue * qty).toFixed(2);
+
       this.autoPnl.set(pnl);
       this.autoPnlPct.set(undefined);
       this.form.update(ff => ({ ...ff, pnl }));

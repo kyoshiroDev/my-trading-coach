@@ -172,6 +172,8 @@
                 <div class="pnl-formula">
                   @if (calculationMode() === 'forex') {
                     {{ autoPoints()! >= 0 ? '+' : '' }}{{ autoPoints()!.toFixed(1) }} pips × ${{ selectedInstrument()!.tickValue }}/pip
+                  } @else if (selectedInstrument()!.tickSize && selectedInstrument()!.tickSize! < 1) {
+                    {{ autoPoints()! >= 0 ? '+' : '' }}{{ autoPoints()!.toFixed(0) }} ticks × ${{ selectedInstrument()!.tickValue }}/tick
                   } @else {
                     {{ autoPoints()! >= 0 ? '+' : '' }}{{ autoPoints()!.toFixed(2) }} pts × ${{ selectedInstrument()!.tickValue }}/pt
                   }
