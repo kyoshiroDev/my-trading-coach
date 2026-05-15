@@ -18,11 +18,13 @@ interface ImportResult { created: number; failed: number; total: number; }
   styleUrl: './csv-import.component.css',
   template: `
     @if (open()) {
-      <div class="overlay" (click)="onOverlayClick($event)">
+      <div class="overlay" role="button" tabindex="-1"
+        (click)="onOverlayClick($event)"
+        (keydown.escape)="dismissed.emit()">
         <div class="modal">
           <div class="modal-header">
             <span class="modal-title">Importer CSV</span>
-            <button class="close-btn" (click)="close.emit()">
+            <button class="close-btn" (click)="dismissed.emit()">
               <lucide-icon [img]="XIcon" [size]="16" />
             </button>
           </div>
@@ -34,7 +36,7 @@ interface ImportResult { created: number; failed: number; total: number; }
               <div class="paywall-desc">
                 L'import CSV avec analyse IA est disponible avec le plan Premium.
               </div>
-              <a routerLink="/settings" class="btn-upgrade" (click)="close.emit()">
+              <a routerLink="/settings" class="btn-upgrade" (click)="dismissed.emit()">
                 Essayer 7 jours gratuit →
               </a>
             </div>
@@ -48,7 +50,7 @@ interface ImportResult { created: number; failed: number; total: number; }
                 <p class="result-sub">{{ result()!.failed }} ligne(s) ignorée(s) (format invalide)</p>
               }
               <button class="btn-primary" (click)="reset()">Importer un autre fichier</button>
-              <button class="btn-ghost" (click)="close.emit()">Fermer</button>
+              <button class="btn-ghost" (click)="dismissed.emit()">Fermer</button>
             </div>
           } @else if (error()) {
             <div class="result-block">
@@ -59,11 +61,15 @@ interface ImportResult { created: number; failed: number; total: number; }
             </div>
           } @else {
             <div class="drop-zone"
+              role="button"
+              tabindex="0"
               [class.drag-over]="isDragging()"
               (dragover)="onDragOver($event)"
               (dragleave)="isDragging.set(false)"
               (drop)="onDrop($event)"
               (click)="fileInput.click()"
+              (keydown.enter)="fileInput.click()"
+              (keydown.space)="fileInput.click()"
             >
               <lucide-icon [img]="UploadIcon" [size]="28" color="var(--text-3)" />
               <p class="drop-title">
@@ -93,7 +99,7 @@ interface ImportResult { created: number; failed: number; total: number; }
 })
 export class CsvImportComponent {
   readonly open = input(false);
-  readonly close = output<void>();
+  readonly dismissed = output<void>();
   readonly imported = output<void>();
 
   protected readonly userStore = inject(UserStore);
@@ -111,7 +117,7 @@ export class CsvImportComponent {
   protected readonly error = signal<string | null>(null);
 
   onOverlayClick(e: MouseEvent) {
-    if ((e.target as HTMLElement).classList.contains('overlay')) this.close.emit();
+    if ((e.target as HTMLElement).classList.contains('overlay')) this.dismissed.emit();
   }
 
   onDragOver(e: DragEvent) {

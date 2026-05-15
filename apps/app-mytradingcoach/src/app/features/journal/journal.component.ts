@@ -147,7 +147,7 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
 
     <mtc-csv-import
       [open]="showImport()"
-      (close)="showImport.set(false)"
+      (dismissed)="showImport.set(false)"
       (imported)="onImported()"
     />
   `,
