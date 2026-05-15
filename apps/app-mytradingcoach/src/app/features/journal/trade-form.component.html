@@ -81,7 +81,6 @@
                 <label class="field-label-small" for="tf-exit">Exit</label>
                 <input id="tf-exit" type="text"
                   [value]="form().exit ?? ''" (input)="filterNumeric($event, 'exit')"
-                  (blur)="onExitBlur()"
                   name="exit" placeholder="—" />
               </div>
               <div class="price-field">
@@ -110,7 +109,7 @@
           </div>
 
           <!-- Toggle SL/TP sorti sur -->
-          @if (exitTouched() && !form().exit) {
+          @if (!form().exit && form().stopLoss && form().takeProfit) {
             <div class="form-group">
               <span class="section-label">Sorti sur</span>
               <div class="side-toggle">
@@ -168,17 +167,7 @@
                   —
                 }
               </div>
-              @if (autoPoints() !== undefined && selectedInstrument()?.tickValue) {
-                <div class="pnl-formula">
-                  @if (calculationMode() === 'forex') {
-                    {{ autoPoints()! >= 0 ? '+' : '' }}{{ autoPoints()!.toFixed(1) }} pips × ${{ selectedInstrument()!.tickValue }}/pip
-                  } @else if (selectedInstrument()!.tickSize && selectedInstrument()!.tickSize! < 1) {
-                    {{ autoPoints()! >= 0 ? '+' : '' }}{{ autoPoints()!.toFixed(0) }} ticks × ${{ selectedInstrument()!.tickValue }}/tick
-                  } @else {
-                    {{ autoPoints()! >= 0 ? '+' : '' }}{{ autoPoints()!.toFixed(2) }} pts × ${{ selectedInstrument()!.tickValue }}/pt
-                  }
-                </div>
-              }
+
             </div>
             <div class="rr-badge" [class.rr-win]="(autoRR() ?? 0) >= 1">
               <div class="rr-label">R/R</div>

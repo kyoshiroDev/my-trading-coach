@@ -51,7 +51,6 @@ export class TradeFormComponent {
   protected readonly autoRR = signal<number | undefined>(undefined);
   protected readonly zodErrors = signal<Record<string, string>>({});
   protected readonly exitMode = signal<'SL' | 'TP' | null>(null);
-  protected readonly exitTouched = signal(false);
   protected readonly leverage = signal<number>(1);
 
   // ── Autocomplete instruments ──────────────────────────────────────────────
@@ -114,45 +113,6 @@ export class TradeFormComponent {
       : entry * (1 + 1 / lev);
   });
 
-  protected readonly autoPoints = computed<number | undefined>(() => {
-    const instr = this.selectedInstrument();
-    const calcMode = this.calculationMode();
-    if (!instr || instr.tickValue === null) return undefined;
-    if (calcMode !== 'futures' && calcMode !== 'forex') return undefined;
-
-    const f = this.form();
-    const entry = f.entry ?? 0;
-    const exit = f.exit ?? 0;
-    const sl = f.stopLoss ?? 0;
-    const tp = f.takeProfit ?? 0;
-    const mode = this.exitMode();
-    const isLong = f.side === 'LONG';
-
-    if (!entry) return undefined;
-
-    let effectiveExit = 0;
-    if (exit > 0) {
-      effectiveExit = exit;
-    } else if (mode === 'SL' && sl > 0) {
-      effectiveExit = sl;
-    } else if (mode === 'TP' && tp > 0) {
-      effectiveExit = tp;
-    }
-
-    if (!effectiveExit) return undefined;
-
-    const rawPoints = isLong ? effectiveExit - entry : entry - effectiveExit;
-
-    if (calcMode === 'forex') {
-      const pipSize = Math.pow(10, -(instr.pipDecimals ?? 4));
-      return rawPoints / pipSize;
-    }
-    if (instr.tickSize && instr.tickSize > 0) {
-      return rawPoints / instr.tickSize;
-    }
-    return rawPoints;
-  });
-
   protected readonly todayMax = computed(() =>
     new Date().toLocaleDateString('sv-SE'),
   );
@@ -196,7 +156,6 @@ export class TradeFormComponent {
       }
       this.leverage.set(1);
       this.exitMode.set(null);
-      this.exitTouched.set(false);
       this.submitted.set(false);
       this.zodErrors.set({});
     });
@@ -215,16 +174,6 @@ export class TradeFormComponent {
 
   protected setEmotion(emotion: string): void {
     this.form.update(f => ({ ...f, emotion: emotion as CreateTradeDto['emotion'] }));
-  }
-
-  protected onExitBlur(): void {
-    if (!this.form().exit) {
-      this.exitTouched.set(true);
-      if (this.exitMode() === null) {
-        this.exitMode.set('TP');
-        this.recalculate();
-      }
-    }
   }
 
   protected setExitMode(mode: 'SL' | 'TP'): void {
@@ -269,7 +218,6 @@ export class TradeFormComponent {
 
   protected recalculate(): void {
     const f = this.form();
-    const exitMode = this.exitMode();
     const entry = f.entry ?? 0;
     const exit = f.exit ?? 0;
     const sl = f.stopLoss ?? 0;
@@ -280,6 +228,13 @@ export class TradeFormComponent {
     const isLong = f.side === 'LONG';
     const calcMode = this.calculationMode();
     const instr = this.selectedInstrument();
+
+    // Auto-sélectionner TP si SL+TP présents, exit vide, et aucun mode choisi
+    if (!exit && sl > 0 && tp > 0 && this.exitMode() === null) {
+      this.exitMode.set('TP');
+    }
+
+    const exitMode = this.exitMode();
 
     if (exit > 0 && exitMode !== null) {
       this.exitMode.set(null);
