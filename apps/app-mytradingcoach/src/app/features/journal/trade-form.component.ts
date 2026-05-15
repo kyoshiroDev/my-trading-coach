@@ -90,20 +90,25 @@ export class TradeFormComponent {
       ) ?? null,
   );
 
-  protected readonly calculationMode = computed<'futures' | 'crypto-spot' | 'crypto-leverage'>(() => {
+  protected readonly calculationMode = computed<'futures' | 'forex' | 'crypto-spot' | 'crypto-leverage'>(() => {
     const instr = this.selectedInstrument();
     if (!instr) return 'crypto-spot';
-    if (instr.tickValue !== null) return 'futures';
+    if (instr.category === 'FUTURES_US') return 'futures';
+    if (instr.category === 'FOREX') return 'forex';
     return this.leverage() > 1 ? 'crypto-leverage' : 'crypto-spot';
   });
 
-  protected readonly showCapital = computed(() => this.calculationMode() !== 'futures');
+  protected readonly showCapital = computed(() =>
+    this.calculationMode() === 'crypto-spot' ||
+    this.calculationMode() === 'crypto-leverage',
+  );
 
   protected readonly liquidationPrice = computed(() => {
     const f = this.form();
     const entry = f.entry ?? 0;
     const lev = this.leverage();
-    if (!entry || lev <= 1 || this.calculationMode() === 'futures') return null;
+    const mode = this.calculationMode();
+    if (!entry || lev <= 1 || mode === 'futures' || mode === 'forex') return null;
     return f.side === 'LONG'
       ? entry * (1 - 1 / lev)
       : entry * (1 + 1 / lev);
@@ -111,7 +116,9 @@ export class TradeFormComponent {
 
   protected readonly autoPoints = computed<number | undefined>(() => {
     const instr = this.selectedInstrument();
+    const calcMode = this.calculationMode();
     if (!instr || instr.tickValue === null) return undefined;
+    if (calcMode !== 'futures' && calcMode !== 'forex') return undefined;
 
     const f = this.form();
     const entry = f.entry ?? 0;
@@ -133,7 +140,14 @@ export class TradeFormComponent {
     }
 
     if (!effectiveExit) return undefined;
-    return isLong ? effectiveExit - entry : entry - effectiveExit;
+
+    const rawPoints = isLong ? effectiveExit - entry : entry - effectiveExit;
+    if (calcMode === 'forex') {
+      const pipDecimals = instr.pipDecimals ?? 4;
+      const pipSize = Math.pow(10, -pipDecimals);
+      return rawPoints / pipSize;
+    }
+    return rawPoints;
   });
 
   protected readonly todayMax = computed(() =>
@@ -302,8 +316,14 @@ export class TradeFormComponent {
       return;
     }
 
-    if (calcMode === 'futures' && instr?.tickValue) {
-      const points = isLong ? effectiveExit - entry : entry - effectiveExit;
+    if ((calcMode === 'futures' || calcMode === 'forex') && instr?.tickValue) {
+      const rawPoints = isLong ? effectiveExit - entry : entry - effectiveExit;
+      let points = rawPoints;
+      if (calcMode === 'forex') {
+        const pipDecimals = instr.pipDecimals ?? 4;
+        const pipSize = Math.pow(10, -pipDecimals);
+        points = rawPoints / pipSize;
+      }
       const pnl = +(points * instr.tickValue * qty).toFixed(2);
       this.autoPnl.set(pnl);
       this.autoPnlPct.set(undefined);

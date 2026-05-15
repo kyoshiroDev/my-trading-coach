@@ -170,7 +170,11 @@
               </div>
               @if (autoPoints() !== undefined && selectedInstrument()?.tickValue) {
                 <div class="pnl-formula">
-                  {{ autoPoints()! >= 0 ? '+' : '' }}{{ autoPoints()!.toFixed(2) }} pts × ${{ selectedInstrument()!.tickValue }}/pt
+                  @if (calculationMode() === 'forex') {
+                    {{ autoPoints()! >= 0 ? '+' : '' }}{{ autoPoints()!.toFixed(1) }} pips × ${{ selectedInstrument()!.tickValue }}/pip
+                  } @else {
+                    {{ autoPoints()! >= 0 ? '+' : '' }}{{ autoPoints()!.toFixed(2) }} pts × ${{ selectedInstrument()!.tickValue }}/pt
+                  }
                 </div>
               }
             </div>

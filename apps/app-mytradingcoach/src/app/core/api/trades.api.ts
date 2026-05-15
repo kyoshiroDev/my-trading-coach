@@ -8,6 +8,7 @@ export interface InstrumentDto {
   label: string;
   category: 'FUTURES_US' | 'CRYPTO' | 'FOREX' | 'INDICES' | 'ACTIONS';
   tickValue: number | null;
+  pipDecimals?: number;
 }
 
 export interface Trade {
