@@ -113,6 +113,15 @@
 
 .export-btn:hover:not(:disabled) { background: var(--bg-3); color: var(--text); border-color: var(--border-hover); }
 .export-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.export-spinner {
+  width: 13px; height: 13px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: var(--text-2);
+  border-radius: 50%;
+  animation: spin-debrief 0.7s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
 
 /* ─── Stats ─── */
 .stats-row {

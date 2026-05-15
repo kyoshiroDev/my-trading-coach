@@ -100,8 +100,17 @@ function badgeClass(badge: string): string {
               · Généré le {{ debrief()!.generatedAt | date:'d MMM à HH:mm' }}
             </div>
           </div>
-          <button class="export-btn" disabled title="Bientôt disponible">
-            <lucide-icon [img]="DownloadIcon" [size]="13" />
+          <button
+            class="export-btn"
+            [disabled]="exportLoading()"
+            (click)="exportPDF()"
+            title="Exporter en PDF"
+          >
+            @if (exportLoading()) {
+              <span class="export-spinner"></span>
+            } @else {
+              <lucide-icon [img]="DownloadIcon" [size]="13" />
+            }
             Export PDF
           </button>
         </div>
@@ -218,6 +227,7 @@ export class DebriefComponent {
   protected readonly debrief = signal<WeeklyDebrief | null>(null);
   protected readonly isLoading = signal(true);
   protected readonly isGenerating = signal(false);
+  protected readonly exportLoading = signal(false);
   protected readonly error = signal<string | null>(null);
 
   constructor() {
@@ -241,6 +251,29 @@ export class DebriefComponent {
   }
 
   protected getBadgeClass(badge: string): string { return badgeClass(badge); }
+
+  exportPDF() {
+    const d = this.debrief();
+    if (!d || this.exportLoading()) return;
+    this.exportLoading.set(true);
+    this.http
+      .get(`${environment.apiUrl}/debrief/${d.year}/${d.weekNumber}/pdf`, {
+        responseType: 'blob',
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `debrief-s${d.weekNumber}-${d.year}.pdf`;
+          a.click();
+          URL.revokeObjectURL(url);
+          this.exportLoading.set(false);
+        },
+        error: () => this.exportLoading.set(false),
+      });
+  }
 
   generateDebrief() {
     if (this.isGenerating()) return;

@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Role } from '@prisma/client';
+import { DebriefPdfData } from '../pdf/pdf.service';
 
 interface DebriefAiResult {
   summary: string;
@@ -109,6 +110,68 @@ export class DebriefService {
 
   async generateForUser(userId: string) {
     return this.generate(userId, Role.USER, true);
+  }
+
+  async getPDFData(userId: string, year: number, weekNumber: number): Promise<DebriefPdfData> {
+    const debrief = await this.getByWeek(userId, year, weekNumber);
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true },
+    });
+
+    const trades = await this.prisma.trade.findMany({
+      where: { userId, tradedAt: { gte: debrief.startDate, lte: debrief.endDate } },
+      orderBy: { pnl: 'desc' },
+    });
+
+    const pnlValues = trades.map((t) => t.pnl ?? 0);
+    const wins = pnlValues.filter((p) => p > 0);
+
+    const storedInsights = debrief.insights as {
+      strengths?: { badge: string; text: string }[];
+      weaknesses?: { badge: string; text: string }[];
+    } | null;
+
+    const insights: DebriefPdfData['insights'] = [
+      ...(storedInsights?.strengths ?? []).map((s) => ({
+        title: s.badge,
+        description: s.text,
+        type: 'positive' as const,
+      })),
+      ...(storedInsights?.weaknesses ?? []).map((w) => ({
+        title: w.badge,
+        description: w.text,
+        type: 'negative' as const,
+      })),
+    ];
+
+    const objectives = (debrief.objectives as { title: string; reason: string }[]) ?? [];
+
+    return {
+      weekNumber,
+      year,
+      startDate: debrief.startDate.toLocaleDateString('fr-FR'),
+      endDate: debrief.endDate.toLocaleDateString('fr-FR'),
+      userName: user?.name ?? 'Trader',
+      summary: debrief.aiSummary ?? '',
+      stats: {
+        totalTrades: trades.length,
+        winRate: trades.length > 0 ? (wins.length / trades.length) * 100 : 0,
+        totalPnl: pnlValues.reduce((a, b) => a + b, 0),
+        avgRR: trades.reduce((acc, t) => acc + (t.riskReward ?? 0), 0) / (trades.length || 1),
+        bestTrade: pnlValues.length > 0 ? Math.max(...pnlValues) : 0,
+        worstTrade: pnlValues.length > 0 ? Math.min(...pnlValues) : 0,
+      },
+      insights,
+      objectives,
+      topTrades: trades.slice(0, 5).map((t) => ({
+        asset: t.asset,
+        side: t.side,
+        pnl: t.pnl ?? 0,
+        tradedAt: t.tradedAt.toISOString(),
+      })),
+    };
   }
 
   private getWeekInfo(date: Date) {
