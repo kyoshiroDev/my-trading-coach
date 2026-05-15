@@ -113,6 +113,8 @@
 
 .export-btn:hover:not(:disabled) { background: var(--bg-3); color: var(--text); border-color: var(--border-hover); }
 .export-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.export-btn-locked { opacity: 0.6; cursor: pointer; text-decoration: none; }
+.export-btn-locked:hover { opacity: 1; border-color: var(--blue); color: var(--blue-bright); }
 .export-spinner {
   width: 13px; height: 13px;
   border: 2px solid rgba(255,255,255,0.2);

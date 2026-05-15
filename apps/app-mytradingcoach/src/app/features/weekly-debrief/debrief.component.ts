@@ -4,6 +4,7 @@ import { PnlFormatPipe } from '../../shared/pipes/pnl-format.pipe';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UserStore } from '../../core/stores/user.store';
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { LucideAngularModule, CalendarDays, RefreshCw, Download } from 'lucide-angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
@@ -43,7 +44,7 @@ function badgeClass(badge: string): string {
 @Component({
   selector: 'mtc-debrief',
   standalone: true,
-  imports: [DatePipe, LucideAngularModule, TopbarComponent, PlanModalComponent, PnlFormatPipe],
+  imports: [DatePipe, RouterLink, LucideAngularModule, TopbarComponent, PlanModalComponent, PnlFormatPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './debrief.component.css',
   template: `
@@ -100,19 +101,26 @@ function badgeClass(badge: string): string {
               · Généré le {{ debrief()!.generatedAt | date:'d MMM à HH:mm' }}
             </div>
           </div>
-          <button
-            class="export-btn"
-            [disabled]="exportLoading()"
-            (click)="exportPDF()"
-            title="Exporter en PDF"
-          >
-            @if (exportLoading()) {
-              <span class="export-spinner"></span>
-            } @else {
+          @if (userStore.isPremium()) {
+            <button
+              class="export-btn"
+              [disabled]="exportLoading()"
+              (click)="exportPDF()"
+              title="Exporter en PDF"
+            >
+              @if (exportLoading()) {
+                <span class="export-spinner"></span>
+              } @else {
+                <lucide-icon [img]="DownloadIcon" [size]="13" />
+              }
+              Export PDF
+            </button>
+          } @else {
+            <a routerLink="/settings" class="export-btn export-btn-locked" title="Fonctionnalité Premium">
               <lucide-icon [img]="DownloadIcon" [size]="13" />
-            }
-            Export PDF
-          </button>
+              PDF ⚡
+            </a>
+          }
         </div>
 
         <!-- Stats row -->

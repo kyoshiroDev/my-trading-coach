@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -7,13 +8,18 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Plan, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { PremiumGuard } from '../../common/guards/premium.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { TradesService } from './trades.service';
 import { CoinGeckoService } from './coingecko.service';
+import { CsvImportService } from './csv-import.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
@@ -25,6 +31,7 @@ export class TradesController {
   constructor(
     private tradesService: TradesService,
     private coinGeckoService: CoinGeckoService,
+    private csvImportService: CsvImportService,
   ) {}
 
   @Get('instruments')
@@ -32,6 +39,37 @@ export class TradesController {
     const cryptoInstruments = await this.coinGeckoService.getCryptoInstruments();
     const nonCrypto = INSTRUMENTS.filter((i) => i.category !== 'CRYPTO');
     return [...nonCrypto, ...cryptoInstruments];
+  }
+
+  @Post('import')
+  @UseGuards(PremiumGuard)
+  @UseInterceptors(FileInterceptor('file', {
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      if (!file.originalname.match(/\.(csv|txt)$/i)) {
+        return cb(new BadRequestException('Seuls les fichiers CSV sont acceptés'), false);
+      }
+      cb(null, true);
+    },
+  }))
+  async importCSV(
+    @CurrentUser() user: { id: string; plan: Plan; role: Role },
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) throw new BadRequestException('Fichier manquant');
+
+    const parsed = await this.csvImportService.parseCSV(file.buffer, file.originalname);
+
+    const results = await Promise.allSettled(
+      parsed.map((dto) =>
+        this.tradesService.create(user.id, dto as CreateTradeDto, user.plan, user.role),
+      ),
+    );
+
+    const created = results.filter((r) => r.status === 'fulfilled').length;
+    const failed = results.filter((r) => r.status === 'rejected').length;
+
+    return { created, failed, total: parsed.length };
   }
 
   @Post()

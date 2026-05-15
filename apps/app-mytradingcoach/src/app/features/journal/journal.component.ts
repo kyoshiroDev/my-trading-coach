@@ -2,11 +2,13 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, injec
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { LucideAngularModule, X, Pencil } from 'lucide-angular';
+import { LucideAngularModule, X, Pencil, Upload } from 'lucide-angular';
 import { TradesStore, Trade } from '../../core/stores/trades.store';
 import { CreateTradeDto, TradesApi } from '../../core/api/trades.api';
+import { UserStore } from '../../core/stores/user.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { TradeFormComponent } from './trade-form.component';
+import { CsvImportComponent } from './csv-import.component';
 import { PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe } from '../../shared/pipes';
 import { environment } from '../../../environments/environment';
 
@@ -17,7 +19,7 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
 @Component({
   selector: 'mtc-journal',
   standalone: true,
-  imports: [DatePipe, LucideAngularModule, TopbarComponent, TradeFormComponent, PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe],
+  imports: [DatePipe, LucideAngularModule, TopbarComponent, TradeFormComponent, CsvImportComponent, PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './journal.component.css',
   template: `
@@ -30,7 +32,7 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
     />
 
     <div class="content">
-      <!-- Filtres -->
+      <!-- Filtres + actions -->
       <div class="journal-filters">
         <button class="filter-chip" [class.active]="filterSide() === 'ALL'" (click)="filterSide.set('ALL')">
           Tous
@@ -46,6 +48,14 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
             {{ setup }}
           </button>
         }
+        <button class="filter-chip import-btn"
+          [class.import-locked]="!userStore.isPremium()"
+          (click)="showImport.set(true)"
+          [title]="userStore.isPremium() ? 'Importer un CSV' : 'Fonctionnalité Premium'">
+          <lucide-icon [img]="UploadIcon" [size]="12" />
+          CSV
+          @if (!userStore.isPremium()) { <span class="lock-badge">⚡</span> }
+        </button>
       </div>
 
       <!-- Tableau -->
@@ -134,10 +144,17 @@ const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']
       (dismissed)="closeModal()"
       (formSave)="submitTrade($event)"
     />
+
+    <mtc-csv-import
+      [open]="showImport()"
+      (close)="showImport.set(false)"
+      (imported)="onImported()"
+    />
   `,
 })
 export class JournalComponent implements OnInit {
   protected readonly tradesStore = inject(TradesStore);
+  protected readonly userStore = inject(UserStore);
   private readonly tradesApi = inject(TradesApi);
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
@@ -145,8 +162,10 @@ export class JournalComponent implements OnInit {
   protected readonly SETUPS = SETUPS;
   protected readonly XIcon = X;
   protected readonly PencilIcon = Pencil;
+  protected readonly UploadIcon = Upload;
 
   protected readonly showModal = signal(false);
+  protected readonly showImport = signal(false);
   protected readonly isSubmitting = signal(false);
   protected readonly submitError = signal<string | null>(null);
   protected readonly selectedTrade = signal<Trade | null>(null);
@@ -235,4 +254,10 @@ export class JournalComponent implements OnInit {
   }
 
   loadMore() { this.tradesStore.loadMore(); }
+
+  onImported() {
+    this.showImport.set(false);
+    this.tradesStore.reset();
+    this.tradesStore.loadTrades();
+  }
 }

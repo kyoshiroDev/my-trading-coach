@@ -433,3 +433,15 @@
     flex-shrink: 0;
   }
 }
+
+.import-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  border-color: rgba(59,130,246,.3);
+  color: var(--blue-bright);
+}
+.import-btn:hover { background: rgba(59,130,246,.08); border-color: var(--blue); }
+.import-locked { opacity: 0.6; }
+.lock-badge { font-size: 10px; }
