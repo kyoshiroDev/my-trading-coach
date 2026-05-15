@@ -4,6 +4,8 @@
 
 - `app-mytradingcoach.html` → référence design app Angular
 - `landing-mytradingcoach.html` → référence design landing Astro
+- `admin-mytradingcoach.html` → référence design app admin Angular
+  (variables CSS différentes — voir section Admin Design System ci-dessous)
 - **Ne jamais inventer** — reproduire exactement ces fichiers
 
 ---
@@ -189,3 +191,34 @@ transition: transform .2s;     /* cartes au hover */
   40% { transform: translateY(-5px); }
 }
 ```
+
+---
+
+## Admin Design System — `admin-mytradingcoach`
+
+L'app admin utilise un design system différent de l'app principale.
+Ne pas mélanger les variables CSS des deux apps.
+
+```css
+/* Admin uniquement — dans apps/admin-mytradingcoach/src/styles.css */
+:root {
+  --bg:        #070809;
+  --bg2:       #0c0e10;
+  --bg3:       #111416;
+  --bg4:       #171a1d;
+  --border:    rgba(255,255,255,0.06);
+  --text:      #e8eaed;
+  --text2:     #9aa3af;
+  --text3:     #4a5568;
+  --teal:      #00d4aa;
+  --teal-dim:  rgba(0,212,170,0.08);
+  --blue:      #4a9eff;
+  --red:       #ff5563;
+  --amber:     #f5a623;
+  --green:     #34d399;
+  --mono:      'Geist Mono', monospace;
+  --sans:      'Geist', sans-serif;
+}
+```
+
+Fonts admin : Geist + Geist Mono (Google Fonts) — pas DM Mono / Syne / DM Sans.

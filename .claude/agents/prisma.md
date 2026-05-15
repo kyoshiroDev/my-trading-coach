@@ -45,11 +45,17 @@ model User {
   password    String          // Argon2 hash — jamais exposer
   name        String?
   plan        Plan            @default(FREE)
+  role        Role            @default(USER)
   trialEndsAt DateTime?
   trialUsed   Boolean         @default(false)
-  stripeCustomerId String?    @unique
+  stripeCustomerId         String?   @unique
+  stripeSubscriptionId     String?
+  stripePriceId            String?
+  stripeCurrentPeriodEnd   DateTime?
+  stripeInterval           String?   // 'month' | 'year'
   trades      Trade[]
   debriefs    WeeklyDebrief[]
+  aiUsageLogs AiUsageLog[]
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 }
@@ -99,7 +105,24 @@ model WeeklyDebrief {
   @@index([userId, year, weekNumber])
 }
 
+model AiUsageLog {
+  id           String   @id @default(cuid())
+  userId       String
+  feature      String   // 'insights' | 'chat' | 'debrief' | 'csv_import'
+  inputTokens  Int
+  outputTokens Int
+  costUsd      Float
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([feature])
+}
+
 enum Plan           { FREE PREMIUM }
+enum Role           { USER ADMIN BETA_TESTER }
 enum TradeSide      { LONG SHORT }
 enum EmotionState   { CONFIDENT STRESSED REVENGE FEAR FOCUSED NEUTRAL }
 enum SetupType      { BREAKOUT PULLBACK RANGE REVERSAL SCALPING NEWS }
