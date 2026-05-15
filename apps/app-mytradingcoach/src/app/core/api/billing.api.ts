@@ -8,7 +8,9 @@ export class BillingApi {
   private readonly base = `${environment.apiUrl}/billing`;
 
   checkout(plan: 'monthly' | 'yearly') {
-    return this.http.post<{ data: { url: string } }>(`${this.base}/checkout`, { plan });
+    return this.http.post<{ data: { url: string } }>(`${this.base}/checkout`, {
+      plan,
+    });
   }
 
   portal() {

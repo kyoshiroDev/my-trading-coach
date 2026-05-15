@@ -25,11 +25,17 @@ export class ResendService {
   constructor(private readonly config: ConfigService) {
     const apiKey = this.config.getOrThrow<string>('RESEND_API_KEY');
     this.resend = new Resend(apiKey);
-    const mailFrom = this.config.get<string>('MAIL_FROM') ?? 'noreply@mytradingcoach.app';
+    const mailFrom =
+      this.config.get<string>('MAIL_FROM') ?? 'noreply@mytradingcoach.app';
     this.from = `MyTradingCoach <${mailFrom}>`;
-    this.replyTo = this.config.get<string>('MAIL_SAV') ?? 'hello@mytradingcoach.app';
-    this.frontendUrl = this.config.get<string>('FRONTEND_URL') ?? 'https://app.mytradingcoach.app';
-    this.logger.log(`ResendService init — from: ${this.from} | key: ${apiKey.slice(0, 8)}...`);
+    this.replyTo =
+      this.config.get<string>('MAIL_SAV') ?? 'hello@mytradingcoach.app';
+    this.frontendUrl =
+      this.config.get<string>('FRONTEND_URL') ??
+      'https://app.mytradingcoach.app';
+    this.logger.log(
+      `ResendService init — from: ${this.from} | key: ${apiKey.slice(0, 8)}...`,
+    );
   }
 
   // ── Bienvenue FREE ─────────────────────────────────────────────────────────
@@ -161,7 +167,9 @@ export class ResendService {
     subject: string;
     html: string;
   }): Promise<void> {
-    this.logger.debug(`Envoi email — from: "${this.from}" to: "${params.to}" subject: "${params.subject}"`);
+    this.logger.debug(
+      `Envoi email — from: "${this.from}" to: "${params.to}" subject: "${params.subject}"`,
+    );
 
     const { data, error } = await this.resend.emails.send({
       from: this.from,
@@ -174,14 +182,16 @@ export class ResendService {
     if (error) {
       this.logger.error(
         `[RESEND ERROR] "${params.subject}" → ${params.to}\n` +
-        `  name: ${(error as { name?: string }).name}\n` +
-        `  message: ${error.message}\n` +
-        `  details: ${JSON.stringify(error)}`,
+          `  name: ${(error as { name?: string }).name}\n` +
+          `  message: ${error.message}\n` +
+          `  details: ${JSON.stringify(error)}`,
       );
       // Ne pas throw — un email raté ne doit pas faire échouer le job BullMQ
       return;
     }
 
-    this.logger.log(`[RESEND OK] "${params.subject}" → ${params.to} (id: ${data?.id})`);
+    this.logger.log(
+      `[RESEND OK] "${params.subject}" → ${params.to} (id: ${data?.id})`,
+    );
   }
 }

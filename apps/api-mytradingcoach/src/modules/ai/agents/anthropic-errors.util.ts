@@ -3,7 +3,8 @@ import Anthropic from '@anthropic-ai/sdk';
 
 export function handleAnthropicError(err: unknown, logger: Logger): never {
   if (err instanceof Anthropic.APIError) {
-    const type = (err.error as { error?: { type?: string } } | null)?.error?.type;
+    const type = (err.error as { error?: { type?: string } } | null)?.error
+      ?.type;
     switch (type) {
       case 'overloaded_error':
         throw new HttpException(
@@ -21,7 +22,9 @@ export function handleAnthropicError(err: unknown, logger: Logger): never {
           HttpStatus.PAYMENT_REQUIRED,
         );
       default:
-        logger.error(`Anthropic API error [${type ?? err.status}]: ${err.message}`);
+        logger.error(
+          `Anthropic API error [${type ?? err.status}]: ${err.message}`,
+        );
         throw new HttpException(
           "L'IA est temporairement indisponible.",
           HttpStatus.BAD_GATEWAY,
@@ -29,5 +32,8 @@ export function handleAnthropicError(err: unknown, logger: Logger): never {
     }
   }
   logger.error('Unknown AI error', err);
-  throw new HttpException("L'IA est temporairement indisponible.", HttpStatus.BAD_GATEWAY);
+  throw new HttpException(
+    "L'IA est temporairement indisponible.",
+    HttpStatus.BAD_GATEWAY,
+  );
 }

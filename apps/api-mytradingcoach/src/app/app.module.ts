@@ -24,7 +24,10 @@ import { AppController } from './app.controller';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: process.env['NODE_ENV'] === 'development' ? '.env.development' : '.env.local',
+      envFilePath:
+        process.env['NODE_ENV'] === 'development'
+          ? '.env.development'
+          : '.env.local',
     }),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }]),
     BullModule.forRoot({
@@ -35,7 +38,9 @@ import { AppController } from './app.controller';
       },
     }),
     // Crons uniquement sur le worker désigné (IS_CRON_WORKER=true) ou en dev
-    ...(process.env['IS_CRON_WORKER'] !== 'false' ? [ScheduleModule.forRoot()] : []),
+    ...(process.env['IS_CRON_WORKER'] !== 'false'
+      ? [ScheduleModule.forRoot()]
+      : []),
     PrismaModule,
     AuthModule,
     TradesModule,

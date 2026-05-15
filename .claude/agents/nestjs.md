@@ -1,7 +1,7 @@
 # Agent NestJS — api-mytradingcoach
 
 ## Stack
-NestJS 11 · Prisma 7 · PostgreSQL 17 · PgBouncer · Redis · BullMQ · Anthropic SDK · Argon2 · JWT Passport
+NestJS 11 · Prisma 7 · PostgreSQL 17 · PgBouncer · Redis · BullMQ · Anthropic SDK · Argon2 · JWT Passport · Sentry
 
 ---
 

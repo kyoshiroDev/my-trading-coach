@@ -8,12 +8,22 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 
 const mockUser = (currency = 'USD', currencyRate = 1) => ({
-  id: 'u1', email: 'test@test.com', name: 'Test', plan: 'FREE' as const,
-  currency, currencyRate, trialEndsAt: null,
+  id: 'u1',
+  email: 'test@test.com',
+  name: 'Test',
+  plan: 'FREE' as const,
+  currency,
+  currencyRate,
+  trialEndsAt: null,
 });
 
 function makePipe(currency = 'USD', currencyRate = 1): PnlFormatPipe {
-  const mockAuthService = { currentUser: signal(mockUser(currency, currencyRate)), isAuthenticated: signal(true), fetchMe: vi.fn(), setCurrentUser: vi.fn() };
+  const mockAuthService = {
+    currentUser: signal(mockUser(currency, currencyRate)),
+    isAuthenticated: signal(true),
+    fetchMe: vi.fn(),
+    setCurrentUser: vi.fn(),
+  };
   TestBed.configureTestingModule({
     providers: [
       PnlFormatPipe,

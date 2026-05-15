@@ -21,9 +21,17 @@
 .sidebar::after {
   content: '';
   position: absolute;
-  top: 0; right: 0;
-  width: 1px; height: 100%;
-  background: linear-gradient(180deg, transparent, var(--blue) 40%, var(--blue) 60%, transparent);
+  top: 0;
+  right: 0;
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    var(--blue) 40%,
+    var(--blue) 60%,
+    transparent
+  );
   opacity: 0.12;
   pointer-events: none;
 }
@@ -91,9 +99,11 @@
 .nav-item.active::before {
   content: '';
   position: absolute;
-  left: 0; top: 50%;
+  left: 0;
+  top: 50%;
   transform: translateY(-50%);
-  width: 3px; height: 20px;
+  width: 3px;
+  height: 20px;
   background: #3b82f6;
   border-radius: 0 3px 3px 0;
 }
@@ -107,7 +117,6 @@
   flex-shrink: 0;
   opacity: 0.8;
 }
-
 
 .badge {
   margin-left: auto;
@@ -129,12 +138,24 @@
   text-align: left;
 }
 
-.admin-section { color: rgba(239, 68, 68, 0.55); }
+.admin-section {
+  color: rgba(239, 68, 68, 0.55);
+}
 
-.admin-item { color: #f87171; }
-.admin-item:hover { background: rgba(239, 68, 68, 0.08); color: var(--red); }
-.admin-item.active { background: rgba(239, 68, 68, 0.12); color: var(--red); }
-.admin-item.active::before { background: var(--red); }
+.admin-item {
+  color: #f87171;
+}
+.admin-item:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--red);
+}
+.admin-item.active {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--red);
+}
+.admin-item.active::before {
+  background: var(--red);
+}
 
 /* ─── FOOTER ─── */
 .sidebar-footer {
@@ -153,13 +174,18 @@
   transition: background 0.15s;
 }
 
-.user-card:hover { background: var(--bg-3); }
+.user-card:hover {
+  background: var(--bg-3);
+}
 
 .avatar {
-  width: 32px; height: 32px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 13px;
   font-weight: 700;
   font-family: var(--font-display);
@@ -167,7 +193,10 @@
   flex-shrink: 0;
 }
 
-.user-info { flex: 1; min-width: 0; }
+.user-info {
+  flex: 1;
+  min-width: 0;
+}
 
 .user-name {
   font-size: 13px;
@@ -192,11 +221,13 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  scrollbar-width: none;       /* Firefox */
-  -ms-overflow-style: none;    /* IE / Edge */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE / Edge */
 }
 
-.main-content::-webkit-scrollbar { display: none; } /* Chrome / Safari */
+.main-content::-webkit-scrollbar {
+  display: none;
+} /* Chrome / Safari */
 
 /* ── Overlay mobile ─────────────────────────────────────────────────────── */
 .sidebar-overlay {

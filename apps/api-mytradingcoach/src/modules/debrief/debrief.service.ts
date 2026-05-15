@@ -58,8 +58,13 @@ export class DebriefService {
     const trades = await this.prisma.trade.findMany({
       where: { userId, tradedAt: { gte: startDate, lte: endDate } },
       select: {
-        asset: true, side: true, pnl: true, emotion: true,
-        setup: true, session: true, tradedAt: true,
+        asset: true,
+        side: true,
+        pnl: true,
+        emotion: true,
+        setup: true,
+        session: true,
+        tradedAt: true,
       },
     });
 
@@ -77,13 +82,13 @@ export class DebriefService {
       await this.aiService.checkDailyLimit(userId, 'debrief', 1);
     }
 
-    const aiResult = await this.aiService.generateDebrief({
+    const aiResult = (await this.aiService.generateDebrief({
       trades,
       stats,
       previousObjectives,
       weekNumber,
       year,
-    }) as DebriefAiResult;
+    })) as DebriefAiResult;
 
     return this.prisma.weeklyDebrief.upsert({
       where: { userId_weekNumber_year: { userId, weekNumber, year } },
@@ -112,7 +117,11 @@ export class DebriefService {
     return this.generate(userId, Role.USER, true);
   }
 
-  async getPDFData(userId: string, year: number, weekNumber: number): Promise<DebriefPdfData> {
+  async getPDFData(
+    userId: string,
+    year: number,
+    weekNumber: number,
+  ): Promise<DebriefPdfData> {
     const debrief = await this.getByWeek(userId, year, weekNumber);
 
     const user = await this.prisma.user.findUnique({
@@ -121,7 +130,10 @@ export class DebriefService {
     });
 
     const trades = await this.prisma.trade.findMany({
-      where: { userId, tradedAt: { gte: debrief.startDate, lte: debrief.endDate } },
+      where: {
+        userId,
+        tradedAt: { gte: debrief.startDate, lte: debrief.endDate },
+      },
       orderBy: { pnl: 'desc' },
     });
 
@@ -146,7 +158,8 @@ export class DebriefService {
       })),
     ];
 
-    const objectives = (debrief.objectives as { title: string; reason: string }[]) ?? [];
+    const objectives =
+      (debrief.objectives as { title: string; reason: string }[]) ?? [];
 
     return {
       weekNumber,
@@ -159,7 +172,9 @@ export class DebriefService {
         totalTrades: trades.length,
         winRate: trades.length > 0 ? (wins.length / trades.length) * 100 : 0,
         totalPnl: pnlValues.reduce((a, b) => a + b, 0),
-        avgRR: trades.reduce((acc, t) => acc + (t.riskReward ?? 0), 0) / (trades.length || 1),
+        avgRR:
+          trades.reduce((acc, t) => acc + (t.riskReward ?? 0), 0) /
+          (trades.length || 1),
         bestTrade: pnlValues.length > 0 ? Math.max(...pnlValues) : 0,
         worstTrade: pnlValues.length > 0 ? Math.min(...pnlValues) : 0,
       },
@@ -179,7 +194,9 @@ export class DebriefService {
     d.setHours(0, 0, 0, 0);
     d.setDate(d.getDate() + 4 - (d.getDay() || 7));
     const yearStart = new Date(d.getFullYear(), 0, 1);
-    const weekNumber = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+    const weekNumber = Math.ceil(
+      ((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7,
+    );
     const year = d.getFullYear();
 
     const monday = new Date(date);

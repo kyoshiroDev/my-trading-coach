@@ -1,5 +1,21 @@
-@keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
 
 .plan-modal-overlay {
   position: fixed;
@@ -58,7 +74,9 @@
   transition: color 0.15s;
 }
 
-.plan-modal-close:hover { color: var(--text); }
+.plan-modal-close:hover {
+  color: var(--text);
+}
 
 /* ─── Plan options ─── */
 .plan-modal-options {
@@ -79,7 +97,9 @@
   position: relative;
 }
 
-.plan-option:hover { border-color: var(--border-hover); }
+.plan-option:hover {
+  border-color: var(--border-hover);
+}
 
 .plan-option.recommended,
 .plan-option.selected {
@@ -170,4 +190,8 @@
   flex-shrink: 0;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

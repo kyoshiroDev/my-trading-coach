@@ -1,4 +1,11 @@
-import { BadRequestException, Controller, Get, Headers, Query, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Headers,
+  Query,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Public } from '../../common/decorators/public.decorator';
 import { UsersService } from '../users/users.service';
 import { DiscordService } from './discord.service';

@@ -11,18 +11,41 @@ export function parseAnthropicJson(raw: string): unknown {
 
   try {
     return JSON.parse(stripped);
-  } catch { /* falls through to sanitizer pass */ }
+  } catch {
+    /* falls through to sanitizer pass */
+  }
 
   let inString = false;
   let escaped = false;
   let sanitized = '';
   for (const char of stripped) {
-    if (escaped) { sanitized += char; escaped = false; continue; }
-    if (char === '\\' && inString) { sanitized += char; escaped = true; continue; }
-    if (char === '"') { inString = !inString; sanitized += char; continue; }
-    if (inString && char === '\n') { sanitized += '\\n'; continue; }
-    if (inString && char === '\r') { sanitized += '\\r'; continue; }
-    if (inString && char === '\t') { sanitized += '\\t'; continue; }
+    if (escaped) {
+      sanitized += char;
+      escaped = false;
+      continue;
+    }
+    if (char === '\\' && inString) {
+      sanitized += char;
+      escaped = true;
+      continue;
+    }
+    if (char === '"') {
+      inString = !inString;
+      sanitized += char;
+      continue;
+    }
+    if (inString && char === '\n') {
+      sanitized += '\\n';
+      continue;
+    }
+    if (inString && char === '\r') {
+      sanitized += '\\r';
+      continue;
+    }
+    if (inString && char === '\t') {
+      sanitized += '\\t';
+      continue;
+    }
     sanitized += char;
   }
   return JSON.parse(sanitized);

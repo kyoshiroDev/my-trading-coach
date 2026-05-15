@@ -1,5 +1,12 @@
 import {
-  ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe, TitleCasePipe } from '@angular/common';
@@ -8,19 +15,48 @@ import { map, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { LucideAngularModule, X } from 'lucide-angular';
 import { Trade } from '../../core/stores/trades.store';
-import { CreateTradeDto, InstrumentDto, TradesApi } from '../../core/api/trades.api';
+import {
+  CreateTradeDto,
+  InstrumentDto,
+  TradesApi,
+} from '../../core/api/trades.api';
 import { CreateTradeSchema } from '../../core/schemas/trade.schema';
 
-const EMOTIONS: Trade['emotion'][] = ['CONFIDENT', 'FOCUSED', 'NEUTRAL', 'STRESSED', 'FEAR', 'REVENGE'];
-const SETUPS: Trade['setup'][] = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS'];
+const EMOTIONS: Trade['emotion'][] = [
+  'CONFIDENT',
+  'FOCUSED',
+  'NEUTRAL',
+  'STRESSED',
+  'FEAR',
+  'REVENGE',
+];
+const SETUPS: Trade['setup'][] = [
+  'BREAKOUT',
+  'PULLBACK',
+  'RANGE',
+  'REVERSAL',
+  'SCALPING',
+  'NEWS',
+];
 const SESSIONS: Trade['session'][] = ['LONDON', 'NEW_YORK', 'ASIAN'];
 const TIMEFRAMES = ['1m', '5m', '15m', '30m', '1h', '4h', '1D', '1W'];
 
 const EMOTION_EMOJIS: Record<string, string> = {
-  CONFIDENT: '😎', FOCUSED: '🎯', NEUTRAL: '😐', STRESSED: '😰', FEAR: '😨', REVENGE: '🤬',
+  CONFIDENT: '😎',
+  FOCUSED: '🎯',
+  NEUTRAL: '😐',
+  STRESSED: '😰',
+  FEAR: '😨',
+  REVENGE: '🤬',
 };
 
-type NumericField = 'entry' | 'exit' | 'stopLoss' | 'takeProfit' | 'quantity' | 'capitalEngaged';
+type NumericField =
+  | 'entry'
+  | 'exit'
+  | 'stopLoss'
+  | 'takeProfit'
+  | 'quantity'
+  | 'capitalEngaged';
 
 @Component({
   selector: 'mtc-trade-form',
@@ -85,11 +121,14 @@ export class TradeFormComponent {
   protected readonly selectedInstrument = computed(
     () =>
       this.instruments().find(
-        (i) => i.symbol.toLowerCase() === (this.form().asset ?? '').toLowerCase(),
+        (i) =>
+          i.symbol.toLowerCase() === (this.form().asset ?? '').toLowerCase(),
       ) ?? null,
   );
 
-  protected readonly calculationMode = computed<'futures' | 'forex' | 'crypto-spot' | 'crypto-leverage'>(() => {
+  protected readonly calculationMode = computed<
+    'futures' | 'forex' | 'crypto-spot' | 'crypto-leverage'
+  >(() => {
     const instr = this.selectedInstrument();
     if (!instr) return 'crypto-spot';
     if (instr.category === 'FUTURES_US') return 'futures';
@@ -97,9 +136,10 @@ export class TradeFormComponent {
     return this.leverage() > 1 ? 'crypto-leverage' : 'crypto-spot';
   });
 
-  protected readonly showCapital = computed(() =>
-    this.calculationMode() === 'crypto-spot' ||
-    this.calculationMode() === 'crypto-leverage',
+  protected readonly showCapital = computed(
+    () =>
+      this.calculationMode() === 'crypto-spot' ||
+      this.calculationMode() === 'crypto-leverage',
   );
 
   protected readonly liquidationPrice = computed(() => {
@@ -107,10 +147,9 @@ export class TradeFormComponent {
     const entry = f.entry ?? 0;
     const lev = this.leverage();
     const mode = this.calculationMode();
-    if (!entry || lev <= 1 || mode === 'futures' || mode === 'forex') return null;
-    return f.side === 'LONG'
-      ? entry * (1 - 1 / lev)
-      : entry * (1 + 1 / lev);
+    if (!entry || lev <= 1 || mode === 'futures' || mode === 'forex')
+      return null;
+    return f.side === 'LONG' ? entry * (1 - 1 / lev) : entry * (1 + 1 / lev);
   });
 
   protected readonly todayMax = computed(() =>
@@ -145,7 +184,11 @@ export class TradeFormComponent {
         });
         this.assetSearch.set(t.asset);
         this.autoPnl.set(t.pnl ?? undefined);
-        this.autoPnlPct.set(t.pnl != null && t.entry > 0 ? +(t.pnl / t.entry * 100).toFixed(2) : undefined);
+        this.autoPnlPct.set(
+          t.pnl != null && t.entry > 0
+            ? +((t.pnl / t.entry) * 100).toFixed(2)
+            : undefined,
+        );
         this.autoRR.set(t.riskReward ?? undefined);
       } else {
         this.form.set(this.emptyForm());
@@ -168,12 +211,15 @@ export class TradeFormComponent {
   }
 
   protected setSide(side: 'LONG' | 'SHORT'): void {
-    this.form.update(f => ({ ...f, side }));
+    this.form.update((f) => ({ ...f, side }));
     this.recalculate();
   }
 
   protected setEmotion(emotion: string): void {
-    this.form.update(f => ({ ...f, emotion: emotion as CreateTradeDto['emotion'] }));
+    this.form.update((f) => ({
+      ...f,
+      emotion: emotion as CreateTradeDto['emotion'],
+    }));
   }
 
   protected setExitMode(mode: 'SL' | 'TP'): void {
@@ -185,7 +231,10 @@ export class TradeFormComponent {
     const input = event.target as HTMLInputElement;
     input.value = input.value.replace(/[^\d.,]/g, '');
     const parsed = parseFloat(input.value.replace(',', '.'));
-    this.form.update(f => ({ ...f, [field]: isNaN(parsed) ? undefined : parsed }));
+    this.form.update((f) => ({
+      ...f,
+      [field]: isNaN(parsed) ? undefined : parsed,
+    }));
     this.recalculate();
   }
 
@@ -194,7 +243,7 @@ export class TradeFormComponent {
     const val = input.value.toUpperCase();
     input.value = val;
     this.assetSearch.set(val);
-    this.form.update(f => ({ ...f, asset: val }));
+    this.form.update((f) => ({ ...f, asset: val }));
     this.recalculate();
   }
 
@@ -203,7 +252,7 @@ export class TradeFormComponent {
   }
 
   protected selectInstrument(instrument: InstrumentDto): void {
-    this.form.update(f => ({ ...f, asset: instrument.symbol }));
+    this.form.update((f) => ({ ...f, asset: instrument.symbol }));
     this.assetSearch.set(instrument.symbol);
     this.showDropdown.set(false);
     this.recalculate();
@@ -256,21 +305,21 @@ export class TradeFormComponent {
       if (risk > 0) {
         const rr = +(reward / risk).toFixed(2);
         this.autoRR.set(rr);
-        this.form.update(ff => ({ ...ff, riskReward: rr }));
+        this.form.update((ff) => ({ ...ff, riskReward: rr }));
       } else {
         this.autoRR.set(undefined);
-        this.form.update(ff => ({ ...ff, riskReward: undefined }));
+        this.form.update((ff) => ({ ...ff, riskReward: undefined }));
       }
     } else {
       this.autoRR.set(undefined);
-      this.form.update(ff => ({ ...ff, riskReward: undefined }));
+      this.form.update((ff) => ({ ...ff, riskReward: undefined }));
     }
 
     // P&L
     if (!entry || !effectiveExit) {
       this.autoPnl.set(undefined);
       this.autoPnlPct.set(undefined);
-      this.form.update(ff => ({ ...ff, pnl: undefined }));
+      this.form.update((ff) => ({ ...ff, pnl: undefined }));
       return;
     }
 
@@ -291,7 +340,7 @@ export class TradeFormComponent {
 
       this.autoPnl.set(pnl);
       this.autoPnlPct.set(undefined);
-      this.form.update(ff => ({ ...ff, pnl }));
+      this.form.update((ff) => ({ ...ff, pnl }));
     } else {
       const variation = isLong
         ? (effectiveExit - entry) / entry
@@ -301,11 +350,11 @@ export class TradeFormComponent {
         const pct = +(variation * lev * 100).toFixed(2);
         this.autoPnl.set(pnl);
         this.autoPnlPct.set(pct);
-        this.form.update(ff => ({ ...ff, pnl }));
+        this.form.update((ff) => ({ ...ff, pnl }));
       } else {
         this.autoPnl.set(undefined);
         this.autoPnlPct.set(undefined);
-        this.form.update(ff => ({ ...ff, pnl: undefined }));
+        this.form.update((ff) => ({ ...ff, pnl: undefined }));
       }
     }
   }
@@ -317,7 +366,7 @@ export class TradeFormComponent {
     const tradedAtIso = tradedAt
       ? new Date(tradedAt + 'T12:00:00').toISOString()
       : new Date().toISOString();
-    this.form.update(f => ({
+    this.form.update((f) => ({
       ...f,
       pnl: this.autoPnl(),
       riskReward: this.autoRR(),
@@ -339,14 +388,14 @@ export class TradeFormComponent {
 
   private emptyForm(): Partial<CreateTradeDto> {
     return {
-      side:           'LONG'     as const,
-      emotion:        'FOCUSED'  as const,
-      setup:          'BREAKOUT' as const,
-      session:        'LONDON'   as const,
-      timeframe:      '1h',
-      quantity:       1,
+      side: 'LONG' as const,
+      emotion: 'FOCUSED' as const,
+      setup: 'BREAKOUT' as const,
+      session: 'LONDON' as const,
+      timeframe: '1h',
+      quantity: 1,
       capitalEngaged: undefined,
-      tradedAt:       new Date().toLocaleDateString('sv-SE'),
+      tradedAt: new Date().toLocaleDateString('sv-SE'),
     };
   }
 }

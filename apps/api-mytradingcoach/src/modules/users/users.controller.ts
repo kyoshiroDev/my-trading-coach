@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { IsEnum, IsOptional, IsString, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Plan, Role } from '@prisma/client';
@@ -43,12 +54,18 @@ export class UsersController {
   }
 
   @Patch('onboarding')
-  completeOnboarding(@CurrentUser() user: { id: string }, @Body() dto: CompleteOnboardingDto) {
+  completeOnboarding(
+    @CurrentUser() user: { id: string },
+    @Body() dto: CompleteOnboardingDto,
+  ) {
     return this.usersService.completeOnboarding(user.id, dto);
   }
 
   @Patch('preferences')
-  updatePreferences(@CurrentUser() user: { id: string }, @Body() dto: UpdatePreferencesDto) {
+  updatePreferences(
+    @CurrentUser() user: { id: string },
+    @Body() dto: UpdatePreferencesDto,
+  ) {
     return this.usersService.updatePreferences(user.id, dto);
   }
 
@@ -76,7 +93,11 @@ export class UsersController {
   @UseGuards(AdminGuard)
   @Get('admin')
   adminList(@Query() query: AdminListQueryDto) {
-    return this.usersService.adminFindAll(query.page, query.limit, query.search);
+    return this.usersService.adminFindAll(
+      query.page,
+      query.limit,
+      query.search,
+    );
   }
 
   @UseGuards(AdminGuard)

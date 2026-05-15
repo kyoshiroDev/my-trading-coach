@@ -14,7 +14,12 @@ const mockDebrief = {
   startDate: new Date('2026-04-07'),
   endDate: new Date('2026-04-13'),
   aiSummary: 'Bonne semaine.',
-  insights: { summary: 'Bonne semaine.', strengths: [], weaknesses: [], objectives: [] },
+  insights: {
+    summary: 'Bonne semaine.',
+    strengths: [],
+    weaknesses: [],
+    objectives: [],
+  },
   objectives: [],
   stats: { winRate: 60, totalPnl: 250, totalTrades: 5 },
   generatedAt: new Date(),
@@ -43,7 +48,9 @@ const mockAiService = {
 };
 
 const mockAnalyticsService = {
-  getSummary: vi.fn().mockResolvedValue({ winRate: 60, totalPnl: 250, totalTrades: 5 }),
+  getSummary: vi
+    .fn()
+    .mockResolvedValue({ winRate: 60, totalPnl: 250, totalTrades: 5 }),
 };
 
 describe('DebriefService', () => {
@@ -95,7 +102,7 @@ describe('DebriefService', () => {
   });
 
   describe('getByWeek', () => {
-    it('retourne le débrief d\'une semaine spécifique', async () => {
+    it("retourne le débrief d'une semaine spécifique", async () => {
       mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(mockDebrief);
 
       const result = await service.getByWeek('user-123', 2026, 15);
@@ -106,13 +113,14 @@ describe('DebriefService', () => {
     it('lance NotFoundException si le débrief est introuvable', async () => {
       mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(null);
 
-      await expect(service.getByWeek('user-123', 2026, 99))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.getByWeek('user-123', 2026, 99)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('getHistory', () => {
-    it('retourne l\'historique des débriefs (max 52 semaines)', async () => {
+    it("retourne l'historique des débriefs (max 52 semaines)", async () => {
       mockPrisma.weeklyDebrief.findMany.mockResolvedValue([mockDebrief]);
 
       const result = await service.getHistory('user-123');
@@ -125,7 +133,7 @@ describe('DebriefService', () => {
   });
 
   describe('generate', () => {
-    it('génère un débrief en appelant l\'IA et le persiste', async () => {
+    it("génère un débrief en appelant l'IA et le persiste", async () => {
       mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
       mockPrisma.weeklyDebrief.upsert.mockResolvedValue(mockDebrief);
 

@@ -449,7 +449,9 @@
   width: 140px;
   transition: border-color 0.15s;
 }
-.settings-inline-input:focus { border-color: var(--blue); }
+.settings-inline-input:focus {
+  border-color: var(--blue);
+}
 
 .settings-save-btn {
   padding: 6px 14px;
@@ -463,8 +465,13 @@
   transition: background 0.15s;
   white-space: nowrap;
 }
-.settings-save-btn:hover:not(:disabled) { background: var(--blue-bright); }
-.settings-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.settings-save-btn:hover:not(:disabled) {
+  background: var(--blue-bright);
+}
+.settings-save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 .settings-cancel-btn {
   padding: 6px 12px;
@@ -476,21 +483,39 @@
   cursor: pointer;
   transition: all 0.15s;
 }
-.settings-cancel-btn:hover { background: var(--bg-3); }
+.settings-cancel-btn:hover {
+  background: var(--bg-3);
+}
 
 /* ── Animation ── */
 @keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.8); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
 }
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .settings-grid { grid-template-columns: 1fr; }
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 600px) {
-  .settings-content { padding: 16px; }
-  .settings-input { width: 140px; }
-  .inline-edit { flex-direction: column; align-items: flex-start; }
+  .settings-content {
+    padding: 16px;
+  }
+  .settings-input {
+    width: 140px;
+  }
+  .inline-edit {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }

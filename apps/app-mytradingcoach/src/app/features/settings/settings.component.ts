@@ -1,5 +1,12 @@
 import {
-  ChangeDetectionStrategy, Component, DestroyRef, OnInit, WritableSignal, effect, inject, signal,
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  WritableSignal,
+  effect,
+  inject,
+  signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
@@ -12,7 +19,10 @@ import { UserStore } from '../../core/stores/user.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { BillingApi } from '../../core/api/billing.api';
 import { UsersApi } from '../../core/api/users.api';
-import type { UpdateMeDto, UpdatePreferencesDto } from '../../core/api/users.api';
+import type {
+  UpdateMeDto,
+  UpdatePreferencesDto,
+} from '../../core/api/users.api';
 
 @Component({
   selector: 'mtc-settings',
@@ -83,15 +93,25 @@ export class SettingsComponent implements OnInit {
   }
 
   protected startTrial(plan: 'monthly' | 'yearly' = 'monthly') {
-    this.billingApi.checkout(plan)
+    this.billingApi
+      .checkout(plan)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: (res) => { window.location.href = res.data.url; } });
+      .subscribe({
+        next: (res) => {
+          window.location.href = res.data.url;
+        },
+      });
   }
 
   protected openPortal() {
-    this.billingApi.portal()
+    this.billingApi
+      .portal()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: (res) => { window.location.href = res.data.url; } });
+      .subscribe({
+        next: (res) => {
+          window.location.href = res.data.url;
+        },
+      });
   }
 
   protected startEditEmail() {
@@ -102,7 +122,9 @@ export class SettingsComponent implements OnInit {
   protected saveEmail() {
     const email = this.emailInput().trim();
     if (!email) return;
-    this.saveUserField({ email }, this.isSavingEmail, () => this.editingEmail.set(false));
+    this.saveUserField({ email }, this.isSavingEmail, () =>
+      this.editingEmail.set(false),
+    );
   }
 
   protected startEditName() {
@@ -113,7 +135,9 @@ export class SettingsComponent implements OnInit {
   protected saveName() {
     const name = this.nameInput().trim();
     if (!name) return;
-    this.saveUserField({ name }, this.isSavingName, () => this.editingName.set(false));
+    this.saveUserField({ name }, this.isSavingName, () =>
+      this.editingName.set(false),
+    );
   }
 
   private saveUserField(
@@ -122,7 +146,8 @@ export class SettingsComponent implements OnInit {
     done: () => void,
   ): void {
     loadingSig.set(true);
-    this.usersApi.updateMe(dto)
+    this.usersApi
+      .updateMe(dto)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
@@ -137,13 +162,18 @@ export class SettingsComponent implements OnInit {
   protected resetPassword() {
     const user = this.userStore.user();
     if (!user) return;
-    this.auth.forgotPassword(user.email).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => {
-        this.passwordResetSent.set(true);
-        setTimeout(() => this.passwordResetSent.set(false), 4000);
-      },
-      error: () => { /* silently ignore — user stays on page */ },
-    });
+    this.auth
+      .forgotPassword(user.email)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.passwordResetSent.set(true);
+          setTimeout(() => this.passwordResetSent.set(false), 4000);
+        },
+        error: () => {
+          /* silently ignore — user stays on page */
+        },
+      });
   }
 
   protected startEditCapital() {
@@ -163,14 +193,19 @@ export class SettingsComponent implements OnInit {
     const parsed = parseFloat(raw);
     const capital = isNaN(parsed) || parsed < 0 ? 0 : parsed;
     this.isSavingCapital.set(true);
-    this.usersApi.updatePreferences({ startingCapital: capital }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (res) => {
-        this.auth.setCurrentUser(res.data);
-        this.isSavingCapital.set(false);
-        this.editingCapital.set(false);
-      },
-      error: () => { this.isSavingCapital.set(false); },
-    });
+    this.usersApi
+      .updatePreferences({ startingCapital: capital })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.auth.setCurrentUser(res.data);
+          this.isSavingCapital.set(false);
+          this.editingCapital.set(false);
+        },
+        error: () => {
+          this.isSavingCapital.set(false);
+        },
+      });
   }
 
   protected savePreferences() {
@@ -180,23 +215,35 @@ export class SettingsComponent implements OnInit {
       notificationsEmail: this.prefNotifications(),
       debriefAutomatic: this.prefDebrief(),
     };
-    this.usersApi.updatePreferences(dto).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (res) => {
-        this.auth.setCurrentUser(res.data);
-        this.isSavingPrefs.set(false);
-        this.prefSaved.set(true);
-        setTimeout(() => this.prefSaved.set(false), 2500);
-      },
-      error: () => { this.isSavingPrefs.set(false); },
-    });
+    this.usersApi
+      .updatePreferences(dto)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.auth.setCurrentUser(res.data);
+          this.isSavingPrefs.set(false);
+          this.prefSaved.set(true);
+          setTimeout(() => this.prefSaved.set(false), 2500);
+        },
+        error: () => {
+          this.isSavingPrefs.set(false);
+        },
+      });
   }
 
   protected confirmDelete() {
     if (this.deleteInput() !== 'SUPPRIMER') return;
     this.isDeleting.set(true);
-    this.usersApi.deleteMe().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => { this.auth.logout(); },
-      error: () => { this.isDeleting.set(false); },
-    });
+    this.usersApi
+      .deleteMe()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.auth.logout();
+        },
+        error: () => {
+          this.isDeleting.set(false);
+        },
+      });
   }
 }

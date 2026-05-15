@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -17,15 +23,21 @@ import { AuthService } from '../../core/auth/auth.service';
 
       <div class="auth-card">
         <div class="auth-logo">
-          <img src="icon/logo-navbar.svg" alt="MyTradingCoach">
+          <img src="icon/logo-navbar.svg" alt="MyTradingCoach" />
         </div>
 
         <h1 class="auth-title">Nouveau mot de passe</h1>
-        <p class="auth-subtitle">Choisis un mot de passe d'au moins 8 caractères</p>
+        <p class="auth-subtitle">
+          Choisis un mot de passe d'au moins 8 caractères
+        </p>
 
         @if (!token()) {
-          <div class="error-msg">Lien invalide ou expiré. Fais une nouvelle demande.</div>
-          <p class="auth-link"><a routerLink="/forgot-password">Nouvelle demande →</a></p>
+          <div class="error-msg">
+            Lien invalide ou expiré. Fais une nouvelle demande.
+          </div>
+          <p class="auth-link">
+            <a routerLink="/forgot-password">Nouvelle demande →</a>
+          </p>
         }
 
         @if (token()) {
@@ -55,8 +67,16 @@ import { AuthService } from '../../core/auth/auth.service';
                     placeholder="••••••••"
                     autocomplete="new-password"
                   />
-                  <button type="button" class="eye-btn" (click)="showPassword.set(!showPassword())">
-                    <lucide-icon [img]="showPassword() ? EyeOffIcon : EyeIcon" [size]="15" color="var(--text-2)" />
+                  <button
+                    type="button"
+                    class="eye-btn"
+                    (click)="showPassword.set(!showPassword())"
+                  >
+                    <lucide-icon
+                      [img]="showPassword() ? EyeOffIcon : EyeIcon"
+                      [size]="15"
+                      color="var(--text-2)"
+                    />
                   </button>
                 </div>
               </div>
@@ -72,7 +92,11 @@ import { AuthService } from '../../core/auth/auth.service';
                   autocomplete="new-password"
                 />
               </div>
-              <button type="submit" [disabled]="isLoading() || !password || password !== confirm" class="btn-submit">
+              <button
+                type="submit"
+                [disabled]="isLoading() || !password || password !== confirm"
+                class="btn-submit"
+              >
                 @if (isLoading()) {
                   <span class="spinner"></span> Enregistrement...
                 } @else {
@@ -124,15 +148,21 @@ export class ResetPasswordComponent {
     this.isLoading.set(true);
     this.error.set(null);
 
-    this.auth.resetPassword(t, this.password).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => {
-        this.success.set(true);
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        this.error.set(err.error?.message ?? 'Lien invalide ou expiré. Fais une nouvelle demande.');
-        this.isLoading.set(false);
-      },
-    });
+    this.auth
+      .resetPassword(t, this.password)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.success.set(true);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          this.error.set(
+            err.error?.message ??
+              'Lien invalide ou expiré. Fais une nouvelle demande.',
+          );
+          this.isLoading.set(false);
+        },
+      });
   }
 }

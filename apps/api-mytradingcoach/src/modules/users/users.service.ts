@@ -1,4 +1,9 @@
-import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { Plan, Role, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
@@ -68,7 +73,14 @@ export class UsersService {
           { role: Role.BETA_TESTER },
         ],
       },
-      select: { id: true, email: true, name: true, plan: true, role: true, trialEndsAt: true },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        plan: true,
+        role: true,
+        trialEndsAt: true,
+      },
     });
   }
 
@@ -120,14 +132,22 @@ export class UsersService {
 
   // ── Admin — update plan/role/name ─────────────────────────────────────────
 
-  async adminUpdate(targetId: string, dto: { name?: string; plan?: Plan; role?: Role }) {
-    const target = await this.prisma.user.findUnique({ where: { id: targetId }, select: { role: true } });
+  async adminUpdate(
+    targetId: string,
+    dto: { name?: string; plan?: Plan; role?: Role },
+  ) {
+    const target = await this.prisma.user.findUnique({
+      where: { id: targetId },
+      select: { role: true },
+    });
     if (!target) throw new NotFoundException('Utilisateur introuvable');
     if (target.role === Role.ADMIN) {
       throw new ForbiddenException('Impossible de modifier un administrateur');
     }
     if (dto.role === Role.ADMIN) {
-      throw new ForbiddenException('Promotion au rôle ADMIN impossible via API');
+      throw new ForbiddenException(
+        'Promotion au rôle ADMIN impossible via API',
+      );
     }
     return this.prisma.user.update({
       where: { id: targetId },
@@ -139,7 +159,10 @@ export class UsersService {
   // ── Admin — suppression ───────────────────────────────────────────────────
 
   async adminDelete(targetId: string): Promise<void> {
-    const target = await this.prisma.user.findUnique({ where: { id: targetId }, select: { role: true } });
+    const target = await this.prisma.user.findUnique({
+      where: { id: targetId },
+      select: { role: true },
+    });
     if (!target) throw new NotFoundException('Utilisateur introuvable');
     if (target.role === Role.ADMIN) {
       throw new ForbiddenException('Impossible de supprimer un administrateur');
@@ -154,12 +177,18 @@ export class UsersService {
     const [monthly, annual, trials, freeUsers, newThisMonth, churnedThisMonth] =
       await Promise.all([
         this.prisma.user.count({
-          where: { plan: 'PREMIUM', stripeInterval: 'month',
-                   stripeSubscriptionStatus: { in: ['active', 'trialing'] } },
+          where: {
+            plan: 'PREMIUM',
+            stripeInterval: 'month',
+            stripeSubscriptionStatus: { in: ['active', 'trialing'] },
+          },
         }),
         this.prisma.user.count({
-          where: { plan: 'PREMIUM', stripeInterval: 'year',
-                   stripeSubscriptionStatus: { in: ['active', 'trialing'] } },
+          where: {
+            plan: 'PREMIUM',
+            stripeInterval: 'year',
+            stripeSubscriptionStatus: { in: ['active', 'trialing'] },
+          },
         }),
         this.prisma.user.count({
           where: { plan: 'PREMIUM', trialEndsAt: { gt: now } },
@@ -167,7 +196,11 @@ export class UsersService {
         this.prisma.user.count({ where: { plan: 'FREE' } }),
         this.prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
         this.prisma.user.count({
-          where: { plan: 'FREE', trialUsed: true, updatedAt: { gte: startOfMonth } },
+          where: {
+            plan: 'FREE',
+            trialUsed: true,
+            updatedAt: { gte: startOfMonth },
+          },
         }),
       ]);
 
@@ -175,16 +208,31 @@ export class UsersService {
     const arr = mrr * 12;
     const totalPremium = monthly + annual;
 
-    return { mrr, arr, totalPremium, monthly, annual, trials, freeUsers, newThisMonth, churnedThisMonth };
+    return {
+      mrr,
+      arr,
+      totalPremium,
+      monthly,
+      annual,
+      trials,
+      freeUsers,
+      newThisMonth,
+      churnedThisMonth,
+    };
   }
 
   // ── Rôle ──────────────────────────────────────────────────────────────────
 
   async setRole(targetUserId: string, role: Role): Promise<void> {
     if (role === Role.ADMIN) {
-      throw new ForbiddenException('Impossible de promouvoir un utilisateur au rôle ADMIN via API');
+      throw new ForbiddenException(
+        'Impossible de promouvoir un utilisateur au rôle ADMIN via API',
+      );
     }
-    await this.prisma.user.update({ where: { id: targetUserId }, data: { role } });
+    await this.prisma.user.update({
+      where: { id: targetUserId },
+      data: { role },
+    });
   }
 
   async activateTrial(userId: string) {
@@ -209,7 +257,9 @@ export class UsersService {
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
-    return this.prisma.trade.count({ where: { userId, createdAt: { gte: startOfMonth } } });
+    return this.prisma.trade.count({
+      where: { userId, createdAt: { gte: startOfMonth } },
+    });
   }
 
   async completeOnboarding(userId: string, dto: CompleteOnboardingDto) {
@@ -226,7 +276,9 @@ export class UsersService {
         onboardingCompleted: true,
         market: dto.market ?? null,
         goal: dto.goal ?? null,
-        ...(dto.startingCapital != null ? { startingCapital: dto.startingCapital } : {}),
+        ...(dto.startingCapital != null
+          ? { startingCapital: dto.startingCapital }
+          : {}),
         ...(dto.currency ? { currency: dto.currency } : {}),
         ...(currencyRate !== undefined ? { currencyRate } : {}),
       },
@@ -260,10 +312,12 @@ export class UsersService {
     const FALLBACK_RATE = 0.92;
     try {
       const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-      const data = await res.json() as { rates: Record<string, number> };
+      const data = (await res.json()) as { rates: Record<string, number> };
       return data.rates['EUR'] ?? FALLBACK_RATE;
     } catch (err) {
-      this.logger.warn(`Exchange rate API unavailable, using fallback ${FALLBACK_RATE} — ${(err as Error).message}`);
+      this.logger.warn(
+        `Exchange rate API unavailable, using fallback ${FALLBACK_RATE} — ${(err as Error).message}`,
+      );
       return FALLBACK_RATE;
     }
   }

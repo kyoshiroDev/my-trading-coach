@@ -61,7 +61,8 @@ export class StripeService implements OnModuleDestroy {
     private readonly prisma: PrismaService,
     private readonly resend: ResendService,
     private readonly discord: DiscordService,
-    @InjectQueue(STRIPE_QUEUE) private readonly webhookQueue: Queue<StripeWebhookJobPayload>,
+    @InjectQueue(STRIPE_QUEUE)
+    private readonly webhookQueue: Queue<StripeWebhookJobPayload>,
   ) {
     this.stripe = new Stripe(
       this.config.getOrThrow<string>('STRIPE_SECRET_KEY'),
@@ -91,7 +92,8 @@ export class StripeService implements OnModuleDestroy {
       return {
         ...parsed,
         subscriptionStatus:
-          (parsed.subscriptionStatus as Stripe.Subscription['status'] | null) ?? null,
+          (parsed.subscriptionStatus as Stripe.Subscription['status'] | null) ??
+          null,
       };
     }
 
@@ -112,7 +114,9 @@ export class StripeService implements OnModuleDestroy {
     const status: StripeStatusResponse = {
       plan: user.plan,
       subscriptionStatus:
-        (user.stripeSubscriptionStatus as Stripe.Subscription['status'] | null) ?? null,
+        (user.stripeSubscriptionStatus as
+          | Stripe.Subscription['status']
+          | null) ?? null,
       currentPeriodEnd: user.stripeCurrentPeriodEnd?.toISOString() ?? null,
       trialUsed: user.trialUsed,
       trialEndsAt: user.trialEndsAt?.toISOString() ?? null,
@@ -157,7 +161,9 @@ export class StripeService implements OnModuleDestroy {
         .catch(() => null);
 
       if (openSessions?.data[0]?.url) {
-        this.logger.log(`Session checkout existante réutilisée — user: ${userId}`);
+        this.logger.log(
+          `Session checkout existante réutilisée — user: ${userId}`,
+        );
         return { url: openSessions.data[0].url };
       }
     }
@@ -190,7 +196,9 @@ export class StripeService implements OnModuleDestroy {
     );
 
     if (!session.url) {
-      throw new InternalServerErrorException('Impossible de créer la session Stripe');
+      throw new InternalServerErrorException(
+        'Impossible de créer la session Stripe',
+      );
     }
 
     this.logger.log(
@@ -259,8 +267,8 @@ export class StripeService implements OnModuleDestroy {
       {
         attempts: 5,
         backoff: { type: 'exponential', delay: 5_000 },
-        removeOnComplete: { count: 100 },   // Garde les 100 derniers succès
-        removeOnFail: false,                  // Garde les échecs pour inspection
+        removeOnComplete: { count: 100 }, // Garde les 100 derniers succès
+        removeOnFail: false, // Garde les échecs pour inspection
       },
     );
 
@@ -296,20 +304,28 @@ export class StripeService implements OnModuleDestroy {
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
         const synced = await this.syncSubscription(subscription.id);
-        if (synced?.id) await this.discord.syncDiscordRole(synced.id).catch(() => undefined);
+        if (synced?.id)
+          await this.discord.syncDiscordRole(synced.id).catch(() => undefined);
 
         // 🔴 Monitoring : alerter si status passe à past_due ou unpaid
-        if (subscription.status === 'past_due' || subscription.status === 'unpaid') {
+        if (
+          subscription.status === 'past_due' ||
+          subscription.status === 'unpaid'
+        ) {
           const customerId = extractId(subscription.customer);
           this.logger.error(
             `[MONITORING] Subscription ${subscription.id} — status: ${subscription.status} — customer: ${customerId ?? 'unknown'}`,
           );
           if (process.env['SENTRY_DSN']) {
             // eslint-disable-next-line @typescript-eslint/no-var-requires
-            const Sentry = require('@sentry/nestjs') as typeof import('@sentry/nestjs');
+            const Sentry =
+              require('@sentry/nestjs') as typeof import('@sentry/nestjs');
             Sentry.captureMessage(
               `Subscription ${subscription.status}: ${subscription.id}`,
-              { level: 'warning', tags: { customerId: customerId ?? 'unknown' } },
+              {
+                level: 'warning',
+                tags: { customerId: customerId ?? 'unknown' },
+              },
             );
           }
         }
@@ -347,13 +363,16 @@ export class StripeService implements OnModuleDestroy {
             userName: user.name ?? '',
           });
           await this.discord.syncDiscordRole(user.id).catch(() => undefined);
-          const amount = subscription.items.data[0]?.price?.recurring?.interval === 'year'
-            ? '349€/an'
-            : '39€/mois';
-          await this.resend.sendAdminAlert(
-            `🔴 Churn — ${user.email}`,
-            `Email   : ${user.email}\nPlan    : Premium ${amount}\nDate    : ${new Date().toLocaleDateString('fr-FR')}`,
-          ).catch(() => undefined);
+          const amount =
+            subscription.items.data[0]?.price?.recurring?.interval === 'year'
+              ? '349€/an'
+              : '39€/mois';
+          await this.resend
+            .sendAdminAlert(
+              `🔴 Churn — ${user.email}`,
+              `Email   : ${user.email}\nPlan    : Premium ${amount}\nDate    : ${new Date().toLocaleDateString('fr-FR')}`,
+            )
+            .catch(() => undefined);
         }
 
         this.logger.log(`Abonnement résilié ${subscription.id} → plan FREE`);
@@ -383,7 +402,9 @@ export class StripeService implements OnModuleDestroy {
           });
           await this.redis.del(cacheKey(user.id)).catch(() => null);
           await this.discord.syncDiscordRole(user.id).catch(() => undefined);
-          this.logger.log(`Customer ${customer.id} supprimé → plan FREE, données Stripe effacées`);
+          this.logger.log(
+            `Customer ${customer.id} supprimé → plan FREE, données Stripe effacées`,
+          );
         }
         break;
       }
@@ -412,10 +433,12 @@ export class StripeService implements OnModuleDestroy {
               userName: user.name ?? '',
               attemptCount,
             });
-            await this.resend.sendAdminAlert(
-              `⚠️ Paiement échoué — ${user.email}`,
-              `Email     : ${user.email}\nTentative : ${attemptCount}/3\nDate      : ${new Date().toLocaleDateString('fr-FR')}`,
-            ).catch(() => undefined);
+            await this.resend
+              .sendAdminAlert(
+                `⚠️ Paiement échoué — ${user.email}`,
+                `Email     : ${user.email}\nTentative : ${attemptCount}/3\nDate      : ${new Date().toLocaleDateString('fr-FR')}`,
+              )
+              .catch(() => undefined);
           }
         }
         break;
@@ -449,14 +472,21 @@ export class StripeService implements OnModuleDestroy {
    */
   async syncSubscription(
     subscriptionId: string,
-  ): Promise<{ id: string; email: string; name: string | null; stripeSubscriptionStatus: string | null } | null> {
+  ): Promise<{
+    id: string;
+    email: string;
+    name: string | null;
+    stripeSubscriptionStatus: string | null;
+  } | null> {
     let subscription: Stripe.Subscription;
 
     try {
       subscription = await this.stripe.subscriptions.retrieve(subscriptionId);
     } catch (err: unknown) {
       if (err instanceof Stripe.errors.StripeInvalidRequestError) {
-        this.logger.warn(`Subscription ${subscriptionId} introuvable sur Stripe`);
+        this.logger.warn(
+          `Subscription ${subscriptionId} introuvable sur Stripe`,
+        );
         return null;
       }
       throw err;
@@ -510,7 +540,12 @@ export class StripeService implements OnModuleDestroy {
       `Sync — user: ${user.id}, plan: ${isActive ? 'PREMIUM' : 'FREE'}, status: ${status}`,
     );
 
-    return { id: user.id, email: user.email, name: user.name, stripeSubscriptionStatus: status };
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      stripeSubscriptionStatus: status,
+    };
   }
 
   // ── Helpers privés ────────────────────────────────────────────────────────────
@@ -519,7 +554,9 @@ export class StripeService implements OnModuleDestroy {
     userId: string,
     userEmail: string,
   ): Promise<string> {
-    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+    });
     if (user.stripeCustomerId) return user.stripeCustomerId;
 
     // Chercher un customer existant sur Stripe (protection anti-doublons)
@@ -564,10 +601,12 @@ export class StripeService implements OnModuleDestroy {
 
   /** Invalide le cache Redis d'un user via son stripeCustomerId */
   private async invalidateCacheByCustomerId(customerId: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({
-      where: { stripeCustomerId: customerId },
-      select: { id: true },
-    }).catch(() => null);
+    const user = await this.prisma.user
+      .findUnique({
+        where: { stripeCustomerId: customerId },
+        select: { id: true },
+      })
+      .catch(() => null);
 
     if (user) {
       await this.redis.del(cacheKey(user.id)).catch(() => null);

@@ -36,33 +36,47 @@ export class TradesController {
 
   @Get('instruments')
   async getInstruments() {
-    const cryptoInstruments = await this.coinGeckoService.getCryptoInstruments();
+    const cryptoInstruments =
+      await this.coinGeckoService.getCryptoInstruments();
     const nonCrypto = INSTRUMENTS.filter((i) => i.category !== 'CRYPTO');
     return [...nonCrypto, ...cryptoInstruments];
   }
 
   @Post('import')
   @UseGuards(PremiumGuard)
-  @UseInterceptors(FileInterceptor('file', {
-    limits: { fileSize: 5 * 1024 * 1024 },
-    fileFilter: (_req, file, cb) => {
-      if (!file.originalname.match(/\.(csv|txt)$/i)) {
-        return cb(new BadRequestException('Seuls les fichiers CSV sont acceptés'), false);
-      }
-      cb(null, true);
-    },
-  }))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (_req, file, cb) => {
+        if (!file.originalname.match(/\.(csv|txt)$/i)) {
+          return cb(
+            new BadRequestException('Seuls les fichiers CSV sont acceptés'),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+    }),
+  )
   async importCSV(
     @CurrentUser() user: { id: string; plan: Plan; role: Role },
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) throw new BadRequestException('Fichier manquant');
 
-    const parsed = await this.csvImportService.parseCSV(file.buffer, file.originalname);
+    const parsed = await this.csvImportService.parseCSV(
+      file.buffer,
+      file.originalname,
+    );
 
     const results = await Promise.allSettled(
       parsed.map((dto) =>
-        this.tradesService.create(user.id, dto as CreateTradeDto, user.plan, user.role),
+        this.tradesService.create(
+          user.id,
+          dto as CreateTradeDto,
+          user.plan,
+          user.role,
+        ),
       ),
     );
 
@@ -89,10 +103,7 @@ export class TradesController {
   }
 
   @Get(':id')
-  findOne(
-    @CurrentUser() user: { id: string },
-    @Param('id') id: string,
-  ) {
+  findOne(@CurrentUser() user: { id: string }, @Param('id') id: string) {
     return this.tradesService.findOne(user.id, id);
   }
 
@@ -106,10 +117,7 @@ export class TradesController {
   }
 
   @Delete(':id')
-  remove(
-    @CurrentUser() user: { id: string },
-    @Param('id') id: string,
-  ) {
+  remove(@CurrentUser() user: { id: string }, @Param('id') id: string) {
     return this.tradesService.remove(user.id, id);
   }
 }

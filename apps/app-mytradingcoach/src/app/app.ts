@@ -1,5 +1,15 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
-import { Router, NavigationEnd, ActivatedRoute, RouterModule } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  OnInit,
+} from '@angular/core';
+import {
+  Router,
+  NavigationEnd,
+  ActivatedRoute,
+  RouterModule,
+} from '@angular/router';
 import { filter, map } from 'rxjs/operators';
 import { SeoService } from './core/seo/seo.service';
 

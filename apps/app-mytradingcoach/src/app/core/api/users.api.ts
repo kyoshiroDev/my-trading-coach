@@ -36,7 +36,9 @@ export class UsersApi {
     return this.http.patch<{ data: AuthUser }>(`${this.base}/me`, dto);
   }
 
-  completeOnboarding(dto: CompleteOnboardingDto): Observable<{ data: AuthUser }> {
+  completeOnboarding(
+    dto: CompleteOnboardingDto,
+  ): Observable<{ data: AuthUser }> {
     return this.http.patch<{ data: AuthUser }>(`${this.base}/onboarding`, dto);
   }
 

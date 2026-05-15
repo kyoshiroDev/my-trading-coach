@@ -22,7 +22,9 @@ const logger = new Logger('Bootstrap');
 function validateEnv() {
   const missing = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
   if (missing.length > 0) {
-    logger.error(`Variables d'environnement manquantes : ${missing.join(', ')}`);
+    logger.error(
+      `Variables d'environnement manquantes : ${missing.join(', ')}`,
+    );
     process.exit(1);
   }
 }
@@ -41,9 +43,9 @@ async function bootstrap() {
   app.use(cookieParser());
   app.setGlobalPrefix('api');
 
-  const corsOrigins =
-    process.env['CORS_ORIGINS']?.split(',') ??
-    ['http://localhost:4200'];
+  const corsOrigins = process.env['CORS_ORIGINS']?.split(',') ?? [
+    'http://localhost:4200',
+  ];
   app.enableCors({ origin: corsOrigins, credentials: true });
 
   app.useGlobalPipes(
@@ -67,7 +69,9 @@ if (cluster.isPrimary && process.env['NODE_ENV'] === 'production') {
   function forkWorker(isCronWorker: boolean) {
     const worker = cluster.fork({ IS_CRON_WORKER: String(isCronWorker) });
     worker.on('exit', (code) => {
-      logger.warn(`Worker ${worker.process.pid} died (code ${code}). Restarting...`);
+      logger.warn(
+        `Worker ${worker.process.pid} died (code ${code}). Restarting...`,
+      );
       forkWorker(isCronWorker);
     });
   }

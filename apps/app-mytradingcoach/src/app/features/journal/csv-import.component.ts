@@ -1,14 +1,30 @@
 import {
-  ChangeDetectionStrategy, Component, DestroyRef, inject, input, output, signal,
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  input,
+  output,
+  signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
-import { LucideAngularModule, X, Upload, CheckCircle, AlertCircle } from 'lucide-angular';
+import {
+  LucideAngularModule,
+  X,
+  Upload,
+  CheckCircle,
+  AlertCircle,
+} from 'lucide-angular';
 import { UserStore } from '../../core/stores/user.store';
 import { environment } from '../../../environments/environment';
 
-interface ImportResult { created: number; failed: number; total: number; }
+interface ImportResult {
+  created: number;
+  failed: number;
+  total: number;
+}
 
 @Component({
   selector: 'mtc-csv-import',
@@ -18,9 +34,13 @@ interface ImportResult { created: number; failed: number; total: number; }
   styleUrl: './csv-import.component.css',
   template: `
     @if (open()) {
-      <div class="overlay" role="button" tabindex="-1"
+      <div
+        class="overlay"
+        role="button"
+        tabindex="-1"
         (click)="onOverlayClick($event)"
-        (keydown.escape)="dismissed.emit()">
+        (keydown.escape)="dismissed.emit()"
+      >
         <div class="modal">
           <div class="modal-header">
             <span class="modal-title">Importer CSV</span>
@@ -34,33 +54,55 @@ interface ImportResult { created: number; failed: number; total: number; }
               <div class="paywall-icon">⚡</div>
               <div class="paywall-title">Fonctionnalité Premium</div>
               <div class="paywall-desc">
-                L'import CSV avec analyse IA est disponible avec le plan Premium.
+                L'import CSV avec analyse IA est disponible avec le plan
+                Premium.
               </div>
-              <a routerLink="/settings" class="btn-upgrade" (click)="dismissed.emit()">
+              <a
+                routerLink="/settings"
+                class="btn-upgrade"
+                (click)="dismissed.emit()"
+              >
                 Essayer 7 jours gratuit →
               </a>
             </div>
           } @else if (result()) {
             <div class="result-block">
               @if (result()!.created > 0) {
-                <lucide-icon [img]="CheckCircleIcon" [size]="32" color="var(--green)" />
-                <p class="result-title">{{ result()!.created }} trade(s) importé(s) !</p>
+                <lucide-icon
+                  [img]="CheckCircleIcon"
+                  [size]="32"
+                  color="var(--green)"
+                />
+                <p class="result-title">
+                  {{ result()!.created }} trade(s) importé(s) !
+                </p>
               }
               @if (result()!.failed > 0) {
-                <p class="result-sub">{{ result()!.failed }} ligne(s) ignorée(s) (format invalide)</p>
+                <p class="result-sub">
+                  {{ result()!.failed }} ligne(s) ignorée(s) (format invalide)
+                </p>
               }
-              <button class="btn-primary" (click)="reset()">Importer un autre fichier</button>
-              <button class="btn-ghost" (click)="dismissed.emit()">Fermer</button>
+              <button class="btn-primary" (click)="reset()">
+                Importer un autre fichier
+              </button>
+              <button class="btn-ghost" (click)="dismissed.emit()">
+                Fermer
+              </button>
             </div>
           } @else if (error()) {
             <div class="result-block">
-              <lucide-icon [img]="AlertCircleIcon" [size]="32" color="var(--red)" />
+              <lucide-icon
+                [img]="AlertCircleIcon"
+                [size]="32"
+                color="var(--red)"
+              />
               <p class="result-title">Erreur d'importation</p>
               <p class="result-sub">{{ error() }}</p>
               <button class="btn-primary" (click)="reset()">Réessayer</button>
             </div>
           } @else {
-            <div class="drop-zone"
+            <div
+              class="drop-zone"
               role="button"
               tabindex="0"
               [class.drag-over]="isDragging()"
@@ -71,15 +113,24 @@ interface ImportResult { created: number; failed: number; total: number; }
               (keydown.enter)="fileInput.click()"
               (keydown.space)="fileInput.click()"
             >
-              <lucide-icon [img]="UploadIcon" [size]="28" color="var(--text-3)" />
+              <lucide-icon
+                [img]="UploadIcon"
+                [size]="28"
+                color="var(--text-3)"
+              />
               <p class="drop-title">
-                @if (isLoading()) { Analyse en cours... } @else { Glisse ton CSV ici }
+                @if (isLoading()) {
+                  Analyse en cours...
+                } @else {
+                  Glisse ton CSV ici
+                }
               </p>
               <p class="drop-sub">
                 @if (isLoading()) {
                   L'IA structure tes trades…
                 } @else {
-                  Tradovate · Binance · MetaTrader · Bybit · ou tout autre broker
+                  Tradovate · Binance · MetaTrader · Bybit · ou tout autre
+                  broker
                 }
               </p>
               @if (!isLoading()) {
@@ -89,8 +140,13 @@ interface ImportResult { created: number; failed: number; total: number; }
               }
             </div>
             <p class="drop-hint">Fichiers CSV ou TXT · max 5 Mo</p>
-            <input #fileInput type="file" accept=".csv,.txt" style="display:none"
-              (change)="onFileChange($event)" />
+            <input
+              #fileInput
+              type="file"
+              accept=".csv,.txt"
+              style="display:none"
+              (change)="onFileChange($event)"
+            />
           }
         </div>
       </div>
@@ -117,7 +173,8 @@ export class CsvImportComponent {
   protected readonly error = signal<string | null>(null);
 
   onOverlayClick(e: MouseEvent) {
-    if ((e.target as HTMLElement).classList.contains('overlay')) this.dismissed.emit();
+    if ((e.target as HTMLElement).classList.contains('overlay'))
+      this.dismissed.emit();
   }
 
   onDragOver(e: DragEvent) {
@@ -144,7 +201,10 @@ export class CsvImportComponent {
     this.error.set(null);
 
     this.http
-      .post<{ data: ImportResult }>(`${environment.apiUrl}/trades/import`, formData)
+      .post<{ data: ImportResult }>(
+        `${environment.apiUrl}/trades/import`,
+        formData,
+      )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {

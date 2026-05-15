@@ -18,7 +18,9 @@ export class UserStore {
 
   readonly isAdmin = computed(() => this.user()?.role === 'ADMIN');
   readonly startingCapital = computed(() => this.user()?.startingCapital ?? 0);
-  readonly displayName = computed(() => this.user()?.name ?? this.user()?.email ?? '');
+  readonly displayName = computed(
+    () => this.user()?.name ?? this.user()?.email ?? '',
+  );
   readonly initials = computed(() => {
     const name = this.user()?.name ?? this.user()?.email ?? '?';
     return name.slice(0, 2).toUpperCase();
@@ -26,7 +28,9 @@ export class UserStore {
 
   refreshUser() {
     this.auth.fetchMe().subscribe({
-      error: () => { /* silently ignore — user stays logged in with cached data */ },
+      error: () => {
+        /* silently ignore — user stays logged in with cached data */
+      },
     });
   }
 }

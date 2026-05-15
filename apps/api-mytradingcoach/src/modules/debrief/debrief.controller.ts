@@ -1,4 +1,12 @@
-import { Controller, Get, Param, ParseIntPipe, Post, Res, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { Role } from '@prisma/client';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';

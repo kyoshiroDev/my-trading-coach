@@ -5,14 +5,23 @@ import { PatternAgent } from './pattern.agent';
 
 const mockMessagesCreate = vi.hoisted(() =>
   vi.fn().mockResolvedValue({
-    content: [{
-      type: 'text',
-      text: JSON.stringify({
-        patterns: [{ type: 'weakness', title: 'Revenge trading', description: 'Tu trades trop vite après une perte.', badge: 'Attention' }],
-        topPattern: 'Revenge trading fréquent',
-        emotionInsight: 'STRESSED → win rate 20%.',
-      }),
-    }],
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify({
+          patterns: [
+            {
+              type: 'weakness',
+              title: 'Revenge trading',
+              description: 'Tu trades trop vite après une perte.',
+              badge: 'Attention',
+            },
+          ],
+          topPattern: 'Revenge trading fréquent',
+          emotionInsight: 'STRESSED → win rate 20%.',
+        }),
+      },
+    ],
   }),
 );
 
@@ -36,14 +45,23 @@ vi.mock('@anthropic-ai/sdk', () => {
 });
 
 const validResponse = {
-  content: [{
-    type: 'text',
-    text: JSON.stringify({
-      patterns: [{ type: 'weakness', title: 'Revenge trading', description: 'Détecté.', badge: 'Attention' }],
-      topPattern: 'Revenge trading fréquent',
-      emotionInsight: 'STRESSED → win rate 20%.',
-    }),
-  }],
+  content: [
+    {
+      type: 'text',
+      text: JSON.stringify({
+        patterns: [
+          {
+            type: 'weakness',
+            title: 'Revenge trading',
+            description: 'Détecté.',
+            badge: 'Attention',
+          },
+        ],
+        topPattern: 'Revenge trading fréquent',
+        emotionInsight: 'STRESSED → win rate 20%.',
+      }),
+    },
+  ],
 };
 
 describe('PatternAgent', () => {
@@ -72,10 +90,12 @@ describe('PatternAgent', () => {
 
   it('analyze() gère le JSON avec backticks markdown', async () => {
     mockMessagesCreate.mockResolvedValueOnce({
-      content: [{
-        type: 'text',
-        text: '```json\n{"patterns":[],"topPattern":"Aucun","emotionInsight":"N/A"}\n```',
-      }],
+      content: [
+        {
+          type: 'text',
+          text: '```json\n{"patterns":[],"topPattern":"Aucun","emotionInsight":"N/A"}\n```',
+        },
+      ],
     });
 
     const result = await agent.analyze('résumé...');

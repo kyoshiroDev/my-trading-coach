@@ -24,7 +24,9 @@ Aucun texte avant ou après le JSON.`;
 @Injectable()
 export class CsvImportService {
   private readonly logger = new Logger(CsvImportService.name);
-  private readonly anthropic = new Anthropic({ apiKey: process.env['ANTHROPIC_API_KEY'] });
+  private readonly anthropic = new Anthropic({
+    apiKey: process.env['ANTHROPIC_API_KEY'],
+  });
 
   async parseCSV(
     buffer: Buffer,
@@ -52,12 +54,15 @@ export class CsvImportService {
         messages: [{ role: 'user', content: userMessage }],
       });
 
-      const text = response.content[0].type === 'text' ? response.content[0].text : '';
+      const text =
+        response.content[0].type === 'text' ? response.content[0].text : '';
       const parsed = JSON.parse(text) as { trades: Partial<CreateTradeDto>[] };
 
       if (!Array.isArray(parsed.trades)) throw new Error('Format inattendu');
 
-      this.logger.log(`CSV "${filename}" parsé par Claude: ${parsed.trades.length} trades`);
+      this.logger.log(
+        `CSV "${filename}" parsé par Claude: ${parsed.trades.length} trades`,
+      );
       return parsed.trades;
     } catch (err) {
       this.logger.error('Erreur parsing CSV', err);
@@ -69,12 +74,20 @@ export class CsvImportService {
     const firstLine = content.split('\n')[0].toLowerCase();
 
     // Tradovate
-    if (firstLine.includes('account') && firstLine.includes('b/s') && firstLine.includes('qty')) {
+    if (
+      firstLine.includes('account') &&
+      firstLine.includes('b/s') &&
+      firstLine.includes('qty')
+    ) {
       return this.parseTradovate(content);
     }
 
     // Binance spot history
-    if (firstLine.includes('date') && firstLine.includes('pair') && firstLine.includes('type')) {
+    if (
+      firstLine.includes('date') &&
+      firstLine.includes('pair') &&
+      firstLine.includes('type')
+    ) {
       return this.parseBinance(content);
     }
 
@@ -83,7 +96,9 @@ export class CsvImportService {
 
   private parseTradovate(content: string): Partial<CreateTradeDto>[] {
     const lines = content.split('\n');
-    const headers = lines[0].split(',').map((h) => h.trim().toLowerCase().replace(/"/g, ''));
+    const headers = lines[0]
+      .split(',')
+      .map((h) => h.trim().toLowerCase().replace(/"/g, ''));
     const idxSide = headers.findIndex((h) => h === 'b/s');
     const idxQty = headers.findIndex((h) => h === 'qty');
     const idxPrice = headers.findIndex((h) => h === 'fill price');
@@ -107,7 +122,10 @@ export class CsvImportService {
         setup: 'BREAKOUT',
         session: 'NEW_YORK',
         timeframe: '1h',
-        tradedAt: idxDate >= 0 && cols[idxDate] ? new Date(cols[idxDate]).toISOString() : new Date().toISOString(),
+        tradedAt:
+          idxDate >= 0 && cols[idxDate]
+            ? new Date(cols[idxDate]).toISOString()
+            : new Date().toISOString(),
       });
     }
     return trades;
@@ -115,13 +133,19 @@ export class CsvImportService {
 
   private parseBinance(content: string): Partial<CreateTradeDto>[] {
     const lines = content.split('\n');
-    const headers = lines[0].split(',').map((h) => h.trim().toLowerCase().replace(/"/g, ''));
+    const headers = lines[0]
+      .split(',')
+      .map((h) => h.trim().toLowerCase().replace(/"/g, ''));
     const idxDate = headers.findIndex((h) => h.includes('date'));
     const idxPair = headers.findIndex((h) => h === 'pair');
     const idxType = headers.findIndex((h) => h === 'type');
     const idxPrice = headers.findIndex((h) => h === 'price');
-    const idxQty = headers.findIndex((h) => h.includes('amount') || h === 'quantity');
-    const idxPnl = headers.findIndex((h) => h.includes('realized') || h.includes('pnl'));
+    const idxQty = headers.findIndex(
+      (h) => h.includes('amount') || h === 'quantity',
+    );
+    const idxPnl = headers.findIndex(
+      (h) => h.includes('realized') || h.includes('pnl'),
+    );
 
     const trades: Partial<CreateTradeDto>[] = [];
     for (let i = 1; i < lines.length; i++) {
@@ -129,10 +153,13 @@ export class CsvImportService {
       if (cols.length < 3 || !cols[idxPair]) continue;
 
       const type = cols[idxType]?.toUpperCase() ?? '';
-      if (!['BUY', 'SELL', 'LONG', 'SHORT'].some((t) => type.includes(t))) continue;
+      if (!['BUY', 'SELL', 'LONG', 'SHORT'].some((t) => type.includes(t)))
+        continue;
 
       const pnl = idxPnl >= 0 ? parseFloat(cols[idxPnl]) : undefined;
-      const symbol = cols[idxPair]?.replace('USDT', '/USDT').replace('BUSD', '/BUSD');
+      const symbol = cols[idxPair]
+        ?.replace('USDT', '/USDT')
+        .replace('BUSD', '/BUSD');
       trades.push({
         asset: symbol,
         side: type.includes('BUY') || type.includes('LONG') ? 'LONG' : 'SHORT',
@@ -143,7 +170,10 @@ export class CsvImportService {
         setup: 'BREAKOUT',
         session: 'ASIAN',
         timeframe: '1h',
-        tradedAt: idxDate >= 0 && cols[idxDate] ? new Date(cols[idxDate]).toISOString() : new Date().toISOString(),
+        tradedAt:
+          idxDate >= 0 && cols[idxDate]
+            ? new Date(cols[idxDate]).toISOString()
+            : new Date().toISOString(),
       });
     }
     return trades;

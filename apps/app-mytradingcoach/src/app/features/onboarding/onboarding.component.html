@@ -2,14 +2,20 @@
 @if (step() !== 4) {
   <div class="overlay" data-testid="onboarding-wizard">
     <div class="wizard">
-
       <!-- Header -->
       <div class="wizard-header">
         <div class="wizard-logo">
           <div class="logo-mark"></div>
           <span class="logo-text">MyTradingCoach</span>
         </div>
-        <button class="skip-btn" data-testid="wizard-skip" (click)="skip()" [disabled]="isSaving()">Passer</button>
+        <button
+          class="skip-btn"
+          data-testid="wizard-skip"
+          (click)="skip()"
+          [disabled]="isSaving()"
+        >
+          Passer
+        </button>
       </div>
 
       <!-- Progress bar -->
@@ -22,7 +28,10 @@
         <div class="wizard-body">
           <div class="step-label">Étape 1 sur 4</div>
           <h2 class="step-title">Quel marché trades-tu ?</h2>
-          <p class="step-desc">Je vais personnaliser tes insights en fonction de ton marché principal.</p>
+          <p class="step-desc">
+            Je vais personnaliser tes insights en fonction de ton marché
+            principal.
+          </p>
 
           <div class="choice-grid">
             @for (m of MARKETS; track m.value) {
@@ -32,12 +41,16 @@
                 (click)="selectMarket(m.value)"
               >
                 <span class="choice-emoji">
-                @if (m.icon) {
-                  <lucide-icon [img]="m.icon" [size]="24" [style.color]="m.iconColor" />
-                } @else {
-                  {{ m.emoji }}
-                }
-              </span>
+                  @if (m.icon) {
+                    <lucide-icon
+                      [img]="m.icon"
+                      [size]="24"
+                      [style.color]="m.iconColor"
+                    />
+                  } @else {
+                    {{ m.emoji }}
+                  }
+                </span>
                 <span class="choice-label">{{ m.label }}</span>
                 <span class="choice-desc">{{ m.desc }}</span>
               </button>
@@ -45,7 +58,11 @@
           </div>
 
           <div class="wizard-footer">
-            <button class="btn-next" (click)="nextStep()" [disabled]="!selectedMarket()">
+            <button
+              class="btn-next"
+              (click)="nextStep()"
+              [disabled]="!selectedMarket()"
+            >
               Continuer →
             </button>
           </div>
@@ -57,7 +74,9 @@
         <div class="wizard-body">
           <div class="step-label">Étape 2 sur 4</div>
           <h2 class="step-title">Quel est ton objectif principal ?</h2>
-          <p class="step-desc">Ton coach IA va se concentrer sur ce qui compte le plus pour toi.</p>
+          <p class="step-desc">
+            Ton coach IA va se concentrer sur ce qui compte le plus pour toi.
+          </p>
 
           <div class="choice-grid goal-grid">
             @for (g of GOALS; track g.value) {
@@ -74,7 +93,11 @@
           </div>
 
           <div class="wizard-footer">
-            <button class="btn-next" (click)="nextStep()" [disabled]="!selectedGoal()">
+            <button
+              class="btn-next"
+              (click)="nextStep()"
+              [disabled]="!selectedGoal()"
+            >
               Continuer →
             </button>
           </div>
@@ -86,12 +109,29 @@
         <div class="wizard-body">
           <div class="step-label">Étape 3 sur 4</div>
           <h2 class="step-title">Quel est ton capital de départ ?</h2>
-          <p class="step-desc">Je l'utiliserai pour calculer ton equity curve, ton drawdown et tes performances réelles.</p>
+          <p class="step-desc">
+            Je l'utiliserai pour calculer ton equity curve, ton drawdown et tes
+            performances réelles.
+          </p>
 
           <div class="capital-field">
             <div class="currency-toggle">
-              <button type="button" class="currency-btn" [class.active-usd]="selectedCurrency() === 'USD'" (click)="selectCurrency('USD')">$ USD</button>
-              <button type="button" class="currency-btn" [class.active-eur]="selectedCurrency() === 'EUR'" (click)="selectCurrency('EUR')">€ EUR</button>
+              <button
+                type="button"
+                class="currency-btn"
+                [class.active-usd]="selectedCurrency() === 'USD'"
+                (click)="selectCurrency('USD')"
+              >
+                $ USD
+              </button>
+              <button
+                type="button"
+                class="currency-btn"
+                [class.active-eur]="selectedCurrency() === 'EUR'"
+                (click)="selectCurrency('EUR')"
+              >
+                € EUR
+              </button>
             </div>
             <input
               type="text"
@@ -103,17 +143,24 @@
             />
           </div>
 
-          <p class="capital-hint">Tu pourras modifier ce montant dans tes paramètres à tout moment.</p>
+          <p class="capital-hint">
+            Tu pourras modifier ce montant dans tes paramètres à tout moment.
+          </p>
 
           <div class="wizard-footer">
-            <button class="btn-skip-capital" type="button" (click)="nextStep()">Passer cette étape</button>
-            <button class="btn-next" (click)="nextStep()" [disabled]="!capitalInput()">
+            <button class="btn-skip-capital" type="button" (click)="nextStep()">
+              Passer cette étape
+            </button>
+            <button
+              class="btn-next"
+              (click)="nextStep()"
+              [disabled]="!capitalInput()"
+            >
               Continuer →
             </button>
           </div>
         </div>
       }
-
     </div>
   </div>
 }

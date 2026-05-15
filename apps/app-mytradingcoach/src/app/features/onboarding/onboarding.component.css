@@ -10,7 +10,14 @@
   animation: fadeIn 0.2s ease;
 }
 
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
 
 .wizard {
   background: var(--bg-card);
@@ -22,7 +29,16 @@
   animation: slideUp 0.25s ease;
 }
 
-@keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes slideUp {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
 
 /* Header */
 .wizard-header {
@@ -65,8 +81,13 @@
   transition: color 0.15s;
 }
 
-.skip-btn:hover { color: var(--text-2); }
-.skip-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.skip-btn:hover {
+  color: var(--text-2);
+}
+.skip-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 /* Progress bar */
 .progress-bar {
@@ -235,8 +256,14 @@
   transition: all 0.15s;
 }
 
-.currency-btn.active-usd { background: rgba(59,130,246,0.15); color: var(--blue-bright); }
-.currency-btn.active-eur { background: rgba(59,130,246,0.15); color: var(--blue-bright); }
+.currency-btn.active-usd {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--blue-bright);
+}
+.currency-btn.active-eur {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--blue-bright);
+}
 
 .capital-input {
   background: var(--bg-2);
@@ -253,8 +280,14 @@
   transition: border-color 0.15s;
 }
 
-.capital-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
-.capital-input::placeholder { color: var(--text-3); font-weight: 400; }
+.capital-input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+.capital-input::placeholder {
+  color: var(--text-3);
+  font-weight: 400;
+}
 
 .capital-hint {
   font-size: 11px;
@@ -274,7 +307,9 @@
   transition: color 0.15s;
   margin-right: auto;
 }
-.btn-skip-capital:hover { color: var(--text-2); }
+.btn-skip-capital:hover {
+  color: var(--text-2);
+}
 
 /* Step 4 — trade form override: hide the overlay from TradeForm, show inline */
 .wizard-body.step3 :host-context(mtc-trade-form) .overlay {

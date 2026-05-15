@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -16,15 +22,18 @@ import { AuthService } from '../../core/auth/auth.service';
 
       <div class="auth-card">
         <div class="auth-logo">
-          <img src="icon/logo-navbar.svg" alt="MyTradingCoach">
+          <img src="icon/logo-navbar.svg" alt="MyTradingCoach" />
         </div>
 
         <h1 class="auth-title">Mot de passe oublié ?</h1>
-        <p class="auth-subtitle">Saisis ton email — on t'envoie un lien de réinitialisation</p>
+        <p class="auth-subtitle">
+          Saisis ton email — on t'envoie un lien de réinitialisation
+        </p>
 
         @if (success()) {
           <div class="success-msg">
-            Si un compte existe pour cet email, un lien t'a été envoyé. Vérifie ta boîte mail (et les spams).
+            Si un compte existe pour cet email, un lien t'a été envoyé. Vérifie
+            ta boîte mail (et les spams).
           </div>
         }
 
@@ -46,7 +55,11 @@ import { AuthService } from '../../core/auth/auth.service';
                 autocomplete="email"
               />
             </div>
-            <button type="submit" [disabled]="isLoading() || !email" class="btn-submit">
+            <button
+              type="submit"
+              [disabled]="isLoading() || !email"
+              class="btn-submit"
+            >
               @if (isLoading()) {
                 <span class="spinner"></span> Envoi...
               } @else {
@@ -77,16 +90,19 @@ export class ForgotPasswordComponent {
     this.isLoading.set(true);
     this.error.set(null);
 
-    this.auth.forgotPassword(this.email).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => {
-        this.success.set(true);
-        this.isLoading.set(false);
-      },
-      error: () => {
-        // Anti-énumération : même message en cas d'erreur
-        this.success.set(true);
-        this.isLoading.set(false);
-      },
-    });
+    this.auth
+      .forgotPassword(this.email)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.success.set(true);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          // Anti-énumération : même message en cas d'erreur
+          this.success.set(true);
+          this.isLoading.set(false);
+        },
+      });
   }
 }

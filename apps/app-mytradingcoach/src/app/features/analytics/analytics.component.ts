@@ -27,26 +27,30 @@ import { PlanModalComponent } from '../../shared/components/plan-modal/plan-moda
 import { environment } from '../../../environments/environment';
 
 const MOCK_HEATMAP_CELLS = [
-  0.75, 0.45, 0.80, 0.30, 0.65, 0.55, 0.20,
-  0.60, 0.70, 0.35, 0.85, 0.50, 0.40, 0.72,
-  0.25, 0.68, 0.45, 0.78, 0.33, 0.61, 0.48,
-  0.82, 0.37, 0.56, 0.43, 0.71, 0.29, 0.64,
-  0.53, 0.77, 0.38, 0.59, 0.44, 0.83, 0.27,
-  0.66, 0.41, 0.74, 0.32, 0.57, 0.47, 0.69,
+  0.75, 0.45, 0.8, 0.3, 0.65, 0.55, 0.2, 0.6, 0.7, 0.35, 0.85, 0.5, 0.4, 0.72,
+  0.25, 0.68, 0.45, 0.78, 0.33, 0.61, 0.48, 0.82, 0.37, 0.56, 0.43, 0.71, 0.29,
+  0.64, 0.53, 0.77, 0.38, 0.59, 0.44, 0.83, 0.27, 0.66, 0.41, 0.74, 0.32, 0.57,
+  0.47, 0.69,
 ] as const;
 const MOCK_SETUP_BARS = [88, 72, 65, 54, 38] as const;
 
 @Component({
   selector: 'mtc-analytics',
   standalone: true,
-  imports: [TopbarComponent, PnlFormatPipe, SessionLabelPipe, PlanModalComponent],
+  imports: [
+    TopbarComponent,
+    PnlFormatPipe,
+    SessionLabelPipe,
+    PlanModalComponent,
+  ],
   templateUrl: './analytics.component.html',
   styleUrl: './analytics.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AnalyticsComponent {
   @ViewChild('equityCanvas') equityCanvasRef?: ElementRef<HTMLCanvasElement>;
-  @ViewChild('drawdownCanvas') drawdownCanvasRef?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('drawdownCanvas')
+  drawdownCanvasRef?: ElementRef<HTMLCanvasElement>;
 
   protected readonly userStore = inject(UserStore);
   private readonly billingApi = inject(BillingApi);
@@ -58,35 +62,61 @@ export class AnalyticsComponent {
   private readonly summaryResource = httpResource<{ data: AnalyticsSummary }>(
     () => `${environment.apiUrl}/analytics/summary`,
   );
-  private readonly equityCurveResource = httpResource<{ data: EquityCurveResponse }>(
-    () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/equity-curve` : undefined,
+  private readonly equityCurveResource = httpResource<{
+    data: EquityCurveResponse;
+  }>(() =>
+    this.userStore.isPremium()
+      ? `${environment.apiUrl}/analytics/equity-curve`
+      : undefined,
   );
   private readonly heatmapResource = httpResource<{ data: HeatmapCell[] }>(
-    () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/by-hour` : undefined,
+    () =>
+      this.userStore.isPremium()
+        ? `${environment.apiUrl}/analytics/by-hour`
+        : undefined,
   );
-  private readonly topAssetsResource = httpResource<{ data: TopAsset[] }>(
-    () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/top-assets` : undefined,
+  private readonly topAssetsResource = httpResource<{ data: TopAsset[] }>(() =>
+    this.userStore.isPremium()
+      ? `${environment.apiUrl}/analytics/top-assets`
+      : undefined,
   );
-  private readonly setupResource = httpResource<{ data: SetupStat[] }>(
-    () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/by-setup` : undefined,
+  private readonly setupResource = httpResource<{ data: SetupStat[] }>(() =>
+    this.userStore.isPremium()
+      ? `${environment.apiUrl}/analytics/by-setup`
+      : undefined,
   );
 
   // ── Computed dérivés des resources ──────────────────────────────────────
-  protected readonly summary = computed(() => this.summaryResource.value()?.data ?? null);
-  protected readonly equityCurve = computed(() => this.equityCurveResource.value()?.data?.points ?? []);
-  private readonly equityStartingCapital = computed(() => this.equityCurveResource.value()?.data?.startingCapital ?? null);
-  protected readonly heatmapData = computed(() => this.heatmapResource.value()?.data ?? []);
-  protected readonly topAssets = computed(() => this.topAssetsResource.value()?.data ?? []);
-  protected readonly setupData = computed(() => this.setupResource.value()?.data ?? []);
+  protected readonly summary = computed(
+    () => this.summaryResource.value()?.data ?? null,
+  );
+  protected readonly equityCurve = computed(
+    () => this.equityCurveResource.value()?.data?.points ?? [],
+  );
+  private readonly equityStartingCapital = computed(
+    () => this.equityCurveResource.value()?.data?.startingCapital ?? null,
+  );
+  protected readonly heatmapData = computed(
+    () => this.heatmapResource.value()?.data ?? [],
+  );
+  protected readonly topAssets = computed(
+    () => this.topAssetsResource.value()?.data ?? [],
+  );
+  protected readonly setupData = computed(
+    () => this.setupResource.value()?.data ?? [],
+  );
 
-  protected readonly isLoading = computed(() =>
-    this.summaryResource.isLoading() ||
-    this.equityCurveResource.isLoading() ||
-    this.heatmapResource.isLoading(),
+  protected readonly isLoading = computed(
+    () =>
+      this.summaryResource.isLoading() ||
+      this.equityCurveResource.isLoading() ||
+      this.heatmapResource.isLoading(),
   );
 
   protected readonly days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-  protected readonly hours = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
+  protected readonly hours = [
+    8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+  ];
   protected readonly Math = Math;
 
   protected readonly mockCells = MOCK_HEATMAP_CELLS;
@@ -138,11 +168,16 @@ export class AnalyticsComponent {
   }
 
   protected startTrial(plan: 'monthly' | 'yearly' = 'monthly'): void {
-    this.billingApi.checkout(plan)
+    this.billingApi
+      .checkout(plan)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (res) => { window.location.href = res.data.url; },
-        error: () => { /* billing error — user stays on page */ },
+        next: (res) => {
+          window.location.href = res.data.url;
+        },
+        error: () => {
+          /* billing error — user stays on page */
+        },
       });
   }
 
@@ -286,7 +321,8 @@ export class AnalyticsComponent {
     grad.addColorStop(1, 'rgba(239,68,68,0)');
     ctx.beginPath();
     ctx.moveTo(toX(0), toY(drawdowns[0]));
-    for (let i = 1; i < drawdowns.length; i++) ctx.lineTo(toX(i), toY(drawdowns[i]));
+    for (let i = 1; i < drawdowns.length; i++)
+      ctx.lineTo(toX(i), toY(drawdowns[i]));
     ctx.lineTo(toX(drawdowns.length - 1), toY(0));
     ctx.lineTo(toX(0), toY(0));
     ctx.closePath();
@@ -307,7 +343,9 @@ export class AnalyticsComponent {
     const fmtDD = (v: number) => {
       if (v === 0) return '$0';
       const abs = Math.abs(v);
-      return abs >= 1000 ? `-$${(abs / 1000).toFixed(1)}k` : `-$${abs.toFixed(0)}`;
+      return abs >= 1000
+        ? `-$${(abs / 1000).toFixed(1)}k`
+        : `-$${abs.toFixed(0)}`;
     };
     ctx.fillStyle = 'rgba(122,147,187,0.7)';
     ctx.font = '10px "DM Mono", monospace';

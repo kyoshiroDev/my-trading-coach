@@ -10,7 +10,11 @@ export const PREMIUM_USER = {
   password: process.env['E2E_PREMIUM_PASSWORD'] ?? 'TestPassword123!',
 };
 
-export async function loginAs(page: Page, email: string, password: string): Promise<void> {
+export async function loginAs(
+  page: Page,
+  email: string,
+  password: string,
+): Promise<void> {
   await page.goto('/login');
   await page.waitForSelector('[data-testid="login-email"]');
   await page.fill('[data-testid="login-email"]', email);
@@ -22,7 +26,12 @@ export async function loginAs(page: Page, email: string, password: string): Prom
     const wizard = page.locator('[data-testid="onboarding-wizard"]');
     if (await wizard.isVisible({ timeout: 3000 })) {
       await page.click('[data-testid="wizard-skip"]');
-      await page.waitForSelector('[data-testid="onboarding-wizard"]', { state: 'hidden', timeout: 5000 });
+      await page.waitForSelector('[data-testid="onboarding-wizard"]', {
+        state: 'hidden',
+        timeout: 5000,
+      });
     }
-  } catch { /* wizard absent */ }
+  } catch {
+    /* wizard absent */
+  }
 }

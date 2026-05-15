@@ -19,10 +19,15 @@ Format JSON : { "advice": [{ "title": "string (5 mots max)", "description": "str
 
 @Injectable()
 export class CoachAgent {
-  private readonly anthropic = new Anthropic({ apiKey: process.env['ANTHROPIC_API_KEY'] });
+  private readonly anthropic = new Anthropic({
+    apiKey: process.env['ANTHROPIC_API_KEY'],
+  });
   private readonly logger = new Logger(CoachAgent.name);
 
-  async generateAdvice(data: { patterns: Pattern[]; summary: string }): Promise<Advice[]> {
+  async generateAdvice(data: {
+    patterns: Pattern[];
+    summary: string;
+  }): Promise<Advice[]> {
     const userContent = `Patterns détectés :\n${JSON.stringify(data.patterns)}\n\nRésumé trader :\n${data.summary}`;
 
     let response: Anthropic.Message;
@@ -30,7 +35,13 @@ export class CoachAgent {
       response = await this.anthropic.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 512,
-        system: [{ type: 'text', text: COACH_SYSTEM, cache_control: { type: 'ephemeral' } }],
+        system: [
+          {
+            type: 'text',
+            text: COACH_SYSTEM,
+            cache_control: { type: 'ephemeral' },
+          },
+        ],
         messages: [{ role: 'user', content: userContent }],
       });
     } catch (err) {
@@ -39,7 +50,10 @@ export class CoachAgent {
 
     const block = response.content[0];
     if (block.type !== 'text') {
-      throw new HttpException('Réponse IA invalide', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(
+        'Réponse IA invalide',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
 
     try {
@@ -47,7 +61,10 @@ export class CoachAgent {
       return parsed.advice ?? [];
     } catch {
       this.logger.error('Failed to parse coach response', block.text);
-      throw new HttpException('Réponse IA invalide', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(
+        'Réponse IA invalide',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

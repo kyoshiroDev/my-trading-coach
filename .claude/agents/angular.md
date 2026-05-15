@@ -1,11 +1,11 @@
 # Agent Angular — app-mytradingcoach
 
 ## Stack
-Angular 19 · Signals · Standalone Components · lucide-angular · Vitest
+Angular 21 · Signals · Standalone Components · lucide-angular · Vitest · Nx 22
 
 ---
 
-## Règles Angular 19 — ABSOLUES
+## Règles Angular 21 — ABSOLUES
 
 - `@if` / `@for` / `@switch` dans les templates — jamais `*ngIf` / `*ngFor`
 - `inject()` plutôt que constructeur

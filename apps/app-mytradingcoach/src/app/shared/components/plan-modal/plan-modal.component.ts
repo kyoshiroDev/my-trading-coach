@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  output,
+  signal,
+} from '@angular/core';
 import { BillingApi } from '../../../core/api/billing.api';
 
 @Component({
@@ -31,7 +37,9 @@ export class PlanModalComponent {
   protected confirmPlan() {
     this.isLoading.set(true);
     this.billingApi.checkout(this.selectedPlan()).subscribe({
-      next: (res) => { window.location.href = res.data.url; },
+      next: (res) => {
+        window.location.href = res.data.url;
+      },
       error: () => this.isLoading.set(false),
     });
   }

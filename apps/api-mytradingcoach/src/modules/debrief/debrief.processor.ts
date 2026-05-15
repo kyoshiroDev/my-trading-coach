@@ -34,7 +34,11 @@ export class DebriefProcessor extends WorkerHost {
     const debrief = await this.debriefService.generateForUser(userId);
 
     if (user.notificationsEmail) {
-      const stats = debrief.stats as { winRate?: number; totalPnl?: number; totalTrades?: number };
+      const stats = debrief.stats as {
+        winRate?: number;
+        totalPnl?: number;
+        totalTrades?: number;
+      };
       await this.resend.sendDebriefReady({
         to: user.email,
         userName: user.name ?? 'Trader',

@@ -1,7 +1,7 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.55);
+  background: rgba(0, 0, 0, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -44,7 +44,9 @@
   border-radius: 6px;
   transition: color 0.15s;
 }
-.close-btn:hover { color: var(--text); }
+.close-btn:hover {
+  color: var(--text);
+}
 
 /* ── Paywall ── */
 .paywall {
@@ -56,7 +58,9 @@
   text-align: center;
 }
 
-.paywall-icon { font-size: 28px; }
+.paywall-icon {
+  font-size: 28px;
+}
 
 .paywall-title {
   font-size: 14px;
@@ -87,7 +91,9 @@
   transition: opacity 0.15s;
   display: inline-block;
 }
-.btn-upgrade:hover { opacity: 0.85; }
+.btn-upgrade:hover {
+  opacity: 0.85;
+}
 
 /* ── Drop zone ── */
 .drop-zone {
@@ -100,11 +106,14 @@
   align-items: center;
   gap: 10px;
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
 }
-.drop-zone:hover, .drop-zone.drag-over {
+.drop-zone:hover,
+.drop-zone.drag-over {
   border-color: var(--blue);
-  background: rgba(59,130,246,.04);
+  background: rgba(59, 130, 246, 0.04);
 }
 
 .drop-title {
@@ -141,14 +150,19 @@
 
 /* ── Spinner ── */
 .spinner {
-  width: 24px; height: 24px;
-  border: 2px solid rgba(255,255,255,.15);
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
   border-top-color: var(--blue);
   border-radius: 50%;
   animation: csv-spin 0.7s linear infinite;
   margin-top: 4px;
 }
-@keyframes csv-spin { to { transform: rotate(360deg); } }
+@keyframes csv-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* ── Result ── */
 .result-block {
@@ -167,7 +181,10 @@
   font-family: var(--font-display);
 }
 
-.result-sub { font-size: 12px; color: var(--text-2); }
+.result-sub {
+  font-size: 12px;
+  color: var(--text-2);
+}
 
 .btn-primary {
   background: var(--blue);
@@ -182,7 +199,9 @@
   margin-top: 4px;
   transition: opacity 0.15s;
 }
-.btn-primary:hover { opacity: 0.85; }
+.btn-primary:hover {
+  opacity: 0.85;
+}
 
 .btn-ghost {
   background: none;
@@ -194,4 +213,7 @@
   cursor: pointer;
   transition: border-color 0.15s;
 }
-.btn-ghost:hover { border-color: var(--text-3); color: var(--text); }
+.btn-ghost:hover {
+  border-color: var(--text-3);
+  color: var(--text);
+}

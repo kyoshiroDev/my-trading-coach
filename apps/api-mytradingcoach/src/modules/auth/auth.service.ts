@@ -26,13 +26,23 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
-    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const existing = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
     if (existing) throw new ConflictException('Cet email est déjà utilisé');
 
     const hashedPassword = await argon2.hash(dto.password);
     const user = await this.prisma.user.create({
       data: { email: dto.email, password: hashedPassword, name: dto.name },
-      select: { id: true, email: true, name: true, plan: true, role: true, onboardingCompleted: true, createdAt: true },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        plan: true,
+        role: true,
+        onboardingCompleted: true,
+        createdAt: true,
+      },
     });
 
     const tokens = await this.generateTokens(user.id, user.email);
@@ -43,20 +53,29 @@ export class AuthService {
     });
 
     // Email de bienvenue à l'utilisateur — fire-and-forget
-    this.resend.sendWelcomeFree({ to: user.email, userName: user.name ?? '' })
-      .catch((err: unknown) => this.logger.error(`Welcome email failed: ${String(err)}`));
+    this.resend
+      .sendWelcomeFree({ to: user.email, userName: user.name ?? '' })
+      .catch((err: unknown) =>
+        this.logger.error(`Welcome email failed: ${String(err)}`),
+      );
 
     // Notification admin — fire-and-forget
-    this.resend.sendAdminAlert(
-      `🆕 Nouvel inscrit — ${user.email}`,
-      `Nom : ${user.name ?? '(non renseigné)'}\nEmail : ${user.email}\nDate : ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}`,
-    ).catch((err: unknown) => this.logger.error(`Admin alert failed: ${String(err)}`));
+    this.resend
+      .sendAdminAlert(
+        `🆕 Nouvel inscrit — ${user.email}`,
+        `Nom : ${user.name ?? '(non renseigné)'}\nEmail : ${user.email}\nDate : ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}`,
+      )
+      .catch((err: unknown) =>
+        this.logger.error(`Admin alert failed: ${String(err)}`),
+      );
 
     return { ...tokens, user };
   }
 
   async login(dto: LoginDto) {
-    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
     if (!user) throw new UnauthorizedException('Identifiants invalides');
 
     const valid = await argon2.verify(user.password, dto.password);
@@ -68,7 +87,14 @@ export class AuthService {
       data: { lastLoginAt: now, lastSeenAt: now },
     });
 
-    const safeUser = { id: user.id, email: user.email, name: user.name, plan: user.plan, role: user.role, onboardingCompleted: user.onboardingCompleted };
+    const safeUser = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      plan: user.plan,
+      role: user.role,
+      onboardingCompleted: user.onboardingCompleted,
+    };
     const tokens = await this.generateTokens(user.id, user.email);
     return { ...tokens, user: safeUser };
   }
@@ -86,27 +112,58 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
       select: {
-        id: true, email: true, name: true, plan: true, role: true,
-        onboardingCompleted: true, currency: true, currencyRate: true, startingCapital: true,
+        id: true,
+        email: true,
+        name: true,
+        plan: true,
+        role: true,
+        onboardingCompleted: true,
+        currency: true,
+        currencyRate: true,
+        startingCapital: true,
       },
     });
     if (!user) throw new UnauthorizedException('Utilisateur introuvable');
 
     const tokens = await this.generateTokens(user.id, user.email);
-    return { ...tokens, user: { id: user.id, email: user.email, name: user.name, plan: user.plan, role: user.role, onboardingCompleted: user.onboardingCompleted, currency: user.currency, currencyRate: user.currencyRate, startingCapital: user.startingCapital } };
+    return {
+      ...tokens,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        plan: user.plan,
+        role: user.role,
+        onboardingCompleted: user.onboardingCompleted,
+        currency: user.currency,
+        currencyRate: user.currencyRate,
+        startingCapital: user.startingCapital,
+      },
+    };
   }
 
   async getMe(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
-        id: true, email: true, name: true, plan: true, role: true,
-        trialEndsAt: true, onboardingCompleted: true,
-        market: true, goal: true,
-        currency: true, currencyRate: true, startingCapital: true,
-        notificationsEmail: true, debriefAutomatic: true,
-        trialEndsAt: true, trialUsed: true,
-        stripeSubscriptionStatus: true, stripeCurrentPeriodEnd: true,
+        id: true,
+        email: true,
+        name: true,
+        plan: true,
+        role: true,
+        trialEndsAt: true,
+        onboardingCompleted: true,
+        market: true,
+        goal: true,
+        currency: true,
+        currencyRate: true,
+        startingCapital: true,
+        notificationsEmail: true,
+        debriefAutomatic: true,
+        trialEndsAt: true,
+        trialUsed: true,
+        stripeSubscriptionStatus: true,
+        stripeCurrentPeriodEnd: true,
       },
     });
     if (!user) throw new UnauthorizedException('Utilisateur introuvable');
@@ -124,7 +181,14 @@ export class AuthService {
         trialEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         trialUsed: true,
       },
-      select: { id: true, email: true, name: true, plan: true, trialEndsAt: true, trialUsed: true },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        plan: true,
+        trialEndsAt: true,
+        trialUsed: true,
+      },
     });
     return updated;
   }
@@ -135,7 +199,10 @@ export class AuthService {
     if (!user) return;
 
     const rawToken = crypto.randomBytes(32).toString('hex');
-    const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(rawToken)
+      .digest('hex');
 
     await this.prisma.user.update({
       where: { id: user.id },
@@ -145,11 +212,15 @@ export class AuthService {
       },
     });
 
-    this.resend.sendResetPassword({
-      to: user.email,
-      userName: user.name ?? '',
-      resetToken: rawToken,
-    }).catch((err: unknown) => this.logger.error(`Reset password email failed: ${String(err)}`));
+    this.resend
+      .sendResetPassword({
+        to: user.email,
+        userName: user.name ?? '',
+        resetToken: rawToken,
+      })
+      .catch((err: unknown) =>
+        this.logger.error(`Reset password email failed: ${String(err)}`),
+      );
   }
 
   async resetPassword(token: string, newPassword: string): Promise<void> {

@@ -1,21 +1,30 @@
 <mtc-topbar title="Analytics" />
 
 <div class="content">
-
   <!-- ── 4 Stats FREE (visibles par tous) ── -->
   <div class="stats-row">
     <div class="stat-card">
       <div class="stat-label">WIN RATE GLOBAL</div>
-      <div class="stat-value" data-testid="analytics-win-rate" [style.color]="winRateColor()">
-        {{ summary() ? (summary()!.winRate).toFixed(1) + '%' : '—' }}
+      <div
+        class="stat-value"
+        data-testid="analytics-win-rate"
+        [style.color]="winRateColor()"
+      >
+        {{ summary() ? summary()!.winRate.toFixed(1) + '%' : '—' }}
       </div>
-      <div class="stat-sub" data-testid="analytics-trades">{{ summary()?.totalTrades ?? 0 }} trades</div>
+      <div class="stat-sub" data-testid="analytics-trades">
+        {{ summary()?.totalTrades ?? 0 }} trades
+      </div>
     </div>
 
     <div class="stat-card">
       <div class="stat-label">P&amp;L TOTAL</div>
-      <div class="stat-value" data-testid="analytics-pnl" [class.text-green]="(summary()?.totalPnl ?? 0) > 0"
-                              [class.text-red]="(summary()?.totalPnl ?? 0) < 0">
+      <div
+        class="stat-value"
+        data-testid="analytics-pnl"
+        [class.text-green]="(summary()?.totalPnl ?? 0) > 0"
+        [class.text-red]="(summary()?.totalPnl ?? 0) < 0"
+      >
         {{ summary() ? (summary()!.totalPnl | pnlFormat) : '—' }}
       </div>
       <div class="stat-sub">P&amp;L cumulé</div>
@@ -26,7 +35,9 @@
       <div class="stat-value text-blue">
         {{ summary() ? (summary()!.topSession | sessionLabel) : '—' }}
       </div>
-      <div class="stat-sub">{{ summary()?.topSessionWinRate ?? 0 }}% win rate</div>
+      <div class="stat-sub">
+        {{ summary()?.topSessionWinRate ?? 0 }}% win rate
+      </div>
     </div>
 
     <div class="stat-card">
@@ -49,21 +60,27 @@
        CONTENU PREMIUM
   ══════════════════════════════════════════ -->
   @if (userStore.isPremium()) {
-
     <!-- Equity Curve + Drawdown côte à côte -->
     <div class="grid-2 mb-16">
       <div class="card">
         <div class="card-header">
           <div class="card-title">Equity Curve</div>
           @if (summary()) {
-            <span class="card-meta" [class.text-green]="(summary()!.totalPnl) >= 0"
-                                    [class.text-red]="(summary()!.totalPnl) < 0">
+            <span
+              class="card-meta"
+              [class.text-green]="summary()!.totalPnl >= 0"
+              [class.text-red]="summary()!.totalPnl < 0"
+            >
               {{ summary()!.totalPnl | pnlFormat }}
             </span>
           }
         </div>
         <div class="chart-container">
-          <canvas #equityCanvas class="chart-canvas" data-testid="equity-curve"></canvas>
+          <canvas
+            #equityCanvas
+            class="chart-canvas"
+            data-testid="equity-curve"
+          ></canvas>
           @if (equityCurve().length === 0) {
             <div class="empty-chart">Aucun trade clôturé</div>
           }
@@ -75,7 +92,7 @@
           <div class="card-title">Courbe de Drawdown</div>
           @if (summary()) {
             <span class="card-meta text-red">
-              {{ -(summary()!.maxDrawdown) | pnlFormat }} max
+              {{ -summary()!.maxDrawdown | pnlFormat }} max
             </span>
           }
         </div>
@@ -93,9 +110,12 @@
       <div class="card-header">
         <div class="card-title">Heatmap horaire — Win Rate par heure</div>
         <div class="heatmap-legend">
-          <span class="legend-dot dot-red"></span><span class="legend-txt">&lt;50%</span>
-          <span class="legend-dot dot-orange"></span><span class="legend-txt">50–65%</span>
-          <span class="legend-dot dot-green"></span><span class="legend-txt">&gt;65%</span>
+          <span class="legend-dot dot-red"></span
+          ><span class="legend-txt">&lt;50%</span>
+          <span class="legend-dot dot-orange"></span
+          ><span class="legend-txt">50–65%</span>
+          <span class="legend-dot dot-green"></span
+          ><span class="legend-txt">&gt;65%</span>
         </div>
       </div>
       <div class="heatmap-wrapper" data-testid="heatmap">
@@ -114,9 +134,26 @@
                 <td class="heatmap-day-td">{{ day }}</td>
                 @for (hour of hours; track hour) {
                   @let cell = getHeatmapCell(day, hour);
-                  <td [class]="cell ? cellClass(cell.winRate) : 'heatmap-cell cell-empty'"
-                      [title]="cell ? (day + ' ' + hour + 'h — ' + cell.winRate.toFixed(0) + '% (' + cell.count + ' trades)') : ''">
-                    @if (cell) { {{ cell.winRate.toFixed(0) }}% }
+                  <td
+                    [class]="
+                      cell ? cellClass(cell.winRate) : 'heatmap-cell cell-empty'
+                    "
+                    [title]="
+                      cell
+                        ? day +
+                          ' ' +
+                          hour +
+                          'h — ' +
+                          cell.winRate.toFixed(0) +
+                          '% (' +
+                          cell.count +
+                          ' trades)'
+                        : ''
+                    "
+                  >
+                    @if (cell) {
+                      {{ cell.winRate.toFixed(0) }}%
+                    }
                   </td>
                 }
               </tr>
@@ -128,7 +165,6 @@
 
     <!-- Top Actifs + Performance par Setup côte à côte -->
     <div class="grid-2">
-
       <div class="card">
         <div class="card-header">
           <div class="card-title">Top actifs</div>
@@ -158,7 +194,9 @@
               </tr>
             }
             @if (topAssets().length === 0) {
-              <tr><td colspan="5" class="empty-td">Aucune donnée</td></tr>
+              <tr>
+                <td colspan="5" class="empty-td">Aucune donnée</td>
+              </tr>
             }
           </tbody>
         </table>
@@ -185,52 +223,74 @@
                 <td class="mono" [style.color]="rateColor(setup.winRate)">
                   {{ setup.winRate.toFixed(0) }}%
                 </td>
-                <td class="mono"
-                    [class.text-green]="setup.avgRR >= 1"
-                    [class.text-red]="setup.avgRR < 1">
+                <td
+                  class="mono"
+                  [class.text-green]="setup.avgRR >= 1"
+                  [class.text-red]="setup.avgRR < 1"
+                >
                   {{ setup.avgRR.toFixed(2) }}
                 </td>
               </tr>
             }
             @if (setupData().length === 0) {
-              <tr><td colspan="4" class="empty-td">Aucune donnée</td></tr>
+              <tr>
+                <td colspan="4" class="empty-td">Aucune donnée</td>
+              </tr>
             }
           </tbody>
         </table>
       </div>
-
     </div>
-
   }
 
   <!-- ══════════════════════════════════════════
        BLOCS VERROUILLÉS — FREE
   ══════════════════════════════════════════ -->
   @if (!userStore.isPremium()) {
-
     <div class="locked-blocks">
-
       <!-- Bloc 1 — Equity Curve & Drawdown -->
       <div class="locked-feature">
         <div class="locked-preview">
           <div class="preview-curves">
-            <svg viewBox="0 0 400 100" class="preview-svg" preserveAspectRatio="none">
+            <svg
+              viewBox="0 0 400 100"
+              class="preview-svg"
+              preserveAspectRatio="none"
+            >
               <defs>
                 <linearGradient id="gGreen" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#10b981" stop-opacity="0.3"/>
-                  <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+                  <stop offset="0%" stop-color="#10b981" stop-opacity="0.3" />
+                  <stop offset="100%" stop-color="#10b981" stop-opacity="0" />
                 </linearGradient>
                 <linearGradient id="gRed" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#ef4444" stop-opacity="0.3"/>
-                  <stop offset="100%" stop-color="#ef4444" stop-opacity="0"/>
+                  <stop offset="0%" stop-color="#ef4444" stop-opacity="0.3" />
+                  <stop offset="100%" stop-color="#ef4444" stop-opacity="0" />
                 </linearGradient>
               </defs>
               <!-- Equity curve (green) -->
-              <path d="M0,80 C40,70 80,50 120,40 C160,30 200,20 240,15 C280,10 320,18 360,12 L400,8 L400,100 L0,100 Z" fill="url(#gGreen)"/>
-              <path d="M0,80 C40,70 80,50 120,40 C160,30 200,20 240,15 C280,10 320,18 360,12 L400,8" fill="none" stroke="#10b981" stroke-width="2"/>
+              <path
+                d="M0,80 C40,70 80,50 120,40 C160,30 200,20 240,15 C280,10 320,18 360,12 L400,8 L400,100 L0,100 Z"
+                fill="url(#gGreen)"
+              />
+              <path
+                d="M0,80 C40,70 80,50 120,40 C160,30 200,20 240,15 C280,10 320,18 360,12 L400,8"
+                fill="none"
+                stroke="#10b981"
+                stroke-width="2"
+              />
               <!-- Drawdown (red, smaller) -->
-              <path d="M0,20 C40,22 80,28 120,35 C160,28 200,25 240,30 C280,36 320,28 360,32 L400,30 L400,0 L0,0 Z" fill="url(#gRed)" opacity="0.5"/>
-              <path d="M0,20 C40,22 80,28 120,35 C160,28 200,25 240,30 C280,36 320,28 360,32 L400,30" fill="none" stroke="#ef4444" stroke-width="1.5" opacity="0.7"/>
+              <path
+                d="M0,20 C40,22 80,28 120,35 C160,28 200,25 240,30 C280,36 320,28 360,32 L400,30 L400,0 L0,0 Z"
+                fill="url(#gRed)"
+                opacity="0.5"
+              />
+              <path
+                d="M0,20 C40,22 80,28 120,35 C160,28 200,25 240,30 C280,36 320,28 360,32 L400,30"
+                fill="none"
+                stroke="#ef4444"
+                stroke-width="1.5"
+                opacity="0.7"
+              />
             </svg>
           </div>
         </div>
@@ -238,9 +298,16 @@
           <span class="locked-icon">🔒</span>
           <h3 class="locked-title">Equity Curve &amp; Drawdown</h3>
           <p class="locked-desc">
-            Visualise l'évolution de ton capital et tes périodes de drawdown pour identifier tes biais comportementaux.
+            Visualise l'évolution de ton capital et tes périodes de drawdown
+            pour identifier tes biais comportementaux.
           </p>
-          <button class="locked-cta" data-testid="upgrade-cta" (click)="showPlanModal.set(true)">Essayer 7 jours gratuit →</button>
+          <button
+            class="locked-cta"
+            data-testid="upgrade-cta"
+            (click)="showPlanModal.set(true)"
+          >
+            Essayer 7 jours gratuit →
+          </button>
         </div>
       </div>
 
@@ -249,10 +316,13 @@
         <div class="locked-preview">
           <div class="heatmap-preview-mock">
             @for (cell of mockCells; track $index) {
-              <div class="mock-cell"
-                   [style.background]="cell > 0.66 ? '#10b981' : cell > 0.5 ? '#f59e0b' : '#ef4444'"
-                   [style.opacity]="0.15 + cell * 0.5">
-              </div>
+              <div
+                class="mock-cell"
+                [style.background]="
+                  cell > 0.66 ? '#10b981' : cell > 0.5 ? '#f59e0b' : '#ef4444'
+                "
+                [style.opacity]="0.15 + cell * 0.5"
+              ></div>
             }
           </div>
         </div>
@@ -260,9 +330,16 @@
           <span class="locked-icon">🔒</span>
           <h3 class="locked-title">Heatmap de performance horaire</h3>
           <p class="locked-desc">
-            Découvre tes meilleures heures — quand tu gagnes vraiment et quand tu perds le plus.
+            Découvre tes meilleures heures — quand tu gagnes vraiment et quand
+            tu perds le plus.
           </p>
-          <button class="locked-cta" data-testid="upgrade-cta" (click)="showPlanModal.set(true)">Essayer 7 jours gratuit →</button>
+          <button
+            class="locked-cta"
+            data-testid="upgrade-cta"
+            (click)="showPlanModal.set(true)"
+          >
+            Essayer 7 jours gratuit →
+          </button>
         </div>
       </div>
 
@@ -284,16 +361,20 @@
           <span class="locked-icon">🔒</span>
           <h3 class="locked-title">Top Actifs &amp; Performance par Setup</h3>
           <p class="locked-desc">
-            Découvre tes actifs les plus profitables et tes setups gagnants. Win rate par émotion, par session et par actif.
+            Découvre tes actifs les plus profitables et tes setups gagnants. Win
+            rate par émotion, par session et par actif.
           </p>
-          <button class="locked-cta" data-testid="upgrade-cta" (click)="showPlanModal.set(true)">Essayer 7 jours gratuit →</button>
+          <button
+            class="locked-cta"
+            data-testid="upgrade-cta"
+            (click)="showPlanModal.set(true)"
+          >
+            Essayer 7 jours gratuit →
+          </button>
         </div>
       </div>
-
     </div>
-
   }
-
 </div>
 
 @if (showPlanModal()) {

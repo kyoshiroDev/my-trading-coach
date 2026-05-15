@@ -7,7 +7,12 @@ import {
   IsDateString,
   Min,
 } from 'class-validator';
-import { EmotionState, SetupType, TradeSide, TradingSession } from '@prisma/client';
+import {
+  EmotionState,
+  SetupType,
+  TradeSide,
+  TradingSession,
+} from '@prisma/client';
 
 export class CreateTradeDto {
   @IsString()

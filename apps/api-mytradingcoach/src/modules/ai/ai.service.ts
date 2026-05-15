@@ -20,7 +20,9 @@ const AI_MONTHLY_QUOTA = 100;
 
 @Injectable()
 export class AiService implements OnModuleDestroy {
-  private readonly anthropic = new Anthropic({ apiKey: process.env['ANTHROPIC_API_KEY'] });
+  private readonly anthropic = new Anthropic({
+    apiKey: process.env['ANTHROPIC_API_KEY'],
+  });
   private readonly logger = new Logger(AiService.name);
   private readonly redis = new Redis({
     host: process.env['REDIS_HOST'] ?? 'localhost',
@@ -68,7 +70,15 @@ export class AiService implements OnModuleDestroy {
       where: { userId },
       orderBy: { tradedAt: 'desc' },
       take: 30,
-      select: { asset: true, side: true, pnl: true, emotion: true, setup: true, session: true, tradedAt: true },
+      select: {
+        asset: true,
+        side: true,
+        pnl: true,
+        emotion: true,
+        setup: true,
+        session: true,
+        tradedAt: true,
+      },
     });
 
     const CHAT_SYSTEM = `Tu es un coach de trading professionnel, bienveillant et direct.
@@ -79,12 +89,18 @@ Sois concis (3-5 phrases). Si le trader a des données, base-toi dessus pour ré
     if (recentTrades.length === 0) {
       contextSummary = "Ce trader n'a encore enregistré aucun trade.";
     } else {
-      const wins = recentTrades.filter(t => (t.pnl ?? 0) > 0).length;
+      const wins = recentTrades.filter((t) => (t.pnl ?? 0) > 0).length;
       const winRate = Math.round((wins / recentTrades.length) * 100);
       const totalPnl = recentTrades.reduce((sum, t) => sum + (t.pnl ?? 0), 0);
-      const emotions = [...new Set(recentTrades.map(t => t.emotion).filter(Boolean))].join(', ');
-      const setups = [...new Set(recentTrades.map(t => t.setup).filter(Boolean))].join(', ');
-      const sessions = [...new Set(recentTrades.map(t => t.session).filter(Boolean))].join(', ');
+      const emotions = [
+        ...new Set(recentTrades.map((t) => t.emotion).filter(Boolean)),
+      ].join(', ');
+      const setups = [
+        ...new Set(recentTrades.map((t) => t.setup).filter(Boolean)),
+      ].join(', ');
+      const sessions = [
+        ...new Set(recentTrades.map((t) => t.session).filter(Boolean)),
+      ].join(', ');
 
       contextSummary = `Données trader (${recentTrades.length} trades récents) :
 - Win rate : ${winRate}%
@@ -97,9 +113,19 @@ Sois concis (3-5 phrases). Si le trader a des données, base-toi dessus pour ré
     const messages: Anthropic.MessageParam[] = [
       {
         role: 'user',
-        content: [{ type: 'text', text: contextSummary, cache_control: { type: 'ephemeral' } }],
+        content: [
+          {
+            type: 'text',
+            text: contextSummary,
+            cache_control: { type: 'ephemeral' },
+          },
+        ],
       },
-      { role: 'assistant', content: "Bien compris, j'ai analysé tes trades récents. Comment puis-je t'aider ?" },
+      {
+        role: 'assistant',
+        content:
+          "Bien compris, j'ai analysé tes trades récents. Comment puis-je t'aider ?",
+      },
       ...history.map((h) => ({ role: h.role, content: h.content })),
       { role: 'user', content: message },
     ];
@@ -109,7 +135,13 @@ Sois concis (3-5 phrases). Si le trader a des données, base-toi dessus pour ré
       response = await this.anthropic.messages.create({
         model: MODEL,
         max_tokens: 512,
-        system: [{ type: 'text', text: CHAT_SYSTEM, cache_control: { type: 'ephemeral' } }],
+        system: [
+          {
+            type: 'text',
+            text: CHAT_SYSTEM,
+            cache_control: { type: 'ephemeral' },
+          },
+        ],
         messages,
       });
     } catch (err) {
@@ -118,7 +150,11 @@ Sois concis (3-5 phrases). Si le trader a des données, base-toi dessus pour ré
 
     if (userRole !== Role.ADMIN) await this.incrementQuota(userId);
     const content = response?.content?.[0];
-    if (!content || content.type !== 'text') throw new HttpException('Réponse IA invalide', HttpStatus.INTERNAL_SERVER_ERROR);
+    if (!content || content.type !== 'text')
+      throw new HttpException(
+        'Réponse IA invalide',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     return { response: content.text };
   }
 
@@ -130,7 +166,9 @@ Sois concis (3-5 phrases). Si le trader a des données, base-toi dessus pour ré
 
   // ── Cooldown / Daily limits ───────────────────────────────────────────────
 
-  async getInsightsCooldown(userId: string): Promise<{ cooldownSeconds: number }> {
+  async getInsightsCooldown(
+    userId: string,
+  ): Promise<{ cooldownSeconds: number }> {
     const key = `ai:cooldown:insights:${userId}`;
     const ttl = await this.redis.ttl(key);
     return { cooldownSeconds: Math.max(0, ttl) };
@@ -142,14 +180,21 @@ Sois concis (3-5 phrases). Si le trader a des données, base-toi dessus pour ré
     if (exists) {
       const ttl = await this.redis.ttl(key);
       throw new HttpException(
-        { message: `Analyse déjà effectuée. Réessaie dans ${Math.ceil(ttl / 60)} minute(s).`, cooldownSeconds: ttl },
+        {
+          message: `Analyse déjà effectuée. Réessaie dans ${Math.ceil(ttl / 60)} minute(s).`,
+          cooldownSeconds: ttl,
+        },
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }
     await this.redis.set(key, '1', 'EX', 60 * 60 * 4);
   }
 
-  async checkDailyLimit(userId: string, action: string, max: number): Promise<void> {
+  async checkDailyLimit(
+    userId: string,
+    action: string,
+    max: number,
+  ): Promise<void> {
     const today = new Date().toISOString().slice(0, 10);
     const key = `ai:limit:${userId}:${action}:${today}`;
     const count = await this.redis.incr(key);
@@ -180,7 +225,9 @@ Sois concis (3-5 phrases). Si le trader a des données, base-toi dessus pour ré
       const val = await this.redis.get(key);
       return val ? parseInt(val) : 0;
     } catch {
-      this.logger.error('Redis unavailable — quota check failed, blocking AI call');
+      this.logger.error(
+        'Redis unavailable — quota check failed, blocking AI call',
+      );
       throw new ServiceUnavailableException(
         'Service IA temporairement indisponible, veuillez réessayer dans quelques instants',
       );

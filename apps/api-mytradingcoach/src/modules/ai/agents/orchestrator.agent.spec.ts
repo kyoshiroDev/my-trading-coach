@@ -7,8 +7,24 @@ import { CoachAgent } from './coach.agent';
 import { PrismaService } from '../../../prisma/prisma.service';
 
 const mockTrades = [
-  { asset: 'BTC', side: 'LONG', pnl: 100, emotion: 'CONFIDENT', setup: 'BREAKOUT', session: 'LONDON', tradedAt: new Date() },
-  { asset: 'ETH', side: 'SHORT', pnl: -50, emotion: 'STRESSED', setup: 'PULLBACK', session: 'NEW_YORK', tradedAt: new Date() },
+  {
+    asset: 'BTC',
+    side: 'LONG',
+    pnl: 100,
+    emotion: 'CONFIDENT',
+    setup: 'BREAKOUT',
+    session: 'LONDON',
+    tradedAt: new Date(),
+  },
+  {
+    asset: 'ETH',
+    side: 'SHORT',
+    pnl: -50,
+    emotion: 'STRESSED',
+    setup: 'PULLBACK',
+    session: 'NEW_YORK',
+    tradedAt: new Date(),
+  },
 ];
 
 const mockPrisma = {
@@ -16,13 +32,24 @@ const mockPrisma = {
 };
 
 const mockPatternResult = {
-  patterns: [{ type: 'weakness', title: 'Revenge', description: 'Tu trades trop vite.', badge: 'Attention' }],
+  patterns: [
+    {
+      type: 'weakness',
+      title: 'Revenge',
+      description: 'Tu trades trop vite.',
+      badge: 'Attention',
+    },
+  ],
   topPattern: 'Revenge trading',
   emotionInsight: 'STRESSED → mauvais résultats.',
 };
 
 const mockAdvice = [
-  { title: 'Pause post-perte', description: 'Attends 30 min.', priority: 'high' as const },
+  {
+    title: 'Pause post-perte',
+    description: 'Attends 30 min.',
+    priority: 'high' as const,
+  },
 ];
 
 describe('OrchestratorAgent', () => {
@@ -39,8 +66,14 @@ describe('OrchestratorAgent', () => {
       providers: [
         OrchestratorAgent,
         DataAgent,
-        { provide: PatternAgent, useValue: { analyze: vi.fn().mockResolvedValue(mockPatternResult) } },
-        { provide: CoachAgent, useValue: { generateAdvice: vi.fn().mockResolvedValue(mockAdvice) } },
+        {
+          provide: PatternAgent,
+          useValue: { analyze: vi.fn().mockResolvedValue(mockPatternResult) },
+        },
+        {
+          provide: CoachAgent,
+          useValue: { generateAdvice: vi.fn().mockResolvedValue(mockAdvice) },
+        },
         { provide: PrismaService, useValue: mockPrisma },
       ],
     }).compile();
@@ -70,17 +103,22 @@ describe('OrchestratorAgent', () => {
 
     expect(result).toHaveProperty('insights');
     expect(result).toHaveProperty('topPattern', 'Revenge trading');
-    expect(result).toHaveProperty('emotionInsight', 'STRESSED → mauvais résultats.');
+    expect(result).toHaveProperty(
+      'emotionInsight',
+      'STRESSED → mauvais résultats.',
+    );
     expect(Array.isArray(result.insights)).toBe(true);
   });
 
   it('dataAgent.buildTradesSummary() ne fait aucun appel Anthropic', () => {
     // DataAgent is a pure computation class with no Anthropic dependency
     const proto = Object.getOwnPropertyNames(Object.getPrototypeOf(dataAgent));
-    const methods = proto.filter(m => m !== 'constructor');
+    const methods = proto.filter((m) => m !== 'constructor');
     expect(methods).toContain('buildTradesSummary');
 
     // Verify no anthropic property exists on the agent
-    expect((dataAgent as unknown as Record<string, unknown>)['anthropic']).toBeUndefined();
+    expect(
+      (dataAgent as unknown as Record<string, unknown>)['anthropic'],
+    ).toBeUndefined();
   });
 });

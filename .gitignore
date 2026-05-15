@@ -74,3 +74,5 @@ playwright/.cache
 .env.development
 .env.production
 SECRETS.md
+
+.nx/self-healing

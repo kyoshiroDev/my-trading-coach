@@ -5,7 +5,9 @@
 }
 
 /* ─── Greeting ─── */
-.greeting { margin-bottom: 28px;}
+.greeting {
+  margin-bottom: 28px;
+}
 .greeting-title {
   font-family: var(--font-display);
   font-size: 24px;
@@ -17,7 +19,11 @@
   align-items: center;
   gap: 10px;
 }
-.greeting-sub { font-size: 14px; color: var(--text-2); font-weight: 400;}
+.greeting-sub {
+  font-size: 14px;
+  color: var(--text-2);
+  font-weight: 400;
+}
 
 /* ─── Stats Row ─── */
 .stats-row {
@@ -27,7 +33,9 @@
   margin-bottom: 24px;
 }
 
-.stats-row.has-capital { grid-template-columns: repeat(5, 1fr); }
+.stats-row.has-capital {
+  grid-template-columns: repeat(5, 1fr);
+}
 
 .stat-card {
   background: var(--bg-card);
@@ -36,34 +44,52 @@
   padding: 20px;
   position: relative;
   overflow: hidden;
-  transition: border-color 0.2s, transform 0.2s;
+  transition:
+    border-color 0.2s,
+    transform 0.2s;
   cursor: default;
 }
 
-.stat-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+.stat-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+}
 
 .stat-card::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--blue), transparent);
   opacity: 0;
   transition: opacity 0.2s;
 }
 
-.stat-card:hover::before { opacity: 0.4; }
+.stat-card:hover::before {
+  opacity: 0.4;
+}
 
 .stat-skeleton {
   min-height: 100px;
-  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-3) 50%, var(--bg-card) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--bg-card) 25%,
+    var(--bg-3) 50%,
+    var(--bg-card) 75%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .stat-label {
@@ -102,8 +128,14 @@
   border-radius: 4px;
 }
 
-.change.up { color: var(--green); background: var(--green-dim); }
-.change.down { color: var(--red); background: var(--red-dim); }
+.change.up {
+  color: var(--green);
+  background: var(--green-dim);
+}
+.change.down {
+  color: var(--red);
+  background: var(--red-dim);
+}
 
 .stat-bg-icon {
   position: absolute;
@@ -111,7 +143,7 @@
   top: 50%;
   transform: translateY(-50%);
   font-size: 36px;
-  opacity: 0.60;
+  opacity: 0.6;
   pointer-events: none;
   user-select: none;
   filter: grayscale(30%);
@@ -121,13 +153,25 @@
   opacity: 0.18;
 }
 
-.text-green { color: var(--green); }
-.text-red { color: var(--red); }
-.text-blue { color: var(--blue-bright); }
+.text-green {
+  color: var(--green);
+}
+.text-red {
+  color: var(--red);
+}
+.text-blue {
+  color: var(--blue-bright);
+}
 
 /* ─── Grid ─── */
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.grid-full { grid-column: 1 / -1; }
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.grid-full {
+  grid-column: 1 / -1;
+}
 
 /* ─── Four-col row (equity · trades · winrate · emotions) ─── */
 .four-col-row {
@@ -147,7 +191,9 @@
   transition: border-color 0.2s;
 }
 
-.card:hover { border-color: var(--border-hover); }
+.card:hover {
+  border-color: var(--border-hover);
+}
 
 .card-header {
   display: flex;
@@ -174,7 +220,9 @@
   text-decoration: none;
 }
 
-.card-action:hover { opacity: 1; }
+.card-action:hover {
+  opacity: 1;
+}
 
 /* ─── Chart filters ─── */
 .chart-filter {
@@ -184,8 +232,12 @@
   cursor: pointer;
   transition: color 0.15s;
 }
-.chart-filter.active { color: var(--blue-bright); }
-.chart-filter:hover { color: var(--text-2); }
+.chart-filter.active {
+  color: var(--blue-bright);
+}
+.chart-filter:hover {
+  color: var(--text-2);
+}
 
 /* ─── Chart container ─── */
 .chart-container {
@@ -204,9 +256,13 @@ canvas {
 }
 
 .empty-chart {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--text-3); font-size: 13px;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-3);
+  font-size: 13px;
 }
 
 /* ─── Donut ─── */
@@ -216,7 +272,9 @@ canvas {
   gap: 20px;
 }
 
-.donut-svg { flex-shrink: 0; }
+.donut-svg {
+  flex-shrink: 0;
+}
 
 .donut-legend {
   flex: 1;
@@ -234,7 +292,8 @@ canvas {
 }
 
 .legend-dot {
-  width: 8px; height: 8px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -247,8 +306,16 @@ canvas {
 }
 
 /* ─── Emotion bars ─── */
-.emotion-grid { display: flex; flex-direction: column; gap: 12px; }
-.emotion-row { display: flex; flex-direction: column; gap: 5px; }
+.emotion-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.emotion-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
 .emotion-label {
   display: flex;
   justify-content: space-between;
@@ -308,7 +375,10 @@ canvas {
 }
 
 /* ─── Recent trades compact ─── */
-.recent-trades-card { display: flex; flex-direction: column; }
+.recent-trades-card {
+  display: flex;
+  flex-direction: column;
+}
 
 .trade-list-compact {
   display: flex;
@@ -325,10 +395,15 @@ canvas {
   border: 1px solid var(--border);
   border-radius: 8px;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
 }
 
-.trade-row-compact:hover { border-color: var(--border-hover); background: var(--bg-3); }
+.trade-row-compact:hover {
+  border-color: var(--border-hover);
+  background: var(--bg-3);
+}
 
 .trade-row-top {
   display: flex;
@@ -346,7 +421,9 @@ canvas {
   height: 18px;
   padding: 0 6px;
   border-radius: 4px;
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: var(--font-mono);
   font-size: 9px;
   font-weight: 500;
@@ -354,8 +431,14 @@ canvas {
   flex-shrink: 0;
 }
 
-.trade-side.long { background: var(--green-dim); color: var(--green); }
-.trade-side.short { background: var(--red-dim); color: var(--red); }
+.trade-side.long {
+  background: var(--green-dim);
+  color: var(--green);
+}
+.trade-side.short {
+  background: var(--red-dim);
+  color: var(--red);
+}
 
 .trade-asset-compact {
   font-weight: 600;
@@ -374,7 +457,10 @@ canvas {
   font-family: var(--font-mono);
 }
 
-.trade-emotion { font-size: 13px; flex-shrink: 0; }
+.trade-emotion {
+  font-size: 13px;
+  flex-shrink: 0;
+}
 
 .trade-pnl {
   font-family: var(--font-mono);
@@ -387,8 +473,12 @@ canvas {
 
 /* ─── Premium upsell banner ─── */
 .premium-banner {
-  background: linear-gradient(135deg, rgba(59,130,246,.08), rgba(139,92,246,.08));
-  border: 1px solid rgba(139, 92, 246, .2);
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.08),
+    rgba(139, 92, 246, 0.08)
+  );
+  border: 1px solid rgba(139, 92, 246, 0.2);
   border-radius: 10px;
   padding: 14px 20px;
   display: flex;
@@ -404,11 +494,22 @@ canvas {
   gap: 12px;
 }
 
-.premium-banner-icon { font-size: 20px; flex-shrink: 0; }
+.premium-banner-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
 
-.premium-banner-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.premium-banner-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
 
-.premium-banner-sub { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.premium-banner-sub {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-top: 2px;
+}
 
 .premium-banner-right {
   display: flex;
@@ -417,11 +518,21 @@ canvas {
   flex-shrink: 0;
 }
 
-.premium-banner-price { text-align: right; }
+.premium-banner-price {
+  text-align: right;
+}
 
-.premium-banner-amount { font-size: 15px; font-weight: 700; color: var(--text); }
+.premium-banner-amount {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
 
-.premium-banner-period { font-size: 11px; font-weight: 400; color: var(--text-3); }
+.premium-banner-period {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-3);
+}
 
 .premium-banner-trial {
   font-size: 11px;
@@ -440,14 +551,14 @@ canvas {
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  box-shadow: 0 0 16px rgba(59, 130, 246, .3);
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.3);
   font-family: var(--font-body);
-  transition: all .2s;
+  transition: all 0.2s;
 }
 
 .premium-banner-btn:hover {
   background: var(--blue-bright);
-  box-shadow: 0 0 24px rgba(59, 130, 246, .5);
+  box-shadow: 0 0 24px rgba(59, 130, 246, 0.5);
   transform: translateY(-1px);
 }
 

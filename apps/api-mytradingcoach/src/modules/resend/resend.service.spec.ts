@@ -3,7 +3,9 @@ import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { ResendService } from './resend.service';
 
-const mockSend = vi.fn().mockResolvedValue({ data: { id: 'email-id' }, error: null });
+const mockSend = vi
+  .fn()
+  .mockResolvedValue({ data: { id: 'email-id' }, error: null });
 
 vi.mock('resend', () => ({
   Resend: vi.fn().mockImplementation(function () {
@@ -29,7 +31,8 @@ describe('ResendService', () => {
             get: vi.fn().mockImplementation((key: string) => {
               if (key === 'MAIL_FROM') return 'noreply@mytradingcoach.app';
               if (key === 'MAIL_SAV') return 'hello@mytradingcoach.app';
-              if (key === 'FRONTEND_URL') return 'https://app.mytradingcoach.app';
+              if (key === 'FRONTEND_URL')
+                return 'https://app.mytradingcoach.app';
               return undefined;
             }),
           },
@@ -60,7 +63,10 @@ describe('ResendService', () => {
     });
 
     it('ne throw pas si Resend retourne une erreur', async () => {
-      mockSend.mockResolvedValueOnce({ data: null, error: { message: 'API error' } });
+      mockSend.mockResolvedValueOnce({
+        data: null,
+        error: { message: 'API error' },
+      });
 
       await expect(
         service.sendDebriefReady({
@@ -92,7 +98,10 @@ describe('ResendService', () => {
     });
 
     it('ne throw pas si Resend retourne une erreur', async () => {
-      mockSend.mockResolvedValueOnce({ data: null, error: { message: 'API error' } });
+      mockSend.mockResolvedValueOnce({
+        data: null,
+        error: { message: 'API error' },
+      });
 
       await expect(
         service.sendRenewalReminder({

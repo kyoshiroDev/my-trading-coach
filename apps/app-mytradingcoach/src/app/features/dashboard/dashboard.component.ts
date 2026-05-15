@@ -21,7 +21,12 @@ import { TopbarComponent } from '../../shared/components/topbar/topbar.component
 import { TradeFormComponent } from '../journal/trade-form.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { CreateTradeDto, TradesApi } from '../../core/api/trades.api';
-import { AnalyticsSummary, EquityPoint, SetupStat, EmotionStat } from '../../core/api/analytics.api';
+import {
+  AnalyticsSummary,
+  EquityPoint,
+  SetupStat,
+  EmotionStat,
+} from '../../core/api/analytics.api';
 import {
   EmotionColorPipe,
   EmotionEmojiPipe,
@@ -37,10 +42,20 @@ import { environment } from '../../../environments/environment';
   selector: 'mtc-dashboard',
   standalone: true,
   imports: [
-    RouterLink, DecimalPipe, TitleCasePipe, UpperCasePipe, TopbarComponent, TradeFormComponent, PlanModalComponent,
-    PnlColorPipe, PnlFormatPipe,
-    EmotionEmojiPipe, EmotionLabelPipe, EmotionColorPipe,
-    SetupColorPipe, SetupColorsMapPipe,
+    RouterLink,
+    DecimalPipe,
+    TitleCasePipe,
+    UpperCasePipe,
+    TopbarComponent,
+    TradeFormComponent,
+    PlanModalComponent,
+    PnlColorPipe,
+    PnlFormatPipe,
+    EmotionEmojiPipe,
+    EmotionLabelPipe,
+    EmotionColorPipe,
+    SetupColorPipe,
+    SetupColorsMapPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './dashboard.component.css',
@@ -55,7 +70,9 @@ import { environment } from '../../../environments/environment';
     <div class="content">
       <!-- Greeting -->
       <div class="greeting">
-        <h1 class="greeting-title">Bonjour, {{ userStore.displayName() }} 👋</h1>
+        <h1 class="greeting-title">
+          Bonjour, {{ userStore.displayName() }} 👋
+        </h1>
       </div>
 
       <!-- Premium upsell banner -->
@@ -65,7 +82,9 @@ import { environment } from '../../../environments/environment';
             <span class="premium-banner-icon">⚡</span>
             <div>
               <div class="premium-banner-title">Passe à Premium</div>
-              <div class="premium-banner-sub">Analytics avancés, IA Insights, Weekly Debrief automatique</div>
+              <div class="premium-banner-sub">
+                Analytics avancés, IA Insights, Weekly Debrief automatique
+              </div>
             </div>
           </div>
           <div class="premium-banner-right">
@@ -74,7 +93,10 @@ import { environment } from '../../../environments/environment';
               <span class="premium-banner-period">/mois</span>
               <div class="premium-banner-trial">7 jours gratuits · sans CB</div>
             </div>
-            <button class="premium-banner-btn" (click)="showPlanModal.set(true)">
+            <button
+              class="premium-banner-btn"
+              (click)="showPlanModal.set(true)"
+            >
               Essayer gratuitement
             </button>
           </div>
@@ -84,7 +106,6 @@ import { environment } from '../../../environments/environment';
       <!-- Stats row -->
       @if (!isLoading()) {
         <div class="stats-row has-capital">
-
           <div class="stat-card">
             <div class="stat-label">Capital</div>
             <div class="stat-value mono" [style.color]="capitalColor()">
@@ -93,7 +114,8 @@ import { environment } from '../../../environments/environment';
             <div class="stat-sub">
               @if (capitalPct() !== 0) {
                 <span class="change" [class]="capitalPct() > 0 ? 'up' : 'down'">
-                  {{ capitalPct() > 0 ? '▲' : '▼' }} {{ capitalPct() | number:'1.1-1' }}%
+                  {{ capitalPct() > 0 ? '▲' : '▼' }}
+                  {{ capitalPct() | number: '1.1-1' }}%
                 </span>
               } @else {
                 <span style="color:var(--text-3)">base</span>
@@ -109,7 +131,10 @@ import { environment } from '../../../environments/environment';
             </div>
             <div class="stat-sub">
               @if ((summary()?.totalTrades ?? 0) > 0) {
-                <span class="change" [class]="(summary()?.totalPnl ?? 0) >= 0 ? 'up' : 'down'">
+                <span
+                  class="change"
+                  [class]="(summary()?.totalPnl ?? 0) >= 0 ? 'up' : 'down'"
+                >
                   {{ (summary()?.totalPnl ?? 0) >= 0 ? '▲' : '▼' }} ce mois
                 </span>
               } @else {
@@ -121,7 +146,9 @@ import { environment } from '../../../environments/environment';
 
           <div class="stat-card">
             <div class="stat-label">Win Rate</div>
-            <div class="stat-value" [style.color]="winRateColor()">{{ (summary()?.winRate ?? 0).toFixed(1) }}%</div>
+            <div class="stat-value" [style.color]="winRateColor()">
+              {{ (summary()?.winRate ?? 0).toFixed(1) }}%
+            </div>
             <div class="stat-sub">
               @if ((summary()?.totalTrades ?? 0) > 0) {
                 <span>vs mois précédent</span>
@@ -134,7 +161,9 @@ import { environment } from '../../../environments/environment';
 
           <div class="stat-card">
             <div class="stat-label">Drawdown Max</div>
-            <div class="stat-value" [style.color]="drawdownColor()">{{ drawdownDisplay() | pnlFormat }}</div>
+            <div class="stat-value" [style.color]="drawdownColor()">
+              {{ drawdownDisplay() | pnlFormat }}
+            </div>
             <div class="stat-sub">
               @if ((summary()?.totalTrades ?? 0) > 0) {
                 <span>sur capital</span>
@@ -147,14 +176,18 @@ import { environment } from '../../../environments/environment';
 
           <div class="stat-card">
             <div class="stat-label">Trades</div>
-            <div class="stat-value">{{ summary()?.totalTrades ?? tradesStore.trades().length }}</div>
+            <div class="stat-value">
+              {{ summary()?.totalTrades ?? tradesStore.trades().length }}
+            </div>
             <div class="stat-sub">
               @if ((summary()?.totalTrades ?? 0) === 0) {
                 <span style="color:var(--text-3)">Aucune donnée</span>
               } @else if ((summary()?.streak ?? 0) > 0) {
                 <span class="change up">▲ +{{ summary()?.streak }} streak</span>
               } @else if ((summary()?.streak ?? 0) < 0) {
-                <span class="change down">▼ {{ summary()?.streak }} streak</span>
+                <span class="change down"
+                  >▼ {{ summary()?.streak }} streak</span
+                >
               } @else {
                 <span class="change">— pas de streak</span>
               }
@@ -164,7 +197,7 @@ import { environment } from '../../../environments/environment';
         </div>
       } @else {
         <div class="stats-row">
-          @for (_ of [0,1,2,3]; track $index) {
+          @for (_ of [0, 1, 2, 3]; track $index) {
             <div class="stat-card stat-skeleton"></div>
           }
         </div>
@@ -172,7 +205,6 @@ import { environment } from '../../../environments/environment';
 
       <!-- Equity · Trades · Winrate · Emotions — même ligne -->
       <div class="four-col-row">
-
         <!-- Equity Curve -->
         <div class="card equity-card">
           <div class="card-header">
@@ -180,11 +212,17 @@ import { environment } from '../../../environments/environment';
             <a routerLink="/analytics" class="card-action">Détails →</a>
           </div>
           <div class="chart-container">
-            <canvas #equityCanvas style="width:100%;height:100%;display:block;position:absolute;inset:0;"></canvas>
+            <canvas
+              #equityCanvas
+              style="width:100%;height:100%;display:block;position:absolute;inset:0;"
+            ></canvas>
             @if (!userStore.isPremium() || equityCurve().length === 0) {
               <div class="empty-chart">
-                @if (!userStore.isPremium()) { Courbe disponible en Premium }
-                @else { Aucun trade enregistré }
+                @if (!userStore.isPremium()) {
+                  Courbe disponible en Premium
+                } @else {
+                  Aucun trade enregistré
+                }
               </div>
             }
           </div>
@@ -206,13 +244,25 @@ import { environment } from '../../../environments/environment';
               @for (trade of tradesStore.trades().slice(0, 4); track trade.id) {
                 <div class="trade-row-compact">
                   <div class="trade-row-top">
-                    <span class="trade-side" [class]="trade.side === 'LONG' ? 'long' : 'short'">{{ trade.side }}</span>
-                    <span class="trade-asset-compact">{{ trade.asset | uppercase }}</span>
-                    <span class="trade-emotion">{{ trade.emotion | emotionEmoji }}</span>
+                    <span
+                      class="trade-side"
+                      [class]="trade.side === 'LONG' ? 'long' : 'short'"
+                      >{{ trade.side }}</span
+                    >
+                    <span class="trade-asset-compact">{{
+                      trade.asset | uppercase
+                    }}</span>
+                    <span class="trade-emotion">{{
+                      trade.emotion | emotionEmoji
+                    }}</span>
                   </div>
                   <div class="trade-row-bottom">
                     <span class="trade-setup-compact">{{ trade.setup }}</span>
-                    <span class="trade-pnl" [style.color]="trade.pnl | pnlColor">{{ trade.pnl | pnlFormat:trade.entry }}</span>
+                    <span
+                      class="trade-pnl"
+                      [style.color]="trade.pnl | pnlColor"
+                      >{{ trade.pnl | pnlFormat: trade.entry }}</span
+                    >
                   </div>
                 </div>
               }
@@ -228,29 +278,57 @@ import { environment } from '../../../environments/environment';
           </div>
           @if (bySetup().length === 0) {
             <p class="empty-widget-msg">
-              Tes setups apparaîtront<br>après tes premiers trades
+              Tes setups apparaîtront<br />après tes premiers trades
             </p>
           } @else {
             <div class="donut-wrap">
-              <svg class="donut-svg" width="80" height="80" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--bg-3)" stroke-width="12"/>
+              <svg
+                class="donut-svg"
+                width="80"
+                height="80"
+                viewBox="0 0 100 100"
+              >
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="38"
+                  fill="none"
+                  stroke="var(--bg-3)"
+                  stroke-width="12"
+                />
                 @for (seg of segments(); track seg.label) {
-                  <circle cx="50" cy="50" r="38" fill="none"
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="38"
+                    fill="none"
                     [attr.stroke]="seg.label | setupColorMap"
                     stroke-width="12"
                     [attr.stroke-dasharray]="seg.dash"
                     [attr.stroke-dashoffset]="seg.offset"
                     stroke-linecap="round"
-                    transform="rotate(-90 50 50)"/>
+                    transform="rotate(-90 50 50)"
+                  />
                 }
-                <text x="50" y="53" text-anchor="middle" font-family="Syne" font-weight="700" font-size="14" fill="#e2eaf5">
+                <text
+                  x="50"
+                  y="53"
+                  text-anchor="middle"
+                  font-family="Syne"
+                  font-weight="700"
+                  font-size="14"
+                  fill="#e2eaf5"
+                >
                   {{ (summary()?.winRate ?? 0).toFixed(0) }}%
                 </text>
               </svg>
               <div class="donut-legend">
                 @for (s of bySetup().slice(0, 4); track s.setup) {
                   <div class="legend-item">
-                    <div class="legend-dot" [style.background]="s.setup | setupColor"></div>
+                    <div
+                      class="legend-dot"
+                      [style.background]="s.setup | setupColor"
+                    ></div>
                     {{ s.setup | titlecase }}
                     <span class="legend-val">{{ s.winRate.toFixed(0) }}%</span>
                   </div>
@@ -268,7 +346,8 @@ import { environment } from '../../../environments/environment';
           </div>
           @if (emotionStats().length === 0) {
             <p class="empty-widget-msg">
-              Enregistre tes premiers trades<br>pour voir tes états émotionnels
+              Enregistre tes premiers trades<br />pour voir tes états
+              émotionnels
             </p>
           } @else {
             <div class="emotion-grid">
@@ -279,7 +358,11 @@ import { environment } from '../../../environments/environment';
                     <span>{{ e.pct }}%</span>
                   </div>
                   <div class="bar-track">
-                    <div class="bar-fill" [style.width.%]="e.pct" [style.background]="e.emotion | emotionColor"></div>
+                    <div
+                      class="bar-fill"
+                      [style.width.%]="e.pct"
+                      [style.background]="e.emotion | emotionColor"
+                    ></div>
                   </div>
                 </div>
               }
@@ -316,19 +399,30 @@ export class DashboardComponent implements AfterViewInit {
   protected readonly isSavingTrade = signal(false);
 
   private readonly summaryResource = httpResource<{ data: AnalyticsSummary }>(
-    () => `${environment.apiUrl}/analytics/summary`
+    () => `${environment.apiUrl}/analytics/summary`,
   );
-  private readonly equityCurveResource = httpResource<{ data: { points: EquityPoint[]; startingCapital: number | null } }>(
-    () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/equity-curve` : undefined
+  private readonly equityCurveResource = httpResource<{
+    data: { points: EquityPoint[]; startingCapital: number | null };
+  }>(() =>
+    this.userStore.isPremium()
+      ? `${environment.apiUrl}/analytics/equity-curve`
+      : undefined,
   );
-  private readonly bySetupResource = httpResource<{ data: SetupStat[] }>(
-    () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/by-setup` : undefined
+  private readonly bySetupResource = httpResource<{ data: SetupStat[] }>(() =>
+    this.userStore.isPremium()
+      ? `${environment.apiUrl}/analytics/by-setup`
+      : undefined,
   );
   private readonly byEmotionResource = httpResource<{ data: EmotionStat[] }>(
-    () => this.userStore.isPremium() ? `${environment.apiUrl}/analytics/by-emotion` : undefined
+    () =>
+      this.userStore.isPremium()
+        ? `${environment.apiUrl}/analytics/by-emotion`
+        : undefined,
   );
 
-  protected readonly summary = computed(() => this.summaryResource.value()?.data ?? null);
+  protected readonly summary = computed(
+    () => this.summaryResource.value()?.data ?? null,
+  );
 
   protected readonly drawdownDisplay = computed(() => {
     const dd = this.summary()?.maxDrawdown ?? 0;
@@ -381,20 +475,27 @@ export class DashboardComponent implements AfterViewInit {
     if (dd === 0) return 'var(--text-2)';
     return 'var(--red)';
   });
-  protected readonly equityCurve = computed(() => this.equityCurveResource.value()?.data?.points ?? []);
-  private readonly initialCapitalFromCurve = computed(() => this.equityCurveResource.value()?.data?.startingCapital ?? null);
-  protected readonly bySetup = computed(() => this.bySetupResource.value()?.data ?? []);
-  protected readonly byEmotion = computed(() => this.byEmotionResource.value()?.data ?? []);
-
-  protected readonly isLoading = computed(() =>
-    this.userStore.isPremium() && (
-      this.summaryResource.isLoading() ||
-      this.equityCurveResource.isLoading() ||
-      this.bySetupResource.isLoading() ||
-      this.byEmotionResource.isLoading()
-    )
+  protected readonly equityCurve = computed(
+    () => this.equityCurveResource.value()?.data?.points ?? [],
+  );
+  private readonly initialCapitalFromCurve = computed(
+    () => this.equityCurveResource.value()?.data?.startingCapital ?? null,
+  );
+  protected readonly bySetup = computed(
+    () => this.bySetupResource.value()?.data ?? [],
+  );
+  protected readonly byEmotion = computed(
+    () => this.byEmotionResource.value()?.data ?? [],
   );
 
+  protected readonly isLoading = computed(
+    () =>
+      this.userStore.isPremium() &&
+      (this.summaryResource.isLoading() ||
+        this.equityCurveResource.isLoading() ||
+        this.bySetupResource.isLoading() ||
+        this.byEmotionResource.isLoading()),
+  );
 
   private readonly canDraw = signal(false);
   private resizeObserver?: ResizeObserver;
@@ -415,7 +516,11 @@ export class DashboardComponent implements AfterViewInit {
     });
 
     effect(() => {
-      if (!this.isLoading() && this.canDraw() && this.equityCurve().length > 0) {
+      if (
+        !this.isLoading() &&
+        this.canDraw() &&
+        this.equityCurve().length > 0
+      ) {
         this.drawEquityCurve();
       }
     });
@@ -443,7 +548,11 @@ export class DashboardComponent implements AfterViewInit {
     let offset = 0;
     return setups.map((s) => {
       const dash = (s.count / total) * circumference;
-      const seg = { label: s.setup, dash: `${dash} ${circumference - dash}`, offset: -offset };
+      const seg = {
+        label: s.setup,
+        dash: `${dash} ${circumference - dash}`,
+        offset: -offset,
+      };
       offset += dash;
       return seg;
     });
@@ -454,12 +563,23 @@ export class DashboardComponent implements AfterViewInit {
     const trades = this.tradesStore.trades();
     if (!trades.length) return [];
     const total = trades.length;
-    return (['REVENGE', 'STRESSED', 'CONFIDENT', 'FOCUSED', 'FEAR', 'NEUTRAL'] as const)
-      .map(emotion => ({
+    return (
+      [
+        'REVENGE',
+        'STRESSED',
+        'CONFIDENT',
+        'FOCUSED',
+        'FEAR',
+        'NEUTRAL',
+      ] as const
+    )
+      .map((emotion) => ({
         emotion,
-        pct: Math.round(trades.filter(t => t.emotion === emotion).length / total * 100),
+        pct: Math.round(
+          (trades.filter((t) => t.emotion === emotion).length / total) * 100,
+        ),
       }))
-      .filter(e => e.pct > 0)
+      .filter((e) => e.pct > 0)
       .sort((a, b) => b.pct - a.pct)
       .slice(0, 4);
   });
@@ -470,7 +590,8 @@ export class DashboardComponent implements AfterViewInit {
 
   protected saveTrade(dto: CreateTradeDto) {
     this.isSavingTrade.set(true);
-    this.tradesApi.create(dto)
+    this.tradesApi
+      .create(dto)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
@@ -484,11 +605,16 @@ export class DashboardComponent implements AfterViewInit {
   }
 
   protected startTrial() {
-    this.billingApi.checkout('monthly')
+    this.billingApi
+      .checkout('monthly')
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (res) => { window.location.href = res.data.url; },
-        error: () => { /* billing error — user stays on page */ },
+        next: (res) => {
+          window.location.href = res.data.url;
+        },
+        error: () => {
+          /* billing error — user stays on page */
+        },
       });
   }
 
@@ -500,10 +626,12 @@ export class DashboardComponent implements AfterViewInit {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const cssW = canvas.getBoundingClientRect().width || canvas.offsetWidth || 800;
-    const cssH = canvas.getBoundingClientRect().height || canvas.offsetHeight || 200;
+    const cssW =
+      canvas.getBoundingClientRect().width || canvas.offsetWidth || 800;
+    const cssH =
+      canvas.getBoundingClientRect().height || canvas.offsetHeight || 200;
     const dpr = window.devicePixelRatio || 1;
-    canvas.width  = cssW * dpr;
+    canvas.width = cssW * dpr;
     canvas.height = cssH * dpr;
     ctx.scale(dpr, dpr);
 
@@ -528,11 +656,11 @@ export class DashboardComponent implements AfterViewInit {
     const toX = (i: number) => PAD.left + (i / (values.length - 1)) * cW;
     const toY = (v: number) => PAD.top + cH - ((v - minV) / range) * cH;
 
-    const lastVal  = values[values.length - 1] ?? 0;
+    const lastVal = values[values.length - 1] ?? 0;
     const firstVal = values[0] ?? 0;
     const isPositive = lastVal >= firstVal;
-    const rgb   = isPositive ? '59,130,246'  : '239,68,68';
-    const color = isPositive ? '#3b82f6'     : '#ef4444';
+    const rgb = isPositive ? '59,130,246' : '239,68,68';
+    const color = isPositive ? '#3b82f6' : '#ef4444';
 
     // Grille horizontale (5 niveaux) — lignes sans labels
     const gridCount = 4;
@@ -549,9 +677,10 @@ export class DashboardComponent implements AfterViewInit {
       ctx.setLineDash([]);
     }
 
-    const fmtVal = (v: number) => Math.abs(v) >= 1000
-      ? '$' + (v / 1000).toFixed(1) + 'k'
-      : '$' + v.toFixed(0);
+    const fmtVal = (v: number) =>
+      Math.abs(v) >= 1000
+        ? '$' + (v / 1000).toFixed(1) + 'k'
+        : '$' + v.toFixed(0);
 
     ctx.font = '500 10px "DM Mono", "Courier New", monospace';
     ctx.textBaseline = 'middle';
@@ -570,15 +699,23 @@ export class DashboardComponent implements AfterViewInit {
     ctx.fillText(fmtVal(lastVal), lastX + 6, labelY);
 
     // Labels X : premier, milieu, dernier
-    const xIndices = [1, Math.floor((values.length - 1) / 2), values.length - 1];
+    const xIndices = [
+      1,
+      Math.floor((values.length - 1) / 2),
+      values.length - 1,
+    ];
     for (const idx of xIndices) {
       const pt = points[idx - 1];
       if (!pt) continue;
       const d = new Date(pt.date);
-      const label = d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+      const label = d.toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: 'short',
+      });
       ctx.fillStyle = 'rgba(112,144,176,0.6)';
       ctx.font = '400 9px "DM Mono", "Courier New", monospace';
-      ctx.textAlign = idx === values.length - 1 ? 'right' : idx === 1 ? 'left' : 'center';
+      ctx.textAlign =
+        idx === values.length - 1 ? 'right' : idx === 1 ? 'left' : 'center';
       ctx.textBaseline = 'top';
       ctx.fillText(label, toX(idx), PAD.top + cH + 8);
     }
@@ -588,7 +725,14 @@ export class DashboardComponent implements AfterViewInit {
       ctx.moveTo(toX(0), toY(vs[0]));
       for (let i = 1; i < vs.length; i++) {
         const cpx = (toX(i - 1) + toX(i)) / 2;
-        ctx.bezierCurveTo(cpx, toY(vs[i - 1]), cpx, toY(vs[i]), toX(i), toY(vs[i]));
+        ctx.bezierCurveTo(
+          cpx,
+          toY(vs[i - 1]),
+          cpx,
+          toY(vs[i]),
+          toX(i),
+          toY(vs[i]),
+        );
       }
       if (close) {
         ctx.lineTo(toX(vs.length - 1), PAD.top + cH);
@@ -599,9 +743,9 @@ export class DashboardComponent implements AfterViewInit {
 
     // Gradient fill
     const grad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + cH);
-    grad.addColorStop(0,   `rgba(${rgb}, 0.4)`);
+    grad.addColorStop(0, `rgba(${rgb}, 0.4)`);
     grad.addColorStop(0.5, `rgba(${rgb}, 0.12)`);
-    grad.addColorStop(1,   `rgba(${rgb}, 0.0)`);
+    grad.addColorStop(1, `rgba(${rgb}, 0.0)`);
     ctx.beginPath();
     smoothPath(values, true);
     ctx.fillStyle = grad;
@@ -612,9 +756,9 @@ export class DashboardComponent implements AfterViewInit {
     ctx.strokeStyle = color;
     ctx.lineWidth = 2.5;
     ctx.lineJoin = 'round';
-    ctx.lineCap  = 'round';
+    ctx.lineCap = 'round';
     ctx.shadowColor = color;
-    ctx.shadowBlur  = 8;
+    ctx.shadowBlur = 8;
     smoothPath(values, false);
     ctx.stroke();
     ctx.shadowBlur = 0;
@@ -631,9 +775,8 @@ export class DashboardComponent implements AfterViewInit {
     ctx.arc(lx, ly, 4, 0, Math.PI * 2);
     ctx.fillStyle = color;
     ctx.shadowColor = color;
-    ctx.shadowBlur  = 12;
+    ctx.shadowBlur = 12;
     ctx.fill();
     ctx.shadowBlur = 0;
   }
-
 }
