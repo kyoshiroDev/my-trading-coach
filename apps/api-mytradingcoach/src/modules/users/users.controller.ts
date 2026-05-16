@@ -119,4 +119,16 @@ export class UsersController {
   async adminDelete(@Param('id') id: string) {
     await this.usersService.adminDelete(id);
   }
+
+  @UseGuards(AdminGuard)
+  @Get('admin/subscriptions')
+  adminSubscriptions(@Query() query: AdminListQueryDto) {
+    return this.usersService.adminSubscriptions(query.page, query.limit);
+  }
+
+  @UseGuards(AdminGuard)
+  @Get('admin/:id/detail')
+  adminDetail(@Param('id') id: string) {
+    return this.usersService.adminDetail(id);
+  }
 }
