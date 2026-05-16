@@ -42,6 +42,20 @@ export class AdminAuthService {
     return localStorage.getItem('admin_access_token');
   }
 
+  refreshToken() {
+    return this.http.post<{ data: { access_token: string; user: AdminAuthUser } }>(
+      `${environment.apiUrl}/auth/refresh`,
+      {},
+      { withCredentials: true },
+    ).pipe(tap(res => {
+      localStorage.setItem('admin_access_token', res.data.access_token);
+      if (res.data.user) {
+        localStorage.setItem('admin_user', JSON.stringify(res.data.user));
+        this.currentUser.set(res.data.user);
+      }
+    }));
+  }
+
   private handleAuth(data: { access_token: string; user: AdminAuthUser }) {
     localStorage.setItem('admin_access_token', data.access_token);
     localStorage.setItem('admin_user', JSON.stringify(data.user));

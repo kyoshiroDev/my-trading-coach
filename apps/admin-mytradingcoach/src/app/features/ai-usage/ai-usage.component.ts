@@ -15,11 +15,24 @@ import { AdminApi, AiUsageData } from '../../core/api/admin.api';
 export class AiUsageComponent {
   private readonly adminApi = inject(AdminApi);
   private readonly destroyRef = inject(DestroyRef);
+
   protected readonly data = signal<AiUsageData | null>(null);
+  protected readonly loading = signal(true);
+  protected readonly error = signal(false);
 
   constructor() {
-    this.adminApi.aiUsage()
-      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
-      .subscribe(r => this.data.set(r?.data ?? null));
+    this.adminApi
+      .aiUsage()
+      .pipe(
+        catchError(() => {
+          this.error.set(true);
+          return of(null);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(r => {
+        if (r) this.data.set(r.data);
+        this.loading.set(false);
+      });
   }
 }

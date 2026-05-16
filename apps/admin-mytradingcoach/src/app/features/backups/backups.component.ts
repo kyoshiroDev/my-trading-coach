@@ -20,6 +20,14 @@ import { VpsApi, Backup } from '../../core/api/vps.api';
           {{ creating() ? 'Création...' : 'Nouveau backup' }}
         </button>
       </div>
+      @if (loading()) {
+        <div class="empty-state">Chargement...</div>
+      } @else if (error()) {
+        <div class="empty-state">
+          <span>Module Sauvegardes non disponible</span>
+          <span>Déployer le module NestJS VPS pour activer cette section.</span>
+        </div>
+      } @else {
       <div class="card">
         @for (b of backups(); track b.filename) {
           <div class="backup-row">
@@ -39,6 +47,7 @@ import { VpsApi, Backup } from '../../core/api/vps.api';
           <div class="empty-state">Aucune sauvegarde disponible</div>
         }
       </div>
+      }
     </div>
   `,
 })
@@ -47,12 +56,24 @@ export class BackupsComponent {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly backups = signal<Backup[]>([]);
   protected readonly creating = signal(false);
+  protected readonly loading = signal(true);
+  protected readonly error = signal(false);
   protected readonly PlusIcon = Plus;
   protected readonly TrashIcon = Trash2;
 
   constructor() {
-    this.vpsApi.backups().pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
-      .subscribe(r => this.backups.set(r?.data ?? []));
+    this.vpsApi.backups()
+      .pipe(
+        catchError(() => {
+          this.error.set(true);
+          return of(null);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(r => {
+        if (r) this.backups.set(r.data);
+        this.loading.set(false);
+      });
   }
 
   protected createBackup() {

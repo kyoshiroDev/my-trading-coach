@@ -17,6 +17,14 @@ import { VpsApi, DockerContainer } from '../../core/api/vps.api';
         <h1 class="page-title">Containers Docker</h1>
         <span class="refresh-hint">Auto 10s</span>
       </div>
+      @if (loading()) {
+        <div class="empty-state">Chargement...</div>
+      } @else if (error()) {
+        <div class="empty-state">
+          <span>Module Docker non disponible</span>
+          <span>Déployer le module NestJS VPS pour activer cette section.</span>
+        </div>
+      } @else {
       <div class="card">
         @for (c of containers(); track c.id) {
           <div class="container-row">
@@ -47,9 +55,10 @@ import { VpsApi, DockerContainer } from '../../core/api/vps.api';
           </div>
         }
         @if (containers().length === 0) {
-          <div class="empty-state">Module Docker non disponible</div>
+          <div class="empty-state">Aucun container trouvé</div>
         }
       </div>
+      }
     </div>
   `,
 })
@@ -57,6 +66,8 @@ export class ContainersComponent {
   private readonly vpsApi = inject(VpsApi);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly containers = signal<DockerContainer[]>([]);
+  protected readonly loading = signal(true);
+  protected readonly error = signal(false);
 
   protected readonly PlayIcon = Play;
   protected readonly StopIcon = Square;
@@ -66,9 +77,19 @@ export class ContainersComponent {
   constructor() {
     interval(10_000).pipe(
       startWith(0),
-      switchMap(() => this.vpsApi.containers().pipe(catchError(() => of(null)))),
+      switchMap(() =>
+        this.vpsApi.containers().pipe(
+          catchError(() => {
+            this.error.set(true);
+            return of(null);
+          }),
+        ),
+      ),
       takeUntilDestroyed(this.destroyRef),
-    ).subscribe(r => this.containers.set(r?.data ?? []));
+    ).subscribe(r => {
+      if (r) this.containers.set(r.data);
+      this.loading.set(false);
+    });
   }
 
   protected action(id: string, a: 'start' | 'stop' | 'restart') {

@@ -1,6 +1,13 @@
 <div class="content">
   <h1 class="page-title">Usage IA</h1>
-  @if (data(); as d) {
+  @if (loading()) {
+    <div class="empty-state">Chargement...</div>
+  } @else if (error()) {
+    <div class="empty-state">
+      <span>Module Usage IA non disponible</span>
+      <span>L'endpoint /admin/ai-usage n'est pas encore déployé.</span>
+    </div>
+  } @else if (data(); as d) {
     <div class="two-col">
       <div class="card">
         <div class="card-header"><span class="card-title">Aujourd'hui</span></div>
@@ -51,7 +58,5 @@
         </div>
       </div>
     </div>
-  } @else {
-    <div class="loading">Chargement...</div>
   }
 </div>

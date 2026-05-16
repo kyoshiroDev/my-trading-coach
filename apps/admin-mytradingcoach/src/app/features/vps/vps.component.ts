@@ -17,7 +17,14 @@ import { VpsApi, VpsStats } from '../../core/api/vps.api';
         <h1 class="page-title">VPS / Serveur</h1>
         <span class="refresh-hint">Auto 10s</span>
       </div>
-      @if (stats(); as s) {
+      @if (loading()) {
+        <div class="empty-state">Connexion SSH au VPS...</div>
+      } @else if (error()) {
+        <div class="empty-state">
+          <span>Module VPS non disponible</span>
+          <span>Déployer le module NestJS VPS pour activer cette section.</span>
+        </div>
+      } @else if (stats(); as s) {
         <div class="two-col">
           <div class="card">
             <div class="card-header"><span class="card-title">Ressources système</span></div>
@@ -47,11 +54,6 @@ import { VpsApi, VpsStats } from '../../core/api/vps.api';
             <div class="info-row"><span class="info-label">Uptime</span><span class="info-val">{{ formatUptime(s.uptime) }}</span></div>
           </div>
         </div>
-      } @else {
-        <div class="empty-state">
-          <span>Module VPS non disponible</span>
-          <span>Déployer le module NestJS VPS pour activer cette section.</span>
-        </div>
       }
     </div>
   `,
@@ -60,13 +62,25 @@ export class VpsComponent {
   private readonly vpsApi = inject(VpsApi);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly stats = signal<VpsStats | null>(null);
+  protected readonly loading = signal(true);
+  protected readonly error = signal(false);
 
   constructor() {
     interval(10_000).pipe(
       startWith(0),
-      switchMap(() => this.vpsApi.stats().pipe(catchError(() => of(null)))),
+      switchMap(() =>
+        this.vpsApi.stats().pipe(
+          catchError(() => {
+            this.error.set(true);
+            return of(null);
+          }),
+        ),
+      ),
       takeUntilDestroyed(this.destroyRef),
-    ).subscribe(r => this.stats.set(r?.data ?? null));
+    ).subscribe(r => {
+      if (r) this.stats.set(r.data);
+      this.loading.set(false);
+    });
   }
 
   protected formatUptime(s: number): string {
