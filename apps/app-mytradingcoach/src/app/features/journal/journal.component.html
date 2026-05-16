@@ -1,0 +1,125 @@
+<mtc-topbar
+  title="Journal"
+  [showAddButton]="true"
+  addLabel="Nouveau trade"
+  addTestId="add-trade-btn"
+  (addClick)="openModal()"
+/>
+
+<div class="content">
+  <!-- Filtres + actions -->
+  <div class="journal-filters">
+    <button class="filter-chip" [class.active]="filterSide() === 'ALL'" (click)="filterSide.set('ALL')">Tous</button>
+    <button class="filter-chip" data-testid="filter-long" [class.active]="filterSide() === 'LONG'" (click)="filterSide.set('LONG')">LONG</button>
+    <button class="filter-chip" data-testid="filter-short" [class.active]="filterSide() === 'SHORT'" (click)="filterSide.set('SHORT')">SHORT</button>
+    @for (setup of SETUPS; track setup) {
+      <button class="filter-chip" [class.active]="filterSetup() === setup" (click)="toggleSetupFilter(setup)">{{ setup }}</button>
+    }
+    <button
+      class="filter-chip import-btn"
+      [class.import-locked]="!userStore.isPremium()"
+      (click)="showImport.set(true)"
+      [title]="userStore.isPremium() ? 'Importer un CSV' : 'Fonctionnalité Premium'"
+    >
+      <lucide-icon [img]="UploadIcon" [size]="12" />
+      CSV
+      @if (!userStore.isPremium()) { <span class="lock-badge">⚡</span> }
+    </button>
+  </div>
+
+  <!-- Vue par jour -->
+  @if (tradesStore.isLoading()) {
+    <div class="loading-state">Chargement des trades...</div>
+  } @else if (tradesByDay().length === 0) {
+    <div class="empty-state" data-testid="empty-state">
+      <div class="empty-state-icon">📖</div>
+      <h3 class="empty-state-title">Aucun trade enregistré</h3>
+      <p class="empty-state-desc">Commence à journaliser tes trades pour obtenir des analyses IA personnalisées</p>
+      <button class="btn-primary" (click)="openModal()">+ Ajouter mon premier trade</button>
+    </div>
+  } @else {
+    <div class="trades-by-day">
+      @for (day of tradesByDay(); track day.label) {
+        <div class="day-group">
+          <div class="day-header" role="button" tabindex="0"
+            (click)="toggleDay(day.label)"
+            (keydown.enter)="toggleDay(day.label)">
+            <span class="day-chevron" [class.collapsed]="isDayCollapsed(day.label)">›</span>
+            <span class="day-label">{{ day.label }}</span>
+            <div class="day-stats">
+              <span class="day-count">{{ day.count }} trade{{ day.count > 1 ? 's' : '' }}</span>
+              <span class="day-sep">·</span>
+              @if (day.totalCommission > 0) {
+                <span class="day-commission">-${{ day.totalCommission | number:'1.2-2' }} frais</span>
+                <span class="day-sep">·</span>
+              }
+              <span class="day-pnl" [class.positive]="day.totalPnl >= 0" [class.negative]="day.totalPnl < 0">
+                {{ day.totalPnl >= 0 ? '+' : '' }}${{ day.totalPnl | number:'1.2-2' }}
+              </span>
+              <span class="day-winrate">{{ day.winCount }}/{{ day.count }}</span>
+            </div>
+          </div>
+
+          @if (!isDayCollapsed(day.label)) {
+            <div class="day-trades table-wrap">
+              <table class="journal-table">
+                <thead>
+                  <tr>
+                    <th>Asset</th><th>Sens</th><th>Entry</th><th>Exit</th>
+                    <th>P&L</th><th class="col-qty">Qté</th><th>R/R</th>
+                    <th>Émotion</th><th>Setup</th><th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (trade of day.trades; track trade.id) {
+                    <tr data-testid="trade-row">
+                      <td class="td-asset">{{ trade.asset }}</td>
+                      <td><span class="trade-side" [class]="trade.side === 'LONG' ? 'long' : 'short'">{{ trade.side }}</span></td>
+                      <td class="mono">{{ trade.entry }}</td>
+                      <td class="mono">{{ trade.exit ?? '—' }}</td>
+                      <td class="mono" data-testid="trade-pnl" [style.color]="trade.pnl | pnlColor">
+                        {{ trade.pnl | pnlFormat: trade.entry }}
+                        @if (trade.commission) {
+                          <span class="commission-badge">-${{ trade.commission | number:'1.2-2' }}</span>
+                        }
+                      </td>
+                      <td class="mono col-qty">{{ trade.quantity ?? 1 }}</td>
+                      <td class="mono">{{ trade.riskReward !== null ? trade.riskReward!.toFixed(2) : '—' }}</td>
+                      <td><span class="emotion-cell">{{ trade.emotion | emotionEmoji }} <span class="emotion-text">{{ trade.emotion }}</span></span></td>
+                      <td><span class="setup-badge">{{ trade.setup }}</span></td>
+                      <td>
+                        <div class="td-actions">
+                          <button class="btn-edit" (click)="openEditModal(trade)" title="Modifier"><lucide-icon [img]="PencilIcon" [size]="12" /></button>
+                          <button class="btn-delete" data-testid="trade-delete" (click)="deleteTrade(trade.id)" title="Supprimer"><lucide-icon [img]="XIcon" [size]="12" /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    @if (tradesStore.hasNextPage()) {
+      <button class="btn-load-more" (click)="loadMore()">Charger plus de trades</button>
+    }
+  }
+</div>
+
+<mtc-trade-form
+  [open]="showModal()"
+  [editTrade]="selectedTrade()"
+  [isSaving]="isSubmitting()"
+  [apiError]="submitError()"
+  (dismissed)="closeModal()"
+  (formSave)="submitTrade($event)"
+/>
+
+<mtc-csv-import
+  [open]="showImport()"
+  (dismissed)="showImport.set(false)"
+  (imported)="onImported()"
+/>

@@ -56,7 +56,8 @@ type NumericField =
   | 'stopLoss'
   | 'takeProfit'
   | 'quantity'
-  | 'capitalEngaged';
+  | 'capitalEngaged'
+  | 'commission';
 
 @Component({
   selector: 'mtc-trade-form',
@@ -85,6 +86,13 @@ export class TradeFormComponent {
   protected readonly autoPnl = signal<number | undefined>(undefined);
   protected readonly autoPnlPct = signal<number | undefined>(undefined);
   protected readonly autoRR = signal<number | undefined>(undefined);
+
+  protected readonly pnlNet = computed(() => {
+    const pnl = this.form().pnl ?? this.autoPnl();
+    if (pnl === undefined || pnl === null) return undefined;
+    const comm = Math.abs(this.form().commission ?? 0);
+    return pnl - comm;
+  });
   protected readonly zodErrors = signal<Record<string, string>>({});
   protected readonly exitMode = signal<'SL' | 'TP' | null>(null);
   protected readonly leverage = signal<number>(1);
@@ -170,6 +178,7 @@ export class TradeFormComponent {
           stopLoss: t.stopLoss ?? undefined,
           takeProfit: t.takeProfit ?? undefined,
           pnl: t.pnl ?? undefined,
+          commission: t.commission ?? undefined,
           riskReward: t.riskReward ?? undefined,
           quantity: t.quantity ?? 1,
           capitalEngaged: t.capitalEngaged ?? undefined,
@@ -395,6 +404,7 @@ export class TradeFormComponent {
       timeframe: '1h',
       quantity: 1,
       capitalEngaged: undefined,
+      commission: undefined,
       tradedAt: new Date().toLocaleDateString('sv-SE'),
     };
   }

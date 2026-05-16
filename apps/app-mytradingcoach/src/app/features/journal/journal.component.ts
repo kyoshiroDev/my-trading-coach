@@ -8,7 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { LucideAngularModule, X, Pencil, Upload } from 'lucide-angular';
 import { TradesStore, Trade } from '../../core/stores/trades.store';
@@ -40,6 +40,7 @@ const SETUPS = [
   standalone: true,
   imports: [
     DatePipe,
+    DecimalPipe,
     LucideAngularModule,
     TopbarComponent,
     TradeFormComponent,
@@ -50,188 +51,7 @@ const SETUPS = [
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './journal.component.css',
-  template: `
-    <mtc-topbar
-      title="Journal"
-      [showAddButton]="true"
-      addLabel="Nouveau trade"
-      addTestId="add-trade-btn"
-      (addClick)="openModal()"
-    />
-
-    <div class="content">
-      <!-- Filtres + actions -->
-      <div class="journal-filters">
-        <button
-          class="filter-chip"
-          [class.active]="filterSide() === 'ALL'"
-          (click)="filterSide.set('ALL')"
-        >
-          Tous
-        </button>
-        <button
-          class="filter-chip"
-          data-testid="filter-long"
-          [class.active]="filterSide() === 'LONG'"
-          (click)="filterSide.set('LONG')"
-        >
-          LONG
-        </button>
-        <button
-          class="filter-chip"
-          data-testid="filter-short"
-          [class.active]="filterSide() === 'SHORT'"
-          (click)="filterSide.set('SHORT')"
-        >
-          SHORT
-        </button>
-        @for (setup of SETUPS; track setup) {
-          <button
-            class="filter-chip"
-            [class.active]="filterSetup() === setup"
-            (click)="toggleSetupFilter(setup)"
-          >
-            {{ setup }}
-          </button>
-        }
-        <button
-          class="filter-chip import-btn"
-          [class.import-locked]="!userStore.isPremium()"
-          (click)="showImport.set(true)"
-          [title]="
-            userStore.isPremium() ? 'Importer un CSV' : 'Fonctionnalité Premium'
-          "
-        >
-          <lucide-icon [img]="UploadIcon" [size]="12" />
-          CSV
-          @if (!userStore.isPremium()) {
-            <span class="lock-badge">⚡</span>
-          }
-        </button>
-      </div>
-
-      <!-- Tableau -->
-      @if (tradesStore.isLoading()) {
-        <div class="loading-state">Chargement des trades...</div>
-      } @else if (filteredTrades().length === 0) {
-        <div class="empty-state" data-testid="empty-state">
-          <div class="empty-state-icon">📖</div>
-          <h3 class="empty-state-title">Aucun trade enregistré</h3>
-          <p class="empty-state-desc">
-            Commence à journaliser tes trades pour obtenir des analyses IA
-            personnalisées
-          </p>
-          <button class="btn-primary" (click)="openModal()">
-            + Ajouter mon premier trade
-          </button>
-        </div>
-      } @else {
-        <div class="table-wrap">
-          <table class="journal-table">
-            <thead>
-              <tr>
-                <th>Asset</th>
-                <th>Sens</th>
-                <th>Entry</th>
-                <th>Exit</th>
-                <th>P&amp;L</th>
-                <th class="col-qty">Qté</th>
-                <th>R/R</th>
-                <th>Émotion</th>
-                <th>Setup</th>
-                <th>Date</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (trade of filteredTrades(); track trade.id) {
-                <tr data-testid="trade-row">
-                  <td class="td-asset">{{ trade.asset }}</td>
-                  <td>
-                    <span
-                      class="trade-side"
-                      [class]="trade.side === 'LONG' ? 'long' : 'short'"
-                    >
-                      {{ trade.side }}
-                    </span>
-                  </td>
-                  <td class="mono">{{ trade.entry }}</td>
-                  <td class="mono">{{ trade.exit ?? '—' }}</td>
-                  <td
-                    class="mono"
-                    data-testid="trade-pnl"
-                    [style.color]="trade.pnl | pnlColor"
-                  >
-                    {{ trade.pnl | pnlFormat: trade.entry }}
-                  </td>
-                  <td class="mono col-qty">{{ trade.quantity ?? 1 }}</td>
-                  <td class="mono">
-                    {{
-                      trade.riskReward !== null
-                        ? trade.riskReward.toFixed(2)
-                        : '—'
-                    }}
-                  </td>
-                  <td>
-                    <span class="emotion-cell">
-                      {{ trade.emotion | emotionEmoji }}
-                      <span class="emotion-text">{{ trade.emotion }}</span>
-                    </span>
-                  </td>
-                  <td>
-                    <span class="setup-badge">{{ trade.setup }}</span>
-                  </td>
-                  <td class="mono td-date">
-                    {{ trade.tradedAt | date: 'dd/MM/yy' }}
-                  </td>
-                  <td>
-                    <div class="td-actions">
-                      <button
-                        class="btn-edit"
-                        (click)="openEditModal(trade)"
-                        title="Modifier"
-                      >
-                        <lucide-icon [img]="PencilIcon" [size]="12" />
-                      </button>
-                      <button
-                        class="btn-delete"
-                        data-testid="trade-delete"
-                        (click)="deleteTrade(trade.id)"
-                        title="Supprimer"
-                      >
-                        <lucide-icon [img]="XIcon" [size]="12" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-
-        @if (tradesStore.hasNextPage()) {
-          <button class="btn-load-more" (click)="loadMore()">
-            Charger plus de trades
-          </button>
-        }
-      }
-    </div>
-
-    <mtc-trade-form
-      [open]="showModal()"
-      [editTrade]="selectedTrade()"
-      [isSaving]="isSubmitting()"
-      [apiError]="submitError()"
-      (dismissed)="closeModal()"
-      (formSave)="submitTrade($event)"
-    />
-
-    <mtc-csv-import
-      [open]="showImport()"
-      (dismissed)="showImport.set(false)"
-      (imported)="onImported()"
-    />
-  `,
+  templateUrl: './journal.component.html',
 })
 export class JournalComponent implements OnInit {
   protected readonly tradesStore = inject(TradesStore);
@@ -261,6 +81,50 @@ export class JournalComponent implements OnInit {
     if (setup) trades = trades.filter((t) => t.setup === setup);
     return trades;
   });
+
+  protected readonly collapsedDays = signal<Set<string>>(new Set());
+
+  protected readonly tradesByDay = computed(() => {
+    const trades = this.filteredTrades();
+    if (!trades.length) return [];
+
+    const groups = new Map<string, Trade[]>();
+    for (const trade of trades) {
+      const key = new Date(trade.tradedAt).toLocaleDateString('fr-FR', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+      });
+      const existing = groups.get(key) ?? [];
+      existing.push(trade);
+      groups.set(key, existing);
+    }
+
+    return Array.from(groups.entries())
+      .sort(([, a], [, b]) =>
+        new Date(b[0].tradedAt).getTime() - new Date(a[0].tradedAt).getTime(),
+      )
+      .map(([label, dayTrades]) => ({
+        label,
+        trades: dayTrades.sort(
+          (a, b) => new Date(b.tradedAt).getTime() - new Date(a.tradedAt).getTime(),
+        ),
+        totalPnl: dayTrades.reduce((s, t) => s + (t.pnl ?? 0), 0),
+        totalCommission: dayTrades.reduce((s, t) => s + Math.abs(t.commission ?? 0), 0),
+        count: dayTrades.length,
+        winCount: dayTrades.filter((t) => (t.pnl ?? 0) > 0).length,
+      }));
+  });
+
+  protected toggleDay(label: string): void {
+    this.collapsedDays.update((set) => {
+      const next = new Set(set);
+      next.has(label) ? next.delete(label) : next.add(label);
+      return next;
+    });
+  }
+
+  protected isDayCollapsed(label: string): boolean {
+    return this.collapsedDays().has(label);
+  }
 
   ngOnInit() {
     this.tradesStore.loadTrades();

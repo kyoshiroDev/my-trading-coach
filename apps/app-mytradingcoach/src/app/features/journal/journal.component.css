@@ -566,3 +566,42 @@
 .lock-badge {
   font-size: 10px;
 }
+
+/* ── Vue par jour ── */
+.trades-by-day { display: flex; flex-direction: column; }
+.day-group { border-bottom: 1px solid var(--border); }
+.day-group:last-child { border-bottom: none; }
+.day-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 20px; cursor: pointer;
+  background: var(--bg-card); user-select: none;
+  transition: background 0.1s;
+}
+.day-header:hover { background: var(--bg-2); }
+.day-chevron {
+  font-size: 14px; color: var(--text-3);
+  transform: rotate(90deg); transition: transform 0.2s;
+  width: 14px; flex-shrink: 0;
+}
+.day-chevron.collapsed { transform: rotate(0deg); }
+.day-label {
+  font-size: 13px; font-weight: 600; color: var(--text);
+  text-transform: capitalize; flex: 1;
+}
+.day-stats { display: flex; align-items: center; gap: 7px; font-size: 11px; font-family: var(--font-mono); }
+.day-count   { color: var(--text-3); }
+.day-sep     { color: var(--text-3); opacity: 0.4; }
+.day-commission { color: var(--red); }
+.day-pnl     { font-weight: 600; }
+.day-pnl.positive { color: var(--green); }
+.day-pnl.negative { color: var(--red); }
+.day-winrate { color: var(--text-3); }
+.day-trades  { border-top: 1px solid var(--border); }
+.commission-badge { font-size: 9px; color: var(--red); margin-left: 4px; font-family: var(--font-mono); opacity: 0.8; }
+
+@media (max-width: 768px) {
+  .day-header { padding: 9px 14px; }
+  .day-label  { font-size: 12px; }
+  .day-stats  { font-size: 10px; gap: 5px; }
+  .day-winrate, .day-commission { display: none; }
+}

@@ -272,6 +272,36 @@
             </div>
           </div>
 
+          <!-- 6b. Commission -->
+          <div class="form-group commission-group">
+            <label class="field-label-small" for="tf-commission">
+              Commission / Frais
+              <span class="optional">(optionnel)</span>
+            </label>
+            <div class="commission-row">
+              <div class="input-prefix-wrap commission-input">
+                <span class="input-prefix">$</span>
+                <input
+                  id="tf-commission"
+                  type="text"
+                  inputmode="decimal"
+                  [value]="form().commission ?? ''"
+                  (input)="filterNumeric($event, 'commission')"
+                  name="commission"
+                  placeholder="0.00"
+                />
+              </div>
+              @if (pnlNet() !== undefined && form().commission) {
+                <div class="pnl-net-hint">
+                  P&L net :
+                  <span [class.text-green]="pnlNet()! >= 0" [class.text-red]="pnlNet()! < 0">
+                    {{ pnlNet()! >= 0 ? '+' : '' }}${{ pnlNet()!.toFixed(2) }}
+                  </span>
+                </div>
+              }
+            </div>
+          </div>
+
           <!-- 7. État émotionnel -->
           <div class="form-group">
             <span class="section-label">État émotionnel</span>

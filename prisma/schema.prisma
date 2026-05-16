@@ -63,6 +63,7 @@ model Trade {
   stopLoss   Float?
   takeProfit Float?
   pnl        Float?
+  commission Float?
   riskReward Float?
   quantity        Float?
   capitalEngaged  Float?
