@@ -129,7 +129,7 @@
 /* ── Header colonnes unique ── */
 .table-header {
   display: grid;
-  grid-template-columns: 90px 70px 90px 90px 110px 50px 50px 1fr 100px 70px;
+  grid-template-columns: 90px 70px 90px 90px 120px 50px 50px 130px 100px 70px;
   padding: 5px 16px 5px 32px;
   border-bottom: 1px solid var(--border);
   background: var(--bg-2);
@@ -176,7 +176,7 @@
 .day-trades { background: var(--bg); }
 .trade-row {
   display: grid;
-  grid-template-columns: 90px 70px 90px 90px 110px 50px 50px 1fr 100px 70px;
+  grid-template-columns: 90px 70px 90px 90px 120px 50px 50px 130px 100px 70px;
   align-items: center;
   padding: 7px 16px 7px 32px;
   border-top: 1px solid var(--border);
