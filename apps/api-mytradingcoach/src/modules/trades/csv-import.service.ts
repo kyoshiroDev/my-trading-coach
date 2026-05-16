@@ -50,14 +50,22 @@ export class CsvImportService {
     if (lines.length < 2) throw new BadRequestException('CSV sans données');
 
     const normalizedCsv = this.preprocessCsv(content);
-    const truncated = normalizedCsv.split('\n').slice(0, 101).join('\n');
+    const normalizedLines = normalizedCsv.split('\n');
 
+    if (normalizedLines.length > 501) {
+      throw new BadRequestException(
+        `Fichier trop volumineux : ${normalizedLines.length - 1} trades détectés. ` +
+        `Importe maximum 500 trades à la fois en découpant ton fichier par période.`,
+      );
+    }
+
+    const truncated = normalizedLines.slice(0, 501).join('\n');
     const prompt = this.buildPrompt(filename, truncated);
 
     try {
       const response = await this.anthropic.messages.create({
         model: MODEL,
-        max_tokens: 4096,
+        max_tokens: 8192,
         system: [
           {
             type: 'text',
@@ -76,8 +84,25 @@ export class CsvImportService {
         .replace(/```\s*$/i, '')
         .trim();
 
-      const parsed = JSON.parse(clean) as ClaudeResponse;
-      if (!Array.isArray(parsed.trades)) throw new Error('Format inattendu');
+      let parsed: ClaudeResponse;
+      try {
+        parsed = JSON.parse(clean) as ClaudeResponse;
+      } catch {
+        this.logger.error(
+          `JSON invalide reçu de Claude pour "${filename}":`,
+          clean.slice(0, 200),
+        );
+        throw new BadRequestException(
+          "Le fichier CSV n'a pas pu être interprété. " +
+          "Vérifie que c'est bien un export de trades fermés (pas un historique d'ordres).",
+        );
+      }
+
+      if (!Array.isArray(parsed.trades)) {
+        throw new BadRequestException(
+          'Format de réponse inattendu. Réessaie avec un fichier plus petit.',
+        );
+      }
 
       if (parsed.errors?.length) {
         this.logger.warn(
@@ -90,19 +115,25 @@ export class CsvImportService {
 
       return this.mapToDto(parsed.trades);
     } catch (err) {
+      if (err instanceof BadRequestException) throw err;
       this.logger.error('Erreur parsing CSV', err);
-      throw new BadRequestException('Impossible de parser ce fichier CSV');
+      throw new BadRequestException(
+        "Erreur lors de l'analyse du fichier. " +
+        "Assure-toi que le fichier est bien un export CSV de trades fermés depuis ton broker.",
+      );
     }
   }
 
   // ── Prétraitement ───────────────────────────────────────────────────────────
 
   private preprocessCsv(raw: string): string {
-    const lines = raw
+    // Supprimer BOM UTF-8 que certains exports Windows ajoutent
+    const cleaned = raw.charCodeAt(0) === 0xFEFF ? raw.slice(1) : raw;
+    const lines = cleaned
       .trim()
       .split('\n')
       .filter((l) => l.trim());
-    if (lines.length < 2) return raw;
+    if (lines.length < 2) return cleaned;
 
     const broker = this.detectBroker(lines[0]);
 
@@ -498,6 +529,7 @@ ${csv}`;
         exit: t.exit > 0 ? t.exit : undefined,
         quantity: t.quantity || 1,
         pnl: t.pnl,
+        commission: (t as any).commission ?? undefined,
         emotion: 'NEUTRAL' as const,
         setup: 'BREAKOUT' as const,
         session: this.detectSession(t.tradedAt),

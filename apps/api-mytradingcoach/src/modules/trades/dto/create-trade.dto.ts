@@ -46,6 +46,10 @@ export class CreateTradeDto {
 
   @IsNumber()
   @IsOptional()
+  commission?: number;
+
+  @IsNumber()
+  @IsOptional()
   riskReward?: number;
 
   @IsNumber()

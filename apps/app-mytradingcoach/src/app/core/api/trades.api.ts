@@ -22,6 +22,7 @@ export interface Trade {
   stopLoss: number | null;
   takeProfit: number | null;
   pnl: number | null;
+  commission: number | null;
   riskReward: number | null;
   quantity: number | null;
   capitalEngaged: number | null;
@@ -49,6 +50,7 @@ export interface CreateTradeDto {
   stopLoss?: number;
   takeProfit?: number;
   pnl?: number;
+  commission?: number;
   riskReward?: number;
   quantity?: number;
   capitalEngaged?: number;

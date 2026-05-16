@@ -493,6 +493,19 @@ input[type='date'] {
   opacity: 0.8;
 }
 
+.commission-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.commission-input { flex: 0 0 140px; }
+.pnl-net-hint {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-2);
+}
+
 .rr-badge {
   background: var(--bg-3);
   border: 1px solid var(--border);
