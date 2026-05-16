@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { interval } from 'rxjs';
-import { startWith, switchMap } from 'rxjs/operators';
+import { interval, of } from 'rxjs';
+import { catchError, startWith, switchMap } from 'rxjs/operators';
 import { VpsApi, VpsStats } from '../../core/api/vps.api';
 
 @Component({
@@ -48,7 +48,10 @@ import { VpsApi, VpsStats } from '../../core/api/vps.api';
           </div>
         </div>
       } @else {
-        <div class="loading">Connexion SSH au VPS...</div>
+        <div class="empty-state">
+          <span>Module VPS non disponible</span>
+          <span>Déployer le module NestJS VPS pour activer cette section.</span>
+        </div>
       }
     </div>
   `,
@@ -59,8 +62,11 @@ export class VpsComponent {
   protected readonly stats = signal<VpsStats | null>(null);
 
   constructor() {
-    interval(10_000).pipe(startWith(0), switchMap(() => this.vpsApi.stats()), takeUntilDestroyed(this.destroyRef))
-      .subscribe(r => this.stats.set(r.data));
+    interval(10_000).pipe(
+      startWith(0),
+      switchMap(() => this.vpsApi.stats().pipe(catchError(() => of(null)))),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(r => this.stats.set(r?.data ?? null));
   }
 
   protected formatUptime(s: number): string {

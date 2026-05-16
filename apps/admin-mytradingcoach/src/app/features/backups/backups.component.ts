@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
 import { LucideAngularModule, Plus, Trash2 } from 'lucide-angular';
 import { VpsApi, Backup } from '../../core/api/vps.api';
 
@@ -35,7 +36,7 @@ import { VpsApi, Backup } from '../../core/api/vps.api';
           </div>
         }
         @if (backups().length === 0) {
-          <div class="empty">Aucune sauvegarde disponible</div>
+          <div class="empty-state">Aucune sauvegarde disponible</div>
         }
       </div>
     </div>
@@ -50,7 +51,8 @@ export class BackupsComponent {
   protected readonly TrashIcon = Trash2;
 
   constructor() {
-    this.vpsApi.backups().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(r => this.backups.set(r.data));
+    this.vpsApi.backups().pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .subscribe(r => this.backups.set(r?.data ?? []));
   }
 
   protected createBackup() {

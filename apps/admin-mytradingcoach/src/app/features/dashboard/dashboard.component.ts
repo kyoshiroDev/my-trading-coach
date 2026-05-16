@@ -1,12 +1,15 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
 import { AdminApi, AdminStats, AdminOnlineUser } from '../../core/api/admin.api';
+import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
 
 @Component({
   selector: 'mtc-admin-dashboard',
   standalone: true,
-  imports: [DatePipe, DecimalPipe],
+  imports: [DatePipe, DecimalPipe, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './dashboard.component.css',
   template: `
@@ -15,6 +18,7 @@ import { AdminApi, AdminStats, AdminOnlineUser } from '../../core/api/admin.api'
         <h1 class="page-title">Dashboard</h1>
         <span class="page-date">{{ now | date:'d MMMM yyyy · HH:mm' }}</span>
       </div>
+
       @if (loading()) {
         <div class="loading">Chargement...</div>
       } @else if (stats(); as s) {
@@ -22,22 +26,24 @@ import { AdminApi, AdminStats, AdminOnlineUser } from '../../core/api/admin.api'
           <div class="stat-card teal">
             <div class="stat-label">MRR</div>
             <div class="stat-value">€{{ s.mrr | number:'1.0-0' }}</div>
-            <div class="stat-change neutral">ARR €{{ s.arr | number:'1.0-0' }}</div>
+            <div class="stat-change neutral">
+              @if (s.mrr === 0) { Beta uniquement } @else { ARR €{{ s.arr | number:'1.0-0' }} }
+            </div>
           </div>
           <div class="stat-card blue">
             <div class="stat-label">Utilisateurs</div>
-            <div class="stat-value">{{ s.freeUsers + s.totalPremium }}</div>
+            <div class="stat-value">{{ s.freeUsers + s.totalPremium + s.betaTesters }}</div>
             <div class="stat-change up">↑ +{{ s.newThisMonth }} ce mois</div>
           </div>
           <div class="stat-card green">
             <div class="stat-label">Premium</div>
             <div class="stat-value">{{ s.totalPremium }}</div>
-            <div class="stat-change neutral">{{ s.trials }} en essai</div>
+            <div class="stat-change neutral">+ {{ s.betaTesters }} beta gratuits</div>
           </div>
           <div class="stat-card amber">
             <div class="stat-label">Mensuel / Annuel</div>
             <div class="stat-value">{{ s.monthly }} / {{ s.annual }}</div>
-            <div class="stat-change neutral">abonnements actifs</div>
+            <div class="stat-change neutral">abonnements Stripe</div>
           </div>
           <div class="stat-card purple">
             <div class="stat-label">Churn</div>
@@ -46,11 +52,12 @@ import { AdminApi, AdminStats, AdminOnlineUser } from '../../core/api/admin.api'
           </div>
         </div>
       }
+
       @if (onlineUsers().length > 0) {
         <div class="card">
           <div class="card-header">
             <span class="card-title">Utilisateurs actifs (5 min)</span>
-            <span class="card-action">{{ onlineUsers().length }} en ligne</span>
+            <span class="online-count">{{ onlineUsers().length }} en ligne</span>
           </div>
           <div class="table-wrap">
             <table>
@@ -67,7 +74,14 @@ import { AdminApi, AdminStats, AdminOnlineUser } from '../../core/api/admin.api'
                         </div>
                       </div>
                     </td>
-                    <td><span class="plan-badge" [class.premium]="u.plan==='PREMIUM'" [class.free]="u.plan==='FREE'">{{ u.plan }}</span></td>
+                    <td>
+                      <span class="plan-badge"
+                        [class.premium]="u.plan==='PREMIUM' && u.role!=='BETA_TESTER'"
+                        [class.beta]="u.role==='BETA_TESTER'"
+                        [class.free]="u.plan==='FREE'">
+                        {{ u.role === 'BETA_TESTER' ? 'BETA' : u.plan }}
+                      </span>
+                    </td>
                     <td class="mono-text">{{ u.lastSeenAt | date:'HH:mm:ss' }}</td>
                   </tr>
                 }
@@ -76,22 +90,83 @@ import { AdminApi, AdminStats, AdminOnlineUser } from '../../core/api/admin.api'
           </div>
         </div>
       }
+
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">VPS · OVH · Paris</span>
+          </div>
+          @if (vpsStats(); as v) {
+            <div class="metric-row">
+              <div class="metric-label">CPU</div>
+              <div class="metric-bar"><div class="metric-fill teal" [style.width.%]="v.cpu"></div></div>
+              <div class="metric-val">{{ v.cpu }}%</div>
+            </div>
+            <div class="metric-row">
+              <div class="metric-label">RAM</div>
+              <div class="metric-bar"><div class="metric-fill blue" [style.width.%]="(v.ram.used/v.ram.total)*100"></div></div>
+              <div class="metric-val">{{ ((v.ram.used/v.ram.total)*100) | number:'1.0-0' }}%</div>
+            </div>
+            <div class="metric-row">
+              <div class="metric-label">Disque</div>
+              <div class="metric-bar"><div class="metric-fill amber" [style.width.%]="(v.disk.used/v.disk.total)*100"></div></div>
+              <div class="metric-val">{{ ((v.disk.used/v.disk.total)*100) | number:'1.0-0' }}%</div>
+            </div>
+          } @else {
+            <div class="empty-state">
+              <span>Module VPS non déployé</span>
+              <a routerLink="/vps" class="empty-link">Configurer →</a>
+            </div>
+          }
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Containers Docker</span>
+          </div>
+          @if (containers().length > 0) {
+            @for (c of containers(); track c.id) {
+              <div class="container-row">
+                <div class="container-status" [class.running]="c.status==='running'" [class.error]="c.status==='error'" [class.stopped]="c.status==='stopped'"></div>
+                <div class="container-name">{{ c.name }}</div>
+                <div class="container-cpu mono-text">{{ c.cpu }}%</div>
+              </div>
+            }
+          } @else {
+            <div class="empty-state">
+              <span>Module Docker non déployé</span>
+            </div>
+          }
+        </div>
+      </div>
     </div>
   `,
 })
 export class DashboardComponent {
   private readonly adminApi = inject(AdminApi);
+  private readonly vpsApi = inject(VpsApi);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly now = new Date();
   protected readonly loading = signal(true);
   protected readonly stats = signal<AdminStats | null>(null);
   protected readonly onlineUsers = signal<AdminOnlineUser[]>([]);
+  protected readonly vpsStats = signal<VpsStats | null>(null);
+  protected readonly containers = signal<DockerContainer[]>([]);
 
   constructor() {
     this.adminApi.stats().pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(r => { this.stats.set(r.data); this.loading.set(false); });
+
     this.adminApi.online().pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(r => this.onlineUsers.set(r.data));
+
+    this.vpsApi.stats()
+      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .subscribe(r => this.vpsStats.set(r?.data ?? null));
+
+    this.vpsApi.containers()
+      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .subscribe(r => this.containers.set(r?.data ?? []));
   }
 }

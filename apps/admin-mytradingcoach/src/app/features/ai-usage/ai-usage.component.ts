@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
 import { AdminApi, AiUsageData } from '../../core/api/admin.api';
 
 @Component({
@@ -17,7 +18,8 @@ export class AiUsageComponent {
   protected readonly data = signal<AiUsageData | null>(null);
 
   constructor() {
-    this.adminApi.aiUsage().pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(r => this.data.set(r.data));
+    this.adminApi.aiUsage()
+      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .subscribe(r => this.data.set(r?.data ?? null));
   }
 }

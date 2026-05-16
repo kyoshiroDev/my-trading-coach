@@ -174,7 +174,7 @@ export class UsersService {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const [monthly, annual, trials, freeUsers, newThisMonth, churnedThisMonth] =
+    const [monthly, annual, trials, freeUsers, newThisMonth, churnedThisMonth, betaTesters] =
       await Promise.all([
         this.prisma.user.count({
           where: {
@@ -202,11 +202,13 @@ export class UsersService {
             updatedAt: { gte: startOfMonth },
           },
         }),
+        // accès offert — pas compté dans le MRR
+        this.prisma.user.count({ where: { role: 'BETA_TESTER' } }),
       ]);
 
     const mrr = monthly * 39 + Math.round((annual * 349) / 12);
     const arr = mrr * 12;
-    const totalPremium = monthly + annual;
+    const totalPremium = monthly + annual; // Stripe uniquement
 
     return {
       mrr,
@@ -218,6 +220,7 @@ export class UsersService {
       freeUsers,
       newThisMonth,
       churnedThisMonth,
+      betaTesters,
     };
   }
 

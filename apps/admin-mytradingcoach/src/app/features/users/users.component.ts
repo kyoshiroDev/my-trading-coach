@@ -24,10 +24,10 @@ import { AdminApi, AdminUser, AdminUserDetail } from '../../core/api/admin.api';
       <div class="card">
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Utilisateur</th><th>Plan</th><th>Rôle</th><th>Inscrit</th><th>Activité</th></tr></thead>
+            <thead><tr><th>Utilisateur</th><th>Plan</th><th>Rôle</th><th>Abonnement</th><th>Activité</th><th>Inscrit</th></tr></thead>
             <tbody>
               @if (loading()) {
-                <tr><td colspan="5" class="loading-cell">Chargement...</td></tr>
+                <tr><td colspan="6" class="loading-cell">Chargement...</td></tr>
               } @else {
                 @for (u of users(); track u.id) {
                   <tr (click)="selectUser(u)">
@@ -40,10 +40,27 @@ import { AdminApi, AdminUser, AdminUserDetail } from '../../core/api/admin.api';
                         </div>
                       </div>
                     </td>
-                    <td><span class="plan-badge" [class.premium]="u.plan==='PREMIUM'" [class.free]="u.plan==='FREE'">{{ u.plan }}</span></td>
+                    <td>
+                      <span class="plan-badge"
+                        [class.premium]="u.plan==='PREMIUM' && u.role!=='BETA_TESTER'"
+                        [class.beta]="u.role==='BETA_TESTER'"
+                        [class.free]="u.plan==='FREE'">
+                        {{ u.role === 'BETA_TESTER' ? 'BETA' : u.plan }}
+                      </span>
+                    </td>
                     <td><span class="role-badge" [class.admin]="u.role==='ADMIN'">{{ u.role }}</span></td>
-                    <td class="mono-text">{{ u.createdAt | date:'dd/MM/yy' }}</td>
+                    <td class="mono-text">
+                      @if (u.role === 'BETA_TESTER') {
+                        <span class="badge-beta">Offert</span>
+                      } @else if (u.stripeInterval) {
+                        {{ u.stripeInterval === 'month' ? 'Mensuel' : 'Annuel' }}
+                        @if (u.stripeCurrentPeriodEnd) { · {{ u.stripeCurrentPeriodEnd | date:'dd/MM/yy' }} }
+                      } @else if (u.trialEndsAt) {
+                        Essai · {{ u.trialEndsAt | date:'dd/MM/yy' }}
+                      } @else { — }
+                    </td>
                     <td class="mono-text">{{ u.lastSeenAt ? (u.lastSeenAt | date:'dd/MM HH:mm') : '—' }}</td>
+                    <td class="mono-text">{{ u.createdAt | date:'dd/MM/yy' }}</td>
                   </tr>
                 }
               }

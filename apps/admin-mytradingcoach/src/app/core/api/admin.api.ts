@@ -14,6 +14,7 @@ export interface AdminStats {
   mrr: number; arr: number; totalPremium: number;
   monthly: number; annual: number; trials: number;
   freeUsers: number; newThisMonth: number; churnedThisMonth: number;
+  betaTesters: number;
 }
 
 export interface AdminOnlineUser {

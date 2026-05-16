@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { interval } from 'rxjs';
-import { startWith, switchMap } from 'rxjs/operators';
+import { interval, of } from 'rxjs';
+import { catchError, startWith, switchMap } from 'rxjs/operators';
 import { LucideAngularModule, Play, Square, RotateCcw, Trash2 } from 'lucide-angular';
 import { VpsApi, DockerContainer } from '../../core/api/vps.api';
 
@@ -47,7 +47,7 @@ import { VpsApi, DockerContainer } from '../../core/api/vps.api';
           </div>
         }
         @if (containers().length === 0) {
-          <div class="empty">Aucun container trouvé</div>
+          <div class="empty-state">Module Docker non disponible</div>
         }
       </div>
     </div>
@@ -64,8 +64,11 @@ export class ContainersComponent {
   protected readonly TrashIcon = Trash2;
 
   constructor() {
-    interval(10_000).pipe(startWith(0), switchMap(() => this.vpsApi.containers()), takeUntilDestroyed(this.destroyRef))
-      .subscribe(r => this.containers.set(r.data));
+    interval(10_000).pipe(
+      startWith(0),
+      switchMap(() => this.vpsApi.containers().pipe(catchError(() => of(null)))),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(r => this.containers.set(r?.data ?? []));
   }
 
   protected action(id: string, a: 'start' | 'stop' | 'restart') {
