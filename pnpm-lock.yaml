@@ -270,6 +270,9 @@ importers:
       ioredis:
         specifier: ^5.10.1
         version: 5.10.1
+      node-ssh:
+        specifier: ^13.2.1
+        version: 13.2.1
       passport:
         specifier: ^0.7.0
         version: 0.7.0
