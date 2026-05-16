@@ -99,6 +99,7 @@ export class JournalComponent implements OnInit {
     }
 
     return Array.from(groups.entries())
+      .filter(([, dayTrades]) => dayTrades.length > 0)
       .sort(([, a], [, b]) =>
         new Date(b[0].tradedAt).getTime() - new Date(a[0].tradedAt).getTime(),
       )
