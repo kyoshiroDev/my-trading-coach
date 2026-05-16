@@ -10,6 +10,6 @@ export class AdminController {
 
   @Get('ai-usage')
   async getAiUsage() {
-    return { data: await this.adminService.getAiUsage() };
+    return this.adminService.getAiUsage();
   }
 }
