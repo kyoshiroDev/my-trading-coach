@@ -23,10 +23,7 @@ describe('UserStore', () => {
     mockAuth = makeAuthServiceMock(null);
 
     TestBed.configureTestingModule({
-      providers: [
-        UserStore,
-        { provide: AuthService, useValue: mockAuth },
-      ],
+      providers: [UserStore, { provide: AuthService, useValue: mockAuth }],
     });
 
     store = TestBed.inject(UserStore);
@@ -38,51 +35,99 @@ describe('UserStore', () => {
     });
 
     it('retourne false pour plan FREE sans trial', () => {
-      mockAuth.currentUser.set({ id: '1', email: 'free@test.com', plan: 'FREE', trialEndsAt: null });
+      mockAuth.currentUser.set({
+        id: '1',
+        email: 'free@test.com',
+        plan: 'FREE',
+        trialEndsAt: null,
+      });
       expect(store.isPremium()).toBe(false);
     });
 
     it('retourne true pour plan PREMIUM', () => {
-      mockAuth.currentUser.set({ id: '1', email: 'premium@test.com', plan: 'PREMIUM', trialEndsAt: null });
+      mockAuth.currentUser.set({
+        id: '1',
+        email: 'premium@test.com',
+        plan: 'PREMIUM',
+        trialEndsAt: null,
+      });
       expect(store.isPremium()).toBe(true);
     });
 
     it('retourne true si trial encore valide (dans 3 jours)', () => {
-      const trialEndsAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
-      mockAuth.currentUser.set({ id: '1', email: 'trial@test.com', plan: 'FREE', trialEndsAt });
+      const trialEndsAt = new Date(
+        Date.now() + 3 * 24 * 60 * 60 * 1000,
+      ).toISOString();
+      mockAuth.currentUser.set({
+        id: '1',
+        email: 'trial@test.com',
+        plan: 'FREE',
+        trialEndsAt,
+      });
       expect(store.isPremium()).toBe(true);
     });
 
     it('retourne false si trial expiré (il y a 1 jour)', () => {
-      const trialEndsAt = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      mockAuth.currentUser.set({ id: '1', email: 'expired@test.com', plan: 'FREE', trialEndsAt });
+      const trialEndsAt = new Date(
+        Date.now() - 24 * 60 * 60 * 1000,
+      ).toISOString();
+      mockAuth.currentUser.set({
+        id: '1',
+        email: 'expired@test.com',
+        plan: 'FREE',
+        trialEndsAt,
+      });
       expect(store.isPremium()).toBe(false);
     });
 
     it('est réactif : se met à jour quand le user change', () => {
-      mockAuth.currentUser.set({ id: '1', email: 'test@test.com', plan: 'FREE', trialEndsAt: null });
+      mockAuth.currentUser.set({
+        id: '1',
+        email: 'test@test.com',
+        plan: 'FREE',
+        trialEndsAt: null,
+      });
       expect(store.isPremium()).toBe(false);
 
-      mockAuth.currentUser.set({ id: '1', email: 'test@test.com', plan: 'PREMIUM', trialEndsAt: null });
+      mockAuth.currentUser.set({
+        id: '1',
+        email: 'test@test.com',
+        plan: 'PREMIUM',
+        trialEndsAt: null,
+      });
       expect(store.isPremium()).toBe(true);
     });
   });
 
   describe('displayName', () => {
     it('retourne le nom si disponible', () => {
-      mockAuth.currentUser.set({ id: '1', email: 'test@test.com', name: 'Thomas', plan: 'FREE' });
+      mockAuth.currentUser.set({
+        id: '1',
+        email: 'test@test.com',
+        name: 'Thomas',
+        plan: 'FREE',
+      });
       expect(store.displayName()).toBe('Thomas');
     });
 
-    it('retourne l\'email si pas de nom', () => {
-      mockAuth.currentUser.set({ id: '1', email: 'test@test.com', plan: 'FREE' });
+    it("retourne l'email si pas de nom", () => {
+      mockAuth.currentUser.set({
+        id: '1',
+        email: 'test@test.com',
+        plan: 'FREE',
+      });
       expect(store.displayName()).toBe('test@test.com');
     });
   });
 
   describe('initials', () => {
     it('retourne les 2 premières lettres du nom en majuscule', () => {
-      mockAuth.currentUser.set({ id: '1', email: 'test@test.com', name: 'Thomas', plan: 'FREE' });
+      mockAuth.currentUser.set({
+        id: '1',
+        email: 'test@test.com',
+        name: 'Thomas',
+        plan: 'FREE',
+      });
       expect(store.initials()).toBe('TH');
     });
   });
@@ -93,20 +138,39 @@ describe('UserStore', () => {
     });
 
     it('retourne 0 si startingCapital non défini', () => {
-      mockAuth.currentUser.set({ id: '1', email: 'test@test.com', plan: 'FREE' });
+      mockAuth.currentUser.set({
+        id: '1',
+        email: 'test@test.com',
+        plan: 'FREE',
+      });
       expect(store.startingCapital()).toBe(0);
     });
 
     it('retourne la valeur du capital de départ', () => {
-      mockAuth.currentUser.set({ id: '1', email: 'test@test.com', plan: 'FREE', startingCapital: 5000 });
+      mockAuth.currentUser.set({
+        id: '1',
+        email: 'test@test.com',
+        plan: 'FREE',
+        startingCapital: 5000,
+      });
       expect(store.startingCapital()).toBe(5000);
     });
 
     it('est réactif : se met à jour quand le capital change', () => {
-      mockAuth.currentUser.set({ id: '1', email: 'test@test.com', plan: 'FREE', startingCapital: 1000 });
+      mockAuth.currentUser.set({
+        id: '1',
+        email: 'test@test.com',
+        plan: 'FREE',
+        startingCapital: 1000,
+      });
       expect(store.startingCapital()).toBe(1000);
 
-      mockAuth.currentUser.set({ id: '1', email: 'test@test.com', plan: 'FREE', startingCapital: 10000 });
+      mockAuth.currentUser.set({
+        id: '1',
+        email: 'test@test.com',
+        plan: 'FREE',
+        startingCapital: 10000,
+      });
       expect(store.startingCapital()).toBe(10000);
     });
   });

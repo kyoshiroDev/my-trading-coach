@@ -39,8 +39,13 @@ export class OrchestratorAgent {
       orderBy: { tradedAt: 'desc' },
       take: 50,
       select: {
-        asset: true, side: true, pnl: true,
-        emotion: true, setup: true, session: true, tradedAt: true,
+        asset: true,
+        side: true,
+        pnl: true,
+        emotion: true,
+        setup: true,
+        session: true,
+        tradedAt: true,
       },
     });
     const summary = this.dataAgent.buildTradesSummary(trades);
@@ -62,15 +67,18 @@ export class OrchestratorAgent {
     };
   }
 
-  private assembleInsights(patterns: Pattern[], advice: Advice[]): InsightItem[] {
-    const fromPatterns: InsightItem[] = patterns.map(p => ({
+  private assembleInsights(
+    patterns: Pattern[],
+    advice: Advice[],
+  ): InsightItem[] {
+    const fromPatterns: InsightItem[] = patterns.map((p) => ({
       type: p.type,
       title: p.title,
       description: p.description,
       badge: p.badge,
     }));
 
-    const fromAdvice: InsightItem[] = advice.map(a => ({
+    const fromAdvice: InsightItem[] = advice.map((a) => ({
       type: 'pattern' as const,
       title: a.title,
       description: a.description,

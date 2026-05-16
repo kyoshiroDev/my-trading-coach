@@ -31,7 +31,9 @@ Format :
 
 @Injectable()
 export class PatternAgent {
-  private readonly anthropic = new Anthropic({ apiKey: process.env['ANTHROPIC_API_KEY'] });
+  private readonly anthropic = new Anthropic({
+    apiKey: process.env['ANTHROPIC_API_KEY'],
+  });
   private readonly logger = new Logger(PatternAgent.name);
 
   async analyze(summary: string): Promise<PatternAnalysis> {
@@ -40,7 +42,13 @@ export class PatternAgent {
       response = await this.anthropic.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 1024,
-        system: [{ type: 'text', text: PATTERN_SYSTEM, cache_control: { type: 'ephemeral' } }],
+        system: [
+          {
+            type: 'text',
+            text: PATTERN_SYSTEM,
+            cache_control: { type: 'ephemeral' },
+          },
+        ],
         messages: [{ role: 'user', content: summary }],
       });
     } catch (err) {
@@ -49,14 +57,20 @@ export class PatternAgent {
 
     const block = response.content[0];
     if (block.type !== 'text') {
-      throw new HttpException('Réponse IA invalide', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(
+        'Réponse IA invalide',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
 
     try {
       return parseAnthropicJson(block.text) as PatternAnalysis;
     } catch {
       this.logger.error('Failed to parse AI response', block.text);
-      throw new HttpException('Réponse IA invalide', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(
+        'Réponse IA invalide',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

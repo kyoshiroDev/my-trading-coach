@@ -49,32 +49,46 @@ export class AuthService {
     const refresh$ = this.fetchMe().pipe(catchError(() => EMPTY));
 
     // Toutes les 30s quand connecté
-    interval(30_000).pipe(
-      filter(() => this.isAuthenticated()),
-      switchMap(() => refresh$),
-    ).subscribe();
+    interval(30_000)
+      .pipe(
+        filter(() => this.isAuthenticated()),
+        switchMap(() => refresh$),
+      )
+      .subscribe();
 
     // Immédiatement quand l'onglet redevient visible
-    fromEvent(document, 'visibilitychange').pipe(
-      filter(() => !document.hidden && this.isAuthenticated()),
-      switchMap(() => refresh$),
-    ).subscribe();
+    fromEvent(document, 'visibilitychange')
+      .pipe(
+        filter(() => !document.hidden && this.isAuthenticated()),
+        switchMap(() => refresh$),
+      )
+      .subscribe();
   }
 
   register(email: string, password: string, name?: string) {
     return this.http
-      .post<AuthResponse>(`${environment.apiUrl}/auth/register`, { email, password, name }, { withCredentials: true })
+      .post<AuthResponse>(
+        `${environment.apiUrl}/auth/register`,
+        { email, password, name },
+        { withCredentials: true },
+      )
       .pipe(tap((res) => this.handleAuthResponse(res)));
   }
 
   login(email: string, password: string) {
     return this.http
-      .post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }, { withCredentials: true })
+      .post<AuthResponse>(
+        `${environment.apiUrl}/auth/login`,
+        { email, password },
+        { withCredentials: true },
+      )
       .pipe(tap((res) => this.handleAuthResponse(res)));
   }
 
   logout() {
-    this.http.post(`${environment.apiUrl}/auth/logout`, {}, { withCredentials: true }).subscribe();
+    this.http
+      .post(`${environment.apiUrl}/auth/logout`, {}, { withCredentials: true })
+      .subscribe();
     localStorage.removeItem('access_token');
     localStorage.removeItem('user');
     this.currentUser.set(null);
@@ -95,7 +109,11 @@ export class AuthService {
   refreshToken() {
     // Le refresh_token est envoyé automatiquement via le cookie httpOnly
     return this.http
-      .post<AuthResponse>(`${environment.apiUrl}/auth/refresh`, {}, { withCredentials: true })
+      .post<AuthResponse>(
+        `${environment.apiUrl}/auth/refresh`,
+        {},
+        { withCredentials: true },
+      )
       .pipe(
         tap((res) => {
           localStorage.setItem('access_token', res.data.access_token);
@@ -108,11 +126,16 @@ export class AuthService {
   }
 
   forgotPassword(email: string) {
-    return this.http.post(`${environment.apiUrl}/auth/forgot-password`, { email });
+    return this.http.post(`${environment.apiUrl}/auth/forgot-password`, {
+      email,
+    });
   }
 
   resetPassword(token: string, password: string) {
-    return this.http.post(`${environment.apiUrl}/auth/reset-password`, { token, password });
+    return this.http.post(`${environment.apiUrl}/auth/reset-password`, {
+      token,
+      password,
+    });
   }
 
   fetchMe() {
@@ -123,7 +146,10 @@ export class AuthService {
           const incoming = res.data;
           // Si le client a déjà onboardingCompleted=true (ex: completeOnboarding en vol),
           // ne pas l'écraser avec false venant de la DB (race condition réseau)
-          if (this.currentUser()?.onboardingCompleted === true && !incoming.onboardingCompleted) {
+          if (
+            this.currentUser()?.onboardingCompleted === true &&
+            !incoming.onboardingCompleted
+          ) {
             incoming.onboardingCompleted = true;
           }
           localStorage.setItem('user', JSON.stringify(incoming));

@@ -14,7 +14,16 @@ export class AnalyticsService {
     });
 
     if (!trades.length) {
-      return { winRate: 0, totalPnl: 0, totalTrades: 0, maxDrawdown: 0, streak: 0, topSession: '—', topSessionWinRate: 0, topHour: '—' };
+      return {
+        winRate: 0,
+        totalPnl: 0,
+        totalTrades: 0,
+        maxDrawdown: 0,
+        streak: 0,
+        topSession: '—',
+        topSessionWinRate: 0,
+        topHour: '—',
+      };
     }
 
     const totalTrades = trades.length;
@@ -55,7 +64,10 @@ export class AnalyticsService {
     let topSessionWinRate = 0;
     for (const [session, g] of sessionMap.entries()) {
       const wr = g.count > 0 ? (g.wins / g.count) * 100 : 0;
-      if (wr > topSessionWinRate) { topSessionWinRate = wr; topSession = session; }
+      if (wr > topSessionWinRate) {
+        topSessionWinRate = wr;
+        topSession = session;
+      }
     }
 
     // Top hour
@@ -72,11 +84,24 @@ export class AnalyticsService {
     for (const [h, g] of hourMap.entries()) {
       if (g.count < 2) continue;
       const wr = g.count > 0 ? (g.wins / g.count) * 100 : 0;
-      if (wr > topHourWr) { topHourWr = wr; topHourNum = h; }
+      if (wr > topHourWr) {
+        topHourWr = wr;
+        topHourNum = h;
+      }
     }
-    const topHour = topHourNum >= 0 ? `${String(topHourNum).padStart(2, '0')}:00` : '—';
+    const topHour =
+      topHourNum >= 0 ? `${String(topHourNum).padStart(2, '0')}:00` : '—';
 
-    return { winRate, totalPnl, totalTrades, maxDrawdown, streak, topSession, topSessionWinRate: Math.round(topSessionWinRate), topHour };
+    return {
+      winRate,
+      totalPnl,
+      totalTrades,
+      maxDrawdown,
+      streak,
+      topSession,
+      topSessionWinRate: Math.round(topSessionWinRate),
+      topHour,
+    };
   }
 
   async getBySetup(userId: string) {
@@ -85,7 +110,10 @@ export class AnalyticsService {
       select: { setup: true, pnl: true, riskReward: true },
     });
 
-    const grouped = new Map<SetupType, { pnl: number; rr: number[]; count: number; wins: number }>();
+    const grouped = new Map<
+      SetupType,
+      { pnl: number; rr: number[]; count: number; wins: number }
+    >();
     for (const t of trades) {
       const g = grouped.get(t.setup) ?? { pnl: 0, rr: [], count: 0, wins: 0 };
       g.count++;
@@ -110,7 +138,10 @@ export class AnalyticsService {
       select: { emotion: true, pnl: true, riskReward: true },
     });
 
-    const grouped = new Map<EmotionState, { pnl: number; rr: number[]; count: number; wins: number }>();
+    const grouped = new Map<
+      EmotionState,
+      { pnl: number; rr: number[]; count: number; wins: number }
+    >();
     for (const t of trades) {
       const g = grouped.get(t.emotion) ?? { pnl: 0, rr: [], count: 0, wins: 0 };
       g.count++;
@@ -135,7 +166,10 @@ export class AnalyticsService {
     });
 
     const DAY_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-    const grouped = new Map<string, { count: number; wins: number; day: string; hour: number }>();
+    const grouped = new Map<
+      string,
+      { count: number; wins: number; day: string; hour: number }
+    >();
     for (const t of trades) {
       const d = new Date(t.tradedAt);
       const day = DAY_LABELS[d.getDay()];
@@ -168,9 +202,10 @@ export class AnalyticsService {
       }),
     ]);
 
-    const startingCapital = user?.startingCapital && user.startingCapital > 0
-      ? user.startingCapital
-      : null;
+    const startingCapital =
+      user?.startingCapital && user.startingCapital > 0
+        ? user.startingCapital
+        : null;
 
     let cumPnl = 0;
     const points = trades.map((t) => {
@@ -187,7 +222,10 @@ export class AnalyticsService {
       select: { asset: true, pnl: true },
     });
 
-    const grouped = new Map<string, { pnl: number; count: number; wins: number }>();
+    const grouped = new Map<
+      string,
+      { pnl: number; count: number; wins: number }
+    >();
     for (const t of trades) {
       const g = grouped.get(t.asset) ?? { pnl: 0, count: 0, wins: 0 };
       g.count++;

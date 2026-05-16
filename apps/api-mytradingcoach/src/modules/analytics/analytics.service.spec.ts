@@ -2,7 +2,12 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AnalyticsService } from './analytics.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { EmotionState, SetupType, TradingSession, TradeSide } from '@prisma/client';
+import {
+  EmotionState,
+  SetupType,
+  TradingSession,
+  TradeSide,
+} from '@prisma/client';
 
 const makeTrade = (pnl: number, tradedAt = new Date(), hour = 10) => ({
   id: `trade-${Math.random()}`,
@@ -80,7 +85,7 @@ describe('AnalyticsService', () => {
       expect(result.totalTrades).toBe(4);
     });
 
-    it('retourne des zéros s\'il n\'y a aucun trade', async () => {
+    it("retourne des zéros s'il n'y a aucun trade", async () => {
       mockPrisma.trade.findMany.mockResolvedValue([]);
 
       const result = await service.getSummary('user-123');
@@ -128,7 +133,9 @@ describe('AnalyticsService', () => {
 
       const result = await service.getByEmotion('user-123');
 
-      const confident = result.find((r) => r.emotion === EmotionState.CONFIDENT);
+      const confident = result.find(
+        (r) => r.emotion === EmotionState.CONFIDENT,
+      );
       expect(confident?.winRate).toBe(100);
       expect(confident?.count).toBe(2);
     });
@@ -151,7 +158,7 @@ describe('AnalyticsService', () => {
   });
 
   describe('getEquityCurve', () => {
-    it('retourne des points cumulatifs dans l\'ordre chronologique', async () => {
+    it("retourne des points cumulatifs dans l'ordre chronologique", async () => {
       mockPrisma.trade.findMany.mockResolvedValue([
         makeTrade(100),
         makeTrade(-50),

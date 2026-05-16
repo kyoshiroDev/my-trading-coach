@@ -3,7 +3,7 @@ import { CanActivateFn, Router } from '@angular/router';
 import { UserStore } from '../stores/user.store';
 
 export const authGuard: CanActivateFn = () => {
-  const store  = inject(UserStore);
+  const store = inject(UserStore);
   const router = inject(Router);
 
   if (store.isLoggedIn()) return true;
@@ -12,7 +12,7 @@ export const authGuard: CanActivateFn = () => {
 };
 
 export const premiumGuard: CanActivateFn = () => {
-  const store  = inject(UserStore);
+  const store = inject(UserStore);
   const router = inject(Router);
 
   if (store.isPremium()) return true;
@@ -21,7 +21,7 @@ export const premiumGuard: CanActivateFn = () => {
 };
 
 export const adminGuard: CanActivateFn = () => {
-  const store  = inject(UserStore);
+  const store = inject(UserStore);
   const router = inject(Router);
 
   if (store.isAdmin()) return true;

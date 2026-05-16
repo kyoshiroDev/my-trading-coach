@@ -44,11 +44,15 @@ export class DebriefApi {
   private readonly base = `${environment.apiUrl}/debrief`;
 
   getCurrent(): Observable<{ data: WeeklyDebrief | null }> {
-    return this.http.get<{ data: WeeklyDebrief | null }>(`${this.base}/current`);
+    return this.http.get<{ data: WeeklyDebrief | null }>(
+      `${this.base}/current`,
+    );
   }
 
   getByWeek(year: number, week: number): Observable<{ data: WeeklyDebrief }> {
-    return this.http.get<{ data: WeeklyDebrief }>(`${this.base}/${year}/${week}`);
+    return this.http.get<{ data: WeeklyDebrief }>(
+      `${this.base}/${year}/${week}`,
+    );
   }
 
   getHistory(): Observable<{ data: WeeklyDebrief[] }> {

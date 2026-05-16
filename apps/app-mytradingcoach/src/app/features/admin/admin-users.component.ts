@@ -12,9 +12,23 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
-import { LucideAngularModule, Search, Trash2, Pencil, X, ShieldCheck, Users, Wifi } from 'lucide-angular';
+import {
+  LucideAngularModule,
+  Search,
+  Trash2,
+  Pencil,
+  X,
+  ShieldCheck,
+  Users,
+  Wifi,
+} from 'lucide-angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
-import { AdminApi, AdminUser, AdminStats, AdminOnlineUser } from '../../core/api/admin.api';
+import {
+  AdminApi,
+  AdminUser,
+  AdminStats,
+  AdminOnlineUser,
+} from '../../core/api/admin.api';
 
 @Component({
   selector: 'mtc-admin-users',
@@ -26,7 +40,6 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser } from '../../core/api
     <mtc-topbar title="Administration — Utilisateurs" />
 
     <div class="content">
-
       <!-- MRR stats grid -->
       @if (stats(); as s) {
         <div class="stats-grid">
@@ -38,7 +51,9 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser } from '../../core/api
           <div class="stat-block">
             <div class="stat-block-label">Premium actifs</div>
             <div class="stat-block-value">{{ s.totalPremium }}</div>
-            <div class="stat-block-sub">{{ s.monthly }} mensuel · {{ s.annual }} annuel</div>
+            <div class="stat-block-sub">
+              {{ s.monthly }} mensuel · {{ s.annual }} annuel
+            </div>
           </div>
           <div class="stat-block">
             <div class="stat-block-label">Trials actifs</div>
@@ -52,7 +67,9 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser } from '../../core/api
           </div>
           <div class="stat-block">
             <div class="stat-block-label">Churns ce mois</div>
-            <div class="stat-block-value text-red">{{ s.churnedThisMonth }}</div>
+            <div class="stat-block-value text-red">
+              {{ s.churnedThisMonth }}
+            </div>
             <div class="stat-block-sub">Passés en FREE</div>
           </div>
         </div>
@@ -72,15 +89,23 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser } from '../../core/api
             @for (u of onlineUsers(); track u.id) {
               <div class="online-card">
                 <div class="online-avatar">
-                  <span>{{ (u.name ?? u.email).slice(0, 2).toUpperCase() }}</span>
+                  <span>{{
+                    (u.name ?? u.email).slice(0, 2).toUpperCase()
+                  }}</span>
                   <span class="online-dot"></span>
                 </div>
                 <div class="online-info">
                   <span class="online-name">{{ u.name ?? u.email }}</span>
-                  @if (u.name) { <span class="online-email">{{ u.email }}</span> }
+                  @if (u.name) {
+                    <span class="online-email">{{ u.email }}</span>
+                  }
                 </div>
                 <div class="online-meta">
-                  <span class="online-plan" [class]="'plan-' + u.plan.toLowerCase()">{{ u.plan }}</span>
+                  <span
+                    class="online-plan"
+                    [class]="'plan-' + u.plan.toLowerCase()"
+                    >{{ u.plan }}</span
+                  >
                   <span class="online-session">⏱ {{ sessionDuration(u) }}</span>
                 </div>
               </div>
@@ -136,7 +161,9 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser } from '../../core/api
                     <div class="user-cell">
                       <div class="avatar">
                         {{ initials(user) }}
-                        @if (isOnline(user)) { <span class="avatar-dot"></span> }
+                        @if (isOnline(user)) {
+                          <span class="avatar-dot"></span>
+                        }
                       </div>
                       <div class="user-info">
                         <span class="user-name">{{ user.name ?? '—' }}</span>
@@ -145,12 +172,18 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser } from '../../core/api
                     </div>
                   </td>
                   <td>
-                    <span class="badge role-badge" [class]="'role-' + user.role.toLowerCase()">
+                    <span
+                      class="badge role-badge"
+                      [class]="'role-' + user.role.toLowerCase()"
+                    >
                       {{ user.role }}
                     </span>
                   </td>
                   <td>
-                    <span class="badge plan-badge" [class]="'plan-' + user.plan.toLowerCase()">
+                    <span
+                      class="badge plan-badge"
+                      [class]="'plan-' + user.plan.toLowerCase()"
+                    >
                       {{ user.plan }}
                     </span>
                   </td>
@@ -166,9 +199,12 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser } from '../../core/api
                   <td class="mono td-date">
                     @if (user.plan === 'PREMIUM') {
                       @if (user.trialEndsAt && isFuture(user.trialEndsAt)) {
-                        <span style="color:var(--yellow)">Trial → {{ user.trialEndsAt | date:'dd/MM/yy' }}</span>
+                        <span style="color:var(--yellow)"
+                          >Trial →
+                          {{ user.trialEndsAt | date: 'dd/MM/yy' }}</span
+                        >
                       } @else if (user.stripeCurrentPeriodEnd) {
-                        {{ premiumSince(user) | date:'dd/MM/yyyy' }}
+                        {{ premiumSince(user) | date: 'dd/MM/yyyy' }}
                       } @else {
                         <span style="color:var(--text-3)">—</span>
                       }
@@ -181,21 +217,47 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser } from '../../core/api
                   </td>
                   <td class="mono td-date">
                     @if (user.lastLoginAt) {
-                      {{ sessionDuration({ lastLoginAt: user.lastLoginAt, lastSeenAt: user.lastSeenAt ?? '', id: user.id, email: user.email, name: user.name, plan: user.plan, role: user.role }) }}
-                    } @else { — }
+                      {{
+                        sessionDuration({
+                          lastLoginAt: user.lastLoginAt,
+                          lastSeenAt: user.lastSeenAt ?? '',
+                          id: user.id,
+                          email: user.email,
+                          name: user.name,
+                          plan: user.plan,
+                          role: user.role,
+                        })
+                      }}
+                    } @else {
+                      —
+                    }
                   </td>
-                  <td class="mono td-date">{{ user.createdAt | date:'dd/MM/yyyy' }}</td>
+                  <td class="mono td-date">
+                    {{ user.createdAt | date: 'dd/MM/yyyy' }}
+                  </td>
                   <td>
                     <div class="row-actions">
                       @if (user.role !== 'ADMIN') {
-                        <button class="btn-icon" (click)="openEdit(user)" aria-label="Modifier">
+                        <button
+                          class="btn-icon"
+                          (click)="openEdit(user)"
+                          aria-label="Modifier"
+                        >
                           <lucide-icon [img]="PencilIcon" [size]="13" />
                         </button>
-                        <button class="btn-icon danger" (click)="openDelete(user)" aria-label="Supprimer">
+                        <button
+                          class="btn-icon danger"
+                          (click)="openDelete(user)"
+                          aria-label="Supprimer"
+                        >
                           <lucide-icon [img]="Trash2Icon" [size]="13" />
                         </button>
                       } @else {
-                        <lucide-icon [img]="ShieldCheckIcon" [size]="14" color="var(--blue-bright)" />
+                        <lucide-icon
+                          [img]="ShieldCheckIcon"
+                          [size]="14"
+                          color="var(--blue-bright)"
+                        />
                       }
                     </div>
                   </td>
@@ -208,9 +270,23 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser } from '../../core/api
         <!-- Pagination -->
         @if (totalPages() > 1) {
           <div class="pagination">
-            <button class="btn-page" [disabled]="page() === 1" (click)="changePage(page() - 1)">← Précédent</button>
-            <span class="mono page-info">{{ page() }} / {{ totalPages() }}</span>
-            <button class="btn-page" [disabled]="page() === totalPages()" (click)="changePage(page() + 1)">Suivant →</button>
+            <button
+              class="btn-page"
+              [disabled]="page() === 1"
+              (click)="changePage(page() - 1)"
+            >
+              ← Précédent
+            </button>
+            <span class="mono page-info"
+              >{{ page() }} / {{ totalPages() }}</span
+            >
+            <button
+              class="btn-page"
+              [disabled]="page() === totalPages()"
+              (click)="changePage(page() + 1)"
+            >
+              Suivant →
+            </button>
           </div>
         }
       }
@@ -218,15 +294,24 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser } from '../../core/api
 
     <!-- ── Edit modal ── -->
     @if (editUser()) {
-      <div class="modal-overlay"
-           role="button"
-           tabindex="0"
-           aria-label="Fermer"
-           (click)="closeIfBackdrop($event, 'edit')"
-           (keydown.escape)="closeEdit()">
-        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+      <div
+        class="modal-overlay"
+        role="button"
+        tabindex="0"
+        aria-label="Fermer"
+        (click)="closeIfBackdrop($event, 'edit')"
+        (keydown.escape)="closeEdit()"
+      >
+        <div
+          class="modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-modal-title"
+        >
           <div class="modal-header">
-            <h2 id="edit-modal-title" class="modal-title">Modifier l'utilisateur</h2>
+            <h2 id="edit-modal-title" class="modal-title">
+              Modifier l'utilisateur
+            </h2>
             <button class="btn-close" (click)="closeEdit()" aria-label="Fermer">
               <lucide-icon [img]="XIcon" [size]="14" />
             </button>
@@ -236,12 +321,22 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser } from '../../core/api
 
             <div class="field">
               <label for="edit-name">Nom</label>
-              <input id="edit-name" class="field-input" type="text" [(ngModel)]="editName" placeholder="Nom complet" />
+              <input
+                id="edit-name"
+                class="field-input"
+                type="text"
+                [(ngModel)]="editName"
+                placeholder="Nom complet"
+              />
             </div>
 
             <div class="field">
               <label for="edit-plan">Plan</label>
-              <select id="edit-plan" class="field-select" [(ngModel)]="editPlan">
+              <select
+                id="edit-plan"
+                class="field-select"
+                [(ngModel)]="editPlan"
+              >
                 <option value="FREE">FREE</option>
                 <option value="PREMIUM">PREMIUM</option>
               </select>
@@ -249,16 +344,26 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser } from '../../core/api
 
             <div class="field">
               <label for="edit-role">Rôle</label>
-              <select id="edit-role" class="field-select" [(ngModel)]="editRole">
+              <select
+                id="edit-role"
+                class="field-select"
+                [(ngModel)]="editRole"
+              >
                 <option value="USER">USER — Utilisateur standard</option>
-                <option value="BETA_TESTER">BETA_TESTER — Premium avec restrictions IA</option>
+                <option value="BETA_TESTER">
+                  BETA_TESTER — Premium avec restrictions IA
+                </option>
               </select>
             </div>
           </div>
           <div class="modal-footer">
             <button class="btn-cancel" (click)="closeEdit()">Annuler</button>
             <button class="btn-save" (click)="saveEdit()" [disabled]="saving()">
-              @if (saving()) { Enregistrement… } @else { Sauvegarder }
+              @if (saving()) {
+                Enregistrement…
+              } @else {
+                Sauvegarder
+              }
             </button>
           </div>
         </div>
@@ -267,29 +372,51 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser } from '../../core/api
 
     <!-- ── Delete confirm ── -->
     @if (deleteUser()) {
-      <div class="modal-overlay"
-           role="button"
-           tabindex="0"
-           aria-label="Fermer"
-           (click)="closeIfBackdrop($event, 'delete')"
-           (keydown.escape)="closeDelete()">
-        <div class="modal modal-sm" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+      <div
+        class="modal-overlay"
+        role="button"
+        tabindex="0"
+        aria-label="Fermer"
+        (click)="closeIfBackdrop($event, 'delete')"
+        (keydown.escape)="closeDelete()"
+      >
+        <div
+          class="modal modal-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-modal-title"
+        >
           <div class="modal-header">
-            <h2 id="delete-modal-title" class="modal-title danger-title">Supprimer l'utilisateur</h2>
-            <button class="btn-close" (click)="closeDelete()" aria-label="Fermer">
+            <h2 id="delete-modal-title" class="modal-title danger-title">
+              Supprimer l'utilisateur
+            </h2>
+            <button
+              class="btn-close"
+              (click)="closeDelete()"
+              aria-label="Fermer"
+            >
               <lucide-icon [img]="XIcon" [size]="14" />
             </button>
           </div>
           <div class="modal-body">
             <p class="delete-msg">
-              Supprimer définitivement <strong>{{ deleteUser()!.email }}</strong> ainsi que
-              tous ses trades et debriefs ? Cette action est irréversible.
+              Supprimer définitivement
+              <strong>{{ deleteUser()!.email }}</strong> ainsi que tous ses
+              trades et debriefs ? Cette action est irréversible.
             </p>
           </div>
           <div class="modal-footer">
             <button class="btn-cancel" (click)="closeDelete()">Annuler</button>
-            <button class="btn-danger" (click)="confirmDelete()" [disabled]="saving()">
-              @if (saving()) { Suppression… } @else { Confirmer la suppression }
+            <button
+              class="btn-danger"
+              (click)="confirmDelete()"
+              [disabled]="saving()"
+            >
+              @if (saving()) {
+                Suppression…
+              } @else {
+                Confirmer la suppression
+              }
             </button>
           </div>
         </div>
@@ -322,7 +449,9 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
   protected readonly deleteUser = signal<AdminUser | null>(null);
   protected readonly onlineUsers = signal<AdminOnlineUser[]>([]);
 
-  protected readonly totalPages = computed(() => Math.ceil(this.total() / 20) || 1);
+  protected readonly totalPages = computed(
+    () => Math.ceil(this.total() / 20) || 1,
+  );
   private onlineInterval?: ReturnType<typeof setInterval>;
 
   protected editName = '';
@@ -334,19 +463,30 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
     this.loadStats();
     this.loadOnline();
     this.onlineInterval = setInterval(() => this.loadOnline(), 30_000);
-    this.search$.pipe(
-      debounceTime(300),
-      distinctUntilChanged(),
-      takeUntilDestroyed(this.destroyRef),
-    ).subscribe(() => { this.page.set(1); this.load(); });
+    this.search$
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => {
+        this.page.set(1);
+        this.load();
+      });
   }
 
   ngOnDestroy() {
     clearInterval(this.onlineInterval);
   }
 
-  protected onSearch(value: string) { this.search.set(value); this.search$.next(value); }
-  protected changePage(p: number) { this.page.set(p); this.load(); }
+  protected onSearch(value: string) {
+    this.search.set(value);
+    this.search$.next(value);
+  }
+  protected changePage(p: number) {
+    this.page.set(p);
+    this.load();
+  }
 
   protected sessionDuration(user: AdminOnlineUser): string {
     if (!user.lastLoginAt) return '—';
@@ -362,7 +502,7 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
     if (!dateStr) return 'Jamais';
     const ms = Date.now() - new Date(dateStr).getTime();
     const min = Math.floor(ms / 60_000);
-    if (min < 1) return 'à l\'instant';
+    if (min < 1) return "à l'instant";
     if (min < 60) return `il y a ${min}min`;
     const h = Math.floor(min / 60);
     if (h < 24) return `il y a ${h}h`;
@@ -384,14 +524,17 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
 
   protected subType(user: AdminUser): string {
     if (user.trialEndsAt && this.isFuture(user.trialEndsAt)) return 'trial';
-    if (user.stripeInterval === 'year')  return 'annual';
+    if (user.stripeInterval === 'year') return 'annual';
     if (user.stripeInterval === 'month') return 'monthly';
     return 'manual';
   }
 
   protected subLabel(user: AdminUser): string {
     const map: Record<string, string> = {
-      trial: 'Essai gratuit', annual: 'Annuel', monthly: 'Mensuel', manual: 'Manuel',
+      trial: 'Essai gratuit',
+      annual: 'Annuel',
+      monthly: 'Mensuel',
+      manual: 'Manuel',
     };
     return map[this.subType(user)];
   }
@@ -406,12 +549,17 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
 
   protected closeIfBackdrop(event: MouseEvent, modal: 'edit' | 'delete') {
     if (event.target !== event.currentTarget) return;
-    if (modal === 'edit') { this.closeEdit(); } else { this.closeDelete(); }
+    if (modal === 'edit') {
+      this.closeEdit();
+    } else {
+      this.closeDelete();
+    }
   }
 
   private load() {
     this.loading.set(true);
-    this.api.list(this.page(), 20, this.search() || undefined)
+    this.api
+      .list(this.page(), 20, this.search() || undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
@@ -425,18 +573,26 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
 
   private loadStats() {
     this.statsLoading.set(true);
-    this.api.stats()
+    this.api
+      .stats()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (res) => { this.stats.set(res.data); this.statsLoading.set(false); },
+        next: (res) => {
+          this.stats.set(res.data);
+          this.statsLoading.set(false);
+        },
         error: () => this.statsLoading.set(false),
       });
   }
 
   private loadOnline() {
-    this.api.online()
+    this.api
+      .online()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: (res) => this.onlineUsers.set(res.data), error: (_err: unknown) => undefined });
+      .subscribe({
+        next: (res) => this.onlineUsers.set(res.data),
+        error: (_err: unknown) => undefined,
+      });
   }
 
   protected getMonthLabel(): string {
@@ -450,20 +606,26 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
     this.editRole = user.role === 'BETA_TESTER' ? 'BETA_TESTER' : 'USER';
   }
 
-  protected closeEdit() { this.editUser.set(null); }
+  protected closeEdit() {
+    this.editUser.set(null);
+  }
 
   protected saveEdit() {
     const user = this.editUser();
     if (!user) return;
     this.saving.set(true);
-    this.api.update(user.id, {
-      name: this.editName || undefined,
-      plan: this.editPlan,
-      role: this.editRole,
-    }).pipe(takeUntilDestroyed(this.destroyRef))
+    this.api
+      .update(user.id, {
+        name: this.editName || undefined,
+        plan: this.editPlan,
+        role: this.editRole,
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
-          this.users.update((list) => list.map((u) => u.id === res.data.id ? res.data : u));
+          this.users.update((list) =>
+            list.map((u) => (u.id === res.data.id ? res.data : u)),
+          );
           this.saving.set(false);
           this.closeEdit();
         },
@@ -471,14 +633,19 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
       });
   }
 
-  protected openDelete(user: AdminUser) { this.deleteUser.set(user); }
-  protected closeDelete() { this.deleteUser.set(null); }
+  protected openDelete(user: AdminUser) {
+    this.deleteUser.set(user);
+  }
+  protected closeDelete() {
+    this.deleteUser.set(null);
+  }
 
   protected confirmDelete() {
     const user = this.deleteUser();
     if (!user) return;
     this.saving.set(true);
-    this.api.delete(user.id)
+    this.api
+      .delete(user.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {

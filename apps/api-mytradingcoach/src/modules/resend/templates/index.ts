@@ -234,7 +234,8 @@ export function debriefReadyTemplate(params: {
   totalTrades: number;
   appUrl: string;
 }): { subject: string; html: string } {
-  const { userName, weekNumber, winRate, totalPnl, totalTrades, appUrl } = params;
+  const { userName, weekNumber, winRate, totalPnl, totalTrades, appUrl } =
+    params;
   const pnlColor = totalPnl >= 0 ? '#10b981' : '#ef4444';
   const pnlSign = totalPnl >= 0 ? '+' : '';
 
@@ -291,7 +292,11 @@ export function renewalReminderTemplate(params: {
   portalUrl: string;
 }): { subject: string; html: string } {
   const { userName, expiresAt, portalUrl } = params;
-  const dateStr = expiresAt.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+  const dateStr = expiresAt.toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
 
   return {
     subject: 'Ton abonnement Premium expire dans 7 jours ⚠️',
@@ -391,5 +396,3 @@ export function welcomePremiumTemplate(params: {
     `,
   };
 }
-
-

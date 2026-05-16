@@ -16,7 +16,11 @@
   transform: translateX(-50%);
   width: 600px;
   height: 600px;
-  background: radial-gradient(ellipse at center, rgba(59,130,246,0.08) 0%, transparent 70%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(59, 130, 246, 0.08) 0%,
+    transparent 70%
+  );
   pointer-events: none;
 }
 
@@ -65,7 +69,7 @@
 
 /* ─── Success ─── */
 .success-msg {
-  background: rgba(16,185,129,.1);
+  background: rgba(16, 185, 129, 0.1);
   border: 1px solid var(--green);
   color: var(--green);
   padding: 10px 14px;
@@ -95,7 +99,7 @@
 
 .form-group.input-error input {
   border-color: var(--red);
-  box-shadow: 0 0 0 3px rgba(239,68,68,0.1);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
 /* ─── Form ─── */
@@ -127,11 +131,20 @@ input {
   box-sizing: border-box;
 }
 
-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
-input::placeholder { color: var(--text-3); }
+input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+input::placeholder {
+  color: var(--text-3);
+}
 
-.input-wrapper { position: relative; }
-.input-wrapper input { padding-right: 40px; }
+.input-wrapper {
+  position: relative;
+}
+.input-wrapper input {
+  padding-right: 40px;
+}
 
 .eye-btn {
   position: absolute;
@@ -164,27 +177,35 @@ input::placeholder { color: var(--text-3); }
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 0 20px rgba(59,130,246,0.25);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
 }
 
 .btn-submit:hover:not(:disabled) {
   background: #2563eb;
-  box-shadow: 0 0 28px rgba(59,130,246,0.4);
+  box-shadow: 0 0 28px rgba(59, 130, 246, 0.4);
 }
 
-.btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 /* ─── Spinner ─── */
 .spinner {
-  width: 14px; height: 14px;
-  border: 2px solid rgba(255,255,255,0.3);
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: #fff;
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
   flex-shrink: 0;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* ─── Forgot password link ─── */
 .forgot-link-row {
@@ -198,7 +219,9 @@ input::placeholder { color: var(--text-3); }
   text-decoration: none;
 }
 
-.forgot-link:hover { color: var(--blue-bright); }
+.forgot-link:hover {
+  color: var(--blue-bright);
+}
 
 /* ─── Footer link ─── */
 .auth-link {
@@ -214,7 +237,9 @@ input::placeholder { color: var(--text-3); }
   font-weight: 500;
 }
 
-.auth-link a:hover { text-decoration: underline; }
+.auth-link a:hover {
+  text-decoration: underline;
+}
 
 @media (max-width: 480px) {
   .auth-page {

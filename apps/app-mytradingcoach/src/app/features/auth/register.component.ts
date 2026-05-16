@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -18,11 +25,15 @@ import { BillingApi } from '../../core/api/billing.api';
 
       <div class="auth-card">
         <div class="auth-logo">
-          <img src="icon/logo-navbar.svg" alt="MyTradingCoach">
+          <img src="icon/logo-navbar.svg" alt="MyTradingCoach" />
         </div>
 
         <h1 class="auth-title">
-          @if (isPremiumFlow()) { Créer ton compte Premium } @else { Commence gratuitement }
+          @if (isPremiumFlow()) {
+            Créer ton compte Premium
+          } @else {
+            Commence gratuitement
+          }
         </h1>
         <p class="auth-subtitle">
           @if (isPremiumFlow()) {
@@ -34,7 +45,9 @@ import { BillingApi } from '../../core/api/billing.api';
 
         <form (ngSubmit)="onRegister()">
           <div class="form-group">
-            <label for="name">Prénom <span class="optional">(optionnel)</span></label>
+            <label for="name"
+              >Prénom <span class="optional">(optionnel)</span></label
+            >
             <input
               id="name"
               type="text"
@@ -65,7 +78,10 @@ import { BillingApi } from '../../core/api/billing.api';
           </div>
 
           <div class="form-group" [class.input-error]="passwordError()">
-            <label for="password">Mot de passe <span class="optional">(8 caractères min)</span></label>
+            <label for="password"
+              >Mot de passe
+              <span class="optional">(8 caractères min)</span></label
+            >
             <div class="input-wrapper">
               <input
                 id="password"
@@ -78,8 +94,16 @@ import { BillingApi } from '../../core/api/billing.api';
                 autocomplete="new-password"
                 (blur)="passwordTouched.set(true)"
               />
-              <button type="button" class="eye-btn" (click)="showPassword.set(!showPassword())">
-                <lucide-icon [img]="showPassword() ? EyeOffIcon : EyeIcon" [size]="15" color="var(--text-2)" />
+              <button
+                type="button"
+                class="eye-btn"
+                (click)="showPassword.set(!showPassword())"
+              >
+                <lucide-icon
+                  [img]="showPassword() ? EyeOffIcon : EyeIcon"
+                  [size]="15"
+                  color="var(--text-2)"
+                />
               </button>
             </div>
             @if (passwordError()) {
@@ -101,8 +125,16 @@ import { BillingApi } from '../../core/api/billing.api';
                 autocomplete="new-password"
                 (blur)="confirmTouched.set(true)"
               />
-              <button type="button" class="eye-btn" (click)="showConfirm.set(!showConfirm())">
-                <lucide-icon [img]="showConfirm() ? EyeOffIcon : EyeIcon" [size]="15" color="var(--text-2)" />
+              <button
+                type="button"
+                class="eye-btn"
+                (click)="showConfirm.set(!showConfirm())"
+              >
+                <lucide-icon
+                  [img]="showConfirm() ? EyeOffIcon : EyeIcon"
+                  [size]="15"
+                  color="var(--text-2)"
+                />
               </button>
             </div>
             @if (confirmError()) {
@@ -110,10 +142,19 @@ import { BillingApi } from '../../core/api/billing.api';
             }
           </div>
 
-          <button type="submit" data-testid="register-submit" [disabled]="isLoading()" class="btn-submit">
+          <button
+            type="submit"
+            data-testid="register-submit"
+            [disabled]="isLoading()"
+            class="btn-submit"
+          >
             @if (isLoading()) {
               <span class="spinner"></span>
-              @if (isPremiumFlow()) { Création et redirection... } @else { Création... }
+              @if (isPremiumFlow()) {
+                Création et redirection...
+              } @else {
+                Création...
+              }
             } @else {
               @if (isPremiumFlow()) {
                 Créer mon compte et continuer vers le paiement →
@@ -124,7 +165,9 @@ import { BillingApi } from '../../core/api/billing.api';
           </button>
 
           @if (apiError()) {
-            <div class="error-msg" data-testid="error-message">{{ apiError() }}</div>
+            <div class="error-msg" data-testid="error-message">
+              {{ apiError() }}
+            </div>
           }
         </form>
 
@@ -166,48 +209,58 @@ export class RegisterComponent {
   protected readonly passwordTouched = signal(false);
   protected readonly confirmTouched = signal(false);
   protected readonly isPremiumFlow = signal(
-    this.route.snapshot.queryParamMap.get('plan') === 'premium'
+    this.route.snapshot.queryParamMap.get('plan') === 'premium',
   );
 
   protected readonly emailError = computed(() => {
     if (!this.submitted() && !this.emailTouched()) return null;
     if (!this.email()) return "L'adresse email est requise";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email())) return 'Veuillez saisir une adresse email valide';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email()))
+      return 'Veuillez saisir une adresse email valide';
     return null;
   });
 
   protected readonly passwordError = computed(() => {
     if (!this.submitted() && !this.passwordTouched()) return null;
     if (!this.password()) return 'Le mot de passe est requis';
-    if (this.password().length < 8) return 'Le mot de passe doit contenir au moins 8 caractères';
-    if (!/[A-Z]/.test(this.password())) return 'Le mot de passe doit contenir au moins une majuscule';
-    if (!/[0-9]/.test(this.password())) return 'Le mot de passe doit contenir au moins un chiffre';
+    if (this.password().length < 8)
+      return 'Le mot de passe doit contenir au moins 8 caractères';
+    if (!/[A-Z]/.test(this.password()))
+      return 'Le mot de passe doit contenir au moins une majuscule';
+    if (!/[0-9]/.test(this.password()))
+      return 'Le mot de passe doit contenir au moins un chiffre';
     return null;
   });
 
   protected readonly confirmError = computed(() => {
     if (!this.submitted() && !this.confirmTouched()) return null;
     if (!this.confirmPassword()) return 'Veuillez confirmer votre mot de passe';
-    if (this.password() !== this.confirmPassword()) return 'Les mots de passe ne correspondent pas';
+    if (this.password() !== this.confirmPassword())
+      return 'Les mots de passe ne correspondent pas';
     return null;
   });
 
   onRegister() {
     this.submitted.set(true);
-    if (this.emailError() || this.passwordError() || this.confirmError()) return;
+    if (this.emailError() || this.passwordError() || this.confirmError())
+      return;
 
     this.isLoading.set(true);
     this.apiError.set(null);
 
-    this.auth.register(this.email(), this.password(), this.name() || undefined)
+    this.auth
+      .register(this.email(), this.password(), this.name() || undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           if (this.isPremiumFlow()) {
-            this.billingApi.checkout('monthly')
+            this.billingApi
+              .checkout('monthly')
               .pipe(takeUntilDestroyed(this.destroyRef))
               .subscribe({
-                next: (res) => { window.location.href = res.data.url; },
+                next: (res) => {
+                  window.location.href = res.data.url;
+                },
                 error: () => {
                   this.isLoading.set(false);
                   this.router.navigate(['/dashboard']);
@@ -219,7 +272,8 @@ export class RegisterComponent {
         },
         error: (err) => {
           const status = err.status;
-          if (status === 409) this.apiError.set('Un compte existe déjà avec cette adresse email');
+          if (status === 409)
+            this.apiError.set('Un compte existe déjà avec cette adresse email');
           else this.apiError.set('Une erreur est survenue, veuillez réessayer');
           this.isLoading.set(false);
         },

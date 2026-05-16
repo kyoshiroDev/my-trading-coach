@@ -19,19 +19,31 @@ describe('PremiumGuard', () => {
 
   describe('utilisateurs PREMIUM', () => {
     it('autorise les utilisateurs avec plan PREMIUM', () => {
-      const ctx = makeContext({ plan: Plan.PREMIUM, trialEndsAt: null, trialUsed: false });
+      const ctx = makeContext({
+        plan: Plan.PREMIUM,
+        trialEndsAt: null,
+        trialUsed: false,
+      });
       expect(guard.canActivate(ctx)).toBe(true);
     });
   });
 
   describe('utilisateurs FREE', () => {
     it('bloque les utilisateurs FREE sans trial', () => {
-      const ctx = makeContext({ plan: Plan.FREE, trialEndsAt: null, trialUsed: false });
+      const ctx = makeContext({
+        plan: Plan.FREE,
+        trialEndsAt: null,
+        trialUsed: false,
+      });
       expect(() => guard.canActivate(ctx)).toThrow(ForbiddenException);
     });
 
     it('retourne trialAvailable: true si trial non utilisé', () => {
-      const ctx = makeContext({ plan: Plan.FREE, trialEndsAt: null, trialUsed: false });
+      const ctx = makeContext({
+        plan: Plan.FREE,
+        trialEndsAt: null,
+        trialUsed: false,
+      });
       try {
         guard.canActivate(ctx);
       } catch (e: any) {
@@ -40,7 +52,11 @@ describe('PremiumGuard', () => {
     });
 
     it('retourne trialAvailable: false si trial déjà utilisé', () => {
-      const ctx = makeContext({ plan: Plan.FREE, trialEndsAt: null, trialUsed: true });
+      const ctx = makeContext({
+        plan: Plan.FREE,
+        trialEndsAt: null,
+        trialUsed: true,
+      });
       try {
         guard.canActivate(ctx);
       } catch (e: any) {

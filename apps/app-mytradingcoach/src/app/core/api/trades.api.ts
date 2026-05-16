@@ -8,6 +8,7 @@ export interface InstrumentDto {
   label: string;
   category: 'FUTURES_US' | 'CRYPTO' | 'FOREX' | 'INDICES' | 'ACTIONS';
   tickValue: number | null;
+  tickSize?: number;
   pipDecimals?: number;
 }
 
@@ -24,7 +25,13 @@ export interface Trade {
   riskReward: number | null;
   quantity: number | null;
   capitalEngaged: number | null;
-  emotion: 'CONFIDENT' | 'STRESSED' | 'REVENGE' | 'FEAR' | 'FOCUSED' | 'NEUTRAL';
+  emotion:
+    | 'CONFIDENT'
+    | 'STRESSED'
+    | 'REVENGE'
+    | 'FEAR'
+    | 'FOCUSED'
+    | 'NEUTRAL';
   setup: 'BREAKOUT' | 'PULLBACK' | 'RANGE' | 'REVERSAL' | 'SCALPING' | 'NEWS';
   session: 'LONDON' | 'NEW_YORK' | 'ASIAN';
   timeframe: string;
@@ -85,7 +92,8 @@ export class TradesApi {
   getAll(filters: TradeFilters = {}): Observable<{ data: PaginatedTrades }> {
     let params = new HttpParams();
     Object.entries(filters).forEach(([key, val]) => {
-      if (val !== undefined && val !== null) params = params.set(key, String(val));
+      if (val !== undefined && val !== null)
+        params = params.set(key, String(val));
     });
     return this.http.get<{ data: PaginatedTrades }>(this.base, { params });
   }

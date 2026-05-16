@@ -1,7 +1,7 @@
 # Agent NestJS — api-mytradingcoach
 
 ## Stack
-NestJS 11 · Prisma 7 · PostgreSQL 17 · PgBouncer · Redis · BullMQ · Anthropic SDK · Argon2 · JWT Passport
+NestJS 11 · Prisma 7 · PostgreSQL 17 · PgBouncer · Redis · BullMQ · Anthropic SDK · Argon2 · JWT Passport · Sentry
 
 ---
 
@@ -11,6 +11,7 @@ NestJS 11 · Prisma 7 · PostgreSQL 17 · PgBouncer · Redis · BullMQ · Anthro
 src/modules/
 ├── auth/      auth.module · auth.controller · auth.service · jwt.strategy · dto/
 ├── trades/    trades.module · trades.controller · trades.service · dto/
+│              csv-import.service.ts   ← parsing CSV via Claude SDK (Premium)
 ├── analytics/ analytics.module · analytics.controller · analytics.service
 ├── ai/        ai.module · ai.controller · ai.service · agents/
 │              └── agents/
@@ -20,7 +21,13 @@ src/modules/
 │                  ├── coach.agent.ts
 │                  └── debrief.agent.ts
 ├── debrief/   debrief.module · debrief.controller · debrief.service · debrief.cron
-└── users/     users.module · users.service
+│              pdf/pdf.service.ts   ← export PDF via puppeteer (Premium)
+├── users/     users.module · users.service
+├── vps/       vps.module · vps.controller · vps.service   ← NOUVEAU
+│              docker.controller · docker.service
+│              backup.controller · backup.service
+│              logs.controller · logs.service
+└── admin/     admin.module · admin.controller   ← NOUVEAU (stats globales + ai-usage)
 src/common/
 ├── guards/        jwt-auth.guard · premium.guard
 ├── interceptors/  response.interceptor ({ data, meta })
@@ -53,10 +60,27 @@ GET    /api/analytics/top-assets       PREMIUM
 POST   /api/ai/insights                PREMIUM → cooldown 4h par user
 POST   /api/ai/chat                    PREMIUM → 50 messages/jour par user
 
+POST   /api/trades/import              PREMIUM → CSV parsing via Claude SDK
+GET    /api/analytics/instruments      instruments avec tickSize/tickValue
+
 GET    /api/debrief/current            PREMIUM
 GET    /api/debrief/:year/:week        PREMIUM
+GET    /api/debrief/:year/:week/pdf    PREMIUM → export PDF via puppeteer
 GET    /api/debrief/history            PREMIUM
 POST   /api/debrief/generate           PREMIUM → 1/jour par user
+
+GET    /api/vps/stats                  ADMIN → stats système SSH
+POST   /api/vps/apt-update             ADMIN → SSE stream
+POST   /api/vps/reboot                 ADMIN → confirmation requise
+GET    /api/docker/containers          ADMIN
+POST   /api/docker/containers/:id/start|stop|restart   ADMIN
+DELETE /api/docker/containers/:id      ADMIN
+GET    /api/vps/backups                ADMIN
+POST   /api/vps/backups                ADMIN → pg_dump via SSH
+GET    /api/vps/logs/:container        ADMIN → SSE stream docker logs
+GET    /api/admin/ai-usage             ADMIN → stats tokens/coût
+GET    /api/users/admin/:id/detail     ADMIN → fiche utilisateur complète
+GET    /api/users/admin/subscriptions  ADMIN → liste abonnements Premium
 
 GET    /api/health
 POST   /api/test/upgrade-user          NODE_ENV=test uniquement
@@ -68,12 +92,15 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
 
 - `@UseGuards(JwtAuthGuard)` sur toutes les routes protégées
 - `@UseGuards(PremiumGuard)` sur routes IA et analytics avancés
+- `@UseGuards(JwtAuthGuard, AdminGuard)` sur TOUTES les routes `/vps/*`, `/docker/*`, `/admin/*`
 - `/api/analytics/summary` : PAS de PremiumGuard (FREE y accède)
 - `ValidationPipe` global : `whitelist: true, forbidNonWhitelisted: true`
 - Ne jamais appeler Prisma dans les controllers
 - Ne jamais `console.log` → Logger NestJS
 - Argon2 pour les mots de passe (jamais Bcrypt)
 - JWT : access_token 15min, refresh_token 7j httpOnly cookie
+- SSH credentials uniquement via variables d'env — jamais en dur, jamais en BDD
+  - `VPS_HOST=51.83.197.230`, `VPS_USER=greg`, `VPS_SSH_KEY_B64=<base64>`
 
 ---
 
@@ -345,6 +372,27 @@ canActivate(ctx: ExecutionContext): boolean {
   });
 }
 ```
+
+---
+
+## AiService — logging automatique obligatoire
+
+Après CHAQUE appel Anthropic dans `AiService`, logger la consommation :
+
+```typescript
+await this.prisma.aiUsageLog.create({
+  data: {
+    userId: options.userId,
+    feature: options.feature ?? 'unknown',
+    inputTokens: response.usage.input_tokens,
+    outputTokens: response.usage.output_tokens,
+    costUsd: (response.usage.input_tokens * 3 + response.usage.output_tokens * 15) / 1_000_000,
+  },
+});
+```
+
+Toujours passer `{ userId, feature }` dans les options. Features valides :
+`'insights'` | `'chat'` | `'debrief'` | `'csv_import'`
 
 ---
 

@@ -7,6 +7,7 @@ import { DebriefProcessor } from './debrief.processor';
 import { AiModule } from '../ai/ai.module';
 import { AnalyticsModule } from '../analytics/analytics.module';
 import { ResendModule } from '../resend/resend.module';
+import { PdfModule } from '../pdf/pdf.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { ResendModule } from '../resend/resend.module';
     AiModule,
     AnalyticsModule,
     ResendModule,
+    PdfModule,
   ],
   controllers: [DebriefController],
   providers: [DebriefService, DebriefCron, DebriefProcessor],

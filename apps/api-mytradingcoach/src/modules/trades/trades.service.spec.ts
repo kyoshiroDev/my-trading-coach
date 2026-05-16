@@ -1,7 +1,18 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException, HttpException, NotFoundException } from '@nestjs/common';
-import { Plan, Role, TradeSide, EmotionState, SetupType, TradingSession } from '@prisma/client';
+import {
+  ForbiddenException,
+  HttpException,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  Plan,
+  Role,
+  TradeSide,
+  EmotionState,
+  SetupType,
+  TradingSession,
+} from '@prisma/client';
 import { TradesService } from './trades.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
@@ -70,11 +81,12 @@ describe('TradesService', () => {
       it('bloque le 51ème trade pour un user FREE', async () => {
         mockPrisma.trade.count.mockResolvedValue(50);
 
-        await expect(service.create('user-123', createTradeDto, Plan.FREE))
-          .rejects.toThrow(HttpException);
+        await expect(
+          service.create('user-123', createTradeDto, Plan.FREE),
+        ).rejects.toThrow(HttpException);
       });
 
-      it('inclut le code FREE_LIMIT_REACHED dans l\'erreur', async () => {
+      it("inclut le code FREE_LIMIT_REACHED dans l'erreur", async () => {
         mockPrisma.trade.count.mockResolvedValue(50);
 
         try {
@@ -89,16 +101,18 @@ describe('TradesService', () => {
         mockPrisma.trade.count.mockResolvedValue(200);
         mockPrisma.trade.create.mockResolvedValue(mockTrade);
 
-        await expect(service.create('user-123', createTradeDto, Plan.PREMIUM))
-          .resolves.toBeDefined();
+        await expect(
+          service.create('user-123', createTradeDto, Plan.PREMIUM),
+        ).resolves.toBeDefined();
       });
 
       it('autorise le 50ème trade (limite non encore atteinte) pour FREE', async () => {
         mockPrisma.trade.count.mockResolvedValue(49);
         mockPrisma.trade.create.mockResolvedValue(mockTrade);
 
-        await expect(service.create('user-123', createTradeDto, Plan.FREE))
-          .resolves.toBeDefined();
+        await expect(
+          service.create('user-123', createTradeDto, Plan.FREE),
+        ).resolves.toBeDefined();
       });
     });
 
@@ -108,7 +122,11 @@ describe('TradesService', () => {
         Promise.resolve({ ...mockTrade, ...data }),
       );
 
-      const result = await service.create('user-123', createTradeDto, Plan.FREE);
+      const result = await service.create(
+        'user-123',
+        createTradeDto,
+        Plan.FREE,
+      );
 
       expect(result.pnl).toBe(2000); // exit - entry = 52000 - 50000 = 2000 LONG
     });
@@ -160,15 +178,20 @@ describe('TradesService', () => {
     it('lance NotFoundException si trade introuvable', async () => {
       mockPrisma.trade.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne('user-123', 'unknown-id'))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.findOne('user-123', 'unknown-id')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('lance ForbiddenException si trade appartient à un autre utilisateur', async () => {
-      mockPrisma.trade.findUnique.mockResolvedValue({ ...mockTrade, userId: 'other-user' });
+      mockPrisma.trade.findUnique.mockResolvedValue({
+        ...mockTrade,
+        userId: 'other-user',
+      });
 
-      await expect(service.findOne('user-123', 'trade-123'))
-        .rejects.toThrow(ForbiddenException);
+      await expect(service.findOne('user-123', 'trade-123')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('retourne le trade si userId correspond', async () => {
@@ -184,29 +207,33 @@ describe('TradesService', () => {
     it('ne bloque pas les users PREMIUM peu importe le count', async () => {
       mockPrisma.trade.count.mockResolvedValue(999);
 
-      await expect(service.checkMonthlyLimit('user-123', Plan.PREMIUM))
-        .resolves.toBeUndefined();
+      await expect(
+        service.checkMonthlyLimit('user-123', Plan.PREMIUM),
+      ).resolves.toBeUndefined();
     });
 
     it('ADMIN → aucune limite de trades', async () => {
       mockPrisma.trade.count.mockResolvedValue(999);
 
-      await expect(service.checkMonthlyLimit('user-123', Plan.FREE, Role.ADMIN))
-        .resolves.toBeUndefined();
+      await expect(
+        service.checkMonthlyLimit('user-123', Plan.FREE, Role.ADMIN),
+      ).resolves.toBeUndefined();
     });
 
     it('BETA_TESTER → aucune limite de trades', async () => {
       mockPrisma.trade.count.mockResolvedValue(999);
 
-      await expect(service.checkMonthlyLimit('user-123', Plan.FREE, Role.BETA_TESTER))
-        .resolves.toBeUndefined();
+      await expect(
+        service.checkMonthlyLimit('user-123', Plan.FREE, Role.BETA_TESTER),
+      ).resolves.toBeUndefined();
     });
 
     it('bloque dès que count >= 50 pour FREE', async () => {
       mockPrisma.trade.count.mockResolvedValue(50);
 
-      await expect(service.checkMonthlyLimit('user-123', Plan.FREE))
-        .rejects.toThrow(HttpException);
+      await expect(
+        service.checkMonthlyLimit('user-123', Plan.FREE),
+      ).rejects.toThrow(HttpException);
     });
   });
 });

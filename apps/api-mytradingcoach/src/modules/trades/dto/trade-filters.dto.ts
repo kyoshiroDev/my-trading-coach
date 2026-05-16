@@ -1,4 +1,12 @@
-import { IsEnum, IsOptional, IsString, IsDateString, IsInt, Min, Max } from 'class-validator';
+import {
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsDateString,
+  IsInt,
+  Min,
+  Max,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
 import { EmotionState, SetupType, TradeSide } from '@prisma/client';
 

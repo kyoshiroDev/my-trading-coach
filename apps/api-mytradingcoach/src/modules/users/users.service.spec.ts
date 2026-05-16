@@ -64,7 +64,11 @@ describe('UsersService', () => {
       expect(mockPrisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: 'user-1' },
-          data: expect.objectContaining({ onboardingCompleted: true, market: 'CRYPTO', goal: 'DISCIPLINE' }),
+          data: expect.objectContaining({
+            onboardingCompleted: true,
+            market: 'CRYPTO',
+            goal: 'DISCIPLINE',
+          }),
         }),
       );
       expect(result.onboardingCompleted).toBe(true);
@@ -82,7 +86,11 @@ describe('UsersService', () => {
 
       expect(mockPrisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ onboardingCompleted: true, market: null, goal: null }),
+          data: expect.objectContaining({
+            onboardingCompleted: true,
+            market: null,
+            goal: null,
+          }),
         }),
       );
     });
@@ -90,9 +98,12 @@ describe('UsersService', () => {
 
   describe('updatePreferences', () => {
     it('met à jour currency et notificationsEmail', async () => {
-      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-        json: vi.fn().mockResolvedValue({ rates: { EUR: 0.92 } }),
-      }));
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          json: vi.fn().mockResolvedValue({ rates: { EUR: 0.92 } }),
+        }),
+      );
 
       mockPrisma.user.update.mockResolvedValue({
         ...mockUser,
@@ -123,7 +134,10 @@ describe('UsersService', () => {
     });
 
     it('met à jour debriefAutomatic seul', async () => {
-      mockPrisma.user.update.mockResolvedValue({ ...mockUser, debriefAutomatic: false });
+      mockPrisma.user.update.mockResolvedValue({
+        ...mockUser,
+        debriefAutomatic: false,
+      });
 
       await service.updatePreferences('user-1', { debriefAutomatic: false });
 
@@ -139,7 +153,9 @@ describe('UsersService', () => {
 
       await service.deleteMe('user-1');
 
-      expect(mockPrisma.user.delete).toHaveBeenCalledWith({ where: { id: 'user-1' } });
+      expect(mockPrisma.user.delete).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+      });
     });
   });
 });

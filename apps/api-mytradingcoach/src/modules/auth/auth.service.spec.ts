@@ -1,6 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import {
+  ConflictException,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -72,7 +76,11 @@ describe('AuthService', () => {
         createdAt: mockUser.createdAt,
       });
 
-      const result = await service.register({ email: 'test@test.com', password: 'password123', name: 'Thomas' });
+      const result = await service.register({
+        email: 'test@test.com',
+        password: 'password123',
+        name: 'Thomas',
+      });
 
       expect(result.user.plan).toBe('FREE');
       expect(result.access_token).toBeDefined();
@@ -83,8 +91,9 @@ describe('AuthService', () => {
     it('lance ConflictException si email déjà utilisé', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
 
-      await expect(service.register({ email: 'test@test.com', password: 'password123' }))
-        .rejects.toThrow(ConflictException);
+      await expect(
+        service.register({ email: 'test@test.com', password: 'password123' }),
+      ).rejects.toThrow(ConflictException);
     });
 
     it('ne retourne jamais le hash du mot de passe', async () => {
@@ -97,17 +106,23 @@ describe('AuthService', () => {
         createdAt: mockUser.createdAt,
       });
 
-      const result = await service.register({ email: 'test@test.com', password: 'password123' });
+      const result = await service.register({
+        email: 'test@test.com',
+        password: 'password123',
+      });
 
       expect(result.user).not.toHaveProperty('password');
     });
   });
 
   describe('login', () => {
-    it('retourne les tokens et l\'utilisateur si identifiants corrects', async () => {
+    it("retourne les tokens et l'utilisateur si identifiants corrects", async () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
 
-      const result = await service.login({ email: 'test@test.com', password: 'password123' });
+      const result = await service.login({
+        email: 'test@test.com',
+        password: 'password123',
+      });
 
       expect(result.access_token).toBeDefined();
       expect(result.user.email).toBe('test@test.com');
@@ -116,8 +131,9 @@ describe('AuthService', () => {
     it('lance UnauthorizedException si email introuvable', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.login({ email: 'unknown@test.com', password: 'password123' }))
-        .rejects.toThrow(UnauthorizedException);
+      await expect(
+        service.login({ email: 'unknown@test.com', password: 'password123' }),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('lance UnauthorizedException si mot de passe incorrect', async () => {
@@ -125,14 +141,18 @@ describe('AuthService', () => {
       const argon2 = await import('argon2');
       vi.mocked(argon2.verify).mockResolvedValueOnce(false);
 
-      await expect(service.login({ email: 'test@test.com', password: 'wrong' }))
-        .rejects.toThrow(UnauthorizedException);
+      await expect(
+        service.login({ email: 'test@test.com', password: 'wrong' }),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('ne retourne jamais le hash du mot de passe', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
 
-      const result = await service.login({ email: 'test@test.com', password: 'password123' });
+      const result = await service.login({
+        email: 'test@test.com',
+        password: 'password123',
+      });
 
       expect(result.user).not.toHaveProperty('password');
     });
@@ -141,7 +161,10 @@ describe('AuthService', () => {
   describe('startTrial', () => {
     it('active le trial pour exactement 7 jours', async () => {
       const now = Date.now();
-      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, trialUsed: false });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        ...mockUser,
+        trialUsed: false,
+      });
       mockPrisma.user.update.mockImplementation(({ data }) => ({
         ...mockUser,
         ...data,
@@ -157,30 +180,37 @@ describe('AuthService', () => {
     });
 
     it('lance BadRequestException si trial déjà utilisé', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, trialUsed: true });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        ...mockUser,
+        trialUsed: true,
+      });
 
-      await expect(service.startTrial('user-123'))
-        .rejects.toThrow(BadRequestException);
+      await expect(service.startTrial('user-123')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('lance UnauthorizedException si user introuvable', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.startTrial('unknown-id'))
-        .rejects.toThrow(UnauthorizedException);
+      await expect(service.startTrial('unknown-id')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 
   describe('forgotPassword', () => {
-    it('ne fait rien si l\'email n\'existe pas (anti-énumération)', async () => {
+    it("ne fait rien si l'email n'existe pas (anti-énumération)", async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.forgotPassword('unknown@test.com')).resolves.toBeUndefined();
+      await expect(
+        service.forgotPassword('unknown@test.com'),
+      ).resolves.toBeUndefined();
       expect(mockPrisma.user.update).not.toHaveBeenCalled();
       expect(mockResend.sendResetPassword).not.toHaveBeenCalled();
     });
 
-    it('stocke un token hashé SHA256 et envoie l\'email', async () => {
+    it("stocke un token hashé SHA256 et envoie l'email", async () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       mockPrisma.user.update.mockResolvedValue(mockUser);
 
@@ -196,14 +226,15 @@ describe('AuthService', () => {
         }),
       );
       // Le token stocké est un hash (64 hex chars), pas le token brut
-      const stored = mockPrisma.user.update.mock.calls[0][0].data.resetPasswordToken as string;
+      const stored = mockPrisma.user.update.mock.calls[0][0].data
+        .resetPasswordToken as string;
       expect(stored).toHaveLength(64);
       expect(mockResend.sendResetPassword).toHaveBeenCalledWith(
         expect.objectContaining({ to: mockUser.email }),
       );
     });
 
-    it('l\'expiration est dans ~1 heure', async () => {
+    it("l'expiration est dans ~1 heure", async () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       mockPrisma.user.update.mockResolvedValue(mockUser);
 
@@ -211,7 +242,8 @@ describe('AuthService', () => {
       await service.forgotPassword('test@test.com');
       const after = Date.now();
 
-      const expires: Date = mockPrisma.user.update.mock.calls[0][0].data.resetPasswordExpires;
+      const expires: Date =
+        mockPrisma.user.update.mock.calls[0][0].data.resetPasswordExpires;
       const diffMs = expires.getTime() - before;
       expect(diffMs).toBeGreaterThanOrEqual(60 * 60 * 1000 - (after - before));
       expect(diffMs).toBeLessThanOrEqual(60 * 60 * 1000 + 1000);
@@ -222,8 +254,9 @@ describe('AuthService', () => {
     it('lance BadRequestException si token invalide ou expiré', async () => {
       mockPrisma.user.findFirst.mockResolvedValue(null);
 
-      await expect(service.resetPassword('invalid-token', 'newpassword123'))
-        .rejects.toThrow(BadRequestException);
+      await expect(
+        service.resetPassword('invalid-token', 'newpassword123'),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('met à jour le mot de passe et efface le token', async () => {

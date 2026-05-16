@@ -1,6 +1,8 @@
 @import 'theme.css';
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -21,9 +23,16 @@ body {
 }
 
 /* ─── Scrollbar ─── */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 2px; }
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-hover);
+  border-radius: 2px;
+}
 
 a {
   color: inherit;
@@ -55,6 +64,8 @@ lucide-icon svg {
   display: block;
 }
 
-input, select, textarea {
+input,
+select,
+textarea {
   font-family: var(--font-body);
 }

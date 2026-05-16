@@ -31,7 +31,7 @@ describe('ResendCron', () => {
     cron = module.get(ResendCron);
   });
 
-  it('envoie un email à chaque user dont l\'abo expire dans 7 jours', async () => {
+  it("envoie un email à chaque user dont l'abo expire dans 7 jours", async () => {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
@@ -48,7 +48,7 @@ describe('ResendCron', () => {
     );
   });
 
-  it('ne fait rien si aucun user n\'expire dans 7 jours', async () => {
+  it("ne fait rien si aucun user n'expire dans 7 jours", async () => {
     mockPrisma.user.findMany.mockResolvedValue([]);
     await cron.checkRenewalReminders();
     expect(mockSendRenewal).not.toHaveBeenCalled();

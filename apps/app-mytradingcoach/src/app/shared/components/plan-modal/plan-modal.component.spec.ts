@@ -9,34 +9,47 @@ import { BillingApi } from '../../../core/api/billing.api';
 
 const angularCore = await import('@angular/core');
 const angularInternalKey = 'ɵresolveComponentResources';
-const resolveComponentResources = (angularCore as Record<string, unknown>)[angularInternalKey] as (
-  resolver: (url: string) => Promise<{ text(): Promise<string> }>
+const resolveComponentResources = (angularCore as Record<string, unknown>)[
+  angularInternalKey
+] as (
+  resolver: (url: string) => Promise<{ text(): Promise<string> }>,
 ) => Promise<void>;
 
 const componentDir = resolve(fileURLToPath(import.meta.url), '..');
 const fsResolver = (url: string) => {
   try {
     const content = readFileSync(resolve(componentDir, url), 'utf-8');
-    return Promise.resolve({ text: () => Promise.resolve(content) } as unknown as Response);
+    return Promise.resolve({
+      text: () => Promise.resolve(content),
+    } as unknown as Response);
   } catch {
-    return Promise.resolve({ text: () => Promise.resolve('') } as unknown as Response);
+    return Promise.resolve({
+      text: () => Promise.resolve(''),
+    } as unknown as Response);
   }
 };
 
-const templateContent = readFileSync(resolve(componentDir, 'plan-modal.component.html'), 'utf-8');
+const templateContent = readFileSync(
+  resolve(componentDir, 'plan-modal.component.html'),
+  'utf-8',
+);
 
 beforeAll(async () => {
   await resolveComponentResources(fsResolver);
 });
 
 const mockBillingApi = {
-  checkout: vi.fn().mockReturnValue(of({ data: { url: 'https://checkout.stripe.com/test' } })),
+  checkout: vi
+    .fn()
+    .mockReturnValue(of({ data: { url: 'https://checkout.stripe.com/test' } })),
 };
 
 describe('PlanModalComponent', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
-    mockBillingApi.checkout.mockReturnValue(of({ data: { url: 'https://checkout.stripe.com/test' } }));
+    mockBillingApi.checkout.mockReturnValue(
+      of({ data: { url: 'https://checkout.stripe.com/test' } }),
+    );
 
     TestBed.configureTestingModule({
       imports: [PlanModalComponent],
@@ -57,7 +70,9 @@ describe('PlanModalComponent', () => {
   it('plan par défaut = yearly', () => {
     const fixture = TestBed.createComponent(PlanModalComponent);
     fixture.detectChanges();
-    const c = fixture.componentInstance as unknown as { selectedPlan: () => string };
+    const c = fixture.componentInstance as unknown as {
+      selectedPlan: () => string;
+    };
     expect(c.selectedPlan()).toBe('yearly');
   });
 
@@ -72,7 +87,7 @@ describe('PlanModalComponent', () => {
     expect(c.selectedPlan()).toBe('monthly');
   });
 
-  it('close() émet l\'output closed', () => {
+  it("close() émet l'output closed", () => {
     const fixture = TestBed.createComponent(PlanModalComponent);
     fixture.detectChanges();
     const closedSpy = vi.fn();
@@ -97,7 +112,9 @@ describe('PlanModalComponent', () => {
   it('confirmPlan() avec yearly appelle checkout("yearly")', () => {
     const fixture = TestBed.createComponent(PlanModalComponent);
     fixture.detectChanges();
-    const c = fixture.componentInstance as unknown as { confirmPlan: () => void };
+    const c = fixture.componentInstance as unknown as {
+      confirmPlan: () => void;
+    };
     c.confirmPlan();
     expect(mockBillingApi.checkout).toHaveBeenCalledWith('yearly');
   });

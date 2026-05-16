@@ -1,5 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { LucideAngularModule, Lightbulb, AlertCircle, Info, TrendingUp } from 'lucide-angular';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+} from '@angular/core';
+import {
+  LucideAngularModule,
+  Lightbulb,
+  AlertCircle,
+  Info,
+  TrendingUp,
+} from 'lucide-angular';
 
 export type InsightType = 'tip' | 'warning' | 'info' | 'strength';
 
@@ -47,68 +58,99 @@ const ICON_COLOR_MAP: Record<InsightType, string> = {
         @if (insight().tags?.length) {
           <div class="insight-tags">
             @for (tag of insight().tags!; track tag) {
-              <span class="insight-tag" [class]="insight().type">{{ tag }}</span>
+              <span class="insight-tag" [class]="insight().type">{{
+                tag
+              }}</span>
             }
           </div>
         }
       </div>
     </div>
   `,
-  styles: [`
-    .insight-item {
-      display: flex;
-      gap: 14px;
-      padding: 16px 0;
-      border-bottom: 1px solid rgba(99,155,255,0.06);
-      align-items: flex-start;
-    }
+  styles: [
+    `
+      .insight-item {
+        display: flex;
+        gap: 14px;
+        padding: 16px 0;
+        border-bottom: 1px solid rgba(99, 155, 255, 0.06);
+        align-items: flex-start;
+      }
 
-    .insight-item:last-child { border-bottom: none; padding-bottom: 0; }
+      .insight-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
 
-    .insight-icon {
-      width: 32px; height: 32px;
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
+      .insight-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
 
-    .insight-content { flex: 1; min-width: 0; }
+      .insight-content {
+        flex: 1;
+        min-width: 0;
+      }
 
-    .insight-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 4px;
-      font-family: var(--font-display, 'Syne', sans-serif);
-    }
+      .insight-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 4px;
+        font-family: var(--font-display, 'Syne', sans-serif);
+      }
 
-    .insight-desc {
-      font-size: 12.5px;
-      color: var(--text-2);
-      line-height: 1.6;
-      margin: 0 0 8px;
-    }
+      .insight-desc {
+        font-size: 12.5px;
+        color: var(--text-2);
+        line-height: 1.6;
+        margin: 0 0 8px;
+      }
 
-    .insight-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+      .insight-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+      }
 
-    .insight-tag {
-      font-size: 10px;
-      font-family: var(--font-mono, 'DM Mono', monospace);
-      padding: 2px 8px;
-      border-radius: 4px;
-    }
+      .insight-tag {
+        font-size: 10px;
+        font-family: var(--font-mono, 'DM Mono', monospace);
+        padding: 2px 8px;
+        border-radius: 4px;
+      }
 
-    .insight-tag.tip { background: rgba(34,211,238,0.1); color: #22d3ee; }
-    .insight-tag.warning { background: var(--red-dim); color: var(--red); }
-    .insight-tag.info { background: var(--blue-glow); color: var(--blue-bright); }
-    .insight-tag.strength { background: var(--green-dim); color: var(--green); }
-  `],
+      .insight-tag.tip {
+        background: rgba(34, 211, 238, 0.1);
+        color: #22d3ee;
+      }
+      .insight-tag.warning {
+        background: var(--red-dim);
+        color: var(--red);
+      }
+      .insight-tag.info {
+        background: var(--blue-glow);
+        color: var(--blue-bright);
+      }
+      .insight-tag.strength {
+        background: var(--green-dim);
+        color: var(--green);
+      }
+    `,
+  ],
 })
 export class InsightCardComponent {
   insight = input.required<Insight>();
 
   protected readonly icon = computed(() => ICON_MAP[this.insight().type]);
   protected readonly iconBg = computed(() => COLOR_MAP[this.insight().type]);
-  protected readonly iconColor = computed(() => ICON_COLOR_MAP[this.insight().type]);
+  protected readonly iconColor = computed(
+    () => ICON_COLOR_MAP[this.insight().type],
+  );
 }

@@ -58,7 +58,15 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build Angular
-        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=production
+        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=production --skip-nx-cache
+
+      - name: Verify build output
+        run: |
+          if [ ! -f "dist/apps/app-mytradingcoach/browser/index.html" ]; then
+            echo "❌ build failed — index.html not found"
+            exit 1
+          fi
+          echo "✅ build ok — $(du -sh dist/apps/app-mytradingcoach/browser/)"
 
       - name: Prepare Vercel output (prebuilt)
         run: |

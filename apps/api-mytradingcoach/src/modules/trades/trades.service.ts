@@ -10,13 +10,18 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
-import { getTickValue } from './instruments.const';
+import { getTickValue, getTickSize } from './instruments.const';
 
 @Injectable()
 export class TradesService {
   constructor(private prisma: PrismaService) {}
 
-  async create(userId: string, dto: CreateTradeDto, plan: Plan = Plan.FREE, role: Role = Role.USER) {
+  async create(
+    userId: string,
+    dto: CreateTradeDto,
+    plan: Plan = Plan.FREE,
+    role: Role = Role.USER,
+  ) {
     await this.checkMonthlyLimit(userId, plan, role);
     const pnl = this.calculatePnl(dto);
     const riskReward = this.calculateRiskReward(dto);
@@ -34,7 +39,15 @@ export class TradesService {
   }
 
   async findAll(userId: string, filters: TradeFiltersDto) {
-    const { cursor, limit = 20, side, setup, emotion, dateFrom, dateTo } = filters;
+    const {
+      cursor,
+      limit = 20,
+      side,
+      setup,
+      emotion,
+      dateFrom,
+      dateTo,
+    } = filters;
     const where: Prisma.TradeWhereInput = { userId };
     if (side) where.side = side;
     if (setup) where.setup = setup;
@@ -83,8 +96,13 @@ export class TradesService {
     await this.prisma.trade.delete({ where: { id } });
   }
 
-  async checkMonthlyLimit(userId: string, plan: Plan, role: Role = Role.USER): Promise<void> {
-    if (role === Role.ADMIN || role === Role.BETA_TESTER || plan !== Plan.FREE) return;
+  async checkMonthlyLimit(
+    userId: string,
+    plan: Plan,
+    role: Role = Role.USER,
+  ): Promise<void> {
+    if (role === Role.ADMIN || role === Role.BETA_TESTER || plan !== Plan.FREE)
+      return;
 
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
@@ -96,7 +114,10 @@ export class TradesService {
 
     if (count >= 50) {
       throw new HttpException(
-        { code: 'FREE_LIMIT_REACHED', message: 'Limite de 50 trades/mois atteinte' },
+        {
+          code: 'FREE_LIMIT_REACHED',
+          message: 'Limite de 50 trades/mois atteinte',
+        },
         HttpStatus.FORBIDDEN,
       );
     }
@@ -114,16 +135,19 @@ export class TradesService {
 
     if (effectiveExit == null) return undefined;
 
-    const points = dto.side === 'LONG'
-      ? effectiveExit - dto.entry
-      : dto.entry - effectiveExit;
+    const points =
+      dto.side === 'LONG'
+        ? effectiveExit - dto.entry
+        : dto.entry - effectiveExit;
 
     const quantity = dto.quantity ?? 1;
     const tickValue = getTickValue(dto.asset);
+    const tickSize = getTickSize(dto.asset);
 
     let pnl: number;
     if (tickValue != null) {
-      pnl = points * tickValue * quantity;
+      const ticks = tickSize && tickSize > 0 ? points / tickSize : points;
+      pnl = ticks * tickValue * quantity;
     } else if (dto.capitalEngaged != null && dto.capitalEngaged > 0) {
       pnl = (points / dto.entry) * dto.capitalEngaged;
     } else {
@@ -136,9 +160,10 @@ export class TradesService {
   private calculateRiskReward(dto: CreateTradeDto): number | undefined {
     // R/R calculé depuis takeProfit (objectif prévu), pas exit (sortie réelle)
     if (dto.entry != null && dto.takeProfit != null && dto.stopLoss != null) {
-      const reward = dto.side === 'LONG'
-        ? dto.takeProfit - dto.entry
-        : dto.entry - dto.takeProfit;
+      const reward =
+        dto.side === 'LONG'
+          ? dto.takeProfit - dto.entry
+          : dto.entry - dto.takeProfit;
       const risk = Math.abs(dto.entry - dto.stopLoss);
       return risk > 0 && reward > 0 ? +(reward / risk).toFixed(2) : undefined;
     }

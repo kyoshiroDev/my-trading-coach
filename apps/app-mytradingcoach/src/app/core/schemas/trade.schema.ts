@@ -5,7 +5,7 @@ import { z } from 'zod';
 const nullToUndef = (v: unknown) => (v == null ? undefined : v);
 
 const optPositive = z.preprocess(nullToUndef, z.number().positive().optional());
-const optNumber   = z.preprocess(nullToUndef, z.number().optional());
+const optNumber = z.preprocess(nullToUndef, z.number().optional());
 
 export const CreateTradeSchema = z.object({
   asset: z.string().min(1, 'Asset requis'),
@@ -16,8 +16,22 @@ export const CreateTradeSchema = z.object({
   takeProfit: optPositive,
   pnl: optNumber,
   riskReward: optNumber,
-  emotion: z.enum(['CONFIDENT', 'STRESSED', 'REVENGE', 'FEAR', 'FOCUSED', 'NEUTRAL']),
-  setup: z.enum(['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS']),
+  emotion: z.enum([
+    'CONFIDENT',
+    'STRESSED',
+    'REVENGE',
+    'FEAR',
+    'FOCUSED',
+    'NEUTRAL',
+  ]),
+  setup: z.enum([
+    'BREAKOUT',
+    'PULLBACK',
+    'RANGE',
+    'REVERSAL',
+    'SCALPING',
+    'NEWS',
+  ]),
   session: z.enum(['LONDON', 'NEW_YORK', 'ASIAN']),
   timeframe: z.string().min(1),
   quantity: z.preprocess(nullToUndef, z.number().positive().optional()),

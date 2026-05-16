@@ -1,4 +1,10 @@
-import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
+import {
+  DestroyRef,
+  Injectable,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
@@ -45,7 +51,9 @@ export class TradesStore {
   readonly hasNextPage = signal(false);
 
   readonly totalTrades = computed(() => this.trades().length);
-  readonly winningTrades = computed(() => this.trades().filter((t) => (t.pnl ?? 0) > 0).length);
+  readonly winningTrades = computed(
+    () => this.trades().filter((t) => (t.pnl ?? 0) > 0).length,
+  );
   readonly winRate = computed(() => {
     const total = this.totalTrades();
     return total > 0 ? (this.winningTrades() / total) * 100 : 0;
@@ -57,7 +65,8 @@ export class TradesStore {
     this.error.set(null);
 
     const params = new URLSearchParams(filters ?? {});
-    this.http.get<{ data: TradesPage }>(`${this.baseUrl}?${params}`)
+    this.http
+      .get<{ data: TradesPage }>(`${this.baseUrl}?${params}`)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
@@ -80,7 +89,8 @@ export class TradesStore {
 
     this.isLoadingMore.set(true);
     const params = new URLSearchParams({ cursor });
-    this.http.get<{ data: TradesPage }>(`${this.baseUrl}?${params}`)
+    this.http
+      .get<{ data: TradesPage }>(`${this.baseUrl}?${params}`)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {

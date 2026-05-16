@@ -1,18 +1,16 @@
 # Agent Angular — app-mytradingcoach
 
 ## Stack
-Angular 20 · Zoneless · Signals · Standalone Components · lucide-angular · Vitest
+Angular 21 · Signals · Standalone Components · lucide-angular · Vitest · Nx 22
 
 ---
 
-## Règles Angular 20 — ABSOLUES
+## Règles Angular 21 — ABSOLUES
 
-- `provideZonelessChangeDetection()` + `provideBrowserGlobalErrorListeners()` dans `app.config.ts`
 - `@if` / `@for` / `@switch` dans les templates — jamais `*ngIf` / `*ngFor`
 - `inject()` plutôt que constructeur
 - `DestroyRef` à la place de `ngOnDestroy`
 - `signal()`, `computed()`, `effect()`, `toSignal()` — signals partout
-- `resource()` / `httpResource()` pour les appels HTTP liés à des signals
 - `@defer` pour le lazy loading des composants lourds
 - Standalone Components exclusivement — pas de NgModules
 - Prefix composants : `mtc-`
@@ -29,10 +27,12 @@ src/app/
 ├── core/
 │   ├── auth/       auth.service.ts · auth.guard.ts · auth.interceptor.ts
 │   ├── api/        trades.api.ts · analytics.api.ts · debrief.api.ts · ai.api.ts
+│   │               admin.api.ts · vps.api.ts
 │   └── stores/     trades.store.ts · user.store.ts
 ├── features/
 │   ├── dashboard/          dashboard.component.ts + .html + .css
 │   ├── journal/            journal.component · trade-form.component · trade-row.component
+│   │                       csv-import.component   ← Premium uniquement
 │   ├── analytics/          analytics.component · heatmap.component
 │   ├── ai-insights/        ai-insights.component · insight-card.component
 │   ├── weekly-debrief/     debrief.component · debrief-objectives · debrief-emotions
@@ -60,6 +60,51 @@ EmotionEmojiPipe  // emoji selon état émotionnel
 SessionLabelPipe  // label lisible de la session
 SetupColorPipe    // couleur selon setup
 ```
+
+---
+
+## Responsive mobile — OBLIGATOIRE sur tous les composants
+
+- `font-size: 16px` minimum sur tous les `input`, `select`, `textarea` — anti-zoom iOS Safari
+- `min-width: 0` sur tous les items grid/flex — anti-overflow
+- `overflow-x: hidden` sur les containers principaux
+- `padding-bottom: calc(env(safe-area-inset-bottom) + Xpx)` sur les footers fixes
+- `height: 100dvh` plutôt que `100vh` — évite le bug Safari barre d'adresse
+- `viewport-fit=cover` dans `index.html`
+
+```css
+/* Règle globale dans chaque composant .css */
+@media (max-width: 768px) {
+  input, select, textarea { font-size: 16px; }
+}
+```
+
+---
+
+## Features Premium — règles obligatoires
+
+Import CSV et Export PDF sont réservés aux membres Premium.
+
+**Pattern obligatoire dans les composants qui accèdent à ces features :**
+
+```typescript
+private readonly userStore = inject(UserStore);
+protected readonly isPremium = this.userStore.isPremium;
+```
+
+```html
+@if (isPremium()) {
+  <!-- feature accessible -->
+} @else {
+  <div class="paywall">
+    <span>⚡</span>
+    <p>Fonctionnalité Premium</p>
+    <a routerLink="/settings">Essayer 7 jours gratuit →</a>
+  </div>
+}
+```
+
+Si l'API retourne `{ code: 'PREMIUM_REQUIRED' }` → rediriger vers `/settings`.
 
 ---
 

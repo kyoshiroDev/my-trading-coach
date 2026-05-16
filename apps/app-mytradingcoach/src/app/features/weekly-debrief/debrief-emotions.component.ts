@@ -10,7 +10,12 @@ export interface EmotionDebrief {
 }
 
 const EMOTION_EMOJIS: Record<string, string> = {
-  CONFIDENT: '😎', FOCUSED: '🎯', NEUTRAL: '😐', STRESSED: '😰', FEAR: '😨', REVENGE: '🤬',
+  CONFIDENT: '😎',
+  FOCUSED: '🎯',
+  NEUTRAL: '😐',
+  STRESSED: '😰',
+  FEAR: '😨',
+  REVENGE: '🤬',
 };
 
 function emotionColor(winRate: number): string {
@@ -31,19 +36,33 @@ function emotionColor(winRate: number): string {
       @for (e of emotions(); track e.emotion) {
         <div class="emotion-row">
           <div class="emotion-left">
-            <span class="emotion-emoji">{{ EMOTION_EMOJIS[e.emotion] || '😐' }}</span>
+            <span class="emotion-emoji">{{
+              EMOTION_EMOJIS[e.emotion] || '😐'
+            }}</span>
             <div class="emotion-info">
               <span class="emotion-name">{{ e.emotion | titlecase }}</span>
-              <span class="emotion-count">{{ e.count }} trade{{ e.count > 1 ? 's' : '' }}</span>
+              <span class="emotion-count"
+                >{{ e.count }} trade{{ e.count > 1 ? 's' : '' }}</span
+              >
             </div>
           </div>
           <div class="emotion-right">
             <div class="emotion-bar-wrap">
-              <div class="emotion-bar" [style.width.%]="e.winRate" [style.background]="color(e.winRate)"></div>
+              <div
+                class="emotion-bar"
+                [style.width.%]="e.winRate"
+                [style.background]="color(e.winRate)"
+              ></div>
             </div>
-            <span class="emotion-wr" [style.color]="color(e.winRate)">{{ e.winRate.toFixed(0) }}%</span>
+            <span class="emotion-wr" [style.color]="color(e.winRate)"
+              >{{ e.winRate.toFixed(0) }}%</span
+            >
           </div>
-          <span class="emotion-pnl" [class.pos]="e.pnl >= 0" [class.neg]="e.pnl < 0">
+          <span
+            class="emotion-pnl"
+            [class.pos]="e.pnl >= 0"
+            [class.neg]="e.pnl < 0"
+          >
             {{ e.pnl | pnlFormat }}
           </span>
         </div>
@@ -58,5 +77,7 @@ export class DebriefEmotionsComponent {
   emotions = input.required<EmotionDebrief[]>();
 
   protected readonly EMOTION_EMOJIS = EMOTION_EMOJIS;
-  protected color(winRate: number): string { return emotionColor(winRate); }
+  protected color(winRate: number): string {
+    return emotionColor(winRate);
+  }
 }

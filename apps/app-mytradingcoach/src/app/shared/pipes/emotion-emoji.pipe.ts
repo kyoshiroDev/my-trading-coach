@@ -2,11 +2,11 @@ import { Pipe, PipeTransform } from '@angular/core';
 
 const EMOTION_EMOJIS: Record<string, string> = {
   CONFIDENT: '😎',
-  FOCUSED:   '🎯',
-  NEUTRAL:   '😐',
-  STRESSED:  '😰',
-  FEAR:      '😨',
-  REVENGE:   '🤬',
+  FOCUSED: '🎯',
+  NEUTRAL: '😐',
+  STRESSED: '😰',
+  FEAR: '😨',
+  REVENGE: '🤬',
 };
 
 @Pipe({ name: 'emotionEmoji', standalone: true })

@@ -43,12 +43,35 @@ vi.mock('ioredis', () => ({
 }));
 
 const mockTrades = [
-  { asset: 'BTC', side: 'LONG', pnl: 100, emotion: 'CONFIDENT', setup: 'BREAKOUT', session: 'LONDON', tradedAt: new Date() },
-  { asset: 'ETH', side: 'SHORT', pnl: -50, emotion: 'STRESSED', setup: 'PULLBACK', session: 'NEW_YORK', tradedAt: new Date() },
+  {
+    asset: 'BTC',
+    side: 'LONG',
+    pnl: 100,
+    emotion: 'CONFIDENT',
+    setup: 'BREAKOUT',
+    session: 'LONDON',
+    tradedAt: new Date(),
+  },
+  {
+    asset: 'ETH',
+    side: 'SHORT',
+    pnl: -50,
+    emotion: 'STRESSED',
+    setup: 'PULLBACK',
+    session: 'NEW_YORK',
+    tradedAt: new Date(),
+  },
 ];
 
 const mockInsightsResult = {
-  insights: [{ type: 'weakness', title: 'Revenge', description: 'Test', badge: 'Attention' }],
+  insights: [
+    {
+      type: 'weakness',
+      title: 'Revenge',
+      description: 'Test',
+      badge: 'Attention',
+    },
+  ],
   topPattern: 'Revenge trading',
   emotionInsight: 'STRESSED → mauvais.',
 };
@@ -65,21 +88,24 @@ const mockDebriefAgent = {
   generate: vi.fn().mockResolvedValue({ summary: 'Semaine correcte.' }),
 };
 
-
 describe('AiService', () => {
   let service: AiService;
 
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    mockMessagesCreate.mockResolvedValue({ content: [{ type: 'text', text: 'Voici mon analyse...' }] });
+    mockMessagesCreate.mockResolvedValue({
+      content: [{ type: 'text', text: 'Voici mon analyse...' }],
+    });
     mockRedisGet.mockResolvedValue(null);
     mockRedisIncr.mockResolvedValue(1);
     mockRedisExpire.mockResolvedValue(1);
     mockRedisQuit.mockResolvedValue('OK');
     mockPrisma.trade.findMany.mockResolvedValue(mockTrades);
     mockOrchestrator.runInsightsFlow.mockResolvedValue(mockInsightsResult);
-    mockDebriefAgent.generate.mockResolvedValue({ summary: 'Semaine correcte.' });
+    mockDebriefAgent.generate.mockResolvedValue({
+      summary: 'Semaine correcte.',
+    });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -105,18 +131,22 @@ describe('AiService', () => {
     it('vérifie le quota avant d appeler l orchestrateur', async () => {
       mockRedisGet.mockResolvedValueOnce('100');
 
-      await expect(service.getInsights('user-123', Role.USER)).rejects.toThrow(HttpException);
+      await expect(service.getInsights('user-123', Role.USER)).rejects.toThrow(
+        HttpException,
+      );
       expect(mockOrchestrator.runInsightsFlow).not.toHaveBeenCalled();
     });
 
     it('cooldown 4h actif → HttpException 429', async () => {
       // get appelé 2× : quota (null = ok), puis cooldown ('1' = fenêtre active)
       mockRedisGet
-        .mockResolvedValueOnce(null)  // quota → 0 appels ce mois
+        .mockResolvedValueOnce(null) // quota → 0 appels ce mois
         .mockResolvedValueOnce('1'); // cooldown → fenêtre 4h en cours
       mockRedisTtl.mockResolvedValueOnce(14000);
 
-      await expect(service.getInsights('user-123', Role.USER)).rejects.toMatchObject({
+      await expect(
+        service.getInsights('user-123', Role.USER),
+      ).rejects.toMatchObject({
         status: 429,
       });
     });
@@ -134,7 +164,12 @@ describe('AiService', () => {
 
   describe('chat', () => {
     it('retourne une réponse string depuis l IA', async () => {
-      const result = await service.chat('user-123', Role.USER, 'Analyse mon week', []);
+      const result = await service.chat(
+        'user-123',
+        Role.USER,
+        'Analyse mon week',
+        [],
+      );
 
       expect(result).toHaveProperty('response');
       expect(typeof result.response).toBe('string');
@@ -143,7 +178,13 @@ describe('AiService', () => {
 
   describe('generateDebrief', () => {
     it('délègue au DebriefAgent', async () => {
-      const data = { trades: [], stats: {}, previousObjectives: [], weekNumber: 17, year: 2026 };
+      const data = {
+        trades: [],
+        stats: {},
+        previousObjectives: [],
+        weekNumber: 17,
+        year: 2026,
+      };
       await service.generateDebrief(data);
 
       expect(mockDebriefAgent.generate).toHaveBeenCalledWith(data);

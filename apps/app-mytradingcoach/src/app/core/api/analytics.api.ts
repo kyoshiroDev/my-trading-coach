@@ -75,7 +75,9 @@ export class AnalyticsApi {
   }
 
   getEquityCurve(): Observable<{ data: EquityCurveResponse }> {
-    return this.http.get<{ data: EquityCurveResponse }>(`${this.base}/equity-curve`);
+    return this.http.get<{ data: EquityCurveResponse }>(
+      `${this.base}/equity-curve`,
+    );
   }
 
   getTopAssets(): Observable<{ data: TopAsset[] }> {

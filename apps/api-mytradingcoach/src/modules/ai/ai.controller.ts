@@ -34,10 +34,12 @@ export class AiController {
 
   @Throttle({ default: { ttl: 60000, limit: 20 } })
   @Post('chat')
-  chat(
-    @CurrentUser() user: { id: string; role: Role },
-    @Body() dto: ChatDto,
-  ) {
-    return this.aiService.chat(user.id, user.role, dto.message, dto.history ?? []);
+  chat(@CurrentUser() user: { id: string; role: Role }, @Body() dto: ChatDto) {
+    return this.aiService.chat(
+      user.id,
+      user.role,
+      dto.message,
+      dto.history ?? [],
+    );
   }
 }

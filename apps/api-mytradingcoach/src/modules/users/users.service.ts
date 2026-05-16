@@ -1,4 +1,9 @@
-import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { Plan, Role, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
@@ -68,7 +73,14 @@ export class UsersService {
           { role: Role.BETA_TESTER },
         ],
       },
-      select: { id: true, email: true, name: true, plan: true, role: true, trialEndsAt: true },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        plan: true,
+        role: true,
+        trialEndsAt: true,
+      },
     });
   }
 
@@ -120,14 +132,22 @@ export class UsersService {
 
   // ── Admin — update plan/role/name ─────────────────────────────────────────
 
-  async adminUpdate(targetId: string, dto: { name?: string; plan?: Plan; role?: Role }) {
-    const target = await this.prisma.user.findUnique({ where: { id: targetId }, select: { role: true } });
+  async adminUpdate(
+    targetId: string,
+    dto: { name?: string; plan?: Plan; role?: Role },
+  ) {
+    const target = await this.prisma.user.findUnique({
+      where: { id: targetId },
+      select: { role: true },
+    });
     if (!target) throw new NotFoundException('Utilisateur introuvable');
     if (target.role === Role.ADMIN) {
       throw new ForbiddenException('Impossible de modifier un administrateur');
     }
     if (dto.role === Role.ADMIN) {
-      throw new ForbiddenException('Promotion au rôle ADMIN impossible via API');
+      throw new ForbiddenException(
+        'Promotion au rôle ADMIN impossible via API',
+      );
     }
     return this.prisma.user.update({
       where: { id: targetId },
@@ -139,7 +159,10 @@ export class UsersService {
   // ── Admin — suppression ───────────────────────────────────────────────────
 
   async adminDelete(targetId: string): Promise<void> {
-    const target = await this.prisma.user.findUnique({ where: { id: targetId }, select: { role: true } });
+    const target = await this.prisma.user.findUnique({
+      where: { id: targetId },
+      select: { role: true },
+    });
     if (!target) throw new NotFoundException('Utilisateur introuvable');
     if (target.role === Role.ADMIN) {
       throw new ForbiddenException('Impossible de supprimer un administrateur');
@@ -151,15 +174,21 @@ export class UsersService {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const [monthly, annual, trials, freeUsers, newThisMonth, churnedThisMonth] =
+    const [monthly, annual, trials, freeUsers, newThisMonth, churnedThisMonth, betaTesters] =
       await Promise.all([
         this.prisma.user.count({
-          where: { plan: 'PREMIUM', stripeInterval: 'month',
-                   stripeSubscriptionStatus: { in: ['active', 'trialing'] } },
+          where: {
+            plan: 'PREMIUM',
+            stripeInterval: 'month',
+            stripeSubscriptionStatus: { in: ['active', 'trialing'] },
+          },
         }),
         this.prisma.user.count({
-          where: { plan: 'PREMIUM', stripeInterval: 'year',
-                   stripeSubscriptionStatus: { in: ['active', 'trialing'] } },
+          where: {
+            plan: 'PREMIUM',
+            stripeInterval: 'year',
+            stripeSubscriptionStatus: { in: ['active', 'trialing'] },
+          },
         }),
         this.prisma.user.count({
           where: { plan: 'PREMIUM', trialEndsAt: { gt: now } },
@@ -167,24 +196,37 @@ export class UsersService {
         this.prisma.user.count({ where: { plan: 'FREE' } }),
         this.prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
         this.prisma.user.count({
-          where: { plan: 'FREE', trialUsed: true, updatedAt: { gte: startOfMonth } },
+          where: {
+            plan: 'FREE',
+            trialUsed: true,
+            updatedAt: { gte: startOfMonth },
+          },
         }),
+        this.prisma.user.count({ where: { role: 'BETA_TESTER' } }),
       ]);
 
     const mrr = monthly * 39 + Math.round((annual * 349) / 12);
     const arr = mrr * 12;
     const totalPremium = monthly + annual;
 
-    return { mrr, arr, totalPremium, monthly, annual, trials, freeUsers, newThisMonth, churnedThisMonth };
+    return {
+      mrr, arr, totalPremium, monthly, annual,
+      trials, freeUsers, newThisMonth, churnedThisMonth, betaTesters,
+    };
   }
 
   // ── Rôle ──────────────────────────────────────────────────────────────────
 
   async setRole(targetUserId: string, role: Role): Promise<void> {
     if (role === Role.ADMIN) {
-      throw new ForbiddenException('Impossible de promouvoir un utilisateur au rôle ADMIN via API');
+      throw new ForbiddenException(
+        'Impossible de promouvoir un utilisateur au rôle ADMIN via API',
+      );
     }
-    await this.prisma.user.update({ where: { id: targetUserId }, data: { role } });
+    await this.prisma.user.update({
+      where: { id: targetUserId },
+      data: { role },
+    });
   }
 
   async activateTrial(userId: string) {
@@ -209,7 +251,9 @@ export class UsersService {
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
-    return this.prisma.trade.count({ where: { userId, createdAt: { gte: startOfMonth } } });
+    return this.prisma.trade.count({
+      where: { userId, createdAt: { gte: startOfMonth } },
+    });
   }
 
   async completeOnboarding(userId: string, dto: CompleteOnboardingDto) {
@@ -226,7 +270,9 @@ export class UsersService {
         onboardingCompleted: true,
         market: dto.market ?? null,
         goal: dto.goal ?? null,
-        ...(dto.startingCapital != null ? { startingCapital: dto.startingCapital } : {}),
+        ...(dto.startingCapital != null
+          ? { startingCapital: dto.startingCapital }
+          : {}),
         ...(dto.currency ? { currency: dto.currency } : {}),
         ...(currencyRate !== undefined ? { currencyRate } : {}),
       },
@@ -260,15 +306,86 @@ export class UsersService {
     const FALLBACK_RATE = 0.92;
     try {
       const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-      const data = await res.json() as { rates: Record<string, number> };
+      const data = (await res.json()) as { rates: Record<string, number> };
       return data.rates['EUR'] ?? FALLBACK_RATE;
     } catch (err) {
-      this.logger.warn(`Exchange rate API unavailable, using fallback ${FALLBACK_RATE} — ${(err as Error).message}`);
+      this.logger.warn(
+        `Exchange rate API unavailable, using fallback ${FALLBACK_RATE} — ${(err as Error).message}`,
+      );
       return FALLBACK_RATE;
     }
   }
 
   async deleteMe(userId: string): Promise<void> {
     await this.prisma.user.delete({ where: { id: userId } });
+  }
+
+  async adminSubscriptions(page = 1, limit = 20) {
+    const [users, total] = await this.prisma.$transaction([
+      this.prisma.user.findMany({
+        where: { plan: 'PREMIUM' },
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { stripeCurrentPeriodEnd: 'desc' },
+        select: {
+          id: true, email: true, name: true, plan: true, role: true,
+          trialEndsAt: true, stripeInterval: true, stripeCurrentPeriodEnd: true,
+          lastSeenAt: true, lastLoginAt: true, createdAt: true,
+        },
+      }),
+      this.prisma.user.count({ where: { plan: 'PREMIUM' } }),
+    ]);
+    return { data: { users, total } };
+  }
+
+  async adminDetail(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true, email: true, name: true, plan: true, role: true,
+        trialEndsAt: true, stripeInterval: true, stripeCurrentPeriodEnd: true,
+        lastSeenAt: true, lastLoginAt: true, createdAt: true,
+      },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const [totalTrades, tradesThisMonth, aiLogs] = await Promise.all([
+      this.prisma.trade.count({ where: { userId } }),
+      this.prisma.trade.count({ where: { userId, createdAt: { gte: startOfMonth } } }),
+      this.prisma.aiUsageLog.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      }),
+    ]);
+
+    const totalTokens = aiLogs.reduce((a, l) => a + l.inputTokens + l.outputTokens, 0);
+
+    const timeline = [
+      ...(user.lastLoginAt
+        ? [{ action: 'Connexion', detail: '', type: 'auth', createdAt: user.lastLoginAt.toISOString() }]
+        : []),
+      ...aiLogs.slice(0, 5).map(l => ({
+        action: `IA: ${l.feature}`,
+        detail: `${l.inputTokens + l.outputTokens} tokens`,
+        type: 'ai',
+        createdAt: l.createdAt.toISOString(),
+      })),
+    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    return {
+      data: {
+        user,
+        stats: {
+          totalTrades, tradesThisMonth, totalSessions: 0,
+          totalTimeMinutes: 0, totalAiCalls: aiLogs.length, totalTokens,
+        },
+        timeline,
+      },
+    };
   }
 }

@@ -21,9 +21,14 @@ async function login(page: Page, user: { email: string; password: string }) {
     const wizard = page.locator('[data-testid="onboarding-wizard"]');
     if (await wizard.isVisible({ timeout: 2000 })) {
       await page.click('[data-testid="wizard-skip"]');
-      await page.waitForSelector('[data-testid="onboarding-wizard"]', { state: 'hidden', timeout: 5000 });
+      await page.waitForSelector('[data-testid="onboarding-wizard"]', {
+        state: 'hidden',
+        timeout: 5000,
+      });
     }
-  } catch { /* wizard absent */ }
+  } catch {
+    /* wizard absent */
+  }
 }
 
 // HP1 — Auth
@@ -47,10 +52,14 @@ test('HP3 — FREE peut ouvrir le formulaire de trade', async ({ page }) => {
 });
 
 // HP4 — Analytics FREE bloqué
-test('HP4 — FREE voit les blocs verrouillés sur analytics', async ({ page }) => {
+test('HP4 — FREE voit les blocs verrouillés sur analytics', async ({
+  page,
+}) => {
   await login(page, FREE_USER);
   await page.goto('/analytics');
-  await expect(page.locator('[data-testid="locked-overlay"]').first()).toBeVisible();
+  await expect(
+    page.locator('[data-testid="locked-overlay"]').first(),
+  ).toBeVisible();
 });
 
 // HP5 — PREMIUM débloqué

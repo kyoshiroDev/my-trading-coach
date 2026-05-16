@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { httpResource } from '@angular/common/http';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
@@ -27,43 +33,81 @@ function computeScore(trades: Trade[]): ScoreBar[] {
   const winRate = closed.length ? (wins.length / closed.length) * 100 : 0;
 
   const revengeCount = trades.filter((t) => t.emotion === 'REVENGE').length;
-  const disciplineScore = Math.min(100, Math.max(0, 100 - (revengeCount / trades.length) * 200));
+  const disciplineScore = Math.min(
+    100,
+    Math.max(0, 100 - (revengeCount / trades.length) * 200),
+  );
 
   const perfScore = Math.min(100, winRate * 1.4);
 
   const badEmotions = ['REVENGE', 'FEAR', 'STRESSED'];
-  const badLosses = trades.filter((t) => badEmotions.includes(t.emotion) && (t.pnl ?? 0) < 0);
-  const psychScore = Math.max(0, 100 - (badLosses.length / trades.length) * 300);
+  const badLosses = trades.filter(
+    (t) => badEmotions.includes(t.emotion) && (t.pnl ?? 0) < 0,
+  );
+  const psychScore = Math.max(
+    0,
+    100 - (badLosses.length / trades.length) * 300,
+  );
 
-  const rrValues = closed.filter((t): t is typeof t & { riskReward: number } => t.riskReward != null).map((t) => t.riskReward);
-  const avgRR = rrValues.length ? rrValues.reduce((a, b) => a + b, 0) / rrValues.length : 0;
+  const rrValues = closed
+    .filter((t): t is typeof t & { riskReward: number } => t.riskReward != null)
+    .map((t) => t.riskReward);
+  const avgRR = rrValues.length
+    ? rrValues.reduce((a, b) => a + b, 0) / rrValues.length
+    : 0;
   const riskScore = Math.min(100, avgRR * 33);
 
   const setups = [...new Set(trades.map((t) => t.setup))];
   const setupWRs = setups.map((s) => {
     const st = closed.filter((t) => t.setup === s);
-    return st.length ? st.filter((t) => (t.pnl ?? 0) > 0).length / st.length : 0;
+    return st.length
+      ? st.filter((t) => (t.pnl ?? 0) > 0).length / st.length
+      : 0;
   });
-  const avg = setupWRs.length ? setupWRs.reduce((a, b) => a + b, 0) / setupWRs.length : 0;
-  const variance = setupWRs.reduce((acc, s) => acc + Math.pow(s - avg, 2), 0) / (setupWRs.length || 1);
+  const avg = setupWRs.length
+    ? setupWRs.reduce((a, b) => a + b, 0) / setupWRs.length
+    : 0;
+  const variance =
+    setupWRs.reduce((acc, s) => acc + Math.pow(s - avg, 2), 0) /
+    (setupWRs.length || 1);
   const consistScore = Math.max(0, 100 - variance * 400);
 
   return [
-    { name: 'Discipline',      score: Math.round(disciplineScore), color: barColor(Math.round(disciplineScore)) },
-    { name: 'Performance',     score: Math.round(perfScore),       color: barColor(Math.round(perfScore)) },
-    { name: 'Psychologie',     score: Math.round(psychScore),      color: barColor(Math.round(psychScore)) },
-    { name: 'Gestion risque',  score: Math.round(riskScore),       color: barColor(Math.round(riskScore)) },
-    { name: 'Consistance',     score: Math.round(consistScore),    color: barColor(Math.round(consistScore)) },
+    {
+      name: 'Discipline',
+      score: Math.round(disciplineScore),
+      color: barColor(Math.round(disciplineScore)),
+    },
+    {
+      name: 'Performance',
+      score: Math.round(perfScore),
+      color: barColor(Math.round(perfScore)),
+    },
+    {
+      name: 'Psychologie',
+      score: Math.round(psychScore),
+      color: barColor(Math.round(psychScore)),
+    },
+    {
+      name: 'Gestion risque',
+      score: Math.round(riskScore),
+      color: barColor(Math.round(riskScore)),
+    },
+    {
+      name: 'Consistance',
+      score: Math.round(consistScore),
+      color: barColor(Math.round(consistScore)),
+    },
   ];
 }
 
 function defaultBars(score: number): ScoreBar[] {
   return [
-    { name: 'Discipline',     score, color: barColor(score) },
-    { name: 'Performance',    score, color: barColor(score) },
-    { name: 'Psychologie',    score, color: barColor(score) },
+    { name: 'Discipline', score, color: barColor(score) },
+    { name: 'Performance', score, color: barColor(score) },
+    { name: 'Psychologie', score, color: barColor(score) },
     { name: 'Gestion risque', score, color: barColor(score) },
-    { name: 'Consistance',    score, color: barColor(score) },
+    { name: 'Consistance', score, color: barColor(score) },
   ];
 }
 
@@ -106,16 +150,22 @@ export class ScoringComponent {
   protected readonly showPlanModal = signal(false);
 
   private readonly tradesResource = httpResource<{ data: { data: Trade[] } }>(
-    () => `${environment.apiUrl}/trades?limit=100`
+    () => `${environment.apiUrl}/trades?limit=100`,
   );
 
-  protected readonly isLoading = computed(() => this.tradesResource.isLoading());
-  private readonly trades = computed(() => this.tradesResource.value()?.data.data ?? []);
+  protected readonly isLoading = computed(() =>
+    this.tradesResource.isLoading(),
+  );
+  private readonly trades = computed(
+    () => this.tradesResource.value()?.data.data ?? [],
+  );
 
   protected readonly bars = computed(() => computeScore(this.trades()));
   protected readonly globalScore = computed(() => {
     const b = this.bars();
-    return b.length ? Math.round(b.reduce((sum, x) => sum + x.score, 0) / b.length) : 0;
+    return b.length
+      ? Math.round(b.reduce((sum, x) => sum + x.score, 0) / b.length)
+      : 0;
   });
   protected readonly tradeCount = computed(() => this.trades().length);
   protected readonly scoreLabel = scoreLabel;

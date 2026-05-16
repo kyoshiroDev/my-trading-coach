@@ -63,23 +63,75 @@ export class CoinGeckoService {
       this.logger.log(`CoinGecko: ${instruments.length} instruments chargés`);
       return instruments;
     } catch {
-      this.logger.warn('CoinGecko API indisponible — fallback sur liste statique');
+      this.logger.warn(
+        'CoinGecko API indisponible — fallback sur liste statique',
+      );
       return this.getStaticCryptoFallback();
     }
   }
 
   private getStaticCryptoFallback(): Instrument[] {
     return [
-      { symbol: 'BTC/USDT',  label: 'Bitcoin (BTC/USDT)',        category: 'CRYPTO', tickValue: null },
-      { symbol: 'ETH/USDT',  label: 'Ethereum (ETH/USDT)',       category: 'CRYPTO', tickValue: null },
-      { symbol: 'SOL/USDT',  label: 'Solana (SOL/USDT)',         category: 'CRYPTO', tickValue: null },
-      { symbol: 'BNB/USDT',  label: 'BNB (BNB/USDT)',            category: 'CRYPTO', tickValue: null },
-      { symbol: 'XRP/USDT',  label: 'XRP (XRP/USDT)',            category: 'CRYPTO', tickValue: null },
-      { symbol: 'DOGE/USDT', label: 'Dogecoin (DOGE/USDT)',      category: 'CRYPTO', tickValue: null },
-      { symbol: 'ADA/USDT',  label: 'Cardano (ADA/USDT)',        category: 'CRYPTO', tickValue: null },
-      { symbol: 'AVAX/USDT', label: 'Avalanche (AVAX/USDT)',     category: 'CRYPTO', tickValue: null },
-      { symbol: 'LINK/USDT', label: 'Chainlink (LINK/USDT)',     category: 'CRYPTO', tickValue: null },
-      { symbol: 'DOT/USDT',  label: 'Polkadot (DOT/USDT)',       category: 'CRYPTO', tickValue: null },
+      {
+        symbol: 'BTC/USDT',
+        label: 'Bitcoin (BTC/USDT)',
+        category: 'CRYPTO',
+        tickValue: null,
+      },
+      {
+        symbol: 'ETH/USDT',
+        label: 'Ethereum (ETH/USDT)',
+        category: 'CRYPTO',
+        tickValue: null,
+      },
+      {
+        symbol: 'SOL/USDT',
+        label: 'Solana (SOL/USDT)',
+        category: 'CRYPTO',
+        tickValue: null,
+      },
+      {
+        symbol: 'BNB/USDT',
+        label: 'BNB (BNB/USDT)',
+        category: 'CRYPTO',
+        tickValue: null,
+      },
+      {
+        symbol: 'XRP/USDT',
+        label: 'XRP (XRP/USDT)',
+        category: 'CRYPTO',
+        tickValue: null,
+      },
+      {
+        symbol: 'DOGE/USDT',
+        label: 'Dogecoin (DOGE/USDT)',
+        category: 'CRYPTO',
+        tickValue: null,
+      },
+      {
+        symbol: 'ADA/USDT',
+        label: 'Cardano (ADA/USDT)',
+        category: 'CRYPTO',
+        tickValue: null,
+      },
+      {
+        symbol: 'AVAX/USDT',
+        label: 'Avalanche (AVAX/USDT)',
+        category: 'CRYPTO',
+        tickValue: null,
+      },
+      {
+        symbol: 'LINK/USDT',
+        label: 'Chainlink (LINK/USDT)',
+        category: 'CRYPTO',
+        tickValue: null,
+      },
+      {
+        symbol: 'DOT/USDT',
+        label: 'Polkadot (DOT/USDT)',
+        category: 'CRYPTO',
+        tickValue: null,
+      },
     ];
   }
 }

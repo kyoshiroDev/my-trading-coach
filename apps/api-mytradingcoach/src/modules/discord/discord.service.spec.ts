@@ -21,14 +21,22 @@ describe('DiscordService', () => {
     process.env['DISCORD_ROLE_MEMBRE_ID'] = 'role-membre';
 
     const module = await Test.createTestingModule({
-      providers: [DiscordService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        DiscordService,
+        { provide: PrismaService, useValue: mockPrisma },
+      ],
     }).compile();
 
     service = module.get(DiscordService);
   });
 
   it('user sans discordId → skip sans appel fetch', async () => {
-    mockPrisma.user.findUnique.mockResolvedValue({ discordId: null, plan: 'FREE', role: 'USER', trialEndsAt: null });
+    mockPrisma.user.findUnique.mockResolvedValue({
+      discordId: null,
+      plan: 'FREE',
+      role: 'USER',
+      trialEndsAt: null,
+    });
     await service.syncDiscordRole('user-1');
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -40,29 +48,55 @@ describe('DiscordService', () => {
   });
 
   it('USER FREE → appelle PUT avec rôle MEMBRE', async () => {
-    mockPrisma.user.findUnique.mockResolvedValue({ discordId: 'discord-123', plan: 'FREE', role: 'USER', trialEndsAt: null });
+    mockPrisma.user.findUnique.mockResolvedValue({
+      discordId: 'discord-123',
+      plan: 'FREE',
+      role: 'USER',
+      trialEndsAt: null,
+    });
     await service.syncDiscordRole('user-1');
-    const putCall = mockFetch.mock.calls.find(([url, opts]) => opts?.method === 'PUT' && url.includes('role-membre'));
+    const putCall = mockFetch.mock.calls.find(
+      ([url, opts]) => opts?.method === 'PUT' && url.includes('role-membre'),
+    );
     expect(putCall).toBeDefined();
   });
 
   it('USER PREMIUM → appelle PUT avec rôle PREMIUM', async () => {
-    mockPrisma.user.findUnique.mockResolvedValue({ discordId: 'discord-123', plan: 'PREMIUM', role: 'USER', trialEndsAt: null });
+    mockPrisma.user.findUnique.mockResolvedValue({
+      discordId: 'discord-123',
+      plan: 'PREMIUM',
+      role: 'USER',
+      trialEndsAt: null,
+    });
     await service.syncDiscordRole('user-1');
-    const putCall = mockFetch.mock.calls.find(([url, opts]) => opts?.method === 'PUT' && url.includes('role-premium'));
+    const putCall = mockFetch.mock.calls.find(
+      ([url, opts]) => opts?.method === 'PUT' && url.includes('role-premium'),
+    );
     expect(putCall).toBeDefined();
   });
 
   it('BETA_TESTER → traité comme PREMIUM', async () => {
-    mockPrisma.user.findUnique.mockResolvedValue({ discordId: 'discord-123', plan: 'FREE', role: 'BETA_TESTER', trialEndsAt: null });
+    mockPrisma.user.findUnique.mockResolvedValue({
+      discordId: 'discord-123',
+      plan: 'FREE',
+      role: 'BETA_TESTER',
+      trialEndsAt: null,
+    });
     await service.syncDiscordRole('user-1');
-    const putCall = mockFetch.mock.calls.find(([url, opts]) => opts?.method === 'PUT' && url.includes('role-premium'));
+    const putCall = mockFetch.mock.calls.find(
+      ([url, opts]) => opts?.method === 'PUT' && url.includes('role-premium'),
+    );
     expect(putCall).toBeDefined();
   });
 
   it('env vars manquantes → skip sans appel fetch', async () => {
     delete process.env['DISCORD_GUILD_ID'];
-    mockPrisma.user.findUnique.mockResolvedValue({ discordId: 'discord-123', plan: 'PREMIUM', role: 'USER', trialEndsAt: null });
+    mockPrisma.user.findUnique.mockResolvedValue({
+      discordId: 'discord-123',
+      plan: 'PREMIUM',
+      role: 'USER',
+      trialEndsAt: null,
+    });
     await service.syncDiscordRole('user-1');
     expect(mockFetch).not.toHaveBeenCalled();
   });

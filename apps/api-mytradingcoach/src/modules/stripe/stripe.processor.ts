@@ -57,7 +57,8 @@ export class StripeProcessor extends WorkerHost {
       );
       if (process.env['SENTRY_DSN']) {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const Sentry = require('@sentry/nestjs') as typeof import('@sentry/nestjs');
+        const Sentry =
+          require('@sentry/nestjs') as typeof import('@sentry/nestjs');
         Sentry.captureException(error, {
           tags: { eventType: event.type, eventId: event.id },
         });
