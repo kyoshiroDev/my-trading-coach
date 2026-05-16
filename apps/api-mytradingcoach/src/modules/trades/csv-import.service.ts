@@ -128,7 +128,7 @@ export class CsvImportService {
 
   private preprocessCsv(raw: string): string {
     // Supprimer BOM UTF-8 que certains exports Windows ajoutent
-    const cleaned = raw.replace(/^﻿/, '');
+    const cleaned = raw.charCodeAt(0) === 0xFEFF ? raw.slice(1) : raw;
     const lines = cleaned
       .trim()
       .split('\n')

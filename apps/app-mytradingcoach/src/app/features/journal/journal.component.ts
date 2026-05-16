@@ -117,7 +117,7 @@ export class JournalComponent implements OnInit {
   protected toggleDay(label: string): void {
     this.collapsedDays.update((set) => {
       const next = new Set(set);
-      next.has(label) ? next.delete(label) : next.add(label);
+      if (next.has(label)) { next.delete(label); } else { next.add(label); }
       return next;
     });
   }
