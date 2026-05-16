@@ -11,6 +11,8 @@ export interface Backup {
 @Injectable()
 export class BackupService {
   private readonly backupDir = process.env['BACKUP_DIR'] ?? '/opt/backups/mtc';
+  private readonly dbName = process.env['POSTGRES_DB'] ?? 'mytradingcoach_prod';
+  private readonly dbUser = process.env['POSTGRES_USER'] ?? 'mtc_user';
 
   constructor(private readonly vps: VpsService) {}
 
@@ -30,7 +32,7 @@ export class BackupService {
           filename,
           size,
           createdAt: new Date(dateStr).toISOString(),
-          type: filename.includes('_manual_') ? 'manual' : 'auto',
+          type: filename.includes('_manual') ? 'manual' : 'auto',
         } as Backup;
       })
       .filter(b => b.filename);
@@ -39,11 +41,7 @@ export class BackupService {
   async createBackup(): Promise<Backup> {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '').slice(0, 15);
     const filename = `mtc_prod_${timestamp}_manual.sql.gz`;
-    const cmd = [
-      `docker exec mtc_postgres pg_dump`,
-      `-U postgres mytradingcoach`,
-      `| gzip > ${this.backupDir}/${filename}`,
-    ].join(' ');
+    const cmd = `docker exec mtc_postgres pg_dump -U ${this.dbUser} ${this.dbName} | gzip > ${this.backupDir}/${filename}`;
     await this.vps.exec(cmd);
     return {
       filename,
