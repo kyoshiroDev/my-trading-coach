@@ -1,6 +1,10 @@
 .content { padding:20px; display:flex; flex-direction:column; gap:20px; }
 .page-header { display:flex; align-items:center; justify-content:space-between; }
 .page-title { font-size:16px; font-weight:700; color:var(--text); }
+.header-actions { display:flex; align-items:center; gap:8px; }
+.btn-ghost { display:flex; align-items:center; padding:8px; background:var(--bg3); border:1px solid var(--border); border-radius:7px; color:var(--text2); cursor:pointer; transition:all 0.1s; }
+.btn-ghost:hover:not(:disabled) { background:var(--bg4); color:var(--text); }
+.btn-ghost:disabled { opacity:0.4; cursor:not-allowed; }
 .btn-primary { display:flex; align-items:center; gap:6px; padding:8px 14px; background:var(--teal); color:#000; border:none; border-radius:7px; font-size:12px; font-weight:700; cursor:pointer; transition:opacity 0.15s; }
 .btn-primary:hover:not(:disabled) { opacity:0.85; }
 .btn-primary:disabled { opacity:0.5; cursor:not-allowed; }

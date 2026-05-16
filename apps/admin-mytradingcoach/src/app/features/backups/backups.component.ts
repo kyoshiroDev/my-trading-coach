@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
-import { LucideAngularModule, Plus, Trash2 } from 'lucide-angular';
+import { LucideAngularModule, Plus, Trash2, RefreshCw } from 'lucide-angular';
 import { VpsApi, Backup } from '../../core/api/vps.api';
 
 @Component({
@@ -15,10 +15,15 @@ import { VpsApi, Backup } from '../../core/api/vps.api';
     <div class="content">
       <div class="page-header">
         <h1 class="page-title">Sauvegardes</h1>
-        <button class="btn-primary" (click)="createBackup()" [disabled]="creating()">
-          <lucide-icon [img]="PlusIcon" [size]="12" />
-          {{ creating() ? 'Création...' : 'Nouveau backup' }}
-        </button>
+        <div class="header-actions">
+          <button class="btn-ghost" (click)="reload()" [disabled]="loading()" title="Rafraîchir">
+            <lucide-icon [img]="RefreshIcon" [size]="12" />
+          </button>
+          <button class="btn-primary" (click)="createBackup()" [disabled]="creating()">
+            <lucide-icon [img]="PlusIcon" [size]="12" />
+            {{ creating() ? 'Création...' : 'Nouveau backup' }}
+          </button>
+        </div>
       </div>
       @if (loading()) {
         <div class="empty-state">Chargement...</div>
@@ -60,8 +65,15 @@ export class BackupsComponent {
   protected readonly error = signal(false);
   protected readonly PlusIcon = Plus;
   protected readonly TrashIcon = Trash2;
+  protected readonly RefreshIcon = RefreshCw;
 
   constructor() {
+    this.reload();
+  }
+
+  protected reload() {
+    this.loading.set(true);
+    this.error.set(false);
     this.vpsApi.backups()
       .pipe(
         catchError(() => {
@@ -78,10 +90,12 @@ export class BackupsComponent {
 
   protected createBackup() {
     this.creating.set(true);
-    this.vpsApi.createBackup().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => { this.creating.set(false); this.vpsApi.backups().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(r => this.backups.set(r.data)); },
-      error: () => this.creating.set(false),
-    });
+    this.vpsApi.createBackup()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => { this.creating.set(false); this.reload(); },
+        error: () => this.creating.set(false),
+      });
   }
 
   protected deleteBackup(f: string) {
