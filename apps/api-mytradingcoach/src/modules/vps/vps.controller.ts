@@ -76,7 +76,7 @@ export class VpsController {
 
     const ssh = await this.vps.getConnection();
 
-    const containerName = container.replace(/[^a-zA-Z0-9_\-]/g, '');
+    const containerName = container.replace(/[^a-zA-Z0-9_-]/g, '');
 
     ssh.exec(`docker logs -f --tail 100 ${containerName}`, [], {
       onStdout: (chunk: Buffer) => {

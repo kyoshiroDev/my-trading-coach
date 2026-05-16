@@ -24,12 +24,12 @@ import { AdminAuthService } from '../../core/auth/admin-auth.service';
         }
         <form (ngSubmit)="submit()">
           <div class="field">
-            <label class="label">Email</label>
-            <input type="email" [(ngModel)]="email" name="email" placeholder="admin@mytradingcoach.app" required />
+            <label class="label" for="login-email">Email</label>
+            <input id="login-email" type="email" [(ngModel)]="email" name="email" placeholder="admin@mytradingcoach.app" required />
           </div>
           <div class="field">
-            <label class="label">Mot de passe</label>
-            <input type="password" [(ngModel)]="password" name="password" placeholder="••••••••••" required />
+            <label class="label" for="login-password">Mot de passe</label>
+            <input id="login-password" type="password" [(ngModel)]="password" name="password" placeholder="••••••••••" required />
           </div>
           <button type="submit" class="btn-login" [disabled]="loading()">
             @if (loading()) { Connexion… } @else { Se connecter }

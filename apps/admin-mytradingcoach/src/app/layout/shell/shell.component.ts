@@ -15,7 +15,7 @@ import { AdminAuthService } from '../../core/auth/admin-auth.service';
   styleUrl: './shell.component.css',
   template: `
     <div class="app">
-      <div class="sidebar-overlay" [class.open]="sidebarOpen()" (click)="sidebarOpen.set(false)"></div>
+      <div class="sidebar-overlay" role="button" tabindex="-1" [class.open]="sidebarOpen()" (click)="sidebarOpen.set(false)" (keydown.escape)="sidebarOpen.set(false)"></div>
       <aside class="sidebar" [class.open]="sidebarOpen()">
         <div class="sidebar-logo">
           <div class="logo-mark">M</div>
