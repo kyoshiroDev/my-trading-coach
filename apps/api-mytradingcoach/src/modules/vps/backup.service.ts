@@ -32,7 +32,7 @@ export class BackupService {
           filename,
           size,
           createdAt: new Date(dateStr).toISOString(),
-          type: filename.includes('_manual_') ? 'manual' : 'auto',
+          type: filename.includes('_manual') ? 'manual' : 'auto',
         } as Backup;
       })
       .filter(b => b.filename);
