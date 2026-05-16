@@ -1,0 +1,9 @@
+{
+  "name": "admin-mytradingcoach-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/admin-mytradingcoach-e2e/src",
+  "implicitDependencies": ["admin-mytradingcoach"],
+  "// targets": "to see all targets run: nx show project admin-mytradingcoach-e2e --web",
+  "targets": {}
+}

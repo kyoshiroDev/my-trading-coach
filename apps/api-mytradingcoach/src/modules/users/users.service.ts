@@ -325,4 +325,71 @@ export class UsersService {
   async deleteMe(userId: string): Promise<void> {
     await this.prisma.user.delete({ where: { id: userId } });
   }
+
+  async adminSubscriptions(page = 1, limit = 20) {
+    const [users, total] = await this.prisma.$transaction([
+      this.prisma.user.findMany({
+        where: { plan: 'PREMIUM' },
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { stripeCurrentPeriodEnd: 'desc' },
+        select: {
+          id: true, email: true, name: true, plan: true, role: true,
+          trialEndsAt: true, stripeInterval: true, stripeCurrentPeriodEnd: true,
+          lastSeenAt: true, lastLoginAt: true, createdAt: true,
+        },
+      }),
+      this.prisma.user.count({ where: { plan: 'PREMIUM' } }),
+    ]);
+    return { data: { users, total } };
+  }
+
+  async adminDetail(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true, email: true, name: true, plan: true, role: true,
+        trialEndsAt: true, stripeInterval: true, stripeCurrentPeriodEnd: true,
+        lastSeenAt: true, lastLoginAt: true, createdAt: true,
+      },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const [totalTrades, tradesThisMonth, aiLogs] = await Promise.all([
+      this.prisma.trade.count({ where: { userId } }),
+      this.prisma.trade.count({ where: { userId, createdAt: { gte: startOfMonth } } }),
+      this.prisma.aiUsageLog.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      }),
+    ]);
+
+    const totalTokens = aiLogs.reduce((a, l) => a + l.inputTokens + l.outputTokens, 0);
+
+    const timeline = [
+      ...(user.lastLoginAt ? [{ action: 'Connexion', detail: '', type: 'auth', createdAt: user.lastLoginAt.toISOString() }] : []),
+      ...aiLogs.slice(0, 5).map(l => ({
+        action: `IA: ${l.feature}`,
+        detail: `${l.inputTokens + l.outputTokens} tokens`,
+        type: 'ai',
+        createdAt: l.createdAt.toISOString(),
+      })),
+    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    return {
+      data: {
+        user,
+        stats: {
+          totalTrades, tradesThisMonth, totalSessions: 0,
+          totalTimeMinutes: 0, totalAiCalls: aiLogs.length, totalTokens,
+        },
+        timeline,
+      },
+    };
+  }
 }

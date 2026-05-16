@@ -1,0 +1,21 @@
+.content { padding:20px; display:flex; flex-direction:column; gap:20px; }
+.page-header { display:flex; align-items:center; justify-content:space-between; }
+.page-title { font-size:16px; font-weight:700; color:var(--text); }
+.btn-primary { display:flex; align-items:center; gap:6px; padding:8px 14px; background:var(--teal); color:#000; border:none; border-radius:7px; font-size:12px; font-weight:700; cursor:pointer; transition:opacity 0.15s; }
+.btn-primary:hover:not(:disabled) { opacity:0.85; }
+.btn-primary:disabled { opacity:0.5; cursor:not-allowed; }
+.card { background:var(--bg2); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+.backup-row { padding:10px 16px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); }
+.backup-row:last-child { border-bottom:none; }
+.backup-icon { width:28px; height:28px; border-radius:6px; background:var(--blue-dim); display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }
+.backup-info { flex:1; min-width:0; }
+.backup-name { font-size:12px; font-family:var(--mono); color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.backup-meta { font-size:10px; color:var(--text3); font-family:var(--mono); }
+.backup-size { font-size:11px; font-family:var(--mono); color:var(--text2); flex-shrink:0; }
+.tag { font-size:9px; font-weight:600; font-family:var(--mono); padding:2px 6px; border-radius:3px; flex-shrink:0; }
+.tag.auto { background:var(--blue-dim); color:var(--blue); }
+.tag.manual { background:var(--teal-dim); color:var(--teal); }
+.action-btn { width:24px; height:24px; border-radius:5px; border:1px solid var(--border2); background:transparent; color:var(--text2); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.action-btn.danger:hover { background:var(--red-dim); border-color:var(--red); color:var(--red); }
+.empty { padding:40px; text-align:center; color:var(--text3); }
+@media(max-width:768px) { .content { padding:12px; } }

@@ -45,6 +45,7 @@ model User {
 
   trades       Trade[]
   debriefs     WeeklyDebrief[]
+  aiUsageLogs  AiUsageLog[]
   lastSeenAt   DateTime?
   lastLoginAt  DateTime?
   createdAt    DateTime        @default(now())
@@ -95,6 +96,22 @@ model WeeklyDebrief {
 
   @@unique([userId, weekNumber, year])
   @@index([userId, year, weekNumber])
+}
+
+model AiUsageLog {
+  id           String   @id @default(cuid())
+  userId       String
+  feature      String
+  inputTokens  Int
+  outputTokens Int
+  costUsd      Float
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([feature])
 }
 
 // ── Idempotence webhooks Stripe ─────────────────────────────────────────────

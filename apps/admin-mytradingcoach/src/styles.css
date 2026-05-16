@@ -1,0 +1,20 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; max-width: 100%; min-width: 0; }
+html, body {
+  height: 100dvh; background: var(--bg); color: var(--text);
+  font-family: var(--sans); font-size: 13px; line-height: 1.5; overflow-x: hidden;
+}
+:root {
+  --bg: #070809; --bg2: #0c0e10; --bg3: #111416; --bg4: #171a1d; --bg5: #1c2024;
+  --border: rgba(255,255,255,0.06); --border2: rgba(255,255,255,0.1);
+  --text: #e8eaed; --text2: #9aa3af; --text3: #4a5568;
+  --teal: #00d4aa; --teal-dim: rgba(0,212,170,0.08); --teal-glow: rgba(0,212,170,0.15);
+  --blue: #4a9eff; --blue-dim: rgba(74,158,255,0.08);
+  --red: #ff5563; --red-dim: rgba(255,85,99,0.08);
+  --amber: #f5a623; --amber-dim: rgba(245,166,35,0.08);
+  --green: #34d399; --purple: #a78bfa;
+  --mono: 'Geist Mono', monospace; --sans: 'Geist', sans-serif;
+  --sidebar-w: 200px;
+}
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg5); border-radius: 2px; }

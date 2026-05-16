@@ -1,0 +1,91 @@
+{
+  "name": "admin-mytradingcoach",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "app",
+  "sourceRoot": "apps/admin-mytradingcoach/src",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@angular/build:application",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/admin-mytradingcoach",
+        "browser": "apps/admin-mytradingcoach/src/main.ts",
+        "tsConfig": "apps/admin-mytradingcoach/tsconfig.app.json",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/admin-mytradingcoach/public"
+          }
+        ],
+        "index": "apps/admin-mytradingcoach/src/index.html",
+        "styles": ["apps/admin-mytradingcoach/src/styles.css"]
+      },
+      "configurations": {
+        "production": {
+          "fileReplacements": [
+            {
+              "replace": "apps/admin-mytradingcoach/src/environments/environment.ts",
+              "with": "apps/admin-mytradingcoach/src/environments/environment.production.ts"
+            }
+          ],
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "500kb",
+              "maximumError": "1mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "4kb",
+              "maximumError": "8kb"
+            }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@angular/build:dev-server",
+      "options": {
+        "port": 4300
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "admin-mytradingcoach:build:production"
+        },
+        "development": {
+          "buildTarget": "admin-mytradingcoach:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "watch": false
+      }
+    },
+    "serve-static": {
+      "continuous": true,
+      "executor": "@nx/web:file-server",
+      "options": {
+        "buildTarget": "admin-mytradingcoach:build",
+        "port": 4300,
+        "staticFilePath": "dist/apps/admin-mytradingcoach/browser",
+        "spa": true
+      }
+    }
+  }
+}
