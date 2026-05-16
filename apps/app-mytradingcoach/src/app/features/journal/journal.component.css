@@ -129,12 +129,11 @@
 /* ── Header colonnes unique ── */
 .table-header {
   display: grid;
-  grid-template-columns: 90px 60px 80px 80px 120px 45px 55px 120px 100px auto;
-  justify-content: start;
+  grid-template-columns: 1.2fr 0.7fr 0.9fr 0.9fr 1.3fr 0.5fr 0.6fr 1.3fr 1.1fr 64px;
   padding: 5px 16px 5px 32px;
   border-bottom: 1px solid var(--border);
   background: var(--bg-2);
-  gap: 8px;
+  gap: 0;
 }
 .table-header > span {
   font-size: 9px;
@@ -177,12 +176,11 @@
 .day-trades { background: var(--bg); }
 .trade-row {
   display: grid;
-  grid-template-columns: 90px 60px 80px 80px 120px 45px 55px 120px 100px auto;
-  justify-content: start;
+  grid-template-columns: 1.2fr 0.7fr 0.9fr 0.9fr 1.3fr 0.5fr 0.6fr 1.3fr 1.1fr 64px;
   align-items: center;
   padding: 7px 16px 7px 32px;
   border-top: 1px solid var(--border);
-  gap: 8px;
+  gap: 0;
   transition: background 0.12s;
 }
 .trade-row:hover { background: var(--bg-2); }
@@ -190,8 +188,7 @@
 .td-asset { font-weight: 600; font-family: var(--font-mono); font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .td-price, .td-qty, .td-rr { font-family: var(--font-mono); font-size: 12px; color: var(--text-2); }
 .td-pnl { font-family: var(--font-mono); font-size: 12px; font-weight: 600; }
-.td-actions { display: flex; align-items: center; gap: 2px; justify-content: flex-end; margin-left: auto; }
-.th-actions { margin-left: auto; }
+.td-actions { display: flex; align-items: center; gap: 2px; justify-content: flex-end; }
 
 .trade-side {
   display: inline-flex; align-items: center; justify-content: center;
