@@ -321,21 +321,40 @@ export class UsersService {
   }
 
   async adminSubscriptions(page = 1, limit = 20) {
-    const [users, total] = await this.prisma.$transaction([
+    const skip = (page - 1) * limit;
+    const userSelect = {
+      id: true, email: true, name: true, plan: true, role: true,
+      trialEndsAt: true, stripeInterval: true, stripeCurrentPeriodEnd: true,
+      lastSeenAt: true, lastLoginAt: true, createdAt: true,
+    } as const;
+
+    const [stripeUsers, stripeTotal, betaTesters] = await Promise.all([
       this.prisma.user.findMany({
-        where: { plan: 'PREMIUM' },
-        skip: (page - 1) * limit,
+        where: { plan: 'PREMIUM', stripeInterval: { not: null } },
+        skip,
         take: limit,
         orderBy: { stripeCurrentPeriodEnd: 'desc' },
-        select: {
-          id: true, email: true, name: true, plan: true, role: true,
-          trialEndsAt: true, stripeInterval: true, stripeCurrentPeriodEnd: true,
-          lastSeenAt: true, lastLoginAt: true, createdAt: true,
-        },
+        select: userSelect,
       }),
-      this.prisma.user.count({ where: { plan: 'PREMIUM' } }),
+      this.prisma.user.count({
+        where: { plan: 'PREMIUM', stripeInterval: { not: null } },
+      }),
+      this.prisma.user.findMany({
+        where: { role: 'BETA_TESTER' },
+        orderBy: { createdAt: 'desc' },
+        select: userSelect,
+      }),
     ]);
-    return { data: { users, total } };
+
+    return {
+      data: {
+        stripeUsers,
+        betaTesters,
+        total: stripeTotal + betaTesters.length,
+        page,
+        limit,
+      },
+    };
   }
 
   async adminDetail(userId: string) {
@@ -356,11 +375,9 @@ export class UsersService {
     const [totalTrades, tradesThisMonth, aiLogs] = await Promise.all([
       this.prisma.trade.count({ where: { userId } }),
       this.prisma.trade.count({ where: { userId, createdAt: { gte: startOfMonth } } }),
-      this.prisma.aiUsageLog.findMany({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
-        take: 50,
-      }),
+      this.prisma.aiUsageLog
+        .findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 50 })
+        .catch(() => []),
     ]);
 
     const totalTokens = aiLogs.reduce((a, l) => a + l.inputTokens + l.outputTokens, 0);

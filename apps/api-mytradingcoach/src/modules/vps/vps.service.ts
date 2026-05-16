@@ -49,9 +49,9 @@ export class VpsService implements OnModuleDestroy {
         ssh.execCommand('cat /proc/meminfo'),
         ssh.execCommand("df -B1 / | tail -1"),
         ssh.execCommand('cat /proc/uptime'),
-        ssh.execCommand('uname -r'),
+        ssh.execCommand('uname -r 2>/dev/null || echo n/a'),
         ssh.execCommand('node -v 2>/dev/null || echo n/a'),
-        ssh.execCommand("docker -v 2>/dev/null | awk '{print $3}' | tr -d ',' || echo n/a"),
+        ssh.execCommand("docker version --format '{{.Server.Version}}' 2>/dev/null || docker -v 2>/dev/null | awk '{print $3}' | tr -d ',' || echo n/a"),
         ssh.execCommand("cat /proc/net/dev | grep -E 'eth0|ens' | head -1"),
       ]);
 
@@ -81,9 +81,9 @@ export class VpsService implements OnModuleDestroy {
       network: { up: netTx, down: netRx },
       uptime: Math.floor(uptimeSec),
       os: 'Ubuntu 24.04 LTS',
-      kernel: uname.stdout.trim(),
-      node: nodever.stdout.trim(),
-      docker: dockerver.stdout.trim(),
+      kernel: uname.stdout.trim() || 'n/a',
+      node: nodever.stdout.trim() || 'n/a',
+      docker: dockerver.stdout.trim() || 'n/a',
       ip: process.env['VPS_HOST'] ?? '51.83.197.230',
     };
   }
