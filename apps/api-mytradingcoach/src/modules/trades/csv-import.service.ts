@@ -539,16 +539,13 @@ ${csv}`;
       }));
   }
 
-  private detectSession(
-    iso: string,
-  ): 'LONDON' | 'NEW_YORK' | 'ASIAN' | 'OVERLAP' | 'PRE_MARKET' {
+  private detectSession(iso: string): 'LONDON' | 'NEW_YORK' | 'ASIAN' {
     try {
       const hour = new Date(iso).getUTCHours();
-      if (hour >= 13 && hour < 17) return 'OVERLAP';
+      if (hour >= 0 && hour < 8)   return 'ASIAN';
+      if (hour >= 8 && hour < 13)  return 'LONDON';
       if (hour >= 13 && hour < 22) return 'NEW_YORK';
-      if (hour >= 8 && hour < 17) return 'LONDON';
-      if (hour >= 0 && hour < 8) return 'ASIAN';
-      return 'PRE_MARKET';
+      return 'LONDON';
     } catch {
       return 'NEW_YORK';
     }
