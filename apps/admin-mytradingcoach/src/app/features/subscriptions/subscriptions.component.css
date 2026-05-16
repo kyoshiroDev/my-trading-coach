@@ -16,5 +16,10 @@ tbody td { padding:10px 16px; font-size:12px; color:var(--text2); }
 .user-email { font-size:10px; color:var(--text3); font-family:var(--mono); }
 .plan-badge { font-size:10px; font-weight:600; font-family:var(--mono); padding:2px 7px; border-radius:4px; }
 .plan-badge.premium { background:var(--teal-dim); color:var(--teal); border:1px solid rgba(0,212,170,0.2); }
+.plan-badge.beta { background:rgba(167,139,250,0.1); color:var(--purple); border:1px solid rgba(167,139,250,0.2); }
+.badge-offert { font-size:10px; font-weight:600; font-family:var(--mono); padding:2px 7px; border-radius:4px; background:var(--green-dim,rgba(52,211,153,0.1)); color:var(--green); border:1px solid rgba(52,211,153,0.2); white-space:nowrap; }
+.card-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--border); }
+.card-title { font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--text2); }
+.card-action { font-size:11px; color:var(--teal); font-family:var(--mono); }
 .mono-text { font-family:var(--mono); font-size:11px; }
 @media(max-width:768px) { .content { padding:12px; } }

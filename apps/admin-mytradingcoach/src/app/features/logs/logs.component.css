@@ -7,5 +7,11 @@ select { background:var(--bg3); border:1px solid var(--border); border-radius:7p
 .action-btn:hover { background:var(--bg4); color:var(--text); }
 .log-terminal { flex:1; background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:12px 16px; overflow-y:auto; min-height:400px; max-height:calc(100dvh - 200px); font-family:var(--mono); font-size:11px; }
 .log-line { color:var(--text2); line-height:1.6; white-space:pre-wrap; word-break:break-all; }
+.log-error { color:var(--red) !important; }
+.log-warn  { color:var(--amber) !important; }
+.log-req   { color:var(--blue) !important; }
+.log-info  { color:var(--text3); }
 .log-empty { color:var(--text3); text-align:center; padding:40px 0; }
+.btn-launch { display:flex; align-items:center; gap:6px; padding:7px 14px; background:var(--teal); color:#000; border:none; border-radius:7px; font-size:12px; font-weight:700; cursor:pointer; transition:opacity 0.15s; }
+.btn-launch:hover { opacity:0.85; }
 @media(max-width:768px) { .content { padding:12px; } .log-terminal { font-size:10px; } }

@@ -39,6 +39,14 @@ export interface AiUsageData {
   topUsers:  { userId: string; email: string; name: string; tokens: number; cost: number }[];
 }
 
+export interface SubscriptionsData {
+  stripeUsers: AdminUser[];
+  betaTesters: AdminUser[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminApi {
   private readonly http = inject(HttpClient);
@@ -56,6 +64,6 @@ export class AdminApi {
   delete(id: string)    { return this.http.delete<void>(`${this.base}/${id}`); }
   stats()               { return this.http.get<{ data: AdminStats }>(`${this.base}/stats`); }
   online()              { return this.http.get<{ data: AdminOnlineUser[] }>(`${this.base}/online`); }
-  subscriptions()       { return this.http.get<{ data: { users: AdminUser[]; total: number } }>(`${this.base}/subscriptions`); }
+  subscriptions()       { return this.http.get<{ data: SubscriptionsData }>(`${this.base}/subscriptions`); }
   aiUsage()             { return this.http.get<{ data: AiUsageData }>(`${environment.apiUrl}/admin/ai-usage`); }
 }
