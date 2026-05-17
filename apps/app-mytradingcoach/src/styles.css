@@ -27,6 +27,32 @@ body {
   overflow-x: hidden;
 }
 
+/* ══ Badges plan/rôle — design system global ══ */
+.badge-plan {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  padding: 2px 8px;
+  border-radius: 5px;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.badge-plan.premium { background: var(--badge-premium-bg); color: var(--badge-premium-color); border-color: var(--badge-premium-border); }
+.badge-plan.free    { background: var(--badge-free-bg);    color: var(--badge-free-color);    border-color: var(--badge-free-border); }
+.badge-plan.beta    { background: var(--badge-beta-bg);    color: var(--badge-beta-color);    border-color: var(--badge-beta-border); }
+.badge-plan.admin   { background: var(--badge-admin-bg);   color: var(--badge-admin-color);   border-color: var(--badge-admin-border); }
+
+.badge-plan-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: currentColor; flex-shrink: 0;
+  animation: badge-pulse 2s infinite;
+}
+@keyframes badge-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
 /* ===== Scrollbar ===== */
 ::-webkit-scrollbar {
   width: 4px;
