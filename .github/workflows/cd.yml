@@ -7,6 +7,35 @@ on:
     branches: [main]
 
 jobs:
+  # ── Détection des apps modifiées ──────────────────────────────────────────
+  changes:
+    name: Detect changed apps
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    outputs:
+      angular: ${{ steps.diff.outputs.angular }}
+      landing: ${{ steps.diff.outputs.landing }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 2
+      - id: diff
+        run: |
+          CHANGED=$(git diff --name-only HEAD~1 HEAD)
+          echo "Files changed:"
+          echo "$CHANGED"
+          if echo "$CHANGED" | grep -q "^apps/app-mytradingcoach/"; then
+            echo "angular=true" >> $GITHUB_OUTPUT
+          else
+            echo "angular=false" >> $GITHUB_OUTPUT
+          fi
+          if echo "$CHANGED" | grep -q "^apps/landing-mytradingcoach/"; then
+            echo "landing=true" >> $GITHUB_OUTPUT
+          else
+            echo "landing=false" >> $GITHUB_OUTPUT
+          fi
+
   # ── Deploy API → OVH VPS (Docker) ────────────────────────────────────────
   deploy-api:
     name: Deploy API to VPS
@@ -38,7 +67,8 @@ jobs:
   deploy-angular:
     name: Deploy Angular to Vercel
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    needs: changes
+    if: ${{ needs.changes.outputs.angular == 'true' }}
     environment: production
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -97,7 +127,8 @@ jobs:
   deploy-landing:
     name: Deploy Landing to Vercel
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    needs: changes
+    if: ${{ needs.changes.outputs.landing == 'true' }}
     environment: production
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

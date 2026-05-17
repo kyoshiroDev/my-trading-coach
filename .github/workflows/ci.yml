@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main, dev, feat/admin-app]
   pull_request:
     branches: [main, dev]
 
@@ -248,12 +248,12 @@ jobs:
             docker compose -f docker-compose.dev.yml --env-file .env.dev up -d --force-recreate api
             echo "Dev API deployment complete at $(date)"
 
-  # ── Deploy Angular dev → Vercel (preview) ────────────────────────────────
-  deploy-angular-dev:
-    name: Deploy Angular dev to Vercel
+  # ── Deploy Angular Admin → Vercel (feat/admin-app — branche permanente) ───
+  deploy-admin:
+    name: Deploy Admin to Vercel
     runs-on: ubuntu-latest
-    needs: [test-angular, test-api]
-    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+    needs: build
+    if: github.ref == 'refs/heads/feat/admin-app' && github.event_name == 'push'
     environment: production
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -273,13 +273,21 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Build Angular (dev)
-        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=development
+      - name: Build Angular Admin
+        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build admin-mytradingcoach --configuration=production --skip-nx-cache
+
+      - name: Verify build output
+        run: |
+          if [ ! -f "dist/apps/admin-mytradingcoach/browser/index.html" ]; then
+            echo "❌ build failed — index.html not found"
+            exit 1
+          fi
+          echo "✅ build ok — $(du -sh dist/apps/admin-mytradingcoach/browser/)"
 
       - name: Prepare Vercel output (prebuilt)
         run: |
           mkdir -p .vercel/output/static
-          cp -r dist/apps/app-mytradingcoach/browser/* .vercel/output/static/
+          cp -r dist/apps/admin-mytradingcoach/browser/* .vercel/output/static/
           cat > .vercel/output/config.json << 'EOF'
           {
             "version": 3,
@@ -295,60 +303,8 @@ jobs:
           }
           EOF
 
-      - name: Deploy to Vercel (dev preview)
-        run: pnpm dlx vercel@latest deploy --prebuilt --yes --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy to Vercel (admin prod)
+        run: pnpm dlx vercel@latest deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_APP_PROJECT_ID }}
-
-  # ── Deploy Landing dev → Vercel (preview) ────────────────────────────────
-  deploy-landing-dev:
-    name: Deploy Landing dev to Vercel
-    runs-on: ubuntu-latest
-    needs: [build-landing]
-    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
-    environment: production
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      NX_NO_CLOUD: true
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
-      - name: Build Astro landing (dev)
-        run: pnpm nx build landing-mytradingcoach
-
-      - name: Prepare Vercel output (prebuilt)
-        run: |
-          mkdir -p .vercel/output/static
-          cp -r apps/landing-mytradingcoach/dist/* .vercel/output/static/
-          cat > .vercel/output/config.json << 'EOF'
-          {
-            "version": 3,
-            "routes": [
-              {
-                "src": "/_astro/(.*)",
-                "headers": { "Cache-Control": "public, max-age=31536000, immutable" },
-                "continue": true
-              }
-            ]
-          }
-          EOF
-
-      - name: Deploy to Vercel (dev preview)
-        run: pnpm dlx vercel@latest deploy --prebuilt --yes --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_LANDING_PROJECT_ID }}
-
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_ADMIN_PROJECT_ID }}
