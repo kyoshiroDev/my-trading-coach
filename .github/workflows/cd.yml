@@ -61,6 +61,7 @@ jobs:
             docker compose -f docker-compose.prod.yml --env-file .env.production up -d --force-recreate api
             docker compose -f docker-compose.discord-bot.yml --env-file .env.production build discord-bot
             docker compose -f docker-compose.discord-bot.yml --env-file .env.production up -d --force-recreate discord-bot
+            docker buildx prune --keep-storage=8GB -f
             echo "Production deployment complete at $(date)"
 
   # ── Deploy Angular → VPS static ──────────────────────────────────────────
