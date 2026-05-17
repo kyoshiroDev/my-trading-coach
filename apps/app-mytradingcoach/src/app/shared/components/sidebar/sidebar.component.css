@@ -210,9 +210,12 @@
 .user-plan {
   font-size: 10px;
   font-family: var(--font-mono);
-  color: var(--yellow);
   letter-spacing: 0.5px;
 }
+.user-plan.premium { color: var(--badge-premium-color); }
+.user-plan.free    { color: var(--badge-free-color); }
+.user-plan.beta    { color: var(--badge-beta-color); }
+.user-plan.admin   { color: var(--badge-admin-color); }
 
 /* ─── MAIN ─── */
 .main-content {

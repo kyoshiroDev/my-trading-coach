@@ -42,4 +42,21 @@
   --border-subtle: var(--border);
   --text2: var(--text-2);
   --text3: var(--text-3);
+
+  /* ── Badges plan/rôle ── */
+  --badge-premium-bg:     rgba(59, 130, 246, 0.12);
+  --badge-premium-color:  #60a5fa;
+  --badge-premium-border: rgba(59, 130, 246, 0.25);
+
+  --badge-free-bg:        rgba(255, 255, 255, 0.04);
+  --badge-free-color:     #4a6080;
+  --badge-free-border:    rgba(255, 255, 255, 0.08);
+
+  --badge-beta-bg:        rgba(167, 139, 250, 0.12);
+  --badge-beta-color:     #a78bfa;
+  --badge-beta-border:    rgba(167, 139, 250, 0.25);
+
+  --badge-admin-bg:       rgba(245, 158, 11, 0.12);
+  --badge-admin-color:    #f59e0b;
+  --badge-admin-border:   rgba(245, 158, 11, 0.25);
 }
