@@ -3,13 +3,14 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, interval, of, startWith, switchMap } from 'rxjs';
+import { LucideAngularModule, Wifi } from 'lucide-angular';
 import { AdminApi, AdminStats, AdminOnlineUser } from '../../core/api/admin.api';
 import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
 
 @Component({
   selector: 'mtc-admin-dashboard',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, RouterLink],
+  imports: [DatePipe, DecimalPipe, RouterLink, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './dashboard.component.css',
   template: `
@@ -53,43 +54,39 @@ import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
         </div>
       }
 
-      @if (onlineUsers().length > 0) {
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">Utilisateurs actifs (5 min)</span>
-            <span class="online-count">{{ onlineUsers().length }} en ligne</span>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Utilisateur</th><th>Plan</th><th>Activité</th></tr></thead>
-              <tbody>
-                @for (u of onlineUsers(); track u.id) {
-                  <tr>
-                    <td>
-                      <div class="user-cell">
-                        <div class="user-avatar">{{ (u.name ?? u.email)[0].toUpperCase() }}</div>
-                        <div>
-                          <div class="user-name">{{ u.name ?? u.email }}</div>
-                          <div class="user-email">{{ u.email }}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <span class="plan-badge"
-                        [class.premium]="u.plan==='PREMIUM' && u.role!=='BETA_TESTER'"
-                        [class.beta]="u.role==='BETA_TESTER'"
-                        [class.free]="u.plan==='FREE'">
-                        {{ u.role === 'BETA_TESTER' ? 'BETA' : u.plan }}
-                      </span>
-                    </td>
-                    <td class="mono-text">{{ u.lastSeenAt | date:'HH:mm:ss' }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
+      <div class="online-panel">
+        <div class="online-panel-header">
+          <lucide-icon [img]="WifiIcon" [size]="13" />
+          <span>Utilisateurs actifs (5 min)</span>
+          <span class="online-count">{{ onlineUsers().length }}</span>
         </div>
-      }
+        @if (onlineUsers().length === 0) {
+          <div class="online-empty">Aucun utilisateur actif</div>
+        } @else {
+          <div class="online-list">
+            @for (u of onlineUsers(); track u.id) {
+              <div class="online-card">
+                <div class="online-avatar">
+                  <span>{{ (u.name ?? u.email).slice(0,2).toUpperCase() }}</span>
+                  <span class="online-dot"></span>
+                </div>
+                <div class="online-info">
+                  <span class="online-name">{{ u.name ?? u.email }}</span>
+                  @if (u.name) { <span class="online-email">{{ u.email }}</span> }
+                </div>
+                <div class="online-meta">
+                  <span class="plan-badge"
+                    [class.premium]="u.plan==='PREMIUM'"
+                    [class.free]="u.plan==='FREE'">
+                    {{ u.plan }}
+                  </span>
+                  <span class="online-session">⏱ {{ sessionDuration(u) }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
 
       <div class="two-col">
         <div class="card">
@@ -161,6 +158,17 @@ import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
   `,
 })
 export class DashboardComponent {
+  protected readonly WifiIcon = Wifi;
+
+  protected sessionDuration(user: AdminOnlineUser): string {
+    if (!user.lastLoginAt) return '—';
+    const ms = Date.now() - new Date(user.lastLoginAt).getTime();
+    const totalMin = Math.floor(ms / 60_000);
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return h === 0 ? `${m}min` : `${h}h${m > 0 ? m + 'min' : ''}`;
+  }
+
   protected formatUptime(seconds: number): string {
     const d = Math.floor(seconds / 86400);
     const h = Math.floor((seconds % 86400) / 3600);
