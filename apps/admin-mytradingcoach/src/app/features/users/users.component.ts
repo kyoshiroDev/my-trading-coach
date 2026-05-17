@@ -83,7 +83,9 @@ import { AdminApi, AdminUser, AdminUserDetail } from '../../core/api/admin.api';
 
     <!-- Backdrop -->
     @if (selectedUser()) {
-      <div class="detail-backdrop" (click)="selectedUser.set(null)"></div>
+      <div class="detail-backdrop" role="button" tabindex="0"
+        (click)="selectedUser.set(null)"
+        (keydown.escape)="selectedUser.set(null)"></div>
 
       <!-- Panel latéral fixe — classe correcte pour le CSS position:fixed -->
       <div class="user-detail-panel">
@@ -138,16 +140,16 @@ import { AdminApi, AdminUser, AdminUserDetail } from '../../core/api/admin.api';
             <!-- Modifier plan + rôle -->
             <div class="detail-section-title" style="margin-top:16px">Modifier le compte</div>
             <div class="edit-row">
-              <label class="edit-label">Plan</label>
-              <select class="edit-select" [value]="editPlan()"
+              <label class="edit-label" for="edit-plan">Plan</label>
+              <select id="edit-plan" class="edit-select" [value]="editPlan()"
                 (change)="editPlan.set($any($event.target).value)">
                 <option value="FREE">FREE</option>
                 <option value="PREMIUM">PREMIUM</option>
               </select>
             </div>
             <div class="edit-row">
-              <label class="edit-label">Rôle</label>
-              <select class="edit-select" [value]="editRole()"
+              <label class="edit-label" for="edit-role">Rôle</label>
+              <select id="edit-role" class="edit-select" [value]="editRole()"
                 (change)="editRole.set($any($event.target).value)">
                 <option value="USER">USER</option>
                 <option value="BETA_TESTER">BETA_TESTER</option>
