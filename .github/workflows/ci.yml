@@ -246,11 +246,12 @@ jobs:
             git reset --hard origin/dev
             docker compose -f docker-compose.dev.yml --env-file .env.dev build api
             docker compose -f docker-compose.dev.yml --env-file .env.dev up -d --force-recreate api
+            docker buildx prune --keep-storage=8GB -f
             echo "Dev API deployment complete at $(date)"
 
-  # ── Deploy Angular dev → Vercel (preview) ────────────────────────────────
-  deploy-angular-dev:
-    name: Deploy Angular dev to Vercel
+  # ── Deploy Angular app dev → VPS static ──────────────────────────────────
+  deploy-app-dev:
+    name: Deploy Angular dev to VPS
     runs-on: ubuntu-latest
     needs: [test-angular, test-api]
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
@@ -274,36 +275,23 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build Angular (dev)
-        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=development
+        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=development --skip-nx-cache
 
-      - name: Prepare Vercel output (prebuilt)
+      - name: Setup SSH
         run: |
-          mkdir -p .vercel/output/static
-          cp -r dist/apps/app-mytradingcoach/browser/* .vercel/output/static/
-          cat > .vercel/output/config.json << 'EOF'
-          {
-            "version": 3,
-            "routes": [
-              {
-                "src": "/assets/(.*)",
-                "headers": { "Cache-Control": "public, max-age=31536000, immutable" },
-                "continue": true
-              },
-              { "handle": "filesystem" },
-              { "src": "/(.*)", "dest": "/index.html" }
-            ]
-          }
-          EOF
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Deploy to Vercel (dev preview)
-        run: pnpm dlx vercel@latest deploy --prebuilt --yes --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_APP_PROJECT_ID }}
+      - name: rsync Angular dev → VPS
+        run: |
+          rsync -az --delete dist/apps/app-mytradingcoach/browser/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/static/app-dev/
 
-  # ── Deploy Landing dev → Vercel (preview) ────────────────────────────────
+  # ── Deploy Astro landing dev → VPS static ────────────────────────────────
   deploy-landing-dev:
-    name: Deploy Landing dev to Vercel
+    name: Deploy Landing dev to VPS
     runs-on: ubuntu-latest
     needs: [build-landing]
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
@@ -329,32 +317,21 @@ jobs:
       - name: Build Astro landing (dev)
         run: pnpm nx build landing-mytradingcoach
 
-      - name: Prepare Vercel output (prebuilt)
+      - name: Setup SSH
         run: |
-          mkdir -p .vercel/output/static
-          cp -r apps/landing-mytradingcoach/dist/* .vercel/output/static/
-          cat > .vercel/output/config.json << 'EOF'
-          {
-            "version": 3,
-            "routes": [
-              {
-                "src": "/_astro/(.*)",
-                "headers": { "Cache-Control": "public, max-age=31536000, immutable" },
-                "continue": true
-              }
-            ]
-          }
-          EOF
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Deploy to Vercel (dev preview)
-        run: pnpm dlx vercel@latest deploy --prebuilt --yes --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_LANDING_PROJECT_ID }}
+      - name: rsync Landing dev → VPS
+        run: |
+          rsync -az --delete apps/landing-mytradingcoach/dist/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/static/landing-dev/
 
-  # ── Deploy Angular Admin → Vercel (feat/admin-app — branche permanente) ───
+  # ── Deploy Angular Admin → VPS static (feat/admin-app — branche permanente) ──
   deploy-admin:
-    name: Deploy Admin to Vercel
+    name: Deploy Admin to VPS
     runs-on: ubuntu-latest
     needs: build
     if: github.ref == 'refs/heads/feat/admin-app' && github.event_name == 'push'
@@ -388,27 +365,14 @@ jobs:
           fi
           echo "✅ build ok — $(du -sh dist/apps/admin-mytradingcoach/browser/)"
 
-      - name: Prepare Vercel output (prebuilt)
+      - name: Setup SSH
         run: |
-          mkdir -p .vercel/output/static
-          cp -r dist/apps/admin-mytradingcoach/browser/* .vercel/output/static/
-          cat > .vercel/output/config.json << 'EOF'
-          {
-            "version": 3,
-            "routes": [
-              {
-                "src": "/assets/(.*)",
-                "headers": { "Cache-Control": "public, max-age=31536000, immutable" },
-                "continue": true
-              },
-              { "handle": "filesystem" },
-              { "src": "/(.*)", "dest": "/index.html" }
-            ]
-          }
-          EOF
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Deploy to Vercel (admin prod)
-        run: pnpm dlx vercel@latest deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_ADMIN_PROJECT_ID }}
+      - name: rsync Admin → VPS
+        run: |
+          rsync -az --delete dist/apps/admin-mytradingcoach/browser/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/static/admin/
