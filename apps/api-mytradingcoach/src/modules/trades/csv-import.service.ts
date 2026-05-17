@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import Anthropic from '@anthropic-ai/sdk';
 import type { CreateTradeDto } from './dto/create-trade.dto';
+import { AiLoggerService } from '../shared/ai-logger.service';
 
 const MODEL = 'claude-sonnet-4-6';
 
@@ -39,9 +40,12 @@ export class CsvImportService {
     apiKey: process.env['ANTHROPIC_API_KEY'],
   });
 
+  constructor(private readonly aiLogger: AiLoggerService) {}
+
   async parseCSV(
     buffer: Buffer,
     filename: string,
+    userId?: string,
   ): Promise<Partial<CreateTradeDto>[]> {
     const content = buffer.toString('utf-8').trim();
     if (!content) throw new BadRequestException('Fichier CSV vide');
@@ -112,6 +116,7 @@ export class CsvImportService {
       this.logger.log(
         `CSV "${filename}" [${parsed.broker}] → ${parsed.trades.length} trades, ${parsed.skipped ?? 0} ignorés`,
       );
+      if (userId) this.aiLogger.log(userId, 'csv_import', response.usage);
 
       return this.mapToDto(parsed.trades);
     } catch (err) {

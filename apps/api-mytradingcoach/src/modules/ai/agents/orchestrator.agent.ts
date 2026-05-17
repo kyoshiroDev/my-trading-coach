@@ -51,13 +51,13 @@ export class OrchestratorAgent {
     const summary = this.dataAgent.buildTradesSummary(trades);
 
     // Step 2 — Pattern detection (1 Anthropic call, system cached)
-    const analysis = await this.patternAgent.analyze(summary);
+    const analysis = await this.patternAgent.analyze(summary, userId);
 
     // Step 3 — Actionable advice (1 Anthropic call, system cached)
     const advice = await this.coachAgent.generateAdvice({
       patterns: analysis.patterns,
       summary,
-    });
+    }, userId);
 
     // Assemble into the existing API response format
     return {

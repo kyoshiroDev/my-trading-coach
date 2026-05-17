@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { parseAnthropicJson } from './parse-json.util';
 import { handleAnthropicError } from './anthropic-errors.util';
 import { Pattern } from './pattern.agent';
+import { AiLoggerService } from '../../shared/ai-logger.service';
 
 export interface Advice {
   title: string;
@@ -24,10 +25,12 @@ export class CoachAgent {
   });
   private readonly logger = new Logger(CoachAgent.name);
 
+  constructor(private readonly aiLogger: AiLoggerService) {}
+
   async generateAdvice(data: {
     patterns: Pattern[];
     summary: string;
-  }): Promise<Advice[]> {
+  }, userId?: string): Promise<Advice[]> {
     const userContent = `Patterns détectés :\n${JSON.stringify(data.patterns)}\n\nRésumé trader :\n${data.summary}`;
 
     let response: Anthropic.Message;
@@ -47,6 +50,8 @@ export class CoachAgent {
     } catch (err) {
       handleAnthropicError(err, this.logger);
     }
+
+    if (userId) this.aiLogger.log(userId, 'insights', response.usage);
 
     const block = response.content[0];
     if (block.type !== 'text') {
