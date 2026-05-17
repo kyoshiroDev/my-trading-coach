@@ -144,10 +144,11 @@ const nav = [
   /* Mobile */
   @media (max-width: 767px) {
     .full-sidebar { display: none; }
-    .full-body { grid-template-columns: 1fr; min-height: unset; }
+    .full-body { display: block; min-height: unset; }
     .full-content { padding: 14px; }
     .fstats { grid-template-columns: repeat(2,1fr); }
     .fstat-val { font-size: 18px; }
     .fgrid2 { grid-template-columns: 1fr; }
+    /* Showcase.astro cache .full-screen via :global — ici on ne touche pas */
   }
 </style>
