@@ -23,6 +23,12 @@ export interface AuthUser {
   startingCapital?: number;
   notificationsEmail?: boolean;
   debriefAutomatic?: boolean;
+  tradingStyle?: string | null;
+  tradingStrategy?: string[];
+  tradingSessions?: string[];
+  tradesPerDayMin?: number | null;
+  tradesPerDayMax?: number | null;
+  strategyDescription?: string | null;
 }
 
 interface AuthResponse {

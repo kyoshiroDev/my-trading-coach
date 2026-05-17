@@ -9,7 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
@@ -23,11 +23,12 @@ import type {
   UpdateMeDto,
   UpdatePreferencesDto,
 } from '../../core/api/users.api';
+import { TRADING_STYLES, STRATEGY_TAGS, SESSIONS } from '../onboarding/onboarding.constants';
 
 @Component({
   selector: 'mtc-settings',
   standalone: true,
-  imports: [TopbarComponent, DatePipe, PlanModalComponent],
+  imports: [TopbarComponent, DatePipe, DecimalPipe, PlanModalComponent],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -69,6 +70,19 @@ export class SettingsComponent implements OnInit {
   protected readonly isSavingPrefs = signal(false);
   protected readonly prefSaved = signal(false);
 
+  // Stratégie de trading
+  protected readonly TRADING_STYLES   = TRADING_STYLES;
+  protected readonly STRATEGY_TAGS    = STRATEGY_TAGS;
+  protected readonly SESSIONS         = SESSIONS;
+  protected readonly tradingStyle     = signal<string | null>(null);
+  protected readonly tradingStrategy  = signal<string[]>([]);
+  protected readonly tradingSessions  = signal<string[]>([]);
+  protected readonly tradesPerDayMin  = signal(1);
+  protected readonly tradesPerDayMax  = signal(10);
+  protected readonly strategyDesc     = signal('');
+  protected readonly isSavingStrategy = signal(false);
+  protected readonly strategySaved    = signal(false);
+
   // Danger
   protected readonly showPlanModal = signal(false);
   protected readonly showDeleteConfirm = signal(false);
@@ -83,6 +97,12 @@ export class SettingsComponent implements OnInit {
       this.prefCurrency.set((user.currency as 'USD' | 'EUR' | 'GBP') ?? 'USD');
       this.prefNotifications.set(user.notificationsEmail ?? true);
       this.prefDebrief.set(user.debriefAutomatic ?? true);
+      this.tradingStyle.set(user.tradingStyle ?? null);
+      this.tradingStrategy.set(user.tradingStrategy ?? []);
+      this.tradingSessions.set(user.tradingSessions ?? []);
+      this.tradesPerDayMin.set(user.tradesPerDayMin ?? 1);
+      this.tradesPerDayMax.set(user.tradesPerDayMax ?? 10);
+      this.strategyDesc.set(user.strategyDescription ?? '');
     });
   }
 
@@ -228,6 +248,45 @@ export class SettingsComponent implements OnInit {
         error: () => {
           this.isSavingPrefs.set(false);
         },
+      });
+  }
+
+  protected toggleTag(tag: string): void {
+    this.tradingStrategy.update(tags =>
+      tags.includes(tag) ? tags.filter(t => t !== tag) : [...tags, tag],
+    );
+  }
+
+  protected toggleSession(session: string): void {
+    this.tradingSessions.update(sessions =>
+      sessions.includes(session) ? sessions.filter(s => s !== session) : [...sessions, session],
+    );
+  }
+
+  protected onStrategyDesc(e: Event): void {
+    this.strategyDesc.set((e.target as HTMLTextAreaElement).value.slice(0, 200));
+  }
+
+  protected saveStrategy(): void {
+    this.isSavingStrategy.set(true);
+    this.usersApi
+      .updatePreferences({
+        tradingStyle:        this.tradingStyle() ?? undefined,
+        tradingStrategy:     this.tradingStrategy(),
+        tradingSessions:     this.tradingSessions(),
+        tradesPerDayMin:     this.tradesPerDayMin(),
+        tradesPerDayMax:     this.tradesPerDayMax(),
+        strategyDescription: this.strategyDesc() || undefined,
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.auth.setCurrentUser(res.data);
+          this.isSavingStrategy.set(false);
+          this.strategySaved.set(true);
+          setTimeout(() => this.strategySaved.set(false), 2500);
+        },
+        error: () => this.isSavingStrategy.set(false),
       });
   }
 

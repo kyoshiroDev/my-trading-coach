@@ -35,6 +35,7 @@ const mockPrisma = {
   trade: {
     findMany: vi.fn().mockResolvedValue([]),
   },
+  user: { findUnique: vi.fn().mockResolvedValue(null) },
 };
 
 const mockAiService = {

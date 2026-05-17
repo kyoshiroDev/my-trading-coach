@@ -26,6 +26,12 @@ const USER_SELECT = {
   startingCapital: true,
   notificationsEmail: true,
   debriefAutomatic: true,
+  tradingStyle: true,
+  tradingStrategy: true,
+  tradingSessions: true,
+  tradesPerDayMin: true,
+  tradesPerDayMax: true,
+  strategyDescription: true,
   createdAt: true,
 } as const;
 
@@ -270,11 +276,15 @@ export class UsersService {
         onboardingCompleted: true,
         market: dto.market ?? null,
         goal: dto.goal ?? null,
-        ...(dto.startingCapital != null
-          ? { startingCapital: dto.startingCapital }
-          : {}),
+        ...(dto.startingCapital != null ? { startingCapital: dto.startingCapital } : {}),
         ...(dto.currency ? { currency: dto.currency } : {}),
         ...(currencyRate !== undefined ? { currencyRate } : {}),
+        ...(dto.tradingStyle ? { tradingStyle: dto.tradingStyle } : {}),
+        ...(dto.tradingStrategy ? { tradingStrategy: dto.tradingStrategy } : {}),
+        ...(dto.tradingSessions ? { tradingSessions: dto.tradingSessions } : {}),
+        ...(dto.tradesPerDayMin != null ? { tradesPerDayMin: dto.tradesPerDayMin } : {}),
+        ...(dto.tradesPerDayMax != null ? { tradesPerDayMax: dto.tradesPerDayMax } : {}),
+        ...(dto.strategyDescription ? { strategyDescription: dto.strategyDescription } : {}),
       },
       select: USER_SELECT,
     });

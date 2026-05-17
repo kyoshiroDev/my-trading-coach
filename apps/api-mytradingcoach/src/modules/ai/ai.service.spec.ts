@@ -79,6 +79,7 @@ const mockInsightsResult = {
 
 const mockPrisma = {
   trade: { findMany: vi.fn().mockResolvedValue(mockTrades) },
+  user: { findUnique: vi.fn().mockResolvedValue(null) },
 };
 
 const mockOrchestrator = {

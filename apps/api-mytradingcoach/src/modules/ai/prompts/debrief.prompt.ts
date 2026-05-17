@@ -1,3 +1,5 @@
+import { buildUserTradingContext, UserTradingProfile } from '../user-context.builder';
+
 export const DEBRIEF_SYSTEM_PROMPT = `Tu es un coach de trading qui génère des debriefs hebdomadaires personnalisés.
 Tu analyses la semaine passée du trader et génères un rapport structuré avec forces, faiblesses, insights émotionnels et objectifs pour la semaine suivante.
 Réponds TOUJOURS et UNIQUEMENT en JSON valide. Pas de texte avant ou après le JSON.
@@ -9,9 +11,10 @@ export const buildDebriefPrompt = (data: {
   previousObjectives: unknown[];
   weekNumber: number;
   year: number;
+  userProfile?: UserTradingProfile;
 }) => `
 Semaine ${data.weekNumber} de ${data.year} — ${data.trades.length} trades enregistrés.
-
+${data.userProfile ? buildUserTradingContext(data.userProfile) : ''}
 Stats de la semaine :
 ${JSON.stringify(data.stats, null, 2)}
 

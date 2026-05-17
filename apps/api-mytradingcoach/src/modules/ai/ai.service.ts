@@ -15,6 +15,7 @@ import { buildDebriefPrompt } from './prompts/debrief.prompt';
 import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiLoggerService } from '../shared/ai-logger.service';
+import { buildUserTradingContext } from './user-context.builder';
 
 const MODEL = 'claude-sonnet-4-6';
 const AI_MONTHLY_QUOTA = 100;
@@ -83,9 +84,20 @@ export class AiService implements OnModuleDestroy {
       },
     });
 
+    const userProfile = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        market: true, goal: true, tradingStyle: true, tradingStrategy: true,
+        tradingSessions: true, tradesPerDayMin: true, tradesPerDayMax: true,
+        strategyDescription: true,
+      },
+    });
+    const userContext = userProfile ? buildUserTradingContext(userProfile) : '';
+
     const CHAT_SYSTEM = `Tu es un coach de trading professionnel, bienveillant et direct.
 Tutoiement. Réponds en texte naturel uniquement — jamais de JSON, jamais de markdown, pas de ** ni de tirets listes.
-Sois concis (3-5 phrases). Si le trader a des données, base-toi dessus pour répondre précisément.`;
+Sois concis (3-5 phrases). Si le trader a des données, base-toi dessus pour répondre précisément.
+${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en garde sur des comportements qui font partie de sa stratégie normale.`;
 
     let contextSummary: string;
     if (recentTrades.length === 0) {

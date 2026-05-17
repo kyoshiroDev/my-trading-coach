@@ -1,4 +1,4 @@
-import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsArray, IsEnum, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 
 export enum Market {
   CRYPTO = 'CRYPTO',
@@ -30,4 +30,35 @@ export class CompleteOnboardingDto {
   @IsString()
   @IsOptional()
   currency?: string;
+
+  @IsString()
+  @IsOptional()
+  tradingStyle?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  tradingStrategy?: string[];
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  tradingSessions?: string[];
+
+  @IsInt()
+  @Min(0)
+  @Max(200)
+  @IsOptional()
+  tradesPerDayMin?: number;
+
+  @IsInt()
+  @Min(0)
+  @Max(200)
+  @IsOptional()
+  tradesPerDayMax?: number;
+
+  @IsString()
+  @MaxLength(200)
+  @IsOptional()
+  strategyDescription?: string;
 }

@@ -4,6 +4,7 @@ import { DataAgent } from './data.agent';
 import { PatternAgent } from './pattern.agent';
 import { CoachAgent, Advice } from './coach.agent';
 import { Pattern } from './pattern.agent';
+import { buildUserTradingContext } from '../user-context.builder';
 
 export interface InsightItem {
   type: 'strength' | 'weakness' | 'pattern';
@@ -34,29 +35,33 @@ export class OrchestratorAgent {
 
   async runInsightsFlow(userId: string): Promise<InsightsFlowResult> {
     // Step 1 — Data (0 Anthropic tokens)
-    const trades = await this.prisma.trade.findMany({
-      where: { userId },
-      orderBy: { tradedAt: 'desc' },
-      take: 50,
-      select: {
-        asset: true,
-        side: true,
-        pnl: true,
-        emotion: true,
-        setup: true,
-        session: true,
-        tradedAt: true,
-      },
-    });
+    const [trades, userProfile] = await Promise.all([
+      this.prisma.trade.findMany({
+        where: { userId },
+        orderBy: { tradedAt: 'desc' },
+        take: 50,
+        select: { asset: true, side: true, pnl: true, emotion: true, setup: true, session: true, tradedAt: true },
+      }),
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          market: true, goal: true, tradingStyle: true, tradingStrategy: true,
+          tradingSessions: true, tradesPerDayMin: true, tradesPerDayMax: true,
+          strategyDescription: true,
+        },
+      }),
+    ]);
+    const userContext = userProfile ? buildUserTradingContext(userProfile) : '';
     const summary = this.dataAgent.buildTradesSummary(trades);
+    const summaryWithContext = userContext ? `${userContext}\n${summary}` : summary;
 
     // Step 2 — Pattern detection (1 Anthropic call, system cached)
-    const analysis = await this.patternAgent.analyze(summary, userId);
+    const analysis = await this.patternAgent.analyze(summaryWithContext, userId);
 
     // Step 3 — Actionable advice (1 Anthropic call, system cached)
     const advice = await this.coachAgent.generateAdvice({
       patterns: analysis.patterns,
-      summary,
+      summary: summaryWithContext,
     }, userId);
 
     // Assemble into the existing API response format

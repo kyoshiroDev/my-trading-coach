@@ -1,65 +1,44 @@
 <mtc-topbar title="Paramètres" />
 
 <div class="settings-content">
+
   @if (checkoutParam() === 'success') {
-    <div class="alert alert-success">
-      ✓ Abonnement activé — bienvenue dans Premium !
-    </div>
+    <div class="alert alert-success">✓ Abonnement activé — bienvenue dans Premium !</div>
   }
   @if (checkoutParam() === 'canceled') {
-    <div class="alert alert-cancel">
-      Paiement annulé. Tu peux réessayer quand tu veux.
-    </div>
+    <div class="alert alert-cancel">Paiement annulé. Tu peux réessayer quand tu veux.</div>
   }
 
-  <div class="settings-grid">
-    <!-- ── Colonne gauche : Compte + Abonnement ── -->
-    <div class="settings-col">
-      <!-- ── 1. COMPTE ── -->
+  <div class="settings-3col">
+
+    <!-- ── Colonne gauche : Compte ── -->
+    <div class="settings-col-left">
+
+      <!-- ══ 1. COMPTE ══ -->
       <div class="settings-section">
         <div class="settings-section-label">Compte</div>
         <div class="settings-card">
+
           <!-- Email -->
           <div class="settings-row">
             <div class="settings-row-left">
               <span class="settings-row-label">Email</span>
               @if (editingEmail()) {
                 <div class="inline-edit">
-                  <input
-                    class="settings-input"
-                    type="email"
-                    [value]="emailInput()"
-                    (input)="emailInput.set($any($event.target).value)"
-                    placeholder="Nouvel email"
-                  />
-                  <button
-                    class="btn-inline-save"
-                    (click)="saveEmail()"
-                    [disabled]="isSavingEmail() || !emailInput().trim()"
-                  >
-                    @if (isSavingEmail()) {
-                      …
-                    } @else {
-                      Sauvegarder
-                    }
+                  <input class="settings-input" type="email" [value]="emailInput()"
+                    (input)="emailInput.set($any($event.target).value)" placeholder="Nouvel email" />
+                  <button class="btn-inline-save" (click)="saveEmail()"
+                    [disabled]="isSavingEmail() || !emailInput().trim()">
+                    {{ isSavingEmail() ? '…' : 'Sauvegarder' }}
                   </button>
-                  <button
-                    class="btn-inline-cancel"
-                    (click)="editingEmail.set(false)"
-                  >
-                    Annuler
-                  </button>
+                  <button class="btn-inline-cancel" (click)="editingEmail.set(false)">Annuler</button>
                 </div>
               } @else {
-                <span class="settings-row-value">{{
-                  userStore.user()?.email
-                }}</span>
+                <span class="settings-row-value">{{ userStore.user()?.email }}</span>
               }
             </div>
             @if (!editingEmail()) {
-              <button class="settings-edit-btn" (click)="startEditEmail()">
-                Modifier
-              </button>
+              <button class="settings-edit-btn" (click)="startEditEmail()">Modifier</button>
             }
           </div>
 
@@ -69,41 +48,20 @@
               <span class="settings-row-label">Nom</span>
               @if (editingName()) {
                 <div class="inline-edit">
-                  <input
-                    class="settings-input"
-                    type="text"
-                    [value]="nameInput()"
-                    (input)="nameInput.set($any($event.target).value)"
-                    placeholder="Ton nom"
-                  />
-                  <button
-                    class="btn-inline-save"
-                    (click)="saveName()"
-                    [disabled]="isSavingName() || !nameInput().trim()"
-                  >
-                    @if (isSavingName()) {
-                      …
-                    } @else {
-                      Sauvegarder
-                    }
+                  <input class="settings-input" type="text" [value]="nameInput()"
+                    (input)="nameInput.set($any($event.target).value)" placeholder="Ton nom" />
+                  <button class="btn-inline-save" (click)="saveName()"
+                    [disabled]="isSavingName() || !nameInput().trim()">
+                    {{ isSavingName() ? '…' : 'Sauvegarder' }}
                   </button>
-                  <button
-                    class="btn-inline-cancel"
-                    (click)="editingName.set(false)"
-                  >
-                    Annuler
-                  </button>
+                  <button class="btn-inline-cancel" (click)="editingName.set(false)">Annuler</button>
                 </div>
               } @else {
-                <span class="settings-row-value">{{
-                  userStore.user()?.name ?? '—'
-                }}</span>
+                <span class="settings-row-value">{{ userStore.user()?.name || '—' }}</span>
               }
             </div>
             @if (!editingName()) {
-              <button class="settings-edit-btn" (click)="startEditName()">
-                Modifier
-              </button>
+              <button class="settings-edit-btn" (click)="startEditName()">Modifier</button>
             }
           </div>
 
@@ -112,101 +70,65 @@
             <div class="settings-row-left">
               <span class="settings-row-label">Mot de passe</span>
               @if (passwordResetSent()) {
-                <span class="settings-row-hint success-hint"
-                  >Email de réinitialisation envoyé.</span
-                >
+                <span class="settings-row-hint success-hint">Email envoyé — vérifie ta boîte mail</span>
               } @else {
                 <span class="settings-row-value">••••••••••••</span>
               }
             </div>
-            <button
-              class="settings-edit-btn"
-              (click)="resetPassword()"
-              [disabled]="passwordResetSent()"
-            >
-              Modifier
-            </button>
+            @if (!passwordResetSent()) {
+              <button class="settings-edit-btn" (click)="resetPassword()">Modifier</button>
+            }
           </div>
 
           <!-- Capital de départ -->
           <div class="settings-row">
             <div class="settings-row-left">
               <span class="settings-row-label">Capital de départ</span>
-              @if (!editingCapital()) {
-                <span class="settings-row-value mono">
-                  @if (userStore.startingCapital() > 0) {
-                    {{ userStore.user()?.currency === 'EUR' ? '€' : '$'
-                    }}{{
-                      userStore
-                        .startingCapital()
-                        .toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })
-                    }}
-                  } @else {
-                    <span style="color: var(--text-3)">Non défini</span>
-                  }
-                </span>
-              } @else {
+              @if (editingCapital()) {
                 <div class="capital-edit-row">
-                  <span class="capital-symbol">{{
-                    userStore.user()?.currency === 'EUR' ? '€' : '$'
-                  }}</span>
-                  <input
-                    type="text"
-                    class="settings-inline-input"
-                    [value]="capitalInput()"
-                    (input)="filterCapital($event)"
-                    placeholder="ex : 5000"
-                  />
-                  <button
-                    class="settings-save-btn"
-                    (click)="saveCapital()"
-                    [disabled]="isSavingCapital()"
-                  >
-                    {{ isSavingCapital() ? '...' : 'Sauvegarder' }}
+                  <span class="capital-symbol">$</span>
+                  <input class="settings-inline-input" type="text" [value]="capitalInput()"
+                    (input)="filterCapital($event)" placeholder="ex : 5000" />
+                  <button class="settings-save-btn" (click)="saveCapital()"
+                    [disabled]="isSavingCapital()">
+                    {{ isSavingCapital() ? '…' : 'OK' }}
                   </button>
-                  <button
-                    class="settings-cancel-btn"
-                    (click)="editingCapital.set(false)"
-                  >
-                    Annuler
-                  </button>
+                  <button class="settings-cancel-btn" (click)="editingCapital.set(false)">Annuler</button>
                 </div>
+              } @else {
+                <span class="settings-row-value">
+                  ${{ userStore.startingCapital() | number:'1.2-2' }}
+                </span>
               }
             </div>
             @if (!editingCapital()) {
-              <button class="settings-edit-btn" (click)="startEditCapital()">
-                Modifier
-              </button>
+              <button class="settings-edit-btn" (click)="startEditCapital()">Modifier</button>
             }
           </div>
+
         </div>
       </div>
 
-      <!-- ── 2. ABONNEMENT ── -->
+    </div> <!-- /settings-col-left -->
+
+    <!-- ── Colonne milieu : Abonnement + Préférences + Danger ── -->
+    <div class="settings-col-middle">
+
+      <!-- ══ 2. ABONNEMENT ══ -->
       <div class="settings-section">
         <div class="settings-section-label">Abonnement</div>
         <div class="settings-card">
           <div class="plan-inner">
             @if (userStore.isPremium()) {
-              <span class="plan-badge premium">
-                <span class="plan-badge-dot"></span>
-                ★ PREMIUM
-              </span>
-              <div class="plan-desc">
-                Accès à toutes les fonctionnalités — IA, analytics avancés,
-                Weekly Debrief.
+              <div class="plan-badge premium">
+                <div class="plan-badge-dot"></div>
+                PREMIUM
               </div>
+              <p class="plan-desc">Accès à toutes les fonctionnalités — IA, analytics avancés, Weekly Debrief.</p>
               @if (userStore.user()?.stripeCurrentPeriodEnd) {
-                <div class="plan-renewal">
-                  Prochain renouvellement :
-                  {{
-                    userStore.user()!.stripeCurrentPeriodEnd
-                      | date: 'dd/MM/yyyy'
-                  }}
-                </div>
+                <p class="plan-renewal">
+                  Renouvellement : {{ userStore.user()?.stripeCurrentPeriodEnd | date:'dd/MM/yyyy' }}
+                </p>
               }
               <div class="plan-actions">
                 <button class="btn btn-secondary" (click)="openPortal()">
@@ -214,23 +136,13 @@
                 </button>
               </div>
             } @else {
-              <span class="plan-badge free">
-                <span class="plan-badge-dot"></span>
-                FREE
-              </span>
-              <div class="plan-desc">
-                50 trades/mois · Journal complet · Stats de base · Historique
-                illimité.
-              </div>
-              <div class="plan-upgrade-hint">
-                Passe à Premium pour débloquer l'IA, les analytics avancés et le
-                Weekly Debrief.
-              </div>
+              <div class="plan-badge free">FREE</div>
+              <p class="plan-desc">50 trades/mois · Journal complet · Stats de base · Historique illimité.</p>
+              <p class="plan-upgrade-hint">
+                Passe à Premium pour débloquer les analyses IA, le Weekly Debrief et l'import CSV.
+              </p>
               <div class="plan-actions">
-                <button
-                  class="btn btn-primary"
-                  (click)="showPlanModal.set(true)"
-                >
+                <button class="btn btn-primary" (click)="showPlanModal.set(true)">
                   ⚡ Essayer 7 jours gratuit →
                 </button>
               </div>
@@ -238,151 +150,190 @@
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- ── Colonne droite : Préférences + Zone de danger ── -->
-    <div class="settings-col">
-      <!-- ── 3. PRÉFÉRENCES ── -->
+      <!-- ══ 3. PRÉFÉRENCES ══ -->
       <div class="settings-section">
         <div class="settings-section-label">Préférences</div>
         <div class="settings-card">
+
           <!-- Devise -->
           <div class="settings-row">
             <div class="settings-row-left">
               <span class="settings-row-label">Devise d'affichage</span>
-              <span class="settings-row-hint"
-                >Utilisée pour l'affichage du P&amp;L</span
-              >
+              <span class="settings-row-hint">Utilisée pour l'affichage du P&amp;L</span>
             </div>
-            <select
-              class="settings-select"
-              [value]="prefCurrency()"
-              (change)="prefCurrency.set($any($event.target).value)"
-            >
+            <select class="settings-select" [value]="prefCurrency()"
+              (change)="prefCurrency.set($any($event.target).value)">
               <option value="USD">USD ($)</option>
               <option value="EUR">EUR (€)</option>
             </select>
           </div>
 
-          <!-- Notifications email -->
+          <!-- Notifications -->
           <div class="settings-row">
             <div class="settings-row-left">
               <span class="settings-row-label">Notifications email</span>
-              <span class="settings-row-hint"
-                >Reçois les debriefs hebdomadaires et alertes importantes</span
-              >
+              <span class="settings-row-hint">Reçois les debriefs hebdomadaires et alertes importantes</span>
             </div>
             <label class="settings-toggle">
-              <input
-                type="checkbox"
-                [checked]="prefNotifications()"
-                (change)="prefNotifications.set($any($event.target).checked)"
-              />
+              <input type="checkbox" [checked]="prefNotifications()"
+                (change)="prefNotifications.set($any($event.target).checked)" />
               <span class="toggle-track"></span>
             </label>
           </div>
 
-          <!-- Weekly Debrief automatique -->
+          <!-- Weekly debrief -->
           <div class="settings-row">
             <div class="settings-row-left">
               <span class="settings-row-label">Weekly Debrief automatique</span>
-              <span class="settings-row-hint"
-                >Génération automatique chaque dimanche. Premium
-                uniquement.</span
-              >
+              <span class="settings-row-hint">Génération automatique chaque dimanche. Premium uniquement.</span>
             </div>
             <label class="settings-toggle">
-              <input
-                type="checkbox"
-                [checked]="prefDebrief()"
-                (change)="prefDebrief.set($any($event.target).checked)"
+              <input type="checkbox" [checked]="prefDebrief()"
                 [disabled]="!userStore.isPremium()"
-              />
-              <span
-                class="toggle-track"
-                [class.disabled]="!userStore.isPremium()"
-              ></span>
+                (change)="prefDebrief.set($any($event.target).checked)" />
+              <span class="toggle-track" [class.disabled]="!userStore.isPremium()"></span>
             </label>
           </div>
+
         </div>
         <div class="pref-save">
-          <button
-            class="btn btn-primary"
-            (click)="savePreferences()"
-            [disabled]="isSavingPrefs()"
-          >
-            @if (isSavingPrefs()) {
-              Enregistrement…
-            } @else if (prefSaved()) {
-              ✓ Sauvegardé
-            } @else {
-              Sauvegarder les préférences
-            }
+          <button class="btn btn-primary" (click)="savePreferences()" [disabled]="isSavingPrefs()">
+            @if (isSavingPrefs()) { Enregistrement… }
+            @else if (prefSaved()) { ✓ Sauvegardé }
+            @else { Sauvegarder les préférences }
           </button>
         </div>
       </div>
 
-      <!-- ── 4. ZONE DE DANGER ── -->
+      <!-- ══ 5. ZONE DE DANGER ══ -->
       <div class="settings-section">
         <div class="settings-section-label danger-label">Zone de danger</div>
         <div class="settings-card danger-card">
           @if (!showDeleteConfirm()) {
             <div class="settings-row">
               <div class="settings-row-left">
-                <span class="settings-row-label danger-row-label"
-                  >Supprimer mon compte</span
-                >
-                <span class="settings-row-hint"
-                  >Supprime définitivement ton compte, tous tes trades et
-                  debriefs. Irréversible.</span
-                >
+                <span class="settings-row-label danger-row-label">Supprimer mon compte</span>
+                <span class="settings-row-hint">
+                  Supprime définitivement ton compte, tous tes trades et debriefs. Irréversible.
+                </span>
               </div>
-              <button
-                class="settings-edit-btn danger-btn"
-                (click)="showDeleteConfirm.set(true)"
-              >
-                Supprimer
-              </button>
+              <button class="settings-edit-btn danger-btn"
+                (click)="showDeleteConfirm.set(true)">Supprimer</button>
             </div>
           } @else {
             <div class="delete-confirm">
-              <div class="delete-confirm-title">Confirme la suppression</div>
-              <div class="delete-confirm-hint">
-                Tape <strong>SUPPRIMER</strong> pour confirmer. Toutes tes
-                données seront effacées immédiatement.
-              </div>
-              <input
-                class="delete-input"
-                type="text"
-                placeholder="SUPPRIMER"
-                [value]="deleteInput()"
-                (input)="deleteInput.set($any($event.target).value)"
-              />
+              <p class="delete-confirm-title">Confirme la suppression</p>
+              <p class="delete-confirm-hint">
+                Tape <strong>SUPPRIMER</strong> pour confirmer. Cette action est irréversible.
+              </p>
+              <input class="delete-input" type="text" [value]="deleteInput()"
+                (input)="deleteInput.set($any($event.target).value)" placeholder="SUPPRIMER" />
               <div class="delete-actions">
-                <button
-                  class="btn btn-secondary"
-                  (click)="showDeleteConfirm.set(false); deleteInput.set('')"
-                >
-                  Annuler
-                </button>
-                <button
-                  class="btn btn-danger"
-                  [disabled]="deleteInput() !== 'SUPPRIMER' || isDeleting()"
-                  (click)="confirmDelete()"
-                >
-                  @if (isDeleting()) {
-                    Suppression…
-                  } @else {
-                    Confirmer la suppression
-                  }
+                <button class="btn btn-secondary"
+                  (click)="showDeleteConfirm.set(false); deleteInput.set('')">Annuler</button>
+                <button class="btn btn-danger" (click)="confirmDelete()"
+                  [disabled]="deleteInput() !== 'SUPPRIMER' || isDeleting()">
+                  {{ isDeleting() ? 'Suppression…' : 'Supprimer définitivement' }}
                 </button>
               </div>
             </div>
           }
         </div>
       </div>
-    </div>
-  </div>
+
+    </div> <!-- /settings-col-middle -->
+
+    <!-- ── Colonne droite : Stratégie ── -->
+    <div class="settings-col-right">
+
+      <!-- ══ 4. STRATÉGIE DE TRADING ══ -->
+      <div class="settings-section">
+        <div class="settings-section-label">Stratégie de trading</div>
+        <div class="settings-card" style="padding:20px">
+
+          <p style="font-size:12px;color:var(--text-3);margin:0 0 4px">
+            Utilisé par l'IA pour personnaliser ses analyses. Plus c'est précis, mieux c'est.
+          </p>
+
+          <!-- Style de trading -->
+          <div class="strat-section-label">Style de trading</div>
+          <div class="strat-chips">
+            @for (s of TRADING_STYLES; track s.value) {
+              <button class="strat-chip" [class.active]="tradingStyle() === s.value"
+                (click)="tradingStyle.set(s.value)">
+                <span class="strat-chip-emoji">{{ s.emoji }}</span>
+                {{ s.label }}
+              </button>
+            }
+          </div>
+
+          <!-- Sessions -->
+          <div class="strat-section-label">Sessions préférées</div>
+          <div class="strat-chips">
+            @for (s of SESSIONS; track s.value) {
+              <button class="strat-chip" [class.active]="tradingSessions().includes(s.value)"
+                (click)="toggleSession(s.value)">
+                {{ s.label }}
+                <span style="font-size:10px;opacity:.6;font-family:var(--font-mono)">{{ s.time }}</span>
+              </button>
+            }
+          </div>
+
+          <!-- Fréquence -->
+          <div class="strat-section-label">
+            Trades / jour habituels
+            <span class="freq-badge">{{ tradesPerDayMin() }}–{{ tradesPerDayMax() }}</span>
+          </div>
+          <div class="freq-slider-row">
+            <span class="freq-slider-label">Min</span>
+            <input type="range" class="freq-slider" min="0" max="50"
+              [value]="tradesPerDayMin()"
+              (input)="tradesPerDayMin.set(+$any($event.target).value)" />
+            <span class="freq-slider-val">{{ tradesPerDayMin() }}</span>
+          </div>
+          <div class="freq-slider-row">
+            <span class="freq-slider-label">Max</span>
+            <input type="range" class="freq-slider" min="0" max="100"
+              [value]="tradesPerDayMax()"
+              (input)="tradesPerDayMax.set(+$any($event.target).value)" />
+            <span class="freq-slider-val">{{ tradesPerDayMax() }}</span>
+          </div>
+
+          <!-- Tags stratégie -->
+          <div class="strat-section-label">Stratégie</div>
+          <div class="strat-chips" style="gap:6px">
+            @for (tag of STRATEGY_TAGS; track tag) {
+              <button class="strat-tag" [class.selected]="tradingStrategy().includes(tag)"
+                (click)="toggleTag(tag)">{{ tag }}</button>
+            }
+          </div>
+
+          <!-- Description libre -->
+          <div class="strat-section-label">
+            Description libre
+            <span class="char-count">{{ strategyDesc().length }}/200</span>
+          </div>
+          <textarea class="strat-textarea" rows="3" maxlength="200"
+            placeholder="Ex: Je trade les OB + FVG sur London et NY, scalping 1-5min..."
+            [value]="strategyDesc()" (input)="onStrategyDesc($event)">
+          </textarea>
+
+          <div class="section-save-row">
+            <button class="btn btn-primary" (click)="saveStrategy()" [disabled]="isSavingStrategy()">
+              @if (isSavingStrategy()) { Enregistrement… }
+              @else if (strategySaved()) { ✓ Sauvegardé }
+              @else { Enregistrer la stratégie }
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+    </div> <!-- /settings-col-right -->
+
+  </div> <!-- /settings-3col -->
+
 </div>
 
 @if (showPlanModal()) {
