@@ -87,10 +87,9 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser } from '../../core/api
                 </div>
                 <div class="online-meta">
                   <span class="plan-badge"
-                    [class.premium]="u.plan==='PREMIUM' && u.role!=='BETA_TESTER'"
-                    [class.beta]="u.role==='BETA_TESTER'"
+                    [class.premium]="u.plan==='PREMIUM'"
                     [class.free]="u.plan==='FREE'">
-                    {{ u.role === 'BETA_TESTER' ? 'BETA' : u.plan }}
+                    {{ u.plan }}
                   </span>
                   <span class="online-session">⏱ {{ sessionDuration(u) }}</span>
                 </div>
@@ -145,10 +144,9 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser } from '../../core/api
                     </td>
                     <td>
                       <span class="plan-badge"
-                        [class.premium]="u.plan==='PREMIUM' && u.role!=='BETA_TESTER'"
-                        [class.beta]="u.role==='BETA_TESTER'"
+                        [class.premium]="u.plan==='PREMIUM'"
                         [class.free]="u.plan==='FREE'">
-                        {{ u.role === 'BETA_TESTER' ? 'BETA' : u.plan }}
+                        {{ u.plan }}
                       </span>
                     </td>
                     <td>
