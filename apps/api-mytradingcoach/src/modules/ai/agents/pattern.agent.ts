@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import Anthropic from '@anthropic-ai/sdk';
 import { parseAnthropicJson } from './parse-json.util';
 import { handleAnthropicError } from './anthropic-errors.util';
+import { AiLoggerService } from '../../shared/ai-logger.service';
 
 export type InsightType = 'strength' | 'weakness' | 'pattern';
 
@@ -36,7 +37,9 @@ export class PatternAgent {
   });
   private readonly logger = new Logger(PatternAgent.name);
 
-  async analyze(summary: string): Promise<PatternAnalysis> {
+  constructor(private readonly aiLogger: AiLoggerService) {}
+
+  async analyze(summary: string, userId?: string): Promise<PatternAnalysis> {
     let response: Anthropic.Message;
     try {
       response = await this.anthropic.messages.create({
@@ -54,6 +57,8 @@ export class PatternAgent {
     } catch (err) {
       handleAnthropicError(err, this.logger);
     }
+
+    if (userId) this.aiLogger.log(userId, 'insights', response.usage);
 
     const block = response.content[0];
     if (block.type !== 'text') {

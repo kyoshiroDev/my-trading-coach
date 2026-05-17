@@ -67,6 +67,7 @@ export class TradesController {
     const parsed = await this.csvImportService.parseCSV(
       file.buffer,
       file.originalname,
+      user.id,
     );
 
     const results = await Promise.allSettled(

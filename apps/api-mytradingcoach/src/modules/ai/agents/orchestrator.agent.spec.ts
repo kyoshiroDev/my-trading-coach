@@ -95,7 +95,7 @@ describe('OrchestratorAgent', () => {
 
     // Pattern analyze receives the summary built by dataAgent
     const summary = buildSummarySpy.mock.results[0].value as string;
-    expect(patternAgent.analyze).toHaveBeenCalledWith(summary);
+    expect(patternAgent.analyze).toHaveBeenCalledWith(summary, 'user-123');
   });
 
   it('runInsightsFlow() retourne insights, topPattern et emotionInsight', async () => {

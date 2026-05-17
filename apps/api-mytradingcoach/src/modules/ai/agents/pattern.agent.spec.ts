@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { HttpException } from '@nestjs/common';
 import { PatternAgent } from './pattern.agent';
+import { AiLoggerService } from '../../shared/ai-logger.service';
 
 const mockMessagesCreate = vi.hoisted(() =>
   vi.fn().mockResolvedValue({
@@ -72,7 +73,10 @@ describe('PatternAgent', () => {
     mockMessagesCreate.mockResolvedValue(validResponse);
 
     const module = await Test.createTestingModule({
-      providers: [PatternAgent],
+      providers: [
+        PatternAgent,
+        { provide: AiLoggerService, useValue: { log: vi.fn() } },
+      ],
     }).compile();
 
     agent = module.get(PatternAgent);

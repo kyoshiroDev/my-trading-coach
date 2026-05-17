@@ -88,7 +88,7 @@ export class DebriefService {
       previousObjectives,
       weekNumber,
       year,
-    })) as DebriefAiResult;
+    }, userId)) as DebriefAiResult;
 
     return this.prisma.weeklyDebrief.upsert({
       where: { userId_weekNumber_year: { userId, weekNumber, year } },

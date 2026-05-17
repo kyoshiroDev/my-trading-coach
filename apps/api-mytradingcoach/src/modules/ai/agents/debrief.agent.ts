@@ -6,6 +6,7 @@ import {
   buildDebriefPrompt,
   DEBRIEF_SYSTEM_PROMPT,
 } from '../prompts/debrief.prompt';
+import { AiLoggerService } from '../../shared/ai-logger.service';
 
 @Injectable()
 export class DebriefAgent {
@@ -14,8 +15,11 @@ export class DebriefAgent {
   });
   private readonly logger = new Logger(DebriefAgent.name);
 
+  constructor(private readonly aiLogger: AiLoggerService) {}
+
   async generate(
     data: Parameters<typeof buildDebriefPrompt>[0],
+    userId?: string,
   ): Promise<unknown> {
     let response: Anthropic.Message;
     try {
@@ -34,6 +38,8 @@ export class DebriefAgent {
     } catch (err) {
       handleAnthropicError(err, this.logger);
     }
+
+    if (userId) this.aiLogger.log(userId, 'debrief', response.usage);
 
     const block = response.content[0];
     if (block.type !== 'text') {

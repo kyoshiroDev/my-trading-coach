@@ -14,6 +14,7 @@ import { DebriefAgent } from './agents/debrief.agent';
 import { buildDebriefPrompt } from './prompts/debrief.prompt';
 import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AiLoggerService } from '../shared/ai-logger.service';
 
 const MODEL = 'claude-sonnet-4-6';
 const AI_MONTHLY_QUOTA = 100;
@@ -35,6 +36,7 @@ export class AiService implements OnModuleDestroy {
     private readonly prisma: PrismaService,
     private readonly orchestrator: OrchestratorAgent,
     private readonly debriefAgent: DebriefAgent,
+    private readonly aiLogger: AiLoggerService,
   ) {}
 
   async onModuleDestroy() {
@@ -149,6 +151,7 @@ Sois concis (3-5 phrases). Si le trader a des données, base-toi dessus pour ré
     }
 
     if (userRole !== Role.ADMIN) await this.incrementQuota(userId);
+    this.aiLogger.log(userId, 'chat', response.usage);
     const content = response?.content?.[0];
     if (!content || content.type !== 'text')
       throw new HttpException(
@@ -160,8 +163,8 @@ Sois concis (3-5 phrases). Si le trader a des données, base-toi dessus pour ré
 
   // ── Debrief — delegates to debrief agent ──────────────────────────────────
 
-  async generateDebrief(data: Parameters<typeof buildDebriefPrompt>[0]) {
-    return this.debriefAgent.generate(data);
+  async generateDebrief(data: Parameters<typeof buildDebriefPrompt>[0], userId?: string) {
+    return this.debriefAgent.generate(data, userId);
   }
 
   // ── Cooldown / Daily limits ───────────────────────────────────────────────

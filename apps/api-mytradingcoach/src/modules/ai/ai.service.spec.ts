@@ -6,6 +6,7 @@ import { AiService } from './ai.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OrchestratorAgent } from './agents/orchestrator.agent';
 import { DebriefAgent } from './agents/debrief.agent';
+import { AiLoggerService } from '../shared/ai-logger.service';
 
 const mockMessagesCreate = vi.hoisted(() =>
   vi.fn().mockResolvedValue({
@@ -96,6 +97,7 @@ describe('AiService', () => {
 
     mockMessagesCreate.mockResolvedValue({
       content: [{ type: 'text', text: 'Voici mon analyse...' }],
+      usage: { input_tokens: 100, output_tokens: 50 },
     });
     mockRedisGet.mockResolvedValue(null);
     mockRedisIncr.mockResolvedValue(1);
@@ -113,6 +115,7 @@ describe('AiService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: OrchestratorAgent, useValue: mockOrchestrator },
         { provide: DebriefAgent, useValue: mockDebriefAgent },
+        { provide: AiLoggerService, useValue: { log: vi.fn() } },
       ],
     }).compile();
 
@@ -187,7 +190,7 @@ describe('AiService', () => {
       };
       await service.generateDebrief(data);
 
-      expect(mockDebriefAgent.generate).toHaveBeenCalledWith(data);
+      expect(mockDebriefAgent.generate).toHaveBeenCalledWith(data, undefined);
     });
   });
 });
