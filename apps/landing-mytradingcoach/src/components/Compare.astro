@@ -35,6 +35,21 @@
       <p class="table-scroll-hint">← Fais défiler pour voir la comparaison →</p>
       <p class="comp-note">Données basées sur les fonctionnalités publiquement documentées. Mise à jour mars 2026.</p>
     </div>
+
+    <!-- Layout mobile vertical -->
+    <div class="comp-mobile reveal">
+      <div class="comp-row-mobile"><div class="comp-feat">Journal de trading</div><div class="comp-vals"><div class="comp-val"><span class="comp-brand-lbl">MTC</span><span class="comp-yes">✓</span></div><div class="comp-val"><span class="comp-brand-lbl">TraderSync</span><span class="comp-yes">✓</span></div></div></div>
+      <div class="comp-row-mobile"><div class="comp-feat">Analytics avancés</div><div class="comp-vals"><div class="comp-val"><span class="comp-brand-lbl">MTC</span><span class="comp-yes">✓</span></div><div class="comp-val"><span class="comp-brand-lbl">TraderSync</span><span class="comp-yes">✓</span></div></div></div>
+      <div class="comp-row-mobile"><div class="comp-feat">Tracking émotionnel</div><div class="comp-vals"><div class="comp-val"><span class="comp-brand-lbl">MTC</span><span class="comp-yes">✓</span></div><div class="comp-val"><span class="comp-brand-lbl">TraderSync</span><span class="comp-no">–</span></div></div></div>
+      <div class="comp-row-mobile"><div class="comp-feat">Coach IA conversationnel</div><div class="comp-vals"><div class="comp-val"><span class="comp-brand-lbl">MTC</span><span class="comp-yes">✓</span></div><div class="comp-val"><span class="comp-brand-lbl">TraderSync</span><span class="comp-no">–</span></div></div></div>
+      <div class="comp-row-mobile"><div class="comp-feat" style="font-weight:500;color:var(--txt)">Weekly Debrief IA auto</div><div class="comp-vals"><div class="comp-val"><span class="comp-brand-lbl">MTC</span><span class="comp-yes" style="color:var(--pulse)">✓</span></div><div class="comp-val"><span class="comp-brand-lbl">TraderSync</span><span class="comp-no">–</span></div></div></div>
+      <div class="comp-row-mobile"><div class="comp-feat">Hébergé en France 🇫🇷</div><div class="comp-vals"><div class="comp-val"><span class="comp-brand-lbl">MTC</span><span class="comp-yes">✓</span></div><div class="comp-val"><span class="comp-brand-lbl">TraderSync</span><span class="comp-no">–</span></div></div></div>
+      <div class="comp-price-mobile">
+        <div class="comp-price-col mtc"><span>MyTradingCoach</span><strong>39 €/mois</strong></div>
+        <div class="comp-price-col"><span>TraderSync</span><strong>30–80 $</strong></div>
+      </div>
+      <p class="comp-note" style="padding:0 0 4px">Données basées sur les fonctionnalités publiques. Mars 2026.</p>
+    </div>
   </div>
 </section>
 
@@ -110,27 +125,26 @@
     font-family: var(--mono);
   }
 
+  /* Mobile vertical layout */
+  .comp-mobile { display: none; }
+
   @media (max-width: 767px) {
-    .comp-table {
-      min-width: 560px;
-    }
+    /* Masquer le tableau desktop */
+    .table-wrapper, .table-scroll-hint { display: none; }
 
-    .comp-table th,
-    .comp-table td {
-      padding: 10px 12px;
-      font-size: 12px;
-      white-space: nowrap;
-    }
+    /* Afficher layout vertical */
+    .comp-mobile { display: flex; flex-direction: column; gap: 8px; padding: 0 16px; margin-top: 32px; }
 
-    .comp-table th:first-child,
-    .comp-table td:first-child {
-      white-space: normal;
-      min-width: 130px;
-      font-size: 12px;
-    }
+    .comp-row-mobile { background: var(--card); border: 1px solid var(--b); border-radius: 10px; padding: 12px 14px; }
+    .comp-feat { font-size: 13px; font-weight: 400; color: var(--txt2); margin-bottom: 8px; }
+    .comp-vals { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .comp-val { display: flex; align-items: center; justify-content: space-between; background: var(--bg3); border-radius: 6px; padding: 6px 10px; }
+    .comp-brand-lbl { font-size: 10px; font-family: var(--mono); color: var(--txt3); }
 
-    .table-scroll-hint {
-      display: block;
-    }
+    .comp-price-mobile { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+    .comp-price-col { background: var(--card); border: 1px solid var(--b); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+    .comp-price-col span { font-size: 10px; color: var(--txt3); font-family: var(--mono); }
+    .comp-price-col strong { font-size: 16px; font-weight: 700; }
+    .comp-price-col.mtc strong { color: var(--blue2); }
   }
 </style>

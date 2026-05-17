@@ -69,7 +69,7 @@ const ARTICLES = [
         </a>
       </div>
 
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+      <div class="blog-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
         {ARTICLES.map((article) => (
           <a href={`/blog/${article.slug}`}
              style="background:var(--card);border:1px solid var(--b);border-radius:14px;padding:24px;text-decoration:none;display:flex;flex-direction:column;gap:12px;transition:border-color .2s;"
@@ -97,3 +97,12 @@ const ARTICLES = [
 
   <Footer />
 </Base>
+
+<style>
+@media (max-width: 767px) {
+  .blog-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+}
+</style>

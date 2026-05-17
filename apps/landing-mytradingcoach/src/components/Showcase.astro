@@ -25,24 +25,122 @@ import MockupDebrief from './mockup/MockupDebrief.astro';
       <MockupShell url="app.mytradingcoach.app — Dashboard" active="dashboard">
         <MockupDashboard />
       </MockupShell>
+      <div class="mobile-mockup">
+        <div class="phone-frame">
+          <div class="phone-bar"><div class="phone-notch"></div></div>
+          <div class="phone-content">
+            <div class="phone-topbar">
+              <span class="phone-title">Dashboard</span>
+              <button class="phone-cta">+ Ajouter trade</button>
+            </div>
+            <div class="phone-stats">
+              <div class="phone-stat"><div class="phone-stat-label">P&amp;L TOTAL</div><div class="phone-stat-value text-g">+$8,420</div></div>
+              <div class="phone-stat"><div class="phone-stat-label">WIN RATE</div><div class="phone-stat-value">67.4%</div></div>
+            </div>
+            <div class="phone-stat-row">
+              <div class="phone-stat-sm"><div class="phone-stat-label">DRAWDOWN</div><div class="phone-stat-value text-r" style="font-size:14px">-$1,240</div></div>
+              <div class="phone-stat-sm"><div class="phone-stat-label">TRADES</div><div class="phone-stat-value" style="font-size:14px">142</div></div>
+            </div>
+            <div class="phone-chart">
+              <div class="phone-chart-label">Equity Curve</div>
+              <svg viewBox="0 0 300 80" preserveAspectRatio="none" style="width:100%;height:60px">
+                <defs><linearGradient id="mg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3b82f6" stop-opacity="0.3"/><stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/></linearGradient></defs>
+                <path d="M0,70 C30,65 50,50 80,45 C110,40 130,55 160,40 C190,25 220,20 260,10 L260,80 L0,80Z" fill="url(#mg)"/>
+                <path d="M0,70 C30,65 50,50 80,45 C110,40 130,55 160,40 C190,25 220,20 260,10" fill="none" stroke="#3b82f6" stroke-width="2"/>
+              </svg>
+            </div>
+            <div class="phone-trades">
+              <div class="phone-trade"><span class="phone-side long">LONG</span><span class="phone-asset">BTC/USDT</span><span class="phone-pnl text-g">+$400</span></div>
+              <div class="phone-trade"><span class="phone-side short">SHORT</span><span class="phone-asset">EUR/USD</span><span class="phone-pnl text-r">-$280</span></div>
+              <div class="phone-trade"><span class="phone-side long">LONG</span><span class="phone-asset">ETH/USDT</span><span class="phone-pnl text-g">+$620</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="showcase-panel" id="tab-analytics">
       <MockupShell url="app.mytradingcoach.app — Analytics" active="analytics">
         <MockupAnalytics />
       </MockupShell>
+      <div class="mobile-mockup">
+        <div class="phone-frame">
+          <div class="phone-bar"><div class="phone-notch"></div></div>
+          <div class="phone-content">
+            <div class="phone-topbar"><span class="phone-title">Analytics</span></div>
+            <div class="phone-stats">
+              <div class="phone-stat"><div class="phone-stat-label">WIN RATE</div><div class="phone-stat-value text-g">67.4%</div></div>
+              <div class="phone-stat"><div class="phone-stat-label">RR MOYEN</div><div class="phone-stat-value">2.1</div></div>
+            </div>
+            <div class="phone-chart">
+              <div class="phone-chart-label">Performance / Setup</div>
+              <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+                <div><div style="display:flex;justify-content:space-between;font-size:10px;color:#9aa3af;margin-bottom:3px"><span>Breakout</span><span>74%</span></div><div style="height:4px;background:#1c2024;border-radius:2px"><div style="width:74%;height:100%;background:#10b981;border-radius:2px"></div></div></div>
+                <div><div style="display:flex;justify-content:space-between;font-size:10px;color:#9aa3af;margin-bottom:3px"><span>Pullback</span><span>62%</span></div><div style="height:4px;background:#1c2024;border-radius:2px"><div style="width:62%;height:100%;background:#3b82f6;border-radius:2px"></div></div></div>
+                <div><div style="display:flex;justify-content:space-between;font-size:10px;color:#9aa3af;margin-bottom:3px"><span>Range</span><span>58%</span></div><div style="height:4px;background:#1c2024;border-radius:2px"><div style="width:58%;height:100%;background:#f59e0b;border-radius:2px"></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="showcase-panel" id="tab-ai">
       <MockupShell url="app.mytradingcoach.app — IA Insights" active="ai">
         <MockupAiInsights />
       </MockupShell>
+      <div class="mobile-mockup">
+        <div class="phone-frame">
+          <div class="phone-bar"><div class="phone-notch"></div></div>
+          <div class="phone-content">
+            <div class="phone-topbar"><span class="phone-title">IA Insights</span></div>
+            <div class="phone-trades" style="gap:8px">
+              <div style="background:var(--card);border:1px solid var(--b);border-radius:9px;padding:12px">
+                <div style="font-size:9px;color:#ef4444;font-family:var(--mono);margin-bottom:6px">⚠ CRITIQUE</div>
+                <div style="font-size:12px;color:#e2eaf5;line-height:1.5">Tu perds 68% de tes trades après 2 défaites consécutives. Prends une pause après 2 SL.</div>
+              </div>
+              <div style="background:var(--card);border:1px solid var(--b);border-radius:9px;padding:12px">
+                <div style="font-size:9px;color:#10b981;font-family:var(--mono);margin-bottom:6px">✓ FORCE</div>
+                <div style="font-size:12px;color:#e2eaf5;line-height:1.5">Ton win rate Breakout est de 74%. Continue à te concentrer sur ce setup.</div>
+              </div>
+              <div style="background:var(--card);border:1px solid var(--b);border-radius:9px;padding:12px">
+                <div style="font-size:9px;color:#f59e0b;font-family:var(--mono);margin-bottom:6px">! ATTENTION</div>
+                <div style="font-size:12px;color:#e2eaf5;line-height:1.5">Tu trades 3x plus en mode "Stressed" le vendredi. Évite les positions fin de semaine.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="showcase-panel" id="tab-debrief">
       <MockupShell url="app.mytradingcoach.app — Weekly Debrief" active="debrief">
         <MockupDebrief />
       </MockupShell>
+      <div class="mobile-mockup">
+        <div class="phone-frame">
+          <div class="phone-bar"><div class="phone-notch"></div></div>
+          <div class="phone-content">
+            <div class="phone-topbar"><span class="phone-title">Weekly Debrief</span></div>
+            <div class="phone-stats">
+              <div class="phone-stat"><div class="phone-stat-label">P&amp;L SEMAINE</div><div class="phone-stat-value text-g">+$2,140</div></div>
+              <div class="phone-stat"><div class="phone-stat-label">TRADES</div><div class="phone-stat-value">18</div></div>
+            </div>
+            <div class="phone-chart" style="margin-bottom:10px">
+              <div class="phone-chart-label" style="margin-bottom:8px">Résumé IA de ta semaine</div>
+              <p style="font-size:11px;color:#9aa3af;line-height:1.6;margin:0">Bonne semaine avec un focus sur les breakouts. Tu as respecté tes SL et évité le revenge trading. Continue sur cette lancée la semaine prochaine.</p>
+            </div>
+            <div class="phone-chart">
+              <div class="phone-chart-label" style="margin-bottom:8px">Objectifs semaine prochaine</div>
+              <div style="font-size:11px;color:#e2eaf5;display:flex;flex-direction:column;gap:5px">
+                <div>1. Limiter les trades à 3 par jour</div>
+                <div>2. Éviter de trader le vendredi PM</div>
+                <div>3. Tenir le journal après chaque trade</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -88,6 +186,32 @@ import MockupDebrief from './mockup/MockupDebrief.astro';
   .showcase-panel { display: none; max-width: 1100px; margin: 0 auto; }
   .showcase-panel.active { display: block; }
 
+  /* Phone mockup — masqué par défaut */
+  .mobile-mockup { display: none; }
+
+  /* ── Phone frame CSS ── */
+  .phone-frame { background: var(--bg3); border: 2px solid var(--b2); border-radius: 32px; overflow: hidden; max-width: 320px; margin: 0 auto; box-shadow: 0 24px 60px rgba(0,0,0,.6); }
+  .phone-bar { background: var(--bg2); height: 32px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--b); }
+  .phone-notch { width: 80px; height: 14px; background: var(--bg3); border-radius: 0 0 12px 12px; }
+  .phone-content { padding: 14px; background: var(--bg2); }
+  .phone-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .phone-title { font-size: 15px; font-weight: 700; }
+  .phone-cta { font-size: 10px; background: var(--blue); color: #fff; border: none; border-radius: 6px; padding: 5px 10px; cursor: pointer; font-weight: 600; }
+  .phone-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .phone-stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .phone-stat, .phone-stat-sm { background: var(--card); border: 1px solid var(--b); border-radius: 8px; padding: 10px; }
+  .phone-stat-label { font-size: 8px; font-family: var(--mono); color: var(--txt3); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 4px; }
+  .phone-stat-value { font-size: 18px; font-weight: 700; font-family: var(--mono); }
+  .phone-chart { background: var(--card); border: 1px solid var(--b); border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+  .phone-chart-label { font-size: 9px; font-family: var(--mono); color: var(--txt3); margin-bottom: 6px; }
+  .phone-trades { display: flex; flex-direction: column; gap: 6px; }
+  .phone-trade { display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--b); border-radius: 7px; padding: 8px 10px; }
+  .phone-side { font-size: 9px; font-weight: 700; font-family: var(--mono); padding: 2px 6px; border-radius: 3px; }
+  .phone-side.long  { background: rgba(16,185,129,.15); color: #10b981; }
+  .phone-side.short { background: rgba(239,68,68,.15);  color: #ef4444; }
+  .phone-asset { font-size: 11px; font-weight: 600; flex: 1; }
+  .phone-pnl   { font-size: 11px; font-weight: 700; font-family: var(--mono); }
+
   /* ── Mobile ── */
   @media (max-width: 767px) {
     .showcase {
@@ -109,9 +233,7 @@ import MockupDebrief from './mockup/MockupDebrief.astro';
       box-sizing: border-box;
     }
 
-    .showcase-tabs::-webkit-scrollbar {
-      display: none;
-    }
+    .showcase-tabs::-webkit-scrollbar { display: none; }
 
     .stab {
       flex-shrink: 0;
@@ -120,9 +242,11 @@ import MockupDebrief from './mockup/MockupDebrief.astro';
       white-space: nowrap;
     }
 
-    .showcase-panel {
-      padding: 0 16px;
-    }
+    .showcase-panel { padding: 0 20px; }
+
+    /* Masquer desktop mockup, afficher phone mockup */
+    .showcase-panel :global(.full-screen) { display: none; }
+    .mobile-mockup { display: block; }
   }
 </style>
 
