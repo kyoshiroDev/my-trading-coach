@@ -43,6 +43,53 @@
 .pagination button { background: var(--bg3); border: 1px solid var(--border); border-radius: 5px; padding: 3px 8px; color: var(--text2); cursor: pointer; }
 .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
 
+/* ── Backdrop ── */
+.detail-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.4);
+  z-index: 49;
+  animation: fadeIn .15s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ── Row sélectionnée ── */
+.row-selected td { background: rgba(59,130,246,.06); }
+
+/* ── Edition plan/rôle ── */
+.edit-row {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 7px 0; border-bottom: 1px solid var(--border);
+  font-size: 11px;
+}
+.edit-row:last-of-type { border-bottom: none; }
+.edit-label { color: var(--text3); }
+.edit-select {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 5px; padding: 3px 8px; font-size: 11px;
+  font-family: var(--mono); color: var(--text2); cursor: pointer; outline: none;
+}
+.edit-select:focus { border-color: var(--teal); }
+
+.btn-save {
+  width: 100%; margin-top: 10px; padding: 8px;
+  background: var(--teal); color: #000;
+  border: none; border-radius: 7px;
+  font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: opacity .15s;
+}
+.btn-save:hover:not(:disabled) { opacity: .85; }
+.btn-save:disabled { opacity: .6; cursor: not-allowed; }
+
+/* ── Timeline ── */
+.timeline { display: flex; flex-direction: column; gap: 10px; }
+.timeline-item { display: flex; align-items: flex-start; gap: 10px; }
+.timeline-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); flex-shrink: 0; margin-top: 3px; }
+.timeline-dot.blue  { background: var(--blue); }
+.timeline-dot.amber { background: var(--amber); }
+.timeline-action { font-size: 11px; color: var(--text2); }
+.timeline-time   { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+
 @media (max-width: 768px) {
   .content { padding: 12px; gap: 12px; }
   .user-detail-panel { width: 100%; max-width: 100%; top: 0; right: 0; bottom: 0; border-left: none; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
