@@ -63,9 +63,9 @@ jobs:
             docker compose -f docker-compose.discord-bot.yml --env-file .env.production up -d --force-recreate discord-bot
             echo "Production deployment complete at $(date)"
 
-  # ── Deploy Angular → Vercel ───────────────────────────────────────────────
+  # ── Deploy Angular → VPS static ──────────────────────────────────────────
   deploy-angular:
-    name: Deploy Angular to Vercel
+    name: Deploy Angular prod to VPS
     runs-on: ubuntu-latest
     needs: changes
     if: ${{ needs.changes.outputs.angular == 'true' }}
@@ -98,34 +98,21 @@ jobs:
           fi
           echo "✅ build ok — $(du -sh dist/apps/app-mytradingcoach/browser/)"
 
-      - name: Prepare Vercel output (prebuilt)
+      - name: Setup SSH
         run: |
-          mkdir -p .vercel/output/static
-          cp -r dist/apps/app-mytradingcoach/browser/* .vercel/output/static/
-          cat > .vercel/output/config.json << 'EOF'
-          {
-            "version": 3,
-            "routes": [
-              {
-                "src": "/assets/(.*)",
-                "headers": { "Cache-Control": "public, max-age=31536000, immutable" },
-                "continue": true
-              },
-              { "handle": "filesystem" },
-              { "src": "/(.*)", "dest": "/index.html" }
-            ]
-          }
-          EOF
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Deploy to Vercel (prebuilt)
-        run: pnpm dlx vercel@latest deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_APP_PROJECT_ID }}
+      - name: rsync Angular prod → VPS
+        run: |
+          rsync -az --delete dist/apps/app-mytradingcoach/browser/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/static/app-prod/
 
-  # ── Deploy Astro Landing → Vercel ─────────────────────────────────────────
+  # ── Deploy Astro Landing → VPS static ────────────────────────────────────
   deploy-landing:
-    name: Deploy Landing to Vercel
+    name: Deploy Landing prod to VPS
     runs-on: ubuntu-latest
     needs: changes
     if: ${{ needs.changes.outputs.landing == 'true' }}
@@ -150,33 +137,14 @@ jobs:
       - name: Build Astro landing
         run: pnpm nx build landing-mytradingcoach
 
-      - name: Prepare Vercel output (prebuilt)
+      - name: Setup SSH
         run: |
-          mkdir -p .vercel/output/static
-          cp -r apps/landing-mytradingcoach/dist/* .vercel/output/static/
-          cat > .vercel/output/config.json << 'EOF'
-          {
-            "version": 3,
-            "routes": [
-              {
-                "src": "/_astro/(.*)",
-                "headers": { "Cache-Control": "public, max-age=31536000, immutable" },
-                "continue": true
-              },
-              {
-                "src": "/(.*)",
-                "has": [{ "type": "host", "value": "mytradingcoach.app" }],
-                "status": 308,
-                "headers": { "Location": "https://www.mytradingcoach.app/$1" }
-              },
-              { "handle": "filesystem" },
-              { "src": "/(.*)", "dest": "/404.html", "status": 404 }
-            ]
-          }
-          EOF
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Deploy to Vercel (prebuilt)
-        run: pnpm dlx vercel@latest deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_LANDING_PROJECT_ID }}
+      - name: rsync Landing prod → VPS
+        run: |
+          rsync -az --delete apps/landing-mytradingcoach/dist/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/static/landing-prod/
