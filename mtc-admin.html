@@ -1,0 +1,2038 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MTC Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #070809;
+  --bg2:       #0c0e10;
+  --bg3:       #111416;
+  --bg4:       #171a1d;
+  --bg5:       #1c2024;
+  --border:    rgba(255,255,255,0.06);
+  --border2:   rgba(255,255,255,0.1);
+  --text:      #e8eaed;
+  --text2:     #9aa3af;
+  --text3:     #4a5568;
+  --teal:      #00d4aa;
+  --teal-dim:  rgba(0,212,170,0.08);
+  --teal-glow: rgba(0,212,170,0.15);
+  --blue:      #4a9eff;
+  --blue-dim:  rgba(74,158,255,0.08);
+  --red:       #ff5563;
+  --red-dim:   rgba(255,85,99,0.08);
+  --amber:     #f5a623;
+  --amber-dim: rgba(245,166,35,0.08);
+  --green:     #34d399;
+  --purple:    #a78bfa;
+  --mono:      'Geist Mono', monospace;
+  --sans:      'Geist', sans-serif;
+  --sidebar-w: 200px;
+}
+
+html, body {
+  height: 100%;
+  height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow: hidden;
+}
+
+/* ── LAYOUT ── */
+.app { display: flex; height: 100vh; height: 100dvh; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  padding: 0 0 20px;
+}
+
+.sidebar-logo {
+  padding: 20px 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.logo-mark {
+  width: 28px; height: 28px;
+  background: var(--teal);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #000;
+  font-family: var(--mono);
+  flex-shrink: 0;
+}
+
+.logo-info { flex: 1; min-width: 0; }
+.logo-name { font-size: 12px; font-weight: 600; color: var(--text); letter-spacing: 0.02em; }
+.logo-sub  { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+
+.nav-group { padding: 4px 8px; }
+.nav-group-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 8px 8px 4px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text2);
+  font-size: 12px;
+  transition: all 0.12s;
+  margin-bottom: 1px;
+}
+.nav-item:hover { background: var(--bg4); color: var(--text); }
+.nav-item.active { background: var(--teal-dim); color: var(--teal); }
+.nav-item svg { width: 14px; height: 14px; flex-shrink: 0; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--teal);
+  color: #000;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 10px;
+  font-family: var(--mono);
+}
+.nav-badge.red { background: var(--red); color: #fff; }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 12px 16px 0;
+  border-top: 1px solid var(--border);
+}
+
+.admin-avatar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar-dot {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, var(--teal), var(--blue));
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #000;
+  flex-shrink: 0;
+}
+
+.avatar-info { flex: 1; min-width: 0; }
+.avatar-name { font-size: 11px; font-weight: 500; color: var(--text); }
+.avatar-role { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+
+/* ── MAIN ── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  height: 48px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.topbar-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+}
+
+.topbar-meta {
+  font-size: 11px;
+  color: var(--text3);
+  font-family: var(--mono);
+}
+
+.status-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--green);
+  font-family: var(--mono);
+}
+
+.status-dot::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ── CONTENT ── */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── CARDS ── */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.card-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text2);
+}
+
+.card-action {
+  font-size: 11px;
+  color: var(--teal);
+  cursor: pointer;
+  font-family: var(--mono);
+}
+
+/* ── MRR STATS ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.stat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+
+.stat-card.teal::before { background: var(--teal); }
+.stat-card.blue::before { background: var(--blue); }
+.stat-card.green::before { background: var(--green); }
+.stat-card.amber::before { background: var(--amber); }
+.stat-card.purple::before { background: var(--purple); }
+
+.stat-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 22px;
+  font-weight: 600;
+  font-family: var(--mono);
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.stat-card.teal .stat-value { color: var(--teal); }
+
+.stat-change {
+  font-size: 10px;
+  font-family: var(--mono);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.stat-change.up { color: var(--green); }
+.stat-change.down { color: var(--red); }
+.stat-change.neutral { color: var(--text3); }
+
+/* ── VPS MONITORING ── */
+.vps-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.metric-row {
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.metric-row:last-child { border-bottom: none; }
+
+.metric-label {
+  font-size: 11px;
+  color: var(--text2);
+  width: 60px;
+  flex-shrink: 0;
+  font-family: var(--mono);
+}
+
+.metric-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--bg4);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.metric-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.metric-fill.teal { background: var(--teal); }
+.metric-fill.blue { background: var(--blue); }
+.metric-fill.amber { background: var(--amber); }
+.metric-fill.red { background: var(--red); }
+
+.metric-val {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--text);
+  width: 50px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── CONTAINERS ── */
+.container-row {
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+.container-row:last-child { border-bottom: none; }
+.container-row:hover { background: var(--bg3); }
+
+.container-status {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.container-status.running { background: var(--green); box-shadow: 0 0 5px var(--green); }
+.container-status.stopped { background: var(--text3); }
+.container-status.error   { background: var(--red); box-shadow: 0 0 5px var(--red); }
+
+.container-name {
+  font-size: 12px;
+  font-family: var(--mono);
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+}
+
+.container-image {
+  font-size: 10px;
+  color: var(--text3);
+  font-family: var(--mono);
+}
+
+.container-cpu {
+  font-size: 10px;
+  font-family: var(--mono);
+  color: var(--text2);
+  width: 40px;
+  text-align: right;
+}
+
+.container-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.action-btn {
+  width: 24px; height: 24px;
+  border-radius: 5px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.1s;
+  font-size: 10px;
+}
+.action-btn:hover { background: var(--bg4); color: var(--text); }
+.action-btn.danger:hover { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+.action-btn.success:hover { background: var(--teal-dim); border-color: var(--teal); color: var(--teal); }
+
+/* ── USERS TABLE ── */
+.table-wrap { overflow-x: auto; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead th {
+  padding: 8px 16px;
+  text-align: left;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text3);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+  cursor: pointer;
+}
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--bg3); }
+
+tbody td {
+  padding: 10px 16px;
+  font-size: 12px;
+  color: var(--text2);
+  vertical-align: middle;
+}
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-avatar {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal), var(--blue));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: #000;
+  flex-shrink: 0;
+  font-family: var(--mono);
+}
+
+.user-avatar.g2 { background: linear-gradient(135deg, var(--purple), var(--blue)); }
+.user-avatar.g3 { background: linear-gradient(135deg, var(--amber), var(--red)); }
+.user-avatar.g4 { background: linear-gradient(135deg, var(--green), var(--teal)); }
+.user-avatar.g5 { background: linear-gradient(135deg, var(--blue), var(--purple)); }
+
+.user-name { font-size: 12px; color: var(--text); font-weight: 500; }
+.user-email { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+
+.plan-badge {
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--mono);
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+
+.plan-badge.premium {
+  background: var(--teal-dim);
+  color: var(--teal);
+  border: 1px solid rgba(0,212,170,0.2);
+}
+
+.plan-badge.free {
+  background: var(--bg4);
+  color: var(--text3);
+  border: 1px solid var(--border);
+}
+
+.activity-bar {
+  display: flex;
+  gap: 2px;
+  align-items: flex-end;
+  height: 16px;
+}
+
+.activity-bar span {
+  width: 3px;
+  border-radius: 1px;
+  background: var(--teal);
+  opacity: 0.4;
+  transition: opacity 0.1s;
+}
+
+.activity-bar span.active { opacity: 1; }
+tbody tr:hover .activity-bar span { opacity: 0.6; }
+tbody tr:hover .activity-bar span.active { opacity: 1; }
+
+.online-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-family: var(--mono);
+}
+.online-badge::before {
+  content: '';
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--green);
+}
+.online-badge.offline { color: var(--text3); }
+.online-badge.offline::before { background: var(--text3); }
+
+/* ── USER DETAIL PANEL ── */
+.detail-panel {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: 400px;
+  background: var(--bg2);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  z-index: 50;
+  animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+.detail-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.detail-avatar {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal), var(--blue));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: #000;
+  font-family: var(--mono);
+  flex-shrink: 0;
+}
+
+.detail-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.detail-email { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+
+.detail-close {
+  margin-left: auto;
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  transition: all 0.1s;
+}
+.detail-close:hover { background: var(--bg4); color: var(--text); }
+
+.detail-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-section-title {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 8px;
+}
+
+.detail-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.detail-stat {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.detail-stat-label {
+  font-size: 9px;
+  color: var(--text3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.detail-stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  font-family: var(--mono);
+  color: var(--text);
+}
+
+.detail-stat-value.teal { color: var(--teal); }
+.detail-stat-value.green { color: var(--green); }
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+}
+.detail-row:last-child { border-bottom: none; }
+
+.detail-row-label { color: var(--text3); }
+.detail-row-value {
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 10px;
+  padding: 6px 0;
+  position: relative;
+}
+
+.timeline-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--teal);
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+
+.timeline-dot.blue { background: var(--blue); }
+.timeline-dot.amber { background: var(--amber); }
+.timeline-dot.green { background: var(--green); }
+
+.timeline-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.timeline-action {
+  font-size: 11px;
+  color: var(--text);
+}
+
+.timeline-time {
+  font-size: 10px;
+  color: var(--text3);
+  font-family: var(--mono);
+}
+
+.detail-actions {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-family: var(--sans);
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: all 0.1s;
+  text-align: center;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text2);
+}
+.btn-ghost:hover { background: var(--bg4); color: var(--text); }
+
+.btn-primary {
+  background: var(--teal);
+  color: #000;
+  border-color: var(--teal);
+  font-weight: 600;
+}
+.btn-primary:hover { opacity: 0.85; }
+
+.btn-danger {
+  background: var(--red-dim);
+  color: var(--red);
+  border-color: rgba(255,85,99,0.2);
+}
+.btn-danger:hover { background: var(--red); color: #fff; }
+
+/* ── BACKUPS ── */
+.backup-row {
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.backup-row:last-child { border-bottom: none; }
+
+.backup-icon {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  background: var(--blue-dim);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.backup-name { font-size: 12px; font-family: var(--mono); color: var(--text); }
+.backup-meta { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+
+.backup-size {
+  margin-left: auto;
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--text2);
+  margin-right: 8px;
+}
+
+.tag {
+  font-size: 9px;
+  font-weight: 600;
+  font-family: var(--mono);
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.04em;
+}
+
+.tag.auto   { background: var(--blue-dim); color: var(--blue); }
+.tag.manual { background: var(--teal-dim); color: var(--teal); }
+.tag.failed { background: var(--red-dim); color: var(--red); }
+
+/* ── SCROLL ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg5); border-radius: 2px; }
+
+/* ── SECTION TABS ── */
+.section-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+}
+
+.tab {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text3);
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.1s;
+}
+.tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+.tab:hover:not(.active) { color: var(--text2); }
+
+/* ── SEARCH ── */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 6px 10px;
+  width: 220px;
+}
+
+.search-bar input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 12px;
+  font-family: var(--sans);
+  width: 100%;
+}
+
+.search-bar input::placeholder { color: var(--text3); }
+.search-icon { color: var(--text3); font-size: 12px; }
+
+/* ── TWO COL ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+/* ═══════════════════════════════════════
+   RESPONSIVE MOBILE — ANTI-OVERFLOW COMPLET
+   ═══════════════════════════════════════ */
+
+/* ── Règle globale anti-overflow ── */
+*, *::before, *::after {
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* ── Burger button (mobile only) ── */
+.burger-btn {
+  display: none;
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text2);
+  cursor: pointer;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.burger-btn span {
+  display: block;
+  width: 14px; height: 1.5px;
+  background: currentColor;
+  border-radius: 1px;
+}
+.burger-btn:active { background: var(--bg4); }
+
+/* ── Sidebar overlay (mobile) ── */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(2px);
+  z-index: 90;
+}
+
+@media (max-width: 768px) {
+
+  /* ── BODY / APP ── */
+  body { overflow-x: hidden; }
+  .app { overflow-x: hidden; }
+
+  /* ── BURGER ── */
+  .burger-btn { display: flex; }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    padding: 0 max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
+    gap: 8px;
+    padding-top: env(safe-area-inset-top);
+    height: calc(48px + env(safe-area-inset-top));
+  }
+  .topbar-meta { display: none; }
+  .status-dot { font-size: 0; gap: 0; }
+  .status-dot::before { width: 7px; height: 7px; }
+
+  /* ── SIDEBAR drawer ── */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+    width: min(260px, 80vw);
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 4px 0 40px rgba(0,0,0,0.6);
+  }
+  .sidebar-overlay.open { display: block; }
+
+  /* ── MAIN ── */
+  .main { overflow-x: hidden; min-width: 0; }
+
+  /* ── CONTENT ── */
+  .content {
+    padding: 12px max(12px, env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 20px) max(12px, env(safe-area-inset-left));
+    gap: 12px;
+    overflow-x: hidden;
+  }
+
+  /* ── GRIDS → 1 colonne ── */
+  .two-col, .three-col { grid-template-columns: 1fr !important; gap: 10px; }
+
+  /* ── STATS → 2 colonnes compactes ── */
+  .stats-row { grid-template-columns: 1fr 1fr !important; gap: 8px; }
+
+  .stat-card {
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow: hidden;
+  }
+  .stat-value { font-size: 16px; word-break: break-all; }
+  .stat-change { font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* ── CARDS ── */
+  .card { border-radius: 8px; overflow: hidden; }
+  .card-header {
+    padding: 10px 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .card-header > * { min-width: 0; }
+
+  /* ── METRIC ROWS ── */
+  .metric-row { padding: 8px 12px; }
+  .metric-label { font-size: 10px; width: 48px; flex-shrink: 0; }
+  .metric-val { font-size: 10px; width: 64px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* ── CONTAINER ROWS ── */
+  .container-row { padding: 9px 12px; gap: 6px; overflow: hidden; }
+  .container-row > div:nth-child(2) { flex: 1; min-width: 0; overflow: hidden; }
+  .container-name { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .container-image { font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .container-cpu { font-size: 10px; flex-shrink: 0; }
+  .container-actions { flex-shrink: 0; gap: 3px; }
+  .action-btn { width: 28px; height: 28px; font-size: 10px; }
+
+  /* ── TABLES ── */
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    /* gradient scroll indicator */
+    background:
+      linear-gradient(to right, var(--bg2) 10%, transparent) left center,
+      linear-gradient(to left, var(--bg2) 10%, transparent) right center;
+    background-repeat: no-repeat;
+    background-size: 20px 100%;
+    background-attachment: local, local;
+  }
+  table { min-width: 0; width: 100%; }
+
+  /* Tables users — masquer colonnes non essentielles */
+  #section-users thead th:nth-child(n+5),
+  #section-users tbody td:nth-child(n+5),
+  #section-dashboard thead th:nth-child(n+5),
+  #section-dashboard tbody td:nth-child(n+5) { display: none; }
+
+  /* Table abonnements */
+  #section-abonnements thead th:nth-child(n+5),
+  #section-abonnements tbody td:nth-child(n+5) { display: none; }
+
+  /* Table IA */
+  #section-ia table { min-width: 0; width: 100%; }
+
+  /* Cellules */
+  td, th { padding: 8px 10px; }
+  .user-cell { gap: 6px; }
+  .user-avatar { width: 24px; height: 24px; font-size: 9px; flex-shrink: 0; }
+  .user-name { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px; }
+  .user-email { display: none; }
+  .plan-badge { font-size: 9px; padding: 1px 5px; white-space: nowrap; }
+
+  /* ── BACKUP ROWS ── */
+  .backup-row { padding: 9px 12px; gap: 6px; flex-wrap: nowrap; overflow: hidden; }
+  .backup-row > div { flex: 1; min-width: 0; overflow: hidden; }
+  .backup-name { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .backup-meta { font-size: 9px; }
+  .backup-size { flex-shrink: 0; font-size: 10px; margin-right: 4px; }
+
+  /* ── SEARCH BAR ── */
+  .search-bar { width: 100%; max-width: 100%; }
+  .search-bar input { width: 100%; }
+
+  /* ── SECTION TABS ── */
+  .section-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+  }
+  .section-tabs::-webkit-scrollbar { display: none; }
+  .tab { white-space: nowrap; flex-shrink: 0; padding: 9px 10px; font-size: 11px; }
+
+  /* ── DETAIL PANEL → plein écran ── */
+  .detail-panel {
+    width: 100%;
+    max-width: 100%;
+    top: 0; right: 0; bottom: 0;
+    border-left: none;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    overflow-x: hidden;
+  }
+  .detail-body { padding: 14px 16px; overflow-x: hidden; }
+  .detail-stats { grid-template-columns: 1fr 1fr; }
+  .detail-stat-value { font-size: 14px; }
+
+  /* ── LOGS ── */
+  #section-logs .card > div[style*="padding"] {
+    font-size: 10px !important;
+    max-height: 60dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    word-break: break-all;
+    overflow-wrap: break-word;
+  }
+
+  /* ── REVENUE CHART ── */
+  #section-revenus .card [style*="height:80px"] {
+    height: 60px;
+  }
+
+  /* ── IA SECTION ── */
+  #section-ia [style*="grid-template-columns:1fr 1fr"] {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px !important;
+  }
+
+  /* ── BUTTONS ── */
+  .btn { min-height: 42px; font-size: 12px; }
+  .detail-actions { gap: 6px; }
+  .detail-actions .btn { padding: 8px 8px; font-size: 11px; }
+
+  /* ── VPS INFO ── */
+  #section-vps .metric-label { width: 80px !important; }
+
+  /* ── INPUTS ── */
+  input, select, textarea { font-size: 16px !important; }
+
+  /* ── TOPBAR TITLE ── */
+  .topbar-title {
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* ── ACTIVITY BARS ── */
+  .activity-bar { height: 14px; }
+  .activity-bar span { width: 2px; }
+
+  /* ── TAGS ── */
+  .tag { font-size: 9px; padding: 2px 5px; white-space: nowrap; flex-shrink: 0; }
+
+  /* ── STATUS DOT INLINE ── */
+  .status-dot.inline-status { font-size: 10px; }
+}
+
+/* ── Très petits écrans (< 375px) ── */
+@media (max-width: 374px) {
+  .stats-row { grid-template-columns: 1fr !important; }
+  .stat-value { font-size: 18px; }
+  .detail-stats { grid-template-columns: 1fr; }
+  .container-actions { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">M</div>
+      <div class="logo-info">
+        <div class="logo-name">MTC Admin</div>
+        <div class="logo-sub">v2.4.1 · prod</div>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">Overview</div>
+      <div class="nav-item active" onclick="navigate('dashboard', this)">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v5H2V2zm0 7h5v5H2V9zm7-7h5v5H9V2zm0 7h5v5H9V9z"/></svg>
+        Dashboard
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">Utilisateurs</div>
+      <div class="nav-item" onclick="navigate('users', this)">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2 14s-1 0-1-1 1-4 7-4 7 3 7 4-1 1-1 1H2z"/></svg>
+        Utilisateurs
+        <span class="nav-badge">247</span>
+      </div>
+      <div class="nav-item" onclick="navigate('abonnements', this)">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a5 5 0 1 0 0 10A5 5 0 0 0 8 1zM6 8a2 2 0 1 1 4 0 2 2 0 0 1-4 0z"/></svg>
+        Abonnements
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">Infrastructure</div>
+      <div class="nav-item" onclick="navigate('vps', this)">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 2a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2zm0 6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V8z"/></svg>
+        VPS / Serveur
+        <span class="nav-badge">1</span>
+      </div>
+      <div class="nav-item" onclick="navigate('containers', this)">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M14.5 3h-13a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5zM3 5h10v1H3V5zm0 2h10v1H3V7zm0 2h7v1H3V9z"/></svg>
+        Containers
+        <span class="nav-badge red">1</span>
+      </div>
+      <div class="nav-item" onclick="navigate('backups', this)">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2zm6.5 4.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3a.5.5 0 0 1 1 0z"/></svg>
+        Sauvegardes
+      </div>
+      <div class="nav-item" onclick="navigate('logs', this)">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>
+        Logs système
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">Business</div>
+      <div class="nav-item" onclick="navigate('revenus', this)">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M0 11l2-2 4 4L14 3l2 2-10 10z"/></svg>
+        Revenus
+      </div>
+      <div class="nav-item" onclick="navigate('ia', this)">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M11 5.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-1zm-4 0a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-1zm-4 0a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-1z"/></svg>
+        Usage IA
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="admin-avatar">
+        <div class="avatar-dot">K</div>
+        <div class="avatar-info">
+          <div class="avatar-name">Kyoshiro</div>
+          <div class="avatar-role">super admin</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <button class="burger-btn" onclick="toggleSidebar()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <span class="status-dot">api.mytradingcoach.app</span>
+      <div class="topbar-meta">VPS OVH · Paris · 15 May 2026 · 12:23</div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- ══════════ SECTION: DASHBOARD ══════════ -->
+      <div id="section-dashboard">
+
+      <!-- ── MRR STATS ── -->
+      <div class="stats-row">
+        <div class="stat-card teal">
+          <div class="stat-label">MRR</div>
+          <div class="stat-value">€1 287</div>
+          <div class="stat-change up">↑ +12.4% ce mois</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-label">Utilisateurs</div>
+          <div class="stat-value">247</div>
+          <div class="stat-change up">↑ +18 cette semaine</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Premium</div>
+          <div class="stat-value">33</div>
+          <div class="stat-change neutral">13.4% de conversion</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-label">Churn 30j</div>
+          <div class="stat-value">2.1%</div>
+          <div class="stat-change up">↓ -0.3% vs mois dernier</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-label">Tokens IA / j</div>
+          <div class="stat-value">842k</div>
+          <div class="stat-change neutral">~€3.20 / jour</div>
+        </div>
+      </div>
+
+      <!-- ── VPS + CONTAINERS ── -->
+      <div class="two-col">
+
+        <!-- VPS Monitoring -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">VPS · OVH VPS-S · Paris</div>
+            <span class="status-dot" style="font-size:10px">online</span>
+          </div>
+          <div class="metric-row">
+            <div class="metric-label">CPU</div>
+            <div class="metric-bar"><div class="metric-fill teal" style="width:23%"></div></div>
+            <div class="metric-val">23%</div>
+          </div>
+          <div class="metric-row">
+            <div class="metric-label">RAM</div>
+            <div class="metric-bar"><div class="metric-fill blue" style="width:61%"></div></div>
+            <div class="metric-val">61% · 3.9G</div>
+          </div>
+          <div class="metric-row">
+            <div class="metric-label">Disque</div>
+            <div class="metric-bar"><div class="metric-fill amber" style="width:44%"></div></div>
+            <div class="metric-val">44% · 22G</div>
+          </div>
+          <div class="metric-row">
+            <div class="metric-label">Réseau ↑</div>
+            <div class="metric-bar"><div class="metric-fill teal" style="width:8%"></div></div>
+            <div class="metric-val">12 MB/s</div>
+          </div>
+          <div class="metric-row">
+            <div class="metric-label">Uptime</div>
+            <div class="metric-bar"><div class="metric-fill teal" style="width:100%"></div></div>
+            <div class="metric-val">14j 6h</div>
+          </div>
+        </div>
+
+        <!-- Containers -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Containers Docker</div>
+            <div class="card-action">+ deploy</div>
+          </div>
+          <div class="container-row">
+            <div class="container-status running"></div>
+            <div>
+              <div class="container-name">mtc-api</div>
+              <div class="container-image">nestjs:18-alpine · port 3000</div>
+            </div>
+            <div class="container-cpu">2.1%</div>
+            <div class="container-actions">
+              <button class="action-btn">↺</button>
+              <button class="action-btn">≡</button>
+            </div>
+          </div>
+          <div class="container-row">
+            <div class="container-status running"></div>
+            <div>
+              <div class="container-name">mtc-postgres</div>
+              <div class="container-image">postgres:16 · port 5432</div>
+            </div>
+            <div class="container-cpu">0.8%</div>
+            <div class="container-actions">
+              <button class="action-btn">↺</button>
+              <button class="action-btn">≡</button>
+            </div>
+          </div>
+          <div class="container-row">
+            <div class="container-status running"></div>
+            <div>
+              <div class="container-name">mtc-redis</div>
+              <div class="container-image">redis:7-alpine · port 6379</div>
+            </div>
+            <div class="container-cpu">0.2%</div>
+            <div class="container-actions">
+              <button class="action-btn">↺</button>
+              <button class="action-btn">≡</button>
+            </div>
+          </div>
+          <div class="container-row">
+            <div class="container-status running"></div>
+            <div>
+              <div class="container-name">nginx-proxy</div>
+              <div class="container-image">nginx:alpine · 80/443</div>
+            </div>
+            <div class="container-cpu">0.1%</div>
+            <div class="container-actions">
+              <button class="action-btn">↺</button>
+              <button class="action-btn">≡</button>
+            </div>
+          </div>
+          <div class="container-row">
+            <div class="container-status error"></div>
+            <div>
+              <div class="container-name" style="color:var(--red)">mtc-worker</div>
+              <div class="container-image">exit code 1 · crashed 2h ago</div>
+            </div>
+            <div class="container-cpu" style="color:var(--red)">—</div>
+            <div class="container-actions">
+              <button class="action-btn success">▶</button>
+              <button class="action-btn">≡</button>
+              <button class="action-btn danger">✕</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── USERS + BACKUPS ── -->
+      <div class="two-col">
+
+        <!-- Dernières sauvegardes -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Sauvegardes</div>
+            <div class="card-action">+ backup maintenant</div>
+          </div>
+          <div class="backup-row">
+            <div class="backup-icon">🗄</div>
+            <div>
+              <div class="backup-name">mtc_prod_20260515_020000.sql.gz</div>
+              <div class="backup-meta">aujourd'hui · 02:00 · auto</div>
+            </div>
+            <div class="backup-size">284 MB</div>
+            <span class="tag auto">auto</span>
+            <button class="action-btn" style="margin-left:6px">↓</button>
+          </div>
+          <div class="backup-row">
+            <div class="backup-icon">🗄</div>
+            <div>
+              <div class="backup-name">mtc_prod_20260514_020000.sql.gz</div>
+              <div class="backup-meta">hier · 02:00 · auto</div>
+            </div>
+            <div class="backup-size">281 MB</div>
+            <span class="tag auto">auto</span>
+            <button class="action-btn" style="margin-left:6px">↓</button>
+          </div>
+          <div class="backup-row">
+            <div class="backup-icon">🗄</div>
+            <div>
+              <div class="backup-name">mtc_prod_20260513_before_deploy.sql.gz</div>
+              <div class="backup-meta">13 mai · avant déploiement</div>
+            </div>
+            <div class="backup-size">278 MB</div>
+            <span class="tag manual">manuel</span>
+            <button class="action-btn" style="margin-left:6px">↓</button>
+          </div>
+          <div class="backup-row">
+            <div class="backup-icon" style="background:var(--red-dim)">⚠</div>
+            <div>
+              <div class="backup-name" style="color:var(--red)">mtc_prod_20260512_020000.sql.gz</div>
+              <div class="backup-meta">12 mai · erreur écriture disque</div>
+            </div>
+            <div class="backup-size" style="color:var(--red)">0 B</div>
+            <span class="tag failed">failed</span>
+          </div>
+        </div>
+
+        <!-- Usage IA -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Usage IA — 7 derniers jours</div>
+            <div class="card-action">claude-sonnet-4-6</div>
+          </div>
+          <div style="padding: 12px 16px; display: flex; flex-direction: column; gap: 10px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <div style="background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:10px 12px;">
+                <div class="stat-label">Tokens input</div>
+                <div style="font-size:18px; font-weight:600; font-family:var(--mono); color:var(--blue)">5.9M</div>
+              </div>
+              <div style="background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:10px 12px;">
+                <div class="stat-label">Tokens output</div>
+                <div style="font-size:18px; font-weight:600; font-family:var(--mono); color:var(--teal)">1.2M</div>
+              </div>
+              <div style="background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:10px 12px;">
+                <div class="stat-label">Coût 7j</div>
+                <div style="font-size:18px; font-weight:600; font-family:var(--mono); color:var(--amber)">€22.40</div>
+              </div>
+              <div style="background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:10px 12px;">
+                <div class="stat-label">Appels API</div>
+                <div style="font-size:18px; font-weight:600; font-family:var(--mono)">1 847</div>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text3);">
+                <span>Weekly Debrief</span><span style="font-family:var(--mono); color:var(--text2)">62%</span>
+              </div>
+              <div style="height:4px; background:var(--bg4); border-radius:2px; overflow:hidden;">
+                <div style="height:100%; width:62%; background:var(--teal); border-radius:2px;"></div>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text3);">
+                <span>AI Insights</span><span style="font-family:var(--mono); color:var(--text2)">28%</span>
+              </div>
+              <div style="height:4px; background:var(--bg4); border-radius:2px; overflow:hidden;">
+                <div style="height:100%; width:28%; background:var(--blue); border-radius:2px;"></div>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text3);">
+                <span>Import CSV</span><span style="font-family:var(--mono); color:var(--text2)">10%</span>
+              </div>
+              <div style="height:4px; background:var(--bg4); border-radius:2px; overflow:hidden;">
+                <div style="height:100%; width:10%; background:var(--purple); border-radius:2px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── USERS TABLE ── -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Utilisateurs récents</div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div class="search-bar">
+              <span class="search-icon">🔍</span>
+              <input type="text" placeholder="Rechercher un utilisateur…">
+            </div>
+            <div class="card-action">Voir tous →</div>
+          </div>
+        </div>
+        <div class="section-tabs">
+          <div class="tab active">Tous (247)</div>
+          <div class="tab">Premium (33)</div>
+          <div class="tab">Actifs 7j (89)</div>
+          <div class="tab">Inactifs 30j (41)</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Utilisateur</th>
+                <th>Plan</th>
+                <th>Trades</th>
+                <th>Dernière co.</th>
+                <th>Temps total</th>
+                <th>Usage IA</th>
+                <th>MRR</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr onclick="document.getElementById('detail').style.display='flex'">
+                <td>
+                  <div class="user-cell">
+                    <div class="user-avatar">GR</div>
+                    <div>
+                      <div class="user-name">gregory</div>
+                      <div class="user-email">tahir.gregory.dev@gmail.com</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="plan-badge free">FREE</span></td>
+                <td style="font-family:var(--mono); color:var(--text)">20</td>
+                <td style="font-family:var(--mono)">il y a 2h</td>
+                <td style="font-family:var(--mono)">4h 32m</td>
+                <td>
+                  <div class="activity-bar">
+                    <span style="height:4px"></span>
+                    <span style="height:8px" class="active"></span>
+                    <span style="height:6px" class="active"></span>
+                    <span style="height:12px" class="active"></span>
+                    <span style="height:10px" class="active"></span>
+                    <span style="height:16px" class="active"></span>
+                    <span style="height:14px" class="active"></span>
+                  </div>
+                </td>
+                <td style="color:var(--text3); font-family:var(--mono)">—</td>
+                <td><span class="online-badge">en ligne</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="user-cell">
+                    <div class="user-avatar g2">AL</div>
+                    <div>
+                      <div class="user-name">Alex Lebrun</div>
+                      <div class="user-email">alex.lebrun@gmail.com</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="plan-badge premium">PREMIUM</span></td>
+                <td style="font-family:var(--mono); color:var(--text)">147</td>
+                <td style="font-family:var(--mono)">il y a 1j</td>
+                <td style="font-family:var(--mono)">28h 14m</td>
+                <td>
+                  <div class="activity-bar">
+                    <span style="height:10px" class="active"></span>
+                    <span style="height:14px" class="active"></span>
+                    <span style="height:8px" class="active"></span>
+                    <span style="height:16px" class="active"></span>
+                    <span style="height:12px" class="active"></span>
+                    <span style="height:10px" class="active"></span>
+                    <span style="height:6px"></span>
+                  </div>
+                </td>
+                <td style="color:var(--teal); font-family:var(--mono)">€39</td>
+                <td><span class="online-badge offline">hier</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="user-cell">
+                    <div class="user-avatar g3">SM</div>
+                    <div>
+                      <div class="user-name">Sarah Moreau</div>
+                      <div class="user-email">sarah.moreau@outlook.com</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="plan-badge premium">PREMIUM</span></td>
+                <td style="font-family:var(--mono); color:var(--text)">89</td>
+                <td style="font-family:var(--mono)">il y a 3j</td>
+                <td style="font-family:var(--mono)">19h 07m</td>
+                <td>
+                  <div class="activity-bar">
+                    <span style="height:16px" class="active"></span>
+                    <span style="height:12px" class="active"></span>
+                    <span style="height:14px" class="active"></span>
+                    <span style="height:8px" class="active"></span>
+                    <span style="height:4px"></span>
+                    <span style="height:4px"></span>
+                    <span style="height:4px"></span>
+                  </div>
+                </td>
+                <td style="color:var(--teal); font-family:var(--mono)">€39</td>
+                <td><span class="online-badge offline">3j</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="user-cell">
+                    <div class="user-avatar g4">TC</div>
+                    <div>
+                      <div class="user-name">Thomas Caron</div>
+                      <div class="user-email">t.caron@protonmail.com</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="plan-badge free">FREE</span></td>
+                <td style="font-family:var(--mono); color:var(--text)">12</td>
+                <td style="font-family:var(--mono)">il y a 5j</td>
+                <td style="font-family:var(--mono)">2h 19m</td>
+                <td>
+                  <div class="activity-bar">
+                    <span style="height:4px"></span>
+                    <span style="height:4px"></span>
+                    <span style="height:8px" class="active"></span>
+                    <span style="height:6px" class="active"></span>
+                    <span style="height:4px"></span>
+                    <span style="height:4px"></span>
+                    <span style="height:4px"></span>
+                  </div>
+                </td>
+                <td style="color:var(--text3); font-family:var(--mono)">—</td>
+                <td><span class="online-badge offline">5j</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="user-cell">
+                    <div class="user-avatar g5">MB</div>
+                    <div>
+                      <div class="user-name">Marie Blanc</div>
+                      <div class="user-email">marie.blanc@gmail.com</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="plan-badge premium">PREMIUM</span></td>
+                <td style="font-family:var(--mono); color:var(--text)">203</td>
+                <td style="font-family:var(--mono)">il y a 12h</td>
+                <td style="font-family:var(--mono)">41h 55m</td>
+                <td>
+                  <div class="activity-bar">
+                    <span style="height:12px" class="active"></span>
+                    <span style="height:16px" class="active"></span>
+                    <span style="height:14px" class="active"></span>
+                    <span style="height:16px" class="active"></span>
+                    <span style="height:10px" class="active"></span>
+                    <span style="height:14px" class="active"></span>
+                    <span style="height:12px" class="active"></span>
+                  </div>
+                </td>
+                <td style="color:var(--teal); font-family:var(--mono)">€39</td>
+                <td><span class="online-badge offline">12h</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      </div> <!-- /section-dashboard -->
+
+      <!-- ══════════ SECTION: USERS ══════════ -->
+      <div id="section-users" style="display:none; flex-direction:column; gap:16px;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Tous les utilisateurs</div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div class="search-bar">
+                <span class="search-icon">🔍</span>
+                <input type="text" placeholder="Rechercher…">
+              </div>
+            </div>
+          </div>
+          <div class="section-tabs">
+            <div class="tab active">Tous (247)</div>
+            <div class="tab">Premium (33)</div>
+            <div class="tab">Actifs 7j (89)</div>
+            <div class="tab">Inactifs 30j (41)</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Utilisateur</th><th>Plan</th><th>Trades</th>
+                <th>Dernière co.</th><th>Temps total</th><th>Usage IA</th><th>MRR</th><th>Statut</th>
+              </tr></thead>
+              <tbody>
+                <tr onclick="document.getElementById('detail').style.display='flex'">
+                  <td><div class="user-cell"><div class="user-avatar">GR</div><div><div class="user-name">gregory</div><div class="user-email">tahir.gregory.dev@gmail.com</div></div></div></td>
+                  <td><span class="plan-badge free">FREE</span></td>
+                  <td style="font-family:var(--mono)">20</td><td style="font-family:var(--mono)">il y a 2h</td>
+                  <td style="font-family:var(--mono)">4h 32m</td>
+                  <td><div class="activity-bar"><span style="height:4px"></span><span style="height:8px" class="active"></span><span style="height:12px" class="active"></span><span style="height:16px" class="active"></span><span style="height:14px" class="active"></span><span style="height:10px" class="active"></span><span style="height:6px" class="active"></span></div></td>
+                  <td style="color:var(--text3); font-family:var(--mono)">—</td>
+                  <td><span class="online-badge">en ligne</span></td>
+                </tr>
+                <tr><td><div class="user-cell"><div class="user-avatar g2">AL</div><div><div class="user-name">Alex Lebrun</div><div class="user-email">alex.lebrun@gmail.com</div></div></div></td><td><span class="plan-badge premium">PREMIUM</span></td><td style="font-family:var(--mono)">147</td><td style="font-family:var(--mono)">il y a 1j</td><td style="font-family:var(--mono)">28h 14m</td><td><div class="activity-bar"><span style="height:10px" class="active"></span><span style="height:14px" class="active"></span><span style="height:16px" class="active"></span><span style="height:12px" class="active"></span><span style="height:8px" class="active"></span><span style="height:6px"></span><span style="height:4px"></span></div></td><td style="color:var(--teal); font-family:var(--mono)">€39</td><td><span class="online-badge offline">hier</span></td></tr>
+                <tr><td><div class="user-cell"><div class="user-avatar g3">SM</div><div><div class="user-name">Sarah Moreau</div><div class="user-email">sarah.moreau@outlook.com</div></div></div></td><td><span class="plan-badge premium">PREMIUM</span></td><td style="font-family:var(--mono)">89</td><td style="font-family:var(--mono)">il y a 3j</td><td style="font-family:var(--mono)">19h 07m</td><td><div class="activity-bar"><span style="height:16px" class="active"></span><span style="height:12px" class="active"></span><span style="height:8px" class="active"></span><span style="height:4px"></span><span style="height:4px"></span><span style="height:4px"></span><span style="height:4px"></span></div></td><td style="color:var(--teal); font-family:var(--mono)">€39</td><td><span class="online-badge offline">3j</span></td></tr>
+                <tr><td><div class="user-cell"><div class="user-avatar g4">TC</div><div><div class="user-name">Thomas Caron</div><div class="user-email">t.caron@protonmail.com</div></div></div></td><td><span class="plan-badge free">FREE</span></td><td style="font-family:var(--mono)">12</td><td style="font-family:var(--mono)">il y a 5j</td><td style="font-family:var(--mono)">2h 19m</td><td><div class="activity-bar"><span style="height:4px"></span><span style="height:4px"></span><span style="height:6px" class="active"></span><span style="height:4px"></span><span style="height:4px"></span><span style="height:4px"></span><span style="height:4px"></span></div></td><td style="color:var(--text3); font-family:var(--mono)">—</td><td><span class="online-badge offline">5j</span></td></tr>
+                <tr><td><div class="user-cell"><div class="user-avatar g5">MB</div><div><div class="user-name">Marie Blanc</div><div class="user-email">marie.blanc@gmail.com</div></div></div></td><td><span class="plan-badge premium">PREMIUM</span></td><td style="font-family:var(--mono)">203</td><td style="font-family:var(--mono)">il y a 12h</td><td style="font-family:var(--mono)">41h 55m</td><td><div class="activity-bar"><span style="height:12px" class="active"></span><span style="height:16px" class="active"></span><span style="height:14px" class="active"></span><span style="height:16px" class="active"></span><span style="height:12px" class="active"></span><span style="height:14px" class="active"></span><span style="height:10px" class="active"></span></div></td><td style="color:var(--teal); font-family:var(--mono)">€39</td><td><span class="online-badge offline">12h</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ SECTION: ABONNEMENTS ══════════ -->
+      <div id="section-abonnements" style="display:none; flex-direction:column; gap:16px;">
+        <div class="stats-row" style="grid-template-columns: repeat(4, 1fr);">
+          <div class="stat-card teal"><div class="stat-label">MRR</div><div class="stat-value">€1 287</div><div class="stat-change up">↑ +12.4%</div></div>
+          <div class="stat-card green"><div class="stat-label">Premium actifs</div><div class="stat-value">33</div><div class="stat-change up">↑ +4 ce mois</div></div>
+          <div class="stat-card amber"><div class="stat-label">Churn 30j</div><div class="stat-value">2.1%</div><div class="stat-change up">↓ -0.3%</div></div>
+          <div class="stat-card blue"><div class="stat-label">ARR projeté</div><div class="stat-value">€15 444</div><div class="stat-change neutral">×12 MRR</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Abonnements Premium actifs</div><div class="card-action">Exporter CSV</div></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Utilisateur</th><th>Plan</th><th>Montant</th><th>Depuis</th><th>Prochain paiement</th><th>Statut Stripe</th></tr></thead>
+              <tbody>
+                <tr><td><div class="user-cell"><div class="user-avatar g2">AL</div><div><div class="user-name">Alex Lebrun</div><div class="user-email">alex.lebrun@gmail.com</div></div></div></td><td><span class="plan-badge premium">PREMIUM</span></td><td style="font-family:var(--mono); color:var(--teal)">€39/mois</td><td style="font-family:var(--mono)">01 fév 2026</td><td style="font-family:var(--mono)">01 juin 2026</td><td><span class="tag auto">active</span></td></tr>
+                <tr><td><div class="user-cell"><div class="user-avatar g3">SM</div><div><div class="user-name">Sarah Moreau</div></div></div></td><td><span class="plan-badge premium">PREMIUM</span></td><td style="font-family:var(--mono); color:var(--teal)">€39/mois</td><td style="font-family:var(--mono)">15 mars 2026</td><td style="font-family:var(--mono)">15 juin 2026</td><td><span class="tag auto">active</span></td></tr>
+                <tr><td><div class="user-cell"><div class="user-avatar g5">MB</div><div><div class="user-name">Marie Blanc</div></div></div></td><td><span class="plan-badge premium">PREMIUM</span></td><td style="font-family:var(--mono); color:var(--teal)">€39/mois</td><td style="font-family:var(--mono)">10 jan 2026</td><td style="font-family:var(--mono)">10 juin 2026</td><td><span class="tag auto">active</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ SECTION: VPS ══════════ -->
+      <div id="section-vps" style="display:none; flex-direction:column; gap:16px;">
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title">VPS · OVH VPS-S · Paris</div><span class="status-dot" style="font-size:10px">online</span></div>
+            <div class="metric-row"><div class="metric-label">CPU</div><div class="metric-bar"><div class="metric-fill teal" style="width:23%"></div></div><div class="metric-val">23%</div></div>
+            <div class="metric-row"><div class="metric-label">RAM</div><div class="metric-bar"><div class="metric-fill blue" style="width:61%"></div></div><div class="metric-val">61% · 3.9G</div></div>
+            <div class="metric-row"><div class="metric-label">Disque</div><div class="metric-bar"><div class="metric-fill amber" style="width:44%"></div></div><div class="metric-val">44% · 22G</div></div>
+            <div class="metric-row"><div class="metric-label">Réseau ↑</div><div class="metric-bar"><div class="metric-fill teal" style="width:8%"></div></div><div class="metric-val">12 MB/s</div></div>
+            <div class="metric-row"><div class="metric-label">Uptime</div><div class="metric-bar"><div class="metric-fill teal" style="width:100%"></div></div><div class="metric-val">14j 6h</div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Informations système</div></div>
+            <div class="metric-row"><div class="metric-label" style="width:120px">OS</div><div style="font-family:var(--mono); font-size:11px; color:var(--text)">Ubuntu 22.04 LTS</div></div>
+            <div class="metric-row"><div class="metric-label" style="width:120px">Kernel</div><div style="font-family:var(--mono); font-size:11px; color:var(--text)">5.15.0-101-generic</div></div>
+            <div class="metric-row"><div class="metric-label" style="width:120px">Node.js</div><div style="font-family:var(--mono); font-size:11px; color:var(--text)">v20.11.0</div></div>
+            <div class="metric-row"><div class="metric-label" style="width:120px">Docker</div><div style="font-family:var(--mono); font-size:11px; color:var(--text)">26.0.1</div></div>
+            <div class="metric-row"><div class="metric-label" style="width:120px">IP publique</div><div style="font-family:var(--mono); font-size:11px; color:var(--text)">51.XX.XX.XX</div></div>
+            <div class="metric-row"><div class="metric-label" style="width:120px">Région</div><div style="font-family:var(--mono); font-size:11px; color:var(--text)">GRA7 · Gravelines</div></div>
+            <div style="padding:12px 16px; display:flex; gap:8px;">
+              <button class="btn btn-ghost" style="flex:none; padding:6px 12px;">apt update</button>
+              <button class="btn btn-ghost" style="flex:none; padding:6px 12px;">Redémarrer</button>
+              <button class="btn btn-danger" style="flex:none; padding:6px 12px;">SSH direct</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ SECTION: CONTAINERS ══════════ -->
+      <div id="section-containers" style="display:none; flex-direction:column; gap:16px;">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Containers Docker</div><div class="card-action">+ deploy stack</div></div>
+          <div class="container-row"><div class="container-status running"></div><div style="flex:1"><div class="container-name">mtc-api</div><div class="container-image">nestjs:18-alpine · port 3000 · démarré il y a 14j</div></div><div class="container-cpu">2.1%</div><div class="container-actions"><button class="action-btn">↺</button><button class="action-btn success">▶</button><button class="action-btn">≡</button><button class="action-btn danger">✕</button></div></div>
+          <div class="container-row"><div class="container-status running"></div><div style="flex:1"><div class="container-name">mtc-postgres</div><div class="container-image">postgres:16 · port 5432 · démarré il y a 14j</div></div><div class="container-cpu">0.8%</div><div class="container-actions"><button class="action-btn">↺</button><button class="action-btn success">▶</button><button class="action-btn">≡</button><button class="action-btn danger">✕</button></div></div>
+          <div class="container-row"><div class="container-status running"></div><div style="flex:1"><div class="container-name">mtc-redis</div><div class="container-image">redis:7-alpine · port 6379 · démarré il y a 14j</div></div><div class="container-cpu">0.2%</div><div class="container-actions"><button class="action-btn">↺</button><button class="action-btn success">▶</button><button class="action-btn">≡</button><button class="action-btn danger">✕</button></div></div>
+          <div class="container-row"><div class="container-status running"></div><div style="flex:1"><div class="container-name">nginx-proxy</div><div class="container-image">nginx:alpine · 80/443 · démarré il y a 14j</div></div><div class="container-cpu">0.1%</div><div class="container-actions"><button class="action-btn">↺</button><button class="action-btn success">▶</button><button class="action-btn">≡</button><button class="action-btn danger">✕</button></div></div>
+          <div class="container-row"><div class="container-status error"></div><div style="flex:1"><div class="container-name" style="color:var(--red)">mtc-worker</div><div class="container-image" style="color:var(--red)">exit code 1 · crashed il y a 2h · 3 restarts</div></div><div class="container-cpu" style="color:var(--red)">—</div><div class="container-actions"><button class="action-btn success">▶</button><button class="action-btn">≡</button><button class="action-btn danger">✕</button></div></div>
+        </div>
+      </div>
+
+      <!-- ══════════ SECTION: BACKUPS ══════════ -->
+      <div id="section-backups" style="display:none; flex-direction:column; gap:16px;">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Sauvegardes PostgreSQL</div><div class="card-action">+ backup maintenant</div></div>
+          <div class="backup-row"><div class="backup-icon">🗄</div><div style="flex:1"><div class="backup-name">mtc_prod_20260515_020000.sql.gz</div><div class="backup-meta">aujourd'hui · 02:00 · automatique</div></div><div class="backup-size">284 MB</div><span class="tag auto">auto</span><button class="action-btn" style="margin-left:6px" title="Télécharger">↓</button><button class="action-btn" style="margin-left:4px" title="Restaurer">↩</button></div>
+          <div class="backup-row"><div class="backup-icon">🗄</div><div style="flex:1"><div class="backup-name">mtc_prod_20260514_020000.sql.gz</div><div class="backup-meta">hier · 02:00 · automatique</div></div><div class="backup-size">281 MB</div><span class="tag auto">auto</span><button class="action-btn" style="margin-left:6px">↓</button><button class="action-btn" style="margin-left:4px">↩</button></div>
+          <div class="backup-row"><div class="backup-icon">🗄</div><div style="flex:1"><div class="backup-name">mtc_prod_20260513_before_deploy.sql.gz</div><div class="backup-meta">13 mai · avant déploiement · manuel</div></div><div class="backup-size">278 MB</div><span class="tag manual">manuel</span><button class="action-btn" style="margin-left:6px">↓</button><button class="action-btn" style="margin-left:4px">↩</button></div>
+          <div class="backup-row"><div class="backup-icon" style="background:var(--red-dim)">⚠</div><div style="flex:1"><div class="backup-name" style="color:var(--red)">mtc_prod_20260512_020000.sql.gz</div><div class="backup-meta">12 mai · erreur écriture disque</div></div><div class="backup-size" style="color:var(--red)">0 B</div><span class="tag failed">failed</span></div>
+        </div>
+      </div>
+
+      <!-- ══════════ SECTION: LOGS ══════════ -->
+      <div id="section-logs" style="display:none; flex-direction:column; gap:16px;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Logs système en temps réel</div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <select style="background:var(--bg3); border:1px solid var(--border); border-radius:6px; padding:4px 8px; color:var(--text); font-size:11px; font-family:var(--mono);">
+                <option>mtc-api</option><option>mtc-postgres</option><option>nginx-proxy</option>
+              </select>
+              <span class="status-dot" style="font-size:10px">live</span>
+            </div>
+          </div>
+          <div style="background:var(--bg); padding:14px 16px; font-family:var(--mono); font-size:11px; line-height:1.8; max-height:420px; overflow-y:auto;">
+            <div style="color:var(--text3)">[2026-05-15 12:23:41] <span style="color:var(--green)">INFO</span>  Server listening on port 3000</div>
+            <div style="color:var(--text3)">[2026-05-15 12:23:38] <span style="color:var(--green)">INFO</span>  Connected to PostgreSQL</div>
+            <div style="color:var(--text3)">[2026-05-15 12:22:15] <span style="color:var(--blue)">REQ</span>   POST /trades 201 142ms user:gregory</div>
+            <div style="color:var(--text3)">[2026-05-15 12:21:04] <span style="color:var(--blue)">REQ</span>   GET /debrief/current 200 891ms user:marie.blanc</div>
+            <div style="color:var(--text3)">[2026-05-15 12:20:55] <span style="color:var(--amber)">WARN</span>  Rate limit approaching for user:alex.lebrun (42/50 req/min)</div>
+            <div style="color:var(--text3)">[2026-05-15 12:19:33] <span style="color:var(--blue)">REQ</span>   GET /analytics 200 234ms user:sarah.moreau</div>
+            <div style="color:var(--text3)">[2026-05-15 12:18:11] <span style="color:var(--red)">ERR</span>   Worker crash: Cannot connect to Redis — ECONNREFUSED</div>
+            <div style="color:var(--text3)">[2026-05-15 12:17:58] <span style="color:var(--blue)">REQ</span>   POST /ai/insights 200 2341ms user:marie.blanc</div>
+            <div style="color:var(--text3)">[2026-05-15 12:15:22] <span style="color:var(--green)">INFO</span>  Weekly debrief generated for user:gregory week:20</div>
+            <div style="color:var(--text3)">[2026-05-15 12:14:01] <span style="color:var(--blue)">REQ</span>   GET /trades 200 88ms user:t.caron</div>
+            <div style="color:var(--text3)">[2026-05-15 12:12:44] <span style="color:var(--amber)">WARN</span>  Slow query detected: 1842ms — findMany trades userId:alex.lebrun</div>
+            <div style="color:var(--text3)">[2026-05-15 12:10:08] <span style="color:var(--green)">INFO</span>  Backup completed: mtc_prod_20260515_020000.sql.gz (284MB)</div>
+            <div style="color:var(--teal); animation: blink 1s infinite">█</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ SECTION: REVENUS ══════════ -->
+      <div id="section-revenus" style="display:none; flex-direction:column; gap:16px;">
+        <div class="stats-row" style="grid-template-columns: repeat(4, 1fr);">
+          <div class="stat-card teal"><div class="stat-label">MRR</div><div class="stat-value">€1 287</div><div class="stat-change up">↑ +12.4% ce mois</div></div>
+          <div class="stat-card blue"><div class="stat-label">ARR</div><div class="stat-value">€15 444</div><div class="stat-change neutral">projeté</div></div>
+          <div class="stat-card green"><div class="stat-label">Revenus ce mois</div><div class="stat-value">€973</div><div class="stat-change up">↑ +8.2%</div></div>
+          <div class="stat-card amber"><div class="stat-label">Churn</div><div class="stat-value">2.1%</div><div class="stat-change up">↓ -0.3%</div></div>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title">MRR — 6 derniers mois</div></div>
+            <div style="padding:20px 16px;">
+              <div style="display:flex; align-items:flex-end; gap:8px; height:80px;">
+                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;"><div style="flex:1; width:100%; background:var(--teal); opacity:0.3; border-radius:3px 3px 0 0; height:30%"></div><div style="font-size:9px; color:var(--text3); font-family:var(--mono)">Déc</div></div>
+                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;"><div style="width:100%; background:var(--teal); opacity:0.4; border-radius:3px 3px 0 0; height:45%"></div><div style="font-size:9px; color:var(--text3); font-family:var(--mono)">Jan</div></div>
+                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;"><div style="width:100%; background:var(--teal); opacity:0.5; border-radius:3px 3px 0 0; height:52%"></div><div style="font-size:9px; color:var(--text3); font-family:var(--mono)">Fév</div></div>
+                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;"><div style="width:100%; background:var(--teal); opacity:0.6; border-radius:3px 3px 0 0; height:65%"></div><div style="font-size:9px; color:var(--text3); font-family:var(--mono)">Mar</div></div>
+                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;"><div style="width:100%; background:var(--teal); opacity:0.8; border-radius:3px 3px 0 0; height:82%"></div><div style="font-size:9px; color:var(--text3); font-family:var(--mono)">Avr</div></div>
+                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;"><div style="width:100%; background:var(--teal); border-radius:3px 3px 0 0; height:100%"></div><div style="font-size:9px; color:var(--teal); font-family:var(--mono); font-weight:600">Mai</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Dernières transactions Stripe</div></div>
+            <div class="backup-row"><div class="backup-icon" style="background:var(--teal-dim); font-size:11px; color:var(--teal)">+</div><div style="flex:1"><div class="backup-name">Alex Lebrun — renouvellement</div><div class="backup-meta">15 mai 2026 · 08:12</div></div><div style="font-family:var(--mono); color:var(--teal); font-size:12px">+€39</div></div>
+            <div class="backup-row"><div class="backup-icon" style="background:var(--teal-dim); font-size:11px; color:var(--teal)">+</div><div style="flex:1"><div class="backup-name">Marie Blanc — renouvellement</div><div class="backup-meta">14 mai 2026 · 09:30</div></div><div style="font-family:var(--mono); color:var(--teal); font-size:12px">+€39</div></div>
+            <div class="backup-row"><div class="backup-icon" style="background:var(--green)" style="font-size:11px">★</div><div style="flex:1"><div class="backup-name">Thomas Caron — upgrade Free→Premium</div><div class="backup-meta">13 mai 2026 · 14:22</div></div><div style="font-family:var(--mono); color:var(--teal); font-size:12px">+€39</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ SECTION: USAGE IA ══════════ -->
+      <div id="section-ia" style="display:none; flex-direction:column; gap:16px;">
+        <div class="stats-row" style="grid-template-columns: repeat(4, 1fr);">
+          <div class="stat-card blue"><div class="stat-label">Tokens input / j</div><div class="stat-value">842k</div><div class="stat-change neutral">~5.9M / semaine</div></div>
+          <div class="stat-card teal"><div class="stat-label">Tokens output / j</div><div class="stat-value">171k</div><div class="stat-change neutral">~1.2M / semaine</div></div>
+          <div class="stat-card amber"><div class="stat-label">Coût / jour</div><div class="stat-value">€3.20</div><div class="stat-change neutral">€22.40 / semaine</div></div>
+          <div class="stat-card purple"><div class="stat-label">Appels API / j</div><div class="stat-value">264</div><div class="stat-change neutral">1 847 / semaine</div></div>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Répartition par feature</div></div>
+            <div style="padding:14px 16px; display:flex; flex-direction:column; gap:10px;">
+              <div><div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:5px;"><span style="color:var(--text2)">Weekly Debrief</span><span style="font-family:var(--mono); color:var(--teal)">62% · €1.98/j</span></div><div style="height:5px; background:var(--bg4); border-radius:2px; overflow:hidden;"><div style="height:100%; width:62%; background:var(--teal); border-radius:2px;"></div></div></div>
+              <div><div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:5px;"><span style="color:var(--text2)">AI Insights</span><span style="font-family:var(--mono); color:var(--blue)">28% · €0.90/j</span></div><div style="height:5px; background:var(--bg4); border-radius:2px; overflow:hidden;"><div style="height:100%; width:28%; background:var(--blue); border-radius:2px;"></div></div></div>
+              <div><div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:5px;"><span style="color:var(--text2)">Import CSV</span><span style="font-family:var(--mono); color:var(--purple)">10% · €0.32/j</span></div><div style="height:5px; background:var(--bg4); border-radius:2px; overflow:hidden;"><div style="height:100%; width:10%; background:var(--purple); border-radius:2px;"></div></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Top utilisateurs IA (tokens)</div></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Utilisateur</th><th>Plan</th><th>Tokens 7j</th><th>Coût</th></tr></thead>
+                <tbody>
+                  <tr><td><div class="user-cell"><div class="user-avatar g5">MB</div><div class="user-name">Marie Blanc</div></div></td><td><span class="plan-badge premium">PREMIUM</span></td><td style="font-family:var(--mono)">284k</td><td style="font-family:var(--mono); color:var(--amber)">€1.08</td></tr>
+                  <tr><td><div class="user-cell"><div class="user-avatar g2">AL</div><div class="user-name">Alex Lebrun</div></div></td><td><span class="plan-badge premium">PREMIUM</span></td><td style="font-family:var(--mono)">201k</td><td style="font-family:var(--mono); color:var(--amber)">€0.76</td></tr>
+                  <tr><td><div class="user-cell"><div class="user-avatar g3">SM</div><div class="user-name">Sarah Moreau</div></div></td><td><span class="plan-badge premium">PREMIUM</span></td><td style="font-family:var(--mono)">156k</td><td style="font-family:var(--mono); color:var(--amber)">€0.59</td></tr>
+                  <tr><td><div class="user-cell"><div class="user-avatar">GR</div><div class="user-name">gregory</div></div></td><td><span class="plan-badge free">FREE</span></td><td style="font-family:var(--mono)">84k</td><td style="font-family:var(--mono); color:var(--amber)">€0.32</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ── USER DETAIL PANEL ── -->
+  <div id="detail" class="detail-panel" style="display:none;">
+    <div class="detail-header">
+      <div class="detail-avatar">GR</div>
+      <div>
+        <div class="detail-name">gregory</div>
+        <div class="detail-email">tahir.gregory.dev@gmail.com</div>
+      </div>
+      <button class="detail-close" onclick="document.getElementById('detail').style.display='none'">×</button>
+    </div>
+
+    <div class="detail-body">
+
+      <!-- Fiche stats -->
+      <div>
+        <div class="detail-section-title">Activité</div>
+        <div class="detail-stats">
+          <div class="detail-stat">
+            <div class="detail-stat-label">Trades</div>
+            <div class="detail-stat-value">20</div>
+          </div>
+          <div class="detail-stat">
+            <div class="detail-stat-label">Temps total</div>
+            <div class="detail-stat-value">4h 32m</div>
+          </div>
+          <div class="detail-stat">
+            <div class="detail-stat-label">Sessions</div>
+            <div class="detail-stat-value">14</div>
+          </div>
+          <div class="detail-stat">
+            <div class="detail-stat-label">Debriefs IA</div>
+            <div class="detail-stat-value teal">3</div>
+          </div>
+          <div class="detail-stat">
+            <div class="detail-stat-label">Appels IA</div>
+            <div class="detail-stat-value">28</div>
+          </div>
+          <div class="detail-stat">
+            <div class="detail-stat-label">Tokens consommés</div>
+            <div class="detail-stat-value">84k</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fiche compte -->
+      <div>
+        <div class="detail-section-title">Compte</div>
+        <div>
+          <div class="detail-row">
+            <span class="detail-row-label">Plan</span>
+            <span class="plan-badge free" style="font-size:10px">FREE</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-row-label">Inscrit le</span>
+            <span class="detail-row-value">09 mai 2026</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-row-label">Dernière connexion</span>
+            <span class="detail-row-value">15 mai 2026 · 10:41</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-row-label">IP dernière co.</span>
+            <span class="detail-row-value">92.184.xxx.xxx · FR</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-row-label">Trades ce mois</span>
+            <span class="detail-row-value">20 / 50</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-row-label">MRR</span>
+            <span class="detail-row-value" style="color:var(--text3)">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Historique -->
+      <div>
+        <div class="detail-section-title">Historique récent</div>
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-dot teal"></div>
+            <div class="timeline-content">
+              <div class="timeline-action">Connexion · Safari iOS</div>
+              <div class="timeline-time">15 mai · 10:41</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot green"></div>
+            <div class="timeline-content">
+              <div class="timeline-action">Trade loggé · MES · LONG · +$50</div>
+              <div class="timeline-time">15 mai · 09:32</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot blue"></div>
+            <div class="timeline-content">
+              <div class="timeline-action">Weekly Debrief généré · S20</div>
+              <div class="timeline-time">13 mai · 18:00</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot amber"></div>
+            <div class="timeline-content">
+              <div class="timeline-action">Limite trades approchée (40/50)</div>
+              <div class="timeline-time">12 mai · 14:22</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot teal"></div>
+            <div class="timeline-content">
+              <div class="timeline-action">Inscription</div>
+              <div class="timeline-time">09 mai · 22:14</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="detail-actions">
+      <button class="btn btn-ghost">Passer Premium</button>
+      <button class="btn btn-ghost">Reset limite</button>
+      <button class="btn btn-danger">Suspendre</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Sidebar overlay mobile -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<script>
+const SECTIONS = {
+  dashboard:    { title: 'Dashboard' },
+  users:        { title: 'Utilisateurs' },
+  abonnements:  { title: 'Abonnements' },
+  vps:          { title: 'VPS / Serveur' },
+  containers:   { title: 'Containers Docker' },
+  backups:      { title: 'Sauvegardes' },
+  logs:         { title: 'Logs système' },
+  revenus:      { title: 'Revenus' },
+  ia:           { title: 'Usage IA' },
+};
+
+let current = 'dashboard';
+
+function navigate(section, navEl) {
+  if (section === current) {
+    closeSidebar();
+    return;
+  }
+
+  // Hide current section
+  const prev = document.getElementById('section-' + current);
+  if (prev) prev.style.display = 'none';
+
+  // Show new section
+  const next = document.getElementById('section-' + section);
+  if (next) next.style.display = 'flex';
+
+  // Update page title
+  document.getElementById('page-title').textContent = SECTIONS[section]?.title || section;
+
+  // Update active nav item
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  if (navEl) navEl.classList.add('active');
+
+  // Close detail panel if open
+  document.getElementById('detail').style.display = 'none';
+
+  // Close sidebar on mobile after navigation
+  closeSidebar();
+
+  current = section;
+}
+
+function toggleSidebar() {
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  const isOpen = sidebar.classList.contains('open');
+  if (isOpen) {
+    closeSidebar();
+  } else {
+    sidebar.classList.add('open');
+    overlay.classList.add('open');
+  }
+}
+
+function closeSidebar() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+// Close on Escape key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeSidebar();
+    document.getElementById('detail').style.display = 'none';
+  }
+});
+
+// Init — show dashboard on load
+document.addEventListener('DOMContentLoaded', () => {
+  Object.keys(SECTIONS).forEach(s => {
+    const el = document.getElementById('section-' + s);
+    if (el) el.style.display = s === 'dashboard' ? 'flex' : 'none';
+  });
+});
+</script>
+</body>
+</html>
