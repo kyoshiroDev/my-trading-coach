@@ -90,25 +90,29 @@ export class SettingsComponent implements OnInit {
   protected readonly isDeleting = signal(false);
 
   constructor() {
-    // Sync réactive : se met à jour si le user change (retour d'onglet, refresh)
+    // Sync prefs uniquement — les signaux stratégie sont gérés dans ngOnInit + saveStrategy
     effect(() => {
       const user = this.userStore.user();
       if (!user) return;
       this.prefCurrency.set((user.currency as 'USD' | 'EUR' | 'GBP') ?? 'USD');
       this.prefNotifications.set(user.notificationsEmail ?? true);
       this.prefDebrief.set(user.debriefAutomatic ?? true);
-      this.tradingStyle.set(user.tradingStyle ?? null);
-      this.tradingStrategy.set(user.tradingStrategy ?? []);
-      this.tradingSessions.set(user.tradingSessions ?? []);
-      this.tradesPerDayMin.set(user.tradesPerDayMin ?? 1);
-      this.tradesPerDayMax.set(user.tradesPerDayMax ?? 10);
-      this.strategyDesc.set(user.strategyDescription ?? '');
     });
   }
 
   ngOnInit(): void {
     if (this.route.snapshot.queryParamMap.get('checkout') === 'success') {
       this.userStore.refreshUser();
+    }
+    // Init stratégie une seule fois au chargement
+    const user = this.userStore.user();
+    if (user) {
+      this.tradingStyle.set(user.tradingStyle ?? null);
+      this.tradingStrategy.set(user.tradingStrategy ?? []);
+      this.tradingSessions.set(user.tradingSessions ?? []);
+      this.tradesPerDayMin.set(user.tradesPerDayMin ?? 1);
+      this.tradesPerDayMax.set(user.tradesPerDayMax ?? 10);
+      this.strategyDesc.set(user.strategyDescription ?? '');
     }
   }
 
@@ -281,6 +285,13 @@ export class SettingsComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
+          // Mettre à jour les signaux stratégie depuis la réponse avant setCurrentUser
+          this.tradingStyle.set(res.data.tradingStyle ?? null);
+          this.tradingStrategy.set(res.data.tradingStrategy ?? []);
+          this.tradingSessions.set(res.data.tradingSessions ?? []);
+          this.tradesPerDayMin.set(res.data.tradesPerDayMin ?? 1);
+          this.tradesPerDayMax.set(res.data.tradesPerDayMax ?? 10);
+          this.strategyDesc.set(res.data.strategyDescription ?? '');
           this.auth.setCurrentUser(res.data);
           this.isSavingStrategy.set(false);
           this.strategySaved.set(true);
