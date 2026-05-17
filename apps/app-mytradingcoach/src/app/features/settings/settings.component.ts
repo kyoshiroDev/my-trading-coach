@@ -9,7 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
@@ -28,7 +28,7 @@ import { TRADING_STYLES, STRATEGY_TAGS, SESSIONS } from '../onboarding/onboardin
 @Component({
   selector: 'mtc-settings',
   standalone: true,
-  imports: [TopbarComponent, DatePipe, PlanModalComponent],
+  imports: [TopbarComponent, DatePipe, DecimalPipe, PlanModalComponent],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
