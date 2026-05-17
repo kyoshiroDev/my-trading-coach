@@ -6,6 +6,12 @@
 .btn-ghost:hover:not(:disabled) { background: var(--bg4); color: var(--text); }
 .btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; }
 
+.backup-tags { display: flex; gap: 4px; flex-shrink: 0; }
+.tag.prod { background: var(--teal-dim); color: var(--teal); border: 1px solid rgba(0,212,170,0.2); }
+.tag.dev  { background: var(--blue-dim); color: var(--blue);  border: 1px solid rgba(74,158,255,0.2); }
+.tag.auto   { background: rgba(52,211,153,0.1); color: var(--green);  border: 1px solid rgba(52,211,153,0.2); }
+.tag.manual { background: var(--amber-dim);     color: var(--amber); border: 1px solid rgba(245,166,35,0.2); }
+
 @media (max-width: 768px) {
   .content { padding: 12px; gap: 12px; }
   .backup-name { font-size: 10px; }

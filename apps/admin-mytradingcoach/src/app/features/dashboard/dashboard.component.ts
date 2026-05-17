@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, of } from 'rxjs';
+import { catchError, interval, of, startWith, switchMap } from 'rxjs';
 import { AdminApi, AdminStats, AdminOnlineUser } from '../../core/api/admin.api';
 import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
 
@@ -95,6 +95,7 @@ import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
         <div class="card">
           <div class="card-header">
             <span class="card-title">VPS · OVH · Paris</span>
+            <span class="refresh-hint">↻ 10s</span>
           </div>
           @if (vpsStats(); as v) {
             <div class="metric-row">
@@ -112,6 +113,16 @@ import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
               <div class="metric-bar"><div class="metric-fill amber" [style.width.%]="(v.disk.used/v.disk.total)*100"></div></div>
               <div class="metric-val">{{ ((v.disk.used/v.disk.total)*100) | number:'1.0-0' }}%</div>
             </div>
+            <div class="vps-info">
+              <div class="info-row"><span class="info-key">IP</span><span class="info-val">{{ v.ip }}</span></div>
+              <div class="info-row"><span class="info-key">OS</span><span class="info-val">{{ v.os }}</span></div>
+              <div class="info-row"><span class="info-key">Node</span><span class="info-val">{{ v.node }}</span></div>
+              <div class="info-row"><span class="info-key">Docker</span><span class="info-val">{{ v.docker }}</span></div>
+              <div class="info-row">
+                <span class="info-key">Uptime</span>
+                <span class="info-val">{{ formatUptime(v.uptime) }}</span>
+              </div>
+            </div>
           } @else {
             <div class="empty-state">
               <span>Module VPS non déployé</span>
@@ -127,9 +138,16 @@ import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
           @if (containers().length > 0) {
             @for (c of containers(); track c.id) {
               <div class="container-row">
-                <div class="container-status" [class.running]="c.status==='running'" [class.error]="c.status==='error'" [class.stopped]="c.status==='stopped'"></div>
-                <div class="container-name">{{ c.name }}</div>
-                <div class="container-cpu mono-text">{{ c.cpu }}%</div>
+                <div class="container-status" [class.running]="c.status==='running'"
+                  [class.error]="c.status==='error'" [class.stopped]="c.status==='stopped'"></div>
+                <div class="container-info">
+                  <div class="container-name">{{ c.name }}</div>
+                  <div class="container-image">{{ c.image }}</div>
+                </div>
+                <div class="container-metrics">
+                  <span class="mono-text">CPU {{ c.cpu }}%</span>
+                  <span class="mono-text">RAM {{ c.ram }}MB</span>
+                </div>
               </div>
             }
           } @else {
@@ -143,6 +161,14 @@ import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
   `,
 })
 export class DashboardComponent {
+  protected formatUptime(seconds: number): string {
+    const d = Math.floor(seconds / 86400);
+    const h = Math.floor((seconds % 86400) / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    if (d > 0) return `${d}j ${h}h`;
+    if (h > 0) return `${h}h ${m}min`;
+    return `${m}min`;
+  }
   private readonly adminApi = inject(AdminApi);
   private readonly vpsApi = inject(VpsApi);
   private readonly destroyRef = inject(DestroyRef);
@@ -161,12 +187,16 @@ export class DashboardComponent {
     this.adminApi.online().pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(r => this.onlineUsers.set(r.data));
 
-    this.vpsApi.stats()
-      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
-      .subscribe(r => this.vpsStats.set(r?.data ?? null));
+    interval(10_000).pipe(
+      startWith(0),
+      switchMap(() => this.vpsApi.stats().pipe(catchError(() => of(null)))),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(r => this.vpsStats.set(r?.data ?? null));
 
-    this.vpsApi.containers()
-      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
-      .subscribe(r => this.containers.set(r?.data ?? []));
+    interval(10_000).pipe(
+      startWith(0),
+      switchMap(() => this.vpsApi.containers().pipe(catchError(() => of(null)))),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(r => this.containers.set(r?.data ?? []));
   }
 }

@@ -42,7 +42,14 @@ import { VpsApi, Backup } from '../../core/api/vps.api';
               <div class="backup-meta">{{ b.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
             </div>
             <span class="backup-size">{{ (b.size / 1048576) | number:'1.1-1' }} Mo</span>
-            <span class="tag" [class.auto]="b.type==='auto'" [class.manual]="b.type==='manual'">{{ b.type }}</span>
+            <div class="backup-tags">
+              <span class="tag" [class.auto]="b.type==='auto'" [class.manual]="b.type==='manual'">
+                {{ b.type === 'auto' ? 'Auto' : 'Manuel' }}
+              </span>
+              <span class="tag" [class.prod]="!b.filename.includes('_dev_')" [class.dev]="b.filename.includes('_dev_')">
+                {{ b.filename.includes('_dev_') ? 'DEV' : 'PROD' }}
+              </span>
+            </div>
             <button class="action-btn danger" (click)="deleteBackup(b.filename)" title="Supprimer">
               <lucide-icon [img]="TrashIcon" [size]="10" />
             </button>
