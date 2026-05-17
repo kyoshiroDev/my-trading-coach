@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import Anthropic from '@anthropic-ai/sdk';
 import type { CreateTradeDto } from './dto/create-trade.dto';
 import { AiLoggerService } from '../shared/ai-logger.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 const MODEL = 'claude-sonnet-4-6';
 
@@ -40,7 +41,10 @@ export class CsvImportService {
     apiKey: process.env['ANTHROPIC_API_KEY'],
   });
 
-  constructor(private readonly aiLogger: AiLoggerService) {}
+  constructor(
+    private readonly aiLogger: AiLoggerService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   async parseCSV(
     buffer: Buffer,
@@ -64,7 +68,19 @@ export class CsvImportService {
     }
 
     const truncated = normalizedLines.slice(0, 501).join('\n');
-    const prompt = this.buildPrompt(filename, truncated);
+
+    let styleNote = '';
+    if (userId) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { tradingStyle: true, tradesPerDayMax: true },
+      });
+      if (user?.tradingStyle === 'SCALPING' || (user?.tradesPerDayMax != null && user.tradesPerDayMax > 20)) {
+        styleNote = `\nNote : Ce trader est scalper avec une fréquence élevée de trades — c'est normal pour son style.`;
+      }
+    }
+
+    const prompt = this.buildPrompt(filename, truncated, styleNote);
 
     try {
       const response = await this.anthropic.messages.create({
@@ -483,8 +499,8 @@ export class CsvImportService {
 
   // ── Prompt Claude ───────────────────────────────────────────────────────────
 
-  private buildPrompt(filename: string, csv: string): string {
-    return `Fichier : ${filename}
+  private buildPrompt(filename: string, csv: string, styleNote = ''): string {
+    return `Fichier : ${filename}${styleNote}
 
 Ce CSV a été partiellement normalisé. Certains champs "entry" peuvent être 0
 si le broker n'exporte pas le prix d'entrée exact.

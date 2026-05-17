@@ -40,6 +40,14 @@ model User {
   notificationsEmail Boolean @default(true)
   debriefAutomatic   Boolean @default(true)
 
+  // ── Profil stratégie ─────────────────────────────────────────────────────
+  tradingStyle        String?
+  tradingStrategy     String[]
+  tradingSessions     String[]
+  tradesPerDayMin     Int?
+  tradesPerDayMax     Int?
+  strategyDescription String?
+
   // ── Discord ──────────────────────────────────────────────────────────────────
   discordId String? @unique
 

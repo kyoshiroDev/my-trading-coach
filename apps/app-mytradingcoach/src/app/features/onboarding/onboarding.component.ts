@@ -14,6 +14,10 @@ import { TradesStore } from '../../core/stores/trades.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { LucideAngularModule, Bitcoin } from 'lucide-angular';
 import { TradeFormComponent } from '../journal/trade-form.component';
+import {
+  TRADING_STYLES, STRATEGY_TAGS, SESSIONS,
+  TradingStyle, TradingSession,
+} from './onboarding.constants';
 
 type Market = 'CRYPTO' | 'FOREX' | 'ACTIONS' | 'MULTI';
 type Goal = 'DISCIPLINE' | 'PERFORMANCE' | 'PSYCHOLOGIE';
@@ -28,52 +32,16 @@ type MarketOption = {
 };
 
 const MARKETS: MarketOption[] = [
-  {
-    value: 'CRYPTO',
-    label: 'Crypto',
-    icon: Bitcoin,
-    iconColor: '#F7931A',
-    desc: 'Bitcoin, Ethereum, altcoins',
-  },
-  {
-    value: 'FOREX',
-    label: 'Forex',
-    emoji: '💱',
-    desc: 'EUR/USD, paires de devises',
-  },
-  {
-    value: 'ACTIONS',
-    label: 'Actions',
-    emoji: '📈',
-    desc: 'Actions, ETF, indices',
-  },
-  {
-    value: 'MULTI',
-    label: 'Multi-marchés',
-    emoji: '🌐',
-    desc: 'Je trade plusieurs marchés',
-  },
+  { value: 'CRYPTO',  label: 'Crypto',       icon: Bitcoin, iconColor: '#F7931A', desc: 'Bitcoin, Ethereum, altcoins' },
+  { value: 'FOREX',   label: 'Forex',         emoji: '💱',  desc: 'EUR/USD, paires de devises' },
+  { value: 'ACTIONS', label: 'Actions',       emoji: '📈',  desc: 'Actions, ETF, indices' },
+  { value: 'MULTI',   label: 'Multi-marchés', emoji: '🌐',  desc: 'Je trade plusieurs marchés' },
 ];
 
 const GOALS: { value: Goal; label: string; emoji: string; desc: string }[] = [
-  {
-    value: 'DISCIPLINE',
-    label: 'Discipline',
-    emoji: '🎯',
-    desc: 'Respecter mon plan de trading et mes règles',
-  },
-  {
-    value: 'PERFORMANCE',
-    label: 'Performance',
-    emoji: '🚀',
-    desc: 'Améliorer mon win rate et ma rentabilité',
-  },
-  {
-    value: 'PSYCHOLOGIE',
-    label: 'Psychologie',
-    emoji: '🧠',
-    desc: 'Gérer mes émotions et éviter les revenge trades',
-  },
+  { value: 'DISCIPLINE',  label: 'Discipline',  emoji: '🎯', desc: 'Respecter mon plan de trading et mes règles' },
+  { value: 'PERFORMANCE', label: 'Performance', emoji: '🚀', desc: 'Améliorer mon win rate et ma rentabilité' },
+  { value: 'PSYCHOLOGIE', label: 'Psychologie', emoji: '🧠', desc: 'Gérer mes émotions et éviter les revenge trades' },
 ];
 
 @Component({
@@ -95,22 +63,43 @@ export class OnboardingComponent {
 
   protected readonly MARKETS = MARKETS;
   protected readonly GOALS = GOALS;
+  protected readonly TRADING_STYLES = TRADING_STYLES;
+  protected readonly STRATEGY_TAGS = STRATEGY_TAGS;
+  protected readonly SESSIONS = SESSIONS;
 
-  protected readonly step = signal<1 | 2 | 3 | 4>(1);
+  protected readonly step = signal<1 | 2 | 3 | 4 | 5>(1);
   protected readonly selectedMarket = signal<Market | null>(null);
   protected readonly selectedGoal = signal<Goal | null>(null);
   protected readonly selectedCurrency = signal<'USD' | 'EUR'>('USD');
   protected readonly capitalInput = signal('');
   protected readonly isSaving = signal(false);
 
-  protected selectMarket(m: Market) {
-    this.selectedMarket.set(m);
+  // Étape 3 — Stratégie
+  protected readonly tradingStyle     = signal<TradingStyle | null>(null);
+  protected readonly tradingStrategy  = signal<string[]>([]);
+  protected readonly tradingSessions  = signal<TradingSession[]>([]);
+  protected readonly tradesPerDayMin  = signal<number>(1);
+  protected readonly tradesPerDayMax  = signal<number>(10);
+  protected readonly strategyDesc     = signal('');
+
+  protected selectMarket(m: Market) { this.selectedMarket.set(m); }
+  protected selectGoal(g: Goal) { this.selectedGoal.set(g); }
+  protected selectCurrency(c: 'USD' | 'EUR') { this.selectedCurrency.set(c); }
+
+  protected toggleTag(tag: string): void {
+    this.tradingStrategy.update(tags =>
+      tags.includes(tag) ? tags.filter(t => t !== tag) : [...tags, tag],
+    );
   }
-  protected selectGoal(g: Goal) {
-    this.selectedGoal.set(g);
+
+  protected toggleSession(session: TradingSession): void {
+    this.tradingSessions.update(sessions =>
+      sessions.includes(session) ? sessions.filter(s => s !== session) : [...sessions, session],
+    );
   }
-  protected selectCurrency(c: 'USD' | 'EUR') {
-    this.selectedCurrency.set(c);
+
+  protected onStrategyDesc(e: Event): void {
+    this.strategyDesc.set((e.target as HTMLTextAreaElement).value.slice(0, 200));
   }
 
   protected filterCapital(event: Event): void {
@@ -121,9 +110,7 @@ export class OnboardingComponent {
 
   protected nextStep() {
     const s = this.step();
-    if (s === 1) this.step.set(2);
-    else if (s === 2) this.step.set(3);
-    else if (s === 3) this.step.set(4);
+    if (s < 5) this.step.set((s + 1) as 1 | 2 | 3 | 4 | 5);
   }
 
   protected skip() {
@@ -136,20 +123,27 @@ export class OnboardingComponent {
     return isNaN(parsed) || parsed < 0 ? 0 : parsed;
   }
 
-  protected onTradeFormSave(dto: CreateTradeDto) {
-    this.isSaving.set(true);
-    const onboardingDto: CompleteOnboardingDto = {
+  private buildOnboardingDto(): CompleteOnboardingDto {
+    return {
       market: this.selectedMarket(),
       goal: this.selectedGoal(),
       startingCapital: this.parseCapital(),
       currency: this.selectedCurrency(),
+      tradingStyle: this.tradingStyle() ?? undefined,
+      tradingStrategy: this.tradingStrategy(),
+      tradingSessions: this.tradingSessions(),
+      tradesPerDayMin: this.tradesPerDayMin(),
+      tradesPerDayMax: this.tradesPerDayMax(),
+      strategyDescription: this.strategyDesc() || undefined,
     };
+  }
+
+  protected onTradeFormSave(dto: CreateTradeDto) {
+    this.isSaving.set(true);
     this.usersApi
-      .completeOnboarding(onboardingDto)
+      .completeOnboarding(this.buildOnboardingDto())
       .pipe(
-        tap((res) => {
-          this.auth.setCurrentUser(res.data);
-        }),
+        tap((res) => { this.auth.setCurrentUser(res.data); }),
         switchMap(() => this.tradesApi.create(dto)),
         takeUntilDestroyed(this.destroyRef),
       )
@@ -159,10 +153,7 @@ export class OnboardingComponent {
           this.isSaving.set(false);
           this.completed.emit();
         },
-        error: () => {
-          this.isSaving.set(false);
-          this.completed.emit();
-        },
+        error: () => { this.isSaving.set(false); this.completed.emit(); },
       });
   }
 
@@ -173,12 +164,7 @@ export class OnboardingComponent {
   private finishOnboarding(market: Market | null, goal: Goal | null) {
     this.isSaving.set(true);
     this.usersApi
-      .completeOnboarding({
-        market,
-        goal,
-        startingCapital: this.parseCapital(),
-        currency: this.selectedCurrency(),
-      })
+      .completeOnboarding({ ...this.buildOnboardingDto(), market, goal })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
@@ -186,15 +172,12 @@ export class OnboardingComponent {
           this.isSaving.set(false);
           this.completed.emit();
         },
-        error: () => {
-          this.isSaving.set(false);
-          this.completed.emit();
-        },
+        error: () => { this.isSaving.set(false); this.completed.emit(); },
       });
   }
 
   protected get progress(): number {
     const s = this.step();
-    return s === 1 ? 25 : s === 2 ? 50 : s === 3 ? 75 : 100;
+    return s === 1 ? 20 : s === 2 ? 40 : s === 3 ? 60 : s === 4 ? 80 : 100;
   }
 }

@@ -519,3 +519,45 @@
     align-items: flex-start;
   }
 }
+
+/* ── Stratégie de trading ───────────────────────────────────── */
+.strategy-card { padding: 0; }
+.strategy-hint { font-size: 12px; color: var(--text-3); padding: 16px 16px 0; margin: 0; }
+.strat-row { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.strat-row:last-of-type { border-bottom: none; }
+.strat-col { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.strat-row-label { font-size: 12px; font-weight: 500; color: var(--text-2); margin-bottom: 6px; }
+
+.style-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.style-chip {
+  padding: 5px 12px; border-radius: 100px;
+  border: 1px solid var(--border); background: transparent;
+  font-size: 12px; color: var(--text-2); cursor: pointer; transition: all 0.15s;
+}
+.style-chip:hover  { border-color: var(--blue); color: var(--text); }
+.style-chip.active { background: rgba(59,130,246,0.1); border-color: var(--blue); color: var(--blue); font-weight: 600; }
+.chip-time { font-size: 10px; color: var(--text-3); margin-left: 4px; }
+
+.freq-row  { display: flex; align-items: center; gap: 10px; width: 100%; }
+.freq-label { font-size: 11px; color: var(--text-3); width: 28px; }
+.freq-val   { font-size: 12px; font-family: var(--font-mono); width: 28px; text-align: right; }
+.range-input { flex: 1; accent-color: var(--blue); cursor: pointer; }
+
+.tags-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
+.strat-tag {
+  padding: 4px 10px; border-radius: 100px;
+  border: 1px solid var(--border); background: transparent;
+  font-size: 11px; font-family: var(--font-mono); color: var(--text-2);
+  cursor: pointer; transition: all 0.15s;
+}
+.strat-tag:hover    { border-color: var(--blue); color: var(--text); }
+.strat-tag.selected { background: rgba(59,130,246,0.1); border-color: var(--blue); color: var(--blue); }
+
+.strat-desc {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 12px; color: var(--text);
+  font-size: 12px; resize: none; outline: none; transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+.strat-desc:focus { border-color: var(--blue); }
+.char-count { font-size: 10px; color: var(--text-3); font-family: var(--font-mono); }

@@ -14,6 +14,12 @@ export interface CompleteOnboardingDto {
   goal?: 'DISCIPLINE' | 'PERFORMANCE' | 'PSYCHOLOGIE' | null;
   startingCapital?: number;
   currency?: 'USD' | 'EUR';
+  tradingStyle?: string;
+  tradingStrategy?: string[];
+  tradingSessions?: string[];
+  tradesPerDayMin?: number;
+  tradesPerDayMax?: number;
+  strategyDescription?: string;
 }
 
 export interface UpdatePreferencesDto {
@@ -21,6 +27,12 @@ export interface UpdatePreferencesDto {
   startingCapital?: number;
   notificationsEmail?: boolean;
   debriefAutomatic?: boolean;
+  tradingStyle?: string;
+  tradingStrategy?: string[];
+  tradingSessions?: string[];
+  tradesPerDayMin?: number;
+  tradesPerDayMax?: number;
+  strategyDescription?: string;
 }
 
 @Injectable({ providedIn: 'root' })

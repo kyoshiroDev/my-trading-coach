@@ -82,12 +82,23 @@ export class DebriefService {
       await this.aiService.checkDailyLimit(userId, 'debrief', 1);
     }
 
+    const userProfile = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        market: true, goal: true,
+        tradingStyle: true, tradingStrategy: true,
+        tradingSessions: true, tradesPerDayMin: true,
+        tradesPerDayMax: true, strategyDescription: true,
+      },
+    });
+
     const aiResult = (await this.aiService.generateDebrief({
       trades,
       stats,
       previousObjectives,
       weekNumber,
       year,
+      userProfile: userProfile ?? undefined,
     }, userId)) as DebriefAiResult;
 
     return this.prisma.weeklyDebrief.upsert({
