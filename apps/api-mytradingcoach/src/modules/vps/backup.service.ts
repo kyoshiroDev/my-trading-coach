@@ -1,61 +1,130 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { VpsService } from './vps.service';
 
 export interface Backup {
   filename: string;
-  size: number;
+  sizeMb: number;
   createdAt: string;
   type: 'auto' | 'manual';
+  target: 'bdd_prod' | 'bdd_dev' | 'api_prod' | 'api_dev';
 }
+
+type BackupTarget = 'bdd_prod' | 'bdd_dev' | 'api_prod' | 'api_dev';
 
 @Injectable()
 export class BackupService {
-  private readonly backupDir = process.env['BACKUP_DIR'] ?? '/opt/backups/mtc';
-  private readonly dbName = process.env['POSTGRES_DB'] ?? 'mytradingcoach_prod';
-  private readonly dbUser = process.env['POSTGRES_USER'] ?? 'mtc_user';
+  private readonly dir    = process.env['BACKUP_DIR']      ?? '/opt/backups/mtc';
+  private readonly dbName = process.env['POSTGRES_DB']     ?? 'mytradingcoach_prod';
+  private readonly dbUser = process.env['POSTGRES_USER']   ?? 'mtc_user';
+  private readonly dbDev  = process.env['POSTGRES_DB_DEV'] ?? 'mytradingcoach_dev';
+  private readonly appDir = process.env['APP_DIR']         ?? '/opt/apps/mytradingcoach/prod';
 
   constructor(private readonly vps: VpsService) {}
 
-  async listBackups(): Promise<Backup[]> {
+  async listBackups(): Promise<{ data: Backup[] }> {
     const output = await this.vps.exec(
-      `ls -la ${this.backupDir}/*.sql.gz 2>/dev/null || echo ""`,
+      `find ${this.dir} \\( -name "*.sql.gz" -o -name "*.tar.gz" \\) 2>/dev/null | ` +
+      `xargs -I{} stat --format="%n|%s|%Y" {} 2>/dev/null | sort -t'|' -k3 -r || echo ""`,
     );
-    if (!output.trim()) return [];
-    return output.split('\n')
-      .filter(l => l.trim() && l.includes('.sql.gz'))
+
+    if (!output.trim()) return { data: [] };
+
+    const backups = output.split('\n')
+      .filter(l => l.includes('|'))
       .map(line => {
-        const parts = line.trim().split(/\s+/);
-        const size = parseInt(parts[4] || '0');
-        const filename = parts[parts.length - 1].split('/').pop() ?? '';
-        const dateStr = `${parts[5]} ${parts[6]} ${parts[7]}`;
-        return {
-          filename,
-          size,
-          createdAt: new Date(dateStr).toISOString(),
-          type: filename.includes('_manual') ? 'manual' : 'auto',
-        } as Backup;
+        const [fullpath, sizeStr, epochStr] = line.split('|');
+        const filename = fullpath?.split('/').pop() ?? '';
+        if (!filename) return null;
+        const sizeMb    = parseFloat((parseInt(sizeStr ?? '0') / 1024 / 1024).toFixed(1));
+        const epoch     = parseInt(epochStr ?? '0') * 1000;
+        const createdAt = new Date(epoch).toISOString();
+        const type      = filename.includes('_manual') ? 'manual' : 'auto';
+        const target    = this.detectTarget(filename);
+        return { filename, sizeMb, createdAt, type, target } as Backup;
       })
-      .filter(b => b.filename);
+      .filter(Boolean) as Backup[];
+
+    return { data: backups };
   }
 
-  async createBackup(): Promise<Backup> {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '').slice(0, 15);
-    const filename = `mtc_prod_${timestamp}_manual.sql.gz`;
-    const cmd = `docker exec mtc_postgres pg_dump -U ${this.dbUser} ${this.dbName} | gzip > ${this.backupDir}/${filename}`;
+  private detectTarget(filename: string): BackupTarget {
+    if (filename.includes('api_prod')) return 'api_prod';
+    if (filename.includes('api_dev'))  return 'api_dev';
+    if (filename.includes('_dev_'))    return 'bdd_dev';
+    return 'bdd_prod';
+  }
+
+  async createBackup(target: BackupTarget = 'bdd_prod'): Promise<{ data: Backup }> {
+    const ts = new Date().toISOString()
+      .replace('T', '_').replace(/:/g, '').slice(0, 15);
+
+    let filename: string;
+    let cmd: string;
+
+    switch (target) {
+      case 'bdd_prod':
+        filename = `mtc_prod_${ts}_manual.sql.gz`;
+        cmd = `docker exec mtc_postgres pg_dump -U ${this.dbUser} ${this.dbName} | gzip > ${this.dir}/${filename}`;
+        break;
+      case 'bdd_dev':
+        filename = `mtc_dev_${ts}_manual.sql.gz`;
+        cmd = `docker exec mtc_postgres pg_dump -U ${this.dbUser} ${this.dbDev} | gzip > ${this.dir}/${filename}`;
+        break;
+      case 'api_prod':
+        filename = `mtc_api_prod_${ts}_manual.tar.gz`;
+        cmd = `tar -czf ${this.dir}/${filename} -C ${this.appDir} docker-compose.prod.yml 2>/dev/null || true`;
+        break;
+      case 'api_dev':
+        filename = `mtc_api_dev_${ts}_manual.tar.gz`;
+        cmd = `tar -czf ${this.dir}/${filename} -C ${this.appDir} docker-compose.dev.yml 2>/dev/null || true`;
+        break;
+      default:
+        throw new BadRequestException('Cible invalide');
+    }
+
     await this.vps.exec(cmd);
     return {
-      filename,
-      size: 0,
-      createdAt: new Date().toISOString(),
-      type: 'manual',
+      data: {
+        filename,
+        sizeMb: 0,
+        createdAt: new Date().toISOString(),
+        type: 'manual',
+        target,
+      },
     };
   }
 
-  async deleteBackup(filename: string): Promise<void> {
-    // Sanitize filename — allow only safe chars
-    if (!/^[\w\-.]+\.sql\.gz$/.test(filename)) {
-      throw new Error('Nom de fichier invalide');
+  async restoreBackup(filename: string): Promise<{ success: boolean; message: string }> {
+    if (!/^[\w\-.]+\.(sql\.gz|tar\.gz)$/.test(filename)) {
+      throw new BadRequestException('Nom de fichier invalide');
     }
-    await this.vps.exec(`rm -f ${this.backupDir}/${filename}`);
+    const filepath = `${this.dir}/${filename}`;
+    const target   = this.detectTarget(filename);
+    let cmd: string;
+
+    switch (target) {
+      case 'bdd_prod':
+        cmd = `gunzip -c ${filepath} | docker exec -i mtc_postgres psql -U ${this.dbUser} ${this.dbName}`;
+        break;
+      case 'bdd_dev':
+        cmd = `gunzip -c ${filepath} | docker exec -i mtc_postgres psql -U ${this.dbUser} ${this.dbDev}`;
+        break;
+      case 'api_prod':
+      case 'api_dev':
+        cmd = `tar -xzf ${filepath} -C ${this.appDir}`;
+        break;
+      default:
+        throw new BadRequestException('Cible non restaurable');
+    }
+
+    await this.vps.exec(cmd);
+    return { success: true, message: `Backup "${filename}" restauré avec succès` };
+  }
+
+  async deleteBackup(filename: string): Promise<void> {
+    if (!/^[\w\-.]+\.(sql\.gz|tar\.gz)$/.test(filename)) {
+      throw new BadRequestException('Nom de fichier invalide');
+    }
+    await this.vps.exec(`rm -f ${this.dir}/${filename}`);
   }
 }
