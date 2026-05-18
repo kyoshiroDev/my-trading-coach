@@ -21,6 +21,7 @@ export const appRoutes: Routes = [
       { path: 'logs',          loadComponent: () => import('./features/logs/logs.component').then(m => m.LogsComponent) },
       { path: 'revenue',       loadComponent: () => import('./features/revenue/revenue.component').then(m => m.RevenueComponent) },
       { path: 'ai-usage',      loadComponent: () => import('./features/ai-usage/ai-usage.component').then(m => m.AiUsageComponent) },
+      { path: 'emails',        loadComponent: () => import('./features/emails/emails.component').then(m => m.EmailsComponent) },
     ],
   },
   { path: '**', redirectTo: 'dashboard' },

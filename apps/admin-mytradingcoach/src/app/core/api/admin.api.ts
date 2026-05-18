@@ -69,10 +69,22 @@ export interface SubscriptionsData {
   total: number; page: number; limit: number;
 }
 
+export interface CampaignMeta {
+  type: string;
+  label: string;
+  emoji: string;
+  desc: string;
+  targetDesc: string;
+  lastSent?: string | null;
+  lastCount?: number;
+  targetCount: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminApi {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/users/admin`;
+  private readonly adminBase = `${environment.apiUrl}/admin`;
 
   list(page = 1, limit = 20, search?: string) {
     let params = new HttpParams().set('page', page).set('limit', limit);
@@ -88,4 +100,18 @@ export class AdminApi {
   online()              { return this.http.get<{ data: AdminOnlineUser[] }>(`${this.base}/online`); }
   subscriptions()       { return this.http.get<{ data: SubscriptionsData }>(`${this.base}/subscriptions`); }
   aiUsage()             { return this.http.get<{ data: AiUsageData }>(`${environment.apiUrl}/admin/ai-usage`); }
+
+  listCampaigns() {
+    return this.http.get<CampaignMeta[]>(`${this.adminBase}/campaigns`);
+  }
+  previewCampaign(type: string, subject?: string, content?: string) {
+    return this.http.post<{ html: string; recipients: { email: string; name: string | null }[] }>(
+      `${this.adminBase}/campaigns/${type}/preview`, { subject, content },
+    );
+  }
+  sendCampaign(type: string, subject?: string, content?: string) {
+    return this.http.post<{ success: number; errors: number }>(
+      `${this.adminBase}/campaigns/${type}/send`, { subject, content },
+    );
+  }
 }
