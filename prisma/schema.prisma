@@ -171,3 +171,16 @@ enum TradingSession {
   NEW_YORK
   ASIAN
 }
+
+model EmailCampaignLog {
+  id           String   @id @default(cuid())
+  type         String
+  subject      String?
+  sentBy       String
+  targetCount  Int
+  successCount Int      @default(0)
+  errorCount   Int      @default(0)
+  sentAt       DateTime @default(now())
+
+  @@index([type, sentAt])
+}
