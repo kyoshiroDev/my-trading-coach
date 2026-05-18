@@ -1,4 +1,5 @@
 import {
+  BadRequestException, Body,
   Controller, Delete, Get, Param, Post, Req, Res, UseGuards,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
@@ -53,8 +54,16 @@ export class VpsController {
   }
 
   @Post('vps/backups')
-  async createBackup() {
-    return this.backup.createBackup();
+  async createBackup(@Body() body: { target?: string }) {
+    const allowed = ['bdd_prod', 'bdd_dev', 'api_prod', 'api_dev'];
+    const target = body?.target ?? 'bdd_prod';
+    if (!allowed.includes(target)) throw new BadRequestException('Cible invalide');
+    return this.backup.createBackup(target as any);
+  }
+
+  @Post('vps/backups/:filename/restore')
+  async restoreBackup(@Param('filename') filename: string) {
+    return this.backup.restoreBackup(filename);
   }
 
   @Delete('vps/backups/:filename')
