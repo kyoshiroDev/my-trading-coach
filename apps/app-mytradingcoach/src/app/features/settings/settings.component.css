@@ -631,7 +631,84 @@
 .section-save-row {
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
   margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid var(--border);
+}
+
+.btn-ghost {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: var(--font-body);
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-ghost:hover { background: var(--bg-2); color: var(--text); }
+
+/* ── Vue résumé stratégie ── */
+.strategy-summary {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+}
+
+.strategy-modify-btn {
+  position: absolute;
+  top: 16px; right: 16px;
+  font-size: 11px; font-family: var(--font-mono);
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 6px; padding: 4px 10px;
+  color: var(--text-2); cursor: pointer;
+  transition: all 0.15s;
+  display: flex; align-items: center; gap: 4px;
+}
+.strategy-modify-btn:hover {
+  border-color: var(--blue); color: var(--blue-bright);
+  background: rgba(59,130,246,0.06);
+}
+
+.summary-row {
+  display: flex; align-items: flex-start;
+  gap: 12px; padding-right: 80px;
+}
+.summary-ic {
+  font-size: 18px; flex-shrink: 0;
+  width: 24px; text-align: center; margin-top: 1px;
+}
+.summary-content { flex: 1; min-width: 0; }
+.summary-label {
+  font-size: 9px; font-family: var(--font-mono);
+  color: var(--text-3); text-transform: uppercase;
+  letter-spacing: 0.8px; margin-bottom: 3px;
+}
+.summary-value { font-size: 13px; font-weight: 500; color: var(--text); }
+
+.summary-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+.summary-tag {
+  font-size: 11px; font-family: var(--font-mono);
+  background: rgba(59,130,246,0.1); color: var(--blue-bright);
+  border: 1px solid rgba(59,130,246,0.2);
+  padding: 2px 8px; border-radius: 100px;
+}
+
+.summary-desc {
+  font-size: 12px; color: var(--text-2);
+  font-style: italic; line-height: 1.6;
+  padding: 10px 14px; background: var(--bg-2);
+  border-radius: 8px; border-left: 2px solid var(--blue);
+  margin-top: 2px;
+}
+.summary-quote {
+  font-family: Georgia, serif; font-size: 16px;
+  color: var(--blue); opacity: 0.5;
 }

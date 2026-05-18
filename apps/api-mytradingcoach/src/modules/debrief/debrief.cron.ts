@@ -3,7 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Plan } from '@prisma/client';
+import { Plan, Role } from '@prisma/client';
 
 @Injectable()
 export class DebriefCron {
@@ -18,13 +18,21 @@ export class DebriefCron {
   async scheduledDebriefs() {
     this.logger.log('Starting weekly debrief generation...');
 
-    const premiumUsers = await this.prisma.user.findMany({
-      where: { plan: Plan.PREMIUM },
-      select: { id: true },
+    // Inclure : utilisateurs PREMIUM + ADMIN (qui ont accès premium quelle que soit leur plan)
+    // Respecter le paramètre debriefAutomatic
+    const eligibleUsers = await this.prisma.user.findMany({
+      where: {
+        debriefAutomatic: true,
+        OR: [
+          { plan: Plan.PREMIUM },
+          { role: Role.ADMIN },
+        ],
+      },
+      select: { id: true, email: true },
     });
 
     await Promise.all(
-      premiumUsers.map((user) =>
+      eligibleUsers.map((user) =>
         this.debriefQueue.add(
           'generate',
           { userId: user.id },
@@ -38,6 +46,6 @@ export class DebriefCron {
       ),
     );
 
-    this.logger.log(`Queued ${premiumUsers.length} debrief jobs`);
+    this.logger.log(`Queued ${eligibleUsers.length} debrief jobs: ${eligibleUsers.map(u => u.email).join(', ')}`);
   }
 }

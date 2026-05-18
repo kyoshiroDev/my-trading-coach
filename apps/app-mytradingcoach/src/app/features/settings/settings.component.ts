@@ -4,6 +4,7 @@ import {
   DestroyRef,
   OnInit,
   WritableSignal,
+  computed,
   effect,
   inject,
   signal,
@@ -82,6 +83,15 @@ export class SettingsComponent implements OnInit {
   protected readonly strategyDesc     = signal('');
   protected readonly isSavingStrategy = signal(false);
   protected readonly strategySaved    = signal(false);
+  protected readonly editingStrategy  = signal(false);
+
+  protected readonly hasStrategyProfile = computed(() =>
+    !!(
+      this.tradingStyle() ||
+      this.tradingStrategy().length > 0 ||
+      this.strategyDesc().trim()
+    ),
+  );
 
   // Danger
   protected readonly showPlanModal = signal(false);
@@ -113,6 +123,13 @@ export class SettingsComponent implements OnInit {
       this.tradesPerDayMin.set(user.tradesPerDayMin ?? 1);
       this.tradesPerDayMax.set(user.tradesPerDayMax ?? 10);
       this.strategyDesc.set(user.strategyDescription ?? '');
+      // Vue résumé si profil déjà renseigné, formulaire sinon
+      const hasProfil = !!(
+        user.tradingStyle ||
+        (user.tradingStrategy?.length ?? 0) > 0 ||
+        user.strategyDescription
+      );
+      this.editingStrategy.set(!hasProfil);
     }
   }
 
@@ -294,8 +311,7 @@ export class SettingsComponent implements OnInit {
           this.strategyDesc.set(res.data.strategyDescription ?? '');
           this.auth.setCurrentUser(res.data);
           this.isSavingStrategy.set(false);
-          this.strategySaved.set(true);
-          setTimeout(() => this.strategySaved.set(false), 2500);
+          this.editingStrategy.set(false);
         },
         error: () => this.isSavingStrategy.set(false),
       });
@@ -315,5 +331,27 @@ export class SettingsComponent implements OnInit {
           this.isDeleting.set(false);
         },
       });
+  }
+
+  protected styleEmoji(style: string | null): string {
+    const map: Record<string, string> = {
+      SCALPING: '⚡', DAY_TRADING: '📅', SWING: '🌊', POSITION: '🏔️',
+    };
+    return style ? (map[style] ?? '📈') : '📈';
+  }
+
+  protected styleLabel(style: string | null): string {
+    const map: Record<string, string> = {
+      SCALPING: 'Scalping', DAY_TRADING: 'Day Trading',
+      SWING: 'Swing Trading', POSITION: 'Position Trading',
+    };
+    return style ? (map[style] ?? style) : '';
+  }
+
+  protected sessionLabel(s: string): string {
+    const map: Record<string, string> = {
+      LONDON: 'London', NEW_YORK: 'New York', ASIAN: 'Asian',
+    };
+    return map[s] ?? s;
   }
 }
