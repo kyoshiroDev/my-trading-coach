@@ -326,11 +326,11 @@
 </section>
 
 <script>
-  const track = document.getElementById('reviewsTrack') as HTMLElement | null;
+  const track = document.getElementById('reviewsTrack') as HTMLElement;
   const dots  = document.querySelectorAll<HTMLButtonElement>('.reviews-dot');
   const prev  = document.getElementById('reviewsPrev');
   const next  = document.getElementById('reviewsNext');
-  if (!track) throw new Error('reviewsTrack not found');
+  if (!track) { throw new Error('reviewsTrack not found'); }
 
   let current = 0;
   const total = 5;
