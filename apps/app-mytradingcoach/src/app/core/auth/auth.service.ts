@@ -23,6 +23,7 @@ export interface AuthUser {
   startingCapital?: number;
   notificationsEmail?: boolean;
   debriefAutomatic?: boolean;
+  discordId?: string | null;
 }
 
 interface AuthResponse {

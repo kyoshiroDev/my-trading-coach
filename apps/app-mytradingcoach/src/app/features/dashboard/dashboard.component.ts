@@ -68,6 +68,26 @@ import { environment } from '../../../environments/environment';
     />
 
     <div class="content">
+      <!-- Bannière Discord -->
+      @if (!userStore.user()?.discordId && !discordBannerDismissed()) {
+        <div class="discord-banner">
+          <div class="discord-banner-content">
+            <span class="discord-banner-ic">💬</span>
+            <div class="discord-banner-text">
+              <strong>Rejoins la communauté Discord</strong>
+              <span>Traders ICT · SMC · Price Action — échanges, setups, support direct</span>
+            </div>
+          </div>
+          <div class="discord-banner-actions">
+            <a href="https://discord.gg/TDK2npvkSN" target="_blank" rel="noopener"
+              class="discord-banner-btn">
+              Rejoindre →
+            </a>
+            <button class="discord-banner-dismiss" (click)="dismissDiscordBanner()" aria-label="Fermer">✕</button>
+          </div>
+        </div>
+      }
+
       <!-- Greeting -->
       <div class="greeting">
         <h1 class="greeting-title">
@@ -583,6 +603,15 @@ export class DashboardComponent implements AfterViewInit {
       .sort((a, b) => b.pct - a.pct)
       .slice(0, 4);
   });
+
+  protected readonly discordBannerDismissed = signal(
+    localStorage.getItem('discord_banner_dismissed') === '1',
+  );
+
+  protected dismissDiscordBanner(): void {
+    localStorage.setItem('discord_banner_dismissed', '1');
+    this.discordBannerDismissed.set(true);
+  }
 
   goToJournal() {
     this.showTradeForm.set(true);

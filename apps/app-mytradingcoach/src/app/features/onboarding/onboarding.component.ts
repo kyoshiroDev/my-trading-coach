@@ -96,7 +96,7 @@ export class OnboardingComponent {
   protected readonly MARKETS = MARKETS;
   protected readonly GOALS = GOALS;
 
-  protected readonly step = signal<1 | 2 | 3 | 4>(1);
+  protected readonly step = signal<1 | 2 | 3 | 4 | 5>(1);
   protected readonly selectedMarket = signal<Market | null>(null);
   protected readonly selectedGoal = signal<Goal | null>(null);
   protected readonly selectedCurrency = signal<'USD' | 'EUR'>('USD');
@@ -124,6 +124,7 @@ export class OnboardingComponent {
     if (s === 1) this.step.set(2);
     else if (s === 2) this.step.set(3);
     else if (s === 3) this.step.set(4);
+    else if (s === 4) this.step.set(5);
   }
 
   protected skip() {
@@ -196,5 +197,6 @@ export class OnboardingComponent {
   protected get progress(): number {
     const s = this.step();
     return s === 1 ? 25 : s === 2 ? 50 : s === 3 ? 75 : 100;
+    // Step 4 (Discord) = 100% — trade form (step 5) hors wizard
   }
 }

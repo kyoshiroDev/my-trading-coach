@@ -152,18 +152,33 @@ export function welcomeFreeTemplate(params: {
           </a>
         </div>
 
-        <div style="${CARD_STYLE}">
-          <p style="margin:0 0 8px 0;">👥 <strong>Rejoins la communauté Discord</strong></p>
-          <p style="color:#8fa3bf; margin:0 0 12px 0;">
-            Échange avec d'autres traders, pose tes questions
-            et suis ta progression avec la communauté.
+        <div style="background:#1a1f2e; border:2px solid #5865f2; border-radius:12px; padding:20px; margin:16px 0;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+            <span style="font-size:24px;">💬</span>
+            <div>
+              <p style="color:#e2eaf5; font-weight:700; font-size:15px; margin:0;">
+                Rejoins la communauté Discord
+              </p>
+              <p style="color:#8fa3bf; font-size:12px; margin:0;">
+                Traders ICT · SMC · Price Action · Crypto · Forex · Futures
+              </p>
+            </div>
+          </div>
+          <p style="color:#b0bec5; font-size:13px; line-height:1.6; margin:0 0 16px 0;">
+            Notre Discord c'est là où tu vas trouver des traders qui ont les mêmes questions
+            que toi, partager tes setups, poster tes wins de la semaine et avoir un support direct.
+            <br/><strong style="color:#e2eaf5;">Ça te prend 2 minutes.</strong>
           </p>
-          <a href="https://discord.gg/zSPD9pv4eB" style="${BTN_STYLE}">
+          <a href="https://discord.gg/TDK2npvkSN" style="display:inline-block; background:#5865f2; color:white; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:700; font-size:14px; margin-bottom:14px;">
             Rejoindre le Discord →
           </a>
-          <p style="color:#8fa3bf; font-size:12px; margin-top:12px;">
-            Une fois connecté, tape <code>/verify</code> dans #👋-bienvenue pour activer ton accès.
-          </p>
+          <div style="background:#0f1219; border-radius:8px; padding:12px 14px;">
+            <p style="color:#8fa3bf; font-size:12px; margin:0; line-height:1.7;">
+              📌 Une fois sur le serveur, tape <code style="background:#1e2533; padding:2px 6px; border-radius:4px; color:#00d4aa; font-family:monospace;">/verify</code>
+              dans <strong style="color:#e2eaf5;">#👋-bienvenue</strong> avec ton email MyTradingCoach
+              pour obtenir ton rôle <strong style="color:#00d4aa;">Membre</strong> automatiquement.
+            </p>
+          </div>
         </div>
 
         <p style="color:#8fa3bf; font-size:13px; margin-top:24px;">
@@ -381,7 +396,7 @@ export function welcomePremiumTemplate(params: {
             Réservé aux membres Premium — stratégies avancées,
             support prioritaire et échanges exclusifs.
           </p>
-          <a href="https://discord.gg/zSPD9pv4eB" style="${BTN_STYLE}">
+          <a href="https://discord.gg/TDK2npvkSN" style="${BTN_STYLE}">
             Rejoindre le Discord →
           </a>
           <p style="color:#8fa3bf; font-size:12px; margin-top:12px;">
