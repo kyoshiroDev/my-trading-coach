@@ -269,7 +269,7 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser, AdminUserDetail } fro
                     <div class="profile-stat-value"
                       [class.val-pos]="(viewDetail()!.stats.winRate ?? 0) >= 50"
                       [class.val-neg]="(viewDetail()!.stats.winRate ?? 0) < 40">
-                      {{ viewDetail()!.stats.winRate ?? '—' }}{{ viewDetail()!.stats.winRate != null ? '%' : '' }}
+                      {{ viewDetail()!.stats.winRate ?? '—' }}{{ viewDetail()!.stats.winRate !== null && viewDetail()!.stats.winRate !== undefined ? '%' : '' }}
                     </div>
                   </div>
                 </div>
