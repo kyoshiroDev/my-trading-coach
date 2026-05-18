@@ -95,7 +95,7 @@ export class BackupService {
   }
 
   async restoreBackup(filename: string): Promise<{ success: boolean; message: string }> {
-    if (!/^[\w\-\.]+\.(sql\.gz|tar\.gz)$/.test(filename)) {
+    if (!/^[\w\-.]+\.(sql\.gz|tar\.gz)$/.test(filename)) {
       throw new BadRequestException('Nom de fichier invalide');
     }
     const filepath = `${this.dir}/${filename}`;
@@ -122,7 +122,7 @@ export class BackupService {
   }
 
   async deleteBackup(filename: string): Promise<void> {
-    if (!/^[\w\-\.]+\.(sql\.gz|tar\.gz)$/.test(filename)) {
+    if (!/^[\w\-.]+\.(sql\.gz|tar\.gz)$/.test(filename)) {
       throw new BadRequestException('Nom de fichier invalide');
     }
     await this.vps.exec(`rm -f ${this.dir}/${filename}`);
