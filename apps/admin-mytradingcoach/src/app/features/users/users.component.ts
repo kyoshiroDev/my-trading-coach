@@ -201,7 +201,8 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser, AdminUserDetail } fro
       <div class="modal-overlay" role="button" tabindex="0" aria-label="Fermer"
         (click)="closeProfile()" (keydown.escape)="closeProfile()">
         <div class="modal modal-profile" role="dialog" aria-modal="true"
-          (click)="$event.stopPropagation()">
+          (click)="$event.stopPropagation()"
+          (keydown)="$event.stopPropagation()">
 
           <div class="modal-header">
             <div class="profile-header-info">
@@ -298,7 +299,7 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser, AdminUserDetail } fro
                         <span class="profile-info-val">{{ viewDetail()!.user.tradingSessions!.map(s => sessionLabel(s)).join(' · ') }}</span>
                       </div>
                     }
-                    @if (viewDetail()!.user.tradesPerDayMin != null) {
+                    @if (viewDetail()!.user.tradesPerDayMin !== null && viewDetail()!.user.tradesPerDayMin !== undefined) {
                       <div class="profile-info-row">
                         <span class="profile-info-label">Fréquence</span>
                         <span class="profile-info-val">{{ viewDetail()!.user.tradesPerDayMin }}–{{ viewDetail()!.user.tradesPerDayMax }} trades/jour</span>
