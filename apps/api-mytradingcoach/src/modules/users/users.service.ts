@@ -374,6 +374,9 @@ export class UsersService {
         id: true, email: true, name: true, plan: true, role: true,
         trialEndsAt: true, stripeInterval: true, stripeCurrentPeriodEnd: true,
         lastSeenAt: true, lastLoginAt: true, createdAt: true,
+        tradingStyle: true, tradingStrategy: true, tradingSessions: true,
+        tradesPerDayMin: true, tradesPerDayMax: true, strategyDescription: true,
+        market: true, goal: true, currency: true, startingCapital: true,
       },
     });
     if (!user) throw new NotFoundException('User not found');
@@ -382,35 +385,60 @@ export class UsersService {
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
-    const [totalTrades, tradesThisMonth, aiLogs] = await Promise.all([
-      this.prisma.trade.count({ where: { userId } }),
-      this.prisma.trade.count({ where: { userId, createdAt: { gte: startOfMonth } } }),
-      this.prisma.aiUsageLog
-        .findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 50 })
-        .catch(() => []),
-    ]);
+    const [totalTrades, tradesThisMonth, aiLogs, pnlData, topAssets] =
+      await Promise.all([
+        this.prisma.trade.count({ where: { userId } }),
+        this.prisma.trade.count({ where: { userId, createdAt: { gte: startOfMonth } } }),
+        this.prisma.aiUsageLog
+          .findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 100 })
+          .catch(() => []),
+        this.prisma.trade.findMany({
+          where: { userId, pnl: { not: null } },
+          select: { pnl: true, asset: true },
+        }),
+        this.prisma.trade.groupBy({
+          by: ['asset'],
+          where: { userId },
+          _count: { asset: true },
+          orderBy: { _count: { asset: 'desc' } },
+          take: 3,
+        }),
+      ]);
 
-    const totalTokens = aiLogs.reduce((a, l) => a + l.inputTokens + l.outputTokens, 0);
+    const totalPnl      = pnlData.reduce((s, t) => s + (t.pnl ?? 0), 0);
+    const winCount      = pnlData.filter(t => (t.pnl ?? 0) > 0).length;
+    const winRate       = pnlData.length > 0 ? Math.round((winCount / pnlData.length) * 100) : 0;
+    const totalTokens   = aiLogs.reduce((a, l) => a + l.inputTokens + l.outputTokens, 0);
+    const totalCostUsd  = aiLogs.reduce((a, l) => a + l.costUsd, 0);
+
+    const featureMap = new Map<string, number>();
+    for (const l of aiLogs) {
+      featureMap.set(l.feature, (featureMap.get(l.feature) ?? 0) + 1);
+    }
 
     const timeline = [
       ...(user.lastLoginAt
-        ? [{ action: 'Connexion', detail: '', type: 'auth', createdAt: user.lastLoginAt.toISOString() }]
+        ? [{ action: 'Connexion', detail: '', type: 'auth' as const, createdAt: user.lastLoginAt.toISOString() }]
         : []),
-      ...aiLogs.slice(0, 5).map(l => ({
-        action: `IA: ${l.feature}`,
-        detail: `${l.inputTokens + l.outputTokens} tokens`,
-        type: 'ai',
+      ...aiLogs.slice(0, 8).map(l => ({
+        action: `IA · ${l.feature}`,
+        detail: `${(l.inputTokens + l.outputTokens).toLocaleString()} tokens`,
+        type: 'ai' as const,
         createdAt: l.createdAt.toISOString(),
       })),
-    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    ]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 8);
 
     return {
       data: {
         user,
         stats: {
-          totalTrades, tradesThisMonth, totalSessions: 0,
-          totalTimeMinutes: 0, totalAiCalls: aiLogs.length, totalTokens,
+          totalTrades, tradesThisMonth, totalPnl, winRate,
+          totalAiCalls: aiLogs.length, totalTokens, totalCostUsd,
+          byFeature: Object.fromEntries(featureMap),
         },
+        topAssets: topAssets.map(a => ({ asset: a.asset, count: a._count.asset })),
         timeline,
       },
     };
