@@ -55,3 +55,17 @@ tbody td { padding: 10px 16px; font-size: 12px; color: var(--text2); }
 .online-email { font-size: 10px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .online-meta  { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
 .online-session { font-size: 10px; font-family: var(--mono); color: var(--text3); }
+
+/* ── Containers groupés dashboard ── */
+.dash-container-group { border-bottom: 1px solid var(--border); }
+.dash-container-group:last-child { border-bottom: none; }
+.dash-group-label {
+  display: flex; align-items: center; gap: 6px; padding: 8px 16px 4px;
+  font-size: 9px; font-family: var(--mono); font-weight: 700;
+  color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase;
+}
+.dash-group-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.container-metrics { display: flex; gap: 10px; flex-shrink: 0; }
+.container-metrics .mono-text { font-size: 10px; color: var(--text3); }
+.val-warn { color: var(--amber) !important; }
+.container-stopped-badge { font-size: 10px; color: var(--text3); flex-shrink: 0; }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -131,26 +131,42 @@ import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
         <div class="card">
           <div class="card-header">
             <span class="card-title">Containers Docker</span>
+            <span class="refresh-hint mono-text">Auto 10s</span>
           </div>
-          @if (containers().length > 0) {
-            @for (c of containers(); track c.id) {
-              <div class="container-row">
-                <div class="container-status" [class.running]="c.status==='running'"
-                  [class.error]="c.status==='error'" [class.stopped]="c.status==='stopped'"></div>
-                <div class="container-info">
-                  <div class="container-name">{{ c.name }}</div>
-                  <div class="container-image">{{ c.image }}</div>
-                </div>
-                <div class="container-metrics">
-                  <span class="mono-text">CPU {{ c.cpu }}%</span>
-                  <span class="mono-text">RAM {{ c.ram }}MB</span>
-                </div>
-              </div>
-            }
+          @if (containers().length === 0) {
+            <div class="empty-state"><span>Module Docker non déployé</span></div>
           } @else {
-            <div class="empty-state">
-              <span>Module Docker non déployé</span>
-            </div>
+            @for (group of containerGroups(); track group.label) {
+              @if (group.containers.length) {
+                <div class="dash-container-group">
+                  <div class="dash-group-label">
+                    <div class="dash-group-dot" [style.background]="group.color"></div>
+                    {{ group.label }}
+                  </div>
+                  @for (c of group.containers; track c.id) {
+                    <div class="container-row">
+                      <div class="container-status"
+                        [class.running]="c.status==='running'"
+                        [class.error]="c.status==='error'"
+                        [class.stopped]="c.status==='stopped'">
+                      </div>
+                      <div class="container-info">
+                        <div class="container-name">{{ c.name }}</div>
+                        <div class="container-image">{{ c.image }}</div>
+                      </div>
+                      @if (c.status === 'running') {
+                        <div class="container-metrics">
+                          <span class="mono-text" [class.val-warn]="c.cpu > 50">CPU {{ c.cpu | number:'1.1-1' }}%</span>
+                          <span class="mono-text">{{ c.ram }}MB</span>
+                        </div>
+                      } @else {
+                        <span class="container-stopped-badge mono-text">{{ c.status === 'error' ? 'Erreur' : 'Arrêté' }}</span>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            }
           }
         </div>
       </div>
@@ -187,6 +203,15 @@ export class DashboardComponent {
   protected readonly onlineUsers = signal<AdminOnlineUser[]>([]);
   protected readonly vpsStats = signal<VpsStats | null>(null);
   protected readonly containers = signal<DockerContainer[]>([]);
+
+  protected readonly containerGroups = computed(() => {
+    const all = this.containers();
+    return [
+      { label: 'PROD',  color: '#00d4aa', containers: all.filter(c => c.name.includes('_prod') || c.name.includes('discord')) },
+      { label: 'DEV',   color: '#4a9eff', containers: all.filter(c => c.name.includes('_dev')) },
+      { label: 'INFRA', color: '#f5a623', containers: all.filter(c => !c.name.includes('_prod') && !c.name.includes('_dev') && !c.name.includes('discord')) },
+    ];
+  });
 
   constructor() {
     this.adminApi.stats().pipe(takeUntilDestroyed(this.destroyRef))

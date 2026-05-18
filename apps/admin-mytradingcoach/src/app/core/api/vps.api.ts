@@ -11,7 +11,7 @@ export interface VpsStats {
 export interface DockerContainer {
   id: string; name: string; image: string;
   status: 'running' | 'stopped' | 'error';
-  cpu: number; ram: number; ports: string[];
+  cpu: number; ram: number; ramLimit: number; ports: string[];
 }
 
 export interface Backup {
@@ -25,6 +25,9 @@ export class VpsApi {
 
   stats()                      { return this.http.get<{ data: VpsStats }>(`${this.base}/vps/stats`); }
   containers()                 { return this.http.get<{ data: DockerContainer[] }>(`${this.base}/docker/containers`); }
+  containerAction(id: string, action: 'start' | 'stop' | 'restart') {
+    return this.http.post(`${this.base}/docker/containers/${id}/${action}`, {});
+  }
   startContainer(id: string)   { return this.http.post(`${this.base}/docker/containers/${id}/start`, {}); }
   stopContainer(id: string)    { return this.http.post(`${this.base}/docker/containers/${id}/stop`, {}); }
   restartContainer(id: string) { return this.http.post(`${this.base}/docker/containers/${id}/restart`, {}); }
