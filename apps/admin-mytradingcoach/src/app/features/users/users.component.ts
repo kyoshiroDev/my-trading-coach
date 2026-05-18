@@ -259,24 +259,24 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser, AdminUserDetail } fro
                   <div class="profile-stat">
                     <div class="profile-stat-label">P&L total</div>
                     <div class="profile-stat-value"
-                      [class.val-pos]="viewDetail()!.stats.totalPnl >= 0"
-                      [class.val-neg]="viewDetail()!.stats.totalPnl < 0">
-                      {{ viewDetail()!.stats.totalPnl >= 0 ? '+' : '' }}{{ viewDetail()!.stats.totalPnl | number:'1.0-0' }}
+                      [class.val-pos]="(viewDetail()!.stats.totalPnl ?? 0) >= 0"
+                      [class.val-neg]="(viewDetail()!.stats.totalPnl ?? 0) < 0">
+                      {{ (viewDetail()!.stats.totalPnl ?? 0) >= 0 ? '+' : '' }}{{ (viewDetail()!.stats.totalPnl ?? 0) | number:'1.0-0' }}
                     </div>
                   </div>
                   <div class="profile-stat">
                     <div class="profile-stat-label">Win rate</div>
                     <div class="profile-stat-value"
-                      [class.val-pos]="viewDetail()!.stats.winRate >= 50"
-                      [class.val-neg]="viewDetail()!.stats.winRate < 40">
-                      {{ viewDetail()!.stats.winRate }}%
+                      [class.val-pos]="(viewDetail()!.stats.winRate ?? 0) >= 50"
+                      [class.val-neg]="(viewDetail()!.stats.winRate ?? 0) < 40">
+                      {{ viewDetail()!.stats.winRate ?? '—' }}{{ viewDetail()!.stats.winRate != null ? '%' : '' }}
                     </div>
                   </div>
                 </div>
-                @if (viewDetail()!.topAssets.length) {
+                @if (viewDetail()!.topAssets?.length) {
                   <div class="profile-assets">
                     <span class="profile-assets-label">Assets :</span>
-                    @for (a of viewDetail()!.topAssets; track a.asset) {
+                    @for (a of viewDetail()!.topAssets!; track a.asset) {
                       <span class="profile-asset-tag">{{ a.asset }} ×{{ a.count }}</span>
                     }
                   </div>
@@ -343,7 +343,7 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser, AdminUserDetail } fro
                     <div class="profile-stat-value">{{ viewDetail()!.stats.totalCostUsd | number:'1.2-2' }} USD</div>
                   </div>
                 </div>
-                @if (viewDetail()!.stats.byFeature) {
+                @if (viewDetail()!.stats.byFeature && (viewDetail()!.stats.byFeature | keyvalue)?.length) {
                   <div class="profile-features">
                     @for (kv of viewDetail()!.stats.byFeature | keyvalue; track kv.key) {
                       <div class="profile-feature-row">
