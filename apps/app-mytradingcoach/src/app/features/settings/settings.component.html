@@ -250,84 +250,140 @@
       <!-- ══ 4. STRATÉGIE DE TRADING ══ -->
       <div class="settings-section">
         <div class="settings-section-label">Stratégie de trading</div>
-        <div class="settings-card" style="padding:20px">
 
-          <p style="font-size:12px;color:var(--text-3);margin:0 0 4px">
-            Utilisé par l'IA pour personnaliser ses analyses. Plus c'est précis, mieux c'est.
-          </p>
-
-          <!-- Style de trading -->
-          <div class="strat-section-label">Style de trading</div>
-          <div class="strat-chips">
-            @for (s of TRADING_STYLES; track s.value) {
-              <button class="strat-chip" [class.active]="tradingStyle() === s.value"
-                (click)="tradingStyle.set(s.value)">
-                <span class="strat-chip-emoji">{{ s.emoji }}</span>
-                {{ s.label }}
-              </button>
-            }
-          </div>
-
-          <!-- Sessions -->
-          <div class="strat-section-label">Sessions préférées</div>
-          <div class="strat-chips">
-            @for (s of SESSIONS; track s.value) {
-              <button class="strat-chip" [class.active]="tradingSessions().includes(s.value)"
-                (click)="toggleSession(s.value)">
-                {{ s.label }}
-                <span style="font-size:10px;opacity:.6;font-family:var(--font-mono)">{{ s.time }}</span>
-              </button>
-            }
-          </div>
-
-          <!-- Fréquence -->
-          <div class="strat-section-label">
-            Trades / jour habituels
-            <span class="freq-badge">{{ tradesPerDayMin() }}–{{ tradesPerDayMax() }}</span>
-          </div>
-          <div class="freq-slider-row">
-            <span class="freq-slider-label">Min</span>
-            <input type="range" class="freq-slider" min="0" max="50"
-              [value]="tradesPerDayMin()"
-              (input)="tradesPerDayMin.set(+$any($event.target).value)" />
-            <span class="freq-slider-val">{{ tradesPerDayMin() }}</span>
-          </div>
-          <div class="freq-slider-row">
-            <span class="freq-slider-label">Max</span>
-            <input type="range" class="freq-slider" min="0" max="100"
-              [value]="tradesPerDayMax()"
-              (input)="tradesPerDayMax.set(+$any($event.target).value)" />
-            <span class="freq-slider-val">{{ tradesPerDayMax() }}</span>
-          </div>
-
-          <!-- Tags stratégie -->
-          <div class="strat-section-label">Stratégie</div>
-          <div class="strat-chips" style="gap:6px">
-            @for (tag of STRATEGY_TAGS; track tag) {
-              <button class="strat-tag" [class.selected]="tradingStrategy().includes(tag)"
-                (click)="toggleTag(tag)">{{ tag }}</button>
-            }
-          </div>
-
-          <!-- Description libre -->
-          <div class="strat-section-label">
-            Description libre
-            <span class="char-count">{{ strategyDesc().length }}/200</span>
-          </div>
-          <textarea class="strat-textarea" rows="3" maxlength="200"
-            placeholder="Ex: Je trade les OB + FVG sur London et NY, scalping 1-5min..."
-            [value]="strategyDesc()" (input)="onStrategyDesc($event)">
-          </textarea>
-
-          <div class="section-save-row">
-            <button class="btn btn-primary" (click)="saveStrategy()" [disabled]="isSavingStrategy()">
-              @if (isSavingStrategy()) { Enregistrement… }
-              @else if (strategySaved()) { ✓ Sauvegardé }
-              @else { Enregistrer la stratégie }
+        <!-- ── VUE RÉSUMÉ ── -->
+        @if (!editingStrategy() && hasStrategyProfile()) {
+          <div class="strategy-summary">
+            <button class="strategy-modify-btn" (click)="editingStrategy.set(true)">
+              ✏️ Modifier
             </button>
+
+            @if (tradingStyle()) {
+              <div class="summary-row">
+                <span class="summary-ic">{{ styleEmoji(tradingStyle()) }}</span>
+                <div class="summary-content">
+                  <div class="summary-label">Style</div>
+                  <div class="summary-value">{{ styleLabel(tradingStyle()) }}</div>
+                </div>
+              </div>
+            }
+
+            @if (tradingSessions().length) {
+              <div class="summary-row">
+                <span class="summary-ic">📍</span>
+                <div class="summary-content">
+                  <div class="summary-label">Sessions</div>
+                  <div class="summary-value">
+                    {{ tradingSessions().map(s => sessionLabel(s)).join(' · ') }}
+                  </div>
+                </div>
+              </div>
+            }
+
+            <div class="summary-row">
+              <span class="summary-ic">📊</span>
+              <div class="summary-content">
+                <div class="summary-label">Fréquence</div>
+                <div class="summary-value">{{ tradesPerDayMin() }}–{{ tradesPerDayMax() }} trades / jour</div>
+              </div>
+            </div>
+
+            @if (tradingStrategy().length) {
+              <div class="summary-row">
+                <span class="summary-ic">🏷️</span>
+                <div class="summary-content">
+                  <div class="summary-label">Stratégie</div>
+                  <div class="summary-tags">
+                    @for (tag of tradingStrategy(); track tag) {
+                      <span class="summary-tag">{{ tag }}</span>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+
+            @if (strategyDesc().trim()) {
+              <div class="summary-desc">
+                <span class="summary-quote">"</span>{{ strategyDesc() }}<span class="summary-quote">"</span>
+              </div>
+            }
           </div>
 
-        </div>
+        <!-- ── VUE FORMULAIRE ── -->
+        } @else {
+          <div class="settings-card" style="padding:20px">
+            <p style="font-size:12px;color:var(--text-3);margin:0 0 4px">
+              Utilisé par l'IA pour personnaliser ses analyses. Plus c'est précis, mieux c'est.
+            </p>
+
+            <div class="strat-section-label">Style de trading</div>
+            <div class="strat-chips">
+              @for (s of TRADING_STYLES; track s.value) {
+                <button class="strat-chip" [class.active]="tradingStyle() === s.value"
+                  (click)="tradingStyle.set(s.value)">
+                  <span class="strat-chip-emoji">{{ s.emoji }}</span>
+                  {{ s.label }}
+                </button>
+              }
+            </div>
+
+            <div class="strat-section-label">Sessions préférées</div>
+            <div class="strat-chips">
+              @for (s of SESSIONS; track s.value) {
+                <button class="strat-chip" [class.active]="tradingSessions().includes(s.value)"
+                  (click)="toggleSession(s.value)">
+                  {{ s.label }}
+                  <span style="font-size:10px;opacity:.6;font-family:var(--font-mono)">{{ s.time }}</span>
+                </button>
+              }
+            </div>
+
+            <div class="strat-section-label">
+              Trades / jour habituels
+              <span class="freq-badge">{{ tradesPerDayMin() }}–{{ tradesPerDayMax() }}</span>
+            </div>
+            <div class="freq-slider-row">
+              <span class="freq-slider-label">Min</span>
+              <input type="range" class="freq-slider" min="0" max="50"
+                [value]="tradesPerDayMin()"
+                (input)="tradesPerDayMin.set(+$any($event.target).value)" />
+              <span class="freq-slider-val">{{ tradesPerDayMin() }}</span>
+            </div>
+            <div class="freq-slider-row">
+              <span class="freq-slider-label">Max</span>
+              <input type="range" class="freq-slider" min="0" max="100"
+                [value]="tradesPerDayMax()"
+                (input)="tradesPerDayMax.set(+$any($event.target).value)" />
+              <span class="freq-slider-val">{{ tradesPerDayMax() }}</span>
+            </div>
+
+            <div class="strat-section-label">Stratégie</div>
+            <div class="strat-chips" style="gap:6px">
+              @for (tag of STRATEGY_TAGS; track tag) {
+                <button class="strat-tag" [class.selected]="tradingStrategy().includes(tag)"
+                  (click)="toggleTag(tag)">{{ tag }}</button>
+              }
+            </div>
+
+            <div class="strat-section-label">
+              Description libre
+              <span class="char-count">{{ strategyDesc().length }}/200</span>
+            </div>
+            <textarea class="strat-textarea" rows="3" maxlength="200"
+              placeholder="Ex: Je trade les OB + FVG sur London et NY, scalping 1-5min..."
+              [value]="strategyDesc()" (input)="onStrategyDesc($event)">
+            </textarea>
+
+            <div class="section-save-row">
+              @if (hasStrategyProfile()) {
+                <button class="btn-ghost" (click)="editingStrategy.set(false)">Annuler</button>
+              }
+              <button class="btn btn-primary" (click)="saveStrategy()" [disabled]="isSavingStrategy()">
+                {{ isSavingStrategy() ? 'Enregistrement…' : 'Enregistrer la stratégie' }}
+              </button>
+            </div>
+          </div>
+        }
       </div>
 
     </div> <!-- /settings-col-right -->
