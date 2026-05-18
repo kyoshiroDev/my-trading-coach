@@ -158,7 +158,7 @@ export function welcomeFreeTemplate(params: {
             Échange avec d'autres traders, pose tes questions
             et suis ta progression avec la communauté.
           </p>
-          <a href="https://discord.gg/zSPD9pv4eB" style="${BTN_STYLE}">
+          <a href="https://discord.gg/TDK2npvkSN" style="${BTN_STYLE}">
             Rejoindre le Discord →
           </a>
           <p style="color:#8fa3bf; font-size:12px; margin-top:12px;">
@@ -381,7 +381,7 @@ export function welcomePremiumTemplate(params: {
             Réservé aux membres Premium — stratégies avancées,
             support prioritaire et échanges exclusifs.
           </p>
-          <a href="https://discord.gg/zSPD9pv4eB" style="${BTN_STYLE}">
+          <a href="https://discord.gg/TDK2npvkSN" style="${BTN_STYLE}">
             Rejoindre le Discord →
           </a>
           <p style="color:#8fa3bf; font-size:12px; margin-top:12px;">

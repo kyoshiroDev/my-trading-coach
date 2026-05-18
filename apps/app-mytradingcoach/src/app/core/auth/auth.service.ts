@@ -29,6 +29,7 @@ export interface AuthUser {
   tradesPerDayMin?: number | null;
   tradesPerDayMax?: number | null;
   strategyDescription?: string | null;
+  discordId?: string | null;
 }
 
 interface AuthResponse {

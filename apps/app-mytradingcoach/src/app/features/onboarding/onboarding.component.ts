@@ -67,7 +67,7 @@ export class OnboardingComponent {
   protected readonly STRATEGY_TAGS = STRATEGY_TAGS;
   protected readonly SESSIONS = SESSIONS;
 
-  protected readonly step = signal<1 | 2 | 3 | 4 | 5>(1);
+  protected readonly step = signal<1 | 2 | 3 | 4 | 5 | 6>(1);
   protected readonly selectedMarket = signal<Market | null>(null);
   protected readonly selectedGoal = signal<Goal | null>(null);
   protected readonly selectedCurrency = signal<'USD' | 'EUR'>('USD');
@@ -110,7 +110,7 @@ export class OnboardingComponent {
 
   protected nextStep() {
     const s = this.step();
-    if (s < 5) this.step.set((s + 1) as 1 | 2 | 3 | 4 | 5);
+    if (s < 6) this.step.set((s + 1) as 1 | 2 | 3 | 4 | 5 | 6);
   }
 
   protected skip() {
