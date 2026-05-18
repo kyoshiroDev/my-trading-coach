@@ -20,40 +20,42 @@ import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
         <span class="page-date">{{ now | date:'d MMMM yyyy · HH:mm' }}</span>
       </div>
 
-      @if (loading()) {
-        <div class="loading">Chargement...</div>
-      } @else if (stats(); as s) {
-        <div class="stats-row">
-          <div class="stat-card teal">
-            <div class="stat-label">MRR</div>
-            <div class="stat-value">€{{ s.mrr | number:'1.0-0' }}</div>
-            <div class="stat-change neutral">
-              @if (s.mrr === 0) { Beta uniquement } @else { ARR €{{ s.arr | number:'1.0-0' }} }
-            </div>
+      <!-- Stats compactes -->
+      @if (!loading() && stats(); as s) {
+        <div class="stats-bar">
+          <div class="stat-item">
+            <span class="stat-item-label">MRR</span>
+            <span class="stat-item-value teal">€{{ s.mrr | number:'1.0-0' }}</span>
+            <span class="stat-item-sub">{{ s.mrr === 0 ? 'Beta' : 'ARR €' + (s.arr | number:'1.0-0') }}</span>
           </div>
-          <div class="stat-card blue">
-            <div class="stat-label">Utilisateurs</div>
-            <div class="stat-value">{{ s.freeUsers + s.totalPremium + s.betaTesters }}</div>
-            <div class="stat-change up">↑ +{{ s.newThisMonth }} ce mois</div>
+          <div class="stat-sep"></div>
+          <div class="stat-item">
+            <span class="stat-item-label">Utilisateurs</span>
+            <span class="stat-item-value">{{ s.freeUsers + s.totalPremium + s.betaTesters }}</span>
+            <span class="stat-item-sub up">+{{ s.newThisMonth }} ce mois</span>
           </div>
-          <div class="stat-card green">
-            <div class="stat-label">Premium</div>
-            <div class="stat-value">{{ s.totalPremium }}</div>
-            <div class="stat-change neutral">+ {{ s.betaTesters }} beta gratuits</div>
+          <div class="stat-sep"></div>
+          <div class="stat-item">
+            <span class="stat-item-label">Premium</span>
+            <span class="stat-item-value blue">{{ s.totalPremium }}</span>
+            <span class="stat-item-sub">+ {{ s.betaTesters }} beta</span>
           </div>
-          <div class="stat-card amber">
-            <div class="stat-label">Mensuel / Annuel</div>
-            <div class="stat-value">{{ s.monthly }} / {{ s.annual }}</div>
-            <div class="stat-change neutral">abonnements Stripe</div>
+          <div class="stat-sep"></div>
+          <div class="stat-item">
+            <span class="stat-item-label">Stripe</span>
+            <span class="stat-item-value">{{ s.monthly }}<span class="stat-slash">/</span>{{ s.annual }}</span>
+            <span class="stat-item-sub">mensuel / annuel</span>
           </div>
-          <div class="stat-card purple">
-            <div class="stat-label">Churn</div>
-            <div class="stat-value">{{ s.churnedThisMonth }}</div>
-            <div class="stat-change down">résiliations ce mois</div>
+          <div class="stat-sep"></div>
+          <div class="stat-item">
+            <span class="stat-item-label">Churn</span>
+            <span class="stat-item-value" [class.red]="s.churnedThisMonth > 0">{{ s.churnedThisMonth }}</span>
+            <span class="stat-item-sub">résiliations</span>
           </div>
         </div>
       }
 
+      <!-- Utilisateurs actifs -->
       <div class="online-panel">
         <div class="online-panel-header">
           <lucide-icon [img]="WifiIcon" [size]="13" />
@@ -61,7 +63,7 @@ import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
           <span class="online-count">{{ onlineUsers().length }}</span>
         </div>
         @if (onlineUsers().length === 0) {
-          <div class="online-empty">Aucun utilisateur actif</div>
+          <div class="online-empty">Aucun utilisateur actif en ce moment</div>
         } @else {
           <div class="online-list">
             @for (u of onlineUsers(); track u.id) {
@@ -88,8 +90,10 @@ import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
         }
       </div>
 
-      <div class="two-col">
-        <div class="card">
+      <!-- VPS + Containers -->
+      <div class="infra-row">
+
+        <div class="card vps-card">
           <div class="card-header">
             <span class="card-title">VPS · OVH · Paris</span>
             <span class="refresh-hint">↻ 10s</span>
@@ -97,78 +101,86 @@ import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
           @if (vpsStats(); as v) {
             <div class="metric-row">
               <div class="metric-label">CPU</div>
-              <div class="metric-bar"><div class="metric-fill teal" [style.width.%]="v.cpu"></div></div>
+              <div class="metric-bar">
+                <div class="metric-fill teal" [style.width.%]="v.cpu"
+                  [class.amber]="v.cpu > 60" [class.red]="v.cpu > 80"></div>
+              </div>
               <div class="metric-val">{{ v.cpu }}%</div>
             </div>
             <div class="metric-row">
               <div class="metric-label">RAM</div>
-              <div class="metric-bar"><div class="metric-fill blue" [style.width.%]="(v.ram.used/v.ram.total)*100"></div></div>
+              <div class="metric-bar">
+                <div class="metric-fill blue" [style.width.%]="(v.ram.used/v.ram.total)*100"
+                  [class.amber]="(v.ram.used/v.ram.total) > 0.7"
+                  [class.red]="(v.ram.used/v.ram.total) > 0.9"></div>
+              </div>
               <div class="metric-val">{{ ((v.ram.used/v.ram.total)*100) | number:'1.0-0' }}%</div>
             </div>
             <div class="metric-row">
               <div class="metric-label">Disque</div>
-              <div class="metric-bar"><div class="metric-fill amber" [style.width.%]="(v.disk.used/v.disk.total)*100"></div></div>
+              <div class="metric-bar">
+                <div class="metric-fill amber" [style.width.%]="(v.disk.used/v.disk.total)*100"
+                  [class.red]="(v.disk.used/v.disk.total) > 0.85"></div>
+              </div>
               <div class="metric-val">{{ ((v.disk.used/v.disk.total)*100) | number:'1.0-0' }}%</div>
             </div>
             <div class="vps-info">
               <div class="info-row"><span class="info-key">IP</span><span class="info-val">{{ v.ip }}</span></div>
               <div class="info-row"><span class="info-key">OS</span><span class="info-val">{{ v.os }}</span></div>
-              <div class="info-row"><span class="info-key">Node</span><span class="info-val">{{ v.node }}</span></div>
               <div class="info-row"><span class="info-key">Docker</span><span class="info-val">{{ v.docker }}</span></div>
-              <div class="info-row">
-                <span class="info-key">Uptime</span>
-                <span class="info-val">{{ formatUptime(v.uptime) }}</span>
-              </div>
+              <div class="info-row"><span class="info-key">Uptime</span><span class="info-val">{{ formatUptime(v.uptime) }}</span></div>
             </div>
           } @else {
-            <div class="empty-state">
-              <span>Module VPS non déployé</span>
-              <a routerLink="/vps" class="empty-link">Configurer →</a>
-            </div>
+            <div class="empty-state"><span>VPS non connecté</span></div>
           }
         </div>
 
-        <div class="card">
+        <div class="card containers-card">
           <div class="card-header">
             <span class="card-title">Containers Docker</span>
-            <span class="refresh-hint mono-text">Auto 10s</span>
+            <div class="containers-header-stats">
+              <span class="cstat-inline green">{{ runningCount() }} running</span>
+              @if (stoppedCount() > 0) {
+                <span class="cstat-inline red">{{ stoppedCount() }} arrêtés</span>
+              }
+            </div>
+            <span class="refresh-hint">↻ 10s</span>
           </div>
+
           @if (containers().length === 0) {
-            <div class="empty-state"><span>Module Docker non déployé</span></div>
+            <div class="empty-state">Module Docker non déployé</div>
           } @else {
-            @for (group of containerGroups(); track group.label) {
-              @if (group.containers.length) {
-                <div class="dash-container-group">
-                  <div class="dash-group-label">
-                    <div class="dash-group-dot" [style.background]="group.color"></div>
-                    {{ group.label }}
+            <div class="containers-table">
+              @for (group of containerGroups(); track group.label) {
+                @if (group.containers.length) {
+                  <div class="ct-group-header">
+                    <div class="ct-group-dot" [style.background]="group.color"></div>
+                    <span class="ct-group-label">{{ group.label }}</span>
+                    <span class="ct-group-count">{{ group.containers.length }}</span>
                   </div>
                   @for (c of group.containers; track c.id) {
-                    <div class="container-row">
-                      <div class="container-status"
+                    <div class="ct-row" [class.ct-stopped]="c.status !== 'running'">
+                      <div class="ct-status-dot"
                         [class.running]="c.status==='running'"
                         [class.error]="c.status==='error'"
                         [class.stopped]="c.status==='stopped'">
                       </div>
-                      <div class="container-info">
-                        <div class="container-name">{{ c.name }}</div>
-                        <div class="container-image">{{ c.image }}</div>
-                      </div>
+                      <span class="ct-name">{{ c.name }}</span>
+                      <span class="ct-image">{{ c.image }}</span>
                       @if (c.status === 'running') {
-                        <div class="container-metrics">
-                          <span class="mono-text" [class.val-warn]="c.cpu > 50">CPU {{ c.cpu | number:'1.1-1' }}%</span>
-                          <span class="mono-text">{{ c.ram }}MB</span>
-                        </div>
+                        <span class="ct-cpu" [class.ct-warn]="c.cpu > 50">{{ c.cpu | number:'1.1-1' }}%</span>
+                        <span class="ct-ram">{{ c.ram }}MB</span>
                       } @else {
-                        <span class="container-stopped-badge mono-text">{{ c.status === 'error' ? 'Erreur' : 'Arrêté' }}</span>
+                        <span class="ct-stopped-badge">{{ c.status === 'error' ? '⚠ Erreur' : 'Arrêté' }}</span>
                       }
                     </div>
                   }
-                </div>
+                }
               }
-            }
+            </div>
           }
         </div>
+
       </div>
     </div>
   `,
@@ -203,6 +215,13 @@ export class DashboardComponent {
   protected readonly onlineUsers = signal<AdminOnlineUser[]>([]);
   protected readonly vpsStats = signal<VpsStats | null>(null);
   protected readonly containers = signal<DockerContainer[]>([]);
+
+  protected readonly runningCount = computed(() =>
+    this.containers().filter(c => c.status === 'running').length,
+  );
+  protected readonly stoppedCount = computed(() =>
+    this.containers().filter(c => c.status !== 'running').length,
+  );
 
   protected readonly containerGroups = computed(() => {
     const all = this.containers();
