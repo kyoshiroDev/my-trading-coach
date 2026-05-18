@@ -431,16 +431,14 @@ export class UsersService {
       .slice(0, 8);
 
     return {
-      data: {
-        user,
-        stats: {
-          totalTrades, tradesThisMonth, totalPnl, winRate,
-          totalAiCalls: aiLogs.length, totalTokens, totalCostUsd,
-          byFeature: Object.fromEntries(featureMap),
-        },
-        topAssets: topAssets.map(a => ({ asset: a.asset, count: a._count.asset })),
-        timeline,
+      user,
+      stats: {
+        totalTrades, tradesThisMonth, totalPnl, winRate,
+        totalAiCalls: aiLogs.length, totalTokens, totalCostUsd,
+        byFeature: Object.fromEntries(featureMap),
       },
+      topAssets: topAssets.map(a => ({ asset: a.asset, count: a._count.asset })),
+      timeline,
     };
   }
 }
