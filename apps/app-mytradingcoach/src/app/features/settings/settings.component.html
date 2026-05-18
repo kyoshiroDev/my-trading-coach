@@ -109,9 +109,45 @@
         </div>
       </div>
 
+      <!-- ══ 5. ZONE DE DANGER ══ -->
+      <div class="settings-section">
+        <div class="settings-section-label danger-label">Zone de danger</div>
+        <div class="settings-card danger-card">
+          @if (!showDeleteConfirm()) {
+            <div class="settings-row">
+              <div class="settings-row-left">
+                <span class="settings-row-label danger-row-label">Supprimer mon compte</span>
+                <span class="settings-row-hint">
+                  Supprime définitivement ton compte, tous tes trades et debriefs. Irréversible.
+                </span>
+              </div>
+              <button class="settings-edit-btn danger-btn"
+                (click)="showDeleteConfirm.set(true)">Supprimer</button>
+            </div>
+          } @else {
+            <div class="delete-confirm">
+              <p class="delete-confirm-title">Confirme la suppression</p>
+              <p class="delete-confirm-hint">
+                Tape <strong>SUPPRIMER</strong> pour confirmer. Cette action est irréversible.
+              </p>
+              <input class="delete-input" type="text" [value]="deleteInput()"
+                (input)="deleteInput.set($any($event.target).value)" placeholder="SUPPRIMER" />
+              <div class="delete-actions">
+                <button class="btn btn-secondary"
+                  (click)="showDeleteConfirm.set(false); deleteInput.set('')">Annuler</button>
+                <button class="btn btn-danger" (click)="confirmDelete()"
+                  [disabled]="deleteInput() !== 'SUPPRIMER' || isDeleting()">
+                  {{ isDeleting() ? 'Suppression…' : 'Supprimer définitivement' }}
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
     </div> <!-- /settings-col-left -->
 
-    <!-- ── Colonne milieu : Abonnement + Préférences + Danger ── -->
+    <!-- ── Colonne milieu : Abonnement + Préférences ── -->
     <div class="settings-col-middle">
 
       <!-- ══ 2. ABONNEMENT ══ -->
@@ -203,42 +239,6 @@
             @else if (prefSaved()) { ✓ Sauvegardé }
             @else { Sauvegarder les préférences }
           </button>
-        </div>
-      </div>
-
-      <!-- ══ 5. ZONE DE DANGER ══ -->
-      <div class="settings-section">
-        <div class="settings-section-label danger-label">Zone de danger</div>
-        <div class="settings-card danger-card">
-          @if (!showDeleteConfirm()) {
-            <div class="settings-row">
-              <div class="settings-row-left">
-                <span class="settings-row-label danger-row-label">Supprimer mon compte</span>
-                <span class="settings-row-hint">
-                  Supprime définitivement ton compte, tous tes trades et debriefs. Irréversible.
-                </span>
-              </div>
-              <button class="settings-edit-btn danger-btn"
-                (click)="showDeleteConfirm.set(true)">Supprimer</button>
-            </div>
-          } @else {
-            <div class="delete-confirm">
-              <p class="delete-confirm-title">Confirme la suppression</p>
-              <p class="delete-confirm-hint">
-                Tape <strong>SUPPRIMER</strong> pour confirmer. Cette action est irréversible.
-              </p>
-              <input class="delete-input" type="text" [value]="deleteInput()"
-                (input)="deleteInput.set($any($event.target).value)" placeholder="SUPPRIMER" />
-              <div class="delete-actions">
-                <button class="btn btn-secondary"
-                  (click)="showDeleteConfirm.set(false); deleteInput.set('')">Annuler</button>
-                <button class="btn btn-danger" (click)="confirmDelete()"
-                  [disabled]="deleteInput() !== 'SUPPRIMER' || isDeleting()">
-                  {{ isDeleting() ? 'Suppression…' : 'Supprimer définitivement' }}
-                </button>
-              </div>
-            </div>
-          }
         </div>
       </div>
 
