@@ -23,13 +23,37 @@ export interface AdminOnlineUser {
   lastSeenAt: string; lastLoginAt: string | null;
 }
 
+export interface AdminUserProfile {
+  tradingStyle?: string | null;
+  tradingStrategy?: string[];
+  tradingSessions?: string[];
+  tradesPerDayMin?: number | null;
+  tradesPerDayMax?: number | null;
+  strategyDescription?: string | null;
+  market?: string | null;
+  goal?: string | null;
+  currency?: string;
+  startingCapital?: number;
+}
+
+export interface AdminUserDetailStats {
+  totalTrades: number;
+  tradesThisMonth: number;
+  totalPnl: number;
+  winRate: number;
+  totalAiCalls: number;
+  totalTokens: number;
+  totalCostUsd: number;
+  byFeature: Record<string, number>;
+}
+
+export interface AdminTopAsset { asset: string; count: number; }
+
 export interface AdminUserDetail {
-  user: AdminUser;
-  stats: {
-    totalTrades: number; totalSessions: number; totalTimeMinutes: number;
-    totalAiCalls: number; totalTokens: number; tradesThisMonth: number;
-  };
-  timeline: { action: string; detail: string; type: string; createdAt: string }[];
+  user: AdminUser & AdminUserProfile;
+  stats: AdminUserDetailStats;
+  topAssets: AdminTopAsset[];
+  timeline: { action: string; detail: string; type: 'auth' | 'ai' | 'trade'; createdAt: string }[];
 }
 
 export interface AiUsageData {
@@ -42,9 +66,7 @@ export interface AiUsageData {
 export interface SubscriptionsData {
   stripeUsers: AdminUser[];
   betaTesters: AdminUser[];
-  total: number;
-  page: number;
-  limit: number;
+  total: number; page: number; limit: number;
 }
 
 @Injectable({ providedIn: 'root' })
