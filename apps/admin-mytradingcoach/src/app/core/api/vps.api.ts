@@ -15,7 +15,11 @@ export interface DockerContainer {
 }
 
 export interface Backup {
-  filename: string; size: number; createdAt: string; type: 'auto' | 'manual';
+  filename: string;
+  sizeMb: number;
+  createdAt: string;
+  type: 'auto' | 'manual';
+  target: 'bdd_prod' | 'bdd_dev' | 'api_prod' | 'api_dev';
 }
 
 @Injectable({ providedIn: 'root' })
@@ -23,8 +27,8 @@ export class VpsApi {
   private readonly http = inject(HttpClient);
   private readonly base = environment.apiUrl;
 
-  stats()                      { return this.http.get<{ data: VpsStats }>(`${this.base}/vps/stats`); }
-  containers()                 { return this.http.get<{ data: DockerContainer[] }>(`${this.base}/docker/containers`); }
+  stats()       { return this.http.get<{ data: VpsStats }>(`${this.base}/vps/stats`); }
+  containers()  { return this.http.get<{ data: DockerContainer[] }>(`${this.base}/docker/containers`); }
   containerAction(id: string, action: 'start' | 'stop' | 'restart') {
     return this.http.post(`${this.base}/docker/containers/${id}/${action}`, {});
   }
@@ -32,9 +36,18 @@ export class VpsApi {
   stopContainer(id: string)    { return this.http.post(`${this.base}/docker/containers/${id}/stop`, {}); }
   restartContainer(id: string) { return this.http.post(`${this.base}/docker/containers/${id}/restart`, {}); }
   deleteContainer(id: string)  { return this.http.delete(`${this.base}/docker/containers/${id}`); }
-  backups()                    { return this.http.get<{ data: Backup[] }>(`${this.base}/vps/backups`); }
-  createBackup()               { return this.http.post(`${this.base}/vps/backups`, {}); }
-  deleteBackup(f: string)      { return this.http.delete(`${this.base}/vps/backups/${f}`); }
+
+  listBackups() { return this.http.get<{ data: Backup[] }>(`${this.base}/vps/backups`); }
+  createBackup(target: 'bdd_prod' | 'bdd_dev' | 'api_prod' | 'api_dev') {
+    return this.http.post<{ data: Backup }>(`${this.base}/vps/backups`, { target });
+  }
+  restoreBackup(filename: string) {
+    return this.http.post<{ success: boolean; message: string }>(
+      `${this.base}/vps/backups/${filename}/restore`, {},
+    );
+  }
+  deleteBackup(f: string) { return this.http.delete(`${this.base}/vps/backups/${f}`); }
+
   logsUrl(container: string, token: string): string {
     return `${this.base}/vps/logs/${container}?token=${token}`;
   }
