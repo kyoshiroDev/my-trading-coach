@@ -239,6 +239,10 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser, AdminUserDetail } fro
               <div class="profile-skeleton" style="width:70%"></div>
               <div class="profile-skeleton" style="width:50%"></div>
             </div>
+          } @else if (viewError()) {
+            <div class="profile-loading" style="color:var(--red);font-size:12px;font-family:var(--mono)">
+              ⚠ Erreur : {{ viewError() }}
+            </div>
           } @else if (viewDetail()) {
             <div class="modal-body profile-body">
 
@@ -512,6 +516,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   protected readonly viewingUser  = signal<AdminUser | null>(null);
   protected readonly viewDetail   = signal<AdminUserDetail | null>(null);
   protected readonly viewLoading  = signal(false);
+  protected readonly viewError    = signal<string | null>(null);
 
   protected readonly totalPages = computed(() => Math.ceil(this.total() / 20) || 1);
   private onlineInterval?: ReturnType<typeof setInterval>;
@@ -614,17 +619,29 @@ export class UsersComponent implements OnInit, OnDestroy {
     event.stopPropagation();
     this.viewingUser.set(user);
     this.viewDetail.set(null);
+    this.viewError.set(null);
     this.viewLoading.set(true);
     this.api.detail(user.id).pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: r => { this.viewDetail.set(r.data); this.viewLoading.set(false); },
-        error: () => this.viewLoading.set(false),
+        next: r => {
+          this.viewDetail.set(r.data);
+          this.viewLoading.set(false);
+        },
+        error: (err: unknown) => {
+          const msg = err instanceof Error ? err.message
+            : typeof err === 'object' && err !== null && 'status' in err
+            ? `HTTP ${(err as { status: number }).status}`
+            : 'Erreur inconnue';
+          this.viewError.set(msg);
+          this.viewLoading.set(false);
+        },
       });
   }
 
   protected closeProfile(): void {
     this.viewingUser.set(null);
     this.viewDetail.set(null);
+    this.viewError.set(null);
   }
 
   protected formatTokens(n: number): string {
