@@ -153,28 +153,29 @@ import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
             <div class="containers-table">
               @for (group of containerGroups(); track group.label) {
                 @if (group.containers.length) {
-                  <div class="ct-group-header">
-                    <div class="ct-group-dot" [style.background]="group.color"></div>
-                    <span class="ct-group-label">{{ group.label }}</span>
-                    <span class="ct-group-count">{{ group.containers.length }}</span>
-                  </div>
-                  @for (c of group.containers; track c.id) {
-                    <div class="ct-row" [class.ct-stopped]="c.status !== 'running'">
-                      <div class="ct-status-dot"
-                        [class.running]="c.status==='running'"
-                        [class.error]="c.status==='error'"
-                        [class.stopped]="c.status==='stopped'">
-                      </div>
-                      <span class="ct-name">{{ c.name }}</span>
-                      <span class="ct-image">{{ c.image }}</span>
-                      @if (c.status === 'running') {
-                        <span class="ct-cpu" [class.ct-warn]="c.cpu > 50">{{ c.cpu | number:'1.1-1' }}%</span>
-                        <span class="ct-ram">{{ c.ram }}MB</span>
-                      } @else {
-                        <span class="ct-stopped-badge">{{ c.status === 'error' ? '⚠ Erreur' : 'Arrêté' }}</span>
-                      }
+                  <div class="ct-col">
+                    <div class="ct-group-header">
+                      <div class="ct-group-dot" [style.background]="group.color"></div>
+                      <span class="ct-group-label">{{ group.label }}</span>
+                      <span class="ct-group-count">{{ group.containers.length }}</span>
                     </div>
-                  }
+                    @for (c of group.containers; track c.id) {
+                      <div class="ct-row" [class.ct-stopped]="c.status !== 'running'">
+                        <div class="ct-status-dot"
+                          [class.running]="c.status==='running'"
+                          [class.error]="c.status==='error'"
+                          [class.stopped]="c.status==='stopped'">
+                        </div>
+                        <span class="ct-name">{{ c.name }}</span>
+                        @if (c.status === 'running') {
+                          <span class="ct-cpu" [class.ct-warn]="c.cpu > 50">{{ c.cpu | number:'1.1-1' }}%</span>
+                          <span class="ct-ram">{{ c.ram }}MB</span>
+                        } @else {
+                          <span class="ct-cpu" style="color:var(--red)">Arrêté</span>
+                        }
+                      </div>
+                    }
+                  </div>
                 }
               }
             </div>
