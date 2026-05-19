@@ -115,8 +115,9 @@
   border-right: 1px solid var(--border);
 }
 .period-stat:last-child { border-right: none; }
-.period-label { font-size: 9px; font-family: var(--font-mono); color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; }
-.period-value { font-size: 14px; font-weight: 600; font-family: var(--font-mono); color: var(--text); }
+.period-label     { font-size: 9px; font-family: var(--font-mono); color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; }
+.period-value     { font-size: 14px; font-weight: 600; font-family: var(--font-mono); color: var(--text); }
+.period-sub-label { font-size: 9px; font-family: var(--font-mono); color: var(--text-3); margin-top: 2px; display: block; }
 
 /* ── Wrapper journal ── */
 .journal-wrap {
@@ -171,6 +172,64 @@
 .day-pnl        { font-weight: 700; font-size: 12px; }
 .day-pnl.positive { color: var(--green); }
 .day-pnl.negative { color: var(--red); }
+.day-fees {
+  font-size: 10px; font-family: var(--font-mono);
+  color: var(--red); opacity: 0.7; cursor: help;
+}
+
+.day-delete-btn {
+  width: 24px; height: 24px;
+  border-radius: 5px; border: 1px solid transparent;
+  background: transparent; color: var(--text-3);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: all 0.15s; flex-shrink: 0; margin-left: 4px;
+}
+.day-header:hover .day-delete-btn { opacity: 1; }
+.day-delete-btn:hover {
+  background: rgba(239,68,68,0.1);
+  border-color: rgba(239,68,68,0.3);
+  color: var(--red);
+}
+
+/* ── Modal confirm suppression journée ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(3px);
+  z-index: 100; display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+}
+.confirm-modal {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 24px; width: 380px; max-width: 100%;
+  display: flex; flex-direction: column; gap: 16px;
+  animation: slideUp 0.2s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.confirm-modal-header { display: flex; align-items: center; gap: 12px; }
+.confirm-modal-ic     { font-size: 24px; }
+.confirm-modal-title  { font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 3px; }
+.confirm-modal-sub    { font-size: 12px; color: var(--text-3); font-family: var(--font-mono); margin: 0; text-transform: capitalize; }
+.confirm-modal-desc   { font-size: 13px; color: var(--text-2); line-height: 1.5; margin: 0; background: var(--bg-2); border-radius: 8px; padding: 12px; }
+.confirm-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.confirm-btn-cancel {
+  padding: 8px 16px; border-radius: 8px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--text-2); font-size: 13px; cursor: pointer; transition: all 0.1s;
+  font-family: var(--font-body);
+}
+.confirm-btn-cancel:hover:not(:disabled) { background: var(--bg-2); }
+.confirm-btn-delete {
+  padding: 8px 16px; border-radius: 8px;
+  background: var(--red); color: white; border: none;
+  font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+  font-family: var(--font-body);
+}
+.confirm-btn-delete:hover:not(:disabled) { opacity: 0.85; }
+.confirm-btn-cancel:disabled,
+.confirm-btn-delete:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── Trades rows ── */
 .day-trades { background: var(--bg); }

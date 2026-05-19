@@ -5,7 +5,8 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { LucideAngularModule, X, Pencil, Upload, ChevronDown, ChevronRight, Calendar } from 'lucide-angular';
+import { forkJoin } from 'rxjs';
+import { LucideAngularModule, X, Pencil, Upload, ChevronDown, ChevronRight, Calendar, Trash2 } from 'lucide-angular';
 import { TradesStore, Trade } from '../../core/stores/trades.store';
 import { CreateTradeDto, TradesApi } from '../../core/api/trades.api';
 import { UserStore } from '../../core/stores/user.store';
@@ -25,6 +26,7 @@ interface DayGroup {
   label: string;
   trades: Trade[];
   totalPnl: number;
+  totalPnlNet: number;
   totalCommission: number;
   count: number;
   winCount: number;
@@ -56,12 +58,15 @@ export class JournalComponent implements OnInit {
   protected readonly ChevronDownIcon  = ChevronDown;
   protected readonly ChevronRightIcon = ChevronRight;
   protected readonly CalendarIcon     = Calendar;
+  protected readonly TrashIcon        = Trash2;
 
-  protected readonly showModal      = signal(false);
-  protected readonly showImport     = signal(false);
-  protected readonly isSubmitting   = signal(false);
-  protected readonly submitError    = signal<string | null>(null);
-  protected readonly selectedTrade  = signal<Trade | null>(null);
+  protected readonly showModal        = signal(false);
+  protected readonly showImport       = signal(false);
+  protected readonly isSubmitting     = signal(false);
+  protected readonly submitError      = signal<string | null>(null);
+  protected readonly selectedTrade    = signal<Trade | null>(null);
+  protected readonly confirmDeleteDay = signal<DayGroup | null>(null);
+  protected readonly isDeletingDay    = signal(false);
   protected readonly filterSide     = signal<FilterSide>('ALL');
   protected readonly filterSetup    = signal<string | null>(null);
   protected readonly collapsedDays  = signal<Set<string>>(new Set());
@@ -132,11 +137,12 @@ export class JournalComponent implements OnInit {
         });
         const totalPnl        = dayTrades.reduce((s, t) => s + (t.pnl ?? 0), 0);
         const totalCommission = dayTrades.reduce((s, t) => s + Math.abs((t as any).commission ?? 0), 0);
+        const totalPnlNet     = totalPnl - totalCommission;
         const winCount        = dayTrades.filter(t => (t.pnl ?? 0) > 0).length;
         return {
           key, label,
           trades: dayTrades.sort((a, b) => new Date(b.tradedAt).getTime() - new Date(a.tradedAt).getTime()),
-          totalPnl, totalCommission,
+          totalPnl, totalPnlNet, totalCommission,
           count: dayTrades.length, winCount,
         };
       });
@@ -147,13 +153,17 @@ export class JournalComponent implements OnInit {
   protected readonly periodStats = computed(() => {
     const trades = this.filteredTrades();
     if (!trades.length) return null;
-    const pnls = trades.map(t => t.pnl ?? 0);
+    const totalCommissions = trades.reduce((s, t) => s + Math.abs((t as any).commission ?? 0), 0);
+    const pnlsNet  = trades.map(t => (t.pnl ?? 0) - Math.abs((t as any).commission ?? 0));
+    const totalPnlBrut = trades.reduce((s, t) => s + (t.pnl ?? 0), 0);
     return {
-      count:      trades.length,
-      totalPnl:   pnls.reduce((s, v) => s + v, 0),
-      winRate:    (trades.filter(t => (t.pnl ?? 0) > 0).length / trades.length) * 100,
-      bestTrade:  Math.max(...pnls),
-      worstTrade: Math.min(...pnls),
+      count:            trades.length,
+      totalPnl:         pnlsNet.reduce((s, v) => s + v, 0),
+      totalPnlBrut,
+      totalCommissions,
+      winRate:          (trades.filter(t => (t.pnl ?? 0) > 0).length / trades.length) * 100,
+      bestTrade:        Math.max(...pnlsNet),
+      worstTrade:       Math.min(...pnlsNet),
     };
   });
 
@@ -236,6 +246,21 @@ export class JournalComponent implements OnInit {
     this.http.delete(`${environment.apiUrl}/trades/${id}`)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({ next: () => this.tradesStore.removeTrade(id) });
+  }
+
+  protected deleteDay(day: DayGroup): void {
+    this.isDeletingDay.set(true);
+    const ids = day.trades.map(t => t.id);
+    forkJoin(ids.map(id => this.http.delete(`${environment.apiUrl}/trades/${id}`)))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          ids.forEach(id => this.tradesStore.removeTrade(id));
+          this.isDeletingDay.set(false);
+          this.confirmDeleteDay.set(null);
+        },
+        error: () => this.isDeletingDay.set(false),
+      });
   }
 
   loadMore(): void { this.tradesStore.loadMore(); }

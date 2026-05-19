@@ -98,12 +98,11 @@ import { environment } from '../../../environments/environment';
         <h1 class="greeting-title">
           Bonjour, {{ userStore.displayName() }} 👋
         </h1>
-        @if (!userStore.user()?.discordId && !discordBannerDismissed()) {
+        @if (!userStore.user()?.discordId) {
           <div class="discord-badge">
             <span class="discord-badge-ic">💬</span>
             <a href="https://discord.gg/TDK2npvkSN" target="_blank" rel="noopener"
               class="discord-badge-link">Rejoindre Discord</a>
-            <button class="discord-badge-dismiss" (click)="dismissDiscordBanner()" aria-label="Fermer">✕</button>
           </div>
         }
       </div>
