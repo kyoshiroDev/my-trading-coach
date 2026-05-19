@@ -86,6 +86,31 @@ import { environment } from '../../../environments/environment';
         </div>
       }
 
+      <!-- Bannière limite FREE -->
+      @if (!userStore.isPremium() && tradesStore.limitReached()) {
+        <div class="limit-banner reached">
+          <div class="limit-banner-left">
+            <span class="limit-banner-ic">🚫</span>
+            <div>
+              <div class="limit-banner-title">Limite mensuelle atteinte</div>
+              <div class="limit-banner-sub">Tu as utilisé tes {{ tradesStore.monthlyLimit() }} trades ce mois. Passe à Premium pour trader sans limites.</div>
+            </div>
+          </div>
+          <button class="limit-banner-btn" (click)="showPlanModal.set(true)">Passer Premium</button>
+        </div>
+      } @else if (!userStore.isPremium() && tradesStore.nearLimit()) {
+        <div class="limit-banner near">
+          <div class="limit-banner-left">
+            <span class="limit-banner-ic">⚠️</span>
+            <div>
+              <div class="limit-banner-title">{{ tradesStore.monthlyCount() }}/{{ tradesStore.monthlyLimit() }} trades ce mois</div>
+              <div class="limit-banner-sub">Tu approches de ta limite gratuite. Upgrade pour continuer sans restrictions.</div>
+            </div>
+          </div>
+          <button class="limit-banner-btn ghost" (click)="showPlanModal.set(true)">Upgrade</button>
+        </div>
+      }
+
       <!-- Greeting -->
       <div class="greeting">
         <h1 class="greeting-title">

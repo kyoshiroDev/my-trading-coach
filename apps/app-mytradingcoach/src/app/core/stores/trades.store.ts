@@ -51,6 +51,18 @@ export class TradesStore {
   readonly nextCursor = signal<string | null>(null);
   readonly hasNextPage = signal(false);
 
+  readonly monthlyCount  = signal<number>(0);
+  readonly monthlyLimit  = signal<number>(30);
+  readonly monthlyLoaded = signal(false);
+
+  readonly monthlyPercent = computed(() =>
+    this.monthlyLimit() > 0
+      ? Math.min(100, Math.round((this.monthlyCount() / this.monthlyLimit()) * 100))
+      : 0,
+  );
+  readonly nearLimit    = computed(() => this.monthlyLoaded() && this.monthlyPercent() >= 80 && this.monthlyPercent() < 100);
+  readonly limitReached = computed(() => this.monthlyLoaded() && this.monthlyCount() >= this.monthlyLimit());
+
   readonly totalTrades = computed(() => this.trades().length);
   readonly winningTrades = computed(
     () => this.trades().filter((t) => (t.pnl ?? 0) > 0).length,
@@ -107,8 +119,23 @@ export class TradesStore {
       });
   }
 
+  loadMonthlyCount(): void {
+    this.http
+      .get<{ data: { count: number; limit: number; isPremium: boolean } }>(`${this.baseUrl}/monthly-count`)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.monthlyCount.set(res.data.count);
+          this.monthlyLimit.set(res.data.limit || 30);
+          this.monthlyLoaded.set(!res.data.isPremium);
+        },
+        error: () => {},
+      });
+  }
+
   addTrade(trade: Trade) {
     this.trades.update((trades) => [trade, ...trades]);
+    if (this.monthlyLoaded()) this.monthlyCount.update((c) => c + 1);
   }
 
   updateTrade(updated: Trade) {

@@ -34,6 +34,13 @@ export class TradesController {
     private csvImportService: CsvImportService,
   ) {}
 
+  @Get('monthly-count')
+  async getMonthlyCount(
+    @CurrentUser() user: { id: string; plan: Plan; role: Role },
+  ) {
+    return this.tradesService.countThisMonth(user.id, user.plan, user.role);
+  }
+
   @Get('instruments')
   async getInstruments() {
     const cryptoInstruments =
