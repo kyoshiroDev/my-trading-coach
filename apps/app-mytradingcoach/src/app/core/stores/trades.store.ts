@@ -129,7 +129,6 @@ export class TradesStore {
           this.monthlyLimit.set(res.data.limit || 30);
           this.monthlyLoaded.set(!res.data.isPremium);
         },
-        error: () => {},
       });
   }
 
