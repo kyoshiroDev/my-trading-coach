@@ -18,6 +18,13 @@ import MockupDashboard from './mockup/MockupDashboard.astro';
     Le seul journal qui connaît ta stratégie avant d'analyser tes trades
   </div>
 
+  <div class="hero-social-proof">
+    <div class="hero-stars">★★★★★</div>
+    <span class="hero-proof-text">
+      <strong>+14 traders</strong> utilisent MTC · 4.9/5 sur les retours beta
+    </span>
+  </div>
+
   <h1>
     Tu sais trader.<br />
     <em>Le problème,</em><br />
@@ -34,12 +41,12 @@ import MockupDashboard from './mockup/MockupDashboard.astro';
   </p>
 
   <div class="hero-actions">
-    <a href="https://app.mytradingcoach.app/register" class="btn-p">
-      Commencer gratuitement
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    <a href="https://app.mytradingcoach.app/register" class="btn-p hero-cta-main">
+      Essayer gratuitement — 7 jours Premium offerts
     </a>
-    <a href="#showcase" class="btn-s">Voir l'app →</a>
+    <p class="hero-cta-sub">Sans CB · Sans engagement · Données en France 🇫🇷</p>
   </div>
+  <a href="#showcase" class="hero-scroll-hint">Voir l'app ↓</a>
 
   <div class="hero-trust">
     <div class="bdot"></div>
@@ -245,6 +252,38 @@ import MockupDashboard from './mockup/MockupDashboard.astro';
   }
 
   /* ── Mobile ── */
+  .hero-social-proof {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 20px;
+    position: relative; z-index: 1;
+  }
+  .hero-stars { color: #f59e0b; font-size: 14px; letter-spacing: 2px; }
+  .hero-proof-text {
+    font-size: 13px; color: var(--txt2);
+    font-family: var(--mono);
+  }
+  .hero-proof-text strong { color: var(--txt); }
+
+  .hero-cta-main {
+    font-size: 16px !important;
+    padding: 16px 32px !important;
+    box-shadow: 0 0 40px rgba(59,130,246,.5) !important;
+  }
+  .hero-cta-sub {
+    font-size: 12px; color: var(--txt3); font-family: var(--mono);
+    margin: 0; text-align: center;
+  }
+  .hero-scroll-hint {
+    display: block; text-align: center; margin-top: 16px;
+    font-size: 12px; color: var(--txt3); font-family: var(--mono);
+    text-decoration: none; animation: bounce 2s infinite;
+    position: relative; z-index: 1;
+  }
+  @keyframes bounce {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(5px); }
+  }
+
   @media (max-width: 767px) {
     .hero {
       padding: 100px 16px 60px;
@@ -252,6 +291,7 @@ import MockupDashboard from './mockup/MockupDashboard.astro';
     }
 
     .hero-badge,
+    .hero-social-proof,
     .hero h1,
     .hero-sub,
     .hero-actions,
@@ -263,7 +303,7 @@ import MockupDashboard from './mockup/MockupDashboard.astro';
     .hero-actions {
       flex-direction: column;
       align-items: stretch;
-      gap: 12px;
+      gap: 8px;
       width: 100%;
       max-width: 320px;
     }
