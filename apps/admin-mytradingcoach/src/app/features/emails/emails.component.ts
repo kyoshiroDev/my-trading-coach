@@ -95,8 +95,8 @@ import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
                 </div>
               </div>
               <div class="preview-frame">
-                <iframe [srcdoc]="previewHtml()" title="Aperçu email"
-                  style="width:100%;height:500px;border:none;border-radius:8px;background:#080c14"></iframe>
+                <iframe [srcdoc]="wrappedPreviewHtml()" title="Aperçu email"
+                  style="width:100%;height:520px;border:none;border-radius:8px;background:#ffffff"></iframe>
               </div>
             }
           </div>
@@ -192,6 +192,23 @@ export class EmailsComponent {
 
   protected announcementSubject = '';
   protected announcementBody    = '';
+
+  protected readonly wrappedPreviewHtml = computed(() => {
+    const html = this.previewHtml();
+    if (!html) return '';
+    return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #f4f4f4; font-family: Arial, sans-serif; }
+  body { display: flex; justify-content: center; padding: 20px; }
+</style>
+</head>
+<body>${html}</body>
+</html>`;
+  });
 
   protected readonly canSend = computed(() => {
     const c = this.sendCampaignModal();
