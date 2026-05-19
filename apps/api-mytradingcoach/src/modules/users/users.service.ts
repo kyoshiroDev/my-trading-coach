@@ -436,6 +436,8 @@ export class UsersService {
         totalTrades, tradesThisMonth, totalPnl, winRate,
         totalAiCalls: aiLogs.length, totalTokens, totalCostUsd,
         byFeature: Object.fromEntries(featureMap),
+        monthlyLimit: user.plan === 'FREE' ? 30 : null,
+        monthlyPercent: user.plan === 'FREE' ? Math.min(100, Math.round((tradesThisMonth / 30) * 100)) : null,
       },
       topAssets: topAssets.map(a => ({ asset: a.asset, count: a._count.asset })),
       timeline,

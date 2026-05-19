@@ -112,15 +112,30 @@ export class TradesService {
       where: { userId, createdAt: { gte: startOfMonth } },
     });
 
-    if (count >= 50) {
+    if (count >= 30) {
       throw new HttpException(
         {
           code: 'FREE_LIMIT_REACHED',
-          message: 'Limite de 50 trades/mois atteinte',
+          message: 'Limite de 30 trades/mois atteinte',
         },
         HttpStatus.FORBIDDEN,
       );
     }
+  }
+
+  async countThisMonth(userId: string, plan: Plan, role: Role = Role.USER): Promise<{ count: number; limit: number; isPremium: boolean }> {
+    const isPremium = plan !== Plan.FREE || role === Role.ADMIN || role === Role.BETA_TESTER;
+    if (isPremium) return { count: 0, limit: 0, isPremium: true };
+
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const count = await this.prisma.trade.count({
+      where: { userId, createdAt: { gte: startOfMonth } },
+    });
+
+    return { count, limit: 30, isPremium: false };
   }
 
   private calculatePnl(dto: CreateTradeDto): number | undefined {

@@ -157,6 +157,77 @@
   background: var(--red);
 }
 
+/* ─── Monthly counter ─── */
+.monthly-counter {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.monthly-counter.near  { border-color: rgba(234, 179, 8, 0.4); }
+.monthly-counter.reached { border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.05); }
+
+.mc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.mc-label {
+  font-size: 11px;
+  color: var(--text-3);
+  font-weight: 500;
+}
+.mc-count {
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: var(--text);
+}
+.monthly-counter.near  .mc-count { color: #eab308; }
+.monthly-counter.reached .mc-count { color: var(--red); }
+.mc-sep { opacity: 0.4; }
+
+.mc-track {
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.mc-fill {
+  height: 100%;
+  background: var(--blue);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+.monthly-counter.near  .mc-fill { background: #eab308; }
+.monthly-counter.reached .mc-fill { background: var(--red); }
+
+.mc-upgrade {
+  margin-top: 8px;
+  width: 100%;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all 0.15s;
+}
+.mc-upgrade.reached {
+  background: var(--red);
+  color: #fff;
+}
+.mc-upgrade.reached:hover { opacity: 0.85; }
+.mc-upgrade.near {
+  background: transparent;
+  border: 1px solid rgba(234, 179, 8, 0.4);
+  color: #eab308;
+}
+.mc-upgrade.near:hover { background: rgba(234, 179, 8, 0.08); }
+
 /* ─── FOOTER ─── */
 .sidebar-footer {
   padding: 16px 12px;

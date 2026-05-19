@@ -2,55 +2,98 @@
 ---
 
 <section class="cta-final">
-  <div class="reveal">
-    <span class="sec-label">Prêt à voir la vérité ?</span>
-    <h2>Ton coach IA t'attend.<br /><em>Il connaît déjà ta stratégie.</em></h2>
-    <p>Crée ton profil trader, importe tes trades, et reçois des analyses vraiment personnalisées dès cette semaine.</p>
-    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-      <a href="https://app.mytradingcoach.app/register" class="btn-p" style="font-size:15px;padding:14px 30px">
-        Commencer gratuitement →
-      </a>
+  <div class="cta-wrap reveal">
+
+    <h2>Ton coach IA t'attend.<br/><em>Il connaît déjà ta stratégie.</em></h2>
+
+    <p class="cta-sub">
+      Crée ton profil en 5 minutes, importe tes trades,
+      et reçois ton premier débrief dès dimanche soir.
+    </p>
+
+    <div class="cta-proof-row">
+      <div class="cta-proof">⚡ Setup en 5 min</div>
+      <div class="cta-proof">📅 Debrief dès dimanche</div>
+      <div class="cta-proof">🇫🇷 Données en France</div>
+      <div class="cta-proof">💬 Support Discord direct</div>
     </div>
-    <p style="margin-top:16px;font-size:12px;color:var(--txt3)">Pas de CB · Pas d'engagement · Données en France 🇫🇷 · Indépendant & bootstrappé</p>
+
+    <a href="https://app.mytradingcoach.app/register" class="cta-btn">
+      Commencer gratuitement →
+    </a>
+    <p class="cta-note">Sans CB · 7 jours Premium offerts · Annulable à tout moment</p>
+
+    <div class="cta-testimonial">
+      <div class="cta-testi-stars">★★★★★</div>
+      <p class="cta-testi-text">
+        "J'ai passé mon défi FTMO la semaine après avoir corrigé
+        mes patterns de revenge trading grâce au debrief MTC."
+      </p>
+      <div class="cta-testi-author">Alexandre L. — Prop firm trader · SMC</div>
+    </div>
+
   </div>
 </section>
 
 <style>
   .cta-final {
+    padding: 100px 5%;
     text-align: center;
-    padding: 120px 5%;
     position: relative;
     overflow: hidden;
   }
-
   .cta-final::before {
     content: '';
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%,-50%);
-    width: 500px; height: 250px;
-    background: radial-gradient(ellipse, rgba(59,130,246,.08) 0%, transparent 70%);
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 100%, rgba(59,130,246,.08), transparent 60%);
     pointer-events: none;
   }
+  .cta-wrap { max-width: 600px; margin: 0 auto; position: relative; }
+  .cta-final h2 {
+    font-family: var(--disp); font-size: clamp(28px,5vw,44px);
+    font-weight: 700; letter-spacing: -.5px; color: var(--txt);
+    line-height: 1.2; margin-bottom: 16px;
+  }
+  .cta-final h2 em { color: var(--blue2); font-style: normal; }
+  .cta-sub { font-size: 16px; color: var(--txt2); line-height: 1.6; margin-bottom: 32px; font-weight: 300; max-width: 460px; margin-left: auto; margin-right: auto; }
 
-  .cta-final h2 { max-width: 650px; margin: 0 auto 18px; }
-  .cta-final p { color: var(--txt2); font-size: 17px; font-weight: 300; max-width: 460px; margin: 0 auto 44px; }
-
-  .btn-p {
-    background: var(--blue);
-    color: #fff;
-    padding: 13px 26px;
-    border-radius: 9px;
-    font-size: 14px;
-    font-weight: 600;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    box-shadow: 0 0 28px rgba(59,130,246,.4);
-    transition: all .2s;
-    font-family: var(--disp);
+  .cta-proof-row {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 12px; margin-bottom: 32px;
+  }
+  .cta-proof {
+    font-size: 12px; font-family: var(--mono); color: var(--txt2);
+    background: var(--card); border: 1px solid var(--b);
+    padding: 6px 14px; border-radius: 100px;
   }
 
-  .btn-p:hover { background: var(--blue2); transform: translateY(-2px); box-shadow: 0 0 44px rgba(59,130,246,.55); }
+  .cta-btn {
+    display: inline-block;
+    background: var(--blue); color: white;
+    text-decoration: none; padding: 16px 40px;
+    border-radius: 12px; font-size: 17px; font-weight: 700;
+    font-family: var(--disp);
+    box-shadow: 0 0 50px rgba(59,130,246,.4);
+    transition: all .2s; margin-bottom: 12px;
+  }
+  .cta-btn:hover { transform: translateY(-3px); box-shadow: 0 0 60px rgba(59,130,246,.5); }
+  .cta-note { font-size: 12px; color: var(--txt3); font-family: var(--mono); }
+
+  .cta-testimonial {
+    margin-top: 48px;
+    background: var(--card); border: 1px solid var(--b);
+    border-left: 3px solid var(--blue2);
+    border-radius: 12px; padding: 20px 24px;
+    text-align: left;
+  }
+  .cta-testi-stars { color: #f59e0b; font-size: 13px; margin-bottom: 10px; }
+  .cta-testi-text  { font-size: 14px; color: var(--txt2); font-style: italic; line-height: 1.6; margin-bottom: 12px; }
+  .cta-testi-author { font-size: 11px; font-family: var(--mono); color: var(--txt3); }
+
+  @media (max-width: 767px) {
+    .cta-final { padding: 60px 16px 80px; }
+    .cta-proof-row { gap: 8px; }
+    .cta-proof { font-size: 11px; padding: 5px 10px; }
+    .cta-btn { font-size: 15px; padding: 14px 28px; }
+  }
 </style>

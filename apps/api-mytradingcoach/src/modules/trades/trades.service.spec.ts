@@ -77,9 +77,9 @@ describe('TradesService', () => {
   });
 
   describe('create', () => {
-    describe('Limite FREE 50 trades/mois', () => {
-      it('bloque le 51ème trade pour un user FREE', async () => {
-        mockPrisma.trade.count.mockResolvedValue(50);
+    describe('Limite FREE 30 trades/mois', () => {
+      it('bloque le 31ème trade pour un user FREE', async () => {
+        mockPrisma.trade.count.mockResolvedValue(30);
 
         await expect(
           service.create('user-123', createTradeDto, Plan.FREE),
@@ -87,7 +87,7 @@ describe('TradesService', () => {
       });
 
       it("inclut le code FREE_LIMIT_REACHED dans l'erreur", async () => {
-        mockPrisma.trade.count.mockResolvedValue(50);
+        mockPrisma.trade.count.mockResolvedValue(30);
 
         try {
           await service.create('user-123', createTradeDto, Plan.FREE);
@@ -106,8 +106,8 @@ describe('TradesService', () => {
         ).resolves.toBeDefined();
       });
 
-      it('autorise le 50ème trade (limite non encore atteinte) pour FREE', async () => {
-        mockPrisma.trade.count.mockResolvedValue(49);
+      it('autorise le 30ème trade (limite non encore atteinte) pour FREE', async () => {
+        mockPrisma.trade.count.mockResolvedValue(29);
         mockPrisma.trade.create.mockResolvedValue(mockTrade);
 
         await expect(
@@ -228,8 +228,8 @@ describe('TradesService', () => {
       ).resolves.toBeUndefined();
     });
 
-    it('bloque dès que count >= 50 pour FREE', async () => {
-      mockPrisma.trade.count.mockResolvedValue(50);
+    it('bloque dès que count >= 30 pour FREE', async () => {
+      mockPrisma.trade.count.mockResolvedValue(30);
 
       await expect(
         service.checkMonthlyLimit('user-123', Plan.FREE),

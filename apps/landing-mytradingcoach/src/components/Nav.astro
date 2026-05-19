@@ -27,6 +27,10 @@
   </button>
 </div>
 
+<a href="https://app.mytradingcoach.app/register" class="nav-sticky-cta">
+  Essayer gratuitement →
+</a>
+
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const toggle = document.getElementById('nav-toggle');
@@ -211,5 +215,29 @@
     .nav-hamburger[aria-expanded="true"] span:nth-child(3) {
       transform: translateY(-7px) rotate(-45deg);
     }
+  }
+
+  .nav-sticky-cta { display: none; }
+
+  @media (max-width: 767px) {
+    .nav-sticky-cta {
+      display: block;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--blue);
+      color: white;
+      text-align: center;
+      padding: 14px;
+      font-size: 15px; font-weight: 700;
+      text-decoration: none;
+      z-index: 999;
+      box-shadow: 0 -4px 20px rgba(0,0,0,.4);
+    }
+  }
+</style>
+
+<style is:global>
+  @media (max-width: 767px) {
+    body { padding-bottom: 56px; }
   }
 </style>

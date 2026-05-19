@@ -17,7 +17,7 @@
       <div class="price-period">pour toujours · sans CB requise</div>
       <div class="price-divider"></div>
       <ul class="price-feats" style="margin-top:24px">
-        <li>50 trades par mois</li>
+        <li>30 trades par mois</li>
         <li>Journal complet — émotions, setup, notes</li>
         <li>Tracking émotionnel</li>
         <li>Stats de base — win rate, P&amp;L, top session, heure top</li>
@@ -34,6 +34,7 @@
     </div>
     <div class="price-card feat" style="padding-top:44px">
       <div class="price-pop">⭐ Recommandé</div>
+      <div class="price-urgency">🔥 7 jours gratuits — aucune CB requise</div>
       <div class="price-name">Premium</div>
       <div class="price-amt">
         <span class="price-amt-num">39</span>
@@ -56,6 +57,11 @@
       </ul>
       <a href="https://app.mytradingcoach.app/register?plan=premium" class="price-cta prim">Essayer 7 jours gratuit →</a>
     </div>
+  </div>
+  <div class="pricing-guarantee reveal">
+    <div class="guarantee-item">✓ Annulation à tout moment</div>
+    <div class="guarantee-item">✓ Données exportables</div>
+    <div class="guarantee-item">✓ Support Discord direct</div>
   </div>
 </section>
 
@@ -179,6 +185,36 @@
   .price-cta.prim:hover { background: var(--blue2); box-shadow: 0 0 40px rgba(59,130,246,.55); transform: translateY(-1px); }
   .price-cta.ghost { border: 1px solid var(--b2); color: var(--txt2); }
   .price-cta.ghost:hover { border-color: var(--blue); color: var(--txt); background: rgba(59,130,246,.05); }
+
+  .price-urgency {
+    background: rgba(245,158,11,.1);
+    border: 1px solid rgba(245,158,11,.3);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    color: #f59e0b;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .pricing-guarantee {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--b);
+    max-width: 780px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .guarantee-item {
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--txt3);
+  }
 
   @media (max-width: 640px) {
     .price-grid { grid-template-columns: 1fr; }

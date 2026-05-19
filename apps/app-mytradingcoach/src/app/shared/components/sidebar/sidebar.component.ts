@@ -20,8 +20,10 @@ import {
   ShieldCheck,
 } from 'lucide-angular';
 import { UserStore } from '../../../core/stores/user.store';
+import { TradesStore } from '../../../core/stores/trades.store';
 import { AuthService } from '../../../core/auth/auth.service';
 import { OnboardingComponent } from '../../../features/onboarding/onboarding.component';
+import { PlanModalComponent } from '../plan-modal/plan-modal.component';
 
 @Component({
   selector: 'mtc-sidebar',
@@ -32,6 +34,7 @@ import { OnboardingComponent } from '../../../features/onboarding/onboarding.com
     RouterLinkActive,
     LucideAngularModule,
     OnboardingComponent,
+    PlanModalComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './sidebar.component.css',
@@ -195,6 +198,31 @@ import { OnboardingComponent } from '../../../features/onboarding/onboarding.com
 
         <!-- User card -->
         <div class="sidebar-footer">
+          @if (!userStore.isPremium() && tradesStore.monthlyLoaded()) {
+            <div class="monthly-counter"
+              [class.near]="tradesStore.nearLimit()"
+              [class.reached]="tradesStore.limitReached()">
+              <div class="mc-header">
+                <span class="mc-label">Trades ce mois</span>
+                <span class="mc-count">{{ tradesStore.monthlyCount() }}<span class="mc-sep">/</span>{{ tradesStore.monthlyLimit() }}</span>
+              </div>
+              <div class="mc-track">
+                <div class="mc-fill" [style.width.%]="tradesStore.monthlyPercent()"></div>
+              </div>
+              @if (tradesStore.limitReached()) {
+                <button class="mc-upgrade reached" (click)="showPlanModal.set(true)" (keydown.enter)="showPlanModal.set(true)">
+                  ⚡ Limite atteinte — Upgrade
+                </button>
+              } @else if (tradesStore.nearLimit()) {
+                <button class="mc-upgrade near" (click)="showPlanModal.set(true)" (keydown.enter)="showPlanModal.set(true)">
+                  Presque à la limite · Upgrade
+                </button>
+              }
+            </div>
+          }
+          @if (showPlanModal()) {
+            <mtc-plan-modal (closed)="showPlanModal.set(false)" />
+          }
           <div class="user-card">
             <div class="avatar">{{ userStore.initials() }}</div>
             <div class="user-info">
@@ -228,10 +256,12 @@ import { OnboardingComponent } from '../../../features/onboarding/onboarding.com
 })
 export class SidebarComponent {
   protected readonly userStore = inject(UserStore);
+  protected readonly tradesStore = inject(TradesStore);
   private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly sidebarOpen = signal(false);
+  protected readonly sidebarOpen   = signal(false);
+  protected readonly showPlanModal  = signal(false);
 
   protected toggleSidebar(): void {
     this.sidebarOpen.update((v) => !v);
@@ -261,6 +291,8 @@ export class SidebarComponent {
   protected readonly ShieldCheckIcon = ShieldCheck;
 
   constructor() {
+    this.tradesStore.loadMonthlyCount();
+
     const onFocus = () => {
       if (!this.auth.isAuthenticated()) return;
       this.auth.fetchMe().subscribe({
