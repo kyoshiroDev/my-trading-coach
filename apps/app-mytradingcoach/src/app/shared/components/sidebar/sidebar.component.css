@@ -157,6 +157,34 @@
   background: var(--red);
 }
 
+/* ─── Discord button ─── */
+.discord-sidebar-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin: 0 8px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(88, 101, 242, 0.25);
+  background: rgba(88, 101, 242, 0.06);
+  color: #7289da;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+.discord-sidebar-btn:hover {
+  background: rgba(88, 101, 242, 0.15);
+  border-color: rgba(88, 101, 242, 0.4);
+  color: #99aab5;
+}
+.discord-sidebar-btn span { flex: 1; }
+.discord-sidebar-arrow {
+  font-size: 11px;
+  opacity: 0.5;
+  flex: none !important;
+}
+
 /* ─── Monthly counter ─── */
 .monthly-counter {
   background: var(--bg-3);
