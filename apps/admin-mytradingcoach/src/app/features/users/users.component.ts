@@ -285,6 +285,24 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser, AdminUserDetail } fro
                     }
                   </div>
                 }
+                @if (viewDetail()!.stats.monthlyLimit !== null) {
+                  <div class="profile-monthly-bar">
+                    <div class="pmb-header">
+                      <span class="pmb-label">Limite mensuelle FREE</span>
+                      <span class="pmb-count"
+                        [class.pmb-near]="(viewDetail()!.stats.monthlyPercent ?? 0) >= 80 && (viewDetail()!.stats.monthlyPercent ?? 0) < 100"
+                        [class.pmb-reached]="(viewDetail()!.stats.monthlyPercent ?? 0) >= 100">
+                        {{ viewDetail()!.stats.tradesThisMonth }}/{{ viewDetail()!.stats.monthlyLimit }}
+                      </span>
+                    </div>
+                    <div class="pmb-track">
+                      <div class="pmb-fill"
+                        [class.pmb-fill-near]="(viewDetail()!.stats.monthlyPercent ?? 0) >= 80 && (viewDetail()!.stats.monthlyPercent ?? 0) < 100"
+                        [class.pmb-fill-reached]="(viewDetail()!.stats.monthlyPercent ?? 0) >= 100"
+                        [style.width.%]="viewDetail()!.stats.monthlyPercent ?? 0"></div>
+                    </div>
+                  </div>
+                }
               </div>
 
               <div class="profile-section">

@@ -45,6 +45,8 @@ export interface AdminUserDetailStats {
   totalTokens: number;
   totalCostUsd: number;
   byFeature: Record<string, number>;
+  monthlyLimit: number | null;
+  monthlyPercent: number | null;
 }
 
 export interface AdminTopAsset { asset: string; count: number; }
