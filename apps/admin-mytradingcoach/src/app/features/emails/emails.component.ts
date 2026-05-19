@@ -206,7 +206,7 @@ export class EmailsComponent {
     this.loading.set(true);
     this.adminApi.listCampaigns()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: r => { this.campaigns.set(r); this.loading.set(false); }, error: () => this.loading.set(false) });
+      .subscribe({ next: r => { this.campaigns.set(r.data ?? []); this.loading.set(false); }, error: () => this.loading.set(false) });
   }
 
   openPreview(c: CampaignMeta): void {
@@ -214,7 +214,7 @@ export class EmailsComponent {
     this.previewLoading.set(true);
     this.adminApi.previewCampaign(c.type, this.announcementSubject, this.announcementBody)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: r => { this.previewHtml.set(r.html); this.previewRecipients.set(r.recipients); this.previewLoading.set(false); }, error: () => this.previewLoading.set(false) });
+      .subscribe({ next: r => { this.previewHtml.set(r.data.html); this.previewRecipients.set(r.data.recipients ?? []); this.previewLoading.set(false); }, error: () => this.previewLoading.set(false) });
   }
 
   openSend(c: CampaignMeta): void {
@@ -229,7 +229,7 @@ export class EmailsComponent {
     this.adminApi.sendCampaign(c.type, this.announcementSubject, this.announcementBody)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: r => { this.sending.set(false); this.sendCampaignModal.set(null); this.showToast(`✅ ${r.success} emails envoyés · ${r.errors} erreurs`); this.load(); },
+        next: r => { this.sending.set(false); this.sendCampaignModal.set(null); this.showToast(`✅ ${r.data.success} emails envoyés · ${r.data.errors} erreurs`); this.load(); },
         error: () => { this.sending.set(false); this.showToast('❌ Erreur lors de l\'envoi', true); },
       });
   }

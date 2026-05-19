@@ -102,15 +102,15 @@ export class AdminApi {
   aiUsage()             { return this.http.get<{ data: AiUsageData }>(`${environment.apiUrl}/admin/ai-usage`); }
 
   listCampaigns() {
-    return this.http.get<CampaignMeta[]>(`${this.adminBase}/campaigns`);
+    return this.http.get<{ data: CampaignMeta[] }>(`${this.adminBase}/campaigns`);
   }
   previewCampaign(type: string, subject?: string, content?: string) {
-    return this.http.post<{ html: string; recipients: { email: string; name: string | null }[] }>(
+    return this.http.post<{ data: { html: string; recipients: { email: string; name: string | null }[] } }>(
       `${this.adminBase}/campaigns/${type}/preview`, { subject, content },
     );
   }
   sendCampaign(type: string, subject?: string, content?: string) {
-    return this.http.post<{ success: number; errors: number }>(
+    return this.http.post<{ data: { success: number; errors: number } }>(
       `${this.adminBase}/campaigns/${type}/send`, { subject, content },
     );
   }
