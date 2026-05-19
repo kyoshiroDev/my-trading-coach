@@ -68,24 +68,6 @@ import { environment } from '../../../environments/environment';
     />
 
     <div class="content">
-      <!-- Bannière Discord -->
-      @if (!userStore.user()?.discordId && !discordBannerDismissed()) {
-        <div class="discord-banner">
-          <div class="discord-banner-content">
-            <span class="discord-banner-ic">💬</span>
-            <div class="discord-banner-text">
-              <strong>Rejoins la communauté Discord</strong>
-              <span>Traders ICT · SMC · Price Action — échanges, setups, support direct</span>
-            </div>
-          </div>
-          <div class="discord-banner-actions">
-            <a href="https://discord.gg/TDK2npvkSN" target="_blank" rel="noopener"
-              class="discord-banner-btn">Rejoindre →</a>
-            <button class="discord-banner-dismiss" (click)="dismissDiscordBanner()" aria-label="Fermer">✕</button>
-          </div>
-        </div>
-      }
-
       <!-- Bannière limite FREE -->
       @if (!userStore.isPremium() && tradesStore.limitReached()) {
         <div class="limit-banner reached">
@@ -111,11 +93,19 @@ import { environment } from '../../../environments/environment';
         </div>
       }
 
-      <!-- Greeting -->
-      <div class="greeting">
+      <!-- Greeting + Discord inline -->
+      <div class="dashboard-header-row">
         <h1 class="greeting-title">
           Bonjour, {{ userStore.displayName() }} 👋
         </h1>
+        @if (!userStore.user()?.discordId && !discordBannerDismissed()) {
+          <div class="discord-badge">
+            <span class="discord-badge-ic">💬</span>
+            <a href="https://discord.gg/TDK2npvkSN" target="_blank" rel="noopener"
+              class="discord-badge-link">Rejoindre Discord</a>
+            <button class="discord-badge-dismiss" (click)="dismissDiscordBanner()" aria-label="Fermer">✕</button>
+          </div>
+        }
       </div>
 
       <!-- Premium upsell banner -->
