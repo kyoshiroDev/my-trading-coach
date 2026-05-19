@@ -38,6 +38,8 @@ body {
   background: var(--bg);
   color: var(--txt);
   font-family: var(--body);
+  font-size: 1rem;
+  line-height: 1.6;
   overflow-x: hidden;
   max-width: 100%;
   -webkit-font-smoothing: antialiased;
@@ -84,7 +86,7 @@ h2 {
 }
 h2 em {
   font-style: italic;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--body);
   font-weight: 300;
   color: var(--blue2);
 }
@@ -155,6 +157,19 @@ h2 em {
   50% {
     opacity: 0.5;
     transform: translate(-50%, -50%) scale(1.04);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .rstag > * {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+  .ai-dot-anim,
+  .bdot {
+    animation: none;
   }
 }
 

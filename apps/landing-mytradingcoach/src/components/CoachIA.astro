@@ -319,7 +319,7 @@
           <path d="M5 12h14M12 5l7 7-7 7"/>
         </svg>
       </a>
-      <p class="coach-cta-note">Aucune CB requise · 7 jours Premium offerts</p>
+      <p class="coach-cta-note">Gratuit sans CB · Premium : essai 7 jours, aucun prélèvement avant</p>
     </div>
 
   </div>
@@ -355,11 +355,15 @@
   next?.addEventListener('click', () => goTo(current + 1));
   dots.forEach((d, i) => d.addEventListener('click', () => goTo(i)));
 
-  let timer = setInterval(() => goTo(current + 1 <= maxIndex() ? current + 1 : 0), 5000);
-  track.addEventListener('mouseenter', () => clearInterval(timer));
-  track.addEventListener('mouseleave', () => {
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let timer: ReturnType<typeof setInterval> | null = null;
+  if (!reducedMotion) {
     timer = setInterval(() => goTo(current + 1 <= maxIndex() ? current + 1 : 0), 5000);
-  });
+    track.addEventListener('mouseenter', () => { if (timer) clearInterval(timer); });
+    track.addEventListener('mouseleave', () => {
+      timer = setInterval(() => goTo(current + 1 <= maxIndex() ? current + 1 : 0), 5000);
+    });
+  }
   window.addEventListener('resize', () => goTo(Math.min(current, maxIndex())));
 </script>
 
@@ -561,14 +565,23 @@
   .review-badge   { font-size: 9px; font-family: var(--mono); font-weight: 700; padding: 2px 7px; border-radius: 100px; background: rgba(59,130,246,.1); color: var(--blue2); border: 1px solid rgba(59,130,246,.2); }
   .reviews-controls { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 20px; }
   .reviews-btn {
-    width: 36px; height: 36px; border-radius: 50%;
+    width: 44px; height: 44px; border-radius: 50%;
     border: 1px solid var(--b2); background: var(--card);
     color: var(--txt2); cursor: pointer;
-    display: flex; align-items: center; justify-content: center; transition: all .15s;
+    display: flex; align-items: center; justify-content: center; transition: background .15s, border-color .15s, color .15s;
   }
   .reviews-btn:hover { background: var(--blue); border-color: var(--blue); color: #fff; }
   .reviews-dots { display: flex; gap: 6px; align-items: center; }
-  .reviews-dot { width: 6px; height: 6px; border-radius: 50%; border: none; background: var(--b2); cursor: pointer; transition: all .2s; padding: 0; }
+  .reviews-dot {
+    width: 6px; height: 6px; border-radius: 50%; border: none;
+    background: var(--b2); cursor: pointer; transition: background .2s, width .2s, border-radius .2s; padding: 0;
+    /* Zone de clic 44px via padding invisible */
+    position: relative;
+  }
+  .reviews-dot::before {
+    content: ''; position: absolute;
+    inset: -19px;
+  }
   .reviews-dot.active { background: var(--blue); width: 20px; border-radius: 3px; }
 
   /* CTA */
@@ -579,7 +592,7 @@
     border-radius: 10px; font-size: 15px; font-weight: 600;
     text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
     box-shadow: 0 0 32px rgba(59,130,246,.4);
-    transition: all .2s; font-family: var(--disp);
+    transition: background .2s, transform .2s, box-shadow .2s; font-family: var(--disp);
   }
   .btn-p:hover { background: var(--blue2); transform: translateY(-2px); }
 
