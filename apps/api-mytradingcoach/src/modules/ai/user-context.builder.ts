@@ -13,7 +13,7 @@ const STYLE_MAP: Record<string, string> = {
   SCALPING:    'Scalper (trades courts, quelques secondes à quelques minutes)',
   DAY_TRADING: 'Day Trader (positions fermées dans la journée)',
   SWING:       'Swing Trader (positions de quelques jours à semaines)',
-  POSITION:    'Position Trader (positions longues, semaines à mois)',
+  POSITION:    'Trader long terme (positions de plusieurs semaines à mois)',
 };
 
 const SESSION_MAP: Record<string, string> = {

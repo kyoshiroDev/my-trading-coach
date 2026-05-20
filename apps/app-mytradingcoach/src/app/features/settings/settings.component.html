@@ -317,23 +317,24 @@
             </p>
 
             <div class="strat-section-label">Style de trading</div>
-            <div class="strat-chips">
+            <div class="style-chips-col">
               @for (s of TRADING_STYLES; track s.value) {
-                <button class="strat-chip" [class.active]="tradingStyle() === s.value"
+                <button class="style-chip-row" [class.active]="tradingStyle() === s.value"
                   (click)="tradingStyle.set(s.value)">
-                  <span class="strat-chip-emoji">{{ s.emoji }}</span>
-                  {{ s.label }}
+                  <span class="style-chip-emoji">{{ s.emoji }}</span>
+                  <span class="style-chip-label">{{ s.label }}</span>
+                  <span class="style-chip-desc">{{ s.desc }}</span>
                 </button>
               }
             </div>
 
             <div class="strat-section-label">Sessions préférées</div>
-            <div class="strat-chips">
+            <div class="style-chips-col">
               @for (s of SESSIONS; track s.value) {
-                <button class="strat-chip" [class.active]="tradingSessions().includes(s.value)"
+                <button class="style-chip-row" [class.active]="tradingSessions().includes(s.value)"
                   (click)="toggleSession(s.value)">
-                  {{ s.label }}
-                  <span style="font-size:10px;opacity:.6;font-family:var(--font-mono)">{{ s.time }}</span>
+                  <span class="style-chip-label">{{ s.label }}</span>
+                  <span class="style-chip-desc">{{ s.time }}</span>
                 </button>
               }
             </div>

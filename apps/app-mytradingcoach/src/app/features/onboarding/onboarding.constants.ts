@@ -5,7 +5,7 @@ export const TRADING_STYLES: { value: TradingStyle; label: string; emoji: string
   { value: 'SCALPING',    label: 'Scalping',    emoji: '⚡', desc: 'Trades de quelques secondes à minutes' },
   { value: 'DAY_TRADING', label: 'Day Trading', emoji: '📅', desc: 'Positions fermées dans la journée' },
   { value: 'SWING',       label: 'Swing',       emoji: '🌊', desc: 'Positions de quelques jours à semaines' },
-  { value: 'POSITION',    label: 'Position',    emoji: '🏔️', desc: 'Positions longues, semaines à mois' },
+  { value: 'POSITION',    label: 'Long terme',  emoji: '🏔️', desc: 'Plusieurs semaines à mois' },
 ];
 
 export const STRATEGY_TAGS = [
