@@ -1,111 +1,245 @@
 ---
 ---
-<!-- Topbar réelle -->
+
+<!-- Topbar -->
 <div class="fdash-topbar">
-  <div>
-    <div class="fdash-title">Bonjour, Alexandre 👋</div>
-    <div class="fdash-sub">Voici un résumé de ton activité de trading</div>
-  </div>
-  <button class="btn-p" style="font-size:12px;padding:8px 16px">⚡ Ajouter trade</button>
+  <h1 class="fdash-page-title">Dashboard</h1>
+  <button class="btn-p" style="font-size:11px;padding:7px 14px;gap:5px">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Ajouter trade
+  </button>
 </div>
 
-<div style="padding:0 24px 24px">
-  <!-- 4 stat cards -->
-  <div class="fstats" style="padding:0;margin-bottom:16px">
-    <div class="fstat"><div class="fstat-lbl">P&L Total</div><div class="fstat-val text-g">+$8,420</div><div class="fstat-sub"><span class="fup">▲ +12.3%</span><span>ce mois</span></div></div>
-    <div class="fstat"><div class="fstat-lbl">Win Rate</div><div class="fstat-val text-b">67.4%</div><div class="fstat-sub"><span class="fup">▲ +3.2%</span><span>vs préc.</span></div></div>
-    <div class="fstat"><div class="fstat-lbl">Drawdown</div><div class="fstat-val text-r">-$1,240</div><div class="fstat-sub"><span class="fdn">▼ -4.8%</span><span>sur cap.</span></div></div>
-    <div class="fstat"><div class="fstat-lbl">Trades</div><div class="fstat-val">142</div><div class="fstat-sub"><span class="fup">▲ +18</span><span>sem.</span></div></div>
+<div style="padding:0 20px 20px">
+
+  <!-- Greeting row + Discord badge -->
+  <div class="fdash-greeting-row">
+    <div class="fdash-greeting">Bonjour, Alexandre 👋</div>
+    <div class="fdash-discord">
+      <span style="font-size:12px">💬</span>
+      <span>Rejoindre Discord</span>
+      <span style="opacity:.5">↗</span>
+    </div>
   </div>
 
-  <!-- Equity Curve -->
-  <div class="fcard">
-    <div class="fcard-h">
-      <div class="fcard-t">Equity Curve</div>
-      <div style="display:flex;gap:10px">
-        <span style="font-size:10px;color:#60a5fa;font-family:var(--mono);cursor:pointer;font-weight:600">3M</span>
-        <span style="font-size:10px;color:var(--txt3);font-family:var(--mono);cursor:pointer">All</span>
+  <!-- 5 stat cards -->
+  <div class="fstats5">
+    <div class="fstat5">
+      <div class="fstat-lbl">Capital</div>
+      <div class="fstat-val text-g">$51 240</div>
+      <div class="fstat-sub"><span class="fup">▲ +2.4%</span></div>
+      <div class="fstat-bg-ic">💼</div>
+    </div>
+    <div class="fstat5">
+      <div class="fstat-lbl">P&amp;L Total</div>
+      <div class="fstat-val text-g">+$1 240</div>
+      <div class="fstat-sub"><span class="fup">▲ ce mois</span></div>
+      <div class="fstat-bg-ic">💰</div>
+    </div>
+    <div class="fstat5">
+      <div class="fstat-lbl">Win Rate</div>
+      <div class="fstat-val text-b">67.4%</div>
+      <div class="fstat-sub"><span>vs mois préc.</span></div>
+      <div class="fstat-bg-ic">🎯</div>
+    </div>
+    <div class="fstat5">
+      <div class="fstat-lbl">Drawdown Max</div>
+      <div class="fstat-val text-r">-$1 240</div>
+      <div class="fstat-sub"><span>sur capital</span></div>
+      <div class="fstat-bg-ic">📉</div>
+    </div>
+    <div class="fstat5">
+      <div class="fstat-lbl">Trades</div>
+      <div class="fstat-val">142</div>
+      <div class="fstat-sub"><span class="fup">▲ +3 streak</span></div>
+      <div class="fstat-bg-ic">🔢</div>
+    </div>
+  </div>
+
+  <!-- 4-col row -->
+  <div class="fdash-four">
+
+    <!-- Equity Curve -->
+    <div class="fcard" style="margin:0">
+      <div class="fcard-h">
+        <div class="fcard-t">Equity Curve</div>
+        <span style="font-size:10px;color:var(--txt3);font-family:var(--mono)">Détails →</span>
+      </div>
+      <div style="position:relative;height:90px">
+        <svg width="100%" height="90" viewBox="0 0 300 90" preserveAspectRatio="none" style="position:absolute;inset:0">
+          <defs>
+            <linearGradient id="ecg3" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#3b82f6" stop-opacity=".35"/>
+              <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M0,80 C30,75 60,68 90,58 C120,48 140,52 170,40 C200,28 230,20 260,12 C280,8 290,6 300,4" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+          <path d="M0,80 C30,75 60,68 90,58 C120,48 140,52 170,40 C200,28 230,20 260,12 C280,8 290,6 300,4 L300,90 L0,90Z" fill="url(#ecg3)"/>
+          <circle cx="300" cy="4" r="4" fill="#3b82f6"/>
+        </svg>
+        <div style="position:absolute;top:4px;left:4px;font-size:9px;font-family:var(--mono);color:rgba(112,144,176,.7)">$50k</div>
+        <div style="position:absolute;top:4px;right:4px;font-size:9px;font-family:var(--mono);color:#3b82f6">$51.2k</div>
       </div>
     </div>
-    <svg width="100%" height="72" viewBox="0 0 600 72" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="ecg2" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#3b82f6" stop-opacity=".2"/>
-          <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
-        </linearGradient>
-      </defs>
-      <path d="M0,70 C40,65 80,58 130,48 C180,38 210,44 250,32 C290,20 320,14 360,9 C400,4 430,10 470,7 C510,4 550,2 600,1" fill="none" stroke="#3b82f6" stroke-width="1.8"/>
-      <path d="M0,70 C40,65 80,58 130,48 C180,38 210,44 250,32 C290,20 320,14 360,9 C400,4 430,10 470,7 C510,4 550,2 600,1 L600,72 L0,72Z" fill="url(#ecg2)"/>
-      <circle cx="600" cy="1" r="3.5" fill="#3b82f6"/>
-    </svg>
-  </div>
 
-  <!-- Win Rate + Emotions -->
-  <div class="fgrid2" style="margin-bottom:12px">
+    <!-- Derniers trades -->
     <div class="fcard" style="margin:0">
-      <div class="fcard-h"><div class="fcard-t">Win Rate / stratégie</div></div>
-      <div style="display:flex;gap:14px;align-items:center">
-        <svg width="68" height="68" viewBox="0 0 100 100" style="flex-shrink:0">
-          <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10"/>
-          <circle cx="50" cy="50" r="38" fill="none" stroke="#10b981" stroke-width="10" stroke-dasharray="160 79" stroke-linecap="round" transform="rotate(-90 50 50)"/>
-          <circle cx="50" cy="50" r="38" fill="none" stroke="#3b82f6" stroke-width="10" stroke-dasharray="57 182" stroke-dashoffset="-160" stroke-linecap="round" transform="rotate(-90 50 50)"/>
-          <circle cx="50" cy="50" r="38" fill="none" stroke="#f59e0b" stroke-width="10" stroke-dasharray="22 217" stroke-dashoffset="-217" stroke-linecap="round" transform="rotate(-90 50 50)"/>
-          <text x="50" y="55" text-anchor="middle" font-family="Syne,sans-serif" font-weight="700" font-size="16" fill="#e2eaf5">67%</text>
-        </svg>
-        <div style="flex:1;display:flex;flex-direction:column;gap:7px;font-size:11px">
-          <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:#10b981;flex-shrink:0"></div>Breakout<span style="margin-left:auto;font-family:var(--mono)">74%</span></div>
-          <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:#3b82f6;flex-shrink:0"></div>Pullback<span style="margin-left:auto;font-family:var(--mono)">62%</span></div>
-          <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:#f59e0b;flex-shrink:0"></div>Range<span style="margin-left:auto;font-family:var(--mono)">58%</span></div>
-          <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:#ef4444;flex-shrink:0"></div>Reversal<span style="margin-left:auto;font-family:var(--mono)">41%</span></div>
+      <div class="fcard-h">
+        <div class="fcard-t">Derniers trades</div>
+        <span style="font-size:10px;color:var(--txt3);font-family:var(--mono)">Voir →</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <div class="ftrade-row">
+          <div class="ftrade-top">
+            <span class="ftrade-side long">LONG</span>
+            <span class="ftrade-asset">BTC/USDT</span>
+            <span style="font-size:11px">😌</span>
+          </div>
+          <div class="ftrade-bot">
+            <span class="ftrade-setup">Breakout</span>
+            <span style="color:#10b981;font-family:var(--mono);font-size:11px;font-weight:600">+$400</span>
+          </div>
+        </div>
+        <div class="ftrade-row">
+          <div class="ftrade-top">
+            <span class="ftrade-side short">SHORT</span>
+            <span class="ftrade-asset">EUR/USD</span>
+            <span style="font-size:11px">😤</span>
+          </div>
+          <div class="ftrade-bot">
+            <span class="ftrade-setup">Pullback</span>
+            <span style="color:#ef4444;font-family:var(--mono);font-size:11px;font-weight:600">-$280</span>
+          </div>
+        </div>
+        <div class="ftrade-row">
+          <div class="ftrade-top">
+            <span class="ftrade-side long">LONG</span>
+            <span class="ftrade-asset">NQ</span>
+            <span style="font-size:11px">🎯</span>
+          </div>
+          <div class="ftrade-bot">
+            <span class="ftrade-setup">Scalping</span>
+            <span style="color:#10b981;font-family:var(--mono);font-size:11px;font-weight:600">+$620</span>
+          </div>
         </div>
       </div>
     </div>
 
+    <!-- Win Rate / stratégie -->
     <div class="fcard" style="margin:0">
-      <div class="fcard-h"><div class="fcard-t">États émotionnels</div></div>
-      <div style="display:flex;flex-direction:column;gap:9px">
-        <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>😤 Revenge</span><span style="font-family:var(--mono);font-size:10px;color:var(--txt3)">23%</span></div><div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px"><div style="width:23%;height:100%;background:#ef4444;border-radius:3px"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>😰 Stress</span><span style="font-family:var(--mono);font-size:10px;color:var(--txt3)">31%</span></div><div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px"><div style="width:31%;height:100%;background:#f59e0b;border-radius:3px"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>😌 Confiant</span><span style="font-family:var(--mono);font-size:10px;color:var(--txt3)">68%</span></div><div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px"><div style="width:68%;height:100%;background:#3b82f6;border-radius:3px"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>🎯 Focus</span><span style="font-family:var(--mono);font-size:10px;color:var(--txt3)">52%</span></div><div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px"><div style="width:52%;height:100%;background:#10b981;border-radius:3px"></div></div></div>
+      <div class="fcard-h">
+        <div class="fcard-t">Win Rate / stratégie</div>
+        <span style="font-size:10px;color:var(--txt3);font-family:var(--mono)">Voir →</span>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center">
+        <svg width="60" height="60" viewBox="0 0 100 100" style="flex-shrink:0">
+          <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="12"/>
+          <circle cx="50" cy="50" r="38" fill="none" stroke="#10b981" stroke-width="12" stroke-dasharray="143 96" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+          <circle cx="50" cy="50" r="38" fill="none" stroke="#3b82f6" stroke-width="12" stroke-dasharray="65 174" stroke-dashoffset="-143" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+          <circle cx="50" cy="50" r="38" fill="none" stroke="#f59e0b" stroke-width="12" stroke-dasharray="31 208" stroke-dashoffset="-208" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+          <text x="50" y="55" text-anchor="middle" font-family="Syne,sans-serif" font-weight="700" font-size="16" fill="#e2eaf5">67%</text>
+        </svg>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px;font-size:10px">
+          <div class="flegend-row"><div class="flegend-dot" style="background:#10b981"></div>Breakout<span class="flegend-val">74%</span></div>
+          <div class="flegend-row"><div class="flegend-dot" style="background:#3b82f6"></div>Pullback<span class="flegend-val">62%</span></div>
+          <div class="flegend-row"><div class="flegend-dot" style="background:#f59e0b"></div>Range<span class="flegend-val">58%</span></div>
+          <div class="flegend-row"><div class="flegend-dot" style="background:#ef4444"></div>Reversal<span class="flegend-val">41%</span></div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Derniers trades -->
-  <div style="display:flex;flex-direction:column;gap:5px">
-    <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--b);border-radius:8px;padding:9px 12px;font-size:11px">
-      <span style="background:rgba(16,185,129,.12);color:#10b981;font-family:var(--mono);font-size:9px;padding:2.5px 7px;border-radius:4px;flex-shrink:0;font-weight:700">LONG</span>
-      <span style="color:#60a5fa;font-family:var(--mono);min-width:65px;font-weight:500">BTC/USDT</span>
-      <span style="color:var(--txt3);flex:1;font-size:10px">Breakout · London</span>
-      <span style="font-size:12px">😌</span>
-      <span style="color:#10b981;font-family:var(--mono);font-weight:600;font-size:12px">+$400</span>
+    <!-- États émotionnels -->
+    <div class="fcard" style="margin:0">
+      <div class="fcard-h">
+        <div class="fcard-t">États émotionnels</div>
+        <span style="font-size:10px;color:var(--txt3);font-family:var(--mono)">Détails →</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="femotion-row"><div class="femotion-lbl"><span>Confiant</span><span style="font-family:var(--mono);font-size:9px;color:var(--txt3)">68%</span></div><div class="femotion-track"><div style="width:68%;height:100%;background:#3b82f6;border-radius:3px"></div></div></div>
+        <div class="femotion-row"><div class="femotion-lbl"><span>Focalisé</span><span style="font-family:var(--mono);font-size:9px;color:var(--txt3)">52%</span></div><div class="femotion-track"><div style="width:52%;height:100%;background:#10b981;border-radius:3px"></div></div></div>
+        <div class="femotion-row"><div class="femotion-lbl"><span>Stressé</span><span style="font-family:var(--mono);font-size:9px;color:var(--txt3)">31%</span></div><div class="femotion-track"><div style="width:31%;height:100%;background:#f59e0b;border-radius:3px"></div></div></div>
+        <div class="femotion-row"><div class="femotion-lbl"><span>Revenge</span><span style="font-family:var(--mono);font-size:9px;color:var(--txt3)">23%</span></div><div class="femotion-track"><div style="width:23%;height:100%;background:#ef4444;border-radius:3px"></div></div></div>
+      </div>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--b);border-radius:8px;padding:9px 12px;font-size:11px">
-      <span style="background:rgba(239,68,68,.12);color:#ef4444;font-family:var(--mono);font-size:9px;padding:2.5px 7px;border-radius:4px;flex-shrink:0;font-weight:700">SHORT</span>
-      <span style="color:#60a5fa;font-family:var(--mono);min-width:65px;font-weight:500">EUR/USD</span>
-      <span style="color:var(--txt3);flex:1;font-size:10px">Pullback · NY</span>
-      <span style="font-size:12px">😤</span>
-      <span style="color:#ef4444;font-family:var(--mono);font-weight:600;font-size:12px">-$280</span>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--b);border-radius:8px;padding:9px 12px;font-size:11px">
-      <span style="background:rgba(16,185,129,.12);color:#10b981;font-family:var(--mono);font-size:9px;padding:2.5px 7px;border-radius:4px;flex-shrink:0;font-weight:700">LONG</span>
-      <span style="color:#60a5fa;font-family:var(--mono);min-width:65px;font-weight:500">ETH/USDT</span>
-      <span style="color:var(--txt3);flex:1;font-size:10px">Range · Asian</span>
-      <span style="font-size:12px">🎯</span>
-      <span style="color:#10b981;font-family:var(--mono);font-weight:600;font-size:12px">+$620</span>
-    </div>
+
   </div>
 </div>
 
 <style>
   .fdash-topbar {
-    display: flex; align-items: flex-start;
+    display: flex; align-items: center;
     justify-content: space-between;
-    padding: 20px 24px 16px;
+    padding: 16px 20px 12px;
     border-bottom: 1px solid var(--b);
-    margin-bottom: 20px;
   }
-  .fdash-title { font-family: var(--disp); font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
-  .fdash-sub { font-size: 12px; color: var(--txt3); margin-top: 4px; }
+  .fdash-page-title {
+    font-family: var(--disp); font-size: 18px; font-weight: 700;
+    letter-spacing: -.3px; color: var(--txt);
+  }
+
+  .fdash-greeting-row {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px; margin-top: 16px;
+  }
+  .fdash-greeting {
+    font-family: var(--disp); font-size: 15px; font-weight: 700;
+    letter-spacing: -.2px;
+  }
+  .fdash-discord {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 10px; font-family: var(--mono);
+    color: var(--txt3);
+    background: rgba(88,101,242,.08);
+    border: 1px solid rgba(88,101,242,.2);
+    padding: 4px 10px; border-radius: 100px;
+    cursor: pointer;
+  }
+
+  .fstats5 {
+    display: grid; grid-template-columns: repeat(5,1fr);
+    gap: 8px; margin-bottom: 10px;
+  }
+  .fstat5 {
+    background: var(--card); border: 1px solid var(--b);
+    border-radius: 10px; padding: 12px;
+    position: relative; overflow: hidden;
+  }
+  .fstat-bg-ic {
+    position: absolute; bottom: -4px; right: 6px;
+    font-size: 24px; opacity: 0.07;
+    line-height: 1;
+  }
+  .fstat-lbl { font-size: 8px; font-family: var(--mono); color: var(--txt3); letter-spacing: .6px; text-transform: uppercase; margin-bottom: 6px; }
+  .fstat-val { font-family: var(--disp); font-size: 16px; font-weight: 700; letter-spacing: -.2px; }
+  .fstat-sub { font-size: 9px; color: var(--txt3); margin-top: 4px; display: flex; gap: 4px; }
+  .fup { color: #10b981; background: rgba(16,185,129,.1); font-family: var(--mono); font-size: 8px; padding: 1px 4px; border-radius: 3px; }
+  .text-g { color: #10b981; }
+  .text-b { color: #60a5fa; }
+  .text-r { color: #ef4444; }
+
+  .fdash-four {
+    display: grid; grid-template-columns: repeat(4,1fr);
+    gap: 8px;
+  }
+  .fcard { background: var(--card); border: 1px solid var(--b); border-radius: 10px; padding: 12px; }
+  .fcard-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .fcard-t { font-family: var(--disp); font-size: 11px; font-weight: 600; letter-spacing: -.1px; }
+
+  .ftrade-row { background: var(--bg3); border: 1px solid var(--b); border-radius: 7px; padding: 7px 9px; }
+  .ftrade-top { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+  .ftrade-bot { display: flex; align-items: center; justify-content: space-between; }
+  .ftrade-side { font-size: 8px; font-weight: 700; font-family: var(--mono); padding: 2px 5px; border-radius: 3px; flex-shrink: 0; }
+  .ftrade-side.long  { background: rgba(16,185,129,.12); color: #10b981; }
+  .ftrade-side.short { background: rgba(239,68,68,.12); color: #ef4444; }
+  .ftrade-asset { font-size: 11px; font-weight: 600; font-family: var(--mono); color: #60a5fa; flex: 1; }
+  .ftrade-setup { font-size: 10px; color: var(--txt3); }
+
+  .flegend-row { display: flex; align-items: center; gap: 5px; color: var(--txt2); }
+  .flegend-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .flegend-val { margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--txt3); }
+
+  .femotion-row { display: flex; flex-direction: column; gap: 4px; }
+  .femotion-lbl { display: flex; justify-content: space-between; font-size: 10px; color: var(--txt2); }
+  .femotion-track { height: 4px; background: rgba(255,255,255,.06); border-radius: 3px; }
 </style>
