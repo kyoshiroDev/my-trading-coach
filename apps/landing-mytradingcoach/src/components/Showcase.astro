@@ -1,6 +1,7 @@
 ---
 import MockupShell from './mockup/MockupShell.astro';
 import MockupDashboard from './mockup/MockupDashboard.astro';
+import MockupJournal from './mockup/MockupJournal.astro';
 import MockupAnalytics from './mockup/MockupAnalytics.astro';
 import MockupAiInsights from './mockup/MockupAiInsights.astro';
 import MockupDebrief from './mockup/MockupDebrief.astro';
@@ -19,6 +20,7 @@ import MockupDebrief from './mockup/MockupDebrief.astro';
 
     <div class="showcase-tabs reveal" role="tablist" aria-label="Aperçu de l'application">
       <button class="stab active" data-tab="dash" role="tab" aria-selected="true" aria-controls="tab-dash" id="stab-dash">Dashboard</button>
+      <button class="stab" data-tab="journal" role="tab" aria-selected="false" aria-controls="tab-journal" id="stab-journal">Journal</button>
       <button class="stab" data-tab="analytics" role="tab" aria-selected="false" aria-controls="tab-analytics" id="stab-analytics">Analytics</button>
       <button class="stab" data-tab="ai" role="tab" aria-selected="false" aria-controls="tab-ai" id="stab-ai">IA Insights</button>
       <button class="stab" data-tab="debrief" role="tab" aria-selected="false" aria-controls="tab-debrief" id="stab-debrief">Weekly Debrief</button>
@@ -56,6 +58,35 @@ import MockupDebrief from './mockup/MockupDebrief.astro';
               <div class="phone-trade"><span class="phone-side long">LONG</span><span class="phone-asset">BTC/USDT</span><span class="phone-pnl text-g">+$400</span></div>
               <div class="phone-trade"><span class="phone-side short">SHORT</span><span class="phone-asset">EUR/USD</span><span class="phone-pnl text-r">-$280</span></div>
               <div class="phone-trade"><span class="phone-side long">LONG</span><span class="phone-asset">ETH/USDT</span><span class="phone-pnl text-g">+$620</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="showcase-panel" id="tab-journal" role="tabpanel" aria-labelledby="stab-journal">
+      <MockupShell url="app.mytradingcoach.app — Journal" active="journal">
+        <MockupJournal />
+      </MockupShell>
+      <div class="mobile-mockup">
+        <div class="phone-frame">
+          <div class="phone-bar"><div class="phone-notch"></div></div>
+          <div class="phone-content">
+            <div class="phone-topbar">
+              <span class="phone-title">Journal</span>
+              <button class="phone-cta">+ Nouveau</button>
+            </div>
+            <div class="phone-stats">
+              <div class="phone-stat"><div class="phone-stat-label">P&amp;L NET</div><div class="phone-stat-value text-g">+$1 420</div></div>
+              <div class="phone-stat"><div class="phone-stat-label">WIN RATE</div><div class="phone-stat-value">67%</div></div>
+            </div>
+            <div class="phone-chart" style="margin-bottom:8px">
+              <div class="phone-chart-label" style="margin-bottom:6px">Mercredi 14 mai — 3 trades · +$740</div>
+            </div>
+            <div class="phone-trades">
+              <div class="phone-trade"><span class="phone-side long">LONG</span><span class="phone-asset">BTC/USDT</span><span class="phone-pnl text-g">+$400</span></div>
+              <div class="phone-trade"><span class="phone-side short">SHORT</span><span class="phone-asset">EUR/USD</span><span class="phone-pnl text-g">+$280</span></div>
+              <div class="phone-trade"><span class="phone-side long">LONG</span><span class="phone-asset">NQ</span><span class="phone-pnl text-r">-$280</span></div>
             </div>
           </div>
         </div>
