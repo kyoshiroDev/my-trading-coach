@@ -249,6 +249,7 @@ export class JournalComponent implements OnInit {
   }
 
   protected deleteDay(day: DayGroup): void {
+    if (!this.userStore.isPremium()) return;
     this.isDeletingDay.set(true);
     const ids = day.trades.map(t => t.id);
     forkJoin(ids.map(id => this.http.delete(`${environment.apiUrl}/trades/${id}`)))
