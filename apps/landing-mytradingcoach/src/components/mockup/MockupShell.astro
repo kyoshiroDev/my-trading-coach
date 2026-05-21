@@ -121,6 +121,26 @@ const { url = 'app.mytradingcoach.app', active = 'dashboard', style } = Astro.pr
     --app-disp:       'Syne', sans-serif;
     --app-mono:       'DM Mono', monospace;
     --app-body:       'DM Sans', sans-serif;
+
+    /* Alias landing → app (composants enfants Analytics, AiInsights, Debrief) */
+    --mono:  var(--app-mono);
+    --disp:  var(--app-disp);
+    --body:  var(--app-body);
+    --txt:   var(--app-txt);
+    --txt2:  var(--app-txt2);
+    --txt3:  var(--app-txt3);
+    --bg:    var(--app-bg);
+    --bg2:   var(--app-bg2);
+    --bg3:   var(--app-bg3);
+    --card:  var(--app-card);
+    --b:     var(--app-border);
+    --b2:    var(--app-border-hov);
+    --blue:  var(--app-blue);
+    --blue2: var(--app-blue-br);
+    --pulse: var(--app-blue-br);
+    --green: var(--app-green);
+    --red:   var(--app-red);
+    --yel:   var(--app-yellow);
   }
 
   .full-screen {
@@ -340,5 +360,78 @@ const { url = 'app.mytradingcoach.app', active = 'dashboard', style } = Astro.pr
     .full-body { display: block; min-height: unset; }
     .full-content { min-height: unset; }
     .full-screen { display: none; }
+  }
+
+  /* ── Utilitaires partagés (Analytics, AiInsights, Debrief) ── */
+
+  .ftopbar {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 0 24px; height: 60px;
+    border-bottom: 1px solid var(--app-border);
+    flex-shrink: 0;
+    background: rgba(8,12,20,0.85);
+    backdrop-filter: blur(16px);
+  }
+  .ftopbar h3 {
+    font-family: var(--app-disp); font-size: 17px;
+    font-weight: 700; letter-spacing: -.3px; color: var(--app-txt);
+  }
+
+  .fstats {
+    display: grid; grid-template-columns: repeat(4,1fr);
+    gap: 12px; padding: 0 24px; margin-bottom: 16px;
+  }
+  .fstat {
+    background: var(--app-card); border: 1px solid var(--app-border);
+    border-radius: 12px; padding: 16px;
+    position: relative; overflow: hidden;
+    transition: border-color .2s, transform .2s;
+  }
+  .fstat:hover { border-color: var(--app-border-hov); transform: translateY(-2px); }
+  .fstat-lbl {
+    font-size: 9px; font-family: var(--app-mono); color: var(--app-txt3);
+    letter-spacing: .7px; text-transform: uppercase; margin-bottom: 8px;
+  }
+  .fstat-val {
+    font-family: var(--app-mono); font-size: 20px; font-weight: 700;
+    letter-spacing: -.3px; color: var(--app-txt); line-height: 1.1; margin-bottom: 5px;
+    font-variant-numeric: tabular-nums;
+  }
+  .fstat-sub { font-size: 10px; color: var(--app-txt3); display: flex; gap: 5px; align-items: center; }
+
+  .fgrid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+
+  .fcard {
+    background: var(--app-card); border: 1px solid var(--app-border);
+    border-radius: 12px; padding: 16px; margin-bottom: 12px;
+    transition: border-color .2s;
+  }
+  .fcard:hover { border-color: var(--app-border-hov); }
+  .fcard-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .fcard-t {
+    font-family: var(--app-disp); font-size: 13px;
+    font-weight: 600; letter-spacing: -.1px; color: var(--app-txt);
+  }
+
+  .btn-p {
+    background: var(--app-blue); color: white; padding: 7px 16px;
+    border-radius: 8px; font-size: 13px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 6px;
+    border: none; cursor: pointer; font-family: var(--app-body);
+    box-shadow: 0 0 20px rgba(59,130,246,.3);
+  }
+
+  .text-g { color: var(--app-green) !important; }
+  .text-b { color: var(--app-blue-br) !important; }
+  .text-r { color: var(--app-red) !important; }
+
+  .fup { color: var(--app-green); background: var(--app-green-dim); font-family: var(--app-mono); font-size: 9px; padding: 2px 5px; border-radius: 3px; }
+  .fdn { color: var(--app-red);   background: var(--app-red-dim);   font-family: var(--app-mono); font-size: 9px; padding: 2px 5px; border-radius: 3px; }
+
+  @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:.3; } }
+  .ai-dot-anim {
+    width: 6px; height: 6px; background: var(--app-blue-br);
+    border-radius: 50%; animation: blink 2s ease infinite; flex-shrink: 0;
   }
 </style>
