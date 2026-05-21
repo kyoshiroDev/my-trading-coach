@@ -1,6 +1,7 @@
 ---
 import MockupShell from './mockup/MockupShell.astro';
 import MockupDashboard from './mockup/MockupDashboard.astro';
+import MockupJournal from './mockup/MockupJournal.astro';
 import MockupAnalytics from './mockup/MockupAnalytics.astro';
 import MockupAiInsights from './mockup/MockupAiInsights.astro';
 import MockupDebrief from './mockup/MockupDebrief.astro';
@@ -17,14 +18,15 @@ import MockupDebrief from './mockup/MockupDebrief.astro';
       </p>
     </div>
 
-    <div class="showcase-tabs reveal">
-      <button class="stab active" data-tab="dash">Dashboard</button>
-      <button class="stab" data-tab="analytics">Analytics</button>
-      <button class="stab" data-tab="ai">IA Insights</button>
-      <button class="stab" data-tab="debrief">Weekly Debrief</button>
+    <div class="showcase-tabs reveal" role="tablist" aria-label="Aperçu de l'application">
+      <button class="stab active" data-tab="dash" role="tab" aria-selected="true" aria-controls="tab-dash" id="stab-dash">Dashboard</button>
+      <button class="stab" data-tab="journal" role="tab" aria-selected="false" aria-controls="tab-journal" id="stab-journal">Journal</button>
+      <button class="stab" data-tab="analytics" role="tab" aria-selected="false" aria-controls="tab-analytics" id="stab-analytics">Analytics</button>
+      <button class="stab" data-tab="ai" role="tab" aria-selected="false" aria-controls="tab-ai" id="stab-ai">IA Insights</button>
+      <button class="stab" data-tab="debrief" role="tab" aria-selected="false" aria-controls="tab-debrief" id="stab-debrief">Weekly Debrief</button>
     </div>
 
-    <div class="showcase-panel active reveal" id="tab-dash">
+    <div class="showcase-panel active reveal" id="tab-dash" role="tabpanel" aria-labelledby="stab-dash">
       <MockupShell url="app.mytradingcoach.app — Dashboard" active="dashboard">
         <MockupDashboard />
       </MockupShell>
@@ -62,7 +64,36 @@ import MockupDebrief from './mockup/MockupDebrief.astro';
       </div>
     </div>
 
-    <div class="showcase-panel" id="tab-analytics">
+    <div class="showcase-panel" id="tab-journal" role="tabpanel" aria-labelledby="stab-journal">
+      <MockupShell url="app.mytradingcoach.app — Journal" active="journal">
+        <MockupJournal />
+      </MockupShell>
+      <div class="mobile-mockup">
+        <div class="phone-frame">
+          <div class="phone-bar"><div class="phone-notch"></div></div>
+          <div class="phone-content">
+            <div class="phone-topbar">
+              <span class="phone-title">Journal</span>
+              <button class="phone-cta">+ Nouveau</button>
+            </div>
+            <div class="phone-stats">
+              <div class="phone-stat"><div class="phone-stat-label">P&amp;L NET</div><div class="phone-stat-value text-g">+$1 420</div></div>
+              <div class="phone-stat"><div class="phone-stat-label">WIN RATE</div><div class="phone-stat-value">67%</div></div>
+            </div>
+            <div class="phone-chart" style="margin-bottom:8px">
+              <div class="phone-chart-label" style="margin-bottom:6px">Mercredi 14 mai — 3 trades · +$740</div>
+            </div>
+            <div class="phone-trades">
+              <div class="phone-trade"><span class="phone-side long">LONG</span><span class="phone-asset">BTC/USDT</span><span class="phone-pnl text-g">+$400</span></div>
+              <div class="phone-trade"><span class="phone-side short">SHORT</span><span class="phone-asset">EUR/USD</span><span class="phone-pnl text-g">+$280</span></div>
+              <div class="phone-trade"><span class="phone-side long">LONG</span><span class="phone-asset">NQ</span><span class="phone-pnl text-r">-$280</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="showcase-panel" id="tab-analytics" role="tabpanel" aria-labelledby="stab-analytics">
       <MockupShell url="app.mytradingcoach.app — Analytics" active="analytics">
         <MockupAnalytics />
       </MockupShell>
@@ -78,9 +109,9 @@ import MockupDebrief from './mockup/MockupDebrief.astro';
             <div class="phone-chart">
               <div class="phone-chart-label">Performance / Setup</div>
               <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
-                <div><div style="display:flex;justify-content:space-between;font-size:10px;color:#9aa3af;margin-bottom:3px"><span>Breakout</span><span>74%</span></div><div style="height:4px;background:#1c2024;border-radius:2px"><div style="width:74%;height:100%;background:#10b981;border-radius:2px"></div></div></div>
-                <div><div style="display:flex;justify-content:space-between;font-size:10px;color:#9aa3af;margin-bottom:3px"><span>Pullback</span><span>62%</span></div><div style="height:4px;background:#1c2024;border-radius:2px"><div style="width:62%;height:100%;background:#3b82f6;border-radius:2px"></div></div></div>
-                <div><div style="display:flex;justify-content:space-between;font-size:10px;color:#9aa3af;margin-bottom:3px"><span>Range</span><span>58%</span></div><div style="height:4px;background:#1c2024;border-radius:2px"><div style="width:58%;height:100%;background:#f59e0b;border-radius:2px"></div></div></div>
+                <div><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--txt3);margin-bottom:3px"><span>Breakout</span><span>74%</span></div><div style="height:4px;background:var(--card);border-radius:2px"><div style="width:74%;height:100%;background:#10b981;border-radius:2px"></div></div></div>
+                <div><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--txt3);margin-bottom:3px"><span>Pullback</span><span>62%</span></div><div style="height:4px;background:var(--card);border-radius:2px"><div style="width:62%;height:100%;background:#3b82f6;border-radius:2px"></div></div></div>
+                <div><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--txt3);margin-bottom:3px"><span>Range</span><span>58%</span></div><div style="height:4px;background:var(--card);border-radius:2px"><div style="width:58%;height:100%;background:#f59e0b;border-radius:2px"></div></div></div>
               </div>
             </div>
           </div>
@@ -88,7 +119,7 @@ import MockupDebrief from './mockup/MockupDebrief.astro';
       </div>
     </div>
 
-    <div class="showcase-panel" id="tab-ai">
+    <div class="showcase-panel" id="tab-ai" role="tabpanel" aria-labelledby="stab-ai">
       <MockupShell url="app.mytradingcoach.app — IA Insights" active="ai">
         <MockupAiInsights />
       </MockupShell>
@@ -116,7 +147,7 @@ import MockupDebrief from './mockup/MockupDebrief.astro';
       </div>
     </div>
 
-    <div class="showcase-panel" id="tab-debrief">
+    <div class="showcase-panel" id="tab-debrief" role="tabpanel" aria-labelledby="stab-debrief">
       <MockupShell url="app.mytradingcoach.app — Weekly Debrief" active="debrief">
         <MockupDebrief />
       </MockupShell>
@@ -131,7 +162,7 @@ import MockupDebrief from './mockup/MockupDebrief.astro';
             </div>
             <div class="phone-chart" style="margin-bottom:10px">
               <div class="phone-chart-label" style="margin-bottom:8px">Résumé IA de ta semaine</div>
-              <p style="font-size:11px;color:#9aa3af;line-height:1.6;margin:0">Bonne semaine avec un focus sur les breakouts. Tu as respecté tes SL et évité le revenge trading. Continue sur cette lancée la semaine prochaine.</p>
+              <p style="font-size:11px;color:var(--txt3);line-height:1.6;margin:0">Bonne semaine avec un focus sur les breakouts. Tu as respecté tes SL et évité le revenge trading. Continue sur cette lancée la semaine prochaine.</p>
             </div>
             <div class="phone-chart">
               <div class="phone-chart-label" style="margin-bottom:8px">Objectifs semaine prochaine</div>
@@ -175,7 +206,7 @@ import MockupDebrief from './mockup/MockupDebrief.astro';
     font-family: var(--mono);
     color: var(--txt3);
     cursor: pointer;
-    transition: all .2s;
+    transition: background .2s, color .2s, border-color .2s;
     border: none;
     background: none;
     letter-spacing: .3px;
@@ -205,7 +236,7 @@ import MockupDebrief from './mockup/MockupDebrief.astro';
   .phone-stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
   .phone-stat, .phone-stat-sm { background: var(--card); border: 1px solid var(--b); border-radius: 8px; padding: 10px; }
   .phone-stat-label { font-size: 8px; font-family: var(--mono); color: var(--txt3); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 4px; }
-  .phone-stat-value { font-size: 18px; font-weight: 700; font-family: var(--mono); }
+  .phone-stat-value { font-size: 18px; font-weight: 700; font-family: var(--mono); font-variant-numeric: tabular-nums; }
   .phone-chart { background: var(--card); border: 1px solid var(--b); border-radius: 8px; padding: 10px; margin-bottom: 10px; }
   .phone-chart-label { font-size: 9px; font-family: var(--mono); color: var(--txt3); margin-bottom: 6px; }
   .phone-trades { display: flex; flex-direction: column; gap: 6px; }
@@ -242,8 +273,9 @@ import MockupDebrief from './mockup/MockupDebrief.astro';
     .stab {
       flex-shrink: 0;
       font-size: 11px;
-      padding: 6px 12px;
+      padding: 10px 14px;
       white-space: nowrap;
+      min-height: 44px;
     }
 
     .showcase-panel { padding: 0 20px; }
@@ -258,9 +290,13 @@ import MockupDebrief from './mockup/MockupDebrief.astro';
   document.querySelectorAll('.stab').forEach(btn => {
     btn.addEventListener('click', () => {
       const tab = (btn as HTMLElement).dataset.tab;
-      document.querySelectorAll('.stab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.stab').forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
       document.querySelectorAll('.showcase-panel').forEach(p => p.classList.remove('active'));
       btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
       const panel = document.getElementById('tab-' + tab);
       if (panel) panel.classList.add('active');
     });

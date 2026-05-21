@@ -1,111 +1,382 @@
 ---
 ---
-<!-- Topbar réelle -->
-<div class="fdash-topbar">
-  <div>
-    <div class="fdash-title">Bonjour, Alexandre 👋</div>
-    <div class="fdash-sub">Voici un résumé de ton activité de trading</div>
-  </div>
-  <button class="btn-p" style="font-size:12px;padding:8px 16px">⚡ Ajouter trade</button>
+
+<!-- Topbar exact (sticky blur, 77px) -->
+<div class="app-topbar">
+  <h1 class="app-page-title">Dashboard</h1>
+  <button class="app-btn-primary">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Ajouter trade
+  </button>
 </div>
 
-<div style="padding:0 24px 24px">
-  <!-- 4 stat cards -->
-  <div class="fstats" style="padding:0;margin-bottom:16px">
-    <div class="fstat"><div class="fstat-lbl">P&L Total</div><div class="fstat-val text-g">+$8,420</div><div class="fstat-sub"><span class="fup">▲ +12.3%</span><span>ce mois</span></div></div>
-    <div class="fstat"><div class="fstat-lbl">Win Rate</div><div class="fstat-val text-b">67.4%</div><div class="fstat-sub"><span class="fup">▲ +3.2%</span><span>vs préc.</span></div></div>
-    <div class="fstat"><div class="fstat-lbl">Drawdown</div><div class="fstat-val text-r">-$1,240</div><div class="fstat-sub"><span class="fdn">▼ -4.8%</span><span>sur cap.</span></div></div>
-    <div class="fstat"><div class="fstat-lbl">Trades</div><div class="fstat-val">142</div><div class="fstat-sub"><span class="fup">▲ +18</span><span>sem.</span></div></div>
+<div class="dash-content">
+
+  <!-- Greeting row + Discord -->
+  <div class="dash-greeting-row">
+    <h1 class="dash-greeting-title">Bonjour, Alexandre 👋</h1>
+    <div class="dash-discord-badge">
+      <span>💬</span>
+      <a href="#" onclick="return false">Rejoindre Discord</a>
+    </div>
   </div>
 
-  <!-- Equity Curve -->
-  <div class="fcard">
-    <div class="fcard-h">
-      <div class="fcard-t">Equity Curve</div>
-      <div style="display:flex;gap:10px">
-        <span style="font-size:10px;color:#60a5fa;font-family:var(--mono);cursor:pointer;font-weight:600">3M</span>
-        <span style="font-size:10px;color:var(--txt3);font-family:var(--mono);cursor:pointer">All</span>
+  <!-- 5 stat cards — exact app CSS -->
+  <div class="dash-stats-row">
+    <div class="dash-stat-card">
+      <div class="dash-stat-label">CAPITAL</div>
+      <div class="dash-stat-value" style="color:var(--app-green)">$51 240</div>
+      <div class="dash-stat-sub"><span class="dash-change up">▲ +2.4%</span></div>
+      <div class="dash-stat-bg-icon">💼</div>
+    </div>
+    <div class="dash-stat-card">
+      <div class="dash-stat-label">P&amp;L TOTAL</div>
+      <div class="dash-stat-value" style="color:var(--app-green)">+$1 240</div>
+      <div class="dash-stat-sub"><span class="dash-change up">▲ ce mois</span></div>
+      <div class="dash-stat-bg-icon">💰</div>
+    </div>
+    <div class="dash-stat-card">
+      <div class="dash-stat-label">WIN RATE</div>
+      <div class="dash-stat-value" style="color:var(--app-blue-br)">67.4%</div>
+      <div class="dash-stat-sub"><span>vs mois précédent</span></div>
+      <div class="dash-stat-bg-icon">🎯</div>
+    </div>
+    <div class="dash-stat-card">
+      <div class="dash-stat-label">DRAWDOWN MAX</div>
+      <div class="dash-stat-value" style="color:var(--app-red)">-$1 240</div>
+      <div class="dash-stat-sub"><span>sur capital</span></div>
+      <div class="dash-stat-bg-icon">📉</div>
+    </div>
+    <div class="dash-stat-card">
+      <div class="dash-stat-label">TRADES</div>
+      <div class="dash-stat-value">142</div>
+      <div class="dash-stat-sub"><span class="dash-change up">▲ +3 streak</span></div>
+      <div class="dash-stat-bg-icon">🔢</div>
+    </div>
+  </div>
+
+  <!-- 4-col row : equity | trades | winrate | emotions -->
+  <div class="dash-four-col">
+
+    <!-- Equity Curve (2fr) -->
+    <div class="dash-card dash-equity-card">
+      <div class="dash-card-header">
+        <div class="dash-card-title">Equity Curve</div>
+        <span class="dash-card-action">Détails →</span>
+      </div>
+      <div class="dash-chart-wrap">
+        <svg width="100%" height="100%" viewBox="0 0 400 120" preserveAspectRatio="none" style="position:absolute;inset:0">
+          <defs>
+            <linearGradient id="ecg-app" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#3b82f6" stop-opacity=".4"/>
+              <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M0,110 C40,105 80,95 120,80 C160,65 190,70 220,55 C250,40 290,28 330,18 C360,10 380,7 400,4"
+            fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M0,110 C40,105 80,95 120,80 C160,65 190,70 220,55 C250,40 290,28 330,18 C360,10 380,7 400,4 L400,120 L0,120Z"
+            fill="url(#ecg-app)"/>
+          <circle cx="400" cy="4" r="5" fill="#3b82f6" opacity=".8"/>
+          <circle cx="400" cy="4" r="9" fill="#3b82f6" opacity=".25"/>
+        </svg>
+        <div style="position:absolute;bottom:8px;left:62px;font-size:9px;font-family:'DM Mono',monospace;color:rgba(112,144,176,.7)">$50k</div>
+        <div style="position:absolute;top:8px;right:8px;font-size:9px;font-family:'DM Mono',monospace;color:#3b82f6">$51.2k</div>
+        <!-- Grille légère -->
+        <svg width="100%" height="100%" viewBox="0 0 400 120" preserveAspectRatio="none" style="position:absolute;inset:0;pointer-events:none">
+          <line x1="62" y1="24" x2="400" y2="24" stroke="rgba(99,155,255,.06)" stroke-dasharray="4 8"/>
+          <line x1="62" y1="54" x2="400" y2="54" stroke="rgba(99,155,255,.06)" stroke-dasharray="4 8"/>
+          <line x1="62" y1="84" x2="400" y2="84" stroke="rgba(99,155,255,.06)" stroke-dasharray="4 8"/>
+        </svg>
       </div>
     </div>
-    <svg width="100%" height="72" viewBox="0 0 600 72" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="ecg2" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#3b82f6" stop-opacity=".2"/>
-          <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
-        </linearGradient>
-      </defs>
-      <path d="M0,70 C40,65 80,58 130,48 C180,38 210,44 250,32 C290,20 320,14 360,9 C400,4 430,10 470,7 C510,4 550,2 600,1" fill="none" stroke="#3b82f6" stroke-width="1.8"/>
-      <path d="M0,70 C40,65 80,58 130,48 C180,38 210,44 250,32 C290,20 320,14 360,9 C400,4 430,10 470,7 C510,4 550,2 600,1 L600,72 L0,72Z" fill="url(#ecg2)"/>
-      <circle cx="600" cy="1" r="3.5" fill="#3b82f6"/>
-    </svg>
-  </div>
 
-  <!-- Win Rate + Emotions -->
-  <div class="fgrid2" style="margin-bottom:12px">
-    <div class="fcard" style="margin:0">
-      <div class="fcard-h"><div class="fcard-t">Win Rate / stratégie</div></div>
-      <div style="display:flex;gap:14px;align-items:center">
-        <svg width="68" height="68" viewBox="0 0 100 100" style="flex-shrink:0">
-          <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10"/>
-          <circle cx="50" cy="50" r="38" fill="none" stroke="#10b981" stroke-width="10" stroke-dasharray="160 79" stroke-linecap="round" transform="rotate(-90 50 50)"/>
-          <circle cx="50" cy="50" r="38" fill="none" stroke="#3b82f6" stroke-width="10" stroke-dasharray="57 182" stroke-dashoffset="-160" stroke-linecap="round" transform="rotate(-90 50 50)"/>
-          <circle cx="50" cy="50" r="38" fill="none" stroke="#f59e0b" stroke-width="10" stroke-dasharray="22 217" stroke-dashoffset="-217" stroke-linecap="round" transform="rotate(-90 50 50)"/>
-          <text x="50" y="55" text-anchor="middle" font-family="Syne,sans-serif" font-weight="700" font-size="16" fill="#e2eaf5">67%</text>
-        </svg>
-        <div style="flex:1;display:flex;flex-direction:column;gap:7px;font-size:11px">
-          <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:#10b981;flex-shrink:0"></div>Breakout<span style="margin-left:auto;font-family:var(--mono)">74%</span></div>
-          <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:#3b82f6;flex-shrink:0"></div>Pullback<span style="margin-left:auto;font-family:var(--mono)">62%</span></div>
-          <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:#f59e0b;flex-shrink:0"></div>Range<span style="margin-left:auto;font-family:var(--mono)">58%</span></div>
-          <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:#ef4444;flex-shrink:0"></div>Reversal<span style="margin-left:auto;font-family:var(--mono)">41%</span></div>
+    <!-- Derniers trades (1fr) -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <div class="dash-card-title">Derniers trades</div>
+        <span class="dash-card-action">Voir →</span>
+      </div>
+      <div class="dash-trade-list">
+        <div class="dash-trade-row">
+          <div class="dash-trade-top">
+            <span class="dash-trade-side long">LONG</span>
+            <span class="dash-trade-asset">BTC/USDT</span>
+            <span class="dash-trade-emotion">😌</span>
+          </div>
+          <div class="dash-trade-bot">
+            <span class="dash-trade-setup">Breakout</span>
+            <span style="color:var(--app-green);font-family:'DM Mono',monospace;font-size:12px;font-weight:600">+$400</span>
+          </div>
+        </div>
+        <div class="dash-trade-row">
+          <div class="dash-trade-top">
+            <span class="dash-trade-side short">SHORT</span>
+            <span class="dash-trade-asset">EUR/USD</span>
+            <span class="dash-trade-emotion">😤</span>
+          </div>
+          <div class="dash-trade-bot">
+            <span class="dash-trade-setup">Pullback</span>
+            <span style="color:var(--app-red);font-family:'DM Mono',monospace;font-size:12px;font-weight:600">-$280</span>
+          </div>
+        </div>
+        <div class="dash-trade-row">
+          <div class="dash-trade-top">
+            <span class="dash-trade-side long">LONG</span>
+            <span class="dash-trade-asset">NQ</span>
+            <span class="dash-trade-emotion">🎯</span>
+          </div>
+          <div class="dash-trade-bot">
+            <span class="dash-trade-setup">Scalping</span>
+            <span style="color:var(--app-green);font-family:'DM Mono',monospace;font-size:12px;font-weight:600">+$620</span>
+          </div>
+        </div>
+        <div class="dash-trade-row" style="border:none">
+          <div class="dash-trade-top">
+            <span class="dash-trade-side long">LONG</span>
+            <span class="dash-trade-asset">ETH/USDT</span>
+            <span class="dash-trade-emotion">😌</span>
+          </div>
+          <div class="dash-trade-bot">
+            <span class="dash-trade-setup">Breakout</span>
+            <span style="color:var(--app-green);font-family:'DM Mono',monospace;font-size:12px;font-weight:600">+$280</span>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="fcard" style="margin:0">
-      <div class="fcard-h"><div class="fcard-t">États émotionnels</div></div>
-      <div style="display:flex;flex-direction:column;gap:9px">
-        <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>😤 Revenge</span><span style="font-family:var(--mono);font-size:10px;color:var(--txt3)">23%</span></div><div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px"><div style="width:23%;height:100%;background:#ef4444;border-radius:3px"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>😰 Stress</span><span style="font-family:var(--mono);font-size:10px;color:var(--txt3)">31%</span></div><div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px"><div style="width:31%;height:100%;background:#f59e0b;border-radius:3px"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>😌 Confiant</span><span style="font-family:var(--mono);font-size:10px;color:var(--txt3)">68%</span></div><div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px"><div style="width:68%;height:100%;background:#3b82f6;border-radius:3px"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>🎯 Focus</span><span style="font-family:var(--mono);font-size:10px;color:var(--txt3)">52%</span></div><div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px"><div style="width:52%;height:100%;background:#10b981;border-radius:3px"></div></div></div>
+    <!-- Win Rate / setup (1fr) -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <div class="dash-card-title">Win Rate / stratégie</div>
+        <span class="dash-card-action">Voir →</span>
+      </div>
+      <div class="dash-donut-wrap">
+        <svg width="80" height="80" viewBox="0 0 100 100" style="flex-shrink:0">
+          <circle cx="50" cy="50" r="38" fill="none" stroke="var(--app-bg3)" stroke-width="12"/>
+          <circle cx="50" cy="50" r="38" fill="none" stroke="#10b981" stroke-width="12" stroke-dasharray="143 96" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+          <circle cx="50" cy="50" r="38" fill="none" stroke="#3b82f6" stroke-width="12" stroke-dasharray="65 174" stroke-dashoffset="-143" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+          <circle cx="50" cy="50" r="38" fill="none" stroke="#f59e0b" stroke-width="12" stroke-dasharray="31 208" stroke-dashoffset="-208" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+          <text x="50" y="54" text-anchor="middle" font-family="Syne,sans-serif" font-weight="700" font-size="14" fill="#e2eaf5">67%</text>
+        </svg>
+        <div class="dash-legend">
+          <div class="dash-legend-item"><div class="dash-legend-dot" style="background:#10b981"></div>Breakout<span>74%</span></div>
+          <div class="dash-legend-item"><div class="dash-legend-dot" style="background:#3b82f6"></div>Pullback<span>62%</span></div>
+          <div class="dash-legend-item"><div class="dash-legend-dot" style="background:#f59e0b"></div>Range<span>58%</span></div>
+          <div class="dash-legend-item"><div class="dash-legend-dot" style="background:#ef4444"></div>Reversal<span>41%</span></div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Derniers trades -->
-  <div style="display:flex;flex-direction:column;gap:5px">
-    <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--b);border-radius:8px;padding:9px 12px;font-size:11px">
-      <span style="background:rgba(16,185,129,.12);color:#10b981;font-family:var(--mono);font-size:9px;padding:2.5px 7px;border-radius:4px;flex-shrink:0;font-weight:700">LONG</span>
-      <span style="color:#60a5fa;font-family:var(--mono);min-width:65px;font-weight:500">BTC/USDT</span>
-      <span style="color:var(--txt3);flex:1;font-size:10px">Breakout · London</span>
-      <span style="font-size:12px">😌</span>
-      <span style="color:#10b981;font-family:var(--mono);font-weight:600;font-size:12px">+$400</span>
+    <!-- États émotionnels (1fr) -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <div class="dash-card-title">États émotionnels</div>
+        <span class="dash-card-action">Détails →</span>
+      </div>
+      <div class="dash-emotions">
+        <div class="dash-emo-row">
+          <div class="dash-emo-lbl"><span>Confiant</span><span>68%</span></div>
+          <div class="dash-emo-track"><div style="width:68%;height:100%;background:#3b82f6;border-radius:3px"></div></div>
+        </div>
+        <div class="dash-emo-row">
+          <div class="dash-emo-lbl"><span>Focalisé</span><span>52%</span></div>
+          <div class="dash-emo-track"><div style="width:52%;height:100%;background:#10b981;border-radius:3px"></div></div>
+        </div>
+        <div class="dash-emo-row">
+          <div class="dash-emo-lbl"><span>Stressé</span><span>31%</span></div>
+          <div class="dash-emo-track"><div style="width:31%;height:100%;background:#f59e0b;border-radius:3px"></div></div>
+        </div>
+        <div class="dash-emo-row">
+          <div class="dash-emo-lbl"><span>Revenge</span><span>23%</span></div>
+          <div class="dash-emo-track"><div style="width:23%;height:100%;background:#ef4444;border-radius:3px"></div></div>
+        </div>
+      </div>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--b);border-radius:8px;padding:9px 12px;font-size:11px">
-      <span style="background:rgba(239,68,68,.12);color:#ef4444;font-family:var(--mono);font-size:9px;padding:2.5px 7px;border-radius:4px;flex-shrink:0;font-weight:700">SHORT</span>
-      <span style="color:#60a5fa;font-family:var(--mono);min-width:65px;font-weight:500">EUR/USD</span>
-      <span style="color:var(--txt3);flex:1;font-size:10px">Pullback · NY</span>
-      <span style="font-size:12px">😤</span>
-      <span style="color:#ef4444;font-family:var(--mono);font-weight:600;font-size:12px">-$280</span>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--b);border-radius:8px;padding:9px 12px;font-size:11px">
-      <span style="background:rgba(16,185,129,.12);color:#10b981;font-family:var(--mono);font-size:9px;padding:2.5px 7px;border-radius:4px;flex-shrink:0;font-weight:700">LONG</span>
-      <span style="color:#60a5fa;font-family:var(--mono);min-width:65px;font-weight:500">ETH/USDT</span>
-      <span style="color:var(--txt3);flex:1;font-size:10px">Range · Asian</span>
-      <span style="font-size:12px">🎯</span>
-      <span style="color:#10b981;font-family:var(--mono);font-weight:600;font-size:12px">+$620</span>
-    </div>
+
   </div>
 </div>
 
-<style>
-  .fdash-topbar {
-    display: flex; align-items: flex-start;
-    justify-content: space-between;
-    padding: 20px 24px 16px;
-    border-bottom: 1px solid var(--b);
-    margin-bottom: 20px;
+<style is:global>
+  /* Topbar exact */
+  .app-topbar {
+    position: sticky; top: 0;
+    background: rgba(8,12,20,0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--app-border);
+    padding: 0 28px;
+    height: 60px;
+    display: flex; align-items: center; gap: 16px;
+    z-index: 5; flex-shrink: 0;
   }
-  .fdash-title { font-family: var(--disp); font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
-  .fdash-sub { font-size: 12px; color: var(--txt3); margin-top: 4px; }
+  .app-page-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 17px; font-weight: 700;
+    letter-spacing: -0.3px; flex: 1;
+    color: var(--app-txt);
+  }
+  .app-btn-primary {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 8px;
+    font-size: 13px; font-weight: 500;
+    background: var(--app-blue); color: white; border: none;
+    box-shadow: 0 0 20px rgba(59,130,246,.3);
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+  }
+
+  /* Content */
+  .dash-content {
+    padding: 28px;
+    flex: 1;
+    max-width: 100%;
+  }
+
+  /* Greeting */
+  .dash-greeting-row {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .dash-greeting-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px; font-weight: 700;
+    letter-spacing: -0.3px; color: var(--app-txt);
+  }
+  .dash-discord-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-family: 'DM Mono', monospace;
+    color: var(--app-txt3);
+    background: rgba(88,101,242,.07);
+    border: 1px solid rgba(88,101,242,.2);
+    padding: 5px 12px; border-radius: 100px;
+  }
+  .dash-discord-badge a { color: inherit; text-decoration: none; }
+
+  /* Stat cards — exact app */
+  .dash-stats-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px; margin-bottom: 20px;
+  }
+  .dash-stat-card {
+    background: var(--app-card);
+    border: 1px solid var(--app-border);
+    border-radius: 12px; padding: 20px;
+    position: relative; overflow: hidden;
+    transition: border-color .2s, transform .2s;
+    cursor: default;
+  }
+  .dash-stat-card:hover { border-color: var(--app-border-hov); transform: translateY(-2px); }
+  .dash-stat-label {
+    font-size: 11px; font-family: 'DM Mono', monospace;
+    font-weight: 400; color: var(--app-txt3);
+    text-transform: uppercase; letter-spacing: 0.8px;
+    margin-bottom: 10px;
+  }
+  .dash-stat-value {
+    font-family: 'DM Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 22px; font-weight: 700;
+    letter-spacing: -1px; line-height: 1;
+    margin-bottom: 8px; color: var(--app-txt);
+  }
+  .dash-stat-sub {
+    font-size: 11px; color: var(--app-txt3);
+    display: flex; align-items: center; gap: 5px;
+  }
+  .dash-change {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; padding: 2px 5px; border-radius: 4px;
+  }
+  .dash-change.up { color: var(--app-green); background: var(--app-green-dim); }
+  .dash-change.down { color: var(--app-red); background: var(--app-red-dim); }
+  .dash-stat-bg-icon {
+    position: absolute; right: 14px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 32px; opacity: 0.07; pointer-events: none;
+    filter: grayscale(30%);
+  }
+
+  /* 4-col row */
+  .dash-four-col {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 16px; align-items: stretch;
+  }
+
+  /* Card */
+  .dash-card {
+    background: var(--app-card);
+    border: 1px solid var(--app-border);
+    border-radius: 12px; padding: 20px;
+    transition: border-color .2s;
+    display: flex; flex-direction: column;
+  }
+  .dash-card:hover { border-color: var(--app-border-hov); }
+  .dash-card-header {
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 16px;
+  }
+  .dash-card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 600; letter-spacing: -0.1px;
+    color: var(--app-txt);
+  }
+  .dash-card-action {
+    font-size: 11px; color: var(--app-txt3);
+    font-family: 'DM Mono', monospace; cursor: pointer;
+  }
+
+  /* Equity chart */
+  .dash-equity-card { padding: 20px 20px 16px; }
+  .dash-chart-wrap {
+    position: relative; flex: 1;
+    min-height: 120px;
+  }
+
+  /* Trade list */
+  .dash-trade-list { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .dash-trade-row {
+    background: var(--app-bg2);
+    border: 1px solid var(--app-border);
+    border-radius: 8px; padding: 8px 10px;
+    border-bottom: 1px solid var(--app-border);
+  }
+  .dash-trade-top { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .dash-trade-bot { display: flex; align-items: center; justify-content: space-between; }
+  .dash-trade-side {
+    font-size: 9px; font-weight: 700;
+    font-family: 'DM Mono', monospace;
+    padding: 2px 6px; border-radius: 4px; flex-shrink: 0;
+  }
+  .dash-trade-side.long  { background: var(--app-green-dim); color: var(--app-green); }
+  .dash-trade-side.short { background: var(--app-red-dim); color: var(--app-red); }
+  .dash-trade-asset {
+    font-size: 12px; font-weight: 600;
+    font-family: 'DM Mono', monospace;
+    color: var(--app-txt); flex: 1;
+    text-transform: uppercase;
+  }
+  .dash-trade-emotion { font-size: 13px; }
+  .dash-trade-setup { font-size: 11px; color: var(--app-txt3); }
+
+  /* Donut */
+  .dash-donut-wrap { display: flex; gap: 14px; align-items: center; flex: 1; }
+  .dash-legend { display: flex; flex-direction: column; gap: 7px; flex: 1; }
+  .dash-legend-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--app-txt2);
+  }
+  .dash-legend-item span { margin-left: auto; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--app-txt3); }
+  .dash-legend-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Emotions */
+  .dash-emotions { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+  .dash-emo-row { display: flex; flex-direction: column; gap: 5px; }
+  .dash-emo-lbl {
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: var(--app-txt2);
+  }
+  .dash-emo-lbl span:last-child { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--app-txt3); }
+  .dash-emo-track { height: 4px; background: rgba(255,255,255,.06); border-radius: 3px; }
 </style>

@@ -64,10 +64,15 @@
         <span class="period-value">{{ s.winRate | number:'1.0-0' }}%</span>
       </div>
       <div class="period-stat">
-        <span class="period-label">P&L net</span>
+        <span class="period-label">P&L Net</span>
         <span class="period-value" [style.color]="s.totalPnl >= 0 ? 'var(--green)' : 'var(--red)'">
           {{ s.totalPnl >= 0 ? '+' : '' }}${{ s.totalPnl | number:'1.2-2' }}
         </span>
+        @if (s.totalCommissions > 0) {
+          <span class="period-sub-label">
+            brut ${{ s.totalPnlBrut | number:'1.2-2' }} · frais ${{ s.totalCommissions | number:'1.2-2' }}
+          </span>
+        }
       </div>
       <div class="period-stat">
         <span class="period-label">Meilleur</span>
@@ -114,7 +119,7 @@
           <div class="day-header" role="button" tabindex="0"
             (click)="toggleDay(day.key)"
             (keydown.enter)="toggleDay(day.key)">
-            <div class="day-accent" [style.background]="day.totalPnl >= 0 ? 'var(--green)' : 'var(--red)'"></div>
+            <div class="day-accent" [style.background]="day.totalPnlNet >= 0 ? 'var(--green)' : 'var(--red)'"></div>
             <div class="day-toggle">
               @if (collapsedDays().has(day.key)) {
                 <lucide-icon [img]="ChevronRightIcon" [size]="14" />
@@ -129,13 +134,26 @@
               <span class="day-winrate">{{ day.winCount }}/{{ day.count }}</span>
               <span class="day-dot">·</span>
               @if (day.totalCommission > 0) {
-                <span class="day-commission">-${{ day.totalCommission | number:'1.2-2' }}</span>
-                <span class="day-dot">·</span>
+                <span class="day-pnl" [class.positive]="day.totalPnlNet >= 0" [class.negative]="day.totalPnlNet < 0">
+                  {{ day.totalPnlNet >= 0 ? '+' : '' }}${{ day.totalPnlNet | number:'1.2-2' }}
+                </span>
+                <span class="day-fees" title="Frais : -${{ day.totalCommission | number:'1.2-2' }}">
+                  -${{ day.totalCommission | number:'1.2-2' }} frais
+                </span>
+              } @else {
+                <span class="day-pnl" [class.positive]="day.totalPnl >= 0" [class.negative]="day.totalPnl < 0">
+                  {{ day.totalPnl >= 0 ? '+' : '' }}${{ day.totalPnl | number:'1.2-2' }}
+                </span>
               }
-              <span class="day-pnl" [class.positive]="day.totalPnl >= 0" [class.negative]="day.totalPnl < 0">
-                {{ day.totalPnl >= 0 ? '+' : '' }}${{ day.totalPnl | number:'1.2-2' }}
-              </span>
             </div>
+            @if (userStore.isPremium()) {
+              <button class="day-delete-btn"
+                title="Supprimer tous les trades de ce jour"
+                (click)="$event.stopPropagation(); confirmDeleteDay.set(day)"
+                (keydown.enter)="$event.stopPropagation(); confirmDeleteDay.set(day)">
+                <lucide-icon [img]="TrashIcon" [size]="12" />
+              </button>
+            }
           </div>
 
           @if (!collapsedDays().has(day.key)) {
@@ -196,3 +214,36 @@
   (dismissed)="showImport.set(false)"
   (imported)="onImported()"
 />
+
+@if (confirmDeleteDay(); as day) {
+  <div class="modal-overlay" role="button" tabindex="0" aria-label="Annuler"
+    (click)="confirmDeleteDay.set(null)" (keydown.escape)="confirmDeleteDay.set(null)">
+    <div class="confirm-modal" role="dialog" aria-modal="true"
+      (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+      <div class="confirm-modal-header">
+        <span class="confirm-modal-ic">🗑️</span>
+        <div>
+          <h3 class="confirm-modal-title">Supprimer la journée</h3>
+          <p class="confirm-modal-sub">{{ day.label }}</p>
+        </div>
+      </div>
+      <p class="confirm-modal-desc">
+        Tu vas supprimer <strong>{{ day.count }} trade{{ day.count > 1 ? 's' : '' }}</strong>
+        de cette journée. Cette action est irréversible.
+      </p>
+      <div class="confirm-modal-actions">
+        <button class="confirm-btn-cancel"
+          (click)="confirmDeleteDay.set(null)"
+          [disabled]="isDeletingDay()">
+          Annuler
+        </button>
+        <button class="confirm-btn-delete"
+          (click)="deleteDay(day)"
+          [disabled]="isDeletingDay()">
+          @if (isDeletingDay()) { Suppression... }
+          @else { Supprimer {{ day.count }} trade{{ day.count > 1 ? 's' : '' }} }
+        </button>
+      </div>
+    </div>
+  </div>
+}

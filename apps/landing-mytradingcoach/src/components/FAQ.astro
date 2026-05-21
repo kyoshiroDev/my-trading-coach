@@ -9,27 +9,27 @@
     </div>
     <div class="faq-wrap reveal" style="transition-delay:.1s">
       <div class="faq-item">
-        <button class="faq-q">C'est quoi exactement MyTradingCoach ?<span class="faq-arrow">+</span></button>
+        <button class="faq-q" aria-expanded="false">C'est quoi exactement MyTradingCoach ?<span class="faq-arrow">+</span></button>
         <div class="faq-a">MyTradingCoach est un journal de trading intelligent. Tu enregistres tes trades et ton état émotionnel, et l'IA analyse tout ça pour identifier tes patterns comportementaux — les heures où tu perds, les émotions qui précèdent tes mauvaises décisions, tes stratégies gagnantes. Chaque dimanche, tu reçois un debrief complet avec 3 objectifs pour la semaine suivante.</div>
       </div>
       <div class="faq-item">
-        <button class="faq-q">Quels marchés sont supportés ?<span class="faq-arrow">+</span></button>
+        <button class="faq-q" aria-expanded="false">Quels marchés sont supportés ?<span class="faq-arrow">+</span></button>
         <div class="faq-a">MyTradingCoach fonctionne pour tous les marchés : crypto (BTC, ETH, SOL...), forex (EUR/USD, GBP/USD...), actions (AAPL, TSLA...) et indices. Tu saisis les données manuellement — pas de connexion à un broker requise, ce qui garantit ta confidentialité.</div>
       </div>
       <div class="faq-item">
-        <button class="faq-q">L'IA est-elle vraiment personnalisée ?<span class="faq-arrow">+</span></button>
+        <button class="faq-q" aria-expanded="false">L'IA est-elle vraiment personnalisée ?<span class="faq-arrow">+</span></button>
         <div class="faq-a">Oui. L'IA analyse uniquement tes données — pas des moyennes génériques. Plus tu l'utilises, plus les insights sont précis. Le debrief hebdomadaire référence tes trades spécifiques avec les heures et les montants réels.</div>
       </div>
       <div class="faq-item">
-        <button class="faq-q">Pourquoi 39 €/mois ?<span class="faq-arrow">+</span></button>
+        <button class="faq-q" aria-expanded="false">Pourquoi 39 €/mois ?<span class="faq-arrow">+</span></button>
         <div class="faq-a">On a voulu un prix accessible pour tous les traders, pas réservé aux pros avec 10 000 $ de capital. Si l'IA t'aide à éviter un seul revenge trade à 300 €, MyTradingCoach est rentabilisé pour 8 mois. On préfère grandir avec toi plutôt que facturer cher dès le départ.</div>
       </div>
       <div class="faq-item">
-        <button class="faq-q">Mes données sont-elles sécurisées ?<span class="faq-arrow">+</span></button>
+        <button class="faq-q" aria-expanded="false">Mes données sont-elles sécurisées ?<span class="faq-arrow">+</span></button>
         <div class="faq-a">Tes données sont stockées sur des serveurs OVH en France, chiffrées au repos et en transit. Nous ne vendons ni ne partageons jamais tes données de trading. Tu peux exporter ou supprimer ton compte à tout moment.</div>
       </div>
       <div class="faq-item">
-        <button class="faq-q">MyTradingCoach est-il un produit établi ?<span class="faq-arrow">+</span></button>
+        <button class="faq-q" aria-expanded="false">MyTradingCoach est-il un produit établi ?<span class="faq-arrow">+</span></button>
         <div class="faq-a">MyTradingCoach est un produit indépendant en croissance active, développé en France par un trader-développeur passionné. Pas de VC, pas de 50 employés — juste un outil qui évolue vite grâce aux retours directs de la communauté. En échange, tu bénéficies d'un tarif avantageux et ton feedback a un impact direct sur les prochaines fonctionnalités. L'app tourne en production depuis plusieurs mois avec des utilisateurs actifs.</div>
       </div>
     </div>
@@ -108,8 +108,14 @@
     btn.addEventListener('click', () => {
       const item = btn.closest('.faq-item');
       const wasOpen = item?.classList.contains('open');
-      document.querySelectorAll('.faq-item').forEach(x => x.classList.remove('open'));
-      if (!wasOpen) item?.classList.add('open');
+      document.querySelectorAll('.faq-item').forEach(x => {
+        x.classList.remove('open');
+        x.querySelector('.faq-q')?.setAttribute('aria-expanded', 'false');
+      });
+      if (!wasOpen) {
+        item?.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+      }
     });
   });
 </script>

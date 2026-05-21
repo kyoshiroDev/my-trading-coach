@@ -343,7 +343,7 @@ export class SettingsComponent implements OnInit {
   protected styleLabel(style: string | null): string {
     const map: Record<string, string> = {
       SCALPING: 'Scalping', DAY_TRADING: 'Day Trading',
-      SWING: 'Swing Trading', POSITION: 'Position Trading',
+      SWING: 'Swing Trading', POSITION: 'Long terme',
     };
     return style ? (map[style] ?? style) : '';
   }
