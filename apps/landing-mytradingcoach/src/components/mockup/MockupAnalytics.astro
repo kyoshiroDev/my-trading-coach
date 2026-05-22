@@ -15,6 +15,7 @@ const heatData: number[][] = [
 
 <div class="ftopbar"><h3>Analytics</h3></div>
 
+<div class="fan-content">
 <div class="fstats" style="margin-bottom:12px">
   <div class="fstat"><div class="fstat-lbl">WIN RATE GLOBAL</div><div class="fstat-val text-g">67.4%</div><div class="fstat-sub">142 trades</div></div>
   <div class="fstat"><div class="fstat-lbl">P&L TOTAL</div><div class="fstat-val text-g" style="font-size:18px">+$9 829</div><div class="fstat-sub">P&L cumulé</div></div>
@@ -81,8 +82,10 @@ const heatData: number[][] = [
     </table>
   </div>
 </div>
+</div>
 
 <style is:global>
+  .fan-content { padding: 20px 24px 0; flex: 1; overflow-y: auto; }
   .an-sep { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
   .an-sep-line { flex:1; height:1px; background:rgba(99,155,255,.1); }
   .an-sep-lbl { font-size:7px; font-family:var(--mono); color:var(--txt3); letter-spacing:.8px; white-space:nowrap; }
