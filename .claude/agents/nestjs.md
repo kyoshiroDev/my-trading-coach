@@ -9,27 +9,32 @@ NestJS 11 · Prisma 7 · PostgreSQL 17 · PgBouncer · Redis · BullMQ · Anthro
 
 ```
 src/modules/
-├── auth/      auth.module · auth.controller · auth.service · jwt.strategy · dto/
-├── trades/    trades.module · trades.controller · trades.service · dto/
-│              csv-import.service.ts   ← parsing CSV via Claude SDK (Premium)
-├── analytics/ analytics.module · analytics.controller · analytics.service
-├── ai/        ai.module · ai.controller · ai.service · agents/
-│              └── agents/
-│                  ├── orchestrator.agent.ts
-│                  ├── data.agent.ts
-│                  ├── pattern.agent.ts
-│                  ├── coach.agent.ts
-│                  └── debrief.agent.ts
-├── debrief/   debrief.module · debrief.controller · debrief.service · debrief.cron
-│              pdf/pdf.service.ts   ← export PDF via puppeteer (Premium)
-├── users/     users.module · users.service
-├── vps/       vps.module · vps.controller · vps.service   ← NOUVEAU
-│              docker.controller · docker.service
-│              backup.controller · backup.service
-│              logs.controller · logs.service
-└── admin/     admin.module · admin.controller   ← NOUVEAU (stats globales + ai-usage)
+├── auth/         auth.module · auth.controller · auth.service · jwt.strategy · dto/
+├── trades/       trades.module · trades.controller · trades.service · dto/
+│                 csv-import.service.ts   ← parsing CSV via Claude SDK (Premium)
+├── analytics/    analytics.module · analytics.controller · analytics.service
+├── ai/           ai.module · ai.controller · ai.service · agents/
+│                 └── agents/
+│                     ├── orchestrator.agent.ts
+│                     ├── data.agent.ts
+│                     ├── pattern.agent.ts
+│                     ├── coach.agent.ts
+│                     └── debrief.agent.ts
+├── debrief/      debrief.module · debrief.controller · debrief.service · debrief.cron
+│                 pdf/pdf.service.ts   ← export PDF via puppeteer (Premium)
+├── session/      session.module · session.controller · session.service   ← V2
+│                 dto/ (create-session.dto · close-session.dto)
+├── daily-recap/  daily-recap.module · daily-recap.service · daily-recap.cron   ← V2
+├── eco-calendar/ eco-calendar.module · eco-calendar.controller · eco-calendar.service   ← V2
+│                 eco-calendar.cron.ts
+├── users/        users.module · users.service
+├── vps/          vps.module · vps.controller · vps.service
+│                 docker.controller · docker.service
+│                 backup.controller · backup.service
+│                 logs.controller · logs.service
+└── admin/        admin.module · admin.controller
 src/common/
-├── guards/        jwt-auth.guard · premium.guard
+├── guards/        jwt-auth.guard · premium.guard · beta.guard   ← BetaGuard V2
 ├── interceptors/  response.interceptor ({ data, meta })
 ├── decorators/    current-user · public
 └── filters/       http-exception.filter
@@ -50,12 +55,23 @@ POST   /api/trades                     → vérifier limite 50/mois FREE avant c
 PATCH  /api/trades/:id
 DELETE /api/trades/:id
 
-GET    /api/analytics/summary          FREE + PREMIUM (pas de PremiumGuard ici)
-GET    /api/analytics/by-setup         PREMIUM
-GET    /api/analytics/by-emotion       PREMIUM
-GET    /api/analytics/by-hour          PREMIUM
-GET    /api/analytics/equity-curve     PREMIUM
-GET    /api/analytics/top-assets       PREMIUM
+GET    /api/analytics/summary                    FREE + PREMIUM (pas de PremiumGuard ici)
+GET    /api/analytics/by-setup                   PREMIUM
+GET    /api/analytics/by-emotion                 PREMIUM
+GET    /api/analytics/by-hour                    PREMIUM
+GET    /api/analytics/equity-curve               PREMIUM
+GET    /api/analytics/top-assets                 PREMIUM
+GET    /api/analytics/daily-recap/yesterday      JWT → recap de la veille
+
+POST   /api/session/start              JWT → démarrer une session, { mood: MoodState }
+GET    /api/session/active             JWT → session active en cours (null si aucune)
+POST   /api/session/:id/close          JWT → clôturer, { mood: MoodState, notes? }
+GET    /api/session/today/trades       JWT → trades du jour
+GET    /api/session/today/stats        JWT → stats live (totalPnl, winRate, tradesCount, trades)
+POST   /api/session/trades/:id/close   JWT → clôturer un trade (exitPrice → détection SL/TP/Manuel)
+
+GET    /api/eco-calendar/today         PREMIUM → events du jour + analyse IA (cache Redis 1h)
+POST   /api/eco-calendar/analyze-result PREMIUM → analyse d'un résultat tombé en temps réel
 
 POST   /api/ai/insights                PREMIUM → cooldown 4h par user
 POST   /api/ai/chat                    PREMIUM → 50 messages/jour par user
@@ -93,6 +109,7 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
 - `@UseGuards(JwtAuthGuard)` sur toutes les routes protégées
 - `@UseGuards(PremiumGuard)` sur routes IA et analytics avancés
 - `@UseGuards(JwtAuthGuard, AdminGuard)` sur TOUTES les routes `/vps/*`, `/docker/*`, `/admin/*`
+- `@UseGuards(JwtAuthGuard, BetaGuard)` sur routes V2 session mode (BETA_TESTER + ADMIN)
 - `/api/analytics/summary` : PAS de PremiumGuard (FREE y accède)
 - `ValidationPipe` global : `whitelist: true, forbidNonWhitelisted: true`
 - Ne jamais appeler Prisma dans les controllers
@@ -392,7 +409,14 @@ await this.prisma.aiUsageLog.create({
 ```
 
 Toujours passer `{ userId, feature }` dans les options. Features valides :
-`'insights'` | `'chat'` | `'debrief'` | `'csv_import'`
+`'insights'` | `'chat'` | `'debrief'` | `'csv_import'` | `'daily_recap'` | `'eco_calendar'`
+
+### Crons V2
+
+| Cron | Planning | Rôle |
+|---|---|---|
+| `DailyRecapCron` | `30 17 * * 1-5` Paris | Génère recap + envoie email aux users actifs du jour |
+| `EcoCalendarCron` | `0 7 * * 1-5` Paris | Pré-génère le calendrier pour tous les users Premium |
 
 ---
 

@@ -28,9 +28,18 @@ src/app/
 │   ├── auth/       auth.service.ts · auth.guard.ts · auth.interceptor.ts
 │   ├── api/        trades.api.ts · analytics.api.ts · debrief.api.ts · ai.api.ts
 │   │               admin.api.ts · vps.api.ts
+│   │               session.api.ts      ← V2 (TradingSession, LiveStats, SessionTrade, MoodState)
+│   │               eco-calendar.api.ts ← V2 (EcoEvent, EcoCalendarData, EcoResultAnalysis)
+│   │               daily-recap.api.ts  ← V2 (DailyRecap)
 │   └── stores/     trades.store.ts · user.store.ts
+│                   user.store : isBeta = computed(() => role === 'BETA_TESTER' || 'ADMIN')
 ├── features/
-│   ├── dashboard/          dashboard.component.ts + .html + .css
+│   ├── dashboard/          dashboard.component.ts + .css
+│   │   └── components/
+│   │       ├── session-morning/  ← V2 : vue pré-session (mood, recap hier, objectifs, éco calendar)
+│   │       │   session-morning.component.ts + .css
+│   │       └── session-live/     ← V2 : vue session active (live feed, quick trade, éco live)
+│   │           session-live.component.ts + .css
 │   ├── journal/            journal.component · trade-form.component · trade-row.component
 │   │                       csv-import.component   ← Premium uniquement
 │   ├── analytics/          analytics.component · heatmap.component
@@ -47,6 +56,22 @@ src/app/
 ├── app.config.ts
 └── app.routes.ts
 ```
+
+### Dashboard V2 — logique d'affichage (BETA_TESTER + ADMIN uniquement)
+
+```typescript
+// Onglets : 'dashboard' | 'morning' | 'live'
+// activeTab = signal<'dashboard' | 'morning' | 'live'>('morning')
+// effect() auto-switch vers 'live' si activeSession()?.status === 'ACTIVE'
+// Polling interval(30s) pour refreshLiveStats() pendant session active
+// isBeta() false → aucun changement, dashboard V1 intact
+```
+
+Données chargées au démarrage (beta users) :
+- `GET /session/active` → `activeSession` signal
+- `GET /analytics/daily-recap/yesterday` → `yesterdayRecap` signal
+- `GET /eco-calendar/today` → `ecoCalendar` signal (PREMIUM)
+- `GET /debrief/current` → `currentObjectives` signal
 
 ---
 
@@ -211,14 +236,41 @@ Après chaque modification de composant, mettre à jour la section correspondant
 ## data-testid obligatoires
 
 ```html
-<!-- Sur tous les éléments interactifs clés -->
-<input data-testid="email" />
-<input data-testid="password" />
-<button data-testid="submit" />
-<button data-testid="add-trade" />
+<!-- Auth -->
+<input data-testid="login-email" />
+<input data-testid="login-password" />
+<button data-testid="login-submit" />
+
+<!-- Journal -->
+<button data-testid="add-trade-btn" />
 <div data-testid="trades-list" />
 <div data-testid="win-rate" />
 <div data-testid="pnl-total" />
 <table data-testid="heatmap" />
 <div data-testid="locked-overlay" />
+
+<!-- Dashboard V2 — Session Mode (BETA_TESTER + ADMIN) -->
+<button data-testid="tab-dashboard" />
+<button data-testid="tab-morning" />
+<button data-testid="tab-live" />
+<div data-testid="session-morning-view" />
+<div data-testid="session-live-view" />
+<button data-testid="mood-confident" />
+<button data-testid="mood-focused" />
+<button data-testid="mood-neutral" />
+<button data-testid="mood-tired" />
+<button data-testid="start-session" />
+<button data-testid="close-session" />
+<div data-testid="yesterday-recap" />
+<div data-testid="today-objectives" />
+<div data-testid="eco-calendar" />
+<div data-testid="live-feed" />
+<div data-testid="quick-trade-form" />
+<input data-testid="quick-trade-asset" />
+<button data-testid="quick-trade-long" />
+<button data-testid="quick-trade-short" />
+<button data-testid="quick-trade-submit" />
+<div data-testid="trade-close-panel" />
+<input data-testid="trade-exit-price" />
+<div data-testid="trade-close-type" />
 ```
