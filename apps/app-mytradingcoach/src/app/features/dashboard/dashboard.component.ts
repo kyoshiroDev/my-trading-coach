@@ -13,6 +13,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe, TitleCasePipe, UpperCasePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { interval } from 'rxjs';
 import { BillingApi } from '../../core/api/billing.api';
 import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
@@ -37,6 +38,12 @@ import {
   SetupColorsMapPipe,
 } from '../../shared/pipes';
 import { environment } from '../../../environments/environment';
+import { SessionApi, TradingSession, LiveStats, SessionTrade, MoodState } from '../../core/api/session.api';
+import { EcoCalendarApi, EcoCalendarData } from '../../core/api/eco-calendar.api';
+import { DailyRecapApi, DailyRecap } from '../../core/api/daily-recap.api';
+import { DebriefApi, DebriefObjective } from '../../core/api/debrief.api';
+import { SessionMorningComponent } from './components/session-morning/session-morning.component';
+import { SessionLiveComponent } from './components/session-live/session-live.component';
 
 @Component({
   selector: 'mtc-dashboard',
@@ -57,6 +64,8 @@ import { environment } from '../../../environments/environment';
     EmotionColorPipe,
     SetupColorPipe,
     SetupColorsMapPipe,
+    SessionMorningComponent,
+    SessionLiveComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './dashboard.component.css',
@@ -75,24 +84,41 @@ import { environment } from '../../../environments/environment';
           <h1 class="greeting-title">Bonjour, {{ userStore.displayName() }} 👋</h1>
           <div class="greeting-sub">{{ today | date:'EEEE d MMMM' }}</div>
           <div class="session-tabs">
-            <button class="session-tab active" data-testid="tab-dashboard">① Dashboard actuel</button>
-            <button class="session-tab" data-testid="tab-morning">
+            <button class="session-tab" [class.active]="activeTab() === 'dashboard'" data-testid="tab-dashboard" (click)="selectTab('dashboard')">① Dashboard actuel</button>
+            <button class="session-tab" [class.active]="activeTab() === 'morning'" data-testid="tab-morning" (click)="selectTab('morning')">
               ② Matin — pré-session <span class="badge-beta">BÊTA</span>
             </button>
-            <button class="session-tab" data-testid="tab-live">
+            <button class="session-tab" [class.active]="activeTab() === 'live'" data-testid="tab-live" (click)="selectTab('live')">
               ③ Session live <span class="badge-beta">BÊTA</span>
             </button>
           </div>
         </div>
 
-        <!-- Vues V2 — implémentées en étape 6 -->
-        <div class="v2-placeholder" data-testid="session-morning-view">
-          <p style="color:var(--text-3);font-size:13px;">Mode Session V2 en cours d'implémentation — étape 6</p>
-        </div>
+        @if (activeTab() === 'morning') {
+          <mtc-session-morning
+            [yesterdayRecap]="yesterdayRecap()"
+            [objectives]="currentObjectives()"
+            [ecoCalendar]="ecoCalendar()"
+            [selectedMood]="selectedMood()"
+            (moodSelected)="selectMood($event)"
+            (sessionStarted)="startSession()"
+          />
+        }
+        @if (activeTab() === 'live') {
+          <mtc-session-live
+            [session]="activeSession()"
+            [todayTrades]="todayTrades()"
+            [liveStats]="todayStats()"
+            [ecoCalendar]="ecoCalendar()"
+            (tradeClosed)="confirmCloseTrade($event)"
+            (sessionClosed)="closeSession($event)"
+            (tradeLogged)="logQuickTrade($event)"
+          />
+        }
       }
 
-      <!-- ── DASHBOARD V1 — tous les autres users ──────────────────────── -->
-      @else {
+      <!-- ── DASHBOARD V1 — tab dashboard ou users non-bêta ─────────────── -->
+      @if (!userStore.isBeta() || activeTab() === 'dashboard') {
 
       <!-- Bannière limite FREE -->
       @if (!userStore.isPremium() && tradesStore.limitReached()) {
@@ -441,7 +467,7 @@ import { environment } from '../../../environments/environment';
         <mtc-plan-modal (closed)="showPlanModal.set(false)" />
       }
 
-      } <!-- fin @else V1 -->
+      } <!-- fin @if V1 -->
     </div>
   `,
 })
@@ -452,13 +478,26 @@ export class DashboardComponent implements AfterViewInit {
   protected readonly tradesStore = inject(TradesStore);
   private readonly billingApi = inject(BillingApi);
   private readonly tradesApi = inject(TradesApi);
+  private readonly sessionApi = inject(SessionApi);
+  private readonly ecoCalendarApi = inject(EcoCalendarApi);
+  private readonly dailyRecapApi = inject(DailyRecapApi);
+  private readonly debriefApi = inject(DebriefApi);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly showTradeForm = signal(false);
   protected readonly showPlanModal = signal(false);
   protected readonly isSavingTrade = signal(false);
-  protected readonly dashboardView = signal<'morning' | 'live'>('morning');
   protected readonly today = new Date();
+
+  // ── V2 Session Mode ─────────────────────────────────────────────────────
+  protected readonly activeTab = signal<'dashboard' | 'morning' | 'live'>('morning');
+  protected readonly selectedMood = signal<MoodState>('CONFIDENT');
+  protected readonly activeSession = signal<TradingSession | null>(null);
+  protected readonly todayStats = signal<LiveStats | null>(null);
+  protected readonly todayTrades = signal<SessionTrade[]>([]);
+  protected readonly yesterdayRecap = signal<DailyRecap | null>(null);
+  protected readonly ecoCalendar = signal<EcoCalendarData | null>(null);
+  protected readonly currentObjectives = signal<DebriefObjective[]>([]);
 
   private readonly summaryResource = httpResource<{ data: AnalyticsSummary }>(
     () => `${environment.apiUrl}/analytics/summary`,
@@ -586,6 +625,27 @@ export class DashboardComponent implements AfterViewInit {
         this.drawEquityCurve();
       }
     });
+
+    // ── V2 : charge les données bêta au démarrage ─────────────────────────
+    if (this.userStore.isBeta()) {
+      this.loadV2Data();
+    }
+
+    // Auto-switch vers l'onglet live si une session est active
+    effect(() => {
+      if (this.activeSession()?.status === 'ACTIVE') {
+        this.activeTab.set('live');
+      }
+    });
+
+    // Polling 30s pour les stats live pendant une session active
+    interval(30_000)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (this.activeSession()?.status === 'ACTIVE') {
+          this.refreshLiveStats();
+        }
+      });
   }
 
   ngAfterViewInit() {
@@ -672,6 +732,105 @@ export class DashboardComponent implements AfterViewInit {
           this.summaryResource.reload();
         },
         error: () => this.isSavingTrade.set(false),
+      });
+  }
+
+  // ── V2 Session Mode ─────────────────────────────────────────────────────
+
+  protected selectTab(tab: 'dashboard' | 'morning' | 'live'): void {
+    this.activeTab.set(tab);
+  }
+
+  protected selectMood(mood: MoodState): void {
+    this.selectedMood.set(mood);
+  }
+
+  protected startSession(): void {
+    this.sessionApi
+      .startSession(this.selectedMood())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.activeSession.set(res.data);
+          this.activeTab.set('live');
+          this.refreshLiveStats();
+        },
+      });
+  }
+
+  protected closeSession(mood: MoodState): void {
+    const session = this.activeSession();
+    if (!session) return;
+    this.sessionApi
+      .closeSession(session.id, mood)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.activeSession.set(res.data);
+          this.activeTab.set('morning');
+          this.summaryResource.reload();
+        },
+      });
+  }
+
+  protected confirmCloseTrade(event: { tradeId: string; exitPrice: number }): void {
+    this.sessionApi
+      .closeTrade(event.tradeId, event.exitPrice)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: () => this.refreshLiveStats() });
+  }
+
+  protected logQuickTrade(dto: CreateTradeDto): void {
+    this.tradesApi
+      .create(dto)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: () => this.refreshLiveStats() });
+  }
+
+  private loadV2Data(): void {
+    this.sessionApi
+      .getActiveSession()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.activeSession.set(res.data ?? null);
+          if (res.data?.status === 'ACTIVE') {
+            this.refreshLiveStats();
+          }
+        },
+      });
+
+    this.dailyRecapApi
+      .getYesterdayRecap()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => this.yesterdayRecap.set(res.data ?? null),
+      });
+
+    this.ecoCalendarApi
+      .getTodayEvents()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => this.ecoCalendar.set(res.data ?? null),
+      });
+
+    this.debriefApi
+      .getCurrent()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => this.currentObjectives.set(res.data?.objectives ?? []),
+      });
+  }
+
+  private refreshLiveStats(): void {
+    this.sessionApi
+      .getLiveStats()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.todayStats.set(res.data);
+          this.todayTrades.set(res.data.trades);
+        },
       });
   }
 
