@@ -17,6 +17,9 @@ export class UserStore {
   });
 
   readonly isAdmin = computed(() => this.user()?.role === 'ADMIN');
+  readonly isBeta = computed(
+    () => this.user()?.role === 'BETA_TESTER' || this.user()?.role === 'ADMIN',
+  );
   readonly startingCapital = computed(() => this.user()?.startingCapital ?? 0);
   readonly displayName = computed(
     () => this.user()?.name ?? this.user()?.email ?? '',

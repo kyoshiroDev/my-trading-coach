@@ -130,10 +130,39 @@ await page.route('**/api/debrief/generate', route => route.fulfill({
 │   → trial en cours → autorisé
 │   → trial expiré → 403
 │
+├── beta.guard.spec.ts    ← V2
+│   → BETA_TESTER → autorisé
+│   → ADMIN → autorisé
+│   → USER → 403 code BETA_ONLY
+│   → USER + plan PREMIUM → 403 (rôle ≠ plan)
+│
+├── session.service.spec.ts    ← V2
+│   → démarrer session, fermer la session active précédente
+│   → getTodayTrades retourne uniquement les trades du jour
+│   → closeTrade détecte SL pour un LONG (exitPrice ≤ stopLoss)
+│   → closeTrade détecte TP pour un LONG (exitPrice ≥ takeProfit)
+│   → closeTrade détecte Manuel si ni SL ni TP touché
+│   → getLiveStats calcule winRate correctement
+│
+├── daily-recap.service.spec.ts    ← V2
+│   → génère recap avec stats correctes (pnl, winRate, dominantEmotion)
+│   → pas de aiOneLiner pour user FREE
+│   → pas de aiOneLiner si < 3 trades
+│   → retourne null si aucun trade aujourd'hui
+│   → upsert si recap existant pour la même date
+│
+├── eco-calendar.service.spec.ts    ← V2
+│   → retourne les données depuis le cache Redis si disponible
+│   → getUserTopAssets retourne les 5 actifs les plus tradés
+│   → analyzeReleasedEvent retourne null si event non publié (isReleased: false)
+│   → fetchEconomicEvents retourne [] si pas de clé API
+│
 └── ai.service.spec.ts
     → insights avec mock Anthropic
     → cooldown 4h → 429 au 2ème appel
     → overloaded_error → 503 lisible
+    → generateDailyOneLiner retourne string (mock Anthropic)    ← V2
+    → analyzeEcoEvents parse le JSON de réponse               ← V2
 ```
 
 ## Tests critiques Angular à maintenir
@@ -181,7 +210,25 @@ e2e/
 ├── 04-analytics-premium.spec.ts → PREMIUM : tout visible, heatmap présente
 ├── 05-ai-insights.spec.ts       → FREE : paywall / PREMIUM : insights (mock)
 ├── 06-weekly-debrief.spec.ts    → FREE : paywall / PREMIUM : rapport (mock)
-└── 07-navigation.spec.ts        → sidebar, routes, 404, mobile burger
+├── 07-navigation.spec.ts        → sidebar, routes, 404, mobile burger
+├── 08-session-mode.spec.ts      ← V2 : vue morning, démarrer session, vue live, quick trade
+└── 09-eco-calendar.spec.ts      ← V2 : events, analyse IA, bull/bear, dim hors session
+```
+
+### Pattern d'auth E2E pour BETA_TESTER
+
+Mock `/api/auth/me` AVANT `loginUser()` pour retourner `role: 'BETA_TESTER'`.
+Le store appelle `fetchMe()` au démarrage → remplace l'utilisateur réel → `isBeta()` true.
+
+```typescript
+await page.route('**/api/auth/me', route =>
+  route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ data: { ...USER, role: 'BETA_TESTER' } }),
+  }),
+);
+await loginUser(page); // login réel, fetchMe mocké
 ```
 
 ### Endpoint test-only NestJS

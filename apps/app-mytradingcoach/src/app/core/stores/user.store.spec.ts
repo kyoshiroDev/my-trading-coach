@@ -132,6 +132,42 @@ describe('UserStore', () => {
     });
   });
 
+  describe('isBeta', () => {
+    it('retourne true pour BETA_TESTER', () => {
+      mockAuth.currentUser.set({
+        id: '1',
+        email: 'beta@test.com',
+        plan: 'FREE',
+        role: 'BETA_TESTER',
+      });
+      expect(store.isBeta()).toBe(true);
+    });
+
+    it('retourne true pour ADMIN', () => {
+      mockAuth.currentUser.set({
+        id: '1',
+        email: 'admin@test.com',
+        plan: 'FREE',
+        role: 'ADMIN',
+      });
+      expect(store.isBeta()).toBe(true);
+    });
+
+    it('retourne false pour USER', () => {
+      mockAuth.currentUser.set({
+        id: '1',
+        email: 'user@test.com',
+        plan: 'FREE',
+        role: 'USER',
+      });
+      expect(store.isBeta()).toBe(false);
+    });
+
+    it('retourne false si aucun utilisateur', () => {
+      expect(store.isBeta()).toBe(false);
+    });
+  });
+
   describe('startingCapital', () => {
     it('retourne 0 si aucun utilisateur', () => {
       expect(store.startingCapital()).toBe(0);

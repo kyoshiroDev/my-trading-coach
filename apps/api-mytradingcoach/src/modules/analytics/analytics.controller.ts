@@ -3,11 +3,15 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PremiumGuard } from '../../common/guards/premium.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AnalyticsService } from './analytics.service';
+import { DailyRecapService } from '../daily-recap/daily-recap.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('analytics')
 export class AnalyticsController {
-  constructor(private analyticsService: AnalyticsService) {}
+  constructor(
+    private analyticsService: AnalyticsService,
+    private dailyRecapService: DailyRecapService,
+  ) {}
 
   @Get('summary')
   getSummary(@CurrentUser() user: { id: string }) {
@@ -42,5 +46,11 @@ export class AnalyticsController {
   @Get('top-assets')
   getTopAssets(@CurrentUser() user: { id: string }) {
     return this.analyticsService.getTopAssets(user.id);
+  }
+
+  @UseGuards(PremiumGuard)
+  @Get('daily-recap/yesterday')
+  getYesterdayRecap(@CurrentUser() user: { id: string }) {
+    return this.dailyRecapService.getYesterdayRecap(user.id);
   }
 }

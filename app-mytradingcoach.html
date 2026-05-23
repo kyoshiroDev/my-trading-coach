@@ -486,9 +486,18 @@ button{font-family:var(--font-body);cursor:pointer;display:inline-flex;align-ite
         </div>
       </header>
       <div class="content">
+        <!-- V2 — BETA_TESTER + ADMIN uniquement (@if userStore.isBeta()) -->
         <div class="greeting">
           <h1 class="greeting-title">Bonjour, gregory 👋</h1>
+          <div class="greeting-sub">vendredi 23 mai</div>
+          <div class="session-tabs">
+            <button class="session-tab active">① Dashboard actuel</button>
+            <button class="session-tab">② Matin — pré-session <span class="badge-beta">BÊTA</span></button>
+            <button class="session-tab">③ Session live <span class="badge-beta">BÊTA</span></button>
+          </div>
         </div>
+        <!-- @else — V1 classique (non-beta users) -->
+        <!-- <div class="greeting"><h1 class="greeting-title">Bonjour, gregory 👋</h1></div> -->
         <!-- Premium banner — @if (!userStore.isPremium()) -->
         <!-- Stats row — @if (!isLoading()) | @else skeleton -->
         <div class="stats-row">

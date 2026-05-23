@@ -53,38 +53,93 @@ model User {
   stripePriceId            String?
   stripeCurrentPeriodEnd   DateTime?
   stripeInterval           String?   // 'month' | 'year'
-  trades      Trade[]
-  debriefs    WeeklyDebrief[]
-  aiUsageLogs AiUsageLog[]
+  trades           Trade[]
+  debriefs         WeeklyDebrief[]
+  aiUsageLogs      AiUsageLog[]
+  tradingSessions  TradingSession[]   // ← V2
+  dailyRecaps      DailyRecap[]       // ← V2
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 }
 
 model Trade {
-  id         String         @id @default(cuid())
-  userId     String
-  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  asset      String
-  side       TradeSide
-  entry      Float
-  exit       Float?
-  stopLoss   Float?
-  takeProfit Float?
-  pnl        Float?
-  riskReward Float?
-  emotion    EmotionState
-  setup      SetupType
-  session    TradingSession
-  timeframe  String
-  notes      String?
-  tags       String[]       @default([])
-  tradedAt   DateTime       @default(now())
-  createdAt  DateTime       @default(now())
+  id              String          @id @default(cuid())
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  asset           String
+  side            TradeSide
+  entry           Float
+  exit            Float?
+  exitPrice       Float?          // alias de exit pour clarté — V2
+  stopLoss        Float?
+  takeProfit      Float?
+  pnl             Float?
+  riskReward      Float?
+  emotion         EmotionState
+  setup           SetupType
+  session         TradingSessionLabel
+  sessionId       String?                          // ← V2 — lien vers TradingSession
+  tradingSession  TradingSession? @relation(fields: [sessionId], references: [id])
+  timeframe       String
+  notes           String?
+  tags            String[]       @default([])
+  tradedAt        DateTime       @default(now())
+  createdAt       DateTime       @default(now())
 
   @@index([userId, tradedAt])
   @@index([userId, emotion])
   @@index([userId, setup])
   @@index([userId, session])
+  @@index([userId, sessionId])
+}
+
+// ── Modèles V2 Session Mode ──────────────────────────────────────────────────
+
+model TradingSession {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startedAt   DateTime      @default(now())
+  endedAt     DateTime?
+  moodStart   MoodState?
+  moodEnd     MoodState?
+  totalPnl    Float?
+  totalTrades Int           @default(0)
+  winRate     Float?
+  status      SessionStatus @default(ACTIVE)
+  notes       String?
+  trades      Trade[]
+  createdAt   DateTime      @default(now())
+
+  @@index([userId, startedAt])
+  @@index([userId, status])
+}
+
+model DailyRecap {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date            DateTime // date du jour (minuit UTC)
+  tradesCount     Int      @default(0)
+  pnl             Float    @default(0)
+  winRate         Float    @default(0)
+  dominantEmotion String?
+  aiOneLiner      String?  // phrase IA — Premium uniquement
+  generatedAt     DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model EcoCalendarCache {
+  id          String   @id @default(cuid())
+  date        DateTime
+  rawData     Json
+  aiAnalysis  Json
+  generatedAt DateTime @default(now())
+
+  @@unique([date])
+  @@index([date])
 }
 
 model WeeklyDebrief {
@@ -121,12 +176,14 @@ model AiUsageLog {
   @@index([feature])
 }
 
-enum Plan           { FREE PREMIUM }
-enum Role           { USER ADMIN BETA_TESTER }
-enum TradeSide      { LONG SHORT }
-enum EmotionState   { CONFIDENT STRESSED REVENGE FEAR FOCUSED NEUTRAL }
-enum SetupType      { BREAKOUT PULLBACK RANGE REVERSAL SCALPING NEWS }
-enum TradingSession { LONDON NEW_YORK ASIAN PRE_MARKET OVERLAP }
+enum Plan                { FREE PREMIUM }
+enum Role                { USER ADMIN BETA_TESTER }
+enum TradeSide           { LONG SHORT }
+enum EmotionState        { CONFIDENT STRESSED REVENGE FEAR FOCUSED NEUTRAL }
+enum SetupType           { BREAKOUT PULLBACK RANGE REVERSAL SCALPING NEWS }
+enum TradingSessionLabel { LONDON NEW_YORK ASIAN PRE_MARKET OVERLAP }  // label session trade
+enum MoodState           { CONFIDENT FOCUSED NEUTRAL TIRED STRESSED }   // ← V2
+enum SessionStatus       { ACTIVE CLOSED }                              // ← V2
 ```
 
 ---

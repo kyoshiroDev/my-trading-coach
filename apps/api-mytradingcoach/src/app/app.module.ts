@@ -15,6 +15,9 @@ import { StripeModule } from '../modules/stripe/stripe.module';
 import { DiscordModule } from '../modules/discord/discord.module';
 import { VpsModule } from '../modules/vps/vps.module';
 import { AdminModule } from '../modules/admin/admin.module';
+import { SessionModule } from '../modules/session/session.module';
+import { DailyRecapModule } from '../modules/daily-recap/daily-recap.module';
+import { EcoCalendarModule } from '../modules/eco-calendar/eco-calendar.module';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { HttpExceptionFilter } from '../common/filters/http-exception.filter';
 import { ResponseInterceptor } from '../common/interceptors/response.interceptor';
@@ -54,6 +57,9 @@ import { AppController } from './app.controller';
     DiscordModule,
     VpsModule,
     AdminModule,
+    SessionModule,
+    DailyRecapModule,
+    EcoCalendarModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

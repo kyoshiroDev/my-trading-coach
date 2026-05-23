@@ -51,13 +51,15 @@ model User {
   // ── Discord ──────────────────────────────────────────────────────────────────
   discordId String? @unique
 
-  trades       Trade[]
-  debriefs     WeeklyDebrief[]
-  aiUsageLogs  AiUsageLog[]
-  lastSeenAt   DateTime?
-  lastLoginAt  DateTime?
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  trades        Trade[]
+  debriefs      WeeklyDebrief[]
+  aiUsageLogs   AiUsageLog[]
+  tradeSessions TradeSession[]
+  dailyRecaps   DailyRecap[]
+  lastSeenAt    DateTime?
+  lastLoginAt   DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 }
 
 model Trade {
@@ -81,12 +83,15 @@ model Trade {
   timeframe  String
   notes      String?
   tags       String[]
-  tradedAt   DateTime       @default(now())
-  createdAt  DateTime       @default(now())
+  sessionId    String?
+  tradeSession TradeSession? @relation(fields: [sessionId], references: [id])
+  tradedAt     DateTime      @default(now())
+  createdAt    DateTime      @default(now())
 
   @@index([userId, tradedAt])
   @@index([userId, emotion])
   @@index([userId, setup])
+  @@index([sessionId])
 }
 
 model WeeklyDebrief {
@@ -121,6 +126,68 @@ model AiUsageLog {
   @@index([userId])
   @@index([createdAt])
   @@index([feature])
+}
+
+// ── V2 Session Mode ─────────────────────────────────────────────────────────
+
+model TradeSession {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startedAt   DateTime      @default(now())
+  endedAt     DateTime?
+  moodStart   MoodState?
+  moodEnd     MoodState?
+  totalPnl    Float?
+  totalTrades Int           @default(0)
+  winRate     Float?
+  status      SessionStatus @default(ACTIVE)
+  notes       String?
+  trades      Trade[]
+  createdAt   DateTime      @default(now())
+
+  @@index([userId, startedAt])
+  @@index([userId, status])
+}
+
+model DailyRecap {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date            DateTime
+  tradesCount     Int      @default(0)
+  pnl             Float    @default(0)
+  winRate         Float    @default(0)
+  dominantEmotion String?
+  aiOneLiner      String?
+  generatedAt     DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model EcoCalendarCache {
+  id          String   @id @default(cuid())
+  date        DateTime
+  rawData     Json
+  aiAnalysis  Json
+  generatedAt DateTime @default(now())
+
+  @@unique([date])
+  @@index([date])
+}
+
+enum MoodState {
+  CONFIDENT
+  FOCUSED
+  NEUTRAL
+  TIRED
+  STRESSED
+}
+
+enum SessionStatus {
+  ACTIVE
+  CLOSED
 }
 
 // ── Idempotence webhooks Stripe ─────────────────────────────────────────────
