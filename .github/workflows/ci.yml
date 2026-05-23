@@ -74,6 +74,7 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       NX_NO_CLOUD: true
       DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
+      DATABASE_DIRECT_URL: postgresql://dummy:dummy@localhost:5432/dummy
 
     steps:
       - uses: actions/checkout@v4
@@ -164,6 +165,7 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       NX_NO_CLOUD: true
       DATABASE_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_test
+      DATABASE_DIRECT_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_test
       REDIS_HOST: localhost
       REDIS_PORT: 6379
       REDIS_PASSWORD: testpassword
