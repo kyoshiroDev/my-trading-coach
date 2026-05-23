@@ -333,6 +333,55 @@ export function renewalReminderTemplate(params: {
   };
 }
 
+// ── Daily Recap ──────────────────────────────────────────────────────────────
+
+export function dailyRecapTemplate(params: {
+  userName: string;
+  date: Date;
+  pnl: number;
+  winRate: number;
+  tradesCount: number;
+  aiOneLiner: string | null;
+  appUrl: string;
+}): { subject: string; html: string } {
+  const { userName, date, pnl, winRate, tradesCount, aiOneLiner, appUrl } = params;
+  const pnlColor = pnl >= 0 ? '#10b981' : '#ef4444';
+  const pnlStr = `${pnl >= 0 ? '+' : ''}${pnl.toFixed(0)}$`;
+  const dateStr = date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  return {
+    subject: `Recap session ${dateStr} — ${pnlStr}`,
+    html: `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="background:#080c14;color:#e2eaf5;font-family:'DM Sans',Arial,sans-serif;padding:32px;max-width:480px;margin:0 auto;">
+  <div style="margin-bottom:24px;">
+    <span style="font-family:'Syne',Arial,sans-serif;font-size:18px;font-weight:700;">MyTradingCoach</span>
+  </div>
+  <h2 style="font-size:20px;margin-bottom:4px;">Session du ${dateStr}</h2>
+  <p style="color:#8fa3bf;font-size:13px;margin-top:0;">Bonjour ${userName || 'Trader'}, voici ton recap du jour.</p>
+  <div style="display:flex;gap:12px;margin:20px 0;flex-wrap:wrap;">
+    <div style="background:#0f1824;border:1px solid rgba(99,155,255,.1);border-radius:8px;padding:12px;text-align:center;flex:1;min-width:80px;">
+      <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:${pnlColor};">${pnlStr}</div>
+      <div style="font-size:10px;color:#4a6080;">P&amp;L</div>
+    </div>
+    <div style="background:#0f1824;border:1px solid rgba(99,155,255,.1);border-radius:8px;padding:12px;text-align:center;flex:1;min-width:80px;">
+      <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;">${winRate.toFixed(0)}%</div>
+      <div style="font-size:10px;color:#4a6080;">Win Rate</div>
+    </div>
+    <div style="background:#0f1824;border:1px solid rgba(99,155,255,.1);border-radius:8px;padding:12px;text-align:center;flex:1;min-width:80px;">
+      <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;">${tradesCount}</div>
+      <div style="font-size:10px;color:#4a6080;">Trades</div>
+    </div>
+  </div>
+  ${aiOneLiner ? `<div style="background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.18);border-radius:8px;padding:14px;font-size:13px;color:#e2eaf5;line-height:1.5;margin-bottom:20px;">✦ ${aiOneLiner}</div>` : ''}
+  <a href="${appUrl}/dashboard" style="display:block;background:#3b82f6;color:white;text-align:center;padding:12px;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;">Ouvrir mon dashboard →</a>
+  <p style="color:#8fa3bf;font-size:12px;margin-top:24px;">MyTradingCoach — Ton journal de trading intelligent</p>
+</body>
+</html>`,
+  };
+}
+
 // ── Bienvenue PREMIUM ────────────────────────────────────────────────────────
 
 export function welcomePremiumTemplate(params: {

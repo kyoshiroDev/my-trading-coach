@@ -173,6 +173,34 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
     return { response: content.text };
   }
 
+  // ── Daily recap one-liner ─────────────────────────────────────────────────
+
+  async generateDailyOneLiner(data: {
+    userId: string;
+    trades: Array<{ side: string; asset: string; pnl: number | null }>;
+    pnl: number;
+    winRate: number;
+    dominantEmotion: string;
+  }): Promise<string> {
+    const top3 = data.trades
+      .slice(0, 3)
+      .map((t) => `${t.side} ${t.asset} ${(t.pnl ?? 0) >= 0 ? '+' : ''}${(t.pnl ?? 0).toFixed(0)}$`)
+      .join(', ');
+
+    const prompt = `Session du jour : ${data.trades.length} trades, P&L ${data.pnl >= 0 ? '+' : ''}${data.pnl.toFixed(0)}$, win rate ${data.winRate.toFixed(0)}%, émotion dominante : ${data.dominantEmotion}.
+Top 3 trades : ${top3}.
+Génère UNE seule phrase coaching (max 120 caractères) : directe, utile, personnalisée. Pas de "Bonne journée" générique.`;
+
+    const response = await this.anthropic.messages.create({
+      model: MODEL,
+      max_tokens: 150,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    this.aiLogger.log(data.userId, 'daily_recap', response.usage);
+    return response.content[0]?.type === 'text' ? response.content[0].text.trim() : '';
+  }
+
   // ── Debrief — delegates to debrief agent ──────────────────────────────────
 
   async generateDebrief(data: Parameters<typeof buildDebriefPrompt>[0], userId?: string) {
