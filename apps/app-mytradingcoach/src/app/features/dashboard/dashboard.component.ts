@@ -11,7 +11,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DecimalPipe, TitleCasePipe, UpperCasePipe } from '@angular/common';
+import { DatePipe, DecimalPipe, TitleCasePipe, UpperCasePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { BillingApi } from '../../core/api/billing.api';
 import { httpResource } from '@angular/common/http';
@@ -43,6 +43,7 @@ import { environment } from '../../../environments/environment';
   standalone: true,
   imports: [
     RouterLink,
+    DatePipe,
     DecimalPipe,
     TitleCasePipe,
     UpperCasePipe,
@@ -68,6 +69,31 @@ import { environment } from '../../../environments/environment';
     />
 
     <div class="content">
+      <!-- ── DASHBOARD V2 — BETA_TESTER + ADMIN uniquement ────────────── -->
+      @if (userStore.isBeta()) {
+        <div class="greeting">
+          <h1 class="greeting-title">Bonjour, {{ userStore.displayName() }} 👋</h1>
+          <div class="greeting-sub">{{ today | date:'EEEE d MMMM' }}</div>
+          <div class="session-tabs">
+            <button class="session-tab active" data-testid="tab-dashboard">① Dashboard actuel</button>
+            <button class="session-tab" data-testid="tab-morning">
+              ② Matin — pré-session <span class="badge-beta">BÊTA</span>
+            </button>
+            <button class="session-tab" data-testid="tab-live">
+              ③ Session live <span class="badge-beta">BÊTA</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Vues V2 — implémentées en étape 6 -->
+        <div class="v2-placeholder" data-testid="session-morning-view">
+          <p style="color:var(--text-3);font-size:13px;">Mode Session V2 en cours d'implémentation — étape 6</p>
+        </div>
+      }
+
+      <!-- ── DASHBOARD V1 — tous les autres users ──────────────────────── -->
+      @else {
+
       <!-- Bannière limite FREE -->
       @if (!userStore.isPremium() && tradesStore.limitReached()) {
         <div class="limit-banner reached">
@@ -414,6 +440,8 @@ import { environment } from '../../../environments/environment';
       @if (showPlanModal()) {
         <mtc-plan-modal (closed)="showPlanModal.set(false)" />
       }
+
+      } <!-- fin @else V1 -->
     </div>
   `,
 })
@@ -429,6 +457,8 @@ export class DashboardComponent implements AfterViewInit {
   protected readonly showTradeForm = signal(false);
   protected readonly showPlanModal = signal(false);
   protected readonly isSavingTrade = signal(false);
+  protected readonly dashboardView = signal<'morning' | 'live'>('morning');
+  protected readonly today = new Date();
 
   private readonly summaryResource = httpResource<{ data: AnalyticsSummary }>(
     () => `${environment.apiUrl}/analytics/summary`,

@@ -724,3 +724,76 @@ canvas {
   .dashboard-header-row { flex-wrap: wrap; }
   .discord-badge { order: -1; }
 }
+
+/* ─── V2 Session Mode — tabs ─── */
+.session-tabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.session-tab {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all .15s;
+  color: var(--text-3);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.session-tab:hover {
+  background: var(--blue-glow);
+  border-color: var(--blue);
+  color: var(--text-2);
+}
+
+.session-tab.active {
+  background: rgba(59, 130, 246, .12);
+  border-color: var(--blue);
+  color: var(--blue-bright);
+  font-weight: 500;
+}
+
+/* ─── Badge BÊTA ─── */
+.badge-beta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(139, 92, 246, .1);
+  color: #a78bfa;
+  border: 1px solid rgba(139, 92, 246, .22);
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.badge-beta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: rgba(139, 92, 246, .08);
+  color: #a78bfa;
+  border: 1px solid rgba(139, 92, 246, .18);
+}
+
+.v2-placeholder {
+  padding: 16px 0;
+}
