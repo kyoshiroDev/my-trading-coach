@@ -201,6 +201,64 @@ Génère UNE seule phrase coaching (max 120 caractères) : directe, utile, perso
     return response.content[0]?.type === 'text' ? response.content[0].text.trim() : '';
   }
 
+  // ── Eco calendar — morning analysis + released event ─────────────────────
+
+  async analyzeEcoEvents(data: {
+    userId: string;
+    events: Array<{ time: string; name: string; impact: string; currency: string }>;
+    userAssets: string[];
+  }) {
+    const prompt = `Tu es un coach de trading expert.
+Actifs du trader : ${data.userAssets.join(', ')}.
+Événements économiques du jour : ${JSON.stringify(data.events, null, 2)}.
+Génère un JSON strict (pas de markdown, pas de texte autour) :
+{
+  "summary": "1-2 phrases sur les risques du jour pour ce trader précis",
+  "recommendation": "1 conseil actionnable concret (créneau à éviter, actif sensible)",
+  "assetImpacts": [{ "asset": string, "sentiment": "bull"|"bear"|"neutral", "reason": string }]
+}`;
+
+    const response = await this.anthropic.messages.create({
+      model: MODEL,
+      max_tokens: 500,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    this.aiLogger.log(data.userId, 'eco_calendar', response.usage);
+    const text = response.content[0]?.type === 'text' ? response.content[0].text : '{}';
+    return JSON.parse(text.replace(/```json\n?|\n?```/g, '').trim());
+  }
+
+  async analyzeEcoResult(data: {
+    userId: string;
+    event: { name: string; actual: number | null; estimate: number | null; previous: number | null };
+    userAssets: string[];
+  }) {
+    const actual = data.event.actual ?? 0;
+    const estimate = data.event.estimate ?? 0;
+    const surprise = actual - estimate;
+
+    const prompt = `Résultat tombé : ${data.event.name}.
+Résultat : ${actual} | Prévu : ${estimate} | Précédent : ${data.event.previous ?? 'N/A'}.
+Surprise : ${surprise >= 0 ? '+' : ''}${surprise.toFixed(2)}.
+Actifs tradés : ${data.userAssets.join(', ')}.
+Génère un JSON strict (pas de markdown, pas de texte autour) :
+{
+  "interpretation": "phrase courte expliquant la surprise",
+  "assetSentiments": [{ "asset": string, "sentiment": "bull"|"bear"|"neutral", "shortReason": string }]
+}`;
+
+    const response = await this.anthropic.messages.create({
+      model: MODEL,
+      max_tokens: 300,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    this.aiLogger.log(data.userId, 'eco_calendar', response.usage);
+    const text = response.content[0]?.type === 'text' ? response.content[0].text : '{}';
+    return JSON.parse(text.replace(/```json\n?|\n?```/g, '').trim());
+  }
+
   // ── Debrief — delegates to debrief agent ──────────────────────────────────
 
   async generateDebrief(data: Parameters<typeof buildDebriefPrompt>[0], userId?: string) {
