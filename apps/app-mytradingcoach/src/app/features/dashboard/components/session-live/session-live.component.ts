@@ -128,7 +128,10 @@ const EMOTIONS = [
                 <!-- Trade LIVE (ouvert) -->
                 <div
                   class="feed-row live-row"
+                  role="button"
+                  tabindex="0"
                   (click)="openClosePanel(trade.id)"
+                  (keyup.enter)="openClosePanel(trade.id)"
                 >
                   <span class="feed-time">—</span>
                   <span class="trade-side" [class]="trade.side.toLowerCase()">{{ trade.side }}</span>
@@ -306,7 +309,10 @@ const EMOTIONS = [
                   class="qt-emo"
                   [class.sel]="qtEmotion() === emo.value"
                   [title]="emo.title"
+                  role="button"
+                  tabindex="0"
                   (click)="qtEmotion.set(emo.value)"
+                  (keyup.enter)="qtEmotion.set(emo.value)"
                 >{{ emo.emoji }}</div>
               }
             </div>
@@ -378,8 +384,12 @@ const EMOTIONS = [
 
       <!-- Modal clôture session -->
       @if (closeMoodOpen()) {
-        <div class="close-session-panel" (click)="closeMoodOpen.set(false)">
-          <div class="close-session-modal" (click)="$event.stopPropagation()">
+        <div class="close-session-panel" role="button" tabindex="0"
+          (click)="closeMoodOpen.set(false)"
+          (keyup.escape)="closeMoodOpen.set(false)">
+          <div class="close-session-modal" tabindex="-1"
+            (click)="$event.stopPropagation()"
+            (keydown)="$event.stopPropagation()">
             <div class="csm-title">Clôturer la session</div>
             <div class="csm-sub">Comment tu te sens en fin de session ?</div>
             <div class="mood-row">
