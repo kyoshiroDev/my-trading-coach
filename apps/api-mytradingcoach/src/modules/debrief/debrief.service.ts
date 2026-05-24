@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { DebriefPdfData } from '../pdf/pdf.service';
 
@@ -126,6 +126,20 @@ export class DebriefService {
 
   async generateForUser(userId: string) {
     return this.generate(userId, Role.USER, true);
+  }
+
+  async addNoteToObjective(userId: string, debriefId: string, index: number, note: string) {
+    const debrief = await this.prisma.weeklyDebrief.findUnique({ where: { id: debriefId } });
+    if (!debrief) throw new NotFoundException('Débrief introuvable');
+    if (debrief.userId !== userId) throw new ForbiddenException();
+
+    const objectives = (debrief.objectives as { title: string; reason: string; note?: string }[]);
+    if (index < 0 || index >= objectives.length) throw new NotFoundException('Objectif introuvable');
+
+    const updated = [...objectives];
+    updated[index] = { ...updated[index], note };
+
+    return this.prisma.weeklyDebrief.update({ where: { id: debriefId }, data: { objectives: updated } });
   }
 
   async getPDFData(

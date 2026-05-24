@@ -122,8 +122,60 @@
   cursor: default;
 }
 .obj-check.done { background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.3); color: var(--green); }
-.obj-text { flex: 1; font-size: 12px; color: var(--text-2); line-height: 1.4; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.obj-body { flex: 1; min-width: 0; }
+.obj-text { font-size: 12px; color: var(--text-2); line-height: 1.4; overflow: hidden; text-overflow: ellipsis; }
 .obj-text.striked { text-decoration: line-through; color: var(--text-3); }
+.obj-note-preview { font-size: 11px; color: var(--text-3); font-style: italic; margin-top: 3px; }
+.obj-note-icon { font-size: 10px; color: var(--text-3); flex-shrink: 0; cursor: pointer; padding: 2px 4px; }
+.obj-item.expandable { cursor: pointer; }
+.obj-item.expandable:hover { background: rgba(99,155,255,.03); border-radius: 5px; }
+
+.obj-note-panel {
+  background: var(--bg-2);
+  border: 1px solid rgba(59,130,246,.15);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 4px;
+  animation: noteSlideDown .15s ease;
+}
+@keyframes noteSlideDown { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+.obj-note-input {
+  width: 100%;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 12px;
+  color: var(--text);
+  font-family: var(--font-body);
+  resize: none;
+  outline: none;
+  transition: border-color .15s;
+  box-sizing: border-box;
+}
+.obj-note-input:focus { border-color: var(--blue); }
+.obj-note-actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px; }
+.obj-note-cancel {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--text-3);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.obj-note-save {
+  background: var(--blue);
+  border: none;
+  color: white;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.obj-note-save:disabled { opacity: .5; cursor: not-allowed; }
 .obj-bdg {
   font-size: 9px;
   font-family: var(--font-mono);

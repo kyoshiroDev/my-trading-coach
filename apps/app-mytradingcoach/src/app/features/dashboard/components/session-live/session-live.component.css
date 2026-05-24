@@ -383,6 +383,25 @@
 .qt-hint { font-size: 10px; color: var(--text-3); text-align: center; }
 
 /* ─── Close session mood ─── */
+.mood-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.mood-btn {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 5px 11px;
+  font-size: 12px;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all .15s;
+  font-family: var(--font-body);
+}
+.mood-btn:hover { border-color: var(--border-hover); color: var(--text); }
+.mood-btn.sel {
+  background: var(--blue-glow);
+  border-color: rgba(59,130,246,.35);
+  color: var(--blue-bright);
+}
+
 .close-session-panel {
   position: fixed;
   inset: 0;

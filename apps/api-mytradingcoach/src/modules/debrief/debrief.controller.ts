@@ -1,8 +1,10 @@
 import {
+  Body,
   Controller,
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Res,
   UseGuards,
@@ -63,5 +65,15 @@ export class DebriefController {
   @Post('generate')
   generate(@CurrentUser() user: { id: string; role: Role }) {
     return this.debriefService.generate(user.id, user.role);
+  }
+
+  @Patch(':debriefId/objectives/:index/note')
+  addNote(
+    @CurrentUser() user: { id: string },
+    @Param('debriefId') debriefId: string,
+    @Param('index', ParseIntPipe) index: number,
+    @Body('note') note: string,
+  ) {
+    return this.debriefService.addNoteToObjective(user.id, debriefId, index, note);
   }
 }

@@ -1,14 +1,18 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
+  inject,
   input,
   output,
+  signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { DailyRecap } from '../../../../core/api/daily-recap.api';
 import { EcoCalendarData } from '../../../../core/api/eco-calendar.api';
 import { MoodState } from '../../../../core/api/session.api';
-import { DebriefObjective } from '../../../../core/api/debrief.api';
+import { DebriefApi, DebriefObjective } from '../../../../core/api/debrief.api';
 
 const MOODS: { value: MoodState; label: string; emoji: string }[] = [
   { value: 'CONFIDENT', label: 'Confiant', emoji: '😎' },
@@ -116,11 +120,43 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
             <div class="empty-state">Objectifs générés après ton Weekly Debrief</div>
           } @else {
             @for (obj of objectives(); track $index) {
-              <div class="obj-item">
+              <div
+                class="obj-item"
+                [class.expandable]="!!debriefId()"
+                role="button"
+                tabindex="0"
+                (click)="debriefId() && toggleObjectiveNote($index)"
+                (keyup.enter)="debriefId() && toggleObjectiveNote($index)"
+              >
                 <div class="obj-check">·</div>
-                <div class="obj-text">{{ obj.title }}</div>
+                <div class="obj-body">
+                  <div class="obj-text">{{ obj.title }}</div>
+                  @if (obj.note && expandedObjectiveIdx() !== $index) {
+                    <div class="obj-note-preview">{{ obj.note }}</div>
+                  }
+                </div>
                 <div class="obj-bdg s">Semaine</div>
+                @if (debriefId()) {
+                  <span class="obj-note-icon">{{ expandedObjectiveIdx() === $index ? '▲' : '✏' }}</span>
+                }
               </div>
+              @if (expandedObjectiveIdx() === $index) {
+                <div class="obj-note-panel" tabindex="-1" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+                  <textarea
+                    class="obj-note-input"
+                    placeholder="Note sur cet objectif..."
+                    rows="2"
+                    [value]="objectiveNoteValues()[$index] ?? obj.note ?? ''"
+                    (input)="setNoteValue($index, $any($event.target).value)"
+                  ></textarea>
+                  <div class="obj-note-actions">
+                    <button class="obj-note-cancel" (click)="toggleObjectiveNote($index)">Annuler</button>
+                    <button class="obj-note-save" [disabled]="isSavingNote()" (click)="saveNote($index)">
+                      {{ isSavingNote() ? '...' : 'Sauvegarder' }}
+                    </button>
+                  </div>
+                </div>
+              }
             }
             <div class="obj-footer">Générés par l'IA · Weekly Debrief</div>
           }
@@ -211,14 +247,48 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
 export class SessionMorningComponent {
   readonly yesterdayRecap = input<DailyRecap | null>(null);
   readonly objectives = input<DebriefObjective[]>([]);
+  readonly debriefId = input<string | null>(null);
   readonly ecoCalendar = input<EcoCalendarData | null>(null);
   readonly selectedMood = input<MoodState>('CONFIDENT');
   readonly isNextDay = input<boolean>(false);
 
   readonly moodSelected = output<MoodState>();
   readonly sessionStarted = output<void>();
+  readonly objectiveNoteAdded = output<{ index: number; note: string }>();
+
+  private readonly debriefApi = inject(DebriefApi);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly moods = MOODS;
+
+  protected readonly expandedObjectiveIdx = signal<number | null>(null);
+  protected readonly objectiveNoteValues = signal<Partial<Record<number, string>>>({});
+  protected readonly isSavingNote = signal(false);
+
+  protected toggleObjectiveNote(idx: number): void {
+    this.expandedObjectiveIdx.update(current => current === idx ? null : idx);
+  }
+
+  protected setNoteValue(idx: number, value: string): void {
+    this.objectiveNoteValues.update(map => ({ ...map, [idx]: value }));
+  }
+
+  protected saveNote(idx: number): void {
+    const debriefId = this.debriefId();
+    if (!debriefId) return;
+    const note = this.objectiveNoteValues()[idx] ?? this.objectives()[idx]?.note ?? '';
+    this.isSavingNote.set(true);
+    this.debriefApi.addObjectiveNote(debriefId, idx, note)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.objectiveNoteAdded.emit({ index: idx, note });
+          this.expandedObjectiveIdx.set(null);
+          this.isSavingNote.set(false);
+        },
+        error: () => this.isSavingNote.set(false),
+      });
+  }
 
   protected emotionEmoji(emotion?: string): string {
     const map: Record<string, string> = {
