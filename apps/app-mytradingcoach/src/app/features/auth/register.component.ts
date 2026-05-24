@@ -175,7 +175,7 @@ import { BillingApi } from '../../core/api/billing.api';
           @if (isPremiumFlow()) {
             Essai 7 jours gratuit · Sans CB requise · Annuler à tout moment
           } @else {
-            Aucune CB requise · 50 trades/mois · Annuler à tout moment
+            Aucune CB requise · 30 trades/mois · Annuler à tout moment
           }
         </p>
 

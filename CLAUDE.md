@@ -10,14 +10,14 @@
 **MyTradingCoach** — SaaS freemium de journal de trading intelligent pour traders particuliers (crypto, forex, actions). L'IA analyse émotions et comportements pour aider les traders à progresser.
 
 **Plans :**
-- **FREE** : 50 trades/mois, historique illimité, stats de base, journal complet, tracking émotionnel
+- **FREE** : 30 trades/mois, historique illimité, stats de base, journal complet, tracking émotionnel
 - **PREMIUM** (39€/mois ou 349€/an) : trades illimités, analytics avancés, IA Insights, Chat Coach, Weekly Debrief automatique, Score trader, Export PDF — essai **7 jours** sans CB
 
 **Règles business absolues :**
 - Tout appel Anthropic = PREMIUM uniquement
 - `/analytics/summary` accessible FREE (win rate, P&L, streak)
 - Historique trades = illimité pour FREE (pas de filtre date)
-- Limite FREE = 50 trades/mois uniquement
+- Limite FREE = 30 trades/mois uniquement
 - Trial = 7 jours (jamais 14)
 
 ---

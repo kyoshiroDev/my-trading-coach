@@ -95,7 +95,7 @@ export function subscriptionCanceledTemplate(params: {
           <p>Bonjour ${userName || 'Trader'},</p>
           <p>
             Votre abonnement PREMIUM a bien été résilié. Vous êtes maintenant
-            sur le plan gratuit avec accès à 50 trades/mois et l'historique complet.
+            sur le plan gratuit avec accès à 30 trades/mois et l'historique complet.
           </p>
           <p>
             Vous pouvez vous réabonner à tout moment pour retrouver les
@@ -142,7 +142,7 @@ export function welcomeFreeTemplate(params: {
           </p>
           <p style="color:#8fa3bf;">Avec ton plan gratuit :</p>
           <ul style="color:#8fa3bf; padding-left:20px; line-height:1.8;">
-            <li>✅ 50 trades par mois</li>
+            <li>✅ 30 trades par mois</li>
             <li>✅ Journal complet — émotions, setup, notes</li>
             <li>✅ Stats de base — win rate, P&L, top session</li>
             <li>✅ Historique illimité</li>
