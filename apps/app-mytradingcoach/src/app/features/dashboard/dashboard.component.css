@@ -179,7 +179,17 @@
   grid-template-columns: 3fr 2fr;
   gap: 16px;
   margin-bottom: 16px;
-  align-items: start;
+  align-items: stretch;
+}
+
+.top-charts-row .equity-card {
+  height: 100%;
+}
+
+.top-charts-row .equity-card .chart-container {
+  flex: 1;
+  height: auto;
+  min-height: 200px;
 }
 
 /* Equity seul (V1) : prend toute la largeur */

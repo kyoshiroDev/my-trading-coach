@@ -105,67 +105,69 @@
       </div>
     </div>
 
-    <!-- Heatmap : jours (lignes) × heures (colonnes) -->
-    <div class="card mb-16">
-      <div class="card-header">
-        <div class="card-title">Heatmap horaire — Win Rate par heure</div>
-        <div class="heatmap-legend">
-          <span class="legend-dot dot-red"></span
-          ><span class="legend-txt">&lt;50%</span>
-          <span class="legend-dot dot-orange"></span
-          ><span class="legend-txt">50–65%</span>
-          <span class="legend-dot dot-green"></span
-          ><span class="legend-txt">&gt;65%</span>
+    <!-- Heatmap + Calendrier côte à côte — même hauteur -->
+    <div class="grid-heatmap-calendar mb-16">
+
+      <!-- Heatmap (gauche — plus large) -->
+      <div class="card heatmap-card">
+        <div class="card-header">
+          <div class="card-title">Heatmap horaire — Win Rate par heure</div>
+          <div class="heatmap-legend">
+            <span class="legend-dot dot-red"></span
+            ><span class="legend-txt">&lt;50%</span>
+            <span class="legend-dot dot-orange"></span
+            ><span class="legend-txt">50–65%</span>
+            <span class="legend-dot dot-green"></span
+            ><span class="legend-txt">&gt;65%</span>
+          </div>
         </div>
-      </div>
-      <div class="heatmap-wrapper" data-testid="heatmap">
-        <table class="heatmap-table">
-          <thead>
-            <tr>
-              <th class="heatmap-corner"></th>
-              @for (hour of hours; track hour) {
-                <th class="heatmap-hour-th">{{ hour }}h</th>
-              }
-            </tr>
-          </thead>
-          <tbody>
-            @for (day of days; track day) {
+        <div class="heatmap-wrapper" data-testid="heatmap">
+          <table class="heatmap-table">
+            <thead>
               <tr>
-                <td class="heatmap-day-td">{{ day }}</td>
+                <th class="heatmap-corner"></th>
                 @for (hour of hours; track hour) {
-                  @let cell = getHeatmapCell(day, hour);
-                  <td
-                    [class]="
-                      cell ? cellClass(cell.winRate) : 'heatmap-cell cell-empty'
-                    "
-                    [title]="
-                      cell
-                        ? day +
-                          ' ' +
-                          hour +
-                          'h — ' +
-                          cell.winRate.toFixed(0) +
-                          '% (' +
-                          cell.count +
-                          ' trades)'
-                        : ''
-                    "
-                  >
-                    @if (cell) {
-                      {{ cell.winRate.toFixed(0) }}%
-                    }
-                  </td>
+                  <th class="heatmap-hour-th">{{ hour }}h</th>
                 }
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (day of days; track day) {
+                <tr>
+                  <td class="heatmap-day-td">{{ day }}</td>
+                  @for (hour of hours; track hour) {
+                    @let cell = getHeatmapCell(day, hour);
+                    <td
+                      [class]="
+                        cell ? cellClass(cell.winRate) : 'heatmap-cell cell-empty'
+                      "
+                      [title]="
+                        cell
+                          ? day +
+                            ' ' +
+                            hour +
+                            'h — ' +
+                            cell.winRate.toFixed(0) +
+                            '% (' +
+                            cell.count +
+                            ' trades)'
+                          : ''
+                      "
+                    >
+                      @if (cell) {
+                        {{ cell.winRate.toFixed(0) }}%
+                      }
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
 
-    <!-- Calendrier + Top Actifs côte à côte -->
-    <div class="grid-calendar-assets">
-      <div>
+      <!-- Calendrier (droite — plus compact) -->
+      <div class="cal-analytics-wrap">
         <mtc-activity-calendar
           [data]="calData()"
           [loading]="calLoading()"
@@ -175,6 +177,11 @@
           (monthChange)="onMonthChange($event)"
         />
       </div>
+
+    </div>
+
+    <!-- Top Actifs + Performance par Setup côte à côte -->
+    <div class="grid-2 mb-16">
 
       <div class="card">
         <div class="card-header">
@@ -212,46 +219,46 @@
           </tbody>
         </table>
       </div>
-    </div>
 
-    <!-- Performance par Setup — pleine largeur -->
-    <div class="card mb-16">
-      <div class="card-header">
-        <div class="card-title">Performance par setup</div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Performance par setup</div>
+        </div>
+        <table class="perf-table">
+          <thead>
+            <tr>
+              <th>SETUP</th>
+              <th>TRADES</th>
+              <th>WIN RATE</th>
+              <th>RR MOY.</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (setup of setupData(); track setup.setup) {
+              <tr>
+                <td class="td-asset">{{ setup.setup }}</td>
+                <td class="mono">{{ setup.count }}</td>
+                <td class="mono" [style.color]="rateColor(setup.winRate)">
+                  {{ setup.winRate.toFixed(0) }}%
+                </td>
+                <td
+                  class="mono"
+                  [class.text-green]="setup.avgRR >= 1"
+                  [class.text-red]="setup.avgRR < 1"
+                >
+                  {{ setup.avgRR.toFixed(2) }}
+                </td>
+              </tr>
+            }
+            @if (setupData().length === 0) {
+              <tr>
+                <td colspan="4" class="empty-td">Aucune donnée</td>
+              </tr>
+            }
+          </tbody>
+        </table>
       </div>
-      <table class="perf-table">
-        <thead>
-          <tr>
-            <th>SETUP</th>
-            <th>TRADES</th>
-            <th>WIN RATE</th>
-            <th>RR MOY.</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (setup of setupData(); track setup.setup) {
-            <tr>
-              <td class="td-asset">{{ setup.setup }}</td>
-              <td class="mono">{{ setup.count }}</td>
-              <td class="mono" [style.color]="rateColor(setup.winRate)">
-                {{ setup.winRate.toFixed(0) }}%
-              </td>
-              <td
-                class="mono"
-                [class.text-green]="setup.avgRR >= 1"
-                [class.text-red]="setup.avgRR < 1"
-              >
-                {{ setup.avgRR.toFixed(2) }}
-              </td>
-            </tr>
-          }
-          @if (setupData().length === 0) {
-            <tr>
-              <td colspan="4" class="empty-td">Aucune donnée</td>
-            </tr>
-          }
-        </tbody>
-      </table>
+
     </div>
   }
 

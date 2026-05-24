@@ -87,22 +87,43 @@
   gap: 16px;
 }
 
-.grid-2 > div,
-.grid-2 > .card {
-  align-self: start;
+/* Grid heatmap + calendrier — même hauteur */
+.grid-heatmap-calendar {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 16px;
+  align-items: stretch;
 }
 
-/* Calendrier (40%) + Top Actifs (60%) */
-.grid-calendar-assets {
-  display: grid;
-  grid-template-columns: 2fr 3fr;
-  gap: 16px;
-  margin-bottom: 16px;
-  align-items: start;
+.heatmap-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.heatmap-card .heatmap-wrapper {
+  flex: 1;
+  overflow-x: auto;
+  min-height: 0;
+}
+
+.cal-analytics-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.cal-analytics-wrap mtc-activity-calendar {
+  flex: 1;
+  height: 100%;
+}
+
+@media (max-width: 1024px) {
+  .grid-heatmap-calendar { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 768px) {
-  .grid-calendar-assets { grid-template-columns: 1fr; }
+  .grid-heatmap-calendar { grid-template-columns: 1fr; }
 }
 
 .mb-16 {
