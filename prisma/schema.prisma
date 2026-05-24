@@ -190,6 +190,7 @@ enum SessionStatus {
   CLOSED
 }
 
+
 // ── Idempotence webhooks Stripe ─────────────────────────────────────────────
 model StripeEvent {
   id          String   @id // Stripe event ID (evt_...)

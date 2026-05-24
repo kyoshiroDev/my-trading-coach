@@ -35,6 +35,7 @@
     "@nx/vitest": "22.7.2",
     "@nx/web": "22.7.2",
     "@nx/webpack": "22.7.2",
+    "@oxc-project/runtime": "^0.115.0",
     "@playwright/test": "^1.36.0",
     "@prisma/client": "^7.8.0",
     "@schematics/angular": "~21.2.0",

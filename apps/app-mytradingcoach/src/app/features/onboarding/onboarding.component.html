@@ -1,5 +1,5 @@
 <!-- Steps 1-4 — wizard overlay -->
-@if (step() !== 6) {
+@if (step() !== 5) {
   <div class="overlay" data-testid="onboarding-wizard">
     <div class="wizard">
       <!-- Header -->
@@ -8,7 +8,12 @@
           <div class="logo-mark"></div>
           <span class="logo-text">MyTradingCoach</span>
         </div>
-        <button class="skip-btn" data-testid="wizard-skip" (click)="skip()" [disabled]="isSaving()">
+        <button
+          class="skip-btn"
+          data-testid="wizard-skip"
+          (click)="skip()"
+          [disabled]="isSaving()"
+        >
           Passer
         </button>
       </div>
@@ -21,15 +26,27 @@
       <!-- Step 1 — Marché -->
       @if (step() === 1) {
         <div class="wizard-body">
-          <div class="step-label">Étape 1 sur 5</div>
+          <div class="step-label">Étape 1 sur 4</div>
           <h2 class="step-title">Quel marché trades-tu ?</h2>
-          <p class="step-desc">Je vais personnaliser tes insights en fonction de ton marché principal.</p>
+          <p class="step-desc">
+            Je vais personnaliser tes insights en fonction de ton marché
+            principal.
+          </p>
+
           <div class="choice-grid">
             @for (m of MARKETS; track m.value) {
-              <button class="choice-card" [class.selected]="selectedMarket() === m.value" (click)="selectMarket(m.value)">
+              <button
+                class="choice-card"
+                [class.selected]="selectedMarket() === m.value"
+                (click)="selectMarket(m.value)"
+              >
                 <span class="choice-emoji">
                   @if (m.icon) {
-                    <lucide-icon [img]="m.icon" [size]="24" [style.color]="m.iconColor" />
+                    <lucide-icon
+                      [img]="m.icon"
+                      [size]="24"
+                      [style.color]="m.iconColor"
+                    />
                   } @else {
                     {{ m.emoji }}
                   }
@@ -39,8 +56,15 @@
               </button>
             }
           </div>
+
           <div class="wizard-footer">
-            <button class="btn-next" (click)="nextStep()" [disabled]="!selectedMarket()">Continuer →</button>
+            <button
+              class="btn-next"
+              (click)="nextStep()"
+              [disabled]="!selectedMarket()"
+            >
+              Continuer →
+            </button>
           </div>
         </div>
       }
@@ -48,122 +72,100 @@
       <!-- Step 2 — Objectif -->
       @if (step() === 2) {
         <div class="wizard-body">
-          <div class="step-label">Étape 2 sur 5</div>
+          <div class="step-label">Étape 2 sur 4</div>
           <h2 class="step-title">Quel est ton objectif principal ?</h2>
-          <p class="step-desc">Ton coach IA va se concentrer sur ce qui compte le plus pour toi.</p>
+          <p class="step-desc">
+            Ton coach IA va se concentrer sur ce qui compte le plus pour toi.
+          </p>
+
           <div class="choice-grid goal-grid">
             @for (g of GOALS; track g.value) {
-              <button class="choice-card" [class.selected]="selectedGoal() === g.value" (click)="selectGoal(g.value)">
+              <button
+                class="choice-card"
+                [class.selected]="selectedGoal() === g.value"
+                (click)="selectGoal(g.value)"
+              >
                 <span class="choice-emoji">{{ g.emoji }}</span>
                 <span class="choice-label">{{ g.label }}</span>
                 <span class="choice-desc">{{ g.desc }}</span>
               </button>
             }
           </div>
+
           <div class="wizard-footer">
-            <button class="btn-next" (click)="nextStep()" [disabled]="!selectedGoal()">Continuer →</button>
+            <button
+              class="btn-next"
+              (click)="nextStep()"
+              [disabled]="!selectedGoal()"
+            >
+              Continuer →
+            </button>
           </div>
         </div>
       }
 
-      <!-- Step 3 — Stratégie -->
+      <!-- Step 3 — Capital de départ -->
       @if (step() === 3) {
-        <div class="wizard-body strategy-body">
-          <div class="step-label">Étape 3 sur 5</div>
-          <h2 class="step-title">Ton style de trading</h2>
-          <p class="step-desc">Ces infos permettent à l'IA de personnaliser ses analyses.</p>
-
-          <div class="section-label">Style</div>
-          <div class="style-grid">
-            @for (s of TRADING_STYLES; track s.value) {
-              <button class="style-btn" [class.selected]="tradingStyle() === s.value" (click)="tradingStyle.set(s.value)">
-                <span class="style-emoji">{{ s.emoji }}</span>
-                <span class="style-label">{{ s.label }}</span>
-                <span class="style-desc">{{ s.desc }}</span>
-              </button>
-            }
-          </div>
-
-          <div class="section-label" style="margin-top:16px">
-            Trades par jour habituels
-            <span class="freq-badge">{{ tradesPerDayMin() }}–{{ tradesPerDayMax() }}</span>
-          </div>
-          <div class="freq-row">
-            <span class="freq-label">Min</span>
-            <input type="range" min="0" max="50" [value]="tradesPerDayMin()"
-              (input)="tradesPerDayMin.set(+$any($event.target).value)" class="range-input" />
-            <span class="freq-val">{{ tradesPerDayMin() }}</span>
-          </div>
-          <div class="freq-row">
-            <span class="freq-label">Max</span>
-            <input type="range" min="0" max="100" [value]="tradesPerDayMax()"
-              (input)="tradesPerDayMax.set(+$any($event.target).value)" class="range-input" />
-            <span class="freq-val">{{ tradesPerDayMax() }}</span>
-          </div>
-
-          <div class="section-label" style="margin-top:16px">Sessions préférées</div>
-          <div class="sessions-row">
-            @for (s of SESSIONS; track s.value) {
-              <button class="session-btn" [class.selected]="tradingSessions().includes(s.value)" (click)="toggleSession(s.value)">
-                <span class="session-label">{{ s.label }}</span>
-                <span class="session-time">{{ s.time }}</span>
-              </button>
-            }
-          </div>
-
-          <div class="section-label" style="margin-top:16px">Stratégie (optionnel)</div>
-          <div class="tags-wrap">
-            @for (tag of STRATEGY_TAGS; track tag) {
-              <button class="strat-tag" [class.selected]="tradingStrategy().includes(tag)" (click)="toggleTag(tag)">{{ tag }}</button>
-            }
-          </div>
-
-          <div class="section-label desc-label" style="margin-top:12px">
-            Description libre
-            <span class="char-count">{{ strategyDesc().length }}/200</span>
-          </div>
-          <textarea class="strat-desc"
-            placeholder="Ex: Je trade les OB + FVG sur London et NY, scalping 1-5min..."
-            [value]="strategyDesc()" (input)="onStrategyDesc($event)" rows="3" maxlength="200">
-          </textarea>
-
-          <div class="wizard-footer">
-            <button class="btn-skip-capital" type="button" (click)="nextStep()">Passer</button>
-            <button class="btn-next" (click)="nextStep()">Continuer →</button>
-          </div>
-        </div>
-      }
-
-      <!-- Step 4 — Capital de départ -->
-      @if (step() === 4) {
         <div class="wizard-body">
-          <div class="step-label">Étape 4 sur 5</div>
+          <div class="step-label">Étape 3 sur 4</div>
+          <!-- Capital reste étape 3 sur 4 car Discord (étape 4) est la dernière du wizard -->
           <h2 class="step-title">Quel est ton capital de départ ?</h2>
-          <p class="step-desc">Je l'utiliserai pour calculer ton equity curve, ton drawdown et tes performances réelles.</p>
+          <p class="step-desc">
+            Je l'utiliserai pour calculer ton equity curve, ton drawdown et tes
+            performances réelles.
+          </p>
+
           <div class="capital-field">
             <div class="currency-toggle">
-              <button type="button" class="currency-btn"
+              <button
+                type="button"
+                class="currency-btn"
                 [class.active-usd]="selectedCurrency() === 'USD'"
-                (click)="selectCurrency('USD')">$ USD</button>
-              <button type="button" class="currency-btn"
+                (click)="selectCurrency('USD')"
+              >
+                $ USD
+              </button>
+              <button
+                type="button"
+                class="currency-btn"
                 [class.active-eur]="selectedCurrency() === 'EUR'"
-                (click)="selectCurrency('EUR')">€ EUR</button>
+                (click)="selectCurrency('EUR')"
+              >
+                € EUR
+              </button>
             </div>
-            <input type="text" class="capital-input" [value]="capitalInput()"
-              (input)="filterCapital($event)" placeholder="ex : 5000" data-testid="capital-input" />
+            <input
+              type="text"
+              class="capital-input"
+              [value]="capitalInput()"
+              (input)="filterCapital($event)"
+              placeholder="ex : 5000"
+              data-testid="capital-input"
+            />
           </div>
-          <p class="capital-hint">Tu pourras modifier ce montant dans tes paramètres à tout moment.</p>
+
+          <p class="capital-hint">
+            Tu pourras modifier ce montant dans tes paramètres à tout moment.
+          </p>
+
           <div class="wizard-footer">
-            <button class="btn-skip-capital" type="button" (click)="nextStep()">Passer cette étape</button>
-            <button class="btn-next" (click)="nextStep()" [disabled]="!capitalInput()">Continuer →</button>
+            <button class="btn-skip-capital" type="button" (click)="nextStep()">
+              Passer cette étape
+            </button>
+            <button
+              class="btn-next"
+              (click)="nextStep()"
+              [disabled]="!capitalInput()"
+            >
+              Continuer →
+            </button>
           </div>
         </div>
       }
-
-      <!-- Step 5 — Discord -->
-      @if (step() === 5) {
+      <!-- Step 4 — Discord -->
+      @if (step() === 4) {
         <div class="wizard-body">
-          <div class="step-label">Étape 5 sur 5</div>
+          <div class="step-label">Étape 4 sur 4</div>
           <h2 class="step-title">Rejoins la communauté 👥</h2>
           <p class="step-desc">
             Des centaines de traders ICT, SMC, Price Action — tous niveaux.
@@ -213,8 +215,8 @@
   </div>
 }
 
-<!-- Step 6 — premier trade -->
-@if (step() === 6) {
+<!-- Step 5 — premier trade (TradeForm gère son propre overlay) -->
+@if (step() === 5) {
   <mtc-trade-form
     [open]="true"
     [isSaving]="isSaving()"
