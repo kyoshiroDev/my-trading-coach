@@ -200,6 +200,7 @@ import { SessionLiveComponent } from './components/session-live/session-live.com
             [todayTrades]="todayTrades()"
             [liveStats]="todayStats()"
             [ecoCalendar]="ecoCalendar()"
+            (startSession)="startSession()"
             (tradeClosed)="confirmCloseTrade($event)"
             (sessionClosed)="closeSession($event)"
             (tradeLogged)="logQuickTrade($event)"
@@ -736,7 +737,7 @@ export class DashboardComponent implements AfterViewInit {
   protected readonly today = new Date();
 
   // ── V2 Session Mode ─────────────────────────────────────────────────────
-  protected readonly activeTab = signal<'dashboard' | 'morning' | 'live'>('morning');
+  protected readonly activeTab = signal<'dashboard' | 'morning' | 'live'>('dashboard');
   protected readonly selectedMood = signal<MoodState>('CONFIDENT');
   protected readonly activeSession = signal<TradingSession | null>(null);
   protected readonly todayStats = signal<LiveStats | null>(null);

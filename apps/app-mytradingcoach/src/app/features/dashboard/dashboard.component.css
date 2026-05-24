@@ -757,8 +757,9 @@ canvas {
 /* ─── V2 Session Mode — tabs ─── */
 .session-tabs {
   display: flex;
-  gap: 6px;
-  margin-top: 16px;
+  gap: 10px;
+  margin-top: 20px;
+  margin-bottom: 4px;
   flex-wrap: wrap;
   justify-content: center;
 }
@@ -766,8 +767,8 @@ canvas {
 .session-tab {
   background: var(--bg-3);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 14px;
+  border-radius: 9px;
+  padding: 9px 20px;
   font-size: 13px;
   font-family: var(--font-body);
   cursor: pointer;
@@ -775,7 +776,8 @@ canvas {
   color: var(--text-2);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
+  letter-spacing: .1px;
 }
 
 .session-tab:hover {

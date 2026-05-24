@@ -1,3 +1,54 @@
+/* ─── Card ─── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  transition: border-color .2s;
+}
+
+/* ─── No session CTA ─── */
+.no-session-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.no-session-icon { font-size: 40px; opacity: .5; }
+
+.no-session-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.no-session-sub {
+  font-size: 13px;
+  color: var(--text-3);
+  line-height: 1.5;
+  max-width: 320px;
+}
+
+.session-start-btn {
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  padding: 11px 22px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: opacity .15s;
+  margin-top: 4px;
+}
+.session-start-btn:hover { opacity: .88; }
+
 /* ─── Session active bar ─── */
 .session-active-bar {
   background: linear-gradient(90deg, rgba(16,185,129,.07), rgba(59,130,246,.04));

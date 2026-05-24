@@ -52,6 +52,18 @@ const EMOTIONS = [
 
       @if (!showRecap()) {
 
+      @if (!session() || session()?.status !== 'ACTIVE') {
+        <!-- Pas de session active : CTA démarrer -->
+        <div class="no-session-cta">
+          <div class="no-session-icon">🎯</div>
+          <div class="no-session-title">Pas de session en cours</div>
+          <div class="no-session-sub">Démarre une session pour tracker tes trades en live et accéder au calendrier économique.</div>
+          <button class="session-start-btn" data-testid="start-session-live" (click)="startSession.emit()">
+            Démarrer la session →
+          </button>
+        </div>
+      } @else {
+
       <!-- Barre session active -->
       <div class="session-active-bar">
         <div class="pulse-dot"></div>
@@ -401,6 +413,7 @@ const EMOTIONS = [
 
       </div>
 
+      } <!-- /if session ACTIVE -->
       } <!-- /if (!showRecap) -->
 
       <!-- Modal clôture session -->
@@ -439,6 +452,7 @@ export class SessionLiveComponent {
   readonly liveStats = input<LiveStats | null>(null);
   readonly ecoCalendar = input<EcoCalendarData | null>(null);
 
+  readonly startSession = output<void>();
   readonly tradeClosed = output<{ tradeId: string; exitPrice: number }>();
   readonly sessionClosed = output<{ mood: MoodState; note?: string }>();
   readonly tradeLogged = output<CreateTradeDto>();

@@ -49,11 +49,6 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
             }
           </div>
         </div>
-        <button
-          class="session-start-btn"
-          data-testid="start-session"
-          (click)="sessionStarted.emit()"
-        >Démarrer la session →</button>
       </div>
 
       <!-- Daily row — hier + objectifs -->
