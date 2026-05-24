@@ -121,7 +121,7 @@ test.describe('Activity Calendar — Dashboard (beta)', () => {
   test('no navigation buttons on dashboard calendar', async ({ page }) => {
     await page.getByTestId('tab-dashboard').click();
     const navBtn = page.locator('mtc-activity-calendar .cal-nav-btn');
-    await expect(navBtn).not.toBeVisible();
+    await expect(navBtn).toBeHidden();
   });
 });
 
@@ -177,8 +177,7 @@ test.describe('Activity Calendar — Analytics (Premium)', () => {
     const prevMonthLabel = MOCK_PREV_MONTH_ACTIVITY.data.month;
     const cal = page.locator('mtc-activity-calendar');
     await expect(cal.locator('.cal-title')).toContainText(String(prevMonthLabel > 0 ? '' : ''));
-    const prevApiCalled = await page.locator('mtc-activity-calendar').isVisible();
-    expect(prevApiCalled).toBe(true);
+    await expect(page.locator('mtc-activity-calendar')).toBeVisible();
   });
 
   test('renders legend', async ({ page }) => {
@@ -205,6 +204,6 @@ test.describe('Activity Calendar — FREE user (no analytics nav)', () => {
 
   test('activity calendar is NOT shown for free users on analytics page', async ({ page }) => {
     const calendarInPremiumBlock = page.locator('.mb-16 mtc-activity-calendar');
-    await expect(calendarInPremiumBlock).not.toBeVisible();
+    await expect(calendarInPremiumBlock).toBeHidden();
   });
 });
