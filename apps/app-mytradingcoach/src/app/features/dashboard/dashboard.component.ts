@@ -94,12 +94,93 @@ import { SessionLiveComponent } from './components/session-live/session-live.com
           </div>
         </div>
 
+        <!-- Stat cards communes à toutes les vues bêta -->
+        @if (!isLoading()) {
+          <div class="stats-row has-capital">
+            <div class="stat-card">
+              <div class="stat-label">Capital</div>
+              <div class="stat-value mono" [style.color]="capitalColor()">{{ capitalDisplay() }}</div>
+              <div class="stat-sub">
+                @if (capitalPct() !== 0) {
+                  <span class="change" [class]="capitalPct() > 0 ? 'up' : 'down'">
+                    {{ capitalPct() > 0 ? '▲' : '▼' }} {{ capitalPct() | number: '1.1-1' }}%
+                  </span>
+                } @else {
+                  <span style="color:var(--text-3)">base</span>
+                }
+              </div>
+              <div class="stat-bg-icon">💼</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">P&amp;L Total</div>
+              <div class="stat-value" [style.color]="pnlColor()">{{ summary()?.totalPnl ?? 0 | pnlFormat }}</div>
+              <div class="stat-sub">
+                @if ((summary()?.totalTrades ?? 0) > 0) {
+                  <span class="change" [class]="(summary()?.totalPnl ?? 0) >= 0 ? 'up' : 'down'">
+                    {{ (summary()?.totalPnl ?? 0) >= 0 ? '▲' : '▼' }} ce mois
+                  </span>
+                } @else {
+                  <span style="color:var(--text-3)">Aucune donnée</span>
+                }
+              </div>
+              <div class="stat-bg-icon">💰</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Win Rate</div>
+              <div class="stat-value" [style.color]="winRateColor()">{{ (summary()?.winRate ?? 0).toFixed(1) }}%</div>
+              <div class="stat-sub">
+                @if ((summary()?.totalTrades ?? 0) > 0) {
+                  <span>vs mois précédent</span>
+                } @else {
+                  <span style="color:var(--text-3)">Aucune donnée</span>
+                }
+              </div>
+              <div class="stat-bg-icon">🎯</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Drawdown Max</div>
+              <div class="stat-value" [style.color]="drawdownColor()">{{ drawdownDisplay() | pnlFormat }}</div>
+              <div class="stat-sub">
+                @if ((summary()?.totalTrades ?? 0) > 0) {
+                  <span>sur capital</span>
+                } @else {
+                  <span style="color:var(--text-3)">Aucune donnée</span>
+                }
+              </div>
+              <div class="stat-bg-icon">📉</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Trades</div>
+              <div class="stat-value">{{ summary()?.totalTrades ?? tradesStore.trades().length }}</div>
+              <div class="stat-sub">
+                @if ((summary()?.totalTrades ?? 0) === 0) {
+                  <span style="color:var(--text-3)">Aucune donnée</span>
+                } @else if ((summary()?.streak ?? 0) > 0) {
+                  <span class="change up">▲ +{{ summary()?.streak }} streak</span>
+                } @else if ((summary()?.streak ?? 0) < 0) {
+                  <span class="change down">▼ {{ summary()?.streak }} streak</span>
+                } @else {
+                  <span class="change">— pas de streak</span>
+                }
+              </div>
+              <div class="stat-bg-icon">🔢</div>
+            </div>
+          </div>
+        } @else {
+          <div class="stats-row">
+            @for (_ of [0, 1, 2, 3]; track $index) {
+              <div class="stat-card stat-skeleton"></div>
+            }
+          </div>
+        }
+
         @if (activeTab() === 'morning') {
           <mtc-session-morning
             [yesterdayRecap]="yesterdayRecap()"
             [objectives]="currentObjectives()"
             [ecoCalendar]="ecoCalendar()"
             [selectedMood]="selectedMood()"
+            [isNextDay]="ecoCalendarIsNextDay()"
             (moodSelected)="selectMood($event)"
             (sessionStarted)="startSession()"
           />
@@ -807,12 +888,7 @@ export class DashboardComponent implements AfterViewInit {
         next: (res) => this.yesterdayRecap.set(res.data ?? null),
       });
 
-    this.ecoCalendarApi
-      .getTodayEvents()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => this.ecoCalendar.set(res.data ?? null),
-      });
+    this.loadEcoCalendar();
 
     this.debriefApi
       .getCurrent()
@@ -820,6 +896,42 @@ export class DashboardComponent implements AfterViewInit {
       .subscribe({
         next: (res) => this.currentObjectives.set(res.data?.objectives ?? []),
       });
+  }
+
+  readonly ecoCalendarIsNextDay = computed(() => {
+    const now = new Date();
+    const parisHour = parseInt(
+      now.toLocaleString('fr-FR', {
+        timeZone: 'Europe/Paris',
+        hour: '2-digit',
+        hour12: false,
+      }),
+      10,
+    );
+    const isWeekend = now.getDay() === 0 || now.getDay() === 6;
+    return this.activeTab() !== 'live' && (parisHour >= 18 || isWeekend);
+  });
+
+  private loadEcoCalendar(): void {
+    const now = new Date();
+    const parisHour = parseInt(
+      now.toLocaleString('fr-FR', {
+        timeZone: 'Europe/Paris',
+        hour: '2-digit',
+        hour12: false,
+      }),
+      10,
+    );
+    const isWeekend = now.getDay() === 0 || now.getDay() === 6;
+    const isSessionLive = this.activeTab() === 'live';
+    const useNextDay = !isSessionLive && (parisHour >= 18 || isWeekend);
+
+    const obs = useNextDay
+      ? this.ecoCalendarApi.getNextTradingDayEvents()
+      : this.ecoCalendarApi.getTodayEvents();
+
+    obs.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: (res) => this.ecoCalendar.set(res.data ?? null) });
   }
 
   private refreshLiveStats(): void {

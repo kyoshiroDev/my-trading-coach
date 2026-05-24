@@ -6,7 +6,7 @@
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
   padding: 0 28px;
-  height: 77px;
+  height: 60px;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -45,12 +45,12 @@
 .btn-primary {
   background: var(--blue);
   color: white;
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 14px rgba(59, 130, 246, 0.2);
 }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--blue-bright);
-  box-shadow: 0 0 28px rgba(59, 130, 246, 0.45);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
   transform: translateY(-1px);
 }
 

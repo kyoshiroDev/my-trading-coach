@@ -3,6 +3,7 @@ import {
   Component,
   DestroyRef,
   computed,
+  effect,
   inject,
   input,
   output,
@@ -94,8 +95,13 @@ const EMOTIONS = [
           </div>
 
           @if (todayTrades().length === 0) {
-            <div style="font-size:12px;color:var(--text-3);padding:12px 0;text-align:center;">
-              Aucun trade aujourd'hui
+            <div class="empty-feed">
+              <div class="empty-feed-icon">📋</div>
+              <div class="empty-feed-title">Aucun trade loggué</div>
+              <div class="empty-feed-sub">
+                Utilise le formulaire →<br>
+                Asset + direction + émotion suffisent
+              </div>
             </div>
           } @else {
             <div class="feed-header">
@@ -425,17 +431,18 @@ export class SessionLiveComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   // Timer
-  private readonly tick = signal(0);
+  private readonly now = signal(new Date());
+  private readonly startTime = signal<Date | null>(null);
+
   protected readonly elapsed = computed(() => {
-    this.tick();
-    const s = this.session();
-    if (!s?.startedAt) return '00:00:00';
-    const ms = Date.now() - new Date(s.startedAt).getTime();
-    const totalSec = Math.floor(ms / 1000);
-    const h = Math.floor(totalSec / 3600).toString().padStart(2, '0');
-    const m = Math.floor((totalSec % 3600) / 60).toString().padStart(2, '0');
-    const sec = (totalSec % 60).toString().padStart(2, '0');
-    return `${h}:${m}:${sec}`;
+    const start = this.startTime();
+    const now = this.now();
+    if (!start) return '00:00:00';
+    const diff = Math.floor((now.getTime() - start.getTime()) / 1000);
+    const h = Math.floor(diff / 3600).toString().padStart(2, '0');
+    const m = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
+    const s = (diff % 60).toString().padStart(2, '0');
+    return `${h}:${m}:${s}`;
   });
 
   // Close trade panel
@@ -464,7 +471,14 @@ export class SessionLiveComponent {
   constructor() {
     interval(1000)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.tick.update(t => t + 1));
+      .subscribe(() => this.now.set(new Date()));
+
+    effect(() => {
+      const s = this.session();
+      if (s?.startedAt) {
+        this.startTime.set(new Date(s.startedAt));
+      }
+    });
   }
 
   protected readonly pnlDisplay = computed(() => {

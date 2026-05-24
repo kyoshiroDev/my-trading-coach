@@ -85,6 +85,13 @@
   grid-template-columns: 1fr 2fr 1fr;
   gap: 12px;
   align-items: start;
+  width: 100%;
+  min-width: 0;
+}
+
+.live-layout > * {
+  min-width: 0;
+  overflow: hidden;
 }
 
 /* ─── Live feed ─── */
@@ -267,6 +274,19 @@
 .chip.bull { background: var(--green-dim); color: var(--green); border-color: rgba(16,185,129,.2); }
 .chip.bear { background: var(--red-dim); color: var(--red); border-color: rgba(239,68,68,.2); }
 .chip.neutral { background: var(--bg-3); color: var(--text-3); border-color: var(--border); }
+
+/* ─── Empty feed ─── */
+.empty-feed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 24px 12px;
+  text-align: center;
+}
+.empty-feed-icon { font-size: 28px; opacity: .4; }
+.empty-feed-title { font-size: 12px; font-weight: 600; color: var(--text-2); }
+.empty-feed-sub { font-size: 11px; color: var(--text-3); line-height: 1.5; }
 
 /* ─── Quick trade panel ─── */
 .qt-panel {

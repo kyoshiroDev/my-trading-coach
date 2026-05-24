@@ -89,7 +89,15 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
             <div class="card-header">
               <div class="card-title">Hier</div>
             </div>
-            <div class="empty-state">Aucune session hier</div>
+            <div class="empty-state">
+              <div style="font-size:24px;margin-bottom:6px;opacity:.4;">📊</div>
+              <div style="font-size:12px;color:var(--text-2);font-weight:600;margin-bottom:4px;">
+                Pas de session hier
+              </div>
+              <div style="font-size:11px;color:var(--text-3);">
+                Démarre une session pour commencer à tracker tes trades.
+              </div>
+            </div>
           }
         </div>
 
@@ -119,20 +127,33 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
         </div>
       </div>
 
-      <!-- Eco Calendar -->
-      @if (ecoCalendar()) {
-        <div class="eco-card" data-testid="eco-calendar">
-          <div class="card-header">
-            <div class="card-title">
-              📅 Agenda du jour
-              <span class="badge-beta">BÊTA</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;">
-              <span class="ai-badge">AI</span>
-              <span style="font-size:10px;color:var(--text-3);">Filtré pour ton profil</span>
+      <!-- Eco Calendar — toujours affiché -->
+      <div class="eco-card" data-testid="eco-calendar">
+        <div class="card-header">
+          <div class="card-title">
+            📅 {{ isNextDay() ? 'Agenda de demain' : 'Agenda du jour' }}
+            <span class="badge-beta">BÊTA</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="ai-badge">AI</span>
+            <span style="font-size:10px;color:var(--text-3);">Filtré pour ton profil</span>
+          </div>
+        </div>
+
+        @if (!ecoCalendar()) {
+          <div class="empty-state" style="padding:20px 0;">
+            <div style="font-size:11px;color:var(--text-3);line-height:1.6;">
+              ✦ Données économiques en cours de chargement...<br>
+              Les événements s'afficheront automatiquement.
             </div>
           </div>
-
+        } @else if (ecoCalendar()!.events.length === 0) {
+          <div class="empty-state" style="padding:20px 0;">
+            <div style="font-size:11px;color:var(--text-3);">
+              Aucun événement majeur prévu — journée calme pour tes actifs.
+            </div>
+          </div>
+        } @else {
           @if (ecoCalendar()!.analysis.summary) {
             <div class="eco-ai-block">
               <span style="font-size:16px;flex-shrink:0;margin-top:1px;">✦</span>
@@ -150,7 +171,7 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
           @if (highImpactCount() > 0) {
             <div class="eco-warning">
               <span>⚠️</span>
-              <span>{{ highImpactCount() }} événement(s) à fort impact aujourd'hui</span>
+              <span>{{ highImpactCount() }} événement(s) à fort impact {{ isNextDay() ? "demain" : "aujourd'hui" }}</span>
             </div>
           }
 
@@ -181,8 +202,8 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
           <div class="eco-footer">
             <span>Événements grisés = hors de ta session</span>
           </div>
-        </div>
-      }
+        }
+      </div>
 
     </div>
   `,
@@ -192,6 +213,7 @@ export class SessionMorningComponent {
   readonly objectives = input<DebriefObjective[]>([]);
   readonly ecoCalendar = input<EcoCalendarData | null>(null);
   readonly selectedMood = input<MoodState>('CONFIDENT');
+  readonly isNextDay = input<boolean>(false);
 
   readonly moodSelected = output<MoodState>();
   readonly sessionStarted = output<void>();

@@ -49,6 +49,10 @@ export class EcoCalendarApi {
     return this.http.get<{ data: EcoCalendarData }>(`${this.base}/today`);
   }
 
+  getNextTradingDayEvents(): Observable<{ data: EcoCalendarData }> {
+    return this.http.get<{ data: EcoCalendarData }>(`${this.base}/next-trading-day`);
+  }
+
   analyzeResult(eventName: string): Observable<{ data: EcoResultAnalysis }> {
     return this.http.post<{ data: EcoResultAnalysis }>(
       `${this.base}/analyze-result`,

@@ -14,6 +14,11 @@ export class EcoCalendarController {
     return this.service.getTodayEvents(user.id);
   }
 
+  @Get('next-trading-day')
+  getNextTradingDayEvents(@CurrentUser() user: { id: string }) {
+    return this.service.getTomorrowEvents(user.id);
+  }
+
   @Post('analyze-result')
   analyzeResult(
     @CurrentUser() user: { id: string },

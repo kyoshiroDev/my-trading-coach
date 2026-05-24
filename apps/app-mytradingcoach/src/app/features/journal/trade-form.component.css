@@ -581,7 +581,7 @@ input[type='date'] {
 .chip {
   background: var(--bg-2);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 6px 11px;
   font-family: var(--font-mono);
   font-size: 11px;

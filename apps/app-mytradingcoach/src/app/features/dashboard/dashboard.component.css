@@ -105,9 +105,9 @@
 .stat-value {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
-  letter-spacing: -1px;
+  letter-spacing: -0.8px;
   line-height: 1;
   margin-bottom: 8px;
   color: var(--text);
@@ -475,8 +475,8 @@ canvas {
 .premium-banner {
   background: linear-gradient(
     135deg,
-    rgba(59, 130, 246, 0.08),
-    rgba(139, 92, 246, 0.08)
+    var(--blue-glow),
+    var(--purple-dim)
   );
   border: 1px solid rgba(139, 92, 246, 0.2);
   border-radius: 10px;
@@ -773,8 +773,8 @@ canvas {
   text-transform: uppercase;
   padding: 2px 7px;
   border-radius: 4px;
-  background: rgba(139, 92, 246, .1);
-  color: #a78bfa;
+  background: var(--purple-dim);
+  color: var(--purple-bright);
   border: 1px solid rgba(139, 92, 246, .22);
   vertical-align: middle;
   flex-shrink: 0;
@@ -789,8 +789,8 @@ canvas {
   font-weight: 700;
   padding: 3px 9px;
   border-radius: 20px;
-  background: rgba(139, 92, 246, .08);
-  color: #a78bfa;
+  background: var(--purple-dim);
+  color: var(--purple-bright);
   border: 1px solid rgba(139, 92, 246, .18);
 }
 

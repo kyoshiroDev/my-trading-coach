@@ -105,6 +105,7 @@
   gap: 8px;
   padding: 8px 0;
   border-bottom: 1px solid rgba(99,155,255,.05);
+  overflow: hidden;
 }
 .obj-item:last-of-type { border-bottom: none; }
 .obj-check {
@@ -121,7 +122,7 @@
   cursor: default;
 }
 .obj-check.done { background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.3); color: var(--green); }
-.obj-text { flex: 1; font-size: 12px; color: var(--text-2); line-height: 1.4; }
+.obj-text { flex: 1; font-size: 12px; color: var(--text-2); line-height: 1.4; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .obj-text.striked { text-decoration: line-through; color: var(--text-3); }
 .obj-bdg {
   font-size: 9px;
@@ -174,7 +175,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(245,158,11,.06);
+  background: var(--yellow-dim);
   border: 1px solid rgba(245,158,11,.15);
   border-radius: 7px;
   padding: 8px 12px;
@@ -232,7 +233,7 @@
   flex-shrink: 0;
 }
 .eco-tag.high { background: rgba(239,68,68,.12); color: var(--red); }
-.eco-tag.medium { background: rgba(245,158,11,.12); color: var(--yellow); }
+.eco-tag.medium { background: var(--yellow-dim); color: var(--yellow); }
 
 .eco-footer {
   display: flex;

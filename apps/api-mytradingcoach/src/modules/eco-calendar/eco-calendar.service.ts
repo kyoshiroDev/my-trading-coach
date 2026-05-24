@@ -139,6 +139,62 @@ export class EcoCalendarService implements OnModuleDestroy {
     }
   }
 
+  async getTomorrowEvents(userId: string): Promise<EcoCalendarData> {
+    const nextDay = this.getNextTradingDay();
+    const dateStr = nextDay.toISOString().slice(0, 10);
+    const cacheKey = `eco:calendar:${dateStr}:${userId}`;
+
+    const cached = await this.redis.get(cacheKey);
+    if (cached) return JSON.parse(cached) as EcoCalendarData;
+
+    const [events, userAssets] = await Promise.all([
+      this.fetchEconomicEvents(dateStr),
+      this.getUserTopAssets(userId),
+    ]);
+
+    let analysis: EcoAnalysis = {
+      summary: 'Données IA indisponibles.',
+      recommendation: '',
+      assetImpacts: [],
+    };
+
+    try {
+      analysis = await this.ai.analyzeEcoEvents({ userId, events, userAssets });
+    } catch (err) {
+      this.logger.warn(`Eco AI analysis skipped: ${(err as Error).message}`);
+    }
+
+    const result: EcoCalendarData = { events, analysis, userAssets };
+    await this.redis.setex(cacheKey, 3600, JSON.stringify(result));
+    return result;
+  }
+
+  getNextTradingDay(from: Date = new Date()): Date {
+    const d = new Date(from);
+    d.setDate(d.getDate() + 1);
+    while (d.getDay() === 0 || d.getDay() === 6) {
+      d.setDate(d.getDate() + 1);
+    }
+    return d;
+  }
+
+  isAfterSessionClose(date: Date = new Date()): boolean {
+    const parisHour = parseInt(
+      date.toLocaleString('fr-FR', {
+        timeZone: 'Europe/Paris',
+        hour: '2-digit',
+        hour12: false,
+      }),
+      10,
+    );
+    return parisHour >= 18;
+  }
+
+  isWeekend(date: Date = new Date()): boolean {
+    const day = date.getDay();
+    return day === 0 || day === 6;
+  }
+
   async getUserTopAssets(userId: string): Promise<string[]> {
     const trades = await this.prisma.trade.findMany({
       where: { userId },

@@ -19,7 +19,7 @@
 
 .filter-chip {
   padding: 5px 12px;
-  border-radius: 100px;
+  border-radius: 8px;
   font-size: 11px;
   font-family: var(--font-mono);
   cursor: pointer;
@@ -61,7 +61,7 @@
   gap: 4px;
 }
 .date-preset:hover  { color: var(--text); background: var(--bg-3); }
-.date-preset.active { background: var(--blue); color: white; }
+.date-preset.active { background: var(--blue-glow); color: var(--blue-bright); border-color: var(--blue); }
 
 .date-range {
   display: flex;
