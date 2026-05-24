@@ -249,7 +249,8 @@ import { SessionLiveComponent } from './components/session-live/session-live.com
               </div>
             </div>
           }
-          <div class="four-col-row">
+          <!-- LIGNE 1 : Equity Curve + Calendrier côte à côte -->
+          <div class="top-charts-row">
             <div class="card equity-card">
               <div class="card-header">
                 <div class="card-title">Equity Curve</div>
@@ -264,6 +265,19 @@ import { SessionLiveComponent } from './components/session-live/session-live.com
                 }
               </div>
             </div>
+            <div class="card calendar-dashboard-card">
+              <mtc-activity-calendar
+                [data]="monthlyActivity()"
+                [loading]="monthlyActivityLoading()"
+                [showNavigation]="false"
+                [year]="calYear()"
+                [month]="calMonth()"
+              />
+            </div>
+          </div>
+
+          <!-- LIGNE 2 : Trades + Win Rate + Émotions -->
+          <div class="bottom-widgets-row">
             <div class="card recent-trades-card">
               <div class="card-header">
                 <div class="card-title">Derniers trades</div>
@@ -343,13 +357,6 @@ import { SessionLiveComponent } from './components/session-live/session-live.com
               }
             </div>
           </div>
-          <mtc-activity-calendar
-            [data]="monthlyActivity()"
-            [loading]="monthlyActivityLoading()"
-            [showNavigation]="false"
-            [year]="calYear()"
-            [month]="calMonth()"
-          />
         }
       }
 
@@ -523,10 +530,9 @@ import { SessionLiveComponent } from './components/session-live/session-live.com
         </div>
       }
 
-      <!-- Equity · Trades · Winrate · Emotions — même ligne -->
-      <div class="four-col-row">
-        <!-- Equity Curve -->
-        <div class="card equity-card">
+      <!-- LIGNE 1 : Equity Curve pleine largeur -->
+      <div class="top-charts-row">
+        <div class="card equity-card equity-card-full">
           <div class="card-header">
             <div class="card-title">Equity Curve</div>
             <a routerLink="/analytics" class="card-action">Détails →</a>
@@ -547,7 +553,10 @@ import { SessionLiveComponent } from './components/session-live/session-live.com
             }
           </div>
         </div>
+      </div>
 
+      <!-- LIGNE 2 : Trades + Win Rate + Émotions -->
+      <div class="bottom-widgets-row">
         <!-- Derniers trades -->
         <div class="card recent-trades-card">
           <div class="card-header">

@@ -174,9 +174,35 @@
 }
 
 /* ─── Four-col row (equity · trades · winrate · emotions) ─── */
-.four-col-row {
+/* Ligne 1 : Equity + Calendrier (ou Equity seul pour V1) */
+.top-charts-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
+  grid-template-columns: 2fr 2fr;
+  gap: 16px;
+  margin-bottom: 16px;
+  align-items: stretch;
+}
+
+/* Equity seul (V1) : prend toute la largeur */
+.top-charts-row:has(> :only-child) {
+  grid-template-columns: 1fr;
+}
+
+.top-charts-row .card,
+.top-charts-row .equity-card {
+  height: 100%;
+}
+
+.calendar-dashboard-card {
+  padding: 0;
+  overflow: hidden;
+  min-height: 280px;
+}
+
+/* Ligne 2 : Trades + Win Rate + Émotions */
+.bottom-widgets-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 16px;
   margin-bottom: 16px;
   align-items: stretch;
@@ -562,6 +588,15 @@ canvas {
   transform: translateY(-1px);
 }
 
+@media (max-width: 1024px) {
+  .top-charts-row {
+    grid-template-columns: 1fr;
+  }
+  .bottom-widgets-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (max-width: 768px) {
   .content {
     padding: 14px 14px calc(env(safe-area-inset-bottom) + 14px);
@@ -617,7 +652,8 @@ canvas {
     padding: 2px 5px;
   }
 
-  .four-col-row {
+  .top-charts-row,
+  .bottom-widgets-row {
     grid-template-columns: 1fr;
     gap: 12px;
   }

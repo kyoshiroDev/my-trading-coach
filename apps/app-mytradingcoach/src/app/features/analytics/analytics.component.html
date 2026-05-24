@@ -163,20 +163,19 @@
       </div>
     </div>
 
-    <!-- Calendrier d'activité mensuelle -->
-    <div class="mb-16">
-      <mtc-activity-calendar
-        [data]="calData()"
-        [loading]="calLoading()"
-        [showNavigation]="true"
-        [year]="calYear()"
-        [month]="calMonth()"
-        (monthChange)="onMonthChange($event)"
-      />
-    </div>
+    <!-- Calendrier + Top Actifs côte à côte -->
+    <div class="grid-2 mb-16">
+      <div>
+        <mtc-activity-calendar
+          [data]="calData()"
+          [loading]="calLoading()"
+          [showNavigation]="true"
+          [year]="calYear()"
+          [month]="calMonth()"
+          (monthChange)="onMonthChange($event)"
+        />
+      </div>
 
-    <!-- Top Actifs + Performance par Setup côte à côte -->
-    <div class="grid-2">
       <div class="card">
         <div class="card-header">
           <div class="card-title">Top actifs</div>
@@ -213,45 +212,46 @@
           </tbody>
         </table>
       </div>
+    </div>
 
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Performance par setup</div>
-        </div>
-        <table class="perf-table">
-          <thead>
-            <tr>
-              <th>SETUP</th>
-              <th>TRADES</th>
-              <th>WIN RATE</th>
-              <th>RR MOY.</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (setup of setupData(); track setup.setup) {
-              <tr>
-                <td class="td-asset">{{ setup.setup }}</td>
-                <td class="mono">{{ setup.count }}</td>
-                <td class="mono" [style.color]="rateColor(setup.winRate)">
-                  {{ setup.winRate.toFixed(0) }}%
-                </td>
-                <td
-                  class="mono"
-                  [class.text-green]="setup.avgRR >= 1"
-                  [class.text-red]="setup.avgRR < 1"
-                >
-                  {{ setup.avgRR.toFixed(2) }}
-                </td>
-              </tr>
-            }
-            @if (setupData().length === 0) {
-              <tr>
-                <td colspan="4" class="empty-td">Aucune donnée</td>
-              </tr>
-            }
-          </tbody>
-        </table>
+    <!-- Performance par Setup — pleine largeur -->
+    <div class="card mb-16">
+      <div class="card-header">
+        <div class="card-title">Performance par setup</div>
       </div>
+      <table class="perf-table">
+        <thead>
+          <tr>
+            <th>SETUP</th>
+            <th>TRADES</th>
+            <th>WIN RATE</th>
+            <th>RR MOY.</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (setup of setupData(); track setup.setup) {
+            <tr>
+              <td class="td-asset">{{ setup.setup }}</td>
+              <td class="mono">{{ setup.count }}</td>
+              <td class="mono" [style.color]="rateColor(setup.winRate)">
+                {{ setup.winRate.toFixed(0) }}%
+              </td>
+              <td
+                class="mono"
+                [class.text-green]="setup.avgRR >= 1"
+                [class.text-red]="setup.avgRR < 1"
+              >
+                {{ setup.avgRR.toFixed(2) }}
+              </td>
+            </tr>
+          }
+          @if (setupData().length === 0) {
+            <tr>
+              <td colspan="4" class="empty-td">Aucune donnée</td>
+            </tr>
+          }
+        </tbody>
+      </table>
     </div>
   }
 

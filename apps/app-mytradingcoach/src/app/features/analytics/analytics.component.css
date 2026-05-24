@@ -86,6 +86,12 @@
   grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
+
+.grid-2 > div,
+.grid-2 > .card {
+  align-self: start;
+}
+
 .mb-16 {
   margin-bottom: 16px;
 }
@@ -219,7 +225,7 @@
 
 .heatmap-cell {
   border-radius: 4px;
-  padding: 5px 2px;
+  padding: 3px 2px;
   text-align: center;
   font-size: 10px;
   font-family: var(--font-mono);
