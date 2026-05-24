@@ -15,15 +15,18 @@ import { TopbarComponent } from '../../shared/components/topbar/topbar.component
 import { PnlFormatPipe, SessionLabelPipe } from '../../shared/pipes';
 import { UserStore } from '../../core/stores/user.store';
 import {
+  AnalyticsApi,
   AnalyticsSummary,
   EquityCurveResponse,
   EquityPoint,
   HeatmapCell,
+  MonthlyActivitySummary,
   SetupStat,
   TopAsset,
 } from '../../core/api/analytics.api';
 import { BillingApi } from '../../core/api/billing.api';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
+import { ActivityCalendarComponent } from '../../shared/components/activity-calendar/activity-calendar.component';
 import { environment } from '../../../environments/environment';
 
 const MOCK_HEATMAP_CELLS = [
@@ -42,6 +45,7 @@ const MOCK_SETUP_BARS = [88, 72, 65, 54, 38] as const;
     PnlFormatPipe,
     SessionLabelPipe,
     PlanModalComponent,
+    ActivityCalendarComponent,
   ],
   templateUrl: './analytics.component.html',
   styleUrl: './analytics.component.css',
@@ -54,9 +58,15 @@ export class AnalyticsComponent {
 
   protected readonly userStore = inject(UserStore);
   private readonly billingApi = inject(BillingApi);
+  private readonly analyticsApi = inject(AnalyticsApi);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly showPlanModal = signal(false);
+
+  protected readonly calYear = signal(new Date().getFullYear());
+  protected readonly calMonth = signal(new Date().getMonth() + 1);
+  protected readonly calData = signal<MonthlyActivitySummary | null>(null);
+  protected readonly calLoading = signal(false);
 
   // ── httpResource — pattern déclaratif, cancel auto, loading state natif ──
   private readonly summaryResource = httpResource<{ data: AnalyticsSummary }>(
@@ -143,6 +153,29 @@ export class AnalyticsComponent {
         this.drawDrawdownCanvas(curve);
       }
     });
+
+    if (this.userStore.isPremium()) {
+      this.loadCalendar(this.calYear(), this.calMonth());
+    }
+  }
+
+  protected onMonthChange(e: { year: number; month: number }): void {
+    this.calYear.set(e.year);
+    this.calMonth.set(e.month);
+    this.loadCalendar(e.year, e.month);
+  }
+
+  private loadCalendar(year: number, month: number): void {
+    this.calLoading.set(true);
+    this.analyticsApi.getMonthActivity(year, month)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.calData.set(res.data);
+          this.calLoading.set(false);
+        },
+        error: () => this.calLoading.set(false),
+      });
   }
 
   protected getHeatmapCell(day: string, hour: number): HeatmapCell | null {

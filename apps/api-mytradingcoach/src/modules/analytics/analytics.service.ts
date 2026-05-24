@@ -216,6 +216,51 @@ export class AnalyticsService {
     return { points, startingCapital };
   }
 
+  async getMonthlyActivity(userId: string, year: number, month: number) {
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 1);
+
+    const trades = await this.prisma.trade.findMany({
+      where: { userId, pnl: { not: null }, tradedAt: { gte: start, lt: end } },
+      select: { tradedAt: true, pnl: true },
+      orderBy: { tradedAt: 'asc' },
+    });
+
+    const byDate = new Map<string, { pnl: number; count: number; wins: number }>();
+    for (const t of trades) {
+      const d = new Date(t.tradedAt);
+      const key = d.toLocaleDateString('fr-FR', {
+        timeZone: 'Europe/Paris',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+      const [day, mon, yr] = key.split('/');
+      const dateKey = `${yr}-${mon}-${day}`;
+      const g = byDate.get(dateKey) ?? { pnl: 0, count: 0, wins: 0 };
+      g.count++;
+      g.pnl += t.pnl ?? 0;
+      if ((t.pnl ?? 0) > 0) g.wins++;
+      byDate.set(dateKey, g);
+    }
+
+    const days = Array.from(byDate.entries()).map(([date, g]) => ({
+      date,
+      pnl: g.pnl,
+      tradesCount: g.count,
+      winRate: g.count > 0 ? (g.wins / g.count) * 100 : 0,
+    }));
+
+    return {
+      year,
+      month,
+      days,
+      totalPnl: days.reduce((acc, d) => acc + d.pnl, 0),
+      totalTrades: days.reduce((acc, d) => acc + d.tradesCount, 0),
+      tradingDays: days.length,
+    };
+  }
+
   async getTopAssets(userId: string) {
     const trades = await this.prisma.trade.findMany({
       where: { userId, pnl: { not: null } },

@@ -163,6 +163,18 @@
       </div>
     </div>
 
+    <!-- Calendrier d'activité mensuelle -->
+    <div class="mb-16">
+      <mtc-activity-calendar
+        [data]="calData()"
+        [loading]="calLoading()"
+        [showNavigation]="true"
+        [year]="calYear()"
+        [month]="calMonth()"
+        (monthChange)="onMonthChange($event)"
+      />
+    </div>
+
     <!-- Top Actifs + Performance par Setup côte à côte -->
     <div class="grid-2">
       <div class="card">

@@ -23,11 +23,14 @@ import { TradeFormComponent } from '../journal/trade-form.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { CreateTradeDto, TradesApi } from '../../core/api/trades.api';
 import {
+  AnalyticsApi,
   AnalyticsSummary,
   EquityPoint,
+  MonthlyActivitySummary,
   SetupStat,
   EmotionStat,
 } from '../../core/api/analytics.api';
+import { ActivityCalendarComponent } from '../../shared/components/activity-calendar/activity-calendar.component';
 import {
   EmotionColorPipe,
   EmotionEmojiPipe,
@@ -66,6 +69,7 @@ import { SessionLiveComponent } from './components/session-live/session-live.com
     SetupColorsMapPipe,
     SessionMorningComponent,
     SessionLiveComponent,
+    ActivityCalendarComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './dashboard.component.css',
@@ -338,6 +342,13 @@ import { SessionLiveComponent } from './components/session-live/session-live.com
               }
             </div>
           </div>
+          <mtc-activity-calendar
+            [data]="monthlyActivity()"
+            [loading]="monthlyActivityLoading()"
+            [showNavigation]="false"
+            [year]="calYear()"
+            [month]="calMonth()"
+          />
         }
       }
 
@@ -702,6 +713,7 @@ export class DashboardComponent implements AfterViewInit {
   protected readonly tradesStore = inject(TradesStore);
   private readonly billingApi = inject(BillingApi);
   private readonly tradesApi = inject(TradesApi);
+  private readonly analyticsApi = inject(AnalyticsApi);
   private readonly sessionApi = inject(SessionApi);
   private readonly ecoCalendarApi = inject(EcoCalendarApi);
   private readonly dailyRecapApi = inject(DailyRecapApi);
@@ -723,6 +735,10 @@ export class DashboardComponent implements AfterViewInit {
   protected readonly ecoCalendar = signal<EcoCalendarData | null>(null);
   protected readonly currentObjectives = signal<DebriefObjective[]>([]);
   protected readonly currentDebriefId = signal<string | null>(null);
+  protected readonly monthlyActivity = signal<MonthlyActivitySummary | null>(null);
+  protected readonly monthlyActivityLoading = signal(false);
+  protected readonly calYear = signal(new Date().getFullYear());
+  protected readonly calMonth = signal(new Date().getMonth() + 1);
 
   private readonly summaryResource = httpResource<{ data: AnalyticsSummary }>(
     () => `${environment.apiUrl}/analytics/summary`,
@@ -859,6 +875,7 @@ export class DashboardComponent implements AfterViewInit {
     // ── V2 : charge les données bêta au démarrage ─────────────────────────
     if (this.userStore.isBeta()) {
       this.loadV2Data();
+      this.loadMonthlyActivity();
     }
 
     // Auto-switch vers l'onglet live si une session est active
@@ -1015,6 +1032,19 @@ export class DashboardComponent implements AfterViewInit {
       .create(dto)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({ next: () => this.refreshLiveStats() });
+  }
+
+  protected loadMonthlyActivity(): void {
+    this.monthlyActivityLoading.set(true);
+    this.analyticsApi.getCurrentMonthActivity()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.monthlyActivity.set(res.data);
+          this.monthlyActivityLoading.set(false);
+        },
+        error: () => this.monthlyActivityLoading.set(false),
+      });
   }
 
   protected updateObjectiveNote(e: { index: number; note: string }): void {
