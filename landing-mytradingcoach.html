@@ -3,481 +3,413 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<!-- ═══ SEO PRIMARY ═══ -->
-<title>MyTradingCoach — Journal de Trading IA & Coach</title>
-<meta name="description" content="Journal de trading intelligent avec coach IA. Identifiez vos patterns émotionnels, recevez un debrief hebdomadaire. Gratuit pour démarrer.">
-<link rel="canonical" href="https://mytradingcoach.app">
-<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
-<meta name="author" content="MyTradingCoach">
-<meta name="keywords" content="journal de trading, journal trading crypto, journal trading forex, coach trading IA, psychologie trading, weekly debrief trading, tracker trades, améliorer trading">
-<meta name="geo.region" content="FR">
-<meta name="language" content="fr">
-
-<!-- ═══ OPEN GRAPH ═══ -->
-<meta property="og:title" content="MyTradingCoach — Journal de Trading Intelligent avec Coach IA">
-<meta property="og:description" content="Identifiez vos patterns émotionnels. Comprenez quand et pourquoi vous déraillez. Debrief IA chaque semaine, automatiquement.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://mytradingcoach.app">
-<meta property="og:image" content="https://mytradingcoach.app/og-image.jpg">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:locale" content="fr_FR">
-<meta property="og:site_name" content="MyTradingCoach">
-
-<!-- ═══ TWITTER CARD ═══ -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:site" content="@mytradingcoach">
-<meta name="twitter:title" content="MyTradingCoach — Journal de Trading Intelligent avec Coach IA">
-<meta name="twitter:description" content="Identifiez vos patterns émotionnels. Comprenez quand et pourquoi vous déraillez. Debrief IA chaque semaine.">
-<meta name="twitter:image" content="https://mytradingcoach.app/og-image.jpg">
-
-<!-- ═══ SCHEMA.ORG JSON-LD ═══ -->
-<script type="application/ld+json">
-[
-  {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "MyTradingCoach",
-    "description": "Journal de trading intelligent avec coach IA et debrief hebdomadaire automatique. Analyse comportementale et émotionnelle pour traders crypto, forex et actions.",
-    "url": "https://mytradingcoach.app",
-    "applicationCategory": "FinanceApplication",
-    "applicationSubCategory": "Trading Journal",
-    "operatingSystem": "Web",
-    "inLanguage": "fr-FR",
-    "offers": [
-      { "@type": "Offer", "name": "Gratuit", "price": "0", "priceCurrency": "EUR", "description": "Journal de trading jusqu'à 50 trades par mois" },
-      { "@type": "Offer", "name": "Premium", "price": "29", "priceCurrency": "EUR", "billingPeriod": "P1M", "description": "IA Insights, Analytics avancés, Weekly Debrief automatique" }
-    ],
-    "featureList": [
-      "Journal de trading intelligent",
-      "Tracking émotionnel par trade",
-      "Analyse IA des performances",
-      "Weekly Debrief automatique",
-      "Coach IA personnel",
-      "Analytics avancés",
-      "Score trader"
-    ]
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "MyTradingCoach",
-    "url": "https://mytradingcoach.app",
-    "inLanguage": "fr-FR",
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": "https://mytradingcoach.app/blog?q={search_term_string}",
-      "query-input": "required name=search_term_string"
-    }
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "MyTradingCoach",
-    "url": "https://mytradingcoach.app",
-    "logo": "https://mytradingcoach.app/logo.svg",
-    "description": "Journal de trading intelligent avec coach IA",
-    "foundingLocation": "France",
-    "sameAs": ["https://twitter.com/mytradingcoach"]
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "C'est quoi exactement MyTradingCoach ?",
-        "acceptedAnswer": { "@type": "Answer", "text": "MyTradingCoach est un journal de trading intelligent. Tu enregistres tes trades et ton état émotionnel, et l'IA analyse tout ça pour identifier tes patterns comportementaux. Chaque dimanche, tu reçois un debrief complet avec 3 objectifs pour la semaine suivante." }
-      },
-      {
-        "@type": "Question",
-        "name": "Quels marchés sont supportés ?",
-        "acceptedAnswer": { "@type": "Answer", "text": "MyTradingCoach fonctionne pour tous les marchés : crypto (BTC, ETH, SOL), forex (EUR/USD, GBP/USD), actions (AAPL, TSLA) et indices. La saisie est manuelle, pas de connexion broker requise." }
-      },
-      {
-        "@type": "Question",
-        "name": "Combien coûte MyTradingCoach ?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Plan gratuit (50 trades/mois) et plan Premium à 39€/mois ou 349€/an. Essai Premium gratuit 7 jours, sans CB requise." }
-      },
-      {
-        "@type": "Question",
-        "name": "L'IA est-elle vraiment personnalisée ?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Oui. L'IA analyse uniquement tes données, pas des moyennes génériques. Plus tu l'utilises, plus les insights sont précis." }
-      },
-      {
-        "@type": "Question",
-        "name": "Mes données sont-elles sécurisées ?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Tes données sont hébergées sur des serveurs OVH en France, chiffrées au repos et en transit. Nous ne vendons ni ne partageons jamais tes données de trading." }
-      }
-    ]
-  }
-]
-</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<title>MyTradingCoach — Le journal de trading IA qui supervise avant, pendant et après ta session</title>
+<meta name="description" content="Journal de trading intelligent avec superviseur IA — il te prépare avant ta session, t'accompagne en temps réel et débrieffe ta journée. Crypto, Futures, Forex. Gratuit sans CB.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:    #06090f;
-  --bg2:   #080c14;
-  --bg3:   #0d1420;
-  --card:  #0f1824;
-  --card2: #111b2e;
-  --b:     rgba(99,155,255,0.1);
-  --b2:    rgba(99,155,255,0.22);
-  --blue:  #3b82f6;
-  --blue2: #60a5fa;
-  --pulse: #22d3ee;
-  --green: #10b981;
-  --red:   #ef4444;
-  --yel:   #f59e0b;
-  --txt:   #e2eaf5;
-  --txt2:  #9db4ce;
-  --txt3:  #7090b0;
-  --disp:  'Inter', sans-serif;
-  --mono:  'DM Mono', monospace;
-  --body:  'DM Sans', sans-serif;
+:root{
+  --bg:#06090f;--bg2:#080c14;--bg3:#0d1420;--card:#0f1824;--card2:#111b2e;
+  --b:rgba(99,155,255,.1);--b2:rgba(99,155,255,.22);
+  --blue:#3b82f6;--blue2:#60a5fa;--pulse:#22d3ee;
+  --green:#10b981;--red:#ef4444;--yel:#f59e0b;--purple:#8b5cf6;
+  --txt:#e2eaf5;--txt2:#9db4ce;--txt3:#7090b0;
+  --disp:'Inter',sans-serif;--mono:'DM Mono',monospace;--body:'DM Sans',sans-serif;
 }
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--txt);font-family:var(--body);overflow-x:hidden;-webkit-font-smoothing:antialiased}
-::-webkit-scrollbar{width:3px}
-::-webkit-scrollbar-thumb{background:var(--blue);border-radius:2px}
-
-/* ── NOISE ── */
-body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;overflow-x:hidden;}
+body{background:var(--bg);color:var(--txt);font-family:var(--body);font-size:1rem;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased;padding-top:60px;}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4;}
+section{padding:96px 5%;position:relative;}
+a{text-decoration:none;color:inherit;}
+h2{font-family:var(--disp);font-size:clamp(30px,3.5vw,48px);font-weight:700;letter-spacing:-.5px;line-height:1.1;margin-bottom:16px;color:var(--txt);}
+h2 em{font-style:italic;font-family:'DM Sans',sans-serif;font-weight:300;color:var(--blue2);}
+.sec-label{font-size:11px;font-family:var(--mono);color:var(--pulse);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;display:block;}
+.sec-sub{font-size:17px;color:var(--txt2);font-weight:300;line-height:1.65;margin-top:12px;}
+.btn-p{background:var(--blue);color:#fff;padding:13px 26px;border-radius:9px;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:8px;box-shadow:0 0 28px rgba(59,130,246,.4);transition:all .2s;border:none;cursor:pointer;font-family:var(--disp);}
+.btn-p:hover{background:var(--blue2);transform:translateY(-2px);box-shadow:0 0 44px rgba(59,130,246,.55);}
+.btn-s{color:var(--txt2);padding:13px 22px;border-radius:9px;font-size:14px;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--b2);transition:all .2s;}
+.btn-s:hover{color:var(--txt);border-color:var(--blue);background:rgba(59,130,246,.05);}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease;}
+.reveal.vis{opacity:1;transform:none;}
+.rstag>*{opacity:0;transform:translateY(16px);transition:opacity .5s ease,transform .5s ease;}
+.rstag.vis>*{opacity:1;transform:none;}
+.rstag.vis>*:nth-child(1){transition-delay:0s;}
+.rstag.vis>*:nth-child(2){transition-delay:.08s;}
+.rstag.vis>*:nth-child(3){transition-delay:.16s;}
+.rstag.vis>*:nth-child(4){transition-delay:.24s;}
+.rstag.vis>*:nth-child(5){transition-delay:.32s;}
+.rstag.vis>*:nth-child(6){transition-delay:.4s;}
+@keyframes fup{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:none;}}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+@keyframes rpulse{0%,100%{opacity:1;transform:translate(-50%,-50%) scale(1);}50%{opacity:.5;transform:translate(-50%,-50%) scale(1.04);}}
+@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+@keyframes slideRight{from{transform:translateX(-12px);opacity:0;}to{transform:none;opacity:1;}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.8);}}
 
 /* ── NAV ── */
-nav{position:fixed;top:0;left:0;right:0;z-index:100;height:60px;padding:0 5%;display:flex;align-items:center;justify-content:space-between;background:rgba(6,9,15,0.75);backdrop-filter:blur(20px);border-bottom:1px solid var(--b)}
-.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--txt)}
-.nav-logo-icon{width:30px;height:30px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.nav-logo-text{font-family:var(--disp);font-size:15px;font-weight:700;letter-spacing:-.3px}
-.nav-logo-text span{color:var(--blue2)}
-.nav-links{display:flex;align-items:center;gap:28px;list-style:none}
-.nav-links a{font-size:13px;color:var(--txt2);text-decoration:none;transition:color .2s}
-.nav-links a:hover{color:var(--txt)}
-.nav-cta{background:var(--blue);color:#fff !important;padding:7px 16px;border-radius:7px;font-weight:500 !important;font-size:13px !important;box-shadow:0 0 20px rgba(59,130,246,.3);transition:all .2s !important}
-.nav-cta:hover{background:var(--blue2) !important;box-shadow:0 0 30px rgba(59,130,246,.5) !important;transform:translateY(-1px)}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:60px;display:flex;align-items:center;padding:0 5%;background:rgba(6,9,15,.92);border-bottom:1px solid var(--b);backdrop-filter:blur(16px);}
+.nav-logo{font-family:var(--disp);font-size:15px;font-weight:800;color:var(--txt);display:flex;align-items:center;gap:8px;letter-spacing:-.3px;}
+.nav-logo-dot{width:8px;height:8px;border-radius:50%;background:var(--pulse);animation:blink 2s infinite;}
+.nav-links{display:flex;align-items:center;gap:28px;margin:0 auto;}
+.nav-links a{font-size:13px;color:var(--txt3);transition:color .15s;font-weight:400;}
+.nav-links a:hover{color:var(--txt);}
+.nav-cta{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.nav-login{font-size:13px;color:var(--txt3);padding:6px 12px;border-radius:7px;transition:all .15s;}
+.nav-login:hover{color:var(--txt);background:var(--bg3);}
+.nav-signup{background:var(--blue);color:white;font-size:13px;font-weight:600;padding:7px 16px;border-radius:7px;transition:all .15s;font-family:var(--disp);}
+.nav-signup:hover{background:var(--blue2);transform:translateY(-1px);}
+@media(max-width:767px){.nav-links{display:none;}.nav-logo-dot{display:none;}}
 
 /* ── BANNER ── */
-.banner{background:rgba(16,185,129,.06);border-bottom:1px solid rgba(16,185,129,.12);padding:8px 5%;text-align:center;font-size:11px;color:#10b981;font-family:var(--mono);letter-spacing:.5px;position:relative;z-index:1}
+.banner{background:rgba(16,185,129,.06);border-bottom:1px solid rgba(16,185,129,.12);padding:8px 5%;text-align:center;font-size:11px;color:var(--green);font-family:var(--mono);letter-spacing:.5px;position:relative;z-index:1;}
 
 /* ── HERO ── */
-.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:120px 5% 80px;text-align:center;position:relative;overflow:hidden}
-.hero-glow{position:absolute;top:20%;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(59,130,246,.1) 0%,transparent 70%);pointer-events:none}
-.pulse-ring{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border:1px solid rgba(34,211,238,.05);border-radius:50%;pointer-events:none;animation:rpulse 4s ease-in-out infinite}
-.pulse-ring:nth-child(1){width:500px;height:500px}
-.pulse-ring:nth-child(2){width:800px;height:800px;animation-delay:1.3s;border-color:rgba(34,211,238,.03)}
-.pulse-ring:nth-child(3){width:1100px;height:1100px;animation-delay:2.6s;border-color:rgba(34,211,238,.02)}
-@keyframes rpulse{0%,100%{opacity:1;transform:translate(-50%,-50%) scale(1)}50%{opacity:.5;transform:translate(-50%,-50%) scale(1.04)}}
-.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(34,211,238,.07);border:1px solid rgba(34,211,238,.2);color:var(--pulse);font-size:11px;font-family:var(--mono);padding:5px 14px;border-radius:100px;margin-bottom:32px;letter-spacing:.4px;position:relative;z-index:1;animation:fup .6s ease both}
-.bdot{width:6px;height:6px;background:var(--pulse);border-radius:50%;animation:blink 2s ease infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.hero h1{font-family:var(--disp);font-size:clamp(40px,7vw,84px);font-weight:700;letter-spacing:-1px;line-height:.95;margin-bottom:26px;position:relative;z-index:1;animation:fup .6s .1s ease both}
-.hero h1 em{font-style:italic;font-family:'DM Sans',sans-serif;font-weight:300;color:var(--blue2);letter-spacing:-1px}
-.hero h1 .gline{display:block;background:linear-gradient(90deg,var(--blue2),var(--pulse));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.hero-sub{font-size:clamp(15px,2vw,19px);color:var(--txt2);font-weight:300;max-width:540px;line-height:1.65;margin-bottom:44px;position:relative;z-index:1;animation:fup .6s .2s ease both}
-.hero-sub strong{color:var(--txt);font-weight:500}
-.hero-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:52px;position:relative;z-index:1;animation:fup .6s .3s ease both}
-.btn-p{background:var(--blue);color:#fff;padding:13px 26px;border-radius:9px;font-size:14px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:8px;box-shadow:0 0 28px rgba(59,130,246,.4);transition:all .2s;border:none;cursor:pointer;font-family:var(--disp)}
-.btn-p:hover{background:var(--blue2);transform:translateY(-2px);box-shadow:0 0 44px rgba(59,130,246,.55)}
-.btn-s{color:var(--txt2);padding:13px 22px;border-radius:9px;font-size:14px;text-decoration:none;border:1px solid var(--b2);transition:all .2s;display:inline-flex;align-items:center;gap:8px}
-.btn-s:hover{color:var(--txt);border-color:var(--blue);background:rgba(59,130,246,.05)}
-.hero-trust{display:flex;align-items:center;gap:8px;background:rgba(34,211,238,.06);border:1px solid rgba(34,211,238,.15);padding:7px 15px;border-radius:100px;position:relative;z-index:1;animation:fup .6s .4s ease both}
-.hero-trust span{font-size:12px;color:var(--pulse);font-family:var(--mono);letter-spacing:.3px}
-@keyframes fup{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 5% 80px;text-align:center;position:relative;overflow:hidden;}
+.hero-glow{position:absolute;top:20%;left:50%;transform:translateX(-50%);width:800px;height:500px;background:radial-gradient(ellipse,rgba(59,130,246,.1) 0%,transparent 70%);pointer-events:none;}
+.pulse-ring{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border:1px solid rgba(34,211,238,.05);border-radius:50%;pointer-events:none;animation:rpulse 4s ease-in-out infinite;}
+.pulse-ring:nth-child(2){width:500px;height:500px;}
+.pulse-ring:nth-child(3){width:800px;height:800px;animation-delay:1.3s;border-color:rgba(34,211,238,.03);}
+.pulse-ring:nth-child(4){width:1100px;height:1100px;animation-delay:2.6s;border-color:rgba(34,211,238,.02);}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(34,211,238,.07);border:1px solid rgba(34,211,238,.2);color:var(--pulse);font-size:11px;font-family:var(--mono);padding:5px 14px;border-radius:100px;margin-bottom:28px;letter-spacing:.4px;position:relative;z-index:1;animation:fup .6s ease both;}
+.hero-badge .bdot{width:6px;height:6px;background:var(--pulse);border-radius:50%;animation:blink 2s ease infinite;flex-shrink:0;}
+.hero-proof{display:flex;align-items:center;gap:10px;margin-bottom:20px;position:relative;z-index:1;}
+.hero-stars{color:var(--yel);font-size:14px;letter-spacing:2px;}
+.hero-proof-text{font-size:13px;color:var(--txt2);font-family:var(--mono);}
+.hero-proof-text strong{color:var(--txt);}
+.hero h1{font-family:var(--disp);font-size:clamp(42px,7vw,88px);font-weight:800;letter-spacing:-1.5px;line-height:.92;margin-bottom:24px;position:relative;z-index:1;animation:fup .6s .1s ease both;}
+.hero h1 em{font-style:italic;font-family:'DM Sans',sans-serif;font-weight:300;color:var(--blue2);}
+.hero h1 .gline{display:block;color:var(--pulse);}
+.hero-sub{font-size:clamp(15px,2vw,19px);color:var(--txt2);font-weight:300;max-width:560px;line-height:1.7;margin-bottom:20px;position:relative;z-index:1;animation:fup .6s .2s ease both;}
+.hero-sub strong{color:var(--txt);font-weight:500;}
 
-/* ── APP SCREENSHOT HERO ── */
-.hero-screen{width:100%;max-width:1100px;margin-top:64px;position:relative;z-index:1;animation:fup .8s .5s ease both}
-.screen-wrap{background:var(--card);border:1px solid var(--b2);border-radius:16px;overflow:hidden;box-shadow:0 48px 120px rgba(0,0,0,.85),0 0 0 1px rgba(56,139,255,.08)}
-.screen-bar{background:var(--bg3);border-bottom:1px solid var(--b);padding:11px 16px;display:flex;align-items:center;gap:7px}
-.sdot{width:10px;height:10px;border-radius:50%}
-.screen-url{margin-left:12px;font-size:11px;color:var(--txt3);font-family:var(--mono)}
-.screen-body{display:grid;grid-template-columns:220px 1fr;min-height:480px}
-.screen-sidebar{background:var(--bg3);border-right:1px solid var(--b);padding:16px 12px;display:flex;flex-direction:column;gap:2px}
-.screen-logo{display:flex;align-items:center;gap:9px;padding:6px 8px 16px;margin-bottom:4px;border-bottom:1px solid var(--b)}
-.slogo-icon{width:28px;height:28px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.slogo-text{font-family:var(--disp);font-size:14px;font-weight:700;letter-spacing:-.2px}
-.slogo-text span{color:var(--blue2)}
-.snav{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:7px;font-size:12.5px;color:var(--txt3);transition:all .15s}
-.snav.active{background:rgba(59,130,246,.12);color:var(--blue2);font-weight:500;position:relative}
-.snav.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--blue);border-radius:0 3px 3px 0}
-.sbadge{margin-left:auto;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;font-size:8px;font-family:var(--mono);padding:2px 6px;border-radius:8px;letter-spacing:.3px}
-.ssec{font-size:10px;font-family:var(--mono);color:var(--txt3);letter-spacing:1.1px;text-transform:uppercase;padding:12px 10px 5px}
-.sfooter{margin-top:auto;border-top:1px solid var(--b);padding-top:14px;display:flex;align-items:center;gap:9px;padding:14px 10px 0}
-.savatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:var(--disp);flex-shrink:0}
-.sname{font-size:12px;font-weight:500}
-.splan{font-size:9px;font-family:var(--mono);color:var(--yel);letter-spacing:.4px}
-.screen-main{padding:24px 22px;overflow:hidden;background:var(--bg2)}
-.sgreeting{margin-bottom:18px}
-.sgreeting h2{font-family:var(--disp);font-size:18px;font-weight:700;letter-spacing:-.3px;margin-bottom:4px}
-.sgreeting p{font-size:12px;color:var(--txt3)}
-.sstats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
-.sstat{background:var(--card);border:1px solid var(--b);border-radius:10px;padding:14px;position:relative;overflow:hidden}
-.sstat::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--blue),transparent);opacity:0}
-.sstat-label{font-size:9px;font-family:var(--mono);color:var(--txt3);letter-spacing:.7px;text-transform:uppercase;margin-bottom:7px}
-.sstat-val{font-family:var(--disp);font-size:22px;font-weight:700;letter-spacing:-.3px;margin-bottom:5px}
-.sstat-sub{font-size:9px;color:var(--txt3);display:flex;gap:5px;align-items:center}
-.sup{color:var(--green);background:rgba(16,185,129,.1);font-family:var(--mono);font-size:8px;padding:1.5px 5px;border-radius:3px}
-.sdn{color:var(--red);background:rgba(239,68,68,.1);font-family:var(--mono);font-size:8px;padding:1.5px 5px;border-radius:3px}
-.scontent-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
-.schart{background:var(--card);border:1px solid var(--b);border-radius:10px;padding:14px;grid-column:1/-1}
-.schart-label{font-size:9px;font-family:var(--mono);color:var(--txt3);letter-spacing:.7px;text-transform:uppercase;margin-bottom:10px}
-.scard{background:var(--card);border:1px solid var(--b);border-radius:10px;padding:14px}
-.scard-t{font-family:var(--disp);font-size:12px;font-weight:600;margin-bottom:10px;letter-spacing:-.1px}
-.semobars{display:flex;flex-direction:column;gap:8px}
-.semorow{display:flex;flex-direction:column;gap:3px}
-.semolbl{display:flex;justify-content:space-between;font-size:10px;color:var(--txt2)}
-.semopc{font-family:var(--mono);font-size:9px;color:var(--txt3)}
-.sbar{height:5px;background:var(--bg3);border-radius:3px}
-.sbarfill{height:100%;border-radius:3px}
-.strades{display:flex;flex-direction:column;gap:6px}
-.strade{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--b);border-radius:8px;padding:9px 11px;font-size:11px}
-.side-l{background:rgba(16,185,129,.12);color:var(--green);font-family:var(--mono);font-size:9px;padding:2.5px 6px;border-radius:3px;flex-shrink:0}
-.side-s{background:rgba(239,68,68,.12);color:var(--red);font-family:var(--mono);font-size:9px;padding:2.5px 6px;border-radius:3px;flex-shrink:0}
-.s-asset{color:var(--blue2);font-family:var(--mono);min-width:58px;font-weight:500;font-size:11px}
-.s-setup{color:var(--txt3);flex:1;font-size:10px}
-.s-emo{font-size:12px}
-.s-pnl-p{color:var(--green);font-family:var(--mono);font-weight:500;font-size:12px}
-.s-pnl-n{color:var(--red);font-family:var(--mono);font-weight:500;font-size:12px}
+/* 3 moments inline sous le sub */
+.hero-moments{display:flex;align-items:center;gap:6px;justify-content:center;margin-bottom:40px;flex-wrap:wrap;position:relative;z-index:1;animation:fup .6s .25s ease both;}
+.hero-moment{font-size:12px;font-family:var(--mono);padding:4px 10px;border-radius:6px;display:flex;align-items:center;gap:6px;}
+.hero-moment.avant{background:rgba(16,185,129,.08);color:var(--green);border:1px solid rgba(16,185,129,.2);}
+.hero-moment.pendant{background:rgba(59,130,246,.08);color:var(--blue2);border:1px solid rgba(59,130,246,.2);}
+.hero-moment.apres{background:rgba(139,92,246,.08);color:#a78bfa;border:1px solid rgba(139,92,246,.2);}
+.hero-moment-sep{color:var(--txt3);font-size:11px;}
 
-/* ── SECTIONS COMMUNES ── */
-section{padding:96px 5%;position:relative}
-.sec-label{font-size:11px;font-family:var(--mono);color:var(--pulse);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;display:block}
-h2{font-family:var(--disp);font-size:clamp(30px,5vw,52px);font-weight:700;letter-spacing:-1px;line-height:1.05;margin-bottom:18px}
-h2 em{font-style:italic;font-family:'DM Sans',sans-serif;font-weight:300;color:var(--blue2)}
-.sec-sub{font-size:17px;color:var(--txt2);font-weight:300;max-width:500px;line-height:1.65}
-.reveal{opacity:0;transform:translateY(22px);transition:opacity .65s ease,transform .65s ease}
-.reveal.vis{opacity:1;transform:none}
-.rstag>*{opacity:0;transform:translateY(18px);transition:opacity .5s ease,transform .5s ease}
-.rstag.vis>*:nth-child(1){opacity:1;transform:none;transition-delay:0s}
-.rstag.vis>*:nth-child(2){opacity:1;transform:none;transition-delay:.1s}
-.rstag.vis>*:nth-child(3){opacity:1;transform:none;transition-delay:.2s}
-.rstag.vis>*:nth-child(4){opacity:1;transform:none;transition-delay:.3s}
+.hero-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:52px;position:relative;z-index:1;animation:fup .6s .3s ease both;}
+.hero-cta-main{font-size:16px!important;padding:16px 32px!important;box-shadow:0 0 40px rgba(59,130,246,.5)!important;}
+.hero-cta-sub{font-size:12px;color:var(--txt3);font-family:var(--mono);margin:0;text-align:center;}
 
-/* ── PROBLÈME ── */
-.prob{background:var(--bg2);border-top:1px solid var(--b);border-bottom:1px solid var(--b)}
-.prob-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:56px;max-width:1100px;margin-left:auto;margin-right:auto}
-.prob-item{background:var(--card);border:1px solid var(--b);border-radius:12px;padding:24px}
-.prob-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:16px}
-.prob-item h3{font-family:var(--disp);font-size:16px;font-weight:600;margin-bottom:10px;letter-spacing:-.2px}
-.prob-item p{font-size:13px;color:var(--txt2);line-height:1.7;font-weight:300}
+/* ── 3 MOMENTS (section centrale) ── */
+.moments-section{padding:80px 5%;background:var(--bg2);border-top:1px solid var(--b);border-bottom:1px solid var(--b);}
+.moments-header{text-align:center;max-width:640px;margin:0 auto 64px;}
+.moments-timeline{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;max-width:1100px;margin:0 auto;position:relative;}
+.moments-timeline::before{content:'';position:absolute;top:48px;left:16.7%;right:16.7%;height:1px;background:linear-gradient(90deg,rgba(16,185,129,.4),rgba(59,130,246,.4),rgba(139,92,246,.4));z-index:0;}
+.moment-card{background:var(--card);border:1px solid var(--b);border-radius:16px;padding:32px 28px;position:relative;transition:border-color .2s,transform .2s;cursor:default;}
+.moment-card:hover{border-color:var(--b2);transform:translateY(-4px);}
+.moment-card.avant{border-top:2px solid rgba(16,185,129,.5);}
+.moment-card.pendant{border-top:2px solid rgba(59,130,246,.5);}
+.moment-card.apres{border-top:2px solid rgba(139,92,246,.5);}
+.moment-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:20px;}
+.moment-card.avant .moment-icon{background:rgba(16,185,129,.1);}
+.moment-card.pendant .moment-icon{background:rgba(59,130,246,.1);}
+.moment-card.apres .moment-icon{background:rgba(139,92,246,.1);}
+.moment-time{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
+.moment-card.avant .moment-time{color:var(--green);}
+.moment-card.pendant .moment-time{color:var(--blue2);}
+.moment-card.apres .moment-time{color:#a78bfa;}
+.moment-card h3{font-family:var(--disp);font-size:20px;font-weight:700;margin-bottom:12px;letter-spacing:-.3px;}
+.moment-card p{font-size:14px;color:var(--txt2);line-height:1.7;font-weight:300;margin-bottom:18px;}
+.moment-features{display:flex;flex-direction:column;gap:8px;}
+.mf{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--txt2);}
+.mf-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:6px;}
+.moment-card.avant .mf-dot{background:var(--green);}
+.moment-card.pendant .mf-dot{background:var(--blue2);}
+.moment-card.apres .mf-dot{background:#a78bfa;}
+
+/* ── PROBLEM ── */
+.prob{background:var(--bg2);border-top:1px solid var(--b);border-bottom:1px solid var(--b);}
+.prob-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:52px;max-width:1100px;margin-left:auto;margin-right:auto;}
+.prob-item{background:var(--card);border:1px solid var(--b);border-radius:12px;padding:24px;}
+.prob-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:16px;}
+.prob-item h3{font-family:var(--disp);font-size:15px;font-weight:600;margin-bottom:10px;letter-spacing:-.2px;}
+.prob-item p{font-size:13px;color:var(--txt2);line-height:1.7;font-weight:300;}
 
 /* ── FEATURES ── */
-.feat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:52px;max-width:1100px;margin-left:auto;margin-right:auto}
-.feat-card{background:var(--card);border:1px solid var(--b);border-radius:14px;padding:28px;position:relative;transition:border-color .2s,transform .2s}
-.feat-card:hover{border-color:var(--b2);transform:translateY(-2px)}
-.feat-card.featured{border-color:rgba(59,130,246,.25)}
-.feat-num{position:absolute;top:20px;right:20px;font-family:var(--mono);font-size:11px;color:var(--txt3);letter-spacing:.5px}
-.feat-ico{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:18px}
-.feat-card h3{font-family:var(--disp);font-size:17px;font-weight:600;margin-bottom:10px;letter-spacing:-.2px}
-.feat-card p{font-size:13px;color:var(--txt2);line-height:1.7;font-weight:300;margin-bottom:16px}
-.feat-tag{display:inline-block;font-size:10px;font-family:var(--mono);padding:3px 10px;border-radius:100px;letter-spacing:.4px}
-.tag-free{background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.2)}
-.tag-prem{background:rgba(59,130,246,.1);color:var(--blue2);border:1px solid rgba(59,130,246,.2)}
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:36px;max-width:1100px;margin-left:auto;margin-right:auto;}
+.feat-card{background:var(--card);border:1px solid var(--b);border-radius:12px;padding:24px;transition:border-color .2s,transform .2s;position:relative;}
+.feat-card:hover{border-color:var(--b2);transform:translateY(-3px);}
+.feat-card.featured{border-color:rgba(34,211,238,.25);background:linear-gradient(135deg,rgba(34,211,238,.04),rgba(59,130,246,.04));}
+.feat-num{font-family:var(--mono);font-size:10px;color:var(--txt3);letter-spacing:1px;margin-bottom:12px;display:block;}
+.feat-ico{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:14px;}
+.feat-card h3{font-family:var(--disp);font-size:15px;font-weight:600;margin-bottom:8px;letter-spacing:-.2px;}
+.feat-card p{font-size:13px;color:var(--txt2);line-height:1.65;font-weight:300;}
+.feat-tag{display:inline-block;font-size:10px;font-family:var(--mono);padding:3px 8px;border-radius:5px;margin-top:14px;font-weight:500;}
+.tag-free{background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.2);}
+.tag-prem{background:rgba(59,130,246,.1);color:var(--blue2);border:1px solid rgba(59,130,246,.2);}
+.tag-new{background:rgba(245,158,11,.1);color:var(--yel);border:1px solid rgba(245,158,11,.2);}
 
-/* ── APP SHOWCASE ── */
-.showcase{background:var(--bg2);border-top:1px solid var(--b);border-bottom:1px solid var(--b)}
-.showcase-tabs{display:flex;gap:4px;margin:0 auto 40px;max-width:1100px;background:var(--card);padding:4px;border-radius:10px;border:1px solid var(--b);width:fit-content}
-.stab{padding:8px 20px;border-radius:7px;font-size:12px;font-family:var(--mono);color:var(--txt3);cursor:pointer;transition:all .2s;border:none;background:none;letter-spacing:.3px}
-.stab.active{background:var(--bg3);color:var(--blue2);border:1px solid var(--b2)}
-.showcase-panel{display:none;max-width:1100px;margin:0 auto}
-.showcase-panel.active{display:block}
-.full-screen{background:var(--card);border:1px solid var(--b2);border-radius:14px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.6)}
-.full-bar{background:var(--bg3);border-bottom:1px solid var(--b);padding:10px 14px;display:flex;align-items:center;gap:7px}
-.full-body{display:grid;grid-template-columns:220px 1fr;min-height:480px}
-.full-sidebar{background:var(--bg3);border-right:1px solid var(--b);padding:14px 10px;display:flex;flex-direction:column;gap:2px}
-.flogo{display:flex;align-items:center;gap:8px;padding:8px;margin-bottom:8px;border-bottom:1px solid var(--b);padding-bottom:14px}
-.flogo-ic{width:26px;height:26px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.flogo-txt{font-family:var(--disp);font-size:13px;font-weight:700;letter-spacing:-.2px}
-.flogo-txt span{color:var(--blue2)}
-.fnav{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;font-size:12px;color:var(--txt3);cursor:pointer;transition:all .15s}
-.fnav:hover{background:rgba(59,130,246,.08);color:var(--txt2)}
-.fnav.act{background:rgba(59,130,246,.12);color:var(--blue2);font-weight:500;position:relative}
-.fnav.act::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--blue);border-radius:0 3px 3px 0}
-.fsec{font-size:9px;font-family:var(--mono);color:var(--txt3);letter-spacing:1.1px;text-transform:uppercase;padding:12px 10px 5px}
-.fbadge{margin-left:auto;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;font-size:8px;font-family:var(--mono);padding:2px 6px;border-radius:8px}
-.fuser{display:flex;align-items:center;gap:8px;padding:10px;border-radius:8px;margin-top:auto;border-top:1px solid var(--b);padding-top:14px}
-.favatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:var(--disp);flex-shrink:0}
-.funame{font-size:12px;font-weight:500}
-.fuplan{font-size:9px;font-family:var(--mono);color:var(--yel);letter-spacing:.4px}
-.full-content{padding:24px;overflow:hidden}
-.ftopbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
-.ftopbar h3{font-family:var(--disp);font-size:16px;font-weight:700;letter-spacing:-.3px}
-.fstats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
-.fstat{background:var(--bg3);border:1px solid var(--b);border-radius:9px;padding:14px;position:relative;overflow:hidden}
-.fstat::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--blue),transparent);opacity:0;transition:opacity .2s}
-.fstat:hover::before{opacity:.4}
-.fstat-lbl{font-size:9px;font-family:var(--mono);color:var(--txt3);letter-spacing:.7px;text-transform:uppercase;margin-bottom:7px}
-.fstat-val{font-family:var(--disp);font-size:22px;font-weight:700;letter-spacing:-.3px}
-.fstat-sub{font-size:10px;color:var(--txt3);margin-top:5px;display:flex;gap:5px}
-.fup{color:var(--green);background:rgba(16,185,129,.1);font-family:var(--mono);font-size:9px;padding:1.5px 5px;border-radius:3px}
-.fdn{color:var(--red);background:rgba(239,68,68,.1);font-family:var(--mono);font-size:9px;padding:1.5px 5px;border-radius:3px}
-.fcard{background:var(--card);border:1px solid var(--b);border-radius:10px;padding:14px;margin-bottom:12px}
-.fcard-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.fcard-t{font-family:var(--disp);font-size:12px;font-weight:600;letter-spacing:-.1px}
-.fcard-a{font-size:10px;color:var(--blue2);font-family:var(--mono);cursor:pointer;opacity:.8}
-.fgrid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 
-/* analytics panel */
-.heat-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;margin-top:6px}
-.hcell{height:20px;border-radius:3px}
-.ftable{width:100%;font-size:11px}
-.ftable th{font-family:var(--mono);font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;padding-bottom:7px;text-align:left;border-bottom:1px solid var(--b)}
-.ftable td{padding:7px 0;color:var(--txt2);border-bottom:1px solid rgba(99,155,255,.04)}
-.ftable tr:last-child td{border:none}
+/* ── JOUR TYPE (timeline) ── */
+.day-section{background:var(--bg2);border-top:1px solid var(--b);border-bottom:1px solid var(--b);}
+.day-container{max-width:860px;margin:0 auto;}
+.day-timeline{position:relative;padding-left:0;}
+.day-item{display:grid;grid-template-columns:120px 1fr;gap:0;margin-bottom:0;}
+.day-line{display:flex;flex-direction:column;align-items:center;padding:0 24px 0 0;}
+.day-time{font-family:var(--mono);font-size:11px;color:var(--txt3);font-weight:500;white-space:nowrap;padding-top:4px;min-width:70px;text-align:right;}
+.day-dot-wrap{display:flex;flex-direction:column;align-items:center;padding:0 24px;}
+.day-dot{width:12px;height:12px;border-radius:50%;border:2px solid;flex-shrink:0;position:relative;z-index:1;margin-top:3px;}
+.day-dot.green{border-color:var(--green);background:rgba(16,185,129,.15);}
+.day-dot.blue{border-color:var(--blue);background:rgba(59,130,246,.15);}
+.day-dot.purple{border-color:#8b5cf6;background:rgba(139,92,246,.15);}
+.day-dot.yel{border-color:var(--yel);background:rgba(245,158,11,.15);}
+.day-connector{flex:1;width:1px;background:linear-gradient(var(--b2),var(--b));margin:4px 0;}
+.day-content{padding:0 0 36px 0;}
+.day-tag{font-size:10px;font-family:var(--mono);letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px;}
+.day-tag.avant{color:var(--green);}
+.day-tag.pendant{color:var(--blue2);}
+.day-tag.apres{color:#a78bfa;}
+.day-tag.nuit{color:var(--txt3);}
+.day-content h3{font-family:var(--disp);font-size:17px;font-weight:600;margin-bottom:6px;letter-spacing:-.2px;}
+.day-content p{font-size:14px;color:var(--txt2);line-height:1.65;font-weight:300;}
+.day-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-family:var(--mono);padding:3px 9px;border-radius:5px;margin-top:10px;}
+.day-pill.g{background:rgba(16,185,129,.08);color:var(--green);border:1px solid rgba(16,185,129,.15);}
+.day-pill.b{background:rgba(59,130,246,.08);color:var(--blue2);border:1px solid rgba(59,130,246,.15);}
+.day-pill.p{background:rgba(139,92,246,.08);color:#a78bfa;border:1px solid rgba(139,92,246,.15);}
 
-/* ai panel */
-.ai-banner{background:linear-gradient(135deg,rgba(59,130,246,.1),rgba(139,92,246,.1));border:1px solid rgba(139,92,246,.2);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:14px}
-.ai-banner-icon{font-size:22px;flex-shrink:0}
-.ai-banner-t{font-family:var(--disp);font-size:13px;font-weight:600;margin-bottom:3px}
-.ai-banner-d{font-size:11px;color:var(--txt2);line-height:1.5}
-.insight-row{display:flex;gap:10px;padding:10px 12px;background:var(--bg3);border:1px solid var(--b);border-radius:8px;margin-bottom:7px}
-.i-ico{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
-.i-t{font-size:12px;font-weight:500;margin-bottom:2px}
-.i-d{font-size:11px;color:var(--txt3);line-height:1.5}
-.i-tag{font-size:9px;font-family:var(--mono);padding:2px 6px;border-radius:3px;align-self:flex-start;margin-top:1px;flex-shrink:0}
-
-/* debrief panel */
-.deb-ai{background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(139,92,246,.08));border:1px solid rgba(139,92,246,.15);border-radius:10px;padding:16px;margin-bottom:14px}
-.deb-ai-lbl{display:flex;align-items:center;gap:7px;font-size:10px;font-family:var(--mono);color:var(--blue2);letter-spacing:.5px;margin-bottom:10px}
-.ai-dot-anim{width:6px;height:6px;background:var(--blue);border-radius:50%;animation:blink 2s ease infinite}
-.deb-ai-txt{font-size:12px;color:var(--txt2);line-height:1.75}
-.deb-ai-txt strong{color:var(--txt)}
-.deb-ai-txt .warn{color:var(--yel)}
-.deb-ai-txt .good{color:var(--green)}
-.obj-box{background:var(--bg3);border:1px solid var(--b);border-radius:8px;padding:10px 12px;display:flex;gap:9px;align-items:flex-start;margin-bottom:6px}
-.obj-circle{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--txt3);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--txt3);flex-shrink:0;margin-top:1px}
-.obj-title{font-size:12px;font-weight:500;margin-bottom:2px}
-.obj-meta{font-size:10px;color:var(--txt3)}
-.dbadge-g{background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.2);font-size:9px;font-family:var(--mono);padding:2px 7px;border-radius:4px}
-.dbadge-r{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2);font-size:9px;font-family:var(--mono);padding:2px 7px;border-radius:4px}
-.dbadge-y{background:rgba(245,158,11,.1);color:var(--yel);border:1px solid rgba(245,158,11,.2);font-size:9px;font-family:var(--mono);padding:2px 7px;border-radius:4px}
-.pts-row{display:flex;gap:8px;padding:9px 0;border-bottom:1px solid rgba(99,155,255,.05);align-items:flex-start}
-.pts-row:last-child{border:none}
-.pts-txt{font-size:11px;color:var(--txt2);line-height:1.5;flex:1}
-
-/* ── DEBRIEF SECTION ── */
-.deb-section{background:var(--bg2);border-top:1px solid var(--b)}
-.deb-layout{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;max-width:1100px;margin:0 auto}
-.deb-points{display:flex;flex-direction:column;gap:18px;margin-top:36px}
-.deb-pt{display:flex;gap:14px;align-items:flex-start}
-.deb-pt-ic{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
-.deb-pt-t{font-size:15px;font-weight:500;margin-bottom:3px}
-.deb-pt-d{font-size:13px;color:var(--txt2);font-weight:300;line-height:1.6}
-.deb-mock{background:var(--card);border:1px solid var(--b2);border-radius:14px;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.5)}
-.dm-week{font-size:10px;font-family:var(--mono);color:var(--txt3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px}
-.dm-title{font-family:var(--disp);font-size:20px;font-weight:700;letter-spacing:-.4px;margin-bottom:4px}
-.dm-sub{font-size:12px;color:var(--txt3);margin-bottom:18px}
-.dm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
-.dm-stat{background:var(--bg3);border:1px solid var(--b);border-radius:8px;padding:10px}
-.dm-val{font-family:var(--disp);font-size:20px;font-weight:700;letter-spacing:-.3px}
-.dm-lbl{font-size:10px;color:var(--txt3);font-family:var(--mono);margin-top:3px}
-.dm-ai{background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(139,92,246,.08));border:1px solid rgba(139,92,246,.15);border-radius:9px;padding:14px;margin-bottom:14px}
-.dm-ai-lbl{display:flex;align-items:center;gap:7px;font-size:9px;font-family:var(--mono);color:var(--blue2);letter-spacing:.5px;margin-bottom:9px;text-transform:uppercase}
-.dm-ai-txt{font-size:12px;color:var(--txt2);line-height:1.75}
-.dm-ai-txt strong{color:var(--txt)}
-.dm-ai-txt .warn{color:var(--yel)}
-.dm-ai-txt .good{color:var(--green)}
-.dm-obj-title{font-size:10px;font-family:var(--mono);color:var(--txt3);letter-spacing:.7px;text-transform:uppercase;margin-bottom:8px}
-.dm-obj{display:flex;gap:9px;padding:8px 0;border-bottom:1px solid rgba(99,155,255,.06);align-items:center;font-size:12px;color:var(--txt2)}
-.dm-obj:last-child{border:none}
-.dm-obj-dot{color:var(--txt3);font-size:14px;flex-shrink:0}
-
-/* ── COMPARAISON ── */
-.comp-section{background:var(--bg2);border-top:1px solid var(--b)}
-.comp-table{width:100%;border-collapse:collapse;max-width:900px;margin:52px auto 0}
-.comp-table th{font-family:var(--mono);font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.8px;padding:12px 14px;border-bottom:1px solid var(--b);font-weight:400;text-align:center}
-.comp-table th:first-child{text-align:left}
-.comp-table th.hl{color:var(--blue2)}
-.comp-table td{padding:12px 14px;font-size:13px;color:var(--txt2);border-bottom:1px solid rgba(99,155,255,.06);text-align:center}
-.comp-table td:first-child{text-align:left;color:var(--txt)}
-.comp-table tr:last-child td{border:none}
-.comp-table tr:hover td{background:rgba(59,130,246,.02)}
-.comp-yes{color:var(--green);font-size:15px}
-.comp-no{color:var(--txt3);font-size:15px}
-.comp-soon{color:var(--txt3);font-size:11px;font-family:var(--mono)}
-.comp-price-hl{color:var(--green);font-family:var(--mono);font-weight:600}
-.comp-price{color:var(--txt3);font-family:var(--mono);font-size:12px}
-.comp-note{text-align:center;font-size:11px;color:var(--txt3);margin-top:12px;font-family:var(--mono);max-width:900px;margin-left:auto;margin-right:auto}
+/* ── COMPARE ── */
+.comp-section{background:var(--bg2);border-top:1px solid var(--b);}
+.table-wrapper{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:40px;border-radius:12px;border:1px solid var(--b);}
+.comp-table{width:100%;border-collapse:collapse;font-size:13px;}
+.comp-table th{padding:14px 18px;font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--txt3);text-align:center;text-transform:uppercase;border-bottom:1px solid var(--b);background:var(--card);}
+.comp-table th:first-child{text-align:left;}
+.comp-table th.hl{color:var(--pulse);}
+.comp-table td{padding:12px 18px;border-bottom:1px solid rgba(99,155,255,.05);color:var(--txt2);text-align:center;}
+.comp-table td:first-child{text-align:left;color:var(--txt);font-weight:400;}
+.comp-table tr:last-child td{border-bottom:none;}
+.comp-table tr:hover td{background:rgba(99,155,255,.02);}
+.comp-yes{color:var(--green);font-size:14px;}
+.comp-no{color:var(--txt3);}
+.comp-price{font-family:var(--mono);font-size:12px;}
+.comp-price-hl{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--pulse);}
+.comp-new{font-size:9px;background:rgba(245,158,11,.1);color:var(--yel);border:1px solid rgba(245,158,11,.2);padding:2px 6px;border-radius:3px;font-family:var(--mono);font-weight:700;}
+.comp-note{font-size:11px;color:var(--txt3);font-family:var(--mono);margin-top:14px;text-align:center;}
+@media(max-width:768px){.comp-table{font-size:12px;}.comp-table th,.comp-table td{padding:10px 12px;}}
 
 /* ── PRICING ── */
-.price-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:780px;margin:56px auto 0}
-.price-card{background:var(--card);border:1px solid var(--b);border-radius:16px;padding:36px 32px;display:flex;flex-direction:column}
-.price-card.feat{border-color:rgba(59,130,246,.4);background:linear-gradient(160deg,rgba(59,130,246,.07),rgba(139,92,246,.04));box-shadow:0 0 40px rgba(59,130,246,.08);position:relative}
-.price-pop{position:absolute;top:-14px;left:50%;transform:translateX(-50%);display:inline-flex;align-items:center;gap:6px;font-size:11px;font-family:var(--mono);padding:4px 14px;border-radius:100px;background:var(--card);color:var(--blue2);border:1px solid rgba(59,130,246,.4);letter-spacing:.3px;white-space:nowrap}
-.price-divider{height:1px;background:var(--b);margin:22px 0}
-.price-name{font-family:var(--disp);font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt3);margin-bottom:16px;text-align:center}
-.price-amt{display:flex;align-items:baseline;gap:3px;line-height:1;margin-bottom:4px;justify-content:center}
-.price-amt-num{font-family:var(--body);font-size:36px;font-weight:600;letter-spacing:-.3px;line-height:1;color:var(--txt)}
-.price-amt-cur{font-family:var(--body);font-size:20px;font-weight:400;color:var(--txt2);line-height:1}
-.price-amt-per{font-family:var(--body);font-size:14px;font-weight:300;color:var(--txt3);line-height:1}
-.price-period{font-size:11.5px;color:var(--txt3);font-family:var(--mono);margin-bottom:0;letter-spacing:.2px;text-align:center}
-.price-feats{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:28px;margin-top:0}
-.price-feats li{display:flex;align-items:flex-start;gap:11px;font-size:14px;color:var(--txt2);line-height:1.5}
-.price-feats li::before{content:'✓';color:var(--green);font-weight:700;font-size:14px;flex-shrink:0;margin-top:1px}
-.price-feats li.no{color:var(--txt3)}
-.price-feats li.no::before{content:'–';color:var(--txt3);font-weight:400}
-.price-cta{display:block;text-align:center;padding:14px;border-radius:10px;font-size:15px;font-weight:600;text-decoration:none;transition:all .2s;font-family:var(--disp);letter-spacing:-.1px;margin-top:auto}
-.price-cta.prim{background:var(--blue);color:#fff;box-shadow:0 0 24px rgba(59,130,246,.35)}
-.price-cta.prim:hover{background:var(--blue2);box-shadow:0 0 40px rgba(59,130,246,.55);transform:translateY(-1px)}
-.price-cta.ghost{border:1px solid var(--b2);color:var(--txt2)}
-.price-cta.ghost:hover{border-color:var(--blue);color:var(--txt);background:rgba(59,130,246,.05)}
+.price-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;max-width:820px;margin:0 auto;margin-top:48px;}
+.price-card{background:var(--card);border:1px solid var(--b);border-radius:16px;padding:36px 32px;display:flex;flex-direction:column;}
+.price-card.feat{
+  border-color:rgba(59,130,246,.5);
+  background:linear-gradient(160deg,rgba(59,130,246,.1),rgba(139,92,246,.07));
+  box-shadow:0 0 40px rgba(59,130,246,.12),inset 0 1px 0 rgba(255,255,255,.06);
+  position:relative;
+}
+.price-card.feat::before{content:'';position:absolute;inset:0;border-radius:16px;background:linear-gradient(160deg,rgba(59,130,246,.08),transparent 60%);pointer-events:none;}
+.price-pop{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,var(--blue),#6366f1);color:white;font-size:11px;font-family:var(--mono);font-weight:700;padding:5px 18px;border-radius:100px;letter-spacing:.6px;white-space:nowrap;box-shadow:0 4px 14px rgba(59,130,246,.4);}
+.price-urgency{font-size:11px;font-family:var(--mono);color:var(--yel);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:6px;padding:8px 12px;margin-bottom:24px;text-align:center;}
+.price-header{text-align:center;margin-bottom:24px;}
+.price-name{font-family:var(--mono);font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--txt3);margin-bottom:12px;text-align:center;}
+.price-card.feat .price-name{color:var(--blue2);}
+.price-amt{display:flex;align-items:baseline;gap:4px;margin-bottom:4px;justify-content:center;}
+.price-amt-num{font-family:var(--disp);font-size:60px;font-weight:800;letter-spacing:-2px;color:var(--txt);}
+.price-card.feat .price-amt-num{color:var(--txt);}
+.price-amt-cur{font-family:var(--disp);font-size:24px;font-weight:600;color:var(--txt2);}
+.price-amt-per{font-size:15px;color:var(--txt3);}
+.price-period{font-size:12px;color:var(--txt3);font-family:var(--mono);margin-bottom:20px;text-align:center;}
+.price-divider{height:1px;background:var(--b);margin:20px 0;}
+.price-feats{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:28px;flex:1;}
+.price-feats li{font-size:13px;color:var(--txt2);display:flex;align-items:flex-start;gap:8px;line-height:1.5;}
+.price-feats li::before{content:'✓';color:var(--green);flex-shrink:0;font-weight:600;margin-top:1px;}
+.price-feats li small.feat-limit{color:var(--txt3);font-family:var(--mono);font-size:10px;}
+.price-feats li .feat-new{font-size:9px;background:rgba(245,158,11,.1);color:var(--yel);border:1px solid rgba(245,158,11,.2);padding:1px 5px;border-radius:3px;font-family:var(--mono);font-weight:700;vertical-align:middle;margin-left:3px;}
+.price-cta{display:block;width:100%;padding:13px;border-radius:9px;font-size:14px;font-weight:600;font-family:var(--disp);text-align:center;transition:all .2s;cursor:pointer;border:none;}
+.price-cta.prim{background:linear-gradient(90deg,var(--blue),#6366f1);color:white;box-shadow:0 0 28px rgba(59,130,246,.4);font-size:15px;padding:15px;}
+.price-cta.prim:hover{background:var(--blue2);box-shadow:0 0 36px rgba(59,130,246,.5);transform:translateY(-1px);}
+.price-cta.ghost{background:transparent;color:var(--txt2);border:1px solid var(--b2);}
+.price-cta.ghost:hover{color:var(--txt);border-color:var(--blue);background:rgba(59,130,246,.05);}
+
+/* ── TESTIMONIAL ── */
+.social-section{padding:80px 5%;}
+.social-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:1100px;margin:48px auto 0;}
+.social-card{background:var(--card);border:1px solid var(--b);border-radius:12px;padding:22px;}
+.social-text{font-size:14px;color:var(--txt2);line-height:1.7;margin-bottom:16px;font-weight:300;}
+.social-text strong{color:var(--txt);}
+.social-author{display:flex;align-items:center;gap:10px;}
+.social-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:var(--disp);color:white;flex-shrink:0;}
+.social-name{font-size:12px;font-weight:500;color:var(--txt);}
+.social-role{font-size:11px;color:var(--txt3);font-family:var(--mono);}
 
 /* ── FAQ ── */
-.faq-section{background:var(--bg2);border-top:1px solid var(--b)}
-.faq-wrap{max-width:700px;margin:52px auto 0;display:flex;flex-direction:column;gap:2px}
-.faq-item{background:var(--card);border:1px solid var(--b);border-radius:10px;overflow:hidden}
-.faq-q{width:100%;padding:18px 22px;background:none;border:none;color:var(--txt);font-size:14px;font-weight:500;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-family:var(--disp);gap:14px;letter-spacing:-.1px}
-.faq-q:hover{color:var(--blue2)}
-.faq-arrow{font-size:18px;color:var(--txt3);transition:transform .2s;flex-shrink:0}
-.faq-item.open .faq-arrow{transform:rotate(45deg)}
-.faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease;padding:0 22px;font-size:13px;color:var(--txt2);line-height:1.75;font-weight:300}
-.faq-item.open .faq-a{max-height:220px;padding:0 22px 18px}
+.faq-section{background:var(--bg2);border-top:1px solid var(--b);}
+.faq-list{max-width:720px;margin:40px auto 0;display:flex;flex-direction:column;gap:0;}
+.faq-item{border-bottom:1px solid var(--b);}
+.faq-q{display:flex;align-items:center;justify-content:space-between;padding:18px 0;cursor:pointer;font-size:15px;font-weight:500;color:var(--txt);transition:color .15s;gap:16px;}
+.faq-q:hover{color:var(--blue2);}
+.faq-arrow{color:var(--txt3);font-size:12px;flex-shrink:0;transition:transform .2s;}
+.faq-a{font-size:14px;color:var(--txt2);line-height:1.7;padding-bottom:16px;display:none;font-weight:300;}
+.faq-item.open .faq-a{display:block;}
+.faq-item.open .faq-arrow{transform:rotate(180deg);}
 
 /* ── CTA FINAL ── */
-.cta-final{text-align:center;padding:120px 5%;position:relative;overflow:hidden}
-.cta-final::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;height:250px;background:radial-gradient(ellipse,rgba(59,130,246,.08) 0%,transparent 70%);pointer-events:none}
-.cta-final h2{max-width:650px;margin:0 auto 18px}
-.cta-final p{color:var(--txt2);font-size:17px;font-weight:300;max-width:460px;margin:0 auto 44px}
+.cta-final{padding:120px 5%;text-align:center;position:relative;overflow:hidden;}
+.cta-final-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:300px;background:radial-gradient(ellipse,rgba(59,130,246,.12) 0%,transparent 70%);pointer-events:none;}
+.cta-final h2{font-size:clamp(32px,5vw,60px);letter-spacing:-1px;position:relative;z-index:1;}
+.cta-final p{font-size:18px;color:var(--txt2);max-width:480px;margin:20px auto 44px;font-weight:300;position:relative;z-index:1;}
+.cta-final-actions{display:flex;align-items:center;gap:14px;justify-content:center;flex-wrap:wrap;position:relative;z-index:1;}
 
 /* ── FOOTER ── */
-footer{border-top:1px solid var(--b);padding:44px 5%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:18px;font-size:12px;color:var(--txt3)}
-.footer-logo{display:flex;align-items:center;gap:8px}
-.footer-links{display:flex;gap:22px}
-.footer-links a{color:var(--txt3);text-decoration:none;transition:color .2s}
-.footer-links a:hover{color:var(--txt2)}
+footer{background:var(--bg2);border-top:1px solid var(--b);padding:40px 5%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+.footer-logo{font-family:var(--disp);font-size:14px;font-weight:700;color:var(--txt3);}
+.footer-links{display:flex;gap:20px;flex-wrap:wrap;}
+.footer-links a{font-size:12px;color:var(--txt3);transition:color .15s;}
+.footer-links a:hover{color:var(--txt);}
+.footer-right{font-size:11px;color:var(--txt3);font-family:var(--mono);}
+.footer-disclaimer{font-size:11px;color:var(--txt3);max-width:900px;line-height:1.6;border-top:1px solid var(--b);padding-top:16px;margin-top:16px;width:100%;}
 
-/* ── MISC ── */
-.mono{font-family:var(--mono)}
-.text-g{color:var(--green)}
-.text-r{color:var(--red)}
-.text-b{color:var(--blue2)}
-.text-y{color:var(--yel)}
+/* ── RESPONSIVE ── */
+
+/* ═══════════════════════════
+   TABLETTE — 768px à 1024px
+═══════════════════════════ */
+@media(max-width:1024px) and (min-width:769px){
+  .moments-timeline{grid-template-columns:1fr 1fr;gap:14px;}
+  .moments-timeline::before{display:none;}
+  .moment-card:last-child{grid-column:1 / -1;max-width:520px;margin:0 auto;}
+  .prob-grid{grid-template-columns:repeat(2,1fr);gap:16px;}
+  .feat-grid{grid-template-columns:repeat(2,1fr);gap:14px;}
+  .social-grid{grid-template-columns:repeat(2,1fr);}
+  .social-card:last-child{grid-column:1 / -1;}
+  .day-item{grid-template-columns:90px 1fr;}
+  .price-grid{grid-template-columns:repeat(2,1fr);}
+  nav{padding:0 3%;}
+  section{padding:72px 4%;}
+  .hero{padding:60px 4% 72px;}
+  .table-wrapper{overflow-x:auto;}
+}
+
+/* ═══════════════════════════
+   MOBILE — < 768px
+═══════════════════════════ */
+@media(max-width:768px){
+  /* Nav */
+  nav{padding:0 16px;}
+  .nav-links{display:none;}
+  .nav-cta{gap:8px;}
+  .nav-login{display:none;}
+  .nav-signup{font-size:12px;padding:6px 12px;}
+
+  /* Hero */
+  .hero{padding:80px 16px 56px;min-height:auto;}
+  .hero h1{font-size:clamp(36px,9vw,52px);letter-spacing:-1px;}
+  .hero-sub{font-size:15px;max-width:100%;}
+  .hero-moments{gap:4px;}
+  .hero-moment{font-size:11px;padding:3px 8px;}
+  .hero-moment-sep{display:none;}
+  .hero-actions{flex-direction:column;align-items:stretch;gap:10px;padding:0;}
+  .hero-actions a{text-align:center;justify-content:center;width:100%;}
+  .btn-p.hero-cta-main{font-size:15px!important;padding:14px 20px!important;}
+  .hero-badge{font-size:10px;padding:4px 12px;text-align:center;}
+  .hero-proof{flex-wrap:wrap;justify-content:center;}
+  .pulse-ring{display:none;}
+
+  /* Sections */
+  section{padding:64px 16px;}
+  .moments-section{padding:64px 16px;}
+  .day-section{padding:64px 16px;}
+  .faq-section{padding:64px 16px;}
+  .social-section{padding:64px 16px;}
+  .cta-final{padding:80px 16px;}
+
+  /* 3 Moments */
+  .moments-timeline{grid-template-columns:1fr;gap:12px;}
+  .moments-timeline::before{display:none;}
+  .moment-card{padding:24px 20px;}
+  .moment-card h3{font-size:18px;}
+  .moments-header{margin-bottom:40px;}
+
+  /* Problem */
+  .prob-grid{grid-template-columns:1fr;gap:12px;}
+
+  /* Features */
+  .feat-grid{grid-template-columns:1fr;gap:12px;}
+  .feat-card{padding:20px;}
+
+  /* Journée type */
+  .day-item{grid-template-columns:64px 1fr;gap:0;}
+  .day-content{padding:0 0 28px 0;}
+  .day-content h3{font-size:15px;}
+  .day-content p{font-size:13px;}
+  .day-container{padding:0;}
+
+  /* Compare */
+  .comp-section{padding:64px 16px;}
+  .table-wrapper{margin-top:28px;border-radius:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .comp-table{min-width:560px;}
+
+  /* Pricing */
+  .price-grid{grid-template-columns:1fr;gap:20px;max-width:100%;}
+  .price-card{padding:28px 20px;}
+  .price-card.feat{padding:44px 20px 28px;}
+  .price-card{padding:24px 20px;}
+  .price-card.feat{padding-top:44px;}
+  .price-amt-num{font-size:48px;}
+
+  /* Testimonials */
+  .social-grid{grid-template-columns:1fr;gap:12px;}
+
+  /* Footer */
+  footer{flex-direction:column;gap:20px;padding:32px 16px;text-align:center;}
+  footer > div{justify-content:center;}
+  .footer-links{justify-content:center;gap:14px;}
+  .footer-right{text-align:center;}
+  .footer-disclaimer{text-align:left;}
+
+  /* CTA final */
+  .cta-final h2{font-size:clamp(28px,7vw,42px);}
+  .cta-final p{font-size:15px;}
+  .cta-final-actions{flex-direction:column;align-items:stretch;gap:10px;}
+  .cta-final-actions a{text-align:center;justify-content:center;}
+
+  /* Hero moments responsive — stack vertical */
+  .hero-moments{flex-direction:column;align-items:center;gap:6px;}
+}
+
+/* ═══════════════════════════
+   PETIT MOBILE — < 480px
+═══════════════════════════ */
+@media(max-width:480px){
+  .hero h1{font-size:36px;}
+  .hero-badge{font-size:9px;letter-spacing:.3px;}
+  .moment-card{padding:20px 16px;}
+  .feat-card{padding:18px 16px;}
+  .price-card{padding:20px 16px;}
+  .social-card{padding:18px 16px;}
+  section{padding:56px 14px;}
+  .moments-section,.day-section,.faq-section,.social-section{padding:56px 14px;}
+  .day-item{grid-template-columns:54px 1fr;}
+  nav{padding:0 14px;}
+  .comp-table th,.comp-table td{padding:9px 10px;font-size:11px;}
+}
+
 </style>
 </head>
 <body>
 
 <!-- BANNER -->
-<div class="banner">🇫🇷 Fait en France · Indépendant · Sans VC · Tes données ne sont jamais vendues</div>
+<div class="banner">🇫🇷 Fait en France · Indépendant · Tes données ne sont jamais vendues</div>
 
 <!-- NAV -->
 <nav>
-  <a href="/" class="nav-logo">
-    <div class="nav-logo-icon">
-      <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
-        <polyline points="3,16 6,16 8,10 10,22 12,6 14,20 16,12 18,16 29,16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </div>
-    <div class="nav-logo-text">MyTrading<span>Coach</span></div>
-  </a>
-  <ul class="nav-links">
-    <li><a href="#features">Fonctionnalités</a></li>
-    <li><a href="#showcase">Aperçu</a></li>
-    <li><a href="#debrief">Debrief IA</a></li>
-    <li><a href="#pricing">Tarifs</a></li>
-    <li><a href="https://app.mytradingcoach.app/register" class="nav-cta">Essayer gratuitement →</a></li>
-  </ul>
+  <div class="nav-logo">
+    <div class="nav-logo-dot"></div>
+    MyTradingCoach
+  </div>
+  <div class="nav-links">
+    <a href="#moments">Comment ça marche</a>
+    <a href="#features">Fonctionnalités</a>
+    <a href="#pricing">Tarifs</a>
+    <a href="#faq">FAQ</a>
+  </div>
+  <div class="nav-cta">
+    <a href="https://app.mytradingcoach.app/login" class="nav-login">Connexion</a>
+    <a href="https://app.mytradingcoach.app/register" class="nav-signup">Essayer gratuitement →</a>
+  </div>
 </nav>
 
 <!-- HERO -->
@@ -489,627 +421,453 @@ footer{border-top:1px solid var(--b);padding:44px 5%;display:flex;align-items:ce
 
   <div class="hero-badge">
     <div class="bdot"></div>
-    Early access ouvert — Journal IA · Coach · Weekly Debrief
+    Le premier superviseur de trading IA — multi-marché
+  </div>
+
+  <div class="hero-proof">
+    <div class="hero-stars">★★★★★</div>
+    <span class="hero-proof-text"><strong>+14 traders</strong> · Beta 4.9/5</span>
   </div>
 
   <h1>
-    Tu sais trader.<br>
-    <em>Le problème,</em><br>
-    <span class="gline">c'est toi.</span>
+    Tu trades seul.<br/>
+    <em>Ton superviseur,</em><br/>
+    <span class="gline">lui, ne dort pas.</span>
   </h1>
 
   <p class="hero-sub">
-    MyTradingCoach, le journal trading intelligent, identifie tes <strong>patterns émotionnels</strong> et te dit exactement
-    quand et pourquoi tu dérailles — chaque semaine, automatiquement.
+    Avant ta session, il te prépare. Pendant, il surveille.
+    Après, il débrieffe. Le seul <strong>journal de trading IA</strong>
+    qui fonctionne comme un <strong>superviseur qui connaît ton profil</strong> —
+    tes actifs, ta stratégie, tes patterns. Crypto, Futures, Forex.
   </p>
 
+  <div class="hero-moments">
+    <div class="hero-moment avant">☀️ Avant — il prépare</div>
+    <div class="hero-moment-sep">·</div>
+    <div class="hero-moment pendant">⚡ Pendant — il surveille</div>
+    <div class="hero-moment-sep">·</div>
+    <div class="hero-moment apres">🌙 Après — il débrieffe</div>
+  </div>
+
   <div class="hero-actions">
-    <a href="https://app.mytradingcoach.app/register" class="btn-p">
-      Commencer gratuitement
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    <a href="https://app.mytradingcoach.app/register" class="btn-p hero-cta-main">
+      Essayer gratuitement — 7 jours Premium offerts
     </a>
-    <a href="#showcase" class="btn-s">Voir l'app →</a>
   </div>
+  <p class="hero-cta-sub">Gratuit sans CB · Premium : 0€ prélevé pendant 7 jours · Données en France 🇫🇷</p>
+</section>
 
-  <div class="hero-trust">
-    <div class="bdot"></div>
-    <span>Early access ouvert — sois parmi les premiers traders</span>
-  </div>
+<!-- 3 MOMENTS -->
+<section class="moments-section" id="moments">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="moments-header reveal">
+      <span class="sec-label">Comment ça marche</span>
+      <h2>Ton superviseur à chaque <em>moment</em> de ta journée</h2>
+      <p class="sec-sub">Les autres journaux de trading, tu les ouvres après avoir perdu. MTC est là à chaque instant — avant, pendant et après chaque session.</p>
+    </div>
 
-  <!-- App screenshot réel -->
-  <div class="hero-screen">
-    <div class="full-screen" style="border-radius:16px;box-shadow:0 48px 120px rgba(0,0,0,.85),0 0 0 1px rgba(56,139,255,.08)">
-      <div class="full-bar">
-        <div class="sdot" style="background:#ef4444"></div>
-        <div class="sdot" style="background:#f59e0b"></div>
-        <div class="sdot" style="background:#10b981"></div>
-        <span class="screen-url" style="margin-left:12px">app.mytradingcoach.app — Dashboard</span>
-      </div>
-      <div class="full-body">
-        <div class="full-sidebar">
-          <div class="flogo">
-            <div class="flogo-ic"><svg width="14" height="14" viewBox="0 0 32 32" fill="none"><polyline points="3,16 6,16 8,10 10,22 12,6 14,20 16,12 18,16 29,16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-            <div class="flogo-txt">MyTrading<span>Coach</span></div>
-          </div>
-          <div class="fsec">Trading</div>
-          <div class="fnav act">⬛ Dashboard</div>
-          <div class="fnav">📋 Journal</div>
-          <div class="fnav">📊 Analytics</div>
-          <div class="fsec">Intelligence</div>
-          <div class="fnav">🤖 IA Insights <span class="fbadge">AI</span></div>
-          <div class="fnav">📅 Weekly Debrief <span class="fbadge">PRO</span></div>
-          <div class="fsec">Compte</div>
-          <div class="fnav">🏆 Scoring</div>
-          <div class="fnav">⚙️ Paramètres</div>
-          <div class="fuser">
-            <div class="favatar">AX</div>
-            <div><div class="funame">Alexandre</div><div class="fuplan">★ PREMIUM</div></div>
-          </div>
+    <div class="moments-timeline rstag">
+      <!-- AVANT -->
+      <div class="moment-card avant">
+        <div class="moment-icon">☀️</div>
+        <div class="moment-time">Avant ta session</div>
+        <h3>Il te prépare</h3>
+        <p>Avant d'ouvrir TradingView, ton superviseur t'informe. Il a analysé la veille et sait ce qui t'attend aujourd'hui.</p>
+        <div class="moment-features">
+          <div class="mf"><div class="mf-dot"></div><span>Recap de ta session d'hier — P&L, win rate, émotion dominante, phrase coaching IA</span></div>
+          <div class="mf"><div class="mf-dot"></div><span>Tes objectifs de la semaine rappelés avant que tu trades</span></div>
+          <div class="mf"><div class="mf-dot"></div><span>Calendrier économique filtré pour tes actifs — NFP, PMI, Fed : ce qui te concerne, toi</span></div>
+          <div class="mf"><div class="mf-dot"></div><span>Check de ton état mental — tu définis comment tu te sens avant de commencer</span></div>
         </div>
-        <div class="full-content">
-          <div class="ftopbar">
-            <div>
-              <h3>Bonjour, Alexandre 👋</h3>
-              <div style="font-size:12px;color:var(--txt3);margin-top:3px">Voici un résumé de tes performances</div>
-            </div>
-            <div style="display:flex;gap:8px">
-              <button class="btn-p" style="font-size:12px;padding:7px 14px">⚡ Ajouter trade</button>
-            </div>
-          </div>
-          <div class="fstats">
-            <div class="fstat"><div class="fstat-lbl">P&L Total</div><div class="fstat-val text-g">+$8,420</div><div class="fstat-sub"><span class="fup">▲ +12.3%</span><span>ce mois</span></div></div>
-            <div class="fstat"><div class="fstat-lbl">Win Rate</div><div class="fstat-val text-b">67.4%</div><div class="fstat-sub"><span class="fup">▲ +3.2%</span><span>vs préc.</span></div></div>
-            <div class="fstat"><div class="fstat-lbl">Drawdown</div><div class="fstat-val text-r">-$1,240</div><div class="fstat-sub"><span class="fdn">▼ -4.8%</span><span>sur cap.</span></div></div>
-            <div class="fstat"><div class="fstat-lbl">Trades</div><div class="fstat-val">142</div><div class="fstat-sub"><span class="fup">▲ +18</span><span>sem.</span></div></div>
-          </div>
-          <div class="fcard">
-            <div class="fcard-h"><div class="fcard-t">Equity Curve</div><div style="display:flex;gap:10px"><span style="font-size:10px;color:var(--blue2);font-family:var(--mono);cursor:pointer">3M</span><span style="font-size:10px;color:var(--txt3);font-family:var(--mono)">All</span></div></div>
-            <svg width="100%" height="80" viewBox="0 0 600 80" preserveAspectRatio="none">
-              <defs><linearGradient id="cg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3b82f6" stop-opacity=".25"/><stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/></linearGradient></defs>
-              <path d="M0,72 C40,64 70,56 100,50 C130,44 155,38 185,30 C215,22 235,34 260,26 C285,18 310,12 340,9 C370,6 390,14 420,10 C450,6 480,4 520,3 C550,2 575,2 600,2" fill="none" stroke="#3b82f6" stroke-width="2"/>
-              <path d="M0,72 C40,64 70,56 100,50 C130,44 155,38 185,30 C215,22 235,34 260,26 C285,18 310,12 340,9 C370,6 390,14 420,10 C450,6 480,4 520,3 C550,2 575,2 600,2 L600,80 L0,80Z" fill="url(#cg2)"/>
-              <circle cx="600" cy="2" r="4" fill="#3b82f6"/>
-            </svg>
-          </div>
-          <div class="fgrid2">
-            <div class="fcard" style="margin:0">
-              <div class="fcard-h"><div class="fcard-t">Win Rate par stratégie</div></div>
-              <div style="display:flex;gap:14px;align-items:center">
-                <svg width="72" height="72" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="#111b2e" stroke-width="10"/><circle cx="50" cy="50" r="38" fill="none" stroke="#10b981" stroke-width="10" stroke-dasharray="160 79" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 50 50)"/><circle cx="50" cy="50" r="38" fill="none" stroke="#3b82f6" stroke-width="10" stroke-dasharray="57 182" stroke-dashoffset="-160" stroke-linecap="round" transform="rotate(-90 50 50)"/><circle cx="50" cy="50" r="38" fill="none" stroke="#ef4444" stroke-width="10" stroke-dasharray="22 217" stroke-dashoffset="-217" stroke-linecap="round" transform="rotate(-90 50 50)"/><text x="50" y="54" text-anchor="middle" font-family="Inter" font-weight="700" font-size="16" fill="#e2eaf5">67%</text></svg>
-                <div style="flex:1;display:flex;flex-direction:column;gap:7px;font-size:11px">
-                  <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0"></div>Breakout<span style="margin-left:auto;font-family:var(--mono);color:var(--txt)">74%</span></div>
-                  <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:var(--blue);flex-shrink:0"></div>Pullback<span style="margin-left:auto;font-family:var(--mono);color:var(--txt)">62%</span></div>
-                  <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:var(--yel);flex-shrink:0"></div>Range<span style="margin-left:auto;font-family:var(--mono);color:var(--txt)">58%</span></div>
-                  <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0"></div>Reversal<span style="margin-left:auto;font-family:var(--mono);color:var(--txt)">41%</span></div>
-                </div>
-              </div>
-            </div>
-            <div class="fcard" style="margin:0">
-              <div class="fcard-h"><div class="fcard-t">États émotionnels</div></div>
-              <div style="display:flex;flex-direction:column;gap:10px">
-                <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>😤 Revenge</span><span class="mono" style="font-size:10px;color:var(--txt3)">23%</span></div><div style="height:5px;background:var(--bg3);border-radius:3px"><div style="width:23%;height:100%;background:var(--red);border-radius:3px"></div></div></div>
-                <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>😰 Stress</span><span class="mono" style="font-size:10px;color:var(--txt3)">31%</span></div><div style="height:5px;background:var(--bg3);border-radius:3px"><div style="width:31%;height:100%;background:var(--yel);border-radius:3px"></div></div></div>
-                <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>😌 Confiant</span><span class="mono" style="font-size:10px;color:var(--txt3)">68%</span></div><div style="height:5px;background:var(--bg3);border-radius:3px"><div style="width:68%;height:100%;background:var(--blue);border-radius:3px"></div></div></div>
-                <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>🎯 Focus</span><span class="mono" style="font-size:10px;color:var(--txt3)">52%</span></div><div style="height:5px;background:var(--bg3);border-radius:3px"><div style="width:52%;height:100%;background:var(--green);border-radius:3px"></div></div></div>
-              </div>
-            </div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px">
-            <div style="display:flex;align-items:center;gap:9px;background:var(--bg3);border:1px solid var(--b);border-radius:8px;padding:9px 12px;font-size:11px">
-              <span style="background:rgba(16,185,129,.12);color:var(--green);font-family:var(--mono);font-size:9px;padding:2.5px 6px;border-radius:3px;flex-shrink:0">LONG</span>
-              <span style="color:var(--blue2);font-family:var(--mono);min-width:60px;font-weight:500">BTC/USDT</span>
-              <span style="color:var(--txt3);flex:1;font-size:10px">Breakout · London</span>
-              <span style="font-size:12px">😌</span>
-              <span style="color:var(--green);font-family:var(--mono);font-weight:500;font-size:12px">+$1 400</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:9px;background:var(--bg3);border:1px solid var(--b);border-radius:8px;padding:9px 12px;font-size:11px">
-              <span style="background:rgba(239,68,68,.12);color:var(--red);font-family:var(--mono);font-size:9px;padding:2.5px 6px;border-radius:3px;flex-shrink:0">SHORT</span>
-              <span style="color:var(--blue2);font-family:var(--mono);min-width:60px;font-weight:500">EUR/USD</span>
-              <span style="color:var(--txt3);flex:1;font-size:10px">Pullback · NY</span>
-              <span style="font-size:12px">😤</span>
-              <span style="color:var(--red);font-family:var(--mono);font-weight:500;font-size:12px">-$280</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:9px;background:var(--bg3);border:1px solid var(--b);border-radius:8px;padding:9px 12px;font-size:11px">
-              <span style="background:rgba(16,185,129,.12);color:var(--green);font-family:var(--mono);font-size:9px;padding:2.5px 6px;border-radius:3px;flex-shrink:0">LONG</span>
-              <span style="color:var(--blue2);font-family:var(--mono);min-width:60px;font-weight:500">ETH/USDT</span>
-              <span style="color:var(--txt3);flex:1;font-size:10px">Range · Asian</span>
-              <span style="font-size:12px">🎯</span>
-              <span style="color:var(--green);font-family:var(--mono);font-weight:500;font-size:12px">+$620</span>
-            </div>
-          </div>
+      </div>
+
+      <!-- PENDANT -->
+      <div class="moment-card pendant">
+        <div class="moment-icon">⚡</div>
+        <div class="moment-time">Pendant ta session</div>
+        <h3>Il surveille</h3>
+        <p>MTC reste ouvert à côté de TradingView. Il capture tes trades en temps réel et t'alerte quand quelque chose mérite ton attention.</p>
+        <div class="moment-features">
+          <div class="mf"><div class="mf-dot"></div><span>Logger un trade en 3 secondes — asset, direction, émotion. Le reste se complète après</span></div>
+          <div class="mf"><div class="mf-dot"></div><span>Live feed de ta session avec entry, exit, SL/TP détectés automatiquement</span></div>
+          <div class="mf"><div class="mf-dot"></div><span>Quand un résultat éco tombe : analyse IA bull/bear pour tes actifs spécifiques en temps réel</span></div>
+          <div class="mf"><div class="mf-dot"></div><span>Alerte comportementale — "tu viens d'atteindre ton objectif max de trades pour vendredi"</span></div>
+        </div>
+      </div>
+
+      <!-- APRÈS -->
+      <div class="moment-card apres">
+        <div class="moment-icon">🌙</div>
+        <div class="moment-time">Après ta session</div>
+        <h3>Il débrieffe</h3>
+        <p>À 17h30, un email t'attend. Ta journée résumée, analysée, et préparée pour demain. Chaque dimanche, un debrief complet de la semaine.</p>
+        <div class="moment-features">
+          <div class="mf"><div class="mf-dot"></div><span>Email automatique à la clôture — P&L, win rate, émotion dominante + phrase coaching IA</span></div>
+          <div class="mf"><div class="mf-dot"></div><span>Patterns comportementaux détectés sur le long terme — revenge trading, overtrading, créneaux</span></div>
+          <div class="mf"><div class="mf-dot"></div><span>Weekly Debrief IA le dimanche — analyse complète + 3 objectifs concrets pour la semaine suivante</span></div>
+          <div class="mf"><div class="mf-dot"></div><span>Score trader sur 100 — discipline, gestion du risque, consistance émotionnelle</span></div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- PROBLÈME -->
+<!-- PROBLEM -->
 <section class="prob" id="problem">
   <div style="max-width:1100px;margin:0 auto">
-    <div class="reveal">
+    <div class="reveal" style="text-align:center;max-width:640px;margin:0 auto">
       <span class="sec-label">Le vrai problème</span>
-      <h2>Ton journal ne te dit pas <em>l'essentiel</em></h2>
-      <p class="sec-sub">Les spreadsheets te montrent tes chiffres. MyTradingCoach te montre <strong style="color:var(--txt)">pourquoi</strong> tu prends les mauvaises décisions.</p>
+      <h2>Pourquoi tu répètes les mêmes <em>erreurs</em></h2>
+      <p class="sec-sub">Sans superviseur, tu opères à l'aveugle. Les données existent, mais personne ne les lit pour toi — et pas au bon moment.</p>
     </div>
     <div class="prob-grid rstag">
       <div class="prob-item">
         <div class="prob-icon" style="background:rgba(239,68,68,.09)">😤</div>
         <h3>Le revenge trading</h3>
-        <p>Après une perte, tu reviens trop vite avec une position trop grande. Tu le sais. Mais sans données, tu ne vois pas à quel point c'est systématique.</p>
+        <p>Après une perte, tu reviens trop vite avec une position trop grande. Ton superviseur le détecte et te le dit pendant que ça se passe — pas après.</p>
       </div>
       <div class="prob-item">
-        <div class="prob-icon" style="background:rgba(245,158,11,.09)">⏰</div>
-        <h3>Les mauvais créneaux</h3>
-        <p>Ton win rate à 09h30 est de 74%. Après 20h il tombe à 38%. Tu n'as jamais calculé ça — et tu continues de trader le soir.</p>
+        <div class="prob-icon" style="background:rgba(245,158,11,.09)">📅</div>
+        <h3>Les news que tu ignores</h3>
+        <p>Le NFP tombe dans 20 minutes sur ton actif et tu n'es pas prêt. Ton superviseur filtre les events économiques pour tes marchés et t'informe chaque matin.</p>
       </div>
       <div class="prob-item">
         <div class="prob-icon" style="background:rgba(59,130,246,.09)">🔁</div>
         <h3>Les patterns invisibles</h3>
-        <p>Tu perds presque toujours sur GBP/USD le jeudi. Tu overstrades le vendredi matin après une bonne série. Ces patterns existent. Tu ne les vois pas.</p>
+        <p>Tu perds presque toujours sur GBP/USD le jeudi. Tu n'as jamais calculé ça — et ton journal actuel non plus. Ton superviseur, si.</p>
+      </div>
+      <div class="prob-item">
+        <div class="prob-icon" style="background:rgba(16,185,129,.09)">🌙</div>
+        <h3>L'analyse qui arrive trop tard</h3>
+        <p>Tu analyses tes trades le week-end, quand l'opportunité d'agir est passée. Ton superviseur t'envoie le recap à 17h30 — quand tu peux encore corriger demain.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- UNE JOURNÉE TYPE -->
+<section class="day-section" id="journee">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="reveal" style="text-align:center;max-width:600px;margin:0 auto 64px">
+      <span class="sec-label">Une journée avec ton superviseur</span>
+      <h2>De 8h à minuit — il est <em>là</em></h2>
+    </div>
+
+    <div class="day-container reveal">
+      <div class="day-timeline">
+
+        <div class="day-item">
+          <div style="display:flex;align-items:flex-start;justify-content:flex-end;padding-right:20px;padding-top:4px;">
+            <span style="font-family:var(--mono);font-size:11px;color:var(--txt3);">08:15</span>
+          </div>
+          <div style="display:flex;gap:0;padding-bottom:32px;border-left:1px solid var(--b);padding-left:24px;position:relative;">
+            <div style="position:absolute;left:-6px;top:4px;width:12px;height:12px;border-radius:50%;border:2px solid var(--green);background:rgba(16,185,129,.15);"></div>
+            <div>
+              <div class="day-tag avant">☀️ Avant — Préparation</div>
+              <h3 style="font-family:var(--disp);font-size:16px;font-weight:600;margin-bottom:6px;">Recap de la veille + Agenda du jour</h3>
+              <p style="font-size:13px;color:var(--txt2);line-height:1.65;font-weight:300;">Tu ouvres MTC avant TradingView. Hier : +$620, 72% WR, émotion dominante 😎. Aujourd'hui : PMI Zone Euro à 10h00 — ton superviseur te recommande d'éviter EUR/USD entre 09h45 et 10h15.</p>
+              <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+                <span class="day-pill g">Recap hier</span>
+                <span class="day-pill g">Objectifs semaine</span>
+                <span class="day-pill g">Calendrier éco IA</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="day-item">
+          <div style="display:flex;align-items:flex-start;justify-content:flex-end;padding-right:20px;padding-top:4px;">
+            <span style="font-family:var(--mono);font-size:11px;color:var(--txt3);">09:30</span>
+          </div>
+          <div style="display:flex;gap:0;padding-bottom:32px;border-left:1px solid var(--b);padding-left:24px;position:relative;">
+            <div style="position:absolute;left:-6px;top:4px;width:12px;height:12px;border-radius:50%;border:2px solid var(--blue);background:rgba(59,130,246,.15);"></div>
+            <div>
+              <div class="day-tag pendant">⚡ Pendant — Session London ouverte</div>
+              <h3 style="font-family:var(--disp);font-size:16px;font-weight:600;margin-bottom:6px;">Tu trades, il note</h3>
+              <p style="font-size:13px;color:var(--txt2);line-height:1.65;font-weight:300;">LONG NQ, breakout confirmé. Tu tapes 3 touches dans MTC — asset, LONG, 😎. Ton superviseur enregistre l'heure, le contexte de marché, ton état. Tout le reste se complète après.</p>
+              <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+                <span class="day-pill b">Trade rapide 3s</span>
+                <span class="day-pill b">Live feed</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="day-item">
+          <div style="display:flex;align-items:flex-start;justify-content:flex-end;padding-right:20px;padding-top:4px;">
+            <span style="font-family:var(--mono);font-size:11px;color:var(--txt3);">10:00</span>
+          </div>
+          <div style="display:flex;gap:0;padding-bottom:32px;border-left:1px solid var(--b);padding-left:24px;position:relative;">
+            <div style="position:absolute;left:-6px;top:4px;width:12px;height:12px;border-radius:50%;border:2px solid var(--blue);background:rgba(59,130,246,.15);"></div>
+            <div>
+              <div class="day-tag pendant">⚡ Pendant — Résultat PMI tombe</div>
+              <h3 style="font-family:var(--disp);font-size:16px;font-weight:600;margin-bottom:6px;">Analyse en temps réel</h3>
+              <p style="font-size:13px;color:var(--txt2);line-height:1.65;font-weight:300;">PMI 52.4 vs 51.5 prévu — surprise haussière. Ton superviseur analyse immédiatement : EUR/USD ▲ BULL, USD ▼ BEAR, NQ neutre. Tu vois l'impact sur tes actifs sans quitter tes graphiques.</p>
+              <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+                <span class="day-pill b">Analyse IA résultats</span>
+                <span class="day-pill b">Bull/Bear par actif</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="day-item">
+          <div style="display:flex;align-items:flex-start;justify-content:flex-end;padding-right:20px;padding-top:4px;">
+            <span style="font-family:var(--mono);font-size:11px;color:var(--txt3);">11:42</span>
+          </div>
+          <div style="display:flex;gap:0;padding-bottom:32px;border-left:1px solid var(--b);padding-left:24px;position:relative;">
+            <div style="position:absolute;left:-6px;top:4px;width:12px;height:12px;border-radius:50%;border:2px solid var(--yel);background:rgba(245,158,11,.15);"></div>
+            <div>
+              <div class="day-tag pendant" style="color:var(--yel);">⚠️ Pendant — Alerte comportementale</div>
+              <h3 style="font-family:var(--disp);font-size:16px;font-weight:600;margin-bottom:6px;">Ton superviseur intervient</h3>
+              <p style="font-size:13px;color:var(--txt2);line-height:1.65;font-weight:300;">"Tu as atteint 4 trades aujourd'hui. C'était ton objectif max le vendredi — c'est toi qui l'as fixé dimanche dernier." Tu le savais, mais l'adrénaline masquait ça. Lui, il ne l'oublie jamais.</p>
+              <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+                <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-family:var(--mono);padding:3px 9px;border-radius:5px;background:rgba(245,158,11,.08);color:var(--yel);border:1px solid rgba(245,158,11,.15);">Alerte objectif</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="day-item">
+          <div style="display:flex;align-items:flex-start;justify-content:flex-end;padding-right:20px;padding-top:4px;">
+            <span style="font-family:var(--mono);font-size:11px;color:var(--txt3);">17:30</span>
+          </div>
+          <div style="display:flex;gap:0;padding-bottom:32px;border-left:1px solid var(--b);padding-left:24px;position:relative;">
+            <div style="position:absolute;left:-6px;top:4px;width:12px;height:12px;border-radius:50%;border:2px solid #8b5cf6;background:rgba(139,92,246,.15);"></div>
+            <div>
+              <div class="day-tag apres">🌙 Après — Recap automatique</div>
+              <h3 style="font-family:var(--disp);font-size:16px;font-weight:600;margin-bottom:6px;">L'email que tu attends</h3>
+              <p style="font-size:13px;color:var(--txt2);line-height:1.65;font-weight:300;">Un email t'attend à 17h30 — sans que tu aies rien demandé. P&L du jour, win rate, émotion dominante, une phrase coaching IA personnalisée sur ta session. Tu lis ça avant le dîner. Demain tu seras meilleur.</p>
+              <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+                <span class="day-pill p">Email recap 17h30</span>
+                <span class="day-pill p">Phrase coaching IA</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="day-item">
+          <div style="display:flex;align-items:flex-start;justify-content:flex-end;padding-right:20px;padding-top:4px;">
+            <span style="font-family:var(--mono);font-size:11px;color:var(--txt3);">Dimanche</span>
+          </div>
+          <div style="display:flex;gap:0;padding-bottom:0;padding-left:24px;position:relative;">
+            <div style="position:absolute;left:-6px;top:4px;width:12px;height:12px;border-radius:50%;border:2px solid #8b5cf6;background:rgba(139,92,246,.15);"></div>
+            <div>
+              <div class="day-tag apres">🌙 Après — Weekly Debrief</div>
+              <h3 style="font-family:var(--disp);font-size:16px;font-weight:600;margin-bottom:6px;">Ton bilan de semaine</h3>
+              <p style="font-size:13px;color:var(--txt2);line-height:1.65;font-weight:300;">Chaque dimanche soir, ton superviseur génère un rapport complet de ta semaine. Patterns détectés, forces identifiées, 3 objectifs concrets pour la semaine suivante. Tout est prêt quand tu ouvres MTC lundi matin.</p>
+              <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+                <span class="day-pill p">Weekly Debrief IA</span>
+                <span class="day-pill p">3 objectifs semaine</span>
+                <span class="day-pill p">Score trader /100</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 </section>
 
 <!-- FEATURES -->
-<section id="features" style="padding:96px 5%">
+<section id="features" style="padding:80px 5%">
   <div style="max-width:1100px;margin:0 auto">
     <div class="reveal" style="text-align:center;max-width:600px;margin:0 auto 0">
       <span class="sec-label">Fonctionnalités</span>
       <h2>Tout ce dont un trader <em>sérieux</em> a besoin</h2>
     </div>
     <div class="feat-grid rstag">
-      <div class="feat-card">
+      <div class="feat-card featured">
         <span class="feat-num">01</span>
-        <div class="feat-ico" style="background:rgba(16,185,129,.09)">📋</div>
-        <h3>Journal intelligent</h3>
-        <p>Enregistre chaque trade en 30 secondes. Actif (crypto, forex, actions), direction, entry/exit, SL/TP, setup, session, timeframe. Plus ton état émotionnel — l'ingrédient que les autres journaux ignorent.</p>
+        <div class="feat-ico" style="background:rgba(16,185,129,.09)">☀️</div>
+        <h3>Pré-session matin</h3>
+        <p>Mood check, recap de la veille avec phrase IA, objectifs de la semaine rappelés avant de trader.</p>
         <span class="feat-tag tag-free">✓ Gratuit</span>
       </div>
       <div class="feat-card featured">
         <span class="feat-num">02</span>
-        <div class="feat-ico" style="background:rgba(34,211,238,.09)">💓</div>
-        <h3>Tracking émotionnel</h3>
-        <p>Confiant, stressé, en revenge trading, dans la peur — tu notes ton état à chaque trade. L'IA corrèle ensuite tes émotions avec tes résultats. Le RR moyen en mode "confiant" vs "stressé" : révélateur.</p>
+        <div class="feat-ico" style="background:rgba(59,130,246,.09)">⚡</div>
+        <h3>Session live</h3>
+        <p>Live feed de tes trades en temps réel. Logger un trade en 3 secondes. Clôture avec détection SL/TP/Manuel automatique.</p>
+        <span class="feat-tag tag-free">✓ Gratuit</span>
+      </div>
+      <div class="feat-card featured">
+        <span class="feat-num">03</span>
+        <div class="feat-ico" style="background:rgba(139,92,246,.09)">📅</div>
+        <h3>Calendrier éco IA</h3>
+        <p>Events économiques filtrés pour tes actifs. Quand un résultat tombe, l'IA analyse immédiatement : bull ou bear pour NQ, BTC, EUR/USD.</p>
+        <span class="feat-tag tag-prem">★ Premium</span>
+      </div>
+      <div class="feat-card">
+        <span class="feat-num">04</span>
+        <div class="feat-ico" style="background:rgba(139,92,246,.09)">🌙</div>
+        <h3>Recap journalier 17h30</h3>
+        <p>Email automatique à la clôture des marchés — P&L, win rate, émotion dominante, phrase coaching IA personnalisée.</p>
+        <span class="feat-tag tag-prem">★ Premium</span>
+      </div>
+      <div class="feat-card">
+        <span class="feat-num">05</span>
+        <div class="feat-ico" style="background:rgba(34,211,238,.09)">💬</div>
+        <h3>Coach IA qui te connaît</h3>
+        <p>Tu définis ton profil une fois — scalper ICT, day trader SMC, swing trader Price Action. L'IA intègre ce contexte dans chaque analyse.</p>
+        <span class="feat-tag tag-prem">★ Premium</span>
+      </div>
+      <div class="feat-card">
+        <span class="feat-num">06</span>
+        <div class="feat-ico" style="background:rgba(59,130,246,.09)">📊</div>
+        <h3>Analytics avancés</h3>
+        <p>Heatmap horaire, equity curve, drawdown max, top actifs, performance par setup. Tout ce qu'un prop trader professionnel suit.</p>
+        <span class="feat-tag tag-prem">★ Premium</span>
+      </div>
+      <div class="feat-card">
+        <span class="feat-num">07</span>
+        <div class="feat-ico" style="background:rgba(99,155,255,.09)">📤</div>
+        <h3>Import CSV universel</h3>
+        <p>Tradovate, Binance, MetaTrader, Bybit ou n'importe quel broker. Il détecte et structure ton historique automatiquement.</p>
         <span class="feat-tag tag-free">✓ Gratuit</span>
       </div>
       <div class="feat-card">
-        <span class="feat-num">03</span>
-        <div class="feat-ico" style="background:rgba(59,130,246,.09)">📊</div>
-        <h3>Analytics avancés</h3>
-        <p>Win rate par stratégie, par heure, par actif, par session. Equity curve. Drawdown max. Heatmap de performance horaire. Tout ce qu'un prop trader professionnel suit.</p>
+        <span class="feat-num">08</span>
+        <div class="feat-ico" style="background:rgba(245,166,35,.09)">🏆</div>
+        <h3>Score trader /100</h3>
+        <p>Score hebdomadaire sur 5 axes — discipline, risque, consistance, émotions, performance. Suis ta progression réelle.</p>
         <span class="feat-tag tag-prem">★ Premium</span>
       </div>
-      <div class="feat-card featured">
-        <span class="feat-num">04</span>
-        <div class="feat-ico" style="background:rgba(139,92,246,.09)">🤖</div>
-        <h3>IA Insights & Coach</h3>
-        <p>Claude analyse tes 30 derniers jours de trades et détecte automatiquement tes patterns. "Tu perds après 2 trades perdants consécutifs." Pas des généralités. Tes données.</p>
-        <span class="feat-tag tag-prem">★ Premium</span>
+      <div class="feat-card">
+        <span class="feat-num">09</span>
+        <div class="feat-ico" style="background:rgba(16,185,129,.09)">⚙️</div>
+        <h3>Multi-marché natif</h3>
+        <p>Futures CME (NQ, ES, MES, Gold, 6E), Crypto spot/levier, Forex, Indices CFD. P&L exact en ticks avec multiplicateurs officiels.</p>
+        <span class="feat-tag tag-free">✓ Gratuit</span>
       </div>
     </div>
   </div>
 </section>
 
-<!-- SHOWCASE APP RÉEL -->
-<section class="showcase" id="showcase">
-  <div style="max-width:1100px;margin:0 auto">
-    <div class="reveal" style="text-align:center;margin-bottom:40px">
-      <span class="sec-label">Aperçu de l'app</span>
-      <h2>Chaque vue. <em>Chaque détail.</em></h2>
-      <p class="sec-sub" style="margin:0 auto;text-align:center">Explore les différentes sections de l'application.</p>
-    </div>
-
-    <div class="showcase-tabs reveal">
-      <button class="stab active" onclick="showTab('dash',this)">Dashboard</button>
-      <button class="stab" onclick="showTab('analytics',this)">Analytics</button>
-      <button class="stab" onclick="showTab('ai',this)">IA Insights</button>
-      <button class="stab" onclick="showTab('debrief',this)">Weekly Debrief</button>
-    </div>
-
-    <!-- DASHBOARD -->
-    <div class="showcase-panel active reveal" id="tab-dash">
-      <div class="full-screen">
-        <div class="full-bar"><div class="sdot" style="background:#ef4444"></div><div class="sdot" style="background:#f59e0b"></div><div class="sdot" style="background:#10b981"></div><span class="screen-url" style="margin-left:10px">Dashboard</span></div>
-        <div class="full-body">
-          <div class="full-sidebar">
-            <div class="flogo">
-              <div class="flogo-ic"><svg width="14" height="14" viewBox="0 0 32 32" fill="none"><polyline points="3,16 6,16 8,10 10,22 12,6 14,20 16,12 18,16 29,16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-              <div class="flogo-txt">MyTrading<span>Coach</span></div>
-            </div>
-            <div class="fsec">Trading</div>
-            <div class="fnav act">⬛ Dashboard</div>
-            <div class="fnav">📋 Journal</div>
-            <div class="fnav">📊 Analytics</div>
-            <div class="fsec">Intelligence</div>
-            <div class="fnav">🤖 IA Insights <span class="fbadge">AI</span></div>
-            <div class="fnav">📅 Weekly Debrief <span class="fbadge">PRO</span></div>
-            <div class="fsec">Compte</div>
-            <div class="fnav">🏆 Scoring</div>
-            <div class="fnav">⚙️ Paramètres</div>
-            <div class="fuser">
-              <div class="favatar">AX</div>
-              <div><div class="funame">Alexandre</div><div class="fuplan">★ PREMIUM</div></div>
-            </div>
-          </div>
-          <div class="full-content">
-            <div class="ftopbar">
-              <div>
-                <h3>Bonjour, Alexandre 👋</h3>
-                <div style="font-size:12px;color:var(--txt3);margin-top:3px">Voici un résumé de tes performances</div>
-              </div>
-              <div style="display:flex;gap:8px">
-                <button class="btn-p" style="font-size:12px;padding:7px 14px">⚡ Ajouter trade</button>
-              </div>
-            </div>
-            <div class="fstats">
-              <div class="fstat"><div class="fstat-lbl">P&L Total</div><div class="fstat-val text-g">+$8,420</div><div class="fstat-sub"><span class="fup">▲ +12.3%</span><span>ce mois</span></div></div>
-              <div class="fstat"><div class="fstat-lbl">Win Rate</div><div class="fstat-val text-b">67.4%</div><div class="fstat-sub"><span class="fup">▲ +3.2%</span><span>vs préc.</span></div></div>
-              <div class="fstat"><div class="fstat-lbl">Drawdown</div><div class="fstat-val text-r">-$1,240</div><div class="fstat-sub"><span class="fdn">▼ -4.8%</span><span>sur cap.</span></div></div>
-              <div class="fstat"><div class="fstat-lbl">Trades</div><div class="fstat-val">142</div><div class="fstat-sub"><span class="fup">▲ +18</span><span>sem.</span></div></div>
-            </div>
-            <div class="fcard">
-              <div class="fcard-h"><div class="fcard-t">Equity Curve</div><div style="display:flex;gap:10px"><span style="font-size:10px;color:var(--blue2);font-family:var(--mono);cursor:pointer">3M</span><span style="font-size:10px;color:var(--txt3);font-family:var(--mono)">All</span></div></div>
-              <svg width="100%" height="80" viewBox="0 0 600 80" preserveAspectRatio="none">
-                <defs><linearGradient id="ecg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3b82f6" stop-opacity=".25"/><stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/></linearGradient></defs>
-                <path d="M0,72 C40,64 70,56 100,50 C130,44 155,38 185,30 C215,22 235,34 260,26 C285,18 310,12 340,9 C370,6 390,14 420,10 C450,6 480,4 520,3 C550,2 575,2 600,2" fill="none" stroke="#3b82f6" stroke-width="2"/>
-                <path d="M0,72 C40,64 70,56 100,50 C130,44 155,38 185,30 C215,22 235,34 260,26 C285,18 310,12 340,9 C370,6 390,14 420,10 C450,6 480,4 520,3 C550,2 575,2 600,2 L600,80 L0,80Z" fill="url(#ecg)"/>
-                <circle cx="600" cy="2" r="4" fill="#3b82f6"/>
-              </svg>
-            </div>
-            <div class="fgrid2">
-              <div class="fcard" style="margin:0">
-                <div class="fcard-h"><div class="fcard-t">Win Rate par stratégie</div></div>
-                <div style="display:flex;gap:14px;align-items:center">
-                  <svg width="72" height="72" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="#111b2e" stroke-width="10"/><circle cx="50" cy="50" r="38" fill="none" stroke="#10b981" stroke-width="10" stroke-dasharray="160 79" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 50 50)"/><circle cx="50" cy="50" r="38" fill="none" stroke="#3b82f6" stroke-width="10" stroke-dasharray="57 182" stroke-dashoffset="-160" stroke-linecap="round" transform="rotate(-90 50 50)"/><circle cx="50" cy="50" r="38" fill="none" stroke="#ef4444" stroke-width="10" stroke-dasharray="22 217" stroke-dashoffset="-217" stroke-linecap="round" transform="rotate(-90 50 50)"/><text x="50" y="54" text-anchor="middle" font-family="Inter" font-weight="700" font-size="16" fill="#e2eaf5">67%</text></svg>
-                  <div style="flex:1;display:flex;flex-direction:column;gap:7px;font-size:11px">
-                    <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0"></div>Breakout<span style="margin-left:auto;font-family:var(--mono);color:var(--txt)">74%</span></div>
-                    <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:var(--blue);flex-shrink:0"></div>Pullback<span style="margin-left:auto;font-family:var(--mono);color:var(--txt)">62%</span></div>
-                    <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:var(--yel);flex-shrink:0"></div>Range<span style="margin-left:auto;font-family:var(--mono);color:var(--txt)">58%</span></div>
-                    <div style="display:flex;align-items:center;gap:6px;color:var(--txt2)"><div style="width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0"></div>Reversal<span style="margin-left:auto;font-family:var(--mono);color:var(--txt)">41%</span></div>
-                  </div>
-                </div>
-              </div>
-              <div class="fcard" style="margin:0">
-                <div class="fcard-h"><div class="fcard-t">États émotionnels</div></div>
-                <div style="display:flex;flex-direction:column;gap:10px">
-                  <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>😤 Revenge</span><span class="mono" style="font-size:10px;color:var(--txt3)">23%</span></div><div style="height:5px;background:var(--bg3);border-radius:3px"><div style="width:23%;height:100%;background:var(--red);border-radius:3px"></div></div></div>
-                  <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>😰 Stress</span><span class="mono" style="font-size:10px;color:var(--txt3)">31%</span></div><div style="height:5px;background:var(--bg3);border-radius:3px"><div style="width:31%;height:100%;background:var(--yel);border-radius:3px"></div></div></div>
-                  <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>😌 Confiant</span><span class="mono" style="font-size:10px;color:var(--txt3)">68%</span></div><div style="height:5px;background:var(--bg3);border-radius:3px"><div style="width:68%;height:100%;background:var(--blue);border-radius:3px"></div></div></div>
-                  <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px"><span>🎯 Focus</span><span class="mono" style="font-size:10px;color:var(--txt3)">52%</span></div><div style="height:5px;background:var(--bg3);border-radius:3px"><div style="width:52%;height:100%;background:var(--green);border-radius:3px"></div></div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ANALYTICS -->
-    <div class="showcase-panel" id="tab-analytics">
-      <div class="full-screen">
-        <div class="full-bar"><div class="sdot" style="background:#ef4444"></div><div class="sdot" style="background:#f59e0b"></div><div class="sdot" style="background:#10b981"></div><span class="screen-url" style="margin-left:10px">Analytics avancés</span></div>
-        <div class="full-body">
-          <div class="full-sidebar">
-            <div class="flogo"><div class="flogo-ic"><svg width="14" height="14" viewBox="0 0 32 32" fill="none"><polyline points="3,16 6,16 8,10 10,22 12,6 14,20 16,12 18,16 29,16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="flogo-txt">MyTrading<span>Coach</span></div></div>
-            <div class="fsec">Trading</div>
-            <div class="fnav">⬛ Dashboard</div>
-            <div class="fnav">📋 Journal</div>
-            <div class="fnav act">📊 Analytics</div>
-            <div class="fsec">Intelligence</div>
-            <div class="fnav">🤖 IA Insights <span class="fbadge">AI</span></div>
-            <div class="fnav">📅 Weekly Debrief <span class="fbadge">PRO</span></div>
-            <div class="fsec">Compte</div>
-            <div class="fnav">🏆 Scoring</div>
-            <div class="fuser"><div class="favatar">AX</div><div><div class="funame">Alexandre</div><div class="fuplan">★ PREMIUM</div></div></div>
-          </div>
-          <div class="full-content">
-            <div class="ftopbar"><h3>Analytics avancés</h3></div>
-            <div class="fstats" style="margin-bottom:14px">
-              <div class="fstat"><div class="fstat-lbl">Ratio G/P</div><div class="fstat-val text-g">2.34</div><div class="fstat-sub"><span class="fup">optimal</span></div></div>
-              <div class="fstat"><div class="fstat-lbl">Top session</div><div class="fstat-val text-b" style="font-size:16px">London</div><div class="fstat-sub">74% wr</div></div>
-              <div class="fstat"><div class="fstat-lbl">Heure top</div><div class="fstat-val">09:30</div><div class="fstat-sub">ouverture NY</div></div>
-              <div class="fstat"><div class="fstat-lbl">Streak</div><div class="fstat-val text-g">+7</div><div class="fstat-sub"><span class="fup">série gagnante</span></div></div>
-            </div>
-            <div class="fgrid2" style="margin-bottom:12px">
-              <div class="fcard" style="margin:0">
-                <div class="fcard-h"><div class="fcard-t">Heatmap — Performance horaire</div></div>
-                <div style="display:flex;gap:4px;margin-bottom:4px;font-size:9px;color:var(--txt3);font-family:var(--mono)">
-                  <span style="width:44px">Lun</span><span style="width:44px">Mar</span><span style="width:44px">Mer</span><span style="width:44px">Jeu</span><span style="width:44px">Ven</span>
-                </div>
-                <div class="heat-grid">
-                  <script>const hvals=[.9,.7,.5,.3,.2,.4,.8,.6,.7,.5,.3,.8,.7,.4,.2,.6,.5,.4,.3,.2,.1,.3,.7,.8,.4,.3,.2,.1,.2,.4,.5,.6,.8,.7,.6,.5,.4,.3,.2,.1];hvals.forEach(v=>{const c=v>.7?'#10b981':v>.5?'#1e5c3a':v>.3?'#1a3a2a':'#1a2535';document.write(`<div class="hcell" style="background:${c}" title="${Math.round(v*100)}%"></div>`)})</script>
-                </div>
-              </div>
-              <div class="fcard" style="margin:0">
-                <div class="fcard-h"><div class="fcard-t">Top actifs</div></div>
-                <table class="ftable">
-                  <thead><tr><th>Actif</th><th>Win%</th><th>P&L</th></tr></thead>
-                  <tbody>
-                    <tr><td class="mono text-b">BTC/USDT</td><td class="text-g">71%</td><td class="mono text-g">+$3,240</td></tr>
-                    <tr><td class="mono text-b">EUR/USD</td><td class="text-g">66%</td><td class="mono text-g">+$1,820</td></tr>
-                    <tr><td class="mono text-b">ETH/USDT</td><td class="text-g">62%</td><td class="mono text-g">+$980</td></tr>
-                    <tr><td class="mono text-b">AAPL</td><td class="text-y">55%</td><td class="mono text-g">+$440</td></tr>
-                    <tr><td class="mono text-b">GBP/USD</td><td class="text-r">46%</td><td class="mono text-r">-$180</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div class="fcard">
-              <div class="fcard-h"><div class="fcard-t">Courbe de drawdown</div></div>
-              <svg width="100%" height="70" viewBox="0 0 600 70" preserveAspectRatio="none">
-                <defs><linearGradient id="dg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ef4444" stop-opacity=".2"/><stop offset="100%" stop-color="#ef4444" stop-opacity="0"/></linearGradient></defs>
-                <path d="M0,5 C30,8 60,12 90,18 C120,24 140,30 160,35 C180,40 195,36 210,32 C225,28 240,22 260,18 C280,14 300,20 320,28 C340,36 355,40 370,35 C385,30 400,22 430,15 C460,8 490,6 530,4 C555,3 575,3 600,3" fill="none" stroke="#ef4444" stroke-width="1.5"/>
-                <path d="M0,5 C30,8 60,12 90,18 C120,24 140,30 160,35 C180,40 195,36 210,32 C225,28 240,22 260,18 C280,14 300,20 320,28 C340,36 355,40 370,35 C385,30 400,22 430,15 C460,8 490,6 530,4 C555,3 575,3 600,3 L600,70 L0,70Z" fill="url(#dg)"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- IA INSIGHTS -->
-    <div class="showcase-panel" id="tab-ai">
-      <div class="full-screen">
-        <div class="full-bar"><div class="sdot" style="background:#ef4444"></div><div class="sdot" style="background:#f59e0b"></div><div class="sdot" style="background:#10b981"></div><span class="screen-url" style="margin-left:10px">IA Insights — Powered by Claude</span></div>
-        <div class="full-body">
-          <div class="full-sidebar">
-            <div class="flogo"><div class="flogo-ic"><svg width="14" height="14" viewBox="0 0 32 32" fill="none"><polyline points="3,16 6,16 8,10 10,22 12,6 14,20 16,12 18,16 29,16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="flogo-txt">MyTrading<span>Coach</span></div></div>
-            <div class="fsec">Trading</div>
-            <div class="fnav">⬛ Dashboard</div>
-            <div class="fnav">📋 Journal</div>
-            <div class="fnav">📊 Analytics</div>
-            <div class="fsec">Intelligence</div>
-            <div class="fnav act">🤖 IA Insights <span class="fbadge">AI</span></div>
-            <div class="fnav">📅 Weekly Debrief <span class="fbadge">PRO</span></div>
-            <div class="fsec">Compte</div>
-            <div class="fnav">🏆 Scoring</div>
-            <div class="fuser"><div class="favatar">AX</div><div><div class="funame">Alexandre</div><div class="fuplan">★ PREMIUM</div></div></div>
-          </div>
-          <div class="full-content">
-            <div class="ai-banner">
-              <div class="ai-banner-icon">🤖</div>
-              <div><div class="ai-banner-t">IA d'analyse — Powered by Claude</div><div class="ai-banner-d">Analyse comportementale et patterns cachés détectés dans 142 trades.</div></div>
-              <button class="btn-p" style="font-size:11px;padding:7px 14px;margin-left:auto;flex-shrink:0">⚡ Générer insights</button>
-            </div>
-            <div class="fgrid2">
-              <div style="display:flex;flex-direction:column;gap:0">
-                <div style="font-family:var(--disp);font-size:12px;font-weight:600;margin-bottom:10px">🎯 Insights personnalisés</div>
-                <div class="insight-row">
-                  <div class="i-ico" style="background:rgba(239,68,68,.1)">🔴</div>
-                  <div style="flex:1"><div class="i-t">Pattern : Revenge Trading détecté</div><div class="i-d">Après 2 pertes consécutives, ton taux de perte grimpe à 78%.</div></div>
-                  <span class="i-tag" style="background:rgba(239,68,68,.1);color:var(--red)">CRITIQUE</span>
-                </div>
-                <div class="insight-row">
-                  <div class="i-ico" style="background:rgba(245,158,11,.1)">⚠️</div>
-                  <div style="flex:1"><div class="i-t">Soirée : performances dégradées</div><div class="i-d">Entre 20h et 23h, win rate = 38%. Tes meilleurs trades sont avant 16h.</div></div>
-                  <span class="i-tag" style="background:rgba(245,158,11,.1);color:var(--yel)">TIMING</span>
-                </div>
-                <div class="insight-row">
-                  <div class="i-ico" style="background:rgba(16,185,129,.1)">✅</div>
-                  <div style="flex:1"><div class="i-t">Setup Breakout : ton point fort</div><div class="i-d">74% win rate sur les breakouts avec confirmation volume.</div></div>
-                  <span class="i-tag" style="background:rgba(16,185,129,.1);color:var(--green)">FORCE</span>
-                </div>
-                <div class="insight-row">
-                  <div class="i-ico" style="background:rgba(59,130,246,.1)">💡</div>
-                  <div style="flex:1"><div class="i-t">Taille de position inconstante</div><div class="i-d">Tu augmentes ton risk après une série gagnante. Overconfidence détectée.</div></div>
-                  <span class="i-tag" style="background:rgba(59,130,246,.1);color:var(--blue2)">RISQUE</span>
-                </div>
-              </div>
-              <div class="fcard" style="margin:0">
-                <div class="fcard-h"><div class="fcard-t">💬 Coach IA</div></div>
-                <div style="background:var(--bg3);border-radius:9px;padding:12px;border:1px solid var(--b);margin-bottom:12px">
-                  <div style="font-size:11px;font-weight:600;color:var(--blue2);font-family:var(--disp);margin-bottom:6px">🤖 MyTradingCoach</div>
-                  <div style="font-size:12px;color:var(--txt2);line-height:1.7">Analyse de tes 142 trades complète. Je détecte 3 patterns comportementaux. Ta principale faiblesse : le <strong style="color:var(--red)">revenge trading</strong> post-perte. Veux-tu un plan d'amélioration ?</div>
-                </div>
-                <div style="background:rgba(16,185,129,.05);border-radius:9px;padding:10px 12px;border:1px solid rgba(16,185,129,.1);margin-bottom:12px;text-align:right">
-                  <div style="font-size:11px;font-weight:600;color:var(--green);margin-bottom:4px">Toi</div>
-                  <div style="font-size:12px;color:var(--txt2)">Pourquoi je perds autant après une série de pertes ?</div>
-                </div>
-                <div style="display:flex;gap:8px">
-                  <input type="text" placeholder="Pose une question à ton coach..." style="flex:1;background:var(--bg3);border:1px solid var(--b);border-radius:8px;padding:8px 11px;color:var(--txt);font-size:12px;font-family:var(--body);outline:none">
-                  <button class="btn-p" style="font-size:12px;padding:8px 14px">→</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- WEEKLY DEBRIEF -->
-    <div class="showcase-panel" id="tab-debrief">
-      <div class="full-screen">
-        <div class="full-bar"><div class="sdot" style="background:#ef4444"></div><div class="sdot" style="background:#f59e0b"></div><div class="sdot" style="background:#10b981"></div><span class="screen-url" style="margin-left:10px">Weekly Debrief — Semaine 12</span></div>
-        <div class="full-body">
-          <div class="full-sidebar">
-            <div class="flogo"><div class="flogo-ic"><svg width="14" height="14" viewBox="0 0 32 32" fill="none"><polyline points="3,16 6,16 8,10 10,22 12,6 14,20 16,12 18,16 29,16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="flogo-txt">MyTrading<span>Coach</span></div></div>
-            <div class="fsec">Trading</div>
-            <div class="fnav">⬛ Dashboard</div>
-            <div class="fnav">📋 Journal</div>
-            <div class="fnav">📊 Analytics</div>
-            <div class="fsec">Intelligence</div>
-            <div class="fnav">🤖 IA Insights <span class="fbadge">AI</span></div>
-            <div class="fnav act">📅 Weekly Debrief <span class="fbadge">PRO</span></div>
-            <div class="fsec">Compte</div>
-            <div class="fnav">🏆 Scoring</div>
-            <div class="fuser"><div class="favatar">AX</div><div><div class="funame">Alexandre</div><div class="fuplan">★ PREMIUM</div></div></div>
-          </div>
-          <div class="full-content">
-            <div class="ftopbar">
-              <div><h3>Semaine 12 — 17–23 mars 2026</h3><div style="font-size:11px;color:var(--txt3);margin-top:3px">28 trades · généré dim. 23h00</div></div>
-              <button class="btn-p" style="font-size:11px;padding:7px 14px">📄 Export PDF</button>
-            </div>
-            <div class="fstats" style="margin-bottom:14px">
-              <div class="fstat"><div class="fstat-lbl">P&L net</div><div class="fstat-val text-g">+$1 840</div><div class="fstat-sub"><span class="fup">▲ +14%</span></div></div>
-              <div class="fstat"><div class="fstat-lbl">Win rate</div><div class="fstat-val text-b">67%</div><div class="fstat-sub"><span class="fup">▲ +3pts</span></div></div>
-              <div class="fstat"><div class="fstat-lbl">Trades</div><div class="fstat-val">28</div><div class="fstat-sub"><span style="color:var(--green);font-family:var(--mono);font-size:9px">19W</span><span style="color:var(--red);font-family:var(--mono);font-size:9px">9L</span></div></div>
-              <div class="fstat"><div class="fstat-lbl">Score</div><div class="fstat-val">74<span style="font-size:12px;color:var(--txt3)">/100</span></div><div class="fstat-sub"><span class="fup">▲ +2pts</span></div></div>
-            </div>
-            <div class="deb-ai">
-              <div class="deb-ai-lbl"><div class="ai-dot-anim"></div>Analyse IA — résumé de semaine</div>
-              <div class="deb-ai-txt">Bonne semaine. Tu as <strong>respecté tes stops à 100%</strong> — une première en 6 semaines. Ton talon d'Achille reste le <span class="warn">jeudi après-midi</span> : 4 trades sur 5 perdants entre 15h–17h. Si tu corriges ce créneau, ton win rate structurel dépasse <span class="good">72%</span> dès la semaine prochaine.</div>
-            </div>
-            <div class="fgrid2">
-              <div>
-                <div style="font-size:11px;font-family:var(--mono);color:var(--txt3);letter-spacing:.7px;text-transform:uppercase;margin-bottom:8px">✅ Points forts</div>
-                <div class="pts-row"><span class="dbadge-g">Force</span><div class="pts-txt" style="margin-left:8px">Stops respectés sur <strong style="color:var(--txt)">100%</strong> des 28 trades.</div></div>
-                <div class="pts-row"><span class="dbadge-g">Force</span><div class="pts-txt" style="margin-left:8px">Breakouts BTC avec RR moyen de <strong style="color:var(--txt)">2.4</strong>.</div></div>
-                <div class="pts-row"><span class="dbadge-g">Force</span><div class="pts-txt" style="margin-left:8px">Session London : <strong style="color:var(--txt)">78% win rate</strong> cette semaine.</div></div>
-              </div>
-              <div>
-                <div style="font-size:11px;font-family:var(--mono);color:var(--txt3);letter-spacing:.7px;text-transform:uppercase;margin-bottom:8px">⚠️ Points faibles</div>
-                <div class="pts-row"><span class="dbadge-r">Critique</span><div class="pts-txt" style="margin-left:8px">Jeudi 15h–17h : <strong style="color:var(--txt)">1W / 4L</strong>. Fatigue fin de session.</div></div>
-                <div class="pts-row"><span class="dbadge-y">Attention</span><div class="pts-txt" style="margin-left:8px">Vendredi matin : overtrading — <strong style="color:var(--txt)">3 trades inutiles</strong>.</div></div>
-                <div class="pts-row"><span class="dbadge-y">Attention</span><div class="pts-txt" style="margin-left:8px">GBP/USD : 3ème semaine en perte. <strong style="color:var(--txt)">À éviter</strong>.</div></div>
-              </div>
-            </div>
-            <div style="margin-top:12px">
-              <div style="font-size:11px;font-family:var(--mono);color:var(--txt3);letter-spacing:.7px;text-transform:uppercase;margin-bottom:8px">🎯 Objectifs semaine 13 — générés par IA</div>
-              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-                <div class="obj-box"><div class="obj-circle">○</div><div><div class="obj-title">Stopper après 15h le jeudi</div><div class="obj-meta">Pattern 1W/4L détecté 3 semaines.</div></div></div>
-                <div class="obj-box"><div class="obj-circle">○</div><div><div class="obj-title">Max 4 trades le vendredi matin</div><div class="obj-meta">Prévenir l'overtrading post-gain.</div></div></div>
-                <div class="obj-box"><div class="obj-circle">○</div><div><div class="obj-title">Éviter GBP/USD</div><div class="obj-meta">Win rate trop faible — 3ème semaine.</div></div></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- DEBRIEF SECTION MARKETING -->
-<section class="deb-section" id="debrief">
-  <div class="deb-layout">
-    <div class="reveal">
-      <span class="sec-label">La feature principale</span>
-      <h2>Ton coach <em>personnel</em> chaque dimanche soir</h2>
-      <p class="sec-sub">Chaque semaine, l'IA analyse l'intégralité de tes trades, détecte ce que tu aurais du mal à voir toi-même, et te fixe 3 objectifs concrets pour la semaine suivante.</p>
-      <div class="deb-points">
-        <div class="deb-pt">
-          <div class="deb-pt-ic" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2)">✓</div>
-          <div><div class="deb-pt-t">Résumé en langage naturel</div><div class="deb-pt-d">Pas des stats brutes — une analyse rédigée qui nomme tes vraies failles.</div></div>
-        </div>
-        <div class="deb-pt">
-          <div class="deb-pt-ic" style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2)">🎯</div>
-          <div><div class="deb-pt-t">3 objectifs personnalisés</div><div class="deb-pt-d">Générés depuis tes propres patterns. Pas des conseils génériques de YouTube.</div></div>
-        </div>
-        <div class="deb-pt">
-          <div class="deb-pt-ic" style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2)">📈</div>
-          <div><div class="deb-pt-t">Boucle semaine après semaine</div><div class="deb-pt-d">Les objectifs S11 deviennent le bilan de S12. Tu mesures ta progression.</div></div>
-        </div>
-      </div>
-    </div>
-    <div class="reveal" style="transition-delay:.15s">
-      <div class="deb-mock">
-        <div class="dm-week">Rapport hebdomadaire — Semaine 12</div>
-        <div class="dm-title">Weekly Debrief IA</div>
-        <div class="dm-sub">28 trades analysés · généré dim. 23h00</div>
-        <div class="dm-stats">
-          <div class="dm-stat"><div class="dm-val text-g">+$1 840</div><div class="dm-lbl">P&L net</div></div>
-          <div class="dm-stat"><div class="dm-val text-b">67%</div><div class="dm-lbl">Win rate</div></div>
-          <div class="dm-stat"><div class="dm-val">74<span style="font-size:11px;color:var(--txt3)">/100</span></div><div class="dm-lbl">Score</div></div>
-        </div>
-        <div class="dm-ai">
-          <div class="dm-ai-lbl"><div class="ai-dot-anim"></div>Analyse IA</div>
-          <div class="dm-ai-txt">Tu as <strong>respecté tes stops à 100%</strong> — une première en 6 semaines. Ton talon d'Achille reste le <span class="warn">jeudi après 15h</span> : 4 trades sur 5 perdants. Si tu corriges ce seul créneau, ton win rate structurel dépasse <strong class="good">72%</strong>.</div>
-        </div>
-        <div class="dm-obj-title">Objectifs semaine prochaine</div>
-        <div class="dm-obj"><div class="dm-obj-dot">○</div>Stopper toute activité le jeudi après 15h</div>
-        <div class="dm-obj"><div class="dm-obj-dot">○</div>Max 4 trades le vendredi matin</div>
-        <div class="dm-obj"><div class="dm-obj-dot">○</div>Éviter GBP/USD — 3ème semaine en perte</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- COMPARAISON -->
+<!-- COMPARE -->
 <section class="comp-section" id="compare">
   <div style="max-width:1100px;margin:0 auto">
     <div class="reveal" style="text-align:center">
       <span class="sec-label">Comparaison</span>
       <h2>Pourquoi MyTradingCoach <em>plutôt que</em> les autres ?</h2>
-      <p class="sec-sub" style="margin:0 auto;text-align:center">On ne prétend pas être le meilleur sur tout. On est le seul à combiner journal, coach IA et debrief hebdomadaire à ce prix.</p>
+      <p class="sec-sub" style="margin:0 auto;text-align:center;max-width:500px">Les autres journaux de trading analysent après. MTC supervise avant, pendant et après.</p>
     </div>
-    <div class="reveal" style="overflow-x:auto">
-      <table class="comp-table">
-        <thead>
-          <tr>
-            <th>Fonctionnalité</th>
-            <th class="hl">MyTradingCoach</th>
-            <th>TraderSync</th>
-            <th>TradesViz</th>
-            <th>Edgely</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td>Journal de trading</td><td><span class="comp-yes">✓</span></td><td><span class="comp-yes">✓</span></td><td><span class="comp-yes">✓</span></td><td><span class="comp-yes">✓</span></td></tr>
-          <tr><td>Analytics avancés</td><td><span class="comp-yes">✓</span></td><td><span class="comp-yes">✓</span></td><td><span class="comp-yes">✓</span></td><td><span class="comp-yes">✓</span></td></tr>
-          <tr><td>Tracking émotionnel</td><td><span class="comp-yes">✓</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td></tr>
-          <tr><td>Coach IA conversationnel</td><td><span class="comp-yes">✓</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td></tr>
-          <tr style="background:rgba(34,211,238,.02)"><td style="font-weight:500;color:var(--txt)">Weekly Debrief IA automatique</td><td><span class="comp-yes" style="color:var(--pulse)">✓</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td></tr>
-          <tr><td>Import broker automatique</td><td><span class="comp-soon">Bientôt</span></td><td><span class="comp-yes">✓</span></td><td><span class="comp-yes">✓</span></td><td><span class="comp-no">–</span></td></tr>
-          <tr><td>Hébergé en France 🇫🇷</td><td><span class="comp-yes">✓</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td></tr>
-          <tr><td>Prix mensuel</td><td><span class="comp-price-hl">39 €/mois</span></td><td><span class="comp-price">30–80 $</span></td><td><span class="comp-price">10–29 $</span></td><td><span class="comp-price">~€15</span></td></tr>
-        </tbody>
-      </table>
-      <p class="comp-note">Données basées sur les fonctionnalités publiquement documentées. Mise à jour mars 2026.</p>
+    <div class="reveal">
+      <div class="table-wrapper">
+        <table class="comp-table">
+          <thead>
+            <tr>
+              <th style="text-align:left">Fonctionnalité</th>
+              <th class="hl">MyTradingCoach</th>
+              <th>TraderSync</th>
+              <th>TradesViz</th>
+              <th>Edgely</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Journal de trading</td><td><span class="comp-yes">✓</span></td><td><span class="comp-yes">✓</span></td><td><span class="comp-yes">✓</span></td><td><span class="comp-yes">✓</span></td></tr>
+            <tr><td>Analytics avancés</td><td><span class="comp-yes">✓</span></td><td><span class="comp-yes">✓</span></td><td><span class="comp-yes">✓</span></td><td><span class="comp-yes">✓</span></td></tr>
+            <tr><td>Tracking émotionnel</td><td><span class="comp-yes">✓</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td></tr>
+            <tr><td>Coach IA conversationnel</td><td><span class="comp-yes">✓</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td></tr>
+            <tr style="background:rgba(34,211,238,.02)"><td style="font-weight:500;color:var(--txt)">Weekly Debrief IA automatique</td><td><span class="comp-yes" style="color:var(--pulse)">✓</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td></tr>
+            <tr><td>Pré-session matin <span class="comp-new">NEW</span></td><td><span class="comp-yes" style="color:var(--pulse)">✓</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td></tr>
+            <tr><td>Session live + trade rapide <span class="comp-new">NEW</span></td><td><span class="comp-yes" style="color:var(--pulse)">✓</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td></tr>
+            <tr><td>Calendrier éco IA filtré <span class="comp-new">NEW</span></td><td><span class="comp-yes" style="color:var(--pulse)">✓</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td></tr>
+            <tr><td>Recap journalier email 17h30 <span class="comp-new">NEW</span></td><td><span class="comp-yes" style="color:var(--pulse)">✓</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td></tr>
+            <tr><td>Import CSV universel (broker-agnostic)</td><td><span class="comp-yes">✓</span></td><td><span class="comp-yes">✓</span></td><td><span class="comp-yes">✓</span></td><td><span class="comp-no">–</span></td></tr>
+            <tr><td>Hébergé en France 🇫🇷</td><td><span class="comp-yes">✓</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td></tr>
+            <tr><td>Prix mensuel</td><td><span class="comp-price-hl">39 €/mois</span></td><td><span class="comp-price">30–80 $</span></td><td><span class="comp-price">10–29 $</span></td><td><span class="comp-price">~€15</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="comp-note">Données basées sur les fonctionnalités publiquement documentées · Mise à jour mai 2026</p>
     </div>
   </div>
 </section>
 
 <!-- PRICING -->
-<section id="pricing" style="padding:96px 5%;text-align:center">
-  <div class="reveal">
-    <span class="sec-label">Tarifs</span>
-    <h2>Simple et <em>transparent</em></h2>
-    <p style="color:var(--txt2);font-size:17px;font-weight:300;max-width:460px;margin:0 auto">Commence gratuitement, sans CB. Passe Premium quand tu es prêt — essai 7 jours inclus. Prix en euros TTC, facturé depuis la France 🇫🇷.</p>
-  </div>
-  <div class="price-grid reveal" style="transition-delay:.1s">
-    <div class="price-card">
-      <div class="price-name">Gratuit</div>
-      <div class="price-amt">
-        <span class="price-amt-num">0</span>
-        <span class="price-amt-cur">€</span>
-      </div>
-      <div class="price-period">pour toujours · sans CB requise</div>
-      <div class="price-divider"></div>
-      <ul class="price-feats" style="margin-top:24px">
-        <li>50 trades par mois</li>
-        <li>Journal complet — émotions, setup, notes</li>
-        <li>Tracking émotionnel</li>
-        <li>Stats de base — win rate, P&L, top session, heure top</li>
-        <li>Historique illimité</li>
-        <li class="no">Analytics avancés — heatmap, courbes, top actifs</li>
-        <li class="no">IA Insights &amp; Chat coach</li>
-        <li class="no">Weekly Debrief automatique</li>
-        <li class="no">Score trader</li>
-      </ul>
-      <a href="https://app.mytradingcoach.app/register" class="price-cta ghost">Commencer gratuitement</a>
+<section id="pricing" style="padding:80px 5%">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="reveal" style="text-align:center;max-width:600px;margin:0 auto">
+      <span class="sec-label">Tarifs</span>
+      <h2>Simple. <em>Transparent.</em></h2>
+      <p class="sec-sub">Gratuit pour démarrer. Premium pour avoir ton superviseur complet. 7 jours d'essai — aucun prélèvement avant la fin.</p>
     </div>
-    <div class="price-card feat" style="padding-top:44px">
-      <div class="price-pop">⭐ Recommandé</div>
-      <div class="price-name">Premium</div>
-      <div class="price-amt">
-        <span class="price-amt-num">29</span>
-        <span class="price-amt-cur">€</span>
-        <span class="price-amt-per">/mois</span>
+    <div class="price-grid reveal" style="transition-delay:.1s">
+      <div class="price-card">
+        <div class="price-name">Gratuit</div>
+        <div class="price-amt"><span class="price-amt-num">0</span><span class="price-amt-cur">€</span></div>
+        <div class="price-period">pour toujours · aucune CB requise</div>
+        <div class="price-divider"></div>
+        <ul class="price-feats">
+          <li>30 trades par mois</li>
+          <li>Journal complet — émotions, setup, notes</li>
+          <li>Tracking émotionnel</li>
+          <li>Stats de base — win rate, P&L, top session</li>
+          <li>Historique illimité</li>
+          <li>Import CSV universel (tous brokers)</li>
+          <li>Pré-session matin <span class="feat-new">NEW</span></li>
+          <li>Session live + trade rapide <span class="feat-new">NEW</span></li>
+          <li>Multi-marché — Futures, Crypto, Forex</li>
+        </ul>
+        <a href="https://app.mytradingcoach.app/register" class="price-cta ghost">Commencer gratuitement</a>
       </div>
-      <div class="price-period">ou 349 €/an — tu économises 119 €</div>
-      <div class="price-divider"></div>
-      <ul class="price-feats" style="margin-top:24px">
-        <li>Trades illimités</li>
-        <li>Tout le plan FREE inclus</li>
-        <li>Analytics avancés — heatmap, equity curve, top actifs, setup</li>
-        <li>IA Insights — analyse de tes patterns par Claude</li>
-        <li>Chat coach IA personnalisé</li>
-        <li>Weekly Debrief automatique chaque dimanche</li>
-        <li>Score trader — 5 axes de progression</li>
-        <li>Export PDF des debriefs</li>
-        <li>Hébergé en France 🇫🇷 · Données chiffrées</li>
-      </ul>
-      <a href="https://app.mytradingcoach.app/register?plan=premium" class="price-cta prim">Essayer 7 jours gratuit →</a>
+      <div class="price-card feat" style="padding-top:44px">
+        <div class="price-pop">⭐ Recommandé</div>
+        <div class="price-urgency">🔥 7 jours gratuits — aucun prélèvement avant la fin</div>
+        <div class="price-name">Premium</div>
+        <div class="price-amt"><span class="price-amt-num">39</span><span class="price-amt-cur">€</span><span class="price-amt-per">/mois</span></div>
+        <div class="price-period">ou 349 €/an — tu économises 119 €</div>
+        <div class="price-divider"></div>
+        <ul class="price-feats">
+          <li>Tout le plan Gratuit inclus</li>
+          <li>Trades illimités</li>
+          <li>Analytics avancés — heatmap, equity curve, drawdown</li>
+          <li>✨ IA Insights — analyse de tes patterns <small class="feat-limit">(1 analyse / 4h)</small></li>
+          <li>💬 Chat coach IA personnalisé <small class="feat-limit">(50 messages/jour)</small></li>
+          <li>📅 Calendrier éco IA — filtré pour tes actifs <span class="feat-new">NEW</span></li>
+          <li>🌙 Recap journalier email 17h30 <span class="feat-new">NEW</span></li>
+          <li>📋 Weekly Debrief IA automatique</li>
+          <li>🏆 Score trader /100 hebdomadaire</li>
+          <li>📄 Export PDF rapport mensuel</li>
+        </ul>
+        <a href="https://app.mytradingcoach.app/register?plan=premium" class="price-cta prim">Essayer 7 jours gratuit →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="social-section" id="avis">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="reveal" style="text-align:center;max-width:500px;margin:0 auto">
+      <span class="sec-label">Ils utilisent MTC</span>
+      <h2>Ce que disent nos <em>premiers traders</em></h2>
+    </div>
+    <div class="social-grid rstag">
+      <div class="social-card">
+        <p class="social-text">"J'ai enfin arrêté de trader après 20h. MTC me montrait chaque semaine que mon win rate le soir était de 28%. <strong>Ça m'a coûté des mois à accepter, mais les données ne mentent pas.</strong>"</p>
+        <div class="social-author">
+          <div class="social-avatar" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6)">AL</div>
+          <div><div class="social-name">Alex L.</div><div class="social-role">Scalper ICT · Futures NQ</div></div>
+        </div>
+      </div>
+      <div class="social-card">
+        <p class="social-text">"Le calendrier éco filtré pour mes actifs change tout. Avant j'oubliais le NFP, maintenant <strong>mon superviseur me le rappelle chaque matin avec l'impact attendu sur BTC et NQ</strong>."</p>
+        <div class="social-author">
+          <div class="social-avatar" style="background:linear-gradient(135deg,#10b981,#3b82f6)">MK</div>
+          <div><div class="social-name">Marc K.</div><div class="social-role">Day trader · Crypto Futures</div></div>
+        </div>
+      </div>
+      <div class="social-card">
+        <p class="social-text">"Le recap à 17h30 a changé ma routine. Je lis mes résultats avant le dîner, pas le week-end. <strong>Je corrige dès le lendemain matin. Ma progression est visible semaine après semaine.</strong>"</p>
+        <div class="social-author">
+          <div class="social-avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">SR</div>
+          <div><div class="social-name">Sophie R.</div><div class="social-role">Swing trader · Forex EUR/USD</div></div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -1118,33 +876,33 @@ footer{border-top:1px solid var(--b);padding:44px 5%;display:flex;align-items:ce
 <section class="faq-section" id="faq">
   <div style="max-width:1100px;margin:0 auto">
     <div class="reveal" style="text-align:center">
-      <span class="sec-label">FAQ</span>
-      <h2>Questions <em>fréquentes</em></h2>
+      <span class="sec-label">Questions fréquentes</span>
+      <h2>Tout ce que tu veux <em>savoir</em></h2>
     </div>
-    <div class="faq-wrap reveal" style="transition-delay:.1s">
-      <div class="faq-item">
-        <button class="faq-q" onclick="faq(this)">C'est quoi exactement MyTradingCoach ?<span class="faq-arrow">+</span></button>
-        <div class="faq-a">MyTradingCoach est un journal de trading intelligent. Tu enregistres tes trades et ton état émotionnel, et l'IA analyse tout ça pour identifier tes patterns comportementaux — les heures où tu perds, les émotions qui précèdent tes mauvaises décisions, tes stratégies gagnantes. Chaque dimanche, tu reçois un debrief complet avec 3 objectifs pour la semaine suivante.</div>
+    <div class="faq-list reveal">
+      <div class="faq-item open">
+        <div class="faq-q" onclick="toggleFaq(this)">Quelle est la différence avec un journal de trading classique ? <span class="faq-arrow">▼</span></div>
+        <div class="faq-a">Un journal de trading classique, tu l'ouvres après avoir perdu pour analyser ce qui s'est passé. MTC est un journal de trading intelligent qui va plus loin — il fonctionne comme un superviseur : Un journal, tu l'ouvres après avoir perdu pour analyser ce qui s'est passé. Un superviseur est là avant (il te prépare), pendant (il surveille en temps réel) et après (il débrieffe). MTC est le premier outil de trading qui couvre les 3 moments — grâce à l'IA qui connaît ton profil, tes actifs et tes patterns.</div>
       </div>
       <div class="faq-item">
-        <button class="faq-q" onclick="faq(this)">Quels marchés sont supportés ?<span class="faq-arrow">+</span></button>
-        <div class="faq-a">MyTradingCoach fonctionne pour tous les marchés : crypto (BTC, ETH, SOL...), forex (EUR/USD, GBP/USD...), actions (AAPL, TSLA...) et indices. Tu saisis les données manuellement — pas de connexion à un broker requise, ce qui garantit ta confidentialité.</div>
+        <div class="faq-q" onclick="toggleFaq(this)">Quels marchés sont supportés ? <span class="faq-arrow">▼</span></div>
+        <div class="faq-a">Tous les marchés : Futures CME (NQ, ES, MES, MNQ, 6E, 6B, Gold, Crude Oil — P&L en ticks avec multiplicateurs officiels), Crypto spot et levier (Binance, Bybit, Coinbase…), Forex (toutes paires), Indices CFD, Actions. Un seul journal pour tout, multi-marché natif.</div>
       </div>
       <div class="faq-item">
-        <button class="faq-q" onclick="faq(this)">L'IA est-elle vraiment personnalisée ?<span class="faq-arrow">+</span></button>
-        <div class="faq-a">Oui. L'IA analyse uniquement tes données — pas des moyennes génériques. Plus tu l'utilises, plus les insights sont précis. Le debrief hebdomadaire référence tes trades spécifiques avec les heures et les montants réels.</div>
+        <div class="faq-q" onclick="toggleFaq(this)">Comment fonctionne le calendrier économique IA ? <span class="faq-arrow">▼</span></div>
+        <div class="faq-a">Chaque matin, MTC récupère les événements économiques du jour (NFP, PMI, décisions Fed, etc.) et les filtre pour tes actifs spécifiques. Tu vois uniquement ce qui te concerne — NQ, BTC/USDT, EUR/USD. Quand un résultat tombe en cours de session, l'IA analyse immédiatement la surprise et t'indique l'impact probable sur chacun de tes actifs (bull/bear/neutre).</div>
       </div>
       <div class="faq-item">
-        <button class="faq-q" onclick="faq(this)">Pourquoi 39 €/mois ?<span class="faq-arrow">+</span></button>
-        <div class="faq-a">On a voulu un prix accessible pour tous les traders, pas réservé aux pros avec 10 000$ de capital. Si l'IA t'aide à éviter un seul revenge trade à 300 €, MyTradingCoach est rentabilisé pour 8 mois. Et si tu évites un trade raté par mois, le ROI est immédiat. On préfère grandir avec toi plutôt que facturer cher dès le départ.</div>
+        <div class="faq-q" onclick="toggleFaq(this)">Puis-je importer mon historique de trades ? <span class="faq-arrow">▼</span></div>
+        <div class="faq-a">Oui. L'import CSV fonctionne avec tous les brokers — Tradovate, Binance, Bybit, MetaTrader 4/5, IBKR et tout autre broker qui exporte en CSV. Il détecte automatiquement le format et structure tes trades. Aucune configuration manuelle nécessaire.</div>
       </div>
       <div class="faq-item">
-        <button class="faq-q" onclick="faq(this)">Mes données sont-elles sécurisées ?<span class="faq-arrow">+</span></button>
-        <div class="faq-a">Tes données sont stockées sur des serveurs OVH en France, chiffrées au repos et en transit. Nous ne vendons ni ne partageons jamais tes données de trading. Tu peux exporter ou supprimer ton compte à tout moment.</div>
+        <div class="faq-q" onclick="toggleFaq(this)">Comment fonctionne le trial Premium ? <span class="faq-arrow">▼</span></div>
+        <div class="faq-a">7 jours d'accès Premium complet — CB requise, aucun prélèvement avant la fin du trial. Tu peux annuler à tout moment depuis les paramètres de ton compte, sans frais. Si tu annules pendant le trial, tu reviens sur le plan Gratuit à la fin des 7 jours.</div>
       </div>
       <div class="faq-item">
-        <button class="faq-q" onclick="faq(this)">MyTradingCoach est-il un produit établi ?<span class="faq-arrow">+</span></button>
-        <div class="faq-a">Non, soyons honnêtes : MyTradingCoach est un projet indépendant en early access. Ce n'est pas une entreprise financée par des VCs avec 50 employés. C'est un outil construit par un développeur passionné de trading, hébergé en France, qui évolue activement. En échange, tu bénéficies d'un tarif avantageux et ton feedback a un impact direct sur les prochaines fonctionnalités.</div>
+        <div class="faq-q" onclick="toggleFaq(this)">Où sont hébergées mes données ? <span class="faq-arrow">▼</span></div>
+        <div class="faq-a">Tes données sont hébergées en France sur des serveurs OVH (Roubaix). Elles ne sont jamais vendues ni partagées avec des tiers. L'IA utilisée est Claude d'Anthropic — tes données ne sont pas utilisées pour entraîner leurs modèles.</div>
       </div>
     </div>
   </div>
@@ -1152,58 +910,58 @@ footer{border-top:1px solid var(--b);padding:44px 5%;display:flex;align-items:ce
 
 <!-- CTA FINAL -->
 <section class="cta-final">
-  <div class="reveal">
-    <span class="sec-label">Prêt à voir la vérité ?</span>
-    <h2>Rejoins les premiers <em>early adopters</em></h2>
-    <p>Sois parmi les premiers à tester MyTradingCoach. Ton feedback construit directement le produit.</p>
-    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-      <a href="https://app.mytradingcoach.app/register" class="btn-p" style="font-size:15px;padding:14px 30px">
-        Commencer gratuitement →
-      </a>
-    </div>
-    <p style="margin-top:16px;font-size:12px;color:var(--txt3)">Pas de CB · Pas d'engagement · Données en France 🇫🇷 · Indépendant & bootstrappé</p>
+  <div class="cta-final-glow"></div>
+  <span class="sec-label reveal">Prêt à trader différemment ?</span>
+  <h2 class="reveal">Arrête de trader seul.<br/><em>Essaie gratuitement.</em></h2>
+  <p class="reveal">Avant ta prochaine session, ton superviseur sera là. 7 jours Premium offerts — aucun prélèvement.</p>
+  <div class="cta-final-actions reveal">
+    <a href="https://app.mytradingcoach.app/register" class="btn-p" style="font-size:16px;padding:16px 32px;">
+      Démarrer — 7 jours Premium gratuits →
+    </a>
+    <p style="font-size:12px;color:var(--txt3);font-family:var(--mono);margin:0;">Sans CB pour le plan Gratuit · Données en France 🇫🇷</p>
   </div>
 </section>
 
 <!-- FOOTER -->
 <footer>
-  <div class="footer-logo">
-    <div style="width:24px;height:24px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-      <svg width="12" height="12" viewBox="0 0 32 32" fill="none"><polyline points="3,16 6,16 8,10 10,22 12,6 14,20 16,12 18,16 29,16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;width:100%;">
+    <div class="footer-logo">MyTradingCoach</div>
+    <div class="footer-links">
+      <a href="/mentions-legales">Mentions légales</a>
+      <a href="/politique-confidentialite">Confidentialité</a>
+      <a href="/cgu">CGU</a>
+      <a href="/disclaimer">Avertissement financier</a>
+      <a href="https://www.mediateur-du-numerique.fr" target="_blank" rel="noopener">Médiation numérique</a>
+      <a href="mailto:hello@mytradingcoach.app">Contact</a>
+      <a href="/blog">Blog</a>
     </div>
-    <span style="font-family:var(--disp);font-weight:700;font-size:14px;color:var(--txt2)">MyTrading<span style="color:var(--blue2)">Coach</span></span>
-    <span>© 2026</span>
+    <div class="footer-right">© 2026 MyTradingCoach · Grégory Tahir · SIRET 512 926 460 00027 · Hébergé en France 🇫🇷</div>
   </div>
-  <div class="footer-links">
-    <a href="/mentions-legales">Mentions légales</a>
-    <a href="/confidentialite">Confidentialité</a>
-    <a href="/cgu">CGU</a>
-    <a href="/cdn-cgi/l/email-protection#1c74797070735c7165686e7d7875727b7f737d7f74327d6c6c">Contact</a>
+  <div class="footer-disclaimer">
+    ⚠️ MyTradingCoach est un outil de <strong>journal de trading et d'analyse comportementale</strong> destiné exclusivement à l'auto-documentation et à l'amélioration de la discipline personnelle. Il ne constitue pas un conseil en investissement financier, ne dispose d'aucun agrément AMF, et n'est soumis à aucune réglementation au titre de MiFID II. Les analyses générées par l'IA sont basées sur vos propres données enregistrées. Le trading comporte un risque élevé de perte en capital. Les performances passées ne préjugent pas des performances futures. <a href="/disclaimer" style="color:var(--txt3);text-decoration:underline;">Lire l'avertissement complet →</a>
   </div>
-  <span>Hébergé en France 🇫🇷 · Données chiffrées · Indépendant & bootstrappé</span>
 </footer>
 
-
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-function faq(btn){
-  const item = btn.closest('.faq-item');
-  const wasOpen = item.classList.contains('open');
-  document.querySelectorAll('.faq-item').forEach(x => x.classList.remove('open'));
-  if(!wasOpen) item.classList.add('open');
-}
-function showTab(id, btn){
-  document.querySelectorAll('.stab').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.showcase-panel').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('tab-' + id).classList.add('active');
-}
-const obs = new IntersectionObserver(entries => {
+<script>
+// Scroll reveal
+const observer = new IntersectionObserver((entries) => {
   entries.forEach(e => {
-    if(e.isIntersecting){ e.target.classList.add('vis'); obs.
-unobserve(e.target); }
+    if (e.isIntersecting) {
+      e.target.classList.add('vis');
+      observer.unobserve(e.target);
+    }
   });
-}, { threshold: 0.15 });
-document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal, .rstag').forEach(el => observer.observe(el));
+
+// FAQ toggle
+function toggleFaq(el) {
+  const item = el.parentElement;
+  const wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+  if (!wasOpen) item.classList.add('open');
+}
 </script>
 </body>
 </html>
