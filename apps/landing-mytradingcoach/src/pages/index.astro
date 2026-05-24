@@ -2,13 +2,13 @@
 import Base from '../layouts/Base.astro';
 import Nav from '../components/Nav.astro';
 import Hero from '../components/Hero.astro';
+import Moments from '../components/Moments.astro';
 import Problem from '../components/Problem.astro';
+import DayTimeline from '../components/DayTimeline.astro';
 import Features from '../components/Features.astro';
-import CoachIA from '../components/CoachIA.astro';
-import Showcase from '../components/Showcase.astro';
-import Debrief from '../components/Debrief.astro';
 import Compare from '../components/Compare.astro';
 import Pricing from '../components/Pricing.astro';
+import Testimonials from '../components/Testimonials.astro';
 import FAQ from '../components/FAQ.astro';
 import CtaFinal from '../components/CtaFinal.astro';
 import Footer from '../components/Footer.astro';
@@ -16,15 +16,15 @@ import Footer from '../components/Footer.astro';
 const ARTICLES = [
   {
     slug: "revenge-trading",
-    title: "Revenge Trading : Comment l’Identifier et l’Arrêter",
-    desc: "Le revenge trading détruit les comptes. Apprenez à identifier ce comportement et les techniques pour l’éliminer.",
+    title: "Revenge Trading : Comment l'Identifier et l'Arrêter",
+    desc: "Le revenge trading détruit les comptes. Apprenez à identifier ce comportement et les techniques pour l'éliminer.",
     tags: ["Psychologie", "Discipline"],
     date: "10 Avr 2026",
   },
   {
     slug: "win-rate-trading",
     title: "Win Rate en Trading : Ce que Votre Taux de Réussite Cache",
-    desc: "Un win rate de 40 % peut être plus rentable qu’un win rate de 70 %. Comprendre ce chiffre change tout.",
+    desc: "Un win rate de 40 % peut être plus rentable qu'un win rate de 70 %. Comprendre ce chiffre change tout.",
     tags: ["Analyse", "Performance"],
     date: "12 Avr 2026",
   },
@@ -39,20 +39,20 @@ const ARTICLES = [
 ---
 
 <Base
-  title="MyTradingCoach — Journal de trading IA pour progresser"
-  description="Analysez vos trades, maîtrisez vos émotions et progressez avec un coach IA. Journal de trading intelligent pour crypto, forex et actions."
+  title="MyTradingCoach — Le journal de trading IA qui supervise avant, pendant et après ta session"
+  description="Journal de trading intelligent avec superviseur IA — il te prépare avant ta session, t'accompagne en temps réel et débrieffe ta journée. Crypto, Futures, Forex. Gratuit sans CB."
   canonical="https://www.mytradingcoach.app/"
   ogUrl="https://www.mytradingcoach.app/"
 >
   <Nav />
   <Hero />
-  <Showcase />
+  <Moments />
   <Problem />
-  <CoachIA />
-  <Debrief />
+  <DayTimeline />
   <Features />
-  <Pricing />
   <Compare />
+  <Pricing />
+  <Testimonials />
   <FAQ />
   <CtaFinal />
 

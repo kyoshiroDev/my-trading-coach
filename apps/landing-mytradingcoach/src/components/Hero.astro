@@ -13,37 +13,41 @@
 
   <div class="hero-badge">
     <div class="bdot"></div>
-    Le seul journal qui connaît ta stratégie avant d'analyser tes trades
+    Le premier superviseur de trading IA — multi-marché
   </div>
 
-  <div class="hero-social-proof">
+  <div class="hero-proof">
     <div class="hero-stars">★★★★★</div>
-    <span class="hero-proof-text">
-      <strong>+14 traders</strong> utilisent MTC · 4.9/5 sur les retours beta
-    </span>
+    <span class="hero-proof-text"><strong>+14 traders</strong> · Beta 4.9/5</span>
   </div>
 
   <h1>
-    Tu sais trader.<br />
-    <em>Le problème,</em><br />
-    <span class="gline">c'est toi.</span>
+    Tu trades seul.<br />
+    <em>Ton superviseur,</em><br />
+    <span class="gline">lui, ne dort pas.</span>
   </h1>
 
   <p class="hero-sub">
-    Tu es scalper ICT sur London ? Swing trader SMC sur NY ?
-    MyTradingCoach est le premier journal de trading avec un
-    <strong>coach IA qui connaît ta stratégie</strong> —
-    ton style, tes sessions, ta fréquence normale.
-    Fini les analyses génériques. Place aux conseils
-    <em>vraiment</em> adaptés à toi.
+    Avant ta session, il te prépare. Pendant, il surveille.
+    Après, il débrieffe. Le seul <strong>journal de trading IA</strong>
+    qui fonctionne comme un <strong>superviseur qui connaît ton profil</strong> —
+    tes actifs, ta stratégie, tes patterns. Crypto, Futures, Forex.
   </p>
+
+  <div class="hero-moments">
+    <div class="hero-moment avant">☀️ Avant — il prépare</div>
+    <div class="hero-moment-sep">·</div>
+    <div class="hero-moment pendant">⚡ Pendant — il surveille</div>
+    <div class="hero-moment-sep">·</div>
+    <div class="hero-moment apres">🌙 Après — il débrieffe</div>
+  </div>
 
   <div class="hero-actions">
     <a href="https://app.mytradingcoach.app/register" class="btn-p hero-cta-main">
       Essayer gratuitement — 7 jours Premium offerts
     </a>
-    <p class="hero-cta-sub">Gratuit sans CB · Premium : CB requise, 0€ prélevé pendant 7 jours · Données en France 🇫🇷</p>
   </div>
+  <p class="hero-cta-sub">Gratuit sans CB · Premium : 0€ prélevé pendant 7 jours · Données en France 🇫🇷</p>
 </section>
 
 <style>
@@ -54,7 +58,7 @@
     padding: 8px 5%;
     text-align: center;
     font-size: 11px;
-    color: #10b981;
+    color: var(--green);
     font-family: var(--mono);
     letter-spacing: .5px;
     position: relative;
@@ -78,7 +82,7 @@
     position: absolute;
     top: 20%; left: 50%;
     transform: translateX(-50%);
-    width: 700px; height: 400px;
+    width: 800px; height: 500px;
     background: radial-gradient(ellipse, rgba(59,130,246,.1) 0%, transparent 70%);
     pointer-events: none;
   }
@@ -107,7 +111,7 @@
     font-family: var(--mono);
     padding: 5px 14px;
     border-radius: 100px;
-    margin-bottom: 32px;
+    margin-bottom: 28px;
     letter-spacing: .4px;
     position: relative;
     z-index: 1;
@@ -122,13 +126,26 @@
     flex-shrink: 0;
   }
 
+  .hero-proof {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-stars { color: var(--yel); font-size: 14px; letter-spacing: 2px; }
+  .hero-proof-text { font-size: 13px; color: var(--txt2); font-family: var(--mono); }
+  .hero-proof-text strong { color: var(--txt); }
+
   .hero h1 {
     font-family: var(--disp);
-    font-size: clamp(40px,7vw,84px);
-    font-weight: 700;
-    letter-spacing: -1px;
-    line-height: .95;
-    margin-bottom: 26px;
+    font-size: clamp(42px,7vw,88px);
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    line-height: .92;
+    margin-bottom: 24px;
     position: relative;
     z-index: 1;
     animation: fup .6s .1s ease both;
@@ -139,27 +156,49 @@
     font-family: 'DM Sans', sans-serif;
     font-weight: 300;
     color: var(--blue2);
-    letter-spacing: -1px;
   }
 
-  .gline {
-    display: block;
-    color: var(--pulse);
-  }
+  .gline { display: block; color: var(--pulse); }
 
   .hero-sub {
     font-size: clamp(15px,2vw,19px);
     color: var(--txt2);
     font-weight: 300;
-    max-width: 540px;
-    line-height: 1.65;
-    margin-bottom: 44px;
+    max-width: 560px;
+    line-height: 1.7;
+    margin-bottom: 20px;
     position: relative;
     z-index: 1;
     animation: fup .6s .2s ease both;
   }
-
   .hero-sub strong { color: var(--txt); font-weight: 500; }
+
+  /* 3 moments inline sous le sub */
+  .hero-moments {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+    animation: fup .6s .25s ease both;
+  }
+
+  .hero-moment {
+    font-size: 12px;
+    font-family: var(--mono);
+    padding: 4px 10px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .hero-moment.avant  { background: rgba(16,185,129,.08);  color: var(--green); border: 1px solid rgba(16,185,129,.2); }
+  .hero-moment.pendant{ background: rgba(59,130,246,.08);  color: var(--blue2); border: 1px solid rgba(59,130,246,.2); }
+  .hero-moment.apres  { background: rgba(139,92,246,.08);  color: #a78bfa;      border: 1px solid rgba(139,92,246,.2); }
+  .hero-moment-sep    { color: var(--txt3); font-size: 11px; }
 
   .hero-actions {
     display: flex;
@@ -167,7 +206,7 @@
     gap: 12px;
     flex-wrap: wrap;
     justify-content: center;
-    margin-bottom: 52px;
+    margin-bottom: 16px;
     position: relative;
     z-index: 1;
     animation: fup .6s .3s ease both;
@@ -193,72 +232,35 @@
 
   .btn-p:hover { background: var(--blue2); transform: translateY(-2px); box-shadow: 0 0 44px rgba(59,130,246,.55); }
 
-  .btn-s {
-    color: var(--txt2);
-    padding: 13px 22px;
-    border-radius: 9px;
-    font-size: 14px;
-    text-decoration: none;
-    border: 1px solid var(--b2);
-    transition: color .2s, border-color .2s, background .2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .btn-s:hover { color: var(--txt); border-color: var(--blue); background: rgba(59,130,246,.05); }
-
-  /* ── Mobile ── */
-  .hero-social-proof {
-    display: flex; align-items: center; gap: 10px;
-    margin-bottom: 20px;
-    position: relative; z-index: 1;
-  }
-  .hero-stars { color: #f59e0b; font-size: 14px; letter-spacing: 2px; }
-  .hero-proof-text {
-    font-size: 13px; color: var(--txt2);
-    font-family: var(--mono);
-  }
-  .hero-proof-text strong { color: var(--txt); }
-
   .hero-cta-main {
     font-size: 16px !important;
     padding: 16px 32px !important;
     box-shadow: 0 0 40px rgba(59,130,246,.5) !important;
   }
+
   .hero-cta-sub {
-    font-size: 12px; color: var(--txt3); font-family: var(--mono);
-    margin: 0; text-align: center;
+    font-size: 12px;
+    color: var(--txt3);
+    font-family: var(--mono);
+    margin: 0;
+    text-align: center;
+    position: relative;
+    z-index: 1;
   }
 
-  @media (max-width: 767px) {
-    .hero {
-      padding: 100px 16px 60px;
-      overflow: visible;
-    }
-
-    .hero-badge,
-    .hero-social-proof,
-    .hero h1,
-    .hero-sub,
-    .hero-actions {
-      position: relative;
-      z-index: 2;
-    }
-
-    .hero-actions {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 8px;
-      width: 100%;
-      max-width: 320px;
-    }
-
-    .hero-actions a {
-      text-align: center;
-      justify-content: center;
-      width: 100%;
-    }
-
+  @media (max-width: 768px) {
+    .hero { padding: 80px 16px 56px; min-height: auto; }
+    .hero h1 { font-size: clamp(36px,9vw,52px); letter-spacing: -1px; }
+    .hero-sub { font-size: 15px; max-width: 100%; }
+    .hero-moments { gap: 4px; }
+    .hero-moment { font-size: 11px; padding: 3px 8px; }
+    .hero-moment-sep { display: none; }
+    .hero-actions { flex-direction: column; align-items: stretch; gap: 10px; padding: 0; }
+    .hero-actions a { text-align: center; justify-content: center; width: 100%; }
+    .btn-p.hero-cta-main { font-size: 15px !important; padding: 14px 20px !important; }
+    .hero-badge { font-size: 10px; padding: 4px 12px; text-align: center; }
+    .hero-proof { flex-wrap: wrap; justify-content: center; }
+    .pulse-ring { display: none; }
+    .hero-moments { flex-direction: column; align-items: center; gap: 6px; }
   }
 </style>
