@@ -17,7 +17,6 @@ import {
   Trophy,
   Settings,
   LogOut,
-  ShieldCheck,
 } from 'lucide-angular';
 import { UserStore } from '../../../core/stores/user.store';
 import { TradesStore } from '../../../core/stores/trades.store';
@@ -169,21 +168,6 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             Paramètres
           </a>
 
-          @if (userStore.isAdmin()) {
-            <div class="nav-section admin-section">ADMIN</div>
-            <a
-              routerLink="/admin"
-              routerLinkActive="active"
-              class="nav-item admin-item"
-              (click)="closeSidebar()"
-            >
-              <span class="nav-icon"
-                ><lucide-icon [img]="ShieldCheckIcon" [size]="14"
-              /></span>
-              Utilisateurs
-            </a>
-          }
-
           <button
             class="nav-item settings-item"
             data-testid="logout-btn"
@@ -236,13 +220,10 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             <div class="user-info">
               <div class="user-name">{{ userStore.displayName() }}</div>
               <div class="user-plan"
-                [class.admin]="userStore.isAdmin()"
                 [class.beta]="userStore.user()?.role === 'BETA_TESTER'"
-                [class.premium]="userStore.isPremium() && userStore.user()?.role !== 'BETA_TESTER' && !userStore.isAdmin()"
+                [class.premium]="userStore.isPremium() && userStore.user()?.role !== 'BETA_TESTER'"
                 [class.free]="!userStore.isPremium()">
-                @if (userStore.isAdmin()) {
-                  ⚡ ADMIN
-                } @else if (userStore.user()?.role === 'BETA_TESTER') {
+                @if (userStore.user()?.role === 'BETA_TESTER') {
                   ★ BETA
                 } @else if (userStore.isPremium()) {
                   ★ PREMIUM
@@ -296,7 +277,6 @@ export class SidebarComponent {
   protected readonly TrophyIcon = Trophy;
   protected readonly SettingsIcon = Settings;
   protected readonly LogOutIcon = LogOut;
-  protected readonly ShieldCheckIcon = ShieldCheck;
 
   constructor() {
     this.tradesStore.loadMonthlyCount();

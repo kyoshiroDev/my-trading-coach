@@ -167,7 +167,7 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
       <div class="eco-card" data-testid="eco-calendar">
         <div class="card-header">
           <div class="card-title">
-            📅 {{ isNextDay() ? 'Agenda de demain' : 'Agenda du jour' }}
+            📅 {{ nextTradingLabel() }}
             <span class="badge-beta">BÊTA</span>
           </div>
           <div style="display:flex;align-items:center;gap:6px;">
@@ -184,9 +184,14 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
             </div>
           </div>
         } @else if (ecoCalendar()!.events.length === 0) {
-          <div class="empty-state" style="padding:20px 0;">
-            <div style="font-size:11px;color:var(--text-3);">
-              Aucun événement majeur prévu — journée calme pour tes actifs.
+          <div class="eco-empty">
+            <div style="font-size:24px;margin-bottom:6px;opacity:.4;">📅</div>
+            <div class="eco-empty-text">
+              @if (isNextDay()) {
+                Aucun événement économique majeur prévu — lundi calme pour tes actifs.
+              } @else {
+                Aucun événement majeur prévu — journée calme pour tes actifs.
+              }
             </div>
           </div>
         } @else {
@@ -251,6 +256,7 @@ export class SessionMorningComponent {
   readonly ecoCalendar = input<EcoCalendarData | null>(null);
   readonly selectedMood = input<MoodState>('CONFIDENT');
   readonly isNextDay = input<boolean>(false);
+  readonly nextTradingDate = input<string | null>(null);
 
   readonly moodSelected = output<MoodState>();
   readonly sessionStarted = output<void>();
@@ -288,6 +294,14 @@ export class SessionMorningComponent {
         },
         error: () => this.isSavingNote.set(false),
       });
+  }
+
+  protected nextTradingLabel(): string {
+    if (!this.isNextDay()) return 'Agenda du jour';
+    const d = this.nextTradingDate();
+    if (!d) return 'Agenda de demain';
+    const date = new Date(d + 'T00:00:00');
+    return 'Agenda du ' + date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
   }
 
   protected emotionEmoji(emotion?: string): string {

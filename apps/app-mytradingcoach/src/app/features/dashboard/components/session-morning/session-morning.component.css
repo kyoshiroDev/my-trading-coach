@@ -298,6 +298,16 @@
 
 .empty-state { padding: 20px; text-align: center; color: var(--text-3); font-size: 13px; }
 
+.eco-empty {
+  padding: 24px 20px;
+  text-align: center;
+}
+.eco-empty-text {
+  font-size: 11px;
+  color: var(--text-3);
+  line-height: 1.5;
+}
+
 @media (max-width: 768px) {
   .session-banner { flex-direction: column; align-items: stretch; }
   .daily-row { grid-template-columns: 1fr; }

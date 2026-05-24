@@ -147,25 +147,36 @@ export class EcoCalendarService implements OnModuleDestroy {
     const cached = await this.redis.get(cacheKey);
     if (cached) return JSON.parse(cached) as EcoCalendarData;
 
-    const [events, userAssets] = await Promise.all([
+    const [rawEvents, userAssets] = await Promise.all([
       this.fetchEconomicEvents(dateStr),
       this.getUserTopAssets(userId),
     ]);
 
+    // Fallback : si aucun événement pour J+1, essayer J+2 (certaines APIs éco publient tardivement)
+    let events = rawEvents;
+    if (events.length === 0) {
+      const nextNext = this.getNextTradingDay(nextDay);
+      events = await this.fetchEconomicEvents(nextNext.toISOString().slice(0, 10));
+    }
+
     let analysis: EcoAnalysis = {
-      summary: 'Données IA indisponibles.',
+      summary: events.length === 0
+        ? 'Aucun événement économique majeur prévu — journée calme pour tes actifs.'
+        : 'Données IA indisponibles.',
       recommendation: '',
       assetImpacts: [],
     };
 
-    try {
-      analysis = await this.ai.analyzeEcoEvents({ userId, events, userAssets });
-    } catch (err) {
-      this.logger.warn(`Eco AI analysis skipped: ${(err as Error).message}`);
+    if (events.length > 0) {
+      try {
+        analysis = await this.ai.analyzeEcoEvents({ userId, events, userAssets });
+      } catch (err) {
+        this.logger.warn(`Eco AI analysis skipped: ${(err as Error).message}`);
+      }
     }
 
     const result: EcoCalendarData = { events, analysis, userAssets };
-    await this.redis.setex(cacheKey, 3600, JSON.stringify(result));
+    await this.redis.setex(cacheKey, 3600 * 6, JSON.stringify(result));
     return result;
   }
 

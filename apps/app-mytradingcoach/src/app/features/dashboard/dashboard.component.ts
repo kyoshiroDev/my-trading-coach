@@ -188,6 +188,7 @@ import { SessionLiveComponent } from './components/session-live/session-live.com
             [ecoCalendar]="ecoCalendar()"
             [selectedMood]="selectedMood()"
             [isNextDay]="ecoCalendarIsNextDay()"
+            [nextTradingDate]="nextTradingDateStr()"
             (moodSelected)="selectMood($event)"
             (sessionStarted)="startSession()"
             (objectiveNoteAdded)="updateObjectiveNote($event)"
@@ -1100,6 +1101,14 @@ export class DashboardComponent implements AfterViewInit {
     );
     const isWeekend = now.getDay() === 0 || now.getDay() === 6;
     return this.activeTab() !== 'live' && (parisHour >= 18 || isWeekend);
+  });
+
+  readonly nextTradingDateStr = computed<string | null>(() => {
+    if (!this.ecoCalendarIsNextDay()) return null;
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+    return d.toISOString().slice(0, 10);
   });
 
   private loadEcoCalendar(): void {

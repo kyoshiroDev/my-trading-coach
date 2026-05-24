@@ -139,25 +139,6 @@
   text-align: left;
 }
 
-.admin-section {
-  color: rgba(239, 68, 68, 0.55);
-}
-
-.admin-item {
-  color: #f87171;
-}
-.admin-item:hover {
-  background: rgba(239, 68, 68, 0.08);
-  color: var(--red);
-}
-.admin-item.active {
-  background: rgba(239, 68, 68, 0.12);
-  color: var(--red);
-}
-.admin-item.active::before {
-  background: var(--red);
-}
-
 /* ─── Discord button ─── */
 .discord-sidebar-btn {
   display: flex;
@@ -315,7 +296,6 @@
 .user-plan.premium { color: var(--badge-premium-color); }
 .user-plan.free    { color: var(--badge-free-color); }
 .user-plan.beta    { color: var(--badge-beta-color); }
-.user-plan.admin   { color: var(--badge-admin-color); }
 
 /* ─── MAIN ─── */
 .main-content {
