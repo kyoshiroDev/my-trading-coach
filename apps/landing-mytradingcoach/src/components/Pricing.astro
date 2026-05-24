@@ -32,7 +32,6 @@
       </div>
       <div class="price-card feat" style="padding-top:44px">
         <div class="price-pop">⭐ Recommandé</div>
-        <div class="price-urgency">🔥 7 jours gratuits — aucun prélèvement avant la fin</div>
         <div class="price-name">Premium</div>
         <div class="price-amt">
           <span class="price-amt-num">39</span>
@@ -53,7 +52,10 @@
           <li>🏆 Score trader /100 hebdomadaire</li>
           <li>📄 Export PDF rapport mensuel</li>
         </ul>
-        <a href="https://app.mytradingcoach.app/register?plan=premium" class="price-cta prim">Essayer 7 jours gratuit →</a>
+        <a href="https://app.mytradingcoach.app/register?plan=premium" class="price-cta prim">
+          <span class="cta-main">Essayer 7 jours gratuit →</span>
+          <span class="cta-sub-text">🔥 Aucun prélèvement avant la fin</span>
+        </a>
       </div>
     </div>
     <div class="pricing-guarantee reveal">
@@ -115,16 +117,15 @@
     box-shadow: 0 4px 14px rgba(59,130,246,.4);
   }
 
-  .price-urgency {
+  .cta-main { display: block; font-size: 15px; font-weight: 600; }
+  .cta-sub-text {
+    display: block;
     font-size: 11px;
+    font-weight: 400;
+    opacity: .85;
+    margin-top: 3px;
     font-family: var(--mono);
-    color: var(--yel);
-    background: rgba(245,158,11,.08);
-    border: 1px solid rgba(245,158,11,.2);
-    border-radius: 6px;
-    padding: 8px 12px;
-    margin-bottom: 24px;
-    text-align: center;
+    letter-spacing: .3px;
   }
 
   .price-name {
