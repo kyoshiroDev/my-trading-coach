@@ -14,6 +14,7 @@ import { interval } from 'rxjs';
 import { EcoCalendarData, EcoResultAnalysis } from '../../../../core/api/eco-calendar.api';
 import { MoodState, TradingSession, LiveStats, SessionTrade } from '../../../../core/api/session.api';
 import { CreateTradeDto } from '../../../../core/api/trades.api';
+import { SessionRecapComponent } from '../session-recap/session-recap.component';
 
 const MOODS: { value: MoodState; label: string; emoji: string }[] = [
   { value: 'CONFIDENT', label: 'Confiant', emoji: '😎' },
@@ -36,8 +37,20 @@ const EMOTIONS = [
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-live.component.css',
+  imports: [SessionRecapComponent],
   template: `
     <div data-testid="session-live-view">
+
+      <!-- Recap post-clôture -->
+      @if (showRecap()) {
+        <mtc-session-recap
+          [session]="session()"
+          [liveStats]="liveStats()"
+          (dismissed)="onRecapClose($event)"
+        />
+      }
+
+      @if (!showRecap()) {
 
       <!-- Barre session active -->
       <div class="session-active-bar">
@@ -388,6 +401,8 @@ const EMOTIONS = [
 
       </div>
 
+      } <!-- /if (!showRecap) -->
+
       <!-- Modal clôture session -->
       @if (closeMoodOpen()) {
         <div class="close-session-panel" role="button" tabindex="0"
@@ -425,7 +440,7 @@ export class SessionLiveComponent {
   readonly ecoCalendar = input<EcoCalendarData | null>(null);
 
   readonly tradeClosed = output<{ tradeId: string; exitPrice: number }>();
-  readonly sessionClosed = output<MoodState>();
+  readonly sessionClosed = output<{ mood: MoodState; note?: string }>();
   readonly tradeLogged = output<CreateTradeDto>();
 
   private readonly destroyRef = inject(DestroyRef);
@@ -452,6 +467,7 @@ export class SessionLiveComponent {
   // Close session
   protected readonly closeMoodOpen = signal(false);
   protected readonly closeMood = signal<MoodState>('NEUTRAL');
+  protected readonly showRecap = signal(false);
 
   // Quick trade form
   protected readonly qtAsset = signal('');
@@ -583,8 +599,13 @@ export class SessionLiveComponent {
   }
 
   protected confirmCloseSession(): void {
-    this.sessionClosed.emit(this.closeMood());
     this.closeMoodOpen.set(false);
+    this.showRecap.set(true);
+  }
+
+  protected onRecapClose(note: string | undefined): void {
+    this.sessionClosed.emit({ mood: this.closeMood(), note });
+    this.showRecap.set(false);
   }
 
   protected submitQuickTrade(): void {

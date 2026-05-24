@@ -173,14 +173,13 @@
   grid-column: 1 / -1;
 }
 
-/* ─── Four-col row (equity · trades · winrate · emotions) ─── */
-/* Ligne 1 : Equity + Calendrier (ou Equity seul pour V1) */
+/* ─── Ligne 1 : Equity (60%) + Calendrier (40%) ou Equity seul V1 ─── */
 .top-charts-row {
   display: grid;
-  grid-template-columns: 2fr 2fr;
+  grid-template-columns: 3fr 2fr;
   gap: 16px;
   margin-bottom: 16px;
-  align-items: stretch;
+  align-items: start;
 }
 
 /* Equity seul (V1) : prend toute la largeur */
@@ -188,15 +187,9 @@
   grid-template-columns: 1fr;
 }
 
-.top-charts-row .card,
-.top-charts-row .equity-card {
-  height: 100%;
-}
-
 .calendar-dashboard-card {
   padding: 0;
   overflow: hidden;
-  min-height: 280px;
 }
 
 /* Ligne 2 : Trades + Win Rate + Émotions */

@@ -1015,11 +1015,11 @@ export class DashboardComponent implements AfterViewInit {
       });
   }
 
-  protected closeSession(mood: MoodState): void {
+  protected closeSession({ mood, note }: { mood: MoodState; note?: string }): void {
     const session = this.activeSession();
     if (!session) return;
     this.sessionApi
-      .closeSession(session.id, mood)
+      .closeSession(session.id, mood, note)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {

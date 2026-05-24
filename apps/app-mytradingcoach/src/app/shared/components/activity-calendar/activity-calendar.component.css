@@ -76,7 +76,6 @@
 }
 
 .cal-cell {
-  aspect-ratio: 1;
   border-radius: 5px;
   display: flex;
   flex-direction: column;
@@ -85,8 +84,10 @@
   gap: 1px;
   cursor: default;
   transition: transform .1s;
-  min-height: 32px;
+  height: 44px;
+  max-height: 44px;
   position: relative;
+  overflow: hidden;
 }
 .cal-cell:not(.empty):not(.no-trade):hover { transform: scale(1.08); z-index: 1; }
 
@@ -166,10 +167,9 @@
   margin-bottom: 4px;
 }
 .cal-skel-cell {
-  aspect-ratio: 1;
   border-radius: 5px;
   background: var(--bg-3);
-  min-height: 32px;
+  height: 44px;
   animation: calSkelPulse 1.4s ease-in-out infinite;
 }
 @keyframes calSkelPulse {
@@ -178,6 +178,7 @@
 }
 
 @media (max-width: 480px) {
-  .cal-cell { min-height: 26px; }
+  .cal-cell { height: 32px; max-height: 32px; }
+  .cal-skel-cell { height: 32px; }
   .cal-pnl { display: none; }
 }
