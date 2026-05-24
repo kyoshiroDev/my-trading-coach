@@ -475,8 +475,10 @@ export class SessionLiveComponent {
 
     effect(() => {
       const s = this.session();
-      if (s?.startedAt) {
+      if (s?.startedAt && s.status === 'ACTIVE') {
         this.startTime.set(new Date(s.startedAt));
+      } else {
+        this.startTime.set(null);
       }
     });
   }
