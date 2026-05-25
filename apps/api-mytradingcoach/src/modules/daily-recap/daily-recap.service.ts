@@ -81,13 +81,16 @@ export class DailyRecapService {
     });
   }
 
-  async getYesterdayRecap(userId: string) {
+  async getYesterdayRecap(userId: string, isPremium = false) {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     yesterday.setHours(0, 0, 0, 0);
 
-    return this.prisma.dailyRecap.findUnique({
+    const recap = await this.prisma.dailyRecap.findUnique({
       where: { userId_date: { userId, date: yesterday } },
     });
+
+    if (!recap || isPremium) return recap;
+    return { ...recap, aiOneLiner: null };
   }
 }

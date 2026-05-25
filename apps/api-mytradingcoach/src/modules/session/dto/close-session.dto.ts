@@ -8,4 +8,12 @@ export class CloseSessionDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsString()
+  reflectionNote?: string;
+
+  @IsOptional()
+  @IsString()
+  reflectionQuestion?: string;
 }

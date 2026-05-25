@@ -1,0 +1,200 @@
+.sessions-page {
+  padding: 24px;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.page-sub {
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+/* ─── Loading skeleton ─── */
+.loading-state { display: flex; flex-direction: column; gap: 8px; }
+.skel-row {
+  height: 64px;
+  border-radius: 10px;
+  background: var(--bg-card);
+  animation: skelPulse 1.4s ease-in-out infinite;
+}
+@keyframes skelPulse {
+  0%, 100% { opacity: .4; }
+  50% { opacity: .8; }
+}
+
+/* ─── Empty state ─── */
+.empty-state {
+  text-align: center;
+  padding: 60px 24px;
+  color: var(--text-3);
+}
+.empty-icon { font-size: 36px; margin-bottom: 12px; opacity: .5; }
+.empty-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-2);
+  margin-bottom: 8px;
+}
+.empty-sub { font-size: 13px; line-height: 1.6; max-width: 360px; margin: 0 auto; }
+
+/* ─── Sessions list ─── */
+.sessions-list { display: flex; flex-direction: column; gap: 8px; }
+
+.session-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s;
+  overflow: hidden;
+}
+.session-card:hover { border-color: var(--border-hover); }
+.session-card.expanded { border-color: rgba(59,130,246,.4); }
+
+.session-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+}
+
+.session-date { min-width: 120px; }
+.session-day {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  text-transform: capitalize;
+}
+.session-time {
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  margin-top: 2px;
+}
+
+.session-moods {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 18px;
+  min-width: 80px;
+}
+.mood-arrow { font-size: 11px; color: var(--text-3); }
+
+.session-stats {
+  display: flex;
+  gap: 20px;
+  flex: 1;
+}
+.stat { text-align: center; }
+.stat-val {
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text);
+}
+.stat-val.green { color: var(--green); }
+.stat-val.red { color: var(--red); }
+.stat-lbl {
+  font-size: 10px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-top: 1px;
+}
+
+.session-expand-icon {
+  font-size: 10px;
+  color: var(--text-3);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ─── Expanded detail ─── */
+.session-detail {
+  border-top: 1px solid var(--border);
+  padding: 14px 18px;
+  background: var(--bg-2);
+}
+
+.detail-reflection {
+  margin-bottom: 12px;
+}
+.detail-q-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #a78bfa;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.detail-question {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text-2);
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+.detail-answer {
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg-3);
+  border-radius: 6px;
+  padding: 8px 12px;
+  line-height: 1.5;
+}
+.detail-answer-empty {
+  font-size: 12px;
+  color: var(--text-3);
+  font-style: italic;
+}
+
+.detail-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+.detail-date-full {
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  text-transform: capitalize;
+}
+
+/* ─── Load more ─── */
+.load-more-wrap { margin-top: 16px; text-align: center; }
+.load-more-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all .15s;
+}
+.load-more-btn:hover:not(:disabled) { border-color: var(--border-hover); color: var(--text); }
+.load-more-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+@media (max-width: 600px) {
+  .sessions-page { padding: 16px; }
+  .session-stats { gap: 12px; }
+  .stat-val { font-size: 13px; }
+}

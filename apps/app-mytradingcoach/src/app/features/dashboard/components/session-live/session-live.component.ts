@@ -454,7 +454,7 @@ export class SessionLiveComponent {
 
   readonly startSession = output<void>();
   readonly tradeClosed = output<{ tradeId: string; exitPrice: number }>();
-  readonly sessionClosed = output<{ mood: MoodState; note?: string }>();
+  readonly sessionClosed = output<{ mood: MoodState; note?: string; question?: string | null }>();
   readonly tradeLogged = output<CreateTradeDto>();
 
   private readonly destroyRef = inject(DestroyRef);
@@ -617,8 +617,8 @@ export class SessionLiveComponent {
     this.showRecap.set(true);
   }
 
-  protected onRecapClose(note: string | undefined): void {
-    this.sessionClosed.emit({ mood: this.closeMood(), note });
+  protected onRecapClose(payload: { note?: string; question?: string | null }): void {
+    this.sessionClosed.emit({ mood: this.closeMood(), note: payload.note, question: payload.question });
     this.showRecap.set(false);
   }
 

@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   BookOpen,
   BarChart2,
+  ClipboardList,
   Sparkles,
   CalendarDays,
   Trophy,
@@ -95,6 +96,19 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
               ><lucide-icon [img]="BookOpenIcon" [size]="14"
             /></span>
             Journal
+          </a>
+
+          <a
+            routerLink="/sessions"
+            routerLinkActive="active"
+            class="nav-item"
+            data-testid="nav-sessions"
+            (click)="closeSidebar()"
+          >
+            <span class="nav-icon"
+              ><lucide-icon [img]="ClipboardListIcon" [size]="14"
+            /></span>
+            Mes sessions
           </a>
 
           <a
@@ -271,6 +285,7 @@ export class SidebarComponent {
 
   protected readonly LayoutDashboardIcon = LayoutDashboard;
   protected readonly BookOpenIcon = BookOpen;
+  protected readonly ClipboardListIcon = ClipboardList;
   protected readonly BarChart2Icon = BarChart2;
   protected readonly SparklesIcon = Sparkles;
   protected readonly CalendarDaysIcon = CalendarDays;

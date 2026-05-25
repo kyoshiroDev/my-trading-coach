@@ -3,7 +3,9 @@ import {
   Controller,
   Get,
   Param,
+  ParseIntPipe,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -37,7 +39,26 @@ export class SessionController {
     @Param('id') id: string,
     @Body() dto: CloseSessionDto,
   ) {
-    return this.sessionService.closeSession(user.id, id, dto.mood, dto.notes);
+    return this.sessionService.closeSession(
+      user.id, id, dto.mood, dto.notes, dto.reflectionNote, dto.reflectionQuestion,
+    );
+  }
+
+  @Get('history')
+  getHistory(
+    @CurrentUser() user: { id: string },
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+    @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
+  ) {
+    return this.sessionService.getSessionHistory(user.id, limit ?? 20, offset ?? 0);
+  }
+
+  @Get('history/:id')
+  getDetail(
+    @CurrentUser() user: { id: string },
+    @Param('id') id: string,
+  ) {
+    return this.sessionService.getSessionDetail(user.id, id);
   }
 
   @Get('today/trades')

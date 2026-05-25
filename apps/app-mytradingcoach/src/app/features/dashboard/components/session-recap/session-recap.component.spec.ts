@@ -73,20 +73,20 @@ describe('SessionRecapComponent', () => {
   });
 
   describe('handleClose()', () => {
-    it('émet close avec undefined si reflectionAnswer est vide', () => {
+    it('émet close avec note undefined si reflectionAnswer est vide', () => {
       const c = makeInstance();
-      const emitted: (string | undefined)[] = [];
+      const emitted: { note?: string; question?: string | null }[] = [];
       c.dismissed.subscribe((v) => emitted.push(v));
 
       (c as unknown as { handleClose: () => void }).handleClose();
 
       expect(emitted).toHaveLength(1);
-      expect(emitted[0]).toBeUndefined();
+      expect(emitted[0].note).toBeUndefined();
     });
 
     it('émet close avec la note si reflectionAnswer est renseigné', () => {
       const c = makeInstance();
-      const emitted: (string | undefined)[] = [];
+      const emitted: { note?: string; question?: string | null }[] = [];
       c.dismissed.subscribe((v) => emitted.push(v));
 
       const ra = (c as unknown as { reflectionAnswer: { set: (v: string) => void } }).reflectionAnswer;
@@ -94,7 +94,7 @@ describe('SessionRecapComponent', () => {
 
       (c as unknown as { handleClose: () => void }).handleClose();
 
-      expect(emitted[0]).toBe('Bonne session');
+      expect(emitted[0].note).toBe('Bonne session');
     });
   });
 });

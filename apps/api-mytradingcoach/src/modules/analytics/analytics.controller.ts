@@ -1,4 +1,5 @@
 import { Controller, Get, Param, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Plan, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PremiumGuard } from '../../common/guards/premium.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -64,9 +65,15 @@ export class AnalyticsController {
     return this.analyticsService.getMonthlyActivity(user.id, year, month);
   }
 
-  @UseGuards(PremiumGuard)
   @Get('daily-recap/yesterday')
-  getYesterdayRecap(@CurrentUser() user: { id: string }) {
-    return this.dailyRecapService.getYesterdayRecap(user.id);
+  getYesterdayRecap(
+    @CurrentUser() user: { id: string; plan: Plan; role: Role; trialEndsAt?: string | null },
+  ) {
+    const isPremium =
+      user.plan === Plan.PREMIUM ||
+      user.role === Role.ADMIN ||
+      user.role === Role.BETA_TESTER ||
+      !!(user.trialEndsAt && new Date() < new Date(user.trialEndsAt));
+    return this.dailyRecapService.getYesterdayRecap(user.id, isPremium);
   }
 }

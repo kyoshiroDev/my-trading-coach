@@ -73,6 +73,14 @@ export const appRoutes: Routes = [
           ),
       },
       {
+        path: 'sessions',
+        data: { seo: { title: 'Mes sessions', noindex: true } },
+        loadComponent: () =>
+          import('./features/sessions/sessions.component').then(
+            (m) => m.SessionsComponent,
+          ),
+      },
+      {
         path: 'analytics',
         data: { seo: { title: 'Analytics', noindex: true } },
         loadComponent: () =>

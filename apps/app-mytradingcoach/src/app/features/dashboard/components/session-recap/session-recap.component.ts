@@ -11,13 +11,15 @@ import { Router } from '@angular/router';
 import { PnlFormatPipe } from '../../../../shared/pipes/pnl-format.pipe';
 import { EmotionEmojiPipe } from '../../../../shared/pipes/emotion-emoji.pipe';
 import { LiveStats, TradingSession } from '../../../../core/api/session.api';
+import { UserStore } from '../../../../core/stores/user.store';
+import { PremiumLockComponent } from '../../../../shared/components/premium-lock/premium-lock.component';
 
 @Component({
   selector: 'mtc-session-recap',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-recap.component.css',
-  imports: [PnlFormatPipe, EmotionEmojiPipe],
+  imports: [PnlFormatPipe, EmotionEmojiPipe, PremiumLockComponent],
   template: `
     <div class="recap-wrap" data-testid="session-recap">
 
@@ -63,21 +65,37 @@ import { LiveStats, TradingSession } from '../../../../core/api/session.api';
 
       <!-- Question de réflexion -->
       @if (reflectionQuestion()) {
-        <div class="recap-reflection">
-          <div class="recap-q-label">
-            <span class="recap-q-icon">✦</span>
-            Question de réflexion
+        @if (userStore.isPremium()) {
+          <div class="recap-reflection">
+            <div class="recap-q-label">
+              <span class="recap-q-icon">✦</span>
+              Question de réflexion
+            </div>
+            <div class="recap-question">{{ reflectionQuestion() }}</div>
+            <textarea
+              class="recap-answer"
+              [value]="reflectionAnswer()"
+              (input)="reflectionAnswer.set($any($event.target).value)"
+              placeholder="Ta réponse (optionnel — alimente ton Weekly Debrief)"
+              rows="2"
+              maxlength="500"
+            ></textarea>
           </div>
-          <div class="recap-question">{{ reflectionQuestion() }}</div>
-          <textarea
-            class="recap-answer"
-            [value]="reflectionAnswer()"
-            (input)="reflectionAnswer.set($any($event.target).value)"
-            placeholder="Ta réponse (optionnel — alimente ton Weekly Debrief)"
-            rows="2"
-            maxlength="500"
-          ></textarea>
-        </div>
+        } @else {
+          <div class="recap-reflection" style="position:relative;min-height:80px;">
+            <div class="recap-q-label" style="filter:blur(3px);user-select:none;pointer-events:none;">
+              <span class="recap-q-icon">✦</span>
+              Question de réflexion
+            </div>
+            <div class="recap-question" style="filter:blur(4px);user-select:none;pointer-events:none;">
+              En une phrase, qu'est-ce que tu retiens de cette session ?
+            </div>
+            <mtc-premium-lock
+              title="Question de réflexion IA"
+              subtitle="Alimente ton Weekly Debrief et ta progression"
+            />
+          </div>
+        }
       }
 
       <!-- Countdown recap 17h30 -->
@@ -111,10 +129,11 @@ import { LiveStats, TradingSession } from '../../../../core/api/session.api';
 })
 export class SessionRecapComponent {
   private readonly router = inject(Router);
+  protected readonly userStore = inject(UserStore);
 
   readonly session   = input<TradingSession | null>(null);
   readonly liveStats = input<LiveStats | null>(null);
-  readonly dismissed = output<string | undefined>();
+  readonly dismissed = output<{ note?: string; question?: string | null }>();
 
   protected readonly reflectionAnswer = signal('');
 
@@ -175,7 +194,10 @@ export class SessionRecapComponent {
 
   protected handleClose(): void {
     const note = this.reflectionAnswer().trim();
-    this.dismissed.emit(note || undefined);
+    this.dismissed.emit({
+      note: note || undefined,
+      question: this.userStore.isPremium() ? this.reflectionQuestion() : null,
+    });
   }
 
   protected viewTrades(): void {

@@ -54,6 +54,8 @@ export class SessionService implements OnModuleDestroy {
     sessionId: string,
     mood: MoodState,
     notes?: string,
+    reflectionNote?: string,
+    reflectionQuestion?: string,
   ) {
     const trades = await this.prisma.trade.findMany({
       where: { userId, sessionId },
@@ -75,10 +77,45 @@ export class SessionService implements OnModuleDestroy {
         totalTrades: trades.length,
         winRate,
         notes,
+        reflectionNote,
+        reflectionQuestion,
       },
     });
 
     await this.redis.del(`session:active:${userId}`).catch(() => null);
+    return session;
+  }
+
+  async getSessionHistory(userId: string, limit = 20, offset = 0) {
+    return this.prisma.tradeSession.findMany({
+      where: { userId, status: SessionStatus.CLOSED },
+      orderBy: { startedAt: 'desc' },
+      skip: offset,
+      take: limit,
+      select: {
+        id: true,
+        startedAt: true,
+        endedAt: true,
+        moodStart: true,
+        moodEnd: true,
+        totalPnl: true,
+        totalTrades: true,
+        winRate: true,
+        reflectionNote: true,
+        reflectionQuestion: true,
+        _count: { select: { trades: true } },
+      },
+    });
+  }
+
+  async getSessionDetail(userId: string, sessionId: string) {
+    const session = await this.prisma.tradeSession.findFirst({
+      where: { id: sessionId, userId },
+      include: {
+        trades: { orderBy: { tradedAt: 'desc' } },
+      },
+    });
+    if (!session) throw new NotFoundException('Session introuvable');
     return session;
   }
 

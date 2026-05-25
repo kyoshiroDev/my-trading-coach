@@ -17,6 +17,22 @@ export interface TradingSession {
   winRate?: number;
   status: 'ACTIVE' | 'CLOSED';
   notes?: string;
+  reflectionNote?: string;
+  reflectionQuestion?: string;
+}
+
+export interface SessionHistoryItem {
+  id: string;
+  startedAt: string;
+  endedAt?: string;
+  moodStart?: MoodState;
+  moodEnd?: MoodState;
+  totalPnl?: number;
+  totalTrades: number;
+  winRate?: number;
+  reflectionNote?: string;
+  reflectionQuestion?: string;
+  _count: { trades: number };
 }
 
 export interface LiveStats {
@@ -55,8 +71,28 @@ export class SessionApi {
     return this.http.get<{ data: TradingSession | null }>(`${this.base}/active`);
   }
 
-  closeSession(id: string, mood: MoodState, notes?: string): Observable<{ data: TradingSession }> {
-    return this.http.post<{ data: TradingSession }>(`${this.base}/${id}/close`, { mood, notes });
+  closeSession(
+    id: string,
+    mood: MoodState,
+    notes?: string,
+    reflectionNote?: string,
+    reflectionQuestion?: string,
+  ): Observable<{ data: TradingSession }> {
+    return this.http.post<{ data: TradingSession }>(`${this.base}/${id}/close`, {
+      mood, notes, reflectionNote, reflectionQuestion,
+    });
+  }
+
+  getSessionHistory(limit = 20, offset = 0): Observable<{ data: SessionHistoryItem[] }> {
+    return this.http.get<{ data: SessionHistoryItem[] }>(
+      `${this.base}/history?limit=${limit}&offset=${offset}`,
+    );
+  }
+
+  getSessionDetail(id: string): Observable<{ data: TradingSession & { trades: SessionTrade[] } }> {
+    return this.http.get<{ data: TradingSession & { trades: SessionTrade[] } }>(
+      `${this.base}/history/${id}`,
+    );
   }
 
   getTodayTrades(): Observable<{ data: SessionTrade[] }> {

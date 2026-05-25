@@ -10,6 +10,7 @@ interface DebriefAiResult {
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { AnalyticsService } from '../analytics/analytics.service';
+import { SessionService } from '../session/session.service';
 
 @Injectable()
 export class DebriefService {
@@ -17,6 +18,7 @@ export class DebriefService {
     private prisma: PrismaService,
     private aiService: AiService,
     private analyticsService: AnalyticsService,
+    private sessionService: SessionService,
   ) {}
 
   async getCurrent(userId: string) {
@@ -92,6 +94,8 @@ export class DebriefService {
       },
     });
 
+    const recentSessions = await this.sessionService.getSessionHistory(userId, 5, 0);
+
     const aiResult = (await this.aiService.generateDebrief({
       trades,
       stats,
@@ -99,6 +103,7 @@ export class DebriefService {
       weekNumber,
       year,
       userProfile: userProfile ?? undefined,
+      recentSessions,
     }, userId)) as DebriefAiResult;
 
     return this.prisma.weeklyDebrief.upsert({

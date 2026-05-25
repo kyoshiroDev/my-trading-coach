@@ -13,6 +13,8 @@ import { DailyRecap } from '../../../../core/api/daily-recap.api';
 import { EcoCalendarData } from '../../../../core/api/eco-calendar.api';
 import { MoodState } from '../../../../core/api/session.api';
 import { DebriefApi, DebriefObjective } from '../../../../core/api/debrief.api';
+import { UserStore } from '../../../../core/stores/user.store';
+import { PremiumLockComponent } from '../../../../shared/components/premium-lock/premium-lock.component';
 
 const MOODS: { value: MoodState; label: string; emoji: string }[] = [
   { value: 'CONFIDENT', label: 'Confiant', emoji: '😎' },
@@ -24,7 +26,7 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
 @Component({
   selector: 'mtc-session-morning',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, PremiumLockComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-morning.component.css',
   template: `
@@ -78,10 +80,21 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
                 <div class="recap-stat-lbl">Émotion dom.</div>
               </div>
             </div>
-            @if (yesterdayRecap()!.aiOneLiner) {
-              <div class="ai-oneliner">
+            @if (userStore.isPremium() && yesterdayRecap()!.aiOneLiner) {
+              <div class="ai-oneliner" data-testid="ai-oneliner">
                 <span class="ai-star">✦</span>
                 <span>{{ yesterdayRecap()!.aiOneLiner }}</span>
+              </div>
+            } @else if (!userStore.isPremium()) {
+              <div class="ai-oneliner" style="position:relative;min-height:40px;">
+                <span class="ai-star" style="filter:blur(2px)">✦</span>
+                <span style="filter:blur(4px);user-select:none;pointer-events:none;">
+                  Ton compagnon a analysé ta session et identifié un pattern clé dans tes trades.
+                </span>
+                <mtc-premium-lock
+                  title="Analyse IA de ta session"
+                  subtitle="Disponible en Premium"
+                />
               </div>
             }
           } @else {
@@ -114,43 +127,63 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
           @if (objectives().length === 0) {
             <div class="empty-state">Objectifs générés après ton Weekly Debrief</div>
           } @else {
-            @for (obj of objectives(); track $index) {
-              <div
-                class="obj-item"
-                [class.expandable]="!!debriefId()"
-                role="button"
-                tabindex="0"
-                (click)="debriefId() && toggleObjectiveNote($index)"
-                (keyup.enter)="debriefId() && toggleObjectiveNote($index)"
-              >
-                <div class="obj-check">·</div>
-                <div class="obj-body">
-                  <div class="obj-text">{{ obj.title }}</div>
-                  @if (obj.note && expandedObjectiveIdx() !== $index) {
-                    <div class="obj-note-preview">{{ obj.note }}</div>
+            @for (obj of objectives(); track $index; let i = $index) {
+              @if (!userStore.isPremium() && i >= 1) {
+                @if (i === 1) {
+                  <!-- 2e objectif flou — aperçu Premium -->
+                  <div style="position:relative;margin-top:4px;">
+                    <div class="obj-item" style="filter:blur(3px);pointer-events:none;user-select:none;">
+                      <div class="obj-check">·</div>
+                      <div class="obj-body">
+                        <div class="obj-text">{{ obj.title }}</div>
+                      </div>
+                      <div class="obj-bdg s">Semaine</div>
+                    </div>
+                    <mtc-premium-lock
+                      title="{{ objectives().length - 1 }} autre(s) objectif(s) IA"
+                      subtitle="Générés par ton compagnon chaque dimanche"
+                    />
+                  </div>
+                }
+                <!-- les suivants (i >= 2) sont masqués -->
+              } @else {
+                <div
+                  class="obj-item"
+                  [class.expandable]="!!debriefId()"
+                  role="button"
+                  tabindex="0"
+                  (click)="debriefId() && toggleObjectiveNote(i)"
+                  (keyup.enter)="debriefId() && toggleObjectiveNote(i)"
+                >
+                  <div class="obj-check">·</div>
+                  <div class="obj-body">
+                    <div class="obj-text">{{ obj.title }}</div>
+                    @if (obj.note && expandedObjectiveIdx() !== i) {
+                      <div class="obj-note-preview">{{ obj.note }}</div>
+                    }
+                  </div>
+                  <div class="obj-bdg s">Semaine</div>
+                  @if (debriefId()) {
+                    <span class="obj-note-icon">{{ expandedObjectiveIdx() === i ? '▲' : '✏' }}</span>
                   }
                 </div>
-                <div class="obj-bdg s">Semaine</div>
-                @if (debriefId()) {
-                  <span class="obj-note-icon">{{ expandedObjectiveIdx() === $index ? '▲' : '✏' }}</span>
-                }
-              </div>
-              @if (expandedObjectiveIdx() === $index) {
-                <div class="obj-note-panel" tabindex="-1" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
-                  <textarea
-                    class="obj-note-input"
-                    placeholder="Note sur cet objectif..."
-                    rows="2"
-                    [value]="objectiveNoteValues()[$index] ?? obj.note ?? ''"
-                    (input)="setNoteValue($index, $any($event.target).value)"
-                  ></textarea>
-                  <div class="obj-note-actions">
-                    <button class="obj-note-cancel" (click)="toggleObjectiveNote($index)">Annuler</button>
-                    <button class="obj-note-save" [disabled]="isSavingNote()" (click)="saveNote($index)">
-                      {{ isSavingNote() ? '...' : 'Sauvegarder' }}
-                    </button>
+                @if (expandedObjectiveIdx() === i) {
+                  <div class="obj-note-panel" tabindex="-1" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+                    <textarea
+                      class="obj-note-input"
+                      placeholder="Note sur cet objectif..."
+                      rows="2"
+                      [value]="objectiveNoteValues()[i] ?? obj.note ?? ''"
+                      (input)="setNoteValue(i, $any($event.target).value)"
+                    ></textarea>
+                    <div class="obj-note-actions">
+                      <button class="obj-note-cancel" (click)="toggleObjectiveNote(i)">Annuler</button>
+                      <button class="obj-note-save" [disabled]="isSavingNote()" (click)="saveNote(i)">
+                        {{ isSavingNote() ? '...' : 'Sauvegarder' }}
+                      </button>
+                    </div>
                   </div>
-                </div>
+                }
               }
             }
             <div class="obj-footer">Générés par l'IA · Weekly Debrief</div>
@@ -259,6 +292,7 @@ export class SessionMorningComponent {
 
   private readonly debriefApi = inject(DebriefApi);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly userStore = inject(UserStore);
 
   protected readonly moods = MOODS;
 

@@ -4,6 +4,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
   CONFIDENT: '😎',
   FOCUSED: '🎯',
   NEUTRAL: '😐',
+  TIRED: '😴',
   STRESSED: '😰',
   FEAR: '😨',
   REVENGE: '🤬',

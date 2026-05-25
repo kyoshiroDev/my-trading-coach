@@ -142,9 +142,11 @@ model TradeSession {
   totalTrades Int           @default(0)
   winRate     Float?
   status      SessionStatus @default(ACTIVE)
-  notes       String?
-  trades      Trade[]
-  createdAt   DateTime      @default(now())
+  notes              String?
+  reflectionNote     String?
+  reflectionQuestion String?
+  trades             Trade[]
+  createdAt          DateTime      @default(now())
 
   @@index([userId, startedAt])
   @@index([userId, status])
