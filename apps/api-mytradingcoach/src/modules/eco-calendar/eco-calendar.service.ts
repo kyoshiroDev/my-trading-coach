@@ -69,10 +69,10 @@ export class EcoCalendarService implements OnModuleDestroy {
   // ── Fetch depuis FMP Stable + upsert PostgreSQL ────────────────────────────
 
   async fetchAndStoreEvents(date: string): Promise<EcoEvent[]> {
-    const apiKey = process.env['FMP_API_KEY'];
+    const apiKey = process.env['FINANCIAL_MODELING_PREP_API_KEY'];
     if (!apiKey) {
       this.logger.error(
-        '❌ FMP_API_KEY non configurée — ' +
+        '❌ FINANCIAL_MODELING_PREP_API_KEY non configurée — ' +
         'Souscrire sur https://site.financialmodelingprep.com/pricing-plans (Starter 22$/mois)',
       );
       return [];
