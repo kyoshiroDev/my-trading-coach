@@ -109,13 +109,14 @@
 }
 
 .nav-icon {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  opacity: 0.8;
+  font-size: 14px;
+  line-height: 1;
 }
 
 .badge {

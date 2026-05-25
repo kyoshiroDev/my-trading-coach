@@ -7,18 +7,6 @@ import {
   signal,
 } from '@angular/core';
 import { RouterModule, RouterLink, RouterLinkActive } from '@angular/router';
-import {
-  LucideAngularModule,
-  LayoutDashboard,
-  BookOpen,
-  BarChart2,
-  ClipboardList,
-  Sparkles,
-  CalendarDays,
-  Trophy,
-  Settings,
-  LogOut,
-} from 'lucide-angular';
 import { UserStore } from '../../../core/stores/user.store';
 import { TradesStore } from '../../../core/stores/trades.store';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -32,7 +20,6 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
     RouterModule,
     RouterLink,
     RouterLinkActive,
-    LucideAngularModule,
     OnboardingComponent,
     PlanModalComponent,
   ],
@@ -79,9 +66,7 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             data-testid="nav-dashboard"
             (click)="closeSidebar()"
           >
-            <span class="nav-icon"
-              ><lucide-icon [img]="LayoutDashboardIcon" [size]="14"
-            /></span>
+            <span class="nav-icon">📊</span>
             Dashboard
           </a>
 
@@ -92,9 +77,7 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             data-testid="nav-journal"
             (click)="closeSidebar()"
           >
-            <span class="nav-icon"
-              ><lucide-icon [img]="BookOpenIcon" [size]="14"
-            /></span>
+            <span class="nav-icon">📖</span>
             Journal
           </a>
 
@@ -105,9 +88,7 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             data-testid="nav-sessions"
             (click)="closeSidebar()"
           >
-            <span class="nav-icon"
-              ><lucide-icon [img]="ClipboardListIcon" [size]="14"
-            /></span>
+            <span class="nav-icon">📋</span>
             Mes sessions
           </a>
 
@@ -118,9 +99,7 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             data-testid="nav-analytics"
             (click)="closeSidebar()"
           >
-            <span class="nav-icon"
-              ><lucide-icon [img]="BarChart2Icon" [size]="14"
-            /></span>
+            <span class="nav-icon">📈</span>
             Analytics
           </a>
 
@@ -133,9 +112,7 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             data-testid="nav-ai-insights"
             (click)="closeSidebar()"
           >
-            <span class="nav-icon"
-              ><lucide-icon [img]="SparklesIcon" [size]="14"
-            /></span>
+            <span class="nav-icon">✨</span>
             IA Insights
             <span class="badge">AI</span>
           </a>
@@ -147,9 +124,7 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             data-testid="nav-debrief"
             (click)="closeSidebar()"
           >
-            <span class="nav-icon"
-              ><lucide-icon [img]="CalendarDaysIcon" [size]="14"
-            /></span>
+            <span class="nav-icon">📅</span>
             Weekly Debrief
             <span class="badge">PRO</span>
           </a>
@@ -163,9 +138,7 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             data-testid="nav-scoring"
             (click)="closeSidebar()"
           >
-            <span class="nav-icon"
-              ><lucide-icon [img]="TrophyIcon" [size]="14"
-            /></span>
+            <span class="nav-icon">🏆</span>
             Scoring
           </a>
 
@@ -176,9 +149,7 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             data-testid="nav-settings"
             (click)="closeSidebar()"
           >
-            <span class="nav-icon"
-              ><lucide-icon [img]="SettingsIcon" [size]="14"
-            /></span>
+            <span class="nav-icon">⚙️</span>
             Paramètres
           </a>
 
@@ -187,9 +158,7 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             data-testid="logout-btn"
             (click)="closeSidebar(); logout()"
           >
-            <span class="nav-icon"
-              ><lucide-icon [img]="LogOutIcon" [size]="14"
-            /></span>
+            <span class="nav-icon">🚪</span>
             Déconnexion
           </button>
         </nav>
@@ -282,16 +251,6 @@ export class SidebarComponent {
     const user = this.userStore.user();
     return !!user && user.onboardingCompleted === false;
   });
-
-  protected readonly LayoutDashboardIcon = LayoutDashboard;
-  protected readonly BookOpenIcon = BookOpen;
-  protected readonly ClipboardListIcon = ClipboardList;
-  protected readonly BarChart2Icon = BarChart2;
-  protected readonly SparklesIcon = Sparkles;
-  protected readonly CalendarDaysIcon = CalendarDays;
-  protected readonly TrophyIcon = Trophy;
-  protected readonly SettingsIcon = Settings;
-  protected readonly LogOutIcon = LogOut;
 
   constructor() {
     this.tradesStore.loadMonthlyCount();
