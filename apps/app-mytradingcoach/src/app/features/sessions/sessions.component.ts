@@ -77,7 +77,7 @@ import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
                     <div class="stat-lbl">Trades</div>
                   </div>
                   <div class="stat">
-                    <div class="stat-val">{{ session.winRate !== null ? session.winRate.toFixed(0) + '%' : '—' }}</div>
+                    <div class="stat-val">{{ session.winRate !== null && session.winRate !== undefined ? session.winRate.toFixed(0) + '%' : '—' }}</div>
                     <div class="stat-lbl">Win Rate</div>
                   </div>
                 </div>
