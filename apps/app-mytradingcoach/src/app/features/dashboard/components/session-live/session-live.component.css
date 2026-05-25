@@ -507,3 +507,80 @@
   .live-layout { grid-template-columns: 1fr; }
   .mini-stats-row { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ── Eco release alert (WebSocket temps réel) ─────────────────────────────── */
+.eco-release-alert {
+  background: linear-gradient(135deg, rgba(34,211,238,.08), rgba(59,130,246,.06));
+  border: 1px solid rgba(34,211,238,.3);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  animation: alertSlideIn .3s ease;
+}
+@keyframes alertSlideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: none; }
+}
+.era-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.era-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22d3ee;
+  flex-shrink: 0;
+  animation: pulseEra 1s ease infinite;
+}
+@keyframes pulseEra {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: .4; transform: scale(.8); }
+}
+.era-title { font-size: 12px; font-weight: 600; color: #22d3ee; flex: 1; }
+.era-close {
+  background: none; border: none;
+  color: var(--text-3); cursor: pointer;
+  font-size: 16px; line-height: 1; padding: 0;
+}
+.era-event {
+  background: var(--bg-3);
+  border-radius: 7px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+.era-event-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.era-currency {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-3);
+  margin-left: 4px;
+}
+.era-values {
+  display: flex;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.era-actual { font-weight: 700; color: var(--text-2); }
+.era-actual.positive { color: var(--green); }
+.era-actual.negative { color: var(--red); }
+.era-estimate { color: var(--text-3); }
+.era-ai-loading {
+  font-size: 11px;
+  color: var(--blue-bright);
+  font-family: var(--font-mono);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.era-spin { animation: spinEra 1s linear infinite; display: inline-block; }
+@keyframes spinEra { to { transform: rotate(360deg); } }

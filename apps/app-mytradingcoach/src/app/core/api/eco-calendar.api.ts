@@ -13,6 +13,7 @@ export interface EcoEvent {
   estimate: number | null;
   previous: number | null;
   isReleased: boolean;
+  unit?: string | null;
 }
 
 export interface EcoAnalysis {
@@ -58,5 +59,9 @@ export class EcoCalendarApi {
       `${this.base}/analyze-result`,
       { eventName },
     );
+  }
+
+  refreshAnalysis(): Observable<{ data: EcoCalendarData }> {
+    return this.http.post<{ data: EcoCalendarData }>(`${this.base}/refresh-today`, {});
   }
 }

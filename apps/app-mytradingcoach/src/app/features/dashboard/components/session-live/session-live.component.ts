@@ -11,10 +11,12 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { interval } from 'rxjs';
-import { EcoCalendarData, EcoResultAnalysis } from '../../../../core/api/eco-calendar.api';
+import { EcoCalendarApi, EcoCalendarData, EcoEvent, EcoResultAnalysis } from '../../../../core/api/eco-calendar.api';
 import { MoodState, TradingSession, LiveStats, SessionTrade } from '../../../../core/api/session.api';
 import { CreateTradeDto } from '../../../../core/api/trades.api';
 import { SessionRecapComponent } from '../session-recap/session-recap.component';
+import { EcoSocketService } from '../../../../core/services/eco-socket.service';
+import { UserStore } from '../../../../core/stores/user.store';
 
 const MOODS: { value: MoodState; label: string; emoji: string }[] = [
   { value: 'CONFIDENT', label: 'Confiant', emoji: '😎' },
@@ -216,6 +218,36 @@ const EMOTIONS = [
             </div>
             <span class="ai-badge">AI</span>
           </div>
+
+          @if (showReleaseAlert() && newReleases().length > 0) {
+            <div class="eco-release-alert" data-testid="eco-release-alert">
+              <div class="era-header">
+                <span class="era-dot"></span>
+                <span class="era-title">
+                  🔔 {{ newReleases().length === 1 ? 'Résultat publié' : newReleases().length + ' résultats publiés' }}
+                </span>
+                <button class="era-close" (click)="showReleaseAlert.set(false)">×</button>
+              </div>
+              @for (ev of newReleases(); track ev.name) {
+                <div class="era-event">
+                  <div class="era-event-name">{{ ev.name }} <span class="era-currency">{{ ev.currency }}</span></div>
+                  <div class="era-values">
+                    <span class="era-actual"
+                          [class.positive]="(ev.actual ?? 0) > (ev.estimate ?? 0)"
+                          [class.negative]="(ev.actual ?? 0) < (ev.estimate ?? 0)">
+                      Actuel : {{ ev.actual }}{{ ev.unit }}
+                    </span>
+                    @if (ev.estimate !== null) {
+                      <span class="era-estimate">Prévu : {{ ev.estimate }}{{ ev.unit }}</span>
+                    }
+                  </div>
+                </div>
+              }
+              <div class="era-ai-loading" data-testid="era-ai-loading">
+                <span class="era-spin">⟳</span> Ton compagnon analyse l'impact...
+              </div>
+            </div>
+          }
 
           @if (!ecoCalendar()) {
             <div style="font-size:12px;color:var(--text-3);text-align:center;padding:20px 0;">
@@ -456,8 +488,12 @@ export class SessionLiveComponent {
   readonly tradeClosed = output<{ tradeId: string; exitPrice: number }>();
   readonly sessionClosed = output<{ mood: MoodState; note?: string; question?: string | null }>();
   readonly tradeLogged = output<CreateTradeDto>();
+  readonly ecoCalendarRefreshed = output<EcoCalendarData>();
 
   private readonly destroyRef = inject(DestroyRef);
+  private readonly ecoSocket = inject(EcoSocketService);
+  private readonly ecoCalendarApi = inject(EcoCalendarApi);
+  private readonly userStore = inject(UserStore);
 
   // Timer
   private readonly now = signal(new Date());
@@ -495,6 +531,10 @@ export class SessionLiveComponent {
   // Eco results cache
   private readonly ecoResults = signal<Record<string, EcoResultAnalysis>>({});
 
+  // Eco WebSocket — nouvelles releases temps réel
+  protected readonly newReleases = signal<EcoEvent[]>([]);
+  protected readonly showReleaseAlert = signal(false);
+
   protected readonly moods = MOODS;
   protected readonly emotions = EMOTIONS;
 
@@ -511,6 +551,30 @@ export class SessionLiveComponent {
         this.startTime.set(null);
       }
     });
+
+    // WebSocket éco — connecter quand session active + Premium
+    effect(() => {
+      const s = this.session();
+      if (s?.status === 'ACTIVE' && this.userStore.isPremium()) {
+        this.ecoSocket.connect();
+      } else {
+        this.ecoSocket.disconnect();
+      }
+    });
+
+    // Écouter les nouvelles releases
+    this.ecoSocket.newReleases$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((events) => {
+        this.newReleases.set(events);
+        this.showReleaseAlert.set(true);
+        setTimeout(() => this.showReleaseAlert.set(false), 30000);
+
+        // Rafraîchir l'analyse IA avec les nouvelles actual values
+        this.ecoCalendarApi.refreshAnalysis().subscribe((res) => {
+          this.ecoCalendarRefreshed.emit(res.data);
+        });
+      });
   }
 
   protected readonly pnlDisplay = computed(() => {
