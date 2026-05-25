@@ -173,4 +173,89 @@ describe('AnalyticsService', () => {
       expect(result.startingCapital).toBeNull();
     });
   });
+
+  describe('getEquityCurveDaily', () => {
+    it('agrège correctement 3 trades le même jour en 1 point', async () => {
+      const day = new Date('2026-05-04T10:00:00Z');
+      mockPrisma.trade.findMany.mockResolvedValue([
+        { tradedAt: day, pnl: 100 },
+        { tradedAt: day, pnl: 200 },
+        { tradedAt: day, pnl: -50 },
+      ]);
+      mockPrisma.user.findUnique.mockResolvedValue({ startingCapital: null });
+
+      const result = await service.getEquityCurveDaily('user-123');
+
+      expect(result.points).toHaveLength(1);
+      expect(result.points[0].cumulativePnl).toBe(250);
+    });
+
+    it('retourne un point par jour actif dans l\'ordre chronologique', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue([
+        { tradedAt: new Date('2026-05-04T10:00:00Z'), pnl: 100 },
+        { tradedAt: new Date('2026-05-11T10:00:00Z'), pnl: -30 },
+      ]);
+      mockPrisma.user.findUnique.mockResolvedValue({ startingCapital: null });
+
+      const result = await service.getEquityCurveDaily('user-123');
+
+      expect(result.points).toHaveLength(2);
+      expect(new Date(result.points[0].date) < new Date(result.points[1].date)).toBe(true);
+    });
+
+    it('le P&L est cumulé correctement sur plusieurs jours', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue([
+        { tradedAt: new Date('2026-05-04T10:00:00Z'), pnl: 100 },
+        { tradedAt: new Date('2026-05-05T10:00:00Z'), pnl: -50 },
+      ]);
+      mockPrisma.user.findUnique.mockResolvedValue({ startingCapital: null });
+
+      const result = await service.getEquityCurveDaily('user-123');
+
+      expect(result.points[0].cumulativePnl).toBe(100);
+      expect(result.points[1].cumulativePnl).toBe(50);
+    });
+
+    it('filtre correctement par from/to', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue([
+        { tradedAt: new Date('2026-05-04T10:00:00Z'), pnl: 100 },
+      ]);
+      mockPrisma.user.findUnique.mockResolvedValue({ startingCapital: null });
+
+      const from = new Date('2026-05-01');
+      const to = new Date('2026-05-31');
+      await service.getEquityCurveDaily('user-123', from, to);
+
+      expect(mockPrisma.trade.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            tradedAt: { gte: from, lte: to },
+          }),
+        }),
+      );
+    });
+
+    it('retourne tableau vide si aucun trade', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue([]);
+      mockPrisma.user.findUnique.mockResolvedValue({ startingCapital: null });
+
+      const result = await service.getEquityCurveDaily('user-123');
+
+      expect(result.points).toHaveLength(0);
+    });
+
+    it('getEquityCurveCurrentMonth filtre sur le mois courant', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue([]);
+      mockPrisma.user.findUnique.mockResolvedValue({ startingCapital: null });
+
+      await service.getEquityCurveCurrentMonth('user-123');
+
+      const call = mockPrisma.trade.findMany.mock.calls[0][0];
+      const now = new Date();
+      const fromMonth = call.where.tradedAt.gte.getMonth();
+      const toMonth = call.where.tradedAt.lte.getMonth();
+      expect(fromMonth).toBe(now.getMonth());
+      expect(toMonth).toBe(now.getMonth());
+    });
+  });
 });

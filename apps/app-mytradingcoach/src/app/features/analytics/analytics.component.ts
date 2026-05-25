@@ -10,14 +10,14 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { httpResource } from '@angular/common/http';
+import { HttpClient, httpResource } from '@angular/common/http';
+import { finalize } from 'rxjs';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PnlFormatPipe, SessionLabelPipe } from '../../shared/pipes';
 import { UserStore } from '../../core/stores/user.store';
 import {
   AnalyticsApi,
   AnalyticsSummary,
-  EquityCurveResponse,
   EquityPoint,
   HeatmapCell,
   MonthlyActivitySummary,
@@ -59,6 +59,7 @@ export class AnalyticsComponent {
   protected readonly userStore = inject(UserStore);
   private readonly billingApi = inject(BillingApi);
   private readonly analyticsApi = inject(AnalyticsApi);
+  private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly showPlanModal = signal(false);
@@ -68,16 +69,23 @@ export class AnalyticsComponent {
   protected readonly calData = signal<MonthlyActivitySummary | null>(null);
   protected readonly calLoading = signal(false);
 
+  // ── Période equity curve ─────────────────────────────────────────────────
+  protected readonly equityPeriod = signal<'1m' | '3m' | '6m' | 'all'>('1m');
+  protected readonly equityDateRange = computed(() => {
+    const now = new Date();
+    if (this.equityPeriod() === 'all') return { from: undefined, to: undefined };
+    const from = new Date(now);
+    if (this.equityPeriod() === '1m') from.setMonth(from.getMonth() - 1);
+    else if (this.equityPeriod() === '3m') from.setMonth(from.getMonth() - 3);
+    else from.setMonth(from.getMonth() - 6);
+    return { from: from.toISOString().slice(0, 10), to: now.toISOString().slice(0, 10) };
+  });
+  protected readonly equityData = signal<{ points: EquityPoint[]; startingCapital: number | null } | null>(null);
+  protected readonly equityLoading = signal(false);
+
   // ── httpResource — pattern déclaratif, cancel auto, loading state natif ──
   private readonly summaryResource = httpResource<{ data: AnalyticsSummary }>(
     () => `${environment.apiUrl}/analytics/summary`,
-  );
-  private readonly equityCurveResource = httpResource<{
-    data: EquityCurveResponse;
-  }>(() =>
-    this.userStore.isPremium()
-      ? `${environment.apiUrl}/analytics/equity-curve`
-      : undefined,
   );
   private readonly heatmapResource = httpResource<{ data: HeatmapCell[] }>(
     () =>
@@ -101,10 +109,10 @@ export class AnalyticsComponent {
     () => this.summaryResource.value()?.data ?? null,
   );
   protected readonly equityCurve = computed(
-    () => this.equityCurveResource.value()?.data?.points ?? [],
+    () => this.equityData()?.points ?? [],
   );
   private readonly equityStartingCapital = computed(
-    () => this.equityCurveResource.value()?.data?.startingCapital ?? null,
+    () => this.equityData()?.startingCapital ?? null,
   );
   protected readonly heatmapData = computed(
     () => this.heatmapResource.value()?.data ?? [],
@@ -119,9 +127,16 @@ export class AnalyticsComponent {
   protected readonly isLoading = computed(
     () =>
       this.summaryResource.isLoading() ||
-      this.equityCurveResource.isLoading() ||
+      this.equityLoading() ||
       this.heatmapResource.isLoading(),
   );
+
+  protected readonly periods: { key: '1m' | '3m' | '6m' | 'all'; label: string }[] = [
+    { key: '1m', label: '1 mois' },
+    { key: '3m', label: '3 mois' },
+    { key: '6m', label: '6 mois' },
+    { key: 'all', label: 'Tout' },
+  ];
 
   protected readonly days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
   protected readonly hours = [
@@ -156,7 +171,32 @@ export class AnalyticsComponent {
 
     if (this.userStore.isPremium()) {
       this.loadCalendar(this.calYear(), this.calMonth());
+      this.loadEquityCurve();
     }
+  }
+
+  protected loadEquityCurve(): void {
+    if (!this.userStore.isPremium()) return;
+    this.equityLoading.set(true);
+    const { from, to } = this.equityDateRange();
+    const params = [from ? `from=${from}` : '', to ? `to=${to}` : '']
+      .filter(Boolean)
+      .join('&');
+    const url = `${environment.apiUrl}/analytics/equity-curve/daily${params ? '?' + params : ''}`;
+    this.http
+      .get<{ data: { points: EquityPoint[]; startingCapital: number | null } }>(url)
+      .pipe(
+        finalize(() => this.equityLoading.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((res) => {
+        this.equityData.set(res.data);
+      });
+  }
+
+  protected selectPeriod(period: '1m' | '3m' | '6m' | 'all'): void {
+    this.equityPeriod.set(period);
+    this.loadEquityCurve();
   }
 
   protected onMonthChange(e: { year: number; month: number }): void {
@@ -238,7 +278,16 @@ export class AnalyticsComponent {
     const maxV = Math.max(base, ...values);
     const range = maxV - minV || 1;
 
-    const toX = (i: number) => PAD.left + (i / (values.length - 1)) * cW;
+    // Date-based X positioning
+    const timestamps = [
+      points[0] ? new Date(points[0].date).getTime() : Date.now(),
+      ...points.map((p) => new Date(p.date).getTime()),
+    ];
+    const firstTs = timestamps[0];
+    const lastTs = timestamps[timestamps.length - 1];
+    const tsRange = lastTs - firstTs || 1;
+    const toX = (i: number) =>
+      PAD.left + ((timestamps[i] - firstTs) / tsRange) * cW;
     const toY = (v: number) => PAD.top + cH - ((v - minV) / range) * cH;
 
     // Grid lines
@@ -294,6 +343,26 @@ export class AnalyticsComponent {
     [minV, maxV].forEach((v) => {
       ctx.fillText(`$${v.toFixed(0)}`, PAD.left - 6, toY(v) + 4);
     });
+
+    // X date labels (adapt to period)
+    const period = this.equityPeriod();
+    const labelCount = period === '1m' ? 4 : period === '3m' ? 6 : 8;
+    const maxLabels = Math.min(labelCount, points.length);
+    if (maxLabels >= 2) {
+      const step = (points.length - 1) / (maxLabels - 1);
+      ctx.font = '9px "DM Mono", monospace';
+      ctx.textBaseline = 'top';
+      for (let li = 0; li < maxLabels; li++) {
+        const idx = Math.round(li * step);
+        const pt = points[idx];
+        if (!pt) continue;
+        const d = new Date(pt.date);
+        const label = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+        ctx.fillStyle = 'rgba(112,144,176,0.6)';
+        ctx.textAlign = li === 0 ? 'left' : li === maxLabels - 1 ? 'right' : 'center';
+        ctx.fillText(label, toX(idx + 1), PAD.top + cH + 4);
+      }
+    }
   }
 
   private drawDrawdownCanvas(points: EquityPoint[]): void {

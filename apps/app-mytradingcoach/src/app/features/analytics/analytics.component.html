@@ -65,15 +65,24 @@
       <div class="card">
         <div class="card-header">
           <div class="card-title">Equity Curve</div>
-          @if (summary()) {
-            <span
-              class="card-meta"
-              [class.text-green]="summary()!.totalPnl >= 0"
-              [class.text-red]="summary()!.totalPnl < 0"
-            >
-              {{ summary()!.totalPnl | pnlFormat }}
-            </span>
-          }
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div class="period-tabs">
+              @for (p of periods; track p.key) {
+                <button
+                  class="period-tab"
+                  [class.active]="equityPeriod() === p.key"
+                  (click)="selectPeriod(p.key)"
+                >{{ p.label }}</button>
+              }
+            </div>
+            @if (equityData()?.points?.length) {
+              <span class="equity-pnl-total"
+                    [class.pos]="(equityData()!.points.at(-1)!.cumulativePnl) >= 0"
+                    [class.neg]="(equityData()!.points.at(-1)!.cumulativePnl) < 0">
+                {{ equityData()!.points.at(-1)!.cumulativePnl | pnlFormat }}
+              </span>
+            }
+          </div>
         </div>
         <div class="chart-container">
           <canvas
@@ -81,8 +90,8 @@
             class="chart-canvas"
             data-testid="equity-curve"
           ></canvas>
-          @if (equityCurve().length === 0) {
-            <div class="empty-chart">Aucun trade clôturé</div>
+          @if (equityCurve().length === 0 && !equityLoading()) {
+            <div class="empty-chart">Aucun trade sur cette période</div>
           }
         </div>
       </div>

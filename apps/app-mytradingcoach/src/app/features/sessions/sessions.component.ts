@@ -77,7 +77,7 @@ import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
                     <div class="stat-lbl">Trades</div>
                   </div>
                   <div class="stat">
-                    <div class="stat-val">{{ session.winRate != null ? session.winRate.toFixed(0) + '%' : '—' }}</div>
+                    <div class="stat-val">{{ session.winRate !== null ? session.winRate.toFixed(0) + '%' : '—' }}</div>
                     <div class="stat-lbl">Win Rate</div>
                   </div>
                 </div>
@@ -87,7 +87,7 @@ import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
 
               <!-- Expanded detail -->
               @if (expandedId() === session.id) {
-                <div class="session-detail" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+                <div class="session-detail" tabindex="0" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
                   @if (session.reflectionQuestion) {
                     <div class="detail-reflection">
                       <div class="detail-q-label">

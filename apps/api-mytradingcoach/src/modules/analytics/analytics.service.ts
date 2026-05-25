@@ -2,6 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EmotionState, SetupType } from '@prisma/client';
 
+export interface EquityPoint {
+  date: Date;
+  cumulativePnl: number;
+}
+
 @Injectable()
 export class AnalyticsService {
   constructor(private prisma: PrismaService) {}
@@ -214,6 +219,82 @@ export class AnalyticsService {
     });
 
     return { points, startingCapital };
+  }
+
+  async getEquityCurveDaily(
+    userId: string,
+    from?: Date,
+    to?: Date,
+  ): Promise<{ points: EquityPoint[]; startingCapital: number | null }> {
+    const [user, trades] = await Promise.all([
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { startingCapital: true },
+      }),
+      this.prisma.trade.findMany({
+        where: {
+          userId,
+          pnl: { not: null },
+          ...(from || to
+            ? {
+                tradedAt: {
+                  ...(from ? { gte: from } : {}),
+                  ...(to ? { lte: to } : {}),
+                },
+              }
+            : {}),
+        },
+        select: { tradedAt: true, pnl: true },
+        orderBy: { tradedAt: 'asc' },
+      }),
+    ]);
+
+    const startingCapital =
+      user?.startingCapital && user.startingCapital > 0
+        ? user.startingCapital
+        : null;
+
+    if (trades.length === 0) return { points: [], startingCapital };
+
+    const byDay = new Map<string, number>();
+    for (const t of trades) {
+      const key = new Date(t.tradedAt)
+        .toLocaleDateString('fr-FR', {
+          timeZone: 'Europe/Paris',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        })
+        .split('/')
+        .reverse()
+        .join('-'); // YYYY-MM-DD
+      byDay.set(key, (byDay.get(key) ?? 0) + (t.pnl ?? 0));
+    }
+
+    const sortedDays = [...byDay.entries()].sort(([a], [b]) =>
+      a.localeCompare(b),
+    );
+    let cumPnl = 0;
+    const points: EquityPoint[] = sortedDays.map(([date, pnl]) => {
+      cumPnl += pnl;
+      return { date: new Date(date), cumulativePnl: cumPnl };
+    });
+
+    return { points, startingCapital };
+  }
+
+  async getEquityCurveCurrentMonth(userId: string) {
+    const now = new Date();
+    const from = new Date(now.getFullYear(), now.getMonth(), 1);
+    const to = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+    );
+    return this.getEquityCurveDaily(userId, from, to);
   }
 
   async getMonthlyActivity(userId: string, year: number, month: number) {

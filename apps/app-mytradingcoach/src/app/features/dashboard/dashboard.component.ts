@@ -255,13 +255,18 @@ import { SessionLiveComponent } from './components/session-live/session-live.com
             <div class="card equity-card">
               <div class="card-header">
                 <div class="card-title">Equity Curve</div>
-                <a routerLink="/analytics" class="card-action">Détails →</a>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <span style="font-size:11px;color:var(--text-3);font-family:var(--font-mono);">
+                    {{ currentMonthLabel() }}
+                  </span>
+                  <a routerLink="/analytics" class="card-action">Détails →</a>
+                </div>
               </div>
               <div class="chart-container">
                 <canvas #equityCanvas style="width:100%;height:100%;display:block;position:absolute;inset:0;"></canvas>
                 @if (!userStore.isPremium() || equityCurve().length === 0) {
                   <div class="empty-chart">
-                    @if (!userStore.isPremium()) { Courbe disponible en Premium } @else { Aucun trade enregistré }
+                    @if (!userStore.isPremium()) { Courbe disponible en Premium } @else { Aucun trade ce mois }
                   </div>
                 }
               </div>
@@ -536,7 +541,12 @@ import { SessionLiveComponent } from './components/session-live/session-live.com
         <div class="card equity-card equity-card-full">
           <div class="card-header">
             <div class="card-title">Equity Curve</div>
-            <a routerLink="/analytics" class="card-action">Détails →</a>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:11px;color:var(--text-3);font-family:var(--font-mono);">
+                {{ currentMonthLabel() }}
+              </span>
+              <a routerLink="/analytics" class="card-action">Détails →</a>
+            </div>
           </div>
           <div class="chart-container">
             <canvas
@@ -548,7 +558,7 @@ import { SessionLiveComponent } from './components/session-live/session-live.com
                 @if (!userStore.isPremium()) {
                   Courbe disponible en Premium
                 } @else {
-                  Aucun trade enregistré
+                  Aucun trade ce mois
                 }
               </div>
             }
@@ -758,7 +768,7 @@ export class DashboardComponent implements AfterViewInit {
     data: { points: EquityPoint[]; startingCapital: number | null };
   }>(() =>
     this.userStore.isPremium()
-      ? `${environment.apiUrl}/analytics/equity-curve`
+      ? `${environment.apiUrl}/analytics/equity-curve/current-month`
       : undefined,
   );
   private readonly bySetupResource = httpResource<{ data: SetupStat[] }>(() =>
@@ -838,6 +848,10 @@ export class DashboardComponent implements AfterViewInit {
   );
   private readonly initialCapitalFromCurve = computed(
     () => this.equityCurveResource.value()?.data?.startingCapital ?? null,
+  );
+
+  protected readonly currentMonthLabel = computed(() =>
+    new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
   );
   protected readonly bySetup = computed(
     () => this.bySetupResource.value()?.data ?? [],
@@ -1206,7 +1220,16 @@ export class DashboardComponent implements AfterViewInit {
     const maxV = rawMax + padding;
     const range = maxV - minV;
 
-    const toX = (i: number) => PAD.left + (i / (values.length - 1)) * cW;
+    // Date-based X positioning
+    const timestamps = [
+      points[0] ? new Date(points[0].date).getTime() : Date.now(),
+      ...points.map((p) => new Date(p.date).getTime()),
+    ];
+    const firstTs = timestamps[0];
+    const lastTs = timestamps[timestamps.length - 1];
+    const tsRange = lastTs - firstTs || 1;
+    const toX = (i: number) =>
+      PAD.left + ((timestamps[i] - firstTs) / tsRange) * cW;
     const toY = (v: number) => PAD.top + cH - ((v - minV) / range) * cH;
 
     const lastVal = values[values.length - 1] ?? 0;
@@ -1251,26 +1274,22 @@ export class DashboardComponent implements AfterViewInit {
     const labelY = lastY > PAD.top + 14 ? lastY - 14 : lastY + 14;
     ctx.fillText(fmtVal(lastVal), lastX + 6, labelY);
 
-    // Labels X : premier, milieu, dernier
-    const xIndices = [
-      1,
-      Math.floor((values.length - 1) / 2),
-      values.length - 1,
-    ];
-    for (const idx of xIndices) {
-      const pt = points[idx - 1];
-      if (!pt) continue;
-      const d = new Date(pt.date);
-      const label = d.toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: 'short',
-      });
-      ctx.fillStyle = 'rgba(112,144,176,0.6)';
-      ctx.font = '400 9px "DM Mono", "Courier New", monospace';
-      ctx.textAlign =
-        idx === values.length - 1 ? 'right' : idx === 1 ? 'left' : 'center';
+    // Labels X : 4 dates réelles uniformément distribuées
+    const labelCount = Math.min(4, points.length);
+    if (labelCount >= 2) {
+      const step = (points.length - 1) / (labelCount - 1);
+      ctx.font = '500 9px "DM Mono", "Courier New", monospace';
       ctx.textBaseline = 'top';
-      ctx.fillText(label, toX(idx), PAD.top + cH + 8);
+      for (let li = 0; li < labelCount; li++) {
+        const idx = Math.round(li * step);
+        const pt = points[idx];
+        if (!pt) continue;
+        const d = new Date(pt.date);
+        const label = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+        ctx.fillStyle = 'rgba(112,144,176,0.6)';
+        ctx.textAlign = li === 0 ? 'left' : li === labelCount - 1 ? 'right' : 'center';
+        ctx.fillText(label, toX(idx + 1), PAD.top + cH + 8);
+      }
     }
 
     // Bezier smooth helper

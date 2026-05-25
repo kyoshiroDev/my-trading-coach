@@ -1,4 +1,4 @@
-import { Controller, Get, Param, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Query, UseGuards } from '@nestjs/common';
 import { Plan, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PremiumGuard } from '../../common/guards/premium.guard';
@@ -41,6 +41,26 @@ export class AnalyticsController {
   @Get('equity-curve')
   getEquityCurve(@CurrentUser() user: { id: string }) {
     return this.analyticsService.getEquityCurve(user.id);
+  }
+
+  @UseGuards(PremiumGuard)
+  @Get('equity-curve/current-month')
+  getEquityCurrentMonth(@CurrentUser() user: { id: string }) {
+    return this.analyticsService.getEquityCurveCurrentMonth(user.id);
+  }
+
+  @UseGuards(PremiumGuard)
+  @Get('equity-curve/daily')
+  getEquityDaily(
+    @CurrentUser() user: { id: string },
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.analyticsService.getEquityCurveDaily(
+      user.id,
+      from ? new Date(from) : undefined,
+      to ? new Date(to) : undefined,
+    );
   }
 
   @UseGuards(PremiumGuard)
