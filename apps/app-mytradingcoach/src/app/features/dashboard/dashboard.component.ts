@@ -874,12 +874,14 @@ export class DashboardComponent implements AfterViewInit {
     });
 
     effect(() => {
+      this.activeTab(); // re-déclenche quand le tab 'dashboard' redevient actif
       if (
         !this.isLoading() &&
         this.canDraw() &&
         this.equityCurve().length > 0
       ) {
-        this.drawEquityCurve();
+        // rAF : attendre que le @if ait recréé le canvas dans le DOM
+        requestAnimationFrame(() => this.drawEquityCurve());
       }
     });
 
