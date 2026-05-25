@@ -97,7 +97,11 @@ export class EcoCalendarService implements OnModuleDestroy {
   async fetchEconomicEvents(date: string): Promise<EcoEvent[]> {
     const apiKey = process.env['FINANCIAL_MODELING_PREP_API_KEY'];
     if (!apiKey) {
-      this.logger.warn('FINANCIAL_MODELING_PREP_API_KEY not set — returning empty events');
+      this.logger.error(
+        '❌ FINANCIAL_MODELING_PREP_API_KEY non configurée — ' +
+        'Aller sur https://financialmodelingprep.com pour une clé gratuite (250 req/jour) ' +
+        "et l'ajouter dans .env sous FINANCIAL_MODELING_PREP_API_KEY",
+      );
       return [];
     }
 
@@ -120,9 +124,10 @@ export class EcoCalendarService implements OnModuleDestroy {
         previous: number | null;
       }>;
 
-      return data
-        .filter((e) => ['High', 'Medium'].includes(e.impact))
-        .map((e) => ({
+      const filtered = data.filter((e) => ['High', 'Medium'].includes(e.impact));
+      this.logger.log(`✅ FMP API: ${data.length} events fetched (${filtered.length} High/Medium) pour ${date}`);
+
+      return filtered.map((e) => ({
           time: e.date,
           name: e.event,
           impact: e.impact === 'High' ? 'high' : 'medium',
@@ -132,7 +137,7 @@ export class EcoCalendarService implements OnModuleDestroy {
           estimate: e.estimate ?? null,
           previous: e.previous ?? null,
           isReleased: e.actual !== null,
-        })) as EcoEvent[];
+        }));
     } catch (err) {
       this.logger.error('FMP fetch failed', err);
       return [];
