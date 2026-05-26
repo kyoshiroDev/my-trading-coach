@@ -1,10 +1,10 @@
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
   ElementRef,
   ViewChild,
+  afterRenderEffect,
   computed,
   effect,
   inject,
@@ -47,6 +47,7 @@ import { DailyRecapApi, DailyRecap } from '../../core/api/daily-recap.api';
 import { DebriefApi, DebriefObjective } from '../../core/api/debrief.api';
 import { SessionMorningComponent } from './components/session-morning/session-morning.component';
 import { SessionLiveComponent } from './components/session-live/session-live.component';
+import { ChartService } from '../../core/services/chart.service';
 
 @Component({
   selector: 'mtc-dashboard',
@@ -264,7 +265,7 @@ import { SessionLiveComponent } from './components/session-live/session-live.com
                 </div>
               </div>
               <div class="chart-container">
-                <canvas #equityCanvas style="width:100%;height:100%;display:block;position:absolute;inset:0;"></canvas>
+                <canvas #equityChart></canvas>
                 @if (!userStore.isPremium() || equityCurve().length === 0) {
                   <div class="empty-chart">
                     @if (!userStore.isPremium()) { Courbe disponible en Premium } @else { Aucun trade ce mois }
@@ -550,10 +551,7 @@ import { SessionLiveComponent } from './components/session-live/session-live.com
             </div>
           </div>
           <div class="chart-container">
-            <canvas
-              #equityCanvas
-              style="width:100%;height:100%;display:block;position:absolute;inset:0;"
-            ></canvas>
+            <canvas #equityChart></canvas>
             @if (!userStore.isPremium() || equityCurve().length === 0) {
               <div class="empty-chart">
                 @if (!userStore.isPremium()) {
@@ -728,8 +726,8 @@ import { SessionLiveComponent } from './components/session-live/session-live.com
     </div>
   `,
 })
-export class DashboardComponent implements AfterViewInit {
-  @ViewChild('equityCanvas') canvasRef?: ElementRef<HTMLCanvasElement>;
+export class DashboardComponent {
+  @ViewChild('equityChart') canvasRef?: ElementRef<HTMLCanvasElement>;
 
   protected readonly userStore = inject(UserStore);
   protected readonly tradesStore = inject(TradesStore);
@@ -741,6 +739,7 @@ export class DashboardComponent implements AfterViewInit {
   private readonly dailyRecapApi = inject(DailyRecapApi);
   private readonly debriefApi = inject(DebriefApi);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly chartService = inject(ChartService);
 
   protected readonly showTradeForm = signal(false);
   protected readonly showPlanModal = signal(false);
@@ -870,8 +869,6 @@ export class DashboardComponent implements AfterViewInit {
         this.byEmotionResource.isLoading()),
   );
 
-  private readonly canDraw = signal(false);
-  private resizeObserver?: ResizeObserver;
   private readonly knownTradesCount = signal(-1);
 
   constructor() {
@@ -888,15 +885,12 @@ export class DashboardComponent implements AfterViewInit {
       this.knownTradesCount.set(count);
     });
 
-    effect(() => {
-      this.activeTab(); // re-déclenche quand le tab 'dashboard' redevient actif
-      if (
-        !this.isLoading() &&
-        this.canDraw() &&
-        this.equityCurve().length > 0
-      ) {
-        // rAF : attendre que le @if ait recréé le canvas dans le DOM
-        requestAnimationFrame(() => this.drawEquityCurve());
+    afterRenderEffect(() => {
+      const canvas = this.canvasRef?.nativeElement;
+      const points = this.equityCurve();
+      const capital = this.initialCapitalFromCurve();
+      if (canvas && points.length >= 2) {
+        this.chartService.buildEquityChart(canvas, points, capital);
       }
     });
 
@@ -921,19 +915,6 @@ export class DashboardComponent implements AfterViewInit {
           this.refreshLiveStats();
         }
       });
-  }
-
-  ngAfterViewInit() {
-    this.canDraw.set(true);
-
-    const container = this.canvasRef?.nativeElement?.parentElement;
-    if (container) {
-      this.resizeObserver = new ResizeObserver(() => {
-        if (this.equityCurve().length > 1) this.drawEquityCurve();
-      });
-      this.resizeObserver.observe(container);
-      this.destroyRef.onDestroy(() => this.resizeObserver?.disconnect());
-    }
   }
 
   /** Segments du donut SVG — recalculés uniquement quand bySetup() change grâce à computed() */
@@ -1195,170 +1176,4 @@ export class DashboardComponent implements AfterViewInit {
       });
   }
 
-  private drawEquityCurve() {
-    const points = this.equityCurve();
-    if (!this.canvasRef?.nativeElement || points.length < 2) return;
-
-    const canvas = this.canvasRef.nativeElement;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const cssW =
-      canvas.getBoundingClientRect().width || canvas.offsetWidth || 800;
-    const cssH =
-      canvas.getBoundingClientRect().height || canvas.offsetHeight || 200;
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = cssW * dpr;
-    canvas.height = cssH * dpr;
-    ctx.scale(dpr, dpr);
-
-    const W = cssW;
-    const H = cssH;
-    const PAD = { top: 16, right: 24, bottom: 32, left: 62 };
-    const cW = W - PAD.left - PAD.right;
-    const cH = H - PAD.top - PAD.bottom;
-
-    ctx.clearRect(0, 0, W, H);
-
-    const base = this.initialCapitalFromCurve() ?? 0;
-    const values = [base, ...points.map((p) => base + p.cumulativePnl)];
-
-    const rawMin = Math.min(...values);
-    const rawMax = Math.max(...values);
-    const padding = (rawMax - rawMin) * 0.1 || rawMax * 0.05 || 1;
-    const minV = rawMin - padding;
-    const maxV = rawMax + padding;
-    const range = maxV - minV;
-
-    // Date-based X positioning
-    const timestamps = [
-      points[0] ? new Date(points[0].date).getTime() : Date.now(),
-      ...points.map((p) => new Date(p.date).getTime()),
-    ];
-    const firstTs = timestamps[0];
-    const lastTs = timestamps[timestamps.length - 1];
-    const tsRange = lastTs - firstTs || 1;
-    const toX = (i: number) =>
-      PAD.left + ((timestamps[i] - firstTs) / tsRange) * cW;
-    const toY = (v: number) => PAD.top + cH - ((v - minV) / range) * cH;
-
-    const lastVal = values[values.length - 1] ?? 0;
-    const firstVal = values[0] ?? 0;
-    const isPositive = lastVal >= firstVal;
-    const rgb = isPositive ? '59,130,246' : '239,68,68';
-    const color = isPositive ? '#3b82f6' : '#ef4444';
-
-    // Grille horizontale (5 niveaux) — lignes sans labels
-    const gridCount = 4;
-    for (let i = 0; i <= gridCount; i++) {
-      const v = minV + (range / gridCount) * i;
-      const y = toY(v);
-      ctx.beginPath();
-      ctx.strokeStyle = 'rgba(99,155,255,0.08)';
-      ctx.lineWidth = 1;
-      ctx.setLineDash([4, 8]);
-      ctx.moveTo(PAD.left, y);
-      ctx.lineTo(PAD.left + cW, y);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-
-    const fmtVal = (v: number) =>
-      Math.abs(v) >= 1000
-        ? '$' + (v / 1000).toFixed(1) + 'k'
-        : '$' + v.toFixed(0);
-
-    ctx.font = '500 10px "DM Mono", "Courier New", monospace';
-    ctx.textBaseline = 'middle';
-
-    // Label bas-gauche : capital de départ (là où la courbe commence)
-    ctx.fillStyle = 'rgba(112,144,176,0.75)';
-    ctx.textAlign = 'right';
-    ctx.fillText(fmtVal(firstVal), PAD.left - 8, toY(firstVal));
-
-    // Label haut-droite : capital + P&L (valeur finale, près du dot)
-    const lastX = toX(values.length - 1);
-    const lastY = toY(lastVal);
-    ctx.fillStyle = color;
-    ctx.textAlign = 'right';
-    const labelY = lastY > PAD.top + 14 ? lastY - 14 : lastY + 14;
-    ctx.fillText(fmtVal(lastVal), lastX + 6, labelY);
-
-    // Labels X : 4 dates réelles uniformément distribuées
-    const labelCount = Math.min(4, points.length);
-    if (labelCount >= 2) {
-      const step = (points.length - 1) / (labelCount - 1);
-      ctx.font = '500 9px "DM Mono", "Courier New", monospace';
-      ctx.textBaseline = 'top';
-      for (let li = 0; li < labelCount; li++) {
-        const idx = Math.round(li * step);
-        const pt = points[idx];
-        if (!pt) continue;
-        const d = new Date(pt.date);
-        const label = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-        ctx.fillStyle = 'rgba(112,144,176,0.6)';
-        ctx.textAlign = li === 0 ? 'left' : li === labelCount - 1 ? 'right' : 'center';
-        ctx.fillText(label, toX(idx + 1), PAD.top + cH + 8);
-      }
-    }
-
-    // Bezier smooth helper
-    const smoothPath = (vs: number[], close: boolean) => {
-      ctx.moveTo(toX(0), toY(vs[0]));
-      for (let i = 1; i < vs.length; i++) {
-        const cpx = (toX(i - 1) + toX(i)) / 2;
-        ctx.bezierCurveTo(
-          cpx,
-          toY(vs[i - 1]),
-          cpx,
-          toY(vs[i]),
-          toX(i),
-          toY(vs[i]),
-        );
-      }
-      if (close) {
-        ctx.lineTo(toX(vs.length - 1), PAD.top + cH);
-        ctx.lineTo(PAD.left, PAD.top + cH);
-        ctx.closePath();
-      }
-    };
-
-    // Gradient fill
-    const grad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + cH);
-    grad.addColorStop(0, `rgba(${rgb}, 0.4)`);
-    grad.addColorStop(0.5, `rgba(${rgb}, 0.12)`);
-    grad.addColorStop(1, `rgba(${rgb}, 0.0)`);
-    ctx.beginPath();
-    smoothPath(values, true);
-    ctx.fillStyle = grad;
-    ctx.fill();
-
-    // Ligne principale avec glow
-    ctx.beginPath();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2.5;
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 8;
-    smoothPath(values, false);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-
-    // Dot final
-    const lx = toX(values.length - 1);
-    const ly = toY(lastVal);
-    ctx.beginPath();
-    ctx.arc(lx, ly, 7, 0, Math.PI * 2);
-    ctx.strokeStyle = `rgba(${rgb}, 0.3)`;
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(lx, ly, 4, 0, Math.PI * 2);
-    ctx.fillStyle = color;
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 12;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-  }
 }

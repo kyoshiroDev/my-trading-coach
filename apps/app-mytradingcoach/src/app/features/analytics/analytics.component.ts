@@ -28,6 +28,7 @@ import { BillingApi } from '../../core/api/billing.api';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { ActivityCalendarComponent } from '../../shared/components/activity-calendar/activity-calendar.component';
 import { environment } from '../../../environments/environment';
+import { ChartService } from '../../core/services/chart.service';
 
 const MOCK_HEATMAP_CELLS = [
   0.75, 0.45, 0.8, 0.3, 0.65, 0.55, 0.2, 0.6, 0.7, 0.35, 0.85, 0.5, 0.4, 0.72,
@@ -61,6 +62,7 @@ export class AnalyticsComponent {
   private readonly analyticsApi = inject(AnalyticsApi);
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly chartService = inject(ChartService);
 
   protected readonly showPlanModal = signal(false);
 
@@ -164,8 +166,14 @@ export class AnalyticsComponent {
     afterRenderEffect(() => {
       const curve = this.equityCurve();
       if (curve.length >= 2) {
-        this.drawEquityCanvas(curve);
-        this.drawDrawdownCanvas(curve);
+        const equityCanvas = this.equityCanvasRef?.nativeElement;
+        const drawdownCanvas = this.drawdownCanvasRef?.nativeElement;
+        if (equityCanvas) {
+          this.chartService.buildEquityChart(equityCanvas, curve, this.equityStartingCapital());
+        }
+        if (drawdownCanvas) {
+          this.chartService.buildDrawdownChart(drawdownCanvas, curve);
+        }
       }
     });
 
@@ -254,205 +262,4 @@ export class AnalyticsComponent {
       });
   }
 
-  private drawEquityCanvas(points: EquityPoint[]): void {
-    const canvas = this.equityCanvasRef?.nativeElement;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const W = canvas.offsetWidth || 400;
-    const H = 140;
-    canvas.width = W;
-    canvas.height = H;
-
-    const PAD = { top: 12, right: 12, bottom: 20, left: 52 };
-    const cW = W - PAD.left - PAD.right;
-    const cH = H - PAD.top - PAD.bottom;
-
-    ctx.clearRect(0, 0, W, H);
-
-    const capital = this.equityStartingCapital();
-    const base = capital != null && capital > 0 ? capital : 0;
-    const values = [base, ...points.map((p) => base + p.cumulativePnl)];
-    const minV = Math.min(base, ...values);
-    const maxV = Math.max(base, ...values);
-    const range = maxV - minV || 1;
-
-    // Date-based X positioning
-    const timestamps = [
-      points[0] ? new Date(points[0].date).getTime() : Date.now(),
-      ...points.map((p) => new Date(p.date).getTime()),
-    ];
-    const firstTs = timestamps[0];
-    const lastTs = timestamps[timestamps.length - 1];
-    const tsRange = lastTs - firstTs || 1;
-    const toX = (i: number) =>
-      PAD.left + ((timestamps[i] - firstTs) / tsRange) * cW;
-    const toY = (v: number) => PAD.top + cH - ((v - minV) / range) * cH;
-
-    // Grid lines
-    ctx.strokeStyle = 'rgba(99,155,255,0.06)';
-    ctx.lineWidth = 1;
-    for (let i = 0; i <= 3; i++) {
-      const y = PAD.top + (cH / 3) * i;
-      ctx.beginPath();
-      ctx.moveTo(PAD.left, y);
-      ctx.lineTo(PAD.left + cW, y);
-      ctx.stroke();
-    }
-
-    // Baseline (capital de départ ou 0)
-    ctx.strokeStyle = 'rgba(99,155,255,0.2)';
-    ctx.setLineDash([4, 4]);
-    ctx.beginPath();
-    ctx.moveTo(PAD.left, toY(base));
-    ctx.lineTo(PAD.left + cW, toY(base));
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    const lastVal = values[values.length - 1] ?? base;
-    const rgb = lastVal >= base ? '16,185,129' : '239,68,68';
-
-    // Fill gradient
-    const grad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + cH);
-    grad.addColorStop(0, `rgba(${rgb},0.25)`);
-    grad.addColorStop(1, `rgba(${rgb},0)`);
-    ctx.beginPath();
-    ctx.moveTo(toX(0), toY(values[0]));
-    for (let i = 1; i < values.length; i++) ctx.lineTo(toX(i), toY(values[i]));
-    ctx.lineTo(toX(values.length - 1), PAD.top + cH);
-    ctx.lineTo(toX(0), PAD.top + cH);
-    ctx.closePath();
-    ctx.fillStyle = grad;
-    ctx.fill();
-
-    // Line
-    ctx.beginPath();
-    ctx.strokeStyle = lastVal >= base ? '#10b981' : '#ef4444';
-    ctx.lineWidth = 2;
-    for (let i = 0; i < values.length; i++) {
-      if (i === 0) ctx.moveTo(toX(0), toY(values[0]));
-      else ctx.lineTo(toX(i), toY(values[i]));
-    }
-    ctx.stroke();
-
-    // Y labels
-    ctx.fillStyle = 'rgba(122,147,187,0.7)';
-    ctx.font = '10px "DM Mono", monospace';
-    ctx.textAlign = 'right';
-    [minV, maxV].forEach((v) => {
-      ctx.fillText(`$${v.toFixed(0)}`, PAD.left - 6, toY(v) + 4);
-    });
-
-    // X date labels (adapt to period)
-    const period = this.equityPeriod();
-    const labelCount = period === '1m' ? 4 : period === '3m' ? 6 : 8;
-    const maxLabels = Math.min(labelCount, points.length);
-    if (maxLabels >= 2) {
-      const step = (points.length - 1) / (maxLabels - 1);
-      ctx.font = '9px "DM Mono", monospace';
-      ctx.textBaseline = 'top';
-      for (let li = 0; li < maxLabels; li++) {
-        const idx = Math.round(li * step);
-        const pt = points[idx];
-        if (!pt) continue;
-        const d = new Date(pt.date);
-        const label = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-        ctx.fillStyle = 'rgba(112,144,176,0.6)';
-        ctx.textAlign = li === 0 ? 'left' : li === maxLabels - 1 ? 'right' : 'center';
-        ctx.fillText(label, toX(idx + 1), PAD.top + cH + 4);
-      }
-    }
-  }
-
-  private drawDrawdownCanvas(points: EquityPoint[]): void {
-    const canvas = this.drawdownCanvasRef?.nativeElement;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const W = canvas.offsetWidth || 400;
-    const H = 140;
-    canvas.width = W;
-    canvas.height = H;
-
-    const PAD = { top: 12, right: 12, bottom: 20, left: 52 };
-    const cW = W - PAD.left - PAD.right;
-    const cH = H - PAD.top - PAD.bottom;
-
-    ctx.clearRect(0, 0, W, H);
-
-    // Compute absolute dollar drawdown from peak (always <= 0)
-    // peak starts at 0 so even an immediately-negative curve is captured
-    let peak = 0;
-    const drawdowns = points.map((p) => {
-      if (p.cumulativePnl > peak) peak = p.cumulativePnl;
-      return p.cumulativePnl - peak;
-    });
-
-    const minD = Math.min(...drawdowns, -1);
-    const maxD = 0;
-    const range = maxD - minD || 1;
-
-    const toX = (i: number) => PAD.left + (i / (drawdowns.length - 1)) * cW;
-    const toY = (v: number) => PAD.top + ((maxD - v) / range) * cH;
-
-    // Grid lines
-    ctx.strokeStyle = 'rgba(99,155,255,0.06)';
-    ctx.lineWidth = 1;
-    for (let i = 0; i <= 3; i++) {
-      const y = PAD.top + (cH / 3) * i;
-      ctx.beginPath();
-      ctx.moveTo(PAD.left, y);
-      ctx.lineTo(PAD.left + cW, y);
-      ctx.stroke();
-    }
-
-    // Zero line
-    ctx.strokeStyle = 'rgba(99,155,255,0.2)';
-    ctx.setLineDash([4, 4]);
-    ctx.beginPath();
-    ctx.moveTo(PAD.left, toY(0));
-    ctx.lineTo(PAD.left + cW, toY(0));
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Fill
-    const grad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + cH);
-    grad.addColorStop(0, 'rgba(239,68,68,0.25)');
-    grad.addColorStop(1, 'rgba(239,68,68,0)');
-    ctx.beginPath();
-    ctx.moveTo(toX(0), toY(drawdowns[0]));
-    for (let i = 1; i < drawdowns.length; i++)
-      ctx.lineTo(toX(i), toY(drawdowns[i]));
-    ctx.lineTo(toX(drawdowns.length - 1), toY(0));
-    ctx.lineTo(toX(0), toY(0));
-    ctx.closePath();
-    ctx.fillStyle = grad;
-    ctx.fill();
-
-    // Line
-    ctx.beginPath();
-    ctx.strokeStyle = '#ef4444';
-    ctx.lineWidth = 2;
-    for (let i = 0; i < drawdowns.length; i++) {
-      if (i === 0) ctx.moveTo(toX(0), toY(drawdowns[0]));
-      else ctx.lineTo(toX(i), toY(drawdowns[i]));
-    }
-    ctx.stroke();
-
-    // Y labels (absolute dollar drawdown)
-    const fmtDD = (v: number) => {
-      if (v === 0) return '$0';
-      const abs = Math.abs(v);
-      return abs >= 1000
-        ? `-$${(abs / 1000).toFixed(1)}k`
-        : `-$${abs.toFixed(0)}`;
-    };
-    ctx.fillStyle = 'rgba(122,147,187,0.7)';
-    ctx.font = '10px "DM Mono", monospace';
-    ctx.textAlign = 'right';
-    ctx.fillText('$0', PAD.left - 6, toY(0) + 4);
-    ctx.fillText(fmtDD(minD), PAD.left - 6, toY(minD) + 4);
-  }
 }
