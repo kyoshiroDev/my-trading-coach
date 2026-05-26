@@ -44,6 +44,25 @@
   color: var(--blue-bright);
 }
 
+.plan-input-wrap { margin-top: 12px; }
+.plan-input {
+  width: 100%;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 12px;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+  transition: border-color .15s;
+  box-sizing: border-box;
+}
+.plan-input:focus { border-color: var(--blue); }
+.plan-input::placeholder { color: var(--text-3); }
+
 
 /* ─── Daily row ─── */
 .daily-row {

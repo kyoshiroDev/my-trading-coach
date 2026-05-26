@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -44,13 +46,27 @@ export class SessionController {
     );
   }
 
+  @Patch(':id')
+  update(
+    @CurrentUser() user: { id: string },
+    @Param('id') id: string,
+    @Body() body: { planNote?: string; marketContext?: string },
+  ) {
+    return this.sessionService.updateSession(user.id, id, body);
+  }
+
   @Get('history')
   getHistory(
     @CurrentUser() user: { id: string },
-    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
-    @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
+    @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset: number,
+    @Query('year') year?: string,
+    @Query('month') month?: string,
   ) {
-    return this.sessionService.getSessionHistory(user.id, limit ?? 20, offset ?? 0);
+    return this.sessionService.getSessionHistory(user.id, limit, offset, {
+      year: year ? parseInt(year, 10) : undefined,
+      month: month ? parseInt(month, 10) : undefined,
+    });
   }
 
   @Get('history/:id')

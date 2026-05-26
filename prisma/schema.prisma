@@ -145,6 +145,11 @@ model TradeSession {
   notes              String?
   reflectionNote     String?
   reflectionQuestion String?
+  planNote           String?
+  marketContext      String?
+  maxDrawdown        Float?
+  bestTradePnl       Float?
+  bestTradeAsset     String?
   trades             Trade[]
   createdAt          DateTime      @default(now())
 

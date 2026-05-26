@@ -192,6 +192,7 @@ import { SessionLiveComponent } from './components/session-live/session-live.com
             (moodSelected)="selectMood($event)"
             (sessionStarted)="startSession()"
             (objectiveNoteAdded)="updateObjectiveNote($event)"
+            (planNoteChanged)="savePlanNote($event)"
           />
         }
         @if (activeTab() === 'live') {
@@ -1072,6 +1073,15 @@ export class DashboardComponent implements AfterViewInit {
         },
         error: () => this.monthlyActivityLoading.set(false),
       });
+  }
+
+  protected savePlanNote(note: string): void {
+    const session = this.activeSession();
+    if (!note.trim() || !session) return;
+    this.sessionApi
+      .updateSession(session.id, { planNote: note })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe();
   }
 
   protected updateObjectiveNote(e: { index: number; note: string }): void {

@@ -19,6 +19,8 @@ export interface TradingSession {
   notes?: string;
   reflectionNote?: string;
   reflectionQuestion?: string;
+  planNote?: string | null;
+  marketContext?: string | null;
 }
 
 export interface SessionHistoryItem {
@@ -27,12 +29,19 @@ export interface SessionHistoryItem {
   endedAt?: string;
   moodStart?: MoodState;
   moodEnd?: MoodState;
-  totalPnl?: number;
+  totalPnl?: number | null;
   totalTrades: number;
-  winRate?: number;
-  reflectionNote?: string;
-  reflectionQuestion?: string;
-  _count: { trades: number };
+  winRate?: number | null;
+  notes?: string | null;
+  reflectionNote?: string | null;
+  reflectionQuestion?: string | null;
+  planNote?: string | null;
+  marketContext?: string | null;
+  maxDrawdown?: number | null;
+  bestTradePnl?: number | null;
+  bestTradeAsset?: string | null;
+  topAssets: string[];
+  aiOneLiner?: string | null;
 }
 
 export interface LiveStats {
@@ -83,9 +92,22 @@ export class SessionApi {
     });
   }
 
-  getSessionHistory(limit = 20, offset = 0): Observable<{ data: SessionHistoryItem[] }> {
+  updateSession(
+    id: string,
+    data: { planNote?: string; marketContext?: string },
+  ): Observable<{ data: TradingSession }> {
+    return this.http.patch<{ data: TradingSession }>(`${this.base}/${id}`, data);
+  }
+
+  getSessionHistory(limit = 50, offset = 0): Observable<{ data: SessionHistoryItem[] }> {
     return this.http.get<{ data: SessionHistoryItem[] }>(
       `${this.base}/history?limit=${limit}&offset=${offset}`,
+    );
+  }
+
+  getSessionsByMonth(year: number, month: number, limit = 50): Observable<{ data: SessionHistoryItem[] }> {
+    return this.http.get<{ data: SessionHistoryItem[] }>(
+      `${this.base}/history?year=${year}&month=${month}&limit=${limit}`,
     );
   }
 

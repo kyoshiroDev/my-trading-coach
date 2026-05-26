@@ -50,6 +50,17 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
               >{{ mood.emoji }} {{ mood.label }}</button>
             }
           </div>
+          <div class="plan-input-wrap">
+            <textarea
+              class="plan-input"
+              placeholder="Plan du jour (optionnel) — ex: Breakouts NQ uniquement, max 5 trades..."
+              rows="2"
+              [value]="planNote()"
+              (input)="planNote.set($any($event.target).value)"
+              (blur)="planNoteChanged.emit(planNote())"
+              maxlength="300"
+            ></textarea>
+          </div>
         </div>
       </div>
 
@@ -289,12 +300,14 @@ export class SessionMorningComponent {
   readonly moodSelected = output<MoodState>();
   readonly sessionStarted = output<void>();
   readonly objectiveNoteAdded = output<{ index: number; note: string }>();
+  readonly planNoteChanged = output<string>();
 
   private readonly debriefApi = inject(DebriefApi);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly userStore = inject(UserStore);
 
   protected readonly moods = MOODS;
+  protected readonly planNote = signal('');
 
   protected readonly expandedObjectiveIdx = signal<number | null>(null);
   protected readonly objectiveNoteValues = signal<Partial<Record<number, string>>>({});
