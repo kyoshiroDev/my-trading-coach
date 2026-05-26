@@ -409,6 +409,21 @@
   transition: all .15s;
 }
 .qt-emo.sel { border-color: var(--blue); background: var(--blue-glow); }
+.qt-secondary { display: flex; gap: 6px; }
+.qt-select {
+  flex: 1;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 5px 8px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-2);
+  cursor: pointer;
+  outline: none;
+  transition: border-color .15s;
+}
+.qt-select:hover, .qt-select:focus { border-color: var(--border-hover); }
 .qt-divider { height: 1px; background: var(--border); }
 .qt-optional-lbl { font-size: 9px; font-family: var(--font-mono); color: var(--text-3); text-align: center; }
 .qt-pnl-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }

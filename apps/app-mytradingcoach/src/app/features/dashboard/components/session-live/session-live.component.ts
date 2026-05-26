@@ -381,6 +381,28 @@ const EMOTIONS = [
             </div>
           </div>
 
+          <div class="qt-secondary">
+            <select class="qt-select"
+                    [value]="qtSetup()"
+                    (change)="qtSetup.set($any($event.target).value)">
+              <option value="BREAKOUT">Breakout</option>
+              <option value="PULLBACK">Pullback</option>
+              <option value="REVERSAL">Reversal</option>
+              <option value="RANGE">Range</option>
+              <option value="SCALPING">Scalping</option>
+              <option value="NEWS">News</option>
+            </select>
+            <select class="qt-select"
+                    [value]="qtTimeframe()"
+                    (change)="qtTimeframe.set($any($event.target).value)">
+              <option value="1m">1m</option>
+              <option value="5m">5m</option>
+              <option value="15m">15m</option>
+              <option value="1h">1h</option>
+              <option value="4h">4h</option>
+            </select>
+          </div>
+
           <div class="qt-divider"></div>
           <div class="qt-optional-lbl">OPTIONNEL</div>
 
@@ -523,6 +545,8 @@ export class SessionLiveComponent {
   protected readonly qtAsset = signal('');
   protected readonly qtSide = signal<'LONG' | 'SHORT'>('LONG');
   protected readonly qtEmotion = signal<'CONFIDENT' | 'STRESSED' | 'REVENGE' | 'FEAR' | 'FOCUSED' | 'NEUTRAL'>('CONFIDENT');
+  protected readonly qtSetup = signal<string>('BREAKOUT');
+  protected readonly qtTimeframe = signal<string>('5m');
   protected readonly qtEntry = signal('');
   protected readonly qtQty = signal('1');
   protected readonly qtSl = signal('');
@@ -698,9 +722,9 @@ export class SessionLiveComponent {
       asset: this.qtAsset().trim().toUpperCase(),
       side: this.qtSide(),
       emotion: this.qtEmotion(),
-      setup: 'BREAKOUT',
+      setup: this.qtSetup() as CreateTradeDto['setup'],
       session,
-      timeframe: '5m',
+      timeframe: this.qtTimeframe(),
       entry: parseFloat(this.qtEntry()) || 0,
       ...(this.qtQty() ? { quantity: parseFloat(this.qtQty()) } : {}),
       ...(this.qtSl() ? { stopLoss: parseFloat(this.qtSl()) } : {}),
@@ -708,7 +732,7 @@ export class SessionLiveComponent {
     };
 
     this.tradeLogged.emit(dto);
-    this.qtAsset.set('');
+    // qtAsset conservé pour le trade suivant (scalper ne re-saisit pas l'instrument)
     this.qtEntry.set('');
     this.qtSl.set('');
     this.qtTp.set('');

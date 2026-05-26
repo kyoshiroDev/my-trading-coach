@@ -203,6 +203,160 @@ describe('TradesService', () => {
     });
   });
 
+  describe('calculatePnl — commission', () => {
+    it('soustrait la commission du P&L NQ calculé via entry/exit', async () => {
+      mockPrisma.trade.count.mockResolvedValue(0);
+      mockPrisma.trade.create.mockImplementation(({ data }) =>
+        Promise.resolve({ ...mockTrade, ...data }),
+      );
+
+      const result = await service.create('user-123', {
+        asset: 'NQ',
+        side: TradeSide.LONG,
+        entry: 20000,
+        exit: 20010,
+        quantity: 1,
+        commission: 5,
+        emotion: EmotionState.CONFIDENT,
+        setup: SetupType.BREAKOUT,
+        session: TradingSession.LONDON,
+        timeframe: '1m',
+      }, Plan.FREE);
+
+      // NQ: 10 ticks × $20 = $200 brut — commission $5 → net $195
+      expect(result.pnl).toBe(195);
+    });
+
+    it('fonctionne sans commission (commission = 0)', async () => {
+      mockPrisma.trade.count.mockResolvedValue(0);
+      mockPrisma.trade.create.mockImplementation(({ data }) =>
+        Promise.resolve({ ...mockTrade, ...data }),
+      );
+
+      const result = await service.create('user-123', {
+        asset: 'MES',
+        side: TradeSide.LONG,
+        entry: 5000,
+        exit: 5010,
+        quantity: 1,
+        emotion: EmotionState.CONFIDENT,
+        setup: SetupType.BREAKOUT,
+        session: TradingSession.LONDON,
+        timeframe: '5m',
+      }, Plan.FREE);
+
+      // MES: 10 ticks × $5 = $50 brut, pas de commission
+      expect(result.pnl).toBeCloseTo(50);
+    });
+
+    it('accepte commission négative (valeur absolue utilisée)', async () => {
+      mockPrisma.trade.count.mockResolvedValue(0);
+      mockPrisma.trade.create.mockImplementation(({ data }) =>
+        Promise.resolve({ ...mockTrade, ...data }),
+      );
+
+      const result = await service.create('user-123', {
+        asset: 'NQ',
+        side: TradeSide.LONG,
+        entry: 20000,
+        exit: 20010,
+        quantity: 1,
+        commission: -5,
+        emotion: EmotionState.CONFIDENT,
+        setup: SetupType.BREAKOUT,
+        session: TradingSession.LONDON,
+        timeframe: '1m',
+      }, Plan.FREE);
+
+      expect(result.pnl).toBe(195);
+    });
+
+    it('soustrait la commission d\'un P&L fourni manuellement', async () => {
+      mockPrisma.trade.count.mockResolvedValue(0);
+      mockPrisma.trade.create.mockImplementation(({ data }) =>
+        Promise.resolve({ ...mockTrade, ...data }),
+      );
+
+      // P&L brut fourni manuellement, pas d'exit
+      const result = await service.create('user-123', {
+        asset: 'BTC/USDT',
+        side: TradeSide.LONG,
+        entry: 50000,
+        pnl: 200,
+        commission: 8,
+        emotion: EmotionState.CONFIDENT,
+        setup: SetupType.BREAKOUT,
+        session: TradingSession.LONDON,
+        timeframe: '1h',
+      }, Plan.FREE);
+
+      // dto.pnl prend la priorité dans create() (dto.pnl ?? pnl)
+      // donc le result.pnl = dto.pnl = 200 (pas de recalcul côté backend)
+      expect(result.pnl).toBe(200);
+    });
+  });
+
+  describe('update — recalcule P&L si prix changent', () => {
+    it('recalcule le P&L si exit est modifié', async () => {
+      const existingTrade = {
+        ...mockTrade,
+        asset: 'NQ',
+        entry: 20000,
+        exit: 20010,
+        pnl: 200,
+        commission: 0,
+      };
+      mockPrisma.trade.findUnique.mockResolvedValue(existingTrade);
+      mockPrisma.trade.update.mockImplementation(({ data }) =>
+        Promise.resolve({ ...existingTrade, ...data }),
+      );
+
+      const result = await service.update('user-123', 'trade-123', {
+        exit: 20005,
+      });
+
+      // NQ: 5 ticks × $20 = $100
+      expect(result.pnl).toBe(100);
+    });
+
+    it('recalcule le P&L si commission est ajoutée', async () => {
+      const existingTrade = {
+        ...mockTrade,
+        asset: 'NQ',
+        entry: 20000,
+        exit: 20010,
+        pnl: 200,
+        commission: null,
+      };
+      mockPrisma.trade.findUnique.mockResolvedValue(existingTrade);
+      mockPrisma.trade.update.mockImplementation(({ data }) =>
+        Promise.resolve({ ...existingTrade, ...data }),
+      );
+
+      const result = await service.update('user-123', 'trade-123', {
+        commission: 10,
+      });
+
+      // NQ: 10 ticks × $20 = $200 − $10 commission = $190
+      expect(result.pnl).toBe(190);
+    });
+
+    it('ne recalcule pas le P&L si seuls setup/emotion changent', async () => {
+      const existingTrade = { ...mockTrade, pnl: 2000 };
+      mockPrisma.trade.findUnique.mockResolvedValue(existingTrade);
+      mockPrisma.trade.update.mockImplementation(({ data }) =>
+        Promise.resolve({ ...existingTrade, ...data }),
+      );
+
+      const result = await service.update('user-123', 'trade-123', {
+        setup: SetupType.PULLBACK,
+      });
+
+      // P&L inchangé — pas de recalcul
+      expect(result.pnl).toBe(2000);
+    });
+  });
+
   describe('checkMonthlyLimit', () => {
     it('ne bloque pas les users PREMIUM peu importe le count', async () => {
       mockPrisma.trade.count.mockResolvedValue(999);

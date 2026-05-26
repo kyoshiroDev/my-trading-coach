@@ -81,12 +81,27 @@ export class TradesService {
   }
 
   async update(userId: string, id: string, dto: UpdateTradeDto) {
-    await this.findOne(userId, id);
+    const existing = await this.findOne(userId, id);
+
+    const merged = { ...existing, ...dto } as CreateTradeDto;
+
+    const priceFieldsChanged =
+      dto.entry !== undefined ||
+      dto.exit !== undefined ||
+      dto.quantity !== undefined ||
+      dto.commission !== undefined ||
+      dto.pnl !== undefined;
+
+    const newPnl = priceFieldsChanged ? this.calculatePnl(merged) : undefined;
+    const newRR = priceFieldsChanged ? this.calculateRiskReward(merged) : undefined;
+
     return this.prisma.trade.update({
       where: { id },
       data: {
         ...dto,
         tradedAt: dto.tradedAt ? new Date(dto.tradedAt) : undefined,
+        ...(newPnl !== undefined ? { pnl: newPnl } : {}),
+        ...(newRR !== undefined ? { riskReward: newRR } : {}),
       },
     });
   }
@@ -141,11 +156,13 @@ export class TradesService {
   private calculatePnl(dto: CreateTradeDto): number | undefined {
     if (dto.entry == null || dto.entry <= 0) return undefined;
 
+    const commission = Math.abs(dto.commission ?? 0);
+
     let effectiveExit: number | undefined;
     if (dto.exit != null && dto.exit > 0) {
       effectiveExit = dto.exit;
     } else if (dto.pnl != null) {
-      return dto.pnl;
+      return +(dto.pnl - commission).toFixed(2);
     }
 
     if (effectiveExit == null) return undefined;
@@ -168,6 +185,8 @@ export class TradesService {
     } else {
       pnl = points * quantity;
     }
+
+    pnl -= commission;
 
     return +pnl.toFixed(2);
   }
