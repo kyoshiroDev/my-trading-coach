@@ -24,6 +24,21 @@ export class DailyRecapService {
         tradedAt: { gte: startOfDay, lte: endOfDay },
         pnl: { not: null },
       },
+      select: {
+        asset: true,
+        side: true,
+        pnl: true,
+        emotion: true,
+        setup: true,
+        session: true,
+        timeframe: true,
+        entry: true,
+        exit: true,
+        stopLoss: true,
+        takeProfit: true,
+        tradedAt: true,
+      },
+      orderBy: { tradedAt: 'asc' },
     });
 
     if (trades.length === 0) return null;
@@ -42,17 +57,76 @@ export class DailyRecapService {
     let aiOneLiner: string | null = null;
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { plan: true },
+      select: {
+        plan: true,
+        market: true,
+        goal: true,
+        tradingStyle: true,
+        tradingStrategy: true,
+        tradingSessions: true,
+        tradesPerDayMin: true,
+        tradesPerDayMax: true,
+        strategyDescription: true,
+      },
     });
 
     if (user?.plan === Plan.PREMIUM && trades.length >= 3) {
+      const sevenDaysAgo = new Date(date);
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      const recentTrades = await this.prisma.trade.findMany({
+        where: {
+          userId,
+          tradedAt: { gte: sevenDaysAgo, lt: startOfDay },
+          pnl: { not: null },
+        },
+        select: { asset: true, side: true, pnl: true, session: true, setup: true },
+      });
+
+      const patternMap = new Map<string, { wins: number; total: number; pnl: number }>();
+      for (const t of recentTrades) {
+        const key = `${t.side}_${t.asset}`;
+        const existing = patternMap.get(key) ?? { wins: 0, total: 0, pnl: 0 };
+        existing.total++;
+        existing.pnl += t.pnl ?? 0;
+        if ((t.pnl ?? 0) > 0) existing.wins++;
+        patternMap.set(key, existing);
+      }
+
+      const sessionMap = new Map<string, { wins: number; total: number; pnl: number }>();
+      for (const t of recentTrades) {
+        const key = t.session ?? 'UNKNOWN';
+        const existing = sessionMap.get(key) ?? { wins: 0, total: 0, pnl: 0 };
+        existing.total++;
+        existing.pnl += t.pnl ?? 0;
+        if ((t.pnl ?? 0) > 0) existing.wins++;
+        sessionMap.set(key, existing);
+      }
+
       try {
         aiOneLiner = await this.ai.generateDailyOneLiner({
           userId,
-          trades: trades as Parameters<AiService['generateDailyOneLiner']>[0]['trades'],
+          trades,
           pnl,
           winRate,
           dominantEmotion: dominantEmotion ?? 'NEUTRAL',
+          date,
+          userProfile: user
+            ? {
+                market: user.market,
+                goal: user.goal,
+                tradingStyle: user.tradingStyle,
+                tradingStrategy: user.tradingStrategy,
+                tradingSessions: user.tradingSessions,
+                tradesPerDayMin: user.tradesPerDayMin,
+                tradesPerDayMax: user.tradesPerDayMax,
+                strategyDescription: user.strategyDescription,
+              }
+            : undefined,
+          patterns7d: {
+            bySidePair: Object.fromEntries(patternMap),
+            bySession: Object.fromEntries(sessionMap),
+          },
         });
       } catch (err) {
         this.logger.warn(`Daily oneliner skipped: ${(err as Error).message}`);

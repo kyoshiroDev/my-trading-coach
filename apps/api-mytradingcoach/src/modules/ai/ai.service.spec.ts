@@ -194,4 +194,186 @@ describe('AiService', () => {
       expect(mockDebriefAgent.generate).toHaveBeenCalledWith(data, undefined);
     });
   });
+
+  describe('generateDailyOneLiner', () => {
+    const baseTrade = {
+      asset: 'NQ',
+      side: 'LONG',
+      pnl: 200,
+      emotion: 'FOCUSED',
+      setup: 'BREAKOUT',
+      session: 'LONDON',
+      timeframe: '5m',
+      entry: 20000,
+      exit: 20020,
+      stopLoss: 19990,
+      takeProfit: 20020,
+      tradedAt: new Date('2026-05-26T07:15:00Z'),
+    };
+
+    const baseData = {
+      userId: 'user-123',
+      trades: [baseTrade],
+      pnl: 200,
+      winRate: 100,
+      dominantEmotion: 'FOCUSED',
+      date: new Date('2026-05-26T12:00:00Z'),
+    };
+
+    it('retourne la phrase coaching de l IA', async () => {
+      mockMessagesCreate.mockResolvedValueOnce({
+        content: [{ type: 'text', text: 'Tes shorts MNQ perdent systématiquement.' }],
+        usage: { input_tokens: 400, output_tokens: 20 },
+      });
+
+      const result = await service.generateDailyOneLiner(baseData);
+      expect(result).toBe('Tes shorts MNQ perdent systématiquement.');
+    });
+
+    it('retire les guillemets entourant la réponse', async () => {
+      mockMessagesCreate.mockResolvedValueOnce({
+        content: [{ type: 'text', text: '"Bonne analyse ce matin."' }],
+        usage: { input_tokens: 400, output_tokens: 20 },
+      });
+
+      const result = await service.generateDailyOneLiner(baseData);
+      expect(result).toBe('Bonne analyse ce matin.');
+    });
+
+    it('fonctionne sans profil trader (userProfile = undefined)', async () => {
+      mockMessagesCreate.mockResolvedValueOnce({
+        content: [{ type: 'text', text: 'Bonne séance.' }],
+        usage: { input_tokens: 300, output_tokens: 15 },
+      });
+
+      await expect(
+        service.generateDailyOneLiner({ ...baseData, userProfile: undefined }),
+      ).resolves.toBeDefined();
+    });
+
+    it('fonctionne sans patterns 7j (patterns7d = undefined)', async () => {
+      mockMessagesCreate.mockResolvedValueOnce({
+        content: [{ type: 'text', text: 'Bonne séance.' }],
+        usage: { input_tokens: 300, output_tokens: 15 },
+      });
+
+      await expect(
+        service.generateDailyOneLiner({ ...baseData, patterns7d: undefined }),
+      ).resolves.toBeDefined();
+    });
+
+    it('inclut le profil trader dans le prompt envoyé', async () => {
+      mockMessagesCreate.mockResolvedValueOnce({
+        content: [{ type: 'text', text: 'Analyse.' }],
+        usage: { input_tokens: 500, output_tokens: 10 },
+      });
+
+      await service.generateDailyOneLiner({
+        ...baseData,
+        userProfile: {
+          tradingStyle: 'SCALPING',
+          tradingStrategy: ['ICT', 'SMC'],
+          strategyDescription: 'Je trade les FVG sur NQ',
+          tradingSessions: ['LONDON'],
+          tradesPerDayMin: 5,
+          tradesPerDayMax: 15,
+          market: 'FUTURES',
+          goal: 'DISCIPLINE',
+        },
+      });
+
+      const callStr = JSON.stringify(mockMessagesCreate.mock.calls[0][0]);
+      expect(callStr).toContain('PROFIL');
+    });
+
+    it('identifie TP atteint quand exit proche du takeProfit', async () => {
+      mockMessagesCreate.mockResolvedValueOnce({
+        content: [{ type: 'text', text: 'Test.' }],
+        usage: { input_tokens: 400, output_tokens: 5 },
+      });
+
+      await service.generateDailyOneLiner({
+        ...baseData,
+        trades: [
+          {
+            ...baseTrade,
+            exit: 20020,
+            stopLoss: 19990,
+            takeProfit: 20020,
+          },
+        ],
+      });
+
+      const callStr = JSON.stringify(mockMessagesCreate.mock.calls[0][0]);
+      expect(callStr).toContain('TP');
+    });
+
+    it('identifie SL touché quand exit proche du stopLoss', async () => {
+      mockMessagesCreate.mockResolvedValueOnce({
+        content: [{ type: 'text', text: 'Test.' }],
+        usage: { input_tokens: 400, output_tokens: 5 },
+      });
+
+      await service.generateDailyOneLiner({
+        ...baseData,
+        trades: [
+          {
+            ...baseTrade,
+            pnl: -100,
+            exit: 19990,
+            stopLoss: 19990,
+            takeProfit: 20030,
+          },
+        ],
+      });
+
+      const callStr = JSON.stringify(mockMessagesCreate.mock.calls[0][0]);
+      expect(callStr).toContain('SL');
+    });
+
+    it('inclut les patterns 7j dans le prompt si total >= 2', async () => {
+      mockMessagesCreate.mockResolvedValueOnce({
+        content: [{ type: 'text', text: 'Test.' }],
+        usage: { input_tokens: 500, output_tokens: 10 },
+      });
+
+      await service.generateDailyOneLiner({
+        ...baseData,
+        patterns7d: {
+          bySidePair: {
+            'SHORT_MNQ': { wins: 1, total: 5, pnl: -340 },
+            'LONG_MNQ': { wins: 9, total: 12, pnl: 520 },
+          },
+          bySession: {
+            'NEW_YORK': { wins: 1, total: 4, pnl: -190 },
+          },
+        },
+      });
+
+      const callStr = JSON.stringify(mockMessagesCreate.mock.calls[0][0]);
+      expect(callStr).toContain('SHORT_MNQ'.replace('_', ' '));
+      expect(callStr).toContain('7');
+    });
+
+    it('n inclut pas les paires avec total < 2 dans les patterns', async () => {
+      mockMessagesCreate.mockResolvedValueOnce({
+        content: [{ type: 'text', text: 'Test.' }],
+        usage: { input_tokens: 400, output_tokens: 5 },
+      });
+
+      await service.generateDailyOneLiner({
+        ...baseData,
+        patterns7d: {
+          bySidePair: {
+            'LONG_BTC': { wins: 1, total: 1, pnl: 100 },
+          },
+          bySession: {},
+        },
+      });
+
+      // total=1 → filtré, prompt ne doit pas contenir les patterns
+      const callStr = JSON.stringify(mockMessagesCreate.mock.calls[0][0]);
+      expect(callStr).not.toContain('Pattern');
+    });
+  });
 });

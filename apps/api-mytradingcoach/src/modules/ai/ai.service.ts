@@ -15,7 +15,7 @@ import { buildDebriefPrompt } from './prompts/debrief.prompt';
 import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiLoggerService } from '../shared/ai-logger.service';
-import { buildUserTradingContext } from './user-context.builder';
+import { buildUserTradingContext, UserTradingProfile } from './user-context.builder';
 
 const MODEL = 'claude-sonnet-4-6';
 const AI_MONTHLY_QUOTA = 100;
@@ -177,28 +177,136 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
 
   async generateDailyOneLiner(data: {
     userId: string;
-    trades: Array<{ side: string; asset: string; pnl: number | null }>;
+    trades: Array<{
+      side: string;
+      asset: string;
+      pnl: number | null;
+      emotion?: string;
+      setup?: string;
+      session?: string;
+      timeframe?: string;
+      entry?: number;
+      exit?: number | null;
+      stopLoss?: number | null;
+      takeProfit?: number | null;
+      tradedAt?: Date;
+    }>;
     pnl: number;
     winRate: number;
     dominantEmotion: string;
+    date: Date;
+    userProfile?: UserTradingProfile;
+    patterns7d?: {
+      bySidePair: Record<string, { wins: number; total: number; pnl: number }>;
+      bySession: Record<string, { wins: number; total: number; pnl: number }>;
+    };
   }): Promise<string> {
-    const top3 = data.trades
-      .slice(0, 3)
-      .map((t) => `${t.side} ${t.asset} ${(t.pnl ?? 0) >= 0 ? '+' : ''}${(t.pnl ?? 0).toFixed(0)}$`)
-      .join(', ');
+    // ── 1. Profil trader ────────────────────────────────────────────────────
+    const profileCtx = data.userProfile
+      ? buildUserTradingContext(data.userProfile)
+      : '';
 
-    const prompt = `Session du jour : ${data.trades.length} trades, P&L ${data.pnl >= 0 ? '+' : ''}${data.pnl.toFixed(0)}$, win rate ${data.winRate.toFixed(0)}%, émotion dominante : ${data.dominantEmotion}.
-Top 3 trades : ${top3}.
-Génère UNE seule phrase coaching (max 120 caractères) : directe, utile, personnalisée. Pas de "Bonne journée" générique.`;
+    // ── 2. Trades du jour détaillés ─────────────────────────────────────────
+    const dateStr = data.date.toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
+
+    const tradesDetail = data.trades
+      .map((t) => {
+        const time = t.tradedAt
+          ? new Date(t.tradedAt).toLocaleTimeString('fr-FR', {
+              hour: '2-digit',
+              minute: '2-digit',
+              timeZone: 'Europe/Paris',
+            })
+          : '??:??';
+        const pnl = t.pnl ?? 0;
+        const pnlStr = `${pnl >= 0 ? '+' : ''}${pnl.toFixed(0)}$`;
+
+        let exitLabel = '';
+        if (t.exit != null && t.stopLoss != null && t.takeProfit != null) {
+          const distSL = Math.abs(t.exit - t.stopLoss);
+          const distTP = Math.abs(t.exit - t.takeProfit);
+          exitLabel = distSL < distTP ? '(SL touché)' : '(TP atteint)';
+        }
+
+        return [
+          time,
+          t.session ?? '?',
+          t.side,
+          t.asset,
+          t.setup ?? '?',
+          t.emotion ?? '?',
+          pnlStr,
+          exitLabel,
+        ]
+          .filter(Boolean)
+          .join(' | ');
+      })
+      .join('\n');
+
+    // ── 3. Patterns 7 jours ─────────────────────────────────────────────────
+    let patternsCtx = '';
+    if (data.patterns7d) {
+      const sidePairLines = Object.entries(data.patterns7d.bySidePair)
+        .filter(([, v]) => v.total >= 2)
+        .sort((a, b) => b[1].total - a[1].total)
+        .slice(0, 5)
+        .map(([key, v]) => {
+          const [side, asset] = key.split('_');
+          const wr = ((v.wins / v.total) * 100).toFixed(0);
+          const pnlStr = `${v.pnl >= 0 ? '+' : ''}${v.pnl.toFixed(0)}$`;
+          return `  - ${side} ${asset} : ${v.wins}/${v.total} = ${wr}% WR | ${pnlStr} cumulé (7j)`;
+        })
+        .join('\n');
+
+      const sessionLines = Object.entries(data.patterns7d.bySession)
+        .filter(([, v]) => v.total >= 2)
+        .sort((a, b) => b[1].total - a[1].total)
+        .map(([session, v]) => {
+          const wr = ((v.wins / v.total) * 100).toFixed(0);
+          const pnlStr = `${v.pnl >= 0 ? '+' : ''}${v.pnl.toFixed(0)}$`;
+          return `  - ${session} : ${v.wins}/${v.total} = ${wr}% WR | ${pnlStr} (7j)`;
+        })
+        .join('\n');
+
+      if (sidePairLines || sessionLines) {
+        patternsCtx = `\nPatterns des 7 derniers jours :\n${sidePairLines}\nPar session :\n${sessionLines}`;
+      }
+    }
+
+    // ── Prompt final ────────────────────────────────────────────────────────
+    const prompt = `${profileCtx}
+Journée du ${dateStr} : ${data.trades.length} trades, P&L ${data.pnl >= 0 ? '+' : ''}${data.pnl.toFixed(0)}$, win rate ${data.winRate.toFixed(0)}%, émotion dominante : ${data.dominantEmotion}.
+
+Détail des trades :
+${tradesDetail}
+${patternsCtx}
+
+Génère UNE seule phrase coaching (max 140 caractères).
+Règles :
+- Directe et concrète : cite l'asset, le setup ou la session problématique si identifié
+- Basée sur les vrais patterns de ce trader, pas des conseils génériques
+- Si un pattern négatif récurrent est détecté (ex: shorts MNQ perdants), le mentionner explicitement
+- Ton coach bienveillant mais franc
+- PAS de "Bonne journée", "Continue comme ça", "Félicitations" génériques
+- PAS d'astérisques ni de markdown`;
 
     const response = await this.anthropic.messages.create({
       model: MODEL,
-      max_tokens: 150,
+      max_tokens: 200,
+      system: `Tu es un coach de trading expert qui connaît en profondeur la stratégie et les habitudes de ce trader.
+Tu analyses ses données réelles pour donner un conseil ultra-personnalisé, jamais générique.
+Réponds UNIQUEMENT avec la phrase coaching, sans guillemets, sans préambule.`,
       messages: [{ role: 'user', content: prompt }],
     });
 
     this.aiLogger.log(data.userId, 'daily_recap', response.usage);
-    return response.content[0]?.type === 'text' ? response.content[0].text.trim() : '';
+    return response.content[0]?.type === 'text'
+      ? response.content[0].text.trim().replace(/^["']|["']$/g, '')
+      : '';
   }
 
   // ── Eco calendar — morning analysis + released event ─────────────────────
