@@ -196,8 +196,12 @@ export class EcoCalendarService implements OnModuleDestroy {
     const today = new Date().toISOString().slice(0, 10);
     const cacheKey = `eco:calendar:${today}:${userId}`;
 
-    const cached = await this.redis.get(cacheKey);
-    if (cached) return JSON.parse(cached) as EcoCalendarData;
+    try {
+      const cached = await this.redis.get(cacheKey);
+      if (cached) return JSON.parse(cached) as EcoCalendarData;
+    } catch {
+      // Redis indisponible — continuer sans cache
+    }
 
     const [events, userAssets] = await Promise.all([
       this.getEventsFromDb(today),
@@ -221,7 +225,11 @@ export class EcoCalendarService implements OnModuleDestroy {
     }
 
     const result: EcoCalendarData = { events, analysis, userAssets };
-    await this.redis.setex(cacheKey, 3600, JSON.stringify(result));
+    try {
+      await this.redis.setex(cacheKey, 3600, JSON.stringify(result));
+    } catch {
+      // Redis indisponible — pas de cache, c'est OK
+    }
     return result;
   }
 
@@ -232,8 +240,12 @@ export class EcoCalendarService implements OnModuleDestroy {
     const dateStr = nextDay.toISOString().slice(0, 10);
     const cacheKey = `eco:calendar:${dateStr}:${userId}`;
 
-    const cached = await this.redis.get(cacheKey);
-    if (cached) return JSON.parse(cached) as EcoCalendarData;
+    try {
+      const cached = await this.redis.get(cacheKey);
+      if (cached) return JSON.parse(cached) as EcoCalendarData;
+    } catch {
+      // Redis indisponible — continuer sans cache
+    }
 
     let events = await this.getEventsFromDb(dateStr);
 
@@ -262,7 +274,11 @@ export class EcoCalendarService implements OnModuleDestroy {
     }
 
     const result: EcoCalendarData = { events, analysis, userAssets };
-    await this.redis.setex(cacheKey, 3600 * 6, JSON.stringify(result));
+    try {
+      await this.redis.setex(cacheKey, 3600 * 6, JSON.stringify(result));
+    } catch {
+      // Redis indisponible — pas de cache, c'est OK
+    }
     return result;
   }
 
@@ -271,7 +287,12 @@ export class EcoCalendarService implements OnModuleDestroy {
   async analyzeReleasedEvent(userId: string, eventName: string): Promise<EcoResultAnalysis | null> {
     const today = new Date().toISOString().slice(0, 10);
     const cacheKey = `eco:calendar:${today}:${userId}`;
-    const cached = await this.redis.get(cacheKey);
+    let cached: string | null = null;
+    try {
+      cached = await this.redis.get(cacheKey);
+    } catch {
+      // Redis indisponible
+    }
     if (!cached) return null;
 
     const { events } = JSON.parse(cached) as EcoCalendarData;

@@ -1023,7 +1023,7 @@ export class DashboardComponent {
       .subscribe({
         next: (res) => {
           this.activeSession.set(res.data);
-          this.activeTab.set('morning');
+          this.activeTab.set('dashboard');
           this.summaryResource.reload();
         },
       });
@@ -1147,7 +1147,10 @@ export class DashboardComponent {
       : this.ecoCalendarApi.getTodayEvents();
 
     obs.pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: (res) => this.ecoCalendar.set(res.data ?? null) });
+      .subscribe({
+        next: (res) => this.ecoCalendar.set(res.data ?? null),
+        error: () => this.ecoCalendar.set({ events: [], analysis: { summary: '', recommendation: '', assetImpacts: [] }, userAssets: [] }),
+      });
   }
 
   private refreshLiveStats(): void {
