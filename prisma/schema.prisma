@@ -48,8 +48,9 @@ model User {
   tradesPerDayMax     Int?
   strategyDescription String?
 
-  // ── Asset favori pour la saisie rapide ───────────────────────────────────
-  favoriteAsset String?
+  // ── Actifs tradés ────────────────────────────────────────────────────────
+  tradingAssets String[]  // configurés dans les paramètres
+  favoriteAsset String?   // pré-sélectionné dans la saisie rapide
 
   // ── Discord ──────────────────────────────────────────────────────────────────
   discordId String? @unique

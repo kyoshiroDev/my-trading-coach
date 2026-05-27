@@ -166,10 +166,28 @@ export class TradesService {
   async getUserAssets(userId: string): Promise<UserAssetItem[]> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { favoriteAsset: true },
+      select: { tradingAssets: true, favoriteAsset: true },
     });
     const favoriteAsset = user?.favoriteAsset ?? null;
+    const instrMap = new Map(INSTRUMENTS.map((i) => [i.symbol, i]));
 
+    // Si l'user a configuré ses actifs → priorité au profil
+    if (user?.tradingAssets?.length) {
+      return user.tradingAssets.map((symbol) => {
+        const instr = instrMap.get(symbol);
+        return {
+          symbol,
+          label: instr?.label ?? symbol,
+          category: instr?.category ?? 'CRYPTO',
+          tradeCount: 0,
+          lastEntry: null,
+          lastQty: null,
+          isFavorite: symbol === favoriteAsset,
+        };
+      });
+    }
+
+    // Fallback : top 8 actifs du mois en cours
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
@@ -183,16 +201,10 @@ export class TradesService {
     const map = new Map<string, { count: number; lastEntry: number | null; lastQty: number | null }>();
     for (const row of rows) {
       if (!map.has(row.asset)) {
-        map.set(row.asset, {
-          count: 0,
-          lastEntry: row.entry,
-          lastQty: row.quantity,
-        });
+        map.set(row.asset, { count: 0, lastEntry: row.entry, lastQty: row.quantity });
       }
       map.get(row.asset)!.count++;
     }
-
-    const instrMap = new Map(INSTRUMENTS.map((i) => [i.symbol, i]));
 
     const items: UserAssetItem[] = Array.from(map.entries()).map(([symbol, data]) => {
       const instr = instrMap.get(symbol);
@@ -209,10 +221,7 @@ export class TradesService {
 
     items.sort((a, b) => b.tradeCount - a.tradeCount);
 
-    if (
-      favoriteAsset &&
-      !items.find((i) => i.symbol === favoriteAsset)
-    ) {
+    if (favoriteAsset && !items.find((i) => i.symbol === favoriteAsset)) {
       const instr = instrMap.get(favoriteAsset);
       items.unshift({
         symbol: favoriteAsset,
@@ -226,6 +235,20 @@ export class TradesService {
     }
 
     return items.slice(0, 8);
+  }
+
+  async saveUserAssets(
+    userId: string,
+    assets: string[],
+    favoriteAsset?: string | null,
+  ): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        tradingAssets: assets,
+        favoriteAsset: favoriteAsset ?? null,
+      },
+    });
   }
 
   async setFavoriteAsset(userId: string, asset: string | null): Promise<void> {

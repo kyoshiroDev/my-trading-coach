@@ -115,12 +115,49 @@ export class TradesController {
     return this.tradesService.getUserAssets(user.id);
   }
 
+  @Patch('user-assets')
+  async saveUserAssets(
+    @CurrentUser() user: { id: string },
+    @Body() body: { assets: string[]; favoriteAsset?: string | null },
+  ) {
+    await this.tradesService.saveUserAssets(user.id, body.assets ?? [], body.favoriteAsset);
+    return { saved: true };
+  }
+
   @Patch('favorite-asset')
   setFavoriteAsset(
     @CurrentUser() user: { id: string },
     @Body('asset') asset: string | null,
   ) {
     return this.tradesService.setFavoriteAsset(user.id, asset ?? null);
+  }
+
+  @Get('instruments/search')
+  async searchInstruments(@Query('q') q: string) {
+    const query = (q ?? '').trim().toLowerCase();
+    if (!query) return { data: [] };
+
+    const staticMatches = INSTRUMENTS.filter(
+      (i) =>
+        i.symbol.toLowerCase().includes(query) ||
+        i.label.toLowerCase().includes(query),
+    ).slice(0, 10);
+
+    const cryptoMatches = (await this.coinGeckoService.getCryptoInstruments())
+      .filter(
+        (i) =>
+          i.symbol.toLowerCase().includes(query) ||
+          i.label.toLowerCase().includes(query),
+      )
+      .slice(0, 10);
+
+    const seen = new Set(staticMatches.map((i) => i.symbol));
+    const merged = [
+      ...staticMatches,
+      ...cryptoMatches.filter((i) => !seen.has(i.symbol)),
+    ].slice(0, 15);
+
+    return { data: merged };
   }
 
   @Get(':id')

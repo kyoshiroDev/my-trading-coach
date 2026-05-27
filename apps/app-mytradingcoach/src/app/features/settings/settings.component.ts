@@ -13,7 +13,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
+import { map, finalize } from 'rxjs/operators';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { UserStore } from '../../core/stores/user.store';
@@ -25,6 +25,7 @@ import type {
   UpdatePreferencesDto,
 } from '../../core/api/users.api';
 import { TRADING_STYLES, STRATEGY_TAGS, SESSIONS } from '../onboarding/onboarding.constants';
+import { TradesApi, InstrumentSearchResult, UserAssetItem } from '../../core/api/trades.api';
 
 @Component({
   selector: 'mtc-settings',
@@ -39,6 +40,7 @@ export class SettingsComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly billingApi = inject(BillingApi);
   private readonly usersApi = inject(UsersApi);
+  private readonly tradesApi = inject(TradesApi);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -93,6 +95,15 @@ export class SettingsComponent implements OnInit {
     ),
   );
 
+  // Actifs tradés
+  protected readonly tradingAssets = signal<UserAssetItem[]>([]);
+  protected readonly isSavingAssets = signal(false);
+  protected readonly assetsSaved = signal(false);
+  protected readonly assetSearchQuery = signal('');
+  protected readonly assetSearchResults = signal<InstrumentSearchResult[]>([]);
+  protected readonly assetSearchLoading = signal(false);
+  private searchDebounce?: ReturnType<typeof setTimeout>;
+
   // Danger
   protected readonly showPlanModal = signal(false);
   protected readonly showDeleteConfirm = signal(false);
@@ -131,6 +142,10 @@ export class SettingsComponent implements OnInit {
       );
       this.editingStrategy.set(!hasProfil);
     }
+
+    this.tradesApi.getUserAssets().subscribe({
+      next: (items) => this.tradingAssets.set(items ?? []),
+    });
   }
 
   protected startTrial(plan: 'monthly' | 'yearly' = 'monthly') {
@@ -314,6 +329,71 @@ export class SettingsComponent implements OnInit {
           this.editingStrategy.set(false);
         },
         error: () => this.isSavingStrategy.set(false),
+      });
+  }
+
+  protected onAssetSearch(query: string): void {
+    this.assetSearchQuery.set(query);
+    clearTimeout(this.searchDebounce);
+    if (!query.trim()) {
+      this.assetSearchResults.set([]);
+      return;
+    }
+    this.searchDebounce = setTimeout(() => {
+      this.assetSearchLoading.set(true);
+      this.tradesApi.searchInstruments(query).subscribe({
+        next: (res) => {
+          this.assetSearchResults.set(res.data ?? []);
+          this.assetSearchLoading.set(false);
+        },
+        error: () => this.assetSearchLoading.set(false),
+      });
+    }, 300);
+  }
+
+  protected addAsset(result: InstrumentSearchResult): void {
+    if (this.tradingAssets().some((a) => a.symbol === result.symbol)) return;
+    const isFirst = this.tradingAssets().length === 0;
+    const newAsset: UserAssetItem = {
+      symbol: result.symbol,
+      label: result.label,
+      category: result.category,
+      isFavorite: isFirst,
+      tradeCount: 0,
+      lastEntry: null,
+      lastQty: null,
+    };
+    this.tradingAssets.update((assets) => [...assets, newAsset]);
+    if (isFirst) {
+      this.tradesApi.setFavoriteAsset(result.symbol).subscribe();
+    }
+    this.assetSearchQuery.set('');
+    this.assetSearchResults.set([]);
+  }
+
+  protected removeAsset(symbol: string): void {
+    this.tradingAssets.update((assets) => assets.filter((a) => a.symbol !== symbol));
+  }
+
+  protected setFavoriteAssetSetting(symbol: string): void {
+    this.tradingAssets.update((assets) =>
+      assets.map((a) => ({ ...a, isFavorite: a.symbol === symbol })),
+    );
+  }
+
+  protected saveAssets(): void {
+    this.isSavingAssets.set(true);
+    this.assetsSaved.set(false);
+    const symbols = this.tradingAssets().map((a) => a.symbol);
+    const fav = this.tradingAssets().find((a) => a.isFavorite)?.symbol ?? null;
+    this.tradesApi
+      .saveUserAssets(symbols, fav)
+      .pipe(finalize(() => this.isSavingAssets.set(false)))
+      .subscribe({
+        next: () => {
+          this.assetsSaved.set(true);
+          setTimeout(() => this.assetsSaved.set(false), 2500);
+        },
       });
   }
 

@@ -29,6 +29,8 @@ export interface AuthUser {
   tradesPerDayMin?: number | null;
   tradesPerDayMax?: number | null;
   strategyDescription?: string | null;
+  tradingAssets?: string[];
+  favoriteAsset?: string | null;
   discordId?: string | null;
 }
 

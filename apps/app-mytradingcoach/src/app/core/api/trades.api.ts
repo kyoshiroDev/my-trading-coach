@@ -96,6 +96,12 @@ export interface UserAssetItem {
   isFavorite: boolean;
 }
 
+export interface InstrumentSearchResult {
+  symbol: string;
+  label: string;
+  category: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TradesApi {
   private readonly http = inject(HttpClient);
@@ -134,7 +140,16 @@ export class TradesApi {
     return this.http.get<UserAssetItem[]>(`${this.base}/user-assets`);
   }
 
+  saveUserAssets(assets: string[], favoriteAsset?: string | null): Observable<{ saved: boolean }> {
+    return this.http.patch<{ saved: boolean }>(`${this.base}/user-assets`, { assets, favoriteAsset });
+  }
+
   setFavoriteAsset(asset: string | null): Observable<void> {
     return this.http.patch<void>(`${this.base}/favorite-asset`, { asset });
+  }
+
+  searchInstruments(query: string): Observable<{ data: InstrumentSearchResult[] }> {
+    const params = new HttpParams().set('q', query);
+    return this.http.get<{ data: InstrumentSearchResult[] }>(`${this.base}/instruments/search`, { params });
   }
 }

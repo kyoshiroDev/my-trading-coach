@@ -32,6 +32,8 @@ const USER_SELECT = {
   tradesPerDayMin: true,
   tradesPerDayMax: true,
   strategyDescription: true,
+  tradingAssets: true,
+  favoriteAsset: true,
   createdAt: true,
 } as const;
 
