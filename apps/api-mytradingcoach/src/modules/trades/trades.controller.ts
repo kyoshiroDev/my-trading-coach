@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   Param,
   Patch,
   Post,
@@ -28,6 +29,8 @@ import { INSTRUMENTS } from './instruments.const';
 @UseGuards(JwtAuthGuard)
 @Controller('trades')
 export class TradesController {
+  private readonly logger = new Logger(TradesController.name);
+
   constructor(
     private tradesService: TradesService,
     private coinGeckoService: CoinGeckoService,
@@ -133,31 +136,88 @@ export class TradesController {
   }
 
   @Get('instruments/search')
-  async searchInstruments(@Query('q') q: string) {
-    const query = (q ?? '').trim().toLowerCase();
+  async searchInstruments(
+    @Query('q') q: string,
+  ): Promise<{ data: Array<{ symbol: string; label: string; category: string; exchange: string }> }> {
+    const query = (q ?? '').trim();
     if (!query) return { data: [] };
 
+    const apiKey = process.env['FMP_API_KEY'];
+
+    if (apiKey) {
+      try {
+        const url =
+          `https://financialmodelingprep.com/stable/search` +
+          `?query=${encodeURIComponent(query)}&limit=12&apikey=${apiKey}`;
+
+        const response = await fetch(url);
+
+        if (response.ok) {
+          const data = (await response.json()) as Array<{
+            symbol: string;
+            name: string;
+            currency: string;
+            stockExchange: string;
+            exchangeShortName: string;
+          }>;
+
+          const getCategory = (exchange: string): string => {
+            const ex = exchange.toUpperCase();
+            if (['CME', 'CBOT', 'NYMEX', 'COMEX'].includes(ex)) return 'FUTURES';
+            if (['CRYPTO', 'COINBASE', 'BINANCE'].includes(ex)) return 'CRYPTO';
+            if (ex === 'FOREX' || ex === 'FX') return 'FOREX';
+            if (['NYSE', 'NASDAQ', 'AMEX'].includes(ex)) return 'ACTIONS';
+            return 'AUTRES';
+          };
+
+          return {
+            data: data
+              .filter((r) => r.symbol && r.name)
+              .map((r) => ({
+                symbol: r.symbol,
+                label: `${r.name} (${r.symbol})`,
+                category: getCategory(r.exchangeShortName ?? ''),
+                exchange: r.exchangeShortName ?? '',
+              }))
+              .slice(0, 10),
+          };
+        }
+      } catch {
+        this.logger.warn('FMP search failed — fallback liste statique');
+      }
+    }
+
+    // Fallback — liste statique + CoinGecko
+    const lq = query.toLowerCase();
     const staticMatches = INSTRUMENTS.filter(
       (i) =>
-        i.symbol.toLowerCase().includes(query) ||
-        i.label.toLowerCase().includes(query),
+        i.symbol.toLowerCase().includes(lq) ||
+        i.label.toLowerCase().includes(lq),
     ).slice(0, 10);
 
-    const cryptoMatches = (await this.coinGeckoService.getCryptoInstruments())
-      .filter(
-        (i) =>
-          i.symbol.toLowerCase().includes(query) ||
-          i.label.toLowerCase().includes(query),
-      )
-      .slice(0, 10);
+    let cryptoMatches: Array<{ symbol: string; label: string; category: string; exchange: string }> = [];
+    if (staticMatches.length < 5) {
+      try {
+        cryptoMatches = (await this.coinGeckoService.getCryptoInstruments())
+          .filter(
+            (i) =>
+              i.symbol.toLowerCase().includes(lq) ||
+              i.label.toLowerCase().includes(lq),
+          )
+          .slice(0, 5)
+          .map((i) => ({ symbol: i.symbol, label: i.label, category: i.category, exchange: '' }));
+      } catch {
+        // CoinGecko indisponible
+      }
+    }
 
     const seen = new Set(staticMatches.map((i) => i.symbol));
-    const merged = [
-      ...staticMatches,
-      ...cryptoMatches.filter((i) => !seen.has(i.symbol)),
-    ].slice(0, 15);
-
-    return { data: merged };
+    return {
+      data: [
+        ...staticMatches.map((i) => ({ symbol: i.symbol, label: i.label, category: i.category, exchange: '' })),
+        ...cryptoMatches.filter((i) => !seen.has(i.symbol)),
+      ].slice(0, 10),
+    };
   }
 
   @Get(':id')

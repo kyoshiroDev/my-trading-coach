@@ -33,15 +33,17 @@ export interface EcoCalendarData {
   userAssets: string[];
 }
 
-interface FinnhubEcoEvent {
-  time: string;      // '2026-05-26 13:30:00' UTC
+interface FmpEcoEvent {
+  date: string;        // '2026-05-26 13:30:00' UTC
   event: string;
   country: string;
   currency: string;
-  prev: number | null;
+  previous: number | null;
   estimate: number | null;
   actual: number | null;
-  impact: number;    // 1=low, 2=medium, 3=high
+  change: number | null;
+  changePercentage: number | null;
+  impact: string;      // 'High' | 'Medium' | 'Low'
   unit: string;
 }
 
@@ -64,36 +66,40 @@ export class EcoCalendarService implements OnModuleDestroy {
     await this.redis.quit();
   }
 
-  // ── Fetch depuis Finnhub + upsert PostgreSQL ──────────────────────────────
+  // ── Fetch depuis FMP + upsert PostgreSQL ─────────────────────────────────
 
   async fetchAndStoreEvents(date: string): Promise<EcoEvent[]> {
-    const apiKey = process.env['FINNHUB_API_KEY'];
+    const apiKey = process.env['FMP_API_KEY'];
     if (!apiKey) {
       this.logger.error(
-        '❌ FINNHUB_API_KEY non configurée — ' +
-        'Clé gratuite sur https://finnhub.io (60 req/min)',
+        '❌ FMP_API_KEY non configurée — ' +
+        'Plan Starter requis sur https://site.financialmodelingprep.com/pricing-plans',
       );
       return [];
     }
 
     try {
       const url =
-        `https://finnhub.io/api/v1/calendar/economic` +
-        `?from=${date}&to=${date}&token=${apiKey}`;
+        `https://financialmodelingprep.com/stable/economic-calendar` +
+        `?from=${date}&to=${date}&apikey=${apiKey}`;
 
       const response = await fetch(url);
 
-      if (!response.ok) {
-        this.logger.warn(`Finnhub API ${response.status} pour ${date}`);
+      if (response.status === 402) {
+        this.logger.error('❌ FMP 402 — plan Starter requis pour le calendrier économique');
         return [];
       }
 
-      const json = (await response.json()) as {
-        economicCalendar?: FinnhubEcoEvent[];
-      };
+      if (!response.ok) {
+        this.logger.warn(`FMP API ${response.status} pour ${date}`);
+        return [];
+      }
 
-      // Garder uniquement medium (2) et high (3)
-      const filtered = (json.economicCalendar ?? []).filter((e) => e.impact >= 2);
+      // FMP retourne directement un tableau (pas d'objet wrapper)
+      const data = (await response.json()) as FmpEcoEvent[];
+
+      // Garder uniquement Medium et High
+      const filtered = data.filter((e) => ['High', 'Medium'].includes(e.impact));
 
       const upserted: EcoEvent[] = [];
 
@@ -101,14 +107,14 @@ export class EcoCalendarService implements OnModuleDestroy {
         const isReleased = e.actual !== null;
         const mapped = {
           date,
-          time: this.toParisTime(e.time ?? `${date} 00:00:00`),
+          time: this.toParisTime(e.date ?? `${date} 00:00:00`),
           name: e.event,
           country: e.country,
           currency: e.currency,
-          impact: e.impact === 3 ? 'high' : 'medium',
+          impact: e.impact === 'High' ? 'high' : 'medium',
           actual: e.actual ?? null,
           estimate: e.estimate ?? null,
-          previous: e.prev ?? null,
+          previous: e.previous ?? null,
           isReleased,
           unit: e.unit ?? null,
         };
@@ -133,10 +139,10 @@ export class EcoCalendarService implements OnModuleDestroy {
         });
       }
 
-      this.logger.log(`✅ Finnhub: ${upserted.length} events stockés pour ${date}`);
+      this.logger.log(`✅ FMP: ${upserted.length} events stockés pour ${date}`);
       return upserted;
     } catch (err) {
-      this.logger.error('Finnhub fetch failed', err);
+      this.logger.error('FMP fetch failed', err);
       return [];
     }
   }
