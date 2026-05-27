@@ -56,14 +56,14 @@ describe('EcoCalendarService', () => {
     vi.spyOn(service['redis'], 'setex').mockResolvedValue('OK' as never);
     vi.spyOn(service['redis'], 'quit').mockResolvedValue('OK' as never);
 
-      originalFmpKey = process.env['FINANCIAL_MODELING_PREP_API_KEY'];
+      originalFmpKey = process.env['FMP_API_KEY'];
   });
 
   afterEach(() => {
     if (originalFmpKey !== undefined) {
-      process.env['FINANCIAL_MODELING_PREP_API_KEY'] = originalFmpKey;
+      process.env['FMP_API_KEY'] = originalFmpKey;
     } else {
-      delete process.env['FINANCIAL_MODELING_PREP_API_KEY'];
+      delete process.env['FMP_API_KEY'];
     }
     vi.restoreAllMocks();
   });
@@ -71,18 +71,18 @@ describe('EcoCalendarService', () => {
   // ── fetchAndStoreEvents ───────────────────────────────────────────────────
 
   describe('fetchAndStoreEvents', () => {
-    it('retourne [] et logue une erreur si FINANCIAL_MODELING_PREP_API_KEY absente', async () => {
-      delete process.env['FINANCIAL_MODELING_PREP_API_KEY'];
+    it('retourne [] et logue une erreur si FMP_API_KEY absente', async () => {
+      delete process.env['FMP_API_KEY'];
       const logSpy = vi.spyOn(service['logger'], 'error');
 
       const result = await service.fetchAndStoreEvents('2026-05-26');
 
       expect(result).toEqual([]);
-      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('FINANCIAL_MODELING_PREP_API_KEY'));
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('FMP_API_KEY'));
     });
 
     it('retourne [] et logue une erreur sur HTTP 402', async () => {
-      process.env['FINANCIAL_MODELING_PREP_API_KEY'] = 'test-key';
+      process.env['FMP_API_KEY'] = 'test-key';
       const logSpy = vi.spyOn(service['logger'], 'error');
       vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
         status: 402,
@@ -97,7 +97,7 @@ describe('EcoCalendarService', () => {
     });
 
     it('retourne [] sur autre erreur HTTP', async () => {
-      process.env['FINANCIAL_MODELING_PREP_API_KEY'] = 'test-key';
+      process.env['FMP_API_KEY'] = 'test-key';
       vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
         status: 500,
         ok: false,
@@ -110,7 +110,7 @@ describe('EcoCalendarService', () => {
     });
 
     it('filtre les événements Low impact', async () => {
-      process.env['FINANCIAL_MODELING_PREP_API_KEY'] = 'test-key';
+      process.env['FMP_API_KEY'] = 'test-key';
       vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
         status: 200,
         ok: true,
@@ -130,7 +130,7 @@ describe('EcoCalendarService', () => {
     });
 
     it('convertit le time UTC en heure Paris', async () => {
-      process.env['FINANCIAL_MODELING_PREP_API_KEY'] = 'test-key';
+      process.env['FMP_API_KEY'] = 'test-key';
       // 13:30 UTC = 15:30 Paris (CEST +2)
       vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
         status: 200,
@@ -147,7 +147,7 @@ describe('EcoCalendarService', () => {
     });
 
     it('upserte correctement un event existant (actual mis à jour)', async () => {
-      process.env['FINANCIAL_MODELING_PREP_API_KEY'] = 'test-key';
+      process.env['FMP_API_KEY'] = 'test-key';
       vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
         status: 200,
         ok: true,
