@@ -48,6 +48,9 @@ model User {
   tradesPerDayMax     Int?
   strategyDescription String?
 
+  // ── Asset favori pour la saisie rapide ───────────────────────────────────
+  favoriteAsset String?
+
   // ── Discord ──────────────────────────────────────────────────────────────────
   discordId String? @unique
 

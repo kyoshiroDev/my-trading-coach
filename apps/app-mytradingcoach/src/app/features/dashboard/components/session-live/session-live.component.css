@@ -448,6 +448,58 @@
 .qt-log:disabled { opacity: .4; cursor: not-allowed; }
 .qt-hint { font-size: 10px; color: var(--text-3); text-align: center; }
 
+/* ─── Asset select ─── */
+.qt-asset-wrap { display: flex; flex-direction: column; gap: 4px; }
+.qt-asset-select {
+  flex: 1;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--text);
+  cursor: pointer;
+  outline: none;
+  transition: border-color .15s;
+  min-width: 0;
+}
+.qt-asset-select:focus { border-color: var(--blue); }
+.qt-fav-btn {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text-3);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+  padding: 0;
+}
+.qt-fav-btn.active { color: var(--yellow); border-color: var(--yellow-dim); background: var(--yellow-dim); }
+.qt-fav-btn:hover { border-color: var(--yellow-dim); color: var(--yellow); }
+.qt-asset-preview {
+  font-size: 10px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+}
+.qt-asset-skel {
+  height: 32px;
+  border-radius: 7px;
+  background: var(--bg-3);
+  animation: skel-pulse 1.2s ease-in-out infinite;
+}
+.qt-asset-hint { font-size: 10px; color: var(--text-3); font-style: italic; }
+@keyframes skel-pulse {
+  0%, 100% { opacity: .4; }
+  50% { opacity: .8; }
+}
+
 /* ─── Close session mood ─── */
 .mood-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
 .mood-btn {

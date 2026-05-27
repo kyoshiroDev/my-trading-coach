@@ -10,7 +10,17 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
-import { getTickValue, getTickSize } from './instruments.const';
+import { getTickValue, getTickSize, INSTRUMENTS } from './instruments.const';
+
+export interface UserAssetItem {
+  symbol: string;
+  label: string;
+  category: string;
+  tradeCount: number;
+  lastEntry: number | null;
+  lastQty: number | null;
+  isFavorite: boolean;
+}
 
 @Injectable()
 export class TradesService {
@@ -151,6 +161,78 @@ export class TradesService {
     });
 
     return { count, limit: 30, isPremium: false };
+  }
+
+  async getUserAssets(userId: string): Promise<UserAssetItem[]> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { favoriteAsset: true },
+    });
+    const favoriteAsset = user?.favoriteAsset ?? null;
+
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const rows = await this.prisma.trade.findMany({
+      where: { userId, tradedAt: { gte: startOfMonth } },
+      select: { asset: true, entry: true, quantity: true, tradedAt: true },
+      orderBy: { tradedAt: 'desc' },
+    });
+
+    const map = new Map<string, { count: number; lastEntry: number | null; lastQty: number | null }>();
+    for (const row of rows) {
+      if (!map.has(row.asset)) {
+        map.set(row.asset, {
+          count: 0,
+          lastEntry: row.entry,
+          lastQty: row.quantity,
+        });
+      }
+      map.get(row.asset)!.count++;
+    }
+
+    const instrMap = new Map(INSTRUMENTS.map((i) => [i.symbol, i]));
+
+    const items: UserAssetItem[] = Array.from(map.entries()).map(([symbol, data]) => {
+      const instr = instrMap.get(symbol);
+      return {
+        symbol,
+        label: instr?.label ?? symbol,
+        category: instr?.category ?? 'CRYPTO',
+        tradeCount: data.count,
+        lastEntry: data.lastEntry,
+        lastQty: data.lastQty,
+        isFavorite: symbol === favoriteAsset,
+      };
+    });
+
+    items.sort((a, b) => b.tradeCount - a.tradeCount);
+
+    if (
+      favoriteAsset &&
+      !items.find((i) => i.symbol === favoriteAsset)
+    ) {
+      const instr = instrMap.get(favoriteAsset);
+      items.unshift({
+        symbol: favoriteAsset,
+        label: instr?.label ?? favoriteAsset,
+        category: instr?.category ?? 'CRYPTO',
+        tradeCount: 0,
+        lastEntry: null,
+        lastQty: null,
+        isFavorite: true,
+      });
+    }
+
+    return items.slice(0, 8);
+  }
+
+  async setFavoriteAsset(userId: string, asset: string | null): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { favoriteAsset: asset },
+    });
   }
 
   private calculatePnl(dto: CreateTradeDto): number | undefined {

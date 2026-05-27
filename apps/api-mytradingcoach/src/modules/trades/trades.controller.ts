@@ -110,6 +110,19 @@ export class TradesController {
     return this.tradesService.findAll(user.id, filters);
   }
 
+  @Get('user-assets')
+  getUserAssets(@CurrentUser() user: { id: string }) {
+    return this.tradesService.getUserAssets(user.id);
+  }
+
+  @Patch('favorite-asset')
+  setFavoriteAsset(
+    @CurrentUser() user: { id: string },
+    @Body('asset') asset: string | null,
+  ) {
+    return this.tradesService.setFavoriteAsset(user.id, asset ?? null);
+  }
+
   @Get(':id')
   findOne(@CurrentUser() user: { id: string }, @Param('id') id: string) {
     return this.tradesService.findOne(user.id, id);

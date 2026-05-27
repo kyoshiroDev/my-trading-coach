@@ -13,7 +13,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { interval } from 'rxjs';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent, EcoResultAnalysis } from '../../../../core/api/eco-calendar.api';
 import { MoodState, TradingSession, LiveStats, SessionTrade } from '../../../../core/api/session.api';
-import { CreateTradeDto } from '../../../../core/api/trades.api';
+import { CreateTradeDto, TradesApi, UserAssetItem } from '../../../../core/api/trades.api';
 import { SessionRecapComponent } from '../session-recap/session-recap.component';
 import { EcoSocketService } from '../../../../core/services/eco-socket.service';
 import { UserStore } from '../../../../core/stores/user.store';
@@ -335,15 +335,43 @@ const EMOTIONS = [
             <span class="badge-beta">BÊTA</span>
           </div>
 
-          <div>
+          <!-- Asset select -->
+          <div class="qt-asset-wrap">
             <div class="qt-lbl">ACTIF</div>
-            <input
-              class="qt-input"
-              placeholder="NQ, BTC/USDT..."
-              data-testid="quick-trade-asset"
-              [value]="qtAsset()"
-              (input)="qtAsset.set($any($event.target).value)"
-            />
+            @if (assetsLoading()) {
+              <div class="qt-asset-skel"></div>
+            } @else {
+              <div style="display:flex;gap:6px;align-items:center;">
+                <select
+                  class="qt-asset-select"
+                  data-testid="quick-trade-asset"
+                  (change)="onAssetSelect($event)"
+                >
+                  <option value="">-- Choisir --</option>
+                  @for (a of userAssets(); track a.symbol) {
+                    <option [value]="a.symbol" [selected]="qtSelectedAsset()?.symbol === a.symbol">
+                      {{ a.isFavorite ? '★ ' : '' }}{{ a.symbol }}{{ a.tradeCount > 0 ? ' · ' + a.tradeCount + 'x' : '' }}
+                    </option>
+                  }
+                </select>
+                @if (qtSelectedAsset()) {
+                  <button
+                    class="qt-fav-btn"
+                    [class.active]="qtSelectedAsset()!.isFavorite"
+                    title="Marquer comme favori"
+                    (click)="setFavorite()"
+                  >★</button>
+                }
+              </div>
+              @if (qtSelectedAsset()?.lastEntry) {
+                <div class="qt-asset-preview">
+                  Last: {{ qtSelectedAsset()!.lastEntry }} · Qty: {{ qtSelectedAsset()!.lastQty ?? 1 }}
+                </div>
+              }
+              @if (userAssets().length === 0) {
+                <div class="qt-asset-hint">Saisis ton premier trade pour voir tes actifs ici</div>
+              }
+            }
           </div>
 
           <div>
@@ -516,6 +544,7 @@ export class SessionLiveComponent {
   private readonly ecoSocket = inject(EcoSocketService);
   private readonly ecoCalendarApi = inject(EcoCalendarApi);
   private readonly userStore = inject(UserStore);
+  private readonly tradesApi = inject(TradesApi);
 
   // Timer
   private readonly now = signal(new Date());
@@ -541,8 +570,10 @@ export class SessionLiveComponent {
   protected readonly closeMood = signal<MoodState>('NEUTRAL');
   protected readonly showRecap = signal(false);
 
-  // Quick trade form
-  protected readonly qtAsset = signal('');
+  // Quick trade form — asset selection
+  protected readonly userAssets = signal<UserAssetItem[]>([]);
+  protected readonly assetsLoading = signal(false);
+  protected readonly qtSelectedAsset = signal<UserAssetItem | null>(null);
   protected readonly qtSide = signal<'LONG' | 'SHORT'>('LONG');
   protected readonly qtEmotion = signal<'CONFIDENT' | 'STRESSED' | 'REVENGE' | 'FEAR' | 'FOCUSED' | 'NEUTRAL'>('CONFIDENT');
   protected readonly qtSetup = signal<string>('BREAKOUT');
@@ -571,6 +602,7 @@ export class SessionLiveComponent {
       const s = this.session();
       if (s?.startedAt && s.status === 'ACTIVE') {
         this.startTime.set(new Date(s.startedAt));
+        this.loadUserAssets();
       } else {
         this.startTime.set(null);
       }
@@ -613,7 +645,7 @@ export class SessionLiveComponent {
   });
 
   protected readonly canSubmitQuickTrade = computed(
-    () => this.qtAsset().trim().length > 0,
+    () => this.qtSelectedAsset() !== null,
   );
 
   protected moodEmoji(mood?: MoodState | null): string {
@@ -710,8 +742,51 @@ export class SessionLiveComponent {
     this.showRecap.set(false);
   }
 
+  protected loadUserAssets(): void {
+    this.assetsLoading.set(true);
+    this.tradesApi.getUserAssets()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (assets) => {
+          this.userAssets.set(assets);
+          const preselect = assets.find((a) => a.isFavorite) ?? assets[0] ?? null;
+          if (preselect) this.applyAssetSelection(preselect);
+          this.assetsLoading.set(false);
+        },
+        error: () => this.assetsLoading.set(false),
+      });
+  }
+
+  protected onAssetSelect(event: Event): void {
+    const symbol = (event.target as HTMLSelectElement).value;
+    const asset = this.userAssets().find((a) => a.symbol === symbol) ?? null;
+    this.qtSelectedAsset.set(asset);
+    if (asset) this.applyAssetSelection(asset);
+  }
+
+  private applyAssetSelection(asset: UserAssetItem): void {
+    this.qtSelectedAsset.set(asset);
+    if (asset.lastEntry != null) this.qtEntry.set(String(asset.lastEntry));
+    if (asset.lastQty != null) this.qtQty.set(String(asset.lastQty));
+  }
+
+  protected setFavorite(): void {
+    const asset = this.qtSelectedAsset();
+    if (!asset) return;
+    const newFav = asset.isFavorite ? null : asset.symbol;
+    this.tradesApi.setFavoriteAsset(newFav).subscribe(() => {
+      this.userAssets.update((list) =>
+        list.map((a) => ({ ...a, isFavorite: a.symbol === newFav })),
+      );
+      this.qtSelectedAsset.update((a) =>
+        a ? { ...a, isFavorite: !a.isFavorite } : null,
+      );
+    });
+  }
+
   protected submitQuickTrade(): void {
-    if (!this.canSubmitQuickTrade()) return;
+    const selected = this.qtSelectedAsset();
+    if (!selected) return;
     const h = new Date().getHours();
     let session: CreateTradeDto['session'];
     if (h >= 7 && h < 16) session = 'LONDON';
@@ -719,7 +794,7 @@ export class SessionLiveComponent {
     else session = 'ASIAN';
 
     const dto: CreateTradeDto = {
-      asset: this.qtAsset().trim().toUpperCase(),
+      asset: selected.symbol,
       side: this.qtSide(),
       emotion: this.qtEmotion(),
       setup: this.qtSetup() as CreateTradeDto['setup'],
@@ -732,7 +807,6 @@ export class SessionLiveComponent {
     };
 
     this.tradeLogged.emit(dto);
-    // qtAsset conservé pour le trade suivant (scalper ne re-saisit pas l'instrument)
     this.qtEntry.set('');
     this.qtSl.set('');
     this.qtTp.set('');

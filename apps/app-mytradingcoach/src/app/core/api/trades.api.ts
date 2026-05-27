@@ -86,6 +86,16 @@ export interface PaginatedTrades {
   };
 }
 
+export interface UserAssetItem {
+  symbol: string;
+  label: string;
+  category: string;
+  tradeCount: number;
+  lastEntry: number | null;
+  lastQty: number | null;
+  isFavorite: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TradesApi {
   private readonly http = inject(HttpClient);
@@ -118,5 +128,13 @@ export class TradesApi {
 
   getInstruments(): Observable<{ data: InstrumentDto[] }> {
     return this.http.get<{ data: InstrumentDto[] }>(`${this.base}/instruments`);
+  }
+
+  getUserAssets(): Observable<UserAssetItem[]> {
+    return this.http.get<UserAssetItem[]>(`${this.base}/user-assets`);
+  }
+
+  setFavoriteAsset(asset: string | null): Observable<void> {
+    return this.http.patch<void>(`${this.base}/favorite-asset`, { asset });
   }
 }
