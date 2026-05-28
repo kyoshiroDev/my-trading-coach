@@ -352,7 +352,7 @@ const EMOTIONS = [
                   <option value="">-- Choisir --</option>
                   @for (a of userAssets(); track a.symbol) {
                     <option [value]="a.symbol" [selected]="qtSelectedAsset()?.symbol === a.symbol">
-                      {{ a.isFavorite ? '★ ' : '' }}{{ a.symbol }}{{ a.tradeCount > 0 ? ' · ' + a.tradeCount + 'x' : '' }}
+                      {{ a.isFavorite ? '★ ' : '' }}{{ a.symbol }}{{ a.tradeCount > 0 ? ' · ' + a.tradeCount + ' trade' + (a.tradeCount > 1 ? 's' : '') : '' }}
                     </option>
                   }
                 </select>
