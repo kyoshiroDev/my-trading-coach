@@ -10,6 +10,10 @@ const mockPrisma = {
     upsert: vi.fn(),
     findMany: vi.fn(),
   },
+  user: {
+    findUnique: vi.fn(),
+    update: vi.fn(),
+  },
 };
 
 const mockAi = {
@@ -56,7 +60,11 @@ describe('EcoCalendarService', () => {
     vi.spyOn(service['redis'], 'setex').mockResolvedValue('OK' as never);
     vi.spyOn(service['redis'], 'quit').mockResolvedValue('OK' as never);
 
-      originalFmpKey = process.env['FMP_API_KEY'];
+    // Valeur par défaut : user sans pins
+    mockPrisma.user.findUnique.mockResolvedValue({ pinnedEcoEvents: [] });
+    mockPrisma.user.update.mockResolvedValue({});
+
+    originalFmpKey = process.env['FMP_API_KEY'];
   });
 
   afterEach(() => {
