@@ -187,15 +187,12 @@ export class TradesService {
       });
     }
 
-    // Fallback : top 8 actifs du mois en cours
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-
+    // Fallback : top actifs sur les 100 derniers trades (tous mois confondus)
     const rows = await this.prisma.trade.findMany({
-      where: { userId, tradedAt: { gte: startOfMonth } },
+      where: { userId },
       select: { asset: true, entry: true, quantity: true, tradedAt: true },
       orderBy: { tradedAt: 'desc' },
+      take: 100,
     });
 
     const map = new Map<string, { count: number; lastEntry: number | null; lastQty: number | null }>();
