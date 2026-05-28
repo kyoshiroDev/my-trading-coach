@@ -123,10 +123,13 @@ export class ChartService {
             grid: { color: 'rgba(99,155,255,0.08)' },
             border: { display: false },
             ticks: {
-              color: 'rgba(112,144,176,0.6)',
+              color: 'rgba(112,144,176,0.7)',
               font: { family: '"DM Mono", monospace', size: 9 },
-              maxTicksLimit: 5,
+              maxTicksLimit: values.length <= 10 ? values.length : 6,
+              autoSkip: true,
+              autoSkipPadding: 10,
               maxRotation: 0,
+              minRotation: 0,
             },
           },
           y: {

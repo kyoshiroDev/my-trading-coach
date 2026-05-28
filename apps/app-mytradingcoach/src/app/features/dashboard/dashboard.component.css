@@ -187,9 +187,10 @@
 }
 
 .top-charts-row .equity-card .chart-container {
-  flex: 1;
-  height: auto;
-  min-height: 200px;
+  height: 220px;
+  min-height: 220px;
+  max-height: 220px;
+  flex: none;
 }
 
 /* Equity seul (V1) : prend toute la largeur */
@@ -396,9 +397,10 @@ canvas {
 }
 
 .equity-card .chart-container {
-  flex: 1;
-  height: auto;
-  min-height: 160px;
+  height: 220px;
+  min-height: 220px;
+  max-height: 220px;
+  flex: none;
 }
 
 /* ─── Recent trades compact ─── */

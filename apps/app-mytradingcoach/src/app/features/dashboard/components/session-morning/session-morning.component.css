@@ -323,6 +323,23 @@
 .eco-tag.high { background: rgba(239,68,68,.12); color: var(--red); }
 .eco-tag.medium { background: var(--yellow-dim); color: var(--yellow); }
 
+/* ── Pinned notice ── */
+.eco-pinned-notice {
+  font-size: 11px;
+  color: var(--yellow);
+  font-family: var(--font-mono);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.eco-pinned-link {
+  color: var(--blue-bright);
+  text-decoration: none;
+  font-size: 11px;
+}
+.eco-pinned-link:hover { opacity: .7; }
+
 /* ── Filtres ── */
 .eco-filters {
   display: flex;

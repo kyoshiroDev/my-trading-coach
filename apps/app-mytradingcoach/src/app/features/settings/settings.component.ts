@@ -333,7 +333,7 @@ export class SettingsComponent implements OnInit {
   }
 
   protected onAssetSearch(query: string): void {
-    this.assetSearchQuery.set(query);
+    this.assetSearchQuery.set(query.toUpperCase());
     clearTimeout(this.searchDebounce);
     if (!query.trim()) {
       this.assetSearchResults.set([]);
@@ -346,18 +346,43 @@ export class SettingsComponent implements OnInit {
           this.assetSearchResults.set(res.data ?? []);
           this.assetSearchLoading.set(false);
         },
-        error: () => this.assetSearchLoading.set(false),
+        error: () => {
+          this.assetSearchResults.set(this.searchLocalFallback(query));
+          this.assetSearchLoading.set(false);
+        },
       });
-    }, 300);
+    }, 400);
+  }
+
+  private searchLocalFallback(query: string): InstrumentSearchResult[] {
+    const QUICK_LIST: InstrumentSearchResult[] = [
+      { symbol: 'NQ', label: 'E-mini Nasdaq (NQ)', category: 'FUTURES' },
+      { symbol: 'MNQ', label: 'Micro E-mini Nasdaq (MNQ)', category: 'FUTURES' },
+      { symbol: 'ES', label: 'E-mini S&P 500 (ES)', category: 'FUTURES' },
+      { symbol: 'MES', label: 'Micro E-mini S&P 500 (MES)', category: 'FUTURES' },
+      { symbol: 'YM', label: 'E-mini Dow Jones (YM)', category: 'FUTURES' },
+      { symbol: 'RTY', label: 'E-mini Russell 2000 (RTY)', category: 'FUTURES' },
+      { symbol: 'GC', label: 'Gold Futures (GC)', category: 'FUTURES' },
+      { symbol: 'CL', label: 'Crude Oil Futures (CL)', category: 'FUTURES' },
+      { symbol: 'BTC/USDT', label: 'Bitcoin (BTC/USDT)', category: 'CRYPTO' },
+      { symbol: 'ETH/USDT', label: 'Ethereum (ETH/USDT)', category: 'CRYPTO' },
+      { symbol: 'EUR/USD', label: 'Euro / Dollar (EUR/USD)', category: 'FOREX' },
+      { symbol: 'GBP/USD', label: 'Livre / Dollar (GBP/USD)', category: 'FOREX' },
+    ];
+    const q = query.toLowerCase();
+    return QUICK_LIST.filter(
+      (i) => i.symbol.toLowerCase().includes(q) || i.label.toLowerCase().includes(q),
+    ).slice(0, 8);
   }
 
   protected addAsset(result: InstrumentSearchResult): void {
-    if (this.tradingAssets().some((a) => a.symbol === result.symbol)) return;
+    const normalized: InstrumentSearchResult = { ...result, symbol: result.symbol.toUpperCase().trim() };
+    if (this.tradingAssets().some((a) => a.symbol === normalized.symbol)) return;
     const isFirst = this.tradingAssets().length === 0;
     const newAsset: UserAssetItem = {
-      symbol: result.symbol,
-      label: result.label,
-      category: result.category,
+      symbol: normalized.symbol,
+      label: normalized.label,
+      category: normalized.category,
       isFavorite: isFirst,
       tradeCount: 0,
       lastEntry: null,
@@ -365,7 +390,7 @@ export class SettingsComponent implements OnInit {
     };
     this.tradingAssets.update((assets) => [...assets, newAsset]);
     if (isFirst) {
-      this.tradesApi.setFavoriteAsset(result.symbol).subscribe();
+      this.tradesApi.setFavoriteAsset(normalized.symbol).subscribe();
     }
     this.assetSearchQuery.set('');
     this.assetSearchResults.set([]);

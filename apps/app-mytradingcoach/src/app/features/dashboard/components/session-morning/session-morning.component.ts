@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { translateEcoEvent } from '../../../../core/data/eco-event-translations';
 import { DailyRecap } from '../../../../core/api/daily-recap.api';
 import { EcoCalendarData } from '../../../../core/api/eco-calendar.api';
@@ -28,7 +29,7 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
 @Component({
   selector: 'mtc-session-morning',
   standalone: true,
-  imports: [DatePipe, PremiumLockComponent],
+  imports: [DatePipe, RouterLink, PremiumLockComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-morning.component.css',
   template: `
@@ -257,6 +258,14 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
             </div>
           }
 
+          <!-- Notice events épinglés -->
+          @if (pinnedKeys().size > 0) {
+            <div class="eco-pinned-notice">
+              📌 {{ pinnedKeys().size }} event{{ pinnedKeys().size > 1 ? 's' : '' }} épinglé{{ pinnedKeys().size > 1 ? 's' : '' }}
+              — <a routerLink="/eco-calendar" class="eco-pinned-link">Gérer</a>
+            </div>
+          }
+
           <!-- Filtres style Investing.com -->
           <div class="eco-filters">
             <div class="eco-filter-group">
@@ -389,13 +398,29 @@ export class SessionMorningComponent {
     return [...new Set(events.map(e => e.currency))].sort();
   });
 
+  protected readonly pinnedKeys = computed(() =>
+    new Set(this.ecoCalendar()?.pinnedEvents ?? []),
+  );
+
   protected readonly filteredEvents = computed(() => {
     const events = this.ecoCalendar()?.events ?? [];
-    return events.filter(e => {
-      const impactOk = this.filterImpact() === 'all' || e.impact === this.filterImpact();
-      const currencyOk = this.filterCurrency() === 'all' || e.currency === this.filterCurrency();
-      return impactOk && currencyOk;
-    });
+    const pinned = this.pinnedKeys();
+    const hasPins = pinned.size > 0;
+
+    return events
+      .filter(e => {
+        if (hasPins && !pinned.has(`${e.name}:${e.currency}`)) return false;
+        const impactOk = this.filterImpact() === 'all' || e.impact === this.filterImpact();
+        const currencyOk = this.filterCurrency() === 'all' || e.currency === this.filterCurrency();
+        return impactOk && currencyOk;
+      })
+      .sort((a, b) => {
+        const aPin = pinned.has(`${a.name}:${a.currency}`);
+        const bPin = pinned.has(`${b.name}:${b.currency}`);
+        if (aPin && !bPin) return -1;
+        if (!aPin && bPin) return 1;
+        return a.time.localeCompare(b.time);
+      });
   });
 
   protected translate(name: string): string {

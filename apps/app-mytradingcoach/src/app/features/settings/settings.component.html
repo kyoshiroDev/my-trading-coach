@@ -423,6 +423,7 @@
               placeholder="Rechercher un actif — NQ, MES, BTC, EUR/USD..."
               [value]="assetSearchQuery()"
               (input)="onAssetSearch($any($event.target).value)"
+              style="text-transform: uppercase;"
             />
             @if (assetSearchLoading()) {
               <span class="asset-search-spin">⟳</span>

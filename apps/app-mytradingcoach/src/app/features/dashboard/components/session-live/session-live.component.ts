@@ -256,7 +256,7 @@ const EMOTIONS = [
             </div>
           } @else {
             <div style="display:flex;flex-direction:column;gap:6px;">
-              @for (event of ecoCalendar()!.events; track event.name) {
+              @for (event of sessionEcoEvents(); track event.name) {
                 <div
                   class="eco-live-event"
                   [class.released]="event.isReleased"
@@ -587,6 +587,19 @@ export class SessionLiveComponent {
 
   // Eco results cache
   private readonly ecoResults = signal<Record<string, EcoResultAnalysis>>({});
+
+  protected readonly pinnedKeys = computed(() =>
+    new Set(this.ecoCalendar()?.pinnedEvents ?? []),
+  );
+
+  protected readonly sessionEcoEvents = computed(() => {
+    const events = this.ecoCalendar()?.events ?? [];
+    const pinned = this.pinnedKeys();
+    if (pinned.size === 0) return events;
+    return events
+      .filter(e => pinned.has(`${e.name}:${e.currency}`))
+      .sort((a, b) => a.time.localeCompare(b.time));
+  });
 
   // Eco WebSocket — nouvelles releases temps réel
   protected readonly newReleases = signal<EcoEvent[]>([]);
