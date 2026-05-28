@@ -148,6 +148,13 @@ export class TradesApi {
     return this.http.patch<void>(`${this.base}/favorite-asset`, { asset });
   }
 
+  getLivePrice(symbol: string): Observable<{ data: { price: number | null; symbol: string; cached: boolean } }> {
+    return this.http.get<{ data: { price: number | null; symbol: string; cached: boolean } }>(
+      `${this.base}/live-price`,
+      { params: { symbol } },
+    );
+  }
+
   searchInstruments(query: string): Observable<{ data: InstrumentSearchResult[] }> {
     const params = new HttpParams().set('q', query);
     return this.http.get<{ data: InstrumentSearchResult[] }>(`${this.base}/instruments/search`, { params });

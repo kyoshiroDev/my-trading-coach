@@ -365,9 +365,18 @@ const EMOTIONS = [
                   >★</button>
                 }
               </div>
-              @if (qtSelectedAsset()?.lastEntry) {
-                <div class="qt-asset-preview">
-                  Last: {{ qtSelectedAsset()!.lastEntry }} · Qty: {{ qtSelectedAsset()!.lastQty ?? 1 }}
+              <!-- Prix temps réel -->
+              @if (qtSelectedAsset()) {
+                <div class="qt-live-price">
+                  @if (livePriceLoading()) {
+                    <span class="qt-live-loading">Chargement...</span>
+                  } @else if (livePrice() !== null) {
+                    <span class="qt-live-dot">●</span>
+                    <span class="qt-live-value">{{ livePricePlaceholder() }}</span>
+                    <span class="qt-live-label">prix actuel</span>
+                  } @else {
+                    <span class="qt-live-unavailable">Prix indisponible</span>
+                  }
                 </div>
               }
               @if (userAssets().length === 0) {
@@ -442,7 +451,7 @@ const EMOTIONS = [
               <input
                 class="qt-input"
                 type="number"
-                placeholder="0.00"
+                [placeholder]="livePricePlaceholder()"
                 style="font-size:12px;"
                 [value]="qtEntry()"
                 (input)="qtEntry.set($any($event.target).value)"
@@ -591,6 +600,21 @@ export class SessionLiveComponent {
   // Pins chargés directement depuis l'API — indépendant du cache getTodayEvents
   private readonly freshPins = signal<string[] | null>(null);
 
+  // Prix temps réel FMP
+  protected readonly livePrice = signal<number | null>(null);
+  protected readonly livePriceLoading = signal(false);
+  private livePriceInterval?: ReturnType<typeof setInterval>;
+
+  protected readonly livePricePlaceholder = computed(() => {
+    const price = this.livePrice();
+    if (price === null) return '0.00';
+    const symbol = this.qtSelectedAsset()?.symbol ?? '';
+    if (symbol.includes('/') && !symbol.includes('USDT')) return price.toFixed(4);
+    if (price < 10) return price.toFixed(4);
+    if (price < 1000) return price.toFixed(2);
+    return price.toFixed(0);
+  });
+
   protected readonly pinnedKeys = computed(() => {
     const fresh = this.freshPins();
     if (fresh !== null) return new Set(fresh);
@@ -634,6 +658,9 @@ export class SessionLiveComponent {
     this.ecoCalendarApi.getPins()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(res => this.freshPins.set(res.data ?? []));
+
+    // Arrêter le polling prix au destroy
+    this.destroyRef.onDestroy(() => this.stopLivePricePolling());
 
     // WebSocket éco — connecter quand session active + Premium
     effect(() => {
@@ -794,8 +821,39 @@ export class SessionLiveComponent {
 
   private applyAssetSelection(asset: UserAssetItem): void {
     this.qtSelectedAsset.set(asset);
-    if (asset.lastEntry != null) this.qtEntry.set(String(asset.lastEntry));
+    // Ne pas pré-remplir l'entry — le trader saisit son prix depuis son broker
+    this.qtEntry.set('');
     if (asset.lastQty != null) this.qtQty.set(String(asset.lastQty));
+    this.startLivePricePolling(asset.symbol);
+  }
+
+  private fetchLivePrice(symbol: string): void {
+    if (!symbol) { this.livePrice.set(null); return; }
+    this.livePriceLoading.set(true);
+    this.tradesApi.getLivePrice(symbol).subscribe({
+      next: (res) => {
+        this.livePrice.set(res.data?.price ?? null);
+        this.livePriceLoading.set(false);
+      },
+      error: () => {
+        this.livePrice.set(null);
+        this.livePriceLoading.set(false);
+      },
+    });
+  }
+
+  private startLivePricePolling(symbol: string): void {
+    this.stopLivePricePolling();
+    this.livePrice.set(null);
+    this.fetchLivePrice(symbol);
+    this.livePriceInterval = setInterval(() => this.fetchLivePrice(symbol), 15_000);
+  }
+
+  private stopLivePricePolling(): void {
+    if (this.livePriceInterval) {
+      clearInterval(this.livePriceInterval);
+      this.livePriceInterval = undefined;
+    }
   }
 
   protected setFavorite(): void {

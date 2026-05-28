@@ -14,6 +14,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import Redis from 'ioredis';
 import { Plan, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PremiumGuard } from '../../common/guards/premium.guard';
@@ -30,6 +31,12 @@ import { INSTRUMENTS } from './instruments.const';
 @Controller('trades')
 export class TradesController {
   private readonly logger = new Logger(TradesController.name);
+  private readonly redis = new Redis({
+    host: process.env['REDIS_HOST'] ?? 'localhost',
+    port: parseInt(process.env['REDIS_PORT'] ?? '6379'),
+    password: process.env['REDIS_PASSWORD'],
+    lazyConnect: true,
+  });
 
   constructor(
     private tradesService: TradesService,
@@ -46,10 +53,62 @@ export class TradesController {
 
   @Get('instruments')
   async getInstruments() {
-    const cryptoInstruments =
-      await this.coinGeckoService.getCryptoInstruments();
-    const nonCrypto = INSTRUMENTS.filter((i) => i.category !== 'CRYPTO');
-    return [...nonCrypto, ...cryptoInstruments];
+    const cryptoInstruments = await this.coinGeckoService.getCryptoInstruments();
+    // Retourner uniquement les futures CME (ceux avec tickValue utile)
+    const futuresOnly = INSTRUMENTS.filter((i) => i.category === 'FUTURES_US');
+    return [...futuresOnly, ...cryptoInstruments];
+  }
+
+  @Get('live-price')
+  async getLivePrice(
+    @Query('symbol') symbol: string,
+  ): Promise<{ price: number | null; symbol: string; cached: boolean }> {
+    if (!symbol?.trim()) return { price: null, symbol: '', cached: false };
+
+    const fmpSymbol = this.mapSymbolToFmp(symbol.trim().toUpperCase());
+    const cacheKey = `price:${fmpSymbol}`;
+
+    try {
+      const cached = await this.redis.get(cacheKey);
+      if (cached) return { price: parseFloat(cached), symbol, cached: true };
+    } catch { /* Redis indisponible */ }
+
+    const apiKey = process.env['FMP_API_KEY'];
+    if (!apiKey) return { price: null, symbol, cached: false };
+
+    try {
+      const url =
+        `https://financialmodelingprep.com/stable/quote` +
+        `?symbol=${encodeURIComponent(fmpSymbol)}&apikey=${apiKey}`;
+
+      const response = await fetch(url);
+      if (!response.ok) return { price: null, symbol, cached: false };
+
+      const data = (await response.json()) as Array<{ symbol: string; price: number }>;
+      const quote = data[0];
+      if (!quote?.price) return { price: null, symbol, cached: false };
+
+      try { await this.redis.setex(cacheKey, 15, String(quote.price)); } catch { /* ignore */ }
+
+      return { price: quote.price, symbol, cached: false };
+    } catch (err) {
+      this.logger.error(`FMP live-price error pour ${fmpSymbol}`, err);
+      return { price: null, symbol, cached: false };
+    }
+  }
+
+  private mapSymbolToFmp(symbol: string): string {
+    const map: Record<string, string> = {
+      'BTC/USDT': 'BTCUSDT', 'ETH/USDT': 'ETHUSDT', 'SOL/USDT': 'SOLUSDT',
+      'BNB/USDT': 'BNBUSDT', 'XRP/USDT': 'XRPUSDT', 'ADA/USDT': 'ADAUSDT',
+      'DOGE/USDT': 'DOGEUSDT', 'AVAX/USDT': 'AVAXUSDT',
+      'LINK/USDT': 'LINKUSDT', 'DOT/USDT': 'DOTUSDT',
+      'EUR/USD': 'EURUSD', 'GBP/USD': 'GBPUSD', 'USD/JPY': 'USDJPY',
+      'AUD/USD': 'AUDUSD', 'USD/CHF': 'USDCHF', 'NZD/USD': 'NZDUSD',
+      'USD/CAD': 'USDCAD', 'EUR/GBP': 'EURGBP', 'EUR/JPY': 'EURJPY',
+      'GBP/JPY': 'GBPJPY',
+    };
+    return map[symbol] ?? symbol;
   }
 
   @Post('import')

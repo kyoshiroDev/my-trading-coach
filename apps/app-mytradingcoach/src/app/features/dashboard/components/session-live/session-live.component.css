@@ -653,3 +653,33 @@
 @keyframes spinEra { to { transform: rotate(360deg); } }
 
 .eco-flag-sm { font-size: 14px; line-height: 1; flex-shrink: 0; }
+
+/* ── Prix live ── */
+.qt-live-price {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 5px; padding: 4px 8px;
+  background: rgba(16,185,129,0.06);
+  border: 1px solid rgba(16,185,129,0.15);
+  border-radius: 6px;
+}
+.qt-live-dot {
+  font-size: 8px; color: var(--green);
+  animation: livePulse 2s ease-in-out infinite;
+}
+@keyframes livePulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+.qt-live-value {
+  font-family: var(--font-mono); font-size: 13px;
+  font-weight: 700; color: var(--text);
+}
+.qt-live-label {
+  font-family: var(--font-mono); font-size: 9px;
+  color: var(--text-3); text-transform: uppercase; letter-spacing: .4px;
+}
+.qt-live-loading {
+  font-family: var(--font-mono); font-size: 10px; color: var(--text-3);
+  animation: skelPulse 1.4s ease-in-out infinite;
+}
+.qt-live-unavailable {
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--text-3); font-style: italic;
+}
