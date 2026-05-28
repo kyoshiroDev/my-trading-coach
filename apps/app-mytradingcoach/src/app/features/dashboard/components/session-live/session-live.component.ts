@@ -149,7 +149,7 @@ const EMOTIONS = [
                   <span class="feed-time">{{ tradeTime(trade.tradedAt) }}</span>
                   <span class="trade-side" [class]="trade.side.toLowerCase()">{{ trade.side }}</span>
                   <span class="feed-asset">{{ trade.asset }}</span>
-                  <span class="feed-price">{{ trade.entry }}</span>
+                  <span class="feed-price">{{ trade.entry || '—' }}</span>
                   <span class="feed-price">{{ trade.exit ?? '—' }}</span>
                   <span class="feed-pnl" [class.green]="trade.pnl >= 0" [class.red]="trade.pnl < 0">
                     {{ trade.pnl >= 0 ? '+' : '' }}{{ trade.pnl.toFixed(0) }}$
@@ -167,10 +167,10 @@ const EMOTIONS = [
                   (click)="openClosePanel(trade.id)"
                   (keyup.enter)="openClosePanel(trade.id)"
                 >
-                  <span class="feed-time">—</span>
+                  <span class="feed-time">{{ tradeTime(trade.tradedAt) }}</span>
                   <span class="trade-side" [class]="trade.side.toLowerCase()">{{ trade.side }}</span>
                   <span class="feed-asset">{{ trade.asset }}</span>
-                  <span class="feed-price">{{ trade.entry }}</span>
+                  <span class="feed-price">{{ trade.entry || '—' }}</span>
                   <span class="feed-price" style="color:var(--text-3);">—</span>
                   <span style="font-family:var(--font-mono);font-size:9px;color:var(--text-3);">En cours</span>
                   <span class="live-tag">● LIVE</span>
