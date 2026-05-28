@@ -30,6 +30,7 @@ export interface EcoCalendarData {
   events: EcoEvent[];
   analysis: EcoAnalysis;
   userAssets: string[];
+  pinnedEvents?: string[];
 }
 
 export interface EcoResultAnalysis {
@@ -63,5 +64,22 @@ export class EcoCalendarApi {
 
   refreshAnalysis(): Observable<{ data: EcoCalendarData }> {
     return this.http.post<{ data: EcoCalendarData }>(`${this.base}/refresh-today`, {});
+  }
+
+  getEventsRange(
+    from: string,
+    to: string,
+  ): Observable<{ data: { date: string; events: EcoEvent[] }[] }> {
+    return this.http.get<{ data: { date: string; events: EcoEvent[] }[] }>(
+      `${this.base}/range?from=${from}&to=${to}`,
+    );
+  }
+
+  getPins(): Observable<{ data: string[] }> {
+    return this.http.get<{ data: string[] }>(`${this.base}/pins`);
+  }
+
+  savePins(pins: string[]): Observable<{ data: string[] }> {
+    return this.http.patch<{ data: string[] }>(`${this.base}/pins`, { pins });
   }
 }

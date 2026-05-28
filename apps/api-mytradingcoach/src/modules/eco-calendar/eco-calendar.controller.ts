@@ -4,7 +4,9 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -42,6 +44,33 @@ export class EcoCalendarController {
     const today = new Date().toISOString().slice(0, 10);
     await this.service.redis.del(`eco:calendar:${today}:${user.id}`);
     return this.service.getTodayEvents(user.id);
+  }
+
+  // Events sur une plage de dates (vue semaine)
+  @Get('range')
+  async getRange(
+    @CurrentUser() user: { id: string },
+    @Query('from') from: string,
+    @Query('to') to: string,
+  ) {
+    if (!from || !to) throw new BadRequestException('from et to requis');
+    const data = await this.service.getEventsRange(user.id, from, to);
+    return { data };
+  }
+
+  @Get('pins')
+  async getPins(@CurrentUser() user: { id: string }) {
+    const pins = await this.service.getUserPins(user.id);
+    return { data: pins };
+  }
+
+  @Patch('pins')
+  async savePins(
+    @CurrentUser() user: { id: string },
+    @Body('pins') pins: string[],
+  ) {
+    const updated = await this.service.updateUserPins(user.id, pins ?? []);
+    return { data: updated };
   }
 
   // Admin — forcer un fetch sans attendre 6h00

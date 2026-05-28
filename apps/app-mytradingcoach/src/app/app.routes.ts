@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, adminGuard } from './core/auth/auth.guard';
+import { authGuard, adminGuard, premiumGuard } from './core/auth/auth.guard';
 import { NotFoundComponent } from './shared/components/not-found/not-found.component';
 
 export const appRoutes: Routes = [
@@ -113,6 +113,21 @@ export const appRoutes: Routes = [
         loadComponent: () =>
           import('./features/scoring/scoring.component').then(
             (m) => m.ScoringComponent,
+          ),
+      },
+      {
+        path: 'eco-calendar',
+        canActivate: [premiumGuard],
+        data: {
+          seo: {
+            title: 'Calendrier économique',
+            description: 'Suivez les événements économiques majeurs et épinglez vos favoris.',
+            noindex: true,
+          },
+        },
+        loadComponent: () =>
+          import('./features/eco-calendar/eco-calendar.component').then(
+            (m) => m.EcoCalendarComponent,
           ),
       },
       {

@@ -52,6 +52,10 @@ model User {
   tradingAssets String[]  // configurés dans les paramètres
   favoriteAsset String?   // pré-sélectionné dans la saisie rapide
 
+  // ── Calendrier économique ─────────────────────────────────────────────────
+  // Format : "EventName:Currency" — pin permanent (ex: "Non-Farm Payrolls:USD")
+  pinnedEcoEvents String[]
+
   // ── Discord ──────────────────────────────────────────────────────────────────
   discordId String? @unique
 

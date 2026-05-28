@@ -129,6 +129,18 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             <span class="badge">PRO</span>
           </a>
 
+          <a
+            routerLink="/eco-calendar"
+            routerLinkActive="active"
+            class="nav-item"
+            data-testid="nav-eco-calendar"
+            (click)="closeSidebar()"
+          >
+            <span class="nav-icon">🗓️</span>
+            Calendrier éco
+            <span class="badge">PRO</span>
+          </a>
+
           <div class="nav-section">ACCOUNT</div>
 
           <a

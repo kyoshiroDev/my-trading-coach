@@ -31,6 +31,7 @@ export interface EcoCalendarData {
   events: EcoEvent[];
   analysis: EcoAnalysis;
   userAssets: string[];
+  pinnedEvents?: string[];
 }
 
 interface FmpEcoEvent {
@@ -222,9 +223,10 @@ export class EcoCalendarService implements OnModuleDestroy {
       // Redis indisponible — continuer sans cache
     }
 
-    const [events, userAssets] = await Promise.all([
+    const [events, userAssets, userPins] = await Promise.all([
       this.getEventsFromDb(today),
       this.getUserTopAssets(userId),
+      this.getUserPins(userId),
     ]);
 
     let analysis: EcoAnalysis = {
@@ -243,7 +245,9 @@ export class EcoCalendarService implements OnModuleDestroy {
       }
     }
 
-    const result: EcoCalendarData = { events, analysis, userAssets };
+    // Épinglés en premier, puis tri par heure
+    const sortedEvents = this.sortWithPins(events, userPins);
+    const result: EcoCalendarData = { events: sortedEvents, analysis, userAssets, pinnedEvents: userPins };
     try {
       await this.redis.setex(cacheKey, 3600, JSON.stringify(result));
     } catch {
@@ -274,7 +278,10 @@ export class EcoCalendarService implements OnModuleDestroy {
       events = await this.getEventsFromDb(nextNext.toISOString().slice(0, 10));
     }
 
-    const userAssets = await this.getUserTopAssets(userId);
+    const [userAssets, userPins] = await Promise.all([
+      this.getUserTopAssets(userId),
+      this.getUserPins(userId),
+    ]);
 
     let analysis: EcoAnalysis = {
       summary: events.length === 0
@@ -292,7 +299,8 @@ export class EcoCalendarService implements OnModuleDestroy {
       }
     }
 
-    const result: EcoCalendarData = { events, analysis, userAssets };
+    const sortedEvents = this.sortWithPins(events, userPins);
+    const result: EcoCalendarData = { events: sortedEvents, analysis, userAssets, pinnedEvents: userPins };
     try {
       await this.redis.setex(cacheKey, 3600 * 6, JSON.stringify(result));
     } catch {
@@ -362,6 +370,65 @@ export class EcoCalendarService implements OnModuleDestroy {
   isWeekend(date: Date = new Date()): boolean {
     const day = date.getDay();
     return day === 0 || day === 6;
+  }
+
+  // ── getEventsRange — events sur une plage de dates (vue semaine) ──────────
+
+  async getEventsRange(
+    userId: string,
+    from: string,
+    to: string,
+  ): Promise<{ date: string; events: EcoEvent[] }[]> {
+    const dates: string[] = [];
+    const current = new Date(from);
+    const end = new Date(to);
+    while (current <= end) {
+      dates.push(current.toISOString().slice(0, 10));
+      current.setDate(current.getDate() + 1);
+    }
+
+    const results = await Promise.all(
+      dates.map(async (date) => ({
+        date,
+        events: await this.getEventsFromDb(date),
+      })),
+    );
+
+    return results.filter((r) => r.events.length > 0);
+  }
+
+  // ── Gestion des pins ─────────────────────────────────────────────────────
+
+  async getUserPins(userId: string): Promise<string[]> {
+    const profile = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { pinnedEcoEvents: true },
+    });
+    return profile?.pinnedEcoEvents ?? [];
+  }
+
+  async updateUserPins(userId: string, pins: string[]): Promise<string[]> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { pinnedEcoEvents: pins },
+    });
+    // Invalider le cache du jour pour que le dashboard voit le nouvel ordre
+    const today = new Date().toISOString().slice(0, 10);
+    try {
+      await this.redis.del(`eco:calendar:${today}:${userId}`);
+    } catch { /* Redis indisponible */ }
+    return pins;
+  }
+
+  private sortWithPins(events: EcoEvent[], pins: string[]): EcoEvent[] {
+    if (pins.length === 0) return events;
+    return [...events].sort((a, b) => {
+      const aPinned = pins.includes(`${a.name}:${a.currency}`);
+      const bPinned = pins.includes(`${b.name}:${b.currency}`);
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
+      return a.time.localeCompare(b.time);
+    });
   }
 
   async getUserTopAssets(userId: string): Promise<string[]> {
