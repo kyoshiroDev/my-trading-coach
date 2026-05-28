@@ -12,7 +12,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe, TitleCasePipe, UpperCasePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { interval } from 'rxjs';
+import { forkJoin, interval } from 'rxjs';
 import { BillingApi } from '../../core/api/billing.api';
 import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
@@ -41,7 +41,7 @@ import {
 } from '../../shared/pipes';
 import { environment } from '../../../environments/environment';
 import { SessionApi, TradingSession, LiveStats, SessionTrade, MoodState } from '../../core/api/session.api';
-import { EcoCalendarApi, EcoCalendarData } from '../../core/api/eco-calendar.api';
+import { EcoCalendarApi, EcoCalendarData, EcoEvent } from '../../core/api/eco-calendar.api';
 import { DailyRecapApi, DailyRecap } from '../../core/api/daily-recap.api';
 import { DebriefApi, DebriefObjective } from '../../core/api/debrief.api';
 import { SessionMorningComponent } from './components/session-morning/session-morning.component';
@@ -185,10 +185,8 @@ import { ChartService } from '../../core/services/chart.service';
             [yesterdayRecap]="yesterdayRecap()"
             [objectives]="currentObjectives()"
             [debriefId]="currentDebriefId()"
-            [ecoCalendar]="ecoCalendar()"
+            [ecoCalendar]="ecoCalendarDay()"
             [selectedMood]="selectedMood()"
-            [isNextDay]="ecoCalendarIsNextDay()"
-            [nextTradingDate]="nextTradingDateStr()"
             (moodSelected)="selectMood($event)"
             (sessionStarted)="startSession()"
             (objectiveNoteAdded)="updateObjectiveNote($event)"
@@ -200,7 +198,7 @@ import { ChartService } from '../../core/services/chart.service';
             [session]="activeSession()"
             [todayTrades]="todayTrades()"
             [liveStats]="todayStats()"
-            [ecoCalendar]="ecoCalendar()"
+            [ecoCalendar]="ecoCalendarDay()"
             (startSession)="startSession()"
             (tradeClosed)="confirmCloseTrade($event)"
             (sessionClosed)="closeSession($event)"
@@ -752,7 +750,23 @@ export class DashboardComponent {
   protected readonly todayStats = signal<LiveStats | null>(null);
   protected readonly todayTrades = signal<SessionTrade[]>([]);
   protected readonly yesterdayRecap = signal<DailyRecap | null>(null);
-  protected readonly ecoCalendar = signal<EcoCalendarData | null>(null);
+  // Semaine entière : date → events
+  private readonly weekEcoEvents = signal<Map<string, EcoEvent[]>>(new Map());
+  private readonly weekEcoPinnedEvents = signal<string[]>([]);
+
+  // Events du bon jour selon l'heure Paris
+  protected readonly ecoCalendarDay = computed<EcoCalendarData | null>(() => {
+    const week = this.weekEcoEvents();
+    if (week.size === 0) return null;
+    const targetDate = this.getTargetEcoDate();
+    const events = week.get(targetDate) ?? [];
+    return {
+      events,
+      analysis: { summary: '', recommendation: '', assetImpacts: [] },
+      userAssets: [],
+      pinnedEvents: this.weekEcoPinnedEvents(),
+    };
+  });
   protected readonly currentObjectives = signal<DebriefObjective[]>([]);
   protected readonly currentDebriefId = signal<string | null>(null);
   protected readonly monthlyActivity = signal<MonthlyActivitySummary | null>(null);
@@ -1098,7 +1112,7 @@ export class DashboardComponent {
         next: (res) => this.yesterdayRecap.set(res.data ?? null),
       });
 
-    this.loadEcoCalendar();
+    this.loadWeekEcoCalendar();
 
     this.debriefApi
       .getCurrent()
@@ -1111,51 +1125,66 @@ export class DashboardComponent {
       });
   }
 
-  readonly ecoCalendarIsNextDay = computed(() => {
-    const now = new Date();
-    const parisHour = parseInt(
-      now.toLocaleString('fr-FR', {
-        timeZone: 'Europe/Paris',
-        hour: '2-digit',
-        hour12: false,
-      }),
-      10,
+  private loadWeekEcoCalendar(): void {
+    const parisNow = new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'Europe/Paris' }),
     );
-    const isWeekend = now.getDay() === 0 || now.getDay() === 6;
-    return this.activeTab() !== 'live' && (parisHour >= 18 || isWeekend);
-  });
+    const dayOfWeek = parisNow.getDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-  readonly nextTradingDateStr = computed<string | null>(() => {
-    if (!this.ecoCalendarIsNextDay()) return null;
-    const d = new Date();
+    const monday = new Date(parisNow);
+    if (isWeekend) {
+      monday.setDate(parisNow.getDate() + (dayOfWeek === 0 ? 1 : 2));
+    } else {
+      monday.setDate(parisNow.getDate() - (dayOfWeek - 1));
+    }
+    monday.setHours(0, 0, 0, 0);
+    const friday = new Date(monday);
+    friday.setDate(monday.getDate() + 4);
+
+    const from = monday.toISOString().slice(0, 10);
+    const to = friday.toISOString().slice(0, 10);
+
+    forkJoin({
+      range: this.ecoCalendarApi.getEventsRange(from, to),
+      pins: this.ecoCalendarApi.getPins(),
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ range, pins }) => {
+          const weekMap = new Map<string, EcoEvent[]>();
+          for (const day of (range.data ?? [])) {
+            weekMap.set(day.date, day.events);
+          }
+          this.weekEcoEvents.set(weekMap);
+          this.weekEcoPinnedEvents.set(pins.data ?? []);
+        },
+        error: () => this.weekEcoEvents.set(new Map()),
+      });
+  }
+
+  private getTargetEcoDate(): string {
+    const parisNow = new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'Europe/Paris' }),
+    );
+    const parisHour = parisNow.getHours();
+    const dayOfWeek = parisNow.getDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+    if (this.activeTab() === 'live') {
+      return parisNow.toISOString().slice(0, 10);
+    }
+    if (!isWeekend && parisHour < 18) {
+      return parisNow.toISOString().slice(0, 10);
+    }
+    return this.getNextTradingDate(parisNow);
+  }
+
+  private getNextTradingDate(from: Date): string {
+    const d = new Date(from);
     d.setDate(d.getDate() + 1);
     while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
     return d.toISOString().slice(0, 10);
-  });
-
-  private loadEcoCalendar(): void {
-    const now = new Date();
-    const parisHour = parseInt(
-      now.toLocaleString('fr-FR', {
-        timeZone: 'Europe/Paris',
-        hour: '2-digit',
-        hour12: false,
-      }),
-      10,
-    );
-    const isWeekend = now.getDay() === 0 || now.getDay() === 6;
-    const isSessionLive = this.activeTab() === 'live';
-    const useNextDay = !isSessionLive && (parisHour >= 18 || isWeekend);
-
-    const obs = useNextDay
-      ? this.ecoCalendarApi.getNextTradingDayEvents()
-      : this.ecoCalendarApi.getTodayEvents();
-
-    obs.pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => this.ecoCalendar.set(res.data ?? null),
-        error: () => this.ecoCalendar.set({ events: [], analysis: { summary: '', recommendation: '', assetImpacts: [] }, userAssets: [] }),
-      });
   }
 
   private refreshLiveStats(): void {

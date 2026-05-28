@@ -301,7 +301,14 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
           <!-- Liste des événements filtrés -->
           <div class="eco-events">
             @if (filteredEvents().length === 0) {
-              <div class="eco-empty-filter">Aucun événement pour ce filtre.</div>
+              <div class="eco-empty-filter">
+                @if (pinnedKeys().size > 0 && !hasMatchingPins()) {
+                  Aucun de tes events épinglés n'est prévu {{ dayLabel() }}.
+                  <a routerLink="/eco-calendar" class="eco-pinned-link">Voir le calendrier →</a>
+                } @else {
+                  Aucun événement pour ce filtre.
+                }
+              </div>
             }
 
             @for (event of filteredEvents(); track event.name) {
@@ -413,11 +420,13 @@ export class SessionMorningComponent {
   protected readonly filteredEvents = computed(() => {
     const events = this.ecoCalendar()?.events ?? [];
     const pinned = this.pinnedKeys();
-    const hasPins = pinned.size > 0;
+    // Filtrer par pins seulement si au moins 1 event du jour est épinglé
+    const hasMatchingPins = pinned.size > 0 &&
+      events.some(e => pinned.has(`${e.name}:${e.currency}`));
 
     return events
       .filter(e => {
-        if (hasPins && !pinned.has(`${e.name}:${e.currency}`)) return false;
+        if (hasMatchingPins && !pinned.has(`${e.name}:${e.currency}`)) return false;
         const impactOk = this.filterImpact() === 'all' || e.impact === this.filterImpact();
         const currencyOk = this.filterCurrency() === 'all' || e.currency === this.filterCurrency();
         return impactOk && currencyOk;
@@ -429,6 +438,20 @@ export class SessionMorningComponent {
         if (!aPin && bPin) return 1;
         return a.time.localeCompare(b.time);
       });
+  });
+
+  protected readonly hasMatchingPins = computed(() => {
+    const events = this.ecoCalendar()?.events ?? [];
+    const pinned = this.pinnedKeys();
+    return pinned.size > 0 && events.some(e => pinned.has(`${e.name}:${e.currency}`));
+  });
+
+  protected readonly dayLabel = computed(() => {
+    const parisNow = new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'Europe/Paris' }),
+    );
+    const isWeekend = parisNow.getDay() === 0 || parisNow.getDay() === 6;
+    return (!isWeekend && parisNow.getHours() < 18) ? "aujourd'hui" : 'demain';
   });
 
   protected translate(name: string): string {

@@ -624,7 +624,9 @@ export class SessionLiveComponent {
   protected readonly sessionEcoEvents = computed(() => {
     const events = this.ecoCalendar()?.events ?? [];
     const pinned = this.pinnedKeys();
-    if (pinned.size === 0) return events;
+    const hasMatchingPins = pinned.size > 0 &&
+      events.some(e => pinned.has(`${e.name}:${e.currency}`));
+    if (!hasMatchingPins) return events;
     return events
       .filter(e => pinned.has(`${e.name}:${e.currency}`))
       .sort((a, b) => a.time.localeCompare(b.time));
