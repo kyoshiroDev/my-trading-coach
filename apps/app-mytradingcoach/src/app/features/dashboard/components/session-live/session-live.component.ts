@@ -368,14 +368,12 @@ const EMOTIONS = [
               <!-- Prix temps réel -->
               @if (qtSelectedAsset()) {
                 <div class="qt-live-price">
-                  @if (livePriceLoading()) {
-                    <span class="qt-live-loading">Chargement...</span>
-                  } @else if (livePrice() !== null) {
+                  @if (livePrice() !== null) {
                     <span class="qt-live-dot">●</span>
                     <span class="qt-live-value">{{ livePricePlaceholder() }}</span>
                     <span class="qt-live-label">prix actuel</span>
                   } @else {
-                    <span class="qt-live-unavailable">Prix indisponible</span>
+                    <span class="qt-live-unavailable">—</span>
                   }
                 </div>
               }

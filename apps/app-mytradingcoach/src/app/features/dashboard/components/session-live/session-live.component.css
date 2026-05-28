@@ -658,9 +658,11 @@
 .qt-live-price {
   display: flex; align-items: center; gap: 6px;
   margin-top: 5px; padding: 4px 8px;
+  height: 28px;                          /* hauteur fixe — pas de saut de taille */
   background: rgba(16,185,129,0.06);
   border: 1px solid rgba(16,185,129,0.15);
   border-radius: 6px;
+  box-sizing: border-box;
 }
 .qt-live-dot {
   font-size: 8px; color: var(--green);
@@ -675,11 +677,7 @@
   font-family: var(--font-mono); font-size: 9px;
   color: var(--text-3); text-transform: uppercase; letter-spacing: .4px;
 }
-.qt-live-loading {
-  font-family: var(--font-mono); font-size: 10px; color: var(--text-3);
-  animation: skelPulse 1.4s ease-in-out infinite;
-}
 .qt-live-unavailable {
   font-family: var(--font-mono); font-size: 10px;
-  color: var(--text-3); font-style: italic;
+  color: var(--text-3);
 }
