@@ -356,18 +356,22 @@ export class SettingsComponent implements OnInit {
 
   private searchLocalFallback(query: string): InstrumentSearchResult[] {
     const QUICK_LIST: InstrumentSearchResult[] = [
-      { symbol: 'NQ', label: 'E-mini Nasdaq (NQ)', category: 'FUTURES' },
-      { symbol: 'MNQ', label: 'Micro E-mini Nasdaq (MNQ)', category: 'FUTURES' },
-      { symbol: 'ES', label: 'E-mini S&P 500 (ES)', category: 'FUTURES' },
-      { symbol: 'MES', label: 'Micro E-mini S&P 500 (MES)', category: 'FUTURES' },
-      { symbol: 'YM', label: 'E-mini Dow Jones (YM)', category: 'FUTURES' },
-      { symbol: 'RTY', label: 'E-mini Russell 2000 (RTY)', category: 'FUTURES' },
-      { symbol: 'GC', label: 'Gold Futures (GC)', category: 'FUTURES' },
-      { symbol: 'CL', label: 'Crude Oil Futures (CL)', category: 'FUTURES' },
-      { symbol: 'BTC/USDT', label: 'Bitcoin (BTC/USDT)', category: 'CRYPTO' },
-      { symbol: 'ETH/USDT', label: 'Ethereum (ETH/USDT)', category: 'CRYPTO' },
-      { symbol: 'EUR/USD', label: 'Euro / Dollar (EUR/USD)', category: 'FOREX' },
-      { symbol: 'GBP/USD', label: 'Livre / Dollar (GBP/USD)', category: 'FOREX' },
+      { symbol: 'NQ',  label: 'E-mini Nasdaq (NQ)',              category: 'FUTURES' },
+      { symbol: 'MNQ', label: 'Micro E-mini Nasdaq (MNQ)',       category: 'FUTURES' },
+      { symbol: 'ES',  label: 'E-mini S&P 500 (ES)',             category: 'FUTURES' },
+      { symbol: 'MES', label: 'Micro E-mini S&P 500 (MES)',      category: 'FUTURES' },
+      { symbol: 'YM',  label: 'E-mini Dow Jones (YM)',           category: 'FUTURES' },
+      { symbol: 'RTY', label: 'E-mini Russell 2000 (RTY)',       category: 'FUTURES' },
+      { symbol: 'GC',  label: 'Gold Futures (GC)',               category: 'FUTURES' },
+      { symbol: 'CL',  label: 'Crude Oil Futures (CL)',          category: 'FUTURES' },
+      { symbol: 'MBT', label: 'Micro Bitcoin CME (MBT)',         category: 'FUTURES' },
+      { symbol: 'BTC', label: 'Bitcoin Futures CME (BTC)',       category: 'FUTURES' },
+      { symbol: 'MET', label: 'Micro Ether CME (MET)',           category: 'FUTURES' },
+      { symbol: 'ETH', label: 'Ether Futures CME (ETH)',         category: 'FUTURES' },
+      { symbol: 'BTC/USDT', label: 'Bitcoin Spot (BTC/USDT)',   category: 'CRYPTO' },
+      { symbol: 'ETH/USDT', label: 'Ethereum Spot (ETH/USDT)', category: 'CRYPTO' },
+      { symbol: 'EUR/USD',  label: 'Euro / Dollar (EUR/USD)',   category: 'FOREX' },
+      { symbol: 'GBP/USD',  label: 'Livre / Dollar (GBP/USD)', category: 'FOREX' },
     ];
     const q = query.toLowerCase();
     return QUICK_LIST.filter(

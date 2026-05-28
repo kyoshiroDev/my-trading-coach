@@ -32,6 +32,11 @@ export const INSTRUMENTS: Instrument[] = [
   { symbol: 'ZF',  label: '5-Year T-Note (ZF)',              category: 'FUTURES_US', tickValue: 7.8125,   tickSize: 0.0078125 },
   { symbol: 'ZN',  label: '10-Year T-Note (ZN)',             category: 'FUTURES_US', tickValue: 15.625,   tickSize: 0.015625  },
   { symbol: 'ZB',  label: '30-Year T-Bond (ZB)',             category: 'FUTURES_US', tickValue: 31.25,    tickSize: 0.03125   },
+  // ── Crypto Futures CME ───────────────────────────────────────────────────
+  { symbol: 'MBT', label: 'Micro Bitcoin CME (MBT)', category: 'FUTURES_US', tickValue: 0.5,    tickSize: 5.0  },
+  { symbol: 'BTC', label: 'Bitcoin CME (BTC)',        category: 'FUTURES_US', tickValue: 25.0,   tickSize: 5.0  },
+  { symbol: 'MET', label: 'Micro Ether CME (MET)',    category: 'FUTURES_US', tickValue: 0.005,  tickSize: 0.05 },
+  { symbol: 'ETH', label: 'Ether CME (ETH)',          category: 'FUTURES_US', tickValue: 2.5,    tickSize: 0.05 },
   // ── Forex Futures ─────────────────────────────────────────────────────────
   { symbol: '6E',  label: 'Euro FX (6E)',                    category: 'FUTURES_US', tickValue: 6.25,     tickSize: 0.00005   },
   { symbol: 'M6E', label: 'Micro Euro FX (M6E)',             category: 'FUTURES_US', tickValue: 0.625,    tickSize: 0.0001    },
