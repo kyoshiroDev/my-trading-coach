@@ -273,11 +273,17 @@
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  background: var(--bg-2);
-  border-radius: 7px;
-  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-3);
+  border: 1px solid transparent;
+  transition: border-color .15s;
 }
+.eco-event:hover { border-color: var(--border); }
 .eco-event.dim { opacity: .45; }
+.eco-event.released {
+  background: rgba(16,185,129,.04);
+  border-color: rgba(16,185,129,.1);
+}
 .eco-event-time {
   font-family: var(--font-mono);
   font-size: 10px;
@@ -316,6 +322,111 @@
 }
 .eco-tag.high { background: rgba(239,68,68,.12); color: var(--red); }
 .eco-tag.medium { background: var(--yellow-dim); color: var(--yellow); }
+
+/* ── Filtres ── */
+.eco-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.eco-filter-group {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.eco-filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-3);
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.eco-filter-btn:hover { color: var(--text-2); }
+.eco-filter-btn.active {
+  background: var(--bg-card);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+
+.eco-filter-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.eco-filter-dot.high { background: var(--red); }
+.eco-filter-dot.medium { background: var(--yellow); }
+
+.eco-filter-select {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-2);
+  cursor: pointer;
+  outline: none;
+  transition: border-color .15s;
+}
+.eco-filter-select:hover,
+.eco-filter-select:focus { border-color: var(--border-hover); }
+
+.eco-filter-count {
+  font-size: 10px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  margin-left: auto;
+}
+
+/* ── Drapeau ── */
+.eco-flag {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* ── Actual beat / miss ── */
+.eco-actual { font-weight: 700; }
+.eco-actual.beat { color: var(--green); }
+.eco-actual.miss { color: var(--red); }
+.eco-sep { color: var(--text-3); opacity: .4; margin: 0 2px; }
+
+/* ── Badge publié ── */
+.eco-released-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--green);
+  background: var(--green-dim);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+/* ── Empty state filtres ── */
+.eco-empty-filter {
+  text-align: center;
+  padding: 20px;
+  font-size: 12px;
+  color: var(--text-3);
+  font-style: italic;
+}
 
 .eco-footer {
   display: flex;

@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  computed,
   inject,
   input,
   output,
@@ -9,6 +10,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
+import { translateEcoEvent } from '../../../../core/data/eco-event-translations';
 import { DailyRecap } from '../../../../core/api/daily-recap.api';
 import { EcoCalendarData } from '../../../../core/api/eco-calendar.api';
 import { MoodState } from '../../../../core/api/session.api';
@@ -255,26 +257,85 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
             </div>
           }
 
+          <!-- Filtres style Investing.com -->
+          <div class="eco-filters">
+            <div class="eco-filter-group">
+              <button class="eco-filter-btn"
+                      [class.active]="filterImpact() === 'all'"
+                      (click)="filterImpact.set('all')">Tous</button>
+              <button class="eco-filter-btn"
+                      [class.active]="filterImpact() === 'high'"
+                      (click)="filterImpact.set('high')">
+                <span class="eco-filter-dot high"></span> Fort
+              </button>
+              <button class="eco-filter-btn"
+                      [class.active]="filterImpact() === 'medium'"
+                      (click)="filterImpact.set('medium')">
+                <span class="eco-filter-dot medium"></span> Moyen
+              </button>
+            </div>
+
+            <select class="eco-filter-select"
+                    [value]="filterCurrency()"
+                    (change)="filterCurrency.set($any($event.target).value)">
+              <option value="all">Toutes les devises</option>
+              @for (c of availableCurrencies(); track c) {
+                <option [value]="c">{{ getFlag({ currency: c }) }} {{ c }}</option>
+              }
+            </select>
+
+            <span class="eco-filter-count">
+              {{ filteredEvents().length }} événement{{ filteredEvents().length > 1 ? 's' : '' }}
+            </span>
+          </div>
+
+          <!-- Liste des événements filtrés -->
           <div class="eco-events">
-            @for (event of ecoCalendar()!.events; track event.name) {
-              <div class="eco-event" [class.dim]="isOutsideSession(event.time)">
+            @if (filteredEvents().length === 0) {
+              <div class="eco-empty-filter">Aucun événement pour ce filtre.</div>
+            }
+
+            @for (event of filteredEvents(); track event.name) {
+              <div class="eco-event"
+                   [class.dim]="isOutsideSession(event.time)"
+                   [class.released]="event.isReleased">
+
                 <span class="eco-event-time">{{ formatTime(event.time) }}</span>
                 <div class="eco-impact" [class]="event.impact"></div>
+                <span class="eco-flag">{{ getFlag(event) }}</span>
+
                 <div class="eco-event-body">
-                  <div class="eco-event-name">{{ event.name }}</div>
-                  @if (event.previous !== null || event.estimate !== null) {
+                  <div class="eco-event-name">{{ translate(event.name) }}</div>
+                  @if (event.previous !== null || event.estimate !== null || event.actual !== null) {
                     <div class="eco-event-detail">
-                      @if (event.previous !== null) { Précédent : {{ event.previous }} · }
-                      @if (event.estimate !== null) { Prévision : {{ event.estimate }} }
+                      @if (event.actual !== null) {
+                        <span class="eco-actual"
+                              [class.beat]="event.estimate !== null && event.actual > event.estimate"
+                              [class.miss]="event.estimate !== null && event.actual < event.estimate">
+                          Actuel&nbsp;: {{ event.actual }}{{ event.unit }}
+                        </span>
+                        <span class="eco-sep">·</span>
+                      }
+                      @if (event.estimate !== null) {
+                        <span>Prévu&nbsp;: {{ event.estimate }}{{ event.unit }}</span>
+                        <span class="eco-sep">·</span>
+                      }
+                      @if (event.previous !== null) {
+                        <span>Préc.&nbsp;: {{ event.previous }}{{ event.unit }}</span>
+                      }
                     </div>
                   }
                 </div>
+
                 @if (getAssetTag(event.currency)) {
                   <span class="eco-asset-tag">{{ getAssetTag(event.currency) }}</span>
                 }
                 <span class="eco-tag" [class]="event.impact">
                   {{ event.impact === 'high' ? 'Fort' : 'Moyen' }}
                 </span>
+                @if (event.isReleased) {
+                  <span class="eco-released-badge">✓</span>
+                }
               </div>
             }
           </div>
@@ -308,6 +369,46 @@ export class SessionMorningComponent {
 
   protected readonly moods = MOODS;
   protected readonly planNote = signal('');
+
+  private readonly FLAGS: Record<string, string> = {
+    US: '🇺🇸', EU: '🇪🇺', GB: '🇬🇧', JP: '🇯🇵',
+    CA: '🇨🇦', AU: '🇦🇺', NZ: '🇳🇿', CH: '🇨🇭',
+    CN: '🇨🇳', DE: '🇩🇪', FR: '🇫🇷', IT: '🇮🇹',
+    ES: '🇪🇸', SE: '🇸🇪', NO: '🇳🇴', DK: '🇩🇰',
+    USD: '🇺🇸', EUR: '🇪🇺', GBP: '🇬🇧', JPY: '🇯🇵',
+    CAD: '🇨🇦', AUD: '🇦🇺', NZD: '🇳🇿', CHF: '🇨🇭',
+    CNY: '🇨🇳', CNH: '🇨🇳', SEK: '🇸🇪', NOK: '🇳🇴',
+    DKK: '🇩🇰', HKD: '🇭🇰', SGD: '🇸🇬', MXN: '🇲🇽',
+  };
+
+  protected readonly filterImpact = signal<'all' | 'high' | 'medium'>('all');
+  protected readonly filterCurrency = signal<string>('all');
+
+  protected readonly availableCurrencies = computed(() => {
+    const events = this.ecoCalendar()?.events ?? [];
+    return [...new Set(events.map(e => e.currency))].sort();
+  });
+
+  protected readonly filteredEvents = computed(() => {
+    const events = this.ecoCalendar()?.events ?? [];
+    return events.filter(e => {
+      const impactOk = this.filterImpact() === 'all' || e.impact === this.filterImpact();
+      const currencyOk = this.filterCurrency() === 'all' || e.currency === this.filterCurrency();
+      return impactOk && currencyOk;
+    });
+  });
+
+  protected translate(name: string): string {
+    return translateEcoEvent(name);
+  }
+
+  protected getFlag(event: { country?: string | null; currency?: string | null }): string {
+    if (event.country) {
+      const flag = this.FLAGS[event.country.toUpperCase()];
+      if (flag) return flag;
+    }
+    return this.FLAGS[event.currency?.toUpperCase() ?? ''] ?? '🌐';
+  }
 
   protected readonly expandedObjectiveIdx = signal<number | null>(null);
   protected readonly objectiveNoteValues = signal<Partial<Record<number, string>>>({});

@@ -12,6 +12,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { interval } from 'rxjs';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent, EcoResultAnalysis } from '../../../../core/api/eco-calendar.api';
+import { translateEcoEvent } from '../../../../core/data/eco-event-translations';
 import { MoodState, TradingSession, LiveStats, SessionTrade } from '../../../../core/api/session.api';
 import { CreateTradeDto, TradesApi, UserAssetItem } from '../../../../core/api/trades.api';
 import { SessionRecapComponent } from '../session-recap/session-recap.component';
@@ -230,7 +231,7 @@ const EMOTIONS = [
               </div>
               @for (ev of newReleases(); track ev.name) {
                 <div class="era-event">
-                  <div class="era-event-name">{{ ev.name }} <span class="era-currency">{{ ev.currency }}</span></div>
+                  <div class="era-event-name">{{ translate(ev.name) }} <span class="era-currency">{{ ev.currency }}</span></div>
                   <div class="era-values">
                     <span class="era-actual"
                           [class.positive]="(ev.actual ?? 0) > (ev.estimate ?? 0)"
@@ -266,7 +267,8 @@ const EMOTIONS = [
                       {{ formatTime(event.time) }}
                     </span>
                     <div style="width:4px;height:22px;border-radius:2px;flex-shrink:0;" [style.background]="event.impact === 'high' ? 'var(--red)' : 'var(--yellow)'"></div>
-                    <span style="font-size:11px;font-weight:600;color:var(--text);flex:1;">{{ event.name }}</span>
+                    <span class="eco-flag-sm">{{ getFlag(event) }}</span>
+                    <span style="font-size:11px;font-weight:600;color:var(--text);flex:1;">{{ translate(event.name) }}</span>
                     <span style="font-size:9px;background:var(--blue-glow);color:var(--blue-bright);border:1px solid rgba(59,130,246,.2);padding:2px 5px;border-radius:4px;font-family:var(--font-mono);">
                       {{ event.currency }}
                     </span>
@@ -811,6 +813,28 @@ export class SessionLiveComponent {
     this.qtSl.set('');
     this.qtTp.set('');
     this.qtQty.set('1');
+  }
+
+  private readonly FLAGS: Record<string, string> = {
+    US: '🇺🇸', EU: '🇪🇺', GB: '🇬🇧', JP: '🇯🇵',
+    CA: '🇨🇦', AU: '🇦🇺', NZ: '🇳🇿', CH: '🇨🇭',
+    CN: '🇨🇳', DE: '🇩🇪', FR: '🇫🇷', IT: '🇮🇹',
+    USD: '🇺🇸', EUR: '🇪🇺', GBP: '🇬🇧', JPY: '🇯🇵',
+    CAD: '🇨🇦', AUD: '🇦🇺', NZD: '🇳🇿', CHF: '🇨🇭',
+    CNY: '🇨🇳', CNH: '🇨🇳', SEK: '🇸🇪', NOK: '🇳🇴',
+    DKK: '🇩🇰', HKD: '🇭🇰', SGD: '🇸🇬', MXN: '🇲🇽',
+  };
+
+  protected translate(name: string): string {
+    return translateEcoEvent(name);
+  }
+
+  protected getFlag(event: { country?: string | null; currency?: string | null }): string {
+    if (event.country) {
+      const flag = this.FLAGS[event.country.toUpperCase()];
+      if (flag) return flag;
+    }
+    return this.FLAGS[event.currency?.toUpperCase() ?? ''] ?? '🌐';
   }
 
   private readonly ai_badge = 'ai-badge';

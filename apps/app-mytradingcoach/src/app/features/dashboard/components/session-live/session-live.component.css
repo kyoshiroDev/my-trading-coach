@@ -651,3 +651,5 @@
 }
 .era-spin { animation: spinEra 1s linear infinite; display: inline-block; }
 @keyframes spinEra { to { transform: rotate(360deg); } }
+
+.eco-flag-sm { font-size: 14px; line-height: 1; flex-shrink: 0; }
