@@ -229,7 +229,8 @@
 
 .heatmap-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 3px;
   min-width: 600px;
 }
 
@@ -242,7 +243,7 @@
   color: var(--text-3);
   font-family: var(--font-mono);
   text-align: center;
-  padding: 2px 4px 6px;
+  padding: 0 2px 4px;
   font-weight: 400;
 }
 
@@ -250,44 +251,48 @@
   font-size: 10px;
   color: var(--text-3);
   font-family: var(--font-mono);
-  padding: 4px 8px 4px 0;
+  padding: 3px 8px 3px 0;
   white-space: nowrap;
   vertical-align: middle;
 }
 
 .heatmap-cell {
-  border-radius: 4px;
-  padding: 6px 4px;
+  border-radius: 6px;
+  padding: 5px 2px;
   text-align: center;
   font-size: 10px;
   font-family: var(--font-mono);
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
   vertical-align: middle;
-  line-height: 1.2;
-  min-width: 32px;
+  line-height: 1;
+  min-width: 36px;
+  cursor: default;
+  transition: opacity .15s;
 }
+.heatmap-cell:hover { opacity: .8; }
 
 .cell-green {
-  background: #1e3a2f;
+  background: rgba(16,185,129,0.18);
   color: #10b981;
+  border: 1px solid rgba(16,185,129,0.25);
 }
 .cell-orange {
-  background: #3a2a0a;
+  background: rgba(245,158,11,0.15);
   color: #f59e0b;
+  border: 1px solid rgba(245,158,11,0.2);
 }
 .cell-red {
-  background: #3a0f0f;
+  background: rgba(239,68,68,0.15);
   color: #ef4444;
+  border: 1px solid rgba(239,68,68,0.2);
 }
 .cell-empty {
   background: rgba(99,155,255,0.04);
-  color: var(--text-3);
-  border-radius: 4px;
-  padding: 6px 4px;
-  min-width: 32px;
+  border: 1px solid rgba(99,155,255,0.06);
+  border-radius: 6px;
+  min-width: 36px;
   vertical-align: middle;
-  line-height: 1.2;
 }
 
 /* ── Perf table ── */

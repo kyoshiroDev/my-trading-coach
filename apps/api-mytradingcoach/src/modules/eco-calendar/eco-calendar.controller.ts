@@ -58,8 +58,9 @@ export class EcoCalendarController {
   }
 
   @Get('pins')
-  getPins(@CurrentUser() user: { id: string }) {
-    return this.service.getUserPins(user.id);
+  async getPins(@CurrentUser() user: { id: string }) {
+    const pins = await this.service.getUserPins(user.id);
+    return { data: pins };
   }
 
   @Patch('pins')
@@ -67,7 +68,8 @@ export class EcoCalendarController {
     @CurrentUser() user: { id: string },
     @Body('pins') pins: string[],
   ) {
-    return this.service.updateUserPins(user.id, pins ?? []);
+    const updated = await this.service.updateUserPins(user.id, pins ?? []);
+    return { data: updated };
   }
 
   // Admin — forcer un fetch sans attendre 6h00
