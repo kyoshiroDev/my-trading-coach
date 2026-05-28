@@ -392,30 +392,6 @@
         <div class="settings-section-label">Mes actifs</div>
         <div class="strat-card">
 
-          @if (tradingAssets().length > 0) {
-            <div class="assets-list">
-              @for (asset of tradingAssets(); track asset.symbol) {
-                <div class="asset-row">
-                  <button
-                    class="asset-fav"
-                    [class.active]="asset.isFavorite"
-                    [title]="asset.isFavorite ? 'Favori — pré-sélectionné en saisie rapide' : 'Définir comme favori'"
-                    (click)="setFavoriteAssetSetting(asset.symbol)"
-                  >★</button>
-                  <div class="asset-chip" [class.is-fav]="asset.isFavorite">
-                    <span class="asset-cat">{{ asset.category }}</span>
-                    <span class="asset-sym">{{ asset.symbol }}</span>
-                    <span class="asset-lbl">{{ asset.label }}</span>
-                  </div>
-                  <button class="asset-del" (click)="removeAsset(asset.symbol)" title="Supprimer">×</button>
-                </div>
-              }
-            </div>
-            <p class="assets-hint">★ L'actif favori sera pré-sélectionné dans la saisie rapide de session</p>
-          } @else {
-            <p class="assets-empty">Aucun actif configuré. Recherche ci-dessous pour en ajouter.</p>
-          }
-
           <div class="asset-search-wrap">
             <input
               class="asset-search-input"
@@ -441,6 +417,28 @@
                 </button>
               }
             </div>
+          }
+
+          @if (tradingAssets().length > 0) {
+            <div class="assets-list">
+              @for (asset of tradingAssets(); track asset.symbol) {
+                <div class="asset-row">
+                  <button
+                    class="asset-fav"
+                    [class.active]="asset.isFavorite"
+                    [title]="asset.isFavorite ? 'Favori — pré-sélectionné en saisie rapide' : 'Définir comme favori'"
+                    (click)="setFavoriteAssetSetting(asset.symbol)"
+                  >★</button>
+                  <div class="asset-chip" [class.is-fav]="asset.isFavorite">
+                    <span class="asset-cat">{{ asset.category }}</span>
+                    <span class="asset-sym">{{ asset.symbol }}</span>
+                    <span class="asset-lbl">{{ asset.label }}</span>
+                  </div>
+                  <button class="asset-del" (click)="removeAsset(asset.symbol)" title="Supprimer">×</button>
+                </div>
+              }
+            </div>
+            <p class="assets-hint">★ L'actif favori sera pré-sélectionné dans la saisie rapide de session</p>
           }
 
           @if (tradingAssets().length > 0) {
