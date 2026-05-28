@@ -104,7 +104,14 @@ export class EcoCalendarService implements OnModuleDestroy {
       const upserted: EcoEvent[] = [];
 
       for (const e of filtered) {
-        const isReleased = e.actual !== null;
+        const eventTimeUTC = e.date
+          ? new Date(e.date.replace(' ', 'T') + 'Z')
+          : null;
+        const now = new Date();
+        const isReleased =
+          e.actual !== null &&
+          eventTimeUTC !== null &&
+          eventTimeUTC <= now;
         const mapped = {
           date,
           time: this.toParisTime(e.date ?? `${date} 00:00:00`),
@@ -155,18 +162,30 @@ export class EcoCalendarService implements OnModuleDestroy {
       orderBy: { time: 'asc' },
     });
 
-    return rows.map((r) => ({
-      time: r.time,
-      name: r.name,
-      impact: r.impact as 'high' | 'medium',
-      country: r.country,
-      currency: r.currency,
-      actual: r.actual ?? null,
-      estimate: r.estimate ?? null,
-      previous: r.previous ?? null,
-      isReleased: r.isReleased,
-      unit: r.unit,
-    }));
+    const now = new Date();
+    // "Paris now" exprimé comme date locale (trick pour comparaison cohérente)
+    const parisNow = new Date(
+      now.toLocaleString('en-US', { timeZone: 'Europe/Paris' }),
+    );
+
+    return rows.map((r) => {
+      // r.time est stocké en heure Paris (HH:MM) — reconstruire pour comparaison
+      const eventDateTime = new Date(`${r.date}T${r.time}:00`);
+      const dynamicIsReleased = r.actual !== null && eventDateTime <= parisNow;
+
+      return {
+        time: r.time,
+        name: r.name,
+        impact: r.impact as 'high' | 'medium',
+        country: r.country,
+        currency: r.currency,
+        actual: r.actual ?? null,
+        estimate: r.estimate ?? null,
+        previous: r.previous ?? null,
+        isReleased: dynamicIsReleased,
+        unit: r.unit,
+      };
+    });
   }
 
   // ── Détection nouveaux actual (pour polling temps réel) ───────────────────
