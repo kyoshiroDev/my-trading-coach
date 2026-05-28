@@ -764,7 +764,8 @@ export class SessionLiveComponent {
     this.tradesApi.getUserAssets()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (assets) => {
+        next: (res) => {
+          const assets = res.data ?? [];
           this.userAssets.set(assets);
           const preselect = assets.find((a) => a.isFavorite) ?? assets[0] ?? null;
           if (preselect) this.applyAssetSelection(preselect);

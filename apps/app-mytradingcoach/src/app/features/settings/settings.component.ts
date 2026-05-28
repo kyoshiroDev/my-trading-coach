@@ -144,7 +144,7 @@ export class SettingsComponent implements OnInit {
     }
 
     this.tradesApi.getUserAssets().subscribe({
-      next: (items) => this.tradingAssets.set(items ?? []),
+      next: (res) => this.tradingAssets.set(res.data ?? []),
     });
   }
 

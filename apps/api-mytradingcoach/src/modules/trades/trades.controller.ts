@@ -138,9 +138,9 @@ export class TradesController {
   @Get('instruments/search')
   async searchInstruments(
     @Query('q') q: string,
-  ): Promise<{ data: Array<{ symbol: string; label: string; category: string; exchange: string }> }> {
+  ) {
     const query = (q ?? '').trim();
-    if (!query) return { data: [] };
+    if (!query) return [];
 
     const apiKey = process.env['FMP_API_KEY'];
 
@@ -170,17 +170,14 @@ export class TradesController {
             return 'AUTRES';
           };
 
-          return {
-            data: data
-              .filter((r) => r.symbol && r.name)
-              .map((r) => ({
-                symbol: r.symbol,
-                label: `${r.name} (${r.symbol})`,
-                category: getCategory(r.exchangeShortName ?? ''),
-                exchange: r.exchangeShortName ?? '',
-              }))
-              .slice(0, 10),
-          };
+          return data
+            .filter((r) => r.symbol && r.name)
+            .map((r) => ({
+              symbol: r.symbol,
+              label: `${r.name} (${r.symbol})`,
+              category: getCategory(r.exchangeShortName ?? ''),
+            }))
+            .slice(0, 10);
         }
       } catch {
         this.logger.warn('FMP search failed — fallback liste statique');
@@ -195,7 +192,7 @@ export class TradesController {
         i.label.toLowerCase().includes(lq),
     ).slice(0, 10);
 
-    let cryptoMatches: Array<{ symbol: string; label: string; category: string; exchange: string }> = [];
+    let cryptoMatches: Array<{ symbol: string; label: string; category: string }> = [];
     if (staticMatches.length < 5) {
       try {
         cryptoMatches = (await this.coinGeckoService.getCryptoInstruments())
@@ -205,19 +202,17 @@ export class TradesController {
               i.label.toLowerCase().includes(lq),
           )
           .slice(0, 5)
-          .map((i) => ({ symbol: i.symbol, label: i.label, category: i.category, exchange: '' }));
+          .map((i) => ({ symbol: i.symbol, label: i.label, category: i.category }));
       } catch {
         // CoinGecko indisponible
       }
     }
 
     const seen = new Set(staticMatches.map((i) => i.symbol));
-    return {
-      data: [
-        ...staticMatches.map((i) => ({ symbol: i.symbol, label: i.label, category: i.category, exchange: '' })),
-        ...cryptoMatches.filter((i) => !seen.has(i.symbol)),
-      ].slice(0, 10),
-    };
+    return [
+      ...staticMatches.map((i) => ({ symbol: i.symbol, label: i.label, category: i.category })),
+      ...cryptoMatches.filter((i) => !seen.has(i.symbol)),
+    ].slice(0, 10);
   }
 
   @Get(':id')

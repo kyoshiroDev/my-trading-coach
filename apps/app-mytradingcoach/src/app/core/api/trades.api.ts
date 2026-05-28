@@ -136,8 +136,8 @@ export class TradesApi {
     return this.http.get<{ data: InstrumentDto[] }>(`${this.base}/instruments`);
   }
 
-  getUserAssets(): Observable<UserAssetItem[]> {
-    return this.http.get<UserAssetItem[]>(`${this.base}/user-assets`);
+  getUserAssets(): Observable<{ data: UserAssetItem[] }> {
+    return this.http.get<{ data: UserAssetItem[] }>(`${this.base}/user-assets`);
   }
 
   saveUserAssets(assets: string[], favoriteAsset?: string | null): Observable<{ saved: boolean }> {
