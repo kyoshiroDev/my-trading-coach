@@ -604,11 +604,13 @@ export class SessionLiveComponent {
       const s = this.session();
       if (s?.startedAt && s.status === 'ACTIVE') {
         this.startTime.set(new Date(s.startedAt));
-        this.loadUserAssets();
       } else {
         this.startTime.set(null);
       }
     });
+
+    // Assets chargés immédiatement — indépendamment de la session
+    this.loadUserAssets();
 
     // WebSocket éco — connecter quand session active + Premium
     effect(() => {

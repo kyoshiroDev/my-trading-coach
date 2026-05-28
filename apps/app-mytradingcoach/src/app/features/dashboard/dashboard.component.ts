@@ -4,7 +4,6 @@ import {
   DestroyRef,
   ElementRef,
   ViewChild,
-  afterRenderEffect,
   computed,
   effect,
   inject,
@@ -885,13 +884,19 @@ export class DashboardComponent {
       this.knownTradesCount.set(count);
     });
 
-    afterRenderEffect(() => {
-      const canvas = this.canvasRef?.nativeElement;
+    // Reconstruction du chart equity à chaque changement de tab ou de données
+    effect(() => {
+      const tab = this.activeTab();
       const points = this.equityCurve();
       const capital = this.initialCapitalFromCurve();
-      if (canvas && points.length >= 2) {
-        this.chartService.buildEquityChart(canvas, points, capital);
-      }
+      if (tab !== 'dashboard') return;
+      // setTimeout minimal pour que Angular rende le canvas avant de l'accéder
+      setTimeout(() => {
+        const canvas = this.canvasRef?.nativeElement;
+        if (canvas && points.length >= 2) {
+          this.chartService.buildEquityChart(canvas, points, capital);
+        }
+      }, 50);
     });
 
     // ── V2 : charge les données bêta au démarrage ─────────────────────────

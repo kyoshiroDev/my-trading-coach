@@ -60,9 +60,12 @@ export class ChartService {
           {
             data: values,
             borderColor: color,
-            borderWidth: 2.5,
-            pointRadius: 0,
-            pointHoverRadius: 4,
+            borderWidth: 2,
+            pointRadius: values.length <= 15 ? 3 : 0,
+            pointHoverRadius: 5,
+            pointBackgroundColor: color,
+            pointBorderColor: 'rgba(8,12,20,0.8)',
+            pointBorderWidth: 1.5,
             fill: true,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             backgroundColor: (ctx: any) => {
@@ -72,7 +75,18 @@ export class ChartService {
               gradient.addColorStop(1, `rgba(${colorRgb},0)`);
               return gradient;
             },
-            tension: 0.4,
+            tension: 0.1,
+          },
+          // Ligne de référence — capital de départ
+          {
+            data: values.map(() => base),
+            borderColor: 'rgba(99,155,255,0.2)',
+            borderWidth: 1,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            borderDash: [4, 6] as any,
+            pointRadius: 0,
+            fill: false,
+            tension: 0,
           },
         ],
       },
@@ -93,10 +107,13 @@ export class ChartService {
             titleFont: { family: '"DM Mono", monospace', size: 10 },
             callbacks: {
               label: (ctx) => {
+                if (ctx.datasetIndex === 1) return '';
                 const v: number = ctx.parsed.y ?? 0;
-                return Math.abs(v) >= 1000
-                  ? `$${(v / 1000).toFixed(2)}k`
-                  : `$${v.toFixed(0)}`;
+                const pnl = v - base;
+                const fmt = (n: number) =>
+                  Math.abs(n) >= 1000 ? `$${(n / 1000).toFixed(2)}k` : `$${n.toFixed(0)}`;
+                const pnlStr = pnl >= 0 ? `+${fmt(pnl)}` : `-${fmt(Math.abs(pnl))}`;
+                return `Capital: ${fmt(v)}  (${pnlStr})`;
               },
             },
           },

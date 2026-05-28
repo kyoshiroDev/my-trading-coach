@@ -257,12 +257,17 @@
 
 .heatmap-cell {
   border-radius: 4px;
-  padding: 3px 2px;
+  padding: 0;
   text-align: center;
   font-size: 10px;
   font-family: var(--font-mono);
   font-weight: 600;
   white-space: nowrap;
+  height: 28px;
+  min-width: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cell-green {
@@ -278,8 +283,14 @@
   color: #ef4444;
 }
 .cell-empty {
-  background: var(--bg-2);
+  background: rgba(99,155,255,0.04);
   color: var(--text-3);
+  height: 28px;
+  min-width: 28px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ── Perf table ── */
