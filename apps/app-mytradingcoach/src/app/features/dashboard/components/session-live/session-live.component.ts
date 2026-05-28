@@ -588,9 +588,14 @@ export class SessionLiveComponent {
   // Eco results cache
   private readonly ecoResults = signal<Record<string, EcoResultAnalysis>>({});
 
-  protected readonly pinnedKeys = computed(() =>
-    new Set(this.ecoCalendar()?.pinnedEvents ?? []),
-  );
+  // Pins chargés directement depuis l'API — indépendant du cache getTodayEvents
+  private readonly freshPins = signal<string[] | null>(null);
+
+  protected readonly pinnedKeys = computed(() => {
+    const fresh = this.freshPins();
+    if (fresh !== null) return new Set(fresh);
+    return new Set(this.ecoCalendar()?.pinnedEvents ?? []);
+  });
 
   protected readonly sessionEcoEvents = computed(() => {
     const events = this.ecoCalendar()?.events ?? [];
@@ -624,6 +629,11 @@ export class SessionLiveComponent {
 
     // Assets chargés immédiatement — indépendamment de la session
     this.loadUserAssets();
+
+    // Pins chargés directement — pas de dépendance au cache getTodayEvents
+    this.ecoCalendarApi.getPins()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(res => this.freshPins.set(res.data ?? []));
 
     // WebSocket éco — connecter quand session active + Premium
     effect(() => {

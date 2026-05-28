@@ -13,7 +13,7 @@ import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { translateEcoEvent } from '../../../../core/data/eco-event-translations';
 import { DailyRecap } from '../../../../core/api/daily-recap.api';
-import { EcoCalendarData } from '../../../../core/api/eco-calendar.api';
+import { EcoCalendarApi, EcoCalendarData } from '../../../../core/api/eco-calendar.api';
 import { MoodState } from '../../../../core/api/session.api';
 import { DebriefApi, DebriefObjective } from '../../../../core/api/debrief.api';
 import { UserStore } from '../../../../core/stores/user.store';
@@ -374,10 +374,14 @@ export class SessionMorningComponent {
 
   private readonly debriefApi = inject(DebriefApi);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly ecoApi = inject(EcoCalendarApi);
   protected readonly userStore = inject(UserStore);
 
   protected readonly moods = MOODS;
   protected readonly planNote = signal('');
+
+  // Pins chargés directement depuis l'API — indépendant du cache getTodayEvents
+  private readonly freshPins = signal<string[] | null>(null);
 
   private readonly FLAGS: Record<string, string> = {
     US: '🇺🇸', EU: '🇪🇺', GB: '🇬🇧', JP: '🇯🇵',
@@ -398,9 +402,13 @@ export class SessionMorningComponent {
     return [...new Set(events.map(e => e.currency))].sort();
   });
 
-  protected readonly pinnedKeys = computed(() =>
-    new Set(this.ecoCalendar()?.pinnedEvents ?? []),
-  );
+  protected readonly pinnedKeys = computed(() => {
+    const fresh = this.freshPins();
+    // Si chargé depuis l'API → priorité (données fraîches)
+    if (fresh !== null) return new Set(fresh);
+    // Fallback : champ pinnedEvents du payload getTodayEvents (cache backend)
+    return new Set(this.ecoCalendar()?.pinnedEvents ?? []);
+  });
 
   protected readonly filteredEvents = computed(() => {
     const events = this.ecoCalendar()?.events ?? [];
@@ -438,6 +446,12 @@ export class SessionMorningComponent {
   protected readonly expandedObjectiveIdx = signal<number | null>(null);
   protected readonly objectiveNoteValues = signal<Partial<Record<number, string>>>({});
   protected readonly isSavingNote = signal(false);
+
+  constructor() {
+    this.ecoApi.getPins()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(res => this.freshPins.set(res.data ?? []));
+  }
 
   protected toggleObjectiveNote(idx: number): void {
     this.expandedObjectiveIdx.update(current => current === idx ? null : idx);
