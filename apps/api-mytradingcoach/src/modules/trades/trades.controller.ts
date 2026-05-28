@@ -65,44 +65,73 @@ export class TradesController {
   ): Promise<{ price: number | null; symbol: string; cached: boolean }> {
     if (!symbol?.trim()) return { price: null, symbol: '', cached: false };
 
-    const fmpSymbol = this.mapSymbolToFmp(symbol.trim().toUpperCase());
-    const cacheKey = `price:${fmpSymbol}`;
+    const sym = symbol.trim().toUpperCase();
+    const cacheKey = `price:${sym}`;
 
     try {
       const cached = await this.redis.get(cacheKey);
       if (cached) return { price: parseFloat(cached), symbol, cached: true };
     } catch { /* Redis indisponible */ }
 
-    const apiKey = process.env['FMP_API_KEY'];
-    if (!apiKey) return { price: null, symbol, cached: false };
+    let price: number | null = null;
 
-    try {
-      const url =
-        `https://financialmodelingprep.com/stable/quote` +
-        `?symbol=${encodeURIComponent(fmpSymbol)}&apikey=${apiKey}`;
-
-      const response = await fetch(url);
-      if (!response.ok) return { price: null, symbol, cached: false };
-
-      const data = (await response.json()) as Array<{ symbol: string; price: number }>;
-      const quote = data[0];
-      if (!quote?.price) return { price: null, symbol, cached: false };
-
-      try { await this.redis.setex(cacheKey, 15, String(quote.price)); } catch { /* ignore */ }
-
-      return { price: quote.price, symbol, cached: false };
-    } catch (err) {
-      this.logger.error(`FMP live-price error pour ${fmpSymbol}`, err);
-      return { price: null, symbol, cached: false };
+    // Futures CME → Yahoo Finance (FMP Starter ne couvre pas les futures)
+    if (INSTRUMENTS.some(i => i.symbol.toUpperCase() === sym && i.category === 'FUTURES_US')) {
+      price = await this.fetchYahooPrice(`${sym}=F`);
     }
+    // Crypto /USDT → Binance (gratuit, sans clé)
+    else if (sym.includes('USDT')) {
+      const binanceSymbol = sym.replace('/', '');
+      price = await this.fetchBinancePrice(binanceSymbol);
+    }
+    // Forex / Actions → FMP
+    else {
+      price = await this.fetchFmpPrice(this.mapSymbolToFmp(sym));
+    }
+
+    if (price !== null) {
+      try { await this.redis.setex(cacheKey, 15, String(price)); } catch { /* ignore */ }
+    }
+
+    return { price, symbol, cached: false };
+  }
+
+  private async fetchYahooPrice(yahooSymbol: string): Promise<number | null> {
+    try {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?interval=1m&range=1d`;
+      const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+      if (!response.ok) return null;
+      const data = await response.json() as {
+        chart: { result?: Array<{ meta: { regularMarketPrice: number } }> };
+      };
+      return data?.chart?.result?.[0]?.meta?.regularMarketPrice ?? null;
+    } catch { return null; }
+  }
+
+  private async fetchBinancePrice(symbol: string): Promise<number | null> {
+    try {
+      const url = `https://api.binance.com/api/v3/ticker/price?symbol=${encodeURIComponent(symbol)}`;
+      const response = await fetch(url);
+      if (!response.ok) return null;
+      const data = await response.json() as { price: string };
+      return data?.price ? parseFloat(data.price) : null;
+    } catch { return null; }
+  }
+
+  private async fetchFmpPrice(symbol: string): Promise<number | null> {
+    const apiKey = process.env['FMP_API_KEY'];
+    if (!apiKey) return null;
+    try {
+      const url = `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(symbol)}&apikey=${apiKey}`;
+      const response = await fetch(url);
+      if (!response.ok) return null;
+      const data = await response.json() as Array<{ price: number }>;
+      return data?.[0]?.price ?? null;
+    } catch { return null; }
   }
 
   private mapSymbolToFmp(symbol: string): string {
     const map: Record<string, string> = {
-      'BTC/USDT': 'BTCUSDT', 'ETH/USDT': 'ETHUSDT', 'SOL/USDT': 'SOLUSDT',
-      'BNB/USDT': 'BNBUSDT', 'XRP/USDT': 'XRPUSDT', 'ADA/USDT': 'ADAUSDT',
-      'DOGE/USDT': 'DOGEUSDT', 'AVAX/USDT': 'AVAXUSDT',
-      'LINK/USDT': 'LINKUSDT', 'DOT/USDT': 'DOTUSDT',
       'EUR/USD': 'EURUSD', 'GBP/USD': 'GBPUSD', 'USD/JPY': 'USDJPY',
       'AUD/USD': 'AUDUSD', 'USD/CHF': 'USDCHF', 'NZD/USD': 'NZDUSD',
       'USD/CAD': 'USDCAD', 'EUR/GBP': 'EURGBP', 'EUR/JPY': 'EURJPY',
