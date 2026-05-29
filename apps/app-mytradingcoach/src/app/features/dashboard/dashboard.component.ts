@@ -89,7 +89,7 @@ import { ChartService } from '../../core/services/chart.service';
           <div class="session-tabs">
             <button class="session-tab" [class.active]="activeTab() === 'dashboard'" data-testid="tab-dashboard" (click)="selectTab('dashboard')">① Dashboard actuel</button>
             <button class="session-tab" [class.active]="activeTab() === 'morning'" data-testid="tab-morning" (click)="selectTab('morning')">
-              ② Matin — pré-session
+              ② Pré-session
             </button>
             <button class="session-tab" [class.active]="activeTab() === 'live'" data-testid="tab-live" (click)="selectTab('live')">
               ③ Session live
