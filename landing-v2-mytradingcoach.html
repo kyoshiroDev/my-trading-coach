@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MyTradingCoach — Le journal de trading IA qui supervise avant, pendant et après ta session</title>
-<meta name="description" content="Journal de trading intelligent avec superviseur IA — il te prépare avant ta session, t'accompagne en temps réel et débrieffe ta journée. Crypto, Futures, Forex. Gratuit sans CB.">
+<title>MyTradingCoach — Le journal de trading IA — ton compagnon avant, pendant et après ta session</title>
+<meta name="description" content="Journal de trading intelligent avec compagnon IA — il te prépare avant ta session, t'accompagne en temps réel et débrieffe ta journée. Crypto, Futures, Forex. Gratuit sans CB.">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -96,10 +96,10 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;height:60px;display:flex;ali
 .hero-cta-sub{font-size:12px;color:var(--txt3);font-family:var(--mono);margin:0;text-align:center;}
 
 /* ── 3 MOMENTS (section centrale) ── */
-.moments-section{padding:80px 5%;background:var(--bg2);border-top:1px solid var(--b);border-bottom:1px solid var(--b);}
+.moments-section{padding:96px 5%;background:var(--bg2);border-top:1px solid var(--b);border-bottom:1px solid var(--b);}
 .moments-header{text-align:center;max-width:640px;margin:0 auto 64px;}
-.moments-timeline{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;max-width:1100px;margin:0 auto;position:relative;}
-.moments-timeline::before{content:'';position:absolute;top:48px;left:16.7%;right:16.7%;height:1px;background:linear-gradient(90deg,rgba(16,185,129,.4),rgba(59,130,246,.4),rgba(139,92,246,.4));z-index:0;}
+.moments-timeline{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:1100px;margin:0 auto;position:relative;}
+.moments-timeline::before{display:none;}
 .moment-card{background:var(--card);border:1px solid var(--b);border-radius:16px;padding:32px 28px;position:relative;transition:border-color .2s,transform .2s;cursor:default;}
 .moment-card:hover{border-color:var(--b2);transform:translateY(-4px);}
 .moment-card.avant{border-top:2px solid rgba(16,185,129,.5);}
@@ -202,7 +202,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;height:60px;display:flex;ali
 }
 .price-card.feat::before{content:'';position:absolute;inset:0;border-radius:16px;background:linear-gradient(160deg,rgba(59,130,246,.08),transparent 60%);pointer-events:none;}
 .price-pop{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,var(--blue),#6366f1);color:white;font-size:11px;font-family:var(--mono);font-weight:700;padding:5px 18px;border-radius:100px;letter-spacing:.6px;white-space:nowrap;box-shadow:0 4px 14px rgba(59,130,246,.4);}
-.price-urgency{font-size:11px;font-family:var(--mono);color:var(--yel);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:6px;padding:8px 12px;margin-bottom:24px;text-align:center;}
+
 .price-header{text-align:center;margin-bottom:24px;}
 .price-name{font-family:var(--mono);font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--txt3);margin-bottom:12px;text-align:center;}
 .price-card.feat .price-name{color:var(--blue2);}
@@ -387,6 +387,8 @@ footer{background:var(--bg2);border-top:1px solid var(--b);padding:40px 5%;displ
   .comp-table th,.comp-table td{padding:9px 10px;font-size:11px;}
 }
 
+.cta-main{display:block;font-size:15px;font-weight:600;}
+.cta-sub-text{display:block;font-size:11px;font-weight:400;opacity:.85;margin-top:3px;font-family:var(--mono);letter-spacing:.3px;}
 </style>
 </head>
 <body>
@@ -421,7 +423,7 @@ footer{background:var(--bg2);border-top:1px solid var(--b);padding:40px 5%;displ
 
   <div class="hero-badge">
     <div class="bdot"></div>
-    Le premier superviseur de trading IA — multi-marché
+    Le premier compagnon de trading IA — multi-marché
   </div>
 
   <div class="hero-proof">
@@ -431,14 +433,14 @@ footer{background:var(--bg2);border-top:1px solid var(--b);padding:40px 5%;displ
 
   <h1>
     Tu trades seul.<br/>
-    <em>Ton superviseur,</em><br/>
+    <em>Ton compagnon,</em><br/>
     <span class="gline">lui, ne dort pas.</span>
   </h1>
 
   <p class="hero-sub">
     Avant ta session, il te prépare. Pendant, il surveille.
     Après, il débrieffe. Le seul <strong>journal de trading IA</strong>
-    qui fonctionne comme un <strong>superviseur qui connaît ton profil</strong> —
+    qui fonctionne comme un <strong>compagnon qui connaît ton profil</strong> —
     tes actifs, ta stratégie, tes patterns. Crypto, Futures, Forex.
   </p>
 
@@ -463,8 +465,8 @@ footer{background:var(--bg2);border-top:1px solid var(--b);padding:40px 5%;displ
   <div style="max-width:1100px;margin:0 auto">
     <div class="moments-header reveal">
       <span class="sec-label">Comment ça marche</span>
-      <h2>Ton superviseur à chaque <em>moment</em> de ta journée</h2>
-      <p class="sec-sub">Les autres journaux de trading, tu les ouvres après avoir perdu. MTC est là à chaque instant — avant, pendant et après chaque session.</p>
+      <h2>Ton compagnon à chaque <em>moment</em> de ta journée</h2>
+      <p class="sec-sub">Les autres journaux de trading, tu les ouvres après avoir perdu. Ton compagnon MTC est là à chaque instant — avant, pendant et après chaque session.</p>
     </div>
 
     <div class="moments-timeline rstag">
@@ -473,7 +475,7 @@ footer{background:var(--bg2);border-top:1px solid var(--b);padding:40px 5%;displ
         <div class="moment-icon">☀️</div>
         <div class="moment-time">Avant ta session</div>
         <h3>Il te prépare</h3>
-        <p>Avant d'ouvrir TradingView, ton superviseur t'informe. Il a analysé la veille et sait ce qui t'attend aujourd'hui.</p>
+        <p>Avant d'ouvrir TradingView, ton compagnon t'informe. Il a analysé la veille et sait ce qui t'attend aujourd'hui.</p>
         <div class="moment-features">
           <div class="mf"><div class="mf-dot"></div><span>Recap de ta session d'hier — P&L, win rate, émotion dominante, phrase coaching IA</span></div>
           <div class="mf"><div class="mf-dot"></div><span>Tes objectifs de la semaine rappelés avant que tu trades</span></div>
@@ -487,7 +489,7 @@ footer{background:var(--bg2);border-top:1px solid var(--b);padding:40px 5%;displ
         <div class="moment-icon">⚡</div>
         <div class="moment-time">Pendant ta session</div>
         <h3>Il surveille</h3>
-        <p>MTC reste ouvert à côté de TradingView. Il capture tes trades en temps réel et t'alerte quand quelque chose mérite ton attention.</p>
+        <p>Ton compagnon reste ouvert à côté de TradingView. Il capture tes trades en temps réel et t'alerte quand quelque chose mérite ton attention.</p>
         <div class="moment-features">
           <div class="mf"><div class="mf-dot"></div><span>Logger un trade en 3 secondes — asset, direction, émotion. Le reste se complète après</span></div>
           <div class="mf"><div class="mf-dot"></div><span>Live feed de ta session avec entry, exit, SL/TP détectés automatiquement</span></div>
@@ -506,6 +508,8 @@ footer{background:var(--bg2);border-top:1px solid var(--b);padding:40px 5%;displ
           <div class="mf"><div class="mf-dot"></div><span>Email automatique à la clôture — P&L, win rate, émotion dominante + phrase coaching IA</span></div>
           <div class="mf"><div class="mf-dot"></div><span>Patterns comportementaux détectés sur le long terme — revenge trading, overtrading, créneaux</span></div>
           <div class="mf"><div class="mf-dot"></div><span>Weekly Debrief IA le dimanche — analyse complète + 3 objectifs concrets pour la semaine suivante</span></div>
+          <div class="mf"><div class="mf-dot"></div><span>Journal de sessions — chaque session archivée avec notes, réflexions et phrase coaching IA</span></div>
+          <div class="mf"><div class="mf-dot"></div><span>Mémoire longitudinale — ton compagnon analyse tes 30 derniers jours pour le Weekly Debrief</span></div>
           <div class="mf"><div class="mf-dot"></div><span>Score trader sur 100 — discipline, gestion du risque, consistance émotionnelle</span></div>
         </div>
       </div>
@@ -519,28 +523,28 @@ footer{background:var(--bg2);border-top:1px solid var(--b);padding:40px 5%;displ
     <div class="reveal" style="text-align:center;max-width:640px;margin:0 auto">
       <span class="sec-label">Le vrai problème</span>
       <h2>Pourquoi tu répètes les mêmes <em>erreurs</em></h2>
-      <p class="sec-sub">Sans superviseur, tu opères à l'aveugle. Les données existent, mais personne ne les lit pour toi — et pas au bon moment.</p>
+      <p class="sec-sub">Sans compagnon de trading, tu opères à l'aveugle. Les données existent, mais personne ne les lit pour toi — et pas au bon moment.</p>
     </div>
     <div class="prob-grid rstag">
       <div class="prob-item">
         <div class="prob-icon" style="background:rgba(239,68,68,.09)">😤</div>
         <h3>Le revenge trading</h3>
-        <p>Après une perte, tu reviens trop vite avec une position trop grande. Ton superviseur le détecte et te le dit pendant que ça se passe — pas après.</p>
+        <p>Après une perte, tu reviens trop vite avec une position trop grande. Ton compagnon le détecte et te le dit pendant que ça se passe — pas après.</p>
       </div>
       <div class="prob-item">
         <div class="prob-icon" style="background:rgba(245,158,11,.09)">📅</div>
         <h3>Les news que tu ignores</h3>
-        <p>Le NFP tombe dans 20 minutes sur ton actif et tu n'es pas prêt. Ton superviseur filtre les events économiques pour tes marchés et t'informe chaque matin.</p>
+        <p>Le NFP tombe dans 20 minutes sur ton actif et tu n'es pas prêt. Ton compagnon filtre les events économiques pour tes marchés et t'informe chaque matin.</p>
       </div>
       <div class="prob-item">
         <div class="prob-icon" style="background:rgba(59,130,246,.09)">🔁</div>
         <h3>Les patterns invisibles</h3>
-        <p>Tu perds presque toujours sur GBP/USD le jeudi. Tu n'as jamais calculé ça — et ton journal actuel non plus. Ton superviseur, si.</p>
+        <p>Tu perds presque toujours sur GBP/USD le jeudi. Tu n'as jamais calculé ça — et ton journal actuel non plus. Ton compagnon, si.</p>
       </div>
       <div class="prob-item">
         <div class="prob-icon" style="background:rgba(16,185,129,.09)">🌙</div>
         <h3>L'analyse qui arrive trop tard</h3>
-        <p>Tu analyses tes trades le week-end, quand l'opportunité d'agir est passée. Ton superviseur t'envoie le recap à 17h30 — quand tu peux encore corriger demain.</p>
+        <p>Tu analyses tes trades le week-end, quand l'opportunité d'agir est passée. Ton compagnon t'envoie le recap à 17h30 — quand tu peux encore corriger demain.</p>
       </div>
     </div>
   </div>
@@ -550,7 +554,7 @@ footer{background:var(--bg2);border-top:1px solid var(--b);padding:40px 5%;displ
 <section class="day-section" id="journee">
   <div style="max-width:1100px;margin:0 auto">
     <div class="reveal" style="text-align:center;max-width:600px;margin:0 auto 64px">
-      <span class="sec-label">Une journée avec ton superviseur</span>
+      <span class="sec-label">Une journée avec ton compagnon</span>
       <h2>De 8h à minuit — il est <em>là</em></h2>
     </div>
 
@@ -566,7 +570,7 @@ footer{background:var(--bg2);border-top:1px solid var(--b);padding:40px 5%;displ
             <div>
               <div class="day-tag avant">☀️ Avant — Préparation</div>
               <h3 style="font-family:var(--disp);font-size:16px;font-weight:600;margin-bottom:6px;">Recap de la veille + Agenda du jour</h3>
-              <p style="font-size:13px;color:var(--txt2);line-height:1.65;font-weight:300;">Tu ouvres MTC avant TradingView. Hier : +$620, 72% WR, émotion dominante 😎. Aujourd'hui : PMI Zone Euro à 10h00 — ton superviseur te recommande d'éviter EUR/USD entre 09h45 et 10h15.</p>
+              <p style="font-size:13px;color:var(--txt2);line-height:1.65;font-weight:300;">Tu ouvres MTC avant TradingView. Hier : +$620, 72% WR, émotion dominante 😎. Aujourd'hui : PMI Zone Euro à 10h00 — ton compagnon te recommande d'éviter EUR/USD entre 09h45 et 10h15.</p>
               <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
                 <span class="day-pill g">Recap hier</span>
                 <span class="day-pill g">Objectifs semaine</span>
@@ -585,7 +589,7 @@ footer{background:var(--bg2);border-top:1px solid var(--b);padding:40px 5%;displ
             <div>
               <div class="day-tag pendant">⚡ Pendant — Session London ouverte</div>
               <h3 style="font-family:var(--disp);font-size:16px;font-weight:600;margin-bottom:6px;">Tu trades, il note</h3>
-              <p style="font-size:13px;color:var(--txt2);line-height:1.65;font-weight:300;">LONG NQ, breakout confirmé. Tu tapes 3 touches dans MTC — asset, LONG, 😎. Ton superviseur enregistre l'heure, le contexte de marché, ton état. Tout le reste se complète après.</p>
+              <p style="font-size:13px;color:var(--txt2);line-height:1.65;font-weight:300;">LONG NQ, breakout confirmé. Tu tapes 3 touches dans MTC — asset, LONG, 😎. ton compagnon enregistre l'heure, le contexte de marché, ton état. Tout le reste se complète après.</p>
               <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
                 <span class="day-pill b">Trade rapide 3s</span>
                 <span class="day-pill b">Live feed</span>
@@ -603,7 +607,7 @@ footer{background:var(--bg2);border-top:1px solid var(--b);padding:40px 5%;displ
             <div>
               <div class="day-tag pendant">⚡ Pendant — Résultat PMI tombe</div>
               <h3 style="font-family:var(--disp);font-size:16px;font-weight:600;margin-bottom:6px;">Analyse en temps réel</h3>
-              <p style="font-size:13px;color:var(--txt2);line-height:1.65;font-weight:300;">PMI 52.4 vs 51.5 prévu — surprise haussière. Ton superviseur analyse immédiatement : EUR/USD ▲ BULL, USD ▼ BEAR, NQ neutre. Tu vois l'impact sur tes actifs sans quitter tes graphiques.</p>
+              <p style="font-size:13px;color:var(--txt2);line-height:1.65;font-weight:300;">PMI 52.4 vs 51.5 prévu — surprise haussière. ton compagnon analyse immédiatement : EUR/USD ▲ BULL, USD ▼ BEAR, NQ neutre. Tu vois l'impact sur tes actifs sans quitter tes graphiques.</p>
               <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
                 <span class="day-pill b">Analyse IA résultats</span>
                 <span class="day-pill b">Bull/Bear par actif</span>
@@ -620,7 +624,7 @@ footer{background:var(--bg2);border-top:1px solid var(--b);padding:40px 5%;displ
             <div style="position:absolute;left:-6px;top:4px;width:12px;height:12px;border-radius:50%;border:2px solid var(--yel);background:rgba(245,158,11,.15);"></div>
             <div>
               <div class="day-tag pendant" style="color:var(--yel);">⚠️ Pendant — Alerte comportementale</div>
-              <h3 style="font-family:var(--disp);font-size:16px;font-weight:600;margin-bottom:6px;">Ton superviseur intervient</h3>
+              <h3 style="font-family:var(--disp);font-size:16px;font-weight:600;margin-bottom:6px;">Ton compagnon intervient</h3>
               <p style="font-size:13px;color:var(--txt2);line-height:1.65;font-weight:300;">"Tu as atteint 4 trades aujourd'hui. C'était ton objectif max le vendredi — c'est toi qui l'as fixé dimanche dernier." Tu le savais, mais l'adrénaline masquait ça. Lui, il ne l'oublie jamais.</p>
               <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
                 <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-family:var(--mono);padding:3px 9px;border-radius:5px;background:rgba(245,158,11,.08);color:var(--yel);border:1px solid rgba(245,158,11,.15);">Alerte objectif</span>
@@ -656,7 +660,7 @@ footer{background:var(--bg2);border-top:1px solid var(--b);padding:40px 5%;displ
             <div>
               <div class="day-tag apres">🌙 Après — Weekly Debrief</div>
               <h3 style="font-family:var(--disp);font-size:16px;font-weight:600;margin-bottom:6px;">Ton bilan de semaine</h3>
-              <p style="font-size:13px;color:var(--txt2);line-height:1.65;font-weight:300;">Chaque dimanche soir, ton superviseur génère un rapport complet de ta semaine. Patterns détectés, forces identifiées, 3 objectifs concrets pour la semaine suivante. Tout est prêt quand tu ouvres MTC lundi matin.</p>
+              <p style="font-size:13px;color:var(--txt2);line-height:1.65;font-weight:300;">Chaque dimanche soir, ton compagnon génère un rapport complet de ta semaine. Patterns détectés, forces identifiées, 3 objectifs concrets pour la semaine suivante. Tout est prêt quand tu ouvres MTC lundi matin.</p>
               <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
                 <span class="day-pill p">Weekly Debrief IA</span>
                 <span class="day-pill p">3 objectifs semaine</span>
@@ -752,7 +756,7 @@ footer{background:var(--bg2);border-top:1px solid var(--b);padding:40px 5%;displ
     <div class="reveal" style="text-align:center">
       <span class="sec-label">Comparaison</span>
       <h2>Pourquoi MyTradingCoach <em>plutôt que</em> les autres ?</h2>
-      <p class="sec-sub" style="margin:0 auto;text-align:center;max-width:500px">Les autres journaux de trading analysent après. MTC supervise avant, pendant et après.</p>
+      <p class="sec-sub" style="margin:0 auto;text-align:center;max-width:500px">Les autres journaux de trading analysent après. Ton compagnon MTC est là avant, pendant et après.</p>
     </div>
     <div class="reveal">
       <div class="table-wrapper">
@@ -772,7 +776,8 @@ footer{background:var(--bg2);border-top:1px solid var(--b);padding:40px 5%;displ
             <tr><td>Tracking émotionnel</td><td><span class="comp-yes">✓</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td></tr>
             <tr><td>Coach IA conversationnel</td><td><span class="comp-yes">✓</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td></tr>
             <tr style="background:rgba(34,211,238,.02)"><td style="font-weight:500;color:var(--txt)">Weekly Debrief IA automatique</td><td><span class="comp-yes" style="color:var(--pulse)">✓</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td></tr>
-            <tr><td>Pré-session matin <span class="comp-new">NEW</span></td><td><span class="comp-yes" style="color:var(--pulse)">✓</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td></tr>
+            <tr><td>Pré-session matin — mood check <span class="comp-new">NEW</span></td><td><span class="comp-yes" style="color:var(--pulse)">✓ FREE</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td></tr>
+            <tr><td>Analyse IA post-session + réflexion <span class="comp-new">NEW</span></td><td><span class="comp-yes" style="color:var(--pulse)">✓</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td></tr>
             <tr><td>Session live + trade rapide <span class="comp-new">NEW</span></td><td><span class="comp-yes" style="color:var(--pulse)">✓</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td></tr>
             <tr><td>Calendrier éco IA filtré <span class="comp-new">NEW</span></td><td><span class="comp-yes" style="color:var(--pulse)">✓</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td></tr>
             <tr><td>Recap journalier email 17h30 <span class="comp-new">NEW</span></td><td><span class="comp-yes" style="color:var(--pulse)">✓</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td><td><span class="comp-no">–</span></td></tr>
@@ -793,13 +798,13 @@ footer{background:var(--bg2);border-top:1px solid var(--b);padding:40px 5%;displ
     <div class="reveal" style="text-align:center;max-width:600px;margin:0 auto">
       <span class="sec-label">Tarifs</span>
       <h2>Simple. <em>Transparent.</em></h2>
-      <p class="sec-sub">Gratuit pour démarrer. Premium pour avoir ton superviseur complet. 7 jours d'essai — aucun prélèvement avant la fin.</p>
+      <p class="sec-sub">Gratuit pour démarrer. Premium pour avoir ton compagnon complet. 7 jours d'essai — aucun prélèvement avant la fin.</p>
     </div>
     <div class="price-grid reveal" style="transition-delay:.1s">
       <div class="price-card">
         <div class="price-name">Gratuit</div>
-        <div class="price-amt"><span class="price-amt-num">0</span><span class="price-amt-cur">€</span></div>
-        <div class="price-period">pour toujours · aucune CB requise</div>
+        <div class="price-amt" style="justify-content:center;"><span class="price-amt-num">0</span><span class="price-amt-cur">€</span></div>
+        <div class="price-period" style="text-align:center;">pour toujours · aucune CB requise</div>
         <div class="price-divider"></div>
         <ul class="price-feats">
           <li>30 trades par mois</li>
@@ -808,15 +813,15 @@ footer{background:var(--bg2);border-top:1px solid var(--b);padding:40px 5%;displ
           <li>Stats de base — win rate, P&L, top session</li>
           <li>Historique illimité</li>
           <li>Import CSV universel (tous brokers)</li>
-          <li>Pré-session matin <span class="feat-new">NEW</span></li>
-          <li>Session live + trade rapide <span class="feat-new">NEW</span></li>
+          <li>Mood check matin <span class="feat-new">NEW</span></li>
+          <li>Session live — logger tes trades <span class="feat-new">NEW</span></li>
+          <li>Calendrier d'activité — mois en cours <span class="feat-new">NEW</span></li>
           <li>Multi-marché — Futures, Crypto, Forex</li>
         </ul>
         <a href="https://app.mytradingcoach.app/register" class="price-cta ghost">Commencer gratuitement</a>
       </div>
       <div class="price-card feat" style="padding-top:44px">
         <div class="price-pop">⭐ Recommandé</div>
-        <div class="price-urgency">🔥 7 jours gratuits — aucun prélèvement avant la fin</div>
         <div class="price-name">Premium</div>
         <div class="price-amt"><span class="price-amt-num">39</span><span class="price-amt-cur">€</span><span class="price-amt-per">/mois</span></div>
         <div class="price-period">ou 349 €/an — tu économises 119 €</div>
@@ -825,15 +830,23 @@ footer{background:var(--bg2);border-top:1px solid var(--b);padding:40px 5%;displ
           <li>Tout le plan Gratuit inclus</li>
           <li>Trades illimités</li>
           <li>Analytics avancés — heatmap, equity curve, drawdown</li>
+          <li>✦ Analyse IA de chaque session — phrase coaching personnalisée <span class="feat-new">NEW</span></li>
+          <li>🧠 Mémoire longitudinale — ton compagnon analyse tes 30 derniers jours <span class="feat-new">NEW</span></li>
+          <li>📋 Journal de sessions — historique complet avec questions de réflexion <span class="feat-new">NEW</span></li>
+          <li>📅 Calendrier éco IA — filtré pour tes actifs + analyse bull/bear en temps réel</li>
+          <li>🌙 Recap journalier email 17h30 avec phrase coaching</li>
+          <li>🎯 Objectifs semaine générés par l'IA — 3 objectifs concrets chaque dimanche</li>
           <li>✨ IA Insights — analyse de tes patterns <small class="feat-limit">(1 analyse / 4h)</small></li>
           <li>💬 Chat coach IA personnalisé <small class="feat-limit">(50 messages/jour)</small></li>
-          <li>📅 Calendrier éco IA — filtré pour tes actifs <span class="feat-new">NEW</span></li>
-          <li>🌙 Recap journalier email 17h30 <span class="feat-new">NEW</span></li>
-          <li>📋 Weekly Debrief IA automatique</li>
+          <li>📋 Weekly Debrief IA — analyse comportementale complète</li>
           <li>🏆 Score trader /100 hebdomadaire</li>
           <li>📄 Export PDF rapport mensuel</li>
+          <li>📅 Calendrier d'activité historique — navigation illimitée</li>
         </ul>
-        <a href="https://app.mytradingcoach.app/register?plan=premium" class="price-cta prim">Essayer 7 jours gratuit →</a>
+        <a href="https://app.mytradingcoach.app/register?plan=premium" class="price-cta prim">
+          <span class="cta-main">Essayer 7 jours gratuit →</span>
+          <span class="cta-sub-text">🔥 Aucun prélèvement avant la fin</span>
+        </a>
       </div>
     </div>
   </div>
@@ -855,7 +868,7 @@ footer{background:var(--bg2);border-top:1px solid var(--b);padding:40px 5%;displ
         </div>
       </div>
       <div class="social-card">
-        <p class="social-text">"Le calendrier éco filtré pour mes actifs change tout. Avant j'oubliais le NFP, maintenant <strong>mon superviseur me le rappelle chaque matin avec l'impact attendu sur BTC et NQ</strong>."</p>
+        <p class="social-text">"Le calendrier éco filtré pour mes actifs change tout. Avant j'oubliais le NFP, maintenant <strong>mon compagnon MTC me le rappelle chaque matin avec l'impact attendu sur BTC et NQ</strong>."</p>
         <div class="social-author">
           <div class="social-avatar" style="background:linear-gradient(135deg,#10b981,#3b82f6)">MK</div>
           <div><div class="social-name">Marc K.</div><div class="social-role">Day trader · Crypto Futures</div></div>
@@ -882,7 +895,7 @@ footer{background:var(--bg2);border-top:1px solid var(--b);padding:40px 5%;displ
     <div class="faq-list reveal">
       <div class="faq-item open">
         <div class="faq-q" onclick="toggleFaq(this)">Quelle est la différence avec un journal de trading classique ? <span class="faq-arrow">▼</span></div>
-        <div class="faq-a">Un journal de trading classique, tu l'ouvres après avoir perdu pour analyser ce qui s'est passé. MTC est un journal de trading intelligent qui va plus loin — il fonctionne comme un superviseur : Un journal, tu l'ouvres après avoir perdu pour analyser ce qui s'est passé. Un superviseur est là avant (il te prépare), pendant (il surveille en temps réel) et après (il débrieffe). MTC est le premier outil de trading qui couvre les 3 moments — grâce à l'IA qui connaît ton profil, tes actifs et tes patterns.</div>
+        <div class="faq-a">Un journal de trading classique, tu l'ouvres après avoir perdu pour analyser ce qui s'est passé. MTC est un journal de trading intelligent qui va plus loin — il fonctionne comme un compagnon : Un journal, tu l'ouvres après avoir perdu pour analyser ce qui s'est passé. Un compagnon est là avant (il te prépare), pendant (il surveille en temps réel) et après (il débrieffe). MTC est le premier outil de trading qui couvre les 3 moments — grâce à l'IA qui connaît ton profil, tes actifs et tes patterns.</div>
       </div>
       <div class="faq-item">
         <div class="faq-q" onclick="toggleFaq(this)">Quels marchés sont supportés ? <span class="faq-arrow">▼</span></div>
@@ -913,7 +926,7 @@ footer{background:var(--bg2);border-top:1px solid var(--b);padding:40px 5%;displ
   <div class="cta-final-glow"></div>
   <span class="sec-label reveal">Prêt à trader différemment ?</span>
   <h2 class="reveal">Arrête de trader seul.<br/><em>Essaie gratuitement.</em></h2>
-  <p class="reveal">Avant ta prochaine session, ton superviseur sera là. 7 jours Premium offerts — aucun prélèvement.</p>
+  <p class="reveal">Avant ta prochaine session, ton compagnon sera là. 7 jours Premium offerts — aucun prélèvement.</p>
   <div class="cta-final-actions reveal">
     <a href="https://app.mytradingcoach.app/register" class="btn-p" style="font-size:16px;padding:16px 32px;">
       Démarrer — 7 jours Premium gratuits →
