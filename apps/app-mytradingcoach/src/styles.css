@@ -109,3 +109,8 @@ textarea {
     font-size: 16px !important;
   }
 }
+
+/* ─── Live mode : bloquer le scroll du main pour laisser les colonnes scroller ─── */
+body.live-mode-active .main-content {
+  overflow: hidden;
+}

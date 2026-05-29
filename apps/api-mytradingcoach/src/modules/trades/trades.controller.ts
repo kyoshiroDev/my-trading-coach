@@ -134,7 +134,7 @@ export class TradesController {
   }
 
   private async fetchDxy(): Promise<number | null> {
-    return this.fetchYahooPrice('DX=F');
+    return this.fetchYahooPrice('DX-Y.NYB');
   }
 
   private async fetchTreasuryRates(): Promise<TreasuryRates> {

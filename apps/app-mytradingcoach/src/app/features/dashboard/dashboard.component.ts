@@ -602,6 +602,12 @@ export class DashboardComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.sessionNow.set(new Date()));
 
+    // Contrôle scroll main-content : live-mode → overflow:hidden pour scroll colonnes
+    effect(() => {
+      document.body.classList.toggle('live-mode-active', this.activeTab() === 'live');
+    });
+    this.destroyRef.onDestroy(() => document.body.classList.remove('live-mode-active'));
+
     // Recharge la summary quand un nouveau trade apparaît dans le store
     // (cas du wizard : le trade est ajouté via addTrade sans passer par le dashboard)
     effect(() => {
