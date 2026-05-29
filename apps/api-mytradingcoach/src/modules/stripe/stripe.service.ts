@@ -456,6 +456,7 @@ export class StripeService implements OnModuleDestroy {
             `Paiement réussi — subscription: ${subscriptionId} synchronisée`,
           );
         }
+        await this.processReferralCommission(invoice);
         break;
       }
 
@@ -610,6 +611,56 @@ export class StripeService implements OnModuleDestroy {
 
     if (user) {
       await this.redis.del(cacheKey(user.id)).catch(() => null);
+    }
+  }
+
+  private async processReferralCommission(
+    invoice: Stripe.Invoice,
+  ): Promise<void> {
+    try {
+      const stripeCustomerId = invoice.customer as string;
+      const subscriptionId = extractId(
+        invoice.parent?.subscription_details?.subscription,
+      );
+      const amountPaid = (invoice.amount_paid ?? 0) / 100;
+
+      if (!stripeCustomerId || !subscriptionId || amountPaid <= 0) return;
+
+      const user = await this.prisma.user.findFirst({
+        where: { stripeCustomerId },
+        select: { id: true, referredBy: true },
+      });
+
+      if (!user?.referredBy) return;
+
+      const ambassador = await this.prisma.user.findFirst({
+        where: { referralCode: user.referredBy },
+        select: { id: true },
+      });
+
+      if (!ambassador) return;
+
+      const commission = +(amountPaid * 0.2).toFixed(2);
+      const period = new Date().toISOString().slice(0, 7);
+
+      await this.prisma.referralCommission.upsert({
+        where: { subscriptionId_period: { subscriptionId, period } },
+        create: {
+          ambassadorId: ambassador.id,
+          referredUserId: user.id,
+          amount: commission,
+          subscriptionId,
+          period,
+          status: 'pending',
+        },
+        update: { amount: commission },
+      });
+
+      this.logger.log(
+        `Commission referral : ${commission}€ pour ambassadeur ${user.referredBy} (sub ${subscriptionId})`,
+      );
+    } catch (err) {
+      this.logger.error('Erreur calcul commission referral', err);
     }
   }
 }

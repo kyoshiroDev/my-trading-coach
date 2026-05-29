@@ -68,10 +68,27 @@ model User {
   aiUsageLogs   AiUsageLog[]
   tradeSessions TradeSession[]
   dailyRecaps   DailyRecap[]
+  referrals     ReferralCommission[] @relation("AmbassadorCommissions")
   lastSeenAt    DateTime?
   lastLoginAt   DateTime?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
+}
+
+model ReferralCommission {
+  id             String   @id @default(cuid())
+  ambassadorId   String
+  referredUserId String
+  amount         Float
+  subscriptionId String
+  period         String
+  status         String   @default("pending")
+  createdAt      DateTime @default(now())
+
+  ambassador User @relation("AmbassadorCommissions", fields: [ambassadorId], references: [id])
+
+  @@unique([subscriptionId, period])
+  @@index([ambassadorId])
 }
 
 model Trade {

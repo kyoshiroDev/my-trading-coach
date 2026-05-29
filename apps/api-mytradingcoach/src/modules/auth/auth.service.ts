@@ -32,8 +32,18 @@ export class AuthService {
     if (existing) throw new ConflictException('Cet email est déjà utilisé');
 
     const hashedPassword = await argon2.hash(dto.password);
+
+    let referredBy: string | null = null;
+    if (dto.referralCode) {
+      const ambassador = await this.prisma.user.findUnique({
+        where: { referralCode: dto.referralCode.toUpperCase() },
+        select: { referralCode: true },
+      });
+      if (ambassador?.referralCode) referredBy = ambassador.referralCode;
+    }
+
     const user = await this.prisma.user.create({
-      data: { email: dto.email, password: hashedPassword, name: dto.name },
+      data: { email: dto.email, password: hashedPassword, name: dto.name, referredBy },
       select: {
         id: true,
         email: true,

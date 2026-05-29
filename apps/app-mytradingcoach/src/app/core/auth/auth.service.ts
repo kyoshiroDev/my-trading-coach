@@ -74,11 +74,11 @@ export class AuthService {
       .subscribe();
   }
 
-  register(email: string, password: string, name?: string) {
+  register(email: string, password: string, name?: string, referralCode?: string) {
     return this.http
       .post<AuthResponse>(
         `${environment.apiUrl}/auth/register`,
-        { email, password, name },
+        { email, password, name, referralCode },
         { withCredentials: true },
       )
       .pipe(tap((res) => this.handleAuthResponse(res)));

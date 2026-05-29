@@ -43,6 +43,12 @@ import { BillingApi } from '../../core/api/billing.api';
           }
         </p>
 
+        @if (referralCode()) {
+          <div class="referral-notice">
+            🎉 Invitation de <strong>{{ referralCode() }}</strong> — 7 jours d'essai Premium offerts
+          </div>
+        }
+
         <form (ngSubmit)="onRegister()">
           <div class="form-group">
             <label for="name"
@@ -211,6 +217,9 @@ export class RegisterComponent {
   protected readonly isPremiumFlow = signal(
     this.route.snapshot.queryParamMap.get('plan') === 'premium',
   );
+  protected readonly referralCode = signal(
+    (this.route.snapshot.queryParamMap.get('ref') ?? '').toUpperCase(),
+  );
 
   protected readonly emailError = computed(() => {
     if (!this.submitted() && !this.emailTouched()) return null;
@@ -249,7 +258,7 @@ export class RegisterComponent {
     this.apiError.set(null);
 
     this.auth
-      .register(this.email(), this.password(), this.name() || undefined)
+      .register(this.email(), this.password(), this.name() || undefined, this.referralCode() || undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
