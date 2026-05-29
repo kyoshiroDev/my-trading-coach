@@ -305,7 +305,7 @@ const EMOTIONS = [
               </div>
             </div>
           } @else {
-            <div style="display:flex;flex-direction:column;gap:3px;overflow-y:auto;flex:1;">
+            <div class="feed-list">
               @for (trade of todayTrades(); track trade.id) {
                 @if (trade.pnl !== null) {
                   <div class="feed-row-2l">

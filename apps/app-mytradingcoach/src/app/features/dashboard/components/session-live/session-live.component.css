@@ -333,6 +333,7 @@
   gap: 12px;
   overflow-y: auto;
   min-height: 0;
+  flex: 1;
 }
 .qt-title {
   font-family: var(--font-display);
@@ -688,7 +689,7 @@
 .news-col {
   display: flex; flex-direction: column; gap: 0; overflow: hidden; min-height: 0;
   background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: 12px; padding: 14px;
+  border-radius: 12px; padding: 14px; flex: 1;
 }
 .news-breaking {
   display: flex; align-items: center; gap: 6px; padding: 6px 9px;
@@ -722,9 +723,9 @@
 .feed-col {
   display: flex; flex-direction: column; overflow: hidden; min-height: 0;
   background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: 12px; padding: 14px;
+  border-radius: 12px; padding: 14px; flex: 1;
 }
-.cal-col  { display: flex; flex-direction: column; gap: 12px; overflow: hidden; min-height: 0; }
+.cal-col  { display: flex; flex-direction: column; gap: 12px; overflow: hidden; min-height: 0; flex: 1; }
 .cal-card {
   background: var(--bg-card); border: 1px solid var(--border);
   border-radius: 12px; padding: 14px; flex: 1; overflow: hidden; min-height: 0;
@@ -763,3 +764,8 @@
 .feed-l2 { display: flex; align-items: center; gap: 5px; padding-left: 2px; }
 .feed-sep { font-size: 8px; color: var(--text-3); font-family: var(--font-mono); }
 .feed-status { font-family: var(--font-mono); font-size: 8px; color: var(--text-3); }
+
+.feed-list {
+  display: flex; flex-direction: column; gap: 3px;
+  overflow-y: auto; flex: 1; min-height: 0;
+}
