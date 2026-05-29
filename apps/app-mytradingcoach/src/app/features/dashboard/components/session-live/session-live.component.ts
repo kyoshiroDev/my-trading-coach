@@ -616,6 +616,7 @@ export class SessionLiveComponent {
   readonly marketCtx = input<MarketContext | null>(null);
   readonly newsItems = input<NewsItem[]>([]);
   readonly breakingNews = input<string | null>(null);
+  readonly triggerCloseModal = input<boolean>(false);
 
   readonly startSession = output<void>();
   readonly tradeClosed = output<{ tradeId: string; exitPrice: number }>();
@@ -714,6 +715,13 @@ export class SessionLiveComponent {
     interval(1000)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.now.set(new Date()));
+
+    // Ouvrir la modal clôture si le dashboard la déclenche depuis la topbar
+    effect(() => {
+      if (this.triggerCloseModal()) {
+        this.closeMoodOpen.set(true);
+      }
+    });
 
     effect(() => {
       const s = this.session();

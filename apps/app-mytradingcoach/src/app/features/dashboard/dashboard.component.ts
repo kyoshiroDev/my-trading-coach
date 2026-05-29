@@ -76,25 +76,42 @@ import { ChartService } from '../../core/services/chart.service';
   template: `
     <mtc-topbar
       title="Dashboard"
-      [showAddButton]="true"
+      [showAddButton]="activeTab() !== 'live'"
       addLabel="⚡ Ajouter trade"
       (addClick)="goToJournal()"
     />
 
+    @if (activeTab() === 'live' && activeSession()?.status === 'ACTIVE') {
+      <div class="session-topbar">
+        <div class="sess-status-pill">
+          <div class="sess-pulse-dot"></div>
+          <span class="sess-timer-top">{{ sessionTimer() }}</span>
+          <span class="sess-sep">·</span>
+          <span class="sess-cnt-top">{{ todayTrades().length }} trade{{ todayTrades().length > 1 ? 's' : '' }}</span>
+          <span class="sess-sep">·</span>
+          <span class="sess-pnl-top" [style.color]="(todayStats()?.totalPnl ?? 0) >= 0 ? 'var(--green)' : 'var(--red)'">
+            {{ (todayStats()?.totalPnl ?? 0) >= 0 ? '+' : '' }}{{ (todayStats()?.totalPnl ?? 0).toFixed(0) }}$
+          </span>
+          <span class="sess-sep">·</span>
+          <span class="sess-emo-top">{{ moodEmoji(activeSession()?.moodStart) }}</span>
+        </div>
+        <button class="sess-stop-top" (click)="openCloseSessionModal()">Clôturer session</button>
+      </div>
+    }
+
     <div class="content">
       <!-- ── Dashboard ─────────────────────────────────────────────────── -->
-        <div class="greeting">
-          <h1 class="greeting-title">Bonjour, {{ userStore.displayName() }} 👋</h1>
-          <div class="greeting-sub">{{ today | date:'EEEE d MMMM' }}</div>
-          <div class="session-tabs">
-            <button class="session-tab" [class.active]="activeTab() === 'dashboard'" data-testid="tab-dashboard" (click)="selectTab('dashboard')">① Dashboard</button>
-            <button class="session-tab" [class.active]="activeTab() === 'morning'" data-testid="tab-morning" (click)="selectTab('morning')">
-              ② Pré-session
-            </button>
-            <button class="session-tab" [class.active]="activeTab() === 'live'" data-testid="tab-live" (click)="selectTab('live')">
-              ③ Session live
-            </button>
+        <div class="page-header">
+          <div class="greeting-block">
+            <h1 class="greeting-title">Bonjour, {{ userStore.displayName() }} 👋</h1>
+            <div class="greeting-sub">{{ today | date:'EEEE d MMMM' }}</div>
           </div>
+          <div class="tabs-block">
+            <button class="session-tab" [class.active]="activeTab() === 'dashboard'" data-testid="tab-dashboard" (click)="selectTab('dashboard')">① Dashboard</button>
+            <button class="session-tab" [class.active]="activeTab() === 'morning'" data-testid="tab-morning" (click)="selectTab('morning')">② Pré-session</button>
+            <button class="session-tab" [class.active]="activeTab() === 'live'" data-testid="tab-live" (click)="selectTab('live')">③ Session live</button>
+          </div>
+          <div class="header-spacer"></div>
         </div>
 
         @if (showGlobalStats()) {
@@ -201,9 +218,10 @@ import { ChartService } from '../../core/services/chart.service';
             [marketCtx]="marketCtx()"
             [newsItems]="newsItems()"
             [breakingNews]="breakingNews()"
+            [triggerCloseModal]="triggerCloseModal()"
             (startSession)="startSession()"
             (tradeClosed)="confirmCloseTrade($event)"
-            (sessionClosed)="closeSession($event)"
+            (sessionClosed)="onSessionClosed($event)"
             (tradeLogged)="logQuickTrade($event)"
           />
         }
@@ -407,6 +425,32 @@ export class DashboardComponent {
   protected readonly todayStats = signal<LiveStats | null>(null);
   protected readonly todayTrades = signal<SessionTrade[]>([]);
 
+  // ── Timer session pour topbar ───────────────────────────────────────────
+  private readonly sessionNow = signal(new Date());
+
+  protected readonly sessionTimer = computed(() => {
+    const session = this.activeSession();
+    if (!session?.startedAt || session.status !== 'ACTIVE') return '00:00:00';
+    const diff = Math.floor((this.sessionNow().getTime() - new Date(session.startedAt).getTime()) / 1000);
+    const h = Math.floor(diff / 3600).toString().padStart(2, '0');
+    const m = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
+    const s = (diff % 60).toString().padStart(2, '0');
+    return `${h}:${m}:${s}`;
+  });
+
+  protected moodEmoji(mood?: string | null): string {
+    const map: Record<string, string> = {
+      CONFIDENT: '😎', FOCUSED: '🎯', NEUTRAL: '😐', TIRED: '😰', STRESSED: '😰',
+    };
+    return map[mood ?? ''] ?? '😐';
+  }
+
+  protected readonly triggerCloseModal = signal(false);
+
+  protected openCloseSessionModal(): void {
+    this.triggerCloseModal.set(true);
+  }
+
   // ── Market context & news (polling pendant session active) ───────────────
   protected readonly marketCtx   = signal<MarketContext | null>(null);
   protected readonly newsItems    = signal<NewsItem[]>([]);
@@ -550,6 +594,10 @@ export class DashboardComponent {
 
   constructor() {
     this.tradesStore.loadTrades({ limit: '6' });
+
+    interval(1000)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.sessionNow.set(new Date()));
 
     // Recharge la summary quand un nouveau trade apparaît dans le store
     // (cas du wizard : le trade est ajouté via addTrade sans passer par le dashboard)
@@ -709,6 +757,11 @@ export class DashboardComponent {
           this.refreshLiveStats();
         },
       });
+  }
+
+  protected onSessionClosed(payload: { mood: MoodState; note?: string; question?: string | null }): void {
+    this.triggerCloseModal.set(false);
+    this.closeSession(payload);
   }
 
   protected closeSession({ mood, note, question }: { mood: MoodState; note?: string; question?: string | null }): void {
