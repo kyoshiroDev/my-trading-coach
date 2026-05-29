@@ -186,7 +186,7 @@ const EMOTIONS = [
                 Calendrier disponible en Premium
               </div>
             } @else {
-              <div style="display:flex;flex-direction:column;gap:6px;">
+              <div class="cal-events-list">
                 @for (event of sessionEcoEvents(); track event.name) {
                   <div
                     class="eco-live-event"
