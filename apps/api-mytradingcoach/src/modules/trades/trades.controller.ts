@@ -27,6 +27,11 @@ import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
 import { INSTRUMENTS } from './instruments.const';
 
+interface MarketContextItem { value: number | null; source: 'fmp' | 'yahoo' | 'binance'; }
+interface TreasuryRates    { t2y: number | null; t5y: number | null; t10y: number | null; t30y: number | null; }
+interface MarketContextDto { nq: MarketContextItem; spx: MarketContextItem; dxy: MarketContextItem; treasury: TreasuryRates; updatedAt: string; }
+interface NewsItem         { title: string; symbol: string; publishedDate: string; sentiment?: 'bull' | 'bear' | 'neutral'; url?: string; }
+
 @UseGuards(JwtAuthGuard)
 @Controller('trades')
 export class TradesController {
@@ -43,6 +48,78 @@ export class TradesController {
     private coinGeckoService: CoinGeckoService,
     private csvImportService: CsvImportService,
   ) {}
+
+  @Get('market-context')
+  async getMarketContext(): Promise<MarketContextDto> {
+    const cacheKey = 'market:context';
+    try {
+      const cached = await this.redis.get(cacheKey);
+      if (cached) return JSON.parse(cached) as MarketContextDto;
+    } catch { /* Redis indisponible */ }
+
+    const [nq, spx, dxy, treasury] = await Promise.allSettled([
+      this.fetchYahooPrice('NQ=F'),
+      this.fetchFmpPrice('SPY'),
+      this.fetchFmpPrice('DXY'),
+      this.fetchTreasuryRates(),
+    ]);
+
+    const result: MarketContextDto = {
+      nq:       { value: nq.status      === 'fulfilled' ? nq.value      : null, source: 'yahoo' },
+      spx:      { value: spx.status     === 'fulfilled' ? spx.value     : null, source: 'fmp'   },
+      dxy:      { value: dxy.status     === 'fulfilled' ? dxy.value     : null, source: 'fmp'   },
+      treasury: treasury.status === 'fulfilled' ? treasury.value : { t2y: null, t5y: null, t10y: null, t30y: null },
+      updatedAt: new Date().toISOString(),
+    };
+
+    try { await this.redis.setex(cacheKey, 15, JSON.stringify(result)); } catch { /* ignore */ }
+    return result;
+  }
+
+  @Get('news')
+  async getMarketNews(@Query('symbols') symbols: string): Promise<NewsItem[]> {
+    const cacheKey = `market:news:${symbols}`;
+    try {
+      const cached = await this.redis.get(cacheKey);
+      if (cached) return JSON.parse(cached) as NewsItem[];
+    } catch { /* ignore */ }
+
+    const apiKey = process.env['FMP_API_KEY'];
+    if (!apiKey) return [];
+
+    try {
+      const fmpSymbols = (symbols || '')
+        .split(',')
+        .map(s => this.mapSymbolToFmp(s.trim()))
+        .filter(Boolean)
+        .join(',');
+
+      const url = `https://financialmodelingprep.com/stable/news/stock?symbols=${fmpSymbols}&limit=20&apikey=${apiKey}`;
+      const res = await fetch(url);
+      if (!res.ok) return [];
+      const data = await res.json() as NewsItem[];
+      try { await this.redis.setex(cacheKey, 60, JSON.stringify(data)); } catch { /* ignore */ }
+      return data;
+    } catch { return []; }
+  }
+
+  private async fetchTreasuryRates(): Promise<TreasuryRates> {
+    const apiKey = process.env['FMP_API_KEY'];
+    if (!apiKey) return { t2y: null, t5y: null, t10y: null, t30y: null };
+    try {
+      const url = `https://financialmodelingprep.com/stable/treasury-rates?apikey=${apiKey}`;
+      const res = await fetch(url);
+      if (!res.ok) return { t2y: null, t5y: null, t10y: null, t30y: null };
+      const data = await res.json() as Array<{ year2: number; year5: number; year10: number; year30: number }>;
+      const latest = data?.[0];
+      return {
+        t2y:  latest?.year2  ?? null,
+        t5y:  latest?.year5  ?? null,
+        t10y: latest?.year10 ?? null,
+        t30y: latest?.year30 ?? null,
+      };
+    } catch { return { t2y: null, t5y: null, t10y: null, t30y: null }; }
+  }
 
   @Get('monthly-count')
   async getMonthlyCount(

@@ -20,7 +20,7 @@ import { TradesStore } from '../../core/stores/trades.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { TradeFormComponent } from '../journal/trade-form.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
-import { CreateTradeDto, TradesApi } from '../../core/api/trades.api';
+import { CreateTradeDto, MarketContext, NewsItem, TradesApi } from '../../core/api/trades.api';
 import {
   AnalyticsApi,
   AnalyticsSummary,
@@ -198,6 +198,9 @@ import { ChartService } from '../../core/services/chart.service';
             [todayTrades]="todayTrades()"
             [liveStats]="todayStats()"
             [ecoCalendar]="ecoCalendarDay()"
+            [marketCtx]="marketCtx()"
+            [newsItems]="newsItems()"
+            [breakingNews]="breakingNews()"
             (startSession)="startSession()"
             (tradeClosed)="confirmCloseTrade($event)"
             (sessionClosed)="closeSession($event)"
@@ -403,6 +406,13 @@ export class DashboardComponent {
   protected readonly activeSession = signal<TradingSession | null>(null);
   protected readonly todayStats = signal<LiveStats | null>(null);
   protected readonly todayTrades = signal<SessionTrade[]>([]);
+
+  // ── Market context & news (polling pendant session active) ───────────────
+  protected readonly marketCtx   = signal<MarketContext | null>(null);
+  protected readonly newsItems    = signal<NewsItem[]>([]);
+  protected readonly breakingNews = signal<string | null>(null);
+  private marketCtxInterval?: ReturnType<typeof setInterval>;
+  private newsInterval?:      ReturnType<typeof setInterval>;
   protected readonly yesterdayRecap = signal<DailyRecap | null>(null);
   // Semaine entière : date → events
   private readonly weekEcoEvents = signal<Map<string, EcoEvent[]>>(new Map());
@@ -578,6 +588,22 @@ export class DashboardComponent {
       }
     });
 
+    // Polling market context + news pendant une session active
+    effect(() => {
+      const isActive = this.activeSession()?.status === 'ACTIVE';
+      if (isActive) {
+        this.fetchMarketContext();
+        this.fetchNewsItems();
+        this.marketCtxInterval = setInterval(() => this.fetchMarketContext(), 15_000);
+        this.newsInterval      = setInterval(() => this.fetchNewsItems(), 60_000);
+      } else {
+        clearInterval(this.marketCtxInterval);
+        clearInterval(this.newsInterval);
+        this.marketCtxInterval = undefined;
+        this.newsInterval = undefined;
+      }
+    });
+
     // Polling 30s pour les stats live pendant une session active
     interval(30_000)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -712,6 +738,30 @@ export class DashboardComponent {
       .create(dto)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({ next: () => this.refreshLiveStats() });
+  }
+
+  private fetchMarketContext(): void {
+    this.tradesApi.getMarketContext()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: (res) => this.marketCtx.set(res.data) });
+  }
+
+  private fetchNewsItems(): void {
+    const assets = this.todayTrades().map(t => t.asset);
+    const symbols = [...new Set(assets)].slice(0, 5);
+    if (!symbols.length) return;
+    this.tradesApi.getNews(symbols)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.newsItems.set(res.data ?? []);
+          const breaking = (res.data ?? []).find(i =>
+            i.title.toLowerCase().includes('fed') ||
+            i.title.toLowerCase().includes('powell'),
+          );
+          this.breakingNews.set(breaking?.title ?? null);
+        },
+      });
   }
 
   protected loadMonthlyActivity(): void {

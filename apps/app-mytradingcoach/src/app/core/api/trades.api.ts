@@ -102,6 +102,23 @@ export interface InstrumentSearchResult {
   category: string;
 }
 
+export interface MarketContextItem { value: number | null; source: string; }
+export interface TreasuryRates { t2y: number | null; t5y: number | null; t10y: number | null; t30y: number | null; }
+export interface MarketContext {
+  nq: MarketContextItem;
+  spx: MarketContextItem;
+  dxy: MarketContextItem;
+  treasury: TreasuryRates;
+  updatedAt: string;
+}
+export interface NewsItem {
+  title: string;
+  symbol: string;
+  publishedDate: string;
+  sentiment?: 'bull' | 'bear' | 'neutral';
+  url?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TradesApi {
   private readonly http = inject(HttpClient);
@@ -158,5 +175,16 @@ export class TradesApi {
   searchInstruments(query: string): Observable<{ data: InstrumentSearchResult[] }> {
     const params = new HttpParams().set('q', query);
     return this.http.get<{ data: InstrumentSearchResult[] }>(`${this.base}/instruments/search`, { params });
+  }
+
+  getMarketContext(): Observable<{ data: MarketContext }> {
+    return this.http.get<{ data: MarketContext }>(`${this.base}/market-context`);
+  }
+
+  getNews(symbols: string[]): Observable<{ data: NewsItem[] }> {
+    return this.http.get<{ data: NewsItem[] }>(
+      `${this.base}/news`,
+      { params: { symbols: symbols.join(',') } },
+    );
   }
 }

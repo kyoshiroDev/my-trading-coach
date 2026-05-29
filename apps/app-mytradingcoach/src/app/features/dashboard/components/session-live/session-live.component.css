@@ -681,3 +681,20 @@
   font-family: var(--font-mono); font-size: 10px;
   color: var(--text-3);
 }
+
+/* Market context bar wrapper */
+.ctx-bar-wrap { padding: 10px 12px 0; flex-shrink: 0; }
+
+/* Treasury rows */
+.treasury-rows { display: flex; flex-direction: column; gap: 5px; }
+.treasury-row { display: flex; align-items: center; gap: 8px; }
+.tr-label { font-family: var(--font-mono); font-size: 9px; color: var(--text-3); width: 22px; flex-shrink: 0; }
+.tr-bar-wrap { flex: 1; height: 3px; background: var(--bg-3); border-radius: 2px; overflow: hidden; }
+.tr-bar-fill { height: 100%; border-radius: 2px; transition: width .3s; }
+.tr-val { font-family: var(--font-mono); font-size: 10px; font-weight: 700; width: 38px; text-align: right; flex-shrink: 0; }
+.tr-inversion-alert {
+  display: flex; align-items: center; gap: 6px; margin-top: 8px;
+  padding: 5px 8px; background: rgba(239,68,68,.07);
+  border: 1px solid rgba(239,68,68,.2); border-radius: 6px;
+  font-size: 9px; color: var(--red); font-family: var(--font-mono);
+}
