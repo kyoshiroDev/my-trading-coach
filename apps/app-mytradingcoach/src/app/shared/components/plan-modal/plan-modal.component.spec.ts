@@ -1,41 +1,21 @@
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import { TestBed, NO_ERRORS_SCHEMA } from '@angular/core/testing';
+import * as angularCore from '@angular/core';
 import { of } from 'rxjs';
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
-import { fileURLToPath } from 'url';
 import { PlanModalComponent } from './plan-modal.component';
 import { BillingApi } from '../../../core/api/billing.api';
 
-const angularCore = await import('@angular/core');
-const angularInternalKey = 'ɵresolveComponentResources';
-const resolveComponentResources = (angularCore as Record<string, unknown>)[
-  angularInternalKey
-] as (
+const resolveComponentResources = (
+  angularCore as Record<string, unknown>
+)['ɵresolveComponentResources'] as (
   resolver: (url: string) => Promise<{ text(): Promise<string> }>,
 ) => Promise<void>;
 
-const componentDir = resolve(fileURLToPath(import.meta.url), '..');
-const fsResolver = (url: string) => {
-  try {
-    const content = readFileSync(resolve(componentDir, url), 'utf-8');
-    return Promise.resolve({
-      text: () => Promise.resolve(content),
-    } as unknown as Response);
-  } catch {
-    return Promise.resolve({
-      text: () => Promise.resolve(''),
-    } as unknown as Response);
-  }
-};
-
-const templateContent = readFileSync(
-  resolve(componentDir, 'plan-modal.component.html'),
-  'utf-8',
-);
+const stubResolver = () =>
+  Promise.resolve({ text: () => Promise.resolve('') } as unknown as Response);
 
 beforeAll(async () => {
-  await resolveComponentResources(fsResolver);
+  await resolveComponentResources(stubResolver);
 });
 
 const mockBillingApi = {
@@ -58,22 +38,21 @@ describe('PlanModalComponent', () => {
     });
     TestBed.overrideComponent(PlanModalComponent, {
       set: {
-        template: templateContent,
+        template: '<div></div>',
         styleUrls: [],
         styleUrl: undefined as unknown as string,
-        schemas: [NO_ERRORS_SCHEMA],
       },
     });
     await TestBed.compileComponents();
   });
 
-  it('plan par défaut = yearly', () => {
+  it('plan par défaut = starter_yearly', () => {
     const fixture = TestBed.createComponent(PlanModalComponent);
     fixture.detectChanges();
     const c = fixture.componentInstance as unknown as {
       selectedPlan: () => string;
     };
-    expect(c.selectedPlan()).toBe('yearly');
+    expect(c.selectedPlan()).toBe('starter_yearly');
   });
 
   it('selectPlan() met à jour selectedPlan', () => {
@@ -83,8 +62,8 @@ describe('PlanModalComponent', () => {
       selectedPlan: () => string;
       selectPlan: (p: string) => void;
     };
-    c.selectPlan('monthly');
-    expect(c.selectedPlan()).toBe('monthly');
+    c.selectPlan('starter_monthly');
+    expect(c.selectedPlan()).toBe('starter_monthly');
   });
 
   it("close() émet l'output closed", () => {
@@ -104,18 +83,18 @@ describe('PlanModalComponent', () => {
       selectPlan: (p: string) => void;
       confirmPlan: () => void;
     };
-    c.selectPlan('monthly');
+    c.selectPlan('starter_monthly');
     c.confirmPlan();
-    expect(mockBillingApi.checkout).toHaveBeenCalledWith('monthly');
+    expect(mockBillingApi.checkout).toHaveBeenCalledWith('starter_monthly');
   });
 
-  it('confirmPlan() avec yearly appelle checkout("yearly")', () => {
+  it('confirmPlan() avec starter_yearly appelle checkout("starter_yearly")', () => {
     const fixture = TestBed.createComponent(PlanModalComponent);
     fixture.detectChanges();
     const c = fixture.componentInstance as unknown as {
       confirmPlan: () => void;
     };
     c.confirmPlan();
-    expect(mockBillingApi.checkout).toHaveBeenCalledWith('yearly');
+    expect(mockBillingApi.checkout).toHaveBeenCalledWith('starter_yearly');
   });
 });
