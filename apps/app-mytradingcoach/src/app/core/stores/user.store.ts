@@ -20,6 +20,9 @@ export class UserStore {
   readonly isBeta = computed(
     () => this.user()?.role === 'BETA_TESTER' || this.user()?.role === 'ADMIN',
   );
+  readonly isAmbassador = computed(
+    () => this.user()?.role === 'AMBASSADOR' || this.user()?.role === 'ADMIN',
+  );
   readonly startingCapital = computed(() => this.user()?.startingCapital ?? 0);
   readonly tradingAssets = computed(() => this.user()?.tradingAssets ?? []);
   readonly favoriteAsset = computed(() => this.user()?.favoriteAsset ?? null);

@@ -52,6 +52,10 @@ model User {
   tradingAssets String[]  // configurés dans les paramètres
   favoriteAsset String?   // pré-sélectionné dans la saisie rapide
 
+  // ── Parrainage ambassadeur ────────────────────────────────────────────────
+  referralCode String?  @unique  // code de parrainage unique
+  referredBy   String?           // code de l'ambassadeur qui a référé cet user
+
   // ── Calendrier économique ─────────────────────────────────────────────────
   // Format : "EventName:Currency" — pin permanent (ex: "Non-Farm Payrolls:USD")
   pinnedEcoEvents String[]
@@ -219,6 +223,7 @@ enum Role {
   ADMIN
   USER
   BETA_TESTER
+  AMBASSADOR
 }
 
 enum Plan {

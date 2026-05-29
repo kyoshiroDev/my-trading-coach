@@ -139,6 +139,15 @@ export const appRoutes: Routes = [
           ),
       },
       {
+        path: 'ambassador',
+        canActivate: [authGuard],
+        data: { seo: { title: 'Ambassadeur', noindex: true } },
+        loadComponent: () =>
+          import('./features/ambassador/ambassador.component').then(
+            (m) => m.AmbassadorComponent,
+          ),
+      },
+      {
         path: 'admin',
         canActivate: [adminGuard],
         data: { seo: { title: 'Admin', noindex: true } },

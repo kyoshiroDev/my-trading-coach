@@ -1,0 +1,116 @@
+<div class="ambassador-page">
+
+  <!-- Header -->
+  <div class="amb-header">
+    <div>
+      <h1 class="amb-title">Dashboard Ambassadeur 🤝</h1>
+      <p class="amb-sub">Suis tes referrals et tes gains en temps réel</p>
+    </div>
+    @if (stats()?.referralCode) {
+      <div class="amb-link-card">
+        <div class="amb-link-label">TON LIEN DE PARRAINAGE</div>
+        <div class="amb-link-wrap">
+          <span class="amb-link-url">{{ referralLink() }}</span>
+          <button class="amb-copy-btn" (click)="copyLink()">
+            {{ copied() ? '✓ Copié' : 'Copier' }}
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (isLoading()) {
+    <div class="amb-loading">Chargement...</div>
+  } @else if (stats()) {
+
+    <!-- Stat cards -->
+    <div class="amb-stats-grid">
+      <div class="amb-stat-card">
+        <div class="amb-stat-val">{{ stats()!.total }}</div>
+        <div class="amb-stat-lbl">Personnes inscrites</div>
+      </div>
+      <div class="amb-stat-card">
+        <div class="amb-stat-val b">{{ stats()!.free }}</div>
+        <div class="amb-stat-lbl">Comptes FREE</div>
+      </div>
+      <div class="amb-stat-card">
+        <div class="amb-stat-val g">{{ stats()!.premium }}</div>
+        <div class="amb-stat-lbl">Comptes PREMIUM</div>
+      </div>
+      <div class="amb-stat-card highlight">
+        <div class="amb-stat-val g">{{ stats()!.totalEarned | number:'1.2-2' }}€</div>
+        <div class="amb-stat-lbl">Total gagné</div>
+      </div>
+      <div class="amb-stat-card">
+        <div class="amb-stat-val y">{{ stats()!.pendingPayout | number:'1.2-2' }}€</div>
+        <div class="amb-stat-lbl">En attente de virement</div>
+      </div>
+    </div>
+
+    <!-- Gains par mois -->
+    @if (monthsSorted().length > 0) {
+      <div class="amb-section">
+        <div class="amb-section-title">Gains par mois</div>
+        <div class="amb-months">
+          @for (m of monthsSorted(); track m.month) {
+            <div class="amb-month-row">
+              <span class="amb-month-label">{{ formatMonth(m.month) }}</span>
+              <span class="amb-month-amount g">+{{ m.amount | number:'1.2-2' }}€</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Liste des referrals -->
+    <div class="amb-section">
+      <div class="amb-section-title">
+        Mes referrals
+        <span class="amb-count">{{ stats()!.total }}</span>
+      </div>
+
+      @if (stats()!.referrals.length === 0) {
+        <div class="amb-empty">
+          Partage ton lien pour voir tes referrals ici.
+        </div>
+      } @else {
+        <div class="amb-table-wrap">
+          <table class="amb-table">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Nom</th>
+                <th>Plan</th>
+                <th>Actif</th>
+                <th>Inscrit le</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (user of stats()!.referrals; track user.id) {
+                <tr>
+                  <td class="amb-email">{{ user.email }}</td>
+                  <td class="amb-name">{{ user.name ?? '—' }}</td>
+                  <td>
+                    <span class="amb-plan-badge"
+                          [class.premium]="user.plan === 'PREMIUM'"
+                          [class.free]="user.plan === 'FREE'">
+                      {{ user.plan }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="amb-active" [class.yes]="user.isActive">
+                      {{ user.isActive ? '✓ Oui' : '—' }}
+                    </span>
+                  </td>
+                  <td class="amb-date">{{ user.createdAt | date:'dd/MM/yyyy' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+  }
+
+</div>

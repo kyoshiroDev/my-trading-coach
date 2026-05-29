@@ -5,7 +5,7 @@ import { EMPTY, fromEvent, interval } from 'rxjs';
 import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
-export type UserRole = 'ADMIN' | 'USER' | 'BETA_TESTER';
+export type UserRole = 'ADMIN' | 'USER' | 'BETA_TESTER' | 'AMBASSADOR';
 
 export interface AuthUser {
   id: string;

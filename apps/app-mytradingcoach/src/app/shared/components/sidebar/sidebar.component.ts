@@ -141,6 +141,19 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             <span class="badge">PRO</span>
           </a>
 
+          @if (userStore.isAmbassador()) {
+            <a
+              routerLink="/ambassador"
+              routerLinkActive="active"
+              class="nav-item"
+              data-testid="nav-ambassador"
+              (click)="closeSidebar()"
+            >
+              <span class="nav-icon">🤝</span>
+              Ambassadeur
+            </a>
+          }
+
           <div class="nav-section">ACCOUNT</div>
 
           <a
