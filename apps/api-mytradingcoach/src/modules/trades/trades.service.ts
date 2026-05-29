@@ -38,6 +38,7 @@ export class TradesService {
     return this.prisma.trade.create({
       data: {
         ...dto,
+        entry: dto.entry ?? 0,
         pnl: dto.pnl ?? pnl,
         riskReward: dto.riskReward ?? riskReward,
         quantity: dto.quantity ?? 1,

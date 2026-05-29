@@ -23,7 +23,8 @@ export class CreateTradeDto {
 
   @IsNumber()
   @Min(0)
-  entry!: number;
+  @IsOptional()
+  entry?: number;
 
   @IsNumber()
   @Min(0)

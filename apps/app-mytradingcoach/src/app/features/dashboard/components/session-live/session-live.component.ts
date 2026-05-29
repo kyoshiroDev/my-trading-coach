@@ -318,7 +318,7 @@ const EMOTIONS = [
                       </span>
                     </div>
                     <div class="feed-l2">
-                      <span class="feed-price">Entrée: {{ trade.entry || '—' }}</span>
+                      <span class="feed-price">Entrée: {{ (trade.entry && trade.entry > 0) ? trade.entry : '—' }}</span>
                       <span class="feed-sep">·</span>
                       <span class="feed-price">Sortie: {{ trade.exit ?? '—' }}</span>
                       <span class="feed-pnl" [class.green]="trade.pnl >= 0" [class.red]="trade.pnl < 0" style="margin-left:auto;">
@@ -342,7 +342,7 @@ const EMOTIONS = [
                       <span class="live-tag">● LIVE</span>
                     </div>
                     <div class="feed-l2">
-                      <span class="feed-price">Entrée: {{ trade.entry || '—' }}</span>
+                      <span class="feed-price">Entrée: {{ (trade.entry && trade.entry > 0) ? trade.entry : '—' }}</span>
                       <span class="feed-sep">·</span>
                       <span class="feed-price">Sortie: —</span>
                     </div>
@@ -955,6 +955,11 @@ export class SessionLiveComponent {
   protected submitQuickTrade(): void {
     const selected = this.qtSelectedAsset();
     if (!selected) return;
+
+    const entryFromField = parseFloat(this.qtEntry());
+    const entryFromLive  = this.livePrice();
+    const finalEntry     = entryFromField > 0 ? entryFromField : (entryFromLive ?? 0);
+
     const h = new Date().getHours();
     let session: CreateTradeDto['session'];
     if (h >= 7 && h < 16) session = 'LONDON';
@@ -968,9 +973,7 @@ export class SessionLiveComponent {
       setup: this.qtSetup() as CreateTradeDto['setup'],
       session,
       timeframe: this.qtTimeframe(),
-      entry: parseFloat(this.qtEntry()) > 0
-        ? parseFloat(this.qtEntry())
-        : (this.livePrice() ?? undefined),
+      entry: finalEntry,
       ...(this.qtQty() ? { quantity: parseFloat(this.qtQty()) } : {}),
       ...(this.qtSl() ? { stopLoss: parseFloat(this.qtSl()) } : {}),
       ...(this.qtTp() ? { takeProfit: parseFloat(this.qtTp()) } : {}),
