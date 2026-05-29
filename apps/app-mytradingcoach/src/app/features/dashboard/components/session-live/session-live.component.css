@@ -133,9 +133,9 @@
 /* ─── Live layout ─── */
 .live-layout {
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
-  align-items: start;
+  align-items: stretch;
   width: 100%;
   min-width: 0;
 }
@@ -566,8 +566,8 @@
   cursor: pointer;
 }
 
-@media (max-width: 1200px) {
-  .live-layout { grid-template-columns: 1fr 1fr; }
+@media (max-width: 1400px) {
+  .live-layout { grid-template-columns: repeat(2, 1fr); }
   .mini-stats-row { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 768px) {
@@ -698,3 +698,78 @@
   border: 1px solid rgba(239,68,68,.2); border-radius: 6px;
   font-size: 9px; color: var(--red); font-family: var(--font-mono);
 }
+
+/* ─── News live ─── */
+.news-col {
+  display: flex; flex-direction: column; gap: 0; overflow: hidden;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px;
+}
+.news-breaking {
+  display: flex; align-items: center; gap: 6px; padding: 6px 9px;
+  background: rgba(239,68,68,.05); border: 1px solid rgba(239,68,68,.18);
+  border-radius: 6px; margin-bottom: 8px; flex-shrink: 0;
+}
+.news-break-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--red); animation: pulse 1s infinite; flex-shrink: 0; }
+.news-break-txt { font-size: 10px; font-weight: 600; color: var(--red); font-family: var(--font-mono); }
+.news-feed { display: flex; flex-direction: column; gap: 5px; overflow-y: auto; flex: 1; }
+.news-item {
+  padding: 7px 9px; background: var(--bg-2); border: 1px solid var(--border);
+  border-radius: 6px; cursor: pointer; transition: border-color .12s; flex-shrink: 0;
+}
+.news-item:hover { border-color: var(--border-hover); }
+.news-item-top { display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }
+.news-asset-tag {
+  font-size: 8px; font-family: var(--font-mono);
+  background: var(--blue-glow); color: var(--blue-bright);
+  border: 1px solid rgba(59,130,246,.18); padding: 1px 5px;
+  border-radius: 3px; flex-shrink: 0;
+}
+.news-sentiment { font-size: 8px; font-family: var(--font-mono); padding: 1px 5px; border-radius: 3px; flex-shrink: 0; }
+.news-sentiment.bull    { background: var(--green-dim); color: var(--green); }
+.news-sentiment.bear    { background: var(--red-dim);   color: var(--red);   }
+.news-sentiment.neutral { background: var(--bg-3);      color: var(--text-3); }
+.news-time  { font-size: 8px; font-family: var(--font-mono); color: var(--text-3); margin-left: auto; }
+.news-title { font-size: 10.5px; color: var(--text-2); line-height: 1.4; }
+.news-empty { font-size: 11px; color: var(--text-3); text-align: center; padding: 20px 0; }
+
+/* ─── Colonnes wrappers ─── */
+.feed-col {
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px;
+}
+.cal-col  { display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+.cal-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px; flex: 1; overflow: hidden;
+}
+.treasury-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px; flex-shrink: 0;
+}
+
+/* ─── Helpers titre colonne ─── */
+.col-title {
+  font-family: var(--font-display); font-size: 12px; font-weight: 600;
+  color: var(--text-3); display: flex; align-items: center; gap: 6px;
+  margin-bottom: 10px; flex-shrink: 0;
+}
+.col-title-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px; flex-shrink: 0;
+}
+
+/* ─── Feed 2 lignes ─── */
+.feed-row-2l {
+  display: flex; flex-direction: column; gap: 1px;
+  padding: 5px 7px; border-radius: 5px;
+  cursor: default; transition: background .1s;
+  border: 1px solid transparent; flex-shrink: 0;
+}
+.feed-row-2l.live-row { cursor: pointer; border-color: rgba(99,155,255,.1); }
+.feed-row-2l:hover { background: rgba(99,155,255,.04); }
+.feed-l1 { display: flex; align-items: center; gap: 5px; }
+.feed-l2 { display: flex; align-items: center; gap: 5px; padding-left: 2px; }
+.feed-sep { font-size: 8px; color: var(--text-3); font-family: var(--font-mono); }
+.feed-status { font-family: var(--font-mono); font-size: 8px; color: var(--text-3); }

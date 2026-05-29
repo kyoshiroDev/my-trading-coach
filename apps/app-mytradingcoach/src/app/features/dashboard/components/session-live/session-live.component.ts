@@ -121,17 +121,198 @@ const EMOTIONS = [
         </div>
       </div>
 
-      <!-- Live layout 3 colonnes -->
+      <!-- Live layout 4 colonnes -->
       <div class="live-layout">
 
-        <!-- COL 1 : LIVE FEED -->
-        <div class="card" style="padding:14px;" data-testid="live-feed">
-          <div class="card-header" style="margin-bottom:10px;">
-            <div class="card-title" style="font-size:12px;display:flex;align-items:center;gap:6px;">
-              Live feed
-              <div class="pulse-dot"></div>
-             
+        <!-- ═══ COL 1 : NEWS LIVE ═══ -->
+        <div class="news-col">
+          <div class="col-title-row">
+            <div class="col-title">📰 News live</div>
+            <span class="ai-badge">AI</span>
+          </div>
+
+          @if (breakingNews()) {
+            <div class="news-breaking">
+              <div class="news-break-dot"></div>
+              <span class="news-break-txt">BREAKING · {{ breakingNews() }}</span>
             </div>
+          }
+
+          <div class="news-feed">
+            @if (newsItems().length === 0) {
+              <div class="news-empty">Aucune news pour le moment</div>
+            } @else {
+              @for (item of newsItems(); track item.publishedDate) {
+                <div class="news-item">
+                  <div class="news-item-top">
+                    <span class="news-asset-tag">{{ item.symbol }}</span>
+                    <span class="news-sentiment" [class]="item.sentiment ?? 'neutral'">
+                      {{ item.sentiment === 'bull' ? '▲ Bull' : item.sentiment === 'bear' ? '▼ Bear' : '— Neutre' }}
+                    </span>
+                    <span class="news-time">{{ formatNewsTime(item.publishedDate) }}</span>
+                  </div>
+                  <div class="news-title">{{ item.title }}</div>
+                </div>
+              }
+            }
+          </div>
+        </div>
+
+        <!-- ═══ COL 2 : CALENDRIER + TREASURY ═══ -->
+        <div class="cal-col">
+
+          <!-- Calendrier éco -->
+          <div class="cal-card">
+            <div class="col-title-row">
+              <div class="col-title">
+                📅 Calendrier — Session en cours
+                <div class="pulse-dot"></div>
+              </div>
+              <span class="ai-badge">AI</span>
+            </div>
+
+            @if (showReleaseAlert() && newReleases().length > 0) {
+              <div class="eco-release-alert" data-testid="eco-release-alert">
+                <div class="era-header">
+                  <span class="era-dot"></span>
+                  <span class="era-title">
+                    🔔 {{ newReleases().length === 1 ? 'Résultat publié' : newReleases().length + ' résultats publiés' }}
+                  </span>
+                  <button class="era-close" (click)="showReleaseAlert.set(false)">×</button>
+                </div>
+                @for (ev of newReleases(); track ev.name) {
+                  <div class="era-event">
+                    <div class="era-event-name">{{ translate(ev.name) }} <span class="era-currency">{{ ev.currency }}</span></div>
+                    <div class="era-values">
+                      <span class="era-actual"
+                            [class.positive]="(ev.actual ?? 0) > (ev.estimate ?? 0)"
+                            [class.negative]="(ev.actual ?? 0) < (ev.estimate ?? 0)">
+                        Actuel : {{ ev.actual }}{{ ev.unit }}
+                      </span>
+                      @if (ev.estimate !== null) {
+                        <span class="era-estimate">Prévu : {{ ev.estimate }}{{ ev.unit }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+                <div class="era-ai-loading" data-testid="era-ai-loading">
+                  <span class="era-spin">⟳</span> Ton compagnon analyse l'impact...
+                </div>
+              </div>
+            }
+
+            @if (!ecoCalendar()) {
+              <div style="font-size:12px;color:var(--text-3);text-align:center;padding:20px 0;">
+                Calendrier disponible en Premium
+              </div>
+            } @else {
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                @for (event of sessionEcoEvents(); track event.name) {
+                  <div
+                    class="eco-live-event"
+                    [class.released]="event.isReleased"
+                    [class.dim]="!event.isReleased && isOutsideSession(event.time)"
+                  >
+                    <div class="eco-live-header">
+                      <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-3);width:36px;flex-shrink:0;">
+                        {{ formatTime(event.time) }}
+                      </span>
+                      <div style="width:4px;height:22px;border-radius:2px;flex-shrink:0;" [style.background]="event.impact === 'high' ? 'var(--red)' : 'var(--yellow)'"></div>
+                      <span class="eco-flag-sm">{{ getFlag(event) }}</span>
+                      <span style="font-size:11px;font-weight:600;color:var(--text);flex:1;">{{ translate(event.name) }}</span>
+                      <span style="font-size:9px;background:var(--blue-glow);color:var(--blue-bright);border:1px solid rgba(59,130,246,.2);padding:2px 5px;border-radius:4px;font-family:var(--font-mono);">
+                        {{ event.currency }}
+                      </span>
+                      @if (event.isReleased) {
+                        <span style="font-size:9px;background:var(--green-dim);color:var(--green);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);">✓ Publié</span>
+                      } @else {
+                        <span style="font-size:9px;color:var(--text-3);font-family:var(--font-mono);">dans {{ minutesUntil(event.time) }} min</span>
+                      }
+                    </div>
+
+                    @if (event.isReleased) {
+                      <div class="eco-live-released">
+                        <div class="eco-result-row">
+                          <div class="eco-result-item">
+                            <span>Résultat</span>
+                            <span class="eco-result-val green">{{ event.actual }}</span>
+                          </div>
+                          @if (event.estimate !== null) {
+                            <div class="eco-result-item">
+                              <span>Prévu</span>
+                              <span class="eco-result-val" style="color:var(--text-2);">{{ event.estimate }}</span>
+                            </div>
+                          }
+                          @if (event.previous !== null) {
+                            <div class="eco-result-item">
+                              <span>Précédent</span>
+                              <span class="eco-result-val" style="color:var(--text-2);">{{ event.previous }}</span>
+                            </div>
+                          }
+                          @if (event.actual !== null && event.estimate !== null) {
+                            <div class="eco-result-item">
+                              <span>Surprise</span>
+                              <span class="eco-result-val" [class.green]="(event.actual - event.estimate) > 0">
+                                {{ event.actual - event.estimate > 0 ? '+' : '' }}{{ (event.actual - event.estimate).toFixed(2) }} {{ event.actual > event.estimate ? '▲' : '▼' }}
+                              </span>
+                            </div>
+                          }
+                        </div>
+
+                        @if (getEventAnalysis(event.name)) {
+                          <div class="eco-ai-block-sm">
+                            <span style="font-size:13px;flex-shrink:0;">✦</span>
+                            <span>{{ getEventAnalysis(event.name)!.interpretation }}</span>
+                          </div>
+                          <div class="sentiment-chips">
+                            @for (s of getEventAnalysis(event.name)!.assetSentiments; track s.asset) {
+                              <div class="chip" [class]="s.sentiment">
+                                {{ s.sentiment === 'bull' ? '▲' : s.sentiment === 'bear' ? '▼' : '—' }}
+                                {{ s.asset }} {{ s.sentiment.toUpperCase() }}
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Treasury Rates -->
+          @if (marketCtx()?.treasury) {
+            <div class="treasury-card">
+              <div class="col-title" style="margin-bottom:10px;">
+                📈 Treasury Rates US
+                <span style="font-size:7.5px;padding:1px 4px;border-radius:3px;background:rgba(59,130,246,.08);color:var(--blue-bright);border:1px solid rgba(59,130,246,.15);font-family:var(--font-mono);">FMP</span>
+              </div>
+              <div class="treasury-rows">
+                @for (row of treasuryRows(); track row.label) {
+                  <div class="treasury-row">
+                    <span class="tr-label">{{ row.label }}</span>
+                    <div class="tr-bar-wrap"><div class="tr-bar-fill" [style.width.%]="row.pct" [style.background]="row.color"></div></div>
+                    <span class="tr-val" [style.color]="row.color">{{ row.value | number:'1.2-2' }}%</span>
+                  </div>
+                }
+              </div>
+              @if (isInverted()) {
+                <div class="tr-inversion-alert">
+                  <span>⚠</span>
+                  <span>Courbe inversée 2Y &gt; 10Y · <strong>{{ spread() }}%</strong></span>
+                </div>
+              }
+            </div>
+          }
+
+        </div><!-- /cal-col -->
+
+        <!-- ═══ COL 3 : LIVE FEED ═══ -->
+        <div class="feed-col" data-testid="live-feed">
+          <div class="col-title">
+            Live feed
+            <div class="pulse-dot"></div>
           </div>
 
           @if (todayTrades().length === 0) {
@@ -144,232 +325,83 @@ const EMOTIONS = [
               </div>
             </div>
           } @else {
-            <div class="feed-header">
-              <span class="feed-col-lbl">H.</span>
-              <span></span>
-              <span class="feed-col-lbl">Actif</span>
-              <span class="feed-col-lbl">Entry</span>
-              <span class="feed-col-lbl">Exit</span>
-              <span class="feed-col-lbl">P&amp;L</span>
-              <span></span>
-            </div>
-
-            @for (trade of todayTrades(); track trade.id) {
-              <!-- Trade clôturé -->
-              @if (trade.pnl !== null) {
-                <div class="feed-row">
-                  <span class="feed-time">{{ tradeTime(trade.tradedAt) }}</span>
-                  <span class="trade-side" [class]="trade.side.toLowerCase()">{{ trade.side }}</span>
-                  <span class="feed-asset">{{ trade.asset }}</span>
-                  <span class="feed-price">{{ trade.entry || '—' }}</span>
-                  <span class="feed-price">{{ trade.exit ?? '—' }}</span>
-                  <span class="feed-pnl" [class.green]="trade.pnl >= 0" [class.red]="trade.pnl < 0">
-                    {{ trade.pnl >= 0 ? '+' : '' }}{{ trade.pnl.toFixed(0) }}$
-                  </span>
-                  <span class="feed-badge" [class]="closeBadgeClass(trade.tags)">
-                    {{ closeBadgeLabel(trade.tags) }}
-                  </span>
-                </div>
-              } @else {
-                <!-- Trade LIVE (ouvert) -->
-                <div
-                  class="feed-row live-row"
-                  role="button"
-                  tabindex="0"
-                  (click)="openClosePanel(trade.id)"
-                  (keyup.enter)="openClosePanel(trade.id)"
-                >
-                  <span class="feed-time">{{ tradeTime(trade.tradedAt) }}</span>
-                  <span class="trade-side" [class]="trade.side.toLowerCase()">{{ trade.side }}</span>
-                  <span class="feed-asset">{{ trade.asset }}</span>
-                  <span class="feed-price">{{ trade.entry || '—' }}</span>
-                  <span class="feed-price" style="color:var(--text-3);">—</span>
-                  <span style="font-family:var(--font-mono);font-size:9px;color:var(--text-3);">En cours</span>
-                  <span class="live-tag">● LIVE</span>
-                </div>
-
-                <!-- Panel clôture -->
-                @if (closingTradeId() === trade.id) {
-                  <div class="close-panel" data-testid="trade-close-panel">
-                    <div class="close-panel-title">
-                      {{ trade.side }} {{ trade.asset }} · Clôture
+            <div style="display:flex;flex-direction:column;gap:3px;overflow-y:auto;flex:1;">
+              @for (trade of todayTrades(); track trade.id) {
+                @if (trade.pnl !== null) {
+                  <div class="feed-row-2l">
+                    <div class="feed-l1">
+                      <span class="feed-time">{{ tradeTime(trade.tradedAt) }}</span>
+                      <span class="trade-side" [class]="trade.side.toLowerCase()">{{ trade.side }}</span>
+                      <span class="feed-asset">{{ trade.asset }}</span>
+                      <span class="feed-badge" [class]="closeBadgeClass(trade.tags)" style="margin-left:auto;">
+                        {{ closeBadgeLabel(trade.tags) }}
+                      </span>
                     </div>
-                    <div class="close-panel-row">
-                      <div class="close-input-wrap">
-                        <div class="close-input-lbl">PRIX DE SORTIE</div>
-                        <input
-                          class="close-input"
-                          type="number"
-                          placeholder="0.00"
-                          data-testid="trade-exit-price"
-                          [value]="exitPriceInput()"
-                          (input)="exitPriceInput.set($any($event.target).value)"
-                        />
-                      </div>
-                      <button class="close-btn-ok" (click)="submitClose()">OK →</button>
-                      <button class="close-btn-cancel" (click)="cancelClose()">✕</button>
+                    <div class="feed-l2">
+                      <span class="feed-price">Entrée: {{ trade.entry || '—' }}</span>
+                      <span class="feed-sep">·</span>
+                      <span class="feed-price">Sortie: {{ trade.exit ?? '—' }}</span>
+                      <span class="feed-pnl" [class.green]="trade.pnl >= 0" [class.red]="trade.pnl < 0" style="margin-left:auto;">
+                        {{ trade.pnl >= 0 ? '+' : '' }}{{ trade.pnl.toFixed(0) }}$
+                      </span>
                     </div>
-                    @if (exitPriceInput()) {
-                      <div data-testid="trade-close-type" style="margin-top:6px;font-size:10px;color:var(--text-3);font-family:var(--font-mono);">
-                        → {{ detectCloseType(trade, +exitPriceInput()) }}
+                  </div>
+                } @else {
+                  <div
+                    class="feed-row-2l live-row"
+                    role="button"
+                    tabindex="0"
+                    (click)="openClosePanel(trade.id)"
+                    (keyup.enter)="openClosePanel(trade.id)"
+                  >
+                    <div class="feed-l1">
+                      <span class="feed-time">{{ tradeTime(trade.tradedAt) }}</span>
+                      <span class="trade-side" [class]="trade.side.toLowerCase()">{{ trade.side }}</span>
+                      <span class="feed-asset">{{ trade.asset }}</span>
+                      <span class="feed-status">En cours</span>
+                      <span class="live-tag">● LIVE</span>
+                    </div>
+                    <div class="feed-l2">
+                      <span class="feed-price">Entrée: {{ trade.entry || '—' }}</span>
+                      <span class="feed-sep">·</span>
+                      <span class="feed-price">Sortie: —</span>
+                    </div>
+                  </div>
+
+                  @if (closingTradeId() === trade.id) {
+                    <div class="close-panel" data-testid="trade-close-panel">
+                      <div class="close-panel-title">
+                        {{ trade.side }} {{ trade.asset }} · Clôture
                       </div>
-                    }
-                  </div>
-                }
-              }
-            }
-          }
-        </div>
-
-        <!-- COL 2 : CALENDRIER LIVE -->
-        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-            <div class="card-title" style="font-size:12px;display:flex;align-items:center;gap:6px;">
-              📅 Calendrier — Session en cours
-              <div class="pulse-dot"></div>
-             
-            </div>
-            <span class="ai-badge">AI</span>
-          </div>
-
-          @if (showReleaseAlert() && newReleases().length > 0) {
-            <div class="eco-release-alert" data-testid="eco-release-alert">
-              <div class="era-header">
-                <span class="era-dot"></span>
-                <span class="era-title">
-                  🔔 {{ newReleases().length === 1 ? 'Résultat publié' : newReleases().length + ' résultats publiés' }}
-                </span>
-                <button class="era-close" (click)="showReleaseAlert.set(false)">×</button>
-              </div>
-              @for (ev of newReleases(); track ev.name) {
-                <div class="era-event">
-                  <div class="era-event-name">{{ translate(ev.name) }} <span class="era-currency">{{ ev.currency }}</span></div>
-                  <div class="era-values">
-                    <span class="era-actual"
-                          [class.positive]="(ev.actual ?? 0) > (ev.estimate ?? 0)"
-                          [class.negative]="(ev.actual ?? 0) < (ev.estimate ?? 0)">
-                      Actuel : {{ ev.actual }}{{ ev.unit }}
-                    </span>
-                    @if (ev.estimate !== null) {
-                      <span class="era-estimate">Prévu : {{ ev.estimate }}{{ ev.unit }}</span>
-                    }
-                  </div>
-                </div>
-              }
-              <div class="era-ai-loading" data-testid="era-ai-loading">
-                <span class="era-spin">⟳</span> Ton compagnon analyse l'impact...
-              </div>
-            </div>
-          }
-
-          @if (!ecoCalendar()) {
-            <div style="font-size:12px;color:var(--text-3);text-align:center;padding:20px 0;">
-              Calendrier disponible en Premium
-            </div>
-          } @else {
-            <div style="display:flex;flex-direction:column;gap:6px;">
-              @for (event of sessionEcoEvents(); track event.name) {
-                <div
-                  class="eco-live-event"
-                  [class.released]="event.isReleased"
-                  [class.dim]="!event.isReleased && isOutsideSession(event.time)"
-                >
-                  <div class="eco-live-header">
-                    <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-3);width:36px;flex-shrink:0;">
-                      {{ formatTime(event.time) }}
-                    </span>
-                    <div style="width:4px;height:22px;border-radius:2px;flex-shrink:0;" [style.background]="event.impact === 'high' ? 'var(--red)' : 'var(--yellow)'"></div>
-                    <span class="eco-flag-sm">{{ getFlag(event) }}</span>
-                    <span style="font-size:11px;font-weight:600;color:var(--text);flex:1;">{{ translate(event.name) }}</span>
-                    <span style="font-size:9px;background:var(--blue-glow);color:var(--blue-bright);border:1px solid rgba(59,130,246,.2);padding:2px 5px;border-radius:4px;font-family:var(--font-mono);">
-                      {{ event.currency }}
-                    </span>
-                    @if (event.isReleased) {
-                      <span style="font-size:9px;background:var(--green-dim);color:var(--green);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);">✓ Publié</span>
-                    } @else {
-                      <span style="font-size:9px;color:var(--text-3);font-family:var(--font-mono);">dans {{ minutesUntil(event.time) }} min</span>
-                    }
-                  </div>
-
-                  @if (event.isReleased) {
-                    <div class="eco-live-released">
-                      <div class="eco-result-row">
-                        <div class="eco-result-item">
-                          <span>Résultat</span>
-                          <span class="eco-result-val green">{{ event.actual }}</span>
+                      <div class="close-panel-row">
+                        <div class="close-input-wrap">
+                          <div class="close-input-lbl">PRIX DE SORTIE</div>
+                          <input
+                            class="close-input"
+                            type="number"
+                            placeholder="0.00"
+                            data-testid="trade-exit-price"
+                            [value]="exitPriceInput()"
+                            (input)="exitPriceInput.set($any($event.target).value)"
+                          />
                         </div>
-                        @if (event.estimate !== null) {
-                          <div class="eco-result-item">
-                            <span>Prévu</span>
-                            <span class="eco-result-val" style="color:var(--text-2);">{{ event.estimate }}</span>
-                          </div>
-                        }
-                        @if (event.previous !== null) {
-                          <div class="eco-result-item">
-                            <span>Précédent</span>
-                            <span class="eco-result-val" style="color:var(--text-2);">{{ event.previous }}</span>
-                          </div>
-                        }
-                        @if (event.actual !== null && event.estimate !== null) {
-                          <div class="eco-result-item">
-                            <span>Surprise</span>
-                            <span class="eco-result-val" [class.green]="(event.actual - event.estimate) > 0">
-                              {{ event.actual - event.estimate > 0 ? '+' : '' }}{{ (event.actual - event.estimate).toFixed(2) }} {{ event.actual > event.estimate ? '▲' : '▼' }}
-                            </span>
-                          </div>
-                        }
+                        <button class="close-btn-ok" (click)="submitClose()">OK →</button>
+                        <button class="close-btn-cancel" (click)="cancelClose()">✕</button>
                       </div>
-
-                      @if (getEventAnalysis(event.name)) {
-                        <div class="eco-ai-block-sm">
-                          <span style="font-size:13px;flex-shrink:0;">✦</span>
-                          <span>{{ getEventAnalysis(event.name)!.interpretation }}</span>
-                        </div>
-                        <div class="sentiment-chips">
-                          @for (s of getEventAnalysis(event.name)!.assetSentiments; track s.asset) {
-                            <div class="chip" [class]="s.sentiment">
-                              {{ s.sentiment === 'bull' ? '▲' : s.sentiment === 'bear' ? '▼' : '—' }}
-                              {{ s.asset }} {{ s.sentiment.toUpperCase() }}
-                            </div>
-                          }
+                      @if (exitPriceInput()) {
+                        <div data-testid="trade-close-type" style="margin-top:6px;font-size:10px;color:var(--text-3);font-family:var(--font-mono);">
+                          → {{ detectCloseType(trade, +exitPriceInput()) }}
                         </div>
                       }
                     </div>
                   }
-                </div>
+                }
               }
             </div>
           }
         </div>
 
-        <!-- Treasury Rates (sous le calendrier) -->
-        @if (marketCtx()?.treasury) {
-          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;flex-shrink:0;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-              <div class="card-title" style="font-size:11px;display:flex;align-items:center;gap:5px;">
-                📈 Treasury Rates US
-                <span style="font-size:7.5px;padding:1px 4px;border-radius:3px;background:rgba(59,130,246,.08);color:var(--blue-bright);border:1px solid rgba(59,130,246,.15);font-family:var(--font-mono);">FMP</span>
-              </div>
-            </div>
-            <div class="treasury-rows">
-              @for (row of treasuryRows(); track row.label) {
-                <div class="treasury-row">
-                  <span class="tr-label">{{ row.label }}</span>
-                  <div class="tr-bar-wrap"><div class="tr-bar-fill" [style.width.%]="row.pct" [style.background]="row.color"></div></div>
-                  <span class="tr-val" [style.color]="row.color">{{ row.value | number:'1.2-2' }}%</span>
-                </div>
-              }
-            </div>
-            @if (isInverted()) {
-              <div class="tr-inversion-alert">
-                <span>⚠</span>
-                <span>Courbe inversée 2Y &gt; 10Y · <strong>{{ spread() }}%</strong></span>
-              </div>
-            }
-          </div>
-        }
-
-        <!-- COL 3 : TRADE RAPIDE -->
+        <!-- ═══ COL 4 : TRADE RAPIDE ═══ -->
         <div class="qt-panel" data-testid="quick-trade-form">
           <div class="qt-title">
             ⚡ Trade rapide
@@ -973,6 +1005,11 @@ export class SessionLiveComponent {
 
   protected translate(name: string): string {
     return translateEcoEvent(name);
+  }
+
+  protected formatNewsTime(iso: string): string {
+    if (!iso) return '';
+    return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   }
 
   protected getFlag(event: { country?: string | null; currency?: string | null }): string {
