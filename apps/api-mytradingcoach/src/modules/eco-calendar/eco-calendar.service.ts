@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import Redis from 'ioredis';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
+import { todayParis, toParisDateStr } from '../../common/utils/paris-date';
 
 export interface EcoEvent {
   time: string;
@@ -213,7 +214,7 @@ export class EcoCalendarService implements OnModuleDestroy {
   // ── getTodayEvents — lecture BDD + cache Redis + analyse IA ───────────────
 
   async getTodayEvents(userId: string): Promise<EcoCalendarData> {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayParis();
     const cacheKey = `eco:calendar:${today}:${userId}`;
 
     try {
@@ -260,7 +261,7 @@ export class EcoCalendarService implements OnModuleDestroy {
 
   async getTomorrowEvents(userId: string): Promise<EcoCalendarData> {
     const nextDay = this.getNextTradingDay();
-    const dateStr = nextDay.toISOString().slice(0, 10);
+    const dateStr = toParisDateStr(nextDay);
     const cacheKey = `eco:calendar:${dateStr}:${userId}`;
 
     try {
@@ -275,7 +276,7 @@ export class EcoCalendarService implements OnModuleDestroy {
     // Fallback J+2 si rien en BDD pour J+1
     if (events.length === 0) {
       const nextNext = this.getNextTradingDay(nextDay);
-      events = await this.getEventsFromDb(nextNext.toISOString().slice(0, 10));
+      events = await this.getEventsFromDb(toParisDateStr(nextNext));
     }
 
     const [userAssets, userPins] = await Promise.all([
@@ -312,7 +313,7 @@ export class EcoCalendarService implements OnModuleDestroy {
   // ── analyzeReleasedEvent (inchangé) ────────────────────────────────────────
 
   async analyzeReleasedEvent(userId: string, eventName: string): Promise<EcoResultAnalysis | null> {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayParis();
     const cacheKey = `eco:calendar:${today}:${userId}`;
     let cached: string | null = null;
     try {
@@ -383,7 +384,7 @@ export class EcoCalendarService implements OnModuleDestroy {
     const current = new Date(from);
     const end = new Date(to);
     while (current <= end) {
-      dates.push(current.toISOString().slice(0, 10));
+      dates.push(toParisDateStr(current));
       current.setDate(current.getDate() + 1);
     }
 
@@ -413,7 +414,7 @@ export class EcoCalendarService implements OnModuleDestroy {
       data: { pinnedEcoEvents: pins },
     });
     // Invalider le cache du jour pour que le dashboard voit le nouvel ordre
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayParis();
     try {
       await this.redis.del(`eco:calendar:${today}:${userId}`);
     } catch { /* Redis indisponible */ }

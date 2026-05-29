@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { EcoCalendarService } from './eco-calendar.service';
 import { EcoCalendarGateway } from './eco-calendar.gateway';
+import { todayParis, toParisDateStr } from '../../common/utils/paris-date';
 
 @Injectable()
 export class EcoCalendarCron {
@@ -15,8 +16,8 @@ export class EcoCalendarCron {
   // 6h00 Paris — charger today + tomorrow (2 appels FMP)
   @Cron('0 6 * * 1-5', { timeZone: 'Europe/Paris' })
   async prefetchDay() {
-    const today = new Date().toISOString().slice(0, 10);
-    const tomorrow = this.ecoCalendarService.getNextTradingDay().toISOString().slice(0, 10);
+    const today = todayParis();
+    const tomorrow = toParisDateStr(this.ecoCalendarService.getNextTradingDay());
     this.logger.log(`📅 Pre-fetching events for ${today} and ${tomorrow}...`);
     await Promise.all([
       this.ecoCalendarService.fetchAndStoreEvents(today),
@@ -27,7 +28,7 @@ export class EcoCalendarCron {
   // Toutes les 60s, 8h-18h Paris, lun-ven — polling temps réel actual values
   @Cron('*/1 8-17 * * 1-5', { timeZone: 'Europe/Paris' })
   async pollLiveReleases() {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayParis();
     const { hasNew, newEvents } = await this.ecoCalendarService.checkNewReleases(today);
 
     if (hasNew) {
@@ -39,7 +40,7 @@ export class EcoCalendarCron {
   // 18h30 Paris — refresh final + vider cache Redis
   @Cron('30 18 * * 1-5', { timeZone: 'Europe/Paris' })
   async finalRefresh() {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayParis();
     this.logger.log(`🔄 Final refresh actual values for ${today}...`);
     await this.ecoCalendarService.fetchAndStoreEvents(today);
 

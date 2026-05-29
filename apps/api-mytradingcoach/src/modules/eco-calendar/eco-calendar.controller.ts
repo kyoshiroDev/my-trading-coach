@@ -14,6 +14,7 @@ import { PremiumGuard } from '../../common/guards/premium.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { EcoCalendarService } from './eco-calendar.service';
+import { todayParis } from '../../common/utils/paris-date';
 
 @Controller('eco-calendar')
 @UseGuards(JwtAuthGuard, PremiumGuard)
@@ -41,7 +42,7 @@ export class EcoCalendarController {
   // Vide le cache Redis user + retourne analyse fraîche (après nouveaux actual WebSocket)
   @Post('refresh-today')
   async refreshToday(@CurrentUser() user: { id: string }) {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayParis();
     await this.service.redis.del(`eco:calendar:${today}:${user.id}`);
     return this.service.getTodayEvents(user.id);
   }

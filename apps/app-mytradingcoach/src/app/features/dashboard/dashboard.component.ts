@@ -47,6 +47,7 @@ import { DebriefApi, DebriefObjective } from '../../core/api/debrief.api';
 import { SessionMorningComponent } from './components/session-morning/session-morning.component';
 import { SessionLiveComponent } from './components/session-live/session-live.component';
 import { ChartService } from '../../core/services/chart.service';
+import { todayParis, toParisDateStr } from '../../core/utils/paris-date';
 
 @Component({
   selector: 'mtc-dashboard',
@@ -905,8 +906,8 @@ export class DashboardComponent {
     const friday = new Date(monday);
     friday.setDate(monday.getDate() + 4);
 
-    const from = monday.toISOString().slice(0, 10);
-    const to = friday.toISOString().slice(0, 10);
+    const from = toParisDateStr(monday);
+    const to = toParisDateStr(friday);
 
     forkJoin({
       range: this.ecoCalendarApi.getEventsRange(from, to),
@@ -935,10 +936,10 @@ export class DashboardComponent {
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
     if (this.activeTab() === 'live') {
-      return parisNow.toISOString().slice(0, 10);
+      return todayParis();
     }
     if (!isWeekend && parisHour < 18) {
-      return parisNow.toISOString().slice(0, 10);
+      return todayParis();
     }
     return this.getNextTradingDate(parisNow);
   }
@@ -947,7 +948,7 @@ export class DashboardComponent {
     const d = new Date(from);
     d.setDate(d.getDate() + 1);
     while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
-    return d.toISOString().slice(0, 10);
+    return toParisDateStr(d);
   }
 
   private refreshLiveStats(): void {

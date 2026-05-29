@@ -16,6 +16,7 @@ import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiLoggerService } from '../shared/ai-logger.service';
 import { buildUserTradingContext, UserTradingProfile } from './user-context.builder';
+import { todayParis } from '../../common/utils/paris-date';
 
 const MODEL = 'claude-sonnet-4-6';
 const AI_MONTHLY_QUOTA = 100;
@@ -404,7 +405,7 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
     action: string,
     max: number,
   ): Promise<void> {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayParis();
     const key = `ai:limit:${userId}:${action}:${today}`;
     const count = await this.redis.incr(key);
     await this.redis.expire(key, 60 * 60 * 24);
@@ -456,7 +457,7 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
   }
 
   private quotaKey(userId: string): string {
-    const month = new Date().toISOString().slice(0, 7);
+    const month = todayParis().slice(0, 7);
     return `ai:calls:${userId}:${month}`;
   }
 }

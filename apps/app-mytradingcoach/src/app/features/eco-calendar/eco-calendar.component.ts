@@ -11,6 +11,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { EcoCalendarApi, EcoEvent } from '../../core/api/eco-calendar.api';
 import { translateEcoEvent } from '../../core/data/eco-event-translations';
+import { todayParis, toParisDateStr } from '../../core/utils/paris-date';
 
 interface DayGroup {
   date: string;
@@ -113,10 +114,10 @@ export class EcoCalendarComponent implements OnInit {
 
   private loadWeek(monday: Date): void {
     this.isLoading.set(true);
-    const from = monday.toISOString().slice(0, 10);
+    const from = toParisDateStr(monday);
     const friday = new Date(monday);
     friday.setDate(friday.getDate() + 4);
-    const to = friday.toISOString().slice(0, 10);
+    const to = toParisDateStr(friday);
 
     this.api.getEventsRange(from, to)
       .pipe(
@@ -124,10 +125,10 @@ export class EcoCalendarComponent implements OnInit {
         finalize(() => this.isLoading.set(false)),
       )
       .subscribe(res => {
-        const today = new Date().toISOString().slice(0, 10);
+        const today = todayParis();
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
-        const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+        const tomorrowStr = toParisDateStr(tomorrow);
 
         this.dayGroups.set(
           (res.data ?? []).map(d => ({
@@ -197,8 +198,7 @@ export class EcoCalendarComponent implements OnInit {
 
   protected isThisWeek(): boolean {
     const monday = this.getMonday(new Date());
-    return this.currentWeekStart().toISOString().slice(0, 10) ===
-      monday.toISOString().slice(0, 10);
+    return toParisDateStr(this.currentWeekStart()) === toParisDateStr(monday);
   }
 
   protected get pinnedCount(): number {
