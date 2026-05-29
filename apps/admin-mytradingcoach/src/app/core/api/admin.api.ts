@@ -82,6 +82,35 @@ export interface CampaignMeta {
   targetCount: number;
 }
 
+export interface AdminAmbassador {
+  id: string;
+  name: string | null;
+  email: string;
+  referralCode: string;
+  totalReferrals: number;
+  premiumReferrals: number;
+  totalEarned: number;
+  pendingPayout: number;
+}
+
+export interface AdminAmbassadorDetail {
+  referralCode: string;
+  referrals: Array<{
+    id: string;
+    name: string | null;
+    email: string;
+    plan: 'FREE' | 'PREMIUM';
+    createdAt: string;
+    isActive: boolean;
+  }>;
+  total: number;
+  free: number;
+  premium: number;
+  earningsByMonth: Record<string, number>;
+  totalEarned: number;
+  pendingPayout: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminApi {
   private readonly http = inject(HttpClient);
@@ -114,6 +143,26 @@ export class AdminApi {
   sendCampaign(type: string, subject?: string, content?: string) {
     return this.http.post<{ data: { success: number; errors: number } }>(
       `${this.adminBase}/campaigns/${type}/send`, { subject, content },
+    );
+  }
+
+  getAmbassadors() {
+    return this.http.get<{ data: AdminAmbassador[] }>(
+      `${environment.apiUrl}/ambassador/list`,
+    );
+  }
+
+  getAmbassadorDetail(userId: string) {
+    return this.http.get<{ data: AdminAmbassadorDetail }>(
+      `${environment.apiUrl}/ambassador/stats`,
+      { params: { userId } },
+    );
+  }
+
+  markAmbassadorPaid(ambassadorId: string) {
+    return this.http.patch<{ data: { success: boolean } }>(
+      `${environment.apiUrl}/ambassador/pay-all/${ambassadorId}`,
+      {},
     );
   }
 }
