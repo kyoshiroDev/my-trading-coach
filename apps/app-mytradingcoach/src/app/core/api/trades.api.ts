@@ -45,7 +45,7 @@ export interface Trade {
 export interface CreateTradeDto {
   asset: string;
   side: Trade['side'];
-  entry: number;
+  entry?: number;
   exit?: number;
   stopLoss?: number;
   takeProfit?: number;

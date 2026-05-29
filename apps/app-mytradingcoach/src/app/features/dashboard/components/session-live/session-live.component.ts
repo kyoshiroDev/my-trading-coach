@@ -968,7 +968,9 @@ export class SessionLiveComponent {
       setup: this.qtSetup() as CreateTradeDto['setup'],
       session,
       timeframe: this.qtTimeframe(),
-      entry: parseFloat(this.qtEntry()) || 0,
+      entry: parseFloat(this.qtEntry()) > 0
+        ? parseFloat(this.qtEntry())
+        : (this.livePrice() ?? undefined),
       ...(this.qtQty() ? { quantity: parseFloat(this.qtQty()) } : {}),
       ...(this.qtSl() ? { stopLoss: parseFloat(this.qtSl()) } : {}),
       ...(this.qtTp() ? { takeProfit: parseFloat(this.qtTp()) } : {}),
