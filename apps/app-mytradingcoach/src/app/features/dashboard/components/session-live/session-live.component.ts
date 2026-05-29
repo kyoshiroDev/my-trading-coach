@@ -123,7 +123,11 @@ const EMOTIONS = [
               <div class="news-empty">Aucune news pour le moment</div>
             } @else {
               @for (item of newsItems(); track item.publishedDate) {
-                <div class="news-item">
+                <div class="news-item"
+                     role="button"
+                     tabindex="0"
+                     (click)="openNews(item)"
+                     (keyup.enter)="openNews(item)">
                   <div class="news-item-top">
                     <span class="news-asset-tag">{{ item.symbol }}</span>
                     <span class="news-sentiment" [class]="item.sentiment ?? 'neutral'">
@@ -585,6 +589,56 @@ const EMOTIONS = [
         </div>
       }
 
+    <!-- Modale news -->
+    @if (selectedNews(); as news) {
+      <div class="news-modal-overlay"
+           role="button"
+           tabindex="0"
+           (click)="closeNews()"
+           (keyup.escape)="closeNews()">
+        <div class="news-modal"
+             role="dialog"
+             aria-modal="true"
+             (click)="$event.stopPropagation()"
+             (keydown)="$event.stopPropagation()">
+          <!-- Header -->
+          <div class="nm-header">
+            <div class="nm-meta">
+              <span class="news-asset-tag">{{ news.symbol }}</span>
+              @if (news.site) {
+                <span class="nm-source">{{ news.site }}</span>
+              }
+              <span class="news-sentiment" [class]="news.sentiment ?? 'neutral'">
+                {{ news.sentiment === 'bull' ? '▲ Bull' : news.sentiment === 'bear' ? '▼ Bear' : '— Neutre' }}
+              </span>
+              <span class="nm-date">{{ formatNewsTime(news.publishedDate) }}</span>
+            </div>
+            <button class="nm-close" (click)="closeNews()" aria-label="Fermer">✕</button>
+          </div>
+
+          <!-- Image -->
+          @if (news.image) {
+            <img class="nm-image" [src]="news.image" [alt]="news.title" loading="lazy" />
+          }
+
+          <!-- Titre -->
+          <h2 class="nm-title">{{ news.title }}</h2>
+
+          <!-- Corps de l'article -->
+          @if (news.text) {
+            <p class="nm-body">{{ news.text }}</p>
+          }
+
+          <!-- Lien vers article complet -->
+          @if (news.url) {
+            <a class="nm-cta" [href]="news.url" target="_blank" rel="noopener noreferrer">
+              Lire l'article complet ↗
+            </a>
+          }
+        </div>
+      </div>
+    }
+
     </div>
   `,
 })
@@ -633,6 +687,16 @@ export class SessionLiveComponent {
   protected readonly closeMoodOpen = signal(false);
   protected readonly closeMood = signal<MoodState>('NEUTRAL');
   protected readonly showRecap = signal(false);
+
+  // Modal news
+  protected readonly selectedNews = signal<import('../../../../core/api/trades.api').NewsItem | null>(null);
+
+  protected openNews(item: import('../../../../core/api/trades.api').NewsItem): void {
+    this.selectedNews.set(item);
+  }
+  protected closeNews(): void {
+    this.selectedNews.set(null);
+  }
 
   // Quick trade form — asset selection
   protected readonly userAssets = signal<UserAssetItem[]>([]);

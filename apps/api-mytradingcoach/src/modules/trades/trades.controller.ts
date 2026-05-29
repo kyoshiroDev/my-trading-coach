@@ -30,7 +30,7 @@ import Anthropic from '@anthropic-ai/sdk';
 interface MarketContextItem { value: number | null; source: 'fmp' | 'yahoo' | 'binance'; }
 interface TreasuryRates    { t2y: number | null; t5y: number | null; t10y: number | null; t30y: number | null; }
 interface MarketContextDto { nq: MarketContextItem; spx: MarketContextItem; dxy: MarketContextItem; treasury: TreasuryRates; updatedAt: string; }
-interface NewsItem         { title: string; symbol: string; publishedDate: string; sentiment?: 'bull' | 'bear' | 'neutral'; url?: string; }
+interface NewsItem         { title: string; symbol: string; publishedDate: string; sentiment?: 'bull' | 'bear' | 'neutral'; url?: string; text?: string; image?: string; site?: string; }
 
 @UseGuards(JwtAuthGuard)
 @Controller('trades')

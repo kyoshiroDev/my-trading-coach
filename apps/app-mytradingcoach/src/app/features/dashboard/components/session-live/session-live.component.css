@@ -769,3 +769,61 @@
   display: flex; flex-direction: column; gap: 3px;
   overflow-y: auto; flex: 1; min-height: 0;
 }
+
+/* ─── Modale news ─── */
+.news-modal-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0, 8, 20, .75);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  animation: fadeIn .15s ease;
+}
+.news-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: slideUp .18s ease;
+}
+.nm-header {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+}
+.nm-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.nm-source {
+  font-family: var(--font-mono); font-size: 9px; color: var(--text-3);
+  background: var(--bg-3); padding: 1px 6px; border-radius: 3px;
+}
+.nm-date { font-size: 9px; font-family: var(--font-mono); color: var(--text-3); }
+.nm-close {
+  background: none; border: none; color: var(--text-3); cursor: pointer;
+  font-size: 14px; padding: 2px 6px; border-radius: 4px;
+  transition: color .15s; flex-shrink: 0;
+}
+.nm-close:hover { color: var(--text); }
+.nm-image {
+  width: 100%; max-height: 180px; object-fit: cover;
+  border-radius: 8px; flex-shrink: 0;
+}
+.nm-title {
+  font-family: var(--font-display); font-size: 16px; font-weight: 700;
+  color: var(--text); line-height: 1.4; margin: 0;
+}
+.nm-body {
+  font-size: 13px; color: var(--text-2); line-height: 1.65; margin: 0;
+}
+.nm-cta {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(59,130,246,.1); border: 1px solid rgba(59,130,246,.2);
+  color: var(--blue-bright); border-radius: 8px; padding: 8px 14px;
+  font-size: 12px; font-family: var(--font-mono); text-decoration: none;
+  transition: all .15s; align-self: flex-start;
+}
+.nm-cta:hover { background: rgba(59,130,246,.18); }

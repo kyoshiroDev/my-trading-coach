@@ -117,6 +117,9 @@ export interface NewsItem {
   publishedDate: string;
   sentiment?: 'bull' | 'bear' | 'neutral';
   url?: string;
+  text?: string;
+  image?: string;
+  site?: string;
 }
 
 @Injectable({ providedIn: 'root' })
