@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { AmbassadorApi, AmbassadorStats } from '../../core/api/ambassador.api';
+import { AmbassadorNotifService } from '../../core/services/ambassador-notif.service';
 
 @Component({
   selector: 'mtc-ambassador',
@@ -19,6 +20,7 @@ import { AmbassadorApi, AmbassadorStats } from '../../core/api/ambassador.api';
 })
 export class AmbassadorComponent implements OnInit {
   private readonly api = inject(AmbassadorApi);
+  private readonly notif = inject(AmbassadorNotifService);
 
   protected readonly stats = signal<AmbassadorStats | null>(null);
   protected readonly isLoading = signal(true);
@@ -38,6 +40,8 @@ export class AmbassadorComponent implements OnInit {
   });
 
   ngOnInit() {
+    this.notif.markSeen();
+
     this.api.getStats().subscribe({
       next: (res) => {
         this.stats.set(res.data);

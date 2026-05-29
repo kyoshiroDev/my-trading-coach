@@ -25,6 +25,26 @@ export interface AmbassadorStats {
 export class AmbassadorService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async getNewCount(userId: string, since: string): Promise<{ count: number }> {
+    const ambassador = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { referralCode: true },
+    });
+
+    if (!ambassador?.referralCode) return { count: 0 };
+
+    const sinceDate = since ? new Date(since) : new Date(0);
+
+    const count = await this.prisma.user.count({
+      where: {
+        referredBy: ambassador.referralCode,
+        createdAt: { gt: sinceDate },
+      },
+    });
+
+    return { count };
+  }
+
   async getStats(userId: string): Promise<AmbassadorStats> {
     const ambassador = await this.prisma.user.findUnique({
       where: { id: userId },

@@ -10,6 +10,7 @@ import { RouterModule, RouterLink, RouterLinkActive } from '@angular/router';
 import { UserStore } from '../../../core/stores/user.store';
 import { TradesStore } from '../../../core/stores/trades.store';
 import { AuthService } from '../../../core/auth/auth.service';
+import { AmbassadorNotifService } from '../../../core/services/ambassador-notif.service';
 import { OnboardingComponent } from '../../../features/onboarding/onboarding.component';
 import { PlanModalComponent } from '../plan-modal/plan-modal.component';
 
@@ -151,6 +152,9 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             >
               <span class="nav-icon">🤝</span>
               Ambassadeur
+              @if (ambassadorNotif.newReferrals() > 0) {
+                <span class="nav-badge-notif">{{ ambassadorNotif.newReferrals() }}</span>
+              }
             </a>
           }
 
@@ -256,6 +260,7 @@ export class SidebarComponent {
   protected readonly tradesStore = inject(TradesStore);
   private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly ambassadorNotif = inject(AmbassadorNotifService);
 
   protected readonly sidebarOpen   = signal(false);
   protected readonly showPlanModal  = signal(false);

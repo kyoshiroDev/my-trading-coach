@@ -31,4 +31,10 @@ export class AmbassadorApi {
   getStats(): Observable<{ data: AmbassadorStats }> {
     return this.http.get<{ data: AmbassadorStats }>(`${this.base}/stats`);
   }
+
+  getNewCount(since: string): Observable<{ data: { count: number } }> {
+    return this.http.get<{ data: { count: number } }>(`${this.base}/new-count`, {
+      params: { since },
+    });
+  }
 }

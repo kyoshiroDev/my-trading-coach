@@ -132,6 +132,25 @@
   letter-spacing: 0.5px;
 }
 
+.nav-badge-notif {
+  margin-left: auto;
+  background: var(--red);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 1px 6px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 16px;
+  animation: badgePop .3s ease;
+}
+@keyframes badgePop {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
 .settings-item {
   margin-top: auto;
   background: none;
