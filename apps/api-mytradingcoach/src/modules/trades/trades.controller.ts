@@ -25,6 +25,7 @@ import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
 import { INSTRUMENTS } from './instruments.const';
+import Anthropic from '@anthropic-ai/sdk';
 
 interface MarketContextItem { value: number | null; source: 'fmp' | 'yahoo' | 'binance'; }
 interface TreasuryRates    { t2y: number | null; t5y: number | null; t10y: number | null; t30y: number | null; }
@@ -94,9 +95,42 @@ export class TradesController {
       const res = await fetch(url);
       if (!res.ok) return [];
       const data = await res.json() as NewsItem[];
-      try { await this.redis.setex(cacheKey, 60, JSON.stringify(data)); } catch { /* ignore */ }
-      return data;
+      const translated = await this.translateNewsTitles(data);
+      try { await this.redis.setex(cacheKey, 60, JSON.stringify(translated)); } catch { /* ignore */ }
+      return translated;
     } catch { return []; }
+  }
+
+  private async translateNewsTitles(items: NewsItem[]): Promise<NewsItem[]> {
+    if (!items.length) return items;
+    const apiKey = process.env['ANTHROPIC_API_KEY'];
+    if (!apiKey) return items;
+
+    try {
+      const titles = items.map(i => i.title);
+      const anthropic = new Anthropic({ apiKey });
+      const msg = await anthropic.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2048,
+        messages: [{
+          role: 'user',
+          content: `Traduis ces titres de news financières en français. Réponds UNIQUEMENT avec un tableau JSON de strings dans le même ordre, sans aucun texte supplémentaire.\n\n${JSON.stringify(titles)}`,
+        }],
+      });
+
+      const raw = msg.content[0].type === 'text' ? msg.content[0].text.trim() : '';
+      const start = raw.indexOf('[');
+      const end   = raw.lastIndexOf(']');
+      if (start === -1 || end === -1) return items;
+
+      const translated: string[] = JSON.parse(raw.slice(start, end + 1));
+      return items.map((item, i) => ({
+        ...item,
+        title: translated[i] ?? item.title,
+      }));
+    } catch {
+      return items;
+    }
   }
 
   private async fetchDxy(): Promise<number | null> {
