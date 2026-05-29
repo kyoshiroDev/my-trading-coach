@@ -616,25 +616,21 @@ const EMOTIONS = [
             <button class="nm-close" (click)="closeNews()" aria-label="Fermer">✕</button>
           </div>
 
-          <!-- Image -->
-          @if (news.image) {
-            <img class="nm-image" [src]="news.image" [alt]="news.title" loading="lazy" />
-          }
-
-          <!-- Titre -->
-          <h2 class="nm-title">{{ news.title }}</h2>
-
-          <!-- Corps de l'article -->
-          @if (news.text) {
-            <p class="nm-body">{{ news.text }}</p>
-          }
-
-          <!-- Lien vers article complet -->
-          @if (news.url) {
-            <a class="nm-cta" [href]="news.url" target="_blank" rel="noopener noreferrer">
-              Lire l'article complet ↗
-            </a>
-          }
+          <!-- Zone scrollable : image + titre + corps + lien -->
+          <div class="nm-body-wrap">
+            @if (news.image) {
+              <img class="nm-image" [src]="news.image" [alt]="news.title" loading="lazy" />
+            }
+            <h2 class="nm-title">{{ news.title }}</h2>
+            @if (news.text) {
+              <p class="nm-body">{{ news.text }}</p>
+            }
+            @if (news.url) {
+              <a class="nm-cta" [href]="news.url" target="_blank" rel="noopener noreferrer">
+                Lire l'article complet ↗
+              </a>
+            }
+          </div>
         </div>
       </div>
     }

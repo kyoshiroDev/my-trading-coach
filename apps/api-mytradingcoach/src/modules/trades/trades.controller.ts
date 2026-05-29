@@ -95,26 +95,26 @@ export class TradesController {
       const res = await fetch(url);
       if (!res.ok) return [];
       const data = await res.json() as NewsItem[];
-      const translated = await this.translateNewsTitles(data);
+      const translated = await this.translateNewsItems(data);
       try { await this.redis.setex(cacheKey, 60, JSON.stringify(translated)); } catch { /* ignore */ }
       return translated;
     } catch { return []; }
   }
 
-  private async translateNewsTitles(items: NewsItem[]): Promise<NewsItem[]> {
+  private async translateNewsItems(items: NewsItem[]): Promise<NewsItem[]> {
     if (!items.length) return items;
     const apiKey = process.env['ANTHROPIC_API_KEY'];
     if (!apiKey) return items;
 
     try {
-      const titles = items.map(i => i.title);
+      const payload = items.map(i => ({ title: i.title, text: i.text ?? '' }));
       const anthropic = new Anthropic({ apiKey });
       const msg = await anthropic.messages.create({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 2048,
+        max_tokens: 8192,
         messages: [{
           role: 'user',
-          content: `Traduis ces titres de news financières en français. Réponds UNIQUEMENT avec un tableau JSON de strings dans le même ordre, sans aucun texte supplémentaire.\n\n${JSON.stringify(titles)}`,
+          content: `Traduis ces news financières en français. Réponds UNIQUEMENT avec un tableau JSON d'objets {title, text} dans le même ordre, sans aucun texte supplémentaire.\n\n${JSON.stringify(payload)}`,
         }],
       });
 
@@ -123,10 +123,11 @@ export class TradesController {
       const end   = raw.lastIndexOf(']');
       if (start === -1 || end === -1) return items;
 
-      const translated: string[] = JSON.parse(raw.slice(start, end + 1));
+      const translated: { title: string; text: string }[] = JSON.parse(raw.slice(start, end + 1));
       return items.map((item, i) => ({
         ...item,
-        title: translated[i] ?? item.title,
+        title: translated[i]?.title ?? item.title,
+        text:  translated[i]?.text  ?? item.text,
       }));
     } catch {
       return items;
