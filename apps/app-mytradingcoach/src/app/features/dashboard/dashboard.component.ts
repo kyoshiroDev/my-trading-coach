@@ -87,7 +87,7 @@ import { ChartService } from '../../core/services/chart.service';
           <h1 class="greeting-title">Bonjour, {{ userStore.displayName() }} 👋</h1>
           <div class="greeting-sub">{{ today | date:'EEEE d MMMM' }}</div>
           <div class="session-tabs">
-            <button class="session-tab" [class.active]="activeTab() === 'dashboard'" data-testid="tab-dashboard" (click)="selectTab('dashboard')">① Dashboard actuel</button>
+            <button class="session-tab" [class.active]="activeTab() === 'dashboard'" data-testid="tab-dashboard" (click)="selectTab('dashboard')">① Dashboard</button>
             <button class="session-tab" [class.active]="activeTab() === 'morning'" data-testid="tab-morning" (click)="selectTab('morning')">
               ② Pré-session
             </button>
