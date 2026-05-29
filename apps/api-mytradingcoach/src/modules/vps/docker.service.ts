@@ -23,13 +23,16 @@ export class DockerService {
     return lines.map(line => {
       try {
         const d = JSON.parse(line);
-        const running = d.status?.toLowerCase().includes('up');
-        const error = d.status?.toLowerCase().includes('exit') && !running;
+        const s = d.status?.toLowerCase() ?? '';
+        const isUp = s.includes('up');
+        const isUnhealthy = s.includes('unhealthy');
+        const isExited = s.includes('exit');
+        const status = (isExited && !isUp) || isUnhealthy ? 'error' : isUp ? 'running' : 'stopped';
         return {
           id: d.id,
           name: d.name.replace(/^\//, ''),
           image: d.image,
-          status: running ? 'running' : error ? 'error' : 'stopped',
+          status,
           cpu: 0,
           ram: 0,
           ports: d.ports ? d.ports.split(', ').filter(Boolean) : [],
