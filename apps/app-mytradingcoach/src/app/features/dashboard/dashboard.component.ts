@@ -99,7 +99,7 @@ import { ChartService } from '../../core/services/chart.service';
       </div>
     }
 
-    <div class="content">
+    <div class="content" [class.live-mode]="activeTab() === 'live'">
       <!-- ── Dashboard ─────────────────────────────────────────────────── -->
         <div class="page-header">
           <div class="greeting-block">
@@ -210,20 +210,22 @@ import { ChartService } from '../../core/services/chart.service';
           />
         }
         @if (activeTab() === 'live') {
-          <mtc-session-live
-            [session]="activeSession()"
-            [todayTrades]="todayTrades()"
-            [liveStats]="todayStats()"
-            [ecoCalendar]="ecoCalendarDay()"
-            [marketCtx]="marketCtx()"
-            [newsItems]="newsItems()"
-            [breakingNews]="breakingNews()"
-            [triggerCloseModal]="triggerCloseModal()"
-            (startSession)="startSession()"
-            (tradeClosed)="confirmCloseTrade($event)"
-            (sessionClosed)="onSessionClosed($event)"
-            (tradeLogged)="logQuickTrade($event)"
-          />
+          <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;">
+            <mtc-session-live
+              [session]="activeSession()"
+              [todayTrades]="todayTrades()"
+              [liveStats]="todayStats()"
+              [ecoCalendar]="ecoCalendarDay()"
+              [marketCtx]="marketCtx()"
+              [newsItems]="newsItems()"
+              [breakingNews]="breakingNews()"
+              [triggerCloseModal]="triggerCloseModal()"
+              (startSession)="startSession()"
+              (tradeClosed)="confirmCloseTrade($event)"
+              (sessionClosed)="onSessionClosed($event)"
+              (tradeLogged)="logQuickTrade($event)"
+            />
+          </div>
         }
 
         @if (activeTab() === 'dashboard') {

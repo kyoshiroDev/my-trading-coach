@@ -2,6 +2,14 @@
   padding: 28px;
   flex: 1;
   max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.content.live-mode {
+  padding: 0;
+  overflow: hidden;
 }
 
 /* ─── Page header ─── */
@@ -17,6 +25,7 @@
   flex-direction: column;
   gap: 2px;
   flex-shrink: 0;
+  min-width: 280px;
 }
 .greeting-title {
   font-family: var(--font-display);
@@ -37,7 +46,9 @@
 }
 .header-spacer {
   flex-shrink: 0;
-  width: 220px;
+  min-width: 280px;
+  flex: 1;
+  max-width: 400px;
 }
 
 /* ─── Stats Row ─── */

@@ -79,26 +79,6 @@ const EMOTIONS = [
         </div>
       }
 
-      <!-- Barre session active -->
-      <div class="session-active-bar">
-        <div class="pulse-dot"></div>
-        <span class="session-timer">{{ elapsed() }}</span>
-        <span style="font-size:12px;color:var(--text-3);">
-          Session en cours · {{ moodEmoji(session()?.moodStart) }}
-        </span>
-        <span style="font-size:12px;color:var(--text-2);">
-          Trades : <strong style="color:var(--text)">{{ liveStats()?.tradesCount ?? 0 }}</strong>
-        </span>
-        <span class="session-pnl" [style.color]="pnlColor()">
-          {{ pnlDisplay() }}
-        </span>
-        <button
-          class="session-stop-btn"
-          data-testid="close-session"
-          (click)="closeMoodOpen.set(true)"
-        >Clôturer session</button>
-      </div>
-
       <!-- Mini stats row -->
       <div class="mini-stats-row">
         <div class="mini-stat">
