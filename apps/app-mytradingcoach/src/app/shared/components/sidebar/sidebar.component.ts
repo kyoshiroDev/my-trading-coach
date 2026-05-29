@@ -11,6 +11,7 @@ import { UserStore } from '../../../core/stores/user.store';
 import { TradesStore } from '../../../core/stores/trades.store';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AmbassadorNotifService } from '../../../core/services/ambassador-notif.service';
+import { LiveModeService } from '../../../core/services/live-mode.service';
 import { OnboardingComponent } from '../../../features/onboarding/onboarding.component';
 import { PlanModalComponent } from '../plan-modal/plan-modal.component';
 
@@ -246,7 +247,8 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
       </aside>
 
       <!-- ─── MAIN ─── -->
-      <main class="main-content">
+      <main class="main-content"
+            [style.overflow]="liveModeService.isLive() ? 'hidden' : null">
         <router-outlet />
       </main>
     </div>
@@ -258,6 +260,7 @@ export class SidebarComponent {
   private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly ambassadorNotif = inject(AmbassadorNotifService);
+  protected readonly liveModeService = inject(LiveModeService);
 
   protected readonly sidebarOpen   = signal(false);
   protected readonly showPlanModal  = signal(false);

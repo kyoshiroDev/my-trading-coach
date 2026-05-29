@@ -48,6 +48,7 @@ import { SessionMorningComponent } from './components/session-morning/session-mo
 import { SessionLiveComponent } from './components/session-live/session-live.component';
 import { ChartService } from '../../core/services/chart.service';
 import { todayParis, toParisDateStr } from '../../core/utils/paris-date';
+import { LiveModeService } from '../../core/services/live-mode.service';
 
 @Component({
   selector: 'mtc-dashboard',
@@ -415,6 +416,7 @@ export class DashboardComponent {
   private readonly debriefApi = inject(DebriefApi);
   private readonly destroyRef = inject(DestroyRef);
   private readonly chartService = inject(ChartService);
+  private readonly liveModeService = inject(LiveModeService);
 
   protected readonly showTradeForm = signal(false);
   protected readonly showPlanModal = signal(false);
@@ -604,9 +606,14 @@ export class DashboardComponent {
 
     // Contrôle scroll main-content : live-mode → overflow:hidden pour scroll colonnes
     effect(() => {
-      document.body.classList.toggle('live-mode-active', this.activeTab() === 'live');
+      const live = this.activeTab() === 'live';
+      document.body.classList.toggle('live-mode-active', live);
+      if (live) { this.liveModeService.activate(); } else { this.liveModeService.deactivate(); }
     });
-    this.destroyRef.onDestroy(() => document.body.classList.remove('live-mode-active'));
+    this.destroyRef.onDestroy(() => {
+      document.body.classList.remove('live-mode-active');
+      this.liveModeService.deactivate();
+    });
 
     // Recharge la summary quand un nouveau trade apparaît dans le store
     // (cas du wizard : le trade est ajouté via addTrade sans passer par le dashboard)
