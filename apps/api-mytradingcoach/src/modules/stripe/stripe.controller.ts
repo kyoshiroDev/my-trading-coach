@@ -36,8 +36,8 @@ export class StripeController {
   ) {
     const priceId =
       dto.plan === 'yearly'
-        ? this.config.getOrThrow<string>('STRIPE_PRICE_YEARLY')
-        : this.config.getOrThrow<string>('STRIPE_PRICE_MONTHLY');
+        ? this.config.getOrThrow<string>('STRIPE_STARTER_PRICE_YEARLY')
+        : this.config.getOrThrow<string>('STRIPE_STARTER_PRICE_MONTHLY');
 
     const frontendUrl =
       this.config.get<string>('FRONTEND_URL') ?? 'http://localhost:4200';
