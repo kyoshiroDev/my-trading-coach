@@ -808,7 +808,7 @@ export class DashboardComponent {
   private fetchNewsItems(): void {
     const assets = this.todayTrades().map(t => t.asset);
     const symbols = [...new Set(assets)].slice(0, 5);
-    if (!symbols.length) return;
+    // symbols peut être vide — l'API retourne QQQ/SPY/BTC par défaut
     this.tradesApi.getNews(symbols)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -816,7 +816,9 @@ export class DashboardComponent {
           this.newsItems.set(res.data ?? []);
           const breaking = (res.data ?? []).find(i =>
             i.title.toLowerCase().includes('fed') ||
-            i.title.toLowerCase().includes('powell'),
+            i.title.toLowerCase().includes('powell') ||
+            i.title.toLowerCase().includes('ecb') ||
+            i.title.toLowerCase().includes('fomc'),
           );
           this.breakingNews.set(breaking?.title ?? null);
         },

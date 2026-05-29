@@ -59,14 +59,14 @@ export class TradesController {
     const [nq, spx, dxy, treasury] = await Promise.allSettled([
       this.fetchYahooPrice('NQ=F'),
       this.fetchFmpPrice('SPY'),
-      this.fetchFmpPrice('DXY'),
+      this.fetchDxy(),
       this.fetchTreasuryRates(),
     ]);
 
     const result: MarketContextDto = {
       nq:       { value: nq.status      === 'fulfilled' ? nq.value      : null, source: 'yahoo' },
       spx:      { value: spx.status     === 'fulfilled' ? spx.value     : null, source: 'fmp'   },
-      dxy:      { value: dxy.status     === 'fulfilled' ? dxy.value     : null, source: 'fmp'   },
+      dxy:      { value: dxy.status     === 'fulfilled' ? dxy.value     : null, source: 'yahoo' },
       treasury: treasury.status === 'fulfilled' ? treasury.value : { t2y: null, t5y: null, t10y: null, t30y: null },
       updatedAt: new Date().toISOString(),
     };
@@ -87,11 +87,8 @@ export class TradesController {
     if (!apiKey) return [];
 
     try {
-      const fmpSymbols = (symbols || '')
-        .split(',')
-        .map(s => this.mapSymbolToFmp(s.trim()))
-        .filter(Boolean)
-        .join(',');
+      const rawSymbols = (symbols || '').split(',').map(s => this.mapSymbolToFmp(s.trim())).filter(Boolean);
+      const fmpSymbols = rawSymbols.length > 0 ? rawSymbols.join(',') : 'QQQ,SPY,BTCUSD,EURUSD';
 
       const url = `https://financialmodelingprep.com/stable/news/stock?symbols=${fmpSymbols}&limit=20&apikey=${apiKey}`;
       const res = await fetch(url);
@@ -102,6 +99,12 @@ export class TradesController {
     } catch { return []; }
   }
 
+  private async fetchDxy(): Promise<number | null> {
+    const fmpVal = await this.fetchFmpPrice('USDX');
+    if (fmpVal !== null) return fmpVal;
+    return this.fetchYahooPrice('DX-Y.NYB');
+  }
+
   private async fetchTreasuryRates(): Promise<TreasuryRates> {
     const apiKey = process.env['FMP_API_KEY'];
     if (!apiKey) return { t2y: null, t5y: null, t10y: null, t30y: null };
@@ -109,13 +112,14 @@ export class TradesController {
       const url = `https://financialmodelingprep.com/stable/treasury-rates?apikey=${apiKey}`;
       const res = await fetch(url);
       if (!res.ok) return { t2y: null, t5y: null, t10y: null, t30y: null };
-      const data = await res.json() as Array<{ year2: number; year5: number; year10: number; year30: number }>;
+      const data = await res.json() as Array<Record<string, number>>;
       const latest = data?.[0];
+      if (!latest) return { t2y: null, t5y: null, t10y: null, t30y: null };
       return {
-        t2y:  latest?.year2  ?? null,
-        t5y:  latest?.year5  ?? null,
-        t10y: latest?.year10 ?? null,
-        t30y: latest?.year30 ?? null,
+        t2y:  latest['year2']   ?? latest['twoYear']    ?? latest['2Year']   ?? null,
+        t5y:  latest['year5']   ?? latest['fiveYear']   ?? latest['5Year']   ?? null,
+        t10y: latest['year10']  ?? latest['tenYear']    ?? latest['10Year']  ?? null,
+        t30y: latest['year30']  ?? latest['thirtyYear'] ?? latest['30Year']  ?? null,
       };
     } catch { return { t2y: null, t5y: null, t10y: null, t30y: null }; }
   }
@@ -212,6 +216,16 @@ export class TradesController {
       'AUD/USD': 'AUDUSD', 'USD/CHF': 'USDCHF', 'NZD/USD': 'NZDUSD',
       'USD/CAD': 'USDCAD', 'EUR/GBP': 'EURGBP', 'EUR/JPY': 'EURJPY',
       'GBP/JPY': 'GBPJPY',
+      'MNQ': 'QQQ', 'NQ': 'QQQ',
+      'MES': 'SPY', 'ES': 'SPY',
+      'MYM': 'DIA', 'YM': 'DIA',
+      'GC': 'GLD', 'MGC': 'GLD',
+      'CL': 'USO', 'MCL': 'USO',
+      'M2K': 'IWM', 'RTY': 'IWM',
+      'BTC/USDT': 'BTCUSD', 'ETH/USDT': 'ETHUSD',
+      'BTC/USD':  'BTCUSD', 'ETH/USD':  'ETHUSD',
+      'SOL/USDT': 'SOLUSD', 'XRP/USDT': 'XRPUSD',
+      'BNB/USDT': 'BNBUSD', 'ADA/USDT': 'ADAUSD',
     };
     return map[symbol] ?? symbol;
   }
