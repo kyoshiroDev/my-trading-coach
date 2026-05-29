@@ -40,7 +40,7 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
         <div class="sb-left">
           <div class="sb-title">
             🎯 Prépare ta session
-            <span class="badge-beta">BÊTA</span>
+           
           </div>
           <div class="sb-sub">Comment tu te sens ce matin ? Ça influence tes décisions.</div>
           <div class="mood-row">
@@ -132,7 +132,7 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
           <div class="card-header">
             <div class="card-title">
               Objectifs semaine
-              <span class="badge-beta">BÊTA</span>
+             
             </div>
             @if (objectives().length) {
               <span style="font-size:11px;color:var(--text-3);font-family:var(--font-mono)">{{ objectives().length }} obj.</span>
@@ -210,7 +210,7 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
         <div class="card-header">
           <div class="card-title">
             📅 {{ nextTradingLabel() }}
-            <span class="badge-beta">BÊTA</span>
+           
           </div>
           <div style="display:flex;align-items:center;gap:6px;">
             <span class="ai-badge">AI</span>

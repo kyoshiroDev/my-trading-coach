@@ -118,7 +118,7 @@ const EMOTIONS = [
             <div class="card-title" style="font-size:12px;display:flex;align-items:center;gap:6px;">
               Live feed
               <div class="pulse-dot"></div>
-              <span class="badge-beta">BÊTA</span>
+             
             </div>
           </div>
 
@@ -215,7 +215,7 @@ const EMOTIONS = [
             <div class="card-title" style="font-size:12px;display:flex;align-items:center;gap:6px;">
               📅 Calendrier — Session en cours
               <div class="pulse-dot"></div>
-              <span class="badge-beta">BÊTA</span>
+             
             </div>
             <span class="ai-badge">AI</span>
           </div>
@@ -334,7 +334,7 @@ const EMOTIONS = [
         <div class="qt-panel" data-testid="quick-trade-form">
           <div class="qt-title">
             ⚡ Trade rapide
-            <span class="badge-beta">BÊTA</span>
+           
           </div>
 
           <!-- Asset select -->

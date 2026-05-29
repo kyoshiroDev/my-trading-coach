@@ -232,12 +232,9 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             <div class="user-info">
               <div class="user-name">{{ userStore.displayName() }}</div>
               <div class="user-plan"
-                [class.beta]="userStore.user()?.role === 'BETA_TESTER'"
-                [class.premium]="userStore.isPremium() && userStore.user()?.role !== 'BETA_TESTER'"
+                [class.premium]="userStore.isPremium()"
                 [class.free]="!userStore.isPremium()">
-                @if (userStore.user()?.role === 'BETA_TESTER') {
-                  ★ BETA
-                } @else if (userStore.isPremium()) {
+                @if (userStore.isPremium()) {
                   ★ PREMIUM
                 } @else {
                   FREE

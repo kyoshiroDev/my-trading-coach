@@ -82,18 +82,17 @@ import { ChartService } from '../../core/services/chart.service';
     />
 
     <div class="content">
-      <!-- ── DASHBOARD V2 — BETA_TESTER + ADMIN uniquement ────────────── -->
-      @if (userStore.isBeta()) {
+      <!-- ── Dashboard ─────────────────────────────────────────────────── -->
         <div class="greeting">
           <h1 class="greeting-title">Bonjour, {{ userStore.displayName() }} 👋</h1>
           <div class="greeting-sub">{{ today | date:'EEEE d MMMM' }}</div>
           <div class="session-tabs">
             <button class="session-tab" [class.active]="activeTab() === 'dashboard'" data-testid="tab-dashboard" (click)="selectTab('dashboard')">① Dashboard actuel</button>
             <button class="session-tab" [class.active]="activeTab() === 'morning'" data-testid="tab-morning" (click)="selectTab('morning')">
-              ② Matin — pré-session <span class="badge-beta">BÊTA</span>
+              ② Matin — pré-session
             </button>
             <button class="session-tab" [class.active]="activeTab() === 'live'" data-testid="tab-live" (click)="selectTab('live')">
-              ③ Session live <span class="badge-beta">BÊTA</span>
+              ③ Session live
             </button>
           </div>
         </div>
@@ -363,351 +362,6 @@ import { ChartService } from '../../core/services/chart.service';
             </div>
           </div>
         }
-      }
-
-      <!-- ── DASHBOARD V1 — users non-bêta uniquement ─────────────── -->
-      @if (!userStore.isBeta()) {
-
-      <!-- Bannière limite FREE -->
-      @if (!userStore.isPremium() && tradesStore.limitReached()) {
-        <div class="limit-banner reached">
-          <div class="limit-banner-left">
-            <span class="limit-banner-ic">🚫</span>
-            <div>
-              <div class="limit-banner-title">Limite mensuelle atteinte</div>
-              <div class="limit-banner-sub">Tu as utilisé tes {{ tradesStore.monthlyLimit() }} trades ce mois. Passe à Premium pour trader sans limites.</div>
-            </div>
-          </div>
-          <button class="limit-banner-btn" (click)="showPlanModal.set(true)">Passer Premium</button>
-        </div>
-      } @else if (!userStore.isPremium() && tradesStore.nearLimit()) {
-        <div class="limit-banner near">
-          <div class="limit-banner-left">
-            <span class="limit-banner-ic">⚠️</span>
-            <div>
-              <div class="limit-banner-title">{{ tradesStore.monthlyCount() }}/{{ tradesStore.monthlyLimit() }} trades ce mois</div>
-              <div class="limit-banner-sub">Tu approches de ta limite gratuite. Upgrade pour continuer sans restrictions.</div>
-            </div>
-          </div>
-          <button class="limit-banner-btn ghost" (click)="showPlanModal.set(true)">Upgrade</button>
-        </div>
-      }
-
-      <!-- Greeting + Discord inline -->
-      <div class="dashboard-header-row">
-        <h1 class="greeting-title">
-          Bonjour, {{ userStore.displayName() }} 👋
-        </h1>
-        @if (!userStore.user()?.discordId) {
-          <div class="discord-badge">
-            <span class="discord-badge-ic">💬</span>
-            <a href="https://discord.gg/TDK2npvkSN" target="_blank" rel="noopener"
-              class="discord-badge-link">Rejoindre Discord</a>
-          </div>
-        }
-      </div>
-
-      <!-- Premium upsell banner -->
-      @if (!userStore.isPremium()) {
-        <div class="premium-banner">
-          <div class="premium-banner-left">
-            <span class="premium-banner-icon">⚡</span>
-            <div>
-              <div class="premium-banner-title">Passe à Premium</div>
-              <div class="premium-banner-sub">
-                Analytics avancés, IA Insights, Weekly Debrief automatique
-              </div>
-            </div>
-          </div>
-          <div class="premium-banner-right">
-            <div class="premium-banner-price">
-              <span class="premium-banner-amount">39€</span>
-              <span class="premium-banner-period">/mois</span>
-              <div class="premium-banner-trial">7 jours gratuits · sans CB</div>
-            </div>
-            <button
-              class="premium-banner-btn"
-              (click)="showPlanModal.set(true)"
-            >
-              Essayer gratuitement
-            </button>
-          </div>
-        </div>
-      }
-
-      <!-- Stats row -->
-      @if (!isLoading()) {
-        <div class="stats-row has-capital">
-          <div class="stat-card">
-            <div class="stat-label">Capital</div>
-            <div class="stat-value mono" [style.color]="capitalColor()">
-              {{ capitalDisplay() }}
-            </div>
-            <div class="stat-sub">
-              @if (capitalPct() !== 0) {
-                <span class="change" [class]="capitalPct() > 0 ? 'up' : 'down'">
-                  {{ capitalPct() > 0 ? '▲' : '▼' }}
-                  {{ capitalPct() | number: '1.1-1' }}%
-                </span>
-              } @else {
-                <span style="color:var(--text-3)">base</span>
-              }
-            </div>
-            <div class="stat-bg-icon">💼</div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-label">P&amp;L Total</div>
-            <div class="stat-value" [style.color]="pnlColor()">
-              {{ summary()?.totalPnl ?? 0 | pnlFormat }}
-            </div>
-            <div class="stat-sub">
-              @if ((summary()?.totalTrades ?? 0) > 0) {
-                <span
-                  class="change"
-                  [class]="(summary()?.totalPnl ?? 0) >= 0 ? 'up' : 'down'"
-                >
-                  {{ (summary()?.totalPnl ?? 0) >= 0 ? '▲' : '▼' }} ce mois
-                </span>
-              } @else {
-                <span style="color:var(--text-3)">Aucune donnée</span>
-              }
-            </div>
-            <div class="stat-bg-icon">💰</div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-label">Win Rate</div>
-            <div class="stat-value" [style.color]="winRateColor()">
-              {{ (summary()?.winRate ?? 0).toFixed(1) }}%
-            </div>
-            <div class="stat-sub">
-              @if ((summary()?.totalTrades ?? 0) > 0) {
-                <span>vs mois précédent</span>
-              } @else {
-                <span style="color:var(--text-3)">Aucune donnée</span>
-              }
-            </div>
-            <div class="stat-bg-icon">🎯</div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-label">Drawdown Max</div>
-            <div class="stat-value" [style.color]="drawdownColor()">
-              {{ drawdownDisplay() | pnlFormat }}
-            </div>
-            <div class="stat-sub">
-              @if ((summary()?.totalTrades ?? 0) > 0) {
-                <span>sur capital</span>
-              } @else {
-                <span style="color:var(--text-3)">Aucune donnée</span>
-              }
-            </div>
-            <div class="stat-bg-icon">📉</div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-label">Trades</div>
-            <div class="stat-value">
-              {{ summary()?.totalTrades ?? tradesStore.trades().length }}
-            </div>
-            <div class="stat-sub">
-              @if ((summary()?.totalTrades ?? 0) === 0) {
-                <span style="color:var(--text-3)">Aucune donnée</span>
-              } @else if ((summary()?.streak ?? 0) > 0) {
-                <span class="change up">▲ +{{ summary()?.streak }} streak</span>
-              } @else if ((summary()?.streak ?? 0) < 0) {
-                <span class="change down"
-                  >▼ {{ summary()?.streak }} streak</span
-                >
-              } @else {
-                <span class="change">— pas de streak</span>
-              }
-            </div>
-            <div class="stat-bg-icon">🔢</div>
-          </div>
-        </div>
-      } @else {
-        <div class="stats-row">
-          @for (_ of [0, 1, 2, 3]; track $index) {
-            <div class="stat-card stat-skeleton"></div>
-          }
-        </div>
-      }
-
-      <!-- LIGNE 1 : Equity Curve pleine largeur -->
-      <div class="top-charts-row">
-        <div class="card equity-card equity-card-full">
-          <div class="card-header">
-            <div class="card-title">Equity Curve</div>
-            <div style="display:flex;align-items:center;gap:10px;">
-              <span style="font-size:11px;color:var(--text-3);font-family:var(--font-mono);">
-                {{ currentMonthLabel() }}
-              </span>
-              <a routerLink="/analytics" class="card-action">Détails →</a>
-            </div>
-          </div>
-          <div class="chart-container">
-            <canvas #equityChart></canvas>
-            @if (!userStore.isPremium() || equityCurve().length === 0) {
-              <div class="empty-chart">
-                @if (!userStore.isPremium()) {
-                  Courbe disponible en Premium
-                } @else {
-                  Aucun trade ce mois
-                }
-              </div>
-            }
-          </div>
-        </div>
-      </div>
-
-      <!-- LIGNE 2 : Trades + Win Rate + Émotions -->
-      <div class="bottom-widgets-row">
-        <!-- Derniers trades -->
-        <div class="card recent-trades-card">
-          <div class="card-header">
-            <div class="card-title">Derniers trades</div>
-            <a routerLink="/journal" class="card-action">Voir →</a>
-          </div>
-          @if (tradesStore.trades().length === 0) {
-            <div class="empty-state">
-              <p>Aucun trade</p>
-              <small>Enregistre ton premier trade</small>
-            </div>
-          } @else {
-            <div class="trade-list-compact">
-              @for (trade of tradesStore.trades().slice(0, 4); track trade.id) {
-                <div class="trade-row-compact">
-                  <div class="trade-row-top">
-                    <span
-                      class="trade-side"
-                      [class]="trade.side === 'LONG' ? 'long' : 'short'"
-                      >{{ trade.side }}</span
-                    >
-                    <span class="trade-asset-compact">{{
-                      trade.asset | uppercase
-                    }}</span>
-                    <span class="trade-emotion">{{
-                      trade.emotion | emotionEmoji
-                    }}</span>
-                  </div>
-                  <div class="trade-row-bottom">
-                    <span class="trade-setup-compact">{{ trade.setup }}</span>
-                    <span
-                      class="trade-pnl"
-                      [style.color]="trade.pnl | pnlColor"
-                      >{{ trade.pnl | pnlFormat: trade.entry }}</span
-                    >
-                  </div>
-                </div>
-              }
-            </div>
-          }
-        </div>
-
-        <!-- Win Rate par stratégie -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">Win Rate / stratégie</div>
-            <a routerLink="/analytics" class="card-action">Voir →</a>
-          </div>
-          @if (bySetup().length === 0) {
-            <p class="empty-widget-msg">
-              Tes setups apparaîtront<br />après tes premiers trades
-            </p>
-          } @else {
-            <div class="donut-wrap">
-              <svg
-                class="donut-svg"
-                width="80"
-                height="80"
-                viewBox="0 0 100 100"
-              >
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="38"
-                  fill="none"
-                  stroke="var(--bg-3)"
-                  stroke-width="12"
-                />
-                @for (seg of segments(); track seg.label) {
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="38"
-                    fill="none"
-                    [attr.stroke]="seg.label | setupColorMap"
-                    stroke-width="12"
-                    [attr.stroke-dasharray]="seg.dash"
-                    [attr.stroke-dashoffset]="seg.offset"
-                    stroke-linecap="round"
-                    transform="rotate(-90 50 50)"
-                  />
-                }
-                <text
-                  x="50"
-                  y="53"
-                  text-anchor="middle"
-                  font-family="Syne"
-                  font-weight="700"
-                  font-size="14"
-                  fill="#e2eaf5"
-                >
-                  {{ (summary()?.winRate ?? 0).toFixed(0) }}%
-                </text>
-              </svg>
-              <div class="donut-legend">
-                @for (s of bySetup().slice(0, 4); track s.setup) {
-                  <div class="legend-item">
-                    <div
-                      class="legend-dot"
-                      [style.background]="s.setup | setupColor"
-                    ></div>
-                    {{ s.setup | titlecase }}
-                    <span class="legend-val">{{ s.winRate.toFixed(0) }}%</span>
-                  </div>
-                }
-              </div>
-            </div>
-          }
-        </div>
-
-        <!-- États émotionnels -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">États émotionnels</div>
-            <a routerLink="/analytics" class="card-action">Détails →</a>
-          </div>
-          @if (emotionStats().length === 0) {
-            <p class="empty-widget-msg">
-              Enregistre tes premiers trades<br />pour voir tes états
-              émotionnels
-            </p>
-          } @else {
-            <div class="emotion-grid">
-              @for (e of emotionStats(); track e.emotion) {
-                <div class="emotion-row">
-                  <div class="emotion-label">
-                    <span>{{ e.emotion | emotionLabel }}</span>
-                    <span>{{ e.pct }}%</span>
-                  </div>
-                  <div class="bar-track">
-                    <div
-                      class="bar-fill"
-                      [style.width.%]="e.pct"
-                      [style.background]="e.emotion | emotionColor"
-                    ></div>
-                  </div>
-                </div>
-              }
-            </div>
-          }
-        </div>
-      </div>
-
-      } <!-- fin @if V1 -->
 
       <!-- Modals — accessibles depuis tous les onglets -->
       <mtc-trade-form
@@ -853,7 +507,7 @@ export class DashboardComponent {
   });
 
   protected readonly showGlobalStats = computed(
-    () => !this.userStore.isBeta() || this.activeTab() !== 'live',
+    () => this.activeTab() !== 'live',
   );
 
   protected readonly equityCurve = computed(
@@ -913,11 +567,9 @@ export class DashboardComponent {
       }, 50);
     });
 
-    // ── V2 : charge les données bêta au démarrage ─────────────────────────
-    if (this.userStore.isBeta()) {
-      this.loadV2Data();
-      this.loadMonthlyActivity();
-    }
+    // ── Charge les données V2 au démarrage ────────────────────────────────
+    this.loadV2Data();
+    this.loadMonthlyActivity();
 
     // Auto-switch vers l'onglet live si une session est active
     effect(() => {
