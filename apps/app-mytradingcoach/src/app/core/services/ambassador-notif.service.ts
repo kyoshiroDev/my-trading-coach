@@ -18,7 +18,6 @@ export class AmbassadorNotifService {
       const lastSeen = localStorage.getItem(this.LAST_SEEN_KEY) ?? new Date(0).toISOString();
       this.api.getNewCount(lastSeen).subscribe({
         next: (res) => this.newReferrals.set(res.data.count),
-        error: () => {},
       });
     });
   }
