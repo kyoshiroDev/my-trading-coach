@@ -2,13 +2,15 @@
 ---
 
 <section id="pricing" style="padding:80px 5%">
-  <div style="max-width:1100px;margin:0 auto">
-    <div class="reveal" style="text-align:center;max-width:600px;margin:0 auto">
+  <div style="max-width:1200px;margin:0 auto">
+    <div class="reveal" style="text-align:center;max-width:640px;margin:0 auto">
       <span class="sec-label">Tarifs</span>
       <h2>Simple. <em>Transparent.</em></h2>
-      <p class="sec-sub">Gratuit pour démarrer. Premium pour avoir ton compagnon complet. 7 jours d'essai — aucun prélèvement avant la fin.</p>
+      <p class="sec-sub">Gratuit pour démarrer. Starter pour trader structuré. Premium pour le compagnon complet. 7 jours d'essai — aucun prélèvement avant la fin.</p>
     </div>
     <div class="price-grid reveal" style="transition-delay:.1s">
+
+      <!-- FREE -->
       <div class="price-card">
         <div class="price-name">Gratuit</div>
         <div class="price-amt">
@@ -21,18 +23,18 @@
           <li>30 trades par mois</li>
           <li>Journal complet — émotions, setup, notes</li>
           <li>Tracking émotionnel</li>
-          <li>Stats de base — win rate, P&amp;L, top session</li>
+          <li>Stats de base — win rate, P&amp;L</li>
           <li>Historique illimité</li>
-          <li>Import CSV universel (tous brokers)</li>
-          <li>Pré-session matin <span class="feat-new">NEW</span></li>
-          <li>Session live + trade rapide <span class="feat-new">NEW</span></li>
+          <li>Import CSV universel</li>
           <li>Multi-marché — Futures, Crypto, Forex</li>
         </ul>
         <a href="https://app.mytradingcoach.app/register" class="price-cta ghost">Commencer gratuitement</a>
       </div>
-      <div class="price-card feat" style="padding-top:44px">
-        <div class="price-pop">⭐ Recommandé</div>
-        <div class="price-name">Premium</div>
+
+      <!-- STARTER -->
+      <div class="price-card starter-card" style="padding-top:44px">
+        <div class="price-pop starter-pop">★ Starter</div>
+        <div class="price-name">Starter</div>
         <div class="price-amt">
           <span class="price-amt-num">39</span>
           <span class="price-amt-cur">€</span>
@@ -43,20 +45,45 @@
         <ul class="price-feats">
           <li>Tout le plan Gratuit inclus</li>
           <li>Trades illimités</li>
-          <li>Analytics avancés — heatmap, equity curve, drawdown</li>
-          <li>✨ IA Insights — analyse de tes patterns <small class="feat-limit">(1 analyse / 4h)</small></li>
-          <li>💬 Chat coach IA personnalisé <small class="feat-limit">(50 messages/jour)</small></li>
-          <li>📅 Calendrier éco IA — filtré pour tes actifs <span class="feat-new">NEW</span></li>
-          <li>🌙 Recap journalier email 17h30 <span class="feat-new">NEW</span></li>
-          <li>📋 Weekly Debrief IA automatique</li>
+          <li>Analytics avancés — heatmap, equity curve</li>
+          <li>🌅 Pré-session matin</li>
+          <li>⚡ Session live + trade rapide</li>
+          <li>📋 Weekly Debrief automatique</li>
           <li>🏆 Score trader /100 hebdomadaire</li>
           <li>📄 Export PDF rapport mensuel</li>
+        </ul>
+        <a href="https://app.mytradingcoach.app/register?plan=starter" class="price-cta starter-cta">
+          <span class="cta-main">Essayer 7 jours gratuit →</span>
+          <span class="cta-sub-text">🔥 Aucun prélèvement avant la fin</span>
+        </a>
+      </div>
+
+      <!-- PREMIUM -->
+      <div class="price-card feat" style="padding-top:44px">
+        <div class="price-pop">⭐ Recommandé</div>
+        <div class="price-name">Premium</div>
+        <div class="price-amt">
+          <span class="price-amt-num">79</span>
+          <span class="price-amt-cur">€</span>
+          <span class="price-amt-per">/mois</span>
+        </div>
+        <div class="price-period">ou 699 €/an — tu économises 249 €</div>
+        <div class="price-divider"></div>
+        <ul class="price-feats">
+          <li>Tout le plan Starter inclus</li>
+          <li>✨ IA Insights — analyse de tes patterns</li>
+          <li>💬 Chat coach IA personnalisé</li>
+          <li>📅 Calendrier éco IA — filtré pour tes actifs</li>
+          <li>📰 News live filtrées sur tes actifs</li>
+          <li>📊 Contexte marché live — DXY, taux US, indices</li>
+          <li>🌙 Recap journalier email 17h30</li>
         </ul>
         <a href="https://app.mytradingcoach.app/register?plan=premium" class="price-cta prim">
           <span class="cta-main">Essayer 7 jours gratuit →</span>
           <span class="cta-sub-text">🔥 Aucun prélèvement avant la fin</span>
         </a>
       </div>
+
     </div>
     <div class="pricing-guarantee reveal">
       <div class="guarantee-item">✓ Annulation à tout moment</div>
@@ -70,9 +97,9 @@
 <style>
   .price-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-    max-width: 820px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 1100px;
     margin: 48px auto 0;
   }
 
@@ -80,9 +107,15 @@
     background: var(--card);
     border: 1px solid var(--b);
     border-radius: 16px;
-    padding: 36px 32px;
+    padding: 36px 28px;
     display: flex;
     flex-direction: column;
+  }
+
+  .starter-card {
+    border-color: rgba(16,185,129,.35);
+    background: linear-gradient(160deg, rgba(16,185,129,.07), rgba(16,185,129,.03));
+    position: relative;
   }
 
   .price-card.feat {
@@ -90,15 +123,6 @@
     background: linear-gradient(160deg, rgba(59,130,246,.1), rgba(139,92,246,.07));
     box-shadow: 0 0 40px rgba(59,130,246,.12), inset 0 1px 0 rgba(255,255,255,.06);
     position: relative;
-  }
-
-  .price-card.feat::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 16px;
-    background: linear-gradient(160deg, rgba(59,130,246,.08), transparent 60%);
-    pointer-events: none;
   }
 
   .price-pop {
@@ -117,7 +141,12 @@
     box-shadow: 0 4px 14px rgba(59,130,246,.4);
   }
 
-  .cta-main { display: block; font-size: 15px; font-weight: 600; }
+  .starter-pop {
+    background: linear-gradient(90deg, #10b981, #059669);
+    box-shadow: 0 4px 14px rgba(16,185,129,.4);
+  }
+
+  .cta-main { display: block; font-size: 14px; font-weight: 600; }
   .cta-sub-text {
     display: block;
     font-size: 11px;
@@ -138,6 +167,7 @@
     text-align: center;
   }
   .price-card.feat .price-name { color: var(--blue2); }
+  .starter-card .price-name { color: #10b981; }
 
   .price-amt {
     display: flex;
@@ -147,15 +177,14 @@
     justify-content: center;
   }
 
-  .price-amt-num { font-family: var(--disp); font-size: 60px; font-weight: 800; letter-spacing: -2px; color: var(--txt); }
-  .price-amt-cur { font-family: var(--disp); font-size: 24px; font-weight: 600; color: var(--txt2); }
-  .price-amt-per { font-size: 15px; color: var(--txt3); }
+  .price-amt-num { font-family: var(--disp); font-size: 56px; font-weight: 800; letter-spacing: -2px; color: var(--txt); }
+  .price-amt-cur { font-family: var(--disp); font-size: 22px; font-weight: 600; color: var(--txt2); }
+  .price-amt-per { font-size: 14px; color: var(--txt3); }
 
   .price-period {
     font-size: 12px;
     color: var(--txt3);
     font-family: var(--mono);
-    margin-bottom: 0;
     text-align: center;
   }
 
@@ -165,8 +194,8 @@
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-bottom: 28px;
+    gap: 9px;
+    margin-bottom: 24px;
     flex: 1;
   }
 
@@ -180,24 +209,10 @@
   }
   .price-feats li::before { content: '✓'; color: var(--green); flex-shrink: 0; font-weight: 600; margin-top: 1px; }
 
-  .feat-limit { color: var(--txt3); font-family: var(--mono); font-size: 10px; }
-  .feat-new {
-    font-size: 9px;
-    background: rgba(245,158,11,.1);
-    color: var(--yel);
-    border: 1px solid rgba(245,158,11,.2);
-    padding: 1px 5px;
-    border-radius: 3px;
-    font-family: var(--mono);
-    font-weight: 700;
-    vertical-align: middle;
-    margin-left: 3px;
-  }
-
   .price-cta {
     display: block;
     width: 100%;
-    padding: 13px;
+    padding: 12px;
     border-radius: 9px;
     font-size: 14px;
     font-weight: 600;
@@ -208,8 +223,10 @@
     cursor: pointer;
     border: none;
   }
-  .price-cta.prim { background: linear-gradient(90deg, var(--blue), #6366f1); color: white; box-shadow: 0 0 28px rgba(59,130,246,.4); font-size: 15px; padding: 15px; }
-  .price-cta.prim:hover { background: var(--blue2); box-shadow: 0 0 36px rgba(59,130,246,.5); transform: translateY(-1px); }
+  .price-cta.prim { background: linear-gradient(90deg, var(--blue), #6366f1); color: white; box-shadow: 0 0 28px rgba(59,130,246,.4); }
+  .price-cta.prim:hover { transform: translateY(-1px); box-shadow: 0 0 36px rgba(59,130,246,.5); }
+  .price-cta.starter-cta { background: linear-gradient(90deg, #10b981, #059669); color: white; box-shadow: 0 0 24px rgba(16,185,129,.3); }
+  .price-cta.starter-cta:hover { transform: translateY(-1px); box-shadow: 0 0 32px rgba(16,185,129,.4); }
   .price-cta.ghost { background: transparent; color: var(--txt2); border: 1px solid var(--b2); }
   .price-cta.ghost:hover { color: var(--txt); border-color: var(--blue); background: rgba(59,130,246,.05); }
 
@@ -221,21 +238,16 @@
     margin-top: 24px;
     padding-top: 20px;
     border-top: 1px solid var(--b);
-    max-width: 820px;
+    max-width: 1100px;
     margin-left: auto;
     margin-right: auto;
   }
   .guarantee-item { font-size: 12px; font-family: var(--mono); color: var(--txt3); }
 
-  @media (max-width: 768px) {
-    .price-grid { grid-template-columns: 1fr; gap: 20px; max-width: 100%; }
-    .price-card { padding: 28px 20px; }
-    .price-card.feat { padding: 44px 20px 28px; }
-    .price-amt-num { font-size: 48px; }
+  @media (max-width: 900px) {
+    .price-grid { grid-template-columns: 1fr; gap: 20px; max-width: 480px; }
   }
-
   @media (max-width: 480px) {
-    .price-card { padding: 20px 16px; }
-    .price-card.feat { padding-top: 44px; }
+    .price-card { padding: 24px 16px; }
   }
 </style>

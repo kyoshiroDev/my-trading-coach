@@ -248,7 +248,7 @@ export class AnalyticsComponent {
     return 'var(--text-2)';
   }
 
-  protected startTrial(plan: 'monthly' | 'yearly' = 'monthly'): void {
+  protected startTrial(plan: 'starter_monthly' | 'starter_yearly' = 'starter_monthly'): void {
     this.billingApi
       .checkout(plan)
       .pipe(takeUntilDestroyed(this.destroyRef))

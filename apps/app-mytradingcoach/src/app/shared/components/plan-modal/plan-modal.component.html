@@ -10,50 +10,89 @@
   <div class="plan-modal-card" role="dialog" aria-modal="true">
     <!-- Header -->
     <div class="plan-modal-header">
-      <h2>Passe à Premium ⚡</h2>
-      <p>Analytics avancés · IA Insights · Weekly Debrief automatique</p>
-      <button class="plan-modal-close" (click)="close()" aria-label="Fermer">
-        ✕
-      </button>
+      <h2>Choisir ton plan ⚡</h2>
+      <p>7 jours gratuits · Sans CB · Annulation à tout moment</p>
+      <button class="plan-modal-close" (click)="close()" aria-label="Fermer">✕</button>
     </div>
 
-    <!-- Plans -->
-    <div class="plan-modal-options">
-      <!-- Annuel — recommandé -->
-      <div
-        class="plan-option"
-        [class.recommended]="selectedPlan() === 'yearly'"
-        (click)="selectPlan('yearly')"
-        role="button"
-        tabindex="0"
-        (keydown.enter)="selectPlan('yearly')"
-      >
-        <div class="plan-option-badge">⭐ Recommandé</div>
-        <div class="plan-option-price">
-          <span class="price">29€</span>
-          <span class="period">/mois</span>
+    <!-- Deux plans côte à côte -->
+    <div class="plan-cols">
+
+      <!-- STARTER -->
+      <div class="plan-col" [class.selected-col]="selectedPlan() === 'starter_monthly' || selectedPlan() === 'starter_yearly'">
+        <div class="plan-col-name">Starter</div>
+        <div class="plan-col-price">
+          @if (selectedPlan() === 'starter_yearly') {
+            <span class="price">29€</span><span class="period">/mois</span>
+            <div class="plan-col-detail">Facturé 349€/an</div>
+          } @else {
+            <span class="price">39€</span><span class="period">/mois</span>
+            <div class="plan-col-detail">Facturé chaque mois</div>
+          }
         </div>
-        <div class="plan-option-detail">Facturé 349€/an</div>
-        <div class="plan-option-saving">Économise 119€ vs mensuel</div>
+        <div class="plan-col-intervals">
+          <button
+            class="plan-interval-btn"
+            [class.active]="selectedPlan() === 'starter_yearly'"
+            (click)="selectPlan('starter_yearly')"
+          >⭐ Annuel — 349€/an</button>
+          <button
+            class="plan-interval-btn"
+            [class.active]="selectedPlan() === 'starter_monthly'"
+            (click)="selectPlan('starter_monthly')"
+          >Mensuel — 39€/mois</button>
+        </div>
+        <ul class="plan-col-feats">
+          <li>✓ Trades illimités</li>
+          <li>✓ Analytics avancés</li>
+          <li>✓ Pré-session matin</li>
+          <li>✓ Session live</li>
+          <li>✓ Weekly Debrief</li>
+          <li>✓ Score trader /100</li>
+          <li>✓ Export PDF</li>
+          <li class="feat-no">✗ IA Insights</li>
+          <li class="feat-no">✗ Chat coach IA</li>
+          <li class="feat-no">✗ Calendrier éco IA</li>
+        </ul>
       </div>
 
-      <!-- Mensuel -->
-      <div
-        class="plan-option"
-        [class.selected]="selectedPlan() === 'monthly'"
-        (click)="selectPlan('monthly')"
-        role="button"
-        tabindex="0"
-        (keydown.enter)="selectPlan('monthly')"
-      >
-        <div class="plan-option-badge">&nbsp;</div>
-        <div class="plan-option-price">
-          <span class="price">39€</span>
-          <span class="period">/mois</span>
+      <!-- PREMIUM -->
+      <div class="plan-col premium-col" [class.selected-col]="selectedPlan() === 'premium_monthly' || selectedPlan() === 'premium_yearly'">
+        <div class="plan-col-badge">Complet</div>
+        <div class="plan-col-name">Premium</div>
+        <div class="plan-col-price">
+          @if (selectedPlan() === 'premium_yearly') {
+            <span class="price">58€</span><span class="period">/mois</span>
+            <div class="plan-col-detail">Facturé 699€/an</div>
+          } @else {
+            <span class="price">79€</span><span class="period">/mois</span>
+            <div class="plan-col-detail">Facturé chaque mois</div>
+          }
         </div>
-        <div class="plan-option-detail">Facturé chaque mois</div>
-        <div class="plan-option-saving">&nbsp;</div>
+        <div class="plan-col-intervals">
+          <button
+            class="plan-interval-btn"
+            [class.active]="selectedPlan() === 'premium_yearly'"
+            (click)="selectPlan('premium_yearly')"
+          >⭐ Annuel — 699€/an</button>
+          <button
+            class="plan-interval-btn"
+            [class.active]="selectedPlan() === 'premium_monthly'"
+            (click)="selectPlan('premium_monthly')"
+          >Mensuel — 79€/mois</button>
+        </div>
+        <ul class="plan-col-feats">
+          <li>✓ Tout Starter inclus</li>
+          <li>✓ IA Insights</li>
+          <li>✓ Chat coach IA</li>
+          <li>✓ Calendrier éco IA</li>
+          <li>✓ News live filtrées</li>
+          <li>✓ Contexte marché live</li>
+          <li>✓ Treasury Rates</li>
+          <li>✓ Recap email 17h30</li>
+        </ul>
       </div>
+
     </div>
 
     <!-- CTA -->

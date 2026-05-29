@@ -126,7 +126,7 @@ export class TradesService {
     plan: Plan,
     role: Role = Role.USER,
   ): Promise<void> {
-    if (role === Role.ADMIN || role === Role.BETA_TESTER || plan !== Plan.FREE)
+    if (role === Role.ADMIN || role === Role.BETA_TESTER || plan === Plan.STARTER || plan === Plan.PREMIUM)
       return;
 
     const startOfMonth = new Date();
@@ -149,7 +149,7 @@ export class TradesService {
   }
 
   async countThisMonth(userId: string, plan: Plan, role: Role = Role.USER): Promise<{ count: number; limit: number; isPremium: boolean }> {
-    const isPremium = plan !== Plan.FREE || role === Role.ADMIN || role === Role.BETA_TESTER;
+    const isPremium = plan === Plan.STARTER || plan === Plan.PREMIUM || role === Role.ADMIN || role === Role.BETA_TESTER;
     if (isPremium) return { count: 0, limit: 0, isPremium: true };
 
     const startOfMonth = new Date();

@@ -12,12 +12,12 @@ import {
 import { Role } from '@prisma/client';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { PremiumGuard } from '../../common/guards/premium.guard';
+import { StarterGuard } from '../../common/guards/starter.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { DebriefService } from './debrief.service';
 import { PdfService } from '../pdf/pdf.service';
 
-@UseGuards(JwtAuthGuard, PremiumGuard)
+@UseGuards(JwtAuthGuard, StarterGuard)
 @Controller('debrief')
 export class DebriefController {
   constructor(

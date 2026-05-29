@@ -7,7 +7,7 @@ export class BillingApi {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/billing`;
 
-  checkout(plan: 'monthly' | 'yearly') {
+  checkout(plan: 'starter_monthly' | 'starter_yearly' | 'premium_monthly' | 'premium_yearly') {
     return this.http.post<{ data: { url: string } }>(`${this.base}/checkout`, {
       plan,
     });

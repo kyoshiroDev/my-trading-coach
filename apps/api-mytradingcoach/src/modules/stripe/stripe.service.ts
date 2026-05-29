@@ -521,10 +521,18 @@ export class StripeService implements OnModuleDestroy {
       ? new Date(firstItem.current_period_end * 1000)
       : null;
 
+    const starterPriceIds = [
+      process.env['STRIPE_STARTER_PRICE_MONTHLY'],
+      process.env['STRIPE_STARTER_PRICE_YEARLY'],
+    ].filter(Boolean);
+    const isStarter = starterPriceIds.includes(priceId ?? '');
+
+    const newPlan = isActive ? (isStarter ? Plan.STARTER : Plan.PREMIUM) : Plan.FREE;
+
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
-        plan: isActive ? Plan.PREMIUM : Plan.FREE,
+        plan: newPlan,
         stripeSubscriptionId: subscription.id,
         stripePriceId: priceId,
         stripeInterval: interval,
@@ -538,7 +546,7 @@ export class StripeService implements OnModuleDestroy {
     await this.redis.del(cacheKey(user.id)).catch(() => null);
 
     this.logger.log(
-      `Sync — user: ${user.id}, plan: ${isActive ? 'PREMIUM' : 'FREE'}, status: ${status}`,
+      `Sync — user: ${user.id}, plan: ${newPlan}, status: ${status}`,
     );
 
     return {

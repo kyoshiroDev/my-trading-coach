@@ -35,9 +35,12 @@ export class StripeController {
     @Body() dto: CreateCheckoutDto,
   ) {
     const priceId =
-      dto.plan === 'yearly'
-        ? this.config.getOrThrow<string>('STRIPE_STARTER_PRICE_YEARLY')
-        : this.config.getOrThrow<string>('STRIPE_STARTER_PRICE_MONTHLY');
+      ({
+        starter_monthly: this.config.getOrThrow<string>('STRIPE_STARTER_PRICE_MONTHLY'),
+        starter_yearly:  this.config.getOrThrow<string>('STRIPE_STARTER_PRICE_YEARLY'),
+        premium_monthly: this.config.getOrThrow<string>('STRIPE_PREMIUM_PRICE_MONTHLY_V2'),
+        premium_yearly:  this.config.getOrThrow<string>('STRIPE_PREMIUM_PRICE_YEARLY_V2'),
+      })[dto.plan];
 
     const frontendUrl =
       this.config.get<string>('FRONTEND_URL') ?? 'http://localhost:4200';

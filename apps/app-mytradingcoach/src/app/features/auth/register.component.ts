@@ -264,7 +264,7 @@ export class RegisterComponent {
         next: () => {
           if (this.isPremiumFlow()) {
             this.billingApi
-              .checkout('monthly')
+              .checkout('starter_monthly')
               .pipe(takeUntilDestroyed(this.destroyRef))
               .subscribe({
                 next: (res) => {

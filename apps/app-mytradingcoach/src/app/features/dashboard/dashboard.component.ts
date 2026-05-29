@@ -739,6 +739,10 @@ export class DashboardComponent {
   // ── V2 Session Mode ─────────────────────────────────────────────────────
 
   protected selectTab(tab: 'dashboard' | 'morning' | 'live'): void {
+    if ((tab === 'morning' || tab === 'live') && !this.userStore.isStarter()) {
+      this.showPlanModal.set(true);
+      return;
+    }
     this.activeTab.set(tab);
   }
 
@@ -956,7 +960,7 @@ export class DashboardComponent {
 
   protected startTrial() {
     this.billingApi
-      .checkout('monthly')
+      .checkout('starter_monthly')
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {

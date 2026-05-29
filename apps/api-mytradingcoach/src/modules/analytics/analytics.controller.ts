@@ -1,7 +1,7 @@
 import { Controller, Get, Param, ParseIntPipe, Query, UseGuards } from '@nestjs/common';
 import { Plan, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { PremiumGuard } from '../../common/guards/premium.guard';
+import { StarterGuard } from '../../common/guards/starter.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AnalyticsService } from './analytics.service';
 import { DailyRecapService } from '../daily-recap/daily-recap.service';
@@ -19,37 +19,37 @@ export class AnalyticsController {
     return this.analyticsService.getSummary(user.id);
   }
 
-  @UseGuards(PremiumGuard)
+  @UseGuards(StarterGuard)
   @Get('by-setup')
   getBySetup(@CurrentUser() user: { id: string }) {
     return this.analyticsService.getBySetup(user.id);
   }
 
-  @UseGuards(PremiumGuard)
+  @UseGuards(StarterGuard)
   @Get('by-emotion')
   getByEmotion(@CurrentUser() user: { id: string }) {
     return this.analyticsService.getByEmotion(user.id);
   }
 
-  @UseGuards(PremiumGuard)
+  @UseGuards(StarterGuard)
   @Get('by-hour')
   getByHour(@CurrentUser() user: { id: string }) {
     return this.analyticsService.getByHour(user.id);
   }
 
-  @UseGuards(PremiumGuard)
+  @UseGuards(StarterGuard)
   @Get('equity-curve')
   getEquityCurve(@CurrentUser() user: { id: string }) {
     return this.analyticsService.getEquityCurve(user.id);
   }
 
-  @UseGuards(PremiumGuard)
+  @UseGuards(StarterGuard)
   @Get('equity-curve/current-month')
   getEquityCurrentMonth(@CurrentUser() user: { id: string }) {
     return this.analyticsService.getEquityCurveCurrentMonth(user.id);
   }
 
-  @UseGuards(PremiumGuard)
+  @UseGuards(StarterGuard)
   @Get('equity-curve/daily')
   getEquityDaily(
     @CurrentUser() user: { id: string },
@@ -63,7 +63,7 @@ export class AnalyticsController {
     );
   }
 
-  @UseGuards(PremiumGuard)
+  @UseGuards(StarterGuard)
   @Get('top-assets')
   getTopAssets(@CurrentUser() user: { id: string }) {
     return this.analyticsService.getTopAssets(user.id);
@@ -75,7 +75,7 @@ export class AnalyticsController {
     return this.analyticsService.getMonthlyActivity(user.id, now.getFullYear(), now.getMonth() + 1);
   }
 
-  @UseGuards(PremiumGuard)
+  @UseGuards(StarterGuard)
   @Get('activity/:year/:month')
   getMonthActivity(
     @CurrentUser() user: { id: string },

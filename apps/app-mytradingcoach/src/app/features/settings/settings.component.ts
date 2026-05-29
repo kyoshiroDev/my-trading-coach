@@ -148,7 +148,7 @@ export class SettingsComponent implements OnInit {
     });
   }
 
-  protected startTrial(plan: 'monthly' | 'yearly' = 'monthly') {
+  protected startTrial(plan: 'starter_monthly' | 'starter_yearly' = 'starter_monthly') {
     this.billingApi
       .checkout(plan)
       .pipe(takeUntilDestroyed(this.destroyRef))

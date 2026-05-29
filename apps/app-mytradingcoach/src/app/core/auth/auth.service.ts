@@ -11,7 +11,7 @@ export interface AuthUser {
   id: string;
   email: string;
   name?: string;
-  plan: 'FREE' | 'PREMIUM';
+  plan: 'FREE' | 'STARTER' | 'PREMIUM';
   role?: UserRole;
   trialEndsAt?: string | null;
   stripeCurrentPeriodEnd?: string | null;

@@ -17,7 +17,6 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import Redis from 'ioredis';
 import { Plan, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { PremiumGuard } from '../../common/guards/premium.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { TradesService } from './trades.service';
 import { CoinGeckoService } from './coingecko.service';
@@ -218,7 +217,6 @@ export class TradesController {
   }
 
   @Post('import')
-  @UseGuards(PremiumGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       limits: { fileSize: 5 * 1024 * 1024 },

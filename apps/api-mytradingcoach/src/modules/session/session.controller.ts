@@ -11,13 +11,14 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { StarterGuard } from '../../common/guards/starter.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { SessionService } from './session.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { CloseSessionDto } from './dto/close-session.dto';
 
 @Controller('session')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, StarterGuard)
 export class SessionController {
   constructor(private readonly sessionService: SessionService) {}
 
