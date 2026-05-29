@@ -134,9 +134,7 @@ export class TradesController {
   }
 
   private async fetchDxy(): Promise<number | null> {
-    const fmpVal = await this.fetchFmpPrice('USDX');
-    if (fmpVal !== null) return fmpVal;
-    return this.fetchYahooPrice('DX-Y.NYB');
+    return this.fetchYahooPrice('DX=F');
   }
 
   private async fetchTreasuryRates(): Promise<TreasuryRates> {
