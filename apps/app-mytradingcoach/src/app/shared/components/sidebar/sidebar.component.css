@@ -332,6 +332,11 @@
   display: none;
 } /* Chrome / Safari */
 
+/* Live mode : bloquer le scroll global pour que les colonnes scrollent en interne */
+:host-context(body.live-mode-active) .main-content {
+  overflow: hidden;
+}
+
 /* ── Overlay mobile ─────────────────────────────────────────────────────── */
 .sidebar-overlay {
   display: none;
