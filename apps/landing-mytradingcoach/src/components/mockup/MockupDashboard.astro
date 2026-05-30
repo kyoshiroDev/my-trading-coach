@@ -79,8 +79,8 @@
           <circle cx="400" cy="4" r="5" fill="#3b82f6" opacity=".8"/>
           <circle cx="400" cy="4" r="9" fill="#3b82f6" opacity=".25"/>
         </svg>
-        <div style="position:absolute;bottom:8px;left:62px;font-size:9px;font-family:'DM Mono',monospace;color:rgba(112,144,176,.7)">$50k</div>
-        <div style="position:absolute;top:8px;right:8px;font-size:9px;font-family:'DM Mono',monospace;color:#3b82f6">$51.2k</div>
+        <div style="position:absolute;bottom:8px;left:62px;font-size:9px;font-family:var(--mono);color:rgba(112,144,176,.7)">$50k</div>
+        <div style="position:absolute;top:8px;right:8px;font-size:9px;font-family:var(--mono);color:#3b82f6">$51.2k</div>
         <!-- Grille légère -->
         <svg width="100%" height="100%" viewBox="0 0 400 120" preserveAspectRatio="none" style="position:absolute;inset:0;pointer-events:none">
           <line x1="62" y1="24" x2="400" y2="24" stroke="rgba(99,155,255,.06)" stroke-dasharray="4 8"/>
@@ -105,7 +105,7 @@
           </div>
           <div class="dash-trade-bot">
             <span class="dash-trade-setup">Breakout</span>
-            <span style="color:var(--app-green);font-family:'DM Mono',monospace;font-size:12px;font-weight:600">+$400</span>
+            <span style="color:var(--app-green);font-family:var(--mono);font-size:12px;font-weight:600">+$400</span>
           </div>
         </div>
         <div class="dash-trade-row">
@@ -116,7 +116,7 @@
           </div>
           <div class="dash-trade-bot">
             <span class="dash-trade-setup">Pullback</span>
-            <span style="color:var(--app-red);font-family:'DM Mono',monospace;font-size:12px;font-weight:600">-$280</span>
+            <span style="color:var(--app-red);font-family:var(--mono);font-size:12px;font-weight:600">-$280</span>
           </div>
         </div>
         <div class="dash-trade-row">
@@ -127,7 +127,7 @@
           </div>
           <div class="dash-trade-bot">
             <span class="dash-trade-setup">Scalping</span>
-            <span style="color:var(--app-green);font-family:'DM Mono',monospace;font-size:12px;font-weight:600">+$620</span>
+            <span style="color:var(--app-green);font-family:var(--mono);font-size:12px;font-weight:600">+$620</span>
           </div>
         </div>
         <div class="dash-trade-row" style="border:none">
@@ -138,7 +138,7 @@
           </div>
           <div class="dash-trade-bot">
             <span class="dash-trade-setup">Breakout</span>
-            <span style="color:var(--app-green);font-family:'DM Mono',monospace;font-size:12px;font-weight:600">+$280</span>
+            <span style="color:var(--app-green);font-family:var(--mono);font-size:12px;font-weight:600">+$280</span>
           </div>
         </div>
       </div>
@@ -156,7 +156,7 @@
           <circle cx="50" cy="50" r="38" fill="none" stroke="#10b981" stroke-width="12" stroke-dasharray="143 96" stroke-linecap="round" transform="rotate(-90 50 50)"/>
           <circle cx="50" cy="50" r="38" fill="none" stroke="#3b82f6" stroke-width="12" stroke-dasharray="65 174" stroke-dashoffset="-143" stroke-linecap="round" transform="rotate(-90 50 50)"/>
           <circle cx="50" cy="50" r="38" fill="none" stroke="#f59e0b" stroke-width="12" stroke-dasharray="31 208" stroke-dashoffset="-208" stroke-linecap="round" transform="rotate(-90 50 50)"/>
-          <text x="50" y="54" text-anchor="middle" font-family="Syne,sans-serif" font-weight="700" font-size="14" fill="#e2eaf5">67%</text>
+          <text x="50" y="54" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" font-size="14" fill="#e2eaf5">67%</text>
         </svg>
         <div class="dash-legend">
           <div class="dash-legend-item"><div class="dash-legend-dot" style="background:#10b981"></div>Breakout<span>74%</span></div>
@@ -210,7 +210,7 @@
     z-index: 5; flex-shrink: 0;
   }
   .app-page-title {
-    font-family: 'Syne', sans-serif;
+    font-family: var(--disp);
     font-size: 17px; font-weight: 700;
     letter-spacing: -0.3px; flex: 1;
     color: var(--app-txt);
@@ -221,7 +221,7 @@
     font-size: 13px; font-weight: 500;
     background: var(--app-blue); color: white; border: none;
     box-shadow: 0 0 20px rgba(59,130,246,.3);
-    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; font-family: var(--body);
   }
 
   /* Content */
@@ -238,13 +238,13 @@
     margin-bottom: 24px;
   }
   .dash-greeting-title {
-    font-family: 'Syne', sans-serif;
+    font-family: var(--disp);
     font-size: 22px; font-weight: 700;
     letter-spacing: -0.3px; color: var(--app-txt);
   }
   .dash-discord-badge {
     display: inline-flex; align-items: center; gap: 6px;
-    font-size: 11px; font-family: 'DM Mono', monospace;
+    font-size: 11px; font-family: var(--mono);
     color: var(--app-txt3);
     background: rgba(88,101,242,.07);
     border: 1px solid rgba(88,101,242,.2);
@@ -268,13 +268,13 @@
   }
   .dash-stat-card:hover { border-color: var(--app-border-hov); transform: translateY(-2px); }
   .dash-stat-label {
-    font-size: 11px; font-family: 'DM Mono', monospace;
+    font-size: 11px; font-family: var(--mono);
     font-weight: 400; color: var(--app-txt3);
     text-transform: uppercase; letter-spacing: 0.8px;
     margin-bottom: 10px;
   }
   .dash-stat-value {
-    font-family: 'DM Mono', monospace;
+    font-family: var(--mono);
     font-variant-numeric: tabular-nums;
     font-size: 22px; font-weight: 700;
     letter-spacing: -1px; line-height: 1;
@@ -285,7 +285,7 @@
     display: flex; align-items: center; gap: 5px;
   }
   .dash-change {
-    font-family: 'DM Mono', monospace;
+    font-family: var(--mono);
     font-size: 10px; padding: 2px 5px; border-radius: 4px;
   }
   .dash-change.up { color: var(--app-green); background: var(--app-green-dim); }
@@ -318,13 +318,13 @@
     justify-content: space-between; margin-bottom: 16px;
   }
   .dash-card-title {
-    font-family: 'Syne', sans-serif;
+    font-family: var(--disp);
     font-size: 13px; font-weight: 600; letter-spacing: -0.1px;
     color: var(--app-txt);
   }
   .dash-card-action {
     font-size: 11px; color: var(--app-txt3);
-    font-family: 'DM Mono', monospace; cursor: pointer;
+    font-family: var(--mono); cursor: pointer;
   }
 
   /* Equity chart */
@@ -346,14 +346,14 @@
   .dash-trade-bot { display: flex; align-items: center; justify-content: space-between; }
   .dash-trade-side {
     font-size: 9px; font-weight: 700;
-    font-family: 'DM Mono', monospace;
+    font-family: var(--mono);
     padding: 2px 6px; border-radius: 4px; flex-shrink: 0;
   }
   .dash-trade-side.long  { background: var(--app-green-dim); color: var(--app-green); }
   .dash-trade-side.short { background: var(--app-red-dim); color: var(--app-red); }
   .dash-trade-asset {
     font-size: 12px; font-weight: 600;
-    font-family: 'DM Mono', monospace;
+    font-family: var(--mono);
     color: var(--app-txt); flex: 1;
     text-transform: uppercase;
   }
@@ -367,7 +367,7 @@
     display: flex; align-items: center; gap: 6px;
     font-size: 11px; color: var(--app-txt2);
   }
-  .dash-legend-item span { margin-left: auto; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--app-txt3); }
+  .dash-legend-item span { margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--app-txt3); }
   .dash-legend-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
   /* Emotions */
@@ -377,6 +377,6 @@
     display: flex; justify-content: space-between;
     font-size: 11px; color: var(--app-txt2);
   }
-  .dash-emo-lbl span:last-child { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--app-txt3); }
+  .dash-emo-lbl span:last-child { font-family: var(--mono); font-size: 10px; color: var(--app-txt3); }
   .dash-emo-track { height: 4px; background: rgba(255,255,255,.06); border-radius: 3px; }
 </style>

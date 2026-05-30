@@ -345,7 +345,7 @@ import { POLLING_MS } from '../../core/constants/polling.const';
                     @for (seg of segments(); track seg.label) {
                       <circle cx="50" cy="50" r="38" fill="none" [attr.stroke]="seg.label | setupColorMap" stroke-width="12" [attr.stroke-dasharray]="seg.dash" [attr.stroke-dashoffset]="seg.offset" stroke-linecap="round" transform="rotate(-90 50 50)" />
                     }
-                    <text x="50" y="53" text-anchor="middle" font-family="Syne" font-weight="700" font-size="14" fill="#e2eaf5">
+                    <text x="50" y="53" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="14" fill="#e2eaf5">
                       {{ (summary()?.winRate ?? 0).toFixed(0) }}%
                     </text>
                   </svg>

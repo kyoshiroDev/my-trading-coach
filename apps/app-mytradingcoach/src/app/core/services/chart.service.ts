@@ -102,8 +102,8 @@ export class ChartService {
             borderWidth: 1,
             titleColor: '#8fafc8',
             bodyColor: color,
-            bodyFont: { family: '"DM Mono", monospace', size: 13, weight: 'bold' },
-            titleFont: { family: '"DM Mono", monospace', size: 10 },
+            bodyFont: { family: '"JetBrains Mono", monospace', size: 13, weight: 'bold' },
+            titleFont: { family: '"JetBrains Mono", monospace', size: 10 },
             callbacks: {
               label: (ctx) => {
                 if (ctx.datasetIndex === 1) return '';
@@ -123,7 +123,7 @@ export class ChartService {
             border: { display: false },
             ticks: {
               color: 'rgba(112,144,176,0.7)',
-              font: { family: '"DM Mono", monospace', size: 9 },
+              font: { family: '"JetBrains Mono", monospace', size: 9 },
               maxTicksLimit: values.length <= 10 ? values.length : 6,
               autoSkip: true,
               autoSkipPadding: 10,
@@ -136,7 +136,7 @@ export class ChartService {
             border: { display: false },
             ticks: {
               color: 'rgba(112,144,176,0.6)',
-              font: { family: '"DM Mono", monospace', size: 10 },
+              font: { family: '"JetBrains Mono", monospace', size: 10 },
               callback: (v) => {
                 const num = Number(v);
                 return Math.abs(num) >= 1000
@@ -200,8 +200,8 @@ export class ChartService {
             borderWidth: 1,
             titleColor: '#8fafc8',
             bodyColor: '#ef4444',
-            bodyFont: { family: '"DM Mono", monospace', size: 13, weight: 'bold' },
-            titleFont: { family: '"DM Mono", monospace', size: 10 },
+            bodyFont: { family: '"JetBrains Mono", monospace', size: 13, weight: 'bold' },
+            titleFont: { family: '"JetBrains Mono", monospace', size: 10 },
             callbacks: {
               label: (ctx) => {
                 const v: number = ctx.parsed.y ?? 0;
@@ -220,7 +220,7 @@ export class ChartService {
             border: { display: false },
             ticks: {
               color: 'rgba(112,144,176,0.6)',
-              font: { family: '"DM Mono", monospace', size: 9 },
+              font: { family: '"JetBrains Mono", monospace', size: 9 },
               maxTicksLimit: 5,
               maxRotation: 0,
             },
@@ -231,7 +231,7 @@ export class ChartService {
             border: { display: false },
             ticks: {
               color: 'rgba(112,144,176,0.6)',
-              font: { family: '"DM Mono", monospace', size: 10 },
+              font: { family: '"JetBrains Mono", monospace', size: 10 },
               callback: (v) => {
                 const num = Number(v);
                 if (num === 0) return '$0';
