@@ -31,20 +31,26 @@ import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
           <div class="stat-sep"></div>
           <div class="stat-item">
             <span class="stat-item-label">Utilisateurs</span>
-            <span class="stat-item-value">{{ s.freeUsers + s.totalPremium + s.betaTesters }}</span>
+            <span class="stat-item-value">{{ s.freeUsers + s.totalStarter + s.totalPremium + s.betaTesters }}</span>
             <span class="stat-item-sub up">+{{ s.newThisMonth }} ce mois</span>
+          </div>
+          <div class="stat-sep"></div>
+          <div class="stat-item">
+            <span class="stat-item-label">Starter</span>
+            <span class="stat-item-value amber">{{ s.totalStarter }}</span>
+            <span class="stat-item-sub">{{ s.starterMonthly }}m · {{ s.starterAnnual }}an</span>
           </div>
           <div class="stat-sep"></div>
           <div class="stat-item">
             <span class="stat-item-label">Premium</span>
             <span class="stat-item-value blue">{{ s.totalPremium }}</span>
-            <span class="stat-item-sub">+ {{ s.betaTesters }} beta</span>
+            <span class="stat-item-sub">{{ s.premiumMonthly }}m · {{ s.premiumAnnual }}an · {{ s.trials }} trial</span>
           </div>
           <div class="stat-sep"></div>
           <div class="stat-item">
-            <span class="stat-item-label">Stripe</span>
-            <span class="stat-item-value">{{ s.monthly }}<span class="stat-slash">/</span>{{ s.annual }}</span>
-            <span class="stat-item-sub">mensuel / annuel</span>
+            <span class="stat-item-label">Ambassadeurs</span>
+            <span class="stat-item-value purple">{{ s.ambassadors }}</span>
+            <span class="stat-item-sub">+ {{ s.betaTesters }} beta</span>
           </div>
           <div class="stat-sep"></div>
           <div class="stat-item">
@@ -79,6 +85,7 @@ import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
                 <div class="online-meta">
                   <span class="plan-badge"
                     [class.premium]="u.plan==='PREMIUM'"
+                    [class.starter]="u.plan==='STARTER'"
                     [class.free]="u.plan==='FREE'">
                     {{ u.plan }}
                   </span>

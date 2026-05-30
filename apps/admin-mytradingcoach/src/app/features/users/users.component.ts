@@ -42,14 +42,19 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser, AdminUserDetail } fro
             <div class="stat-block-sub">ARR {{ s.arr }}€</div>
           </div>
           <div class="stat-block">
-            <div class="stat-block-label">Premium actifs</div>
-            <div class="stat-block-value">{{ s.totalPremium }}</div>
-            <div class="stat-block-sub">{{ s.monthly }} mensuel · {{ s.annual }} annuel</div>
+            <div class="stat-block-label">Starter actifs</div>
+            <div class="stat-block-value text-amber">{{ s.totalStarter }}</div>
+            <div class="stat-block-sub">{{ s.starterMonthly }} mensuel · {{ s.starterAnnual }} annuel</div>
           </div>
           <div class="stat-block">
-            <div class="stat-block-label">Trials actifs</div>
-            <div class="stat-block-value text-blue">{{ s.trials }}</div>
-            <div class="stat-block-sub">En période d'essai</div>
+            <div class="stat-block-label">Premium actifs</div>
+            <div class="stat-block-value text-blue">{{ s.totalPremium }}</div>
+            <div class="stat-block-sub">{{ s.premiumMonthly }} mensuel · {{ s.premiumAnnual }} annuel · {{ s.trials }} trial</div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-block-label">Ambassadeurs</div>
+            <div class="stat-block-value text-purple">{{ s.ambassadors }}</div>
+            <div class="stat-block-sub">{{ s.betaTesters }} beta testeur{{ s.betaTesters > 1 ? 's' : '' }}</div>
           </div>
           <div class="stat-block">
             <div class="stat-block-label">Nouveaux ce mois</div>
@@ -87,7 +92,7 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser, AdminUserDetail } fro
                 </div>
                 <div class="online-meta">
                   <span class="plan-badge"
-                    [class.premium]="u.plan==='PREMIUM'"
+                    [class.premium]="u.plan==='PREMIUM'" [class.starter]="u.plan==='STARTER'"
                     [class.free]="u.plan==='FREE'">
                     {{ u.plan }}
                   </span>
@@ -137,14 +142,14 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser, AdminUserDetail } fro
                     </td>
                     <td>
                       <span class="role-badge"
-                        [class.admin]="u.role==='ADMIN'"
+                        [class.admin]="u.role==='ADMIN'" [class.ambassador]="u.role==='AMBASSADOR'"
                         [class.beta-role]="u.role==='BETA_TESTER'">
                         {{ u.role }}
                       </span>
                     </td>
                     <td>
                       <span class="plan-badge"
-                        [class.premium]="u.plan==='PREMIUM'"
+                        [class.premium]="u.plan==='PREMIUM'" [class.starter]="u.plan==='STARTER'"
                         [class.free]="u.plan==='FREE'">
                         {{ u.plan }}
                       </span>
@@ -220,9 +225,11 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser, AdminUserDetail } fro
                   <span class="profile-email">{{ viewingUser()!.email }}</span>
                   <span class="plan-badge"
                     [class.premium]="viewingUser()!.plan==='PREMIUM' && viewingUser()!.role!=='BETA_TESTER'"
+                    [class.starter]="viewingUser()!.plan==='STARTER' && viewingUser()!.role!=='BETA_TESTER'"
                     [class.beta]="viewingUser()!.role==='BETA_TESTER'"
+                    [class.ambassador]="viewingUser()!.role==='AMBASSADOR'"
                     [class.free]="viewingUser()!.plan==='FREE'">
-                    {{ viewingUser()!.role==='BETA_TESTER' ? 'BETA' : viewingUser()!.plan }}
+                    {{ viewingUser()!.role==='BETA_TESTER' ? 'BETA' : viewingUser()!.role==='AMBASSADOR' ? 'AMBASSADOR' : viewingUser()!.plan }}
                   </span>
                   <span class="profile-since">depuis {{ viewingUser()!.createdAt | date:'dd/MM/yyyy' }}</span>
                 </div>
@@ -456,7 +463,8 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser, AdminUserDetail } fro
               <label for="modal-edit-plan">Plan</label>
               <select id="modal-edit-plan" class="field-select" [(ngModel)]="editPlan">
                 <option value="FREE">FREE</option>
-                <option value="PREMIUM">PREMIUM</option>
+                <option value="STARTER">STARTER — 39€/mois</option>
+                <option value="PREMIUM">PREMIUM — 79€/mois</option>
               </select>
             </div>
             <div class="field">
@@ -464,6 +472,7 @@ import { AdminApi, AdminUser, AdminStats, AdminOnlineUser, AdminUserDetail } fro
               <select id="modal-edit-role" class="field-select" [(ngModel)]="editRole">
                 <option value="USER">USER — Utilisateur standard</option>
                 <option value="BETA_TESTER">BETA_TESTER — Premium offert</option>
+                <option value="AMBASSADOR">AMBASSADOR — Programme ambassadeur</option>
               </select>
             </div>
           </div>
@@ -540,8 +549,8 @@ export class UsersComponent implements OnInit, OnDestroy {
   private onlineInterval?: ReturnType<typeof setInterval>;
 
   protected editName = '';
-  protected editPlan: 'FREE' | 'PREMIUM' = 'FREE';
-  protected editRole: 'USER' | 'BETA_TESTER' = 'USER';
+  protected editPlan: 'FREE' | 'STARTER' | 'PREMIUM' = 'FREE';
+  protected editRole: 'USER' | 'BETA_TESTER' | 'AMBASSADOR' = 'USER';
 
   ngOnInit() {
     this.load();
@@ -614,7 +623,7 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.editUser.set(user);
     this.editName = user.name ?? '';
     this.editPlan = user.plan;
-    this.editRole = user.role === 'BETA_TESTER' ? 'BETA_TESTER' : 'USER';
+    this.editRole = user.role === 'BETA_TESTER' ? 'BETA_TESTER' : user.role === 'AMBASSADOR' ? 'AMBASSADOR' : 'USER';
   }
   protected closeEdit() { this.editUser.set(null); }
 

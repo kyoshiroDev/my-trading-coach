@@ -49,6 +49,7 @@ import { SessionLiveComponent } from './components/session-live/session-live.com
 import { ChartService } from '../../core/services/chart.service';
 import { todayParis, toParisDateStr } from '../../core/utils/paris-date';
 import { LiveModeService } from '../../core/services/live-mode.service';
+import { POLLING_MS } from '../../core/constants/polling.const';
 
 @Component({
   selector: 'mtc-dashboard',
@@ -656,8 +657,8 @@ export class DashboardComponent {
       if (isActive) {
         this.fetchMarketContext();
         this.fetchNewsItems();
-        this.marketCtxInterval = setInterval(() => this.fetchMarketContext(), 15_000);
-        this.newsInterval      = setInterval(() => this.fetchNewsItems(), 60_000);
+        this.marketCtxInterval = setInterval(() => this.fetchMarketContext(), POLLING_MS.MARKET_CONTEXT);
+        this.newsInterval      = setInterval(() => this.fetchNewsItems(), POLLING_MS.NEWS);
       } else {
         clearInterval(this.marketCtxInterval);
         clearInterval(this.newsInterval);
