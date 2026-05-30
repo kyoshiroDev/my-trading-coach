@@ -80,6 +80,27 @@ import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
             </button>
           </div>
           <div class="modal-body">
+            @if (previewCampaign()!.type === 'announcement') {
+              <div class="preview-compose">
+                <div class="field-group">
+                  <label class="field-label" for="preview-subject">Objet *</label>
+                  <input id="preview-subject" type="text" class="field-input"
+                    placeholder="ex: 🚀 Nouvelle feature — Import CSV amélioré"
+                    [(ngModel)]="announcementSubject" />
+                </div>
+                <div class="field-group">
+                  <label class="field-label" for="preview-body">Contenu (HTML supporté)</label>
+                  <textarea id="preview-body" class="field-textarea preview-textarea" rows="4"
+                    placeholder="ex: Nous venons de déployer une nouvelle fonctionnalité..."
+                    [(ngModel)]="announcementBody"></textarea>
+                </div>
+                <button class="btn-refresh-preview" (click)="refreshPreview()"
+                  [disabled]="previewLoading()">
+                  <lucide-icon [img]="RefreshIcon" [size]="12" />
+                  Rafraîchir l'aperçu
+                </button>
+              </div>
+            }
             @if (previewLoading()) {
               <div class="loading-state">Génération de l'aperçu...</div>
             } @else {
@@ -96,7 +117,7 @@ import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
               </div>
               <div class="preview-frame">
                 <iframe [srcdoc]="wrappedPreviewHtml()" title="Aperçu email"
-                  style="width:100%;height:520px;border:none;border-radius:8px;background:#ffffff"></iframe>
+                  style="width:100%;height:460px;border:none;border-radius:8px;background:#ffffff"></iframe>
               </div>
             }
           </div>
@@ -228,10 +249,29 @@ export class EmailsComponent {
 
   openPreview(c: CampaignMeta): void {
     this.previewCampaign.set(c);
+    this.previewHtml.set('');
+    this.previewRecipients.set([]);
+    if (c.type !== 'announcement') {
+      this.fetchPreview(c.type);
+    } else {
+      this.previewLoading.set(false);
+    }
+  }
+
+  refreshPreview(): void {
+    const c = this.previewCampaign();
+    if (!c) return;
+    this.fetchPreview(c.type);
+  }
+
+  private fetchPreview(type: string): void {
     this.previewLoading.set(true);
-    this.adminApi.previewCampaign(c.type, this.announcementSubject, this.announcementBody)
+    this.adminApi.previewCampaign(type, this.announcementSubject, this.announcementBody)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: r => { this.previewHtml.set(r.data.html); this.previewRecipients.set(r.data.recipients ?? []); this.previewLoading.set(false); }, error: () => this.previewLoading.set(false) });
+      .subscribe({
+        next: r => { this.previewHtml.set(r.data.html); this.previewRecipients.set(r.data.recipients ?? []); this.previewLoading.set(false); },
+        error: () => this.previewLoading.set(false),
+      });
   }
 
   openSend(c: CampaignMeta): void {
