@@ -34,6 +34,10 @@
         <div class="amb-stat-lbl">Comptes FREE</div>
       </div>
       <div class="amb-stat-card">
+        <div class="amb-stat-val" style="color: var(--blue-bright)">{{ s.starter }}</div>
+        <div class="amb-stat-lbl">Comptes STARTER</div>
+      </div>
+      <div class="amb-stat-card">
         <div class="amb-stat-val g">{{ s.premium }}</div>
         <div class="amb-stat-lbl">Comptes PREMIUM</div>
       </div>
@@ -93,6 +97,7 @@
                   <td>
                     <span class="amb-plan-badge"
                           [class.premium]="user.plan === 'PREMIUM'"
+                          [class.starter]="user.plan === 'STARTER'"
                           [class.free]="user.plan === 'FREE'">
                       {{ user.plan }}
                     </span>

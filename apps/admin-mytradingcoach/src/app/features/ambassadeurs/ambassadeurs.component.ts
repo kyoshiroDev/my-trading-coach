@@ -100,7 +100,13 @@ import { AdminApi, AdminAmbassador, AdminAmbassadorDetail } from '../../core/api
                   </td>
                   <td><span class="rate-badge">20%</span></td>
                   <td class="mono">{{ amb.totalReferrals }}</td>
-                  <td class="mono blue">{{ amb.premiumReferrals }}</td>
+                  <td class="mono">
+                    <span style="color: var(--blue-bright)">{{ amb.starterReferrals }}</span>
+                    <span style="color: var(--text-muted, #5a7a99); font-size: 10px;"> S</span>
+                    <span style="color: var(--text-muted, #5a7a99);"> / </span>
+                    <span style="color: #10b981">{{ amb.premiumReferrals }}</span>
+                    <span style="color: var(--text-muted, #5a7a99); font-size: 10px;"> P</span>
+                  </td>
                   <td class="mono amber">{{ amb.pendingPayout | number:'1.2-2' }}€</td>
                   <td class="mono green">{{ (amb.totalEarned - amb.pendingPayout) | number:'1.2-2' }}€</td>
                   <td>
@@ -140,6 +146,10 @@ import { AdminApi, AdminAmbassador, AdminAmbassadorDetail } from '../../core/api
             <div class="detail-stat">
               <div class="detail-stat-val green">{{ detail.premium }}</div>
               <div class="detail-stat-lbl">Premium</div>
+            </div>
+            <div class="detail-stat">
+              <div class="detail-stat-val blue">{{ detail.starter }}</div>
+              <div class="detail-stat-lbl">Starter</div>
             </div>
             <div class="detail-stat">
               <div class="detail-stat-val">{{ detail.free }}</div>
@@ -260,7 +270,7 @@ export class AmbassadeursComponent implements OnInit {
     this.ambassadors().reduce((s, a) => s + a.totalReferrals, 0),
   );
   protected readonly totalPremium = computed(() =>
-    this.ambassadors().reduce((s, a) => s + a.premiumReferrals, 0),
+    this.ambassadors().reduce((s, a) => s + a.starterReferrals + a.premiumReferrals, 0),
   );
   protected readonly totalPending = computed(() =>
     this.ambassadors().reduce((s, a) => s + a.pendingPayout, 0),

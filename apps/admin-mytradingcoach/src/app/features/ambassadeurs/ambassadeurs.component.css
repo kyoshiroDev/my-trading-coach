@@ -105,6 +105,7 @@
   font-weight: 700; border-radius: 20px; padding: 2px 8px;
 }
 .plan-badge.premium { background: rgba(167,139,250,.1); color: #a78bfa; }
+.plan-badge.starter { background: rgba(59,130,246,.1); color: #60a5fa; border: 1px solid rgba(59,130,246,.2); }
 .plan-badge.free { background: rgba(90,122,153,.1); color: #5a7a99; }
 .active-dot { color: #10b981; font-weight: 700; }
 .inactive-dot { color: var(--text-muted, #5a7a99); }

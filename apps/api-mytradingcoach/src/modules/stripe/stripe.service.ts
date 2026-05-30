@@ -623,7 +623,7 @@ export class StripeService {
 
       const user = await this.prisma.user.findFirst({
         where: { stripeCustomerId },
-        select: { id: true, referredBy: true },
+        select: { id: true, referredBy: true, plan: true },
       });
 
       if (!user?.referredBy) return;
@@ -652,7 +652,8 @@ export class StripeService {
       });
 
       this.logger.log(
-        `Commission referral : ${commission}€ pour ambassadeur ${user.referredBy} (sub ${subscriptionId})`,
+        `Commission referral : ${commission}€ pour ambassadeur ${user.referredBy}` +
+        ` (plan: ${user.plan}, sub: ${subscriptionId})`,
       );
     } catch (err) {
       this.logger.error('Erreur calcul commission referral', err);

@@ -88,6 +88,7 @@ export interface AdminAmbassador {
   email: string;
   referralCode: string;
   totalReferrals: number;
+  starterReferrals: number;
   premiumReferrals: number;
   totalEarned: number;
   pendingPayout: number;
@@ -99,12 +100,13 @@ export interface AdminAmbassadorDetail {
     id: string;
     name: string | null;
     email: string;
-    plan: 'FREE' | 'PREMIUM';
+    plan: 'FREE' | 'STARTER' | 'PREMIUM';
     createdAt: string;
     isActive: boolean;
   }>;
   total: number;
   free: number;
+  starter: number;
   premium: number;
   earningsByMonth: Record<string, number>;
   totalEarned: number;
