@@ -100,6 +100,7 @@
 
       <!-- Header colonnes — une seule fois -->
       <div class="table-header">
+        <span class="th-time">H.</span>
         <span class="th-asset">Asset</span>
         <span class="th-side">Sens</span>
         <span class="th-price">Entry</span>
@@ -160,6 +161,7 @@
             <div class="day-trades">
               @for (trade of day.trades; track trade.id) {
                 <div class="trade-row" data-testid="trade-row">
+                  <span class="td-time">{{ trade.tradedAt | date:'HH:mm' }}</span>
                   <span class="td-asset">{{ trade.asset }}</span>
                   <span class="td-side">
                     <span class="trade-side" [class]="trade.side === 'LONG' ? 'long' : 'short'">{{ trade.side }}</span>

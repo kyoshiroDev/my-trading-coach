@@ -130,7 +130,7 @@
 /* ── Header colonnes unique ── */
 .table-header {
   display: grid;
-  grid-template-columns: 1.2fr 0.7fr 0.9fr 0.9fr 1.3fr 0.5fr 0.6fr 1.3fr 1.1fr 64px;
+  grid-template-columns: 44px 1.2fr 0.7fr 0.9fr 0.9fr 1.3fr 0.5fr 0.6fr 1.3fr 1.1fr 64px;
   padding: 5px 16px 5px 32px;
   border-bottom: 1px solid var(--border);
   background: var(--bg-2);
@@ -235,7 +235,7 @@
 .day-trades { background: var(--bg); }
 .trade-row {
   display: grid;
-  grid-template-columns: 1.2fr 0.7fr 0.9fr 0.9fr 1.3fr 0.5fr 0.6fr 1.3fr 1.1fr 64px;
+  grid-template-columns: 44px 1.2fr 0.7fr 0.9fr 0.9fr 1.3fr 0.5fr 0.6fr 1.3fr 1.1fr 64px;
   align-items: center;
   padding: 7px 16px 7px 32px;
   border-top: 1px solid var(--border);
@@ -244,6 +244,7 @@
 }
 .trade-row:hover { background: var(--bg-2); }
 
+.td-time { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); white-space: nowrap; }
 .td-asset { font-weight: 600; font-family: var(--font-mono); font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .td-price, .td-qty, .td-rr { font-family: var(--font-mono); font-size: 12px; color: var(--text-2); }
 .td-pnl { font-family: var(--font-mono); font-size: 12px; font-weight: 600; }

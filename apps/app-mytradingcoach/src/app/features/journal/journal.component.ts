@@ -3,7 +3,7 @@ import {
   computed, inject, signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
 import { LucideAngularModule, X, Pencil, Upload, ChevronDown, ChevronRight, Calendar, Trash2 } from 'lucide-angular';
@@ -36,7 +36,7 @@ interface DayGroup {
   selector: 'mtc-journal',
   standalone: true,
   imports: [
-    DecimalPipe, LucideAngularModule,
+    DatePipe, DecimalPipe, LucideAngularModule,
     TopbarComponent, TradeFormComponent, CsvImportComponent,
     PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe,
   ],
