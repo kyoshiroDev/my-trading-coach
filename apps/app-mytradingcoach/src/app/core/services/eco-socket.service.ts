@@ -20,12 +20,12 @@ export class EcoSocketService implements OnDestroy {
       this.newReleases$.next(data.events);
     });
 
-    this.socket.on('connect', () =>
-      console.debug('[EcoSocket] connecté'),
-    );
-    this.socket.on('disconnect', () =>
-      console.debug('[EcoSocket] déconnecté'),
-    );
+    this.socket.on('connect', () => {
+      if (!environment.production) console.debug('[EcoSocket] connecté');
+    });
+    this.socket.on('disconnect', () => {
+      if (!environment.production) console.debug('[EcoSocket] déconnecté');
+    });
   }
 
   disconnect() {

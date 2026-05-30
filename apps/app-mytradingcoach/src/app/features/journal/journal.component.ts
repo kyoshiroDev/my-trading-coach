@@ -4,7 +4,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
 import { LucideAngularModule, X, Pencil, Upload, ChevronDown, ChevronRight, Calendar, Trash2 } from 'lucide-angular';
 import { TradesStore, Trade } from '../../core/stores/trades.store';
@@ -229,13 +229,13 @@ export class JournalComponent implements OnInit {
       : this.http.post<{ data: Trade }>(`${environment.apiUrl}/trades`, dto);
 
     obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (res: any) => {
+      next: (res: { data: Trade }) => {
         if (edit) { this.tradesStore.updateTrade(res.data); } else { this.tradesStore.addTrade(res.data); }
         this.closeModal();
         this.isSubmitting.set(false);
       },
-      error: (err: any) => {
-        const msg = err?.error?.message ?? 'Erreur';
+      error: (err: HttpErrorResponse) => {
+        const msg = (err?.error as { message?: string | string[] })?.message ?? 'Erreur';
         this.submitError.set(Array.isArray(msg) ? msg.join(', ') : String(msg));
         this.isSubmitting.set(false);
       },

@@ -11,59 +11,72 @@ export class AdminService {
     const startOfWeek = new Date(now);
     startOfWeek.setDate(now.getDate() - 7);
 
-    const [todayLogs, weekLogs] = await Promise.all([
-      this.prisma.aiUsageLog.findMany({ where: { createdAt: { gte: startOfToday } } }),
-      this.prisma.aiUsageLog.findMany({
+    const [todayAgg, weekAgg, byFeatureRaw, topUsersRaw] = await Promise.all([
+      // Totaux aujourd'hui — aggregate (pas de chargement en RAM)
+      this.prisma.aiUsageLog.aggregate({
+        where: { createdAt: { gte: startOfToday } },
+        _sum: { inputTokens: true, outputTokens: true, costUsd: true },
+        _count: true,
+      }),
+      // Totaux semaine — aggregate
+      this.prisma.aiUsageLog.aggregate({
         where: { createdAt: { gte: startOfWeek } },
-        include: { user: { select: { email: true, name: true } } },
+        _sum: { inputTokens: true, outputTokens: true, costUsd: true },
+        _count: true,
+      }),
+      // Par feature — groupBy (PostgreSQL fait le calcul)
+      this.prisma.aiUsageLog.groupBy({
+        by: ['feature'],
+        where: { createdAt: { gte: startOfWeek } },
+        _sum: { inputTokens: true, outputTokens: true, costUsd: true },
+        _count: true,
+      }),
+      // Top users — groupBy avec userId
+      this.prisma.aiUsageLog.groupBy({
+        by: ['userId'],
+        where: { createdAt: { gte: startOfWeek } },
+        _sum: { inputTokens: true, outputTokens: true, costUsd: true },
+        orderBy: { _sum: { inputTokens: 'desc' } },
+        take: 10,
       }),
     ]);
 
-    const sum = (logs: typeof todayLogs) => ({
-      inputTokens:  logs.reduce((a, l) => a + l.inputTokens, 0),
-      outputTokens: logs.reduce((a, l) => a + l.outputTokens, 0),
-      costUsd:      logs.reduce((a, l) => a + l.costUsd, 0),
-      calls:        logs.length,
-    });
+    const today = {
+      inputTokens:  todayAgg._sum.inputTokens  ?? 0,
+      outputTokens: todayAgg._sum.outputTokens ?? 0,
+      costUsd:      todayAgg._sum.costUsd       ?? 0,
+      calls:        todayAgg._count,
+    };
+    const week = {
+      inputTokens:  weekAgg._sum.inputTokens  ?? 0,
+      outputTokens: weekAgg._sum.outputTokens ?? 0,
+      costUsd:      weekAgg._sum.costUsd       ?? 0,
+      calls:        weekAgg._count,
+    };
 
-    // By feature
-    const featureMap = new Map<string, { tokens: number; cost: number }>();
-    const weekTotal = weekLogs.reduce((a, l) => a + l.inputTokens + l.outputTokens, 0);
-    for (const l of weekLogs) {
-      const prev = featureMap.get(l.feature) ?? { tokens: 0, cost: 0 };
-      featureMap.set(l.feature, {
-        tokens: prev.tokens + l.inputTokens + l.outputTokens,
-        cost: prev.cost + l.costUsd,
-      });
-    }
-    const byFeature = [...featureMap.entries()].map(([feature, v]) => ({
-      feature,
-      tokens: v.tokens,
-      cost: v.cost,
-      pct: weekTotal > 0 ? Math.round((v.tokens / weekTotal) * 100) : 0,
+    const weekTotal = week.inputTokens + week.outputTokens;
+    const byFeature = byFeatureRaw.map(f => ({
+      feature: f.feature,
+      tokens:  (f._sum.inputTokens ?? 0) + (f._sum.outputTokens ?? 0),
+      cost:    f._sum.costUsd ?? 0,
+      pct:     weekTotal > 0 ? Math.round(((f._sum.inputTokens ?? 0) + (f._sum.outputTokens ?? 0)) / weekTotal * 100) : 0,
     }));
 
-    // Top users
-    const userMap = new Map<string, { email: string; name: string; tokens: number; cost: number }>();
-    for (const l of weekLogs as (typeof weekLogs[0] & { user?: { email: string; name: string | null } })[]) {
-      const key = l.userId;
-      const prev = userMap.get(key) ?? { email: l.user?.email ?? '', name: l.user?.name ?? '', tokens: 0, cost: 0 };
-      userMap.set(key, {
-        ...prev,
-        tokens: prev.tokens + l.inputTokens + l.outputTokens,
-        cost: prev.cost + l.costUsd,
-      });
-    }
-    const topUsers = [...userMap.entries()]
-      .map(([userId, v]) => ({ userId, ...v }))
-      .sort((a, b) => b.tokens - a.tokens)
-      .slice(0, 10);
+    // Enrichir avec email/name depuis users
+    const userIds = topUsersRaw.map(u => u.userId);
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, email: true, name: true },
+    });
+    const userById = new Map(users.map(u => [u.id, u]));
+    const topUsers = topUsersRaw.map(u => ({
+      userId:  u.userId,
+      email:   userById.get(u.userId)?.email ?? '',
+      name:    userById.get(u.userId)?.name  ?? '',
+      tokens:  (u._sum.inputTokens ?? 0) + (u._sum.outputTokens ?? 0),
+      cost:    u._sum.costUsd ?? 0,
+    }));
 
-    return {
-      today: sum(todayLogs),
-      week: sum(weekLogs),
-      byFeature,
-      topUsers,
-    };
+    return { today, week, byFeature, topUsers };
   }
 }

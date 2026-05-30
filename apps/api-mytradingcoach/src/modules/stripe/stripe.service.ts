@@ -306,9 +306,7 @@ export class StripeService {
             `[MONITORING] Subscription ${subscription.id} — status: ${subscription.status} — customer: ${customerId ?? 'unknown'}`,
           );
           if (process.env['SENTRY_DSN']) {
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
-            const Sentry =
-              require('@sentry/nestjs') as typeof import('@sentry/nestjs');
+            const Sentry = await import('@sentry/nestjs');
             Sentry.captureMessage(
               `Subscription ${subscription.status}: ${subscription.id}`,
               {
