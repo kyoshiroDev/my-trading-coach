@@ -3,9 +3,11 @@ import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { EmailCampaignService } from './email-campaign.service';
 import { ResendModule } from '../resend/resend.module';
+import { UsersModule } from '../users/users.module';
+import { PrismaModule } from '../../prisma/prisma.module';
 
 @Module({
-  imports: [ResendModule],
+  imports: [ResendModule, UsersModule, PrismaModule],
   controllers: [AdminController],
   providers: [AdminService, EmailCampaignService],
 })

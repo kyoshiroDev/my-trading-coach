@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { DebriefPdfData } from '../pdf/pdf.service';
 
@@ -10,6 +10,7 @@ interface DebriefAiResult {
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { AnalyticsService } from '../analytics/analytics.service';
+import { SessionService } from '../session/session.service';
 
 @Injectable()
 export class DebriefService {
@@ -17,6 +18,7 @@ export class DebriefService {
     private prisma: PrismaService,
     private aiService: AiService,
     private analyticsService: AnalyticsService,
+    private sessionService: SessionService,
   ) {}
 
   async getCurrent(userId: string) {
@@ -92,6 +94,8 @@ export class DebriefService {
       },
     });
 
+    const recentSessions = await this.sessionService.getSessionHistory(userId, 5, 0);
+
     const aiResult = (await this.aiService.generateDebrief({
       trades,
       stats,
@@ -99,6 +103,7 @@ export class DebriefService {
       weekNumber,
       year,
       userProfile: userProfile ?? undefined,
+      recentSessions,
     }, userId)) as DebriefAiResult;
 
     return this.prisma.weeklyDebrief.upsert({
@@ -126,6 +131,20 @@ export class DebriefService {
 
   async generateForUser(userId: string) {
     return this.generate(userId, Role.USER, true);
+  }
+
+  async addNoteToObjective(userId: string, debriefId: string, index: number, note: string) {
+    const debrief = await this.prisma.weeklyDebrief.findUnique({ where: { id: debriefId } });
+    if (!debrief) throw new NotFoundException('Débrief introuvable');
+    if (debrief.userId !== userId) throw new ForbiddenException();
+
+    const objectives = (debrief.objectives as { title: string; reason: string; note?: string }[]);
+    if (index < 0 || index >= objectives.length) throw new NotFoundException('Objectif introuvable');
+
+    const updated = [...objectives];
+    updated[index] = { ...updated[index], note };
+
+    return this.prisma.weeklyDebrief.update({ where: { id: debriefId }, data: { objectives: updated } });
   }
 
   async getPDFData(

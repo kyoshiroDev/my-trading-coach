@@ -12,6 +12,7 @@ export const buildDebriefPrompt = (data: {
   weekNumber: number;
   year: number;
   userProfile?: UserTradingProfile;
+  recentSessions?: unknown[];
 }) => `
 Semaine ${data.weekNumber} de ${data.year} — ${data.trades.length} trades enregistrés.
 ${data.userProfile ? buildUserTradingContext(data.userProfile) : ''}
@@ -23,6 +24,25 @@ ${JSON.stringify(data.trades, null, 2)}
 
 Objectifs fixés la semaine précédente :
 ${JSON.stringify(data.previousObjectives, null, 2)}
+${data.recentSessions?.length ? `
+Dernières sessions (humeur, P&L, réflexions) :
+${JSON.stringify(data.recentSessions.map((s: unknown) => {
+  const session = s as {
+    startedAt?: string; moodStart?: string; moodEnd?: string;
+    totalPnl?: number; totalTrades?: number; winRate?: number;
+    reflectionQuestion?: string; reflectionNote?: string;
+  };
+  return {
+    date: session.startedAt,
+    moodStart: session.moodStart,
+    moodEnd: session.moodEnd,
+    pnl: session.totalPnl,
+    trades: session.totalTrades,
+    winRate: session.winRate,
+    question: session.reflectionQuestion,
+    reflection: session.reflectionNote,
+  };
+}), null, 2)}` : ''}
 
 Génère le débrief au format JSON suivant (UNIQUEMENT le JSON, rien d'autre) :
 {

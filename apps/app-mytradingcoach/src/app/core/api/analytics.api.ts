@@ -53,6 +53,22 @@ export interface TopAsset {
   count: number;
 }
 
+export interface DailyActivity {
+  date: string;
+  pnl: number;
+  tradesCount: number;
+  winRate: number;
+}
+
+export interface MonthlyActivitySummary {
+  year: number;
+  month: number;
+  days: DailyActivity[];
+  totalPnl: number;
+  totalTrades: number;
+  tradingDays: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AnalyticsApi {
   private readonly http = inject(HttpClient);
@@ -82,5 +98,13 @@ export class AnalyticsApi {
 
   getTopAssets(): Observable<{ data: TopAsset[] }> {
     return this.http.get<{ data: TopAsset[] }>(`${this.base}/top-assets`);
+  }
+
+  getCurrentMonthActivity(): Observable<{ data: MonthlyActivitySummary }> {
+    return this.http.get<{ data: MonthlyActivitySummary }>(`${this.base}/activity/current-month`);
+  }
+
+  getMonthActivity(year: number, month: number): Observable<{ data: MonthlyActivitySummary }> {
+    return this.http.get<{ data: MonthlyActivitySummary }>(`${this.base}/activity/${year}/${month}`);
   }
 }

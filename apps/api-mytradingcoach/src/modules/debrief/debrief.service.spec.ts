@@ -5,6 +5,7 @@ import { DebriefService } from './debrief.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { AnalyticsService } from '../analytics/analytics.service';
+import { SessionService } from '../session/session.service';
 
 const mockDebrief = {
   id: 'debrief-1',
@@ -54,6 +55,10 @@ const mockAnalyticsService = {
     .mockResolvedValue({ winRate: 60, totalPnl: 250, totalTrades: 5 }),
 };
 
+const mockSessionService = {
+  getSessionHistory: vi.fn().mockResolvedValue([]),
+};
+
 describe('DebriefService', () => {
   let service: DebriefService;
 
@@ -66,6 +71,7 @@ describe('DebriefService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AiService, useValue: mockAiService },
         { provide: AnalyticsService, useValue: mockAnalyticsService },
+        { provide: SessionService, useValue: mockSessionService },
       ],
     }).compile();
 

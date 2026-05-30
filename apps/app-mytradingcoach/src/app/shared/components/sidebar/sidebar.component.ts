@@ -7,21 +7,11 @@ import {
   signal,
 } from '@angular/core';
 import { RouterModule, RouterLink, RouterLinkActive } from '@angular/router';
-import {
-  LucideAngularModule,
-  LayoutDashboard,
-  BookOpen,
-  BarChart2,
-  Sparkles,
-  CalendarDays,
-  Trophy,
-  Settings,
-  LogOut,
-  ShieldCheck,
-} from 'lucide-angular';
 import { UserStore } from '../../../core/stores/user.store';
 import { TradesStore } from '../../../core/stores/trades.store';
 import { AuthService } from '../../../core/auth/auth.service';
+import { AmbassadorNotifService } from '../../../core/services/ambassador-notif.service';
+import { LiveModeService } from '../../../core/services/live-mode.service';
 import { OnboardingComponent } from '../../../features/onboarding/onboarding.component';
 import { PlanModalComponent } from '../plan-modal/plan-modal.component';
 
@@ -32,7 +22,6 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
     RouterModule,
     RouterLink,
     RouterLinkActive,
-    LucideAngularModule,
     OnboardingComponent,
     PlanModalComponent,
   ],
@@ -79,9 +68,7 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             data-testid="nav-dashboard"
             (click)="closeSidebar()"
           >
-            <span class="nav-icon"
-              ><lucide-icon [img]="LayoutDashboardIcon" [size]="14"
-            /></span>
+            <span class="nav-icon">📊</span>
             Dashboard
           </a>
 
@@ -92,10 +79,19 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             data-testid="nav-journal"
             (click)="closeSidebar()"
           >
-            <span class="nav-icon"
-              ><lucide-icon [img]="BookOpenIcon" [size]="14"
-            /></span>
+            <span class="nav-icon">📖</span>
             Journal
+          </a>
+
+          <a
+            routerLink="/sessions"
+            routerLinkActive="active"
+            class="nav-item"
+            data-testid="nav-sessions"
+            (click)="closeSidebar()"
+          >
+            <span class="nav-icon">📋</span>
+            Mes sessions
           </a>
 
           <a
@@ -105,9 +101,7 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             data-testid="nav-analytics"
             (click)="closeSidebar()"
           >
-            <span class="nav-icon"
-              ><lucide-icon [img]="BarChart2Icon" [size]="14"
-            /></span>
+            <span class="nav-icon">📈</span>
             Analytics
           </a>
 
@@ -120,9 +114,7 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             data-testid="nav-ai-insights"
             (click)="closeSidebar()"
           >
-            <span class="nav-icon"
-              ><lucide-icon [img]="SparklesIcon" [size]="14"
-            /></span>
+            <span class="nav-icon">✨</span>
             IA Insights
             <span class="badge">AI</span>
           </a>
@@ -134,12 +126,38 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             data-testid="nav-debrief"
             (click)="closeSidebar()"
           >
-            <span class="nav-icon"
-              ><lucide-icon [img]="CalendarDaysIcon" [size]="14"
-            /></span>
+            <span class="nav-icon">📅</span>
             Weekly Debrief
             <span class="badge">PRO</span>
           </a>
+
+          <a
+            routerLink="/eco-calendar"
+            routerLinkActive="active"
+            class="nav-item"
+            data-testid="nav-eco-calendar"
+            (click)="closeSidebar()"
+          >
+            <span class="nav-icon">🗓️</span>
+            Calendrier éco
+            <span class="badge">PRO</span>
+          </a>
+
+          @if (userStore.isAmbassador()) {
+            <a
+              routerLink="/ambassador"
+              routerLinkActive="active"
+              class="nav-item"
+              data-testid="nav-ambassador"
+              (click)="closeSidebar()"
+            >
+              <span class="nav-icon">🤝</span>
+              Ambassadeur
+              @if (ambassadorNotif.newReferrals() > 0) {
+                <span class="nav-badge-notif">{{ ambassadorNotif.newReferrals() }}</span>
+              }
+            </a>
+          }
 
           <div class="nav-section">ACCOUNT</div>
 
@@ -150,9 +168,7 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             data-testid="nav-scoring"
             (click)="closeSidebar()"
           >
-            <span class="nav-icon"
-              ><lucide-icon [img]="TrophyIcon" [size]="14"
-            /></span>
+            <span class="nav-icon">🏆</span>
             Scoring
           </a>
 
@@ -163,35 +179,16 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             data-testid="nav-settings"
             (click)="closeSidebar()"
           >
-            <span class="nav-icon"
-              ><lucide-icon [img]="SettingsIcon" [size]="14"
-            /></span>
+            <span class="nav-icon">⚙️</span>
             Paramètres
           </a>
-
-          @if (userStore.isAdmin()) {
-            <div class="nav-section admin-section">ADMIN</div>
-            <a
-              routerLink="/admin"
-              routerLinkActive="active"
-              class="nav-item admin-item"
-              (click)="closeSidebar()"
-            >
-              <span class="nav-icon"
-                ><lucide-icon [img]="ShieldCheckIcon" [size]="14"
-              /></span>
-              Utilisateurs
-            </a>
-          }
 
           <button
             class="nav-item settings-item"
             data-testid="logout-btn"
             (click)="closeSidebar(); logout()"
           >
-            <span class="nav-icon"
-              ><lucide-icon [img]="LogOutIcon" [size]="14"
-            /></span>
+            <span class="nav-icon">🚪</span>
             Déconnexion
           </button>
         </nav>
@@ -236,15 +233,9 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             <div class="user-info">
               <div class="user-name">{{ userStore.displayName() }}</div>
               <div class="user-plan"
-                [class.admin]="userStore.isAdmin()"
-                [class.beta]="userStore.user()?.role === 'BETA_TESTER'"
-                [class.premium]="userStore.isPremium() && userStore.user()?.role !== 'BETA_TESTER' && !userStore.isAdmin()"
+                [class.premium]="userStore.isPremium()"
                 [class.free]="!userStore.isPremium()">
-                @if (userStore.isAdmin()) {
-                  ⚡ ADMIN
-                } @else if (userStore.user()?.role === 'BETA_TESTER') {
-                  ★ BETA
-                } @else if (userStore.isPremium()) {
+                @if (userStore.isPremium()) {
                   ★ PREMIUM
                 } @else {
                   FREE
@@ -256,7 +247,8 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
       </aside>
 
       <!-- ─── MAIN ─── -->
-      <main class="main-content">
+      <main class="main-content"
+            [style.overflow]="liveModeService.isLive() ? 'hidden' : null">
         <router-outlet />
       </main>
     </div>
@@ -267,6 +259,8 @@ export class SidebarComponent {
   protected readonly tradesStore = inject(TradesStore);
   private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly ambassadorNotif = inject(AmbassadorNotifService);
+  protected readonly liveModeService = inject(LiveModeService);
 
   protected readonly sidebarOpen   = signal(false);
   protected readonly showPlanModal  = signal(false);
@@ -287,16 +281,6 @@ export class SidebarComponent {
     const user = this.userStore.user();
     return !!user && user.onboardingCompleted === false;
   });
-
-  protected readonly LayoutDashboardIcon = LayoutDashboard;
-  protected readonly BookOpenIcon = BookOpen;
-  protected readonly BarChart2Icon = BarChart2;
-  protected readonly SparklesIcon = Sparkles;
-  protected readonly CalendarDaysIcon = CalendarDays;
-  protected readonly TrophyIcon = Trophy;
-  protected readonly SettingsIcon = Settings;
-  protected readonly LogOutIcon = LogOut;
-  protected readonly ShieldCheckIcon = ShieldCheck;
 
   constructor() {
     this.tradesStore.loadMonthlyCount();

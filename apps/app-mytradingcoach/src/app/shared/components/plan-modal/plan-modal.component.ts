@@ -1,11 +1,15 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   inject,
   output,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BillingApi } from '../../../core/api/billing.api';
+
+type PlanId = 'starter_monthly' | 'starter_yearly' | 'premium_monthly' | 'premium_yearly';
 
 @Component({
   selector: 'mtc-plan-modal',
@@ -18,11 +22,12 @@ export class PlanModalComponent {
   closed = output<void>();
 
   private readonly billingApi = inject(BillingApi);
+  private readonly destroyRef = inject(DestroyRef);
 
-  protected selectedPlan = signal<'monthly' | 'yearly'>('yearly');
+  protected selectedPlan = signal<PlanId>('starter_yearly');
   protected isLoading = signal(false);
 
-  protected selectPlan(plan: 'monthly' | 'yearly') {
+  protected selectPlan(plan: PlanId) {
     this.selectedPlan.set(plan);
   }
 
@@ -36,11 +41,11 @@ export class PlanModalComponent {
 
   protected confirmPlan() {
     this.isLoading.set(true);
-    this.billingApi.checkout(this.selectedPlan()).subscribe({
-      next: (res) => {
-        window.location.href = res.data.url;
-      },
-      error: () => this.isLoading.set(false),
-    });
+    this.billingApi.checkout(this.selectedPlan())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => { window.location.href = res.data.url; },
+        error: () => this.isLoading.set(false),
+      });
   }
 }

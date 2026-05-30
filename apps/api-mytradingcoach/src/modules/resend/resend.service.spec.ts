@@ -59,7 +59,7 @@ describe('ResendService', () => {
       expect(call.to).toBe('trader@test.com');
       expect(call.subject).toContain('17');
       expect(call.html).toContain('65.5');
-      expect(call.html).toContain('234.50');
+      expect(call.html).toContain('+235');
     });
 
     it('ne throw pas si Resend retourne une erreur', async () => {

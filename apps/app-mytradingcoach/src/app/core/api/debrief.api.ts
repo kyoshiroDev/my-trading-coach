@@ -11,6 +11,7 @@ export interface DebriefItem {
 export interface DebriefObjective {
   title: string;
   reason: string;
+  note?: string;
 }
 
 export interface DebriefInsights {
@@ -61,5 +62,12 @@ export class DebriefApi {
 
   generate(): Observable<{ data: WeeklyDebrief }> {
     return this.http.post<{ data: WeeklyDebrief }>(`${this.base}/generate`, {});
+  }
+
+  addObjectiveNote(debriefId: string, index: number, note: string): Observable<{ data: WeeklyDebrief }> {
+    return this.http.patch<{ data: WeeklyDebrief }>(
+      `${this.base}/${debriefId}/objectives/${index}/note`,
+      { note },
+    );
   }
 }

@@ -32,6 +32,8 @@ const USER_SELECT = {
   tradesPerDayMin: true,
   tradesPerDayMax: true,
   strategyDescription: true,
+  tradingAssets: true,
+  favoriteAsset: true,
   createdAt: true,
 } as const;
 
@@ -213,7 +215,7 @@ export class UsersService {
 
     const mrr = monthly * 39 + Math.round((annual * 349) / 12);
     const arr = mrr * 12;
-    const totalPremium = monthly + annual;
+    const totalPremium = monthly + annual; // Stripe uniquement
 
     return {
       mrr, arr, totalPremium, monthly, annual,

@@ -7,8 +7,8 @@
 
 /* ─── SIDEBAR ─── */
 .sidebar {
-  width: 240px;
-  min-width: 240px;
+  width: 220px;
+  min-width: 220px;
   background: var(--bg-2);
   border-right: 1px solid var(--border);
   display: flex;
@@ -32,7 +32,7 @@
     var(--blue) 60%,
     transparent
   );
-  opacity: 0.12;
+  opacity: 0.20;
   pointer-events: none;
 }
 
@@ -109,25 +109,46 @@
 }
 
 .nav-icon {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  opacity: 0.8;
+  font-size: 14px;
+  line-height: 1;
 }
 
 .badge {
   margin-left: auto;
-  background: linear-gradient(135deg, var(--blue), #8b5cf6);
-  color: white;
+  background: var(--badge-premium-bg);
+  color: var(--badge-premium-color);
+  border: 1px solid var(--badge-premium-border);
   font-size: 9px;
   font-family: var(--font-mono);
   font-weight: 500;
   padding: 2px 6px;
   border-radius: 10px;
   letter-spacing: 0.5px;
+}
+
+.nav-badge-notif {
+  margin-left: auto;
+  background: var(--red);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 1px 6px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 16px;
+  animation: badgePop .3s ease;
+}
+@keyframes badgePop {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
 }
 
 .settings-item {
@@ -138,25 +159,6 @@
   text-align: left;
 }
 
-.admin-section {
-  color: rgba(239, 68, 68, 0.55);
-}
-
-.admin-item {
-  color: #f87171;
-}
-.admin-item:hover {
-  background: rgba(239, 68, 68, 0.08);
-  color: var(--red);
-}
-.admin-item.active {
-  background: rgba(239, 68, 68, 0.12);
-  color: var(--red);
-}
-.admin-item.active::before {
-  background: var(--red);
-}
-
 /* ─── Discord button ─── */
 .discord-sidebar-btn {
   display: flex;
@@ -165,18 +167,18 @@
   padding: 8px 12px;
   margin: 0 8px 8px;
   border-radius: 8px;
-  border: 1px solid rgba(88, 101, 242, 0.25);
-  background: rgba(88, 101, 242, 0.06);
-  color: #7289da;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-3);
   text-decoration: none;
   font-size: 12px;
   font-weight: 500;
   transition: all 0.15s;
 }
 .discord-sidebar-btn:hover {
-  background: rgba(88, 101, 242, 0.15);
-  border-color: rgba(88, 101, 242, 0.4);
-  color: #99aab5;
+  background: var(--blue-glow);
+  border-color: var(--border-hover);
+  color: var(--text-2);
 }
 .discord-sidebar-btn span { flex: 1; }
 .discord-sidebar-arrow {
@@ -314,7 +316,6 @@
 .user-plan.premium { color: var(--badge-premium-color); }
 .user-plan.free    { color: var(--badge-free-color); }
 .user-plan.beta    { color: var(--badge-beta-color); }
-.user-plan.admin   { color: var(--badge-admin-color); }
 
 /* ─── MAIN ─── */
 .main-content {

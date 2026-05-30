@@ -48,16 +48,47 @@ model User {
   tradesPerDayMax     Int?
   strategyDescription String?
 
+  // ── Actifs tradés ────────────────────────────────────────────────────────
+  tradingAssets String[]  // configurés dans les paramètres
+  favoriteAsset String?   // pré-sélectionné dans la saisie rapide
+
+  // ── Parrainage ambassadeur ────────────────────────────────────────────────
+  referralCode String?  @unique  // code de parrainage unique
+  referredBy   String?           // code de l'ambassadeur qui a référé cet user
+
+  // ── Calendrier économique ─────────────────────────────────────────────────
+  // Format : "EventName:Currency" — pin permanent (ex: "Non-Farm Payrolls:USD")
+  pinnedEcoEvents String[]
+
   // ── Discord ──────────────────────────────────────────────────────────────────
   discordId String? @unique
 
-  trades       Trade[]
-  debriefs     WeeklyDebrief[]
-  aiUsageLogs  AiUsageLog[]
-  lastSeenAt   DateTime?
-  lastLoginAt  DateTime?
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  trades        Trade[]
+  debriefs      WeeklyDebrief[]
+  aiUsageLogs   AiUsageLog[]
+  tradeSessions TradeSession[]
+  dailyRecaps   DailyRecap[]
+  referrals     ReferralCommission[] @relation("AmbassadorCommissions")
+  lastSeenAt    DateTime?
+  lastLoginAt   DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model ReferralCommission {
+  id             String   @id @default(cuid())
+  ambassadorId   String
+  referredUserId String
+  amount         Float
+  subscriptionId String
+  period         String
+  status         String   @default("pending")
+  createdAt      DateTime @default(now())
+
+  ambassador User @relation("AmbassadorCommissions", fields: [ambassadorId], references: [id])
+
+  @@unique([subscriptionId, period])
+  @@index([ambassadorId])
 }
 
 model Trade {
@@ -81,12 +112,15 @@ model Trade {
   timeframe  String
   notes      String?
   tags       String[]
-  tradedAt   DateTime       @default(now())
-  createdAt  DateTime       @default(now())
+  sessionId    String?
+  tradeSession TradeSession? @relation(fields: [sessionId], references: [id])
+  tradedAt     DateTime      @default(now())
+  createdAt    DateTime      @default(now())
 
   @@index([userId, tradedAt])
   @@index([userId, emotion])
   @@index([userId, setup])
+  @@index([sessionId])
 }
 
 model WeeklyDebrief {
@@ -123,6 +157,76 @@ model AiUsageLog {
   @@index([feature])
 }
 
+// ── V2 Session Mode ─────────────────────────────────────────────────────────
+
+model TradeSession {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startedAt   DateTime      @default(now())
+  endedAt     DateTime?
+  moodStart   MoodState?
+  moodEnd     MoodState?
+  totalPnl    Float?
+  totalTrades Int           @default(0)
+  winRate     Float?
+  status      SessionStatus @default(ACTIVE)
+  notes              String?
+  reflectionNote     String?
+  reflectionQuestion String?
+  planNote           String?
+  marketContext      String?
+  maxDrawdown        Float?
+  bestTradePnl       Float?
+  bestTradeAsset     String?
+  trades             Trade[]
+  createdAt          DateTime      @default(now())
+
+  @@index([userId, startedAt])
+  @@index([userId, status])
+}
+
+model DailyRecap {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date            DateTime
+  tradesCount     Int      @default(0)
+  pnl             Float    @default(0)
+  winRate         Float    @default(0)
+  dominantEmotion String?
+  aiOneLiner      String?
+  generatedAt     DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model EcoCalendarCache {
+  id          String   @id @default(cuid())
+  date        DateTime
+  rawData     Json
+  aiAnalysis  Json
+  generatedAt DateTime @default(now())
+
+  @@unique([date])
+  @@index([date])
+}
+
+enum MoodState {
+  CONFIDENT
+  FOCUSED
+  NEUTRAL
+  TIRED
+  STRESSED
+}
+
+enum SessionStatus {
+  ACTIVE
+  CLOSED
+}
+
+
 // ── Idempotence webhooks Stripe ─────────────────────────────────────────────
 model StripeEvent {
   id          String   @id // Stripe event ID (evt_...)
@@ -136,10 +240,12 @@ enum Role {
   ADMIN
   USER
   BETA_TESTER
+  AMBASSADOR
 }
 
 enum Plan {
   FREE
+  STARTER
   PREMIUM
 }
 
@@ -170,6 +276,27 @@ enum TradingSession {
   LONDON
   NEW_YORK
   ASIAN
+}
+
+model EcoEvent {
+  id         String   @id @default(cuid())
+  date       String
+  time       String
+  name       String
+  country    String
+  currency   String
+  impact     String
+  actual     Float?
+  estimate   Float?
+  previous   Float?
+  isReleased Boolean  @default(false)
+  unit       String?
+  fetchedAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([date, name, currency])
+  @@index([date])
+  @@index([date, isReleased])
 }
 
 model EmailCampaignLog {

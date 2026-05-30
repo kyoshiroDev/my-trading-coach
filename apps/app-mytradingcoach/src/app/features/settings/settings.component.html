@@ -173,7 +173,7 @@
               </div>
             } @else {
               <div class="plan-badge free">FREE</div>
-              <p class="plan-desc">50 trades/mois · Journal complet · Stats de base · Historique illimité.</p>
+              <p class="plan-desc">30 trades/mois · Journal complet · Stats de base · Historique illimité.</p>
               <p class="plan-upgrade-hint">
                 Passe à Premium pour débloquer les analyses IA, le Weekly Debrief et l'import CSV.
               </p>
@@ -385,6 +385,73 @@
             </div>
           </div>
         }
+      </div>
+
+      <!-- ══ MES ACTIFS ══ -->
+      <div class="settings-section">
+        <div class="settings-section-label">Mes actifs</div>
+        <div class="strat-card">
+
+          <div class="asset-search-wrap">
+            <input
+              class="asset-search-input"
+              type="text"
+              placeholder="Rechercher un actif — NQ, MES, BTC, EUR/USD..."
+              [value]="assetSearchQuery()"
+              (input)="onAssetSearch($any($event.target).value)"
+              style="text-transform: uppercase;"
+            />
+            @if (assetSearchLoading()) {
+              <span class="asset-search-spin">⟳</span>
+            }
+          </div>
+
+          @if (assetSearchResults().length > 0) {
+            <div class="asset-results">
+              @for (result of assetSearchResults(); track result.symbol) {
+                <button class="asset-result" type="button" (click)="addAsset(result)">
+                  <span class="asset-result-sym">{{ result.symbol }}</span>
+                  <span class="asset-result-lbl">{{ result.label }}</span>
+                  <span class="asset-result-cat">{{ result.category }}</span>
+                  <span class="asset-result-add">+</span>
+                </button>
+              }
+            </div>
+          }
+
+          @if (tradingAssets().length > 0) {
+            <div class="assets-list">
+              @for (asset of tradingAssets(); track asset.symbol) {
+                <div class="asset-row">
+                  <button
+                    class="asset-fav"
+                    [class.active]="asset.isFavorite"
+                    [title]="asset.isFavorite ? 'Favori — pré-sélectionné en saisie rapide' : 'Définir comme favori'"
+                    (click)="setFavoriteAssetSetting(asset.symbol)"
+                  >★</button>
+                  <div class="asset-chip" [class.is-fav]="asset.isFavorite">
+                    <span class="asset-cat">{{ asset.category }}</span>
+                    <span class="asset-sym">{{ asset.symbol }}</span>
+                    <span class="asset-lbl">{{ asset.label }}</span>
+                  </div>
+                  <button class="asset-del" (click)="removeAsset(asset.symbol)" title="Supprimer">×</button>
+                </div>
+              }
+            </div>
+            <p class="assets-hint">★ L'actif favori sera pré-sélectionné dans la saisie rapide de session</p>
+          }
+
+          @if (tradingAssets().length > 0) {
+            <div class="section-save-row">
+              <button class="btn btn-primary" [disabled]="isSavingAssets()" (click)="saveAssets()">
+                @if (assetsSaved()) { ✓ Sauvegardé }
+                @else if (isSavingAssets()) { Sauvegarde… }
+                @else { Sauvegarder mes actifs }
+              </button>
+            </div>
+          }
+
+        </div>
       </div>
 
     </div> <!-- /settings-col-right -->

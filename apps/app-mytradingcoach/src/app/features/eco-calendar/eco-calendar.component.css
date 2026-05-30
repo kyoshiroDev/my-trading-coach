@@ -1,0 +1,210 @@
+/* ── Page ── */
+.eco-page { padding: 24px; max-width: 960px; margin: 0 auto; }
+
+/* ── Header ── */
+.eco-header {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; flex-wrap: wrap;
+  gap: 12px; margin-bottom: 20px;
+}
+.eco-title {
+  font-family: var(--font-display); font-size: 22px;
+  font-weight: 700; color: var(--text); margin-bottom: 3px;
+}
+.eco-subtitle { font-size: 12px; color: var(--text-3); font-family: var(--font-mono); }
+.eco-pins-badge {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.2);
+  border-radius: 8px; padding: 6px 12px;
+  font-size: 12px; color: var(--yellow); font-family: var(--font-mono);
+}
+.eco-saving { opacity: .6; }
+
+/* ── Navigation semaine ── */
+.eco-nav {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+}
+.eco-nav-btn {
+  background: var(--bg-3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 7px 14px;
+  font-size: 14px; color: var(--text-2); cursor: pointer; transition: all .15s;
+}
+.eco-nav-btn:hover { border-color: var(--border-hover); color: var(--text); }
+.eco-week-label {
+  font-size: 14px; font-weight: 600; color: var(--text);
+  font-family: var(--font-mono); flex: 1; text-align: center;
+}
+.eco-nav-today {
+  background: var(--blue-glow); border: 1px solid rgba(59,130,246,.25);
+  border-radius: 7px; padding: 6px 12px;
+  font-size: 11px; color: var(--blue-bright); cursor: pointer;
+  font-family: var(--font-mono); transition: all .15s;
+}
+.eco-nav-today:hover { background: rgba(59,130,246,.2); }
+
+/* ── Filtres ── */
+.eco-filters {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 20px; flex-wrap: wrap;
+}
+.eco-filter-group {
+  display: flex; gap: 3px;
+  background: var(--bg-3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 3px;
+}
+.eco-filter-btn {
+  display: flex; align-items: center; gap: 5px;
+  background: transparent; border: none; border-radius: 6px;
+  padding: 5px 12px; font-size: 11px;
+  font-family: var(--font-mono); color: var(--text-3);
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.eco-filter-btn:hover { color: var(--text-2); }
+.eco-filter-btn.active {
+  background: var(--bg-card); color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.eco-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+}
+.eco-dot.high { background: var(--red); }
+.eco-dot.medium { background: var(--yellow); }
+.eco-filter-select {
+  background: var(--bg-3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 5px 10px;
+  font-size: 11px; font-family: var(--font-mono);
+  color: var(--text-2); cursor: pointer; outline: none; transition: border-color .15s;
+}
+.eco-filter-select:hover { border-color: var(--border-hover); }
+.eco-reset-btn {
+  background: none; border: 1px solid var(--border);
+  border-radius: 7px; padding: 5px 10px;
+  font-size: 11px; font-family: var(--font-mono);
+  color: var(--text-3); cursor: pointer; transition: all .15s;
+}
+.eco-reset-btn:hover { border-color: var(--red); color: var(--red); }
+
+/* ── Loading skeleton ── */
+.eco-loading { display: flex; flex-direction: column; gap: 8px; }
+.eco-skel {
+  height: 56px; border-radius: 10px; background: var(--bg-card);
+  animation: skelPulse 1.4s ease-in-out infinite;
+}
+@keyframes skelPulse { 0%, 100% { opacity: .4; } 50% { opacity: .8; } }
+
+/* ── Empty state ── */
+.eco-empty { text-align: center; padding: 60px 24px; }
+.eco-empty-icon { font-size: 40px; margin-bottom: 14px; opacity: .4; }
+.eco-empty-title { font-size: 16px; font-weight: 600; color: var(--text-2); margin-bottom: 8px; }
+.eco-empty-sub {
+  font-size: 13px; color: var(--text-3); line-height: 1.6;
+  max-width: 360px; margin: 0 auto;
+}
+
+/* ── Groupe par jour ── */
+.eco-day-group { margin-bottom: 24px; }
+.eco-day-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 4px; margin-bottom: 8px;
+}
+.eco-day-label {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono); font-size: 12px;
+  font-weight: 700; color: var(--text-2); text-transform: capitalize;
+}
+.eco-day-group.today .eco-day-label { color: var(--blue-bright); }
+.eco-today-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--blue-bright);
+  animation: todayPulse 2s ease-in-out infinite;
+}
+@keyframes todayPulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+.eco-day-count { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
+
+/* ── Liste events ── */
+.eco-events-list { display: flex; flex-direction: column; gap: 5px; }
+
+/* ── Ligne event ── */
+.eco-event-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 10px; transition: all .15s;
+}
+.eco-event-row:hover { border-color: var(--border-hover); }
+.eco-event-row.pinned {
+  border-color: rgba(245,158,11,.3);
+  background: rgba(245,158,11,.04);
+}
+.eco-event-row.released { background: rgba(16,185,129,.03); }
+.eco-event-row.high { border-left: 3px solid var(--red); }
+
+/* ── Checkbox pin ── */
+.eco-pin-wrap { position: relative; flex-shrink: 0; }
+.eco-pin-check { position: absolute; opacity: 0; width: 0; height: 0; }
+.eco-pin-label {
+  display: flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; cursor: pointer;
+  border-radius: 6px; border: 1px solid var(--border);
+  background: var(--bg-3); transition: all .15s;
+  font-size: 12px; opacity: .4;
+}
+.eco-pin-check:checked + .eco-pin-label {
+  opacity: 1;
+  background: rgba(245,158,11,.1);
+  border-color: rgba(245,158,11,.4);
+}
+.eco-pin-label:hover { opacity: .8; border-color: var(--border-hover); }
+
+/* ── Heure ── */
+.eco-event-time {
+  font-family: var(--font-mono); font-size: 12px;
+  font-weight: 600; color: var(--text-2); min-width: 40px; flex-shrink: 0;
+}
+
+/* ── Barre impact ── */
+.eco-impact-bar { width: 3px; height: 28px; border-radius: 2px; flex-shrink: 0; }
+.eco-impact-bar.high { background: var(--red); }
+.eco-impact-bar.medium { background: var(--yellow); }
+
+/* ── Drapeau ── */
+.eco-flag { font-size: 18px; line-height: 1; flex-shrink: 0; }
+
+/* ── Corps event ── */
+.eco-event-body { flex: 1; min-width: 0; }
+.eco-event-name {
+  font-size: 13px; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.eco-event-values {
+  display: flex; gap: 8px; margin-top: 3px; flex-wrap: wrap;
+}
+.eco-val { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); }
+.eco-val.actual { font-weight: 700; color: var(--text-2); }
+.eco-val.actual.beat { color: var(--green); }
+.eco-val.actual.miss { color: var(--red); }
+
+/* ── Tags ── */
+.eco-currency-tag {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+  background: var(--blue-glow); color: var(--blue-bright);
+  border: 1px solid rgba(59,130,246,.2);
+  border-radius: 5px; padding: 2px 7px; flex-shrink: 0;
+}
+.eco-impact-badge {
+  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+  border-radius: 5px; padding: 2px 7px; flex-shrink: 0;
+  text-transform: uppercase; letter-spacing: .3px;
+}
+.eco-impact-badge.high {
+  background: rgba(239,68,68,.12); color: var(--red);
+  border: 1px solid rgba(239,68,68,.2);
+}
+.eco-impact-badge.medium {
+  background: var(--yellow-dim); color: var(--yellow);
+  border: 1px solid rgba(245,158,11,.2);
+}
+.eco-published {
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--green); background: var(--green-dim);
+  border-radius: 5px; padding: 2px 7px; flex-shrink: 0;
+}

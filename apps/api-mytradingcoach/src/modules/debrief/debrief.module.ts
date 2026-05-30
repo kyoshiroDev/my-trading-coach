@@ -8,6 +8,7 @@ import { AiModule } from '../ai/ai.module';
 import { AnalyticsModule } from '../analytics/analytics.module';
 import { ResendModule } from '../resend/resend.module';
 import { PdfModule } from '../pdf/pdf.module';
+import { SessionModule } from '../session/session.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { PdfModule } from '../pdf/pdf.module';
     AnalyticsModule,
     ResendModule,
     PdfModule,
+    SessionModule,
   ],
   controllers: [DebriefController],
   providers: [DebriefService, DebriefCron, DebriefProcessor],

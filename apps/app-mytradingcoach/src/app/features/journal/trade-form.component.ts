@@ -83,6 +83,7 @@ export class TradeFormComponent {
   protected readonly EMOTION_EMOJIS = EMOTION_EMOJIS;
 
   protected readonly submitted = signal(false);
+  private readonly originalTradedAtTime = signal<string | null>(null);
   protected readonly autoPnl = signal<number | undefined>(undefined);
   protected readonly autoPnlPct = signal<number | undefined>(undefined);
   protected readonly autoRR = signal<number | undefined>(undefined);
@@ -170,6 +171,12 @@ export class TradeFormComponent {
       this.open();
       const t = this.editTrade();
       if (t) {
+        if (t.tradedAt) {
+          const d = new Date(t.tradedAt);
+          this.originalTradedAtTime.set(d.toTimeString().slice(0, 8));
+        } else {
+          this.originalTradedAtTime.set(null);
+        }
         this.form.set({
           asset: t.asset,
           side: t.side,
@@ -200,6 +207,7 @@ export class TradeFormComponent {
         );
         this.autoRR.set(t.riskReward ?? undefined);
       } else {
+        this.originalTradedAtTime.set(null);
         this.form.set(this.emptyForm());
         this.assetSearch.set('');
         this.autoPnl.set(undefined);
@@ -370,14 +378,23 @@ export class TradeFormComponent {
 
   onSubmit(): void {
     this.submitted.set(true);
-    // Convertit YYYY-MM-DD en ISO datetime pour le backend
     const tradedAt = this.form().tradedAt;
-    const tradedAtIso = tradedAt
-      ? new Date(tradedAt + 'T12:00:00').toISOString()
-      : new Date().toISOString();
+    const today = new Date().toLocaleDateString('sv-SE');
+    const originalTime = this.originalTradedAtTime();
+
+    let tradedAtIso: string;
+    if (!tradedAt) {
+      tradedAtIso = new Date().toISOString();
+    } else if (originalTime) {
+      tradedAtIso = new Date(tradedAt + 'T' + originalTime).toISOString();
+    } else if (tradedAt === today) {
+      tradedAtIso = new Date().toISOString();
+    } else {
+      tradedAtIso = new Date(tradedAt + 'T12:00:00').toISOString();
+    }
     this.form.update((f) => ({
       ...f,
-      pnl: this.autoPnl(),
+      pnl: this.pnlNet() ?? this.autoPnl(),
       riskReward: this.autoRR(),
       tradedAt: tradedAtIso,
     }));

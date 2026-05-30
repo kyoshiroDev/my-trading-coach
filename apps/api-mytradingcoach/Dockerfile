@@ -7,7 +7,7 @@ COPY prisma ./prisma
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN pnpm install --frozen-lockfile
 COPY . .
-RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm exec prisma generate --config=./prisma/prisma.config.ts
+RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" DATABASE_DIRECT_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm exec prisma generate --config=./prisma/prisma.config.ts
 RUN NX_DAEMON=false NX_NO_CLOUD=true pnpm nx sync --yes 2>/dev/null || true
 RUN NX_DAEMON=false NX_NO_CLOUD=true pnpm nx build api-mytradingcoach --configuration=production --skip-nx-cache
 
@@ -20,7 +20,7 @@ COPY apps/api-mytradingcoach/package.json ./apps/api-mytradingcoach/
 COPY prisma ./prisma
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN pnpm install --frozen-lockfile
-RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm exec prisma generate --config=./prisma/prisma.config.ts
+RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" DATABASE_DIRECT_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm exec prisma generate --config=./prisma/prisma.config.ts
 
 FROM node:22-alpine AS runtime
 # Chromium pour puppeteer (génération PDF)

@@ -65,15 +65,24 @@
       <div class="card">
         <div class="card-header">
           <div class="card-title">Equity Curve</div>
-          @if (summary()) {
-            <span
-              class="card-meta"
-              [class.text-green]="summary()!.totalPnl >= 0"
-              [class.text-red]="summary()!.totalPnl < 0"
-            >
-              {{ summary()!.totalPnl | pnlFormat }}
-            </span>
-          }
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div class="period-tabs">
+              @for (p of periods; track p.key) {
+                <button
+                  class="period-tab"
+                  [class.active]="equityPeriod() === p.key"
+                  (click)="selectPeriod(p.key)"
+                >{{ p.label }}</button>
+              }
+            </div>
+            @if (equityData()?.points?.length) {
+              <span class="equity-pnl-total"
+                    [class.pos]="(equityData()!.points.at(-1)!.cumulativePnl) >= 0"
+                    [class.neg]="(equityData()!.points.at(-1)!.cumulativePnl) < 0">
+                {{ equityData()!.points.at(-1)!.cumulativePnl | pnlFormat }}
+              </span>
+            }
+          </div>
         </div>
         <div class="chart-container">
           <canvas
@@ -81,8 +90,8 @@
             class="chart-canvas"
             data-testid="equity-curve"
           ></canvas>
-          @if (equityCurve().length === 0) {
-            <div class="empty-chart">Aucun trade clôturé</div>
+          @if (equityCurve().length === 0 && !equityLoading()) {
+            <div class="empty-chart">Aucun trade sur cette période</div>
           }
         </div>
       </div>
@@ -105,66 +114,84 @@
       </div>
     </div>
 
-    <!-- Heatmap : jours (lignes) × heures (colonnes) -->
-    <div class="card mb-16">
-      <div class="card-header">
-        <div class="card-title">Heatmap horaire — Win Rate par heure</div>
-        <div class="heatmap-legend">
-          <span class="legend-dot dot-red"></span
-          ><span class="legend-txt">&lt;50%</span>
-          <span class="legend-dot dot-orange"></span
-          ><span class="legend-txt">50–65%</span>
-          <span class="legend-dot dot-green"></span
-          ><span class="legend-txt">&gt;65%</span>
+    <!-- Heatmap + Calendrier côte à côte — même hauteur -->
+    <div class="grid-heatmap-calendar mb-16">
+
+      <!-- Heatmap (gauche — plus large) -->
+      <div class="card heatmap-card">
+        <div class="card-header">
+          <div class="card-title">Heatmap horaire — Win Rate par heure</div>
+          <div class="heatmap-legend">
+            <span class="legend-dot dot-red"></span
+            ><span class="legend-txt">&lt;50%</span>
+            <span class="legend-dot dot-orange"></span
+            ><span class="legend-txt">50–65%</span>
+            <span class="legend-dot dot-green"></span
+            ><span class="legend-txt">&gt;65%</span>
+          </div>
         </div>
-      </div>
-      <div class="heatmap-wrapper" data-testid="heatmap">
-        <table class="heatmap-table">
-          <thead>
-            <tr>
-              <th class="heatmap-corner"></th>
-              @for (hour of hours; track hour) {
-                <th class="heatmap-hour-th">{{ hour }}h</th>
-              }
-            </tr>
-          </thead>
-          <tbody>
-            @for (day of days; track day) {
+        <div class="heatmap-wrapper" data-testid="heatmap">
+          <table class="heatmap-table">
+            <thead>
               <tr>
-                <td class="heatmap-day-td">{{ day }}</td>
+                <th class="heatmap-corner"></th>
                 @for (hour of hours; track hour) {
-                  @let cell = getHeatmapCell(day, hour);
-                  <td
-                    [class]="
-                      cell ? cellClass(cell.winRate) : 'heatmap-cell cell-empty'
-                    "
-                    [title]="
-                      cell
-                        ? day +
-                          ' ' +
-                          hour +
-                          'h — ' +
-                          cell.winRate.toFixed(0) +
-                          '% (' +
-                          cell.count +
-                          ' trades)'
-                        : ''
-                    "
-                  >
-                    @if (cell) {
-                      {{ cell.winRate.toFixed(0) }}%
-                    }
-                  </td>
+                  <th class="heatmap-hour-th">{{ hour }}h</th>
                 }
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (day of days; track day) {
+                <tr>
+                  <td class="heatmap-day-td">{{ day }}</td>
+                  @for (hour of hours; track hour) {
+                    @let cell = getHeatmapCell(day, hour);
+                    <td
+                      [class]="
+                        cell ? cellClass(cell.winRate) : 'heatmap-cell cell-empty'
+                      "
+                      [title]="
+                        cell
+                          ? day +
+                            ' ' +
+                            hour +
+                            'h — ' +
+                            cell.winRate.toFixed(0) +
+                            '% (' +
+                            cell.count +
+                            ' trades)'
+                          : ''
+                      "
+                    >
+                      @if (cell) {
+                        {{ cell.winRate.toFixed(0) }}%
+                      }
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      <!-- Calendrier (droite — plus compact) -->
+      <div class="cal-analytics-wrap">
+        <mtc-activity-calendar
+          [data]="calData()"
+          [loading]="calLoading()"
+          [showNavigation]="true"
+          [year]="calYear()"
+          [month]="calMonth()"
+          (monthChange)="onMonthChange($event)"
+        />
+      </div>
+
     </div>
 
     <!-- Top Actifs + Performance par Setup côte à côte -->
-    <div class="grid-2">
+    <div class="grid-2 mb-16">
+
       <div class="card">
         <div class="card-header">
           <div class="card-title">Top actifs</div>
@@ -240,6 +267,7 @@
           </tbody>
         </table>
       </div>
+
     </div>
   }
 

@@ -1,28 +1,66 @@
+/* Permet à mtc-dashboard de participer au flex de main-content */
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
 .content {
   padding: 28px;
   flex: 1;
   max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
-/* ─── Greeting ─── */
-.greeting {
-  margin-bottom: 28px;
+.content.live-mode {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ─── Page header ─── */
+.page-header {
+  display: flex;
+  align-items: center;
+  padding: 20px 28px 0;
+  margin-bottom: 20px;
+  gap: 0;
+}
+.greeting-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+  min-width: 280px;
 }
 .greeting-title {
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
-  letter-spacing: -0.3px;
   color: var(--text);
-  margin-bottom: 6px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
 }
 .greeting-sub {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-2);
-  font-weight: 400;
+}
+.tabs-block {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+.header-spacer {
+  flex-shrink: 0;
+  min-width: 280px;
+  flex: 1;
+  max-width: 400px;
 }
 
 /* ─── Stats Row ─── */
@@ -105,9 +143,9 @@
 .stat-value {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
-  letter-spacing: -1px;
+  letter-spacing: -0.8px;
   line-height: 1;
   margin-bottom: 8px;
   color: var(--text);
@@ -173,10 +211,40 @@
   grid-column: 1 / -1;
 }
 
-/* ─── Four-col row (equity · trades · winrate · emotions) ─── */
-.four-col-row {
+/* ─── Ligne 1 : Equity (60%) + Calendrier (40%) ou Equity seul V1 ─── */
+.top-charts-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
+  grid-template-columns: 3fr 2fr;
+  gap: 16px;
+  margin-bottom: 16px;
+  align-items: stretch;
+}
+
+.top-charts-row .equity-card {
+  height: 100%;
+}
+
+.top-charts-row .equity-card .chart-container {
+  height: 220px;
+  min-height: 220px;
+  max-height: 220px;
+  flex: none;
+}
+
+/* Equity seul (V1) : prend toute la largeur */
+.top-charts-row:has(> :only-child) {
+  grid-template-columns: 1fr;
+}
+
+.calendar-dashboard-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Ligne 2 : Trades + Win Rate + Émotions */
+.bottom-widgets-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 16px;
   margin-bottom: 16px;
   align-items: stretch;
@@ -248,11 +316,9 @@
 }
 
 canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .empty-chart {
@@ -369,9 +435,10 @@ canvas {
 }
 
 .equity-card .chart-container {
-  flex: 1;
-  height: auto;
-  min-height: 160px;
+  height: 220px;
+  min-height: 220px;
+  max-height: 220px;
+  flex: none;
 }
 
 /* ─── Recent trades compact ─── */
@@ -475,8 +542,8 @@ canvas {
 .premium-banner {
   background: linear-gradient(
     135deg,
-    rgba(59, 130, 246, 0.08),
-    rgba(139, 92, 246, 0.08)
+    var(--blue-glow),
+    var(--purple-dim)
   );
   border: 1px solid rgba(139, 92, 246, 0.2);
   border-radius: 10px;
@@ -562,6 +629,15 @@ canvas {
   transform: translateY(-1px);
 }
 
+@media (max-width: 1024px) {
+  .top-charts-row {
+    grid-template-columns: 1fr;
+  }
+  .bottom-widgets-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (max-width: 768px) {
   .content {
     padding: 14px 14px calc(env(safe-area-inset-bottom) + 14px);
@@ -617,7 +693,8 @@ canvas {
     padding: 2px 5px;
   }
 
-  .four-col-row {
+  .top-charts-row,
+  .bottom-widgets-row {
     grid-template-columns: 1fr;
     gap: 12px;
   }
@@ -724,3 +801,99 @@ canvas {
   .dashboard-header-row { flex-wrap: wrap; }
   .discord-badge { order: -1; }
 }
+
+/* ─── V2 Session Mode — tabs ─── */
+.session-tab {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all .13s;
+  color: var(--text-3);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.session-tab:hover {
+  background: var(--blue-glow);
+  border-color: rgba(59,130,246,.35);
+  color: var(--text-2);
+}
+.session-tab.active {
+  background: rgba(59,130,246,.12);
+  border-color: rgba(59,130,246,.4);
+  color: var(--blue-bright);
+  font-weight: 500;
+}
+
+/* ─── Badge BÊTA ─── */
+.badge-beta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--purple-dim);
+  color: var(--purple-bright);
+  border: 1px solid rgba(139, 92, 246, .22);
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.badge-beta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: var(--purple-dim);
+  color: var(--purple-bright);
+  border: 1px solid rgba(139, 92, 246, .18);
+}
+
+.v2-placeholder {
+  padding: 16px 0;
+}
+
+/* ─── Session pill (dans la topbar via ng-content) ─── */
+.sess-status-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  background: rgba(16,185,129,.06);
+  border: 1px solid rgba(16,185,129,.18);
+  border-radius: 8px;
+}
+.sess-pulse-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green); animation: sess-pulse 2s infinite; flex-shrink: 0;
+}
+@keyframes sess-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: .5; transform: scale(.8); }
+}
+.sess-timer-top { font-family: var(--font-mono); font-size: 13px; font-weight: 700; letter-spacing: .8px; color: var(--text); }
+.sess-sep       { color: var(--text-3); font-size: 11px; }
+.sess-cnt-top   { font-size: 12px; color: var(--text-2); font-family: var(--font-mono); }
+.sess-pnl-top   { font-family: var(--font-mono); font-size: 13px; font-weight: 700; }
+.sess-emo-top   { font-size: 14px; }
+.sess-stop-top {
+  background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.28);
+  color: var(--red); border-radius: 7px; padding: 6px 13px;
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  font-family: var(--font-body); white-space: nowrap; transition: all .15s;
+}
+.sess-stop-top:hover { background: rgba(239,68,68,.18); }

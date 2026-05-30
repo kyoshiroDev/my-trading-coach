@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   Param,
   Patch,
   Post,
@@ -13,9 +14,9 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import Redis from 'ioredis';
 import { Plan, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { PremiumGuard } from '../../common/guards/premium.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { TradesService } from './trades.service';
 import { CoinGeckoService } from './coingecko.service';
@@ -24,15 +25,137 @@ import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
 import { INSTRUMENTS } from './instruments.const';
+import Anthropic from '@anthropic-ai/sdk';
+
+interface MarketContextItem { value: number | null; source: 'fmp' | 'yahoo' | 'binance'; }
+interface TreasuryRates    { t2y: number | null; t5y: number | null; t10y: number | null; t30y: number | null; }
+interface MarketContextDto { nq: MarketContextItem; spx: MarketContextItem; dxy: MarketContextItem; treasury: TreasuryRates; updatedAt: string; }
+interface NewsItem         { title: string; symbol: string; publishedDate: string; sentiment?: 'bull' | 'bear' | 'neutral'; url?: string; text?: string; image?: string; site?: string; }
 
 @UseGuards(JwtAuthGuard)
 @Controller('trades')
 export class TradesController {
+  private readonly logger = new Logger(TradesController.name);
+  private readonly redis = new Redis({
+    host: process.env['REDIS_HOST'] ?? 'localhost',
+    port: parseInt(process.env['REDIS_PORT'] ?? '6379'),
+    password: process.env['REDIS_PASSWORD'],
+    lazyConnect: true,
+  });
+
   constructor(
     private tradesService: TradesService,
     private coinGeckoService: CoinGeckoService,
     private csvImportService: CsvImportService,
   ) {}
+
+  @Get('market-context')
+  async getMarketContext(): Promise<MarketContextDto> {
+    const cacheKey = 'market:context';
+    try {
+      const cached = await this.redis.get(cacheKey);
+      if (cached) return JSON.parse(cached) as MarketContextDto;
+    } catch { /* Redis indisponible */ }
+
+    const [nq, spx, dxy, treasury] = await Promise.allSettled([
+      this.fetchYahooPrice('NQ=F'),
+      this.fetchFmpPrice('SPY'),
+      this.fetchDxy(),
+      this.fetchTreasuryRates(),
+    ]);
+
+    const result: MarketContextDto = {
+      nq:       { value: nq.status      === 'fulfilled' ? nq.value      : null, source: 'yahoo' },
+      spx:      { value: spx.status     === 'fulfilled' ? spx.value     : null, source: 'fmp'   },
+      dxy:      { value: dxy.status     === 'fulfilled' ? dxy.value     : null, source: 'yahoo' },
+      treasury: treasury.status === 'fulfilled' ? treasury.value : { t2y: null, t5y: null, t10y: null, t30y: null },
+      updatedAt: new Date().toISOString(),
+    };
+
+    try { await this.redis.setex(cacheKey, 15, JSON.stringify(result)); } catch { /* ignore */ }
+    return result;
+  }
+
+  @Get('news')
+  async getMarketNews(@Query('symbols') symbols: string): Promise<NewsItem[]> {
+    const cacheKey = `market:news:${symbols}`;
+    try {
+      const cached = await this.redis.get(cacheKey);
+      if (cached) return JSON.parse(cached) as NewsItem[];
+    } catch { /* ignore */ }
+
+    const apiKey = process.env['FMP_API_KEY'];
+    if (!apiKey) return [];
+
+    try {
+      const rawSymbols = (symbols || '').split(',').map(s => this.mapSymbolToFmp(s.trim())).filter(Boolean);
+      const fmpSymbols = rawSymbols.length > 0 ? rawSymbols.join(',') : 'QQQ,SPY,BTCUSD,EURUSD';
+
+      const url = `https://financialmodelingprep.com/stable/news/stock?symbols=${fmpSymbols}&limit=20&apikey=${apiKey}`;
+      const res = await fetch(url);
+      if (!res.ok) return [];
+      const data = await res.json() as NewsItem[];
+      const translated = await this.translateNewsItems(data);
+      try { await this.redis.setex(cacheKey, 60, JSON.stringify(translated)); } catch { /* ignore */ }
+      return translated;
+    } catch { return []; }
+  }
+
+  private async translateNewsItems(items: NewsItem[]): Promise<NewsItem[]> {
+    if (!items.length) return items;
+    const apiKey = process.env['ANTHROPIC_API_KEY'];
+    if (!apiKey) return items;
+
+    try {
+      const payload = items.map(i => ({ title: i.title, text: i.text ?? '' }));
+      const anthropic = new Anthropic({ apiKey });
+      const msg = await anthropic.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 8192,
+        messages: [{
+          role: 'user',
+          content: `Traduis ces news financières en français. Réponds UNIQUEMENT avec un tableau JSON d'objets {title, text} dans le même ordre, sans aucun texte supplémentaire.\n\n${JSON.stringify(payload)}`,
+        }],
+      });
+
+      const raw = msg.content[0].type === 'text' ? msg.content[0].text.trim() : '';
+      const start = raw.indexOf('[');
+      const end   = raw.lastIndexOf(']');
+      if (start === -1 || end === -1) return items;
+
+      const translated: { title: string; text: string }[] = JSON.parse(raw.slice(start, end + 1));
+      return items.map((item, i) => ({
+        ...item,
+        title: translated[i]?.title ?? item.title,
+        text:  translated[i]?.text  ?? item.text,
+      }));
+    } catch {
+      return items;
+    }
+  }
+
+  private async fetchDxy(): Promise<number | null> {
+    return this.fetchYahooPrice('DX-Y.NYB');
+  }
+
+  private async fetchTreasuryRates(): Promise<TreasuryRates> {
+    const apiKey = process.env['FMP_API_KEY'];
+    if (!apiKey) return { t2y: null, t5y: null, t10y: null, t30y: null };
+    try {
+      const url = `https://financialmodelingprep.com/stable/treasury-rates?apikey=${apiKey}`;
+      const res = await fetch(url);
+      if (!res.ok) return { t2y: null, t5y: null, t10y: null, t30y: null };
+      const data = await res.json() as Array<Record<string, number>>;
+      const latest = data?.[0];
+      if (!latest) return { t2y: null, t5y: null, t10y: null, t30y: null };
+      return {
+        t2y:  latest['year2']   ?? latest['twoYear']    ?? latest['2Year']   ?? null,
+        t5y:  latest['year5']   ?? latest['fiveYear']   ?? latest['5Year']   ?? null,
+        t10y: latest['year10']  ?? latest['tenYear']    ?? latest['10Year']  ?? null,
+        t30y: latest['year30']  ?? latest['thirtyYear'] ?? latest['30Year']  ?? null,
+      };
+    } catch { return { t2y: null, t5y: null, t10y: null, t30y: null }; }
+  }
 
   @Get('monthly-count')
   async getMonthlyCount(
@@ -43,14 +166,104 @@ export class TradesController {
 
   @Get('instruments')
   async getInstruments() {
-    const cryptoInstruments =
-      await this.coinGeckoService.getCryptoInstruments();
-    const nonCrypto = INSTRUMENTS.filter((i) => i.category !== 'CRYPTO');
-    return [...nonCrypto, ...cryptoInstruments];
+    const cryptoInstruments = await this.coinGeckoService.getCryptoInstruments();
+    // Retourner uniquement les futures CME (ceux avec tickValue utile)
+    const futuresOnly = INSTRUMENTS.filter((i) => i.category === 'FUTURES_US');
+    return [...futuresOnly, ...cryptoInstruments];
+  }
+
+  @Get('live-price')
+  async getLivePrice(
+    @Query('symbol') symbol: string,
+  ): Promise<{ price: number | null; symbol: string; cached: boolean }> {
+    if (!symbol?.trim()) return { price: null, symbol: '', cached: false };
+
+    const sym = symbol.trim().toUpperCase();
+    const cacheKey = `price:${sym}`;
+
+    try {
+      const cached = await this.redis.get(cacheKey);
+      if (cached) return { price: parseFloat(cached), symbol, cached: true };
+    } catch { /* Redis indisponible */ }
+
+    let price: number | null = null;
+
+    // Futures CME → Yahoo Finance (FMP Starter ne couvre pas les futures)
+    if (INSTRUMENTS.some(i => i.symbol.toUpperCase() === sym && i.category === 'FUTURES_US')) {
+      price = await this.fetchYahooPrice(`${sym}=F`);
+    }
+    // Crypto /USDT → Binance (gratuit, sans clé)
+    else if (sym.includes('USDT')) {
+      const binanceSymbol = sym.replace('/', '');
+      price = await this.fetchBinancePrice(binanceSymbol);
+    }
+    // Forex / Actions → FMP
+    else {
+      price = await this.fetchFmpPrice(this.mapSymbolToFmp(sym));
+    }
+
+    if (price !== null) {
+      try { await this.redis.setex(cacheKey, 15, String(price)); } catch { /* ignore */ }
+    }
+
+    return { price, symbol, cached: false };
+  }
+
+  private async fetchYahooPrice(yahooSymbol: string): Promise<number | null> {
+    try {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?interval=1m&range=1d`;
+      const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+      if (!response.ok) return null;
+      const data = await response.json() as {
+        chart: { result?: Array<{ meta: { regularMarketPrice: number } }> };
+      };
+      return data?.chart?.result?.[0]?.meta?.regularMarketPrice ?? null;
+    } catch { return null; }
+  }
+
+  private async fetchBinancePrice(symbol: string): Promise<number | null> {
+    try {
+      const url = `https://api.binance.com/api/v3/ticker/price?symbol=${encodeURIComponent(symbol)}`;
+      const response = await fetch(url);
+      if (!response.ok) return null;
+      const data = await response.json() as { price: string };
+      return data?.price ? parseFloat(data.price) : null;
+    } catch { return null; }
+  }
+
+  private async fetchFmpPrice(symbol: string): Promise<number | null> {
+    const apiKey = process.env['FMP_API_KEY'];
+    if (!apiKey) return null;
+    try {
+      const url = `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(symbol)}&apikey=${apiKey}`;
+      const response = await fetch(url);
+      if (!response.ok) return null;
+      const data = await response.json() as Array<{ price: number }>;
+      return data?.[0]?.price ?? null;
+    } catch { return null; }
+  }
+
+  private mapSymbolToFmp(symbol: string): string {
+    const map: Record<string, string> = {
+      'EUR/USD': 'EURUSD', 'GBP/USD': 'GBPUSD', 'USD/JPY': 'USDJPY',
+      'AUD/USD': 'AUDUSD', 'USD/CHF': 'USDCHF', 'NZD/USD': 'NZDUSD',
+      'USD/CAD': 'USDCAD', 'EUR/GBP': 'EURGBP', 'EUR/JPY': 'EURJPY',
+      'GBP/JPY': 'GBPJPY',
+      'MNQ': 'QQQ', 'NQ': 'QQQ',
+      'MES': 'SPY', 'ES': 'SPY',
+      'MYM': 'DIA', 'YM': 'DIA',
+      'GC': 'GLD', 'MGC': 'GLD',
+      'CL': 'USO', 'MCL': 'USO',
+      'M2K': 'IWM', 'RTY': 'IWM',
+      'BTC/USDT': 'BTCUSD', 'ETH/USDT': 'ETHUSD',
+      'BTC/USD':  'BTCUSD', 'ETH/USD':  'ETHUSD',
+      'SOL/USDT': 'SOLUSD', 'XRP/USDT': 'XRPUSD',
+      'BNB/USDT': 'BNBUSD', 'ADA/USDT': 'ADAUSD',
+    };
+    return map[symbol] ?? symbol;
   }
 
   @Post('import')
-  @UseGuards(PremiumGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       limits: { fileSize: 5 * 1024 * 1024 },
@@ -108,6 +321,108 @@ export class TradesController {
     @Query() filters: TradeFiltersDto,
   ) {
     return this.tradesService.findAll(user.id, filters);
+  }
+
+  @Get('user-assets')
+  getUserAssets(@CurrentUser() user: { id: string }) {
+    return this.tradesService.getUserAssets(user.id);
+  }
+
+  @Patch('user-assets')
+  async saveUserAssets(
+    @CurrentUser() user: { id: string },
+    @Body() body: { assets: string[]; favoriteAsset?: string | null },
+  ) {
+    await this.tradesService.saveUserAssets(user.id, body.assets ?? [], body.favoriteAsset);
+    return { saved: true };
+  }
+
+  @Patch('favorite-asset')
+  setFavoriteAsset(
+    @CurrentUser() user: { id: string },
+    @Body('asset') asset: string | null,
+  ) {
+    return this.tradesService.setFavoriteAsset(user.id, asset ?? null);
+  }
+
+  @Get('instruments/search')
+  async searchInstruments(
+    @Query('q') q: string,
+  ) {
+    const query = (q ?? '').trim();
+    if (!query) return [];
+
+    const apiKey = process.env['FMP_API_KEY'];
+
+    if (apiKey) {
+      try {
+        const url =
+          `https://financialmodelingprep.com/stable/search` +
+          `?query=${encodeURIComponent(query)}&limit=12&apikey=${apiKey}`;
+
+        const response = await fetch(url);
+
+        if (response.ok) {
+          const data = (await response.json()) as Array<{
+            symbol: string;
+            name: string;
+            currency: string;
+            stockExchange: string;
+            exchangeShortName: string;
+          }>;
+
+          const getCategory = (exchange: string): string => {
+            const ex = exchange.toUpperCase();
+            if (['CME', 'CBOT', 'NYMEX', 'COMEX'].includes(ex)) return 'FUTURES';
+            if (['CRYPTO', 'COINBASE', 'BINANCE'].includes(ex)) return 'CRYPTO';
+            if (ex === 'FOREX' || ex === 'FX') return 'FOREX';
+            if (['NYSE', 'NASDAQ', 'AMEX'].includes(ex)) return 'ACTIONS';
+            return 'AUTRES';
+          };
+
+          return data
+            .filter((r) => r.symbol && r.name)
+            .map((r) => ({
+              symbol: r.symbol,
+              label: `${r.name} (${r.symbol})`,
+              category: getCategory(r.exchangeShortName ?? ''),
+            }))
+            .slice(0, 10);
+        }
+      } catch {
+        this.logger.warn('FMP search failed — fallback liste statique');
+      }
+    }
+
+    // Fallback — liste statique + CoinGecko
+    const lq = query.toLowerCase();
+    const staticMatches = INSTRUMENTS.filter(
+      (i) =>
+        i.symbol.toLowerCase().includes(lq) ||
+        i.label.toLowerCase().includes(lq),
+    ).slice(0, 10);
+
+    let cryptoMatches: Array<{ symbol: string; label: string; category: string }> = [];
+    if (staticMatches.length < 5) {
+      try {
+        cryptoMatches = (await this.coinGeckoService.getCryptoInstruments())
+          .filter(
+            (i) =>
+              i.symbol.toLowerCase().includes(lq) ||
+              i.label.toLowerCase().includes(lq),
+          )
+          .slice(0, 5)
+          .map((i) => ({ symbol: i.symbol, label: i.label, category: i.category }));
+      } catch {
+        // CoinGecko indisponible
+      }
+    }
+
+    const seen = new Set(staticMatches.map((i) => i.symbol));
+    return [
+      ...staticMatches.map((i) => ({ symbol: i.symbol, label: i.label, category: i.category })),
+      ...cryptoMatches.filter((i) => !seen.has(i.symbol)),
+    ].slice(0, 10);
   }
 
   @Get(':id')

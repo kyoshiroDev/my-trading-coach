@@ -1,0 +1,171 @@
+<div class="eco-page">
+
+  <!-- Header -->
+  <div class="eco-header">
+    <div class="eco-header-left">
+      <h1 class="eco-title">Calendrier économique</h1>
+      <span class="eco-subtitle">
+        {{ totalEvents() }} événement{{ totalEvents() > 1 ? 's' : '' }} · {{ getWeekLabel() }}
+      </span>
+    </div>
+
+    @if (pinnedCount > 0) {
+      <div class="eco-pins-badge">
+        📌 {{ pinnedCount }} épinglé{{ pinnedCount > 1 ? 's' : '' }} — affichés en priorité dans ta session
+        @if (isSavingPins()) {
+          <span class="eco-saving">· Sauvegarde...</span>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Navigation semaine -->
+  <div class="eco-nav">
+    <button class="eco-nav-btn" (click)="prevWeek()">←</button>
+    <div class="eco-week-label">{{ getWeekLabel() }}</div>
+    <button class="eco-nav-btn" (click)="nextWeek()">→</button>
+    @if (!isThisWeek()) {
+      <button class="eco-nav-today" (click)="goToThisWeek()">Cette semaine</button>
+    }
+  </div>
+
+  <!-- Filtres -->
+  <div class="eco-filters">
+    <div class="eco-filter-group">
+      <button class="eco-filter-btn" [class.active]="filterImpact() === 'all'"
+              (click)="filterImpact.set('all')">Tous</button>
+      <button class="eco-filter-btn" [class.active]="filterImpact() === 'high'"
+              (click)="filterImpact.set('high')">
+        <span class="eco-dot high"></span> Fort
+      </button>
+      <button class="eco-filter-btn" [class.active]="filterImpact() === 'medium'"
+              (click)="filterImpact.set('medium')">
+        <span class="eco-dot medium"></span> Moyen
+      </button>
+    </div>
+
+    <select class="eco-filter-select"
+            [value]="filterCurrency()"
+            (change)="filterCurrency.set($any($event.target).value)">
+      <option value="all">🌍 Toutes les devises</option>
+      @for (c of availableCurrencies(); track c) {
+        <option [value]="c">{{ c }}</option>
+      }
+    </select>
+
+    <select class="eco-filter-select"
+            [value]="filterCountry()"
+            (change)="filterCountry.set($any($event.target).value)">
+      <option value="all">🌍 Tous les pays</option>
+      @for (c of availableCountries(); track c.code) {
+        <option [value]="c.code">{{ c.flag }} {{ c.code }}</option>
+      }
+    </select>
+
+    @if (hasActiveFilters()) {
+      <button class="eco-reset-btn" (click)="resetFilters()">× Réinitialiser</button>
+    }
+  </div>
+
+  <!-- Loading -->
+  @if (isLoading()) {
+    <div class="eco-loading">
+      @for (i of [1, 2, 3, 4, 5]; track i) {
+        <div class="eco-skel"></div>
+      }
+    </div>
+  }
+
+  <!-- Groupes par jour -->
+  @if (!isLoading()) {
+    @if (filteredDayGroups().length === 0) {
+      <div class="eco-empty">
+        <div class="eco-empty-icon">📅</div>
+        <div class="eco-empty-title">Aucun événement cette semaine</div>
+        <div class="eco-empty-sub">
+          Les données sont chargées chaque matin à 6h00.<br>
+          Vérifie que la clé FMP est bien configurée.
+        </div>
+      </div>
+    }
+
+    @for (group of filteredDayGroups(); track group.date) {
+      <div class="eco-day-group" [class.today]="group.isToday">
+
+        <div class="eco-day-header">
+          <div class="eco-day-label">
+            @if (group.isToday) {
+              <span class="eco-today-dot"></span>
+            }
+            {{ group.label }}
+          </div>
+          <div class="eco-day-count">
+            {{ group.events.length }} événement{{ group.events.length > 1 ? 's' : '' }}
+          </div>
+        </div>
+
+        <div class="eco-events-list">
+          @for (event of group.events; track event.name + event.currency) {
+            <div class="eco-event-row"
+                 [class.pinned]="isPinned(event)"
+                 [class.released]="event.isReleased"
+                 [class.high]="event.impact === 'high'">
+
+              <!-- Checkbox épingler -->
+              <div class="eco-pin-wrap">
+                <input
+                  type="checkbox"
+                  class="eco-pin-check"
+                  [id]="'pin-' + event.name + '-' + event.currency"
+                  [checked]="isPinned(event)"
+                  (change)="togglePin(event)"
+                />
+                <label
+                  class="eco-pin-label"
+                  [attr.for]="'pin-' + event.name + '-' + event.currency"
+                  [title]="isPinned(event) ? 'Retirer des épinglés' : 'Épingler dans ma session'"
+                >📌</label>
+              </div>
+
+              <div class="eco-event-time">{{ event.time }}</div>
+              <div class="eco-impact-bar" [class]="event.impact"></div>
+              <span class="eco-flag">{{ getFlag(event) }}</span>
+
+              <div class="eco-event-body">
+                <div class="eco-event-name">{{ translate(event.name) }}</div>
+                @if (event.previous !== null || event.estimate !== null || event.actual !== null) {
+                  <div class="eco-event-values">
+                    @if (event.actual !== null) {
+                      <span class="eco-val actual"
+                            [class.beat]="event.estimate !== null && event.actual > event.estimate"
+                            [class.miss]="event.estimate !== null && event.actual < event.estimate">
+                        A: {{ event.actual }}{{ event.unit }}
+                      </span>
+                    }
+                    @if (event.estimate !== null) {
+                      <span class="eco-val estimate">P: {{ event.estimate }}{{ event.unit }}</span>
+                    }
+                    @if (event.previous !== null) {
+                      <span class="eco-val previous">Préc: {{ event.previous }}{{ event.unit }}</span>
+                    }
+                  </div>
+                }
+              </div>
+
+              <span class="eco-currency-tag">{{ event.currency }}</span>
+
+              <span class="eco-impact-badge" [class]="event.impact">
+                {{ event.impact === 'high' ? 'Fort' : 'Moyen' }}
+              </span>
+
+              @if (event.isReleased) {
+                <span class="eco-published">✓ Publié</span>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+
+</div>

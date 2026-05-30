@@ -1,8 +1,10 @@
 import {
+  Body,
   Controller,
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Res,
   UseGuards,
@@ -10,12 +12,12 @@ import {
 import { Role } from '@prisma/client';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { PremiumGuard } from '../../common/guards/premium.guard';
+import { StarterGuard } from '../../common/guards/starter.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { DebriefService } from './debrief.service';
 import { PdfService } from '../pdf/pdf.service';
 
-@UseGuards(JwtAuthGuard, PremiumGuard)
+@UseGuards(JwtAuthGuard, StarterGuard)
 @Controller('debrief')
 export class DebriefController {
   constructor(
@@ -63,5 +65,15 @@ export class DebriefController {
   @Post('generate')
   generate(@CurrentUser() user: { id: string; role: Role }) {
     return this.debriefService.generate(user.id, user.role);
+  }
+
+  @Patch(':debriefId/objectives/:index/note')
+  addNote(
+    @CurrentUser() user: { id: string },
+    @Param('debriefId') debriefId: string,
+    @Param('index', ParseIntPipe) index: number,
+    @Body('note') note: string,
+  ) {
+    return this.debriefService.addNoteToObjective(user.id, debriefId, index, note);
   }
 }

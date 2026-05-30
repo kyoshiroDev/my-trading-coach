@@ -324,68 +324,6 @@
   max-height: 60vh;
 }
 
-/* ── Step 3 Stratégie ─────────────────────────────────────── */
-.strategy-body { overflow-y: auto; max-height: 70vh; }
-
-.section-label {
-  font-size: 11px; font-weight: 600; color: var(--text-2);
-  letter-spacing: 0.05em; margin-bottom: 6px; display: flex;
-  align-items: center; gap: 6px;
-}
-.desc-label { justify-content: space-between; }
-
-.style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
-.style-btn {
-  display: flex; flex-direction: column; gap: 3px; padding: 12px;
-  border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card);
-  cursor: pointer; transition: all 0.15s; text-align: left;
-}
-.style-btn:hover   { border-color: var(--blue); }
-.style-btn.selected { border-color: var(--blue); background: rgba(59,130,246,0.08); }
-.style-emoji { font-size: 18px; }
-.style-label { font-size: 13px; font-weight: 600; color: var(--text); }
-.style-desc  { font-size: 11px; color: var(--text-3); }
-
-.freq-row  { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
-.freq-label { font-size: 11px; color: var(--text-3); width: 28px; }
-.freq-val   { font-size: 12px; font-family: var(--font-mono); width: 28px; text-align: right; }
-.freq-badge {
-  padding: 1px 8px; background: rgba(59,130,246,0.1); color: var(--blue);
-  border-radius: 20px; font-size: 11px; font-family: var(--font-mono);
-}
-.range-input { flex: 1; accent-color: var(--blue); cursor: pointer; }
-
-.sessions-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-.session-btn {
-  flex: 1; min-width: 90px; padding: 10px 12px; border-radius: 8px;
-  border: 1px solid var(--border); background: var(--bg-card);
-  cursor: pointer; transition: all 0.15s;
-  display: flex; flex-direction: column; gap: 2px; text-align: left;
-}
-.session-btn:hover    { border-color: var(--teal); }
-.session-btn.selected { border-color: var(--teal); background: rgba(20,184,166,0.08); }
-.session-label { font-size: 12px; font-weight: 600; color: var(--text); }
-.session-time  { font-size: 10px; font-family: var(--font-mono); color: var(--text-3); }
-
-.tags-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.strat-tag {
-  padding: 4px 12px; border-radius: 100px;
-  border: 1px solid var(--border); background: transparent;
-  font-size: 12px; font-family: var(--font-mono); color: var(--text-2);
-  cursor: pointer; transition: all 0.15s;
-}
-.strat-tag:hover    { border-color: var(--blue); color: var(--text); }
-.strat-tag.selected { background: rgba(59,130,246,0.1); border-color: var(--blue); color: var(--blue); }
-
-.strat-desc {
-  width: 100%; background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: 8px; padding: 10px 12px; color: var(--text);
-  font-size: 12px; font-family: var(--font-sans); resize: none; outline: none;
-  transition: border-color 0.15s; box-sizing: border-box;
-}
-.strat-desc:focus { border-color: var(--blue); }
-.char-count { font-size: 10px; color: var(--text-3); font-family: var(--font-mono); margin-left: auto; }
-
 /* ── Step Discord ── */
 .discord-card {
   display: flex; align-items: center; gap: 14px;
@@ -398,6 +336,7 @@
 }
 .discord-server-name { font-size: 14px; font-weight: 700; color: var(--text); }
 .discord-server-desc { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); margin-top: 3px; }
+
 .discord-channels { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 16px; }
 .discord-channel {
   font-size: 13px; color: var(--text-2);
@@ -405,6 +344,7 @@
   padding: 6px 10px; background: var(--bg-card); border-radius: 7px;
 }
 .discord-channel span { color: var(--text); font-weight: 500; }
+
 .discord-note {
   display: flex; align-items: flex-start; gap: 8px;
   background: var(--bg-2); border-radius: 8px; padding: 12px 14px;
@@ -414,11 +354,14 @@
   background: var(--bg-card); padding: 1px 6px; border-radius: 4px;
   font-family: var(--font-mono); color: var(--blue-bright);
 }
+
 .discord-footer { display: flex; align-items: center; gap: 10px; }
+
 .btn-discord {
   flex: 1; display: flex; align-items: center; justify-content: center;
-  background: #5865f2; color: white !important; border: none;
-  border-radius: 10px; padding: 12px 20px; font-size: 14px; font-weight: 700;
-  text-decoration: none; cursor: pointer; transition: opacity 0.15s;
+  background: #5865f2; color: white !important;
+  border: none; border-radius: 10px; padding: 12px 20px;
+  font-size: 14px; font-weight: 700; text-decoration: none;
+  cursor: pointer; transition: opacity 0.15s;
 }
 .btn-discord:hover { opacity: 0.85; }

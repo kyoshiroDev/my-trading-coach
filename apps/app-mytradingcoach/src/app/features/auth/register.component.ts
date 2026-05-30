@@ -43,6 +43,12 @@ import { BillingApi } from '../../core/api/billing.api';
           }
         </p>
 
+        @if (referralCode()) {
+          <div class="referral-notice">
+            🎉 Invitation de <strong>{{ referralCode() }}</strong> — 7 jours d'essai Premium offerts
+          </div>
+        }
+
         <form (ngSubmit)="onRegister()">
           <div class="form-group">
             <label for="name"
@@ -175,7 +181,7 @@ import { BillingApi } from '../../core/api/billing.api';
           @if (isPremiumFlow()) {
             Essai 7 jours gratuit · Sans CB requise · Annuler à tout moment
           } @else {
-            Aucune CB requise · 50 trades/mois · Annuler à tout moment
+            Aucune CB requise · 30 trades/mois · Annuler à tout moment
           }
         </p>
 
@@ -210,6 +216,9 @@ export class RegisterComponent {
   protected readonly confirmTouched = signal(false);
   protected readonly isPremiumFlow = signal(
     this.route.snapshot.queryParamMap.get('plan') === 'premium',
+  );
+  protected readonly referralCode = signal(
+    (this.route.snapshot.queryParamMap.get('ref') ?? '').toUpperCase(),
   );
 
   protected readonly emailError = computed(() => {
@@ -249,13 +258,13 @@ export class RegisterComponent {
     this.apiError.set(null);
 
     this.auth
-      .register(this.email(), this.password(), this.name() || undefined)
+      .register(this.email(), this.password(), this.name() || undefined, this.referralCode() || undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           if (this.isPremiumFlow()) {
             this.billingApi
-              .checkout('monthly')
+              .checkout('starter_monthly')
               .pipe(takeUntilDestroyed(this.destroyRef))
               .subscribe({
                 next: (res) => {

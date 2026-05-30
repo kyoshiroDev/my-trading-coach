@@ -15,7 +15,8 @@ import { buildDebriefPrompt } from './prompts/debrief.prompt';
 import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiLoggerService } from '../shared/ai-logger.service';
-import { buildUserTradingContext } from './user-context.builder';
+import { buildUserTradingContext, UserTradingProfile } from './user-context.builder';
+import { todayParis } from '../../common/utils/paris-date';
 
 const MODEL = 'claude-sonnet-4-6';
 const AI_MONTHLY_QUOTA = 100;
@@ -173,6 +174,200 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
     return { response: content.text };
   }
 
+  // ── Daily recap one-liner ─────────────────────────────────────────────────
+
+  async generateDailyOneLiner(data: {
+    userId: string;
+    trades: Array<{
+      side: string;
+      asset: string;
+      pnl: number | null;
+      emotion?: string;
+      setup?: string;
+      session?: string;
+      timeframe?: string;
+      entry?: number;
+      exit?: number | null;
+      stopLoss?: number | null;
+      takeProfit?: number | null;
+      tradedAt?: Date;
+    }>;
+    pnl: number;
+    winRate: number;
+    dominantEmotion: string;
+    date: Date;
+    userProfile?: UserTradingProfile;
+    patterns7d?: {
+      bySidePair: Record<string, { wins: number; total: number; pnl: number }>;
+      bySession: Record<string, { wins: number; total: number; pnl: number }>;
+    };
+  }): Promise<string> {
+    // ── 1. Profil trader ────────────────────────────────────────────────────
+    const profileCtx = data.userProfile
+      ? buildUserTradingContext(data.userProfile)
+      : '';
+
+    // ── 2. Trades du jour détaillés ─────────────────────────────────────────
+    const dateStr = data.date.toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
+
+    const tradesDetail = data.trades
+      .map((t) => {
+        const time = t.tradedAt
+          ? new Date(t.tradedAt).toLocaleTimeString('fr-FR', {
+              hour: '2-digit',
+              minute: '2-digit',
+              timeZone: 'Europe/Paris',
+            })
+          : '??:??';
+        const pnl = t.pnl ?? 0;
+        const pnlStr = `${pnl >= 0 ? '+' : ''}${pnl.toFixed(0)}$`;
+
+        let exitLabel = '';
+        if (t.exit != null && t.stopLoss != null && t.takeProfit != null) {
+          const distSL = Math.abs(t.exit - t.stopLoss);
+          const distTP = Math.abs(t.exit - t.takeProfit);
+          exitLabel = distSL < distTP ? '(SL touché)' : '(TP atteint)';
+        }
+
+        return [
+          time,
+          t.session ?? '?',
+          t.side,
+          t.asset,
+          t.setup ?? '?',
+          t.emotion ?? '?',
+          pnlStr,
+          exitLabel,
+        ]
+          .filter(Boolean)
+          .join(' | ');
+      })
+      .join('\n');
+
+    // ── 3. Patterns 7 jours ─────────────────────────────────────────────────
+    let patternsCtx = '';
+    if (data.patterns7d) {
+      const sidePairLines = Object.entries(data.patterns7d.bySidePair)
+        .filter(([, v]) => v.total >= 2)
+        .sort((a, b) => b[1].total - a[1].total)
+        .slice(0, 5)
+        .map(([key, v]) => {
+          const [side, asset] = key.split('_');
+          const wr = ((v.wins / v.total) * 100).toFixed(0);
+          const pnlStr = `${v.pnl >= 0 ? '+' : ''}${v.pnl.toFixed(0)}$`;
+          return `  - ${side} ${asset} : ${v.wins}/${v.total} = ${wr}% WR | ${pnlStr} cumulé (7j)`;
+        })
+        .join('\n');
+
+      const sessionLines = Object.entries(data.patterns7d.bySession)
+        .filter(([, v]) => v.total >= 2)
+        .sort((a, b) => b[1].total - a[1].total)
+        .map(([session, v]) => {
+          const wr = ((v.wins / v.total) * 100).toFixed(0);
+          const pnlStr = `${v.pnl >= 0 ? '+' : ''}${v.pnl.toFixed(0)}$`;
+          return `  - ${session} : ${v.wins}/${v.total} = ${wr}% WR | ${pnlStr} (7j)`;
+        })
+        .join('\n');
+
+      if (sidePairLines || sessionLines) {
+        patternsCtx = `\nPatterns des 7 derniers jours :\n${sidePairLines}\nPar session :\n${sessionLines}`;
+      }
+    }
+
+    // ── Prompt final ────────────────────────────────────────────────────────
+    const prompt = `${profileCtx}
+Journée du ${dateStr} : ${data.trades.length} trades, P&L ${data.pnl >= 0 ? '+' : ''}${data.pnl.toFixed(0)}$, win rate ${data.winRate.toFixed(0)}%, émotion dominante : ${data.dominantEmotion}.
+
+Détail des trades :
+${tradesDetail}
+${patternsCtx}
+
+Génère UNE seule phrase coaching (max 140 caractères).
+Règles :
+- Directe et concrète : cite l'asset, le setup ou la session problématique si identifié
+- Basée sur les vrais patterns de ce trader, pas des conseils génériques
+- Si un pattern négatif récurrent est détecté (ex: shorts MNQ perdants), le mentionner explicitement
+- Ton coach bienveillant mais franc
+- PAS de "Bonne journée", "Continue comme ça", "Félicitations" génériques
+- PAS d'astérisques ni de markdown`;
+
+    const response = await this.anthropic.messages.create({
+      model: MODEL,
+      max_tokens: 200,
+      system: `Tu es un coach de trading expert qui connaît en profondeur la stratégie et les habitudes de ce trader.
+Tu analyses ses données réelles pour donner un conseil ultra-personnalisé, jamais générique.
+Réponds UNIQUEMENT avec la phrase coaching, sans guillemets, sans préambule.`,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    this.aiLogger.log(data.userId, 'daily_recap', response.usage);
+    return response.content[0]?.type === 'text'
+      ? response.content[0].text.trim().replace(/^["']|["']$/g, '')
+      : '';
+  }
+
+  // ── Eco calendar — morning analysis + released event ─────────────────────
+
+  async analyzeEcoEvents(data: {
+    userId: string;
+    events: Array<{ time: string; name: string; impact: string; currency: string }>;
+    userAssets: string[];
+  }) {
+    const prompt = `Tu es un coach de trading expert.
+Actifs du trader : ${data.userAssets.join(', ')}.
+Événements économiques du jour : ${JSON.stringify(data.events, null, 2)}.
+Génère un JSON strict (pas de markdown, pas de texte autour) :
+{
+  "summary": "1-2 phrases sur les risques du jour pour ce trader précis",
+  "recommendation": "1 conseil actionnable concret (créneau à éviter, actif sensible)",
+  "assetImpacts": [{ "asset": string, "sentiment": "bull"|"bear"|"neutral", "reason": string }]
+}`;
+
+    const response = await this.anthropic.messages.create({
+      model: MODEL,
+      max_tokens: 500,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    this.aiLogger.log(data.userId, 'eco_calendar', response.usage);
+    const text = response.content[0]?.type === 'text' ? response.content[0].text : '{}';
+    return JSON.parse(text.replace(/```json\n?|\n?```/g, '').trim());
+  }
+
+  async analyzeEcoResult(data: {
+    userId: string;
+    event: { name: string; actual: number | null; estimate: number | null; previous: number | null };
+    userAssets: string[];
+  }) {
+    const actual = data.event.actual ?? 0;
+    const estimate = data.event.estimate ?? 0;
+    const surprise = actual - estimate;
+
+    const prompt = `Résultat tombé : ${data.event.name}.
+Résultat : ${actual} | Prévu : ${estimate} | Précédent : ${data.event.previous ?? 'N/A'}.
+Surprise : ${surprise >= 0 ? '+' : ''}${surprise.toFixed(2)}.
+Actifs tradés : ${data.userAssets.join(', ')}.
+Génère un JSON strict (pas de markdown, pas de texte autour) :
+{
+  "interpretation": "phrase courte expliquant la surprise",
+  "assetSentiments": [{ "asset": string, "sentiment": "bull"|"bear"|"neutral", "shortReason": string }]
+}`;
+
+    const response = await this.anthropic.messages.create({
+      model: MODEL,
+      max_tokens: 300,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    this.aiLogger.log(data.userId, 'eco_calendar', response.usage);
+    const text = response.content[0]?.type === 'text' ? response.content[0].text : '{}';
+    return JSON.parse(text.replace(/```json\n?|\n?```/g, '').trim());
+  }
+
   // ── Debrief — delegates to debrief agent ──────────────────────────────────
 
   async generateDebrief(data: Parameters<typeof buildDebriefPrompt>[0], userId?: string) {
@@ -210,7 +405,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
     action: string,
     max: number,
   ): Promise<void> {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayParis();
     const key = `ai:limit:${userId}:${action}:${today}`;
     const count = await this.redis.incr(key);
     await this.redis.expire(key, 60 * 60 * 24);
@@ -262,7 +457,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
   }
 
   private quotaKey(userId: string): string {
-    const month = new Date().toISOString().slice(0, 7);
+    const month = todayParis().slice(0, 7);
     return `ai:calls:${userId}:${month}`;
   }
 }

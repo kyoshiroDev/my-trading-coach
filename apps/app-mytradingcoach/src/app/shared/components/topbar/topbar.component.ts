@@ -38,6 +38,7 @@ import { LucideAngularModule, Plus, Bell } from 'lucide-angular';
             <lucide-icon [img]="BellIcon" [size]="16" />
           </button>
         }
+        <ng-content />
       </div>
     </header>
 

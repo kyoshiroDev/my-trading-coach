@@ -14,6 +14,7 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     outputs:
       angular: ${{ steps.diff.outputs.angular }}
+      admin: ${{ steps.diff.outputs.admin }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,6 +29,11 @@ jobs:
             echo "angular=true" >> $GITHUB_OUTPUT
           else
             echo "angular=false" >> $GITHUB_OUTPUT
+          fi
+          if echo "$CHANGED" | grep -q "^apps/admin-mytradingcoach/"; then
+            echo "admin=true" >> $GITHUB_OUTPUT
+          else
+            echo "admin=false" >> $GITHUB_OUTPUT
           fi
 
   # ── Deploy API → OVH VPS (Docker) ────────────────────────────────────────
@@ -104,6 +110,53 @@ jobs:
         run: |
           rsync -az --delete dist/apps/app-mytradingcoach/browser/ \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/static/app-prod/
+
+  # ── Deploy Admin → VPS static ────────────────────────────────────────────
+  deploy-admin:
+    name: Deploy Admin to VPS
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.admin == 'true' }}
+    environment: production
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      NX_NO_CLOUD: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build Admin
+        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build admin-mytradingcoach --configuration=production --skip-nx-cache
+
+      - name: Verify build output
+        run: |
+          if [ ! -f "dist/apps/admin-mytradingcoach/browser/index.html" ]; then
+            echo "❌ build failed — index.html not found"
+            exit 1
+          fi
+          echo "✅ build ok — $(du -sh dist/apps/admin-mytradingcoach/browser/)"
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: rsync Admin → VPS
+        run: |
+          rsync -az --delete dist/apps/admin-mytradingcoach/browser/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/static/admin-prod/
 
   # ── Deploy Astro Landing → VPS static ────────────────────────────────────
   deploy-landing:

@@ -1,9 +1,9 @@
 :root {
   /* ─── Backgrounds ─── */
   --bg: #080c14;
-  --bg-2: #0d1420;
+  --bg-2: #0b1219;
   --bg-3: #111b2e;
-  --bg-card: #0f1824;
+  --bg-card: #101d2e;
 
   /* ─── Borders ─── */
   --border: rgba(99, 155, 255, 0.1);
@@ -20,6 +20,10 @@
   --red: #ef4444;
   --red-dim: rgba(239, 68, 68, 0.12);
   --yellow: #f59e0b;
+  --yellow-dim: rgba(245, 158, 11, 0.12);
+  --purple: #8b5cf6;
+  --purple-bright: #a78bfa;
+  --purple-dim: rgba(139, 92, 246, 0.12);
   --accent: #3b82f6;
 
   /* ─── Text ─── */

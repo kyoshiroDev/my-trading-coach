@@ -282,3 +282,14 @@ input::placeholder {
     min-height: 48px;
   }
 }
+
+.referral-notice {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--green);
+  margin-bottom: 16px;
+  text-align: center;
+}

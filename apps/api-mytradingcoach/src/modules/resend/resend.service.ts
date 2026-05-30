@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
 import {
+  dailyRecapTemplate,
   debriefReadyTemplate,
   paymentFailedTemplate,
   renewalReminderTemplate,
@@ -143,6 +144,24 @@ export class ResendService {
     const portalUrl = `${this.frontendUrl}/settings`;
     const { subject, html } = renewalReminderTemplate({ ...params, portalUrl });
     await this.send({ to: params.to, subject, html });
+  }
+
+  // ── Daily Recap ───────────────────────────────────────────────────────────
+
+  async sendDailyRecap(
+    user: { email: string; name: string | null },
+    recap: { date: Date; pnl: number; winRate: number; tradesCount: number; aiOneLiner: string | null },
+  ): Promise<void> {
+    const { subject, html } = dailyRecapTemplate({
+      userName: user.name ?? 'Trader',
+      date: recap.date,
+      pnl: recap.pnl,
+      winRate: recap.winRate,
+      tradesCount: recap.tradesCount,
+      aiOneLiner: recap.aiOneLiner,
+      appUrl: this.frontendUrl,
+    });
+    await this.send({ to: user.email, subject, html });
   }
 
   // ── Alerte admin ──────────────────────────────────────────────────────────

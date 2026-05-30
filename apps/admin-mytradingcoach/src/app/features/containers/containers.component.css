@@ -1,0 +1,75 @@
+.content { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+.page-header { display: flex; align-items: center; justify-content: space-between; }
+.page-title  { font-size: 16px; font-weight: 700; color: var(--text); }
+.refresh-hint { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+.loading-state, .error-state { text-align: center; padding: 40px; font-size: 13px; color: var(--text3); font-family: var(--mono); }
+.error-state { color: var(--red); }
+.mono-text { font-family: var(--mono); font-size: 11px; }
+
+/* ── Stats globales ── */
+.containers-stats { display: flex; gap: 12px; }
+.cstat { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; text-align: center; }
+.cstat-val   { font-size: 22px; font-weight: 700; font-family: var(--mono); color: var(--text); }
+.cstat-label { font-size: 10px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 3px; }
+.cstat.green .cstat-val { color: var(--green); }
+.cstat.red   .cstat-val { color: var(--red); }
+
+/* ── Groupe ── */
+.group-section { display: flex; flex-direction: column; gap: 10px; }
+.group-header { display: flex; align-items: center; gap: 8px; font-size: 11px; font-family: var(--mono); }
+.group-dot    { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.group-label  { font-weight: 700; color: var(--text); letter-spacing: 0.08em; }
+.group-count  { color: var(--text3); }
+.group-running { margin-left: auto; color: var(--green); }
+
+/* ── Grille ── */
+.containers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+
+/* ── Card ── */
+.container-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px;
+  display: flex; flex-direction: column; gap: 10px;
+  transition: border-color 0.15s;
+}
+.container-card:hover { border-color: var(--border2); }
+.container-card.stopped   { opacity: 0.6; }
+.container-card.error-card { border-color: rgba(255,85,99,0.3); }
+
+.container-card-header { display: flex; align-items: center; gap: 8px; }
+
+.container-status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.container-status-dot.running { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.container-status-dot.stopped { background: var(--text3); }
+.container-status-dot.error   { background: var(--red); animation: pulse 1s infinite; }
+
+.container-name { font-size: 12px; font-weight: 600; font-family: var(--mono); color: var(--text); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.container-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+.caction-btn { width: 24px; height: 24px; border-radius: 5px; border: 1px solid var(--border2); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.1s; color: var(--text3); }
+.caction-btn:hover         { background: var(--bg4); color: var(--text); }
+.caction-btn.success:hover { background: var(--teal-dim); border-color: var(--teal); color: var(--teal); }
+.caction-btn.warning:hover { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+
+.container-image { font-size: 10px; color: var(--text3); font-family: var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── Métriques ── */
+.container-metrics { display: flex; flex-direction: column; gap: 7px; }
+.metric-header { display: flex; justify-content: space-between; font-size: 10px; font-family: var(--mono); margin-bottom: 4px; }
+.metric-name { color: var(--text3); }
+.metric-val  { color: var(--text2); }
+.metric-bar  { height: 3px; background: var(--bg4); border-radius: 2px; overflow: hidden; }
+.metric-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+.metric-fill.cpu    { background: var(--teal); }
+.metric-fill.ram    { background: var(--blue); }
+.metric-fill.warn   { background: var(--amber) !important; }
+.metric-fill.danger { background: var(--red) !important; }
+
+.container-stopped-label { font-size: 11px; font-family: var(--mono); color: var(--text3); }
+
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+@media (max-width: 768px) {
+  .content { padding: 12px; gap: 12px; }
+  .containers-grid { grid-template-columns: 1fr; }
+}

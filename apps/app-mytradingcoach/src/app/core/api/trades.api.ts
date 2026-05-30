@@ -45,7 +45,7 @@ export interface Trade {
 export interface CreateTradeDto {
   asset: string;
   side: Trade['side'];
-  entry: number;
+  entry?: number;
   exit?: number;
   stopLoss?: number;
   takeProfit?: number;
@@ -86,6 +86,42 @@ export interface PaginatedTrades {
   };
 }
 
+export interface UserAssetItem {
+  symbol: string;
+  label: string;
+  category: string;
+  tradeCount: number;
+  lastEntry: number | null;
+  lastQty: number | null;
+  isFavorite: boolean;
+}
+
+export interface InstrumentSearchResult {
+  symbol: string;
+  label: string;
+  category: string;
+}
+
+export interface MarketContextItem { value: number | null; source: string; }
+export interface TreasuryRates { t2y: number | null; t5y: number | null; t10y: number | null; t30y: number | null; }
+export interface MarketContext {
+  nq: MarketContextItem;
+  spx: MarketContextItem;
+  dxy: MarketContextItem;
+  treasury: TreasuryRates;
+  updatedAt: string;
+}
+export interface NewsItem {
+  title: string;
+  symbol: string;
+  publishedDate: string;
+  sentiment?: 'bull' | 'bear' | 'neutral';
+  url?: string;
+  text?: string;
+  image?: string;
+  site?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TradesApi {
   private readonly http = inject(HttpClient);
@@ -118,5 +154,40 @@ export class TradesApi {
 
   getInstruments(): Observable<{ data: InstrumentDto[] }> {
     return this.http.get<{ data: InstrumentDto[] }>(`${this.base}/instruments`);
+  }
+
+  getUserAssets(): Observable<{ data: UserAssetItem[] }> {
+    return this.http.get<{ data: UserAssetItem[] }>(`${this.base}/user-assets`);
+  }
+
+  saveUserAssets(assets: string[], favoriteAsset?: string | null): Observable<{ saved: boolean }> {
+    return this.http.patch<{ saved: boolean }>(`${this.base}/user-assets`, { assets, favoriteAsset });
+  }
+
+  setFavoriteAsset(asset: string | null): Observable<void> {
+    return this.http.patch<void>(`${this.base}/favorite-asset`, { asset });
+  }
+
+  getLivePrice(symbol: string): Observable<{ data: { price: number | null; symbol: string; cached: boolean } }> {
+    return this.http.get<{ data: { price: number | null; symbol: string; cached: boolean } }>(
+      `${this.base}/live-price`,
+      { params: { symbol } },
+    );
+  }
+
+  searchInstruments(query: string): Observable<{ data: InstrumentSearchResult[] }> {
+    const params = new HttpParams().set('q', query);
+    return this.http.get<{ data: InstrumentSearchResult[] }>(`${this.base}/instruments/search`, { params });
+  }
+
+  getMarketContext(): Observable<{ data: MarketContext }> {
+    return this.http.get<{ data: MarketContext }>(`${this.base}/market-context`);
+  }
+
+  getNews(symbols: string[]): Observable<{ data: NewsItem[] }> {
+    return this.http.get<{ data: NewsItem[] }>(
+      `${this.base}/news`,
+      { params: { symbols: symbols.join(',') } },
+    );
   }
 }

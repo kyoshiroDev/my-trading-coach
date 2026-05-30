@@ -5,13 +5,13 @@ import { EMPTY, fromEvent, interval } from 'rxjs';
 import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
-export type UserRole = 'ADMIN' | 'USER' | 'BETA_TESTER';
+export type UserRole = 'ADMIN' | 'USER' | 'BETA_TESTER' | 'AMBASSADOR';
 
 export interface AuthUser {
   id: string;
   email: string;
   name?: string;
-  plan: 'FREE' | 'PREMIUM';
+  plan: 'FREE' | 'STARTER' | 'PREMIUM';
   role?: UserRole;
   trialEndsAt?: string | null;
   stripeCurrentPeriodEnd?: string | null;
@@ -29,6 +29,8 @@ export interface AuthUser {
   tradesPerDayMin?: number | null;
   tradesPerDayMax?: number | null;
   strategyDescription?: string | null;
+  tradingAssets?: string[];
+  favoriteAsset?: string | null;
   discordId?: string | null;
 }
 
@@ -72,11 +74,11 @@ export class AuthService {
       .subscribe();
   }
 
-  register(email: string, password: string, name?: string) {
+  register(email: string, password: string, name?: string, referralCode?: string) {
     return this.http
       .post<AuthResponse>(
         `${environment.apiUrl}/auth/register`,
-        { email, password, name },
+        { email, password, name, referralCode },
         { withCredentials: true },
       )
       .pipe(tap((res) => this.handleAuthResponse(res)));

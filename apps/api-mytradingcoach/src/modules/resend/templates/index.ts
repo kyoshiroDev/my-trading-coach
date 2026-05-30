@@ -1,230 +1,94 @@
 // ── Templates emails MyTradingCoach ─────────────────────────────────────────
 // Templates HTML inline — pas de dépendance externe pour le rendu
 
-const BASE_STYLE = `
-  font-family: 'DM Sans', Arial, sans-serif;
-  background-color: #080c14;
-  color: #e2eaf5;
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 40px 24px;
-`;
+// ── Base système ──────────────────────────────────────────────────────────────
 
-const CARD_STYLE = `
-  background-color: #0f1824;
-  border: 1px solid rgba(99,155,255,.1);
-  border-radius: 12px;
-  padding: 32px;
-  margin: 24px 0;
-`;
+const FONT = `font-family: 'DM Sans', -apple-system, Arial, sans-serif;`;
+const MONO = `font-family: 'DM Mono', 'Courier New', monospace;`;
 
-const BTN_STYLE = `
-  display: inline-block;
-  background-color: #3b82f6;
-  color: #ffffff;
-  text-decoration: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  margin-top: 20px;
-`;
+function emailWrapper(content: string, preheader = ''): string {
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="x-apple-disable-message-reformatting">
+  <title>MyTradingCoach</title>
+</head>
+<body style="margin:0;padding:0;background:#080c14;${FONT}">
+  ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${preheader}</div>` : ''}
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#080c14;min-height:100vh;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;margin:0 auto;">
 
-const MUTED_STYLE = `color: #8fa3bf; font-size: 13px; margin-top: 32px;`;
+          <!-- HEADER -->
+          <tr>
+            <td style="padding-bottom:24px;">
+              <div style="display:inline-flex;align-items:center;gap:8px;">
+                <div style="width:8px;height:8px;border-radius:50%;background:#22d3ee;display:inline-block;"></div>
+                <span style="${FONT}font-size:15px;font-weight:700;color:#e2eaf5;letter-spacing:-.3px;">MyTradingCoach</span>
+              </div>
+            </td>
+          </tr>
 
-// ── Paiement échoué ──────────────────────────────────────────────────────────
+          <!-- CONTENU -->
+          <tr>
+            <td>
+              ${content}
+            </td>
+          </tr>
 
-export function paymentFailedTemplate(params: {
-  userName: string;
-  attemptCount: number;
-  portalUrl: string;
-}): { subject: string; html: string } {
-  const { userName, attemptCount, portalUrl } = params;
+          <!-- FOOTER -->
+          <tr>
+            <td style="padding-top:32px;border-top:1px solid rgba(99,155,255,.08);margin-top:32px;">
+              <p style="${FONT}font-size:11px;color:#3d5268;line-height:1.6;margin:0;">
+                MyTradingCoach · Fait en France 🇫🇷 · SIRET 512 926 460 00027<br>
+                <a href="https://www.mytradingcoach.app" style="color:#3d5268;text-decoration:none;">mytradingcoach.app</a>
+                · <a href="https://app.mytradingcoach.app/parametres" style="color:#3d5268;text-decoration:none;">Se désabonner</a>
+              </p>
+            </td>
+          </tr>
 
-  return {
-    subject: '⚠️ Votre paiement MyTradingCoach a échoué',
-    html: `
-      <div style="${BASE_STYLE}">
-        <h1 style="color:#e2eaf5; font-size:22px; margin-bottom:8px;">
-          ⚠️ Problème de paiement
-        </h1>
-        <p style="color:#8fa3bf; margin-top:0;">MyTradingCoach — Facturation</p>
-
-        <div style="${CARD_STYLE}">
-          <p>Bonjour ${userName || 'Trader'},</p>
-          <p>
-            Nous n'avons pas pu traiter votre paiement
-            ${attemptCount > 1 ? `(tentative ${attemptCount})` : ''}.
-            Votre accès PREMIUM reste actif pendant quelques jours le temps
-            que vous mettiez à jour votre moyen de paiement.
-          </p>
-          <p><strong>Action requise : mettez à jour votre carte bancaire.</strong></p>
-          <a href="${portalUrl}" style="${BTN_STYLE}">
-            Mettre à jour mon paiement →
-          </a>
-        </div>
-
-        <p style="${MUTED_STYLE}">
-          Si vous avez des questions, contactez-nous à
-          <a href="mailto:support@mytradingcoach.app" style="color:#60a5fa;">
-            support@mytradingcoach.app
-          </a>
-        </p>
-      </div>
-    `,
-  };
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 }
 
-// ── Abonnement résilié ───────────────────────────────────────────────────────
-
-export function subscriptionCanceledTemplate(params: {
-  userName: string;
-  resubscribeUrl: string;
-}): { subject: string; html: string } {
-  const { userName, resubscribeUrl } = params;
-
-  return {
-    subject: 'Votre abonnement MyTradingCoach a été résilié',
-    html: `
-      <div style="${BASE_STYLE}">
-        <h1 style="color:#e2eaf5; font-size:22px; margin-bottom:8px;">
-          Abonnement résilié
-        </h1>
-        <p style="color:#8fa3bf; margin-top:0;">MyTradingCoach — Facturation</p>
-
-        <div style="${CARD_STYLE}">
-          <p>Bonjour ${userName || 'Trader'},</p>
-          <p>
-            Votre abonnement PREMIUM a bien été résilié. Vous êtes maintenant
-            sur le plan gratuit avec accès à 50 trades/mois et l'historique complet.
-          </p>
-          <p>
-            Vous pouvez vous réabonner à tout moment pour retrouver les
-            analytics avancés, l'IA Coach et les Weekly Debriefs.
-          </p>
-          <a href="${resubscribeUrl}" style="${BTN_STYLE}">
-            Me réabonner →
-          </a>
-        </div>
-
-        <p style="${MUTED_STYLE}">
-          Des questions ? Écrivez-nous :
-          <a href="mailto:support@mytradingcoach.app" style="color:#60a5fa;">
-            support@mytradingcoach.app
-          </a>
-        </p>
-      </div>
-    `,
-  };
+function card(content: string, accentColor = 'rgba(59,130,246,.3)'): string {
+  return `<div style="background:#0f1824;border:1px solid rgba(99,155,255,.1);border-top:2px solid ${accentColor};border-radius:12px;padding:28px 24px;margin-bottom:16px;">
+    ${content}
+  </div>`;
 }
 
-// ── Bienvenue FREE ───────────────────────────────────────────────────────────
-
-export function welcomeFreeTemplate(params: {
-  userName: string;
-  appUrl: string;
-}): { subject: string; html: string } {
-  const { userName, appUrl } = params;
-
-  return {
-    subject: '👋 Bienvenue sur MyTradingCoach !',
-    html: `
-      <div style="${BASE_STYLE}">
-        <h1 style="color:#e2eaf5; font-size:22px; margin-bottom:8px;">
-          👋 Bienvenue sur MyTradingCoach !
-        </h1>
-        <p style="color:#8fa3bf; margin-top:0;">Le journal de trading intelligent</p>
-
-        <div style="${CARD_STYLE}">
-          <p>Bonjour ${userName || 'Trader'},</p>
-          <p>
-            Ton compte est créé. Tu peux maintenant enregistrer tes trades,
-            suivre tes émotions et analyser tes performances.
-          </p>
-          <p style="color:#8fa3bf;">Avec ton plan gratuit :</p>
-          <ul style="color:#8fa3bf; padding-left:20px; line-height:1.8;">
-            <li>✅ 50 trades par mois</li>
-            <li>✅ Journal complet — émotions, setup, notes</li>
-            <li>✅ Stats de base — win rate, P&L, top session</li>
-            <li>✅ Historique illimité</li>
-          </ul>
-          <a href="${appUrl}" style="${BTN_STYLE}">
-            Accéder à mon journal →
-          </a>
-        </div>
-
-        <div style="${CARD_STYLE}">
-          <p style="margin:0 0 8px 0;">👥 <strong>Rejoins la communauté Discord</strong></p>
-          <p style="color:#8fa3bf; margin:0 0 12px 0;">
-            Échange avec d'autres traders, pose tes questions
-            et suis ta progression avec la communauté.
-          </p>
-          <a href="https://discord.gg/TDK2npvkSN" style="${BTN_STYLE}">
-            Rejoindre le Discord →
-          </a>
-          <p style="color:#8fa3bf; font-size:12px; margin-top:12px;">
-            Une fois connecté, tape <code>/verify</code> dans #👋-bienvenue pour activer ton accès.
-          </p>
-        </div>
-
-        <p style="color:#8fa3bf; font-size:13px; margin-top:24px;">
-          Tu veux aller plus loin ? Essaie le Premium 7 jours gratuits —
-          analytics avancés, IA Coach et Weekly Debrief automatique.
-        </p>
-
-        <p style="${MUTED_STYLE}">
-          MyTradingCoach — Fait en France 🇫🇷
-        </p>
-      </div>
-    `,
-  };
+function statCell(value: string, label: string, color = '#e2eaf5'): string {
+  return `<td style="background:#0a1220;border:1px solid rgba(99,155,255,.08);border-radius:8px;padding:14px;text-align:center;width:33%;">
+    <div style="${MONO}font-size:22px;font-weight:700;color:${color};line-height:1;margin-bottom:4px;">${value}</div>
+    <div style="${FONT}font-size:10px;color:#4a6080;letter-spacing:.5px;text-transform:uppercase;">${label}</div>
+  </td>`;
 }
 
-// ── Reset mot de passe ───────────────────────────────────────────────────────
-
-export function resetPasswordTemplate(params: {
-  userName: string;
-  resetUrl: string;
-  expiresIn: string;
-}): { subject: string; html: string } {
-  const { userName, resetUrl, expiresIn } = params;
-
-  return {
-    subject: '🔐 Réinitialisation de votre mot de passe MyTradingCoach',
-    html: `
-      <div style="${BASE_STYLE}">
-        <h1 style="color:#e2eaf5; font-size:22px; margin-bottom:8px;">
-          🔐 Réinitialisation du mot de passe
-        </h1>
-        <p style="color:#8fa3bf; margin-top:0;">MyTradingCoach — Sécurité</p>
-
-        <div style="${CARD_STYLE}">
-          <p>Bonjour ${userName || 'Trader'},</p>
-          <p>
-            Vous avez demandé à réinitialiser votre mot de passe.
-            Cliquez sur le bouton ci-dessous pour en choisir un nouveau.
-          </p>
-          <p style="color:#8fa3bf; font-size:13px;">
-            Ce lien expire dans ${expiresIn}.
-          </p>
-          <a href="${resetUrl}" style="${BTN_STYLE}">
-            Réinitialiser mon mot de passe →
-          </a>
-        </div>
-
-        <p style="color:#8fa3bf; font-size:13px; margin-top:24px;">
-          Si vous n'avez pas demandé cette réinitialisation,
-          ignorez cet email. Votre mot de passe n'a pas été modifié.
-        </p>
-
-        <p style="${MUTED_STYLE}">
-          MyTradingCoach — Fait en France 🇫🇷
-        </p>
-      </div>
-    `,
-  };
+function cta(text: string, url: string, style: 'primary' | 'secondary' = 'primary'): string {
+  const bg = style === 'primary' ? 'linear-gradient(90deg,#3b82f6,#6366f1)' : 'transparent';
+  const border = style === 'secondary' ? 'border:1px solid rgba(99,155,255,.3);' : '';
+  return `<a href="${url}" style="display:block;background:${bg};${border}color:#ffffff;text-decoration:none;text-align:center;padding:13px 24px;border-radius:9px;${FONT}font-size:14px;font-weight:600;margin-top:20px;">
+    ${text}
+  </a>`;
 }
 
-// ── Débrief prêt ────────────────────────────────────────────────────────────
+function aiBlock(text: string): string {
+  return `<div style="background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.18);border-radius:8px;padding:14px 16px;margin:16px 0;">
+    <span style="color:#a78bfa;font-size:14px;">✦</span>
+    <span style="${FONT}font-size:13px;color:#c5d5e8;line-height:1.6;margin-left:8px;">${text}</span>
+  </div>`;
+}
+
+const divider = `<div style="height:1px;background:rgba(99,155,255,.08);margin:20px 0;"></div>`;
+
+// ── Weekly Debrief ────────────────────────────────────────────────────────────
 
 export function debriefReadyTemplate(params: {
   userName: string;
@@ -234,106 +98,167 @@ export function debriefReadyTemplate(params: {
   totalTrades: number;
   appUrl: string;
 }): { subject: string; html: string } {
-  const { userName, weekNumber, winRate, totalPnl, totalTrades, appUrl } =
-    params;
+  const { userName, weekNumber, winRate, totalPnl, totalTrades, appUrl } = params;
   const pnlColor = totalPnl >= 0 ? '#10b981' : '#ef4444';
-  const pnlSign = totalPnl >= 0 ? '+' : '';
+  const pnlStr = `${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(0)}$`;
+  const pnlBg = totalPnl >= 0 ? 'rgba(16,185,129,.3)' : 'rgba(239,68,68,.3)';
+
+  const content = card(`
+    <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Weekly Debrief · Semaine ${weekNumber}</p>
+    <h1 style="${FONT}font-size:24px;font-weight:700;color:#e2eaf5;margin:0 0 20px 0;letter-spacing:-.5px;">
+      Ton débrief est prêt
+    </h1>
+
+    <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 20px 0;">
+      Bonjour ${userName || 'Trader'}, ton analyse de la semaine ${weekNumber} vient d'être générée par ton compagnon.
+    </p>
+
+    <table width="100%" cellpadding="4" cellspacing="4" border="0" style="margin:20px 0;">
+      <tr>
+        ${statCell(`${winRate.toFixed(1)}%`, 'Win Rate', '#60a5fa')}
+        <td style="width:4px;"></td>
+        ${statCell(pnlStr, 'P&L', pnlColor)}
+        <td style="width:4px;"></td>
+        ${statCell(`${totalTrades}`, 'Trades', '#e2eaf5')}
+      </tr>
+    </table>
+
+    ${divider}
+
+    <p style="${FONT}font-size:13px;color:#6b8299;margin:0 0 16px 0;">
+      Ton compagnon a analysé tes trades, tes émotions et tes patterns de la semaine.
+      Objectifs de la semaine prochaine disponibles dans l'app.
+    </p>
+
+    ${cta('Voir mon débrief complet →', `${appUrl}/debrief`)}
+  `, pnlBg);
 
   return {
-    subject: `Ton débrief semaine ${weekNumber} est prêt 📅`,
-    html: `
-      <div style="${BASE_STYLE}">
-        <h1 style="color:#e2eaf5; font-size:22px; margin-bottom:8px;">
-          📅 Ton débrief semaine ${weekNumber} est prêt
-        </h1>
-        <p style="color:#8fa3bf; margin-top:0;">MyTradingCoach — Weekly Debrief</p>
-
-        <div style="${CARD_STYLE}">
-          <p>Bonjour ${userName || 'Trader'},</p>
-          <p>Ton analyse de la semaine ${weekNumber} vient d'être générée. Voici un aperçu :</p>
-
-          <div style="display:flex; gap:24px; margin:20px 0; flex-wrap:wrap;">
-            <div style="text-align:center;">
-              <div style="font-size:24px; font-weight:700; color:#60a5fa; font-family:'DM Mono',monospace;">
-                ${winRate.toFixed(1)}%
-              </div>
-              <div style="font-size:12px; color:#8fa3bf; margin-top:4px;">Win Rate</div>
-            </div>
-            <div style="text-align:center;">
-              <div style="font-size:24px; font-weight:700; color:${pnlColor}; font-family:'DM Mono',monospace;">
-                ${pnlSign}${totalPnl.toFixed(2)}$
-              </div>
-              <div style="font-size:12px; color:#8fa3bf; margin-top:4px;">P&amp;L</div>
-            </div>
-            <div style="text-align:center;">
-              <div style="font-size:24px; font-weight:700; color:#e2eaf5; font-family:'DM Mono',monospace;">
-                ${totalTrades}
-              </div>
-              <div style="font-size:12px; color:#8fa3bf; margin-top:4px;">Trades</div>
-            </div>
-          </div>
-
-          <a href="${appUrl}/debrief" style="${BTN_STYLE}">
-            Voir mon débrief complet →
-          </a>
-        </div>
-
-        <p style="${MUTED_STYLE}">MyTradingCoach — Ton journal de trading intelligent</p>
-      </div>
-    `,
+    subject: `📅 Ton débrief semaine ${weekNumber} est prêt — ${pnlStr}`,
+    html: emailWrapper(content, `Semaine ${weekNumber} : ${winRate.toFixed(0)}% WR · ${pnlStr} · ${totalTrades} trades`),
   };
 }
 
-// ── Rappel renouvellement ────────────────────────────────────────────────────
+// ── Daily Recap ───────────────────────────────────────────────────────────────
 
-export function renewalReminderTemplate(params: {
+export function dailyRecapTemplate(params: {
   userName: string;
-  expiresAt: Date;
-  portalUrl: string;
+  date: Date;
+  pnl: number;
+  winRate: number;
+  tradesCount: number;
+  aiOneLiner: string | null;
+  appUrl: string;
 }): { subject: string; html: string } {
-  const { userName, expiresAt, portalUrl } = params;
-  const dateStr = expiresAt.toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
+  const { userName, date, pnl, winRate, tradesCount, aiOneLiner, appUrl } = params;
+  const pnlColor = pnl >= 0 ? '#10b981' : '#ef4444';
+  const pnlStr = `${pnl >= 0 ? '+' : ''}${pnl.toFixed(0)}$`;
+  const pnlBg = pnl >= 0 ? 'rgba(16,185,129,.3)' : 'rgba(239,68,68,.3)';
+  const dateStr = date.toLocaleDateString('fr-FR', {
+    weekday: 'long', day: 'numeric', month: 'long',
   });
 
+  const content = card(`
+    <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Recap session · ${dateStr}</p>
+    <h1 style="${FONT}font-size:24px;font-weight:700;color:${pnlColor};margin:0 0 20px 0;letter-spacing:-.5px;">
+      ${pnlStr}
+    </h1>
+
+    <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 20px 0;">
+      Bonjour ${userName || 'Trader'}, voici le bilan de ta session du jour.
+    </p>
+
+    <table width="100%" cellpadding="4" cellspacing="4" border="0" style="margin:0 0 16px 0;">
+      <tr>
+        ${statCell(pnlStr, 'P&L', pnlColor)}
+        <td style="width:4px;"></td>
+        ${statCell(`${winRate.toFixed(0)}%`, 'Win Rate', '#60a5fa')}
+        <td style="width:4px;"></td>
+        ${statCell(`${tradesCount}`, 'Trades', '#e2eaf5')}
+      </tr>
+    </table>
+
+    ${aiOneLiner ? aiBlock(aiOneLiner) : ''}
+
+    ${divider}
+
+    <p style="${FONT}font-size:12px;color:#6b8299;margin:0 0 16px 0;">
+      Ton bilan complet avec l'analyse détaillée est disponible dans l'app.
+    </p>
+
+    ${cta('Voir mon dashboard →', `${appUrl}/dashboard`)}
+  `, pnlBg);
+
   return {
-    subject: 'Ton abonnement Premium expire dans 7 jours ⚠️',
-    html: `
-      <div style="${BASE_STYLE}">
-        <h1 style="color:#e2eaf5; font-size:22px; margin-bottom:8px;">
-          ⚠️ Ton abonnement expire bientôt
-        </h1>
-        <p style="color:#8fa3bf; margin-top:0;">MyTradingCoach — Facturation</p>
-
-        <div style="${CARD_STYLE}">
-          <p>Bonjour ${userName || 'Trader'},</p>
-          <p>
-            Ton abonnement PREMIUM expire le <strong style="color:#e2eaf5;">${dateStr}</strong>,
-            soit dans <strong>7 jours</strong>.
-          </p>
-          <p style="color:#8fa3bf;">
-            Si tu ne fais rien, tu basculeras automatiquement sur le plan gratuit
-            et perdras l'accès aux analytics avancés, à l'IA Coach et aux Weekly Debriefs.
-          </p>
-          <a href="${portalUrl}" style="${BTN_STYLE}">
-            Renouveler mon abonnement →
-          </a>
-        </div>
-
-        <p style="${MUTED_STYLE}">
-          Pour toute question :
-          <a href="mailto:support@mytradingcoach.app" style="color:#60a5fa;">
-            support@mytradingcoach.app
-          </a>
-        </p>
-      </div>
-    `,
+    subject: `${pnl >= 0 ? '📈' : '📉'} Session ${dateStr} — ${pnlStr}`,
+    html: emailWrapper(content, `${pnlStr} · ${winRate.toFixed(0)}% WR · ${tradesCount} trades`),
   };
 }
 
-// ── Bienvenue PREMIUM ────────────────────────────────────────────────────────
+// ── Bienvenue FREE ────────────────────────────────────────────────────────────
+
+export function welcomeFreeTemplate(params: {
+  userName: string;
+  appUrl: string;
+}): { subject: string; html: string } {
+  const { userName, appUrl } = params;
+
+  const content = `
+    ${card(`
+      <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Bienvenue</p>
+      <h1 style="${FONT}font-size:24px;font-weight:700;color:#e2eaf5;margin:0 0 16px 0;letter-spacing:-.5px;">
+        Ton compagnon de trading est prêt 👋
+      </h1>
+
+      <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 20px 0;line-height:1.7;">
+        Bonjour ${userName || 'Trader'}, ton compte MyTradingCoach est créé.
+        Tu peux maintenant enregistrer tes trades, suivre tes émotions et analyser tes performances.
+      </p>
+
+      <div style="margin:16px 0;">
+        <div style="margin-bottom:10px;">
+          <span style="color:#10b981;">✓</span>
+          <span style="${FONT}font-size:13px;color:#9db4ce;margin-left:8px;">30 trades par mois · Journal complet · Stats de base</span>
+        </div>
+        <div style="margin-bottom:10px;">
+          <span style="color:#10b981;">✓</span>
+          <span style="${FONT}font-size:13px;color:#9db4ce;margin-left:8px;">Mood check matin · Session live · Calendrier d'activité</span>
+        </div>
+        <div>
+          <span style="color:#10b981;">✓</span>
+          <span style="${FONT}font-size:13px;color:#9db4ce;margin-left:8px;">Multi-marché — Futures, Crypto, Forex, Indices</span>
+        </div>
+      </div>
+
+      ${divider}
+
+      ${cta('Accéder à mon journal →', appUrl)}
+    `)}
+
+    <div style="background:#0f1824;border:1px solid #5865f2;border-radius:12px;padding:24px;margin-bottom:16px;">
+      <p style="${FONT}font-size:15px;font-weight:700;color:#e2eaf5;margin:0 0 8px 0;">💬 Rejoins la communauté Discord</p>
+      <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 16px 0;line-height:1.6;">
+        Traders ICT · SMC · Price Action · Crypto · Futures.
+        Partage tes setups, pose tes questions, reçois un support direct.
+      </p>
+      ${cta('Rejoindre le Discord →', 'https://discord.gg/TDK2npvkSN', 'secondary')}
+    </div>
+
+    <div style="background:rgba(59,130,246,.04);border:1px solid rgba(59,130,246,.12);border-radius:8px;padding:16px;text-align:center;">
+      <p style="${FONT}font-size:12px;color:#6b8299;margin:0;">
+        Envie d'aller plus loin ? <a href="${appUrl}/parametres" style="color:#60a5fa;text-decoration:none;font-weight:600;">Essaie Premium 7 jours gratuits</a> —
+        analytics avancés, IA Coach, Weekly Debrief automatique.
+      </p>
+    </div>
+  `;
+
+  return {
+    subject: '👋 Bienvenue sur MyTradingCoach — ton compagnon de trading',
+    html: emailWrapper(content, 'Ton journal de trading intelligent est prêt.'),
+  };
+}
+
+// ── Bienvenue PREMIUM ─────────────────────────────────────────────────────────
 
 export function welcomePremiumTemplate(params: {
   userName: string;
@@ -342,57 +267,178 @@ export function welcomePremiumTemplate(params: {
 }): { subject: string; html: string } {
   const { userName, isTrial, appUrl } = params;
 
-  const subject = isTrial
-    ? '🚀 Votre essai PREMIUM démarre maintenant — MyTradingCoach'
-    : '🚀 Bienvenue dans MyTradingCoach PREMIUM !';
+  const features = [
+    'Trades illimités',
+    'Analytics avancés — heatmap, equity curve, drawdown',
+    'Analyse IA de chaque session + phrase coaching',
+    'Calendrier économique filtré pour tes actifs',
+    'Weekly Debrief IA automatique chaque dimanche',
+    'Score trader /100 · Export PDF',
+  ];
+
+  const content = `
+    ${card(`
+      <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">
+        ${isTrial ? 'Essai gratuit · 7 jours' : 'Premium activé'}
+      </p>
+      <h1 style="${FONT}font-size:24px;font-weight:700;color:#e2eaf5;margin:0 0 16px 0;letter-spacing:-.5px;">
+        ${isTrial ? 'Ton compagnon Premium est actif 🚀' : 'Bienvenue en Premium 🚀'}
+      </h1>
+
+      <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 20px 0;line-height:1.7;">
+        Bonjour ${userName || 'Trader'},
+        ${isTrial
+          ? `ton essai gratuit de <strong style="color:#e2eaf5;">7 jours</strong> est activé. Aucun prélèvement avant la fin.`
+          : `ton abonnement Premium est actif. Profite de toutes les fonctionnalités de ton compagnon.`
+        }
+      </p>
+
+      <div style="margin:16px 0;">
+        ${features.map(f => `
+          <div style="margin-bottom:8px;">
+            <span style="color:#a78bfa;">✦</span>
+            <span style="${FONT}font-size:13px;color:#9db4ce;margin-left:8px;">${f}</span>
+          </div>
+        `).join('')}
+      </div>
+
+      ${cta('Accéder à mon dashboard →', appUrl)}
+    `, 'rgba(99,92,246,.4)')}
+
+    <div style="background:#0f1824;border:1px solid #5865f2;border-radius:12px;padding:24px;">
+      <p style="${FONT}font-size:15px;font-weight:700;color:#e2eaf5;margin:0 0 8px 0;">
+        ⭐ Salon Premium sur Discord
+      </p>
+      <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 16px 0;line-height:1.6;">
+        Réservé aux membres Premium — stratégies avancées, support prioritaire, échanges exclusifs.
+        Tape <code style="background:#1e2533;padding:2px 6px;border-radius:4px;color:#00d4aa;font-family:monospace;">/verify</code> dans #👋-bienvenue.
+      </p>
+      ${cta('Rejoindre le Discord →', 'https://discord.gg/TDK2npvkSN', 'secondary')}
+    </div>
+  `;
 
   return {
-    subject,
-    html: `
-      <div style="${BASE_STYLE}">
-        <h1 style="color:#e2eaf5; font-size:22px; margin-bottom:8px;">
-          🚀 ${isTrial ? 'Votre essai gratuit commence !' : 'Bienvenue en PREMIUM !'}
-        </h1>
-        <p style="color:#8fa3bf; margin-top:0;">MyTradingCoach</p>
+    subject: isTrial
+      ? '🚀 Ton essai Premium démarre — MyTradingCoach'
+      : '🚀 Bienvenue en Premium — MyTradingCoach',
+    html: emailWrapper(content, isTrial ? '7 jours gratuits, aucun prélèvement.' : 'Accès complet activé.'),
+  };
+}
 
-        <div style="${CARD_STYLE}">
-          <p>Bonjour ${userName || 'Trader'},</p>
-          ${
-            isTrial
-              ? `<p>Votre essai gratuit de <strong>7 jours</strong> est activé.
-                 Aucun prélèvement pendant la période d'essai.</p>`
-              : `<p>Votre abonnement PREMIUM est actif. Profitez de toutes les fonctionnalités.</p>`
-          }
-          <ul style="color:#8fa3bf; padding-left: 20px; line-height: 1.8;">
-            <li>✅ Trades illimités</li>
-            <li>✅ Analytics avancés (par setup, émotion, heure)</li>
-            <li>✅ IA Insights & Chat Coach</li>
-            <li>✅ Weekly Debrief automatique</li>
-            <li>✅ Score Trader & Export PDF</li>
-          </ul>
-          <a href="${appUrl}" style="${BTN_STYLE}">
-            Accéder à mon tableau de bord →
-          </a>
-        </div>
+// ── Reset mot de passe ────────────────────────────────────────────────────────
 
-        <div style="${CARD_STYLE}">
-          <p style="margin:0 0 8px 0;">👥 <strong>Accède au salon ⭐ Premium sur Discord</strong></p>
-          <p style="color:#8fa3bf; margin:0 0 12px 0;">
-            Réservé aux membres Premium — stratégies avancées,
-            support prioritaire et échanges exclusifs.
-          </p>
-          <a href="https://discord.gg/TDK2npvkSN" style="${BTN_STYLE}">
-            Rejoindre le Discord →
-          </a>
-          <p style="color:#8fa3bf; font-size:12px; margin-top:12px;">
-            Tape <code>/verify</code> dans #👋-bienvenue pour débloquer ton accès Premium.
-          </p>
-        </div>
+export function resetPasswordTemplate(params: {
+  userName: string;
+  resetUrl: string;
+  expiresIn: string;
+}): { subject: string; html: string } {
+  const { userName, resetUrl, expiresIn } = params;
 
-        <p style="${MUTED_STYLE}">
-          MyTradingCoach — Votre journal de trading intelligent
-        </p>
-      </div>
-    `,
+  const content = card(`
+    <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Sécurité</p>
+    <h1 style="${FONT}font-size:22px;font-weight:700;color:#e2eaf5;margin:0 0 16px 0;letter-spacing:-.5px;">
+      Réinitialisation du mot de passe
+    </h1>
+    <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;">
+      Bonjour ${userName || 'Trader'}, tu as demandé à réinitialiser ton mot de passe.
+    </p>
+    <p style="${FONT}font-size:12px;color:#6b8299;margin:0 0 20px 0;">
+      Ce lien expire dans <strong style="color:#e2eaf5;">${expiresIn}</strong>.
+      Si tu n'es pas à l'origine de cette demande, ignore cet email.
+    </p>
+    ${cta('Réinitialiser mon mot de passe →', resetUrl)}
+  `, 'rgba(239,68,68,.3)');
+
+  return {
+    subject: '🔐 Réinitialisation de ton mot de passe — MyTradingCoach',
+    html: emailWrapper(content, `Lien valable ${expiresIn}.`),
+  };
+}
+
+// ── Paiement échoué ───────────────────────────────────────────────────────────
+
+export function paymentFailedTemplate(params: {
+  userName: string;
+  attemptCount: number;
+  portalUrl: string;
+}): { subject: string; html: string } {
+  const { userName, attemptCount, portalUrl } = params;
+
+  const content = card(`
+    <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Facturation</p>
+    <h1 style="${FONT}font-size:22px;font-weight:700;color:#ef4444;margin:0 0 16px 0;letter-spacing:-.5px;">
+      Problème de paiement
+    </h1>
+    <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
+      Bonjour ${userName || 'Trader'}, nous n'avons pas pu traiter ton paiement
+      ${attemptCount > 1 ? `(tentative ${attemptCount})` : ''}.
+      Ton accès Premium reste actif quelques jours le temps de mettre à jour ta carte.
+    </p>
+    ${cta('Mettre à jour mon paiement →', portalUrl)}
+  `, 'rgba(239,68,68,.3)');
+
+  return {
+    subject: '⚠️ Paiement échoué — MyTradingCoach',
+    html: emailWrapper(content),
+  };
+}
+
+// ── Abonnement résilié ────────────────────────────────────────────────────────
+
+export function subscriptionCanceledTemplate(params: {
+  userName: string;
+  resubscribeUrl: string;
+}): { subject: string; html: string } {
+  const { userName, resubscribeUrl } = params;
+
+  const content = card(`
+    <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Facturation</p>
+    <h1 style="${FONT}font-size:22px;font-weight:700;color:#e2eaf5;margin:0 0 16px 0;letter-spacing:-.5px;">
+      Abonnement résilié
+    </h1>
+    <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
+      Bonjour ${userName || 'Trader'}, ton abonnement Premium a bien été résilié.
+      Tu es maintenant sur le plan gratuit — journal, stats de base et historique illimité restent accessibles.
+    </p>
+    <p style="${FONT}font-size:13px;color:#6b8299;margin:0 0 20px 0;">
+      Tu peux te réabonner à tout moment pour retrouver les analytics avancés, l'IA Coach et les Weekly Debriefs.
+    </p>
+    ${cta('Me réabonner →', resubscribeUrl, 'secondary')}
+  `);
+
+  return {
+    subject: 'Ton abonnement MyTradingCoach a été résilié',
+    html: emailWrapper(content),
+  };
+}
+
+// ── Rappel renouvellement ─────────────────────────────────────────────────────
+
+export function renewalReminderTemplate(params: {
+  userName: string;
+  expiresAt: Date;
+  portalUrl: string;
+}): { subject: string; html: string } {
+  const { userName, expiresAt, portalUrl } = params;
+  const dateStr = expiresAt.toLocaleDateString('fr-FR', {
+    day: 'numeric', month: 'long', year: 'numeric',
+  });
+
+  const content = card(`
+    <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Facturation</p>
+    <h1 style="${FONT}font-size:22px;font-weight:700;color:#e2eaf5;margin:0 0 16px 0;letter-spacing:-.5px;">
+      Ton Premium expire dans 7 jours
+    </h1>
+    <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
+      Bonjour ${userName || 'Trader'}, ton abonnement Premium expire le
+      <strong style="color:#e2eaf5;">${dateStr}</strong>.
+      Sans renouvellement, tu passeras automatiquement sur le plan gratuit.
+    </p>
+    ${cta('Gérer mon abonnement →', portalUrl)}
+  `, 'rgba(245,158,11,.3)');
+
+  return {
+    subject: '⏳ Ton Premium expire dans 7 jours — MyTradingCoach',
+    html: emailWrapper(content, `Expiration le ${dateStr}.`),
   };
 }

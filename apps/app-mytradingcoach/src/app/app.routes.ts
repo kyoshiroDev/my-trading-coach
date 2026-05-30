@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, adminGuard } from './core/auth/auth.guard';
+import { authGuard, adminGuard, premiumGuard } from './core/auth/auth.guard';
 import { NotFoundComponent } from './shared/components/not-found/not-found.component';
 
 export const appRoutes: Routes = [
@@ -73,6 +73,14 @@ export const appRoutes: Routes = [
           ),
       },
       {
+        path: 'sessions',
+        data: { seo: { title: 'Mes sessions', noindex: true } },
+        loadComponent: () =>
+          import('./features/sessions/sessions.component').then(
+            (m) => m.SessionsComponent,
+          ),
+      },
+      {
         path: 'analytics',
         data: { seo: { title: 'Analytics', noindex: true } },
         loadComponent: () =>
@@ -108,11 +116,35 @@ export const appRoutes: Routes = [
           ),
       },
       {
+        path: 'eco-calendar',
+        canActivate: [premiumGuard],
+        data: {
+          seo: {
+            title: 'Calendrier économique',
+            description: 'Suivez les événements économiques majeurs et épinglez vos favoris.',
+            noindex: true,
+          },
+        },
+        loadComponent: () =>
+          import('./features/eco-calendar/eco-calendar.component').then(
+            (m) => m.EcoCalendarComponent,
+          ),
+      },
+      {
         path: 'settings',
         data: { seo: { title: 'Paramètres', noindex: true } },
         loadComponent: () =>
           import('./features/settings/settings.component').then(
             (m) => m.SettingsComponent,
+          ),
+      },
+      {
+        path: 'ambassador',
+        canActivate: [authGuard],
+        data: { seo: { title: 'Ambassadeur', noindex: true } },
+        loadComponent: () =>
+          import('./features/ambassador/ambassador.component').then(
+            (m) => m.AmbassadorComponent,
           ),
       },
       {

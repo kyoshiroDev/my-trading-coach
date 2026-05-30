@@ -28,6 +28,7 @@ import { TopbarComponent } from '../../shared/components/topbar/topbar.component
 import { environment } from '../../../environments/environment';
 import { interval } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
+import { todayParis } from '../../core/utils/paris-date';
 
 interface Insight {
   type: 'strength' | 'weakness' | 'pattern';
@@ -396,7 +397,7 @@ export class AiInsightsComponent implements AfterViewChecked {
   }
 
   private getQuotaKey(): string {
-    return `mtc_chat_quota_${new Date().toISOString().slice(0, 10)}`;
+    return `mtc_chat_quota_${todayParis()}`;
   }
 
   private loadChatQuota(): number {

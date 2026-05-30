@@ -92,6 +92,6 @@ Chaque dimanche, tu reçois un Weekly Debrief généré par IA qui identifie :
 - Tes 2 axes d'amélioration prioritaires
 - 3 objectifs concrets pour la semaine suivante
 
-Le plan gratuit inclut 50 trades par mois, l'historique illimité, et les statistiques de base — suffisant pour démarrer et comprendre si l'outil correspond à ta façon de travailler.
+Le plan gratuit inclut 30 trades par mois, l'historique illimité, et les statistiques de base — suffisant pour démarrer et comprendre si l'outil correspond à ta façon de travailler.
 
 [Commence gratuitement →](https://app.mytradingcoach.app/register)
