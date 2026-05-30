@@ -74,9 +74,16 @@ export class EcoCalendarService {
     }
 
     try {
+      const dayBefore = new Date(`${date}T00:00:00Z`);
+      dayBefore.setUTCDate(dayBefore.getUTCDate() - 1);
+      const dayAfter = new Date(`${date}T00:00:00Z`);
+      dayAfter.setUTCDate(dayAfter.getUTCDate() + 1);
+      const fromU = dayBefore.toISOString().slice(0, 10);
+      const toU   = dayAfter.toISOString().slice(0, 10);
+
       const url =
         `https://financialmodelingprep.com/stable/economic-calendar` +
-        `?from=${date}&to=${date}&apikey=${apiKey}`;
+        `?from=${fromU}&to=${toU}&apikey=${apiKey}`;
 
       const response = await fetch(url);
 
@@ -107,9 +114,13 @@ export class EcoCalendarService {
           e.actual !== null &&
           eventTimeUTC !== null &&
           eventTimeUTC <= now;
+        const { date: parisDate, time: parisTime } = this.toParisDateTime(
+          e.date ?? `${date} 00:00:00`,
+        );
+
         const mapped = {
-          date,
-          time: this.toParisTime(e.date ?? `${date} 00:00:00`),
+          date: parisDate,
+          time: parisTime,
           name: e.event,
           country: e.country,
           currency: e.currency,
@@ -122,7 +133,7 @@ export class EcoCalendarService {
         };
 
         const row = await this.prisma.ecoEvent.upsert({
-          where: { date_name_currency: { date, name: e.event, currency: e.currency } },
+          where: { date_name_currency: { date: parisDate, name: e.event, currency: e.currency } },
           update: { actual: e.actual ?? null, isReleased, updatedAt: new Date() },
           create: mapped,
         });
@@ -325,6 +336,22 @@ export class EcoCalendarService {
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
+
+  private toParisDateTime(utcDateStr: string): { date: string; time: string } {
+    try {
+      const d = new Date(utcDateStr.replace(' ', 'T') + 'Z');
+      const date = d.toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
+      const time = d.toLocaleTimeString('fr-FR', {
+        timeZone: 'Europe/Paris',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
+      return { date, time };
+    } catch {
+      return { date: utcDateStr.slice(0, 10), time: utcDateStr.slice(11, 16) };
+    }
+  }
 
   private toParisTime(utcDateStr: string): string {
     try {
