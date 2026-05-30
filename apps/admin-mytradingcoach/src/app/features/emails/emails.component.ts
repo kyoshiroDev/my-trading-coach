@@ -86,23 +86,20 @@ import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
                   <label class="field-label" for="preview-subject">Objet *</label>
                   <input id="preview-subject" type="text" class="field-input"
                     placeholder="ex: 🚀 Nouvelle feature — Import CSV amélioré"
-                    [(ngModel)]="announcementSubject" />
+                    [ngModel]="announcementSubject()"
+                    (ngModelChange)="announcementSubject.set($event)" />
                 </div>
                 <div class="field-group">
-                  <label class="field-label" for="preview-body">Contenu (HTML supporté)</label>
+                  <label class="field-label" for="preview-body">Contenu</label>
                   <textarea id="preview-body" class="field-textarea preview-textarea" rows="4"
-                    placeholder="ex: Nous venons de déployer une nouvelle fonctionnalité..."
-                    [(ngModel)]="announcementBody"></textarea>
+                    placeholder="ex: Ça y est, la V2 est en ligne..."
+                    [ngModel]="announcementBody()"
+                    (ngModelChange)="announcementBody.set($event)"></textarea>
                 </div>
-                <button class="btn-refresh-preview" (click)="refreshPreview()"
-                  [disabled]="previewLoading()">
-                  <lucide-icon [img]="RefreshIcon" [size]="12" />
-                  Rafraîchir l'aperçu
-                </button>
               </div>
             }
             @if (previewLoading()) {
-              <div class="loading-state">Génération de l'aperçu...</div>
+              <div class="loading-state">Chargement des destinataires...</div>
             } @else {
               <div class="preview-meta">
                 <span class="preview-recipients">{{ previewRecipients().length }} destinataire{{ previewRecipients().length !== 1 ? 's' : '' }}</span>
@@ -143,13 +140,15 @@ import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
                 <label class="field-label" for="announce-subject">Sujet *</label>
                 <input id="announce-subject" type="text" class="field-input"
                   placeholder="ex: 🚀 Nouvelle feature — Import CSV amélioré"
-                  [(ngModel)]="announcementSubject" />
+                  [ngModel]="announcementSubject()"
+                  (ngModelChange)="announcementSubject.set($event)" />
               </div>
               <div class="field-group">
-                <label class="field-label" for="announce-body">Contenu (HTML supporté)</label>
+                <label class="field-label" for="announce-body">Contenu</label>
                 <textarea id="announce-body" class="field-textarea" rows="6"
-                  placeholder="ex: Nous venons de déployer..."
-                  [(ngModel)]="announcementBody">
+                  placeholder="ex: Ça y est, la V2 est en ligne..."
+                  [ngModel]="announcementBody()"
+                  (ngModelChange)="announcementBody.set($event)">
                 </textarea>
               </div>
             }
@@ -211,30 +210,36 @@ export class EmailsComponent {
   protected readonly sending            = signal(false);
   protected readonly toast              = signal<{ message: string; error?: boolean } | null>(null);
 
-  protected announcementSubject = '';
-  protected announcementBody    = '';
+  protected readonly announcementSubject = signal('');
+  protected readonly announcementBody    = signal('');
 
   protected readonly wrappedPreviewHtml = computed(() => {
-    const html = this.previewHtml();
-    if (!html) return '';
-    return `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<style>
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: #f4f4f4; font-family: Arial, sans-serif; }
-  body { display: flex; justify-content: center; padding: 20px; }
-</style>
-</head>
-<body>${html}</body>
-</html>`;
+    const campaign = this.previewCampaign();
+
+    let inner: string;
+    if (campaign?.type === 'announcement') {
+      const subject = this.announcementSubject().trim() || '📣 Nouveauté MyTradingCoach';
+      const body    = this.formatBody(this.announcementBody());
+      const name    = this.previewRecipients()[0]?.name ?? 'Trader';
+      const APP_URL = 'https://app.mytradingcoach.app';
+      const BASE    = `font-family:'DM Sans',Arial,sans-serif;background:#080c14;color:#e2eaf5;max-width:600px;margin:0 auto;padding:40px 24px;`;
+      const CARD    = `background:#0f1824;border:1px solid rgba(99,155,255,.1);border-radius:12px;padding:28px;margin:20px 0;`;
+      const BTN     = `display:inline-block;background:#3b82f6;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:700;margin-top:16px;`;
+      const MUTED   = `color:#8fa3bf;font-size:12px;margin-top:28px;text-align:center;`;
+
+      inner = `<div style="${BASE}"><h1 style="color:#e2eaf5;font-size:22px;margin-bottom:6px;">${subject}</h1><p style="color:#8fa3bf;margin-top:0;">MyTradingCoach</p><div style="${CARD}"><p style="color:#e2eaf5;">Bonjour ${name},</p>${body}<a href="${APP_URL}" style="${BTN}">Accéder à l'app →</a></div><p style="${MUTED}">MyTradingCoach — Fait en France 🇫🇷</p></div>`;
+    } else {
+      inner = this.previewHtml();
+    }
+
+    if (!inner) return '';
+    return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{box-sizing:border-box;}html,body{margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;}body{display:flex;justify-content:center;padding:20px;}</style></head><body>${inner}</body></html>`;
   });
 
   protected readonly canSend = computed(() => {
     const c = this.sendCampaignModal();
     if (!c) return false;
-    if (c.type === 'announcement') return !!this.announcementSubject.trim();
+    if (c.type === 'announcement') return !!this.announcementSubject().trim();
     return true;
   });
 
@@ -251,31 +256,24 @@ export class EmailsComponent {
     this.previewCampaign.set(c);
     this.previewHtml.set('');
     this.previewRecipients.set([]);
-    if (c.type !== 'announcement') {
-      this.fetchPreview(c.type);
-    } else {
-      this.previewLoading.set(false);
-    }
-  }
-
-  refreshPreview(): void {
-    const c = this.previewCampaign();
-    if (!c) return;
-    this.fetchPreview(c.type);
-  }
-
-  private fetchPreview(type: string): void {
     this.previewLoading.set(true);
-    this.adminApi.previewCampaign(type, this.announcementSubject, this.announcementBody)
+    this.adminApi.previewCampaign(c.type, this.announcementSubject(), this.announcementBody())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: r => { this.previewHtml.set(r.data.html); this.previewRecipients.set(r.data.recipients ?? []); this.previewLoading.set(false); },
+        next: r => {
+          if (c.type !== 'announcement') this.previewHtml.set(r.data.html);
+          this.previewRecipients.set(r.data.recipients ?? []);
+          this.previewLoading.set(false);
+        },
         error: () => this.previewLoading.set(false),
       });
   }
 
   openSend(c: CampaignMeta): void {
-    if (c.type !== 'announcement') { this.announcementSubject = ''; this.announcementBody = ''; }
+    if (c.type !== 'announcement') {
+      this.announcementSubject.set('');
+      this.announcementBody.set('');
+    }
     this.sendCampaignModal.set(c);
   }
 
@@ -283,12 +281,30 @@ export class EmailsComponent {
     const c = this.sendCampaignModal();
     if (!c || !this.canSend()) return;
     this.sending.set(true);
-    this.adminApi.sendCampaign(c.type, this.announcementSubject, this.announcementBody)
+    this.adminApi.sendCampaign(c.type, this.announcementSubject(), this.announcementBody())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: r => { this.sending.set(false); this.sendCampaignModal.set(null); this.showToast(`✅ ${r.data.success} emails envoyés · ${r.data.errors} erreurs`); this.load(); },
         error: () => { this.sending.set(false); this.showToast('❌ Erreur lors de l\'envoi', true); },
       });
+  }
+
+  private formatBody(raw: string): string {
+    if (!raw?.trim()) return '<p style="color:#8fa3bf;font-style:italic;">Ton message apparaîtra ici…</p>';
+    const blocks = raw
+      .replace(/\r\n/g, '\n')
+      .split(/\n{2,}/)
+      .map(b => b.trim())
+      .filter(Boolean);
+    return blocks
+      .map(block => {
+        const withBreaks = block.replace(/\n/g, '<br/>');
+        const isHeading = /^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(block) && block.length < 60 && !block.includes('\n');
+        return isHeading
+          ? `<p style="font-size:15px;font-weight:700;color:#e2eaf5;margin:22px 0 8px;">${withBreaks}</p>`
+          : `<p style="color:#b0bec5;line-height:1.8;margin:0 0 14px;">${withBreaks}</p>`;
+      })
+      .join('');
   }
 
   private showToast(message: string, error = false): void {
