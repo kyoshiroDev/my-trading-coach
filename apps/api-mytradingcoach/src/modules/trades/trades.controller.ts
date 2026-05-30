@@ -24,133 +24,32 @@ import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
 import { INSTRUMENTS } from './instruments.const';
-import Anthropic from '@anthropic-ai/sdk';
-import { RedisService } from '../shared/redis.service';
-
-interface MarketContextItem { value: number | null; source: 'fmp' | 'yahoo' | 'binance'; }
-interface TreasuryRates    { t2y: number | null; t5y: number | null; t10y: number | null; t30y: number | null; }
-interface MarketContextDto { nq: MarketContextItem; spx: MarketContextItem; dxy: MarketContextItem; treasury: TreasuryRates; updatedAt: string; }
-interface NewsItem         { title: string; symbol: string; publishedDate: string; sentiment?: 'bull' | 'bear' | 'neutral'; url?: string; text?: string; image?: string; site?: string; }
+import { MarketDataService } from './market-data.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('trades')
 export class TradesController {
   private readonly logger = new Logger(TradesController.name);
-  private get redis() { return this.redisService.client; }
 
   constructor(
     private tradesService: TradesService,
     private coinGeckoService: CoinGeckoService,
     private csvImportService: CsvImportService,
-    private readonly redisService: RedisService,
+    private readonly marketData: MarketDataService,
   ) {}
 
   @Get('market-context')
-  async getMarketContext(): Promise<MarketContextDto> {
-    const cacheKey = 'market:context';
-    try {
-      const cached = await this.redis.get(cacheKey);
-      if (cached) return JSON.parse(cached) as MarketContextDto;
-    } catch { /* Redis indisponible */ }
-
-    const [nq, spx, dxy, treasury] = await Promise.allSettled([
-      this.fetchYahooPrice('NQ=F'),
-      this.fetchFmpPrice('SPY'),
-      this.fetchDxy(),
-      this.fetchTreasuryRates(),
-    ]);
-
-    const result: MarketContextDto = {
-      nq:       { value: nq.status      === 'fulfilled' ? nq.value      : null, source: 'yahoo' },
-      spx:      { value: spx.status     === 'fulfilled' ? spx.value     : null, source: 'fmp'   },
-      dxy:      { value: dxy.status     === 'fulfilled' ? dxy.value     : null, source: 'yahoo' },
-      treasury: treasury.status === 'fulfilled' ? treasury.value : { t2y: null, t5y: null, t10y: null, t30y: null },
-      updatedAt: new Date().toISOString(),
-    };
-
-    try { await this.redis.setex(cacheKey, 15, JSON.stringify(result)); } catch { /* ignore */ }
-    return result;
-  }
+  getMarketContext() { return this.marketData.getMarketContext(); }
 
   @Get('news')
-  async getMarketNews(@Query('symbols') symbols: string): Promise<NewsItem[]> {
-    const cacheKey = `market:news:${symbols}`;
-    try {
-      const cached = await this.redis.get(cacheKey);
-      if (cached) return JSON.parse(cached) as NewsItem[];
-    } catch { /* ignore */ }
-
-    const apiKey = process.env['FMP_API_KEY'];
-    if (!apiKey) return [];
-
-    try {
-      const rawSymbols = (symbols || '').split(',').map(s => this.mapSymbolToFmp(s.trim())).filter(Boolean);
-      const fmpSymbols = rawSymbols.length > 0 ? rawSymbols.join(',') : 'QQQ,SPY,BTCUSD,EURUSD';
-
-      const url = `https://financialmodelingprep.com/stable/news/stock?symbols=${fmpSymbols}&limit=20&apikey=${apiKey}`;
-      const res = await fetch(url);
-      if (!res.ok) return [];
-      const data = await res.json() as NewsItem[];
-      const translated = await this.translateNewsItems(data);
-      try { await this.redis.setex(cacheKey, 60, JSON.stringify(translated)); } catch { /* ignore */ }
-      return translated;
-    } catch { return []; }
+  getMarketNews(@Query('symbols') symbols: string) {
+    return this.marketData.getNews(symbols ?? '');
   }
 
-  private async translateNewsItems(items: NewsItem[]): Promise<NewsItem[]> {
-    if (!items.length) return items;
-    const apiKey = process.env['ANTHROPIC_API_KEY'];
-    if (!apiKey) return items;
-
-    try {
-      const payload = items.map(i => ({ title: i.title, text: i.text ?? '' }));
-      const anthropic = new Anthropic({ apiKey });
-      const msg = await anthropic.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 8192,
-        messages: [{
-          role: 'user',
-          content: `Traduis ces news financières en français. Réponds UNIQUEMENT avec un tableau JSON d'objets {title, text} dans le même ordre, sans aucun texte supplémentaire.\n\n${JSON.stringify(payload)}`,
-        }],
-      });
-
-      const raw = msg.content[0].type === 'text' ? msg.content[0].text.trim() : '';
-      const start = raw.indexOf('[');
-      const end   = raw.lastIndexOf(']');
-      if (start === -1 || end === -1) return items;
-
-      const translated: { title: string; text: string }[] = JSON.parse(raw.slice(start, end + 1));
-      return items.map((item, i) => ({
-        ...item,
-        title: translated[i]?.title ?? item.title,
-        text:  translated[i]?.text  ?? item.text,
-      }));
-    } catch {
-      return items;
-    }
-  }
-
-  private async fetchDxy(): Promise<number | null> {
-    return this.fetchYahooPrice('DX-Y.NYB');
-  }
-
-  private async fetchTreasuryRates(): Promise<TreasuryRates> {
-    const apiKey = process.env['FMP_API_KEY'];
-    if (!apiKey) return { t2y: null, t5y: null, t10y: null, t30y: null };
-    try {
-      const url = `https://financialmodelingprep.com/stable/treasury-rates?apikey=${apiKey}`;
-      const res = await fetch(url);
-      if (!res.ok) return { t2y: null, t5y: null, t10y: null, t30y: null };
-      const data = await res.json() as Array<Record<string, number>>;
-      const latest = data?.[0];
-      if (!latest) return { t2y: null, t5y: null, t10y: null, t30y: null };
-      return {
-        t2y:  latest['year2']   ?? latest['twoYear']    ?? latest['2Year']   ?? null,
-        t5y:  latest['year5']   ?? latest['fiveYear']   ?? latest['5Year']   ?? null,
-        t10y: latest['year10']  ?? latest['tenYear']    ?? latest['10Year']  ?? null,
-        t30y: latest['year30']  ?? latest['thirtyYear'] ?? latest['30Year']  ?? null,
-      };
-    } catch { return { t2y: null, t5y: null, t10y: null, t30y: null }; }
+  @Get('live-price')
+  async getLivePrice(@Query('symbol') symbol: string): Promise<{ price: number | null; symbol: string; cached: boolean }> {
+    if (!symbol?.trim()) return { price: null, symbol: '', cached: false };
+    return { ...(await this.marketData.getLivePrice(symbol.trim())), symbol };
   }
 
   @Get('monthly-count')
@@ -199,7 +98,7 @@ export class TradesController {
     }
 
     if (price !== null) {
-      try { await this.redis.setex(cacheKey, 15, String(price)); } catch { /* ignore */ }
+      try { await this.redis.setex(cacheKey, CACHE_TTL.PRICE, String(price)); } catch { /* ignore */ }
     }
 
     return { price, symbol, cached: false };
@@ -419,6 +318,27 @@ export class TradesController {
       ...staticMatches.map((i) => ({ symbol: i.symbol, label: i.label, category: i.category })),
       ...cryptoMatches.filter((i) => !seen.has(i.symbol)),
     ].slice(0, 10);
+  }
+
+  @Get('instruments/search')
+  async searchInstruments(@Query('q') q: string) {
+    const query = (q ?? '').trim();
+    if (!query) return [];
+    const fmpResults = await this.marketData.searchSymbols(query);
+    if (fmpResults.length > 0) return fmpResults;
+    const lq = query.toLowerCase();
+    const staticMatches = INSTRUMENTS
+      .filter(i => i.symbol.toLowerCase().includes(lq) || i.label.toLowerCase().includes(lq))
+      .slice(0, 10)
+      .map(i => ({ symbol: i.symbol, label: i.label, category: i.category }));
+    if (staticMatches.length >= 5) return staticMatches;
+    try {
+      const crypto = (await this.coinGeckoService.getCryptoInstruments())
+        .filter(i => i.symbol.toLowerCase().includes(lq) || i.label.toLowerCase().includes(lq))
+        .slice(0, 5).map(i => ({ symbol: i.symbol, label: i.label, category: i.category }));
+      const seen = new Set(staticMatches.map(i => i.symbol));
+      return [...staticMatches, ...crypto.filter(i => !seen.has(i.symbol))].slice(0, 10);
+    } catch { return staticMatches; }
   }
 
   @Get(':id')

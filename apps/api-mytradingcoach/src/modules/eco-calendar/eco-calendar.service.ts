@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 import { AiService } from '../ai/ai.service';
 import { todayParis, toParisDateStr } from '../../common/utils/paris-date';
+import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 
 export interface EcoEvent {
   time: string;
@@ -242,7 +243,7 @@ export class EcoCalendarService {
     const sortedEvents = this.sortWithPins(events, userPins);
     const result: EcoCalendarData = { events: sortedEvents, analysis, userAssets, pinnedEvents: userPins };
     try {
-      await this.redis.setex(cacheKey, 3600, JSON.stringify(result));
+      await this.redis.setex(cacheKey, CACHE_TTL.ECO_EVENTS, JSON.stringify(result));
     } catch {
       // Redis indisponible — pas de cache, c'est OK
     }
@@ -295,7 +296,7 @@ export class EcoCalendarService {
     const sortedEvents = this.sortWithPins(events, userPins);
     const result: EcoCalendarData = { events: sortedEvents, analysis, userAssets, pinnedEvents: userPins };
     try {
-      await this.redis.setex(cacheKey, 3600 * 6, JSON.stringify(result));
+      await this.redis.setex(cacheKey, CACHE_TTL.ECO_EVENTS_LONG, JSON.stringify(result));
     } catch {
       // Redis indisponible — pas de cache, c'est OK
     }
