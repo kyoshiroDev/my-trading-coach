@@ -1,3 +1,11 @@
+/* Permet à mtc-dashboard de participer au flex de main-content */
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
 .content {
   padding: 28px;
   flex: 1;
