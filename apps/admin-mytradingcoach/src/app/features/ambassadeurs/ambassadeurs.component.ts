@@ -33,10 +33,15 @@ import { AdminApi, AdminAmbassador, AdminAmbassadorDetail } from '../../core/api
           <div class="stat-value">{{ totalReferrals() }}</div>
           <div class="stat-change neutral">via liens</div>
         </div>
+        <div class="stat-card amber">
+          <div class="stat-label">Référés Starter</div>
+          <div class="stat-value">{{ totalStarter() }}</div>
+          <div class="stat-change neutral">39€/mois</div>
+        </div>
         <div class="stat-card green">
           <div class="stat-label">Référés Premium</div>
           <div class="stat-value">{{ totalPremium() }}</div>
-          <div class="stat-change neutral">abonnés actifs</div>
+          <div class="stat-change neutral">79€/mois</div>
         </div>
         <div class="stat-card amber">
           <div class="stat-label">Commissions dues</div>
@@ -69,7 +74,7 @@ import { AdminApi, AdminAmbassador, AdminAmbassadorDetail } from '../../core/api
                 <th>Code / Lien</th>
                 <th>Taux</th>
                 <th>Référés</th>
-                <th>Premium</th>
+                <th>Starter / Prem.</th>
                 <th>Dû</th>
                 <th>Total payé</th>
                 <th>Actions</th>
@@ -233,9 +238,9 @@ AND status = 'pending';</code>
         <div class="card-header"><span class="card-title">Taux de commission</span></div>
         <div class="rates-grid">
           <div class="rate-card green">
-            <div class="rate-label">Val (VAL)</div>
+            <div class="rate-label">Taux ambassadeur</div>
             <div class="rate-value">20%</div>
-            <div class="rate-desc">= 7,80€/mois par user Premium</div>
+            <div class="rate-desc">Starter : 7,80€/mois · Premium : 15,80€/mois</div>
           </div>
           <div class="rate-card blue">
             <div class="rate-label">Futur ambassadeur</div>
@@ -269,8 +274,11 @@ export class AmbassadeursComponent implements OnInit {
   protected readonly totalReferrals = computed(() =>
     this.ambassadors().reduce((s, a) => s + a.totalReferrals, 0),
   );
+  protected readonly totalStarter = computed(() =>
+    this.ambassadors().reduce((s, a) => s + a.starterReferrals, 0),
+  );
   protected readonly totalPremium = computed(() =>
-    this.ambassadors().reduce((s, a) => s + a.starterReferrals + a.premiumReferrals, 0),
+    this.ambassadors().reduce((s, a) => s + a.premiumReferrals, 0),
   );
   protected readonly totalPending = computed(() =>
     this.ambassadors().reduce((s, a) => s + a.pendingPayout, 0),
