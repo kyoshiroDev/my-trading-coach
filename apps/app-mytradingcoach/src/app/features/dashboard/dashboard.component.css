@@ -867,19 +867,7 @@ canvas {
   padding: 16px 0;
 }
 
-/* ─── Topbar session live ─── */
-.session-topbar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 28px;
-  height: 50px;
-  background: rgba(8,12,20,.85);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  justify-content: flex-end;
-}
+/* ─── Session pill (dans la topbar via ng-content) ─── */
 .sess-status-pill {
   display: flex;
   align-items: center;

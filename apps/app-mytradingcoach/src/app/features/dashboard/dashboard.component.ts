@@ -81,10 +81,8 @@ import { LiveModeService } from '../../core/services/live-mode.service';
       [showAddButton]="activeTab() !== 'live'"
       addLabel="⚡ Ajouter trade"
       (addClick)="goToJournal()"
-    />
-
-    @if (activeTab() === 'live' && activeSession()?.status === 'ACTIVE') {
-      <div class="session-topbar">
+    >
+      @if (activeTab() === 'live' && activeSession()?.status === 'ACTIVE') {
         <div class="sess-status-pill">
           <div class="sess-pulse-dot"></div>
           <span class="sess-timer-top">{{ sessionTimer() }}</span>
@@ -98,8 +96,8 @@ import { LiveModeService } from '../../core/services/live-mode.service';
           <span class="sess-emo-top">{{ moodEmoji(activeSession()?.moodStart) }}</span>
         </div>
         <button class="sess-stop-top" (click)="openCloseSessionModal()">Clôturer session</button>
-      </div>
-    }
+      }
+    </mtc-topbar>
 
     <div class="content" [class.live-mode]="activeTab() === 'live'">
       <!-- ── Dashboard ─────────────────────────────────────────────────── -->
