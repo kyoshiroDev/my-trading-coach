@@ -140,7 +140,6 @@ export class AnalyticsService {
     let topHourNum = -1;
     let topHourWr = 0;
     for (const [h, g] of hourMap.entries()) {
-      if (g.count < 2) continue;
       const wr = g.count > 0 ? (g.wins / g.count) * 100 : 0;
       if (wr > topHourWr) {
         topHourWr = wr;
