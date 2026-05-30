@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AnalyticsService } from './analytics.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { RedisService } from '../shared/redis.service';
 import {
   EmotionState,
   SetupType,
@@ -38,6 +39,19 @@ const mockPrisma = {
   },
 };
 
+
+const mockRedisService = {
+  client: {
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue('OK'),
+    setex: vi.fn().mockResolvedValue('OK'),
+    del: vi.fn().mockResolvedValue(1),
+    incr: vi.fn().mockResolvedValue(1),
+    expire: vi.fn().mockResolvedValue(1),
+    ttl: vi.fn().mockResolvedValue(-1),
+    keys: vi.fn().mockResolvedValue([]),
+  },
+};
 describe('AnalyticsService', () => {
   let service: AnalyticsService;
 
@@ -46,6 +60,7 @@ describe('AnalyticsService', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        { provide: RedisService, useValue: mockRedisService },
         AnalyticsService,
         { provide: PrismaService, useValue: mockPrisma },
       ],

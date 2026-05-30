@@ -15,7 +15,9 @@ import {
 } from '@prisma/client';
 import { TradesService } from './trades.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AnalyticsService } from '../analytics/analytics.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
+import { RedisService } from '../shared/redis.service';
 
 const mockTrade = {
   id: 'trade-123',
@@ -60,6 +62,19 @@ const mockPrisma = {
   },
 };
 
+
+const mockRedisService = {
+  client: {
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue('OK'),
+    setex: vi.fn().mockResolvedValue('OK'),
+    del: vi.fn().mockResolvedValue(1),
+    incr: vi.fn().mockResolvedValue(1),
+    expire: vi.fn().mockResolvedValue(1),
+    ttl: vi.fn().mockResolvedValue(-1),
+    keys: vi.fn().mockResolvedValue([]),
+  },
+};
 describe('TradesService', () => {
   let service: TradesService;
 
@@ -68,8 +83,10 @@ describe('TradesService', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        { provide: RedisService, useValue: mockRedisService },
         TradesService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: AnalyticsService, useValue: { invalidateUserCache: vi.fn().mockResolvedValue(undefined) } },
       ],
     }).compile();
 

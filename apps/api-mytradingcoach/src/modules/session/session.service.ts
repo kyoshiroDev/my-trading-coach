@@ -46,7 +46,7 @@ export class SessionService {
       data: { userId, moodStart: mood, status: SessionStatus.ACTIVE },
     });
 
-    await this.redis
+    await this.redisService.client
       .setex(`session:active:${userId}`, 60 * 60 * 24, session.id)
       .catch(() => null);
 
