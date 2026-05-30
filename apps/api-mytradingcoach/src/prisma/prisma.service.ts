@@ -20,7 +20,7 @@ export class PrismaService
       connectionString: process.env['DATABASE_URL'],
       keepAlive: true,
       idleTimeoutMillis: 20000,
-      max: 10,
+      max: 10, // 10 connexions par worker — 4 workers prod = 40 total (limite PG: 100)
     });
     pool.on('error', (err) => {
       this.logger.error(`idle client error: ${err.message}`);

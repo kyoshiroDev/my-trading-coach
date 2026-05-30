@@ -4,22 +4,26 @@ import { environment } from '../../../environments/environment';
 
 export interface AdminUser {
   id: string; email: string; name: string | null;
-  plan: 'FREE' | 'PREMIUM'; role: 'ADMIN' | 'USER' | 'BETA_TESTER';
+  plan: 'FREE' | 'STARTER' | 'PREMIUM'; role: 'ADMIN' | 'USER' | 'BETA_TESTER' | 'AMBASSADOR';
   trialEndsAt: string | null; stripeInterval: 'month' | 'year' | null;
   stripeCurrentPeriodEnd: string | null;
   lastSeenAt: string | null; lastLoginAt: string | null; createdAt: string;
 }
 
 export interface AdminStats {
-  mrr: number; arr: number; totalPremium: number;
-  monthly: number; annual: number; trials: number;
+  mrr: number; arr: number;
+  totalStarter: number; totalPremium: number;
+  starterMonthly: number; starterAnnual: number;
+  premiumMonthly: number; premiumAnnual: number;
+  monthly: number; annual: number;
+  trials: number;
   freeUsers: number; newThisMonth: number; churnedThisMonth: number;
-  betaTesters: number;
+  betaTesters: number; ambassadors: number;
 }
 
 export interface AdminOnlineUser {
   id: string; email: string; name: string | null;
-  plan: 'FREE' | 'PREMIUM'; role: 'ADMIN' | 'USER' | 'BETA_TESTER';
+  plan: 'FREE' | 'STARTER' | 'PREMIUM'; role: 'ADMIN' | 'USER' | 'BETA_TESTER' | 'AMBASSADOR';
   lastSeenAt: string; lastLoginAt: string | null;
 }
 
@@ -88,6 +92,7 @@ export interface AdminAmbassador {
   email: string;
   referralCode: string;
   totalReferrals: number;
+  starterReferrals: number;
   premiumReferrals: number;
   totalEarned: number;
   pendingPayout: number;
@@ -99,12 +104,13 @@ export interface AdminAmbassadorDetail {
     id: string;
     name: string | null;
     email: string;
-    plan: 'FREE' | 'PREMIUM';
+    plan: 'FREE' | 'STARTER' | 'PREMIUM';
     createdAt: string;
     isActive: boolean;
   }>;
   total: number;
   free: number;
+  starter: number;
   premium: number;
   earningsByMonth: Record<string, number>;
   totalEarned: number;
@@ -123,7 +129,7 @@ export class AdminApi {
     return this.http.get<{ data: { users: AdminUser[]; total: number } }>(this.base, { params });
   }
   detail(id: string)    { return this.http.get<{ data: AdminUserDetail }>(`${this.base}/${id}/detail`); }
-  update(id: string, dto: { name?: string; plan?: 'FREE' | 'PREMIUM'; role?: 'USER' | 'BETA_TESTER' }) {
+  update(id: string, dto: { name?: string; plan?: 'FREE' | 'STARTER' | 'PREMIUM'; role?: 'USER' | 'BETA_TESTER' | 'AMBASSADOR' }) {
     return this.http.patch<{ data: AdminUser }>(`${this.base}/${id}`, dto);
   }
   delete(id: string)    { return this.http.delete<void>(`${this.base}/${id}`); }

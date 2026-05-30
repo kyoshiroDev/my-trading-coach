@@ -83,7 +83,7 @@ import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
       }
 
       .td-asset {
-        font-family: var(--font-mono, 'DM Mono', monospace);
+        font-family: var(--font-mono);
         font-size: 13px;
         font-weight: 500;
         color: var(--blue-bright);
@@ -91,7 +91,7 @@ import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
 
       .side-badge {
         font-size: 10px;
-        font-family: var(--font-mono, 'DM Mono', monospace);
+        font-family: var(--font-mono);
         font-weight: 600;
         padding: 2px 8px;
         border-radius: 4px;
@@ -108,7 +108,7 @@ import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
       }
 
       .td-num {
-        font-family: var(--font-mono, 'DM Mono', monospace);
+        font-family: var(--font-mono);
         font-size: 12px;
         color: var(--text-2);
       }
@@ -131,7 +131,7 @@ import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
 
       .setup-chip {
         font-size: 10px;
-        font-family: var(--font-mono, 'DM Mono', monospace);
+        font-family: var(--font-mono);
         background: var(--blue-glow);
         color: var(--blue-bright);
         padding: 2px 8px;
@@ -142,7 +142,7 @@ import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
       .td-date {
         font-size: 11px;
         color: var(--text-3);
-        font-family: var(--font-mono, 'DM Mono', monospace);
+        font-family: var(--font-mono);
       }
 
       .td-actions {

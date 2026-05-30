@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { RedisService } from '../shared/redis.service';
 
 const mockUser = {
   id: 'user-1',
@@ -31,6 +32,19 @@ const mockPrisma = {
   },
 };
 
+
+const mockRedisService = {
+  client: {
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue('OK'),
+    setex: vi.fn().mockResolvedValue('OK'),
+    del: vi.fn().mockResolvedValue(1),
+    incr: vi.fn().mockResolvedValue(1),
+    expire: vi.fn().mockResolvedValue(1),
+    ttl: vi.fn().mockResolvedValue(-1),
+    keys: vi.fn().mockResolvedValue([]),
+  },
+};
 describe('UsersService', () => {
   let service: UsersService;
 
@@ -39,6 +53,7 @@ describe('UsersService', () => {
 
     const module = await Test.createTestingModule({
       providers: [
+        { provide: RedisService, useValue: mockRedisService },
         UsersService,
         { provide: PrismaService, useValue: mockPrisma },
       ],

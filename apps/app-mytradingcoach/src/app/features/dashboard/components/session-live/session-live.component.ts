@@ -20,6 +20,10 @@ import { SessionRecapComponent } from '../session-recap/session-recap.component'
 import { MarketContextBarComponent } from '../market-context-bar/market-context-bar.component';
 import { EcoSocketService } from '../../../../core/services/eco-socket.service';
 import { UserStore } from '../../../../core/stores/user.store';
+import { formatDuration } from '../../../../core/utils/time.utils';
+import { POLLING_MS } from '../../../../core/constants/polling.const';
+import { LiveNewsComponent } from './components/live-news/live-news.component';
+import { LiveFeedComponent } from './components/live-feed/live-feed.component';
 
 const MOODS: { value: MoodState; label: string; emoji: string }[] = [
   { value: 'CONFIDENT', label: 'Confiant', emoji: '😎' },
@@ -42,7 +46,7 @@ const EMOTIONS = [
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-live.component.css',
-  imports: [SessionRecapComponent, MarketContextBarComponent, DecimalPipe],
+  imports: [SessionRecapComponent, MarketContextBarComponent, DecimalPipe, LiveNewsComponent, LiveFeedComponent],
   template: `
     <div data-testid="session-live-view">
 
@@ -666,13 +670,8 @@ export class SessionLiveComponent {
 
   protected readonly elapsed = computed(() => {
     const start = this.startTime();
-    const now = this.now();
     if (!start) return '00:00:00';
-    const diff = Math.floor((now.getTime() - start.getTime()) / 1000);
-    const h = Math.floor(diff / 3600).toString().padStart(2, '0');
-    const m = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
-    const s = (diff % 60).toString().padStart(2, '0');
-    return `${h}:${m}:${s}`;
+    return formatDuration(Math.floor((this.now().getTime() - start.getTime()) / 1000));
   });
 
   // Close trade panel
@@ -988,7 +987,7 @@ export class SessionLiveComponent {
     this.stopLivePricePolling();
     this.livePrice.set(null);
     this.fetchLivePrice(symbol);
-    this.livePriceInterval = setInterval(() => this.fetchLivePrice(symbol), 15_000);
+    this.livePriceInterval = setInterval(() => this.fetchLivePrice(symbol), POLLING_MS.LIVE_PRICE);
   }
 
   private stopLivePricePolling(): void {

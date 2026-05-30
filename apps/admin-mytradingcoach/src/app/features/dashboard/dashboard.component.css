@@ -15,9 +15,11 @@
 }
 .stat-item-label { font-size: 9px; font-family: var(--mono); font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; }
 .stat-item-value { font-size: 20px; font-weight: 700; font-family: var(--mono); color: var(--text); line-height: 1.1; }
-.stat-item-value.teal { color: var(--teal); }
-.stat-item-value.blue { color: var(--blue); }
-.stat-item-value.red  { color: var(--red); }
+.stat-item-value.teal   { color: var(--teal); }
+.stat-item-value.blue   { color: var(--blue); }
+.stat-item-value.red    { color: var(--red); }
+.stat-item-value.amber  { color: var(--amber); }
+.stat-item-value.purple { color: var(--purple); }
 .stat-slash { font-size: 14px; color: var(--text3); margin: 0 2px; }
 .stat-item-sub { font-size: 10px; font-family: var(--mono); color: var(--text3); white-space: nowrap; }
 .stat-item-sub.up { color: var(--green); }

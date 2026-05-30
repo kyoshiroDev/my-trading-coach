@@ -21,28 +21,32 @@
 
   @if (isLoading()) {
     <div class="amb-loading">Chargement...</div>
-  } @else if (stats()) {
+  } @else if (stats(); as s) {
 
     <!-- Stat cards -->
     <div class="amb-stats-grid">
       <div class="amb-stat-card">
-        <div class="amb-stat-val">{{ stats()!.total }}</div>
+        <div class="amb-stat-val">{{ s.total }}</div>
         <div class="amb-stat-lbl">Personnes inscrites</div>
       </div>
       <div class="amb-stat-card">
-        <div class="amb-stat-val b">{{ stats()!.free }}</div>
+        <div class="amb-stat-val b">{{ s.free }}</div>
         <div class="amb-stat-lbl">Comptes FREE</div>
       </div>
       <div class="amb-stat-card">
-        <div class="amb-stat-val g">{{ stats()!.premium }}</div>
+        <div class="amb-stat-val" style="color: var(--blue-bright)">{{ s.starter }}</div>
+        <div class="amb-stat-lbl">Comptes STARTER</div>
+      </div>
+      <div class="amb-stat-card">
+        <div class="amb-stat-val g">{{ s.premium }}</div>
         <div class="amb-stat-lbl">Comptes PREMIUM</div>
       </div>
       <div class="amb-stat-card highlight">
-        <div class="amb-stat-val g">{{ stats()!.totalEarned | number:'1.2-2' }}€</div>
+        <div class="amb-stat-val g">{{ s.totalEarned | number:'1.2-2' }}€</div>
         <div class="amb-stat-lbl">Total gagné</div>
       </div>
       <div class="amb-stat-card">
-        <div class="amb-stat-val y">{{ stats()!.pendingPayout | number:'1.2-2' }}€</div>
+        <div class="amb-stat-val y">{{ s.pendingPayout | number:'1.2-2' }}€</div>
         <div class="amb-stat-lbl">En attente de virement</div>
       </div>
     </div>
@@ -66,10 +70,10 @@
     <div class="amb-section">
       <div class="amb-section-title">
         Mes referrals
-        <span class="amb-count">{{ stats()!.total }}</span>
+        <span class="amb-count">{{ s.total }}</span>
       </div>
 
-      @if (stats()!.referrals.length === 0) {
+      @if (s.referrals.length === 0) {
         <div class="amb-empty">
           Partage ton lien pour voir tes referrals ici.
         </div>
@@ -86,13 +90,14 @@
               </tr>
             </thead>
             <tbody>
-              @for (user of stats()!.referrals; track user.id) {
+              @for (user of s.referrals; track user.id) {
                 <tr>
                   <td class="amb-email">{{ user.email }}</td>
                   <td class="amb-name">{{ user.name ?? '—' }}</td>
                   <td>
                     <span class="amb-plan-badge"
                           [class.premium]="user.plan === 'PREMIUM'"
+                          [class.starter]="user.plan === 'STARTER'"
                           [class.free]="user.plan === 'FREE'">
                       {{ user.plan }}
                     </span>

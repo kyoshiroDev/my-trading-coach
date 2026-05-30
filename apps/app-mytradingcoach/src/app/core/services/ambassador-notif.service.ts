@@ -1,4 +1,5 @@
-import { Injectable, inject, signal, effect } from '@angular/core';
+import { Injectable, DestroyRef, inject, signal, effect } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AmbassadorApi } from '../api/ambassador.api';
 import { UserStore } from '../stores/user.store';
 
@@ -6,6 +7,7 @@ import { UserStore } from '../stores/user.store';
 export class AmbassadorNotifService {
   private readonly api = inject(AmbassadorApi);
   private readonly userStore = inject(UserStore);
+  private readonly destroyRef = inject(DestroyRef);
 
   private readonly LAST_SEEN_KEY = 'ambassador_last_seen';
 
@@ -16,9 +18,11 @@ export class AmbassadorNotifService {
       if (!this.userStore.isAmbassador()) return;
 
       const lastSeen = localStorage.getItem(this.LAST_SEEN_KEY) ?? new Date(0).toISOString();
-      this.api.getNewCount(lastSeen).subscribe({
-        next: (res) => this.newReferrals.set(res.data.count),
-      });
+      this.api.getNewCount(lastSeen)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (res) => this.newReferrals.set(res.data.count),
+        });
     });
   }
 

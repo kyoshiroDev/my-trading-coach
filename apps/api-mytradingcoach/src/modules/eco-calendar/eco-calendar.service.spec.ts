@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import { EcoCalendarService } from './eco-calendar.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
+import { RedisService } from '../shared/redis.service';
 
 const mockPrisma = {
   trade: { findMany: vi.fn() },
@@ -40,6 +41,20 @@ const makeFmpEvent = (overrides: Partial<{
   ...overrides,
 });
 
+
+const mockRedisService = {
+  client: {
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue('OK'),
+    setex: vi.fn().mockResolvedValue('OK'),
+    del: vi.fn().mockResolvedValue(1),
+    incr: vi.fn().mockResolvedValue(1),
+    expire: vi.fn().mockResolvedValue(1),
+    ttl: vi.fn().mockResolvedValue(-1),
+    keys: vi.fn().mockResolvedValue([]),
+    quit: vi.fn().mockResolvedValue('OK'),
+  },
+};
 describe('EcoCalendarService', () => {
   let service: EcoCalendarService;
   let originalFmpKey: string | undefined;
@@ -49,6 +64,7 @@ describe('EcoCalendarService', () => {
 
     const module = await Test.createTestingModule({
       providers: [
+        { provide: RedisService, useValue: mockRedisService },
         EcoCalendarService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AiService, useValue: mockAi },
@@ -58,7 +74,6 @@ describe('EcoCalendarService', () => {
     service = module.get(EcoCalendarService);
     vi.spyOn(service['redis'], 'get').mockResolvedValue(null);
     vi.spyOn(service['redis'], 'setex').mockResolvedValue('OK' as never);
-    vi.spyOn(service['redis'], 'quit').mockResolvedValue('OK' as never);
 
     // Valeur par défaut : user sans pins
     mockPrisma.user.findUnique.mockResolvedValue({ pinnedEcoEvents: [] });

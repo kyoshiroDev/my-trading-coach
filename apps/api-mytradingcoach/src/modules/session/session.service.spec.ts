@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { SessionService } from './session.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { RedisService } from '../shared/redis.service';
 
 const makeTrade = (overrides: Record<string, unknown> = {}) => ({
   id: 'trade-1',
@@ -33,6 +34,19 @@ const mockPrisma = {
   },
 };
 
+
+const mockRedisService = {
+  client: {
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue('OK'),
+    setex: vi.fn().mockResolvedValue('OK'),
+    del: vi.fn().mockResolvedValue(1),
+    incr: vi.fn().mockResolvedValue(1),
+    expire: vi.fn().mockResolvedValue(1),
+    ttl: vi.fn().mockResolvedValue(-1),
+    keys: vi.fn().mockResolvedValue([]),
+  },
+};
 describe('SessionService', () => {
   let service: SessionService;
 
@@ -41,16 +55,13 @@ describe('SessionService', () => {
 
     const module = await Test.createTestingModule({
       providers: [
+        { provide: RedisService, useValue: mockRedisService },
         SessionService,
         { provide: PrismaService, useValue: mockPrisma },
       ],
     }).compile();
 
     service = module.get(SessionService);
-    // Désactiver Redis pour les tests
-    vi.spyOn(service['redis'], 'setex').mockResolvedValue('OK');
-    vi.spyOn(service['redis'], 'del').mockResolvedValue(1);
-    vi.spyOn(service['redis'], 'quit').mockResolvedValue('OK');
   });
 
   describe('startSession', () => {

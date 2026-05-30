@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, adminGuard, premiumGuard } from './core/auth/auth.guard';
+import { authGuard, premiumGuard } from './core/auth/auth.guard';
 import { NotFoundComponent } from './shared/components/not-found/not-found.component';
 
 export const appRoutes: Routes = [
@@ -145,15 +145,6 @@ export const appRoutes: Routes = [
         loadComponent: () =>
           import('./features/ambassador/ambassador.component').then(
             (m) => m.AmbassadorComponent,
-          ),
-      },
-      {
-        path: 'admin',
-        canActivate: [adminGuard],
-        data: { seo: { title: 'Admin', noindex: true } },
-        loadComponent: () =>
-          import('./features/admin/admin-users.component').then(
-            (m) => m.AdminUsersComponent,
           ),
       },
     ],

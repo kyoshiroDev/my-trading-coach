@@ -87,12 +87,12 @@ function heatColor(winRate: number, count: number): string {
       .cell-hour {
         font-size: 9px;
         color: var(--text-3);
-        font-family: var(--font-mono, 'DM Mono', monospace);
+        font-family: var(--font-mono);
       }
       .cell-val {
         font-size: 10px;
         color: var(--text);
-        font-family: var(--font-mono, 'DM Mono', monospace);
+        font-family: var(--font-mono);
         font-weight: 600;
       }
 

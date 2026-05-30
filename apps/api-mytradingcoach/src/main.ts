@@ -4,6 +4,7 @@ import { ConsoleLogger, Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
+import * as compression from 'compression';
 import { AppModule } from './app/app.module';
 
 const REQUIRED_ENV_VARS = [
@@ -40,6 +41,7 @@ async function bootstrap() {
   });
 
   app.use(helmet());
+  app.use(compression());
   app.use(cookieParser());
   app.setGlobalPrefix('api');
 

@@ -1,8 +1,9 @@
-import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
-import Redis from 'ioredis';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { RedisService } from '../shared/redis.service';
 import { AiService } from '../ai/ai.service';
 import { todayParis, toParisDateStr } from '../../common/utils/paris-date';
+import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 
 export interface EcoEvent {
   time: string;
@@ -50,23 +51,15 @@ interface FmpEcoEvent {
 }
 
 @Injectable()
-export class EcoCalendarService implements OnModuleDestroy {
+export class EcoCalendarService {
   private readonly logger = new Logger(EcoCalendarService.name);
-  readonly redis = new Redis({
-    host: process.env['REDIS_HOST'] ?? 'localhost',
-    port: parseInt(process.env['REDIS_PORT'] ?? '6379'),
-    password: process.env['REDIS_PASSWORD'],
-    lazyConnect: true,
-  });
+  get redis() { return this.redisService.client; }
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly ai: AiService,
+    private readonly redisService: RedisService,
   ) {}
-
-  async onModuleDestroy() {
-    await this.redis.quit();
-  }
 
   // ── Fetch depuis FMP + upsert PostgreSQL ─────────────────────────────────
 
@@ -250,7 +243,7 @@ export class EcoCalendarService implements OnModuleDestroy {
     const sortedEvents = this.sortWithPins(events, userPins);
     const result: EcoCalendarData = { events: sortedEvents, analysis, userAssets, pinnedEvents: userPins };
     try {
-      await this.redis.setex(cacheKey, 3600, JSON.stringify(result));
+      await this.redis.setex(cacheKey, CACHE_TTL.ECO_EVENTS, JSON.stringify(result));
     } catch {
       // Redis indisponible — pas de cache, c'est OK
     }
@@ -303,7 +296,7 @@ export class EcoCalendarService implements OnModuleDestroy {
     const sortedEvents = this.sortWithPins(events, userPins);
     const result: EcoCalendarData = { events: sortedEvents, analysis, userAssets, pinnedEvents: userPins };
     try {
-      await this.redis.setex(cacheKey, 3600 * 6, JSON.stringify(result));
+      await this.redis.setex(cacheKey, CACHE_TTL.ECO_EVENTS_LONG, JSON.stringify(result));
     } catch {
       // Redis indisponible — pas de cache, c'est OK
     }

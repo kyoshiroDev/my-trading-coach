@@ -407,6 +407,7 @@ export class AiInsightsComponent implements AfterViewChecked {
         ? Math.max(0, parseInt(stored, 10))
         : this.QUOTA_MAX;
     } catch {
+      /* localStorage indisponible (SSR ou permission refusée) — retourne quota max */
       return this.QUOTA_MAX;
     }
   }
@@ -415,7 +416,7 @@ export class AiInsightsComponent implements AfterViewChecked {
     try {
       localStorage.setItem(this.getQuotaKey(), String(value));
     } catch {
-      /* ignore */
+      /* localStorage indisponible — quota non persisté */
     }
   }
 

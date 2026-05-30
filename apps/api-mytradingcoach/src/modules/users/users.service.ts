@@ -6,6 +6,8 @@ import {
 } from '@nestjs/common';
 import { Plan, Role, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { RedisService } from '../shared/redis.service';
+import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
@@ -54,7 +56,10 @@ const ADMIN_USER_SELECT = {
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redisService: RedisService,
+  ) {}
 
   async findById(id: string) {
     return this.prisma.user.findUnique({ where: { id }, select: USER_SELECT });
@@ -182,44 +187,51 @@ export class UsersService {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const [monthly, annual, trials, freeUsers, newThisMonth, churnedThisMonth, betaTesters] =
-      await Promise.all([
-        this.prisma.user.count({
-          where: {
-            plan: 'PREMIUM',
-            stripeInterval: 'month',
-            stripeSubscriptionStatus: { in: ['active', 'trialing'] },
-          },
-        }),
-        this.prisma.user.count({
-          where: {
-            plan: 'PREMIUM',
-            stripeInterval: 'year',
-            stripeSubscriptionStatus: { in: ['active', 'trialing'] },
-          },
-        }),
-        this.prisma.user.count({
-          where: { plan: 'PREMIUM', trialEndsAt: { gt: now } },
-        }),
-        this.prisma.user.count({ where: { plan: 'FREE' } }),
-        this.prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
-        this.prisma.user.count({
-          where: {
-            plan: 'FREE',
-            trialUsed: true,
-            updatedAt: { gte: startOfMonth },
-          },
-        }),
-        this.prisma.user.count({ where: { role: 'BETA_TESTER' } }),
-      ]);
+    const [
+      starterMonthly, starterAnnual,
+      premiumMonthly, premiumAnnual,
+      trials, freeUsers, newThisMonth, churnedThisMonth,
+      betaTesters, ambassadors,
+    ] = await Promise.all([
+      this.prisma.user.count({
+        where: { plan: 'STARTER', stripeInterval: 'month', stripeSubscriptionStatus: { in: ['active', 'trialing'] } },
+      }),
+      this.prisma.user.count({
+        where: { plan: 'STARTER', stripeInterval: 'year', stripeSubscriptionStatus: { in: ['active', 'trialing'] } },
+      }),
+      this.prisma.user.count({
+        where: { plan: 'PREMIUM', stripeInterval: 'month', stripeSubscriptionStatus: { in: ['active', 'trialing'] } },
+      }),
+      this.prisma.user.count({
+        where: { plan: 'PREMIUM', stripeInterval: 'year', stripeSubscriptionStatus: { in: ['active', 'trialing'] } },
+      }),
+      this.prisma.user.count({ where: { plan: 'PREMIUM', trialEndsAt: { gt: now } } }),
+      this.prisma.user.count({ where: { plan: 'FREE' } }),
+      this.prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
+      this.prisma.user.count({ where: { plan: 'FREE', trialUsed: true, updatedAt: { gte: startOfMonth } } }),
+      this.prisma.user.count({ where: { role: 'BETA_TESTER' } }),
+      this.prisma.user.count({ where: { role: 'AMBASSADOR' } }),
+    ]);
 
-    const mrr = monthly * 39 + Math.round((annual * 349) / 12);
+    const mrr = starterMonthly * 39
+      + Math.round((starterAnnual * 349) / 12)
+      + premiumMonthly * 79
+      + Math.round((premiumAnnual * 699) / 12);
     const arr = mrr * 12;
-    const totalPremium = monthly + annual; // Stripe uniquement
+
+    const totalStarter = starterMonthly + starterAnnual;
+    const totalPremium = premiumMonthly + premiumAnnual;
+    const monthly = starterMonthly + premiumMonthly;
+    const annual = starterAnnual + premiumAnnual;
 
     return {
-      mrr, arr, totalPremium, monthly, annual,
-      trials, freeUsers, newThisMonth, churnedThisMonth, betaTesters,
+      mrr, arr,
+      totalStarter, totalPremium,
+      starterMonthly, starterAnnual,
+      premiumMonthly, premiumAnnual,
+      monthly, annual,
+      trials, freeUsers, newThisMonth, churnedThisMonth,
+      betaTesters, ambassadors,
     };
   }
 
@@ -316,9 +328,22 @@ export class UsersService {
 
   private async fetchEurUsdRate(): Promise<number> {
     const FALLBACK_RATE = 0.92;
+    const cacheKey = 'exchange:rates:USD';
+
+    try {
+      const cached = await this.redisService.client.get(cacheKey);
+      if (cached) {
+        const rates = JSON.parse(cached) as Record<string, number>;
+        return rates['EUR'] ?? FALLBACK_RATE;
+      }
+    } catch { /* Redis indisponible */ }
+
     try {
       const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
       const data = (await res.json()) as { rates: Record<string, number> };
+      try {
+        await this.redisService.client.setex(cacheKey, CACHE_TTL.EXCHANGE_RATES, JSON.stringify(data.rates));
+      } catch { /* ignore */ }
       return data.rates['EUR'] ?? FALLBACK_RATE;
     } catch (err) {
       this.logger.warn(

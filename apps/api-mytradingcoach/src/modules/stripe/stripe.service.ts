@@ -4,15 +4,14 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
-  OnModuleDestroy,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { Prisma, Plan } from '@prisma/client';
 import Stripe from 'stripe';
-import Redis from 'ioredis';
 import { PrismaService } from '../../prisma/prisma.service';
+import { RedisService } from '../shared/redis.service';
 import { ResendService } from '../resend/resend.service';
 import { DiscordService } from '../discord/discord.service';
 import {
@@ -51,9 +50,9 @@ function isUniqueConstraintError(err: unknown): boolean {
 // ── Service ──────────────────────────────────────────────────────────────────
 
 @Injectable()
-export class StripeService implements OnModuleDestroy {
+export class StripeService {
   private readonly stripe: Stripe;
-  private readonly redis: Redis;
+  private get redis() { return this.redisService.client; }
   private readonly logger = new Logger(StripeService.name);
 
   constructor(
@@ -63,22 +62,12 @@ export class StripeService implements OnModuleDestroy {
     private readonly discord: DiscordService,
     @InjectQueue(STRIPE_QUEUE)
     private readonly webhookQueue: Queue<StripeWebhookJobPayload>,
+    private readonly redisService: RedisService,
   ) {
     this.stripe = new Stripe(
       this.config.getOrThrow<string>('STRIPE_SECRET_KEY'),
       { apiVersion: '2024-06-20' },
     );
-
-    this.redis = new Redis({
-      host: process.env['REDIS_HOST'] ?? 'localhost',
-      port: parseInt(process.env['REDIS_PORT'] ?? '6379'),
-      password: process.env['REDIS_PASSWORD'],
-      lazyConnect: true,
-    });
-  }
-
-  async onModuleDestroy() {
-    await this.redis.quit();
   }
 
   // ── Billing Status (avec cache Redis) ───────────────────────────────────────
@@ -317,9 +306,7 @@ export class StripeService implements OnModuleDestroy {
             `[MONITORING] Subscription ${subscription.id} — status: ${subscription.status} — customer: ${customerId ?? 'unknown'}`,
           );
           if (process.env['SENTRY_DSN']) {
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
-            const Sentry =
-              require('@sentry/nestjs') as typeof import('@sentry/nestjs');
+            const Sentry = await import('@sentry/nestjs');
             Sentry.captureMessage(
               `Subscription ${subscription.status}: ${subscription.id}`,
               {
@@ -636,7 +623,7 @@ export class StripeService implements OnModuleDestroy {
 
       const user = await this.prisma.user.findFirst({
         where: { stripeCustomerId },
-        select: { id: true, referredBy: true },
+        select: { id: true, referredBy: true, plan: true },
       });
 
       if (!user?.referredBy) return;
@@ -665,7 +652,8 @@ export class StripeService implements OnModuleDestroy {
       });
 
       this.logger.log(
-        `Commission referral : ${commission}€ pour ambassadeur ${user.referredBy} (sub ${subscriptionId})`,
+        `Commission referral : ${commission}€ pour ambassadeur ${user.referredBy}` +
+        ` (plan: ${user.plan}, sub: ${subscriptionId})`,
       );
     } catch (err) {
       this.logger.error('Erreur calcul commission referral', err);

@@ -10,7 +10,7 @@ import { EcoEvent } from './eco-calendar.service';
 
 @WebSocketGateway({
   namespace: '/eco',
-  cors: { origin: process.env['FRONTEND_URL'] ?? '*' },
+  cors: { origin: process.env['FRONTEND_URL'] ?? 'http://localhost:4200' },
 })
 export class EcoCalendarGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(EcoCalendarGateway.name);
@@ -28,6 +28,6 @@ export class EcoCalendarGateway implements OnGatewayConnection, OnGatewayDisconn
 
   notifyNewReleases(events: EcoEvent[]) {
     this.server.emit('eco:new-releases', { events, timestamp: new Date() });
-    this.logger.log(`📡 WebSocket broadcast: ${events.length} nouveaux résultats économiques`);
+    this.logger.log(`📡 WebSocket broadcast: ${events.length} résultats économiques`);
   }
 }

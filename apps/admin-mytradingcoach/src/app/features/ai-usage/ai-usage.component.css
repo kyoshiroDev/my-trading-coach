@@ -17,7 +17,7 @@
 .stat-val { font-size: 15px; font-weight: 600; font-family: var(--mono); color: var(--text); }
 .stat-val.teal  { color: var(--teal); }
 .stat-val.amber { color: var(--amber); }
-.stat-rows { }
+
 .stat-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 16px; border-bottom: 1px solid var(--border); font-size: 12px; }
 .stat-row:last-child { border-bottom: none; }
 .amber { color: var(--amber); }

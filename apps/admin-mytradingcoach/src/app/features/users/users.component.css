@@ -9,15 +9,17 @@
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
 /* ── Stats MRR ── */
-.stats-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; }
+.stats-grid { display: grid; grid-template-columns: repeat(6,1fr); gap: 12px; }
 .stat-block { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; transition: border-color .15s; }
 .stat-block:hover { border-color: var(--border2); }
 .stat-block-label { font-size: 9px; font-family: var(--mono); color: var(--text3); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 6px; }
 .stat-block-value { font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
 .stat-block-sub { font-size: 10px; color: var(--text3); }
-.text-teal { color: var(--teal); }
-.text-blue { color: var(--blue); }
-.text-red  { color: var(--red); }
+.text-teal   { color: var(--teal); }
+.text-blue   { color: var(--blue); }
+.text-red    { color: var(--red); }
+.text-amber  { color: var(--amber); }
+.text-purple { color: var(--purple); }
 
 /* ── Online panel ── */
 .online-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }

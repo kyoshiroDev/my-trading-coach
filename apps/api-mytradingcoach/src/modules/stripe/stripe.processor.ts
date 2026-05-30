@@ -40,7 +40,7 @@ export class StripeProcessor extends WorkerHost {
   }
 
   @OnWorkerEvent('failed')
-  onFailed(job: Job<StripeWebhookJobPayload> | undefined, error: Error): void {
+  async onFailed(job: Job<StripeWebhookJobPayload> | undefined, error: Error): Promise<void> {
     if (!job) return;
     const { event } = job.data;
 
@@ -56,9 +56,7 @@ export class StripeProcessor extends WorkerHost {
         `[MONITORING CRITIQUE] Job ${job.id} définitivement échoué — event: ${event.type} [${event.id}]. Inspection manuelle requise.`,
       );
       if (process.env['SENTRY_DSN']) {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const Sentry =
-          require('@sentry/nestjs') as typeof import('@sentry/nestjs');
+        const Sentry = await import('@sentry/nestjs');
         Sentry.captureException(error, {
           tags: { eventType: event.type, eventId: event.id },
         });

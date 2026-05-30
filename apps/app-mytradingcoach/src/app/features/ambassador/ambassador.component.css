@@ -106,6 +106,10 @@
   background: rgba(16,185,129,.12); color: var(--green);
   border: 1px solid rgba(16,185,129,.2);
 }
+.amb-plan-badge.starter {
+  background: rgba(59,130,246,.12); color: var(--blue-bright);
+  border: 1px solid rgba(59,130,246,.3);
+}
 .amb-plan-badge.free {
   background: var(--bg-3); color: var(--text-3);
   border: 1px solid var(--border);

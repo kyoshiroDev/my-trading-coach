@@ -7,6 +7,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { OrchestratorAgent } from './agents/orchestrator.agent';
 import { DebriefAgent } from './agents/debrief.agent';
 import { AiLoggerService } from '../shared/ai-logger.service';
+import { RedisService } from '../shared/redis.service';
 
 const mockMessagesCreate = vi.hoisted(() =>
   vi.fn().mockResolvedValue({
@@ -90,6 +91,19 @@ const mockDebriefAgent = {
   generate: vi.fn().mockResolvedValue({ summary: 'Semaine correcte.' }),
 };
 
+
+const mockRedisService = {
+  client: {
+    get: mockRedisGet,
+    set: mockRedisSet,
+    setex: vi.fn().mockResolvedValue('OK'),
+    del: vi.fn().mockResolvedValue(1),
+    incr: mockRedisIncr,
+    expire: mockRedisExpire,
+    ttl: mockRedisTtl,
+    keys: vi.fn().mockResolvedValue([]),
+  },
+};
 describe('AiService', () => {
   let service: AiService;
 
@@ -112,6 +126,7 @@ describe('AiService', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        { provide: RedisService, useValue: mockRedisService },
         AiService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: OrchestratorAgent, useValue: mockOrchestrator },

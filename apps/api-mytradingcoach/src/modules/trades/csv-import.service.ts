@@ -23,6 +23,7 @@ interface ClaudeTrade {
   exit: number;
   quantity: number;
   pnl: number;
+  commission?: number;
   tradedAt: string;
   notes?: string | null;
 }
@@ -550,7 +551,7 @@ ${csv}`;
         exit: t.exit > 0 ? t.exit : undefined,
         quantity: t.quantity || 1,
         pnl: t.pnl,
-        commission: (t as any).commission ?? undefined,
+        commission: t.commission ?? undefined,
         emotion: 'NEUTRAL' as const,
         setup: 'BREAKOUT' as const,
         session: this.detectSession(t.tradedAt),

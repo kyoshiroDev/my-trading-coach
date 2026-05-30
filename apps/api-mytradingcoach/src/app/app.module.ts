@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { SharedModule } from '../modules/shared/shared.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { BullModule } from '@nestjs/bullmq';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -47,6 +48,7 @@ import { AppController } from './app.controller';
     ...(process.env['IS_CRON_WORKER'] !== 'false'
       ? [ScheduleModule.forRoot()]
       : []),
+    SharedModule,
     PrismaModule,
     AuthModule,
     TradesModule,

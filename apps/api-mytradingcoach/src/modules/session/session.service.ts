@@ -2,11 +2,10 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  OnModuleDestroy,
 } from '@nestjs/common';
 import { MoodState, Prisma, SessionStatus } from '@prisma/client';
-import Redis from 'ioredis';
 import { PrismaService } from '../../prisma/prisma.service';
+import { RedisService } from '../shared/redis.service';
 
 export interface SessionHistoryItem {
   id: string;
@@ -29,20 +28,13 @@ export interface SessionHistoryItem {
 }
 
 @Injectable()
-export class SessionService implements OnModuleDestroy {
+export class SessionService {
   private readonly logger = new Logger(SessionService.name);
-  private readonly redis = new Redis({
-    host: process.env['REDIS_HOST'] ?? 'localhost',
-    port: parseInt(process.env['REDIS_PORT'] ?? '6379'),
-    password: process.env['REDIS_PASSWORD'],
-    lazyConnect: true,
-  });
 
-  constructor(private readonly prisma: PrismaService) {}
-
-  async onModuleDestroy() {
-    await this.redis.quit();
-  }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redisService: RedisService,
+  ) {}
 
   async startSession(userId: string, mood: MoodState) {
     await this.prisma.tradeSession.updateMany({
@@ -54,7 +46,7 @@ export class SessionService implements OnModuleDestroy {
       data: { userId, moodStart: mood, status: SessionStatus.ACTIVE },
     });
 
-    await this.redis
+    await this.redisService.client
       .setex(`session:active:${userId}`, 60 * 60 * 24, session.id)
       .catch(() => null);
 
@@ -120,7 +112,7 @@ export class SessionService implements OnModuleDestroy {
       },
     });
 
-    await this.redis.del(`session:active:${userId}`).catch(() => null);
+    await this.redisService.client.del(`session:active:${userId}`).catch(() => null);
     return session;
   }
 

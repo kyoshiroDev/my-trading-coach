@@ -95,7 +95,7 @@ export class EmailCampaignService {
       try {
         const html         = this.buildHtml(type, user.name ?? 'Trader', subject, body);
         const emailSubject = subject?.trim() || this.defaultSubject(type);
-        await (this.resend as any)['send']({ to: user.email, subject: emailSubject, html });
+        await this.resend.send({ to: user.email, subject: emailSubject, html });
         success++;
         await new Promise(r => setTimeout(r, 150));
       } catch { errors++; }

@@ -49,6 +49,7 @@ import { SessionLiveComponent } from './components/session-live/session-live.com
 import { ChartService } from '../../core/services/chart.service';
 import { todayParis, toParisDateStr } from '../../core/utils/paris-date';
 import { LiveModeService } from '../../core/services/live-mode.service';
+import { POLLING_MS } from '../../core/constants/polling.const';
 
 @Component({
   selector: 'mtc-dashboard',
@@ -344,7 +345,7 @@ import { LiveModeService } from '../../core/services/live-mode.service';
                     @for (seg of segments(); track seg.label) {
                       <circle cx="50" cy="50" r="38" fill="none" [attr.stroke]="seg.label | setupColorMap" stroke-width="12" [attr.stroke-dasharray]="seg.dash" [attr.stroke-dashoffset]="seg.offset" stroke-linecap="round" transform="rotate(-90 50 50)" />
                     }
-                    <text x="50" y="53" text-anchor="middle" font-family="Syne" font-weight="700" font-size="14" fill="#e2eaf5">
+                    <text x="50" y="53" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="14" fill="#e2eaf5">
                       {{ (summary()?.winRate ?? 0).toFixed(0) }}%
                     </text>
                   </svg>
@@ -656,8 +657,8 @@ export class DashboardComponent {
       if (isActive) {
         this.fetchMarketContext();
         this.fetchNewsItems();
-        this.marketCtxInterval = setInterval(() => this.fetchMarketContext(), 15_000);
-        this.newsInterval      = setInterval(() => this.fetchNewsItems(), 60_000);
+        this.marketCtxInterval = setInterval(() => this.fetchMarketContext(), POLLING_MS.MARKET_CONTEXT);
+        this.newsInterval      = setInterval(() => this.fetchNewsItems(), POLLING_MS.NEWS);
       } else {
         clearInterval(this.marketCtxInterval);
         clearInterval(this.newsInterval);

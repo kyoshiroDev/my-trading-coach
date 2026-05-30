@@ -181,7 +181,7 @@ export class ResendService {
 
   // ── Envoi générique ────────────────────────────────────────────────────────
 
-  private async send(params: {
+  async send(params: {
     to: string;
     subject: string;
     html: string;

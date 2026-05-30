@@ -8,6 +8,7 @@ import {
   CategoryScale,
   Filler,
   Tooltip,
+  ScriptableContext,
 } from 'chart.js';
 import { EquityPoint } from '../api/analytics.api';
 
@@ -67,8 +68,7 @@ export class ChartService {
             pointBorderColor: 'rgba(8,12,20,0.8)',
             pointBorderWidth: 1.5,
             fill: true,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            backgroundColor: (ctx: any) => {
+            backgroundColor: (ctx: ScriptableContext<'line'>) => {
               const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, ctx.chart.height);
               gradient.addColorStop(0, `rgba(${colorRgb},0.4)`);
               gradient.addColorStop(0.5, `rgba(${colorRgb},0.12)`);
@@ -82,8 +82,7 @@ export class ChartService {
             data: values.map(() => base),
             borderColor: 'rgba(99,155,255,0.2)',
             borderWidth: 1,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            borderDash: [4, 6] as any,
+            borderDash: [4, 6],
             pointRadius: 0,
             fill: false,
             tension: 0,
@@ -103,8 +102,8 @@ export class ChartService {
             borderWidth: 1,
             titleColor: '#8fafc8',
             bodyColor: color,
-            bodyFont: { family: '"DM Mono", monospace', size: 13, weight: 'bold' },
-            titleFont: { family: '"DM Mono", monospace', size: 10 },
+            bodyFont: { family: '"JetBrains Mono", monospace', size: 13, weight: 'bold' },
+            titleFont: { family: '"JetBrains Mono", monospace', size: 10 },
             callbacks: {
               label: (ctx) => {
                 if (ctx.datasetIndex === 1) return '';
@@ -124,7 +123,7 @@ export class ChartService {
             border: { display: false },
             ticks: {
               color: 'rgba(112,144,176,0.7)',
-              font: { family: '"DM Mono", monospace', size: 9 },
+              font: { family: '"JetBrains Mono", monospace', size: 9 },
               maxTicksLimit: values.length <= 10 ? values.length : 6,
               autoSkip: true,
               autoSkipPadding: 10,
@@ -137,7 +136,7 @@ export class ChartService {
             border: { display: false },
             ticks: {
               color: 'rgba(112,144,176,0.6)',
-              font: { family: '"DM Mono", monospace', size: 10 },
+              font: { family: '"JetBrains Mono", monospace', size: 10 },
               callback: (v) => {
                 const num = Number(v);
                 return Math.abs(num) >= 1000
@@ -178,8 +177,7 @@ export class ChartService {
             pointRadius: 0,
             pointHoverRadius: 4,
             fill: true,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            backgroundColor: (ctx: any) => {
+            backgroundColor: (ctx: ScriptableContext<'line'>) => {
               const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, ctx.chart.height);
               gradient.addColorStop(0, 'rgba(239,68,68,0.25)');
               gradient.addColorStop(1, 'rgba(239,68,68,0)');
@@ -202,8 +200,8 @@ export class ChartService {
             borderWidth: 1,
             titleColor: '#8fafc8',
             bodyColor: '#ef4444',
-            bodyFont: { family: '"DM Mono", monospace', size: 13, weight: 'bold' },
-            titleFont: { family: '"DM Mono", monospace', size: 10 },
+            bodyFont: { family: '"JetBrains Mono", monospace', size: 13, weight: 'bold' },
+            titleFont: { family: '"JetBrains Mono", monospace', size: 10 },
             callbacks: {
               label: (ctx) => {
                 const v: number = ctx.parsed.y ?? 0;
@@ -222,7 +220,7 @@ export class ChartService {
             border: { display: false },
             ticks: {
               color: 'rgba(112,144,176,0.6)',
-              font: { family: '"DM Mono", monospace', size: 9 },
+              font: { family: '"JetBrains Mono", monospace', size: 9 },
               maxTicksLimit: 5,
               maxRotation: 0,
             },
@@ -233,7 +231,7 @@ export class ChartService {
             border: { display: false },
             ticks: {
               color: 'rgba(112,144,176,0.6)',
-              font: { family: '"DM Mono", monospace', size: 10 },
+              font: { family: '"JetBrains Mono", monospace', size: 10 },
               callback: (v) => {
                 const num = Number(v);
                 if (num === 0) return '$0';
