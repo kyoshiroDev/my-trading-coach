@@ -91,8 +91,8 @@ import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
                 </div>
                 <div class="field-group">
                   <label class="field-label" for="preview-body">Contenu</label>
-                  <textarea id="preview-body" class="field-textarea preview-textarea" rows="4"
-                    placeholder="ex: Ça y est, la V2 est en ligne..."
+                  <textarea id="preview-body" class="field-textarea preview-textarea" rows="6"
+                    placeholder="# Titre de section&#10;**mot important** en gras&#10;- élément de liste&#10;&#10;Ligne vide = nouveau paragraphe."
                     [ngModel]="announcementBody()"
                     (ngModelChange)="announcementBody.set($event)"></textarea>
                 </div>
@@ -114,7 +114,7 @@ import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
               </div>
               <div class="preview-frame">
                 <iframe [srcdoc]="wrappedPreviewHtml()" title="Aperçu email"
-                  style="width:100%;height:460px;border:none;border-radius:8px;background:#ffffff"></iframe>
+                  style="width:100%;height:460px;border:none;border-radius:8px;background:#070a10"></iframe>
               </div>
             }
           </div>
@@ -145,8 +145,8 @@ import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
               </div>
               <div class="field-group">
                 <label class="field-label" for="announce-body">Contenu</label>
-                <textarea id="announce-body" class="field-textarea" rows="6"
-                  placeholder="ex: Ça y est, la V2 est en ligne..."
+                <textarea id="announce-body" class="field-textarea" rows="8"
+                  placeholder="# Titre de section&#10;**mot important** en gras&#10;- élément de liste&#10;&#10;Ligne vide = nouveau paragraphe."
                   [ngModel]="announcementBody()"
                   (ngModelChange)="announcementBody.set($event)">
                 </textarea>
@@ -219,7 +219,7 @@ export class EmailsComponent {
     let inner: string;
     if (campaign?.type === 'announcement') {
       const subject = this.announcementSubject().trim() || '📣 Nouveauté MyTradingCoach';
-      const body    = this.formatBody(this.announcementBody());
+      const body    = this.renderMarkdown(this.announcementBody());
       const name    = this.previewRecipients()[0]?.name ?? 'Trader';
       const APP_URL = 'https://app.mytradingcoach.app';
       inner = `<div style="margin:0;padding:0;background-color:#070a10;font-family:'DM Sans',Arial,sans-serif;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#070a10;padding:24px 0;"><tr><td align="center"><table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#0e1420;border:1px solid rgba(120,160,255,0.1);border-radius:18px;overflow:hidden;"><tr><td style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);padding:34px 32px;text-align:center;"><div style="font-size:24px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;line-height:1.3;margin:0;">${subject}</div></td></tr><tr><td style="padding:32px 32px 8px;"><p style="font-size:16px;color:#eef3fb;line-height:1.6;margin:0 0 16px;">Bonjour ${name},</p>${body}</td></tr><tr><td style="padding:8px 32px 28px;text-align:center;"><a href="${APP_URL}" style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#60a5fa);color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 34px;border-radius:12px;">Découvrir →</a></td></tr><tr><td style="padding:22px 32px 26px;border-top:1px solid rgba(120,160,255,0.08);"><div style="font-size:12px;color:#5e789c;text-align:center;line-height:1.6;">🇫🇷 Données hébergées en France<br/>MyTradingCoach · <a href="https://mytradingcoach.app" style="color:#60a5fa;text-decoration:none;">mytradingcoach.app</a></div></td></tr></table></td></tr></table></div>`;
@@ -228,7 +228,7 @@ export class EmailsComponent {
     }
 
     if (!inner) return '';
-    return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{box-sizing:border-box;}html,body{margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;}body{display:flex;justify-content:center;padding:20px;}</style></head><body>${inner}</body></html>`;
+    return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{box-sizing:border-box;}html,body{margin:0;padding:0;background:#070a10;font-family:Arial,sans-serif;}body{display:flex;justify-content:center;padding:0;}</style></head><body>${inner}</body></html>`;
   });
 
   protected readonly canSend = computed(() => {
@@ -284,22 +284,36 @@ export class EmailsComponent {
       });
   }
 
-  private formatBody(raw: string): string {
-    if (!raw?.trim()) return '<p style="color:#8fa3bf;font-style:italic;">Ton message apparaîtra ici…</p>';
-    const blocks = raw
-      .replace(/\r\n/g, '\n')
-      .split(/\n{2,}/)
-      .map(b => b.trim())
-      .filter(Boolean);
-    return blocks
-      .map(block => {
-        const withBreaks = block.replace(/\n/g, '<br/>');
-        const isHeading = /^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(block) && block.length < 60 && !block.includes('\n');
-        return isHeading
-          ? `<p style="font-size:15px;font-weight:700;color:#eef3fb;margin:22px 0 8px;">${withBreaks}</p>`
-          : `<p style="color:#9bb0cf;line-height:1.7;margin:0 0 14px;">${withBreaks}</p>`;
-      })
-      .join('');
+  private renderMarkdown(raw: string): string {
+    if (!raw?.trim()) return '<p style="color:#5e789c;font-style:italic;">Ton message apparaîtra ici…</p>';
+
+    const escapeHtml = (s: string) =>
+      s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    const inline = (s: string) =>
+      escapeHtml(s)
+        .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#eef3fb;">$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+    const blocks = raw.replace(/\r\n/g, '\n').split(/\n{2,}/).map(b => b.trim()).filter(Boolean);
+
+    return blocks.map(block => {
+      const lines = block.split('\n');
+
+      if (/^#\s+/.test(block) && lines.length === 1) {
+        return `<p style="font-size:16px;font-weight:700;color:#eef3fb;margin:22px 0 8px;">${inline(block.replace(/^#\s+/, ''))}</p>`;
+      }
+
+      if (lines.every(l => /^[-•]\s+/.test(l))) {
+        const items = lines
+          .map(l => `<tr><td style="vertical-align:top;padding:2px 8px 2px 0;color:#60a5fa;">•</td><td style="padding:2px 0;color:#9bb0cf;line-height:1.6;">${inline(l.replace(/^[-•]\s+/, ''))}</td></tr>`)
+          .join('');
+        return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 14px;">${items}</table>`;
+      }
+
+      const withBreaks = lines.map(inline).join('<br/>');
+      return `<p style="color:#9bb0cf;line-height:1.7;margin:0 0 14px;">${withBreaks}</p>`;
+    }).join('');
   }
 
   private showToast(message: string, error = false): void {
