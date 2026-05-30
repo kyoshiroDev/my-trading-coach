@@ -166,8 +166,9 @@ export class EmailCampaignService {
         return `<div style="${BASE}"><h1 style="color:#e2eaf5;font-size:22px;margin-bottom:6px;">📅 Ton débrief hebdo est prêt</h1><p style="color:#8fa3bf;margin-top:0;">MyTradingCoach — Weekly Debrief</p><div style="${CARD}"><p>Bonjour ${name},</p><p style="color:#b0bec5;line-height:1.7;">Ton analyse de la semaine vient d'être générée par l'IA. Elle a passé en revue tous tes trades, détecté tes patterns et te fixe 3 objectifs concrets.</p><a href="${APP_URL}/weekly-debrief" style="${BTN}">Voir mon débrief →</a></div><p style="${MUTED}">MyTradingCoach — Fait en France 🇫🇷</p></div>`;
 
       case 'announcement': {
-        const formattedBody = this.formatAnnouncementBody(body ?? '');
-        return `<div style="${BASE}"><h1 style="color:#e2eaf5;font-size:22px;margin-bottom:6px;">${subject ?? '📣 Nouveauté MyTradingCoach'}</h1><p style="color:#8fa3bf;margin-top:0;">MyTradingCoach</p><div style="${CARD}"><p style="color:#e2eaf5;">Bonjour ${name},</p>${formattedBody}<a href="${APP_URL}" style="${BTN}">Accéder à l'app →</a></div><p style="${MUTED}">MyTradingCoach — Fait en France 🇫🇷</p></div>`;
+        const announceSubject = subject?.trim() || '📣 Nouveauté MyTradingCoach';
+        const formattedBody   = this.formatAnnouncementBody(body ?? '');
+        return `<div style="margin:0;padding:0;background-color:#070a10;font-family:'DM Sans',Arial,sans-serif;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#070a10;padding:24px 0;"><tr><td align="center"><table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#0e1420;border:1px solid rgba(120,160,255,0.1);border-radius:18px;overflow:hidden;"><tr><td style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);padding:34px 32px;text-align:center;"><div style="font-size:24px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;line-height:1.3;margin:0;">${announceSubject}</div></td></tr><tr><td style="padding:32px 32px 8px;"><p style="font-size:16px;color:#eef3fb;line-height:1.6;margin:0 0 16px;">Bonjour ${name},</p>${formattedBody}</td></tr><tr><td style="padding:8px 32px 28px;text-align:center;"><a href="${APP_URL}" style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#60a5fa);color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 34px;border-radius:12px;">Découvrir →</a></td></tr><tr><td style="padding:22px 32px 26px;border-top:1px solid rgba(120,160,255,0.08);"><div style="font-size:12px;color:#5e789c;text-align:center;line-height:1.6;">🇫🇷 Données hébergées en France<br/>MyTradingCoach · <a href="https://mytradingcoach.app" style="color:#60a5fa;text-decoration:none;">mytradingcoach.app</a></div></td></tr></table></td></tr></table></div>`;
       }
 
       default: return '';
@@ -188,9 +189,9 @@ export class EmailCampaignService {
         const withBreaks = block.replace(/\n/g, '<br/>');
         const isHeading = /^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(block) && block.length < 60 && !block.includes('\n');
         if (isHeading) {
-          return `<p style="font-size:15px;font-weight:700;color:#e2eaf5;margin:22px 0 8px;">${withBreaks}</p>`;
+          return `<p style="font-size:15px;font-weight:700;color:#eef3fb;margin:22px 0 8px;">${withBreaks}</p>`;
         }
-        return `<p style="color:#b0bec5;line-height:1.8;margin:0 0 14px;">${withBreaks}</p>`;
+        return `<p style="color:#9bb0cf;line-height:1.7;margin:0 0 14px;">${withBreaks}</p>`;
       })
       .join('');
   }
