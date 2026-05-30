@@ -6,9 +6,10 @@ import { CoinGeckoService } from './coingecko.service';
 import { CsvImportService } from './csv-import.service';
 import { AiLoggerService } from '../shared/ai-logger.service';
 import { PrismaModule } from '../../prisma/prisma.module';
+import { AnalyticsModule } from '../analytics/analytics.module';
 
 @Module({
-  imports: [HttpModule, PrismaModule],
+  imports: [HttpModule, PrismaModule, AnalyticsModule],
   controllers: [TradesController],
   providers: [TradesService, CoinGeckoService, CsvImportService, AiLoggerService],
   exports: [TradesService],

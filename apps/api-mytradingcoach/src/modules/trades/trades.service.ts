@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Plan, Role, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AnalyticsService } from '../analytics/analytics.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
@@ -24,7 +25,10 @@ export interface UserAssetItem {
 
 @Injectable()
 export class TradesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly analyticsService: AnalyticsService,
+  ) {}
 
   async create(
     userId: string,
@@ -35,7 +39,7 @@ export class TradesService {
     await this.checkMonthlyLimit(userId, plan, role);
     const pnl = this.calculatePnl(dto);
     const riskReward = this.calculateRiskReward(dto);
-    return this.prisma.trade.create({
+    const trade = await this.prisma.trade.create({
       data: {
         ...dto,
         entry: dto.entry ?? 0,
@@ -47,6 +51,8 @@ export class TradesService {
         tradedAt: dto.tradedAt ? new Date(dto.tradedAt) : new Date(),
       },
     });
+    await this.analyticsService.invalidateUserCache(userId);
+    return trade;
   }
 
   async findAll(userId: string, filters: TradeFiltersDto) {
@@ -106,7 +112,7 @@ export class TradesService {
     const newPnl = priceFieldsChanged ? this.calculatePnl(merged) : undefined;
     const newRR = priceFieldsChanged ? this.calculateRiskReward(merged) : undefined;
 
-    return this.prisma.trade.update({
+    const result = await this.prisma.trade.update({
       where: { id },
       data: {
         ...dto,
@@ -115,11 +121,14 @@ export class TradesService {
         ...(newRR !== undefined ? { riskReward: newRR } : {}),
       },
     });
+    await this.analyticsService.invalidateUserCache(userId);
+    return result;
   }
 
   async remove(userId: string, id: string) {
     await this.findOne(userId, id);
     await this.prisma.trade.delete({ where: { id } });
+    await this.analyticsService.invalidateUserCache(userId);
   }
 
   async checkMonthlyLimit(

@@ -1,6 +1,6 @@
-import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
-import Redis from 'ioredis';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { RedisService } from '../shared/redis.service';
 import { AiService } from '../ai/ai.service';
 import { todayParis, toParisDateStr } from '../../common/utils/paris-date';
 
@@ -50,23 +50,15 @@ interface FmpEcoEvent {
 }
 
 @Injectable()
-export class EcoCalendarService implements OnModuleDestroy {
+export class EcoCalendarService {
   private readonly logger = new Logger(EcoCalendarService.name);
-  readonly redis = new Redis({
-    host: process.env['REDIS_HOST'] ?? 'localhost',
-    port: parseInt(process.env['REDIS_PORT'] ?? '6379'),
-    password: process.env['REDIS_PASSWORD'],
-    lazyConnect: true,
-  });
+  get redis() { return this.redisService.client; }
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly ai: AiService,
+    private readonly redisService: RedisService,
   ) {}
-
-  async onModuleDestroy() {
-    await this.redis.quit();
-  }
 
   // ── Fetch depuis FMP + upsert PostgreSQL ─────────────────────────────────
 

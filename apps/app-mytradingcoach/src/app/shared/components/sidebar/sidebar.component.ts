@@ -7,6 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { RouterModule, RouterLink, RouterLinkActive } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UserStore } from '../../../core/stores/user.store';
 import { TradesStore } from '../../../core/stores/trades.store';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -287,11 +288,11 @@ export class SidebarComponent {
 
     const onFocus = () => {
       if (!this.auth.isAuthenticated()) return;
-      this.auth.fetchMe().subscribe({
-        error: () => {
-          /* silently ignore */
-        },
-      });
+      this.auth.fetchMe()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          error: () => { /* silently ignore */ },
+        });
     };
     window.addEventListener('focus', onFocus);
     this.destroyRef.onDestroy(() =>

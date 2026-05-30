@@ -6,6 +6,8 @@ import {
 } from '@nestjs/common';
 import { Plan, Role, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { RedisService } from '../shared/redis.service';
+import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
@@ -54,7 +56,10 @@ const ADMIN_USER_SELECT = {
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redisService: RedisService,
+  ) {}
 
   async findById(id: string) {
     return this.prisma.user.findUnique({ where: { id }, select: USER_SELECT });
@@ -316,9 +321,22 @@ export class UsersService {
 
   private async fetchEurUsdRate(): Promise<number> {
     const FALLBACK_RATE = 0.92;
+    const cacheKey = 'exchange:rates:USD';
+
+    try {
+      const cached = await this.redisService.client.get(cacheKey);
+      if (cached) {
+        const rates = JSON.parse(cached) as Record<string, number>;
+        return rates['EUR'] ?? FALLBACK_RATE;
+      }
+    } catch { /* Redis indisponible */ }
+
     try {
       const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
       const data = (await res.json()) as { rates: Record<string, number> };
+      try {
+        await this.redisService.client.setex(cacheKey, CACHE_TTL.EXCHANGE_RATES, JSON.stringify(data.rates));
+      } catch { /* ignore */ }
       return data.rates['EUR'] ?? FALLBACK_RATE;
     } catch (err) {
       this.logger.warn(

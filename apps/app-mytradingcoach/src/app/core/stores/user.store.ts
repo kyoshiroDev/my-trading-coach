@@ -1,4 +1,5 @@
 import { Injectable, computed, inject } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 
 @Injectable({ providedIn: 'root' })
@@ -43,10 +44,6 @@ export class UserStore {
   });
 
   refreshUser() {
-    this.auth.fetchMe().subscribe({
-      error: () => {
-        /* silently ignore — user stays logged in with cached data */
-      },
-    });
+    firstValueFrom(this.auth.fetchMe()).catch(() => { /* silently ignore */ });
   }
 }

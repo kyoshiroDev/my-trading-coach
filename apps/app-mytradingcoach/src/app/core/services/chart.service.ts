@@ -83,7 +83,7 @@ export class ChartService {
             borderColor: 'rgba(99,155,255,0.2)',
             borderWidth: 1,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            borderDash: [4, 6] as any,
+            borderDash: [4, 6],
             pointRadius: 0,
             fill: false,
             tension: 0,

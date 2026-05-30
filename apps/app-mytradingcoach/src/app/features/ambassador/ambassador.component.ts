@@ -1,11 +1,13 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   OnInit,
   computed,
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { AmbassadorApi, AmbassadorStats } from '../../core/api/ambassador.api';
 import { AmbassadorNotifService } from '../../core/services/ambassador-notif.service';
@@ -21,6 +23,7 @@ import { AmbassadorNotifService } from '../../core/services/ambassador-notif.ser
 export class AmbassadorComponent implements OnInit {
   private readonly api = inject(AmbassadorApi);
   private readonly notif = inject(AmbassadorNotifService);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly stats = signal<AmbassadorStats | null>(null);
   protected readonly isLoading = signal(true);
@@ -42,13 +45,15 @@ export class AmbassadorComponent implements OnInit {
   ngOnInit() {
     this.notif.markSeen();
 
-    this.api.getStats().subscribe({
-      next: (res) => {
-        this.stats.set(res.data);
-        this.isLoading.set(false);
-      },
-      error: () => this.isLoading.set(false),
-    });
+    this.api.getStats()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.stats.set(res.data);
+          this.isLoading.set(false);
+        },
+        error: () => this.isLoading.set(false),
+      });
   }
 
   protected copyLink(): void {

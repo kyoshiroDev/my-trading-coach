@@ -136,7 +136,7 @@ export class JournalComponent implements OnInit {
           weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
         });
         const totalPnl        = dayTrades.reduce((s, t) => s + (t.pnl ?? 0), 0);
-        const totalCommission = dayTrades.reduce((s, t) => s + Math.abs((t as any).commission ?? 0), 0);
+        const totalCommission = dayTrades.reduce((s, t) => s + Math.abs(t.commission ?? 0), 0);
         const totalPnlNet     = totalPnl - totalCommission;
         const winCount        = dayTrades.filter(t => (t.pnl ?? 0) > 0).length;
         return {
@@ -153,8 +153,8 @@ export class JournalComponent implements OnInit {
   protected readonly periodStats = computed(() => {
     const trades = this.filteredTrades();
     if (!trades.length) return null;
-    const totalCommissions = trades.reduce((s, t) => s + Math.abs((t as any).commission ?? 0), 0);
-    const pnlsNet  = trades.map(t => (t.pnl ?? 0) - Math.abs((t as any).commission ?? 0));
+    const totalCommissions = trades.reduce((s, t) => s + Math.abs(t.commission ?? 0), 0);
+    const pnlsNet  = trades.map(t => (t.pnl ?? 0) - Math.abs(t.commission ?? 0));
     const totalPnlBrut = trades.reduce((s, t) => s + (t.pnl ?? 0), 0);
     return {
       count:            trades.length,

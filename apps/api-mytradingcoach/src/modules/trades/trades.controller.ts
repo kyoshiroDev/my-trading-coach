@@ -14,7 +14,6 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import Redis from 'ioredis';
 import { Plan, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -26,6 +25,7 @@ import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
 import { INSTRUMENTS } from './instruments.const';
 import Anthropic from '@anthropic-ai/sdk';
+import { RedisService } from '../shared/redis.service';
 
 interface MarketContextItem { value: number | null; source: 'fmp' | 'yahoo' | 'binance'; }
 interface TreasuryRates    { t2y: number | null; t5y: number | null; t10y: number | null; t30y: number | null; }
@@ -36,17 +36,13 @@ interface NewsItem         { title: string; symbol: string; publishedDate: strin
 @Controller('trades')
 export class TradesController {
   private readonly logger = new Logger(TradesController.name);
-  private readonly redis = new Redis({
-    host: process.env['REDIS_HOST'] ?? 'localhost',
-    port: parseInt(process.env['REDIS_PORT'] ?? '6379'),
-    password: process.env['REDIS_PASSWORD'],
-    lazyConnect: true,
-  });
+  private get redis() { return this.redisService.client; }
 
   constructor(
     private tradesService: TradesService,
     private coinGeckoService: CoinGeckoService,
     private csvImportService: CsvImportService,
+    private readonly redisService: RedisService,
   ) {}
 
   @Get('market-context')
