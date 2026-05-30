@@ -4,6 +4,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LucideAngularModule, Send, Eye, X, RefreshCw } from 'lucide-angular';
 import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
@@ -194,6 +195,7 @@ import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
 export class EmailsComponent {
   private readonly adminApi   = inject(AdminApi);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly sanitizer  = inject(DomSanitizer);
 
   protected readonly SendIcon    = Send;
   protected readonly EyeIcon     = Eye;
@@ -213,7 +215,7 @@ export class EmailsComponent {
   protected readonly announcementSubject = signal('');
   protected readonly announcementBody    = signal('');
 
-  protected readonly wrappedPreviewHtml = computed(() => {
+  protected readonly wrappedPreviewHtml = computed<SafeHtml>(() => {
     const campaign = this.previewCampaign();
 
     let inner: string;
@@ -227,8 +229,10 @@ export class EmailsComponent {
       inner = this.previewHtml();
     }
 
-    if (!inner) return '';
-    return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{box-sizing:border-box;}html,body{margin:0;padding:0;background:#070a10;font-family:Arial,sans-serif;}body{display:flex;justify-content:center;padding:0;}</style></head><body>${inner}</body></html>`;
+    const fullHtml = !inner
+      ? ''
+      : `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{box-sizing:border-box;}html,body{margin:0;padding:0;background:#070a10;font-family:Arial,sans-serif;}body{display:flex;justify-content:center;padding:0;}</style></head><body>${inner}</body></html>`;
+    return this.sanitizer.bypassSecurityTrustHtml(fullHtml);
   });
 
   protected readonly canSend = computed(() => {
