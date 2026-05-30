@@ -165,10 +165,33 @@ export class EmailCampaignService {
       case 'debrief_reminder':
         return `<div style="${BASE}"><h1 style="color:#e2eaf5;font-size:22px;margin-bottom:6px;">📅 Ton débrief hebdo est prêt</h1><p style="color:#8fa3bf;margin-top:0;">MyTradingCoach — Weekly Debrief</p><div style="${CARD}"><p>Bonjour ${name},</p><p style="color:#b0bec5;line-height:1.7;">Ton analyse de la semaine vient d'être générée par l'IA. Elle a passé en revue tous tes trades, détecté tes patterns et te fixe 3 objectifs concrets.</p><a href="${APP_URL}/weekly-debrief" style="${BTN}">Voir mon débrief →</a></div><p style="${MUTED}">MyTradingCoach — Fait en France 🇫🇷</p></div>`;
 
-      case 'announcement':
-        return `<div style="${BASE}"><h1 style="color:#e2eaf5;font-size:22px;margin-bottom:6px;">${subject ?? '📣 Nouveauté MyTradingCoach'}</h1><p style="color:#8fa3bf;margin-top:0;">MyTradingCoach</p><div style="${CARD}"><p>Bonjour ${name},</p><div style="color:#b0bec5;line-height:1.8;">${body ?? ''}</div><a href="${APP_URL}" style="${BTN}">Accéder à l'app →</a></div><p style="${MUTED}">MyTradingCoach — Fait en France 🇫🇷</p></div>`;
+      case 'announcement': {
+        const formattedBody = this.formatAnnouncementBody(body ?? '');
+        return `<div style="${BASE}"><h1 style="color:#e2eaf5;font-size:22px;margin-bottom:6px;">${subject ?? '📣 Nouveauté MyTradingCoach'}</h1><p style="color:#8fa3bf;margin-top:0;">MyTradingCoach</p><div style="${CARD}"><p style="color:#e2eaf5;">Bonjour ${name},</p>${formattedBody}<a href="${APP_URL}" style="${BTN}">Accéder à l'app →</a></div><p style="${MUTED}">MyTradingCoach — Fait en France 🇫🇷</p></div>`;
+      }
 
       default: return '';
     }
+  }
+
+  private formatAnnouncementBody(raw: string): string {
+    if (!raw?.trim()) return '';
+
+    const blocks = raw
+      .replace(/\r\n/g, '\n')
+      .split(/\n{2,}/)
+      .map(b => b.trim())
+      .filter(Boolean);
+
+    return blocks
+      .map(block => {
+        const withBreaks = block.replace(/\n/g, '<br/>');
+        const isHeading = /^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(block) && block.length < 60 && !block.includes('\n');
+        if (isHeading) {
+          return `<p style="font-size:15px;font-weight:700;color:#e2eaf5;margin:22px 0 8px;">${withBreaks}</p>`;
+        }
+        return `<p style="color:#b0bec5;line-height:1.8;margin:0 0 14px;">${withBreaks}</p>`;
+      })
+      .join('');
   }
 }
