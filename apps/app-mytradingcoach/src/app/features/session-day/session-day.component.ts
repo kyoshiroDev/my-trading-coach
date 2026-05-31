@@ -489,7 +489,7 @@ export class SessionDayComponent implements OnInit, OnDestroy {
     const s = this.store.activeSession();
     if (!s?.id) return;
     this.sessionApi.updateSession(s.id, data as Parameters<SessionApi['updateSession']>[1])
-      .subscribe({ next: () => { this.journalSaved.set(true); this.flashSaved(); }, error: () => {} });
+      .subscribe({ next: () => { this.journalSaved.set(true); this.flashSaved(); } });
   }
 
   protected selectCloseMood(mood: MoodState): void {
