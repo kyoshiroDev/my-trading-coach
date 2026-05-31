@@ -19,12 +19,12 @@ export class VpsController {
 
   @Get('vps/stats')
   async getStats() {
-    return { data: await this.vps.getStats() };
+    return await this.vps.getStats();
   }
 
   @Get('docker/containers')
   async listContainers() {
-    return { data: await this.docker.listContainers() };
+    return await this.docker.listContainers();
   }
 
   @Post('docker/containers/:id/start')
@@ -49,12 +49,12 @@ export class VpsController {
 
   @Get('vps/backups')
   async listBackups() {
-    return { data: await this.backup.listBackups() };
+    return await this.backup.listBackups();
   }
 
   @Post('vps/backups')
   async createBackup() {
-    return { data: await this.backup.createBackup() };
+    return await this.backup.createBackup();
   }
 
   @Delete('vps/backups/:filename')
