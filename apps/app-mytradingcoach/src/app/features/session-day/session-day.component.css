@@ -118,6 +118,17 @@
 /* ── Onglet Débrief ── */
 .session-debrief { display: flex; flex-direction: column; gap: 18px; padding: 4px 30px 30px; }
 
+.debrief-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px;
+}
+.debrief-section-title {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .8px; color: var(--text-3);
+  margin-bottom: 14px;
+}
+
+/* Émotion fin de session */
 .debrief-mood-card {
   background: var(--bg-card); border: 1px solid var(--border);
   border-radius: 14px; padding: 20px;
@@ -139,7 +150,73 @@
   color: var(--purple-bright);
 }
 
+/* Score discipline */
+.debrief-score-card { padding: 22px 20px; }
+.score-ring-wrap { display: flex; align-items: center; gap: 20px; }
+.score-ring {
+  width: 80px; height: 80px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  transition: background 0.4s;
+}
+.score-ring-inner {
+  width: 62px; height: 62px; border-radius: 50%;
+  background: var(--bg-card);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.score-val { font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: var(--text); line-height: 1; }
+.score-unit { font-size: 9px; color: var(--text-3); font-family: var(--font-mono); }
+.score-label-wrap { flex: 1; }
+.score-label { font-family: var(--font-display); font-size: 18px; font-weight: 700; }
+.score-desc { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+.score-hint { font-size: 11px; color: var(--text-3); margin-top: 6px; line-height: 1.4; }
+
+/* Meilleur / pire trade */
+.debrief-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.debrief-trade-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px;
+}
+.debrief-trade-card.best { border-color: rgba(16,185,129,.2); }
+.debrief-trade-card.worst { border-color: rgba(239,68,68,.15); }
+.dtc-header { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+.dtc-icon { font-size: 16px; }
+.dtc-title { font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: .6px; font-family: var(--font-mono); }
+.dtc-asset { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.dtc-side { font-size: 10px; font-weight: 700; font-family: var(--font-mono); padding: 1px 6px; border-radius: 4px; }
+.dtc-side.long { background: rgba(16,185,129,.12); color: var(--green); }
+.dtc-side.short { background: rgba(239,68,68,.12); color: var(--red); }
+.dtc-row { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 12px; }
+.dtc-time { color: var(--text-3); }
+.dtc-pnl { margin-left: auto; font-size: 14px; font-weight: 700; }
+
+/* Émotions */
+.emo-list { display: flex; flex-direction: column; gap: 8px; }
+.emo-row { display: flex; align-items: center; gap: 10px; }
+.emo-emoji { font-size: 16px; flex-shrink: 0; width: 22px; text-align: center; }
+.emo-bar-wrap { flex: 1; height: 6px; background: var(--bg-3); border-radius: 3px; overflow: hidden; }
+.emo-bar { height: 100%; border-radius: 3px; transition: width .4s; min-width: 4px; }
+.emo-stat { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); white-space: nowrap; }
+
+/* Objectifs */
+.obj-list { display: flex; flex-direction: column; gap: 8px; }
+.obj-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; background: var(--bg-3); border-radius: 8px; border: 1px solid transparent; }
+.obj-row.obj-ok { border-color: rgba(16,185,129,.25); background: rgba(16,185,129,.04); }
+.obj-row.obj-ko { border-color: rgba(239,68,68,.2); background: rgba(239,68,68,.03); }
+.obj-check-auto { font-size: 14px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+.obj-row.obj-ok .obj-check-auto { color: var(--green); }
+.obj-row.obj-ko .obj-check-auto { color: var(--red); }
+.obj-check-manual { width: 15px; height: 15px; flex-shrink: 0; margin-top: 2px; accent-color: var(--purple-bright); cursor: pointer; }
+.obj-body { flex: 1; min-width: 0; }
+.obj-title { font-size: 13px; color: var(--text); display: block; }
+.obj-detail { font-size: 11px; color: var(--red); font-family: var(--font-mono); display: block; margin-top: 2px; }
+
+/* Vide */
 .debrief-empty { text-align: center; padding: 60px 20px; color: var(--text-3); }
 .debrief-empty-icon { font-size: 42px; margin-bottom: 14px; }
 .debrief-empty p { font-size: 14px; margin-bottom: 4px; }
 .debrief-empty-sub { font-size: 12.5px; color: var(--text-3); margin-top: 8px; }
+
+@media (max-width: 600px) {
+  .debrief-two-col { grid-template-columns: 1fr; }
+  .score-ring-wrap { flex-direction: column; text-align: center; }
+}
