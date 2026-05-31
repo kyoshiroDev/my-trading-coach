@@ -118,6 +118,15 @@
 /* ── Onglet Débrief ── */
 .session-debrief { display: flex; flex-direction: column; gap: 18px; padding: 4px 30px 30px; }
 
+/* 4 cards tout en haut */
+.debrief-cards-row { display: flex; gap: 11px; }
+.card4 { flex: 1; background: var(--bg-card); border: 1px solid var(--border); border-radius: 13px; padding: 15px; text-align: center; }
+.card4-v { font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+.card4-v.green { color: var(--green); }
+.card4-v.red   { color: var(--red); }
+.card4-emoji   { font-size: 24px; }
+.card4-l { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: var(--text-3); font-family: var(--font-mono); }
+
 /* Ligne du haut : émotions | score */
 .debrief-top-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 

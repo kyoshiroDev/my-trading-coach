@@ -9,7 +9,9 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe, registerLocaleData } from '@angular/common';
+import localeFr from '@angular/common/locales/fr';
+registerLocaleData(localeFr);
 import { SessionStore } from '../../core/stores/session.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { SessionMorningComponent } from '../dashboard/components/session-morning/session-morning.component';
@@ -84,7 +86,7 @@ const EMOTION_COLORS: Record<string, string> = {
       <div class="page-header">
         <div class="greeting-block">
           <h1 class="greeting-title">Ma session</h1>
-          <div class="greeting-sub">{{ today | date:'EEEE d MMMM' }}</div>
+          <div class="greeting-sub" style="text-transform:capitalize">{{ today | date:'EEEE d MMMM':'':'fr-FR' }}</div>
         </div>
         <div class="tabs-and-badge">
           <div class="tabs-block">
@@ -153,7 +155,40 @@ const EMOTION_COLORS: Record<string, string> = {
 
           @if (store.activeSession(); as session) {
 
-            <!-- LIGNE DU HAUT : émotions (gauche) + score discipline (droite) -->
+            <!-- 4 CARDS EN HAUT -->
+            <div class="debrief-cards-row">
+              <div class="card4">
+                <div class="card4-v" [class.green]="(store.todayStats()?.totalPnl ?? 0) >= 0" [class.red]="(store.todayStats()?.totalPnl ?? 0) < 0">
+                  {{ store.todayStats()?.totalPnl | pnlFormat }}
+                </div>
+                <div class="card4-l">P&L session</div>
+              </div>
+              <div class="card4">
+                <div class="card4-v">{{ store.todayStats()?.tradesCount ?? 0 }}</div>
+                <div class="card4-l">Trades</div>
+              </div>
+              <div class="card4">
+                <div class="card4-v">{{ (store.todayStats()?.winRate ?? 0) > 0 ? (store.todayStats()!.winRate.toFixed(0) + '%') : '—' }}</div>
+                <div class="card4-l">Win Rate</div>
+              </div>
+              <div class="card4">
+                <div class="card4-v card4-emoji">{{ session.moodEnd | emotionEmoji }}</div>
+                <div class="card4-l">Humeur finale</div>
+              </div>
+            </div>
+
+            <!-- BANDEAU 0 TRADE -->
+            @if (noTrades()) {
+              <div class="debrief-zero-banner">
+                <span class="dzb-icon">🧘</span>
+                <div>
+                  <div class="dzb-title">Pas de trade aujourd'hui — et c'est OK</div>
+                  <div class="dzb-sub">Parfois, la meilleure décision est de rester à l'écart quand il n'y a pas de setup clair. Savoir ne pas trader est une vraie compétence.</div>
+                </div>
+              </div>
+            }
+
+            <!-- ÉMOTIONS + SCORE -->
             <div class="debrief-top-row">
               <div class="debrief-mood-card">
                 <h3 class="debrief-mood-title">Comment tu te sens en fin de session ?</h3>
@@ -184,19 +219,6 @@ const EMOTION_COLORS: Record<string, string> = {
               </div>
             </div>
 
-            <!-- Bandeau journée sans trade -->
-            @if (noTrades()) {
-              <div class="debrief-zero-banner">
-                <span class="dzb-icon">🧘</span>
-                <div>
-                  <div class="dzb-title">Pas de trade aujourd'hui — et c'est OK</div>
-                  <div class="dzb-sub">Parfois, la meilleure décision est de rester à l'écart quand il n'y a pas de setup clair. Savoir ne pas trader est une vraie compétence.</div>
-                </div>
-              </div>
-            }
-
-            <!-- 4 cards stats -->
-            <mtc-session-recap [session]="session" [liveStats]="store.todayStats()" />
 
             <!-- Meilleur / trade à revoir -->
             <div class="debrief-two-col">
