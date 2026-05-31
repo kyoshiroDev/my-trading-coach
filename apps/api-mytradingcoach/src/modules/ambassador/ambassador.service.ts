@@ -38,7 +38,7 @@ export class AmbassadorService {
     pendingPayout: number;
   }[]> {
     const ambassadors = await this.prisma.user.findMany({
-      where: { referralCode: { not: null } },
+      where: { OR: [{ referralCode: { not: null } }, { role: 'AMBASSADOR' }] },
       select: {
         id: true,
         name: true,
