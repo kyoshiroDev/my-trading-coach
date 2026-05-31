@@ -179,6 +179,7 @@
                   <div class="sel-name">{{ translate(event.name) }}</div>
                 </div>
                 <span class="eco-impact-badge" [class]="event.impact">{{ event.impact === 'high' ? 'Fort' : 'Moy' }}</span>
+                <button class="sel-unpin" (click)="togglePin(event)" title="Désépingler">✕</button>
               </div>
             } @empty {
               <div class="eco-session-empty">Épingle des événements 📌<br>pour les suivre ici</div>

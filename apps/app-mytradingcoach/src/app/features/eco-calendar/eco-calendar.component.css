@@ -304,6 +304,14 @@
 .sel-bdy  { flex: 1; min-width: 0; }
 .sel-day  { font-family: var(--font-mono); font-size: 9px; color: var(--yellow); font-weight: 600; text-transform: uppercase; }
 .sel-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sel-unpin {
+  background: transparent; border: none; cursor: pointer;
+  color: var(--text-3); font-size: 11px; padding: 2px 4px;
+  border-radius: 4px; flex-shrink: 0; opacity: 0;
+  transition: opacity .15s, color .15s;
+}
+.sel-item:hover .sel-unpin { opacity: 1; }
+.sel-unpin:hover { color: var(--red); }
 
 @media (max-width: 900px) {
   .eco-layout { grid-template-columns: 1fr; }
