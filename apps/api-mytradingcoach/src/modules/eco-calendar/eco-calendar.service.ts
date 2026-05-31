@@ -410,10 +410,14 @@ export class EcoCalendarService {
     }
 
     const results = await Promise.all(
-      dates.map(async (date) => ({
-        date,
-        events: await this.getEventsFromDb(date),
-      })),
+      dates.map(async (date) => {
+        let events = await this.getEventsFromDb(date);
+        if (events.length === 0) {
+          try { events = await this.fetchAndStoreEvents(date); }
+          catch { events = []; }
+        }
+        return { date, events };
+      }),
     );
 
     return results.filter((r) => r.events.length > 0);
