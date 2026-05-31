@@ -459,8 +459,6 @@ export class EcoCalendarService {
     const rawPins = await this.getUserPins(userId);
     if (rawPins.length === 0) return [];
 
-    // Normalise les pins : retire le suffixe de période "(May)", "(Q1)" etc.
-    // "Consumer Confidence (May):JPY" → "Consumer Confidence:JPY"
     const normalizedPins = new Set(rawPins.map(p => this.normalizeEventKey(p)));
 
     const today = todayParis();

@@ -124,8 +124,13 @@
           </div>
           <div class="eco-session-body">
             @if (selectedDayGroup(); as group) {
-              @for (event of group.sessions.europe; track selectedDate() + event.name + event.currency + event.time) {
-                <ng-container [ngTemplateOutlet]="eventRow" [ngTemplateOutletContext]="{ $implicit: event }" />
+              @for (event of group.sessions.europe; track event.name + event.currency) {
+                <mtc-eco-event-row
+                  [event]="event"
+                  [pinned]="isPinned(event)"
+                  [flag]="getFlag(event)"
+                  [translatedName]="translate(event.name)"
+                  (togglePin)="togglePin($event)" />
               } @empty {
                 <div class="eco-session-empty">Rien ce matin</div>
               }
@@ -143,8 +148,13 @@
           </div>
           <div class="eco-session-body">
             @if (selectedDayGroup(); as group) {
-              @for (event of group.sessions.us; track selectedDate() + event.name + event.currency + event.time) {
-                <ng-container [ngTemplateOutlet]="eventRow" [ngTemplateOutletContext]="{ $implicit: event }" />
+              @for (event of group.sessions.us; track event.name + event.currency) {
+                <mtc-eco-event-row
+                  [event]="event"
+                  [pinned]="isPinned(event)"
+                  [flag]="getFlag(event)"
+                  [translatedName]="translate(event.name)"
+                  (togglePin)="togglePin($event)" />
               } @empty {
                 <div class="eco-session-empty">Rien cet après-midi</div>
               }
@@ -183,61 +193,3 @@
 
 </div>
 
-<!-- ── Template factorisé : une ligne event ── -->
-<ng-template #eventRow let-event>
-  <div class="eco-event-row"
-       [class.pinned]="isPinned(event)"
-       [class.released]="event.isReleased"
-       [class.high]="event.impact === 'high'">
-
-    <div class="eco-pin-wrap">
-      <input
-        type="checkbox"
-        class="eco-pin-check"
-        [id]="'pin-' + event.name + '-' + event.currency"
-        [checked]="isPinned(event)"
-        (change)="togglePin(event)"
-      />
-      <label
-        class="eco-pin-label"
-        [attr.for]="'pin-' + event.name + '-' + event.currency"
-        [title]="isPinned(event) ? 'Retirer des épinglés' : 'Épingler dans ma session'"
-      >📌</label>
-    </div>
-
-    <div class="eco-event-time">{{ event.time }}</div>
-    <div class="eco-impact-bar" [class]="event.impact"></div>
-    <span class="eco-flag">{{ getFlag(event) }}</span>
-
-    <div class="eco-event-body">
-      <div class="eco-event-name">{{ translate(event.name) }}</div>
-      @if (event.previous !== null || event.estimate !== null || event.actual !== null) {
-        <div class="eco-event-values">
-          @if (event.actual !== null) {
-            <span class="eco-val actual"
-                  [class.beat]="event.estimate !== null && event.actual > event.estimate"
-                  [class.miss]="event.estimate !== null && event.actual < event.estimate">
-              A: {{ event.actual }}{{ event.unit }}
-            </span>
-          }
-          @if (event.estimate !== null) {
-            <span class="eco-val estimate">P: {{ event.estimate }}{{ event.unit }}</span>
-          }
-          @if (event.previous !== null) {
-            <span class="eco-val previous">Préc: {{ event.previous }}{{ event.unit }}</span>
-          }
-        </div>
-      }
-    </div>
-
-    <span class="eco-currency-tag">{{ event.currency }}</span>
-
-    <span class="eco-impact-badge" [class]="event.impact">
-      {{ event.impact === 'high' ? 'Fort' : 'Moyen' }}
-    </span>
-
-    @if (event.isReleased) {
-      <span class="eco-published">✓ Publié</span>
-    }
-  </div>
-</ng-template>
