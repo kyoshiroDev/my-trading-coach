@@ -44,7 +44,7 @@
 
 /* ── Filtres ── */
 .eco-filters {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
   margin-bottom: 20px; flex-wrap: wrap;
 }
 .eco-filter-group {
