@@ -50,17 +50,6 @@ const EMOTIONS = [
   template: `
     <div data-testid="session-live-view">
 
-      <!-- Recap post-clôture -->
-      @if (showRecap()) {
-        <mtc-session-recap
-          [session]="session()"
-          [liveStats]="liveStats()"
-          (dismissed)="onRecapClose($event)"
-        />
-      }
-
-      @if (!showRecap()) {
-
       @if (!session() || session()?.status !== 'ACTIVE') {
         <!-- Pas de session active : CTA démarrer -->
         <div class="no-session-cta">
@@ -564,34 +553,6 @@ const EMOTIONS = [
       </div>
 
       } <!-- /if session ACTIVE -->
-      } <!-- /if (!showRecap) -->
-
-      <!-- Modal clôture session -->
-      @if (closeMoodOpen()) {
-        <div class="close-session-panel" role="button" tabindex="0"
-          (click)="closeMoodOpen.set(false)"
-          (keyup.escape)="closeMoodOpen.set(false)">
-          <div class="close-session-modal" tabindex="-1"
-            (click)="$event.stopPropagation()"
-            (keydown)="$event.stopPropagation()">
-            <div class="csm-title">Clôturer la session</div>
-            <div class="csm-sub">Comment tu te sens en fin de session ?</div>
-            <div class="mood-row">
-              @for (mood of moods; track mood.value) {
-                <button
-                  class="mood-btn"
-                  [class.sel]="closeMood() === mood.value"
-                  (click)="closeMood.set(mood.value)"
-                >{{ mood.emoji }} {{ mood.label }}</button>
-              }
-            </div>
-            <div class="csm-actions">
-              <button class="csm-cancel" (click)="closeMoodOpen.set(false)">Annuler</button>
-              <button class="csm-confirm" (click)="confirmCloseSession()">Clôturer →</button>
-            </div>
-          </div>
-        </div>
-      }
 
     <!-- Modale news -->
     @if (selectedNews(); as news) {
@@ -657,6 +618,7 @@ export class SessionLiveComponent {
   readonly sessionClosed = output<{ mood: MoodState; note?: string; question?: string | null }>();
   readonly tradeLogged = output<CreateTradeDto>();
   readonly ecoCalendarRefreshed = output<EcoCalendarData>();
+  readonly goToDebrief = output<void>();
 
   private readonly destroyRef = inject(DestroyRef);
   private readonly ecoSocket = inject(EcoSocketService);
@@ -678,10 +640,7 @@ export class SessionLiveComponent {
   protected readonly closingTradeId = signal<string | null>(null);
   protected readonly exitPriceInput = signal('');
 
-  // Close session
-  protected readonly closeMoodOpen = signal(false);
-  protected readonly closeMood = signal<MoodState>('NEUTRAL');
-  protected readonly showRecap = signal(false);
+  // (close session gérée via onglet Débrief dans session-day)
 
   // Modal news
   protected readonly selectedNews = signal<import('../../../../core/api/trades.api').NewsItem | null>(null);
@@ -755,10 +714,10 @@ export class SessionLiveComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.now.set(new Date()));
 
-    // Ouvrir la modal clôture si le dashboard la déclenche depuis la topbar
+    // triggerCloseModal → naviguer vers l'onglet Débrief
     effect(() => {
       if (this.triggerCloseModal()) {
-        this.closeMoodOpen.set(true);
+        this.goToDebrief.emit();
       }
     });
 
@@ -925,16 +884,6 @@ export class SessionLiveComponent {
       if (isTp) return 'TP détecté';
     }
     return 'Clôture manuelle';
-  }
-
-  protected confirmCloseSession(): void {
-    this.closeMoodOpen.set(false);
-    this.showRecap.set(true);
-  }
-
-  protected onRecapClose(payload: { note?: string; question?: string | null }): void {
-    this.sessionClosed.emit({ mood: this.closeMood(), note: payload.note, question: payload.question });
-    this.showRecap.set(false);
   }
 
   protected loadUserAssets(): void {
