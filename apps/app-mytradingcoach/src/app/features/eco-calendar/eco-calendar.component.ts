@@ -90,6 +90,40 @@ export class EcoCalendarComponent implements OnInit {
     this.filterCountry() !== 'all',
   );
 
+  protected readonly selectedDate = signal<string | null>(null);
+
+  protected readonly selectedDayGroup = computed(() => {
+    const date = this.selectedDate();
+    const groups = this.filteredDayGroups();
+    if (!date) return groups[0] ?? null;
+    return groups.find(g => g.date === date) ?? groups[0] ?? null;
+  });
+
+  protected readonly weekDays = computed(() => {
+    const monday = this.currentWeekStart();
+    const today = todayParis();
+    const out: {
+      date: string; label: string; short: string; dayNum: string;
+      count: number; hasHigh: boolean; isToday: boolean;
+    }[] = [];
+    for (let i = 0; i < 5; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const date = toParisDateStr(d);
+      const group = this.filteredDayGroups().find(g => g.date === date);
+      out.push({
+        date,
+        label: this.formatDayLabel(date),
+        short: d.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', ''),
+        dayNum: String(d.getDate()),
+        count: group?.events.length ?? 0,
+        hasHigh: (group?.events ?? []).some(e => e.impact === 'high'),
+        isToday: date === today,
+      });
+    }
+    return out;
+  });
+
   ngOnInit() {
     this.loadWeek(this.currentWeekStart());
     this.api.getPins()
@@ -124,6 +158,17 @@ export class EcoCalendarComponent implements OnInit {
     this.filterCountry.set('all');
   }
 
+  protected selectDay(date: string): void {
+    this.selectedDate.set(date);
+  }
+
+  private setDefaultSelectedDay(): void {
+    const today = todayParis();
+    const days = this.weekDays();
+    const todayInWeek = days.find(d => d.date === today);
+    this.selectedDate.set(todayInWeek ? today : (days[0]?.date ?? null));
+  }
+
   private loadWeek(monday: Date): void {
     this.isLoading.set(true);
     const from = toParisDateStr(monday);
@@ -154,6 +199,7 @@ export class EcoCalendarComponent implements OnInit {
             };
           }),
         );
+        this.setDefaultSelectedDay();
       });
   }
 

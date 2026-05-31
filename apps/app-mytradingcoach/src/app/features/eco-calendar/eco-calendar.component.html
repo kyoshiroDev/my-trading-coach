@@ -29,6 +29,23 @@
     }
   </div>
 
+  <!-- Sélecteur de jour en pills -->
+  <div class="eco-day-pills">
+    @for (day of weekDays(); track day.date) {
+      <button class="eco-day-pill"
+              [class.active]="day.date === selectedDayGroup()?.date"
+              [class.today]="day.isToday"
+              (click)="selectDay(day.date)">
+        <span class="dp-day">{{ day.short }}</span>
+        <span class="dp-date">{{ day.dayNum }}</span>
+        <span class="dp-cnt">
+          {{ day.count }}
+          @if (day.hasHigh) { <span class="dp-dot"></span> }
+        </span>
+      </button>
+    }
+  </div>
+
   <!-- Filtres -->
   <div class="eco-filters">
     <div class="eco-filter-group">
@@ -67,7 +84,7 @@
     }
   </div>
 
-  <!-- Loading -->
+  <!-- Loading skeleton -->
   @if (isLoading()) {
     <div class="eco-loading">
       @for (i of [1, 2, 3, 4, 5]; track i) {
@@ -76,89 +93,92 @@
     </div>
   }
 
-  <!-- Empty state -->
-  @if (!isLoading() && filteredDayGroups().length === 0) {
-    <div class="eco-empty">
-      <div class="eco-empty-icon">📅</div>
-      <div class="eco-empty-title">Aucun événement cette semaine</div>
-      <div class="eco-empty-sub">
-        Les données sont chargées chaque matin à 6h00.<br>
-        Vérifie que la clé FMP est bien configurée.
-      </div>
-    </div>
-  }
+  @if (!isLoading()) {
 
-  <!-- ── Grille 3 colonnes égales ── -->
-  @if (!isLoading() && filteredDayGroups().length > 0) {
-    <div class="eco-layout">
-
-      <!-- Colonne 1 : Session Europe -->
-      <div class="eco-col">
-        <div class="eco-session-head europe">
-          <span class="eco-session-ic">🇪🇺</span> Session Europe
+    <!-- Semaine sans événements -->
+    @if (filteredDayGroups().length === 0) {
+      <div class="eco-empty">
+        <div class="eco-empty-icon">📅</div>
+        <div class="eco-empty-title">Aucun événement cette semaine</div>
+        <div class="eco-empty-sub">
+          Les données sont chargées chaque matin à 6h00.<br>
+          Vérifie que la clé FMP est bien configurée.
         </div>
-        <div class="eco-col-body">
-          @for (group of filteredDayGroups(); track group.date) {
-            <div class="eco-day-block" [class.today]="group.isToday">
-              <div class="eco-day-sep">
-                @if (group.isToday) { <span class="eco-today-dot"></span> }
-                {{ group.label }}
-              </div>
+      </div>
+    } @else {
+
+      <!-- Titre du jour sélectionné -->
+      <div class="eco-selected-day-label">
+        @if (selectedDayGroup()?.isToday) { <span class="eco-today-dot"></span> }
+        {{ selectedDayGroup()?.label ?? '' }}
+      </div>
+
+      <!-- Grille 3 colonnes égales : Europe | US | Ma sélection -->
+      <div class="eco-layout">
+
+        <!-- Col 1 : Session Europe (jour sélectionné uniquement) -->
+        <div class="eco-session-col">
+          <div class="eco-session-head europe">
+            <span class="eco-session-ic">🇪🇺</span> Session Europe
+            <span class="eco-session-cnt">{{ selectedDayGroup()?.sessions?.europe?.length ?? 0 }}</span>
+          </div>
+          <div class="eco-session-body">
+            @if (selectedDayGroup(); as group) {
               @for (event of group.sessions.europe; track event.name + event.currency) {
                 <ng-container [ngTemplateOutlet]="eventRow" [ngTemplateOutletContext]="{ $implicit: event }" />
               } @empty {
                 <div class="eco-session-empty">Rien ce matin</div>
               }
-            </div>
-          }
+            } @else {
+              <div class="eco-session-empty">Rien ce matin</div>
+            }
+          </div>
         </div>
-      </div>
 
-      <!-- Colonne 2 : Session US -->
-      <div class="eco-col">
-        <div class="eco-session-head us">
-          <span class="eco-session-ic">🇺🇸</span> Session US
-        </div>
-        <div class="eco-col-body">
-          @for (group of filteredDayGroups(); track group.date) {
-            <div class="eco-day-block" [class.today]="group.isToday">
-              <div class="eco-day-sep">
-                @if (group.isToday) { <span class="eco-today-dot"></span> }
-                {{ group.label }}
-              </div>
+        <!-- Col 2 : Session US (jour sélectionné uniquement) -->
+        <div class="eco-session-col">
+          <div class="eco-session-head us">
+            <span class="eco-session-ic">🇺🇸</span> Session US
+            <span class="eco-session-cnt">{{ selectedDayGroup()?.sessions?.us?.length ?? 0 }}</span>
+          </div>
+          <div class="eco-session-body">
+            @if (selectedDayGroup(); as group) {
               @for (event of group.sessions.us; track event.name + event.currency) {
                 <ng-container [ngTemplateOutlet]="eventRow" [ngTemplateOutletContext]="{ $implicit: event }" />
               } @empty {
                 <div class="eco-session-empty">Rien cet après-midi</div>
               }
-            </div>
-          }
+            } @else {
+              <div class="eco-session-empty">Rien cet après-midi</div>
+            }
+          </div>
         </div>
-      </div>
 
-      <!-- Colonne 3 : Ma sélection -->
-      <aside class="eco-col eco-selection-col">
-        <div class="eco-session-head selection">
-          <span class="eco-session-ic">⭐</span> Ma sélection
-          <span class="eco-session-cnt">{{ pinnedUpcoming().length }}</span>
-        </div>
-        <div class="eco-col-body eco-selection-body">
-          @for (event of pinnedUpcoming(); track event.name + event.currency + event.date) {
-            <div class="sel-item" [class.high]="event.impact === 'high'">
-              <span class="sel-flag">{{ getFlag(event) }}</span>
-              <div class="sel-bdy">
-                <div class="sel-day">{{ formatShortDay(event.date!) }} · {{ event.time }}</div>
-                <div class="sel-name">{{ translate(event.name) }}</div>
+        <!-- Col 3 : Ma sélection (transversale, inchangée) -->
+        <aside class="eco-session-col eco-selection-col">
+          <div class="eco-session-head selection">
+            <span class="eco-session-ic">⭐</span> Ma sélection
+            <span class="eco-session-cnt">{{ pinnedUpcoming().length }}</span>
+          </div>
+          <div class="eco-col-body eco-selection-body">
+            @for (event of pinnedUpcoming(); track event.name + event.currency + event.date) {
+              <div class="sel-item" [class.high]="event.impact === 'high'">
+                <span class="sel-flag">{{ getFlag(event) }}</span>
+                <div class="sel-bdy">
+                  <div class="sel-day">{{ formatShortDay(event.date!) }} · {{ event.time }}</div>
+                  <div class="sel-name">{{ translate(event.name) }}</div>
+                </div>
+                <span class="eco-impact-badge" [class]="event.impact">{{ event.impact === 'high' ? 'Fort' : 'Moy' }}</span>
               </div>
-              <span class="eco-impact-badge" [class]="event.impact">{{ event.impact === 'high' ? 'Fort' : 'Moy' }}</span>
-            </div>
-          } @empty {
-            <div class="eco-session-empty">Épingle des événements 📌<br>pour les suivre ici</div>
-          }
-        </div>
-      </aside>
+            } @empty {
+              <div class="eco-session-empty">Épingle des événements 📌<br>pour les suivre ici</div>
+            }
+          </div>
+        </aside>
 
-    </div>
+      </div><!-- /eco-layout -->
+
+    }
   }
 
 </div>

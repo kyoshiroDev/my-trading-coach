@@ -313,3 +313,50 @@
 @media (max-width: 600px) {
   .eco-event-row { flex-wrap: wrap; }
 }
+
+/* ── Pills sélecteur de jour ── */
+.eco-day-pills { display: flex; gap: 8px; margin-bottom: 16px; }
+.eco-day-pill {
+  flex: 1; min-width: 80px; padding: 11px 8px;
+  border-radius: 11px; background: var(--bg-card); border: 1px solid var(--border);
+  cursor: pointer; text-align: center; transition: all .15s;
+  display: flex; flex-direction: column; gap: 3px; align-items: center;
+}
+.eco-day-pill:hover { border-color: var(--border-hover); }
+.eco-day-pill.active { border-color: var(--blue); background: var(--blue-glow); }
+.eco-day-pill.today { border-left: 3px solid var(--blue-bright); }
+.dp-day {
+  font-family: var(--font-mono); font-size: 10px; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: .5px;
+}
+.eco-day-pill.active .dp-day { color: var(--blue-bright); }
+.dp-date {
+  font-family: var(--font-display); font-weight: 700; font-size: 17px; color: var(--text);
+}
+.eco-day-pill.active .dp-date { color: var(--blue-bright); }
+.dp-cnt {
+  display: flex; align-items: center;
+  font-size: 10px; color: var(--text-3); font-family: var(--font-mono);
+}
+.dp-dot {
+  display: inline-block; width: 5px; height: 5px;
+  border-radius: 50%; background: var(--red); margin-left: 3px;
+}
+
+/* ── Titre du jour sélectionné ── */
+.eco-selected-day-label {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-display); font-weight: 700; font-size: 15px;
+  text-transform: capitalize; margin-bottom: 12px; color: var(--text);
+}
+
+/* ── Colonne sélection sticky ── */
+.eco-selection-col {
+  position: sticky;
+  top: 76px;
+}
+
+@media (max-width: 600px) {
+  .eco-day-pills { overflow-x: auto; }
+  .eco-day-pill { min-width: 64px; flex: 0 0 auto; }
+}
