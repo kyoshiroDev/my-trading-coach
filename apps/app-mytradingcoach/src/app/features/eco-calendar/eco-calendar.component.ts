@@ -7,24 +7,27 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { EcoCalendarApi, EcoEvent } from '../../core/api/eco-calendar.api';
 import { translateEcoEvent } from '../../core/data/eco-event-translations';
 import { todayParis, toParisDateStr } from '../../core/utils/paris-date';
 
+interface SessionGroup { europe: EcoEvent[]; us: EcoEvent[]; }
 interface DayGroup {
   date: string;
   label: string;
   isToday: boolean;
   events: EcoEvent[];
+  sessions: SessionGroup;
 }
 
 @Component({
   selector: 'mtc-eco-calendar-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [],
+  imports: [NgTemplateOutlet],
   templateUrl: './eco-calendar.component.html',
   styleUrl: './eco-calendar.component.css',
 })
@@ -57,15 +60,22 @@ export class EcoCalendarComponent implements OnInit {
 
   protected readonly filteredDayGroups = computed(() =>
     this.dayGroups()
-      .map(group => ({
-        ...group,
-        events: group.events.filter(e => {
+      .map(group => {
+        const events = group.events.filter(e => {
           const impactOk = this.filterImpact() === 'all' || e.impact === this.filterImpact();
           const currencyOk = this.filterCurrency() === 'all' || e.currency === this.filterCurrency();
           const countryOk = this.filterCountry() === 'all' || e.country === this.filterCountry();
           return impactOk && currencyOk && countryOk;
-        }),
-      }))
+        });
+        return {
+          ...group,
+          events,
+          sessions: {
+            europe: events.filter(e => this.sessionOf(e) === 'europe'),
+            us:     events.filter(e => this.sessionOf(e) === 'us'),
+          },
+        };
+      })
       .filter(g => g.events.length > 0),
   );
 
@@ -136,6 +146,10 @@ export class EcoCalendarComponent implements OnInit {
             label: this.formatDayLabel(d.date, today, tomorrowStr),
             isToday: d.date === today,
             events: d.events,
+            sessions: {
+              europe: d.events.filter(e => this.sessionOf(e) === 'europe'),
+              us:     d.events.filter(e => this.sessionOf(e) === 'us'),
+            },
           })),
         );
       });
@@ -203,6 +217,15 @@ export class EcoCalendarComponent implements OnInit {
 
   protected get pinnedCount(): number {
     return this.pinnedEvents().size;
+  }
+
+  protected highCount(group: DayGroup): number {
+    return group.events.filter(e => e.impact === 'high').length;
+  }
+
+  private sessionOf(event: EcoEvent): 'europe' | 'us' {
+    const [h, m] = event.time.split(':').map(Number);
+    return ((h || 0) * 60 + (m || 0)) >= 13 * 60 + 30 ? 'us' : 'europe';
   }
 
   private getMonday(d: Date): Date {
