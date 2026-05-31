@@ -7,8 +7,6 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
-import { createAdapter } from '@socket.io/redis-adapter';
-import { RedisService } from '../shared/redis.service';
 import { EcoEvent } from './eco-calendar.service';
 
 @WebSocketGateway({
@@ -23,13 +21,8 @@ export class EcoCalendarGateway
   @WebSocketServer()
   server: Server;
 
-  constructor(private readonly redisService: RedisService) {}
-
-  afterInit(server: Server) {
-    const pubClient = this.redisService.client;
-    const subClient = pubClient.duplicate();
-    server.adapter(createAdapter(pubClient, subClient));
-    this.logger.log('WebSocket Redis adapter activé — compatible multi-workers');
+  afterInit(_server: Server) {
+    this.logger.log('WebSocket EcoCalendar Gateway initialisé');
   }
 
   handleConnection(client: Socket) {
