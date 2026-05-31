@@ -116,7 +116,7 @@
 .sess-stop-top:hover { background: rgba(139,92,246,.18); }
 
 /* ── Onglet Débrief ── */
-.session-debrief { display: flex; flex-direction: column; gap: 18px; padding: 4px 0 30px; }
+.session-debrief { display: flex; flex-direction: column; gap: 18px; padding: 4px 30px 30px; }
 
 .debrief-mood-card {
   background: var(--bg-card); border: 1px solid var(--border);
