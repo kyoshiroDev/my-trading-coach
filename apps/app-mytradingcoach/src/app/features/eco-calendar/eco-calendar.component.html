@@ -124,7 +124,7 @@
           </div>
           <div class="eco-session-body">
             @if (selectedDayGroup(); as group) {
-              @for (event of group.sessions.europe; track event.name + event.currency) {
+              @for (event of group.sessions.europe; track selectedDate() + event.name + event.currency + event.time) {
                 <ng-container [ngTemplateOutlet]="eventRow" [ngTemplateOutletContext]="{ $implicit: event }" />
               } @empty {
                 <div class="eco-session-empty">Rien ce matin</div>
@@ -143,7 +143,7 @@
           </div>
           <div class="eco-session-body">
             @if (selectedDayGroup(); as group) {
-              @for (event of group.sessions.us; track event.name + event.currency) {
+              @for (event of group.sessions.us; track selectedDate() + event.name + event.currency + event.time) {
                 <ng-container [ngTemplateOutlet]="eventRow" [ngTemplateOutletContext]="{ $implicit: event }" />
               } @empty {
                 <div class="eco-session-empty">Rien cet après-midi</div>
