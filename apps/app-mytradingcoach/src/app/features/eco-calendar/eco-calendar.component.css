@@ -243,20 +243,24 @@
   border-radius: 5px; padding: 2px 7px; flex-shrink: 0;
 }
 
-/* ── Layout : calendrier + colonne sélection ── */
+/* ── Layout : 3 colonnes égales (Europe / US / Sélection) ── */
 .eco-layout {
   display: grid;
-  grid-template-columns: 1fr 300px;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 14px;
   align-items: start;
 }
-.eco-calendar-col { min-width: 0; }
+/* Le calendrier occupe les 2 premières colonnes + le gap entre elles */
+.eco-calendar-col {
+  grid-column: span 2;
+  min-width: 0;
+}
 
 /* ── 3e colonne : Ma sélection (sticky, scroll) ── */
 .eco-selection-col {
   position: sticky;
-  top: 16px;
-  max-height: calc(100vh - 32px);
+  top: 76px; /* 60px topbar + 16px marge */
+  max-height: calc(100vh - 92px); /* 60px topbar + 16px haut + 16px bas */
   display: flex;
   flex-direction: column;
 }
@@ -289,6 +293,7 @@
 
 @media (max-width: 900px) {
   .eco-layout { grid-template-columns: 1fr; }
+  .eco-calendar-col { grid-column: auto; }
   .eco-selection-col {
     position: static;
     max-height: 360px;
