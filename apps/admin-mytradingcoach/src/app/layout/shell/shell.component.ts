@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import {
   LucideAngularModule,
-  LayoutDashboard, Users, CreditCard, Server, Box, Database, ScrollText,
+  LayoutDashboard, Users, CreditCard, Activity, Database,
   TrendingUp, Brain, Mail, LogOut, Handshake,
 } from 'lucide-angular';
 import { AdminAuthService } from '../../core/auth/admin-auth.service';
@@ -44,17 +44,11 @@ import { AdminAuthService } from '../../core/auth/admin-auth.service';
 
         <div class="nav-group">
           <div class="nav-group-label">Infrastructure</div>
-          <a class="nav-item" routerLink="/vps" routerLinkActive="active" (click)="sidebarOpen.set(false)">
-            <lucide-icon [img]="ServerIcon" [size]="14" /> VPS / Serveur
-          </a>
-          <a class="nav-item" routerLink="/containers" routerLinkActive="active" (click)="sidebarOpen.set(false)">
-            <lucide-icon [img]="BoxIcon" [size]="14" /> Containers
+          <a class="nav-item" routerLink="/surveillance" routerLinkActive="active" (click)="sidebarOpen.set(false)">
+            <lucide-icon [img]="ActivityIcon" [size]="14" /> Surveillance
           </a>
           <a class="nav-item" routerLink="/backups" routerLinkActive="active" (click)="sidebarOpen.set(false)">
             <lucide-icon [img]="DatabaseIcon" [size]="14" /> Sauvegardes
-          </a>
-          <a class="nav-item" routerLink="/logs" routerLinkActive="active" (click)="sidebarOpen.set(false)">
-            <lucide-icon [img]="ScrollTextIcon" [size]="14" /> Logs système
           </a>
         </div>
 
@@ -111,10 +105,8 @@ export class ShellComponent {
   protected readonly DashboardIcon = LayoutDashboard;
   protected readonly UsersIcon = Users;
   protected readonly CreditCardIcon = CreditCard;
-  protected readonly ServerIcon = Server;
-  protected readonly BoxIcon = Box;
+  protected readonly ActivityIcon = Activity;
   protected readonly DatabaseIcon = Database;
-  protected readonly ScrollTextIcon = ScrollText;
   protected readonly TrendingUpIcon = TrendingUp;
   protected readonly BrainIcon = Brain;
   protected readonly MailIcon      = Mail;
