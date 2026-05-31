@@ -57,6 +57,14 @@ export const appRoutes: Routes = [
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       {
+        path: 'session',
+        data: { seo: { title: 'Ma session', noindex: true } },
+        loadComponent: () =>
+          import('./features/session-day/session-day.component').then(
+            (m) => m.SessionDayComponent,
+          ),
+      },
+      {
         path: 'dashboard',
         data: { seo: { title: 'Dashboard', noindex: true } },
         loadComponent: () =>

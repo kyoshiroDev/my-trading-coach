@@ -12,7 +12,6 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe, TitleCasePipe, UpperCasePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { interval } from 'rxjs';
 import { BillingApi } from '../../core/api/billing.api';
 import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
@@ -22,7 +21,6 @@ import { TopbarComponent } from '../../shared/components/topbar/topbar.component
 import { TradeFormComponent } from '../journal/trade-form.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { CreateTradeDto, TradesApi } from '../../core/api/trades.api';
-import { MoodState } from '../../core/api/session.api';
 import {
   AnalyticsApi,
   AnalyticsSummary,
@@ -42,10 +40,7 @@ import {
   SetupColorsMapPipe,
 } from '../../shared/pipes';
 import { environment } from '../../../environments/environment';
-import { SessionMorningComponent } from './components/session-morning/session-morning.component';
-import { SessionLiveComponent } from './components/session-live/session-live.component';
 import { ChartService } from '../../core/services/chart.service';
-import { LiveModeService } from '../../core/services/live-mode.service';
 
 @Component({
   selector: 'mtc-dashboard',
@@ -66,8 +61,6 @@ import { LiveModeService } from '../../core/services/live-mode.service';
     EmotionColorPipe,
     SetupColorPipe,
     SetupColorsMapPipe,
-    SessionMorningComponent,
-    SessionLiveComponent,
     ActivityCalendarComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -75,315 +68,267 @@ import { LiveModeService } from '../../core/services/live-mode.service';
   template: `
     <mtc-topbar
       title="Dashboard"
-      [showAddButton]="activeTab() !== 'live'"
       addLabel="⚡ Ajouter trade"
       (addClick)="goToJournal()"
     >
-      @if (activeTab() === 'live' && sessionStore.activeSession()?.status === 'ACTIVE') {
-        <div class="sess-status-pill">
+      @if (sessionStore.hasActiveSession()) {
+        <a routerLink="/session" class="sess-active-pill">
           <div class="sess-pulse-dot"></div>
-          <span class="sess-timer-top">{{ sessionStore.sessionTimer() }}</span>
-          <span class="sess-sep">·</span>
-          <span class="sess-cnt-top">{{ sessionStore.todayTrades().length }} trade{{ sessionStore.todayTrades().length > 1 ? 's' : '' }}</span>
-          <span class="sess-sep">·</span>
+          <span>Session en cours</span>
           <span class="sess-pnl-top" [style.color]="(sessionStore.todayStats()?.totalPnl ?? 0) >= 0 ? 'var(--green)' : 'var(--red)'">
             {{ (sessionStore.todayStats()?.totalPnl ?? 0) >= 0 ? '+' : '' }}{{ (sessionStore.todayStats()?.totalPnl ?? 0).toFixed(0) }}$
           </span>
-          <span class="sess-sep">·</span>
-          <span class="sess-emo-top">{{ sessionStore.moodEmoji(sessionStore.activeSession()?.moodStart) }}</span>
-        </div>
-        <button class="sess-stop-top" (click)="sessionStore.openCloseSessionModal()">Clôturer session</button>
+          <span style="color:var(--text-3);font-size:11px;">→</span>
+        </a>
       }
     </mtc-topbar>
 
-    <div class="content" [class.live-mode]="activeTab() === 'live'">
-      <!-- ── Dashboard ─────────────────────────────────────────────────── -->
-        <div class="page-header">
-          <div class="greeting-block">
-            <h1 class="greeting-title">Bonjour, {{ userStore.displayName() }} 👋</h1>
-            <div class="greeting-sub">{{ today | date:'EEEE d MMMM' }}</div>
-          </div>
-          <div class="tabs-block">
-            <button class="session-tab" [class.active]="activeTab() === 'dashboard'" data-testid="tab-dashboard" (click)="selectTab('dashboard')">① Dashboard</button>
-            <button class="session-tab" [class.active]="activeTab() === 'morning'" data-testid="tab-morning" (click)="selectTab('morning')">② Pré-session</button>
-            <button class="session-tab" [class.active]="activeTab() === 'live'" data-testid="tab-live" (click)="selectTab('live')">③ Session live</button>
-          </div>
-          <div class="header-spacer"></div>
+    <div class="content">
+      <div class="page-header">
+        <div class="greeting-block">
+          <h1 class="greeting-title">Bonjour, {{ userStore.displayName() }} 👋</h1>
+          <div class="greeting-sub">{{ today | date:'EEEE d MMMM' }}</div>
         </div>
+        <div class="header-spacer"></div>
+      </div>
 
-        @if (showGlobalStats()) {
-          <!-- Stat cards communes (masquées en session live) -->
-          @if (!isLoading()) {
-            <div class="stats-row has-capital">
-              <div class="stat-card">
-                <div class="stat-label">Capital</div>
-                <div class="stat-value mono" [style.color]="capitalColor()">{{ capitalDisplay() }}</div>
-                <div class="stat-sub">
-                  @if (capitalPct() !== 0) {
-                    <span class="change" [class]="capitalPct() > 0 ? 'up' : 'down'">
-                      {{ capitalPct() > 0 ? '▲' : '▼' }} {{ capitalPct() | number: '1.1-1' }}%
-                    </span>
-                  } @else {
-                    <span style="color:var(--text-3)">base</span>
-                  }
-                </div>
-                <div class="stat-bg-icon">💼</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-label">P&amp;L Total</div>
-                <div class="stat-value" [style.color]="pnlColor()">{{ summary()?.totalPnl ?? 0 | pnlFormat }}</div>
-                <div class="stat-sub">
-                  @if ((summary()?.totalTrades ?? 0) > 0) {
-                    <span class="change" [class]="(summary()?.totalPnl ?? 0) >= 0 ? 'up' : 'down'">
-                      {{ (summary()?.totalPnl ?? 0) >= 0 ? '▲' : '▼' }} ce mois
-                    </span>
-                  } @else {
-                    <span style="color:var(--text-3)">Aucune donnée</span>
-                  }
-                </div>
-                <div class="stat-bg-icon">💰</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-label">Win Rate</div>
-                <div class="stat-value" [style.color]="winRateColor()">{{ (summary()?.winRate ?? 0).toFixed(1) }}%</div>
-                <div class="stat-sub">
-                  @if ((summary()?.totalTrades ?? 0) > 0) {
-                    <span>vs mois précédent</span>
-                  } @else {
-                    <span style="color:var(--text-3)">Aucune donnée</span>
-                  }
-                </div>
-                <div class="stat-bg-icon">🎯</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-label">Drawdown Max</div>
-                <div class="stat-value" [style.color]="drawdownColor()">{{ drawdownDisplay() | pnlFormat }}</div>
-                <div class="stat-sub">
-                  @if ((summary()?.totalTrades ?? 0) > 0) {
-                    <span>sur capital</span>
-                  } @else {
-                    <span style="color:var(--text-3)">Aucune donnée</span>
-                  }
-                </div>
-                <div class="stat-bg-icon">📉</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-label">Trades</div>
-                <div class="stat-value">{{ summary()?.totalTrades ?? tradesStore.trades().length }}</div>
-                <div class="stat-sub">
-                  @if ((summary()?.totalTrades ?? 0) === 0) {
-                    <span style="color:var(--text-3)">Aucune donnée</span>
-                  } @else if ((summary()?.streak ?? 0) > 0) {
-                    <span class="change up">▲ +{{ summary()?.streak }} streak</span>
-                  } @else if ((summary()?.streak ?? 0) < 0) {
-                    <span class="change down">▼ {{ summary()?.streak }} streak</span>
-                  } @else {
-                    <span class="change">— pas de streak</span>
-                  }
-                </div>
-                <div class="stat-bg-icon">🔢</div>
-              </div>
+      @if (!userStore.isPremium() && tradesStore.limitReached()) {
+        <div class="limit-banner reached">
+          <div class="limit-banner-left">
+            <span class="limit-banner-ic">🚫</span>
+            <div>
+              <div class="limit-banner-title">Limite mensuelle atteinte</div>
+              <div class="limit-banner-sub">Tu as utilisé tes {{ tradesStore.monthlyLimit() }} trades ce mois. Passe à Premium pour trader sans limites.</div>
             </div>
+          </div>
+          <button class="limit-banner-btn" (click)="showPlanModal.set(true)">Passer Premium</button>
+        </div>
+      } @else if (!userStore.isPremium() && tradesStore.nearLimit()) {
+        <div class="limit-banner near">
+          <div class="limit-banner-left">
+            <span class="limit-banner-ic">⚠️</span>
+            <div>
+              <div class="limit-banner-title">{{ tradesStore.monthlyCount() }}/{{ tradesStore.monthlyLimit() }} trades ce mois</div>
+              <div class="limit-banner-sub">Tu approches de ta limite gratuite. Upgrade pour continuer sans restrictions.</div>
+            </div>
+          </div>
+          <button class="limit-banner-btn ghost" (click)="showPlanModal.set(true)">Upgrade</button>
+        </div>
+      }
+
+      @if (!userStore.isPremium()) {
+        <div class="premium-banner">
+          <div class="premium-banner-left">
+            <span class="premium-banner-icon">⚡</span>
+            <div>
+              <div class="premium-banner-title">Passe à Premium</div>
+              <div class="premium-banner-sub">Analytics avancés, IA Insights, Weekly Debrief automatique</div>
+            </div>
+          </div>
+          <div class="premium-banner-right">
+            <div class="premium-banner-price">
+              <span class="premium-banner-amount">39€</span>
+              <span class="premium-banner-period">/mois</span>
+              <div class="premium-banner-trial">7 jours gratuits · sans CB</div>
+            </div>
+            <button class="premium-banner-btn" (click)="showPlanModal.set(true)">Essayer gratuitement</button>
+          </div>
+        </div>
+      }
+
+      @if (!isLoading()) {
+        <div class="stats-row has-capital">
+          <div class="stat-card">
+            <div class="stat-label">Capital</div>
+            <div class="stat-value mono" [style.color]="capitalColor()">{{ capitalDisplay() }}</div>
+            <div class="stat-sub">
+              @if (capitalPct() !== 0) {
+                <span class="change" [class]="capitalPct() > 0 ? 'up' : 'down'">
+                  {{ capitalPct() > 0 ? '▲' : '▼' }} {{ capitalPct() | number: '1.1-1' }}%
+                </span>
+              } @else {
+                <span style="color:var(--text-3)">base</span>
+              }
+            </div>
+            <div class="stat-bg-icon">💼</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">P&amp;L Total</div>
+            <div class="stat-value" [style.color]="pnlColor()">{{ summary()?.totalPnl ?? 0 | pnlFormat }}</div>
+            <div class="stat-sub">
+              @if ((summary()?.totalTrades ?? 0) > 0) {
+                <span class="change" [class]="(summary()?.totalPnl ?? 0) >= 0 ? 'up' : 'down'">
+                  {{ (summary()?.totalPnl ?? 0) >= 0 ? '▲' : '▼' }} ce mois
+                </span>
+              } @else {
+                <span style="color:var(--text-3)">Aucune donnée</span>
+              }
+            </div>
+            <div class="stat-bg-icon">💰</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Win Rate</div>
+            <div class="stat-value" [style.color]="winRateColor()">{{ (summary()?.winRate ?? 0).toFixed(1) }}%</div>
+            <div class="stat-sub">
+              @if ((summary()?.totalTrades ?? 0) > 0) {
+                <span>vs mois précédent</span>
+              } @else {
+                <span style="color:var(--text-3)">Aucune donnée</span>
+              }
+            </div>
+            <div class="stat-bg-icon">🎯</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Drawdown Max</div>
+            <div class="stat-value" [style.color]="drawdownColor()">{{ drawdownDisplay() | pnlFormat }}</div>
+            <div class="stat-sub">
+              @if ((summary()?.totalTrades ?? 0) > 0) {
+                <span>sur capital</span>
+              } @else {
+                <span style="color:var(--text-3)">Aucune donnée</span>
+              }
+            </div>
+            <div class="stat-bg-icon">📉</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Trades</div>
+            <div class="stat-value">{{ summary()?.totalTrades ?? tradesStore.trades().length }}</div>
+            <div class="stat-sub">
+              @if ((summary()?.totalTrades ?? 0) === 0) {
+                <span style="color:var(--text-3)">Aucune donnée</span>
+              } @else if ((summary()?.streak ?? 0) > 0) {
+                <span class="change up">▲ +{{ summary()?.streak }} streak</span>
+              } @else if ((summary()?.streak ?? 0) < 0) {
+                <span class="change down">▼ {{ summary()?.streak }} streak</span>
+              } @else {
+                <span class="change">— pas de streak</span>
+              }
+            </div>
+            <div class="stat-bg-icon">🔢</div>
+          </div>
+        </div>
+      } @else {
+        <div class="stats-row">
+          @for (_ of [0, 1, 2, 3]; track $index) {
+            <div class="stat-card stat-skeleton"></div>
+          }
+        </div>
+      }
+
+      <!-- LIGNE 1 : Equity Curve + Calendrier côte à côte -->
+      <div class="top-charts-row">
+        <div class="card equity-card">
+          <div class="card-header">
+            <div class="card-title">Equity Curve</div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:11px;color:var(--text-3);font-family:var(--font-mono);">
+                {{ currentMonthLabel() }}
+              </span>
+              <a routerLink="/analytics" class="card-action">Détails →</a>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas #equityChart></canvas>
+            @if (!userStore.isPremium() || equityCurve().length === 0) {
+              <div class="empty-chart">
+                @if (!userStore.isPremium()) { Courbe disponible en Premium } @else { Aucun trade ce mois }
+              </div>
+            }
+          </div>
+        </div>
+        <div class="card calendar-dashboard-card">
+          <mtc-activity-calendar
+            [data]="monthlyActivity()"
+            [loading]="monthlyActivityLoading()"
+            [showNavigation]="false"
+            [year]="calYear()"
+            [month]="calMonth()"
+          />
+        </div>
+      </div>
+
+      <!-- LIGNE 2 : Trades + Win Rate + Émotions -->
+      <div class="bottom-widgets-row">
+        <div class="card recent-trades-card">
+          <div class="card-header">
+            <div class="card-title">Derniers trades</div>
+            <a routerLink="/journal" class="card-action">Voir →</a>
+          </div>
+          @if (tradesStore.trades().length === 0) {
+            <div class="empty-state"><p>Aucun trade</p><small>Enregistre ton premier trade</small></div>
           } @else {
-            <div class="stats-row">
-              @for (_ of [0, 1, 2, 3]; track $index) {
-                <div class="stat-card stat-skeleton"></div>
+            <div class="trade-list-compact">
+              @for (trade of tradesStore.trades().slice(0, 4); track trade.id) {
+                <div class="trade-row-compact">
+                  <div class="trade-row-top">
+                    <span class="trade-side" [class]="trade.side === 'LONG' ? 'long' : 'short'">{{ trade.side }}</span>
+                    <span class="trade-asset-compact">{{ trade.asset | uppercase }}</span>
+                    <span class="trade-emotion">{{ trade.emotion | emotionEmoji }}</span>
+                  </div>
+                  <div class="trade-row-bottom">
+                    <span class="trade-setup-compact">{{ trade.setup }}</span>
+                    <span class="trade-pnl" [style.color]="trade.pnl | pnlColor">{{ trade.pnl | pnlFormat: trade.entry }}</span>
+                  </div>
+                </div>
               }
             </div>
           }
-        }
-
-        @if (activeTab() === 'morning') {
-          <mtc-session-morning
-            [yesterdayRecap]="sessionStore.yesterdayRecap()"
-            [objectives]="sessionStore.currentObjectives()"
-            [debriefId]="sessionStore.currentDebriefId()"
-            [ecoCalendar]="sessionStore.ecoCalendarDay()"
-            [selectedMood]="sessionStore.selectedMood()"
-            (moodSelected)="sessionStore.selectMood($event)"
-            (sessionStarted)="startSession()"
-            (objectiveNoteAdded)="sessionStore.updateObjectiveNote($event)"
-            (planNoteChanged)="sessionStore.savePlanNote($event)"
-          />
-        }
-        @if (activeTab() === 'live') {
-          <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;">
-            <mtc-session-live
-              [session]="sessionStore.activeSession()"
-              [todayTrades]="sessionStore.todayTrades()"
-              [liveStats]="sessionStore.todayStats()"
-              [ecoCalendar]="sessionStore.ecoCalendarDay()"
-              [marketCtx]="sessionStore.marketCtx()"
-              [newsItems]="sessionStore.newsItems()"
-              [breakingNews]="sessionStore.breakingNews()"
-              [triggerCloseModal]="sessionStore.triggerCloseModal()"
-              (startSession)="startSession()"
-              (tradeClosed)="sessionStore.confirmCloseTrade($event)"
-              (sessionClosed)="onSessionClosed($event)"
-              (tradeLogged)="sessionStore.logQuickTrade($event)"
-            />
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Win Rate / stratégie</div>
+            <a routerLink="/analytics" class="card-action">Voir →</a>
           </div>
-        }
-
-        @if (activeTab() === 'dashboard') {
-          @if (!userStore.isPremium() && tradesStore.limitReached()) {
-            <div class="limit-banner reached">
-              <div class="limit-banner-left">
-                <span class="limit-banner-ic">🚫</span>
-                <div>
-                  <div class="limit-banner-title">Limite mensuelle atteinte</div>
-                  <div class="limit-banner-sub">Tu as utilisé tes {{ tradesStore.monthlyLimit() }} trades ce mois. Passe à Premium pour trader sans limites.</div>
-                </div>
-              </div>
-              <button class="limit-banner-btn" (click)="showPlanModal.set(true)">Passer Premium</button>
-            </div>
-          } @else if (!userStore.isPremium() && tradesStore.nearLimit()) {
-            <div class="limit-banner near">
-              <div class="limit-banner-left">
-                <span class="limit-banner-ic">⚠️</span>
-                <div>
-                  <div class="limit-banner-title">{{ tradesStore.monthlyCount() }}/{{ tradesStore.monthlyLimit() }} trades ce mois</div>
-                  <div class="limit-banner-sub">Tu approches de ta limite gratuite. Upgrade pour continuer sans restrictions.</div>
-                </div>
-              </div>
-              <button class="limit-banner-btn ghost" (click)="showPlanModal.set(true)">Upgrade</button>
-            </div>
-          }
-          @if (!userStore.isPremium()) {
-            <div class="premium-banner">
-              <div class="premium-banner-left">
-                <span class="premium-banner-icon">⚡</span>
-                <div>
-                  <div class="premium-banner-title">Passe à Premium</div>
-                  <div class="premium-banner-sub">Analytics avancés, IA Insights, Weekly Debrief automatique</div>
-                </div>
-              </div>
-              <div class="premium-banner-right">
-                <div class="premium-banner-price">
-                  <span class="premium-banner-amount">39€</span>
-                  <span class="premium-banner-period">/mois</span>
-                  <div class="premium-banner-trial">7 jours gratuits · sans CB</div>
-                </div>
-                <button class="premium-banner-btn" (click)="showPlanModal.set(true)">Essayer gratuitement</button>
-              </div>
-            </div>
-          }
-          <!-- LIGNE 1 : Equity Curve + Calendrier côte à côte -->
-          <div class="top-charts-row">
-            <div class="card equity-card">
-              <div class="card-header">
-                <div class="card-title">Equity Curve</div>
-                <div style="display:flex;align-items:center;gap:10px;">
-                  <span style="font-size:11px;color:var(--text-3);font-family:var(--font-mono);">
-                    {{ currentMonthLabel() }}
-                  </span>
-                  <a routerLink="/analytics" class="card-action">Détails →</a>
-                </div>
-              </div>
-              <div class="chart-container">
-                <canvas #equityChart></canvas>
-                @if (!userStore.isPremium() || equityCurve().length === 0) {
-                  <div class="empty-chart">
-                    @if (!userStore.isPremium()) { Courbe disponible en Premium } @else { Aucun trade ce mois }
+          @if (bySetup().length === 0) {
+            <p class="empty-widget-msg">Tes setups apparaîtront<br />après tes premiers trades</p>
+          } @else {
+            <div class="donut-wrap">
+              <svg class="donut-svg" width="80" height="80" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--bg-3)" stroke-width="12" />
+                @for (seg of segments(); track seg.label) {
+                  <circle cx="50" cy="50" r="38" fill="none" [attr.stroke]="seg.label | setupColorMap" stroke-width="12" [attr.stroke-dasharray]="seg.dash" [attr.stroke-dashoffset]="seg.offset" stroke-linecap="round" transform="rotate(-90 50 50)" />
+                }
+                <text x="50" y="53" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="14" fill="#e2eaf5">
+                  {{ (summary()?.winRate ?? 0).toFixed(0) }}%
+                </text>
+              </svg>
+              <div class="donut-legend">
+                @for (s of bySetup().slice(0, 4); track s.setup) {
+                  <div class="legend-item">
+                    <div class="legend-dot" [style.background]="s.setup | setupColor"></div>
+                    {{ s.setup | titlecase }}
+                    <span class="legend-val">{{ s.winRate.toFixed(0) }}%</span>
                   </div>
                 }
               </div>
             </div>
-            <div class="card calendar-dashboard-card">
-              <mtc-activity-calendar
-                [data]="monthlyActivity()"
-                [loading]="monthlyActivityLoading()"
-                [showNavigation]="false"
-                [year]="calYear()"
-                [month]="calMonth()"
-              />
-            </div>
+          }
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">États émotionnels</div>
+            <a routerLink="/analytics" class="card-action">Détails →</a>
           </div>
-
-          <!-- LIGNE 2 : Trades + Win Rate + Émotions -->
-          <div class="bottom-widgets-row">
-            <div class="card recent-trades-card">
-              <div class="card-header">
-                <div class="card-title">Derniers trades</div>
-                <a routerLink="/journal" class="card-action">Voir →</a>
-              </div>
-              @if (tradesStore.trades().length === 0) {
-                <div class="empty-state"><p>Aucun trade</p><small>Enregistre ton premier trade</small></div>
-              } @else {
-                <div class="trade-list-compact">
-                  @for (trade of tradesStore.trades().slice(0, 4); track trade.id) {
-                    <div class="trade-row-compact">
-                      <div class="trade-row-top">
-                        <span class="trade-side" [class]="trade.side === 'LONG' ? 'long' : 'short'">{{ trade.side }}</span>
-                        <span class="trade-asset-compact">{{ trade.asset | uppercase }}</span>
-                        <span class="trade-emotion">{{ trade.emotion | emotionEmoji }}</span>
-                      </div>
-                      <div class="trade-row-bottom">
-                        <span class="trade-setup-compact">{{ trade.setup }}</span>
-                        <span class="trade-pnl" [style.color]="trade.pnl | pnlColor">{{ trade.pnl | pnlFormat: trade.entry }}</span>
-                      </div>
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-            <div class="card">
-              <div class="card-header">
-                <div class="card-title">Win Rate / stratégie</div>
-                <a routerLink="/analytics" class="card-action">Voir →</a>
-              </div>
-              @if (bySetup().length === 0) {
-                <p class="empty-widget-msg">Tes setups apparaîtront<br />après tes premiers trades</p>
-              } @else {
-                <div class="donut-wrap">
-                  <svg class="donut-svg" width="80" height="80" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="38" fill="none" stroke="var(--bg-3)" stroke-width="12" />
-                    @for (seg of segments(); track seg.label) {
-                      <circle cx="50" cy="50" r="38" fill="none" [attr.stroke]="seg.label | setupColorMap" stroke-width="12" [attr.stroke-dasharray]="seg.dash" [attr.stroke-dashoffset]="seg.offset" stroke-linecap="round" transform="rotate(-90 50 50)" />
-                    }
-                    <text x="50" y="53" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="14" fill="#e2eaf5">
-                      {{ (summary()?.winRate ?? 0).toFixed(0) }}%
-                    </text>
-                  </svg>
-                  <div class="donut-legend">
-                    @for (s of bySetup().slice(0, 4); track s.setup) {
-                      <div class="legend-item">
-                        <div class="legend-dot" [style.background]="s.setup | setupColor"></div>
-                        {{ s.setup | titlecase }}
-                        <span class="legend-val">{{ s.winRate.toFixed(0) }}%</span>
-                      </div>
-                    }
+          @if (emotionStats().length === 0) {
+            <p class="empty-widget-msg">Enregistre tes premiers trades<br />pour voir tes états émotionnels</p>
+          } @else {
+            <div class="emotion-grid">
+              @for (e of emotionStats(); track e.emotion) {
+                <div class="emotion-row">
+                  <div class="emotion-label">
+                    <span>{{ e.emotion | emotionLabel }}</span>
+                    <span>{{ e.pct }}%</span>
+                  </div>
+                  <div class="bar-track">
+                    <div class="bar-fill" [style.width.%]="e.pct" [style.background]="e.emotion | emotionColor"></div>
                   </div>
                 </div>
               }
             </div>
-            <div class="card">
-              <div class="card-header">
-                <div class="card-title">États émotionnels</div>
-                <a routerLink="/analytics" class="card-action">Détails →</a>
-              </div>
-              @if (emotionStats().length === 0) {
-                <p class="empty-widget-msg">Enregistre tes premiers trades<br />pour voir tes états émotionnels</p>
-              } @else {
-                <div class="emotion-grid">
-                  @for (e of emotionStats(); track e.emotion) {
-                    <div class="emotion-row">
-                      <div class="emotion-label">
-                        <span>{{ e.emotion | emotionLabel }}</span>
-                        <span>{{ e.pct }}%</span>
-                      </div>
-                      <div class="bar-track">
-                        <div class="bar-fill" [style.width.%]="e.pct" [style.background]="e.emotion | emotionColor"></div>
-                      </div>
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-          </div>
-        }
+          }
+        </div>
+      </div>
 
-      <!-- Modals — accessibles depuis tous les onglets -->
       <mtc-trade-form
         [open]="showTradeForm()"
         [isSaving]="isSavingTrade()"
@@ -403,19 +348,16 @@ export class DashboardComponent {
   protected readonly userStore    = inject(UserStore);
   protected readonly tradesStore  = inject(TradesStore);
   protected readonly sessionStore = inject(SessionStore);
-  private readonly billingApi     = inject(BillingApi);
-  private readonly tradesApi      = inject(TradesApi);
-  private readonly analyticsApi   = inject(AnalyticsApi);
-  private readonly destroyRef     = inject(DestroyRef);
-  private readonly chartService   = inject(ChartService);
-  private readonly liveModeService = inject(LiveModeService);
+  private  readonly billingApi    = inject(BillingApi);
+  private  readonly tradesApi     = inject(TradesApi);
+  private  readonly analyticsApi  = inject(AnalyticsApi);
+  private  readonly destroyRef    = inject(DestroyRef);
+  private  readonly chartService  = inject(ChartService);
 
   protected readonly showTradeForm = signal(false);
   protected readonly showPlanModal = signal(false);
   protected readonly isSavingTrade = signal(false);
   protected readonly today = new Date();
-
-  protected readonly activeTab = signal<'dashboard' | 'morning' | 'live'>('dashboard');
 
   protected readonly monthlyActivity        = signal<MonthlyActivitySummary | null>(null);
   protected readonly monthlyActivityLoading = signal(false);
@@ -475,7 +417,6 @@ export class DashboardComponent {
   protected readonly drawdownColor = computed(() =>
     (this.summary()?.maxDrawdown ?? 0) === 0 ? 'var(--text-2)' : 'var(--red)',
   );
-  protected readonly showGlobalStats = computed(() => this.activeTab() !== 'live');
   protected readonly equityCurve = computed(
     () => this.equityCurveResource.value()?.data?.points ?? [],
   );
@@ -499,19 +440,7 @@ export class DashboardComponent {
 
   constructor() {
     this.tradesStore.loadTrades({ limit: '6' });
-    this.sessionStore.loadSessionData();
     this.loadMonthlyActivity();
-
-    // Horloge UI — live-mode CSS
-    effect(() => {
-      const live = this.activeTab() === 'live';
-      document.body.classList.toggle('live-mode-active', live);
-      if (live) { this.liveModeService.activate(); } else { this.liveModeService.deactivate(); }
-    });
-    this.destroyRef.onDestroy(() => {
-      document.body.classList.remove('live-mode-active');
-      this.liveModeService.deactivate();
-    });
 
     // Recharge summary si un trade est ajouté depuis l'extérieur (wizard)
     effect(() => {
@@ -523,10 +452,8 @@ export class DashboardComponent {
 
     // Equity chart — reconstruction quand les données changent
     effect(() => {
-      const tab    = this.activeTab();
-      const points = this.equityCurve();
+      const points  = this.equityCurve();
       const capital = this.initialCapitalFromCurve();
-      if (tab !== 'dashboard') return;
       setTimeout(() => {
         const canvas = this.canvasRef?.nativeElement;
         if (canvas && points.length >= 2) {
@@ -534,22 +461,6 @@ export class DashboardComponent {
         }
       }, 50);
     });
-
-    // Auto-switch vers live quand session devient active
-    effect(() => {
-      if (this.sessionStore.activeSession()?.status === 'ACTIVE') {
-        this.activeTab.set('live');
-      }
-    });
-
-    // Polling live stats toutes les 30 s (géré dans le store, mais intervalle 30s aussi ici
-    // en cas de rechargement de page sans retrigger le store)
-    interval(30_000)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        // Le store gère déjà le polling — ce subscribe est un guard supplémentaire inutile.
-        // Laissé vide pour ne pas dupliquer l'appel (le store le gère déjà).
-      });
   }
 
   protected readonly segments = computed(() => {
@@ -606,30 +517,7 @@ export class DashboardComponent {
       });
   }
 
-  protected selectTab(tab: 'dashboard' | 'morning' | 'live'): void {
-    if ((tab === 'morning' || tab === 'live') && !this.userStore.isStarter()) {
-      this.showPlanModal.set(true);
-      return;
-    }
-    this.activeTab.set(tab);
-  }
-
-  // ── Wrappers session (UI side-effects : tab + analytics reload) ───────────
-
-  protected startSession(): void {
-    this.sessionStore.startSession();
-    this.activeTab.set('live');
-  }
-
-  protected onSessionClosed(payload: { mood: MoodState; note?: string; question?: string | null }): void {
-    this.sessionStore.onSessionClosed(payload);
-    this.activeTab.set('dashboard');
-    this.summaryResource.reload();
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-
-  protected loadMonthlyActivity(): void {
+  private loadMonthlyActivity(): void {
     this.monthlyActivityLoading.set(true);
     this.analyticsApi.getCurrentMonthActivity()
       .pipe(takeUntilDestroyed(this.destroyRef))
