@@ -456,8 +456,12 @@ export class EcoCalendarService {
   // ── getPinnedUpcoming — prochaines occurrences des types épinglés ────────────
 
   async getPinnedUpcoming(userId: string, daysAhead = 7): Promise<EcoEvent[]> {
-    const pins = new Set(await this.getUserPins(userId));
-    if (pins.size === 0) return [];
+    const rawPins = await this.getUserPins(userId);
+    if (rawPins.length === 0) return [];
+
+    // Normalise les pins : retire le suffixe de période "(May)", "(Q1)" etc.
+    // "Consumer Confidence (May):JPY" → "Consumer Confidence:JPY"
+    const normalizedPins = new Set(rawPins.map(p => this.normalizeEventKey(p)));
 
     const today = todayParis();
     const start = new Date(`${today}T00:00:00`);
@@ -479,7 +483,7 @@ export class EcoCalendarService {
       }
 
       for (const e of events) {
-        if (pins.has(`${e.name}:${e.currency}`)) {
+        if (normalizedPins.has(this.normalizeEventKey(`${e.name}:${e.currency}`))) {
           all.push({ ...e, date });
         }
       }
@@ -488,6 +492,15 @@ export class EcoCalendarService {
     return all.sort((a, b) =>
       ((a.date ?? '') + (a.time ?? '')).localeCompare((b.date ?? '') + (b.time ?? '')),
     );
+  }
+
+  // Retire le suffixe de période "(May)", "(Q1 2026)", "(Apr)" d'une clé nom:devise
+  private normalizeEventKey(key: string): string {
+    const colonIdx = key.lastIndexOf(':');
+    if (colonIdx === -1) return key;
+    const name     = key.substring(0, colonIdx).replace(/\s*\([^)]*\)\s*$/, '').trim();
+    const currency = key.substring(colonIdx + 1);
+    return `${name}:${currency}`;
   }
 
   async getUserTopAssets(userId: string): Promise<string[]> {
