@@ -120,6 +120,17 @@ const EMOTION_COLORS: Record<string, string> = {
 
           @if (store.activeSession(); as session) {
 
+            <!-- 0. Bandeau journée sans trade -->
+            @if (noTrades()) {
+              <div class="debrief-zero-banner">
+                <span class="dzb-icon">🧘</span>
+                <div>
+                  <div class="dzb-title">Pas de trade aujourd'hui — et c'est OK</div>
+                  <div class="dzb-sub">Parfois, la meilleure décision est de rester à l'écart quand il n'y a pas de setup clair. Savoir ne pas trader est une vraie compétence.</div>
+                </div>
+              </div>
+            }
+
             <!-- 1. Choix émotion fin -->
             <div class="debrief-mood-card">
               <h3 class="debrief-mood-title">Comment tu te sens en fin de session ?</h3>
@@ -133,64 +144,64 @@ const EMOTION_COLORS: Record<string, string> = {
               </div>
             </div>
 
-            <!-- 2. Score de discipline -->
-            @if (disciplineScore() !== null) {
-              <div class="debrief-card debrief-score-card">
-                <div class="score-ring-wrap">
-                  <div class="score-ring"
-                       [style.background]="'conic-gradient(' + scoreColor() + ' ' + disciplineScore() + '%, var(--bg-3) 0)'">
-                    <div class="score-ring-inner">
-                      <span class="score-val">{{ disciplineScore() }}</span>
-                      <span class="score-unit">/100</span>
-                    </div>
-                  </div>
-                  <div class="score-label-wrap">
-                    <div class="score-label" [style.color]="scoreColor()">{{ disciplineLabel() }}</div>
-                    <div class="score-desc">Score de discipline</div>
-                    <div class="score-hint">Score indicatif basé sur ta session — revenge trades, stops, objectifs.</div>
+            <!-- 2. Score de discipline (toujours visible) -->
+            <div class="debrief-card debrief-score-card">
+              <div class="score-ring-wrap">
+                <div class="score-ring"
+                     [style.background]="'conic-gradient(' + scoreColor() + ' ' + disciplineScore() + '%, var(--bg-3) 0)'">
+                  <div class="score-ring-inner">
+                    <span class="score-val">{{ disciplineScore() }}</span>
+                    <span class="score-unit">/100</span>
                   </div>
                 </div>
+                <div class="score-label-wrap">
+                  <div class="score-label" [style.color]="scoreColor()">{{ disciplineLabel() }}</div>
+                  <div class="score-desc">Score de discipline</div>
+                  <div class="score-hint">{{ disciplinePhrase() }}</div>
+                </div>
               </div>
-            }
+            </div>
 
-            <!-- 3. Meilleur / pire trade -->
-            @if (closedTrades().length > 0) {
-              <div class="debrief-two-col">
+            <!-- 3. Meilleur / trade à revoir (toujours visible) -->
+            <div class="debrief-two-col">
+              <div class="debrief-trade-card best">
+                <div class="dtc-header">
+                  <span class="dtc-icon">🏆</span>
+                  <span class="dtc-title">Meilleur trade</span>
+                </div>
                 @if (bestTrade(); as t) {
-                  <div class="debrief-trade-card best">
-                    <div class="dtc-header">
-                      <span class="dtc-icon">🏆</span>
-                      <span class="dtc-title">Meilleur trade</span>
-                    </div>
-                    <div class="dtc-asset">{{ t.asset }} <span class="dtc-side" [class]="t.side.toLowerCase()">{{ t.side }}</span></div>
-                    <div class="dtc-row">
-                      <span class="dtc-time">{{ t.tradedAt | date:'HH:mm' }}</span>
-                      <span>{{ t.emotion | emotionEmoji }}</span>
-                      <span class="dtc-pnl" [style.color]="t.pnl | pnlColor">{{ t.pnl | pnlFormat }}</span>
-                    </div>
+                  <div class="dtc-asset">{{ t.asset }} <span class="dtc-side" [class]="t.side.toLowerCase()">{{ t.side }}</span></div>
+                  <div class="dtc-row">
+                    <span class="dtc-time">{{ t.tradedAt | date:'HH:mm' }}</span>
+                    <span>{{ t.emotion | emotionEmoji }}</span>
+                    <span class="dtc-pnl" [style.color]="t.pnl | pnlColor">{{ t.pnl | pnlFormat }}</span>
                   </div>
-                }
-                @if (worstTrade(); as t) {
-                  <div class="debrief-trade-card worst">
-                    <div class="dtc-header">
-                      <span class="dtc-icon">📉</span>
-                      <span class="dtc-title">Trade difficile</span>
-                    </div>
-                    <div class="dtc-asset">{{ t.asset }} <span class="dtc-side" [class]="t.side.toLowerCase()">{{ t.side }}</span></div>
-                    <div class="dtc-row">
-                      <span class="dtc-time">{{ t.tradedAt | date:'HH:mm' }}</span>
-                      <span>{{ t.emotion | emotionEmoji }}</span>
-                      <span class="dtc-pnl" [style.color]="t.pnl | pnlColor">{{ t.pnl | pnlFormat }}</span>
-                    </div>
-                  </div>
+                } @else {
+                  <div class="dtc-empty">Aucun trade clôturé aujourd'hui</div>
                 }
               </div>
-            }
+              <div class="debrief-trade-card worst">
+                <div class="dtc-header">
+                  <span class="dtc-icon">📉</span>
+                  <span class="dtc-title">Trade à revoir</span>
+                </div>
+                @if (worstTrade(); as t) {
+                  <div class="dtc-asset">{{ t.asset }} <span class="dtc-side" [class]="t.side.toLowerCase()">{{ t.side }}</span></div>
+                  <div class="dtc-row">
+                    <span class="dtc-time">{{ t.tradedAt | date:'HH:mm' }}</span>
+                    <span>{{ t.emotion | emotionEmoji }}</span>
+                    <span class="dtc-pnl" [style.color]="t.pnl | pnlColor">{{ t.pnl | pnlFormat }}</span>
+                  </div>
+                } @else {
+                  <div class="dtc-empty">Rien à analyser — journée sans trade</div>
+                }
+              </div>
+            </div>
 
-            <!-- 4. Répartition émotionnelle -->
-            @if (emotionBreakdown().length > 0) {
-              <div class="debrief-card">
-                <div class="debrief-section-title">États émotionnels de la session</div>
+            <!-- 4. Répartition émotionnelle (toujours visible) -->
+            <div class="debrief-card">
+              <div class="debrief-section-title">États émotionnels de la session</div>
+              @if (emotionBreakdown().length > 0) {
                 <div class="emo-list">
                   @for (e of emotionBreakdown(); track e.emotion) {
                     <div class="emo-row">
@@ -202,8 +213,20 @@ const EMOTION_COLORS: Record<string, string> = {
                     </div>
                   }
                 </div>
-              </div>
-            }
+              } @else {
+                <div class="emo-session-fallback">
+                  <div class="esf-item">
+                    <span class="esf-lbl">Au démarrage</span>
+                    <span class="esf-emo">{{ store.selectedMood() | emotionEmoji }}</span>
+                  </div>
+                  <div class="esf-item">
+                    <span class="esf-lbl">En fin de session</span>
+                    <span class="esf-emo">{{ closeMood() | emotionEmoji }}</span>
+                  </div>
+                  <div class="esf-note">Pas de trade pour analyser les émotions en action — voici ton état d'esprit global.</div>
+                </div>
+              }
+            </div>
 
             <!-- 5. Objectifs du matin -->
             @if (objectivesReview().length > 0) {
@@ -262,6 +285,9 @@ export class SessionDayComponent implements OnInit {
   protected readonly moods             = MOODS;
   protected readonly today             = new Date();
 
+  // ── 0 trade ───────────────────────────────────────────────────────────────
+  protected readonly noTrades = computed(() => this.store.todayTrades().length === 0);
+
   // ── Trades clôturés ───────────────────────────────────────────────────────
   protected readonly closedTrades = computed(() =>
     this.store.todayTrades().filter(t => t.pnl !== null),
@@ -315,7 +341,7 @@ export class SessionDayComponent implements OnInit {
   // ── Score de discipline ───────────────────────────────────────────────────
   protected readonly disciplineScore = computed(() => {
     const trades = this.store.todayTrades();
-    if (!trades.length) return null;
+    if (!trades.length) return 100; // ne pas surtrader = discipline parfaite
     let score = 100;
     const revenge = trades.filter(t => t.emotion === 'REVENGE').length;
     score -= revenge * 20;
@@ -327,12 +353,22 @@ export class SessionDayComponent implements OnInit {
   });
 
   protected readonly disciplineLabel = computed(() => {
-    const s = this.disciplineScore();
-    if (s === null) return '';
+    if (this.noTrades()) return 'Patient';
+    const s = this.disciplineScore() ?? 0;
     if (s >= 85) return 'Excellent';
     if (s >= 70) return 'Bon';
     if (s >= 50) return 'Moyen';
     return 'À travailler';
+  });
+
+  protected readonly disciplinePhrase = computed(() => {
+    if (this.noTrades()) return "Tu n'as pas forcé de trade aujourd'hui. C'est de la discipline.";
+    const s = this.disciplineScore() ?? 0;
+    const revenge = this.store.todayTrades().filter(t => t.emotion === 'REVENGE').length;
+    if (revenge > 0) return `${revenge} revenge trade${revenge > 1 ? 's' : ''} détecté${revenge > 1 ? 's' : ''} — travailler la gestion émotionnelle.`;
+    if (s >= 85) return 'Excellente gestion — plan respecté, émotions sous contrôle.';
+    if (s >= 70) return "Bonne session dans l'ensemble. Quelques petits ajustements possibles.";
+    return 'Score indicatif basé sur ta session — revenge trades, stops, objectifs.';
   });
 
   protected readonly scoreColor = computed(() => {
