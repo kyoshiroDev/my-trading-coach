@@ -1,6 +1,6 @@
 /* ── Page layout ── */
 .content {
-  padding: 28px;
+  padding: 30px;
   flex: 1;
   max-width: 100%;
 }
