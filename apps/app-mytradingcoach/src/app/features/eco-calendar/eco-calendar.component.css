@@ -1,5 +1,5 @@
 /* ── Page ── */
-.eco-page { padding: 24px; max-width: 960px; margin: 0 auto; }
+.eco-page { padding: 24px; max-width: 1280px; margin: 0 auto; }
 
 /* ── Header ── */
 .eco-header {
@@ -241,4 +241,38 @@
   font-family: var(--font-mono); font-size: 10px;
   color: var(--green); background: var(--green-dim);
   border-radius: 5px; padding: 2px 7px; flex-shrink: 0;
+}
+
+/* ── Layout 2 colonnes (calendrier + panneau) ── */
+.eco-layout { display: grid; grid-template-columns: 1fr 300px; gap: 18px; align-items: start; }
+.eco-main { min-width: 0; }
+
+/* ── Panneau Ma sélection ── */
+.eco-selection {
+  position: sticky; top: 20px;
+  background: var(--bg-card);
+  border: 1px solid rgba(245,158,11,.25);
+  border-radius: 14px; overflow: hidden;
+}
+.sel-head {
+  background: linear-gradient(135deg, rgba(245,158,11,.16), rgba(245,158,11,.03));
+  padding: 14px 16px; border-bottom: 1px solid rgba(245,158,11,.2);
+}
+.sel-title { font-family: var(--font-display); font-weight: 700; font-size: 14px; color: var(--yellow); }
+.sel-sub { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); margin-top: 3px; }
+.sel-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; max-height: 70vh; overflow-y: auto; }
+.sel-item {
+  display: flex; align-items: center; gap: 9px; padding: 10px 12px;
+  background: var(--bg-3); border: 1px solid rgba(245,158,11,.12); border-radius: 9px;
+}
+.sel-item.high { border-left: 3px solid var(--red); }
+.sel-flag { font-size: 17px; flex-shrink: 0; }
+.sel-bdy { flex: 1; min-width: 0; }
+.sel-day { font-family: var(--font-mono); font-size: 9px; color: var(--yellow); font-weight: 600; text-transform: uppercase; }
+.sel-name { font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sel-empty { text-align: center; padding: 30px 14px; color: var(--text-3); font-size: 12px; line-height: 1.6; }
+
+@media (max-width: 900px) {
+  .eco-layout { grid-template-columns: 1fr; }
+  .eco-selection { position: static; order: -1; margin-bottom: 16px; }
 }

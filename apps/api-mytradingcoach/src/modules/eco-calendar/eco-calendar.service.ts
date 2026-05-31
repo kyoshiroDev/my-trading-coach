@@ -6,6 +6,7 @@ import { todayParis, toParisDateStr } from '../../common/utils/paris-date';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 
 export interface EcoEvent {
+  date?: string;
   time: string;
   name: string;
   impact: 'high' | 'medium';
@@ -450,6 +451,36 @@ export class EcoCalendarService {
       if (!aPinned && bPinned) return 1;
       return a.time.localeCompare(b.time);
     });
+  }
+
+  // ── getPinnedUpcoming — prochaines occurrences des types épinglés ────────────
+
+  async getPinnedUpcoming(userId: string, daysAhead = 14): Promise<EcoEvent[]> {
+    const pins = new Set(await this.getUserPins(userId));
+    if (pins.size === 0) return [];
+
+    const today = todayParis();
+    const start = new Date(`${today}T00:00:00`);
+    const dates: string[] = [];
+    for (let i = 0; i < daysAhead; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      dates.push(toParisDateStr(d));
+    }
+
+    const all: EcoEvent[] = [];
+    for (const date of dates) {
+      const events = await this.getEventsFromDb(date);
+      for (const e of events) {
+        if (pins.has(`${e.name}:${e.currency}`)) {
+          all.push({ ...e, date });
+        }
+      }
+    }
+
+    return all.sort((a, b) =>
+      ((a.date ?? '') + (a.time ?? '')).localeCompare((b.date ?? '') + (b.time ?? '')),
+    );
   }
 
   async getUserTopAssets(userId: string): Promise<string[]> {

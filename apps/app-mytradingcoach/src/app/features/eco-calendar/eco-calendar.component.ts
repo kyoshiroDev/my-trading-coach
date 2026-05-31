@@ -41,6 +41,7 @@ export class EcoCalendarComponent implements OnInit {
   protected readonly dayGroups = signal<DayGroup[]>([]);
   protected readonly pinnedEvents = signal<Set<string>>(new Set());
   protected readonly isSavingPins = signal(false);
+  protected readonly pinnedUpcoming = signal<EcoEvent[]>([]);
 
   protected readonly filterImpact = signal<'all' | 'high' | 'medium'>('all');
   protected readonly filterCurrency = signal<string>('all');
@@ -94,6 +95,7 @@ export class EcoCalendarComponent implements OnInit {
     this.api.getPins()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(res => this.pinnedEvents.set(new Set(res.data ?? [])));
+    this.loadPinnedUpcoming();
   }
 
   protected prevWeek(): void {
@@ -167,7 +169,18 @@ export class EcoCalendarComponent implements OnInit {
     this.isSavingPins.set(true);
     this.api.savePins([...pins])
       .pipe(finalize(() => this.isSavingPins.set(false)))
-      .subscribe();
+      .subscribe(() => this.loadPinnedUpcoming());
+  }
+
+  private loadPinnedUpcoming(): void {
+    this.api.getPinnedUpcoming()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(res => this.pinnedUpcoming.set(res.data ?? []));
+  }
+
+  protected formatShortDay(dateStr: string): string {
+    const d = new Date(`${dateStr}T12:00:00`);
+    return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
   }
 
   protected isPinned(event: EcoEvent): boolean {
