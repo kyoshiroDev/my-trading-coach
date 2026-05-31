@@ -12,12 +12,21 @@ import { SessionStore } from '../../core/stores/session.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { SessionMorningComponent } from '../dashboard/components/session-morning/session-morning.component';
 import { SessionLiveComponent } from '../dashboard/components/session-live/session-live.component';
+import { SessionRecapComponent } from '../dashboard/components/session-recap/session-recap.component';
 import { LiveModeService } from '../../core/services/live-mode.service';
+import { MoodState } from '../../core/api/session.api';
+
+const MOODS: { value: MoodState; label: string; emoji: string }[] = [
+  { value: 'CONFIDENT', label: 'Confiant', emoji: '😎' },
+  { value: 'FOCUSED',   label: 'Focalisé', emoji: '🎯' },
+  { value: 'NEUTRAL',   label: 'Neutre',   emoji: '😐' },
+  { value: 'TIRED',     label: 'Fatigué',  emoji: '😰' },
+];
 
 @Component({
   selector: 'mtc-session-day',
   standalone: true,
-  imports: [DatePipe, TopbarComponent, SessionMorningComponent, SessionLiveComponent],
+  imports: [DatePipe, TopbarComponent, SessionMorningComponent, SessionLiveComponent, SessionRecapComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-day.component.css',
   template: `
@@ -35,7 +44,7 @@ import { LiveModeService } from '../../core/services/live-mode.service';
           <span class="sess-sep">·</span>
           <span class="sess-emo-top">{{ store.moodEmoji(store.activeSession()?.moodStart) }}</span>
         </div>
-        <button class="sess-stop-top" (click)="store.openCloseSessionModal()">Clôturer session</button>
+        <button class="sess-stop-top" (click)="selectTab('debrief')">🌙 Débrief</button>
       }
     </mtc-topbar>
 
@@ -53,6 +62,10 @@ import { LiveModeService } from '../../core/services/live-mode.service';
           <button class="session-tab" [class.active]="activeTab() === 'live'"
                   data-testid="tab-live" (click)="selectTab('live')">
             ⚡ Session live
+          </button>
+          <button class="session-tab" [class.active]="activeTab() === 'debrief'"
+                  data-testid="tab-debrief" (click)="selectTab('debrief')">
+            🌙 Débrief
           </button>
         </div>
         <div class="header-spacer"></div>
@@ -85,21 +98,60 @@ import { LiveModeService } from '../../core/services/live-mode.service';
             [triggerCloseModal]="store.triggerCloseModal()"
             (startSession)="startSession()"
             (tradeClosed)="store.confirmCloseTrade($event)"
-            (sessionClosed)="onSessionClosed($event)"
             (tradeLogged)="store.logQuickTrade($event)"
+            (goToDebrief)="selectTab('debrief')"
           />
+        </div>
+      }
+
+      @if (activeTab() === 'debrief') {
+        <div class="session-debrief">
+          @if (store.activeSession(); as session) {
+
+            <!-- 1. Choix émotion de fin -->
+            <div class="debrief-mood-card">
+              <h3 class="debrief-mood-title">Comment tu te sens en fin de session ?</h3>
+              <div class="mood-row">
+                @for (mood of moods; track mood.value) {
+                  <button class="mood-btn" [class.sel]="closeMood() === mood.value"
+                          (click)="closeMood.set(mood.value)">
+                    {{ mood.emoji }} {{ mood.label }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- 2. Bilan (composant existant) -->
+            <mtc-session-recap
+              [session]="session"
+              [liveStats]="store.todayStats()"
+              (dismissed)="confirmDebrief($event)"
+            />
+
+          } @else {
+
+            <!-- Pas de session active -->
+            <div class="debrief-empty">
+              <div class="debrief-empty-icon">🌙</div>
+              <p>Aucune session en cours à débriefer.</p>
+              <p class="debrief-empty-sub">Lance une session depuis l'onglet ☀️ Pré-session,<br>puis reviens ici pour la clôturer.</p>
+            </div>
+
+          }
         </div>
       }
     </div>
   `,
 })
 export class SessionDayComponent implements OnInit {
-  protected readonly store           = inject(SessionStore);
-  private  readonly liveModeService  = inject(LiveModeService);
-  private  readonly destroyRef       = inject(DestroyRef);
+  protected readonly store          = inject(SessionStore);
+  private  readonly liveModeService = inject(LiveModeService);
+  private  readonly destroyRef      = inject(DestroyRef);
 
-  protected readonly activeTab = signal<'morning' | 'live'>('morning');
-  protected readonly today = new Date();
+  protected readonly activeTab  = signal<'morning' | 'live' | 'debrief'>('morning');
+  protected readonly closeMood  = signal<MoodState>('NEUTRAL');
+  protected readonly moods      = MOODS;
+  protected readonly today      = new Date();
 
   constructor() {
     // Bascule automatiquement sur live quand une session est active
@@ -126,7 +178,7 @@ export class SessionDayComponent implements OnInit {
     this.store.loadSessionData();
   }
 
-  protected selectTab(tab: 'morning' | 'live'): void {
+  protected selectTab(tab: 'morning' | 'live' | 'debrief'): void {
     this.activeTab.set(tab);
   }
 
@@ -135,8 +187,13 @@ export class SessionDayComponent implements OnInit {
     this.activeTab.set('live');
   }
 
-  protected onSessionClosed(payload: { mood: string; note?: string; question?: string | null }): void {
-    this.store.onSessionClosed(payload as Parameters<typeof this.store.onSessionClosed>[0]);
+  protected confirmDebrief(payload: { note?: string; question?: string | null }): void {
+    this.store.onSessionClosed({
+      mood: this.closeMood(),
+      note: payload.note,
+      question: payload.question,
+    });
+    this.closeMood.set('NEUTRAL');
     this.activeTab.set('morning');
   }
 }
