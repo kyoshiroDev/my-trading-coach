@@ -247,7 +247,7 @@ interface WeekGroup {
 
                   @if (session.notes) {
                     <div class="detail-notes">
-                      <div class="detail-notes-lbl">📝 Notes</div>
+                      <div class="detail-notes-lbl">📓 Journal</div>
                       <div class="detail-notes-txt">{{ session.notes }}</div>
                     </div>
                   }

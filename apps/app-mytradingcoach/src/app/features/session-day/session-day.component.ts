@@ -254,7 +254,29 @@ const EMOTION_COLORS: Record<string, string> = {
               </div>
             }
 
-            <!-- 6. Recap (question réflexion + 17h30 + actions) -->
+            <!-- 6. Journal libre -->
+            <div class="session-journal">
+              <div class="sj-header">
+                <span class="sj-icon">📓</span>
+                <div>
+                  <div class="sj-title">Ton journal de session</div>
+                  <div class="sj-sub">Écris librement : ce qui a marché, tes émotions, ce que tu retiens. C'est ton espace.</div>
+                </div>
+              </div>
+              <textarea class="sj-textarea"
+                [value]="journalText()"
+                (input)="journalText.set($any($event.target).value)"
+                placeholder="Aujourd'hui, j'ai remarqué que..."
+                rows="5"></textarea>
+              <div class="sj-footer">
+                <span class="sj-count">{{ journalText().length }} caractères</span>
+                @if (journalSaved()) {
+                  <span class="sj-saved">✓ Enregistré</span>
+                }
+              </div>
+            </div>
+
+            <!-- 7. Recap (question réflexion + 17h30 + actions) -->
             <mtc-session-recap
               [session]="session"
               [liveStats]="store.todayStats()"
@@ -282,6 +304,8 @@ export class SessionDayComponent implements OnInit {
   protected readonly activeTab         = signal<'morning' | 'live' | 'debrief'>('morning');
   protected readonly closeMood         = signal<MoodState>('NEUTRAL');
   protected readonly objectiveChecks   = signal<Record<number, boolean>>({});
+  protected readonly journalText       = signal('');
+  protected readonly journalSaved      = signal(false);
   protected readonly moods             = MOODS;
   protected readonly today             = new Date();
 
@@ -397,6 +421,14 @@ export class SessionDayComponent implements OnInit {
       }
     });
 
+    // Pré-remplir le journal si la session a déjà des notes
+    effect(() => {
+      const session = this.store.activeSession();
+      if (session?.notes && this.journalText() === '') {
+        this.journalText.set(session.notes);
+      }
+    });
+
     effect(() => {
       const live = this.activeTab() === 'live';
       document.body.classList.toggle('live-mode-active', live);
@@ -425,11 +457,14 @@ export class SessionDayComponent implements OnInit {
   protected confirmDebrief(payload: { note?: string; question?: string | null }): void {
     this.store.onSessionClosed({
       mood: this.closeMood(),
+      notes: this.journalText() || undefined,
       note: payload.note,
       question: payload.question,
     });
     this.closeMood.set('NEUTRAL');
     this.objectiveChecks.set({});
+    this.journalText.set('');
+    this.journalSaved.set(false);
     this.activeTab.set('morning');
   }
 }

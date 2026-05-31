@@ -228,6 +228,27 @@
 .obj-title { font-size: 13px; color: var(--text); display: block; }
 .obj-detail { font-size: 11px; color: var(--red); font-family: var(--font-mono); display: block; margin-top: 2px; }
 
+/* Journal de session */
+.session-journal {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 18px;
+}
+.sj-header { display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start; }
+.sj-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+.sj-title { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--text); }
+.sj-sub { font-size: 12px; color: var(--text-3); margin-top: 3px; line-height: 1.5; }
+.sj-textarea {
+  width: 100%; background: var(--bg-3); border: 1px solid var(--border);
+  border-radius: 10px; padding: 13px; color: var(--text);
+  font-family: var(--font-body); font-size: 14px; line-height: 1.6;
+  resize: vertical; box-sizing: border-box; transition: border-color .15s;
+}
+.sj-textarea:focus { outline: none; border-color: var(--purple-bright); }
+.sj-textarea::placeholder { color: var(--text-3); }
+.sj-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.sj-count { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
+.sj-saved { font-size: 11px; color: var(--green); font-family: var(--font-mono); }
+
 /* Vide */
 .debrief-empty { text-align: center; padding: 60px 20px; color: var(--text-3); }
 .debrief-empty-icon { font-size: 42px; margin-bottom: 14px; }
