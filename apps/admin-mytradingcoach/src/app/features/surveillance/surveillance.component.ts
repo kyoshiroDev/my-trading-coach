@@ -18,7 +18,7 @@ interface ContainerGroup { label: string; color: string; containers: DockerConta
 const LOG_CONTAINERS = ['mtc_api_prod', 'mtc_api_dev', 'mtc_postgres', 'mtc_redis', 'mtc_pgbouncer', 'mtc_traefik'];
 
 @Component({
-  selector: 'mtc-surveillance',
+  selector: 'mtc-admin-surveillance',
   standalone: true,
   imports: [DecimalPipe, FormsModule, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
