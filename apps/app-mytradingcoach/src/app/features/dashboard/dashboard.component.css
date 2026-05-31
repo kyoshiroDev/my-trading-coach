@@ -7,7 +7,7 @@
 }
 
 .content {
-  padding: 28px;
+  padding: 30px;
   flex: 1;
   max-width: 100%;
   display: flex;
@@ -28,7 +28,7 @@
 .page-header {
   display: flex;
   align-items: center;
-  padding: 20px 28px 0;
+  padding: 20px 30px 0;
   margin-bottom: 20px;
   gap: 0;
 }
@@ -897,3 +897,13 @@ canvas {
   font-family: var(--font-body); white-space: nowrap; transition: all .15s;
 }
 .sess-stop-top:hover { background: rgba(239,68,68,.18); }
+
+/* ── Pill "session en cours" dans topbar dashboard ── */
+.sess-active-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 12px;
+  background: rgba(16,185,129,.06); border: 1px solid rgba(16,185,129,.18);
+  border-radius: 8px; text-decoration: none; color: var(--text-2);
+  font-size: 12px; transition: background .15s;
+}
+.sess-active-pill:hover { background: rgba(16,185,129,.12); }

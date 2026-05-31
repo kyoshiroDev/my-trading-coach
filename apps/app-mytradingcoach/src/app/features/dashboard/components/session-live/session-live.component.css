@@ -12,7 +12,7 @@
   flex: 1;
   overflow: hidden;
   min-height: 0;
-  padding: 0 14px 10px;
+  padding: 0 30px 10px;
 }
 
 /* ─── Card ─── */
@@ -111,6 +111,7 @@
 .live-layout {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: 1fr; /* force la grille à remplir la hauteur disponible */
   gap: 12px;
   align-items: stretch;
   width: 100%;
@@ -553,11 +554,18 @@
 }
 
 @media (max-width: 1400px) {
-  .live-layout { grid-template-columns: repeat(2, 1fr); }
+  .live-layout {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
   .mini-stats-row { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 768px) {
-  .live-layout { grid-template-columns: 1fr; }
+  .live-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    overflow-y: auto;
+  }
   .mini-stats-row { grid-template-columns: repeat(2, 1fr); }
 }
 

@@ -7,7 +7,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
+import { EcoEventRowComponent } from './eco-event-row.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { EcoCalendarApi, EcoEvent } from '../../core/api/eco-calendar.api';
@@ -27,7 +27,7 @@ interface DayGroup {
   selector: 'mtc-eco-calendar-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgTemplateOutlet],
+  imports: [EcoEventRowComponent],
   templateUrl: './eco-calendar.component.html',
   styleUrl: './eco-calendar.component.css',
 })
@@ -41,6 +41,7 @@ export class EcoCalendarComponent implements OnInit {
   protected readonly dayGroups = signal<DayGroup[]>([]);
   protected readonly pinnedEvents = signal<Set<string>>(new Set());
   protected readonly isSavingPins = signal(false);
+  protected readonly pinnedUpcoming = signal<EcoEvent[]>([]);
 
   protected readonly filterImpact = signal<'all' | 'high' | 'medium'>('all');
   protected readonly filterCurrency = signal<string>('all');
@@ -89,11 +90,46 @@ export class EcoCalendarComponent implements OnInit {
     this.filterCountry() !== 'all',
   );
 
+  protected readonly selectedDate = signal<string | null>(null);
+
+  protected readonly selectedDayGroup = computed(() => {
+    const date = this.selectedDate();
+    const groups = this.filteredDayGroups();
+    if (!date) return groups[0] ?? null;
+    return groups.find(g => g.date === date) ?? groups[0] ?? null;
+  });
+
+  protected readonly weekDays = computed(() => {
+    const monday = this.currentWeekStart();
+    const today = todayParis();
+    const out: {
+      date: string; label: string; short: string; dayNum: string;
+      count: number; hasHigh: boolean; isToday: boolean;
+    }[] = [];
+    for (let i = 0; i < 5; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const date = toParisDateStr(d);
+      const group = this.filteredDayGroups().find(g => g.date === date);
+      out.push({
+        date,
+        label: this.formatDayLabel(date),
+        short: d.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', ''),
+        dayNum: String(d.getDate()),
+        count: group?.events.length ?? 0,
+        hasHigh: (group?.events ?? []).some(e => e.impact === 'high'),
+        isToday: date === today,
+      });
+    }
+    return out;
+  });
+
   ngOnInit() {
     this.loadWeek(this.currentWeekStart());
     this.api.getPins()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(res => this.pinnedEvents.set(new Set(res.data ?? [])));
+    this.loadPinnedUpcoming();
   }
 
   protected prevWeek(): void {
@@ -122,6 +158,17 @@ export class EcoCalendarComponent implements OnInit {
     this.filterCountry.set('all');
   }
 
+  protected selectDay(date: string): void {
+    this.selectedDate.set(date);
+  }
+
+  private setDefaultSelectedDay(): void {
+    const today = todayParis();
+    const days = this.weekDays();
+    const todayInWeek = days.find(d => d.date === today);
+    this.selectedDate.set(todayInWeek ? today : (days[0]?.date ?? null));
+  }
+
   private loadWeek(monday: Date): void {
     this.isLoading.set(true);
     const from = toParisDateStr(monday);
@@ -136,16 +183,13 @@ export class EcoCalendarComponent implements OnInit {
       )
       .subscribe(res => {
         const today = todayParis();
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const tomorrowStr = toParisDateStr(tomorrow);
 
         this.dayGroups.set(
           (res.data ?? []).map(d => {
             const events = d.events ?? [];
             return {
               date: d.date,
-              label: this.formatDayLabel(d.date, today, tomorrowStr),
+              label: this.formatDayLabel(d.date),
               isToday: d.date === today,
               events,
               sessions: {
@@ -155,6 +199,7 @@ export class EcoCalendarComponent implements OnInit {
             };
           }),
         );
+        this.setDefaultSelectedDay();
       });
   }
 
@@ -167,7 +212,18 @@ export class EcoCalendarComponent implements OnInit {
     this.isSavingPins.set(true);
     this.api.savePins([...pins])
       .pipe(finalize(() => this.isSavingPins.set(false)))
-      .subscribe();
+      .subscribe(() => this.loadPinnedUpcoming());
+  }
+
+  private loadPinnedUpcoming(): void {
+    this.api.getPinnedUpcoming()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(res => this.pinnedUpcoming.set(res.data ?? []));
+  }
+
+  protected formatShortDay(dateStr: string): string {
+    const d = new Date(`${dateStr}T12:00:00`);
+    return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
   }
 
   protected isPinned(event: EcoEvent): boolean {
@@ -179,14 +235,19 @@ export class EcoCalendarComponent implements OnInit {
   }
 
   private readonly FLAGS: Record<string, string> = {
-    US: '🇺🇸', EU: '🇪🇺', GB: '🇬🇧', JP: '🇯🇵',
-    CA: '🇨🇦', AU: '🇦🇺', NZ: '🇳🇿', CH: '🇨🇭',
-    CN: '🇨🇳', DE: '🇩🇪', FR: '🇫🇷', IT: '🇮🇹',
-    ES: '🇪🇸', SE: '🇸🇪', NO: '🇳🇴', DK: '🇩🇰',
-    USD: '🇺🇸', EUR: '🇪🇺', GBP: '🇬🇧', JPY: '🇯🇵',
-    CAD: '🇨🇦', AUD: '🇦🇺', NZD: '🇳🇿', CHF: '🇨🇭',
-    CNY: '🇨🇳', CNH: '🇨🇳', SEK: '🇸🇪', NOK: '🇳🇴',
-    DKK: '🇩🇰', HKD: '🇭🇰', SGD: '🇸🇬', MXN: '🇲🇽',
+    // Codes pays
+    US: '🇺🇸', EU: '🇪🇺', GB: '🇬🇧', JP: '🇯🇵', CA: '🇨🇦', AU: '🇦🇺',
+    NZ: '🇳🇿', CH: '🇨🇭', CN: '🇨🇳', DE: '🇩🇪', FR: '🇫🇷', IT: '🇮🇹',
+    ES: '🇪🇸', SE: '🇸🇪', NO: '🇳🇴', DK: '🇩🇰', KR: '🇰🇷', TR: '🇹🇷',
+    RU: '🇷🇺', BR: '🇧🇷', IN: '🇮🇳', ZA: '🇿🇦', PL: '🇵🇱', HU: '🇭🇺',
+    CZ: '🇨🇿', IL: '🇮🇱', TH: '🇹🇭', ID: '🇮🇩', MX: '🇲🇽', SG: '🇸🇬',
+    HK: '🇭🇰', PT: '🇵🇹', AT: '🇦🇹', BE: '🇧🇪', FI: '🇫🇮', NL: '🇳🇱',
+    // Codes devise
+    USD: '🇺🇸', EUR: '🇪🇺', GBP: '🇬🇧', JPY: '🇯🇵', CAD: '🇨🇦', AUD: '🇦🇺',
+    NZD: '🇳🇿', CHF: '🇨🇭', CNY: '🇨🇳', CNH: '🇨🇳', SEK: '🇸🇪', NOK: '🇳🇴',
+    DKK: '🇩🇰', HKD: '🇭🇰', SGD: '🇸🇬', MXN: '🇲🇽', KRW: '🇰🇷', TRY: '🇹🇷',
+    RUB: '🇷🇺', BRL: '🇧🇷', INR: '🇮🇳', ZAR: '🇿🇦', PLN: '🇵🇱', HUF: '🇭🇺',
+    CZK: '🇨🇿', ILS: '🇮🇱', THB: '🇹🇭', IDR: '🇮🇩',
   };
 
   protected getFlag(event: { country?: string | null; currency?: string | null }): string {
@@ -203,14 +264,13 @@ export class EcoCalendarComponent implements OnInit {
     friday.setDate(friday.getDate() + 4);
     const fmt = (d: Date) =>
       d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-    return `${fmt(monday)} — ${fmt(friday)}`;
+    return `Semaine du ${fmt(monday)} — ${fmt(friday)}`;
   }
 
-  protected formatDayLabel(date: string, today: string, tomorrow: string): string {
-    if (date === today) return "Aujourd'hui";
-    if (date === tomorrow) return 'Demain';
+  protected formatDayLabel(date: string): string {
     const d = new Date(date + 'T12:00:00');
-    return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    const label = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    return label.charAt(0).toUpperCase() + label.slice(1);
   }
 
   protected isThisWeek(): boolean {
@@ -232,8 +292,13 @@ export class EcoCalendarComponent implements OnInit {
   }
 
   private getMonday(d: Date): Date {
-    const day = d.getDay();
-    const diff = day === 0 ? -6 : 1 - day;
+    const parisStr = d.toLocaleDateString('en-US', { timeZone: 'Europe/Paris', weekday: 'short' });
+    const map: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+    const day = map[parisStr] ?? d.getDay();
+    let diff: number;
+    if (day === 0) diff = 1;
+    else if (day === 6) diff = 2;
+    else diff = 1 - day;
     const monday = new Date(d);
     monday.setDate(d.getDate() + diff);
     monday.setHours(0, 0, 0, 0);

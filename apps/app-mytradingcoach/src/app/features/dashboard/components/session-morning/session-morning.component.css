@@ -1,3 +1,5 @@
+:host { display: block; padding: 0 30px 30px; }
+
 /* ─── Session banner ─── */
 .session-banner {
   background: linear-gradient(135deg, rgba(59,130,246,.07), rgba(16,185,129,.04));

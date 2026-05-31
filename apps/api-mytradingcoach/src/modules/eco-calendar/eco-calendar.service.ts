@@ -6,6 +6,7 @@ import { todayParis, toParisDateStr } from '../../common/utils/paris-date';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 
 export interface EcoEvent {
+  date?: string;
   time: string;
   name: string;
   impact: 'high' | 'medium';
@@ -409,10 +410,14 @@ export class EcoCalendarService {
     }
 
     const results = await Promise.all(
-      dates.map(async (date) => ({
-        date,
-        events: await this.getEventsFromDb(date),
-      })),
+      dates.map(async (date) => {
+        let events = await this.getEventsFromDb(date);
+        if (events.length === 0) {
+          try { events = await this.fetchAndStoreEvents(date); }
+          catch { events = []; }
+        }
+        return { date, events };
+      }),
     );
 
     return results.filter((r) => r.events.length > 0);
@@ -450,6 +455,54 @@ export class EcoCalendarService {
       if (!aPinned && bPinned) return 1;
       return a.time.localeCompare(b.time);
     });
+  }
+
+  // ── getPinnedUpcoming — prochaines occurrences des types épinglés ────────────
+
+  async getPinnedUpcoming(userId: string, daysAhead = 7): Promise<EcoEvent[]> {
+    const rawPins = await this.getUserPins(userId);
+    if (rawPins.length === 0) return [];
+
+    const normalizedPins = new Set(rawPins.map(p => this.normalizeEventKey(p)));
+
+    const today = todayParis();
+    const start = new Date(`${today}T00:00:00`);
+    const all: EcoEvent[] = [];
+
+    for (let i = 0; i < daysAhead; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const date = toParisDateStr(d);
+
+      // Lecture base ; si vide, on fetch FMP pour ce jour
+      let events = await this.getEventsFromDb(date);
+      if (events.length === 0) {
+        try {
+          events = await this.fetchAndStoreEvents(date);
+        } catch {
+          events = [];
+        }
+      }
+
+      for (const e of events) {
+        if (normalizedPins.has(this.normalizeEventKey(`${e.name}:${e.currency}`))) {
+          all.push({ ...e, date });
+        }
+      }
+    }
+
+    return all.sort((a, b) =>
+      ((a.date ?? '') + (a.time ?? '')).localeCompare((b.date ?? '') + (b.time ?? '')),
+    );
+  }
+
+  // Retire le suffixe de période "(May)", "(Q1 2026)", "(Apr)" d'une clé nom:devise
+  private normalizeEventKey(key: string): string {
+    const colonIdx = key.lastIndexOf(':');
+    if (colonIdx === -1) return key;
+    const name     = key.substring(0, colonIdx).replace(/\s*\([^)]*\)\s*$/, '').trim();
+    const currency = key.substring(colonIdx + 1);
+    return `${name}:${currency}`;
   }
 
   async getUserTopAssets(userId: string): Promise<string[]> {

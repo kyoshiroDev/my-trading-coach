@@ -1,5 +1,5 @@
 /* ── Page ── */
-.eco-page { padding: 24px; max-width: 960px; margin: 0 auto; }
+.eco-page { padding: 30px; }
 
 /* ── Header ── */
 .eco-header {
@@ -120,11 +120,7 @@
 @keyframes todayPulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
 .eco-day-count { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
 
-/* ── Liste events (ancien, gardé pour compat) ── */
-.eco-events-list { display: flex; flex-direction: column; gap: 5px; }
-
-/* ── Sessions 2 colonnes ── */
-.eco-sessions { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+/* ── Session column header (Europe / US / Sélection) ── */
 .eco-session-col { display: flex; flex-direction: column; }
 .eco-session-head {
   display: flex; align-items: center; gap: 8px;
@@ -241,4 +237,134 @@
   font-family: var(--font-mono); font-size: 10px;
   color: var(--green); background: var(--green-dim);
   border-radius: 5px; padding: 2px 7px; flex-shrink: 0;
+}
+
+/* ── Layout : 3 colonnes strictement égales ── */
+.eco-layout {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+/* Colonne générique */
+.eco-col { display: flex; flex-direction: column; }
+
+/* Corps de colonne (sous le header) */
+.eco-col-body {
+  background: rgba(14,20,32,.4);
+  border: 1px solid var(--border); border-top: none;
+  border-radius: 0 0 10px 10px;
+  display: flex; flex-direction: column;
+}
+
+/* Bloc par jour dans chaque colonne */
+.eco-day-block {
+  padding: 8px 7px;
+  border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.eco-day-block:last-child { border-bottom: none; }
+
+/* Séparateur de jour dans la colonne */
+.eco-day-sep {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  color: var(--text-3); text-transform: uppercase; letter-spacing: .8px;
+  padding-bottom: 4px;
+}
+.eco-day-block.today .eco-day-sep { color: var(--blue-bright); }
+
+/* En-tête de la colonne sélection */
+.eco-session-head.selection {
+  background: linear-gradient(135deg, rgba(245,158,11,.18), rgba(245,158,11,.04));
+  color: var(--yellow);
+  border: 1px solid rgba(245,158,11,.35);
+  border-bottom: none;
+}
+
+/* Corps sélection : scroll interne si liste longue */
+.eco-selection-body {
+  padding: 7px;
+  display: flex; flex-direction: column; gap: 6px;
+  overflow-y: auto; max-height: 60vh; min-height: 0;
+}
+.eco-selection-body::-webkit-scrollbar { width: 4px; }
+.eco-selection-body::-webkit-scrollbar-thumb {
+  background: rgba(245,158,11,.2); border-radius: 2px;
+}
+
+/* Éléments de la sélection */
+.sel-item {
+  display: flex; align-items: center; gap: 9px; padding: 8px 10px;
+  background: var(--bg-3); border: 1px solid rgba(245,158,11,.12); border-radius: 8px;
+}
+.sel-item.high { border-left: 3px solid var(--red); }
+.sel-flag { font-size: 16px; flex-shrink: 0; }
+.sel-bdy  { flex: 1; min-width: 0; }
+.sel-day  { font-family: var(--font-mono); font-size: 9px; color: var(--yellow); font-weight: 600; text-transform: uppercase; }
+.sel-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sel-unpin {
+  background: transparent; border: none; cursor: pointer;
+  color: var(--text-3); font-size: 11px; padding: 2px 4px;
+  border-radius: 4px; flex-shrink: 0; opacity: 0;
+  transition: opacity .15s, color .15s;
+}
+.sel-item:hover .sel-unpin { opacity: 1; }
+.sel-unpin:hover { color: var(--red); }
+
+@media (max-width: 900px) {
+  .eco-layout { grid-template-columns: 1fr; }
+  .eco-selection-col { order: -1; margin-bottom: 8px; }
+  .eco-selection-body { max-height: 320px; }
+}
+@media (max-width: 600px) {
+  .eco-event-row { flex-wrap: wrap; }
+}
+
+/* ── Pills sélecteur de jour ── */
+.eco-day-pills { display: flex; gap: 8px; margin-bottom: 16px; }
+.eco-day-pill {
+  flex: 1; min-width: 80px; padding: 11px 8px;
+  border-radius: 11px; background: var(--bg-card); border: 1px solid var(--border);
+  cursor: pointer; text-align: center; transition: all .15s;
+  display: flex; flex-direction: column; gap: 3px; align-items: center;
+}
+.eco-day-pill:hover { border-color: var(--border-hover); }
+.eco-day-pill.active { border-color: var(--blue); background: var(--blue-glow); }
+.eco-day-pill.today { border-left: 3px solid var(--blue-bright); }
+.dp-day {
+  font-family: var(--font-mono); font-size: 10px; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: .5px;
+}
+.eco-day-pill.active .dp-day { color: var(--blue-bright); }
+.dp-date {
+  font-family: var(--font-display); font-weight: 700; font-size: 17px; color: var(--text);
+}
+.eco-day-pill.active .dp-date { color: var(--blue-bright); }
+.dp-cnt {
+  display: flex; align-items: center;
+  font-size: 10px; color: var(--text-3); font-family: var(--font-mono);
+}
+.dp-dot {
+  display: inline-block; width: 5px; height: 5px;
+  border-radius: 50%; background: var(--red); margin-left: 3px;
+}
+
+/* ── Titre du jour sélectionné ── */
+.eco-selected-day-label {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-display); font-weight: 700; font-size: 15px;
+  text-transform: capitalize; margin-bottom: 12px; color: var(--text);
+}
+
+/* ── Colonne sélection sticky ── */
+.eco-selection-col {
+  position: sticky;
+  top: 76px;
+}
+
+@media (max-width: 600px) {
+  .eco-day-pills { overflow-x: auto; }
+  .eco-day-pill { min-width: 64px; flex: 0 0 auto; }
 }

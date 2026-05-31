@@ -74,6 +74,17 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
           </a>
 
           <a
+            routerLink="/session"
+            routerLinkActive="active"
+            class="nav-item"
+            data-testid="nav-session"
+            (click)="closeSidebar()"
+          >
+            <span class="nav-icon">⚡</span>
+            Ma session
+          </a>
+
+          <a
             routerLink="/journal"
             routerLinkActive="active"
             class="nav-item"

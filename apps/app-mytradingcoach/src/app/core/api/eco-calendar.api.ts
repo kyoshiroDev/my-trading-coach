@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface EcoEvent {
+  date?: string;
   time: string;
   name: string;
   impact: 'high' | 'medium';
@@ -73,6 +74,10 @@ export class EcoCalendarApi {
     return this.http.get<{ data: { date: string; events: EcoEvent[] }[] }>(
       `${this.base}/range?from=${from}&to=${to}`,
     );
+  }
+
+  getPinnedUpcoming(): Observable<{ data: EcoEvent[] }> {
+    return this.http.get<{ data: EcoEvent[] }>(`${this.base}/pinned-upcoming`);
   }
 
   getPins(): Observable<{ data: string[] }> {

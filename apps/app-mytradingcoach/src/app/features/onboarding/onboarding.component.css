@@ -1,367 +1,173 @@
 .overlay {
-  position: fixed;
-  inset: 0;
+  position: fixed; inset: 0;
   background: var(--bg);
   z-index: 300;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   padding: 24px;
   animation: fadeIn 0.2s ease;
 }
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 .wizard {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 20px;
-  width: 100%;
-  max-width: 560px;
+  width: 100%; max-width: 560px;
   overflow: hidden;
   animation: slideUp 0.25s ease;
 }
+@keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-@keyframes slideUp {
-  from {
-    transform: translateY(24px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-/* Header */
+/* ── Header ── */
 .wizard-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: flex; align-items: center; justify-content: space-between;
   padding: 20px 24px;
   border-bottom: 1px solid var(--border);
 }
-
-.wizard-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.logo-mark {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-}
-
-.logo-text {
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text);
-}
-
+.wizard-logo { display: flex; align-items: center; gap: 10px; }
+.logo-mark   { width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); }
+.logo-text   { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--text); }
 .skip-btn {
-  font-size: 12px;
-  font-family: var(--font-mono);
-  color: var(--text-3);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 6px 12px;
-  border-radius: 6px;
-  transition: color 0.15s;
+  font-size: 12px; font-family: var(--font-mono); color: var(--text-3);
+  background: transparent; border: none; cursor: pointer;
+  padding: 6px 12px; border-radius: 6px; transition: color 0.15s;
 }
+.skip-btn:hover { color: var(--text-2); }
+.skip-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.skip-btn:hover {
-  color: var(--text-2);
-}
-.skip-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+/* ── Progress ── */
+.progress-bar  { height: 3px; background: var(--border); }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6); transition: width 0.4s ease; }
 
-/* Progress bar */
-.progress-bar {
-  height: 3px;
-  background: var(--border);
-}
+/* ── Body ── */
+.wizard-body { padding: 28px 24px 24px; }
+.step-label  { font-family: var(--font-mono); font-size: 10px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; color: var(--blue-bright, #60a5fa); margin-bottom: 10px; }
+.step-title  { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--text); margin: 0 0 8px; line-height: 1.2; }
+.step-title.center { text-align: center; }
+.step-desc   { font-size: 13px; color: var(--text-2); margin: 0 0 24px; line-height: 1.5; }
+.step-desc.center { text-align: center; }
 
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-  transition: width 0.4s ease;
+/* ── Étape 1 — Promesse ── */
+.promise-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+.promise-card {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 14px 16px;
+  background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px;
 }
+.promise-ic { font-size: 22px; flex-shrink: 0; line-height: 1; }
+.promise-t  { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+.promise-d  { font-size: 12px; color: var(--text-3); line-height: 1.5; }
 
-/* Body */
-.wizard-body {
-  padding: 32px 24px 24px;
-}
-
-.wizard-body.step3 {
-  padding: 24px 0 0;
-}
-
-.step-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--blue-bright, #60a5fa);
-  margin-bottom: 10px;
-}
-
-.step-title {
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text);
-  margin: 0 0 8px;
-  line-height: 1.2;
-}
-
-.step-desc {
-  font-size: 13px;
-  color: var(--text-2);
-  margin: 0 0 24px;
-  line-height: 1.5;
-}
-
-/* Choice grid */
-.choice-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 24px;
-}
-
-.goal-grid {
-  grid-template-columns: 1fr;
-}
+/* ── Choice grid (marchés, objectifs, trade step 5) ── */
+.choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+.goal-grid   { grid-template-columns: 1fr; }
 
 .choice-card {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  padding: 16px;
-  background: var(--bg-2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.15s;
-  text-align: left;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+  padding: 16px; background: var(--bg-2); border: 1px solid var(--border);
+  border-radius: 12px; cursor: pointer; transition: all 0.15s; text-align: left;
+}
+.choice-card:hover         { border-color: rgba(59,130,246,.4); background: rgba(59,130,246,.04); }
+.choice-card.selected      { border-color: var(--blue, #3b82f6); background: rgba(59,130,246,.08); box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
+
+/* inner classes partagées */
+.choice-emoji { font-size: 22px; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; height: 28px; }
+.choice-label { font-family: var(--font-body); font-size: 14px; font-weight: 600; color: var(--text); }
+.choice-desc  { font-size: 11px; color: var(--text-3); line-height: 1.4; }
+
+/* Icone step 5 */
+.choice-ic { font-size: 22px; margin-bottom: 6px; }
+.choice-ic.blue  { filter: none; }
+.choice-ic.green { filter: none; }
+
+/* Tag "Recommandé" */
+.choice-tag {
+  margin-top: 6px; font-size: 10px; font-family: var(--font-mono); font-weight: 600;
+  padding: 2px 8px; border-radius: 20px;
+  background: rgba(59,130,246,.12); color: var(--blue-bright);
+  border: 1px solid rgba(59,130,246,.2);
+}
+.choice-tag.green {
+  background: rgba(16,185,129,.12); color: var(--green);
+  border-color: rgba(16,185,129,.2);
 }
 
-.choice-card:hover {
-  border-color: rgba(59, 130, 246, 0.4);
-  background: rgba(59, 130, 246, 0.04);
-}
-
-.choice-card.selected {
-  border-color: var(--blue, #3b82f6);
-  background: rgba(59, 130, 246, 0.08);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
-}
-
-.choice-emoji {
-  font-size: 22px;
-  margin-bottom: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 28px;
-}
-
-.choice-label {
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.choice-desc {
-  font-size: 11px;
-  color: var(--text-3);
-  line-height: 1.4;
-}
-
-/* Footer */
-.wizard-footer {
-  display: flex;
-  justify-content: flex-end;
-}
+/* ── Footer ── */
+.wizard-footer { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+.footer-step5  { justify-content: space-between; }
 
 .btn-next {
-  padding: 11px 28px;
-  background: var(--blue, #3b82f6);
-  border: none;
-  border-radius: 10px;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: var(--font-body);
-  cursor: pointer;
-  transition: all 0.15s;
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
+  padding: 11px 28px; background: var(--blue, #3b82f6); border: none; border-radius: 10px;
+  color: #fff; font-size: 14px; font-weight: 600; font-family: var(--font-body);
+  cursor: pointer; transition: all 0.15s;
+  box-shadow: 0 0 20px rgba(59,130,246,.25);
 }
+.btn-next:hover:not(:disabled) { background: var(--blue-bright, #60a5fa); transform: translateY(-1px); }
+.btn-next:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-dashboard { width: 100%; justify-content: center; }
 
-.btn-next:hover:not(:disabled) {
-  background: var(--blue-bright, #60a5fa);
-  transform: translateY(-1px);
+.btn-back {
+  font-size: 12px; font-family: var(--font-mono); color: var(--text-3);
+  background: transparent; border: none; cursor: pointer;
+  padding: 6px 10px; border-radius: 6px; transition: color 0.15s;
 }
-
-.btn-next:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Step 3 — Capital de départ */
-.capital-field {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.currency-toggle {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-  background: var(--bg-2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 4px;
-}
-
-.currency-btn {
-  padding: 8px;
-  border: none;
-  border-radius: 5px;
-  font-size: 13px;
-  font-family: var(--font-mono);
-  font-weight: 600;
-  cursor: pointer;
-  background: transparent;
-  color: var(--text-3);
-  transition: all 0.15s;
-}
-
-.currency-btn.active-usd {
-  background: rgba(59, 130, 246, 0.15);
-  color: var(--blue-bright);
-}
-.currency-btn.active-eur {
-  background: rgba(59, 130, 246, 0.15);
-  color: var(--blue-bright);
-}
-
-.capital-input {
-  background: var(--bg-2);
-  border: 1px solid var(--border);
-  color: var(--text);
-  border-radius: 8px;
-  padding: 12px 16px;
-  font-size: 20px;
-  font-family: var(--font-mono);
-  font-weight: 600;
-  outline: none;
-  width: 100%;
-  box-sizing: border-box;
-  transition: border-color 0.15s;
-}
-
-.capital-input:focus {
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-.capital-input::placeholder {
-  color: var(--text-3);
-  font-weight: 400;
-}
-
-.capital-hint {
-  font-size: 11px;
-  color: var(--text-3);
-  margin: 0 0 24px;
-}
+.btn-back:hover { color: var(--text-2); }
 
 .btn-skip-capital {
-  font-size: 12px;
-  font-family: var(--font-mono);
-  color: var(--text-3);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 6px 12px;
-  border-radius: 6px;
-  transition: color 0.15s;
-  margin-right: auto;
+  font-size: 12px; font-family: var(--font-mono); color: var(--text-3);
+  background: transparent; border: none; cursor: pointer;
+  padding: 6px 12px; border-radius: 6px; transition: color 0.15s; margin-right: auto;
 }
-.btn-skip-capital:hover {
-  color: var(--text-2);
-}
+.btn-skip-capital:hover  { color: var(--text-2); }
+.btn-skip-capital:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* Step 4 — trade form override: hide the overlay from TradeForm, show inline */
-.wizard-body.step3 :host-context(mtc-trade-form) .overlay {
-  position: static;
-  background: none;
-  padding: 0;
+/* ── Capital ── */
+.capital-field { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; }
+.currency-toggle {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+  background: var(--bg-2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 4px;
 }
-
-.wizard-body.step3 :host-context(mtc-trade-form) .modal {
-  border: none;
-  border-radius: 0;
-  max-height: 60vh;
+.currency-btn {
+  padding: 8px; border: none; border-radius: 5px;
+  font-size: 13px; font-family: var(--font-mono); font-weight: 600;
+  cursor: pointer; background: transparent; color: var(--text-3); transition: all 0.15s;
 }
+.currency-btn.active-usd,
+.currency-btn.active-eur { background: rgba(59,130,246,.15); color: var(--blue-bright); }
 
-/* ── Step Discord ── */
-.discord-card {
+.capital-input {
+  background: var(--bg-2); border: 1px solid var(--border); color: var(--text);
+  border-radius: 8px; padding: 12px 16px; font-size: 20px;
+  font-family: var(--font-mono); font-weight: 600; outline: none; width: 100%;
+  box-sizing: border-box; transition: border-color 0.15s;
+}
+.capital-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59,130,246,.1); }
+.capital-input::placeholder { color: var(--text-3); font-weight: 400; }
+.capital-hint { font-size: 11px; color: var(--text-3); margin: 0 0 20px; line-height: 1.5; }
+
+/* ── Étape 6 — Célébration + Discord ── */
+.celebrate    { text-align: center; margin-bottom: 8px; }
+.celebrate-ic { font-size: 48px; line-height: 1; }
+
+.discord-card-link {
   display: flex; align-items: center; gap: 14px;
-  background: rgba(88,101,242,0.1); border: 1px solid rgba(88,101,242,0.3);
-  border-radius: 12px; padding: 16px; margin: 16px 0;
+  background: rgba(88,101,242,.1); border: 1px solid rgba(88,101,242,.3);
+  border-radius: 12px; padding: 16px; margin: 0 0 20px;
+  text-decoration: none; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
 }
+.discord-card-link:hover { background: rgba(88,101,242,.18); border-color: rgba(88,101,242,.5); }
 .discord-logo {
-  width: 48px; height: 48px; background: #5865f2; border-radius: 12px;
+  width: 44px; height: 44px; background: #5865f2; border-radius: 12px;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
+.discord-info { flex: 1; min-width: 0; }
 .discord-server-name { font-size: 14px; font-weight: 700; color: var(--text); }
 .discord-server-desc { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); margin-top: 3px; }
-
-.discord-channels { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 16px; }
-.discord-channel {
-  font-size: 13px; color: var(--text-2);
-  display: flex; align-items: center; gap: 8px;
-  padding: 6px 10px; background: var(--bg-card); border-radius: 7px;
+.discord-join {
+  font-size: 13px; font-weight: 700; color: #7289da;
+  white-space: nowrap; flex-shrink: 0;
+  background: rgba(88,101,242,.15); padding: 6px 12px; border-radius: 8px;
 }
-.discord-channel span { color: var(--text); font-weight: 500; }
-
-.discord-note {
-  display: flex; align-items: flex-start; gap: 8px;
-  background: var(--bg-2); border-radius: 8px; padding: 12px 14px;
-  font-size: 12px; color: var(--text-3); line-height: 1.6; margin-bottom: 8px;
-}
-.discord-note code {
-  background: var(--bg-card); padding: 1px 6px; border-radius: 4px;
-  font-family: var(--font-mono); color: var(--blue-bright);
-}
-
-.discord-footer { display: flex; align-items: center; gap: 10px; }
-
-.btn-discord {
-  flex: 1; display: flex; align-items: center; justify-content: center;
-  background: #5865f2; color: white !important;
-  border: none; border-radius: 10px; padding: 12px 20px;
-  font-size: 14px; font-weight: 700; text-decoration: none;
-  cursor: pointer; transition: opacity 0.15s;
-}
-.btn-discord:hover { opacity: 0.85; }
+.discord-card-link:hover .discord-join { background: rgba(88,101,242,.3); }
