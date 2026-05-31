@@ -254,7 +254,8 @@
 .sj-textarea::placeholder { color: var(--text-3); }
 .sj-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
 .sj-count { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
-.sj-saved { font-size: 11px; color: var(--green); font-family: var(--font-mono); }
+.sj-saved  { font-size: 11px; color: var(--green); font-family: var(--font-mono); }
+.sj-saving { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
 
 /* Vide */
 .debrief-empty { text-align: center; padding: 60px 20px; color: var(--text-3); }

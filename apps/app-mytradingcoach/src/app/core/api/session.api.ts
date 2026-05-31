@@ -94,7 +94,7 @@ export class SessionApi {
 
   updateSession(
     id: string,
-    data: { planNote?: string; marketContext?: string },
+    data: { planNote?: string; marketContext?: string; notes?: string; reflectionNote?: string },
   ): Observable<{ data: TradingSession }> {
     return this.http.patch<{ data: TradingSession }>(`${this.base}/${id}`, data);
   }

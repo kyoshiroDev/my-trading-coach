@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  OnDestroy,
   OnInit,
   computed,
   effect,
@@ -15,7 +16,7 @@ import { SessionMorningComponent } from '../dashboard/components/session-morning
 import { SessionLiveComponent } from '../dashboard/components/session-live/session-live.component';
 import { SessionRecapComponent } from '../dashboard/components/session-recap/session-recap.component';
 import { LiveModeService } from '../../core/services/live-mode.service';
-import { MoodState } from '../../core/api/session.api';
+import { MoodState, SessionApi } from '../../core/api/session.api';
 import { EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe } from '../../shared/pipes';
 
 const MOODS: { value: MoodState; label: string; emoji: string }[] = [
@@ -277,13 +278,15 @@ const EMOTION_COLORS: Record<string, string> = {
               </div>
               <textarea class="sj-textarea"
                 [value]="journalText()"
-                (input)="journalText.set($any($event.target).value)"
+                (input)="onJournalInput($any($event.target).value)"
                 placeholder="Aujourd'hui, j'ai remarqué que..."
                 rows="5"></textarea>
               <div class="sj-footer">
                 <span class="sj-count">{{ journalText().length }} caractères</span>
                 @if (journalSaved()) {
                   <span class="sj-saved">✓ Enregistré</span>
+                } @else if (journalText().length > 0) {
+                  <span class="sj-saving">Enregistrement…</span>
                 }
               </div>
             </div>
@@ -302,10 +305,12 @@ const EMOTION_COLORS: Record<string, string> = {
     </div>
   `,
 })
-export class SessionDayComponent implements OnInit {
+export class SessionDayComponent implements OnInit, OnDestroy {
   protected readonly store          = inject(SessionStore);
   private  readonly liveModeService = inject(LiveModeService);
+  private  readonly sessionApi      = inject(SessionApi);
   private  readonly destroyRef      = inject(DestroyRef);
+  private  journalSaveTimer: ReturnType<typeof setTimeout> | null = null;
 
   protected readonly activeTab         = signal<'morning' | 'live' | 'debrief'>('morning');
   protected readonly closeMood         = signal<MoodState>('NEUTRAL');
@@ -458,6 +463,27 @@ export class SessionDayComponent implements OnInit {
   protected startSession(): void {
     this.store.startSession();
     this.activeTab.set('live');
+  }
+
+  protected onJournalInput(value: string): void {
+    this.journalText.set(value);
+    this.journalSaved.set(false);
+    if (this.journalSaveTimer) clearTimeout(this.journalSaveTimer);
+    this.journalSaveTimer = setTimeout(() => this.saveJournal(), 1200);
+  }
+
+  private saveJournal(): void {
+    const session = this.store.activeSession();
+    if (!session?.id) return;
+    this.sessionApi.updateSession(session.id, { notes: this.journalText() })
+      .subscribe({
+        next: () => this.journalSaved.set(true),
+        error: () => this.journalSaved.set(false),
+      });
+  }
+
+  ngOnDestroy(): void {
+    if (this.journalSaveTimer) clearTimeout(this.journalSaveTimer);
   }
 
   protected confirmDebrief(payload: { note?: string; question?: string | null }): void {
