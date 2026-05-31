@@ -120,7 +120,43 @@ const EMOTION_COLORS: Record<string, string> = {
 
           @if (store.activeSession(); as session) {
 
-            <!-- 0. Bandeau journée sans trade -->
+            <!-- LIGNE DU HAUT : émotions (gauche) + score discipline (droite) -->
+            <div class="debrief-top-row">
+
+              <!-- Gauche : émotion de fin -->
+              <div class="debrief-mood-card">
+                <h3 class="debrief-mood-title">Comment tu te sens en fin de session ?</h3>
+                <div class="mood-row">
+                  @for (mood of moods; track mood.value) {
+                    <button class="mood-btn" [class.sel]="closeMood() === mood.value"
+                            (click)="closeMood.set(mood.value)">
+                      {{ mood.emoji }} {{ mood.label }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <!-- Droite : score de discipline -->
+              <div class="debrief-card debrief-score-card">
+                <div class="score-ring-wrap">
+                  <div class="score-ring"
+                       [style.background]="'conic-gradient(' + scoreColor() + ' ' + disciplineScore() + '%, var(--bg-3) 0)'">
+                    <div class="score-ring-inner">
+                      <span class="score-val">{{ disciplineScore() }}</span>
+                      <span class="score-unit">/100</span>
+                    </div>
+                  </div>
+                  <div class="score-label-wrap">
+                    <div class="score-label" [style.color]="scoreColor()">{{ disciplineLabel() }}</div>
+                    <div class="score-desc">Score de discipline</div>
+                    <div class="score-hint">{{ disciplinePhrase() }}</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Bandeau journée sans trade (sous la ligne du haut) -->
             @if (noTrades()) {
               <div class="debrief-zero-banner">
                 <span class="dzb-icon">🧘</span>
@@ -131,36 +167,12 @@ const EMOTION_COLORS: Record<string, string> = {
               </div>
             }
 
-            <!-- 1. Choix émotion fin -->
-            <div class="debrief-mood-card">
-              <h3 class="debrief-mood-title">Comment tu te sens en fin de session ?</h3>
-              <div class="mood-row">
-                @for (mood of moods; track mood.value) {
-                  <button class="mood-btn" [class.sel]="closeMood() === mood.value"
-                          (click)="closeMood.set(mood.value)">
-                    {{ mood.emoji }} {{ mood.label }}
-                  </button>
-                }
-              </div>
-            </div>
-
-            <!-- 2. Score de discipline (toujours visible) -->
-            <div class="debrief-card debrief-score-card">
-              <div class="score-ring-wrap">
-                <div class="score-ring"
-                     [style.background]="'conic-gradient(' + scoreColor() + ' ' + disciplineScore() + '%, var(--bg-3) 0)'">
-                  <div class="score-ring-inner">
-                    <span class="score-val">{{ disciplineScore() }}</span>
-                    <span class="score-unit">/100</span>
-                  </div>
-                </div>
-                <div class="score-label-wrap">
-                  <div class="score-label" [style.color]="scoreColor()">{{ disciplineLabel() }}</div>
-                  <div class="score-desc">Score de discipline</div>
-                  <div class="score-hint">{{ disciplinePhrase() }}</div>
-                </div>
-              </div>
-            </div>
+            <!-- 4 cards stats (P&L, Trades, Win Rate, Humeur) -->
+            <mtc-session-recap
+              [session]="session"
+              [liveStats]="store.todayStats()"
+              (dismissed)="confirmDebrief($event)"
+            />
 
             <!-- 3. Meilleur / trade à revoir (toujours visible) -->
             <div class="debrief-two-col">
@@ -276,12 +288,6 @@ const EMOTION_COLORS: Record<string, string> = {
               </div>
             </div>
 
-            <!-- 7. Recap (question réflexion + 17h30 + actions) -->
-            <mtc-session-recap
-              [session]="session"
-              [liveStats]="store.todayStats()"
-              (dismissed)="confirmDebrief($event)"
-            />
 
           } @else {
             <div class="debrief-empty">

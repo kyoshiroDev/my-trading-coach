@@ -98,29 +98,10 @@ import { PremiumLockComponent } from '../../../../shared/components/premium-lock
         }
       }
 
-      <!-- Countdown recap 17h30 -->
-      <div class="recap-countdown">
-        <div class="recap-countdown-icon">📧</div>
-        <div>
-          <div class="recap-countdown-title">Ton bilan complet arrive à 17h30</div>
-          <div class="recap-countdown-sub">
-            Analyse IA de ta session · Phrase coaching · Objectifs de demain
-          </div>
-        </div>
-        @if (minutesUntilRecap() > 0) {
-          <div class="recap-countdown-time">dans {{ minutesUntilRecap() }}min</div>
-        } @else {
-          <div class="recap-countdown-time" style="color:var(--green)">En cours...</div>
-        }
-      </div>
-
-      <!-- Actions -->
+      <!-- Action unique : valider le débrief -->
       <div class="recap-actions">
-        <button class="recap-btn-secondary" (click)="viewTrades()">
-          Voir les trades de la session
-        </button>
         <button class="recap-btn-primary" (click)="handleClose()">
-          Retour au dashboard
+          Valider mon débrief →
         </button>
       </div>
 

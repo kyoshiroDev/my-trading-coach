@@ -118,6 +118,13 @@
 /* ── Onglet Débrief ── */
 .session-debrief { display: flex; flex-direction: column; gap: 18px; padding: 4px 30px 30px; }
 
+/* Ligne du haut : émotions | score */
+.debrief-top-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+@media (max-width: 720px) {
+  .debrief-top-row { grid-template-columns: 1fr; }
+}
+
 /* Bandeau 0 trade */
 .debrief-zero-banner {
   display: flex; align-items: center; gap: 14px;
