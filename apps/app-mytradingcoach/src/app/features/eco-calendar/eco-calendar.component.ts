@@ -61,7 +61,7 @@ export class EcoCalendarComponent implements OnInit {
   protected readonly filteredDayGroups = computed(() =>
     this.dayGroups()
       .map(group => {
-        const events = group.events.filter(e => {
+        const events = (group.events ?? []).filter(e => {
           const impactOk = this.filterImpact() === 'all' || e.impact === this.filterImpact();
           const currencyOk = this.filterCurrency() === 'all' || e.currency === this.filterCurrency();
           const countryOk = this.filterCountry() === 'all' || e.country === this.filterCountry();
@@ -141,16 +141,19 @@ export class EcoCalendarComponent implements OnInit {
         const tomorrowStr = toParisDateStr(tomorrow);
 
         this.dayGroups.set(
-          (res.data ?? []).map(d => ({
-            date: d.date,
-            label: this.formatDayLabel(d.date, today, tomorrowStr),
-            isToday: d.date === today,
-            events: d.events,
-            sessions: {
-              europe: d.events.filter(e => this.sessionOf(e) === 'europe'),
-              us:     d.events.filter(e => this.sessionOf(e) === 'us'),
-            },
-          })),
+          (res.data ?? []).map(d => {
+            const events = d.events ?? [];
+            return {
+              date: d.date,
+              label: this.formatDayLabel(d.date, today, tomorrowStr),
+              isToday: d.date === today,
+              events,
+              sessions: {
+                europe: events.filter(e => this.sessionOf(e) === 'europe'),
+                us:     events.filter(e => this.sessionOf(e) === 'us'),
+              },
+            };
+          }),
         );
       });
   }
@@ -224,7 +227,7 @@ export class EcoCalendarComponent implements OnInit {
   }
 
   private sessionOf(event: EcoEvent): 'europe' | 'us' {
-    const [h, m] = event.time.split(':').map(Number);
+    const [h, m] = (event.time ?? '00:00').split(':').map(Number);
     return ((h || 0) * 60 + (m || 0)) >= 13 * 60 + 30 ? 'us' : 'europe';
   }
 
