@@ -70,7 +70,7 @@
   <!-- Grid calendrier + panneau Ma sélection -->
   <div class="eco-layout">
 
-    <div class="eco-main">
+    <div class="eco-calendar-col">
       <!-- Loading -->
       @if (isLoading()) {
         <div class="eco-loading">
@@ -146,13 +146,13 @@
       }
     </div>
 
-    <!-- Panneau Ma sélection -->
-    <aside class="eco-selection">
-      <div class="sel-head">
-        <div class="sel-title">⭐ Ma sélection</div>
-        <div class="sel-sub">{{ pinnedUpcoming().length }} à venir · suivis</div>
+    <!-- 3e colonne : Ma sélection -->
+    <aside class="eco-session-col eco-selection-col">
+      <div class="eco-session-head selection">
+        <span class="eco-session-ic">⭐</span> Ma sélection
+        <span class="eco-session-cnt">{{ pinnedUpcoming().length }}</span>
       </div>
-      <div class="sel-body">
+      <div class="eco-session-body eco-selection-body">
         @for (event of pinnedUpcoming(); track event.name + event.currency + event.date) {
           <div class="sel-item" [class.high]="event.impact === 'high'">
             <span class="sel-flag">{{ getFlag(event) }}</span>
@@ -163,7 +163,7 @@
             <span class="eco-impact-badge" [class]="event.impact">{{ event.impact === 'high' ? 'Fort' : 'Moy' }}</span>
           </div>
         } @empty {
-          <div class="sel-empty">Épingle des événements 📌<br>pour les suivre ici</div>
+          <div class="eco-session-empty">Épingle des événements 📌<br>pour les suivre ici</div>
         }
       </div>
     </aside>

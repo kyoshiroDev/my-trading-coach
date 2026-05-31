@@ -243,36 +243,56 @@
   border-radius: 5px; padding: 2px 7px; flex-shrink: 0;
 }
 
-/* ── Layout 2 colonnes (calendrier + panneau) ── */
-.eco-layout { display: grid; grid-template-columns: 1fr 300px; gap: 18px; align-items: start; }
-.eco-main { min-width: 0; }
+/* ── Layout : calendrier + colonne sélection ── */
+.eco-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 14px;
+  align-items: start;
+}
+.eco-calendar-col { min-width: 0; }
 
-/* ── Panneau Ma sélection ── */
-.eco-selection {
-  position: sticky; top: 20px;
-  background: var(--bg-card);
-  border: 1px solid rgba(245,158,11,.25);
-  border-radius: 14px; overflow: hidden;
+/* ── 3e colonne : Ma sélection (sticky, scroll) ── */
+.eco-selection-col {
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
 }
-.sel-head {
-  background: linear-gradient(135deg, rgba(245,158,11,.16), rgba(245,158,11,.03));
-  padding: 14px 16px; border-bottom: 1px solid rgba(245,158,11,.2);
+.eco-session-head.selection {
+  background: linear-gradient(135deg, rgba(245,158,11,.18), rgba(245,158,11,.04));
+  color: var(--yellow);
+  border: 1px solid rgba(245,158,11,.35);
+  border-bottom: none;
 }
-.sel-title { font-family: var(--font-display); font-weight: 700; font-size: 14px; color: var(--yellow); }
-.sel-sub { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); margin-top: 3px; }
-.sel-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; max-height: 70vh; overflow-y: auto; }
+.eco-selection-body {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+.eco-selection-body::-webkit-scrollbar { width: 4px; }
+.eco-selection-body::-webkit-scrollbar-thumb {
+  background: rgba(245,158,11,.2); border-radius: 2px;
+}
+
+/* ── Éléments de la sélection ── */
 .sel-item {
-  display: flex; align-items: center; gap: 9px; padding: 10px 12px;
-  background: var(--bg-3); border: 1px solid rgba(245,158,11,.12); border-radius: 9px;
+  display: flex; align-items: center; gap: 9px; padding: 8px 10px;
+  background: var(--bg-3); border: 1px solid rgba(245,158,11,.12); border-radius: 8px;
 }
 .sel-item.high { border-left: 3px solid var(--red); }
-.sel-flag { font-size: 17px; flex-shrink: 0; }
+.sel-flag { font-size: 16px; flex-shrink: 0; }
 .sel-bdy { flex: 1; min-width: 0; }
 .sel-day { font-family: var(--font-mono); font-size: 9px; color: var(--yellow); font-weight: 600; text-transform: uppercase; }
-.sel-name { font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sel-empty { text-align: center; padding: 30px 14px; color: var(--text-3); font-size: 12px; line-height: 1.6; }
+.sel-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 @media (max-width: 900px) {
   .eco-layout { grid-template-columns: 1fr; }
-  .eco-selection { position: static; order: -1; margin-bottom: 16px; }
+  .eco-selection-col {
+    position: static;
+    max-height: 360px;
+    order: -1;
+    margin-bottom: 16px;
+  }
 }
