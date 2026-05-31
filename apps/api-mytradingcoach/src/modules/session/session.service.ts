@@ -119,7 +119,7 @@ export class SessionService {
   async updateSession(
     userId: string,
     sessionId: string,
-    data: { planNote?: string; marketContext?: string; notes?: string; reflectionNote?: string },
+    data: { planNote?: string; marketContext?: string; notes?: string; reflectionNote?: string; moodEnd?: MoodState },
   ) {
     return this.prisma.tradeSession.update({
       where: { id: sessionId, userId },

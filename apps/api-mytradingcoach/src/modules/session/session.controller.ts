@@ -50,7 +50,7 @@ export class SessionController {
   update(
     @CurrentUser() user: { id: string },
     @Param('id') id: string,
-    @Body() body: { planNote?: string; marketContext?: string; notes?: string; reflectionNote?: string },
+    @Body() body: { planNote?: string; marketContext?: string; notes?: string; reflectionNote?: string; moodEnd?: string },
   ) {
     return this.sessionService.updateSession(user.id, id, body);
   }

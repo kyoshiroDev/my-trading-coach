@@ -164,6 +164,16 @@ export class SessionStore {
       .subscribe({ next: (res) => this.activeSession.set(res.data) });
   }
 
+  closeSessionThenDebrief(): void {
+    const session = this.activeSession();
+    if (!session) return;
+    this.triggerCloseModal.set(false);
+    this.sessionApi
+      .closeSession(session.id, 'NEUTRAL' as MoodState)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: (res) => this.activeSession.set(res.data) });
+  }
+
   confirmCloseTrade(event: { tradeId: string; exitPrice: number }): void {
     this.sessionApi
       .closeTrade(event.tradeId, event.exitPrice)
