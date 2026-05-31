@@ -138,16 +138,13 @@ export class EcoCalendarComponent implements OnInit {
       )
       .subscribe(res => {
         const today = todayParis();
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const tomorrowStr = toParisDateStr(tomorrow);
 
         this.dayGroups.set(
           (res.data ?? []).map(d => {
             const events = d.events ?? [];
             return {
               date: d.date,
-              label: this.formatDayLabel(d.date, today, tomorrowStr),
+              label: this.formatDayLabel(d.date),
               isToday: d.date === today,
               events,
               sessions: {
@@ -192,14 +189,19 @@ export class EcoCalendarComponent implements OnInit {
   }
 
   private readonly FLAGS: Record<string, string> = {
-    US: '🇺🇸', EU: '🇪🇺', GB: '🇬🇧', JP: '🇯🇵',
-    CA: '🇨🇦', AU: '🇦🇺', NZ: '🇳🇿', CH: '🇨🇭',
-    CN: '🇨🇳', DE: '🇩🇪', FR: '🇫🇷', IT: '🇮🇹',
-    ES: '🇪🇸', SE: '🇸🇪', NO: '🇳🇴', DK: '🇩🇰',
-    USD: '🇺🇸', EUR: '🇪🇺', GBP: '🇬🇧', JPY: '🇯🇵',
-    CAD: '🇨🇦', AUD: '🇦🇺', NZD: '🇳🇿', CHF: '🇨🇭',
-    CNY: '🇨🇳', CNH: '🇨🇳', SEK: '🇸🇪', NOK: '🇳🇴',
-    DKK: '🇩🇰', HKD: '🇭🇰', SGD: '🇸🇬', MXN: '🇲🇽',
+    // Codes pays
+    US: '🇺🇸', EU: '🇪🇺', GB: '🇬🇧', JP: '🇯🇵', CA: '🇨🇦', AU: '🇦🇺',
+    NZ: '🇳🇿', CH: '🇨🇭', CN: '🇨🇳', DE: '🇩🇪', FR: '🇫🇷', IT: '🇮🇹',
+    ES: '🇪🇸', SE: '🇸🇪', NO: '🇳🇴', DK: '🇩🇰', KR: '🇰🇷', TR: '🇹🇷',
+    RU: '🇷🇺', BR: '🇧🇷', IN: '🇮🇳', ZA: '🇿🇦', PL: '🇵🇱', HU: '🇭🇺',
+    CZ: '🇨🇿', IL: '🇮🇱', TH: '🇹🇭', ID: '🇮🇩', MX: '🇲🇽', SG: '🇸🇬',
+    HK: '🇭🇰', PT: '🇵🇹', AT: '🇦🇹', BE: '🇧🇪', FI: '🇫🇮', NL: '🇳🇱',
+    // Codes devise
+    USD: '🇺🇸', EUR: '🇪🇺', GBP: '🇬🇧', JPY: '🇯🇵', CAD: '🇨🇦', AUD: '🇦🇺',
+    NZD: '🇳🇿', CHF: '🇨🇭', CNY: '🇨🇳', CNH: '🇨🇳', SEK: '🇸🇪', NOK: '🇳🇴',
+    DKK: '🇩🇰', HKD: '🇭🇰', SGD: '🇸🇬', MXN: '🇲🇽', KRW: '🇰🇷', TRY: '🇹🇷',
+    RUB: '🇷🇺', BRL: '🇧🇷', INR: '🇮🇳', ZAR: '🇿🇦', PLN: '🇵🇱', HUF: '🇭🇺',
+    CZK: '🇨🇿', ILS: '🇮🇱', THB: '🇹🇭', IDR: '🇮🇩',
   };
 
   protected getFlag(event: { country?: string | null; currency?: string | null }): string {
@@ -216,14 +218,13 @@ export class EcoCalendarComponent implements OnInit {
     friday.setDate(friday.getDate() + 4);
     const fmt = (d: Date) =>
       d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-    return `${fmt(monday)} — ${fmt(friday)}`;
+    return `Semaine du ${fmt(monday)} — ${fmt(friday)}`;
   }
 
-  protected formatDayLabel(date: string, today: string, tomorrow: string): string {
-    if (date === today) return "Aujourd'hui";
-    if (date === tomorrow) return 'Demain';
+  protected formatDayLabel(date: string): string {
     const d = new Date(date + 'T12:00:00');
-    return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    const label = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    return label.charAt(0).toUpperCase() + label.slice(1);
   }
 
   protected isThisWeek(): boolean {

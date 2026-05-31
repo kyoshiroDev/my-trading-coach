@@ -455,22 +455,29 @@ export class EcoCalendarService {
 
   // ── getPinnedUpcoming — prochaines occurrences des types épinglés ────────────
 
-  async getPinnedUpcoming(userId: string, daysAhead = 14): Promise<EcoEvent[]> {
+  async getPinnedUpcoming(userId: string, daysAhead = 7): Promise<EcoEvent[]> {
     const pins = new Set(await this.getUserPins(userId));
     if (pins.size === 0) return [];
 
     const today = todayParis();
     const start = new Date(`${today}T00:00:00`);
-    const dates: string[] = [];
+    const all: EcoEvent[] = [];
+
     for (let i = 0; i < daysAhead; i++) {
       const d = new Date(start);
       d.setDate(start.getDate() + i);
-      dates.push(toParisDateStr(d));
-    }
+      const date = toParisDateStr(d);
 
-    const all: EcoEvent[] = [];
-    for (const date of dates) {
-      const events = await this.getEventsFromDb(date);
+      // Lecture base ; si vide, on fetch FMP pour ce jour
+      let events = await this.getEventsFromDb(date);
+      if (events.length === 0) {
+        try {
+          events = await this.fetchAndStoreEvents(date);
+        } catch {
+          events = [];
+        }
+      }
+
       for (const e of events) {
         if (pins.has(`${e.name}:${e.currency}`)) {
           all.push({ ...e, date });
