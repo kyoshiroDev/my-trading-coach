@@ -60,7 +60,7 @@ export class EcoCalendarController {
 
   @Get('pinned-upcoming')
   async getPinnedUpcoming(@CurrentUser() user: { id: string }) {
-    return { data: await this.service.getPinnedUpcoming(user.id, 14) };
+    return await this.service.getPinnedUpcoming(user.id, 14);
   }
 
   @Get('pins')
