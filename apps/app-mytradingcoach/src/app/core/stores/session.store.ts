@@ -154,12 +154,22 @@ export class SessionStore {
     this.triggerCloseModal.set(true);
   }
 
-  onSessionClosed(payload: { mood: MoodState; note?: string; question?: string | null }): void {
+  onSessionClosed(payload: { mood: MoodState; notes?: string; note?: string; question?: string | null }): void {
     this.triggerCloseModal.set(false);
     const session = this.activeSession();
     if (!session) return;
     this.sessionApi
-      .closeSession(session.id, payload.mood, undefined, payload.note, payload.question ?? undefined)
+      .closeSession(session.id, payload.mood, payload.notes, payload.note, payload.question ?? undefined)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: (res) => this.activeSession.set(res.data) });
+  }
+
+  closeSessionThenDebrief(): void {
+    const session = this.activeSession();
+    if (!session) return;
+    this.triggerCloseModal.set(false);
+    this.sessionApi
+      .closeSession(session.id, 'NEUTRAL' as MoodState)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({ next: (res) => this.activeSession.set(res.data) });
   }
