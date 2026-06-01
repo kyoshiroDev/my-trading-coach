@@ -8,11 +8,12 @@ import { AiLoggerService } from '../shared/ai-logger.service';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { AnalyticsModule } from '../analytics/analytics.module';
 import { MarketDataService } from './market-data.service';
+import { MarketNewsCron } from './market-news.cron';
 
 @Module({
   imports: [HttpModule, PrismaModule, AnalyticsModule],
   controllers: [TradesController],
-  providers: [TradesService, CoinGeckoService, CsvImportService, AiLoggerService, MarketDataService],
+  providers: [TradesService, CoinGeckoService, CsvImportService, AiLoggerService, MarketDataService, MarketNewsCron],
   exports: [TradesService, MarketDataService],
 })
 export class TradesModule {}

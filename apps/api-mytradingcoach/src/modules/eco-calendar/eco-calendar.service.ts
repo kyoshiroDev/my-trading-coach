@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import Anthropic from '@anthropic-ai/sdk';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 import { AiService } from '../ai/ai.service';
@@ -154,10 +155,61 @@ export class EcoCalendarService {
       }
 
       this.logger.log(`✅ FMP: ${upserted.length} events stockés pour ${date}`);
+
+      // Traduction des libellés une seule fois (gardée en prod uniquement)
+      await this.translateEventNames(date);
+
       return upserted;
     } catch (err) {
       this.logger.error('FMP fetch failed', err);
       return [];
+    }
+  }
+
+  // Garde-fou environnement : pas de traduction hors prod (économie Dev)
+  private get translationEnabled(): boolean {
+    return process.env['NODE_ENV'] === 'production'
+      && process.env['NEWS_TRANSLATION'] !== 'off';
+  }
+
+  // Traduit les `name` (anglais FMP) du jour qui n'ont pas encore de `nameFr`.
+  // Un seul appel Haiku par jour (via cron) — coût négligeable.
+  private async translateEventNames(date: string): Promise<void> {
+    if (!this.translationEnabled) return;
+
+    // Enrichissement best-effort : ne doit jamais faire échouer le fetch.
+    try {
+      const pending = await this.prisma.ecoEvent.findMany({
+        where: { date, nameFr: null },
+        select: { name: true },
+        distinct: ['name'],
+      });
+      if (!pending?.length) return;
+
+      const names = pending.map((p) => p.name);
+      const anthropic = new Anthropic({ apiKey: process.env['ANTHROPIC_API_KEY'] });
+      const msg = await anthropic.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1500,
+        messages: [{ role: 'user', content:
+          `Traduis en français ces libellés d'événements économiques. Réponds UNIQUEMENT avec un objet JSON { "<libellé EN>": "<libellé FR>" }, sans texte autour.\n\n${JSON.stringify(names)}` }],
+      });
+      const txt = msg.content[0]?.type === 'text' ? msg.content[0].text : '';
+      const s = txt.indexOf('{'), e = txt.lastIndexOf('}');
+      if (s === -1 || e === -1) return;
+      const mapping = JSON.parse(txt.slice(s, e + 1)) as Record<string, string>;
+      await Promise.all(
+        names.map((name) => {
+          const fr = mapping[name];
+          if (!fr) return Promise.resolve(null);
+          return this.prisma.ecoEvent.updateMany({
+            where: { date, name },
+            data: { nameFr: fr },
+          });
+        }),
+      );
+    } catch (err) {
+      this.logger.warn(`Eco name translation failed: ${(err as Error).message}`);
     }
   }
 
@@ -182,7 +234,7 @@ export class EcoCalendarService {
 
       return {
         time: r.time,
-        name: r.name,
+        name: r.nameFr ?? r.name,
         impact: r.impact as 'high' | 'medium',
         country: r.country,
         currency: r.currency,
