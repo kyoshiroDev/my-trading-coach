@@ -383,19 +383,68 @@
 .qt-side.sht.sel { background: var(--red-dim); border-color: rgba(239,68,68,.3); color: var(--red); }
 .qt-emos { display: flex; gap: 4px; flex-wrap: wrap; }
 .qt-emo {
-  width: 28px;
-  height: 28px;
+  appearance: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 6px;
   font-size: 15px;
+  font-family: inherit;
+  color: inherit;
   cursor: pointer;
   border: 1px solid transparent;
   background: var(--bg-3);
   transition: all .15s;
 }
 .qt-emo.sel { border-color: var(--blue); background: var(--blue-glow); }
+
+/* Erreur de chargement des actifs + retry */
+.qt-asset-error {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 8px 10px; border-radius: 7px;
+  background: var(--red-dim); border: 1px solid rgba(239,68,68,.25);
+  font-size: 11px; color: var(--text-2);
+}
+.qt-retry-btn {
+  align-self: flex-start;
+  background: var(--bg-3); border: 1px solid var(--border);
+  color: var(--blue-bright); border-radius: 6px;
+  padding: 5px 12px; font-size: 11px; cursor: pointer;
+  font-family: var(--font-body); transition: border-color .15s;
+}
+.qt-retry-btn:hover { border-color: var(--border-hover); }
+
+/* Toast retour d'action (succès / erreur) */
+.qt-feedback-toast {
+  margin-top: 2px; padding: 7px 10px; border-radius: 7px;
+  font-size: 11px; font-family: var(--font-body); font-weight: 500;
+  display: flex; align-items: center; gap: 6px;
+  animation: fbIn .18s ease;
+}
+.qt-feedback-toast.ok  { background: var(--green-dim); color: var(--green); border: 1px solid rgba(16,185,129,.25); }
+.qt-feedback-toast.err { background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(239,68,68,.25); }
+@keyframes fbIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+
+/* Indicateurs de focus clavier (accessibilité) */
+.qt-emo:focus-visible,
+.qt-side:focus-visible,
+.news-item:focus-visible,
+.feed-row-2l.live-row:focus-visible,
+.qt-asset-select:focus-visible,
+.qt-select:focus-visible,
+.qt-retry-btn:focus-visible,
+.qt-log:focus-visible,
+.qt-fav-btn:focus-visible,
+.close-btn-ok:focus-visible,
+.close-btn-cancel:focus-visible,
+.nm-close:focus-visible {
+  outline: 2px solid var(--blue-bright);
+  outline-offset: 2px;
+}
+.news-modal:focus-visible { outline: none; }
 .qt-secondary { display: flex; gap: 6px; }
 .qt-select {
   flex: 1;
@@ -571,8 +620,8 @@
 
 /* ── Eco release alert (WebSocket temps réel) ─────────────────────────────── */
 .eco-release-alert {
-  background: linear-gradient(135deg, rgba(34,211,238,.08), rgba(59,130,246,.06));
-  border: 1px solid rgba(34,211,238,.3);
+  background: var(--bg-2);
+  border: 1px solid rgba(245,158,11,.3);
   border-radius: 10px;
   padding: 12px 14px;
   margin-bottom: 10px;
@@ -592,7 +641,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #22d3ee;
+  background: var(--yellow);
   flex-shrink: 0;
   animation: pulseEra 1s ease infinite;
 }
@@ -600,7 +649,7 @@
   0%, 100% { opacity: 1; transform: scale(1); }
   50%       { opacity: .4; transform: scale(.8); }
 }
-.era-title { font-size: 12px; font-weight: 600; color: #22d3ee; flex: 1; }
+.era-title { font-size: 12px; font-weight: 600; color: var(--yellow); flex: 1; }
 .era-close {
   background: none; border: none;
   color: var(--text-3); cursor: pointer;
@@ -773,8 +822,7 @@
 /* ─── Modale news ─── */
 .news-modal-overlay {
   position: fixed; inset: 0; z-index: 1000;
-  background: rgba(0, 8, 20, .75);
-  backdrop-filter: blur(6px);
+  background: rgba(6, 9, 15, .88);
   display: flex; align-items: center; justify-content: center;
   padding: 20px;
   animation: fadeIn .15s ease;
@@ -840,3 +888,22 @@
   transition: all .15s; align-self: flex-start; flex-shrink: 0;
 }
 .nm-cta:hover { background: rgba(59,130,246,.18); }
+
+/* ─── Réduction des animations (accessibilité) ─── */
+@media (prefers-reduced-motion: reduce) {
+  .pulse-dot,
+  .news-break-dot,
+  .era-dot,
+  .era-spin,
+  .qt-live-dot,
+  .qt-asset-skel {
+    animation: none !important;
+  }
+  .eco-release-alert,
+  .close-panel,
+  .qt-feedback-toast,
+  .news-modal,
+  .news-modal-overlay {
+    animation: none !important;
+  }
+}

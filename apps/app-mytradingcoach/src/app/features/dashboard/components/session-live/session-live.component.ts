@@ -2,12 +2,14 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
   computed,
   effect,
   inject,
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { interval } from 'rxjs';
@@ -372,6 +374,11 @@ const EMOTIONS = [
             <div class="qt-lbl">ACTIF</div>
             @if (assetsLoading()) {
               <div class="qt-asset-skel"></div>
+            } @else if (assetsError()) {
+              <div class="qt-asset-error" role="alert">
+                <span>Impossible de charger tes actifs.</span>
+                <button type="button" class="qt-retry-btn" (click)="loadUserAssets()">Réessayer</button>
+              </div>
             } @else {
               <div style="display:flex;gap:6px;align-items:center;">
                 <select
@@ -419,12 +426,14 @@ const EMOTIONS = [
               <button
                 class="qt-side lng"
                 [class.sel]="qtSide() === 'LONG'"
+                [attr.aria-pressed]="qtSide() === 'LONG'"
                 data-testid="quick-trade-long"
                 (click)="qtSide.set('LONG')"
               >▲ LONG</button>
               <button
                 class="qt-side sht"
                 [class.sel]="qtSide() === 'SHORT'"
+                [attr.aria-pressed]="qtSide() === 'SHORT'"
                 data-testid="quick-trade-short"
                 (click)="qtSide.set('SHORT')"
               >▼ SHORT</button>
@@ -435,15 +444,15 @@ const EMOTIONS = [
             <div class="qt-lbl">ÉMOTION</div>
             <div class="qt-emos">
               @for (emo of emotions; track emo.value) {
-                <div
+                <button
+                  type="button"
                   class="qt-emo"
                   [class.sel]="qtEmotion() === emo.value"
                   [title]="emo.title"
-                  role="button"
-                  tabindex="0"
+                  [attr.aria-label]="emo.title"
+                  [attr.aria-pressed]="qtEmotion() === emo.value"
                   (click)="qtEmotion.set(emo.value)"
-                  (keyup.enter)="qtEmotion.set(emo.value)"
-                >{{ emo.emoji }}</div>
+                >{{ emo.emoji }}</button>
               }
             </div>
           </div>
@@ -530,6 +539,15 @@ const EMOTIONS = [
             (click)="submitQuickTrade()"
           >⚡ Logger ce trade</button>
           <div class="qt-hint">Asset + direction + émotion suffisent</div>
+
+          <!-- Retour d'action (succès / erreur) — annoncé aux lecteurs d'écran -->
+          <div class="qt-feedback" role="status" aria-live="polite">
+            @if (feedbackToast(); as fb) {
+              <div class="qt-feedback-toast" [class.ok]="fb.type === 'success'" [class.err]="fb.type === 'error'">
+                {{ fb.type === 'success' ? '✓' : '⚠' }} {{ fb.text }}
+              </div>
+            }
+          </div>
         </div>
 
       </div>
@@ -543,10 +561,13 @@ const EMOTIONS = [
            tabindex="0"
            (click)="closeNews()"
            (keyup.escape)="closeNews()">
-        <div class="news-modal"
+        <div #newsDialog class="news-modal"
              role="dialog"
              aria-modal="true"
+             aria-labelledby="news-modal-title"
+             tabindex="-1"
              (click)="$event.stopPropagation()"
+             (keydown.escape)="closeNews()"
              (keydown)="$event.stopPropagation()">
           <!-- Header -->
           <div class="nm-header">
@@ -568,7 +589,7 @@ const EMOTIONS = [
             @if (news.image) {
               <img class="nm-image" [src]="news.image" [alt]="news.title" loading="lazy" />
             }
-            <h2 class="nm-title">{{ news.title }}</h2>
+            <h2 id="news-modal-title" class="nm-title">{{ news.title }}</h2>
             @if (news.text) {
               <p class="nm-body">{{ news.text }}</p>
             }
@@ -594,6 +615,7 @@ export class SessionLiveComponent {
   readonly newsItems = input<NewsItem[]>([]);
   readonly breakingNews = input<string | null>(null);
   readonly triggerCloseModal = input<boolean>(false);
+  readonly liveFeedback = input<{ type: 'success' | 'error'; text: string; ts: number } | null>(null);
 
   readonly startSession = output<void>();
   readonly tradeClosed = output<{ tradeId: string; exitPrice: number }>();
@@ -626,17 +648,27 @@ export class SessionLiveComponent {
 
   // Modal news
   protected readonly selectedNews = signal<import('../../../../core/api/trades.api').NewsItem | null>(null);
+  private readonly newsDialogRef = viewChild<ElementRef<HTMLElement>>('newsDialog');
+  private newsTrigger: HTMLElement | null = null;
 
   protected openNews(item: import('../../../../core/api/trades.api').NewsItem): void {
+    this.newsTrigger = (document.activeElement as HTMLElement) ?? null;
     this.selectedNews.set(item);
   }
   protected closeNews(): void {
     this.selectedNews.set(null);
+    this.newsTrigger?.focus();
+    this.newsTrigger = null;
   }
+
+  // Retour d'action live (toast succès/erreur, auto-effacé)
+  protected readonly feedbackToast = signal<{ type: 'success' | 'error'; text: string } | null>(null);
+  private feedbackTimer?: ReturnType<typeof setTimeout>;
 
   // Quick trade form — asset selection
   protected readonly userAssets = signal<UserAssetItem[]>([]);
   protected readonly assetsLoading = signal(false);
+  protected readonly assetsError = signal(false);
   protected readonly qtSelectedAsset = signal<UserAssetItem | null>(null);
   protected readonly qtSide = signal<'LONG' | 'SHORT'>('LONG');
   protected readonly qtEmotion = signal<'CONFIDENT' | 'STRESSED' | 'REVENGE' | 'FEAR' | 'FOCUSED' | 'NEUTRAL'>('CONFIDENT');
@@ -710,6 +742,22 @@ export class SessionLiveComponent {
       } else {
         this.startTime.set(null);
       }
+    });
+
+    // Retour d'action live → toast auto-effacé après 3,5 s (annoncé via aria-live)
+    effect(() => {
+      const fb = this.liveFeedback();
+      if (!fb) return;
+      this.feedbackToast.set({ type: fb.type, text: fb.text });
+      clearTimeout(this.feedbackTimer);
+      this.feedbackTimer = setTimeout(() => this.feedbackToast.set(null), 3500);
+    });
+    this.destroyRef.onDestroy(() => clearTimeout(this.feedbackTimer));
+
+    // Modale news → focus sur le dialogue à l'ouverture (accessibilité clavier)
+    effect(() => {
+      const dialog = this.newsDialogRef()?.nativeElement;
+      if (this.selectedNews() && dialog) dialog.focus();
     });
 
     // Assets chargés immédiatement — indépendamment de la session
@@ -849,6 +897,7 @@ export class SessionLiveComponent {
 
   protected loadUserAssets(): void {
     this.assetsLoading.set(true);
+    this.assetsError.set(false);
     this.tradesApi.getUserAssets()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -859,7 +908,10 @@ export class SessionLiveComponent {
           if (preselect) this.applyAssetSelection(preselect);
           this.assetsLoading.set(false);
         },
-        error: () => this.assetsLoading.set(false),
+        error: () => {
+          this.assetsError.set(true);
+          this.assetsLoading.set(false);
+        },
       });
   }
 

@@ -142,6 +142,7 @@ const EMOTION_COLORS: Record<string, string> = {
             [newsItems]="store.newsItems()"
             [breakingNews]="store.breakingNews()"
             [triggerCloseModal]="store.triggerCloseModal()"
+            [liveFeedback]="store.liveFeedback()"
             (startSession)="startSession()"
             (tradeClosed)="store.confirmCloseTrade($event)"
             (tradeLogged)="store.logQuickTrade($event)"
