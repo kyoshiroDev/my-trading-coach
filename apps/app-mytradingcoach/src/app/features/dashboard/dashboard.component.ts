@@ -17,6 +17,7 @@ import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
 import { TradesStore } from '../../core/stores/trades.store';
 import { SessionStore } from '../../core/stores/session.store';
+import { PRICING } from '../../core/constants/pricing.const';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { TradeFormComponent } from '../journal/trade-form.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
@@ -139,7 +140,7 @@ import { ChartService } from '../../core/services/chart.service';
           </div>
           <div class="premium-banner-right">
             <div class="premium-banner-price">
-              <span class="premium-banner-amount">39€</span>
+              <span class="premium-banner-amount">{{ PRICING.premium.monthly }}€</span>
               <span class="premium-banner-period">/mois</span>
               <div class="premium-banner-trial">7 jours gratuits · sans CB</div>
             </div>
@@ -378,6 +379,7 @@ export class DashboardComponent {
   protected readonly showPlanModal = signal(false);
   protected readonly isSavingTrade = signal(false);
   protected readonly today = new Date();
+  protected readonly PRICING = PRICING;
 
   protected readonly monthlyActivity        = signal<MonthlyActivitySummary | null>(null);
   protected readonly monthlyActivityLoading = signal(false);

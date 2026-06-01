@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BillingApi } from '../../../core/api/billing.api';
+import { PRICING, yearlyPerMonth } from '../../../core/constants/pricing.const';
 
 type PlanId = 'starter_monthly' | 'starter_yearly' | 'premium_monthly' | 'premium_yearly';
 
@@ -23,6 +24,9 @@ export class PlanModalComponent {
 
   private readonly billingApi = inject(BillingApi);
   private readonly destroyRef = inject(DestroyRef);
+
+  protected readonly PRICING = PRICING;
+  protected readonly yearlyPerMonth = yearlyPerMonth;
 
   protected selectedPlan = signal<PlanId>('starter_yearly');
   protected isLoading = signal(false);
