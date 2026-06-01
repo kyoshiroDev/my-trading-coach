@@ -16,7 +16,7 @@
 .ctx-grid { display: flex; gap: 5px; }
 
 .ctx-cell {
-  flex: 1; background: var(--bg-card); border: 1px solid var(--border);
+  flex: 1; min-width: 0; background: var(--bg-card); border: 1px solid var(--border);
   border-radius: 7px; padding: 7px 9px;
   display: flex; flex-direction: column; gap: 2px;
   position: relative; overflow: hidden; cursor: default;
@@ -31,7 +31,9 @@
 .ctx-cell.dxy-warn         { border-color: rgba(239,68,68,.18); background: rgba(239,68,68,.02); }
 .ctx-cell.dxy-warn::before { background: rgba(239,68,68,.5); }
 .ctx-cell.trate10::before  { background: rgba(245,158,11,.5); }
+.ctx-cell.trate30::before  { background: rgba(245,158,11,.5); }
 .ctx-cell.trate2::before   { background: rgba(96,165,250,.5); }
+.ctx-cell.trate5::before   { background: rgba(96,165,250,.5); }
 .ctx-cell.inverted         { border-color: rgba(239,68,68,.25); background: rgba(239,68,68,.025); }
 .ctx-cell.inverted::before { background: rgba(239,68,68,.7); }
 

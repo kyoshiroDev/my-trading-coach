@@ -60,6 +60,9 @@ const mockPrisma = {
     delete: vi.fn(),
     count: vi.fn(),
   },
+  tradeSession: {
+    findFirst: vi.fn().mockResolvedValue(null),
+  },
 };
 
 

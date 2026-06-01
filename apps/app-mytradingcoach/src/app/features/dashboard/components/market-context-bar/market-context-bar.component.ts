@@ -48,15 +48,27 @@ import { MarketContext } from '../../../../core/api/trades.api';
             </div>
           </div>
 
+          <div class="ctx-cell trate2">
+            <div class="ctx-cell-name">US 2Y <span class="ctx-src">FMP</span></div>
+            <div class="ctx-cell-val blue">{{ ctx()!.treasury.t2y !== null ? (ctx()!.treasury.t2y | number:'1.2-2') + '%' : '—' }}</div>
+            <div class="ctx-cell-sub"></div>
+          </div>
+
+          <div class="ctx-cell trate5">
+            <div class="ctx-cell-name">US 5Y <span class="ctx-src">FMP</span></div>
+            <div class="ctx-cell-val blue">{{ ctx()!.treasury.t5y !== null ? (ctx()!.treasury.t5y | number:'1.2-2') + '%' : '—' }}</div>
+            <div class="ctx-cell-sub"></div>
+          </div>
+
           <div class="ctx-cell trate10">
             <div class="ctx-cell-name">US 10Y <span class="ctx-src">FMP</span></div>
             <div class="ctx-cell-val yellow">{{ ctx()!.treasury.t10y !== null ? (ctx()!.treasury.t10y | number:'1.2-2') + '%' : '—' }}</div>
             <div class="ctx-cell-sub"></div>
           </div>
 
-          <div class="ctx-cell trate2">
-            <div class="ctx-cell-name">US 2Y <span class="ctx-src">FMP</span></div>
-            <div class="ctx-cell-val blue">{{ ctx()!.treasury.t2y !== null ? (ctx()!.treasury.t2y | number:'1.2-2') + '%' : '—' }}</div>
+          <div class="ctx-cell trate30">
+            <div class="ctx-cell-name">US 30Y <span class="ctx-src">FMP</span></div>
+            <div class="ctx-cell-val yellow">{{ ctx()!.treasury.t30y !== null ? (ctx()!.treasury.t30y | number:'1.2-2') + '%' : '—' }}</div>
             <div class="ctx-cell-sub"></div>
           </div>
 

@@ -10,7 +10,6 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DecimalPipe } from '@angular/common';
 import { interval } from 'rxjs';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent, EcoResultAnalysis } from '../../../../core/api/eco-calendar.api';
 import { translateEcoEvent } from '../../../../core/data/eco-event-translations';
@@ -46,7 +45,7 @@ const EMOTIONS = [
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-live.component.css',
-  imports: [SessionRecapComponent, MarketContextBarComponent, DecimalPipe, LiveNewsComponent, LiveFeedComponent],
+  imports: [SessionRecapComponent, MarketContextBarComponent, LiveNewsComponent, LiveFeedComponent],
   template: `
     <div data-testid="session-live-view">
 
@@ -253,35 +252,18 @@ const EMOTIONS = [
                       </div>
                     }
                   </div>
+                } @empty {
+                  <div class="cal-empty">
+                    <div class="cal-empty-icon">📅</div>
+                    <div class="cal-empty-title">Aucun événement</div>
+                    <div class="cal-empty-sub">Pas d'annonce économique pour cette session.</div>
+                  </div>
                 }
               </div>
             }
           </div>
 
-          <!-- Treasury Rates -->
-          @if (marketCtx()?.treasury) {
-            <div class="treasury-card">
-              <div class="col-title" style="margin-bottom:10px;">
-                📈 Treasury Rates US
-                <span style="font-size:7.5px;padding:1px 4px;border-radius:3px;background:rgba(59,130,246,.08);color:var(--blue-bright);border:1px solid rgba(59,130,246,.15);font-family:var(--font-mono);">FMP</span>
-              </div>
-              <div class="treasury-rows">
-                @for (row of treasuryRows(); track row.label) {
-                  <div class="treasury-row">
-                    <span class="tr-label">{{ row.label }}</span>
-                    <div class="tr-bar-wrap"><div class="tr-bar-fill" [style.width.%]="row.pct" [style.background]="row.color"></div></div>
-                    <span class="tr-val" [style.color]="row.color">{{ row.value | number:'1.2-2' }}%</span>
-                  </div>
-                }
-              </div>
-              @if (isInverted()) {
-                <div class="tr-inversion-alert">
-                  <span>⚠</span>
-                  <span>Courbe inversée 2Y &gt; 10Y · <strong>{{ spread() }}%</strong></span>
-                </div>
-              }
-            </div>
-          }
+          <!-- Treasury Rates → déplacés dans la barre de contexte marché (haut) -->
 
         </div><!-- /cal-col -->
 
@@ -692,7 +674,7 @@ export class SessionLiveComponent {
   });
 
   protected readonly sessionEcoEvents = computed(() => {
-    const events = this.ecoCalendar()?.events ?? [];
+    const events = (this.ecoCalendar()?.events ?? []).filter((e) => !!e.name?.trim());
     const pinned = this.pinnedKeys();
     const hasMatchingPins = pinned.size > 0 &&
       events.some(e => pinned.has(`${e.name}:${e.currency}`));
@@ -765,27 +747,6 @@ export class SessionLiveComponent {
         });
       });
   }
-
-  protected readonly spread = computed(() => {
-    const t2  = this.marketCtx()?.treasury.t2y;
-    const t10 = this.marketCtx()?.treasury.t10y;
-    if (t2 == null || t10 == null) return null;
-    return parseFloat((t2 - t10).toFixed(2));
-  });
-
-  protected readonly isInverted = computed(() => (this.spread() ?? 0) > 0);
-
-  protected readonly treasuryRows = computed(() => {
-    const t = this.marketCtx()?.treasury;
-    if (!t) return [];
-    const max = Math.max(t.t2y ?? 0, t.t5y ?? 0, t.t10y ?? 0, t.t30y ?? 0) || 1;
-    return [
-      { label: '2Y',  value: t.t2y  ?? 0, pct: ((t.t2y  ?? 0) / max) * 100, color: '#60a5fa' },
-      { label: '5Y',  value: t.t5y  ?? 0, pct: ((t.t5y  ?? 0) / max) * 100, color: '#60a5fa' },
-      { label: '10Y', value: t.t10y ?? 0, pct: ((t.t10y ?? 0) / max) * 100, color: '#f59e0b' },
-      { label: '30Y', value: t.t30y ?? 0, pct: ((t.t30y ?? 0) / max) * 100, color: '#f59e0b' },
-    ];
-  });
 
   protected readonly pnlDisplay = computed(() => {
     const pnl = this.liveStats()?.totalPnl ?? 0;
