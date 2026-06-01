@@ -200,7 +200,7 @@ const EMOTIONS = [
               </div>
             } @else {
               <div class="cal-events-list">
-                @for (event of sessionEcoEvents(); track event.name) {
+                @for (event of visibleEcoEvents(); track event.name) {
                   <div
                     class="eco-live-event"
                     [class.released]="event.isReleased"
@@ -766,6 +766,12 @@ export class SessionLiveComponent {
       .filter(e => pinned.has(`${e.name}:${e.currency}`))
       .sort((a, b) => a.time.localeCompare(b.time));
   });
+
+  /** Événements affichés : publiés OU dans la fenêtre de session.
+   *  Les events hors-session ne produisent plus de lignes fantômes (le @empty s'active). */
+  protected readonly visibleEcoEvents = computed(() =>
+    this.sessionEcoEvents().filter((e) => e.isReleased || !this.isOutsideSession(e.time)),
+  );
 
   // Eco WebSocket — nouvelles releases temps réel
   protected readonly newReleases = signal<EcoEvent[]>([]);

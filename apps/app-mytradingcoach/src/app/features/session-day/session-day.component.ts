@@ -20,8 +20,6 @@ import { SessionRecapComponent } from '../dashboard/components/session-recap/ses
 import { LiveModeService } from '../../core/services/live-mode.service';
 import { MoodState, SessionApi } from '../../core/api/session.api';
 import { EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe } from '../../shared/pipes';
-import { UserStore } from '../../core/stores/user.store';
-import { PremiumLockComponent } from '../../shared/components/premium-lock/premium-lock.component';
 
 const MOODS: { value: MoodState; label: string; emoji: string }[] = [
   { value: 'CONFIDENT', label: 'Confiant', emoji: '😎' },
@@ -42,7 +40,7 @@ const EMOTION_COLORS: Record<string, string> = {
 @Component({
   selector: 'mtc-session-day',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, TopbarComponent, SessionMorningComponent, SessionLiveComponent, SessionRecapComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe, PremiumLockComponent],
+  imports: [DatePipe, DecimalPipe, TopbarComponent, SessionMorningComponent, SessionLiveComponent, SessionRecapComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-day.component.css',
   template: `
@@ -331,27 +329,6 @@ const EMOTION_COLORS: Record<string, string> = {
               </div>
             </div>
 
-            <!-- Question de réflexion (si disponible) -->
-            @if (reflectionQuestion()) {
-              <div class="debrief-card debrief-reflection">
-                @if (userStore.isPremium()) {
-                  <div class="recap-q-label"><span class="recap-q-icon">✦</span> Question de réflexion</div>
-                  <div class="recap-question">{{ reflectionQuestion() }}</div>
-                  <textarea class="recap-answer"
-                    [value]="reflectionAnswer()"
-                    (input)="onReflectionInput($any($event.target).value)"
-                    placeholder="Ta réponse (optionnel — alimente ton Weekly Debrief)"
-                    rows="2" maxlength="500"></textarea>
-                } @else {
-                  <div style="position:relative;min-height:70px;">
-                    <div class="recap-q-label" style="filter:blur(3px);user-select:none;pointer-events:none;"><span class="recap-q-icon">✦</span> Question de réflexion</div>
-                    <div class="recap-question" style="filter:blur(4px);user-select:none;pointer-events:none;">En une phrase, qu'est-ce que tu retiens de cette session ?</div>
-                    <mtc-premium-lock title="Question de réflexion IA" subtitle="Alimente ton Weekly Debrief et ta progression" />
-                  </div>
-                }
-              </div>
-            }
-
           } @else {
             <div class="debrief-empty">
               <div class="debrief-empty-icon">🌙</div>
@@ -370,10 +347,8 @@ export class SessionDayComponent implements OnInit, OnDestroy {
   private  readonly liveModeService = inject(LiveModeService);
   private  readonly sessionApi      = inject(SessionApi);
   private  readonly destroyRef      = inject(DestroyRef);
-  protected readonly userStore      = inject(UserStore);
 
   private  journalSaveTimer: ReturnType<typeof setTimeout> | null = null;
-  private  reflectionTimer:  ReturnType<typeof setTimeout> | null = null;
 
   protected readonly activeTab         = signal<'morning' | 'live' | 'debrief'>('morning');
   protected readonly confirmCloseOpen  = signal(false);
@@ -381,7 +356,6 @@ export class SessionDayComponent implements OnInit, OnDestroy {
   protected readonly objectiveChecks   = signal<Record<number, boolean>>({});
   protected readonly journalText       = signal('');
   protected readonly journalSaved      = signal(false);
-  protected readonly reflectionAnswer  = signal('');
   protected readonly savedFlash        = signal(false);
   protected readonly moods             = MOODS;
   protected readonly today             = new Date();
@@ -395,24 +369,6 @@ export class SessionDayComponent implements OnInit, OnDestroy {
     const h = Math.floor(diff / 3600);
     const m = Math.floor((diff % 3600) / 60);
     return h > 0 ? `${h}h ${m}min` : `${m}min`;
-  });
-
-  // ── Question de réflexion ─────────────────────────────────────────────────
-  protected readonly reflectionQuestion = computed(() => {
-    const stats = this.store.todayStats();
-    const s = this.store.activeSession();
-    if (!stats || stats.tradesCount === 0) return null;
-    const pnl = stats.totalPnl;
-    const wr  = stats.winRate;
-    if (s?.moodEnd === 'STRESSED' || s?.moodEnd === 'TIRED')
-      return "Tu as clôturé en mode stressé. Qu'est-ce qui a changé par rapport au début de la session ?";
-    if (pnl < 0 && wr < 40)
-      return `Session difficile avec ${stats.tradesCount} trades. Quel était le signal que tu as ignoré ?`;
-    if (wr >= 80)
-      return `Excellente session à ${wr.toFixed(0)}% WR. Qu'est-ce qui a fait la différence aujourd'hui ?`;
-    if (stats.tradesCount >= 6)
-      return `Tu as fait ${stats.tradesCount} trades aujourd'hui. Est-ce que tous étaient dans ton plan ?`;
-    return "En une phrase, qu'est-ce que tu retiens de cette session ?";
   });
 
   // ── Trades ────────────────────────────────────────────────────────────────
@@ -525,11 +481,6 @@ export class SessionDayComponent implements OnInit, OnDestroy {
     if (this.journalSaveTimer) clearTimeout(this.journalSaveTimer);
     this.journalSaveTimer = setTimeout(() => this.patch({ notes: this.journalText() }), 1200);
   }
-  protected onReflectionInput(value: string): void {
-    this.reflectionAnswer.set(value);
-    if (this.reflectionTimer) clearTimeout(this.reflectionTimer);
-    this.reflectionTimer = setTimeout(() => this.patch({ reflectionNote: this.reflectionAnswer() }), 1200);
-  }
 
   constructor() {
     // Bascule sur live quand session ACTIVE
@@ -545,8 +496,6 @@ export class SessionDayComponent implements OnInit, OnDestroy {
       if (!session) return;
       if (session.notes && this.journalText() === '')        this.journalText.set(session.notes);
       if (session.moodEnd && this.closeMood() === 'NEUTRAL') this.closeMood.set(session.moodEnd as MoodState);
-      if ((session as any).reflectionNote && this.reflectionAnswer() === '')
-        this.reflectionAnswer.set((session as any).reflectionNote);
     });
 
     effect(() => {
@@ -564,7 +513,6 @@ export class SessionDayComponent implements OnInit, OnDestroy {
   ngOnInit(): void { this.store.loadSessionData(); }
   ngOnDestroy(): void {
     if (this.journalSaveTimer)  clearTimeout(this.journalSaveTimer);
-    if (this.reflectionTimer)   clearTimeout(this.reflectionTimer);
   }
 
   protected selectTab(tab: 'morning' | 'live' | 'debrief'): void { this.activeTab.set(tab); }
