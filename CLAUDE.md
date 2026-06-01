@@ -9,16 +9,18 @@
 
 **MyTradingCoach** — SaaS freemium de journal de trading intelligent pour traders particuliers (crypto, forex, actions). L'IA analyse émotions et comportements pour aider les traders à progresser.
 
-**Plans :**
-- **FREE** : 30 trades/mois, historique illimité, stats de base, journal complet, tracking émotionnel
-- **PREMIUM** (39€/mois ou 349€/an) : trades illimités, analytics avancés, IA Insights, Chat Coach, Weekly Debrief automatique, Score trader, Export PDF — essai **7 jours** sans CB
+**Plans (source de vérité tarifaire : landing `Pricing.astro` + `core/constants/pricing.const.ts`) :**
+- **FREE** — gratuit : 30 trades/mois, historique illimité, stats de base, journal complet, tracking émotionnel
+- **STARTER** — **39 €/mois** ou **349 €/an** (~29 €/mois annualisé, économie 119 €) : trades illimités, analytics avancés, pré-session matin, session live, Weekly Debrief automatique, Score trader /100, Export PDF — essai **7 jours** sans CB
+- **PREMIUM** — **79 €/mois** ou **699 €/an** (~58 €/mois annualisé, économie 249 €) : tout Starter + IA Insights, Chat Coach IA, Calendrier éco IA, News live filtrées, contexte marché live, Treasury Rates, Recap email 17h30 — essai **7 jours** sans CB
 
 **Règles business absolues :**
-- Tout appel Anthropic = PREMIUM uniquement
+- Tout appel Anthropic = PREMIUM uniquement (Starter n'a pas d'IA)
 - `/analytics/summary` accessible FREE (win rate, P&L, streak)
 - Historique trades = illimité pour FREE (pas de filtre date)
 - Limite FREE = 30 trades/mois uniquement
 - Trial = 7 jours (jamais 14)
+- Prix : ne jamais coder une valeur tarifaire en dur → toujours `pricing.const.ts` (front), aligné sur la landing. Prix Stripe réels pilotés par les `STRIPE_*_PRICE_*`.
 
 ---
 
@@ -98,7 +100,7 @@ Dev
 - Prisma dans controllers → passer par les services
 - Trial 14 jours → 7 jours
 - Historique FREE 30 jours → illimité
-- Prix $19 → 39€
+- Prix Premium = **79 €** (pas 39 € — 39 € = Starter) · valeurs en dur → `pricing.const.ts`
 - CSS inline dans `.ts` → toujours dans `.css`
 - `@nestjs/bull` → `@nestjs/bullmq`
 
