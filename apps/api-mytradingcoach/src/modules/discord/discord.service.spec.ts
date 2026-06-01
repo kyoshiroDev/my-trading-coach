@@ -75,6 +75,20 @@ describe('DiscordService', () => {
     expect(putCall).toBeDefined();
   });
 
+  it('USER STARTER → appelle PUT avec rôle PREMIUM (palier payant)', async () => {
+    mockPrisma.user.findUnique.mockResolvedValue({
+      discordId: 'discord-123',
+      plan: 'STARTER',
+      role: 'USER',
+      trialEndsAt: null,
+    });
+    await service.syncDiscordRole('user-1');
+    const putCall = mockFetch.mock.calls.find(
+      ([url, opts]) => opts?.method === 'PUT' && url.includes('role-premium'),
+    );
+    expect(putCall).toBeDefined();
+  });
+
   it('BETA_TESTER → traité comme PREMIUM', async () => {
     mockPrisma.user.findUnique.mockResolvedValue({
       discordId: 'discord-123',
