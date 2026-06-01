@@ -62,6 +62,8 @@ export interface SessionTrade {
   takeProfit: number | null;
   pnl: number | null;
   emotion: string;
+  setup?: string;
+  riskReward?: number | null;
   tags: string[];
   tradedAt: string;
   sessionId: string | null;

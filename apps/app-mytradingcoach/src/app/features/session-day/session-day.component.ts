@@ -18,7 +18,9 @@ import { SessionMorningComponent } from '../dashboard/components/session-morning
 import { SessionLiveComponent } from '../dashboard/components/session-live/session-live.component';
 import { SessionRecapComponent } from '../dashboard/components/session-recap/session-recap.component';
 import { LiveModeService } from '../../core/services/live-mode.service';
-import { MoodState, SessionApi } from '../../core/api/session.api';
+import { MoodState, SessionApi, SessionTrade } from '../../core/api/session.api';
+import { DebriefObjective } from '../../core/api/debrief.api';
+import { evaluateObjectiveCheck } from './objective-check.util';
 import { EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe } from '../../shared/pipes';
 
 const MOODS: { value: MoodState; label: string; emoji: string }[] = [
@@ -400,23 +402,36 @@ export class SessionDayComponent implements OnInit, OnDestroy {
   // ── Objectifs ─────────────────────────────────────────────────────────────
   protected readonly objectivesReview = computed(() => {
     const objs = this.store.currentObjectives();
-    const tradeCount = this.store.todayTrades().length;
-    const hasRevenge = this.store.todayTrades().some(t => t.emotion === 'REVENGE');
+    const trades = this.store.todayTrades();
+    const journalLen = this.journalText().length;
+
     return objs.map((o) => {
-      const title = o.title.toLowerCase();
-      const maxMatch = title.match(/max\s*(\d+)\s*trade/);
-      if (maxMatch) {
-        const limit = +maxMatch[1];
-        return { ...o, auto: true, ok: tradeCount <= limit,
-                 detail: tradeCount <= limit ? '' : `${tradeCount} trades — dépassé` };
-      }
-      if (/revenge|vengeance/.test(title) || /apr[èe]s.*perte/.test(title)) {
-        return { ...o, auto: true, ok: !hasRevenge,
-                 detail: hasRevenge ? 'revenge trade détecté' : '' };
-      }
-      return { ...o, auto: false, ok: null as boolean | null, detail: '' };
+      const ok = evaluateObjectiveCheck(o.check, trades, journalLen);
+      return { ...o, auto: ok !== null, ok, detail: this.objDetail(o, ok, trades) };
     });
   });
+
+  /** Libellé court d'échec pour un objectif (vide si réussi ou manuel). */
+  private objDetail(o: DebriefObjective, ok: boolean | null, trades: SessionTrade[]): string {
+    if (ok !== false) return '';
+    const p = o.check?.params ?? {};
+    switch (o.check?.type) {
+      case 'max_trades':      return `${trades.length} trades — dépassé`;
+      case 'min_trades':      return `${trades.length}/${Number(p['min'])} trades`;
+      case 'no_revenge':      return 'revenge trade détecté';
+      case 'all_stops':       return 'stop loss manquant';
+      case 'min_rr': {
+        const rr = trades.map((t) => t.riskReward).filter((v): v is number => v != null);
+        const avg = rr.length ? rr.reduce((a, b) => a + b, 0) / rr.length : 0;
+        return `R:R ${avg.toFixed(1)} < ${Number(p['value'])}`;
+      }
+      case 'journal_filled':  return 'journal trop court';
+      case 'trade_window':    return `aucun trade ${String(p['start'])}-${String(p['end'])}`;
+      case 'setup_only':      return 'setup hors liste';
+      case 'max_loss_trades': return `${trades.filter((t) => (t.pnl ?? 0) < 0).length} pertes — dépassé`;
+      default:                return '';
+    }
+  }
 
   // ── Score de discipline ───────────────────────────────────────────────────
   protected readonly disciplineScore = computed(() => {

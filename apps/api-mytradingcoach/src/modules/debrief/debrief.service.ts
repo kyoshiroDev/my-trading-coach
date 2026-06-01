@@ -1,11 +1,21 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException, Logger } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { DebriefPdfData } from '../pdf/pdf.service';
+import { OBJECTIVE_CHECK_TYPES } from '../ai/prompts/debrief.prompt';
 
+interface ObjectiveCheck {
+  type: string;
+  params?: Record<string, unknown>;
+}
+interface DebriefObjective {
+  title: string;
+  reason: string;
+  check?: ObjectiveCheck | null;
+}
 interface DebriefAiResult {
   summary: string;
   insights: unknown;
-  objectives: { title: string; reason: string }[];
+  objectives: DebriefObjective[];
 }
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
@@ -14,12 +24,35 @@ import { SessionService } from '../session/session.service';
 
 @Injectable()
 export class DebriefService {
+  private readonly logger = new Logger(DebriefService.name);
+
   constructor(
     private prisma: PrismaService,
     private aiService: AiService,
     private analyticsService: AnalyticsService,
     private sessionService: SessionService,
   ) {}
+
+  /**
+   * Valide chaque objectif contre le catalogue de checks.
+   * check hors catalogue / absent → check:null (objectif manuel côté front), warning loggé.
+   */
+  private normalizeObjectives(
+    objectives: DebriefObjective[] | undefined,
+  ): DebriefObjective[] {
+    if (!Array.isArray(objectives)) return [];
+    const allowed = OBJECTIVE_CHECK_TYPES as readonly string[];
+    return objectives.map((o) => {
+      const type = o.check?.type;
+      if (type && allowed.includes(type)) {
+        return { title: o.title, reason: o.reason, check: { type, params: o.check?.params ?? {} } };
+      }
+      if (type) {
+        this.logger.warn(`Objectif IA avec check hors catalogue ignoré : "${type}" (titre: ${o.title})`);
+      }
+      return { title: o.title, reason: o.reason, check: null };
+    });
+  }
 
   async getCurrent(userId: string) {
     const now = new Date();
@@ -106,6 +139,8 @@ export class DebriefService {
       recentSessions,
     }, userId)) as DebriefAiResult;
 
+    const normalizedObjectives = this.normalizeObjectives(aiResult.objectives);
+
     return this.prisma.weeklyDebrief.upsert({
       where: { userId_weekNumber_year: { userId, weekNumber, year } },
       create: {
@@ -116,13 +151,13 @@ export class DebriefService {
         endDate,
         aiSummary: aiResult.summary,
         insights: JSON.parse(JSON.stringify(aiResult)),
-        objectives: aiResult.objectives,
+        objectives: normalizedObjectives,
         stats,
       },
       update: {
         aiSummary: aiResult.summary,
         insights: JSON.parse(JSON.stringify(aiResult)),
-        objectives: aiResult.objectives,
+        objectives: normalizedObjectives,
         stats,
         generatedAt: new Date(),
       },
