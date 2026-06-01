@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
-const EMOTION_COLORS: Record<string, string> = {
+export const EMOTION_COLORS: Record<string, string> = {
   CONFIDENT: '#10b981',
   FOCUSED: '#3b82f6',
   NEUTRAL: '#6b7280',
