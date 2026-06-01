@@ -213,6 +213,19 @@ model EcoCalendarCache {
   @@index([date])
 }
 
+/// Analyse IA du calendrier éco mutualisée par (date, signature d'actifs).
+/// 1 appel IA par signature partagé entre tous les users → coût O(actifs) au lieu de O(users).
+model EcoAnalysisCache {
+  id           String   @id @default(cuid())
+  date         String // YYYY-MM-DD Paris
+  assetsKey    String // signature normalisée des actifs
+  analysisJson String   @db.Text
+  createdAt    DateTime @default(now())
+
+  @@unique([date, assetsKey])
+  @@index([date])
+}
+
 enum MoodState {
   CONFIDENT
   FOCUSED

@@ -15,6 +15,10 @@ const mockPrisma = {
     findUnique: vi.fn(),
     update: vi.fn(),
   },
+  ecoAnalysisCache: {
+    findUnique: vi.fn().mockResolvedValue(null),
+    upsert: vi.fn().mockResolvedValue({}),
+  },
 };
 
 const mockAi = {
@@ -78,6 +82,9 @@ describe('EcoCalendarService', () => {
     // Valeur par défaut : user sans pins
     mockPrisma.user.findUnique.mockResolvedValue({ pinnedEcoEvents: [] });
     mockPrisma.user.update.mockResolvedValue({});
+    // Cache analyse mutualisée : miss par défaut
+    mockPrisma.ecoAnalysisCache.findUnique.mockResolvedValue(null);
+    mockPrisma.ecoAnalysisCache.upsert.mockResolvedValue({});
 
     originalFmpKey = process.env['FMP_API_KEY'];
   });
@@ -320,6 +327,35 @@ describe('EcoCalendarService', () => {
 
       expect(mockAi.analyzeEcoEvents).toHaveBeenCalledOnce();
       expect(result.analysis.summary).toContain('NFP');
+    });
+
+    it('mutualise l’analyse : 2 users mêmes actifs → 1 seul appel IA (le 2e lit le cache BDD)', async () => {
+      mockPrisma.ecoEvent.findMany.mockResolvedValue([{
+        time: '15:30', name: 'NFP', country: 'US', currency: 'USD',
+        impact: 'high', actual: null, estimate: 180000, previous: 150000,
+        isReleased: false, unit: 'K',
+      }]);
+      mockPrisma.trade.findMany.mockResolvedValue([{ asset: 'NQ' }]); // même actif pour les 2
+      const analysis = { summary: 'NFP attendu.', recommendation: '', assetImpacts: [] };
+      mockAi.analyzeEcoEvents.mockResolvedValue(analysis);
+      mockPrisma.ecoAnalysisCache.findUnique
+        .mockResolvedValueOnce(null) // user-A : cache BDD miss → appel IA
+        .mockResolvedValueOnce({ analysisJson: JSON.stringify(analysis) }); // user-B : hit
+
+      await service.getTodayEvents('user-A');
+      await service.getTodayEvents('user-B');
+
+      expect(mockAi.analyzeEcoEvents).toHaveBeenCalledOnce();
+      expect(mockPrisma.ecoAnalysisCache.upsert).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('assetsKey', () => {
+    it('normalise (trim, upper, dédup, tri) et renvoie DEFAULT si vide', () => {
+      const key = (a: string[]) => service['assetsKey'](a);
+      expect(key(['  btc ', 'eth', 'BTC'])).toBe('BTC|ETH');
+      expect(key([])).toBe('DEFAULT');
+      expect(key(['', '  '])).toBe('DEFAULT');
     });
   });
 
