@@ -694,6 +694,14 @@
 }
 .era-spin { animation: spinEra 1s linear infinite; display: inline-block; }
 @keyframes spinEra { to { transform: rotate(360deg); } }
+.era-ai-ready {
+  margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(245,158,11,.15);
+  font-size: 11px; color: var(--green); font-family: var(--font-mono);
+}
+.era-ai-error {
+  margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(245,158,11,.15);
+  font-size: 11px; color: var(--text-3); font-family: var(--font-mono);
+}
 
 .eco-flag-sm { font-size: 14px; line-height: 1; flex-shrink: 0; }
 

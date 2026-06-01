@@ -12,7 +12,8 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { interval } from 'rxjs';
+import { forkJoin, interval, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent, EcoResultAnalysis } from '../../../../core/api/eco-calendar.api';
 import { translateEcoEvent } from '../../../../core/data/eco-event-translations';
 import { MoodState, TradingSession, LiveStats, SessionTrade } from '../../../../core/api/session.api';
@@ -173,9 +174,23 @@ const EMOTIONS = [
                     </div>
                   </div>
                 }
-                <div class="era-ai-loading" data-testid="era-ai-loading">
-                  <span class="era-spin">⟳</span> Ton compagnon analyse l'impact...
-                </div>
+                @switch (releaseAlertState()) {
+                  @case ('analyzing') {
+                    <div class="era-ai-loading" data-testid="era-ai-loading">
+                      <span class="era-spin">⟳</span> Ton compagnon analyse l'impact...
+                    </div>
+                  }
+                  @case ('ready') {
+                    <div class="era-ai-ready" data-testid="era-ai-ready">
+                      ✦ Analyse prête — détail dans le calendrier ci-dessous ↓
+                    </div>
+                  }
+                  @case ('error') {
+                    <div class="era-ai-error">
+                      Analyse indisponible pour le moment.
+                    </div>
+                  }
+                }
               </div>
             }
 
@@ -719,6 +734,8 @@ export class SessionLiveComponent {
   // Eco WebSocket — nouvelles releases temps réel
   protected readonly newReleases = signal<EcoEvent[]>([]);
   protected readonly showReleaseAlert = signal(false);
+  protected readonly releaseAlertState = signal<'analyzing' | 'ready' | 'error'>('analyzing');
+  private releaseAlertTimer?: ReturnType<typeof setTimeout>;
 
   protected readonly moods = MOODS;
   protected readonly emotions = EMOTIONS;
@@ -786,14 +803,40 @@ export class SessionLiveComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((events) => {
         this.newReleases.set(events);
+        this.releaseAlertState.set('analyzing');
         this.showReleaseAlert.set(true);
-        setTimeout(() => this.showReleaseAlert.set(false), 30000);
+        clearTimeout(this.releaseAlertTimer);
 
-        // Rafraîchir l'analyse IA avec les nouvelles actual values
-        this.ecoCalendarApi.refreshAnalysis().subscribe((res) => {
-          this.ecoCalendarRefreshed.emit(res.data);
-        });
+        // Re-synchroniser le calendrier (actual values) pour le parent
+        this.ecoCalendarApi.refreshAnalysis()
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe((res) => this.ecoCalendarRefreshed.emit(res.data));
+
+        // Analyse IA ciblée par événement publié
+        const calls = events.map((ev) =>
+          this.ecoCalendarApi.analyzeResult(ev.name).pipe(
+            map((res) => ({ name: ev.name, analysis: res.data })),
+            catchError(() => of({ name: ev.name, analysis: null as EcoResultAnalysis | null })),
+          ),
+        );
+        if (!calls.length) { this.showReleaseAlert.set(false); return; }
+
+        forkJoin(calls)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe((results) => {
+            const next = { ...this.ecoResults() };
+            let anyOk = false;
+            for (const r of results) {
+              if (r.analysis) { next[r.name] = r.analysis; anyOk = true; }
+            }
+            this.ecoResults.set(next);
+            this.releaseAlertState.set(anyOk ? 'ready' : 'error');
+            // auto-dismiss UNIQUEMENT une fois l'analyse arrivée
+            this.releaseAlertTimer = setTimeout(() => this.showReleaseAlert.set(false), 12000);
+          });
       });
+
+    this.destroyRef.onDestroy(() => clearTimeout(this.releaseAlertTimer));
   }
 
   protected readonly pnlDisplay = computed(() => {
