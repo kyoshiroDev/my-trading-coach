@@ -1,5 +1,5 @@
-<!-- Wizard overlay : steps 1-6 sauf quand TradeForm prend l'écran -->
-@if (!(step() === 5 && tradeChoice() === 'manual')) {
+<!-- Wizard overlay : steps 1-8 sauf quand TradeForm prend l'écran -->
+@if (!(step() === 7 && tradeChoice() === 'manual')) {
   <div class="overlay" data-testid="onboarding-wizard">
     <div class="wizard">
 
@@ -9,7 +9,7 @@
           <div class="logo-mark"></div>
           <span class="logo-text">MyTradingCoach</span>
         </div>
-        @if (step() !== 6) {
+        @if (step() !== 8) {
           <button class="skip-btn" data-testid="wizard-skip" (click)="skip()" [disabled]="isSaving()">
             Passer
           </button>
@@ -139,8 +139,128 @@
         </div>
       }
 
-      <!-- ── Étape 5 — Choix premier trade ── -->
-      @if (step() === 5 && tradeChoice() === 'choice') {
+      <!-- ── Étape 5 — Stratégie (obligatoire) ── -->
+      @if (step() === 5) {
+        <div class="wizard-body">
+          <div class="step-label">{{ stepLabel }}</div>
+          <h2 class="step-title">Ta stratégie de trading</h2>
+          <p class="step-desc">Ces infos personnalisent l'analyse de ton coach IA.</p>
+
+          <div class="field-label">Ton style</div>
+          <div class="choice-grid strat-style-grid">
+            @for (st of TRADING_STYLES; track st.value) {
+              <button class="choice-card compact" [class.selected]="selectedStyle() === st.value" (click)="selectStyle(st.value)">
+                <span class="choice-emoji">{{ st.emoji }}</span>
+                <span class="choice-label">{{ st.label }}</span>
+                <span class="choice-desc">{{ st.desc }}</span>
+              </button>
+            }
+          </div>
+
+          <div class="field-label">Ton approche <span class="field-req">· au moins 1</span></div>
+          <div class="strat-tags">
+            @for (tag of STRATEGY_TAGS; track tag) {
+              <button class="strat-tag" [class.sel]="selectedStrategyTags().includes(tag)" (click)="toggleStrategyTag(tag)">{{ tag }}</button>
+            }
+          </div>
+
+          <div class="field-label">Décris ta stratégie <span class="field-opt">· optionnel mais conseillé</span></div>
+          <textarea
+            class="strat-desc"
+            rows="3"
+            [value]="strategyDescription()"
+            (input)="onStrategyDescription($event)"
+            placeholder="Ex : J'attends un FVG sur NQ après prise de liquidité de Londres, entrée en M5, TP au prochain order block."
+          ></textarea>
+
+          <div class="field-label">Tes sessions <span class="field-opt">· optionnel</span></div>
+          <div class="strat-tags">
+            @for (se of SESSIONS; track se.value) {
+              <button class="strat-tag" [class.sel]="selectedSessions().includes(se.value)" (click)="toggleSession(se.value)">
+                {{ se.label }} <span class="strat-tag-sub">{{ se.time }}</span>
+              </button>
+            }
+          </div>
+
+          <div class="wizard-footer">
+            <button class="btn-back" type="button" (click)="prevStep()">← Retour</button>
+            <button class="btn-next" data-testid="strategy-continue" (click)="nextStep()" [disabled]="!strategyValid() || isSaving()">
+              {{ isSaving() ? 'Enregistrement…' : 'Continuer →' }}
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- ── Étape 6 — Actifs (obligatoire) ── -->
+      @if (step() === 6) {
+        <div class="wizard-body">
+          <div class="step-label">{{ stepLabel }}</div>
+          <h2 class="step-title">Tes actifs principaux</h2>
+          <p class="step-desc">1 à 3 instruments que tu trades. Le premier devient ton favori — utilisé pour ton premier trade.</p>
+
+          <div class="field-label">Suggestions</div>
+          <div class="strat-tags">
+            @for (sug of assetSuggestions(); track sug) {
+              <button
+                class="strat-tag"
+                [class.sel]="selectedAssets().includes(sug)"
+                [disabled]="!selectedAssets().includes(sug) && selectedAssets().length >= 3"
+                (click)="addAsset(sug)"
+              >{{ sug }}</button>
+            }
+          </div>
+
+          <div class="field-label">Recherche</div>
+          <div class="asset-search-wrap">
+            <input
+              class="asset-search"
+              type="text"
+              data-testid="onboarding-asset-search"
+              [value]="assetQuery()"
+              (input)="onAssetSearch($event)"
+              (keydown.enter)="submitAssetQuery()"
+              [disabled]="selectedAssets().length >= 3"
+              placeholder="Cherche ou saisis un symbole (ex : NQ, BTC/USDT)…"
+            />
+            @if (assetQuery().trim()) {
+              <button class="asset-add-btn" type="button" (click)="submitAssetQuery()" [disabled]="selectedAssets().length >= 3">Ajouter</button>
+            }
+          </div>
+          @if (assetResults().length > 0) {
+            <div class="asset-results">
+              @for (r of assetResults(); track r.symbol) {
+                <button class="asset-result" (click)="addAsset(r.symbol)">
+                  <span class="asset-result-sym">{{ r.symbol }}</span>
+                  <span class="asset-result-lbl">{{ r.label }}</span>
+                </button>
+              }
+            </div>
+          }
+
+          @if (selectedAssets().length > 0) {
+            <div class="field-label">Sélection <span class="field-opt">· clique ★ pour le favori</span></div>
+            <div class="asset-selected">
+              @for (a of selectedAssets(); track a) {
+                <div class="asset-pill" [class.fav]="favoriteAsset() === a">
+                  <button class="asset-star" type="button" [class.on]="favoriteAsset() === a" title="Favori" (click)="setFavoriteAsset(a)">★</button>
+                  <span class="asset-pill-sym">{{ a }}</span>
+                  <button class="asset-remove" type="button" title="Retirer" (click)="removeAsset(a)">✕</button>
+                </div>
+              }
+            </div>
+          }
+
+          <div class="wizard-footer">
+            <button class="btn-back" type="button" (click)="prevStep()">← Retour</button>
+            <button class="btn-next" data-testid="assets-continue" (click)="nextStep()" [disabled]="!assetsValid() || isSaving()">
+              {{ isSaving() ? 'Enregistrement…' : 'Continuer →' }}
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- ── Étape 7 — Choix premier trade ── -->
+      @if (step() === 7 && tradeChoice() === 'choice') {
         <div class="wizard-body">
           <div class="step-label">{{ stepLabel }}</div>
           <h2 class="step-title">Ajoute ton premier trade</h2>
@@ -168,8 +288,8 @@
         </div>
       }
 
-      <!-- ── Étape 6 — Discord récompense ── -->
-      @if (step() === 6) {
+      <!-- ── Étape 8 — Discord récompense ── -->
+      @if (step() === 8) {
         <div class="wizard-body">
           <div class="celebrate"><span class="celebrate-ic">🎉</span></div>
           <h2 class="step-title center">Tu es prêt !</h2>
@@ -201,7 +321,7 @@
 }
 
 <!-- TradeForm (gère son propre overlay) — affiché quand choix manuel -->
-@if (step() === 5 && tradeChoice() === 'manual') {
+@if (step() === 7 && tradeChoice() === 'manual') {
   <mtc-trade-form
     [open]="true"
     [isSaving]="isSaving()"

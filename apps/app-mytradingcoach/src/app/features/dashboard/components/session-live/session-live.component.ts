@@ -12,12 +12,12 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { forkJoin, interval, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { Subject, forkJoin, interval, of } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent, EcoResultAnalysis } from '../../../../core/api/eco-calendar.api';
 import { translateEcoEvent } from '../../../../core/data/eco-event-translations';
 import { MoodState, TradingSession, LiveStats, SessionTrade } from '../../../../core/api/session.api';
-import { CreateTradeDto, MarketContext, NewsItem, TradesApi, UserAssetItem } from '../../../../core/api/trades.api';
+import { CreateTradeDto, InstrumentSearchResult, MarketContext, NewsItem, TradesApi, UserAssetItem } from '../../../../core/api/trades.api';
 import { SessionRecapComponent } from '../session-recap/session-recap.component';
 import { MarketContextBarComponent } from '../market-context-bar/market-context-bar.component';
 import { EcoSocketService } from '../../../../core/services/eco-socket.service';
@@ -407,6 +407,7 @@ const EMOTIONS = [
                       {{ a.isFavorite ? '★ ' : '' }}{{ a.symbol }}{{ a.tradeCount > 0 ? ' · ' + a.tradeCount + ' trade' + (a.tradeCount > 1 ? 's' : '') : '' }}
                     </option>
                   }
+                  <option value="__custom__">➕ Autre actif…</option>
                 </select>
                 @if (qtSelectedAsset()) {
                   <button
@@ -417,6 +418,36 @@ const EMOTIONS = [
                   >★</button>
                 }
               </div>
+
+              @if (customAssetMode()) {
+                <div class="qt-custom-asset">
+                  <div class="qt-custom-row">
+                    <input
+                      class="qt-input"
+                      type="text"
+                      data-testid="quick-trade-custom-asset"
+                      [value]="customAssetQuery()"
+                      (input)="onCustomAssetSearch($event)"
+                      (keydown.enter)="submitCustomAsset()"
+                      placeholder="Cherche ou saisis (ex : NQ, BTC/USDT)…"
+                      style="font-size:12px;"
+                    />
+                    <button class="qt-custom-add" type="button" [disabled]="!customAssetQuery().trim()" (click)="submitCustomAsset()">OK</button>
+                    <button class="qt-custom-cancel" type="button" (click)="cancelCustomAsset()">✕</button>
+                  </div>
+                  @if (customAssetResults().length > 0) {
+                    <div class="qt-custom-results">
+                      @for (r of customAssetResults(); track r.symbol) {
+                        <button class="qt-custom-result" type="button" (click)="addCustomAsset(r.symbol)">
+                          <span class="qt-custom-sym">{{ r.symbol }}</span>
+                          <span class="qt-custom-lbl">{{ r.label }}</span>
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+
               <!-- Prix temps réel -->
               @if (qtSelectedAsset()) {
                 <div class="qt-live-price">
@@ -429,8 +460,8 @@ const EMOTIONS = [
                   }
                 </div>
               }
-              @if (userAssets().length === 0) {
-                <div class="qt-asset-hint">Saisis ton premier trade pour voir tes actifs ici</div>
+              @if (userAssets().length === 0 && !customAssetMode()) {
+                <div class="qt-asset-hint">Choisis « ➕ Autre actif… » pour saisir ton premier instrument.</div>
               }
             }
           </div>
@@ -685,6 +716,11 @@ export class SessionLiveComponent {
   protected readonly assetsLoading = signal(false);
   protected readonly assetsError = signal(false);
   protected readonly qtSelectedAsset = signal<UserAssetItem | null>(null);
+  // Saisie libre d'actif (anti-blocage premier trade)
+  protected readonly customAssetMode    = signal(false);
+  protected readonly customAssetQuery   = signal('');
+  protected readonly customAssetResults = signal<InstrumentSearchResult[]>([]);
+  private readonly customAssetSearch$   = new Subject<string>();
   protected readonly qtSide = signal<'LONG' | 'SHORT'>('LONG');
   protected readonly qtEmotion = signal<'CONFIDENT' | 'STRESSED' | 'REVENGE' | 'FEAR' | 'FOCUSED' | 'NEUTRAL'>('CONFIDENT');
   protected readonly qtSetup = signal<string>('BREAKOUT');
@@ -779,6 +815,21 @@ export class SessionLiveComponent {
 
     // Assets chargés immédiatement — indépendamment de la session
     this.loadUserAssets();
+
+    // Recherche d'instrument (saisie libre d'actif)
+    this.customAssetSearch$
+      .pipe(
+        debounceTime(300),
+        map((q) => q.trim()),
+        distinctUntilChanged(),
+        switchMap((q) =>
+          q.length < 2
+            ? of({ data: [] as InstrumentSearchResult[] })
+            : this.tradesApi.searchInstruments(q).pipe(catchError(() => of({ data: [] as InstrumentSearchResult[] }))),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((res) => this.customAssetResults.set(res.data ?? []));
 
     // Pins chargés directement — pas de dépendance au cache getTodayEvents
     this.ecoCalendarApi.getPins()
@@ -960,9 +1011,57 @@ export class SessionLiveComponent {
 
   protected onAssetSelect(event: Event): void {
     const symbol = (event.target as HTMLSelectElement).value;
+    if (symbol === '__custom__') {
+      this.customAssetMode.set(true);
+      this.customAssetQuery.set('');
+      this.customAssetResults.set([]);
+      return;
+    }
     const asset = this.userAssets().find((a) => a.symbol === symbol) ?? null;
     this.qtSelectedAsset.set(asset);
     if (asset) this.applyAssetSelection(asset);
+  }
+
+  protected onCustomAssetSearch(event: Event): void {
+    const v = (event.target as HTMLInputElement).value;
+    this.customAssetQuery.set(v);
+    this.customAssetSearch$.next(v);
+  }
+
+  protected submitCustomAsset(): void {
+    const q = this.customAssetQuery().trim();
+    if (q) this.addCustomAsset(q);
+  }
+
+  protected cancelCustomAsset(): void {
+    this.customAssetMode.set(false);
+    this.customAssetQuery.set('');
+    this.customAssetResults.set([]);
+  }
+
+  /** Ajoute un actif saisi librement : local immédiat + persistance, sélectionné pour le trade. */
+  protected addCustomAsset(symbol: string): void {
+    const sym = symbol.trim().toUpperCase();
+    if (!sym) return;
+
+    let asset = this.userAssets().find((a) => a.symbol === sym) ?? null;
+    if (!asset) {
+      asset = {
+        symbol: sym, label: sym, category: '',
+        tradeCount: 0, lastEntry: null, lastQty: null, isFavorite: false,
+      };
+      this.userAssets.update((list) => [asset as UserAssetItem, ...list]);
+    }
+
+    this.applyAssetSelection(asset);
+    this.cancelCustomAsset();
+
+    // Persister la liste d'actifs (ne pas bloquer en cas d'erreur réseau)
+    const symbols = this.userAssets().map((a) => a.symbol);
+    const fav = this.userAssets().find((a) => a.isFavorite)?.symbol ?? null;
+    this.tradesApi.saveUserAssets(symbols, fav)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: () => undefined, error: () => undefined });
   }
 
   private applyAssetSelection(asset: UserAssetItem): void {

@@ -531,6 +531,41 @@
   animation: skel-pulse 1.2s ease-in-out infinite;
 }
 .qt-asset-hint { font-size: 10px; color: var(--text-3); font-style: italic; }
+
+/* Saisie libre d'actif */
+.qt-custom-asset { display: flex; flex-direction: column; gap: 5px; margin-top: 5px; }
+.qt-custom-row { display: flex; gap: 5px; align-items: center; }
+.qt-custom-row .qt-input { flex: 1; min-width: 0; }
+.qt-custom-add, .qt-custom-cancel {
+  flex-shrink: 0; height: 32px; border-radius: 6px; cursor: pointer;
+  font-family: var(--font-body); font-size: 11px; font-weight: 600;
+  transition: all .15s;
+}
+.qt-custom-add {
+  padding: 0 12px; background: rgba(59,130,246,.12);
+  border: 1px solid rgba(59,130,246,.3); color: var(--blue-bright);
+}
+.qt-custom-add:hover:not(:disabled) { background: rgba(59,130,246,.2); }
+.qt-custom-add:disabled { opacity: .4; cursor: not-allowed; }
+.qt-custom-cancel {
+  width: 32px; background: var(--bg-3); border: 1px solid var(--border); color: var(--text-3);
+}
+.qt-custom-cancel:hover { color: var(--text); border-color: var(--border-hover); }
+.qt-custom-results {
+  display: flex; flex-direction: column; gap: 2px;
+  max-height: 140px; overflow-y: auto;
+  background: var(--bg-3); border: 1px solid var(--border); border-radius: 6px; padding: 3px;
+}
+.qt-custom-result {
+  display: flex; align-items: baseline; gap: 6px;
+  padding: 6px 8px; border-radius: 5px; cursor: pointer;
+  background: transparent; border: none; text-align: left; width: 100%;
+  transition: background .12s;
+}
+.qt-custom-result:hover { background: rgba(59,130,246,.08); }
+.qt-custom-result:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: -2px; }
+.qt-custom-sym { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--text); }
+.qt-custom-lbl { font-size: 10px; color: var(--text-3); }
 @keyframes skel-pulse {
   0%, 100% { opacity: .4; }
   50% { opacity: .8; }

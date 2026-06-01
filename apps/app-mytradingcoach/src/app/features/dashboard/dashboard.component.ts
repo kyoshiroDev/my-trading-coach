@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe, TitleCasePipe, UpperCasePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { BillingApi } from '../../core/api/billing.api';
 import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
@@ -112,6 +112,19 @@ import { ChartService } from '../../core/services/chart.service';
             </div>
           </div>
           <button class="limit-banner-btn ghost" (click)="showPlanModal.set(true)">Upgrade</button>
+        </div>
+      }
+
+      @if (userStore.profileIncomplete()) {
+        <div class="limit-banner near" data-testid="profile-nudge">
+          <div class="limit-banner-left">
+            <span class="limit-banner-ic">✨</span>
+            <div>
+              <div class="limit-banner-title">Complète ton profil de trader</div>
+              <div class="limit-banner-sub">Stratégie + actifs principaux → analyses IA bien plus personnalisées.</div>
+            </div>
+          </div>
+          <button class="limit-banner-btn" (click)="goToSettings()">Compléter</button>
         </div>
       }
 
@@ -357,6 +370,9 @@ export class DashboardComponent {
   private  readonly analyticsApi  = inject(AnalyticsApi);
   private  readonly destroyRef    = inject(DestroyRef);
   private  readonly chartService  = inject(ChartService);
+  private  readonly router        = inject(Router);
+
+  protected goToSettings(): void { this.router.navigate(['/settings']); }
 
   protected readonly showTradeForm = signal(false);
   protected readonly showPlanModal = signal(false);

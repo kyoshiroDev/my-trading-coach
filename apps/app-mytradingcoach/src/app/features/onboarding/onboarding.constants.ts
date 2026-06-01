@@ -19,3 +19,10 @@ export const SESSIONS: { value: TradingSession; label: string; time: string }[] 
   { value: 'NEW_YORK', label: 'New York', time: '14h-20h CET' },
   { value: 'ASIAN',    label: 'Asie',     time: '00h-8h CET' },
 ];
+
+export const ASSET_SUGGESTIONS: Record<string, string[]> = {
+  CRYPTO:  ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'XRP/USDT'],
+  FOREX:   ['EUR/USD', 'GBP/USD', 'USD/JPY', 'XAU/USD'],
+  ACTIONS: ['NQ', 'ES', 'MNQ', 'MES', 'AAPL', 'TSLA'],
+  MULTI:   ['BTC/USDT', 'EUR/USD', 'NQ', 'ES'],
+};
