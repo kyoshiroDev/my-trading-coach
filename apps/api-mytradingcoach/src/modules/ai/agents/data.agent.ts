@@ -8,6 +8,9 @@ export type TradeSummaryInput = {
   setup: string;
   session: string;
   tradedAt: Date;
+  riskReward?: number | null;
+  timeframe?: string | null;
+  notes?: string | null;
 };
 
 /**
@@ -44,14 +47,53 @@ export class DataAgent {
         .join(', ');
     };
 
-    const top5 = [...closed]
+    // R:R moyen global + par setup (trades avec riskReward seulement)
+    const withRR = trades.filter(
+      (t): t is TradeSummaryInput & { riskReward: number } => t.riskReward != null,
+    );
+    const avgRR = withRR.length
+      ? (withRR.reduce((s, t) => s + t.riskReward, 0) / withRR.length).toFixed(2)
+      : null;
+    const rrGroups = withRR.reduce<Record<string, number[]>>((acc, t) => {
+      (acc[t.setup] ??= []).push(t.riskReward);
+      return acc;
+    }, {});
+    const rrBySetup = Object.entries(rrGroups)
+      .map(
+        ([k, vals]) =>
+          `${k}:${(vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)}`,
+      )
+      .join(', ');
+    const rrLine = avgRR
+      ? `R:R moyen: ${avgRR}${rrBySetup ? ` | par setup: ${rrBySetup}` : ''}`
+      : "R:R moyen: n/a (renseigne SL/TP pour l'activer)";
+
+    // Performance par timeframe (W/L)
+    const tfGroups = trades.reduce<Record<string, TradeSummaryInput[]>>(
+      (acc, t) => {
+        if (!t.timeframe) return acc;
+        (acc[t.timeframe] ??= []).push(t);
+        return acc;
+      },
+      {},
+    );
+    const tfStats = Object.entries(tfGroups)
+      .map(([k, ts]) => {
+        const w = ts.filter((t) => (t.pnl ?? 0) > 0).length;
+        return `${k}:${w}W/${ts.length - w}L`;
+      })
+      .join(', ');
+
+    // Top 5 trades significatifs : R:R + note tronquée (≤120 car)
+    const top5lines = [...closed]
       .sort((a, b) => Math.abs(b.pnl) - Math.abs(a.pnl))
       .slice(0, 5)
-      .map(
-        (t) =>
-          `${t.asset} ${t.side} ${t.setup} ${t.emotion} ${t.pnl >= 0 ? '+' : ''}${t.pnl}$`,
-      )
-      .join(' | ');
+      .map((t) => {
+        const base = `${t.asset} ${t.side} ${t.setup} ${t.emotion} ${t.pnl >= 0 ? '+' : ''}${t.pnl}$`;
+        const rr = t.riskReward != null ? ` R:R ${t.riskReward.toFixed(1)}` : '';
+        const note = t.notes ? ` — « ${t.notes.slice(0, 120)} »` : '';
+        return base + rr + note;
+      });
 
     const sorted = [...trades].sort(
       (a, b) => a.tradedAt.getTime() - b.tradedAt.getTime(),
@@ -64,10 +106,13 @@ export class DataAgent {
 
     return `RÉSUMÉ TRADES (${trades.length} total, ${closed.length} clôturés)
 Win Rate: ${winRate}% | PnL: $${totalPnl}
+${rrLine}
 Par émotion: ${groupStats('emotion')}
 Par setup: ${groupStats('setup')}
 Par session: ${groupStats('session')}
+Par timeframe: ${tfStats || 'n/a'}
 Séquences revenge (perte→REVENGE): ${revengeSeq}
-Top 5 trades significatifs: ${top5}`;
+Top 5 trades significatifs:
+${top5lines.join('\n')}`;
   }
 }

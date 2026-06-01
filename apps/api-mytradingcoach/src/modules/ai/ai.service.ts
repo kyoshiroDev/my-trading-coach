@@ -72,6 +72,9 @@ export class AiService {
         setup: true,
         session: true,
         tradedAt: true,
+        riskReward: true,
+        timeframe: true,
+        notes: true,
       },
     });
 
@@ -106,10 +109,17 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
       const sessions = [
         ...new Set(recentTrades.map((t) => t.session).filter(Boolean)),
       ].join(', ');
+      const rrVals = recentTrades
+        .map((t) => t.riskReward)
+        .filter((v): v is number => v != null);
+      const avgRR = rrVals.length
+        ? (rrVals.reduce((a, b) => a + b, 0) / rrVals.length).toFixed(2)
+        : null;
 
       contextSummary = `Données trader (${recentTrades.length} trades récents) :
 - Win rate : ${winRate}%
 - P&L total : ${totalPnl.toFixed(2)}$
+- R:R moyen : ${avgRR ?? 'non renseigné'}
 - Émotions : ${emotions || 'non renseignées'}
 - Setups : ${setups || 'non renseignés'}
 - Sessions : ${sessions || 'non renseignées'}`;
