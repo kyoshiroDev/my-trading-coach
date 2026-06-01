@@ -31,6 +31,7 @@ const mockPrisma = {
     findMany: vi.fn(),
     findFirst: vi.fn(),
     update: vi.fn(),
+    updateMany: vi.fn(),
   },
 };
 
@@ -116,6 +117,60 @@ describe('SessionService', () => {
       // 2 wins / 3 closed = 66.67%
       expect(stats.winRate).toBeCloseTo(66.67, 1);
       expect(stats.totalPnl).toBe(250);
+    });
+  });
+
+  describe('closeSession', () => {
+    it('rattache les trades du jour non liés puis recalcule les stats', async () => {
+      mockPrisma.tradeSession.findFirst.mockResolvedValue({
+        startedAt: new Date('2026-06-01T08:00:00.000Z'),
+      });
+      mockPrisma.trade.updateMany.mockResolvedValue({ count: 2 });
+      mockPrisma.trade.findMany.mockResolvedValue([
+        makeTrade({ pnl: 100, asset: 'NQ' }),
+        makeTrade({ id: 'trade-2', pnl: -40, asset: 'ES' }),
+      ]);
+      mockPrisma.tradeSession.update.mockResolvedValue({ id: 'session-1' });
+
+      await service.closeSession('user-1', 'session-1', 'CONFIDENT');
+
+      // Rattachement des trades du jour encore non liés
+      expect(mockPrisma.trade.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            userId: 'user-1',
+            sessionId: null,
+            tradedAt: expect.objectContaining({
+              gte: expect.any(Date),
+              lte: expect.any(Date),
+            }),
+          }),
+          data: { sessionId: 'session-1' },
+        }),
+      );
+
+      // Stats recalculées depuis les trades liés
+      expect(mockPrisma.tradeSession.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'session-1', userId: 'user-1' },
+          data: expect.objectContaining({
+            status: 'CLOSED',
+            totalTrades: 2,
+            totalPnl: 60,
+            winRate: 50,
+          }),
+        }),
+      );
+    });
+
+    it('lance NotFoundException si la session est introuvable', async () => {
+      mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.closeSession('user-1', 'session-x', 'CONFIDENT'),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(mockPrisma.trade.updateMany).not.toHaveBeenCalled();
     });
   });
 

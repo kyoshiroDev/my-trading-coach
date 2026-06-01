@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Plan, Role, Prisma } from '@prisma/client';
+import { Plan, Role, Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
@@ -39,6 +39,12 @@ export class TradesService {
     await this.checkMonthlyLimit(userId, plan, role);
     const pnl = this.calculatePnl(dto);
     const riskReward = this.calculateRiskReward(dto);
+
+    const activeSession = await this.prisma.tradeSession.findFirst({
+      where: { userId, status: SessionStatus.ACTIVE },
+      select: { id: true },
+    });
+
     const trade = await this.prisma.trade.create({
       data: {
         ...dto,
@@ -48,6 +54,7 @@ export class TradesService {
         quantity: dto.quantity ?? 1,
         capitalEngaged: dto.capitalEngaged ?? null,
         userId,
+        sessionId: activeSession?.id ?? null,
         tradedAt: dto.tradedAt ? new Date(dto.tradedAt) : new Date(),
       },
     });

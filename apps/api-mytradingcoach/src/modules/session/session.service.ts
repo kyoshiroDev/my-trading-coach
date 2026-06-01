@@ -68,6 +68,24 @@ export class SessionService {
     reflectionNote?: string,
     reflectionQuestion?: string,
   ) {
+    const existing = await this.prisma.tradeSession.findFirst({
+      where: { id: sessionId, userId },
+      select: { startedAt: true },
+    });
+    if (!existing) throw new NotFoundException('Session introuvable');
+
+    // Fenêtre du jour de la session (même base de date que getLiveStats / Débrief)
+    const dayStart = new Date(existing.startedAt);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(existing.startedAt);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    // Rattacher les trades du jour encore non liés à cette session
+    await this.prisma.trade.updateMany({
+      where: { userId, sessionId: null, tradedAt: { gte: dayStart, lte: dayEnd } },
+      data: { sessionId },
+    });
+
     const trades = await this.prisma.trade.findMany({
       where: { userId, sessionId },
       select: { pnl: true, asset: true },
