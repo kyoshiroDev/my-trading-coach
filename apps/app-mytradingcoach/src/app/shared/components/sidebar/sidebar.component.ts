@@ -118,7 +118,7 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             <span class="badge starter">STARTER</span>
           </a>
 
-          <div class="nav-section">PREMIUM</div>
+          <div class="nav-section">ANALYSE &amp; IA</div>
 
           <a
             routerLink="/ai-insights"
