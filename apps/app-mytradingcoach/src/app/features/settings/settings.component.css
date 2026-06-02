@@ -229,6 +229,11 @@
   color: var(--badge-premium-color);
   border-color: var(--badge-premium-border);
 }
+.plan-badge.starter {
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--blue-bright, #60a5fa);
+  border-color: rgba(59, 130, 246, 0.3);
+}
 .plan-badge.free {
   background: var(--badge-free-bg);
   color: var(--badge-free-color);

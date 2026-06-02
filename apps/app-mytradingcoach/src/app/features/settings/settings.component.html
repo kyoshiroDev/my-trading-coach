@@ -3,7 +3,7 @@
 <div class="settings-content">
 
   @if (checkoutParam() === 'success') {
-    <div class="alert alert-success">✓ Abonnement activé — bienvenue dans Premium !</div>
+    <div class="alert alert-success">✓ Abonnement activé — bienvenue !</div>
   }
   @if (checkoutParam() === 'canceled') {
     <div class="alert alert-cancel">Paiement annulé. Tu peux réessayer quand tu veux.</div>
@@ -189,7 +189,7 @@
                 <div class="plan-badge-dot"></div>
                 PREMIUM
               </div>
-              <p class="plan-desc">Accès à toutes les fonctionnalités — IA, analytics avancés, Weekly Debrief.</p>
+              <p class="plan-desc">Accès à tout — IA Insights, Chat coach IA, Calendrier éco IA, news &amp; contexte marché, recap email 17h30.</p>
               @if (userStore.user()?.stripeCurrentPeriodEnd) {
                 <p class="plan-renewal">
                   Renouvellement : {{ userStore.user()?.stripeCurrentPeriodEnd | date:'dd/MM/yyyy' }}
@@ -198,6 +198,28 @@
               <div class="plan-actions">
                 <button class="btn btn-secondary" (click)="openPortal()">
                   Gérer mon abonnement →
+                </button>
+              </div>
+            } @else if (userStore.isStarterOrAbove()) {
+              <div class="plan-badge starter">
+                <div class="plan-badge-dot"></div>
+                STARTER
+              </div>
+              <p class="plan-desc">Trades illimités · Analytics avancés · Weekly Debrief · Score trader · Export PDF.</p>
+              @if (userStore.user()?.stripeCurrentPeriodEnd) {
+                <p class="plan-renewal">
+                  Renouvellement : {{ userStore.user()?.stripeCurrentPeriodEnd | date:'dd/MM/yyyy' }}
+                </p>
+              }
+              <p class="plan-upgrade-hint">
+                Passe à Premium pour l'IA : Chat coach, IA Insights, Calendrier éco IA, news &amp; contexte marché.
+              </p>
+              <div class="plan-actions">
+                <button class="btn btn-secondary" (click)="openPortal()">
+                  Gérer mon abonnement →
+                </button>
+                <button class="btn btn-primary" (click)="showPlanModal.set(true)">
+                  Passer Premium →
                 </button>
               </div>
             } @else {
@@ -251,13 +273,13 @@
           <div class="settings-row">
             <div class="settings-row-left">
               <span class="settings-row-label">Weekly Debrief automatique</span>
-              <span class="settings-row-hint">Génération automatique chaque dimanche. Premium uniquement.</span>
+              <span class="settings-row-hint">Génération automatique chaque dimanche. Starter uniquement.</span>
             </div>
             <label class="settings-toggle">
               <input type="checkbox" [checked]="prefDebrief()"
-                [disabled]="!userStore.isPremium()"
+                [disabled]="!userStore.isStarterOrAbove()"
                 (change)="prefDebrief.set($any($event.target).checked)" />
-              <span class="toggle-track" [class.disabled]="!userStore.isPremium()"></span>
+              <span class="toggle-track" [class.disabled]="!userStore.isStarterOrAbove()"></span>
             </label>
           </div>
 
