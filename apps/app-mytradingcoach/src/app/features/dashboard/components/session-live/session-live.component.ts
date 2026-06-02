@@ -767,10 +767,18 @@ export class SessionLiveComponent {
       .sort((a, b) => a.time.localeCompare(b.time));
   });
 
-  /** Événements affichés : publiés OU dans la fenêtre de session.
-   *  Les events hors-session ne produisent plus de lignes fantômes (le @empty s'active). */
+  /** Événements affichés : uniquement ceux avec un contenu réel, sans dépendre
+   *  d'un seuil horaire (faux pour les sessions du soir/nuit).
+   *  - publié → seulement si une valeur a été publiée (actual != null)
+   *  - à venir → seulement si l'heure est valide
+   *  Sinon, plus aucune ligne fantôme → le @empty s'active correctement. */
   protected readonly visibleEcoEvents = computed(() =>
-    this.sessionEcoEvents().filter((e) => e.isReleased || !this.isOutsideSession(e.time)),
+    this.sessionEcoEvents().filter((e) => {
+      if (!e.name?.trim()) return false;
+      if (e.isReleased) return e.actual != null;
+      const h = parseInt((e.time ?? '').split(':')[0] ?? '', 10);
+      return Number.isFinite(h);
+    }),
   );
 
   // Eco WebSocket — nouvelles releases temps réel

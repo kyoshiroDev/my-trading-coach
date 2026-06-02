@@ -6,6 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Prisma } from '@prisma/client';
 import * as argon2 from 'argon2';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -14,6 +15,38 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 heure
+
+// Champs renvoyés au front pour représenter l'utilisateur courant.
+// Source de vérité unique utilisée par getMe / refresh / login / register
+// afin que le store front (et profileIncomplete) ait toujours les mêmes
+// données — notamment tradingAssets/favoriteAsset (sinon nudge faux positif).
+const ME_SELECT = {
+  id: true,
+  email: true,
+  name: true,
+  plan: true,
+  role: true,
+  onboardingCompleted: true,
+  market: true,
+  goal: true,
+  currency: true,
+  currencyRate: true,
+  startingCapital: true,
+  notificationsEmail: true,
+  debriefAutomatic: true,
+  trialEndsAt: true,
+  trialUsed: true,
+  stripeSubscriptionStatus: true,
+  stripeCurrentPeriodEnd: true,
+  tradingStyle: true,
+  tradingStrategy: true,
+  tradingSessions: true,
+  tradesPerDayMin: true,
+  tradesPerDayMax: true,
+  strategyDescription: true,
+  tradingAssets: true,
+  favoriteAsset: true,
+} satisfies Prisma.UserSelect;
 
 @Injectable()
 export class AuthService {
@@ -57,9 +90,10 @@ export class AuthService {
 
     const tokens = await this.generateTokens(user.id, user.email);
     const now = new Date();
-    await this.prisma.user.update({
+    const me = await this.prisma.user.update({
       where: { id: user.id },
       data: { lastLoginAt: now, lastSeenAt: now },
+      select: ME_SELECT,
     });
 
     // Email de bienvenue à l'utilisateur — fire-and-forget
@@ -79,7 +113,7 @@ export class AuthService {
         this.logger.error(`Admin alert failed: ${String(err)}`),
       );
 
-    return { ...tokens, user };
+    return { ...tokens, user: me };
   }
 
   async login(dto: LoginDto) {
@@ -92,19 +126,12 @@ export class AuthService {
     if (!valid) throw new UnauthorizedException('Identifiants invalides');
 
     const now = new Date();
-    await this.prisma.user.update({
+    const safeUser = await this.prisma.user.update({
       where: { id: user.id },
       data: { lastLoginAt: now, lastSeenAt: now },
+      select: ME_SELECT,
     });
 
-    const safeUser = {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      plan: user.plan,
-      role: user.role,
-      onboardingCompleted: user.onboardingCompleted,
-    };
     const tokens = await this.generateTokens(user.id, user.email);
     return { ...tokens, user: safeUser };
   }
@@ -121,16 +148,7 @@ export class AuthService {
 
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
-      select: {
-        id: true, email: true, name: true, plan: true, role: true,
-        onboardingCompleted: true, currency: true, currencyRate: true,
-        startingCapital: true, notificationsEmail: true, debriefAutomatic: true,
-        trialEndsAt: true, trialUsed: true,
-        stripeSubscriptionStatus: true, stripeCurrentPeriodEnd: true,
-        tradingStyle: true, tradingStrategy: true, tradingSessions: true,
-        tradesPerDayMin: true, tradesPerDayMax: true, strategyDescription: true,
-        market: true, goal: true,
-      },
+      select: ME_SELECT,
     });
     if (!user) throw new UnauthorizedException('Utilisateur introuvable');
 
@@ -141,34 +159,7 @@ export class AuthService {
   async getMe(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        plan: true,
-        role: true,
-        trialEndsAt: true,
-        onboardingCompleted: true,
-        market: true,
-        goal: true,
-        currency: true,
-        currencyRate: true,
-        startingCapital: true,
-        notificationsEmail: true,
-        debriefAutomatic: true,
-        trialEndsAt: true,
-        trialUsed: true,
-        stripeSubscriptionStatus: true,
-        stripeCurrentPeriodEnd: true,
-        tradingStyle: true,
-        tradingStrategy: true,
-        tradingSessions: true,
-        tradesPerDayMin: true,
-        tradesPerDayMax: true,
-        strategyDescription: true,
-        market: true,
-        goal: true,
-      },
+      select: ME_SELECT,
     });
     if (!user) throw new UnauthorizedException('Utilisateur introuvable');
     return user;
