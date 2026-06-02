@@ -83,7 +83,7 @@ export class TradesController {
     }),
   )
   async importCSV(
-    @CurrentUser() user: { id: string; plan: Plan; role: Role },
+    @CurrentUser() user: { id: string; plan: Plan; role: Role; trialEndsAt?: Date | null },
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) throw new BadRequestException('Fichier manquant');
@@ -92,6 +92,7 @@ export class TradesController {
       file.buffer,
       file.originalname,
       user.id,
+      { plan: user.plan, role: user.role, trialEndsAt: user.trialEndsAt },
     );
 
     // Déduplication à l'import : ne recrée pas un trade déjà présent (ré-essais, ré-imports).
