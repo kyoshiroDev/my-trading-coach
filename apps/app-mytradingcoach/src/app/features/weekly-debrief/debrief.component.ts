@@ -315,6 +315,12 @@ export class DebriefComponent {
   protected readonly error = signal<string | null>(null);
 
   constructor() {
+    // /debrief/current = StarterGuard : ne pas poller pour un non-Starter (sinon 403).
+    // Les non-Starter voient le paywall ; rien à charger.
+    if (!this.userStore.isStarterOrAbove()) {
+      this.isLoading.set(false);
+      return;
+    }
     // Poll toutes les 15s tant qu'aucun débrief n'est disponible.
     // S'arrête automatiquement dès qu'un débrief est trouvé.
     timer(0, 15_000)

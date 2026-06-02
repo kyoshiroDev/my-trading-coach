@@ -382,18 +382,21 @@ export class AiInsightsComponent implements AfterViewChecked {
       }
     });
 
-    // Vérifier le cooldown au chargement de la page
-    this.http
-      .get<{ data: { cooldownSeconds: number } }>(
-        `${environment.apiUrl}/ai/cooldown`,
-      )
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => {
-          const secs = res.data?.cooldownSeconds ?? 0;
-          if (secs > 0) this.cooldownUntil.set(Date.now() + secs * 1000);
-        },
-      });
+    // Cooldown = endpoint Premium (PremiumGuard) : ne l'appeler que pour un Premium,
+    // sinon 403 inutile (les non-premium voient le paywall).
+    if (this.userStore.isPremium()) {
+      this.http
+        .get<{ data: { cooldownSeconds: number } }>(
+          `${environment.apiUrl}/ai/cooldown`,
+        )
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (res) => {
+            const secs = res.data?.cooldownSeconds ?? 0;
+            if (secs > 0) this.cooldownUntil.set(Date.now() + secs * 1000);
+          },
+        });
+    }
   }
 
   private getQuotaKey(): string {
