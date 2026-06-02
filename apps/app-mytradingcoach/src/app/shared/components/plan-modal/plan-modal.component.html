@@ -15,31 +15,45 @@
       <button class="plan-modal-close" (click)="close()" aria-label="Fermer">✕</button>
     </div>
 
+    <!-- Toggle d'intervalle GLOBAL (pilote les 2 cartes) -->
+    <div class="plan-interval-toggle" role="group" aria-label="Intervalle de facturation">
+      <button
+        class="interval-opt"
+        [class.active]="interval() === 'monthly'"
+        (click)="setInterval('monthly')"
+      >Mensuel</button>
+      <button
+        class="interval-opt"
+        [class.active]="interval() === 'yearly'"
+        (click)="setInterval('yearly')"
+      >
+        Annuel
+        <span class="interval-save">−{{ savingsPct(selectedTier()) }}%</span>
+      </button>
+    </div>
+
     <!-- Deux plans côte à côte -->
     <div class="plan-cols">
 
       <!-- STARTER -->
-      <div class="plan-col" [class.selected-col]="selectedPlan() === 'starter_monthly' || selectedPlan() === 'starter_yearly'">
+      <div
+        class="plan-col"
+        role="button"
+        tabindex="0"
+        [class.selected-col]="selectedTier() === 'starter'"
+        (click)="selectTier('starter')"
+        (keydown.enter)="selectTier('starter')"
+        (keydown.space)="selectTier('starter')"
+      >
         <div class="plan-col-name">Starter</div>
         <div class="plan-col-price">
-          @if (selectedPlan() === 'starter_yearly') {
-            <span class="price">{{ yearlyPerMonth(PRICING.starter.yearly) }}€</span><span class="period">/mois</span>
-            <div class="plan-col-detail">Facturé {{ PRICING.starter.yearly }}€/an</div>
+          @if (interval() === 'yearly') {
+            <span class="price">{{ PRICING.starter.yearly }}€</span><span class="period">/an</span>
+            <div class="plan-col-detail save">économise {{ PRICING.starter.savings }}€</div>
           } @else {
             <span class="price">{{ PRICING.starter.monthly }}€</span><span class="period">/mois</span>
+            <div class="plan-col-detail">Facturé chaque mois</div>
           }
-        </div>
-        <div class="plan-col-intervals">
-          <button
-            class="plan-interval-btn"
-            [class.active]="selectedPlan() === 'starter_yearly'"
-            (click)="selectPlan('starter_yearly')"
-          >⭐ Annuel — {{ PRICING.starter.yearly }}€/an</button>
-          <button
-            class="plan-interval-btn"
-            [class.active]="selectedPlan() === 'starter_monthly'"
-            (click)="selectPlan('starter_monthly')"
-          >Mensuel — {{ PRICING.starter.monthly }}€/mois</button>
         </div>
         <ul class="plan-col-feats">
           <li>✓ Trades illimités</li>
@@ -49,35 +63,30 @@
           <li>✓ Weekly Debrief</li>
           <li>✓ Score trader /100</li>
           <li>✓ Export PDF</li>
-          <li class="feat-no">✗ IA Insights</li>
-          <li class="feat-no">✗ Chat coach IA</li>
-          <li class="feat-no">✗ Calendrier éco IA</li>
+          <li class="feat-upsell">+ IA Insights, Chat coach &amp; Calendrier éco dans Premium →</li>
         </ul>
       </div>
 
       <!-- PREMIUM -->
-      <div class="plan-col premium-col" [class.selected-col]="selectedPlan() === 'premium_monthly' || selectedPlan() === 'premium_yearly'">
-        <div class="plan-col-badge">Complet</div>
+      <div
+        class="plan-col premium-col"
+        role="button"
+        tabindex="0"
+        [class.selected-col]="selectedTier() === 'premium'"
+        (click)="selectTier('premium')"
+        (keydown.enter)="selectTier('premium')"
+        (keydown.space)="selectTier('premium')"
+      >
+        <div class="plan-col-badge">Recommandé</div>
         <div class="plan-col-name">Premium</div>
         <div class="plan-col-price">
-          @if (selectedPlan() === 'premium_yearly') {
-            <span class="price">{{ yearlyPerMonth(PRICING.premium.yearly) }}€</span><span class="period">/mois</span>
-            <div class="plan-col-detail">Facturé {{ PRICING.premium.yearly }}€/an</div>
+          @if (interval() === 'yearly') {
+            <span class="price">{{ PRICING.premium.yearly }}€</span><span class="period">/an</span>
+            <div class="plan-col-detail save">économise {{ PRICING.premium.savings }}€</div>
           } @else {
             <span class="price">{{ PRICING.premium.monthly }}€</span><span class="period">/mois</span>
+            <div class="plan-col-detail">Facturé chaque mois</div>
           }
-        </div>
-        <div class="plan-col-intervals">
-          <button
-            class="plan-interval-btn"
-            [class.active]="selectedPlan() === 'premium_yearly'"
-            (click)="selectPlan('premium_yearly')"
-          >⭐ Annuel — {{ PRICING.premium.yearly }}€/an</button>
-          <button
-            class="plan-interval-btn"
-            [class.active]="selectedPlan() === 'premium_monthly'"
-            (click)="selectPlan('premium_monthly')"
-          >Mensuel — {{ PRICING.premium.monthly }}€/mois</button>
         </div>
         <ul class="plan-col-feats">
           <li>✓ Tout Starter inclus</li>
@@ -102,9 +111,9 @@
       @if (isLoading()) {
         <span class="btn-spinner"></span> Redirection...
       } @else {
-        Essayer 7 jours gratuit →
+        Essayer {{ selectedTier() === 'premium' ? 'Premium' : 'Starter' }} 7 jours gratuit →
       }
     </button>
-    <p class="plan-modal-hint">Sans CB · Annulation à tout moment</p>
+    <p class="plan-modal-hint">Puis {{ ctaPriceLabel() }} · Sans CB · Annulation à tout moment</p>
   </div>
 </div>
