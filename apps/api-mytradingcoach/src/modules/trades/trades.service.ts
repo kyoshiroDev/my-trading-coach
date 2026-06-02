@@ -62,6 +62,58 @@ export class TradesService {
     return trade;
   }
 
+  /**
+   * Import en masse avec déduplication — empêche la création de doublons.
+   * Clé d'unicité applicative : userId + asset + side + tradedAt + entry + exit + pnl.
+   * Skip les trades déjà présents en base ET les doublons internes au même lot
+   * (un fichier ré-importé ne recrée donc rien). Pas de migration : dédup applicative.
+   */
+  async importTrades(
+    userId: string,
+    dtos: Partial<CreateTradeDto>[],
+    plan: Plan = Plan.FREE,
+    role: Role = Role.USER,
+  ): Promise<{ created: number; duplicates: number; failed: number; total: number }> {
+    const tradeKey = (t: {
+      asset?: string | null;
+      side?: string | null;
+      tradedAt?: string | Date | null;
+      entry?: number | null;
+      exit?: number | null;
+      pnl?: number | null;
+    }): string => {
+      const at = t.tradedAt ? new Date(t.tradedAt).toISOString() : '';
+      return [t.asset ?? '', t.side ?? '', at, t.entry ?? '', t.exit ?? '', t.pnl ?? ''].join('|');
+    };
+
+    const existing = await this.prisma.trade.findMany({
+      where: { userId },
+      select: { asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true },
+    });
+    const seen = new Set(existing.map(tradeKey));
+
+    let created = 0;
+    let duplicates = 0;
+    let failed = 0;
+
+    for (const dto of dtos) {
+      const key = tradeKey(dto);
+      if (seen.has(key)) {
+        duplicates++;
+        continue;
+      }
+      seen.add(key); // dédup intra-lot (même trade présent 2× dans le fichier)
+      try {
+        await this.create(userId, dto as CreateTradeDto, plan, role);
+        created++;
+      } catch {
+        failed++;
+      }
+    }
+
+    return { created, duplicates, failed, total: dtos.length };
+  }
+
   async findAll(userId: string, filters: TradeFiltersDto) {
     const {
       cursor,

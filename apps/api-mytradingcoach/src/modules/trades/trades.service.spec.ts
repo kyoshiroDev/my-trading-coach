@@ -410,4 +410,49 @@ describe('TradesService', () => {
       ).rejects.toThrow(HttpException);
     });
   });
+
+  describe('importTrades — déduplication', () => {
+    it('skip les trades déjà en base ET les doublons internes au lot', async () => {
+      const tradedAt = new Date('2026-05-30T14:31:55.000Z');
+      // Un trade déjà présent en base
+      mockPrisma.trade.findMany.mockResolvedValue([
+        { asset: 'BTC/USDT', side: TradeSide.LONG, tradedAt, entry: 100, exit: 110, pnl: 10 },
+      ]);
+      mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
+      mockPrisma.trade.create.mockResolvedValue(mockTrade);
+
+      const dup: Partial<CreateTradeDto> = {
+        asset: 'BTC/USDT', side: TradeSide.LONG, entry: 100, exit: 110, pnl: 10,
+        emotion: EmotionState.NEUTRAL, setup: SetupType.BREAKOUT,
+        session: TradingSession.LONDON, timeframe: '1h', tradedAt: tradedAt.toISOString(),
+      };
+      const fresh: Partial<CreateTradeDto> = { ...dup, asset: 'ETH/USDT' };
+
+      const res = await service.importTrades(
+        'user-123',
+        [dup, fresh, { ...fresh }], // dup (déjà en base) + ETH + ETH (doublon intra-lot)
+        Plan.PREMIUM,
+      );
+
+      expect(res.total).toBe(3);
+      expect(res.created).toBe(1); // seul ETH créé une fois
+      expect(res.duplicates).toBe(2); // dup déjà en base + 2e ETH du lot
+      expect(mockPrisma.trade.create).toHaveBeenCalledTimes(1);
+    });
+
+    it('crée tous les trades quand aucun doublon', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue([]);
+      mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
+      mockPrisma.trade.create.mockResolvedValue(mockTrade);
+
+      const res = await service.importTrades(
+        'user-123',
+        [createTradeDto, { ...createTradeDto, asset: 'ETH/USDT' }],
+        Plan.PREMIUM,
+      );
+
+      expect(res.created).toBe(2);
+      expect(res.duplicates).toBe(0);
+    });
+  });
 });

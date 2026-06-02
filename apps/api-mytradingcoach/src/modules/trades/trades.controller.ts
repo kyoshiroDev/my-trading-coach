@@ -94,21 +94,13 @@ export class TradesController {
       user.id,
     );
 
-    const results = await Promise.allSettled(
-      parsed.map((dto) =>
-        this.tradesService.create(
-          user.id,
-          dto as CreateTradeDto,
-          user.plan,
-          user.role,
-        ),
-      ),
+    // Déduplication à l'import : ne recrée pas un trade déjà présent (ré-essais, ré-imports).
+    return this.tradesService.importTrades(
+      user.id,
+      parsed,
+      user.plan,
+      user.role,
     );
-
-    const created = results.filter((r) => r.status === 'fulfilled').length;
-    const failed = results.filter((r) => r.status === 'rejected').length;
-
-    return { created, failed, total: parsed.length };
   }
 
   @Post()

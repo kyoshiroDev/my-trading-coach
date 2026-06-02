@@ -22,6 +22,7 @@ import { environment } from '../../../environments/environment';
 
 interface ImportResult {
   created: number;
+  duplicates: number;
   failed: number;
   total: number;
 }
@@ -75,6 +76,13 @@ interface ImportResult {
                 />
                 <p class="result-title">
                   {{ result()!.created }} trade(s) importé(s) !
+                </p>
+              } @else {
+                <p class="result-title">Aucun nouveau trade</p>
+              }
+              @if (result()!.duplicates > 0) {
+                <p class="result-sub">
+                  {{ result()!.duplicates }} doublon(s) ignoré(s) (déjà présents)
                 </p>
               }
               @if (result()!.failed > 0) {
