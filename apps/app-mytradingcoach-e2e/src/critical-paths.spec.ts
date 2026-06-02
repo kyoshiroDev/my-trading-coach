@@ -16,18 +16,13 @@ async function login(page: Page, user: { email: string; password: string }) {
   await page.fill('[data-testid="login-password"]', user.password);
   await page.click('[data-testid="login-submit"]');
   await page.waitForURL('**/dashboard');
-  // Ignorer le wizard d'onboarding s'il apparaît
-  try {
-    const wizard = page.locator('[data-testid="onboarding-wizard"]');
-    if (await wizard.isVisible({ timeout: 2000 })) {
-      await page.click('[data-testid="wizard-skip"]');
-      await page.waitForSelector('[data-testid="onboarding-wizard"]', {
-        state: 'hidden',
-        timeout: 5000,
-      });
-    }
-  } catch {
-    /* wizard absent */
+  // Onboarding obligatoire (plus de bouton "Passer") : les comptes E2E doivent
+  // être onboardés (onboardingCompleted=true), sinon l'overlay bloque l'app.
+  const wizard = page.locator('[data-testid="onboarding-wizard"]');
+  if (await wizard.isVisible({ timeout: 1000 }).catch(() => false)) {
+    throw new Error(
+      "Wizard d'onboarding visible : le compte de test E2E doit être onboardé (onboardingCompleted=true).",
+    );
   }
 }
 
