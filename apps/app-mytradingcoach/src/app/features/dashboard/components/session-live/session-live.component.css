@@ -366,6 +366,19 @@
   transition: border-color .15s;
 }
 .qt-input:focus { border-color: var(--blue); }
+
+/* ENTRY capturé automatiquement au clic — lecture seule (non interactif) */
+.qt-entry-readonly {
+  width: 100%;
+  background: var(--bg-2);
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-2);
+  cursor: default;
+}
 .qt-sides { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
 .qt-side {
   padding: 7px;

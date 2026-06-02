@@ -530,15 +530,10 @@ const EMOTIONS = [
 
           <div class="qt-pnl-row">
             <div>
-              <div class="qt-lbl">ENTRY</div>
-              <input
-                class="qt-input"
-                type="number"
-                [placeholder]="livePricePlaceholder()"
-                style="font-size:12px;"
-                [value]="qtEntry()"
-                (input)="qtEntry.set($any($event.target).value)"
-              />
+              <div class="qt-lbl">ENTRY (au clic)</div>
+              <div class="qt-entry-readonly" data-testid="qt-entry-auto">
+                {{ livePrice() !== null ? livePricePlaceholder() : '—' }}
+              </div>
             </div>
             <div>
               <div class="qt-lbl">QUANTITÉ</div>
@@ -581,9 +576,9 @@ const EMOTIONS = [
           <button
             class="qt-log"
             data-testid="quick-trade-submit"
-            [disabled]="!canSubmitQuickTrade()"
+            [disabled]="!canSubmitQuickTrade() || qtSubmitting()"
             (click)="submitQuickTrade()"
-          >⚡ Logger ce trade</button>
+          >{{ qtSubmitting() ? 'Capture…' : '⚡ Logger ce trade' }}</button>
           <div class="qt-hint">Asset + direction + émotion suffisent</div>
 
           <!-- Retour d'action (succès / erreur) — annoncé aux lecteurs d'écran -->
@@ -725,10 +720,10 @@ export class SessionLiveComponent {
   protected readonly qtEmotion = signal<'CONFIDENT' | 'STRESSED' | 'REVENGE' | 'FEAR' | 'FOCUSED' | 'NEUTRAL'>('CONFIDENT');
   protected readonly qtSetup = signal<string>('BREAKOUT');
   protected readonly qtTimeframe = signal<string>('5m');
-  protected readonly qtEntry = signal('');
   protected readonly qtQty = signal('1');
   protected readonly qtSl = signal('');
   protected readonly qtTp = signal('');
+  protected readonly qtSubmitting = signal(false);
 
   // Eco results cache
   private readonly ecoResults = signal<Record<string, EcoResultAnalysis>>({});
@@ -1080,8 +1075,7 @@ export class SessionLiveComponent {
 
   private applyAssetSelection(asset: UserAssetItem): void {
     this.qtSelectedAsset.set(asset);
-    // Ne pas pré-remplir l'entry — le trader saisit son prix depuis son broker
-    this.qtEntry.set('');
+    // L'entry est capturée automatiquement au clic (prix marché de l'instant) — pas de saisie.
     if (asset.lastQty != null) this.qtQty.set(String(asset.lastQty));
     this.startLivePricePolling(asset.symbol);
   }
@@ -1105,7 +1099,10 @@ export class SessionLiveComponent {
     this.stopLivePricePolling();
     this.livePrice.set(null);
     this.fetchLivePrice(symbol);
-    this.livePriceInterval = setInterval(() => this.fetchLivePrice(symbol), POLLING_MS.LIVE_PRICE);
+    this.livePriceInterval = setInterval(() => {
+      // Garde-fou : pas d'appels quand l'onglet est masqué
+      if (!document.hidden) this.fetchLivePrice(symbol);
+    }, POLLING_MS.LIVE_PRICE);
   }
 
   private stopLivePricePolling(): void {
@@ -1131,12 +1128,27 @@ export class SessionLiveComponent {
 
   protected submitQuickTrade(): void {
     const selected = this.qtSelectedAsset();
-    if (!selected) return;
+    if (!selected || this.qtSubmitting()) return;
 
-    const entryFromField = parseFloat(this.qtEntry());
-    const entryFromLive  = this.livePrice();
-    const finalEntry     = entryFromField > 0 ? entryFromField : (entryFromLive ?? 0);
+    this.qtSubmitting.set(true);
+    // Capture FRAÎCHE du prix au moment exact du clic (cache backend 3s).
+    this.tradesApi
+      .getLivePrice(selected.symbol)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.emitTrade(selected, res.data?.price ?? this.livePrice() ?? 0);
+          this.qtSubmitting.set(false);
+        },
+        error: () => {
+          // Fallback : dernier prix affiché (ne pas bloquer le log)
+          this.emitTrade(selected, this.livePrice() ?? 0);
+          this.qtSubmitting.set(false);
+        },
+      });
+  }
 
+  private emitTrade(selected: UserAssetItem, entry: number): void {
     const h = new Date().getHours();
     let session: CreateTradeDto['session'];
     if (h >= 7 && h < 16) session = 'LONDON';
@@ -1150,14 +1162,13 @@ export class SessionLiveComponent {
       setup: this.qtSetup() as CreateTradeDto['setup'],
       session,
       timeframe: this.qtTimeframe(),
-      entry: finalEntry,
+      entry,
       ...(this.qtQty() ? { quantity: parseFloat(this.qtQty()) } : {}),
       ...(this.qtSl() ? { stopLoss: parseFloat(this.qtSl()) } : {}),
       ...(this.qtTp() ? { takeProfit: parseFloat(this.qtTp()) } : {}),
     };
 
     this.tradeLogged.emit(dto);
-    this.qtEntry.set('');
     this.qtSl.set('');
     this.qtTp.set('');
     this.qtQty.set('1');
