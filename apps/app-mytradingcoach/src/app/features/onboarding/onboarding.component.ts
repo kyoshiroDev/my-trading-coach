@@ -203,22 +203,6 @@ export class OnboardingComponent {
 
   protected finishAndGoDiscord() { this.step.set(8); }
 
-  protected skip(): void {
-    this.isSaving.set(true);
-    this.usersApi
-      .completeOnboarding({
-        market: this.selectedMarket(),
-        goal: this.selectedGoal(),
-        startingCapital: this.parseCapital(),
-        currency: this.selectedCurrency(),
-      })
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => { this.auth.setCurrentUser(res.data); this.isSaving.set(false); this.completed.emit(); },
-        error: () => { this.isSaving.set(false); this.completed.emit(); },
-      });
-  }
-
   // Étape Stratégie (5) → enregistre le profil IA complet puis va aux Actifs (6)
   private saveProfileThenGoAssets(): void {
     this.isSaving.set(true);

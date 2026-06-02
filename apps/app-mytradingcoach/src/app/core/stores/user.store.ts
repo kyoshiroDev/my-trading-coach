@@ -17,6 +17,9 @@ export class UserStore {
     return user.plan === 'STARTER' || user.plan === 'PREMIUM';
   });
 
+  /** Alias explicite : plan Starter OU supérieur (Premium / trial / rôle privilégié). */
+  readonly isStarterOrAbove = this.isStarter;
+
   readonly isPremium = computed(() => {
     const user = this.user();
     if (!user) return false;

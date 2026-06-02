@@ -82,6 +82,7 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
           >
             <span class="nav-icon">⚡</span>
             Ma session
+            <span class="badge starter">STARTER</span>
           </a>
 
           <a
@@ -115,6 +116,7 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
           >
             <span class="nav-icon">📈</span>
             Analytics
+            <span class="badge starter">STARTER</span>
           </a>
 
           <div class="nav-section">PREMIUM</div>
@@ -140,7 +142,7 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
           >
             <span class="nav-icon">📅</span>
             Weekly Debrief
-            <span class="badge">PRO</span>
+            <span class="badge starter">STARTER</span>
           </a>
 
           <a
@@ -152,7 +154,6 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
           >
             <span class="nav-icon">🗓️</span>
             Calendrier éco
-            <span class="badge">PRO</span>
           </a>
 
           @if (userStore.isAmbassador()) {

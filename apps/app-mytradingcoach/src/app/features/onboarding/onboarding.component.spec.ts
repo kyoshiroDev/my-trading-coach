@@ -45,7 +45,6 @@ const MINIMAL_TEMPLATE = `
   @if (step() > 2) {
     <div>step {{ step() }}</div>
   }
-  <button class="btn-skip" (click)="skip()">Ignorer</button>
 `;
 
 describe('OnboardingComponent', () => {
@@ -138,15 +137,5 @@ describe('OnboardingComponent', () => {
     c.selectGoal('DISCIPLINE');
     c.nextStep();
     expect(c.step()).toBe(3);
-  });
-
-  it('skip appelle completeOnboarding avec null', () => {
-    const fixture = TestBed.createComponent(OnboardingComponent);
-    fixture.detectChanges();
-    const c = fixture.componentInstance as unknown as { skip: () => void };
-    c.skip();
-    expect(mockUsersApi.completeOnboarding).toHaveBeenCalledWith(
-      expect.objectContaining({ market: null, goal: null }),
-    );
   });
 });

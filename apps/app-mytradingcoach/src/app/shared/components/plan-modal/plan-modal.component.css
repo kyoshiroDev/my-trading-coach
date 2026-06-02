@@ -204,6 +204,8 @@
   margin-bottom: 16px;
 }
 
+.plan-cols { align-items: stretch; }
+
 .plan-col {
   background: var(--bg-2);
   border: 1px solid var(--border);
@@ -211,21 +213,33 @@
   padding: 16px;
   cursor: default;
   transition: border-color .15s;
+  display: flex;
+  flex-direction: column;
 }
 .plan-col.selected-col { border-color: rgba(59,130,246,.4); background: rgba(59,130,246,.04); }
-.premium-col.selected-col { border-color: rgba(139,92,246,.4); background: rgba(139,92,246,.04); }
 
+/* Premium = plan recommandé : cadre violet permanent + léger halo */
+.premium-col {
+  border: 1.5px solid #8b5cf6;
+  box-shadow: 0 0 0 1px rgba(139,92,246,.25), 0 8px 30px -12px rgba(139,92,246,.4);
+  position: relative;
+}
+.premium-col.selected-col { border-color: #8b5cf6; background: rgba(139,92,246,.06); }
+
+/* Badge "Complet" centré en haut, à cheval sur la bordure */
 .plan-col-badge {
-  display: inline-block;
-  font-size: 9px;
-  font-family: var(--font-mono);
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #8b5cf6;
+  color: #fff;
+  font-size: 11px;
   font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, rgba(59,130,246,.15), rgba(139,92,246,.15));
-  color: #a78bfa;
-  border: 1px solid rgba(139,92,246,.2);
-  margin-bottom: 6px;
+  letter-spacing: .3px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
 }
 
 .plan-col-name {
@@ -235,7 +249,7 @@
   margin-bottom: 8px;
 }
 
-.plan-col-price { margin-bottom: 10px; }
+.plan-col-price { margin-bottom: 10px; min-height: 46px; }
 .plan-col-price .price { font-size: 26px; font-weight: 700; font-family: var(--font-mono); color: var(--text); }
 .plan-col-price .period { font-size: 12px; color: var(--text-3); margin-left: 3px; }
 .plan-col-detail { font-size: 11px; color: var(--text-3); margin-top: 2px; }
