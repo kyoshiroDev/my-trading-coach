@@ -102,7 +102,7 @@ export interface InstrumentSearchResult {
   category: string;
 }
 
-export interface MarketContextItem { value: number | null; source: string; }
+export interface MarketContextItem { value: number | null; changePct: number | null; source: string; }
 export interface TreasuryRates { t2y: number | null; t5y: number | null; t10y: number | null; t30y: number | null; }
 export interface MarketContext {
   nq: MarketContextItem;

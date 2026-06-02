@@ -276,6 +276,9 @@ const EMOTIONS = [
                     <div class="cal-empty-sub">Pas d'annonce économique pour cette session.</div>
                   </div>
                 }
+                @if (hiddenEcoCount() > 0) {
+                  <div class="cal-more">+{{ hiddenEcoCount() }} autre{{ hiddenEcoCount() > 1 ? 's' : '' }} événement{{ hiddenEcoCount() > 1 ? 's' : '' }} hors fenêtre de session</div>
+                }
               </div>
             }
           </div>
@@ -762,18 +765,36 @@ export class SessionLiveComponent {
       .sort((a, b) => a.time.localeCompare(b.time));
   });
 
-  /** Événements affichés : uniquement ceux avec un contenu réel, sans dépendre
-   *  d'un seuil horaire (faux pour les sessions du soir/nuit).
-   *  - publié → seulement si une valeur a été publiée (actual != null)
-   *  - à venir → seulement si l'heure est valide
-   *  Sinon, plus aucune ligne fantôme → le @empty s'active correctement. */
+  /** Cap d'affichage : au-delà, on résume par un compteur « +N autres ». */
+  private readonly MAX_ECO_EVENTS = 12;
+
+  /** Événements pertinents : contenu réel + fenêtre de session (pas toute la
+   *  journée éco, sinon empilement illisible de barres fines).
+   *  - publié → seulement si une valeur a été publiée (actual != null), dans les 6 dernières heures
+   *  - à venir → heure valide, de −30 min à +6 h autour de maintenant
+   *  Triés par heure croissante. */
+  protected readonly relevantEcoEvents = computed(() =>
+    this.sessionEcoEvents()
+      .filter((e) => {
+        if (!e.name?.trim()) return false;
+        const delta = this.eventMinutesFromNow(e.time);
+        if (e.isReleased) {
+          if (e.actual == null) return false;
+          return delta === null || (delta >= -360 && delta <= 60);
+        }
+        return delta !== null && delta >= -30 && delta <= 360;
+      })
+      .sort((a, b) => (a.time ?? '').localeCompare(b.time ?? '')),
+  );
+
+  /** Liste effectivement rendue (plafonnée). */
   protected readonly visibleEcoEvents = computed(() =>
-    this.sessionEcoEvents().filter((e) => {
-      if (!e.name?.trim()) return false;
-      if (e.isReleased) return e.actual != null;
-      const h = parseInt((e.time ?? '').split(':')[0] ?? '', 10);
-      return Number.isFinite(h);
-    }),
+    this.relevantEcoEvents().slice(0, this.MAX_ECO_EVENTS),
+  );
+
+  /** Nombre d'événements pertinents masqués par le cap. */
+  protected readonly hiddenEcoCount = computed(() =>
+    Math.max(0, this.relevantEcoEvents().length - this.MAX_ECO_EVENTS),
   );
 
   // Eco WebSocket — nouvelles releases temps réel
@@ -958,6 +979,24 @@ export class SessionLiveComponent {
     const eventMin = h * 60 + min;
     const nowMin = now.getHours() * 60 + now.getMinutes();
     return Math.max(0, eventMin - nowMin);
+  }
+
+  /** Minutes signées entre l'événement et maintenant (négatif = passé).
+   *  Gère le format « HH:MM » comme l'ISO. null si l'heure est invalide. */
+  private eventMinutesFromNow(time: string | null | undefined): number | null {
+    if (!time) return null;
+    let h: number, m: number;
+    if (time.includes('T')) {
+      const d = new Date(time);
+      h = d.getHours();
+      m = d.getMinutes();
+    } else {
+      h = parseInt(time.split(':')[0] ?? '', 10);
+      m = parseInt(time.split(':')[1] ?? '0', 10);
+    }
+    if (!Number.isFinite(h)) return null;
+    const now = new Date();
+    return h * 60 + (Number.isFinite(m) ? m : 0) - (now.getHours() * 60 + now.getMinutes());
   }
 
   protected getEventAnalysis(eventName: string): EcoResultAnalysis | null {
