@@ -74,30 +74,18 @@ export class TradesService {
     plan: Plan = Plan.FREE,
     role: Role = Role.USER,
   ): Promise<{ created: number; duplicates: number; failed: number; total: number }> {
-    const tradeKey = (t: {
-      asset?: string | null;
-      side?: string | null;
-      tradedAt?: string | Date | null;
-      entry?: number | null;
-      exit?: number | null;
-      pnl?: number | null;
-    }): string => {
-      const at = t.tradedAt ? new Date(t.tradedAt).toISOString() : '';
-      return [t.asset ?? '', t.side ?? '', at, t.entry ?? '', t.exit ?? '', t.pnl ?? ''].join('|');
-    };
-
     const existing = await this.prisma.trade.findMany({
       where: { userId },
       select: { asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true },
     });
-    const seen = new Set(existing.map(tradeKey));
+    const seen = new Set(existing.map((t) => this.dedupeKey(t)));
 
     let created = 0;
     let duplicates = 0;
     let failed = 0;
 
     for (const dto of dtos) {
-      const key = tradeKey(dto);
+      const key = this.dedupeKey(dto);
       if (seen.has(key)) {
         duplicates++;
         continue;
@@ -112,6 +100,52 @@ export class TradesService {
     }
 
     return { created, duplicates, failed, total: dtos.length };
+  }
+
+  /** Clé d'unicité d'un trade : asset + side + tradedAt + entry + exit + pnl. */
+  private dedupeKey(t: {
+    asset?: string | null;
+    side?: string | null;
+    tradedAt?: string | Date | null;
+    entry?: number | null;
+    exit?: number | null;
+    pnl?: number | null;
+  }): string {
+    const at = t.tradedAt ? new Date(t.tradedAt).toISOString() : '';
+    return [t.asset ?? '', t.side ?? '', at, t.entry ?? '', t.exit ?? '', t.pnl ?? ''].join('|');
+  }
+
+  /** Compte les doublons existants pour un user (lignes en trop par rapport aux uniques). */
+  async countDuplicates(
+    userId: string,
+  ): Promise<{ total: number; unique: number; duplicates: number }> {
+    const trades = await this.prisma.trade.findMany({
+      where: { userId },
+      select: { asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true },
+    });
+    const keys = new Set(trades.map((t) => this.dedupeKey(t)));
+    return { total: trades.length, unique: keys.size, duplicates: trades.length - keys.size };
+  }
+
+  /** Supprime les doublons en gardant la plus ancienne occurrence de chaque clé. */
+  async removeDuplicates(userId: string): Promise<{ removed: number; kept: number }> {
+    const trades = await this.prisma.trade.findMany({
+      where: { userId },
+      select: { id: true, asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true },
+      orderBy: { createdAt: 'asc' }, // garder la 1ʳᵉ occurrence créée
+    });
+    const seen = new Set<string>();
+    const toDelete: string[] = [];
+    for (const t of trades) {
+      const key = this.dedupeKey(t);
+      if (seen.has(key)) toDelete.push(t.id);
+      else seen.add(key);
+    }
+    if (toDelete.length > 0) {
+      await this.prisma.trade.deleteMany({ where: { id: { in: toDelete }, userId } });
+      await this.analyticsService.invalidateUserCache(userId);
+    }
+    return { removed: toDelete.length, kept: seen.size };
   }
 
   async findAll(userId: string, filters: TradeFiltersDto) {

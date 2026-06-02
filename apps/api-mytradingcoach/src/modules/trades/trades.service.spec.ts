@@ -58,6 +58,7 @@ const mockPrisma = {
     create: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
+    deleteMany: vi.fn(),
     count: vi.fn(),
   },
   tradeSession: {
@@ -453,6 +454,44 @@ describe('TradesService', () => {
 
       expect(res.created).toBe(2);
       expect(res.duplicates).toBe(0);
+    });
+  });
+
+  describe('countDuplicates / removeDuplicates', () => {
+    const dupRows = [
+      { id: 'a', asset: 'BTC/USDT', side: TradeSide.LONG, tradedAt: new Date('2026-01-01T10:00:00Z'), entry: 100, exit: 110, pnl: 10 },
+      { id: 'b', asset: 'BTC/USDT', side: TradeSide.LONG, tradedAt: new Date('2026-01-01T10:00:00Z'), entry: 100, exit: 110, pnl: 10 }, // doublon de a
+      { id: 'c', asset: 'ETH/USDT', side: TradeSide.LONG, tradedAt: new Date('2026-01-02T10:00:00Z'), entry: 50, exit: 55, pnl: 5 },
+    ];
+
+    it('countDuplicates compte les lignes en trop', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue(dupRows);
+      const res = await service.countDuplicates('user-123');
+      expect(res.total).toBe(3);
+      expect(res.unique).toBe(2);
+      expect(res.duplicates).toBe(1);
+    });
+
+    it('removeDuplicates supprime les copies en gardant 1 occurrence', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue(dupRows);
+      mockPrisma.trade.deleteMany.mockResolvedValue({ count: 1 });
+
+      const res = await service.removeDuplicates('user-123');
+
+      expect(res.removed).toBe(1);
+      expect(res.kept).toBe(2);
+      expect(mockPrisma.trade.deleteMany).toHaveBeenCalledWith({
+        where: { id: { in: ['b'] }, userId: 'user-123' },
+      });
+    });
+
+    it('removeDuplicates ne supprime rien si aucun doublon', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue([dupRows[0], dupRows[2]]);
+
+      const res = await service.removeDuplicates('user-123');
+
+      expect(res.removed).toBe(0);
+      expect(mockPrisma.trade.deleteMany).not.toHaveBeenCalled();
     });
   });
 });

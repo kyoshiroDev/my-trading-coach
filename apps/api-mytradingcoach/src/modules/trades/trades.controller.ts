@@ -242,6 +242,17 @@ export class TradesController {
     } catch { return staticMatches; }
   }
 
+  // ⚠️ Déclarés avant les routes ':id' pour ne pas être capturés par @Get/@Delete(':id').
+  @Get('duplicates')
+  getDuplicates(@CurrentUser() user: { id: string }) {
+    return this.tradesService.countDuplicates(user.id);
+  }
+
+  @Delete('duplicates')
+  removeDuplicates(@CurrentUser() user: { id: string }) {
+    return this.tradesService.removeDuplicates(user.id);
+  }
+
   @Get(':id')
   findOne(@CurrentUser() user: { id: string }, @Param('id') id: string) {
     return this.tradesService.findOne(user.id, id);

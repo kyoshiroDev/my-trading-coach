@@ -109,6 +109,35 @@
         </div>
       </div>
 
+      <!-- ══ 4b. MAINTENANCE — NETTOYAGE DOUBLONS ══ -->
+      <div class="settings-section">
+        <div class="settings-section-label">Maintenance des données</div>
+        <div class="settings-card">
+          <div class="settings-row">
+            <div class="settings-row-left">
+              <span class="settings-row-label">Nettoyer les doublons</span>
+              <span class="settings-row-hint">
+                Supprime les trades en double (même actif, sens, date, prix et P&L) en gardant
+                une occurrence. Utile après un import répété.
+              </span>
+            </div>
+            @if (dedupeRemoved() !== null) {
+              <span class="settings-row-value">{{ dedupeRemoved() }} supprimé(s) ✓</span>
+            } @else if (duplicateCount() === null) {
+              <button class="settings-edit-btn" (click)="scanDuplicates()" [disabled]="dedupeScanning()">
+                {{ dedupeScanning() ? 'Analyse…' : 'Rechercher' }}
+              </button>
+            } @else if (duplicateCount()! > 0) {
+              <button class="settings-edit-btn danger-btn" (click)="removeDuplicates()" [disabled]="dedupeRemoving()">
+                {{ dedupeRemoving() ? 'Suppression…' : 'Supprimer ' + duplicateCount() + ' doublon(s)' }}
+              </button>
+            } @else {
+              <span class="settings-row-value">Aucun doublon ✓</span>
+            }
+          </div>
+        </div>
+      </div>
+
       <!-- ══ 5. ZONE DE DANGER ══ -->
       <div class="settings-section">
         <div class="settings-section-label danger-label">Zone de danger</div>
