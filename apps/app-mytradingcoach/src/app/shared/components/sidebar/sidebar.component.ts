@@ -82,7 +82,6 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
           >
             <span class="nav-icon">⚡</span>
             Ma session
-            <span class="badge starter">STARTER</span>
           </a>
 
           <a
