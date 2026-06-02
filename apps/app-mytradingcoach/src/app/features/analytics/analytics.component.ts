@@ -91,17 +91,17 @@ export class AnalyticsComponent {
   );
   private readonly heatmapResource = httpResource<{ data: HeatmapCell[] }>(
     () =>
-      this.userStore.isPremium()
+      this.userStore.isStarterOrAbove()
         ? `${environment.apiUrl}/analytics/by-hour`
         : undefined,
   );
   private readonly topAssetsResource = httpResource<{ data: TopAsset[] }>(() =>
-    this.userStore.isPremium()
+    this.userStore.isStarterOrAbove()
       ? `${environment.apiUrl}/analytics/top-assets`
       : undefined,
   );
   private readonly setupResource = httpResource<{ data: SetupStat[] }>(() =>
-    this.userStore.isPremium()
+    this.userStore.isStarterOrAbove()
       ? `${environment.apiUrl}/analytics/by-setup`
       : undefined,
   );
@@ -177,14 +177,14 @@ export class AnalyticsComponent {
       }
     });
 
-    if (this.userStore.isPremium()) {
+    if (this.userStore.isStarterOrAbove()) {
       this.loadCalendar(this.calYear(), this.calMonth());
       this.loadEquityCurve();
     }
   }
 
   protected loadEquityCurve(): void {
-    if (!this.userStore.isPremium()) return;
+    if (!this.userStore.isStarterOrAbove()) return;
     this.equityLoading.set(true);
     const { from, to } = this.equityDateRange();
     const params = [from ? `from=${from}` : '', to ? `to=${to}` : '']

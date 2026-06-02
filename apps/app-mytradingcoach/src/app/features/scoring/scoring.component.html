@@ -1,10 +1,10 @@
 <mtc-topbar title="Score Trader" />
 
 <div class="content">
-  @if (!userStore.isPremium()) {
+  @if (!userStore.isStarterOrAbove()) {
     <div class="premium-paywall">
       <div class="paywall-icon">🏆</div>
-      <h2 class="paywall-title">Fonctionnalité Premium</h2>
+      <h2 class="paywall-title">Fonctionnalité Starter</h2>
       <p class="paywall-desc">
         Le Trader Score analyse tes performances globales et te donne un score
         de 0 à 100 basé sur ta discipline, ta rentabilité et ta gestion du
