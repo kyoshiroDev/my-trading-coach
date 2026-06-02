@@ -139,11 +139,14 @@ interface ImportResult {
                 <div class="spinner"></div>
               }
             </div>
-            <p class="drop-hint">Fichiers CSV ou TXT · max 5 Mo</p>
+            <p class="drop-hint">
+              CSV ou Excel · exporte tes <strong>trades fermés</strong> depuis ton
+              broker · jusqu'à 2000 trades
+            </p>
             <input
               #fileInput
               type="file"
-              accept=".csv,.txt"
+              accept=".csv,.txt,.xlsx,.xls"
               style="display:none"
               (change)="onFileChange($event)"
             />
