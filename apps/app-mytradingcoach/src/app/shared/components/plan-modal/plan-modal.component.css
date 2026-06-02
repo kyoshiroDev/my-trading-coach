@@ -208,16 +208,36 @@
 
 .plan-col {
   background: var(--bg-2);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
   border-radius: 12px;
   padding: 16px;
   cursor: pointer;
-  transition: border-color .15s, background .15s;
+  transition: border-color .15s, background .15s, transform .15s, box-shadow .15s;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
-.plan-col:hover { border-color: var(--border-hover, rgba(59,130,246,.3)); }
-.plan-col.selected-col { border-color: rgba(59,130,246,.55); background: rgba(59,130,246,.06); }
+.plan-col:hover { border-color: rgba(255,255,255,.18); }
+
+/* SÉLECTION (choix utilisateur) — franche : bordure pleine + fond + halo + lift */
+.plan-col.selected-col {
+  border-color: var(--blue-bright);
+  background: rgba(59,130,246,.10);
+  box-shadow: 0 0 0 1px var(--blue-bright), 0 10px 30px -12px rgba(59,130,246,.5);
+  transform: translateY(-2px);
+}
+
+/* Pastille explicite "✓ Sélectionné" */
+.plan-col-check {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--blue-bright);
+}
+.premium-col .plan-col-check { color: #8b5cf6; }
 
 /* Toggle d'intervalle global */
 .plan-interval-toggle {
@@ -244,7 +264,13 @@
   align-items: center;
   gap: 6px;
 }
-.interval-opt.active { background: var(--bg-card); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+.interval-opt.active {
+  background: var(--blue-bright);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(59,130,246,.35);
+}
+.interval-opt.active .interval-save { background: rgba(255,255,255,.22); color: #fff; }
 .interval-save {
   font-size: 10px;
   font-weight: 700;
@@ -254,13 +280,16 @@
   padding: 1px 5px;
 }
 
-/* Premium = plan recommandé : cadre violet permanent + léger halo */
-.premium-col {
-  border: 1.5px solid #8b5cf6;
-  box-shadow: 0 0 0 1px rgba(139,92,246,.25), 0 8px 30px -12px rgba(139,92,246,.4);
-  position: relative;
+/* "Recommandé" = état PERMANENT de Premium (contour violet doux, sans le halo de sélection) */
+.premium-col:not(.selected-col) {
+  border-color: rgba(139,92,246,.35);
 }
-.premium-col.selected-col { border-color: #8b5cf6; background: rgba(139,92,246,.06); }
+/* Premium SÉLECTIONNÉ — halo violet franc (distinct du "recommandé" et du bleu Starter) */
+.premium-col.selected-col {
+  border-color: #8b5cf6;
+  background: rgba(139,92,246,.10);
+  box-shadow: 0 0 0 1px #8b5cf6, 0 10px 30px -12px rgba(139,92,246,.5);
+}
 
 /* Badge "Complet" centré en haut, à cheval sur la bordure */
 .plan-col-badge {

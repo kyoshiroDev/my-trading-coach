@@ -61,11 +61,11 @@ describe('PlanModalComponent', () => {
     return fixture.componentInstance as unknown as ModalApi;
   };
 
-  it('par défaut: tier premium + intervalle annuel', () => {
+  it('par défaut: tier starter + intervalle mensuel', () => {
     const c = instance();
-    expect(c.selectedTier()).toBe('premium');
-    expect(c.interval()).toBe('yearly');
-    expect(c.planId()).toBe('premium_yearly');
+    expect(c.selectedTier()).toBe('starter');
+    expect(c.interval()).toBe('monthly');
+    expect(c.planId()).toBe('starter_monthly');
   });
 
   it('selectTier() change la carte sélectionnée', () => {
@@ -104,9 +104,9 @@ describe('PlanModalComponent', () => {
     expect(mockBillingApi.checkout).toHaveBeenCalledWith('starter_monthly');
   });
 
-  it('confirmPlan() par défaut → checkout("premium_yearly")', () => {
+  it('confirmPlan() par défaut → checkout("starter_monthly")', () => {
     const c = instance();
     c.confirmPlan();
-    expect(mockBillingApi.checkout).toHaveBeenCalledWith('premium_yearly');
+    expect(mockBillingApi.checkout).toHaveBeenCalledWith('starter_monthly');
   });
 });

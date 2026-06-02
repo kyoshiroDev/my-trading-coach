@@ -31,8 +31,8 @@ export class PlanModalComponent {
 
   // Plan (carte) et intervalle (global) sont indépendants → les 2 cartes
   // suivent toujours le même intervalle (corrige l'incohérence d'affichage).
-  protected selectedTier = signal<PlanTier>('premium'); // Premium recommandé par défaut
-  protected interval = signal<Interval>('yearly'); // annuel par défaut (meilleure valeur)
+  protected selectedTier = signal<PlanTier>('starter'); // entrée de gamme par défaut (39€, moins effrayant)
+  protected interval = signal<Interval>('monthly'); // mensuel par défaut ; Premium reste "Recommandé" (badge)
   protected isLoading = signal(false);
 
   protected selectTier(tier: PlanTier) {

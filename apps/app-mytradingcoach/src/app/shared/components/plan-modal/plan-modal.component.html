@@ -45,6 +45,7 @@
         (keydown.enter)="selectTier('starter')"
         (keydown.space)="selectTier('starter')"
       >
+        @if (selectedTier() === 'starter') { <span class="plan-col-check">✓ Sélectionné</span> }
         <div class="plan-col-name">Starter</div>
         <div class="plan-col-price">
           @if (interval() === 'yearly') {
@@ -77,6 +78,7 @@
         (keydown.space)="selectTier('premium')"
       >
         <div class="plan-col-badge">Recommandé</div>
+        @if (selectedTier() === 'premium') { <span class="plan-col-check">✓ Sélectionné</span> }
         <div class="plan-col-name">Premium</div>
         <div class="plan-col-price">
           @if (interval() === 'yearly') {
