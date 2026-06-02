@@ -5,15 +5,37 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PremiumGuard } from '../../common/guards/premium.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AiService } from './ai.service';
-import { IsArray, IsOptional, IsString } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsIn,
+  IsOptional,
+  IsString,
+  MaxLength,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+
+class ChatMessageDto {
+  @IsIn(['user', 'assistant'])
+  role!: 'user' | 'assistant';
+
+  @IsString()
+  @MaxLength(4000)
+  content!: string;
+}
 
 class ChatDto {
   @IsString()
+  @MaxLength(4000)
   message!: string;
 
   @IsArray()
   @IsOptional()
-  history?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  @ArrayMaxSize(40)
+  @ValidateNested({ each: true })
+  @Type(() => ChatMessageDto)
+  history?: ChatMessageDto[];
 }
 
 @UseGuards(JwtAuthGuard, PremiumGuard)
