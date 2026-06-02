@@ -92,18 +92,18 @@ import { ChartService } from '../../core/services/chart.service';
         <div class="header-spacer"></div>
       </div>
 
-      @if (!userStore.isPremium() && tradesStore.limitReached()) {
+      @if (!userStore.isStarterOrAbove() && tradesStore.limitReached()) {
         <div class="limit-banner reached">
           <div class="limit-banner-left">
             <span class="limit-banner-ic">🚫</span>
             <div>
               <div class="limit-banner-title">Limite mensuelle atteinte</div>
-              <div class="limit-banner-sub">Tu as utilisé tes {{ tradesStore.monthlyLimit() }} trades ce mois. Passe à Premium pour trader sans limites.</div>
+              <div class="limit-banner-sub">Tu as utilisé tes {{ tradesStore.monthlyLimit() }} trades ce mois. Passe à Starter pour trader sans limites.</div>
             </div>
           </div>
-          <button class="limit-banner-btn" (click)="showPlanModal.set(true)">Passer Premium</button>
+          <button class="limit-banner-btn" (click)="showPlanModal.set(true)">Passer Starter</button>
         </div>
-      } @else if (!userStore.isPremium() && tradesStore.nearLimit()) {
+      } @else if (!userStore.isStarterOrAbove() && tradesStore.nearLimit()) {
         <div class="limit-banner near">
           <div class="limit-banner-left">
             <span class="limit-banner-ic">⚠️</span>
@@ -129,18 +129,18 @@ import { ChartService } from '../../core/services/chart.service';
         </div>
       }
 
-      @if (!userStore.isPremium()) {
+      @if (!userStore.isStarterOrAbove()) {
         <div class="premium-banner">
           <div class="premium-banner-left">
             <span class="premium-banner-icon">⚡</span>
             <div>
-              <div class="premium-banner-title">Passe à Premium</div>
-              <div class="premium-banner-sub">Analytics avancés, IA Insights, Weekly Debrief automatique</div>
+              <div class="premium-banner-title">Passe à Starter</div>
+              <div class="premium-banner-sub">Trades illimités, analytics avancés, Weekly Debrief, Score trader</div>
             </div>
           </div>
           <div class="premium-banner-right">
             <div class="premium-banner-price">
-              <span class="premium-banner-amount">{{ PRICING.premium.monthly }}€</span>
+              <span class="premium-banner-amount">{{ PRICING.starter.monthly }}€</span>
               <span class="premium-banner-period">/mois</span>
               <div class="premium-banner-trial">7 jours gratuits · sans CB</div>
             </div>
@@ -242,9 +242,9 @@ import { ChartService } from '../../core/services/chart.service';
           </div>
           <div class="chart-container">
             <canvas #equityChart></canvas>
-            @if (!userStore.isPremium() || equityCurve().length === 0) {
+            @if (!userStore.isStarterOrAbove() || equityCurve().length === 0) {
               <div class="empty-chart">
-                @if (!userStore.isPremium()) { Courbe disponible en Premium } @else { Aucun trade ce mois }
+                @if (!userStore.isStarterOrAbove()) { Courbe disponible dès Starter } @else { Aucun trade ce mois }
               </div>
             }
           </div>
@@ -392,15 +392,15 @@ export class DashboardComponent {
   private readonly equityCurveResource = httpResource<{
     data: { points: EquityPoint[]; startingCapital: number | null };
   }>(() =>
-    this.userStore.isPremium()
+    this.userStore.isStarterOrAbove()
       ? `${environment.apiUrl}/analytics/equity-curve/current-month`
       : undefined,
   );
   private readonly bySetupResource = httpResource<{ data: SetupStat[] }>(() =>
-    this.userStore.isPremium() ? `${environment.apiUrl}/analytics/by-setup` : undefined,
+    this.userStore.isStarterOrAbove() ? `${environment.apiUrl}/analytics/by-setup` : undefined,
   );
   private readonly byEmotionResource = httpResource<{ data: EmotionStat[] }>(() =>
-    this.userStore.isPremium() ? `${environment.apiUrl}/analytics/by-emotion` : undefined,
+    this.userStore.isStarterOrAbove() ? `${environment.apiUrl}/analytics/by-emotion` : undefined,
   );
 
   protected readonly summary = computed(() => this.summaryResource.value()?.data ?? null);
@@ -451,7 +451,7 @@ export class DashboardComponent {
   protected readonly bySetup = computed(() => this.bySetupResource.value()?.data ?? []);
   protected readonly isLoading = computed(
     () =>
-      this.userStore.isPremium() &&
+      this.userStore.isStarterOrAbove() &&
       (this.summaryResource.isLoading() ||
         this.equityCurveResource.isLoading() ||
         this.bySetupResource.isLoading() ||
