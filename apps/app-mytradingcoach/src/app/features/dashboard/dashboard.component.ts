@@ -11,12 +11,13 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe, TitleCasePipe, UpperCasePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { BillingApi } from '../../core/api/billing.api';
 import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
 import { TradesStore } from '../../core/stores/trades.store';
 import { SessionStore } from '../../core/stores/session.store';
+import { PRICING } from '../../core/constants/pricing.const';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { TradeFormComponent } from '../journal/trade-form.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
@@ -37,8 +38,8 @@ import {
   PnlColorPipe,
   PnlFormatPipe,
   SetupColorPipe,
-  SetupColorsMapPipe,
 } from '../../shared/pipes';
+import { EMOTION_COLORS } from '../../shared/pipes/emotion-color.pipe';
 import { environment } from '../../../environments/environment';
 import { ChartService } from '../../core/services/chart.service';
 
@@ -60,7 +61,6 @@ import { ChartService } from '../../core/services/chart.service';
     EmotionLabelPipe,
     EmotionColorPipe,
     SetupColorPipe,
-    SetupColorsMapPipe,
     ActivityCalendarComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -116,6 +116,19 @@ import { ChartService } from '../../core/services/chart.service';
         </div>
       }
 
+      @if (userStore.profileIncomplete()) {
+        <div class="limit-banner near" data-testid="profile-nudge">
+          <div class="limit-banner-left">
+            <span class="limit-banner-ic">✨</span>
+            <div>
+              <div class="limit-banner-title">Complète ton profil de trader</div>
+              <div class="limit-banner-sub">Stratégie + actifs principaux → analyses IA bien plus personnalisées.</div>
+            </div>
+          </div>
+          <button class="limit-banner-btn" (click)="goToSettings()">Compléter</button>
+        </div>
+      }
+
       @if (!userStore.isPremium()) {
         <div class="premium-banner">
           <div class="premium-banner-left">
@@ -127,7 +140,7 @@ import { ChartService } from '../../core/services/chart.service';
           </div>
           <div class="premium-banner-right">
             <div class="premium-banner-price">
-              <span class="premium-banner-amount">39€</span>
+              <span class="premium-banner-amount">{{ PRICING.premium.monthly }}€</span>
               <span class="premium-banner-period">/mois</span>
               <div class="premium-banner-trial">7 jours gratuits · sans CB</div>
             </div>
@@ -274,7 +287,7 @@ import { ChartService } from '../../core/services/chart.service';
             </div>
           }
         </div>
-        <div class="card">
+        <div class="card fill-card">
           <div class="card-header">
             <div class="card-title">Win Rate / stratégie</div>
             <a routerLink="/analytics" class="card-action">Voir →</a>
@@ -282,29 +295,27 @@ import { ChartService } from '../../core/services/chart.service';
           @if (bySetup().length === 0) {
             <p class="empty-widget-msg">Tes setups apparaîtront<br />après tes premiers trades</p>
           } @else {
-            <div class="donut-wrap">
-              <svg class="donut-svg" width="80" height="80" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--bg-3)" stroke-width="12" />
-                @for (seg of segments(); track seg.label) {
-                  <circle cx="50" cy="50" r="38" fill="none" [attr.stroke]="seg.label | setupColorMap" stroke-width="12" [attr.stroke-dasharray]="seg.dash" [attr.stroke-dashoffset]="seg.offset" stroke-linecap="round" transform="rotate(-90 50 50)" />
-                }
-                <text x="50" y="53" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="14" fill="#e2eaf5">
-                  {{ (summary()?.winRate ?? 0).toFixed(0) }}%
-                </text>
-              </svg>
-              <div class="donut-legend">
-                @for (s of bySetup().slice(0, 4); track s.setup) {
-                  <div class="legend-item">
-                    <div class="legend-dot" [style.background]="s.setup | setupColor"></div>
-                    {{ s.setup | titlecase }}
-                    <span class="legend-val">{{ s.winRate.toFixed(0) }}%</span>
+            <div class="wr-header">
+              <span class="wr-global-label">Win rate global</span>
+              <span class="wr-global-val">{{ (summary()?.winRate ?? 0).toFixed(0) }}%</span>
+            </div>
+            <div class="vbars">
+              @for (s of bySetup().slice(0, 4); track s.setup) {
+                <div class="vbar">
+                  <span class="vbar-val">{{ s.winRate.toFixed(0) }}%</span>
+                  <div class="vbar-track">
+                    <div class="vbar-fill"
+                         [style.height.%]="s.winRate"
+                         [style.background]="s.setup | setupColor"
+                         [style.color]="s.setup | setupColor"></div>
                   </div>
-                }
-              </div>
+                  <span class="vbar-label">{{ s.setup | titlecase }}</span>
+                </div>
+              }
             </div>
           }
         </div>
-        <div class="card">
+        <div class="card fill-card">
           <div class="card-header">
             <div class="card-title">États émotionnels</div>
             <a routerLink="/analytics" class="card-action">Détails →</a>
@@ -312,18 +323,25 @@ import { ChartService } from '../../core/services/chart.service';
           @if (emotionStats().length === 0) {
             <p class="empty-widget-msg">Enregistre tes premiers trades<br />pour voir tes états émotionnels</p>
           } @else {
-            <div class="emotion-grid">
-              @for (e of emotionStats(); track e.emotion) {
-                <div class="emotion-row">
-                  <div class="emotion-label">
-                    <span>{{ e.emotion | emotionLabel }}</span>
-                    <span>{{ e.pct }}%</span>
+            <div class="pie-wrap">
+              <div class="pie" [style.background]="emotionPie().gradient">
+                @for (s of emotionPie().slices; track s.emotion) {
+                  @if (s.show) {
+                    <span class="slice-pct"
+                          [class.dom]="$first"
+                          [style.left.%]="s.x"
+                          [style.top.%]="s.y">{{ s.pct }}%</span>
+                  }
+                }
+              </div>
+              <div class="pie-legend">
+                @for (e of emotionStats(); track e.emotion) {
+                  <div class="pl-item">
+                    <span class="pl-dot" [style.background]="e.emotion | emotionColor"></span>
+                    {{ e.emotion | emotionLabel }}
                   </div>
-                  <div class="bar-track">
-                    <div class="bar-fill" [style.width.%]="e.pct" [style.background]="e.emotion | emotionColor"></div>
-                  </div>
-                </div>
-              }
+                }
+              </div>
             </div>
           }
         </div>
@@ -353,11 +371,15 @@ export class DashboardComponent {
   private  readonly analyticsApi  = inject(AnalyticsApi);
   private  readonly destroyRef    = inject(DestroyRef);
   private  readonly chartService  = inject(ChartService);
+  private  readonly router        = inject(Router);
+
+  protected goToSettings(): void { this.router.navigate(['/settings']); }
 
   protected readonly showTradeForm = signal(false);
   protected readonly showPlanModal = signal(false);
   protected readonly isSavingTrade = signal(false);
   protected readonly today = new Date();
+  protected readonly PRICING = PRICING;
 
   protected readonly monthlyActivity        = signal<MonthlyActivitySummary | null>(null);
   protected readonly monthlyActivityLoading = signal(false);
@@ -463,18 +485,30 @@ export class DashboardComponent {
     });
   }
 
-  protected readonly segments = computed(() => {
-    const setups = this.bySetup().slice(0, 4);
-    if (!setups.length) return [];
-    const circumference = 2 * Math.PI * 38;
-    const total = setups.reduce((a, b) => a + b.count, 0);
-    let offset = 0;
-    return setups.map((s) => {
-      const dash = (s.count / total) * circumference;
-      const seg  = { label: s.setup, dash: `${dash} ${circumference - dash}`, offset: -offset };
-      offset += dash;
-      return seg;
+  protected readonly emotionPie = computed(() => {
+    const stats = this.emotionStats();
+    if (!stats.length) return { gradient: '', slices: [] as { emotion: string; pct: number; x: number; y: number; show: boolean }[] };
+    const total = stats.reduce((s, e) => s + e.pct, 0) || 1;
+    const R = 32;            // rayon (% du conteneur) où poser les labels
+    let cum = 0;
+    const stops: string[] = [];
+    const slices = stats.map((e) => {
+      const frac = e.pct / total;
+      const start = cum;
+      const end = cum + frac;
+      cum = end;
+      const color = EMOTION_COLORS[e.emotion] ?? '#6b7280';
+      stops.push(`${color} ${(start * 100).toFixed(2)}% ${(end * 100).toFixed(2)}%`);
+      const midRad = ((start + end) / 2) * 2 * Math.PI; // angle médian, 0 = haut, horaire
+      return {
+        emotion: e.emotion,
+        pct: e.pct,
+        x: 50 + R * Math.sin(midRad),
+        y: 50 - R * Math.cos(midRad),
+        show: e.pct >= 8,
+      };
     });
+    return { gradient: `conic-gradient(${stops.join(', ')})`, slices };
   });
 
   protected readonly emotionStats = computed(() => {

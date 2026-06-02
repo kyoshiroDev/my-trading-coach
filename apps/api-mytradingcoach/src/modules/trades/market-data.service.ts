@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Anthropic from '@anthropic-ai/sdk';
+import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 import { INSTRUMENTS } from './instruments.const';
@@ -23,7 +24,14 @@ export class MarketDataService {
   constructor(
     private readonly config: ConfigService,
     private readonly redisService: RedisService,
+    private readonly prisma: PrismaService,
   ) {}
+
+  // Garde-fou environnement : pas de traduction hors prod (économie Dev)
+  private get translationEnabled(): boolean {
+    return process.env['NODE_ENV'] === 'production'
+      && process.env['NEWS_TRANSLATION'] !== 'off';
+  }
 
   async getMarketContext(): Promise<MarketContextDto> {
     const cacheKey = 'market:context';
@@ -51,28 +59,92 @@ export class MarketDataService {
   }
 
   async getNews(symbols: string): Promise<NewsItem[]> {
-    const cacheKey = `market:news:${symbols}`;
+    const cacheKey = `market:news:${symbols || 'default'}`;
     try {
       const cached = await this.redisService.client.get(cacheKey);
       if (cached) return JSON.parse(cached) as NewsItem[];
     } catch { /* ignore */ }
 
-    const apiKey = this.config.get<string>('FMP_API_KEY');
-    if (!apiKey) return [];
+    const list = (symbols || '').split(',').map(s => s.trim()).filter(Boolean);
+    const where = list.length ? { symbol: { in: list } } : {};
+    const rows = await this.prisma.marketNews.findMany({
+      where, orderBy: { publishedDate: 'desc' }, take: 20,
+    });
+    const items: NewsItem[] = rows.map(r => ({
+      title: r.titleFr ?? r.title,
+      symbol: r.symbol,
+      publishedDate: r.publishedDate.toISOString(),
+      sentiment: (r.sentiment as NewsItem['sentiment']) ?? 'neutral',
+      url: r.url,
+      text: r.textFr ?? r.text ?? undefined,
+      image: r.image ?? undefined,
+      site: r.site ?? undefined,
+    }));
+    try { await this.redisService.client.setex(cacheKey, CACHE_TTL.NEWS, JSON.stringify(items)); } catch { /* ignore */ }
+    return items;
+  }
 
+  async refreshNewsBatch(): Promise<number> {
+    const apiKey = this.config.get<string>('FMP_API_KEY');
+    if (!apiKey) return 0;
+    const symbols = 'QQQ,SPY,BTCUSD,EURUSD,AAPL,MSFT,NVDA,TSLA';
+    const url = `https://financialmodelingprep.com/stable/news/stock?symbols=${symbols}&limit=30&apikey=${apiKey}`;
+    let raw: NewsItem[] = [];
     try {
-      const rawSymbols = (symbols || '').split(',').map(s => this.mapSymbolToFmp(s.trim())).filter(Boolean);
-      const fmpSymbols = rawSymbols.length > 0 ? rawSymbols.join(',') : 'QQQ,SPY,BTCUSD,EURUSD';
-      const url = `https://financialmodelingprep.com/stable/news/stock?symbols=${fmpSymbols}&limit=20&apikey=${apiKey}`;
       const res = await fetch(url);
-      if (!res.ok) return [];
-      const data = await res.json() as NewsItem[];
-      const translated = await this.translateNewsItems(data);
-      try { await this.redisService.client.setex(cacheKey, CACHE_TTL.NEWS, JSON.stringify(translated)); } catch { /* ignore */ }
-      return translated;
+      if (!res.ok) return 0;
+      raw = await res.json() as NewsItem[];
     } catch (err) {
       this.logger.warn(`News fetch failed: ${(err as Error).message}`);
-      return [];
+      return 0;
+    }
+
+    // 1) Upsert sans traduction (dédup par url)
+    for (const it of raw) {
+      if (!it.url) continue;
+      await this.prisma.marketNews.upsert({
+        where: { url: it.url },
+        update: { sentiment: it.sentiment ?? null }, // refresh sentiment éventuel
+        create: {
+          url: it.url, symbol: it.symbol, title: it.title, text: it.text ?? null,
+          sentiment: it.sentiment ?? null, image: it.image ?? null, site: it.site ?? null,
+          publishedDate: new Date(it.publishedDate),
+        },
+      });
+    }
+
+    // 2) Traduire uniquement les non-traduits (batch borné)
+    if (!this.translationEnabled) return 0;
+    const pending = await this.prisma.marketNews.findMany({
+      where: { translated: false },
+      orderBy: { publishedDate: 'desc' },
+      take: 30,
+    });
+    if (!pending.length) return 0;
+
+    const payload = pending.map(p => ({ title: p.title, text: p.text ?? '' }));
+    try {
+      const anthropic = new Anthropic({ apiKey: this.config.get<string>('ANTHROPIC_API_KEY') });
+      const msg = await anthropic.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 3000,
+        messages: [{ role: 'user', content:
+          `Traduis ces news financières en français. Réponds UNIQUEMENT avec un tableau JSON d'objets {title, text} dans le même ordre, sans texte autour.\n\n${JSON.stringify(payload)}` }],
+      });
+      const txt = msg.content[0]?.type === 'text' ? msg.content[0].text : '';
+      const s = txt.indexOf('['), e = txt.lastIndexOf(']');
+      if (s === -1 || e === -1) return 0;
+      const tr = JSON.parse(txt.slice(s, e + 1)) as { title: string; text: string }[];
+      await Promise.all(pending.map((p, i) =>
+        this.prisma.marketNews.update({
+          where: { id: p.id },
+          data: { titleFr: tr[i]?.title ?? p.title, textFr: tr[i]?.text ?? p.text, translated: true },
+        }),
+      ));
+      return pending.length;
+    } catch (err) {
+      this.logger.warn(`News translation failed: ${(err as Error).message}`);
+      return 0;
     }
   }
 
@@ -196,28 +268,5 @@ export class MarketDataService {
     if (ex === 'FOREX' || ex === 'FX') return 'FOREX';
     if (['NYSE', 'NASDAQ', 'AMEX'].includes(ex)) return 'ACTIONS';
     return 'AUTRES';
-  }
-
-  private async translateNewsItems(items: NewsItem[]): Promise<NewsItem[]> {
-    if (!items.length) return items;
-    const apiKey = this.config.get<string>('ANTHROPIC_API_KEY');
-    if (!apiKey) return items;
-    try {
-      const payload = items.map(i => ({ title: i.title, text: i.text ?? '' }));
-      const anthropic = new Anthropic({ apiKey });
-      const msg = await anthropic.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 8192,
-        messages: [{ role: 'user', content: `Traduis ces news financières en français. Réponds UNIQUEMENT avec un tableau JSON d'objets {title, text} dans le même ordre, sans aucun texte supplémentaire.\n\n${JSON.stringify(payload)}` }],
-      });
-      const raw = msg.content[0].type === 'text' ? msg.content[0].text.trim() : '';
-      const start = raw.indexOf('['), end = raw.lastIndexOf(']');
-      if (start === -1 || end === -1) return items;
-      const translated: { title: string; text: string }[] = JSON.parse(raw.slice(start, end + 1));
-      return items.map((item, i) => ({ ...item, title: translated[i]?.title ?? item.title, text: translated[i]?.text ?? item.text }));
-    } catch (err) {
-      this.logger.warn(`News translation failed: ${(err as Error).message}`);
-      return items;
-    }
   }
 }

@@ -151,4 +151,43 @@ describe('DebriefService', () => {
       expect(result).toEqual(mockDebrief);
     });
   });
+
+  describe('normalizeObjectives', () => {
+    type Svc = {
+      normalizeObjectives: (o: unknown) => { title: string; reason: string; check: unknown }[];
+      logger: { warn: (m: string) => void };
+    };
+
+    it('conserve un check valide du catalogue', () => {
+      const svc = service as unknown as Svc;
+      const out = svc.normalizeObjectives([
+        { title: 'Max 3 trades', reason: 'overtrading', check: { type: 'max_trades', params: { limit: 3 } } },
+      ]);
+      expect(out).toHaveLength(1);
+      expect(out[0].check).toEqual({ type: 'max_trades', params: { limit: 3 } });
+    });
+
+    it('neutralise un check hors catalogue (check:null) et loggue un warning', () => {
+      const svc = service as unknown as Svc;
+      const warn = vi.spyOn(svc.logger, 'warn').mockImplementation(() => undefined);
+      const out = svc.normalizeObjectives([
+        { title: 'Partager avec un mentor', reason: 'x', check: { type: 'share_mentor', params: {} } },
+      ]);
+      expect(out[0].check).toBeNull();
+      expect(warn).toHaveBeenCalledOnce();
+    });
+
+    it('objectif sans check → null sans warning (rétro-compat)', () => {
+      const svc = service as unknown as Svc;
+      const warn = vi.spyOn(svc.logger, 'warn').mockImplementation(() => undefined);
+      const out = svc.normalizeObjectives([{ title: 'Ancien objectif', reason: 'x' }]);
+      expect(out[0].check).toBeNull();
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    it('renvoie [] si objectives absent', () => {
+      const svc = service as unknown as Svc;
+      expect(svc.normalizeObjectives(undefined)).toEqual([]);
+    });
+  });
 });

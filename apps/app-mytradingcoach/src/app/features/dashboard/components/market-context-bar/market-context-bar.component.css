@@ -60,5 +60,10 @@
   border-radius: 7px; flex-shrink: 0; min-width: 180px;
 }
 .ctx-break-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--red); animation: pulse 1s infinite; flex-shrink: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ctx-pulse-dot,
+  .ctx-break-dot { animation: none !important; }
+}
 .ctx-break-lbl { font-size: 8px; font-weight: 700; color: var(--red); white-space: nowrap; margin-bottom: 2px; font-family: var(--font-mono); }
 .ctx-break-txt { font-size: 9px; color: var(--text-2); line-height: 1.3; font-family: var(--font-mono); }

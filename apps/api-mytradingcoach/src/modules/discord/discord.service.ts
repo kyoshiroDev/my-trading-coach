@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { isPremiumAccess } from './discord-access.util';
 
 @Injectable()
 export class DiscordService {
@@ -15,11 +16,7 @@ export class DiscordService {
 
     if (!user?.discordId) return;
 
-    const isPremium =
-      user.plan === 'PREMIUM' ||
-      user.role === 'BETA_TESTER' ||
-      user.role === 'ADMIN' ||
-      (user.trialEndsAt !== null && new Date() < new Date(user.trialEndsAt));
+    const isPremium = isPremiumAccess(user);
 
     const guildId = process.env['DISCORD_GUILD_ID'];
     const botToken = process.env['DISCORD_BOT_TOKEN'];

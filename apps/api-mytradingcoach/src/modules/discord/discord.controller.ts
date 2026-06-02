@@ -9,6 +9,7 @@ import {
 import { Public } from '../../common/decorators/public.decorator';
 import { UsersService } from '../users/users.service';
 import { DiscordService } from './discord.service';
+import { isPremiumAccess } from './discord-access.util';
 
 @Controller('discord')
 export class DiscordController {
@@ -43,11 +44,7 @@ export class DiscordController {
     await this.usersService.updateDiscordId(user.id, discordId);
     await this.discordService.syncDiscordRole(user.id);
 
-    const isPremium =
-      user.plan === 'PREMIUM' ||
-      user.role === 'ADMIN' ||
-      user.role === 'BETA_TESTER' ||
-      (user.trialEndsAt !== null && new Date() < new Date(user.trialEndsAt));
+    const isPremium = isPremiumAccess(user);
 
     return {
       verified: true,

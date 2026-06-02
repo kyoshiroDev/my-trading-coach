@@ -40,7 +40,8 @@ export class OrchestratorAgent {
         where: { userId },
         orderBy: { tradedAt: 'desc' },
         take: 50,
-        select: { asset: true, side: true, pnl: true, emotion: true, setup: true, session: true, tradedAt: true },
+        select: { asset: true, side: true, pnl: true, emotion: true, setup: true, session: true, tradedAt: true,
+                  riskReward: true, timeframe: true, notes: true },
       }),
       this.prisma.user.findUnique({
         where: { id: userId },

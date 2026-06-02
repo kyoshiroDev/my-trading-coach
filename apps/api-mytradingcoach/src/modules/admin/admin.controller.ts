@@ -6,6 +6,7 @@ import { EmailCampaignService, CampaignType } from './email-campaign.service';
 import { UsersService } from '../users/users.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { PrismaService } from '../../prisma/prisma.service';
+import { DiscordService } from '../discord/discord.service';
 
 @UseGuards(JwtAuthGuard, AdminGuard)
 @Controller('admin')
@@ -15,7 +16,30 @@ export class AdminController {
     private readonly emailCampaign: EmailCampaignService,
     private readonly usersService: UsersService,
     private readonly prisma: PrismaService,
+    private readonly discordService: DiscordService,
   ) {}
+
+  /**
+   * Re-synchronise le rôle Discord de tous les comptes liés (idempotent).
+   * Corrige les STARTER existants qui avaient le rôle Membre avant le fix isPremiumAccess.
+   */
+  @Post('discord/resync')
+  async resyncDiscordRoles() {
+    const users = await this.prisma.user.findMany({
+      where: { discordId: { not: null } },
+      select: { id: true },
+    });
+    let ok = 0;
+    for (const u of users) {
+      try {
+        await this.discordService.syncDiscordRole(u.id);
+        ok++;
+      } catch {
+        // continue — un échec ponctuel ne doit pas bloquer le batch
+      }
+    }
+    return { linked: users.length, resynced: ok };
+  }
 
   @Post('users/:id/beta')
   async assignBetaRole(@Param('id') id: string) {

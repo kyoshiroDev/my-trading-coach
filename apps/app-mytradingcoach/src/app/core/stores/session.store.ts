@@ -36,6 +36,8 @@ export class SessionStore {
   readonly newsItems         = signal<NewsItem[]>([]);
   readonly breakingNews      = signal<string | null>(null);
   readonly triggerCloseModal = signal(false);
+  /** Retour d'action live (log / clôture trade) — succès ou erreur, pour feedback UI. */
+  readonly liveFeedback      = signal<{ type: 'success' | 'error'; text: string; ts: number } | null>(null);
 
   private readonly weekEcoEvents       = signal<Map<string, EcoEvent[]>>(new Map());
   private readonly weekEcoPinnedEvents = signal<string[]>([]);
@@ -178,14 +180,32 @@ export class SessionStore {
     this.sessionApi
       .closeTrade(event.tradeId, event.exitPrice)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: () => this.refreshLiveStats() });
+      .subscribe({
+        next: () => {
+          this.refreshLiveStats();
+          this.flashFeedback('success', 'Trade clôturé');
+        },
+        error: (err) =>
+          this.flashFeedback('error', err?.error?.message ?? 'Échec de la clôture du trade'),
+      });
   }
 
   logQuickTrade(dto: CreateTradeDto): void {
     this.tradesApi
       .create(dto)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: () => this.refreshLiveStats() });
+      .subscribe({
+        next: () => {
+          this.refreshLiveStats();
+          this.flashFeedback('success', 'Trade loggué');
+        },
+        error: (err) =>
+          this.flashFeedback('error', err?.error?.message ?? 'Échec de l’enregistrement du trade'),
+      });
+  }
+
+  private flashFeedback(type: 'success' | 'error', text: string): void {
+    this.liveFeedback.set({ type, text, ts: Date.now() });
   }
 
   savePlanNote(note: string): void {

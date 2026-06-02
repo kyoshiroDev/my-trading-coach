@@ -2,19 +2,22 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
   computed,
   effect,
   inject,
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { interval } from 'rxjs';
+import { Subject, forkJoin, interval, of } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent, EcoResultAnalysis } from '../../../../core/api/eco-calendar.api';
 import { translateEcoEvent } from '../../../../core/data/eco-event-translations';
 import { MoodState, TradingSession, LiveStats, SessionTrade } from '../../../../core/api/session.api';
-import { CreateTradeDto, MarketContext, NewsItem, TradesApi, UserAssetItem } from '../../../../core/api/trades.api';
+import { CreateTradeDto, InstrumentSearchResult, MarketContext, NewsItem, TradesApi, UserAssetItem } from '../../../../core/api/trades.api';
 import { SessionRecapComponent } from '../session-recap/session-recap.component';
 import { MarketContextBarComponent } from '../market-context-bar/market-context-bar.component';
 import { EcoSocketService } from '../../../../core/services/eco-socket.service';
@@ -171,9 +174,23 @@ const EMOTIONS = [
                     </div>
                   </div>
                 }
-                <div class="era-ai-loading" data-testid="era-ai-loading">
-                  <span class="era-spin">⟳</span> Ton compagnon analyse l'impact...
-                </div>
+                @switch (releaseAlertState()) {
+                  @case ('analyzing') {
+                    <div class="era-ai-loading" data-testid="era-ai-loading">
+                      <span class="era-spin">⟳</span> Ton compagnon analyse l'impact...
+                    </div>
+                  }
+                  @case ('ready') {
+                    <div class="era-ai-ready" data-testid="era-ai-ready">
+                      ✦ Analyse prête — détail dans le calendrier ci-dessous ↓
+                    </div>
+                  }
+                  @case ('error') {
+                    <div class="era-ai-error">
+                      Analyse indisponible pour le moment.
+                    </div>
+                  }
+                }
               </div>
             }
 
@@ -183,7 +200,7 @@ const EMOTIONS = [
               </div>
             } @else {
               <div class="cal-events-list">
-                @for (event of sessionEcoEvents(); track event.name) {
+                @for (event of visibleEcoEvents(); track event.name) {
                   <div
                     class="eco-live-event"
                     [class.released]="event.isReleased"
@@ -372,6 +389,11 @@ const EMOTIONS = [
             <div class="qt-lbl">ACTIF</div>
             @if (assetsLoading()) {
               <div class="qt-asset-skel"></div>
+            } @else if (assetsError()) {
+              <div class="qt-asset-error" role="alert">
+                <span>Impossible de charger tes actifs.</span>
+                <button type="button" class="qt-retry-btn" (click)="loadUserAssets()">Réessayer</button>
+              </div>
             } @else {
               <div style="display:flex;gap:6px;align-items:center;">
                 <select
@@ -385,6 +407,7 @@ const EMOTIONS = [
                       {{ a.isFavorite ? '★ ' : '' }}{{ a.symbol }}{{ a.tradeCount > 0 ? ' · ' + a.tradeCount + ' trade' + (a.tradeCount > 1 ? 's' : '') : '' }}
                     </option>
                   }
+                  <option value="__custom__">➕ Autre actif…</option>
                 </select>
                 @if (qtSelectedAsset()) {
                   <button
@@ -395,6 +418,36 @@ const EMOTIONS = [
                   >★</button>
                 }
               </div>
+
+              @if (customAssetMode()) {
+                <div class="qt-custom-asset">
+                  <div class="qt-custom-row">
+                    <input
+                      class="qt-input"
+                      type="text"
+                      data-testid="quick-trade-custom-asset"
+                      [value]="customAssetQuery()"
+                      (input)="onCustomAssetSearch($event)"
+                      (keydown.enter)="submitCustomAsset()"
+                      placeholder="Cherche ou saisis (ex : NQ, BTC/USDT)…"
+                      style="font-size:12px;"
+                    />
+                    <button class="qt-custom-add" type="button" [disabled]="!customAssetQuery().trim()" (click)="submitCustomAsset()">OK</button>
+                    <button class="qt-custom-cancel" type="button" (click)="cancelCustomAsset()">✕</button>
+                  </div>
+                  @if (customAssetResults().length > 0) {
+                    <div class="qt-custom-results">
+                      @for (r of customAssetResults(); track r.symbol) {
+                        <button class="qt-custom-result" type="button" (click)="addCustomAsset(r.symbol)">
+                          <span class="qt-custom-sym">{{ r.symbol }}</span>
+                          <span class="qt-custom-lbl">{{ r.label }}</span>
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+
               <!-- Prix temps réel -->
               @if (qtSelectedAsset()) {
                 <div class="qt-live-price">
@@ -407,8 +460,8 @@ const EMOTIONS = [
                   }
                 </div>
               }
-              @if (userAssets().length === 0) {
-                <div class="qt-asset-hint">Saisis ton premier trade pour voir tes actifs ici</div>
+              @if (userAssets().length === 0 && !customAssetMode()) {
+                <div class="qt-asset-hint">Choisis « ➕ Autre actif… » pour saisir ton premier instrument.</div>
               }
             }
           </div>
@@ -419,12 +472,14 @@ const EMOTIONS = [
               <button
                 class="qt-side lng"
                 [class.sel]="qtSide() === 'LONG'"
+                [attr.aria-pressed]="qtSide() === 'LONG'"
                 data-testid="quick-trade-long"
                 (click)="qtSide.set('LONG')"
               >▲ LONG</button>
               <button
                 class="qt-side sht"
                 [class.sel]="qtSide() === 'SHORT'"
+                [attr.aria-pressed]="qtSide() === 'SHORT'"
                 data-testid="quick-trade-short"
                 (click)="qtSide.set('SHORT')"
               >▼ SHORT</button>
@@ -435,15 +490,15 @@ const EMOTIONS = [
             <div class="qt-lbl">ÉMOTION</div>
             <div class="qt-emos">
               @for (emo of emotions; track emo.value) {
-                <div
+                <button
+                  type="button"
                   class="qt-emo"
                   [class.sel]="qtEmotion() === emo.value"
                   [title]="emo.title"
-                  role="button"
-                  tabindex="0"
+                  [attr.aria-label]="emo.title"
+                  [attr.aria-pressed]="qtEmotion() === emo.value"
                   (click)="qtEmotion.set(emo.value)"
-                  (keyup.enter)="qtEmotion.set(emo.value)"
-                >{{ emo.emoji }}</div>
+                >{{ emo.emoji }}</button>
               }
             </div>
           </div>
@@ -530,6 +585,15 @@ const EMOTIONS = [
             (click)="submitQuickTrade()"
           >⚡ Logger ce trade</button>
           <div class="qt-hint">Asset + direction + émotion suffisent</div>
+
+          <!-- Retour d'action (succès / erreur) — annoncé aux lecteurs d'écran -->
+          <div class="qt-feedback" role="status" aria-live="polite">
+            @if (feedbackToast(); as fb) {
+              <div class="qt-feedback-toast" [class.ok]="fb.type === 'success'" [class.err]="fb.type === 'error'">
+                {{ fb.type === 'success' ? '✓' : '⚠' }} {{ fb.text }}
+              </div>
+            }
+          </div>
         </div>
 
       </div>
@@ -543,10 +607,13 @@ const EMOTIONS = [
            tabindex="0"
            (click)="closeNews()"
            (keyup.escape)="closeNews()">
-        <div class="news-modal"
+        <div #newsDialog class="news-modal"
              role="dialog"
              aria-modal="true"
+             aria-labelledby="news-modal-title"
+             tabindex="-1"
              (click)="$event.stopPropagation()"
+             (keydown.escape)="closeNews()"
              (keydown)="$event.stopPropagation()">
           <!-- Header -->
           <div class="nm-header">
@@ -568,7 +635,7 @@ const EMOTIONS = [
             @if (news.image) {
               <img class="nm-image" [src]="news.image" [alt]="news.title" loading="lazy" />
             }
-            <h2 class="nm-title">{{ news.title }}</h2>
+            <h2 id="news-modal-title" class="nm-title">{{ news.title }}</h2>
             @if (news.text) {
               <p class="nm-body">{{ news.text }}</p>
             }
@@ -594,6 +661,7 @@ export class SessionLiveComponent {
   readonly newsItems = input<NewsItem[]>([]);
   readonly breakingNews = input<string | null>(null);
   readonly triggerCloseModal = input<boolean>(false);
+  readonly liveFeedback = input<{ type: 'success' | 'error'; text: string; ts: number } | null>(null);
 
   readonly startSession = output<void>();
   readonly tradeClosed = output<{ tradeId: string; exitPrice: number }>();
@@ -626,18 +694,33 @@ export class SessionLiveComponent {
 
   // Modal news
   protected readonly selectedNews = signal<import('../../../../core/api/trades.api').NewsItem | null>(null);
+  private readonly newsDialogRef = viewChild<ElementRef<HTMLElement>>('newsDialog');
+  private newsTrigger: HTMLElement | null = null;
 
   protected openNews(item: import('../../../../core/api/trades.api').NewsItem): void {
+    this.newsTrigger = (document.activeElement as HTMLElement) ?? null;
     this.selectedNews.set(item);
   }
   protected closeNews(): void {
     this.selectedNews.set(null);
+    this.newsTrigger?.focus();
+    this.newsTrigger = null;
   }
+
+  // Retour d'action live (toast succès/erreur, auto-effacé)
+  protected readonly feedbackToast = signal<{ type: 'success' | 'error'; text: string } | null>(null);
+  private feedbackTimer?: ReturnType<typeof setTimeout>;
 
   // Quick trade form — asset selection
   protected readonly userAssets = signal<UserAssetItem[]>([]);
   protected readonly assetsLoading = signal(false);
+  protected readonly assetsError = signal(false);
   protected readonly qtSelectedAsset = signal<UserAssetItem | null>(null);
+  // Saisie libre d'actif (anti-blocage premier trade)
+  protected readonly customAssetMode    = signal(false);
+  protected readonly customAssetQuery   = signal('');
+  protected readonly customAssetResults = signal<InstrumentSearchResult[]>([]);
+  private readonly customAssetSearch$   = new Subject<string>();
   protected readonly qtSide = signal<'LONG' | 'SHORT'>('LONG');
   protected readonly qtEmotion = signal<'CONFIDENT' | 'STRESSED' | 'REVENGE' | 'FEAR' | 'FOCUSED' | 'NEUTRAL'>('CONFIDENT');
   protected readonly qtSetup = signal<string>('BREAKOUT');
@@ -684,9 +767,17 @@ export class SessionLiveComponent {
       .sort((a, b) => a.time.localeCompare(b.time));
   });
 
+  /** Événements affichés : publiés OU dans la fenêtre de session.
+   *  Les events hors-session ne produisent plus de lignes fantômes (le @empty s'active). */
+  protected readonly visibleEcoEvents = computed(() =>
+    this.sessionEcoEvents().filter((e) => e.isReleased || !this.isOutsideSession(e.time)),
+  );
+
   // Eco WebSocket — nouvelles releases temps réel
   protected readonly newReleases = signal<EcoEvent[]>([]);
   protected readonly showReleaseAlert = signal(false);
+  protected readonly releaseAlertState = signal<'analyzing' | 'ready' | 'error'>('analyzing');
+  private releaseAlertTimer?: ReturnType<typeof setTimeout>;
 
   protected readonly moods = MOODS;
   protected readonly emotions = EMOTIONS;
@@ -712,8 +803,39 @@ export class SessionLiveComponent {
       }
     });
 
+    // Retour d'action live → toast auto-effacé après 3,5 s (annoncé via aria-live)
+    effect(() => {
+      const fb = this.liveFeedback();
+      if (!fb) return;
+      this.feedbackToast.set({ type: fb.type, text: fb.text });
+      clearTimeout(this.feedbackTimer);
+      this.feedbackTimer = setTimeout(() => this.feedbackToast.set(null), 3500);
+    });
+    this.destroyRef.onDestroy(() => clearTimeout(this.feedbackTimer));
+
+    // Modale news → focus sur le dialogue à l'ouverture (accessibilité clavier)
+    effect(() => {
+      const dialog = this.newsDialogRef()?.nativeElement;
+      if (this.selectedNews() && dialog) dialog.focus();
+    });
+
     // Assets chargés immédiatement — indépendamment de la session
     this.loadUserAssets();
+
+    // Recherche d'instrument (saisie libre d'actif)
+    this.customAssetSearch$
+      .pipe(
+        debounceTime(300),
+        map((q) => q.trim()),
+        distinctUntilChanged(),
+        switchMap((q) =>
+          q.length < 2
+            ? of({ data: [] as InstrumentSearchResult[] })
+            : this.tradesApi.searchInstruments(q).pipe(catchError(() => of({ data: [] as InstrumentSearchResult[] }))),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((res) => this.customAssetResults.set(res.data ?? []));
 
     // Pins chargés directement — pas de dépendance au cache getTodayEvents
     this.ecoCalendarApi.getPins()
@@ -738,14 +860,40 @@ export class SessionLiveComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((events) => {
         this.newReleases.set(events);
+        this.releaseAlertState.set('analyzing');
         this.showReleaseAlert.set(true);
-        setTimeout(() => this.showReleaseAlert.set(false), 30000);
+        clearTimeout(this.releaseAlertTimer);
 
-        // Rafraîchir l'analyse IA avec les nouvelles actual values
-        this.ecoCalendarApi.refreshAnalysis().subscribe((res) => {
-          this.ecoCalendarRefreshed.emit(res.data);
-        });
+        // Re-synchroniser le calendrier (actual values) pour le parent
+        this.ecoCalendarApi.refreshAnalysis()
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe((res) => this.ecoCalendarRefreshed.emit(res.data));
+
+        // Analyse IA ciblée par événement publié
+        const calls = events.map((ev) =>
+          this.ecoCalendarApi.analyzeResult(ev.name).pipe(
+            map((res) => ({ name: ev.name, analysis: res.data })),
+            catchError(() => of({ name: ev.name, analysis: null as EcoResultAnalysis | null })),
+          ),
+        );
+        if (!calls.length) { this.showReleaseAlert.set(false); return; }
+
+        forkJoin(calls)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe((results) => {
+            const next = { ...this.ecoResults() };
+            let anyOk = false;
+            for (const r of results) {
+              if (r.analysis) { next[r.name] = r.analysis; anyOk = true; }
+            }
+            this.ecoResults.set(next);
+            this.releaseAlertState.set(anyOk ? 'ready' : 'error');
+            // auto-dismiss UNIQUEMENT une fois l'analyse arrivée
+            this.releaseAlertTimer = setTimeout(() => this.showReleaseAlert.set(false), 12000);
+          });
       });
+
+    this.destroyRef.onDestroy(() => clearTimeout(this.releaseAlertTimer));
   }
 
   protected readonly pnlDisplay = computed(() => {
@@ -849,6 +997,7 @@ export class SessionLiveComponent {
 
   protected loadUserAssets(): void {
     this.assetsLoading.set(true);
+    this.assetsError.set(false);
     this.tradesApi.getUserAssets()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -859,15 +1008,66 @@ export class SessionLiveComponent {
           if (preselect) this.applyAssetSelection(preselect);
           this.assetsLoading.set(false);
         },
-        error: () => this.assetsLoading.set(false),
+        error: () => {
+          this.assetsError.set(true);
+          this.assetsLoading.set(false);
+        },
       });
   }
 
   protected onAssetSelect(event: Event): void {
     const symbol = (event.target as HTMLSelectElement).value;
+    if (symbol === '__custom__') {
+      this.customAssetMode.set(true);
+      this.customAssetQuery.set('');
+      this.customAssetResults.set([]);
+      return;
+    }
     const asset = this.userAssets().find((a) => a.symbol === symbol) ?? null;
     this.qtSelectedAsset.set(asset);
     if (asset) this.applyAssetSelection(asset);
+  }
+
+  protected onCustomAssetSearch(event: Event): void {
+    const v = (event.target as HTMLInputElement).value;
+    this.customAssetQuery.set(v);
+    this.customAssetSearch$.next(v);
+  }
+
+  protected submitCustomAsset(): void {
+    const q = this.customAssetQuery().trim();
+    if (q) this.addCustomAsset(q);
+  }
+
+  protected cancelCustomAsset(): void {
+    this.customAssetMode.set(false);
+    this.customAssetQuery.set('');
+    this.customAssetResults.set([]);
+  }
+
+  /** Ajoute un actif saisi librement : local immédiat + persistance, sélectionné pour le trade. */
+  protected addCustomAsset(symbol: string): void {
+    const sym = symbol.trim().toUpperCase();
+    if (!sym) return;
+
+    let asset = this.userAssets().find((a) => a.symbol === sym) ?? null;
+    if (!asset) {
+      asset = {
+        symbol: sym, label: sym, category: '',
+        tradeCount: 0, lastEntry: null, lastQty: null, isFavorite: false,
+      };
+      this.userAssets.update((list) => [asset as UserAssetItem, ...list]);
+    }
+
+    this.applyAssetSelection(asset);
+    this.cancelCustomAsset();
+
+    // Persister la liste d'actifs (ne pas bloquer en cas d'erreur réseau)
+    const symbols = this.userAssets().map((a) => a.symbol);
+    const fav = this.userAssets().find((a) => a.isFavorite)?.symbol ?? null;
+    this.tradesApi.saveUserAssets(symbols, fav)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: () => undefined, error: () => undefined });
   }
 
   private applyAssetSelection(asset: UserAssetItem): void {

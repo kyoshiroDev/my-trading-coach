@@ -8,10 +8,16 @@ export interface DebriefItem {
   text: string;
 }
 
+export interface ObjectiveCheck {
+  type: string;
+  params?: Record<string, unknown>;
+}
+
 export interface DebriefObjective {
   title: string;
   reason: string;
   note?: string;
+  check?: ObjectiveCheck | null;
 }
 
 export interface DebriefInsights {

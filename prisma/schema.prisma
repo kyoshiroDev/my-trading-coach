@@ -213,6 +213,19 @@ model EcoCalendarCache {
   @@index([date])
 }
 
+/// Analyse IA du calendrier éco mutualisée par (date, signature d'actifs).
+/// 1 appel IA par signature partagé entre tous les users → coût O(actifs) au lieu de O(users).
+model EcoAnalysisCache {
+  id           String   @id @default(cuid())
+  date         String // YYYY-MM-DD Paris
+  assetsKey    String // signature normalisée des actifs
+  analysisJson String   @db.Text
+  createdAt    DateTime @default(now())
+
+  @@unique([date, assetsKey])
+  @@index([date])
+}
+
 enum MoodState {
   CONFIDENT
   FOCUSED
@@ -291,12 +304,32 @@ model EcoEvent {
   previous   Float?
   isReleased Boolean  @default(false)
   unit       String?
+  nameFr     String?  // libellé traduit une seule fois
   fetchedAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   @@unique([date, name, currency])
   @@index([date])
   @@index([date, isReleased])
+}
+
+model MarketNews {
+  id            String   @id @default(cuid())
+  url           String   @unique          // clé de dédup (un article = une URL)
+  symbol        String
+  title         String                    // titre original
+  titleFr       String?                   // traduit une seule fois
+  text          String?  @db.Text
+  textFr        String?  @db.Text
+  sentiment     String?                   // bull | bear | neutral
+  image         String?
+  site          String?
+  publishedDate DateTime
+  translated    Boolean  @default(false)
+  fetchedAt     DateTime @default(now())
+
+  @@index([symbol, publishedDate])
+  @@index([translated])
 }
 
 model EmailCampaignLog {

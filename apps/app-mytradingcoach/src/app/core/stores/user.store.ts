@@ -35,6 +35,15 @@ export class UserStore {
   readonly startingCapital = computed(() => this.user()?.startingCapital ?? 0);
   readonly tradingAssets = computed(() => this.user()?.tradingAssets ?? []);
   readonly favoriteAsset = computed(() => this.user()?.favoriteAsset ?? null);
+
+  /** Profil IA incomplet : pas de stratégie OU pas d'actif (comptes créés avant l'onboarding enrichi). */
+  readonly profileIncomplete = computed(() => {
+    const u = this.user();
+    if (!u) return false;
+    const noStrategy = !u.tradingStyle || !(u.tradingStrategy?.length);
+    const noAsset = !u.favoriteAsset && !(u.tradingAssets?.length);
+    return noStrategy || noAsset;
+  });
   readonly displayName = computed(
     () => this.user()?.name ?? this.user()?.email ?? '',
   );

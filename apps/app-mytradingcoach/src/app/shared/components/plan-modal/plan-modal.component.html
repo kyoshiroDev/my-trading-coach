@@ -23,10 +23,10 @@
         <div class="plan-col-name">Starter</div>
         <div class="plan-col-price">
           @if (selectedPlan() === 'starter_yearly') {
-            <span class="price">29€</span><span class="period">/mois</span>
-            <div class="plan-col-detail">Facturé 349€/an</div>
+            <span class="price">{{ yearlyPerMonth(PRICING.starter.yearly) }}€</span><span class="period">/mois</span>
+            <div class="plan-col-detail">Facturé {{ PRICING.starter.yearly }}€/an</div>
           } @else {
-            <span class="price">39€</span><span class="period">/mois</span>
+            <span class="price">{{ PRICING.starter.monthly }}€</span><span class="period">/mois</span>
             <div class="plan-col-detail">Facturé chaque mois</div>
           }
         </div>
@@ -35,12 +35,12 @@
             class="plan-interval-btn"
             [class.active]="selectedPlan() === 'starter_yearly'"
             (click)="selectPlan('starter_yearly')"
-          >⭐ Annuel — 349€/an</button>
+          >⭐ Annuel — {{ PRICING.starter.yearly }}€/an</button>
           <button
             class="plan-interval-btn"
             [class.active]="selectedPlan() === 'starter_monthly'"
             (click)="selectPlan('starter_monthly')"
-          >Mensuel — 39€/mois</button>
+          >Mensuel — {{ PRICING.starter.monthly }}€/mois</button>
         </div>
         <ul class="plan-col-feats">
           <li>✓ Trades illimités</li>
@@ -62,10 +62,10 @@
         <div class="plan-col-name">Premium</div>
         <div class="plan-col-price">
           @if (selectedPlan() === 'premium_yearly') {
-            <span class="price">58€</span><span class="period">/mois</span>
-            <div class="plan-col-detail">Facturé 699€/an</div>
+            <span class="price">{{ yearlyPerMonth(PRICING.premium.yearly) }}€</span><span class="period">/mois</span>
+            <div class="plan-col-detail">Facturé {{ PRICING.premium.yearly }}€/an</div>
           } @else {
-            <span class="price">79€</span><span class="period">/mois</span>
+            <span class="price">{{ PRICING.premium.monthly }}€</span><span class="period">/mois</span>
             <div class="plan-col-detail">Facturé chaque mois</div>
           }
         </div>
@@ -74,12 +74,12 @@
             class="plan-interval-btn"
             [class.active]="selectedPlan() === 'premium_yearly'"
             (click)="selectPlan('premium_yearly')"
-          >⭐ Annuel — 699€/an</button>
+          >⭐ Annuel — {{ PRICING.premium.yearly }}€/an</button>
           <button
             class="plan-interval-btn"
             [class.active]="selectedPlan() === 'premium_monthly'"
             (click)="selectPlan('premium_monthly')"
-          >Mensuel — 79€/mois</button>
+          >Mensuel — {{ PRICING.premium.monthly }}€/mois</button>
         </div>
         <ul class="plan-col-feats">
           <li>✓ Tout Starter inclus</li>
