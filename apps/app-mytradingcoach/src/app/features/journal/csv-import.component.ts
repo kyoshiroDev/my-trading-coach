@@ -7,7 +7,6 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
 import {
@@ -17,7 +16,6 @@ import {
   CheckCircle,
   AlertCircle,
 } from 'lucide-angular';
-import { UserStore } from '../../core/stores/user.store';
 import { environment } from '../../../environments/environment';
 
 interface ImportResult {
@@ -30,7 +28,7 @@ interface ImportResult {
 @Component({
   selector: 'mtc-csv-import',
   standalone: true,
-  imports: [RouterLink, LucideAngularModule],
+  imports: [LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './csv-import.component.css',
   template: `
@@ -50,23 +48,7 @@ interface ImportResult {
             </button>
           </div>
 
-          @if (!userStore.isPremium()) {
-            <div class="paywall">
-              <div class="paywall-icon">⚡</div>
-              <div class="paywall-title">Fonctionnalité Premium</div>
-              <div class="paywall-desc">
-                L'import CSV avec analyse IA est disponible avec le plan
-                Premium.
-              </div>
-              <a
-                routerLink="/settings"
-                class="btn-upgrade"
-                (click)="dismissed.emit()"
-              >
-                Essayer 7 jours gratuit →
-              </a>
-            </div>
-          } @else if (result()) {
+          @if (result()) {
             <div class="result-block">
               @if (result()!.created > 0) {
                 <lucide-icon
@@ -169,7 +151,6 @@ export class CsvImportComponent {
   readonly dismissed = output<void>();
   readonly imported = output<void>();
 
-  protected readonly userStore = inject(UserStore);
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
 

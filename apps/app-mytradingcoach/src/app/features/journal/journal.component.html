@@ -42,12 +42,10 @@
       }
 
       <button class="filter-chip import-btn"
-        [class.import-locked]="!userStore.isPremium()"
         (click)="showImport.set(true)"
-        [title]="userStore.isPremium() ? 'Importer un CSV' : 'Fonctionnalité Premium'">
+        title="Importer un CSV">
         <lucide-icon [img]="UploadIcon" [size]="12" />
         CSV
-        @if (!userStore.isPremium()) { <span class="lock-badge">⚡</span> }
       </button>
     </div>
   </div>
