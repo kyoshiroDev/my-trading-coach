@@ -28,6 +28,22 @@ const mockUser = {
   updatedAt: new Date(),
 };
 
+// Utilisateur renvoyé par getMe/login/register (ME_SELECT) — sans password
+const mockSafeUser = {
+  id: 'user-123',
+  email: 'test@test.com',
+  name: 'Thomas',
+  plan: 'FREE',
+  role: 'USER',
+  onboardingCompleted: false,
+  trialEndsAt: null,
+  trialUsed: false,
+  tradingStyle: null,
+  tradingStrategy: [],
+  tradingAssets: [],
+  favoriteAsset: null,
+};
+
 const mockPrisma = {
   user: {
     findUnique: vi.fn(),
@@ -52,6 +68,9 @@ describe('AuthService', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    // login/register renvoient désormais l'utilisateur issu d'un update(select: ME_SELECT).
+    // Les tests startTrial/forgotPassword/resetPassword surchargent ce mock au besoin.
+    mockPrisma.user.update.mockResolvedValue(mockSafeUser);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
