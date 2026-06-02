@@ -16,22 +16,28 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { EcoCalendarService } from './eco-calendar.service';
 import { todayParis } from '../../common/utils/paris-date';
 
+// Affichage du calendrier = lecture BDD, accessible à tous (FREE inclus).
+// Seuls les endpoints porteurs d'analyse IA restent protégés par PremiumGuard
+// au niveau de chaque méthode (today / next-trading-day / refresh-today / analyze-result).
 @Controller('eco-calendar')
-@UseGuards(JwtAuthGuard, PremiumGuard)
+@UseGuards(JwtAuthGuard)
 export class EcoCalendarController {
   constructor(private readonly service: EcoCalendarService) {}
 
   @Get('today')
+  @UseGuards(PremiumGuard)
   getTodayEvents(@CurrentUser() user: { id: string }) {
     return this.service.getTodayEvents(user.id);
   }
 
   @Get('next-trading-day')
+  @UseGuards(PremiumGuard)
   getNextTradingDayEvents(@CurrentUser() user: { id: string }) {
     return this.service.getTomorrowEvents(user.id);
   }
 
   @Post('analyze-result')
+  @UseGuards(PremiumGuard)
   analyzeResult(
     @CurrentUser() user: { id: string },
     @Body('eventName') eventName: string,
@@ -41,6 +47,7 @@ export class EcoCalendarController {
 
   // Vide le cache Redis user + retourne analyse fraîche (après nouveaux actual WebSocket)
   @Post('refresh-today')
+  @UseGuards(PremiumGuard)
   async refreshToday(@CurrentUser() user: { id: string }) {
     const today = todayParis();
     await this.service.redis.del(`eco:calendar:${today}:${user.id}`);

@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, premiumGuard } from './core/auth/auth.guard';
+import { authGuard } from './core/auth/auth.guard';
 import { NotFoundComponent } from './shared/components/not-found/not-found.component';
 
 export const appRoutes: Routes = [
@@ -125,7 +125,7 @@ export const appRoutes: Routes = [
       },
       {
         path: 'eco-calendar',
-        canActivate: [premiumGuard],
+        // Affichage du calendrier accessible à tous (FREE) — l'analyse IA reste premium côté API.
         data: {
           seo: {
             title: 'Calendrier économique',
