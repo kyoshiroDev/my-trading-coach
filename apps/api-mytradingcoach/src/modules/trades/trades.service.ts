@@ -73,7 +73,13 @@ export class TradesService {
     dtos: Partial<CreateTradeDto>[],
     plan: Plan = Plan.FREE,
     role: Role = Role.USER,
-  ): Promise<{ created: number; duplicates: number; failed: number; total: number }> {
+  ): Promise<{
+    created: number;
+    duplicates: number;
+    failed: number;
+    limitBlocked: number;
+    total: number;
+  }> {
     const existing = await this.prisma.trade.findMany({
       where: { userId },
       select: { asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true },
@@ -83,6 +89,8 @@ export class TradesService {
     let created = 0;
     let duplicates = 0;
     let failed = 0;
+    let limitBlocked = 0; // trades non importés car la limite FREE (30/mois) est atteinte
+    let limitHit = false;
 
     for (const dto of dtos) {
       const key = this.dedupeKey(dto);
@@ -91,15 +99,38 @@ export class TradesService {
         continue;
       }
       seen.add(key); // dédup intra-lot (même trade présent 2× dans le fichier)
+      // Une fois la limite atteinte, inutile de retenter : tout le reste est bloqué.
+      if (limitHit) {
+        limitBlocked++;
+        continue;
+      }
       try {
         await this.create(userId, dto as CreateTradeDto, plan, role);
         created++;
-      } catch {
-        failed++;
+      } catch (err) {
+        if (this.isFreeLimitError(err)) {
+          limitHit = true;
+          limitBlocked++;
+        } else {
+          failed++;
+        }
       }
     }
 
-    return { created, duplicates, failed, total: dtos.length };
+    return { created, duplicates, failed, limitBlocked, total: dtos.length };
+  }
+
+  /** Vrai si l'erreur est le refus de quota FREE (FREE_LIMIT_REACHED). */
+  private isFreeLimitError(err: unknown): boolean {
+    if (err instanceof HttpException) {
+      const res = err.getResponse();
+      return (
+        typeof res === 'object' &&
+        res !== null &&
+        (res as { code?: string }).code === 'FREE_LIMIT_REACHED'
+      );
+    }
+    return false;
   }
 
   /** Clé d'unicité d'un trade : asset + side + tradedAt + entry + exit + pnl. */

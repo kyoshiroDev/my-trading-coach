@@ -185,6 +185,9 @@
   font-size: 12px;
   color: var(--text-2);
 }
+.result-sub.result-limit {
+  color: var(--amber, #f59e0b);
+}
 
 .btn-primary {
   background: var(--blue);

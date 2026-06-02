@@ -22,6 +22,7 @@ interface ImportResult {
   created: number;
   duplicates: number;
   failed: number;
+  limitBlocked: number;
   total: number;
 }
 
@@ -65,6 +66,12 @@ interface ImportResult {
               @if (result()!.duplicates > 0) {
                 <p class="result-sub">
                   {{ result()!.duplicates }} doublon(s) ignoré(s) (déjà présents)
+                </p>
+              }
+              @if (result()!.limitBlocked > 0) {
+                <p class="result-sub result-limit">
+                  {{ result()!.limitBlocked }} non importé(s) — limite FREE atteinte
+                  (30/mois). Passe Starter pour l'illimité.
                 </p>
               }
               @if (result()!.failed > 0) {

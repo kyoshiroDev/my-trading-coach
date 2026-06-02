@@ -454,6 +454,23 @@ describe('TradesService', () => {
 
       expect(res.created).toBe(2);
       expect(res.duplicates).toBe(0);
+      expect(res.limitBlocked).toBe(0);
+    });
+
+    it('compte separement les trades bloques par la limite FREE (30/mois)', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue([]); // rien en base
+      mockPrisma.trade.count.mockResolvedValue(30); // quota FREE deja atteint
+      mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
+
+      const res = await service.importTrades(
+        'user-123',
+        [createTradeDto, { ...createTradeDto, asset: 'ETH/USDT' }],
+        Plan.FREE,
+      );
+
+      expect(res.created).toBe(0);
+      expect(res.limitBlocked).toBe(2); // bloques par la limite, pas 'failed'
+      expect(res.failed).toBe(0);
     });
   });
 
