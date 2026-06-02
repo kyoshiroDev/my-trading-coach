@@ -55,9 +55,9 @@ export class TradesController {
     FileInterceptor('file', {
       limits: { fileSize: 5 * 1024 * 1024 },
       fileFilter: (_req, file, cb) => {
-        if (!file.originalname.match(/\.(csv|txt)$/i)) {
+        if (!file.originalname.match(/\.(csv|txt|xlsx|xls)$/i)) {
           return cb(
-            new BadRequestException('Seuls les fichiers CSV sont acceptés'),
+            new BadRequestException('Formats acceptés : CSV, TXT, Excel (.xlsx)'),
             false,
           );
         }

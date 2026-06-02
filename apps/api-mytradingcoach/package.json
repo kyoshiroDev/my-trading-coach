@@ -105,16 +105,17 @@
     "cookie-parser": "^1.4.7",
     "helmet": "^8.1.0",
     "ioredis": "^5.10.1",
+    "node-ssh": "^13.2.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "pg": "^8.20.0",
     "reflect-metadata": "^0.1.14",
-    "node-ssh": "^13.2.1",
     "resend": "^6.10.0",
     "rxjs": "^7.8.2",
     "stripe": "^22.0.0",
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@nestjs/testing": "11.1.17",
