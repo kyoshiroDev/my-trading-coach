@@ -64,6 +64,10 @@ const mockPrisma = {
   tradeSession: {
     findFirst: vi.fn().mockResolvedValue(null),
   },
+  // Inscription ancienne par défaut → les trades de test (datés récemment) sont post-inscription.
+  user: {
+    findUnique: vi.fn().mockResolvedValue({ createdAt: new Date('2020-01-01') }),
+  },
 };
 
 
@@ -471,6 +475,31 @@ describe('TradesService', () => {
       expect(res.created).toBe(0);
       expect(res.limitBlocked).toBe(2); // bloques par la limite, pas 'failed'
       expect(res.failed).toBe(0);
+    });
+
+    it("importe l'historique (trades avant inscription) sans le decompter de la limite FREE", async () => {
+      // Inscription recente ; quota courant deja atteint
+      mockPrisma.user.findUnique.mockResolvedValue({ createdAt: new Date('2026-06-01T00:00:00Z') });
+      mockPrisma.trade.findMany.mockResolvedValue([]);
+      mockPrisma.trade.count.mockResolvedValue(30); // limite courante atteinte
+      mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
+      mockPrisma.trade.create.mockResolvedValue(mockTrade);
+
+      const histo = (asset: string): Partial<CreateTradeDto> => ({
+        asset, side: TradeSide.LONG, entry: 100, exit: 110, pnl: 10,
+        emotion: EmotionState.NEUTRAL, setup: SetupType.BREAKOUT,
+        session: TradingSession.LONDON, timeframe: '1h',
+        tradedAt: '2024-03-15T10:00:00Z', // AVANT inscription (2026-06-01) -> historique
+      });
+
+      const res = await service.importTrades(
+        'user-123',
+        [histo('BTC/USDT'), histo('ETH/USDT')],
+        Plan.FREE,
+      );
+
+      expect(res.created).toBe(2); // historiques crees malgre la limite atteinte
+      expect(res.limitBlocked).toBe(0);
     });
   });
 

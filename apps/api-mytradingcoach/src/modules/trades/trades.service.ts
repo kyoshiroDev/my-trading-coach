@@ -36,7 +36,7 @@ export class TradesService {
     plan: Plan = Plan.FREE,
     role: Role = Role.USER,
   ) {
-    await this.checkMonthlyLimit(userId, plan, role);
+    await this.checkMonthlyLimit(userId, plan, role, dto.tradedAt);
     const pnl = this.calculatePnl(dto);
     const riskReward = this.calculateRiskReward(dto);
 
@@ -80,16 +80,23 @@ export class TradesService {
     limitBlocked: number;
     total: number;
   }> {
-    const existing = await this.prisma.trade.findMany({
-      where: { userId },
-      select: { asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true },
-    });
+    const [existing, user] = await Promise.all([
+      this.prisma.trade.findMany({
+        where: { userId },
+        select: { asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true },
+      }),
+      this.prisma.user.findUnique({ where: { id: userId }, select: { createdAt: true } }),
+    ]);
     const seen = new Set(existing.map((t) => this.dedupeKey(t)));
+
+    // Historique = trade daté AVANT l'inscription → toujours importé, hors limite FREE.
+    const isHistorical = (t: Partial<CreateTradeDto>): boolean =>
+      !!user && t.tradedAt != null && new Date(t.tradedAt) < user.createdAt;
 
     let created = 0;
     let duplicates = 0;
     let failed = 0;
-    let limitBlocked = 0; // trades non importés car la limite FREE (30/mois) est atteinte
+    let limitBlocked = 0; // trades post-inscription non importés car la limite FREE (30/mois) est atteinte
     let limitHit = false;
 
     for (const dto of dtos) {
@@ -99,8 +106,8 @@ export class TradesService {
         continue;
       }
       seen.add(key); // dédup intra-lot (même trade présent 2× dans le fichier)
-      // Une fois la limite atteinte, inutile de retenter : tout le reste est bloqué.
-      if (limitHit) {
+      // Limite atteinte : on ne saute QUE les trades courants ; l'historique passe toujours.
+      if (limitHit && !isHistorical(dto)) {
         limitBlocked++;
         continue;
       }
@@ -109,6 +116,7 @@ export class TradesService {
         created++;
       } catch (err) {
         if (this.isFreeLimitError(err)) {
+          // Ne peut concerner qu'un trade post-inscription (l'historique est exempté).
           limitHit = true;
           limitBlocked++;
         } else {
@@ -259,16 +267,30 @@ export class TradesService {
     userId: string,
     plan: Plan,
     role: Role = Role.USER,
+    tradedAt?: string | Date | null,
   ): Promise<void> {
     if (role === Role.ADMIN || role === Role.BETA_TESTER || plan === Plan.STARTER || plan === Plan.PREMIUM)
       return;
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { createdAt: true },
+    });
 
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
+    // Le trade en cours est-il de l'historique (avant inscription) ou hors mois courant ?
+    // → il ne consomme PAS la limite des 30/mois.
+    const td = tradedAt ? new Date(tradedAt) : new Date();
+    if (user && td < user.createdAt) return; // historique importé
+    if (td < startOfMonth) return; // hors mois courant
+
+    // Compter l'activité courante : trades du mois courant ET postérieurs à l'inscription.
+    const since = user && user.createdAt > startOfMonth ? user.createdAt : startOfMonth;
     const count = await this.prisma.trade.count({
-      where: { userId, createdAt: { gte: startOfMonth } },
+      where: { userId, tradedAt: { gte: since } },
     });
 
     if (count >= 30) {
@@ -286,12 +308,19 @@ export class TradesService {
     const isPremium = plan === Plan.STARTER || plan === Plan.PREMIUM || role === Role.ADMIN || role === Role.BETA_TESTER;
     if (isPremium) return { count: 0, limit: 0, isPremium: true };
 
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { createdAt: true },
+    });
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
+    // Activité courante uniquement : trades du mois ET postérieurs à l'inscription.
+    // L'historique importé (tradedAt < inscription) n'est pas décompté.
+    const since = user && user.createdAt > startOfMonth ? user.createdAt : startOfMonth;
     const count = await this.prisma.trade.count({
-      where: { userId, createdAt: { gte: startOfMonth } },
+      where: { userId, tradedAt: { gte: since } },
     });
 
     return { count, limit: 30, isPremium: false };
