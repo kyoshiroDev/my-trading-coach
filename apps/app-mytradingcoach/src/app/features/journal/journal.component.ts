@@ -9,7 +9,6 @@ import { forkJoin } from 'rxjs';
 import { LucideAngularModule, X, Pencil, Upload, ChevronDown, ChevronRight, Calendar, Trash2 } from 'lucide-angular';
 import { TradesStore, Trade } from '../../core/stores/trades.store';
 import { CreateTradeDto, TradesApi } from '../../core/api/trades.api';
-import { UserStore } from '../../core/stores/user.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { TradeFormComponent } from './trade-form.component';
 import { CsvImportComponent } from './csv-import.component';
@@ -46,7 +45,6 @@ interface DayGroup {
 })
 export class JournalComponent implements OnInit {
   protected readonly tradesStore = inject(TradesStore);
-  protected readonly userStore   = inject(UserStore);
   private readonly tradesApi     = inject(TradesApi);
   private readonly http          = inject(HttpClient);
   private readonly destroyRef    = inject(DestroyRef);
@@ -249,7 +247,6 @@ export class JournalComponent implements OnInit {
   }
 
   protected deleteDay(day: DayGroup): void {
-    if (!this.userStore.isPremium()) return;
     this.isDeletingDay.set(true);
     const ids = day.trades.map(t => t.id);
     forkJoin(ids.map(id => this.http.delete(`${environment.apiUrl}/trades/${id}`)))

@@ -12,6 +12,7 @@ import { TradesApi, CreateTradeDto, MarketContext, NewsItem } from '../api/trade
 import { DailyRecapApi, DailyRecap } from '../api/daily-recap.api';
 import { DebriefApi, DebriefObjective } from '../api/debrief.api';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent } from '../api/eco-calendar.api';
+import { UserStore } from './user.store';
 import { todayParis, toParisDateStr } from '../utils/paris-date';
 import { POLLING_MS } from '../constants/polling.const';
 
@@ -22,6 +23,7 @@ export class SessionStore {
   private readonly dailyRecapApi   = inject(DailyRecapApi);
   private readonly debriefApi      = inject(DebriefApi);
   private readonly ecoCalendarApi  = inject(EcoCalendarApi);
+  private readonly userStore       = inject(UserStore);
   private readonly destroyRef      = inject(DestroyRef);
 
   // ── State ─────────────────────────────────────────────────────────────────
@@ -125,15 +127,19 @@ export class SessionStore {
 
     this.loadWeekEcoCalendar();
 
-    this.debriefApi
-      .getCurrent()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => {
-          this.currentObjectives.set(res.data?.objectives ?? []);
-          this.currentDebriefId.set(res.data?.id ?? null);
-        },
-      });
+    // Le débrief (objectifs) est une feature Starter+ : ne pas appeler l'endpoint
+    // (StarterGuard) pour un FREE, sinon 403. La session de base reste accessible.
+    if (this.userStore.isStarterOrAbove()) {
+      this.debriefApi
+        .getCurrent()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (res) => {
+            this.currentObjectives.set(res.data?.objectives ?? []);
+            this.currentDebriefId.set(res.data?.id ?? null);
+          },
+        });
+    }
   }
 
   selectMood(mood: MoodState): void {

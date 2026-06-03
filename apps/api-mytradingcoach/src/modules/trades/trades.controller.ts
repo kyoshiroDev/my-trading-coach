@@ -83,7 +83,7 @@ export class TradesController {
     }),
   )
   async importCSV(
-    @CurrentUser() user: { id: string; plan: Plan; role: Role },
+    @CurrentUser() user: { id: string; plan: Plan; role: Role; trialEndsAt?: Date | null },
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) throw new BadRequestException('Fichier manquant');
@@ -92,23 +92,16 @@ export class TradesController {
       file.buffer,
       file.originalname,
       user.id,
+      { plan: user.plan, role: user.role, trialEndsAt: user.trialEndsAt },
     );
 
-    const results = await Promise.allSettled(
-      parsed.map((dto) =>
-        this.tradesService.create(
-          user.id,
-          dto as CreateTradeDto,
-          user.plan,
-          user.role,
-        ),
-      ),
+    // Déduplication à l'import : ne recrée pas un trade déjà présent (ré-essais, ré-imports).
+    return this.tradesService.importTrades(
+      user.id,
+      parsed,
+      user.plan,
+      user.role,
     );
-
-    const created = results.filter((r) => r.status === 'fulfilled').length;
-    const failed = results.filter((r) => r.status === 'rejected').length;
-
-    return { created, failed, total: parsed.length };
   }
 
   @Post()
@@ -248,6 +241,17 @@ export class TradesController {
       const seen = new Set(staticMatches.map(i => i.symbol));
       return [...staticMatches, ...crypto.filter(i => !seen.has(i.symbol))].slice(0, 10);
     } catch { return staticMatches; }
+  }
+
+  // ⚠️ Déclarés avant les routes ':id' pour ne pas être capturés par @Get/@Delete(':id').
+  @Get('duplicates')
+  getDuplicates(@CurrentUser() user: { id: string }) {
+    return this.tradesService.countDuplicates(user.id);
+  }
+
+  @Delete('duplicates')
+  removeDuplicates(@CurrentUser() user: { id: string }) {
+    return this.tradesService.removeDuplicates(user.id);
   }
 
   @Get(':id')

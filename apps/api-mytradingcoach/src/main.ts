@@ -16,6 +16,8 @@ const REQUIRED_ENV_VARS = [
   'STRIPE_WEBHOOK_SECRET',
   'STRIPE_STARTER_PRICE_MONTHLY',
   'STRIPE_STARTER_PRICE_YEARLY',
+  'STRIPE_PREMIUM_PRICE_MONTHLY_V2',
+  'STRIPE_PREMIUM_PRICE_YEARLY_V2',
   'RESEND_API_KEY',
 ];
 const logger = new Logger('Bootstrap');
@@ -40,7 +42,25 @@ async function bootstrap() {
         : new ConsoleLogger(),
   });
 
-  app.use(helmet());
+  // API JSON pure : aucune ressource n'est servie au navigateur pour rendu.
+  // CSP verrouillée + interdiction d'iframing + HSTS 1 an.
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        useDefaults: false,
+        directives: {
+          defaultSrc: ["'none'"],
+          frameAncestors: ["'none'"],
+          baseUri: ["'none'"],
+          formAction: ["'none'"],
+        },
+      },
+      frameguard: { action: 'deny' },
+      hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+      referrerPolicy: { policy: 'no-referrer' },
+      crossOriginResourcePolicy: { policy: 'same-site' },
+    }),
+  );
   app.use(compression());
   app.use(cookieParser());
   app.setGlobalPrefix('api');

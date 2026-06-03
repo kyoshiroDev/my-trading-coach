@@ -5,6 +5,8 @@ import {
   IsString,
   IsArray,
   IsDateString,
+  ArrayMaxSize,
+  MaxLength,
   Min,
 } from 'class-validator';
 import {
@@ -16,6 +18,7 @@ import {
 
 export class CreateTradeDto {
   @IsString()
+  @MaxLength(40)
   asset!: string;
 
   @IsEnum(TradeSide)
@@ -73,14 +76,18 @@ export class CreateTradeDto {
   session!: TradingSession;
 
   @IsString()
+  @MaxLength(20)
   timeframe!: string;
 
   @IsString()
+  @MaxLength(2000)
   @IsOptional()
   notes?: string;
 
   @IsArray()
+  @ArrayMaxSize(20)
   @IsString({ each: true })
+  @MaxLength(30, { each: true })
   @IsOptional()
   tags?: string[];
 

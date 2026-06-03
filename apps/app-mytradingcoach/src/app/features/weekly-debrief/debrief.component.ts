@@ -77,7 +77,7 @@ function badgeClass(badge: string): string {
   template: `
     <mtc-topbar
       title="Weekly Debrief"
-      [showAddButton]="userStore.isPremium()"
+      [showAddButton]="userStore.isStarterOrAbove()"
       [addLabel]="isGenerating() ? 'Analyse en cours...' : 'Générer le débrief'"
       [addLoading]="isGenerating()"
       addTestId="debrief-generate-btn"
@@ -85,12 +85,12 @@ function badgeClass(badge: string): string {
     />
 
     <div class="content">
-      @if (!userStore.isPremium()) {
+      @if (!userStore.isStarterOrAbove()) {
         <div data-testid="debrief-paywall" class="premium-paywall">
           <div class="paywall-icon">📅</div>
-          <h3 class="paywall-title">Fonctionnalité Premium</h3>
+          <h3 class="paywall-title">Fonctionnalité Starter</h3>
           <p class="paywall-desc">
-            Le Weekly Debrief est disponible avec le plan Premium.<br />Reçois
+            Le Weekly Debrief est disponible avec le plan Starter.<br />Reçois
             chaque dimanche un rapport IA complet de ta semaine.
           </p>
           <button class="paywall-cta" (click)="showPlanModal.set(true)">
@@ -150,7 +150,7 @@ function badgeClass(badge: string): string {
                 {{ debrief()!.generatedAt | date: 'd MMM à HH:mm' }}
               </div>
             </div>
-            @if (userStore.isPremium()) {
+            @if (userStore.isStarterOrAbove()) {
               <button
                 class="export-btn"
                 [disabled]="exportLoading()"
@@ -168,7 +168,7 @@ function badgeClass(badge: string): string {
               <a
                 routerLink="/settings"
                 class="export-btn export-btn-locked"
-                title="Fonctionnalité Premium"
+                title="Fonctionnalité Starter"
               >
                 <lucide-icon [img]="DownloadIcon" [size]="13" />
                 PDF ⚡
@@ -315,6 +315,12 @@ export class DebriefComponent {
   protected readonly error = signal<string | null>(null);
 
   constructor() {
+    // /debrief/current = StarterGuard : ne pas poller pour un non-Starter (sinon 403).
+    // Les non-Starter voient le paywall ; rien à charger.
+    if (!this.userStore.isStarterOrAbove()) {
+      this.isLoading.set(false);
+      return;
+    }
     // Poll toutes les 15s tant qu'aucun débrief n'est disponible.
     // S'arrête automatiquement dès qu'un débrief est trouvé.
     timer(0, 15_000)

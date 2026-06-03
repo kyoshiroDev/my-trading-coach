@@ -49,17 +49,17 @@
     </div>
   </div>
 
-  <!-- ── Séparateur PREMIUM ── -->
+  <!-- ── Séparateur STARTER ── -->
   <div class="premium-separator">
     <div class="separator-line"></div>
-    <span class="separator-label">ANALYTICS AVANCÉS — PREMIUM</span>
+    <span class="separator-label">ANALYTICS AVANCÉS — STARTER</span>
     <div class="separator-line"></div>
   </div>
 
   <!-- ══════════════════════════════════════════
-       CONTENU PREMIUM
+       CONTENU STARTER
   ══════════════════════════════════════════ -->
-  @if (userStore.isPremium()) {
+  @if (userStore.isStarterOrAbove()) {
     <!-- Equity Curve + Drawdown côte à côte -->
     <div class="grid-2 mb-16">
       <div class="card">
@@ -274,7 +274,7 @@
   <!-- ══════════════════════════════════════════
        BLOCS VERROUILLÉS — FREE
   ══════════════════════════════════════════ -->
-  @if (!userStore.isPremium()) {
+  @if (!userStore.isStarterOrAbove()) {
     <div class="locked-blocks">
       <!-- Bloc 1 — Equity Curve & Drawdown -->
       <div class="locked-feature">

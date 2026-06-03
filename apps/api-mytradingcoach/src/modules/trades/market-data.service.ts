@@ -6,7 +6,7 @@ import { RedisService } from '../shared/redis.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 import { INSTRUMENTS } from './instruments.const';
 
-export interface MarketContextItem { value: number | null; source: 'fmp' | 'yahoo' | 'binance'; }
+export interface MarketContextItem { value: number | null; changePct: number | null; source: 'fmp' | 'yahoo' | 'binance'; }
 export interface TreasuryRates { t2y: number | null; t5y: number | null; t10y: number | null; t30y: number | null; }
 export interface MarketContextDto {
   nq: MarketContextItem; spx: MarketContextItem; dxy: MarketContextItem;
@@ -40,17 +40,22 @@ export class MarketDataService {
       if (cached) return JSON.parse(cached) as MarketContextDto;
     } catch { /* Redis indisponible */ }
 
+    const empty = { price: null, changePct: null };
     const [nq, spx, dxy, treasury] = await Promise.allSettled([
-      this.fetchYahooPrice('NQ=F'),
-      this.fetchFmpPrice('SPY'),
-      this.fetchDxy(),
+      this.fetchYahooQuote('NQ=F'),
+      this.fetchFmpQuote('SPY'),
+      this.fetchYahooQuote('DX-Y.NYB'),
       this.fetchTreasuryRates(),
     ]);
 
+    const nqV  = nq.status  === 'fulfilled' ? nq.value  : empty;
+    const spxV = spx.status === 'fulfilled' ? spx.value : empty;
+    const dxyV = dxy.status === 'fulfilled' ? dxy.value : empty;
+
     const result: MarketContextDto = {
-      nq:       { value: nq.status      === 'fulfilled' ? nq.value      : null, source: 'yahoo' },
-      spx:      { value: spx.status     === 'fulfilled' ? spx.value     : null, source: 'fmp'   },
-      dxy:      { value: dxy.status     === 'fulfilled' ? dxy.value     : null, source: 'yahoo' },
+      nq:       { value: nqV.price,  changePct: nqV.changePct,  source: 'yahoo' },
+      spx:      { value: spxV.price, changePct: spxV.changePct, source: 'fmp'   },
+      dxy:      { value: dxyV.price, changePct: dxyV.changePct, source: 'yahoo' },
       treasury: treasury.status === 'fulfilled' ? treasury.value : { t2y: null, t5y: null, t10y: null, t30y: null },
       updatedAt: new Date().toISOString(),
     };
@@ -189,13 +194,28 @@ export class MarketDataService {
   }
 
   async fetchYahooPrice(yahooSymbol: string): Promise<number | null> {
+    return (await this.fetchYahooQuote(yahooSymbol)).price;
+  }
+
+  /** Prix + variation % vs clôture précédente. Aucune requête supplémentaire :
+   *  le `meta` Yahoo contient déjà `previousClose` / `chartPreviousClose`. */
+  async fetchYahooQuote(yahooSymbol: string): Promise<{ price: number | null; changePct: number | null }> {
     try {
       const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?interval=1m&range=1d`;
       const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-      if (!res.ok) return null;
-      const data = await res.json() as { chart: { result?: Array<{ meta: { regularMarketPrice: number } }> } };
-      return data?.chart?.result?.[0]?.meta?.regularMarketPrice ?? null;
-    } catch { return null; }
+      if (!res.ok) return { price: null, changePct: null };
+      const data = await res.json() as {
+        chart: { result?: Array<{ meta: { regularMarketPrice?: number; previousClose?: number; chartPreviousClose?: number } }> };
+      };
+      const meta = data?.chart?.result?.[0]?.meta;
+      const price = meta?.regularMarketPrice ?? null;
+      const prev = meta?.previousClose ?? meta?.chartPreviousClose ?? null;
+      const changePct =
+        price != null && prev != null && prev !== 0
+          ? Number((((price - prev) / prev) * 100).toFixed(2))
+          : null;
+      return { price, changePct };
+    } catch { return { price: null, changePct: null }; }
   }
 
   async fetchBinancePrice(symbol: string): Promise<number | null> {
@@ -208,14 +228,25 @@ export class MarketDataService {
   }
 
   async fetchFmpPrice(symbol: string): Promise<number | null> {
+    return (await this.fetchFmpQuote(symbol)).price;
+  }
+
+  /** Prix + variation % via FMP `/stable/quote` (champ `changePercentage`,
+   *  legacy `changesPercentage`). Pas de requête supplémentaire. */
+  async fetchFmpQuote(symbol: string): Promise<{ price: number | null; changePct: number | null }> {
     const apiKey = this.config.get<string>('FMP_API_KEY');
-    if (!apiKey) return null;
+    if (!apiKey) return { price: null, changePct: null };
     try {
       const res = await fetch(`https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(symbol)}&apikey=${apiKey}`);
-      if (!res.ok) return null;
-      const data = await res.json() as Array<{ price: number }>;
-      return data?.[0]?.price ?? null;
-    } catch { return null; }
+      if (!res.ok) return { price: null, changePct: null };
+      const data = await res.json() as Array<{ price?: number; changePercentage?: number; changesPercentage?: number }>;
+      const row = data?.[0];
+      const pct = row?.changePercentage ?? row?.changesPercentage ?? null;
+      return {
+        price: row?.price ?? null,
+        changePct: pct != null ? Number(pct.toFixed(2)) : null,
+      };
+    } catch { return { price: null, changePct: null }; }
   }
 
   mapSymbolToFmp(symbol: string): string {
@@ -233,10 +264,6 @@ export class MarketDataService {
       'BNB/USDT': 'BNBUSD', 'ADA/USDT': 'ADAUSD',
     };
     return map[symbol] ?? symbol;
-  }
-
-  private async fetchDxy(): Promise<number | null> {
-    return this.fetchYahooPrice('DX-Y.NYB');
   }
 
   private async fetchTreasuryRates(): Promise<TreasuryRates> {

@@ -61,6 +61,10 @@
     "webpack-cli": "^5.1.4"
   },
   "pnpm": {
+    "overrides": {
+      "path-to-regexp@>=8.0.0 <8.4.0": ">=8.4.0",
+      "axios@<1.16.0": ">=1.16.0"
+    },
     "onlyBuiltDependencies": [
       "@nestjs/core",
       "@parcel/watcher",
@@ -90,7 +94,7 @@
     "@nestjs/mapped-types": "^2.1.1",
     "@nestjs/platform-express": "11.1.17",
     "@types/multer": "^2.1.0",
-    "axios": "^1.6.0",
+    "axios": "^1.16.0",
     "chart.js": "^4.5.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",

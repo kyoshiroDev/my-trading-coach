@@ -1,10 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { BadRequestException } from '@nestjs/common';
+import { Plan, Role } from '@prisma/client';
 import * as XLSX from 'xlsx';
 import { CsvImportService } from './csv-import.service';
 
 // Anthropic SDK lit la clé à la construction → fournir une valeur factice en test
 process.env['ANTHROPIC_API_KEY'] = 'test-key';
+
+// Le chemin IA est réservé Premium + prod : pour exercer ce chemin en test,
+// il faut un accès Premium ET NODE_ENV=production (helper withAiEnabled ci-dessous).
+const PREMIUM_ACCESS = { plan: Plan.PREMIUM, role: Role.USER, trialEndsAt: null };
 
 const MEXC_HEADER =
   'UID;Futures;Open Time(UTC+02:00);Close Time;Margin Mode;Avg Entry Price;Avg Close Price;Direction;Closing Qty (Cont.);Fee;Realized PNL;Status';
@@ -110,14 +114,59 @@ describe('CsvImportService — séparateur européen & limites', () => {
   });
 
   it('refuse le chemin IA au-delà de 2000 lignes avec un message clair', async () => {
-    const rows = Array.from({ length: 2001 }, (_, i) => `v${i},w,z`);
-    const csv = ['foo,bar,baz', ...rows].join('\n');
-    await expect(svc.parseCSV(Buffer.from(csv), 'unknown.csv')).rejects.toThrow(
-      BadRequestException,
-    );
-    await expect(svc.parseCSV(Buffer.from(csv), 'unknown.csv')).rejects.toThrow(
-      /2000/,
-    );
+    const oldEnv = process.env['NODE_ENV'];
+    process.env['NODE_ENV'] = 'production'; // débloque le chemin IA pour atteindre la limite
+    try {
+      const rows = Array.from({ length: 2001 }, (_, i) => `v${i},w,z`);
+      const csv = ['foo,bar,baz', ...rows].join('\n');
+      await expect(
+        svc.parseCSV(Buffer.from(csv), 'unknown.csv', undefined, PREMIUM_ACCESS),
+      ).rejects.toThrow(/2000/);
+    } finally {
+      process.env['NODE_ENV'] = oldEnv;
+    }
+  });
+});
+
+describe('CsvImportService — chemin IA réservé Premium', () => {
+  let svc: CsvImportService;
+  beforeEach(() => {
+    svc = makeService();
+  });
+
+  it('refuse le broker inconnu sans Premium (message clair, 0 appel Anthropic)', async () => {
+    const create = vi.fn();
+    (svc as any).anthropic.messages.create = create;
+    const csv = ['foo,bar,baz', 'v1,w,z', 'v2,w,z'].join('\n');
+
+    await expect(
+      svc.parseCSV(Buffer.from(csv), 'unknown.csv', undefined, {
+        plan: Plan.FREE,
+        role: Role.USER,
+        trialEndsAt: null,
+      }),
+    ).rejects.toThrow(/Premium/);
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('refuse aussi un STARTER (Starter n’a pas d’IA)', async () => {
+    const oldEnv = process.env['NODE_ENV'];
+    process.env['NODE_ENV'] = 'production';
+    try {
+      const create = vi.fn();
+      (svc as any).anthropic.messages.create = create;
+      const csv = ['foo,bar,baz', 'v1,w,z'].join('\n');
+      await expect(
+        svc.parseCSV(Buffer.from(csv), 'unknown.csv', undefined, {
+          plan: Plan.STARTER,
+          role: Role.USER,
+          trialEndsAt: null,
+        }),
+      ).rejects.toThrow(/Premium/);
+      expect(create).not.toHaveBeenCalled();
+    } finally {
+      process.env['NODE_ENV'] = oldEnv;
+    }
   });
 });
 
@@ -149,11 +198,22 @@ describe('CsvImportService — chemin IA par lots', () => {
     });
     (svc as any).anthropic.messages.create = create;
 
-    const rows = Array.from({ length: 600 }, (_, i) => `v${i},w,z`);
-    const csv = ['foo,bar,baz', ...rows].join('\n');
-    const dtos = await svc.parseCSV(Buffer.from(csv), 'unknown.csv');
+    const oldEnv = process.env['NODE_ENV'];
+    process.env['NODE_ENV'] = 'production'; // chemin IA actif (Premium + prod)
+    try {
+      const rows = Array.from({ length: 600 }, (_, i) => `v${i},w,z`);
+      const csv = ['foo,bar,baz', ...rows].join('\n');
+      const dtos = await svc.parseCSV(
+        Buffer.from(csv),
+        'unknown.csv',
+        undefined,
+        PREMIUM_ACCESS,
+      );
 
-    expect(create).toHaveBeenCalledTimes(3); // 250 + 250 + 100
-    expect(dtos).toHaveLength(3); // un trade agrégé par lot
+      expect(create).toHaveBeenCalledTimes(3); // 250 + 250 + 100
+      expect(dtos).toHaveLength(3); // un trade agrégé par lot
+    } finally {
+      process.env['NODE_ENV'] = oldEnv;
+    }
   });
 });

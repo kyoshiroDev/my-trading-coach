@@ -82,7 +82,6 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
           >
             <span class="nav-icon">⚡</span>
             Ma session
-            <span class="badge starter">STARTER</span>
           </a>
 
           <a
@@ -119,7 +118,7 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
             <span class="badge starter">STARTER</span>
           </a>
 
-          <div class="nav-section">PREMIUM</div>
+          <div class="nav-section">ANALYSE &amp; IA</div>
 
           <a
             routerLink="/ai-insights"
@@ -183,6 +182,7 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
           >
             <span class="nav-icon">🏆</span>
             Scoring
+            <span class="badge starter">STARTER</span>
           </a>
 
           <a

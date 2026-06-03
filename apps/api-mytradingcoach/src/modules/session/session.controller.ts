@@ -11,14 +11,17 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { StarterGuard } from '../../common/guards/starter.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { SessionService } from './session.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { CloseSessionDto } from './dto/close-session.dto';
 
+// Le compagnon de session (pré-session, live, débrief de base) est le hook du plan FREE.
+// Accessible à tous les comptes connectés ; les limites FREE sont portées par les trades
+// (30/mois) et les sous-features premium (analyse IA éco, contexte marché) restent gardées
+// au niveau de leurs propres endpoints.
 @Controller('session')
-@UseGuards(JwtAuthGuard, StarterGuard)
+@UseGuards(JwtAuthGuard)
 export class SessionController {
   constructor(private readonly sessionService: SessionService) {}
 

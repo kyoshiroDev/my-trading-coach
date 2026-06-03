@@ -1,6 +1,6 @@
 /** Durées de cache Redis en secondes */
 export const CACHE_TTL = {
-  PRICE:           15,
+  PRICE:           3,
   MARKET_CTX:      15,
   NEWS:            300,
   ECO_EVENTS:      3_600,

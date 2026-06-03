@@ -3,7 +3,7 @@
 <div class="settings-content">
 
   @if (checkoutParam() === 'success') {
-    <div class="alert alert-success">✓ Abonnement activé — bienvenue dans Premium !</div>
+    <div class="alert alert-success">✓ Abonnement activé — bienvenue !</div>
   }
   @if (checkoutParam() === 'canceled') {
     <div class="alert alert-cancel">Paiement annulé. Tu peux réessayer quand tu veux.</div>
@@ -109,6 +109,35 @@
         </div>
       </div>
 
+      <!-- ══ 4b. MAINTENANCE — NETTOYAGE DOUBLONS ══ -->
+      <div class="settings-section">
+        <div class="settings-section-label">Maintenance des données</div>
+        <div class="settings-card">
+          <div class="settings-row">
+            <div class="settings-row-left">
+              <span class="settings-row-label">Nettoyer les doublons</span>
+              <span class="settings-row-hint">
+                Supprime les trades en double (même actif, sens, date, prix et P&L) en gardant
+                une occurrence. Utile après un import répété.
+              </span>
+            </div>
+            @if (dedupeRemoved() !== null) {
+              <span class="settings-row-value">{{ dedupeRemoved() }} supprimé(s) ✓</span>
+            } @else if (duplicateCount() === null) {
+              <button class="settings-edit-btn" (click)="scanDuplicates()" [disabled]="dedupeScanning()">
+                {{ dedupeScanning() ? 'Analyse…' : 'Rechercher' }}
+              </button>
+            } @else if (duplicateCount()! > 0) {
+              <button class="settings-edit-btn danger-btn" (click)="removeDuplicates()" [disabled]="dedupeRemoving()">
+                {{ dedupeRemoving() ? 'Suppression…' : 'Supprimer ' + duplicateCount() + ' doublon(s)' }}
+              </button>
+            } @else {
+              <span class="settings-row-value">Aucun doublon ✓</span>
+            }
+          </div>
+        </div>
+      </div>
+
       <!-- ══ 5. ZONE DE DANGER ══ -->
       <div class="settings-section">
         <div class="settings-section-label danger-label">Zone de danger</div>
@@ -160,7 +189,7 @@
                 <div class="plan-badge-dot"></div>
                 PREMIUM
               </div>
-              <p class="plan-desc">Accès à toutes les fonctionnalités — IA, analytics avancés, Weekly Debrief.</p>
+              <p class="plan-desc">Accès à tout — IA Insights, Chat coach IA, Calendrier éco IA, news &amp; contexte marché, recap email 17h30.</p>
               @if (userStore.user()?.stripeCurrentPeriodEnd) {
                 <p class="plan-renewal">
                   Renouvellement : {{ userStore.user()?.stripeCurrentPeriodEnd | date:'dd/MM/yyyy' }}
@@ -171,11 +200,33 @@
                   Gérer mon abonnement →
                 </button>
               </div>
+            } @else if (userStore.isStarterOrAbove()) {
+              <div class="plan-badge starter">
+                <div class="plan-badge-dot"></div>
+                STARTER
+              </div>
+              <p class="plan-desc">Trades illimités · Analytics avancés · Weekly Debrief · Score trader · Export PDF.</p>
+              @if (userStore.user()?.stripeCurrentPeriodEnd) {
+                <p class="plan-renewal">
+                  Renouvellement : {{ userStore.user()?.stripeCurrentPeriodEnd | date:'dd/MM/yyyy' }}
+                </p>
+              }
+              <p class="plan-upgrade-hint">
+                Passe à Premium pour l'IA : Chat coach, IA Insights, Calendrier éco IA, news &amp; contexte marché.
+              </p>
+              <div class="plan-actions">
+                <button class="btn btn-secondary" (click)="openPortal()">
+                  Gérer mon abonnement →
+                </button>
+                <button class="btn btn-primary" (click)="showPlanModal.set(true)">
+                  Passer Premium →
+                </button>
+              </div>
             } @else {
               <div class="plan-badge free">FREE</div>
-              <p class="plan-desc">30 trades/mois · Journal complet · Stats de base · Historique illimité.</p>
+              <p class="plan-desc">30 trades/mois (hors import historique) · Journal complet · Stats de base · Historique illimité.</p>
               <p class="plan-upgrade-hint">
-                Passe à Premium pour débloquer les analyses IA, le Weekly Debrief et l'import CSV.
+                Passe à Starter pour les trades illimités, les analytics et le Weekly Debrief — ou Premium pour l'IA (coach, insights, calendrier éco IA).
               </p>
               <div class="plan-actions">
                 <button class="btn btn-primary" (click)="showPlanModal.set(true)">
@@ -222,13 +273,13 @@
           <div class="settings-row">
             <div class="settings-row-left">
               <span class="settings-row-label">Weekly Debrief automatique</span>
-              <span class="settings-row-hint">Génération automatique chaque dimanche. Premium uniquement.</span>
+              <span class="settings-row-hint">Génération automatique chaque dimanche. Starter uniquement.</span>
             </div>
             <label class="settings-toggle">
               <input type="checkbox" [checked]="prefDebrief()"
-                [disabled]="!userStore.isPremium()"
+                [disabled]="!userStore.isStarterOrAbove()"
                 (change)="prefDebrief.set($any($event.target).checked)" />
-              <span class="toggle-track" [class.disabled]="!userStore.isPremium()"></span>
+              <span class="toggle-track" [class.disabled]="!userStore.isStarterOrAbove()"></span>
             </label>
           </div>
 

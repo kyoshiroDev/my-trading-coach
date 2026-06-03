@@ -10,19 +10,18 @@ export const TEST_USER_PREMIUM = {
   password: 'TestPassword123!',
 };
 
-async function dismissWizard(page: Page): Promise<void> {
-  try {
-    const wizard = page.locator('[data-testid="onboarding-wizard"]');
-    const isVisible = await wizard.isVisible({ timeout: 3000 });
-    if (isVisible) {
-      await page.click('[data-testid="wizard-skip"]');
-      await page.waitForSelector('[data-testid="onboarding-wizard"]', {
-        state: 'hidden',
-        timeout: 5000,
-      });
-    }
-  } catch {
-    // wizard absent — continuer
+async function ensureOnboarded(page: Page): Promise<void> {
+  // L'onboarding est désormais OBLIGATOIRE (plus de bouton "Passer").
+  // Les comptes de test E2E doivent avoir onboardingCompleted=true, sinon
+  // l'overlay d'onboarding couvre l'app et bloque le test.
+  const wizard = page.locator('[data-testid="onboarding-wizard"]');
+  const isVisible = await wizard
+    .isVisible({ timeout: 1000 })
+    .catch(() => false);
+  if (isVisible) {
+    throw new Error(
+      "Wizard d'onboarding visible : le compte de test E2E doit être onboardé (onboardingCompleted=true).",
+    );
   }
 }
 
@@ -36,7 +35,7 @@ export async function loginUser(
   await page.fill('[data-testid="login-password"]', user.password);
   await page.click('[data-testid="login-submit"]');
   await page.waitForURL('**/dashboard');
-  await dismissWizard(page);
+  await ensureOnboarded(page);
 }
 
 export async function logoutUser(page: Page): Promise<void> {

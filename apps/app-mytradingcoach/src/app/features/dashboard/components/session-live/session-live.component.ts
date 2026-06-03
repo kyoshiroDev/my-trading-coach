@@ -276,6 +276,9 @@ const EMOTIONS = [
                     <div class="cal-empty-sub">Pas d'annonce économique pour cette session.</div>
                   </div>
                 }
+                @if (hiddenEcoCount() > 0) {
+                  <div class="cal-more">+{{ hiddenEcoCount() }} autre{{ hiddenEcoCount() > 1 ? 's' : '' }} événement{{ hiddenEcoCount() > 1 ? 's' : '' }} hors fenêtre de session</div>
+                }
               </div>
             }
           </div>
@@ -530,15 +533,10 @@ const EMOTIONS = [
 
           <div class="qt-pnl-row">
             <div>
-              <div class="qt-lbl">ENTRY</div>
-              <input
-                class="qt-input"
-                type="number"
-                [placeholder]="livePricePlaceholder()"
-                style="font-size:12px;"
-                [value]="qtEntry()"
-                (input)="qtEntry.set($any($event.target).value)"
-              />
+              <div class="qt-lbl">ENTRY (au clic)</div>
+              <div class="qt-entry-readonly" data-testid="qt-entry-auto">
+                {{ livePrice() !== null ? livePricePlaceholder() : '—' }}
+              </div>
             </div>
             <div>
               <div class="qt-lbl">QUANTITÉ</div>
@@ -581,9 +579,9 @@ const EMOTIONS = [
           <button
             class="qt-log"
             data-testid="quick-trade-submit"
-            [disabled]="!canSubmitQuickTrade()"
+            [disabled]="!canSubmitQuickTrade() || qtSubmitting()"
             (click)="submitQuickTrade()"
-          >⚡ Logger ce trade</button>
+          >{{ qtSubmitting() ? 'Capture…' : '⚡ Logger ce trade' }}</button>
           <div class="qt-hint">Asset + direction + émotion suffisent</div>
 
           <!-- Retour d'action (succès / erreur) — annoncé aux lecteurs d'écran -->
@@ -725,10 +723,10 @@ export class SessionLiveComponent {
   protected readonly qtEmotion = signal<'CONFIDENT' | 'STRESSED' | 'REVENGE' | 'FEAR' | 'FOCUSED' | 'NEUTRAL'>('CONFIDENT');
   protected readonly qtSetup = signal<string>('BREAKOUT');
   protected readonly qtTimeframe = signal<string>('5m');
-  protected readonly qtEntry = signal('');
   protected readonly qtQty = signal('1');
   protected readonly qtSl = signal('');
   protected readonly qtTp = signal('');
+  protected readonly qtSubmitting = signal(false);
 
   // Eco results cache
   private readonly ecoResults = signal<Record<string, EcoResultAnalysis>>({});
@@ -767,18 +765,36 @@ export class SessionLiveComponent {
       .sort((a, b) => a.time.localeCompare(b.time));
   });
 
-  /** Événements affichés : uniquement ceux avec un contenu réel, sans dépendre
-   *  d'un seuil horaire (faux pour les sessions du soir/nuit).
-   *  - publié → seulement si une valeur a été publiée (actual != null)
-   *  - à venir → seulement si l'heure est valide
-   *  Sinon, plus aucune ligne fantôme → le @empty s'active correctement. */
+  /** Cap d'affichage : au-delà, on résume par un compteur « +N autres ». */
+  private readonly MAX_ECO_EVENTS = 12;
+
+  /** Événements pertinents : contenu réel + fenêtre de session (pas toute la
+   *  journée éco, sinon empilement illisible de barres fines).
+   *  - publié → seulement si une valeur a été publiée (actual != null), dans les 6 dernières heures
+   *  - à venir → heure valide, de −30 min à +6 h autour de maintenant
+   *  Triés par heure croissante. */
+  protected readonly relevantEcoEvents = computed(() =>
+    this.sessionEcoEvents()
+      .filter((e) => {
+        if (!e.name?.trim()) return false;
+        const delta = this.eventMinutesFromNow(e.time);
+        if (e.isReleased) {
+          if (e.actual == null) return false;
+          return delta === null || (delta >= -360 && delta <= 60);
+        }
+        return delta !== null && delta >= -30 && delta <= 360;
+      })
+      .sort((a, b) => (a.time ?? '').localeCompare(b.time ?? '')),
+  );
+
+  /** Liste effectivement rendue (plafonnée). */
   protected readonly visibleEcoEvents = computed(() =>
-    this.sessionEcoEvents().filter((e) => {
-      if (!e.name?.trim()) return false;
-      if (e.isReleased) return e.actual != null;
-      const h = parseInt((e.time ?? '').split(':')[0] ?? '', 10);
-      return Number.isFinite(h);
-    }),
+    this.relevantEcoEvents().slice(0, this.MAX_ECO_EVENTS),
+  );
+
+  /** Nombre d'événements pertinents masqués par le cap. */
+  protected readonly hiddenEcoCount = computed(() =>
+    Math.max(0, this.relevantEcoEvents().length - this.MAX_ECO_EVENTS),
   );
 
   // Eco WebSocket — nouvelles releases temps réel
@@ -965,6 +981,24 @@ export class SessionLiveComponent {
     return Math.max(0, eventMin - nowMin);
   }
 
+  /** Minutes signées entre l'événement et maintenant (négatif = passé).
+   *  Gère le format « HH:MM » comme l'ISO. null si l'heure est invalide. */
+  private eventMinutesFromNow(time: string | null | undefined): number | null {
+    if (!time) return null;
+    let h: number, m: number;
+    if (time.includes('T')) {
+      const d = new Date(time);
+      h = d.getHours();
+      m = d.getMinutes();
+    } else {
+      h = parseInt(time.split(':')[0] ?? '', 10);
+      m = parseInt(time.split(':')[1] ?? '0', 10);
+    }
+    if (!Number.isFinite(h)) return null;
+    const now = new Date();
+    return h * 60 + (Number.isFinite(m) ? m : 0) - (now.getHours() * 60 + now.getMinutes());
+  }
+
   protected getEventAnalysis(eventName: string): EcoResultAnalysis | null {
     return this.ecoResults()[eventName] ?? null;
   }
@@ -1080,8 +1114,7 @@ export class SessionLiveComponent {
 
   private applyAssetSelection(asset: UserAssetItem): void {
     this.qtSelectedAsset.set(asset);
-    // Ne pas pré-remplir l'entry — le trader saisit son prix depuis son broker
-    this.qtEntry.set('');
+    // L'entry est capturée automatiquement au clic (prix marché de l'instant) — pas de saisie.
     if (asset.lastQty != null) this.qtQty.set(String(asset.lastQty));
     this.startLivePricePolling(asset.symbol);
   }
@@ -1105,7 +1138,10 @@ export class SessionLiveComponent {
     this.stopLivePricePolling();
     this.livePrice.set(null);
     this.fetchLivePrice(symbol);
-    this.livePriceInterval = setInterval(() => this.fetchLivePrice(symbol), POLLING_MS.LIVE_PRICE);
+    this.livePriceInterval = setInterval(() => {
+      // Garde-fou : pas d'appels quand l'onglet est masqué
+      if (!document.hidden) this.fetchLivePrice(symbol);
+    }, POLLING_MS.LIVE_PRICE);
   }
 
   private stopLivePricePolling(): void {
@@ -1131,12 +1167,27 @@ export class SessionLiveComponent {
 
   protected submitQuickTrade(): void {
     const selected = this.qtSelectedAsset();
-    if (!selected) return;
+    if (!selected || this.qtSubmitting()) return;
 
-    const entryFromField = parseFloat(this.qtEntry());
-    const entryFromLive  = this.livePrice();
-    const finalEntry     = entryFromField > 0 ? entryFromField : (entryFromLive ?? 0);
+    this.qtSubmitting.set(true);
+    // Capture FRAÎCHE du prix au moment exact du clic (cache backend 3s).
+    this.tradesApi
+      .getLivePrice(selected.symbol)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.emitTrade(selected, res.data?.price ?? this.livePrice() ?? 0);
+          this.qtSubmitting.set(false);
+        },
+        error: () => {
+          // Fallback : dernier prix affiché (ne pas bloquer le log)
+          this.emitTrade(selected, this.livePrice() ?? 0);
+          this.qtSubmitting.set(false);
+        },
+      });
+  }
 
+  private emitTrade(selected: UserAssetItem, entry: number): void {
     const h = new Date().getHours();
     let session: CreateTradeDto['session'];
     if (h >= 7 && h < 16) session = 'LONDON';
@@ -1150,14 +1201,13 @@ export class SessionLiveComponent {
       setup: this.qtSetup() as CreateTradeDto['setup'],
       session,
       timeframe: this.qtTimeframe(),
-      entry: finalEntry,
+      entry,
       ...(this.qtQty() ? { quantity: parseFloat(this.qtQty()) } : {}),
       ...(this.qtSl() ? { stopLoss: parseFloat(this.qtSl()) } : {}),
       ...(this.qtTp() ? { takeProfit: parseFloat(this.qtTp()) } : {}),
     };
 
     this.tradeLogged.emit(dto);
-    this.qtEntry.set('');
     this.qtSl.set('');
     this.qtTp.set('');
     this.qtQty.set('1');

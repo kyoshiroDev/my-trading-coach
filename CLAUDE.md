@@ -10,13 +10,15 @@
 **MyTradingCoach** — SaaS freemium de journal de trading intelligent pour traders particuliers (crypto, forex, actions). L'IA analyse émotions et comportements pour aider les traders à progresser.
 
 **Plans (source de vérité tarifaire : landing `Pricing.astro` + `core/constants/pricing.const.ts`) :**
-- **FREE** — gratuit : 30 trades/mois, historique illimité, stats de base, journal complet, tracking émotionnel
-- **STARTER** — **39 €/mois** ou **349 €/an** (~29 €/mois annualisé, économie 119 €) : trades illimités, analytics avancés, pré-session matin, session live, Weekly Debrief automatique, Score trader /100, Export PDF — essai **7 jours** sans CB
+- **FREE** — gratuit : 30 trades/mois, historique illimité, journal complet, stats de base, **compagnon de session** (pré-session + session live + débrief de session), **calendrier éco brut** (events + épingles), tracking émotionnel
+- **STARTER** — **39 €/mois** ou **349 €/an** (~29 €/mois annualisé, économie 119 €) : tout FREE + trades illimités, analytics avancés, Weekly Debrief automatique, Score trader /100, Export PDF — essai **7 jours** sans CB
 - **PREMIUM** — **79 €/mois** ou **699 €/an** (~58 €/mois annualisé, économie 249 €) : tout Starter + IA Insights, Chat Coach IA, Calendrier éco IA, News live filtrées, contexte marché live, Treasury Rates, Recap email 17h30 — essai **7 jours** sans CB
 
 **Règles business absolues :**
 - Tout appel Anthropic = PREMIUM uniquement (Starter n'a pas d'IA)
 - `/analytics/summary` accessible FREE (win rate, P&L, streak)
+- Compagnon de session (pré-session, live, débrief de session) = FREE (hook) ; Weekly Debrief = Starter
+- Calendrier éco : affichage + épingles = FREE ; analyse IA (bull/bear) = PREMIUM (guard au niveau méthode)
 - Historique trades = illimité pour FREE (pas de filtre date)
 - Limite FREE = 30 trades/mois uniquement
 - Trial = 7 jours (jamais 14)

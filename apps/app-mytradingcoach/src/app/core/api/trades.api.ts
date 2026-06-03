@@ -102,7 +102,7 @@ export interface InstrumentSearchResult {
   category: string;
 }
 
-export interface MarketContextItem { value: number | null; source: string; }
+export interface MarketContextItem { value: number | null; changePct: number | null; source: string; }
 export interface TreasuryRates { t2y: number | null; t5y: number | null; t10y: number | null; t30y: number | null; }
 export interface MarketContext {
   nq: MarketContextItem;
@@ -150,6 +150,18 @@ export class TradesApi {
 
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);
+  }
+
+  getDuplicates(): Observable<{ data: { total: number; unique: number; duplicates: number } }> {
+    return this.http.get<{ data: { total: number; unique: number; duplicates: number } }>(
+      `${this.base}/duplicates`,
+    );
+  }
+
+  removeDuplicates(): Observable<{ data: { removed: number; kept: number } }> {
+    return this.http.delete<{ data: { removed: number; kept: number } }>(
+      `${this.base}/duplicates`,
+    );
   }
 
   getInstruments(): Observable<{ data: InstrumentDto[] }> {

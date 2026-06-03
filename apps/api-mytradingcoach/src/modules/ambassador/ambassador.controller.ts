@@ -1,4 +1,5 @@
 import { Controller, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
+import { Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AmbassadorGuard } from '../../common/guards/ambassador.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
@@ -24,10 +25,14 @@ export class AmbassadorController {
 
   @Get('stats')
   getStats(
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string; role: Role },
     @Query('userId') userId?: string,
   ) {
-    return this.service.getStats(userId ?? user.id);
+    // IDOR: seul un ADMIN peut consulter les stats d'un autre ambassadeur.
+    // Un ambassadeur normal est toujours forcé sur ses propres données.
+    const targetId =
+      user.role === Role.ADMIN && userId ? userId : user.id;
+    return this.service.getStats(targetId);
   }
 
   @Get('list')

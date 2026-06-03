@@ -6,14 +6,10 @@
   background: var(--green); animation: pulse 2s infinite; flex-shrink: 0;
 }
 .ctx-lbl { font-size: 9px; color: var(--text-3); text-transform: uppercase; letter-spacing: .7px; }
-.ctx-src-badge {
-  font-size: 7.5px; padding: 1px 4px; border-radius: 3px;
-  background: rgba(59,130,246,.08); color: var(--blue-bright);
-  border: 1px solid rgba(59,130,246,.15);
-}
 .ctx-upd { font-size: 9px; color: var(--text-3); margin-left: auto; }
 
-.ctx-grid { display: flex; gap: 5px; }
+.ctx-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; }
+.ctx-foot { font-size: 8px; color: var(--text-3); font-family: var(--font-mono); opacity: .55; text-align: right; margin-top: 1px; }
 
 .ctx-cell {
   flex: 1; min-width: 0; background: var(--bg-card); border: 1px solid var(--border);
@@ -28,6 +24,7 @@
   height: 2px; border-radius: 7px 7px 0 0;
 }
 .ctx-cell.bull::before     { background: rgba(16,185,129,.5); }
+.ctx-cell.bear::before     { background: rgba(239,68,68,.5); }
 .ctx-cell.dxy-warn         { border-color: rgba(239,68,68,.18); background: rgba(239,68,68,.02); }
 .ctx-cell.dxy-warn::before { background: rgba(239,68,68,.5); }
 .ctx-cell.trate10::before  { background: rgba(245,158,11,.5); }
@@ -38,7 +35,6 @@
 .ctx-cell.inverted::before { background: rgba(239,68,68,.7); }
 
 .ctx-cell-name { font-size: 8.5px; font-family: var(--font-mono); color: var(--text-3); display: flex; align-items: center; justify-content: space-between; }
-.ctx-src  { font-size: 7px; opacity: .5; }
 .ctx-cell-val  { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--text); line-height: 1; margin: 2px 0; }
 .ctx-cell-val.yellow { color: var(--yellow); }
 .ctx-cell-val.blue   { color: var(--blue-bright); }
@@ -55,9 +51,10 @@
 .dxy-badge.risk-on  { background: rgba(16,185,129,.11); color: var(--green); }
 
 .ctx-breaking {
-  display: flex; align-items: center; gap: 6px; padding: 0 10px;
+  grid-column: 1 / -1;
+  display: flex; align-items: center; gap: 6px; padding: 6px 10px;
   background: rgba(239,68,68,.05); border: 1px solid rgba(239,68,68,.18);
-  border-radius: 7px; flex-shrink: 0; min-width: 180px;
+  border-radius: 7px;
 }
 .ctx-break-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--red); animation: pulse 1s infinite; flex-shrink: 0; }
 

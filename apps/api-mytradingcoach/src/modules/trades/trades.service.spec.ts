@@ -58,10 +58,15 @@ const mockPrisma = {
     create: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
+    deleteMany: vi.fn(),
     count: vi.fn(),
   },
   tradeSession: {
     findFirst: vi.fn().mockResolvedValue(null),
+  },
+  // Inscription ancienne par défaut → les trades de test (datés récemment) sont post-inscription.
+  user: {
+    findUnique: vi.fn().mockResolvedValue({ createdAt: new Date('2020-01-01') }),
   },
 };
 
@@ -408,6 +413,131 @@ describe('TradesService', () => {
       await expect(
         service.checkMonthlyLimit('user-123', Plan.FREE),
       ).rejects.toThrow(HttpException);
+    });
+  });
+
+  describe('importTrades — déduplication', () => {
+    it('skip les trades déjà en base ET les doublons internes au lot', async () => {
+      const tradedAt = new Date('2026-05-30T14:31:55.000Z');
+      // Un trade déjà présent en base
+      mockPrisma.trade.findMany.mockResolvedValue([
+        { asset: 'BTC/USDT', side: TradeSide.LONG, tradedAt, entry: 100, exit: 110, pnl: 10 },
+      ]);
+      mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
+      mockPrisma.trade.create.mockResolvedValue(mockTrade);
+
+      const dup: Partial<CreateTradeDto> = {
+        asset: 'BTC/USDT', side: TradeSide.LONG, entry: 100, exit: 110, pnl: 10,
+        emotion: EmotionState.NEUTRAL, setup: SetupType.BREAKOUT,
+        session: TradingSession.LONDON, timeframe: '1h', tradedAt: tradedAt.toISOString(),
+      };
+      const fresh: Partial<CreateTradeDto> = { ...dup, asset: 'ETH/USDT' };
+
+      const res = await service.importTrades(
+        'user-123',
+        [dup, fresh, { ...fresh }], // dup (déjà en base) + ETH + ETH (doublon intra-lot)
+        Plan.PREMIUM,
+      );
+
+      expect(res.total).toBe(3);
+      expect(res.created).toBe(1); // seul ETH créé une fois
+      expect(res.duplicates).toBe(2); // dup déjà en base + 2e ETH du lot
+      expect(mockPrisma.trade.create).toHaveBeenCalledTimes(1);
+    });
+
+    it('crée tous les trades quand aucun doublon', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue([]);
+      mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
+      mockPrisma.trade.create.mockResolvedValue(mockTrade);
+
+      const res = await service.importTrades(
+        'user-123',
+        [createTradeDto, { ...createTradeDto, asset: 'ETH/USDT' }],
+        Plan.PREMIUM,
+      );
+
+      expect(res.created).toBe(2);
+      expect(res.duplicates).toBe(0);
+      expect(res.limitBlocked).toBe(0);
+    });
+
+    it('compte separement les trades bloques par la limite FREE (30/mois)', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue([]); // rien en base
+      mockPrisma.trade.count.mockResolvedValue(30); // quota FREE deja atteint
+      mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
+
+      const res = await service.importTrades(
+        'user-123',
+        [createTradeDto, { ...createTradeDto, asset: 'ETH/USDT' }],
+        Plan.FREE,
+      );
+
+      expect(res.created).toBe(0);
+      expect(res.limitBlocked).toBe(2); // bloques par la limite, pas 'failed'
+      expect(res.failed).toBe(0);
+    });
+
+    it("importe l'historique (trades avant inscription) sans le decompter de la limite FREE", async () => {
+      // Inscription recente ; quota courant deja atteint
+      mockPrisma.user.findUnique.mockResolvedValue({ createdAt: new Date('2026-06-01T00:00:00Z') });
+      mockPrisma.trade.findMany.mockResolvedValue([]);
+      mockPrisma.trade.count.mockResolvedValue(30); // limite courante atteinte
+      mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
+      mockPrisma.trade.create.mockResolvedValue(mockTrade);
+
+      const histo = (asset: string): Partial<CreateTradeDto> => ({
+        asset, side: TradeSide.LONG, entry: 100, exit: 110, pnl: 10,
+        emotion: EmotionState.NEUTRAL, setup: SetupType.BREAKOUT,
+        session: TradingSession.LONDON, timeframe: '1h',
+        tradedAt: '2024-03-15T10:00:00Z', // AVANT inscription (2026-06-01) -> historique
+      });
+
+      const res = await service.importTrades(
+        'user-123',
+        [histo('BTC/USDT'), histo('ETH/USDT')],
+        Plan.FREE,
+      );
+
+      expect(res.created).toBe(2); // historiques crees malgre la limite atteinte
+      expect(res.limitBlocked).toBe(0);
+    });
+  });
+
+  describe('countDuplicates / removeDuplicates', () => {
+    const dupRows = [
+      { id: 'a', asset: 'BTC/USDT', side: TradeSide.LONG, tradedAt: new Date('2026-01-01T10:00:00Z'), entry: 100, exit: 110, pnl: 10 },
+      { id: 'b', asset: 'BTC/USDT', side: TradeSide.LONG, tradedAt: new Date('2026-01-01T10:00:00Z'), entry: 100, exit: 110, pnl: 10 }, // doublon de a
+      { id: 'c', asset: 'ETH/USDT', side: TradeSide.LONG, tradedAt: new Date('2026-01-02T10:00:00Z'), entry: 50, exit: 55, pnl: 5 },
+    ];
+
+    it('countDuplicates compte les lignes en trop', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue(dupRows);
+      const res = await service.countDuplicates('user-123');
+      expect(res.total).toBe(3);
+      expect(res.unique).toBe(2);
+      expect(res.duplicates).toBe(1);
+    });
+
+    it('removeDuplicates supprime les copies en gardant 1 occurrence', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue(dupRows);
+      mockPrisma.trade.deleteMany.mockResolvedValue({ count: 1 });
+
+      const res = await service.removeDuplicates('user-123');
+
+      expect(res.removed).toBe(1);
+      expect(res.kept).toBe(2);
+      expect(mockPrisma.trade.deleteMany).toHaveBeenCalledWith({
+        where: { id: { in: ['b'] }, userId: 'user-123' },
+      });
+    });
+
+    it('removeDuplicates ne supprime rien si aucun doublon', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue([dupRows[0], dupRows[2]]);
+
+      const res = await service.removeDuplicates('user-123');
+
+      expect(res.removed).toBe(0);
+      expect(mockPrisma.trade.deleteMany).not.toHaveBeenCalled();
     });
   });
 });

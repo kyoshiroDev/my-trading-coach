@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { Plan, Role } from '@prisma/client';
 import Anthropic from '@anthropic-ai/sdk';
 import * as XLSX from 'xlsx';
 import type { CreateTradeDto } from './dto/create-trade.dto';
@@ -23,6 +24,13 @@ type BrokerType =
 const MAX_KNOWN_ROWS = 10_000;
 const MAX_AI_ROWS = 2000;
 const AI_BATCH = 250;
+
+/** Accès requis pour le chemin IA d'import (broker inconnu) — Premium strict. */
+interface AiImportAccess {
+  plan: Plan;
+  role: Role;
+  trialEndsAt?: Date | null;
+}
 
 interface ClaudeTrade {
   asset: string;
@@ -59,6 +67,7 @@ export class CsvImportService {
     buffer: Buffer,
     filename: string,
     userId?: string,
+    access?: AiImportAccess,
   ): Promise<Partial<CreateTradeDto>[]> {
     // 1. Obtenir du texte CSV (Excel converti localement, sinon UTF-8)
     const content = this.toCsvText(buffer, filename);
@@ -86,12 +95,40 @@ export class CsvImportService {
       dtos = this.mapNormalizedCsvToDto(csv);
       this.logger.log(`CSV "${filename}" [${broker}] → ${dtos.length} trades (local, sans IA)`);
     } else {
-      // 4. Broker inconnu → chemin IA borné, par lots
+      // 4. Broker inconnu → chemin IA (Anthropic) : réservé Premium + prod uniquement.
+      //    Les brokers connus (ci-dessus) restent gratuits pour tous les plans.
+      if (!this.aiImportAllowed(access)) {
+        throw new BadRequestException(
+          "Ce broker n'est pas encore reconnu automatiquement. " +
+          "L'import intelligent par IA est réservé au plan Premium. " +
+          "L'import direct fonctionne pour les brokers supportés (MEXC, Binance, Bybit, MT4/5, IBKR, Tradovate), " +
+          "ou écris-nous sur Discord pour qu'on ajoute le tien.",
+        );
+      }
       dtos = await this.parseUnknownWithAi(normalizedLines, filename, userId);
     }
 
     if (!dtos.length) throw new BadRequestException(this.emptyMessage());
     return dtos;
+  }
+
+  /**
+   * Le chemin IA d'import (broker inconnu → Anthropic) n'est autorisé que :
+   * - en production (garde NODE_ENV : zéro dépense IA hors prod), ET
+   * - pour un accès Premium strict (PREMIUM / ADMIN / BETA_TESTER / trial actif).
+   * Aligné sur PremiumGuard — STARTER N'A PAS d'IA (CLAUDE.md).
+   */
+  private aiImportAllowed(access?: AiImportAccess): boolean {
+    if (process.env['NODE_ENV'] !== 'production') return false;
+    if (!access) return false;
+    const trialActive =
+      access.trialEndsAt != null && new Date() < new Date(access.trialEndsAt);
+    return (
+      access.plan === Plan.PREMIUM ||
+      access.role === Role.ADMIN ||
+      access.role === Role.BETA_TESTER ||
+      trialActive
+    );
   }
 
   /** Convertit le buffer en texte CSV : Excel → CSV local, sinon UTF-8. */

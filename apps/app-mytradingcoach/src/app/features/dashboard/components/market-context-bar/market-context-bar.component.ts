@@ -14,30 +14,39 @@ import { MarketContext } from '../../../../core/api/trades.api';
         <div class="ctx-header">
           <div class="ctx-pulse-dot"></div>
           <span class="ctx-lbl">Contexte marché</span>
-          <span class="ctx-src-badge">FMP</span>
           <span class="ctx-upd">MAJ 15s · {{ updatedLabel() }}</span>
         </div>
 
         <div class="ctx-grid">
-          <div class="ctx-cell bull">
-            <div class="ctx-cell-name">NQ100 <span class="ctx-src">Yahoo</span></div>
+          <div class="ctx-cell"
+               [class.bull]="dir(ctx()!.nq.changePct) === 'up'"
+               [class.bear]="dir(ctx()!.nq.changePct) === 'down'">
+            <div class="ctx-cell-name">NQ100</div>
             <div class="ctx-cell-val">{{ ctx()!.nq.value !== null ? (ctx()!.nq.value | number:'1.0-0') : '—' }}</div>
-            <div class="ctx-cell-sub"></div>
-          </div>
-
-          <div class="ctx-cell bull">
-            <div class="ctx-cell-name">SPX <span class="ctx-src">FMP</span></div>
-            <div class="ctx-cell-val">{{ ctx()!.spx.value !== null ? (ctx()!.spx.value | number:'1.0-0') : '—' }}</div>
-            <div class="ctx-cell-sub"></div>
+            <div class="ctx-cell-sub"
+                 [class.green]="dir(ctx()!.nq.changePct) === 'up'"
+                 [class.red]="dir(ctx()!.nq.changePct) === 'down'">{{ pctLabel(ctx()!.nq.changePct) }}</div>
           </div>
 
           <div class="ctx-cell"
-               [class.dxy-warn]="dxyLabel() === 'risk-off'"
-               [class.dxy-ok]="dxyLabel() === 'risk-on'">
-            <div class="ctx-cell-name">DXY <span class="ctx-src">Yahoo</span></div>
+               [class.bull]="dir(ctx()!.spx.changePct) === 'up'"
+               [class.bear]="dir(ctx()!.spx.changePct) === 'down'">
+            <div class="ctx-cell-name">SPX</div>
+            <div class="ctx-cell-val">{{ ctx()!.spx.value !== null ? (ctx()!.spx.value | number:'1.0-0') : '—' }}</div>
+            <div class="ctx-cell-sub"
+                 [class.green]="dir(ctx()!.spx.changePct) === 'up'"
+                 [class.red]="dir(ctx()!.spx.changePct) === 'down'">{{ pctLabel(ctx()!.spx.changePct) }}</div>
+          </div>
+
+          <div class="ctx-cell"
+               [class.bull]="dir(ctx()!.dxy.changePct) === 'up'"
+               [class.bear]="dir(ctx()!.dxy.changePct) === 'down'">
+            <div class="ctx-cell-name">DXY</div>
             <div class="ctx-cell-val">{{ ctx()!.dxy.value !== null ? (ctx()!.dxy.value | number:'1.2-2') : '—' }}</div>
-            <div class="ctx-cell-sub">
-              Dollar
+            <div class="ctx-cell-sub"
+                 [class.green]="dir(ctx()!.dxy.changePct) === 'up'"
+                 [class.red]="dir(ctx()!.dxy.changePct) === 'down'">
+              {{ pctLabel(ctx()!.dxy.changePct) }}
               @if (dxyLabel()) {
                 <span class="dxy-badge"
                       [class.risk-off]="dxyLabel() === 'risk-off'"
@@ -49,27 +58,27 @@ import { MarketContext } from '../../../../core/api/trades.api';
           </div>
 
           <div class="ctx-cell trate2">
-            <div class="ctx-cell-name">US 2Y <span class="ctx-src">FMP</span></div>
+            <div class="ctx-cell-name">US 2Y</div>
             <div class="ctx-cell-val blue">{{ ctx()!.treasury.t2y !== null ? (ctx()!.treasury.t2y | number:'1.2-2') + '%' : '—' }}</div>
-            <div class="ctx-cell-sub"></div>
+            <div class="ctx-cell-sub">Taux court</div>
           </div>
 
           <div class="ctx-cell trate5">
-            <div class="ctx-cell-name">US 5Y <span class="ctx-src">FMP</span></div>
+            <div class="ctx-cell-name">US 5Y</div>
             <div class="ctx-cell-val blue">{{ ctx()!.treasury.t5y !== null ? (ctx()!.treasury.t5y | number:'1.2-2') + '%' : '—' }}</div>
-            <div class="ctx-cell-sub"></div>
+            <div class="ctx-cell-sub">Taux moyen</div>
           </div>
 
           <div class="ctx-cell trate10">
-            <div class="ctx-cell-name">US 10Y <span class="ctx-src">FMP</span></div>
+            <div class="ctx-cell-name">US 10Y</div>
             <div class="ctx-cell-val yellow">{{ ctx()!.treasury.t10y !== null ? (ctx()!.treasury.t10y | number:'1.2-2') + '%' : '—' }}</div>
-            <div class="ctx-cell-sub"></div>
+            <div class="ctx-cell-sub">Référence</div>
           </div>
 
           <div class="ctx-cell trate30">
-            <div class="ctx-cell-name">US 30Y <span class="ctx-src">FMP</span></div>
+            <div class="ctx-cell-name">US 30Y</div>
             <div class="ctx-cell-val yellow">{{ ctx()!.treasury.t30y !== null ? (ctx()!.treasury.t30y | number:'1.2-2') + '%' : '—' }}</div>
-            <div class="ctx-cell-sub"></div>
+            <div class="ctx-cell-sub">Taux long</div>
           </div>
 
           @if (isInverted()) {
@@ -96,6 +105,8 @@ import { MarketContext } from '../../../../core/api/trades.api';
             </div>
           }
         </div>
+
+        <div class="ctx-foot">Données : Yahoo · FMP — variation vs clôture précédente</div>
       </div>
     }
   `,
@@ -103,6 +114,21 @@ import { MarketContext } from '../../../../core/api/trades.api';
 export class MarketContextBarComponent {
   readonly ctx = input<MarketContext | null>(null);
   readonly breakingNews = input<string | null>(null);
+
+  /** Sens de variation d'un actif (vert/rouge/neutre selon changePct). */
+  protected dir(pct: number | null | undefined): 'up' | 'down' | 'flat' {
+    if (pct == null) return 'flat';
+    return pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
+  }
+
+  /** Libellé variation : « ▲ +0.45% » / « ▼ -0.32% », ou « — » si indisponible. */
+  protected pctLabel(pct: number | null | undefined): string {
+    if (pct == null) return '—';
+    const v = pct.toFixed(2);
+    if (pct > 0) return `▲ +${v}%`;
+    if (pct < 0) return `▼ ${v}%`;
+    return `${v}%`;
+  }
 
   protected readonly spread = computed(() => {
     const t2  = this.ctx()?.treasury.t2y;

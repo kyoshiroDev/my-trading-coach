@@ -46,24 +46,45 @@ describe('PlanModalComponent', () => {
     await TestBed.compileComponents();
   });
 
-  it('plan par défaut = starter_yearly', () => {
+  type ModalApi = {
+    selectedTier: () => string;
+    interval: () => string;
+    selectTier: (t: string) => void;
+    setInterval: (i: string) => void;
+    planId: () => string;
+    confirmPlan: () => void;
+    close: () => void;
+  };
+  const instance = (): ModalApi => {
     const fixture = TestBed.createComponent(PlanModalComponent);
     fixture.detectChanges();
-    const c = fixture.componentInstance as unknown as {
-      selectedPlan: () => string;
-    };
-    expect(c.selectedPlan()).toBe('starter_yearly');
+    return fixture.componentInstance as unknown as ModalApi;
+  };
+
+  it('par défaut: tier starter + intervalle mensuel', () => {
+    const c = instance();
+    expect(c.selectedTier()).toBe('starter');
+    expect(c.interval()).toBe('monthly');
+    expect(c.planId()).toBe('starter_monthly');
   });
 
-  it('selectPlan() met à jour selectedPlan', () => {
-    const fixture = TestBed.createComponent(PlanModalComponent);
-    fixture.detectChanges();
-    const c = fixture.componentInstance as unknown as {
-      selectedPlan: () => string;
-      selectPlan: (p: string) => void;
-    };
-    c.selectPlan('starter_monthly');
-    expect(c.selectedPlan()).toBe('starter_monthly');
+  it('selectTier() change la carte sélectionnée', () => {
+    const c = instance();
+    c.selectTier('starter');
+    expect(c.selectedTier()).toBe('starter');
+  });
+
+  it('setInterval() change l’intervalle (global aux 2 cartes)', () => {
+    const c = instance();
+    c.setInterval('monthly');
+    expect(c.interval()).toBe('monthly');
+  });
+
+  it('planId() recompose tier_interval', () => {
+    const c = instance();
+    c.selectTier('starter');
+    c.setInterval('monthly');
+    expect(c.planId()).toBe('starter_monthly');
   });
 
   it("close() émet l'output closed", () => {
@@ -71,30 +92,21 @@ describe('PlanModalComponent', () => {
     fixture.detectChanges();
     const closedSpy = vi.fn();
     fixture.componentInstance.closed.subscribe(closedSpy);
-    const c = fixture.componentInstance as unknown as { close: () => void };
-    c.close();
+    (fixture.componentInstance as unknown as ModalApi).close();
     expect(closedSpy).toHaveBeenCalledOnce();
   });
 
-  it('confirmPlan() appelle billingApi.checkout avec le plan sélectionné', () => {
-    const fixture = TestBed.createComponent(PlanModalComponent);
-    fixture.detectChanges();
-    const c = fixture.componentInstance as unknown as {
-      selectPlan: (p: string) => void;
-      confirmPlan: () => void;
-    };
-    c.selectPlan('starter_monthly');
+  it('confirmPlan() appelle checkout avec le planId composé', () => {
+    const c = instance();
+    c.selectTier('starter');
+    c.setInterval('monthly');
     c.confirmPlan();
     expect(mockBillingApi.checkout).toHaveBeenCalledWith('starter_monthly');
   });
 
-  it('confirmPlan() avec starter_yearly appelle checkout("starter_yearly")', () => {
-    const fixture = TestBed.createComponent(PlanModalComponent);
-    fixture.detectChanges();
-    const c = fixture.componentInstance as unknown as {
-      confirmPlan: () => void;
-    };
+  it('confirmPlan() par défaut → checkout("starter_monthly")', () => {
+    const c = instance();
     c.confirmPlan();
-    expect(mockBillingApi.checkout).toHaveBeenCalledWith('starter_yearly');
+    expect(mockBillingApi.checkout).toHaveBeenCalledWith('starter_monthly');
   });
 });

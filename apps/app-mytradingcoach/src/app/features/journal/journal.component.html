@@ -42,12 +42,10 @@
       }
 
       <button class="filter-chip import-btn"
-        [class.import-locked]="!userStore.isPremium()"
         (click)="showImport.set(true)"
-        [title]="userStore.isPremium() ? 'Importer un CSV' : 'Fonctionnalité Premium'">
+        title="Importer un CSV">
         <lucide-icon [img]="UploadIcon" [size]="12" />
         CSV
-        @if (!userStore.isPremium()) { <span class="lock-badge">⚡</span> }
       </button>
     </div>
   </div>
@@ -147,14 +145,12 @@
                 </span>
               }
             </div>
-            @if (userStore.isPremium()) {
-              <button class="day-delete-btn"
-                title="Supprimer tous les trades de ce jour"
-                (click)="$event.stopPropagation(); confirmDeleteDay.set(day)"
-                (keydown.enter)="$event.stopPropagation(); confirmDeleteDay.set(day)">
-                <lucide-icon [img]="TrashIcon" [size]="12" />
-              </button>
-            }
+            <button class="day-delete-btn"
+              title="Supprimer tous les trades de ce jour"
+              (click)="$event.stopPropagation(); confirmDeleteDay.set(day)"
+              (keydown.enter)="$event.stopPropagation(); confirmDeleteDay.set(day)">
+              <lucide-icon [img]="TrashIcon" [size]="12" />
+            </button>
           </div>
 
           @if (!collapsedDays().has(day.key)) {

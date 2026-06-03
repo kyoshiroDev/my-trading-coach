@@ -110,6 +110,12 @@ export class SettingsComponent implements OnInit {
   protected readonly deleteInput = signal('');
   protected readonly isDeleting = signal(false);
 
+  // Nettoyage des doublons (maintenance)
+  protected readonly duplicateCount = signal<number | null>(null); // null = pas encore analysé
+  protected readonly dedupeScanning = signal(false);
+  protected readonly dedupeRemoving = signal(false);
+  protected readonly dedupeRemoved = signal<number | null>(null);
+
   constructor() {
     // Sync prefs uniquement — les signaux stratégie sont gérés dans ngOnInit + saveStrategy
     effect(() => {
@@ -439,6 +445,36 @@ export class SettingsComponent implements OnInit {
         error: () => {
           this.isDeleting.set(false);
         },
+      });
+  }
+
+  protected scanDuplicates() {
+    this.dedupeScanning.set(true);
+    this.dedupeRemoved.set(null);
+    this.tradesApi
+      .getDuplicates()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.duplicateCount.set(res.data.duplicates);
+          this.dedupeScanning.set(false);
+        },
+        error: () => this.dedupeScanning.set(false),
+      });
+  }
+
+  protected removeDuplicates() {
+    this.dedupeRemoving.set(true);
+    this.tradesApi
+      .removeDuplicates()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.dedupeRemoved.set(res.data.removed);
+          this.duplicateCount.set(0);
+          this.dedupeRemoving.set(false);
+        },
+        error: () => this.dedupeRemoving.set(false),
       });
   }
 

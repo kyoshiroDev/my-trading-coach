@@ -208,23 +208,88 @@
 
 .plan-col {
   background: var(--bg-2);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
   border-radius: 12px;
   padding: 16px;
-  cursor: default;
-  transition: border-color .15s;
+  cursor: pointer;
+  transition: border-color .15s, background .15s, transform .15s, box-shadow .15s;
   display: flex;
   flex-direction: column;
-}
-.plan-col.selected-col { border-color: rgba(59,130,246,.4); background: rgba(59,130,246,.04); }
-
-/* Premium = plan recommandé : cadre violet permanent + léger halo */
-.premium-col {
-  border: 1.5px solid #8b5cf6;
-  box-shadow: 0 0 0 1px rgba(139,92,246,.25), 0 8px 30px -12px rgba(139,92,246,.4);
   position: relative;
 }
-.premium-col.selected-col { border-color: #8b5cf6; background: rgba(139,92,246,.06); }
+.plan-col:hover { border-color: rgba(255,255,255,.18); }
+
+/* SÉLECTION (choix utilisateur) — franche : bordure pleine + fond + halo + lift */
+.plan-col.selected-col {
+  border-color: var(--blue-bright);
+  background: rgba(59,130,246,.10);
+  box-shadow: 0 0 0 1px var(--blue-bright), 0 10px 30px -12px rgba(59,130,246,.5);
+  transform: translateY(-2px);
+}
+
+/* Pastille explicite "✓ Sélectionné" */
+.plan-col-check {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--blue-bright);
+}
+.premium-col .plan-col-check { color: #8b5cf6; }
+
+/* Toggle d'intervalle global */
+.plan-interval-toggle {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 3px;
+  width: fit-content;
+  margin: 0 auto 16px;
+}
+.interval-opt {
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--text-3);
+  cursor: pointer;
+  transition: all .13s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.interval-opt.active {
+  background: var(--blue-bright);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(59,130,246,.35);
+}
+.interval-opt.active .interval-save { background: rgba(255,255,255,.22); color: #fff; }
+.interval-save {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--green);
+  background: rgba(16,185,129,.12);
+  border-radius: 6px;
+  padding: 1px 5px;
+}
+
+/* "Recommandé" = état PERMANENT de Premium (contour violet doux, sans le halo de sélection) */
+.premium-col:not(.selected-col) {
+  border-color: rgba(139,92,246,.35);
+}
+/* Premium SÉLECTIONNÉ — halo violet franc (distinct du "recommandé" et du bleu Starter) */
+.premium-col.selected-col {
+  border-color: #8b5cf6;
+  background: rgba(139,92,246,.10);
+  box-shadow: 0 0 0 1px #8b5cf6, 0 10px 30px -12px rgba(139,92,246,.5);
+}
 
 /* Badge "Complet" centré en haut, à cheval sur la bordure */
 .plan-col-badge {
@@ -253,6 +318,7 @@
 .plan-col-price .price { font-size: 26px; font-weight: 700; font-family: var(--font-mono); color: var(--text); }
 .plan-col-price .period { font-size: 12px; color: var(--text-3); margin-left: 3px; }
 .plan-col-detail { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+.plan-col-detail.save { color: var(--green); font-weight: 600; }
 
 .plan-col-intervals { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
 .plan-interval-btn {
@@ -277,6 +343,13 @@
 .plan-col-feats { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
 .plan-col-feats li { font-size: 11px; color: var(--text-2); }
 .plan-col-feats li.feat-no { color: var(--text-3); }
+.plan-col-feats li.feat-upsell {
+  color: #a78bfa;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 10.5px;
+}
 
 @media (max-width: 600px) {
   .plan-cols { grid-template-columns: 1fr; }
