@@ -352,6 +352,15 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
                 @if (event.isReleased) {
                   <span class="eco-released-badge">✓</span>
                 }
+                @if (pinnedKeys().has(event.name + ':' + event.currency)) {
+                  <button
+                    type="button"
+                    class="eco-unpin-btn"
+                    title="Retirer des épinglés"
+                    (click)="unpinEvent(event)">
+                    ✕
+                  </button>
+                }
               </div>
             }
           </div>
@@ -445,6 +454,20 @@ export class SessionMorningComponent {
     const pinned = this.pinnedKeys();
     return pinned.size > 0 && events.some(e => pinned.has(`${e.name}:${e.currency}`));
   });
+
+  protected unpinEvent(event: { name: string; currency: string }): void {
+    const key = `${event.name}:${event.currency}`;
+    const current = this.pinnedKeys();
+    if (!current.has(key)) return;
+    const next = new Set(current);
+    next.delete(key);
+    // Mise à jour optimiste du signal local → l'event disparaît immédiatement
+    this.freshPins.set([...next]);
+    // Persistance backend (même API que eco-calendar)
+    this.ecoApi.savePins([...next])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe();
+  }
 
   protected readonly dayLabel = computed(() => {
     const parisNow = new Date(

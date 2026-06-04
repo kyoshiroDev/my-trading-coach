@@ -438,6 +438,25 @@
   flex-shrink: 0;
 }
 
+.eco-unpin-btn {
+  font-size: 10px;
+  line-height: 1;
+  color: var(--text-3);
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 6px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.eco-unpin-btn:hover {
+  color: var(--red);
+  border-color: var(--red);
+  background: rgba(239,68,68,.12);
+}
+
 /* ── Empty state filtres ── */
 .eco-empty-filter {
   text-align: center;
