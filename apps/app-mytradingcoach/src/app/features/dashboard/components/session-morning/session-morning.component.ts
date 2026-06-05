@@ -433,20 +433,26 @@ export class SessionMorningComponent {
   protected readonly filteredEvents = computed(() => {
     const events = this.ecoCalendar()?.events ?? [];
     const pinned = this.pinnedKeys();
-    // Filtrer par pins seulement si au moins 1 event du jour est épinglé
-    const hasMatchingPins = pinned.size > 0 &&
-      events.some(e => pinned.has(`${e.name}:${e.currency}`));
+    const impact = this.filterImpact();
+    const isKeyPinned = (e: { name: string; currency: string }) =>
+      pinned.has(`${e.name}:${e.currency}`);
 
     return events
       .filter(e => {
-        if (hasMatchingPins && !pinned.has(`${e.name}:${e.currency}`)) return false;
-        const impactOk = this.filterImpact() === 'all' || e.impact === this.filterImpact();
         const currencyOk = this.filterCurrency() === 'all' || e.currency === this.filterCurrency();
-        return impactOk && currencyOk;
+        if (!currencyOk) return false;
+
+        if (impact === 'all') {
+          // Règle par défaut : épinglés OU fort impact uniquement
+          return isKeyPinned(e) || e.impact === 'high';
+        }
+        // Filtre manuel choisi (high / medium) → il prime, comportement classique
+        return e.impact === impact;
       })
       .sort((a, b) => {
-        const aPin = pinned.has(`${a.name}:${a.currency}`);
-        const bPin = pinned.has(`${b.name}:${b.currency}`);
+        // Épinglés d'abord, puis tri par heure
+        const aPin = isKeyPinned(a);
+        const bPin = isKeyPinned(b);
         if (aPin && !bPin) return -1;
         if (!aPin && bPin) return 1;
         return a.time.localeCompare(b.time);
