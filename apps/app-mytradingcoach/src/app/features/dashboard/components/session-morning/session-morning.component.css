@@ -67,11 +67,20 @@
 
 
 /* ─── Daily row ─── */
-.daily-row {
+/* Conteneur : gauche (Hier + Objectifs empilés) | droite (Agenda pleine hauteur) */
+.session-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+  align-items: stretch;
   margin-bottom: 20px;
+}
+
+.daily-row {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 0;
 }
 
 .card {
@@ -227,7 +236,8 @@
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 16px;
-  margin-bottom: 16px;
+  margin-bottom: 0;
+  height: 100%;
 }
 
 .ai-badge {
@@ -438,6 +448,25 @@
   flex-shrink: 0;
 }
 
+.eco-unpin-btn {
+  font-size: 10px;
+  line-height: 1;
+  color: var(--text-3);
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 6px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.eco-unpin-btn:hover {
+  color: var(--red);
+  border-color: var(--red);
+  background: rgba(239,68,68,.12);
+}
+
 /* ── Empty state filtres ── */
 .eco-empty-filter {
   text-align: center;
@@ -470,5 +499,6 @@
 
 @media (max-width: 768px) {
   .session-banner { flex-direction: column; align-items: stretch; }
+  .session-layout { grid-template-columns: 1fr; }
   .daily-row { grid-template-columns: 1fr; }
 }

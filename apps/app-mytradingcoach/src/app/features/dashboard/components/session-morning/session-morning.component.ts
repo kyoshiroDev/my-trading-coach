@@ -67,6 +67,8 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
         </div>
       </div>
 
+      <div class="session-layout">
+
       <!-- Daily row — hier + objectifs -->
       <div class="daily-row" data-testid="yesterday-recap">
         <!-- Card : recap hier -->
@@ -352,6 +354,15 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
                 @if (event.isReleased) {
                   <span class="eco-released-badge">✓</span>
                 }
+                @if (pinnedKeys().has(event.name + ':' + event.currency)) {
+                  <button
+                    type="button"
+                    class="eco-unpin-btn"
+                    title="Retirer des épinglés"
+                    (click)="unpinEvent(event)">
+                    ✕
+                  </button>
+                }
               </div>
             }
           </div>
@@ -360,6 +371,8 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
             <span>Événements grisés = hors de ta session</span>
           </div>
         }
+      </div>
+
       </div>
 
     </div>
@@ -420,20 +433,26 @@ export class SessionMorningComponent {
   protected readonly filteredEvents = computed(() => {
     const events = this.ecoCalendar()?.events ?? [];
     const pinned = this.pinnedKeys();
-    // Filtrer par pins seulement si au moins 1 event du jour est épinglé
-    const hasMatchingPins = pinned.size > 0 &&
-      events.some(e => pinned.has(`${e.name}:${e.currency}`));
+    const impact = this.filterImpact();
+    const isKeyPinned = (e: { name: string; currency: string }) =>
+      pinned.has(`${e.name}:${e.currency}`);
 
     return events
       .filter(e => {
-        if (hasMatchingPins && !pinned.has(`${e.name}:${e.currency}`)) return false;
-        const impactOk = this.filterImpact() === 'all' || e.impact === this.filterImpact();
         const currencyOk = this.filterCurrency() === 'all' || e.currency === this.filterCurrency();
-        return impactOk && currencyOk;
+        if (!currencyOk) return false;
+
+        if (impact === 'all') {
+          // Règle par défaut : épinglés OU fort impact uniquement
+          return isKeyPinned(e) || e.impact === 'high';
+        }
+        // Filtre manuel choisi (high / medium) → il prime, comportement classique
+        return e.impact === impact;
       })
       .sort((a, b) => {
-        const aPin = pinned.has(`${a.name}:${a.currency}`);
-        const bPin = pinned.has(`${b.name}:${b.currency}`);
+        // Épinglés d'abord, puis tri par heure
+        const aPin = isKeyPinned(a);
+        const bPin = isKeyPinned(b);
         if (aPin && !bPin) return -1;
         if (!aPin && bPin) return 1;
         return a.time.localeCompare(b.time);
@@ -445,6 +464,20 @@ export class SessionMorningComponent {
     const pinned = this.pinnedKeys();
     return pinned.size > 0 && events.some(e => pinned.has(`${e.name}:${e.currency}`));
   });
+
+  protected unpinEvent(event: { name: string; currency: string }): void {
+    const key = `${event.name}:${event.currency}`;
+    const current = this.pinnedKeys();
+    if (!current.has(key)) return;
+    const next = new Set(current);
+    next.delete(key);
+    // Mise à jour optimiste du signal local → l'event disparaît immédiatement
+    this.freshPins.set([...next]);
+    // Persistance backend (même API que eco-calendar)
+    this.ecoApi.savePins([...next])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe();
+  }
 
   protected readonly dayLabel = computed(() => {
     const parisNow = new Date(
