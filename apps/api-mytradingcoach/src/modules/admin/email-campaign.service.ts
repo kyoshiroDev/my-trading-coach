@@ -135,7 +135,7 @@ export class EmailCampaignService {
     const map: Record<CampaignType, string> = {
       discord_invite:   '💬 Rejoins la communauté Discord MyTradingCoach',
       premium_upsell:   '⚡ Passe à Premium — 7 jours gratuits',
-      reengagement:     '📖 Tes trades t\'attendent sur MyTradingCoach',
+      reengagement:     '📖 Un retour sur MyTradingCoach ?',
       strategy_profile: '🎯 Personnalise ton coach IA en 5 minutes',
       debrief_reminder: '📅 Ton débrief hebdomadaire est prêt',
       announcement:     '📣 Nouveauté MyTradingCoach',
@@ -143,36 +143,60 @@ export class EmailCampaignService {
     return map[type];
   }
 
+  /** Template visuel unifié pour TOUTES les campagnes (couleurs de la marque, layout table-based). */
+  private renderEmail(opts: {
+    name: string;
+    headerTitle: string;
+    bodyHtml: string;
+    ctaLabel?: string;
+    ctaUrl?: string;
+  }): string {
+    const { name, headerTitle, bodyHtml, ctaLabel, ctaUrl } = opts;
+    const cta = ctaLabel && ctaUrl
+      ? `<tr><td style="padding:8px 32px 28px;text-align:center;"><a href="${ctaUrl}" style="display:inline-block;background:#3b82f6;color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 34px;border-radius:12px;">${ctaLabel}</a></td></tr>`
+      : '';
+    return `<div style="margin:0;padding:0;background-color:#080c14;font-family:'DM Sans',Arial,sans-serif;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#080c14;padding:24px 0;"><tr><td align="center"><table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#101d2e;border:1px solid rgba(99,155,255,0.12);border-radius:18px;overflow:hidden;"><tr><td style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);padding:32px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;line-height:1.3;">${headerTitle}</div><div style="font-size:13px;color:rgba(255,255,255,0.85);margin-top:4px;">MyTradingCoach</div></td></tr><tr><td style="padding:32px 32px 8px;"><p style="font-size:16px;color:#e2eaf5;line-height:1.6;margin:0 0 16px;">Bonjour ${name},</p>${bodyHtml}</td></tr>${cta}<tr><td style="padding:22px 32px 26px;border-top:1px solid rgba(99,155,255,0.08);"><div style="font-size:12px;color:#7090b0;text-align:center;line-height:1.6;">🇫🇷 Données hébergées en France<br/>MyTradingCoach · <a href="https://mytradingcoach.app" style="color:#60a5fa;text-decoration:none;">mytradingcoach.app</a></div></td></tr></table></td></tr></table></div>`;
+  }
+
   private buildHtml(type: CampaignType, name: string, subject?: string, body?: string): string {
-    const BASE = `font-family:'DM Sans',Arial,sans-serif;background:#080c14;color:#e2eaf5;max-width:600px;margin:0 auto;padding:40px 24px;`;
-    const CARD = `background:#0f1824;border:1px solid rgba(99,155,255,.1);border-radius:12px;padding:28px;margin:20px 0;`;
-    const BTN  = `display:inline-block;background:#3b82f6;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:700;margin-top:16px;`;
-    const MUTED = `color:#8fa3bf;font-size:12px;margin-top:28px;text-align:center;`;
+    // Défauts par campagne : titre header, corps (markdown), cta label + url
+    const defaults: Record<CampaignType, { title: string; body: string; ctaLabel?: string; ctaUrl?: string }> = {
+      discord_invite: {
+        title: '💬 Rejoins la communauté',
+        body: 'Des traders ICT, SMC, Price Action échangent chaque jour leurs setups. C\'est gratuit et ça prend 2 minutes.\n\n📌 Tape **/verify** dans **#👋-bienvenue** pour obtenir ton rôle automatiquement.',
+        ctaLabel: 'Rejoindre le Discord →', ctaUrl: DISCORD_URL,
+      },
+      premium_upsell: {
+        title: '⚡ Passe à Premium',
+        body: 'Tu utilises MyTradingCoach depuis quelques jours. Va plus loin avec le Coach IA, le Weekly Debrief, les analytics avancés et l\'import CSV.\n\n7 jours gratuits · Sans CB · Annulable à tout moment.',
+        ctaLabel: 'Essayer Premium →', ctaUrl: `${APP_URL}/settings?upgrade=1`,
+      },
+      reengagement: {
+        title: '📖 Un retour sur MyTradingCoach ?',
+        body: 'Tu t\'es inscrit il y a quelque temps et j\'aimerais ton avis honnête.\n\nQue tu aies testé l\'app ou pas encore eu l\'occasion : qu\'est-ce qui t\'a manqué, bloqué, ou pas convaincu ? Pas eu le temps, pas compris comment t\'en servir, un bug ?\n\nRéponds-moi en une ligne, c\'est super précieux pour améliorer l\'app 🙏',
+        ctaLabel: undefined, ctaUrl: undefined, // pas de bouton : on veut une RÉPONSE, pas un clic
+      },
+      strategy_profile: {
+        title: '🎯 Personnalise ton coach IA',
+        body: 'Tu n\'as pas encore renseigné ton profil stratégie. En 5 minutes, tu permets à l\'IA de vraiment te connaître — ton style, ta stratégie (ICT, SMC…), tes sessions, ta fréquence.',
+        ctaLabel: 'Remplir mon profil →', ctaUrl: `${APP_URL}/settings`,
+      },
+      debrief_reminder: {
+        title: '📅 Ton débrief hebdo est prêt',
+        body: 'Ton analyse de la semaine vient d\'être générée par l\'IA : tes patterns, tes points forts, et 3 objectifs concrets pour la semaine.',
+        ctaLabel: 'Voir mon débrief →', ctaUrl: `${APP_URL}/weekly-debrief`,
+      },
+      announcement: {
+        title: '📣 Nouveauté MyTradingCoach',
+        body: '',
+        ctaLabel: 'Découvrir →', ctaUrl: APP_URL,
+      },
+    };
 
-    switch (type) {
-      case 'discord_invite':
-        return `<div style="${BASE}"><h1 style="color:#e2eaf5;font-size:22px;margin-bottom:6px;">💬 Tu n'es pas encore sur notre Discord !</h1><p style="color:#8fa3bf;margin-top:0;">MyTradingCoach — Communauté</p><div style="${CARD}"><p>Bonjour ${name},</p><p style="color:#b0bec5;line-height:1.7;">Des traders ICT, SMC, Price Action échangent chaque jour leurs setups. C'est gratuit et ça prend 2 minutes.</p><a href="${DISCORD_URL}" style="${BTN.replace('#3b82f6','#5865f2')}">Rejoindre le Discord →</a><div style="background:#080c14;border-radius:8px;padding:12px 14px;margin-top:16px;"><p style="color:#8fa3bf;font-size:12px;margin:0;line-height:1.8;">📌 Tape <code style="background:#1e2533;padding:2px 6px;border-radius:4px;color:#00d4aa;">/verify</code> dans <strong style="color:#e2eaf5;">#👋-bienvenue</strong> pour obtenir ton rôle automatiquement.</p></div></div><p style="${MUTED}">MyTradingCoach — Fait en France 🇫🇷</p></div>`;
-
-      case 'premium_upsell':
-        return `<div style="${BASE}"><h1 style="color:#e2eaf5;font-size:22px;margin-bottom:6px;">⚡ Passe à Premium — 7 jours gratuits</h1><p style="color:#8fa3bf;margin-top:0;">MyTradingCoach</p><div style="${CARD}"><p>Bonjour ${name},</p><p style="color:#b0bec5;line-height:1.7;">Tu utilises MyTradingCoach depuis quelques jours. Tu veux aller plus loin ?</p><div style="background:#080c14;border-radius:8px;padding:14px 16px;margin:16px 0;color:#b0bec5;font-size:13px;line-height:2.2;">🤖 <strong style="color:#e2eaf5;">Coach IA personnalisé</strong><br/>📅 <strong style="color:#e2eaf5;">Weekly Debrief automatique</strong><br/>📊 <strong style="color:#e2eaf5;">Analytics avancés</strong><br/>📥 <strong style="color:#e2eaf5;">Import CSV</strong></div><a href="${APP_URL}/settings?upgrade=1" style="${BTN}">Essayer Premium gratuitement →</a><p style="color:#8fa3bf;font-size:12px;margin-top:10px;">7 jours gratuits · Sans CB · Annulable à tout moment</p></div><p style="${MUTED}">MyTradingCoach — Fait en France 🇫🇷</p></div>`;
-
-      case 'reengagement':
-        return `<div style="${BASE}"><h1 style="color:#e2eaf5;font-size:22px;margin-bottom:6px;">📖 Tes trades t'attendent</h1><p style="color:#8fa3bf;margin-top:0;">MyTradingCoach</p><div style="${CARD}"><p>Bonjour ${name},</p><p style="color:#b0bec5;line-height:1.7;">Ça fait un moment qu'on ne t'a pas vu. La discipline de journalisation, c'est souvent ce qui fait la différence entre un trader qui progresse et un qui stagne.</p><a href="${APP_URL}" style="${BTN}">Retourner sur mon journal →</a></div><p style="${MUTED}">MyTradingCoach — Fait en France 🇫🇷</p></div>`;
-
-      case 'strategy_profile':
-        return `<div style="${BASE}"><h1 style="color:#e2eaf5;font-size:22px;margin-bottom:6px;">🎯 Personnalise ton coach IA</h1><p style="color:#8fa3bf;margin-top:0;">MyTradingCoach</p><div style="${CARD}"><p>Bonjour ${name},</p><p style="color:#b0bec5;line-height:1.7;">Tu n'as pas encore renseigné ton profil stratégie. En 5 minutes, tu permets à l'IA de vraiment te connaître — ton style, ta stratégie (ICT, SMC…), tes sessions, ta fréquence.</p><a href="${APP_URL}/settings" style="${BTN}">Remplir mon profil stratégie →</a></div><p style="${MUTED}">MyTradingCoach — Fait en France 🇫🇷</p></div>`;
-
-      case 'debrief_reminder':
-        return `<div style="${BASE}"><h1 style="color:#e2eaf5;font-size:22px;margin-bottom:6px;">📅 Ton débrief hebdo est prêt</h1><p style="color:#8fa3bf;margin-top:0;">MyTradingCoach — Weekly Debrief</p><div style="${CARD}"><p>Bonjour ${name},</p><p style="color:#b0bec5;line-height:1.7;">Ton analyse de la semaine vient d'être générée par l'IA. Elle a passé en revue tous tes trades, détecté tes patterns et te fixe 3 objectifs concrets.</p><a href="${APP_URL}/weekly-debrief" style="${BTN}">Voir mon débrief →</a></div><p style="${MUTED}">MyTradingCoach — Fait en France 🇫🇷</p></div>`;
-
-      case 'announcement': {
-        const announceSubject = subject?.trim() || '📣 Nouveauté MyTradingCoach';
-        const formattedBody   = this.renderMarkdown(body ?? '');
-        return `<div style="margin:0;padding:0;background-color:#070a10;font-family:'DM Sans',Arial,sans-serif;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#070a10;padding:24px 0;"><tr><td align="center"><table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#0e1420;border:1px solid rgba(120,160,255,0.1);border-radius:18px;overflow:hidden;"><tr><td style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);padding:34px 32px;text-align:center;"><div style="font-size:24px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;line-height:1.3;margin:0;">${announceSubject}</div></td></tr><tr><td style="padding:32px 32px 8px;"><p style="font-size:16px;color:#eef3fb;line-height:1.6;margin:0 0 16px;">Bonjour ${name},</p>${formattedBody}</td></tr><tr><td style="padding:8px 32px 28px;text-align:center;"><a href="${APP_URL}" style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#60a5fa);color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 34px;border-radius:12px;">Découvrir →</a></td></tr><tr><td style="padding:22px 32px 26px;border-top:1px solid rgba(120,160,255,0.08);"><div style="font-size:12px;color:#5e789c;text-align:center;line-height:1.6;">🇫🇷 Données hébergées en France<br/>MyTradingCoach · <a href="https://mytradingcoach.app" style="color:#60a5fa;text-decoration:none;">mytradingcoach.app</a></div></td></tr></table></td></tr></table></div>`;
-      }
-
-      default: return '';
-    }
+    const d = defaults[type];
+    const headerTitle = subject?.trim() || d.title;
+    const bodyHtml = this.renderMarkdown(body?.trim() || d.body);
+    return this.renderEmail({ name, headerTitle, bodyHtml, ctaLabel: d.ctaLabel, ctaUrl: d.ctaUrl });
   }
 
   private renderMarkdown(raw: string): string {
