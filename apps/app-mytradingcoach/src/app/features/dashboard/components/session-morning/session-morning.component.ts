@@ -67,6 +67,8 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
         </div>
       </div>
 
+      <div class="session-layout">
+
       <!-- Daily row — hier + objectifs -->
       <div class="daily-row" data-testid="yesterday-recap">
         <!-- Card : recap hier -->
@@ -369,6 +371,8 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
             <span>Événements grisés = hors de ta session</span>
           </div>
         }
+      </div>
+
       </div>
 
     </div>
