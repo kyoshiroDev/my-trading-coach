@@ -250,19 +250,25 @@ export class EcoCalendarService {
   // ── Détection nouveaux actual (pour polling temps réel) ───────────────────
 
   async checkNewReleases(date: string): Promise<{ hasNew: boolean; newEvents: EcoEvent[] }> {
-    // Snapshot des events déjà released AVANT le fetch
-    const previously = await this.prisma.ecoEvent.findMany({
-      where: { date, isReleased: true },
-      select: { name: true, currency: true },
-    });
-    const prevSet = new Set(previously.map((p) => `${p.name}:${p.currency}`));
+    // Snapshot AVANT fetch — events déjà publiés. On lit via getEventsFromDb pour
+    // que les noms soient ceux AFFICHÉS (nameFr en prod), pas l'anglais brut FMP.
+    const before = await this.getEventsFromDb(date);
+    const prevSet = new Set(
+      before
+        .filter((e) => e.isReleased)
+        .map((e) => this.normalizeEventKey(`${e.name}:${e.currency}`)),
+    );
 
-    // Fetch + upsert
-    const freshEvents = await this.fetchAndStoreEvents(date);
+    // Fetch + upsert (met aussi à jour nameFr en prod)
+    await this.fetchAndStoreEvents(date);
 
-    // Events qui ont un actual maintenant et qui n'étaient pas released avant
-    const brandNew = freshEvents.filter(
-      (e) => e.isReleased && !prevSet.has(`${e.name}:${e.currency}`),
+    // Relecture APRÈS fetch : mêmes noms que ceux affichés/cachés côté front, pour
+    // que analyzeResult(ev.name) et getEventAnalysis(event.name) matchent enfin.
+    const after = await this.getEventsFromDb(date);
+    const brandNew = after.filter(
+      (e) =>
+        e.isReleased &&
+        !prevSet.has(this.normalizeEventKey(`${e.name}:${e.currency}`)),
     );
 
     return { hasNew: brandNew.length > 0, newEvents: brandNew };
@@ -401,16 +407,25 @@ export class EcoCalendarService {
   async analyzeReleasedEvent(userId: string, eventName: string): Promise<EcoResultAnalysis | null> {
     const today = todayParis();
     const cacheKey = `eco:calendar:${today}:${userId}`;
-    let cached: string | null = null;
-    try {
-      cached = await this.redis.get(cacheKey);
-    } catch {
-      // Redis indisponible
-    }
-    if (!cached) return null;
 
-    const { events } = JSON.parse(cached) as EcoCalendarData;
-    const event = events.find((e) => e.name === eventName);
+    // Source des events : cache si présent, sinon relecture BDD. Le fallback BDD
+    // évite la race avec refresh-today (qui vide le cache juste avant l'analyse).
+    let events: EcoEvent[] | null = null;
+    try {
+      const cached = await this.redis.get(cacheKey);
+      if (cached) events = (JSON.parse(cached) as EcoCalendarData).events;
+    } catch {
+      // Redis indisponible → fallback BDD
+    }
+    if (!events) events = await this.getEventsFromDb(today);
+
+    // Match tolérant : nom exact, sinon nom sans suffixe de période ("(Jun)"…).
+    const stripPeriod = (n: string) => n.replace(/\s*\([^)]*\)\s*$/, '').trim();
+    let event = events.find((e) => e.name === eventName);
+    if (!event) {
+      const target = stripPeriod(eventName);
+      event = events.find((e) => stripPeriod(e.name) === target);
+    }
     if (!event?.isReleased) return null;
 
     const userAssets = await this.getUserTopAssets(userId);

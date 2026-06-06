@@ -230,15 +230,19 @@ describe('EcoCalendarService', () => {
   // ── checkNewReleases ──────────────────────────────────────────────────────
 
   describe('checkNewReleases', () => {
+    // Ligne BDD complète telle que lue par getEventsFromDb (date passée → isReleased
+    // dynamique = actual !== null). nameFr null → name reste l'anglais en test.
+    const dbRow = (actual: number | null) => ({
+      date: '2026-05-26', time: '15:30', name: 'NFP', nameFr: null,
+      country: 'US', currency: 'USD', impact: 'high',
+      actual, estimate: 180000, previous: 150000, isReleased: actual !== null, unit: 'K',
+    });
+
     it('détecte un event nouvellement publié', async () => {
-      mockPrisma.ecoEvent.findMany.mockResolvedValueOnce([]); // aucun released avant
-      const fetchSpy = vi.spyOn(service, 'fetchAndStoreEvents').mockResolvedValue([
-        {
-          time: '15:30', name: 'NFP', country: 'US', currency: 'USD',
-          impact: 'high', actual: 210000, estimate: 180000, previous: 150000,
-          isReleased: true, unit: 'K',
-        },
-      ]);
+      mockPrisma.ecoEvent.findMany
+        .mockResolvedValueOnce([dbRow(null)])      // avant : pas encore publié
+        .mockResolvedValueOnce([dbRow(210000)]);   // après : publié
+      const fetchSpy = vi.spyOn(service, 'fetchAndStoreEvents').mockResolvedValue([]);
 
       const { hasNew, newEvents } = await service.checkNewReleases('2026-05-26');
 
@@ -249,17 +253,10 @@ describe('EcoCalendarService', () => {
     });
 
     it('ne re-détecte pas un event déjà released', async () => {
-      // NFP était déjà released avant le poll
-      mockPrisma.ecoEvent.findMany.mockResolvedValueOnce([
-        { name: 'NFP', currency: 'USD' },
-      ]);
-      vi.spyOn(service, 'fetchAndStoreEvents').mockResolvedValue([
-        {
-          time: '15:30', name: 'NFP', country: 'US', currency: 'USD',
-          impact: 'high', actual: 210000, estimate: 180000, previous: 150000,
-          isReleased: true, unit: 'K',
-        },
-      ]);
+      mockPrisma.ecoEvent.findMany
+        .mockResolvedValueOnce([dbRow(210000)])    // avant : déjà publié
+        .mockResolvedValueOnce([dbRow(210000)]);   // après : toujours publié
+      vi.spyOn(service, 'fetchAndStoreEvents').mockResolvedValue([]);
 
       const { hasNew, newEvents } = await service.checkNewReleases('2026-05-26');
 
@@ -268,14 +265,10 @@ describe('EcoCalendarService', () => {
     });
 
     it('retourne hasNew false si aucun event published', async () => {
-      mockPrisma.ecoEvent.findMany.mockResolvedValueOnce([]);
-      vi.spyOn(service, 'fetchAndStoreEvents').mockResolvedValue([
-        {
-          time: '15:30', name: 'NFP', country: 'US', currency: 'USD',
-          impact: 'high', actual: null, estimate: 180000, previous: 150000,
-          isReleased: false, unit: 'K',
-        },
-      ]);
+      mockPrisma.ecoEvent.findMany
+        .mockResolvedValueOnce([dbRow(null)])
+        .mockResolvedValueOnce([dbRow(null)]);
+      vi.spyOn(service, 'fetchAndStoreEvents').mockResolvedValue([]);
 
       const { hasNew, newEvents } = await service.checkNewReleases('2026-05-26');
 
@@ -384,8 +377,9 @@ describe('EcoCalendarService', () => {
   // ── analyzeReleasedEvent ──────────────────────────────────────────────────
 
   describe('analyzeReleasedEvent', () => {
-    it('retourne null si aucun cache Redis', async () => {
+    it('retourne null si event introuvable (cache vide → fallback BDD vide)', async () => {
       vi.spyOn(service['redis'], 'get').mockResolvedValue(null);
+      mockPrisma.ecoEvent.findMany.mockResolvedValue([]); // fallback BDD : aucun event
 
       const result = await service.analyzeReleasedEvent('user-1', 'PMI Zone Euro');
 
