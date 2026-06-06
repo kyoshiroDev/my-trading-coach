@@ -1,9 +1,12 @@
 import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { SessionTrade } from '../../../../../../core/api/session.api';
+import { NumericInputDirective } from '../../../../../../core/directives/numeric-input.directive';
+import { parseDecimal } from '../../../../../../core/utils/parse-decimal';
 
 @Component({
   selector: 'mtc-live-feed',
   standalone: true,
+  imports: [NumericInputDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="feed-col" data-testid="live-feed">
@@ -61,7 +64,8 @@ import { SessionTrade } from '../../../../../../core/api/session.api';
                   <div class="close-panel-row">
                     <div class="close-input-wrap">
                       <div class="close-input-lbl">PRIX DE SORTIE</div>
-                      <input class="close-input" type="number" placeholder="0.00"
+                      <input class="close-input" type="text" inputmode="decimal" mtcNumericInput
+                             placeholder="0.00"
                              data-testid="trade-exit-price"
                              [value]="exitPriceInput()"
                              (input)="exitPriceInput.set($any($event.target).value)" />
@@ -99,8 +103,8 @@ export class LiveFeedComponent {
   protected cancelClose(): void { this.closingTradeId.set(null); this.exitPriceInput.set(''); }
 
   protected submitClose(trade: SessionTrade): void {
-    const exitPrice = parseFloat(this.exitPriceInput());
-    if (!exitPrice || exitPrice <= 0) return;
+    const exitPrice = parseDecimal(this.exitPriceInput());
+    if (exitPrice == null || exitPrice <= 0) return;
     this.tradeClosed.emit({ tradeId: trade.id, exitPrice });
     this.closingTradeId.set(null);
     this.exitPriceInput.set('');

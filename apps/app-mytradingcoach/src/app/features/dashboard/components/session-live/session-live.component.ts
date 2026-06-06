@@ -24,6 +24,8 @@ import { MarketContextBarComponent } from '../market-context-bar/market-context-
 import { EcoSocketService } from '../../../../core/services/eco-socket.service';
 import { UserStore } from '../../../../core/stores/user.store';
 import { formatDuration } from '../../../../core/utils/time.utils';
+import { parseDecimal } from '../../../../core/utils/parse-decimal';
+import { NumericInputDirective } from '../../../../core/directives/numeric-input.directive';
 import { POLLING_MS } from '../../../../core/constants/polling.const';
 import { LiveNewsComponent } from './components/live-news/live-news.component';
 import { LiveFeedComponent } from './components/live-feed/live-feed.component';
@@ -49,7 +51,7 @@ const EMOTIONS = [
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-live.component.css',
-  imports: [SessionRecapComponent, MarketContextBarComponent, LiveNewsComponent, LiveFeedComponent],
+  imports: [SessionRecapComponent, MarketContextBarComponent, LiveNewsComponent, LiveFeedComponent, NumericInputDirective],
   template: `
     <div data-testid="session-live-view">
 
@@ -358,7 +360,9 @@ const EMOTIONS = [
                           <div class="close-input-lbl">PRIX DE SORTIE</div>
                           <input
                             class="close-input"
-                            type="number"
+                            type="text"
+                            inputmode="decimal"
+                            mtcNumericInput
                             placeholder="0.00"
                             data-testid="trade-exit-price"
                             [value]="exitPriceInput()"
@@ -370,7 +374,7 @@ const EMOTIONS = [
                       </div>
                       @if (exitPriceInput()) {
                         <div data-testid="trade-close-type" style="margin-top:6px;font-size:10px;color:var(--text-3);font-family:var(--font-mono);">
-                          → {{ detectCloseType(trade, +exitPriceInput()) }}
+                          → {{ detectCloseType(trade, exitPriceInput()) }}
                         </div>
                       }
                     </div>
@@ -543,7 +547,9 @@ const EMOTIONS = [
               <div class="qt-lbl">QUANTITÉ</div>
               <input
                 class="qt-input"
-                type="number"
+                type="text"
+                inputmode="decimal"
+                mtcNumericInput
                 placeholder="1"
                 style="font-size:12px;"
                 [value]="qtQty()"
@@ -557,7 +563,9 @@ const EMOTIONS = [
               <div class="qt-lbl" style="color:rgba(239,68,68,.7);">STOP LOSS</div>
               <input
                 class="qt-input qt-sl-input"
-                type="number"
+                type="text"
+                inputmode="decimal"
+                mtcNumericInput
                 placeholder="0.00"
                 style="font-size:12px;"
                 [value]="qtSl()"
@@ -568,7 +576,9 @@ const EMOTIONS = [
               <div class="qt-lbl" style="color:rgba(16,185,129,.7);">TAKE PROFIT</div>
               <input
                 class="qt-input qt-tp-input"
-                type="number"
+                type="text"
+                inputmode="decimal"
+                mtcNumericInput
                 placeholder="0.00"
                 style="font-size:12px;"
                 [value]="qtTp()"
@@ -1020,13 +1030,15 @@ export class SessionLiveComponent {
 
   protected submitClose(): void {
     const tradeId = this.closingTradeId();
-    const exitPrice = parseFloat(this.exitPriceInput());
-    if (!tradeId || isNaN(exitPrice) || exitPrice <= 0) return;
+    const exitPrice = parseDecimal(this.exitPriceInput());
+    if (!tradeId || exitPrice == null || exitPrice <= 0) return;
     this.tradeClosed.emit({ tradeId, exitPrice });
     this.cancelClose();
   }
 
-  protected detectCloseType(trade: SessionTrade, exitPrice: number): string {
+  protected detectCloseType(trade: SessionTrade, exitRaw: string): string {
+    const exitPrice = parseDecimal(exitRaw);
+    if (exitPrice == null) return 'Clôture manuelle';
     if (trade.stopLoss !== null) {
       const isSl = trade.side === 'LONG' ? exitPrice <= trade.stopLoss : exitPrice >= trade.stopLoss;
       if (isSl) return 'SL détecté';
@@ -1195,6 +1207,11 @@ export class SessionLiveComponent {
     else if (h >= 14 && h < 22) session = 'NEW_YORK';
     else session = 'ASIAN';
 
+    // Normalisation virgule → point avant envoi (champs filtrés par mtcNumericInput).
+    const qty = parseDecimal(this.qtQty());
+    const sl = parseDecimal(this.qtSl());
+    const tp = parseDecimal(this.qtTp());
+
     const dto: CreateTradeDto = {
       asset: selected.symbol,
       side: this.qtSide(),
@@ -1203,9 +1220,9 @@ export class SessionLiveComponent {
       session,
       timeframe: this.qtTimeframe(),
       entry,
-      ...(this.qtQty() ? { quantity: parseFloat(this.qtQty()) } : {}),
-      ...(this.qtSl() ? { stopLoss: parseFloat(this.qtSl()) } : {}),
-      ...(this.qtTp() ? { takeProfit: parseFloat(this.qtTp()) } : {}),
+      ...(qty != null ? { quantity: qty } : {}),
+      ...(sl != null ? { stopLoss: sl } : {}),
+      ...(tp != null ? { takeProfit: tp } : {}),
     };
 
     this.tradeLogged.emit(dto);

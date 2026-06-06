@@ -17,6 +17,8 @@ import {
   AlertCircle,
 } from 'lucide-angular';
 import { environment } from '../../../environments/environment';
+import { NumericInputDirective } from '../../core/directives/numeric-input.directive';
+import { parseDecimal } from '../../core/utils/parse-decimal';
 
 interface ImportResult {
   created: number;
@@ -29,7 +31,7 @@ interface ImportResult {
 @Component({
   selector: 'mtc-csv-import',
   standalone: true,
-  imports: [LucideAngularModule],
+  imports: [LucideAngularModule, NumericInputDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './csv-import.component.css',
   template: `
@@ -127,10 +129,9 @@ interface ImportResult {
                     <div class="fees-input-wrap">
                       <input
                         id="totalFees"
-                        type="number"
-                        min="0"
-                        step="0.01"
+                        type="text"
                         inputmode="decimal"
+                        mtcNumericInput
                         placeholder="0,00"
                         class="fees-input"
                         [value]="totalFees()"
@@ -294,8 +295,8 @@ export class CsvImportComponent {
     const formData = new FormData();
     formData.append('file', file, file.name);
 
-    const fees = parseFloat(this.totalFees().replace(',', '.'));
-    if (this.feesDisabledReason() === null && Number.isFinite(fees) && fees > 0) {
+    const fees = parseDecimal(this.totalFees());
+    if (this.feesDisabledReason() === null && fees != null && fees > 0) {
       formData.append('totalFees', String(fees));
     }
 
