@@ -37,10 +37,10 @@ export class EmailCampaignService {
 
     const [discordCount, upsellCount, totalCount, strategyCount] =
       await Promise.all([
-        this.prisma.user.count({ where: { discordId: null } }),
-        this.prisma.user.count({ where: { plan: 'FREE', lastSeenAt: { gte: cutoff14d } } }),
-        this.prisma.user.count(),
-        this.prisma.user.count({ where: { tradingStyle: null } }),
+        this.prisma.user.count({ where: { isDemo: false, discordId: null } }),
+        this.prisma.user.count({ where: { isDemo: false, plan: 'FREE', lastSeenAt: { gte: cutoff14d } } }),
+        this.prisma.user.count({ where: { isDemo: false } }),
+        this.prisma.user.count({ where: { isDemo: false, tradingStyle: null } }),
       ]);
 
     // Users sans trade depuis 7j
@@ -50,7 +50,7 @@ export class EmailCampaignService {
       distinct: ['userId'],
     });
     const reengageCount = await this.prisma.user.count({
-      where: { id: { notIn: activeIds.map(t => t.userId) } },
+      where: { isDemo: false, id: { notIn: activeIds.map(t => t.userId) } },
     });
 
     // Derniers envois par type
@@ -72,7 +72,7 @@ export class EmailCampaignService {
       { type: 'premium_upsell',   label: 'Passe à Premium',             emoji: '⚡', desc: 'Inciter les FREE actifs à passer Premium',            targetDesc: 'Users FREE actifs (14 derniers j)', targetCount: upsellCount,    ...meta('premium_upsell') },
       { type: 'reengagement',     label: 'Tu n\'as pas tradé',          emoji: '😴', desc: 'Réengager les inactifs depuis plus de 7 jours',       targetDesc: 'Users sans trade depuis 7j',       targetCount: reengageCount,  ...meta('reengagement') },
       { type: 'strategy_profile', label: 'Remplis ton profil stratégie',emoji: '📊', desc: 'Rappel pour renseigner le profil IA',                 targetDesc: 'Users sans profil stratégie',      targetCount: strategyCount,  ...meta('strategy_profile') },
-      { type: 'debrief_reminder', label: 'Ton debrief est prêt',        emoji: '📅', desc: 'Notifier les Premium que le debrief est disponible',  targetDesc: 'Users Premium',                   targetCount: await this.prisma.user.count({ where: { plan: 'PREMIUM' } }), ...meta('debrief_reminder') },
+      { type: 'debrief_reminder', label: 'Ton debrief est prêt',        emoji: '📅', desc: 'Notifier les Premium que le debrief est disponible',  targetDesc: 'Users Premium',                   targetCount: await this.prisma.user.count({ where: { isDemo: false, plan: 'PREMIUM' } }), ...meta('debrief_reminder') },
       { type: 'announcement',     label: 'Annonce / Nouveauté',         emoji: '📣', desc: 'Envoyer une annonce libre à tous les utilisateurs',   targetDesc: 'Tous les utilisateurs',           targetCount: totalCount,     ...meta('announcement') },
     ];
   }
@@ -113,19 +113,19 @@ export class EmailCampaignService {
 
     switch (type) {
       case 'discord_invite':
-        return this.prisma.user.findMany({ where: { discordId: null }, select: { email: true, name: true } });
+        return this.prisma.user.findMany({ where: { isDemo: false, discordId: null }, select: { email: true, name: true } });
       case 'premium_upsell':
-        return this.prisma.user.findMany({ where: { plan: 'FREE', lastSeenAt: { gte: cutoff14d } }, select: { email: true, name: true } });
+        return this.prisma.user.findMany({ where: { isDemo: false, plan: 'FREE', lastSeenAt: { gte: cutoff14d } }, select: { email: true, name: true } });
       case 'reengagement': {
         const ids = await this.prisma.trade.findMany({ where: { tradedAt: { gte: cutoff7d } }, select: { userId: true }, distinct: ['userId'] });
-        return this.prisma.user.findMany({ where: { id: { notIn: ids.map(t => t.userId) } }, select: { email: true, name: true } });
+        return this.prisma.user.findMany({ where: { isDemo: false, id: { notIn: ids.map(t => t.userId) } }, select: { email: true, name: true } });
       }
       case 'strategy_profile':
-        return this.prisma.user.findMany({ where: { tradingStyle: null }, select: { email: true, name: true } });
+        return this.prisma.user.findMany({ where: { isDemo: false, tradingStyle: null }, select: { email: true, name: true } });
       case 'debrief_reminder':
-        return this.prisma.user.findMany({ where: { plan: 'PREMIUM' }, select: { email: true, name: true } });
+        return this.prisma.user.findMany({ where: { isDemo: false, plan: 'PREMIUM' }, select: { email: true, name: true } });
       case 'announcement':
-        return this.prisma.user.findMany({ select: { email: true, name: true } });
+        return this.prisma.user.findMany({ where: { isDemo: false }, select: { email: true, name: true } });
       default:
         return [];
     }

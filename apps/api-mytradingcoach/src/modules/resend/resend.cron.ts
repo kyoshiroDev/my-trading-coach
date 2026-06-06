@@ -23,6 +23,7 @@ export class ResendCron {
 
     const users = await this.prisma.user.findMany({
       where: {
+        isDemo: false,
         plan: 'PREMIUM',
         notificationsEmail: true,
         stripeCurrentPeriodEnd: { gte: start, lte: end },

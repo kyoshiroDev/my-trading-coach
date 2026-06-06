@@ -115,6 +115,7 @@ Dev
 - Prix Premium = **79 €** (pas 39 € — 39 € = Starter) · valeurs en dur → `pricing.const.ts`
 - CSS inline dans `.ts` → toujours dans `.css`
 - `@nestjs/bull` → `@nestjs/bullmq`
+- Compte démo (`isDemo`) : nouvelle mutation → déjà bloquée par `DemoReadOnlyGuard` (rien à faire) ; nouvelle métrique/agrégat admin ou cron/email ciblant des users → **exclure `isDemo: false`** ; nouvelle feature avec données → vérifier l'affichage démo + enrichir le seed
 
 ---
 

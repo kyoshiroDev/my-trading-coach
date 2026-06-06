@@ -21,6 +21,7 @@ import { DailyRecapModule } from '../modules/daily-recap/daily-recap.module';
 import { EcoCalendarModule } from '../modules/eco-calendar/eco-calendar.module';
 import { AmbassadorModule } from '../modules/ambassador/ambassador.module';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { DemoReadOnlyGuard } from '../common/guards/demo-read-only.guard';
 import { HttpExceptionFilter } from '../common/filters/http-exception.filter';
 import { ResponseInterceptor } from '../common/interceptors/response.interceptor';
 import { PresenceInterceptor } from '../common/interceptors/presence.interceptor';
@@ -68,6 +69,8 @@ import { AppController } from './app.controller';
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    // Après JwtAuthGuard (besoin de request.user) : bloque les écritures du compte démo.
+    { provide: APP_GUARD, useClass: DemoReadOnlyGuard },
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
     { provide: APP_INTERCEPTOR, useClass: ResponseInterceptor },
     { provide: APP_INTERCEPTOR, useClass: PresenceInterceptor },

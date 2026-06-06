@@ -37,11 +37,11 @@ export class MetricsSnapshotCron {
     const oneDayAgo = new Date(Date.now() - 86_400_000);
 
     const [totalUsers, activeUsers, newThisDay] = await Promise.all([
-      this.prisma.user.count(),
+      this.prisma.user.count({ where: { isDemo: false } }),
       this.prisma.user.count({
-        where: { trades: { some: { tradedAt: { gte: sevenDaysAgo } } } },
+        where: { isDemo: false, trades: { some: { tradedAt: { gte: sevenDaysAgo } } } },
       }),
-      this.prisma.user.count({ where: { createdAt: { gte: oneDayAgo } } }),
+      this.prisma.user.count({ where: { isDemo: false, createdAt: { gte: oneDayAgo } } }),
     ]);
 
     const data = {

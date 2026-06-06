@@ -194,23 +194,23 @@ export class UsersService {
       betaTesters, ambassadors,
     ] = await Promise.all([
       this.prisma.user.count({
-        where: { plan: 'STARTER', stripeInterval: 'month', stripeSubscriptionStatus: { in: ['active', 'trialing'] } },
+        where: { isDemo: false, plan: 'STARTER', stripeInterval: 'month', stripeSubscriptionStatus: { in: ['active', 'trialing'] } },
       }),
       this.prisma.user.count({
-        where: { plan: 'STARTER', stripeInterval: 'year', stripeSubscriptionStatus: { in: ['active', 'trialing'] } },
+        where: { isDemo: false, plan: 'STARTER', stripeInterval: 'year', stripeSubscriptionStatus: { in: ['active', 'trialing'] } },
       }),
       this.prisma.user.count({
-        where: { plan: 'PREMIUM', stripeInterval: 'month', stripeSubscriptionStatus: { in: ['active', 'trialing'] } },
+        where: { isDemo: false, plan: 'PREMIUM', stripeInterval: 'month', stripeSubscriptionStatus: { in: ['active', 'trialing'] } },
       }),
       this.prisma.user.count({
-        where: { plan: 'PREMIUM', stripeInterval: 'year', stripeSubscriptionStatus: { in: ['active', 'trialing'] } },
+        where: { isDemo: false, plan: 'PREMIUM', stripeInterval: 'year', stripeSubscriptionStatus: { in: ['active', 'trialing'] } },
       }),
-      this.prisma.user.count({ where: { plan: 'PREMIUM', trialEndsAt: { gt: now } } }),
-      this.prisma.user.count({ where: { plan: 'FREE' } }),
-      this.prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
-      this.prisma.user.count({ where: { plan: 'FREE', trialUsed: true, updatedAt: { gte: startOfMonth } } }),
-      this.prisma.user.count({ where: { role: 'BETA_TESTER' } }),
-      this.prisma.user.count({ where: { role: 'AMBASSADOR' } }),
+      this.prisma.user.count({ where: { isDemo: false, plan: 'PREMIUM', trialEndsAt: { gt: now } } }),
+      this.prisma.user.count({ where: { isDemo: false, plan: 'FREE' } }),
+      this.prisma.user.count({ where: { isDemo: false, createdAt: { gte: startOfMonth } } }),
+      this.prisma.user.count({ where: { isDemo: false, plan: 'FREE', trialUsed: true, updatedAt: { gte: startOfMonth } } }),
+      this.prisma.user.count({ where: { isDemo: false, role: 'BETA_TESTER' } }),
+      this.prisma.user.count({ where: { isDemo: false, role: 'AMBASSADOR' } }),
     ]);
 
     const mrr = starterMonthly * 39

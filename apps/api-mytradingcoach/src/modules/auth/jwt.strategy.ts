@@ -29,6 +29,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         role: true,
         trialEndsAt: true,
         trialUsed: true,
+        isDemo: true,
       },
     });
     if (!user) throw new UnauthorizedException();

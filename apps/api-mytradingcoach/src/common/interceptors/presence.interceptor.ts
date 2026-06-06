@@ -16,10 +16,13 @@ export class PresenceInterceptor implements NestInterceptor {
   constructor(private readonly prisma: PrismaService) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-    const req = context.switchToHttp().getRequest<{ user?: { id?: string } }>();
+    const req = context
+      .switchToHttp()
+      .getRequest<{ user?: { id?: string; isDemo?: boolean } }>();
     const userId = req.user?.id;
 
-    if (userId) {
+    // Le compte démo ne doit pas polluer la présence (online/lastSeen) ni les métriques.
+    if (userId && !req.user?.isDemo) {
       const now = Date.now();
       const last = this.lastUpdated.get(userId) ?? 0;
       if (now - last > THROTTLE_MS) {

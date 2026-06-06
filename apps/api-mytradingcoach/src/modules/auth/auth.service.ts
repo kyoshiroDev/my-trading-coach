@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   Logger,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -46,6 +47,7 @@ const ME_SELECT = {
   strategyDescription: true,
   tradingAssets: true,
   favoriteAsset: true,
+  isDemo: true,
 } satisfies Prisma.UserSelect;
 
 @Injectable()
@@ -239,6 +241,25 @@ export class AuthService {
         resetPasswordExpires: null,
       },
     });
+  }
+
+  /**
+   * Connexion au compte démo vitrine (lecture seule). Renvoie un token d'accès
+   * long SANS refresh : la session démo est éphémère et le DemoReadOnlyGuard
+   * neutralise toute écriture même si le token fuite (défense en profondeur).
+   */
+  async demoLogin() {
+    const user = await this.prisma.user.findFirst({
+      where: { isDemo: true },
+      select: ME_SELECT,
+    });
+    if (!user) throw new NotFoundException('Compte démo indisponible');
+
+    const access_token = await this.jwtService.signAsync(
+      { sub: user.id, email: user.email },
+      { expiresIn: '12h' },
+    );
+    return { access_token, user };
   }
 
   private async generateTokens(userId: string, email: string) {
