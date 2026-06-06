@@ -16,6 +16,7 @@ import { Subject, forkJoin, interval, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent, EcoResultAnalysis } from '../../../../core/api/eco-calendar.api';
 import { translateEcoEvent } from '../../../../core/data/eco-event-translations';
+import { normalizeEventKey, eventKey } from '../../../../core/data/eco-event-key';
 import { MoodState, TradingSession, LiveStats, SessionTrade } from '../../../../core/api/session.api';
 import { CreateTradeDto, InstrumentSearchResult, MarketContext, NewsItem, TradesApi, UserAssetItem } from '../../../../core/api/trades.api';
 import { SessionRecapComponent } from '../session-recap/session-recap.component';
@@ -750,18 +751,18 @@ export class SessionLiveComponent {
 
   protected readonly pinnedKeys = computed(() => {
     const fresh = this.freshPins();
-    if (fresh !== null) return new Set(fresh);
-    return new Set(this.ecoCalendar()?.pinnedEvents ?? []);
+    const raw = fresh !== null ? fresh : (this.ecoCalendar()?.pinnedEvents ?? []);
+    return new Set(raw.map(normalizeEventKey));
   });
 
   protected readonly sessionEcoEvents = computed(() => {
     const events = (this.ecoCalendar()?.events ?? []).filter((e) => !!e.name?.trim());
     const pinned = this.pinnedKeys();
     const hasMatchingPins = pinned.size > 0 &&
-      events.some(e => pinned.has(`${e.name}:${e.currency}`));
+      events.some(e => pinned.has(eventKey(e)));
     if (!hasMatchingPins) return events;
     return events
-      .filter(e => pinned.has(`${e.name}:${e.currency}`))
+      .filter(e => pinned.has(eventKey(e)))
       .sort((a, b) => a.time.localeCompare(b.time));
   });
 
