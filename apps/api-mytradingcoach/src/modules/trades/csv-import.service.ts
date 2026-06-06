@@ -22,6 +22,10 @@ type BrokerType =
 // Limites différenciées : un broker connu est parsé localement (sans IA),
 // l'inconnu passe par Claude par lots bornés pour maîtriser le coût.
 const MAX_KNOWN_ROWS = 10_000;
+
+// Au-delà, un total global réparti au prorata donnerait des frais lissés faux :
+// on désactive la saisie d'un total des frais (front) et on l'ignore (back).
+const FEES_INPUT_MAX_TRADES = 100;
 const MAX_AI_ROWS = 2000;
 const AI_BATCH = 250;
 
@@ -112,8 +116,17 @@ export class CsvImportService {
     if (!dtos.length) throw new BadRequestException(this.emptyMessage());
 
     // Frais saisis par l'utilisateur → répartis au prorata des contrats (P&L net).
-    if (totalFees != null && totalFees > 0) {
-      dtos = this.distributeFees(dtos, totalFees);
+    // Double sécurité (le front protège déjà) : jamais d'addition par-dessus des
+    // frais déjà présents dans le CSV, ni de lissage sur un gros import.
+    if (totalFees != null && totalFees > 0 && dtos.length > 0) {
+      const hasCsvFees = dtos.some((d) => (d.commission ?? 0) > 0);
+      if (hasCsvFees) {
+        this.logger.warn('totalFees ignoré : frais déjà présents dans le CSV (anti double comptage).');
+      } else if (dtos.length > FEES_INPUT_MAX_TRADES) {
+        this.logger.warn(`totalFees ignoré : ${dtos.length} trades > ${FEES_INPUT_MAX_TRADES}.`);
+      } else {
+        dtos = this.distributeFees(dtos, totalFees);
+      }
     }
 
     return dtos;

@@ -105,30 +105,47 @@ interface ImportResult {
                 <button class="file-change" (click)="clearFile()">Changer</button>
               </div>
 
-              <div class="fees-field">
-                <label class="fees-label" for="totalFees">
-                  Total des frais (optionnel)
-                </label>
-                <div class="fees-input-wrap">
-                  <input
-                    id="totalFees"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    inputmode="decimal"
-                    placeholder="0,00"
-                    class="fees-input"
-                    [value]="totalFees()"
-                    (input)="totalFees.set($any($event.target).value)"
-                  />
-                  <span class="fees-unit">€</span>
-                </div>
-                <p class="fees-help">
-                  Indique le total des commissions de ton broker pour cet import
-                  (ex. 7,28). Le P&amp;L sera affiché net de frais. Laisse vide si
-                  déjà inclus.
-                </p>
-              </div>
+              @switch (feesDisabledReason()) {
+                @case ('has_fees_column') {
+                  <p class="fees-note">
+                    ✓ Frais détectés dans ton fichier — ils sont déjà pris en
+                    compte. Pas besoin de les saisir.
+                  </p>
+                }
+                @case ('too_many') {
+                  <p class="fees-note">
+                    Import volumineux (plus de 100 trades). Les frais ne peuvent
+                    pas être saisis en un total global sur autant de trades —
+                    importe par période plus courte pour les inclure.
+                  </p>
+                }
+                @default {
+                  <div class="fees-field">
+                    <label class="fees-label" for="totalFees">
+                      Total des frais (optionnel)
+                    </label>
+                    <div class="fees-input-wrap">
+                      <input
+                        id="totalFees"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        inputmode="decimal"
+                        placeholder="0,00"
+                        class="fees-input"
+                        [value]="totalFees()"
+                        (input)="totalFees.set($any($event.target).value)"
+                      />
+                      <span class="fees-unit">€</span>
+                    </div>
+                    <p class="fees-help">
+                      Indique le total des commissions de ton broker pour cet import
+                      (ex. 7,28). Le P&amp;L sera affiché net de frais. Laisse vide si
+                      déjà inclus.
+                    </p>
+                  </div>
+                }
+              }
 
               <button class="btn-primary" (click)="upload()">Importer</button>
             </div>
@@ -207,6 +224,11 @@ export class CsvImportComponent {
   protected readonly error = signal<string | null>(null);
   protected readonly selectedFile = signal<File | null>(null);
   protected readonly totalFees = signal<string>('');
+  // null = champ frais actif ; sinon raison de désactivation.
+  protected readonly feesDisabledReason = signal<null | 'has_fees_column' | 'too_many'>(null);
+
+  /** Au-delà : un total global réparti au prorata donnerait des frais faux. */
+  private readonly FEES_INPUT_MAX_TRADES = 100;
 
   onOverlayClick(e: MouseEvent) {
     if ((e.target as HTMLElement).classList.contains('overlay'))
@@ -234,11 +256,34 @@ export class CsvImportComponent {
   private selectFile(file: File) {
     this.selectedFile.set(file);
     this.error.set(null);
+    this.totalFees.set('');
+    this.feesDisabledReason.set(null);
+
+    // Lecture légère (en-tête + nb de lignes) pour décider si le champ frais
+    // doit être désactivé. Excel (.xlsx) non lisible ici → le back protège.
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = String(reader.result ?? '');
+      const lines = text.split(/\r?\n/).filter((l) => l.trim());
+      if (lines.length < 2) return;
+
+      const header = lines[0].toLowerCase();
+      const hasFeesColumn = /\b(commission|comm\.|fee|fees|frais)\b/.test(header);
+      const tradeCount = lines.length - 1;
+
+      if (hasFeesColumn) this.feesDisabledReason.set('has_fees_column');
+      else if (tradeCount > this.FEES_INPUT_MAX_TRADES) this.feesDisabledReason.set('too_many');
+    };
+    reader.onerror = () => {
+      /* échec lecture → on n'empêche rien, le back reste le filet de sécurité */
+    };
+    reader.readAsText(file);
   }
 
   protected clearFile() {
     this.selectedFile.set(null);
     this.totalFees.set('');
+    this.feesDisabledReason.set(null);
   }
 
   // Étape 2 : confirmation → upload avec les frais éventuels.
@@ -250,7 +295,7 @@ export class CsvImportComponent {
     formData.append('file', file, file.name);
 
     const fees = parseFloat(this.totalFees().replace(',', '.'));
-    if (Number.isFinite(fees) && fees > 0) {
+    if (this.feesDisabledReason() === null && Number.isFinite(fees) && fees > 0) {
       formData.append('totalFees', String(fees));
     }
 
@@ -281,5 +326,6 @@ export class CsvImportComponent {
     this.error.set(null);
     this.selectedFile.set(null);
     this.totalFees.set('');
+    this.feesDisabledReason.set(null);
   }
 }
