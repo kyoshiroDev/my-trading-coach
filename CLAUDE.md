@@ -31,9 +31,10 @@
 ```
 .claude/agents/     ← agents spécialisés (lire le pertinent avant de coder)
 apps/
-├── app-mytradingcoach/     ← Angular 20 (port 4200)
+├── app-mytradingcoach/     ← Angular 21 (port 4200)
+├── admin-mytradingcoach/   ← Angular 21 (back-office, accès ADMIN)
 ├── api-mytradingcoach/     ← NestJS 11 (port 3000)
-└── landing-mytradingcoach/ ← Astro 5 (port 4321)
+└── landing-mytradingcoach/ ← Astro 6 (port 4321)
 prisma/schema.prisma
 app-mytradingcoach.html     ← référence design app    ← LIRE AVANT ANGULAR
 landing-mytradingcoach.html ← référence design landing ← LIRE AVANT ASTRO
@@ -58,6 +59,15 @@ Après chaque modification Angular → mettre à jour `app-mytradingcoach.html`.
 | `settings.component` | `id="view-settings"` |
 | `sidebar.component` | `aside.sidebar` |
 | `topbar.component` | `header.topbar` |
+
+---
+
+## 🎭 Compte démo — lecture seule (à garder en phase)
+
+- `User.isDemo` (Prisma) : un compte démo voit l'app en **lecture seule**.
+- `DemoReadOnlyGuard` (APP_GUARD, après `JwtAuthGuard`) bloque toute mutation (`POST/PUT/PATCH/DELETE`) si `user.isDemo` → `403 « Action non disponible en mode démo »`. Les `GET/HEAD/OPTIONS` passent toujours.
+- Sécurité par défaut « tout bloqué sauf lecture » : une nouvelle mutation est protégée sans rien faire. Pour autoriser explicitement une route en démo → décorateur `@DemoAllowed()`.
+- En conséquence : **enrichir le seed démo** pour chaque nouvelle feature à données (trades, débriefs, scoring…) afin que la démo reste représentative.
 
 ---
 
@@ -108,4 +118,4 @@ Dev
 
 ---
 
-*MyTradingCoach — Avril 2026*
+*MyTradingCoach — Juin 2026*
