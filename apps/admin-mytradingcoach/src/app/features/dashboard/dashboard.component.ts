@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, interval, of, startWith, switchMap } from 'rxjs';
 import { LucideAngularModule, Wifi } from 'lucide-angular';
-import { AdminApi, AdminStats, AdminOnlineUser } from '../../core/api/admin.api';
+import { AdminApi, AdminStats, AdminOnlineUser, RetentionData } from '../../core/api/admin.api';
 import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
 
 @Component({
@@ -57,6 +57,38 @@ import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
             <span class="stat-item-label">Churn</span>
             <span class="stat-item-value" [class.red]="s.churnedThisMonth > 0">{{ s.churnedThisMonth }}</span>
             <span class="stat-item-sub">résiliations</span>
+          </div>
+        </div>
+      }
+
+      <!-- Rétention & activation -->
+      @if (retention(); as r) {
+        <div class="ret-title">Rétention & activation</div>
+        <div class="ret-grid">
+          <div class="ret-card">
+            <span class="ret-label">Taux d'activation</span>
+            <span class="ret-value teal">{{ r.activation.rate }}%</span>
+            <span class="ret-sub">{{ r.activation.activated }} / {{ r.activation.total }} ont tradé</span>
+          </div>
+          <div class="ret-card">
+            <span class="ret-label">Activation (ce mois)</span>
+            <span class="ret-value teal">{{ r.activationThisMonth.rate }}%</span>
+            <span class="ret-sub">{{ r.activationThisMonth.activated }} / {{ r.activationThisMonth.total }} inscrits</span>
+          </div>
+          <div class="ret-card">
+            <span class="ret-label">Utilisateurs actifs</span>
+            <span class="ret-value">{{ r.active.dau }}<span class="ret-unit"> DAU</span></span>
+            <span class="ret-sub">{{ r.active.wau }} WAU · {{ r.active.mau }} MAU</span>
+          </div>
+          <div class="ret-card">
+            <span class="ret-label">Rétention J+7</span>
+            <span class="ret-value blue">{{ r.retentionD7.rate }}%</span>
+            <span class="ret-sub">{{ r.retentionD7.retained }} / {{ r.retentionD7.eligible }} cohorte</span>
+          </div>
+          <div class="ret-card">
+            <span class="ret-label">Inscrits sans trade</span>
+            <span class="ret-value" [class.red]="r.ghostUsers > 0">{{ r.ghostUsers }}</span>
+            <span class="ret-sub">fantômes (onboarding)</span>
           </div>
         </div>
       }
@@ -220,6 +252,7 @@ export class DashboardComponent {
   protected readonly now = new Date();
   protected readonly loading = signal(true);
   protected readonly stats = signal<AdminStats | null>(null);
+  protected readonly retention = signal<RetentionData | null>(null);
   protected readonly onlineUsers = signal<AdminOnlineUser[]>([]);
   protected readonly vpsStats = signal<VpsStats | null>(null);
   protected readonly containers = signal<DockerContainer[]>([]);
@@ -246,6 +279,11 @@ export class DashboardComponent {
 
     this.adminApi.online().pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(r => this.onlineUsers.set(r.data));
+
+    this.adminApi.retention().pipe(
+      catchError(() => of(null)),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(r => this.retention.set(r?.data ?? null));
 
     interval(10_000).pipe(
       startWith(0),
