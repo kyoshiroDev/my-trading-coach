@@ -125,6 +125,18 @@ export interface RetentionData {
   ghostUsers: number;
 }
 
+export interface StripeReconcileData {
+  mrrDb: number;
+  mrrStripe: number;
+  gap: number;
+  dbActiveCount: number;
+  stripeActiveCount: number;
+  divergences: {
+    inDbNotStripe: { userId: string; email: string; name: string | null; plan: string; subscriptionId: string | null; status: string | null }[];
+    inStripeNotDb: { subscriptionId: string; customerId: string | null; status: string; monthly: number }[];
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminApi {
   private readonly http = inject(HttpClient);
@@ -146,6 +158,7 @@ export class AdminApi {
   subscriptions()       { return this.http.get<{ data: SubscriptionsData }>(`${this.base}/subscriptions`); }
   aiUsage()             { return this.http.get<{ data: AiUsageData }>(`${environment.apiUrl}/admin/ai-usage`); }
   retention()           { return this.http.get<{ data: RetentionData }>(`${this.adminBase}/retention`); }
+  stripeReconcile()     { return this.http.get<{ data: StripeReconcileData }>(`${this.adminBase}/stripe/reconcile`); }
 
   listCampaigns() {
     return this.http.get<{ data: CampaignMeta[] }>(`${this.adminBase}/campaigns`);

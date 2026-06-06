@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AdminApi, AdminStats } from '../../core/api/admin.api';
+import { catchError, of } from 'rxjs';
+import { AdminApi, AdminStats, StripeReconcileData } from '../../core/api/admin.api';
 
 @Component({
   selector: 'mtc-admin-revenue',
@@ -47,6 +48,43 @@ import { AdminApi, AdminStats } from '../../core/api/admin.api';
       } @else {
         <div class="loading">Chargement...</div>
       }
+
+      <!-- Réconciliation Stripe (lecture seule) -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Réconciliation Stripe</span>
+          <button class="reconcile-btn" (click)="reconcile()" [disabled]="reconciling()">
+            {{ reconciling() ? 'Vérification…' : 'Vérifier avec Stripe' }}
+          </button>
+        </div>
+        @if (reconcileError()) {
+          <div class="reconcile-err">{{ reconcileError() }}</div>
+        }
+        @if (reconcileData(); as r) {
+          <div class="revenue-rows">
+            <div class="rev-row"><span class="rev-label">MRR calculé (DB)</span><span class="rev-val">€{{ r.mrrDb | number:'1.0-0' }}</span></div>
+            <div class="rev-row"><span class="rev-label">MRR réel (Stripe)</span><span class="rev-val teal">€{{ r.mrrStripe | number:'1.0-0' }}</span></div>
+            <div class="rev-row"><span class="rev-label">Écart</span><span class="rev-val" [class.red]="r.gap !== 0" [class.green]="r.gap === 0">€{{ r.gap | number:'1.0-0' }}</span></div>
+            <div class="rev-row"><span class="rev-label">Abonnements actifs</span><span class="rev-val">{{ r.dbActiveCount }} DB · {{ r.stripeActiveCount }} Stripe</span></div>
+          </div>
+
+          @if (r.divergences.inDbNotStripe.length === 0 && r.divergences.inStripeNotDb.length === 0) {
+            <div class="reconcile-ok">✓ Aucune divergence — DB et Stripe sont cohérents.</div>
+          }
+          @if (r.divergences.inDbNotStripe.length > 0) {
+            <div class="diverge-title red">Actif en DB, absent chez Stripe ({{ r.divergences.inDbNotStripe.length }})</div>
+            @for (d of r.divergences.inDbNotStripe; track d.userId) {
+              <div class="diverge-row">{{ d.email }} · {{ d.plan }} · {{ d.status }} · {{ d.subscriptionId }}</div>
+            }
+          }
+          @if (r.divergences.inStripeNotDb.length > 0) {
+            <div class="diverge-title amber">Actif chez Stripe, pas en DB ({{ r.divergences.inStripeNotDb.length }})</div>
+            @for (d of r.divergences.inStripeNotDb; track d.subscriptionId) {
+              <div class="diverge-row">{{ d.subscriptionId }} · {{ d.customerId }} · {{ d.status }} · €{{ d.monthly }}/mois</div>
+            }
+          }
+        }
+      </div>
     </div>
   `,
 })
@@ -55,7 +93,25 @@ export class RevenueComponent {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly stats = signal<AdminStats | null>(null);
 
+  protected readonly reconcileData = signal<StripeReconcileData | null>(null);
+  protected readonly reconciling = signal(false);
+  protected readonly reconcileError = signal<string | null>(null);
+
   constructor() {
     this.adminApi.stats().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(r => this.stats.set(r.data));
+  }
+
+  protected reconcile(): void {
+    this.reconciling.set(true);
+    this.reconcileError.set(null);
+    this.adminApi.stripeReconcile()
+      .pipe(
+        catchError(() => { this.reconcileError.set('Erreur lors de la vérification Stripe.'); return of(null); }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(r => {
+        if (r) this.reconcileData.set(r.data);
+        this.reconciling.set(false);
+      });
   }
 }

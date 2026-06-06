@@ -659,4 +659,27 @@ export class StripeService {
       this.logger.error('Erreur calcul commission referral', err);
     }
   }
+
+  /**
+   * Liste les abonnements actifs + en essai chez Stripe (LECTURE SEULE).
+   * Paginé et BORNÉ (max 20 pages × 100 par statut) — pour la réconciliation admin.
+   */
+  async listActiveSubscriptions(): Promise<Stripe.Subscription[]> {
+    const out: Stripe.Subscription[] = [];
+    for (const status of [...ACTIVE_STATUSES]) {
+      let startingAfter: string | undefined;
+      let pages = 0;
+      do {
+        const res = await this.stripe.subscriptions.list({
+          status,
+          limit: 100,
+          ...(startingAfter ? { starting_after: startingAfter } : {}),
+        });
+        out.push(...res.data);
+        startingAfter = res.has_more ? res.data.at(-1)?.id : undefined;
+        pages++;
+      } while (startingAfter && pages < 20);
+    }
+    return out;
+  }
 }

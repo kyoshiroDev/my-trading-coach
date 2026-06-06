@@ -1,9 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { UsersService } from '../users/users.service';
+import { StripeService } from '../stripe/stripe.service';
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly users: UsersService,
+    private readonly stripe: StripeService,
+  ) {}
 
   async getAiUsage() {
     const now = new Date();
@@ -138,6 +144,69 @@ export class AdminService {
       active: { dau, wau, mau },
       retentionD7: { rate: pct(retained, eligible), retained, eligible },
       ghostUsers,
+    };
+  }
+
+  /**
+   * Réconciliation MRR DB vs Stripe (LECTURE SEULE — ne modifie jamais la DB).
+   * Signale les écarts : abonnement actif en DB mais absent chez Stripe (webhook
+   * raté), ou actif chez Stripe mais pas marqué actif en DB.
+   */
+  async reconcileStripe() {
+    const [stats, stripeSubs, dbSubs] = await Promise.all([
+      this.users.adminStats(),
+      this.stripe.listActiveSubscriptions(),
+      this.prisma.user.findMany({
+        where: {
+          stripeSubscriptionStatus: { in: ['active', 'trialing'] },
+          stripeSubscriptionId: { not: null },
+        },
+        select: {
+          id: true, email: true, name: true, plan: true,
+          stripeSubscriptionId: true, stripeSubscriptionStatus: true,
+        },
+      }),
+    ]);
+
+    // MRR réel Stripe : somme des montants normalisés au mois (année / 12).
+    const monthlyOf = (s: { items: { data: { quantity?: number | null; price: { unit_amount: number | null; recurring: { interval: string } | null } }[] } }) => {
+      let total = 0;
+      for (const item of s.items.data) {
+        const qty = item.quantity ?? 1;
+        const amount = (item.price.unit_amount ?? 0) / 100;
+        const perMonth = item.price.recurring?.interval === 'year' ? amount / 12 : amount;
+        total += perMonth * qty;
+      }
+      return total;
+    };
+    const mrrStripe = Math.round(stripeSubs.reduce((sum, s) => sum + monthlyOf(s), 0));
+
+    const stripeIds = new Set(stripeSubs.map((s) => s.id));
+    const dbIds = new Set(dbSubs.map((u) => u.stripeSubscriptionId as string));
+
+    const inDbNotStripe = dbSubs
+      .filter((u) => !stripeIds.has(u.stripeSubscriptionId as string))
+      .map((u) => ({
+        userId: u.id, email: u.email, name: u.name, plan: u.plan,
+        subscriptionId: u.stripeSubscriptionId, status: u.stripeSubscriptionStatus,
+      }));
+
+    const inStripeNotDb = stripeSubs
+      .filter((s) => !dbIds.has(s.id))
+      .map((s) => ({
+        subscriptionId: s.id,
+        customerId: typeof s.customer === 'string' ? s.customer : s.customer?.id ?? null,
+        status: s.status,
+        monthly: Math.round(monthlyOf(s)),
+      }));
+
+    return {
+      mrrDb: stats.mrr,
+      mrrStripe,
+      gap: mrrStripe - stats.mrr,
+      dbActiveCount: dbSubs.length,
+      stripeActiveCount: stripeSubs.length,
+      divergences: { inDbNotStripe, inStripeNotDb },
     };
   }
 }

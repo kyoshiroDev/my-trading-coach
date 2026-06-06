@@ -7,9 +7,10 @@ import { ResendModule } from '../resend/resend.module';
 import { UsersModule } from '../users/users.module';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { DiscordModule } from '../discord/discord.module';
+import { StripeModule } from '../stripe/stripe.module';
 
 @Module({
-  imports: [ResendModule, UsersModule, PrismaModule, DiscordModule],
+  imports: [ResendModule, UsersModule, PrismaModule, DiscordModule, StripeModule],
   controllers: [AdminController],
   providers: [AdminService, EmailCampaignService, MetricsSnapshotCron],
 })
