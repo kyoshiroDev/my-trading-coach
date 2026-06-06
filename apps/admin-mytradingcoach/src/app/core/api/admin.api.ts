@@ -117,6 +117,14 @@ export interface AdminAmbassadorDetail {
   pendingPayout: number;
 }
 
+export interface RetentionData {
+  activation: { rate: number; activated: number; total: number };
+  activationThisMonth: { rate: number; activated: number; total: number };
+  active: { dau: number; wau: number; mau: number };
+  retentionD7: { rate: number; retained: number; eligible: number };
+  ghostUsers: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminApi {
   private readonly http = inject(HttpClient);
@@ -137,6 +145,7 @@ export class AdminApi {
   online()              { return this.http.get<{ data: AdminOnlineUser[] }>(`${this.base}/online`); }
   subscriptions()       { return this.http.get<{ data: SubscriptionsData }>(`${this.base}/subscriptions`); }
   aiUsage()             { return this.http.get<{ data: AiUsageData }>(`${environment.apiUrl}/admin/ai-usage`); }
+  retention()           { return this.http.get<{ data: RetentionData }>(`${this.adminBase}/retention`); }
 
   listCampaigns() {
     return this.http.get<{ data: CampaignMeta[] }>(`${this.adminBase}/campaigns`);

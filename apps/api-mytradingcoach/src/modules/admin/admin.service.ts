@@ -79,4 +79,65 @@ export class AdminService {
 
     return { today, week, byFeature, topUsers };
   }
+
+  /**
+   * Métriques de rétention / activation. Tout en agrégats SQL (count + 1 requête
+   * raw bornée) — aucune boucle JS sur l'ensemble des users.
+   */
+  async getRetention() {
+    const now = Date.now();
+    const nowD = new Date();
+    const startOfMonth = new Date(nowD.getFullYear(), nowD.getMonth(), 1);
+    const d1 = new Date(now - 1 * 86_400_000);
+    const d7 = new Date(now - 7 * 86_400_000);
+    const d30 = new Date(now - 30 * 86_400_000);
+
+    const [
+      totalUsers,
+      activatedUsers,
+      newThisMonth,
+      newThisMonthActivated,
+      dau,
+      wau,
+      mau,
+      retentionRows,
+    ] = await Promise.all([
+      this.prisma.user.count(),
+      this.prisma.user.count({ where: { trades: { some: {} } } }),
+      this.prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
+      this.prisma.user.count({ where: { createdAt: { gte: startOfMonth }, trades: { some: {} } } }),
+      this.prisma.user.count({ where: { trades: { some: { tradedAt: { gte: d1 } } } } }),
+      this.prisma.user.count({ where: { trades: { some: { tradedAt: { gte: d7 } } } } }),
+      this.prisma.user.count({ where: { trades: { some: { tradedAt: { gte: d30 } } } } }),
+      // Rétention J+7 : parmi les inscrits il y a ≥7j, % avec ≥1 trade entre J et J+7.
+      this.prisma.$queryRaw<{ eligible: bigint; retained: bigint }[]>`
+        SELECT
+          COUNT(*) FILTER (WHERE u."createdAt" <= NOW() - INTERVAL '7 days') AS eligible,
+          COUNT(*) FILTER (WHERE u."createdAt" <= NOW() - INTERVAL '7 days' AND EXISTS (
+            SELECT 1 FROM "Trade" t
+            WHERE t."userId" = u.id
+              AND t."tradedAt" >= u."createdAt"
+              AND t."tradedAt" < u."createdAt" + INTERVAL '7 days'
+          )) AS retained
+        FROM "User" u
+      `,
+    ]);
+
+    const eligible = Number(retentionRows[0]?.eligible ?? 0);
+    const retained = Number(retentionRows[0]?.retained ?? 0);
+    const ghostUsers = totalUsers - activatedUsers;
+    const pct = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 1000) / 10 : 0);
+
+    return {
+      activation: { rate: pct(activatedUsers, totalUsers), activated: activatedUsers, total: totalUsers },
+      activationThisMonth: {
+        rate: pct(newThisMonthActivated, newThisMonth),
+        activated: newThisMonthActivated,
+        total: newThisMonth,
+      },
+      active: { dau, wau, mau },
+      retentionD7: { rate: pct(retained, eligible), retained, eligible },
+      ghostUsers,
+    };
+  }
 }

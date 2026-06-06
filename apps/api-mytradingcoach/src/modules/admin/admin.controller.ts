@@ -75,6 +75,11 @@ export class AdminController {
     return this.adminService.getAiUsage();
   }
 
+  @Get('retention')
+  async getRetention() {
+    return this.adminService.getRetention();
+  }
+
   @Get('campaigns')
   listCampaigns() {
     return this.emailCampaign.listCampaigns();
