@@ -80,6 +80,11 @@ export class AdminController {
     return this.adminService.getRetention();
   }
 
+  @Get('stripe/reconcile')
+  async reconcileStripe() {
+    return this.adminService.reconcileStripe();
+  }
+
   @Get('campaigns')
   listCampaigns() {
     return this.emailCampaign.listCampaigns();
