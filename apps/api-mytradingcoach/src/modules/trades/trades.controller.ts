@@ -85,14 +85,20 @@ export class TradesController {
   async importCSV(
     @CurrentUser() user: { id: string; plan: Plan; role: Role; trialEndsAt?: Date | null },
     @UploadedFile() file: Express.Multer.File,
+    @Body() body: { totalFees?: string },
   ) {
     if (!file) throw new BadRequestException('Fichier manquant');
+
+    // Total des frais (multipart → string) réparti au prorata des contrats. Optionnel.
+    const rawFees = body?.totalFees != null ? Math.abs(parseFloat(body.totalFees)) : NaN;
+    const totalFees = Number.isFinite(rawFees) ? rawFees : undefined;
 
     const parsed = await this.csvImportService.parseCSV(
       file.buffer,
       file.originalname,
       user.id,
       { plan: user.plan, role: user.role, trialEndsAt: user.trialEndsAt },
+      totalFees,
     );
 
     // Déduplication à l'import : ne recrée pas un trade déjà présent (ré-essais, ré-imports).

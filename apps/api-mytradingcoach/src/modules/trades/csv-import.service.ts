@@ -68,6 +68,7 @@ export class CsvImportService {
     filename: string,
     userId?: string,
     access?: AiImportAccess,
+    totalFees?: number,
   ): Promise<Partial<CreateTradeDto>[]> {
     // 1. Obtenir du texte CSV (Excel converti localement, sinon UTF-8)
     const content = this.toCsvText(buffer, filename);
@@ -109,7 +110,34 @@ export class CsvImportService {
     }
 
     if (!dtos.length) throw new BadRequestException(this.emptyMessage());
+
+    // Frais saisis par l'utilisateur → répartis au prorata des contrats (P&L net).
+    if (totalFees != null && totalFees > 0) {
+      dtos = this.distributeFees(dtos, totalFees);
+    }
+
     return dtos;
+  }
+
+  /**
+   * Répartit un total de frais saisi par l'utilisateur sur les trades de l'import,
+   * AU PRORATA de la quantité de contrats. Le P&L net est ensuite calculé
+   * automatiquement par `calculatePnl` (qui déduit `commission`).
+   */
+  private distributeFees(
+    dtos: Partial<CreateTradeDto>[],
+    totalFees: number,
+  ): Partial<CreateTradeDto>[] {
+    const totalQty = dtos.reduce((sum, d) => sum + (d.quantity ?? 1), 0);
+    if (totalQty <= 0) return dtos;
+
+    return dtos.map((d) => {
+      const qty = d.quantity ?? 1;
+      const fee = +(totalFees * (qty / totalQty)).toFixed(2);
+      // On additionne aux frais éventuels déjà présents (CSV), sinon on pose.
+      const commission = +((d.commission ?? 0) + fee).toFixed(2);
+      return { ...d, commission };
+    });
   }
 
   /**

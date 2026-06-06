@@ -97,6 +97,41 @@ interface ImportResult {
               <p class="result-sub">{{ error() }}</p>
               <button class="btn-primary" (click)="reset()">Réessayer</button>
             </div>
+          } @else if (selectedFile() && !isLoading()) {
+            <div class="confirm-block">
+              <div class="file-pill">
+                <lucide-icon [img]="UploadIcon" [size]="16" color="var(--blue)" />
+                <span class="file-name">{{ selectedFile()!.name }}</span>
+                <button class="file-change" (click)="clearFile()">Changer</button>
+              </div>
+
+              <div class="fees-field">
+                <label class="fees-label" for="totalFees">
+                  Total des frais (optionnel)
+                </label>
+                <div class="fees-input-wrap">
+                  <input
+                    id="totalFees"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    inputmode="decimal"
+                    placeholder="0,00"
+                    class="fees-input"
+                    [value]="totalFees()"
+                    (input)="totalFees.set($any($event.target).value)"
+                  />
+                  <span class="fees-unit">€</span>
+                </div>
+                <p class="fees-help">
+                  Indique le total des commissions de ton broker pour cet import
+                  (ex. 7,28). Le P&amp;L sera affiché net de frais. Laisse vide si
+                  déjà inclus.
+                </p>
+              </div>
+
+              <button class="btn-primary" (click)="upload()">Importer</button>
+            </div>
           } @else {
             <div
               class="drop-zone"
@@ -170,6 +205,8 @@ export class CsvImportComponent {
   protected readonly isLoading = signal(false);
   protected readonly result = signal<ImportResult | null>(null);
   protected readonly error = signal<string | null>(null);
+  protected readonly selectedFile = signal<File | null>(null);
+  protected readonly totalFees = signal<string>('');
 
   onOverlayClick(e: MouseEvent) {
     if ((e.target as HTMLElement).classList.contains('overlay'))
@@ -185,17 +222,38 @@ export class CsvImportComponent {
     e.preventDefault();
     this.isDragging.set(false);
     const file = e.dataTransfer?.files[0];
-    if (file) this.upload(file);
+    if (file) this.selectFile(file);
   }
 
   onFileChange(e: Event) {
     const file = (e.target as HTMLInputElement).files?.[0];
-    if (file) this.upload(file);
+    if (file) this.selectFile(file);
   }
 
-  private upload(file: File) {
+  // Étape 1 : sélection → on affiche le champ frais (pas d'upload immédiat).
+  private selectFile(file: File) {
+    this.selectedFile.set(file);
+    this.error.set(null);
+  }
+
+  protected clearFile() {
+    this.selectedFile.set(null);
+    this.totalFees.set('');
+  }
+
+  // Étape 2 : confirmation → upload avec les frais éventuels.
+  protected upload() {
+    const file = this.selectedFile();
+    if (!file) return;
+
     const formData = new FormData();
     formData.append('file', file, file.name);
+
+    const fees = parseFloat(this.totalFees().replace(',', '.'));
+    if (Number.isFinite(fees) && fees > 0) {
+      formData.append('totalFees', String(fees));
+    }
+
     this.isLoading.set(true);
     this.error.set(null);
 
@@ -221,5 +279,7 @@ export class CsvImportComponent {
   reset() {
     this.result.set(null);
     this.error.set(null);
+    this.selectedFile.set(null);
+    this.totalFees.set('');
   }
 }
