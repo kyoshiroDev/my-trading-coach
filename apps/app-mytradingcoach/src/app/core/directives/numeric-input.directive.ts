@@ -18,10 +18,10 @@ import { Directive, ElementRef, HostListener, inject, input } from '@angular/cor
   standalone: true,
 })
 export class NumericInputDirective {
-  /** Autoriser un nombre négatif (défaut: false). */
-  readonly allowNegative = input(false, { alias: 'mtcAllowNegative' });
-  /** Nombre max de décimales (défaut: illimité = -1). */
-  readonly maxDecimals = input(-1, { alias: 'mtcMaxDecimals' });
+  /** Autoriser un nombre négatif (défaut: false). Usage : [mtcAllowNegative]="true". */
+  readonly mtcAllowNegative = input(false);
+  /** Nombre max de décimales (défaut: illimité = -1). Usage : [mtcMaxDecimals]="2". */
+  readonly mtcMaxDecimals = input(-1);
 
   private readonly el = inject<ElementRef<HTMLInputElement>>(ElementRef);
 
@@ -54,7 +54,7 @@ export class NumericInputDirective {
 
     // Signe négatif : garder seulement s'il est autorisé ET en tête.
     let neg = '';
-    if (this.allowNegative() && s.startsWith('-')) neg = '-';
+    if (this.mtcAllowNegative() && s.startsWith('-')) neg = '-';
     s = s.replace(/-/g, '');
 
     // Ne garder que chiffres, point et virgule.
@@ -69,7 +69,7 @@ export class NumericInputDirective {
     }
 
     // Limiter les décimales si demandé.
-    const max = this.maxDecimals();
+    const max = this.mtcMaxDecimals();
     if (max >= 0) {
       const sep = s.search(/[.,]/);
       if (sep !== -1) s = s.slice(0, sep + 1 + max);
