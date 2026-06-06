@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
 import * as compression from 'compression';
 import { AppModule } from './app/app.module';
+import { RedisIoAdapter } from './common/adapters/redis-io.adapter';
 
 const REQUIRED_ENV_VARS = [
   'JWT_SECRET',
@@ -77,6 +78,12 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  // Adapter Redis pour socket.io → broadcast propagé à TOUS les workers du cluster.
+  // Doit être branché avant app.listen() (init des gateways). Résilient si Redis down.
+  const redisIoAdapter = new RedisIoAdapter(app);
+  await redisIoAdapter.connectToRedis();
+  app.useWebSocketAdapter(redisIoAdapter);
 
   const port = process.env['PORT'] ?? 3000;
   await app.listen(port);
