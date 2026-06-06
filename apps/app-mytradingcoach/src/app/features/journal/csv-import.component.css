@@ -148,6 +148,110 @@
   margin: 0 20px 20px;
 }
 
+/* ── Confirm (fichier sélectionné + frais) ── */
+.confirm-block {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+.file-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.file-name {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-change {
+  background: none;
+  border: none;
+  color: var(--blue);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+  flex-shrink: 0;
+}
+.file-change:hover {
+  text-decoration: underline;
+}
+
+.fees-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fees-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  font-family: var(--font-display);
+}
+
+.fees-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.fees-input {
+  width: 100%;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 28px 9px 12px;
+  font-size: 13px;
+  color: var(--text);
+  font-family: var(--font-body);
+  transition: border-color 0.15s;
+}
+.fees-input:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+.fees-input::placeholder {
+  color: var(--text-3);
+}
+
+.fees-unit {
+  position: absolute;
+  right: 12px;
+  font-size: 13px;
+  color: var(--text-3);
+  pointer-events: none;
+}
+
+.fees-help {
+  font-size: 11px;
+  color: var(--text-3);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.fees-note {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.5;
+  margin: 0;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
 /* ── Spinner ── */
 .spinner {
   width: 24px;

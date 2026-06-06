@@ -344,3 +344,23 @@ model EmailCampaignLog {
 
   @@index([type, sentAt])
 }
+
+// Historique quotidien des métriques clés (1 ligne/jour) → courbes d'évolution admin.
+model MetricsSnapshot {
+  id           String   @id @default(cuid())
+  date         String   @unique // YYYY-MM-DD Paris (1 snapshot/jour)
+  mrr          Int
+  arr          Int
+  totalUsers   Int
+  freeUsers    Int
+  starterUsers Int
+  premiumUsers Int
+  trials       Int
+  newThisDay   Int // inscriptions du jour (24h glissantes)
+  activeUsers  Int // users avec ≥1 trade sur 7 jours
+  betaTesters  Int
+  ambassadors  Int
+  createdAt    DateTime @default(now())
+
+  @@index([date])
+}

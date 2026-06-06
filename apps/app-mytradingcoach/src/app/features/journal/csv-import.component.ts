@@ -17,6 +17,8 @@ import {
   AlertCircle,
 } from 'lucide-angular';
 import { environment } from '../../../environments/environment';
+import { NumericInputDirective } from '../../core/directives/numeric-input.directive';
+import { parseDecimal } from '../../core/utils/parse-decimal';
 
 interface ImportResult {
   created: number;
@@ -29,7 +31,7 @@ interface ImportResult {
 @Component({
   selector: 'mtc-csv-import',
   standalone: true,
-  imports: [LucideAngularModule],
+  imports: [LucideAngularModule, NumericInputDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './csv-import.component.css',
   template: `
@@ -96,6 +98,57 @@ interface ImportResult {
               <p class="result-title">Erreur d'importation</p>
               <p class="result-sub">{{ error() }}</p>
               <button class="btn-primary" (click)="reset()">Réessayer</button>
+            </div>
+          } @else if (selectedFile() && !isLoading()) {
+            <div class="confirm-block">
+              <div class="file-pill">
+                <lucide-icon [img]="UploadIcon" [size]="16" color="var(--blue)" />
+                <span class="file-name">{{ selectedFile()!.name }}</span>
+                <button class="file-change" (click)="clearFile()">Changer</button>
+              </div>
+
+              @switch (feesDisabledReason()) {
+                @case ('has_fees_column') {
+                  <p class="fees-note">
+                    ✓ Frais détectés dans ton fichier — ils sont déjà pris en
+                    compte. Pas besoin de les saisir.
+                  </p>
+                }
+                @case ('too_many') {
+                  <p class="fees-note">
+                    Import volumineux (plus de 100 trades). Les frais ne peuvent
+                    pas être saisis en un total global sur autant de trades —
+                    importe par période plus courte pour les inclure.
+                  </p>
+                }
+                @default {
+                  <div class="fees-field">
+                    <label class="fees-label" for="totalFees">
+                      Total des frais (optionnel)
+                    </label>
+                    <div class="fees-input-wrap">
+                      <input
+                        id="totalFees"
+                        type="text"
+                        inputmode="decimal"
+                        mtcNumericInput
+                        placeholder="0,00"
+                        class="fees-input"
+                        [value]="totalFees()"
+                        (input)="totalFees.set($any($event.target).value)"
+                      />
+                      <span class="fees-unit">€</span>
+                    </div>
+                    <p class="fees-help">
+                      Indique le total des commissions de ton broker pour cet import
+                      (ex. 7,28). Le P&amp;L sera affiché net de frais. Laisse vide si
+                      déjà inclus.
+                    </p>
+                  </div>
+                }
+              }
+
+              <button class="btn-primary" (click)="upload()">Importer</button>
             </div>
           } @else {
             <div
@@ -170,6 +223,13 @@ export class CsvImportComponent {
   protected readonly isLoading = signal(false);
   protected readonly result = signal<ImportResult | null>(null);
   protected readonly error = signal<string | null>(null);
+  protected readonly selectedFile = signal<File | null>(null);
+  protected readonly totalFees = signal<string>('');
+  // null = champ frais actif ; sinon raison de désactivation.
+  protected readonly feesDisabledReason = signal<null | 'has_fees_column' | 'too_many'>(null);
+
+  /** Au-delà : un total global réparti au prorata donnerait des frais faux. */
+  private readonly FEES_INPUT_MAX_TRADES = 100;
 
   onOverlayClick(e: MouseEvent) {
     if ((e.target as HTMLElement).classList.contains('overlay'))
@@ -185,17 +245,61 @@ export class CsvImportComponent {
     e.preventDefault();
     this.isDragging.set(false);
     const file = e.dataTransfer?.files[0];
-    if (file) this.upload(file);
+    if (file) this.selectFile(file);
   }
 
   onFileChange(e: Event) {
     const file = (e.target as HTMLInputElement).files?.[0];
-    if (file) this.upload(file);
+    if (file) this.selectFile(file);
   }
 
-  private upload(file: File) {
+  // Étape 1 : sélection → on affiche le champ frais (pas d'upload immédiat).
+  private selectFile(file: File) {
+    this.selectedFile.set(file);
+    this.error.set(null);
+    this.totalFees.set('');
+    this.feesDisabledReason.set(null);
+
+    // Lecture légère (en-tête + nb de lignes) pour décider si le champ frais
+    // doit être désactivé. Excel (.xlsx) non lisible ici → le back protège.
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = String(reader.result ?? '');
+      const lines = text.split(/\r?\n/).filter((l) => l.trim());
+      if (lines.length < 2) return;
+
+      const header = lines[0].toLowerCase();
+      const hasFeesColumn = /\b(commission|comm\.|fee|fees|frais)\b/.test(header);
+      const tradeCount = lines.length - 1;
+
+      if (hasFeesColumn) this.feesDisabledReason.set('has_fees_column');
+      else if (tradeCount > this.FEES_INPUT_MAX_TRADES) this.feesDisabledReason.set('too_many');
+    };
+    reader.onerror = () => {
+      /* échec lecture → on n'empêche rien, le back reste le filet de sécurité */
+    };
+    reader.readAsText(file);
+  }
+
+  protected clearFile() {
+    this.selectedFile.set(null);
+    this.totalFees.set('');
+    this.feesDisabledReason.set(null);
+  }
+
+  // Étape 2 : confirmation → upload avec les frais éventuels.
+  protected upload() {
+    const file = this.selectedFile();
+    if (!file) return;
+
     const formData = new FormData();
     formData.append('file', file, file.name);
+
+    const fees = parseDecimal(this.totalFees());
+    if (this.feesDisabledReason() === null && fees != null && fees > 0) {
+      formData.append('totalFees', String(fees));
+    }
+
     this.isLoading.set(true);
     this.error.set(null);
 
@@ -221,5 +325,8 @@ export class CsvImportComponent {
   reset() {
     this.result.set(null);
     this.error.set(null);
+    this.selectedFile.set(null);
+    this.totalFees.set('');
+    this.feesDisabledReason.set(null);
   }
 }

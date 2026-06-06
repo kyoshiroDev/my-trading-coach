@@ -12,6 +12,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { translateEcoEvent } from '../../../../core/data/eco-event-translations';
+import { normalizeEventKey, eventKey } from '../../../../core/data/eco-event-key';
 import { DailyRecap } from '../../../../core/api/daily-recap.api';
 import { EcoCalendarApi, EcoCalendarData } from '../../../../core/api/eco-calendar.api';
 import { MoodState } from '../../../../core/api/session.api';
@@ -354,7 +355,7 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
                 @if (event.isReleased) {
                   <span class="eco-released-badge">✓</span>
                 }
-                @if (pinnedKeys().has(event.name + ':' + event.currency)) {
+                @if (isEventPinned(event)) {
                   <button
                     type="button"
                     class="eco-unpin-btn"
@@ -424,18 +425,23 @@ export class SessionMorningComponent {
 
   protected readonly pinnedKeys = computed(() => {
     const fresh = this.freshPins();
-    // Si chargé depuis l'API → priorité (données fraîches)
-    if (fresh !== null) return new Set(fresh);
-    // Fallback : champ pinnedEvents du payload getTodayEvents (cache backend)
-    return new Set(this.ecoCalendar()?.pinnedEvents ?? []);
+    // freshPins (API) en priorité, sinon le champ pinnedEvents du cache backend.
+    const raw = fresh !== null ? fresh : (this.ecoCalendar()?.pinnedEvents ?? []);
+    // Clés normalisées (suffixe de période retiré) pour un matching stable dans le temps.
+    return new Set(raw.map(normalizeEventKey));
   });
+
+  /** Un event affiché est-il épinglé ? (clé normalisée). */
+  protected isEventPinned(e: { name: string; currency: string }): boolean {
+    return this.pinnedKeys().has(eventKey(e));
+  }
 
   protected readonly filteredEvents = computed(() => {
     const events = this.ecoCalendar()?.events ?? [];
     const pinned = this.pinnedKeys();
     const impact = this.filterImpact();
     const isKeyPinned = (e: { name: string; currency: string }) =>
-      pinned.has(`${e.name}:${e.currency}`);
+      pinned.has(eventKey(e));
 
     return events
       .filter(e => {
@@ -462,19 +468,21 @@ export class SessionMorningComponent {
   protected readonly hasMatchingPins = computed(() => {
     const events = this.ecoCalendar()?.events ?? [];
     const pinned = this.pinnedKeys();
-    return pinned.size > 0 && events.some(e => pinned.has(`${e.name}:${e.currency}`));
+    return pinned.size > 0 && events.some(e => pinned.has(eventKey(e)));
   });
 
   protected unpinEvent(event: { name: string; currency: string }): void {
-    const key = `${event.name}:${event.currency}`;
-    const current = this.pinnedKeys();
-    if (!current.has(key)) return;
-    const next = new Set(current);
-    next.delete(key);
+    const target = eventKey(event); // forme normalisée de l'event à retirer
+    // On travaille sur les pins BRUTS stockés (avec suffixe de période) pour ne
+    // pas réécrire les autres clés. On retire toute clé dont la forme normalisée
+    // correspond à l'event désépinglé (insensible au suffixe « (Jun) »…).
+    const rawPins = this.freshPins() ?? this.ecoCalendar()?.pinnedEvents ?? [];
+    const next = rawPins.filter(p => normalizeEventKey(p) !== target);
+    if (next.length === rawPins.length) return; // rien à retirer
     // Mise à jour optimiste du signal local → l'event disparaît immédiatement
-    this.freshPins.set([...next]);
+    this.freshPins.set(next);
     // Persistance backend (même API que eco-calendar)
-    this.ecoApi.savePins([...next])
+    this.ecoApi.savePins(next)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe();
   }
