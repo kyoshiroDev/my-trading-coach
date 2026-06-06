@@ -1,9 +1,10 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { AdminService } from './admin.service';
 import { EmailCampaignService } from './email-campaign.service';
 import type { CampaignType } from './email-campaign.service';
+import { MetricsSnapshotCron } from './metrics-snapshot.cron';
 import { UsersService } from '../users/users.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -18,7 +19,22 @@ export class AdminController {
     private readonly usersService: UsersService,
     private readonly prisma: PrismaService,
     private readonly discordService: DiscordService,
+    private readonly metrics: MetricsSnapshotCron,
   ) {}
+
+  // ── Métriques historisées (snapshots quotidiens) ──────────────────────────
+
+  /** Les N derniers snapshots quotidiens (pour les courbes d'évolution). */
+  @Get('metrics/history')
+  metricsHistory(@Query('days') days?: string) {
+    return this.metrics.history(days ? parseInt(days, 10) : 30);
+  }
+
+  /** Déclenche un snapshot immédiat (backfill / test). Idempotent sur la date. */
+  @Post('metrics/snapshot')
+  triggerSnapshot() {
+    return this.metrics.takeSnapshot();
+  }
 
   /**
    * Re-synchronise le rôle Discord de tous les comptes liés (idempotent).
