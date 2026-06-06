@@ -65,6 +65,28 @@
       "path-to-regexp@>=8.0.0 <8.4.0": ">=8.4.0",
       "axios@<1.16.0": ">=1.16.0"
     },
+    "packageExtensions": {
+      "@nestjs/schedule": {
+        "peerDependencies": { "@nestjs/platform-express": "*", "@nestjs/websockets": "*" },
+        "peerDependenciesMeta": { "@nestjs/platform-express": { "optional": true }, "@nestjs/websockets": { "optional": true } }
+      },
+      "@nestjs/bullmq": {
+        "peerDependencies": { "@nestjs/platform-express": "*", "@nestjs/websockets": "*" },
+        "peerDependenciesMeta": { "@nestjs/platform-express": { "optional": true }, "@nestjs/websockets": { "optional": true } }
+      },
+      "@nestjs/bull-shared": {
+        "peerDependencies": { "@nestjs/platform-express": "*", "@nestjs/websockets": "*" },
+        "peerDependenciesMeta": { "@nestjs/platform-express": { "optional": true }, "@nestjs/websockets": { "optional": true } }
+      },
+      "@nestjs/throttler": {
+        "peerDependencies": { "@nestjs/platform-express": "*", "@nestjs/websockets": "*" },
+        "peerDependenciesMeta": { "@nestjs/platform-express": { "optional": true }, "@nestjs/websockets": { "optional": true } }
+      },
+      "@sentry/nestjs": {
+        "peerDependencies": { "@nestjs/platform-express": "*", "@nestjs/websockets": "*" },
+        "peerDependenciesMeta": { "@nestjs/platform-express": { "optional": true }, "@nestjs/websockets": { "optional": true } }
+      }
+    },
     "onlyBuiltDependencies": [
       "@nestjs/core",
       "@parcel/watcher",
