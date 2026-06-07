@@ -14,7 +14,7 @@ import { RouterLink } from '@angular/router';
 import { translateEcoEvent } from '../../../../core/data/eco-event-translations';
 import { normalizeEventKey, eventKey } from '../../../../core/data/eco-event-key';
 import { DailyRecap } from '../../../../core/api/daily-recap.api';
-import { EcoCalendarApi, EcoCalendarData } from '../../../../core/api/eco-calendar.api';
+import { EcoCalendarApi, EcoCalendarData, EcoEvent } from '../../../../core/api/eco-calendar.api';
 import { MoodState } from '../../../../core/api/session.api';
 import { DebriefApi, DebriefObjective } from '../../../../core/api/debrief.api';
 import { UserStore } from '../../../../core/stores/user.store';
@@ -25,6 +25,13 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
   { value: 'FOCUSED',   label: 'Focalisé', emoji: '🎯' },
   { value: 'NEUTRAL',   label: 'Neutre',   emoji: '😐' },
   { value: 'TIRED',     label: 'Fatigué',  emoji: '😰' },
+];
+
+// Agenda éco d'exemple (mode démo) — affiché si aucun événement réel à montrer,
+// pour que la carte « Agenda du jour » ne soit jamais vide côté vitrine.
+const DEMO_ECO_EVENTS: EcoEvent[] = [
+  { time: '14:30', name: 'Non-Farm Payrolls', currency: 'USD', country: 'US', impact: 'high', actual: null, estimate: 185, previous: 206, isReleased: false, unit: 'K' },
+  { time: '16:00', name: 'ISM Manufacturing PMI', currency: 'USD', country: 'US', impact: 'high', actual: null, estimate: 48.5, previous: 48.7, isReleased: false, unit: null },
 ];
 
 @Component({
@@ -297,13 +304,13 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
             </select>
 
             <span class="eco-filter-count">
-              {{ filteredEvents().length }} événement{{ filteredEvents().length > 1 ? 's' : '' }}
+              {{ agendaEvents().length }} événement{{ agendaEvents().length > 1 ? 's' : '' }}
             </span>
           </div>
 
           <!-- Liste des événements filtrés -->
           <div class="eco-events">
-            @if (filteredEvents().length === 0) {
+            @if (agendaEvents().length === 0) {
               <div class="eco-empty-filter">
                 @if (pinnedKeys().size > 0 && !hasMatchingPins()) {
                   Aucun de tes events épinglés n'est prévu {{ dayLabel() }}.
@@ -314,7 +321,7 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
               </div>
             }
 
-            @for (event of filteredEvents(); track event.name) {
+            @for (event of agendaEvents(); track event.name) {
               <div class="eco-event"
                    [class.dim]="isOutsideSession(event.time)"
                    [class.released]="event.isReleased">
@@ -463,6 +470,13 @@ export class SessionMorningComponent {
         if (!aPin && bPin) return 1;
         return a.time.localeCompare(b.time);
       });
+  });
+
+  /** Agenda affiché : événements réels, ou exemples figés en démo si rien à montrer. */
+  protected readonly agendaEvents = computed(() => {
+    const real = this.filteredEvents();
+    if (real.length > 0) return real;
+    return this.userStore.isDemo() ? DEMO_ECO_EVENTS : real;
   });
 
   protected readonly hasMatchingPins = computed(() => {

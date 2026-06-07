@@ -20,6 +20,22 @@ import { todayParis } from '../../common/utils/paris-date';
 const MODEL = 'claude-sonnet-4-6';
 const AI_MONTHLY_QUOTA = 100;
 
+// Contenu IA figé pour le compte démo — AUCUN appel modèle (coût zéro).
+const DEMO_INSIGHTS = {
+  topPattern:
+    "Tes meilleurs trades sont des breakouts/pullbacks en session de Londres, en état FOCALISÉ. Tes pertes se concentrent en session asiatique.",
+  emotionInsight:
+    'CONFIANT/FOCALISÉ → win rate > 70%. FATIGUÉ → sous 40% : évite de trader fatigué.',
+  insights: [
+    { type: 'strength', title: 'Edge clair sur Londres', description: '72% de win rate sur la session de Londres (breakouts/pullbacks).', badge: 'Force' },
+    { type: 'weakness', title: 'Session asiatique à éviter', description: 'Win rate 38% en session asiatique, hors de ta zone.', badge: 'Attention' },
+    { type: 'pattern', title: 'Overtrading en fin de journée', description: 'Tes trades après le 3ᵉ de la journée sont majoritairement perdants.', badge: 'Pattern' },
+    { type: 'strength', title: 'Bonne gestion du risque', description: 'R:R moyen 1.9 — tu coupes tes pertes.', badge: 'Force' },
+  ],
+};
+const DEMO_CHAT_REPLY =
+  "Je suis ton coach IA. En mode démo, mes réponses sont des exemples. Crée ton compte gratuit pour un coaching personnalisé sur tes vrais trades : tes patterns, tes émotions et des objectifs concrets chaque semaine.";
+
 @Injectable()
 export class AiService {
   private readonly anthropic = new Anthropic({
@@ -37,7 +53,8 @@ export class AiService {
 
   // ── Insights — delegates to orchestrator ──────────────────────────────────
 
-  async getInsights(userId: string, role: Role) {
+  async getInsights(userId: string, role: Role, isDemo = false) {
+    if (isDemo) return DEMO_INSIGHTS; // données figées, zéro appel modèle
     if (role !== Role.ADMIN) {
       await this.checkQuota(userId);
       await this.checkInsightsCooldown(userId);
@@ -54,7 +71,9 @@ export class AiService {
     userRole: Role,
     message: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }>,
+    isDemo = false,
   ) {
+    if (isDemo) return { response: DEMO_CHAT_REPLY }; // réponse figée, zéro appel modèle
     if (userRole !== Role.ADMIN) {
       await this.checkQuota(userId);
       await this.checkDailyLimit(userId, 'chat', 50);
@@ -378,7 +397,9 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
 
   async getInsightsCooldown(
     userId: string,
+    isDemo = false,
   ): Promise<{ cooldownSeconds: number }> {
+    if (isDemo) return { cooldownSeconds: 0 }; // pas de cooldown en démo
     const key = `ai:cooldown:insights:${userId}`;
     const ttl = await this.redisService.client.ttl(key);
     return { cooldownSeconds: Math.max(0, ttl) };

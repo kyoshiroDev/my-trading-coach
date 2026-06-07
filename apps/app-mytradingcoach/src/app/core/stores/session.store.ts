@@ -34,6 +34,9 @@ export class SessionStore {
   readonly yesterdayRecap    = signal<DailyRecap | null>(null);
   readonly currentObjectives = signal<DebriefObjective[]>([]);
   readonly currentDebriefId  = signal<string | null>(null);
+  // Démo : dernière session CLOSED (+ ses stats) pour un débrief d'exemple jamais vide.
+  readonly lastClosedSession = signal<TradingSession | null>(null);
+  readonly lastClosedStats   = signal<LiveStats | null>(null);
   readonly marketCtx         = signal<MarketContext | null>(null);
   readonly newsItems         = signal<NewsItem[]>([]);
   readonly breakingNews      = signal<string | null>(null);
@@ -127,6 +130,9 @@ export class SessionStore {
 
     this.loadWeekEcoCalendar();
 
+    // Démo : charger la dernière session fermée → débrief d'exemple (jamais vide).
+    if (this.userStore.isDemo()) this.loadLastClosedSession();
+
     // Le débrief (objectifs) est une feature Starter+ : ne pas appeler l'endpoint
     // (StarterGuard) pour un FREE, sinon 403. La session de base reste accessible.
     if (this.userStore.isStarterOrAbove()) {
@@ -140,6 +146,38 @@ export class SessionStore {
           },
         });
     }
+  }
+
+  /** Démo : récupère la dernière session CLOSED (avec stats) pour l'onglet Débrief. */
+  private loadLastClosedSession(): void {
+    this.sessionApi
+      .getSessionHistory(10)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          // L'historique ne contient que des sessions fermées → prendre la plus
+          // récente avec des trades (sinon la plus récente).
+          const items = res.data ?? [];
+          const closed = items.find((s) => (s.totalTrades ?? 0) > 0) ?? items[0];
+          if (!closed) return;
+          this.sessionApi
+            .getSessionDetail(closed.id)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+              next: (d) => {
+                const detail = d.data;
+                this.lastClosedSession.set(detail);
+                this.lastClosedStats.set({
+                  totalPnl: detail.totalPnl ?? 0,
+                  winRate: detail.winRate ?? 0,
+                  tradesCount: detail.totalTrades ?? 0,
+                  closedCount: detail.totalTrades ?? 0,
+                  trades: detail.trades ?? [],
+                });
+              },
+            });
+        },
+      });
   }
 
   selectMood(mood: MoodState): void {
