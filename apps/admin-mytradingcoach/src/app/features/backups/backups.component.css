@@ -6,6 +6,13 @@
 .btn-ghost:hover:not(:disabled) { background: var(--bg4); color: var(--text); }
 .btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; }
 
+.backup-alert { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--amber-dim); border: 1px solid rgba(245,166,35,0.3); border-radius: 8px; color: var(--text); font-size: 13px; line-height: 1.4; }
+.backup-alert lucide-icon { color: var(--amber); flex-shrink: 0; }
+.backup-alert strong { font-weight: 700; }
+.backup-alert-sub { color: var(--text2); }
+.backup-alert.critical { background: rgba(255,85,99,0.1); border-color: rgba(255,85,99,0.3); }
+.backup-alert.critical lucide-icon { color: var(--red); }
+
 .backup-tags { display: flex; gap: 4px; flex-shrink: 0; }
 .tag.prod { background: var(--teal-dim); color: var(--teal); border: 1px solid rgba(0,212,170,0.2); }
 .tag.dev  { background: var(--blue-dim); color: var(--blue);  border: 1px solid rgba(74,158,255,0.2); }

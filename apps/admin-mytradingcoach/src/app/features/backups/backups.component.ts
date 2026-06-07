@@ -4,7 +4,7 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { LucideAngularModule, RefreshCw, Plus, Trash2, RotateCcw, X } from 'lucide-angular';
+import { LucideAngularModule, RefreshCw, Plus, Trash2, RotateCcw, X, AlertTriangle } from 'lucide-angular';
 import { VpsApi, Backup } from '../../core/api/vps.api';
 
 type BackupTarget = 'bdd_prod' | 'bdd_dev' | 'api_prod' | 'api_dev';
@@ -44,6 +44,27 @@ const TARGET_CONFIG: Record<BackupTarget, { label: string; color: string; icon: 
           </button>
         </div>
       </div>
+
+      <!-- Alerte fraîcheur : aucune sauvegarde ou dernière > seuil -->
+      @if (backupStale()) {
+        <div class="backup-alert" [class.critical]="lastBackupAt() === null">
+          <lucide-icon [img]="AlertIcon" [size]="18" />
+          @if (lastBackupAt() === null) {
+            <div>
+              <strong>Aucune sauvegarde trouvée.</strong>
+              <span class="backup-alert-sub">Lance un backup ou vérifie le cron sur le VPS.</span>
+            </div>
+          } @else {
+            <div>
+              <strong>Dernière sauvegarde il y a {{ hoursSinceLastBackup() }} h</strong>
+              <span class="backup-alert-sub">
+                — au-delà du seuil de {{ staleThresholdH }} h ({{ lastBackupAt() | date:'dd/MM/yyyy HH:mm' }}).
+                Vérifie que le backup automatique tourne.
+              </span>
+            </div>
+          }
+        </div>
+      }
 
       <!-- Stats -->
       <div class="backup-stats">
@@ -223,6 +244,10 @@ export class BackupsComponent {
   protected readonly TrashIcon   = Trash2;
   protected readonly RestoreIcon = RotateCcw;
   protected readonly XIcon       = X;
+  protected readonly AlertIcon   = AlertTriangle;
+
+  /** Seuil au-delà duquel on alerte que la dernière sauvegarde est trop ancienne. */
+  protected readonly staleThresholdH = 48;
 
   protected readonly loading             = signal(true);
   protected readonly backups             = signal<Backup[]>([]);
@@ -243,6 +268,27 @@ export class BackupsComponent {
   protected readonly totalSizeMb = computed(() =>
     this.backups().reduce((s, b) => s + (b.sizeMb ?? 0), 0).toFixed(1),
   );
+
+  /** Date de la sauvegarde la plus récente (toutes confondues), ou null si aucune. */
+  protected readonly lastBackupAt = computed<Date | null>(() => {
+    const times = this.backups()
+      .map(b => new Date(b.createdAt).getTime())
+      .filter(t => !Number.isNaN(t));
+    return times.length ? new Date(Math.max(...times)) : null;
+  });
+
+  /** Heures écoulées depuis la dernière sauvegarde (null si aucune). */
+  protected readonly hoursSinceLastBackup = computed<number | null>(() => {
+    const last = this.lastBackupAt();
+    return last ? Math.floor((Date.now() - last.getTime()) / 3_600_000) : null;
+  });
+
+  /** Vrai si aucune sauvegarde ou si la dernière dépasse le seuil. */
+  protected readonly backupStale = computed<boolean>(() => {
+    if (this.loading()) return false;
+    const h = this.hoursSinceLastBackup();
+    return h === null || h > this.staleThresholdH;
+  });
 
   protected readonly groups = computed((): BackupGroup[] =>
     Object.entries(TARGET_CONFIG).map(([target, cfg]) => ({
