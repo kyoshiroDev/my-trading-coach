@@ -1,4 +1,5 @@
 ---
+import { API_URL } from '../config';
 import Base from '../layouts/Base.astro';
 import Nav from '../components/Nav.astro';
 import Hero from '../components/Hero.astro';
@@ -36,6 +37,19 @@ const ARTICLES = [
     date: "15 Avr 2026",
   },
 ];
+
+// Compteur de traders : fetch au build (SEO + valeur initiale), fallback si API down.
+const FALLBACK_TRADERS = 14;
+let traders = FALLBACK_TRADERS;
+try {
+  const res = await fetch(`${API_URL}/public/stats`);
+  if (res.ok) {
+    const j = await res.json();
+    if (typeof j?.data?.traders === 'number') traders = j.data.traders;
+  }
+} catch {
+  // API injoignable au build → on garde le fallback
+}
 ---
 
 <Base
@@ -45,14 +59,14 @@ const ARTICLES = [
   ogUrl="https://www.mytradingcoach.app/"
 >
   <Nav />
-  <Hero />
+  <Hero traders={traders} />
   <Moments />
   <Problem />
   <DayTimeline />
   <Features />
   <Compare />
   <Pricing />
-  <Testimonials />
+  <Testimonials traders={traders} />
   <FAQ />
   <CtaFinal />
 
@@ -98,6 +112,22 @@ const ARTICLES = [
   </section>
 
   <Footer />
+
+  <!-- Rafraîchit le compteur de traders en live (la valeur du build sert de fallback). -->
+  <script>
+    const API = import.meta.env.PUBLIC_API_URL ?? 'https://api.mytradingcoach.app';
+    fetch(`${API}/public/stats`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        const n = j?.data?.traders;
+        if (typeof n === 'number') {
+          document
+            .querySelectorAll('[data-traders-count]')
+            .forEach((el) => { el.textContent = String(n); });
+        }
+      })
+      .catch(() => { /* API down → on garde la valeur du build */ });
+  </script>
 </Base>
 
 <style>
