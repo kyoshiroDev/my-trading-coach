@@ -13,8 +13,10 @@ import { TradesStore } from '../../../core/stores/trades.store';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AmbassadorNotifService } from '../../../core/services/ambassador-notif.service';
 import { LiveModeService } from '../../../core/services/live-mode.service';
+import { DemoService } from '../../../core/services/demo.service';
 import { OnboardingComponent } from '../../../features/onboarding/onboarding.component';
 import { PlanModalComponent } from '../plan-modal/plan-modal.component';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'mtc-sidebar',
@@ -262,9 +264,34 @@ import { PlanModalComponent } from '../plan-modal/plan-modal.component';
       <!-- ─── MAIN ─── -->
       <main class="main-content"
             [style.overflow]="liveModeService.isLive() ? 'hidden' : null">
+        @if (userStore.isDemo()) {
+          <div class="demo-banner">
+            <span class="demo-banner-text">
+              🔍 <strong>Mode démo</strong> — tu explores MyTradingCoach avec des données d'exemple.
+            </span>
+            <a class="demo-banner-cta" [href]="landingUrl + '/#pricing'">Créer mon compte gratuit →</a>
+          </div>
+        }
         <router-outlet />
       </main>
     </div>
+
+    @if (demo.showSignupPrompt()) {
+      <div class="demo-modal-overlay" role="button" tabindex="-1"
+           (click)="demo.dismiss()" (keydown.escape)="demo.dismiss()">
+        <div class="demo-modal" role="dialog"
+             (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+          <div class="demo-modal-emoji">🚀</div>
+          <h2 class="demo-modal-title">Crée ton compte pour aller plus loin</h2>
+          <p class="demo-modal-text">
+            En mode démo, les données sont en lecture seule. Crée ton compte gratuit
+            pour logger tes vrais trades et débloquer ton coaching personnalisé.
+          </p>
+          <a class="demo-modal-cta" [href]="landingUrl + '/#pricing'">Créer mon compte gratuit →</a>
+          <button class="demo-modal-dismiss" (click)="demo.dismiss()">Continuer la démo</button>
+        </div>
+      </div>
+    }
   `,
 })
 export class SidebarComponent {
@@ -274,6 +301,8 @@ export class SidebarComponent {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly ambassadorNotif = inject(AmbassadorNotifService);
   protected readonly liveModeService = inject(LiveModeService);
+  protected readonly demo = inject(DemoService);
+  protected readonly landingUrl = environment.landingUrl;
 
   protected readonly sidebarOpen   = signal(false);
   protected readonly showPlanModal  = signal(false);
@@ -322,6 +351,12 @@ export class SidebarComponent {
   }
 
   logout() {
+    // En mode démo : retour à la landing plutôt que l'écran de login.
+    if (this.userStore.isDemo()) {
+      this.auth.logout();
+      window.location.href = this.landingUrl;
+      return;
+    }
     this.auth.logout();
   }
 }

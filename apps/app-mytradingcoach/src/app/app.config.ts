@@ -14,6 +14,7 @@ import { registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
 import { appRoutes } from './app.routes';
 import { authInterceptor } from './core/auth/auth.interceptor';
+import { demoInterceptor } from './core/auth/demo.interceptor';
 
 // Locale française pour tous les DatePipe/DecimalPipe (dates en français)
 registerLocaleData(localeFr, 'fr-FR');
@@ -23,7 +24,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
     provideRouter(appRoutes),
-    provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
+    provideHttpClient(withFetch(), withInterceptors([authInterceptor, demoInterceptor])),
     { provide: LOCALE_ID, useValue: 'fr-FR' },
   ],
 };
