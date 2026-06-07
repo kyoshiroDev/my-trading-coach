@@ -7,7 +7,8 @@
     "postinstall": "echo skip prisma generate",
     "clean": "rm -rf .angular/cache .nx/cache",
     "dev": "rm -rf .angular/cache && nx serve app-mytradingcoach",
-    "dev:api": "NODE_ENV=development nx serve api-mytradingcoach"
+    "dev:api": "NODE_ENV=development nx serve api-mytradingcoach",
+    "seed:demo": "tsx apps/api-mytradingcoach/scripts/seed-demo-account.ts"
   },
   "private": true,
   "devDependencies": {
