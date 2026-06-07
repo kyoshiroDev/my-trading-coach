@@ -1,12 +1,12 @@
 import {
-  Controller, Delete, Get, Param, Post, Req, Res, UseGuards,
+  Body, Controller, Delete, Get, Param, Post, Req, Res, UseGuards,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { VpsService } from './vps.service';
 import { DockerService } from './docker.service';
-import { BackupService } from './backup.service';
+import { BackupService, BackupTarget } from './backup.service';
 
 @UseGuards(JwtAuthGuard, AdminGuard)
 @Controller()
@@ -53,8 +53,8 @@ export class VpsController {
   }
 
   @Post('vps/backups')
-  async createBackup() {
-    return await this.backup.createBackup();
+  async createBackup(@Body() body: { target?: BackupTarget }) {
+    return await this.backup.createBackup(body?.target);
   }
 
   @Delete('vps/backups/:filename')
