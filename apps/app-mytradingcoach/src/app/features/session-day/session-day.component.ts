@@ -13,6 +13,7 @@ import { DatePipe, DecimalPipe, registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
 registerLocaleData(localeFr);
 import { SessionStore } from '../../core/stores/session.store';
+import { UserStore } from '../../core/stores/user.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { SessionMorningComponent } from '../dashboard/components/session-morning/session-morning.component';
 import { SessionLiveComponent } from '../dashboard/components/session-live/session-live.component';
@@ -154,7 +155,16 @@ const EMOTION_COLORS: Record<string, string> = {
       @if (activeTab() === 'debrief') {
         <div class="session-debrief">
 
-          @if (store.activeSession(); as session) {
+          @if (userStore.isDemo() && store.lastClosedSession(); as recapSession) {
+            <!-- Démo : débrief d'exemple de la dernière session fermée -->
+            @if (recapSession.reflectionNote) {
+              <div class="debrief-card" style="margin-bottom:14px;">
+                <div class="debrief-section-title">Ta réflexion de session</div>
+                <p style="color:var(--text-2);line-height:1.6;font-size:13px;margin:6px 0 0;">{{ recapSession.reflectionNote }}</p>
+              </div>
+            }
+            <mtc-session-recap [session]="recapSession" [liveStats]="store.lastClosedStats()" />
+          } @else if (store.activeSession(); as session) {
 
             <!-- 4 CARDS EN HAUT -->
             <div class="debrief-cards-row">
@@ -346,6 +356,7 @@ const EMOTION_COLORS: Record<string, string> = {
 })
 export class SessionDayComponent implements OnInit, OnDestroy {
   protected readonly store          = inject(SessionStore);
+  protected readonly userStore      = inject(UserStore);
   private  readonly liveModeService = inject(LiveModeService);
   private  readonly sessionApi      = inject(SessionApi);
   private  readonly destroyRef      = inject(DestroyRef);
