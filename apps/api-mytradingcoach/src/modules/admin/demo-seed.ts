@@ -223,21 +223,22 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
     data: {
       userId: user.id, startedAt: dateOf(0, 8), endedAt: null,
       status: SessionStatus.ACTIVE, moodStart: 'FOCUSED' as MoodState,
-      // moodEnd + reflectionNote (sur session ACTIVE) → le débrief démo du jour
-      // est cohérent avec le live (mêmes trades) tout en gardant la session active.
+      // moodEnd + notes (journal) sur session ACTIVE → le débrief riche démo est
+      // cohérent avec le live (mêmes trades) tout en gardant la session active.
       moodEnd: 'CONFIDENT' as MoodState,
+      notes: 'Deux entrées propres : MNQ sur breakout Londres laissé courir, EUR/USD scalp discipliné. Plan respecté, pertes coupées tôt.',
       reflectionNote: 'Deux entrées propres : MNQ sur breakout Londres laissé courir, EUR/USD scalp discipliné. Plan respecté.',
       planNote: "Plan du jour : breakouts MNQ sur Londres, 2 trades max, R:R ≥ 1.5.",
       reflectionQuestion: "As-tu respecté ton plan de trading aujourd'hui ?",
     },
   });
   const tTrades = [
-    { asset: 'MNQ', side: 'LONG' as TradeSide, entry: 18600, exit: 18640, pnl: 160, rr: 2.1, qty: 2, emotion: 'CONFIDENT' as EmotionState, setup: 'BREAKOUT' as SetupType, session: 'LONDON' as TradingSession, tf: '5m', hour: 9 },
-    { asset: 'EUR/USD', side: 'LONG' as TradeSide, entry: 1.0850, exit: 1.0853, pnl: 30, rr: 1.5, qty: 1, emotion: 'FOCUSED' as EmotionState, setup: 'PULLBACK' as SetupType, session: 'LONDON' as TradingSession, tf: '15m', hour: 10 },
+    { asset: 'MNQ', side: 'LONG' as TradeSide, entry: 18600, exit: 18640, stopLoss: 18560, pnl: 160, rr: 2.1, qty: 2, emotion: 'CONFIDENT' as EmotionState, setup: 'BREAKOUT' as SetupType, session: 'LONDON' as TradingSession, tf: '5m', hour: 9 },
+    { asset: 'EUR/USD', side: 'LONG' as TradeSide, entry: 1.0850, exit: 1.0853, stopLoss: 1.0835, pnl: 30, rr: 1.5, qty: 1, emotion: 'FOCUSED' as EmotionState, setup: 'PULLBACK' as SetupType, session: 'LONDON' as TradingSession, tf: '15m', hour: 10 },
   ];
   for (const t of tTrades) {
     await prisma.trade.create({ data: {
-      userId: user.id, asset: t.asset, side: t.side, entry: t.entry, exit: t.exit,
+      userId: user.id, asset: t.asset, side: t.side, entry: t.entry, exit: t.exit, stopLoss: t.stopLoss,
       pnl: t.pnl, riskReward: t.rr, quantity: t.qty, emotion: t.emotion, setup: t.setup,
       session: t.session, timeframe: t.tf, tags: ['DEMO'], tradedAt: dateOf(0, t.hour), sessionId: todaySession.id,
     } });

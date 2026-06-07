@@ -13,11 +13,9 @@ import { DatePipe, DecimalPipe, registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
 registerLocaleData(localeFr);
 import { SessionStore } from '../../core/stores/session.store';
-import { UserStore } from '../../core/stores/user.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { SessionMorningComponent } from '../dashboard/components/session-morning/session-morning.component';
 import { SessionLiveComponent } from '../dashboard/components/session-live/session-live.component';
-import { SessionRecapComponent } from '../dashboard/components/session-recap/session-recap.component';
 import { LiveModeService } from '../../core/services/live-mode.service';
 import { MoodState, SessionApi, SessionTrade } from '../../core/api/session.api';
 import { DebriefObjective } from '../../core/api/debrief.api';
@@ -43,7 +41,7 @@ const EMOTION_COLORS: Record<string, string> = {
 @Component({
   selector: 'mtc-session-day',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, TopbarComponent, SessionMorningComponent, SessionLiveComponent, SessionRecapComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
+  imports: [DatePipe, DecimalPipe, TopbarComponent, SessionMorningComponent, SessionLiveComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-day.component.css',
   template: `
@@ -155,16 +153,18 @@ const EMOTION_COLORS: Record<string, string> = {
       @if (activeTab() === 'debrief') {
         <div class="session-debrief">
 
-          @if (userStore.isDemo() && store.activeSession(); as recapSession) {
-            <!-- Démo : débrief d'exemple cohérent avec la session du jour (live) -->
-            @if (recapSession.reflectionNote) {
-              <div class="debrief-card" style="margin-bottom:14px;">
-                <div class="debrief-section-title">Ta réflexion de session</div>
-                <p style="color:var(--text-2);line-height:1.6;font-size:13px;margin:6px 0 0;">{{ recapSession.reflectionNote }}</p>
+          @if (store.activeSession(); as session) {
+
+            <!-- BANDEAU 0 TRADE (au-dessus des 4 cartes) -->
+            @if (noTrades()) {
+              <div class="debrief-zero-banner">
+                <span class="dzb-icon">🧘</span>
+                <div>
+                  <div class="dzb-title">Pas de trade aujourd'hui — et c'est OK</div>
+                  <div class="dzb-sub">Parfois, la meilleure décision est de rester à l'écart quand il n'y a pas de setup clair. Savoir ne pas trader est une vraie compétence.</div>
+                </div>
               </div>
             }
-            <mtc-session-recap [session]="recapSession" [liveStats]="store.todayStats()" />
-          } @else if (store.activeSession(); as session) {
 
             <!-- 4 CARDS EN HAUT -->
             <div class="debrief-cards-row">
@@ -187,17 +187,6 @@ const EMOTION_COLORS: Record<string, string> = {
                 <div class="card4-l">Humeur finale</div>
               </div>
             </div>
-
-            <!-- BANDEAU 0 TRADE -->
-            @if (noTrades()) {
-              <div class="debrief-zero-banner">
-                <span class="dzb-icon">🧘</span>
-                <div>
-                  <div class="dzb-title">Pas de trade aujourd'hui — et c'est OK</div>
-                  <div class="dzb-sub">Parfois, la meilleure décision est de rester à l'écart quand il n'y a pas de setup clair. Savoir ne pas trader est une vraie compétence.</div>
-                </div>
-              </div>
-            }
 
             <!-- ÉMOTIONS + SCORE -->
             <div class="debrief-top-row">
@@ -356,7 +345,6 @@ const EMOTION_COLORS: Record<string, string> = {
 })
 export class SessionDayComponent implements OnInit, OnDestroy {
   protected readonly store          = inject(SessionStore);
-  protected readonly userStore      = inject(UserStore);
   private  readonly liveModeService = inject(LiveModeService);
   private  readonly sessionApi      = inject(SessionApi);
   private  readonly destroyRef      = inject(DestroyRef);

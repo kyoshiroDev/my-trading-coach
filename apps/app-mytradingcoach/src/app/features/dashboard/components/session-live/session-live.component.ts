@@ -37,6 +37,28 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
   { value: 'TIRED',     label: 'Fatigué',  emoji: '😰' },
 ];
 
+// Calendrier éco d'exemple pour la session live démo (affiché si rien de réel
+// dans la fenêtre de session). Released → bloc d'analyse IA figé (DEMO_ECO_ANALYSIS).
+const DEMO_LIVE_ECO_EVENTS: EcoEvent[] = [
+  { time: '09:00', name: 'PMI manufacturier',  currency: 'EUR', country: 'EU', impact: 'medium', actual: 49.2, estimate: 49.0, previous: 48.8, isReleased: true,  unit: null },
+  { time: '14:30', name: 'Inflation CPI (US)', currency: 'USD', country: 'US', impact: 'high',   actual: 3.1,  estimate: 3.2,  previous: 3.4,  isReleased: true,  unit: '%' },
+  { time: '16:00', name: 'Discours BCE',        currency: 'EUR', country: 'EU', impact: 'high',   actual: null, estimate: null, previous: null, isReleased: false, unit: null },
+];
+// Analyse IA figée par événement (keyée sur le name brut). Zéro appel modèle.
+const DEMO_ECO_ANALYSIS: Record<string, EcoResultAnalysis> = {
+  'PMI manufacturier': {
+    interpretation: "PMI au-dessus des attentes (49.2 vs 49.0) — léger soutien pour l'EUR, sentiment risk-on modéré.",
+    assetSentiments: [{ asset: 'EUR/USD', sentiment: 'bull', shortReason: 'PMI meilleur que prévu' }],
+  },
+  'Inflation CPI (US)': {
+    interpretation: "CPI US sous les attentes (3.1% vs 3.2%) — désinflation confirmée : pression baissière sur le dollar, soutien des indices US.",
+    assetSentiments: [
+      { asset: 'MNQ', sentiment: 'bull', shortReason: 'CPI plus bas → indices en hausse' },
+      { asset: 'EUR/USD', sentiment: 'bull', shortReason: 'Dollar plus faible' },
+    ],
+  },
+};
+
 const EMOTIONS = [
   { value: 'CONFIDENT', emoji: '😎', title: 'Confiant' },
   { value: 'FOCUSED',   emoji: '🎯', title: 'Focalisé' },
@@ -796,10 +818,12 @@ export class SessionLiveComponent {
       .sort((a, b) => (a.time ?? '').localeCompare(b.time ?? '')),
   );
 
-  /** Liste effectivement rendue (plafonnée). */
-  protected readonly visibleEcoEvents = computed(() =>
-    this.relevantEcoEvents().slice(0, this.MAX_ECO_EVENTS),
-  );
+  /** Liste effectivement rendue (plafonnée). En démo, exemples figés si rien de réel. */
+  protected readonly visibleEcoEvents = computed(() => {
+    const real = this.relevantEcoEvents().slice(0, this.MAX_ECO_EVENTS);
+    if (real.length > 0) return real;
+    return this.userStore.isDemo() ? DEMO_LIVE_ECO_EVENTS : real;
+  });
 
   /** Nombre d'événements pertinents masqués par le cap. */
   protected readonly hiddenEcoCount = computed(() =>
@@ -816,6 +840,9 @@ export class SessionLiveComponent {
   protected readonly emotions = EMOTIONS;
 
   constructor() {
+    // Démo : analyse IA figée pour les annonces du calendrier (zéro appel modèle).
+    if (this.userStore.isDemo()) this.ecoResults.set(DEMO_ECO_ANALYSIS);
+
     interval(1000)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.now.set(new Date()));
