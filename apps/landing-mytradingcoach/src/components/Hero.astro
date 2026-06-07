@@ -1,4 +1,5 @@
 ---
+import { APP_URL } from '../config';
 ---
 
 <!-- BANNER -->
@@ -45,7 +46,7 @@
     <a href="https://app.mytradingcoach.app/register" class="btn-p hero-cta-main">
       Essayer gratuitement — 7 jours offerts
     </a>
-    <a href="https://app.mytradingcoach.app/demo" class="btn-demo hero-cta-demo">
+    <a href={`${APP_URL}/demo`} class="btn-demo hero-cta-demo">
       🔍 Tester la démo
     </a>
   </div>
