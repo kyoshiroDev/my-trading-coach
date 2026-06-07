@@ -397,6 +397,11 @@ export class AiInsightsComponent implements AfterViewChecked {
           },
         });
     }
+
+    // Démo : pré-charger les insights figés (instantané, zéro appel modèle) sans clic.
+    if (this.userStore.isDemo()) {
+      this.loadInsights();
+    }
   }
 
   private getQuotaKey(): string {

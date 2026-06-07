@@ -5,6 +5,7 @@ import { AdminService } from './admin.service';
 import { EmailCampaignService } from './email-campaign.service';
 import type { CampaignType } from './email-campaign.service';
 import { MetricsSnapshotCron } from './metrics-snapshot.cron';
+import { DemoSeedService } from './demo-seed.service';
 import { UsersService } from '../users/users.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -20,7 +21,14 @@ export class AdminController {
     private readonly prisma: PrismaService,
     private readonly discordService: DiscordService,
     private readonly metrics: MetricsSnapshotCron,
+    private readonly demoSeed: DemoSeedService,
   ) {}
+
+  /** Seed/refresh idempotent du compte démo vitrine. Admin only. */
+  @Post('seed-demo')
+  seedDemo() {
+    return this.demoSeed.run();
+  }
 
   // ── Métriques historisées (snapshots quotidiens) ──────────────────────────
 

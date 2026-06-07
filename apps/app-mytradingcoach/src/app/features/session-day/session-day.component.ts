@@ -16,7 +16,6 @@ import { SessionStore } from '../../core/stores/session.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { SessionMorningComponent } from '../dashboard/components/session-morning/session-morning.component';
 import { SessionLiveComponent } from '../dashboard/components/session-live/session-live.component';
-import { SessionRecapComponent } from '../dashboard/components/session-recap/session-recap.component';
 import { LiveModeService } from '../../core/services/live-mode.service';
 import { MoodState, SessionApi, SessionTrade } from '../../core/api/session.api';
 import { DebriefObjective } from '../../core/api/debrief.api';
@@ -42,7 +41,7 @@ const EMOTION_COLORS: Record<string, string> = {
 @Component({
   selector: 'mtc-session-day',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, TopbarComponent, SessionMorningComponent, SessionLiveComponent, SessionRecapComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
+  imports: [DatePipe, DecimalPipe, TopbarComponent, SessionMorningComponent, SessionLiveComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-day.component.css',
   template: `
@@ -156,6 +155,17 @@ const EMOTION_COLORS: Record<string, string> = {
 
           @if (store.activeSession(); as session) {
 
+            <!-- BANDEAU 0 TRADE (au-dessus des 4 cartes) -->
+            @if (noTrades()) {
+              <div class="debrief-zero-banner">
+                <span class="dzb-icon">🧘</span>
+                <div>
+                  <div class="dzb-title">Pas de trade aujourd'hui — et c'est OK</div>
+                  <div class="dzb-sub">Parfois, la meilleure décision est de rester à l'écart quand il n'y a pas de setup clair. Savoir ne pas trader est une vraie compétence.</div>
+                </div>
+              </div>
+            }
+
             <!-- 4 CARDS EN HAUT -->
             <div class="debrief-cards-row">
               <div class="card4">
@@ -177,17 +187,6 @@ const EMOTION_COLORS: Record<string, string> = {
                 <div class="card4-l">Humeur finale</div>
               </div>
             </div>
-
-            <!-- BANDEAU 0 TRADE -->
-            @if (noTrades()) {
-              <div class="debrief-zero-banner">
-                <span class="dzb-icon">🧘</span>
-                <div>
-                  <div class="dzb-title">Pas de trade aujourd'hui — et c'est OK</div>
-                  <div class="dzb-sub">Parfois, la meilleure décision est de rester à l'écart quand il n'y a pas de setup clair. Savoir ne pas trader est une vraie compétence.</div>
-                </div>
-              </div>
-            }
 
             <!-- ÉMOTIONS + SCORE -->
             <div class="debrief-top-row">

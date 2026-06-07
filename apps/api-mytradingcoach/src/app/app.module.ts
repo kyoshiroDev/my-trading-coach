@@ -20,6 +20,7 @@ import { SessionModule } from '../modules/session/session.module';
 import { DailyRecapModule } from '../modules/daily-recap/daily-recap.module';
 import { EcoCalendarModule } from '../modules/eco-calendar/eco-calendar.module';
 import { AmbassadorModule } from '../modules/ambassador/ambassador.module';
+import { PublicModule } from '../modules/public/public.module';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { DemoReadOnlyGuard } from '../common/guards/demo-read-only.guard';
 import { HttpExceptionFilter } from '../common/filters/http-exception.filter';
@@ -65,6 +66,7 @@ import { AppController } from './app.controller';
     DailyRecapModule,
     EcoCalendarModule,
     AmbassadorModule,
+    PublicModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

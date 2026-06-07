@@ -105,8 +105,6 @@ import { MarketContext } from '../../../../core/api/trades.api';
             </div>
           }
         </div>
-
-        <div class="ctx-foot">Données : Yahoo · FMP — variation vs clôture précédente</div>
       </div>
     }
   `,
