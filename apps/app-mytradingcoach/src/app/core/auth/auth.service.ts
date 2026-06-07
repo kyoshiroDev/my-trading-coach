@@ -135,6 +135,13 @@ export class AuthService {
       );
   }
 
+  /** Connexion au compte démo vitrine (lecture seule). Stocke token + user. */
+  demoLogin() {
+    return this.http
+      .post<AuthResponse>(`${environment.apiUrl}/auth/demo-login`, {})
+      .pipe(tap((res) => this.handleAuthResponse(res)));
+  }
+
   forgotPassword(email: string) {
     return this.http.post(`${environment.apiUrl}/auth/forgot-password`, {
       email,

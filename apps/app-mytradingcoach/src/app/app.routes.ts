@@ -4,6 +4,12 @@ import { NotFoundComponent } from './shared/components/not-found/not-found.compo
 
 export const appRoutes: Routes = [
   {
+    path: 'demo',
+    data: { seo: { title: 'Démo', noindex: true } },
+    loadComponent: () =>
+      import('./features/auth/demo-entry.component').then((m) => m.DemoEntryComponent),
+  },
+  {
     path: 'login',
     data: {
       seo: {
