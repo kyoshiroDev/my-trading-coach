@@ -57,6 +57,10 @@ const DEMO_ECO_ANALYSIS: Record<string, EcoResultAnalysis> = {
       { asset: 'EUR/USD', sentiment: 'bull', shortReason: 'Dollar plus faible' },
     ],
   },
+  'Balance courante': {
+    interpretation: "Balance courante japonaise au-dessus des attentes — léger soutien du yen, impact indirect sur tes actifs (indices US, EUR/USD).",
+    assetSentiments: [{ asset: 'EUR/USD', sentiment: 'neutral', shortReason: 'Impact indirect via le yen' }],
+  },
 };
 
 const EMOTIONS = [
