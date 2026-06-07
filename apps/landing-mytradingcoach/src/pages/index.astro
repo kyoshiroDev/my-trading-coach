@@ -115,7 +115,7 @@ try {
 
   <!-- Rafraîchit le compteur de traders en live (la valeur du build sert de fallback). -->
   <script>
-    const API = import.meta.env.PUBLIC_API_URL ?? 'https://api.mytradingcoach.app';
+    const API = import.meta.env.PUBLIC_API_URL ?? 'https://api.mytradingcoach.app/api';
     fetch(`${API}/public/stats`)
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
