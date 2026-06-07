@@ -223,6 +223,10 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
     data: {
       userId: user.id, startedAt: dateOf(0, 8), endedAt: null,
       status: SessionStatus.ACTIVE, moodStart: 'FOCUSED' as MoodState,
+      // moodEnd + reflectionNote (sur session ACTIVE) → le débrief démo du jour
+      // est cohérent avec le live (mêmes trades) tout en gardant la session active.
+      moodEnd: 'CONFIDENT' as MoodState,
+      reflectionNote: 'Deux entrées propres : MNQ sur breakout Londres laissé courir, EUR/USD scalp discipliné. Plan respecté.',
       planNote: "Plan du jour : breakouts MNQ sur Londres, 2 trades max, R:R ≥ 1.5.",
       reflectionQuestion: "As-tu respecté ton plan de trading aujourd'hui ?",
     },
@@ -293,6 +297,33 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
       },
     });
   }
+
+  // ── Calendrier éco du jour + 2 favoris épinglés (agenda pré-session + live) ──
+  // EcoEvent est global → upsert idempotent par (date, name, currency).
+  const today = new Date().toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
+  const ecoEvents = [
+    { time: '01:50', name: 'Balance courante',  currency: 'JPY', country: 'JP', impact: 'medium', actual: 1.2,  estimate: 1.0,  previous: 0.9,  unit: 'T¥' },
+    { time: '09:00', name: 'PMI manufacturier', currency: 'EUR', country: 'EU', impact: 'medium', actual: 49.2, estimate: 49.0, previous: 48.8, unit: null },
+    { time: '14:30', name: 'Inflation CPI (US)', currency: 'USD', country: 'US', impact: 'high',  actual: 3.1,  estimate: 3.2,  previous: 3.4,  unit: '%' },
+    { time: '16:00', name: 'Discours BCE',       currency: 'EUR', country: 'EU', impact: 'high',  actual: null, estimate: null, previous: null, unit: null },
+  ];
+  for (const e of ecoEvents) {
+    const data = {
+      time: e.time, nameFr: e.name, country: e.country, impact: e.impact,
+      actual: e.actual, estimate: e.estimate, previous: e.previous,
+      isReleased: e.actual !== null, unit: e.unit,
+    };
+    await prisma.ecoEvent.upsert({
+      where: { date_name_currency: { date: today, name: e.name, currency: e.currency } },
+      update: data,
+      create: { date: today, name: e.name, currency: e.currency, ...data },
+    });
+  }
+  // Favoris épinglés (format "name:currency") — matchés via normalizeEventKey côté front.
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { pinnedEcoEvents: ['Inflation CPI (US):USD', 'Discours BCE:EUR'] },
+  });
 
   const total = trades.reduce((s, t) => s + t.pnl, 0);
   const wins = trades.filter(t => t.pnl > 0).length;

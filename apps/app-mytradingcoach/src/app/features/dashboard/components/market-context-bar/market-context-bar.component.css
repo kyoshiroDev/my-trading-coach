@@ -9,7 +9,6 @@
 .ctx-upd { font-size: 9px; color: var(--text-3); margin-left: auto; }
 
 .ctx-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; }
-.ctx-foot { font-size: 8px; color: var(--text-3); font-family: var(--font-mono); opacity: .55; text-align: right; margin-top: 1px; }
 
 .ctx-cell {
   flex: 1; min-width: 0; background: var(--bg-card); border: 1px solid var(--border);

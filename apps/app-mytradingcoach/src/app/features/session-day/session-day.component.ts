@@ -155,15 +155,15 @@ const EMOTION_COLORS: Record<string, string> = {
       @if (activeTab() === 'debrief') {
         <div class="session-debrief">
 
-          @if (userStore.isDemo() && store.lastClosedSession(); as recapSession) {
-            <!-- Démo : débrief d'exemple de la dernière session fermée -->
+          @if (userStore.isDemo() && store.activeSession(); as recapSession) {
+            <!-- Démo : débrief d'exemple cohérent avec la session du jour (live) -->
             @if (recapSession.reflectionNote) {
               <div class="debrief-card" style="margin-bottom:14px;">
                 <div class="debrief-section-title">Ta réflexion de session</div>
                 <p style="color:var(--text-2);line-height:1.6;font-size:13px;margin:6px 0 0;">{{ recapSession.reflectionNote }}</p>
               </div>
             }
-            <mtc-session-recap [session]="recapSession" [liveStats]="store.lastClosedStats()" />
+            <mtc-session-recap [session]="recapSession" [liveStats]="store.todayStats()" />
           } @else if (store.activeSession(); as session) {
 
             <!-- 4 CARDS EN HAUT -->
