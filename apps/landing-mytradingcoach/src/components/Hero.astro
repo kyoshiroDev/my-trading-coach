@@ -1,5 +1,6 @@
 ---
 import { APP_URL } from '../config';
+const { traders = 14 } = Astro.props;
 ---
 
 <!-- BANNER -->
@@ -18,7 +19,7 @@ import { APP_URL } from '../config';
   </div>
 
   <div class="hero-proof">
-    <span class="hero-proof-text"><strong>+14 traders</strong> en bêta</span>
+    <span class="hero-proof-text"><strong data-traders-count>{traders}</strong> traders depuis le lancement</span>
   </div>
 
   <h1>
