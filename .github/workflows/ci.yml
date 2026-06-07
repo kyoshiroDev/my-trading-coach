@@ -320,6 +320,7 @@ jobs:
         run: pnpm nx build landing-mytradingcoach
         env:
           PUBLIC_APP_URL: https://dev.app.mytradingcoach.app
+          PUBLIC_API_URL: https://dev.api.mytradingcoach.app
 
       - name: Setup SSH
         run: |
