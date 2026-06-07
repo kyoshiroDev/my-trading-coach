@@ -180,6 +180,65 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
     });
   }
 
+  // ── Hier (J-1) : session CLOSED + 2 trades + recap (carte « Hier » pré-session) ──
+  const yClosed = await prisma.tradeSession.create({
+    data: {
+      userId: user.id, startedAt: dateOf(1, 8), endedAt: dateOf(1, 17),
+      status: SessionStatus.CLOSED, moodStart: 'NEUTRAL' as MoodState, moodEnd: 'CONFIDENT' as MoodState,
+      planNote: "Plan : breakouts MNQ sur Londres, patience sur New York. 2 trades max, R:R ≥ 1.5.",
+      reflectionNote: "Journée propre : plan suivi, perte coupée tôt et gagnant laissé courir. À reproduire.",
+      reflectionQuestion: "As-tu respecté ton plan de trading aujourd'hui ?",
+    },
+  });
+  const yTrades = [
+    { asset: 'MNQ', side: 'LONG' as TradeSide, entry: 18500, exit: 18545, pnl: 180, rr: 2.2, qty: 2, emotion: 'CONFIDENT' as EmotionState, setup: 'BREAKOUT' as SetupType, session: 'LONDON' as TradingSession, tf: '5m', hour: 9 },
+    { asset: 'MES', side: 'LONG' as TradeSide, entry: 5200, exit: 5198.6, pnl: -70, rr: 1.4, qty: 2, emotion: 'NEUTRAL' as EmotionState, setup: 'PULLBACK' as SetupType, session: 'NEW_YORK' as TradingSession, tf: '5m', hour: 15 },
+  ];
+  for (const t of yTrades) {
+    await prisma.trade.create({ data: {
+      userId: user.id, asset: t.asset, side: t.side, entry: t.entry, exit: t.exit,
+      pnl: t.pnl, riskReward: t.rr, quantity: t.qty, emotion: t.emotion, setup: t.setup,
+      session: t.session, timeframe: t.tf, tags: ['DEMO'], tradedAt: dateOf(1, t.hour), sessionId: yClosed.id,
+    } });
+  }
+  {
+    const pnl = yTrades.reduce((s, t) => s + t.pnl, 0);
+    const wins = yTrades.filter(t => t.pnl > 0).length;
+    const best = yTrades.reduce((a, b) => (b.pnl > a.pnl ? b : a));
+    await prisma.tradeSession.update({ where: { id: yClosed.id }, data: {
+      totalPnl: pnl, totalTrades: yTrades.length, winRate: Math.round((wins / yTrades.length) * 100),
+      bestTradePnl: best.pnl, bestTradeAsset: best.asset,
+    } });
+    const d = dateOf(1, 18); d.setHours(0, 0, 0, 0); // hier 00:00 — clé du recap "yesterday"
+    await prisma.dailyRecap.create({ data: {
+      userId: user.id, date: d, tradesCount: yTrades.length, pnl,
+      winRate: Math.round((wins / yTrades.length) * 100), dominantEmotion: 'CONFIDENT',
+      aiOneLiner: "Belle discipline hier : perte coupée tôt, gagnant laissé courir. Reproduis ce schéma aujourd'hui.",
+    } });
+  }
+
+  // ── Aujourd'hui (J-0) : session ACTIVE + 2 trades (onglet Session live) ──
+  // Pas de totalPnl/totalTrades figés : les stats du jour se calculent via getTodayTrades.
+  const todaySession = await prisma.tradeSession.create({
+    data: {
+      userId: user.id, startedAt: dateOf(0, 8), endedAt: null,
+      status: SessionStatus.ACTIVE, moodStart: 'FOCUSED' as MoodState,
+      planNote: "Plan du jour : breakouts MNQ sur Londres, 2 trades max, R:R ≥ 1.5.",
+      reflectionQuestion: "As-tu respecté ton plan de trading aujourd'hui ?",
+    },
+  });
+  const tTrades = [
+    { asset: 'MNQ', side: 'LONG' as TradeSide, entry: 18600, exit: 18640, pnl: 160, rr: 2.1, qty: 2, emotion: 'CONFIDENT' as EmotionState, setup: 'BREAKOUT' as SetupType, session: 'LONDON' as TradingSession, tf: '5m', hour: 9 },
+    { asset: 'EUR/USD', side: 'LONG' as TradeSide, entry: 1.0850, exit: 1.0853, pnl: 30, rr: 1.5, qty: 1, emotion: 'FOCUSED' as EmotionState, setup: 'PULLBACK' as SetupType, session: 'LONDON' as TradingSession, tf: '15m', hour: 10 },
+  ];
+  for (const t of tTrades) {
+    await prisma.trade.create({ data: {
+      userId: user.id, asset: t.asset, side: t.side, entry: t.entry, exit: t.exit,
+      pnl: t.pnl, riskReward: t.rr, quantity: t.qty, emotion: t.emotion, setup: t.setup,
+      session: t.session, timeframe: t.tf, tags: ['DEMO'], tradedAt: dateOf(0, t.hour), sessionId: todaySession.id,
+    } });
+  }
+
   const recaps = [
     { daysAgo: 2, emotion: 'FOCUSED', line: "Session disciplinée : 2 trades, R:R respecté. Continue sur cette lancée, la régularité paie." },
     { daysAgo: 6, emotion: 'NEUTRAL', line: "Bonne gestion du risque autour du NFP. Travaille ton timing d'entrée sur les news." },
@@ -207,23 +266,30 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
     const pnl = wk.reduce((s, t) => s + t.pnl, 0);
     const wins = wk.filter(t => t.pnl > 0).length;
     const wr = wk.length ? Math.round((wins / wk.length) * 100) : 0;
+    const summary = wkAgo === 1
+      ? "Semaine solide et disciplinée. Ton edge se confirme sur les sessions de Londres avec les setups breakout/pullback. Ta gestion émotionnelle s'est nettement améliorée : moins de trades de revanche."
+      : "Semaine en dents de scie. Tes pertes viennent surtout des trades pris en session asiatique, hors de ta zone de confiance. Recentre-toi sur Londres/NY où ton win rate est bien meilleur.";
+    const strengths = [
+      { badge: 'Force', text: `Win rate ${wr}% sur la semaine` },
+      { badge: 'Force', text: 'Discipline en hausse : R:R moyen supérieur à 1.8' },
+    ];
+    const weaknesses = [
+      { badge: 'Attention', text: 'Performance plus faible en session asiatique' },
+    ];
+    const emotionInsight = "Tes trades en état FOCALISÉ affichent le meilleur win rate ; évite de trader FATIGUÉ.";
+    const objectives = [
+      { title: 'Limiter à 2 trades par session', reason: 'Tes meilleurs résultats viennent de tes 2 premiers trades' },
+      { title: 'Ne trader que Londres et New York', reason: 'Ton win rate chute en session asiatique' },
+      { title: 'Noter une émotion sur chaque trade', reason: "Corréler l'émotion au résultat affine ton edge" },
+    ];
     await prisma.weeklyDebrief.create({
       data: {
         userId: user.id, weekNumber: week, year, startDate: start, endDate: ref,
-        aiSummary: wkAgo === 1
-          ? "Semaine solide et disciplinée. Ton edge se confirme sur les sessions de Londres avec les setups breakout/pullback. Ta gestion émotionnelle s'est nettement améliorée : moins de trades de revanche."
-          : "Semaine en dents de scie. Tes pertes viennent surtout des trades pris en session asiatique, hors de ta zone de confiance. Recentre-toi sur Londres/NY où ton win rate est bien meilleur.",
-        insights: [
-          { type: 'strength', text: `Win rate ${wr}% sur la semaine` },
-          { type: 'strength', text: 'Meilleure discipline : R:R moyen > 1.8' },
-          { type: 'weakness', text: 'Performance plus faible en session asiatique' },
-        ],
-        objectives: [
-          { text: 'Limiter à 2 trades par session', type: 'focus' },
-          { text: 'Ne trader que Londres et New York', type: 'risk' },
-          { text: 'Noter une émotion sur chaque trade', type: 'focus' },
-        ],
-        stats: { trades: wk.length, pnl, winRate: wr },
+        aiSummary: summary,
+        // Forme attendue par le front (debrief.api.ts / debrief.component.ts).
+        insights: { summary, strengths, weaknesses, emotionInsight, objectives },
+        objectives, // colonne top-level lue par le composant
+        stats: { winRate: wr, totalPnl: pnl, totalTrades: wk.length },
       },
     });
   }
@@ -231,8 +297,8 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
   const total = trades.reduce((s, t) => s + t.pnl, 0);
   const wins = trades.filter(t => t.pnl > 0).length;
   return {
-    email: user.email, trades: trades.length,
+    email: user.email, trades: trades.length + 4, // +2 hier +2 aujourd'hui
     winRate: Math.round((wins / trades.length) * 100), pnl: total,
-    sessions: sessionDefs.length, recaps: recaps.length, debriefs: 2,
+    sessions: sessionDefs.length + 2, recaps: recaps.length + 1, debriefs: 2,
   };
 }
