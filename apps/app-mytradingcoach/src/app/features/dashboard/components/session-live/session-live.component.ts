@@ -106,7 +106,6 @@ const EMOTIONS = [
         <div class="news-col">
           <div class="col-title-row">
             <div class="col-title">📰 News live</div>
-            <span class="ai-badge">AI</span>
           </div>
 
           @if (breakingNews()) {
@@ -150,7 +149,6 @@ const EMOTIONS = [
                 📅 Calendrier — Session en cours
                 <div class="pulse-dot"></div>
               </div>
-              <span class="ai-badge">AI</span>
             </div>
 
             @if (showReleaseAlert() && newReleases().length > 0) {
