@@ -1,16 +1,17 @@
 ---
+const { traders = 14 } = Astro.props;
 ---
 
 <section class="social-proof" id="temoignages">
   <div class="reveal" style="text-align:center;max-width:560px;margin:0 auto">
-    <span class="sec-label">Bêta</span>
+    <span class="sec-label">Depuis le lancement</span>
     <h2>Les premiers traders <em>construisent MTC avec nous</em></h2>
     <p class="sec-sub">
-      MyTradingCoach est en bêta active avec +14 traders. Leurs retours
+      Depuis son lancement, MyTradingCoach réunit déjà <span data-traders-count>{traders}</span> traders. Leurs retours
       façonnent le produit chaque semaine. Rejoins-les.
     </p>
-    <a href="https://app.mytradingcoach.app/register" class="beta-cta">
-      Rejoindre la bêta gratuitement →
+    <a href="https://app.mytradingcoach.app/register" class="join-cta">
+      Rejoindre gratuitement →
     </a>
   </div>
 </section>
@@ -18,7 +19,7 @@
 <style>
   .social-proof { padding: 80px 5%; }
 
-  .beta-cta {
+  .join-cta {
     display: inline-block;
     margin-top: 24px;
     padding: 13px 26px;
@@ -32,7 +33,7 @@
     box-shadow: 0 0 28px rgba(59, 130, 246, 0.35);
     transition: transform 0.2s, box-shadow 0.2s;
   }
-  .beta-cta:hover {
+  .join-cta:hover {
     transform: translateY(-1px);
     box-shadow: 0 0 36px rgba(59, 130, 246, 0.5);
   }
