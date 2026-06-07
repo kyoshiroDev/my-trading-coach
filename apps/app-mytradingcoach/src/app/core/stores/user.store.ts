@@ -28,6 +28,9 @@ export class UserStore {
     return !!(user.trialEndsAt && new Date() < new Date(user.trialEndsAt));
   });
 
+  /** Compte démo vitrine (lecture seule) — bandeau + actions redirigées vers l'inscription. */
+  readonly isDemo = computed(() => this.user()?.isDemo === true);
+
   readonly isAdmin = computed(() => this.user()?.role === 'ADMIN');
   readonly isBeta = computed(
     () => this.user()?.role === 'BETA_TESTER' || this.user()?.role === 'ADMIN',

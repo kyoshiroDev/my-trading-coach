@@ -15,6 +15,7 @@ export interface AuthUser {
   role?: UserRole;
   trialEndsAt?: string | null;
   stripeCurrentPeriodEnd?: string | null;
+  isDemo?: boolean;
   onboardingCompleted?: boolean;
   market?: string | null;
   goal?: string | null;

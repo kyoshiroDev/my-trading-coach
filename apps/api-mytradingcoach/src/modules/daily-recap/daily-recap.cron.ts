@@ -22,6 +22,7 @@ export class DailyRecapCron {
 
     const activeUsers = await this.prisma.user.findMany({
       where: {
+        isDemo: false,
         plan: 'PREMIUM',
         trades: {
           some: { tradedAt: { gte: new Date(today.toDateString()) } },

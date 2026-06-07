@@ -65,20 +65,22 @@
             }
           </div>
 
-          <!-- Mot de passe -->
-          <div class="settings-row">
-            <div class="settings-row-left">
-              <span class="settings-row-label">Mot de passe</span>
-              @if (passwordResetSent()) {
-                <span class="settings-row-hint success-hint">Email envoyé — vérifie ta boîte mail</span>
-              } @else {
-                <span class="settings-row-value">••••••••••••</span>
+          <!-- Mot de passe (masqué en démo) -->
+          @if (!userStore.isDemo()) {
+            <div class="settings-row">
+              <div class="settings-row-left">
+                <span class="settings-row-label">Mot de passe</span>
+                @if (passwordResetSent()) {
+                  <span class="settings-row-hint success-hint">Email envoyé — vérifie ta boîte mail</span>
+                } @else {
+                  <span class="settings-row-value">••••••••••••</span>
+                }
+              </div>
+              @if (!passwordResetSent()) {
+                <button class="settings-edit-btn" (click)="resetPassword()">Modifier</button>
               }
             </div>
-            @if (!passwordResetSent()) {
-              <button class="settings-edit-btn" (click)="resetPassword()">Modifier</button>
-            }
-          </div>
+          }
 
           <!-- Capital de départ -->
           <div class="settings-row">
@@ -138,7 +140,8 @@
         </div>
       </div>
 
-      <!-- ══ 5. ZONE DE DANGER ══ -->
+      <!-- ══ 5. ZONE DE DANGER (masquée en démo) ══ -->
+      @if (!userStore.isDemo()) {
       <div class="settings-section">
         <div class="settings-section-label danger-label">Zone de danger</div>
         <div class="settings-card danger-card">
@@ -173,6 +176,7 @@
           }
         </div>
       </div>
+      }
 
     </div> <!-- /settings-col-left -->
 
@@ -195,11 +199,13 @@
                   Renouvellement : {{ userStore.user()?.stripeCurrentPeriodEnd | date:'dd/MM/yyyy' }}
                 </p>
               }
-              <div class="plan-actions">
-                <button class="btn btn-secondary" (click)="openPortal()">
-                  Gérer mon abonnement →
-                </button>
-              </div>
+              @if (!userStore.isDemo()) {
+                <div class="plan-actions">
+                  <button class="btn btn-secondary" (click)="openPortal()">
+                    Gérer mon abonnement →
+                  </button>
+                </div>
+              }
             } @else if (userStore.isStarterOrAbove()) {
               <div class="plan-badge starter">
                 <div class="plan-badge-dot"></div>

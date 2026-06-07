@@ -365,13 +365,14 @@ async scheduledDebriefs() {
 
 ## Clustering — règles
 
-- Clustering activé uniquement en `NODE_ENV=production` (4 workers)
+- Clustering activé uniquement en `NODE_ENV=production`. Nombre de workers = `availableParallelism()` (cœurs CPU dispo ; 8 sur le VPS actuel) — pas une valeur fixe
 - `IS_CRON_WORKER=true` sur 1 seul worker → seul lui exécute `@Cron`
 - `ScheduleModule.forRoot()` conditionnel dans `app.module.ts` :
   ```typescript
   ...(process.env['IS_CRON_WORKER'] !== 'false' ? [ScheduleModule.forRoot()] : [])
   ```
 - En dev : process unique, pas de clustering, IS_CRON_WORKER non défini → crons actifs normalement
+- **WebSocket en cluster** : broadcast cross-worker via `@socket.io/redis-adapter` (`RedisIoAdapter` branché au bootstrap dans `main.ts`) — obligatoire en cluster, sinon les emits n'atteignent que les clients connectés au même worker
 
 ---
 

@@ -22,6 +22,7 @@ export class DebriefCron {
     // Respecter le paramètre debriefAutomatic
     const eligibleUsers = await this.prisma.user.findMany({
       where: {
+        isDemo: false,
         debriefAutomatic: true,
         OR: [
           { plan: Plan.PREMIUM },

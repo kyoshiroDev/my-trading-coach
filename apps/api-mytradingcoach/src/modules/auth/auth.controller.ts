@@ -73,6 +73,12 @@ export class AuthController {
   }
 
   @Public()
+  @Post('demo-login')
+  demoLogin() {
+    return this.authService.demoLogin();
+  }
+
+  @Public()
   @Post('logout')
   logout(@Res({ passthrough: true }) res: Response) {
     res.clearCookie(REFRESH_COOKIE, { path: '/' });

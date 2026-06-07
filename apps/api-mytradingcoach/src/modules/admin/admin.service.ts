@@ -108,13 +108,13 @@ export class AdminService {
       mau,
       retentionRows,
     ] = await Promise.all([
-      this.prisma.user.count(),
-      this.prisma.user.count({ where: { trades: { some: {} } } }),
-      this.prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
-      this.prisma.user.count({ where: { createdAt: { gte: startOfMonth }, trades: { some: {} } } }),
-      this.prisma.user.count({ where: { trades: { some: { tradedAt: { gte: d1 } } } } }),
-      this.prisma.user.count({ where: { trades: { some: { tradedAt: { gte: d7 } } } } }),
-      this.prisma.user.count({ where: { trades: { some: { tradedAt: { gte: d30 } } } } }),
+      this.prisma.user.count({ where: { isDemo: false } }),
+      this.prisma.user.count({ where: { isDemo: false, trades: { some: {} } } }),
+      this.prisma.user.count({ where: { isDemo: false, createdAt: { gte: startOfMonth } } }),
+      this.prisma.user.count({ where: { isDemo: false, createdAt: { gte: startOfMonth }, trades: { some: {} } } }),
+      this.prisma.user.count({ where: { isDemo: false, trades: { some: { tradedAt: { gte: d1 } } } } }),
+      this.prisma.user.count({ where: { isDemo: false, trades: { some: { tradedAt: { gte: d7 } } } } }),
+      this.prisma.user.count({ where: { isDemo: false, trades: { some: { tradedAt: { gte: d30 } } } } }),
       // Rétention J+7 : parmi les inscrits il y a ≥7j, % avec ≥1 trade entre J et J+7.
       this.prisma.$queryRaw<{ eligible: bigint; retained: bigint }[]>`
         SELECT
@@ -126,6 +126,7 @@ export class AdminService {
               AND t."tradedAt" < u."createdAt" + INTERVAL '7 days'
           )) AS retained
         FROM "User" u
+        WHERE u."isDemo" = false
       `,
     ]);
 
@@ -158,6 +159,7 @@ export class AdminService {
       this.stripe.listActiveSubscriptions(),
       this.prisma.user.findMany({
         where: {
+          isDemo: false,
           stripeSubscriptionStatus: { in: ['active', 'trialing'] },
           stripeSubscriptionId: { not: null },
         },

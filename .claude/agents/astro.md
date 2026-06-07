@@ -1,7 +1,7 @@
 # Agent Astro — landing-mytradingcoach
 
 ## Stack
-Astro 5 · Tailwind 4 · Static output · Vercel CDN
+Astro 6 · Tailwind 4 · Static output · Vercel CDN
 
 ---
 

@@ -28,6 +28,10 @@ model User {
   stripeCurrentPeriodEnd   DateTime?
   stripeSubscriptionStatus String? // 'active' | 'trialing' | 'past_due' | 'unpaid' | 'canceled'
 
+  // Compte vitrine en lecture seule (démo landing). Bloque les écritures
+  // (DemoReadOnlyGuard) et est exclu de toutes les métriques/crons/emails admin.
+  isDemo Boolean @default(false)
+
   // ── Onboarding ─────────────────────────────────────────────────────────────
   onboardingCompleted Boolean @default(false)
   market              String?
