@@ -1,0 +1,8 @@
+/* L'hôte EST le wrapper de l'anneau (cf. .gauge-ring-wrap de la maquette).
+   .gauge-ring / .ring-center / .ring-val / .ring-lbl / .ring-sub sont globales. */
+:host {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+}
