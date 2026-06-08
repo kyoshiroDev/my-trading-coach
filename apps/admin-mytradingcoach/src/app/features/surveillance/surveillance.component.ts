@@ -1,13 +1,16 @@
 import {
-  ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal,
+  ChangeDetectionStrategy, Component, DestroyRef, ElementRef,
+  OnDestroy, computed, inject, signal, viewChild,
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, filter, interval, of, startWith, switchMap } from 'rxjs';
 import type { ChartConfiguration, ScriptableContext } from 'chart.js';
-import { LucideAngularModule, Play, Square, RotateCcw, RefreshCw } from 'lucide-angular';
+import { LucideAngularModule, Play, Square, RotateCcw, Pause, Trash2, RefreshCw } from 'lucide-angular';
 import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
+import { AdminAuthService } from '../../core/auth/admin-auth.service';
 import { environment } from '../../../environments/environment';
 import { ChartCanvasComponent } from '../../shared/components/chart-canvas/chart-canvas.component';
 import { CHART_COLORS, fade, noLegend } from '../../shared/charts/chart-theme';
@@ -17,11 +20,12 @@ interface ContainerGroup { label: string; tone: string; containers: DockerContai
 
 const GB = 1_073_741_824;
 const CPU_HISTORY_LEN = 30;
+const LOG_CONTAINERS = ['mtc_api_prod', 'mtc_api_dev', 'mtc_postgres', 'mtc_redis', 'mtc_pgbouncer', 'mtc_traefik'];
 
 @Component({
   selector: 'mtc-admin-surveillance',
   standalone: true,
-  imports: [DecimalPipe, LucideAngularModule, ChartCanvasComponent],
+  imports: [DecimalPipe, FormsModule, LucideAngularModule, ChartCanvasComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './surveillance.component.css',
   template: `
@@ -77,7 +81,7 @@ const CPU_HISTORY_LEN = 30;
           </div>
         </div>
 
-        <div class="card fill surv-ct">
+        <div class="card surv-ct">
           <div class="card-head"><span class="card-label">Containers Docker</span>
             <span class="badge b-ok">{{ runningCount() }} running</span></div>
           <div class="card-body">
@@ -118,17 +122,50 @@ const CPU_HISTORY_LEN = 30;
           </div>
         </div>
       </div>
+
+      <!-- ── Logs live ── -->
+      <div class="card logs-card">
+        <div class="card-head">
+          <span class="card-label">Logs live</span>
+          <div class="log-controls">
+            <select class="log-select" [(ngModel)]="selectedContainer" aria-label="Container">
+              @for (c of logContainers; track c) { <option [value]="c">{{ c }}</option> }
+            </select>
+            @if (!streaming()) {
+              <button class="btn-launch" (click)="startStream()"><lucide-icon [img]="PlayIcon" [size]="11" /> Lancer</button>
+            } @else {
+              <button class="icon-btn" (click)="togglePause()" [title]="paused() ? 'Reprendre' : 'Pause'"><lucide-icon [img]="paused() ? PlayIcon : PauseIcon" [size]="11" /></button>
+              <button class="icon-btn" (click)="stopStream()" title="Arrêter"><lucide-icon [img]="StopIcon" [size]="11" /></button>
+              <button class="icon-btn" (click)="clearLines()" title="Vider"><lucide-icon [img]="TrashIcon" [size]="11" /></button>
+            }
+          </div>
+        </div>
+        <div class="log-terminal" #terminal>
+          @for (line of lines(); track $index) {
+            <div class="log-line" [class]="lineClass(line)">{{ line }}</div>
+          }
+          @if (!streaming()) {
+            <div class="log-empty">Sélectionne un container et clique sur « Lancer »</div>
+          } @else if (lines().length === 0) {
+            <div class="log-empty">En attente de logs…</div>
+          }
+        </div>
+      </div>
     </div>
   `,
 })
-export class SurveillanceComponent {
+export class SurveillanceComponent implements OnDestroy {
   private readonly vpsApi = inject(VpsApi);
+  private readonly auth = inject(AdminAuthService);
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly terminalRef = viewChild<ElementRef<HTMLDivElement>>('terminal');
 
   protected readonly PlayIcon = Play;
   protected readonly StopIcon = Square;
   protected readonly RestartIcon = RotateCcw;
+  protected readonly PauseIcon = Pause;
+  protected readonly TrashIcon = Trash2;
   protected readonly RefreshIcon = RefreshCw;
 
   protected readonly stats = signal<VpsStats | null>(null);
@@ -140,6 +177,14 @@ export class SurveillanceComponent {
   ]);
   protected readonly loadingStats = signal(true);
   protected readonly loadingContainers = signal(true);
+
+  // ── Logs live ──
+  protected readonly lines = signal<string[]>([]);
+  protected readonly paused = signal(false);
+  protected readonly streaming = signal(false);
+  protected readonly logContainers = LOG_CONTAINERS;
+  protected selectedContainer = LOG_CONTAINERS[0];
+  private es: EventSource | null = null;
 
   protected readonly runningCount = computed(() => this.allContainers().filter((c) => c.status === 'running').length);
   protected readonly groups = computed((): ContainerGroup[] => {
@@ -180,7 +225,6 @@ export class SurveillanceComponent {
   } as ChartConfiguration));
 
   constructor() {
-    // Stats VPS — 15s, pause si onglet masqué
     interval(15_000).pipe(
       startWith(0),
       filter(() => document.visibilityState === 'visible'),
@@ -197,7 +241,6 @@ export class SurveillanceComponent {
       }
     });
 
-    // Containers — 15s
     interval(15_000).pipe(
       startWith(0),
       filter(() => document.visibilityState === 'visible'),
@@ -208,7 +251,6 @@ export class SurveillanceComponent {
       if (r) this.allContainers.set(r.data ?? []);
     });
 
-    // Santé API prod — 15s
     interval(15_000).pipe(
       startWith(0),
       filter(() => document.visibilityState === 'visible'),
@@ -233,6 +275,38 @@ export class SurveillanceComponent {
     this.vpsApi.containerAction(id, act).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
   }
 
+  // ── Logs live (SSE) ──────────────────────────────────────────────────────
+  protected startStream(): void {
+    this.stopStream();
+    this.lines.set([]);
+    this.streaming.set(true);
+    const token = this.auth.getAccessToken() ?? '';
+    this.es = new EventSource(this.vpsApi.logsUrl(this.selectedContainer, token));
+    this.es.onmessage = (e) => {
+      if (this.paused()) return;
+      this.lines.update((prev) => {
+        const next = [...prev, e.data];
+        return next.length > 500 ? next.slice(-500) : next;
+      });
+      requestAnimationFrame(() => {
+        const el = this.terminalRef()?.nativeElement;
+        if (el) el.scrollTop = el.scrollHeight;
+      });
+    };
+    this.es.onerror = () => { this.streaming.set(false); this.stopStream(); };
+  }
+
+  protected stopStream(): void { this.es?.close(); this.es = null; this.streaming.set(false); }
+  protected togglePause(): void { this.paused.update((v) => !v); }
+  protected clearLines(): void { this.lines.set([]); }
+
+  protected lineClass(line: string): string {
+    if (line.includes(' ERR') || line.includes('Error') || line.includes('"error"')) return 'log-error';
+    if (line.includes('WARN') || line.includes('"warn"')) return 'log-warn';
+    if (line.includes('GET ') || line.includes('POST ') || line.includes('PUT ')) return 'log-req';
+    return 'log-info';
+  }
+
   private updateHealth(label: string, status: HealthCard['status'], meta: string): void {
     this.health.update((cards) => cards.map((c) => (c.label === label ? { ...c, status, meta } : c)));
   }
@@ -250,4 +324,6 @@ export class SurveillanceComponent {
     const h = Math.floor((s % 86400) / 3600);
     return d > 0 ? `${d}j ${h}h` : `${h}h`;
   }
+
+  ngOnDestroy(): void { this.stopStream(); }
 }

@@ -23,9 +23,21 @@
 .ct-row:hover .ct-actions, .ct-actions:focus-within { opacity: 1; }
 .ct-actions .icon-btn { width: 24px; height: 24px; }
 
+/* Logs live */
+.log-select { background: var(--bg3); border: 1px solid var(--border); color: var(--text2); border-radius: var(--r-sm); padding: 5px 8px; font-family: var(--mono); font-size: 11px; outline: none; }
+.log-select option { background: var(--bg2); }
+.btn-launch { background: var(--teal); color: #06241f; border: none; border-radius: var(--r-sm); padding: 6px 12px; font-family: var(--mono); font-size: 11px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.btn-launch:hover { background: #00ecbe; }
+.logs-card .log-terminal { height: 320px; border-radius: 0 0 var(--r-lg) var(--r-lg); }
+
+/* Containers hauts sur desktop, puis la page scrolle jusqu'aux logs */
+@media (min-width: 1024px) {
+  .surv-main { height: clamp(420px, calc(100vh - 250px), 720px); }
+}
+
 @media (max-width: 640px) {
-  /* sur tactile, pas de hover : actions toujours visibles */
   .ct-actions { opacity: 1; }
   .ct-actions .icon-btn { width: 32px; height: 32px; }
   .ct-meta { font-size: 9px; gap: 8px; }
+  .logs-card .log-terminal { height: 240px; }
 }
