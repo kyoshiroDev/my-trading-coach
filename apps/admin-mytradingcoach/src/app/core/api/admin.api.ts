@@ -125,6 +125,12 @@ export interface RetentionData {
   ghostUsers: number;
 }
 
+export interface MetricsHistoryPoint {
+  date: string; // YYYY-MM-DD (Paris)
+  users: number;
+  mrr: number;
+}
+
 export interface StripeReconcileData {
   mrrDb: number;
   mrrStripe: number;
@@ -158,6 +164,11 @@ export class AdminApi {
   subscriptions()       { return this.http.get<{ data: SubscriptionsData }>(`${this.base}/subscriptions`); }
   aiUsage()             { return this.http.get<{ data: AiUsageData }>(`${environment.apiUrl}/admin/ai-usage`); }
   retention()           { return this.http.get<{ data: RetentionData }>(`${this.adminBase}/retention`); }
+  metricsHistory(days = 30) {
+    return this.http.get<{ data: MetricsHistoryPoint[] }>(
+      `${this.adminBase}/metrics/history`, { params: { days } },
+    );
+  }
   stripeReconcile()     { return this.http.get<{ data: StripeReconcileData }>(`${this.adminBase}/stripe/reconcile`); }
 
   listCampaigns() {

@@ -75,4 +75,20 @@ export class MetricsSnapshotCron {
     });
     return rows.reverse();
   }
+
+  /**
+   * Série allégée pour les courbes d'évolution du dashboard (date, users, mrr),
+   * du plus ancien au plus récent. Lit les snapshots persistés (zéro recalcul).
+   */
+  async historyPoints(days: number): Promise<MetricsHistoryPoint[]> {
+    const rows = await this.history(days);
+    return rows.map((r) => ({ date: r.date, users: r.totalUsers, mrr: r.mrr }));
+  }
+}
+
+/** Point de la courbe d'évolution MRR & utilisateurs. */
+export interface MetricsHistoryPoint {
+  date: string; // YYYY-MM-DD (Paris)
+  users: number;
+  mrr: number;
 }

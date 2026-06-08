@@ -32,10 +32,10 @@ export class AdminController {
 
   // ── Métriques historisées (snapshots quotidiens) ──────────────────────────
 
-  /** Les N derniers snapshots quotidiens (pour les courbes d'évolution). */
+  /** Série d'évolution (date, users, mrr) sur N jours (snapshots persistés). */
   @Get('metrics/history')
   metricsHistory(@Query('days') days?: string) {
-    return this.metrics.history(days ? parseInt(days, 10) : 30);
+    return this.metrics.historyPoints(days ? parseInt(days, 10) : 30);
   }
 
   /** Déclenche un snapshot immédiat (backfill / test). Idempotent sur la date. */
