@@ -48,7 +48,7 @@ export class RadialGaugeComponent {
   readonly sub = input('');
 
   private readonly canvasRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
-  private chart?: Chart;
+  private chart?: Chart<'doughnut', number[]>;
 
   constructor() {
     const destroyRef = inject(DestroyRef);
