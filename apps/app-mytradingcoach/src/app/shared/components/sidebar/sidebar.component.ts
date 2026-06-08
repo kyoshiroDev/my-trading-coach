@@ -204,7 +204,7 @@ import { environment } from '../../../../environments/environment';
             (click)="closeSidebar(); logout()"
           >
             <span class="nav-icon">🚪</span>
-            Déconnexion
+            @if (userStore.isDemo()) { Quitter la démo } @else { Déconnexion }
           </button>
         </nav>
 
