@@ -4,5 +4,5 @@ export const environment = {
   wsUrl: 'https://api.mytradingcoach.app',
   appName: 'MyTradingCoach',
   appUrl: 'https://app.mytradingcoach.app',
-  landingUrl: 'https://mytradingcoach.app',
+  landingUrl: 'https://www.mytradingcoach.app',
 };

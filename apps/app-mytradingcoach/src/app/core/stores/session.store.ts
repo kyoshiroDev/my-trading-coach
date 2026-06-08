@@ -293,8 +293,17 @@ export class SessionStore {
     const friday = new Date(monday);
     friday.setDate(monday.getDate() + 4);
 
+    // Étendre la plage pour couvrir le jour cible (en session active = aujourd'hui),
+    // y compris le week-end où monday/friday pointent sur la semaine suivante.
+    // Dates au format YYYY-MM-DD → comparaison lexicographique = chronologique.
+    const target     = this.getTargetEcoDate();
+    const mondayStr  = toParisDateStr(monday);
+    const fridayStr  = toParisDateStr(friday);
+    const rangeStart = target < mondayStr ? target : mondayStr;
+    const rangeEnd   = target > fridayStr ? target : fridayStr;
+
     forkJoin({
-      range: this.ecoCalendarApi.getEventsRange(toParisDateStr(monday), toParisDateStr(friday)),
+      range: this.ecoCalendarApi.getEventsRange(rangeStart, rangeEnd),
       pins:  this.ecoCalendarApi.getPins(),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
