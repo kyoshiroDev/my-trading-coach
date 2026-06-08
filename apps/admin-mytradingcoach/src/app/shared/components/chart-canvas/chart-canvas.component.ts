@@ -9,7 +9,7 @@ import {
   input,
   viewChild,
 } from '@angular/core';
-import type { ChartConfiguration, ChartType } from 'chart.js';
+import type { ChartConfiguration } from 'chart.js';
 import { Chart, applyChartTheme } from '../../charts/chart-theme';
 
 /**
@@ -30,7 +30,7 @@ import { Chart, applyChartTheme } from '../../charts/chart-theme';
 })
 export class ChartCanvasComponent {
   /** Configuration Chart.js complète (type + data + options). */
-  readonly config = input.required<ChartConfiguration<ChartType>>();
+  readonly config = input.required<ChartConfiguration>();
 
   private readonly canvasRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
   private chart?: Chart;
