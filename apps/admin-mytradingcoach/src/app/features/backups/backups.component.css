@@ -46,7 +46,7 @@
 .confirm-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; font-size: 13px; font-family: var(--mono); color: var(--text); outline: none; }
 .confirm-input:focus { border-color: var(--red); }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .target-grid { grid-template-columns: 1fr; }
   .modal-overlay { align-items: flex-end; }
   .modal, .modal-sm { width: 100%; max-width: 100%; border-radius: 12px 12px 0 0; }

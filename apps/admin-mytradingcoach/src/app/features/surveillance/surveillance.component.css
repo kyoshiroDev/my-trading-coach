@@ -35,9 +35,9 @@
   .surv-main { height: clamp(420px, calc(100vh - 250px), 720px); }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .ct-actions { opacity: 1; }
-  .ct-actions .icon-btn { width: 32px; height: 32px; }
+  .ct-actions .icon-btn { width: 44px; height: 44px; }
   .ct-meta { font-size: 9px; gap: 8px; }
   .logs-card .log-terminal { height: 240px; }
 }

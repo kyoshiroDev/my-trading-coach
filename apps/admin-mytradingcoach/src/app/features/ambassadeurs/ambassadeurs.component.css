@@ -18,6 +18,6 @@
 .act-off { color: var(--text3); }
 .sql-wrap { margin-top: 18px; }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .code-cell { flex-direction: column; }
 }

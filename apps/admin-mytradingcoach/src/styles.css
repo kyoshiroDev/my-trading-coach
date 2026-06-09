@@ -98,7 +98,7 @@ a { color: inherit; text-decoration: none; }
 .status-dot { display: inline-flex; align-items: center; gap: 6px; color: var(--teal); white-space: nowrap; }
 .status-dot::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 8px var(--teal); animation: pulse 2.4s ease infinite; flex-shrink: 0; }
 .tb-meta { white-space: nowrap; }
-.hamburger { display: inline-flex; width: 36px; height: 36px; align-items: center; justify-content: center; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); cursor: pointer; flex-shrink: 0; }
+.hamburger { display: inline-flex; width: 44px; height: 44px; align-items: center; justify-content: center; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); cursor: pointer; flex-shrink: 0; }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
 
 .content { padding: 14px; display: flex; flex-direction: column; flex: 1; min-height: 0; overflow-y: auto; }
@@ -363,9 +363,10 @@ router-outlet { display: none; }
   .del-left > .card.grow .chart-box { flex: 1; min-height: 0; height: auto; width: 100%; }
 }
 
-/* ───────────────────────── TÉLÉPHONE (≤640px) : tables → cartes ─────────────────────────
-   Mixin réutilisable. Appliquer aux tables Utilisateurs / Sauvegardes / Comptes supprimés. */
-@media (max-width: 640px) {
+/* ───────────────────────── TÉLÉPHONE (<768px) : tables → cartes ─────────────────────────
+   Mixin réutilisable. Appliquer aux tables Utilisateurs / Sauvegardes / Comptes supprimés.
+   Breakpoint < 768px (cf. règle responsive : pas de table dense sous la tablette). */
+@media (max-width: 767px) {
   .ret-stat { border-left: none !important; }
   .gauges3 { flex-direction: column; }
 
@@ -377,8 +378,8 @@ router-outlet { display: none; }
   .tbl td::before { content: attr(data-label); color: var(--text3); font: 600 9.5px/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase; text-align: left; flex-shrink: 0; }
   .tbl td:first-child { text-align: left; border-bottom: 1px solid var(--border); padding-bottom: 9px; margin-bottom: 2px; }
   .tbl td:first-child::before { display: none; }
-  .row-actions { justify-content: flex-end; }
-  .icon-btn { width: 36px; height: 36px; }
+  .row-actions { justify-content: flex-end; gap: 8px; }
+  .icon-btn { width: 44px; height: 44px; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
