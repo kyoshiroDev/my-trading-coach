@@ -60,7 +60,7 @@ const LOG_CONTAINERS = ['mtc_api_prod', 'mtc_api_dev', 'mtc_postgres', 'mtc_redi
                 <div class="gauge"><span class="gauge-name">RAM</span><div class="gauge-track"><div class="gauge-fill" [style.width.%]="ramPct()" style="background:var(--blue)"></div></div><span class="gauge-val">{{ gb(s.ram.used) }} / {{ gb(s.ram.total) }}G</span></div>
                 <div class="gauge"><span class="gauge-name">Disque</span><div class="gauge-track"><div class="gauge-fill" [style.width.%]="diskPct()" [style.background]="diskPct() > 85 ? 'var(--red)' : 'var(--amber)'"></div></div><span class="gauge-val">{{ gb(s.disk.used) }} / {{ gb(s.disk.total) }}G</span></div>
                 <div class="gauge"><span class="gauge-name">Réseau ↑</span><div class="gauge-track"><div class="gauge-fill" [style.width.%]="netWidth()" style="background:var(--purple)"></div></div><span class="gauge-val">{{ (s.network.up/1024) | number:'1.0-0' }} KB/s</span></div>
-                <div class="cpu-spark"><div class="card-label cpu-spark-label">CPU (60s)</div><div class="chart-box cpu-spark-box"><mtc-chart [config]="cpuSparkConfig()" /></div></div>
+                <div class="cpu-spark"><div class="card-label cpu-spark-label">CPU (60s)</div><div class="chart-box cpu-spark-box"><mtc-admin-chart [config]="cpuSparkConfig()" /></div></div>
               } @else {
                 <div class="empty">{{ loadingStats() ? 'Connexion SSH…' : 'VPS non disponible' }}</div>
               }

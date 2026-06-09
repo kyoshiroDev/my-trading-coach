@@ -131,7 +131,7 @@ router-outlet { display: none; }
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--border); }
 .card-label { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--text2); font-weight: 500; }
 .card-body { padding: 18px; }
-.card-action { font-family: var(--mono); font-size: 11px; color: var(--teal); cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.card-action { font-family: var(--mono); font-size: 11px; color: var(--teal); cursor: pointer; display: inline-flex; gap: 6px; align-items: center; background: none; border: none; padding: 0; }
 .card-action:hover { text-decoration: underline; }
 
 /* KPI strip — mobile 2 → tablette 3 → desktop 6 */

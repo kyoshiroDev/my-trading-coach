@@ -59,11 +59,11 @@ import { CHART_COLORS, fade, gridAxis, noLegend, type ChartTone } from '../../sh
         <div class="area-left dcol">
           <div class="card grow-chart">
             <div class="card-head"><span class="card-label">Évolution — MRR &amp; utilisateurs (30j)</span><span class="card-label muted">snapshots</span></div>
-            <div class="card-body"><div class="chart-box"><mtc-chart [config]="trendConfig()" /></div></div>
+            <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="trendConfig()" /></div></div>
           </div>
           <div class="card">
             <div class="card-head"><span class="card-label">Entonnoir d'activation</span><span class="card-label muted">inscrits → 1ᵉʳ trade</span></div>
-            <div class="card-body"><div class="chart-box funnel-box"><mtc-chart [config]="funnelConfig()" /></div></div>
+            <div class="card-body"><div class="chart-box funnel-box"><mtc-admin-chart [config]="funnelConfig()" /></div></div>
           </div>
         </div>
 
@@ -75,9 +75,9 @@ import { CHART_COLORS, fade, gridAxis, noLegend, type ChartTone } from '../../sh
             <div class="card-body sys-body">
               @if (vpsStats(); as v) {
                 <div class="gauges3">
-                  <mtc-radial-gauge [value]="v.cpu" [tone]="cpuTone()" label="CPU" sub="charge" />
-                  <mtc-radial-gauge [value]="ramPct()" [tone]="ramTone()" label="RAM" [sub]="ramSub()" />
-                  <mtc-radial-gauge [value]="diskPct()" [tone]="diskTone()" label="Disque" [sub]="diskSub()" />
+                  <mtc-admin-radial-gauge [value]="v.cpu" [tone]="cpuTone()" label="CPU" sub="charge" />
+                  <mtc-admin-radial-gauge [value]="ramPct()" [tone]="ramTone()" label="RAM" [sub]="ramSub()" />
+                  <mtc-admin-radial-gauge [value]="diskPct()" [tone]="diskTone()" label="Disque" [sub]="diskSub()" />
                 </div>
               } @else {
                 <div class="empty">VPS non connecté</div>

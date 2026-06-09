@@ -22,7 +22,7 @@ import { Chart, CHART_COLORS, RING_TRACK, type ChartTone } from '../../charts/ch
  * <mtc-radial-gauge [value]="46" tone="amber" label="Disque" sub="33 / 72G" />
  */
 @Component({
-  selector: 'mtc-radial-gauge',
+  selector: 'mtc-admin-radial-gauge',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './radial-gauge.component.css',

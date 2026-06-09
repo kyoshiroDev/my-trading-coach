@@ -31,11 +31,11 @@ import { CHART_COLORS, gridAxis, noLegend } from '../../shared/charts/chart-them
             </div>
             <div class="card grow">
               <div class="card-head"><span class="card-label">Suppressions par mois</span></div>
-              <div class="card-body"><div class="chart-box"><mtc-chart [config]="monthConfig()" /></div></div>
+              <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="monthConfig()" /></div></div>
             </div>
             <div class="card grow">
               <div class="card-head"><span class="card-label">Motifs de départ</span><span class="card-label muted">si renseigné</span></div>
-              <div class="card-body"><div class="chart-box"><mtc-chart [config]="reasonConfig()" /></div></div>
+              <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="reasonConfig()" /></div></div>
             </div>
           </div>
 

@@ -30,7 +30,7 @@ import { CHART_COLORS, gridAxis, noLegend } from '../../shared/charts/chart-them
       </div>
 
       <div class="card">
-        <div class="card-head"><span class="card-label">Ambassadeurs</span><span class="card-action" (click)="copyCommand()">⧉ Copier SQL ajout</span></div>
+        <div class="card-head"><span class="card-label">Ambassadeurs</span><button type="button" class="card-action" (click)="copyCommand()">⧉ Copier SQL ajout</button></div>
         @if (loading()) {
           <div class="empty">Chargement…</div>
         } @else if (ambassadors().length === 0) {
@@ -73,7 +73,7 @@ import { CHART_COLORS, gridAxis, noLegend } from '../../shared/charts/chart-them
             <div class="grid-2">
               <div>
                 <div class="card-label sect">Gains par mois</div>
-                <div class="chart-box amb-chart"><mtc-chart [config]="earningsConfig()" /></div>
+                <div class="chart-box amb-chart"><mtc-admin-chart [config]="earningsConfig()" /></div>
               </div>
               <div>
                 <div class="card-label sect">Référés ({{ detail.referrals.length }})</div>

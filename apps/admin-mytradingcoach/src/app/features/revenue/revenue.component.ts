@@ -31,11 +31,11 @@ import { CHART_COLORS, fade, gridAxis, noLegend } from '../../shared/charts/char
         <div class="grid-2">
           <div class="card">
             <div class="card-head"><span class="card-label">Évolution du MRR (30j)</span></div>
-            <div class="card-body"><div class="chart-box"><mtc-chart [config]="mrrConfig()" /></div></div>
+            <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="mrrConfig()" /></div></div>
           </div>
           <div class="card">
             <div class="card-head"><span class="card-label">Répartition des abonnements</span></div>
-            <div class="card-body"><div class="chart-box"><mtc-chart [config]="splitConfig()" /></div></div>
+            <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="splitConfig()" /></div></div>
           </div>
         </div>
 
@@ -53,7 +53,7 @@ import { CHART_COLORS, fade, gridAxis, noLegend } from '../../shared/charts/char
       }
 
       <div class="card">
-        <div class="card-head"><span class="card-label">Réconciliation Stripe</span><span class="card-action" (click)="reconcile()">Vérifier avec Stripe →</span></div>
+        <div class="card-head"><span class="card-label">Réconciliation Stripe</span><button type="button" class="card-action" (click)="reconcile()">Vérifier avec Stripe →</button></div>
         <div class="card-body">
           @if (reconcileError()) { <div class="empty">{{ reconcileError() }}</div> }
           <div class="mini-stats">

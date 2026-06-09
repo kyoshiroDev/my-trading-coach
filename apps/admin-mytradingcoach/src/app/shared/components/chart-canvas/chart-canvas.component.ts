@@ -22,7 +22,7 @@ import { Chart, applyChartTheme } from '../../charts/chart-theme';
  * <div class="chart-box"><mtc-chart [config]="trendConfig" /></div>
  */
 @Component({
-  selector: 'mtc-chart',
+  selector: 'mtc-admin-chart',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './chart-canvas.component.css',
