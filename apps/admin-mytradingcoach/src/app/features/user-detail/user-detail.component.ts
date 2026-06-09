@@ -8,6 +8,24 @@ import { environment } from '../../../environments/environment';
 import { UserDetailData } from '../../core/api/admin.api';
 import { ActivityCalendarComponent } from './activity-calendar.component';
 
+/** Libellés courts/longs des features IA (clés réelles d'AiUsageLog). */
+const FEATURE_LABELS: Record<string, { full: string; short: string }> = {
+  chat: { full: 'Chat Coach', short: 'Chat' },
+  chat_coach: { full: 'Chat Coach', short: 'Chat' },
+  debrief: { full: 'Weekly Debrief', short: 'Débrief' },
+  weekly_debrief: { full: 'Weekly Debrief', short: 'Débrief' },
+  eco_calendar: { full: 'Calendrier éco', short: 'Éco' },
+  eco: { full: 'Calendrier éco', short: 'Éco' },
+  daily_recap: { full: 'Daily recap', short: 'Recap' },
+  recap: { full: 'Daily recap', short: 'Recap' },
+  insights: { full: 'IA Insights', short: 'Insights' },
+  ai_insights: { full: 'IA Insights', short: 'Insights' },
+  market_news: { full: 'News marché', short: 'News' },
+};
+function featLabel(key: string): { full: string; short: string } {
+  return FEATURE_LABELS[key] ?? { full: key, short: key.replace(/_/g, ' ') };
+}
+
 @Component({
   selector: 'mtc-admin-user-detail',
   standalone: true,
@@ -74,7 +92,20 @@ import { ActivityCalendarComponent } from './activity-calendar.component';
             </div>
             <div class="card r-ia">
               <div class="card-head"><span class="card-label">Consommation IA</span><span class="card-action ud-static">{{ aiHead() }}</span></div>
-              <div class="card-body"><div class="empty">Graphe IA (étape 5)</div></div>
+              <div class="card-body">
+                @if (d.aiByFeature.length === 0) {
+                  <div class="empty-ai">Aucun appel IA — {{ d.identity.plan === 'FREE' ? 'plan FREE (IA réservée au Premium)' : 'pas encore utilisé' }}.</div>
+                } @else {
+                  <div class="vchart">
+                    @for (b of aiBars(); track b.feature) {
+                      <div class="vbar" [title]="b.full + ' · ' + b.kTokens + 'k tok · $' + b.costUsd.toFixed(2)">
+                        <div class="vbar-col"><div class="vbar-fill" [style.height.%]="b.heightPct"></div></div>
+                        <div class="vbar-lbl"><div class="vbar-name">{{ b.short }}</div><div class="vbar-v">{{ b.kTokens }}k</div></div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
             </div>
           </div>
         </div>
@@ -146,6 +177,21 @@ export class UserDetailComponent {
   protected readonly aiHead = computed(() => {
     const ai = this.data()?.kpis.ai;
     return ai && ai.tokens ? `$${ai.usd.toFixed(2)} · ${Math.round(ai.tokens / 1000)}k tokens` : '—';
+  });
+  protected readonly aiBars = computed(() => {
+    const feats = this.data()?.aiByFeature ?? [];
+    const max = Math.max(...feats.map((f) => f.tokens), 1);
+    return feats.map((f) => {
+      const l = featLabel(f.feature);
+      return {
+        feature: f.feature,
+        full: l.full,
+        short: l.short,
+        costUsd: f.costUsd,
+        kTokens: Math.round(f.tokens / 1000),
+        heightPct: Math.max(4, Math.round((f.tokens / max) * 100)),
+      };
+    });
   });
 
   private relTime(iso: string): string {
