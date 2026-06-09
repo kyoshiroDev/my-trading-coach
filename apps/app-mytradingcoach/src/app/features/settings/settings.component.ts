@@ -108,6 +108,7 @@ export class SettingsComponent implements OnInit {
   protected readonly showPlanModal = signal(false);
   protected readonly showDeleteConfirm = signal(false);
   protected readonly deleteInput = signal('');
+  protected readonly deleteReason = signal('');
   protected readonly isDeleting = signal(false);
 
   // Nettoyage des doublons (maintenance)
@@ -436,7 +437,7 @@ export class SettingsComponent implements OnInit {
     if (this.deleteInput() !== 'SUPPRIMER') return;
     this.isDeleting.set(true);
     this.usersApi
-      .deleteMe()
+      .deleteMe(this.deleteReason() || undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {

@@ -162,6 +162,18 @@
               <p class="delete-confirm-hint">
                 Tape <strong>SUPPRIMER</strong> pour confirmer. Cette action est irréversible.
               </p>
+              <label class="delete-reason-label" for="delete-reason">Pourquoi pars-tu ? (optionnel)</label>
+              <select id="delete-reason" class="delete-input" [value]="deleteReason()"
+                (change)="deleteReason.set($any($event.target).value)">
+                <option value="">Je préfère ne pas dire</option>
+                <option value="Trop compliqué">Trop compliqué</option>
+                <option value="Pas pour moi">Pas pour moi</option>
+                <option value="Manque de temps">Manque de temps</option>
+                <option value="J'ai arrêté de trader">J'ai arrêté de trader</option>
+                <option value="Problème technique">Problème technique</option>
+                <option value="Trop cher">Trop cher</option>
+                <option value="Autre">Autre</option>
+              </select>
               <input class="delete-input" type="text" [value]="deleteInput()"
                 (input)="deleteInput.set($any($event.target).value)" placeholder="SUPPRIMER" />
               <div class="delete-actions">

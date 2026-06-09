@@ -3,7 +3,7 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import {
   LucideAngularModule,
   LayoutDashboard, Users, CreditCard, Activity, Database,
-  TrendingUp, Brain, Mail, LogOut, Handshake, Menu,
+  TrendingUp, Brain, Mail, LogOut, Handshake, Menu, UserX,
 } from 'lucide-angular';
 import { AdminAuthService } from '../../core/auth/admin-auth.service';
 
@@ -39,6 +39,9 @@ import { AdminAuthService } from '../../core/auth/admin-auth.service';
           </a>
           <a class="nav-item" routerLink="/subscriptions" routerLinkActive="active" (click)="navOpen.set(false)">
             <lucide-icon [img]="CreditCardIcon" [size]="14" /> Abonnements
+          </a>
+          <a class="nav-item" routerLink="/deleted" routerLinkActive="active" (click)="navOpen.set(false)">
+            <lucide-icon [img]="UserXIcon" [size]="14" /> Comptes supprimés
           </a>
         </div>
 
@@ -105,6 +108,7 @@ export class ShellComponent {
   protected readonly navOpen = signal(false);
 
   protected readonly MenuIcon = Menu;
+  protected readonly UserXIcon = UserX;
   protected readonly DashboardIcon = LayoutDashboard;
   protected readonly UsersIcon = Users;
   protected readonly CreditCardIcon = CreditCard;

@@ -131,6 +131,29 @@ export interface MetricsHistoryPoint {
   mrr: number;
 }
 
+export interface DeletedAccount {
+  id: string;
+  name: string | null;
+  email: string | null;
+  signedUpAt: string;
+  deletedAt: string;
+  lifetimeDays: number;
+  plan: 'FREE' | 'STARTER' | 'PREMIUM';
+  hadTraded: boolean;
+  tradesCount: number;
+  referredBy: string | null;
+  deletedBy: string; // "self" | "admin"
+  reason: string | null;
+  anonymizedAt: string | null;
+}
+
+export interface DeletedAccountsData {
+  accounts: DeletedAccount[];
+  stats: { thisMonth: number; total: number; medianLifetimeDays: number; noTradePct: number; noTradeCount: number };
+  byMonth: { month: string; count: number }[];
+  byReason: { reason: string; count: number }[];
+}
+
 export interface StripeReconcileData {
   mrrDb: number;
   mrrStripe: number;
@@ -168,6 +191,9 @@ export class AdminApi {
     return this.http.get<{ data: MetricsHistoryPoint[] }>(
       `${this.adminBase}/metrics/history`, { params: { days } },
     );
+  }
+  deletedAccounts() {
+    return this.http.get<{ data: DeletedAccountsData }>(`${this.adminBase}/deleted-accounts`);
   }
   stripeReconcile()     { return this.http.get<{ data: StripeReconcileData }>(`${this.adminBase}/stripe/reconcile`); }
 
