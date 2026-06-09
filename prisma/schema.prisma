@@ -368,3 +368,24 @@ model MetricsSnapshot {
 
   @@index([date])
 }
+
+/// Trace analytique d'un compte supprimé (RGPD). Identité (name/email)
+/// conservée 90 jours puis anonymisée par cron ; les champs analytiques restent.
+model DeletedAccount {
+  id           String   @id @default(cuid())
+  name         String? // anonymisé après 90 j
+  email        String? // anonymisé après 90 j
+  signedUpAt   DateTime
+  deletedAt    DateTime  @default(now())
+  lifetimeDays Int
+  plan         Plan
+  hadTraded    Boolean
+  tradesCount  Int
+  referredBy   String?
+  deletedBy    String // "self" | "admin"
+  reason       String?
+  anonymizedAt DateTime?
+
+  @@index([deletedAt])
+  @@index([anonymizedAt])
+}

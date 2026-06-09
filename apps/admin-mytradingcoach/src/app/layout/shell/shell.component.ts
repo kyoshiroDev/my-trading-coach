@@ -3,7 +3,7 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import {
   LucideAngularModule,
   LayoutDashboard, Users, CreditCard, Activity, Database,
-  TrendingUp, Brain, Mail, LogOut, Handshake,
+  TrendingUp, Brain, Mail, LogOut, Handshake, Menu, UserX,
 } from 'lucide-angular';
 import { AdminAuthService } from '../../core/auth/admin-auth.service';
 
@@ -14,9 +14,9 @@ import { AdminAuthService } from '../../core/auth/admin-auth.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './shell.component.css',
   template: `
-    <div class="app">
-      <div class="sidebar-overlay" role="button" tabindex="-1" [class.open]="sidebarOpen()" (click)="sidebarOpen.set(false)" (keydown.escape)="sidebarOpen.set(false)"></div>
-      <aside class="sidebar" [class.open]="sidebarOpen()">
+    <div class="app" [class.nav-open]="navOpen()">
+      <div class="nav-overlay" role="button" tabindex="-1" (click)="navOpen.set(false)" (keydown.escape)="navOpen.set(false)"></div>
+      <aside class="sidebar">
         <div class="sidebar-logo">
           <div class="logo-mark">M</div>
           <div class="logo-info">
@@ -27,43 +27,46 @@ import { AdminAuthService } from '../../core/auth/admin-auth.service';
 
         <div class="nav-group">
           <div class="nav-group-label">Overview</div>
-          <a class="nav-item" routerLink="/dashboard" routerLinkActive="active" (click)="sidebarOpen.set(false)">
+          <a class="nav-item" routerLink="/dashboard" routerLinkActive="active" (click)="navOpen.set(false)">
             <lucide-icon [img]="DashboardIcon" [size]="14" /> Dashboard
           </a>
         </div>
 
         <div class="nav-group">
           <div class="nav-group-label">Utilisateurs</div>
-          <a class="nav-item" routerLink="/users" routerLinkActive="active" (click)="sidebarOpen.set(false)">
+          <a class="nav-item" routerLink="/users" routerLinkActive="active" (click)="navOpen.set(false)">
             <lucide-icon [img]="UsersIcon" [size]="14" /> Utilisateurs
           </a>
-          <a class="nav-item" routerLink="/subscriptions" routerLinkActive="active" (click)="sidebarOpen.set(false)">
+          <a class="nav-item" routerLink="/subscriptions" routerLinkActive="active" (click)="navOpen.set(false)">
             <lucide-icon [img]="CreditCardIcon" [size]="14" /> Abonnements
+          </a>
+          <a class="nav-item" routerLink="/deleted" routerLinkActive="active" (click)="navOpen.set(false)">
+            <lucide-icon [img]="UserXIcon" [size]="14" /> Comptes supprimés
           </a>
         </div>
 
         <div class="nav-group">
           <div class="nav-group-label">Infrastructure</div>
-          <a class="nav-item" routerLink="/surveillance" routerLinkActive="active" (click)="sidebarOpen.set(false)">
+          <a class="nav-item" routerLink="/surveillance" routerLinkActive="active" (click)="navOpen.set(false)">
             <lucide-icon [img]="ActivityIcon" [size]="14" /> Surveillance
           </a>
-          <a class="nav-item" routerLink="/backups" routerLinkActive="active" (click)="sidebarOpen.set(false)">
+          <a class="nav-item" routerLink="/backups" routerLinkActive="active" (click)="navOpen.set(false)">
             <lucide-icon [img]="DatabaseIcon" [size]="14" /> Sauvegardes
           </a>
         </div>
 
         <div class="nav-group">
           <div class="nav-group-label">Business</div>
-          <a class="nav-item" routerLink="/revenue" routerLinkActive="active" (click)="sidebarOpen.set(false)">
+          <a class="nav-item" routerLink="/revenue" routerLinkActive="active" (click)="navOpen.set(false)">
             <lucide-icon [img]="TrendingUpIcon" [size]="14" /> Revenus
           </a>
-          <a class="nav-item" routerLink="/ai-usage" routerLinkActive="active" (click)="sidebarOpen.set(false)">
+          <a class="nav-item" routerLink="/ai-usage" routerLinkActive="active" (click)="navOpen.set(false)">
             <lucide-icon [img]="BrainIcon" [size]="14" /> Usage IA
           </a>
-          <a class="nav-item" routerLink="/emails" routerLinkActive="active" (click)="sidebarOpen.set(false)">
+          <a class="nav-item" routerLink="/emails" routerLinkActive="active" (click)="navOpen.set(false)">
             <lucide-icon [img]="MailIcon" [size]="14" /> Emails
           </a>
-          <a class="nav-item" routerLink="/ambassadeurs" routerLinkActive="active" (click)="sidebarOpen.set(false)">
+          <a class="nav-item" routerLink="/ambassadeurs" routerLinkActive="active" (click)="navOpen.set(false)">
             <lucide-icon [img]="HandshakeIcon" [size]="14" /> Ambassadeurs
           </a>
         </div>
@@ -84,14 +87,16 @@ import { AdminAuthService } from '../../core/auth/admin-auth.service';
 
       <div class="main">
         <div class="topbar">
-          <button class="burger-btn" (click)="sidebarOpen.update(v => !v)" aria-label="Menu">
-            <span></span><span></span><span></span>
-          </button>
           <div class="topbar-title">MTC Admin</div>
-          <span class="status-dot">api.mytradingcoach.app</span>
-          <div class="topbar-meta">VPS OVH · Paris</div>
+          <div class="topbar-right">
+            <span class="status-dot">api.mytradingcoach.app</span>
+            <span class="tb-meta">VPS OVH · Paris</span>
+          </div>
+          <button class="hamburger" (click)="navOpen.update(v => !v)" aria-label="Ouvrir le menu">
+            <lucide-icon [img]="MenuIcon" [size]="18" />
+          </button>
         </div>
-        <div class="content-wrapper">
+        <div class="content">
           <router-outlet />
         </div>
       </div>
@@ -100,8 +105,10 @@ import { AdminAuthService } from '../../core/auth/admin-auth.service';
 })
 export class ShellComponent {
   protected readonly auth = inject(AdminAuthService);
-  protected readonly sidebarOpen = signal(false);
+  protected readonly navOpen = signal(false);
 
+  protected readonly MenuIcon = Menu;
+  protected readonly UserXIcon = UserX;
   protected readonly DashboardIcon = LayoutDashboard;
   protected readonly UsersIcon = Users;
   protected readonly CreditCardIcon = CreditCard;

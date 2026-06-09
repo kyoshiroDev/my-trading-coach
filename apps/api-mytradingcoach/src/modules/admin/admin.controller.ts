@@ -5,6 +5,7 @@ import { AdminService } from './admin.service';
 import { EmailCampaignService } from './email-campaign.service';
 import type { CampaignType } from './email-campaign.service';
 import { MetricsSnapshotCron } from './metrics-snapshot.cron';
+import { DeletedAccountService } from './deleted-account.service';
 import { DemoSeedService } from './demo-seed.service';
 import { UsersService } from '../users/users.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -21,8 +22,15 @@ export class AdminController {
     private readonly prisma: PrismaService,
     private readonly discordService: DiscordService,
     private readonly metrics: MetricsSnapshotCron,
+    private readonly deletedAccounts: DeletedAccountService,
     private readonly demoSeed: DemoSeedService,
   ) {}
+
+  /** Comptes supprimés (trace analytique RGPD) — liste récente + agrégats. */
+  @Get('deleted-accounts')
+  getDeletedAccounts() {
+    return this.deletedAccounts.getDeletedAccounts();
+  }
 
   /** Seed/refresh idempotent du compte démo vitrine. Admin only. */
   @Post('seed-demo')
@@ -32,10 +40,10 @@ export class AdminController {
 
   // ── Métriques historisées (snapshots quotidiens) ──────────────────────────
 
-  /** Les N derniers snapshots quotidiens (pour les courbes d'évolution). */
+  /** Série d'évolution (date, users, mrr) sur N jours (snapshots persistés). */
   @Get('metrics/history')
   metricsHistory(@Query('days') days?: string) {
-    return this.metrics.history(days ? parseInt(days, 10) : 30);
+    return this.metrics.historyPoints(days ? parseInt(days, 10) : 30);
   }
 
   /** Déclenche un snapshot immédiat (backfill / test). Idempotent sur la date. */

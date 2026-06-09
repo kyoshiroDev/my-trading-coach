@@ -58,7 +58,9 @@ export class UsersApi {
     return this.http.patch<{ data: AuthUser }>(`${this.base}/preferences`, dto);
   }
 
-  deleteMe(): Observable<void> {
-    return this.http.delete<void>(`${this.base}/me`);
+  deleteMe(reason?: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/me`, {
+      body: reason ? { reason } : {},
+    });
   }
 }

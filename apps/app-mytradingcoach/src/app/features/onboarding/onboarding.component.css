@@ -266,3 +266,8 @@
   font-size: 12px; color: var(--text-3); transition: color 0.15s;
 }
 .asset-remove:hover { color: var(--red, #ef4444); }
+
+/* ─── Responsive — petits téléphones ─── */
+@media (max-width: 380px) {
+  .choice-grid { grid-template-columns: 1fr; }
+}

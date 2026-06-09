@@ -30,6 +30,10 @@ const mockPrisma = {
   trade: {
     count: vi.fn(),
   },
+  deletedAccount: {
+    create: vi.fn().mockReturnValue({ __op: 'create' }),
+  },
+  $transaction: vi.fn().mockResolvedValue([{}, {}]),
 };
 
 
@@ -163,14 +167,19 @@ describe('UsersService', () => {
   });
 
   describe('deleteMe', () => {
-    it('supprime le compte utilisateur', async () => {
-      mockPrisma.user.delete.mockResolvedValue(mockUser);
+    it('supprime le compte utilisateur (avec trace DeletedAccount)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        ...mockUser, plan: 'FREE', referredBy: null, _count: { trades: 0 },
+      });
+      mockPrisma.user.delete.mockReturnValue({ __op: 'delete' });
 
       await service.deleteMe('user-1');
 
+      expect(mockPrisma.deletedAccount.create).toHaveBeenCalledTimes(1);
       expect(mockPrisma.user.delete).toHaveBeenCalledWith({
         where: { id: 'user-1' },
       });
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
     });
   });
 });

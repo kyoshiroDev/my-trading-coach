@@ -1,0 +1,11 @@
+/* Remplit la .chart-box du parent ; Chart.js dimensionne le canvas
+   (maintainAspectRatio:false) à la taille de cet hôte. */
+:host {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+canvas {
+  display: block;
+}

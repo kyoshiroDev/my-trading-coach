@@ -71,8 +71,11 @@ export class UsersController {
 
   @Delete('me')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteMe(@CurrentUser() user: { id: string }) {
-    await this.usersService.deleteMe(user.id);
+  async deleteMe(
+    @CurrentUser() user: { id: string },
+    @Body() body?: { reason?: string },
+  ) {
+    await this.usersService.deleteMe(user.id, body?.reason);
   }
 
   // ── Admin routes ──────────────────────────────────────────────────────────
