@@ -180,7 +180,55 @@ export class UsersService {
     if (target.role === Role.ADMIN) {
       throw new ForbiddenException('Impossible de supprimer un administrateur');
     }
-    await this.prisma.user.delete({ where: { id: targetId } });
+    await this.archiveAndDelete(targetId, 'admin');
+  }
+
+  /**
+   * Archive une trace analytique (DeletedAccount) PUIS supprime le User, le tout
+   * dans une transaction : on ne perd jamais la trace et on ne laisse pas d'orphelin.
+   * L'identité (name/email) est anonymisée par cron après 90 j.
+   */
+  private async archiveAndDelete(
+    userId: string,
+    deletedBy: 'self' | 'admin',
+    reason?: string,
+  ): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        name: true,
+        email: true,
+        plan: true,
+        createdAt: true,
+        referredBy: true,
+        _count: { select: { trades: true } },
+      },
+    });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+
+    const tradesCount = user._count.trades;
+    const lifetimeDays = Math.max(
+      0,
+      Math.floor((Date.now() - user.createdAt.getTime()) / 86_400_000),
+    );
+
+    await this.prisma.$transaction([
+      this.prisma.deletedAccount.create({
+        data: {
+          name: user.name,
+          email: user.email,
+          signedUpAt: user.createdAt,
+          lifetimeDays,
+          plan: user.plan,
+          hadTraded: tradesCount > 0,
+          tradesCount,
+          referredBy: user.referredBy,
+          deletedBy,
+          reason: reason?.trim() ? reason.trim().slice(0, 280) : null,
+        },
+      }),
+      this.prisma.user.delete({ where: { id: userId } }),
+    ]);
   }
 
   async adminStats() {
@@ -353,8 +401,8 @@ export class UsersService {
     }
   }
 
-  async deleteMe(userId: string): Promise<void> {
-    await this.prisma.user.delete({ where: { id: userId } });
+  async deleteMe(userId: string, reason?: string): Promise<void> {
+    await this.archiveAndDelete(userId, 'self', reason);
   }
 
   async adminSubscriptions(page = 1, limit = 20) {

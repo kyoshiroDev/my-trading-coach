@@ -15,6 +15,7 @@ export const appRoutes: Routes = [
       { path: 'dashboard',     loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent) },
       { path: 'users',         loadComponent: () => import('./features/users/users.component').then(m => m.UsersComponent) },
       { path: 'subscriptions', loadComponent: () => import('./features/subscriptions/subscriptions.component').then(m => m.SubscriptionsComponent) },
+      { path: 'deleted',       loadComponent: () => import('./features/deleted/deleted.component').then(m => m.DeletedComponent) },
       { path: 'surveillance',  loadComponent: () => import('./features/surveillance/surveillance.component').then(m => m.SurveillanceComponent) },
       { path: 'vps',           redirectTo: 'surveillance', pathMatch: 'full' },
       { path: 'containers',    redirectTo: 'surveillance', pathMatch: 'full' },

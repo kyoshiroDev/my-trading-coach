@@ -1,0 +1,13 @@
+/* Comptes supprimés — del-body / del-left / del-right / .fill : design system global. */
+
+.card-label.muted { color: var(--text3); }
+.muted { color: var(--text3); }
+.ref { color: var(--blue); }
+
+/* avatar grisé (compte supprimé) */
+.del-av { background: linear-gradient(135deg, #5a6472, #3a4350); color: #fff; }
+
+@media (min-width: 1024px) {
+  /* les 2 graphes de gauche se partagent la hauteur restante sous les KPIs */
+  .del-left > .card.grow { flex: 1; }
+}

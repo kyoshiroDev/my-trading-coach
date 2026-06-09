@@ -1,62 +1,55 @@
-<div class="content">
-  <h1 class="page-title">Usage IA</h1>
+<div class="screen">
+  <div class="page-head">
+    <div class="page-title">Usage IA</div>
+    <span class="page-meta">claude-sonnet · claude-haiku</span>
+  </div>
+
   @if (loading()) {
-    <div class="empty-state">Chargement...</div>
+    <div class="card"><div class="empty">Chargement…</div></div>
   } @else if (error()) {
-    <div class="empty-state">
-      <span>Module Usage IA non disponible</span>
-      <span>L'endpoint /admin/ai-usage n'est pas encore déployé.</span>
-    </div>
+    <div class="card"><div class="empty">Module Usage IA non disponible — l'endpoint /admin/ai-usage n'est pas déployé.</div></div>
   } @else if (data(); as d) {
-    <div class="two-col">
+    <div class="kpi-strip cols-4">
+      <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Appels (7j)</div><div class="kpi-value teal">{{ d.week.calls | number }}</div><div class="kpi-sub">{{ d.today.calls }} aujourd'hui</div></div>
+      <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Tokens entrée (7j)</div><div class="kpi-value blue">{{ d.week.inputTokens | number }}</div><div class="kpi-sub">{{ d.today.inputTokens | number }} aujourd'hui</div></div>
+      <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Tokens sortie (7j)</div><div class="kpi-value purple">{{ d.week.outputTokens | number }}</div><div class="kpi-sub">{{ d.today.outputTokens | number }} aujourd'hui</div></div>
+      <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Coût USD (7j)</div><div class="kpi-value amber">${{ d.week.costUsd | number:'1.2-2' }}</div><div class="kpi-sub">${{ d.today.costUsd | number:'1.4-4' }} aujourd'hui</div></div>
+    </div>
+
+    <div class="grid-2">
       <div class="card">
-        <div class="card-header"><span class="card-title">Aujourd'hui</span></div>
-        <div class="stat-rows">
-          <div class="stat-row"><span class="stat-lbl">Appels</span><span class="stat-val teal">{{ d.today.calls }}</span></div>
-          <div class="stat-row"><span class="stat-lbl">Tokens entrée</span><span class="stat-val">{{ d.today.inputTokens | number }}</span></div>
-          <div class="stat-row"><span class="stat-lbl">Tokens sortie</span><span class="stat-val">{{ d.today.outputTokens | number }}</span></div>
-          <div class="stat-row"><span class="stat-lbl">Coût USD</span><span class="stat-val amber">{{ d.today.costUsd | number:'1.4-4' }}</span></div>
-        </div>
+        <div class="card-head"><span class="card-label">Coût par feature (7j)</span></div>
+        <div class="card-body"><div class="chart-box"><mtc-chart [config]="featureConfig()" /></div></div>
       </div>
       <div class="card">
-        <div class="card-header"><span class="card-title">7 derniers jours</span></div>
-        <div class="stat-rows">
-          <div class="stat-row"><span class="stat-lbl">Appels</span><span class="stat-val teal">{{ d.week.calls }}</span></div>
-          <div class="stat-row"><span class="stat-lbl">Tokens entrée</span><span class="stat-val">{{ d.week.inputTokens | number }}</span></div>
-          <div class="stat-row"><span class="stat-lbl">Tokens sortie</span><span class="stat-val">{{ d.week.outputTokens | number }}</span></div>
-          <div class="stat-row"><span class="stat-lbl">Coût USD</span><span class="stat-val amber">{{ d.week.costUsd | number:'1.2-2' }}</span></div>
+        <div class="card-head"><span class="card-label">Détail par feature</span></div>
+        <div class="card-body slim">
+          @for (f of d.byFeature; track f.feature) {
+            <div class="feat-row">
+              <span class="feat-name">{{ f.feature }}</span>
+              <div class="feat-track"><div class="feat-fill" [style.width.%]="f.pct"></div></div>
+              <span class="feat-pct">{{ f.pct }}%</span>
+              <span class="feat-cost">{{ f.cost | number:'1.3-3' }} USD</span>
+            </div>
+          } @empty { <div class="empty">Aucun appel IA sur 7 jours</div> }
         </div>
       </div>
     </div>
-    <div class="two-col">
-      <div class="card">
-        <div class="card-header"><span class="card-title">Par feature (7j)</span></div>
-        @for (f of d.byFeature; track f.feature) {
-          <div class="feature-row">
-            <span class="feature-name">{{ f.feature }}</span>
-            <div class="feature-bar"><div class="feature-fill" [style.width.%]="f.pct"></div></div>
-            <span class="feature-pct">{{ f.pct }}%</span>
-            <span class="feature-cost">{{ f.cost | number:'1.3-3' }} USD</span>
-          </div>
-        }
-      </div>
-      <div class="card">
-        <div class="card-header"><span class="card-title">Top utilisateurs (7j)</span></div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Utilisateur</th><th>Tokens</th><th>Coût</th></tr></thead>
-            <tbody>
-              @for (u of d.topUsers; track u.userId) {
-                <tr>
-                  <td><div class="user-name">{{ u.name || u.email }}</div></td>
-                  <td class="mono-text">{{ u.tokens | number }}</td>
-                  <td class="mono-text amber">{{ u.cost | number:'1.3-3' }} USD</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </div>
+
+    <div class="card fill">
+      <div class="card-head"><span class="card-label">Top utilisateurs (7j)</span></div>
+      <table class="tbl">
+        <thead><tr><th>Utilisateur</th><th class="num">Tokens</th><th class="num">Coût</th></tr></thead>
+        <tbody>
+          @for (u of d.topUsers; track u.userId) {
+            <tr>
+              <td data-label="Utilisateur" class="u-name">{{ u.name || u.email }}</td>
+              <td data-label="Tokens" class="td-mono num">{{ u.tokens | number }}</td>
+              <td data-label="Coût" class="td-mono num cost">{{ u.cost | number:'1.3-3' }} USD</td>
+            </tr>
+          } @empty { <tr><td colspan="3" class="empty">Aucun utilisateur</td></tr> }
+        </tbody>
+      </table>
     </div>
   }
 </div>

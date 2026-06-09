@@ -16,57 +16,37 @@ import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './emails.component.css',
   template: `
-    <div class="content">
-      <div class="page-header">
-        <h1 class="page-title">Campagnes Email</h1>
-        <button class="btn-icon" (click)="load()" aria-label="Rafraîchir">
-          <lucide-icon [img]="RefreshIcon" [size]="14" />
+    <div class="screen">
+      <div class="page-head">
+        <div class="page-title">Campagnes Email</div>
+        <button class="refresh-tag refresh-btn" (click)="load()" aria-label="Rafraîchir">
+          <lucide-icon [img]="RefreshIcon" [size]="12" /> ↻
         </button>
       </div>
 
       @if (loading()) {
-        <div class="loading-state">Chargement des campagnes...</div>
+        <div class="card"><div class="empty">Chargement des campagnes…</div></div>
       } @else {
-        <div class="campaigns-list">
+        <div class="card fill">
           @for (c of campaigns(); track c.type) {
-            <div class="campaign-card">
-              <div class="campaign-left">
-                <div class="campaign-emoji">{{ c.emoji }}</div>
-                <div class="campaign-info">
-                  <div class="campaign-label">{{ c.label }}</div>
-                  <div class="campaign-desc">{{ c.desc }}</div>
-                  <div class="campaign-target">
-                    <span class="target-badge">{{ c.targetDesc }}</span>
-                    <span class="target-count">{{ c.targetCount }} destinataire{{ c.targetCount !== 1 ? 's' : '' }}</span>
-                  </div>
-                </div>
+            <div class="camp">
+              <div class="camp-ico">{{ c.emoji }}</div>
+              <div class="camp-main">
+                <div class="camp-title">{{ c.label }}</div>
+                <div class="camp-desc">{{ c.desc }}</div>
+                <span class="camp-target">{{ c.targetDesc }} · <span class="n">{{ c.targetCount }} destinataire{{ c.targetCount !== 1 ? 's' : '' }}</span></span>
               </div>
-              <div class="campaign-right">
-                @if (c.lastSent) {
-                  <div class="campaign-last">
-                    Dernier : {{ c.lastSent | date:'dd/MM HH:mm' }} · {{ c.lastCount }} envoyés
-                  </div>
-                } @else {
-                  <div class="campaign-last never">Jamais envoyé</div>
-                }
-                <div class="campaign-actions">
-                  <button class="btn-preview" (click)="openPreview(c)" [disabled]="c.targetCount === 0"
-                    aria-label="Aperçu">
-                    <lucide-icon [img]="EyeIcon" [size]="13" />
-                    Aperçu
-                  </button>
-                  <button class="btn-send" (click)="openSend(c)" [disabled]="c.targetCount === 0"
-                    aria-label="Envoyer">
-                    <lucide-icon [img]="SendIcon" [size]="13" />
-                    Envoyer
-                  </button>
+              <div class="camp-right">
+                <span class="camp-when">{{ c.lastSent ? ('Dernier · ' + (c.lastSent | date:'dd/MM HH:mm') + ' · ' + c.lastCount + ' envoyés') : 'Jamais envoyé' }}</span>
+                <div class="camp-btns">
+                  <button class="btn" (click)="openPreview(c)" [disabled]="c.targetCount === 0"><lucide-icon [img]="EyeIcon" [size]="12" /> Aperçu</button>
+                  <button class="btn btn-primary" (click)="openSend(c)" [disabled]="c.targetCount === 0"><lucide-icon [img]="SendIcon" [size]="12" /> Envoyer</button>
                 </div>
               </div>
             </div>
-          }
+          } @empty { <div class="empty">Aucune campagne</div> }
         </div>
       }
-    </div>
 
     <!-- ── Modal Aperçu ── -->
     @if (previewCampaign()) {
@@ -190,6 +170,7 @@ import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
     @if (toast()) {
       <div class="toast" [class.toast-error]="toast()!.error">{{ toast()!.message }}</div>
     }
+    </div>
   `,
 })
 export class EmailsComponent {
