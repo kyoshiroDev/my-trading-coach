@@ -1,126 +1,54 @@
 import {
-  ChangeDetectionStrategy,
-  Component,
-  DestroyRef,
-  OnInit,
-  computed,
-  inject,
-  signal,
+  ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
+import type { ChartConfiguration } from 'chart.js';
 import { AdminApi, AdminAmbassador, AdminAmbassadorDetail } from '../../core/api/admin.api';
+import { ChartCanvasComponent } from '../../shared/components/chart-canvas/chart-canvas.component';
+import { CHART_COLORS, gridAxis, noLegend } from '../../shared/charts/chart-theme';
 
 @Component({
   selector: 'mtc-admin-ambassadeurs',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, DecimalPipe, NgClass],
+  imports: [DatePipe, DecimalPipe, ChartCanvasComponent],
   styleUrl: './ambassadeurs.component.css',
   template: `
-    <div class="content">
-      <h1 class="page-title">Ambassadeurs</h1>
-
-      <!-- KPIs globaux -->
-      <div class="stats-row">
-        <div class="stat-card purple">
-          <div class="stat-label">Ambassadeurs</div>
-          <div class="stat-value">{{ ambassadors().length }}</div>
-          <div class="stat-change neutral">actifs</div>
-        </div>
-        <div class="stat-card blue">
-          <div class="stat-label">Total référés</div>
-          <div class="stat-value">{{ totalReferrals() }}</div>
-          <div class="stat-change neutral">via liens</div>
-        </div>
-        <div class="stat-card amber">
-          <div class="stat-label">Référés Starter</div>
-          <div class="stat-value">{{ totalStarter() }}</div>
-          <div class="stat-change neutral">39€/mois</div>
-        </div>
-        <div class="stat-card green">
-          <div class="stat-label">Référés Premium</div>
-          <div class="stat-value">{{ totalPremium() }}</div>
-          <div class="stat-change neutral">79€/mois</div>
-        </div>
-        <div class="stat-card amber">
-          <div class="stat-label">Commissions dues</div>
-          <div class="stat-value">{{ totalPending() | number:'1.2-2' }}€</div>
-          <div class="stat-change neutral">à verser</div>
-        </div>
-        <div class="stat-card teal">
-          <div class="stat-label">Total payé</div>
-          <div class="stat-value">{{ totalPaid() | number:'1.2-2' }}€</div>
-          <div class="stat-change neutral">versé</div>
-        </div>
+    <div class="screen">
+      <div class="page-head">
+        <div class="page-title">Ambassadeurs</div>
       </div>
 
-      <!-- Tableau ambassadeurs -->
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Ambassadeurs</span>
-          <button class="card-action-btn" (click)="copyCommand()">📋 Copier SQL ajout</button>
-        </div>
+      <div class="kpi-strip">
+        <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Ambassadeurs</div><div class="kpi-value purple">{{ ambassadors().length }}</div><div class="kpi-sub">actifs</div></div>
+        <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Total référés</div><div class="kpi-value blue">{{ totalReferrals() }}</div><div class="kpi-sub">via liens</div></div>
+        <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Référés Starter</div><div class="kpi-value amber">{{ totalStarter() }}</div><div class="kpi-sub">39€/mois</div></div>
+        <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Référés Premium</div><div class="kpi-value blue">{{ totalPremium() }}</div><div class="kpi-sub">79€/mois</div></div>
+        <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Commissions dues</div><div class="kpi-value amber">{{ totalPending() | number:'1.2-2' }}€</div><div class="kpi-sub">à verser</div></div>
+        <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Total payé</div><div class="kpi-value teal">{{ totalPaid() | number:'1.2-2' }}€</div><div class="kpi-sub">versé</div></div>
+      </div>
 
+      <div class="card">
+        <div class="card-head"><span class="card-label">Ambassadeurs</span><span class="card-action" (click)="copyCommand()">⧉ Copier SQL ajout</span></div>
         @if (loading()) {
-          <div class="loading">Chargement...</div>
+          <div class="empty">Chargement…</div>
         } @else if (ambassadors().length === 0) {
           <div class="empty">Aucun ambassadeur configuré</div>
         } @else {
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Ambassadeur</th>
-                <th>Code / Lien</th>
-                <th>Taux</th>
-                <th>Référés</th>
-                <th>Starter / Prem.</th>
-                <th>Dû</th>
-                <th>Total payé</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
+          <table class="tbl">
+            <thead><tr><th>Ambassadeur</th><th>Code / Lien</th><th>Taux</th><th>Référés</th><th>Starter / Prem.</th><th class="num">Dû</th><th class="num">Total payé</th><th class="actions-col">Actions</th></tr></thead>
             <tbody>
               @for (amb of ambassadors(); track amb.id) {
-                <tr [class.selected]="selectedId() === amb.id"
-                    (click)="selectAmbassador(amb)">
-                  <td>
-                    <div class="user-cell">
-                      <div class="avatar">{{ (amb.name || amb.email)[0].toUpperCase() }}</div>
-                      <div>
-                        <div class="user-name">{{ amb.name ?? '—' }}</div>
-                        <div class="user-email">{{ amb.email }}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="code-cell">
-                      <span class="ref-code">{{ amb.referralCode }}</span>
-                      <button class="copy-btn"
-                              (click)="$event.stopPropagation(); copyLink(amb.referralCode)">
-                        Copier lien
-                      </button>
-                    </div>
-                    <div class="ref-url">mytradingcoach.app?ref={{ amb.referralCode }}</div>
-                  </td>
-                  <td><span class="rate-badge">20%</span></td>
-                  <td class="mono">{{ amb.totalReferrals }}</td>
-                  <td class="mono">
-                    <span style="color: var(--blue-bright)">{{ amb.starterReferrals }}</span>
-                    <span style="color: var(--text-muted, #5a7a99); font-size: 10px;"> S</span>
-                    <span style="color: var(--text-muted, #5a7a99);"> / </span>
-                    <span style="color: #10b981">{{ amb.premiumReferrals }}</span>
-                    <span style="color: var(--text-muted, #5a7a99); font-size: 10px;"> P</span>
-                  </td>
-                  <td class="mono amber">{{ amb.pendingPayout | number:'1.2-2' }}€</td>
-                  <td class="mono green">{{ (amb.totalEarned - amb.pendingPayout) | number:'1.2-2' }}€</td>
-                  <td>
-                    <button class="action-btn"
-                            [disabled]="amb.pendingPayout === 0"
-                            (click)="$event.stopPropagation(); payAmbassador(amb)">
-                      ✓ Payer
-                    </button>
-                  </td>
+                <tr [class.row-selected]="selectedId() === amb.id" (click)="selectAmbassador(amb)">
+                  <td data-label="Ambassadeur"><div class="u-cell"><div class="u-av amb-av">{{ (amb.name || amb.email).slice(0,2).toUpperCase() }}</div><div><div class="u-name">{{ amb.name ?? '—' }}</div><div class="u-mail">{{ amb.email }}</div></div></div></td>
+                  <td data-label="Code / Lien"><div class="code-cell"><span class="pill teal-pill">{{ amb.referralCode }}</span><button class="pill" (click)="$event.stopPropagation(); copyLink(amb.referralCode)">Copier lien</button></div><div class="amb-link">mytradingcoach.app?ref={{ amb.referralCode }}</div></td>
+                  <td data-label="Taux" class="td-mono blue">20%</td>
+                  <td data-label="Référés" class="td-mono">{{ amb.totalReferrals }}</td>
+                  <td data-label="Starter / Prem." class="td-mono">{{ amb.starterReferrals }} S / {{ amb.premiumReferrals }} P</td>
+                  <td data-label="Dû" class="td-mono num amber">{{ amb.pendingPayout | number:'1.2-2' }}€</td>
+                  <td data-label="Total payé" class="td-mono num">{{ (amb.totalEarned - amb.pendingPayout) | number:'1.2-2' }}€</td>
+                  <td data-label="Actions"><div class="row-actions"><button class="btn pay-btn" [disabled]="amb.pendingPayout === 0" (click)="$event.stopPropagation(); payAmbassador(amb)">✓ Payer</button></div></td>
                 </tr>
               }
             </tbody>
@@ -128,135 +56,54 @@ import { AdminApi, AdminAmbassador, AdminAmbassadorDetail } from '../../core/api
         }
       </div>
 
-      <!-- Détail ambassadeur sélectionné -->
       @if (selectedDetail(); as detail) {
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">
-              Détail — {{ selectedAmbassador()?.name ?? selectedAmbassador()?.email }}
-            </span>
-            <button class="pay-all-btn"
-                    [disabled]="detail.pendingPayout === 0 || paying()"
-                    (click)="paySelected()">
-              {{ paying() ? 'En cours...' : '✓ Marquer tout payé (' + (detail.pendingPayout | number:'1.2-2') + '€)' }}
-            </button>
-          </div>
+        <div class="card fill">
+          <div class="card-head"><span class="card-label">Détail — {{ selectedAmbassador()?.name ?? selectedAmbassador()?.email }}</span>
+            <button class="btn" [disabled]="detail.pendingPayout === 0 || paying()" (click)="paySelected()">{{ paying() ? 'En cours…' : '✓ Marquer tout payé (' + (detail.pendingPayout | number:'1.2-2') + '€)' }}</button></div>
+          <div class="card-body">
+            <div class="mini-stats">
+              <div class="mini"><span class="mini-v blue">{{ detail.total }}</span><span class="mini-l">Inscrits</span></div>
+              <div class="mini"><span class="mini-v green">{{ detail.premium }}</span><span class="mini-l">Premium</span></div>
+              <div class="mini"><span class="mini-v">{{ detail.starter }}</span><span class="mini-l">Starter</span></div>
+              <div class="mini"><span class="mini-v">{{ detail.free }}</span><span class="mini-l">Free</span></div>
+              <div class="mini"><span class="mini-v amber">{{ detail.pendingPayout | number:'1.2-2' }}€</span><span class="mini-l">À payer</span></div>
+              <div class="mini"><span class="mini-v green">{{ detail.totalEarned | number:'1.2-2' }}€</span><span class="mini-l">Total gagné</span></div>
+            </div>
 
-          <!-- Mini stats -->
-          <div class="detail-stats">
-            <div class="detail-stat">
-              <div class="detail-stat-val blue">{{ detail.total }}</div>
-              <div class="detail-stat-lbl">Inscrits</div>
-            </div>
-            <div class="detail-stat">
-              <div class="detail-stat-val green">{{ detail.premium }}</div>
-              <div class="detail-stat-lbl">Premium</div>
-            </div>
-            <div class="detail-stat">
-              <div class="detail-stat-val blue">{{ detail.starter }}</div>
-              <div class="detail-stat-lbl">Starter</div>
-            </div>
-            <div class="detail-stat">
-              <div class="detail-stat-val">{{ detail.free }}</div>
-              <div class="detail-stat-lbl">FREE</div>
-            </div>
-            <div class="detail-stat">
-              <div class="detail-stat-val amber">{{ detail.pendingPayout | number:'1.2-2' }}€</div>
-              <div class="detail-stat-lbl">À payer</div>
-            </div>
-            <div class="detail-stat">
-              <div class="detail-stat-val green">{{ detail.totalEarned | number:'1.2-2' }}€</div>
-              <div class="detail-stat-lbl">Total gagné</div>
-            </div>
-          </div>
-
-          <!-- Gains par mois -->
-          @if (monthsSorted().length > 0) {
-            <div class="months-section">
-              <div class="section-label">Gains par mois</div>
-              <div class="months-list">
-                @for (m of monthsSorted(); track m.month) {
-                  <div class="month-row">
-                    <span class="month-label">{{ formatMonth(m.month) }}</span>
-                    <span class="month-amount">+{{ m.amount | number:'1.2-2' }}€</span>
-                  </div>
+            <div class="grid-2">
+              <div>
+                <div class="card-label sect">Gains par mois</div>
+                <div class="chart-box amb-chart"><mtc-chart [config]="earningsConfig()" /></div>
+              </div>
+              <div>
+                <div class="card-label sect">Référés ({{ detail.referrals.length }})</div>
+                @if (detail.referrals.length === 0) {
+                  <div class="empty">Aucun référé encore</div>
+                } @else {
+                  <table class="tbl ref-tbl">
+                    <thead><tr><th>Email</th><th>Plan</th><th>Actif</th><th>Inscrit</th></tr></thead>
+                    <tbody>
+                      @for (ref of detail.referrals; track ref.id) {
+                        <tr>
+                          <td data-label="Email" class="td-mono">{{ ref.email }}</td>
+                          <td data-label="Plan"><span class="badge" [class.b-premium]="ref.plan==='PREMIUM'" [class.b-starter]="ref.plan==='STARTER'" [class.b-free]="ref.plan==='FREE'">{{ ref.plan }}</span></td>
+                          <td data-label="Actif"><span [class.act-on]="ref.isActive" [class.act-off]="!ref.isActive">{{ ref.isActive ? '✓' : '—' }}</span></td>
+                          <td data-label="Inscrit" class="td-mono muted">{{ ref.createdAt | date:'dd/MM/yyyy' }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
                 }
               </div>
             </div>
-          }
 
-          <!-- Table des référés -->
-          <div class="section-label" style="margin-top:16px">Référés ({{ detail.referrals.length }})</div>
-          @if (detail.referrals.length === 0) {
-            <div class="empty">Aucun référé encore</div>
-          } @else {
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Email</th>
-                  <th>Nom</th>
-                  <th>Plan</th>
-                  <th>Actif</th>
-                  <th>Inscrit le</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (ref of detail.referrals; track ref.id) {
-                  <tr>
-                    <td class="mono small">{{ ref.email }}</td>
-                    <td>{{ ref.name ?? '—' }}</td>
-                    <td>
-                      <span class="plan-badge" [ngClass]="ref.plan.toLowerCase()">
-                        {{ ref.plan }}
-                      </span>
-                    </td>
-                    <td>
-                      <span [class.active-dot]="ref.isActive"
-                            [class.inactive-dot]="!ref.isActive">
-                        {{ ref.isActive ? '✓' : '—' }}
-                      </span>
-                    </td>
-                    <td class="mono small">{{ ref.createdAt | date:'dd/MM/yyyy' }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          }
-
-          <!-- SQL paiement -->
-          <div class="sql-block">
-            <div class="sql-label">SQL — marquer payé manuellement</div>
-            <code>UPDATE "ReferralCommission" SET status = 'paid'
-WHERE "ambassadorId" = '{{ selectedId() }}'
-AND status = 'pending';</code>
+            <div class="sql-wrap">
+              <div class="card-label sect">SQL — marquer payé manuellement</div>
+              <div class="sql-block"><span class="kw">UPDATE</span> <span class="str">"ReferralCommission"</span> <span class="kw">SET</span> status = <span class="str">'paid'</span><br><span class="kw">WHERE</span> "ambassadorId" = <span class="str">'{{ selectedId() }}'</span><br><span class="kw">AND</span> status = <span class="str">'pending'</span>;</div>
+            </div>
           </div>
         </div>
       }
-
-      <!-- Taux configurables -->
-      <div class="card">
-        <div class="card-header"><span class="card-title">Taux de commission</span></div>
-        <div class="rates-grid">
-          <div class="rate-card green">
-            <div class="rate-label">Taux ambassadeur</div>
-            <div class="rate-value">20%</div>
-            <div class="rate-desc">Starter : 7,80€/mois · Premium : 15,80€/mois</div>
-          </div>
-          <div class="rate-card blue">
-            <div class="rate-label">Futur ambassadeur</div>
-            <div class="rate-value">?%</div>
-            <div class="rate-desc">à définir au cas par cas</div>
-          </div>
-          <div class="rate-card gray">
-            <div class="rate-label">Paiement</div>
-            <div class="rate-value">Manuel</div>
-            <div class="rate-desc">virement mensuel sur relevé</div>
-          </div>
-        </div>
-        <div class="info-banner">
-          ⚠️ Taux gérés manuellement — champ referralRate à ajouter en BDD si plusieurs taux
-        </div>
-      </div>
     </div>
   `,
 })
@@ -271,81 +118,55 @@ export class AmbassadeursComponent implements OnInit {
   protected readonly selectedAmbassador = signal<AdminAmbassador | null>(null);
   protected readonly paying = signal(false);
 
-  protected readonly totalReferrals = computed(() =>
-    this.ambassadors().reduce((s, a) => s + a.totalReferrals, 0),
-  );
-  protected readonly totalStarter = computed(() =>
-    this.ambassadors().reduce((s, a) => s + a.starterReferrals, 0),
-  );
-  protected readonly totalPremium = computed(() =>
-    this.ambassadors().reduce((s, a) => s + a.premiumReferrals, 0),
-  );
-  protected readonly totalPending = computed(() =>
-    this.ambassadors().reduce((s, a) => s + a.pendingPayout, 0),
-  );
-  protected readonly totalPaid = computed(() =>
-    this.ambassadors().reduce((s, a) => s + a.totalEarned - a.pendingPayout, 0),
-  );
-  protected readonly monthsSorted = computed(() => {
+  protected readonly totalReferrals = computed(() => this.ambassadors().reduce((s, a) => s + a.totalReferrals, 0));
+  protected readonly totalStarter = computed(() => this.ambassadors().reduce((s, a) => s + a.starterReferrals, 0));
+  protected readonly totalPremium = computed(() => this.ambassadors().reduce((s, a) => s + a.premiumReferrals, 0));
+  protected readonly totalPending = computed(() => this.ambassadors().reduce((s, a) => s + a.pendingPayout, 0));
+  protected readonly totalPaid = computed(() => this.ambassadors().reduce((s, a) => s + a.totalEarned - a.pendingPayout, 0));
+
+  protected readonly earningsConfig = computed<ChartConfiguration>(() => {
     const earnings = this.selectedDetail()?.earningsByMonth ?? {};
-    return Object.entries(earnings)
-      .sort((a, b) => b[0].localeCompare(a[0]))
-      .map(([month, amount]) => ({ month, amount }));
+    const months = Object.entries(earnings).sort((a, b) => a[0].localeCompare(b[0]));
+    return {
+      type: 'bar',
+      data: { labels: months.map(([m]) => this.formatMonth(m)), datasets: [{ label: '€', data: months.map(([, v]) => v), backgroundColor: CHART_COLORS.purple, borderRadius: 4, barThickness: 22 }] },
+      options: { maintainAspectRatio: false, plugins: noLegend, scales: { x: { grid: { display: false } }, y: { grid: gridAxis, beginAtZero: true, ticks: { callback: (v) => '€' + v } } } },
+    } as ChartConfiguration;
   });
 
-  ngOnInit() {
-    this.loadAmbassadors();
-  }
+  ngOnInit() { this.loadAmbassadors(); }
 
   private loadAmbassadors(): void {
     this.loading.set(true);
-    this.api.getAmbassadors()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => {
-          this.ambassadors.set(res.data);
-          this.loading.set(false);
-          if (res.data.length > 0) this.selectAmbassador(res.data[0]);
-        },
-        error: () => this.loading.set(false),
-      });
+    this.api.getAmbassadors().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => { this.ambassadors.set(res.data); this.loading.set(false); if (res.data.length > 0) this.selectAmbassador(res.data[0]); },
+      error: () => this.loading.set(false),
+    });
   }
 
   protected selectAmbassador(amb: AdminAmbassador): void {
     this.selectedId.set(amb.id);
     this.selectedAmbassador.set(amb);
     this.selectedDetail.set(null);
-
-    this.api.getAmbassadorDetail(amb.id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: (res) => this.selectedDetail.set(res.data) });
+    this.api.getAmbassadorDetail(amb.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: (res) => this.selectedDetail.set(res.data) });
   }
 
   protected copyLink(code: string): void {
     navigator.clipboard.writeText(`https://mytradingcoach.app?ref=${code}`);
   }
-
   protected copyCommand(): void {
-    navigator.clipboard.writeText(
-      `UPDATE "User" SET role = 'AMBASSADOR', "referralCode" = 'CODE' WHERE email = 'email@exemple.com';`,
-    );
+    navigator.clipboard.writeText(`UPDATE "User" SET role = 'AMBASSADOR', "referralCode" = 'CODE' WHERE email = 'email@exemple.com';`);
   }
 
   protected payAmbassador(amb: AdminAmbassador): void {
     if (amb.pendingPayout === 0) return;
     if (!confirm(`Marquer ${amb.pendingPayout.toFixed(2)}€ comme payé à ${amb.name ?? amb.email} ?`)) return;
     this.paying.set(true);
-    this.api.markAmbassadorPaid(amb.id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          this.paying.set(false);
-          this.loadAmbassadors();
-        },
-        error: () => this.paying.set(false),
-      });
+    this.api.markAmbassadorPaid(amb.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => { this.paying.set(false); this.loadAmbassadors(); },
+      error: () => this.paying.set(false),
+    });
   }
-
   protected paySelected(): void {
     const amb = this.selectedAmbassador();
     if (amb) this.payAmbassador(amb);
@@ -353,9 +174,6 @@ export class AmbassadeursComponent implements OnInit {
 
   protected formatMonth(month: string): string {
     const [year, m] = month.split('-');
-    return new Date(+year, +m - 1, 1).toLocaleDateString('fr-FR', {
-      month: 'long',
-      year: 'numeric',
-    });
+    return new Date(+year, +m - 1, 1).toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
   }
 }
