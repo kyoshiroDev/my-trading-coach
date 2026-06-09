@@ -6,11 +6,12 @@ import { httpResource } from '@angular/common/http';
 import { map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { UserDetailData } from '../../core/api/admin.api';
+import { ActivityCalendarComponent } from './activity-calendar.component';
 
 @Component({
   selector: 'mtc-admin-user-detail',
   standalone: true,
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, ActivityCalendarComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './user-detail.component.css',
   template: `
@@ -56,7 +57,9 @@ import { UserDetailData } from '../../core/api/admin.api';
         <div class="fiche-row">
           <div class="card">
             <div class="card-head"><span class="card-label">Connexions par jour</span></div>
-            <div class="card-body"><div class="empty">Calendrier (étape 4)</div></div>
+            <div class="card-body">
+              <mtc-admin-activity-calendar [activeDates]="d.activeDates" [createdAt]="d.identity.createdAt" />
+            </div>
           </div>
           <div class="fiche-rgrid">
             <div class="fiche-rstack">
