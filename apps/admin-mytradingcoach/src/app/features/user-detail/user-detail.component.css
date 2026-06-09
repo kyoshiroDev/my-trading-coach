@@ -1,0 +1,12 @@
+/* Fiche utilisateur — layout détaillé en ÉTAPE 3. Ici : lien retour. */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text2);
+  text-decoration: none;
+  width: fit-content;
+}
+.back-link:hover { color: var(--teal); }
