@@ -1,12 +1,53 @@
-/* Fiche utilisateur — layout détaillé en ÉTAPE 3. Ici : lien retour. */
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--text2);
-  text-decoration: none;
-  width: fit-content;
-}
-.back-link:hover { color: var(--teal); }
+/* Fiche utilisateur — porté de admin-mytradingcoach.html (classes propres à l'écran).
+   Le calendrier (cal-*) vit dans le sous-composant activity-calendar. */
+
+.ud-back { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11px; color: var(--teal); cursor: pointer; background: none; border: none; padding: 0; text-decoration: none; width: fit-content; }
+.ud-back:hover { text-decoration: underline; }
+
+/* En-tête identité — compact, calé à gauche */
+.ud-head { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 12px 30px 12px 18px; align-self: flex-start; width: fit-content; max-width: 100%; }
+.ud-av { width: 42px; height: 42px; border-radius: 11px; background: linear-gradient(135deg, var(--blue), var(--teal)); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; color: #04121f; flex-shrink: 0; }
+.ud-name { font-size: 17px; font-weight: 600; letter-spacing: -.01em; line-height: 1.1; }
+.ud-mailrow { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 4px; }
+.ud-mail { font-family: var(--mono); font-size: 12px; color: var(--text2); }
+.ud-badges { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ud-ref { margin-left: 8px; }
+.ud-static { cursor: default; }
+
+.kpi-frac { font-size: 13px; color: var(--text3); }
+
+/* Ligne fiche : calendrier (460px) | grille droite */
+.fiche-row { display: grid; grid-template-columns: 460px 1fr; gap: 20px; align-items: start; }
+.fiche-rstack { display: flex; flex-direction: column; gap: 20px; }
+.fiche-rgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: stretch; }
+.r-ia { display: flex; flex-direction: column; }
+.r-ia > .card-body { flex: 1; display: flex; flex-direction: column; }
+
+/* Consommation IA — colonnes verticales (étape 5) */
+.vchart { flex: 1; display: flex; align-items: stretch; gap: 8px; padding-top: 6px; min-height: 140px; }
+.vbar { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.vbar-col { flex: 1; position: relative; width: 100%; min-height: 60px; }
+.vbar-fill { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 40px; border-radius: 6px 6px 0 0; background: linear-gradient(180deg, var(--teal), #00a88a); min-height: 4px; transition: height .3s; }
+.vbar-lbl { text-align: center; margin-top: 8px; }
+.vbar-name { font-size: 9.5px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vbar-v { font-family: var(--mono); font-size: 10px; color: var(--teal); margin-top: 2px; }
+.empty-ai { font-family: var(--mono); font-size: 11px; color: var(--text3); padding: 8px 0; }
+
+/* Signaux (étape 6) */
+.sig { display: flex; gap: 9px; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.sig:last-child { border-bottom: none; }
+.sig-ic { width: 20px; height: 20px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
+.sig-ic.ok { background: var(--teal-dim); color: var(--teal); }
+.sig-ic.warn { background: var(--amber-dim); color: var(--amber); }
+.sig-ic.bad { background: var(--red-dim); color: var(--red); }
+.sig-tx { font-size: 12px; }
+.sig-sub { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+
+/* Informations (étape 6) — liste clé/valeur */
+.dl { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+.dl:last-child { border-bottom: none; }
+.dl-k { color: var(--text3); }
+.dl-v { color: var(--text); font-family: var(--mono); }
+
+@media (max-width: 1000px) { .fiche-row { grid-template-columns: 1fr; } }
+@media (max-width: 760px) { .fiche-rgrid { grid-template-columns: 1fr; } }
