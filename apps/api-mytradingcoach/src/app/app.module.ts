@@ -21,11 +21,13 @@ import { DailyRecapModule } from '../modules/daily-recap/daily-recap.module';
 import { EcoCalendarModule } from '../modules/eco-calendar/eco-calendar.module';
 import { AmbassadorModule } from '../modules/ambassador/ambassador.module';
 import { PublicModule } from '../modules/public/public.module';
+import { ActivityTrackingModule } from '../modules/activity-tracking/activity-tracking.module';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { DemoReadOnlyGuard } from '../common/guards/demo-read-only.guard';
 import { HttpExceptionFilter } from '../common/filters/http-exception.filter';
 import { ResponseInterceptor } from '../common/interceptors/response.interceptor';
 import { PresenceInterceptor } from '../common/interceptors/presence.interceptor';
+import { ActivityTrackingInterceptor } from '../common/interceptors/activity-tracking.interceptor';
 import { AppController } from './app.controller';
 
 @Module({
@@ -67,6 +69,7 @@ import { AppController } from './app.controller';
     EcoCalendarModule,
     AmbassadorModule,
     PublicModule,
+    ActivityTrackingModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
@@ -76,6 +79,7 @@ import { AppController } from './app.controller';
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
     { provide: APP_INTERCEPTOR, useClass: ResponseInterceptor },
     { provide: APP_INTERCEPTOR, useClass: PresenceInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: ActivityTrackingInterceptor },
   ],
 })
 export class AppModule {}
