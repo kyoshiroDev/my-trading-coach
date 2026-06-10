@@ -545,15 +545,30 @@ export class EcoCalendarService {
   async getUserPins(userId: string): Promise<string[]> {
     const profile = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { pinnedEcoEvents: true },
+      select: { pinnedEcoEvents: true, pinnedEcoDate: true },
     });
-    return profile?.pinnedEcoEvents ?? [];
+    if (!profile) return [];
+
+    // Sélection quotidienne : si la date stockée n'est pas aujourd'hui (Paris),
+    // la sélection a expiré → reset paresseux (nettoyage best-effort) + vide.
+    if (profile.pinnedEcoDate !== todayParis()) {
+      if (profile.pinnedEcoEvents.length > 0 || profile.pinnedEcoDate) {
+        try {
+          await this.prisma.user.update({
+            where: { id: userId },
+            data: { pinnedEcoEvents: [], pinnedEcoDate: null },
+          });
+        } catch { /* nettoyage best-effort */ }
+      }
+      return [];
+    }
+    return profile.pinnedEcoEvents;
   }
 
   async updateUserPins(userId: string, pins: string[]): Promise<string[]> {
     await this.prisma.user.update({
       where: { id: userId },
-      data: { pinnedEcoEvents: pins },
+      data: { pinnedEcoEvents: pins, pinnedEcoDate: todayParis() },
     });
     // Invalider le cache du jour pour que le dashboard voit le nouvel ordre
     const today = todayParis();

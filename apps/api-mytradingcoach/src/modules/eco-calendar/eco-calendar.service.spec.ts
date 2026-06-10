@@ -4,6 +4,7 @@ import { EcoCalendarService } from './eco-calendar.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { RedisService } from '../shared/redis.service';
+import { todayParis } from '../../common/utils/paris-date';
 
 const mockPrisma = {
   trade: { findMany: vi.fn() },
@@ -274,6 +275,37 @@ describe('EcoCalendarService', () => {
 
       expect(hasNew).toBe(false);
       expect(newEvents).toHaveLength(0);
+    });
+  });
+
+  // ── Sélection quotidienne (reset paresseux) ───────────────────────────────
+
+  describe('getUserPins / updateUserPins (sélection quotidienne)', () => {
+    it('même jour (Paris) → renvoie les pins, pas de reset', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ pinnedEcoEvents: ['NFP:USD'], pinnedEcoDate: todayParis() });
+      expect(await service.getUserPins('u1')).toEqual(['NFP:USD']);
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('date périmée → renvoie vide + reset paresseux en base', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ pinnedEcoEvents: ['NFP:USD'], pinnedEcoDate: '2020-01-01' });
+      expect(await service.getUserPins('u1')).toEqual([]);
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { pinnedEcoEvents: [], pinnedEcoDate: null } }),
+      );
+    });
+
+    it('jamais sélectionné (date null, vide) → vide sans écriture inutile', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ pinnedEcoEvents: [], pinnedEcoDate: null });
+      expect(await service.getUserPins('u1')).toEqual([]);
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('updateUserPins enregistre la date du jour (Paris)', async () => {
+      await service.updateUserPins('u1', ['NFP:USD']);
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { pinnedEcoEvents: ['NFP:USD'], pinnedEcoDate: todayParis() } }),
+      );
     });
   });
 
