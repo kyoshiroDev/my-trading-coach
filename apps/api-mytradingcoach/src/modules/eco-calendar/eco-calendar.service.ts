@@ -589,43 +589,34 @@ export class EcoCalendarService {
     });
   }
 
-  // ── getPinnedUpcoming — prochaines occurrences des types épinglés ────────────
+  // ── getPinnedUpcoming — les épinglés du JOUR (sélection quotidienne) ──────────
+  // La sélection est remise à zéro chaque jour (reset paresseux dans getUserPins).
+  // On renvoie donc une entrée par pin correspondant exactement à un event
+  // d'aujourd'hui — plus de scan multi-jours ni de matching par type. Ainsi le
+  // compteur du bandeau et la liste « Ma sélection » partagent une source unique
+  // et restent toujours cohérents (compteur = items = taille de la sélection).
 
-  async getPinnedUpcoming(userId: string, daysAhead = 7): Promise<EcoEvent[]> {
-    const rawPins = await this.getUserPins(userId);
-    if (rawPins.length === 0) return [];
-
-    const normalizedPins = new Set(rawPins.map(p => this.normalizeEventKey(p)));
+  async getPinnedUpcoming(userId: string): Promise<EcoEvent[]> {
+    const pins = await this.getUserPins(userId);
+    if (pins.length === 0) return [];
 
     const today = todayParis();
-    const start = new Date(`${today}T00:00:00`);
-    const all: EcoEvent[] = [];
-
-    for (let i = 0; i < daysAhead; i++) {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      const date = toParisDateStr(d);
-
-      // Lecture base ; si vide, on fetch FMP pour ce jour
-      let events = await this.getEventsFromDb(date);
-      if (events.length === 0) {
-        try {
-          events = await this.fetchAndStoreEvents(date);
-        } catch {
-          events = [];
-        }
-      }
-
-      for (const e of events) {
-        if (normalizedPins.has(this.normalizeEventKey(`${e.name}:${e.currency}`))) {
-          all.push({ ...e, date });
-        }
+    let events = await this.getEventsFromDb(today);
+    if (events.length === 0) {
+      try {
+        events = await this.fetchAndStoreEvents(today);
+      } catch {
+        events = [];
       }
     }
 
-    return all.sort((a, b) =>
-      ((a.date ?? '') + (a.time ?? '')).localeCompare((b.date ?? '') + (b.time ?? '')),
-    );
+    // Une entrée par pin (clé exacte name:currency), dans l'ordre des pins.
+    const byKey = new Map(events.map((e) => [`${e.name}:${e.currency}`, e]));
+    return pins
+      .map((pin) => byKey.get(pin))
+      .filter((e): e is EcoEvent => !!e)
+      .map((e) => ({ ...e, date: today }))
+      .sort((a, b) => (a.time ?? '').localeCompare(b.time ?? ''));
   }
 
   // Retire le suffixe de période "(May)", "(Q1 2026)", "(Apr)" d'une clé nom:devise

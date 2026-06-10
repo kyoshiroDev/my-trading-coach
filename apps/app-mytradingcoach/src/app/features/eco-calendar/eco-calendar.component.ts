@@ -278,9 +278,13 @@ export class EcoCalendarComponent implements OnInit {
     return toParisDateStr(this.currentWeekStart()) === toParisDateStr(monday);
   }
 
-  /** Sélection du JOUR (reset quotidien côté serveur) → compteur = sélection. */
+  /**
+   * Compteur du bandeau = même source que « Ma sélection » (`pinnedUpcoming`),
+   * la liste des épinglés du jour résolue côté serveur. Garantit par construction
+   * bandeau = items « Ma sélection » = N, sans divergence possible.
+   */
   protected get pinnedCount(): number {
-    return this.pinnedEvents().size;
+    return this.pinnedUpcoming().length;
   }
 
   protected highCount(group: DayGroup): number {
