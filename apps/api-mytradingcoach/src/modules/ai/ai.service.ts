@@ -366,6 +366,11 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
     const estimate = data.event.estimate ?? 0;
     const surprise = actual - estimate;
 
+    // Aucun appel modèle hors production (cf. principes coût IA du projet).
+    if (process.env['NODE_ENV'] !== 'production') {
+      return { interpretation: '(analyse IA disponible en production)', assetSentiments: [] };
+    }
+
     const prompt = `Résultat tombé : ${data.event.name}.
 Résultat : ${actual} | Prévu : ${estimate} | Précédent : ${data.event.previous ?? 'N/A'}.
 Surprise : ${surprise >= 0 ? '+' : ''}${surprise.toFixed(2)}.

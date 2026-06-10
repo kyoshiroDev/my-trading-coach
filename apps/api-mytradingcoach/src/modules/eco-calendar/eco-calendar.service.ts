@@ -429,7 +429,28 @@ export class EcoCalendarService {
     if (!event?.isReleased) return null;
 
     const userAssets = await this.getUserTopAssets(userId);
-    return this.ai.analyzeEcoResult({ userId, event, userAssets });
+
+    // Cache serveur : l'analyse d'un event publié est stable sur la journée.
+    // Clé = (date, event sans suffixe, signature actifs) → mutualise entre users
+    // de mêmes actifs et évite tout rappel modèle à la 2ᵉ ouverture de session.
+    const assetsSig = [...userAssets].map((a) => a.trim().toUpperCase()).sort().join(',') || 'none';
+    const analysisKey = `eco:analysis:${today}:${stripPeriod(event.name)}:${assetsSig}`;
+    try {
+      const cached = await this.redis.get(analysisKey);
+      if (cached) return JSON.parse(cached) as EcoResultAnalysis;
+    } catch {
+      // Redis indisponible → on calcule
+    }
+
+    const analysis = await this.ai.analyzeEcoResult({ userId, event, userAssets });
+    if (analysis) {
+      try {
+        await this.redis.setex(analysisKey, CACHE_TTL.ECO_ANALYSIS, JSON.stringify(analysis));
+      } catch {
+        // cache best-effort
+      }
+    }
+    return analysis;
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
