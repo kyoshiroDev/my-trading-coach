@@ -429,7 +429,28 @@ export class EcoCalendarService {
     if (!event?.isReleased) return null;
 
     const userAssets = await this.getUserTopAssets(userId);
-    return this.ai.analyzeEcoResult({ userId, event, userAssets });
+
+    // Cache serveur : l'analyse d'un event publié est stable sur la journée.
+    // Clé = (date, event sans suffixe, signature actifs) → mutualise entre users
+    // de mêmes actifs et évite tout rappel modèle à la 2ᵉ ouverture de session.
+    const assetsSig = [...userAssets].map((a) => a.trim().toUpperCase()).sort().join(',') || 'none';
+    const analysisKey = `eco:analysis:${today}:${stripPeriod(event.name)}:${assetsSig}`;
+    try {
+      const cached = await this.redis.get(analysisKey);
+      if (cached) return JSON.parse(cached) as EcoResultAnalysis;
+    } catch {
+      // Redis indisponible → on calcule
+    }
+
+    const analysis = await this.ai.analyzeEcoResult({ userId, event, userAssets });
+    if (analysis) {
+      try {
+        await this.redis.setex(analysisKey, CACHE_TTL.ECO_ANALYSIS, JSON.stringify(analysis));
+      } catch {
+        // cache best-effort
+      }
+    }
+    return analysis;
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -524,15 +545,30 @@ export class EcoCalendarService {
   async getUserPins(userId: string): Promise<string[]> {
     const profile = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { pinnedEcoEvents: true },
+      select: { pinnedEcoEvents: true, pinnedEcoDate: true },
     });
-    return profile?.pinnedEcoEvents ?? [];
+    if (!profile) return [];
+
+    // Sélection quotidienne : si la date stockée n'est pas aujourd'hui (Paris),
+    // la sélection a expiré → reset paresseux (nettoyage best-effort) + vide.
+    if (profile.pinnedEcoDate !== todayParis()) {
+      if (profile.pinnedEcoEvents.length > 0 || profile.pinnedEcoDate) {
+        try {
+          await this.prisma.user.update({
+            where: { id: userId },
+            data: { pinnedEcoEvents: [], pinnedEcoDate: null },
+          });
+        } catch { /* nettoyage best-effort */ }
+      }
+      return [];
+    }
+    return profile.pinnedEcoEvents;
   }
 
   async updateUserPins(userId: string, pins: string[]): Promise<string[]> {
     await this.prisma.user.update({
       where: { id: userId },
-      data: { pinnedEcoEvents: pins },
+      data: { pinnedEcoEvents: pins, pinnedEcoDate: todayParis() },
     });
     // Invalider le cache du jour pour que le dashboard voit le nouvel ordre
     const today = todayParis();

@@ -397,6 +397,17 @@
 }
 .eco-pinned-link:hover { opacity: .7; }
 
+/* Rappel discret du rituel quand rien n'est sélectionné aujourd'hui (invitation, non bloquant) */
+.eco-pinned-reminder {
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* ── Filtres ── */
 .eco-filters {
   display: flex;

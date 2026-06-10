@@ -5,6 +5,7 @@ export const CACHE_TTL = {
   NEWS:            300,
   ECO_EVENTS:      3_600,
   ECO_EVENTS_LONG: 3_600 * 6,
+  ECO_ANALYSIS:    3_600 * 12, // analyse IA d'un event publié — stable sur la journée
   EXCHANGE_RATES:  3_600 * 6,
   ANALYTICS:       300,
   DEBRIEF:         3_600,

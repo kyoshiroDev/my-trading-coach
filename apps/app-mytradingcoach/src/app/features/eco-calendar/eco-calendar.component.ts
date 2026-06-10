@@ -278,6 +278,7 @@ export class EcoCalendarComponent implements OnInit {
     return toParisDateStr(this.currentWeekStart()) === toParisDateStr(monday);
   }
 
+  /** Sélection du JOUR (reset quotidien côté serveur) → compteur = sélection. */
   protected get pinnedCount(): number {
     return this.pinnedEvents().size;
   }

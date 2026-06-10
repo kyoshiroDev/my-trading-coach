@@ -11,7 +11,7 @@
 
     @if (pinnedCount > 0) {
       <div class="eco-pins-badge">
-        📌 {{ pinnedCount }} épinglé{{ pinnedCount > 1 ? 's' : '' }} — affichés en priorité dans ta session
+        📌 {{ pinnedCount }} épinglé{{ pinnedCount > 1 ? 's' : '' }} du jour — affichés en priorité dans ta session
         @if (isSavingPins()) {
           <span class="eco-saving">· Sauvegarde...</span>
         }
@@ -182,7 +182,7 @@
                 <button class="sel-unpin" (click)="togglePin(event)" title="Désépingler">✕</button>
               </div>
             } @empty {
-              <div class="eco-session-empty">Épingle des événements 📌<br>pour les suivre ici</div>
+              <div class="eco-session-empty">Épingle les annonces du jour 📌<br>pour les suivre ici</div>
             }
           </div>
         </aside>

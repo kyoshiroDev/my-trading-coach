@@ -4,6 +4,7 @@ import { EcoCalendarService } from './eco-calendar.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { RedisService } from '../shared/redis.service';
+import { todayParis } from '../../common/utils/paris-date';
 
 const mockPrisma = {
   trade: { findMany: vi.fn() },
@@ -277,6 +278,75 @@ describe('EcoCalendarService', () => {
     });
   });
 
+  // ── Sélection quotidienne (reset paresseux) ───────────────────────────────
+
+  describe('getUserPins / updateUserPins (sélection quotidienne)', () => {
+    it('même jour (Paris) → renvoie les pins, pas de reset', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ pinnedEcoEvents: ['NFP:USD'], pinnedEcoDate: todayParis() });
+      expect(await service.getUserPins('u1')).toEqual(['NFP:USD']);
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('date périmée → renvoie vide + reset paresseux en base', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ pinnedEcoEvents: ['NFP:USD'], pinnedEcoDate: '2020-01-01' });
+      expect(await service.getUserPins('u1')).toEqual([]);
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { pinnedEcoEvents: [], pinnedEcoDate: null } }),
+      );
+    });
+
+    it('jamais sélectionné (date null, vide) → vide sans écriture inutile', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ pinnedEcoEvents: [], pinnedEcoDate: null });
+      expect(await service.getUserPins('u1')).toEqual([]);
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('updateUserPins enregistre la date du jour (Paris)', async () => {
+      await service.updateUserPins('u1', ['NFP:USD']);
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { pinnedEcoEvents: ['NFP:USD'], pinnedEcoDate: todayParis() } }),
+      );
+    });
+  });
+
+  // ── analyzeReleasedEvent (cache IA) ───────────────────────────────────────
+
+  describe('analyzeReleasedEvent (cache IA result)', () => {
+    const released = {
+      date: '2026-05-26', time: '15:30', name: 'NFP', nameFr: null,
+      country: 'US', currency: 'USD', impact: 'high',
+      actual: 210000, estimate: 180000, previous: 150000, isReleased: true, unit: 'K',
+    };
+    const analysis = { interpretation: 'Surprise haussière', assetSentiments: [] };
+
+    beforeEach(() => {
+      mockPrisma.ecoEvent.findMany.mockResolvedValue([released]);
+      mockPrisma.trade.findMany.mockResolvedValue([]); // getUserTopAssets → []
+      mockAi.analyzeEcoResult.mockResolvedValue(analysis);
+    });
+
+    it('cache miss → appelle le modèle puis met en cache (setex)', async () => {
+      const r = await service.analyzeReleasedEvent('user-1', 'NFP');
+      expect(r).toEqual(analysis);
+      expect(mockAi.analyzeEcoResult).toHaveBeenCalledTimes(1);
+      expect(service['redis'].setex).toHaveBeenCalledWith(
+        expect.stringMatching(/^eco:analysis:.*:NFP:/),
+        expect.any(Number),
+        JSON.stringify(analysis),
+      );
+    });
+
+    it('cache hit → ne rappelle PAS le modèle', async () => {
+      vi.spyOn(service['redis'], 'get').mockImplementation(
+        ((key: string) =>
+          Promise.resolve(key.startsWith('eco:analysis:') ? JSON.stringify(analysis) : null)) as never,
+      );
+      const r = await service.analyzeReleasedEvent('user-1', 'NFP');
+      expect(r).toEqual(analysis);
+      expect(mockAi.analyzeEcoResult).not.toHaveBeenCalled();
+    });
+  });
+
   // ── getTodayEvents ────────────────────────────────────────────────────────
 
   describe('getTodayEvents', () => {
@@ -405,7 +475,11 @@ describe('EcoCalendarService', () => {
         actual: 52.1, estimate: 51.0, previous: 50.5,
       };
       const cached = { events: [event], analysis: {}, userAssets: ['EUR/USD'] };
-      vi.spyOn(service['redis'], 'get').mockResolvedValue(JSON.stringify(cached));
+      // cache calendrier = hit (events) ; cache d'analyse IA = miss → le modèle est appelé
+      vi.spyOn(service['redis'], 'get').mockImplementation(
+        ((key: string) =>
+          Promise.resolve(key.startsWith('eco:analysis:') ? null : JSON.stringify(cached))) as never,
+      );
       mockPrisma.trade.findMany.mockResolvedValue([{ asset: 'EUR/USD' }]);
       mockAi.analyzeEcoResult.mockResolvedValue({
         interpretation: 'PMI supérieur aux attentes — signal haussier EUR.',
