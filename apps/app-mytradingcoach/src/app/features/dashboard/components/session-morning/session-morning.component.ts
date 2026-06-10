@@ -269,11 +269,16 @@ const DEMO_ECO_EVENTS: EcoEvent[] = [
             </div>
           }
 
-          <!-- Notice events épinglés -->
+          <!-- Notice events épinglés du jour, ou rappel discret du rituel si vide -->
           @if (pinnedKeys().size > 0) {
             <div class="eco-pinned-notice">
-              📌 {{ pinnedKeys().size }} event{{ pinnedKeys().size > 1 ? 's' : '' }} épinglé{{ pinnedKeys().size > 1 ? 's' : '' }}
+              📌 {{ pinnedKeys().size }} event{{ pinnedKeys().size > 1 ? 's' : '' }} épinglé{{ pinnedKeys().size > 1 ? 's' : '' }} du jour
               — <a routerLink="/eco-calendar" class="eco-pinned-link">Gérer</a>
+            </div>
+          } @else {
+            <div class="eco-pinned-reminder">
+              📌 Sélectionne tes annonces du jour
+              — <a routerLink="/eco-calendar" class="eco-pinned-link">Calendrier éco →</a>
             </div>
           }
 
