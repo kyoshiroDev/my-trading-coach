@@ -11,7 +11,8 @@
 
     @if (pinnedCount > 0) {
       <div class="eco-pins-badge">
-        📌 {{ pinnedCount }} épinglé{{ pinnedCount > 1 ? 's' : '' }} — affichés en priorité dans ta session
+        📌 {{ pinnedCount }} épinglé{{ pinnedCount > 1 ? 's' : '' }} —
+        {{ pinnedUpcoming().length > 0 ? 'affichés en priorité dans ta session' : 'aucun prévu cette semaine' }}
         @if (isSavingPins()) {
           <span class="eco-saving">· Sauvegarde...</span>
         }
@@ -168,7 +169,7 @@
         <aside class="eco-session-col eco-selection-col">
           <div class="eco-session-head selection">
             <span class="eco-session-ic">⭐</span> Ma sélection
-            <span class="eco-session-cnt">{{ pinnedUpcoming().length }}</span>
+            <span class="eco-session-cnt">{{ pinnedCount }}</span>
           </div>
           <div class="eco-col-body eco-selection-body">
             @for (event of pinnedUpcoming(); track event.name + event.currency + event.date) {
@@ -181,7 +182,19 @@
                 <span class="eco-impact-badge" [class]="event.impact">{{ event.impact === 'high' ? 'Fort' : 'Moy' }}</span>
                 <button class="sel-unpin" (click)="togglePin(event)" title="Désépingler">✕</button>
               </div>
-            } @empty {
+            }
+
+            @if (otherPinned().length > 0) {
+              <div class="sel-other-head">Pas prévu cette semaine</div>
+              @for (p of otherPinned(); track p.key) {
+                <div class="sel-item sel-other">
+                  <div class="sel-bdy"><div class="sel-name">{{ p.label }}</div></div>
+                  <button class="sel-unpin" (click)="unpinKey(p.key)" title="Désépingler">✕</button>
+                </div>
+              }
+            }
+
+            @if (pinnedUpcoming().length === 0 && otherPinned().length === 0) {
               <div class="eco-session-empty">Épingle des événements 📌<br>pour les suivre ici</div>
             }
           </div>

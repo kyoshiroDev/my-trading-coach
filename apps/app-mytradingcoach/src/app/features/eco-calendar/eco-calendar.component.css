@@ -368,3 +368,7 @@
   .eco-day-pills { overflow-x: auto; }
   .eco-day-pill { min-width: 64px; flex: 0 0 auto; }
 }
+/* Épinglés sans occurrence proche (cohérence « Ma sélection ») */
+.sel-other-head { font-size: 10px; color: var(--text-3); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .06em; padding: 12px 11px 4px; }
+.sel-other { opacity: .72; }
+.sel-other .sel-name { color: var(--text-2); }
