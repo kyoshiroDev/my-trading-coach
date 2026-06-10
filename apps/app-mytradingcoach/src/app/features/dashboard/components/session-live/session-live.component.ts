@@ -922,12 +922,14 @@ export class SessionLiveComponent {
     });
 
     // Analyse IA des events DÉJÀ publiés à l'ouverture (Premium + session active, hors démo).
-    // Les releases live restent gérées par newReleases$ ; ici on couvre l'historique.
+    // Limité au FORT impact : ce sont eux qui bougent le marché. Sur une grosse journée
+    // (~19 events US), ça évite une rafale d'appels modèle à la 1re ouverture ; le cache
+    // mutualisé sert les suivantes. Les releases live restent couvertes par newReleases$.
     effect(() => {
       const s = this.session();
       if (s?.status !== 'ACTIVE' || !this.userStore.isPremium() || this.userStore.isDemo()) return;
       const released = this.sessionEcoEvents().filter(
-        (e) => e.isReleased && e.actual != null && !!e.name?.trim(),
+        (e) => e.impact === 'high' && e.isReleased && e.actual != null && !!e.name?.trim(),
       );
       const pending = released.filter((e) => !this.analyzedNames.has(e.name));
       // Échelonné (400 ms) pour ne pas lancer N requêtes simultanées.

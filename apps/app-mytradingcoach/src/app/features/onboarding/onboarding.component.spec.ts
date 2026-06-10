@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
-import { TestBed, NO_ERRORS_SCHEMA } from '@angular/core/testing';
-import { signal, NO_ERRORS_SCHEMA as noErrors } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
 import * as angularCore from '@angular/core';
 import { of } from 'rxjs';
 import { OnboardingComponent } from './onboarding.component';
@@ -66,7 +66,7 @@ describe('OnboardingComponent', () => {
         template: MINIMAL_TEMPLATE,
         styleUrls: [],
         styleUrl: undefined as unknown as string,
-        schemas: [noErrors],
+        schemas: [NO_ERRORS_SCHEMA],
       },
     });
     await TestBed.compileComponents();
