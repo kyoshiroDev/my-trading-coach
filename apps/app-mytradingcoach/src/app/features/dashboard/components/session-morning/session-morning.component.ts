@@ -13,6 +13,7 @@ import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { translateEcoEvent } from '../../../../core/data/eco-event-translations';
 import { normalizeEventKey, eventKey } from '../../../../core/data/eco-event-key';
+import { filterMorningEvents } from './session-morning.util';
 import { DailyRecap } from '../../../../core/api/daily-recap.api';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent } from '../../../../core/api/eco-calendar.api';
 import { MoodState } from '../../../../core/api/session.api';
@@ -443,34 +444,14 @@ export class SessionMorningComponent {
     return this.pinnedKeys().has(eventKey(e));
   }
 
-  protected readonly filteredEvents = computed(() => {
-    const events = this.ecoCalendar()?.events ?? [];
-    const pinned = this.pinnedKeys();
-    const impact = this.filterImpact();
-    const isKeyPinned = (e: { name: string; currency: string }) =>
-      pinned.has(eventKey(e));
-
-    return events
-      .filter(e => {
-        const currencyOk = this.filterCurrency() === 'all' || e.currency === this.filterCurrency();
-        if (!currencyOk) return false;
-
-        if (impact === 'all') {
-          // Règle par défaut : épinglés OU fort impact uniquement
-          return isKeyPinned(e) || e.impact === 'high';
-        }
-        // Filtre manuel choisi (high / medium) → il prime, comportement classique
-        return e.impact === impact;
-      })
-      .sort((a, b) => {
-        // Épinglés d'abord, puis tri par heure
-        const aPin = isKeyPinned(a);
-        const bPin = isKeyPinned(b);
-        if (aPin && !bPin) return -1;
-        if (!aPin && bPin) return 1;
-        return a.time.localeCompare(b.time);
-      });
-  });
+  protected readonly filteredEvents = computed(() =>
+    filterMorningEvents(
+      this.ecoCalendar()?.events ?? [],
+      this.pinnedKeys(),
+      this.filterImpact(),
+      this.filterCurrency(),
+    ),
+  );
 
   /** Agenda affiché : événements réels, ou exemples figés en démo si rien à montrer. */
   protected readonly agendaEvents = computed(() => {
