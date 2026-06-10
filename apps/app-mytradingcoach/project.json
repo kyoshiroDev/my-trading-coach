@@ -90,6 +90,18 @@
     "lint": {
       "executor": "@nx/eslint:lint"
     },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "apps/app-mytradingcoach",
+        "parallel": false,
+        "commands": [
+          "tsc --noEmit -p tsconfig.app.json",
+          "tsc --noEmit -p tsconfig.spec.json"
+        ]
+      }
+    },
     "test": {
       "executor": "@nx/vitest:test",
       "options": {
