@@ -1,5 +1,5 @@
 .eco-event-row {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: flex-start; gap: 10px;
   padding: 10px 14px;
   background: var(--bg-card); border: 1px solid var(--border);
   border-radius: 10px; transition: all .15s;
@@ -33,18 +33,23 @@
   font-weight: 600; color: var(--text-2); min-width: 40px; flex-shrink: 0;
 }
 
-.eco-impact-bar { width: 3px; height: 28px; border-radius: 2px; flex-shrink: 0; }
+.eco-impact-bar { width: 3px; align-self: stretch; min-height: 28px; border-radius: 2px; flex-shrink: 0; }
 .eco-impact-bar.high   { background: var(--red); }
 .eco-impact-bar.medium { background: var(--yellow); }
 
 .eco-flag { font-size: 18px; line-height: 1; flex-shrink: 0; }
 
-.eco-event-body { flex: 1; min-width: 0; }
+/* Colonne principale : titre sur sa propre ligne (toute la largeur), métas dessous */
+.eco-event-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.eco-event-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .eco-event-name {
+  flex: 1; min-width: 0;
   font-size: 13px; font-weight: 600; color: var(--text);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  white-space: normal;                /* on autorise le retour à la ligne */
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; line-height: 1.25;
 }
-.eco-event-values { display: flex; gap: 8px; margin-top: 3px; flex-wrap: wrap; }
+.eco-event-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .eco-val { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); }
 .eco-val.actual { font-weight: 700; color: var(--text-2); }
 .eco-val.actual.beat { color: var(--green); }

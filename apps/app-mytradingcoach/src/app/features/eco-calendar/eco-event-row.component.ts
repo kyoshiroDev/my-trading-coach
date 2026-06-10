@@ -34,40 +34,38 @@ import { EcoEvent } from '../../core/api/eco-calendar.api';
         >📌</label>
       </div>
 
-      <div class="eco-event-time">{{ event().time }}</div>
       <div class="eco-impact-bar" [class]="event().impact"></div>
-      <span class="eco-flag">{{ flag() }}</span>
 
-      <div class="eco-event-body">
-        <div class="eco-event-name">{{ translatedName() }}</div>
-        @if (event().previous !== null || event().estimate !== null || event().actual !== null) {
-          <div class="eco-event-values">
-            @if (event().actual !== null) {
-              <span class="eco-val actual"
-                    [class.beat]="event().estimate !== null && event().actual! > event().estimate!"
-                    [class.miss]="event().estimate !== null && event().actual! < event().estimate!">
-                A: {{ event().actual }}{{ event().unit }}
-              </span>
-            }
-            @if (event().estimate !== null) {
-              <span class="eco-val estimate">P: {{ event().estimate }}{{ event().unit }}</span>
-            }
-            @if (event().previous !== null) {
-              <span class="eco-val previous">Préc: {{ event().previous }}{{ event().unit }}</span>
-            }
-          </div>
-        }
+      <div class="eco-event-main">
+        <div class="eco-event-top">
+          <span class="eco-event-time">{{ event().time }}</span>
+          <span class="eco-flag">{{ flag() }}</span>
+          <span class="eco-event-name" [title]="translatedName()">{{ translatedName() }}</span>
+        </div>
+
+        <div class="eco-event-meta">
+          <span class="eco-currency-tag">{{ event().currency }}</span>
+          <span class="eco-impact-badge" [class]="event().impact">
+            {{ event().impact === 'high' ? 'Fort' : 'Moyen' }}
+          </span>
+          @if (event().isReleased) {
+            <span class="eco-published">✓ Publié</span>
+          }
+          @if (event().actual !== null) {
+            <span class="eco-val actual"
+                  [class.beat]="event().estimate !== null && event().actual! > event().estimate!"
+                  [class.miss]="event().estimate !== null && event().actual! < event().estimate!">
+              A: {{ event().actual }}{{ event().unit }}
+            </span>
+          }
+          @if (event().estimate !== null) {
+            <span class="eco-val estimate">P: {{ event().estimate }}{{ event().unit }}</span>
+          }
+          @if (event().previous !== null) {
+            <span class="eco-val previous">Préc: {{ event().previous }}{{ event().unit }}</span>
+          }
+        </div>
       </div>
-
-      <span class="eco-currency-tag">{{ event().currency }}</span>
-
-      <span class="eco-impact-badge" [class]="event().impact">
-        {{ event().impact === 'high' ? 'Fort' : 'Moyen' }}
-      </span>
-
-      @if (event().isReleased) {
-        <span class="eco-published">✓ Publié</span>
-      }
     </div>
   `,
 })
