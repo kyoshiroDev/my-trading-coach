@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
-import { TestBed, NO_ERRORS_SCHEMA } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 import * as angularCore from '@angular/core';
 import { of } from 'rxjs';
 import { PlanModalComponent } from './plan-modal.component';

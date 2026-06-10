@@ -4,7 +4,6 @@ import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AnalyticsComponent } from './analytics.component';
-import { UserStore } from '../../core/stores/user.store';
 
 describe('AnalyticsComponent — equity curve période', () => {
   function makeComponent() {
