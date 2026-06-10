@@ -1,5 +1,12 @@
-/* ── Page ── */
-.eco-page { padding: 30px; }
+/* ── Page : borne à la hauteur écran, en-tête fixe, colonnes à scroll interne ── */
+:host { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.eco-page {
+  padding: 30px;
+  display: flex; flex-direction: column;
+  flex: 1; min-height: 0;
+}
+/* En-tête fixe (titre + pills + filtres + libellé du jour) */
+.eco-header, .eco-nav, .eco-day-pills, .eco-filters, .eco-selected-day-label { flex-shrink: 0; }
 
 /* ── Header ── */
 .eco-header {
@@ -121,9 +128,9 @@
 .eco-day-count { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
 
 /* ── Session column header (Europe / US / Sélection) ── */
-.eco-session-col { display: flex; flex-direction: column; min-width: 0; }
+.eco-session-col { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .eco-session-head {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
   padding: 10px 13px; border-radius: 10px 10px 0 0;
   font-family: var(--font-mono); font-size: 11px; font-weight: 700;
   text-transform: uppercase; letter-spacing: .5px;
@@ -142,8 +149,10 @@
   border: 1px solid var(--border); border-top: none;
   border-radius: 0 0 10px 10px;
   padding: 7px; display: flex; flex-direction: column; gap: 6px;
-  min-height: 70px; flex: 1;
+  flex: 1; min-height: 0; overflow-y: auto;
 }
+.eco-session-body::-webkit-scrollbar { width: 4px; }
+.eco-session-body::-webkit-scrollbar-thumb { background: rgba(99,155,255,.2); border-radius: 2px; }
 .eco-session-empty {
   text-align: center; padding: 20px 12px;
   color: var(--text-3); font-size: 12px; font-style: italic;
@@ -243,8 +252,9 @@
 .eco-layout {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr)); /* vrais tiers, indépendants du contenu */
+  grid-template-rows: 1fr;                           /* la ligne remplit la hauteur dispo */
   gap: 14px;
-  align-items: start;
+  flex: 1; min-height: 0; overflow: hidden;          /* borne à l'écran, scroll délégué aux colonnes */
 }
 
 /* Colonne générique */
@@ -283,11 +293,11 @@
   border-bottom: none;
 }
 
-/* Corps sélection : scroll interne si liste longue */
+/* Corps sélection : partage la même hauteur bornée, scroll interne propre */
 .eco-selection-body {
   padding: 7px;
   display: flex; flex-direction: column; gap: 6px;
-  overflow-y: auto; max-height: 60vh; min-height: 0;
+  overflow-y: auto; flex: 1; min-height: 0;
 }
 .eco-selection-body::-webkit-scrollbar { width: 4px; }
 .eco-selection-body::-webkit-scrollbar-thumb {
@@ -314,9 +324,15 @@
 .sel-unpin:hover { color: var(--red); }
 
 @media (max-width: 900px) {
-  .eco-layout { grid-template-columns: 1fr; }
+  /* Mobile : on relâche la borne hauteur → scroll de page classique */
+  :host, .eco-page { display: block; min-height: 0; }
+  .eco-layout {
+    grid-template-columns: 1fr; grid-template-rows: none;
+    flex: none; overflow: visible;
+  }
+  .eco-session-body { flex: none; min-height: 70px; overflow-y: visible; }
   .eco-selection-col { order: -1; margin-bottom: 8px; }
-  .eco-selection-body { max-height: 320px; }
+  .eco-selection-body { flex: none; max-height: 320px; overflow-y: auto; }
 }
 @media (max-width: 600px) {
   .eco-event-row { flex-wrap: wrap; }
@@ -358,11 +374,8 @@
   text-transform: capitalize; margin-bottom: 12px; color: var(--text);
 }
 
-/* ── Colonne sélection sticky ── */
-.eco-selection-col {
-  position: sticky;
-  top: 76px;
-}
+/* La colonne sélection partage la hauteur bornée du layout (plus de sticky :
+   les 3 colonnes scrollent en interne, l'en-tête de page reste fixe). */
 
 @media (max-width: 600px) {
   .eco-day-pills { overflow-x: auto; }
