@@ -121,7 +121,7 @@
 .eco-day-count { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
 
 /* ── Session column header (Europe / US / Sélection) ── */
-.eco-session-col { display: flex; flex-direction: column; }
+.eco-session-col { display: flex; flex-direction: column; min-width: 0; }
 .eco-session-head {
   display: flex; align-items: center; gap: 8px;
   padding: 10px 13px; border-radius: 10px 10px 0 0;
@@ -242,13 +242,13 @@
 /* ── Layout : 3 colonnes strictement égales ── */
 .eco-layout {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr)); /* vrais tiers, indépendants du contenu */
   gap: 14px;
   align-items: start;
 }
 
 /* Colonne générique */
-.eco-col { display: flex; flex-direction: column; }
+.eco-col { display: flex; flex-direction: column; min-width: 0; }
 
 /* Corps de colonne (sous le header) */
 .eco-col-body {
