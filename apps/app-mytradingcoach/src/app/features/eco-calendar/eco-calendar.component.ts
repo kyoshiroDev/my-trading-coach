@@ -12,7 +12,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { EcoCalendarApi, EcoEvent } from '../../core/api/eco-calendar.api';
 import { translateEcoEvent } from '../../core/data/eco-event-translations';
-import { normalizeEventKey } from '../../core/data/eco-event-key';
 import { todayParis, toParisDateStr } from '../../core/utils/paris-date';
 
 interface SessionGroup { europe: EcoEvent[]; us: EcoEvent[]; }
@@ -279,39 +278,9 @@ export class EcoCalendarComponent implements OnInit {
     return toParisDateStr(this.currentWeekStart()) === toParisDateStr(monday);
   }
 
+  /** Sélection du JOUR (reset quotidien côté serveur) → compteur = sélection. */
   protected get pinnedCount(): number {
     return this.pinnedEvents().size;
-  }
-
-  /** Clés normalisées des épinglés ayant une occurrence dans la fenêtre (« Ma sélection »). */
-  protected readonly pinnedUpcomingKeys = computed(
-    () => new Set(this.pinnedUpcoming().map(e => normalizeEventKey(`${e.name}:${e.currency}`))),
-  );
-
-  /** Épinglés SANS occurrence proche → affichés honnêtement (pas de « 0 » silencieux). */
-  protected readonly otherPinned = computed(() => {
-    const upcoming = this.pinnedUpcomingKeys();
-    return [...this.pinnedEvents()]
-      .filter(k => !upcoming.has(normalizeEventKey(k)))
-      .map(k => ({ key: k, label: this.pinLabel(k) }));
-  });
-
-  /** Libellé lisible d'une clé `name:currency` (sans suffixe de période ni devise). */
-  private pinLabel(key: string): string {
-    const colon = key.lastIndexOf(':');
-    const name = (colon === -1 ? key : key.substring(0, colon)).replace(/\s*\([^)]*\)\s*$/, '').trim();
-    return name;
-  }
-
-  /** Désépingle par clé brute (utilisé pour les épinglés « pas cette semaine »). */
-  protected unpinKey(key: string): void {
-    const pins = new Set(this.pinnedEvents());
-    pins.delete(key);
-    this.pinnedEvents.set(pins);
-    this.isSavingPins.set(true);
-    this.api.savePins([...pins])
-      .pipe(finalize(() => this.isSavingPins.set(false)))
-      .subscribe(() => this.loadPinnedUpcoming());
   }
 
   protected highCount(group: DayGroup): number {
