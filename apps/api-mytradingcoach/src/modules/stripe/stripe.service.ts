@@ -66,7 +66,9 @@ export class StripeService {
   ) {
     this.stripe = new Stripe(
       this.config.getOrThrow<string>('STRIPE_SECRET_KEY'),
-      { apiVersion: '2024-06-20' },
+      // Version d'API épinglée (comportement testé). Cast car le type du SDK
+      // Stripe 22.2 pointe vers une version plus récente — runtime inchangé.
+      { apiVersion: '2024-06-20' as Stripe.LatestApiVersion },
     );
   }
 
