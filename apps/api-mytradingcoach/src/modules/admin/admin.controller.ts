@@ -6,6 +6,7 @@ import { EmailCampaignService } from './email-campaign.service';
 import type { CampaignType } from './email-campaign.service';
 import { MetricsSnapshotCron } from './metrics-snapshot.cron';
 import { DeletedAccountService } from './deleted-account.service';
+import { UserDetailService } from './user-detail.service';
 import { DemoSeedService } from './demo-seed.service';
 import { UsersService } from '../users/users.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -23,8 +24,15 @@ export class AdminController {
     private readonly discordService: DiscordService,
     private readonly metrics: MetricsSnapshotCron,
     private readonly deletedAccounts: DeletedAccountService,
+    private readonly userDetail: UserDetailService,
     private readonly demoSeed: DemoSeedService,
   ) {}
+
+  /** Fiche utilisateur détaillée (faits bruts agrégés) — admin only. */
+  @Get('users/:id')
+  getUserDetail(@Param('id') id: string) {
+    return this.userDetail.getUserDetail(id);
+  }
 
   /** Comptes supprimés (trace analytique RGPD) — liste récente + agrégats. */
   @Get('deleted-accounts')

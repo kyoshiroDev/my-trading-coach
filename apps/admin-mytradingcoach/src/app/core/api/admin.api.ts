@@ -147,6 +147,31 @@ export interface DeletedAccount {
   anonymizedAt: string | null;
 }
 
+export interface UserDetailData {
+  identity: {
+    id: string;
+    name: string | null;
+    email: string;
+    plan: 'FREE' | 'STARTER' | 'PREMIUM';
+    role: 'ADMIN' | 'USER' | 'BETA_TESTER' | 'AMBASSADOR';
+    subscriptionStatus: string | null;
+    ambassadorRefCode: string | null;
+    createdAt: string;
+    lastActivityAt: string | null;
+  };
+  kpis: {
+    daysSinceSignup: number;
+    lastConnection: string | null;
+    activeDays: number;
+    totalDays: number;
+    sessionTimeMinutes: number | null;
+    ai: { usd: number; tokens: number };
+  };
+  activeDates: string[];
+  aiByFeature: { feature: string; tokens: number; costUsd: number }[];
+  sessions: { date: string; trades: number; pnl: number; winRate: number; emotion: string | null; durationMinutes: number | null }[];
+}
+
 export interface DeletedAccountsData {
   accounts: DeletedAccount[];
   stats: { thisMonth: number; total: number; medianLifetimeDays: number; noTradePct: number; noTradeCount: number };
