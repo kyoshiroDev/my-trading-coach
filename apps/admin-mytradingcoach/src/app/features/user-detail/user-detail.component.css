@@ -49,5 +49,9 @@
 .dl-k { color: var(--text3); }
 .dl-v { color: var(--text); font-family: var(--mono); }
 
+/* P&L sessions (couleur par classe, jamais inline) */
+.pnl-pos { color: var(--green); }
+.pnl-neg { color: var(--red); }
+
 @media (max-width: 1000px) { .fiche-row { grid-template-columns: 1fr; } }
 @media (max-width: 760px) { .fiche-rgrid { grid-template-columns: 1fr; } }

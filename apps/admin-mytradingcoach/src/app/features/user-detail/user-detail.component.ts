@@ -26,6 +26,13 @@ function featLabel(key: string): { full: string; short: string } {
   return FEATURE_LABELS[key] ?? { full: key, short: key.replace(/_/g, ' ') };
 }
 
+/** Emoji d'humeur (enum MoodState) — pas de pipe émoji côté admin. */
+const MOOD_EMOJI: Record<string, string> = {
+  CONFIDENT: '😎', FOCUSED: '🎯', NEUTRAL: '😐', TIRED: '😴', STRESSED: '😰',
+};
+
+interface Signal { cls: 'ok' | 'warn' | 'bad'; ic: string; text: string; sub: string; }
+
 @Component({
   selector: 'mtc-admin-user-detail',
   standalone: true,
@@ -83,11 +90,22 @@ function featLabel(key: string): { full: string; short: string } {
             <div class="fiche-rstack">
               <div class="card">
                 <div class="card-head"><span class="card-label">Informations</span></div>
-                <div class="card-body"><div class="empty">Infos (étape 6)</div></div>
+                <div class="card-body">
+                  <div class="dl"><span class="dl-k">Statut abonnement</span><span class="dl-v">{{ subStatus() }}</span></div>
+                  <div class="dl"><span class="dl-k">Source</span><span class="dl-v">{{ d.identity.ambassadorRefCode ? '?ref=' + d.identity.ambassadorRefCode : 'directe' }}</span></div>
+                  <div class="dl"><span class="dl-k">Rôle</span><span class="dl-v">{{ d.identity.role }}{{ d.identity.role === 'AMBASSADOR' ? ' · 20%' : '' }}</span></div>
+                  <div class="dl"><span class="dl-k">Inscrit le</span><span class="dl-v">{{ d.identity.createdAt | date:'dd/MM/yyyy' }}</span></div>
+                  <div class="dl"><span class="dl-k">Dernière activité</span><span class="dl-v">{{ d.identity.lastActivityAt ? (d.identity.lastActivityAt | date:'dd/MM/yyyy HH:mm') : 'jamais' }}</span></div>
+                  <div class="dl"><span class="dl-k">Temps de session</span><span class="dl-v">{{ sessionTime() }}</span></div>
+                </div>
               </div>
               <div class="card">
                 <div class="card-head"><span class="card-label">Signaux</span></div>
-                <div class="card-body"><div class="empty">Signaux (étape 6)</div></div>
+                <div class="card-body">
+                  @for (s of signals(); track s.text) {
+                    <div class="sig"><div class="sig-ic" [class]="s.cls">{{ s.ic }}</div><div><div class="sig-tx">{{ s.text }}</div><div class="sig-sub">{{ s.sub }}</div></div></div>
+                  }
+                </div>
               </div>
             </div>
             <div class="card r-ia">
@@ -113,7 +131,27 @@ function featLabel(key: string): { full: string; short: string } {
         <!-- Dernières sessions -->
         <div class="card">
           <div class="card-head"><span class="card-label">Dernières sessions</span><span class="card-action ud-static">lecture seule</span></div>
-          <div class="card-body"><div class="empty">Sessions (étape 6)</div></div>
+          <div class="card-body">
+            @if (d.sessions.length === 0) {
+              <div class="empty-ai">Aucune session enregistrée.</div>
+            } @else {
+              <table class="tbl">
+                <thead><tr><th>Date</th><th>Trades</th><th>P&amp;L</th><th>Win rate</th><th>Humeur</th><th>Durée</th></tr></thead>
+                <tbody>
+                  @for (s of d.sessions; track s.date) {
+                    <tr>
+                      <td data-label="Date" class="td-mono">{{ s.date | date:'dd/MM' }}</td>
+                      <td data-label="Trades">{{ s.trades }}</td>
+                      <td data-label="P&L" class="td-mono" [class.pnl-pos]="s.pnl >= 0" [class.pnl-neg]="s.pnl < 0">{{ s.pnl >= 0 ? '+' : '' }}{{ s.pnl.toFixed(2) }}$</td>
+                      <td data-label="Win rate" class="td-mono">{{ s.winRate }}%</td>
+                      <td data-label="Humeur">{{ moodEmoji(s.emotion) }}</td>
+                      <td data-label="Durée" class="td-mono">{{ fmtDuration(s.durationMinutes) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </div>
         </div>
       }
     </div>
@@ -193,6 +231,52 @@ export class UserDetailComponent {
       };
     });
   });
+
+  /** Signaux dérivés (icône ok/warn/bad). */
+  protected readonly signals = computed<Signal[]>(() => {
+    const d = this.data();
+    if (!d) return [];
+    const k = d.kpis;
+    const never = k.activeDays === 0;
+    const pct = this.activationPct();
+    const list: Signal[] = [];
+
+    if (never) {
+      list.push({ cls: 'bad', ic: '✕', text: 'Jamais connecté', sub: `inscrit il y a ${k.daysSinceSignup}j, 0 activité` });
+    } else {
+      list.push({ cls: 'ok', ic: '✓', text: 'Onboarding terminé', sub: 'au moins une connexion' });
+      list.push(
+        pct >= 50
+          ? { cls: 'ok', ic: '✓', text: `Activation forte — ${pct}%`, sub: `connecté ${k.activeDays}j sur ${k.totalDays}` }
+          : { cls: 'warn', ic: '!', text: `Activation faible — ${pct}%`, sub: `seulement ${k.activeDays}j sur ${k.totalDays}` },
+      );
+      if (this.status() === 'actif') {
+        list.push({ cls: 'ok', ic: '✓', text: 'Connexion récente', sub: this.lastConn() });
+      } else {
+        list.push({ cls: 'warn', ic: '!', text: `Inactif — il y a ${this.lastConn()}`, sub: 'risque de churn' });
+      }
+    }
+    if (d.identity.plan !== 'FREE' && d.sessions.length === 0) {
+      list.push({ cls: 'warn', ic: '!', text: 'Premium sans session', sub: 'accès accordé, jamais utilisé' });
+    }
+    return list;
+  });
+
+  protected readonly subStatus = computed(() => {
+    const i = this.data()?.identity;
+    if (!i) return '—';
+    return i.subscriptionStatus ?? (i.plan === 'FREE' ? 'aucun' : 'accès manuel');
+  });
+
+  protected moodEmoji(mood: string | null): string {
+    return mood ? (MOOD_EMOJI[mood] ?? '·') : '·';
+  }
+  protected fmtDuration(mins: number | null): string {
+    if (mins === null) return '—';
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return h > 0 ? `${h}h${String(m).padStart(2, '0')}` : `${m}min`;
+  }
 
   private relTime(iso: string): string {
     const min = Math.floor((Date.now() - Date.parse(iso)) / 60_000);
