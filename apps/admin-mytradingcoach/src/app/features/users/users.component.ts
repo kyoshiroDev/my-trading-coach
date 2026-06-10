@@ -8,17 +8,18 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DatePipe, DecimalPipe, KeyValuePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
-import { LucideAngularModule, Trash2, Pencil, X, ShieldCheck, Eye, TrendingUp, Bot } from 'lucide-angular';
-import { AdminApi, AdminUser, AdminStats, AdminUserDetail } from '../../core/api/admin.api';
+import { LucideAngularModule, Trash2, Pencil, X, ShieldCheck } from 'lucide-angular';
+import { AdminApi, AdminUser, AdminStats } from '../../core/api/admin.api';
 import { TableSort } from '../../shared/tables/table-sort';
 
 @Component({
   selector: 'mtc-admin-users',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, KeyValuePipe, FormsModule, LucideAngularModule],
+  imports: [DatePipe, FormsModule, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './users.component.css',
   template: `
@@ -73,7 +74,7 @@ import { TableSort } from '../../shared/tables/table-sort';
             </thead>
             <tbody>
               @for (u of sortedUsers(); track u.id) {
-                <tr>
+                <tr class="clickable" (click)="goToDetail(u.id)">
                   <td data-label="Utilisateur"><div class="u-cell"><div class="u-av">{{ initials(u) }}</div><div><div class="u-name">{{ u.name ?? '—' }}</div><div class="u-mail">{{ u.email }}</div></div></div></td>
                   <td data-label="Rôle"><span class="role-tag" [class.purple]="u.role !== 'USER'">{{ u.role }}</span></td>
                   <td data-label="Plan"><span class="badge" [class.b-premium]="u.plan==='PREMIUM'" [class.b-starter]="u.plan==='STARTER'" [class.b-free]="u.plan==='FREE'">{{ u.plan }}</span></td>
@@ -86,10 +87,9 @@ import { TableSort } from '../../shared/tables/table-sort';
                   <td data-label="Inscrit" class="td-mono muted">{{ u.createdAt | date:'dd/MM/yyyy' }}</td>
                   <td data-label="Actions">
                     <div class="row-actions">
-                      <button class="icon-btn" (click)="openProfile(u, $event)" aria-label="Voir le profil"><lucide-icon [img]="EyeIcon" [size]="13" /></button>
                       @if (u.role !== 'ADMIN') {
-                        <button class="icon-btn" (click)="openEdit(u)" aria-label="Modifier"><lucide-icon [img]="PencilIcon" [size]="13" /></button>
-                        <button class="icon-btn danger" (click)="openDeleteModal(u)" aria-label="Supprimer"><lucide-icon [img]="Trash2Icon" [size]="13" /></button>
+                        <button class="icon-btn" (click)="$event.stopPropagation(); openEdit(u)" aria-label="Modifier"><lucide-icon [img]="PencilIcon" [size]="13" /></button>
+                        <button class="icon-btn danger" (click)="$event.stopPropagation(); openDeleteModal(u)" aria-label="Supprimer"><lucide-icon [img]="Trash2Icon" [size]="13" /></button>
                       } @else {
                         <lucide-icon [img]="ShieldCheckIcon" [size]="14" color="var(--blue)" />
                       }
@@ -106,194 +106,6 @@ import { TableSort } from '../../shared/tables/table-sort';
               <button class="btn-page" [disabled]="page() === totalPages()" (click)="changePage(page()+1)">Suivant →</button>
             </div>
           }
-        </div>
-      }
-
-      <!-- ── Modal Profil Utilisateur ── -->
-      @if (viewingUser()) {
-        <div class="modal-overlay" role="button" tabindex="0" aria-label="Fermer"
-          (click)="closeProfile()" (keydown.escape)="closeProfile()">
-          <div class="modal modal-profile" role="dialog" aria-modal="true"
-            (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
-
-            <div class="modal-header">
-              <div class="profile-header-info">
-                <div class="profile-avatar"
-                  [style.background]="viewingUser()!.role==='BETA_TESTER'
-                    ? 'linear-gradient(135deg,#8b5cf6,#a78bfa)'
-                    : viewingUser()!.role==='ADMIN'
-                    ? 'linear-gradient(135deg,#f59e0b,#fbbf24)'
-                    : 'linear-gradient(135deg,#3b82f6,#22d3ee)'">
-                  {{ (viewingUser()!.name ?? viewingUser()!.email).slice(0,2).toUpperCase() }}
-                </div>
-                <div>
-                  <h2 class="modal-title">{{ viewingUser()!.name ?? viewingUser()!.email }}</h2>
-                  <div class="profile-meta">
-                    <span class="profile-email">{{ viewingUser()!.email }}</span>
-                    <span class="plan-badge"
-                      [class.premium]="viewingUser()!.plan==='PREMIUM' && viewingUser()!.role!=='BETA_TESTER'"
-                      [class.starter]="viewingUser()!.plan==='STARTER' && viewingUser()!.role!=='BETA_TESTER'"
-                      [class.beta]="viewingUser()!.role==='BETA_TESTER'"
-                      [class.ambassador]="viewingUser()!.role==='AMBASSADOR'"
-                      [class.free]="viewingUser()!.plan==='FREE'">
-                      {{ viewingUser()!.role==='BETA_TESTER' ? 'BETA' : viewingUser()!.role==='AMBASSADOR' ? 'AMBASSADOR' : viewingUser()!.plan }}
-                    </span>
-                    <span class="profile-since">depuis {{ viewingUser()!.createdAt | date:'dd/MM/yyyy' }}</span>
-                  </div>
-                </div>
-              </div>
-              <button class="btn-icon" (click)="closeProfile()" aria-label="Fermer">
-                <lucide-icon [img]="XIcon" [size]="16" />
-              </button>
-            </div>
-
-            @if (viewLoading()) {
-              <div class="profile-loading">
-                <div class="profile-skeleton"></div>
-                <div class="profile-skeleton" style="width:70%"></div>
-                <div class="profile-skeleton" style="width:50%"></div>
-              </div>
-            } @else if (viewError()) {
-              <div class="profile-loading" style="color:var(--red);font-size:12px;font-family:var(--mono)">
-                ⚠ Erreur : {{ viewError() }}
-              </div>
-            } @else if (viewDetail(); as d) {
-              <div class="modal-body profile-body">
-
-                <div class="profile-section">
-                  <div class="profile-section-title">
-                    <lucide-icon [img]="TrendingUpIcon" [size]="12" />
-                    Activité trading
-                  </div>
-                  <div class="profile-stats-grid">
-                    <div class="profile-stat">
-                      <div class="profile-stat-label">Trades total</div>
-                      <div class="profile-stat-value">{{ d.stats.totalTrades }}</div>
-                    </div>
-                    <div class="profile-stat">
-                      <div class="profile-stat-label">Ce mois</div>
-                      <div class="profile-stat-value">{{ d.stats.tradesThisMonth }}</div>
-                    </div>
-                    <div class="profile-stat">
-                      <div class="profile-stat-label">P&L total</div>
-                      <div class="profile-stat-value"
-                        [class.val-pos]="d.stats.totalPnl >= 0" [class.val-neg]="d.stats.totalPnl < 0">
-                        {{ d.stats.totalPnl >= 0 ? '+' : '' }}{{ d.stats.totalPnl | number:'1.0-0' }}
-                      </div>
-                    </div>
-                    <div class="profile-stat">
-                      <div class="profile-stat-label">Win rate</div>
-                      <div class="profile-stat-value"
-                        [class.val-pos]="d.stats.winRate >= 50" [class.val-neg]="d.stats.winRate < 40">
-                        {{ d.stats.winRate }}%
-                      </div>
-                    </div>
-                  </div>
-                  @if (d.topAssets.length) {
-                    <div class="profile-assets">
-                      <span class="profile-assets-label">Assets :</span>
-                      @for (a of d.topAssets; track a.asset) {
-                        <span class="profile-asset-tag">{{ a.asset }} ×{{ a.count }}</span>
-                      }
-                    </div>
-                  }
-                  @if (d.stats.monthlyLimit !== null) {
-                    <div class="profile-monthly-bar">
-                      <div class="pmb-header">
-                        <span class="pmb-label">Limite mensuelle FREE</span>
-                        <span class="pmb-count"
-                          [class.pmb-near]="(d.stats.monthlyPercent ?? 0) >= 80 && (d.stats.monthlyPercent ?? 0) < 100"
-                          [class.pmb-reached]="(d.stats.monthlyPercent ?? 0) >= 100">
-                          {{ d.stats.tradesThisMonth }}/{{ d.stats.monthlyLimit }}
-                        </span>
-                      </div>
-                      <div class="pmb-track">
-                        <div class="pmb-fill"
-                          [class.pmb-fill-near]="(d.stats.monthlyPercent ?? 0) >= 80 && (d.stats.monthlyPercent ?? 0) < 100"
-                          [class.pmb-fill-reached]="(d.stats.monthlyPercent ?? 0) >= 100"
-                          [style.width.%]="d.stats.monthlyPercent ?? 0"></div>
-                      </div>
-                    </div>
-                  }
-                </div>
-
-                <div class="profile-section">
-                  <div class="profile-section-title">⚡ Profil stratégie</div>
-                  @if (d.user.tradingStyle || d.user.tradingStrategy?.length || d.user.tradingSessions?.length) {
-                    <div class="profile-info-list">
-                      @if (d.user.tradingStyle) {
-                        <div class="profile-info-row"><span class="profile-info-label">Style</span><span class="profile-info-val">{{ styleLabel(d.user.tradingStyle) }}</span></div>
-                      }
-                      @if (d.user.tradingSessions?.length) {
-                        <div class="profile-info-row"><span class="profile-info-label">Sessions</span><span class="profile-info-val">{{ d.user.tradingSessions!.map(s => sessionLabel(s)).join(' · ') }}</span></div>
-                      }
-                      @if (d.user.tradesPerDayMin !== null && d.user.tradesPerDayMin !== undefined) {
-                        <div class="profile-info-row"><span class="profile-info-label">Fréquence</span><span class="profile-info-val">{{ d.user.tradesPerDayMin }}–{{ d.user.tradesPerDayMax }} trades/jour</span></div>
-                      }
-                      @if (d.user.tradingStrategy?.length) {
-                        <div class="profile-info-row"><span class="profile-info-label">Stratégie</span>
-                          <div class="profile-tags">@for (tag of d.user.tradingStrategy!; track tag) { <span class="profile-tag">{{ tag }}</span> }</div>
-                        </div>
-                      }
-                    </div>
-                    @if (d.user.strategyDescription) { <div class="profile-desc">"{{ d.user.strategyDescription }}"</div> }
-                  } @else {
-                    <p class="profile-empty">Profil stratégie non renseigné</p>
-                  }
-                </div>
-
-                <div class="profile-section">
-                  <div class="profile-section-title"><lucide-icon [img]="BotIcon" [size]="12" /> Usage IA</div>
-                  <div class="profile-stats-grid">
-                    <div class="profile-stat"><div class="profile-stat-label">Appels</div><div class="profile-stat-value">{{ d.stats.totalAiCalls }}</div></div>
-                    <div class="profile-stat"><div class="profile-stat-label">Tokens</div><div class="profile-stat-value">{{ formatTokens(d.stats.totalTokens) }}</div></div>
-                    <div class="profile-stat"><div class="profile-stat-label">Coût</div><div class="profile-stat-value">{{ d.stats.totalCostUsd | number:'1.2-2' }} USD</div></div>
-                  </div>
-                  @if ((d.stats.byFeature | keyvalue)?.length) {
-                    <div class="profile-features">
-                      @for (kv of d.stats.byFeature | keyvalue; track kv.key) {
-                        <div class="profile-feature-row"><span class="profile-feature-name">{{ kv.key }}</span><span class="profile-feature-count">{{ $any(kv.value) }} appels</span></div>
-                      }
-                    </div>
-                  }
-                </div>
-
-                <div class="profile-section">
-                  <div class="profile-section-title">💳 Abonnement</div>
-                  <div class="profile-info-list">
-                    @if (d.user.stripeInterval) {
-                      <div class="profile-info-row"><span class="profile-info-label">Type</span><span class="profile-info-val">{{ d.user.stripeInterval==='month' ? 'Mensuel' : 'Annuel' }}</span></div>
-                    }
-                    @if (d.user.stripeCurrentPeriodEnd) {
-                      <div class="profile-info-row"><span class="profile-info-label">Expiration</span><span class="profile-info-val">{{ d.user.stripeCurrentPeriodEnd | date:'dd/MM/yyyy' }}</span></div>
-                    }
-                    @if (d.user.lastLoginAt) {
-                      <div class="profile-info-row"><span class="profile-info-label">Dernière co.</span><span class="profile-info-val">{{ d.user.lastLoginAt | date:'dd/MM HH:mm' }}</span></div>
-                    }
-                    @if (d.user.startingCapital) {
-                      <div class="profile-info-row"><span class="profile-info-label">Capital</span><span class="profile-info-val">{{ d.user.currency ?? 'USD' }} {{ d.user.startingCapital | number:'1.0-0' }}</span></div>
-                    }
-                  </div>
-                </div>
-
-                @if (d.timeline.length) {
-                  <div class="profile-section">
-                    <div class="profile-section-title">🕐 Activité récente</div>
-                    <div class="profile-timeline">
-                      @for (t of d.timeline; track t.createdAt) {
-                        <div class="profile-tl-item">
-                          <div class="profile-tl-dot" [class.dot-blue]="t.type==='auth'" [class.dot-purple]="t.type==='ai'" [class.dot-green]="t.type==='trade'"></div>
-                          <div class="profile-tl-content"><span class="profile-tl-action">{{ t.action }}</span>@if (t.detail) { <span class="profile-tl-detail">{{ t.detail }}</span> }</div>
-                          <span class="profile-tl-time">{{ t.createdAt | date:'dd/MM HH:mm' }}</span>
-                        </div>
-                      }
-                    </div>
-                  </div>
-                }
-
-              </div>
-            }
-          </div>
         </div>
       }
 
@@ -364,11 +176,9 @@ export class UsersComponent implements OnInit {
   protected readonly PencilIcon      = Pencil;
   protected readonly XIcon           = X;
   protected readonly ShieldCheckIcon = ShieldCheck;
-  protected readonly EyeIcon         = Eye;
-  protected readonly TrendingUpIcon  = TrendingUp;
-  protected readonly BotIcon         = Bot;
 
   private readonly api = inject(AdminApi);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly search$ = new Subject<string>();
 
@@ -381,10 +191,6 @@ export class UsersComponent implements OnInit {
   protected readonly search      = signal('');
   protected readonly editUser    = signal<AdminUser | null>(null);
   protected readonly deleteModal = signal<AdminUser | null>(null);
-  protected readonly viewingUser = signal<AdminUser | null>(null);
-  protected readonly viewDetail  = signal<AdminUserDetail | null>(null);
-  protected readonly viewLoading = signal(false);
-  protected readonly viewError   = signal<string | null>(null);
 
   protected readonly totalPages = computed(() => Math.ceil(this.total() / 20) || 1);
 
@@ -418,6 +224,9 @@ export class UsersComponent implements OnInit {
 
   protected onSearch(value: string) { this.search.set(value); this.search$.next(value); }
   protected changePage(p: number)   { this.page.set(p); this.load(); }
+
+  /** Clic sur une ligne → fiche utilisateur. */
+  protected goToDetail(id: string) { this.router.navigate(['/users', id]); }
 
   /** Sélecteur mobile « Trier par » : positionne la clé (sans inverser). */
   protected setSort(key: string) {
@@ -500,45 +309,6 @@ export class UsersComponent implements OnInit {
 
   protected openDeleteModal(user: AdminUser) { this.deleteModal.set(user); }
   protected closeDeleteModal() { this.deleteModal.set(null); }
-
-  protected openProfile(user: AdminUser, event: MouseEvent): void {
-    event.stopPropagation();
-    this.viewingUser.set(user);
-    this.viewDetail.set(null);
-    this.viewError.set(null);
-    this.viewLoading.set(true);
-    this.api.detail(user.id).pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (r) => { this.viewDetail.set(r.data); this.viewLoading.set(false); },
-        error: (err: unknown) => {
-          const msg = err instanceof Error ? err.message
-            : typeof err === 'object' && err !== null && 'status' in err
-            ? `HTTP ${(err as { status: number }).status}`
-            : 'Erreur inconnue';
-          this.viewError.set(msg);
-          this.viewLoading.set(false);
-        },
-      });
-  }
-  protected closeProfile(): void {
-    this.viewingUser.set(null);
-    this.viewDetail.set(null);
-    this.viewError.set(null);
-  }
-
-  protected formatTokens(n: number): string {
-    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-    if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
-    return String(n);
-  }
-
-  protected styleLabel(style: string | null | undefined): string {
-    const m: Record<string, string> = { SCALPING: 'Scalping', DAY_TRADING: 'Day Trading', SWING: 'Swing', POSITION: 'Position' };
-    return style ? (m[style] ?? style) : '—';
-  }
-  protected sessionLabel(s: string): string {
-    return ({ LONDON: 'London', NEW_YORK: 'New York', ASIAN: 'Asian' } as Record<string, string>)[s] ?? s;
-  }
 
   protected confirmDelete() {
     const user = this.deleteModal();

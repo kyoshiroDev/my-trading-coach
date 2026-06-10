@@ -2,6 +2,7 @@
    Ce fichier ne garde que le spécifique : tri mobile, modals, profil. */
 
 .head-right { display: flex; align-items: center; gap: 10px; }
+.tbl tbody tr.clickable { cursor: pointer; }
 .sort-mobile { display: none; }
 .muted { color: var(--text3); }
 .actions-col { text-align: right; }

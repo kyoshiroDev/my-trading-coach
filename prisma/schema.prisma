@@ -72,6 +72,7 @@ model User {
   aiUsageLogs   AiUsageLog[]
   tradeSessions TradeSession[]
   dailyRecaps   DailyRecap[]
+  dailyActivity UserDailyActivity[]
   referrals     ReferralCommission[] @relation("AmbassadorCommissions")
   lastSeenAt    DateTime?
   lastLoginAt   DateTime?
@@ -367,6 +368,19 @@ model MetricsSnapshot {
   createdAt    DateTime @default(now())
 
   @@index([date])
+}
+
+/// Un jour d'activité par utilisateur (≥1 requête authentifiée dans la journée).
+/// Alimente la heatmap « Connexions par jour » de la fiche admin. RGPD : userId + date
+/// seulement, suppression en cascade avec le compte.
+model UserDailyActivity {
+  id     String   @id @default(cuid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date   DateTime @db.Date
+
+  @@unique([userId, date])
+  @@index([userId, date])
 }
 
 /// Trace analytique d'un compte supprimé (RGPD). Identité (name/email)

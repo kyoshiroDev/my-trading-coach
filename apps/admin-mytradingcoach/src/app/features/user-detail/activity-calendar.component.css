@@ -1,0 +1,26 @@
+/* Calendrier de connexions — porté de admin-mytradingcoach.html (cal-*). */
+:host { display: block; }
+
+.cal-nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 16px; }
+.cal-arrow { background: var(--bg3); border: 1px solid var(--border); color: var(--text2); width: 26px; height: 26px; border-radius: 6px; cursor: pointer; font-size: 15px; line-height: 1; display: flex; align-items: center; justify-content: center; transition: .13s; }
+.cal-arrow:hover:not(:disabled) { background: var(--bg4); color: var(--text); }
+.cal-arrow:disabled { opacity: .3; cursor: not-allowed; }
+.cal-month-label { font-family: var(--mono); font-size: 13px; color: var(--text); letter-spacing: .04em; min-width: 140px; text-align: center; }
+
+.cal-single { display: grid; grid-template-columns: repeat(7, 1fr); gap: 7px; max-width: 100%; }
+.cal-hd { font-family: var(--mono); font-size: 9px; color: var(--text3); text-align: center; padding-bottom: 2px; }
+.cal-d { aspect-ratio: 1; border-radius: 6px; background: var(--bg4); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 11px; color: var(--text3); }
+.cal-d.on { background: var(--teal); color: #04121f; font-weight: 600; }
+.cal-d.future { background: transparent; border: 1px solid var(--border); color: var(--text3); opacity: .45; }
+.cal-d.pad { background: transparent; }
+
+.hm-legend { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: 10px; }
+.hm-legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.hm-legend i.lg-on { background: var(--teal); }
+.hm-legend i.lg-off { background: var(--bg4); }
+.hm-sum { margin-left: auto; }
+
+.cal-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding-top: 16px; margin-top: 18px; border-top: 1px solid var(--border); }
+.cal-stat { text-align: center; }
+.cal-stat .v { font-family: var(--mono); font-size: 17px; color: var(--text); font-weight: 600; line-height: 1; }
+.cal-stat .l { font-family: var(--mono); font-size: 8.5px; color: var(--text3); text-transform: uppercase; letter-spacing: .1em; margin-top: 5px; }
