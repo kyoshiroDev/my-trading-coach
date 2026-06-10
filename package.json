@@ -22,7 +22,7 @@
     "@commitlint/cli": "^20.5.0",
     "@commitlint/config-conventional": "^20.5.0",
     "@eslint/js": "^9.8.0",
-    "@nestjs/schematics": "11.0.9",
+    "@nestjs/schematics": "^11.1.0",
     "@nestjs/testing": "11.1.17",
     "@nx/angular": "22.7.5",
     "@nx/devkit": "22.7.5",
@@ -64,7 +64,11 @@
   "pnpm": {
     "overrides": {
       "path-to-regexp@>=8.0.0 <8.4.0": ">=8.4.0",
-      "axios@<1.16.0": ">=1.16.0"
+      "axios@<1.16.0": ">=1.16.0",
+      "shell-quote@<1.8.4": ">=1.8.4",
+      "@babel/plugin-transform-modules-systemjs@<7.29.4": ">=7.29.4",
+      "picomatch@4": "^4.0.4",
+      "lodash@<4.18.0": ">=4.18.0"
     },
     "packageExtensions": {
       "@nestjs/schedule": {
@@ -175,7 +179,7 @@
     "node-ssh": "^13.2.1",
     "puppeteer": "^24.43.1",
     "reflect-metadata": "^0.1.13",
-    "rxjs": "~7.8.0",
+    "rxjs": "~7.8.2",
     "socket.io-client": "^4.8.3"
   }
 }
