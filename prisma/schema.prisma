@@ -61,8 +61,11 @@ model User {
   referredBy   String?           // code de l'ambassadeur qui a référé cet user
 
   // ── Calendrier économique ─────────────────────────────────────────────────
-  // Format : "EventName:Currency" — pin permanent (ex: "Non-Farm Payrolls:USD")
+  // Sélection d'annonces du JOUR (rituel de prep). Format : "EventName:Currency".
+  // Réinitialisée chaque jour : si pinnedEcoDate ≠ aujourd'hui (Europe/Paris), la
+  // lecture renvoie une sélection vide (reset paresseux, sans cron).
   pinnedEcoEvents String[]
+  pinnedEcoDate   String?   // YYYY-MM-DD (Europe/Paris) — jour de la sélection
 
   // ── Discord ──────────────────────────────────────────────────────────────────
   discordId String? @unique

@@ -12,7 +12,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subject, forkJoin, interval, of } from 'rxjs';
+import { Subject, forkJoin, interval, of, timer } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent, EcoResultAnalysis } from '../../../../core/api/eco-calendar.api';
 import { translateEcoEvent } from '../../../../core/data/eco-event-translations';
@@ -839,6 +839,8 @@ export class SessionLiveComponent {
   protected readonly showReleaseAlert = signal(false);
   protected readonly releaseAlertState = signal<'analyzing' | 'ready' | 'error'>('analyzing');
   private releaseAlertTimer?: ReturnType<typeof setTimeout>;
+  /** Events déjà analysés (dédup du déclenchement au montage). */
+  private readonly analyzedNames = new Set<string>();
 
   protected readonly moods = MOODS;
   protected readonly emotions = EMOTIONS;
@@ -917,6 +919,29 @@ export class SessionLiveComponent {
       } else {
         this.ecoSocket.disconnect();
       }
+    });
+
+    // Analyse IA des events DÉJÀ publiés à l'ouverture (Premium + session active, hors démo).
+    // Les releases live restent gérées par newReleases$ ; ici on couvre l'historique.
+    effect(() => {
+      const s = this.session();
+      if (s?.status !== 'ACTIVE' || !this.userStore.isPremium() || this.userStore.isDemo()) return;
+      const released = this.sessionEcoEvents().filter(
+        (e) => e.isReleased && e.actual != null && !!e.name?.trim(),
+      );
+      const pending = released.filter((e) => !this.analyzedNames.has(e.name));
+      // Échelonné (400 ms) pour ne pas lancer N requêtes simultanées.
+      pending.forEach((e, i) => {
+        this.analyzedNames.add(e.name);
+        timer(i * 400)
+          .pipe(
+            switchMap(() => this.ecoCalendarApi.analyzeResult(e.name).pipe(catchError(() => of(null)))),
+            takeUntilDestroyed(this.destroyRef),
+          )
+          .subscribe((res) => {
+            if (res?.data) this.ecoResults.update((prev) => ({ ...prev, [e.name]: res.data }));
+          });
+      });
     });
 
     // Écouter les nouvelles releases

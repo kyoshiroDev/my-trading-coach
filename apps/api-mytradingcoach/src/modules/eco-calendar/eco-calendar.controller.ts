@@ -67,7 +67,8 @@ export class EcoCalendarController {
 
   @Get('pinned-upcoming')
   async getPinnedUpcoming(@CurrentUser() user: { id: string }) {
-    return await this.service.getPinnedUpcoming(user.id, 14);
+    // Sélection quotidienne : uniquement les épinglés du jour (pas de fenêtre).
+    return await this.service.getPinnedUpcoming(user.id, 1);
   }
 
   @Get('pins')
