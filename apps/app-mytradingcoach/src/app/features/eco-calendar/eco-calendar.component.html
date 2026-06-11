@@ -113,64 +113,117 @@
         {{ selectedDayGroup()?.label ?? '' }}
       </div>
 
-      <!-- Grille 3 colonnes égales : Europe | US | Ma sélection -->
+      <!-- Layout : bloc events 2/3 + Ma sélection fixe 1/3 -->
       <div class="eco-layout">
 
-        <!-- Col 1 : Session Europe (jour sélectionné uniquement) -->
-        <div class="eco-session-col">
-          <div class="eco-session-head europe">
-            <span class="eco-session-ic">🇪🇺</span> Session Europe
-            <span class="eco-session-cnt">{{ selectedDayGroup()?.sessions?.europe?.length ?? 0 }}</span>
-          </div>
-          <div class="eco-session-body">
-            @if (selectedDayGroup(); as group) {
-              @for (event of group.sessions.europe; track event.name + event.currency) {
-                <mtc-eco-event-row
-                  [event]="event"
-                  [pinned]="isPinned(event)"
-                  [flag]="getFlag(event)"
-                  [translatedName]="translate(event.name)"
-                  (togglePin)="togglePin($event)" />
-              } @empty {
-                <div class="eco-session-empty">Rien ce matin</div>
-              }
-            } @else {
-              <div class="eco-session-empty">Rien ce matin</div>
+        <!-- Col 1 : annonces en tableau, avec onglets de session -->
+        <div class="eco-col">
+          <div class="eco-sess-tabs">
+            @for (tab of SESSION_TABS; track tab.k) {
+              <button class="eco-sess-tab" [class.active]="sessionTab() === tab.k"
+                      (click)="setSessionTab(tab.k)">
+                {{ tab.nm }} <span class="cnt">{{ tabCounts()[tab.k] }}</span>
+              </button>
             }
+          </div>
+
+          <div class="eco-table-wrap">
+            <table class="cal">
+              <thead>
+                <tr>
+                  <th class="c-pin"></th>
+                  <th>Heure</th>
+                  <th>Devise</th>
+                  <th>Événement</th>
+                  <th>Impact</th>
+                  <th class="r">Actuel</th>
+                  <th class="r hide-sm">Prév.</th>
+                  <th class="r hide-sm">Précédent</th>
+                  <th class="c-ia">IA</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of tableRows(); track row.key) {
+                  @switch (row.kind) {
+
+                    @case ('sep') {
+                      <tr class="r-sep"><td colspan="9">{{ row.label }} · {{ row.count }}</td></tr>
+                    }
+
+                    @case ('now') {
+                      <tr class="r-now">
+                        <td colspan="9">
+                          <div class="nowline"><span class="lbl">{{ row.label }}</span><span class="ln"></span></div>
+                        </td>
+                      </tr>
+                    }
+
+                    @case ('ev') {
+                      @if (row.event; as event) {
+                        <tr class="r-ev"
+                            [class.published]="row.state === 'published'"
+                            [class.next]="row.state === 'next'"
+                            [class.high]="event.impact === 'high'">
+                          <td class="c-pin">
+                            <button class="pin" [class.on]="isPinned(event)" (click)="togglePin(event)"
+                                    [title]="isPinned(event) ? 'Désépingler' : 'Épingler'">{{ isPinned(event) ? '★' : '☆' }}</button>
+                          </td>
+                          <td class="c-time" data-label="Heure">{{ event.time }}</td>
+                          <td data-label="Devise"><span class="cur"><span class="flag">{{ getFlag(event) }}</span>{{ event.currency }}</span></td>
+                          <td class="cell-evt" data-label="Événement"><span class="evt">{{ translate(event.name) }}</span></td>
+                          <td data-label="Impact">
+                            <span class="stars">
+                              @for (i of STAR_SLOTS; track i) {
+                                <span [style.color]="starColor(event.impact, i)">★</span>
+                              }
+                            </span>
+                          </td>
+                          <td class="r" data-label="Actuel">
+                            @if (event.actual !== null) {
+                              <span class="num" [class.up]="actualClass(event) === 'up'" [class.down]="actualClass(event) === 'down'">{{ event.actual }}{{ event.unit }}</span>
+                            } @else if (row.state === 'next') {
+                              <span class="state nx">{{ relTime(event) }}</span>
+                            } @else {
+                              <span style="color:var(--text-3)">—</span>
+                            }
+                          </td>
+                          <td class="r num hide-sm" data-label="Prév.">
+                            @if (event.estimate !== null) { {{ event.estimate }}{{ event.unit }} } @else { — }
+                          </td>
+                          <td class="r num hide-sm" data-label="Précédent">
+                            @if (event.previous !== null) { {{ event.previous }}{{ event.unit }} } @else { — }
+                          </td>
+                          <td class="c-ia" data-label="IA">
+                            @switch (iaState(event)) {
+                              @case ('ready') {
+                                <span class="ia-cell neutral">
+                                  <span class="ia-ccy">{{ event.currency }}</span>
+                                  <span class="ia-spark">✨</span>
+                                </span>
+                              }
+                              @case ('wait') { <span class="ia-wait">⏳ après chiffres</span> }
+                              @default { <span class="ia-na">—</span> }
+                            }
+                          </td>
+                        </tr>
+                      }
+                    }
+                  }
+                } @empty {
+                  <tr><td colspan="9" class="eco-table-empty">Aucune annonce pour cette session</td></tr>
+                }
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <!-- Col 2 : Session US (jour sélectionné uniquement) -->
-        <div class="eco-session-col">
-          <div class="eco-session-head us">
-            <span class="eco-session-ic">🇺🇸</span> Session US
-            <span class="eco-session-cnt">{{ selectedDayGroup()?.sessions?.us?.length ?? 0 }}</span>
-          </div>
-          <div class="eco-session-body">
-            @if (selectedDayGroup(); as group) {
-              @for (event of group.sessions.us; track event.name + event.currency) {
-                <mtc-eco-event-row
-                  [event]="event"
-                  [pinned]="isPinned(event)"
-                  [flag]="getFlag(event)"
-                  [translatedName]="translate(event.name)"
-                  (togglePin)="togglePin($event)" />
-              } @empty {
-                <div class="eco-session-empty">Rien cet après-midi</div>
-              }
-            } @else {
-              <div class="eco-session-empty">Rien cet après-midi</div>
-            }
-          </div>
-        </div>
-
-        <!-- Col 3 : Ma sélection (transversale, inchangée) -->
-        <aside class="eco-session-col eco-selection-col">
+        <!-- Col 2 : Ma sélection (fixe) -->
+        <aside class="eco-selection-col">
           <div class="eco-session-head selection">
-            <span class="eco-session-ic">⭐</span> Ma sélection
+            <span>⭐</span> Ma sélection
             <span class="eco-session-cnt">{{ pinnedUpcoming().length }}</span>
           </div>
-          <div class="eco-col-body eco-selection-body">
+          <div class="eco-selection-body">
             @for (event of pinnedUpcoming(); track event.name + event.currency + event.date) {
               <div class="sel-item" [class.high]="event.impact === 'high'">
                 <span class="sel-flag">{{ getFlag(event) }}</span>
@@ -182,15 +235,21 @@
                 <button class="sel-unpin" (click)="togglePin(event)" title="Désépingler">✕</button>
               </div>
             } @empty {
-              <div class="eco-session-empty">Épingle les annonces du jour 📌<br>pour les suivre ici</div>
+              <div class="eco-empty-sm">Épingle les annonces du jour 📌<br>pour les suivre ici</div>
             }
           </div>
         </aside>
 
       </div><!-- /eco-layout -->
 
+      <!-- Légende -->
+      <div class="eco-legend">
+        Actuel <span style="color:var(--green)">vert</span> = meilleur que prévu ·
+        <span style="color:var(--red)">rouge</span> = moins bon ·
+        clique sur ✨ pour l'analyse IA (events publiés, fort impact)
+      </div>
+
     }
   }
 
 </div>
-

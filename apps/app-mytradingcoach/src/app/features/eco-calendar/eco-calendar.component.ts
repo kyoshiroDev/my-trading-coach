@@ -8,7 +8,6 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { EcoEventRowComponent } from './eco-event-row.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { EcoCalendarApi, EcoEvent } from '../../core/api/eco-calendar.api';
@@ -26,11 +25,20 @@ interface DayGroup {
   sessions: SessionGroup;
 }
 
+type EvState = 'published' | 'next' | 'upcoming';
+interface TableRow {
+  kind: 'sep' | 'now' | 'ev';
+  key: string;
+  label?: string;
+  count?: number;
+  event?: EcoEvent;
+  state?: EvState;
+}
+
 @Component({
   selector: 'mtc-eco-calendar-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [EcoEventRowComponent],
   templateUrl: './eco-calendar.component.html',
   styleUrl: './eco-calendar.component.css',
 })
@@ -144,6 +152,51 @@ export class EcoCalendarComponent implements OnInit {
     return [...list].sort((a, b) => this.timeMinutes(a.time) - this.timeMinutes(b.time));
   });
 
+  // Lignes du tableau : séparateurs de session (en mode « Tous »), ligne « maintenant »
+  // (jour = aujourd'hui), puis les events. État par event : published / next / upcoming.
+  protected readonly tableRows = computed<TableRow[]>(() => {
+    const g = this.selectedDayGroup();
+    if (!g) return [];
+    const tab = this.sessionTab();
+    const isToday = g.isToday;
+    const nowM = this.nowMinutes();
+    const futureTimes = g.events
+      .map(e => this.timeMinutes(e.time))
+      .filter(m => m > nowM);
+    const nextM = isToday && futureTimes.length ? Math.min(...futureTimes) : -1;
+    const isPastDay = g.date < todayParis();
+
+    const rows: TableRow[] = [];
+    const pushList = (list: EcoEvent[]) => {
+      const sorted = [...list].sort((a, b) => this.timeMinutes(a.time) - this.timeMinutes(b.time));
+      let nowDone = false;
+      for (const e of sorted) {
+        const m = this.timeMinutes(e.time);
+        if (isToday && !nowDone && m > nowM) {
+          rows.push({ kind: 'now', key: `now-${e.name}-${e.time}`, label: this.formatNow(nowM) });
+          nowDone = true;
+        }
+        const state: EvState = isToday
+          ? (m <= nowM ? 'published' : (m === nextM ? 'next' : 'upcoming'))
+          : (isPastDay ? 'published' : 'upcoming');
+        rows.push({ kind: 'ev', key: `${e.name}-${e.currency}-${e.time}`, event: e, state });
+      }
+    };
+
+    if (tab === 'all') {
+      (['asia', 'europe', 'us'] as EcoSession[]).forEach(k => {
+        const list = g.sessions[k];
+        if (!list.length) return;
+        const nm = this.SESSION_TABS.find(t => t.k === k)!.nm;
+        rows.push({ kind: 'sep', key: `sep-${k}`, label: nm, count: list.length });
+        pushList(list);
+      });
+    } else {
+      pushList(g.sessions[tab]);
+    }
+    return rows;
+  });
+
   protected readonly weekDays = computed(() => {
     const monday = this.currentWeekStart();
     const today = todayParis();
@@ -214,6 +267,49 @@ export class EcoCalendarComponent implements OnInit {
   private timeMinutes(time: string | undefined): number {
     const [h, m] = (time ?? '00:00').split(':').map(Number);
     return (h || 0) * 60 + (m || 0);
+  }
+
+  private nowMinutes(): number {
+    const paris = new Date().toLocaleTimeString('en-GB', {
+      timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit', hour12: false,
+    });
+    const [h, m] = paris.split(':').map(Number);
+    return (h || 0) * 60 + (m || 0);
+  }
+
+  protected formatNow(minutes: number): string {
+    const h = Math.floor(minutes / 60), m = minutes % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  }
+
+  /** Temps relatif jusqu'à l'event (pour l'event « next » non publié). */
+  protected relTime(event: EcoEvent): string {
+    const d = this.timeMinutes(event.time) - this.nowMinutes();
+    if (d < 0) return '';
+    if (d < 60) return `dans ${d}min`;
+    const h = Math.floor(d / 60), mm = d % 60;
+    return `dans ${h}h${mm ? String(mm).padStart(2, '0') : ''}`;
+  }
+
+  /** Couleur de la valeur Actuel : 'up' (vert, > prév.) / 'down' (rouge, < prév.) / ''. */
+  protected actualClass(event: EcoEvent): string {
+    if (event.actual == null || event.estimate == null) return '';
+    return event.actual > event.estimate ? 'up' : event.actual < event.estimate ? 'down' : '';
+  }
+
+  protected readonly STAR_SLOTS = [0, 1, 2];
+  protected starFilled(impact: 'high' | 'medium', i: number): boolean {
+    return i < (impact === 'high' ? 3 : 2);
+  }
+  protected starColor(impact: 'high' | 'medium', i: number): string {
+    if (!this.starFilled(impact, i)) return 'var(--border-hover)';
+    return impact === 'high' ? 'var(--red)' : 'var(--yellow)';
+  }
+
+  /** État de la colonne IA : 'ready' (fort publié), 'wait' (fort à venir), 'na' (moyen). */
+  protected iaState(event: EcoEvent): 'ready' | 'wait' | 'na' {
+    if (event.impact !== 'high') return 'na';
+    return event.isReleased ? 'ready' : 'wait';
   }
 
   private setDefaultSelectedDay(): void {
@@ -336,10 +432,6 @@ export class EcoCalendarComponent implements OnInit {
    */
   protected get pinnedCount(): number {
     return this.pinnedUpcoming().length;
-  }
-
-  protected highCount(group: DayGroup): number {
-    return group.events.filter(e => e.impact === 'high').length;
   }
 
   // Session de marché par région de la devise (et plus par heure) — ex. EUR 14:15 → Europe.
