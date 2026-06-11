@@ -94,13 +94,10 @@ describe('CsvImportService — MEXC (parser dédié, sans IA)', () => {
   });
 
   it('lit un fichier Excel (.xlsx) converti localement', async () => {
-    // Dans un vrai .xlsx MEXC, les prix/quantités sont des cellules NUMÉRIQUES
-    // (sheet_to_csv les rend sans virgule de milliers) ; Fee/PNL gardent le suffixe USDT.
-    const aoa = [
-      MEXC_HEADER.split(';'),
-      ['BTCUSDT', '2026-05-30 12:11:40', '2026-05-30 14:31:55', 'Isolated',
-        73602.51, 73692.56, 'Short', 550, '1.6202459USDT', '-6.5727459USDT', 'All Closed', 65370223],
-    ];
+    // MEXC stocke tout en texte dans le .xlsx : la cellule `73,602.51` (avec virgule)
+    // ressort entre guillemets après sheet_to_csv (`"73,602.51"`) → vérifie le chemin
+    // guillemets + séparateur de milliers via splitCsvLine quote-aware.
+    const aoa = [MEXC_HEADER.split(';'), MEXC_ROW.split(';')];
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
@@ -110,6 +107,7 @@ describe('CsvImportService — MEXC (parser dédié, sans IA)', () => {
     expect(dtos).toHaveLength(1);
     expect(dtos[0].asset).toBe('BTC/USDT');
     expect(dtos[0].side).toBe('SHORT');
+    expect(dtos[0].entry).toBe(73602.51); // nombre entre guillemets + millier correctement parsés
   });
 });
 
