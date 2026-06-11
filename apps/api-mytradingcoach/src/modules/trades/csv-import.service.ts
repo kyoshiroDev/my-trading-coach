@@ -639,9 +639,12 @@ export class CsvImportService {
   }
 
   /**
-   * MEXC Futures — format stable et propre → parser local (gratuit, sans IA).
-   * En-tête `;` : UID;Futures;Open Time;Close Time;Margin Mode;Avg Entry Price;
-   * Avg Close Price;Direction;Closing Qty (Cont.);Fee;Realized PNL;Status
+   * MEXC Futures — parser local (gratuit, sans IA).
+   * En-tête réel (export CSV et XLSX, identiques) :
+   *   Futures;Open Time;Close Time;Margin Mode;Avg Entry Price;Avg Close Price;
+   *   Direction;Closing Qty (Cont.);Trading Fee;Realized PNL;Status;UID
+   * Lecture par NOM de colonne → robuste si MEXC réordonne (ex. UID passé en dernier).
+   * Nombres au format US : `1,644.31` (virgule = séparateur de milliers) → on retire les virgules.
    * Produit le CSV interne `symbol,side,entry,exit,qty,pnl,tradedAt,commission`.
    */
   private parseMexc(lines: string[]): string {
@@ -649,24 +652,42 @@ export class CsvImportService {
     // Robuste à un MEXC converti depuis Excel (séparateur `,` au lieu de `;`)
     const sep = (lines[0] ?? '').includes(';') ? ';' : ',';
 
+    const header = (lines[0] ?? '')
+      .replace(/\r/g, '')
+      .split(sep)
+      .map((h) => h.trim().toLowerCase());
+    const at = (...needles: string[]) =>
+      header.findIndex((h) => needles.some((n) => h.includes(n)));
+
+    const iSym = at('futures');
+    const iClose = at('close time');
+    const iEntry = at('avg entry');
+    const iExit = at('avg close');
+    const iDir = at('direction');
+    const iQty = at('closing qty', 'qty');
+    const iFee = at('fee'); // "Trading Fee" ou "Fee"
+    const iPnl = at('realized pnl', 'pnl');
+    const iStatus = at('status');
+
+    // Format US : retire le suffixe USDT et les virgules de milliers, garde le point décimal.
+    const num = (s: string) =>
+      parseFloat(String(s ?? '').replace(/usdt/i, '').replace(/,/g, '').trim());
+
     for (let i = 1; i < lines.length; i++) {
       const c = lines[i].replace(/\r/g, '').split(sep);
-      if (c.length < 12) continue;
+      if (c.length < header.length) continue;
 
-      const [, futures, , closeTime, , entryRaw, closeRaw, dir, qtyRaw, feeRaw, pnlRaw, status] = c;
-      if (!/closed/i.test(status ?? '')) continue; // trades fermés uniquement
+      if (!/closed/i.test(c[iStatus] ?? '')) continue; // trades fermés uniquement
 
-      const num = (s: string) =>
-        parseFloat(String(s ?? '').replace(/usdt/i, '').replace(',', '.').trim());
-      const entry = num(entryRaw);
-      const exit = num(closeRaw);
-      const pnl = num(pnlRaw);
-      const fee = num(feeRaw);
-      const quantity = num(qtyRaw);
-      const side = /short/i.test(dir ?? '') ? 'SHORT' : 'LONG';
-      const asset = this.normalizeMexcSymbol(futures ?? '');
+      const entry = num(c[iEntry]);
+      const exit = num(c[iExit]);
+      const pnl = num(c[iPnl]);
+      const fee = iFee >= 0 ? num(c[iFee]) : NaN;
+      const quantity = num(c[iQty]);
+      const side = /short/i.test(c[iDir] ?? '') ? 'SHORT' : 'LONG';
+      const asset = this.normalizeMexcSymbol(c[iSym] ?? '');
       // Close Time en UTC+02:00 → ISO avec offset explicite
-      const tradedAt = `${(closeTime ?? '').trim().replace(' ', 'T')}+02:00`;
+      const tradedAt = `${(c[iClose] ?? '').trim().replace(' ', 'T')}+02:00`;
 
       if (!asset || !isFinite(entry) || !isFinite(pnl)) continue;
       out.push(
