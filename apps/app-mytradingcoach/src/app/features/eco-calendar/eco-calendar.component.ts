@@ -4,6 +4,7 @@ import {
   DestroyRef,
   OnInit,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -13,6 +14,7 @@ import { finalize } from 'rxjs';
 import { EcoCalendarApi, EcoEvent } from '../../core/api/eco-calendar.api';
 import { translateEcoEvent } from '../../core/data/eco-event-translations';
 import { todayParis, toParisDateStr } from '../../core/utils/paris-date';
+import { UserStore } from '../../core/stores/user.store';
 
 type EcoSession = 'asia' | 'europe' | 'us';
 interface SessionGroup { asia: EcoEvent[]; europe: EcoEvent[]; us: EcoEvent[]; }
@@ -35,9 +37,38 @@ interface DayGroup {
 export class EcoCalendarComponent implements OnInit {
   private readonly api = inject(EcoCalendarApi);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly userStore = inject(UserStore);
 
   protected readonly currentWeekStart = signal(this.getMonday(new Date()));
   protected readonly isLoading = signal(false);
+
+  // ── Onglets de session ──────────────────────────────────────────────────
+  protected readonly SESSION_TABS: { k: 'all' | EcoSession; nm: string }[] = [
+    { k: 'all', nm: 'Tous' }, { k: 'asia', nm: '🌏 Asie' },
+    { k: 'europe', nm: '🇪🇺 Europe' }, { k: 'us', nm: '🇺🇸 US' },
+  ];
+  protected readonly sessionTab = signal<'all' | EcoSession>('all');
+  private tabInitialized = false;
+
+  // tradingSessions du profil → onglet par défaut (1 seule session connue ⇒ celle-ci, sinon Tous)
+  private static readonly SESSION_BY_PROFILE: Record<string, EcoSession> = {
+    LONDON: 'europe', NEW_YORK: 'us', ASIAN: 'asia',
+  };
+
+  constructor() {
+    effect(() => {
+      if (this.tabInitialized) return;
+      const user = this.userStore.user();
+      if (!user) return; // on attend que le profil soit chargé
+      this.tabInitialized = true;
+      const unique = [...new Set(
+        (user.tradingSessions ?? [])
+          .map(s => EcoCalendarComponent.SESSION_BY_PROFILE[s])
+          .filter((x): x is EcoSession => !!x),
+      )];
+      if (unique.length === 1) this.sessionTab.set(unique[0]);
+    });
+  }
 
   protected readonly dayGroups = signal<DayGroup[]>([]);
   protected readonly pinnedEvents = signal<Set<string>>(new Set());
@@ -95,6 +126,22 @@ export class EcoCalendarComponent implements OnInit {
     const groups = this.filteredDayGroups();
     if (!date) return groups[0] ?? null;
     return groups.find(g => g.date === date) ?? groups[0] ?? null;
+  });
+
+  // Compteurs par onglet pour le jour sélectionné (filtres déjà appliqués en amont).
+  protected readonly tabCounts = computed(() => {
+    const g = this.selectedDayGroup();
+    const s = g?.sessions ?? { asia: [], europe: [], us: [] };
+    return { all: g?.events.length ?? 0, asia: s.asia.length, europe: s.europe.length, us: s.us.length };
+  });
+
+  // Events du jour sélectionné filtrés par l'onglet (cumulé aux filtres existants), triés par heure.
+  protected readonly tabbedEvents = computed(() => {
+    const g = this.selectedDayGroup();
+    if (!g) return [];
+    const tab = this.sessionTab();
+    const list = tab === 'all' ? g.events : g.sessions[tab];
+    return [...list].sort((a, b) => this.timeMinutes(a.time) - this.timeMinutes(b.time));
   });
 
   protected readonly weekDays = computed(() => {
@@ -158,6 +205,15 @@ export class EcoCalendarComponent implements OnInit {
 
   protected selectDay(date: string): void {
     this.selectedDate.set(date);
+  }
+
+  protected setSessionTab(tab: 'all' | EcoSession): void {
+    this.sessionTab.set(tab);
+  }
+
+  private timeMinutes(time: string | undefined): number {
+    const [h, m] = (time ?? '00:00').split(':').map(Number);
+    return (h || 0) * 60 + (m || 0);
   }
 
   private setDefaultSelectedDay(): void {
