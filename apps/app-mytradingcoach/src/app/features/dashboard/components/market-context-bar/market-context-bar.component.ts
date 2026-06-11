@@ -18,6 +18,16 @@ import { MarketContext } from '../../../../core/api/trades.api';
         </div>
 
         <div class="ctx-grid">
+          @if (breakingNews()) {
+            <div class="ctx-breaking">
+              <div class="ctx-break-dot"></div>
+              <div>
+                <div class="ctx-break-lbl">BREAKING</div>
+                <div class="ctx-break-txt">{{ breakingNews() }}</div>
+              </div>
+            </div>
+          }
+
           <div class="ctx-cell"
                [class.bull]="dir(ctx()!.nq.changePct) === 'up'"
                [class.bear]="dir(ctx()!.nq.changePct) === 'down'">
@@ -92,16 +102,6 @@ import { MarketContext } from '../../../../core/api/trades.api';
               <div class="ctx-cell-name">Spread</div>
               <div class="ctx-cell-val green">{{ spread() !== null ? spread() + '%' : '—' }}</div>
               <div class="ctx-cell-sub">10Y - 2Y</div>
-            </div>
-          }
-
-          @if (breakingNews()) {
-            <div class="ctx-breaking">
-              <div class="ctx-break-dot"></div>
-              <div>
-                <div class="ctx-break-lbl">BREAKING</div>
-                <div class="ctx-break-txt">{{ breakingNews() }}</div>
-              </div>
             </div>
           }
         </div>
