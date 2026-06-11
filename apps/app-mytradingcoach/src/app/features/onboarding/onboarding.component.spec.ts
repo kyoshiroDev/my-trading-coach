@@ -8,6 +8,7 @@ import { UsersApi } from '../../core/api/users.api';
 import { TradesApi } from '../../core/api/trades.api';
 import { TradesStore } from '../../core/stores/trades.store';
 import { AuthService } from '../../core/auth/auth.service';
+import { UserStore } from '../../core/stores/user.store';
 
 const resolveComponentResources = (angularCore as Record<string, unknown>)[
   'ɵresolveComponentResources'
@@ -25,11 +26,15 @@ const mockUsersApi = {
     .fn()
     .mockReturnValue(of({ data: { onboardingCompleted: true } })),
 };
-const mockTradesApi = { create: vi.fn().mockReturnValue(of({})) };
+const mockTradesApi = {
+  create: vi.fn().mockReturnValue(of({})),
+  saveUserAssets: vi.fn().mockReturnValue(of({ data: null })),
+};
 const mockTradesStore = { loadTrades: vi.fn() };
+const authUser = signal<unknown>(null);
 const mockAuth = {
-  currentUser: signal(null as unknown),
-  setCurrentUser: vi.fn(),
+  currentUser: authUser,
+  setCurrentUser: vi.fn((u: unknown) => authUser.set(u)),
 };
 
 // Minimal template exercising the DOM assertions in the tests below
@@ -137,5 +142,29 @@ describe('OnboardingComponent', () => {
     c.selectGoal('DISCIPLINE');
     c.nextStep();
     expect(c.step()).toBe(3);
+  });
+
+  it("après sauvegarde des actifs, le store est à jour → pas de faux « Complète ton profil » (PROMPT-089)", () => {
+    // Profil complet SAUF les actifs (état avant l'étape 6)
+    authUser.set({ tradingStyle: 'SCALPING', tradingStrategy: ['BREAKOUT'], tradingAssets: [], favoriteAsset: null });
+    const userStore = TestBed.inject(UserStore);
+    expect(userStore.profileIncomplete()).toBe(true); // sanity : faux positif possible avant le fix
+
+    const fixture = TestBed.createComponent(OnboardingComponent);
+    fixture.detectChanges();
+    const c = fixture.componentInstance as unknown as {
+      selectedAssets: { set: (v: string[]) => void };
+      favoriteAsset: { set: (v: string) => void };
+      saveAssetsThenGoTrade: () => void;
+    };
+    c.selectedAssets.set(['BTCUSDT']);
+    c.favoriteAsset.set('BTCUSDT');
+    c.saveAssetsThenGoTrade();
+
+    // Le store reflète les actifs persistés → profileIncomplete() redevient faux.
+    const u = authUser() as { tradingAssets?: string[]; favoriteAsset?: string | null };
+    expect(u.tradingAssets).toEqual(['BTCUSDT']);
+    expect(u.favoriteAsset).toBe('BTCUSDT');
+    expect(userStore.profileIncomplete()).toBe(false);
   });
 });
