@@ -14,7 +14,8 @@ import { EcoCalendarApi, EcoEvent } from '../../core/api/eco-calendar.api';
 import { translateEcoEvent } from '../../core/data/eco-event-translations';
 import { todayParis, toParisDateStr } from '../../core/utils/paris-date';
 
-interface SessionGroup { europe: EcoEvent[]; us: EcoEvent[]; }
+type EcoSession = 'asia' | 'europe' | 'us';
+interface SessionGroup { asia: EcoEvent[]; europe: EcoEvent[]; us: EcoEvent[]; }
 interface DayGroup {
   date: string;
   label: string;
@@ -71,10 +72,7 @@ export class EcoCalendarComponent implements OnInit {
         return {
           ...group,
           events,
-          sessions: {
-            europe: events.filter(e => this.sessionOf(e) === 'europe'),
-            us:     events.filter(e => this.sessionOf(e) === 'us'),
-          },
+          sessions: this.bucketBySession(events),
         };
       })
       .filter(g => g.events.length > 0),
@@ -192,10 +190,7 @@ export class EcoCalendarComponent implements OnInit {
               label: this.formatDayLabel(d.date),
               isToday: d.date === today,
               events,
-              sessions: {
-                europe: events.filter(e => this.sessionOf(e) === 'europe'),
-                us:     events.filter(e => this.sessionOf(e) === 'us'),
-              },
+              sessions: this.bucketBySession(events),
             };
           }),
         );
@@ -291,9 +286,32 @@ export class EcoCalendarComponent implements OnInit {
     return group.events.filter(e => e.impact === 'high').length;
   }
 
-  private sessionOf(event: EcoEvent): 'europe' | 'us' {
+  // Session de marché par région de la devise (et plus par heure) — ex. EUR 14:15 → Europe.
+  private static readonly SESSION_BY_CCY: Record<string, EcoSession> = {
+    // Asie / Pacifique
+    JPY: 'asia', CNY: 'asia', AUD: 'asia', NZD: 'asia', KRW: 'asia', INR: 'asia',
+    HKD: 'asia', SGD: 'asia', TWD: 'asia', IDR: 'asia', THB: 'asia', MYR: 'asia',
+    // Europe / EMEA
+    EUR: 'europe', GBP: 'europe', CHF: 'europe', SEK: 'europe', NOK: 'europe',
+    DKK: 'europe', PLN: 'europe', HUF: 'europe', CZK: 'europe', TRY: 'europe', ZAR: 'europe', RUB: 'europe',
+    // Amériques
+    USD: 'us', CAD: 'us', MXN: 'us', BRL: 'us', ARS: 'us', CLP: 'us',
+  };
+
+  private sessionOf(event: EcoEvent): EcoSession {
+    const byCcy = EcoCalendarComponent.SESSION_BY_CCY[event.currency?.toUpperCase()];
+    if (byCcy) return byCcy;
+    // Repli si devise non mappée : par heure (Europe/Paris) — avant 14h ⇒ europe, sinon us
     const [h, m] = (event.time ?? '00:00').split(':').map(Number);
-    return ((h || 0) * 60 + (m || 0)) >= 13 * 60 + 30 ? 'us' : 'europe';
+    return ((h || 0) * 60 + (m || 0)) >= 14 * 60 ? 'us' : 'europe';
+  }
+
+  private bucketBySession(events: EcoEvent[]): SessionGroup {
+    return {
+      asia:   events.filter(e => this.sessionOf(e) === 'asia'),
+      europe: events.filter(e => this.sessionOf(e) === 'europe'),
+      us:     events.filter(e => this.sessionOf(e) === 'us'),
+    };
   }
 
   private getMonday(d: Date): Date {
