@@ -803,13 +803,6 @@
   background: var(--bg-card); border: 1px solid var(--border);
   border-radius: 12px; padding: 14px; flex: 1;
 }
-.news-breaking {
-  display: flex; align-items: center; gap: 6px; padding: 6px 9px;
-  background: rgba(239,68,68,.05); border: 1px solid rgba(239,68,68,.18);
-  border-radius: 6px; margin-bottom: 8px; flex-shrink: 0;
-}
-.news-break-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--red); animation: pulse 1s infinite; flex-shrink: 0; }
-.news-break-txt { font-size: 10px; font-weight: 600; color: var(--red); font-family: var(--font-mono); }
 .news-feed { display: flex; flex-direction: column; gap: 5px; overflow-y: auto; flex: 1; min-height: 0; }
 .news-item {
   padding: 7px 9px; background: var(--bg-2); border: 1px solid var(--border);
@@ -961,7 +954,6 @@
 /* ─── Réduction des animations (accessibilité) ─── */
 @media (prefers-reduced-motion: reduce) {
   .pulse-dot,
-  .news-break-dot,
   .era-dot,
   .era-spin,
   .qt-live-dot,

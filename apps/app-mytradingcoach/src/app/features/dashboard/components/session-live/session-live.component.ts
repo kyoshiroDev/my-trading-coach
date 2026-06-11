@@ -134,13 +134,6 @@ const EMOTIONS = [
             <div class="col-title">📰 News live</div>
           </div>
 
-          @if (breakingNews()) {
-            <div class="news-breaking">
-              <div class="news-break-dot"></div>
-              <span class="news-break-txt">BREAKING · {{ breakingNews() }}</span>
-            </div>
-          }
-
           <div class="news-feed">
             @if (newsItems().length === 0) {
               <div class="news-empty">Aucune news pour le moment</div>
