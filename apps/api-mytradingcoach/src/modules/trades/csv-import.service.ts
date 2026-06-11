@@ -643,8 +643,10 @@ export class CsvImportService {
    * En-tête réel (export CSV et XLSX, identiques) :
    *   Futures;Open Time;Close Time;Margin Mode;Avg Entry Price;Avg Close Price;
    *   Direction;Closing Qty (Cont.);Trading Fee;Realized PNL;Status;UID
-   * Lecture par NOM de colonne → robuste si MEXC réordonne (ex. UID passé en dernier).
-   * Nombres au format US : `1,644.31` (virgule = séparateur de milliers) → on retire les virgules.
+   * - Lecture par NOM de colonne → robuste si MEXC réordonne (ex. UID passé en dernier).
+   * - Découpage quote-aware via splitCsvLine(sep) → gère le XLSX où sheet_to_csv entoure
+   *   les nombres de guillemets (`"1,644.31"`).
+   * - Nombres format US : virgule = séparateur de milliers → on la retire (garde le point).
    * Produit le CSV interne `symbol,side,entry,exit,qty,pnl,tradedAt,commission`.
    */
   private parseMexc(lines: string[]): string {
@@ -652,10 +654,9 @@ export class CsvImportService {
     // Robuste à un MEXC converti depuis Excel (séparateur `,` au lieu de `;`)
     const sep = (lines[0] ?? '').includes(';') ? ';' : ',';
 
-    const header = (lines[0] ?? '')
-      .replace(/\r/g, '')
-      .split(sep)
-      .map((h) => h.trim().toLowerCase());
+    const header = this.splitCsvLine((lines[0] ?? '').replace(/\r/g, ''), sep).map((h) =>
+      h.trim().toLowerCase(),
+    );
     const at = (...needles: string[]) =>
       header.findIndex((h) => needles.some((n) => h.includes(n)));
 
@@ -674,7 +675,7 @@ export class CsvImportService {
       parseFloat(String(s ?? '').replace(/usdt/i, '').replace(/,/g, '').trim());
 
     for (let i = 1; i < lines.length; i++) {
-      const c = lines[i].replace(/\r/g, '').split(sep);
+      const c = this.splitCsvLine(lines[i].replace(/\r/g, ''), sep);
       if (c.length < header.length) continue;
 
       if (!/closed/i.test(c[iStatus] ?? '')) continue; // trades fermés uniquement
@@ -732,15 +733,15 @@ export class CsvImportService {
     return raw.replace(/[FGHJKMNQUVXZ]\d{1,2}$/, '');
   }
 
-  // Gère les champs entre guillemets avec virgules internes
-  private splitCsvLine(line: string): string[] {
+  // Gère les champs entre guillemets contenant le séparateur (CSV ou `;`).
+  private splitCsvLine(line: string, sep = ','): string[] {
     const result: string[] = [];
     let current = '';
     let inQuotes = false;
     for (const ch of line) {
       if (ch === '"') {
         inQuotes = !inQuotes;
-      } else if (ch === ',' && !inQuotes) {
+      } else if (ch === sep && !inQuotes) {
         result.push(current.replace(/^"|"$/g, '').trim());
         current = '';
       } else {
