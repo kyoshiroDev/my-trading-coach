@@ -196,16 +196,48 @@
                           <td class="c-ia" data-label="IA">
                             @switch (iaState(event)) {
                               @case ('ready') {
-                                <span class="ia-cell neutral">
+                                <button class="ia-cell" [class]="analysisFor(event) ? sentCls(ccySent(event)) : 'neutral'"
+                                        (click)="toggleAnalysis(event)"
+                                        [title]="event.currency + (analysisFor(event) ? ' : ' + sentLabel(ccySent(event)) : ' — analyse IA')">
                                   <span class="ia-ccy">{{ event.currency }}</span>
+                                  @if (analysisFor(event)) { <span class="ia-arrow">{{ sentArrow(ccySent(event)) }}</span> }
                                   <span class="ia-spark">✨</span>
-                                </span>
+                                  <span class="ia-chev">{{ expandedEvent() === event.name ? '▴' : '▾' }}</span>
+                                </button>
                               }
                               @case ('wait') { <span class="ia-wait">⏳ après chiffres</span> }
                               @default { <span class="ia-na">—</span> }
                             }
                           </td>
                         </tr>
+
+                        @if (iaState(event) === 'ready' && expandedEvent() === event.name) {
+                          <tr class="r-ai">
+                            <td colspan="9">
+                              <div class="ai-panel">
+                                <div class="ai-h">✨ Analyse IA</div>
+                                @if (loadingAnalysis() === event.name) {
+                                  <div class="ai-interp ia-loading">Analyse en cours…</div>
+                                } @else if (analysisFor(event); as analysis) {
+                                  <div class="ai-interp">{{ analysis.interpretation }}</div>
+                                  @if (analysis.assetSentiments.length) {
+                                    <div class="ai-assets">
+                                      @for (asset of analysis.assetSentiments; track asset.asset) {
+                                        <div class="ai-asset">
+                                          <span class="as-name">{{ asset.asset }}</span>
+                                          <span class="vchip" [class]="sentCls(asset.sentiment)"><span class="va">{{ sentArrow(asset.sentiment) }}</span> {{ sentLabel(asset.sentiment) }}</span>
+                                          <span class="as-reason">{{ asset.shortReason }}</span>
+                                        </div>
+                                      }
+                                    </div>
+                                  }
+                                } @else {
+                                  <div class="ai-interp ia-loading">Analyse indisponible pour le moment.</div>
+                                }
+                              </div>
+                            </td>
+                          </tr>
+                        }
                       }
                     }
                   }
