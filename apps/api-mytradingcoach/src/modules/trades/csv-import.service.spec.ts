@@ -10,11 +10,13 @@ process.env['ANTHROPIC_API_KEY'] = 'test-key';
 // il faut un accès Premium ET NODE_ENV=production (helper withAiEnabled ci-dessous).
 const PREMIUM_ACCESS = { plan: Plan.PREMIUM, role: Role.USER, trialEndsAt: null };
 
+// Ordre RÉEL de l'export MEXC (CSV et XLSX) : Futures en 1er, UID en dernier,
+// nombres au format US avec séparateur de milliers (`73,602.51`).
 const MEXC_HEADER =
-  'UID;Futures;Open Time(UTC+02:00);Close Time;Margin Mode;Avg Entry Price;Avg Close Price;Direction;Closing Qty (Cont.);Fee;Realized PNL;Status';
+  'Futures;Open Time;Close Time;Margin Mode;Avg Entry Price;Avg Close Price;Direction;Closing Qty (Cont.);Trading Fee;Realized PNL;Status;UID';
 
 const MEXC_ROW =
-  '65370223;BTCUSDT;2026-05-30 12:11:40;2026-05-30 14:31:55;Isolated;73602.51;73692.56;Short;550;1.6202459USDT;-6.5727459USDT;All Closed';
+  'BTCUSDT;2026-05-30 12:11:40;2026-05-30 14:31:55;Isolated;73,602.51;73,692.56;Short;550;1.6202459USDT;-6.5727459USDT;All Closed;65370223';
 
 function makeService() {
   const aiLogger = { log: vi.fn() } as any;
@@ -76,6 +78,14 @@ describe('CsvImportService — MEXC (parser dédié, sans IA)', () => {
     expect(lines).toHaveLength(2); // header + 1 trade fermé seulement
   });
 
+  it("parse correctement même avec l'UID en dernière colonne (régression PROMPT-087)", async () => {
+    const csv = [MEXC_HEADER, MEXC_ROW].join('\r\n');
+    const dtos = await svc.parseCSV(Buffer.from(csv), 'mexc.csv');
+    expect(dtos).toHaveLength(1);
+    expect(dtos[0].asset).toBe('BTC/USDT');
+    expect(dtos[0].entry).toBe(73602.51); // séparateur de milliers correctement retiré
+  });
+
   it('accepte un broker connu au-delà de 500 lignes (pas de bridage IA)', async () => {
     const rows = Array.from({ length: 600 }, () => MEXC_ROW);
     const csv = [MEXC_HEADER, ...rows].join('\n');
@@ -84,7 +94,13 @@ describe('CsvImportService — MEXC (parser dédié, sans IA)', () => {
   });
 
   it('lit un fichier Excel (.xlsx) converti localement', async () => {
-    const aoa = [MEXC_HEADER.split(';'), MEXC_ROW.split(';')];
+    // Dans un vrai .xlsx MEXC, les prix/quantités sont des cellules NUMÉRIQUES
+    // (sheet_to_csv les rend sans virgule de milliers) ; Fee/PNL gardent le suffixe USDT.
+    const aoa = [
+      MEXC_HEADER.split(';'),
+      ['BTCUSDT', '2026-05-30 12:11:40', '2026-05-30 14:31:55', 'Isolated',
+        73602.51, 73692.56, 'Short', 550, '1.6202459USDT', '-6.5727459USDT', 'All Closed', 65370223],
+    ];
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
