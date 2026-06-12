@@ -92,6 +92,19 @@ import { ChartService } from '../../core/services/chart.service';
         <div class="header-spacer"></div>
       </div>
 
+      @if (!isLoading() && tradesStore.totalTrades() === 0) {
+        <div class="firstrun-hero">
+          <div class="firstrun-text">
+            <h2 class="firstrun-title">Fais ton premier pas 🚀</h2>
+            <p class="firstrun-sub">Logge ton premier trade ou démarre une session — c'est là que ton coach commence à t'aider.</p>
+          </div>
+          <div class="firstrun-actions">
+            <button class="firstrun-btn primary" (click)="goToJournal()">Enregistrer mon premier trade</button>
+            <a class="firstrun-btn ghost" routerLink="/session">Démarrer une session</a>
+          </div>
+        </div>
+      }
+
       @if (!userStore.isStarterOrAbove() && tradesStore.limitReached()) {
         <div class="limit-banner reached">
           <div class="limit-banner-left">

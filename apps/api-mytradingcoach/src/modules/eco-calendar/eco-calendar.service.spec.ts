@@ -556,11 +556,13 @@ describe('EcoCalendarService', () => {
       expect(mockPrisma.ecoEvent.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) } }),
       );
+      // La date 'YYYY-MM-DD' est parsée en UTC → on vérifie le jour en UTC (indépendant du
+      // fuseau du runner). Le prochain jour ouvré ne doit jamais tomber un week-end.
       const calledDate = new Date(
         (mockPrisma.ecoEvent.findMany.mock.calls[0][0] as { where: { date: string } }).where.date,
       );
-      expect(calledDate.getDay()).not.toBe(0);
-      expect(calledDate.getDay()).not.toBe(6);
+      expect(calledDate.getUTCDay()).not.toBe(0);
+      expect(calledDate.getUTCDay()).not.toBe(6);
     });
   });
 });

@@ -227,11 +227,20 @@ export class OnboardingComponent {
   // Étape Actifs (6) → persiste actifs + favori puis va au premier trade (7)
   private saveAssetsThenGoTrade(): void {
     this.isSaving.set(true);
+    const assets = this.selectedAssets();
+    const favorite = this.favoriteAsset();
     this.tradesApi
-      .saveUserAssets(this.selectedAssets(), this.favoriteAsset())
+      .saveUserAssets(assets, favorite)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: () => { this.isSaving.set(false); this.step.set(7); },
+        next: () => {
+          // Rafraîchir le store (optimiste, exactement ce qui part en base) pour que
+          // profileIncomplete() ne déclenche pas à tort « Complète ton profil » au dashboard.
+          const u = this.auth.currentUser();
+          if (u) this.auth.setCurrentUser({ ...u, tradingAssets: assets, favoriteAsset: favorite });
+          this.isSaving.set(false);
+          this.step.set(7);
+        },
         error: () => { this.isSaving.set(false); this.step.set(7); },
       });
   }

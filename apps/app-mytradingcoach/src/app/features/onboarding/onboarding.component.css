@@ -121,6 +121,15 @@
 .btn-skip-capital:hover  { color: var(--text-2); }
 .btn-skip-capital:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* Sortie douce étape 7 : lien discret sous la grille de choix (jamais un bouton de même poids) */
+.btn-skip-soft {
+  display: block; margin: 14px auto 2px; padding: 4px 8px;
+  background: transparent; border: none; cursor: pointer;
+  font-size: 12px; font-family: var(--font-body); color: var(--text-3);
+  transition: color 0.15s;
+}
+.btn-skip-soft:hover { color: var(--text-2); text-decoration: underline; }
+
 /* ── Capital ── */
 .capital-field { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; }
 .currency-toggle {
