@@ -488,10 +488,20 @@ export class EcoCalendarService {
   getNextTradingDay(from: Date = new Date()): Date {
     const d = new Date(from);
     d.setDate(d.getDate() + 1);
-    while (d.getDay() === 0 || d.getDay() === 6) {
+    // Saut des week-ends en jour de PARIS (cohérent avec toParisDateStr en aval) :
+    // près de minuit UTC, le getDay() local pouvait renvoyer un jour ≠ de la date Paris
+    // formatée → on pouvait produire une date Paris tombant un samedi/dimanche.
+    while (this.parisWeekday(d) === 0 || this.parisWeekday(d) === 6) {
       d.setDate(d.getDate() + 1);
     }
     return d;
+  }
+
+  /** Jour de la semaine (0=dim … 6=sam) d'une Date, évalué en heure de Paris. */
+  private parisWeekday(d: Date): number {
+    const short = d.toLocaleDateString('en-US', { timeZone: 'Europe/Paris', weekday: 'short' });
+    const map: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+    return map[short] ?? d.getDay();
   }
 
   isAfterSessionClose(date: Date = new Date()): boolean {
