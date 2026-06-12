@@ -1,0 +1,187 @@
+name: Beta — CI/CD
+
+# Pipeline dédié à la branche beta uniquement (env de pré-prod sur le VPS).
+on:
+  push:
+    branches: [beta]
+
+concurrency:
+  group: beta-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Lint + Build ───────────────────────────────────────────────────────────
+  build:
+    name: Lint · Build
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      NX_NO_CLOUD: true
+      DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
+      DATABASE_DIRECT_URL: postgresql://dummy:dummy@localhost:5432/dummy
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Prisma generate
+        run: pnpm exec prisma generate --config=./prisma/prisma.config.ts
+      - name: Lint
+        run: pnpm nx run-many --target=lint --projects=app-mytradingcoach,api-mytradingcoach --parallel=2
+      - name: Build (app beta + api)
+        run: |
+          NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=beta --skip-nx-cache
+          pnpm nx build api-mytradingcoach --configuration=production --skip-nx-cache
+
+  # ── Tests API ──────────────────────────────────────────────────────────────
+  test-api:
+    name: Test API
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      NX_NO_CLOUD: true
+      DATABASE_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_test
+      DATABASE_DIRECT_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_test
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: testpassword
+      JWT_SECRET: test-jwt-secret-64-chars-minimum-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      JWT_REFRESH_SECRET: test-refresh-secret-64-chars-minimum-xxxxxxxxxxxxxxxxxxxxxxxxx
+      ANTHROPIC_API_KEY: sk-ant-test
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: mytradingcoach_test
+          POSTGRES_USER: mtc_user
+          POSTGRES_PASSWORD: devpassword
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7.4-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Prisma generate
+        run: pnpm exec prisma generate --config=./prisma/prisma.config.ts
+      - name: Prisma migrate (test DB)
+        run: pnpm exec prisma migrate deploy --config=./prisma/prisma.config.ts
+      - name: Test API
+        run: pnpm nx test api-mytradingcoach --parallel=2
+
+  # ── Test Angular ───────────────────────────────────────────────────────────
+  test-angular:
+    name: Test Angular
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      NX_NO_CLOUD: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Test Angular
+        run: pnpm nx test app-mytradingcoach --parallel=2
+
+  # ── Deploy API beta → VPS (beta.api.mytradingcoach.app) ────────────────────
+  deploy-api-beta:
+    name: Deploy API beta to VPS
+    runs-on: ubuntu-latest
+    needs: [test-api, test-angular]
+    environment: production
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      NX_NO_CLOUD: true
+    steps:
+      - name: Deploy via SSH (beta)
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/apps/mytradingcoach/beta
+            git fetch origin
+            git reset --hard origin/beta
+            docker compose -f docker-compose.beta.yml --env-file .env.beta build api
+            docker compose -f docker-compose.beta.yml --env-file .env.beta up -d --force-recreate api
+            docker buildx prune --keep-storage=8GB -f
+            echo "Beta API deployment complete at $(date)"
+
+  # ── Deploy Angular app beta → VPS static (beta.app.mytradingcoach.app) ──────
+  deploy-app-beta:
+    name: Deploy Angular beta to VPS
+    runs-on: ubuntu-latest
+    needs: [test-api, test-angular]
+    environment: production
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      NX_NO_CLOUD: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build Angular (beta)
+        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=beta --skip-nx-cache
+      - name: Verify build output
+        run: |
+          if [ ! -f "dist/apps/app-mytradingcoach/browser/index.html" ]; then
+            echo "❌ build failed — index.html not found"
+            exit 1
+          fi
+          echo "✅ build ok — $(du -sh dist/apps/app-mytradingcoach/browser/)"
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+      - name: rsync Angular beta → VPS
+        run: |
+          rsync -az --delete dist/apps/app-mytradingcoach/browser/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/static/app-beta/
