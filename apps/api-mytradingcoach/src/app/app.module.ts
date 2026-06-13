@@ -17,6 +17,7 @@ import { DiscordModule } from '../modules/discord/discord.module';
 import { VpsModule } from '../modules/vps/vps.module';
 import { AdminModule } from '../modules/admin/admin.module';
 import { SessionModule } from '../modules/session/session.module';
+import { AccountsModule } from '../modules/accounts/accounts.module';
 import { DailyRecapModule } from '../modules/daily-recap/daily-recap.module';
 import { EcoCalendarModule } from '../modules/eco-calendar/eco-calendar.module';
 import { AmbassadorModule } from '../modules/ambassador/ambassador.module';
@@ -65,6 +66,7 @@ import { AppController } from './app.controller';
     VpsModule,
     AdminModule,
     SessionModule,
+    AccountsModule,
     DailyRecapModule,
     EcoCalendarModule,
     AmbassadorModule,
