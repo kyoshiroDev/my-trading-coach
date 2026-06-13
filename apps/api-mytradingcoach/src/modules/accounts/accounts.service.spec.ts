@@ -6,25 +6,34 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { AccountsService } from './accounts.service';
-import { PremiumGuard } from '../../common/guards/premium.guard';
+import { StarterGuard } from '../../common/guards/starter.guard';
 
-// Le AccountsController est gardé par @UseGuards(JwtAuthGuard, PremiumGuard).
-// On prouve ici que le gating Premium rejette bien un non-Premium (403).
+// Le AccountsController est gardé par @UseGuards(JwtAuthGuard, StarterGuard) :
+// le multi-comptes est ouvert à Starter et + (quota par plan), bloqué pour FREE.
 const ctxWith = (user: unknown): ExecutionContext =>
   ({ switchToHttp: () => ({ getRequest: () => ({ user }) }) }) as ExecutionContext;
 
-describe('AccountsController — gating Premium', () => {
-  const guard = new PremiumGuard();
+describe('AccountsController — gating Starter', () => {
+  const guard = new StarterGuard();
 
-  it('user FREE (non Premium, hors trial) → 403', () => {
+  it('user FREE (hors trial) → 403', () => {
     expect(() =>
       guard.canActivate(ctxWith({ plan: 'FREE', role: 'USER', trialEndsAt: null })),
     ).toThrow(ForbiddenException);
   });
 
+  it('user STARTER → autorisé', () => {
+    expect(guard.canActivate(ctxWith({ plan: 'STARTER', role: 'USER' }))).toBe(true);
+  });
+
   it('user PREMIUM → autorisé', () => {
+    expect(guard.canActivate(ctxWith({ plan: 'PREMIUM', role: 'USER' }))).toBe(true);
+  });
+
+  it('user en trial → autorisé', () => {
+    const future = new Date(Date.now() + 3 * 86400_000);
     expect(
-      guard.canActivate(ctxWith({ plan: 'PREMIUM', role: 'USER' })),
+      guard.canActivate(ctxWith({ plan: 'FREE', role: 'USER', trialEndsAt: future })),
     ).toBe(true);
   });
 });
@@ -59,6 +68,52 @@ describe('AccountsService', () => {
     await svc.create('u1', { label: 'Apex 50k' } as never);
     expect(prisma.tradingAccount.create).toHaveBeenCalledWith({
       data: { userId: 'u1', label: 'Apex 50k' },
+    });
+  });
+
+  describe('create — quota par plan', () => {
+    const ctx = (plan: string, extra: Record<string, unknown> = {}) =>
+      ({ plan, role: 'USER', ...extra }) as never;
+
+    it('STARTER sous le quota (2/3) → crée', async () => {
+      prisma.tradingAccount.count.mockResolvedValue(2);
+      prisma.tradingAccount.create.mockResolvedValue({ id: 'a4' });
+      await svc.create('u1', { label: 'C3' } as never, ctx('STARTER'));
+      expect(prisma.tradingAccount.count).toHaveBeenCalledWith({
+        where: { userId: 'u1', status: { not: 'ARCHIVED' } },
+      });
+      expect(prisma.tradingAccount.create).toHaveBeenCalled();
+    });
+
+    it('STARTER au quota (3/3) → 403 ACCOUNT_LIMIT_REACHED, aucune création', async () => {
+      prisma.tradingAccount.count.mockResolvedValue(3);
+      await expect(
+        svc.create('u1', { label: 'C4' } as never, ctx('STARTER')),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.tradingAccount.create).not.toHaveBeenCalled();
+    });
+
+    it('PREMIUM → illimité (aucun comptage, crée même à 50 comptes)', async () => {
+      prisma.tradingAccount.create.mockResolvedValue({ id: 'aN' });
+      await svc.create('u1', { label: 'CN' } as never, ctx('PREMIUM'));
+      expect(prisma.tradingAccount.count).not.toHaveBeenCalled();
+      expect(prisma.tradingAccount.create).toHaveBeenCalled();
+    });
+
+    it('trial (FREE + trialEndsAt futur) → illimité', async () => {
+      prisma.tradingAccount.create.mockResolvedValue({ id: 'aT' });
+      const future = new Date(Date.now() + 3 * 86400_000);
+      await svc.create('u1', { label: 'CT' } as never, ctx('FREE', { trialEndsAt: future }));
+      expect(prisma.tradingAccount.count).not.toHaveBeenCalled();
+      expect(prisma.tradingAccount.create).toHaveBeenCalled();
+    });
+
+    it('FREE au quota (1/1) → 403', async () => {
+      prisma.tradingAccount.count.mockResolvedValue(1);
+      await expect(
+        svc.create('u1', { label: 'C2' } as never, ctx('FREE', { trialEndsAt: null })),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.tradingAccount.create).not.toHaveBeenCalled();
     });
   });
 
