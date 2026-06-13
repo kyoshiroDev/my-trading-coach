@@ -4,6 +4,12 @@ import { NotFoundException } from '@nestjs/common';
 import { SessionService } from './session.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
+import { AccountsService } from '../accounts/accounts.service';
+
+const mockAccounts = {
+  accountWhere: vi.fn().mockResolvedValue({ accountId: 'acc-1' }),
+  ensureDefaultAccountId: vi.fn().mockResolvedValue('acc-default'),
+};
 
 const makeTrade = (overrides: Record<string, unknown> = {}) => ({
   id: 'trade-1',
@@ -59,6 +65,7 @@ describe('SessionService', () => {
         { provide: RedisService, useValue: mockRedisService },
         SessionService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: AccountsService, useValue: mockAccounts },
       ],
     }).compile();
 
