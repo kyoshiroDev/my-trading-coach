@@ -42,6 +42,8 @@ import {
 import { EMOTION_COLORS } from '../../shared/pipes/emotion-color.pipe';
 import { environment } from '../../../environments/environment';
 import { ChartService } from '../../core/services/chart.service';
+import { AccountSelectorComponent } from '../../shared/components/account-selector/account-selector.component';
+import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 
 @Component({
   selector: 'mtc-dashboard',
@@ -62,6 +64,7 @@ import { ChartService } from '../../core/services/chart.service';
     EmotionColorPipe,
     SetupColorPipe,
     ActivityCalendarComponent,
+    AccountSelectorComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './dashboard.component.css',
@@ -90,6 +93,12 @@ import { ChartService } from '../../core/services/chart.service';
           <div class="greeting-sub">{{ today | date:'EEEE d MMMM' }}</div>
         </div>
         <div class="header-spacer"></div>
+      </div>
+
+      <!-- Barre « Compte » : sélecteur multi-comptes (toutes les tuiles se recalculent dessus). -->
+      <div class="acct-bar">
+        <span class="acct-bar-lbl">Compte</span>
+        <mtc-account-selector />
       </div>
 
       @if (!isLoading() && tradesStore.totalTrades() === 0) {
@@ -379,6 +388,7 @@ export class DashboardComponent {
   protected readonly userStore    = inject(UserStore);
   protected readonly tradesStore  = inject(TradesStore);
   protected readonly sessionStore = inject(SessionStore);
+  protected readonly selectedAccount = inject(SelectedAccountStore);
   private  readonly billingApi    = inject(BillingApi);
   private  readonly tradesApi     = inject(TradesApi);
   private  readonly analyticsApi  = inject(AnalyticsApi);
@@ -399,21 +409,28 @@ export class DashboardComponent {
   protected readonly calYear  = signal(new Date().getFullYear());
   protected readonly calMonth = signal(new Date().getMonth() + 1);
 
+  // Suffixe query du compte sélectionné (multi-comptes). « Tous » → '' (agrégé). Lu dans les
+  // URL des resources → tout se refetch automatiquement au changement de compte.
+  private accQuery(): string {
+    const id = this.selectedAccount.accountParam();
+    return id ? `?accountId=${encodeURIComponent(id)}` : '';
+  }
+
   private readonly summaryResource = httpResource<{ data: AnalyticsSummary }>(
-    () => `${environment.apiUrl}/analytics/summary`,
+    () => `${environment.apiUrl}/analytics/summary${this.accQuery()}`,
   );
   private readonly equityCurveResource = httpResource<{
     data: { points: EquityPoint[]; startingCapital: number | null };
   }>(() =>
     this.userStore.isStarterOrAbove()
-      ? `${environment.apiUrl}/analytics/equity-curve/current-month`
+      ? `${environment.apiUrl}/analytics/equity-curve/current-month${this.accQuery()}`
       : undefined,
   );
   private readonly bySetupResource = httpResource<{ data: SetupStat[] }>(() =>
-    this.userStore.isStarterOrAbove() ? `${environment.apiUrl}/analytics/by-setup` : undefined,
+    this.userStore.isStarterOrAbove() ? `${environment.apiUrl}/analytics/by-setup${this.accQuery()}` : undefined,
   );
   private readonly byEmotionResource = httpResource<{ data: EmotionStat[] }>(() =>
-    this.userStore.isStarterOrAbove() ? `${environment.apiUrl}/analytics/by-emotion` : undefined,
+    this.userStore.isStarterOrAbove() ? `${environment.apiUrl}/analytics/by-emotion${this.accQuery()}` : undefined,
   );
 
   protected readonly summary = computed(() => this.summaryResource.value()?.data ?? null);
@@ -474,8 +491,13 @@ export class DashboardComponent {
   private readonly knownTradesCount = signal(-1);
 
   constructor() {
-    this.tradesStore.loadTrades({ limit: '6' });
-    this.loadMonthlyActivity();
+    // Trades récents + activité du compte sélectionné. L'effect relit `accountParam()` →
+    // refetch automatique au changement de compte ('all' = agrégé, sans param).
+    effect(() => {
+      const accountId = this.selectedAccount.accountParam();
+      this.tradesStore.loadTrades(accountId ? { limit: '6', accountId } : { limit: '6' });
+      this.loadMonthlyActivity(accountId);
+    });
 
     // Recharge summary si un trade est ajouté depuis l'extérieur (wizard)
     effect(() => {
@@ -564,9 +586,9 @@ export class DashboardComponent {
       });
   }
 
-  private loadMonthlyActivity(): void {
+  private loadMonthlyActivity(accountId?: string): void {
     this.monthlyActivityLoading.set(true);
-    this.analyticsApi.getCurrentMonthActivity()
+    this.analyticsApi.getCurrentMonthActivity(accountId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => { this.monthlyActivity.set(res.data); this.monthlyActivityLoading.set(false); },
