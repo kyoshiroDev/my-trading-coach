@@ -95,11 +95,13 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
         <div class="header-spacer"></div>
       </div>
 
-      <!-- Barre « Compte » : sélecteur multi-comptes (toutes les tuiles se recalculent dessus). -->
-      <div class="acct-bar">
-        <span class="acct-bar-lbl">Compte</span>
-        <mtc-account-selector />
-      </div>
+      <!-- Barre « Compte » : sélecteur multi-comptes (Starter et + ; FREE n'a qu'1 compte). -->
+      @if (userStore.isStarterOrAbove()) {
+        <div class="acct-bar">
+          <span class="acct-bar-lbl">Compte</span>
+          <mtc-account-selector />
+        </div>
+      }
 
       @if (!isLoading() && tradesStore.totalTrades() === 0) {
         <div class="firstrun-hero">

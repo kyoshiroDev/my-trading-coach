@@ -1,4 +1,4 @@
-@if (userStore.isPremium()) {
+@if (userStore.isStarterOrAbove()) {
   <div class="acct-tabs">
     <button class="acct-tab"
             [class.active]="store.selectedAccountId() === 'all'"
@@ -16,11 +16,11 @@
     }
   </div>
 } @else {
-  <!-- Non-Premium : option désactivée + mini-CTA Premium (aucun appel /accounts). -->
+  <!-- FREE : option désactivée + mini-CTA Starter (aucun appel /accounts). -->
   <button class="acct-locked" type="button" (click)="showPlanModal.set(true)">
     <span class="dot" style="background:var(--text-3)"></span>
     Multi-comptes
-    <span class="acct-premium-badge">PREMIUM</span>
+    <span class="acct-premium-badge">STARTER</span>
   </button>
   @if (showPlanModal()) {
     <mtc-plan-modal (closed)="showPlanModal.set(false)" />

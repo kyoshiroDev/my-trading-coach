@@ -86,17 +86,19 @@ import { environment } from '../../../../environments/environment';
             Ma session
           </a>
 
-          <a
-            routerLink="/accounts"
-            routerLinkActive="active"
-            class="nav-item"
-            data-testid="nav-accounts"
-            (click)="closeSidebar()"
-          >
-            <span class="nav-icon">💼</span>
-            Mes comptes
-            <span class="badge">PREMIUM</span>
-          </a>
+          @if (userStore.isStarterOrAbove()) {
+            <a
+              routerLink="/accounts"
+              routerLinkActive="active"
+              class="nav-item"
+              data-testid="nav-accounts"
+              (click)="closeSidebar()"
+            >
+              <span class="nav-icon">💼</span>
+              Mes comptes
+              <span class="badge starter">STARTER</span>
+            </a>
+          }
 
           <a
             routerLink="/journal"

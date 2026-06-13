@@ -38,7 +38,7 @@ function acct(p: Partial<TradingAccount> & { id: string }): TradingAccount {
 
 const api = { create: vi.fn(() => of({ data: {} })), update: vi.fn(() => of({ data: {} })), remove: vi.fn(() => of({ data: {} })) };
 
-function setup(opts: { premium: boolean; accounts: TradingAccount[] }) {
+function setup(opts: { premium: boolean; accounts: TradingAccount[]; limit?: number | null }) {
   const accountsSig = signal(opts.accounts);
   const store = {
     accounts: accountsSig,
@@ -46,7 +46,12 @@ function setup(opts: { premium: boolean; accounts: TradingAccount[] }) {
     loaded: signal(true),
     load: vi.fn(),
   };
-  const userStore = { isPremium: () => opts.premium };
+  // limit: null = illimité (Premium par défaut dans les tests existants).
+  const userStore = {
+    isPremium: () => opts.premium,
+    isStarterOrAbove: () => opts.premium,
+    maxAccounts: signal(opts.limit ?? null),
+  };
 
   TestBed.configureTestingModule({
     providers: [
@@ -141,5 +146,32 @@ describe('AccountsComponent — logique', () => {
     (c['openCreate'] as () => void)();
     (c['submitForm'] as () => void)();
     expect(api.create).not.toHaveBeenCalled();
+  });
+
+  it('quota STARTER 3/3 → atLimit, openCreate ouvre l\'upsell (pas le formulaire), submit bloqué', () => {
+    const c = setup({ premium: true, limit: 3, accounts: [acct({ id: 'a' }), acct({ id: 'b' }), acct({ id: 'c' })] });
+    expect((c['atLimit'] as () => boolean)()).toBe(true);
+    (c['openCreate'] as () => void)();
+    expect((c['formOpen'] as () => boolean)()).toBe(false);
+    expect((c['showPlanModal'] as () => boolean)()).toBe(true);
+    (c['patch'] as (p: unknown) => void)({ label: 'C4' });
+    expect((c['canSubmit'] as () => boolean)()).toBe(false);
+  });
+
+  it('sous le quota (1/3) → openCreate ouvre le formulaire', () => {
+    const c = setup({ premium: true, limit: 3, accounts: [acct({ id: 'a' })] });
+    expect((c['atLimit'] as () => boolean)()).toBe(false);
+    (c['openCreate'] as () => void)();
+    expect((c['formOpen'] as () => boolean)()).toBe(true);
+  });
+
+  it('comptes archivés ne consomment pas le quota', () => {
+    const c = setup({ premium: true, limit: 3, accounts: [acct({ id: 'a' }), acct({ id: 'b' }), acct({ id: 'z', status: 'ARCHIVED' })] });
+    expect((c['atLimit'] as () => boolean)()).toBe(false); // 2 actifs < 3
+  });
+
+  it('Premium (limit null) → jamais atLimit', () => {
+    const c = setup({ premium: true, limit: null, accounts: [acct({ id: 'a' }), acct({ id: 'b' }), acct({ id: 'c' }), acct({ id: 'd' })] });
+    expect((c['atLimit'] as () => boolean)()).toBe(false);
   });
 });
