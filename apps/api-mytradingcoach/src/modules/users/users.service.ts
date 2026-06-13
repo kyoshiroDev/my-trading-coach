@@ -244,17 +244,19 @@ export class UsersService {
       betaTesters, ambassadors,
       totalUsers, totalStarter, totalPremium,
     ] = await Promise.all([
+      // MRR = revenu réellement encaissé → abonnements 'active' uniquement (les essais
+      // 'trialing' ne paient pas et sont déjà comptés à part dans `trials`).
       this.prisma.user.count({
-        where: { isDemo: false, plan: 'STARTER', stripeInterval: 'month', stripeSubscriptionStatus: { in: ['active', 'trialing'] } },
+        where: { isDemo: false, plan: 'STARTER', stripeInterval: 'month', stripeSubscriptionStatus: 'active' },
       }),
       this.prisma.user.count({
-        where: { isDemo: false, plan: 'STARTER', stripeInterval: 'year', stripeSubscriptionStatus: { in: ['active', 'trialing'] } },
+        where: { isDemo: false, plan: 'STARTER', stripeInterval: 'year', stripeSubscriptionStatus: 'active' },
       }),
       this.prisma.user.count({
-        where: { isDemo: false, plan: 'PREMIUM', stripeInterval: 'month', stripeSubscriptionStatus: { in: ['active', 'trialing'] } },
+        where: { isDemo: false, plan: 'PREMIUM', stripeInterval: 'month', stripeSubscriptionStatus: 'active' },
       }),
       this.prisma.user.count({
-        where: { isDemo: false, plan: 'PREMIUM', stripeInterval: 'year', stripeSubscriptionStatus: { in: ['active', 'trialing'] } },
+        where: { isDemo: false, plan: 'PREMIUM', stripeInterval: 'year', stripeSubscriptionStatus: 'active' },
       }),
       this.prisma.user.count({ where: { isDemo: false, plan: 'PREMIUM', trialEndsAt: { gt: now } } }),
       this.prisma.user.count({ where: { isDemo: false, plan: 'FREE' } }),
