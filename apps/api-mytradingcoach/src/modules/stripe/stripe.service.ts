@@ -338,6 +338,7 @@ export class StripeService {
             stripePriceId: null,
             stripeCurrentPeriodEnd: null,
             stripeSubscriptionStatus: null,
+            subscriptionCanceledAt: new Date(), // churn daté (KPI fiable)
           },
         });
 
@@ -387,6 +388,7 @@ export class StripeService {
               stripeInterval: null,
               stripeCurrentPeriodEnd: null,
               stripeSubscriptionStatus: null,
+              subscriptionCanceledAt: new Date(), // churn daté (KPI fiable)
             },
           });
           await this.redis.del(cacheKey(user.id)).catch(() => null);
@@ -528,6 +530,8 @@ export class StripeService {
         stripeCurrentPeriodEnd: periodEnd,
         stripeSubscriptionStatus: status,
         trialUsed: user.trialUsed || !isTrialing,
+        // Réabonnement actif → on efface la date de churn (ne plus compter comme résilié).
+        subscriptionCanceledAt: isActive ? null : undefined,
       },
     });
 
