@@ -73,4 +73,18 @@ describe('SelectedAccountStore', () => {
     store.load();
     expect(store.selectedAccountId()).toBe('all');
   });
+
+  it('non-Premium → accountParam() undefined même avec une sélection persistée (anti-fuite)', () => {
+    localStorage.setItem('mtc.selectedAccount', 'a1'); // ancien compte d'un plan déchu
+    const { store } = setup({ premium: false });
+    expect(store.accountParam()).toBeUndefined();
+  });
+
+  it('non-Premium → load() réinitialise la sélection persistée à « all »', () => {
+    localStorage.setItem('mtc.selectedAccount', 'a1');
+    const { store } = setup({ premium: false });
+    store.load();
+    expect(store.selectedAccountId()).toBe('all');
+    expect(localStorage.getItem('mtc.selectedAccount')).toBe('all');
+  });
 });

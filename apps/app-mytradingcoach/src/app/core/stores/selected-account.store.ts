@@ -40,6 +40,9 @@ export class SelectedAccountStore {
     if (!this.userStore.isPremium()) {
       this.accounts.set([]);
       this.loaded.set(true);
+      // Anti-fuite : un plan déchu (Premium → FREE/Starter) laisserait une sélection
+      // persistée → on repasse à l'agrégé pour ne jamais filtrer les stats par compte.
+      if (this.selectedAccountId() !== 'all') this.select('all');
       return;
     }
     this.isLoading.set(true);
@@ -67,8 +70,12 @@ export class SelectedAccountStore {
     try { localStorage.setItem(STORAGE_KEY, id); } catch { /* stockage indispo */ }
   }
 
-  /** Param à passer en query aux appels stats : undefined si « Tous ». */
+  /**
+   * Param à passer en query aux appels stats : undefined si « Tous » — et toujours
+   * undefined pour un non-Premium (gating global : aucune stat filtrée par compte).
+   */
   accountParam(): string | undefined {
+    if (!this.userStore.isPremium()) return undefined;
     const id = this.selectedAccountId();
     return id === 'all' ? undefined : id;
   }
