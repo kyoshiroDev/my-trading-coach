@@ -3,22 +3,149 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { AccountStatus, TradingAccount } from '@prisma/client';
+import { AccountStatus, DrawdownType, TradingAccount } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
+
+type RuleTrade = { pnl: number | null; tradedAt: Date };
+
+const RULE_DISCLAIMER =
+  "Estimation basée uniquement sur les trades loggés dans MyTradingCoach — pas " +
+  "l'equity temps réel ni le calcul officiel de la prop firm (positions ouvertes, " +
+  "fuseau, trailing intraday). Le statut du compte reste piloté par toi.";
+
+export interface AccountRuleMetrics {
+  startingBalance: number;
+  realizedPnl: number;
+  currentBalance: number;
+  tradesCount: number;
+  objective: { current: number; target: number; pct: number } | null;
+  drawdown: {
+    type: DrawdownType;
+    floor: number;
+    margin: number;
+    maxDrawdown: number;
+    pct: number;
+    breached: boolean;
+  } | null;
+  estimated: true;
+  disclaimer: string;
+}
 
 @Injectable()
 export class AccountsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Liste des comptes du user : actifs d'abord, archivés ensuite. */
-  async list(userId: string): Promise<TradingAccount[]> {
+  /**
+   * Liste des comptes du user (actifs d'abord, archivés ensuite), chacun enrichi de ses
+   * métriques « règles prop firm » estimées à partir des trades loggés (cf. computeRuleMetrics).
+   */
+  async list(
+    userId: string,
+  ): Promise<(TradingAccount & { metrics: AccountRuleMetrics })[]> {
     // Ordre enum Postgres = ordre de déclaration (ACTIVE < PASSED < FAILED < ARCHIVED).
-    return this.prisma.tradingAccount.findMany({
+    const accounts = await this.prisma.tradingAccount.findMany({
       where: { userId },
       orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
     });
+    if (accounts.length === 0) return [];
+
+    // Une seule requête pour tous les trades fermés des comptes, groupés ensuite en mémoire.
+    const trades = await this.prisma.trade.findMany({
+      where: {
+        userId,
+        pnl: { not: null },
+        accountId: { in: accounts.map((a) => a.id) },
+      },
+      select: { accountId: true, pnl: true, tradedAt: true },
+      orderBy: { tradedAt: 'asc' },
+    });
+    const byAccount = new Map<string, RuleTrade[]>();
+    for (const t of trades) {
+      if (!t.accountId) continue;
+      const list = byAccount.get(t.accountId);
+      if (list) list.push(t);
+      else byAccount.set(t.accountId, [t]);
+    }
+
+    return accounts.map((a) => ({
+      ...a,
+      metrics: this.computeRuleMetrics(a, byAccount.get(a.id) ?? []),
+    }));
+  }
+
+  private clamp01(x: number): number {
+    if (!isFinite(x)) return 0;
+    return Math.max(0, Math.min(1, x));
+  }
+
+  /**
+   * Métriques « règles prop firm » ESTIMÉES à partir des trades fermés (pnl net) triés par
+   * tradedAt. Objectif (vs profitTarget) + marge avant drawdown selon STATIC/TRAILING.
+   * Honnêteté : `estimated: true` + `disclaimer` que le front DOIT afficher. Aucun statut
+   * PASSED/FAILED positionné ici (piloté par l'user) — on se contente d'estimer.
+   */
+  computeRuleMetrics(
+    account: Pick<
+      TradingAccount,
+      'accountSize' | 'startingBalance' | 'profitTarget' | 'maxDrawdown' | 'drawdownType'
+    >,
+    trades: RuleTrade[],
+  ): AccountRuleMetrics {
+    const startingBalance = account.startingBalance ?? account.accountSize ?? 0;
+    const sorted = [...trades].sort(
+      (a, b) => a.tradedAt.getTime() - b.tradedAt.getTime(),
+    );
+    const realizedPnl = sorted.reduce((s, t) => s + (t.pnl ?? 0), 0);
+    const currentBalance = startingBalance + realizedPnl;
+
+    const objective =
+      account.profitTarget != null && account.profitTarget > 0
+        ? {
+            current: realizedPnl,
+            target: account.profitTarget,
+            pct: this.clamp01(realizedPnl / account.profitTarget),
+          }
+        : null;
+
+    let drawdown: AccountRuleMetrics['drawdown'] = null;
+    if (account.maxDrawdown != null && account.maxDrawdown > 0) {
+      let floor: number;
+      if (account.drawdownType === DrawdownType.TRAILING) {
+        // Plancher glissant : suit le plus haut solde cumulé atteint (hwm).
+        let bal = startingBalance;
+        let hwm = startingBalance;
+        for (const t of sorted) {
+          bal += t.pnl ?? 0;
+          if (bal > hwm) hwm = bal;
+        }
+        floor = hwm - account.maxDrawdown;
+      } else {
+        // STATIC : plancher fixe depuis le solde de départ.
+        floor = startingBalance - account.maxDrawdown;
+      }
+      const margin = currentBalance - floor;
+      drawdown = {
+        type: account.drawdownType,
+        floor,
+        margin,
+        maxDrawdown: account.maxDrawdown,
+        pct: this.clamp01(margin / account.maxDrawdown),
+        breached: margin <= 0,
+      };
+    }
+
+    return {
+      startingBalance,
+      realizedPnl,
+      currentBalance,
+      tradesCount: sorted.length,
+      objective,
+      drawdown,
+      estimated: true,
+      disclaimer: RULE_DISCLAIMER,
+    };
   }
 
   async create(userId: string, dto: CreateAccountDto): Promise<TradingAccount> {

@@ -162,4 +162,56 @@ describe('AccountsService', () => {
       });
     });
   });
+
+  describe('computeRuleMetrics — règles prop firm estimées', () => {
+    const t = (pnl: number, day: number) => ({ pnl, tradedAt: new Date(2026, 5, day) });
+    // Trades : +1000, +2000, -500 → realizedPnl 2500, currentBalance 52500.
+    const trades = [t(1000, 1), t(2000, 2), t(-500, 3)];
+
+    it('STATIC : plancher = startingBalance - maxDrawdown, objectif & marge corrects', () => {
+      const m = svc.computeRuleMetrics(
+        { startingBalance: 50000, accountSize: null, profitTarget: 3000, maxDrawdown: 2000, drawdownType: 'STATIC' },
+        trades,
+      );
+      expect(m.realizedPnl).toBe(2500);
+      expect(m.currentBalance).toBe(52500);
+      expect(m.objective).toEqual({ current: 2500, target: 3000, pct: expect.closeTo(0.8333, 3) });
+      expect(m.drawdown?.floor).toBe(48000); // 50000 - 2000
+      expect(m.drawdown?.margin).toBe(4500); // 52500 - 48000
+      expect(m.drawdown?.breached).toBe(false);
+      expect(m.estimated).toBe(true);
+      expect(m.disclaimer).toContain('Estimation basée uniquement sur les trades loggés');
+    });
+
+    it('TRAILING : plancher = hwm - maxDrawdown (différent de STATIC)', () => {
+      const m = svc.computeRuleMetrics(
+        { startingBalance: 50000, accountSize: null, profitTarget: null, maxDrawdown: 2000, drawdownType: 'TRAILING' },
+        trades,
+      );
+      // soldes cumulés : 51000, 53000, 52500 → hwm 53000 → floor 51000.
+      expect(m.drawdown?.floor).toBe(51000);
+      expect(m.drawdown?.margin).toBe(1500); // 52500 - 51000
+      expect(m.drawdown?.pct).toBeCloseTo(0.75, 3);
+      expect(m.objective).toBeNull(); // pas de profitTarget
+    });
+
+    it('TRAILING : drawdown dépassé → breached true, pct 0', () => {
+      const m = svc.computeRuleMetrics(
+        { startingBalance: 50000, accountSize: null, profitTarget: null, maxDrawdown: 2000, drawdownType: 'TRAILING' },
+        [t(3000, 1), t(-2500, 2)], // hwm 53000, currentBalance 50500, floor 51000 → margin -500
+      );
+      expect(m.drawdown?.breached).toBe(true);
+      expect(m.drawdown?.pct).toBe(0);
+    });
+
+    it('sans règles (maxDrawdown null) → drawdown null, startingBalance via accountSize', () => {
+      const m = svc.computeRuleMetrics(
+        { startingBalance: null, accountSize: 10000, profitTarget: null, maxDrawdown: null, drawdownType: 'STATIC' },
+        [t(500, 1)],
+      );
+      expect(m.startingBalance).toBe(10000);
+      expect(m.currentBalance).toBe(10500);
+      expect(m.drawdown).toBeNull();
+    });
+  });
 });
