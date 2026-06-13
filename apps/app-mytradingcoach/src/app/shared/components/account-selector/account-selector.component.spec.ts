@@ -17,7 +17,8 @@ function setup(opts: { premium?: boolean; loaded?: boolean } = {}) {
     select: vi.fn(),
     load: vi.fn(),
   };
-  const userStore = { isPremium: () => opts.premium ?? true };
+  const eligible = opts.premium ?? true;
+  const userStore = { isStarterOrAbove: () => eligible, isPremium: () => eligible };
 
   TestBed.configureTestingModule({
     providers: [
@@ -37,12 +38,12 @@ function setup(opts: { premium?: boolean; loaded?: boolean } = {}) {
 describe('AccountSelectorComponent', () => {
   beforeEach(() => TestBed.resetTestingModule());
 
-  it('Premium + non chargé → charge les comptes à l\'init', () => {
+  it('Starter+ + non chargé → charge les comptes à l\'init', () => {
     const { store } = setup({ premium: true, loaded: false });
     expect(store.load).toHaveBeenCalledTimes(1);
   });
 
-  it('non-Premium → ne charge pas (aucun appel /accounts)', () => {
+  it('FREE → ne charge pas (aucun appel /accounts)', () => {
     const { store } = setup({ premium: false });
     expect(store.load).not.toHaveBeenCalled();
   });

@@ -98,8 +98,16 @@ export class AccountsComponent implements OnInit {
       }).length,
   );
 
+  // ── Quota par plan (Starter 3 · Premium illimité). null = illimité. ──────
+  // Seuls les comptes non archivés comptent (visibleAccounts).
+  protected readonly accountLimit = this.userStore.maxAccounts;
+  protected readonly atLimit = computed(() => {
+    const limit = this.accountLimit();
+    return limit !== null && this.visibleAccountsCount() >= limit;
+  });
+
   ngOnInit(): void {
-    if (this.userStore.isPremium() && !this.store.loaded() && !this.store.isLoading()) {
+    if (this.userStore.isStarterOrAbove() && !this.store.loaded() && !this.store.isLoading()) {
       this.store.load();
     }
   }
@@ -177,6 +185,11 @@ export class AccountsComponent implements OnInit {
 
   // ── Formulaire create / edit ────────────────────────────────────────────
   protected openCreate(): void {
+    // Quota du plan atteint → on propose l'upgrade au lieu d'ouvrir le formulaire.
+    if (this.atLimit()) {
+      this.showPlanModal.set(true);
+      return;
+    }
     this.editingId.set(null);
     this.form.set(emptyForm());
     this.menuOpenId.set(null);
@@ -208,6 +221,8 @@ export class AccountsComponent implements OnInit {
   }
 
   protected canSubmit(): boolean {
+    // En création, on respecte le quota (belt-and-suspenders avec openCreate).
+    if (!this.editingId() && this.atLimit()) return false;
     return this.form().label.trim().length > 0 && !this.saving();
   }
 

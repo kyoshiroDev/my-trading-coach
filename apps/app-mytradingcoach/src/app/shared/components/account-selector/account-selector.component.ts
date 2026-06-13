@@ -11,7 +11,7 @@ import { TradingAccount } from '../../../core/api/accounts.api';
 import { PlanModalComponent } from '../plan-modal/plan-modal.component';
 
 // Sélecteur de compte réutilisable (dashboard, etc.). Onglets « Tous les comptes » + 1 par
-// compte avec pastille de statut. Réservé Premium → sinon CTA upsell, aucun appel /accounts.
+// compte avec pastille de statut. Réservé Starter et + → sinon CTA upsell, aucun appel /accounts.
 @Component({
   selector: 'mtc-account-selector',
   standalone: true,
@@ -26,8 +26,8 @@ export class AccountSelectorComponent implements OnInit {
   protected readonly showPlanModal = signal(false);
 
   ngOnInit(): void {
-    // Charge les comptes si Premium (le store no-op pour les non-Premium).
-    if (this.userStore.isPremium() && !this.store.loaded() && !this.store.isLoading()) {
+    // Charge les comptes si Starter et + (le store no-op pour les FREE).
+    if (this.userStore.isStarterOrAbove() && !this.store.loaded() && !this.store.isLoading()) {
       this.store.load();
     }
   }

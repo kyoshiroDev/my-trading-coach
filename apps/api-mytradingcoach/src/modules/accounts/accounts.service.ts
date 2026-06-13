@@ -1,14 +1,29 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { AccountStatus, DrawdownType, TradingAccount } from '@prisma/client';
+import {
+  AccountStatus,
+  DrawdownType,
+  Plan,
+  Role,
+  TradingAccount,
+} from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 
 type RuleTrade = { pnl: number | null; tradedAt: Date };
+
+/** Contexte plan du user pour le calcul du quota de comptes. */
+type PlanContext = { plan: Plan; role: Role; trialEndsAt?: Date | null };
+
+// Quota de comptes par plan — aligné front `ACCOUNT_LIMITS` (pricing.const.ts).
+// Premium / trial / admin / beta = illimité. Seuls les comptes NON archivés comptent.
+const STARTER_ACCOUNT_LIMIT = 3;
+const FREE_ACCOUNT_LIMIT = 1;
 
 const RULE_DISCLAIMER =
   "Estimation basée uniquement sur les trades loggés dans MyTradingCoach — pas " +
@@ -148,7 +163,40 @@ export class AccountsService {
     };
   }
 
-  async create(userId: string, dto: CreateAccountDto): Promise<TradingAccount> {
+  /**
+   * Quota de comptes du plan : `null` = illimité.
+   * Premium / trial / admin / beta → illimité · Starter → 3 · Free → 1.
+   * Sans contexte (appels internes) → non plafonné.
+   */
+  private resolveAccountLimit(ctx?: PlanContext): number | null {
+    if (!ctx) return null;
+    const { plan, role, trialEndsAt } = ctx;
+    if (role === Role.ADMIN || role === Role.BETA_TESTER) return null;
+    const inTrial = !!(trialEndsAt && new Date() < new Date(trialEndsAt));
+    if (plan === Plan.PREMIUM || inTrial) return null;
+    if (plan === Plan.STARTER) return STARTER_ACCOUNT_LIMIT;
+    return FREE_ACCOUNT_LIMIT;
+  }
+
+  async create(
+    userId: string,
+    dto: CreateAccountDto,
+    ctx?: PlanContext,
+  ): Promise<TradingAccount> {
+    const limit = this.resolveAccountLimit(ctx);
+    if (limit !== null) {
+      // Seuls les comptes non archivés consomment le quota (archiver libère un slot).
+      const activeCount = await this.prisma.tradingAccount.count({
+        where: { userId, status: { not: AccountStatus.ARCHIVED } },
+      });
+      if (activeCount >= limit) {
+        throw new ForbiddenException({
+          code: 'ACCOUNT_LIMIT_REACHED',
+          limit,
+          message: `Limite de ${limit} compte(s) atteinte pour ton plan. Passe à un plan supérieur pour en ajouter.`,
+        });
+      }
+    }
     return this.prisma.tradingAccount.create({ data: { userId, ...dto } });
   }
 

@@ -1,6 +1,6 @@
 <mtc-topbar
   title="Mes comptes"
-  [showAddButton]="userStore.isPremium()"
+  [showAddButton]="userStore.isStarterOrAbove()"
   addLabel="Ajouter un compte"
   addTestId="add-account-btn"
   (addClick)="openCreate()"
@@ -8,17 +8,18 @@
 
 <div class="content">
 
-  @if (!userStore.isPremium()) {
-    <!-- ── Upsell (FREE / STARTER) ── -->
+  @if (!userStore.isStarterOrAbove()) {
+    <!-- ── Upsell (FREE) ── -->
     <div class="acct-upsell" data-testid="accounts-upsell">
       <div class="upsell-ic">💼</div>
-      <h2 class="upsell-title">Multi-comptes — réservé au plan Premium</h2>
+      <h2 class="upsell-title">Plusieurs comptes — à partir du plan Starter</h2>
       <p class="upsell-sub">
-        Suis tes stats par compte (prop firms, comptes perso), filtre tout l'app par compte,
+        Suis tes stats par compte (prop firms, comptes perso), filtre toute l'app par compte,
         et garde un œil sur ton objectif et ta marge avant drawdown.
+        <br />Starter : jusqu'à 3 comptes · Premium : comptes illimités.
       </p>
       <button class="btn" (click)="showPlanModal.set(true)" data-testid="accounts-upsell-cta">
-        Passer au Premium
+        Passer au Starter
       </button>
     </div>
   } @else {
@@ -53,6 +54,11 @@
     <div class="acct-bar">
       <span class="acct-bar-lbl">Compte actif</span>
       <mtc-account-selector />
+      <span class="acct-quota" data-testid="account-quota"
+            [class.is-limit]="atLimit()">
+        {{ visibleAccountsCount() }}{{ accountLimit() !== null ? ' / ' + accountLimit() : '' }} compte(s)
+        @if (accountLimit() === null) { · illimité }
+      </span>
     </div>
 
     @if (store.isLoading() && store.accounts().length === 0) {
@@ -151,12 +157,20 @@
         </div>
       }
 
-      <!-- Ajouter -->
-      <button class="acct-add" (click)="openCreate()" data-testid="add-account-tile">
-        <div class="plus">+</div>
-        <div>Ajouter un compte</div>
-        <div class="acct-add-sub">prop firm ou perso</div>
-      </button>
+      <!-- Ajouter / quota atteint -->
+      @if (atLimit()) {
+        <button class="acct-add is-limit" (click)="showPlanModal.set(true)" data-testid="add-account-limit">
+          <div class="plus">🔒</div>
+          <div>Limite de {{ accountLimit() }} compte(s) atteinte</div>
+          <div class="acct-add-sub">Passe au Premium pour des comptes illimités</div>
+        </button>
+      } @else {
+        <button class="acct-add" (click)="openCreate()" data-testid="add-account-tile">
+          <div class="plus">+</div>
+          <div>Ajouter un compte</div>
+          <div class="acct-add-sub">prop firm ou perso</div>
+        </button>
+      }
 
     </div>
   }

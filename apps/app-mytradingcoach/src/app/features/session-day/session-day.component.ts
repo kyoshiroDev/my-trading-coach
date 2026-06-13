@@ -125,7 +125,7 @@ const EMOTION_COLORS: Record<string, string> = {
       </div>
 
       @if (activeTab() === 'morning') {
-        @if (userStore.isPremium() && selectedAccount.activeAccounts().length > 0) {
+        @if (userStore.isStarterOrAbove() && selectedAccount.activeAccounts().length > 0) {
           <div class="sd-acct-bar">
             <span class="sd-acct-bar-lbl">Compte de la session</span>
             <mtc-account-selector />
@@ -384,10 +384,10 @@ export class SessionDayComponent implements OnInit, OnDestroy {
   protected readonly today             = new Date();
 
   // ── Compte de la session ────────────────────────────────────────────────
-  // Vrai si l'utilisateur Premium a des comptes mais reste sur « Tous » :
+  // Vrai si l'utilisateur (Starter et +) a des comptes mais reste sur « Tous » :
   // une session = un compte → on demande un choix précis avant de lancer.
   protected readonly accountChoiceRequired = computed(
-    () => this.userStore.isPremium()
+    () => this.userStore.isStarterOrAbove()
       && this.selectedAccount.activeAccounts().length > 0
       && this.selectedAccount.accountParam() === undefined,
   );

@@ -9,15 +9,16 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { PremiumGuard } from '../../common/guards/premium.guard';
+import { StarterGuard } from '../../common/guards/starter.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Plan, Role } from '@prisma/client';
 import { AccountsService } from './accounts.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 
-// Multi-comptes (prop firms + perso) — feature réservée PREMIUM.
+// Multi-comptes (prop firms + perso) — quota par plan (Starter 3 · Premium illimité).
 @Controller('accounts')
-@UseGuards(JwtAuthGuard, PremiumGuard)
+@UseGuards(JwtAuthGuard, StarterGuard)
 export class AccountsController {
   constructor(private readonly accounts: AccountsService) {}
 
@@ -27,8 +28,16 @@ export class AccountsController {
   }
 
   @Post()
-  create(@CurrentUser() user: { id: string }, @Body() dto: CreateAccountDto) {
-    return this.accounts.create(user.id, dto);
+  create(
+    @CurrentUser()
+    user: { id: string; plan: Plan; role: Role; trialEndsAt?: Date | null },
+    @Body() dto: CreateAccountDto,
+  ) {
+    return this.accounts.create(user.id, dto, {
+      plan: user.plan,
+      role: user.role,
+      trialEndsAt: user.trialEndsAt,
+    });
   }
 
   @Patch(':id')

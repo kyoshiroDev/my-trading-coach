@@ -8,7 +8,8 @@ const STORAGE_KEY = 'mtc.selectedAccount';
 
 /**
  * Compte sélectionné (multi-comptes) + liste des comptes (avec métriques règles de 089).
- * Réservé PREMIUM : aucun appel `/accounts` pour un non-Premium.
+ * Réservé STARTER et + (quota par plan : Starter 3, Premium illimité) : aucun appel
+ * `/accounts` ni filtrage par compte pour un FREE.
  */
 @Injectable({ providedIn: 'root' })
 export class SelectedAccountStore {
@@ -35,12 +36,12 @@ export class SelectedAccountStore {
     this.accounts().filter((a) => a.status === 'ACTIVE'),
   );
 
-  /** Charge les comptes (Premium uniquement). Non-Premium → liste vide, aucun appel réseau. */
+  /** Charge les comptes (Starter et +). FREE → liste vide, aucun appel réseau. */
   load(): void {
-    if (!this.userStore.isPremium()) {
+    if (!this.userStore.isStarterOrAbove()) {
       this.accounts.set([]);
       this.loaded.set(true);
-      // Anti-fuite : un plan déchu (Premium → FREE/Starter) laisserait une sélection
+      // Anti-fuite : un plan déchu (Starter/Premium → FREE) laisserait une sélection
       // persistée → on repasse à l'agrégé pour ne jamais filtrer les stats par compte.
       if (this.selectedAccountId() !== 'all') this.select('all');
       return;
@@ -77,10 +78,10 @@ export class SelectedAccountStore {
 
   /**
    * Param à passer en query aux appels stats : undefined si « Tous » — et toujours
-   * undefined pour un non-Premium (gating global : aucune stat filtrée par compte).
+   * undefined pour un FREE (gating global : aucune stat filtrée par compte).
    */
   accountParam(): string | undefined {
-    if (!this.userStore.isPremium()) return undefined;
+    if (!this.userStore.isStarterOrAbove()) return undefined;
     const id = this.selectedAccountId();
     return id === 'all' ? undefined : id;
   }

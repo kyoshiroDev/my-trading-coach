@@ -10,7 +10,9 @@ const acc = (id: string, over: Partial<TradingAccount> = {}): TradingAccount =>
 
 function setup(opts: { premium?: boolean; accounts?: TradingAccount[] } = {}) {
   const api = { getAll: vi.fn(() => of({ data: opts.accounts ?? [] })) };
-  const userStore = { isPremium: () => opts.premium ?? true };
+  // Le store gate désormais sur isStarterOrAbove (Starter et +), plus isPremium.
+  const eligible = opts.premium ?? true;
+  const userStore = { isStarterOrAbove: () => eligible, isPremium: () => eligible };
   TestBed.configureTestingModule({
     providers: [
       SelectedAccountStore,
