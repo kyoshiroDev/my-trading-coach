@@ -165,8 +165,10 @@
 
 <!-- ── Modal create / edit ── -->
 @if (formOpen()) {
-  <div class="modal-overlay" (click)="closeForm()">
-    <div class="modal" (click)="$event.stopPropagation()">
+  <div class="modal-overlay" role="button" tabindex="-1"
+       (click)="closeForm()" (keydown.escape)="closeForm()">
+    <div class="modal" role="dialog"
+         (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
       <div class="modal-head">
         <h3 class="modal-title">{{ editingId() ? 'Modifier le compte' : 'Nouveau compte' }}</h3>
         <button class="modal-x" (click)="closeForm()">✕</button>
