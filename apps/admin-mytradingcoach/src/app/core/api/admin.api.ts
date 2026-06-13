@@ -12,6 +12,7 @@ export interface AdminUser {
 
 export interface AdminStats {
   mrr: number; arr: number;
+  totalUsers: number;
   totalStarter: number; totalPremium: number;
   starterMonthly: number; starterAnnual: number;
   premiumMonthly: number; premiumAnnual: number;
@@ -67,6 +68,7 @@ export interface AiUsageData {
   week:  { inputTokens: number; outputTokens: number; costUsd: number; calls: number };
   byFeature: { feature: string; tokens: number; cost: number; pct: number }[];
   topUsers:  { userId: string; email: string; name: string; tokens: number; cost: number }[];
+  daily:     { date: string; cost: number }[];
 }
 
 export interface SubscriptionsData {

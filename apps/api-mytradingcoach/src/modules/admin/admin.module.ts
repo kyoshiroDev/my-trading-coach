@@ -11,9 +11,10 @@ import { UsersModule } from '../users/users.module';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { DiscordModule } from '../discord/discord.module';
 import { StripeModule } from '../stripe/stripe.module';
+import { VpsModule } from '../vps/vps.module';
 
 @Module({
-  imports: [ResendModule, UsersModule, PrismaModule, DiscordModule, StripeModule],
+  imports: [ResendModule, UsersModule, PrismaModule, DiscordModule, StripeModule, VpsModule],
   controllers: [AdminController],
   providers: [AdminService, EmailCampaignService, MetricsSnapshotCron, DeletedAccountService, UserDetailService, DemoSeedService],
 })

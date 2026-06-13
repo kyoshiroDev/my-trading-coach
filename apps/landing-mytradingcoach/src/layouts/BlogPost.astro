@@ -5,13 +5,14 @@ import Footer from '../components/Footer.astro';
 
 interface Props {
   title: string;
+  seoTitle?: string;
   description: string;
   publishDate: Date;
   updatedDate?: Date;
   tags?: string[];
 }
 
-const { title, description, publishDate, updatedDate, tags = [] } = Astro.props;
+const { title, seoTitle, description, publishDate, updatedDate, tags = [] } = Astro.props;
 
 const canonical = `https://www.mytradingcoach.app${Astro.url.pathname}`;
 
@@ -44,7 +45,7 @@ const schema = [
 ];
 ---
 
-<Base title={`${title} | MyTradingCoach Blog`} description={description} canonical={canonical} ogUrl={canonical} schema={schema as unknown as Record<string, unknown>}>
+<Base title={seoTitle ?? title} description={description} canonical={canonical} ogUrl={canonical} schema={schema as unknown as Record<string, unknown>}>
   <Nav />
 
   <main class="article-wrap">

@@ -46,7 +46,7 @@ const TARGET_CONFIG: Record<BackupTarget, { label: string; color: string; icon: 
 
       <div class="kpi-strip cols-4">
         <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Total</div><div class="kpi-value teal">{{ backups().length }}</div><div class="kpi-sub">sauvegardes</div></div>
-        <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Automatiques</div><div class="kpi-value blue">{{ autoCount() }}</div><div class="kpi-sub">cron quotidien</div></div>
+        <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Automatiques</div><div class="kpi-value blue">{{ autoCount() }}</div><div class="kpi-sub">cron quotidien 04:00</div></div>
         <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Manuels</div><div class="kpi-value purple">{{ manualCount() }}</div><div class="kpi-sub">déclenchés admin</div></div>
         <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Taille totale</div><div class="kpi-value amber">{{ totalSizeMb() }} Mo</div><div class="kpi-sub">conservation 14j</div></div>
       </div>

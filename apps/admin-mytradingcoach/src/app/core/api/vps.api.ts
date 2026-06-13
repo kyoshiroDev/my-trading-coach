@@ -22,12 +22,18 @@ export interface Backup {
   target: 'bdd_prod' | 'bdd_dev' | 'api_prod' | 'api_dev';
 }
 
+export interface HealthPoint {
+  date: string;
+  status: 'ok' | 'incident' | 'unknown';
+}
+
 @Injectable({ providedIn: 'root' })
 export class VpsApi {
   private readonly http = inject(HttpClient);
   private readonly base = environment.apiUrl;
 
   stats()       { return this.http.get<{ data: VpsStats }>(`${this.base}/vps/stats`); }
+  healthHistory(days = 90) { return this.http.get<{ data: HealthPoint[] }>(`${this.base}/admin/health-history?days=${days}`); }
   containers()  { return this.http.get<{ data: DockerContainer[] }>(`${this.base}/docker/containers`); }
   containerAction(id: string, action: 'start' | 'stop' | 'restart') {
     return this.http.post(`${this.base}/docker/containers/${id}/${action}`, {});

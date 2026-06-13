@@ -60,6 +60,12 @@ export class AdminController {
     return this.metrics.takeSnapshot();
   }
 
+  /** Historique de santé VPS (uptime 90j) — points réellement enregistrés par le cron. */
+  @Get('health-history')
+  healthHistory(@Query('days') days?: string) {
+    return this.metrics.healthHistory(days ? parseInt(days, 10) : 90);
+  }
+
   /**
    * Re-synchronise le rôle Discord de tous les comptes liés (idempotent).
    * Corrige les STARTER existants qui avaient le rôle Membre avant le fix isPremiumAccess.
