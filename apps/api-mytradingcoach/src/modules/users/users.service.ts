@@ -240,6 +240,7 @@ export class UsersService {
       premiumMonthly, premiumAnnual,
       trials, freeUsers, newThisMonth, churnedThisMonth,
       betaTesters, ambassadors,
+      totalUsers, totalStarter, totalPremium,
     ] = await Promise.all([
       this.prisma.user.count({
         where: { isDemo: false, plan: 'STARTER', stripeInterval: 'month', stripeSubscriptionStatus: { in: ['active', 'trialing'] } },
@@ -259,21 +260,26 @@ export class UsersService {
       this.prisma.user.count({ where: { isDemo: false, plan: 'FREE', trialUsed: true, updatedAt: { gte: startOfMonth } } }),
       this.prisma.user.count({ where: { isDemo: false, role: 'BETA_TESTER' } }),
       this.prisma.user.count({ where: { isDemo: false, role: 'AMBASSADOR' } }),
+      // Total réel (tous plans/rôles, hors démo) + comptes PAR PLAN (inclut les
+      // Premium/Starter octroyés sans abonnement Stripe : beta, ambassadeur, comp).
+      this.prisma.user.count({ where: { isDemo: false } }),
+      this.prisma.user.count({ where: { isDemo: false, plan: 'STARTER' } }),
+      this.prisma.user.count({ where: { isDemo: false, plan: 'PREMIUM' } }),
     ]);
 
+    // MRR/ARR restent basés sur les abonnements Stripe payants (pas les comptes par plan).
     const mrr = starterMonthly * 39
       + Math.round((starterAnnual * 349) / 12)
       + premiumMonthly * 79
       + Math.round((premiumAnnual * 699) / 12);
     const arr = mrr * 12;
 
-    const totalStarter = starterMonthly + starterAnnual;
-    const totalPremium = premiumMonthly + premiumAnnual;
     const monthly = starterMonthly + premiumMonthly;
     const annual = starterAnnual + premiumAnnual;
 
     return {
       mrr, arr,
+      totalUsers,
       totalStarter, totalPremium,
       starterMonthly, starterAnnual,
       premiumMonthly, premiumAnnual,
