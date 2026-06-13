@@ -74,6 +74,14 @@ describe('SelectedAccountStore', () => {
     expect(store.selectedAccountId()).toBe('all');
   });
 
+  it('si le compte sélectionné est archivé → retour à « all » (plus de filtre fantôme)', () => {
+    localStorage.setItem('mtc.selectedAccount', 'a1');
+    const { store } = setup({ accounts: [acc('a1', { status: 'ARCHIVED' }), acc('a2')] });
+    store.load();
+    expect(store.selectedAccountId()).toBe('all');
+    expect(store.accountParam()).toBeUndefined();
+  });
+
   it('non-Premium → accountParam() undefined même avec une sélection persistée (anti-fuite)', () => {
     localStorage.setItem('mtc.selectedAccount', 'a1'); // ancien compte d'un plan déchu
     const { store } = setup({ premium: false });

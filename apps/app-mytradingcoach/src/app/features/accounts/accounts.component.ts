@@ -143,16 +143,20 @@ export class AccountsComponent implements OnInit {
     return a.type === 'EVALUATION' ? 'var(--yellow)' : 'var(--green)';
   }
 
+  // Largeur de barre bornée à [0,100] (un objectif dépassé donne pct > 1 côté funded).
+  private barWidth(pct: number | undefined): number {
+    return Math.min(100, Math.max(0, Math.round((pct ?? 0) * 100)));
+  }
   // Barre objectif : largeur = pct atteint (0..1) ; verte si atteint, sinon bleue.
   protected objWidth(a: TradingAccount): number {
-    return Math.round((a.metrics.objective?.pct ?? 0) * 100);
+    return this.barWidth(a.metrics.objective?.pct);
   }
   protected objReached(a: TradingAccount): boolean {
     return (a.metrics.objective?.pct ?? 0) >= 1;
   }
   // Barre marge drawdown : largeur = marge restante (pct du max) ; rouge si dépassé/critique.
   protected ddWidth(a: TradingAccount): number {
-    return Math.round((a.metrics.drawdown?.pct ?? 0) * 100);
+    return this.barWidth(a.metrics.drawdown?.pct);
   }
   protected ddColor(a: TradingAccount): string {
     const dd = a.metrics.drawdown;

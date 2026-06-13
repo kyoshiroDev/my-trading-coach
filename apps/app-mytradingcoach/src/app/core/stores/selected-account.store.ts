@@ -54,9 +54,14 @@ export class SelectedAccountStore {
           const list = res.data ?? [];
           this.accounts.set(list);
           this.loaded.set(true);
-          // Si le compte sélectionné n'existe plus (archivé/supprimé) → retour à l'agrégé.
+          // Si le compte sélectionné a disparu OU a été archivé → retour à l'agrégé.
+          // (les comptes archivés sont masqués de la vue : ils ne doivent pas rester
+          // le filtre actif des stats du dashboard / de la session.)
           const id = this.selectedAccountId();
-          if (id !== 'all' && !list.some((a) => a.id === id)) this.select('all');
+          const stillSelectable = list.some(
+            (a) => a.id === id && a.status !== 'ARCHIVED',
+          );
+          if (id !== 'all' && !stillSelectable) this.select('all');
         },
         error: () => {
           this.accounts.set([]);
