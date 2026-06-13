@@ -53,34 +53,35 @@ model User {
   strategyDescription String?
 
   // ── Actifs tradés ────────────────────────────────────────────────────────
-  tradingAssets String[]  // configurés dans les paramètres
-  favoriteAsset String?   // pré-sélectionné dans la saisie rapide
+  tradingAssets String[] // configurés dans les paramètres
+  favoriteAsset String? // pré-sélectionné dans la saisie rapide
 
   // ── Parrainage ambassadeur ────────────────────────────────────────────────
-  referralCode String?  @unique  // code de parrainage unique
-  referredBy   String?           // code de l'ambassadeur qui a référé cet user
+  referralCode String? @unique // code de parrainage unique
+  referredBy   String? // code de l'ambassadeur qui a référé cet user
 
   // ── Calendrier économique ─────────────────────────────────────────────────
   // Sélection d'annonces du JOUR (rituel de prep). Format : "EventName:Currency".
   // Réinitialisée chaque jour : si pinnedEcoDate ≠ aujourd'hui (Europe/Paris), la
   // lecture renvoie une sélection vide (reset paresseux, sans cron).
   pinnedEcoEvents String[]
-  pinnedEcoDate   String?   // YYYY-MM-DD (Europe/Paris) — jour de la sélection
+  pinnedEcoDate   String? // YYYY-MM-DD (Europe/Paris) — jour de la sélection
 
   // ── Discord ──────────────────────────────────────────────────────────────────
   discordId String? @unique
 
-  trades        Trade[]
-  debriefs      WeeklyDebrief[]
-  aiUsageLogs   AiUsageLog[]
-  tradeSessions TradeSession[]
-  dailyRecaps   DailyRecap[]
-  dailyActivity UserDailyActivity[]
-  referrals     ReferralCommission[] @relation("AmbassadorCommissions")
-  lastSeenAt    DateTime?
-  lastLoginAt   DateTime?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  trades          Trade[]
+  debriefs        WeeklyDebrief[]
+  aiUsageLogs     AiUsageLog[]
+  tradeSessions   TradeSession[]
+  tradingAccounts TradingAccount[]
+  dailyRecaps     DailyRecap[]
+  dailyActivity   UserDailyActivity[]
+  referrals       ReferralCommission[] @relation("AmbassadorCommissions")
+  lastSeenAt      DateTime?
+  lastLoginAt     DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
 }
 
 model ReferralCommission {
@@ -100,35 +101,38 @@ model ReferralCommission {
 }
 
 model Trade {
-  id         String         @id @default(cuid())
-  userId     String
-  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  asset      String
-  side       TradeSide
-  entry      Float
-  exit       Float?
-  stopLoss   Float?
-  takeProfit Float?
-  pnl        Float?
-  commission Float?
-  riskReward Float?
-  quantity        Float?
-  capitalEngaged  Float?
-  emotion    EmotionState
-  setup      SetupType
-  session    TradingSession
-  timeframe  String
-  notes      String?
-  tags       String[]
-  sessionId    String?
-  tradeSession TradeSession? @relation(fields: [sessionId], references: [id])
-  tradedAt     DateTime      @default(now())
-  createdAt    DateTime      @default(now())
+  id             String          @id @default(cuid())
+  userId         String
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  asset          String
+  side           TradeSide
+  entry          Float
+  exit           Float?
+  stopLoss       Float?
+  takeProfit     Float?
+  pnl            Float?
+  commission     Float?
+  riskReward     Float?
+  quantity       Float?
+  capitalEngaged Float?
+  emotion        EmotionState
+  setup          SetupType
+  session        TradingSession
+  timeframe      String
+  notes          String?
+  tags           String[]
+  sessionId      String?
+  tradeSession   TradeSession?   @relation(fields: [sessionId], references: [id])
+  accountId      String?
+  account        TradingAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  tradedAt       DateTime        @default(now())
+  createdAt      DateTime        @default(now())
 
   @@index([userId, tradedAt])
   @@index([userId, emotion])
   @@index([userId, setup])
   @@index([sessionId])
+  @@index([accountId])
 }
 
 model WeeklyDebrief {
@@ -168,17 +172,17 @@ model AiUsageLog {
 // ── V2 Session Mode ─────────────────────────────────────────────────────────
 
 model TradeSession {
-  id          String        @id @default(cuid())
-  userId      String
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  startedAt   DateTime      @default(now())
-  endedAt     DateTime?
-  moodStart   MoodState?
-  moodEnd     MoodState?
-  totalPnl    Float?
-  totalTrades Int           @default(0)
-  winRate     Float?
-  status      SessionStatus @default(ACTIVE)
+  id                 String          @id @default(cuid())
+  userId             String
+  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startedAt          DateTime        @default(now())
+  endedAt            DateTime?
+  moodStart          MoodState?
+  moodEnd            MoodState?
+  totalPnl           Float?
+  totalTrades        Int             @default(0)
+  winRate            Float?
+  status             SessionStatus   @default(ACTIVE)
   notes              String?
   reflectionNote     String?
   reflectionQuestion String?
@@ -187,10 +191,37 @@ model TradeSession {
   maxDrawdown        Float?
   bestTradePnl       Float?
   bestTradeAsset     String?
+  accountId          String?
+  account            TradingAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
   trades             Trade[]
-  createdAt          DateTime      @default(now())
+  createdAt          DateTime        @default(now())
 
   @@index([userId, startedAt])
+  @@index([userId, status])
+  @@index([accountId])
+}
+
+// ── Multi-comptes (prop firms + perso) ──────────────────────────────────────
+model TradingAccount {
+  id              String         @id @default(cuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label           String // "Apex 50k #1"
+  broker          String? // prop firm / courtier
+  type            AccountType    @default(PERSONAL)
+  status          AccountStatus  @default(ACTIVE)
+  accountSize     Float?
+  currency        String         @default("USD")
+  // Règles prop firm (saisies par l'user, propres à sa firm/plan) :
+  startingBalance Float? // base du solde (défaut = accountSize si null)
+  profitTarget    Float? // objectif (eval) / objectif payout (funded), en $
+  maxDrawdown     Float? // montant du drawdown autorisé, en $
+  drawdownType    DrawdownType   @default(STATIC)
+  trades          Trade[]
+  tradeSessions   TradeSession[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
   @@index([userId, status])
 }
 
@@ -247,6 +278,25 @@ enum SessionStatus {
   CLOSED
 }
 
+// ── Multi-comptes (prop firms + perso) ──────────────────────────────────────
+enum AccountType {
+  EVALUATION
+  FUNDED
+  PERSONAL
+  DEMO
+}
+
+enum AccountStatus {
+  ACTIVE
+  PASSED
+  FAILED
+  ARCHIVED
+}
+
+enum DrawdownType {
+  STATIC
+  TRAILING
+}
 
 // ── Idempotence webhooks Stripe ─────────────────────────────────────────────
 model StripeEvent {
@@ -312,7 +362,7 @@ model EcoEvent {
   previous   Float?
   isReleased Boolean  @default(false)
   unit       String?
-  nameFr     String?  // libellé traduit une seule fois
+  nameFr     String? // libellé traduit une seule fois
   fetchedAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -323,13 +373,13 @@ model EcoEvent {
 
 model MarketNews {
   id            String   @id @default(cuid())
-  url           String   @unique          // clé de dédup (un article = une URL)
+  url           String   @unique // clé de dédup (un article = une URL)
   symbol        String
-  title         String                    // titre original
-  titleFr       String?                   // traduit une seule fois
+  title         String // titre original
+  titleFr       String? // traduit une seule fois
   text          String?  @db.Text
   textFr        String?  @db.Text
-  sentiment     String?                   // bull | bear | neutral
+  sentiment     String? // bull | bear | neutral
   image         String?
   site          String?
   publishedDate DateTime
@@ -389,7 +439,7 @@ model UserDailyActivity {
 /// Trace analytique d'un compte supprimé (RGPD). Identité (name/email)
 /// conservée 90 jours puis anonymisée par cron ; les champs analytiques restent.
 model DeletedAccount {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   name         String? // anonymisé après 90 j
   email        String? // anonymisé après 90 j
   signedUpAt   DateTime
