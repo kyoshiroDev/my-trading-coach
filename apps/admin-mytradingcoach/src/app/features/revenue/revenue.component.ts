@@ -30,7 +30,7 @@ import { CHART_COLORS, fade, gridAxis, noLegend } from '../../shared/charts/char
 
         <div class="grid-2">
           <div class="card">
-            <div class="card-head"><span class="card-label">Évolution du MRR (30j)</span></div>
+            <div class="card-head"><span class="card-label">Évolution du MRR (6 mois)</span></div>
             <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="mrrConfig()" /></div></div>
           </div>
           <div class="card">
@@ -110,7 +110,7 @@ export class RevenueComponent {
 
   constructor() {
     this.adminApi.stats().pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef)).subscribe((r) => { if (r) this.stats.set(r.data); });
-    this.adminApi.metricsHistory(30).pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef)).subscribe((r) => { if (r) this.history.set(r.data); });
+    this.adminApi.metricsHistory(180).pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef)).subscribe((r) => { if (r) this.history.set(r.data); });
   }
 
   protected reconcile(): void {

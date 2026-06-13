@@ -24,7 +24,7 @@ import { CHART_COLORS, gridAxis, noLegend } from '../../shared/charts/chart-them
         <div class="del-body">
           <div class="del-left">
             <div class="kpi-strip cols-2">
-              <div class="kpi"><div class="kpi-top red"></div><div class="kpi-label">Supprimés ce mois</div><div class="kpi-value red">{{ d.stats.thisMonth }}</div><div class="kpi-sub">mois en cours</div></div>
+              <div class="kpi"><div class="kpi-top red"></div><div class="kpi-label">Supprimés ce mois</div><div class="kpi-value red">{{ d.stats.thisMonth }}</div><div class="kpi-sub">{{ monthLabel }}</div></div>
               <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Total supprimés</div><div class="kpi-value amber">{{ d.stats.total }}</div><div class="kpi-sub">depuis le lancement</div></div>
               <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Durée de vie médiane</div><div class="kpi-value blue">{{ d.stats.medianLifetimeDays }}j</div><div class="kpi-sub">inscription → suppression</div></div>
               <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Partis sans trade</div><div class="kpi-value purple">{{ d.stats.noTradePct }}%</div><div class="kpi-sub">{{ d.stats.noTradeCount }} / {{ d.stats.total }} jamais tradé</div></div>
@@ -49,7 +49,7 @@ import { CHART_COLORS, gridAxis, noLegend } from '../../shared/charts/chart-them
                     <tr>
                       <td data-label="Utilisateur"><div class="u-cell"><div class="u-av del-av">{{ initials(a) }}</div><div><div class="u-name">{{ a.name ?? 'anonymisé' }}</div><div class="u-mail">{{ a.email ?? '—' }}</div></div></div></td>
                       <td data-label="Inscrit le" class="td-mono muted">{{ a.signedUpAt | date:'dd/MM/yyyy' }}</td>
-                      <td data-label="Supprimé le" class="td-mono">{{ a.deletedAt | date:'dd/MM/yyyy' }}</td>
+                      <td data-label="Supprimé le" class="td-mono" [style.color]="isDeletedToday(a.deletedAt) ? 'var(--red)' : null">{{ a.deletedAt | date:'dd/MM/yyyy' }}</td>
                       <td data-label="Durée de vie" class="td-mono">{{ lifetime(a.lifetimeDays) }}</td>
                       <td data-label="Plan"><span class="badge" [class.b-premium]="a.plan==='PREMIUM'" [class.b-starter]="a.plan==='STARTER'" [class.b-free]="a.plan==='FREE'">{{ a.plan }}</span></td>
                       <td data-label="A tradé">@if (a.hadTraded) { <span class="badge b-ok">oui</span> } @else { <span class="badge b-free">jamais</span> }</td>
@@ -106,10 +106,24 @@ export class DeletedComponent {
     ).subscribe((r) => { if (r) this.data.set(r.data); });
   }
 
+  // Libellé du mois courant (« juin 2026 ») — sans dépendance de locale enregistrée.
+  private static readonly MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  protected readonly monthLabel = (() => {
+    const d = new Date();
+    return `${DeletedComponent.MONTHS_FR[d.getMonth()]} ${d.getFullYear()}`;
+  })();
+
   protected initials(a: DeletedAccount): string {
     return (a.name ?? a.email ?? '??').slice(0, 2).toUpperCase();
   }
   protected lifetime(days: number): string {
     return days <= 0 ? '< 1j' : `${days}j`;
+  }
+  /** Vrai si la suppression a eu lieu aujourd'hui (mise en évidence rouge, comme le mockup). */
+  protected isDeletedToday(iso: string | null | undefined): boolean {
+    if (!iso) return false;
+    const d = new Date(iso);
+    const now = new Date();
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
   }
 }

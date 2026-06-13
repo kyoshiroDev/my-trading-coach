@@ -67,6 +67,7 @@ export interface AiUsageData {
   week:  { inputTokens: number; outputTokens: number; costUsd: number; calls: number };
   byFeature: { feature: string; tokens: number; cost: number; pct: number }[];
   topUsers:  { userId: string; email: string; name: string; tokens: number; cost: number }[];
+  daily:     { date: string; cost: number }[];
 }
 
 export interface SubscriptionsData {
