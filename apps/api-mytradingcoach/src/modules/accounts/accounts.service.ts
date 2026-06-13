@@ -75,6 +75,26 @@ export class AccountsService {
     return { archived: true };
   }
 
+  /**
+   * Helper de filtre lecture réutilisable. `accountId` absent ou 'all' → fragment vide
+   * (agrégé, comportement actuel). Sinon vérifie l'appartenance au user (sinon 404) et
+   * renvoie `{ accountId }` à fusionner dans un `where` Prisma.
+   */
+  async accountWhere(
+    userId: string,
+    accountId?: string,
+  ): Promise<{ accountId?: string }> {
+    if (!accountId || accountId === 'all') return {};
+    const account = await this.prisma.tradingAccount.findUnique({
+      where: { id: accountId },
+      select: { userId: true },
+    });
+    if (!account || account.userId !== userId) {
+      throw new NotFoundException('Compte introuvable.');
+    }
+    return { accountId };
+  }
+
   /** Vérifie que le compte existe ET appartient au user (sinon 404, sans fuite d'existence). */
   private async assertOwner(
     userId: string,

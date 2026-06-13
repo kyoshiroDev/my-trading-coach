@@ -15,6 +15,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { SessionService } from './session.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { CloseSessionDto } from './dto/close-session.dto';
+import { AccountsService } from '../accounts/accounts.service';
 
 // Le compagnon de session (pré-session, live, débrief de base) est le hook du plan FREE.
 // Accessible à tous les comptes connectés ; les limites FREE sont portées par les trades
@@ -23,7 +24,10 @@ import { CloseSessionDto } from './dto/close-session.dto';
 @Controller('session')
 @UseGuards(JwtAuthGuard)
 export class SessionController {
-  constructor(private readonly sessionService: SessionService) {}
+  constructor(
+    private readonly sessionService: SessionService,
+    private readonly accounts: AccountsService,
+  ) {}
 
   @Post('start')
   start(
@@ -59,16 +63,20 @@ export class SessionController {
   }
 
   @Get('history')
-  getHistory(
+  async getHistory(
     @CurrentUser() user: { id: string },
     @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
     @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset: number,
     @Query('year') year?: string,
     @Query('month') month?: string,
+    @Query('accountId') accountId?: string,
   ) {
+    // 'all'/absent = agrégé ; sinon valide l'appartenance du compte (404 sinon).
+    const acc = await this.accounts.accountWhere(user.id, accountId);
     return this.sessionService.getSessionHistory(user.id, limit, offset, {
       year: year ? parseInt(year, 10) : undefined,
       month: month ? parseInt(month, 10) : undefined,
+      accountId: acc.accountId,
     });
   }
 

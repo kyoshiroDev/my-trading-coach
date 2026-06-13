@@ -41,4 +41,9 @@ export class TradeFiltersDto {
   @IsDateString()
   @IsOptional()
   dateTo?: string;
+
+  // Filtre multi-comptes : id de compte, ou 'all'/absent pour l'agrégé.
+  @IsString()
+  @IsOptional()
+  accountId?: string;
 }

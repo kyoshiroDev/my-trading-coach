@@ -149,13 +149,17 @@ export class SessionService {
     userId: string,
     limit = 50,
     offset = 0,
-    filter?: { year?: number; month?: number },
+    filter?: { year?: number; month?: number; accountId?: string },
   ): Promise<SessionHistoryItem[]> {
     const where: Prisma.TradeSessionWhereInput = {
       userId,
       status: SessionStatus.CLOSED,
       totalTrades: { gt: 0 },
     };
+
+    if (filter?.accountId && filter.accountId !== 'all') {
+      where.accountId = filter.accountId;
+    }
 
     if (filter?.year && filter?.month) {
       const from = new Date(filter.year, filter.month - 1, 1);

@@ -196,8 +196,10 @@ export class TradesService {
       emotion,
       dateFrom,
       dateTo,
+      accountId,
     } = filters;
     const where: Prisma.TradeWhereInput = { userId };
+    if (accountId && accountId !== 'all') where.accountId = accountId;
     if (side) where.side = side;
     if (setup) where.setup = setup;
     if (emotion) where.emotion = emotion;

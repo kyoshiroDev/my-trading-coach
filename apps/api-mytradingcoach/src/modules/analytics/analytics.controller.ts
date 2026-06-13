@@ -5,6 +5,7 @@ import { StarterGuard } from '../../common/guards/starter.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AnalyticsService } from './analytics.service';
 import { DailyRecapService } from '../daily-recap/daily-recap.service';
+import { AccountsService } from '../accounts/accounts.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('analytics')
@@ -12,77 +13,96 @@ export class AnalyticsController {
   constructor(
     private analyticsService: AnalyticsService,
     private dailyRecapService: DailyRecapService,
+    private accounts: AccountsService,
   ) {}
 
+  // Résout (et vérifie l'appartenance) le filtre compte. absent/'all' → undefined (agrégé).
+  private async accountId(userId: string, accountId?: string): Promise<string | undefined> {
+    return (await this.accounts.accountWhere(userId, accountId)).accountId;
+  }
+
   @Get('summary')
-  getSummary(@CurrentUser() user: { id: string }) {
-    return this.analyticsService.getSummary(user.id);
+  async getSummary(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
+    return this.analyticsService.getSummary(user.id, await this.accountId(user.id, accountId));
   }
 
   @UseGuards(StarterGuard)
   @Get('by-setup')
-  getBySetup(@CurrentUser() user: { id: string }) {
-    return this.analyticsService.getBySetup(user.id);
+  async getBySetup(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
+    return this.analyticsService.getBySetup(user.id, await this.accountId(user.id, accountId));
   }
 
   @UseGuards(StarterGuard)
   @Get('by-emotion')
-  getByEmotion(@CurrentUser() user: { id: string }) {
-    return this.analyticsService.getByEmotion(user.id);
+  async getByEmotion(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
+    return this.analyticsService.getByEmotion(user.id, await this.accountId(user.id, accountId));
   }
 
   @UseGuards(StarterGuard)
   @Get('by-hour')
-  getByHour(@CurrentUser() user: { id: string }) {
-    return this.analyticsService.getByHour(user.id);
+  async getByHour(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
+    return this.analyticsService.getByHour(user.id, await this.accountId(user.id, accountId));
   }
 
   @UseGuards(StarterGuard)
   @Get('equity-curve')
-  getEquityCurve(@CurrentUser() user: { id: string }) {
-    return this.analyticsService.getEquityCurve(user.id);
+  async getEquityCurve(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
+    return this.analyticsService.getEquityCurve(user.id, await this.accountId(user.id, accountId));
   }
 
   @UseGuards(StarterGuard)
   @Get('equity-curve/current-month')
-  getEquityCurrentMonth(@CurrentUser() user: { id: string }) {
-    return this.analyticsService.getEquityCurveCurrentMonth(user.id);
+  async getEquityCurrentMonth(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
+    return this.analyticsService.getEquityCurveCurrentMonth(user.id, await this.accountId(user.id, accountId));
   }
 
   @UseGuards(StarterGuard)
   @Get('equity-curve/daily')
-  getEquityDaily(
+  async getEquityDaily(
     @CurrentUser() user: { id: string },
     @Query('from') from?: string,
     @Query('to') to?: string,
+    @Query('accountId') accountId?: string,
   ) {
     return this.analyticsService.getEquityCurveDaily(
       user.id,
       from ? new Date(from) : undefined,
       to ? new Date(to) : undefined,
+      await this.accountId(user.id, accountId),
     );
   }
 
   @UseGuards(StarterGuard)
   @Get('top-assets')
-  getTopAssets(@CurrentUser() user: { id: string }) {
-    return this.analyticsService.getTopAssets(user.id);
+  async getTopAssets(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
+    return this.analyticsService.getTopAssets(user.id, await this.accountId(user.id, accountId));
   }
 
   @Get('activity/current-month')
-  getCurrentMonthActivity(@CurrentUser() user: { id: string }) {
+  async getCurrentMonthActivity(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
     const now = new Date();
-    return this.analyticsService.getMonthlyActivity(user.id, now.getFullYear(), now.getMonth() + 1);
+    return this.analyticsService.getMonthlyActivity(
+      user.id,
+      now.getFullYear(),
+      now.getMonth() + 1,
+      await this.accountId(user.id, accountId),
+    );
   }
 
   @UseGuards(StarterGuard)
   @Get('activity/:year/:month')
-  getMonthActivity(
+  async getMonthActivity(
     @CurrentUser() user: { id: string },
     @Param('year', ParseIntPipe) year: number,
     @Param('month', ParseIntPipe) month: number,
+    @Query('accountId') accountId?: string,
   ) {
-    return this.analyticsService.getMonthlyActivity(user.id, year, month);
+    return this.analyticsService.getMonthlyActivity(
+      user.id,
+      year,
+      month,
+      await this.accountId(user.id, accountId),
+    );
   }
 
   @Get('daily-recap/yesterday')

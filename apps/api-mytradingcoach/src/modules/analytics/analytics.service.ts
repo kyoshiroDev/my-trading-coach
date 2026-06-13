@@ -35,38 +35,42 @@ export class AnalyticsService {
     } catch { /* Redis indisponible */ }
   }
 
-  async getSummary(userId: string) {
-    return this.withCache(`analytics:${userId}:summary`, CACHE_TTL.ANALYTICS, () => this.computeSummary(userId));
+  // Filtre multi-comptes : fragment `where` + suffixe de clé de cache. Absent → agrégé (inchangé).
+  private accCond(accountId?: string): { accountId?: string } { return accountId ? { accountId } : {}; }
+  private accKey(accountId?: string): string { return accountId ? `:acc:${accountId}` : ''; }
+
+  async getSummary(userId: string, accountId?: string) {
+    return this.withCache(`analytics:${userId}:summary${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeSummary(userId, accountId));
   }
-  async getBySetup(userId: string) {
-    return this.withCache(`analytics:${userId}:setup`, CACHE_TTL.ANALYTICS, () => this.computeBySetup(userId));
+  async getBySetup(userId: string, accountId?: string) {
+    return this.withCache(`analytics:${userId}:setup${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeBySetup(userId, accountId));
   }
-  async getByEmotion(userId: string) {
-    return this.withCache(`analytics:${userId}:emotion`, CACHE_TTL.ANALYTICS, () => this.computeByEmotion(userId));
+  async getByEmotion(userId: string, accountId?: string) {
+    return this.withCache(`analytics:${userId}:emotion${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeByEmotion(userId, accountId));
   }
-  async getByHour(userId: string) {
-    return this.withCache(`analytics:${userId}:hour`, CACHE_TTL.ANALYTICS, () => this.computeByHour(userId));
+  async getByHour(userId: string, accountId?: string) {
+    return this.withCache(`analytics:${userId}:hour${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeByHour(userId, accountId));
   }
-  async getEquityCurve(userId: string) {
-    return this.withCache(`analytics:${userId}:equity`, CACHE_TTL.ANALYTICS, () => this.computeEquityCurve(userId));
+  async getEquityCurve(userId: string, accountId?: string) {
+    return this.withCache(`analytics:${userId}:equity${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeEquityCurve(userId, accountId));
   }
-  async getEquityCurveCurrentMonth(userId: string) {
-    return this.withCache(`analytics:${userId}:equity:month`, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveCurrentMonth(userId));
+  async getEquityCurveCurrentMonth(userId: string, accountId?: string) {
+    return this.withCache(`analytics:${userId}:equity:month${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveCurrentMonth(userId, accountId));
   }
-  async getTopAssets(userId: string) {
-    return this.withCache(`analytics:${userId}:topassets`, CACHE_TTL.ANALYTICS, () => this.computeTopAssets(userId));
+  async getTopAssets(userId: string, accountId?: string) {
+    return this.withCache(`analytics:${userId}:topassets${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeTopAssets(userId, accountId));
   }
-  async getMonthlyActivity(userId: string, year: number, month: number) {
-    return this.withCache(`analytics:${userId}:activity:${year}:${month}`, CACHE_TTL.ANALYTICS, () => this.computeMonthlyActivity(userId, year, month));
+  async getMonthlyActivity(userId: string, year: number, month: number, accountId?: string) {
+    return this.withCache(`analytics:${userId}:activity:${year}:${month}${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeMonthlyActivity(userId, year, month, accountId));
   }
-  async getEquityCurveDaily(userId: string, from?: Date, to?: Date) {
-    const key = `analytics:${userId}:equity:daily:${from?.toISOString() ?? ''}:${to?.toISOString() ?? ''}`;
-    return this.withCache(key, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveDaily(userId, from, to));
+  async getEquityCurveDaily(userId: string, from?: Date, to?: Date, accountId?: string) {
+    const key = `analytics:${userId}:equity:daily:${from?.toISOString() ?? ''}:${to?.toISOString() ?? ''}${this.accKey(accountId)}`;
+    return this.withCache(key, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveDaily(userId, from, to, accountId));
   }
 
-  private async computeSummary(userId: string) {
+  private async computeSummary(userId: string, accountId?: string) {
     const trades = await this.prisma.trade.findMany({
-      where: { userId, pnl: { not: null } },
+      where: { userId, ...this.accCond(accountId), pnl: { not: null } },
       select: { pnl: true, tradedAt: true, session: true },
       orderBy: { tradedAt: 'asc' },
     });
@@ -161,9 +165,9 @@ export class AnalyticsService {
     };
   }
 
-  private async computeBySetup(userId: string) {
+  private async computeBySetup(userId: string, accountId?: string) {
     const trades = await this.prisma.trade.findMany({
-      where: { userId, pnl: { not: null } },
+      where: { userId, ...this.accCond(accountId), pnl: { not: null } },
       select: { setup: true, pnl: true, riskReward: true },
     });
 
@@ -189,9 +193,9 @@ export class AnalyticsService {
     }));
   }
 
-  private async computeByEmotion(userId: string) {
+  private async computeByEmotion(userId: string, accountId?: string) {
     const trades = await this.prisma.trade.findMany({
-      where: { userId, pnl: { not: null } },
+      where: { userId, ...this.accCond(accountId), pnl: { not: null } },
       select: { emotion: true, pnl: true, riskReward: true },
     });
 
@@ -216,9 +220,9 @@ export class AnalyticsService {
     }));
   }
 
-  private async computeByHour(userId: string) {
+  private async computeByHour(userId: string, accountId?: string) {
     const trades = await this.prisma.trade.findMany({
-      where: { userId, pnl: { not: null } },
+      where: { userId, ...this.accCond(accountId), pnl: { not: null } },
       select: { tradedAt: true, pnl: true },
     });
 
@@ -246,10 +250,10 @@ export class AnalyticsService {
     }));
   }
 
-  private async computeEquityCurve(userId: string) {
+  private async computeEquityCurve(userId: string, accountId?: string) {
     const [trades, user] = await Promise.all([
       this.prisma.trade.findMany({
-        where: { userId, pnl: { not: null } },
+        where: { userId, ...this.accCond(accountId), pnl: { not: null } },
         select: { tradedAt: true, pnl: true },
         orderBy: { tradedAt: 'asc' },
       }),
@@ -277,6 +281,7 @@ export class AnalyticsService {
     userId: string,
     from?: Date,
     to?: Date,
+    accountId?: string,
   ): Promise<{ points: EquityPoint[]; startingCapital: number | null }> {
     const [user, trades] = await Promise.all([
       this.prisma.user.findUnique({
@@ -286,6 +291,7 @@ export class AnalyticsService {
       this.prisma.trade.findMany({
         where: {
           userId,
+          ...this.accCond(accountId),
           pnl: { not: null },
           ...(from || to
             ? {
@@ -335,7 +341,7 @@ export class AnalyticsService {
     return { points, startingCapital };
   }
 
-  private async computeEquityCurveCurrentMonth(userId: string) {
+  private async computeEquityCurveCurrentMonth(userId: string, accountId?: string) {
     const now = new Date();
     const from = new Date(now.getFullYear(), now.getMonth(), 1);
     const to = new Date(
@@ -346,15 +352,15 @@ export class AnalyticsService {
       59,
       59,
     );
-    return this.computeEquityCurveDaily(userId, from, to);
+    return this.computeEquityCurveDaily(userId, from, to, accountId);
   }
 
-  private async computeMonthlyActivity(userId: string, year: number, month: number) {
+  private async computeMonthlyActivity(userId: string, year: number, month: number, accountId?: string) {
     const start = new Date(year, month - 1, 1);
     const end = new Date(year, month, 1);
 
     const trades = await this.prisma.trade.findMany({
-      where: { userId, pnl: { not: null }, tradedAt: { gte: start, lt: end } },
+      where: { userId, ...this.accCond(accountId), pnl: { not: null }, tradedAt: { gte: start, lt: end } },
       select: { tradedAt: true, pnl: true },
       orderBy: { tradedAt: 'asc' },
     });
@@ -394,9 +400,9 @@ export class AnalyticsService {
     };
   }
 
-  private async computeTopAssets(userId: string) {
+  private async computeTopAssets(userId: string, accountId?: string) {
     const trades = await this.prisma.trade.findMany({
-      where: { userId, pnl: { not: null } },
+      where: { userId, ...this.accCond(accountId), pnl: { not: null } },
       select: { asset: true, pnl: true },
     });
 

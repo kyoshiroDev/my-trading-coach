@@ -114,4 +114,25 @@ describe('AccountsService', () => {
     prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'autre', status: 'ACTIVE' });
     await expect(svc.remove('u1', 'a1')).rejects.toBeInstanceOf(NotFoundException);
   });
+
+  describe('accountWhere — filtre lecture (rétrocompatible + ownership)', () => {
+    it('absent → fragment vide (agrégé, comportement actuel)', async () => {
+      expect(await svc.accountWhere('u1', undefined)).toEqual({});
+      expect(prisma.tradingAccount.findUnique).not.toHaveBeenCalled();
+    });
+
+    it("'all' → fragment vide", async () => {
+      expect(await svc.accountWhere('u1', 'all')).toEqual({});
+    });
+
+    it('compte du user → { accountId }', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ userId: 'u1' });
+      expect(await svc.accountWhere('u1', 'a1')).toEqual({ accountId: 'a1' });
+    });
+
+    it('compte d\'un autre user → 404 (refusé)', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ userId: 'autre' });
+      await expect(svc.accountWhere('u1', 'a1')).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
 });
