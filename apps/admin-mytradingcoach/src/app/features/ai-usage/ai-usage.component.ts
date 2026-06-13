@@ -2,10 +2,10 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signa
 import { DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
-import type { ChartConfiguration } from 'chart.js';
+import type { ChartConfiguration, ScriptableContext } from 'chart.js';
 import { AdminApi, AiUsageData } from '../../core/api/admin.api';
 import { ChartCanvasComponent } from '../../shared/components/chart-canvas/chart-canvas.component';
-import { CHART_COLORS } from '../../shared/charts/chart-theme';
+import { CHART_COLORS, fade, gridAxis, noLegend } from '../../shared/charts/chart-theme';
 
 @Component({
   selector: 'mtc-admin-ai-usage',
@@ -35,6 +35,30 @@ export class AiUsageComponent {
       },
     } as ChartConfiguration;
   });
+
+  // Coût quotidien sur 7 jours (ligne) — aligné sur le mockup « Coût quotidien (7j) ».
+  protected readonly dailyConfig = computed<ChartConfiguration>(() => {
+    const d = this.data()?.daily ?? [];
+    return {
+      type: 'line',
+      data: {
+        labels: d.map((p) => this.shortDate(p.date)),
+        datasets: [{
+          label: 'Coût USD',
+          data: d.map((p) => p.cost),
+          borderColor: CHART_COLORS.amber,
+          backgroundColor: (ctx: ScriptableContext<'line'>) => fade(ctx, CHART_COLORS.amber),
+          fill: true, tension: 0.35, pointRadius: 0, borderWidth: 2,
+        }],
+      },
+      options: { maintainAspectRatio: false, plugins: noLegend, scales: { x: { grid: { display: false } }, y: { grid: gridAxis, beginAtZero: true } } },
+    } as ChartConfiguration;
+  });
+
+  private shortDate(iso: string): string {
+    const [, m, day] = iso.split('-');
+    return `${day}/${m}`;
+  }
 
   constructor() {
     this.adminApi.aiUsage().pipe(

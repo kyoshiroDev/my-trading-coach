@@ -83,7 +83,30 @@ export class AdminService {
       cost:    u._sum.costUsd ?? 0,
     }));
 
-    return { today, week, byFeature, topUsers };
+    // Série quotidienne du coût sur 7 jours (graphe « Coût quotidien (7j) »).
+    // Bornée à 7 jours d'activité IA (volume faible, IA = prod uniquement) ; on bucketise
+    // en JS par jour local pour rester cohérent avec startOfToday/startOfWeek.
+    // Pas de filtre isDemo : aligné sur les autres agrégats ai-usage ci-dessus, pour que la
+    // somme quotidienne réconcilie avec le KPI « Coût USD (7j) » (le démo est lecture seule).
+    const weekLogs = await this.prisma.aiUsageLog.findMany({
+      where: { createdAt: { gte: startOfWeek } },
+      select: { createdAt: true, costUsd: true },
+    });
+    const dayKey = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const dailyMap = new Map<string, number>();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(startOfToday);
+      d.setDate(startOfToday.getDate() - i);
+      dailyMap.set(dayKey(d), 0);
+    }
+    for (const log of weekLogs) {
+      const key = dayKey(log.createdAt);
+      if (dailyMap.has(key)) dailyMap.set(key, (dailyMap.get(key) ?? 0) + log.costUsd);
+    }
+    const daily = [...dailyMap.entries()].map(([date, cost]) => ({ date, cost }));
+
+    return { today, week, byFeature, topUsers, daily };
   }
 
   /**
