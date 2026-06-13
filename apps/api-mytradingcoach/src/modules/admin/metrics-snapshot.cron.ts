@@ -91,8 +91,8 @@ export class MetricsSnapshotCron {
     const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000);
     const oneDayAgo = new Date(Date.now() - 86_400_000);
 
-    const [totalUsers, activeUsers, newThisDay] = await Promise.all([
-      this.prisma.user.count({ where: { isDemo: false } }),
+    // totalUsers vient d'adminStats() (source unique) → snapshot et KPI live concordent.
+    const [activeUsers, newThisDay] = await Promise.all([
       this.prisma.user.count({
         where: { isDemo: false, trades: { some: { tradedAt: { gte: sevenDaysAgo } } } },
       }),
@@ -102,7 +102,7 @@ export class MetricsSnapshotCron {
     const data = {
       mrr: stats.mrr,
       arr: stats.arr,
-      totalUsers,
+      totalUsers: stats.totalUsers,
       freeUsers: stats.freeUsers,
       starterUsers: stats.totalStarter,
       premiumUsers: stats.totalPremium,
