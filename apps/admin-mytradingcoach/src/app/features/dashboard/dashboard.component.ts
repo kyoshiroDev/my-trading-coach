@@ -179,11 +179,7 @@ export class DashboardComponent {
     ];
   });
 
-  protected readonly totalUsers = computed(() => {
-    const s = this.stats();
-    if (!s) return 0;
-    return s.freeUsers + s.totalStarter + s.totalPremium;
-  });
+  protected readonly totalUsers = computed(() => this.stats()?.totalUsers ?? 0);
 
   // ── Anneaux système (valeur % + ton selon seuil) ──────────────────────────
   protected readonly ramPct = computed(() => this.pct(this.vpsStats()?.ram));

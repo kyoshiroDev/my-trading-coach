@@ -12,6 +12,7 @@ export interface AdminUser {
 
 export interface AdminStats {
   mrr: number; arr: number;
+  totalUsers: number;
   totalStarter: number; totalPremium: number;
   starterMonthly: number; starterAnnual: number;
   premiumMonthly: number; premiumAnnual: number;
