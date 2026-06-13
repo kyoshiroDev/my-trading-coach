@@ -102,7 +102,7 @@ export class UsersService {
   async getOnlineUsers() {
     const threshold = new Date(Date.now() - 5 * 60 * 1000);
     return this.prisma.user.findMany({
-      where: { lastSeenAt: { gte: threshold } },
+      where: { isDemo: false, lastSeenAt: { gte: threshold } },
       orderBy: { lastSeenAt: 'desc' },
       select: {
         id: true,
@@ -119,14 +119,16 @@ export class UsersService {
   // ── Admin — liste paginée ─────────────────────────────────────────────────
 
   async adminFindAll(page = 1, limit = 20, search?: string) {
+    // Hors démo (cohérence avec le KPI « Utilisateurs » du dashboard).
     const where: Prisma.UserWhereInput = search
       ? {
+          isDemo: false,
           OR: [
             { email: { contains: search, mode: 'insensitive' } },
             { name: { contains: search, mode: 'insensitive' } },
           ],
         }
-      : {};
+      : { isDemo: false };
 
     const skip = (page - 1) * limit;
     const [users, total] = await Promise.all([
@@ -419,19 +421,30 @@ export class UsersService {
       lastSeenAt: true, lastLoginAt: true, createdAt: true,
     } as const;
 
+    // Abonnés payants = Premium avec abonnement Stripe (hors démo).
+    const stripeWhere = {
+      isDemo: false,
+      plan: 'PREMIUM' as Plan,
+      stripeInterval: { not: null },
+    };
+    // « Accès manuels » = TOUT accès élevé (Starter/Premium) octroyé SANS abonnement
+    // Stripe (bêta, ambassadeur, comp) — pas seulement le rôle BETA_TESTER. Hors démo.
+    const manualWhere = {
+      isDemo: false,
+      plan: { in: ['STARTER', 'PREMIUM'] as Plan[] },
+      stripeInterval: null,
+    };
     const [stripeUsers, stripeTotal, betaTesters] = await Promise.all([
       this.prisma.user.findMany({
-        where: { plan: 'PREMIUM', stripeInterval: { not: null } },
+        where: stripeWhere,
         skip,
         take: limit,
         orderBy: { stripeCurrentPeriodEnd: 'desc' },
         select: userSelect,
       }),
-      this.prisma.user.count({
-        where: { plan: 'PREMIUM', stripeInterval: { not: null } },
-      }),
+      this.prisma.user.count({ where: stripeWhere }),
       this.prisma.user.findMany({
-        where: { role: 'BETA_TESTER' },
+        where: manualWhere,
         orderBy: { createdAt: 'desc' },
         select: userSelect,
       }),
