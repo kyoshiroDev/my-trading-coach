@@ -8,6 +8,7 @@ import {
 import { Plan, Role, Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AnalyticsService } from '../analytics/analytics.service';
+import { AccountsService } from '../accounts/accounts.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
@@ -28,6 +29,7 @@ export class TradesService {
   constructor(
     private prisma: PrismaService,
     private readonly analyticsService: AnalyticsService,
+    private readonly accounts: AccountsService,
   ) {}
 
   async create(
@@ -42,8 +44,17 @@ export class TradesService {
 
     const activeSession = await this.prisma.tradeSession.findFirst({
       where: { userId, status: SessionStatus.ACTIVE },
-      select: { id: true },
+      select: { id: true, accountId: true },
     });
+
+    // accountId : fourni (validé) → sinon hérité de la session active → sinon compte
+    // par défaut (anti-NULL : jamais de trade sans compte).
+    let accountId: string | undefined;
+    if (dto.accountId && dto.accountId !== 'all') {
+      accountId = (await this.accounts.accountWhere(userId, dto.accountId)).accountId;
+    }
+    if (!accountId) accountId = activeSession?.accountId ?? undefined;
+    if (!accountId) accountId = await this.accounts.ensureDefaultAccountId(userId);
 
     const trade = await this.prisma.trade.create({
       data: {
@@ -55,6 +66,7 @@ export class TradesService {
         capitalEngaged: dto.capitalEngaged ?? null,
         userId,
         sessionId: activeSession?.id ?? null,
+        accountId,
         tradedAt: dto.tradedAt ? new Date(dto.tradedAt) : new Date(),
       },
     });

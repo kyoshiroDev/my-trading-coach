@@ -34,7 +34,7 @@ export class SessionController {
     @CurrentUser() user: { id: string },
     @Body() dto: CreateSessionDto,
   ) {
-    return this.sessionService.startSession(user.id, dto.mood);
+    return this.sessionService.startSession(user.id, dto.mood, dto.accountId);
   }
 
   @Get('active')

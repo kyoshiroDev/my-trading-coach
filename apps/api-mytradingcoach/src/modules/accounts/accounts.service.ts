@@ -95,6 +95,33 @@ export class AccountsService {
     return { accountId };
   }
 
+  /**
+   * Compte par défaut (anti-NULL) pour une écriture sans accountId explicite :
+   * le « Compte principal » actif, sinon le compte actif le plus récent, sinon on
+   * CRÉE le « Compte principal ». Renvoie toujours un id (jamais NULL).
+   * (Les comptes démo sont read-only — bloqués en amont par DemoReadOnlyGuard.)
+   */
+  async ensureDefaultAccountId(userId: string): Promise<string> {
+    const principal = await this.prisma.tradingAccount.findFirst({
+      where: { userId, status: AccountStatus.ACTIVE, label: 'Compte principal' },
+      select: { id: true },
+    });
+    if (principal) return principal.id;
+
+    const recent = await this.prisma.tradingAccount.findFirst({
+      where: { userId, status: AccountStatus.ACTIVE },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true },
+    });
+    if (recent) return recent.id;
+
+    const created = await this.prisma.tradingAccount.create({
+      data: { userId, label: 'Compte principal' },
+      select: { id: true },
+    });
+    return created.id;
+  }
+
   /** Vérifie que le compte existe ET appartient au user (sinon 404, sans fuite d'existence). */
   private async assertOwner(
     userId: string,

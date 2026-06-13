@@ -34,6 +34,7 @@ function makePrisma() {
     tradingAccount: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -133,6 +134,32 @@ describe('AccountsService', () => {
     it('compte d\'un autre user → 404 (refusé)', async () => {
       prisma.tradingAccount.findUnique.mockResolvedValue({ userId: 'autre' });
       await expect(svc.accountWhere('u1', 'a1')).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('ensureDefaultAccountId — défaut anti-NULL', () => {
+    it('« Compte principal » actif existe → renvoie son id', async () => {
+      prisma.tradingAccount.findFirst.mockResolvedValueOnce({ id: 'principal' });
+      expect(await svc.ensureDefaultAccountId('u1')).toBe('principal');
+      expect(prisma.tradingAccount.create).not.toHaveBeenCalled();
+    });
+
+    it('pas de principal mais un compte actif récent → renvoie le récent', async () => {
+      prisma.tradingAccount.findFirst
+        .mockResolvedValueOnce(null) // pas de Compte principal
+        .mockResolvedValueOnce({ id: 'recent' }); // actif le plus récent
+      expect(await svc.ensureDefaultAccountId('u1')).toBe('recent');
+      expect(prisma.tradingAccount.create).not.toHaveBeenCalled();
+    });
+
+    it('aucun compte actif → crée le « Compte principal » (jamais NULL)', async () => {
+      prisma.tradingAccount.findFirst.mockResolvedValue(null);
+      prisma.tradingAccount.create.mockResolvedValue({ id: 'created' });
+      expect(await svc.ensureDefaultAccountId('u1')).toBe('created');
+      expect(prisma.tradingAccount.create).toHaveBeenCalledWith({
+        data: { userId: 'u1', label: 'Compte principal' },
+        select: { id: true },
+      });
     });
   });
 });
