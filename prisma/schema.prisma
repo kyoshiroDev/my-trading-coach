@@ -27,6 +27,7 @@ model User {
   stripeInterval           String? // 'month' | 'year'
   stripeCurrentPeriodEnd   DateTime?
   stripeSubscriptionStatus String? // 'active' | 'trialing' | 'past_due' | 'unpaid' | 'canceled'
+  subscriptionCanceledAt   DateTime? // date de résiliation (churn fiable) ; remis à null au réabonnement
 
   // Compte vitrine en lecture seule (démo landing). Bloque les écritures
   // (DemoReadOnlyGuard) et est exclu de toutes les métriques/crons/emails admin.
