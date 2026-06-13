@@ -1,0 +1,28 @@
+@if (userStore.isPremium()) {
+  <div class="acct-tabs">
+    <button class="acct-tab"
+            [class.active]="store.selectedAccountId() === 'all'"
+            (click)="store.select('all')">
+      <span class="dot" style="background:var(--blue-bright)"></span>
+      Tous les comptes
+    </button>
+    @for (a of store.accounts(); track a.id) {
+      <button class="acct-tab"
+              [class.active]="store.selectedAccountId() === a.id"
+              (click)="store.select(a.id)">
+        <span class="dot" [style.background]="dotColor(a)"></span>
+        {{ a.label }}
+      </button>
+    }
+  </div>
+} @else {
+  <!-- Non-Premium : option désactivée + mini-CTA Premium (aucun appel /accounts). -->
+  <button class="acct-locked" type="button" (click)="showPlanModal.set(true)">
+    <span class="dot" style="background:var(--text-3)"></span>
+    Multi-comptes
+    <span class="acct-premium-badge">PREMIUM</span>
+  </button>
+  @if (showPlanModal()) {
+    <mtc-plan-modal (closed)="showPlanModal.set(false)" />
+  }
+}
