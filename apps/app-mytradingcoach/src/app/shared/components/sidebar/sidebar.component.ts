@@ -87,6 +87,18 @@ import { environment } from '../../../../environments/environment';
           </a>
 
           <a
+            routerLink="/accounts"
+            routerLinkActive="active"
+            class="nav-item"
+            data-testid="nav-accounts"
+            (click)="closeSidebar()"
+          >
+            <span class="nav-icon">💼</span>
+            Mes comptes
+            <span class="badge">PREMIUM</span>
+          </a>
+
+          <a
             routerLink="/journal"
             routerLinkActive="active"
             class="nav-item"

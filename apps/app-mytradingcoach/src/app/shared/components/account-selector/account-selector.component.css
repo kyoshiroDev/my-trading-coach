@@ -1,0 +1,34 @@
+/* Onglets de sélection de compte (repris de la maquette dashboard multi-comptes) */
+.acct-tabs { display: flex; gap: 7px; flex-wrap: wrap; }
+
+.acct-tab {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 13px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg-card);
+  font-size: 12.5px; color: var(--text-2); cursor: pointer;
+  font-family: var(--font-mono); transition: all 0.15s;
+}
+.acct-tab:hover { border-color: var(--border-hover); color: var(--text); }
+.acct-tab.active {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.45);
+  color: var(--blue-bright);
+}
+.acct-tab .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+/* Non-Premium : chip verrouillé + badge Premium */
+.acct-locked {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 13px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg-card);
+  font-size: 12.5px; color: var(--text-3); cursor: pointer;
+  font-family: var(--font-mono); transition: all 0.15s;
+}
+.acct-locked:hover { border-color: var(--border-hover); }
+.acct-locked .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.acct-premium-badge {
+  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: 0.5px; padding: 2px 6px; border-radius: 5px;
+  background: var(--blue-glow); color: var(--blue-bright);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}

@@ -1,0 +1,271 @@
+<mtc-topbar
+  title="Mes comptes"
+  [showAddButton]="userStore.isPremium()"
+  addLabel="Ajouter un compte"
+  addTestId="add-account-btn"
+  (addClick)="openCreate()"
+/>
+
+<div class="content">
+
+  @if (!userStore.isPremium()) {
+    <!-- ── Upsell (FREE / STARTER) ── -->
+    <div class="acct-upsell" data-testid="accounts-upsell">
+      <div class="upsell-ic">💼</div>
+      <h2 class="upsell-title">Multi-comptes — réservé au plan Premium</h2>
+      <p class="upsell-sub">
+        Suis tes stats par compte (prop firms, comptes perso), filtre tout l'app par compte,
+        et garde un œil sur ton objectif et ta marge avant drawdown.
+      </p>
+      <button class="btn" (click)="showPlanModal.set(true)" data-testid="accounts-upsell-cta">
+        Passer au Premium
+      </button>
+    </div>
+  } @else {
+
+    <!-- ── Vue agrégée ── -->
+    <div class="stats-row">
+      <div class="stat-card" style="--c:var(--blue)">
+        <div class="stat-label">Capital suivi</div>
+        <div class="stat-value">{{ trackedCapital() | number:'1.0-0' }} $</div>
+        <div class="stat-sub">{{ visibleAccountsCount() }} compte(s) actif(s)</div>
+      </div>
+      <div class="stat-card" style="--c:var(--green)">
+        <div class="stat-label">P&amp;L cumulé</div>
+        <div class="stat-value" [class.text-green]="totalPnl() >= 0" [class.text-red]="totalPnl() < 0">
+          {{ totalPnl() >= 0 ? '+' : '' }}{{ totalPnl() | number:'1.0-0' }} $
+        </div>
+        <div class="stat-sub">tous comptes · estimé</div>
+      </div>
+      <div class="stat-card" style="--c:var(--blue)">
+        <div class="stat-label">Trades cumulés</div>
+        <div class="stat-value">{{ totalTrades() }}</div>
+        <div class="stat-sub">trades loggés</div>
+      </div>
+      <div class="stat-card" style="--c:var(--yellow)">
+        <div class="stat-label">À surveiller</div>
+        <div class="stat-value" [class.text-yellow]="atRiskCount() > 0">{{ atRiskCount() }}</div>
+        <div class="stat-sub">proche du drawdown</div>
+      </div>
+    </div>
+
+    <!-- ── Sélecteur global (filtre l'app) ── -->
+    <div class="acct-bar">
+      <span class="acct-bar-lbl">Compte actif</span>
+      <mtc-account-selector />
+    </div>
+
+    @if (store.isLoading() && store.accounts().length === 0) {
+      <div class="acct-empty">Chargement des comptes…</div>
+    }
+
+    <!-- ── Cartes comptes ── -->
+    <div class="acct-grid">
+
+      @for (a of store.accounts(); track a.id) {
+        <div class="acct-card" [class.is-archived]="a.status === 'ARCHIVED'">
+          <div class="acct-top">
+            <div class="acct-ic">{{ typeIcon(a.type) }}</div>
+            <div class="acct-id">
+              <div class="acct-name">{{ a.label }}</div>
+              <div class="acct-meta">
+                @if (a.broker) { <span class="tag firm">{{ a.broker }}</span> }
+                <span class="tag {{ typeTagClass(a.type) }}">{{ typeLabel(a.type) }}</span>
+                <span class="acct-status">
+                  <span class="dot" [style.background]="dotColor(a)"></span> {{ statusLabel(a.status) }}
+                </span>
+              </div>
+            </div>
+            <div class="acct-menu-wrap">
+              <button class="acct-menu" (click)="toggleMenu(a.id)" [attr.data-testid]="'account-menu-' + a.id">⋯</button>
+              @if (menuOpenId() === a.id) {
+                <div class="menu-pop">
+                  <button class="menu-item" (click)="openEdit(a)">✏️ Modifier</button>
+                  <button class="menu-item danger" (click)="confirmDelete(a)">🗑️ Supprimer</button>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="acct-stats">
+            <div class="mini">
+              <div class="mini-v" [class.text-green]="a.metrics.realizedPnl >= 0" [class.text-red]="a.metrics.realizedPnl < 0">
+                {{ a.metrics.realizedPnl >= 0 ? '+' : '' }}{{ a.metrics.realizedPnl | number:'1.0-0' }} $
+              </div>
+              <div class="mini-l">P&amp;L</div>
+            </div>
+            <div class="mini">
+              <div class="mini-v">{{ a.metrics.currentBalance | number:'1.0-0' }} $</div>
+              <div class="mini-l">Solde</div>
+            </div>
+            <div class="mini">
+              <div class="mini-v">{{ a.metrics.tradesCount }}</div>
+              <div class="mini-l">Trades</div>
+            </div>
+            <div class="mini">
+              <div class="mini-v">{{ a.metrics.startingBalance | number:'1.0-0' }} $</div>
+              <div class="mini-l">Départ</div>
+            </div>
+          </div>
+
+          @if (a.metrics.objective || a.metrics.drawdown) {
+            <div class="rules-head">📋 Règles prop firm <span class="est-pill">estimé</span></div>
+
+            @if (a.metrics.objective; as obj) {
+              <div class="rule">
+                <div class="rule-top">
+                  <span class="rule-name">Objectif</span>
+                  @if (objReached(a)) {
+                    <span class="rule-val text-green">atteint</span>
+                  } @else {
+                    <span class="rule-val">{{ obj.current | number:'1.0-0' }} $ / {{ obj.target | number:'1.0-0' }} $</span>
+                  }
+                </div>
+                <div class="bar-track">
+                  <div class="bar-fill" [style.width.%]="objWidth(a)"
+                       [style.background]="objReached(a) ? 'var(--green)' : 'var(--blue)'"></div>
+                </div>
+              </div>
+            }
+
+            @if (a.metrics.drawdown; as dd) {
+              <div class="rule">
+                <div class="rule-top">
+                  <span class="rule-name">Marge avant {{ dd.type === 'TRAILING' ? 'trailing ' : '' }}drawdown</span>
+                  @if (dd.breached) {
+                    <span class="rule-val text-red">dépassé</span>
+                  } @else {
+                    <span class="rule-val" [style.color]="ddColor(a)">{{ dd.margin | number:'1.0-0' }} $ restants</span>
+                  }
+                </div>
+                <div class="bar-track">
+                  <div class="bar-fill" [style.width.%]="ddWidth(a)" [style.background]="ddColor(a)"></div>
+                </div>
+              </div>
+            }
+
+            <div class="rule-disclaimer">{{ a.metrics.disclaimer }}</div>
+          } @else {
+            <div class="rules-head muted">📋 Pas de règles (compte perso)</div>
+          }
+        </div>
+      }
+
+      <!-- Ajouter -->
+      <button class="acct-add" (click)="openCreate()" data-testid="add-account-tile">
+        <div class="plus">+</div>
+        <div>Ajouter un compte</div>
+        <div class="acct-add-sub">prop firm ou perso</div>
+      </button>
+
+    </div>
+  }
+
+</div>
+
+<!-- ── Modal create / edit ── -->
+@if (formOpen()) {
+  <div class="modal-overlay" (click)="closeForm()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3 class="modal-title">{{ editingId() ? 'Modifier le compte' : 'Nouveau compte' }}</h3>
+        <button class="modal-x" (click)="closeForm()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <label class="fld">
+          <span class="fld-lbl">Nom du compte *</span>
+          <input class="inp" type="text" [ngModel]="form().label"
+                 (ngModelChange)="patch({ label: $event })"
+                 placeholder="Apex 50k #1" data-testid="account-label" />
+        </label>
+
+        <label class="fld">
+          <span class="fld-lbl">Type</span>
+          <select class="inp" [ngModel]="form().type" (ngModelChange)="patch({ type: $event })">
+            <option value="EVALUATION">Évaluation (prop firm)</option>
+            <option value="FUNDED">Funded (prop firm)</option>
+            <option value="PERSONAL">Personnel</option>
+            <option value="DEMO">Démo</option>
+          </select>
+        </label>
+
+        @if (isPropFirm(form().type)) {
+          <label class="fld">
+            <span class="fld-lbl">Prop firm</span>
+            <input class="inp" type="text" [ngModel]="form().broker"
+                   (ngModelChange)="patch({ broker: $event })" placeholder="Apex, Lucid, FTMO…" />
+          </label>
+        }
+
+        <div class="fld-row">
+          <label class="fld">
+            <span class="fld-lbl">Capital du compte</span>
+            <input class="inp" type="number" [ngModel]="form().accountSize"
+                   (ngModelChange)="patch({ accountSize: $event })" placeholder="50000" />
+          </label>
+          <label class="fld">
+            <span class="fld-lbl">Solde de départ</span>
+            <input class="inp" type="number" [ngModel]="form().startingBalance"
+                   (ngModelChange)="patch({ startingBalance: $event })" placeholder="50000" />
+          </label>
+          <label class="fld fld-sm">
+            <span class="fld-lbl">Devise</span>
+            <input class="inp" type="text" [ngModel]="form().currency"
+                   (ngModelChange)="patch({ currency: $event })" placeholder="USD" />
+          </label>
+        </div>
+
+        @if (isPropFirm(form().type)) {
+          <div class="fld-row">
+            <label class="fld">
+              <span class="fld-lbl">Objectif de profit</span>
+              <input class="inp" type="number" [ngModel]="form().profitTarget"
+                     (ngModelChange)="patch({ profitTarget: $event })" placeholder="3000" />
+            </label>
+            <label class="fld">
+              <span class="fld-lbl">Drawdown max</span>
+              <input class="inp" type="number" [ngModel]="form().maxDrawdown"
+                     (ngModelChange)="patch({ maxDrawdown: $event })" placeholder="2500" />
+            </label>
+            <label class="fld">
+              <span class="fld-lbl">Type drawdown</span>
+              <select class="inp" [ngModel]="form().drawdownType" (ngModelChange)="patch({ drawdownType: $event })">
+                <option value="TRAILING">Trailing</option>
+                <option value="STATIC">Statique</option>
+              </select>
+            </label>
+          </div>
+        }
+
+        @if (editingId()) {
+          <label class="fld">
+            <span class="fld-lbl">Statut</span>
+            <select class="inp" [ngModel]="form().status" (ngModelChange)="patch({ status: $event })">
+              <option value="ACTIVE">Actif</option>
+              <option value="PASSED">Validé</option>
+              <option value="FAILED">Échoué</option>
+              <option value="ARCHIVED">Archivé</option>
+            </select>
+          </label>
+        }
+
+        <p class="modal-note">
+          Les règles sont estimées d'après tes trades loggés (objectif + marge drawdown) — pas
+          l'equity temps réel de la prop firm.
+        </p>
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn-ghost" (click)="closeForm()">Annuler</button>
+        <button class="btn" [disabled]="!canSubmit()" (click)="submitForm()" data-testid="account-submit">
+          {{ saving() ? 'Enregistrement…' : (editingId() ? 'Enregistrer' : 'Créer le compte') }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showPlanModal()) {
+  <mtc-plan-modal (closed)="showPlanModal.set(false)" />
+}

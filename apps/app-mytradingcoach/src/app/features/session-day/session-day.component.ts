@@ -18,6 +18,9 @@ import { SessionMorningComponent } from '../dashboard/components/session-morning
 import { SessionLiveComponent } from '../dashboard/components/session-live/session-live.component';
 import { LiveModeService } from '../../core/services/live-mode.service';
 import { MoodState, SessionApi, SessionTrade } from '../../core/api/session.api';
+import { SelectedAccountStore } from '../../core/stores/selected-account.store';
+import { UserStore } from '../../core/stores/user.store';
+import { AccountSelectorComponent } from '../../shared/components/account-selector/account-selector.component';
 import { DebriefObjective } from '../../core/api/debrief.api';
 import { evaluateObjectiveCheck } from './objective-check.util';
 import { EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe } from '../../shared/pipes';
@@ -41,7 +44,7 @@ const EMOTION_COLORS: Record<string, string> = {
 @Component({
   selector: 'mtc-session-day',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, TopbarComponent, SessionMorningComponent, SessionLiveComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
+  imports: [DatePipe, DecimalPipe, TopbarComponent, SessionMorningComponent, SessionLiveComponent, AccountSelectorComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-day.component.css',
   template: `
@@ -85,7 +88,12 @@ const EMOTION_COLORS: Record<string, string> = {
       <div class="page-header">
         <div class="greeting-block">
           <h1 class="greeting-title">Ma session</h1>
-          <div class="greeting-sub" style="text-transform:capitalize">{{ today | date:'EEEE d MMMM':'':'fr-FR' }}</div>
+          <div class="greeting-sub" style="text-transform:capitalize">
+            {{ today | date:'EEEE d MMMM':'':'fr-FR' }}
+            @if (activeAccountLabel(); as label) {
+              <span class="sd-acct-chip">· {{ label }}</span>
+            }
+          </div>
         </div>
         <div class="tabs-and-badge">
           <div class="tabs-block">
@@ -117,6 +125,17 @@ const EMOTION_COLORS: Record<string, string> = {
       </div>
 
       @if (activeTab() === 'morning') {
+        @if (userStore.isPremium() && selectedAccount.activeAccounts().length > 0) {
+          <div class="sd-acct-bar">
+            <span class="sd-acct-bar-lbl">Compte de la session</span>
+            <mtc-account-selector />
+            @if (needsAccount()) {
+              <span class="sd-acct-bar-hint" data-testid="account-required">
+                Choisis un compte précis (pas « Tous les comptes ») pour lancer la session.
+              </span>
+            }
+          </div>
+        }
         <mtc-session-morning
           [yesterdayRecap]="store.yesterdayRecap()"
           [objectives]="store.currentObjectives()"
@@ -345,6 +364,8 @@ const EMOTION_COLORS: Record<string, string> = {
 })
 export class SessionDayComponent implements OnInit, OnDestroy {
   protected readonly store          = inject(SessionStore);
+  protected readonly selectedAccount = inject(SelectedAccountStore);
+  protected readonly userStore      = inject(UserStore);
   private  readonly liveModeService = inject(LiveModeService);
   private  readonly sessionApi      = inject(SessionApi);
   private  readonly destroyRef      = inject(DestroyRef);
@@ -358,8 +379,25 @@ export class SessionDayComponent implements OnInit, OnDestroy {
   protected readonly journalText       = signal('');
   protected readonly journalSaved      = signal(false);
   protected readonly savedFlash        = signal(false);
+  protected readonly needsAccount      = signal(false);
   protected readonly moods             = MOODS;
   protected readonly today             = new Date();
+
+  // ── Compte de la session ────────────────────────────────────────────────
+  // Vrai si l'utilisateur Premium a des comptes mais reste sur « Tous » :
+  // une session = un compte → on demande un choix précis avant de lancer.
+  protected readonly accountChoiceRequired = computed(
+    () => this.userStore.isPremium()
+      && this.selectedAccount.activeAccounts().length > 0
+      && this.selectedAccount.accountParam() === undefined,
+  );
+
+  // Libellé du compte rattaché à la session active (en-tête « Session · Apex 50k »).
+  protected readonly activeAccountLabel = computed(() => {
+    const id = this.store.activeSession()?.accountId;
+    if (!id) return null;
+    return this.selectedAccount.accounts().find(a => a.id === id)?.label ?? null;
+  });
 
   // ── Session duration ──────────────────────────────────────────────────────
   protected readonly sessionDuration = computed(() => {
@@ -524,13 +562,25 @@ export class SessionDayComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnInit(): void { this.store.loadSessionData(); }
+  ngOnInit(): void {
+    this.store.loadSessionData();
+    this.selectedAccount.load(); // Premium-only en interne ; alimente le sélecteur
+  }
   ngOnDestroy(): void {
     if (this.journalSaveTimer)  clearTimeout(this.journalSaveTimer);
   }
 
   protected selectTab(tab: 'morning' | 'live' | 'debrief'): void { this.activeTab.set(tab); }
-  protected startSession(): void { this.store.startSession(); this.activeTab.set('live'); }
+  protected startSession(): void {
+    // 1 session = 1 compte : si « Tous » est sélectionné (Premium + comptes), on bloque.
+    if (this.accountChoiceRequired()) {
+      this.needsAccount.set(true);
+      return;
+    }
+    this.needsAccount.set(false);
+    this.store.startSession(this.selectedAccount.accountParam());
+    this.activeTab.set('live');
+  }
 
   protected closeAndGoToDebrief(): void {
     this.confirmCloseOpen.set(false);
