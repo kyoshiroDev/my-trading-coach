@@ -18,6 +18,37 @@
 .act-off { color: var(--text3); }
 .sql-wrap { margin-top: 18px; }
 
+.row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.revoke-btn { padding: 5px 11px; color: var(--red, #ef4444); border-color: var(--red-dim, rgba(239,68,68,.25)); }
+.revoke-btn:hover { color: var(--red, #ef4444); border-color: var(--red, #ef4444); }
+.revoke-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Modale (ajout / confirmation retrait) */
+.modal-overlay { position: fixed; inset: 0; background: rgba(4,8,14,.7); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+.modal { background: var(--bg-card, var(--bg2)); border: 1px solid var(--border); border-radius: var(--r-lg); width: 100%; max-width: 460px; }
+.modal-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 12px; border-bottom: 1px solid var(--border); }
+.modal-title { font-size: 16px; font-weight: 700; }
+.modal-x { background: none; border: none; color: var(--text3); font-size: 15px; cursor: pointer; }
+.modal-x:hover { color: var(--text); }
+.modal-body { padding: 18px 20px; }
+.modal-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 12px 20px 18px; border-top: 1px solid var(--border); }
+
+/* Formulaire */
+.field { display: block; margin-bottom: 14px; }
+.field-lbl { display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+.field-lbl .opt { color: var(--text3); }
+.field-input { width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--r-sm); padding: 9px 11px; color: var(--text); font-family: var(--mono); font-size: 13px; }
+.field-input:focus { outline: none; border-color: var(--teal); }
+.err-text { color: var(--red, #ef4444); font-size: 12px; margin: 4px 0 0; }
+.confirm-text { font-size: 13px; line-height: 1.6; color: var(--text2); margin: 0; }
+
+/* Résultat succès */
+.ok-text { font-size: 13px; color: var(--text); margin: 0 0 14px; }
+.result-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.result-lbl { font-size: 11px; color: var(--text3); width: 42px; }
+.result-link { font-size: 12px; color: var(--blue); word-break: break-all; }
+
+@media (max-width: 768px) { .field-input { font-size: 16px; } }
 @media (max-width: 767px) {
   .code-cell { flex-direction: column; }
 }
