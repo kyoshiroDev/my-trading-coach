@@ -153,5 +153,33 @@ const {
     }, { threshold: 0.1 });
     document.querySelectorAll('.reveal, .rstag').forEach(el => obs.observe(el));
   </script>
+
+  <!-- Parrainage : capture ?ref, le persiste 30j, et le propage à tous les CTA d'inscription -->
+  <script is:inline>
+    (function () {
+      try {
+        var KEY = 'mtc_ref', MAX_AGE = 30 * 24 * 60 * 60 * 1000;
+        var fromUrl = (new URL(window.location.href).searchParams.get('ref') || '')
+          .trim().toUpperCase();
+        if (fromUrl) {
+          try { localStorage.setItem(KEY, JSON.stringify({ code: fromUrl, ts: Date.now() })); } catch (e) {}
+        }
+        var ref = fromUrl;
+        if (!ref) {
+          try {
+            var o = JSON.parse(localStorage.getItem(KEY) || 'null');
+            if (o && o.code && (Date.now() - o.ts) < MAX_AGE) ref = o.code;
+          } catch (e) {}
+        }
+        if (!ref) return;
+        document.querySelectorAll('a[href*="/register"]').forEach(function (a) {
+          try {
+            var h = new URL(a.href);
+            if (!h.searchParams.get('ref')) { h.searchParams.set('ref', ref); a.href = h.toString(); }
+          } catch (e) {}
+        });
+      } catch (e) {}
+    })();
+  </script>
 </body>
 </html>
