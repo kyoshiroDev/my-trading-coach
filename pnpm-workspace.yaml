@@ -2,3 +2,89 @@ packages:
   - 'apps/*'
   - 'libs/*'
   - 'packages/*'
+
+# pnpm >= 11 ne lit plus "shamefully-hoist" depuis .npmrc — migré ici.
+# Requis : du code app importe des deps non déclarées (ex. zod, dép fantôme)
+# qui doivent être hoistées à la racine de node_modules.
+shamefullyHoist: true
+
+# Réglages migrés depuis le champ "pnpm" de package.json : pnpm >= 11 ne lit plus
+# ce champ et attend ces clés ici. Valeurs identiques à celles ayant généré le
+# lockfile (sinon mismatch / dé-pinning NestJS — cf. note "NestJS version pinning").
+overrides:
+  'path-to-regexp@>=8.0.0 <8.4.0': '>=8.4.0'
+  'axios@<1.16.0': '>=1.16.0'
+  'shell-quote@<1.8.4': '>=1.8.4'
+  '@babel/plugin-transform-modules-systemjs@<7.29.4': '>=7.29.4'
+  'picomatch@4': '^4.0.4'
+  'lodash@<4.18.0': '>=4.18.0'
+  '@nestjs/core': '11.1.26'
+  '@nestjs/common': '11.1.26'
+  '@nestjs/platform-express': '11.1.26'
+
+packageExtensions:
+  '@nestjs/schedule':
+    peerDependencies:
+      '@nestjs/platform-express': '*'
+      '@nestjs/websockets': '*'
+    peerDependenciesMeta:
+      '@nestjs/platform-express':
+        optional: true
+      '@nestjs/websockets':
+        optional: true
+  '@nestjs/bullmq':
+    peerDependencies:
+      '@nestjs/platform-express': '*'
+      '@nestjs/websockets': '*'
+    peerDependenciesMeta:
+      '@nestjs/platform-express':
+        optional: true
+      '@nestjs/websockets':
+        optional: true
+  '@nestjs/bull-shared':
+    peerDependencies:
+      '@nestjs/platform-express': '*'
+      '@nestjs/websockets': '*'
+    peerDependenciesMeta:
+      '@nestjs/platform-express':
+        optional: true
+      '@nestjs/websockets':
+        optional: true
+  '@nestjs/throttler':
+    peerDependencies:
+      '@nestjs/platform-express': '*'
+      '@nestjs/websockets': '*'
+    peerDependenciesMeta:
+      '@nestjs/platform-express':
+        optional: true
+      '@nestjs/websockets':
+        optional: true
+  '@sentry/nestjs':
+    peerDependencies:
+      '@nestjs/platform-express': '*'
+      '@nestjs/websockets': '*'
+    peerDependenciesMeta:
+      '@nestjs/platform-express':
+        optional: true
+      '@nestjs/websockets':
+        optional: true
+
+# pnpm >= 11 remplace "onlyBuiltDependencies" par "allowBuilds" (map name -> bool).
+# true = scripts de build autorisés (natifs nécessaires), comme dans l'ancien
+# onlyBuiltDependencies. cpu-features/puppeteer/ssh2 restaient non buildés -> false.
+allowBuilds:
+  '@parcel/watcher': true
+  '@prisma/engines': true
+  '@swc/core': true
+  argon2: true
+  cpu-features: false
+  esbuild: true
+  less: true
+  lmdb: true
+  msgpackr-extract: true
+  nx: true
+  prisma: true
+  puppeteer: false
+  sharp: true
+  ssh2: false
+  unrs-resolver: true
