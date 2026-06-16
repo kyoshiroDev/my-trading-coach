@@ -100,6 +100,14 @@ export interface AdminAmbassador {
   pendingPayout: number;
 }
 
+export interface AdminAmbassadorPromoteResult {
+  email: string;
+  name: string | null;
+  role: 'ADMIN' | 'USER' | 'BETA_TESTER' | 'AMBASSADOR';
+  referralCode: string;
+  referralLink: string;
+}
+
 export interface AdminAmbassadorDetail {
   referralCode: string;
   referrals: Array<{
@@ -255,6 +263,20 @@ export class AdminApi {
     return this.http.patch<{ data: { success: boolean } }>(
       `${environment.apiUrl}/ambassador/pay-all/${ambassadorId}`,
       {},
+    );
+  }
+
+  promoteAmbassador(email: string, referralCode?: string) {
+    return this.http.post<{ data: AdminAmbassadorPromoteResult }>(
+      `${environment.apiUrl}/ambassador/admin/promote`,
+      referralCode ? { email, referralCode } : { email },
+    );
+  }
+
+  revokeAmbassador(email: string) {
+    return this.http.post<{ data: { email: string; name: string | null; role: string } }>(
+      `${environment.apiUrl}/ambassador/admin/revoke`,
+      { email },
     );
   }
 }

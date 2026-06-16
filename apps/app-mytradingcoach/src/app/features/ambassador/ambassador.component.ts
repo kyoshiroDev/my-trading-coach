@@ -11,6 +11,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { AmbassadorApi, AmbassadorStats } from '../../core/api/ambassador.api';
 import { AmbassadorNotifService } from '../../core/services/ambassador-notif.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'mtc-ambassador',
@@ -39,7 +40,9 @@ export class AmbassadorComponent implements OnInit {
   protected readonly referralLink = computed(() => {
     const code = this.stats()?.referralCode;
     if (!code) return '';
-    return `https://mytradingcoach.app?ref=${code}`;
+    // Pointe vers la landing (page de vente) avec le code de parrainage.
+    // La landing capture ?ref et le transmet à la page d'inscription (cf. Base.astro).
+    return `${environment.landingUrl}/?ref=${code}`;
   });
 
   ngOnInit() {
