@@ -134,7 +134,7 @@ export function debriefReadyTemplate(params: {
   `, pnlBg);
 
   return {
-    subject: `📅 Ton débrief semaine ${weekNumber} est prêt — ${pnlStr}`,
+    subject: `📅 Ton débrief semaine ${weekNumber} est prêt : ${pnlStr}`,
     html: emailWrapper(content, `Semaine ${weekNumber} : ${winRate.toFixed(0)}% WR · ${pnlStr} · ${totalTrades} trades`),
   };
 }
@@ -190,7 +190,7 @@ export function dailyRecapTemplate(params: {
   `, pnlBg);
 
   return {
-    subject: `${pnl >= 0 ? '📈' : '📉'} Session ${dateStr} — ${pnlStr}`,
+    subject: `${pnl >= 0 ? '📈' : '📉'} Session ${dateStr} : ${pnlStr}`,
     html: emailWrapper(content, `${pnlStr} · ${winRate.toFixed(0)}% WR · ${tradesCount} trades`),
   };
 }
@@ -226,7 +226,7 @@ export function welcomeFreeTemplate(params: {
         </div>
         <div>
           <span style="color:#10b981;">✓</span>
-          <span style="${FONT}font-size:13px;color:#9db4ce;margin-left:8px;">Multi-marché — Futures, Crypto, Forex, Indices</span>
+          <span style="${FONT}font-size:13px;color:#9db4ce;margin-left:8px;">Multi-marché : Futures, Crypto, Forex, Indices</span>
         </div>
       </div>
 
@@ -246,14 +246,14 @@ export function welcomeFreeTemplate(params: {
 
     <div style="background:rgba(59,130,246,.04);border:1px solid rgba(59,130,246,.12);border-radius:8px;padding:16px;text-align:center;">
       <p style="${FONT}font-size:12px;color:#6b8299;margin:0;">
-        Envie d'aller plus loin ? <a href="${appUrl}/parametres" style="color:#60a5fa;text-decoration:none;font-weight:600;">Essaie Premium 7 jours gratuits</a> —
-        analytics avancés, IA Coach, Weekly Debrief automatique.
+        Tu veux la couche IA ? <a href="${appUrl}/parametres" style="color:#60a5fa;text-decoration:none;font-weight:600;">Essaie Premium 7 jours gratuits</a> :
+        analytics avancés, IA Coach et Weekly Debrief automatique.
       </p>
     </div>
   `;
 
   return {
-    subject: '👋 Bienvenue sur MyTradingCoach — ton compagnon de trading',
+    subject: '👋 Bienvenue sur MyTradingCoach, ton compagnon de trading',
     html: emailWrapper(content, 'Ton journal de trading intelligent est prêt.'),
   };
 }
@@ -269,7 +269,7 @@ export function welcomePremiumTemplate(params: {
 
   const features = [
     'Trades illimités',
-    'Analytics avancés — heatmap, equity curve, drawdown',
+    'Analytics avancés : heatmap, equity curve, drawdown',
     'Analyse IA de chaque session + phrase coaching',
     'Calendrier économique filtré pour tes actifs',
     'Weekly Debrief IA automatique chaque dimanche',
@@ -310,7 +310,7 @@ export function welcomePremiumTemplate(params: {
         ⭐ Salon Premium sur Discord
       </p>
       <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 16px 0;line-height:1.6;">
-        Réservé aux membres Premium — stratégies avancées, support prioritaire, échanges exclusifs.
+        Réservé aux membres Premium : stratégies avancées, support prioritaire, échanges exclusifs.
         Tape <code style="background:#1e2533;padding:2px 6px;border-radius:4px;color:#00d4aa;font-family:monospace;">/verify</code> dans #👋-bienvenue.
       </p>
       ${cta('Rejoindre le Discord →', 'https://discord.gg/TDK2npvkSN', 'secondary')}
@@ -319,8 +319,8 @@ export function welcomePremiumTemplate(params: {
 
   return {
     subject: isTrial
-      ? '🚀 Ton essai Premium démarre — MyTradingCoach'
-      : '🚀 Bienvenue en Premium — MyTradingCoach',
+      ? '🚀 Ton essai Premium démarre'
+      : '🚀 Bienvenue en Premium',
     html: emailWrapper(content, isTrial ? '7 jours gratuits, aucun prélèvement.' : 'Accès complet activé.'),
   };
 }
@@ -350,7 +350,7 @@ export function resetPasswordTemplate(params: {
   `, 'rgba(239,68,68,.3)');
 
   return {
-    subject: '🔐 Réinitialisation de ton mot de passe — MyTradingCoach',
+    subject: '🔐 Réinitialisation de ton mot de passe',
     html: emailWrapper(content, `Lien valable ${expiresIn}.`),
   };
 }
@@ -378,7 +378,7 @@ export function paymentFailedTemplate(params: {
   `, 'rgba(239,68,68,.3)');
 
   return {
-    subject: '⚠️ Paiement échoué — MyTradingCoach',
+    subject: '⚠️ Paiement échoué',
     html: emailWrapper(content),
   };
 }
@@ -398,7 +398,7 @@ export function subscriptionCanceledTemplate(params: {
     </h1>
     <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
       Bonjour ${userName || 'Trader'}, ton abonnement Premium a bien été résilié.
-      Tu es maintenant sur le plan gratuit — journal, stats de base et historique illimité restent accessibles.
+      Tu es maintenant sur le plan gratuit : journal, stats de base et historique illimité restent accessibles.
     </p>
     <p style="${FONT}font-size:13px;color:#6b8299;margin:0 0 20px 0;">
       Tu peux te réabonner à tout moment pour retrouver les analytics avancés, l'IA Coach et les Weekly Debriefs.
@@ -438,7 +438,7 @@ export function renewalReminderTemplate(params: {
   `, 'rgba(245,158,11,.3)');
 
   return {
-    subject: '⏳ Ton Premium expire dans 7 jours — MyTradingCoach',
+    subject: '⏳ Ton Premium expire dans 7 jours',
     html: emailWrapper(content, `Expiration le ${dateStr}.`),
   };
 }
