@@ -226,7 +226,7 @@
     90deg,
     transparent,
     var(--blue),
-    #8b5cf6,
+    var(--purple),
     transparent
   );
   opacity: 0.4;

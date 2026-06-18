@@ -764,7 +764,7 @@
 }
 .asset-fav:hover { border-color: var(--border-hover); color: #f59e0b; }
 .asset-fav.active {
-  color: #f59e0b; border-color: rgba(245,158,11,.35);
+  color: var(--yellow); border-color: rgba(245,158,11,.35);
   background: rgba(245,158,11,.08);
 }
 

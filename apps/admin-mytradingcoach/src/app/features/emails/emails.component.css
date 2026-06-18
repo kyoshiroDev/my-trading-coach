@@ -63,3 +63,5 @@
   .campaign-card { flex-direction: column; align-items: flex-start; }
   .campaign-right { width: 100%; align-items: flex-start; }
 }
+
+@media (max-width: 768px) { .field-input, .field-textarea { font-size: 16px; } }

@@ -24,7 +24,7 @@
 
 .pl-icon {
   font-size: 18px;
-  color: #a78bfa;
+  color: var(--purple-bright);
   flex-shrink: 0;
 }
 
