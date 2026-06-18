@@ -20,6 +20,7 @@ import { SessionStore } from '../../core/stores/session.store';
 import { PRICING } from '../../core/constants/pricing.const';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { TradeFormComponent } from '../journal/trade-form.component';
+import { CsvImportComponent } from '../journal/csv-import.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { CreateTradeDto, TradesApi } from '../../core/api/trades.api';
 import {
@@ -54,6 +55,7 @@ import { ChartService } from '../../core/services/chart.service';
     UpperCasePipe,
     TopbarComponent,
     TradeFormComponent,
+    CsvImportComponent,
     PlanModalComponent,
     PnlColorPipe,
     PnlFormatPipe,
@@ -100,6 +102,7 @@ import { ChartService } from '../../core/services/chart.service';
           </div>
           <div class="firstrun-actions">
             <button class="firstrun-btn primary" (click)="goToJournal()">Enregistrer mon premier trade</button>
+            <button class="firstrun-btn ghost" data-testid="firstrun-import" (click)="openCsvImport()">Importer mes trades</button>
             <a class="firstrun-btn ghost" routerLink="/session">Démarrer une session</a>
           </div>
         </div>
@@ -367,6 +370,12 @@ import { ChartService } from '../../core/services/chart.service';
         (formSave)="saveTrade($event)"
       />
 
+      <mtc-csv-import
+        [open]="showCsvImport()"
+        (dismissed)="showCsvImport.set(false)"
+        (imported)="onCsvImported()"
+      />
+
       @if (showPlanModal()) {
         <mtc-plan-modal (closed)="showPlanModal.set(false)" />
       }
@@ -389,6 +398,7 @@ export class DashboardComponent {
   protected goToSettings(): void { this.router.navigate(['/settings']); }
 
   protected readonly showTradeForm = signal(false);
+  protected readonly showCsvImport = signal(false);
   protected readonly showPlanModal = signal(false);
   protected readonly isSavingTrade = signal(false);
   protected readonly today = new Date();
@@ -547,6 +557,15 @@ export class DashboardComponent {
   }
 
   goToJournal() { this.showTradeForm.set(true); }
+
+  protected openCsvImport(): void { this.showCsvImport.set(true); }
+
+  protected onCsvImported(): void {
+    this.showCsvImport.set(false);
+    this.tradesStore.reset();
+    this.tradesStore.loadTrades({ limit: '6' });
+    this.summaryResource.reload();
+  }
 
   protected saveTrade(dto: CreateTradeDto) {
     this.isSavingTrade.set(true);

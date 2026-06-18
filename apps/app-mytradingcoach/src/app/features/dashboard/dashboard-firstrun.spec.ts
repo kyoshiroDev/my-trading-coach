@@ -25,7 +25,7 @@ function setup(totalTrades: number) {
   const tradesStore = {
     limitReached: () => false, monthlyCount: () => 0, monthlyLimit: () => 30,
     nearLimit: () => false, totalTrades: signal(totalTrades), trades: signal([]),
-    loadTrades: vi.fn(), loadMonthlyCount: vi.fn(),
+    loadTrades: vi.fn(), loadMonthlyCount: vi.fn(), reset: vi.fn(),
   };
   const sessionStore = { hasActiveSession: () => false, todayStats: () => null };
 
@@ -46,7 +46,12 @@ function setup(totalTrades: number) {
   TestBed.overrideComponent(DashboardComponent, {
     set: {
       template:
-        `@if (!isLoading() && tradesStore.totalTrades() === 0) { <div class="firstrun-hero"></div> }`,
+        `@if (!isLoading() && tradesStore.totalTrades() === 0) {
+          <div class="firstrun-hero">
+            <button data-testid="firstrun-import" (click)="openCsvImport()">Importer mes trades</button>
+          </div>
+        }
+        <mtc-csv-import [open]="showCsvImport()" />`,
       imports: [],
       styleUrls: [],
       styleUrl: undefined as unknown as string,
@@ -69,5 +74,17 @@ describe('DashboardComponent — empty state « premier pas »', () => {
   it("masque le firstrun-hero dès qu'il y a ≥1 trade", () => {
     const fixture = setup(1);
     expect(fixture.nativeElement.querySelector('.firstrun-hero')).toBeFalsy();
+  });
+
+  it('le hero propose un bouton « Importer mes trades » qui ouvre l\'import CSV', () => {
+    const fixture = setup(0);
+    const btn = fixture.nativeElement.querySelector('[data-testid="firstrun-import"]') as HTMLButtonElement;
+    expect(btn).toBeTruthy();
+
+    const c = fixture.componentInstance as unknown as { showCsvImport: () => boolean };
+    expect(c.showCsvImport()).toBe(false);
+    btn.click();
+    fixture.detectChanges();
+    expect(c.showCsvImport()).toBe(true);
   });
 });

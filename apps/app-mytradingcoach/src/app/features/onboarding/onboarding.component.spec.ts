@@ -144,6 +144,32 @@ describe('OnboardingComponent', () => {
     expect(c.step()).toBe(3);
   });
 
+  it('étape premier trade : les 3 options (CSV / manuel / zéro) sont distinctes et câblées', () => {
+    const fixture = TestBed.createComponent(OnboardingComponent);
+    fixture.detectChanges();
+    const c = fixture.componentInstance as unknown as {
+      tradeChoice: () => string;
+      csvOpen: () => boolean;
+      step: () => number;
+      chooseCsv: () => void;
+      chooseManual: () => void;
+      finishAndGoDiscord: () => void;
+    };
+
+    // CSV → ouvre l'import
+    c.chooseCsv();
+    expect(c.tradeChoice()).toBe('csv');
+    expect(c.csvOpen()).toBe(true);
+
+    // Manuel → bascule sur le formulaire
+    c.chooseManual();
+    expect(c.tradeChoice()).toBe('manual');
+
+    // Zéro → saute directement à l'étape finale (Discord)
+    c.finishAndGoDiscord();
+    expect(c.step()).toBe(8);
+  });
+
   it("après sauvegarde des actifs, le store est à jour → pas de faux « Complète ton profil » (PROMPT-089)", () => {
     // Profil complet SAUF les actifs (état avant l'étape 6)
     authUser.set({ tradingStyle: 'SCALPING', tradingStrategy: ['BREAKOUT'], tradingAssets: [], favoriteAsset: null });
