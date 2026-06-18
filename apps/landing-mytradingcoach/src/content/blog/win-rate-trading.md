@@ -1,6 +1,6 @@
 ---
 title: "Win Rate en Trading : Comment le Calculer et l'Améliorer"
-description: "Le win rate seul ne suffit pas. Découvrez comment calculer votre taux de réussite, l'interpréter avec le Risk/Reward et l'améliorer grâce à l'analyse de vos trades."
+description: "Le win rate seul ne suffit pas. Calcule ton taux de réussite, lis-le avec le ratio R/R et améliore-le en analysant tes trades."
 publishDate: 2026-03-20
 tags: ["win rate", "trading", "performance trading"]
 ---
@@ -57,22 +57,22 @@ Ton win rate global est une moyenne. Masqué dedans : peut-être que tes setups 
 
 Améliorer son win rate ne passe pas forcément par de meilleures analyses techniques. Les axes les plus efficaces :
 
-1. **Éliminer les trades hors-setup** — Les trades passés sans setup clairement défini ont généralement un win rate bien en dessous de la moyenne. Les supprimer améliore mécaniquement le win rate global.
+1. **Éliminer les trades hors-setup** : Les trades passés sans setup clairement défini ont généralement un win rate bien en dessous de la moyenne. Les supprimer améliore mécaniquement le win rate global.
 
-2. **Optimiser les créneaux horaires** — La plupart des traders ont un win rate très variable selon l'heure. Identifier ses meilleures heures et concentrer l'activité dessus est souvent plus efficace que d'essayer d'améliorer tous les créneaux.
+2. **Optimiser les créneaux horaires** : La plupart des traders ont un win rate très variable selon l'heure. Identifier ses meilleures heures et concentrer l'activité dessus est souvent plus efficace que d'essayer d'améliorer tous les créneaux.
 
-3. **Réduire les trades émotionnels** — La psychologie du trading a un impact direct sur le win rate. Les trades passés en état de stress, FOMO ou revenge ont systématiquement un win rate inférieur.
+3. **Réduire les trades émotionnels** : La psychologie du trading a un impact direct sur le win rate. Les trades passés en état de stress, FOMO ou revenge ont systématiquement un win rate inférieur.
 
-4. **Analyser les trades perdants** — Chaque perte contient une information. Identifier les patterns récurrents dans tes pertes permet de les corriger.
+4. **Analyser les trades perdants** : Chaque perte contient une information. Identifier les patterns récurrents dans tes pertes permet de les corriger.
 
 ## Comment analyser ses propres métriques
 
 MyTradingCoach calcule automatiquement toutes ces métriques à partir de tes trades enregistrés. La vue Analytics décompose ton win rate par setup, par émotion, par session de trading et par heure.
 
-En quelques minutes, tu sais exactement quelles conditions de trading sont profitables pour toi — et lesquelles ne le sont pas. L'IA identifie ensuite les patterns et te propose des actions concrètes pour améliorer ta performance dans le Weekly Debrief du dimanche.
+En quelques minutes, tu sais exactement quelles conditions de trading sont profitables pour toi, et lesquelles ne le sont pas. L'IA identifie ensuite les patterns et te propose des actions concrètes pour améliorer ta performance dans le Weekly Debrief du dimanche.
 
 > "Un trader avec 40% de win rate et une bonne gestion du risque surpasse régulièrement un trader avec 70% de win rate et une gestion catastrophique."
 
 ---
 
-Essaie [MyTradingCoach gratuitement →](https://app.mytradingcoach.app/register) — calcule et analyse ton win rate par setup, par heure et par émotion automatiquement.
+Essaie [MyTradingCoach gratuitement →](https://app.mytradingcoach.app/register) : calcule et analyse ton win rate par setup, par heure et par émotion automatiquement.

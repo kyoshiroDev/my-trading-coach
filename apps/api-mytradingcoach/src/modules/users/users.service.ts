@@ -8,6 +8,7 @@ import { Plan, Role, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
+import { PRICING_EUR } from '../../common/constants/pricing.const';
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
@@ -273,10 +274,10 @@ export class UsersService {
     ]);
 
     // MRR/ARR restent basés sur les abonnements Stripe payants (pas les comptes par plan).
-    const mrr = starterMonthly * 39
-      + Math.round((starterAnnual * 349) / 12)
-      + premiumMonthly * 79
-      + Math.round((premiumAnnual * 699) / 12);
+    const mrr = starterMonthly * PRICING_EUR.STARTER.monthly
+      + Math.round((starterAnnual * PRICING_EUR.STARTER.annual) / 12)
+      + premiumMonthly * PRICING_EUR.PREMIUM.monthly
+      + Math.round((premiumAnnual * PRICING_EUR.PREMIUM.annual) / 12);
     const arr = mrr * 12;
 
     const monthly = starterMonthly + premiumMonthly;

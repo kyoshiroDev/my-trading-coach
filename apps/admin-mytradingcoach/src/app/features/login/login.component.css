@@ -14,3 +14,5 @@ input::placeholder { color:var(--text3); }
 .btn-login { width:100%; padding:11px; background:var(--teal); color:#000; border:none; border-radius:8px; font-size:13px; font-weight:700; font-family:var(--sans); cursor:pointer; margin-top:8px; transition:opacity 0.15s; }
 .btn-login:hover:not(:disabled) { opacity:0.85; }
 .btn-login:disabled { opacity:0.5; cursor:not-allowed; }
+
+@media (max-width: 768px) { input { font-size: 16px; } }

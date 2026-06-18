@@ -216,7 +216,7 @@ const trades = await prisma.trade.findMany({
 const nextCursor = trades.length === limit ? trades[trades.length - 1].id : null;
 ```
 
-### Limite 50 trades/mois FREE
+### Limite 30 trades/mois FREE
 
 ```typescript
 const startOfMonth = new Date();
@@ -227,8 +227,8 @@ const count = await prisma.trade.count({
   where: { userId, createdAt: { gte: startOfMonth } }
 });
 
-if (user.plan === 'FREE' && count >= 50) {
-  throw new HttpException('Limite de 50 trades/mois atteinte. Passe à Premium.', 403);
+if (user.plan === 'FREE' && count >= 30) {
+  throw new HttpException('Limite de 30 trades/mois atteinte. Passe à Premium.', 403);
 }
 ```
 

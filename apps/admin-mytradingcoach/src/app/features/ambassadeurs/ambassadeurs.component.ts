@@ -7,6 +7,7 @@ import type { ChartConfiguration } from 'chart.js';
 import { AdminApi, AdminAmbassador, AdminAmbassadorDetail, AdminAmbassadorPromoteResult } from '../../core/api/admin.api';
 import { ChartCanvasComponent } from '../../shared/components/chart-canvas/chart-canvas.component';
 import { CHART_COLORS, gridAxis, noLegend } from '../../shared/charts/chart-theme';
+import { PRICING_EUR } from '../../core/constants/pricing.const';
 
 @Component({
   selector: 'mtc-admin-ambassadeurs',
@@ -23,8 +24,8 @@ import { CHART_COLORS, gridAxis, noLegend } from '../../shared/charts/chart-them
       <div class="kpi-strip">
         <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Ambassadeurs</div><div class="kpi-value purple">{{ ambassadors().length }}</div><div class="kpi-sub">actifs</div></div>
         <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Total référés</div><div class="kpi-value blue">{{ totalReferrals() }}</div><div class="kpi-sub">via liens</div></div>
-        <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Référés Starter</div><div class="kpi-value amber">{{ totalStarter() }}</div><div class="kpi-sub">39€/mois</div></div>
-        <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Référés Premium</div><div class="kpi-value blue">{{ totalPremium() }}</div><div class="kpi-sub">79€/mois</div></div>
+        <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Référés Starter</div><div class="kpi-value amber">{{ totalStarter() }}</div><div class="kpi-sub">{{ pricing.STARTER.monthly }}€/mois</div></div>
+        <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Référés Premium</div><div class="kpi-value blue">{{ totalPremium() }}</div><div class="kpi-sub">{{ pricing.PREMIUM.monthly }}€/mois</div></div>
         <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Commissions dues</div><div class="kpi-value amber">{{ totalPending() | number:'1.2-2' }}€</div><div class="kpi-sub">à verser</div></div>
         <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Total payé</div><div class="kpi-value teal">{{ totalPaid() | number:'1.2-2' }}€</div><div class="kpi-sub">versé</div></div>
       </div>
@@ -167,6 +168,7 @@ export class AmbassadeursComponent implements OnInit {
   protected readonly selectedDetail = signal<AdminAmbassadorDetail | null>(null);
   protected readonly selectedAmbassador = signal<AdminAmbassador | null>(null);
   protected readonly paying = signal(false);
+  protected readonly pricing = PRICING_EUR;
 
   // Ajout d'un ambassadeur
   protected readonly showAdd = signal(false);

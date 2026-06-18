@@ -353,14 +353,18 @@ export class StripeService {
             userName: user.name ?? '',
           });
           await this.discord.syncDiscordRole(user.id).catch(() => undefined);
+          // Montant réel dérivé de l'abonnement Stripe (ne jamais coder le prix en dur).
+          const churnItem = subscription.items.data[0];
+          const churnInterval =
+            churnItem?.price?.recurring?.interval === 'year' ? 'an' : 'mois';
           const amount =
-            subscription.items.data[0]?.price?.recurring?.interval === 'year'
-              ? '349€/an'
-              : '39€/mois';
+            churnItem?.price?.unit_amount != null
+              ? `${Math.round(churnItem.price.unit_amount / 100)} €/${churnInterval}`
+              : 'montant inconnu';
           await this.resend
             .sendAdminAlert(
-              `🔴 Churn — ${user.email}`,
-              `Email   : ${user.email}\nPlan    : Premium ${amount}\nDate    : ${new Date().toLocaleDateString('fr-FR')}`,
+              `🔴 Churn : ${user.email}`,
+              `Email   : ${user.email}\nMontant : ${amount}\nDate    : ${new Date().toLocaleDateString('fr-FR')}`,
             )
             .catch(() => undefined);
         }

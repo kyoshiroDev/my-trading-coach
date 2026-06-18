@@ -237,7 +237,7 @@
   font-family: var(--font-mono);
   color: var(--blue-bright);
 }
-.premium-col .plan-col-check { color: #8b5cf6; }
+.premium-col .plan-col-check { color: var(--purple); }
 
 /* Toggle d'intervalle global */
 .plan-interval-toggle {
@@ -286,9 +286,9 @@
 }
 /* Premium SÉLECTIONNÉ — halo violet franc (distinct du "recommandé" et du bleu Starter) */
 .premium-col.selected-col {
-  border-color: #8b5cf6;
+  border-color: var(--purple);
   background: rgba(139,92,246,.10);
-  box-shadow: 0 0 0 1px #8b5cf6, 0 10px 30px -12px rgba(139,92,246,.5);
+  box-shadow: 0 0 0 1px var(--purple), 0 10px 30px -12px rgba(139,92,246,.5);
 }
 
 /* Badge "Complet" centré en haut, à cheval sur la bordure */
@@ -297,7 +297,7 @@
   top: -11px;
   left: 50%;
   transform: translateX(-50%);
-  background: #8b5cf6;
+  background: var(--purple);
   color: #fff;
   font-size: 11px;
   font-weight: 700;
@@ -344,7 +344,7 @@
 .plan-col-feats li { font-size: 11px; color: var(--text-2); }
 .plan-col-feats li.feat-no { color: var(--text-3); }
 .plan-col-feats li.feat-upsell {
-  color: #a78bfa;
+  color: var(--purple-bright);
   margin-top: 4px;
   padding-top: 8px;
   border-top: 1px solid var(--border);

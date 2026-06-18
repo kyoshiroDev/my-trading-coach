@@ -123,3 +123,5 @@
   .modal-profile { max-height: 90vh; }
   .profile-stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+@media (max-width: 768px) { .field-input, .field-select { font-size: 16px; } }
