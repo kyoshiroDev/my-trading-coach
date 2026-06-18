@@ -1,18 +1,18 @@
 ---
 title: "Journal de Trading pour Débutants : Guide Complet 2026"
-description: "Apprenez à tenir un journal de trading efficace. Nos conseils pour débutants vous aident à analyser vos trades et progresser rapidement."
+description: "Tenir un journal de trading qui te fait vraiment progresser : quoi noter, comment analyser tes trades, et avancer plus vite."
 publishDate: 2026-04-01
 tags: ["journal de trading", "débutant", "guide"]
 draft: false
 ---
 
-La majorité des traders qui échouent ont un point commun : ils ne tiennent pas de journal. Pas par flemme — par manque de méthode. Un fichier Excel avec quelques colonnes ne suffit pas. Un journal de trading efficace doit capturer **les données qui expliquent vraiment tes performances**.
+La majorité des traders qui échouent ont un point commun : ils ne tiennent pas de journal. Pas par flemme : par manque de méthode. Un fichier Excel avec quelques colonnes ne suffit pas. Un journal de trading efficace doit capturer **les données qui expliquent vraiment tes performances**.
 
 ## Pourquoi tenir un journal de trading ?
 
-Le journal de trading est l'outil le plus sous-estimé du trading. Il te permet de transformer chaque trade — qu'il soit gagnant ou perdant — en donnée exploitable. Sans journal, tu rejoues les mêmes erreurs sans jamais les voir. Avec un journal bien tenu, tu construis une base de données personnelle qui révèle tes patterns comportementaux.
+Le journal de trading est l'outil le plus sous-estimé du trading. Il te permet de transformer chaque trade (qu'il soit gagnant ou perdant) en donnée exploitable. Sans journal, tu rejoues les mêmes erreurs sans jamais les voir. Avec un journal bien tenu, tu construis une base de données personnelle qui révèle tes patterns comportementaux.
 
-Les traders professionnels tiennent tous un journal. Pas parce qu'on leur dit de le faire — parce qu'ils ont compris que les marchés ne changent pas, mais leur comportement si. Et seules les données permettent de mesurer ce changement.
+Les traders professionnels tiennent tous un journal. Pas parce qu'on leur dit de le faire : parce qu'ils ont compris que les marchés ne changent pas, mais leur comportement si. Et seules les données permettent de mesurer ce changement.
 
 ## Que noter dans son journal de trading ?
 
@@ -42,7 +42,7 @@ Sur quel timeframe as-tu pris la décision ? M5, M15, H1, H4, D1...
 FOMO, overtrading, setup raté, bon trade mal géré, sortie trop tôt... Des étiquettes que tu définis toi-même pour catégoriser tes comportements.
 
 **7. Notes libres**
-Ton raisonnement au moment du trade. Ce que tu pensais. Pourquoi tu as ignoré le stop. Ces notes disparaissent de ta mémoire en 48h — capte-les immédiatement.
+Ton raisonnement au moment du trade. Ce que tu pensais. Pourquoi tu as ignoré le stop. Ces notes disparaissent de ta mémoire en 48h : capte-les immédiatement.
 
 ## Comment analyser ses trades perdants ?
 
@@ -50,11 +50,11 @@ Les trades perdants sont plus instructifs que les gagnants. Voici la méthode po
 
 **Pose-toi ces 3 questions après chaque perte :**
 
-1. **Le setup était-il valide avant d'entrer ?** Si non, c'est un trade hors plan — catégorie FOMO ou overtrading.
+1. **Le setup était-il valide avant d'entrer ?** Si non, c'est un trade hors plan : catégorie FOMO ou overtrading.
 
 2. **As-tu respecté ton stop loss ?** Si tu l'as déplacé ou ignoré, note-le explicitement. Ce comportement coûte plus cher sur l'année que n'importe quel mauvais setup.
 
-3. **Quel était ton état émotionnel ?** Un trade Stressed ou Revenge après une perte récente — c'est prédictible. Le journal te permet de le voir dans les données avant que ça liquide ton compte.
+3. **Quel était ton état émotionnel ?** Un trade Stressed ou Revenge après une perte récente, c'est prédictible. Le journal te permet de le voir dans les données avant que ça liquide ton compte.
 
 **L'analyse hebdomadaire (15 minutes)**
 
@@ -92,6 +92,6 @@ Chaque dimanche, tu reçois un Weekly Debrief généré par IA qui identifie :
 - Tes 2 axes d'amélioration prioritaires
 - 3 objectifs concrets pour la semaine suivante
 
-Le plan gratuit inclut 30 trades par mois, l'historique illimité, et les statistiques de base — suffisant pour démarrer et comprendre si l'outil correspond à ta façon de travailler.
+Le plan gratuit inclut 30 trades par mois, l'historique illimité, et les statistiques de base : suffisant pour démarrer et comprendre si l'outil correspond à ta façon de travailler.
 
 [Commence gratuitement →](https://app.mytradingcoach.app/register)
