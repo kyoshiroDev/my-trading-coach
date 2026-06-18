@@ -36,29 +36,19 @@ apps/
 ├── api-mytradingcoach/     ← NestJS 11 (port 3000)
 └── landing-mytradingcoach/ ← Astro 6 (port 4321)
 prisma/schema.prisma
-app-mytradingcoach.html     ← référence design app    ← LIRE AVANT ANGULAR
-landing-mytradingcoach.html ← référence design landing ← LIRE AVANT ASTRO
+admin-mytradingcoach.html   ← référence design admin   ← LIRE AVANT TRAVAIL ADMIN
 CLAUDE.md
 ```
 
 ---
 
-## 🔄 Règle de synchronisation — OBLIGATOIRE
+## 🔄 Référence design
 
-Après chaque modification Angular → mettre à jour `app-mytradingcoach.html`.
-
-| Composant modifié | Section HTML à mettre à jour |
-|---|---|
-| `dashboard.component` | `id="view-dashboard"` |
-| `journal.component` | `id="view-journal"` |
-| `trade-form.component` | modal `id="modal-trade"` |
-| `analytics.component` | `id="view-analytics"` |
-| `ai-insights.component` | `id="view-ai"` |
-| `debrief.component` | `id="view-debrief"` |
-| `scoring.component` | `id="view-scoring"` |
-| `settings.component` | `id="view-settings"` |
-| `sidebar.component` | `aside.sidebar` |
-| `topbar.component` | `header.topbar` |
+Les composants Angular/Astro sont la **source de vérité** du design. Les anciens
+miroirs statiques `app-mytradingcoach.html` et `landing-mytradingcoach.html` ont
+été retirés — ne plus s'y référer. Pour l'app **admin**, la maquette
+`admin-mytradingcoach.html` (racine) reste la référence : la lire avant de
+modifier l'admin, reproduire le design, ne pas inventer.
 
 ---
 
@@ -75,17 +65,15 @@ Après chaque modification Angular → mettre à jour `app-mytradingcoach.html`.
 
 ### Avant de coder
 1. Lire l'agent pertinent dans `.claude/agents/`
-2. Lire `app-mytradingcoach.html` avant tout travail Angular
-3. Lire `landing-mytradingcoach.html` avant tout travail Astro
-4. Lire le fichier cible en entier avant modification
+2. Lire `admin-mytradingcoach.html` avant tout travail sur l'app admin
+3. Lire le fichier cible en entier avant modification
 
 ### Pendant
-5. Builder après chaque partie — zéro erreur avant de continuer
-6. Ne jamais `npm` / `npx` → toujours `pnpm` / `pnpm dlx`
+4. Builder après chaque partie — zéro erreur avant de continuer
+5. Ne jamais `npm` / `npx` → toujours `pnpm` / `pnpm dlx`
 
 ### Après
-7. Synchroniser `app-mytradingcoach.html` si composant Angular modifié
-8. Commit atomique : `feat(scope):` / `fix(scope):` / `perf(scope):`
+6. Commit atomique : `feat(scope):` / `fix(scope):` / `perf(scope):`
 
 ---
 

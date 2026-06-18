@@ -2,11 +2,13 @@
 
 ## Source de vérité
 
-- `app-mytradingcoach.html` → référence design app Angular
-- `landing-mytradingcoach.html` → référence design landing Astro
-- `admin-mytradingcoach.html` → référence design app admin Angular
-  (variables CSS différentes — voir section Admin Design System ci-dessous)
-- **Ne jamais inventer** — reproduire exactement ces fichiers
+- **App trader & landing** : les composants Angular/Astro eux-mêmes sont la
+  source de vérité. Les anciens miroirs statiques `app-mytradingcoach.html` et
+  `landing-mytradingcoach.html` ont été retirés — ne plus s'y référer.
+- `admin-mytradingcoach.html` (racine) → référence design de l'app **admin**
+  (variables CSS différentes — voir section Admin Design System ci-dessous).
+  La lire et la reproduire avant de modifier l'admin, ne pas inventer.
+- Respecter les tokens CSS existants (cf. ci-dessous) plutôt que des valeurs en dur.
 
 ---
 
