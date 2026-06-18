@@ -52,6 +52,14 @@ export interface AmbassadorStats {
 export class AmbassadorService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Marque toutes les commissions en attente d'un ambassadeur comme payées. */
+  markAllPaid(ambassadorId: string) {
+    return this.prisma.referralCommission.updateMany({
+      where: { ambassadorId, status: 'pending' },
+      data: { status: 'paid' },
+    });
+  }
+
   /**
    * Promeut un utilisateur en ambassadeur (remplace l'UPDATE SQL manuel).
    * Idempotent : si déjà ambassadeur, met à jour le code.

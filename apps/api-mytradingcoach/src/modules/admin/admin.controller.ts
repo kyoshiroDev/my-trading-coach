@@ -10,7 +10,6 @@ import { UserDetailService } from './user-detail.service';
 import { DemoSeedService } from './demo-seed.service';
 import { UsersService } from '../users/users.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { PrismaService } from '../../prisma/prisma.service';
 import { DiscordService } from '../discord/discord.service';
 
 @UseGuards(JwtAuthGuard, AdminGuard)
@@ -20,7 +19,6 @@ export class AdminController {
     private readonly adminService: AdminService,
     private readonly emailCampaign: EmailCampaignService,
     private readonly usersService: UsersService,
-    private readonly prisma: PrismaService,
     private readonly discordService: DiscordService,
     private readonly metrics: MetricsSnapshotCron,
     private readonly deletedAccounts: DeletedAccountService,
@@ -72,10 +70,7 @@ export class AdminController {
    */
   @Post('discord/resync')
   async resyncDiscordRoles() {
-    const users = await this.prisma.user.findMany({
-      where: { discordId: { not: null } },
-      select: { id: true },
-    });
+    const users = await this.adminService.findDiscordLinkedUserIds();
     let ok = 0;
     for (const u of users) {
       try {
@@ -138,52 +133,12 @@ export class AdminController {
   }
 
   @Get('referral-stats')
-  async getReferralStats() {
-    const ambassadors = await this.prisma.user.findMany({
-      where: { referralCode: { not: null } },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        referralCode: true,
-        referrals: {
-          select: {
-            amount: true,
-            status: true,
-            period: true,
-            referredUserId: true,
-          },
-        },
-      },
-    });
-
-    return {
-      data: ambassadors.map((a) => ({
-        name: a.name,
-        email: a.email,
-        referralCode: a.referralCode,
-        totalReferrals: new Set(a.referrals.map((r) => r.referredUserId)).size,
-        totalCommissions: a.referrals.reduce((s, r) => s + r.amount, 0).toFixed(2),
-        pendingCommissions: a.referrals
-          .filter((r) => r.status === 'pending')
-          .reduce((s, r) => s + r.amount, 0)
-          .toFixed(2),
-        commissionsByMonth: a.referrals.reduce(
-          (acc, r) => {
-            acc[r.period] = (acc[r.period] ?? 0) + r.amount;
-            return acc;
-          },
-          {} as Record<string, number>,
-        ),
-      })),
-    };
+  getReferralStats() {
+    return this.adminService.getReferralStats();
   }
 
   @Patch('referral-commission/:id/pay')
   markCommissionPaid(@Param('id') id: string) {
-    return this.prisma.referralCommission.update({
-      where: { id },
-      data: { status: 'paid' },
-    });
+    return this.adminService.markCommissionPaid(id);
   }
 }

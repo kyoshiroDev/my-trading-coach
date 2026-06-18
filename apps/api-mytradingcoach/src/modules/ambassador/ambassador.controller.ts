@@ -14,7 +14,6 @@ import { AmbassadorGuard } from '../../common/guards/ambassador.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AmbassadorService } from './ambassador.service';
-import { PrismaService } from '../../prisma/prisma.service';
 import {
   PromoteAmbassadorDto,
   RevokeAmbassadorDto,
@@ -23,10 +22,7 @@ import {
 @Controller('ambassador')
 @UseGuards(JwtAuthGuard, AmbassadorGuard)
 export class AmbassadorController {
-  constructor(
-    private readonly service: AmbassadorService,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly service: AmbassadorService) {}
 
   @Get('new-count')
   getNewCount(
@@ -69,10 +65,7 @@ export class AmbassadorController {
   @Patch('pay-all/:ambassadorId')
   @UseGuards(AdminGuard)
   async markAllPaid(@Param('ambassadorId') ambassadorId: string) {
-    await this.prisma.referralCommission.updateMany({
-      where: { ambassadorId, status: 'pending' },
-      data: { status: 'paid' },
-    });
+    await this.service.markAllPaid(ambassadorId);
     return { success: true };
   }
 }
