@@ -53,12 +53,19 @@ export class UsersController {
     return this.usersService.updateMe(user.id, dto);
   }
 
+  // Sauvegarde le profil (étape stratégie) sans terminer l'onboarding
   @Patch('onboarding')
-  completeOnboarding(
+  saveOnboardingProfile(
     @CurrentUser() user: { id: string },
     @Body() dto: CompleteOnboardingDto,
   ) {
-    return this.usersService.completeOnboarding(user.id, dto);
+    return this.usersService.saveOnboardingProfile(user.id, dto);
+  }
+
+  // Marque l'onboarding terminé — appelé uniquement à l'écran final
+  @Patch('onboarding/finish')
+  finishOnboarding(@CurrentUser() user: { id: string }) {
+    return this.usersService.finishOnboarding(user.id);
   }
 
   @Patch('preferences')

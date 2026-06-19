@@ -126,8 +126,7 @@
 
           <div class="wizard-footer">
             <button class="btn-back" type="button" (click)="prevStep()">← Retour</button>
-            <button class="btn-skip-capital" type="button" (click)="nextStep()" [disabled]="isSaving()">Passer</button>
-            <button class="btn-next" (click)="nextStep()" [disabled]="!capitalInput() || isSaving()">
+            <button class="btn-next" (click)="nextStep()" [disabled]="!capitalValid() || isSaving()">
               {{ isSaving() ? 'Enregistrement…' : 'Continuer →' }}
             </button>
           </div>
@@ -159,7 +158,7 @@
             }
           </div>
 
-          <div class="field-label">Décris ta stratégie <span class="field-opt">· optionnel mais conseillé</span></div>
+          <div class="field-label">Décris ta stratégie <span class="field-req">· min 15 caractères</span></div>
           <textarea
             class="strat-desc"
             rows="3"
@@ -168,7 +167,7 @@
             placeholder="Ex : J'attends un FVG sur NQ après prise de liquidité de Londres, entrée en M5, TP au prochain order block."
           ></textarea>
 
-          <div class="field-label">Tes sessions <span class="field-opt">· optionnel</span></div>
+          <div class="field-label">Tes sessions <span class="field-req">· au moins 1</span></div>
           <div class="strat-tags">
             @for (se of SESSIONS; track se.value) {
               <button class="strat-tag" [class.sel]="selectedSessions().includes(se.value)" (click)="toggleSession(se.value)">
