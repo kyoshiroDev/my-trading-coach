@@ -92,8 +92,14 @@ export class OnboardingComponent {
   protected readonly selectedStrategyTags = signal<string[]>([]);
   protected readonly strategyDescription  = signal('');
   protected readonly selectedSessions     = signal<TradingSession[]>([]);
+  // Stratégie : tout obligatoire pour un contexte IA exploitable.
+  // Description min 15 caractères pour éviter le déchet (« test », « rien »).
   protected readonly strategyValid = computed(
-    () => !!this.selectedStyle() && this.selectedStrategyTags().length > 0,
+    () =>
+      !!this.selectedStyle() &&
+      this.selectedStrategyTags().length > 0 &&
+      this.selectedSessions().length > 0 &&
+      this.strategyDescription().trim().length >= 15,
   );
 
   // Étape Actifs
@@ -180,6 +186,9 @@ export class OnboardingComponent {
     this.capitalInput.set(input.value);
   }
 
+  // Capital obligatoire : « Continuer » bloqué tant que > 0 n'est pas saisi.
+  protected readonly capitalValid = computed(() => this.parseCapital() > 0);
+
   protected nextStep(): void {
     const s = this.step();
     if (s === 5) {
@@ -203,11 +212,13 @@ export class OnboardingComponent {
 
   protected finishAndGoDiscord() { this.step.set(8); }
 
-  // Étape Stratégie (5) → enregistre le profil IA complet puis va aux Actifs (6)
+  // Étape Stratégie (5) → enregistre le profil IA (SANS terminer l'onboarding)
+  // puis va aux Actifs (6). Marquer l'onboarding fini ici sauterait les étapes
+  // Actifs (6) et Premier trade (7) — le flag n'est posé qu'à l'écran final.
   private saveProfileThenGoAssets(): void {
     this.isSaving.set(true);
     this.usersApi
-      .completeOnboarding({
+      .saveOnboardingProfile({
         market: this.selectedMarket(),
         goal: this.selectedGoal(),
         startingCapital: this.parseCapital(),

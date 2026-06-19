@@ -280,3 +280,7 @@
 @media (max-width: 380px) {
   .choice-grid { grid-template-columns: 1fr; }
 }
+
+/* Etape trade : 3 options equivalentes (CSV / manuel / zero) */
+.choice-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+@media (max-width: 640px) { .choice-grid-3 { grid-template-columns: 1fr; } }

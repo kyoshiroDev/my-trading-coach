@@ -11,6 +11,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UserStore } from '../../../core/stores/user.store';
 import { TradesStore } from '../../../core/stores/trades.store';
 import { AuthService } from '../../../core/auth/auth.service';
+import { UsersApi } from '../../../core/api/users.api';
 import { AmbassadorNotifService } from '../../../core/services/ambassador-notif.service';
 import { LiveModeService } from '../../../core/services/live-mode.service';
 import { DemoService } from '../../../core/services/demo.service';
@@ -298,6 +299,7 @@ export class SidebarComponent {
   protected readonly userStore = inject(UserStore);
   protected readonly tradesStore = inject(TradesStore);
   private readonly auth = inject(AuthService);
+  private readonly usersApi = inject(UsersApi);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly ambassadorNotif = inject(AmbassadorNotifService);
   protected readonly liveModeService = inject(LiveModeService);
@@ -348,6 +350,13 @@ export class SidebarComponent {
       // setCurrentUser (et non currentUser.set) pour persister dans le localStorage
       this.auth.setCurrentUser({ ...user, onboardingCompleted: true });
     }
+    // C'est ICI (écran final du wizard) que l'onboarding est marqué terminé en
+    // base — jamais à l'étape stratégie, sinon les étapes Actifs/Premier trade
+    // seraient sautées. Optimiste : le flag local est déjà posé ci-dessus.
+    this.usersApi
+      .finishOnboarding()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ error: () => { /* flag local déjà posé, resync au prochain fetchMe */ } });
   }
 
   logout() {

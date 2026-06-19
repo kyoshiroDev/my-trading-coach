@@ -22,7 +22,11 @@ beforeAll(async () => {
 });
 
 const mockUsersApi = {
-  completeOnboarding: vi
+  // Sauvegarde du profil : ne termine PAS l'onboarding (flag reste false)
+  saveOnboardingProfile: vi
+    .fn()
+    .mockReturnValue(of({ data: { onboardingCompleted: false } })),
+  finishOnboarding: vi
     .fn()
     .mockReturnValue(of({ data: { onboardingCompleted: true } })),
 };
@@ -142,6 +146,70 @@ describe('OnboardingComponent', () => {
     c.selectGoal('DISCIPLINE');
     c.nextStep();
     expect(c.step()).toBe(3);
+  });
+
+  it("la sauvegarde de la stratégie ne termine PAS l'onboarding (étape Actifs atteignable)", () => {
+    const fixture = TestBed.createComponent(OnboardingComponent);
+    fixture.detectChanges();
+
+    let completedEmitted = false;
+    fixture.componentInstance.completed.subscribe(() => (completedEmitted = true));
+
+    const c = fixture.componentInstance as unknown as {
+      saveProfileThenGoAssets: () => void;
+      step: () => number;
+    };
+    c.saveProfileThenGoAssets();
+
+    expect(mockUsersApi.saveOnboardingProfile).toHaveBeenCalled();
+    // L'onboarding ne doit pas se terminer à l'étape stratégie
+    expect(mockUsersApi.finishOnboarding).not.toHaveBeenCalled();
+    expect(completedEmitted).toBe(false);
+    // On avance vers l'étape Actifs (6), pas vers le dashboard
+    expect(c.step()).toBe(6);
+  });
+
+  it("le flag de fin n'est posé qu'à l'écran final (completed émis au step 8)", () => {
+    const fixture = TestBed.createComponent(OnboardingComponent);
+    fixture.detectChanges();
+
+    let completedEmitted = false;
+    fixture.componentInstance.completed.subscribe(() => (completedEmitted = true));
+
+    const c = fixture.componentInstance as unknown as {
+      finishAndGoDiscord: () => void;
+      step: () => number;
+    };
+    // « Je commence à zéro » → étape finale (8), pas encore de completed
+    c.finishAndGoDiscord();
+    expect(c.step()).toBe(8);
+    expect(completedEmitted).toBe(false);
+  });
+
+  it('étape premier trade : les 3 options (CSV / manuel / zéro) sont distinctes et câblées', () => {
+    const fixture = TestBed.createComponent(OnboardingComponent);
+    fixture.detectChanges();
+    const c = fixture.componentInstance as unknown as {
+      tradeChoice: () => string;
+      csvOpen: () => boolean;
+      step: () => number;
+      chooseCsv: () => void;
+      chooseManual: () => void;
+      finishAndGoDiscord: () => void;
+    };
+
+    // CSV → ouvre l'import
+    c.chooseCsv();
+    expect(c.tradeChoice()).toBe('csv');
+    expect(c.csvOpen()).toBe(true);
+
+    // Manuel → bascule sur le formulaire
+    c.chooseManual();
+    expect(c.tradeChoice()).toBe('manual');
+
+    // Zéro → saute directement à l'étape finale (Discord)
+    c.finishAndGoDiscord();
+    expect(c.step()).toBe(8);
   });
 
   it("après sauvegarde des actifs, le store est à jour → pas de faux « Complète ton profil » (PROMPT-089)", () => {
