@@ -47,14 +47,14 @@ model User {
 
   // ── Profil stratégie ─────────────────────────────────────────────────────
   tradingStyle        String?
-  tradingStrategy     String[]
-  tradingSessions     String[]
+  tradingStrategy     String[] @default([])
+  tradingSessions     String[] @default([])
   tradesPerDayMin     Int?
   tradesPerDayMax     Int?
   strategyDescription String?
 
   // ── Actifs tradés ────────────────────────────────────────────────────────
-  tradingAssets String[]  // configurés dans les paramètres
+  tradingAssets String[]  @default([]) // configurés dans les paramètres
   favoriteAsset String?   // pré-sélectionné dans la saisie rapide
 
   // ── Parrainage ambassadeur ────────────────────────────────────────────────
@@ -65,7 +65,7 @@ model User {
   // Sélection d'annonces du JOUR (rituel de prep). Format : "EventName:Currency".
   // Réinitialisée chaque jour : si pinnedEcoDate ≠ aujourd'hui (Europe/Paris), la
   // lecture renvoie une sélection vide (reset paresseux, sans cron).
-  pinnedEcoEvents String[]
+  pinnedEcoEvents String[] @default([])
   pinnedEcoDate   String?   // YYYY-MM-DD (Europe/Paris) — jour de la sélection
 
   // ── Discord ──────────────────────────────────────────────────────────────────
@@ -77,7 +77,8 @@ model User {
   tradeSessions TradeSession[]
   dailyRecaps   DailyRecap[]
   dailyActivity UserDailyActivity[]
-  referrals     ReferralCommission[] @relation("AmbassadorCommissions")
+  referrals       ReferralCommission[] @relation("AmbassadorCommissions")
+  parrainRewards  ReferralReward[]     @relation("ParrainRewards")
   lastSeenAt    DateTime?
   lastLoginAt   DateTime?
   createdAt     DateTime        @default(now())
@@ -98,6 +99,24 @@ model ReferralCommission {
 
   @@unique([subscriptionId, period])
   @@index([ambassadorId])
+}
+
+// Parrainage grand public : mois offert au parrain (user normal) pour chaque
+// filleul payant. Miroir de ReferralCommission, mais récompense en mois offert
+// (crédit Stripe) et non en commission cash. Unicité (filleulId) = 1 seule
+// récompense par filleul, jamais cumulée avec la commission ambassadeur.
+model ReferralReward {
+  id             String   @id @default(cuid())
+  parrainId      String
+  filleulId      String   @unique
+  subscriptionId String
+  amountEur      Float    @default(0)
+  status         String   @default("PENDING") // PENDING | APPLIED
+  createdAt      DateTime @default(now())
+
+  parrain User @relation("ParrainRewards", fields: [parrainId], references: [id])
+
+  @@index([parrainId])
 }
 
 model Trade {

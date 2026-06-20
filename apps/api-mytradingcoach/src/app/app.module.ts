@@ -20,6 +20,7 @@ import { SessionModule } from '../modules/session/session.module';
 import { DailyRecapModule } from '../modules/daily-recap/daily-recap.module';
 import { EcoCalendarModule } from '../modules/eco-calendar/eco-calendar.module';
 import { AmbassadorModule } from '../modules/ambassador/ambassador.module';
+import { ReferralModule } from '../modules/referral/referral.module';
 import { PublicModule } from '../modules/public/public.module';
 import { ActivityTrackingModule } from '../modules/activity-tracking/activity-tracking.module';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -68,6 +69,7 @@ import { AppController } from './app.controller';
     DailyRecapModule,
     EcoCalendarModule,
     AmbassadorModule,
+    ReferralModule,
     PublicModule,
     ActivityTrackingModule,
   ],

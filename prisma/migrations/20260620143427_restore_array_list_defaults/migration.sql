@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "User" ALTER COLUMN "tradingStrategy" SET DEFAULT ARRAY[]::TEXT[],
+ALTER COLUMN "tradingSessions" SET DEFAULT ARRAY[]::TEXT[],
+ALTER COLUMN "tradingAssets" SET DEFAULT ARRAY[]::TEXT[],
+ALTER COLUMN "pinnedEcoEvents" SET DEFAULT ARRAY[]::TEXT[];
