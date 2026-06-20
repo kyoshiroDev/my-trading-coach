@@ -16,6 +16,7 @@
   position: relative;
   z-index: 10;
   overflow-y: auto;
+  transition: width 0.2s ease, min-width 0.2s ease;
 }
 
 .sidebar::after {
@@ -48,6 +49,39 @@
 .logo img {
   height: 40px;
   width: auto;
+}
+
+.logo-full { display: block; max-width: 100%; }
+.logo-mark { display: none; }
+
+/* ─── Collapse toggle ─── */
+.collapse-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 12px 0;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all 0.15s;
+}
+.collapse-toggle:hover {
+  background: var(--blue-glow);
+  border-color: var(--border-hover);
+  color: var(--text-2);
+}
+.collapse-chevron {
+  font-size: 14px;
+  line-height: 1;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
 }
 
 /* ─── NAV ─── */
@@ -497,3 +531,69 @@
   padding: 4px;
 }
 .demo-modal-dismiss:hover { color: var(--text); }
+
+/* ─── Sidebar repliée (mode icônes) — desktop uniquement ─── */
+@media (min-width: 769px) {
+  .sidebar.collapsed {
+    width: 68px;
+    min-width: 68px;
+  }
+
+  /* Tout le texte / les en-têtes / badges disparaissent */
+  .sidebar.collapsed .nav-label,
+  .sidebar.collapsed .nav-section,
+  .sidebar.collapsed .badge,
+  .sidebar.collapsed .nav-badge-notif,
+  .sidebar.collapsed .discord-sidebar-arrow,
+  .sidebar.collapsed .user-info,
+  .sidebar.collapsed .logo-full,
+  .sidebar.collapsed .monthly-counter {
+    display: none;
+  }
+
+  /* Logo : marque carrée centrée */
+  .sidebar.collapsed .logo {
+    padding: 18px 0 14px;
+    text-align: center;
+  }
+  .sidebar.collapsed .logo-mark {
+    display: block;
+    margin: 0 auto;
+  }
+
+  /* Items de nav : icône seule centrée */
+  .sidebar.collapsed .nav {
+    padding: 16px 8px;
+  }
+  .sidebar.collapsed .nav-item {
+    justify-content: center;
+    gap: 0;
+    padding: 9px 0;
+  }
+
+  /* Toggle replié : chevron centré */
+  .sidebar.collapsed .collapse-toggle {
+    justify-content: center;
+    padding: 6px 0;
+    margin: 8px 8px 0;
+  }
+  .sidebar.collapsed .collapse-chevron { width: auto; }
+
+  /* Footer : Discord en icône, carte user en avatar seul */
+  .sidebar.collapsed .sidebar-footer { padding: 16px 8px; }
+  .sidebar.collapsed .discord-sidebar-btn {
+    justify-content: center;
+    gap: 0;
+    padding: 8px 0;
+    margin: 0 0 8px;
+  }
+  .sidebar.collapsed .user-card {
+    justify-content: center;
+    padding: 10px 0;
+  }
+}
+
+/* Le toggle de repli n'a pas de sens en mobile (la sidebar est un drawer) */
+@media (max-width: 768px) {
+  .collapse-toggle { display: none; }
+}

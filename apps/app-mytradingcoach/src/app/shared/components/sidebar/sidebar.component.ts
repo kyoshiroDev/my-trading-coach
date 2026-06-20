@@ -50,16 +50,25 @@ import { environment } from '../../../../environments/environment';
 
     <div class="app-layout">
       <!-- ─── SIDEBAR ─── -->
-      <aside class="sidebar" [class.open]="sidebarOpen()">
-        <!-- Logo -->
+      <aside class="sidebar" [class.open]="sidebarOpen()" [class.collapsed]="collapsed()">
+        <!-- Logo (complet déplié / marque seule replié) -->
         <a routerLink="/dashboard" class="logo">
-          <img
-            src="icon/logo-horizontal.svg"
-            alt="MyTradingCoach"
-            height="40"
-            style="display:block;max-width:100%"
-          />
+          <img class="logo-full" src="icon/logo-horizontal.svg" alt="MyTradingCoach" height="40" />
+          <img class="logo-mark" src="logo.svg" alt="MyTradingCoach" height="32" width="32" />
         </a>
+
+        <!-- Toggle repli/dépli (desktop) -->
+        <button
+          type="button"
+          class="collapse-toggle"
+          data-testid="sidebar-collapse-toggle"
+          (click)="toggleCollapse()"
+          [attr.aria-label]="collapsed() ? 'Déplier la barre latérale' : 'Replier la barre latérale'"
+          [attr.title]="collapsed() ? 'Déplier' : 'Replier'"
+        >
+          <span class="collapse-chevron">{{ collapsed() ? '»' : '«' }}</span>
+          <span class="nav-label">Replier</span>
+        </button>
 
         <!-- Nav -->
         <nav class="nav">
@@ -70,10 +79,11 @@ import { environment } from '../../../../environments/environment';
             routerLinkActive="active"
             class="nav-item"
             data-testid="nav-dashboard"
+            [attr.title]="collapsed() ? 'Dashboard' : null"
             (click)="closeSidebar()"
           >
             <span class="nav-icon">📊</span>
-            Dashboard
+            <span class="nav-label">Dashboard</span>
           </a>
 
           <a
@@ -81,10 +91,11 @@ import { environment } from '../../../../environments/environment';
             routerLinkActive="active"
             class="nav-item"
             data-testid="nav-session"
+            [attr.title]="collapsed() ? 'Ma session' : null"
             (click)="closeSidebar()"
           >
             <span class="nav-icon">⚡</span>
-            Ma session
+            <span class="nav-label">Ma session</span>
           </a>
 
           <a
@@ -92,10 +103,11 @@ import { environment } from '../../../../environments/environment';
             routerLinkActive="active"
             class="nav-item"
             data-testid="nav-journal"
+            [attr.title]="collapsed() ? 'Journal' : null"
             (click)="closeSidebar()"
           >
             <span class="nav-icon">📖</span>
-            Journal
+            <span class="nav-label">Journal</span>
           </a>
 
           <a
@@ -103,10 +115,11 @@ import { environment } from '../../../../environments/environment';
             routerLinkActive="active"
             class="nav-item"
             data-testid="nav-sessions"
+            [attr.title]="collapsed() ? 'Mes sessions' : null"
             (click)="closeSidebar()"
           >
             <span class="nav-icon">📋</span>
-            Mes sessions
+            <span class="nav-label">Mes sessions</span>
           </a>
 
           <a
@@ -114,11 +127,14 @@ import { environment } from '../../../../environments/environment';
             routerLinkActive="active"
             class="nav-item"
             data-testid="nav-analytics"
+            [attr.title]="collapsed() ? 'Analytics' : null"
             (click)="closeSidebar()"
           >
             <span class="nav-icon">📈</span>
-            Analytics
-            <span class="badge starter">STARTER</span>
+            <span class="nav-label">Analytics</span>
+            @if (!userStore.isStarterOrAbove()) {
+              <span class="badge starter">STARTER</span>
+            }
           </a>
 
           <div class="nav-section">ANALYSE &amp; IA</div>
@@ -128,11 +144,14 @@ import { environment } from '../../../../environments/environment';
             routerLinkActive="active"
             class="nav-item"
             data-testid="nav-ai-insights"
+            [attr.title]="collapsed() ? 'IA Insights' : null"
             (click)="closeSidebar()"
           >
             <span class="nav-icon">✨</span>
-            IA Insights
-            <span class="badge">AI</span>
+            <span class="nav-label">IA Insights</span>
+            @if (!userStore.isPremium()) {
+              <span class="badge">AI</span>
+            }
           </a>
 
           <a
@@ -140,11 +159,14 @@ import { environment } from '../../../../environments/environment';
             routerLinkActive="active"
             class="nav-item"
             data-testid="nav-debrief"
+            [attr.title]="collapsed() ? 'Weekly Debrief' : null"
             (click)="closeSidebar()"
           >
             <span class="nav-icon">📅</span>
-            Weekly Debrief
-            <span class="badge starter">STARTER</span>
+            <span class="nav-label">Weekly Debrief</span>
+            @if (!userStore.isStarterOrAbove()) {
+              <span class="badge starter">STARTER</span>
+            }
           </a>
 
           <a
@@ -152,10 +174,11 @@ import { environment } from '../../../../environments/environment';
             routerLinkActive="active"
             class="nav-item"
             data-testid="nav-eco-calendar"
+            [attr.title]="collapsed() ? 'Calendrier éco' : null"
             (click)="closeSidebar()"
           >
             <span class="nav-icon">🗓️</span>
-            Calendrier éco
+            <span class="nav-label">Calendrier éco</span>
           </a>
 
           @if (userStore.isAmbassador()) {
@@ -164,10 +187,11 @@ import { environment } from '../../../../environments/environment';
               routerLinkActive="active"
               class="nav-item"
               data-testid="nav-ambassador"
+              [attr.title]="collapsed() ? 'Ambassadeur' : null"
               (click)="closeSidebar()"
             >
               <span class="nav-icon">🤝</span>
-              Ambassadeur
+              <span class="nav-label">Ambassadeur</span>
               @if (ambassadorNotif.newReferrals() > 0) {
                 <span class="nav-badge-notif">{{ ambassadorNotif.newReferrals() }}</span>
               }
@@ -181,11 +205,14 @@ import { environment } from '../../../../environments/environment';
             routerLinkActive="active"
             class="nav-item"
             data-testid="nav-scoring"
+            [attr.title]="collapsed() ? 'Scoring' : null"
             (click)="closeSidebar()"
           >
             <span class="nav-icon">🏆</span>
-            Scoring
-            <span class="badge starter">STARTER</span>
+            <span class="nav-label">Scoring</span>
+            @if (!userStore.isStarterOrAbove()) {
+              <span class="badge starter">STARTER</span>
+            }
           </a>
 
           <a
@@ -193,19 +220,21 @@ import { environment } from '../../../../environments/environment';
             routerLinkActive="active"
             class="nav-item"
             data-testid="nav-settings"
+            [attr.title]="collapsed() ? 'Paramètres' : null"
             (click)="closeSidebar()"
           >
             <span class="nav-icon">⚙️</span>
-            Paramètres
+            <span class="nav-label">Paramètres</span>
           </a>
 
           <button
             class="nav-item settings-item"
             data-testid="logout-btn"
+            [attr.title]="collapsed() ? (userStore.isDemo() ? 'Quitter la démo' : 'Déconnexion') : null"
             (click)="closeSidebar(); logout()"
           >
             <span class="nav-icon">🚪</span>
-            @if (userStore.isDemo()) { Quitter la démo } @else { Déconnexion }
+            <span class="nav-label">@if (userStore.isDemo()) { Quitter la démo } @else { Déconnexion }</span>
           </button>
         </nav>
 
@@ -241,10 +270,10 @@ import { environment } from '../../../../environments/environment';
             <svg width="14" height="14" viewBox="0 0 127.14 96.36" fill="currentColor">
               <path d="M107.7 8.07A105.15 105.15 0 0 0 81.47 0a72.06 72.06 0 0 0-3.36 6.83 97.68 97.68 0 0 0-29.11 0A72.37 72.37 0 0 0 45.64 0a105.89 105.89 0 0 0-26.25 8.09C2.79 32.65-1.71 56.6.54 80.21a105.73 105.73 0 0 0 32.17 16.15 77.7 77.7 0 0 0 6.89-11.11 68.42 68.42 0 0 1-10.85-5.18c.91-.66 1.8-1.34 2.66-2a75.57 75.57 0 0 0 64.32 0c.87.71 1.76 1.39 2.66 2a68.68 68.68 0 0 1-10.87 5.19 77 77 0 0 0 6.89 11.1 105.25 105.25 0 0 0 32.19-16.14c2.64-27.38-4.51-51.11-18.9-72.15zM42.45 65.69C36.18 65.69 31 60 31 53s5-12.74 11.43-12.74S54 46 53.89 53s-5.05 12.69-11.44 12.69zm42.24 0C78.41 65.69 73.25 60 73.25 53s5-12.74 11.44-12.74S96.23 46 96.12 53s-5.04 12.69-11.43 12.69z"/>
             </svg>
-            <span>Communauté Discord</span>
+            <span class="nav-label">Communauté Discord</span>
             <span class="discord-sidebar-arrow">↗</span>
           </a>
-          <div class="user-card">
+          <div class="user-card" [attr.title]="collapsed() ? userStore.displayName() : null">
             <div class="avatar">{{ userStore.initials() }}</div>
             <div class="user-info">
               <div class="user-name">{{ userStore.displayName() }}</div>
@@ -309,11 +338,33 @@ export class SidebarComponent {
   protected readonly sidebarOpen   = signal(false);
   protected readonly showPlanModal  = signal(false);
 
+  // Préférence d'UI desktop : sidebar repliée en mode icônes. Persistée en
+  // localStorage (préférence purement visuelle, pas besoin du backend).
+  private static readonly COLLAPSE_KEY = 'sidebar_collapsed';
+  protected readonly collapsed = signal<boolean>(this.readCollapsed());
+
+  private readCollapsed(): boolean {
+    try {
+      return localStorage.getItem(SidebarComponent.COLLAPSE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  }
+
   protected toggleSidebar(): void {
     this.sidebarOpen.update((v) => !v);
   }
   protected closeSidebar(): void {
     this.sidebarOpen.set(false);
+  }
+  protected toggleCollapse(): void {
+    this.collapsed.update((v) => {
+      const next = !v;
+      try {
+        localStorage.setItem(SidebarComponent.COLLAPSE_KEY, next ? '1' : '0');
+      } catch { /* préférence non persistée, sans gravité */ }
+      return next;
+    });
   }
 
   // Signal local — une fois mis à true, le wizard ne peut plus revenir dans la session
