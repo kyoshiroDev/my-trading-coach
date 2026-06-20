@@ -179,6 +179,25 @@ export interface UserDetailData {
   };
   activeDates: string[];
   aiByFeature: { feature: string; tokens: number; costUsd: number }[];
+  profile: {
+    market: string | null;
+    goal: string | null;
+    tradingStyle: string | null;
+    tradingStrategy: string[];
+    tradingSessions: string[];
+    tradesPerDayMin: number | null;
+    tradesPerDayMax: number | null;
+    strategyDescription: string | null;
+    startingCapital: number;
+    currency: string;
+  };
+  usage: {
+    totalTrades: number;
+    tradesThisMonth: number;
+    totalPnl: number;
+    winRate: number;
+  };
+  topAssets: { asset: string; count: number }[];
   sessions: { date: string; trades: number; pnl: number; winRate: number; emotion: string | null; durationMinutes: number | null }[];
 }
 
