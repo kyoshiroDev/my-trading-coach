@@ -20,6 +20,10 @@ export interface AdminStats {
   trials: number;
   freeUsers: number; newThisMonth: number; churnedThisMonth: number;
   betaTesters: number; ambassadors: number;
+  // Engagement par récence (≥1 trade sur la fenêtre) — distinct de l'activation.
+  tradersActifs7d: number; tradersActifs30d: number;
+  // Comptes supprimés (trace RGPD) — distinct du churn d'abonnement.
+  comptesSupprimesMois: number; comptesSupprimesTotal: number;
 }
 
 export interface AdminOnlineUser {
@@ -139,6 +143,7 @@ export interface MetricsHistoryPoint {
   date: string; // YYYY-MM-DD (Paris)
   users: number;
   mrr: number;
+  newSignups: number; // inscriptions du jour → agrégées par semaine pour les barres
 }
 
 export interface DeletedAccount {

@@ -237,6 +237,9 @@ export class UsersService {
   async adminStats() {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    // Fenêtres de récence pour l'engagement (a tradé récemment, pas juste 1 fois).
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 86_400_000);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 86_400_000);
 
     const [
       starterMonthly, starterAnnual,
@@ -244,6 +247,8 @@ export class UsersService {
       trials, freeUsers, newThisMonth, churnedThisMonth,
       betaTesters, ambassadors,
       totalUsers, totalStarter, totalPremium,
+      tradersActifs7d, tradersActifs30d,
+      comptesSupprimesMois, comptesSupprimesTotal,
     ] = await Promise.all([
       // MRR = revenu réellement encaissé → abonnements 'active' uniquement (les essais
       // 'trialing' ne paient pas et sont déjà comptés à part dans `trials`).
@@ -271,6 +276,14 @@ export class UsersService {
       this.prisma.user.count({ where: { isDemo: false } }),
       this.prisma.user.count({ where: { isDemo: false, plan: 'STARTER' } }),
       this.prisma.user.count({ where: { isDemo: false, plan: 'PREMIUM' } }),
+      // Engagement par récence : ≥1 trade sur 7j / 30j (distinct users, hors démo).
+      // À ne pas confondre avec l'activation (= a tradé au moins une fois).
+      this.prisma.user.count({ where: { isDemo: false, trades: { some: { tradedAt: { gte: sevenDaysAgo } } } } }),
+      this.prisma.user.count({ where: { isDemo: false, trades: { some: { tradedAt: { gte: thirtyDaysAgo } } } } }),
+      // Comptes supprimés (trace DeletedAccount) — distinct du churn d'abonnement.
+      // Les comptes démo ne sont jamais supprimés → naturellement hors démo.
+      this.prisma.deletedAccount.count({ where: { deletedAt: { gte: startOfMonth } } }),
+      this.prisma.deletedAccount.count(),
     ]);
 
     // MRR/ARR restent basés sur les abonnements Stripe payants (pas les comptes par plan).
@@ -292,6 +305,8 @@ export class UsersService {
       monthly, annual,
       trials, freeUsers, newThisMonth, churnedThisMonth,
       betaTesters, ambassadors,
+      tradersActifs7d, tradersActifs30d,
+      comptesSupprimesMois, comptesSupprimesTotal,
     };
   }
 

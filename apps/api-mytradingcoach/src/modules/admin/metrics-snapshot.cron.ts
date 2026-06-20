@@ -137,7 +137,7 @@ export class MetricsSnapshotCron {
    */
   async historyPoints(days: number): Promise<MetricsHistoryPoint[]> {
     const rows = await this.history(days);
-    return rows.map((r) => ({ date: r.date, users: r.totalUsers, mrr: r.mrr }));
+    return rows.map((r) => ({ date: r.date, users: r.totalUsers, mrr: r.mrr, newSignups: r.newThisDay }));
   }
 }
 
@@ -146,4 +146,5 @@ export interface MetricsHistoryPoint {
   date: string; // YYYY-MM-DD (Paris)
   users: number;
   mrr: number;
+  newSignups: number; // inscriptions du jour (snapshot.newThisDay) → barres hebdo
 }
