@@ -18,6 +18,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { RedisService } from '../shared/redis.service';
+import { AccountsService } from '../accounts/accounts.service';
 
 const mockTrade = {
   id: 'trade-123',
@@ -95,6 +96,10 @@ describe('TradesService', () => {
         TradesService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AnalyticsService, useValue: { invalidateUserCache: vi.fn().mockResolvedValue(undefined) } },
+        { provide: AccountsService, useValue: {
+          accountWhere: vi.fn().mockResolvedValue({ accountId: 'acc-1' }),
+          ensureDefaultAccountId: vi.fn().mockResolvedValue('acc-default'),
+        } },
       ],
     }).compile();
 

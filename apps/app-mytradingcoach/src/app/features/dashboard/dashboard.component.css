@@ -63,6 +63,17 @@
   max-width: 400px;
 }
 
+/* ─── Barre « Compte » (sélecteur multi-comptes) ─── */
+.acct-bar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 22px; padding: 12px 14px;
+  background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px;
+}
+.acct-bar-lbl {
+  font-family: var(--font-mono); font-size: 10px; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.8px; margin-right: 2px;
+}
+
 /* ─── Stats Row ─── */
 .stats-row {
   display: grid;

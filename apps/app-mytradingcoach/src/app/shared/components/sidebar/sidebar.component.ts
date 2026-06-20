@@ -98,6 +98,20 @@ import { environment } from '../../../../environments/environment';
             <span class="nav-label">Ma session</span>
           </a>
 
+          @if (userStore.isStarterOrAbove()) {
+            <a
+              routerLink="/accounts"
+              routerLinkActive="active"
+              class="nav-item"
+              data-testid="nav-accounts"
+              (click)="closeSidebar()"
+            >
+              <span class="nav-icon">💼</span>
+              Mes comptes
+              <span class="badge starter">STARTER</span>
+            </a>
+          }
+
           <a
             routerLink="/journal"
             routerLinkActive="active"

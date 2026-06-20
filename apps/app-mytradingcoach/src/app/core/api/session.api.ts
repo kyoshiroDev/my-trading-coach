@@ -21,6 +21,7 @@ export interface TradingSession {
   reflectionQuestion?: string;
   planNote?: string | null;
   marketContext?: string | null;
+  accountId?: string | null;
 }
 
 export interface SessionHistoryItem {
@@ -74,8 +75,11 @@ export class SessionApi {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/session`;
 
-  startSession(mood: MoodState): Observable<{ data: TradingSession }> {
-    return this.http.post<{ data: TradingSession }>(`${this.base}/start`, { mood });
+  startSession(mood: MoodState, accountId?: string): Observable<{ data: TradingSession }> {
+    return this.http.post<{ data: TradingSession }>(`${this.base}/start`, {
+      mood,
+      ...(accountId ? { accountId } : {}),
+    });
   }
 
   getActiveSession(): Observable<{ data: TradingSession | null }> {

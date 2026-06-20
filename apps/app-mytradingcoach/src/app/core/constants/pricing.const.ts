@@ -13,3 +13,13 @@ export const PRICING = {
 export const yearlyPerMonth = (yearly: number): number => Math.round(yearly / 12);
 
 export const FREE_TRADE_LIMIT = 30; // aligné backend trades.service
+
+/**
+ * Quota de comptes de trading par plan (aligné backend accounts.service).
+ * `null` = illimité. Seuls les comptes NON archivés comptent dans le quota.
+ */
+export const ACCOUNT_LIMITS = {
+  free: 1,
+  starter: 3,
+  premium: null,
+} as const;

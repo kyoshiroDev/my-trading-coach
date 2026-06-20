@@ -146,9 +146,9 @@ export class SessionStore {
     this.selectedMood.set(mood);
   }
 
-  startSession(): void {
+  startSession(accountId?: string): void {
     this.sessionApi
-      .startSession(this.selectedMood())
+      .startSession(this.selectedMood(), accountId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
