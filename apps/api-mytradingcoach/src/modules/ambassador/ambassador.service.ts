@@ -1,5 +1,31 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+
+// Lien de parrainage : même format que celui affiché par le dashboard ambassadeur.
+const REFERRAL_BASE = 'https://mytradingcoach.app';
+const buildReferralLink = (code: string) => `${REFERRAL_BASE}?ref=${code}`;
+
+const CODE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+function randomSuffix(length: number): string {
+  let out = '';
+  for (let i = 0; i < length; i++) {
+    out += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+  }
+  return out;
+}
+
+export interface PromoteResult {
+  email: string;
+  name: string | null;
+  role: Role;
+  referralCode: string;
+  referralLink: string;
+}
 
 export interface ReferralUser {
   id: string;
@@ -25,6 +51,109 @@ export interface AmbassadorStats {
 @Injectable()
 export class AmbassadorService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /** Marque toutes les commissions en attente d'un ambassadeur comme payées. */
+  markAllPaid(ambassadorId: string) {
+    return this.prisma.referralCommission.updateMany({
+      where: { ambassadorId, status: 'pending' },
+      data: { status: 'paid' },
+    });
+  }
+
+  /**
+   * Promeut un utilisateur en ambassadeur (remplace l'UPDATE SQL manuel).
+   * Idempotent : si déjà ambassadeur, met à jour le code.
+   * - code fourni → format déjà validé par le DTO + contrôle d'unicité (409).
+   * - code absent → réutilise le code existant, sinon en génère un unique.
+   */
+  async promote(email: string, referralCode?: string): Promise<PromoteResult> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      select: { id: true, name: true, email: true, referralCode: true },
+    });
+    if (!user) {
+      throw new NotFoundException('Aucun utilisateur avec cet email');
+    }
+
+    let code: string;
+    if (referralCode) {
+      const owner = await this.prisma.user.findUnique({
+        where: { referralCode },
+        select: { id: true },
+      });
+      if (owner && owner.id !== user.id) {
+        throw new ConflictException('Ce code est déjà utilisé, choisis-en un autre');
+      }
+      code = referralCode;
+    } else {
+      code = user.referralCode ?? (await this.generateUniqueCode(user.name, user.email));
+    }
+
+    try {
+      const updated = await this.prisma.user.update({
+        where: { id: user.id },
+        data: { role: Role.AMBASSADOR, referralCode: code },
+        select: { email: true, name: true, role: true, referralCode: true },
+      });
+      return {
+        email: updated.email,
+        name: updated.name,
+        role: updated.role,
+        referralCode: updated.referralCode!,
+        referralLink: buildReferralLink(updated.referralCode!),
+      };
+    } catch (err) {
+      // Garde-fou course condition : la contrainte @unique a tranché.
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
+        throw new ConflictException('Ce code est déjà utilisé, choisis-en un autre');
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * Retire le statut ambassadeur : role → USER, referralCode vidé.
+   * Ne touche pas aux commissions déjà enregistrées (referredBy des filleuls reste).
+   */
+  async revoke(email: string): Promise<{ email: string; name: string | null; role: Role }> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
+    });
+    if (!user) {
+      throw new NotFoundException('Aucun utilisateur avec cet email');
+    }
+    const updated = await this.prisma.user.update({
+      where: { id: user.id },
+      data: { role: Role.USER, referralCode: null },
+      select: { email: true, name: true, role: true },
+    });
+    return updated;
+  }
+
+  /** Génère un code unique : slug du nom/email en MAJUSCULES, fallback aléatoire. */
+  private async generateUniqueCode(
+    name: string | null,
+    email: string,
+  ): Promise<string> {
+    const source = name?.trim() ? name : email.split('@')[0];
+    let base = source.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12);
+    if (base.length < 3) base = `${base}AMB`.slice(0, 3);
+
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const candidate =
+        attempt === 0 ? base : `${base.slice(0, 12)}${randomSuffix(4)}`.slice(0, 20);
+      const exists = await this.prisma.user.findUnique({
+        where: { referralCode: candidate },
+        select: { id: true },
+      });
+      if (!exists) return candidate;
+    }
+    return `AMB${randomSuffix(8)}`;
+  }
 
   async listAmbassadors(): Promise<{
     id: string;

@@ -4,9 +4,10 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import type { ChartConfiguration } from 'chart.js';
-import { AdminApi, AdminAmbassador, AdminAmbassadorDetail } from '../../core/api/admin.api';
+import { AdminApi, AdminAmbassador, AdminAmbassadorDetail, AdminAmbassadorPromoteResult } from '../../core/api/admin.api';
 import { ChartCanvasComponent } from '../../shared/components/chart-canvas/chart-canvas.component';
 import { CHART_COLORS, gridAxis, noLegend } from '../../shared/charts/chart-theme';
+import { PRICING_EUR } from '../../core/constants/pricing.const';
 
 @Component({
   selector: 'mtc-admin-ambassadeurs',
@@ -23,14 +24,14 @@ import { CHART_COLORS, gridAxis, noLegend } from '../../shared/charts/chart-them
       <div class="kpi-strip">
         <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Ambassadeurs</div><div class="kpi-value purple">{{ ambassadors().length }}</div><div class="kpi-sub">actifs</div></div>
         <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Total référés</div><div class="kpi-value blue">{{ totalReferrals() }}</div><div class="kpi-sub">via liens</div></div>
-        <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Référés Starter</div><div class="kpi-value amber">{{ totalStarter() }}</div><div class="kpi-sub">39€/mois</div></div>
-        <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Référés Premium</div><div class="kpi-value blue">{{ totalPremium() }}</div><div class="kpi-sub">79€/mois</div></div>
+        <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Référés Starter</div><div class="kpi-value amber">{{ totalStarter() }}</div><div class="kpi-sub">{{ pricing.STARTER.monthly }}€/mois</div></div>
+        <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Référés Premium</div><div class="kpi-value blue">{{ totalPremium() }}</div><div class="kpi-sub">{{ pricing.PREMIUM.monthly }}€/mois</div></div>
         <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Commissions dues</div><div class="kpi-value amber">{{ totalPending() | number:'1.2-2' }}€</div><div class="kpi-sub">à verser</div></div>
         <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Total payé</div><div class="kpi-value teal">{{ totalPaid() | number:'1.2-2' }}€</div><div class="kpi-sub">versé</div></div>
       </div>
 
       <div class="card">
-        <div class="card-head"><span class="card-label">Ambassadeurs</span><button type="button" class="card-action" (click)="copyCommand()">⧉ Copier SQL ajout</button></div>
+        <div class="card-head"><span class="card-label">Ambassadeurs</span><button type="button" class="card-action" data-testid="add-ambassador-btn" (click)="openAdd()">+ Ajouter un ambassadeur</button></div>
         @if (loading()) {
           <div class="empty">Chargement…</div>
         } @else if (ambassadors().length === 0) {
@@ -48,7 +49,7 @@ import { CHART_COLORS, gridAxis, noLegend } from '../../shared/charts/chart-them
                   <td data-label="Starter / Prem." class="td-mono">{{ amb.starterReferrals }} S / {{ amb.premiumReferrals }} P</td>
                   <td data-label="Dû" class="td-mono num amber">{{ amb.pendingPayout | number:'1.2-2' }}€</td>
                   <td data-label="Total payé" class="td-mono num">{{ (amb.totalEarned - amb.pendingPayout) | number:'1.2-2' }}€</td>
-                  <td data-label="Actions"><div class="row-actions"><button class="btn pay-btn" [disabled]="amb.pendingPayout === 0" (click)="$event.stopPropagation(); payAmbassador(amb)">✓ Payer</button></div></td>
+                  <td data-label="Actions"><div class="row-actions"><button class="btn pay-btn" [disabled]="amb.pendingPayout === 0" (click)="$event.stopPropagation(); payAmbassador(amb)">✓ Payer</button><button class="btn revoke-btn" (click)="$event.stopPropagation(); askRevoke(amb)">Retirer</button></div></td>
                 </tr>
               }
             </tbody>
@@ -104,6 +105,56 @@ import { CHART_COLORS, gridAxis, noLegend } from '../../shared/charts/chart-them
           </div>
         </div>
       }
+
+      @if (showAdd()) {
+        <div class="modal-overlay" role="button" tabindex="-1" (click)="closeAdd()" (keydown.escape)="closeAdd()">
+          <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+            <div class="modal-head"><h3 class="modal-title">Ajouter un ambassadeur</h3><button class="modal-x" (click)="closeAdd()">✕</button></div>
+            @if (addResult(); as r) {
+              <div class="modal-body">
+                <p class="ok-text">✓ <strong>{{ r.name ?? r.email }}</strong> est désormais ambassadeur.</p>
+                <div class="result-row"><span class="result-lbl">Code</span><span class="pill teal-pill">{{ r.referralCode }}</span></div>
+                <div class="result-row"><span class="result-lbl">Lien</span><span class="result-link td-mono">{{ r.referralLink }}</span></div>
+              </div>
+              <div class="modal-foot">
+                <button class="btn" (click)="copyResultLink(r.referralLink)">{{ linkCopied() ? '✓ Copié' : '⧉ Copier le lien' }}</button>
+                <button class="btn btn-primary" (click)="closeAdd()">Fermer</button>
+              </div>
+            } @else {
+              <div class="modal-body">
+                <label class="field">
+                  <span class="field-lbl">Email de l'utilisateur</span>
+                  <input class="field-input" type="email" data-testid="add-ambassador-email" placeholder="email@exemple.com" [value]="addEmail()" (input)="addEmail.set($any($event.target).value)" />
+                </label>
+                <label class="field">
+                  <span class="field-lbl">Code de parrainage <span class="opt">(optionnel)</span></span>
+                  <input class="field-input" type="text" data-testid="add-ambassador-code" placeholder="laisser vide pour générer automatiquement" [value]="addCode()" (input)="addCode.set($any($event.target).value)" />
+                </label>
+                @if (addError(); as e) { <p class="err-text" data-testid="add-ambassador-error">{{ e }}</p> }
+              </div>
+              <div class="modal-foot">
+                <button class="btn" (click)="closeAdd()">Annuler</button>
+                <button class="btn btn-primary" data-testid="add-ambassador-submit" [disabled]="!addEmail().trim() || adding()" (click)="submitAdd()">{{ adding() ? 'En cours…' : 'Ajouter' }}</button>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @if (revokeTarget(); as target) {
+        <div class="modal-overlay" role="button" tabindex="-1" (click)="cancelRevoke()" (keydown.escape)="cancelRevoke()">
+          <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+            <div class="modal-head"><h3 class="modal-title">Retirer l'ambassadeur</h3><button class="modal-x" (click)="cancelRevoke()">✕</button></div>
+            <div class="modal-body">
+              <p class="confirm-text">Retirer le statut ambassadeur de <strong>{{ target.name ?? target.email }}</strong> ? Son rôle repasse à <strong>USER</strong> et son code <strong>{{ target.referralCode }}</strong> est libéré. Les commissions déjà enregistrées sont conservées.</p>
+            </div>
+            <div class="modal-foot">
+              <button class="btn" (click)="cancelRevoke()">Annuler</button>
+              <button class="btn revoke-btn" data-testid="revoke-confirm" [disabled]="revoking()" (click)="confirmRevoke()">{{ revoking() ? 'En cours…' : 'Retirer' }}</button>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   `,
 })
@@ -117,6 +168,20 @@ export class AmbassadeursComponent implements OnInit {
   protected readonly selectedDetail = signal<AdminAmbassadorDetail | null>(null);
   protected readonly selectedAmbassador = signal<AdminAmbassador | null>(null);
   protected readonly paying = signal(false);
+  protected readonly pricing = PRICING_EUR;
+
+  // Ajout d'un ambassadeur
+  protected readonly showAdd = signal(false);
+  protected readonly addEmail = signal('');
+  protected readonly addCode = signal('');
+  protected readonly adding = signal(false);
+  protected readonly addError = signal<string | null>(null);
+  protected readonly addResult = signal<AdminAmbassadorPromoteResult | null>(null);
+  protected readonly linkCopied = signal(false);
+
+  // Retrait d'un ambassadeur
+  protected readonly revokeTarget = signal<AdminAmbassador | null>(null);
+  protected readonly revoking = signal(false);
 
   protected readonly totalReferrals = computed(() => this.ambassadors().reduce((s, a) => s + a.totalReferrals, 0));
   protected readonly totalStarter = computed(() => this.ambassadors().reduce((s, a) => s + a.starterReferrals, 0));
@@ -154,8 +219,63 @@ export class AmbassadeursComponent implements OnInit {
   protected copyLink(code: string): void {
     navigator.clipboard.writeText(`https://mytradingcoach.app?ref=${code}`);
   }
-  protected copyCommand(): void {
-    navigator.clipboard.writeText(`UPDATE "User" SET role = 'AMBASSADOR', "referralCode" = 'CODE' WHERE email = 'email@exemple.com';`);
+
+  // ── Ajouter un ambassadeur ──────────────────────────────────────────────
+  protected openAdd(): void {
+    this.addEmail.set('');
+    this.addCode.set('');
+    this.addError.set(null);
+    this.addResult.set(null);
+    this.linkCopied.set(false);
+    this.showAdd.set(true);
+  }
+  protected closeAdd(): void {
+    this.showAdd.set(false);
+  }
+  protected submitAdd(): void {
+    const email = this.addEmail().trim();
+    if (!email || this.adding()) return;
+    const code = this.addCode().trim() || undefined;
+    this.adding.set(true);
+    this.addError.set(null);
+    this.api.promoteAmbassador(email, code).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => {
+        this.adding.set(false);
+        this.addResult.set(res.data);
+        this.loadAmbassadors();
+      },
+      error: (err: { status?: number; error?: { message?: string } }) => {
+        this.adding.set(false);
+        if (err.status === 404) this.addError.set('Aucun utilisateur avec cet email.');
+        else if (err.status === 409) this.addError.set('Ce code est déjà utilisé, choisis-en un autre.');
+        else this.addError.set(err.error?.message ?? 'Une erreur est survenue.');
+      },
+    });
+  }
+  protected copyResultLink(link: string): void {
+    navigator.clipboard.writeText(link);
+    this.linkCopied.set(true);
+  }
+
+  // ── Retirer un ambassadeur ──────────────────────────────────────────────
+  protected askRevoke(amb: AdminAmbassador): void {
+    this.revokeTarget.set(amb);
+  }
+  protected cancelRevoke(): void {
+    this.revokeTarget.set(null);
+  }
+  protected confirmRevoke(): void {
+    const target = this.revokeTarget();
+    if (!target || this.revoking()) return;
+    this.revoking.set(true);
+    this.api.revokeAmbassador(target.email).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.revoking.set(false);
+        this.revokeTarget.set(null);
+        this.loadAmbassadors();
+      },
+      error: () => this.revoking.set(false),
+    });
   }
 
   protected payAmbassador(amb: AdminAmbassador): void {

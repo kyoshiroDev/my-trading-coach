@@ -234,4 +234,57 @@ export class AdminService {
       divergences: { inDbNotStripe, inStripeNotDb },
     };
   }
+
+  /** IDs des comptes liés à Discord (pour resync des rôles). */
+  findDiscordLinkedUserIds() {
+    return this.prisma.user.findMany({
+      where: { discordId: { not: null } },
+      select: { id: true },
+    });
+  }
+
+  /** Stats de parrainage agrégées par ambassadeur. */
+  async getReferralStats() {
+    const ambassadors = await this.prisma.user.findMany({
+      where: { referralCode: { not: null } },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        referralCode: true,
+        referrals: {
+          select: { amount: true, status: true, period: true, referredUserId: true },
+        },
+      },
+    });
+
+    return {
+      data: ambassadors.map((a) => ({
+        name: a.name,
+        email: a.email,
+        referralCode: a.referralCode,
+        totalReferrals: new Set(a.referrals.map((r) => r.referredUserId)).size,
+        totalCommissions: a.referrals.reduce((s, r) => s + r.amount, 0).toFixed(2),
+        pendingCommissions: a.referrals
+          .filter((r) => r.status === 'pending')
+          .reduce((s, r) => s + r.amount, 0)
+          .toFixed(2),
+        commissionsByMonth: a.referrals.reduce(
+          (acc, r) => {
+            acc[r.period] = (acc[r.period] ?? 0) + r.amount;
+            return acc;
+          },
+          {} as Record<string, number>,
+        ),
+      })),
+    };
+  }
+
+  /** Marque une commission de parrainage comme payée. */
+  markCommissionPaid(id: string) {
+    return this.prisma.referralCommission.update({
+      where: { id },
+      data: { status: 'paid' },
+    });
+  }
 }

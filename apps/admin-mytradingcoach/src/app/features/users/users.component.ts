@@ -15,6 +15,7 @@ import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { LucideAngularModule, Trash2, Pencil, X, ShieldCheck } from 'lucide-angular';
 import { AdminApi, AdminUser, AdminStats } from '../../core/api/admin.api';
 import { TableSort } from '../../shared/tables/table-sort';
+import { PRICING_EUR } from '../../core/constants/pricing.const';
 
 @Component({
   selector: 'mtc-admin-users',
@@ -128,8 +129,8 @@ import { TableSort } from '../../shared/tables/table-sort';
                 <label for="modal-edit-plan">Plan</label>
                 <select id="modal-edit-plan" class="field-select" [(ngModel)]="editPlan">
                   <option value="FREE">FREE</option>
-                  <option value="STARTER">STARTER — 39€/mois</option>
-                  <option value="PREMIUM">PREMIUM — 79€/mois</option>
+                  <option value="STARTER">STARTER · {{ pricing.STARTER.monthly }}€/mois</option>
+                  <option value="PREMIUM">PREMIUM · {{ pricing.PREMIUM.monthly }}€/mois</option>
                 </select>
               </div>
               <div class="field">
@@ -176,6 +177,7 @@ export class UsersComponent implements OnInit {
   protected readonly PencilIcon      = Pencil;
   protected readonly XIcon           = X;
   protected readonly ShieldCheckIcon = ShieldCheck;
+  protected readonly pricing = PRICING_EUR;
 
   private readonly api = inject(AdminApi);
   private readonly router = inject(Router);

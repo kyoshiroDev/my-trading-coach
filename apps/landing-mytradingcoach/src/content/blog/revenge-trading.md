@@ -1,11 +1,11 @@
 ---
 title: "Revenge Trading : Comment l'identifier et l'arrêter définitivement"
-description: "Le revenge trading détruit les comptes des traders les plus disciplinés. Découvrez comment le détecter, le mesurer et l'éliminer grâce à un journal de trading."
+description: "Le revenge trading détruit même les comptes des traders disciplinés. Comment le repérer, le mesurer et l'éliminer avec un journal de trading."
 publishDate: 2026-03-10
 tags: ["psychologie trading", "revenge trading", "journal de trading"]
 ---
 
-Tu viens de perdre. La colère monte. Une voix dans ta tête dit : "Je vais récupérer ça tout de suite." Tu reprends position immédiatement, avec une taille plus importante, sur un setup discutable. Tu perds encore plus. C'est le revenge trading — et il liquide des comptes chaque jour.
+Tu viens de perdre. La colère monte. Une voix dans ta tête dit : "Je vais récupérer ça tout de suite." Tu reprends position immédiatement, avec une taille plus importante, sur un setup discutable. Tu perds encore plus. C'est le revenge trading, et il liquide des comptes chaque jour.
 
 ## Qu'est-ce que le revenge trading exactement ?
 
@@ -19,7 +19,7 @@ Le revenge trading est l'acte de passer un trade dans le but explicite ou implic
 
 ## Pourquoi c'est si difficile à arrêter
 
-Le revenge trading active le même circuit neurologique que le jeu compulsif. Après une perte, le cerveau cherche à "réparer" l'injustice. L'action immédiate réduit temporairement l'inconfort — même si elle aggrave la situation. C'est un mécanisme de survie détourné.
+Le revenge trading active le même circuit neurologique que le jeu compulsif. Après une perte, le cerveau cherche à "réparer" l'injustice. L'action immédiate réduit temporairement l'inconfort : même si elle aggrave la situation. C'est un mécanisme de survie détourné.
 
 La volonté seule ne suffit pas à contrer ça. C'est pourquoi des traders expérimentés et disciplinés continuent à en souffrir. Il faut des **systèmes externes** pour briser le cycle.
 
@@ -31,7 +31,7 @@ Si tu viens de perdre dans les 2 dernières heures, tu es en zone à risque. Sim
 
 ### Signal 2 : L'état émotionnel
 
-Stress, colère, frustration, sentiment d'injustice — ces états sont mesurables. Un bon carnet de trading te demande ton état émotionnel avant chaque trade. Si tu notes "STRESSED" ou "REVENGE", le système peut te signaler le risque automatiquement.
+Stress, colère, frustration, sentiment d'injustice : ces états sont mesurables. Un bon carnet de trading te demande ton état émotionnel avant chaque trade. Si tu notes "STRESSED" ou "REVENGE", le système peut te signaler le risque automatiquement.
 
 ### Signal 3 : La justification forcée
 
@@ -60,4 +60,4 @@ La psychologie du trading ne se corrige pas par la volonté. Elle se corrige par
 
 ---
 
-Essaie [MyTradingCoach gratuitement →](https://app.mytradingcoach.app/register) — identifie tes patterns de revenge trading en quelques semaines de données.
+Essaie [MyTradingCoach gratuitement →](https://app.mytradingcoach.app/register) : identifie tes patterns de revenge trading en quelques semaines de données.

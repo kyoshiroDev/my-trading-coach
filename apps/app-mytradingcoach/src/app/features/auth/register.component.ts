@@ -217,9 +217,32 @@ export class RegisterComponent {
   protected readonly isPremiumFlow = signal(
     this.route.snapshot.queryParamMap.get('plan') === 'premium',
   );
-  protected readonly referralCode = signal(
-    (this.route.snapshot.queryParamMap.get('ref') ?? '').toUpperCase(),
-  );
+  protected readonly referralCode = signal(this.resolveReferralCode());
+
+  /**
+   * Code de parrainage : query param `?ref` prioritaire (transmis par la landing),
+   * sinon fallback localStorage. Persiste le code pour survivre à la navigation
+   * interne de l'app (register → login → register) avant l'inscription.
+   */
+  private resolveReferralCode(): string {
+    const KEY = 'mtc_ref';
+    const fromUrl = (this.route.snapshot.queryParamMap.get('ref') ?? '')
+      .trim()
+      .toUpperCase();
+    if (fromUrl) {
+      try {
+        localStorage.setItem(KEY, fromUrl);
+      } catch {
+        /* localStorage indisponible (SSR ou permission refusée) */
+      }
+      return fromUrl;
+    }
+    try {
+      return (localStorage.getItem(KEY) ?? '').toUpperCase();
+    } catch {
+      return '';
+    }
+  }
 
   protected readonly emailError = computed(() => {
     if (!this.submitted() && !this.emailTouched()) return null;

@@ -8,6 +8,7 @@ import { Plan, Role, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
+import { PRICING_EUR } from '../../common/constants/pricing.const';
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
@@ -273,10 +274,10 @@ export class UsersService {
     ]);
 
     // MRR/ARR restent basés sur les abonnements Stripe payants (pas les comptes par plan).
-    const mrr = starterMonthly * 39
-      + Math.round((starterAnnual * 349) / 12)
-      + premiumMonthly * 79
-      + Math.round((premiumAnnual * 699) / 12);
+    const mrr = starterMonthly * PRICING_EUR.STARTER.monthly
+      + Math.round((starterAnnual * PRICING_EUR.STARTER.annual) / 12)
+      + premiumMonthly * PRICING_EUR.PREMIUM.monthly
+      + Math.round((premiumAnnual * PRICING_EUR.PREMIUM.annual) / 12);
     const arr = mrr * 12;
 
     const monthly = starterMonthly + premiumMonthly;
@@ -335,7 +336,13 @@ export class UsersService {
     });
   }
 
-  async completeOnboarding(userId: string, dto: CompleteOnboardingDto) {
+  /**
+   * Sauvegarde le profil de l'onboarding (étape stratégie) SANS marquer
+   * l'onboarding terminé. Le flag `onboardingCompleted` n'est posé qu'à la
+   * toute fin du wizard, via {@link finishOnboarding}. Sinon l'overlay
+   * disparaît dès la stratégie et les étapes Actifs/Premier trade sont sautées.
+   */
+  async saveOnboardingProfile(userId: string, dto: CompleteOnboardingDto) {
     let currencyRate: number | undefined;
     if (dto.currency === 'EUR') {
       currencyRate = await this.fetchEurUsdRate();
@@ -346,7 +353,6 @@ export class UsersService {
     return this.prisma.user.update({
       where: { id: userId },
       data: {
-        onboardingCompleted: true,
         market: dto.market ?? null,
         goal: dto.goal ?? null,
         ...(dto.startingCapital != null ? { startingCapital: dto.startingCapital } : {}),
@@ -359,6 +365,15 @@ export class UsersService {
         ...(dto.tradesPerDayMax != null ? { tradesPerDayMax: dto.tradesPerDayMax } : {}),
         ...(dto.strategyDescription ? { strategyDescription: dto.strategyDescription } : {}),
       },
+      select: USER_SELECT,
+    });
+  }
+
+  /** Marque l'onboarding terminé — appelé uniquement à l'écran final du wizard. */
+  async finishOnboarding(userId: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { onboardingCompleted: true },
       select: USER_SELECT,
     });
   }

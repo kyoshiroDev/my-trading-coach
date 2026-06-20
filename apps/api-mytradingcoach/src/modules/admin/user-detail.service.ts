@@ -25,6 +25,27 @@ export interface AdminUserDetailDto {
   };
   activeDates: string[];
   aiByFeature: { feature: string; tokens: number; costUsd: number }[];
+  // Profil trader (saisi à l'onboarding) — qui est ce trader.
+  profile: {
+    market: string | null;
+    goal: string | null;
+    tradingStyle: string | null;
+    tradingStrategy: string[];
+    tradingSessions: string[];
+    tradesPerDayMin: number | null;
+    tradesPerDayMax: number | null;
+    strategyDescription: string | null;
+    startingCapital: number;
+    currency: string;
+  };
+  // Usage réel (trades) — est-ce qu'il utilise vraiment l'app.
+  usage: {
+    totalTrades: number;
+    tradesThisMonth: number;
+    totalPnl: number;
+    winRate: number;
+  };
+  topAssets: { asset: string; count: number }[];
   sessions: {
     date: string;
     trades: number;
@@ -50,6 +71,9 @@ export class UserDetailService {
         id: true, name: true, email: true, plan: true, role: true,
         stripeSubscriptionStatus: true, referralCode: true,
         createdAt: true, lastSeenAt: true,
+        market: true, goal: true, tradingStyle: true, tradingStrategy: true,
+        tradingSessions: true, tradesPerDayMin: true, tradesPerDayMax: true,
+        strategyDescription: true, startingCapital: true, currency: true,
       },
     });
     if (!user) throw new NotFoundException('Utilisateur introuvable');
@@ -116,6 +140,27 @@ export class UserDetailService {
       ? closed.reduce((s, x) => s + Math.round((x.endedAt!.getTime() - x.startedAt.getTime()) / 60_000), 0)
       : null;
 
+    // ── Usage réel (trades) : activation = a-t-il loggé/importé des trades ──
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    const [totalTrades, tradesThisMonth, pnlRows, topAssetRows] = await Promise.all([
+      this.prisma.trade.count({ where: { userId: id } }),
+      this.prisma.trade.count({ where: { userId: id, createdAt: { gte: startOfMonth } } }),
+      this.prisma.trade.findMany({ where: { userId: id, pnl: { not: null } }, select: { pnl: true } }),
+      this.prisma.trade.groupBy({
+        by: ['asset'],
+        where: { userId: id },
+        _count: { asset: true },
+        orderBy: { _count: { asset: 'desc' } },
+        take: 3,
+      }),
+    ]);
+    const totalPnl = pnlRows.reduce((s, t) => s + (t.pnl ?? 0), 0);
+    const winCount = pnlRows.filter((t) => (t.pnl ?? 0) > 0).length;
+    const winRate = pnlRows.length > 0 ? Math.round((winCount / pnlRows.length) * 100) : 0;
+    const topAssets = topAssetRows.map((a) => ({ asset: a.asset, count: a._count.asset }));
+
     return {
       identity: {
         id: user.id,
@@ -138,6 +183,20 @@ export class UserDetailService {
       },
       activeDates,
       aiByFeature,
+      profile: {
+        market: user.market ?? null,
+        goal: user.goal ?? null,
+        tradingStyle: user.tradingStyle ?? null,
+        tradingStrategy: user.tradingStrategy ?? [],
+        tradingSessions: user.tradingSessions ?? [],
+        tradesPerDayMin: user.tradesPerDayMin ?? null,
+        tradesPerDayMax: user.tradesPerDayMax ?? null,
+        strategyDescription: user.strategyDescription ?? null,
+        startingCapital: user.startingCapital ?? 0,
+        currency: user.currency ?? 'USD',
+      },
+      usage: { totalTrades, tradesThisMonth, totalPnl, winRate },
+      topAssets,
       sessions,
     };
   }

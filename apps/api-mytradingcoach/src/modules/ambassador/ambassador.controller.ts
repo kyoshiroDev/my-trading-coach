@@ -1,19 +1,28 @@
-import { Controller, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AmbassadorGuard } from '../../common/guards/ambassador.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AmbassadorService } from './ambassador.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import {
+  PromoteAmbassadorDto,
+  RevokeAmbassadorDto,
+} from './dto/admin-ambassador.dto';
 
 @Controller('ambassador')
 @UseGuards(JwtAuthGuard, AmbassadorGuard)
 export class AmbassadorController {
-  constructor(
-    private readonly service: AmbassadorService,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly service: AmbassadorService) {}
 
   @Get('new-count')
   getNewCount(
@@ -41,13 +50,22 @@ export class AmbassadorController {
     return this.service.listAmbassadors();
   }
 
+  @Post('admin/promote')
+  @UseGuards(AdminGuard)
+  promote(@Body() dto: PromoteAmbassadorDto) {
+    return this.service.promote(dto.email, dto.referralCode);
+  }
+
+  @Post('admin/revoke')
+  @UseGuards(AdminGuard)
+  revoke(@Body() dto: RevokeAmbassadorDto) {
+    return this.service.revoke(dto.email);
+  }
+
   @Patch('pay-all/:ambassadorId')
   @UseGuards(AdminGuard)
   async markAllPaid(@Param('ambassadorId') ambassadorId: string) {
-    await this.prisma.referralCommission.updateMany({
-      where: { ambassadorId, status: 'pending' },
-      data: { status: 'paid' },
-    });
+    await this.service.markAllPaid(ambassadorId);
     return { success: true };
   }
 }

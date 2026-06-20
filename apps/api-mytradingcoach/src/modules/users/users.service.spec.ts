@@ -66,52 +66,61 @@ describe('UsersService', () => {
     service = module.get(UsersService);
   });
 
-  describe('completeOnboarding', () => {
-    it('met onboardingCompleted à true avec market et goal', async () => {
+  describe('saveOnboardingProfile', () => {
+    it('persiste market et goal SANS marquer onboardingCompleted', async () => {
       mockPrisma.user.update.mockResolvedValue({
         ...mockUser,
-        onboardingCompleted: true,
         market: 'CRYPTO',
         goal: 'DISCIPLINE',
       });
 
-      const result = await service.completeOnboarding('user-1', {
+      await service.saveOnboardingProfile('user-1', {
         market: 'CRYPTO',
         goal: 'DISCIPLINE',
       });
 
-      expect(mockPrisma.user.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: 'user-1' },
-          data: expect.objectContaining({
-            onboardingCompleted: true,
-            market: 'CRYPTO',
-            goal: 'DISCIPLINE',
-          }),
-        }),
+      const call = mockPrisma.user.update.mock.calls[0][0];
+      expect(call.where).toEqual({ id: 'user-1' });
+      expect(call.data).toEqual(
+        expect.objectContaining({ market: 'CRYPTO', goal: 'DISCIPLINE' }),
       );
-      expect(result.onboardingCompleted).toBe(true);
+      // Le flag ne doit PAS être posé à l'étape stratégie
+      expect(call.data).not.toHaveProperty('onboardingCompleted');
     });
 
-    it('accepte market et goal null (skip)', async () => {
+    it('accepte market et goal null (skip) sans toucher le flag', async () => {
       mockPrisma.user.update.mockResolvedValue({
         ...mockUser,
-        onboardingCompleted: true,
         market: null,
         goal: null,
       });
 
-      await service.completeOnboarding('user-1', { market: null, goal: null });
+      await service.saveOnboardingProfile('user-1', { market: null, goal: null });
+
+      const call = mockPrisma.user.update.mock.calls[0][0];
+      expect(call.data).toEqual(
+        expect.objectContaining({ market: null, goal: null }),
+      );
+      expect(call.data).not.toHaveProperty('onboardingCompleted');
+    });
+  });
+
+  describe('finishOnboarding', () => {
+    it('met onboardingCompleted à true', async () => {
+      mockPrisma.user.update.mockResolvedValue({
+        ...mockUser,
+        onboardingCompleted: true,
+      });
+
+      const result = await service.finishOnboarding('user-1');
 
       expect(mockPrisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({
-            onboardingCompleted: true,
-            market: null,
-            goal: null,
-          }),
+          where: { id: 'user-1' },
+          data: { onboardingCompleted: true },
         }),
       );
+      expect(result.onboardingCompleted).toBe(true);
     });
   });
 

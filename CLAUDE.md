@@ -36,13 +36,19 @@ apps/
 ├── api-mytradingcoach/     ← NestJS 11 (port 3000)
 └── landing-mytradingcoach/ ← Astro 6 (port 4321)
 prisma/schema.prisma
-CLAUDE.md
-```
 
-> Référence design : la source de vérité est le composant lui-même
-> (`*.component.html`) + les maquettes dédiées du dépôt (`maquette-*.html`).
-> Les anciens mockups globaux `app-mytradingcoach.html` / `landing-mytradingcoach.html`
-> ont été retirés (commit `581875e`) et ne sont plus maintenus.
+admin-mytradingcoach.html   ← référence design admin   ← LIRE AVANT TRAVAIL ADMIN
+CLAUDE.md
+​```
+
+---
+
+## 🖼 Référence design
+
+La source de vérité du design, c'est le composant lui-même (`*.component.html`) plus les maquettes dédiées du dépôt (`maquette-*.html`). Les anciens miroirs globaux `app-mytradingcoach.html` et `landing-mytradingcoach.html` ont été retirés (commit `581875e`) et ne sont plus maintenus.
+
+Pour l'app **admin**, la maquette `admin-mytradingcoach.html` (racine) reste LA référence : la lire avant de modifier l'admin, reproduire le design, ne pas inventer.
+
 
 ---
 
@@ -59,8 +65,8 @@ CLAUDE.md
 
 ### Avant de coder
 1. Lire l'agent pertinent dans `.claude/agents/`
-2. Lire la maquette dédiée (`maquette-*.html`) si elle existe pour la vue concernée
-3. Lire le fichier cible en entier avant modification
+2. Lire `admin-mytradingcoach.html` avant tout travail sur l'app admin
+3. Lire la maquette dédiée (`maquette-*.html`) si elle existe pour la vue concernée
 
 ### Pendant
 4. Builder après chaque partie — zéro erreur avant de continuer

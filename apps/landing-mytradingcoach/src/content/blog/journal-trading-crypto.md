@@ -11,11 +11,11 @@ Le marché crypto a des particularités qui rendent le journaling encore plus cr
 
 En crypto, 3 pièges spécifiques détruisent les comptes :
 
-- **La volatilité amplifiée** — Les mouvements de 20-30% en quelques heures créent des décisions émotionnelles en cascade. Sans journal, impossible de voir le pattern.
-- **Le trading nocturne** — La session asiatique et les mouvements de nuit tentent les traders qui manquent de sommeil. La fatigue détruit le jugement. Un journal de trading crypto capture l'heure de chaque trade.
-- **L'effet altcoin** — La rotation de capital entre BTC, ETH et altcoins crée l'illusion d'opportunités permanentes. Le FOMO est omniprésent.
+- **La volatilité amplifiée** : Les mouvements de 20-30% en quelques heures créent des décisions émotionnelles en cascade. Sans journal, impossible de voir le pattern.
+- **Le trading nocturne** : La session asiatique et les mouvements de nuit tentent les traders qui manquent de sommeil. La fatigue détruit le jugement. Un journal de trading crypto capture l'heure de chaque trade.
+- **L'effet altcoin** : La rotation de capital entre BTC, ETH et altcoins crée l'illusion d'opportunités permanentes. Le FOMO est omniprésent.
 
-## Template de journal de trading crypto — données à capturer
+## Template de journal de trading crypto : données à capturer
 
 ### Pour chaque trade
 
@@ -52,15 +52,15 @@ En période de bull market, les altcoins surperforment. En bear market, ils perd
 
 La psychologie du trading est encore plus sollicitée en crypto qu'ailleurs. Trois biais sont particulièrement actifs :
 
-1. **FOMO crypto** — Voir un altcoin multiplié par 5 en 48h quand on n'est pas positionné crée une pression émotionnelle intense.
-2. **Diamond hands vs cut your losses** — La culture crypto glorifie le "hold" à tout prix, ce qui contredit les règles de gestion des risques.
-3. **Biais de récence** — Une série haussière de 3 semaines fait oublier les corrections de 60-80% qui arrivent régulièrement.
+1. **FOMO crypto** : Voir un altcoin multiplié par 5 en 48h quand on n'est pas positionné crée une pression émotionnelle intense.
+2. **Diamond hands vs cut your losses** : La culture crypto glorifie le "hold" à tout prix, ce qui contredit les règles de gestion des risques.
+3. **Biais de récence** : Une série haussière de 3 semaines fait oublier les corrections de 60-80% qui arrivent régulièrement.
 
 Un bon journal de trading crypto te protège de ces biais en te montrant tes vraies données de performance plutôt que tes impressions.
 
 ## MyTradingCoach pour les traders crypto
 
-MyTradingCoach supporte toutes les paires crypto. La heatmap horaire est particulièrement utile pour identifier tes meilleures heures de trading. L'IA analyse tes patterns spécifiques — si tu trades mieux quand BTC est en consolidation qu'en tendance forte, elle te le dira.
+MyTradingCoach supporte toutes les paires crypto. La heatmap horaire est particulièrement utile pour identifier tes meilleures heures de trading. L'IA analyse tes patterns spécifiques : si tu trades mieux quand BTC est en consolidation qu'en tendance forte, elle te le dira.
 
 Le Weekly Debrief du dimanche est parfait pour le marché crypto : il analyse ta semaine entière (7 jours, pas 5 comme en actions) et t'aide à préparer la semaine suivante avec 3 objectifs concrets.
 
@@ -76,4 +76,4 @@ Le Weekly Debrief du dimanche est parfait pour le marché crypto : il analyse ta
 
 ---
 
-Essaie [MyTradingCoach gratuitement →](https://app.mytradingcoach.app/register) — un journal de trading crypto gratuit pour commencer à tracker tes performances dès aujourd'hui.
+Essaie [MyTradingCoach gratuitement →](https://app.mytradingcoach.app/register) : un journal de trading crypto gratuit pour commencer à tracker tes performances dès aujourd'hui.
