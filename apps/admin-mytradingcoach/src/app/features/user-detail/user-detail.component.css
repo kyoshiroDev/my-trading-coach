@@ -47,7 +47,11 @@
 .dl { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
 .dl:last-child { border-bottom: none; }
 .dl-k { color: var(--text3); }
-.dl-v { color: var(--text); font-family: var(--mono); }
+.dl-v { color: var(--text); font-family: var(--mono); text-align: right; }
+
+/* Description stratégie : peut être longue → empilée et alignée à gauche */
+.dl-desc { flex-direction: column; align-items: flex-start; gap: 4px; }
+.dl-desc-v { text-align: left; font-family: var(--sans); color: var(--text2); line-height: 1.5; }
 
 /* P&L sessions (couleur par classe, jamais inline) */
 .pnl-pos { color: var(--green); }

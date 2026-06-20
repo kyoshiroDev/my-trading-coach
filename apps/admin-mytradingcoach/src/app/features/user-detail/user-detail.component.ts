@@ -31,7 +31,58 @@ const MOOD_EMOJI: Record<string, string> = {
   CONFIDENT: '😎', FOCUSED: '🎯', NEUTRAL: '😐', TIRED: '😴', STRESSED: '😰',
 };
 
-interface Signal { cls: 'ok' | 'warn' | 'bad'; ic: string; text: string; sub: string; }
+/** Libellés du profil trader (valeurs d'onboarding → FR). */
+const MARKET_LABELS: Record<string, string> = { CRYPTO: 'Crypto', FOREX: 'Forex', ACTIONS: 'Actions', MULTI: 'Multi-marchés' };
+const GOAL_LABELS: Record<string, string> = { DISCIPLINE: 'Discipline', PERFORMANCE: 'Performance', PSYCHOLOGIE: 'Psychologie' };
+const STYLE_LABELS: Record<string, string> = { SCALPING: 'Scalping', DAY_TRADING: 'Day trading', SWING: 'Swing', POSITION: 'Long terme' };
+const SESSION_LABELS: Record<string, string> = { LONDON: 'Londres', NEW_YORK: 'New York', ASIAN: 'Asie' };
+function lbl(map: Record<string, string>, v: string | null | undefined): string {
+  return v ? (map[v] ?? v) : '—';
+}
+
+export interface Signal { cls: 'ok' | 'warn' | 'bad'; ic: string; text: string; sub: string; }
+
+/**
+ * Construit les signaux de la fiche (pure, testable).
+ * Activation = usage réel (trades). Les connexions restent affichées comme
+ * engagement, jamais nommées « activation ».
+ */
+export function buildSignals(
+  d: UserDetailData,
+  status: 'never' | 'inactif' | 'actif',
+  lastConn: string,
+  engagementPct: number,
+): Signal[] {
+  const k = d.kpis;
+  const trades = d.usage.totalTrades;
+  const never = k.activeDays === 0;
+  const list: Signal[] = [];
+
+  // 1. Activation = a-t-il loggé / importé des trades ?
+  if (trades > 0) {
+    list.push({ cls: 'ok', ic: '✓', text: 'Activé · a loggé des trades', sub: `${trades} trade${trades > 1 ? 's' : ''} au total` });
+  } else {
+    list.push({ cls: 'warn', ic: '!', text: 'Inscrit mais 0 trade · pas encore activé', sub: 'aucun trade logué ni importé' });
+  }
+
+  // 2. Engagement = connexions (info, distinct de l'activation)
+  if (never) {
+    list.push({ cls: 'bad', ic: '✕', text: 'Jamais connecté', sub: `inscrit il y a ${k.daysSinceSignup}j` });
+  } else {
+    list.push({ cls: 'ok', ic: '✓', text: `Connecté ${k.activeDays}j sur ${k.totalDays}`, sub: `${engagementPct}% de présence` });
+    if (status === 'actif') {
+      list.push({ cls: 'ok', ic: '✓', text: 'Connexion récente', sub: lastConn });
+    } else {
+      list.push({ cls: 'warn', ic: '!', text: `Inactif depuis ${lastConn}`, sub: 'risque de churn' });
+    }
+  }
+
+  // 3. Warning Premium sans session (conservé)
+  if (d.identity.plan !== 'FREE' && d.sessions.length === 0) {
+    list.push({ cls: 'warn', ic: '!', text: 'Premium sans session', sub: 'accès accordé, jamais utilisé' });
+  }
+  return list;
+}
 
 @Component({
   selector: 'mtc-admin-user-detail',
@@ -68,12 +119,64 @@ interface Signal { cls: 'ok' | 'warn' | 'bad'; ic: string; text: string; sub: st
           }
         </div>
 
-        <!-- KPI strip -->
+        <!-- Usage réel (trades) — est-ce qu'il utilise vraiment l'app -->
+        <div class="kpi-strip cols-4">
+          <div class="kpi">
+            <div class="kpi-top teal"></div>
+            <div class="kpi-label">Total trades</div>
+            <div class="kpi-value teal">{{ d.usage.totalTrades }}</div>
+            <div class="kpi-sub">{{ d.usage.totalTrades === 0 ? 'aucun trade' : 'loggés / importés' }}</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-top blue"></div>
+            <div class="kpi-label">Trades ce mois</div>
+            <div class="kpi-value blue">{{ d.usage.tradesThisMonth }}</div>
+            <div class="kpi-sub">mois en cours</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-top" [class.green]="d.usage.totalPnl > 0" [class.red]="d.usage.totalPnl < 0" [class.teal]="d.usage.totalPnl === 0"></div>
+            <div class="kpi-label">P&amp;L total</div>
+            <div class="kpi-value" [class.green]="d.usage.totalPnl > 0" [class.red]="d.usage.totalPnl < 0" [class.teal]="d.usage.totalPnl === 0">{{ pnlDisplay() }}</div>
+            <div class="kpi-sub">sur trades clos</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-top amber"></div>
+            <div class="kpi-label">Win rate</div>
+            <div class="kpi-value amber">{{ d.usage.winRate }}%</div>
+            <div class="kpi-sub">trades gagnants</div>
+          </div>
+        </div>
+
+        <!-- Profil trader (onboarding) — qui est ce trader -->
+        <div class="card">
+          <div class="card-head"><span class="card-label">Profil trader</span><span class="card-action ud-static">onboarding</span></div>
+          <div class="card-body">
+            @if (hasProfile()) {
+              <div class="dl"><span class="dl-k">Marché</span><span class="dl-v">{{ marketLabel() }}</span></div>
+              <div class="dl"><span class="dl-k">Objectif</span><span class="dl-v">{{ goalLabel() }}</span></div>
+              <div class="dl"><span class="dl-k">Style</span><span class="dl-v">{{ styleLabel() }}</span></div>
+              <div class="dl"><span class="dl-k">Approche</span><span class="dl-v">{{ strategyLabel() }}</span></div>
+              <div class="dl"><span class="dl-k">Sessions</span><span class="dl-v">{{ sessionsLabel() }}</span></div>
+              <div class="dl"><span class="dl-k">Capital de départ</span><span class="dl-v">{{ capitalLabel() }}</span></div>
+              @if (frequencyLabel()) {
+                <div class="dl"><span class="dl-k">Fréquence</span><span class="dl-v">{{ frequencyLabel() }}</span></div>
+              }
+              <div class="dl"><span class="dl-k">Actifs les plus tradés</span><span class="dl-v">{{ topAssetsLabel() }}</span></div>
+              @if (profile()?.strategyDescription) {
+                <div class="dl dl-desc"><span class="dl-k">Description</span><span class="dl-v dl-desc-v">{{ profile()?.strategyDescription }}</span></div>
+              }
+            } @else {
+              <div class="empty-ai">Profil non renseigné (onboarding incomplet).</div>
+            }
+          </div>
+        </div>
+
+        <!-- KPI strip engagement -->
         <div class="kpi-strip">
           <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Plan</div><div class="kpi-value purple">{{ d.identity.plan }}</div><div class="kpi-sub">{{ planSub() }}</div></div>
           <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Inscrit</div><div class="kpi-value blue">J+{{ d.kpis.daysSinceSignup }}</div><div class="kpi-sub">{{ d.identity.createdAt | date:'dd/MM/yyyy' }}</div></div>
           <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Dernière connexion</div><div class="kpi-value teal">{{ lastConn() }}</div><div class="kpi-sub">activité</div></div>
-          <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Jours actifs</div><div class="kpi-value teal">{{ d.kpis.activeDays }}<span class="kpi-frac"> /{{ d.kpis.totalDays }}</span></div><div class="kpi-sub">{{ activationPct() }}% d'activation</div></div>
+          <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Jours actifs</div><div class="kpi-value teal">{{ d.kpis.activeDays }}<span class="kpi-frac"> /{{ d.kpis.totalDays }}</span></div><div class="kpi-sub">{{ engagementPct() }}% de présence</div></div>
           <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Temps session</div><div class="kpi-value blue">{{ sessionTime() }}</div><div class="kpi-sub">cumulé</div></div>
           <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Coût IA</div><div class="kpi-value amber">{{ '$' + d.kpis.ai.usd.toFixed(2) }}</div><div class="kpi-sub">{{ aiSub() }}</div></div>
         </div>
@@ -199,9 +302,56 @@ export class UserDetailComponent {
     if (d.identity.subscriptionStatus) return 'payant';
     return d.identity.plan === 'FREE' ? 'gratuit' : 'accès manuel';
   });
-  protected readonly activationPct = computed(() => {
+  /** Présence = jours connectés / jours depuis inscription. NE PAS confondre
+   *  avec l'activation (= a-t-il loggé des trades), basée sur l'usage réel. */
+  protected readonly engagementPct = computed(() => {
     const k = this.data()?.kpis;
     return k && k.totalDays ? Math.round((k.activeDays / k.totalDays) * 100) : 0;
+  });
+
+  // ── Profil trader ──
+  protected readonly profile = computed(() => this.data()?.profile ?? null);
+  protected readonly hasProfile = computed(() => {
+    const p = this.profile();
+    return !!p && !!(
+      p.market || p.goal || p.tradingStyle ||
+      p.tradingStrategy.length || p.tradingSessions.length || p.startingCapital
+    );
+  });
+  protected readonly marketLabel  = computed(() => lbl(MARKET_LABELS, this.profile()?.market));
+  protected readonly goalLabel    = computed(() => lbl(GOAL_LABELS, this.profile()?.goal));
+  protected readonly styleLabel   = computed(() => lbl(STYLE_LABELS, this.profile()?.tradingStyle));
+  protected readonly sessionsLabel = computed(() => {
+    const s = this.profile()?.tradingSessions ?? [];
+    return s.length ? s.map((x) => SESSION_LABELS[x] ?? x).join(', ') : '—';
+  });
+  protected readonly strategyLabel = computed(() => {
+    const t = this.profile()?.tradingStrategy ?? [];
+    return t.length ? t.join(', ') : '—';
+  });
+  protected readonly capitalLabel = computed(() => {
+    const p = this.profile();
+    if (!p || !p.startingCapital) return '—';
+    const sym = p.currency === 'EUR' ? '€' : '$';
+    return `${sym}${p.startingCapital.toLocaleString('en-US')}`;
+  });
+  protected readonly frequencyLabel = computed<string | null>(() => {
+    const p = this.profile();
+    if (!p || p.tradesPerDayMin == null) return null;
+    const max = p.tradesPerDayMax;
+    return max != null && max !== p.tradesPerDayMin
+      ? `${p.tradesPerDayMin}-${max} trades/jour`
+      : `${p.tradesPerDayMin} trades/jour`;
+  });
+  protected readonly topAssetsLabel = computed(() => {
+    const a = this.data()?.topAssets ?? [];
+    return a.length ? a.map((x) => `${x.asset} (${x.count})`).join(', ') : '—';
+  });
+
+  // ── Usage ──
+  protected readonly pnlDisplay = computed(() => {
+    const p = this.data()?.usage.totalPnl ?? 0;
+    return `${p >= 0 ? '+' : ''}${p.toFixed(2)}$`;
   });
   protected readonly lastConn = computed(() => {
     const iso = this.data()?.kpis.lastConnection;
@@ -232,34 +382,11 @@ export class UserDetailComponent {
     });
   });
 
-  /** Signaux dérivés (icône ok/warn/bad). */
+  /** Signaux dérivés (icône ok/warn/bad) — délégué à une fonction pure testable. */
   protected readonly signals = computed<Signal[]>(() => {
     const d = this.data();
     if (!d) return [];
-    const k = d.kpis;
-    const never = k.activeDays === 0;
-    const pct = this.activationPct();
-    const list: Signal[] = [];
-
-    if (never) {
-      list.push({ cls: 'bad', ic: '✕', text: 'Jamais connecté', sub: `inscrit il y a ${k.daysSinceSignup}j, 0 activité` });
-    } else {
-      list.push({ cls: 'ok', ic: '✓', text: 'Onboarding terminé', sub: 'au moins une connexion' });
-      list.push(
-        pct >= 50
-          ? { cls: 'ok', ic: '✓', text: `Activation forte — ${pct}%`, sub: `connecté ${k.activeDays}j sur ${k.totalDays}` }
-          : { cls: 'warn', ic: '!', text: `Activation faible — ${pct}%`, sub: `seulement ${k.activeDays}j sur ${k.totalDays}` },
-      );
-      if (this.status() === 'actif') {
-        list.push({ cls: 'ok', ic: '✓', text: 'Connexion récente', sub: this.lastConn() });
-      } else {
-        list.push({ cls: 'warn', ic: '!', text: `Inactif — il y a ${this.lastConn()}`, sub: 'risque de churn' });
-      }
-    }
-    if (d.identity.plan !== 'FREE' && d.sessions.length === 0) {
-      list.push({ cls: 'warn', ic: '!', text: 'Premium sans session', sub: 'accès accordé, jamais utilisé' });
-    }
-    return list;
+    return buildSignals(d, this.status(), this.lastConn(), this.engagementPct());
   });
 
   protected readonly subStatus = computed(() => {

@@ -12,6 +12,11 @@ describe('UserDetailService', () => {
     userDailyActivity: { findMany: ReturnType<typeof vi.fn> };
     aiUsageLog: { groupBy: ReturnType<typeof vi.fn> };
     tradeSession: { findMany: ReturnType<typeof vi.fn> };
+    trade: {
+      count: ReturnType<typeof vi.fn>;
+      findMany: ReturnType<typeof vi.fn>;
+      groupBy: ReturnType<typeof vi.fn>;
+    };
   };
 
   beforeEach(() => {
@@ -20,6 +25,11 @@ describe('UserDetailService', () => {
       userDailyActivity: { findMany: vi.fn().mockResolvedValue([]) },
       aiUsageLog: { groupBy: vi.fn().mockResolvedValue([]) },
       tradeSession: { findMany: vi.fn().mockResolvedValue([]) },
+      trade: {
+        count: vi.fn().mockResolvedValue(0),
+        findMany: vi.fn().mockResolvedValue([]),
+        groupBy: vi.fn().mockResolvedValue([]),
+      },
     };
     service = new UserDetailService(prisma as unknown as PrismaService);
   });
@@ -34,6 +44,10 @@ describe('UserDetailService', () => {
       id: 'u1', name: 'Val', email: 'val@test.com', plan: 'PREMIUM', role: 'AMBASSADOR',
       stripeSubscriptionStatus: 'active', referralCode: 'VAL',
       createdAt: new Date(Date.now() - 10 * DAY), lastSeenAt: new Date(),
+      market: 'CRYPTO', goal: 'PERFORMANCE', tradingStyle: 'SWING',
+      tradingStrategy: ['ICT', 'SMC'], tradingSessions: ['NEW_YORK'],
+      tradesPerDayMin: 1, tradesPerDayMax: 3, strategyDescription: 'FVG + OB',
+      startingCapital: 5000, currency: 'EUR',
     });
     prisma.userDailyActivity.findMany.mockResolvedValue([
       { date: new Date('2026-06-01T00:00:00Z') },
@@ -51,8 +65,24 @@ describe('UserDetailService', () => {
       .mockResolvedValueOnce([
         { startedAt: new Date('2026-06-05T09:00:00Z'), endedAt: new Date('2026-06-05T10:30:00Z') },
       ]);
+    prisma.trade.count.mockResolvedValueOnce(42).mockResolvedValueOnce(7);
+    prisma.trade.findMany.mockResolvedValue([{ pnl: 100 }, { pnl: -40 }, { pnl: 60 }]);
+    prisma.trade.groupBy.mockResolvedValue([
+      { asset: 'BTC/USDT', _count: { asset: 30 } },
+      { asset: 'ETH/USDT', _count: { asset: 12 } },
+    ]);
 
     const r = await service.getUserDetail('u1');
+
+    // Usage réel
+    expect(r.usage.totalTrades).toBe(42);
+    expect(r.usage.tradesThisMonth).toBe(7);
+    expect(r.usage.totalPnl).toBe(120);
+    expect(r.usage.winRate).toBe(67); // 2/3 gagnants
+    expect(r.topAssets).toEqual([
+      { asset: 'BTC/USDT', count: 30 },
+      { asset: 'ETH/USDT', count: 12 },
+    ]);
 
     expect(r.kpis.activeDays).toBe(3);
     expect(r.kpis.activeDays).toBe(r.activeDates.length);
@@ -61,6 +91,11 @@ describe('UserDetailService', () => {
     expect(r.aiByFeature.map((f) => f.feature)).toEqual(['eco_calendar', 'chat']);
     expect(r.kpis.ai.tokens).toBe(1350);
     expect(r.kpis.ai.usd).toBeCloseTo(2.7, 5);
+    expect(r.profile).toMatchObject({
+      market: 'CRYPTO', goal: 'PERFORMANCE', tradingStyle: 'SWING',
+      tradingStrategy: ['ICT', 'SMC'], tradingSessions: ['NEW_YORK'],
+      startingCapital: 5000, currency: 'EUR',
+    });
     expect(r.identity.ambassadorRefCode).toBe('VAL');
     expect(r.sessions[0]).toMatchObject({ trades: 3, pnl: 120, winRate: 66, emotion: 'CONFIDENT', durationMinutes: 90 });
     expect(r.kpis.sessionTimeMinutes).toBe(90);
@@ -83,5 +118,9 @@ describe('UserDetailService', () => {
     expect(r.kpis.sessionTimeMinutes).toBeNull();
     expect(r.identity.ambassadorRefCode).toBeNull();
     expect(r.kpis.lastConnection).toBeNull();
+    // 0 trade : pas encore activé
+    expect(r.usage).toEqual({ totalTrades: 0, tradesThisMonth: 0, totalPnl: 0, winRate: 0 });
+    expect(r.topAssets).toEqual([]);
+    expect(r.profile.tradingStrategy).toEqual([]);
   });
 });
