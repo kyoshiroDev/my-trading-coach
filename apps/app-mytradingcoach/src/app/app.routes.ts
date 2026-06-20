@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
+import { parrainageGuard, ambassadorPageGuard } from './core/auth/referral-gating.guard';
 import { NotFoundComponent } from './shared/components/not-found/not-found.component';
 
 export const appRoutes: Routes = [
@@ -163,11 +164,29 @@ export const appRoutes: Routes = [
       },
       {
         path: 'ambassador',
-        canActivate: [authGuard],
+        canActivate: [authGuard, ambassadorPageGuard],
         data: { seo: { title: 'Ambassadeur', noindex: true } },
         loadComponent: () =>
           import('./features/ambassador/ambassador.component').then(
             (m) => m.AmbassadorComponent,
+          ),
+      },
+      {
+        path: 'parrainage',
+        canActivate: [authGuard, parrainageGuard],
+        data: { seo: { title: 'Parrainage', noindex: true } },
+        loadComponent: () =>
+          import('./features/referral/referral.component').then(
+            (m) => m.ReferralComponent,
+          ),
+      },
+      {
+        path: 'devenir-ambassadeur',
+        canActivate: [authGuard, parrainageGuard],
+        data: { seo: { title: 'Devenir ambassadeur', noindex: true } },
+        loadComponent: () =>
+          import('./features/become-ambassador/become-ambassador.component').then(
+            (m) => m.BecomeAmbassadorComponent,
           ),
       },
     ],

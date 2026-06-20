@@ -157,6 +157,35 @@ export interface DeletedAccount {
   anonymizedAt: string | null;
 }
 
+export interface ReferralAdminParrain {
+  referralCode: string;
+  name: string | null;
+  email: string;
+  invited: number;
+  payants: number;
+  conversion: number;
+  moisGagnes: number;
+  moisAppliques: number;
+}
+
+export interface ReferralAdminFilleul {
+  pseudo: string;
+  parrainCode: string | null;
+  status: 'payant' | 'essai' | 'inscrit';
+  date: string;
+}
+
+export interface ReferralAdminOverview {
+  parrainsActifs: number;
+  invitesTotal: number;
+  payants: number;
+  tauxConversion: number;
+  moisAccordes: number;
+  moisAAppliquer: number;
+  parrains: ReferralAdminParrain[];
+  filleulsRecents: ReferralAdminFilleul[];
+}
+
 export interface UserDetailData {
   identity: {
     id: string;
@@ -250,6 +279,7 @@ export class AdminApi {
     return this.http.get<{ data: DeletedAccountsData }>(`${this.adminBase}/deleted-accounts`);
   }
   stripeReconcile()     { return this.http.get<{ data: StripeReconcileData }>(`${this.adminBase}/stripe/reconcile`); }
+  referralOverview()    { return this.http.get<{ data: ReferralAdminOverview }>(`${environment.apiUrl}/referral/admin/overview`); }
 
   listCampaigns() {
     return this.http.get<{ data: CampaignMeta[] }>(`${this.adminBase}/campaigns`);
