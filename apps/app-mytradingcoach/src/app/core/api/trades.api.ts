@@ -61,6 +61,7 @@ export interface CreateTradeDto {
   notes?: string;
   tags?: string[];
   tradedAt?: string;
+  accountId?: string;
 }
 
 export type UpdateTradeDto = Partial<CreateTradeDto>;

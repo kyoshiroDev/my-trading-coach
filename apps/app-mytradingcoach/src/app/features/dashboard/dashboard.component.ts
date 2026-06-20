@@ -43,7 +43,6 @@ import {
 import { EMOTION_COLORS } from '../../shared/pipes/emotion-color.pipe';
 import { environment } from '../../../environments/environment';
 import { ChartService } from '../../core/services/chart.service';
-import { AccountSelectorComponent } from '../../shared/components/account-selector/account-selector.component';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 
 @Component({
@@ -66,7 +65,6 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
     EmotionColorPipe,
     SetupColorPipe,
     ActivityCalendarComponent,
-    AccountSelectorComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './dashboard.component.css',
@@ -74,6 +72,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
     <mtc-topbar
       title="Dashboard"
       addLabel="⚡ Ajouter trade"
+      [showAccountSelector]="true"
       (addClick)="goToJournal()"
     >
       @if (sessionStore.hasActiveSession()) {
@@ -96,14 +95,6 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
         </div>
         <div class="header-spacer"></div>
       </div>
-
-      <!-- Barre « Compte » : sélecteur multi-comptes (Starter et + ; FREE n'a qu'1 compte). -->
-      @if (userStore.isStarterOrAbove()) {
-        <div class="acct-bar">
-          <span class="acct-bar-lbl">Compte</span>
-          <mtc-account-selector />
-        </div>
-      }
 
       @if (!isLoading() && tradesStore.totalTrades() === 0) {
         <div class="firstrun-hero">

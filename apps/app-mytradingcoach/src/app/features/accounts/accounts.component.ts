@@ -12,7 +12,6 @@ import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
-import { AccountSelectorComponent } from '../../shared/components/account-selector/account-selector.component';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { UserStore } from '../../core/stores/user.store';
 import {
@@ -58,7 +57,7 @@ function emptyForm(): AccountFormState {
   selector: 'mtc-accounts',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DecimalPipe, FormsModule, TopbarComponent, PlanModalComponent, AccountSelectorComponent],
+  imports: [DecimalPipe, FormsModule, TopbarComponent, PlanModalComponent],
   templateUrl: './accounts.component.html',
   styleUrl: './accounts.component.css',
 })

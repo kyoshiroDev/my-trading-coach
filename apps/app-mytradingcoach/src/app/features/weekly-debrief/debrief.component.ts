@@ -77,6 +77,7 @@ function badgeClass(badge: string): string {
   template: `
     <mtc-topbar
       title="Weekly Debrief"
+      [globalScopeNote]="true"
       [showAddButton]="userStore.isStarterOrAbove()"
       [addLabel]="isGenerating() ? 'Analyse en cours...' : 'Générer le débrief'"
       [addLoading]="isGenerating()"

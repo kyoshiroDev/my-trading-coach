@@ -111,9 +111,10 @@ export class SessionApi {
     );
   }
 
-  getSessionsByMonth(year: number, month: number, limit = 50): Observable<{ data: SessionHistoryItem[] }> {
+  getSessionsByMonth(year: number, month: number, accountId?: string, limit = 50): Observable<{ data: SessionHistoryItem[] }> {
+    const acc = accountId ? `&accountId=${encodeURIComponent(accountId)}` : '';
     return this.http.get<{ data: SessionHistoryItem[] }>(
-      `${this.base}/history?year=${year}&month=${month}&limit=${limit}`,
+      `${this.base}/history?year=${year}&month=${month}&limit=${limit}${acc}`,
     );
   }
 

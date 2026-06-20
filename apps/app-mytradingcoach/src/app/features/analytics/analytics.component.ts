@@ -6,8 +6,10 @@ import {
   ViewChild,
   afterRenderEffect,
   computed,
+  effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient, httpResource } from '@angular/common/http';
@@ -15,6 +17,7 @@ import { finalize } from 'rxjs';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PnlFormatPipe, SessionLabelPipe } from '../../shared/pipes';
 import { UserStore } from '../../core/stores/user.store';
+import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import {
   AnalyticsApi,
   AnalyticsSummary,
@@ -63,6 +66,14 @@ export class AnalyticsComponent {
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
   private readonly chartService = inject(ChartService);
+  private readonly selectedAccount = inject(SelectedAccountStore);
+
+  // Suffixe query du compte sélectionné (multi-comptes). « Tous » → '' (agrégé). Lu dans les
+  // URL des resources → refetch auto au changement de compte (pattern dashboard).
+  private accQuery(): string {
+    const id = this.selectedAccount.accountParam();
+    return id ? `?accountId=${encodeURIComponent(id)}` : '';
+  }
 
   protected readonly showPlanModal = signal(false);
 
@@ -87,22 +98,22 @@ export class AnalyticsComponent {
 
   // ── httpResource — pattern déclaratif, cancel auto, loading state natif ──
   private readonly summaryResource = httpResource<{ data: AnalyticsSummary }>(
-    () => `${environment.apiUrl}/analytics/summary`,
+    () => `${environment.apiUrl}/analytics/summary${this.accQuery()}`,
   );
   private readonly heatmapResource = httpResource<{ data: HeatmapCell[] }>(
     () =>
       this.userStore.isStarterOrAbove()
-        ? `${environment.apiUrl}/analytics/by-hour`
+        ? `${environment.apiUrl}/analytics/by-hour${this.accQuery()}`
         : undefined,
   );
   private readonly topAssetsResource = httpResource<{ data: TopAsset[] }>(() =>
     this.userStore.isStarterOrAbove()
-      ? `${environment.apiUrl}/analytics/top-assets`
+      ? `${environment.apiUrl}/analytics/top-assets${this.accQuery()}`
       : undefined,
   );
   private readonly setupResource = httpResource<{ data: SetupStat[] }>(() =>
     this.userStore.isStarterOrAbove()
-      ? `${environment.apiUrl}/analytics/by-setup`
+      ? `${environment.apiUrl}/analytics/by-setup${this.accQuery()}`
       : undefined,
   );
 
@@ -177,9 +188,16 @@ export class AnalyticsComponent {
       }
     });
 
+    // Recharge les données impératives (courbe equity + calendrier) au changement de
+    // compte sélectionné. Les httpResources se refetchent seules via accQuery().
     if (this.userStore.isStarterOrAbove()) {
-      this.loadCalendar(this.calYear(), this.calMonth());
-      this.loadEquityCurve();
+      effect(() => {
+        this.selectedAccount.accountParam(); // seule dépendance réactive (selectedAccountId)
+        untracked(() => {
+          this.loadEquityCurve();
+          this.loadCalendar(this.calYear(), this.calMonth());
+        });
+      });
     }
   }
 
@@ -187,7 +205,8 @@ export class AnalyticsComponent {
     if (!this.userStore.isStarterOrAbove()) return;
     this.equityLoading.set(true);
     const { from, to } = this.equityDateRange();
-    const params = [from ? `from=${from}` : '', to ? `to=${to}` : '']
+    const accountId = this.selectedAccount.accountParam();
+    const params = [from ? `from=${from}` : '', to ? `to=${to}` : '', accountId ? `accountId=${encodeURIComponent(accountId)}` : '']
       .filter(Boolean)
       .join('&');
     const url = `${environment.apiUrl}/analytics/equity-curve/daily${params ? '?' + params : ''}`;
@@ -215,7 +234,7 @@ export class AnalyticsComponent {
 
   private loadCalendar(year: number, month: number): void {
     this.calLoading.set(true);
-    this.analyticsApi.getMonthActivity(year, month)
+    this.analyticsApi.getMonthActivity(year, month, this.selectedAccount.accountParam())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {

@@ -55,6 +55,9 @@ export class TradesStore {
   readonly monthlyLimit  = signal<number>(30);
   readonly monthlyLoaded = signal(false);
 
+  /** Derniers filtres de loadTrades (ex. accountId) — réappliqués par loadMore. */
+  private lastFilters: Record<string, string> = {};
+
   readonly monthlyPercent = computed(() =>
     this.monthlyLimit() > 0
       ? Math.min(100, Math.round((this.monthlyCount() / this.monthlyLimit()) * 100))
@@ -77,7 +80,8 @@ export class TradesStore {
     this.isLoading.set(true);
     this.error.set(null);
 
-    const params = new URLSearchParams(filters ?? {});
+    this.lastFilters = filters ?? {};
+    const params = new URLSearchParams(this.lastFilters);
     this.http
       .get<{ data: TradesPage }>(`${this.baseUrl}?${params}`)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -101,7 +105,7 @@ export class TradesStore {
     if (!cursor || this.isLoadingMore()) return;
 
     this.isLoadingMore.set(true);
-    const params = new URLSearchParams({ cursor });
+    const params = new URLSearchParams({ ...this.lastFilters, cursor });
     this.http
       .get<{ data: TradesPage }>(`${this.baseUrl}?${params}`)
       .pipe(takeUntilDestroyed(this.destroyRef))

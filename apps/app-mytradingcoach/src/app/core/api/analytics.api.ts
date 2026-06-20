@@ -105,7 +105,8 @@ export class AnalyticsApi {
     return this.http.get<{ data: MonthlyActivitySummary }>(`${this.base}/activity/current-month${q}`);
   }
 
-  getMonthActivity(year: number, month: number): Observable<{ data: MonthlyActivitySummary }> {
-    return this.http.get<{ data: MonthlyActivitySummary }>(`${this.base}/activity/${year}/${month}`);
+  getMonthActivity(year: number, month: number, accountId?: string): Observable<{ data: MonthlyActivitySummary }> {
+    const q = accountId ? `?accountId=${encodeURIComponent(accountId)}` : '';
+    return this.http.get<{ data: MonthlyActivitySummary }>(`${this.base}/activity/${year}/${month}${q}`);
   }
 }

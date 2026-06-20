@@ -1,6 +1,7 @@
 <mtc-topbar
   title="Mes comptes"
   [showAddButton]="userStore.isStarterOrAbove()"
+  [showAccountSelector]="true"
   addLabel="Ajouter un compte"
   addTestId="add-account-btn"
   (addClick)="openCreate()"
@@ -50,10 +51,8 @@
       </div>
     </div>
 
-    <!-- ── Sélecteur global (filtre l'app) ── -->
+    <!-- Quota (le sélecteur de compte vit désormais dans le topbar, source unique) -->
     <div class="acct-bar">
-      <span class="acct-bar-lbl">Compte actif</span>
-      <mtc-account-selector />
       <span class="acct-quota" data-testid="account-quota"
             [class.is-limit]="atLimit()">
         {{ visibleAccountsCount() }}{{ accountLimit() !== null ? ' / ' + accountLimit() : '' }} compte(s)
