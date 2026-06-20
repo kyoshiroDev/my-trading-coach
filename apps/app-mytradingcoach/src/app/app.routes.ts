@@ -79,6 +79,15 @@ export const appRoutes: Routes = [
           ),
       },
       {
+        path: 'accounts',
+        // Pas de premiumGuard — upsell inline intentionnel (preview + UX conversion).
+        data: { seo: { title: 'Mes comptes', noindex: true } },
+        loadComponent: () =>
+          import('./features/accounts/accounts.component').then(
+            (m) => m.AccountsComponent,
+          ),
+      },
+      {
         path: 'journal',
         data: { seo: { title: 'Journal', noindex: true } },
         loadComponent: () =>

@@ -94,4 +94,9 @@ export class CreateTradeDto {
   @IsDateString()
   @IsOptional()
   tradedAt?: string;
+
+  // Compte de rattachement (multi-comptes). Absent → hérite de la session active, sinon défaut.
+  @IsString()
+  @IsOptional()
+  accountId?: string;
 }

@@ -6,6 +6,7 @@ import {
 import { MoodState, Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
+import { AccountsService } from '../accounts/accounts.service';
 
 export interface SessionHistoryItem {
   id: string;
@@ -34,16 +35,32 @@ export class SessionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly redisService: RedisService,
+    private readonly accounts: AccountsService,
   ) {}
 
-  async startSession(userId: string, mood: MoodState) {
+  async startSession(userId: string, mood: MoodState, accountId?: string) {
     await this.prisma.tradeSession.updateMany({
       where: { userId, status: SessionStatus.ACTIVE },
       data: { status: SessionStatus.CLOSED, endedAt: new Date() },
     });
 
+    // accountId fourni et valide (appartient au user) → on l'utilise ; sinon compte
+    // par défaut (anti-NULL : jamais de session sans compte).
+    let resolvedAccountId: string;
+    if (accountId && accountId !== 'all') {
+      const owned = (await this.accounts.accountWhere(userId, accountId)).accountId;
+      resolvedAccountId = owned ?? (await this.accounts.ensureDefaultAccountId(userId));
+    } else {
+      resolvedAccountId = await this.accounts.ensureDefaultAccountId(userId);
+    }
+
     const session = await this.prisma.tradeSession.create({
-      data: { userId, moodStart: mood, status: SessionStatus.ACTIVE },
+      data: {
+        userId,
+        moodStart: mood,
+        status: SessionStatus.ACTIVE,
+        accountId: resolvedAccountId,
+      },
     });
 
     await this.redisService.client
@@ -149,13 +166,17 @@ export class SessionService {
     userId: string,
     limit = 50,
     offset = 0,
-    filter?: { year?: number; month?: number },
+    filter?: { year?: number; month?: number; accountId?: string },
   ): Promise<SessionHistoryItem[]> {
     const where: Prisma.TradeSessionWhereInput = {
       userId,
       status: SessionStatus.CLOSED,
       totalTrades: { gt: 0 },
     };
+
+    if (filter?.accountId && filter.accountId !== 'all') {
+      where.accountId = filter.accountId;
+    }
 
     if (filter?.year && filter?.month) {
       const from = new Date(filter.year, filter.month - 1, 1);

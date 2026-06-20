@@ -1,6 +1,7 @@
 import { Injectable, computed, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
+import { ACCOUNT_LIMITS } from '../constants/pricing.const';
 
 @Injectable({ providedIn: 'root' })
 export class UserStore {
@@ -26,6 +27,16 @@ export class UserStore {
     if (user.role === 'ADMIN' || user.role === 'BETA_TESTER') return true;
     if (user.plan === 'PREMIUM') return true;
     return !!(user.trialEndsAt && new Date() < new Date(user.trialEndsAt));
+  });
+
+  /**
+   * Quota de comptes de trading du plan courant : `null` = illimité.
+   * Premium / trial / admin → illimité · Starter → 3 · Free → 1. Aligné backend.
+   */
+  readonly maxAccounts = computed<number | null>(() => {
+    if (this.isPremium()) return ACCOUNT_LIMITS.premium; // null (illimité)
+    if (this.isStarterOrAbove()) return ACCOUNT_LIMITS.starter;
+    return ACCOUNT_LIMITS.free;
   });
 
   /** Compte démo vitrine (lecture seule) — bandeau + actions redirigées vers l'inscription. */
