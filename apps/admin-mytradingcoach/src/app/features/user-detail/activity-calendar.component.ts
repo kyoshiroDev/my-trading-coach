@@ -12,6 +12,7 @@ const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet'
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './activity-calendar.component.css',
+  host: { '[class.compact]': 'compact()' },
   template: `
     <div class="cal-nav">
       <button class="cal-arrow" (click)="nav(-1)" aria-label="Mois précédent">‹</button>
@@ -30,10 +31,12 @@ const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet'
       }
     </div>
 
-    <div class="hm-legend">
-      <i class="lg-on"></i> connecté&nbsp;&nbsp;<i class="lg-off"></i> non
-      <span class="hm-sum">{{ monthCount() }} jour{{ monthCount() > 1 ? 's' : '' }} connecté ce mois</span>
-    </div>
+    @if (!compact()) {
+      <div class="hm-legend">
+        <i class="lg-on"></i> connecté&nbsp;&nbsp;<i class="lg-off"></i> non
+        <span class="hm-sum">{{ monthCount() }} jour{{ monthCount() > 1 ? 's' : '' }} connecté ce mois</span>
+      </div>
+    }
 
     <div class="cal-stats">
       <div class="cal-stat"><div class="v">{{ stats().total }}</div><div class="l">jours connectés</div></div>
@@ -45,6 +48,8 @@ const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet'
 export class ActivityCalendarComponent {
   readonly activeDates = input.required<string[]>();
   readonly createdAt = input.required<string>();
+  /** Version dense pour la fiche admin : cellules + en-têtes minuscules. */
+  readonly compact = input(false);
 
   protected readonly weekdays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
