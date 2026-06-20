@@ -69,7 +69,9 @@
     <div class="acct-grid">
 
       @for (a of store.accounts(); track a.id) {
-        <div class="acct-card" [class.is-archived]="a.status === 'ARCHIVED'">
+        <div class="acct-card"
+             [class.is-archived]="a.status === 'ARCHIVED'"
+             [class.is-selected]="a.id === store.selectedAccountId()">
           <div class="acct-top">
             <div class="acct-ic">{{ typeIcon(a.type) }}</div>
             <div class="acct-id">
@@ -80,6 +82,9 @@
                 <span class="acct-status">
                   <span class="dot" [style.background]="dotColor(a)"></span> {{ statusLabel(a.status) }}
                 </span>
+                @if (a.id === store.selectedAccountId()) {
+                  <span class="acct-active-mark">● Actif</span>
+                }
               </div>
             </div>
             <div class="acct-menu-wrap">
