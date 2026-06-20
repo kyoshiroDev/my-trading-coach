@@ -458,8 +458,27 @@ export class DashboardComponent {
   protected readonly winRateColor = computed(() =>
     (this.summary()?.winRate ?? 0) === 0 ? 'var(--text-2)' : 'var(--blue-bright)',
   );
+  /**
+   * Capital de base, source unique scopée au compte sélectionné — miroir EXACT
+   * de la page Mes comptes :
+   * - compte sélectionné → son `metrics.startingBalance` ;
+   * - « Tous les comptes » → somme des `startingBalance` des comptes non archivés
+   *   (cf. `trackedCapital` dans accounts.component) ;
+   * - FREE / comptes non chargés → fallback sur le capital du profil user.
+   */
+  protected readonly baseCapital = computed(() => {
+    if (!this.userStore.isStarterOrAbove() || !this.selectedAccount.loaded()) {
+      return this.userStore.startingCapital();
+    }
+    const account = this.selectedAccount.selected();
+    if (account) return account.metrics.startingBalance ?? 0;
+    return this.selectedAccount
+      .accounts()
+      .filter((a) => a.status !== 'ARCHIVED')
+      .reduce((s, a) => s + (a.metrics.startingBalance ?? 0), 0);
+  });
   protected readonly currentCapital = computed(() =>
-    this.userStore.startingCapital() + (this.summary()?.totalPnl ?? 0),
+    this.baseCapital() + (this.summary()?.totalPnl ?? 0),
   );
   protected readonly capitalDisplay = computed(() => {
     const capital  = this.currentCapital();
@@ -469,11 +488,11 @@ export class DashboardComponent {
     return `${symbol}${Math.abs(capital * rate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   });
   protected readonly capitalPct = computed(() => {
-    const start = this.userStore.startingCapital();
+    const start = this.baseCapital();
     return start <= 0 ? 0 : ((this.summary()?.totalPnl ?? 0) / start) * 100;
   });
   protected readonly capitalColor = computed(() => {
-    const start = this.userStore.startingCapital();
+    const start = this.baseCapital();
     if (start <= 0) return 'var(--text-2)';
     const pnl = this.summary()?.totalPnl ?? 0;
     return pnl === 0 ? 'var(--text-2)' : pnl > 0 ? 'var(--green)' : 'var(--red)';
