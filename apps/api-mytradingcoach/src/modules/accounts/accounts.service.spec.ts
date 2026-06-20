@@ -75,12 +75,13 @@ describe('AccountsService', () => {
     const ctx = (plan: string, extra: Record<string, unknown> = {}) =>
       ({ plan, role: 'USER', ...extra }) as never;
 
-    it('STARTER sous le quota (2/3) → crée', async () => {
+    it('STARTER sous le quota (2/3) → crée, ne compte que les comptes ACTIVE', async () => {
       prisma.tradingAccount.count.mockResolvedValue(2);
       prisma.tradingAccount.create.mockResolvedValue({ id: 'a4' });
       await svc.create('u1', { label: 'C3' } as never, ctx('STARTER'));
+      // Slot = comptes ACTIVE uniquement (PASSED / FAILED / ARCHIVED libèrent le slot).
       expect(prisma.tradingAccount.count).toHaveBeenCalledWith({
-        where: { userId: 'u1', status: { not: 'ARCHIVED' } },
+        where: { userId: 'u1', status: 'ACTIVE' },
       });
       expect(prisma.tradingAccount.create).toHaveBeenCalled();
     });
@@ -114,6 +115,66 @@ describe('AccountsService', () => {
         svc.create('u1', { label: 'C2' } as never, ctx('FREE', { trialEndsAt: null })),
       ).rejects.toBeInstanceOf(ForbiddenException);
       expect(prisma.tradingAccount.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('update — réactivation et quota (anti-bypass)', () => {
+    const ctx = (plan: string, extra: Record<string, unknown> = {}) =>
+      ({ plan, role: 'USER', ...extra }) as never;
+
+    it('réactivation (FAILED → ACTIVE) au quota → 403 ACCOUNT_LIMIT_REACHED, pas d\'update', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'FAILED' });
+      prisma.tradingAccount.count.mockResolvedValue(3); // déjà 3 ACTIVE (Starter plein)
+      await expect(
+        svc.update('u1', 'a1', { status: 'ACTIVE' } as never, ctx('STARTER')),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.tradingAccount.count).toHaveBeenCalledWith({
+        where: { userId: 'u1', status: 'ACTIVE' },
+      });
+      expect(prisma.tradingAccount.update).not.toHaveBeenCalled();
+    });
+
+    it('réactivation (ARCHIVED → ACTIVE) sous le quota → applique', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'ARCHIVED' });
+      prisma.tradingAccount.count.mockResolvedValue(2); // 2/3 → reste de la place
+      prisma.tradingAccount.update.mockResolvedValue({ id: 'a1', status: 'ACTIVE' });
+      await svc.update('u1', 'a1', { status: 'ACTIVE' } as never, ctx('STARTER'));
+      expect(prisma.tradingAccount.update).toHaveBeenCalledWith({
+        where: { id: 'a1' },
+        data: { status: 'ACTIVE' },
+      });
+    });
+
+    it('réactivation PREMIUM (illimité) → applique sans comptage', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'FAILED' });
+      prisma.tradingAccount.update.mockResolvedValue({ id: 'a1', status: 'ACTIVE' });
+      await svc.update('u1', 'a1', { status: 'ACTIVE' } as never, ctx('PREMIUM'));
+      expect(prisma.tradingAccount.count).not.toHaveBeenCalled();
+      expect(prisma.tradingAccount.update).toHaveBeenCalled();
+    });
+
+    it('passage ACTIVE → FAILED (libère un slot) → aucune vérif de quota', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'ACTIVE' });
+      prisma.tradingAccount.update.mockResolvedValue({ id: 'a1', status: 'FAILED' });
+      await svc.update('u1', 'a1', { status: 'FAILED' } as never, ctx('STARTER'));
+      expect(prisma.tradingAccount.count).not.toHaveBeenCalled();
+      expect(prisma.tradingAccount.update).toHaveBeenCalled();
+    });
+
+    it('update sans changement de statut (label) → aucune vérif de quota', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'ACTIVE' });
+      prisma.tradingAccount.update.mockResolvedValue({ id: 'a1' });
+      await svc.update('u1', 'a1', { label: 'Renommé' } as never, ctx('STARTER'));
+      expect(prisma.tradingAccount.count).not.toHaveBeenCalled();
+      expect(prisma.tradingAccount.update).toHaveBeenCalled();
+    });
+
+    it('déjà ACTIVE, dto ACTIVE (no-op statut) → aucune vérif de quota', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'ACTIVE' });
+      prisma.tradingAccount.update.mockResolvedValue({ id: 'a1' });
+      await svc.update('u1', 'a1', { status: 'ACTIVE' } as never, ctx('STARTER'));
+      expect(prisma.tradingAccount.count).not.toHaveBeenCalled();
+      expect(prisma.tradingAccount.update).toHaveBeenCalled();
     });
   });
 

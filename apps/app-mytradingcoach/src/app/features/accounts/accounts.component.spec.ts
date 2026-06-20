@@ -170,6 +170,30 @@ describe('AccountsComponent — logique', () => {
     expect((c['atLimit'] as () => boolean)()).toBe(false); // 2 actifs < 3
   });
 
+  it('quota = comptes ACTIVE uniquement : PASSED/FAILED/ARCHIVED ne comptent pas', () => {
+    const c = setup({
+      premium: true, limit: 3,
+      accounts: [
+        acct({ id: 'a' }), acct({ id: 'b' }),
+        acct({ id: 'p', status: 'PASSED' }),
+        acct({ id: 'f', status: 'FAILED' }),
+        acct({ id: 'z', status: 'ARCHIVED' }),
+      ],
+    });
+    expect((c['activeAccountsCount'] as () => number)()).toBe(2);
+    expect((c['atLimit'] as () => boolean)()).toBe(false); // 2 ACTIVE < 3
+  });
+
+  it('3 ACTIVE = limite atteinte, un FAILED en plus n\'ajoute rien', () => {
+    const c = setup({ premium: true, limit: 3, accounts: [acct({ id: 'a' }), acct({ id: 'b' }), acct({ id: 'c' }), acct({ id: 'f', status: 'FAILED' })] });
+    expect((c['atLimit'] as () => boolean)()).toBe(true); // 3 ACTIVE = limite
+  });
+
+  it('2 ACTIVE + 1 FAILED → création encore possible (FAILED libère son slot)', () => {
+    const c = setup({ premium: true, limit: 3, accounts: [acct({ id: 'a' }), acct({ id: 'b' }), acct({ id: 'f', status: 'FAILED' })] });
+    expect((c['atLimit'] as () => boolean)()).toBe(false); // 2 ACTIVE < 3
+  });
+
   it('Premium (limit null) → jamais atLimit', () => {
     const c = setup({ premium: true, limit: null, accounts: [acct({ id: 'a' }), acct({ id: 'b' }), acct({ id: 'c' }), acct({ id: 'd' })] });
     expect((c['atLimit'] as () => boolean)()).toBe(false);

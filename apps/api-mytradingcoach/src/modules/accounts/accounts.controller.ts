@@ -42,11 +42,16 @@ export class AccountsController {
 
   @Patch(':id')
   update(
-    @CurrentUser() user: { id: string },
+    @CurrentUser()
+    user: { id: string; plan: Plan; role: Role; trialEndsAt?: Date | null },
     @Param('id') id: string,
     @Body() dto: UpdateAccountDto,
   ) {
-    return this.accounts.update(user.id, id, dto);
+    return this.accounts.update(user.id, id, dto, {
+      plan: user.plan,
+      role: user.role,
+      trialEndsAt: user.trialEndsAt,
+    });
   }
 
   @Delete(':id')

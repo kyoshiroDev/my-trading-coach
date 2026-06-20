@@ -78,7 +78,11 @@ export class AccountsComponent implements OnInit {
   private readonly visibleAccounts = computed(() =>
     this.store.accounts().filter((a) => a.status !== 'ARCHIVED'),
   );
-  protected readonly visibleAccountsCount = computed(() => this.visibleAccounts().length);
+  // Quota : seuls les comptes ACTIVE consomment un slot (aligné backend). PASSED /
+  // FAILED / ARCHIVED le libèrent → c'est ce count qu'on affiche et qui borne le quota.
+  protected readonly activeAccountsCount = computed(
+    () => this.store.accounts().filter((a) => a.status === 'ACTIVE').length,
+  );
   protected readonly trackedCapital = computed(() =>
     this.visibleAccounts().reduce((s, a) => s + (a.metrics.startingBalance ?? 0), 0),
   );
@@ -98,11 +102,11 @@ export class AccountsComponent implements OnInit {
   );
 
   // ── Quota par plan (Starter 3 · Premium illimité). null = illimité. ──────
-  // Seuls les comptes non archivés comptent (visibleAccounts).
+  // Seuls les comptes ACTIVE consomment le quota (aligné backend).
   protected readonly accountLimit = this.userStore.maxAccounts;
   protected readonly atLimit = computed(() => {
     const limit = this.accountLimit();
-    return limit !== null && this.visibleAccountsCount() >= limit;
+    return limit !== null && this.activeAccountsCount() >= limit;
   });
 
   ngOnInit(): void {

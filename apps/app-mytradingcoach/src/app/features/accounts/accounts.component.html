@@ -30,7 +30,7 @@
       <div class="stat-card" style="--c:var(--blue)">
         <div class="stat-label">Capital suivi</div>
         <div class="stat-value">{{ trackedCapital() | number:'1.0-0' }} $</div>
-        <div class="stat-sub">{{ visibleAccountsCount() }} compte(s) actif(s)</div>
+        <div class="stat-sub">{{ activeAccountsCount() }} compte(s) actif(s)</div>
       </div>
       <div class="stat-card" style="--c:var(--green)">
         <div class="stat-label">P&amp;L cumulé</div>
@@ -55,7 +55,7 @@
     <div class="acct-bar">
       <span class="acct-quota" data-testid="account-quota"
             [class.is-limit]="atLimit()">
-        {{ visibleAccountsCount() }}{{ accountLimit() !== null ? ' / ' + accountLimit() : '' }} compte(s)
+        {{ activeAccountsCount() }}{{ accountLimit() !== null ? ' / ' + accountLimit() : '' }} compte(s)
         @if (accountLimit() === null) { · illimité }
       </span>
     </div>
