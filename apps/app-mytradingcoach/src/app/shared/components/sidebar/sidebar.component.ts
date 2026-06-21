@@ -108,7 +108,6 @@ import { environment } from '../../../../environments/environment';
             >
               <span class="nav-icon">💼</span>
               Mes comptes
-              <span class="badge starter">STARTER</span>
             </a>
           }
 
@@ -195,7 +194,7 @@ import { environment } from '../../../../environments/environment';
             <span class="nav-label">Calendrier éco</span>
           </a>
 
-          <!-- Une seule surface de parrainage selon le statut (gating par rôle) -->
+          <!-- Surface(s) de parrainage selon le rôle. L'admin voit les DEUX. -->
           @if (userStore.isAmbassador()) {
             <a
               routerLink="/ambassador"
@@ -211,7 +210,8 @@ import { environment } from '../../../../environments/environment';
                 <span class="nav-badge-notif">{{ ambassadorNotif.newReferrals() }}</span>
               }
             </a>
-          } @else {
+          }
+          @if (!userStore.isAmbassador() || userStore.isAdmin()) {
             <a
               routerLink="/parrainage"
               routerLinkActive="active"

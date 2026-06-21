@@ -10,7 +10,11 @@ import { UserStore } from '../stores/user.store';
 export const parrainageGuard: CanActivateFn = () => {
   const store = inject(UserStore);
   const router = inject(Router);
-  return store.isAmbassador() ? router.createUrlTree(['/ambassador']) : true;
+  // Un ambassadeur (non-admin) est renvoyé vers sa page Ambassadeur. L'admin, lui,
+  // accède aux DEUX surfaces (parrainage + ambassadeur).
+  return store.isAmbassador() && !store.isAdmin()
+    ? router.createUrlTree(['/ambassador'])
+    : true;
 };
 
 export const ambassadorPageGuard: CanActivateFn = () => {

@@ -48,9 +48,14 @@ describe('parrainageGuard', () => {
     expect(target(run(parrainageGuard) as boolean | UrlTree)).toBe(true);
   });
 
-  it('redirige un ambassadeur vers /ambassador', () => {
+  it('redirige un ambassadeur (non-admin) vers /ambassador', () => {
     setup('AMBASSADOR');
     expect(target(run(parrainageGuard) as boolean | UrlTree)).toBe('/ambassador');
+  });
+
+  it('laisse passer un admin (accès aux deux surfaces)', () => {
+    setup('ADMIN');
+    expect(target(run(parrainageGuard) as boolean | UrlTree)).toBe(true);
   });
 });
 

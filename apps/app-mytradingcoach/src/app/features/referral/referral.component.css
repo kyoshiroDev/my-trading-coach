@@ -1,6 +1,6 @@
 :host { display: block; }
 
-.content { padding: 28px; max-width: 1100px; }
+.content { padding: 28px; max-width: 1100px; margin: 0 auto; }
 
 .page-head { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
 .page-title { font-family: var(--font-display); font-size: 24px; font-weight: 700; letter-spacing: -.3px; display: flex; align-items: center; gap: 10px; }

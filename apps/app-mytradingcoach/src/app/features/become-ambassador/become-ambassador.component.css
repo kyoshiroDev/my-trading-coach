@@ -1,6 +1,6 @@
 :host { display: block; }
 
-.content { padding: 28px; max-width: 720px; }
+.content { padding: 28px; max-width: 720px; margin: 0 auto; }
 
 .back { display: inline-block; font-family: var(--font-mono); font-size: 12px; color: var(--blue-bright); margin-bottom: 16px; text-decoration: none; }
 .back:hover { text-decoration: underline; }
