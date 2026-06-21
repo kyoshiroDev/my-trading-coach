@@ -93,10 +93,11 @@ import { environment } from '../../../../environments/environment';
               routerLinkActive="active"
               class="nav-item"
               data-testid="nav-accounts"
+              [attr.title]="collapsed() ? 'Mes comptes' : null"
               (click)="closeSidebar()"
             >
               <span class="nav-icon">💼</span>
-              Mes comptes
+              <span class="nav-label">Mes comptes</span>
             </a>
           }
 
