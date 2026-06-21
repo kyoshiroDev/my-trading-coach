@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { StripeService } from '../stripe/stripe.service';
@@ -121,6 +122,9 @@ export class AdminService {
     const d7 = new Date(now - 7 * 86_400_000);
     const d30 = new Date(now - 30 * 86_400_000);
 
+    // Utilisateurs « réels » : hors démo ET hors comptes ADMIN.
+    const REAL_USERS = { isDemo: false, role: { not: Role.ADMIN } } as const;
+
     const [
       totalUsers,
       activatedUsers,
@@ -131,13 +135,13 @@ export class AdminService {
       mau,
       retentionRows,
     ] = await Promise.all([
-      this.prisma.user.count({ where: { isDemo: false } }),
-      this.prisma.user.count({ where: { isDemo: false, trades: { some: {} } } }),
-      this.prisma.user.count({ where: { isDemo: false, createdAt: { gte: startOfMonth } } }),
-      this.prisma.user.count({ where: { isDemo: false, createdAt: { gte: startOfMonth }, trades: { some: {} } } }),
-      this.prisma.user.count({ where: { isDemo: false, trades: { some: { tradedAt: { gte: d1 } } } } }),
-      this.prisma.user.count({ where: { isDemo: false, trades: { some: { tradedAt: { gte: d7 } } } } }),
-      this.prisma.user.count({ where: { isDemo: false, trades: { some: { tradedAt: { gte: d30 } } } } }),
+      this.prisma.user.count({ where: { ...REAL_USERS } }),
+      this.prisma.user.count({ where: { ...REAL_USERS, trades: { some: {} } } }),
+      this.prisma.user.count({ where: { ...REAL_USERS, createdAt: { gte: startOfMonth } } }),
+      this.prisma.user.count({ where: { ...REAL_USERS, createdAt: { gte: startOfMonth }, trades: { some: {} } } }),
+      this.prisma.user.count({ where: { ...REAL_USERS, trades: { some: { tradedAt: { gte: d1 } } } } }),
+      this.prisma.user.count({ where: { ...REAL_USERS, trades: { some: { tradedAt: { gte: d7 } } } } }),
+      this.prisma.user.count({ where: { ...REAL_USERS, trades: { some: { tradedAt: { gte: d30 } } } } }),
       // Rétention J+7 : parmi les inscrits il y a ≥7j, % avec ≥1 trade entre J et J+7.
       this.prisma.$queryRaw<{ eligible: bigint; retained: bigint }[]>`
         SELECT
@@ -149,7 +153,7 @@ export class AdminService {
               AND t."tradedAt" < u."createdAt" + INTERVAL '7 days'
           )) AS retained
         FROM "User" u
-        WHERE u."isDemo" = false
+        WHERE u."isDemo" = false AND u."role" <> 'ADMIN'
       `,
     ]);
 

@@ -30,14 +30,14 @@
       <div class="stat-card" style="--c:var(--blue)">
         <div class="stat-label"><lucide-icon [img]="WalletIcon" [size]="13" />Capital suivi</div>
         <div class="stat-value">{{ trackedCapital() | number:'1.0-0' }} $</div>
-        <div class="stat-sub">{{ activeAccountsCount() }} compte(s) actif(s)</div>
+        <div class="stat-sub">{{ visibleAccounts().length }} compte(s) suivi(s)</div>
       </div>
       <div class="stat-card" style="--c:var(--green)">
         <div class="stat-label"><lucide-icon [img]="TrendingUpIcon" [size]="13" />P&amp;L cumulé</div>
         <div class="stat-value" [class.text-green]="totalPnl() >= 0" [class.text-red]="totalPnl() < 0">
           {{ totalPnl() >= 0 ? '+' : '' }}{{ totalPnl() | number:'1.0-0' }} $
         </div>
-        <div class="stat-sub">tous comptes · estimé</div>
+        <div class="stat-sub">{{ selectedAccountName() ?? 'tous comptes' }} · estimé</div>
       </div>
       <div class="stat-card" style="--c:var(--purple)">
         <div class="stat-label"><lucide-icon [img]="ListIcon" [size]="13" />Trades cumulés</div>
@@ -49,6 +49,13 @@
         <div class="stat-value" [class.text-yellow]="atRiskCount() > 0">{{ atRiskCount() }}</div>
         <div class="stat-sub">proche du drawdown</div>
       </div>
+      <div class="stat-card" style="--c:var(--cyan)">
+        <div class="stat-label"><lucide-icon [img]="LayersIcon" [size]="13" />Comptes</div>
+        <div class="stat-value">{{ activeAccountsCount() }}</div>
+        <div class="stat-sub" data-testid="account-quota">
+          {{ accountLimit() === null ? 'actifs · illimité' : 'actifs / ' + accountLimit() + ' max' }}
+        </div>
+      </div>
     </div>
 
     <!-- Disclaimer UNIQUE (au lieu d'être répété sur chaque carte prop firm) -->
@@ -59,15 +66,6 @@
       </div>
     }
 
-    <!-- Quota (le sélecteur de compte vit désormais dans le topbar, source unique) -->
-    <div class="acct-bar">
-      <span class="acct-quota" data-testid="account-quota"
-            [class.is-limit]="atLimit()">
-        {{ activeAccountsCount() }}{{ accountLimit() !== null ? ' / ' + accountLimit() : '' }} compte(s)
-        @if (accountLimit() === null) { · illimité }
-      </span>
-    </div>
-
     @if (store.isLoading() && store.accounts().length === 0) {
       <div class="acct-empty">Chargement des comptes…</div>
     }
@@ -75,12 +73,11 @@
     <!-- ── Cartes comptes ── -->
     <div class="acct-grid">
 
-      @for (a of store.accounts(); track a.id) {
+      @for (a of displayedAccounts(); track a.id) {
         <div class="acct-card"
              [style.--ac]="accentVar(a)"
              [attr.data-testid]="'account-card-' + a.id"
-             [class.is-archived]="a.status === 'ARCHIVED'"
-             [class.is-selected]="a.id === store.selectedAccountId()">
+             [class.is-archived]="a.status === 'ARCHIVED'">
           <div class="acct-top">
             <div class="acct-ic"><lucide-icon [img]="typeIcon(a.type)" [size]="18" /></div>
             <div class="acct-id">
@@ -91,9 +88,6 @@
                 <span class="acct-status" [attr.data-testid]="'account-status-' + a.id">
                   <span class="dot" [style.background]="dotColor(a)"></span> {{ statusLabel(a.status) }}
                 </span>
-                @if (a.id === store.selectedAccountId()) {
-                  <span class="acct-active-mark" [attr.data-testid]="'account-selected-' + a.id">● Actif</span>
-                }
               </div>
             </div>
             <div class="acct-menu-wrap">
@@ -186,19 +180,21 @@
         </div>
       }
 
-      <!-- Ajouter / quota atteint -->
-      @if (atLimit()) {
-        <button class="acct-add is-limit" (click)="showPlanModal.set(true)" data-testid="add-account-limit">
-          <div class="plus"><lucide-icon [img]="LockIcon" [size]="24" /></div>
-          <div>Limite de {{ accountLimit() }} compte(s) atteinte</div>
-          <div class="acct-add-sub">Passe au Premium pour des comptes illimités</div>
-        </button>
-      } @else {
-        <button class="acct-add" (click)="openCreate()" data-testid="add-account-tile">
-          <div class="plus"><lucide-icon [img]="PlusIcon" [size]="24" /></div>
-          <div>Ajouter un compte</div>
-          <div class="acct-add-sub">prop firm ou perso</div>
-        </button>
+      <!-- Ajouter / quota atteint — uniquement en vue « Tous les comptes ». -->
+      @if (store.selectedAccountId() === 'all') {
+        @if (atLimit()) {
+          <button class="acct-add is-limit" (click)="showPlanModal.set(true)" data-testid="add-account-limit">
+            <div class="plus"><lucide-icon [img]="LockIcon" [size]="24" /></div>
+            <div>Limite de {{ accountLimit() }} compte(s) atteinte</div>
+            <div class="acct-add-sub">Passe au Premium pour des comptes illimités</div>
+          </button>
+        } @else {
+          <button class="acct-add" (click)="openCreate()" data-testid="add-account-tile">
+            <div class="plus"><lucide-icon [img]="PlusIcon" [size]="24" /></div>
+            <div>Ajouter un compte</div>
+            <div class="acct-add-sub">prop firm ou perso</div>
+          </button>
+        }
       }
 
     </div>

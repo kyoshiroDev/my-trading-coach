@@ -63,10 +63,11 @@
 /* ── Vue agrégée ────────────────────────────────────────────────────────── */
 .stats-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 16px;
   margin-bottom: 22px;
 }
+@media (max-width: 1200px) { .stats-row { grid-template-columns: repeat(3, 1fr); } }
 .stat-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -114,20 +115,6 @@
 .global-note lucide-icon { flex-shrink: 0; margin-top: 2px; color: var(--yellow); }
 .global-note b { color: var(--text-2); font-weight: 600; }
 
-/* ── Sélecteur ──────────────────────────────────────────────────────────── */
-.acct-bar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
-.acct-bar-lbl { font-size: 13px; font-weight: 600; color: var(--text-2); }
-.acct-quota {
-  margin-left: auto;
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  color: var(--text-3);
-  padding: 4px 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-.acct-quota.is-limit { color: var(--yellow); border-color: rgba(245,158,11,.3); }
-
 .acct-empty { color: var(--text-3); font-size: 13px; padding: 12px 0; }
 
 /* ── Grille de comptes ──────────────────────────────────────────────────── */
@@ -161,23 +148,6 @@
 }
 .acct-card:hover { border-color: var(--border-hover); }
 .acct-card.is-archived { opacity: .6; }
-/* Compte actif (sélecteur) : bordure accent + léger glow, discret mais visible. */
-.acct-card.is-selected {
-  border-color: var(--blue);
-  box-shadow: 0 0 0 1px var(--blue), 0 0 18px var(--blue-glow);
-}
-.acct-active-mark {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 500;
-  letter-spacing: .4px;
-  text-transform: uppercase;
-  padding: 2px 7px;
-  border-radius: 5px;
-  background: var(--blue-glow);
-  color: var(--blue-bright);
-  border: 1px solid rgba(59,130,246,.3);
-}
 .acct-top { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 14px; }
 .acct-ic {
   width: 38px; height: 38px;

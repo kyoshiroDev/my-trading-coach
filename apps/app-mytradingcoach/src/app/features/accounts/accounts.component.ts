@@ -13,7 +13,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   LucideAngularModule,
   User, Target, Building2, FlaskConical,
-  Wallet, TrendingUp, List, Eye,
+  Wallet, TrendingUp, List, Eye, Layers,
   ClipboardList, MoreHorizontal, Info, Plus, Lock,
   Pencil, Trash2, X, Briefcase,
 } from 'lucide-angular';
@@ -81,10 +81,24 @@ export class AccountsComponent implements OnInit {
   protected readonly menuOpenId = signal<string | null>(null);
   protected readonly form = signal<AccountFormState>(emptyForm());
 
-  // ── Vue agrégée (tous comptes non archivés) ─────────────────────────────
-  private readonly visibleAccounts = computed(() =>
-    this.store.accounts().filter((a) => a.status !== 'ARCHIVED'),
-  );
+  // ── Vue agrégée (source des KPI), scopée par la sélection du topbar ──────
+  // null = « Tous les comptes » → tous (non archivés) ; sinon le seul compte choisi.
+  protected readonly visibleAccounts = computed(() => {
+    const sel = this.store.selectedAccountId();
+    const base = this.store.accounts().filter((a) => a.status !== 'ARCHIVED');
+    return sel === 'all' ? base : base.filter((a) => a.id === sel);
+  });
+  // Cartes affichées dans la grille : toutes, ou la seule sélectionnée.
+  protected readonly displayedAccounts = computed(() => {
+    const sel = this.store.selectedAccountId();
+    const all = this.store.accounts();
+    return sel === 'all' ? all : all.filter((a) => a.id === sel);
+  });
+  // Nom du compte sélectionné (sous-libellé KPI P&L), null en vue « Tous les comptes ».
+  protected readonly selectedAccountName = computed(() => {
+    const sel = this.store.selectedAccountId();
+    return sel === 'all' ? null : (this.store.accounts().find((a) => a.id === sel)?.label ?? null);
+  });
   // Quota : seuls les comptes ACTIVE consomment un slot (aligné backend). PASSED /
   // FAILED / ARCHIVED le libèrent → c'est ce count qu'on affiche et qui borne le quota.
   protected readonly activeAccountsCount = computed(
@@ -135,6 +149,7 @@ export class AccountsComponent implements OnInit {
   protected readonly TrendingUpIcon = TrendingUp;
   protected readonly ListIcon = List;
   protected readonly EyeIcon = Eye;
+  protected readonly LayersIcon = Layers;
   protected readonly ClipboardListIcon = ClipboardList;
   protected readonly MoreHorizontalIcon = MoreHorizontal;
   protected readonly InfoIcon = Info;
