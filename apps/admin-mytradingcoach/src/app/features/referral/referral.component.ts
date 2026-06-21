@@ -40,6 +40,7 @@ import { AdminApi, ReferralAdminOverview } from '../../core/api/admin.api';
           <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Mois à appliquer</div><div class="kpi-value amber">{{ d.moisAAppliquer }}</div><div class="kpi-sub">crédits non consommés</div></div>
         </div>
 
+        <div class="ref-cols">
         <!-- Parrains -->
         <div class="card">
           <div class="card-head"><span class="card-label">Parrains</span><span class="card-action ud-static">classés par filleuls payants</span></div>
@@ -110,6 +111,7 @@ import { AdminApi, ReferralAdminOverview } from '../../core/api/admin.api';
               </tbody>
             </table>
           }
+        </div>
         </div>
 
       }
