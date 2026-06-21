@@ -3,6 +3,35 @@
   height: 100dvh;
   background: var(--bg);
   overflow: hidden;
+  position: relative; /* ancre la flèche de repli (.collapse-edge) */
+}
+
+/* ─── Flèche de repli sur le bord (desktop) ─── */
+.collapse-edge {
+  position: absolute;
+  left: 220px; /* couture sidebar/contenu (largeur déployée) */
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: left 0.2s ease, background 0.15s, color 0.15s, border-color 0.15s;
+}
+.collapse-edge:hover {
+  background: var(--bg-3);
+  color: var(--text);
+  border-color: var(--border-hover);
+}
+.collapse-edge.collapsed {
+  left: 68px; /* suit la largeur repliée de la sidebar */
 }
 
 /* ─── SIDEBAR ─── */
@@ -54,35 +83,6 @@
 .logo-full { display: block; max-width: 100%; }
 .logo-mark { display: none; }
 
-/* ─── Collapse toggle ─── */
-.collapse-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 8px 12px 0;
-  padding: 6px 12px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--text-3);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  font-family: var(--font-body);
-  transition: all 0.15s;
-}
-.collapse-toggle:hover {
-  background: var(--blue-glow);
-  border-color: var(--border-hover);
-  color: var(--text-2);
-}
-.collapse-chevron {
-  font-size: 14px;
-  line-height: 1;
-  width: 18px;
-  text-align: center;
-  flex-shrink: 0;
-}
 
 /* ─── NAV ─── */
 .nav {
@@ -578,14 +578,6 @@
     padding: 9px 0;
   }
 
-  /* Toggle replié : chevron centré */
-  .sidebar.collapsed .collapse-toggle {
-    justify-content: center;
-    padding: 6px 0;
-    margin: 8px 8px 0;
-  }
-  .sidebar.collapsed .collapse-chevron { width: auto; }
-
   /* Footer : Discord en icône, carte user en avatar seul */
   .sidebar.collapsed .sidebar-footer { padding: 16px 8px; }
   .sidebar.collapsed .discord-sidebar-btn {
@@ -602,5 +594,6 @@
 
 /* Le toggle de repli n'a pas de sens en mobile (la sidebar est un drawer) */
 @media (max-width: 768px) {
-  .collapse-toggle { display: none; }
+  /* Concept desktop : sur mobile c'est l'overlay (hamburger) qui prend le relais. */
+  .collapse-edge { display: none; }
 }
