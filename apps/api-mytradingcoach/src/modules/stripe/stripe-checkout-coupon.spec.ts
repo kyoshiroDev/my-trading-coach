@@ -9,7 +9,7 @@ const ANNUAL = 'price_annual';
 const MONTHLY = 'price_monthly';
 const UNKNOWN = 'price_unknown';
 
-function makeSvc(referredBy: string | null) {
+function makeSvc(referredBy: string | null, parrainRole: 'USER' | 'AMBASSADOR' = 'USER') {
   const config = {
     getOrThrow: () => 'sk_test_dummy',
     // isAnnualPrice lit STRIPE_*_PRICE_YEARLY, isMonthlyPrice lit STRIPE_*_PRICE_MONTHLY
@@ -26,6 +26,8 @@ function makeSvc(referredBy: string | null) {
         id: 'filleul', referredBy, stripeSubscriptionId: null, stripeCustomerId: 'cus_f', trialUsed: true,
       }),
       findUniqueOrThrow: vi.fn().mockResolvedValue({ id: 'filleul', stripeCustomerId: 'cus_f' }),
+      // Rôle du parrain (lu au checkout pour réserver le -10% au parrainage classique).
+      findFirst: vi.fn().mockResolvedValue(referredBy ? { role: parrainRole } : null),
       update: vi.fn().mockResolvedValue({}),
     },
   };
@@ -69,6 +71,22 @@ describe('StripeService.createCheckoutSession — coupon filleul -10%', () => {
   it('parrain + priceId inconnu → pas de coupon (securite), codes promo ouverts', async () => {
     const { svc, create } = makeSvc('GREGCODE');
     await run(svc, UNKNOWN);
+    const params = create.mock.calls[0][0];
+    expect(params.discounts).toBeUndefined();
+    expect(params.allow_promotion_codes).toBe(true);
+  });
+
+  it('parrain AMBASSADEUR + annuel → AUCUN coupon (l ambassadeur touche ses 20%), codes promo ouverts', async () => {
+    const { svc, create } = makeSvc('AMBCODE', 'AMBASSADOR');
+    await run(svc, ANNUAL);
+    const params = create.mock.calls[0][0];
+    expect(params.discounts).toBeUndefined();
+    expect(params.allow_promotion_codes).toBe(true);
+  });
+
+  it('parrain AMBASSADEUR + mensuel → AUCUN coupon non plus', async () => {
+    const { svc, create } = makeSvc('AMBCODE', 'AMBASSADOR');
+    await run(svc, MONTHLY);
     const params = create.mock.calls[0][0];
     expect(params.discounts).toBeUndefined();
     expect(params.allow_promotion_codes).toBe(true);

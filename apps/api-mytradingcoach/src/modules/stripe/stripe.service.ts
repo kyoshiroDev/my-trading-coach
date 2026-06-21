@@ -180,15 +180,23 @@ export class StripeService {
       : { trial_period_days: 7, metadata: { userId } };
 
     // Réduc filleul : -10% sur la première année, routée selon l'intervalle
-    // (annuel → coupon once, mensuel → coupon repeating 12 mois). Stripe interdit
-    // discounts + allow_promotion_codes ensemble → si le filleul a un parrain et un
-    // priceId connu, on applique le coupon ; sinon on garde les codes promo ouverts.
+    // (annuel → coupon once, mensuel → coupon repeating 12 mois). RÉSERVÉ au parrainage
+    // classique : jamais pour les filleuls d'ambassadeur (l'ambassadeur touche déjà ses
+    // 20% via le webhook — sinon double coût). Même test de rôle que processReferral.
+    // Stripe interdit discounts + allow_promotion_codes ensemble → si pas de coupon,
+    // on garde les codes promo manuels ouverts.
     let discounts: Stripe.Checkout.SessionCreateParams.Discount[] | undefined;
     if (user.referredBy) {
-      if (this.isAnnualPrice(priceId)) {
-        discounts = [{ coupon: await this.ensureReferralCoupon('annual') }];
-      } else if (this.isMonthlyPrice(priceId)) {
-        discounts = [{ coupon: await this.ensureReferralCoupon('monthly') }];
+      const parrain = await this.prisma.user.findFirst({
+        where: { referralCode: user.referredBy },
+        select: { role: true },
+      });
+      if (parrain && parrain.role !== Role.AMBASSADOR) {
+        if (this.isAnnualPrice(priceId)) {
+          discounts = [{ coupon: await this.ensureReferralCoupon('annual') }];
+        } else if (this.isMonthlyPrice(priceId)) {
+          discounts = [{ coupon: await this.ensureReferralCoupon('monthly') }];
+        }
       }
     }
 
