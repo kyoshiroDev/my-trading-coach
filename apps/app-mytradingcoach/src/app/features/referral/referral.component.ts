@@ -10,6 +10,7 @@ import {
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { LucideAngularModule, Users, CircleCheck, Gift, Wallet } from 'lucide-angular';
 import { ReferralApi, MyReferral, FilleulStatus } from '../../core/api/referral.api';
 
 const GOAL = 12; // 12 filleuls payants = 1 an offert
@@ -18,29 +19,13 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
   selector: 'mtc-referral',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, DecimalPipe, RouterLink],
+  imports: [DatePipe, DecimalPipe, RouterLink, LucideAngularModule],
   styleUrl: './referral.component.css',
   template: `
     <div class="content">
       <div class="page-head">
-        <div>
-          <h1 class="page-title">🎁 Parrainage</h1>
-          <p class="page-sub">Invite des traders, gagnez tous les deux. Aucun statut ni paperasse requis.</p>
-        </div>
-        @if (data(); as d) {
-          <div class="link-card">
-            <div class="link-lbl">Ton lien de parrainage</div>
-            <div class="link-row">
-              <span class="link-url">{{ d.link }}</span>
-              <button class="copy-btn" (click)="copy(d.link)">{{ copied() ? '✓ Copié' : 'Copier' }}</button>
-            </div>
-            <div class="share-row">
-              <button class="share-chip" (click)="share('whatsapp', d.link)">WhatsApp</button>
-              <button class="share-chip" (click)="share('x', d.link)">X</button>
-              <button class="share-chip" (click)="share('discord', d.link)">{{ discordCopied() ? '✓ Copié' : 'Discord' }}</button>
-            </div>
-          </div>
-        }
+        <h1 class="page-title">🎁 Parrainage</h1>
+        <p class="page-sub">Invite des traders, gagnez tous les deux. Aucun statut ni paperasse requis.</p>
       </div>
 
       @if (isLoading()) {
@@ -49,78 +34,100 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
         <div class="state-box error">Impossible de charger ton parrainage. Réessaie plus tard.</div>
       } @else if (data(); as d) {
 
-        <!-- Comment ça marche -->
-        <div class="how">
-          <div class="how-title">Comment ça marche</div>
+        <!-- HÉRO : lien (action) + objectif -->
+        <div class="hero">
+          <div class="link-card">
+            <div class="link-lbl">Ton lien de parrainage</div>
+            <div class="link-row">
+              <input class="link-input" type="text" readonly [value]="d.link" aria-label="Ton lien de parrainage" />
+              <button class="btn btn-blue" (click)="copy(d.link)">{{ copied() ? '✓ Copié' : 'Copier' }}</button>
+            </div>
+            <div class="hero-note">Ton filleul démarre avec <b>-10%</b> sur l'annuel, et tu gagnes <b>1 mois offert</b> dès qu'il s'abonne.</div>
+          </div>
+
+          <div class="goal">
+            <div class="goal-head">
+              <span class="l">Objectif : 1 an offert</span>
+              <span class="r">{{ d.subscribed }} / {{ GOAL }}</span>
+            </div>
+            <div class="goal-bar"><div class="goal-fill" [style.width.%]="goalPercent()"></div></div>
+            <div class="goal-foot">
+              @if (goalRemaining() > 0) {
+                Encore {{ goalRemaining() }} filleul{{ goalRemaining() > 1 ? 's' : '' }} payant{{ goalRemaining() > 1 ? 's' : '' }} et tu débloques 12 mois offerts cumulés.
+              } @else {
+                Objectif atteint : 12 mois offerts cumulés.
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-text">
+              <span class="stat-lbl">Filleuls invités</span>
+              <div class="stat-v v-blue">{{ d.invited }}</div>
+              <div class="stat-foot">via ton lien</div>
+            </div>
+            <span class="stat-ic v-blue"><lucide-icon [img]="UsersIcon" [size]="24" /></span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-text">
+              <span class="stat-lbl">Filleuls abonnés</span>
+              <div class="stat-v v-green">{{ d.subscribed }}</div>
+              <div class="stat-foot">payants</div>
+            </div>
+            <span class="stat-ic v-green"><lucide-icon [img]="CircleCheckIcon" [size]="24" /></span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-text">
+              <span class="stat-lbl">Mois offerts gagnés</span>
+              <div class="stat-v v-violet">{{ d.freeMonthsEarned }}</div>
+              <div class="stat-foot">depuis le début</div>
+            </div>
+            <span class="stat-ic v-violet"><lucide-icon [img]="GiftIcon" [size]="24" /></span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-text">
+              <span class="stat-lbl">Crédit dispo</span>
+              <div class="stat-v v-amber">{{ d.creditAvailable | number:'1.0-2' }}€</div>
+              <div class="stat-foot">prochain renouvellement</div>
+            </div>
+            <span class="stat-ic v-amber"><lucide-icon [img]="WalletIcon" [size]="24" /></span>
+          </div>
+        </div>
+
+        <!-- COMMENT ÇA MARCHE -->
+        <div class="card mb">
+          <div class="card-title">Comment ça marche</div>
           <div class="steps">
             <div class="step">
               <div class="step-n">1</div>
-              <div class="step-t">Partage ton lien</div>
-              <div class="step-d">Envoie ton lien à un trader. Il garde ton code automatiquement à l'inscription.</div>
+              <h4>Partage ton lien</h4>
+              <p>Envoie ton lien à un trader. Son code est attribué automatiquement à l'inscription.</p>
             </div>
             <div class="step">
               <div class="step-n">2</div>
-              <div class="step-t">Il s'abonne, il économise</div>
-              <div class="step-d">Ton filleul profite de <b class="hl-blue">-10% sur l'abonnement annuel</b>.</div>
+              <h4>Il s'abonne, il économise</h4>
+              <p>Ton filleul profite de <em>-10% sur l'abonnement annuel</em>.</p>
             </div>
             <div class="step">
               <div class="step-n">3</div>
-              <div class="step-t">Tu gagnes un mois</div>
-              <div class="step-d">Dès qu'il devient abonné payant, tu reçois <b class="hl-green">1 mois offert</b>.</div>
+              <h4>Tu gagnes un mois</h4>
+              <p>Dès qu'il devient abonné payant, tu reçois <em>1 mois offert</em>.</p>
             </div>
           </div>
-          <div class="how-note">⊙ Récompense créditée quand ton filleul paie, pas à la simple inscription. Un mois offert par filleul payant.</div>
+          <div class="how-note">Récompense créditée quand ton filleul paie, pas à la simple inscription. Un mois offert par filleul payant.</div>
         </div>
 
-        <!-- Stats -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-lbl">Filleuls invités</div>
-            <div class="stat-val">{{ d.invited }}</div>
-            <div class="stat-foot">inscrits via ton lien</div>
-            <div class="stat-ic">👥</div>
+        <!-- MES FILLEULS -->
+        <div class="card mb">
+          <div class="filleuls-head">
+            <div class="card-title nomb">Mes filleuls</div>
+            <span class="count-pill">{{ d.filleuls.length }}</span>
           </div>
-          <div class="stat-card">
-            <div class="stat-lbl">Filleuls abonnés</div>
-            <div class="stat-val hl-green">{{ d.subscribed }}</div>
-            <div class="stat-foot">payants</div>
-            <div class="stat-ic">✅</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-lbl">Mois offerts gagnés</div>
-            <div class="stat-val hl-blue">{{ d.freeMonthsEarned }}</div>
-            <div class="stat-foot">depuis le début</div>
-            <div class="stat-ic">🎁</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-lbl">Crédit dispo</div>
-            <div class="stat-val hl-yellow">{{ d.creditAvailable | number:'1.0-2' }}€</div>
-            <div class="stat-foot">sur ton prochain renouvellement</div>
-            <div class="stat-ic">⏳</div>
-          </div>
-        </div>
-
-        <!-- Objectif -->
-        <div class="goal-card">
-          <div class="goal-head">
-            <div class="goal-title">Objectif : 1 an offert</div>
-            <div class="goal-count">{{ d.subscribed }} / {{ GOAL }} filleuls payants</div>
-          </div>
-          <div class="goal-track"><div class="goal-fill" [style.width.%]="goalPercent()"></div></div>
-          <div class="goal-foot">
-            @if (goalRemaining() > 0) {
-              Encore {{ goalRemaining() }} filleul{{ goalRemaining() > 1 ? 's' : '' }} payant{{ goalRemaining() > 1 ? 's' : '' }} et tu débloques 12 mois offerts cumulés.
-            } @else {
-              Objectif atteint : 12 mois offerts cumulés.
-            }
-          </div>
-        </div>
-
-        <!-- Mes filleuls -->
-        <div class="card">
-          <div class="card-head"><div class="card-title">Mes filleuls</div></div>
           @if (d.filleuls.length === 0) {
-            <div class="state-box muted">Partage ton lien pour voir tes filleuls ici.</div>
+            <div class="empty">Partage ton lien pour voir tes filleuls ici.</div>
           } @else {
             <div class="f-list">
               @for (f of d.filleuls; track f.pseudo + f.date) {
@@ -140,10 +147,10 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
           }
         </div>
 
-        <!-- Cross-link ambassadeur -->
-        <a class="cross" routerLink="/devenir-ambassadeur">
-          <div class="cross-txt"><b>Tu as une audience ?</b> Le programme Ambassadeur te verse une commission cash récurrente plutôt que des mois offerts.</div>
-          <span class="cross-link">Voir le programme Ambassadeur →</span>
+        <!-- CTA AMBASSADEUR -->
+        <a class="amb" routerLink="/devenir-ambassadeur">
+          <div class="t"><b>Tu as une audience ?</b> Le programme Ambassadeur te verse une commission cash récurrente plutôt que des mois offerts.</div>
+          <span class="amb-link">Voir le programme Ambassadeur →</span>
         </a>
       }
     </div>
@@ -153,12 +160,16 @@ export class ReferralComponent implements OnInit {
   private readonly api = inject(ReferralApi);
   private readonly destroyRef = inject(DestroyRef);
 
+  protected readonly UsersIcon = Users;
+  protected readonly CircleCheckIcon = CircleCheck;
+  protected readonly GiftIcon = Gift;
+  protected readonly WalletIcon = Wallet;
+
   protected readonly GOAL = GOAL;
   protected readonly data = signal<MyReferral | null>(null);
   protected readonly isLoading = signal(true);
   protected readonly error = signal(false);
   protected readonly copied = signal(false);
-  protected readonly discordCopied = signal(false);
 
   protected readonly goalPercent = computed(() =>
     Math.min(100, Math.round(((this.data()?.subscribed ?? 0) / GOAL) * 100)),
@@ -181,21 +192,6 @@ export class ReferralComponent implements OnInit {
       this.copied.set(true);
       setTimeout(() => this.copied.set(false), 2000);
     });
-  }
-
-  protected share(platform: 'whatsapp' | 'x' | 'discord', link: string): void {
-    const text = `Je trade avec MyTradingCoach. Inscris-toi avec mon lien et profite de -10% sur l'abonnement annuel :`;
-    if (platform === 'whatsapp') {
-      window.open(`https://wa.me/?text=${encodeURIComponent(`${text} ${link}`)}`, '_blank', 'noopener');
-    } else if (platform === 'x') {
-      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link)}`, '_blank', 'noopener');
-    } else {
-      // Discord n'a pas d'intent de partage : on copie le lien.
-      navigator.clipboard.writeText(link).then(() => {
-        this.discordCopied.set(true);
-        setTimeout(() => this.discordCopied.set(false), 2000);
-      });
-    }
   }
 
   protected avatar(pseudo: string): string {

@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
+import { LucideAngularModule, Users, CircleCheck, TrendingUp, Award, Check } from 'lucide-angular';
 import { AmbassadorApi, AmbassadorStats, ReferralUser } from '../../core/api/ambassador.api';
 import { ReferralApi } from '../../core/api/referral.api';
 import { AmbassadorNotifService } from '../../core/services/ambassador-notif.service';
@@ -22,7 +23,7 @@ const COMMISSION_RATE = 0.2;
   selector: 'mtc-ambassador',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, DecimalPipe, TitleCasePipe],
+  imports: [DatePipe, DecimalPipe, TitleCasePipe, LucideAngularModule],
   templateUrl: './ambassador.component.html',
   styleUrl: './ambassador.component.css',
 })
@@ -31,6 +32,12 @@ export class AmbassadorComponent implements OnInit {
   private readonly referralApi = inject(ReferralApi);
   private readonly notif = inject(AmbassadorNotifService);
   private readonly destroyRef = inject(DestroyRef);
+
+  protected readonly UsersIcon = Users;
+  protected readonly CircleCheckIcon = CircleCheck;
+  protected readonly TrendingUpIcon = TrendingUp;
+  protected readonly AwardIcon = Award;
+  protected readonly CheckIcon = Check;
 
   protected readonly stats = signal<AmbassadorStats | null>(null);
   protected readonly isLoading = signal(true);

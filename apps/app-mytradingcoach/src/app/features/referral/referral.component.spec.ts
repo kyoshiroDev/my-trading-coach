@@ -48,9 +48,10 @@ describe('ReferralComponent', () => {
   it('charge et affiche les données de parrainage', () => {
     const { fixture, api } = setup();
     expect(api.getMyReferral).toHaveBeenCalled();
-    const html = fixture.nativeElement.textContent as string;
-    expect(html).toContain('GREG4K');
-    expect(html).toContain('Maxime S.');
+    // Le lien (avec le code) est dans l'input readonly du hero → lire sa valeur.
+    const linkInput = fixture.nativeElement.querySelector('.link-input') as HTMLInputElement;
+    expect(linkInput?.value).toContain('GREG4K');
+    expect(fixture.nativeElement.textContent as string).toContain('Maxime S.');
   });
 
   it('calcule la progression vers l’objectif des 12 filleuls payants', () => {
