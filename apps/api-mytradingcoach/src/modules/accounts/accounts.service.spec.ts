@@ -348,5 +348,28 @@ describe('AccountsService', () => {
       expect(m.currentBalance).toBe(10500);
       expect(m.drawdown).toBeNull();
     });
+
+    it('winRate / bestDay / worstDay : PnL groupé par jour UTC (somme intra-jour)', () => {
+      // Dates UTC explicites → indépendant du fuseau de la machine de test.
+      const u = (pnl: number, day: number, h = 12) => ({ pnl, tradedAt: new Date(Date.UTC(2026, 5, day, h)) });
+      const m = svc.computeRuleMetrics(
+        { startingBalance: 50000, accountSize: null, profitTarget: null, maxDrawdown: null, drawdownType: 'STATIC' },
+        [u(1000, 1, 9), u(500, 1, 15), u(-800, 2)], // jour 1 = +1500, jour 2 = -800
+      );
+      expect(m.winRate).toBeCloseTo(2 / 3, 3); // 2 gagnants (pnl > 0) sur 3 trades
+      expect(m.bestDay).toBe(1500);
+      expect(m.worstDay).toBe(-800);
+    });
+
+    it('0 trade → winRate / bestDay / worstDay null', () => {
+      const m = svc.computeRuleMetrics(
+        { startingBalance: 50000, accountSize: null, profitTarget: null, maxDrawdown: null, drawdownType: 'STATIC' },
+        [],
+      );
+      expect(m.tradesCount).toBe(0);
+      expect(m.winRate).toBeNull();
+      expect(m.bestDay).toBeNull();
+      expect(m.worstDay).toBeNull();
+    });
   });
 });
