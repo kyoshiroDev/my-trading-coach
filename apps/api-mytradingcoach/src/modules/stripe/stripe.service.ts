@@ -26,8 +26,13 @@ const STRIPE_QUEUE = 'stripe';
 const CACHE_TTL_SECONDS = 300; // 5 min
 const cacheKey = (userId: string) => `billing:status:${userId}`;
 
-// Coupon réduc filleul : -10% une seule fois, réservé à l'abonnement annuel.
+// Coupons réduc filleul : -10% sur la première année, selon l'intervalle choisi.
+// - Annuel : duration once (l'annuel = 1 paiement = 1 an).
+// - Mensuel : duration repeating 12 mois (les 12 premiers paiements).
 const REFERRAL_COUPON_ID = 'REFERRAL_FILLEUL_10PCT';
+const REFERRAL_COUPON_MONTHLY_ID = 'REFERRAL_FILLEUL_MONTHLY_10PCT';
+
+type ReferralCouponKind = 'annual' | 'monthly';
 
 /** Statuts Stripe qui confèrent l'accès PREMIUM */
 const ACTIVE_STATUSES = new Set<Stripe.Subscription['status']>([
@@ -57,7 +62,10 @@ export class StripeService {
   private readonly stripe: Stripe;
   private get redis() { return this.redisService.client; }
   private readonly logger = new Logger(StripeService.name);
-  private referralCouponEnsured = false;
+  private readonly referralCouponEnsured: Record<ReferralCouponKind, boolean> = {
+    annual: false,
+    monthly: false,
+  };
 
   constructor(
     private readonly config: ConfigService,
@@ -171,14 +179,17 @@ export class StripeService {
       ? { metadata: { userId } }
       : { trial_period_days: 7, metadata: { userId } };
 
-    // Réduc filleul : -10% une fois, sur l'annuel uniquement (protège la marge).
-    // Stripe interdit discounts + allow_promotion_codes ensemble → on bascule :
-    // si le filleul a un parrain ET prend l'annuel, on applique le coupon, sinon
-    // on garde les codes promo manuels ouverts.
+    // Réduc filleul : -10% sur la première année, routée selon l'intervalle
+    // (annuel → coupon once, mensuel → coupon repeating 12 mois). Stripe interdit
+    // discounts + allow_promotion_codes ensemble → si le filleul a un parrain et un
+    // priceId connu, on applique le coupon ; sinon on garde les codes promo ouverts.
     let discounts: Stripe.Checkout.SessionCreateParams.Discount[] | undefined;
-    if (user.referredBy && this.isAnnualPrice(priceId)) {
-      const coupon = await this.ensureReferralCoupon();
-      discounts = [{ coupon }];
+    if (user.referredBy) {
+      if (this.isAnnualPrice(priceId)) {
+        discounts = [{ coupon: await this.ensureReferralCoupon('annual') }];
+      } else if (this.isMonthlyPrice(priceId)) {
+        discounts = [{ coupon: await this.ensureReferralCoupon('monthly') }];
+      }
     }
 
     const session = await this.stripe.checkout.sessions.create(
@@ -815,27 +826,46 @@ export class StripeService {
     return yearly.includes(priceId);
   }
 
-  /** Crée (idempotent) le coupon -10% once du parrainage filleul. */
-  private async ensureReferralCoupon(): Promise<string> {
-    if (this.referralCouponEnsured) return REFERRAL_COUPON_ID;
+  /** Détecte un priceId mensuel (Starter ou Premium) via la config. */
+  private isMonthlyPrice(priceId: string): boolean {
+    const monthly = [
+      this.config.get<string>('STRIPE_STARTER_PRICE_MONTHLY'),
+      this.config.get<string>('STRIPE_PREMIUM_PRICE_MONTHLY_V2'),
+    ].filter(Boolean);
+    return monthly.includes(priceId);
+  }
+
+  private referralCouponId(kind: ReferralCouponKind): string {
+    return kind === 'annual' ? REFERRAL_COUPON_ID : REFERRAL_COUPON_MONTHLY_ID;
+  }
+
+  /**
+   * Crée (idempotent) le coupon -10% « première année » du parrainage filleul.
+   * - annual : duration once (l'annuel = 1 paiement).
+   * - monthly : duration repeating 12 mois (les 12 premiers paiements).
+   * Retrieve d'abord, create sinon ; course condition (resource_already_exists)
+   * ignorée. Flag d'« ensured » par kind.
+   */
+  private async ensureReferralCoupon(kind: ReferralCouponKind): Promise<string> {
+    const id = this.referralCouponId(kind);
+    if (this.referralCouponEnsured[kind]) return id;
     try {
-      await this.stripe.coupons.retrieve(REFERRAL_COUPON_ID);
+      await this.stripe.coupons.retrieve(id);
     } catch {
+      const params: Stripe.CouponCreateParams =
+        kind === 'annual'
+          ? { id, percent_off: 10, duration: 'once', name: 'Parrainage -10% (1ère année)' }
+          : { id, percent_off: 10, duration: 'repeating', duration_in_months: 12, name: 'Parrainage -10% (12 mois)' };
       try {
-        await this.stripe.coupons.create({
-          id: REFERRAL_COUPON_ID,
-          percent_off: 10,
-          duration: 'once',
-          name: 'Parrainage -10% (annuel)',
-        });
+        await this.stripe.coupons.create(params);
       } catch (err) {
         // Course condition : créé entre-temps → ignorer le conflit, sinon relancer.
         const code = (err as Stripe.errors.StripeError)?.code;
         if (code !== 'resource_already_exists') throw err;
       }
     }
-    this.referralCouponEnsured = true;
-    return REFERRAL_COUPON_ID;
+    this.referralCouponEnsured[kind] = true;
+    return id;
   }
 
   /**
@@ -843,14 +873,14 @@ export class StripeService {
    * existante `ensureReferralCoupon` (retrieve-or-create, paramètres inchangés)
    * puis retourne le coupon Stripe pour pouvoir l'afficher. Pas d'effet runtime nouveau.
    */
-  async ensureReferralCouponNow(): Promise<Stripe.Coupon> {
-    await this.ensureReferralCoupon();
-    return this.stripe.coupons.retrieve(REFERRAL_COUPON_ID);
+  async ensureReferralCouponNow(kind: ReferralCouponKind): Promise<Stripe.Coupon> {
+    const id = await this.ensureReferralCoupon(kind);
+    return this.stripe.coupons.retrieve(id);
   }
 
-  /** Lecture seule : retourne le coupon de parrainage s'il existe déjà, sinon null. */
-  async findReferralCoupon(): Promise<Stripe.Coupon | null> {
-    return this.stripe.coupons.retrieve(REFERRAL_COUPON_ID).catch(() => null);
+  /** Lecture seule : retourne le coupon de parrainage (selon kind) s'il existe déjà, sinon null. */
+  async findReferralCoupon(kind: ReferralCouponKind): Promise<Stripe.Coupon | null> {
+    return this.stripe.coupons.retrieve(this.referralCouponId(kind)).catch(() => null);
   }
 
   /**

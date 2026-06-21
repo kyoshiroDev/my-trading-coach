@@ -42,7 +42,7 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
               <input class="link-input" type="text" readonly [value]="d.link" aria-label="Ton lien de parrainage" />
               <button class="btn btn-blue" (click)="copy(d.link)">{{ copied() ? '✓ Copié' : 'Copier' }}</button>
             </div>
-            <div class="hero-note">Ton filleul démarre avec <b>-10%</b> sur l'annuel, et tu gagnes <b>1 mois offert</b> dès qu'il s'abonne.</div>
+            <div class="hero-note">Ton filleul démarre avec <b>-10%</b> sur sa première année, et tu gagnes <b>1 mois offert</b> dès qu'il s'abonne.</div>
           </div>
 
           <div class="goal">
@@ -109,7 +109,7 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
             <div class="step">
               <div class="step-n">2</div>
               <h4>Il s'abonne, il économise</h4>
-              <p>Ton filleul profite de <em>-10% sur l'abonnement annuel</em>.</p>
+              <p>Ton filleul profite de <em>-10% sur sa première année</em>.</p>
             </div>
             <div class="step">
               <div class="step-n">3</div>

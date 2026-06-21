@@ -1,17 +1,24 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { StripeService } from './stripe.service';
 
-// Coupon filleul -10% : applique au checkout UNIQUEMENT si le filleul a un parrain
-// (referredBy) ET prend l'annuel. Sinon, codes promo manuels ouverts. Stripe mocke.
+// Coupon filleul -10% sur la première année : appliqué au checkout si le filleul a
+// un parrain ET un priceId connu — annuel (coupon once) ou mensuel (coupon repeating
+// 12 mois). Sinon, codes promo manuels ouverts. Stripe mocké.
 
 const ANNUAL = 'price_annual';
 const MONTHLY = 'price_monthly';
+const UNKNOWN = 'price_unknown';
 
 function makeSvc(referredBy: string | null) {
   const config = {
     getOrThrow: () => 'sk_test_dummy',
-    // isAnnualPrice lit STRIPE_*_PRICE_YEARLY
-    get: (k: string) => (k === 'STRIPE_PREMIUM_PRICE_YEARLY_V2' ? ANNUAL : undefined),
+    // isAnnualPrice lit STRIPE_*_PRICE_YEARLY, isMonthlyPrice lit STRIPE_*_PRICE_MONTHLY
+    get: (k: string) =>
+      k === 'STRIPE_PREMIUM_PRICE_YEARLY_V2'
+        ? ANNUAL
+        : k === 'STRIPE_PREMIUM_PRICE_MONTHLY_V2'
+          ? MONTHLY
+          : undefined,
   };
   const prisma = {
     user: {
@@ -43,7 +50,7 @@ const run = (svc: StripeService, priceId: string) =>
 describe('StripeService.createCheckoutSession — coupon filleul -10%', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('parrain (referredBy) + annuel → coupon -10% applique, pas de codes promo ouverts', async () => {
+  it('parrain (referredBy) + annuel → coupon once applique, pas de codes promo ouverts', async () => {
     const { svc, create } = makeSvc('GREGCODE');
     await run(svc, ANNUAL);
     const params = create.mock.calls[0][0];
@@ -51,9 +58,17 @@ describe('StripeService.createCheckoutSession — coupon filleul -10%', () => {
     expect(params.allow_promotion_codes).toBeUndefined();
   });
 
-  it('parrain + MENSUEL → pas de coupon (protege la marge), codes promo ouverts', async () => {
+  it('parrain + MENSUEL → coupon mensuel (repeating 12 mois) applique, pas de codes promo ouverts', async () => {
     const { svc, create } = makeSvc('GREGCODE');
     await run(svc, MONTHLY);
+    const params = create.mock.calls[0][0];
+    expect(params.discounts).toEqual([{ coupon: 'REFERRAL_FILLEUL_MONTHLY_10PCT' }]);
+    expect(params.allow_promotion_codes).toBeUndefined();
+  });
+
+  it('parrain + priceId inconnu → pas de coupon (securite), codes promo ouverts', async () => {
+    const { svc, create } = makeSvc('GREGCODE');
+    await run(svc, UNKNOWN);
     const params = create.mock.calls[0][0];
     expect(params.discounts).toBeUndefined();
     expect(params.allow_promotion_codes).toBe(true);

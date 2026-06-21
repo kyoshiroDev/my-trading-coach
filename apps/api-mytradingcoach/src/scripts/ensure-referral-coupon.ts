@@ -1,7 +1,9 @@
 /**
- * Crée (idempotent) le coupon de parrainage `REFERRAL_FILLEUL_10PCT` dans Stripe,
+ * Crée (idempotent) les DEUX coupons de parrainage dans Stripe :
+ *   - REFERRAL_FILLEUL_10PCT          (annuel, -10% once)
+ *   - REFERRAL_FILLEUL_MONTHLY_10PCT  (mensuel, -10% repeating 12 mois)
  * en REUTILISANT la logique existante (StripeService.ensureReferralCouponNow →
- * ensureReferralCoupon, paramètres inchangés : percent_off 10, duration once).
+ * ensureReferralCoupon, paramètres inchangés).
  *
  * Ecrit VOLONTAIREMENT dans Stripe selon la clé de l'env courant (donc Live sur la prod).
  * Aucun garde-fou anti-prod : c'est le but. Affiche le mode de clé (LIVE/TEST) en sécurité.
@@ -13,6 +15,8 @@
  *     apps/api-mytradingcoach/src/scripts/ensure-referral-coupon.ts
  */
 import { StripeService } from '../modules/stripe/stripe.service';
+
+const KINDS = ['annual', 'monthly'] as const;
 
 async function main(): Promise<void> {
   const key = process.env['STRIPE_SECRET_KEY'] ?? '';
@@ -43,26 +47,30 @@ async function main(): Promise<void> {
     config as never, {} as never, {} as never, {} as never, {} as never, {} as never,
   );
 
-  // Détecte créé vs déjà présent : on tente un retrieve AVANT l'ensure.
-  const before = await stripeService.findReferralCoupon();
-  const coupon = await stripeService.ensureReferralCouponNow();
-  const state = before ? 'déjà présent' : 'créé';
+  for (const kind of KINDS) {
+    // Détecte créé vs déjà présent : on tente un retrieve AVANT l'ensure.
+    const before = await stripeService.findReferralCoupon(kind);
+    const coupon = await stripeService.ensureReferralCouponNow(kind);
+    const state = before ? 'déjà présent' : 'créé';
 
-  console.log(
-    JSON.stringify(
-      {
-        state,
-        id: coupon.id,
-        percent_off: coupon.percent_off,
-        duration: coupon.duration,
-        name: coupon.name,
-        valid: coupon.valid,
-        mode,
-      },
-      null,
-      2,
-    ),
-  );
+    console.log(
+      JSON.stringify(
+        {
+          kind,
+          state,
+          id: coupon.id,
+          percent_off: coupon.percent_off,
+          duration: coupon.duration,
+          duration_in_months: coupon.duration_in_months,
+          name: coupon.name,
+          valid: coupon.valid,
+          mode,
+        },
+        null,
+        2,
+      ),
+    );
+  }
 }
 
 main()
