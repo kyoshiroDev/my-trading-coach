@@ -36,6 +36,9 @@ export interface AccountRuleMetrics {
   realizedPnl: number;
   currentBalance: number;
   tradesCount: number;
+  winRate: number | null; // ratio 0..1 des trades gagnants (pnl > 0), null si 0 trade
+  bestDay: number | null; // meilleur PnL journalier cumulé, en $, null si 0 trade
+  worstDay: number | null; // pire PnL journalier cumulé, en $, null si 0 trade
   objective: { current: number; target: number; pct: number } | null;
   drawdown: {
     type: DrawdownType;
@@ -116,6 +119,25 @@ export class AccountsService {
     const realizedPnl = sorted.reduce((s, t) => s + (t.pnl ?? 0), 0);
     const currentBalance = startingBalance + realizedPnl;
 
+    // Taux de réussite (sur trades fermés) — réutilise `sorted`, aucune requête.
+    const wins = sorted.filter((t) => (t.pnl ?? 0) > 0).length;
+    const winRate = sorted.length > 0 ? wins / sorted.length : null;
+
+    // PnL cumulé par jour (clé = date calendaire UTC du tradedAt) → meilleur / pire jour.
+    // Groupement UTC volontairement simple, cohérent avec le cadrage « estimé » (pas de fuseau user).
+    let bestDay: number | null = null;
+    let worstDay: number | null = null;
+    if (sorted.length > 0) {
+      const byDay = new Map<string, number>();
+      for (const t of sorted) {
+        const key = t.tradedAt.toISOString().slice(0, 10);
+        byDay.set(key, (byDay.get(key) ?? 0) + (t.pnl ?? 0));
+      }
+      const sums = [...byDay.values()];
+      bestDay = Math.max(...sums);
+      worstDay = Math.min(...sums);
+    }
+
     const objective =
       account.profitTarget != null && account.profitTarget > 0
         ? {
@@ -157,6 +179,9 @@ export class AccountsService {
       realizedPnl,
       currentBalance,
       tradesCount: sorted.length,
+      winRate,
+      bestDay,
+      worstDay,
       objective,
       drawdown,
       estimated: true,
