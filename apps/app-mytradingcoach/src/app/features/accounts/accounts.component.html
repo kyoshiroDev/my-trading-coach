@@ -69,6 +69,7 @@
 
       @for (a of store.accounts(); track a.id) {
         <div class="acct-card"
+             [attr.data-testid]="'account-card-' + a.id"
              [class.is-archived]="a.status === 'ARCHIVED'"
              [class.is-selected]="a.id === store.selectedAccountId()">
           <div class="acct-top">
@@ -78,11 +79,11 @@
               <div class="acct-meta">
                 @if (a.broker) { <span class="tag firm">{{ a.broker }}</span> }
                 <span class="tag {{ typeTagClass(a.type) }}">{{ typeLabel(a.type) }}</span>
-                <span class="acct-status">
+                <span class="acct-status" [attr.data-testid]="'account-status-' + a.id">
                   <span class="dot" [style.background]="dotColor(a)"></span> {{ statusLabel(a.status) }}
                 </span>
                 @if (a.id === store.selectedAccountId()) {
-                  <span class="acct-active-mark">● Actif</span>
+                  <span class="acct-active-mark" [attr.data-testid]="'account-selected-' + a.id">● Actif</span>
                 }
               </div>
             </div>

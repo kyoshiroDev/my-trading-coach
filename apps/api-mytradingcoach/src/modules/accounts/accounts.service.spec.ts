@@ -71,6 +71,25 @@ describe('AccountsService', () => {
     });
   });
 
+  describe('resolveAccountLimit — quota par plan/rôle', () => {
+    // Méthode privée : on la teste directement (entrées/sorties claires).
+    const limit = (ctx: unknown) =>
+      (svc as unknown as { resolveAccountLimit: (c?: unknown) => number | null }).resolveAccountLimit(ctx);
+
+    it('FREE → 1', () => expect(limit({ plan: 'FREE', role: 'USER' })).toBe(1));
+    it('STARTER → 3', () => expect(limit({ plan: 'STARTER', role: 'USER' })).toBe(3));
+    it('PREMIUM → illimité (null)', () => expect(limit({ plan: 'PREMIUM', role: 'USER' })).toBeNull());
+    it('trial actif (FREE + trialEndsAt futur) → illimité', () => {
+      expect(limit({ plan: 'FREE', role: 'USER', trialEndsAt: new Date(Date.now() + 86_400_000) })).toBeNull();
+    });
+    it('trial expiré → retombe sur le plan (FREE → 1)', () => {
+      expect(limit({ plan: 'FREE', role: 'USER', trialEndsAt: new Date(Date.now() - 86_400_000) })).toBe(1);
+    });
+    it('ADMIN → illimité', () => expect(limit({ plan: 'FREE', role: 'ADMIN' })).toBeNull());
+    it('BETA_TESTER → illimité', () => expect(limit({ plan: 'FREE', role: 'BETA_TESTER' })).toBeNull());
+    it('sans contexte (appel interne) → non plafonné (null)', () => expect(limit(undefined)).toBeNull());
+  });
+
   describe('create — quota par plan', () => {
     const ctx = (plan: string, extra: Record<string, unknown> = {}) =>
       ({ plan, role: 'USER', ...extra }) as never;

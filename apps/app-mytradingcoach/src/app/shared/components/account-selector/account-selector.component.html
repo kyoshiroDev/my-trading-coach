@@ -1,6 +1,7 @@
 @if (userStore.isStarterOrAbove()) {
-  <div class="acct-tabs">
+  <div class="acct-tabs" data-testid="account-selector">
     <button class="acct-tab"
+            data-testid="account-option-all"
             [class.active]="store.selectedAccountId() === 'all'"
             (click)="store.select('all')">
       <span class="dot" style="background:var(--blue-bright)"></span>
@@ -8,6 +9,7 @@
     </button>
     @for (a of store.accounts(); track a.id) {
       <button class="acct-tab"
+              [attr.data-testid]="'account-option-' + a.id"
               [class.active]="store.selectedAccountId() === a.id"
               (click)="store.select(a.id)">
         <span class="dot" [style.background]="dotColor(a)"></span>

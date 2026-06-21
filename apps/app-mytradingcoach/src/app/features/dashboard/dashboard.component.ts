@@ -171,7 +171,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
         <div class="stats-row has-capital">
           <div class="stat-card">
             <div class="stat-label">Capital</div>
-            <div class="stat-value mono" [style.color]="capitalColor()">{{ capitalDisplay() }}</div>
+            <div class="stat-value mono" data-testid="dashboard-capital" [style.color]="capitalColor()">{{ capitalDisplay() }}</div>
             <div class="stat-sub">
               @if (capitalPct() !== 0) {
                 <span class="change" [class]="capitalPct() > 0 ? 'up' : 'down'">
