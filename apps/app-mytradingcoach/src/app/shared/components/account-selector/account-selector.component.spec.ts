@@ -31,7 +31,7 @@ function setup(opts: { premium?: boolean; loaded?: boolean } = {}) {
   });
   const fixture = TestBed.createComponent(AccountSelectorComponent);
   fixture.detectChanges();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return { fixture, cmp: fixture.componentInstance as any, store };
 }
 

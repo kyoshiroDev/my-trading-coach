@@ -9,7 +9,7 @@ function makeAgent() {
   const agent = new DebriefAgent(aiLogger as never);
   // Remplace l'instance Anthropic par un mock (jamais d'appel réel — coût/flakiness).
   const create = vi.fn();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   (agent as any).anthropic = { messages: { create } };
   return { agent, create, aiLogger };
 }

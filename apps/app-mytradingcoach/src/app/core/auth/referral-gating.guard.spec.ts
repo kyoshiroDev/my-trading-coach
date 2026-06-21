@@ -31,7 +31,7 @@ const setup = (role: Role) => {
 
 const run = (guard: typeof parrainageGuard) =>
   TestBed.runInInjectionContext(() =>
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     guard({} as any, {} as any),
   );
 

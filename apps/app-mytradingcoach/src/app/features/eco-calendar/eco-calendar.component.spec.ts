@@ -49,7 +49,7 @@ function setup(opts: SetupOpts = {}) {
   });
   const fixture = TestBed.createComponent(EcoCalendarComponent);
   fixture.detectChanges();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return { fixture, cmp: fixture.componentInstance as any, api };
 }
 

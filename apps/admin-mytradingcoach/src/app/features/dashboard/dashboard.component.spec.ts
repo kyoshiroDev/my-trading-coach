@@ -46,7 +46,7 @@ function setup(stats: AdminStats, history: MetricsHistoryPoint[]) {
   });
   const fixture = TestBed.createComponent(DashboardComponent);
   fixture.detectChanges();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return fixture.componentInstance as any;
 }
 

@@ -32,7 +32,7 @@ function setup(accountParam: string | undefined) {
   // embarquée dans l'URL, donc on matche par préfixe).
   http.match((r) => r.method === 'GET' && r.url.startsWith(`${environment.apiUrl}/trades`))
     .forEach((r) => r.flush({ data: { data: [], nextCursor: null, hasNextPage: false } }));
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return { cmp: fixture.componentInstance as any, http };
 }
 

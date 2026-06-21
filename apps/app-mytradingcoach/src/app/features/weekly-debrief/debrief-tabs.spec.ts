@@ -6,7 +6,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { DebriefComponent } from './debrief.component';
 import { UserStore } from '../../core/stores/user.store';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function account(id: string, over: Record<string, any> = {}): any {
   return {
     accountId: id, name: id, type: 'PERSONAL', status: 'ACTIVE',
@@ -29,11 +29,11 @@ function setup() {
     set: { imports: [], template: '<div></div>', styleUrls: [], styleUrl: undefined as unknown as string, schemas: [NO_ERRORS_SCHEMA] },
   });
   const fixture = TestBed.createComponent(DebriefComponent);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return fixture.componentInstance as any;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function setDebrief(cmp: any, insights: any, extra: Record<string, any> = {}) {
   (cmp.debrief as WritableSignal<unknown>).set({
     id: 'd1', weekNumber: 25, year: 2026, startDate: '', endDate: '',

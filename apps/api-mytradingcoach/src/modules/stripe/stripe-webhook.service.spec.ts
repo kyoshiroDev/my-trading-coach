@@ -36,12 +36,12 @@ function makeSvc() {
   );
   // Remplace l'instance Stripe (réseau) par un mock contrôlé.
   const retrieve = vi.fn();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   (svc as any).stripe = { subscriptions: { retrieve } };
   return { svc, prisma, resend, discord, retrieve };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function subscription(over: Record<string, any> = {}): any {
   return {
     id: 'sub_1',
@@ -66,7 +66,7 @@ describe('StripeService.processWebhookEvent — tunnel argent', () => {
     await svc.processWebhookEvent({
       type: 'checkout.session.completed',
       data: { object: { mode: 'subscription', subscription: 'sub_1', client_reference_id: 'user_1' } },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
     } as any);
 
     expect(prisma.user.update).toHaveBeenCalledTimes(1);
@@ -85,7 +85,7 @@ describe('StripeService.processWebhookEvent — tunnel argent', () => {
     await svc.processWebhookEvent({
       type: 'customer.subscription.updated',
       data: { object: subscription({ items: { data: [{ price: { id: 'price_starter' } }] } }) },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
     } as any);
 
     expect(prisma.user.update.mock.calls[0][0].data.plan).toBe('STARTER');
@@ -99,7 +99,7 @@ describe('StripeService.processWebhookEvent — tunnel argent', () => {
     await svc.processWebhookEvent({
       type: 'customer.subscription.updated',
       data: { object: subscription({ status: 'trialing' }) },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
     } as any);
 
     const data = prisma.user.update.mock.calls[0][0].data;
@@ -114,7 +114,7 @@ describe('StripeService.processWebhookEvent — tunnel argent', () => {
     await svc.processWebhookEvent({
       type: 'customer.subscription.deleted',
       data: { object: subscription({ items: { data: [{ price: { unit_amount: 7900, recurring: { interval: 'month' } } }] } }) },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
     } as any);
 
     expect(prisma.user.updateMany).toHaveBeenCalledTimes(1);
@@ -133,7 +133,7 @@ describe('StripeService.processWebhookEvent — tunnel argent', () => {
     await svc.processWebhookEvent({
       type: 'customer.subscription.updated',
       data: { object: subscription() },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
     } as any);
 
     expect(prisma.user.update).not.toHaveBeenCalled();

@@ -47,7 +47,7 @@ function setup(referralOverride: Partial<Record<'generateStatement', unknown>> =
   });
   const fixture = TestBed.createComponent(AmbassadorComponent);
   fixture.detectChanges();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return { fixture, cmp: fixture.componentInstance as any, referralApi };
 }
 

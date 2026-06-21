@@ -38,7 +38,7 @@ function setup(apiOverride: Partial<Record<'getMyReferral', unknown>> = {}) {
   });
   const fixture = TestBed.createComponent(ReferralComponent);
   fixture.detectChanges();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return { fixture, cmp: fixture.componentInstance as any, api };
 }
 

@@ -15,7 +15,7 @@ import { BillingApi } from '../../core/api/billing.api';
 import { TradesApi } from '../../core/api/trades.api';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function acc(startingBalance: number, status = 'ACTIVE'): any {
   return { id: 'a' + startingBalance, status, metrics: { startingBalance, realizedPnl: 0 } };
 }
@@ -24,9 +24,9 @@ interface Cfg {
   isStarterOrAbove?: boolean;
   startingCapital?: number;
   loaded?: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   selected?: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   accounts?: any[];
 }
 
@@ -71,7 +71,7 @@ function setup(cfg: Cfg) {
   });
   const fixture = TestBed.createComponent(DashboardComponent);
   fixture.detectChanges();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return fixture.componentInstance as any;
 }
 
