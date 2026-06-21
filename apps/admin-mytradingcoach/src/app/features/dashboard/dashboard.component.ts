@@ -229,7 +229,7 @@ export class DashboardComponent {
         label: 'Inscrits',
         data: w.map((x) => x.signups),
         backgroundColor: CHART_COLORS.blue,
-        borderRadius: 5, categoryPercentage: 0.7, barPercentage: 0.85,
+        borderRadius: 5, categoryPercentage: 0.7, barPercentage: 0.85, maxBarThickness: 40,
         yAxisID: 'y', order: 2,
       },
     ];
@@ -292,7 +292,7 @@ export class DashboardComponent {
           {
             data: [total, traded, active7],
             backgroundColor: [CHART_COLORS.blue, CHART_COLORS.teal, CHART_COLORS.green],
-            borderRadius: 5, categoryPercentage: 0.72, barPercentage: 0.82,
+            borderRadius: 5, categoryPercentage: 0.72, barPercentage: 0.82, maxBarThickness: 40,
           },
         ],
       },
