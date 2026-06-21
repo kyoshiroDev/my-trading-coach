@@ -109,7 +109,7 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
             <div class="step">
               <div class="step-n">2</div>
               <h4>Il s'abonne, il économise</h4>
-              <p>Ton filleul profite de <em>-10% sur sa première année</em>.</p>
+              <p>Ton filleul profite de <em>-10% sur sa première année, mensuel ou annuel</em>.</p>
             </div>
             <div class="step">
               <div class="step-n">3</div>
