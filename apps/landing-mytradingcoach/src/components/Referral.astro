@@ -1,0 +1,56 @@
+---
+// Section parrainage (home). Publiée seulement si FEATURES.referral.
+// Ordre voulu : parrain d'abord (+1 mois), puis filleul (-10 %).
+---
+
+<section id="parrainage" class="ref">
+  <div class="ref-wrap">
+    <div class="reveal ref-head">
+      <span class="sec-label">Parrainage</span>
+      <h2>Parraine un trader, <em>gagnez tous les deux</em></h2>
+      <p class="sec-sub">
+        Tu partages ton lien. Pour chaque filleul qui s'abonne, tu gagnes un mois
+        offert, et lui démarre avec 10 % de moins.
+      </p>
+    </div>
+
+    <div class="ref-grid reveal">
+      <article class="ref-card">
+        <span class="ref-num">Pour toi, le parrain</span>
+        <div class="ref-amt" style="color:var(--green)">+1 mois</div>
+        <p>Un mois offert pour chaque filleul qui passe à un abonnement payant. Autant de filleuls que tu veux.</p>
+      </article>
+      <article class="ref-card">
+        <span class="ref-num">Pour ton filleul</span>
+        <div class="ref-amt" style="color:var(--blue2)">-10 %</div>
+        <p>Il démarre avec 10 % de réduction sur sa première année, mensuel ou annuel (Starter ou Premium).</p>
+      </article>
+    </div>
+
+    <p class="ref-amblink reveal">
+      Tu es créateur ou formateur trading ? Découvre le
+      <a href="/ambassadeur">programme ambassadeur</a>.
+    </p>
+  </div>
+</section>
+
+<style>
+  .ref { padding: 80px 5%; border-top: 1px solid var(--b); }
+  .ref-wrap { max-width: 1100px; margin: 0 auto; }
+  .ref-head { max-width: 640px; margin: 0 auto; text-align: center; }
+  .ref-head .sec-sub { margin-left: auto; margin-right: auto; }
+
+  .ref-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; max-width: 760px; margin: 40px auto 0; }
+  .ref-card { background: var(--card); border: 1px solid var(--b); border-radius: 16px; padding: 26px; }
+  .ref-num { font-family: var(--mono); font-size: 11px; color: var(--blue2); letter-spacing: .1em; text-transform: uppercase; }
+  .ref-amt { font-family: var(--disp); font-weight: 700; font-size: 30px; margin: 8px 0 4px; }
+  .ref-card p { color: var(--txt2); font-size: 14px; line-height: 1.55; }
+
+  .ref-amblink { text-align: center; margin-top: 26px; font-size: 13.5px; color: var(--txt3); }
+  .ref-amblink a { color: var(--blue2); text-decoration: none; border-bottom: 1px solid var(--b2); }
+  .ref-amblink a:hover { color: var(--txt); }
+
+  @media (max-width: 720px) {
+    .ref-grid { grid-template-columns: 1fr; }
+  }
+</style>

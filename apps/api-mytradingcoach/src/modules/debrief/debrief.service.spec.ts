@@ -36,14 +36,16 @@ const mockPrisma = {
   trade: {
     findMany: vi.fn().mockResolvedValue([]),
   },
+  tradingAccount: {
+    findMany: vi.fn().mockResolvedValue([]),
+  },
   user: { findUnique: vi.fn().mockResolvedValue(null) },
 };
 
 const mockAiService = {
   generateDebrief: vi.fn().mockResolvedValue({
-    summary: 'Bonne semaine.',
-    strengths: [],
-    weaknesses: [],
+    overview: { summary: 'Bonne semaine.' },
+    accounts: [],
     objectives: [],
   }),
   checkDailyLimit: vi.fn().mockResolvedValue(undefined),
@@ -149,6 +151,51 @@ describe('DebriefService', () => {
       expect(mockAiService.generateDebrief).toHaveBeenCalledOnce();
       expect(mockPrisma.weeklyDebrief.upsert).toHaveBeenCalledOnce();
       expect(result).toEqual(mockDebrief);
+    });
+
+    it('par compte : UN SEUL appel IA, stats backend + analyse IA fusionnées', async () => {
+      mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
+      mockPrisma.weeklyDebrief.upsert.mockImplementation((args: { create: unknown }) =>
+        Promise.resolve(args.create),
+      );
+      mockPrisma.tradingAccount.findMany.mockResolvedValue([
+        { id: 'acc-perso', label: 'Compte principal', type: 'PERSONAL', status: 'ACTIVE', startingBalance: 0, profitTarget: null, maxDrawdown: null, drawdownType: null },
+        { id: 'acc-eval', label: 'Lucide 50k', type: 'EVALUATION', status: 'ACTIVE', startingBalance: 50000, profitTarget: 3000, maxDrawdown: 2500, drawdownType: 'TRAILING' },
+      ]);
+      mockPrisma.trade.findMany.mockResolvedValue([
+        { asset: 'BTC', side: 'LONG', pnl: 100, emotion: 'NEUTRAL', setup: 'BREAKOUT', session: 'NEW_YORK', tradedAt: new Date(), accountId: 'acc-perso' },
+        { asset: 'ETH', side: 'SHORT', pnl: -40, emotion: 'NEUTRAL', setup: 'RANGE', session: 'LONDON', tradedAt: new Date(), accountId: 'acc-perso' },
+      ]);
+      mockAiService.generateDebrief.mockResolvedValueOnce({
+        overview: { summary: 'Vue cross-compte.' },
+        accounts: [
+          { accountId: 'acc-perso', summary: 'Bon compte.', strengths: [{ badge: 'Force', text: 'risque constant' }], weaknesses: [], objectives: [{ title: 'o', reason: 'r' }], propNote: null },
+          { accountId: 'acc-eval', summary: 'Éval à lancer.', strengths: [], weaknesses: [], objectives: [], propNote: 'Marge estimée OK (estimation depuis tes trades loggés, pas le calcul officiel de la firme)' },
+        ],
+        objectives: [{ title: 'Max 5 trades', reason: 'overtrading', check: { type: 'max_trades', params: { limit: 5 } } }],
+      });
+
+      await service.generate('user-123');
+
+      // UN SEUL appel IA quel que soit le nombre de comptes.
+      expect(mockAiService.generateDebrief).toHaveBeenCalledOnce();
+      const aiArg = mockAiService.generateDebrief.mock.calls[0][0] as {
+        accounts: unknown[]; tradesByAccount: Record<string, unknown[]>;
+      };
+      expect(aiArg.accounts).toHaveLength(2);
+      expect(aiArg.tradesByAccount['acc-perso']).toHaveLength(2);
+
+      const stored = (mockPrisma.weeklyDebrief.upsert.mock.calls[0][0] as { create: { insights: {
+        overview: { summary: string };
+        accounts: { accountId: string; stats: { totalTrades: number; winRate: number; totalPnl: number }; rules: { maxDrawdown: number | null } | null; propNote: string | null }[];
+      } } }).create.insights;
+      expect(stored.overview.summary).toBe('Vue cross-compte.');
+      expect(stored.accounts).toHaveLength(2);
+      const perso = stored.accounts.find((a) => a.accountId === 'acc-perso')!;
+      expect(perso.stats).toEqual({ totalTrades: 2, winRate: 50, totalPnl: 60 });
+      const evalAcc = stored.accounts.find((a) => a.accountId === 'acc-eval')!;
+      expect(evalAcc.rules?.maxDrawdown).toBe(2500);
+      expect(evalAcc.propNote).toContain('estimation');
     });
   });
 

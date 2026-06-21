@@ -1,121 +1,128 @@
-<div class="ambassador-page">
+<div class="content">
 
-  <!-- Header -->
-  <div class="amb-header">
-    <div>
-      <h1 class="amb-title">Dashboard Ambassadeur 🤝</h1>
-      <p class="amb-sub">Suis tes referrals et tes gains en temps réel</p>
-    </div>
-    @if (stats()?.referralCode) {
-      <div class="amb-link-card">
-        <div class="amb-link-label">TON LIEN DE PARRAINAGE</div>
-        <div class="amb-link-wrap">
-          <span class="amb-link-url">{{ referralLink() }}</span>
-          <button class="amb-copy-btn" (click)="copyLink()">
-            {{ copied() ? '✓ Copié' : 'Copier' }}
-          </button>
-        </div>
-      </div>
-    }
+  <div class="page-head">
+    <h1 class="page-title">🤝 Programme Ambassadeur</h1>
+    <p class="page-sub">Recommande MyTradingCoach à ton audience et touche une commission récurrente sur chaque abonnement.</p>
   </div>
 
   @if (isLoading()) {
-    <div class="amb-loading">Chargement...</div>
+    <div class="state-box">Chargement…</div>
   } @else if (stats(); as s) {
 
-    <!-- Stat cards -->
-    <div class="amb-stats-grid">
-      <div class="amb-stat-card">
-        <div class="amb-stat-val">{{ s.total }}</div>
-        <div class="amb-stat-lbl">Personnes inscrites</div>
+    <!-- HÉRO : lien + 20% -->
+    <div class="hero">
+      <div class="link-card">
+        <div class="link-lbl">Ton lien ambassadeur</div>
+        <div class="link-row">
+          <input class="link-input" type="text" readonly [value]="referralLink()" aria-label="Ton lien ambassadeur" />
+          <button class="btn btn-blue" (click)="copyLink()">{{ copied() ? '✓ Copié' : 'Copier' }}</button>
+        </div>
+        <div class="hero-note">Partage-le à ta communauté. Tu touches <b>20% récurrent</b> sur chaque abonnement, chaque mois.</div>
       </div>
-      <div class="amb-stat-card">
-        <div class="amb-stat-val b">{{ s.free }}</div>
-        <div class="amb-stat-lbl">Comptes FREE</div>
-      </div>
-      <div class="amb-stat-card">
-        <div class="amb-stat-val" style="color: var(--blue-bright)">{{ s.starter }}</div>
-        <div class="amb-stat-lbl">Comptes STARTER</div>
-      </div>
-      <div class="amb-stat-card">
-        <div class="amb-stat-val g">{{ s.premium }}</div>
-        <div class="amb-stat-lbl">Comptes PREMIUM</div>
-      </div>
-      <div class="amb-stat-card highlight">
-        <div class="amb-stat-val g">{{ s.totalEarned | number:'1.2-2' }}€</div>
-        <div class="amb-stat-lbl">Total gagné</div>
-      </div>
-      <div class="amb-stat-card">
-        <div class="amb-stat-val y">{{ s.pendingPayout | number:'1.2-2' }}€</div>
-        <div class="amb-stat-lbl">En attente de virement</div>
+      <div class="comm">
+        <div class="comm-pct">20%</div>
+        <div class="comm-txt"><b>de commission récurrente</b> sur chaque paiement de tes filleuls.</div>
+        <span class="comm-pill">RÉCURRENT · TANT QUE LE FILLEUL RESTE ABONNÉ</span>
       </div>
     </div>
 
-    <!-- Gains par mois -->
-    @if (monthsSorted().length > 0) {
-      <div class="amb-section">
-        <div class="amb-section-title">Gains par mois</div>
-        <div class="amb-months">
-          @for (m of monthsSorted(); track m.month) {
-            <div class="amb-month-row">
-              <span class="amb-month-label">{{ formatMonth(m.month) }}</span>
-              <span class="amb-month-amount g">+{{ m.amount | number:'1.2-2' }}€</span>
+    <!-- STATS (sous le hero) -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-text">
+          <span class="stat-lbl">Filleuls inscrits</span>
+          <div class="stat-v v-blue">{{ s.total }}</div>
+          <div class="stat-foot">via ton lien</div>
+        </div>
+        <span class="stat-ic v-blue"><lucide-icon [img]="UsersIcon" [size]="24" /></span>
+      </div>
+      <div class="stat-card">
+        <div class="stat-text">
+          <span class="stat-lbl">Filleuls payants</span>
+          <div class="stat-v v-green">{{ paidCount() }}</div>
+          <div class="stat-foot">abonnement actif</div>
+        </div>
+        <span class="stat-ic v-green"><lucide-icon [img]="CircleCheckIcon" [size]="24" /></span>
+      </div>
+      <div class="stat-card">
+        <div class="stat-text">
+          <span class="stat-lbl">Gains ce mois</span>
+          <div class="stat-v">{{ currentMonthEarnings() | number:'1.2-2' }}€</div>
+          <div class="stat-foot">commissions de {{ currentMonthLabel() }}</div>
+        </div>
+        <span class="stat-ic v-blue"><lucide-icon [img]="TrendingUpIcon" [size]="24" /></span>
+      </div>
+      <div class="stat-card">
+        <div class="stat-text">
+          <span class="stat-lbl">Total gagné</span>
+          <div class="stat-v v-amber">{{ s.totalEarned | number:'1.2-2' }}€</div>
+          <div class="stat-foot">depuis le début</div>
+        </div>
+        <span class="stat-ic v-amber"><lucide-icon [img]="AwardIcon" [size]="24" /></span>
+      </div>
+    </div>
+
+    <!-- COMMENT ÇA MARCHE -->
+    <div class="card mb">
+      <div class="card-title">Comment ça marche</div>
+      <div class="steps">
+        <div class="step"><div class="step-n">1</div><h4>Partage ton lien</h4><p>À ta communauté, sur tes contenus. Ton code est attribué automatiquement à l'inscription.</p></div>
+        <div class="step"><div class="step-n">2</div><h4>Ton filleul s'abonne</h4><p>Il passe Starter ou Premium. Rien n'est dû tant qu'il est en essai.</p></div>
+        <div class="step"><div class="step-n">3</div><h4>Tu touches 20%</h4><p>Sur chaque paiement, chaque mois, tant qu'il reste client. Tu factures, on te paie.</p></div>
+      </div>
+    </div>
+
+    <!-- CONDITIONS + À FACTURER -->
+    <div class="cols">
+      <div class="card">
+        <div class="card-title">📋 Conditions</div>
+        <div class="elig"><span class="elig-ic"><lucide-icon [img]="CheckIcon" [size]="12" /></span><span><b>Statut pro</b> : micro-entreprise ou société (la micro est gratuite et se crée en 15 min).</span></div>
+        <div class="elig"><span class="elig-ic"><lucide-icon [img]="CheckIcon" [size]="12" /></span><span><b>Justificatif</b> : avis de situation SIRENE, ou Kbis si société.</span></div>
+        <div class="elig"><span class="elig-ic"><lucide-icon [img]="CheckIcon" [size]="12" /></span><span><b>RIB</b> au nom de l'entreprise pour le versement.</span></div>
+        <div class="elig"><span class="elig-ic"><lucide-icon [img]="CheckIcon" [size]="12" /></span><span><b>Facture mensuelle</b> des commissions dues, payée par virement.</span></div>
+        <a class="cond-link" href="https://discord.gg/TDK2npvkSN" target="_blank" rel="noopener">Lire les conditions complètes →</a>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💸 À facturer ce mois</div>
+        <div class="bill-row"><span class="bill-amt">{{ currentMonthEarnings() | number:'1.2-2' }}€</span>Commissions de {{ currentMonthLabel() }}</div>
+        <div class="bill-p">Montant des commissions dues sur la période. Génère ton relevé, puis envoie ta facture pour ce montant. Paiement par virement.</div>
+        <button class="btn-full" data-testid="generate-statement" [disabled]="statementLoading()" (click)="generateStatement()">
+          {{ statementLoading() ? 'Génération…' : 'Générer mon relevé' }}
+        </button>
+        @if (statementError()) {
+          <div class="bill-err">Génération impossible pour le moment. Réessaie.</div>
+        }
+        <div class="bill-note">TVA non applicable, art. 293 B du CGI<br>Ce relevé sert de base à ta facture.</div>
+      </div>
+    </div>
+
+    <!-- MES FILLEULS -->
+    <div class="card">
+      <div class="filleuls-head"><div class="card-title nomb">Mes filleuls</div><span class="count-pill">{{ s.total }}</span></div>
+      @if (s.referrals.length === 0) {
+        <div class="empty">Partage ton lien pour voir tes filleuls ici.</div>
+      } @else {
+        <div class="f-list">
+          @for (u of s.referrals; track u.id) {
+            <div class="f-row">
+              <div class="f-av">{{ avatar(u) }}</div>
+              <div class="f-mid">
+                <div class="f-name">
+                  {{ u.name ?? u.email }}
+                  @if (u.plan !== 'FREE') { <span class="f-plan">{{ u.plan | titlecase }}</span> }
+                  <span class="f-status" [class.st-paid]="isPaid(u)" [class.st-signed]="!isPaid(u)">{{ isPaid(u) ? 'Payant' : 'Inscrit' }}</span>
+                </div>
+                <div class="f-date">{{ u.createdAt | date:'d MMM yyyy' }}</div>
+              </div>
+              <span class="f-comm" [class.c-yes]="isPaid(u)" [class.c-no]="!isPaid(u)">
+                {{ isPaid(u) ? (monthlyCommission(u) | number:'1.2-2') + '€ / mois' : '—' }}
+              </span>
             </div>
           }
-        </div>
-      </div>
-    }
-
-    <!-- Liste des referrals -->
-    <div class="amb-section">
-      <div class="amb-section-title">
-        Mes referrals
-        <span class="amb-count">{{ s.total }}</span>
-      </div>
-
-      @if (s.referrals.length === 0) {
-        <div class="amb-empty">
-          Partage ton lien pour voir tes referrals ici.
-        </div>
-      } @else {
-        <div class="amb-table-wrap">
-          <table class="amb-table">
-            <thead>
-              <tr>
-                <th>Email</th>
-                <th>Nom</th>
-                <th>Plan</th>
-                <th>Actif</th>
-                <th>Inscrit le</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (user of s.referrals; track user.id) {
-                <tr>
-                  <td class="amb-email">{{ user.email }}</td>
-                  <td class="amb-name">{{ user.name ?? '—' }}</td>
-                  <td>
-                    <span class="amb-plan-badge"
-                          [class.premium]="user.plan === 'PREMIUM'"
-                          [class.starter]="user.plan === 'STARTER'"
-                          [class.free]="user.plan === 'FREE'">
-                      {{ user.plan }}
-                    </span>
-                  </td>
-                  <td>
-                    <span class="amb-active" [class.yes]="user.isActive">
-                      {{ user.isActive ? '✓ Oui' : '—' }}
-                    </span>
-                  </td>
-                  <td class="amb-date">{{ user.createdAt | date:'dd/MM/yyyy' }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
         </div>
       }
     </div>
 
   }
-
 </div>

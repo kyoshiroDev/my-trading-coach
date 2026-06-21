@@ -20,6 +20,10 @@ export interface AdminStats {
   trials: number;
   freeUsers: number; newThisMonth: number; churnedThisMonth: number;
   betaTesters: number; ambassadors: number;
+  // Engagement par récence (≥1 trade sur la fenêtre) — distinct de l'activation.
+  tradersActifs7d: number; tradersActifs30d: number;
+  // Comptes supprimés (trace RGPD) — distinct du churn d'abonnement.
+  comptesSupprimesMois: number; comptesSupprimesTotal: number;
 }
 
 export interface AdminOnlineUser {
@@ -139,6 +143,7 @@ export interface MetricsHistoryPoint {
   date: string; // YYYY-MM-DD (Paris)
   users: number;
   mrr: number;
+  newSignups: number; // inscriptions du jour → agrégées par semaine pour les barres
 }
 
 export interface DeletedAccount {
@@ -155,6 +160,35 @@ export interface DeletedAccount {
   deletedBy: string; // "self" | "admin"
   reason: string | null;
   anonymizedAt: string | null;
+}
+
+export interface ReferralAdminParrain {
+  referralCode: string;
+  name: string | null;
+  email: string;
+  invited: number;
+  payants: number;
+  conversion: number;
+  moisGagnes: number;
+  moisAppliques: number;
+}
+
+export interface ReferralAdminFilleul {
+  pseudo: string;
+  parrainCode: string | null;
+  status: 'payant' | 'essai' | 'inscrit';
+  date: string;
+}
+
+export interface ReferralAdminOverview {
+  parrainsActifs: number;
+  invitesTotal: number;
+  payants: number;
+  tauxConversion: number;
+  moisAccordes: number;
+  moisAAppliquer: number;
+  parrains: ReferralAdminParrain[];
+  filleulsRecents: ReferralAdminFilleul[];
 }
 
 export interface UserDetailData {
@@ -250,6 +284,7 @@ export class AdminApi {
     return this.http.get<{ data: DeletedAccountsData }>(`${this.adminBase}/deleted-accounts`);
   }
   stripeReconcile()     { return this.http.get<{ data: StripeReconcileData }>(`${this.adminBase}/stripe/reconcile`); }
+  referralOverview()    { return this.http.get<{ data: ReferralAdminOverview }>(`${environment.apiUrl}/referral/admin/overview`); }
 
   listCampaigns() {
     return this.http.get<{ data: CampaignMeta[] }>(`${this.adminBase}/campaigns`);

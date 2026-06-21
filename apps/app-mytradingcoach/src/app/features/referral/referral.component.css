@@ -1,0 +1,88 @@
+/* Token violet absent du thème global → défini localement (scopé). */
+:host { display: block; --violet: #8b5cf6; }
+
+.content { padding: 30px; max-width: 1200px; margin: 0 auto; }
+
+.page-head { margin-bottom: 20px; }
+.page-title { font-family: var(--font-display); font-size: 25px; font-weight: 700; letter-spacing: -.3px; display: flex; align-items: center; gap: 10px; }
+.page-sub { font-size: 14px; color: var(--text-2); margin-top: 6px; max-width: 520px; }
+
+.card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 13px; padding: 20px 22px; }
+.card-title { font-family: var(--font-display); font-size: 14.5px; font-weight: 600; margin-bottom: 16px; }
+.card-title.nomb { margin-bottom: 0; }
+.mb { margin-bottom: 18px; }
+
+.state-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 13px; padding: 30px; text-align: center; color: var(--text-2); font-size: 13px; }
+.state-box.error { color: var(--red); }
+
+/* ── HÉRO : ton lien (action) + objectif ── */
+.hero { display: grid; grid-template-columns: 1.6fr 1fr; gap: 18px; margin-bottom: 18px; align-items: stretch; }
+@media (max-width: 880px) { .hero { grid-template-columns: 1fr; } }
+
+.link-card { background: linear-gradient(135deg, #3b82f618, #8b5cf610); border: 1px solid var(--border-hover); border-radius: 14px; padding: 22px 24px; box-shadow: 0 0 0 1px rgba(59, 130, 246, .06), 0 22px 50px -28px rgba(59, 130, 246, .4); }
+.link-lbl { font-family: var(--font-mono); font-size: 10px; color: var(--blue-bright); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 12px; }
+.link-row { display: flex; gap: 9px; }
+.link-input { flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--border-hover); border-radius: 9px; padding: 13px 15px; font-family: var(--font-mono); font-size: 13.5px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.btn { border: none; border-radius: 9px; font-family: var(--font-body); font-weight: 700; font-size: 13.5px; cursor: pointer; padding: 13px 20px; }
+.btn-blue { background: var(--blue); color: #fff; box-shadow: 0 0 18px rgba(59, 130, 246, .35); white-space: nowrap; }
+.btn-blue:hover { background: var(--blue-bright); }
+.hero-note { margin-top: 13px; font-size: 12.5px; color: var(--text-2); }
+.hero-note b { color: var(--blue-bright); font-weight: 600; }
+
+.goal { display: flex; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 22px 24px; }
+.goal-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; gap: 10px; }
+.goal-head .l { font-family: var(--font-display); font-size: 14.5px; font-weight: 600; }
+.goal-head .r { font-family: var(--font-mono); font-size: 12px; color: var(--text-2); }
+.goal-bar { height: 10px; border-radius: 5px; background: rgba(255, 255, 255, .05); overflow: hidden; }
+.goal-fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--blue), var(--violet)); transition: width 1s; }
+.goal-foot { font-size: 12px; color: var(--text-3); margin-top: auto; padding-top: 14px; }
+
+/* ── STATS compactes ── */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 18px; }
+.stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 13px; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.stat-text { min-width: 0; }
+.stat-lbl { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: .6px; }
+.stat-v { font-family: var(--font-display); font-size: 26px; font-weight: 700; margin: 7px 0 2px; }
+.stat-foot { font-size: 11px; color: var(--text-3); }
+.stat-ic { flex-shrink: 0; width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, currentColor 13%, transparent); }
+.v-blue { color: var(--blue-bright); }
+.v-green { color: var(--green); }
+.v-violet { color: var(--violet); }
+.v-amber { color: var(--yellow); }
+@media (max-width: 880px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+
+/* ── COMMENT ÇA MARCHE ── */
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.step-n { width: 25px; height: 25px; border-radius: 50%; background: var(--blue-glow); border: 1px solid var(--blue); color: var(--blue-bright); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 12px; font-weight: 600; margin-bottom: 9px; }
+.step h4 { font-size: 13.5px; font-weight: 600; margin-bottom: 5px; }
+.step p { font-size: 12.5px; color: var(--text-2); line-height: 1.5; }
+.step em { font-style: normal; color: var(--blue-bright); font-weight: 600; }
+.how-note { margin-top: 15px; padding-top: 13px; border-top: 1px solid var(--border); font-size: 11.5px; color: var(--text-3); font-family: var(--font-mono); }
+@media (max-width: 880px) { .steps { grid-template-columns: 1fr; } }
+
+/* ── MES FILLEULS ── */
+.filleuls-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.count-pill { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
+.empty { padding: 30px 0; text-align: center; color: var(--text-3); font-size: 13px; }
+
+.f-list { display: flex; flex-direction: column; margin-top: 8px; }
+.f-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid var(--border); }
+.f-row:first-child { border-top: none; }
+.f-av { width: 34px; height: 34px; border-radius: 50%; background: var(--blue-glow); color: var(--blue-bright); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 12px; font-weight: 600; flex-shrink: 0; }
+.f-mid { flex: 1; min-width: 0; }
+.f-name { font-size: 13.5px; font-weight: 600; color: var(--text); }
+.f-date { font-size: 11.5px; color: var(--text-3); font-family: var(--font-mono); margin-top: 2px; }
+.f-status { font-family: var(--font-mono); font-size: 10.5px; padding: 3px 8px; border-radius: 6px; }
+.f-status.st-paid { color: var(--green); background: var(--green-dim); }
+.f-status.st-trial { color: var(--yellow); background: var(--yellow-dim); }
+.f-status.st-signed { color: var(--blue-bright); background: var(--blue-glow); }
+.f-reward { font-family: var(--font-mono); font-size: 11.5px; min-width: 78px; text-align: right; white-space: nowrap; }
+.f-reward.r-yes { color: var(--violet); }
+.f-reward.r-no { color: var(--text-3); }
+
+/* ── CTA AMBASSADEUR ── */
+.amb { background: linear-gradient(135deg, #8b5cf612, #3b82f60f); border: 1px solid var(--border-hover); border-radius: 13px; padding: 15px 22px; display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; text-decoration: none; transition: border-color .15s; }
+.amb:hover { border-color: var(--blue); }
+.amb .t { font-size: 13px; color: var(--text-2); }
+.amb .t b { color: var(--text); font-weight: 600; }
+.amb-link { font-family: var(--font-mono); font-size: 12.5px; color: var(--blue-bright); white-space: nowrap; }

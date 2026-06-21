@@ -18,6 +18,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { RedisService } from '../shared/redis.service';
+import { AccountsService } from '../accounts/accounts.service';
 
 const mockTrade = {
   id: 'trade-123',
@@ -83,11 +84,19 @@ const mockRedisService = {
     keys: vi.fn().mockResolvedValue([]),
   },
 };
+const mockAccounts = {
+  accountWhere: vi.fn(),
+  ensureDefaultAccountId: vi.fn(),
+};
+
 describe('TradesService', () => {
   let service: TradesService;
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    mockAccounts.accountWhere.mockResolvedValue({ accountId: 'acc-1' });
+    mockAccounts.ensureDefaultAccountId.mockResolvedValue('acc-default');
+    mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -95,6 +104,7 @@ describe('TradesService', () => {
         TradesService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AnalyticsService, useValue: { invalidateUserCache: vi.fn().mockResolvedValue(undefined) } },
+        { provide: AccountsService, useValue: mockAccounts },
       ],
     }).compile();
 
@@ -138,6 +148,35 @@ describe('TradesService', () => {
         await expect(
           service.create('user-123', createTradeDto, Plan.FREE),
         ).resolves.toBeDefined();
+      });
+    });
+
+    describe('Chaîne de fallback accountId (jamais orphelin)', () => {
+      beforeEach(() => {
+        mockPrisma.trade.count.mockResolvedValue(0);
+        mockPrisma.trade.create.mockResolvedValue(mockTrade);
+      });
+
+      it('accountId du dto fourni → résolu via accountWhere (priorité 1)', async () => {
+        mockAccounts.accountWhere.mockResolvedValue({ accountId: 'acc-dto' });
+        await service.create('user-123', { ...createTradeDto, accountId: 'acc-dto' }, Plan.PREMIUM);
+        expect(mockAccounts.accountWhere).toHaveBeenCalledWith('user-123', 'acc-dto');
+        expect(mockPrisma.trade.create.mock.calls[0][0].data.accountId).toBe('acc-dto');
+        expect(mockAccounts.ensureDefaultAccountId).not.toHaveBeenCalled();
+      });
+
+      it("dto 'all' (agrégé) → ignoré, hérite de la session active (priorité 2)", async () => {
+        mockPrisma.tradeSession.findFirst.mockResolvedValue({ id: 's1', accountId: 'acc-session' });
+        await service.create('user-123', { ...createTradeDto, accountId: 'all' }, Plan.PREMIUM);
+        expect(mockAccounts.accountWhere).not.toHaveBeenCalled();
+        expect(mockPrisma.trade.create.mock.calls[0][0].data.accountId).toBe('acc-session');
+      });
+
+      it('aucun accountId, aucune session → compte par défaut (priorité 3, anti-NULL)', async () => {
+        mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
+        await service.create('user-123', createTradeDto, Plan.PREMIUM);
+        expect(mockAccounts.ensureDefaultAccountId).toHaveBeenCalledWith('user-123');
+        expect(mockPrisma.trade.create.mock.calls[0][0].data.accountId).toBe('acc-default');
       });
     });
 

@@ -36,7 +36,31 @@ export default [
       '**/*.cjs',
       '**/*.mjs',
     ],
-    // Override or add rules here
-    rules: {},
+    rules: {
+      // Le `_`-prefixe marque un binding intentionnellement inutilisé (params requis
+      // par une signature/override, erreur de catch ignoree). Convention standard.
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+      // Decision deliberee (regle stylistique inadaptee a ce stack TS strict) :
+      // l'operateur `!` est utilise volontairement la ou un invariant garantit le
+      // non-null mais que TS ne peut pas l'inferer (champs Prisma filtres `not: null`,
+      // cles de groupBy, Map.get apres set, refs @ViewChild). Le reecrire en garde
+      // ajoute du bruit sans gain de surete. On garde no-explicit-any actif (vrai defaut).
+      '@typescript-eslint/no-non-null-assertion': 'off',
+    },
+  },
+  {
+    // Fichiers de test : `any` (mocks, casts de fixtures) et assertions de fixtures
+    // connues sont legitimes. On relache uniquement le typage strict cote tests.
+    files: ['**/*.spec.ts', '**/*.spec.tsx', '**/*.test.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
   },
 ];

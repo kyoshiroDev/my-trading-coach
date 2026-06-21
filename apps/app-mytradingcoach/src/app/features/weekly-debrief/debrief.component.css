@@ -462,3 +462,67 @@
   background: var(--blue-bright);
   transform: translateY(-1px);
 }
+
+/* ── Bandeau global (1 appel IA) ── */
+.debrief-banner {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--font-mono); font-size: 11px; color: var(--blue-bright);
+  background: var(--blue-glow); border: 1px solid rgba(59,130,246,.25);
+  padding: 5px 11px; border-radius: 8px; margin-bottom: 16px;
+}
+.banner-diamond { font-size: 10px; }
+
+/* ── Onglets par compte ── */
+.debrief-tabs {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  border-bottom: 1px solid var(--border); margin-bottom: 20px;
+}
+.debrief-tab {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 15px; font-size: 13.5px; color: var(--text-2);
+  background: none; border: none; border-bottom: 2px solid transparent;
+  margin-bottom: -1px; cursor: pointer; font-weight: 500; font-family: var(--font-body);
+  transition: color .15s;
+}
+.debrief-tab:hover { color: var(--text); }
+.debrief-tab.on { color: var(--text); border-bottom-color: var(--blue); }
+.tab-pin { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.tab-badge {
+  font-family: var(--font-mono); font-size: 9px; padding: 2px 6px; border-radius: 5px; letter-spacing: .4px;
+}
+.tab-badge.eval { background: var(--yellow-dim); color: var(--yellow); }
+.tab-badge.funded { background: var(--green-dim); color: var(--green); }
+
+/* ── Tableau « par compte en un coup d'œil » ── */
+.cmp { display: flex; flex-direction: column; }
+.cmp-row {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.cmp-row:last-child { border-bottom: none; }
+.cmp-name {
+  font-weight: 600; font-size: 14px; min-width: 170px;
+  display: flex; align-items: center; gap: 8px;
+}
+.cmp-stat { font-family: var(--font-mono); font-size: 13px; min-width: 92px; }
+.cmp-l {
+  font-family: var(--font-mono); font-size: 9px; color: var(--text-3);
+  text-transform: uppercase; display: block; margin-bottom: 2px; letter-spacing: .4px;
+}
+.cmp .g { color: var(--green); }
+.cmp .r { color: var(--red); }
+.cmp .b { color: var(--blue-bright); }
+.cmp .muted { color: var(--text-3); }
+
+/* ── Note prop firm (estimation) ── */
+.propfirm-note {
+  display: flex; gap: 9px; align-items: flex-start;
+  margin-bottom: 16px; padding: 13px 15px; border-radius: 10px;
+  background: rgba(245,158,11,.07); border: 1px solid var(--yellow-dim);
+  font-size: 13px; line-height: 1.55;
+}
+.propfirm-ic { color: var(--yellow); flex-shrink: 0; }
+.propfirm-note p { color: var(--text-2); }
+
+.stat-value.small { font-size: 18px; }
+.text-amber { color: var(--yellow); }

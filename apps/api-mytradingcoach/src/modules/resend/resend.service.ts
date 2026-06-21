@@ -12,6 +12,14 @@ import {
   welcomePremiumTemplate,
 } from './templates';
 
+// Boîte interne de réception (candidatures ambassadeur, relevés). Aligné sur
+// sendAdminAlert (inbox éprouvée du projet).
+const CONTACT_INBOX = 'hello@mytradingcoach.app';
+
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c] ?? c);
+}
+
 // ── Service Mail (Resend) ─────────────────────────────────────────────────────
 
 @Injectable()
@@ -177,6 +185,60 @@ export class ResendService {
     } catch (err) {
       this.logger.error('Erreur sendAdminAlert', err);
     }
+  }
+
+  // ── Demande pour devenir ambassadeur (lean, par email) ─────────────────────
+
+  async sendAmbassadorApplication(params: {
+    name: string;
+    email: string;
+    socials: string;
+    message?: string;
+  }): Promise<void> {
+    const body =
+      `Nom      : ${params.name}\n` +
+      `Email    : ${params.email}\n` +
+      `Réseaux  : ${params.socials}\n` +
+      `Message  : ${params.message?.trim() || '(aucun)'}\n` +
+      `Date     : ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}`;
+    try {
+      await this.resend.emails.send({
+        from: 'noreply@mytradingcoach.app',
+        to: CONTACT_INBOX,
+        replyTo: params.email,
+        subject: `🤝 Demande ambassadeur — ${params.name}`,
+        html: `<pre style="font-family:monospace;font-size:14px">${escapeHtml(body)}</pre>`,
+      });
+    } catch (err) {
+      this.logger.error('Erreur sendAmbassadorApplication', err);
+      throw err;
+    }
+  }
+
+  // ── Relevé de commissions ambassadeur (PDF — PAS une facture) ──────────────
+
+  async sendAmbassadorStatement(params: {
+    ambassadorName: string;
+    ambassadorEmail: string;
+    period: string;
+    pdf: Buffer;
+  }): Promise<void> {
+    await this.resend.emails.send({
+      from: this.from,
+      to: CONTACT_INBOX,
+      replyTo: params.ambassadorEmail,
+      subject: `Relevé de commissions — ${escapeHtml(params.ambassadorName)} (${params.period})`,
+      html:
+        `<p>Relevé de commissions de <strong>${escapeHtml(params.ambassadorName)}</strong> ` +
+        `pour la période ${params.period} en pièce jointe.</p>` +
+        `<p style="color:#666;font-size:13px">Ce relevé sert de base à la facture de l'ambassadeur. Ce n'est pas une facture.</p>`,
+      attachments: [
+        {
+          filename: `releve-commissions-${params.period}.pdf`,
+          content: params.pdf.toString('base64'),
+        },
+      ],
+    });
   }
 
   // ── Envoi générique ────────────────────────────────────────────────────────

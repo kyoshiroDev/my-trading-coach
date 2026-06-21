@@ -98,6 +98,19 @@ import { environment } from '../../../../environments/environment';
             <span class="nav-label">Ma session</span>
           </a>
 
+          @if (userStore.isStarterOrAbove()) {
+            <a
+              routerLink="/accounts"
+              routerLinkActive="active"
+              class="nav-item"
+              data-testid="nav-accounts"
+              (click)="closeSidebar()"
+            >
+              <span class="nav-icon">💼</span>
+              Mes comptes
+            </a>
+          }
+
           <a
             routerLink="/journal"
             routerLinkActive="active"
@@ -181,6 +194,7 @@ import { environment } from '../../../../environments/environment';
             <span class="nav-label">Calendrier éco</span>
           </a>
 
+          <!-- Surface(s) de parrainage selon le rôle. L'admin voit les DEUX. -->
           @if (userStore.isAmbassador()) {
             <a
               routerLink="/ambassador"
@@ -195,6 +209,19 @@ import { environment } from '../../../../environments/environment';
               @if (ambassadorNotif.newReferrals() > 0) {
                 <span class="nav-badge-notif">{{ ambassadorNotif.newReferrals() }}</span>
               }
+            </a>
+          }
+          @if (!userStore.isAmbassador() || userStore.isAdmin()) {
+            <a
+              routerLink="/parrainage"
+              routerLinkActive="active"
+              class="nav-item"
+              data-testid="nav-parrainage"
+              [attr.title]="collapsed() ? 'Parrainage' : null"
+              (click)="closeSidebar()"
+            >
+              <span class="nav-icon">🎁</span>
+              <span class="nav-label">Parrainage</span>
             </a>
           }
 

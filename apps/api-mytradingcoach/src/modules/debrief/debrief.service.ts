@@ -1,7 +1,7 @@
 import { Injectable, ForbiddenException, NotFoundException, Logger } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { DebriefPdfData } from '../pdf/pdf.service';
-import { OBJECTIVE_CHECK_TYPES } from '../ai/prompts/debrief.prompt';
+import { OBJECTIVE_CHECK_TYPES, DebriefAccountInput } from '../ai/prompts/debrief.prompt';
 
 interface ObjectiveCheck {
   type: string;
@@ -12,9 +12,43 @@ interface DebriefObjective {
   reason: string;
   check?: ObjectiveCheck | null;
 }
-interface DebriefAiResult {
+interface DebriefBadgeItem {
+  badge: string;
+  text: string;
+}
+/** Analyse qualitative IA d'un compte (avant fusion avec les stats backend). */
+interface DebriefAccountAi {
+  accountId: string;
+  summary?: string;
+  strengths?: DebriefBadgeItem[];
+  weaknesses?: DebriefBadgeItem[];
+  objectives?: { title: string; reason: string }[];
+  propNote?: string | null;
+}
+/** Section compte stockée (stats + règles backend + analyse IA). */
+interface DebriefAccountSection {
+  accountId: string;
+  name: string;
+  type: string;
+  status: string;
+  stats: { totalTrades: number; winRate: number; totalPnl: number };
+  rules: {
+    startingBalance: number | null;
+    profitTarget: number | null;
+    maxDrawdown: number | null;
+    drawdownType: string | null;
+  } | null;
   summary: string;
-  insights: unknown;
+  strengths: DebriefBadgeItem[];
+  weaknesses: DebriefBadgeItem[];
+  objectives: { title: string; reason: string }[];
+  propNote: string | null;
+}
+interface DebriefAiResult {
+  summary?: string;
+  overview?: { summary: string };
+  accounts?: DebriefAccountAi[];
+  emotionInsight?: string;
   objectives: DebriefObjective[];
 }
 import { PrismaService } from '../../prisma/prisma.service';
@@ -100,8 +134,26 @@ export class DebriefService {
         setup: true,
         session: true,
         tradedAt: true,
+        accountId: true,
       },
     });
+
+    // Comptes non archivés (avec leurs règles prop firm) pour l'analyse par compte.
+    const accounts = await this.prisma.tradingAccount.findMany({
+      where: { userId, status: { not: 'ARCHIVED' } },
+      select: {
+        id: true, label: true, type: true, status: true,
+        startingBalance: true, profitTarget: true, maxDrawdown: true, drawdownType: true,
+      },
+      orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
+    });
+
+    // Trades groupés par compte (accountId null → bucket « unassigned »).
+    const tradesByAccount: Record<string, typeof trades> = {};
+    for (const t of trades) {
+      const key = t.accountId ?? 'unassigned';
+      (tradesByAccount[key] ??= []).push(t);
+    }
 
     const stats = await this.analyticsService.getSummary(userId);
 
@@ -129,6 +181,18 @@ export class DebriefService {
 
     const recentSessions = await this.sessionService.getSessionHistory(userId, 5, 0);
 
+    // Inputs comptes pour l'IA (avec règles + nb de trades de la semaine).
+    const accountInputs: DebriefAccountInput[] = accounts.map((a) => ({
+      accountId: a.id,
+      name: a.label,
+      type: a.type,
+      startingBalance: a.startingBalance,
+      profitTarget: a.profitTarget,
+      maxDrawdown: a.maxDrawdown,
+      drawdownType: a.drawdownType,
+      tradesCount: tradesByAccount[a.id]?.length ?? 0,
+    }));
+
     const aiResult = (await this.aiService.generateDebrief({
       trades,
       stats,
@@ -137,9 +201,48 @@ export class DebriefService {
       year,
       userProfile: userProfile ?? undefined,
       recentSessions,
+      accounts: accountInputs,
+      tradesByAccount,
     }, userId)) as DebriefAiResult;
 
     const normalizedObjectives = this.normalizeObjectives(aiResult.objectives);
+
+    // Vue d'ensemble (rétrocompat : ancien `summary` à plat si pas d'overview).
+    const overviewSummary = aiResult.overview?.summary ?? aiResult.summary ?? '';
+
+    // Analyse IA indexée par compte pour la fusion.
+    const aiByAccount = new Map<string, DebriefAccountAi>();
+    for (const a of aiResult.accounts ?? []) {
+      if (a?.accountId) aiByAccount.set(a.accountId, a);
+    }
+
+    // Onglets : tous les comptes non archivés + bucket « unassigned » si trades orphelins.
+    const accountSections: DebriefAccountSection[] = accounts.map((a) =>
+      this.buildAccountSection(
+        a.id, a.label, a.type, a.status,
+        tradesByAccount[a.id] ?? [],
+        a.maxDrawdown != null || a.profitTarget != null
+          ? { startingBalance: a.startingBalance, profitTarget: a.profitTarget, maxDrawdown: a.maxDrawdown, drawdownType: a.drawdownType }
+          : null,
+        aiByAccount.get(a.id),
+      ),
+    );
+    if (tradesByAccount['unassigned']?.length) {
+      accountSections.push(
+        this.buildAccountSection(
+          'unassigned', 'Non attribué', 'PERSONAL', 'ACTIVE',
+          tradesByAccount['unassigned'], null, aiByAccount.get('unassigned'),
+        ),
+      );
+    }
+
+    const structuredInsights = {
+      overview: { summary: overviewSummary },
+      accounts: accountSections,
+      // Champs à plat conservés pour la rétrocompat (PDF / anciens lecteurs).
+      summary: overviewSummary,
+      emotionInsight: aiResult.emotionInsight ?? '',
+    };
 
     return this.prisma.weeklyDebrief.upsert({
       where: { userId_weekNumber_year: { userId, weekNumber, year } },
@@ -149,19 +252,56 @@ export class DebriefService {
         year,
         startDate,
         endDate,
-        aiSummary: aiResult.summary,
-        insights: JSON.parse(JSON.stringify(aiResult)),
+        aiSummary: overviewSummary,
+        insights: JSON.parse(JSON.stringify(structuredInsights)),
         objectives: normalizedObjectives,
         stats,
       },
       update: {
-        aiSummary: aiResult.summary,
-        insights: JSON.parse(JSON.stringify(aiResult)),
+        aiSummary: overviewSummary,
+        insights: JSON.parse(JSON.stringify(structuredInsights)),
         objectives: normalizedObjectives,
         stats,
         generatedAt: new Date(),
       },
     });
+  }
+
+  /** Stats déterministes d'un compte sur la semaine (jamais l'IA pour les chiffres). */
+  private accountStats(trades: { pnl: number | null }[]) {
+    const total = trades.length;
+    const wins = trades.filter((t) => (t.pnl ?? 0) > 0).length;
+    const totalPnl = trades.reduce((s, t) => s + (t.pnl ?? 0), 0);
+    return {
+      totalTrades: total,
+      winRate: total > 0 ? (wins / total) * 100 : 0,
+      totalPnl,
+    };
+  }
+
+  /** Fusionne métadonnées + stats backend (autoritaires) et analyse qualitative IA. */
+  private buildAccountSection(
+    accountId: string,
+    name: string,
+    type: string,
+    status: string,
+    trades: { pnl: number | null }[],
+    rules: DebriefAccountSection['rules'],
+    ai: DebriefAccountAi | undefined,
+  ): DebriefAccountSection {
+    return {
+      accountId,
+      name,
+      type,
+      status,
+      stats: this.accountStats(trades),
+      rules,
+      summary: ai?.summary ?? '',
+      strengths: Array.isArray(ai?.strengths) ? ai!.strengths : [],
+      weaknesses: Array.isArray(ai?.weaknesses) ? ai!.weaknesses : [],
+      objectives: Array.isArray(ai?.objectives) ? ai!.objectives : [],
+      propNote: ai?.propNote ?? null,
+    };
   }
 
   async generateForUser(userId: string) {
@@ -208,15 +348,33 @@ export class DebriefService {
     const storedInsights = debrief.insights as {
       strengths?: { badge: string; text: string }[];
       weaknesses?: { badge: string; text: string }[];
+      accounts?: {
+        name?: string;
+        strengths?: { badge: string; text: string }[];
+        weaknesses?: { badge: string; text: string }[];
+      }[];
     } | null;
 
+    // Nouveau format (par compte) : on aplatit forces/faiblesses de tous les comptes,
+    // préfixées du nom du compte. Ancien format à plat : rétrocompat directe.
+    const flatStrengths =
+      storedInsights?.strengths ??
+      (storedInsights?.accounts ?? []).flatMap((a) =>
+        (a.strengths ?? []).map((s) => ({ badge: s.badge, text: a.name ? `[${a.name}] ${s.text}` : s.text })),
+      );
+    const flatWeaknesses =
+      storedInsights?.weaknesses ??
+      (storedInsights?.accounts ?? []).flatMap((a) =>
+        (a.weaknesses ?? []).map((w) => ({ badge: w.badge, text: a.name ? `[${a.name}] ${w.text}` : w.text })),
+      );
+
     const insights: DebriefPdfData['insights'] = [
-      ...(storedInsights?.strengths ?? []).map((s) => ({
+      ...flatStrengths.map((s) => ({
         title: s.badge,
         description: s.text,
         type: 'positive' as const,
       })),
-      ...(storedInsights?.weaknesses ?? []).map((w) => ({
+      ...flatWeaknesses.map((w) => ({
         title: w.badge,
         description: w.text,
         type: 'negative' as const,

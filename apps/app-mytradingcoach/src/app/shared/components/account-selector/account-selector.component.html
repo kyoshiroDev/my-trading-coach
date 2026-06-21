@@ -1,0 +1,30 @@
+@if (userStore.isStarterOrAbove()) {
+  <div class="acct-tabs" data-testid="account-selector">
+    <button class="acct-tab"
+            data-testid="account-option-all"
+            [class.active]="store.selectedAccountId() === 'all'"
+            (click)="store.select('all')">
+      <span class="dot" style="background:var(--blue-bright)"></span>
+      Tous les comptes
+    </button>
+    @for (a of store.accounts(); track a.id) {
+      <button class="acct-tab"
+              [attr.data-testid]="'account-option-' + a.id"
+              [class.active]="store.selectedAccountId() === a.id"
+              (click)="store.select(a.id)">
+        <span class="dot" [style.background]="dotColor(a)"></span>
+        {{ a.label }}
+      </button>
+    }
+  </div>
+} @else {
+  <!-- FREE : option désactivée + mini-CTA Starter (aucun appel /accounts). -->
+  <button class="acct-locked" type="button" (click)="showPlanModal.set(true)">
+    <span class="dot" style="background:var(--text-3)"></span>
+    Multi-comptes
+    <span class="acct-premium-badge">STARTER</span>
+  </button>
+  @if (showPlanModal()) {
+    <mtc-plan-modal (closed)="showPlanModal.set(false)" />
+  }
+}

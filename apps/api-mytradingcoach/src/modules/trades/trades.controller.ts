@@ -24,6 +24,7 @@ import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
 import { INSTRUMENTS } from './instruments.const';
 import { MarketDataService } from './market-data.service';
+import { AccountsService } from '../accounts/accounts.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('trades')
@@ -33,6 +34,7 @@ export class TradesController {
     private coinGeckoService: CoinGeckoService,
     private csvImportService: CsvImportService,
     private readonly marketData: MarketDataService,
+    private readonly accounts: AccountsService,
   ) {}
 
   @Get('market-context')
@@ -116,10 +118,12 @@ export class TradesController {
   }
 
   @Get()
-  findAll(
+  async findAll(
     @CurrentUser() user: { id: string },
     @Query() filters: TradeFiltersDto,
   ) {
+    // Valide l'appartenance du compte filtré (404 si pas au user) ; 'all'/absent = agrégé.
+    await this.accounts.accountWhere(user.id, filters.accountId);
     return this.tradesService.findAll(user.id, filters);
   }
 

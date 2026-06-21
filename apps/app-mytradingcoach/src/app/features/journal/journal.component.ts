@@ -1,6 +1,6 @@
 import {
-  ChangeDetectionStrategy, Component, DestroyRef, OnInit,
-  computed, inject, signal,
+  ChangeDetectionStrategy, Component, DestroyRef,
+  computed, effect, inject, signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe } from '@angular/common';
@@ -9,6 +9,7 @@ import { forkJoin } from 'rxjs';
 import { LucideAngularModule, X, Pencil, Upload, ChevronDown, ChevronRight, Calendar, Trash2 } from 'lucide-angular';
 import { TradesStore, Trade } from '../../core/stores/trades.store';
 import { CreateTradeDto, TradesApi } from '../../core/api/trades.api';
+import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { TradeFormComponent } from './trade-form.component';
 import { CsvImportComponent } from './csv-import.component';
@@ -43,11 +44,20 @@ interface DayGroup {
   styleUrl: './journal.component.css',
   templateUrl: './journal.component.html',
 })
-export class JournalComponent implements OnInit {
+export class JournalComponent {
   protected readonly tradesStore = inject(TradesStore);
   private readonly tradesApi     = inject(TradesApi);
   private readonly http          = inject(HttpClient);
   private readonly destroyRef    = inject(DestroyRef);
+  private readonly selectedAccount = inject(SelectedAccountStore);
+
+  constructor() {
+    // Recharge le journal au changement de compte (contexte global). 'all' → agrégé.
+    effect(() => {
+      const accountId = this.selectedAccount.accountParam(); // lit selectedAccountId (réactif)
+      this.tradesStore.loadTrades(accountId ? { accountId } : undefined);
+    });
+  }
 
   protected readonly SETUPS = SETUPS;
   protected readonly XIcon            = X;
@@ -193,8 +203,6 @@ export class JournalComponent implements OnInit {
     this.dateTo.set((e.target as HTMLInputElement).value);
   }
 
-  ngOnInit() { this.tradesStore.loadTrades(); }
-
   openModal(): void {
     this.selectedTrade.set(null);
     this.showModal.set(true);
@@ -222,9 +230,14 @@ export class JournalComponent implements OnInit {
     this.isSubmitting.set(true);
     this.submitError.set(null);
 
+    // Création : rattacher le trade au compte sélectionné (sauf « Tous »). Le backend
+    // garde son fallback (session active → compte par défaut) si accountId absent.
+    const accountId = this.selectedAccount.accountParam();
+    const payload: CreateTradeDto = !edit && accountId ? { ...dto, accountId } : dto;
+
     const obs = edit
       ? this.tradesApi.update(edit.id, dto)
-      : this.http.post<{ data: Trade }>(`${environment.apiUrl}/trades`, dto);
+      : this.http.post<{ data: Trade }>(`${environment.apiUrl}/trades`, payload);
 
     obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res: { data: Trade }) => {
@@ -266,6 +279,7 @@ export class JournalComponent implements OnInit {
   onImported(): void {
     this.showImport.set(false);
     this.tradesStore.reset();
-    this.tradesStore.loadTrades();
+    const accountId = this.selectedAccount.accountParam();
+    this.tradesStore.loadTrades(accountId ? { accountId } : undefined);
   }
 }

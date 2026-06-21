@@ -3,6 +3,7 @@ import {
   Component,
   DestroyRef,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -12,6 +13,9 @@ import { RouterLink } from '@angular/router';
 import { SessionApi, SessionHistoryItem } from '../../core/api/session.api';
 import { PnlFormatPipe } from '../../shared/pipes/pnl-format.pipe';
 import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
+import { AccountSelectorComponent } from '../../shared/components/account-selector/account-selector.component';
+import { SelectedAccountStore } from '../../core/stores/selected-account.store';
+import { UserStore } from '../../core/stores/user.store';
 
 interface WeekGroup {
   weekNumber: number;
@@ -27,7 +31,7 @@ interface WeekGroup {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './sessions.component.css',
-  imports: [DatePipe, DecimalPipe, PnlFormatPipe, EmotionEmojiPipe, RouterLink],
+  imports: [DatePipe, DecimalPipe, PnlFormatPipe, EmotionEmojiPipe, RouterLink, AccountSelectorComponent],
   template: `
 <div class="sessions-page" data-testid="sessions-page">
 
@@ -48,6 +52,13 @@ interface WeekGroup {
       }
     </select>
   </div>
+
+  <!-- Sélecteur de compte global (multi-comptes Starter+) -->
+  @if (userStore.isStarterOrAbove()) {
+    <div class="sessions-accounts">
+      <mtc-account-selector />
+    </div>
+  }
 
   <!-- Résumé du mois -->
   @if (sessions().length > 0) {
@@ -280,6 +291,8 @@ interface WeekGroup {
 export class SessionsComponent {
   private readonly sessionApi = inject(SessionApi);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly selectedAccount = inject(SelectedAccountStore);
+  protected readonly userStore = inject(UserStore);
 
   protected readonly sessions = signal<SessionHistoryItem[]>([]);
   protected readonly isLoading = signal(true);
@@ -348,21 +361,21 @@ export class SessionsComponent {
   });
 
   constructor() {
-    this.loadSessions();
+    // Recharge à chaque changement de mois OU de compte sélectionné (contexte global).
+    effect(() => {
+      const [year, month] = this.selectedMonth().split('-').map(Number);
+      const accountId = this.selectedAccount.accountParam(); // lit selectedAccountId (réactif)
+      this.loadSessions(year, month, accountId);
+    });
   }
 
   protected onMonthChange(value: string): void {
-    this.selectedMonth.set(value);
-    const [year, month] = value.split('-').map(Number);
-    this.loadSessions(year, month);
+    this.selectedMonth.set(value); // l'effect ci-dessus déclenche le rechargement
   }
 
-  private loadSessions(year?: number, month?: number): void {
+  private loadSessions(year: number, month: number, accountId?: string): void {
     this.isLoading.set(true);
-    const now = new Date();
-    const y = year ?? now.getFullYear();
-    const m = month ?? now.getMonth() + 1;
-    this.sessionApi.getSessionsByMonth(y, m)
+    this.sessionApi.getSessionsByMonth(year, month, accountId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {

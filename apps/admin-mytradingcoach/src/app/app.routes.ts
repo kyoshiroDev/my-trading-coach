@@ -26,6 +26,7 @@ export const appRoutes: Routes = [
       { path: 'ai-usage',      loadComponent: () => import('./features/ai-usage/ai-usage.component').then(m => m.AiUsageComponent) },
       { path: 'emails',          loadComponent: () => import('./features/emails/emails.component').then(m => m.EmailsComponent) },
       { path: 'ambassadeurs',   loadComponent: () => import('./features/ambassadeurs/ambassadeurs.component').then(m => m.AmbassadeursComponent) },
+      { path: 'parrainage',     loadComponent: () => import('./features/referral/referral.component').then(m => m.ReferralComponent) },
     ],
   },
   { path: '**', redirectTo: 'dashboard' },

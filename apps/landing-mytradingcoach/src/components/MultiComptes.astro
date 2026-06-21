@@ -1,0 +1,116 @@
+---
+// Section multi-comptes / prop firm (home). Publiée seulement si FEATURES.multiAccounts.
+// Angle inclusif : rassure d'abord le trader à un compte, puis élargit au multi-comptes.
+---
+
+<section id="multi-comptes" class="mc">
+  <div class="mc-wrap">
+    <div class="reveal mc-head">
+      <span class="sec-label">Multi-comptes</span>
+      <h2>Un compte, ou <em>tous tes comptes</em></h2>
+      <p class="sec-sub">
+        Un seul compte ? MyTradingCoach est parfait pour ça. Plusieurs comptes
+        (éval, funded, prop firm, perso) ? Chacun reste séparé, avec ses stats et
+        sa propre analyse IA.
+      </p>
+      <p class="mc-link">
+        Tu trades en prop firm ? Voir la
+        <a href="/journal-trading-prop-firm">page dédiée prop firm</a>.
+      </p>
+    </div>
+
+    <div class="mc-grid reveal">
+      <div class="mc-feats">
+        <article class="mc-feat">
+          <div class="mc-ico" style="background:rgba(59,130,246,.1)">🗂️</div>
+          <div>
+            <h3>Tes comptes ne se mélangent plus</h3>
+            <p>Un compte perso, ton éval Apex, ton funded Lucide. Chacun avec son capital de départ et ses propres trades. Fini le mélange entre l'éval et le funded.</p>
+          </div>
+        </article>
+        <article class="mc-feat">
+          <div class="mc-ico" style="background:rgba(34,211,238,.1)">💬</div>
+          <div>
+            <h3>Une analyse IA par compte</h3>
+            <p>Le débrief hebdo te sort un onglet par compte : forces, points faibles, objectifs. Du concret pour chaque compte, pas une moyenne de tout mélangé.</p>
+          </div>
+        </article>
+        <article class="mc-feat">
+          <div class="mc-ico" style="background:rgba(245,158,11,.1)">📐</div>
+          <div>
+            <h3>Drawdown et objectif sous les yeux</h3>
+            <p>Tu vois ta marge avant le drawdown et ta progression vers l'objectif, compte par compte.</p>
+            <p class="mc-note">Estimation calculée depuis tes trades enregistrés. Ce n'est pas le calcul officiel de ta firme, garde un œil sur ta plateforme.</p>
+          </div>
+        </article>
+      </div>
+
+      <!-- visuel sélecteur de comptes (décoratif) -->
+      <div class="acc-mock" aria-hidden="true">
+        <div class="acc-mock-top">
+          <span class="acc-tab">Tous</span>
+          <span class="acc-tab on">Lucide 50k</span>
+          <span class="acc-tab">Apex 100k</span>
+          <span class="acc-tab">Perso</span>
+        </div>
+        <div class="acc-row">
+          <span class="acc-name">Lucide 50k <span class="acc-badge b-eval">Éval</span></span>
+          <span class="acc-stat pos">+1 240 $</span>
+        </div>
+        <div class="acc-row">
+          <span class="acc-name">Apex 100k <span class="acc-badge b-fund">Funded</span></span>
+          <span class="acc-stat pos">+3 880 $</span>
+        </div>
+        <div class="acc-row">
+          <span class="acc-name">Compte perso <span class="acc-badge b-perso">Perso</span></span>
+          <span class="acc-stat neg">-310 $</span>
+        </div>
+        <div class="acc-dd">
+          <div class="dd-lbl"><span>Lucide 50k · marge avant drawdown</span><span>1 860 $ / 3 000 $</span></div>
+          <div class="dd-bar"><div class="dd-fill"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .mc { padding: 80px 5%; border-top: 1px solid var(--b); }
+  .mc-wrap { max-width: 1100px; margin: 0 auto; }
+  .mc-head { max-width: 680px; margin: 0 auto 44px; text-align: center; }
+  .mc-head .sec-sub { margin-left: auto; margin-right: auto; }
+  .mc-link { margin-top: 14px; font-size: 13.5px; color: var(--txt3); }
+  .mc-link a { color: var(--blue2); text-decoration: none; border-bottom: 1px solid var(--b2); }
+  .mc-link a:hover { color: var(--txt); }
+
+  .mc-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 40px; align-items: center; }
+  .mc-feats { display: flex; flex-direction: column; gap: 18px; }
+  .mc-feat { display: flex; gap: 14px; align-items: flex-start; }
+  .mc-ico { width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center; font-size: 20px; flex-shrink: 0; }
+  .mc-feat h3 { font-family: var(--disp); font-size: 17px; font-weight: 600; margin-bottom: 6px; color: var(--txt); }
+  .mc-feat p { color: var(--txt2); font-size: 14.5px; line-height: 1.55; }
+  .mc-note { margin-top: 8px; font-size: 12.5px; color: var(--txt3); font-family: var(--mono); line-height: 1.5; }
+
+  .acc-mock { background: var(--card); border: 1px solid var(--b); border-radius: 16px; padding: 18px; box-shadow: 0 30px 70px -30px rgba(0,0,0,.7); }
+  .acc-mock-top { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .acc-tab { font-family: var(--mono); font-size: 11px; padding: 7px 11px; border-radius: 8px; border: 1px solid var(--b); color: var(--txt2); white-space: nowrap; }
+  .acc-tab.on { background: rgba(59,130,246,.15); border-color: var(--blue); color: var(--blue2); }
+  .acc-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid rgba(255,255,255,.04); }
+  .acc-row:first-of-type { border-top: none; }
+  .acc-name { display: flex; align-items: center; gap: 9px; font-size: 13.5px; font-weight: 600; color: var(--txt); }
+  .acc-badge { font-family: var(--mono); font-size: 9.5px; letter-spacing: .05em; padding: 2px 7px; border-radius: 5px; text-transform: uppercase; }
+  .b-eval { background: rgba(245,158,11,.14); color: var(--yel); }
+  .b-fund { background: rgba(16,185,129,.14); color: var(--green); }
+  .b-perso { background: rgba(139,92,246,.14); color: #a78bfa; }
+  .acc-stat { font-family: var(--mono); font-size: 13px; }
+  .pos { color: var(--green); }
+  .neg { color: var(--red); }
+  .acc-dd { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.04); }
+  .dd-lbl { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--txt2); margin-bottom: 6px; font-family: var(--mono); }
+  .dd-bar { height: 7px; border-radius: 4px; background: rgba(255,255,255,.06); overflow: hidden; }
+  .dd-fill { height: 100%; width: 62%; background: linear-gradient(90deg, var(--green), var(--yel)); }
+
+  @media (max-width: 860px) {
+    .mc-grid { grid-template-columns: 1fr; }
+  }
+</style>

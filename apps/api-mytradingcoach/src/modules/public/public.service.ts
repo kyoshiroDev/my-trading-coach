@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
+import { ResendService } from '../resend/resend.service';
+import { PublicAmbassadorApplyDto } from './dto/ambassador-apply.dto';
 
 const CACHE_KEY = 'public:traders-count';
 const CACHE_TTL = 600; // 10 min
@@ -15,7 +17,28 @@ export class PublicService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly redisService: RedisService,
+    private readonly resend: ResendService,
   ) {}
+
+  /**
+   * Candidature ambassadeur depuis la landing (sans compte) → email à l'équipe.
+   * Réutilise le mail de candidature ambassadeur (PROMPT 100/101) en agrégeant
+   * l'audience multi-sélection + les liens dans le champ « réseaux ».
+   */
+  async applyAmbassador(dto: PublicAmbassadorApplyDto): Promise<{ success: boolean }> {
+    const communities = (dto.communities ?? []).filter((c) => c.trim()).join(', ');
+    const links = dto.links?.trim();
+    const socials = [communities, links].filter(Boolean).join(' · ') || '(non renseigné)';
+    const message = `Société pour facturer : ${dto.hasCompany ? 'oui' : 'non / à confirmer'}`;
+
+    await this.resend.sendAmbassadorApplication({
+      name: dto.name.trim(),
+      email: dto.email.trim(),
+      socials,
+      message,
+    });
+    return { success: true };
+  }
 
   /**
    * Nombre de traders inscrits (réels) — exclut le compte démo et l'admin.

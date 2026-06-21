@@ -43,6 +43,7 @@ import {
 import { EMOTION_COLORS } from '../../shared/pipes/emotion-color.pipe';
 import { environment } from '../../../environments/environment';
 import { ChartService } from '../../core/services/chart.service';
+import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 
 @Component({
   selector: 'mtc-dashboard',
@@ -71,6 +72,7 @@ import { ChartService } from '../../core/services/chart.service';
     <mtc-topbar
       title="Dashboard"
       addLabel="⚡ Ajouter trade"
+      [showAccountSelector]="true"
       (addClick)="goToJournal()"
     >
       @if (sessionStore.hasActiveSession()) {
@@ -169,7 +171,7 @@ import { ChartService } from '../../core/services/chart.service';
         <div class="stats-row has-capital">
           <div class="stat-card">
             <div class="stat-label">Capital</div>
-            <div class="stat-value mono" [style.color]="capitalColor()">{{ capitalDisplay() }}</div>
+            <div class="stat-value mono" data-testid="dashboard-capital" [style.color]="capitalColor()">{{ capitalDisplay() }}</div>
             <div class="stat-sub">
               @if (capitalPct() !== 0) {
                 <span class="change" [class]="capitalPct() > 0 ? 'up' : 'down'">
@@ -388,6 +390,7 @@ export class DashboardComponent {
   protected readonly userStore    = inject(UserStore);
   protected readonly tradesStore  = inject(TradesStore);
   protected readonly sessionStore = inject(SessionStore);
+  protected readonly selectedAccount = inject(SelectedAccountStore);
   private  readonly billingApi    = inject(BillingApi);
   private  readonly tradesApi     = inject(TradesApi);
   private  readonly analyticsApi  = inject(AnalyticsApi);
@@ -409,21 +412,28 @@ export class DashboardComponent {
   protected readonly calYear  = signal(new Date().getFullYear());
   protected readonly calMonth = signal(new Date().getMonth() + 1);
 
+  // Suffixe query du compte sélectionné (multi-comptes). « Tous » → '' (agrégé). Lu dans les
+  // URL des resources → tout se refetch automatiquement au changement de compte.
+  private accQuery(): string {
+    const id = this.selectedAccount.accountParam();
+    return id ? `?accountId=${encodeURIComponent(id)}` : '';
+  }
+
   private readonly summaryResource = httpResource<{ data: AnalyticsSummary }>(
-    () => `${environment.apiUrl}/analytics/summary`,
+    () => `${environment.apiUrl}/analytics/summary${this.accQuery()}`,
   );
   private readonly equityCurveResource = httpResource<{
     data: { points: EquityPoint[]; startingCapital: number | null };
   }>(() =>
     this.userStore.isStarterOrAbove()
-      ? `${environment.apiUrl}/analytics/equity-curve/current-month`
+      ? `${environment.apiUrl}/analytics/equity-curve/current-month${this.accQuery()}`
       : undefined,
   );
   private readonly bySetupResource = httpResource<{ data: SetupStat[] }>(() =>
-    this.userStore.isStarterOrAbove() ? `${environment.apiUrl}/analytics/by-setup` : undefined,
+    this.userStore.isStarterOrAbove() ? `${environment.apiUrl}/analytics/by-setup${this.accQuery()}` : undefined,
   );
   private readonly byEmotionResource = httpResource<{ data: EmotionStat[] }>(() =>
-    this.userStore.isStarterOrAbove() ? `${environment.apiUrl}/analytics/by-emotion` : undefined,
+    this.userStore.isStarterOrAbove() ? `${environment.apiUrl}/analytics/by-emotion${this.accQuery()}` : undefined,
   );
 
   protected readonly summary = computed(() => this.summaryResource.value()?.data ?? null);
@@ -439,8 +449,27 @@ export class DashboardComponent {
   protected readonly winRateColor = computed(() =>
     (this.summary()?.winRate ?? 0) === 0 ? 'var(--text-2)' : 'var(--blue-bright)',
   );
+  /**
+   * Capital de base, source unique scopée au compte sélectionné — miroir EXACT
+   * de la page Mes comptes :
+   * - compte sélectionné → son `metrics.startingBalance` ;
+   * - « Tous les comptes » → somme des `startingBalance` des comptes non archivés
+   *   (cf. `trackedCapital` dans accounts.component) ;
+   * - FREE / comptes non chargés → fallback sur le capital du profil user.
+   */
+  protected readonly baseCapital = computed(() => {
+    if (!this.userStore.isStarterOrAbove() || !this.selectedAccount.loaded()) {
+      return this.userStore.startingCapital();
+    }
+    const account = this.selectedAccount.selected();
+    if (account) return account.metrics.startingBalance ?? 0;
+    return this.selectedAccount
+      .accounts()
+      .filter((a) => a.status !== 'ARCHIVED')
+      .reduce((s, a) => s + (a.metrics.startingBalance ?? 0), 0);
+  });
   protected readonly currentCapital = computed(() =>
-    this.userStore.startingCapital() + (this.summary()?.totalPnl ?? 0),
+    this.baseCapital() + (this.summary()?.totalPnl ?? 0),
   );
   protected readonly capitalDisplay = computed(() => {
     const capital  = this.currentCapital();
@@ -450,11 +479,11 @@ export class DashboardComponent {
     return `${symbol}${Math.abs(capital * rate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   });
   protected readonly capitalPct = computed(() => {
-    const start = this.userStore.startingCapital();
+    const start = this.baseCapital();
     return start <= 0 ? 0 : ((this.summary()?.totalPnl ?? 0) / start) * 100;
   });
   protected readonly capitalColor = computed(() => {
-    const start = this.userStore.startingCapital();
+    const start = this.baseCapital();
     if (start <= 0) return 'var(--text-2)';
     const pnl = this.summary()?.totalPnl ?? 0;
     return pnl === 0 ? 'var(--text-2)' : pnl > 0 ? 'var(--green)' : 'var(--red)';
@@ -484,8 +513,13 @@ export class DashboardComponent {
   private readonly knownTradesCount = signal(-1);
 
   constructor() {
-    this.tradesStore.loadTrades({ limit: '6' });
-    this.loadMonthlyActivity();
+    // Trades récents + activité du compte sélectionné. L'effect relit `accountParam()` →
+    // refetch automatique au changement de compte ('all' = agrégé, sans param).
+    effect(() => {
+      const accountId = this.selectedAccount.accountParam();
+      this.tradesStore.loadTrades(accountId ? { limit: '6', accountId } : { limit: '6' });
+      this.loadMonthlyActivity(accountId);
+    });
 
     // Recharge summary si un trade est ajouté depuis l'extérieur (wizard)
     effect(() => {
@@ -583,9 +617,9 @@ export class DashboardComponent {
       });
   }
 
-  private loadMonthlyActivity(): void {
+  private loadMonthlyActivity(accountId?: string): void {
     this.monthlyActivityLoading.set(true);
-    this.analyticsApi.getCurrentMonthActivity()
+    this.analyticsApi.getCurrentMonthActivity(accountId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => { this.monthlyActivity.set(res.data); this.monthlyActivityLoading.set(false); },

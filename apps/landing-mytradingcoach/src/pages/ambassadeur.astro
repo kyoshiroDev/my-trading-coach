@@ -1,0 +1,254 @@
+---
+import Base from '../layouts/Base.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import { FEATURES, API_URL } from '../config';
+
+// Gating publication : page en ligne seulement quand le système parrainage est shippé.
+if (!FEATURES.referral) return Astro.redirect('/');
+
+const COMMUNITIES = ['YouTube', 'X / Twitter', 'Discord', 'Twitch', 'Formation', 'Newsletter', 'Autre'];
+---
+
+<Base
+  title="Programme ambassadeur trading | MyTradingCoach"
+  description="Tu animes une communauté de traders ? Recommande MyTradingCoach et touche une commission récurrente de 20 pour cent, versée chaque mois tant que ton filleul reste abonné."
+  canonical="https://www.mytradingcoach.app/ambassadeur"
+  ogUrl="https://www.mytradingcoach.app/ambassadeur"
+>
+  <Nav />
+
+  <main class="amb">
+    <a class="amb-back" href="/">← Retour à l'accueil</a>
+
+    <header class="amb-hero">
+      <span class="sec-label">Programme ambassadeur</span>
+      <h1>Recommande MyTradingCoach à <em>ta communauté</em></h1>
+      <p>
+        Tu animes une chaîne, un Discord, un groupe de traders ? Partage l'outil que tu
+        utilises et touche une commission récurrente sur chaque abonnement.
+      </p>
+    </header>
+
+    <section class="amb-sec">
+      <h2 class="amb-t">Comment ça marche</h2>
+      <div class="amb-steps">
+        <article class="amb-step">
+          <span class="amb-n">01</span>
+          <h3>Ton lien et ton code</h3>
+          <p>On t'attribue un code à ton nom et ton lien de parrainage, suivis dans ton espace.</p>
+        </article>
+        <article class="amb-step">
+          <span class="amb-n">02</span>
+          <h3>Tu le partages</h3>
+          <p>Dans tes vidéos, ton Discord, tes posts. Comme tu parles déjà de tes outils.</p>
+        </article>
+        <article class="amb-step">
+          <span class="amb-n">03</span>
+          <h3>Tu es payé chaque mois</h3>
+          <p>Une commission récurrente tant que tes filleuls restent abonnés. Suivi en temps réel.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="amb-sec">
+      <h2 class="amb-t">Ta commission</h2>
+      <div class="amb-rew">
+        <article class="amb-rew-card">
+          <span class="amb-rew-num" style="color:var(--green)">Sur chaque abonnement</span>
+          <div class="amb-rew-amt" style="color:var(--green)">20 % récurrent</div>
+          <p>Tu touches 20 % sur chaque abonnement souscrit via ton lien, Starter ou Premium, mensuel ou annuel.</p>
+        </article>
+        <article class="amb-rew-card">
+          <span class="amb-rew-num" style="color:var(--blue2)">Versement</span>
+          <div class="amb-rew-amt" style="color:var(--blue2)">Mensuel</div>
+          <p>Ta commission tombe chaque mois tant que ton filleul reste abonné. Pas un paiement unique.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="amb-sec amb-center">
+      <h2 class="amb-t">C'est pour qui</h2>
+      <p class="amb-p">
+        Le programme est sur candidature, réservé aux créateurs et formateurs qui ont une
+        vraie communauté de traders. Pas besoin d'être énorme, juste d'être actif et
+        aligné avec l'outil. La commission est un revenu, tu dois donc avoir une société
+        pour la facturer.
+      </p>
+      <div class="amb-chips">
+        <span class="amb-chip">YouTube</span>
+        <span class="amb-chip">X / Twitter</span>
+        <span class="amb-chip">Discord</span>
+        <span class="amb-chip">Twitch</span>
+        <span class="amb-chip">Formateur</span>
+        <span class="amb-chip">Newsletter</span>
+      </div>
+    </section>
+
+    <section class="amb-sec">
+      <h2 class="amb-t">On t'accompagne</h2>
+      <ul class="amb-kit">
+        <li>Un espace ambassadeur avec le suivi de tes filleuls et de tes gains</li>
+        <li>Un relevé clair de tes commissions chaque mois</li>
+        <li>Un accès direct pour remonter les retours de ta communauté</li>
+      </ul>
+    </section>
+
+    <section class="amb-sec" style="border-bottom:none">
+      <form class="amb-apply" id="amb-form" data-api={API_URL}>
+        <h2 class="amb-apply-t">Candidater</h2>
+        <p class="amb-apply-sub">On regarde chaque demande à la main. Réponse sous quelques jours.</p>
+
+        <div class="amb-field">
+          <label for="amb-name">Nom ou pseudo</label>
+          <input id="amb-name" name="name" type="text" required maxlength="80" placeholder="Ton nom de créateur" />
+        </div>
+        <div class="amb-field">
+          <label for="amb-email">Email</label>
+          <input id="amb-email" name="email" type="email" required placeholder="toi@exemple.com" />
+        </div>
+
+        <div class="amb-field">
+          <label>Où est ta communauté · plusieurs possibles</label>
+          <div class="amb-chipset" id="amb-chipset">
+            {COMMUNITIES.map((c) => (
+              <button type="button" class="amb-chip amb-selchip" data-val={c}>{c}</button>
+            ))}
+          </div>
+        </div>
+
+        <div class="amb-field">
+          <label for="amb-links">Liens vers tes profils</label>
+          <input id="amb-links" name="links" type="text" maxlength="500" placeholder="https://...  (sépare par des virgules si plusieurs)" />
+        </div>
+
+        <label class="amb-check">
+          <input id="amb-company" type="checkbox" />
+          <span>J'ai une société pour facturer mes commissions</span>
+        </label>
+
+        <p class="amb-form-msg" id="amb-msg" role="status"></p>
+
+        <button class="amb-btn" type="submit" id="amb-submit">Envoyer ma candidature</button>
+        <p class="amb-small">
+          En postulant, tu acceptes les conditions du programme. La commission rémunère ta
+          recommandation, elle n'a aucun lien avec des résultats de trading.
+        </p>
+      </form>
+    </section>
+  </main>
+
+  <Footer />
+</Base>
+
+<script>
+  const form = document.getElementById('amb-form') as HTMLFormElement | null;
+  if (form) {
+    const chipset = document.getElementById('amb-chipset')!;
+    chipset.querySelectorAll('.amb-selchip').forEach((c) =>
+      c.addEventListener('click', () => c.classList.toggle('sel')),
+    );
+
+    const msg = document.getElementById('amb-msg')!;
+    const submit = document.getElementById('amb-submit') as HTMLButtonElement;
+    const api = form.dataset.api || 'https://api.mytradingcoach.app/api';
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = (document.getElementById('amb-name') as HTMLInputElement).value.trim();
+      const email = (document.getElementById('amb-email') as HTMLInputElement).value.trim();
+      const links = (document.getElementById('amb-links') as HTMLInputElement).value.trim();
+      const hasCompany = (document.getElementById('amb-company') as HTMLInputElement).checked;
+      const communities = Array.from(chipset.querySelectorAll('.amb-selchip.sel')).map(
+        (c) => (c as HTMLElement).dataset.val as string,
+      );
+
+      if (name.length < 2 || !email) {
+        msg.textContent = 'Renseigne au moins ton nom et un email valide.';
+        msg.className = 'amb-form-msg err';
+        return;
+      }
+
+      submit.disabled = true;
+      submit.textContent = 'Envoi...';
+      msg.textContent = '';
+      msg.className = 'amb-form-msg';
+      try {
+        const res = await fetch(`${api}/public/ambassador-apply`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, communities, links, hasCompany }),
+        });
+        if (!res.ok) throw new Error('fail');
+        form.reset();
+        chipset.querySelectorAll('.amb-selchip.sel').forEach((c) => c.classList.remove('sel'));
+        msg.textContent = 'Candidature envoyée. On revient vers toi sous quelques jours.';
+        msg.className = 'amb-form-msg ok';
+        submit.textContent = 'Candidature envoyée';
+      } catch {
+        msg.textContent = "Envoi impossible pour le moment. Réessaie dans un instant.";
+        msg.className = 'amb-form-msg err';
+        submit.disabled = false;
+        submit.textContent = 'Envoyer ma candidature';
+      }
+    });
+  }
+</script>
+
+<style>
+  .amb { max-width: 880px; margin: 0 auto; padding: 0 5% 40px; }
+  .amb-back { display: inline-block; font-family: var(--mono); font-size: 13px; color: var(--txt3); text-decoration: none; padding: 28px 0 0; }
+  .amb-back:hover { color: var(--txt2); }
+
+  .amb-hero { padding: 44px 0 48px; text-align: center; }
+  .amb h1 { font-family: var(--disp); font-size: clamp(30px, 5vw, 42px); font-weight: 700; letter-spacing: -.02em; line-height: 1.12; margin: 14px auto 0; max-width: 680px; color: var(--txt); }
+  .amb h1 em { font-style: normal; color: var(--blue2); }
+  .amb-hero p { color: var(--txt2); font-size: 17px; max-width: 560px; margin: 18px auto 0; line-height: 1.6; }
+
+  .amb-sec { padding: 42px 0; border-top: 1px solid var(--b); }
+  .amb-center { text-align: center; }
+  .amb-t { font-family: var(--disp); font-size: 22px; font-weight: 700; margin-bottom: 24px; text-align: center; color: var(--txt); }
+  .amb-p { color: var(--txt2); font-size: 14.5px; max-width: 580px; margin: 0 auto 22px; line-height: 1.65; }
+
+  .amb-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .amb-step { background: var(--card); border: 1px solid var(--b); border-radius: 14px; padding: 22px; }
+  .amb-n { font-family: var(--mono); font-size: 12px; color: var(--blue2); letter-spacing: .1em; }
+  .amb-step h3 { font-family: var(--disp); font-size: 16px; font-weight: 600; margin: 10px 0 6px; color: var(--txt); }
+  .amb-step p { color: var(--txt2); font-size: 13.5px; line-height: 1.55; }
+
+  .amb-rew { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .amb-rew-card { background: var(--card); border: 1px solid var(--b); border-radius: 16px; padding: 26px; }
+  .amb-rew-num { font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
+  .amb-rew-amt { font-family: var(--disp); font-weight: 700; font-size: 30px; margin: 8px 0 6px; }
+  .amb-rew-card p { color: var(--txt2); font-size: 14px; line-height: 1.55; }
+
+  .amb-chips { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .amb-chip { font-family: var(--mono); font-size: 12.5px; color: var(--txt2); background: var(--card); border: 1px solid var(--b); border-radius: 9px; padding: 9px 14px; }
+
+  .amb-kit { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 720px; margin: 0 auto; list-style: none; padding: 0; }
+  .amb-kit li { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--txt2); line-height: 1.55; }
+  .amb-kit li::before { content: '→'; color: var(--blue2); flex-shrink: 0; }
+
+  .amb-apply { background: var(--card); border: 1px solid var(--b); border-radius: 18px; padding: 30px; max-width: 560px; margin: 0 auto; }
+  .amb-apply-t { font-family: var(--disp); font-size: 22px; font-weight: 700; text-align: center; margin-bottom: 4px; color: var(--txt); }
+  .amb-apply-sub { text-align: center; color: var(--txt2); font-size: 14px; margin-bottom: 22px; }
+  .amb-field { margin-bottom: 14px; }
+  .amb-field label { display: block; font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--txt3); margin-bottom: 6px; }
+  .amb-field input { width: 100%; background: var(--bg3); border: 1px solid var(--b); border-radius: 10px; padding: 11px 13px; color: var(--txt); font-family: var(--body); font-size: 16px; }
+  .amb-field input:focus { outline: none; border-color: var(--blue); }
+  .amb-chipset { display: flex; flex-wrap: wrap; gap: 8px; }
+  .amb-selchip { cursor: pointer; user-select: none; transition: .15s; font-family: var(--mono); font-size: 12.5px; color: var(--txt2); background: var(--card); border: 1px solid var(--b); border-radius: 9px; padding: 9px 14px; }
+  .amb-selchip.sel { background: rgba(59,130,246,.15); border-color: var(--blue); color: var(--blue2); }
+  .amb-check { display: flex; gap: 10px; align-items: center; font-size: 14px; color: var(--txt2); margin: 6px 0 2px; cursor: pointer; }
+  .amb-check input { width: 16px; height: 16px; accent-color: var(--blue); flex-shrink: 0; }
+  .amb-btn { width: 100%; font-family: var(--disp); font-weight: 600; font-size: 15px; padding: 13px; border-radius: 11px; border: none; background: var(--blue); color: #fff; cursor: pointer; margin-top: 10px; }
+  .amb-btn:disabled { opacity: .6; cursor: default; }
+  .amb-small { font-size: 12px; color: var(--txt3); text-align: center; margin-top: 14px; line-height: 1.5; }
+  .amb-form-msg { font-size: 13px; text-align: center; min-height: 18px; margin-top: 8px; }
+  .amb-form-msg.ok { color: var(--green); }
+  .amb-form-msg.err { color: var(--red); }
+
+  @media (max-width: 720px) {
+    .amb-steps, .amb-rew, .amb-kit { grid-template-columns: 1fr; }
+  }
+</style>

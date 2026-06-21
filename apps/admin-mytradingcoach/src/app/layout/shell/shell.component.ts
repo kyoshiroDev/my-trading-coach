@@ -3,7 +3,7 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import {
   LucideAngularModule,
   LayoutDashboard, Users, CreditCard, Activity, Database,
-  TrendingUp, Brain, Mail, LogOut, Handshake, Menu, UserX,
+  TrendingUp, Brain, Mail, LogOut, Handshake, Menu, UserX, Gift,
 } from 'lucide-angular';
 import { AdminAuthService } from '../../core/auth/admin-auth.service';
 
@@ -69,6 +69,9 @@ import { AdminAuthService } from '../../core/auth/admin-auth.service';
           <a class="nav-item" routerLink="/ambassadeurs" routerLinkActive="active" (click)="navOpen.set(false)">
             <lucide-icon [img]="HandshakeIcon" [size]="14" /> Ambassadeurs
           </a>
+          <a class="nav-item" routerLink="/parrainage" routerLinkActive="active" (click)="navOpen.set(false)">
+            <lucide-icon [img]="GiftIcon" [size]="14" /> Parrainage
+          </a>
         </div>
 
         <div class="sidebar-footer">
@@ -119,4 +122,5 @@ export class ShellComponent {
   protected readonly MailIcon      = Mail;
   protected readonly LogOutIcon    = LogOut;
   protected readonly HandshakeIcon = Handshake;
+  protected readonly GiftIcon      = Gift;
 }

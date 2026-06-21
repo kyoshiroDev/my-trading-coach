@@ -17,9 +17,11 @@ import { DiscordModule } from '../modules/discord/discord.module';
 import { VpsModule } from '../modules/vps/vps.module';
 import { AdminModule } from '../modules/admin/admin.module';
 import { SessionModule } from '../modules/session/session.module';
+import { AccountsModule } from '../modules/accounts/accounts.module';
 import { DailyRecapModule } from '../modules/daily-recap/daily-recap.module';
 import { EcoCalendarModule } from '../modules/eco-calendar/eco-calendar.module';
 import { AmbassadorModule } from '../modules/ambassador/ambassador.module';
+import { ReferralModule } from '../modules/referral/referral.module';
 import { PublicModule } from '../modules/public/public.module';
 import { ActivityTrackingModule } from '../modules/activity-tracking/activity-tracking.module';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -48,8 +50,10 @@ import { AppController } from './app.controller';
         password: process.env['REDIS_PASSWORD'],
       },
     }),
-    // Crons uniquement sur le worker désigné (IS_CRON_WORKER=true) ou en dev
-    ...(process.env['IS_CRON_WORKER'] !== 'false'
+    // Fail-safe cluster : les crons s'activent UNIQUEMENT en opt-in explicite
+    // (IS_CRON_WORKER=true), à poser sur LE worker cron dédié. Par défaut (variable
+    // absente) → aucun cron, donc jamais de recap 17h30 & co envoyés N fois.
+    ...(process.env['IS_CRON_WORKER'] === 'true'
       ? [ScheduleModule.forRoot()]
       : []),
     SharedModule,
@@ -65,9 +69,11 @@ import { AppController } from './app.controller';
     VpsModule,
     AdminModule,
     SessionModule,
+    AccountsModule,
     DailyRecapModule,
     EcoCalendarModule,
     AmbassadorModule,
+    ReferralModule,
     PublicModule,
     ActivityTrackingModule,
   ],
