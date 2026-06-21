@@ -49,6 +49,13 @@
         <div class="stat-value" [class.text-yellow]="atRiskCount() > 0">{{ atRiskCount() }}</div>
         <div class="stat-sub">proche du drawdown</div>
       </div>
+      <div class="stat-card" style="--c:var(--cyan)">
+        <div class="stat-label"><lucide-icon [img]="LayersIcon" [size]="13" />Comptes</div>
+        <div class="stat-value">{{ activeAccountsCount() }}</div>
+        <div class="stat-sub" data-testid="account-quota">
+          {{ accountLimit() === null ? 'actifs · illimité' : 'actifs / ' + accountLimit() + ' max' }}
+        </div>
+      </div>
     </div>
 
     <!-- Disclaimer UNIQUE (au lieu d'être répété sur chaque carte prop firm) -->
@@ -70,8 +77,7 @@
         <div class="acct-card"
              [style.--ac]="accentVar(a)"
              [attr.data-testid]="'account-card-' + a.id"
-             [class.is-archived]="a.status === 'ARCHIVED'"
-             [class.is-selected]="a.id === store.selectedAccountId()">
+             [class.is-archived]="a.status === 'ARCHIVED'">
           <div class="acct-top">
             <div class="acct-ic"><lucide-icon [img]="typeIcon(a.type)" [size]="18" /></div>
             <div class="acct-id">
@@ -82,9 +88,6 @@
                 <span class="acct-status" [attr.data-testid]="'account-status-' + a.id">
                   <span class="dot" [style.background]="dotColor(a)"></span> {{ statusLabel(a.status) }}
                 </span>
-                @if (a.id === store.selectedAccountId()) {
-                  <span class="acct-active-mark" [attr.data-testid]="'account-selected-' + a.id">● Actif</span>
-                }
               </div>
             </div>
             <div class="acct-menu-wrap">
@@ -190,9 +193,6 @@
             <div class="plus"><lucide-icon [img]="PlusIcon" [size]="24" /></div>
             <div>Ajouter un compte</div>
             <div class="acct-add-sub">prop firm ou perso</div>
-            <div class="acct-add-quota" data-testid="account-quota">
-              {{ activeAccountsCount() }}{{ accountLimit() !== null ? ' / ' + accountLimit() : '' }} compte(s)@if (accountLimit() === null) { · illimité }
-            </div>
           </button>
         }
       }

@@ -13,7 +13,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   LucideAngularModule,
   User, Target, Building2, FlaskConical,
-  Wallet, TrendingUp, List, Eye,
+  Wallet, TrendingUp, List, Eye, Layers,
   ClipboardList, MoreHorizontal, Info, Plus, Lock,
   Pencil, Trash2, X, Briefcase,
 } from 'lucide-angular';
@@ -149,6 +149,7 @@ export class AccountsComponent implements OnInit {
   protected readonly TrendingUpIcon = TrendingUp;
   protected readonly ListIcon = List;
   protected readonly EyeIcon = Eye;
+  protected readonly LayersIcon = Layers;
   protected readonly ClipboardListIcon = ClipboardList;
   protected readonly MoreHorizontalIcon = MoreHorizontal;
   protected readonly InfoIcon = Info;

@@ -63,10 +63,11 @@
 /* ── Vue agrégée ────────────────────────────────────────────────────────── */
 .stats-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 16px;
   margin-bottom: 22px;
 }
+@media (max-width: 1200px) { .stats-row { grid-template-columns: repeat(3, 1fr); } }
 .stat-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -147,23 +148,6 @@
 }
 .acct-card:hover { border-color: var(--border-hover); }
 .acct-card.is-archived { opacity: .6; }
-/* Compte actif (sélecteur) : bordure accent + léger glow, discret mais visible. */
-.acct-card.is-selected {
-  border-color: var(--blue);
-  box-shadow: 0 0 0 1px var(--blue), 0 0 18px var(--blue-glow);
-}
-.acct-active-mark {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 500;
-  letter-spacing: .4px;
-  text-transform: uppercase;
-  padding: 2px 7px;
-  border-radius: 5px;
-  background: var(--blue-glow);
-  color: var(--blue-bright);
-  border: 1px solid rgba(59,130,246,.3);
-}
 .acct-top { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 14px; }
 .acct-ic {
   width: 38px; height: 38px;
@@ -289,15 +273,6 @@
 .acct-add:hover { border-color: var(--blue); color: var(--blue-bright); background: var(--blue-glow); }
 .acct-add .plus { display: flex; }
 .acct-add-sub { font-size: 11px; color: var(--text-3); }
-/* Indicateur de quota, collé à l'action d'ajout (remplace l'ancienne pastille flottante). */
-.acct-add-quota {
-  margin-top: 10px;
-  border-top: 1px solid var(--border);
-  padding-top: 10px;
-  font: 500 11px var(--font-mono);
-  color: var(--text-3);
-  letter-spacing: .3px;
-}
 .acct-add.is-limit { border-color: rgba(245,158,11,.35); color: var(--yellow); }
 .acct-add.is-limit:hover { border-color: var(--yellow); background: var(--yellow-dim); color: var(--yellow); }
 
