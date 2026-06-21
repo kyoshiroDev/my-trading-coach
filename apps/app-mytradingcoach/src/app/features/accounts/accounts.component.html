@@ -12,7 +12,7 @@
   @if (!userStore.isStarterOrAbove()) {
     <!-- ── Upsell (FREE) ── -->
     <div class="acct-upsell" data-testid="accounts-upsell">
-      <div class="upsell-ic">💼</div>
+      <div class="upsell-ic"><lucide-icon [img]="BriefcaseIcon" [size]="36" /></div>
       <h2 class="upsell-title">Plusieurs comptes — à partir du plan Starter</h2>
       <p class="upsell-sub">
         Suis tes stats par compte (prop firms, comptes perso), filtre toute l'app par compte,
@@ -28,28 +28,36 @@
     <!-- ── Vue agrégée ── -->
     <div class="stats-row">
       <div class="stat-card" style="--c:var(--blue)">
-        <div class="stat-label">Capital suivi</div>
+        <div class="stat-label"><lucide-icon [img]="WalletIcon" [size]="13" />Capital suivi</div>
         <div class="stat-value">{{ trackedCapital() | number:'1.0-0' }} $</div>
         <div class="stat-sub">{{ activeAccountsCount() }} compte(s) actif(s)</div>
       </div>
       <div class="stat-card" style="--c:var(--green)">
-        <div class="stat-label">P&amp;L cumulé</div>
+        <div class="stat-label"><lucide-icon [img]="TrendingUpIcon" [size]="13" />P&amp;L cumulé</div>
         <div class="stat-value" [class.text-green]="totalPnl() >= 0" [class.text-red]="totalPnl() < 0">
           {{ totalPnl() >= 0 ? '+' : '' }}{{ totalPnl() | number:'1.0-0' }} $
         </div>
         <div class="stat-sub">tous comptes · estimé</div>
       </div>
-      <div class="stat-card" style="--c:var(--blue)">
-        <div class="stat-label">Trades cumulés</div>
+      <div class="stat-card" style="--c:var(--purple)">
+        <div class="stat-label"><lucide-icon [img]="ListIcon" [size]="13" />Trades cumulés</div>
         <div class="stat-value">{{ totalTrades() }}</div>
         <div class="stat-sub">trades loggés</div>
       </div>
       <div class="stat-card" style="--c:var(--yellow)">
-        <div class="stat-label">À surveiller</div>
+        <div class="stat-label"><lucide-icon [img]="EyeIcon" [size]="13" />À surveiller</div>
         <div class="stat-value" [class.text-yellow]="atRiskCount() > 0">{{ atRiskCount() }}</div>
         <div class="stat-sub">proche du drawdown</div>
       </div>
     </div>
+
+    <!-- Disclaimer UNIQUE (au lieu d'être répété sur chaque carte prop firm) -->
+    @if (hasPropAccount()) {
+      <div class="global-note">
+        <lucide-icon [img]="InfoIcon" [size]="15" />
+        <span><b>Règles prop firm estimées</b> d'après tes trades loggés dans MyTradingCoach, pas l'equity temps réel ni le calcul officiel des firms (positions ouvertes, fuseau, trailing intraday). Le statut de chaque compte reste piloté par toi.</span>
+      </div>
+    }
 
     <!-- Quota (le sélecteur de compte vit désormais dans le topbar, source unique) -->
     <div class="acct-bar">
@@ -69,11 +77,13 @@
 
       @for (a of store.accounts(); track a.id) {
         <div class="acct-card"
+             [style.--ac]="accentVar(a)"
              [attr.data-testid]="'account-card-' + a.id"
              [class.is-archived]="a.status === 'ARCHIVED'"
+             [class.is-perso]="a.type === 'PERSONAL'"
              [class.is-selected]="a.id === store.selectedAccountId()">
           <div class="acct-top">
-            <div class="acct-ic">{{ typeIcon(a.type) }}</div>
+            <div class="acct-ic"><lucide-icon [img]="typeIcon(a.type)" [size]="18" /></div>
             <div class="acct-id">
               <div class="acct-name">{{ a.label }}</div>
               <div class="acct-meta">
@@ -88,11 +98,11 @@
               </div>
             </div>
             <div class="acct-menu-wrap">
-              <button class="acct-menu" (click)="toggleMenu(a.id)" [attr.data-testid]="'account-menu-' + a.id">⋯</button>
+              <button class="acct-menu" (click)="toggleMenu(a.id)" [attr.data-testid]="'account-menu-' + a.id"><lucide-icon [img]="MoreHorizontalIcon" [size]="18" /></button>
               @if (menuOpenId() === a.id) {
                 <div class="menu-pop">
-                  <button class="menu-item" (click)="openEdit(a)">✏️ Modifier</button>
-                  <button class="menu-item danger" (click)="confirmDelete(a)">🗑️ Supprimer</button>
+                  <button class="menu-item" (click)="openEdit(a)"><lucide-icon [img]="PencilIcon" [size]="13" /> Modifier</button>
+                  <button class="menu-item danger" (click)="confirmDelete(a)"><lucide-icon [img]="TrashIcon" [size]="13" /> Supprimer</button>
                 </div>
               }
             </div>
@@ -120,16 +130,19 @@
           </div>
 
           @if (a.metrics.objective || a.metrics.drawdown) {
-            <div class="rules-head">📋 Règles prop firm <span class="est-pill">estimé</span></div>
+            <div class="rules-head"><lucide-icon [img]="ClipboardListIcon" [size]="12" /> Règles prop firm <span class="est-pill">estimé</span></div>
 
             @if (a.metrics.objective; as obj) {
-              <div class="rule">
-                <div class="rule-top">
-                  <span class="rule-name">Objectif</span>
+              <div class="obj">
+                <div class="obj-top">
+                  <span class="obj-name">{{ objLabel(a) }}</span>
                   @if (objReached(a)) {
-                    <span class="rule-val text-green">atteint</span>
+                    <div class="obj-right"><span class="obj-pct done">atteint</span></div>
                   } @else {
-                    <span class="rule-val">{{ obj.current | number:'1.0-0' }} $ / {{ obj.target | number:'1.0-0' }} $</span>
+                    <div class="obj-right">
+                      <span class="obj-val">{{ obj.current | number:'1.0-0' }} / {{ obj.target | number:'1.0-0' }} $</span>
+                      <span class="obj-pct">{{ objPct(a) }} %</span>
+                    </div>
                   }
                 </div>
                 <div class="bar-track">
@@ -149,15 +162,16 @@
                     <span class="rule-val" [style.color]="ddColor(a)">{{ dd.margin | number:'1.0-0' }} $ restants</span>
                   }
                 </div>
-                <div class="bar-track">
+                <div class="bar-track sm">
                   <div class="bar-fill" [style.width.%]="ddWidth(a)" [style.background]="ddColor(a)"></div>
                 </div>
               </div>
             }
-
-            <div class="rule-disclaimer">{{ a.metrics.disclaimer }}</div>
           } @else {
-            <div class="rules-head muted">📋 Pas de règles (compte perso)</div>
+            <div class="perso-note">
+              <lucide-icon [img]="WalletIcon" [size]="15" />
+              <span>Compte perso — suivi P&amp;L et activité. Les règles prop firm s'affichent sur les comptes éval/funded.</span>
+            </div>
           }
         </div>
       }
@@ -165,13 +179,13 @@
       <!-- Ajouter / quota atteint -->
       @if (atLimit()) {
         <button class="acct-add is-limit" (click)="showPlanModal.set(true)" data-testid="add-account-limit">
-          <div class="plus">🔒</div>
+          <div class="plus"><lucide-icon [img]="LockIcon" [size]="24" /></div>
           <div>Limite de {{ accountLimit() }} compte(s) atteinte</div>
           <div class="acct-add-sub">Passe au Premium pour des comptes illimités</div>
         </button>
       } @else {
         <button class="acct-add" (click)="openCreate()" data-testid="add-account-tile">
-          <div class="plus">+</div>
+          <div class="plus"><lucide-icon [img]="PlusIcon" [size]="24" /></div>
           <div>Ajouter un compte</div>
           <div class="acct-add-sub">prop firm ou perso</div>
         </button>
@@ -190,7 +204,7 @@
          (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
       <div class="modal-head">
         <h3 class="modal-title">{{ editingId() ? 'Modifier le compte' : 'Nouveau compte' }}</h3>
-        <button class="modal-x" (click)="closeForm()">✕</button>
+        <button class="modal-x" (click)="closeForm()"><lucide-icon [img]="XIcon" [size]="16" /></button>
       </div>
 
       <div class="modal-body">

@@ -10,6 +10,13 @@ import {
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  LucideAngularModule,
+  User, Target, Building2, FlaskConical,
+  Wallet, TrendingUp, List, Eye,
+  ClipboardList, MoreHorizontal, Info, Plus, Lock,
+  Pencil, Trash2, X, Briefcase,
+} from 'lucide-angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
@@ -57,7 +64,7 @@ function emptyForm(): AccountFormState {
   selector: 'mtc-accounts',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DecimalPipe, FormsModule, TopbarComponent, PlanModalComponent],
+  imports: [DecimalPipe, FormsModule, LucideAngularModule, TopbarComponent, PlanModalComponent],
   templateUrl: './accounts.component.html',
   styleUrl: './accounts.component.css',
 })
@@ -100,6 +107,10 @@ export class AccountsComponent implements OnInit {
         return dd && (dd.breached || dd.pct <= 0.25);
       }).length,
   );
+  // Au moins un compte prop firm (éval / funded) → affiche la note disclaimer globale unique.
+  protected readonly hasPropAccount = computed(() =>
+    this.store.accounts().some((a) => a.type === 'EVALUATION' || a.type === 'FUNDED'),
+  );
 
   // ── Quota par plan (Starter 3 · Premium illimité). null = illimité. ──────
   // Seuls les comptes ACTIVE consomment le quota (aligné backend).
@@ -115,13 +126,33 @@ export class AccountsComponent implements OnInit {
     }
   }
 
+  // ── Icônes lucide ────────────────────────────────────────────────────────
+  protected readonly UserIcon = User;
+  protected readonly TargetIcon = Target;
+  protected readonly Building2Icon = Building2;
+  protected readonly FlaskIcon = FlaskConical;
+  protected readonly WalletIcon = Wallet;
+  protected readonly TrendingUpIcon = TrendingUp;
+  protected readonly ListIcon = List;
+  protected readonly EyeIcon = Eye;
+  protected readonly ClipboardListIcon = ClipboardList;
+  protected readonly MoreHorizontalIcon = MoreHorizontal;
+  protected readonly InfoIcon = Info;
+  protected readonly PlusIcon = Plus;
+  protected readonly LockIcon = Lock;
+  protected readonly PencilIcon = Pencil;
+  protected readonly TrashIcon = Trash2;
+  protected readonly XIcon = X;
+  protected readonly BriefcaseIcon = Briefcase;
+
   // ── Helpers d'affichage ─────────────────────────────────────────────────
-  protected typeIcon(t: AccountType): string {
+  // Icône lucide selon le type de compte.
+  protected typeIcon(t: AccountType) {
     switch (t) {
-      case 'FUNDED': return '🏦';
-      case 'EVALUATION': return '🎯';
-      case 'DEMO': return '🎮';
-      default: return '🪙';
+      case 'FUNDED': return this.Building2Icon;
+      case 'EVALUATION': return this.TargetIcon;
+      case 'DEMO': return this.FlaskIcon;
+      default: return this.UserIcon;
     }
   }
   protected typeLabel(t: AccountType): string {
@@ -179,6 +210,25 @@ export class AccountsComponent implements OnInit {
 
   protected isPropFirm(t: AccountType): boolean {
     return t === 'EVALUATION' || t === 'FUNDED';
+  }
+
+  // Objectif en % (pastille). FUNDED → objectif "payout", éval/passed → objectif d'éval.
+  protected objPct(a: TradingAccount): number {
+    return Math.round((a.metrics.objective?.pct ?? 0) * 100);
+  }
+  protected objLabel(a: TradingAccount): string {
+    return a.type === 'FUNDED' ? 'Objectif payout' : 'Objectif';
+  }
+
+  // Couleur d'accent stable par compte (identité visuelle, pas l'état). Perso → vert ;
+  // sinon dérivée d'un hash du broker/label (même firm = même couleur, stable au reorder).
+  private readonly ACCENT_VARS = ['--blue', '--yellow', '--purple', '--cyan', '--green', '--red', '--blue-bright'];
+  protected accentVar(a: TradingAccount): string {
+    if (a.type === 'PERSONAL') return 'var(--green)';
+    const key = a.broker ?? a.label ?? a.id;
+    let h = 0;
+    for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+    return `var(${this.ACCENT_VARS[h % this.ACCENT_VARS.length]})`;
   }
 
   // ── Menu carte ──────────────────────────────────────────────────────────
