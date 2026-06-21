@@ -21,11 +21,16 @@ export class DebriefAgent {
     data: Parameters<typeof buildDebriefPrompt>[0],
     userId?: string,
   ): Promise<unknown> {
+    // Borne le budget de sortie : base + marge par compte, plafonné (un seul appel,
+    // coût maîtrisé même avec plusieurs comptes).
+    const accountCount = data.accounts?.length ?? 1;
+    const maxTokens = Math.min(4096, 1600 + accountCount * 500);
+
     let response: Anthropic.Message;
     try {
       response = await this.anthropic.messages.create({
         model: 'claude-sonnet-4-6',
-        max_tokens: 2048,
+        max_tokens: maxTokens,
         system: [
           {
             type: 'text',
