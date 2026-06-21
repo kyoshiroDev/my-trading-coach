@@ -81,10 +81,24 @@ export class AccountsComponent implements OnInit {
   protected readonly menuOpenId = signal<string | null>(null);
   protected readonly form = signal<AccountFormState>(emptyForm());
 
-  // ── Vue agrégée (tous comptes non archivés) ─────────────────────────────
-  private readonly visibleAccounts = computed(() =>
-    this.store.accounts().filter((a) => a.status !== 'ARCHIVED'),
-  );
+  // ── Vue agrégée (source des KPI), scopée par la sélection du topbar ──────
+  // null = « Tous les comptes » → tous (non archivés) ; sinon le seul compte choisi.
+  protected readonly visibleAccounts = computed(() => {
+    const sel = this.store.selectedAccountId();
+    const base = this.store.accounts().filter((a) => a.status !== 'ARCHIVED');
+    return sel ? base.filter((a) => a.id === sel) : base;
+  });
+  // Cartes affichées dans la grille : toutes, ou la seule sélectionnée.
+  protected readonly displayedAccounts = computed(() => {
+    const sel = this.store.selectedAccountId();
+    const all = this.store.accounts();
+    return sel ? all.filter((a) => a.id === sel) : all;
+  });
+  // Nom du compte sélectionné (sous-libellé KPI P&L), null en vue « Tous les comptes ».
+  protected readonly selectedAccountName = computed(() => {
+    const sel = this.store.selectedAccountId();
+    return sel ? (this.store.accounts().find((a) => a.id === sel)?.label ?? null) : null;
+  });
   // Quota : seuls les comptes ACTIVE consomment un slot (aligné backend). PASSED /
   // FAILED / ARCHIVED le libèrent → c'est ce count qu'on affiche et qui borne le quota.
   protected readonly activeAccountsCount = computed(

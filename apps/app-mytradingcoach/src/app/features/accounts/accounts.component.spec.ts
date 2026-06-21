@@ -44,6 +44,7 @@ function setup(opts: { premium: boolean; accounts: TradingAccount[]; limit?: num
     accounts: accountsSig,
     isLoading: signal(false),
     loaded: signal(true),
+    selectedAccountId: signal<string | null>(null), // null = « Tous les comptes »
     load: vi.fn(),
   };
   // limit: null = illimité (Premium par défaut dans les tests existants).
@@ -107,6 +108,30 @@ describe('AccountsComponent — logique', () => {
       ],
     });
     expect((c['atRiskCount'] as () => number)()).toBe(2);
+  });
+
+  it('compte sélectionné → grille + KPI scopés sur ce seul compte', () => {
+    const m = (startingBalance: number, realizedPnl: number, tradesCount: number) => ({
+      startingBalance, realizedPnl, currentBalance: startingBalance + realizedPnl,
+      tradesCount, winRate: null, bestDay: null, worstDay: null,
+      objective: null, drawdown: null, estimated: true as const, disclaimer: '',
+    });
+    const c = setup({
+      premium: true,
+      accounts: [
+        acct({ id: 'a', label: 'Apex 50K', metrics: m(50000, 1200, 10) }),
+        acct({ id: 'b', label: 'FTMO 100K', metrics: m(100000, 500, 5) }),
+      ],
+    });
+    (TestBed.inject(SelectedAccountStore) as unknown as {
+      selectedAccountId: { set: (v: string | null) => void };
+    }).selectedAccountId.set('a');
+
+    expect((c['displayedAccounts'] as () => TradingAccount[])().map((a) => a.id)).toEqual(['a']);
+    expect((c['visibleAccounts'] as () => TradingAccount[])().length).toBe(1);
+    expect((c['trackedCapital'] as () => number)()).toBe(50000); // pas 150000
+    expect((c['totalTrades'] as () => number)()).toBe(10); // pas 15
+    expect((c['selectedAccountName'] as () => string | null)()).toBe('Apex 50K');
   });
 
   it('barre objectif : largeur = pct, atteint à 100 %', () => {
