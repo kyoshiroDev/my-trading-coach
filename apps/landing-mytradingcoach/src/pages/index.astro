@@ -1,5 +1,5 @@
 ---
-import { API_URL } from '../config';
+import { API_URL, FEATURES } from '../config';
 import Base from '../layouts/Base.astro';
 import Nav from '../components/Nav.astro';
 import Hero from '../components/Hero.astro';
@@ -7,8 +7,10 @@ import Moments from '../components/Moments.astro';
 import Problem from '../components/Problem.astro';
 import DayTimeline from '../components/DayTimeline.astro';
 import Features from '../components/Features.astro';
+import MultiComptes from '../components/MultiComptes.astro';
 import Compare from '../components/Compare.astro';
 import Pricing from '../components/Pricing.astro';
+import Referral from '../components/Referral.astro';
 import Testimonials from '../components/Testimonials.astro';
 import FAQ from '../components/FAQ.astro';
 import CtaFinal from '../components/CtaFinal.astro';
@@ -64,8 +66,10 @@ try {
   <Problem />
   <DayTimeline />
   <Features />
+  {FEATURES.multiAccounts && <MultiComptes />}
   <Compare />
   <Pricing />
+  {FEATURES.referral && <Referral />}
   <Testimonials traders={traders} />
   <FAQ />
   <CtaFinal />

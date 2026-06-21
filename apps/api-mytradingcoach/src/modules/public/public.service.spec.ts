@@ -4,6 +4,7 @@ import { Role } from '@prisma/client';
 import { PublicService } from './public.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
+import { ResendService } from '../resend/resend.service';
 
 const mockPrisma = { user: { count: vi.fn() } };
 const mockRedisService = {
@@ -12,6 +13,7 @@ const mockRedisService = {
     setex: vi.fn().mockResolvedValue('OK'),
   },
 };
+const mockResend = { sendAmbassadorApplication: vi.fn().mockResolvedValue(undefined) };
 
 describe('PublicService', () => {
   let service: PublicService;
@@ -23,6 +25,7 @@ describe('PublicService', () => {
         PublicService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: RedisService, useValue: mockRedisService },
+        { provide: ResendService, useValue: mockResend },
       ],
     }).compile();
     service = module.get(PublicService);
@@ -58,5 +61,28 @@ describe('PublicService', () => {
     const result = await service.getTradersCount();
 
     expect(result).toBe(9);
+  });
+
+  describe('applyAmbassador (candidature landing)', () => {
+    it('agrège audience + liens et envoie le mail de candidature', async () => {
+      const res = await service.applyAmbassador({
+        name: '  Val  ', email: 'val@test.com',
+        communities: ['YouTube', 'Discord'], links: 'https://youtube.com/val', hasCompany: true,
+      });
+      expect(res).toEqual({ success: true });
+      expect(mockResend.sendAmbassadorApplication).toHaveBeenCalledWith({
+        name: 'Val',
+        email: 'val@test.com',
+        socials: 'YouTube, Discord · https://youtube.com/val',
+        message: 'Société pour facturer : oui',
+      });
+    });
+
+    it('sans société → message « non / à confirmer », socials fallback', async () => {
+      await service.applyAmbassador({ name: 'Lea', email: 'lea@test.com' });
+      const arg = mockResend.sendAmbassadorApplication.mock.calls[0][0];
+      expect(arg.socials).toBe('(non renseigné)');
+      expect(arg.message).toBe('Société pour facturer : non / à confirmer');
+    });
   });
 });
