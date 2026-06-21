@@ -154,8 +154,8 @@
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 2px;
-  background: linear-gradient(90deg, var(--ac, var(--blue)), transparent 75%);
-  opacity: .7;
+  background: linear-gradient(90deg, transparent, var(--ac, var(--blue)), transparent);
+  opacity: .5;
   border-top-left-radius: 14px;
   border-top-right-radius: 14px;
 }
