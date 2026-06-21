@@ -839,6 +839,21 @@ export class StripeService {
   }
 
   /**
+   * Wrapper public fin pour l'outillage (script d'ensure). Réutilise la logique
+   * existante `ensureReferralCoupon` (retrieve-or-create, paramètres inchangés)
+   * puis retourne le coupon Stripe pour pouvoir l'afficher. Pas d'effet runtime nouveau.
+   */
+  async ensureReferralCouponNow(): Promise<Stripe.Coupon> {
+    await this.ensureReferralCoupon();
+    return this.stripe.coupons.retrieve(REFERRAL_COUPON_ID);
+  }
+
+  /** Lecture seule : retourne le coupon de parrainage s'il existe déjà, sinon null. */
+  async findReferralCoupon(): Promise<Stripe.Coupon | null> {
+    return this.stripe.coupons.retrieve(REFERRAL_COUPON_ID).catch(() => null);
+  }
+
+  /**
    * Liste les abonnements actifs + en essai chez Stripe (LECTURE SEULE).
    * Paginé et BORNÉ (max 20 pages × 100 par statut) — pour la réconciliation admin.
    */
