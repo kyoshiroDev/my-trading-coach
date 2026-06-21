@@ -114,20 +114,6 @@
 .global-note lucide-icon { flex-shrink: 0; margin-top: 2px; color: var(--yellow); }
 .global-note b { color: var(--text-2); font-weight: 600; }
 
-/* ── Sélecteur ──────────────────────────────────────────────────────────── */
-.acct-bar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
-.acct-bar-lbl { font-size: 13px; font-weight: 600; color: var(--text-2); }
-.acct-quota {
-  margin-left: auto;
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  color: var(--text-3);
-  padding: 4px 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-.acct-quota.is-limit { color: var(--yellow); border-color: rgba(245,158,11,.3); }
-
 .acct-empty { color: var(--text-3); font-size: 13px; padding: 12px 0; }
 
 /* ── Grille de comptes ──────────────────────────────────────────────────── */
@@ -303,6 +289,15 @@
 .acct-add:hover { border-color: var(--blue); color: var(--blue-bright); background: var(--blue-glow); }
 .acct-add .plus { display: flex; }
 .acct-add-sub { font-size: 11px; color: var(--text-3); }
+/* Indicateur de quota, collé à l'action d'ajout (remplace l'ancienne pastille flottante). */
+.acct-add-quota {
+  margin-top: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  font: 500 11px var(--font-mono);
+  color: var(--text-3);
+  letter-spacing: .3px;
+}
 .acct-add.is-limit { border-color: rgba(245,158,11,.35); color: var(--yellow); }
 .acct-add.is-limit:hover { border-color: var(--yellow); background: var(--yellow-dim); color: var(--yellow); }
 

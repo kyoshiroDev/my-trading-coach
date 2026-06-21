@@ -59,18 +59,6 @@
       </div>
     }
 
-    <!-- Quota (le sélecteur de compte vit désormais dans le topbar, source unique).
-         Masqué en vue mono-compte : seulement pertinent sur « Tous les comptes ». -->
-    @if (!store.selectedAccountId()) {
-      <div class="acct-bar">
-        <span class="acct-quota" data-testid="account-quota"
-              [class.is-limit]="atLimit()">
-          {{ activeAccountsCount() }}{{ accountLimit() !== null ? ' / ' + accountLimit() : '' }} compte(s)
-          @if (accountLimit() === null) { · illimité }
-        </span>
-      </div>
-    }
-
     @if (store.isLoading() && store.accounts().length === 0) {
       <div class="acct-empty">Chargement des comptes…</div>
     }
@@ -202,6 +190,9 @@
             <div class="plus"><lucide-icon [img]="PlusIcon" [size]="24" /></div>
             <div>Ajouter un compte</div>
             <div class="acct-add-sub">prop firm ou perso</div>
+            <div class="acct-add-quota" data-testid="account-quota">
+              {{ activeAccountsCount() }}{{ accountLimit() !== null ? ' / ' + accountLimit() : '' }} compte(s)@if (accountLimit() === null) { · illimité }
+            </div>
           </button>
         }
       }
