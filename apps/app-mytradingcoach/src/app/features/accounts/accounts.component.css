@@ -7,10 +7,13 @@
 
 .content {
   padding: 28px;
-  max-width: 1760px;
-  margin-inline: auto; /* centré sur écran ultra-large, plein cadre sinon */
+  max-width: none; /* pleine largeur de .main-content, pas de marges latérales */
   overflow-y: auto;
+  /* Scroll sans barre visible, comme .main-content (le reste de l'app). */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE / Edge */
 }
+.content::-webkit-scrollbar { display: none; } /* WebKit */
 
 .btn {
   display: inline-flex;
@@ -130,12 +133,12 @@
 /* ── Grille de comptes ──────────────────────────────────────────────────── */
 .acct-grid {
   display: grid;
-  /* auto-fit (et non auto-fill) : les cards s'étirent pour remplir la ligne,
-     pas de colonnes vides à droite. La tuile « Ajouter » est toujours présente,
-     donc au moins 2 items → une card unique trop large ne se produit pas. */
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  /* Grille déterministe qui remplit la largeur : 4 colonnes (paliers responsive plus bas). */
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
+@media (max-width: 1500px) { .acct-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 1080px) { .acct-grid { grid-template-columns: repeat(2, 1fr); } }
 .acct-card {
   position: relative;
   background: var(--bg-card);
@@ -350,5 +353,6 @@
 
 @media (max-width: 720px) {
   .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .acct-grid { grid-template-columns: 1fr; }
   .fld-row { flex-wrap: wrap; }
 }
