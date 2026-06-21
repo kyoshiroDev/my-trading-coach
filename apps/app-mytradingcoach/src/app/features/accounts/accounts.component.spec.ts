@@ -44,7 +44,7 @@ function setup(opts: { premium: boolean; accounts: TradingAccount[]; limit?: num
     accounts: accountsSig,
     isLoading: signal(false),
     loaded: signal(true),
-    selectedAccountId: signal<string | null>(null), // null = « Tous les comptes »
+    selectedAccountId: signal<string | 'all'>('all'), // 'all' = « Tous les comptes »
     load: vi.fn(),
   };
   // limit: null = illimité (Premium par défaut dans les tests existants).

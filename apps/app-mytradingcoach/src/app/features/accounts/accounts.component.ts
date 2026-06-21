@@ -86,18 +86,18 @@ export class AccountsComponent implements OnInit {
   protected readonly visibleAccounts = computed(() => {
     const sel = this.store.selectedAccountId();
     const base = this.store.accounts().filter((a) => a.status !== 'ARCHIVED');
-    return sel ? base.filter((a) => a.id === sel) : base;
+    return sel === 'all' ? base : base.filter((a) => a.id === sel);
   });
   // Cartes affichées dans la grille : toutes, ou la seule sélectionnée.
   protected readonly displayedAccounts = computed(() => {
     const sel = this.store.selectedAccountId();
     const all = this.store.accounts();
-    return sel ? all.filter((a) => a.id === sel) : all;
+    return sel === 'all' ? all : all.filter((a) => a.id === sel);
   });
   // Nom du compte sélectionné (sous-libellé KPI P&L), null en vue « Tous les comptes ».
   protected readonly selectedAccountName = computed(() => {
     const sel = this.store.selectedAccountId();
-    return sel ? (this.store.accounts().find((a) => a.id === sel)?.label ?? null) : null;
+    return sel === 'all' ? null : (this.store.accounts().find((a) => a.id === sel)?.label ?? null);
   });
   // Quota : seuls les comptes ACTIVE consomment un slot (aligné backend). PASSED /
   // FAILED / ARCHIVED le libèrent → c'est ce count qu'on affiche et qui borne le quota.
