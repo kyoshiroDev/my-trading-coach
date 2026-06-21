@@ -21,6 +21,16 @@ export class DebriefAgent {
     data: Parameters<typeof buildDebriefPrompt>[0],
     userId?: string,
   ): Promise<unknown> {
+    // Aucun appel modèle (payant) hors production, sauf opt-in explicite AI_DEBRIEF_DEV=true.
+    // Stub structuré valide : debrief.service lit overview?.summary et reconstruit les
+    // sections par compte depuis la BDD (accounts:[] → onglets sans texte IA, pas de crash).
+    if (
+      process.env['NODE_ENV'] !== 'production' &&
+      process.env['AI_DEBRIEF_DEV'] !== 'true'
+    ) {
+      return { overview: { summary: '(débrief IA disponible en production)' }, accounts: [] };
+    }
+
     // Borne le budget de sortie : base + marge par compte, plafonné (un seul appel,
     // coût maîtrisé même avec plusieurs comptes).
     const accountCount = data.accounts?.length ?? 1;
