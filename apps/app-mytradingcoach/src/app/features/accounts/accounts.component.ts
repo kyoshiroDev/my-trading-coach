@@ -231,6 +231,24 @@ export class AccountsComponent implements OnInit {
     return `var(${this.ACCENT_VARS[h % this.ACCENT_VARS.length]})`;
   }
 
+  // ── Bloc « Activité » carte perso (métriques du 126, dégradation propre si absentes) ──
+  // Groupe milliers en fr-FR, comme DecimalPipe '1.0-0'.
+  private fmt0(n: number): string {
+    return Math.round(n).toLocaleString('fr-FR');
+  }
+  protected bestDayLabel(a: TradingAccount): string {
+    const v = a.metrics.bestDay;
+    return v == null ? '—' : `${v > 0 ? '+' : ''}${this.fmt0(v)} $`;
+  }
+  protected worstDayLabel(a: TradingAccount): string {
+    const v = a.metrics.worstDay;
+    return v == null ? '—' : `${this.fmt0(v)} $`;
+  }
+  protected winRateLabel(a: TradingAccount): string {
+    const v = a.metrics.winRate;
+    return v == null ? '—' : `${this.fmt0(v * 100)} %`;
+  }
+
   // ── Menu carte ──────────────────────────────────────────────────────────
   protected toggleMenu(id: string): void {
     this.menuOpenId.update((cur) => (cur === id ? null : id));

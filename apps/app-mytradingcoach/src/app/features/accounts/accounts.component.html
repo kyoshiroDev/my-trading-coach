@@ -80,7 +80,6 @@
              [style.--ac]="accentVar(a)"
              [attr.data-testid]="'account-card-' + a.id"
              [class.is-archived]="a.status === 'ARCHIVED'"
-             [class.is-perso]="a.type === 'PERSONAL'"
              [class.is-selected]="a.id === store.selectedAccountId()">
           <div class="acct-top">
             <div class="acct-ic"><lucide-icon [img]="typeIcon(a.type)" [size]="18" /></div>
@@ -168,9 +167,20 @@
               </div>
             }
           } @else {
-            <div class="perso-note">
-              <lucide-icon [img]="WalletIcon" [size]="15" />
-              <span>Compte perso — suivi P&amp;L et activité. Les règles prop firm s'affichent sur les comptes éval/funded.</span>
+            <div class="rules-head">Activité</div>
+            <div class="perso-grid">
+              <div class="pi">
+                <div class="pi-v text-green">{{ bestDayLabel(a) }}</div>
+                <div class="pi-l">Meilleur jour</div>
+              </div>
+              <div class="pi">
+                <div class="pi-v text-red">{{ worstDayLabel(a) }}</div>
+                <div class="pi-l">Pire jour</div>
+              </div>
+              <div class="pi">
+                <div class="pi-v">{{ winRateLabel(a) }}</div>
+                <div class="pi-l">Win rate</div>
+              </div>
             </div>
           }
         </div>
