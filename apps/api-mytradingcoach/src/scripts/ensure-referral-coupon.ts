@@ -47,11 +47,17 @@ async function main(): Promise<void> {
     config as never, {} as never, {} as never, {} as never, {} as never, {} as never,
   );
 
+  // Détecte créé vs déjà présent : on tente un retrieve AVANT l'ensure, par kind.
+  const before = {
+    annual: await stripeService.findReferralCoupon('annual'),
+    monthly: await stripeService.findReferralCoupon('monthly'),
+  };
+
+  const coupons = await stripeService.ensureReferralCouponNow();
+
   for (const kind of KINDS) {
-    // Détecte créé vs déjà présent : on tente un retrieve AVANT l'ensure.
-    const before = await stripeService.findReferralCoupon(kind);
-    const coupon = await stripeService.ensureReferralCouponNow(kind);
-    const state = before ? 'déjà présent' : 'créé';
+    const coupon = coupons[kind];
+    const state = before[kind] ? 'déjà présent' : 'créé';
 
     console.log(
       JSON.stringify(

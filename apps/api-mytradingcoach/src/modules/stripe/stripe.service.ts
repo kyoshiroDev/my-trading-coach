@@ -870,12 +870,18 @@ export class StripeService {
 
   /**
    * Wrapper public fin pour l'outillage (script d'ensure). Réutilise la logique
-   * existante `ensureReferralCoupon` (retrieve-or-create, paramètres inchangés)
-   * puis retourne le coupon Stripe pour pouvoir l'afficher. Pas d'effet runtime nouveau.
+   * existante `ensureReferralCoupon` (retrieve-or-create, paramètres inchangés) pour
+   * les DEUX kinds, puis retourne les deux coupons Stripe pour pouvoir les afficher.
+   * Pas d'effet runtime nouveau.
    */
-  async ensureReferralCouponNow(kind: ReferralCouponKind): Promise<Stripe.Coupon> {
-    const id = await this.ensureReferralCoupon(kind);
-    return this.stripe.coupons.retrieve(id);
+  async ensureReferralCouponNow(): Promise<{ annual: Stripe.Coupon; monthly: Stripe.Coupon }> {
+    const annualId = await this.ensureReferralCoupon('annual');
+    const monthlyId = await this.ensureReferralCoupon('monthly');
+    const [annual, monthly] = await Promise.all([
+      this.stripe.coupons.retrieve(annualId),
+      this.stripe.coupons.retrieve(monthlyId),
+    ]);
+    return { annual, monthly };
   }
 
   /** Lecture seule : retourne le coupon de parrainage (selon kind) s'il existe déjà, sinon null. */
