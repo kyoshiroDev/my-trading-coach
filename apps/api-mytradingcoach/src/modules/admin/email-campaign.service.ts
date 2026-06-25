@@ -1,7 +1,15 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
+import { Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ResendService } from '../resend/resend.service';
+import { EmailDispatchService } from '../resend/email-dispatch.service';
+import {
+  CAMPAIGNS_BY_KEY,
+  EmailCampaign,
+} from '../resend/campaigns/campaign-registry';
+import { announcementTemplate } from '../resend/campaigns/campaign-templates';
 
+// Types exposés à l'admin (compat front). Chacun pointe vers une campagne du
+// registre — source unique des segments et des templates.
 export type CampaignType =
   | 'discord_invite'
   | 'premium_upsell'
@@ -10,193 +18,184 @@ export type CampaignType =
   | 'debrief_reminder'
   | 'announcement';
 
-export interface CampaignMeta {
+// Mapping type admin → clé du registre.
+const TYPE_TO_KEY: Record<CampaignType, string> = {
+  discord_invite: 'discord_invite',
+  premium_upsell: 'premium_upsell',
+  reengagement: 'reengagement',
+  strategy_profile: 'profile_reminder',
+  debrief_reminder: 'debrief_reminder',
+  announcement: 'announcement',
+};
+
+interface CampaignPresentation {
   type: CampaignType;
-  label: string;
   emoji: string;
   desc: string;
   targetDesc: string;
-  lastSent?: Date | null;
-  lastCount?: number;
-  targetCount: number;
 }
 
-const DISCORD_URL = 'https://discord.gg/TDK2npvkSN';
-const APP_URL     = process.env['FRONTEND_URL'] ?? 'https://app.mytradingcoach.app';
+// Présentation (icône/texte) propre à l'admin, hors logique métier (registre).
+const PRESENTATION: CampaignPresentation[] = [
+  { type: 'discord_invite',   emoji: '💬', desc: 'Inviter les users à rejoindre le Discord',          targetDesc: 'Users sans Discord lié' },
+  { type: 'premium_upsell',   emoji: '⚡', desc: 'Inciter les FREE actifs à passer Premium',           targetDesc: 'Users FREE actifs (14 derniers j)' },
+  { type: 'reengagement',     emoji: '😴', desc: 'Réengager les inactifs depuis plus de 7 jours',      targetDesc: 'Users sans trade depuis 7j' },
+  { type: 'strategy_profile', emoji: '📊', desc: 'Rappel pour renseigner le profil IA',                targetDesc: 'Users sans profil stratégie' },
+  { type: 'debrief_reminder', emoji: '📅', desc: 'Notifier les Premium que le debrief est disponible', targetDesc: 'Users Premium' },
+  { type: 'announcement',     emoji: '📣', desc: 'Envoyer une annonce libre aux users consentants',    targetDesc: 'Tous les users consentants' },
+];
+
+export interface CampaignMeta extends CampaignPresentation {
+  label: string;
+  kind: 'transactional' | 'marketing';
+  automated: boolean;
+  requiresConsent: boolean;
+  targetCount: number; // users dans le segment (matching)
+  alreadyContacted: number; // ont déjà reçu cette campagne (EmailSend)
+  newCount: number; // matching - alreadyContacted
+  lastSent?: Date | null;
+  lastCount?: number;
+}
+
+// Users réels (hors démo / admin), filtre commun à tous les segments.
+const REAL_USERS: Prisma.UserWhereInput = { isDemo: false, role: { not: Role.ADMIN } };
 
 @Injectable()
 export class EmailCampaignService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly resend: ResendService,
+    private readonly dispatch: EmailDispatchService,
   ) {}
 
+  private campaign(type: CampaignType): EmailCampaign {
+    const c = CAMPAIGNS_BY_KEY.get(TYPE_TO_KEY[type]);
+    if (!c) throw new BadRequestException(`Campagne inconnue: ${type}`);
+    return c;
+  }
+
+  private segmentWhere(c: EmailCampaign, now: Date): Prisma.UserWhereInput {
+    return { AND: [c.segment(now), REAL_USERS] };
+  }
+
   async listCampaigns(): Promise<CampaignMeta[]> {
-    const cutoff7d  = new Date(Date.now() - 7  * 86_400_000);
-    const cutoff14d = new Date(Date.now() - 14 * 86_400_000);
+    const now = new Date();
 
-    const [discordCount, upsellCount, totalCount, strategyCount] =
-      await Promise.all([
-        this.prisma.user.count({ where: { isDemo: false, discordId: null } }),
-        this.prisma.user.count({ where: { isDemo: false, plan: 'FREE', lastSeenAt: { gte: cutoff14d } } }),
-        this.prisma.user.count({ where: { isDemo: false } }),
-        this.prisma.user.count({ where: { isDemo: false, tradingStyle: null } }),
-      ]);
-
-    // Users sans trade depuis 7j
-    const activeIds = await this.prisma.trade.findMany({
-      where: { tradedAt: { gte: cutoff7d } },
-      select: { userId: true },
-      distinct: ['userId'],
-    });
-    const reengageCount = await this.prisma.user.count({
-      where: { isDemo: false, id: { notIn: activeIds.map(t => t.userId) } },
-    });
-
-    // Derniers envois par type
+    // Derniers envois par campagne (résumés) — table d'historique admin.
     const logs = await this.prisma.emailCampaignLog.findMany({
       orderBy: { sentAt: 'desc' },
-      take: 30,
+      take: 60,
     });
-    const lastByType = new Map<string, typeof logs[0]>();
-    for (const log of logs) {
-      if (!lastByType.has(log.type)) lastByType.set(log.type, log);
-    }
-    const meta = (type: CampaignType) => {
-      const log = lastByType.get(type);
-      return { lastSent: log?.sentAt ?? null, lastCount: log?.successCount ?? 0 };
-    };
+    const lastByType = new Map<string, (typeof logs)[number]>();
+    for (const log of logs) if (!lastByType.has(log.type)) lastByType.set(log.type, log);
 
-    return [
-      { type: 'discord_invite',   label: 'Invitation Discord',          emoji: '💬', desc: 'Inviter les users à rejoindre le Discord',            targetDesc: 'Users sans Discord lié',          targetCount: discordCount,   ...meta('discord_invite') },
-      { type: 'premium_upsell',   label: 'Passe à Premium',             emoji: '⚡', desc: 'Inciter les FREE actifs à passer Premium',            targetDesc: 'Users FREE actifs (14 derniers j)', targetCount: upsellCount,    ...meta('premium_upsell') },
-      { type: 'reengagement',     label: 'Tu n\'as pas tradé',          emoji: '😴', desc: 'Réengager les inactifs depuis plus de 7 jours',       targetDesc: 'Users sans trade depuis 7j',       targetCount: reengageCount,  ...meta('reengagement') },
-      { type: 'strategy_profile', label: 'Remplis ton profil stratégie',emoji: '📊', desc: 'Rappel pour renseigner le profil IA',                 targetDesc: 'Users sans profil stratégie',      targetCount: strategyCount,  ...meta('strategy_profile') },
-      { type: 'debrief_reminder', label: 'Ton debrief est prêt',        emoji: '📅', desc: 'Notifier les Premium que le debrief est disponible',  targetDesc: 'Users Premium',                   targetCount: await this.prisma.user.count({ where: { isDemo: false, plan: 'PREMIUM' } }), ...meta('debrief_reminder') },
-      { type: 'announcement',     label: 'Annonce / Nouveauté',         emoji: '📣', desc: 'Envoyer une annonce libre à tous les utilisateurs',   targetDesc: 'Tous les utilisateurs',           targetCount: totalCount,     ...meta('announcement') },
-    ];
+    return Promise.all(
+      PRESENTATION.map(async (p) => {
+        const c = this.campaign(p.type);
+        const where = this.segmentWhere(c, now);
+        const [matching, alreadyContacted] = await Promise.all([
+          this.prisma.user.count({ where }),
+          this.prisma.user.count({
+            where: { AND: [where, { emailSends: { some: { campaignKey: c.key } } }] },
+          }),
+        ]);
+        const log = lastByType.get(p.type);
+        return {
+          ...p,
+          label: c.label,
+          kind: c.kind,
+          automated: c.automated,
+          requiresConsent: c.requiresConsent,
+          targetCount: matching,
+          alreadyContacted,
+          newCount: Math.max(0, matching - alreadyContacted),
+          lastSent: log?.sentAt ?? null,
+          lastCount: log?.successCount ?? 0,
+        };
+      }),
+    );
   }
 
   async preview(type: CampaignType, subject?: string, body?: string) {
-    const recipients = await this.getRecipients(type);
-    const html = this.buildHtml(type, recipients[0]?.name ?? 'Trader', subject, body);
-    return { html, recipients: recipients.slice(0, 20) };
+    const c = this.campaign(type);
+    const now = new Date();
+    const recipients = await this.prisma.user.findMany({
+      where: this.segmentWhere(c, now),
+      select: { email: true, name: true },
+      take: 20,
+    });
+    const userName = recipients[0]?.name ?? 'Trader';
+    const sampleUnsub = this.dispatch.buildUnsubUrl('apercu-token');
+    const content =
+      type === 'announcement'
+        ? announcementTemplate(
+            { userName, appUrl: process.env['FRONTEND_URL'] ?? 'https://app.mytradingcoach.app', unsubUrl: sampleUnsub },
+            { subject, bodyHtml: this.renderMarkdown(body ?? '') },
+          )
+        : c.build({ userName, appUrl: process.env['FRONTEND_URL'] ?? 'https://app.mytradingcoach.app', unsubUrl: sampleUnsub });
+    return { html: content.html, recipients };
   }
 
-  async send(type: CampaignType, adminId: string, subject?: string, body?: string) {
+  /**
+   * Envoi manuel — passe par EmailDispatchService (log EmailSend + plafond +
+   * consentement). Par défaut, n'envoie qu'aux NOUVEAUX (oneShot non encore
+   * reçu). `force=true` renvoie à tous ceux qui matchent (ignore le oneShot,
+   * jamais le consentement).
+   */
+  async send(
+    type: CampaignType,
+    adminId: string,
+    subject?: string,
+    body?: string,
+    force = false,
+  ) {
     if (type === 'announcement' && !subject?.trim()) {
       throw new BadRequestException('Sujet requis pour une annonce');
     }
-    const recipients = await this.getRecipients(type);
+    const c = this.campaign(type);
+    const now = new Date();
+    const recipients = await this.prisma.user.findMany({
+      where: this.segmentWhere(c, now),
+      select: { id: true, email: true, name: true, marketingConsent: true, unsubToken: true },
+    });
+
+    const appUrl = process.env['FRONTEND_URL'] ?? 'https://app.mytradingcoach.app';
     let success = 0;
-    let errors  = 0;
+    let errors = 0;
+    let skipped = 0;
 
     for (const user of recipients) {
+      if (!(await this.dispatch.canSend(c, user, { force }))) {
+        skipped++;
+        continue;
+      }
       try {
-        const html         = this.buildHtml(type, user.name ?? 'Trader', subject, body);
-        const emailSubject = subject?.trim() || this.defaultSubject(type);
-        await this.resend.send({ to: user.email, subject: emailSubject, html });
+        // Annonce : contenu personnalisé fourni par l'admin (override).
+        const override =
+          type === 'announcement'
+            ? announcementTemplate(
+                { userName: user.name ?? '', appUrl, unsubUrl: this.dispatch.buildUnsubUrl(user.unsubToken ?? '') },
+                { subject, bodyHtml: this.renderMarkdown(body ?? '') },
+              )
+            : undefined;
+        await this.dispatch.dispatch(c, user, override);
         success++;
-        await new Promise(r => setTimeout(r, 150));
-      } catch { errors++; }
+        await new Promise((r) => setTimeout(r, 150));
+      } catch {
+        errors++;
+      }
     }
 
     await this.prisma.emailCampaignLog.create({
-      data: { type, subject: subject ?? null, sentBy: adminId, targetCount: recipients.length, successCount: success, errorCount: errors },
+      data: {
+        type,
+        subject: subject ?? null,
+        sentBy: adminId,
+        targetCount: recipients.length,
+        successCount: success,
+        errorCount: errors,
+      },
     });
-    return { success, errors };
-  }
-
-  private async getRecipients(type: CampaignType): Promise<{ email: string; name: string | null }[]> {
-    const cutoff7d  = new Date(Date.now() - 7  * 86_400_000);
-    const cutoff14d = new Date(Date.now() - 14 * 86_400_000);
-
-    switch (type) {
-      case 'discord_invite':
-        return this.prisma.user.findMany({ where: { isDemo: false, discordId: null }, select: { email: true, name: true } });
-      case 'premium_upsell':
-        return this.prisma.user.findMany({ where: { isDemo: false, plan: 'FREE', lastSeenAt: { gte: cutoff14d } }, select: { email: true, name: true } });
-      case 'reengagement': {
-        const ids = await this.prisma.trade.findMany({ where: { tradedAt: { gte: cutoff7d } }, select: { userId: true }, distinct: ['userId'] });
-        return this.prisma.user.findMany({ where: { isDemo: false, id: { notIn: ids.map(t => t.userId) } }, select: { email: true, name: true } });
-      }
-      case 'strategy_profile':
-        return this.prisma.user.findMany({ where: { isDemo: false, tradingStyle: null }, select: { email: true, name: true } });
-      case 'debrief_reminder':
-        return this.prisma.user.findMany({ where: { isDemo: false, plan: 'PREMIUM' }, select: { email: true, name: true } });
-      case 'announcement':
-        return this.prisma.user.findMany({ where: { isDemo: false }, select: { email: true, name: true } });
-      default:
-        return [];
-    }
-  }
-
-  private defaultSubject(type: CampaignType): string {
-    const map: Record<CampaignType, string> = {
-      discord_invite:   '💬 Rejoins la communauté Discord MyTradingCoach',
-      premium_upsell:   '⚡ Passe à Premium — 7 jours gratuits',
-      reengagement:     '📖 Un retour sur MyTradingCoach ?',
-      strategy_profile: '🎯 Personnalise ton coach IA en 5 minutes',
-      debrief_reminder: '📅 Ton débrief hebdomadaire est prêt',
-      announcement:     '📣 Nouveauté MyTradingCoach',
-    };
-    return map[type];
-  }
-
-  /** Template visuel unifié pour TOUTES les campagnes (couleurs de la marque, layout table-based). */
-  private renderEmail(opts: {
-    name: string;
-    headerTitle: string;
-    bodyHtml: string;
-    ctaLabel?: string;
-    ctaUrl?: string;
-  }): string {
-    const { name, headerTitle, bodyHtml, ctaLabel, ctaUrl } = opts;
-    const cta = ctaLabel && ctaUrl
-      ? `<tr><td style="padding:8px 32px 28px;text-align:center;"><a href="${ctaUrl}" style="display:inline-block;background:#3b82f6;color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 34px;border-radius:12px;">${ctaLabel}</a></td></tr>`
-      : '';
-    return `<div style="margin:0;padding:0;background-color:#080c14;font-family:'DM Sans',Arial,sans-serif;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#080c14;padding:24px 0;"><tr><td align="center"><table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#101d2e;border:1px solid rgba(99,155,255,0.12);border-radius:18px;overflow:hidden;"><tr><td style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);padding:32px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;line-height:1.3;">${headerTitle}</div><div style="font-size:13px;color:rgba(255,255,255,0.85);margin-top:4px;">MyTradingCoach</div></td></tr><tr><td style="padding:32px 32px 8px;"><p style="font-size:16px;color:#e2eaf5;line-height:1.6;margin:0 0 16px;">Bonjour ${name},</p>${bodyHtml}</td></tr>${cta}<tr><td style="padding:22px 32px 26px;border-top:1px solid rgba(99,155,255,0.08);"><div style="font-size:12px;color:#7090b0;text-align:center;line-height:1.6;">🇫🇷 Données hébergées en France<br/>MyTradingCoach · <a href="https://mytradingcoach.app" style="color:#60a5fa;text-decoration:none;">mytradingcoach.app</a></div></td></tr></table></td></tr></table></div>`;
-  }
-
-  private buildHtml(type: CampaignType, name: string, subject?: string, body?: string): string {
-    // Défauts par campagne : titre header, corps (markdown), cta label + url
-    const defaults: Record<CampaignType, { title: string; body: string; ctaLabel?: string; ctaUrl?: string }> = {
-      discord_invite: {
-        title: '💬 Rejoins la communauté',
-        body: 'Des traders ICT, SMC, Price Action échangent chaque jour leurs setups. C\'est gratuit et ça prend 2 minutes.\n\n📌 Tape **/verify** dans **#👋-bienvenue** pour obtenir ton rôle automatiquement.',
-        ctaLabel: 'Rejoindre le Discord →', ctaUrl: DISCORD_URL,
-      },
-      premium_upsell: {
-        title: '⚡ Passe à Premium',
-        body: 'Tu utilises MyTradingCoach depuis quelques jours. Va plus loin avec le Coach IA, le Weekly Debrief, les analytics avancés et l\'import CSV.\n\n7 jours gratuits · Sans CB · Annulable à tout moment.',
-        ctaLabel: 'Essayer Premium →', ctaUrl: `${APP_URL}/settings?upgrade=1`,
-      },
-      reengagement: {
-        title: '📖 Un retour sur MyTradingCoach ?',
-        body: 'Tu t\'es inscrit il y a quelque temps et j\'aimerais ton avis honnête.\n\nQue tu aies testé l\'app ou pas encore eu l\'occasion : qu\'est-ce qui t\'a manqué, bloqué, ou pas convaincu ? Pas eu le temps, pas compris comment t\'en servir, un bug ?\n\nRéponds-moi en une ligne, c\'est super précieux pour améliorer l\'app 🙏',
-        ctaLabel: undefined, ctaUrl: undefined, // pas de bouton : on veut une RÉPONSE, pas un clic
-      },
-      strategy_profile: {
-        title: '🎯 Personnalise ton coach IA',
-        body: 'Tu n\'as pas encore renseigné ton profil stratégie. En 5 minutes, tu permets à l\'IA de vraiment te connaître — ton style, ta stratégie (ICT, SMC…), tes sessions, ta fréquence.',
-        ctaLabel: 'Remplir mon profil →', ctaUrl: `${APP_URL}/settings`,
-      },
-      debrief_reminder: {
-        title: '📅 Ton débrief hebdo est prêt',
-        body: 'Ton analyse de la semaine vient d\'être générée par l\'IA : tes patterns, tes points forts, et 3 objectifs concrets pour la semaine.',
-        ctaLabel: 'Voir mon débrief →', ctaUrl: `${APP_URL}/weekly-debrief`,
-      },
-      announcement: {
-        title: '📣 Nouveauté MyTradingCoach',
-        body: '',
-        ctaLabel: 'Découvrir →', ctaUrl: APP_URL,
-      },
-    };
-
-    const d = defaults[type];
-    const headerTitle = subject?.trim() || d.title;
-    const bodyHtml = this.renderMarkdown(body?.trim() || d.body);
-    return this.renderEmail({ name, headerTitle, bodyHtml, ctaLabel: d.ctaLabel, ctaUrl: d.ctaUrl });
+    return { success, errors, skipped };
   }
 
   private renderMarkdown(raw: string): string {
@@ -210,24 +209,26 @@ export class EmailCampaignService {
         .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#eef3fb;">$1</strong>')
         .replace(/\*(.+?)\*/g, '<em>$1</em>');
 
-    const blocks = raw.replace(/\r\n/g, '\n').split(/\n{2,}/).map(b => b.trim()).filter(Boolean);
+    const blocks = raw.replace(/\r\n/g, '\n').split(/\n{2,}/).map((b) => b.trim()).filter(Boolean);
 
-    return blocks.map(block => {
-      const lines = block.split('\n');
+    return blocks
+      .map((block) => {
+        const lines = block.split('\n');
 
-      if (/^#\s+/.test(block) && lines.length === 1) {
-        return `<p style="font-size:16px;font-weight:700;color:#eef3fb;margin:22px 0 8px;">${inline(block.replace(/^#\s+/, ''))}</p>`;
-      }
+        if (/^#\s+/.test(block) && lines.length === 1) {
+          return `<p style="font-size:16px;font-weight:700;color:#eef3fb;margin:22px 0 8px;">${inline(block.replace(/^#\s+/, ''))}</p>`;
+        }
 
-      if (lines.every(l => /^[-•]\s+/.test(l))) {
-        const items = lines
-          .map(l => `<tr><td style="vertical-align:top;padding:2px 8px 2px 0;color:#60a5fa;">•</td><td style="padding:2px 0;color:#9bb0cf;line-height:1.6;">${inline(l.replace(/^[-•]\s+/, ''))}</td></tr>`)
-          .join('');
-        return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 14px;">${items}</table>`;
-      }
+        if (lines.every((l) => /^[-•]\s+/.test(l))) {
+          const items = lines
+            .map((l) => `<tr><td style="vertical-align:top;padding:2px 8px 2px 0;color:#60a5fa;">•</td><td style="padding:2px 0;color:#9bb0cf;line-height:1.6;">${inline(l.replace(/^[-•]\s+/, ''))}</td></tr>`)
+            .join('');
+          return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 14px;">${items}</table>`;
+        }
 
-      const withBreaks = lines.map(inline).join('<br/>');
-      return `<p style="color:#9bb0cf;line-height:1.7;margin:0 0 14px;">${withBreaks}</p>`;
-    }).join('');
+        const withBreaks = lines.map(inline).join('<br/>');
+        return `<p style="color:#9bb0cf;line-height:1.7;margin:0 0 14px;">${withBreaks}</p>`;
+      })
+      .join('');
   }
 }

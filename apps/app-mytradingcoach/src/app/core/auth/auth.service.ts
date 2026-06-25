@@ -24,6 +24,7 @@ export interface AuthUser {
   startingCapital?: number;
   notificationsEmail?: boolean;
   debriefAutomatic?: boolean;
+  marketingConsent?: boolean;
   tradingStyle?: string | null;
   tradingStrategy?: string[];
   tradingSessions?: string[];
@@ -75,11 +76,17 @@ export class AuthService {
       .subscribe();
   }
 
-  register(email: string, password: string, name?: string, referralCode?: string) {
+  register(
+    email: string,
+    password: string,
+    name?: string,
+    referralCode?: string,
+    marketingConsent?: boolean,
+  ) {
     return this.http
       .post<AuthResponse>(
         `${environment.apiUrl}/auth/register`,
-        { email, password, name, referralCode },
+        { email, password, name, referralCode, marketingConsent },
         { withCredentials: true },
       )
       .pipe(tap((res) => this.handleAuthResponse(res)));

@@ -27,6 +27,7 @@ export interface UpdatePreferencesDto {
   startingCapital?: number;
   notificationsEmail?: boolean;
   debriefAutomatic?: boolean;
+  marketingConsent?: boolean;
   tradingStyle?: string;
   tradingStrategy?: string[];
   tradingSessions?: string[];

@@ -34,7 +34,7 @@ import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
               <div class="camp-main">
                 <div class="camp-title">{{ c.label }}</div>
                 <div class="camp-desc">{{ c.desc }}</div>
-                <span class="camp-target">{{ c.targetDesc }} · <span class="n">{{ c.targetCount }} destinataire{{ c.targetCount !== 1 ? 's' : '' }}</span></span>
+                <span class="camp-target">{{ c.targetDesc }} · <span class="n">{{ c.newCount }} nouveau{{ c.newCount !== 1 ? 'x' : '' }}</span> / {{ c.targetCount }} au total@if (c.alreadyContacted > 0) { · {{ c.alreadyContacted }} déjà contacté{{ c.alreadyContacted !== 1 ? 's' : '' }} }@if (c.automated) { · <span class="badge-auto">auto</span> }</span>
               </div>
               <div class="camp-right">
                 <span class="camp-when">{{ c.lastSent ? ('Dernier · ' + (c.lastSent | date:'dd/MM HH:mm') + ' · ' + c.lastCount + ' envoyés') : 'Jamais envoyé' }}</span>
@@ -135,8 +135,12 @@ import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
             }
             <div class="send-summary">
               <div class="summary-row">
-                <span class="summary-label">Destinataires</span>
-                <span class="summary-val">{{ sendCampaignModal()!.targetCount }} utilisateurs</span>
+                <span class="summary-label">Nouveaux destinataires</span>
+                <span class="summary-val">{{ sendCampaignModal()!.newCount }} utilisateur{{ sendCampaignModal()!.newCount !== 1 ? 's' : '' }}</span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">Déjà contactés</span>
+                <span class="summary-val">{{ sendCampaignModal()!.alreadyContacted }}</span>
               </div>
               <div class="summary-row">
                 <span class="summary-label">Cible</span>
@@ -149,8 +153,16 @@ import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
                 </div>
               }
             </div>
+            <label class="force-toggle">
+              <input type="checkbox" [ngModel]="force()" (ngModelChange)="force.set($event)" />
+              <span>Renvoyer à tous ceux qui matchent ({{ sendCampaignModal()!.targetCount }}), y compris déjà contactés</span>
+            </label>
             <div class="warning-box">
-              ⚠️ Envoi à <strong>{{ sendCampaignModal()!.targetCount }} personne{{ sendCampaignModal()!.targetCount !== 1 ? 's' : '' }}</strong>. Vérifie l'aperçu avant.
+              @if (sendCampaignModal()!.requiresConsent) {
+                ⚠️ Campagne marketing : seuls les users <strong>consentants</strong> et hors plafond de fréquence recevront l'email. Le compte réel peut être inférieur.
+              } @else {
+                ⚠️ Envoi à <strong>{{ sendCount() }} personne{{ sendCount() !== 1 ? 's' : '' }}</strong>. Vérifie l'aperçu avant.
+              }
             </div>
           </div>
           <div class="modal-footer">
@@ -159,7 +171,7 @@ import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
               @if (sending()) { Envoi en cours... }
               @else {
                 <lucide-icon [img]="SendIcon" [size]="13" />
-                Envoyer à {{ sendCampaignModal()!.targetCount }} personnes
+                Envoyer à {{ sendCount() }} {{ sendCount() === 1 ? 'personne' : 'personnes' }}
               }
             </button>
           </div>
@@ -195,6 +207,14 @@ export class EmailsComponent {
 
   protected readonly announcementSubject = signal('');
   protected readonly announcementBody    = signal('');
+  protected readonly force               = signal(false);
+
+  // Nombre d'envois visé : nouveaux par défaut, tout le segment si "force".
+  protected readonly sendCount = computed(() => {
+    const c = this.sendCampaignModal();
+    if (!c) return 0;
+    return this.force() ? c.targetCount : c.newCount;
+  });
 
   protected readonly wrappedPreviewHtml = computed<SafeHtml>(() => {
     const campaign = this.previewCampaign();
@@ -254,6 +274,7 @@ export class EmailsComponent {
       this.announcementSubject.set('');
       this.announcementBody.set('');
     }
+    this.force.set(false);
     this.sendCampaignModal.set(c);
   }
 
@@ -261,10 +282,16 @@ export class EmailsComponent {
     const c = this.sendCampaignModal();
     if (!c || !this.canSend()) return;
     this.sending.set(true);
-    this.adminApi.sendCampaign(c.type, this.announcementSubject(), this.announcementBody())
+    this.adminApi.sendCampaign(c.type, this.announcementSubject(), this.announcementBody(), this.force())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: r => { this.sending.set(false); this.sendCampaignModal.set(null); this.showToast(`✅ ${r.data.success} emails envoyés · ${r.data.errors} erreurs`); this.load(); },
+        next: r => {
+          this.sending.set(false);
+          this.sendCampaignModal.set(null);
+          const skipped = r.data.skipped ? ` · ${r.data.skipped} ignorés` : '';
+          this.showToast(`✅ ${r.data.success} emails envoyés · ${r.data.errors} erreurs${skipped}`);
+          this.load();
+        },
         error: () => { this.sending.set(false); this.showToast('❌ Erreur lors de l\'envoi', true); },
       });
   }

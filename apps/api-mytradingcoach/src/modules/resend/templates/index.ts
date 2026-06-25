@@ -3,10 +3,19 @@
 
 // ── Base système ──────────────────────────────────────────────────────────────
 
-const FONT = `font-family: 'DM Sans', -apple-system, Arial, sans-serif;`;
+export const FONT = `font-family: 'DM Sans', -apple-system, Arial, sans-serif;`;
 const MONO = `font-family: 'DM Mono', 'Courier New', monospace;`;
 
-function emailWrapper(content: string, preheader = ''): string {
+// Pied de page marketing : mention RGPD + lien de désinscription obligatoire.
+// Réutilisé par les templates de campagnes marketing (campaign-registry).
+export function marketingFooter(unsubUrl: string): string {
+  return `<p style="${FONT}font-size:12px;color:#6b8299;line-height:1.6;margin:18px 0 0 0;text-align:center;">
+    Tu reçois cet email parce que tu as un compte MyTradingCoach.
+    <a href="${unsubUrl}" style="color:#8fa3bf;text-decoration:underline;">Me désinscrire des emails</a>.
+  </p>`;
+}
+
+export function emailWrapper(content: string, preheader = ''): string {
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -58,7 +67,7 @@ function emailWrapper(content: string, preheader = ''): string {
 </html>`;
 }
 
-function card(content: string, accentColor = 'rgba(59,130,246,.3)'): string {
+export function card(content: string, accentColor = 'rgba(59,130,246,.3)'): string {
   return `<div style="background:#0f1824;border:1px solid rgba(99,155,255,.1);border-top:2px solid ${accentColor};border-radius:12px;padding:28px 24px;margin-bottom:16px;">
     ${content}
   </div>`;
@@ -71,7 +80,7 @@ function statCell(value: string, label: string, color = '#e2eaf5'): string {
   </td>`;
 }
 
-function cta(text: string, url: string, style: 'primary' | 'secondary' = 'primary'): string {
+export function cta(text: string, url: string, style: 'primary' | 'secondary' = 'primary'): string {
   const bg = style === 'primary' ? 'linear-gradient(90deg,#3b82f6,#6366f1)' : 'transparent';
   const border = style === 'secondary' ? 'border:1px solid rgba(99,155,255,.3);' : '';
   return `<a href="${url}" style="display:block;background:${bg};${border}color:#ffffff;text-decoration:none;text-align:center;padding:13px 24px;border-radius:9px;${FONT}font-size:14px;font-weight:600;margin-top:20px;">
@@ -86,7 +95,7 @@ function aiBlock(text: string): string {
   </div>`;
 }
 
-const divider = `<div style="height:1px;background:rgba(99,155,255,.08);margin:20px 0;"></div>`;
+export const divider = `<div style="height:1px;background:rgba(99,155,255,.08);margin:20px 0;"></div>`;
 
 // ── Weekly Debrief ────────────────────────────────────────────────────────────
 
