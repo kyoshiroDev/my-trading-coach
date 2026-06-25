@@ -24,6 +24,11 @@ export class UpdatePreferencesDto {
   @IsOptional()
   debriefAutomatic?: boolean;
 
+  // Consentement aux emails marketing (toggle Paramètres).
+  @IsBoolean()
+  @IsOptional()
+  marketingConsent?: boolean;
+
   @IsString()
   @IsOptional()
   tradingStyle?: string;

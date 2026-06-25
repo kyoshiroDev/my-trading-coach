@@ -87,9 +87,14 @@ export interface CampaignMeta {
   emoji: string;
   desc: string;
   targetDesc: string;
+  kind: 'transactional' | 'marketing';
+  automated: boolean;
+  requiresConsent: boolean;
   lastSent?: string | null;
   lastCount?: number;
-  targetCount: number;
+  targetCount: number; // users dans le segment (matching)
+  alreadyContacted: number; // ont déjà reçu cette campagne
+  newCount: number; // nouveaux destinataires (matching - alreadyContacted)
 }
 
 export interface AdminAmbassador {
@@ -294,9 +299,9 @@ export class AdminApi {
       `${this.adminBase}/campaigns/${type}/preview`, { subject, content },
     );
   }
-  sendCampaign(type: string, subject?: string, content?: string) {
-    return this.http.post<{ data: { success: number; errors: number } }>(
-      `${this.adminBase}/campaigns/${type}/send`, { subject, content },
+  sendCampaign(type: string, subject?: string, content?: string, force = false) {
+    return this.http.post<{ data: { success: number; errors: number; skipped?: number } }>(
+      `${this.adminBase}/campaigns/${type}/send`, { subject, content, force },
     );
   }
 

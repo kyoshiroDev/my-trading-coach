@@ -20,6 +20,14 @@ model User {
   resetPasswordToken   String?   @unique
   resetPasswordExpires DateTime?
 
+  // ── Consentement marketing (RGPD Art. 6.1.a) ──────────────────────────────
+  // Aucun email marketing/réengagement ne part sans marketingConsent=true.
+  // unsubToken : jeton du lien de désinscription (généré à la création, lazy
+  // pour les comptes existants au 1er besoin).
+  marketingConsent   Boolean   @default(false)
+  marketingConsentAt DateTime?
+  unsubToken         String?   @unique
+
   // ── Stripe ──────────────────────────────────────
   stripeCustomerId         String?   @unique
   stripeSubscriptionId     String?   @unique
@@ -78,6 +86,7 @@ model User {
   tradingAccounts TradingAccount[]
   dailyRecaps     DailyRecap[]
   dailyActivity   UserDailyActivity[]
+  emailSends      EmailSend[]
   referrals       ReferralCommission[] @relation("AmbassadorCommissions")
   parrainRewards  ReferralReward[]     @relation("ParrainRewards")
   lastSeenAt      DateTime?
@@ -408,6 +417,21 @@ model MarketNews {
 
   @@index([symbol, publishedDate])
   @@index([translated])
+}
+
+/// Log unitaire d'envoi d'email (moteur de campagnes). Source de vérité de
+/// l'anti-doublon (oneShot), du plafond de fréquence marketing et du compteur
+/// "déjà contacté" de l'admin. 1 ligne = 1 email envoyé à 1 user.
+model EmailSend {
+  id          String   @id @default(cuid())
+  campaignKey String
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind        String // 'transactional' | 'marketing'
+  sentAt      DateTime @default(now())
+
+  @@index([campaignKey, userId])
+  @@index([userId, sentAt])
 }
 
 model EmailCampaignLog {

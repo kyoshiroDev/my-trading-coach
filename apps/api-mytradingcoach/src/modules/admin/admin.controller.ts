@@ -126,10 +126,10 @@ export class AdminController {
   @Post('campaigns/:type/send')
   sendCampaign(
     @Param('type') type: CampaignType,
-    @Body() body: { subject?: string; content?: string },
+    @Body() body: { subject?: string; content?: string; force?: boolean },
     @CurrentUser() user: { id: string },
   ) {
-    return this.emailCampaign.send(type, user.id, body.subject, body.content);
+    return this.emailCampaign.send(type, user.id, body.subject, body.content, body.force === true);
   }
 
   @Get('referral-stats')

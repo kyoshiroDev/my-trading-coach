@@ -301,6 +301,19 @@
             </label>
           </div>
 
+          <!-- Emails marketing -->
+          <div class="settings-row">
+            <div class="settings-row-left">
+              <span class="settings-row-label">Emails marketing</span>
+              <span class="settings-row-hint">Conseils, nouveautés et offres. Désinscription à tout moment.</span>
+            </div>
+            <label class="settings-toggle">
+              <input type="checkbox" [checked]="prefMarketing()"
+                (change)="prefMarketing.set($any($event.target).checked)" />
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+
         </div>
         <div class="pref-save">
           <button class="btn btn-primary" (click)="savePreferences()" [disabled]="isSavingPrefs()">

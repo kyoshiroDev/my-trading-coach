@@ -70,6 +70,7 @@ export class SettingsComponent implements OnInit {
   protected readonly prefCurrency = signal<'USD' | 'EUR' | 'GBP'>('USD');
   protected readonly prefNotifications = signal(true);
   protected readonly prefDebrief = signal(true);
+  protected readonly prefMarketing = signal(false);
   protected readonly isSavingPrefs = signal(false);
   protected readonly prefSaved = signal(false);
 
@@ -125,6 +126,7 @@ export class SettingsComponent implements OnInit {
       this.prefCurrency.set((user.currency as 'USD' | 'EUR' | 'GBP') ?? 'USD');
       this.prefNotifications.set(user.notificationsEmail ?? true);
       this.prefDebrief.set(user.debriefAutomatic ?? true);
+      this.prefMarketing.set(user.marketingConsent ?? false);
     });
   }
 
@@ -277,6 +279,7 @@ export class SettingsComponent implements OnInit {
       currency: this.prefCurrency(),
       notificationsEmail: this.prefNotifications(),
       debriefAutomatic: this.prefDebrief(),
+      marketingConsent: this.prefMarketing(),
     };
     this.usersApi
       .updatePreferences(dto)

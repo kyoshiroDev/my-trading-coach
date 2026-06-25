@@ -29,6 +29,7 @@ const USER_SELECT = {
   startingCapital: true,
   notificationsEmail: true,
   debriefAutomatic: true,
+  marketingConsent: true,
   tradingStyle: true,
   tradingStrategy: true,
   tradingSessions: true,
@@ -412,9 +413,18 @@ export class UsersService {
     } else if (dto.currency === 'USD') {
       currencyRate = 1;
     }
+    // Horodate le consentement marketing quand il change (preuve RGPD).
+    const consentAt =
+      dto.marketingConsent === undefined
+        ? {}
+        : { marketingConsentAt: dto.marketingConsent ? new Date() : null };
     return this.prisma.user.update({
       where: { id: userId },
-      data: { ...dto, ...(currencyRate !== undefined ? { currencyRate } : {}) },
+      data: {
+        ...dto,
+        ...(currencyRate !== undefined ? { currencyRate } : {}),
+        ...consentAt,
+      },
       select: USER_SELECT,
     });
   }
