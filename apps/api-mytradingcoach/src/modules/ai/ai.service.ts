@@ -13,7 +13,7 @@ import { buildDebriefPrompt } from './prompts/debrief.prompt';
 import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
-import { AiLoggerService } from '../shared/ai-logger.service';
+import { AnthropicClientService } from '../shared/anthropic-client.service';
 import { buildUserTradingContext, UserTradingProfile } from './user-context.builder';
 import { todayParis } from '../../common/utils/paris-date';
 
@@ -38,16 +38,13 @@ const DEMO_CHAT_REPLY =
 
 @Injectable()
 export class AiService {
-  private readonly anthropic = new Anthropic({
-    apiKey: process.env['ANTHROPIC_API_KEY'],
-  });
   private readonly logger = new Logger(AiService.name);
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly orchestrator: OrchestratorAgent,
     private readonly debriefAgent: DebriefAgent,
-    private readonly aiLogger: AiLoggerService,
+    private readonly anthropicClient: AnthropicClientService,
     private readonly redisService: RedisService,
   ) {}
 
@@ -166,24 +163,26 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
 
     let response: Anthropic.Message;
     try {
-      response = await this.anthropic.messages.create({
-        model: MODEL,
-        max_tokens: 512,
-        system: [
-          {
-            type: 'text',
-            text: CHAT_SYSTEM,
-            cache_control: { type: 'ephemeral' },
-          },
-        ],
-        messages,
-      });
+      response = await this.anthropicClient.create(
+        {
+          model: MODEL,
+          max_tokens: 512,
+          system: [
+            {
+              type: 'text',
+              text: CHAT_SYSTEM,
+              cache_control: { type: 'ephemeral' },
+            },
+          ],
+          messages,
+        },
+        { feature: 'chat', userId },
+      );
     } catch (err) {
       handleAnthropicError(err, this.logger);
     }
 
     if (userRole !== Role.ADMIN) await this.incrementQuota(userId);
-    this.aiLogger.log(userId, 'chat', response.usage);
     const content = response?.content?.[0];
     if (!content || content.type !== 'text')
       throw new HttpException(
@@ -314,16 +313,18 @@ Règles :
 - PAS de "Bonne journée", "Continue comme ça", "Félicitations" génériques
 - PAS d'astérisques ni de markdown`;
 
-    const response = await this.anthropic.messages.create({
-      model: MODEL,
-      max_tokens: 200,
-      system: `Tu es un coach de trading expert qui connaît en profondeur la stratégie et les habitudes de ce trader.
+    const response = await this.anthropicClient.create(
+      {
+        model: MODEL,
+        max_tokens: 200,
+        system: `Tu es un coach de trading expert qui connaît en profondeur la stratégie et les habitudes de ce trader.
 Tu analyses ses données réelles pour donner un conseil ultra-personnalisé, jamais générique.
 Réponds UNIQUEMENT avec la phrase coaching, sans guillemets, sans préambule.`,
-      messages: [{ role: 'user', content: prompt }],
-    });
+        messages: [{ role: 'user', content: prompt }],
+      },
+      { feature: 'daily_recap', userId: data.userId },
+    );
 
-    this.aiLogger.log(data.userId, 'daily_recap', response.usage);
     return response.content[0]?.type === 'text'
       ? response.content[0].text.trim().replace(/^["']|["']$/g, '')
       : '';
@@ -346,13 +347,15 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
   "assetImpacts": [{ "asset": string, "sentiment": "bull"|"bear"|"neutral", "reason": string }]
 }`;
 
-    const response = await this.anthropic.messages.create({
-      model: MODEL,
-      max_tokens: 500,
-      messages: [{ role: 'user', content: prompt }],
-    });
+    const response = await this.anthropicClient.create(
+      {
+        model: MODEL,
+        max_tokens: 500,
+        messages: [{ role: 'user', content: prompt }],
+      },
+      { feature: 'eco_calendar', userId: data.userId },
+    );
 
-    this.aiLogger.log(data.userId, 'eco_calendar', response.usage);
     const text = response.content[0]?.type === 'text' ? response.content[0].text : '{}';
     return JSON.parse(text.replace(/```json\n?|\n?```/g, '').trim());
   }
@@ -381,13 +384,15 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
   "assetSentiments": [{ "asset": string, "sentiment": "bull"|"bear"|"neutral", "shortReason": string }]
 }`;
 
-    const response = await this.anthropic.messages.create({
-      model: MODEL,
-      max_tokens: 300,
-      messages: [{ role: 'user', content: prompt }],
-    });
+    const response = await this.anthropicClient.create(
+      {
+        model: MODEL,
+        max_tokens: 300,
+        messages: [{ role: 'user', content: prompt }],
+      },
+      { feature: 'eco_calendar', userId: data.userId },
+    );
 
-    this.aiLogger.log(data.userId, 'eco_calendar', response.usage);
     const text = response.content[0]?.type === 'text' ? response.content[0].text : '{}';
     return JSON.parse(text.replace(/```json\n?|\n?```/g, '').trim());
   }

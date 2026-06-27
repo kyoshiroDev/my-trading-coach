@@ -113,6 +113,7 @@ export interface MarketContext {
   updatedAt: string;
 }
 export interface NewsItem {
+  id: string;
   title: string;
   symbol: string;
   publishedDate: string;
@@ -121,6 +122,7 @@ export interface NewsItem {
   text?: string;
   image?: string;
   site?: string;
+  textTranslated?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -202,5 +204,10 @@ export class TradesApi {
       `${this.base}/news`,
       { params: { symbols: symbols.join(',') } },
     );
+  }
+
+  // Traduction paresseuse du corps d'une news, déclenchée à l'ouverture de la modale.
+  newsText(id: string): Observable<{ data: { text: string | null } }> {
+    return this.http.get<{ data: { text: string | null } }>(`${this.base}/news/${id}/text`);
   }
 }

@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import Anthropic from '@anthropic-ai/sdk';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
+import { AnthropicClientService } from '../shared/anthropic-client.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 import { INSTRUMENTS } from './instruments.const';
 
@@ -13,8 +13,9 @@ export interface MarketContextDto {
   treasury: TreasuryRates; updatedAt: string;
 }
 export interface NewsItem {
-  title: string; symbol: string; publishedDate: string;
+  id: string; title: string; symbol: string; publishedDate: string;
   sentiment?: 'bull' | 'bear' | 'neutral'; url?: string; text?: string; image?: string; site?: string;
+  textTranslated?: boolean;
 }
 
 @Injectable()
@@ -25,6 +26,7 @@ export class MarketDataService {
     private readonly config: ConfigService,
     private readonly redisService: RedisService,
     private readonly prisma: PrismaService,
+    private readonly anthropicClient: AnthropicClientService,
   ) {}
 
   // Garde-fou environnement : pas de traduction hors prod (économie Dev)
@@ -76,6 +78,7 @@ export class MarketDataService {
       where, orderBy: { publishedDate: 'desc' }, take: 20,
     });
     const items: NewsItem[] = rows.map(r => ({
+      id: r.id,
       title: r.titleFr ?? r.title,
       symbol: r.symbol,
       publishedDate: r.publishedDate.toISOString(),
@@ -84,6 +87,7 @@ export class MarketDataService {
       text: r.textFr ?? r.text ?? undefined,
       image: r.image ?? undefined,
       site: r.site ?? undefined,
+      textTranslated: r.textTranslated,
     }));
     try { await this.redisService.client.setex(cacheKey, CACHE_TTL.NEWS, JSON.stringify(items)); } catch { /* ignore */ }
     return items;
@@ -118,7 +122,8 @@ export class MarketDataService {
       });
     }
 
-    // 2) Traduire uniquement les non-traduits (batch borné)
+    // 2) Traduire uniquement les TITRES non-traduits (output minime). Le texte de
+    //    l'article est traduit paresseusement à l'ouverture (ensureNewsTextFr).
     if (!this.translationEnabled) return 0;
     const pending = await this.prisma.marketNews.findMany({
       where: { translated: false },
@@ -127,29 +132,61 @@ export class MarketDataService {
     });
     if (!pending.length) return 0;
 
-    const payload = pending.map(p => ({ title: p.title, text: p.text ?? '' }));
+    const titles = pending.map(p => p.title);
     try {
-      const anthropic = new Anthropic({ apiKey: this.config.get<string>('ANTHROPIC_API_KEY') });
-      const msg = await anthropic.messages.create({
+      const msg = await this.anthropicClient.create({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 3000,
+        max_tokens: 800,
         messages: [{ role: 'user', content:
-          `Traduis ces news financières en français. Réponds UNIQUEMENT avec un tableau JSON d'objets {title, text} dans le même ordre, sans texte autour.\n\n${JSON.stringify(payload)}` }],
-      });
+          `Traduis en français ces titres de news financières. Réponds UNIQUEMENT avec un tableau JSON d'objets {title} dans le même ordre, sans texte autour.\n\n${JSON.stringify(titles)}` }],
+      }, { feature: 'news_translation', userId: null });
       const txt = msg.content[0]?.type === 'text' ? msg.content[0].text : '';
       const s = txt.indexOf('['), e = txt.lastIndexOf(']');
       if (s === -1 || e === -1) return 0;
-      const tr = JSON.parse(txt.slice(s, e + 1)) as { title: string; text: string }[];
+      const tr = JSON.parse(txt.slice(s, e + 1)) as { title: string }[];
       await Promise.all(pending.map((p, i) =>
         this.prisma.marketNews.update({
           where: { id: p.id },
-          data: { titleFr: tr[i]?.title ?? p.title, textFr: tr[i]?.text ?? p.text, translated: true },
+          data: { titleFr: tr[i]?.title ?? p.title, translated: true },
         }),
       ));
       return pending.length;
     } catch (err) {
-      this.logger.warn(`News translation failed: ${(err as Error).message}`);
+      this.logger.warn(`News title translation failed: ${(err as Error).message}`);
       return 0;
+    }
+  }
+
+  /**
+   * Traduction paresseuse du corps d'un article, à la première ouverture, puis persistée.
+   * Idempotent + best-effort : aucun appel modèle si déjà traduit (ou pas de texte),
+   * et en cas d'échec on retourne le texte original sans crasher.
+   */
+  async ensureNewsTextFr(id: string): Promise<string | null> {
+    const news = await this.prisma.marketNews.findUnique({ where: { id } });
+    if (!news) return null;
+    // Déjà traduit, ou pas de texte à traduire → zéro appel modèle.
+    if (news.textTranslated || news.text == null) return news.textFr ?? news.text;
+    // Interrupteur fin (NEWS_TRANSLATION / hors prod) → renvoyer le texte tel quel.
+    if (!this.translationEnabled) return news.textFr ?? news.text;
+
+    try {
+      const msg = await this.anthropicClient.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 700,
+        messages: [{ role: 'user', content:
+          `Traduis en français ce texte de news financière. Réponds UNIQUEMENT avec la traduction, sans préambule ni guillemets.\n\n${news.text}` }],
+      }, { feature: 'news_translation', userId: null });
+      const fr = msg.content[0]?.type === 'text' ? msg.content[0].text.trim() : '';
+      if (!fr) return news.textFr ?? news.text;
+      await this.prisma.marketNews.update({
+        where: { id },
+        data: { textFr: fr, textTranslated: true },
+      });
+      return fr;
+    } catch (err) {
+      this.logger.warn(`News text translation failed: ${(err as Error).message}`);
+      return news.textFr ?? news.text;
     }
   }
 

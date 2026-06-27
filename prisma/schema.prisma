@@ -184,18 +184,20 @@ model WeeklyDebrief {
 
 model AiUsageLog {
   id           String   @id @default(cuid())
-  userId       String
+  userId       String? // null pour les jobs système (traductions news/eco, crons)
   feature      String
+  model        String   @default("claude-sonnet-4-6") // vrai modèle appelé → ventilation Haiku/Sonnet
   inputTokens  Int
   outputTokens Int
   costUsd      Float
   createdAt    DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([createdAt])
   @@index([feature])
+  @@index([model])
 }
 
 // ── V2 Session Mode ─────────────────────────────────────────────────────────
@@ -412,11 +414,19 @@ model MarketNews {
   image         String?
   site          String?
   publishedDate DateTime
-  translated    Boolean  @default(false)
+  translated     Boolean  @default(false) // titre traduit (eager). Le texte est traduit paresseusement → textTranslated
+  textTranslated Boolean  @default(false) // corps de l'article traduit à la 1re ouverture, puis persisté
   fetchedAt     DateTime @default(now())
 
   @@index([symbol, publishedDate])
   @@index([translated])
+}
+
+/// Glossaire global des libellés d'événements éco : chaque libellé EN traduit une seule fois à vie.
+model EcoLabelTranslation {
+  nameEn    String   @id
+  nameFr    String
+  createdAt DateTime @default(now())
 }
 
 /// Log unitaire d'envoi d'email (moteur de campagnes). Source de vérité de

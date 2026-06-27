@@ -6,7 +6,7 @@ import { AiService } from './ai.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OrchestratorAgent } from './agents/orchestrator.agent';
 import { DebriefAgent } from './agents/debrief.agent';
-import { AiLoggerService } from '../shared/ai-logger.service';
+import { AnthropicClientService } from '../shared/anthropic-client.service';
 import { RedisService } from '../shared/redis.service';
 
 const mockMessagesCreate = vi.hoisted(() =>
@@ -131,7 +131,9 @@ describe('AiService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: OrchestratorAgent, useValue: mockOrchestrator },
         { provide: DebriefAgent, useValue: mockDebriefAgent },
-        { provide: AiLoggerService, useValue: { log: vi.fn() } },
+        // Client central mocké : `create(params, meta)` délègue au mock SDK, en
+        // ignorant `meta` — les tests vérifient toujours `params` via mock.calls[0][0].
+        { provide: AnthropicClientService, useValue: { create: (params: unknown) => mockMessagesCreate(params) } },
       ],
     }).compile();
 

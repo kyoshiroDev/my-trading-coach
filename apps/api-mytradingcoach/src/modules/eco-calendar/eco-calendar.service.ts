@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import Anthropic from '@anthropic-ai/sdk';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
+import { AnthropicClientService } from '../shared/anthropic-client.service';
 import { AiService } from '../ai/ai.service';
 import { todayParis, toParisDateStr } from '../../common/utils/paris-date';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
@@ -61,6 +61,7 @@ export class EcoCalendarService {
     private readonly prisma: PrismaService,
     private readonly ai: AiService,
     private readonly redisService: RedisService,
+    private readonly anthropicClient: AnthropicClientService,
   ) {}
 
   // ── Fetch depuis FMP + upsert PostgreSQL ─────────────────────────────────
@@ -173,7 +174,8 @@ export class EcoCalendarService {
   }
 
   // Traduit les `name` (anglais FMP) du jour qui n'ont pas encore de `nameFr`.
-  // Un seul appel Haiku par jour (via cron) — coût négligeable.
+  // Dédup à vie via le glossaire EcoLabelTranslation : chaque libellé n'est traduit
+  // qu'une seule fois (les mêmes libellés reviennent chaque semaine). Coût ≈ 0 en régime de croisière.
   private async translateEventNames(date: string): Promise<void> {
     if (!this.translationEnabled) return;
 
@@ -185,27 +187,48 @@ export class EcoCalendarService {
         distinct: ['name'],
       });
       if (!pending?.length) return;
-
       const names = pending.map((p) => p.name);
-      const anthropic = new Anthropic({ apiKey: process.env['ANTHROPIC_API_KEY'] });
-      const msg = await anthropic.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1500,
-        messages: [{ role: 'user', content:
-          `Traduis en français ces libellés d'événements économiques. Réponds UNIQUEMENT avec un objet JSON { "<libellé EN>": "<libellé FR>" }, sans texte autour.\n\n${JSON.stringify(names)}` }],
+
+      // 1) Hit glossaire d'abord : libellés déjà connus → propagation, zéro appel modèle.
+      const known = await this.prisma.ecoLabelTranslation.findMany({
+        where: { nameEn: { in: names } },
       });
+      const knownMap = new Map(known.map((k) => [k.nameEn, k.nameFr]));
+      await Promise.all(
+        [...knownMap.entries()].map(([name, fr]) =>
+          this.prisma.ecoEvent.updateMany({ where: { date, name }, data: { nameFr: fr } }),
+        ),
+      );
+
+      // 2) Ne traduire que les libellés réellement nouveaux (absents du glossaire).
+      const missing = names.filter((n) => !knownMap.has(n));
+      if (!missing.length) return;
+
+      const msg = await this.anthropicClient.create(
+        {
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 300,
+          messages: [{ role: 'user', content:
+            `Traduis en français ces libellés d'événements économiques. Réponds UNIQUEMENT avec un objet JSON { "<libellé EN>": "<libellé FR>" }, sans texte autour.\n\n${JSON.stringify(missing)}` }],
+        },
+        { feature: 'eco_translation', userId: null },
+      );
       const txt = msg.content[0]?.type === 'text' ? msg.content[0].text : '';
       const s = txt.indexOf('{'), e = txt.lastIndexOf('}');
       if (s === -1 || e === -1) return;
       const mapping = JSON.parse(txt.slice(s, e + 1)) as Record<string, string>;
+
+      // 3) Upsert glossaire (1 fois à vie) puis propagation aux events du jour.
       await Promise.all(
-        names.map((name) => {
+        missing.map(async (name) => {
           const fr = mapping[name];
-          if (!fr) return Promise.resolve(null);
-          return this.prisma.ecoEvent.updateMany({
-            where: { date, name },
-            data: { nameFr: fr },
+          if (!fr) return;
+          await this.prisma.ecoLabelTranslation.upsert({
+            where: { nameEn: name },
+            update: { nameFr: fr },
+            create: { nameEn: name, nameFr: fr },
           });
+          await this.prisma.ecoEvent.updateMany({ where: { date, name }, data: { nameFr: fr } });
         }),
       );
     } catch (err) {
@@ -442,7 +465,12 @@ export class EcoCalendarService {
       // Redis indisponible → on calcule
     }
 
-    const analysis = await this.ai.analyzeEcoResult({ userId, event, userAssets });
+    const analysis = await this.ai
+      .analyzeEcoResult({ userId, event, userAssets })
+      .catch((err: Error) => {
+        this.logger.warn(`Eco result analysis skipped: ${err.message}`);
+        return null;
+      });
     if (analysis) {
       try {
         await this.redis.setex(analysisKey, CACHE_TTL.ECO_ANALYSIS, JSON.stringify(analysis));

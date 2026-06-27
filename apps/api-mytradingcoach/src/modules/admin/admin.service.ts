@@ -17,8 +17,12 @@ export class AdminService {
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const startOfWeek = new Date(now);
     startOfWeek.setDate(now.getDate() - 7);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    // Fenêtre des 30 derniers jours pour la série quotidienne + les ventilations.
+    const startOfWindow = new Date(startOfToday);
+    startOfWindow.setDate(startOfToday.getDate() - 30);
 
-    const [todayAgg, weekAgg, byFeatureRaw, topUsersRaw] = await Promise.all([
+    const [todayAgg, weekAgg, monthAgg, byFeatureRaw, byModelRaw, topUsersRaw] = await Promise.all([
       // Totaux aujourd'hui — aggregate (pas de chargement en RAM)
       this.prisma.aiUsageLog.aggregate({
         where: { createdAt: { gte: startOfToday } },
@@ -31,6 +35,12 @@ export class AdminService {
         _sum: { inputTokens: true, outputTokens: true, costUsd: true },
         _count: true,
       }),
+      // Totaux mois-à-jour — le chiffre qui doit réconcilier avec la console Anthropic
+      this.prisma.aiUsageLog.aggregate({
+        where: { createdAt: { gte: startOfMonth } },
+        _sum: { inputTokens: true, outputTokens: true, costUsd: true },
+        _count: true,
+      }),
       // Par feature — groupBy (PostgreSQL fait le calcul)
       this.prisma.aiUsageLog.groupBy({
         by: ['feature'],
@@ -38,10 +48,17 @@ export class AdminService {
         _sum: { inputTokens: true, outputTokens: true, costUsd: true },
         _count: true,
       }),
-      // Top users — groupBy avec userId
+      // Par modèle — groupBy (ventilation Haiku vs Sonnet)
+      this.prisma.aiUsageLog.groupBy({
+        by: ['model'],
+        where: { createdAt: { gte: startOfWeek } },
+        _sum: { inputTokens: true, outputTokens: true, costUsd: true },
+        _count: true,
+      }),
+      // Top users — groupBy avec userId (exclure les jobs système : userId null)
       this.prisma.aiUsageLog.groupBy({
         by: ['userId'],
-        where: { createdAt: { gte: startOfWeek } },
+        where: { createdAt: { gte: startOfWeek }, userId: { not: null } },
         _sum: { inputTokens: true, outputTokens: true, costUsd: true },
         orderBy: { _sum: { inputTokens: 'desc' } },
         take: 10,
@@ -60,6 +77,12 @@ export class AdminService {
       costUsd:      weekAgg._sum.costUsd       ?? 0,
       calls:        weekAgg._count,
     };
+    const month = {
+      inputTokens:  monthAgg._sum.inputTokens  ?? 0,
+      outputTokens: monthAgg._sum.outputTokens ?? 0,
+      costUsd:      monthAgg._sum.costUsd       ?? 0,
+      calls:        monthAgg._count,
+    };
 
     const weekTotal = week.inputTokens + week.outputTokens;
     const byFeature = byFeatureRaw.map(f => ({
@@ -69,45 +92,53 @@ export class AdminService {
       pct:     weekTotal > 0 ? Math.round(((f._sum.inputTokens ?? 0) + (f._sum.outputTokens ?? 0)) / weekTotal * 100) : 0,
     }));
 
-    // Enrichir avec email/name depuis users
-    const userIds = topUsersRaw.map(u => u.userId);
+    const byModel = byModelRaw.map(m => ({
+      model:  m.model,
+      tokens: (m._sum.inputTokens ?? 0) + (m._sum.outputTokens ?? 0),
+      cost:   m._sum.costUsd ?? 0,
+      pct:    weekTotal > 0 ? Math.round(((m._sum.inputTokens ?? 0) + (m._sum.outputTokens ?? 0)) / weekTotal * 100) : 0,
+    }));
+
+    // Enrichir avec email/name depuis users (userId non-null garanti par le where ci-dessus)
+    const userIds = topUsersRaw.map(u => u.userId).filter((id): id is string => id !== null);
     const users = await this.prisma.user.findMany({
       where: { id: { in: userIds } },
       select: { id: true, email: true, name: true },
     });
     const userById = new Map(users.map(u => [u.id, u]));
-    const topUsers = topUsersRaw.map(u => ({
-      userId:  u.userId,
-      email:   userById.get(u.userId)?.email ?? '',
-      name:    userById.get(u.userId)?.name  ?? '',
-      tokens:  (u._sum.inputTokens ?? 0) + (u._sum.outputTokens ?? 0),
-      cost:    u._sum.costUsd ?? 0,
-    }));
+    const topUsers = topUsersRaw
+      .filter((u): u is typeof u & { userId: string } => u.userId !== null)
+      .map(u => ({
+        userId:  u.userId,
+        email:   userById.get(u.userId)?.email ?? '',
+        name:    userById.get(u.userId)?.name  ?? '',
+        tokens:  (u._sum.inputTokens ?? 0) + (u._sum.outputTokens ?? 0),
+        cost:    u._sum.costUsd ?? 0,
+      }));
 
-    // Série quotidienne du coût sur 7 jours (graphe « Coût quotidien (7j) »).
-    // Bornée à 7 jours d'activité IA (volume faible, IA = prod uniquement) ; on bucketise
-    // en JS par jour local pour rester cohérent avec startOfToday/startOfWeek.
+    // Série quotidienne du coût sur 30 jours (graphe « Coût quotidien (30j) »).
+    // On bucketise en JS par jour local pour rester cohérent avec startOfToday.
     // Pas de filtre isDemo : aligné sur les autres agrégats ai-usage ci-dessus, pour que la
-    // somme quotidienne réconcilie avec le KPI « Coût USD (7j) » (le démo est lecture seule).
-    const weekLogs = await this.prisma.aiUsageLog.findMany({
-      where: { createdAt: { gte: startOfWeek } },
+    // somme quotidienne réconcilie avec les KPI de coût (le démo est lecture seule).
+    const windowLogs = await this.prisma.aiUsageLog.findMany({
+      where: { createdAt: { gte: startOfWindow } },
       select: { createdAt: true, costUsd: true },
     });
     const dayKey = (d: Date) =>
       `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const dailyMap = new Map<string, number>();
-    for (let i = 6; i >= 0; i--) {
+    for (let i = 29; i >= 0; i--) {
       const d = new Date(startOfToday);
       d.setDate(startOfToday.getDate() - i);
       dailyMap.set(dayKey(d), 0);
     }
-    for (const log of weekLogs) {
+    for (const log of windowLogs) {
       const key = dayKey(log.createdAt);
       if (dailyMap.has(key)) dailyMap.set(key, (dailyMap.get(key) ?? 0) + log.costUsd);
     }
     const daily = [...dailyMap.entries()].map(([date, cost]) => ({ date, cost }));
 
-    return { today, week, byFeature, topUsers, daily };
+    return { today, week, month, byFeature, byModel, topUsers, daily };
   }
 
   /**

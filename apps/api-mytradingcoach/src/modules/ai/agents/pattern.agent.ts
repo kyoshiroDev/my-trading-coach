@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import Anthropic from '@anthropic-ai/sdk';
 import { parseAnthropicJson } from './parse-json.util';
 import { handleAnthropicError } from './anthropic-errors.util';
-import { AiLoggerService } from '../../shared/ai-logger.service';
+import { AnthropicClientService } from '../../shared/anthropic-client.service';
 
 export type InsightType = 'strength' | 'weakness' | 'pattern';
 
@@ -32,33 +32,31 @@ Format :
 
 @Injectable()
 export class PatternAgent {
-  private readonly anthropic = new Anthropic({
-    apiKey: process.env['ANTHROPIC_API_KEY'],
-  });
   private readonly logger = new Logger(PatternAgent.name);
 
-  constructor(private readonly aiLogger: AiLoggerService) {}
+  constructor(private readonly anthropicClient: AnthropicClientService) {}
 
   async analyze(summary: string, userId?: string): Promise<PatternAnalysis> {
     let response: Anthropic.Message;
     try {
-      response = await this.anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1024,
-        system: [
-          {
-            type: 'text',
-            text: PATTERN_SYSTEM,
-            cache_control: { type: 'ephemeral' },
-          },
-        ],
-        messages: [{ role: 'user', content: summary }],
-      });
+      response = await this.anthropicClient.create(
+        {
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1024,
+          system: [
+            {
+              type: 'text',
+              text: PATTERN_SYSTEM,
+              cache_control: { type: 'ephemeral' },
+            },
+          ],
+          messages: [{ role: 'user', content: summary }],
+        },
+        { feature: 'insights', userId: userId ?? null },
+      );
     } catch (err) {
       handleAnthropicError(err, this.logger);
     }
-
-    if (userId) this.aiLogger.log(userId, 'insights', response.usage);
 
     const block = response.content[0];
     if (block.type !== 'text') {

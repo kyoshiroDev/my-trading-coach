@@ -45,6 +45,12 @@ export class TradesController {
     return this.marketData.getNews(symbols ?? '');
   }
 
+  // Traduction paresseuse du corps d'une news : déclenchée à l'ouverture de la modale.
+  @Get('news/:id/text')
+  async getNewsText(@Param('id') id: string): Promise<{ text: string | null }> {
+    return { text: await this.marketData.ensureNewsTextFr(id) };
+  }
+
   @Get('live-price')
   async getLivePrice(@Query('symbol') symbol: string): Promise<{ price: number | null; symbol: string; cached: boolean }> {
     if (!symbol?.trim()) return { price: null, symbol: '', cached: false };

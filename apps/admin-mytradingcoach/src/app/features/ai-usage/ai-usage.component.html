@@ -9,7 +9,8 @@
   } @else if (error()) {
     <div class="card"><div class="empty">Module Usage IA non disponible — l'endpoint /admin/ai-usage n'est pas déployé.</div></div>
   } @else if (data(); as d) {
-    <div class="kpi-strip cols-4">
+    <div class="kpi-strip cols-5">
+      <div class="kpi"><div class="kpi-top green"></div><div class="kpi-label">Coût ce mois-ci</div><div class="kpi-value green">${{ d.month.costUsd | number:'1.2-2' }}</div><div class="kpi-sub">{{ d.month.calls | number }} appels</div></div>
       <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Appels (7j)</div><div class="kpi-value teal">{{ d.week.calls | number }}</div><div class="kpi-sub">{{ d.today.calls }} aujourd'hui</div></div>
       <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Tokens entrée (7j)</div><div class="kpi-value blue">{{ d.week.inputTokens | number }}</div><div class="kpi-sub">{{ d.today.inputTokens | number }} aujourd'hui</div></div>
       <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Tokens sortie (7j)</div><div class="kpi-value purple">{{ d.week.outputTokens | number }}</div><div class="kpi-sub">{{ d.today.outputTokens | number }} aujourd'hui</div></div>
@@ -22,8 +23,28 @@
         <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="featureConfig()" /></div></div>
       </div>
       <div class="card">
-        <div class="card-head"><span class="card-label">Coût quotidien (7j)</span></div>
+        <div class="card-head"><span class="card-label">Coût quotidien (30j)</span></div>
         <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="dailyConfig()" /></div></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head"><span class="card-label">Coût par modèle (7j)</span></div>
+        <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="modelConfig()" /></div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-label">Détail par modèle</span></div>
+        <div class="card-body slim">
+          @for (m of d.byModel; track m.model) {
+            <div class="feat-row">
+              <span class="feat-name">{{ modelLabel(m.model) }}</span>
+              <div class="feat-track"><div class="feat-fill" [style.width.%]="m.pct"></div></div>
+              <span class="feat-pct">{{ m.pct }}%</span>
+              <span class="feat-cost">{{ m.cost | number:'1.3-3' }} USD</span>
+            </div>
+          } @empty { <div class="empty">Aucun appel IA sur 7 jours</div> }
+        </div>
       </div>
     </div>
 
