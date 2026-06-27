@@ -3,7 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { parseAnthropicJson } from './parse-json.util';
 import { handleAnthropicError } from './anthropic-errors.util';
 import { Pattern } from './pattern.agent';
-import { AiLoggerService } from '../../shared/ai-logger.service';
+import { AnthropicClientService } from '../../shared/anthropic-client.service';
 
 export interface Advice {
   title: string;
@@ -20,12 +20,9 @@ Format JSON : { "advice": [{ "title": "string (5 mots max)", "description": "str
 
 @Injectable()
 export class CoachAgent {
-  private readonly anthropic = new Anthropic({
-    apiKey: process.env['ANTHROPIC_API_KEY'],
-  });
   private readonly logger = new Logger(CoachAgent.name);
 
-  constructor(private readonly aiLogger: AiLoggerService) {}
+  constructor(private readonly anthropicClient: AnthropicClientService) {}
 
   async generateAdvice(data: {
     patterns: Pattern[];
@@ -35,23 +32,24 @@ export class CoachAgent {
 
     let response: Anthropic.Message;
     try {
-      response = await this.anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 512,
-        system: [
-          {
-            type: 'text',
-            text: COACH_SYSTEM,
-            cache_control: { type: 'ephemeral' },
-          },
-        ],
-        messages: [{ role: 'user', content: userContent }],
-      });
+      response = await this.anthropicClient.create(
+        {
+          model: 'claude-sonnet-4-6',
+          max_tokens: 512,
+          system: [
+            {
+              type: 'text',
+              text: COACH_SYSTEM,
+              cache_control: { type: 'ephemeral' },
+            },
+          ],
+          messages: [{ role: 'user', content: userContent }],
+        },
+        { feature: 'insights', userId: userId ?? null },
+      );
     } catch (err) {
       handleAnthropicError(err, this.logger);
     }
-
-    if (userId) this.aiLogger.log(userId, 'insights', response.usage);
 
     const block = response.content[0];
     if (block.type !== 'text') {

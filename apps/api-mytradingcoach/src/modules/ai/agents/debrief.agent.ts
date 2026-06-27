@@ -6,16 +6,13 @@ import {
   buildDebriefPrompt,
   DEBRIEF_SYSTEM_PROMPT,
 } from '../prompts/debrief.prompt';
-import { AiLoggerService } from '../../shared/ai-logger.service';
+import { AnthropicClientService } from '../../shared/anthropic-client.service';
 
 @Injectable()
 export class DebriefAgent {
-  private readonly anthropic = new Anthropic({
-    apiKey: process.env['ANTHROPIC_API_KEY'],
-  });
   private readonly logger = new Logger(DebriefAgent.name);
 
-  constructor(private readonly aiLogger: AiLoggerService) {}
+  constructor(private readonly anthropicClient: AnthropicClientService) {}
 
   async generate(
     data: Parameters<typeof buildDebriefPrompt>[0],
@@ -38,23 +35,24 @@ export class DebriefAgent {
 
     let response: Anthropic.Message;
     try {
-      response = await this.anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: maxTokens,
-        system: [
-          {
-            type: 'text',
-            text: DEBRIEF_SYSTEM_PROMPT,
-            cache_control: { type: 'ephemeral' },
-          },
-        ],
-        messages: [{ role: 'user', content: buildDebriefPrompt(data) }],
-      });
+      response = await this.anthropicClient.create(
+        {
+          model: 'claude-sonnet-4-6',
+          max_tokens: maxTokens,
+          system: [
+            {
+              type: 'text',
+              text: DEBRIEF_SYSTEM_PROMPT,
+              cache_control: { type: 'ephemeral' },
+            },
+          ],
+          messages: [{ role: 'user', content: buildDebriefPrompt(data) }],
+        },
+        { feature: 'debrief', userId: userId ?? null },
+      );
     } catch (err) {
       handleAnthropicError(err, this.logger);
     }
-
-    if (userId) this.aiLogger.log(userId, 'debrief', response.usage);
 
     const block = response.content[0];
     if (block.type !== 'text') {

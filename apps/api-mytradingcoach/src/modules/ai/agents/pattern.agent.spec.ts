@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { HttpException } from '@nestjs/common';
 import { PatternAgent } from './pattern.agent';
-import { AiLoggerService } from '../../shared/ai-logger.service';
+import { AnthropicClientService } from '../../shared/anthropic-client.service';
 
 const mockMessagesCreate = vi.hoisted(() =>
   vi.fn().mockResolvedValue({
@@ -75,7 +75,9 @@ describe('PatternAgent', () => {
     const module = await Test.createTestingModule({
       providers: [
         PatternAgent,
-        { provide: AiLoggerService, useValue: { log: vi.fn() } },
+        // Client central mocké : `create` délègue au mock SDK (et propage les rejets
+        // APIError pour tester handleAnthropicError).
+        { provide: AnthropicClientService, useValue: { create: (params: unknown) => mockMessagesCreate(params) } },
       ],
     }).compile();
 

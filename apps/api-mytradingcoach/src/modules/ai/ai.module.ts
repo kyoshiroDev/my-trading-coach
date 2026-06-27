@@ -6,7 +6,6 @@ import { DataAgent } from './agents/data.agent';
 import { PatternAgent } from './agents/pattern.agent';
 import { CoachAgent } from './agents/coach.agent';
 import { DebriefAgent } from './agents/debrief.agent';
-import { AiLoggerService } from '../shared/ai-logger.service';
 
 @Module({
   controllers: [AiController],
@@ -17,7 +16,6 @@ import { AiLoggerService } from '../shared/ai-logger.service';
     PatternAgent,
     CoachAgent,
     DebriefAgent,
-    AiLoggerService,
   ],
   exports: [AiService],
 })

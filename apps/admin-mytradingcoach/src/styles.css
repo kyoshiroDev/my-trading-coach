@@ -149,6 +149,7 @@ router-outlet { display: none; }
 @media (min-width: 768px)  { .kpi-strip { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 1024px) {
   .kpi-strip { grid-template-columns: repeat(6, 1fr); }
+  .kpi-strip.cols-5 { grid-template-columns: repeat(5, 1fr); }
   .kpi-strip.cols-4 { grid-template-columns: repeat(4, 1fr); }
   .kpi-strip.cols-2 { grid-template-columns: repeat(2, 1fr); gap: 12px; }
 }

@@ -19,9 +19,10 @@ const MEXC_ROW =
   'BTCUSDT;2026-05-30 12:11:40;2026-05-30 14:31:55;Isolated;73,602.51;73,692.56;Short;550;1.6202459USDT;-6.5727459USDT;All Closed;65370223';
 
 function makeService() {
-  const aiLogger = { log: vi.fn() } as any;
+  // Client Anthropic central mocké (le service appelle `anthropicClient.create`).
+  const anthropicClient = { create: vi.fn() } as any;
   const prisma = { user: { findUnique: vi.fn().mockResolvedValue(null) } } as any;
-  return new CsvImportService(aiLogger, prisma);
+  return new CsvImportService(anthropicClient, prisma);
 }
 
 describe('CsvImportService — MEXC (parser dédié, sans IA)', () => {
@@ -150,7 +151,7 @@ describe('CsvImportService — chemin IA réservé Premium', () => {
 
   it('refuse le broker inconnu sans Premium (message clair, 0 appel Anthropic)', async () => {
     const create = vi.fn();
-    (svc as any).anthropic.messages.create = create;
+    (svc as any).anthropicClient.create = create;
     const csv = ['foo,bar,baz', 'v1,w,z', 'v2,w,z'].join('\n');
 
     await expect(
@@ -168,7 +169,7 @@ describe('CsvImportService — chemin IA réservé Premium', () => {
     process.env['NODE_ENV'] = 'production';
     try {
       const create = vi.fn();
-      (svc as any).anthropic.messages.create = create;
+      (svc as any).anthropicClient.create = create;
       const csv = ['foo,bar,baz', 'v1,w,z'].join('\n');
       await expect(
         svc.parseCSV(Buffer.from(csv), 'unknown.csv', undefined, {
@@ -210,7 +211,7 @@ describe('CsvImportService — chemin IA par lots', () => {
       ],
       usage: { input_tokens: 1, output_tokens: 1 },
     });
-    (svc as any).anthropic.messages.create = create;
+    (svc as any).anthropicClient.create = create;
 
     const oldEnv = process.env['NODE_ENV'];
     process.env['NODE_ENV'] = 'production'; // chemin IA actif (Premium + prod)
