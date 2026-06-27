@@ -942,6 +942,10 @@
   font-size: 13px; color: var(--text-2); line-height: 1.7; margin: 0;
   white-space: pre-line;
 }
+.nm-translating {
+  font-size: 12px; color: var(--text-3); font-family: var(--font-mono);
+  margin: 0; opacity: .85;
+}
 .nm-cta {
   display: inline-flex; align-items: center; gap: 5px;
   background: rgba(59,130,246,.1); border: 1px solid rgba(59,130,246,.2);
