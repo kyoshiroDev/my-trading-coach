@@ -35,6 +35,7 @@ const ME_SELECT = {
   startingCapital: true,
   notificationsEmail: true,
   debriefAutomatic: true,
+  marketingConsent: true,
   trialEndsAt: true,
   trialUsed: true,
   stripeSubscriptionStatus: true,
@@ -78,7 +79,15 @@ export class AuthService {
     }
 
     const user = await this.prisma.user.create({
-      data: { email: dto.email, password: hashedPassword, name: dto.name, referredBy },
+      data: {
+        email: dto.email,
+        password: hashedPassword,
+        name: dto.name,
+        referredBy,
+        unsubToken: crypto.randomBytes(32).toString('hex'),
+        marketingConsent: dto.marketingConsent === true,
+        marketingConsentAt: dto.marketingConsent === true ? new Date() : null,
+      },
       select: {
         id: true,
         email: true,

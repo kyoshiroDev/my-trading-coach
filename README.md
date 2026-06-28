@@ -89,6 +89,19 @@ Nx Console is an editor extension that enriches your developer experience. It le
 
 [Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
 
+## IA — interrupteur d'environnement (`AI_ENABLED`)
+
+Tous les appels au modèle Anthropic passent par `AnthropicClientService` et sont coupés si
+`AI_ENABLED !== 'true'`. C'est le seul interrupteur d'environnement (indépendant de `NODE_ENV`,
+car le déploiement **Dev** tourne en `NODE_ENV=production`).
+
+- **Production** : `AI_ENABLED=true`.
+- **Déploiement Dev + CI** : `AI_ENABLED=false` → **zéro dépense Anthropic** (les crons de
+  traduction news/eco et tous les appels IA sont court-circuités).
+
+Chaque appel est loggé dans `AiUsageLog` avec le vrai modèle et le coût au tarif du modèle
+(`ai-pricing.const.ts`) — visible dans l'écran admin `ai-usage` (coût du mois + ventilation Haiku/Sonnet).
+
 ## Useful links
 
 Learn more:

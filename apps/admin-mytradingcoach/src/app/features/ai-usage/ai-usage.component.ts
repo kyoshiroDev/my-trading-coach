@@ -36,7 +36,29 @@ export class AiUsageComponent {
     } as ChartConfiguration;
   });
 
-  // Coût quotidien sur 7 jours (ligne) — aligné sur le mockup « Coût quotidien (7j) ».
+  // Ventilation du coût par modèle (doughnut) — Haiku vs Sonnet.
+  protected readonly modelConfig = computed<ChartConfiguration>(() => {
+    const m = this.data()?.byModel ?? [];
+    const palette = [CHART_COLORS.teal, CHART_COLORS.purple, CHART_COLORS.blue, CHART_COLORS.amber, CHART_COLORS.green, CHART_COLORS.red];
+    return {
+      type: 'doughnut',
+      data: { labels: m.map((x) => this.modelLabel(x.model)), datasets: [{ data: m.map((x) => x.cost), backgroundColor: m.map((_, i) => palette[i % palette.length]), borderColor: '#0c0e10', borderWidth: 2 }] },
+      options: {
+        maintainAspectRatio: false, cutout: '62%',
+        plugins: { legend: { position: 'right', labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, padding: 12 } } },
+      },
+    } as ChartConfiguration;
+  });
+
+  /** Libellé court d'un identifiant de modèle Anthropic. */
+  protected modelLabel(model: string): string {
+    if (model.includes('haiku')) return 'Haiku 4.5';
+    if (model.includes('sonnet')) return 'Sonnet 4.6';
+    if (model.includes('opus')) return 'Opus';
+    return model;
+  }
+
+  // Coût quotidien sur 30 jours (ligne) — aligné sur le mockup « Coût quotidien (30j) ».
   protected readonly dailyConfig = computed<ChartConfiguration>(() => {
     const d = this.data()?.daily ?? [];
     return {

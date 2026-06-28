@@ -68,6 +68,7 @@ function insightVariant(type: string): InsightVariant {
   template: `
     <mtc-topbar
       title="IA Insights"
+      [globalScopeNote]="true"
       [showAddButton]="userStore.isPremium()"
       [addLabel]="
         insightsLoading()

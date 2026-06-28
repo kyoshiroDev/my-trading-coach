@@ -3,7 +3,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, interval, of, startWith, switchMap } from 'rxjs';
-import type { ChartConfiguration, ScriptableContext } from 'chart.js';
+import type { ChartConfiguration } from 'chart.js';
 import {
   AdminApi,
   AdminStats,
@@ -14,7 +14,7 @@ import {
 import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
 import { ChartCanvasComponent } from '../../shared/components/chart-canvas/chart-canvas.component';
 import { RadialGaugeComponent } from '../../shared/components/radial-gauge/radial-gauge.component';
-import { CHART_COLORS, fade, gridAxis, noLegend, type ChartTone } from '../../shared/charts/chart-theme';
+import { CHART_COLORS, gridAxis, noLegend, type ChartTone } from '../../shared/charts/chart-theme';
 
 @Component({
   selector: 'mtc-admin-dashboard',
@@ -31,7 +31,7 @@ import { CHART_COLORS, fade, gridAxis, noLegend, type ChartTone } from '../../sh
 
       <!-- KPIs pleine largeur -->
       @if (stats(); as s) {
-        <div class="kpi-strip">
+        <div class="kpi-strip dash-kpis">
           <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">MRR</div>
             <div class="kpi-value teal">€{{ s.mrr | number:'1.0-0' }}</div>
             <div class="kpi-sub">{{ s.mrr === 0 ? 'bêta' : 'ARR €' + (s.arr | number:'1.0-0') }}</div></div>
@@ -50,6 +50,10 @@ import { CHART_COLORS, fade, gridAxis, noLegend, type ChartTone } from '../../sh
           <div class="kpi"><div class="kpi-top red"></div><div class="kpi-label">Churn</div>
             <div class="kpi-value" [class.red]="s.churnedThisMonth > 0">{{ s.churnedThisMonth }}</div>
             <div class="kpi-sub">résiliations</div></div>
+          <div class="kpi kpi-link" routerLink="/deleted" role="link" tabindex="0">
+            <div class="kpi-top slate"></div><div class="kpi-label">Comptes supprimés</div>
+            <div class="kpi-value">{{ s.comptesSupprimesMois }}</div>
+            <div class="kpi-sub">{{ s.comptesSupprimesTotal }} au total · ce mois</div></div>
         </div>
       }
 
@@ -58,7 +62,7 @@ import { CHART_COLORS, fade, gridAxis, noLegend, type ChartTone } from '../../sh
         <!-- Gauche, pleine hauteur : Évolution + Entonnoir -->
         <div class="area-left dcol">
           <div class="card grow-chart">
-            <div class="card-head"><span class="card-label">Évolution — MRR &amp; utilisateurs (30j)</span><span class="card-label muted">snapshots</span></div>
+            <div class="card-head"><span class="card-label">Évolution — inscrits par semaine{{ showMrrLine() ? ' + MRR' : '' }}</span><span class="card-label muted">snapshots</span></div>
             <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="trendConfig()" /></div></div>
           </div>
           <div class="card">
@@ -140,10 +144,11 @@ import { CHART_COLORS, fade, gridAxis, noLegend, type ChartTone } from '../../sh
         <div class="card act-strip area-strip">
           <div class="card-head"><span class="card-label">Fidélisation &amp; activation</span><span class="card-label danger">priorité produit</span></div>
           @if (retention(); as r) {
-            <div class="card-body ret-grid">
-              <div class="ret-stat"><span class="kpi-label">Taux d'activation</span><span class="v teal">{{ r.activation.rate }}%</span><span class="kpi-sub">{{ r.activation.activated }} / {{ r.activation.total }} ont tradé</span></div>
-              <div class="ret-stat"><span class="kpi-label">Reviennent à J+7</span><span class="v blue">{{ r.retentionD7.rate }}%</span><span class="kpi-sub">{{ r.retentionD7.retained }} / {{ r.retentionD7.eligible }} cohorte</span></div>
-              <div class="ret-stat"><span class="kpi-label">Utilisateurs actifs</span><span class="v">{{ r.active.dau }} <span class="ret-when">aujourd'hui</span></span><span class="kpi-sub">{{ r.active.wau }} cette semaine · {{ r.active.mau }} ce mois</span></div>
+            <div class="card-body ret-grid funnel">
+              <div class="ret-stat"><span class="kpi-label">Activation (ont tradé)</span><span class="v teal">{{ r.activation.rate }}%</span><span class="kpi-sub">{{ r.activation.activated }} / {{ r.activation.total }} · ≥1 trade</span></div>
+              <div class="ret-stat"><span class="kpi-label">Traders actifs 7j</span><span class="v blue">{{ stats()?.tradersActifs7d ?? 0 }}</span><span class="kpi-sub">≥1 trade sur 7 jours</span></div>
+              <div class="ret-stat"><span class="kpi-label">Traders actifs 30j</span><span class="v green">{{ stats()?.tradersActifs30d ?? 0 }}</span><span class="kpi-sub">≥1 trade sur 30 jours</span></div>
+              <div class="ret-stat"><span class="kpi-label">Reviennent à J+7</span><span class="v">{{ r.retentionD7.rate }}%</span><span class="kpi-sub">{{ r.retentionD7.retained }} / {{ r.retentionD7.eligible }} cohorte</span></div>
               <div class="ret-stat"><span class="kpi-label">Inscrits sans trade</span><span class="v red">{{ r.ghostUsers }}</span><span class="kpi-sub">fantômes (onboarding)</span></div>
             </div>
           } @else {
@@ -191,36 +196,84 @@ export class DashboardComponent {
   protected readonly diskTone = computed<ChartTone>(() => this.tone(this.diskPct(), 'amber'));
 
   // ── Configs graphes ───────────────────────────────────────────────────────
+
+  /** Agrège les snapshots quotidiens en semaines (rythme d'acquisition + MRR). */
+  protected readonly weekly = computed(() => {
+    const pts = this.history(); // ordonnés du plus ancien au plus récent
+    const buckets = new Map<string, { label: string; signups: number; mrr: number; order: number }>();
+    for (const p of pts) {
+      const monday = this.mondayOf(p.date);
+      const key = monday.toISOString().slice(0, 10);
+      const ex = buckets.get(key);
+      if (ex) {
+        ex.signups += p.newSignups;
+        ex.mrr = p.mrr; // dernier snapshot de la semaine = MRR de fin de semaine
+      } else {
+        buckets.set(key, { label: this.weekLabel(monday), signups: p.newSignups, mrr: p.mrr, order: monday.getTime() });
+      }
+    }
+    return [...buckets.values()].sort((a, b) => a.order - b.order);
+  });
+
+  /** Ligne MRR affichée uniquement quand le MRR courant dépasse 0 (pas de faux axe). */
+  protected readonly showMrrLine = computed(() => (this.stats()?.mrr ?? 0) > 0);
+
   protected readonly trendConfig = computed<ChartConfiguration>(() => {
-    const h = this.history();
-    return {
-      type: 'line',
-      data: {
-        labels: h.map((p) => this.shortDate(p.date)),
-        datasets: [
-          {
-            label: 'Utilisateurs',
-            data: h.map((p) => p.users),
-            borderColor: CHART_COLORS.blue,
-            backgroundColor: (ctx: ScriptableContext<'line'>) => fade(ctx, CHART_COLORS.blue),
-            fill: true, tension: 0.35, pointRadius: 0, borderWidth: 2, yAxisID: 'y',
-          },
-          {
-            label: 'MRR €',
-            data: h.map((p) => p.mrr),
-            borderColor: CHART_COLORS.teal,
-            borderWidth: 2, pointRadius: 0, tension: 0.3, yAxisID: 'y1',
-          },
-        ],
+    const w = this.weekly();
+    const showMrr = this.showMrrLine();
+
+    // Barres = nouveaux inscrits par semaine (le rythme que les cards ne montrent pas).
+    const datasets: ChartConfiguration['data']['datasets'] = [
+      {
+        type: 'bar',
+        label: 'Inscrits',
+        data: w.map((x) => x.signups),
+        backgroundColor: CHART_COLORS.blue,
+        borderRadius: 5, categoryPercentage: 0.7, barPercentage: 0.85, maxBarThickness: 40,
+        yAxisID: 'y', order: 2,
       },
+    ];
+
+    // Ligne MRR seulement si MRR > 0 (sinon aucune trace ni axe €).
+    if (showMrr) {
+      datasets.push({
+        type: 'line',
+        label: 'MRR €',
+        data: w.map((x) => x.mrr),
+        borderColor: CHART_COLORS.teal,
+        backgroundColor: CHART_COLORS.teal,
+        borderWidth: 2, pointRadius: 2, tension: 0.3,
+        yAxisID: 'y1', order: 1,
+      });
+    }
+
+    return {
+      type: 'bar',
+      data: { labels: w.map((x) => x.label), datasets },
       options: {
         maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: false },
-        plugins: { legend: { display: true, labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, padding: 14 } } },
+        plugins: {
+          legend: showMrr
+            ? { display: true, labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, padding: 14 } }
+            : { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const v = ctx.parsed.y ?? 0;
+                return ctx.dataset.yAxisID === 'y1'
+                  ? `MRR €${v}`
+                  : `${v} inscrit${v > 1 ? 's' : ''}`;
+              },
+            },
+          },
+        },
         scales: {
           x: { grid: { display: false } },
           y: { position: 'left', grid: gridAxis, beginAtZero: true, ticks: { precision: 0 } },
-          y1: { position: 'right', grid: { display: false }, beginAtZero: true, ticks: { callback: (v) => '€' + v } },
+          ...(showMrr
+            ? { y1: { position: 'right', grid: { display: false }, beginAtZero: true, ticks: { callback: (v) => '€' + v } } }
+            : {}),
         },
       },
     } as ChartConfiguration;
@@ -239,7 +292,7 @@ export class DashboardComponent {
           {
             data: [total, traded, active7],
             backgroundColor: [CHART_COLORS.blue, CHART_COLORS.teal, CHART_COLORS.green],
-            borderRadius: 5, categoryPercentage: 0.72, barPercentage: 0.82,
+            borderRadius: 5, categoryPercentage: 0.72, barPercentage: 0.82, maxBarThickness: 40,
           },
         ],
       },
@@ -300,8 +353,17 @@ export class DashboardComponent {
     if (value > 65) return 'amber';
     return base;
   }
-  private shortDate(iso: string): string {
-    const [, m, d] = iso.split('-');
-    return `${d}/${m}`;
+  /** Lundi de la semaine d'une date ISO (YYYY-MM-DD), pour grouper par semaine. */
+  private mondayOf(iso: string): Date {
+    const d = new Date(iso + 'T00:00:00');
+    const offset = (d.getDay() + 6) % 7; // 0 = lundi
+    d.setDate(d.getDate() - offset);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+  private weekLabel(monday: Date): string {
+    const dd = String(monday.getDate()).padStart(2, '0');
+    const mm = String(monday.getMonth() + 1).padStart(2, '0');
+    return `${dd}/${mm}`;
   }
 }

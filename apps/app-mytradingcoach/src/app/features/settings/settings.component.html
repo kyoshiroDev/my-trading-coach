@@ -1,4 +1,4 @@
-<mtc-topbar title="Paramètres" />
+<mtc-topbar title="Profil" />
 
 <div class="settings-content">
 
@@ -9,525 +9,532 @@
     <div class="alert alert-cancel">Paiement annulé. Tu peux réessayer quand tu veux.</div>
   }
 
-  <div class="settings-3col">
+  <!-- ════ ONGLETS ════ -->
+  <div class="profile-tabs">
+    <button class="ptab" [class.active]="activeProfileTab() === 'trader'"
+      (click)="setProfileTab('trader')">
+      <span class="ptab-ico">👤</span>Profil trader
+    </button>
+    <button class="ptab" [class.active]="activeProfileTab() === 'params'"
+      (click)="setProfileTab('params')">
+      <span class="ptab-ico">⚙️</span>Paramètres
+    </button>
+  </div>
 
-    <!-- ── Colonne gauche : Compte ── -->
-    <div class="settings-col-left">
+  <!-- ════ ONGLET PROFIL TRADER ════ -->
+  @if (activeProfileTab() === 'trader') {
+    <div class="profile-grid-trader">
 
-      <!-- ══ 1. COMPTE ══ -->
-      <div class="settings-section">
-        <div class="settings-section-label">Compte</div>
-        <div class="settings-card">
+      <!-- ── Colonne gauche : Stratégie + Mes actifs ── -->
+      <div class="pcol">
 
-          <!-- Email -->
-          <div class="settings-row">
-            <div class="settings-row-left">
-              <span class="settings-row-label">Email</span>
-              @if (editingEmail()) {
-                <div class="inline-edit">
-                  <input class="settings-input" type="email" [value]="emailInput()"
-                    (input)="emailInput.set($any($event.target).value)" placeholder="Nouvel email" />
-                  <button class="btn-inline-save" (click)="saveEmail()"
-                    [disabled]="isSavingEmail() || !emailInput().trim()">
-                    {{ isSavingEmail() ? '…' : 'Sauvegarder' }}
-                  </button>
-                  <button class="btn-inline-cancel" (click)="editingEmail.set(false)">Annuler</button>
-                </div>
-              } @else {
-                <span class="settings-row-value">{{ userStore.user()?.email }}</span>
-              }
+        <!-- ══ STRATÉGIE — vue résumé ══ -->
+        <div class="settings-section">
+          <div class="settings-section-label">Stratégie de trading</div>
+          <div class="settings-card strat-summary">
+            <button class="strat-edit-btn" (click)="openStrategyModal()">✎ Modifier</button>
+
+            <div class="ssum-row">
+              <span class="ssum-k">Capital</span>
+              <span class="ssum-v">${{ userStore.startingCapital() | number:'1.2-2' }}</span>
             </div>
-            @if (!editingEmail()) {
-              <button class="settings-edit-btn" (click)="startEditEmail()">Modifier</button>
-            }
-          </div>
-
-          <!-- Nom -->
-          <div class="settings-row">
-            <div class="settings-row-left">
-              <span class="settings-row-label">Nom</span>
-              @if (editingName()) {
-                <div class="inline-edit">
-                  <input class="settings-input" type="text" [value]="nameInput()"
-                    (input)="nameInput.set($any($event.target).value)" placeholder="Ton nom" />
-                  <button class="btn-inline-save" (click)="saveName()"
-                    [disabled]="isSavingName() || !nameInput().trim()">
-                    {{ isSavingName() ? '…' : 'Sauvegarder' }}
-                  </button>
-                  <button class="btn-inline-cancel" (click)="editingName.set(false)">Annuler</button>
-                </div>
-              } @else {
-                <span class="settings-row-value">{{ userStore.user()?.name || '—' }}</span>
-              }
-            </div>
-            @if (!editingName()) {
-              <button class="settings-edit-btn" (click)="startEditName()">Modifier</button>
-            }
-          </div>
-
-          <!-- Mot de passe (masqué en démo) -->
-          @if (!userStore.isDemo()) {
-            <div class="settings-row">
-              <div class="settings-row-left">
-                <span class="settings-row-label">Mot de passe</span>
-                @if (passwordResetSent()) {
-                  <span class="settings-row-hint success-hint">Email envoyé — vérifie ta boîte mail</span>
-                } @else {
-                  <span class="settings-row-value">••••••••••••</span>
-                }
-              </div>
-              @if (!passwordResetSent()) {
-                <button class="settings-edit-btn" (click)="resetPassword()">Modifier</button>
-              }
-            </div>
-          }
-
-          <!-- Capital de départ -->
-          <div class="settings-row">
-            <div class="settings-row-left">
-              <span class="settings-row-label">Capital de départ</span>
-              @if (editingCapital()) {
-                <div class="capital-edit-row">
-                  <span class="capital-symbol">$</span>
-                  <input class="settings-inline-input" type="text" [value]="capitalInput()"
-                    (input)="filterCapital($event)" placeholder="ex : 5000" />
-                  <button class="settings-save-btn" (click)="saveCapital()"
-                    [disabled]="isSavingCapital()">
-                    {{ isSavingCapital() ? '…' : 'OK' }}
-                  </button>
-                  <button class="settings-cancel-btn" (click)="editingCapital.set(false)">Annuler</button>
-                </div>
-              } @else {
-                <span class="settings-row-value">
-                  ${{ userStore.startingCapital() | number:'1.2-2' }}
-                </span>
-              }
-            </div>
-            @if (!editingCapital()) {
-              <button class="settings-edit-btn" (click)="startEditCapital()">Modifier</button>
-            }
-          </div>
-
-        </div>
-      </div>
-
-      <!-- ══ 4b. MAINTENANCE — NETTOYAGE DOUBLONS ══ -->
-      <div class="settings-section">
-        <div class="settings-section-label">Maintenance des données</div>
-        <div class="settings-card">
-          <div class="settings-row">
-            <div class="settings-row-left">
-              <span class="settings-row-label">Nettoyer les doublons</span>
-              <span class="settings-row-hint">
-                Supprime les trades en double (même actif, sens, date, prix et P&L) en gardant
-                une occurrence. Utile après un import répété.
+            <div class="ssum-row">
+              <span class="ssum-k">Style</span>
+              <span class="ssum-v">
+                @if (tradingStyle()) {
+                  {{ styleEmoji(tradingStyle()) }} {{ styleLabel(tradingStyle()) }}
+                } @else { — }
               </span>
             </div>
-            @if (dedupeRemoved() !== null) {
-              <span class="settings-row-value">{{ dedupeRemoved() }} supprimé(s) ✓</span>
-            } @else if (duplicateCount() === null) {
-              <button class="settings-edit-btn" (click)="scanDuplicates()" [disabled]="dedupeScanning()">
-                {{ dedupeScanning() ? 'Analyse…' : 'Rechercher' }}
-              </button>
-            } @else if (duplicateCount()! > 0) {
-              <button class="settings-edit-btn danger-btn" (click)="removeDuplicates()" [disabled]="dedupeRemoving()">
-                {{ dedupeRemoving() ? 'Suppression…' : 'Supprimer ' + duplicateCount() + ' doublon(s)' }}
-              </button>
-            } @else {
-              <span class="settings-row-value">Aucun doublon ✓</span>
-            }
+            <div class="ssum-row">
+              <span class="ssum-k">Sessions</span>
+              <span class="ssum-v">
+                {{ tradingSessions().length ? tradingSessions().map(s => sessionLabel(s)).join(', ') : '—' }}
+              </span>
+            </div>
+            <div class="ssum-row">
+              <span class="ssum-k">Trades/jour</span>
+              <span class="ssum-v">{{ tradesPerDayMin() }}–{{ tradesPerDayMax() }}</span>
+            </div>
+            <div class="ssum-row">
+              <span class="ssum-k">Description</span>
+              <span class="ssum-v desc">{{ strategyDesc().trim() || '—' }}</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- ══ 5. ZONE DE DANGER (masquée en démo) ══ -->
-      @if (!userStore.isDemo()) {
-      <div class="settings-section">
-        <div class="settings-section-label danger-label">Zone de danger</div>
-        <div class="settings-card danger-card">
-          @if (!showDeleteConfirm()) {
+        <!-- ══ MES ACTIFS — auto-save ══ -->
+        <div class="settings-section">
+          <div class="settings-section-label">Mes actifs</div>
+          <div class="strat-card">
+
+            <div class="asset-search-wrap">
+              <input
+                class="asset-search-input"
+                type="text"
+                placeholder="Rechercher un actif — NQ, MES, BTC, EUR/USD..."
+                [value]="assetSearchQuery()"
+                (input)="onAssetSearch($any($event.target).value)"
+                style="text-transform: uppercase;"
+              />
+              @if (assetSearchLoading()) {
+                <span class="asset-search-spin">⟳</span>
+              }
+            </div>
+
+            @if (assetSearchResults().length > 0) {
+              <div class="asset-results">
+                @for (result of assetSearchResults(); track result.symbol) {
+                  <button class="asset-result" type="button" [disabled]="assetsSaving()"
+                    (click)="addAsset(result)">
+                    <span class="asset-result-sym">{{ result.symbol }}</span>
+                    <span class="asset-result-lbl">{{ result.label }}</span>
+                    <span class="asset-result-cat">{{ result.category }}</span>
+                    <span class="asset-result-add">+</span>
+                  </button>
+                }
+              </div>
+            }
+
+            @if (tradingAssets().length > 0) {
+              <div class="assets-list">
+                @for (asset of tradingAssets(); track asset.symbol) {
+                  <div class="asset-row">
+                    <button
+                      class="asset-fav"
+                      [class.active]="asset.isFavorite"
+                      [disabled]="assetsSaving()"
+                      [title]="asset.isFavorite ? 'Favori — pré-sélectionné en saisie rapide' : 'Définir comme favori'"
+                      (click)="setFavoriteAssetSetting(asset.symbol)"
+                    >★</button>
+                    <div class="asset-chip" [class.is-fav]="asset.isFavorite">
+                      <span class="asset-cat">{{ asset.category }}</span>
+                      <span class="asset-sym">{{ asset.symbol }}</span>
+                      <span class="asset-lbl">{{ asset.label }}</span>
+                    </div>
+                    <button class="asset-del" [disabled]="assetsSaving()"
+                      (click)="removeAsset(asset.symbol)" title="Supprimer">×</button>
+                  </div>
+                }
+              </div>
+              <p class="assets-hint">★ L'actif favori sera pré-sélectionné dans la saisie rapide de session</p>
+            } @else {
+              <p class="assets-empty">Aucun actif. Recherche et ajoute tes instruments ci-dessus.</p>
+            }
+
+          </div>
+        </div>
+
+      </div> <!-- /pcol gauche -->
+
+      <!-- ── Colonne droite : Mes setups (coquille) ── -->
+      <div class="pcol">
+        <div class="settings-section">
+          <div class="settings-section-label">Mes setups</div>
+          <div class="strat-card">
+            <div class="stp-intro">
+              Le tag <b>SETUP</b> de chaque trade, pour grouper tes stats.
+            </div>
+            <!-- TODO PROMPT-13X : liste dynamique des setups (CRUD, barre d'usage, win rate) -->
+            <div class="stp-add">
+              <button class="stp-addbtn" type="button" disabled title="Bientôt disponible">
+                + Ajouter un setup
+              </button>
+            </div>
+          </div>
+        </div>
+      </div> <!-- /pcol droite -->
+
+    </div>
+  }
+
+  <!-- ════ ONGLET PARAMÈTRES ════ -->
+  @if (activeProfileTab() === 'params') {
+    <div class="profile-grid-2">
+
+      <!-- ── Colonne gauche : Compte + Maintenance + Danger ── -->
+      <div class="pcol">
+
+        <!-- ══ COMPTE ══ -->
+        <div class="settings-section">
+          <div class="settings-section-label">Compte</div>
+          <div class="settings-card">
+
+            <!-- Email -->
             <div class="settings-row">
               <div class="settings-row-left">
-                <span class="settings-row-label danger-row-label">Supprimer mon compte</span>
+                <span class="settings-row-label">Email</span>
+                @if (editingEmail()) {
+                  <div class="inline-edit">
+                    <input class="settings-input" type="email" [value]="emailInput()"
+                      (input)="emailInput.set($any($event.target).value)" placeholder="Nouvel email" />
+                    <button class="btn-inline-save" (click)="saveEmail()"
+                      [disabled]="isSavingEmail() || !emailInput().trim()">
+                      {{ isSavingEmail() ? '…' : 'Sauvegarder' }}
+                    </button>
+                    <button class="btn-inline-cancel" (click)="editingEmail.set(false)">Annuler</button>
+                  </div>
+                } @else {
+                  <span class="settings-row-value">{{ userStore.user()?.email }}</span>
+                }
+              </div>
+              @if (!editingEmail()) {
+                <button class="settings-edit-btn" (click)="startEditEmail()">Modifier</button>
+              }
+            </div>
+
+            <!-- Nom -->
+            <div class="settings-row">
+              <div class="settings-row-left">
+                <span class="settings-row-label">Nom</span>
+                @if (editingName()) {
+                  <div class="inline-edit">
+                    <input class="settings-input" type="text" [value]="nameInput()"
+                      (input)="nameInput.set($any($event.target).value)" placeholder="Ton nom" />
+                    <button class="btn-inline-save" (click)="saveName()"
+                      [disabled]="isSavingName() || !nameInput().trim()">
+                      {{ isSavingName() ? '…' : 'Sauvegarder' }}
+                    </button>
+                    <button class="btn-inline-cancel" (click)="editingName.set(false)">Annuler</button>
+                  </div>
+                } @else {
+                  <span class="settings-row-value">{{ userStore.user()?.name || '—' }}</span>
+                }
+              </div>
+              @if (!editingName()) {
+                <button class="settings-edit-btn" (click)="startEditName()">Modifier</button>
+              }
+            </div>
+
+            <!-- Mot de passe (masqué en démo) -->
+            @if (!userStore.isDemo()) {
+              <div class="settings-row">
+                <div class="settings-row-left">
+                  <span class="settings-row-label">Mot de passe</span>
+                  @if (passwordResetSent()) {
+                    <span class="settings-row-hint success-hint">Email envoyé — vérifie ta boîte mail</span>
+                  } @else {
+                    <span class="settings-row-value">••••••••••••</span>
+                  }
+                </div>
+                @if (!passwordResetSent()) {
+                  <button class="settings-edit-btn" (click)="resetPassword()">Modifier</button>
+                }
+              </div>
+            }
+
+          </div>
+        </div>
+
+        <!-- ══ MAINTENANCE — NETTOYAGE DOUBLONS ══ -->
+        <div class="settings-section">
+          <div class="settings-section-label">Maintenance des données</div>
+          <div class="settings-card">
+            <div class="settings-row">
+              <div class="settings-row-left">
+                <span class="settings-row-label">Nettoyer les doublons</span>
                 <span class="settings-row-hint">
-                  Supprime définitivement ton compte, tous tes trades et debriefs. Irréversible.
+                  Supprime les trades en double (même actif, sens, date, prix et P&L) en gardant
+                  une occurrence. Utile après un import répété.
                 </span>
               </div>
-              <button class="settings-edit-btn danger-btn"
-                (click)="showDeleteConfirm.set(true)">Supprimer</button>
-            </div>
-          } @else {
-            <div class="delete-confirm">
-              <p class="delete-confirm-title">Confirme la suppression</p>
-              <p class="delete-confirm-hint">
-                Tape <strong>SUPPRIMER</strong> pour confirmer. Cette action est irréversible.
-              </p>
-              <label class="delete-reason-label" for="delete-reason">Pourquoi pars-tu ? (optionnel)</label>
-              <select id="delete-reason" class="delete-input" [value]="deleteReason()"
-                (change)="deleteReason.set($any($event.target).value)">
-                <option value="">Je préfère ne pas dire</option>
-                <option value="Trop compliqué">Trop compliqué</option>
-                <option value="Pas pour moi">Pas pour moi</option>
-                <option value="Manque de temps">Manque de temps</option>
-                <option value="J'ai arrêté de trader">J'ai arrêté de trader</option>
-                <option value="Problème technique">Problème technique</option>
-                <option value="Trop cher">Trop cher</option>
-                <option value="Autre">Autre</option>
-              </select>
-              <input class="delete-input" type="text" [value]="deleteInput()"
-                (input)="deleteInput.set($any($event.target).value)" placeholder="SUPPRIMER" />
-              <div class="delete-actions">
-                <button class="btn btn-secondary"
-                  (click)="showDeleteConfirm.set(false); deleteInput.set('')">Annuler</button>
-                <button class="btn btn-danger" (click)="confirmDelete()"
-                  [disabled]="deleteInput() !== 'SUPPRIMER' || isDeleting()">
-                  {{ isDeleting() ? 'Suppression…' : 'Supprimer définitivement' }}
+              @if (dedupeRemoved() !== null) {
+                <span class="settings-row-value">{{ dedupeRemoved() }} supprimé(s) ✓</span>
+              } @else if (duplicateCount() === null) {
+                <button class="settings-edit-btn" (click)="scanDuplicates()" [disabled]="dedupeScanning()">
+                  {{ dedupeScanning() ? 'Analyse…' : 'Rechercher' }}
                 </button>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-      }
-
-    </div> <!-- /settings-col-left -->
-
-    <!-- ── Colonne milieu : Abonnement + Préférences ── -->
-    <div class="settings-col-middle">
-
-      <!-- ══ 2. ABONNEMENT ══ -->
-      <div class="settings-section">
-        <div class="settings-section-label">Abonnement</div>
-        <div class="settings-card">
-          <div class="plan-inner">
-            @if (userStore.isPremium()) {
-              <div class="plan-badge premium">
-                <div class="plan-badge-dot"></div>
-                PREMIUM
-              </div>
-              <p class="plan-desc">Accès à tout — IA Insights, Chat coach IA, Calendrier éco IA, news &amp; contexte marché, recap email 17h30.</p>
-              @if (userStore.user()?.stripeCurrentPeriodEnd) {
-                <p class="plan-renewal">
-                  Renouvellement : {{ userStore.user()?.stripeCurrentPeriodEnd | date:'dd/MM/yyyy' }}
-                </p>
+              } @else if (duplicateCount()! > 0) {
+                <button class="settings-edit-btn danger-btn" (click)="removeDuplicates()" [disabled]="dedupeRemoving()">
+                  {{ dedupeRemoving() ? 'Suppression…' : 'Supprimer ' + duplicateCount() + ' doublon(s)' }}
+                </button>
+              } @else {
+                <span class="settings-row-value">Aucun doublon ✓</span>
               }
-              @if (!userStore.isDemo()) {
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ ZONE DE DANGER (masquée en démo) ══ -->
+        @if (!userStore.isDemo()) {
+          <div class="settings-section">
+            <div class="settings-section-label danger-label">Zone de danger</div>
+            <div class="settings-card danger-card">
+              @if (!showDeleteConfirm()) {
+                <div class="settings-row">
+                  <div class="settings-row-left">
+                    <span class="settings-row-label danger-row-label">Supprimer mon compte</span>
+                    <span class="settings-row-hint">
+                      Supprime définitivement ton compte, tous tes trades et debriefs. Irréversible.
+                    </span>
+                  </div>
+                  <button class="settings-edit-btn danger-btn"
+                    (click)="showDeleteConfirm.set(true)">Supprimer</button>
+                </div>
+              } @else {
+                <div class="delete-confirm">
+                  <p class="delete-confirm-title">Confirme la suppression</p>
+                  <p class="delete-confirm-hint">
+                    Tape <strong>SUPPRIMER</strong> pour confirmer. Cette action est irréversible.
+                  </p>
+                  <label class="delete-reason-label" for="delete-reason">Pourquoi pars-tu ? (optionnel)</label>
+                  <select id="delete-reason" class="delete-input" [value]="deleteReason()"
+                    (change)="deleteReason.set($any($event.target).value)">
+                    <option value="">Je préfère ne pas dire</option>
+                    <option value="Trop compliqué">Trop compliqué</option>
+                    <option value="Pas pour moi">Pas pour moi</option>
+                    <option value="Manque de temps">Manque de temps</option>
+                    <option value="J'ai arrêté de trader">J'ai arrêté de trader</option>
+                    <option value="Problème technique">Problème technique</option>
+                    <option value="Trop cher">Trop cher</option>
+                    <option value="Autre">Autre</option>
+                  </select>
+                  <input class="delete-input" type="text" [value]="deleteInput()"
+                    (input)="deleteInput.set($any($event.target).value)" placeholder="SUPPRIMER" />
+                  <div class="delete-actions">
+                    <button class="btn btn-secondary"
+                      (click)="showDeleteConfirm.set(false); deleteInput.set('')">Annuler</button>
+                    <button class="btn btn-danger" (click)="confirmDelete()"
+                      [disabled]="deleteInput() !== 'SUPPRIMER' || isDeleting()">
+                      {{ isDeleting() ? 'Suppression…' : 'Supprimer définitivement' }}
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+      </div> <!-- /pcol gauche params -->
+
+      <!-- ── Colonne droite : Abonnement + Préférences ── -->
+      <div class="pcol">
+
+        <!-- ══ ABONNEMENT ══ -->
+        <div class="settings-section">
+          <div class="settings-section-label">Abonnement</div>
+          <div class="settings-card">
+            <div class="plan-inner">
+              @if (userStore.isPremium()) {
+                <div class="plan-badge premium">
+                  <div class="plan-badge-dot"></div>
+                  PREMIUM
+                </div>
+                <p class="plan-desc">Accès à tout — IA Insights, Chat coach IA, Calendrier éco IA, news &amp; contexte marché, recap email 17h30.</p>
+                @if (userStore.user()?.stripeCurrentPeriodEnd) {
+                  <p class="plan-renewal">
+                    Renouvellement : {{ userStore.user()?.stripeCurrentPeriodEnd | date:'dd/MM/yyyy' }}
+                  </p>
+                }
+                @if (!userStore.isDemo()) {
+                  <div class="plan-actions">
+                    <button class="btn btn-secondary" (click)="openPortal()">
+                      Gérer mon abonnement →
+                    </button>
+                  </div>
+                }
+              } @else if (userStore.isStarterOrAbove()) {
+                <div class="plan-badge starter">
+                  <div class="plan-badge-dot"></div>
+                  STARTER
+                </div>
+                <p class="plan-desc">Trades illimités · Analytics avancés · Weekly Debrief · Score trader · Export PDF.</p>
+                @if (userStore.user()?.stripeCurrentPeriodEnd) {
+                  <p class="plan-renewal">
+                    Renouvellement : {{ userStore.user()?.stripeCurrentPeriodEnd | date:'dd/MM/yyyy' }}
+                  </p>
+                }
+                <p class="plan-upgrade-hint">
+                  Passe à Premium pour l'IA : Chat coach, IA Insights, Calendrier éco IA, news &amp; contexte marché.
+                </p>
                 <div class="plan-actions">
                   <button class="btn btn-secondary" (click)="openPortal()">
                     Gérer mon abonnement →
                   </button>
+                  <button class="btn btn-primary" (click)="showPlanModal.set(true)">
+                    Passer Premium →
+                  </button>
+                </div>
+              } @else {
+                <div class="plan-badge free">FREE</div>
+                <p class="plan-desc">30 trades/mois (hors import historique) · Journal complet · Stats de base · Historique illimité.</p>
+                <p class="plan-upgrade-hint">
+                  Passe à Starter pour les trades illimités, les analytics et le Weekly Debrief — ou Premium pour l'IA (coach, insights, calendrier éco IA).
+                </p>
+                <div class="plan-actions">
+                  <button class="btn btn-primary" (click)="showPlanModal.set(true)">
+                    ⚡ Essayer 7 jours gratuit →
+                  </button>
                 </div>
               }
-            } @else if (userStore.isStarterOrAbove()) {
-              <div class="plan-badge starter">
-                <div class="plan-badge-dot"></div>
-                STARTER
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ PRÉFÉRENCES ══ -->
+        <div class="settings-section">
+          <div class="settings-section-label">Préférences</div>
+          <div class="settings-card">
+
+            <!-- Devise -->
+            <div class="settings-row">
+              <div class="settings-row-left">
+                <span class="settings-row-label">Devise d'affichage</span>
+                <span class="settings-row-hint">Utilisée pour l'affichage du P&amp;L</span>
               </div>
-              <p class="plan-desc">Trades illimités · Analytics avancés · Weekly Debrief · Score trader · Export PDF.</p>
-              @if (userStore.user()?.stripeCurrentPeriodEnd) {
-                <p class="plan-renewal">
-                  Renouvellement : {{ userStore.user()?.stripeCurrentPeriodEnd | date:'dd/MM/yyyy' }}
-                </p>
-              }
-              <p class="plan-upgrade-hint">
-                Passe à Premium pour l'IA : Chat coach, IA Insights, Calendrier éco IA, news &amp; contexte marché.
-              </p>
-              <div class="plan-actions">
-                <button class="btn btn-secondary" (click)="openPortal()">
-                  Gérer mon abonnement →
-                </button>
-                <button class="btn btn-primary" (click)="showPlanModal.set(true)">
-                  Passer Premium →
-                </button>
+              <select class="settings-select" [value]="prefCurrency()"
+                (change)="prefCurrency.set($any($event.target).value)">
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+              </select>
+            </div>
+
+            <!-- Notifications -->
+            <div class="settings-row">
+              <div class="settings-row-left">
+                <span class="settings-row-label">Notifications email</span>
+                <span class="settings-row-hint">Reçois les debriefs hebdomadaires et alertes importantes</span>
               </div>
-            } @else {
-              <div class="plan-badge free">FREE</div>
-              <p class="plan-desc">30 trades/mois (hors import historique) · Journal complet · Stats de base · Historique illimité.</p>
-              <p class="plan-upgrade-hint">
-                Passe à Starter pour les trades illimités, les analytics et le Weekly Debrief — ou Premium pour l'IA (coach, insights, calendrier éco IA).
-              </p>
-              <div class="plan-actions">
-                <button class="btn btn-primary" (click)="showPlanModal.set(true)">
-                  ⚡ Essayer 7 jours gratuit →
-                </button>
+              <label class="settings-toggle">
+                <input type="checkbox" [checked]="prefNotifications()"
+                  (change)="prefNotifications.set($any($event.target).checked)" />
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+
+            <!-- Weekly debrief -->
+            <div class="settings-row">
+              <div class="settings-row-left">
+                <span class="settings-row-label">Weekly Debrief automatique</span>
+                <span class="settings-row-hint">Génération automatique chaque dimanche. Starter uniquement.</span>
               </div>
+              <label class="settings-toggle">
+                <input type="checkbox" [checked]="prefDebrief()"
+                  [disabled]="!userStore.isStarterOrAbove()"
+                  (change)="prefDebrief.set($any($event.target).checked)" />
+                <span class="toggle-track" [class.disabled]="!userStore.isStarterOrAbove()"></span>
+              </label>
+            </div>
+
+            <!-- Emails marketing -->
+            <div class="settings-row">
+              <div class="settings-row-left">
+                <span class="settings-row-label">Emails marketing</span>
+                <span class="settings-row-hint">Conseils, nouveautés et offres. Désinscription à tout moment.</span>
+              </div>
+              <label class="settings-toggle">
+                <input type="checkbox" [checked]="prefMarketing()"
+                  (change)="prefMarketing.set($any($event.target).checked)" />
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+
+          </div>
+          <div class="pref-save">
+            <button class="btn btn-primary" (click)="savePreferences()" [disabled]="isSavingPrefs()">
+              @if (isSavingPrefs()) { Enregistrement… }
+              @else if (prefSaved()) { ✓ Sauvegardé }
+              @else { Sauvegarder les préférences }
+            </button>
+          </div>
+        </div>
+
+      </div> <!-- /pcol droite params -->
+
+    </div>
+  }
+
+</div>
+
+<!-- ════ MODALE STRATÉGIE ════ -->
+@if (showStrategyModal()) {
+  <div class="stp-ov open" role="button" tabindex="0"
+    (click)="closeStrategyModal()" (keyup.escape)="closeStrategyModal()">
+    <div class="stp-modal strat-modal" role="dialog" aria-modal="true" aria-label="Modifier ma stratégie"
+      (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+      <div class="stp-mh">
+        <h3>Modifier ma stratégie</h3>
+        <button class="stp-mx" type="button" (click)="closeStrategyModal()" aria-label="Fermer">×</button>
+      </div>
+
+      <div class="stp-mb">
+        <!-- Capital -->
+        <div class="stp-fld">
+          <div class="stp-fld-label">Capital de départ</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="color:var(--text-3);font-family:var(--font-mono)">$</span>
+            <input class="stp-inp" type="text" inputmode="decimal" [value]="draftCapital()"
+              (input)="filterDraftCapital($event)" placeholder="ex : 5000" />
+          </div>
+        </div>
+
+        <!-- Style -->
+        <div class="stp-fld">
+          <div class="stp-fld-label">Style de trading</div>
+          <div class="style-chips-col">
+            @for (s of TRADING_STYLES; track s.value) {
+              <button class="style-chip-row" [class.active]="draftStyle() === s.value"
+                (click)="draftStyle.set(s.value)">
+                <span class="style-chip-emoji">{{ s.emoji }}</span>
+                <span class="style-chip-label">{{ s.label }}</span>
+                <span class="style-chip-desc">{{ s.desc }}</span>
+              </button>
             }
           </div>
         </div>
+
+        <!-- Sessions -->
+        <div class="stp-fld">
+          <div class="stp-fld-label">Sessions préférées</div>
+          <div class="style-chips-col sessions-3col">
+            @for (s of SESSIONS; track s.value) {
+              <button class="style-chip-row" [class.active]="draftSessions().includes(s.value)"
+                (click)="toggleDraftSession(s.value)">
+                <span class="style-chip-label">{{ s.label }}</span>
+                <span class="style-chip-desc">{{ s.time }}</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Trades / jour -->
+        <div class="stp-fld">
+          <div class="stp-fld-label">Trades / jour habituels <span class="opt">{{ draftMin() }}–{{ draftMax() }}</span></div>
+          <div class="freq-slider-row">
+            <span class="freq-slider-label">Min</span>
+            <input type="range" class="freq-slider" min="0" max="50"
+              [value]="draftMin()" (input)="draftMin.set(+$any($event.target).value)" />
+            <span class="freq-slider-val">{{ draftMin() }}</span>
+          </div>
+          <div class="freq-slider-row">
+            <span class="freq-slider-label">Max</span>
+            <input type="range" class="freq-slider" min="0" max="100"
+              [value]="draftMax()" (input)="draftMax.set(+$any($event.target).value)" />
+            <span class="freq-slider-val">{{ draftMax() }}</span>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="stp-fld">
+          <div class="stp-fld-label">Description libre <span class="opt">{{ draftDesc().length }}/200</span></div>
+          <textarea class="stp-inp" maxlength="200"
+            placeholder="Ex: Je trade les OB + FVG sur London et NY, scalping 1-5min..."
+            [value]="draftDesc()" (input)="onDraftDesc($event)"></textarea>
+        </div>
       </div>
 
-      <!-- ══ 3. PRÉFÉRENCES ══ -->
-      <div class="settings-section">
-        <div class="settings-section-label">Préférences</div>
-        <div class="settings-card">
-
-          <!-- Devise -->
-          <div class="settings-row">
-            <div class="settings-row-left">
-              <span class="settings-row-label">Devise d'affichage</span>
-              <span class="settings-row-hint">Utilisée pour l'affichage du P&amp;L</span>
-            </div>
-            <select class="settings-select" [value]="prefCurrency()"
-              (change)="prefCurrency.set($any($event.target).value)">
-              <option value="USD">USD ($)</option>
-              <option value="EUR">EUR (€)</option>
-            </select>
-          </div>
-
-          <!-- Notifications -->
-          <div class="settings-row">
-            <div class="settings-row-left">
-              <span class="settings-row-label">Notifications email</span>
-              <span class="settings-row-hint">Reçois les debriefs hebdomadaires et alertes importantes</span>
-            </div>
-            <label class="settings-toggle">
-              <input type="checkbox" [checked]="prefNotifications()"
-                (change)="prefNotifications.set($any($event.target).checked)" />
-              <span class="toggle-track"></span>
-            </label>
-          </div>
-
-          <!-- Weekly debrief -->
-          <div class="settings-row">
-            <div class="settings-row-left">
-              <span class="settings-row-label">Weekly Debrief automatique</span>
-              <span class="settings-row-hint">Génération automatique chaque dimanche. Starter uniquement.</span>
-            </div>
-            <label class="settings-toggle">
-              <input type="checkbox" [checked]="prefDebrief()"
-                [disabled]="!userStore.isStarterOrAbove()"
-                (change)="prefDebrief.set($any($event.target).checked)" />
-              <span class="toggle-track" [class.disabled]="!userStore.isStarterOrAbove()"></span>
-            </label>
-          </div>
-
-        </div>
-        <div class="pref-save">
-          <button class="btn btn-primary" (click)="savePreferences()" [disabled]="isSavingPrefs()">
-            @if (isSavingPrefs()) { Enregistrement… }
-            @else if (prefSaved()) { ✓ Sauvegardé }
-            @else { Sauvegarder les préférences }
+      <div class="stp-mf">
+        <span style="font-size:11px;color:var(--text-3)">Contexte permanent pour le coach IA</span>
+        <div class="stp-fr">
+          <button class="stp-bc" type="button" (click)="closeStrategyModal()">Annuler</button>
+          <button class="stp-bs" type="button" (click)="saveStrategy()" [disabled]="isSavingStrategy()">
+            {{ isSavingStrategy() ? 'Enregistrement…' : 'Enregistrer' }}
           </button>
         </div>
       </div>
-
-    </div> <!-- /settings-col-middle -->
-
-    <!-- ── Colonne droite : Stratégie ── -->
-    <div class="settings-col-right">
-
-      <!-- ══ 4. STRATÉGIE DE TRADING ══ -->
-      <div class="settings-section">
-        <div class="settings-section-label">Stratégie de trading</div>
-
-        <!-- ── VUE RÉSUMÉ ── -->
-        @if (!editingStrategy() && hasStrategyProfile()) {
-          <div class="strategy-summary">
-            <button class="strategy-modify-btn" (click)="editingStrategy.set(true)">
-              ✏️ Modifier
-            </button>
-
-            @if (tradingStyle()) {
-              <div class="summary-row">
-                <span class="summary-ic">{{ styleEmoji(tradingStyle()) }}</span>
-                <div class="summary-content">
-                  <div class="summary-label">Style</div>
-                  <div class="summary-value">{{ styleLabel(tradingStyle()) }}</div>
-                </div>
-              </div>
-            }
-
-            @if (tradingSessions().length) {
-              <div class="summary-row">
-                <span class="summary-ic">📍</span>
-                <div class="summary-content">
-                  <div class="summary-label">Sessions</div>
-                  <div class="summary-value">
-                    {{ tradingSessions().map(s => sessionLabel(s)).join(' · ') }}
-                  </div>
-                </div>
-              </div>
-            }
-
-            <div class="summary-row">
-              <span class="summary-ic">📊</span>
-              <div class="summary-content">
-                <div class="summary-label">Fréquence</div>
-                <div class="summary-value">{{ tradesPerDayMin() }}–{{ tradesPerDayMax() }} trades / jour</div>
-              </div>
-            </div>
-
-            @if (tradingStrategy().length) {
-              <div class="summary-row">
-                <span class="summary-ic">🏷️</span>
-                <div class="summary-content">
-                  <div class="summary-label">Stratégie</div>
-                  <div class="summary-tags">
-                    @for (tag of tradingStrategy(); track tag) {
-                      <span class="summary-tag">{{ tag }}</span>
-                    }
-                  </div>
-                </div>
-              </div>
-            }
-
-            @if (strategyDesc().trim()) {
-              <div class="summary-desc">
-                <span class="summary-quote">"</span>{{ strategyDesc() }}<span class="summary-quote">"</span>
-              </div>
-            }
-          </div>
-
-        <!-- ── VUE FORMULAIRE ── -->
-        } @else {
-          <div class="settings-card" style="padding:20px">
-            <p style="font-size:12px;color:var(--text-3);margin:0 0 4px">
-              Utilisé par l'IA pour personnaliser ses analyses. Plus c'est précis, mieux c'est.
-            </p>
-
-            <div class="strat-section-label">Style de trading</div>
-            <div class="style-chips-col">
-              @for (s of TRADING_STYLES; track s.value) {
-                <button class="style-chip-row" [class.active]="tradingStyle() === s.value"
-                  (click)="tradingStyle.set(s.value)">
-                  <span class="style-chip-emoji">{{ s.emoji }}</span>
-                  <span class="style-chip-label">{{ s.label }}</span>
-                  <span class="style-chip-desc">{{ s.desc }}</span>
-                </button>
-              }
-            </div>
-
-            <div class="strat-section-label">Sessions préférées</div>
-            <div class="style-chips-col">
-              @for (s of SESSIONS; track s.value) {
-                <button class="style-chip-row" [class.active]="tradingSessions().includes(s.value)"
-                  (click)="toggleSession(s.value)">
-                  <span class="style-chip-label">{{ s.label }}</span>
-                  <span class="style-chip-desc">{{ s.time }}</span>
-                </button>
-              }
-            </div>
-
-            <div class="strat-section-label">
-              Trades / jour habituels
-              <span class="freq-badge">{{ tradesPerDayMin() }}–{{ tradesPerDayMax() }}</span>
-            </div>
-            <div class="freq-slider-row">
-              <span class="freq-slider-label">Min</span>
-              <input type="range" class="freq-slider" min="0" max="50"
-                [value]="tradesPerDayMin()"
-                (input)="tradesPerDayMin.set(+$any($event.target).value)" />
-              <span class="freq-slider-val">{{ tradesPerDayMin() }}</span>
-            </div>
-            <div class="freq-slider-row">
-              <span class="freq-slider-label">Max</span>
-              <input type="range" class="freq-slider" min="0" max="100"
-                [value]="tradesPerDayMax()"
-                (input)="tradesPerDayMax.set(+$any($event.target).value)" />
-              <span class="freq-slider-val">{{ tradesPerDayMax() }}</span>
-            </div>
-
-            <div class="strat-section-label">Stratégie</div>
-            <div class="strat-chips" style="gap:6px">
-              @for (tag of STRATEGY_TAGS; track tag) {
-                <button class="strat-tag" [class.selected]="tradingStrategy().includes(tag)"
-                  (click)="toggleTag(tag)">{{ tag }}</button>
-              }
-            </div>
-
-            <div class="strat-section-label">
-              Description libre
-              <span class="char-count">{{ strategyDesc().length }}/200</span>
-            </div>
-            <textarea class="strat-textarea" rows="3" maxlength="200"
-              placeholder="Ex: Je trade les OB + FVG sur London et NY, scalping 1-5min..."
-              [value]="strategyDesc()" (input)="onStrategyDesc($event)">
-            </textarea>
-
-            <div class="section-save-row">
-              @if (hasStrategyProfile()) {
-                <button class="btn-ghost" (click)="editingStrategy.set(false)">Annuler</button>
-              }
-              <button class="btn btn-primary" (click)="saveStrategy()" [disabled]="isSavingStrategy()">
-                {{ isSavingStrategy() ? 'Enregistrement…' : 'Enregistrer la stratégie' }}
-              </button>
-            </div>
-          </div>
-        }
-      </div>
-
-      <!-- ══ MES ACTIFS ══ -->
-      <div class="settings-section">
-        <div class="settings-section-label">Mes actifs</div>
-        <div class="strat-card">
-
-          <div class="asset-search-wrap">
-            <input
-              class="asset-search-input"
-              type="text"
-              placeholder="Rechercher un actif — NQ, MES, BTC, EUR/USD..."
-              [value]="assetSearchQuery()"
-              (input)="onAssetSearch($any($event.target).value)"
-              style="text-transform: uppercase;"
-            />
-            @if (assetSearchLoading()) {
-              <span class="asset-search-spin">⟳</span>
-            }
-          </div>
-
-          @if (assetSearchResults().length > 0) {
-            <div class="asset-results">
-              @for (result of assetSearchResults(); track result.symbol) {
-                <button class="asset-result" type="button" (click)="addAsset(result)">
-                  <span class="asset-result-sym">{{ result.symbol }}</span>
-                  <span class="asset-result-lbl">{{ result.label }}</span>
-                  <span class="asset-result-cat">{{ result.category }}</span>
-                  <span class="asset-result-add">+</span>
-                </button>
-              }
-            </div>
-          }
-
-          @if (tradingAssets().length > 0) {
-            <div class="assets-list">
-              @for (asset of tradingAssets(); track asset.symbol) {
-                <div class="asset-row">
-                  <button
-                    class="asset-fav"
-                    [class.active]="asset.isFavorite"
-                    [title]="asset.isFavorite ? 'Favori — pré-sélectionné en saisie rapide' : 'Définir comme favori'"
-                    (click)="setFavoriteAssetSetting(asset.symbol)"
-                  >★</button>
-                  <div class="asset-chip" [class.is-fav]="asset.isFavorite">
-                    <span class="asset-cat">{{ asset.category }}</span>
-                    <span class="asset-sym">{{ asset.symbol }}</span>
-                    <span class="asset-lbl">{{ asset.label }}</span>
-                  </div>
-                  <button class="asset-del" (click)="removeAsset(asset.symbol)" title="Supprimer">×</button>
-                </div>
-              }
-            </div>
-            <p class="assets-hint">★ L'actif favori sera pré-sélectionné dans la saisie rapide de session</p>
-          }
-
-          @if (tradingAssets().length > 0) {
-            <div class="section-save-row">
-              <button class="btn btn-primary" [disabled]="isSavingAssets()" (click)="saveAssets()">
-                @if (assetsSaved()) { ✓ Sauvegardé }
-                @else if (isSavingAssets()) { Sauvegarde… }
-                @else { Sauvegarder mes actifs }
-              </button>
-            </div>
-          }
-
-        </div>
-      </div>
-
-    </div> <!-- /settings-col-right -->
-
-  </div> <!-- /settings-3col -->
-
-</div>
+    </div>
+  </div>
+}
 
 @if (showPlanModal()) {
   <mtc-plan-modal (closed)="showPlanModal.set(false)" />

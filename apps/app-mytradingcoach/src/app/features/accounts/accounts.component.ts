@@ -10,9 +10,15 @@ import {
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  LucideAngularModule,
+  User, Target, Building2, FlaskConical,
+  Wallet, TrendingUp, List, Eye, Layers,
+  ClipboardList, MoreHorizontal, Info, Plus, Lock,
+  Pencil, Trash2, X, Briefcase,
+} from 'lucide-angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
-import { AccountSelectorComponent } from '../../shared/components/account-selector/account-selector.component';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { UserStore } from '../../core/stores/user.store';
 import {
@@ -58,7 +64,7 @@ function emptyForm(): AccountFormState {
   selector: 'mtc-accounts',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DecimalPipe, FormsModule, TopbarComponent, PlanModalComponent, AccountSelectorComponent],
+  imports: [DecimalPipe, FormsModule, LucideAngularModule, TopbarComponent, PlanModalComponent],
   templateUrl: './accounts.component.html',
   styleUrl: './accounts.component.css',
 })
@@ -75,11 +81,29 @@ export class AccountsComponent implements OnInit {
   protected readonly menuOpenId = signal<string | null>(null);
   protected readonly form = signal<AccountFormState>(emptyForm());
 
-  // ── Vue agrégée (tous comptes non archivés) ─────────────────────────────
-  private readonly visibleAccounts = computed(() =>
-    this.store.accounts().filter((a) => a.status !== 'ARCHIVED'),
+  // ── Vue agrégée (source des KPI), scopée par la sélection du topbar ──────
+  // null = « Tous les comptes » → tous (non archivés) ; sinon le seul compte choisi.
+  protected readonly visibleAccounts = computed(() => {
+    const sel = this.store.selectedAccountId();
+    const base = this.store.accounts().filter((a) => a.status !== 'ARCHIVED');
+    return sel === 'all' ? base : base.filter((a) => a.id === sel);
+  });
+  // Cartes affichées dans la grille : toutes, ou la seule sélectionnée.
+  protected readonly displayedAccounts = computed(() => {
+    const sel = this.store.selectedAccountId();
+    const all = this.store.accounts();
+    return sel === 'all' ? all : all.filter((a) => a.id === sel);
+  });
+  // Nom du compte sélectionné (sous-libellé KPI P&L), null en vue « Tous les comptes ».
+  protected readonly selectedAccountName = computed(() => {
+    const sel = this.store.selectedAccountId();
+    return sel === 'all' ? null : (this.store.accounts().find((a) => a.id === sel)?.label ?? null);
+  });
+  // Quota : seuls les comptes ACTIVE consomment un slot (aligné backend). PASSED /
+  // FAILED / ARCHIVED le libèrent → c'est ce count qu'on affiche et qui borne le quota.
+  protected readonly activeAccountsCount = computed(
+    () => this.store.accounts().filter((a) => a.status === 'ACTIVE').length,
   );
-  protected readonly visibleAccountsCount = computed(() => this.visibleAccounts().length);
   protected readonly trackedCapital = computed(() =>
     this.visibleAccounts().reduce((s, a) => s + (a.metrics.startingBalance ?? 0), 0),
   );
@@ -97,13 +121,17 @@ export class AccountsComponent implements OnInit {
         return dd && (dd.breached || dd.pct <= 0.25);
       }).length,
   );
+  // Au moins un compte prop firm (éval / funded) → affiche la note disclaimer globale unique.
+  protected readonly hasPropAccount = computed(() =>
+    this.store.accounts().some((a) => a.type === 'EVALUATION' || a.type === 'FUNDED'),
+  );
 
   // ── Quota par plan (Starter 3 · Premium illimité). null = illimité. ──────
-  // Seuls les comptes non archivés comptent (visibleAccounts).
+  // Seuls les comptes ACTIVE consomment le quota (aligné backend).
   protected readonly accountLimit = this.userStore.maxAccounts;
   protected readonly atLimit = computed(() => {
     const limit = this.accountLimit();
-    return limit !== null && this.visibleAccountsCount() >= limit;
+    return limit !== null && this.activeAccountsCount() >= limit;
   });
 
   ngOnInit(): void {
@@ -112,13 +140,34 @@ export class AccountsComponent implements OnInit {
     }
   }
 
+  // ── Icônes lucide ────────────────────────────────────────────────────────
+  protected readonly UserIcon = User;
+  protected readonly TargetIcon = Target;
+  protected readonly Building2Icon = Building2;
+  protected readonly FlaskIcon = FlaskConical;
+  protected readonly WalletIcon = Wallet;
+  protected readonly TrendingUpIcon = TrendingUp;
+  protected readonly ListIcon = List;
+  protected readonly EyeIcon = Eye;
+  protected readonly LayersIcon = Layers;
+  protected readonly ClipboardListIcon = ClipboardList;
+  protected readonly MoreHorizontalIcon = MoreHorizontal;
+  protected readonly InfoIcon = Info;
+  protected readonly PlusIcon = Plus;
+  protected readonly LockIcon = Lock;
+  protected readonly PencilIcon = Pencil;
+  protected readonly TrashIcon = Trash2;
+  protected readonly XIcon = X;
+  protected readonly BriefcaseIcon = Briefcase;
+
   // ── Helpers d'affichage ─────────────────────────────────────────────────
-  protected typeIcon(t: AccountType): string {
+  // Icône lucide selon le type de compte.
+  protected typeIcon(t: AccountType) {
     switch (t) {
-      case 'FUNDED': return '🏦';
-      case 'EVALUATION': return '🎯';
-      case 'DEMO': return '🎮';
-      default: return '🪙';
+      case 'FUNDED': return this.Building2Icon;
+      case 'EVALUATION': return this.TargetIcon;
+      case 'DEMO': return this.FlaskIcon;
+      default: return this.UserIcon;
     }
   }
   protected typeLabel(t: AccountType): string {
@@ -176,6 +225,43 @@ export class AccountsComponent implements OnInit {
 
   protected isPropFirm(t: AccountType): boolean {
     return t === 'EVALUATION' || t === 'FUNDED';
+  }
+
+  // Objectif en % (pastille). FUNDED → objectif "payout", éval/passed → objectif d'éval.
+  protected objPct(a: TradingAccount): number {
+    return Math.round((a.metrics.objective?.pct ?? 0) * 100);
+  }
+  protected objLabel(a: TradingAccount): string {
+    return a.type === 'FUNDED' ? 'Objectif payout' : 'Objectif';
+  }
+
+  // Couleur d'accent stable par compte (identité visuelle, pas l'état). Perso → vert ;
+  // sinon dérivée d'un hash du broker/label (même firm = même couleur, stable au reorder).
+  private readonly ACCENT_VARS = ['--blue', '--yellow', '--purple', '--cyan', '--green', '--red', '--blue-bright'];
+  protected accentVar(a: TradingAccount): string {
+    if (a.type === 'PERSONAL') return 'var(--green)';
+    const key = a.broker ?? a.label ?? a.id;
+    let h = 0;
+    for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+    return `var(${this.ACCENT_VARS[h % this.ACCENT_VARS.length]})`;
+  }
+
+  // ── Bloc « Activité » carte perso (métriques du 126, dégradation propre si absentes) ──
+  // Groupe milliers en fr-FR, comme DecimalPipe '1.0-0'.
+  private fmt0(n: number): string {
+    return Math.round(n).toLocaleString('fr-FR');
+  }
+  protected bestDayLabel(a: TradingAccount): string {
+    const v = a.metrics.bestDay;
+    return v == null ? '—' : `${v > 0 ? '+' : ''}${this.fmt0(v)} $`;
+  }
+  protected worstDayLabel(a: TradingAccount): string {
+    const v = a.metrics.worstDay;
+    return v == null ? '—' : `${this.fmt0(v)} $`;
+  }
+  protected winRateLabel(a: TradingAccount): string {
+    const v = a.metrics.winRate;
+    return v == null ? '—' : `${this.fmt0(v * 100)} %`;
   }
 
   // ── Menu carte ──────────────────────────────────────────────────────────

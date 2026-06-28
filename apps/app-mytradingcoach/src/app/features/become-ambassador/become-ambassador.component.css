@@ -1,0 +1,64 @@
+/* Token violet absent du thème global → défini localement (scopé). */
+:host { display: block; --violet: #8b5cf6; }
+
+.content { padding: 30px; max-width: 1080px; margin: 0 auto; }
+
+.back { display: inline-block; font-family: var(--font-mono); font-size: 12px; color: var(--blue-bright); margin-bottom: 16px; text-decoration: none; }
+.back:hover { text-decoration: underline; }
+
+.page-title { font-family: var(--font-display); font-size: 25px; font-weight: 700; letter-spacing: -.3px; display: flex; align-items: center; gap: 10px; }
+.page-sub { font-size: 14px; color: var(--text-2); margin: 7px 0 22px; line-height: 1.55; max-width: 680px; }
+
+.card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 13px; padding: 22px 24px; margin-bottom: 18px; }
+.card-title { font-family: var(--font-display); font-size: 14.5px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+/* ── 20% band (pleine largeur, horizontal) ── */
+.comm { display: flex; align-items: center; gap: 26px; background: linear-gradient(135deg, #8b5cf614, #3b82f60f); border: 1px solid var(--border-hover); border-radius: 13px; padding: 22px 26px; margin-bottom: 18px; }
+.comm-pct { font-family: var(--font-display); font-size: 50px; font-weight: 800; background: linear-gradient(90deg, var(--blue-bright), var(--violet)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; line-height: 1; flex-shrink: 0; }
+.comm-body { min-width: 0; }
+.comm-txt { font-size: 13.5px; color: var(--text-2); line-height: 1.55; }
+.comm-txt b { color: var(--text); font-weight: 600; }
+.comm-pill { display: inline-block; margin-top: 11px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .4px; color: var(--green); background: var(--green-dim); padding: 4px 9px; border-radius: 6px; }
+@media (max-width: 560px) { .comm { flex-direction: column; align-items: flex-start; gap: 12px; } }
+
+/* ── conditions (pleine largeur, items en 2 colonnes) ── */
+.elig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; }
+@media (max-width: 680px) { .elig-grid { grid-template-columns: 1fr; } }
+.elig { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--text-2); }
+.elig-ic { width: 20px; height: 20px; border-radius: 6px; background: var(--green-dim); color: var(--green); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.elig b { color: var(--text); font-weight: 600; }
+
+/* ── zone 2 colonnes : 1 carte par colonne → hauteurs égales ── */
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 880px) { .grid { grid-template-columns: 1fr; } }
+.grid .card { margin-bottom: 0; }
+
+/* comment ça marche (vertical) */
+.vstep { display: flex; gap: 12px; margin-bottom: 16px; }
+.vstep:last-child { margin-bottom: 0; }
+.vstep .n { width: 26px; height: 26px; border-radius: 50%; background: var(--blue-glow); border: 1px solid var(--blue); color: var(--blue-bright); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 12px; font-weight: 600; flex-shrink: 0; }
+.vstep h4 { font-size: 13.5px; font-weight: 600; margin-bottom: 3px; }
+.vstep p { font-size: 12.5px; color: var(--text-2); line-height: 1.5; }
+
+/* formulaire */
+.field-lbl { display: block; font-size: 12.5px; color: var(--text-2); margin: 0 0 7px; }
+.req { font-family: var(--font-mono); font-size: 10px; color: var(--blue-bright); margin-left: 5px; }
+.opt { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); margin-left: 5px; }
+.field { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 9px; padding: 11px 13px; color: var(--text); font-family: var(--font-body); font-size: 13.5px; resize: vertical; }
+.field:focus { outline: none; border-color: var(--blue); }
+.field::placeholder { color: var(--text-3); }
+textarea.field { min-height: 96px; }
+.field-row { margin-top: 16px; }
+.form-error { color: var(--red); font-size: 12.5px; margin-top: 12px; }
+.submit-btn { width: 100%; margin-top: 18px; background: var(--blue); color: #fff; border: none; border-radius: 9px; padding: 12px; font-size: 13.5px; font-weight: 600; box-shadow: 0 0 18px rgba(59, 130, 246, .3); transition: all .15s; cursor: pointer; }
+.submit-btn:hover:not(:disabled) { background: var(--blue-bright); }
+.submit-btn:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+.form-note { text-align: center; font-size: 11px; color: var(--text-3); font-family: var(--font-mono); margin-top: 12px; }
+
+/* success */
+.card.success { text-align: center; padding: 36px 24px; }
+.success-ic { width: 48px; height: 48px; border-radius: 50%; background: var(--green-dim); color: var(--green); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
+.success-t { font-family: var(--font-display); font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.success-d { font-size: 13.5px; color: var(--text-2); line-height: 1.6; max-width: 420px; margin: 0 auto 18px; }
+.back-btn { display: inline-block; background: var(--blue); color: #fff; border-radius: 8px; padding: 10px 18px; font-size: 13px; font-weight: 600; text-decoration: none; }
+.back-btn:hover { background: var(--blue-bright); }

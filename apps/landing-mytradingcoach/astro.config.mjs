@@ -1,6 +1,13 @@
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 
+// Mêmes flags que src/config.ts, lus au build (process.env.PUBLIC_*). Une page
+// gatée ne doit JAMAIS être listée dans le sitemap tant que sa feature est OFF
+// (sinon Google crawle une URL qui redirige → « Page avec redirection »).
+const flag = (v) => v === 'true' || v === '1';
+const MULTI_ACCOUNTS = flag(process.env.PUBLIC_FEATURE_MULTI_ACCOUNTS);
+const REFERRAL = flag(process.env.PUBLIC_FEATURE_REFERRAL);
+
 export default defineConfig({
   site: 'https://www.mytradingcoach.app',
   integrations: [
@@ -8,7 +15,12 @@ export default defineConfig({
       changefreq: 'weekly',
       priority: 0.7,
       lastmod: new Date(),
-      filter: (page) => !page.includes('/404') && !page.includes('/confidentialite'),
+      filter: (page) => {
+        if (page.includes('/404') || page.includes('/confidentialite')) return false;
+        if (!MULTI_ACCOUNTS && page.includes('/journal-trading-prop-firm')) return false;
+        if (!REFERRAL && page.includes('/ambassadeur')) return false;
+        return true;
+      },
       serialize: (item) => {
         // Homepage — priorité maximale
         if (item.url === 'https://www.mytradingcoach.app/') {
@@ -26,6 +38,7 @@ export default defineConfig({
         if (
           item.url.includes('/mentions-legales') ||
           item.url.includes('/confidentialite') ||
+          item.url.includes('/politique-confidentialite') ||
           item.url.includes('/cgu')
         ) {
           return { ...item, priority: 0.3, changefreq: 'yearly' };

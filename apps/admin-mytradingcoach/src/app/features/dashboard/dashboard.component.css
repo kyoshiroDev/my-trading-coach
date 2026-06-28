@@ -5,6 +5,22 @@
 .card-label.muted { color: var(--text3); }
 .card-label.danger { color: var(--red); }
 
+/* Carte « Comptes supprimés » : accent neutre (distinct du churn rouge), cliquable */
+.kpi-top.slate { background: var(--text3); }
+.kpi-link { cursor: pointer; text-decoration: none; color: inherit; }
+.kpi-link:hover { border-color: rgba(255,255,255,.12); }
+
+/* 7 KPIs sur une ligne en desktop (MRR, users, starter, premium, ambassadeurs, churn, supprimés) */
+@media (min-width: 1100px) {
+  .kpi-strip.dash-kpis { grid-template-columns: repeat(7, 1fr); }
+}
+
+/* Fidélisation : entonnoir 5 stats (activation → traders actifs 7j/30j → J+7 → fantômes) */
+@media (min-width: 1100px) {
+  .ret-grid.funnel { grid-template-columns: repeat(5, 1fr); }
+}
+.ret-stat .v.green { color: var(--green); }
+
 .sys-body { padding: 16px 18px; }
 
 .funnel-box { height: 172px; }

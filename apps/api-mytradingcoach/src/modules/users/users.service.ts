@@ -29,6 +29,7 @@ const USER_SELECT = {
   startingCapital: true,
   notificationsEmail: true,
   debriefAutomatic: true,
+  marketingConsent: true,
   tradingStyle: true,
   tradingStrategy: true,
   tradingSessions: true,
@@ -237,6 +238,12 @@ export class UsersService {
   async adminStats() {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    // Fenêtres de récence pour l'engagement (a tradé récemment, pas juste 1 fois).
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 86_400_000);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 86_400_000);
+
+    // Utilisateurs « réels » : hors démo ET hors comptes ADMIN (super-admin, etc.).
+    const REAL_USERS = { isDemo: false, role: { not: Role.ADMIN } } as const;
 
     const [
       starterMonthly, starterAnnual,
@@ -244,33 +251,44 @@ export class UsersService {
       trials, freeUsers, newThisMonth, churnedThisMonth,
       betaTesters, ambassadors,
       totalUsers, totalStarter, totalPremium,
+      tradersActifs7d, tradersActifs30d,
+      comptesSupprimesMois, comptesSupprimesTotal,
     ] = await Promise.all([
       // MRR = revenu réellement encaissé → abonnements 'active' uniquement (les essais
       // 'trialing' ne paient pas et sont déjà comptés à part dans `trials`).
       this.prisma.user.count({
-        where: { isDemo: false, plan: 'STARTER', stripeInterval: 'month', stripeSubscriptionStatus: 'active' },
+        where: { ...REAL_USERS, plan: 'STARTER', stripeInterval: 'month', stripeSubscriptionStatus: 'active' },
       }),
       this.prisma.user.count({
-        where: { isDemo: false, plan: 'STARTER', stripeInterval: 'year', stripeSubscriptionStatus: 'active' },
+        where: { ...REAL_USERS, plan: 'STARTER', stripeInterval: 'year', stripeSubscriptionStatus: 'active' },
       }),
       this.prisma.user.count({
-        where: { isDemo: false, plan: 'PREMIUM', stripeInterval: 'month', stripeSubscriptionStatus: 'active' },
+        where: { ...REAL_USERS, plan: 'PREMIUM', stripeInterval: 'month', stripeSubscriptionStatus: 'active' },
       }),
       this.prisma.user.count({
-        where: { isDemo: false, plan: 'PREMIUM', stripeInterval: 'year', stripeSubscriptionStatus: 'active' },
+        where: { ...REAL_USERS, plan: 'PREMIUM', stripeInterval: 'year', stripeSubscriptionStatus: 'active' },
       }),
-      this.prisma.user.count({ where: { isDemo: false, plan: 'PREMIUM', trialEndsAt: { gt: now } } }),
-      this.prisma.user.count({ where: { isDemo: false, plan: 'FREE' } }),
-      this.prisma.user.count({ where: { isDemo: false, createdAt: { gte: startOfMonth } } }),
+      this.prisma.user.count({ where: { ...REAL_USERS, plan: 'PREMIUM', trialEndsAt: { gt: now } } }),
+      this.prisma.user.count({ where: { ...REAL_USERS, plan: 'FREE' } }),
+      this.prisma.user.count({ where: { ...REAL_USERS, createdAt: { gte: startOfMonth } } }),
       // Churn fiable : résiliations effectives datées sur le mois courant (webhook Stripe).
-      this.prisma.user.count({ where: { isDemo: false, subscriptionCanceledAt: { gte: startOfMonth } } }),
-      this.prisma.user.count({ where: { isDemo: false, role: 'BETA_TESTER' } }),
-      this.prisma.user.count({ where: { isDemo: false, role: 'AMBASSADOR' } }),
-      // Total réel (tous plans/rôles, hors démo) + comptes PAR PLAN (inclut les
+      this.prisma.user.count({ where: { ...REAL_USERS, subscriptionCanceledAt: { gte: startOfMonth } } }),
+      // role spécifique → écrase le `role: { not: ADMIN }` du spread (un user a un seul rôle).
+      this.prisma.user.count({ where: { ...REAL_USERS, role: 'BETA_TESTER' } }),
+      this.prisma.user.count({ where: { ...REAL_USERS, role: 'AMBASSADOR' } }),
+      // Total réel (tous plans/rôles, hors démo + hors admin) + comptes PAR PLAN (inclut les
       // Premium/Starter octroyés sans abonnement Stripe : beta, ambassadeur, comp).
-      this.prisma.user.count({ where: { isDemo: false } }),
-      this.prisma.user.count({ where: { isDemo: false, plan: 'STARTER' } }),
-      this.prisma.user.count({ where: { isDemo: false, plan: 'PREMIUM' } }),
+      this.prisma.user.count({ where: { ...REAL_USERS } }),
+      this.prisma.user.count({ where: { ...REAL_USERS, plan: 'STARTER' } }),
+      this.prisma.user.count({ where: { ...REAL_USERS, plan: 'PREMIUM' } }),
+      // Engagement par récence : ≥1 trade sur 7j / 30j (distinct users, hors démo+admin).
+      // À ne pas confondre avec l'activation (= a tradé au moins une fois).
+      this.prisma.user.count({ where: { ...REAL_USERS, trades: { some: { tradedAt: { gte: sevenDaysAgo } } } } }),
+      this.prisma.user.count({ where: { ...REAL_USERS, trades: { some: { tradedAt: { gte: thirtyDaysAgo } } } } }),
+      // Comptes supprimés (trace DeletedAccount) — distinct du churn d'abonnement.
+      // Les comptes démo ne sont jamais supprimés → naturellement hors démo.
+      this.prisma.deletedAccount.count({ where: { deletedAt: { gte: startOfMonth } } }),
+      this.prisma.deletedAccount.count(),
     ]);
 
     // MRR/ARR restent basés sur les abonnements Stripe payants (pas les comptes par plan).
@@ -292,6 +310,8 @@ export class UsersService {
       monthly, annual,
       trials, freeUsers, newThisMonth, churnedThisMonth,
       betaTesters, ambassadors,
+      tradersActifs7d, tradersActifs30d,
+      comptesSupprimesMois, comptesSupprimesTotal,
     };
   }
 
@@ -393,9 +413,18 @@ export class UsersService {
     } else if (dto.currency === 'USD') {
       currencyRate = 1;
     }
+    // Horodate le consentement marketing quand il change (preuve RGPD).
+    const consentAt =
+      dto.marketingConsent === undefined
+        ? {}
+        : { marketingConsentAt: dto.marketingConsent ? new Date() : null };
     return this.prisma.user.update({
       where: { id: userId },
-      data: { ...dto, ...(currencyRate !== undefined ? { currencyRate } : {}) },
+      data: {
+        ...dto,
+        ...(currencyRate !== undefined ? { currencyRate } : {}),
+        ...consentAt,
+      },
       select: USER_SELECT,
     });
   }

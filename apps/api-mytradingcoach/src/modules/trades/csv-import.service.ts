@@ -1,9 +1,8 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { Plan, Role } from '@prisma/client';
-import Anthropic from '@anthropic-ai/sdk';
 import * as XLSX from 'xlsx';
 import type { CreateTradeDto } from './dto/create-trade.dto';
-import { AiLoggerService } from '../shared/ai-logger.service';
+import { AnthropicClientService } from '../shared/anthropic-client.service';
 import { PrismaService } from '../../prisma/prisma.service';
 
 const MODEL = 'claude-sonnet-4-6';
@@ -58,12 +57,9 @@ interface ClaudeResponse {
 @Injectable()
 export class CsvImportService {
   private readonly logger = new Logger(CsvImportService.name);
-  private readonly anthropic = new Anthropic({
-    apiKey: process.env['ANTHROPIC_API_KEY'],
-  });
 
   constructor(
-    private readonly aiLogger: AiLoggerService,
+    private readonly anthropicClient: AnthropicClientService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -246,18 +242,21 @@ export class CsvImportService {
     userId?: string,
   ): Promise<ClaudeResponse> {
     const prompt = this.buildPrompt(filename, chunk, styleNote);
-    const response = await this.anthropic.messages.create({
-      model: MODEL,
-      max_tokens: 8192,
-      system: [
-        {
-          type: 'text',
-          text: 'Tu es un parseur de fichiers CSV de trading. Retourne UNIQUEMENT du JSON valide. Aucun texte avant ou après.',
-          cache_control: { type: 'ephemeral' },
-        },
-      ],
-      messages: [{ role: 'user', content: prompt }],
-    });
+    const response = await this.anthropicClient.create(
+      {
+        model: MODEL,
+        max_tokens: 8192,
+        system: [
+          {
+            type: 'text',
+            text: 'Tu es un parseur de fichiers CSV de trading. Retourne UNIQUEMENT du JSON valide. Aucun texte avant ou après.',
+            cache_control: { type: 'ephemeral' },
+          },
+        ],
+        messages: [{ role: 'user', content: prompt }],
+      },
+      { feature: 'csv_import', userId: userId ?? null },
+    );
 
     const text =
       response.content[0].type === 'text' ? response.content[0].text : '';
@@ -287,7 +286,6 @@ export class CsvImportService {
       );
     }
 
-    if (userId) this.aiLogger.log(userId, 'csv_import', response.usage);
     return { ...parsed, trades: parsed.trades, errors: parsed.errors ?? [], skipped: parsed.skipped ?? 0 };
   }
 

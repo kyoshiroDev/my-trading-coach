@@ -71,16 +71,36 @@ describe('AccountsService', () => {
     });
   });
 
+  describe('resolveAccountLimit — quota par plan/rôle', () => {
+    // Méthode privée : on la teste directement (entrées/sorties claires).
+    const limit = (ctx: unknown) =>
+      (svc as unknown as { resolveAccountLimit: (c?: unknown) => number | null }).resolveAccountLimit(ctx);
+
+    it('FREE → 1', () => expect(limit({ plan: 'FREE', role: 'USER' })).toBe(1));
+    it('STARTER → 3', () => expect(limit({ plan: 'STARTER', role: 'USER' })).toBe(3));
+    it('PREMIUM → illimité (null)', () => expect(limit({ plan: 'PREMIUM', role: 'USER' })).toBeNull());
+    it('trial actif (FREE + trialEndsAt futur) → illimité', () => {
+      expect(limit({ plan: 'FREE', role: 'USER', trialEndsAt: new Date(Date.now() + 86_400_000) })).toBeNull();
+    });
+    it('trial expiré → retombe sur le plan (FREE → 1)', () => {
+      expect(limit({ plan: 'FREE', role: 'USER', trialEndsAt: new Date(Date.now() - 86_400_000) })).toBe(1);
+    });
+    it('ADMIN → illimité', () => expect(limit({ plan: 'FREE', role: 'ADMIN' })).toBeNull());
+    it('BETA_TESTER → illimité', () => expect(limit({ plan: 'FREE', role: 'BETA_TESTER' })).toBeNull());
+    it('sans contexte (appel interne) → non plafonné (null)', () => expect(limit(undefined)).toBeNull());
+  });
+
   describe('create — quota par plan', () => {
     const ctx = (plan: string, extra: Record<string, unknown> = {}) =>
       ({ plan, role: 'USER', ...extra }) as never;
 
-    it('STARTER sous le quota (2/3) → crée', async () => {
+    it('STARTER sous le quota (2/3) → crée, ne compte que les comptes ACTIVE', async () => {
       prisma.tradingAccount.count.mockResolvedValue(2);
       prisma.tradingAccount.create.mockResolvedValue({ id: 'a4' });
       await svc.create('u1', { label: 'C3' } as never, ctx('STARTER'));
+      // Slot = comptes ACTIVE uniquement (PASSED / FAILED / ARCHIVED libèrent le slot).
       expect(prisma.tradingAccount.count).toHaveBeenCalledWith({
-        where: { userId: 'u1', status: { not: 'ARCHIVED' } },
+        where: { userId: 'u1', status: 'ACTIVE' },
       });
       expect(prisma.tradingAccount.create).toHaveBeenCalled();
     });
@@ -114,6 +134,66 @@ describe('AccountsService', () => {
         svc.create('u1', { label: 'C2' } as never, ctx('FREE', { trialEndsAt: null })),
       ).rejects.toBeInstanceOf(ForbiddenException);
       expect(prisma.tradingAccount.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('update — réactivation et quota (anti-bypass)', () => {
+    const ctx = (plan: string, extra: Record<string, unknown> = {}) =>
+      ({ plan, role: 'USER', ...extra }) as never;
+
+    it('réactivation (FAILED → ACTIVE) au quota → 403 ACCOUNT_LIMIT_REACHED, pas d\'update', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'FAILED' });
+      prisma.tradingAccount.count.mockResolvedValue(3); // déjà 3 ACTIVE (Starter plein)
+      await expect(
+        svc.update('u1', 'a1', { status: 'ACTIVE' } as never, ctx('STARTER')),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.tradingAccount.count).toHaveBeenCalledWith({
+        where: { userId: 'u1', status: 'ACTIVE' },
+      });
+      expect(prisma.tradingAccount.update).not.toHaveBeenCalled();
+    });
+
+    it('réactivation (ARCHIVED → ACTIVE) sous le quota → applique', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'ARCHIVED' });
+      prisma.tradingAccount.count.mockResolvedValue(2); // 2/3 → reste de la place
+      prisma.tradingAccount.update.mockResolvedValue({ id: 'a1', status: 'ACTIVE' });
+      await svc.update('u1', 'a1', { status: 'ACTIVE' } as never, ctx('STARTER'));
+      expect(prisma.tradingAccount.update).toHaveBeenCalledWith({
+        where: { id: 'a1' },
+        data: { status: 'ACTIVE' },
+      });
+    });
+
+    it('réactivation PREMIUM (illimité) → applique sans comptage', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'FAILED' });
+      prisma.tradingAccount.update.mockResolvedValue({ id: 'a1', status: 'ACTIVE' });
+      await svc.update('u1', 'a1', { status: 'ACTIVE' } as never, ctx('PREMIUM'));
+      expect(prisma.tradingAccount.count).not.toHaveBeenCalled();
+      expect(prisma.tradingAccount.update).toHaveBeenCalled();
+    });
+
+    it('passage ACTIVE → FAILED (libère un slot) → aucune vérif de quota', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'ACTIVE' });
+      prisma.tradingAccount.update.mockResolvedValue({ id: 'a1', status: 'FAILED' });
+      await svc.update('u1', 'a1', { status: 'FAILED' } as never, ctx('STARTER'));
+      expect(prisma.tradingAccount.count).not.toHaveBeenCalled();
+      expect(prisma.tradingAccount.update).toHaveBeenCalled();
+    });
+
+    it('update sans changement de statut (label) → aucune vérif de quota', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'ACTIVE' });
+      prisma.tradingAccount.update.mockResolvedValue({ id: 'a1' });
+      await svc.update('u1', 'a1', { label: 'Renommé' } as never, ctx('STARTER'));
+      expect(prisma.tradingAccount.count).not.toHaveBeenCalled();
+      expect(prisma.tradingAccount.update).toHaveBeenCalled();
+    });
+
+    it('déjà ACTIVE, dto ACTIVE (no-op statut) → aucune vérif de quota', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'ACTIVE' });
+      prisma.tradingAccount.update.mockResolvedValue({ id: 'a1' });
+      await svc.update('u1', 'a1', { status: 'ACTIVE' } as never, ctx('STARTER'));
+      expect(prisma.tradingAccount.count).not.toHaveBeenCalled();
+      expect(prisma.tradingAccount.update).toHaveBeenCalled();
     });
   });
 
@@ -267,6 +347,29 @@ describe('AccountsService', () => {
       expect(m.startingBalance).toBe(10000);
       expect(m.currentBalance).toBe(10500);
       expect(m.drawdown).toBeNull();
+    });
+
+    it('winRate / bestDay / worstDay : PnL groupé par jour UTC (somme intra-jour)', () => {
+      // Dates UTC explicites → indépendant du fuseau de la machine de test.
+      const u = (pnl: number, day: number, h = 12) => ({ pnl, tradedAt: new Date(Date.UTC(2026, 5, day, h)) });
+      const m = svc.computeRuleMetrics(
+        { startingBalance: 50000, accountSize: null, profitTarget: null, maxDrawdown: null, drawdownType: 'STATIC' },
+        [u(1000, 1, 9), u(500, 1, 15), u(-800, 2)], // jour 1 = +1500, jour 2 = -800
+      );
+      expect(m.winRate).toBeCloseTo(2 / 3, 3); // 2 gagnants (pnl > 0) sur 3 trades
+      expect(m.bestDay).toBe(1500);
+      expect(m.worstDay).toBe(-800);
+    });
+
+    it('0 trade → winRate / bestDay / worstDay null', () => {
+      const m = svc.computeRuleMetrics(
+        { startingBalance: 50000, accountSize: null, profitTarget: null, maxDrawdown: null, drawdownType: 'STATIC' },
+        [],
+      );
+      expect(m.tradesCount).toBe(0);
+      expect(m.winRate).toBeNull();
+      expect(m.bestDay).toBeNull();
+      expect(m.worstDay).toBeNull();
     });
   });
 });

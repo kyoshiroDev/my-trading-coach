@@ -8,7 +8,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { Prisma, Plan } from '@prisma/client';
+import { Prisma, Plan, Role } from '@prisma/client';
 import Stripe from 'stripe';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
@@ -25,6 +25,14 @@ import {
 const STRIPE_QUEUE = 'stripe';
 const CACHE_TTL_SECONDS = 300; // 5 min
 const cacheKey = (userId: string) => `billing:status:${userId}`;
+
+// Coupons réduc filleul : -10% sur la première année, selon l'intervalle choisi.
+// - Annuel : duration once (l'annuel = 1 paiement = 1 an).
+// - Mensuel : duration repeating 12 mois (les 12 premiers paiements).
+const REFERRAL_COUPON_ID = 'REFERRAL_FILLEUL_10PCT';
+const REFERRAL_COUPON_MONTHLY_ID = 'REFERRAL_FILLEUL_MONTHLY_10PCT';
+
+type ReferralCouponKind = 'annual' | 'monthly';
 
 /** Statuts Stripe qui confèrent l'accès PREMIUM */
 const ACTIVE_STATUSES = new Set<Stripe.Subscription['status']>([
@@ -54,6 +62,10 @@ export class StripeService {
   private readonly stripe: Stripe;
   private get redis() { return this.redisService.client; }
   private readonly logger = new Logger(StripeService.name);
+  private readonly referralCouponEnsured: Record<ReferralCouponKind, boolean> = {
+    annual: false,
+    monthly: false,
+  };
 
   constructor(
     private readonly config: ConfigService,
@@ -167,6 +179,27 @@ export class StripeService {
       ? { metadata: { userId } }
       : { trial_period_days: 7, metadata: { userId } };
 
+    // Réduc filleul : -10% sur la première année, routée selon l'intervalle
+    // (annuel → coupon once, mensuel → coupon repeating 12 mois). RÉSERVÉ au parrainage
+    // classique : jamais pour les filleuls d'ambassadeur (l'ambassadeur touche déjà ses
+    // 20% via le webhook — sinon double coût). Même test de rôle que processReferral.
+    // Stripe interdit discounts + allow_promotion_codes ensemble → si pas de coupon,
+    // on garde les codes promo manuels ouverts.
+    let discounts: Stripe.Checkout.SessionCreateParams.Discount[] | undefined;
+    if (user.referredBy) {
+      const parrain = await this.prisma.user.findFirst({
+        where: { referralCode: user.referredBy },
+        select: { role: true },
+      });
+      if (parrain && parrain.role !== Role.AMBASSADOR) {
+        if (this.isAnnualPrice(priceId)) {
+          discounts = [{ coupon: await this.ensureReferralCoupon('annual') }];
+        } else if (this.isMonthlyPrice(priceId)) {
+          discounts = [{ coupon: await this.ensureReferralCoupon('monthly') }];
+        }
+      }
+    }
+
     const session = await this.stripe.checkout.sessions.create(
       {
         customer: customerId,
@@ -177,7 +210,7 @@ export class StripeService {
         success_url: `${returnUrl}/dashboard?checkout=success`,
         cancel_url: `${returnUrl}/dashboard?checkout=canceled`,
         locale: 'fr',
-        allow_promotion_codes: true,
+        ...(discounts ? { discounts } : { allow_promotion_codes: true }),
         client_reference_id: userId,
         expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
       },
@@ -451,7 +484,7 @@ export class StripeService {
             `Paiement réussi — subscription: ${subscriptionId} synchronisée`,
           );
         }
-        await this.processReferralCommission(invoice);
+        await this.processReferral(invoice);
         break;
       }
 
@@ -619,9 +652,15 @@ export class StripeService {
     }
   }
 
-  private async processReferralCommission(
-    invoice: Stripe.Invoice,
-  ): Promise<void> {
+  /**
+   * Récompense de parrainage au paiement d'un filleul. Règle de coexistence,
+   * décidée par le RÔLE du parrain (user dont referralCode == filleul.referredBy) :
+   *  - parrain AMBASSADOR → commission cash (existant), JAMAIS de mois offert.
+   *  - parrain user normal → mois offert (1 par filleul payant).
+   * Anti-abus : paiement réel uniquement, jamais l'auto-parrainage (single-level),
+   * une seule récompense par filleul.
+   */
+  private async processReferral(invoice: Stripe.Invoice): Promise<void> {
     try {
       const stripeCustomerId = invoice.customer as string;
       const subscriptionId = extractId(
@@ -631,43 +670,231 @@ export class StripeService {
 
       if (!stripeCustomerId || !subscriptionId || amountPaid <= 0) return;
 
-      const user = await this.prisma.user.findFirst({
+      const filleul = await this.prisma.user.findFirst({
         where: { stripeCustomerId },
         select: { id: true, referredBy: true, plan: true },
       });
+      if (!filleul?.referredBy) return;
 
-      if (!user?.referredBy) return;
-
-      const ambassador = await this.prisma.user.findFirst({
-        where: { referralCode: user.referredBy },
-        select: { id: true },
+      const parrain = await this.prisma.user.findFirst({
+        where: { referralCode: filleul.referredBy },
+        select: { id: true, role: true },
       });
+      if (!parrain) return;
+      if (parrain.id === filleul.id) return; // anti auto-parrainage (single-level)
 
-      if (!ambassador) return;
-
-      const commission = +(amountPaid * 0.2).toFixed(2);
-      const period = new Date().toISOString().slice(0, 7);
-
-      await this.prisma.referralCommission.upsert({
-        where: { subscriptionId_period: { subscriptionId, period } },
-        create: {
-          ambassadorId: ambassador.id,
-          referredUserId: user.id,
-          amount: commission,
+      if (parrain.role === Role.AMBASSADOR) {
+        await this.creditAmbassadorCommission({
+          ambassadorId: parrain.id,
+          filleul,
           subscriptionId,
-          period,
-          status: 'pending',
-        },
-        update: { amount: commission },
-      });
-
-      this.logger.log(
-        `Commission referral : ${commission}€ pour ambassadeur ${user.referredBy}` +
-        ` (plan: ${user.plan}, sub: ${subscriptionId})`,
-      );
+          amountPaid,
+        });
+      } else {
+        await this.grantReferralFreeMonth({
+          parrainId: parrain.id,
+          filleulId: filleul.id,
+          subscriptionId,
+        });
+      }
     } catch (err) {
-      this.logger.error('Erreur calcul commission referral', err);
+      this.logger.error('Erreur traitement parrainage', err);
     }
+  }
+
+  /** Commission cash 20% pour un parrain AMBASSADEUR (comportement existant). */
+  private async creditAmbassadorCommission(args: {
+    ambassadorId: string;
+    filleul: { id: string; referredBy: string | null; plan: Plan };
+    subscriptionId: string;
+    amountPaid: number;
+  }): Promise<void> {
+    const { ambassadorId, filleul, subscriptionId, amountPaid } = args;
+    const commission = +(amountPaid * 0.2).toFixed(2);
+    const period = new Date().toISOString().slice(0, 7);
+
+    await this.prisma.referralCommission.upsert({
+      where: { subscriptionId_period: { subscriptionId, period } },
+      create: {
+        ambassadorId,
+        referredUserId: filleul.id,
+        amount: commission,
+        subscriptionId,
+        period,
+        status: 'pending',
+      },
+      update: { amount: commission },
+    });
+
+    this.logger.log(
+      `Commission referral : ${commission}€ pour ambassadeur ${filleul.referredBy}` +
+      ` (plan: ${filleul.plan}, sub: ${subscriptionId})`,
+    );
+  }
+
+  /** Mois offert à un parrain NORMAL : 1 par filleul payant, crédité chez Stripe. */
+  private async grantReferralFreeMonth(args: {
+    parrainId: string;
+    filleulId: string;
+    subscriptionId: string;
+  }): Promise<void> {
+    const { parrainId, filleulId, subscriptionId } = args;
+
+    // 1 récompense par filleul : la contrainte @unique(filleulId) tranche.
+    let reward;
+    try {
+      reward = await this.prisma.referralReward.create({
+        data: { parrainId, filleulId, subscriptionId, status: 'PENDING', amountEur: 0 },
+      });
+    } catch (err) {
+      if (isUniqueConstraintError(err)) {
+        this.logger.debug(`Mois offert déjà accordé pour le filleul ${filleulId}`);
+        return;
+      }
+      throw err;
+    }
+
+    const parrain = await this.prisma.user.findUnique({
+      where: { id: parrainId },
+      select: { email: true, stripeCustomerId: true, stripeSubscriptionId: true },
+    });
+    if (!parrain) return;
+
+    const monthCents = await this.resolveFreeMonthCents(parrain.stripeSubscriptionId);
+    if (monthCents <= 0) {
+      this.logger.warn(`Mois offert non chiffrable (parrain ${parrainId}) — reward laissé PENDING`);
+      return; // reste PENDING : visible dans « mois à appliquer » côté admin
+    }
+
+    const customerId =
+      parrain.stripeCustomerId ?? (await this.ensureStripeCustomer(parrainId, parrain.email));
+
+    // Avoir sur le solde client (négatif = crédit) → appliqué à sa prochaine facture.
+    await this.stripe.customers.createBalanceTransaction(
+      customerId,
+      {
+        amount: -monthCents,
+        currency: 'eur',
+        description: `Mois offert — parrainage (filleul ${filleulId})`,
+      },
+      { idempotencyKey: `referral-reward-${filleulId}` },
+    );
+
+    await this.prisma.referralReward.update({
+      where: { id: reward.id },
+      data: { status: 'APPLIED', amountEur: +(monthCents / 100).toFixed(2) },
+    });
+
+    this.logger.log(
+      `Mois offert (${(monthCents / 100).toFixed(2)}€) crédité au parrain ${parrainId} (filleul ${filleulId})`,
+    );
+  }
+
+  /** Montant d'un mois en cents : mensualité du parrain s'il est abonné, sinon Starter mensuel. */
+  private async resolveFreeMonthCents(parrainSubId: string | null): Promise<number> {
+    if (parrainSubId) {
+      const sub = await this.stripe.subscriptions.retrieve(parrainSubId).catch(() => null);
+      const price = sub?.items.data[0]?.price;
+      if (price?.unit_amount != null) {
+        return price.recurring?.interval === 'year'
+          ? Math.round(price.unit_amount / 12)
+          : price.unit_amount;
+      }
+    }
+    // Défaut prudent (protège la marge) : mensualité Starter.
+    const starterMonthly = this.config.get<string>('STRIPE_STARTER_PRICE_MONTHLY');
+    if (starterMonthly) {
+      const price = await this.stripe.prices.retrieve(starterMonthly).catch(() => null);
+      if (price?.unit_amount != null) return price.unit_amount;
+    }
+    return 0;
+  }
+
+  /** Crédit disponible (avoir) du parrain chez Stripe, en euros. Pour /referral/me. */
+  async getCustomerBalanceCreditEur(userId: string): Promise<number> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { stripeCustomerId: true },
+    });
+    if (!user?.stripeCustomerId) return 0;
+    const customer = await this.stripe.customers
+      .retrieve(user.stripeCustomerId)
+      .catch(() => null);
+    if (!customer || (customer as Stripe.DeletedCustomer).deleted) return 0;
+    const balance = (customer as Stripe.Customer).balance ?? 0; // négatif = avoir
+    return balance < 0 ? +(-balance / 100).toFixed(2) : 0;
+  }
+
+  /** Détecte un priceId annuel (Starter ou Premium) via la config. */
+  private isAnnualPrice(priceId: string): boolean {
+    const yearly = [
+      this.config.get<string>('STRIPE_STARTER_PRICE_YEARLY'),
+      this.config.get<string>('STRIPE_PREMIUM_PRICE_YEARLY_V2'),
+    ].filter(Boolean);
+    return yearly.includes(priceId);
+  }
+
+  /** Détecte un priceId mensuel (Starter ou Premium) via la config. */
+  private isMonthlyPrice(priceId: string): boolean {
+    const monthly = [
+      this.config.get<string>('STRIPE_STARTER_PRICE_MONTHLY'),
+      this.config.get<string>('STRIPE_PREMIUM_PRICE_MONTHLY_V2'),
+    ].filter(Boolean);
+    return monthly.includes(priceId);
+  }
+
+  private referralCouponId(kind: ReferralCouponKind): string {
+    return kind === 'annual' ? REFERRAL_COUPON_ID : REFERRAL_COUPON_MONTHLY_ID;
+  }
+
+  /**
+   * Crée (idempotent) le coupon -10% « première année » du parrainage filleul.
+   * - annual : duration once (l'annuel = 1 paiement).
+   * - monthly : duration repeating 12 mois (les 12 premiers paiements).
+   * Retrieve d'abord, create sinon ; course condition (resource_already_exists)
+   * ignorée. Flag d'« ensured » par kind.
+   */
+  private async ensureReferralCoupon(kind: ReferralCouponKind): Promise<string> {
+    const id = this.referralCouponId(kind);
+    if (this.referralCouponEnsured[kind]) return id;
+    try {
+      await this.stripe.coupons.retrieve(id);
+    } catch {
+      const params: Stripe.CouponCreateParams =
+        kind === 'annual'
+          ? { id, percent_off: 10, duration: 'once', name: 'Parrainage -10% (1ère année)' }
+          : { id, percent_off: 10, duration: 'repeating', duration_in_months: 12, name: 'Parrainage -10% (12 mois)' };
+      try {
+        await this.stripe.coupons.create(params);
+      } catch (err) {
+        // Course condition : créé entre-temps → ignorer le conflit, sinon relancer.
+        const code = (err as Stripe.errors.StripeError)?.code;
+        if (code !== 'resource_already_exists') throw err;
+      }
+    }
+    this.referralCouponEnsured[kind] = true;
+    return id;
+  }
+
+  /**
+   * Wrapper public fin pour l'outillage (script d'ensure). Réutilise la logique
+   * existante `ensureReferralCoupon` (retrieve-or-create, paramètres inchangés) pour
+   * les DEUX kinds, puis retourne les deux coupons Stripe pour pouvoir les afficher.
+   * Pas d'effet runtime nouveau.
+   */
+  async ensureReferralCouponNow(): Promise<{ annual: Stripe.Coupon; monthly: Stripe.Coupon }> {
+    const annualId = await this.ensureReferralCoupon('annual');
+    const monthlyId = await this.ensureReferralCoupon('monthly');
+    const [annual, monthly] = await Promise.all([
+      this.stripe.coupons.retrieve(annualId),
+      this.stripe.coupons.retrieve(monthlyId),
+    ]);
+    return { annual, monthly };
+  }
+
+  /** Lecture seule : retourne le coupon de parrainage (selon kind) s'il existe déjà, sinon null. */
+  async findReferralCoupon(kind: ReferralCouponKind): Promise<Stripe.Coupon | null> {
+    return this.stripe.coupons.retrieve(this.referralCouponId(kind)).catch(() => null);
   }
 
   /**

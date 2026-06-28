@@ -44,6 +44,7 @@ function setup(opts: { premium: boolean; accounts: TradingAccount[]; limit?: num
     accounts: accountsSig,
     isLoading: signal(false),
     loaded: signal(true),
+    selectedAccountId: signal<string | 'all'>('all'), // 'all' = « Tous les comptes »
     load: vi.fn(),
   };
   // limit: null = illimité (Premium par défaut dans les tests existants).
@@ -109,6 +110,30 @@ describe('AccountsComponent — logique', () => {
     expect((c['atRiskCount'] as () => number)()).toBe(2);
   });
 
+  it('compte sélectionné → grille + KPI scopés sur ce seul compte', () => {
+    const m = (startingBalance: number, realizedPnl: number, tradesCount: number) => ({
+      startingBalance, realizedPnl, currentBalance: startingBalance + realizedPnl,
+      tradesCount, winRate: null, bestDay: null, worstDay: null,
+      objective: null, drawdown: null, estimated: true as const, disclaimer: '',
+    });
+    const c = setup({
+      premium: true,
+      accounts: [
+        acct({ id: 'a', label: 'Apex 50K', metrics: m(50000, 1200, 10) }),
+        acct({ id: 'b', label: 'FTMO 100K', metrics: m(100000, 500, 5) }),
+      ],
+    });
+    (TestBed.inject(SelectedAccountStore) as unknown as {
+      selectedAccountId: { set: (v: string | null) => void };
+    }).selectedAccountId.set('a');
+
+    expect((c['displayedAccounts'] as () => TradingAccount[])().map((a) => a.id)).toEqual(['a']);
+    expect((c['visibleAccounts'] as () => TradingAccount[])().length).toBe(1);
+    expect((c['trackedCapital'] as () => number)()).toBe(50000); // pas 150000
+    expect((c['totalTrades'] as () => number)()).toBe(10); // pas 15
+    expect((c['selectedAccountName'] as () => string | null)()).toBe('Apex 50K');
+  });
+
   it('barre objectif : largeur = pct, atteint à 100 %', () => {
     const c = setup({ premium: true, accounts: [] });
     const a = acct({ id: 'a', metrics: { startingBalance: 0, realizedPnl: 0, currentBalance: 0, tradesCount: 0, objective: { current: 1500, target: 3000, pct: 0.5 }, drawdown: null, estimated: true, disclaimer: '' } });
@@ -168,6 +193,30 @@ describe('AccountsComponent — logique', () => {
   it('comptes archivés ne consomment pas le quota', () => {
     const c = setup({ premium: true, limit: 3, accounts: [acct({ id: 'a' }), acct({ id: 'b' }), acct({ id: 'z', status: 'ARCHIVED' })] });
     expect((c['atLimit'] as () => boolean)()).toBe(false); // 2 actifs < 3
+  });
+
+  it('quota = comptes ACTIVE uniquement : PASSED/FAILED/ARCHIVED ne comptent pas', () => {
+    const c = setup({
+      premium: true, limit: 3,
+      accounts: [
+        acct({ id: 'a' }), acct({ id: 'b' }),
+        acct({ id: 'p', status: 'PASSED' }),
+        acct({ id: 'f', status: 'FAILED' }),
+        acct({ id: 'z', status: 'ARCHIVED' }),
+      ],
+    });
+    expect((c['activeAccountsCount'] as () => number)()).toBe(2);
+    expect((c['atLimit'] as () => boolean)()).toBe(false); // 2 ACTIVE < 3
+  });
+
+  it('3 ACTIVE = limite atteinte, un FAILED en plus n\'ajoute rien', () => {
+    const c = setup({ premium: true, limit: 3, accounts: [acct({ id: 'a' }), acct({ id: 'b' }), acct({ id: 'c' }), acct({ id: 'f', status: 'FAILED' })] });
+    expect((c['atLimit'] as () => boolean)()).toBe(true); // 3 ACTIVE = limite
+  });
+
+  it('2 ACTIVE + 1 FAILED → création encore possible (FAILED libère son slot)', () => {
+    const c = setup({ premium: true, limit: 3, accounts: [acct({ id: 'a' }), acct({ id: 'b' }), acct({ id: 'f', status: 'FAILED' })] });
+    expect((c['atLimit'] as () => boolean)()).toBe(false); // 2 ACTIVE < 3
   });
 
   it('Premium (limit null) → jamais atLimit', () => {

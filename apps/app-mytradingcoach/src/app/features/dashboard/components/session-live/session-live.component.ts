@@ -662,6 +662,9 @@ const EMOTIONS = [
               <img class="nm-image" [src]="news.image" [alt]="news.title" loading="lazy" />
             }
             <h2 id="news-modal-title" class="nm-title">{{ news.title }}</h2>
+            @if (translatingNewsText()) {
+              <p class="nm-translating" aria-live="polite">Traduction…</p>
+            }
             @if (news.text) {
               <p class="nm-body">{{ news.text }}</p>
             }
@@ -719,16 +722,40 @@ export class SessionLiveComponent {
   // (close session gérée via onglet Débrief dans session-day)
 
   // Modal news
-  protected readonly selectedNews = signal<import('../../../../core/api/trades.api').NewsItem | null>(null);
+  protected readonly selectedNews = signal<NewsItem | null>(null);
+  // Traduction paresseuse du corps : true pendant l'appel à /news/:id/text.
+  protected readonly translatingNewsText = signal(false);
   private readonly newsDialogRef = viewChild<ElementRef<HTMLElement>>('newsDialog');
   private newsTrigger: HTMLElement | null = null;
 
-  protected openNews(item: import('../../../../core/api/trades.api').NewsItem): void {
+  protected openNews(item: NewsItem): void {
     this.newsTrigger = (document.activeElement as HTMLElement) ?? null;
     this.selectedNews.set(item);
+    this.translatingNewsText.set(false);
+
+    // Traduction du texte à la demande (1re ouverture) : le corps n'est traduit
+    // que pour les news réellement consultées. Hors démo, et seulement s'il y a du texte.
+    if (item.textTranslated === false && !!item.text && !this.userStore.isDemo()) {
+      this.translatingNewsText.set(true);
+      this.tradesApi.newsText(item.id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (res) => {
+            this.translatingNewsText.set(false);
+            const fr = res.data?.text ?? null;
+            if (fr) {
+              this.selectedNews.update((n) =>
+                n && n.id === item.id ? { ...n, text: fr, textTranslated: true } : n,
+              );
+            }
+          },
+          error: () => this.translatingNewsText.set(false),
+        });
+    }
   }
   protected closeNews(): void {
     this.selectedNews.set(null);
+    this.translatingNewsText.set(false);
     this.newsTrigger?.focus();
     this.newsTrigger = null;
   }

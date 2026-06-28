@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { RouterModule, RouterLink, RouterLinkActive } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { LucideAngularModule, ChevronLeft, ChevronRight } from 'lucide-angular';
 import { UserStore } from '../../../core/stores/user.store';
 import { TradesStore } from '../../../core/stores/trades.store';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -26,6 +27,7 @@ import { environment } from '../../../../environments/environment';
     RouterModule,
     RouterLink,
     RouterLinkActive,
+    LucideAngularModule,
     OnboardingComponent,
     PlanModalComponent,
   ],
@@ -56,19 +58,6 @@ import { environment } from '../../../../environments/environment';
           <img class="logo-full" src="icon/logo-horizontal.svg" alt="MyTradingCoach" height="40" />
           <img class="logo-mark" src="logo.svg" alt="MyTradingCoach" height="32" width="32" />
         </a>
-
-        <!-- Toggle repli/dépli (desktop) -->
-        <button
-          type="button"
-          class="collapse-toggle"
-          data-testid="sidebar-collapse-toggle"
-          (click)="toggleCollapse()"
-          [attr.aria-label]="collapsed() ? 'Déplier la barre latérale' : 'Replier la barre latérale'"
-          [attr.title]="collapsed() ? 'Déplier' : 'Replier'"
-        >
-          <span class="collapse-chevron">{{ collapsed() ? '»' : '«' }}</span>
-          <span class="nav-label">Replier</span>
-        </button>
 
         <!-- Nav -->
         <nav class="nav">
@@ -104,11 +93,11 @@ import { environment } from '../../../../environments/environment';
               routerLinkActive="active"
               class="nav-item"
               data-testid="nav-accounts"
+              [attr.title]="collapsed() ? 'Mes comptes' : null"
               (click)="closeSidebar()"
             >
               <span class="nav-icon">💼</span>
-              Mes comptes
-              <span class="badge starter">STARTER</span>
+              <span class="nav-label">Mes comptes</span>
             </a>
           }
 
@@ -195,6 +184,7 @@ import { environment } from '../../../../environments/environment';
             <span class="nav-label">Calendrier éco</span>
           </a>
 
+          <!-- Surface(s) de parrainage selon le rôle. L'admin voit les DEUX. -->
           @if (userStore.isAmbassador()) {
             <a
               routerLink="/ambassador"
@@ -209,6 +199,19 @@ import { environment } from '../../../../environments/environment';
               @if (ambassadorNotif.newReferrals() > 0) {
                 <span class="nav-badge-notif">{{ ambassadorNotif.newReferrals() }}</span>
               }
+            </a>
+          }
+          @if (!userStore.isAmbassador() || userStore.isAdmin()) {
+            <a
+              routerLink="/parrainage"
+              routerLinkActive="active"
+              class="nav-item"
+              data-testid="nav-parrainage"
+              [attr.title]="collapsed() ? 'Parrainage' : null"
+              (click)="closeSidebar()"
+            >
+              <span class="nav-icon">🎁</span>
+              <span class="nav-label">Parrainage</span>
             </a>
           }
 
@@ -230,15 +233,15 @@ import { environment } from '../../../../environments/environment';
           </a>
 
           <a
-            routerLink="/settings"
+            routerLink="/profil"
             routerLinkActive="active"
             class="nav-item"
             data-testid="nav-settings"
-            [attr.title]="collapsed() ? 'Paramètres' : null"
+            [attr.title]="collapsed() ? 'Profil' : null"
             (click)="closeSidebar()"
           >
-            <span class="nav-icon">⚙️</span>
-            <span class="nav-label">Paramètres</span>
+            <span class="nav-icon">👤</span>
+            <span class="nav-label">Profil</span>
           </a>
 
           <button
@@ -305,6 +308,19 @@ import { environment } from '../../../../environments/environment';
         </div>
       </aside>
 
+      <!-- Flèche de repli sur le bord (desktop) — ancrée sur .app-layout pour ne pas
+           être coupée par l'overflow:hidden de .sidebar -->
+      <button
+        type="button"
+        class="collapse-edge"
+        [class.collapsed]="collapsed()"
+        data-testid="sidebar-collapse-toggle"
+        (click)="toggleCollapse()"
+        [attr.aria-label]="collapsed() ? 'Déplier la barre latérale' : 'Replier la barre latérale'"
+      >
+        <lucide-icon [img]="collapsed() ? ChevronRightIcon : ChevronLeftIcon" [size]="16" />
+      </button>
+
       <!-- ─── MAIN ─── -->
       <main class="main-content"
             [style.overflow]="liveModeService.isLive() ? 'hidden' : null">
@@ -348,6 +364,9 @@ export class SidebarComponent {
   protected readonly liveModeService = inject(LiveModeService);
   protected readonly demo = inject(DemoService);
   protected readonly landingUrl = environment.landingUrl;
+
+  protected readonly ChevronLeftIcon = ChevronLeft;
+  protected readonly ChevronRightIcon = ChevronRight;
 
   protected readonly sidebarOpen   = signal(false);
   protected readonly showPlanModal  = signal(false);

@@ -20,6 +20,10 @@ export interface AdminStats {
   trials: number;
   freeUsers: number; newThisMonth: number; churnedThisMonth: number;
   betaTesters: number; ambassadors: number;
+  // Engagement par récence (≥1 trade sur la fenêtre) — distinct de l'activation.
+  tradersActifs7d: number; tradersActifs30d: number;
+  // Comptes supprimés (trace RGPD) — distinct du churn d'abonnement.
+  comptesSupprimesMois: number; comptesSupprimesTotal: number;
 }
 
 export interface AdminOnlineUser {
@@ -66,7 +70,9 @@ export interface AdminUserDetail {
 export interface AiUsageData {
   today: { inputTokens: number; outputTokens: number; costUsd: number; calls: number };
   week:  { inputTokens: number; outputTokens: number; costUsd: number; calls: number };
+  month: { inputTokens: number; outputTokens: number; costUsd: number; calls: number };
   byFeature: { feature: string; tokens: number; cost: number; pct: number }[];
+  byModel:   { model: string;   tokens: number; cost: number; pct: number }[];
   topUsers:  { userId: string; email: string; name: string; tokens: number; cost: number }[];
   daily:     { date: string; cost: number }[];
 }
@@ -83,9 +89,14 @@ export interface CampaignMeta {
   emoji: string;
   desc: string;
   targetDesc: string;
+  kind: 'transactional' | 'marketing';
+  automated: boolean;
+  requiresConsent: boolean;
   lastSent?: string | null;
   lastCount?: number;
-  targetCount: number;
+  targetCount: number; // users dans le segment (matching)
+  alreadyContacted: number; // ont déjà reçu cette campagne
+  newCount: number; // nouveaux destinataires (matching - alreadyContacted)
 }
 
 export interface AdminAmbassador {
@@ -139,6 +150,7 @@ export interface MetricsHistoryPoint {
   date: string; // YYYY-MM-DD (Paris)
   users: number;
   mrr: number;
+  newSignups: number; // inscriptions du jour → agrégées par semaine pour les barres
 }
 
 export interface DeletedAccount {
@@ -155,6 +167,35 @@ export interface DeletedAccount {
   deletedBy: string; // "self" | "admin"
   reason: string | null;
   anonymizedAt: string | null;
+}
+
+export interface ReferralAdminParrain {
+  referralCode: string;
+  name: string | null;
+  email: string;
+  invited: number;
+  payants: number;
+  conversion: number;
+  moisGagnes: number;
+  moisAppliques: number;
+}
+
+export interface ReferralAdminFilleul {
+  pseudo: string;
+  parrainCode: string | null;
+  status: 'payant' | 'essai' | 'inscrit';
+  date: string;
+}
+
+export interface ReferralAdminOverview {
+  parrainsActifs: number;
+  invitesTotal: number;
+  payants: number;
+  tauxConversion: number;
+  moisAccordes: number;
+  moisAAppliquer: number;
+  parrains: ReferralAdminParrain[];
+  filleulsRecents: ReferralAdminFilleul[];
 }
 
 export interface UserDetailData {
@@ -250,6 +291,7 @@ export class AdminApi {
     return this.http.get<{ data: DeletedAccountsData }>(`${this.adminBase}/deleted-accounts`);
   }
   stripeReconcile()     { return this.http.get<{ data: StripeReconcileData }>(`${this.adminBase}/stripe/reconcile`); }
+  referralOverview()    { return this.http.get<{ data: ReferralAdminOverview }>(`${environment.apiUrl}/referral/admin/overview`); }
 
   listCampaigns() {
     return this.http.get<{ data: CampaignMeta[] }>(`${this.adminBase}/campaigns`);
@@ -259,9 +301,9 @@ export class AdminApi {
       `${this.adminBase}/campaigns/${type}/preview`, { subject, content },
     );
   }
-  sendCampaign(type: string, subject?: string, content?: string) {
-    return this.http.post<{ data: { success: number; errors: number } }>(
-      `${this.adminBase}/campaigns/${type}/send`, { subject, content },
+  sendCampaign(type: string, subject?: string, content?: string, force = false) {
+    return this.http.post<{ data: { success: number; errors: number; skipped?: number } }>(
+      `${this.adminBase}/campaigns/${type}/send`, { subject, content, force },
     );
   }
 

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { VpsService } from '../vps/vps.service';
@@ -94,9 +95,9 @@ export class MetricsSnapshotCron {
     // totalUsers vient d'adminStats() (source unique) → snapshot et KPI live concordent.
     const [activeUsers, newThisDay] = await Promise.all([
       this.prisma.user.count({
-        where: { isDemo: false, trades: { some: { tradedAt: { gte: sevenDaysAgo } } } },
+        where: { isDemo: false, role: { not: Role.ADMIN }, trades: { some: { tradedAt: { gte: sevenDaysAgo } } } },
       }),
-      this.prisma.user.count({ where: { isDemo: false, createdAt: { gte: oneDayAgo } } }),
+      this.prisma.user.count({ where: { isDemo: false, role: { not: Role.ADMIN }, createdAt: { gte: oneDayAgo } } }),
     ]);
 
     const data = {
@@ -137,7 +138,7 @@ export class MetricsSnapshotCron {
    */
   async historyPoints(days: number): Promise<MetricsHistoryPoint[]> {
     const rows = await this.history(days);
-    return rows.map((r) => ({ date: r.date, users: r.totalUsers, mrr: r.mrr }));
+    return rows.map((r) => ({ date: r.date, users: r.totalUsers, mrr: r.mrr, newSignups: r.newThisDay }));
   }
 }
 
@@ -146,4 +147,5 @@ export interface MetricsHistoryPoint {
   date: string; // YYYY-MM-DD (Paris)
   users: number;
   mrr: number;
+  newSignups: number; // inscriptions du jour (snapshot.newThisDay) → barres hebdo
 }

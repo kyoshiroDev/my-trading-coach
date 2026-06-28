@@ -21,7 +21,8 @@ type RuleTrade = { pnl: number | null; tradedAt: Date };
 type PlanContext = { plan: Plan; role: Role; trialEndsAt?: Date | null };
 
 // Quota de comptes par plan — aligné front `ACCOUNT_LIMITS` (pricing.const.ts).
-// Premium / trial / admin / beta = illimité. Seuls les comptes NON archivés comptent.
+// Premium / trial / admin / beta = illimité. Seuls les comptes ACTIVE consomment un
+// slot (PASSED / FAILED / ARCHIVED le libèrent).
 const STARTER_ACCOUNT_LIMIT = 3;
 const FREE_ACCOUNT_LIMIT = 1;
 
@@ -35,6 +36,9 @@ export interface AccountRuleMetrics {
   realizedPnl: number;
   currentBalance: number;
   tradesCount: number;
+  winRate: number | null; // ratio 0..1 des trades gagnants (pnl > 0), null si 0 trade
+  bestDay: number | null; // meilleur PnL journalier cumulé, en $, null si 0 trade
+  worstDay: number | null; // pire PnL journalier cumulé, en $, null si 0 trade
   objective: { current: number; target: number; pct: number } | null;
   drawdown: {
     type: DrawdownType;
@@ -115,6 +119,25 @@ export class AccountsService {
     const realizedPnl = sorted.reduce((s, t) => s + (t.pnl ?? 0), 0);
     const currentBalance = startingBalance + realizedPnl;
 
+    // Taux de réussite (sur trades fermés) — réutilise `sorted`, aucune requête.
+    const wins = sorted.filter((t) => (t.pnl ?? 0) > 0).length;
+    const winRate = sorted.length > 0 ? wins / sorted.length : null;
+
+    // PnL cumulé par jour (clé = date calendaire UTC du tradedAt) → meilleur / pire jour.
+    // Groupement UTC volontairement simple, cohérent avec le cadrage « estimé » (pas de fuseau user).
+    let bestDay: number | null = null;
+    let worstDay: number | null = null;
+    if (sorted.length > 0) {
+      const byDay = new Map<string, number>();
+      for (const t of sorted) {
+        const key = t.tradedAt.toISOString().slice(0, 10);
+        byDay.set(key, (byDay.get(key) ?? 0) + (t.pnl ?? 0));
+      }
+      const sums = [...byDay.values()];
+      bestDay = Math.max(...sums);
+      worstDay = Math.min(...sums);
+    }
+
     const objective =
       account.profitTarget != null && account.profitTarget > 0
         ? {
@@ -156,6 +179,9 @@ export class AccountsService {
       realizedPnl,
       currentBalance,
       tradesCount: sorted.length,
+      winRate,
+      bestDay,
+      worstDay,
       objective,
       drawdown,
       estimated: true,
@@ -178,25 +204,37 @@ export class AccountsService {
     return FREE_ACCOUNT_LIMIT;
   }
 
+  /**
+   * Vérifie qu'un slot est disponible avant d'ouvrir un compte ACTIVE.
+   * Règle de slot : seuls les comptes ACTIVE consomment le quota — PASSED, FAILED et
+   * ARCHIVED libèrent leur slot (un éval terminé/cramé ne bloque pas une création).
+   * Throw `ACCOUNT_LIMIT_REACHED` si la limite du plan serait dépassée.
+   */
+  private async assertActiveSlotAvailable(
+    userId: string,
+    ctx?: PlanContext,
+  ): Promise<void> {
+    const limit = this.resolveAccountLimit(ctx);
+    if (limit === null) return;
+    const activeCount = await this.prisma.tradingAccount.count({
+      where: { userId, status: AccountStatus.ACTIVE },
+    });
+    if (activeCount >= limit) {
+      throw new ForbiddenException({
+        code: 'ACCOUNT_LIMIT_REACHED',
+        limit,
+        message: `Limite de ${limit} compte(s) atteinte pour ton plan. Passe à un plan supérieur pour en ajouter.`,
+      });
+    }
+  }
+
   async create(
     userId: string,
     dto: CreateAccountDto,
     ctx?: PlanContext,
   ): Promise<TradingAccount> {
-    const limit = this.resolveAccountLimit(ctx);
-    if (limit !== null) {
-      // Seuls les comptes non archivés consomment le quota (archiver libère un slot).
-      const activeCount = await this.prisma.tradingAccount.count({
-        where: { userId, status: { not: AccountStatus.ARCHIVED } },
-      });
-      if (activeCount >= limit) {
-        throw new ForbiddenException({
-          code: 'ACCOUNT_LIMIT_REACHED',
-          limit,
-          message: `Limite de ${limit} compte(s) atteinte pour ton plan. Passe à un plan supérieur pour en ajouter.`,
-        });
-      }
-    }
+    // Un compte créé est ACTIVE par défaut → il consomme un slot.
+    await this.assertActiveSlotAvailable(userId, ctx);
     return this.prisma.tradingAccount.create({ data: { userId, ...dto } });
   }
 
@@ -204,8 +242,15 @@ export class AccountsService {
     userId: string,
     id: string,
     dto: UpdateAccountDto,
+    ctx?: PlanContext,
   ): Promise<TradingAccount> {
-    await this.assertOwner(userId, id);
+    const account = await this.assertOwner(userId, id);
+    // Réactivation (passage à ACTIVE depuis PASSED/FAILED/ARCHIVED) : revérifier le
+    // quota AVANT d'appliquer (anti-bypass archiver→créer→désarchiver). Les updates
+    // qui ne rendent pas le compte ACTIVE ne sont pas concernés.
+    if (dto.status === AccountStatus.ACTIVE && account.status !== AccountStatus.ACTIVE) {
+      await this.assertActiveSlotAvailable(userId, ctx);
+    }
     return this.prisma.tradingAccount.update({ where: { id }, data: dto });
   }
 

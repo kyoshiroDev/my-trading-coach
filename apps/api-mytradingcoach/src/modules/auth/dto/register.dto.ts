@@ -1,4 +1,4 @@
-import { IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class RegisterDto {
   @IsEmail()
@@ -16,4 +16,9 @@ export class RegisterDto {
   @IsString()
   @MaxLength(20)
   referralCode?: string;
+
+  // Consentement marketing (case non cochée par défaut côté front).
+  @IsOptional()
+  @IsBoolean()
+  marketingConsent?: boolean;
 }

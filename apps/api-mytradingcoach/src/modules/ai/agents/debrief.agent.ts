@@ -6,40 +6,53 @@ import {
   buildDebriefPrompt,
   DEBRIEF_SYSTEM_PROMPT,
 } from '../prompts/debrief.prompt';
-import { AiLoggerService } from '../../shared/ai-logger.service';
+import { AnthropicClientService } from '../../shared/anthropic-client.service';
 
 @Injectable()
 export class DebriefAgent {
-  private readonly anthropic = new Anthropic({
-    apiKey: process.env['ANTHROPIC_API_KEY'],
-  });
   private readonly logger = new Logger(DebriefAgent.name);
 
-  constructor(private readonly aiLogger: AiLoggerService) {}
+  constructor(private readonly anthropicClient: AnthropicClientService) {}
 
   async generate(
     data: Parameters<typeof buildDebriefPrompt>[0],
     userId?: string,
   ): Promise<unknown> {
+    // Aucun appel modèle (payant) hors production, sauf opt-in explicite AI_DEBRIEF_DEV=true.
+    // Stub structuré valide : debrief.service lit overview?.summary et reconstruit les
+    // sections par compte depuis la BDD (accounts:[] → onglets sans texte IA, pas de crash).
+    if (
+      process.env['NODE_ENV'] !== 'production' &&
+      process.env['AI_DEBRIEF_DEV'] !== 'true'
+    ) {
+      return { overview: { summary: '(débrief IA disponible en production)' }, accounts: [] };
+    }
+
+    // Borne le budget de sortie : base + marge par compte, plafonné (un seul appel,
+    // coût maîtrisé même avec plusieurs comptes).
+    const accountCount = data.accounts?.length ?? 1;
+    const maxTokens = Math.min(4096, 1600 + accountCount * 500);
+
     let response: Anthropic.Message;
     try {
-      response = await this.anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 2048,
-        system: [
-          {
-            type: 'text',
-            text: DEBRIEF_SYSTEM_PROMPT,
-            cache_control: { type: 'ephemeral' },
-          },
-        ],
-        messages: [{ role: 'user', content: buildDebriefPrompt(data) }],
-      });
+      response = await this.anthropicClient.create(
+        {
+          model: 'claude-sonnet-4-6',
+          max_tokens: maxTokens,
+          system: [
+            {
+              type: 'text',
+              text: DEBRIEF_SYSTEM_PROMPT,
+              cache_control: { type: 'ephemeral' },
+            },
+          ],
+          messages: [{ role: 'user', content: buildDebriefPrompt(data) }],
+        },
+        { feature: 'debrief', userId: userId ?? null },
+      );
     } catch (err) {
       handleAnthropicError(err, this.logger);
     }
-
-    if (userId) this.aiLogger.log(userId, 'debrief', response.usage);
 
     const block = response.content[0];
     if (block.type !== 'text') {

@@ -88,7 +88,7 @@ describe('OrchestratorAgent', () => {
   it('runInsightsFlow() appelle dataAgent puis patternAgent puis coachAgent dans l ordre', async () => {
     const buildSummarySpy = vi.spyOn(dataAgent, 'buildTradesSummary');
 
-    const result = await orchestrator.runInsightsFlow('user-123');
+    await orchestrator.runInsightsFlow('user-123');
 
     expect(buildSummarySpy).toHaveBeenCalledOnce();
     expect(patternAgent.analyze).toHaveBeenCalledOnce();

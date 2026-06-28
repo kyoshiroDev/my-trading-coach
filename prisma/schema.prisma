@@ -20,6 +20,14 @@ model User {
   resetPasswordToken   String?   @unique
   resetPasswordExpires DateTime?
 
+  // ── Consentement marketing (RGPD Art. 6.1.a) ──────────────────────────────
+  // Aucun email marketing/réengagement ne part sans marketingConsent=true.
+  // unsubToken : jeton du lien de désinscription (généré à la création, lazy
+  // pour les comptes existants au 1er besoin).
+  marketingConsent   Boolean   @default(false)
+  marketingConsentAt DateTime?
+  unsubToken         String?   @unique
+
   // ── Stripe ──────────────────────────────────────
   stripeCustomerId         String?   @unique
   stripeSubscriptionId     String?   @unique
@@ -47,14 +55,14 @@ model User {
 
   // ── Profil stratégie ─────────────────────────────────────────────────────
   tradingStyle        String?
-  tradingStrategy     String[]
-  tradingSessions     String[]
+  tradingStrategy     String[] @default([])
+  tradingSessions     String[] @default([])
   tradesPerDayMin     Int?
   tradesPerDayMax     Int?
   strategyDescription String?
 
   // ── Actifs tradés ────────────────────────────────────────────────────────
-  tradingAssets String[] // configurés dans les paramètres
+  tradingAssets String[] @default([]) // configurés dans les paramètres
   favoriteAsset String? // pré-sélectionné dans la saisie rapide
 
   // ── Parrainage ambassadeur ────────────────────────────────────────────────
@@ -65,7 +73,7 @@ model User {
   // Sélection d'annonces du JOUR (rituel de prep). Format : "EventName:Currency".
   // Réinitialisée chaque jour : si pinnedEcoDate ≠ aujourd'hui (Europe/Paris), la
   // lecture renvoie une sélection vide (reset paresseux, sans cron).
-  pinnedEcoEvents String[]
+  pinnedEcoEvents String[] @default([])
   pinnedEcoDate   String? // YYYY-MM-DD (Europe/Paris) — jour de la sélection
 
   // ── Discord ──────────────────────────────────────────────────────────────────
@@ -78,7 +86,9 @@ model User {
   tradingAccounts TradingAccount[]
   dailyRecaps     DailyRecap[]
   dailyActivity   UserDailyActivity[]
+  emailSends      EmailSend[]
   referrals       ReferralCommission[] @relation("AmbassadorCommissions")
+  parrainRewards  ReferralReward[]     @relation("ParrainRewards")
   lastSeenAt      DateTime?
   lastLoginAt     DateTime?
   createdAt       DateTime             @default(now())
@@ -99,6 +109,24 @@ model ReferralCommission {
 
   @@unique([subscriptionId, period])
   @@index([ambassadorId])
+}
+
+// Parrainage grand public : mois offert au parrain (user normal) pour chaque
+// filleul payant. Miroir de ReferralCommission, mais récompense en mois offert
+// (crédit Stripe) et non en commission cash. Unicité (filleulId) = 1 seule
+// récompense par filleul, jamais cumulée avec la commission ambassadeur.
+model ReferralReward {
+  id             String   @id @default(cuid())
+  parrainId      String
+  filleulId      String   @unique
+  subscriptionId String
+  amountEur      Float    @default(0)
+  status         String   @default("PENDING") // PENDING | APPLIED
+  createdAt      DateTime @default(now())
+
+  parrain User @relation("ParrainRewards", fields: [parrainId], references: [id])
+
+  @@index([parrainId])
 }
 
 model Trade {
@@ -156,18 +184,20 @@ model WeeklyDebrief {
 
 model AiUsageLog {
   id           String   @id @default(cuid())
-  userId       String
+  userId       String? // null pour les jobs système (traductions news/eco, crons)
   feature      String
+  model        String   @default("claude-sonnet-4-6") // vrai modèle appelé → ventilation Haiku/Sonnet
   inputTokens  Int
   outputTokens Int
   costUsd      Float
   createdAt    DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([createdAt])
   @@index([feature])
+  @@index([model])
 }
 
 // ── V2 Session Mode ─────────────────────────────────────────────────────────
@@ -384,11 +414,34 @@ model MarketNews {
   image         String?
   site          String?
   publishedDate DateTime
-  translated    Boolean  @default(false)
+  translated     Boolean  @default(false) // titre traduit (eager). Le texte est traduit paresseusement → textTranslated
+  textTranslated Boolean  @default(false) // corps de l'article traduit à la 1re ouverture, puis persisté
   fetchedAt     DateTime @default(now())
 
   @@index([symbol, publishedDate])
   @@index([translated])
+}
+
+/// Glossaire global des libellés d'événements éco : chaque libellé EN traduit une seule fois à vie.
+model EcoLabelTranslation {
+  nameEn    String   @id
+  nameFr    String
+  createdAt DateTime @default(now())
+}
+
+/// Log unitaire d'envoi d'email (moteur de campagnes). Source de vérité de
+/// l'anti-doublon (oneShot), du plafond de fréquence marketing et du compteur
+/// "déjà contacté" de l'admin. 1 ligne = 1 email envoyé à 1 user.
+model EmailSend {
+  id          String   @id @default(cuid())
+  campaignKey String
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind        String // 'transactional' | 'marketing'
+  sentAt      DateTime @default(now())
+
+  @@index([campaignKey, userId])
+  @@index([userId, sentAt])
 }
 
 model EmailCampaignLog {

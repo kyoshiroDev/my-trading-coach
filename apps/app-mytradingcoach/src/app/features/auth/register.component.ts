@@ -148,6 +148,16 @@ import { BillingApi } from '../../core/api/billing.api';
             }
           </div>
 
+          <label class="consent-check">
+            <input
+              type="checkbox"
+              name="marketingConsent"
+              [ngModel]="marketingConsent()"
+              (ngModelChange)="marketingConsent.set($event)"
+            />
+            <span>J'accepte de recevoir des emails de MyTradingCoach (conseils, nouveautés). Désinscription à tout moment.</span>
+          </label>
+
           <button
             type="submit"
             data-testid="register-submit"
@@ -206,6 +216,7 @@ export class RegisterComponent {
   protected readonly email = signal('');
   protected readonly password = signal('');
   protected readonly confirmPassword = signal('');
+  protected readonly marketingConsent = signal(false);
   protected readonly isLoading = signal(false);
   protected readonly apiError = signal<string | null>(null);
   protected readonly showPassword = signal(false);
@@ -281,7 +292,13 @@ export class RegisterComponent {
     this.apiError.set(null);
 
     this.auth
-      .register(this.email(), this.password(), this.name() || undefined, this.referralCode() || undefined)
+      .register(
+        this.email(),
+        this.password(),
+        this.name() || undefined,
+        this.referralCode() || undefined,
+        this.marketingConsent(),
+      )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {

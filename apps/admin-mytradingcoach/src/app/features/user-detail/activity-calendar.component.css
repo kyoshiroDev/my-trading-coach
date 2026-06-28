@@ -24,3 +24,14 @@
 .cal-stat { text-align: center; }
 .cal-stat .v { font-family: var(--mono); font-size: 17px; color: var(--text); font-weight: 600; line-height: 1; }
 .cal-stat .l { font-family: var(--mono); font-size: 8.5px; color: var(--text3); text-transform: uppercase; letter-spacing: .1em; margin-top: 5px; }
+
+/* ── Version compacte (fiche admin densifiée) ── */
+:host(.compact) .cal-nav { gap: 10px; margin-bottom: 10px; }
+:host(.compact) .cal-arrow { width: 20px; height: 20px; font-size: 12px; border-radius: 5px; }
+:host(.compact) .cal-month-label { font-size: 11px; min-width: 96px; }
+:host(.compact) .cal-single { gap: 3px; }
+:host(.compact) .cal-hd { font-size: 8px; padding-bottom: 0; }
+:host(.compact) .cal-d { border-radius: 3px; font-size: 8.5px; }
+:host(.compact) .cal-stats { gap: 6px; padding-top: 10px; margin-top: 10px; }
+:host(.compact) .cal-stat .v { font-size: 14px; }
+:host(.compact) .cal-stat .l { font-size: 8px; margin-top: 3px; }

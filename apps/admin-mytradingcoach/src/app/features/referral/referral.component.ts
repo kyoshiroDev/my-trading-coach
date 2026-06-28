@@ -1,0 +1,144 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  signal,
+} from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AdminApi, ReferralAdminOverview } from '../../core/api/admin.api';
+
+@Component({
+  selector: 'mtc-admin-referral',
+  standalone: true,
+  imports: [DatePipe],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './referral.component.css',
+  template: `
+    <div class="screen">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Parrainage</h1>
+          <div class="page-meta">Suivi du programme de parrainage grand public</div>
+        </div>
+      </div>
+
+      @if (isLoading()) {
+        <div class="card"><div class="empty">Chargement…</div></div>
+      } @else if (error()) {
+        <div class="card"><div class="empty">⚠ Impossible de charger le suivi du parrainage</div></div>
+      } @else if (data(); as d) {
+
+        <!-- KPI -->
+        <div class="kpi-strip">
+          <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Parrains actifs</div><div class="kpi-value teal">{{ d.parrainsActifs }}</div><div class="kpi-sub">au moins 1 filleul</div></div>
+          <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Filleuls invités</div><div class="kpi-value blue">{{ d.invitesTotal }}</div><div class="kpi-sub">inscrits via un lien</div></div>
+          <div class="kpi"><div class="kpi-top green"></div><div class="kpi-label">Filleuls payants</div><div class="kpi-value green">{{ d.payants }}</div><div class="kpi-sub">abonnement actif</div></div>
+          <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Taux conversion</div><div class="kpi-value purple">{{ d.tauxConversion }}%</div><div class="kpi-sub">payants / invités</div></div>
+          <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Mois accordés</div><div class="kpi-value teal">{{ d.moisAccordes }}</div><div class="kpi-sub">total distribué</div></div>
+          <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Mois à appliquer</div><div class="kpi-value amber">{{ d.moisAAppliquer }}</div><div class="kpi-sub">crédits non consommés</div></div>
+        </div>
+
+        <div class="ref-cols">
+        <!-- Parrains -->
+        <div class="card">
+          <div class="card-head"><span class="card-label">Parrains</span><span class="card-action ud-static">classés par filleuls payants</span></div>
+          @if (d.parrains.length === 0) {
+            <div class="empty">Aucun parrain actif pour le moment.</div>
+          } @else {
+            <table class="tbl">
+              <thead><tr>
+                <th>Parrain</th><th>Code</th><th class="num">Invités</th><th class="num">Payants</th>
+                <th class="num">Conv.</th><th class="num">Mois gagnés</th><th class="num">Mois appliqués</th><th>Statut</th>
+              </tr></thead>
+              <tbody>
+                @for (p of d.parrains; track p.referralCode) {
+                  <tr>
+                    <td>
+                      <div class="p-name">
+                        <div class="p-av">{{ initials(p.name, p.email) }}</div>
+                        <div class="p-main"><b>{{ p.name ?? p.email }}</b><span>{{ p.email }}</span></div>
+                      </div>
+                    </td>
+                    <td><span class="code-pill">{{ p.referralCode }}</span></td>
+                    <td class="num">{{ p.invited }}</td>
+                    <td class="num">{{ p.payants }}</td>
+                    <td class="num">{{ p.conversion }}%</td>
+                    <td class="num cell-green">{{ p.moisGagnes }}</td>
+                    <td class="num">{{ p.moisAppliques }}</td>
+                    <td>
+                      <span class="pill" [class.pill-active]="p.payants > 0" [class.pill-pending]="p.payants === 0">
+                        {{ p.payants > 0 ? 'Actif' : 'En attente' }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
+
+        <!-- Filleuls récents -->
+        <div class="card">
+          <div class="card-head"><span class="card-label">Filleuls récents</span><span class="card-action ud-static">{{ d.filleulsRecents.length }} derniers</span></div>
+          @if (d.filleulsRecents.length === 0) {
+            <div class="empty">Aucun filleul récent.</div>
+          } @else {
+            <table class="tbl">
+              <thead><tr>
+                <th>Filleul</th><th>Parrain</th><th>Statut</th><th class="num">Inscrit</th><th class="num">Récompense parrain</th>
+              </tr></thead>
+              <tbody>
+                @for (f of d.filleulsRecents; track f.pseudo + f.date) {
+                  <tr>
+                    <td><b class="td-strong">{{ f.pseudo }}</b></td>
+                    <td>@if (f.parrainCode) { <span class="code-pill">{{ f.parrainCode }}</span> } @else { — }</td>
+                    <td>
+                      <span class="pill"
+                        [class.pill-active]="f.status === 'payant'"
+                        [class.pill-trial]="f.status === 'essai'"
+                        [class.pill-pending]="f.status === 'inscrit'">
+                        {{ statusLabel(f.status) }}
+                      </span>
+                    </td>
+                    <td class="num td-mono">{{ f.date | date:'dd/MM' }}</td>
+                    <td class="num" [class.cell-green]="f.status === 'payant'">
+                      {{ f.status === 'payant' ? '+1 mois' : (f.status === 'essai' ? 'en attente' : '—') }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
+        </div>
+
+      }
+    </div>
+  `,
+})
+export class ReferralComponent {
+  private readonly api = inject(AdminApi);
+  private readonly destroyRef = inject(DestroyRef);
+
+  protected readonly data = signal<ReferralAdminOverview | null>(null);
+  protected readonly isLoading = signal(true);
+  protected readonly error = signal(false);
+
+  constructor() {
+    this.api.referralOverview()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => { this.data.set(res.data); this.isLoading.set(false); },
+        error: () => { this.error.set(true); this.isLoading.set(false); },
+      });
+  }
+
+  protected initials(name: string | null, email: string): string {
+    return (name ?? email).slice(0, 2).toUpperCase();
+  }
+  protected statusLabel(s: 'payant' | 'essai' | 'inscrit'): string {
+    return s === 'payant' ? 'Payant' : s === 'essai' ? 'Essai' : 'Inscrit';
+  }
+}

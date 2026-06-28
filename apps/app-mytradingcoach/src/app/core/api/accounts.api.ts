@@ -13,6 +13,9 @@ export interface AccountRuleMetrics {
   realizedPnl: number;
   currentBalance: number;
   tradesCount: number;
+  winRate: number | null;
+  bestDay: number | null;
+  worstDay: number | null;
   objective: { current: number; target: number; pct: number } | null;
   drawdown: {
     type: DrawdownType;

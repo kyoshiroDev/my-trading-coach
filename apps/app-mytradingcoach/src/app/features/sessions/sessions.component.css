@@ -3,6 +3,7 @@
 
 /* ─── Header ─── */
 .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 14px; }
+.sessions-accounts { margin-bottom: 18px; }
 .page-title { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
 .page-sub { font-size: 12px; color: var(--text-3); font-family: var(--font-mono); }
 

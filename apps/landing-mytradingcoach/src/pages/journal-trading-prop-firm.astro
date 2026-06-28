@@ -1,0 +1,174 @@
+---
+import Base from '../layouts/Base.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import { FEATURES } from '../config';
+
+// Gating publication : page en ligne seulement quand le multi-comptes est en prod.
+if (!FEATURES.multiAccounts) return Astro.redirect('/');
+
+const faq = [
+  {
+    q: 'Comment suivre plusieurs comptes prop firm au même endroit ?',
+    a: "Tu crées un compte par éval ou funded (Apex, Lucide, Topstep, FTMO...) plus tes comptes perso. Chaque compte garde son capital de départ, ses trades et ses stats. Le sélecteur en haut de l'app filtre le journal, les analytics et les sessions sur le compte choisi, ou affiche l'ensemble.",
+  },
+  {
+    q: "Le suivi du drawdown et de l'objectif est-il fiable ?",
+    a: "C'est une estimation calculée depuis les trades que tu enregistres dans MyTradingCoach. Ce n'est pas le calcul officiel de ta firme, qui tient compte des positions ouvertes, du fuseau et du trailing intraday. Garde toujours un œil sur la plateforme de ta prop firm pour les chiffres officiels.",
+  },
+  {
+    q: "L'analyse IA est-elle séparée par compte ?",
+    a: "Oui. Le Weekly Debrief sort un onglet par compte avec ses forces, ses points faibles et ses objectifs propres, plus une vue d'ensemble. Tu ne reçois pas une moyenne de tout mélangé : chaque compte a son analyse.",
+  },
+  {
+    q: 'Peut-on importer les trades exportés des plateformes prop firm ?',
+    a: "Oui, via l'import CSV universel. Tu exportes ton historique depuis ta plateforme et tu l'importes dans le compte correspondant. Ton historique importé ne compte pas dans la limite mensuelle de trades.",
+  },
+  {
+    q: 'Combien de comptes puis-je suivre ?',
+    a: 'Le plan Gratuit gère 1 compte, Starter jusqu\'à 3 comptes actifs en parallèle, et Premium des comptes illimités avec les règles prop firm (drawdown, objectif) par compte.',
+  },
+];
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faq.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+};
+---
+
+<Base
+  title="Journal de trading prop firm multi-comptes | MyTradingCoach"
+  description="Le journal de trading pensé pour les traders prop firm : suis tous tes comptes Apex, Lucide, Topstep et perso, avec analyse IA par compte et suivi estimé du drawdown et de l'objectif."
+  canonical="https://www.mytradingcoach.app/journal-trading-prop-firm"
+  ogUrl="https://www.mytradingcoach.app/journal-trading-prop-firm"
+  schema={faqSchema}
+>
+  <Nav />
+
+  <main class="pf-page">
+    <a class="pf-back" href="/">← Retour à l'accueil</a>
+
+    <header class="pf-hero">
+      <span class="sec-label">Trading prop firm</span>
+      <h1>Le journal de trading <em>prop firm et multi-comptes</em></h1>
+      <p class="pf-lead">
+        Évals, comptes funded, comptes perso : suis-les tous au même endroit, sans les
+        mélanger. Chaque compte garde ses stats, son suivi de drawdown estimé et sa
+        propre analyse IA. Pensé pour les traders Apex, Lucide, Topstep, FTMO et les
+        autres firmes.
+      </p>
+      <div class="pf-cta-row">
+        <a class="pf-btn" href="https://app.mytradingcoach.app/register">Commencer gratuitement</a>
+        <a class="pf-btn ghost" href="/#pricing">Voir les tarifs</a>
+      </div>
+    </header>
+
+    <section class="pf-sec">
+      <h2>Un compte par éval, sans rien mélanger</h2>
+      <p>
+        Tu passes une éval Apex, tu gères un funded Lucide et tu trades aussi un compte
+        perso ? Crée un compte par environnement. Chacun a son capital de départ, ses
+        trades, son win rate et son P&amp;L. Fini l'éval et le funded confondus dans la
+        même moyenne. Le sélecteur de compte filtre tout le journal, les analytics et
+        tes sessions sur le compte que tu regardes, ou te montre la vue d'ensemble.
+      </p>
+    </section>
+
+    <section class="pf-sec">
+      <h2>Drawdown et objectif suivis compte par compte</h2>
+      <p>
+        Pour chaque compte prop firm, tu vois ta marge avant le drawdown et ta
+        progression vers l'objectif. De quoi savoir où tu en es sans ouvrir trois
+        onglets.
+      </p>
+      <p class="pf-note">
+        Important : ce suivi est une estimation calculée depuis les trades que tu
+        enregistres. Ce n'est pas le calcul officiel de ta firme (positions ouvertes,
+        fuseau, trailing intraday). Réfère-toi toujours à ta plateforme pour les chiffres
+        qui valident ou invalident ton compte.
+      </p>
+    </section>
+
+    <section class="pf-sec">
+      <h2>Une analyse IA dédiée à chaque compte</h2>
+      <p>
+        Le Weekly Debrief te génère un onglet par compte : tes forces, tes points
+        faibles et tes objectifs pour la semaine, propres à ce compte. Plus une vue
+        d'ensemble qui compare tes comptes entre eux. Tu sais quoi corriger sur ton éval
+        sans que ton compte perso fausse la lecture.
+      </p>
+    </section>
+
+    <section class="pf-sec">
+      <h2>Import CSV des plateformes prop firm</h2>
+      <p>
+        Tu exportes l'historique de ta plateforme et tu l'importes dans le bon compte
+        avec l'import CSV universel. Ton historique importé ne compte pas dans ta limite
+        mensuelle de trades, tu pars donc avec tout ton passif déjà en place.
+      </p>
+    </section>
+
+    <section class="pf-sec">
+      <h2>Questions fréquentes sur le trading prop firm</h2>
+      <div class="pf-faq">
+        {faq.map((f) => (
+          <details class="pf-faq-item">
+            <summary>{f.q}</summary>
+            <p>{f.a}</p>
+          </details>
+        ))}
+      </div>
+    </section>
+
+    <section class="pf-final">
+      <h2>Prêt à suivre tes comptes proprement ?</h2>
+      <p>Démarre gratuitement, sans carte bancaire. Passe à Starter ou Premium quand tu suis plusieurs comptes.</p>
+      <div class="pf-cta-row">
+        <a class="pf-btn" href="https://app.mytradingcoach.app/register">Créer mon compte</a>
+        <a class="pf-btn ghost" href="/#pricing">Comparer les plans</a>
+      </div>
+      <p class="pf-amf">
+        MyTradingCoach est un outil de journal et d'analyse comportementale. Aucun conseil
+        en investissement, aucune promesse de gain. Le trading comporte un risque de perte.
+      </p>
+    </section>
+  </main>
+
+  <Footer />
+</Base>
+
+<style>
+  .pf-page { max-width: 820px; margin: 0 auto; padding: 0 5% 40px; }
+  .pf-back { display: inline-block; font-family: var(--mono); font-size: 13px; color: var(--txt3); text-decoration: none; padding: 28px 0 0; }
+  .pf-back:hover { color: var(--txt2); }
+
+  .pf-hero { padding: 40px 0 36px; text-align: center; }
+  .pf-page h1 { font-family: var(--disp); font-size: clamp(30px, 5vw, 44px); font-weight: 700; letter-spacing: -.02em; line-height: 1.12; margin: 14px auto 0; max-width: 700px; color: var(--txt); }
+  .pf-page h1 em { font-style: normal; color: var(--blue2); }
+  .pf-lead { color: var(--txt2); font-size: 17px; line-height: 1.6; max-width: 600px; margin: 18px auto 0; }
+  .pf-cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 26px; }
+  .pf-btn { font-family: var(--disp); font-weight: 600; font-size: 14px; padding: 12px 22px; border-radius: 10px; background: var(--blue); color: #fff; text-decoration: none; }
+  .pf-btn.ghost { background: transparent; border: 1px solid var(--b2); color: var(--txt); }
+
+  .pf-sec { padding: 30px 0; border-top: 1px solid var(--b); }
+  .pf-sec h2 { font-family: var(--disp); font-size: 22px; font-weight: 700; margin-bottom: 12px; color: var(--txt); }
+  .pf-sec p { color: var(--txt2); font-size: 15.5px; line-height: 1.7; }
+  .pf-note { margin-top: 12px; font-size: 13px; color: var(--txt3); font-family: var(--mono); line-height: 1.6; background: rgba(245,158,11,.06); border: 1px solid rgba(245,158,11,.18); border-radius: 10px; padding: 12px 14px; }
+
+  .pf-faq { display: flex; flex-direction: column; gap: 10px; }
+  .pf-faq-item { background: var(--card); border: 1px solid var(--b); border-radius: 12px; padding: 4px 16px; }
+  .pf-faq-item summary { cursor: pointer; font-weight: 600; font-size: 15px; color: var(--txt); padding: 14px 0; list-style: none; }
+  .pf-faq-item summary::-webkit-details-marker { display: none; }
+  .pf-faq-item[open] summary { color: var(--blue2); }
+  .pf-faq-item p { color: var(--txt2); font-size: 14.5px; line-height: 1.65; padding: 0 0 14px; }
+
+  .pf-final { text-align: center; padding: 40px 0 0; border-top: 1px solid var(--b); margin-top: 10px; }
+  .pf-final h2 { font-family: var(--disp); font-size: 24px; font-weight: 700; color: var(--txt); }
+  .pf-final p { color: var(--txt2); font-size: 15px; margin-top: 10px; }
+  .pf-amf { font-family: var(--mono); font-size: 11.5px; color: var(--txt3); margin-top: 24px; line-height: 1.6; max-width: 600px; margin-left: auto; margin-right: auto; }
+</style>
