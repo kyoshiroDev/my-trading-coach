@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, finalize } from 'rxjs/operators';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
@@ -24,8 +24,10 @@ import type {
   UpdateMeDto,
   UpdatePreferencesDto,
 } from '../../core/api/users.api';
-import { TRADING_STYLES, STRATEGY_TAGS, SESSIONS } from '../onboarding/onboarding.constants';
+import { TRADING_STYLES, SESSIONS } from '../onboarding/onboarding.constants';
 import { TradesApi, InstrumentSearchResult, UserAssetItem } from '../../core/api/trades.api';
+
+type ProfileTab = 'trader' | 'params';
 
 @Component({
   selector: 'mtc-settings',
@@ -42,11 +44,15 @@ export class SettingsComponent implements OnInit {
   private readonly usersApi = inject(UsersApi);
   private readonly tradesApi = inject(TradesApi);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly checkoutParam = toSignal(
     this.route.queryParamMap.pipe(map((p) => p.get('checkout'))),
   );
+
+  // Onglets Profil trader / Paramètres (deep-link ?tab=params)
+  protected readonly activeProfileTab = signal<ProfileTab>('trader');
 
   // Compte — nom
   protected readonly editingName = signal(false);
@@ -61,11 +67,6 @@ export class SettingsComponent implements OnInit {
   // Compte — mot de passe
   protected readonly passwordResetSent = signal(false);
 
-  // Compte — capital de départ
-  protected readonly editingCapital = signal(false);
-  protected readonly capitalInput = signal('');
-  protected readonly isSavingCapital = signal(false);
-
   // Préférences
   protected readonly prefCurrency = signal<'USD' | 'EUR' | 'GBP'>('USD');
   protected readonly prefNotifications = signal(true);
@@ -74,32 +75,32 @@ export class SettingsComponent implements OnInit {
   protected readonly isSavingPrefs = signal(false);
   protected readonly prefSaved = signal(false);
 
-  // Stratégie de trading
+  // Stratégie de trading (résumé en lecture + modale d'édition)
   protected readonly TRADING_STYLES   = TRADING_STYLES;
-  protected readonly STRATEGY_TAGS    = STRATEGY_TAGS;
   protected readonly SESSIONS         = SESSIONS;
   protected readonly tradingStyle     = signal<string | null>(null);
-  protected readonly tradingStrategy  = signal<string[]>([]);
   protected readonly tradingSessions  = signal<string[]>([]);
   protected readonly tradesPerDayMin  = signal(1);
   protected readonly tradesPerDayMax  = signal(10);
   protected readonly strategyDesc     = signal('');
   protected readonly isSavingStrategy = signal(false);
-  protected readonly strategySaved    = signal(false);
-  protected readonly editingStrategy  = signal(false);
+
+  // Modale stratégie — brouillon (édité dans la modale, annulé sans persistance)
+  protected readonly showStrategyModal = signal(false);
+  protected readonly draftCapital  = signal('');
+  protected readonly draftStyle    = signal<string | null>(null);
+  protected readonly draftSessions = signal<string[]>([]);
+  protected readonly draftMin      = signal(1);
+  protected readonly draftMax      = signal(10);
+  protected readonly draftDesc     = signal('');
 
   protected readonly hasStrategyProfile = computed(() =>
-    !!(
-      this.tradingStyle() ||
-      this.tradingStrategy().length > 0 ||
-      this.strategyDesc().trim()
-    ),
+    !!(this.tradingStyle() || this.strategyDesc().trim()),
   );
 
-  // Actifs tradés
+  // Actifs tradés — auto-save (chaque mutation persiste immédiatement)
   protected readonly tradingAssets = signal<UserAssetItem[]>([]);
-  protected readonly isSavingAssets = signal(false);
-  protected readonly assetsSaved = signal(false);
+  protected readonly assetsSaving = signal(false);
   protected readonly assetSearchQuery = signal('');
   protected readonly assetSearchResults = signal<InstrumentSearchResult[]>([]);
   protected readonly assetSearchLoading = signal(false);
@@ -134,26 +135,37 @@ export class SettingsComponent implements OnInit {
     if (this.route.snapshot.queryParamMap.get('checkout') === 'success') {
       this.userStore.refreshUser();
     }
+    // Deep-link onglet : ?tab=params ouvre directement l'onglet Paramètres.
+    if (this.route.snapshot.queryParamMap.get('tab') === 'params') {
+      this.activeProfileTab.set('params');
+    }
+
     // Init stratégie une seule fois au chargement
     const user = this.userStore.user();
     if (user) {
       this.tradingStyle.set(user.tradingStyle ?? null);
-      this.tradingStrategy.set(user.tradingStrategy ?? []);
       this.tradingSessions.set(user.tradingSessions ?? []);
       this.tradesPerDayMin.set(user.tradesPerDayMin ?? 1);
       this.tradesPerDayMax.set(user.tradesPerDayMax ?? 10);
       this.strategyDesc.set(user.strategyDescription ?? '');
-      // Vue résumé si profil déjà renseigné, formulaire sinon
-      const hasProfil = !!(
-        user.tradingStyle ||
-        (user.tradingStrategy?.length ?? 0) > 0 ||
-        user.strategyDescription
-      );
-      this.editingStrategy.set(!hasProfil);
+      // Premier passage (profil stratégie vide) → ouvrir directement la modale d'édition.
+      if (!this.hasStrategyProfile()) this.openStrategyModal();
     }
 
     this.tradesApi.getUserAssets().subscribe({
       next: (res) => this.tradingAssets.set(res.data ?? []),
+    });
+  }
+
+  // ── Onglets ───────────────────────────────────────────────────────────────
+  protected setProfileTab(tab: ProfileTab): void {
+    this.activeProfileTab.set(tab);
+    // Met à jour l'URL (merge → conserve ?checkout=…), sans empiler d'historique.
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: tab === 'params' ? 'params' : null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
     });
   }
 
@@ -241,38 +253,6 @@ export class SettingsComponent implements OnInit {
       });
   }
 
-  protected startEditCapital() {
-    const current = this.userStore.startingCapital();
-    this.capitalInput.set(current > 0 ? String(current) : '');
-    this.editingCapital.set(true);
-  }
-
-  protected filterCapital(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    input.value = input.value.replace(/[^\d.,]/g, '');
-    this.capitalInput.set(input.value);
-  }
-
-  protected saveCapital() {
-    const raw = this.capitalInput().replace(',', '.');
-    const parsed = parseFloat(raw);
-    const capital = isNaN(parsed) || parsed < 0 ? 0 : parsed;
-    this.isSavingCapital.set(true);
-    this.usersApi
-      .updatePreferences({ startingCapital: capital })
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => {
-          this.auth.setCurrentUser(res.data);
-          this.isSavingCapital.set(false);
-          this.editingCapital.set(false);
-        },
-        error: () => {
-          this.isSavingCapital.set(false);
-        },
-      });
-  }
-
   protected savePreferences() {
     this.isSavingPrefs.set(true);
     const dto: UpdatePreferencesDto = {
@@ -297,51 +277,70 @@ export class SettingsComponent implements OnInit {
       });
   }
 
-  protected toggleTag(tag: string): void {
-    this.tradingStrategy.update(tags =>
-      tags.includes(tag) ? tags.filter(t => t !== tag) : [...tags, tag],
+  // ── Stratégie : modale ──────────────────────────────────────────────────────
+  protected openStrategyModal(): void {
+    const cap = this.userStore.startingCapital();
+    this.draftCapital.set(cap > 0 ? String(cap) : '');
+    this.draftStyle.set(this.tradingStyle());
+    this.draftSessions.set([...this.tradingSessions()]);
+    this.draftMin.set(this.tradesPerDayMin());
+    this.draftMax.set(this.tradesPerDayMax());
+    this.draftDesc.set(this.strategyDesc());
+    this.showStrategyModal.set(true);
+  }
+
+  protected closeStrategyModal(): void {
+    this.showStrategyModal.set(false);
+  }
+
+  protected toggleDraftSession(session: string): void {
+    this.draftSessions.update((sessions) =>
+      sessions.includes(session) ? sessions.filter((s) => s !== session) : [...sessions, session],
     );
   }
 
-  protected toggleSession(session: string): void {
-    this.tradingSessions.update(sessions =>
-      sessions.includes(session) ? sessions.filter(s => s !== session) : [...sessions, session],
-    );
+  protected filterDraftCapital(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    input.value = input.value.replace(/[^\d.,]/g, '');
+    this.draftCapital.set(input.value);
   }
 
-  protected onStrategyDesc(e: Event): void {
-    this.strategyDesc.set((e.target as HTMLTextAreaElement).value.slice(0, 200));
+  protected onDraftDesc(e: Event): void {
+    this.draftDesc.set((e.target as HTMLTextAreaElement).value.slice(0, 200));
   }
 
   protected saveStrategy(): void {
     this.isSavingStrategy.set(true);
+    const raw = this.draftCapital().replace(',', '.');
+    const parsed = parseFloat(raw);
+    const capital = isNaN(parsed) || parsed < 0 ? 0 : parsed;
     this.usersApi
       .updatePreferences({
-        tradingStyle:        this.tradingStyle() ?? undefined,
-        tradingStrategy:     this.tradingStrategy(),
-        tradingSessions:     this.tradingSessions(),
-        tradesPerDayMin:     this.tradesPerDayMin(),
-        tradesPerDayMax:     this.tradesPerDayMax(),
-        strategyDescription: this.strategyDesc() || undefined,
+        startingCapital:     capital,
+        tradingStyle:        this.draftStyle() ?? undefined,
+        tradingSessions:     this.draftSessions(),
+        tradesPerDayMin:     this.draftMin(),
+        tradesPerDayMax:     this.draftMax(),
+        strategyDescription: this.draftDesc().trim() || undefined,
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
-          // Mettre à jour les signaux stratégie depuis la réponse avant setCurrentUser
+          // Rafraîchir les signaux du résumé depuis la réponse, puis le store.
           this.tradingStyle.set(res.data.tradingStyle ?? null);
-          this.tradingStrategy.set(res.data.tradingStrategy ?? []);
           this.tradingSessions.set(res.data.tradingSessions ?? []);
           this.tradesPerDayMin.set(res.data.tradesPerDayMin ?? 1);
           this.tradesPerDayMax.set(res.data.tradesPerDayMax ?? 10);
           this.strategyDesc.set(res.data.strategyDescription ?? '');
           this.auth.setCurrentUser(res.data);
           this.isSavingStrategy.set(false);
-          this.editingStrategy.set(false);
+          this.showStrategyModal.set(false);
         },
         error: () => this.isSavingStrategy.set(false),
       });
   }
 
+  // ── Actifs : recherche + auto-save ─────────────────────────────────────────
   protected onAssetSearch(query: string): void {
     this.assetSearchQuery.set(query.toUpperCase());
     clearTimeout(this.searchDebounce);
@@ -390,49 +389,59 @@ export class SettingsComponent implements OnInit {
   }
 
   protected addAsset(result: InstrumentSearchResult): void {
-    const normalized: InstrumentSearchResult = { ...result, symbol: result.symbol.toUpperCase().trim() };
-    if (this.tradingAssets().some((a) => a.symbol === normalized.symbol)) return;
-    const isFirst = this.tradingAssets().length === 0;
+    if (this.assetsSaving()) return;
+    const symbol = result.symbol.toUpperCase().trim();
+    if (this.tradingAssets().some((a) => a.symbol === symbol)) return;
+    const prev = this.tradingAssets();
+    const isFirst = prev.length === 0;
     const newAsset: UserAssetItem = {
-      symbol: normalized.symbol,
-      label: normalized.label,
-      category: normalized.category,
+      symbol,
+      label: result.label,
+      category: result.category,
       isFavorite: isFirst,
       tradeCount: 0,
       lastEntry: null,
       lastQty: null,
     };
-    this.tradingAssets.update((assets) => [...assets, newAsset]);
-    if (isFirst) {
-      this.tradesApi.setFavoriteAsset(normalized.symbol).subscribe();
-    }
+    this.tradingAssets.set([...prev, newAsset]);
     this.assetSearchQuery.set('');
     this.assetSearchResults.set([]);
+    this.persistAssets(prev);
   }
 
   protected removeAsset(symbol: string): void {
-    this.tradingAssets.update((assets) => assets.filter((a) => a.symbol !== symbol));
+    if (this.assetsSaving()) return;
+    const prev = this.tradingAssets();
+    const wasFav = prev.find((a) => a.symbol === symbol)?.isFavorite ?? false;
+    let next = prev.filter((a) => a.symbol !== symbol);
+    // Si on retire le favori, promouvoir le premier restant (un seul favori).
+    if (wasFav && next.length) {
+      next = next.map((a, i) => ({ ...a, isFavorite: i === 0 }));
+    }
+    this.tradingAssets.set(next);
+    this.persistAssets(prev);
   }
 
   protected setFavoriteAssetSetting(symbol: string): void {
-    this.tradingAssets.update((assets) =>
-      assets.map((a) => ({ ...a, isFavorite: a.symbol === symbol })),
-    );
+    if (this.assetsSaving()) return;
+    const prev = this.tradingAssets();
+    this.tradingAssets.set(prev.map((a) => ({ ...a, isFavorite: a.symbol === symbol })));
+    this.persistAssets(prev);
   }
 
-  protected saveAssets(): void {
-    this.isSavingAssets.set(true);
-    this.assetsSaved.set(false);
+  /** Persiste la liste d'actifs + favori. Rollback du signal si l'appel échoue. */
+  private persistAssets(prev: UserAssetItem[]): void {
+    this.assetsSaving.set(true);
     const symbols = this.tradingAssets().map((a) => a.symbol);
     const fav = this.tradingAssets().find((a) => a.isFavorite)?.symbol ?? null;
     this.tradesApi
       .saveUserAssets(symbols, fav)
-      .pipe(finalize(() => this.isSavingAssets.set(false)))
+      .pipe(
+        finalize(() => this.assetsSaving.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe({
-        next: () => {
-          this.assetsSaved.set(true);
-          setTimeout(() => this.assetsSaved.set(false), 2500);
-        },
+        error: () => this.tradingAssets.set(prev), // rollback optimiste
       });
   }
 
@@ -499,7 +508,7 @@ export class SettingsComponent implements OnInit {
 
   protected sessionLabel(s: string): string {
     const map: Record<string, string> = {
-      LONDON: 'London', NEW_YORK: 'New York', ASIAN: 'Asian',
+      LONDON: 'Londres', NEW_YORK: 'New York', ASIAN: 'Asie',
     };
     return map[s] ?? s;
   }
