@@ -23,7 +23,8 @@ export interface Trade {
   quantity: number | null;
   capitalEngaged: number | null;
   emotion: string;
-  setup: string;
+  setupId: string;
+  setup: { id: string; title: string; color: string };
   session: string;
   timeframe: string;
   notes: string | null;

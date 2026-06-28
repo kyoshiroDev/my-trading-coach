@@ -324,14 +324,14 @@
           <div class="form-group">
             <span class="section-label">Setup</span>
             <div class="chips-group">
-              @for (s of SETUPS; track s) {
+              @for (s of setupOptions(); track s.id) {
                 <button
                   type="button"
                   class="chip"
-                  [class.active]="form().setup === s"
-                  (click)="form.update((f) => ({ ...f, setup: $any(s) }))"
+                  [class.active]="form().setupId === s.id"
+                  (click)="form.update((f) => ({ ...f, setupId: s.id }))"
                 >
-                  {{ s }}
+                  <span class="chip-dot" [style.background]="s.color"></span>{{ s.title }}
                 </button>
               }
             </div>

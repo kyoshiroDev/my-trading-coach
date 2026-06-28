@@ -3,10 +3,12 @@ import {
   Component,
   DestroyRef,
   computed,
+  effect,
   inject,
   input,
   output,
   signal,
+  untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
@@ -21,6 +23,7 @@ import { environment } from '../../../environments/environment';
 import { NumericInputDirective } from '../../core/directives/numeric-input.directive';
 import { parseDecimal } from '../../core/utils/parse-decimal';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
+import { SetupsStore } from '../../core/stores/setups.store';
 
 interface ImportResult {
   created: number;
@@ -28,14 +31,6 @@ interface ImportResult {
   failed: number;
   limitBlocked: number;
   total: number;
-}
-
-interface SetupItem {
-  id: string;
-  title: string;
-  color: string;
-  archived: boolean;
-  sortOrder: number;
 }
 
 // Émotions (mêmes valeurs que le form de trade) appliquées à tout le lot.
@@ -287,6 +282,7 @@ export class CsvImportComponent {
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly accountStore = inject(SelectedAccountStore);
+  private readonly setupsStore = inject(SetupsStore);
 
   protected readonly XIcon = X;
   protected readonly UploadIcon = Upload;
@@ -307,7 +303,8 @@ export class CsvImportComponent {
   protected readonly accountId = signal<string>('');
   protected readonly emotion = signal<string>('NEUTRAL');
   protected readonly setupId = signal<string>('');
-  protected readonly setups = signal<SetupItem[]>([]);
+  // Setups actifs du user (store partagé — liste dynamique).
+  protected readonly setups = this.setupsStore.active;
 
   /** Couleur du setup sélectionné (pastille à côté du select). */
   protected readonly selectedSetupColor = computed(
@@ -324,18 +321,12 @@ export class CsvImportComponent {
 
   constructor() {
     if (!this.accountStore.loaded()) this.accountStore.load();
-    // Setups actifs du user (GET /setups — endpoint existant depuis PROMPT-140).
-    this.http
-      .get<{ data: SetupItem[] }>(`${environment.apiUrl}/setups`)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => {
-          const active = (res.data ?? []).filter((s) => !s.archived);
-          this.setups.set(active);
-          if (active.length && !this.setupId()) this.setupId.set(active[0].id);
-        },
-        error: () => { /* setups indispo → champ masqué, défaut backend appliqué */ },
-      });
+    this.setupsStore.load();
+    // Défaut = 1er setup actif, dès que la liste est disponible.
+    effect(() => {
+      const first = this.setupsStore.active()[0];
+      if (first && untracked(() => !this.setupId())) this.setupId.set(first.id);
+    });
   }
 
   protected emotionEmoji(e: string): string {

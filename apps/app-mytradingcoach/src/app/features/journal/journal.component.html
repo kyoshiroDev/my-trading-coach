@@ -16,9 +16,11 @@
       <button class="filter-chip" [class.active]="filterSide() === 'ALL'" (click)="filterSide.set('ALL')">Tous</button>
       <button class="filter-chip" [class.active]="filterSide() === 'LONG'" (click)="filterSide.set('LONG')">LONG</button>
       <button class="filter-chip" [class.active]="filterSide() === 'SHORT'" (click)="filterSide.set('SHORT')">SHORT</button>
-      @for (setup of SETUPS; track setup) {
-        <button class="filter-chip" [class.active]="filterSetup() === setup"
-          (click)="toggleSetupFilter(setup)">{{ setup }}</button>
+      @for (s of setupsStore.active(); track s.id) {
+        <button class="filter-chip" [class.active]="filterSetup() === s.id"
+          (click)="toggleSetupFilter(s.id)">
+          <span class="filter-chip-dot" [style.background]="s.color"></span>{{ s.title }}
+        </button>
       }
     </div>
 
@@ -184,7 +186,7 @@
                       <span class="emotion-text">{{ trade.emotion }}</span>
                     </span>
                   </span>
-                  <span class="td-setup"><span class="setup-badge">{{ trade.setup }}</span></span>
+                  <span class="td-setup"><span class="setup-badge"><span class="setup-badge-dot" [style.background]="trade.setup.color"></span>{{ trade.setup.title }}</span></span>
                   <span class="td-actions">
                     <button class="btn-edit" (click)="openEditModal(trade)" title="Modifier">
                       <lucide-icon [img]="PencilIcon" [size]="12" />

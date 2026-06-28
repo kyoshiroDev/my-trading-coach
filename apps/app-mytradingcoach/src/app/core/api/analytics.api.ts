@@ -15,8 +15,10 @@ export interface AnalyticsSummary {
 }
 
 export interface SetupStat {
-  setup: string;
-  winRate: number;
+  setupId: string;
+  title: string;
+  color: string;
+  winRate: number | null;
   avgRR: number;
   count: number;
   pnl: number;

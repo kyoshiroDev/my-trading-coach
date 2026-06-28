@@ -10,6 +10,7 @@ import { LucideAngularModule, X, Pencil, Upload, ChevronDown, ChevronRight, Cale
 import { TradesStore, Trade } from '../../core/stores/trades.store';
 import { CreateTradeDto, TradesApi } from '../../core/api/trades.api';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
+import { SetupsStore } from '../../core/stores/setups.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { TradeFormComponent } from './trade-form.component';
 import { CsvImportComponent } from './csv-import.component';
@@ -18,8 +19,6 @@ import { environment } from '../../../environments/environment';
 
 type FilterSide = 'ALL' | 'LONG' | 'SHORT';
 type DatePreset = 'today' | 'week' | 'month' | 'custom' | 'all';
-
-const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS'];
 
 interface DayGroup {
   key: string;
@@ -50,8 +49,10 @@ export class JournalComponent {
   private readonly http          = inject(HttpClient);
   private readonly destroyRef    = inject(DestroyRef);
   private readonly selectedAccount = inject(SelectedAccountStore);
+  protected readonly setupsStore = inject(SetupsStore);
 
   constructor() {
+    this.setupsStore.load();
     // Recharge le journal au changement de compte (contexte global). 'all' → agrégé.
     effect(() => {
       const accountId = this.selectedAccount.accountParam(); // lit selectedAccountId (réactif)
@@ -59,7 +60,6 @@ export class JournalComponent {
     });
   }
 
-  protected readonly SETUPS = SETUPS;
   protected readonly XIcon            = X;
   protected readonly PencilIcon       = Pencil;
   protected readonly UploadIcon       = Upload;
@@ -105,7 +105,7 @@ export class JournalComponent {
     const to     = this.dateTo();
 
     if (side !== 'ALL') trades = trades.filter(t => t.side === side);
-    if (setup)          trades = trades.filter(t => t.setup === setup);
+    if (setup)          trades = trades.filter(t => t.setupId === setup);
 
     const now   = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
