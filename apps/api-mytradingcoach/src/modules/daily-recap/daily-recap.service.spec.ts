@@ -14,7 +14,7 @@ const makeTrade = (overrides: Record<string, unknown> = {}) => ({
   side: 'LONG',
   pnl: 100,
   emotion: 'CONFIDENT',
-  setup: 'BREAKOUT',
+  setup: { title: 'BREAKOUT' },
   session: 'LONDON',
   timeframe: '5m',
   entry: 19000,
@@ -263,9 +263,9 @@ describe('DailyRecapService', () => {
 
     it('passe les trades enrichis (setup, session, timeframe) à generateDailyOneLiner', async () => {
       const todayTrades = [
-        makeTrade({ id: 't1', pnl: 100, setup: 'BREAKOUT', session: 'LONDON', timeframe: '5m' }),
-        makeTrade({ id: 't2', pnl: 50, setup: 'PULLBACK', session: 'NEW_YORK', timeframe: '1h' }),
-        makeTrade({ id: 't3', pnl: 30, setup: 'REVERSAL', session: 'LONDON', timeframe: '15m' }),
+        makeTrade({ id: 't1', pnl: 100, setup: { title: 'BREAKOUT' }, session: 'LONDON', timeframe: '5m' }),
+        makeTrade({ id: 't2', pnl: 50, setup: { title: 'PULLBACK' }, session: 'NEW_YORK', timeframe: '1h' }),
+        makeTrade({ id: 't3', pnl: 30, setup: { title: 'REVERSAL' }, session: 'LONDON', timeframe: '15m' }),
       ];
       mockPrisma.trade.findMany
         .mockResolvedValueOnce(todayTrades)

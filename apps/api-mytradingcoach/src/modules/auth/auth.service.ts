@@ -12,6 +12,7 @@ import * as argon2 from 'argon2';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
+import { SetupsService } from '../setups/setups.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
@@ -59,6 +60,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private resend: ResendService,
+    private setups: SetupsService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -98,6 +100,10 @@ export class AuthService {
         createdAt: true,
       },
     });
+
+    // Setups par défaut dès le signup : le sélecteur de trade n'est jamais vide
+    // et le coach IA a du contexte dès le 1er trade (aucune étape obligatoire).
+    await this.setups.seedDefaults(user.id);
 
     const tokens = await this.generateTokens(user.id, user.email);
     const now = new Date();

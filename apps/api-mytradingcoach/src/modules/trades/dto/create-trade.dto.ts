@@ -11,7 +11,6 @@ import {
 } from 'class-validator';
 import {
   EmotionState,
-  SetupType,
   TradeSide,
   TradingSession,
 } from '@prisma/client';
@@ -69,8 +68,8 @@ export class CreateTradeDto {
   @IsEnum(EmotionState)
   emotion!: EmotionState;
 
-  @IsEnum(SetupType)
-  setup!: SetupType;
+  @IsString()
+  setupId!: string;
 
   @IsEnum(TradingSession)
   session!: TradingSession;

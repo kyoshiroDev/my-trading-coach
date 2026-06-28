@@ -10,7 +10,6 @@ import {
   Role,
   TradeSide,
   EmotionState,
-  SetupType,
   TradingSession,
 } from '@prisma/client';
 import { TradesService } from './trades.service';
@@ -19,6 +18,7 @@ import { AnalyticsService } from '../analytics/analytics.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { RedisService } from '../shared/redis.service';
 import { AccountsService } from '../accounts/accounts.service';
+import { SetupsService } from '../setups/setups.service';
 
 const mockTrade = {
   id: 'trade-123',
@@ -32,7 +32,7 @@ const mockTrade = {
   pnl: 2000,
   riskReward: 2,
   emotion: EmotionState.CONFIDENT,
-  setup: SetupType.BREAKOUT,
+  setupId: 'setup-1',
   session: TradingSession.LONDON,
   timeframe: '1H',
   notes: null,
@@ -47,7 +47,7 @@ const createTradeDto: CreateTradeDto = {
   entry: 50000,
   exit: 52000,
   emotion: EmotionState.CONFIDENT,
-  setup: SetupType.BREAKOUT,
+  setupId: 'setup-1',
   session: TradingSession.LONDON,
   timeframe: '1H',
 };
@@ -105,6 +105,7 @@ describe('TradesService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AnalyticsService, useValue: { invalidateUserCache: vi.fn().mockResolvedValue(undefined) } },
         { provide: AccountsService, useValue: mockAccounts },
+        { provide: SetupsService, useValue: { assertOwnedActive: vi.fn().mockResolvedValue(undefined), getDefaultSetupId: vi.fn().mockResolvedValue('setup-default') } },
       ],
     }).compile();
 
@@ -282,7 +283,7 @@ describe('TradesService', () => {
         quantity: 1,
         commission: 5,
         emotion: EmotionState.CONFIDENT,
-        setup: SetupType.BREAKOUT,
+        setupId: 'setup-1',
         session: TradingSession.LONDON,
         timeframe: '1m',
       }, Plan.FREE);
@@ -304,7 +305,7 @@ describe('TradesService', () => {
         exit: 5010,
         quantity: 1,
         emotion: EmotionState.CONFIDENT,
-        setup: SetupType.BREAKOUT,
+        setupId: 'setup-1',
         session: TradingSession.LONDON,
         timeframe: '5m',
       }, Plan.FREE);
@@ -327,7 +328,7 @@ describe('TradesService', () => {
         quantity: 1,
         commission: -5,
         emotion: EmotionState.CONFIDENT,
-        setup: SetupType.BREAKOUT,
+        setupId: 'setup-1',
         session: TradingSession.LONDON,
         timeframe: '1m',
       }, Plan.FREE);
@@ -349,7 +350,7 @@ describe('TradesService', () => {
         pnl: 200,
         commission: 8,
         emotion: EmotionState.CONFIDENT,
-        setup: SetupType.BREAKOUT,
+        setupId: 'setup-1',
         session: TradingSession.LONDON,
         timeframe: '1h',
       }, Plan.FREE);
@@ -413,7 +414,7 @@ describe('TradesService', () => {
       );
 
       const result = await service.update('user-123', 'trade-123', {
-        setup: SetupType.PULLBACK,
+        setupId: 'setup-2',
       });
 
       // P&L inchangé — pas de recalcul
@@ -467,7 +468,7 @@ describe('TradesService', () => {
 
       const dup: Partial<CreateTradeDto> = {
         asset: 'BTC/USDT', side: TradeSide.LONG, entry: 100, exit: 110, pnl: 10,
-        emotion: EmotionState.NEUTRAL, setup: SetupType.BREAKOUT,
+        emotion: EmotionState.NEUTRAL, setupId: 'setup-1',
         session: TradingSession.LONDON, timeframe: '1h', tradedAt: tradedAt.toISOString(),
       };
       const fresh: Partial<CreateTradeDto> = { ...dup, asset: 'ETH/USDT' };
@@ -526,7 +527,7 @@ describe('TradesService', () => {
 
       const histo = (asset: string): Partial<CreateTradeDto> => ({
         asset, side: TradeSide.LONG, entry: 100, exit: 110, pnl: 10,
-        emotion: EmotionState.NEUTRAL, setup: SetupType.BREAKOUT,
+        emotion: EmotionState.NEUTRAL, setupId: 'setup-1',
         session: TradingSession.LONDON, timeframe: '1h',
         tradedAt: '2024-03-15T10:00:00Z', // AVANT inscription (2026-06-01) -> historique
       });

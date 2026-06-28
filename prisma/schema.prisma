@@ -80,6 +80,7 @@ model User {
   discordId String? @unique
 
   trades          Trade[]
+  setups          Setup[]
   debriefs        WeeklyDebrief[]
   aiUsageLogs     AiUsageLog[]
   tradeSessions   TradeSession[]
@@ -145,7 +146,11 @@ model Trade {
   quantity       Float?
   capitalEngaged Float?
   emotion        EmotionState
-  setup          SetupType
+  setupId        String
+  // NoAction (vérif en fin d'instruction) : la suppression d'un user cascade ses
+  // trades ET ses setups sans violer la FK. La règle "pas de delete si trades" est
+  // portée par SetupsService + ce backstop FK.
+  setup          Setup           @relation(fields: [setupId], references: [id], onDelete: NoAction)
   session        TradingSession
   timeframe      String
   notes          String?
@@ -159,9 +164,28 @@ model Trade {
 
   @@index([userId, tradedAt])
   @@index([userId, emotion])
-  @@index([userId, setup])
+  @@index([userId, setupId])
   @@index([sessionId])
   @@index([accountId])
+}
+
+/// Setup de trading défini par l'utilisateur (remplace l'ancien enum SetupType).
+/// La description sert aussi de contexte au coach IA.
+model Setup {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String // label de la chip, affiché en MAJ côté UI
+  color       String // hex, ex "#10b981"
+  description String?  @db.Text // sert AUSSI de contexte au coach IA
+  sortOrder   Int      @default(0)
+  archived    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trades      Trade[]
+
+  @@index([userId, archived])
+  @@index([userId, sortOrder])
 }
 
 model WeeklyDebrief {
@@ -363,15 +387,6 @@ enum EmotionState {
   FEAR
   FOCUSED
   NEUTRAL
-}
-
-enum SetupType {
-  BREAKOUT
-  PULLBACK
-  RANGE
-  REVERSAL
-  SCALPING
-  NEWS
 }
 
 enum TradingSession {

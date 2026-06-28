@@ -85,7 +85,7 @@ export class AiService {
         side: true,
         pnl: true,
         emotion: true,
-        setup: true,
+        setup: { select: { title: true, description: true } },
         session: true,
         tradedAt: true,
         riskReward: true,
@@ -120,7 +120,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
         ...new Set(recentTrades.map((t) => t.emotion).filter(Boolean)),
       ].join(', ');
       const setups = [
-        ...new Set(recentTrades.map((t) => t.setup).filter(Boolean)),
+        ...new Set(recentTrades.map((t) => t.setup.title).filter(Boolean)),
       ].join(', ');
       const sessions = [
         ...new Set(recentTrades.map((t) => t.session).filter(Boolean)),
@@ -132,13 +132,28 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
         ? (rrVals.reduce((a, b) => a + b, 0) / rrVals.length).toFixed(2)
         : null;
 
+      // Glossaire setups : la description (saisie par le trader) nourrit le coach.
+      // Uniquement les setups réellement utilisés ET décrits, bornés pour ne pas polluer.
+      const setupDefs = [
+        ...new Map(
+          recentTrades
+            .filter((t) => t.setup.description)
+            .map((t) => [t.setup.title, t.setup.description as string]),
+        ).entries(),
+      ].slice(0, 8);
+      const glossary = setupDefs.length
+        ? `\nDéfinitions setups :\n${setupDefs
+            .map(([title, desc]) => `  • ${title} — ${desc.slice(0, 120)}`)
+            .join('\n')}`
+        : '';
+
       contextSummary = `Données trader (${recentTrades.length} trades récents) :
 - Win rate : ${winRate}%
 - P&L total : ${totalPnl.toFixed(2)}$
 - R:R moyen : ${avgRR ?? 'non renseigné'}
 - Émotions : ${emotions || 'non renseignées'}
 - Setups : ${setups || 'non renseignés'}
-- Sessions : ${sessions || 'non renseignées'}`;
+- Sessions : ${sessions || 'non renseignées'}${glossary}`;
     }
 
     const messages: Anthropic.MessageParam[] = [

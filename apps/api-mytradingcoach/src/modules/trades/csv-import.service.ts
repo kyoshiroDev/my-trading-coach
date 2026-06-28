@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx';
 import type { CreateTradeDto } from './dto/create-trade.dto';
 import { AnthropicClientService } from '../shared/anthropic-client.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { SetupsService } from '../setups/setups.service';
 
 const MODEL = 'claude-sonnet-4-6';
 
@@ -61,6 +62,7 @@ export class CsvImportService {
   constructor(
     private readonly anthropicClient: AnthropicClientService,
     private readonly prisma: PrismaService,
+    private readonly setups: SetupsService,
   ) {}
 
   async parseCSV(
@@ -123,6 +125,13 @@ export class CsvImportService {
       } else {
         dtos = this.distributeFees(dtos, totalFees);
       }
+    }
+
+    // Setup : à défaut d'un setupId fourni (PROMPT-138), affecter le setup par
+    // défaut du user (sortOrder le plus bas, non archivé). Jamais de trade sans setup.
+    const defaultSetupId = userId ? await this.setups.getDefaultSetupId(userId) : null;
+    if (defaultSetupId) {
+      for (const d of dtos) d.setupId ??= defaultSetupId;
     }
 
     return dtos;
@@ -805,7 +814,7 @@ ${csv}`;
         pnl: t.pnl,
         commission: t.commission ?? undefined,
         emotion: 'NEUTRAL' as const,
-        setup: 'BREAKOUT' as const,
+        // setupId affecté en aval (parseCSV) : setup par défaut du user, ou fourni par l'import (PROMPT-138).
         session: this.detectSession(t.tradedAt),
         timeframe: '1h',
         tradedAt: t.tradedAt,
@@ -872,7 +881,7 @@ ${csv}`;
         pnl: isFinite(pnl) ? pnl : 0,
         commission: isFinite(commission) ? Math.abs(commission) : undefined,
         emotion: 'NEUTRAL' as const,
-        setup: 'BREAKOUT' as const,
+        // setupId affecté en aval (parseCSV) : setup par défaut du user, ou fourni par l'import (PROMPT-138).
         session: this.detectSession(tradedAt),
         timeframe: '1h',
         tradedAt: tradedAt || new Date().toISOString(),

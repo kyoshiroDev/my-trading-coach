@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
-import { EmotionState, SetupType } from '@prisma/client';
+import { EmotionState } from '@prisma/client';
 
 export interface EquityPoint {
   date: Date;
@@ -166,30 +166,50 @@ export class AnalyticsService {
   }
 
   private async computeBySetup(userId: string, accountId?: string) {
-    const trades = await this.prisma.trade.findMany({
-      where: { userId, ...this.accCond(accountId), pnl: { not: null } },
-      select: { setup: true, pnl: true, riskReward: true },
-    });
+    // Setups actifs (inclus même à 0 trade) + agrégats de trades par setupId.
+    // Les setups archivés n'apparaissent que s'ils ont des trades (historique préservé).
+    const [activeSetups, trades] = await Promise.all([
+      this.prisma.setup.findMany({
+        where: { userId, archived: false },
+        orderBy: { sortOrder: 'asc' },
+        select: { id: true, title: true, color: true },
+      }),
+      this.prisma.trade.findMany({
+        where: { userId, ...this.accCond(accountId), pnl: { not: null } },
+        select: {
+          setupId: true,
+          pnl: true,
+          riskReward: true,
+          setup: { select: { title: true, color: true } },
+        },
+      }),
+    ]);
 
-    const grouped = new Map<
-      SetupType,
-      { pnl: number; rr: number[]; count: number; wins: number }
-    >();
+    type Agg = { title: string; color: string; pnl: number; rr: number[]; count: number; wins: number };
+    const grouped = new Map<string, Agg>();
+    // Setups actifs d'abord (ordre stable, présents même à 0 trade).
+    for (const s of activeSetups) {
+      grouped.set(s.id, { title: s.title, color: s.color, pnl: 0, rr: [], count: 0, wins: 0 });
+    }
     for (const t of trades) {
-      const g = grouped.get(t.setup) ?? { pnl: 0, rr: [], count: 0, wins: 0 };
+      const g = grouped.get(t.setupId) ?? {
+        title: t.setup.title, color: t.setup.color, pnl: 0, rr: [], count: 0, wins: 0,
+      };
       g.count++;
       g.pnl += t.pnl ?? 0;
       if ((t.pnl ?? 0) > 0) g.wins++;
       if (t.riskReward) g.rr.push(t.riskReward);
-      grouped.set(t.setup, g);
+      grouped.set(t.setupId, g);
     }
 
-    return Array.from(grouped.entries()).map(([setup, g]) => ({
-      setup,
-      winRate: g.count > 0 ? (g.wins / g.count) * 100 : 0,
-      avgRR: g.rr.length ? g.rr.reduce((a, b) => a + b, 0) / g.rr.length : 0,
+    return Array.from(grouped.entries()).map(([setupId, g]) => ({
+      setupId,
+      title: g.title,
+      color: g.color,
       count: g.count,
       pnl: g.pnl,
+      avgRR: g.rr.length ? g.rr.reduce((a, b) => a + b, 0) / g.rr.length : 0,
+      winRate: g.count > 0 ? (g.wins / g.count) * 100 : null,
     }));
   }
 

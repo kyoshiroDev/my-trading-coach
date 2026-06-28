@@ -9,6 +9,7 @@ import { Plan, Role, Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { AccountsService } from '../accounts/accounts.service';
+import { SetupsService } from '../setups/setups.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
@@ -30,6 +31,7 @@ export class TradesService {
     private prisma: PrismaService,
     private readonly analyticsService: AnalyticsService,
     private readonly accounts: AccountsService,
+    private readonly setups: SetupsService,
   ) {}
 
   async create(
@@ -39,6 +41,8 @@ export class TradesService {
     role: Role = Role.USER,
   ) {
     await this.checkMonthlyLimit(userId, plan, role, dto.tradedAt);
+    // Le setup doit appartenir au user et être actif (sinon 400).
+    await this.setups.assertOwnedActive(userId, dto.setupId);
     const pnl = this.calculatePnl(dto);
     const riskReward = this.calculateRiskReward(dto);
 
@@ -69,6 +73,7 @@ export class TradesService {
         accountId,
         tradedAt: dto.tradedAt ? new Date(dto.tradedAt) : new Date(),
       },
+      include: { setup: { select: { id: true, title: true, color: true } } },
     });
     await this.analyticsService.invalidateUserCache(userId);
     return trade;
@@ -204,7 +209,7 @@ export class TradesService {
       cursor,
       limit = 20,
       side,
-      setup,
+      setupId,
       emotion,
       dateFrom,
       dateTo,
@@ -213,7 +218,7 @@ export class TradesService {
     const where: Prisma.TradeWhereInput = { userId };
     if (accountId && accountId !== 'all') where.accountId = accountId;
     if (side) where.side = side;
-    if (setup) where.setup = setup;
+    if (setupId) where.setupId = setupId;
     if (emotion) where.emotion = emotion;
     if (dateFrom || dateTo) {
       where.tradedAt = {};
@@ -227,6 +232,7 @@ export class TradesService {
       cursor: cursor ? { id: cursor } : undefined,
       where,
       orderBy: { tradedAt: 'desc' },
+      include: { setup: { select: { id: true, title: true, color: true } } },
     });
 
     const hasNextPage = trades.length > limit;
@@ -237,7 +243,10 @@ export class TradesService {
   }
 
   async findOne(userId: string, id: string) {
-    const trade = await this.prisma.trade.findUnique({ where: { id } });
+    const trade = await this.prisma.trade.findUnique({
+      where: { id },
+      include: { setup: { select: { id: true, title: true, color: true } } },
+    });
     if (!trade) throw new NotFoundException('Trade introuvable');
     if (trade.userId !== userId) throw new ForbiddenException();
     return trade;
@@ -245,6 +254,8 @@ export class TradesService {
 
   async update(userId: string, id: string, dto: UpdateTradeDto) {
     const existing = await this.findOne(userId, id);
+    // Changement de setup → revalider l'ownership + actif.
+    if (dto.setupId) await this.setups.assertOwnedActive(userId, dto.setupId);
 
     const merged = { ...existing, ...dto } as CreateTradeDto;
 
@@ -266,6 +277,7 @@ export class TradesService {
         ...(newPnl !== undefined ? { pnl: newPnl } : {}),
         ...(newRR !== undefined ? { riskReward: newRR } : {}),
       },
+      include: { setup: { select: { id: true, title: true, color: true } } },
     });
     await this.analyticsService.invalidateUserCache(userId);
     return result;
