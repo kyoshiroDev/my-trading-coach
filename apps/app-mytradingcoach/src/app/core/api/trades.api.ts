@@ -155,6 +155,10 @@ export class TradesApi {
     return this.http.delete<void>(`${this.base}/${id}`);
   }
 
+  reassign(tradeIds: string[], accountId: string): Observable<{ data: { moved: number } }> {
+    return this.http.patch<{ data: { moved: number } }>(`${this.base}/reassign`, { tradeIds, accountId });
+  }
+
   getDuplicates(): Observable<{ data: { total: number; unique: number; duplicates: number } }> {
     return this.http.get<{ data: { total: number; unique: number; duplicates: number } }>(
       `${this.base}/duplicates`,

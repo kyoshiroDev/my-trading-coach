@@ -191,6 +191,63 @@
   color: var(--red);
 }
 
+/* ── Déplacer la journée vers un autre compte ── */
+.day-reassign-btn {
+  width: 24px; height: 24px;
+  border-radius: 5px; border: 1px solid transparent;
+  background: transparent; color: var(--text-3);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: all 0.15s; flex-shrink: 0; margin-left: 4px;
+}
+.day-header:hover .day-reassign-btn { opacity: 1; }
+.day-reassign-btn:hover {
+  background: var(--blue-glow);
+  border-color: rgba(59,130,246,0.3);
+  color: var(--blue-bright);
+}
+
+.reassign-accounts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 14px 0 4px;
+}
+.reassign-account {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--text);
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.reassign-account:hover:not(:disabled) {
+  border-color: var(--blue);
+  background: var(--blue-glow);
+}
+.reassign-account:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.reassign-account-label { flex: 1; }
+.reassign-account-current {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-3);
+}
+.reassign-error {
+  font-size: 12px;
+  color: var(--red);
+  margin: 8px 0 0;
+}
+
 /* ── Modal confirm suppression journée ── */
 .modal-overlay {
   position: fixed; inset: 0;
