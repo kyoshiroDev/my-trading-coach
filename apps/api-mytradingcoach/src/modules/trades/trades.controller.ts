@@ -196,6 +196,24 @@ export class TradesController {
     return this.tradesService.removeDuplicates(user.id);
   }
 
+  // Réaffecter un lot de trades (ex. une journée) à un autre compte.
+  @Patch('reassign')
+  async reassign(
+    @CurrentUser() user: { id: string },
+    @Body() body: { tradeIds: string[]; accountId: string },
+  ) {
+    if (!Array.isArray(body?.tradeIds) || body.tradeIds.length === 0) {
+      throw new BadRequestException('Aucun trade à déplacer.');
+    }
+    if (!body.accountId || body.accountId === 'all') {
+      throw new BadRequestException('Compte cible requis.');
+    }
+    // accountWhere rejette un compte non possédé (anti-IDOR) ; 'all'/vide déjà exclu.
+    const { accountId } = await this.accounts.accountWhere(user.id, body.accountId);
+    if (!accountId) throw new BadRequestException('Compte cible requis.');
+    return this.tradesService.reassignAccount(user.id, body.tradeIds, accountId);
+  }
+
   @Get(':id')
   findOne(@CurrentUser() user: { id: string }, @Param('id') id: string) {
     return this.tradesService.findOne(user.id, id);

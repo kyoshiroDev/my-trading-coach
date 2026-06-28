@@ -289,6 +289,20 @@ export class TradesService {
     await this.analyticsService.invalidateUserCache(userId);
   }
 
+  /**
+   * Réaffecte un lot de trades à un autre compte. Le `userId` dans le `where`
+   * garantit qu'on ne touche que les trades du user (anti-IDOR). Seul `accountId`
+   * change : les métriques compte se recalculent à la lecture (rien à recalculer ici).
+   */
+  async reassignAccount(userId: string, tradeIds: string[], accountId: string) {
+    const result = await this.prisma.trade.updateMany({
+      where: { id: { in: tradeIds }, userId },
+      data: { accountId },
+    });
+    await this.analyticsService.invalidateUserCache(userId);
+    return { moved: result.count };
+  }
+
   async checkMonthlyLimit(
     userId: string,
     plan: Plan,
