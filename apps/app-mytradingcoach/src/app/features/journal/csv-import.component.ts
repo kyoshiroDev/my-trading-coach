@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  computed,
   inject,
   input,
   output,
@@ -19,6 +20,7 @@ import {
 import { environment } from '../../../environments/environment';
 import { NumericInputDirective } from '../../core/directives/numeric-input.directive';
 import { parseDecimal } from '../../core/utils/parse-decimal';
+import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 
 interface ImportResult {
   created: number;
@@ -27,6 +29,20 @@ interface ImportResult {
   limitBlocked: number;
   total: number;
 }
+
+interface SetupItem {
+  id: string;
+  title: string;
+  color: string;
+  archived: boolean;
+  sortOrder: number;
+}
+
+// Émotions (mêmes valeurs que le form de trade) appliquées à tout le lot.
+const EMOTIONS = ['CONFIDENT', 'FOCUSED', 'NEUTRAL', 'STRESSED', 'FEAR', 'REVENGE'] as const;
+const EMOTION_EMOJIS: Record<string, string> = {
+  CONFIDENT: '😎', FOCUSED: '🎯', NEUTRAL: '😐', STRESSED: '😰', FEAR: '😨', REVENGE: '🤬',
+};
 
 @Component({
   selector: 'mtc-csv-import',
@@ -107,6 +123,60 @@ interface ImportResult {
                 <button class="file-change" (click)="clearFile()">Changer</button>
               </div>
 
+              <!-- Compte cible (corrige le rattachement multi-compte) -->
+              @if (accountStore.activeAccounts().length > 0) {
+                <div class="import-field">
+                  <label class="import-label" for="importAccount">Importer dans le compte</label>
+                  <select
+                    id="importAccount"
+                    class="import-select"
+                    [value]="accountId()"
+                    (change)="accountId.set($any($event.target).value)"
+                  >
+                    <option value="" disabled>Choisis le compte</option>
+                    @for (a of accountStore.activeAccounts(); track a.id) {
+                      <option [value]="a.id">{{ a.label }}</option>
+                    }
+                  </select>
+                </div>
+              }
+
+              <!-- Émotion en lot -->
+              <div class="import-field">
+                <label class="import-label" for="importEmotion">Émotion (appliquée à tous les trades)</label>
+                <select
+                  id="importEmotion"
+                  class="import-select"
+                  [value]="emotion()"
+                  (change)="emotion.set($any($event.target).value)"
+                >
+                  @for (e of EMOTIONS; track e) {
+                    <option [value]="e">{{ emotionEmoji(e) }} {{ e }}</option>
+                  }
+                </select>
+                <p class="import-help">Tu pourras affiner trade par trade ensuite.</p>
+              </div>
+
+              <!-- Setup en lot (setups actifs du user) -->
+              @if (setups().length > 0) {
+                <div class="import-field">
+                  <label class="import-label" for="importSetup">Setup (appliqué à tous les trades)</label>
+                  <div class="import-setup-row">
+                    <span class="setup-dot" [style.background]="selectedSetupColor()"></span>
+                    <select
+                      id="importSetup"
+                      class="import-select"
+                      [value]="setupId()"
+                      (change)="setupId.set($any($event.target).value)"
+                    >
+                      @for (s of setups(); track s.id) {
+                        <option [value]="s.id">{{ s.title }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+              }
+
               @switch (feesDisabledReason()) {
                 @case ('has_fees_column') {
                   <p class="fees-note">
@@ -148,7 +218,10 @@ interface ImportResult {
                 }
               }
 
-              <button class="btn-primary" (click)="upload()">Importer</button>
+              @if (!canImport()) {
+                <p class="import-help import-warn">Choisis le compte de destination pour importer.</p>
+              }
+              <button class="btn-primary" (click)="upload()" [disabled]="!canImport()">Importer</button>
             </div>
           } @else {
             <div
@@ -213,11 +286,13 @@ export class CsvImportComponent {
 
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly accountStore = inject(SelectedAccountStore);
 
   protected readonly XIcon = X;
   protected readonly UploadIcon = Upload;
   protected readonly CheckCircleIcon = CheckCircle;
   protected readonly AlertCircleIcon = AlertCircle;
+  protected readonly EMOTIONS = EMOTIONS;
 
   protected readonly isDragging = signal(false);
   protected readonly isLoading = signal(false);
@@ -228,8 +303,51 @@ export class CsvImportComponent {
   // null = champ frais actif ; sinon raison de désactivation.
   protected readonly feesDisabledReason = signal<null | 'has_fees_column' | 'too_many'>(null);
 
+  // Defaults appliqués à tout le lot.
+  protected readonly accountId = signal<string>('');
+  protected readonly emotion = signal<string>('NEUTRAL');
+  protected readonly setupId = signal<string>('');
+  protected readonly setups = signal<SetupItem[]>([]);
+
+  /** Couleur du setup sélectionné (pastille à côté du select). */
+  protected readonly selectedSetupColor = computed(
+    () => this.setups().find((s) => s.id === this.setupId())?.color ?? 'transparent',
+  );
+
+  /** Import autorisé : pas de comptes (FREE → compte par défaut backend) OU un compte choisi. */
+  protected readonly canImport = computed(
+    () => this.accountStore.activeAccounts().length === 0 || this.accountId() !== '',
+  );
+
   /** Au-delà : un total global réparti au prorata donnerait des frais faux. */
   private readonly FEES_INPUT_MAX_TRADES = 100;
+
+  constructor() {
+    if (!this.accountStore.loaded()) this.accountStore.load();
+    // Setups actifs du user (GET /setups — endpoint existant depuis PROMPT-140).
+    this.http
+      .get<{ data: SetupItem[] }>(`${environment.apiUrl}/setups`)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          const active = (res.data ?? []).filter((s) => !s.archived);
+          this.setups.set(active);
+          if (active.length && !this.setupId()) this.setupId.set(active[0].id);
+        },
+        error: () => { /* setups indispo → champ masqué, défaut backend appliqué */ },
+      });
+  }
+
+  protected emotionEmoji(e: string): string {
+    return EMOTION_EMOJIS[e] ?? '😐';
+  }
+
+  /** Pré-sélectionne le compte courant (si c'est un compte réel, pas « Tous »). */
+  private initAccountSelection(): void {
+    const sel = this.accountStore.selectedAccountId();
+    const real = sel !== 'all' && this.accountStore.activeAccounts().some((a) => a.id === sel);
+    this.accountId.set(real ? sel : '');
+  }
 
   onOverlayClick(e: MouseEvent) {
     if ((e.target as HTMLElement).classList.contains('overlay'))
@@ -259,6 +377,7 @@ export class CsvImportComponent {
     this.error.set(null);
     this.totalFees.set('');
     this.feesDisabledReason.set(null);
+    this.initAccountSelection();
 
     // Lecture légère (en-tête + nb de lignes) pour décider si le champ frais
     // doit être désactivé. Excel (.xlsx) non lisible ici → le back protège.
@@ -290,7 +409,7 @@ export class CsvImportComponent {
   // Étape 2 : confirmation → upload avec les frais éventuels.
   protected upload() {
     const file = this.selectedFile();
-    if (!file) return;
+    if (!file || !this.canImport()) return;
 
     const formData = new FormData();
     formData.append('file', file, file.name);
@@ -299,6 +418,11 @@ export class CsvImportComponent {
     if (this.feesDisabledReason() === null && fees != null && fees > 0) {
       formData.append('totalFees', String(fees));
     }
+
+    // Defaults du lot : compte cible (si choisi), émotion, setup.
+    if (this.accountId()) formData.append('accountId', this.accountId());
+    formData.append('emotion', this.emotion());
+    if (this.setupId()) formData.append('setupId', this.setupId());
 
     this.isLoading.set(true);
     this.error.set(null);
