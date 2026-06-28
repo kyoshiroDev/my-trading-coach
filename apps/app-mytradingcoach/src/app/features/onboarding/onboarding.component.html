@@ -151,13 +151,6 @@
             }
           </div>
 
-          <div class="field-label">Ton approche <span class="field-req">· au moins 1</span></div>
-          <div class="strat-tags">
-            @for (tag of STRATEGY_TAGS; track tag) {
-              <button class="strat-tag" [class.sel]="selectedStrategyTags().includes(tag)" (click)="toggleStrategyTag(tag)">{{ tag }}</button>
-            }
-          </div>
-
           <div class="field-label">Décris ta stratégie <span class="field-req">· min 15 caractères</span></div>
           <textarea
             class="strat-desc"

@@ -19,7 +19,6 @@ import { TradeFormComponent } from '../journal/trade-form.component';
 import { CsvImportComponent } from '../journal/csv-import.component';
 import {
   TRADING_STYLES,
-  STRATEGY_TAGS,
   SESSIONS,
   ASSET_SUGGESTIONS,
   TradingStyle,
@@ -74,7 +73,6 @@ export class OnboardingComponent {
   protected readonly MARKETS        = MARKETS;
   protected readonly GOALS          = GOALS;
   protected readonly TRADING_STYLES = TRADING_STYLES;
-  protected readonly STRATEGY_TAGS  = STRATEGY_TAGS;
   protected readonly SESSIONS       = SESSIONS;
   protected readonly discordUrl     = DISCORD_URL;
 
@@ -89,15 +87,13 @@ export class OnboardingComponent {
 
   // Étape Stratégie
   protected readonly selectedStyle        = signal<TradingStyle | null>(null);
-  protected readonly selectedStrategyTags = signal<string[]>([]);
   protected readonly strategyDescription  = signal('');
   protected readonly selectedSessions     = signal<TradingSession[]>([]);
-  // Stratégie : tout obligatoire pour un contexte IA exploitable.
-  // Description min 15 caractères pour éviter le déchet (« test », « rien »).
+  // Stratégie : style + ≥1 session + description ≥ 15 caractères (contexte IA exploitable).
+  // Les tags d'approche ont été retirés (redondants avec les setups + la description libre).
   protected readonly strategyValid = computed(
     () =>
       !!this.selectedStyle() &&
-      this.selectedStrategyTags().length > 0 &&
       this.selectedSessions().length > 0 &&
       this.strategyDescription().trim().length >= 15,
   );
@@ -135,11 +131,6 @@ export class OnboardingComponent {
 
   // ── Stratégie ──
   protected selectStyle(s: TradingStyle)     { this.selectedStyle.set(s); }
-  protected toggleStrategyTag(tag: string): void {
-    this.selectedStrategyTags.update((tags) =>
-      tags.includes(tag) ? tags.filter((t) => t !== tag) : [...tags, tag],
-    );
-  }
   protected toggleSession(s: TradingSession): void {
     this.selectedSessions.update((arr) =>
       arr.includes(s) ? arr.filter((x) => x !== s) : [...arr, s],
@@ -224,7 +215,6 @@ export class OnboardingComponent {
         startingCapital: this.parseCapital(),
         currency: this.selectedCurrency(),
         tradingStyle: this.selectedStyle() ?? undefined,
-        tradingStrategy: this.selectedStrategyTags(),
         strategyDescription: this.strategyDescription().trim() || undefined,
         tradingSessions: this.selectedSessions(),
       })
