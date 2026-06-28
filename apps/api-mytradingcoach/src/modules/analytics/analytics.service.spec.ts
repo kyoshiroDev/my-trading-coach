@@ -178,6 +178,28 @@ describe('AnalyticsService', () => {
       expect(breakout?.winRate).toBe(50);
       expect(breakout?.count).toBe(2);
     });
+
+    it('inclut un setup actif sans trade (count 0, winRate null) et un archivé seulement s’il a des trades', async () => {
+      mockPrisma.setup.findMany.mockResolvedValueOnce([
+        { id: 'setup-active', title: 'Actif', color: '#10b981' },   // 0 trade
+        { id: 'setup-used', title: 'Utilisé', color: '#3b82f6' },
+      ]);
+      mockPrisma.trade.findMany.mockResolvedValue([
+        { ...makeTrade(100), setupId: 'setup-used', setup: { title: 'Utilisé', color: '#3b82f6' } },
+        // setup archivé (absent de findMany actifs) mais avec un trade → doit apparaître
+        { ...makeTrade(-30), setupId: 'setup-arch', setup: { title: 'Archivé', color: '#ef4444' } },
+      ]);
+
+      const result = await service.getBySetup('user-123');
+
+      const active0 = result.find((r) => r.setupId === 'setup-active');
+      expect(active0?.count).toBe(0);
+      expect(active0?.winRate).toBeNull();
+
+      const archivedWithTrades = result.find((r) => r.setupId === 'setup-arch');
+      expect(archivedWithTrades?.title).toBe('Archivé');
+      expect(archivedWithTrades?.count).toBe(1);
+    });
   });
 
   describe('getEquityCurve', () => {

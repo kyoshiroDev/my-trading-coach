@@ -22,7 +22,9 @@ function makeService() {
   // Client Anthropic central mocké (le service appelle `anthropicClient.create`).
   const anthropicClient = { create: vi.fn() } as any;
   const prisma = { user: { findUnique: vi.fn().mockResolvedValue(null) } } as any;
-  return new CsvImportService(anthropicClient, prisma);
+  // SetupsService : setup par défaut du user (fallback import).
+  const setups = { getDefaultSetupId: vi.fn().mockResolvedValue('setup-default') } as any;
+  return new CsvImportService(anthropicClient, prisma, setups);
 }
 
 describe('CsvImportService — MEXC (parser dédié, sans IA)', () => {
@@ -230,5 +232,36 @@ describe('CsvImportService — chemin IA par lots', () => {
     } finally {
       process.env['NODE_ENV'] = oldEnv;
     }
+  });
+});
+
+describe('CsvImportService — defaults du lot (compte / émotion / setup)', () => {
+  const csv = () => [MEXC_HEADER, MEXC_ROW].join('\r\n');
+
+  it('applique accountId, emotion et setupId fournis à chaque dto', async () => {
+    const svc = makeService();
+    const dtos = await svc.parseCSV(Buffer.from(csv()), 'mexc.csv', 'user-1', undefined, undefined, {
+      accountId: 'acc-9', emotion: 'FEAR', setupId: 'setup-7',
+    });
+    expect(dtos).toHaveLength(1);
+    expect(dtos[0].accountId).toBe('acc-9');
+    expect(dtos[0].emotion).toBe('FEAR');
+    expect(dtos[0].setupId).toBe('setup-7');
+  });
+
+  it('émotion invalide → NEUTRAL (pas de crash) ; setup absent → défaut du user', async () => {
+    const svc = makeService();
+    const dtos = await svc.parseCSV(Buffer.from(csv()), 'mexc.csv', 'user-1', undefined, undefined, {
+      emotion: 'PAS_UNE_EMOTION',
+    });
+    expect(dtos[0].emotion).toBe('NEUTRAL');
+    expect(dtos[0].setupId).toBe('setup-default');
+  });
+
+  it('sans defaults → émotion NEUTRAL + setup par défaut du user', async () => {
+    const svc = makeService();
+    const dtos = await svc.parseCSV(Buffer.from(csv()), 'mexc.csv', 'user-1');
+    expect(dtos[0].emotion).toBe('NEUTRAL');
+    expect(dtos[0].setupId).toBe('setup-default');
   });
 });

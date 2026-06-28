@@ -58,6 +58,7 @@ const mockPrisma = {
     findUnique: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    updateMany: vi.fn(),
     delete: vi.fn(),
     deleteMany: vi.fn(),
     count: vi.fn(),
@@ -70,6 +71,8 @@ const mockPrisma = {
     findUnique: vi.fn().mockResolvedValue({ createdAt: new Date('2020-01-01') }),
   },
 };
+
+const mockAnalytics = { invalidateUserCache: vi.fn().mockResolvedValue(undefined) };
 
 
 const mockRedisService = {
@@ -103,7 +106,7 @@ describe('TradesService', () => {
         { provide: RedisService, useValue: mockRedisService },
         TradesService,
         { provide: PrismaService, useValue: mockPrisma },
-        { provide: AnalyticsService, useValue: { invalidateUserCache: vi.fn().mockResolvedValue(undefined) } },
+        { provide: AnalyticsService, useValue: mockAnalytics },
         { provide: AccountsService, useValue: mockAccounts },
         { provide: SetupsService, useValue: { assertOwnedActive: vi.fn().mockResolvedValue(undefined), getDefaultSetupId: vi.fn().mockResolvedValue('setup-default') } },
       ],
@@ -578,6 +581,28 @@ describe('TradesService', () => {
 
       expect(res.removed).toBe(0);
       expect(mockPrisma.trade.deleteMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('reassignAccount', () => {
+    it('scope updateMany sur userId + accountId, retourne le nombre déplacé', async () => {
+      mockPrisma.trade.updateMany.mockResolvedValue({ count: 3 });
+
+      const res = await service.reassignAccount('user-1', ['t1', 't2', 't3'], 'acc-target');
+
+      expect(mockPrisma.trade.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: ['t1', 't2', 't3'] }, userId: 'user-1' },
+        data: { accountId: 'acc-target' },
+      });
+      expect(res).toEqual({ moved: 3 });
+    });
+
+    it('invalide le cache analytics du user après déplacement', async () => {
+      mockPrisma.trade.updateMany.mockResolvedValue({ count: 1 });
+
+      await service.reassignAccount('user-1', ['t1'], 'acc-target');
+
+      expect(mockAnalytics.invalidateUserCache).toHaveBeenCalledWith('user-1');
     });
   });
 });

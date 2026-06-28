@@ -9,6 +9,7 @@ import { TradesApi } from '../../core/api/trades.api';
 import { TradesStore } from '../../core/stores/trades.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { UserStore } from '../../core/stores/user.store';
+import { SetupsStore } from '../../core/stores/setups.store';
 
 const resolveComponentResources = (angularCore as Record<string, unknown>)[
   'ɵresolveComponentResources'
@@ -35,6 +36,12 @@ const mockTradesApi = {
   saveUserAssets: vi.fn().mockReturnValue(of({ data: null })),
 };
 const mockTradesStore = { loadTrades: vi.fn() };
+const mockSetupsStore = {
+  load: vi.fn(),
+  active: () => [],
+  create: vi.fn(),
+  remove: vi.fn(),
+};
 const authUser = signal<unknown>(null);
 const mockAuth = {
   currentUser: authUser,
@@ -66,6 +73,7 @@ describe('OnboardingComponent', () => {
         { provide: UsersApi, useValue: mockUsersApi },
         { provide: TradesApi, useValue: mockTradesApi },
         { provide: TradesStore, useValue: mockTradesStore },
+        { provide: SetupsStore, useValue: mockSetupsStore },
         { provide: AuthService, useValue: mockAuth },
       ],
       schemas: [NO_ERRORS_SCHEMA],
@@ -169,7 +177,7 @@ describe('OnboardingComponent', () => {
     expect(c.step()).toBe(6);
   });
 
-  it("le flag de fin n'est posé qu'à l'écran final (completed émis au step 8)", () => {
+  it("le flag de fin n'est posé qu'à l'écran final (completed émis au step 9)", () => {
     const fixture = TestBed.createComponent(OnboardingComponent);
     fixture.detectChanges();
 
@@ -180,9 +188,9 @@ describe('OnboardingComponent', () => {
       finishAndGoDiscord: () => void;
       step: () => number;
     };
-    // « Je commence à zéro » → étape finale (8), pas encore de completed
+    // « Je commence à zéro » → étape finale (9), pas encore de completed
     c.finishAndGoDiscord();
-    expect(c.step()).toBe(8);
+    expect(c.step()).toBe(9);
     expect(completedEmitted).toBe(false);
   });
 
@@ -209,7 +217,41 @@ describe('OnboardingComponent', () => {
 
     // Zéro → saute directement à l'étape finale (Discord)
     c.finishAndGoDiscord();
-    expect(c.step()).toBe(8);
+    expect(c.step()).toBe(9);
+  });
+
+  it('étape Tes setups : charge le store, ajoute/retire via le store, wizard à 9 étapes', () => {
+    const fixture = TestBed.createComponent(OnboardingComponent);
+    fixture.detectChanges();
+    expect(mockSetupsStore.load).toHaveBeenCalled();
+
+    const c = fixture.componentInstance as unknown as {
+      step: { set: (n: number) => void };
+      progress: number;
+      stepLabel: string;
+      showSetupModal: { (): boolean; set: (v: boolean) => void };
+      openSetupModal: () => void;
+      onSetupSave: (v: { title: string; color: string; description: string }) => void;
+      removeSetup: (id: string) => void;
+    };
+
+    // Wizard 9 étapes : progression + label de l'étape Setups (7).
+    c.step.set(7);
+    expect(c.progress).toBe(Math.round((7 / 9) * 100));
+    expect(c.stepLabel).toBe('Étape 6 sur 7');
+    c.step.set(9);
+    expect(c.progress).toBe(100);
+
+    // Ajout via la modale partagée → store.create + ferme la modale.
+    c.openSetupModal();
+    expect(c.showSetupModal()).toBe(true);
+    c.onSetupSave({ title: 'ORB', color: '#22d3ee', description: '' });
+    expect(mockSetupsStore.create).toHaveBeenCalledWith({ title: 'ORB', color: '#22d3ee', description: '' });
+    expect(c.showSetupModal()).toBe(false);
+
+    // Retrait → store.remove.
+    c.removeSetup('s1');
+    expect(mockSetupsStore.remove).toHaveBeenCalledWith('s1');
   });
 
   it("après sauvegarde des actifs, le store est à jour → pas de faux « Complète ton profil » (PROMPT-089)", () => {
