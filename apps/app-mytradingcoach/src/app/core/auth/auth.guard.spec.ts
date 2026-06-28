@@ -89,7 +89,7 @@ describe('premiumGuard', () => {
     expect(result).toBe(true);
   });
 
-  it('redirige vers /settings si authentifié mais pas premium', () => {
+  it('redirige vers /profil si authentifié mais pas premium', () => {
     setupTestBed(makeAuthMock(true, false));
     const router = TestBed.inject(Router);
     const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
@@ -101,7 +101,7 @@ describe('premiumGuard', () => {
       ),
     );
 
-    expect(navigateSpy).toHaveBeenCalledWith(['/settings']);
+    expect(navigateSpy).toHaveBeenCalledWith(['/profil']);
   });
 
   it('retourne false si non premium', () => {

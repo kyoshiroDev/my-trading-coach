@@ -155,13 +155,16 @@ export const appRoutes: Routes = [
           ),
       },
       {
-        path: 'settings',
-        data: { seo: { title: 'Paramètres', noindex: true } },
+        path: 'profil',
+        data: { seo: { title: 'Profil', noindex: true } },
         loadComponent: () =>
           import('./features/settings/settings.component').then(
             (m) => m.SettingsComponent,
           ),
       },
+      // Compat : anciens liens /settings (bookmarks, emails, retours Stripe ?checkout=…).
+      // redirectTo préserve les query params et le fragment par défaut.
+      { path: 'settings', redirectTo: 'profil', pathMatch: 'full' },
       {
         path: 'ambassador',
         canActivate: [authGuard, ambassadorPageGuard],

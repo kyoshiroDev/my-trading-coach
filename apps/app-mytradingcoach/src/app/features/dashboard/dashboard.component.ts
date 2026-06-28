@@ -398,7 +398,7 @@ export class DashboardComponent {
   private  readonly chartService  = inject(ChartService);
   private  readonly router        = inject(Router);
 
-  protected goToSettings(): void { this.router.navigate(['/settings']); }
+  protected goToSettings(): void { this.router.navigate(['/profil']); }
 
   protected readonly showTradeForm = signal(false);
   protected readonly showCsvImport = signal(false);
