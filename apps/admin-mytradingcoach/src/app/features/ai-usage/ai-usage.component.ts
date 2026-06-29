@@ -23,39 +23,29 @@ export class AiUsageComponent {
   protected readonly loading = signal(true);
   protected readonly error = signal(false);
 
-  protected readonly featureConfig = computed<ChartConfiguration>(() => {
-    const f = this.data()?.byFeature ?? [];
-    const palette = [CHART_COLORS.teal, CHART_COLORS.blue, CHART_COLORS.purple, CHART_COLORS.amber, CHART_COLORS.green, CHART_COLORS.red];
-    return {
-      type: 'doughnut',
-      data: { labels: f.map((x) => x.feature), datasets: [{ data: f.map((x) => x.cost), backgroundColor: f.map((_, i) => palette[i % palette.length]), borderColor: '#0c0e10', borderWidth: 2 }] },
-      options: {
-        maintainAspectRatio: false, cutout: '62%',
-        plugins: { legend: { position: 'right', labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, padding: 12 } } },
-      },
-    } as ChartConfiguration;
-  });
-
-  // Ventilation du coût par modèle (doughnut) — Haiku vs Sonnet.
-  protected readonly modelConfig = computed<ChartConfiguration>(() => {
-    const m = this.data()?.byModel ?? [];
-    const palette = [CHART_COLORS.teal, CHART_COLORS.purple, CHART_COLORS.blue, CHART_COLORS.amber, CHART_COLORS.green, CHART_COLORS.red];
-    return {
-      type: 'doughnut',
-      data: { labels: m.map((x) => this.modelLabel(x.model)), datasets: [{ data: m.map((x) => x.cost), backgroundColor: m.map((_, i) => palette[i % palette.length]), borderColor: '#0c0e10', borderWidth: 2 }] },
-      options: {
-        maintainAspectRatio: false, cutout: '62%',
-        plugins: { legend: { position: 'right', labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, padding: 12 } } },
-      },
-    } as ChartConfiguration;
-  });
-
   /** Libellé court d'un identifiant de modèle Anthropic. */
   protected modelLabel(model: string): string {
     if (model.includes('haiku')) return 'Haiku 4.5';
     if (model.includes('sonnet')) return 'Sonnet 4.6';
     if (model.includes('opus')) return 'Opus';
     return model;
+  }
+
+  /** Classe de la barre/pastille selon le modèle (Haiku en bleu, Sonnet en teal). */
+  protected modelClass(model: string): string {
+    return model.includes('haiku') ? 'haiku' : '';
+  }
+
+  /** Note de complétude : depuis la date de déploiement du logging IA, sinon générique. */
+  protected readonly trackingNote = computed(() => {
+    const s = this.data()?.trackingSince;
+    return s ? `Tracking complet depuis le ${this.frDate(s)}` : 'Tracking complet depuis l\'activation du logging';
+  });
+
+  /** `2026-06-27` → `27/06/2026`. */
+  private frDate(iso: string): string {
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
   }
 
   // Coût quotidien sur 30 jours (ligne) — aligné sur le mockup « Coût quotidien (30j) ».
