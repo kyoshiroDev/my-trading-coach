@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } f
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { AdminService } from './admin.service';
+import { AnthropicCostService } from './anthropic-cost.service';
 import { EmailCampaignService } from './email-campaign.service';
 import type { CampaignType } from './email-campaign.service';
 import { MetricsSnapshotCron } from './metrics-snapshot.cron';
@@ -17,6 +18,7 @@ import { DiscordService } from '../discord/discord.service';
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
+    private readonly anthropicCost: AnthropicCostService,
     private readonly emailCampaign: EmailCampaignService,
     private readonly usersService: UsersService,
     private readonly discordService: DiscordService,
@@ -95,9 +97,17 @@ export class AdminController {
     return { id, role: 'USER' };
   }
 
-  @Get('ai-usage')
-  async getAiUsage() {
-    return this.adminService.getAiUsage();
+  // Usage IA 30j : coût réel (Cost API) + attribution estimée (logs) + réconciliation.
+  @Get('ai-cost')
+  getAiCost() {
+    return this.adminService.getAiCost();
+  }
+
+  // Rafraîchit le cache du coût réel sans attendre le cron de 6h (1er remplissage / refresh manuel).
+  @Post('ai-cost/refresh')
+  async refreshAiCost() {
+    const { rows, total30d } = await this.anthropicCost.refreshLast30Days();
+    return { ok: true, rows, total30d };
   }
 
   @Get('retention')
