@@ -1,5 +1,5 @@
 import { Injectable, ForbiddenException, NotFoundException, Logger } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { Plan, Role, WeeklyDebrief } from '@prisma/client';
 import { DebriefPdfData } from '../pdf/pdf.service';
 import { OBJECTIVE_CHECK_TYPES, DebriefAccountInput } from '../ai/prompts/debrief.prompt';
 
@@ -120,9 +120,23 @@ export class DebriefService {
     });
   }
 
-  async generate(userId: string, role: Role = Role.USER, skipLimit = false) {
-    const now = new Date();
-    const { weekNumber, year, startDate, endDate } = this.getWeekInfo(now);
+  async generate(
+    userId: string,
+    role: Role = Role.USER,
+    skipLimit = false,
+    opts?: { refDate?: Date; force?: boolean },
+  ): Promise<{ debrief: WeeklyDebrief; created: boolean }> {
+    // La semaine cible vient de refDate (par défaut maintenant) → permet de viser une semaine passée.
+    const { weekNumber, year, startDate, endDate } = this.getWeekInfo(opts?.refDate ?? new Date());
+
+    // Idempotence : si le débrief de cette semaine existe et qu'on ne force pas, on le renvoie
+    // tel quel — zéro appel IA, zéro doublon. created=false → le processor n'enverra pas d'email.
+    const existing = await this.prisma.weeklyDebrief.findUnique({
+      where: { userId_weekNumber_year: { userId, weekNumber, year } },
+    });
+    if (existing && !opts?.force) {
+      return { debrief: existing, created: false };
+    }
 
     const trades = (
       await this.prisma.trade.findMany({
@@ -246,7 +260,7 @@ export class DebriefService {
       emotionInsight: aiResult.emotionInsight ?? '',
     };
 
-    return this.prisma.weeklyDebrief.upsert({
+    const debrief = await this.prisma.weeklyDebrief.upsert({
       where: { userId_weekNumber_year: { userId, weekNumber, year } },
       create: {
         userId,
@@ -267,6 +281,7 @@ export class DebriefService {
         generatedAt: new Date(),
       },
     });
+    return { debrief, created: true };
   }
 
   /** Stats déterministes d'un compte sur la semaine (jamais l'IA pour les chiffres). */
@@ -306,8 +321,38 @@ export class DebriefService {
     };
   }
 
-  async generateForUser(userId: string) {
-    return this.generate(userId, Role.USER, true);
+  async generateForUser(
+    userId: string,
+    opts?: { refDate?: Date; force?: boolean },
+  ): Promise<{ debrief: WeeklyDebrief; created: boolean }> {
+    return this.generate(userId, Role.USER, true, opts);
+  }
+
+  /** Éligibles au débrief auto : non-démo, opt-in, accès premium (PREMIUM ou ADMIN). */
+  getEligibleUsers() {
+    return this.prisma.user.findMany({
+      where: {
+        isDemo: false,
+        debriefAutomatic: true,
+        OR: [{ plan: Plan.PREMIUM }, { role: Role.ADMIN }],
+      },
+      select: { id: true, email: true },
+    });
+  }
+
+  /** Date dans la semaine précédente (pour le rattrapage du lundi). */
+  lastCompletedWeekRef(now: Date = new Date()): Date {
+    return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  }
+
+  /** Lundi midi de la semaine ISO (year, week) — à passer en refDate pour cibler cette semaine. */
+  weekRefDate(year: number, week: number): Date {
+    const jan4 = new Date(year, 0, 4); // toujours en semaine ISO 1
+    const dow = jan4.getDay() || 7; // 1 (lun) .. 7 (dim)
+    const monday = new Date(jan4);
+    monday.setDate(jan4.getDate() - (dow - 1) + (week - 1) * 7);
+    monday.setHours(12, 0, 0, 0);
+    return monday;
   }
 
   async addNoteToObjective(userId: string, debriefId: string, index: number, note: string) {
@@ -414,7 +459,7 @@ export class DebriefService {
     };
   }
 
-  private getWeekInfo(date: Date) {
+  getWeekInfo(date: Date) {
     const d = new Date(date);
     d.setHours(0, 0, 0, 0);
     d.setDate(d.getDate() + 4 - (d.getDay() || 7));
