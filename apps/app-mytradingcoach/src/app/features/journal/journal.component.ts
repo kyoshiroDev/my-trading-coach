@@ -53,11 +53,65 @@ export class JournalComponent {
 
   constructor() {
     this.setupsStore.load();
-    // Recharge le journal au changement de compte (contexte global). 'all' → agrégé.
-    effect(() => {
-      const accountId = this.selectedAccount.accountParam(); // lit selectedAccountId (réactif)
-      this.tradesStore.loadTrades(accountId ? { accountId } : undefined);
-    });
+    // Liste paginée ET KPIs rechargés côté serveur à tout changement de filtre
+    // (compte, preset/dates, side, setup). Les KPIs viennent de l'agrégat backend
+    // → stables, indépendants de « Charger plus ».
+    effect(() => this.refreshJournal());
+  }
+
+  /** Filtres serveur dérivés des signaux (n'inclut que les valeurs définies). */
+  private readonly journalFilters = computed<Record<string, string>>(() => {
+    const f: Record<string, string> = {};
+    const acc = this.selectedAccount.accountParam();
+    if (acc) f['accountId'] = acc;
+    const side = this.filterSide();
+    if (side !== 'ALL') f['side'] = side;
+    const setup = this.filterSetup();
+    if (setup) f['setupId'] = setup;
+    const { dateFrom, dateTo } = this.dateRange();
+    if (dateFrom) f['dateFrom'] = dateFrom;
+    if (dateTo) f['dateTo'] = dateTo;
+    return f;
+  });
+
+  /** Range ISO dérivé du preset (même logique que l'ancien filtrage client). */
+  private readonly dateRange = computed<{ dateFrom?: string; dateTo?: string }>(() => {
+    const preset = this.datePreset();
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (preset === 'today') return { dateFrom: today.toISOString(), dateTo: now.toISOString() };
+    if (preset === 'week') {
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - today.getDay()); // dimanche, comme avant
+      return { dateFrom: weekStart.toISOString(), dateTo: now.toISOString() };
+    }
+    if (preset === 'month') {
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      return { dateFrom: monthStart.toISOString(), dateTo: now.toISOString() };
+    }
+    if (preset === 'custom') {
+      const from = this.dateFrom();
+      if (!from) return {};
+      const to = this.dateTo();
+      return {
+        dateFrom: new Date(from).toISOString(),
+        dateTo: to ? new Date(to + 'T23:59:59').toISOString() : now.toISOString(),
+      };
+    }
+    return {}; // 'all' → pas de borne
+  });
+
+  /** Reset + recharge liste et KPIs avec les filtres courants. */
+  private refreshJournal(): void {
+    const filters = this.journalFilters();
+    this.tradesStore.reset();
+    this.tradesStore.loadTrades(filters);
+    this.tradesStore.loadStats(filters);
+  }
+
+  /** Recharge seulement les KPIs (la liste est déjà mise à jour de façon optimiste). */
+  private refreshStats(): void {
+    this.tradesStore.loadStats(this.journalFilters());
   }
 
   protected readonly XIcon            = X;
@@ -94,47 +148,13 @@ export class JournalComponent {
   protected readonly dateFrom       = signal('');
   protected readonly dateTo         = signal('');
 
-  // ── Filtres combinés ──────────────────────────────────────────────────────
-
-  protected readonly filteredTrades = computed(() => {
-    let trades = this.tradesStore.trades();
-    const side   = this.filterSide();
-    const setup  = this.filterSetup();
-    const preset = this.datePreset();
-    const from   = this.dateFrom();
-    const to     = this.dateTo();
-
-    if (side !== 'ALL') trades = trades.filter(t => t.side === side);
-    if (setup)          trades = trades.filter(t => t.setupId === setup);
-
-    const now   = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    if (preset === 'today') {
-      trades = trades.filter(t => new Date(t.tradedAt) >= today);
-    } else if (preset === 'week') {
-      const weekStart = new Date(today);
-      weekStart.setDate(today.getDate() - today.getDay());
-      trades = trades.filter(t => new Date(t.tradedAt) >= weekStart);
-    } else if (preset === 'month') {
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      trades = trades.filter(t => new Date(t.tradedAt) >= monthStart);
-    } else if (preset === 'custom' && from) {
-      const f  = new Date(from);
-      const t2 = to ? new Date(to + 'T23:59:59') : new Date();
-      trades = trades.filter(t => {
-        const d = new Date(t.tradedAt);
-        return d >= f && d <= t2;
-      });
-    }
-
-    return trades;
-  });
-
   // ── Vue par jour ──────────────────────────────────────────────────────────
+  // Le filtrage (période/side/setup) est désormais fait côté serveur : on groupe
+  // simplement les trades renvoyés. « Charger plus » révèle des jours plus anciens
+  // dans le même filtre, sans changer les KPIs (qui viennent de l'agrégat backend).
 
   protected readonly tradesByDay = computed((): DayGroup[] => {
-    const trades = this.filteredTrades();
+    const trades = this.tradesStore.trades();
     if (!trades.length) return [];
 
     const groups = new Map<string, Trade[]>();
@@ -168,21 +188,20 @@ export class JournalComponent {
   });
 
   // ── Stats période ─────────────────────────────────────────────────────────
+  // KPIs issus de l'agrégat backend (ensemble filtré complet, hors pagination).
+  // Remappés sur les libellés du template ; null si aucun trade → état vide.
 
   protected readonly periodStats = computed(() => {
-    const trades = this.filteredTrades();
-    if (!trades.length) return null;
-    const totalCommissions = trades.reduce((s, t) => s + Math.abs(t.commission ?? 0), 0);
-    const pnlsNet  = trades.map(t => (t.pnl ?? 0) - Math.abs(t.commission ?? 0));
-    const totalPnlBrut = trades.reduce((s, t) => s + (t.pnl ?? 0), 0);
+    const s = this.tradesStore.stats();
+    if (!s || s.totalTrades === 0) return null;
     return {
-      count:            trades.length,
-      totalPnl:         pnlsNet.reduce((s, v) => s + v, 0),
-      totalPnlBrut,
-      totalCommissions,
-      winRate:          (trades.filter(t => (t.pnl ?? 0) > 0).length / trades.length) * 100,
-      bestTrade:        Math.max(...pnlsNet),
-      worstTrade:       Math.min(...pnlsNet),
+      count:            s.totalTrades,
+      totalPnl:         s.pnlNet,
+      totalPnlBrut:     s.pnlBrut,
+      totalCommissions: s.fees,
+      winRate:          s.winRate,
+      bestTrade:        s.bestTrade,
+      worstTrade:       s.worstTrade,
     };
   });
 
@@ -253,6 +272,7 @@ export class JournalComponent {
     obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res: { data: Trade }) => {
         if (edit) { this.tradesStore.updateTrade(res.data); } else { this.tradesStore.addTrade(res.data); }
+        this.refreshStats(); // KPIs recalculés côté serveur sur l'ensemble filtré
         this.closeModal();
         this.isSubmitting.set(false);
       },
@@ -267,7 +287,7 @@ export class JournalComponent {
   deleteTrade(id: string): void {
     this.http.delete(`${environment.apiUrl}/trades/${id}`)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: () => this.tradesStore.removeTrade(id) });
+      .subscribe({ next: () => { this.tradesStore.removeTrade(id); this.refreshStats(); } });
   }
 
   protected deleteDay(day: DayGroup): void {
@@ -278,6 +298,7 @@ export class JournalComponent {
       .subscribe({
         next: () => {
           ids.forEach(id => this.tradesStore.removeTrade(id));
+          this.refreshStats();
           this.isDeletingDay.set(false);
           this.confirmDeleteDay.set(null);
         },
@@ -301,11 +322,8 @@ export class JournalComponent {
         next: () => {
           this.isReassigning.set(false);
           this.reassignDay.set(null);
-          // Les trades changent de compte → recharger le journal du compte courant
-          // (en vue filtrée ils quittent la vue ; en « Tous » ils restent, à jour).
-          this.tradesStore.reset();
-          const accId = this.selectedAccount.accountParam();
-          this.tradesStore.loadTrades(accId ? { accountId: accId } : undefined);
+          // Les trades changent de compte → recharger liste + KPIs du filtre courant.
+          this.refreshJournal();
         },
         error: (err: HttpErrorResponse) => {
           this.reassignError.set(err.error?.message ?? 'Erreur lors du déplacement.');
@@ -318,8 +336,6 @@ export class JournalComponent {
 
   onImported(): void {
     this.showImport.set(false);
-    this.tradesStore.reset();
-    const accountId = this.selectedAccount.accountParam();
-    this.tradesStore.loadTrades(accountId ? { accountId } : undefined);
+    this.refreshJournal();
   }
 }
