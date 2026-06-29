@@ -25,6 +25,7 @@ import { TradeFiltersDto } from './dto/trade-filters.dto';
 import { INSTRUMENTS } from './instruments.const';
 import { MarketDataService } from './market-data.service';
 import { AccountsService } from '../accounts/accounts.service';
+import { SetupsService } from '../setups/setups.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('trades')
@@ -35,6 +36,7 @@ export class TradesController {
     private csvImportService: CsvImportService,
     private readonly marketData: MarketDataService,
     private readonly accounts: AccountsService,
+    private readonly setups: SetupsService,
   ) {}
 
   @Get('market-context')
@@ -90,7 +92,7 @@ export class TradesController {
   async importCSV(
     @CurrentUser() user: { id: string; plan: Plan; role: Role; trialEndsAt?: Date | null },
     @UploadedFile() file: Express.Multer.File,
-    @Body() body: { totalFees?: string },
+    @Body() body: { totalFees?: string; accountId?: string; emotion?: string; setupId?: string },
   ) {
     if (!file) throw new BadRequestException('Fichier manquant');
 
@@ -98,12 +100,19 @@ export class TradesController {
     const rawFees = body?.totalFees != null ? Math.abs(parseFloat(body.totalFees)) : NaN;
     const totalFees = Number.isFinite(rawFees) ? rawFees : undefined;
 
+    // Compte cible : valide l'ownership (gère 'all'/absent → pas de compte forcé,
+    // fallback backend). C'est le correctif du rattachement multi-compte.
+    const { accountId } = await this.accounts.accountWhere(user.id, body.accountId);
+    // Setup en lot : s'il est fourni, il doit appartenir au user et être actif.
+    if (body.setupId) await this.setups.assertOwnedActive(user.id, body.setupId);
+
     const parsed = await this.csvImportService.parseCSV(
       file.buffer,
       file.originalname,
       user.id,
       { plan: user.plan, role: user.role, trialEndsAt: user.trialEndsAt },
       totalFees,
+      { accountId, emotion: body.emotion, setupId: body.setupId },
     );
 
     // Déduplication à l'import : ne recrée pas un trade déjà présent (ré-essais, ré-imports).
@@ -185,6 +194,24 @@ export class TradesController {
   @Delete('duplicates')
   removeDuplicates(@CurrentUser() user: { id: string }) {
     return this.tradesService.removeDuplicates(user.id);
+  }
+
+  // Réaffecter un lot de trades (ex. une journée) à un autre compte.
+  @Patch('reassign')
+  async reassign(
+    @CurrentUser() user: { id: string },
+    @Body() body: { tradeIds: string[]; accountId: string },
+  ) {
+    if (!Array.isArray(body?.tradeIds) || body.tradeIds.length === 0) {
+      throw new BadRequestException('Aucun trade à déplacer.');
+    }
+    if (!body.accountId || body.accountId === 'all') {
+      throw new BadRequestException('Compte cible requis.');
+    }
+    // accountWhere rejette un compte non possédé (anti-IDOR) ; 'all'/vide déjà exclu.
+    const { accountId } = await this.accounts.accountWhere(user.id, body.accountId);
+    if (!accountId) throw new BadRequestException('Compte cible requis.');
+    return this.tradesService.reassignAccount(user.id, body.tradeIds, accountId);
   }
 
   @Get(':id')

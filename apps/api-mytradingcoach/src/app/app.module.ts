@@ -18,6 +18,7 @@ import { VpsModule } from '../modules/vps/vps.module';
 import { AdminModule } from '../modules/admin/admin.module';
 import { SessionModule } from '../modules/session/session.module';
 import { AccountsModule } from '../modules/accounts/accounts.module';
+import { SetupsModule } from '../modules/setups/setups.module';
 import { DailyRecapModule } from '../modules/daily-recap/daily-recap.module';
 import { EcoCalendarModule } from '../modules/eco-calendar/eco-calendar.module';
 import { AmbassadorModule } from '../modules/ambassador/ambassador.module';
@@ -70,6 +71,7 @@ import { AppController } from './app.controller';
     AdminModule,
     SessionModule,
     AccountsModule,
+    SetupsModule,
     DailyRecapModule,
     EcoCalendarModule,
     AmbassadorModule,

@@ -12,7 +12,7 @@ const trade = (over: Partial<SessionTrade> = {}): SessionTrade => ({
   takeProfit: 120,
   pnl: 10,
   emotion: 'CONFIDENT',
-  setup: 'BREAKOUT',
+  setup: { id: 's0', title: 'BREAKOUT', color: '#10b981' },
   riskReward: 2,
   tags: [],
   tradedAt: '2026-01-05T10:00:00Z',
@@ -72,9 +72,9 @@ describe('evaluateObjectiveCheck', () => {
 
   it('setup_only', () => {
     expect(
-      evaluateObjectiveCheck({ type: 'setup_only', params: { setups: ['BREAKOUT', 'PULLBACK'] } }, [trade({ setup: 'BREAKOUT' })], 0),
+      evaluateObjectiveCheck({ type: 'setup_only', params: { setups: ['BREAKOUT', 'PULLBACK'] } }, [trade({ setup: { id: 's1', title: 'BREAKOUT', color: '#10b981' } })], 0),
     ).toBe(true);
-    expect(evaluateObjectiveCheck({ type: 'setup_only', params: { setups: ['BREAKOUT'] } }, [trade({ setup: 'RANGE' })], 0)).toBe(false);
+    expect(evaluateObjectiveCheck({ type: 'setup_only', params: { setups: ['BREAKOUT'] } }, [trade({ setup: { id: 's2', title: 'RANGE', color: '#f59e0b' } })], 0)).toBe(false);
   });
 
   it('max_loss_trades', () => {

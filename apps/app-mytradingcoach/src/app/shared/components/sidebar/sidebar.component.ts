@@ -233,15 +233,15 @@ import { environment } from '../../../../environments/environment';
           </a>
 
           <a
-            routerLink="/settings"
+            routerLink="/profil"
             routerLinkActive="active"
             class="nav-item"
             data-testid="nav-settings"
-            [attr.title]="collapsed() ? 'Paramètres' : null"
+            [attr.title]="collapsed() ? 'Profil' : null"
             (click)="closeSidebar()"
           >
-            <span class="nav-icon">⚙️</span>
-            <span class="nav-label">Paramètres</span>
+            <span class="nav-icon">👤</span>
+            <span class="nav-label">Profil</span>
           </a>
 
           <button

@@ -1,4 +1,4 @@
-import { PrismaClient, TradeSide, EmotionState, SetupType, TradingSession, Plan } from '@prisma/client';
+import { PrismaClient, TradeSide, EmotionState, TradingSession, Plan } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import * as argon2 from 'argon2';
@@ -8,6 +8,30 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter } as ConstructorParameters<typeof PrismaClient>[0]);
 
 const USER_ID = 'cmo482e9h00009xz8nseczhcd';
+
+// Setups par défaut (alignés sur setups.defaults / migration) + map ancien enum → titre.
+const DEFAULT_SETUPS = [
+  { title: 'Breakout', color: '#10b981', description: "Cassure d'un niveau clé avec volume",   sortOrder: 0 },
+  { title: 'Pullback', color: '#3b82f6', description: 'Repli sur support/EMA puis reprise',     sortOrder: 1 },
+  { title: 'Range',    color: '#f59e0b', description: 'Trade entre support et résistance',      sortOrder: 2 },
+  { title: 'Reversal', color: '#ef4444', description: 'Retournement sur extrême + divergence',  sortOrder: 3 },
+  { title: 'Scalping', color: '#8b5cf6', description: 'Entrées rapides sur petits mouvements',  sortOrder: 4 },
+  { title: 'News',     color: '#60a5fa', description: 'Trade sur publication économique',       sortOrder: 5 },
+];
+const ENUM_TO_TITLE: Record<string, string> = {
+  BREAKOUT: 'Breakout', PULLBACK: 'Pullback', RANGE: 'Range',
+  REVERSAL: 'Reversal', SCALPING: 'Scalping', NEWS: 'News',
+};
+
+/** Crée les setups par défaut (si absents) et renvoie un map titre → id. */
+async function ensureSetups(userId: string): Promise<Map<string, string>> {
+  const count = await prisma.setup.count({ where: { userId } });
+  if (count === 0) {
+    await prisma.setup.createMany({ data: DEFAULT_SETUPS.map((d) => ({ userId, ...d })) });
+  }
+  const setups = await prisma.setup.findMany({ where: { userId }, select: { id: true, title: true } });
+  return new Map(setups.map((s) => [s.title, s.id]));
+}
 
 const trades = [
   // Mois -2 : 18 trades
@@ -70,6 +94,7 @@ async function main() {
   console.log(`Seeding 49 trades for user ${USER_ID}...`);
 
   await prisma.trade.deleteMany({ where: { userId: USER_ID } });
+  const setupIdByTitle = await ensureSetups(USER_ID);
 
   for (const t of trades) {
     const d = new Date();
@@ -86,7 +111,7 @@ async function main() {
         pnl:          t.pnl,
         riskReward:   t.rr,
         emotion:      t.emotion as EmotionState,
-        setup:        t.setup as SetupType,
+        setupId:      setupIdByTitle.get(ENUM_TO_TITLE[t.setup])!,
         session:      t.session as TradingSession,
         timeframe:    t.tf,
         tags:         t.tags,
@@ -100,7 +125,7 @@ async function main() {
   // ── Utilisateurs E2E ────────────────────────────────────────────────────
   const e2ePassword = await argon2.hash('TestPassword123!');
 
-  await prisma.user.upsert({
+  const freeE2e = await prisma.user.upsert({
     where: { email: 'free-e2e@test.com' },
     update: {},
     create: {
@@ -111,9 +136,10 @@ async function main() {
       onboardingCompleted: true,
     },
   });
+  await ensureSetups(freeE2e.id);
   console.log('✓ Utilisateur FREE créé : free-e2e@test.com');
 
-  await prisma.user.upsert({
+  const premiumE2e = await prisma.user.upsert({
     where: { email: 'premium-e2e@test.com' },
     update: {},
     create: {
@@ -124,6 +150,7 @@ async function main() {
       onboardingCompleted: true,
     },
   });
+  await ensureSetups(premiumE2e.id);
   console.log('✓ Utilisateur PREMIUM créé : premium-e2e@test.com');
 }
 

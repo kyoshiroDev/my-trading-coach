@@ -8,7 +8,7 @@ import {
   Max,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { EmotionState, SetupType, TradeSide } from '@prisma/client';
+import { EmotionState, TradeSide } from '@prisma/client';
 
 export class TradeFiltersDto {
   @IsString()
@@ -26,9 +26,9 @@ export class TradeFiltersDto {
   @IsOptional()
   side?: TradeSide;
 
-  @IsEnum(SetupType)
+  @IsString()
   @IsOptional()
-  setup?: SetupType;
+  setupId?: string;
 
   @IsEnum(EmotionState)
   @IsOptional()

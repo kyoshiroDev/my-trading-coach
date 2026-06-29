@@ -29,7 +29,7 @@ export class DailyRecapService {
         side: true,
         pnl: true,
         emotion: true,
-        setup: true,
+        setup: { select: { title: true } },
         session: true,
         timeframe: true,
         entry: true,
@@ -80,7 +80,7 @@ export class DailyRecapService {
           tradedAt: { gte: sevenDaysAgo, lt: startOfDay },
           pnl: { not: null },
         },
-        select: { asset: true, side: true, pnl: true, session: true, setup: true },
+        select: { asset: true, side: true, pnl: true, session: true },
       });
 
       const patternMap = new Map<string, { wins: number; total: number; pnl: number }>();
@@ -106,7 +106,8 @@ export class DailyRecapService {
       try {
         aiOneLiner = await this.ai.generateDailyOneLiner({
           userId,
-          trades,
+          // setup (relation) → titre string attendu par generateDailyOneLiner.
+          trades: trades.map((t) => ({ ...t, setup: t.setup?.title })),
           pnl,
           winRate,
           dominantEmotion: dominantEmotion ?? 'NEUTRAL',

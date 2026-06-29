@@ -10,7 +10,7 @@ import { environment } from '../../../environments/environment';
 
 const DTO: CreateTradeDto = {
   asset: 'BTC/USDT', side: 'LONG', emotion: 'NEUTRAL',
-  setup: 'BREAKOUT', session: 'NEW_YORK', timeframe: '5m',
+  setupId: 's1', session: 'NEW_YORK', timeframe: '5m',
 };
 const TRADE_RES = { data: { ...DTO, id: 't1', tags: [], tradedAt: '', createdAt: '' } };
 
@@ -32,7 +32,10 @@ function setup(accountParam: string | undefined) {
   // embarquée dans l'URL, donc on matche par préfixe).
   http.match((r) => r.method === 'GET' && r.url.startsWith(`${environment.apiUrl}/trades`))
     .forEach((r) => r.flush({ data: { data: [], nextCursor: null, hasNextPage: false } }));
-   
+  // Le store setups charge aussi au démarrage (GET /setups) → on l'absorbe.
+  http.match((r) => r.method === 'GET' && r.url.startsWith(`${environment.apiUrl}/setups`))
+    .forEach((r) => r.flush({ data: [] }));
+
   return { cmp: fixture.componentInstance as any, http };
 }
 

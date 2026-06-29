@@ -15,7 +15,7 @@ interface Trade {
   pnl: number | null;
   riskReward: number | null;
   emotion: string;
-  setup: string;
+  setupId: string;
   tradedAt: string;
 }
 
@@ -57,9 +57,9 @@ function computeScore(trades: Trade[]): ScoreBar[] {
     : 0;
   const riskScore = Math.min(100, avgRR * 33);
 
-  const setups = [...new Set(trades.map((t) => t.setup))];
+  const setups = [...new Set(trades.map((t) => t.setupId))];
   const setupWRs = setups.map((s) => {
-    const st = closed.filter((t) => t.setup === s);
+    const st = closed.filter((t) => t.setupId === s);
     return st.length
       ? st.filter((t) => (t.pnl ?? 0) > 0).length / st.length
       : 0;

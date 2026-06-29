@@ -6,10 +6,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
-import { LucideAngularModule, X, Pencil, Upload, ChevronDown, ChevronRight, Calendar, Trash2 } from 'lucide-angular';
+import { LucideAngularModule, X, Pencil, Upload, ChevronDown, ChevronRight, Calendar, Trash2, ArrowRightLeft } from 'lucide-angular';
 import { TradesStore, Trade } from '../../core/stores/trades.store';
 import { CreateTradeDto, TradesApi } from '../../core/api/trades.api';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
+import { SetupsStore } from '../../core/stores/setups.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { TradeFormComponent } from './trade-form.component';
 import { CsvImportComponent } from './csv-import.component';
@@ -18,8 +19,6 @@ import { environment } from '../../../environments/environment';
 
 type FilterSide = 'ALL' | 'LONG' | 'SHORT';
 type DatePreset = 'today' | 'week' | 'month' | 'custom' | 'all';
-
-const SETUPS = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS'];
 
 interface DayGroup {
   key: string;
@@ -50,8 +49,10 @@ export class JournalComponent {
   private readonly http          = inject(HttpClient);
   private readonly destroyRef    = inject(DestroyRef);
   private readonly selectedAccount = inject(SelectedAccountStore);
+  protected readonly setupsStore = inject(SetupsStore);
 
   constructor() {
+    this.setupsStore.load();
     // Recharge le journal au changement de compte (contexte global). 'all' → agrégé.
     effect(() => {
       const accountId = this.selectedAccount.accountParam(); // lit selectedAccountId (réactif)
@@ -59,7 +60,6 @@ export class JournalComponent {
     });
   }
 
-  protected readonly SETUPS = SETUPS;
   protected readonly XIcon            = X;
   protected readonly PencilIcon       = Pencil;
   protected readonly UploadIcon       = Upload;
@@ -67,6 +67,7 @@ export class JournalComponent {
   protected readonly ChevronRightIcon = ChevronRight;
   protected readonly CalendarIcon     = Calendar;
   protected readonly TrashIcon        = Trash2;
+  protected readonly ReassignIcon     = ArrowRightLeft;
 
   protected readonly showModal        = signal(false);
   protected readonly showImport       = signal(false);
@@ -75,6 +76,16 @@ export class JournalComponent {
   protected readonly selectedTrade    = signal<Trade | null>(null);
   protected readonly confirmDeleteDay = signal<DayGroup | null>(null);
   protected readonly isDeletingDay    = signal(false);
+  // Réaffectation d'une journée vers un autre compte.
+  protected readonly reassignDay      = signal<DayGroup | null>(null);
+  protected readonly isReassigning    = signal(false);
+  protected readonly reassignError    = signal<string | null>(null);
+  protected readonly activeAccounts   = computed(() => this.selectedAccount.activeAccounts());
+  protected readonly currentAccountId = computed(() => this.selectedAccount.selectedAccountId());
+  // Réaffectation utile seulement s'il existe un compte cible ≠ compte courant.
+  protected readonly canReassign      = computed(() =>
+    this.activeAccounts().some((a) => a.id !== this.currentAccountId()),
+  );
   protected readonly filterSide     = signal<FilterSide>('ALL');
   protected readonly filterSetup    = signal<string | null>(null);
   protected readonly collapsedDays  = signal<Set<string>>(new Set());
@@ -94,7 +105,7 @@ export class JournalComponent {
     const to     = this.dateTo();
 
     if (side !== 'ALL') trades = trades.filter(t => t.side === side);
-    if (setup)          trades = trades.filter(t => t.setup === setup);
+    if (setup)          trades = trades.filter(t => t.setupId === setup);
 
     const now   = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -271,6 +282,35 @@ export class JournalComponent {
           this.confirmDeleteDay.set(null);
         },
         error: () => this.isDeletingDay.set(false),
+      });
+  }
+
+  protected openReassign(day: DayGroup): void {
+    this.reassignError.set(null);
+    this.reassignDay.set(day);
+  }
+
+  protected reassignTo(day: DayGroup, accountId: string): void {
+    if (this.isReassigning()) return;
+    this.isReassigning.set(true);
+    this.reassignError.set(null);
+    const ids = day.trades.map((t) => t.id);
+    this.tradesApi.reassign(ids, accountId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.isReassigning.set(false);
+          this.reassignDay.set(null);
+          // Les trades changent de compte → recharger le journal du compte courant
+          // (en vue filtrée ils quittent la vue ; en « Tous » ils restent, à jour).
+          this.tradesStore.reset();
+          const accId = this.selectedAccount.accountParam();
+          this.tradesStore.loadTrades(accId ? { accountId: accId } : undefined);
+        },
+        error: (err: HttpErrorResponse) => {
+          this.reassignError.set(err.error?.message ?? 'Erreur lors du déplacement.');
+          this.isReassigning.set(false);
+        },
       });
   }
 
