@@ -364,8 +364,86 @@ describe('TradesService', () => {
     });
   });
 
+  describe('calculatePnl — P&L réalisé fourni prime sur le recalcul (fix MEXC ×contrat)', () => {
+    it('import MEXC : avec {entry, exit, quantity, pnl} fournis → garde le P&L réalisé, jamais points×contrats', async () => {
+      mockPrisma.trade.count.mockResolvedValue(0);
+      mockPrisma.trade.create.mockImplementation(({ data }) =>
+        Promise.resolve({ ...mockTrade, ...data }),
+      );
+
+      // Sample MEXC : BTCUSDT short, 200 contrats, realized PnL fichier = 5.136.
+      // Le recalcul fautif donnerait points×qty = (60750-60493.2)×200 = 51360.
+      const result = await service.create('user-123', {
+        asset: 'BTC/USDT',
+        side: TradeSide.SHORT,
+        entry: 60750,
+        exit: 60493.2,
+        quantity: 200,
+        pnl: 5.136,
+        emotion: EmotionState.NEUTRAL,
+        setupId: 'setup-1',
+        session: TradingSession.NEW_YORK,
+        timeframe: '5m',
+      }, Plan.FREE);
+
+      expect(result.pnl).toBe(5.136);
+      expect(result.pnl).not.toBe(51360);
+    });
+
+    it('édition d\'un trade MEXC importé (le form renvoie le pnl) → P&L inchangé, pas de recalcul ×contrat', async () => {
+      const existingTrade = {
+        ...mockTrade,
+        asset: 'BTC/USDT',
+        side: TradeSide.SHORT,
+        entry: 60750,
+        exit: 60493.2,
+        quantity: 200,
+        pnl: 5.136,
+        commission: 0,
+      };
+      mockPrisma.trade.findUnique.mockResolvedValue(existingTrade);
+      mockPrisma.trade.update.mockImplementation(({ data }) =>
+        Promise.resolve({ ...existingTrade, ...data }),
+      );
+
+      // Cas Nath : changer l'émotion ; le form resoumet le pnl existant → priceFieldsChanged = true.
+      const result = await service.update('user-123', 'trade-123', {
+        emotion: EmotionState.STRESSED,
+        pnl: 5.136,
+      });
+
+      // calculatePnl arrondit à 2 décimales (toFixed) → 5.14. Le point clé : PAS 51360.
+      expect(result.pnl).toBe(5.14);
+      expect(result.pnl).not.toBe(51360);
+    });
+
+    it('régression futures : le pnl fourni par le form (NQ) est stocké tel quel, comme avant le patch', async () => {
+      mockPrisma.trade.count.mockResolvedValue(0);
+      mockPrisma.trade.create.mockImplementation(({ data }) =>
+        Promise.resolve({ ...mockTrade, ...data }),
+      );
+
+      // NQ : le form calcule 10 ticks × $20 = 200 et envoie pnl=200.
+      // create stocke `dto.pnl ?? pnl` → 200 (inchangé avant/après le patch).
+      const result = await service.create('user-123', {
+        asset: 'NQ',
+        side: TradeSide.LONG,
+        entry: 20000,
+        exit: 20010,
+        quantity: 1,
+        pnl: 200,
+        emotion: EmotionState.CONFIDENT,
+        setupId: 'setup-1',
+        session: TradingSession.LONDON,
+        timeframe: '1m',
+      }, Plan.FREE);
+
+      expect(result.pnl).toBe(200);
+    });
+  });
+
   describe('update — recalcule P&L si prix changent', () => {
-    it('recalcule le P&L si exit est modifié', async () => {
+    it('applique le P&L recalculé par le form quand l\'exit change', async () => {
       const existingTrade = {
         ...mockTrade,
         asset: 'NQ',
@@ -379,11 +457,13 @@ describe('TradesService', () => {
         Promise.resolve({ ...existingTrade, ...data }),
       );
 
+      // Sur changement de prix, le form (recalculate) renvoie le nouveau pnl avec l'exit.
+      // NQ: 5 ticks × $20 = $100 → le backend respecte ce pnl fourni.
       const result = await service.update('user-123', 'trade-123', {
         exit: 20005,
+        pnl: 100,
       });
 
-      // NQ: 5 ticks × $20 = $100
       expect(result.pnl).toBe(100);
     });
 
