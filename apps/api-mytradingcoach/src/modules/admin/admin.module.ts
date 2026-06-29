@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
+import { AnthropicCostService } from './anthropic-cost.service';
 import { EmailCampaignService } from './email-campaign.service';
 import { MetricsSnapshotCron } from './metrics-snapshot.cron';
 import { DeletedAccountService } from './deleted-account.service';
@@ -16,6 +17,6 @@ import { VpsModule } from '../vps/vps.module';
 @Module({
   imports: [ResendModule, UsersModule, PrismaModule, DiscordModule, StripeModule, VpsModule],
   controllers: [AdminController],
-  providers: [AdminService, EmailCampaignService, MetricsSnapshotCron, DeletedAccountService, UserDetailService, DemoSeedService],
+  providers: [AdminService, AnthropicCostService, EmailCampaignService, MetricsSnapshotCron, DeletedAccountService, UserDetailService, DemoSeedService],
 })
 export class AdminModule {}

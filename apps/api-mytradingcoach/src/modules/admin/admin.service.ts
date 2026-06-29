@@ -3,6 +3,7 @@ import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { StripeService } from '../stripe/stripe.service';
+import { AnthropicCostService } from './anthropic-cost.service';
 
 @Injectable()
 export class AdminService {
@@ -10,139 +11,99 @@ export class AdminService {
     private readonly prisma: PrismaService,
     private readonly users: UsersService,
     private readonly stripe: StripeService,
+    private readonly anthropicCost: AnthropicCostService,
   ) {}
 
-  async getAiUsage() {
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - 7);
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    // Fenêtre des 30 derniers jours pour la série quotidienne + les ventilations.
-    const startOfWindow = new Date(startOfToday);
-    startOfWindow.setDate(startOfToday.getDate() - 30);
+  /**
+   * Usage IA sur 30 jours : coût RÉEL (Cost API, autoritatif) + attribution ESTIMÉE
+   * (AiUsageLog : feature + user, prod seulement) + ligne de réconciliation.
+   */
+  async getAiCost() {
+    const today = new Date();
+    // Fenêtre 30j en clés de jour UTC (cohérent avec les buckets de la Cost API).
+    const dayKeys: string[] = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - i));
+      dayKeys.push(d.toISOString().slice(0, 10));
+    }
+    const cutoff = dayKeys[0];
+    const start30 = new Date(today.getTime() - 30 * 86_400_000);
 
-    const [todayAgg, weekAgg, monthAgg, byFeatureRaw, byModelRaw, topUsersRaw] = await Promise.all([
-      // Totaux aujourd'hui — aggregate (pas de chargement en RAM)
-      this.prisma.aiUsageLog.aggregate({
-        where: { createdAt: { gte: startOfToday } },
-        _sum: { inputTokens: true, outputTokens: true, costUsd: true },
-        _count: true,
-      }),
-      // Totaux semaine — aggregate
-      this.prisma.aiUsageLog.aggregate({
-        where: { createdAt: { gte: startOfWeek } },
-        _sum: { inputTokens: true, outputTokens: true, costUsd: true },
-        _count: true,
-      }),
-      // Totaux mois-à-jour — le chiffre qui doit réconcilier avec la console Anthropic
-      this.prisma.aiUsageLog.aggregate({
-        where: { createdAt: { gte: startOfMonth } },
-        _sum: { inputTokens: true, outputTokens: true, costUsd: true },
-        _count: true,
-      }),
-      // Par feature — groupBy (PostgreSQL fait le calcul)
+    const [billedRows, attrAgg, byFeatureRaw, topUsersRaw] = await Promise.all([
+      // RÉEL — cache Cost API, borné aux 30 derniers jours.
+      this.prisma.anthropicCostDaily.findMany({ where: { date: { gte: cutoff } } }),
+      // ESTIMÉ — total attribué (logs prod).
+      this.prisma.aiUsageLog.aggregate({ where: { createdAt: { gte: start30 } }, _sum: { costUsd: true } }),
+      // ESTIMÉ — par feature.
       this.prisma.aiUsageLog.groupBy({
         by: ['feature'],
-        where: { createdAt: { gte: startOfWeek } },
-        _sum: { inputTokens: true, outputTokens: true, costUsd: true },
-        _count: true,
+        where: { createdAt: { gte: start30 } },
+        _sum: { costUsd: true },
       }),
-      // Par modèle — groupBy (ventilation Haiku vs Sonnet)
-      this.prisma.aiUsageLog.groupBy({
-        by: ['model'],
-        where: { createdAt: { gte: startOfWeek } },
-        _sum: { inputTokens: true, outputTokens: true, costUsd: true },
-        _count: true,
-      }),
-      // Top users — groupBy avec userId (exclure les jobs système : userId null)
+      // ESTIMÉ — top users (hors jobs système userId null), par coût.
       this.prisma.aiUsageLog.groupBy({
         by: ['userId'],
-        where: { createdAt: { gte: startOfWeek }, userId: { not: null } },
+        where: { createdAt: { gte: start30 }, userId: { not: null } },
         _sum: { inputTokens: true, outputTokens: true, costUsd: true },
-        orderBy: { _sum: { inputTokens: 'desc' } },
+        _count: true,
+        orderBy: { _sum: { costUsd: 'desc' } },
         take: 10,
       }),
     ]);
 
-    const today = {
-      inputTokens:  todayAgg._sum.inputTokens  ?? 0,
-      outputTokens: todayAgg._sum.outputTokens ?? 0,
-      costUsd:      todayAgg._sum.costUsd       ?? 0,
-      calls:        todayAgg._count,
-    };
-    const week = {
-      inputTokens:  weekAgg._sum.inputTokens  ?? 0,
-      outputTokens: weekAgg._sum.outputTokens ?? 0,
-      costUsd:      weekAgg._sum.costUsd       ?? 0,
-      calls:        weekAgg._count,
-    };
-    const month = {
-      inputTokens:  monthAgg._sum.inputTokens  ?? 0,
-      outputTokens: monthAgg._sum.outputTokens ?? 0,
-      costUsd:      monthAgg._sum.costUsd       ?? 0,
-      calls:        monthAgg._count,
+    // ── RÉEL (billed) ──
+    const billedByDay = new Map<string, number>(dayKeys.map((k) => [k, 0]));
+    const billedByModel = new Map<string, number>();
+    let billedTotal = 0;
+    let maxUpdatedAt: Date | null = null;
+    for (const row of billedRows) {
+      if (!billedByDay.has(row.date)) continue;
+      billedByDay.set(row.date, (billedByDay.get(row.date) ?? 0) + row.amountUsd);
+      billedByModel.set(row.model, (billedByModel.get(row.model) ?? 0) + row.amountUsd);
+      billedTotal += row.amountUsd;
+      if (!maxUpdatedAt || row.updatedAt > maxUpdatedAt) maxUpdatedAt = row.updatedAt;
+    }
+    const billed = {
+      total30d: billedTotal,
+      byModel: [...billedByModel.entries()]
+        .map(([model, costUsd]) => ({ model, costUsd, pct: billedTotal > 0 ? Math.round((costUsd / billedTotal) * 100) : 0 }))
+        .sort((a, b) => b.costUsd - a.costUsd),
+      daily: dayKeys.map((date) => ({ date, costUsd: billedByDay.get(date) ?? 0 })),
+      updatedAt: maxUpdatedAt ? maxUpdatedAt.toISOString() : null,
     };
 
-    const weekTotal = week.inputTokens + week.outputTokens;
-    const byFeature = byFeatureRaw.map(f => ({
-      feature: f.feature,
-      tokens:  (f._sum.inputTokens ?? 0) + (f._sum.outputTokens ?? 0),
-      cost:    f._sum.costUsd ?? 0,
-      pct:     weekTotal > 0 ? Math.round(((f._sum.inputTokens ?? 0) + (f._sum.outputTokens ?? 0)) / weekTotal * 100) : 0,
-    }));
+    // ── ESTIMÉ (attributed) ──
+    const attributedTotal = attrAgg._sum.costUsd ?? 0;
+    const byFeature = byFeatureRaw
+      .map((f) => ({
+        feature: f.feature,
+        cost: f._sum.costUsd ?? 0,
+        pct: attributedTotal > 0 ? Math.round(((f._sum.costUsd ?? 0) / attributedTotal) * 100) : 0,
+      }))
+      .sort((a, b) => b.cost - a.cost);
 
-    const byModel = byModelRaw.map(m => ({
-      model:  m.model,
-      tokens: (m._sum.inputTokens ?? 0) + (m._sum.outputTokens ?? 0),
-      cost:   m._sum.costUsd ?? 0,
-      pct:    weekTotal > 0 ? Math.round(((m._sum.inputTokens ?? 0) + (m._sum.outputTokens ?? 0)) / weekTotal * 100) : 0,
-    }));
-
-    // Enrichir avec email/name depuis users (userId non-null garanti par le where ci-dessus)
-    const userIds = topUsersRaw.map(u => u.userId).filter((id): id is string => id !== null);
+    const userIds = topUsersRaw.map((u) => u.userId).filter((id): id is string => id !== null);
     const users = await this.prisma.user.findMany({
       where: { id: { in: userIds } },
       select: { id: true, email: true, name: true },
     });
-    const userById = new Map(users.map(u => [u.id, u]));
+    const userById = new Map(users.map((u) => [u.id, u]));
     const topUsers = topUsersRaw
       .filter((u): u is typeof u & { userId: string } => u.userId !== null)
-      .map(u => ({
-        userId:  u.userId,
-        email:   userById.get(u.userId)?.email ?? '',
-        name:    userById.get(u.userId)?.name  ?? '',
-        tokens:  (u._sum.inputTokens ?? 0) + (u._sum.outputTokens ?? 0),
-        cost:    u._sum.costUsd ?? 0,
+      .map((u) => ({
+        userId: u.userId,
+        name: userById.get(u.userId)?.name ?? '',
+        email: userById.get(u.userId)?.email ?? '',
+        calls: u._count,
+        tokens: (u._sum.inputTokens ?? 0) + (u._sum.outputTokens ?? 0),
+        cost: u._sum.costUsd ?? 0,
       }));
 
-    // Série quotidienne du coût sur 30 jours (graphe « Coût quotidien (30j) »).
-    // On bucketise en JS par jour local pour rester cohérent avec startOfToday.
-    // Pas de filtre isDemo : aligné sur les autres agrégats ai-usage ci-dessus, pour que la
-    // somme quotidienne réconcilie avec les KPI de coût (le démo est lecture seule).
-    const windowLogs = await this.prisma.aiUsageLog.findMany({
-      where: { createdAt: { gte: startOfWindow } },
-      select: { createdAt: true, costUsd: true },
-    });
-    const dayKey = (d: Date) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    const dailyMap = new Map<string, number>();
-    for (let i = 29; i >= 0; i--) {
-      const d = new Date(startOfToday);
-      d.setDate(startOfToday.getDate() - i);
-      dailyMap.set(dayKey(d), 0);
-    }
-    for (const log of windowLogs) {
-      const key = dayKey(log.createdAt);
-      if (dailyMap.has(key)) dailyMap.set(key, (dailyMap.get(key) ?? 0) + log.costUsd);
-    }
-    const daily = [...dailyMap.entries()].map(([date, cost]) => ({ date, cost }));
-
-    // Date de déploiement explicite du logging IA complet (PROMPT-135). Surtout PAS
-    // dérivée de min(createdAt) : les logs user existaient avant, mais pas les traductions.
-    const trackingSince = process.env['AI_TRACKING_SINCE'] ?? null;
-
-    return { today, week, month, byFeature, byModel, topUsers, daily, trackingSince };
+    return {
+      billed,
+      attributed: { total30d: attributedTotal, byFeature, topUsers },
+      unattributed: Math.max(0, billedTotal - attributedTotal),
+    };
   }
 
   /**
