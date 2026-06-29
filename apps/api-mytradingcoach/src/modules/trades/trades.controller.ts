@@ -142,6 +142,16 @@ export class TradesController {
     return this.tradesService.findAll(user.id, filters);
   }
 
+  // KPIs agrégés sur l'ensemble filtré complet (hors pagination) — déclaré avant ':id'.
+  @Get('stats')
+  async stats(
+    @CurrentUser() user: { id: string },
+    @Query() filters: TradeFiltersDto,
+  ) {
+    await this.accounts.accountWhere(user.id, filters.accountId);
+    return this.tradesService.computeJournalStats(user.id, filters);
+  }
+
   @Get('user-assets')
   getUserAssets(@CurrentUser() user: { id: string }) {
     return this.tradesService.getUserAssets(user.id);

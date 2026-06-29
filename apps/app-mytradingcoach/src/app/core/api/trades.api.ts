@@ -95,6 +95,17 @@ export interface PaginatedTrades {
   };
 }
 
+/** KPIs du journal agrégés en base sur tout l'ensemble filtré (hors pagination). */
+export interface JournalStats {
+  totalTrades: number;
+  winRate: number;
+  pnlBrut: number;
+  fees: number;
+  pnlNet: number;
+  bestTrade: number;
+  worstTrade: number;
+}
+
 export interface UserAssetItem {
   symbol: string;
   label: string;
@@ -145,6 +156,15 @@ export class TradesApi {
         params = params.set(key, String(val));
     });
     return this.http.get<{ data: PaginatedTrades }>(this.base, { params });
+  }
+
+  /** KPIs du journal sur l'ensemble filtré complet (mêmes filtres que la liste, sans pagination). */
+  getStats(filters: Record<string, string> = {}): Observable<{ data: JournalStats }> {
+    let params = new HttpParams();
+    Object.entries(filters).forEach(([key, val]) => {
+      if (val !== undefined && val !== null && val !== '') params = params.set(key, String(val));
+    });
+    return this.http.get<{ data: JournalStats }>(`${this.base}/stats`, { params });
   }
 
   getById(id: string): Observable<{ data: Trade }> {
