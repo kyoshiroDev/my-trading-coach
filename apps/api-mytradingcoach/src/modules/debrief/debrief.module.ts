@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { DebriefController } from './debrief.controller';
+import { DebriefAdminController } from './debrief-admin.controller';
 import { DebriefService } from './debrief.service';
 import { DebriefCron } from './debrief.cron';
 import { DebriefProcessor } from './debrief.processor';
@@ -19,7 +20,7 @@ import { SessionModule } from '../session/session.module';
     PdfModule,
     SessionModule,
   ],
-  controllers: [DebriefController],
+  controllers: [DebriefController, DebriefAdminController],
   providers: [DebriefService, DebriefCron, DebriefProcessor],
 })
 export class DebriefModule {}
