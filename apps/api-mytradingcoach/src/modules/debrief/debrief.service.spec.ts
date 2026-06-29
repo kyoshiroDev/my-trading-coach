@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
+import { Role } from '@prisma/client';
 import { DebriefService } from './debrief.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
@@ -150,7 +151,66 @@ describe('DebriefService', () => {
 
       expect(mockAiService.generateDebrief).toHaveBeenCalledOnce();
       expect(mockPrisma.weeklyDebrief.upsert).toHaveBeenCalledOnce();
-      expect(result).toEqual(mockDebrief);
+      expect(result.debrief).toEqual(mockDebrief);
+      expect(result.created).toBe(true);
+    });
+
+    it('idempotent : débrief existant + pas de force → retourne l\'existant, zéro IA, zéro upsert', async () => {
+      mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(mockDebrief);
+
+      const result = await service.generate('user-123');
+
+      expect(result).toEqual({ debrief: mockDebrief, created: false });
+      expect(mockAiService.generateDebrief).not.toHaveBeenCalled();
+      expect(mockPrisma.weeklyDebrief.upsert).not.toHaveBeenCalled();
+    });
+
+    it('force=true : régénère même si existant (IA + upsert), created=true', async () => {
+      mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(mockDebrief);
+      mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
+      mockPrisma.weeklyDebrief.upsert.mockResolvedValue(mockDebrief);
+
+      const result = await service.generate('user-123', Role.USER, true, { force: true });
+
+      expect(mockAiService.generateDebrief).toHaveBeenCalledOnce();
+      expect(mockPrisma.weeklyDebrief.upsert).toHaveBeenCalledOnce();
+      expect(result.created).toBe(true);
+    });
+
+    it('refDate dans une semaine passée → cible (year, weekNumber) de cette semaine ISO', async () => {
+      mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(null);
+      mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
+      mockPrisma.weeklyDebrief.upsert.mockImplementation((args: { create: unknown }) =>
+        Promise.resolve(args.create),
+      );
+
+      // Mercredi 24 juin 2026 = semaine ISO 26.
+      await service.generate('user-123', Role.USER, true, { refDate: new Date('2026-06-24T12:00:00') });
+
+      const createArg = (mockPrisma.weeklyDebrief.upsert.mock.calls[0][0] as {
+        create: { weekNumber: number; year: number };
+      }).create;
+      expect(createArg.weekNumber).toBe(26);
+      expect(createArg.year).toBe(2026);
+      // L'idempotence a bien cherché la semaine ciblée.
+      expect(mockPrisma.weeklyDebrief.findUnique).toHaveBeenCalledWith({
+        where: { userId_weekNumber_year: { userId: 'user-123', weekNumber: 26, year: 2026 } },
+      });
+    });
+  });
+
+  describe('helpers de semaine', () => {
+    it('lastCompletedWeekRef → 7 jours avant, tombe dans la semaine précédente', () => {
+      const now = new Date('2026-06-29T08:00:00'); // lundi, semaine 27
+      const ref = service.lastCompletedWeekRef(now);
+      expect(ref.getTime()).toBe(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      expect(service.getWeekInfo(ref).weekNumber).toBe(26);
+    });
+
+    it('weekRefDate(2026, 26) → une date de la semaine ISO 26', () => {
+      const d = service.weekRefDate(2026, 26);
+      expect(service.getWeekInfo(d).weekNumber).toBe(26);
+      expect(service.getWeekInfo(d).year).toBe(2026);
     });
 
     it('par compte : UN SEUL appel IA, stats backend + analyse IA fusionnées', async () => {

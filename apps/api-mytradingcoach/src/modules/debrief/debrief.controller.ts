@@ -62,9 +62,12 @@ export class DebriefController {
     return this.debriefService.getByWeek(user.id, year, weekNumber);
   }
 
+  // Bouton manuel : rafraîchit le débrief de la semaine COURANTE (force) ; n'envoie pas d'email
+  // (seul le processor envoie le mail). Renvoie le débrief, pas l'enveloppe { debrief, created }.
   @Post('generate')
-  generate(@CurrentUser() user: { id: string; role: Role }) {
-    return this.debriefService.generate(user.id, user.role);
+  async generate(@CurrentUser() user: { id: string; role: Role }) {
+    const { debrief } = await this.debriefService.generate(user.id, user.role, false, { force: true });
+    return debrief;
   }
 
   @Patch(':debriefId/objectives/:index/note')

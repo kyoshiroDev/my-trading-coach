@@ -49,6 +49,9 @@ describe('JournalComponent — trade créé sur le compte sélectionné', () => 
     const req = http.expectOne(`${environment.apiUrl}/trades`);
     expect(req.request.body.accountId).toBe('acc1');
     req.flush(TRADE_RES);
+    // submitTrade rafraîchit les KPIs → GET /trades/stats à absorber.
+    http.match((r) => r.url.startsWith(`${environment.apiUrl}/trades/stats`))
+      .forEach((r) => r.flush({ data: { totalTrades: 0, winRate: 0, pnlBrut: 0, fees: 0, pnlNet: 0, bestTrade: 0, worstTrade: 0 } }));
   });
 
   it('« Tous les comptes » → POST /trades sans accountId (fallback backend)', () => {
@@ -57,5 +60,8 @@ describe('JournalComponent — trade créé sur le compte sélectionné', () => 
     const req = http.expectOne(`${environment.apiUrl}/trades`);
     expect(req.request.body.accountId).toBeUndefined();
     req.flush(TRADE_RES);
+    // submitTrade rafraîchit les KPIs → GET /trades/stats à absorber.
+    http.match((r) => r.url.startsWith(`${environment.apiUrl}/trades/stats`))
+      .forEach((r) => r.flush({ data: { totalTrades: 0, winRate: 0, pnlBrut: 0, fees: 0, pnlNet: 0, bestTrade: 0, worstTrade: 0 } }));
   });
 });

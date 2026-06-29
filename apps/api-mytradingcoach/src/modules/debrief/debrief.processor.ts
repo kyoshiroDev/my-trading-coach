@@ -17,8 +17,8 @@ export class DebriefProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<{ userId: string }>) {
-    const { userId } = job.data;
+  async process(job: Job<{ userId: string; refDate?: string; force?: boolean }>) {
+    const { userId, refDate, force } = job.data;
     this.logger.log(`Processing debrief for user ${userId}`);
 
     const user = await this.prisma.user.findUnique({
@@ -31,9 +31,13 @@ export class DebriefProcessor extends WorkerHost {
       return;
     }
 
-    const debrief = await this.debriefService.generateForUser(userId);
+    const { debrief, created } = await this.debriefService.generateForUser(userId, {
+      refDate: refDate ? new Date(refDate) : undefined,
+      force,
+    });
 
-    if (user.notificationsEmail) {
+    // Mail uniquement si le débrief vient d'être créé/régénéré (idempotence : pas de 2e email).
+    if (created && user.notificationsEmail) {
       const stats = debrief.stats as {
         winRate?: number;
         totalPnl?: number;
@@ -49,6 +53,6 @@ export class DebriefProcessor extends WorkerHost {
       });
     }
 
-    this.logger.log(`Debrief generated for user ${userId}`);
+    this.logger.log(`Debrief ${created ? 'generated' : 'already present (skipped)'} for user ${userId}`);
   }
 }

@@ -8,6 +8,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { TradesApi, JournalStats } from '../api/trades.api';
 
 export interface Trade {
   id: string;
@@ -42,6 +43,7 @@ interface TradesPage {
 @Injectable({ providedIn: 'root' })
 export class TradesStore {
   private readonly http = inject(HttpClient);
+  private readonly tradesApi = inject(TradesApi);
   private readonly destroyRef = inject(DestroyRef);
   private readonly baseUrl = `${environment.apiUrl}/trades`;
 
@@ -51,6 +53,10 @@ export class TradesStore {
   readonly error = signal<string | null>(null);
   readonly nextCursor = signal<string | null>(null);
   readonly hasNextPage = signal(false);
+
+  // KPIs du journal agrégés côté serveur (stables, indépendants de la pagination).
+  readonly stats = signal<JournalStats | null>(null);
+  readonly isLoadingStats = signal(false);
 
   readonly monthlyCount  = signal<number>(0);
   readonly monthlyLimit  = signal<number>(30);
@@ -121,6 +127,18 @@ export class TradesStore {
           this.error.set(err.message);
           this.isLoadingMore.set(false);
         },
+      });
+  }
+
+  // Charge les KPIs agrégés sur l'ensemble filtré complet (mêmes filtres que loadTrades).
+  loadStats(filters?: Record<string, string>) {
+    this.isLoadingStats.set(true);
+    this.tradesApi
+      .getStats(filters ?? {})
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => { this.stats.set(res.data); this.isLoadingStats.set(false); },
+        error: () => { this.isLoadingStats.set(false); },
       });
   }
 

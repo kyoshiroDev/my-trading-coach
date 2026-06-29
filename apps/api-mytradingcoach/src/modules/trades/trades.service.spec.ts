@@ -685,4 +685,51 @@ describe('TradesService', () => {
       expect(mockAnalytics.invalidateUserCache).toHaveBeenCalledWith('user-1');
     });
   });
+
+  describe('computeJournalStats', () => {
+    it('agrège count/winRate/pnlBrut/fees/pnlNet/best/worst sur tout l\'ensemble', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue([
+        { pnl: 100, commission: 5 },   // net 95, gagnant
+        { pnl: -50, commission: 2 },   // net -52, perdant
+        { pnl: 200, commission: 0 },   // net 200, gagnant
+      ]);
+
+      const r = await service.computeJournalStats('user-123', {});
+
+      expect(r.totalTrades).toBe(3);
+      expect(r.pnlBrut).toBe(250);
+      expect(r.fees).toBe(7);
+      expect(r.pnlNet).toBe(243);
+      expect(r.winRate).toBeCloseTo((2 / 3) * 100);
+      expect(r.bestTrade).toBe(200);
+      expect(r.worstTrade).toBe(-52);
+    });
+
+    it('ensemble vide → tout à 0 (pas de best/worst aberrant)', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue([]);
+
+      const r = await service.computeJournalStats('user-123', {});
+
+      expect(r).toEqual({ totalTrades: 0, winRate: 0, pnlBrut: 0, fees: 0, pnlNet: 0, bestTrade: 0, worstTrade: 0 });
+    });
+
+    it('répercute les filtres (date/side/setup) + ne sélectionne que pnl/commission', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue([]);
+
+      await service.computeJournalStats('user-123', {
+        dateFrom: '2026-06-01T00:00:00.000Z',
+        dateTo: '2026-06-30T23:59:59.000Z',
+        side: TradeSide.LONG,
+        setupId: 'setup-1',
+      });
+
+      const arg = mockPrisma.trade.findMany.mock.calls[0][0];
+      expect(arg.where.userId).toBe('user-123');
+      expect(arg.where.side).toBe(TradeSide.LONG);
+      expect(arg.where.setupId).toBe('setup-1');
+      expect(arg.where.tradedAt.gte).toEqual(new Date('2026-06-01T00:00:00.000Z'));
+      expect(arg.where.tradedAt.lte).toEqual(new Date('2026-06-30T23:59:59.000Z'));
+      expect(arg.select).toEqual({ pnl: true, commission: true });
+    });
+  });
 });

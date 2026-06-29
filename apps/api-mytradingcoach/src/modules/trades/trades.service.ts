@@ -25,6 +25,17 @@ export interface UserAssetItem {
   isFavorite: boolean;
 }
 
+/** KPIs du journal agrégés sur l'ensemble filtré complet (hors pagination). */
+export interface JournalStats {
+  totalTrades: number;
+  winRate: number;
+  pnlBrut: number;
+  fees: number;
+  pnlNet: number;
+  bestTrade: number;
+  worstTrade: number;
+}
+
 @Injectable()
 export class TradesService {
   constructor(
@@ -204,27 +215,78 @@ export class TradesService {
     return { removed: toDelete.length, kept: seen.size };
   }
 
-  async findAll(userId: string, filters: TradeFiltersDto) {
-    const {
-      cursor,
-      limit = 20,
-      side,
-      setupId,
-      emotion,
-      dateFrom,
-      dateTo,
-      accountId,
-    } = filters;
+  /**
+   * Construit le `where` Prisma commun à la liste et aux stats (même filtres → mêmes résultats).
+   * Factorisé pour que la liste paginée et l'agrégat de stats ne divergent jamais.
+   */
+  private buildTradeWhere(
+    userId: string,
+    f: Pick<TradeFiltersDto, 'accountId' | 'side' | 'setupId' | 'emotion' | 'dateFrom' | 'dateTo'>,
+  ): Prisma.TradeWhereInput {
     const where: Prisma.TradeWhereInput = { userId };
-    if (accountId && accountId !== 'all') where.accountId = accountId;
-    if (side) where.side = side;
-    if (setupId) where.setupId = setupId;
-    if (emotion) where.emotion = emotion;
-    if (dateFrom || dateTo) {
+    if (f.accountId && f.accountId !== 'all') where.accountId = f.accountId;
+    if (f.side) where.side = f.side;
+    if (f.setupId) where.setupId = f.setupId;
+    if (f.emotion) where.emotion = f.emotion;
+    if (f.dateFrom || f.dateTo) {
       where.tradedAt = {};
-      if (dateFrom) where.tradedAt.gte = new Date(dateFrom);
-      if (dateTo) where.tradedAt.lte = new Date(dateTo);
+      if (f.dateFrom) where.tradedAt.gte = new Date(f.dateFrom);
+      if (f.dateTo) where.tradedAt.lte = new Date(f.dateTo);
     }
+    return where;
+  }
+
+  /**
+   * KPIs du journal calculés en base sur TOUT l'ensemble filtré (hors pagination).
+   * Évite que les stats changent quand le front charge plus de trades.
+   */
+  async computeJournalStats(
+    userId: string,
+    filters: TradeFiltersDto,
+  ): Promise<JournalStats> {
+    // Ownership du compte validé au niveau contrôleur (accountWhere), comme findAll.
+    const where = this.buildTradeWhere(userId, filters);
+
+    const trades = await this.prisma.trade.findMany({
+      where,
+      select: { pnl: true, commission: true },
+    });
+
+    const totalTrades = trades.length;
+    if (totalTrades === 0) {
+      return { totalTrades: 0, winRate: 0, pnlBrut: 0, fees: 0, pnlNet: 0, bestTrade: 0, worstTrade: 0 };
+    }
+
+    let pnlBrut = 0;
+    let fees = 0;
+    let wins = 0;
+    let bestTrade = -Infinity;
+    let worstTrade = Infinity;
+    for (const t of trades) {
+      const pnl = t.pnl ?? 0;
+      const fee = Math.abs(t.commission ?? 0);
+      pnlBrut += pnl;
+      fees += fee;
+      if (pnl > 0) wins++; // même définition « gagnant » que le reste de l'app
+      const net = pnl - fee;
+      if (net > bestTrade) bestTrade = net;
+      if (net < worstTrade) worstTrade = net;
+    }
+
+    return {
+      totalTrades,
+      winRate: (wins / totalTrades) * 100,
+      pnlBrut,
+      fees,
+      pnlNet: pnlBrut - fees,
+      bestTrade,
+      worstTrade,
+    };
+  }
+
+  async findAll(userId: string, filters: TradeFiltersDto) {
+    const { cursor, limit = 20 } = filters;
+    const where = this.buildTradeWhere(userId, filters);
 
     const trades = await this.prisma.trade.findMany({
       take: limit + 1,
