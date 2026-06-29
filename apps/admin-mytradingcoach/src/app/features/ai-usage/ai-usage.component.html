@@ -1,6 +1,9 @@
 <div class="screen">
   <div class="page-head">
-    <div class="page-title">Usage IA</div>
+    <div>
+      <div class="page-title">Usage IA</div>
+      <div class="page-note">{{ trackingNote() }} · les coûts antérieurs ne sont pas enregistrés</div>
+    </div>
     <span class="page-meta">claude-sonnet · claude-haiku</span>
   </div>
 
@@ -17,40 +20,29 @@
       <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Coût USD (7j)</div><div class="kpi-value amber">${{ d.week.costUsd | number:'1.2-2' }}</div><div class="kpi-sub">${{ d.today.costUsd | number:'1.4-4' }} aujourd'hui</div></div>
     </div>
 
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-head"><span class="card-label">Coût par feature (7j)</span></div>
-        <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="featureConfig()" /></div></div>
-      </div>
-      <div class="card">
-        <div class="card-head"><span class="card-label">Coût quotidien (30j)</span></div>
-        <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="dailyConfig()" /></div></div>
-      </div>
+    <div class="card">
+      <div class="card-head"><span class="card-label">Coût quotidien (30j)</span><span class="card-hint">USD / jour</span></div>
+      <div class="card-body"><div class="chart-box short"><mtc-admin-chart [config]="dailyConfig()" /></div></div>
     </div>
 
     <div class="grid-2">
       <div class="card">
-        <div class="card-head"><span class="card-label">Coût par modèle (7j)</span></div>
-        <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="modelConfig()" /></div></div>
-      </div>
-      <div class="card">
-        <div class="card-head"><span class="card-label">Détail par modèle</span></div>
+        <div class="card-head"><span class="card-label">Par modèle (7j)</span><span class="card-hint">${{ d.week.costUsd | number:'1.2-2' }}</span></div>
         <div class="card-body slim">
           @for (m of d.byModel; track m.model) {
             <div class="feat-row">
-              <span class="feat-name">{{ modelLabel(m.model) }}</span>
-              <div class="feat-track"><div class="feat-fill" [style.width.%]="m.pct"></div></div>
+              <span class="feat-name">
+                <span class="feat-dot" [style.background]="modelClass(m.model) === 'haiku' ? 'var(--blue)' : 'var(--teal)'"></span>{{ modelLabel(m.model) }}
+              </span>
+              <div class="feat-track"><div class="feat-fill" [class.haiku]="modelClass(m.model) === 'haiku'" [style.width.%]="m.pct"></div></div>
               <span class="feat-pct">{{ m.pct }}%</span>
               <span class="feat-cost">{{ m.cost | number:'1.3-3' }} USD</span>
             </div>
           } @empty { <div class="empty">Aucun appel IA sur 7 jours</div> }
         </div>
       </div>
-    </div>
-
-    <div class="grid-2">
       <div class="card">
-        <div class="card-head"><span class="card-label">Détail par feature</span></div>
+        <div class="card-head"><span class="card-label">Par feature (7j)</span><span class="card-hint">${{ d.week.costUsd | number:'1.2-2' }}</span></div>
         <div class="card-body slim">
           @for (f of d.byFeature; track f.feature) {
             <div class="feat-row">
@@ -62,21 +54,22 @@
           } @empty { <div class="empty">Aucun appel IA sur 7 jours</div> }
         </div>
       </div>
-      <div class="card">
-        <div class="card-head"><span class="card-label">Top utilisateurs (7j)</span></div>
-        <table class="tbl">
-          <thead><tr><th>Utilisateur</th><th class="num">Tokens</th><th class="num">Coût</th></tr></thead>
-          <tbody>
-            @for (u of d.topUsers; track u.userId) {
-              <tr>
-                <td data-label="Utilisateur" class="u-name">{{ u.name || u.email }}</td>
-                <td data-label="Tokens" class="td-mono num">{{ u.tokens | number }}</td>
-                <td data-label="Coût" class="td-mono num cost">{{ u.cost | number:'1.3-3' }} USD</td>
-              </tr>
-            } @empty { <tr><td colspan="3" class="empty">Aucun utilisateur</td></tr> }
-          </tbody>
-        </table>
-      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-label">Top utilisateurs (7j)</span></div>
+      <table class="tbl">
+        <thead><tr><th>Utilisateur</th><th class="num">Tokens</th><th class="num">Coût</th></tr></thead>
+        <tbody>
+          @for (u of d.topUsers; track u.userId) {
+            <tr>
+              <td data-label="Utilisateur" class="u-name">{{ u.name || u.email }}</td>
+              <td data-label="Tokens" class="td-mono num">{{ u.tokens | number }}</td>
+              <td data-label="Coût" class="td-mono num cost">{{ u.cost | number:'1.3-3' }} USD</td>
+            </tr>
+          } @empty { <tr><td colspan="3" class="empty">Aucun utilisateur</td></tr> }
+        </tbody>
+      </table>
     </div>
   }
 </div>

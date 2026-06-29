@@ -75,6 +75,7 @@ export interface AiUsageData {
   byModel:   { model: string;   tokens: number; cost: number; pct: number }[];
   topUsers:  { userId: string; email: string; name: string; tokens: number; cost: number }[];
   daily:     { date: string; cost: number }[];
+  trackingSince: string | null;
 }
 
 export interface SubscriptionsData {

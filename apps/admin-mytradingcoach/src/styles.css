@@ -127,11 +127,14 @@ router-outlet { display: none; }
 .page-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .page-title { font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
 .page-meta { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+.page-note { font-family: var(--mono); font-size: 10.5px; color: var(--text3); margin-top: 4px; }
+.page-note b { color: var(--text2); font-weight: 500; }
 .refresh-tag { font-family: var(--mono); font-size: 10px; color: var(--text3); display: inline-flex; gap: 6px; align-items: center; }
 
 .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); }
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--border); }
 .card-label { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--text2); font-weight: 500; }
+.card-hint { font-family: var(--mono); font-size: 10px; color: var(--text3); }
 .card-body { padding: 18px; }
 .card-action { font-family: var(--mono); font-size: 11px; color: var(--teal); cursor: pointer; display: inline-flex; gap: 6px; align-items: center; background: none; border: none; padding: 0; }
 .card-action:hover { text-decoration: underline; }
@@ -182,6 +185,7 @@ router-outlet { display: none; }
 
 .chart-box { height: 240px; position: relative; }
 .chart-box.tall { height: 300px; }
+.chart-box.short { height: 148px; }
 
 /* gauges barres */
 .gauge { display: flex; align-items: center; gap: 14px; padding: 11px 0; }
@@ -270,6 +274,8 @@ router-outlet { display: none; }
 .feat-name { font-family: var(--mono); font-size: 11.5px; color: var(--text); }
 .feat-track { height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
 .feat-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--teal), #00a88a); }
+.feat-fill.haiku { background: linear-gradient(90deg, var(--blue), #2f6fd6); }
+.feat-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; display: inline-block; margin-right: 8px; }
 .feat-pct { font-family: var(--mono); font-size: 11px; color: var(--text2); text-align: right; }
 .feat-cost { font-family: var(--mono); font-size: 11px; color: var(--amber); text-align: right; }
 
