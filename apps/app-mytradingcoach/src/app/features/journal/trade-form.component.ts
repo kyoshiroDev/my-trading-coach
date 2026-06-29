@@ -7,6 +7,7 @@ import {
   input,
   output,
   signal,
+  untracked,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe, TitleCasePipe } from '@angular/common';
@@ -21,6 +22,7 @@ import {
   TradesApi,
 } from '../../core/api/trades.api';
 import { CreateTradeSchema } from '../../core/schemas/trade.schema';
+import { SetupsStore } from '../../core/stores/setups.store';
 
 const EMOTIONS: Trade['emotion'][] = [
   'CONFIDENT',
@@ -29,14 +31,6 @@ const EMOTIONS: Trade['emotion'][] = [
   'STRESSED',
   'FEAR',
   'REVENGE',
-];
-const SETUPS: Trade['setup'][] = [
-  'BREAKOUT',
-  'PULLBACK',
-  'RANGE',
-  'REVERSAL',
-  'SCALPING',
-  'NEWS',
 ];
 const SESSIONS: Trade['session'][] = ['LONDON', 'NEW_YORK', 'ASIAN'];
 const TIMEFRAMES = ['1m', '5m', '15m', '30m', '1h', '4h', '1D', '1W'];
@@ -77,7 +71,16 @@ export class TradeFormComponent {
 
   protected readonly XIcon = X;
   protected readonly EMOTIONS = EMOTIONS;
-  protected readonly SETUPS = SETUPS;
+  protected readonly setupsStore = inject(SetupsStore);
+  // Setups proposés : actifs du user + (en édition) le setup archivé du trade pour ne pas le perdre.
+  protected readonly setupOptions = computed<{ id: string; title: string; color: string }[]>(() => {
+    const opts = this.setupsStore.active().map((s) => ({ id: s.id, title: s.title, color: s.color }));
+    const t = this.editTrade();
+    if (t?.setup && !opts.some((o) => o.id === t.setupId)) {
+      opts.push({ id: t.setup.id, title: t.setup.title, color: t.setup.color });
+    }
+    return opts;
+  });
   protected readonly SESSIONS = SESSIONS;
   protected readonly TIMEFRAMES = TIMEFRAMES;
   protected readonly EMOTION_EMOJIS = EMOTION_EMOJIS;
@@ -167,6 +170,19 @@ export class TradeFormComponent {
   // ──────────────────────────────────────────────────────────────────────────
 
   constructor() {
+    this.setupsStore.load();
+
+    // Quand les setups arrivent après l'ouverture (création, champ vide) → défaut.
+    effect(() => {
+      const first = this.setupsStore.active()[0];
+      if (!first) return;
+      untracked(() => {
+        if (!this.editTrade() && !this.form().setupId) {
+          this.form.update((f) => ({ ...f, setupId: first.id }));
+        }
+      });
+    });
+
     effect(() => {
       this.open();
       const t = this.editTrade();
@@ -190,7 +206,7 @@ export class TradeFormComponent {
           quantity: t.quantity ?? 1,
           capitalEngaged: t.capitalEngaged ?? undefined,
           emotion: t.emotion as CreateTradeDto['emotion'],
-          setup: t.setup as CreateTradeDto['setup'],
+          setupId: t.setupId,
           session: t.session as CreateTradeDto['session'],
           timeframe: t.timeframe,
           notes: t.notes ?? undefined,
@@ -416,7 +432,7 @@ export class TradeFormComponent {
     return {
       side: 'LONG' as const,
       emotion: 'FOCUSED' as const,
-      setup: 'BREAKOUT' as const,
+      setupId: this.setupsStore.active()[0]?.id ?? '',
       session: 'LONDON' as const,
       timeframe: '1h',
       quantity: 1,

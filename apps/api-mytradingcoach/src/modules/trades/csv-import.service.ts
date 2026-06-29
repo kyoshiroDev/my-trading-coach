@@ -1,9 +1,10 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { Plan, Role } from '@prisma/client';
+import { Plan, Role, EmotionState } from '@prisma/client';
 import * as XLSX from 'xlsx';
 import type { CreateTradeDto } from './dto/create-trade.dto';
 import { AnthropicClientService } from '../shared/anthropic-client.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { SetupsService } from '../setups/setups.service';
 
 const MODEL = 'claude-sonnet-4-6';
 
@@ -61,6 +62,7 @@ export class CsvImportService {
   constructor(
     private readonly anthropicClient: AnthropicClientService,
     private readonly prisma: PrismaService,
+    private readonly setups: SetupsService,
   ) {}
 
   async parseCSV(
@@ -69,6 +71,7 @@ export class CsvImportService {
     userId?: string,
     access?: AiImportAccess,
     totalFees?: number,
+    defaults?: { accountId?: string; emotion?: string; setupId?: string },
   ): Promise<Partial<CreateTradeDto>[]> {
     // 1. Obtenir du texte CSV (Excel converti localement, sinon UTF-8)
     const content = this.toCsvText(buffer, filename);
@@ -125,7 +128,29 @@ export class CsvImportService {
       }
     }
 
+    // Defaults appliqués à TOUT le lot : compte cible, émotion, setup.
+    // - accountId : le compte choisi (validé en amont) → create() le résout ; sinon
+    //   fallback backend existant (session active / compte par défaut).
+    // - emotion : choix unique, sinon NEUTRAL (pas de régression). Valeur invalide → NEUTRAL.
+    // - setupId : choix unique, sinon le setup par défaut du user (sortOrder le plus bas).
+    const batchEmotion = this.normalizeEmotion(defaults?.emotion);
+    const setupId =
+      defaults?.setupId ?? (userId ? await this.setups.getDefaultSetupId(userId) : null);
+    for (const d of dtos) {
+      if (defaults?.accountId) d.accountId = defaults.accountId;
+      d.emotion = batchEmotion;
+      if (setupId) d.setupId = setupId;
+    }
+
     return dtos;
+  }
+
+  /** Valide une émotion contre l'enum Prisma ; valeur absente/invalide → NEUTRAL. */
+  private normalizeEmotion(value?: string): EmotionState {
+    const allowed = Object.values(EmotionState) as string[];
+    return value && allowed.includes(value)
+      ? (value as EmotionState)
+      : EmotionState.NEUTRAL;
   }
 
   /**
@@ -805,7 +830,7 @@ ${csv}`;
         pnl: t.pnl,
         commission: t.commission ?? undefined,
         emotion: 'NEUTRAL' as const,
-        setup: 'BREAKOUT' as const,
+        // setupId affecté en aval (parseCSV) : setup par défaut du user, ou fourni par l'import (PROMPT-138).
         session: this.detectSession(t.tradedAt),
         timeframe: '1h',
         tradedAt: t.tradedAt,
@@ -872,7 +897,7 @@ ${csv}`;
         pnl: isFinite(pnl) ? pnl : 0,
         commission: isFinite(commission) ? Math.abs(commission) : undefined,
         emotion: 'NEUTRAL' as const,
-        setup: 'BREAKOUT' as const,
+        // setupId affecté en aval (parseCSV) : setup par défaut du user, ou fourni par l'import (PROMPT-138).
         session: this.detectSession(tradedAt),
         timeframe: '1h',
         tradedAt: tradedAt || new Date().toISOString(),

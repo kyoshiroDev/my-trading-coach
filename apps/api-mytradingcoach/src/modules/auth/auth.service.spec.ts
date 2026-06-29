@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
+import { SetupsService } from '../setups/setups.service';
 
 // Mock argon2 globally for all tests
 vi.mock('argon2', () => ({
@@ -78,6 +79,7 @@ describe('AuthService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: JwtService, useValue: mockJwt },
         { provide: ResendService, useValue: mockResend },
+        { provide: SetupsService, useValue: { seedDefaults: vi.fn().mockResolvedValue(true) } },
       ],
     }).compile();
 

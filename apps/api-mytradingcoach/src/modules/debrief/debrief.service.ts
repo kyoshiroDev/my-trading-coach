@@ -124,19 +124,21 @@ export class DebriefService {
     const now = new Date();
     const { weekNumber, year, startDate, endDate } = this.getWeekInfo(now);
 
-    const trades = await this.prisma.trade.findMany({
-      where: { userId, tradedAt: { gte: startDate, lte: endDate } },
-      select: {
-        asset: true,
-        side: true,
-        pnl: true,
-        emotion: true,
-        setup: true,
-        session: true,
-        tradedAt: true,
-        accountId: true,
-      },
-    });
+    const trades = (
+      await this.prisma.trade.findMany({
+        where: { userId, tradedAt: { gte: startDate, lte: endDate } },
+        select: {
+          asset: true,
+          side: true,
+          pnl: true,
+          emotion: true,
+          setup: { select: { title: true } },
+          session: true,
+          tradedAt: true,
+          accountId: true,
+        },
+      })
+    ).map((t) => ({ ...t, setup: t.setup?.title ?? null }));
 
     // Comptes non archivés (avec leurs règles prop firm) pour l'analyse par compte.
     const accounts = await this.prisma.tradingAccount.findMany({

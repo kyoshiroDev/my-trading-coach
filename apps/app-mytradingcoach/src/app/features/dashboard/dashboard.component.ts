@@ -38,7 +38,6 @@ import {
   EmotionLabelPipe,
   PnlColorPipe,
   PnlFormatPipe,
-  SetupColorPipe,
 } from '../../shared/pipes';
 import { EMOTION_COLORS } from '../../shared/pipes/emotion-color.pipe';
 import { environment } from '../../../environments/environment';
@@ -63,7 +62,6 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
     EmotionEmojiPipe,
     EmotionLabelPipe,
     EmotionColorPipe,
-    SetupColorPipe,
     ActivityCalendarComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -297,7 +295,9 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
                     <span class="trade-emotion">{{ trade.emotion | emotionEmoji }}</span>
                   </div>
                   <div class="trade-row-bottom">
-                    <span class="trade-setup-compact">{{ trade.setup }}</span>
+                    <span class="trade-setup-compact">
+                      <span class="setup-dot-sm" [style.background]="trade.setup.color"></span>{{ trade.setup.title }}
+                    </span>
                     <span class="trade-pnl" [style.color]="trade.pnl | pnlColor">{{ trade.pnl | pnlFormat: trade.entry }}</span>
                   </div>
                 </div>
@@ -310,7 +310,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
             <div class="card-title">Win Rate / stratégie</div>
             <a routerLink="/analytics" class="card-action">Voir →</a>
           </div>
-          @if (bySetup().length === 0) {
+          @if (topSetups().length === 0) {
             <p class="empty-widget-msg">Tes setups apparaîtront<br />après tes premiers trades</p>
           } @else {
             <div class="wr-header">
@@ -318,16 +318,15 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
               <span class="wr-global-val">{{ (summary()?.winRate ?? 0).toFixed(0) }}%</span>
             </div>
             <div class="vbars">
-              @for (s of bySetup().slice(0, 4); track s.setup) {
+              @for (s of topSetups(); track s.setupId) {
                 <div class="vbar">
-                  <span class="vbar-val">{{ s.winRate.toFixed(0) }}%</span>
+                  <span class="vbar-val">{{ (s.winRate ?? 0).toFixed(0) }}%</span>
                   <div class="vbar-track">
                     <div class="vbar-fill"
-                         [style.height.%]="s.winRate"
-                         [style.background]="s.setup | setupColor"
-                         [style.color]="s.setup | setupColor"></div>
+                         [style.height.%]="s.winRate ?? 0"
+                         [style.background]="s.color"></div>
                   </div>
-                  <span class="vbar-label">{{ s.setup | titlecase }}</span>
+                  <span class="vbar-label">{{ s.title }}</span>
                 </div>
               }
             </div>
@@ -501,6 +500,10 @@ export class DashboardComponent {
     new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
   );
   protected readonly bySetup = computed(() => this.bySetupResource.value()?.data ?? []);
+  // Top 4 setups réellement utilisés (win rate défini) pour le widget « Win Rate / stratégie ».
+  protected readonly topSetups = computed(() =>
+    this.bySetup().filter((s) => s.winRate !== null).slice(0, 4),
+  );
   protected readonly isLoading = computed(
     () =>
       this.userStore.isStarterOrAbove() &&

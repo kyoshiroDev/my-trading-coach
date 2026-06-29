@@ -40,7 +40,9 @@ export class OrchestratorAgent {
         where: { userId },
         orderBy: { tradedAt: 'desc' },
         take: 50,
-        select: { asset: true, side: true, pnl: true, emotion: true, setup: true, session: true, tradedAt: true,
+        select: { asset: true, side: true, pnl: true, emotion: true,
+                  setup: { select: { title: true, description: true } },
+                  session: true, tradedAt: true,
                   riskReward: true, timeframe: true, notes: true },
       }),
       this.prisma.user.findUnique({
@@ -53,7 +55,9 @@ export class OrchestratorAgent {
       }),
     ]);
     const userContext = userProfile ? buildUserTradingContext(userProfile) : '';
-    const summary = this.dataAgent.buildTradesSummary(trades);
+    // DataAgent attend un setup en string : on l'alimente avec le TITRE du setup.
+    const summaryTrades = trades.map((t) => ({ ...t, setup: t.setup.title }));
+    const summary = this.dataAgent.buildTradesSummary(summaryTrades);
     const summaryWithContext = userContext ? `${userContext}\n${summary}` : summary;
 
     // Step 2 — Pattern detection (1 Anthropic call, system cached)

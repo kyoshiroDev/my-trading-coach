@@ -1,8 +1,9 @@
 import {
-  PrismaClient, Plan, TradeSide, EmotionState, SetupType,
+  PrismaClient, Plan, TradeSide, EmotionState,
   TradingSession, MoodState, SessionStatus,
 } from '@prisma/client';
 import * as argon2 from 'argon2';
+import { seedDefaultSetups } from '../setups/setups.defaults';
 
 /**
  * Logique de seed du compte DÉMO vitrine — source de vérité unique, utilisée par
@@ -35,12 +36,13 @@ const ASSETS = [
   { sym: 'GC',       base: 2_350,  ptVal: 100,     qty: 1, dec: 1 },
 ];
 const EMOTIONS: EmotionState[] = ['CONFIDENT', 'FOCUSED', 'NEUTRAL', 'STRESSED', 'FEAR', 'REVENGE'];
-const SETUPS: SetupType[] = ['BREAKOUT', 'PULLBACK', 'RANGE', 'REVERSAL', 'SCALPING', 'NEWS'];
+// Titres des setups par défaut (cf. setups.defaults) — la démo affecte les trades par titre.
+const SETUPS: string[] = ['Breakout', 'Pullback', 'Range', 'Reversal', 'Scalping', 'News'];
 const TF = ['1m', '5m', '15m', '1h'];
 
 interface GenTrade {
   asset: string; side: TradeSide; entry: number; exit: number; pnl: number;
-  rr: number; qty: number; emotion: EmotionState; setup: SetupType;
+  rr: number; qty: number; emotion: EmotionState; setup: string;
   session: TradingSession; tf: string; daysAgo: number; hour: number;
 }
 
@@ -120,6 +122,16 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
   await prisma.weeklyDebrief.deleteMany({ where: { userId: user.id } });
   await prisma.dailyRecap.deleteMany({ where: { userId: user.id } });
 
+  // Setups par défaut (idempotent) + map titre→id pour affecter les trades démo.
+  await seedDefaultSetups(prisma, user.id);
+  const demoSetups = await prisma.setup.findMany({
+    where: { userId: user.id },
+    select: { id: true, title: true },
+  });
+  const setupIdByTitle = new Map(demoSetups.map((s) => [s.title, s.id]));
+  const setupIdFor = (title: string): string =>
+    setupIdByTitle.get(title) ?? demoSetups[0].id;
+
   const trades = buildTrades();
   const dateOf = (daysAgo: number, hour: number) => {
     const d = new Date();
@@ -158,7 +170,7 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
       data: {
         userId: user.id, asset: t.asset, side: t.side, entry: t.entry, exit: t.exit,
         pnl: t.pnl, riskReward: t.rr, quantity: t.qty, emotion: t.emotion,
-        setup: t.setup, session: t.session, timeframe: t.tf, tags: ['DEMO'],
+        setupId: setupIdFor(t.setup), session: t.session, timeframe: t.tf, tags: ['DEMO'],
         tradedAt: dateOf(t.daysAgo, t.hour),
         ...(sessionIdByDay.has(t.daysAgo) ? { sessionId: sessionIdByDay.get(t.daysAgo) } : {}),
       },
@@ -191,13 +203,13 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
     },
   });
   const yTrades = [
-    { asset: 'MNQ', side: 'LONG' as TradeSide, entry: 18500, exit: 18545, pnl: 180, rr: 2.2, qty: 2, emotion: 'CONFIDENT' as EmotionState, setup: 'BREAKOUT' as SetupType, session: 'LONDON' as TradingSession, tf: '5m', hour: 9 },
-    { asset: 'MES', side: 'LONG' as TradeSide, entry: 5200, exit: 5198.6, pnl: -70, rr: 1.4, qty: 2, emotion: 'NEUTRAL' as EmotionState, setup: 'PULLBACK' as SetupType, session: 'NEW_YORK' as TradingSession, tf: '5m', hour: 15 },
+    { asset: 'MNQ', side: 'LONG' as TradeSide, entry: 18500, exit: 18545, pnl: 180, rr: 2.2, qty: 2, emotion: 'CONFIDENT' as EmotionState, setup: 'Breakout', session: 'LONDON' as TradingSession, tf: '5m', hour: 9 },
+    { asset: 'MES', side: 'LONG' as TradeSide, entry: 5200, exit: 5198.6, pnl: -70, rr: 1.4, qty: 2, emotion: 'NEUTRAL' as EmotionState, setup: 'Pullback', session: 'NEW_YORK' as TradingSession, tf: '5m', hour: 15 },
   ];
   for (const t of yTrades) {
     await prisma.trade.create({ data: {
       userId: user.id, asset: t.asset, side: t.side, entry: t.entry, exit: t.exit,
-      pnl: t.pnl, riskReward: t.rr, quantity: t.qty, emotion: t.emotion, setup: t.setup,
+      pnl: t.pnl, riskReward: t.rr, quantity: t.qty, emotion: t.emotion, setupId: setupIdFor(t.setup),
       session: t.session, timeframe: t.tf, tags: ['DEMO'], tradedAt: dateOf(1, t.hour), sessionId: yClosed.id,
     } });
   }
@@ -233,13 +245,13 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
     },
   });
   const tTrades = [
-    { asset: 'MNQ', side: 'LONG' as TradeSide, entry: 18600, exit: 18640, stopLoss: 18560, pnl: 160, rr: 2.1, qty: 2, emotion: 'CONFIDENT' as EmotionState, setup: 'BREAKOUT' as SetupType, session: 'LONDON' as TradingSession, tf: '5m', hour: 9 },
-    { asset: 'EUR/USD', side: 'LONG' as TradeSide, entry: 1.0850, exit: 1.0853, stopLoss: 1.0835, pnl: 30, rr: 1.5, qty: 1, emotion: 'FOCUSED' as EmotionState, setup: 'PULLBACK' as SetupType, session: 'LONDON' as TradingSession, tf: '15m', hour: 10 },
+    { asset: 'MNQ', side: 'LONG' as TradeSide, entry: 18600, exit: 18640, stopLoss: 18560, pnl: 160, rr: 2.1, qty: 2, emotion: 'CONFIDENT' as EmotionState, setup: 'Breakout', session: 'LONDON' as TradingSession, tf: '5m', hour: 9 },
+    { asset: 'EUR/USD', side: 'LONG' as TradeSide, entry: 1.0850, exit: 1.0853, stopLoss: 1.0835, pnl: 30, rr: 1.5, qty: 1, emotion: 'FOCUSED' as EmotionState, setup: 'Pullback', session: 'LONDON' as TradingSession, tf: '15m', hour: 10 },
   ];
   for (const t of tTrades) {
     await prisma.trade.create({ data: {
       userId: user.id, asset: t.asset, side: t.side, entry: t.entry, exit: t.exit, stopLoss: t.stopLoss,
-      pnl: t.pnl, riskReward: t.rr, quantity: t.qty, emotion: t.emotion, setup: t.setup,
+      pnl: t.pnl, riskReward: t.rr, quantity: t.qty, emotion: t.emotion, setupId: setupIdFor(t.setup),
       session: t.session, timeframe: t.tf, tags: ['DEMO'], tradedAt: dateOf(0, t.hour), sessionId: todaySession.id,
     } });
   }

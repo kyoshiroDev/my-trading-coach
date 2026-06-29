@@ -44,7 +44,7 @@ export function evaluateObjectiveCheck(
         return hhmm >= String(p['start']) && hhmm <= String(p['end']);
       });
     case 'setup_only':
-      return trades.length > 0 && trades.every((t) => ((p['setups'] as string[]) ?? []).includes(t.setup ?? ''));
+      return trades.length > 0 && trades.every((t) => ((p['setups'] as string[]) ?? []).includes(t.setup?.title ?? ''));
     case 'max_loss_trades':
       return trades.filter((t) => (t.pnl ?? 0) < 0).length <= Number(p['limit']);
     default:

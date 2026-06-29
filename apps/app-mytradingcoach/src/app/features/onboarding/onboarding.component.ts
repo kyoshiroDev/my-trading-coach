@@ -17,6 +17,11 @@ import { AuthService } from '../../core/auth/auth.service';
 import { LucideAngularModule, Bitcoin } from 'lucide-angular';
 import { TradeFormComponent } from '../journal/trade-form.component';
 import { CsvImportComponent } from '../journal/csv-import.component';
+import { SetupsStore } from '../../core/stores/setups.store';
+import {
+  SetupFormModalComponent,
+  SetupFormValue,
+} from '../../shared/components/setup-form-modal/setup-form-modal.component';
 import {
   TRADING_STYLES,
   SESSIONS,
@@ -27,7 +32,7 @@ import {
 
 type Market = 'CRYPTO' | 'FOREX' | 'ACTIONS' | 'MULTI';
 type Goal   = 'DISCIPLINE' | 'PERFORMANCE' | 'PSYCHOLOGIE';
-type Step   = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+type Step   = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
 type MarketOption = {
   value: Market;
@@ -56,7 +61,7 @@ const DISCORD_URL = 'https://discord.gg/TDK2npvkSN';
 @Component({
   selector: 'mtc-onboarding',
   standalone: true,
-  imports: [LucideAngularModule, TradeFormComponent, CsvImportComponent],
+  imports: [LucideAngularModule, TradeFormComponent, CsvImportComponent, SetupFormModalComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './onboarding.component.html',
   styleUrl: './onboarding.component.css',
@@ -67,8 +72,12 @@ export class OnboardingComponent {
   private readonly usersApi    = inject(UsersApi);
   private readonly tradesApi   = inject(TradesApi);
   private readonly tradesStore = inject(TradesStore);
+  protected readonly setupsStore = inject(SetupsStore);
   private readonly auth        = inject(AuthService);
   private readonly destroyRef  = inject(DestroyRef);
+
+  // Étape Tes setups (les 6 défauts sont seedés au signup).
+  protected readonly showSetupModal = signal(false);
 
   protected readonly MARKETS        = MARKETS;
   protected readonly GOALS          = GOALS;
@@ -110,6 +119,7 @@ export class OnboardingComponent {
   protected readonly assetsValid = computed(() => this.selectedAssets().length > 0);
 
   constructor() {
+    this.setupsStore.load();
     this.assetSearch$
       .pipe(
         debounceTime(300),
@@ -185,23 +195,31 @@ export class OnboardingComponent {
     if (s === 5) {
       this.saveProfileThenGoAssets();        // Stratégie → profil IA enregistré → Actifs
     } else if (s === 6) {
-      this.saveAssetsThenGoTrade();          // Actifs enregistrés → premier trade
-    } else if (s < 8) {
-      this.step.set((s + 1) as Step);
+      this.saveAssetsThenGoTrade();          // Actifs enregistrés → étape Setups (7)
+    } else if (s < 9) {
+      this.step.set((s + 1) as Step);        // ex. Setups (7) → premier trade (8)
     }
   }
 
   protected prevStep(): void {
     const s = this.step();
-    if (s === 7) { this.tradeChoice.set('choice'); this.step.set(6); }
-    else if (s > 1 && s < 8) { this.step.set((s - 1) as Step); }
+    if (s === 8) { this.tradeChoice.set('choice'); this.step.set(7); } // premier trade → Setups
+    else if (s > 1 && s < 9) { this.step.set((s - 1) as Step); }
   }
 
   protected chooseManual() { this.tradeChoice.set('manual'); }
   protected chooseCsv()    { this.tradeChoice.set('csv'); this.csvOpen.set(true); }
   protected backToChoice() { this.tradeChoice.set('choice'); this.csvOpen.set(false); }
 
-  protected finishAndGoDiscord() { this.step.set(8); }
+  protected finishAndGoDiscord() { this.step.set(9); }
+
+  // ── Étape Tes setups (7) — réutilise la modale partagée + SetupsStore ──
+  protected openSetupModal(): void { this.showSetupModal.set(true); }
+  protected onSetupSave(value: SetupFormValue): void {
+    this.setupsStore.create(value);
+    this.showSetupModal.set(false);
+  }
+  protected removeSetup(id: string): void { this.setupsStore.remove(id); }
 
   // Étape Stratégie (5) → enregistre le profil IA (SANS terminer l'onboarding)
   // puis va aux Actifs (6). Marquer l'onboarding fini ici sauterait les étapes
@@ -253,8 +271,8 @@ export class OnboardingComponent {
       .create(dto)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (res) => { this.tradesStore.addTrade(res.data); this.isSaving.set(false); this.step.set(8); },
-        error: () => { this.isSaving.set(false); this.step.set(8); },
+        next: (res) => { this.tradesStore.addTrade(res.data); this.isSaving.set(false); this.step.set(9); },
+        error: () => { this.isSaving.set(false); this.step.set(9); },
       });
   }
 
@@ -262,17 +280,17 @@ export class OnboardingComponent {
   protected onTradeFormDismissed(): void { this.tradeChoice.set('choice'); }
 
   // CSV importé → étape Discord
-  protected onCsvImported(): void { this.csvOpen.set(false); this.step.set(8); }
+  protected onCsvImported(): void { this.csvOpen.set(false); this.step.set(9); }
   protected onCsvDismissed(): void { this.csvOpen.set(false); this.tradeChoice.set('choice'); }
 
   protected get progress(): number {
-    return Math.round((this.step() / 8) * 100);
+    return Math.round((this.step() / 9) * 100);
   }
 
   protected get stepLabel(): string {
     const s = this.step();
-    if (s === 1 || s === 8) return '';
-    return `Étape ${s - 1} sur 6`;
+    if (s === 1 || s === 9) return '';
+    return `Étape ${s - 1} sur 7`;
   }
 
   private parseCapital(): number {

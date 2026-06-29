@@ -241,6 +241,59 @@
   margin: 0;
 }
 
+/* ── Defaults du lot : compte / émotion / setup ── */
+.import-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.import-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  font-family: var(--font-display);
+}
+.import-select {
+  width: 100%;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 13px;
+  color: var(--text);
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.import-select:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+.import-help {
+  font-size: 11px;
+  color: var(--text-3);
+  line-height: 1.5;
+  margin: 0;
+}
+.import-warn {
+  color: var(--yellow);
+}
+.import-setup-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.import-setup-row .import-select {
+  flex: 1;
+}
+.setup-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.06);
+}
+
 .fees-note {
   font-size: 12px;
   color: var(--text-2);

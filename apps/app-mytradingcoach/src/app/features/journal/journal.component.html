@@ -16,9 +16,11 @@
       <button class="filter-chip" [class.active]="filterSide() === 'ALL'" (click)="filterSide.set('ALL')">Tous</button>
       <button class="filter-chip" [class.active]="filterSide() === 'LONG'" (click)="filterSide.set('LONG')">LONG</button>
       <button class="filter-chip" [class.active]="filterSide() === 'SHORT'" (click)="filterSide.set('SHORT')">SHORT</button>
-      @for (setup of SETUPS; track setup) {
-        <button class="filter-chip" [class.active]="filterSetup() === setup"
-          (click)="toggleSetupFilter(setup)">{{ setup }}</button>
+      @for (s of setupsStore.active(); track s.id) {
+        <button class="filter-chip" [class.active]="filterSetup() === s.id"
+          (click)="toggleSetupFilter(s.id)">
+          <span class="filter-chip-dot" [style.background]="s.color"></span>{{ s.title }}
+        </button>
       }
     </div>
 
@@ -146,6 +148,14 @@
                 </span>
               }
             </div>
+            @if (canReassign()) {
+              <button class="day-reassign-btn"
+                title="Déplacer tous les trades de ce jour vers un autre compte"
+                (click)="$event.stopPropagation(); openReassign(day)"
+                (keydown.enter)="$event.stopPropagation(); openReassign(day)">
+                <lucide-icon [img]="ReassignIcon" [size]="12" />
+              </button>
+            }
             <button class="day-delete-btn"
               title="Supprimer tous les trades de ce jour"
               (click)="$event.stopPropagation(); confirmDeleteDay.set(day)"
@@ -176,7 +186,7 @@
                       <span class="emotion-text">{{ trade.emotion }}</span>
                     </span>
                   </span>
-                  <span class="td-setup"><span class="setup-badge">{{ trade.setup }}</span></span>
+                  <span class="td-setup"><span class="setup-badge"><span class="setup-badge-dot" [style.background]="trade.setup.color"></span>{{ trade.setup.title }}</span></span>
                   <span class="td-actions">
                     <button class="btn-edit" (click)="openEditModal(trade)" title="Modifier">
                       <lucide-icon [img]="PencilIcon" [size]="12" />
@@ -241,6 +251,48 @@
           [disabled]="isDeletingDay()">
           @if (isDeletingDay()) { Suppression... }
           @else { Supprimer {{ day.count }} trade{{ day.count > 1 ? 's' : '' }} }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (reassignDay(); as day) {
+  <div class="modal-overlay" role="button" tabindex="0" aria-label="Annuler"
+    (click)="reassignDay.set(null)" (keydown.escape)="reassignDay.set(null)">
+    <div class="confirm-modal" role="dialog" aria-modal="true"
+      (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+      <div class="confirm-modal-header">
+        <span class="confirm-modal-ic">↔️</span>
+        <div>
+          <h3 class="confirm-modal-title">Déplacer la journée</h3>
+          <p class="confirm-modal-sub">{{ day.label }}</p>
+        </div>
+      </div>
+      <p class="confirm-modal-desc">
+        Déplacer <strong>tous les trades de cette journée</strong>
+        ({{ day.count }} trade{{ day.count > 1 ? 's' : '' }}) vers :
+      </p>
+      <div class="reassign-accounts">
+        @for (acc of activeAccounts(); track acc.id) {
+          <button class="reassign-account"
+            [disabled]="acc.id === currentAccountId() || isReassigning()"
+            (click)="reassignTo(day, acc.id)">
+            <span class="reassign-account-label">{{ acc.label }}</span>
+            @if (acc.id === currentAccountId()) {
+              <span class="reassign-account-current">(actuel)</span>
+            }
+          </button>
+        }
+      </div>
+      @if (reassignError()) {
+        <p class="reassign-error">{{ reassignError() }}</p>
+      }
+      <div class="confirm-modal-actions">
+        <button class="confirm-btn-cancel"
+          (click)="reassignDay.set(null)"
+          [disabled]="isReassigning()">
+          Annuler
         </button>
       </div>
     </div>

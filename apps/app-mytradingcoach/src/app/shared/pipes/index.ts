@@ -6,6 +6,4 @@ export { PnlColorPipe } from './pnl-color.pipe';
 export { PnlFormatPipe } from './pnl-format.pipe';
 export { PnlSignPipe } from './pnl-sign.pipe';
 export { SessionLabelPipe } from './session-label.pipe';
-export { SetupColorPipe } from './setup-color.pipe';
-export { SetupColorsMapPipe } from './setup-color-map.pipe';
 export { TimeframeLabelPipe } from './timeframe-label.pipe';

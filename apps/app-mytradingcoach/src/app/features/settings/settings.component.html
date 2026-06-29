@@ -127,7 +127,7 @@
 
       </div> <!-- /pcol gauche -->
 
-      <!-- ── Colonne droite : Mes setups (coquille) ── -->
+      <!-- ── Colonne droite : Mes setups ── -->
       <div class="pcol">
         <div class="settings-section">
           <div class="settings-section-label">Mes setups</div>
@@ -135,12 +135,83 @@
             <div class="stp-intro">
               Le tag <b>SETUP</b> de chaque trade, pour grouper tes stats.
             </div>
-            <!-- TODO PROMPT-13X : liste dynamique des setups (CRUD, barre d'usage, win rate) -->
+
+            <!-- Setups actifs -->
+            @for (s of setupsStore.active(); track s.id) {
+              <div class="stp-row">
+                <span class="stp-dot" [style.background]="s.color"></span>
+                <div class="stp-main">
+                  <div class="stp-name">{{ s.title }}</div>
+                  <div class="stp-desc">{{ s.description || '— pas de description' }}</div>
+                  <div class="stp-meta">
+                    @if (s.tradeCount > 0) {
+                      <div class="stp-bar">
+                        <span [style.width.%]="setupUsagePct(s.tradeCount)" [style.background]="s.color"></span>
+                      </div>
+                      <span class="stp-stat">
+                        {{ s.tradeCount }} trade{{ s.tradeCount > 1 ? 's' : '' }} ·
+                        @if (winRateValue(s.id) !== null) {
+                          <b [class]="'wr-' + winRateClass(s.id)">{{ winRateValue(s.id) }}% WR</b>
+                        } @else { <b>—</b> }
+                      </span>
+                    } @else {
+                      <span class="stp-stat stp-stat-empty">jamais utilisé</span>
+                    }
+                  </div>
+                </div>
+                <div class="stp-acts">
+                  <button class="stp-ico" type="button" title="Modifier" (click)="openEditSetup(s)">
+                    <lucide-icon [img]="PencilIcon" [size]="15" />
+                  </button>
+                  @if (s.tradeCount > 0) {
+                    <button class="stp-ico" type="button" title="Archiver" (click)="archiveSetup(s.id)">
+                      <lucide-icon [img]="ArchiveIcon" [size]="15" />
+                    </button>
+                  } @else {
+                    <button class="stp-ico dg" type="button" title="Supprimer" (click)="deleteSetup(s.id)">
+                      <lucide-icon [img]="TrashIcon" [size]="15" />
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Ajouter -->
             <div class="stp-add">
-              <button class="stp-addbtn" type="button" disabled title="Bientôt disponible">
+              <button class="stp-addbtn" type="button" (click)="openCreateSetup()">
                 + Ajouter un setup
               </button>
             </div>
+
+            <!-- Archivés (repliable) -->
+            @if (setupsStore.archived().length > 0) {
+              <button class="stp-arch-h" type="button" (click)="showSetupsArchived.set(!showSetupsArchived())">
+                <span class="a">
+                  <lucide-icon [img]="showSetupsArchived() ? ChevronDownIcon : ChevronRightIcon" [size]="12" />
+                  Archivés ({{ setupsStore.archived().length }})
+                </span>
+                <span class="b">cachés du sélecteur, gardés en stats</span>
+              </button>
+              @if (showSetupsArchived()) {
+                <div class="stp-arch-list">
+                  @for (s of setupsStore.archived(); track s.id) {
+                    <div class="stp-row arch">
+                      <span class="stp-dot" [style.background]="s.color"></span>
+                      <div class="stp-main"><div class="stp-name">{{ s.title }}</div></div>
+                      <span class="stp-count">{{ s.tradeCount }}</span>
+                      <div class="stp-acts">
+                        <button class="stp-mini" type="button" (click)="restoreSetup(s.id)">Restaurer</button>
+                        @if (s.tradeCount === 0) {
+                          <button class="stp-ico dg" type="button" title="Supprimer" (click)="deleteSetup(s.id)">
+                            <lucide-icon [img]="TrashIcon" [size]="15" />
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            }
           </div>
         </div>
       </div> <!-- /pcol droite -->
@@ -538,4 +609,12 @@
 
 @if (showPlanModal()) {
   <mtc-plan-modal (closed)="showPlanModal.set(false)" />
+}
+
+@if (showSetupModal()) {
+  <mtc-setup-form-modal
+    [editSetup]="editingSetup()"
+    (save)="onSetupSave($event)"
+    (cancelled)="showSetupModal.set(false); editingSetup.set(null)"
+  />
 }

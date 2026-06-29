@@ -9,6 +9,7 @@ import {
   input,
   output,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -23,6 +24,7 @@ import { SessionRecapComponent } from '../session-recap/session-recap.component'
 import { MarketContextBarComponent } from '../market-context-bar/market-context-bar.component';
 import { EcoSocketService } from '../../../../core/services/eco-socket.service';
 import { UserStore } from '../../../../core/stores/user.store';
+import { SetupsStore } from '../../../../core/stores/setups.store';
 import { formatDuration } from '../../../../core/utils/time.utils';
 import { parseDecimal } from '../../../../core/utils/parse-decimal';
 import { NumericInputDirective } from '../../../../core/directives/numeric-input.directive';
@@ -532,12 +534,9 @@ const EMOTIONS = [
             <select class="qt-select"
                     [value]="qtSetup()"
                     (change)="qtSetup.set($any($event.target).value)">
-              <option value="BREAKOUT">Breakout</option>
-              <option value="PULLBACK">Pullback</option>
-              <option value="REVERSAL">Reversal</option>
-              <option value="RANGE">Range</option>
-              <option value="SCALPING">Scalping</option>
-              <option value="NEWS">News</option>
+              @for (s of setupsStore.active(); track s.id) {
+                <option [value]="s.id">{{ s.title }}</option>
+              }
             </select>
             <select class="qt-select"
                     [value]="qtTimeframe()"
@@ -704,6 +703,7 @@ export class SessionLiveComponent {
   private readonly ecoCalendarApi = inject(EcoCalendarApi);
   private readonly userStore = inject(UserStore);
   private readonly tradesApi = inject(TradesApi);
+  protected readonly setupsStore = inject(SetupsStore);
 
   // Timer
   private readonly now = signal(new Date());
@@ -776,7 +776,7 @@ export class SessionLiveComponent {
   private readonly customAssetSearch$   = new Subject<string>();
   protected readonly qtSide = signal<'LONG' | 'SHORT'>('LONG');
   protected readonly qtEmotion = signal<'CONFIDENT' | 'STRESSED' | 'REVENGE' | 'FEAR' | 'FOCUSED' | 'NEUTRAL'>('CONFIDENT');
-  protected readonly qtSetup = signal<string>('BREAKOUT');
+  protected readonly qtSetup = signal<string>('');
   protected readonly qtTimeframe = signal<string>('5m');
   protected readonly qtQty = signal('1');
   protected readonly qtSl = signal('');
@@ -866,6 +866,13 @@ export class SessionLiveComponent {
   protected readonly emotions = EMOTIONS;
 
   constructor() {
+    // Setups du user pour le sélecteur de trade rapide (défaut = 1er actif).
+    this.setupsStore.load();
+    effect(() => {
+      const first = this.setupsStore.active()[0];
+      if (first && untracked(() => !this.qtSetup())) this.qtSetup.set(first.id);
+    });
+
     // Démo : analyse IA figée pour les annonces du calendrier (zéro appel modèle).
     if (this.userStore.isDemo()) this.ecoResults.set(DEMO_ECO_ANALYSIS);
 
@@ -1292,7 +1299,7 @@ export class SessionLiveComponent {
       asset: selected.symbol,
       side: this.qtSide(),
       emotion: this.qtEmotion(),
-      setup: this.qtSetup() as CreateTradeDto['setup'],
+      setupId: this.qtSetup(),
       session,
       timeframe: this.qtTimeframe(),
       entry,

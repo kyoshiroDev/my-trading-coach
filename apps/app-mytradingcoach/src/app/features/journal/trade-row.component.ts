@@ -56,7 +56,9 @@ import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
       </span>
     </td>
     <td>
-      <span class="setup-chip">{{ trade().setup }}</span>
+      <span class="setup-chip">
+        <span class="setup-chip-dot" [style.background]="trade().setup.color"></span>{{ trade().setup.title }}
+      </span>
     </td>
     <td class="td-date">{{ trade().tradedAt | date: 'd MMM HH:mm' }}</td>
     <td class="td-actions">

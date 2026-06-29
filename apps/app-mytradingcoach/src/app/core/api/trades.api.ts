@@ -12,6 +12,13 @@ export interface InstrumentDto {
   pipDecimals?: number;
 }
 
+/** Setup tel que renvoyé par l'API sur un trade (relation). */
+export interface TradeSetup {
+  id: string;
+  title: string;
+  color: string;
+}
+
 export interface Trade {
   id: string;
   userId: string;
@@ -33,7 +40,8 @@ export interface Trade {
     | 'FEAR'
     | 'FOCUSED'
     | 'NEUTRAL';
-  setup: 'BREAKOUT' | 'PULLBACK' | 'RANGE' | 'REVERSAL' | 'SCALPING' | 'NEWS';
+  setupId: string;
+  setup: TradeSetup;
   session: 'LONDON' | 'NEW_YORK' | 'ASIAN';
   timeframe: string;
   notes: string | null;
@@ -55,7 +63,7 @@ export interface CreateTradeDto {
   quantity?: number;
   capitalEngaged?: number;
   emotion: Trade['emotion'];
-  setup: Trade['setup'];
+  setupId: string;
   session: Trade['session'];
   timeframe: string;
   notes?: string;
@@ -70,7 +78,7 @@ export interface TradeFilters {
   page?: number;
   limit?: number;
   side?: Trade['side'];
-  setup?: Trade['setup'];
+  setupId?: string;
   emotion?: Trade['emotion'];
   dateFrom?: string;
   dateTo?: string;
@@ -153,6 +161,10 @@ export class TradesApi {
 
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);
+  }
+
+  reassign(tradeIds: string[], accountId: string): Observable<{ data: { moved: number } }> {
+    return this.http.patch<{ data: { moved: number } }>(`${this.base}/reassign`, { tradeIds, accountId });
   }
 
   getDuplicates(): Observable<{ data: { total: number; unique: number; duplicates: number } }> {

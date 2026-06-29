@@ -5,7 +5,6 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 import {
   EmotionState,
-  SetupType,
   TradingSession,
   TradeSide,
 } from '@prisma/client';
@@ -20,7 +19,8 @@ const makeTrade = (pnl: number, tradedAt = new Date(), hour = 10) => ({
   pnl,
   riskReward: pnl > 0 ? 2 : null,
   emotion: EmotionState.CONFIDENT,
-  setup: SetupType.BREAKOUT,
+  setupId: 'setup-breakout',
+  setup: { title: 'Breakout', color: '#10b981' },
   session: TradingSession.LONDON,
   timeframe: '1H',
   notes: null,
@@ -33,6 +33,9 @@ const mockPrisma = {
   trade: {
     findMany: vi.fn(),
     count: vi.fn(),
+  },
+  setup: {
+    findMany: vi.fn().mockResolvedValue([]),
   },
   user: {
     findUnique: vi.fn().mockResolvedValue({ startingCapital: null }),
@@ -157,18 +160,45 @@ describe('AnalyticsService', () => {
   });
 
   describe('getBySetup', () => {
-    it('groupe par setup et calcule win rate', async () => {
+    it('groupe par setupId, joint title/color et calcule win rate', async () => {
+      mockPrisma.setup.findMany.mockResolvedValueOnce([
+        { id: 'setup-breakout', title: 'Breakout', color: '#10b981' },
+        { id: 'setup-pullback', title: 'Pullback', color: '#3b82f6' },
+      ]);
       mockPrisma.trade.findMany.mockResolvedValue([
-        { ...makeTrade(100), setup: SetupType.BREAKOUT },
-        { ...makeTrade(-50), setup: SetupType.BREAKOUT },
-        { ...makeTrade(200), setup: SetupType.PULLBACK },
+        { ...makeTrade(100), setupId: 'setup-breakout', setup: { title: 'Breakout', color: '#10b981' } },
+        { ...makeTrade(-50), setupId: 'setup-breakout', setup: { title: 'Breakout', color: '#10b981' } },
+        { ...makeTrade(200), setupId: 'setup-pullback', setup: { title: 'Pullback', color: '#3b82f6' } },
       ]);
 
       const result = await service.getBySetup('user-123');
 
-      const breakout = result.find((r) => r.setup === SetupType.BREAKOUT);
+      const breakout = result.find((r) => r.setupId === 'setup-breakout');
+      expect(breakout?.title).toBe('Breakout');
       expect(breakout?.winRate).toBe(50);
       expect(breakout?.count).toBe(2);
+    });
+
+    it('inclut un setup actif sans trade (count 0, winRate null) et un archivé seulement s’il a des trades', async () => {
+      mockPrisma.setup.findMany.mockResolvedValueOnce([
+        { id: 'setup-active', title: 'Actif', color: '#10b981' },   // 0 trade
+        { id: 'setup-used', title: 'Utilisé', color: '#3b82f6' },
+      ]);
+      mockPrisma.trade.findMany.mockResolvedValue([
+        { ...makeTrade(100), setupId: 'setup-used', setup: { title: 'Utilisé', color: '#3b82f6' } },
+        // setup archivé (absent de findMany actifs) mais avec un trade → doit apparaître
+        { ...makeTrade(-30), setupId: 'setup-arch', setup: { title: 'Archivé', color: '#ef4444' } },
+      ]);
+
+      const result = await service.getBySetup('user-123');
+
+      const active0 = result.find((r) => r.setupId === 'setup-active');
+      expect(active0?.count).toBe(0);
+      expect(active0?.winRate).toBeNull();
+
+      const archivedWithTrades = result.find((r) => r.setupId === 'setup-arch');
+      expect(archivedWithTrades?.title).toBe('Archivé');
+      expect(archivedWithTrades?.count).toBe(1);
     });
   });
 

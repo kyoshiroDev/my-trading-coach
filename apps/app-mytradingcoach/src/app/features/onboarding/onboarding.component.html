@@ -1,5 +1,5 @@
-<!-- Wizard overlay : steps 1-8 sauf quand TradeForm prend l'écran -->
-@if (!(step() === 7 && tradeChoice() === 'manual')) {
+<!-- Wizard overlay : steps 1-9 sauf quand TradeForm prend l'écran -->
+@if (!(step() === 8 && tradeChoice() === 'manual')) {
   <div class="overlay" data-testid="onboarding-wizard">
     <div class="wizard">
 
@@ -246,8 +246,40 @@
         </div>
       }
 
-      <!-- ── Étape 7 — Choix premier trade ── -->
-      @if (step() === 7 && tradeChoice() === 'choice') {
+      <!-- ── Étape 7 — Tes setups ── -->
+      @if (step() === 7) {
+        <div class="wizard-body">
+          <div class="step-label">{{ stepLabel }}</div>
+          <h2 class="step-title">Tes setups</h2>
+          <p class="step-desc">
+            Tes types de trade (tes patterns d'entrée). On t'a préparé les classiques,
+            garde-les, retire ceux que tu ne fais pas, ou ajoute les tiens. Ils servent
+            à grouper tes stats et donnent du contexte au coach IA.
+          </p>
+
+          <div class="ob-setups">
+            @for (s of setupsStore.active(); track s.id) {
+              <div class="ob-setup-row">
+                <span class="ob-cd" [style.background]="s.color"></span>
+                <div class="ob-setup-main">
+                  <div class="ob-setup-name">{{ s.title }}</div>
+                  <div class="ob-setup-desc">{{ s.description || '— pas de description' }}</div>
+                </div>
+                <button class="ob-setup-rm" type="button" title="Retirer" (click)="removeSetup(s.id)">✕</button>
+              </div>
+            }
+          </div>
+          <button class="ob-addbtn" type="button" (click)="openSetupModal()">+ Ajouter un setup</button>
+
+          <div class="wizard-footer">
+            <button class="btn-back" type="button" (click)="prevStep()">← Retour</button>
+            <button class="btn-next" data-testid="setups-continue" (click)="nextStep()">Continuer →</button>
+          </div>
+        </div>
+      }
+
+      <!-- ── Étape 8 — Choix premier trade ── -->
+      @if (step() === 8 && tradeChoice() === 'choice') {
         <div class="wizard-body">
           <div class="step-label">{{ stepLabel }}</div>
           <h2 class="step-title">Ajoute ton premier trade</h2>
@@ -278,8 +310,8 @@
         </div>
       }
 
-      <!-- ── Étape 8 — Discord récompense ── -->
-      @if (step() === 8) {
+      <!-- ── Étape 9 — Discord récompense ── -->
+      @if (step() === 9) {
         <div class="wizard-body">
           <div class="celebrate"><span class="celebrate-ic">🎉</span></div>
           <h2 class="step-title center">Tu es prêt !</h2>
@@ -311,7 +343,7 @@
 }
 
 <!-- TradeForm (gère son propre overlay) — affiché quand choix manuel -->
-@if (step() === 7 && tradeChoice() === 'manual') {
+@if (step() === 8 && tradeChoice() === 'manual') {
   <mtc-trade-form
     [open]="true"
     [isSaving]="isSaving()"
@@ -326,3 +358,11 @@
   (imported)="onCsvImported()"
   (dismissed)="onCsvDismissed()"
 />
+
+<!-- Modale de formulaire setup partagée (étape Tes setups) -->
+@if (showSetupModal()) {
+  <mtc-setup-form-modal
+    (save)="onSetupSave($event)"
+    (cancelled)="showSetupModal.set(false)"
+  />
+}

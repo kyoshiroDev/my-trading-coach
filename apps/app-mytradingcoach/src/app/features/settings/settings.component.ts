@@ -14,6 +14,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, finalize } from 'rxjs/operators';
+import { LucideAngularModule, Pencil, Archive, Trash2, RotateCcw, ChevronDown, ChevronRight } from 'lucide-angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { UserStore } from '../../core/stores/user.store';
@@ -26,13 +27,21 @@ import type {
 } from '../../core/api/users.api';
 import { TRADING_STYLES, SESSIONS } from '../onboarding/onboarding.constants';
 import { TradesApi, InstrumentSearchResult, UserAssetItem } from '../../core/api/trades.api';
+import { SetupsStore } from '../../core/stores/setups.store';
+import { Setup } from '../../core/api/setups.api';
+import { AnalyticsApi, SetupStat } from '../../core/api/analytics.api';
+import {
+  SetupFormModalComponent,
+  SetupFormValue,
+  EditableSetup,
+} from '../../shared/components/setup-form-modal/setup-form-modal.component';
 
 type ProfileTab = 'trader' | 'params';
 
 @Component({
   selector: 'mtc-settings',
   standalone: true,
-  imports: [TopbarComponent, DatePipe, DecimalPipe, PlanModalComponent],
+  imports: [TopbarComponent, DatePipe, DecimalPipe, PlanModalComponent, SetupFormModalComponent, LucideAngularModule],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,6 +52,8 @@ export class SettingsComponent implements OnInit {
   private readonly billingApi = inject(BillingApi);
   private readonly usersApi = inject(UsersApi);
   private readonly tradesApi = inject(TradesApi);
+  protected readonly setupsStore = inject(SetupsStore);
+  private readonly analyticsApi = inject(AnalyticsApi);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -155,7 +166,79 @@ export class SettingsComponent implements OnInit {
     this.tradesApi.getUserAssets().subscribe({
       next: (res) => this.tradingAssets.set(res.data ?? []),
     });
+
+    // Mes setups : liste (store) + win rate par setup (analytics).
+    this.setupsStore.load();
+    this.analyticsApi.getBySetup()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: (res) => this.setupStats.set(res.data ?? []) });
   }
+
+  // ── Mes setups ──────────────────────────────────────────────────────────────
+  protected readonly PencilIcon    = Pencil;
+  protected readonly ArchiveIcon   = Archive;
+  protected readonly TrashIcon     = Trash2;
+  protected readonly RestoreIcon   = RotateCcw;
+  protected readonly ChevronDownIcon  = ChevronDown;
+  protected readonly ChevronRightIcon = ChevronRight;
+  protected readonly setupStats = signal<SetupStat[]>([]);
+  protected readonly showSetupsArchived = signal(false);
+  protected readonly showSetupModal = signal(false);
+  protected readonly editingSetup = signal<EditableSetup | null>(null);
+
+  /** win rate par setupId (depuis analytics by-setup). */
+  protected readonly winRateBySetup = computed(() => {
+    const map = new Map<string, number | null>();
+    for (const s of this.setupStats()) map.set(s.setupId, s.winRate);
+    return map;
+  });
+
+  /** Nombre de trades du setup le plus utilisé (échelle de la barre d'usage). */
+  protected readonly maxSetupCount = computed(() =>
+    Math.max(1, ...this.setupsStore.active().map((s) => s.tradeCount)),
+  );
+
+  protected setupUsagePct(count: number): number {
+    return Math.round((count / this.maxSetupCount()) * 100);
+  }
+
+  /** Couleur du win rate : vert ≥52, rouge <45, neutre sinon. */
+  protected winRateClass(setupId: string): 'good' | 'bad' | 'neutral' {
+    const wr = this.winRateBySetup().get(setupId);
+    if (wr == null) return 'neutral';
+    if (wr >= 52) return 'good';
+    if (wr < 45) return 'bad';
+    return 'neutral';
+  }
+
+  protected winRateValue(setupId: string): number | null {
+    return this.winRateBySetup().get(setupId) ?? null;
+  }
+
+  protected openCreateSetup(): void {
+    this.editingSetup.set(null);
+    this.showSetupModal.set(true);
+  }
+
+  protected openEditSetup(s: Setup): void {
+    this.editingSetup.set({ id: s.id, title: s.title, color: s.color, description: s.description });
+    this.showSetupModal.set(true);
+  }
+
+  protected onSetupSave(value: SetupFormValue): void {
+    const editing = this.editingSetup();
+    if (editing) {
+      this.setupsStore.update(editing.id, value);
+    } else {
+      this.setupsStore.create(value);
+    }
+    this.showSetupModal.set(false);
+    this.editingSetup.set(null);
+  }
+
+  protected archiveSetup(id: string): void { this.setupsStore.archive(id); }
+  protected restoreSetup(id: string): void { this.setupsStore.restore(id); }
+  protected deleteSetup(id: string): void { this.setupsStore.remove(id); }
 
   // ── Onglets ───────────────────────────────────────────────────────────────
   protected setProfileTab(tab: ProfileTab): void {
