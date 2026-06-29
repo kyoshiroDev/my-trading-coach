@@ -138,7 +138,11 @@ export class AdminService {
     }
     const daily = [...dailyMap.entries()].map(([date, cost]) => ({ date, cost }));
 
-    return { today, week, month, byFeature, byModel, topUsers, daily };
+    // Date de déploiement explicite du logging IA complet (PROMPT-135). Surtout PAS
+    // dérivée de min(createdAt) : les logs user existaient avant, mais pas les traductions.
+    const trackingSince = process.env['AI_TRACKING_SINCE'] ?? null;
+
+    return { today, week, month, byFeature, byModel, topUsers, daily, trackingSince };
   }
 
   /**

@@ -463,14 +463,12 @@ export class TradesService {
 
     const commission = Math.abs(dto.commission ?? 0);
 
-    let effectiveExit: number | undefined;
-    if (dto.exit != null && dto.exit > 0) {
-      effectiveExit = dto.exit;
-    } else if (dto.pnl != null) {
-      return +(dto.pnl - commission).toFixed(2);
-    }
+    // P&L réalisé fourni (import broker, ou édition sans changement de prix/qty) = source de vérité.
+    // On NE recalcule PAS points × quantité : faux pour la crypto/contrats (qty MEXC en contrats, pas en coins).
+    if (dto.pnl != null) return +(dto.pnl - commission).toFixed(2);
 
-    if (effectiveExit == null) return undefined;
+    if (dto.exit == null || dto.exit <= 0) return undefined;
+    const effectiveExit = dto.exit;
 
     const points =
       dto.side === 'LONG'
