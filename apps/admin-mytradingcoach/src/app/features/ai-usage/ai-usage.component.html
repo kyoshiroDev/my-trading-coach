@@ -1,73 +1,122 @@
 <div class="screen">
   <div class="page-head">
     <div>
-      <div class="page-title">Usage IA</div>
-      <div class="page-note">{{ trackingNote() }} · les coûts antérieurs ne sont pas enregistrés</div>
+      <div class="page-title">Usage IA — 30 jours</div>
+      <div class="page-note"><b>Réel</b> = facturé Anthropic (Cost API, tous environnements) · <b>Estimé</b> = attribué via les logs applicatifs (prod)</div>
     </div>
-    <span class="page-meta">claude-sonnet · claude-haiku</span>
+    <span class="page-note">{{ updatedNote() }} · claude-sonnet · claude-haiku</span>
   </div>
 
   @if (loading()) {
     <div class="card"><div class="empty">Chargement…</div></div>
   } @else if (error()) {
-    <div class="card"><div class="empty">Module Usage IA non disponible — l'endpoint /admin/ai-usage n'est pas déployé.</div></div>
+    <div class="card"><div class="empty">Module Usage IA non disponible — l'endpoint /admin/ai-cost n'est pas déployé.</div></div>
   } @else if (data(); as d) {
-    <div class="kpi-strip cols-5">
-      <div class="kpi"><div class="kpi-top green"></div><div class="kpi-label">Coût ce mois-ci</div><div class="kpi-value green">${{ d.month.costUsd | number:'1.2-2' }}</div><div class="kpi-sub">{{ d.month.calls | number }} appels</div></div>
-      <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Appels (7j)</div><div class="kpi-value teal">{{ d.week.calls | number }}</div><div class="kpi-sub">{{ d.today.calls }} aujourd'hui</div></div>
-      <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Tokens entrée (7j)</div><div class="kpi-value blue">{{ d.week.inputTokens | number }}</div><div class="kpi-sub">{{ d.today.inputTokens | number }} aujourd'hui</div></div>
-      <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Tokens sortie (7j)</div><div class="kpi-value purple">{{ d.week.outputTokens | number }}</div><div class="kpi-sub">{{ d.today.outputTokens | number }} aujourd'hui</div></div>
-      <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Coût USD (7j)</div><div class="kpi-value amber">${{ d.week.costUsd | number:'1.2-2' }}</div><div class="kpi-sub">${{ d.today.costUsd | number:'1.4-4' }} aujourd'hui</div></div>
+
+    <!-- BANDEAU RÉEL (autoritatif) -->
+    <div class="hero-strip">
+      <div class="kpi hero">
+        <span class="badge real">Réel · facturé</span>
+        <div class="kpi-label">Coût total Anthropic (30j)</div>
+        @if (billedNotConfigured()) {
+          <div class="kpi-value text" style="font-size:18px">Non configurée</div>
+          <div class="kpi-sub">clé Admin absente (ANTHROPIC_ADMIN_KEY)</div>
+        } @else {
+          <div class="kpi-value">${{ d.billed.total30d | number:'1.2-2' }}</div>
+          <div class="kpi-sub">≈ ce que tu paieras sur la facture</div>
+        }
+      </div>
+      <div class="kpi">
+        <div class="kpi-top blue"></div>
+        <div class="kpi-label">Haiku 4.5 (réel)</div>
+        <div class="kpi-value blue">{{ haikuBilled() ? '$' + (haikuBilled()!.costUsd | number:'1.2-2') : '—' }}</div>
+        <div class="kpi-sub">{{ haikuBilled() ? haikuBilled()!.pct + '% du total' : 'aucune donnée' }}</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-top teal"></div>
+        <div class="kpi-label">Sonnet 4.6 (réel)</div>
+        <div class="kpi-value text">{{ sonnetBilled() ? '$' + (sonnetBilled()!.costUsd | number:'1.2-2') : '—' }}</div>
+        <div class="kpi-sub">{{ sonnetBilled() ? sonnetBilled()!.pct + '% du total' : 'aucune donnée' }}</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-top amber"></div>
+        <div class="kpi-label">Estimation attribuée</div>
+        <div class="kpi-value amber">${{ d.attributed.total30d | number:'1.2-2' }}</div>
+        <div class="kpi-sub">prod loggée · cf. plus bas</div>
+      </div>
     </div>
 
+    <!-- COURBE RÉELLE 30J -->
     <div class="card">
-      <div class="card-head"><span class="card-label">Coût quotidien (30j)</span><span class="card-hint">USD / jour</span></div>
+      <div class="card-head">
+        <span class="card-label"><span class="dot" style="background:var(--teal)"></span>Coût réel par jour (30j)</span>
+        <span class="card-hint">source : Cost API · USD/jour</span>
+      </div>
       <div class="card-body"><div class="chart-box short"><mtc-admin-chart [config]="dailyConfig()" /></div></div>
+      <div class="reconcile">
+        Réconciliation : total réel <b>${{ d.billed.total30d | number:'1.2-2' }}</b> ·
+        attribué par les logs <b>${{ d.attributed.total30d | number:'1.2-2' }}</b> ·
+        non attribué <b>${{ d.unattributed | number:'1.2-2' }}</b> (Dev + appels antérieurs au logging). L'écart se résorbe au fil des jours.
+      </div>
     </div>
 
+    <!-- QUI / QUOI -->
     <div class="grid-2">
       <div class="card">
-        <div class="card-head"><span class="card-label">Par modèle (7j)</span><span class="card-hint">${{ d.week.costUsd | number:'1.2-2' }}</span></div>
+        <div class="card-head">
+          <span class="card-label"><span class="badge est">Estimé</span>Par feature (30j)</span>
+          <span class="card-hint">${{ d.attributed.total30d | number:'1.2-2' }} attribués</span>
+        </div>
         <div class="card-body slim">
-          @for (m of d.byModel; track m.model) {
+          @for (f of d.attributed.byFeature; track f.feature) {
+            <div class="feat-row">
+              <span class="feat-name">{{ f.feature }}</span>
+              <div class="feat-track"><div class="feat-fill est" [style.width.%]="f.pct"></div></div>
+              <span class="feat-pct">{{ f.pct }}%</span>
+              <span class="feat-cost">{{ f.cost | number:'1.2-2' }} USD</span>
+            </div>
+          } @empty { <div class="empty">Aucun appel IA loggé sur 30 jours</div> }
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <span class="card-label"><span class="badge real">Réel</span>Par modèle (30j)</span>
+          <span class="card-hint">${{ d.billed.total30d | number:'1.2-2' }}</span>
+        </div>
+        <div class="card-body slim">
+          @for (m of d.billed.byModel; track m.model) {
             <div class="feat-row">
               <span class="feat-name">
-                <span class="feat-dot" [style.background]="modelClass(m.model) === 'haiku' ? 'var(--blue)' : 'var(--teal)'"></span>{{ modelLabel(m.model) }}
+                <span class="dot" [style.background]="modelClass(m.model) === 'haiku' ? 'var(--blue)' : 'var(--teal)'"></span>{{ modelLabel(m.model) }}
               </span>
               <div class="feat-track"><div class="feat-fill" [class.haiku]="modelClass(m.model) === 'haiku'" [style.width.%]="m.pct"></div></div>
               <span class="feat-pct">{{ m.pct }}%</span>
-              <span class="feat-cost">{{ m.cost | number:'1.3-3' }} USD</span>
+              <span class="feat-cost">{{ m.costUsd | number:'1.2-2' }} USD</span>
             </div>
-          } @empty { <div class="empty">Aucun appel IA sur 7 jours</div> }
+          } @empty { <div class="empty">Cost API non configurée (ANTHROPIC_ADMIN_KEY)</div> }
         </div>
-      </div>
-      <div class="card">
-        <div class="card-head"><span class="card-label">Par feature (7j)</span><span class="card-hint">${{ d.week.costUsd | number:'1.2-2' }}</span></div>
-        <div class="card-body slim">
-          @for (f of d.byFeature; track f.feature) {
-            <div class="feat-row">
-              <span class="feat-name">{{ f.feature }}</span>
-              <div class="feat-track"><div class="feat-fill" [style.width.%]="f.pct"></div></div>
-              <span class="feat-pct">{{ f.pct }}%</span>
-              <span class="feat-cost">{{ f.cost | number:'1.3-3' }} USD</span>
-            </div>
-          } @empty { <div class="empty">Aucun appel IA sur 7 jours</div> }
-        </div>
+        <div class="reconcile">Le réel par modèle vient de la Cost API. La répartition par feature/user est estimée via les logs et ne couvre que la prod.</div>
       </div>
     </div>
 
+    <!-- TOP USERS -->
     <div class="card">
-      <div class="card-head"><span class="card-label">Top utilisateurs (7j)</span></div>
+      <div class="card-head">
+        <span class="card-label"><span class="badge est">Estimé</span>Top utilisateurs (30j)</span>
+        <span class="card-hint">coût attribué</span>
+      </div>
       <table class="tbl">
-        <thead><tr><th>Utilisateur</th><th class="num">Tokens</th><th class="num">Coût</th></tr></thead>
+        <thead><tr><th>Utilisateur</th><th class="num">Appels</th><th class="num">Tokens</th><th class="num">Coût estimé</th></tr></thead>
         <tbody>
-          @for (u of d.topUsers; track u.userId) {
+          @for (u of d.attributed.topUsers; track u.userId) {
             <tr>
-              <td data-label="Utilisateur" class="u-name">{{ u.name || u.email }}</td>
-              <td data-label="Tokens" class="td-mono num">{{ u.tokens | number }}</td>
-              <td data-label="Coût" class="td-mono num cost">{{ u.cost | number:'1.3-3' }} USD</td>
+              <td class="u-name">{{ u.name || u.email }}</td>
+              <td class="num td-mono">{{ u.calls | number }}</td>
+              <td class="num td-mono">{{ u.tokens | number }}</td>
+              <td class="num td-mono cost">{{ u.cost | number:'1.2-2' }} USD</td>
             </tr>
-          } @empty { <tr><td colspan="3" class="empty">Aucun utilisateur</td></tr> }
+          } @empty { <tr><td colspan="4" class="empty">Aucun utilisateur</td></tr> }
         </tbody>
       </table>
     </div>
