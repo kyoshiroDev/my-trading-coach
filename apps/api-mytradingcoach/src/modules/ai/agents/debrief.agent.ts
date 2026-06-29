@@ -29,9 +29,10 @@ export class DebriefAgent {
     }
 
     // Borne le budget de sortie : base + marge par compte, plafonné (un seul appel,
-    // coût maîtrisé même avec plusieurs comptes).
+    // coût maîtrisé même avec plusieurs comptes). Plafond 8192 + marge/compte élargie :
+    // 4096 tronquait l'analyse détaillée des users multi-comptes → JSON invalide.
     const accountCount = data.accounts?.length ?? 1;
-    const maxTokens = Math.min(4096, 1600 + accountCount * 500);
+    const maxTokens = Math.min(8192, 2000 + accountCount * 900);
 
     let response: Anthropic.Message;
     try {

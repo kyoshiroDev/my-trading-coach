@@ -525,3 +525,13 @@ model DeletedAccount {
   @@index([deletedAt])
   @@index([anonymizedAt])
 }
+
+/// Cache quotidien du coût RÉEL facturé par Anthropic (Cost API). Source autoritative.
+model AnthropicCostDaily {
+  date      String // 'YYYY-MM-DD' (bucket jour, UTC) tel que renvoyé par la Cost API
+  model     String // modèle parsé depuis `description` (ex 'claude-haiku-4-5'), 'other' sinon
+  amountUsd Float
+  updatedAt DateTime @updatedAt
+
+  @@id([date, model])
+}

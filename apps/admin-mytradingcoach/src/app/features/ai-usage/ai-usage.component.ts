@@ -3,7 +3,7 @@ import { DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import type { ChartConfiguration, ScriptableContext } from 'chart.js';
-import { AdminApi, AiUsageData } from '../../core/api/admin.api';
+import { AdminApi, AiCostData } from '../../core/api/admin.api';
 import { ChartCanvasComponent } from '../../shared/components/chart-canvas/chart-canvas.component';
 import { CHART_COLORS, fade, gridAxis, noLegend } from '../../shared/charts/chart-theme';
 
@@ -19,7 +19,7 @@ export class AiUsageComponent {
   private readonly adminApi = inject(AdminApi);
   private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly data = signal<AiUsageData | null>(null);
+  protected readonly data = signal<AiCostData | null>(null);
   protected readonly loading = signal(true);
   protected readonly error = signal(false);
 
@@ -31,35 +31,45 @@ export class AiUsageComponent {
     return model;
   }
 
-  /** Classe de la barre/pastille selon le modèle (Haiku en bleu, Sonnet en teal). */
+  /** Variante de barre/pastille (Haiku en bleu, Sonnet en teal). */
   protected modelClass(model: string): string {
     return model.includes('haiku') ? 'haiku' : '';
   }
 
-  /** Note de complétude : depuis la date de déploiement du logging IA, sinon générique. */
-  protected readonly trackingNote = computed(() => {
-    const s = this.data()?.trackingSince;
-    return s ? `Tracking complet depuis le ${this.frDate(s)}` : 'Tracking complet depuis l\'activation du logging';
+  // Split du hero (réel) — Haiku vs Sonnet depuis la Cost API.
+  protected readonly haikuBilled = computed(
+    () => this.data()?.billed.byModel.find((m) => m.model.includes('haiku')) ?? null,
+  );
+  protected readonly sonnetBilled = computed(
+    () => this.data()?.billed.byModel.find((m) => m.model.includes('sonnet')) ?? null,
+  );
+
+  /** Bloc réel vide ET jamais rafraîchi → Cost API non configurée (clé Admin manquante). */
+  protected readonly billedNotConfigured = computed(() => {
+    const b = this.data()?.billed;
+    return !!b && b.total30d === 0 && b.updatedAt === null;
   });
 
-  /** `2026-06-27` → `27/06/2026`. */
-  private frDate(iso: string): string {
-    const [y, m, d] = iso.split('-');
-    return `${d}/${m}/${y}`;
-  }
+  /** « maj il y a Xh » depuis billed.updatedAt. */
+  protected readonly updatedNote = computed(() => {
+    const u = this.data()?.billed.updatedAt;
+    if (!u) return 'Cost API non configurée';
+    const h = Math.floor((Date.now() - new Date(u).getTime()) / 3_600_000);
+    return h <= 0 ? 'maj à l’instant' : `maj il y a ${h} h`;
+  });
 
-  // Coût quotidien sur 30 jours (ligne) — aligné sur le mockup « Coût quotidien (30j) ».
+  // Courbe du coût RÉEL par jour (teal — c'est du facturé, pas de l'estimation).
   protected readonly dailyConfig = computed<ChartConfiguration>(() => {
-    const d = this.data()?.daily ?? [];
+    const d = this.data()?.billed.daily ?? [];
     return {
       type: 'line',
       data: {
-        labels: d.map((p) => this.shortDate(p.date)),
+        labels: d.map((p) => this.frDateShort(p.date)),
         datasets: [{
-          label: 'Coût USD',
-          data: d.map((p) => p.cost),
-          borderColor: CHART_COLORS.amber,
-          backgroundColor: (ctx: ScriptableContext<'line'>) => fade(ctx, CHART_COLORS.amber),
+          label: 'Coût réel USD',
+          data: d.map((p) => p.costUsd),
+          borderColor: CHART_COLORS.teal,
+          backgroundColor: (ctx: ScriptableContext<'line'>) => fade(ctx, CHART_COLORS.teal),
           fill: true, tension: 0.35, pointRadius: 0, borderWidth: 2,
         }],
       },
@@ -67,13 +77,13 @@ export class AiUsageComponent {
     } as ChartConfiguration;
   });
 
-  private shortDate(iso: string): string {
+  private frDateShort(iso: string): string {
     const [, m, day] = iso.split('-');
     return `${day}/${m}`;
   }
 
   constructor() {
-    this.adminApi.aiUsage().pipe(
+    this.adminApi.aiCost().pipe(
       catchError(() => { this.error.set(true); return of(null); }),
       takeUntilDestroyed(this.destroyRef),
     ).subscribe((r) => { if (r) this.data.set(r.data); this.loading.set(false); });

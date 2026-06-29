@@ -67,15 +67,20 @@ export interface AdminUserDetail {
   timeline: { action: string; detail: string; type: 'auth' | 'ai' | 'trade'; createdAt: string }[];
 }
 
-export interface AiUsageData {
-  today: { inputTokens: number; outputTokens: number; costUsd: number; calls: number };
-  week:  { inputTokens: number; outputTokens: number; costUsd: number; calls: number };
-  month: { inputTokens: number; outputTokens: number; costUsd: number; calls: number };
-  byFeature: { feature: string; tokens: number; cost: number; pct: number }[];
-  byModel:   { model: string;   tokens: number; cost: number; pct: number }[];
-  topUsers:  { userId: string; email: string; name: string; tokens: number; cost: number }[];
-  daily:     { date: string; cost: number }[];
-  trackingSince: string | null;
+/** Usage IA 30j : coût RÉEL (Cost API) + attribution ESTIMÉE (logs) + réconciliation. */
+export interface AiCostData {
+  billed: {
+    total30d: number;
+    byModel: { model: string; costUsd: number; pct: number }[];
+    daily:   { date: string; costUsd: number }[];
+    updatedAt: string | null;
+  };
+  attributed: {
+    total30d: number;
+    byFeature: { feature: string; cost: number; pct: number }[];
+    topUsers:  { userId: string; name: string; email: string; calls: number; tokens: number; cost: number }[];
+  };
+  unattributed: number;
 }
 
 export interface SubscriptionsData {
@@ -281,7 +286,8 @@ export class AdminApi {
   stats()               { return this.http.get<{ data: AdminStats }>(`${this.base}/stats`); }
   online()              { return this.http.get<{ data: AdminOnlineUser[] }>(`${this.base}/online`); }
   subscriptions()       { return this.http.get<{ data: SubscriptionsData }>(`${this.base}/subscriptions`); }
-  aiUsage()             { return this.http.get<{ data: AiUsageData }>(`${environment.apiUrl}/admin/ai-usage`); }
+  aiCost()              { return this.http.get<{ data: AiCostData }>(`${environment.apiUrl}/admin/ai-cost`); }
+  refreshAiCost()       { return this.http.post<{ data: { ok: boolean; rows: number; total30d: number } }>(`${environment.apiUrl}/admin/ai-cost/refresh`, {}); }
   retention()           { return this.http.get<{ data: RetentionData }>(`${this.adminBase}/retention`); }
   metricsHistory(days = 30) {
     return this.http.get<{ data: MetricsHistoryPoint[] }>(
