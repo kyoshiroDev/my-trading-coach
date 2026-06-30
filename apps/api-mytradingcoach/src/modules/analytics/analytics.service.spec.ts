@@ -101,6 +101,8 @@ describe('AnalyticsService', () => {
 
       expect(result.winRate).toBe(50);
       expect(result.totalTrades).toBe(4);
+      // profit factor = profits bruts (300) / pertes brutes (80) = 3.75
+      expect(result.profitFactor).toBeCloseTo(3.75);
     });
 
     it("retourne des zéros s'il n'y a aucun trade", async () => {
@@ -112,6 +114,7 @@ describe('AnalyticsService', () => {
       expect(result.totalPnl).toBe(0);
       expect(result.totalTrades).toBe(0);
       expect(result.maxDrawdown).toBe(0);
+      expect(result.profitFactor).toBeNull();
       expect(result.streak).toBe(0);
     });
 

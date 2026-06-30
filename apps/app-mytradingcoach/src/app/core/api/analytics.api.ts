@@ -8,6 +8,7 @@ export interface AnalyticsSummary {
   totalPnl: number;
   totalTrades: number;
   maxDrawdown: number;
+  profitFactor: number | null;
   streak: number;
   topSession: string;
   topSessionWinRate: number;

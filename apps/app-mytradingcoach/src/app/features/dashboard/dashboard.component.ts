@@ -28,6 +28,7 @@ import {
   MonthlyActivitySummary,
   SetupStat,
   EmotionStat,
+  TopAsset,
 } from '../../core/api/analytics.api';
 import { ActivityCalendarComponent } from '../../shared/components/activity-calendar/activity-calendar.component';
 import {
@@ -208,6 +209,24 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
             </div>
             <div class="mtc-mini-donut" [style.background]="winRateDonut()"><span></span></div>
           </div>
+          <!-- Profit factor -->
+          <div class="mtc-kpi" style="--glow:var(--purple)">
+            <div class="mtc-kpi-l">
+              <div class="mtc-kpi-lab">Profit factor</div>
+              <div class="mtc-kpi-val">{{ profitFactorDisplay() }}</div>
+              <div class="mtc-kpi-sub">
+                @if ((summary()?.totalTrades ?? 0) > 0) { profits / pertes } @else { Aucune donnée }
+              </div>
+            </div>
+            @let pf = sparkPath(eqSeries());
+            @if (pf.line) {
+              <svg class="mtc-spark" viewBox="0 0 72 42" preserveAspectRatio="none" width="72" height="42">
+                <path [attr.d]="pf.area" fill="var(--purple)" fill-opacity="0.13" />
+                <path [attr.d]="pf.line" fill="none" stroke="var(--purple-bright)" stroke-width="1.6" stroke-linejoin="round" />
+                <circle [attr.cx]="pf.cx" [attr.cy]="pf.cy" r="1.9" fill="var(--purple-bright)" />
+              </svg>
+            }
+          </div>
           <!-- Trades pris -->
           <div class="mtc-kpi" style="--glow:var(--green)">
             <div class="mtc-kpi-l">
@@ -297,6 +316,26 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
                 </div>
               </div>
             } @else { <p class="empty-widget-msg">Tes setups apparaîtront<br />après tes premiers trades</p> }
+          </div>
+        </div>
+
+        <div class="mtc-panel">
+          <div class="mtc-panel-head"><div><div class="mtc-panel-title">Top actifs</div><div class="mtc-panel-sub">P&amp;L par instrument</div></div><a routerLink="/analytics" class="card-action">Voir →</a></div>
+          <div class="mtc-panel-body">
+            @if (topAssets().length) {
+              <div class="mtc-hbars">
+                @for (a of topAssets(); track a.asset) {
+                  <div class="mtc-hbar">
+                    <div class="mtc-hbar-l">
+                      <div class="mtc-hbar-name">{{ a.asset | uppercase }}</div>
+                      <div class="mtc-hbar-meta">{{ a.count }} trade{{ a.count > 1 ? 's' : '' }} · {{ a.winRate.toFixed(0) }}%</div>
+                    </div>
+                    <div class="mtc-hbar-track"><div class="mtc-hbar-fill" [class.neg]="a.pnl < 0" [style.width.%]="a.barPct"></div></div>
+                    <div class="mtc-hbar-v" [style.color]="a.pnl >= 0 ? 'var(--green)' : 'var(--red)'">{{ a.pnl | pnlFormat }}</div>
+                  </div>
+                }
+              </div>
+            } @else { <p class="empty-widget-msg">Tes actifs apparaîtront<br />après tes premiers trades</p> }
           </div>
         </div>
 
@@ -468,8 +507,25 @@ export class DashboardComponent {
   private readonly byEmotionResource = httpResource<{ data: EmotionStat[] }>(() =>
     this.userStore.isStarterOrAbove() ? `${environment.apiUrl}/analytics/by-emotion${this.accQuery()}` : undefined,
   );
+  private readonly topAssetsResource = httpResource<{ data: TopAsset[] }>(() =>
+    this.userStore.isStarterOrAbove() ? `${environment.apiUrl}/analytics/top-assets${this.accQuery()}` : undefined,
+  );
 
   protected readonly summary = computed(() => this.summaryResource.value()?.data ?? null);
+
+  /** Top actifs par P&L (HBars) — largeur de barre précalculée sur le max absolu. */
+  protected readonly topAssets = computed(() => {
+    const list = (this.topAssetsResource.value()?.data ?? []).slice(0, 5);
+    const max = Math.max(...list.map((a) => Math.abs(a.pnl)), 1);
+    return list.map((a) => ({ ...a, barPct: (Math.abs(a.pnl) / max) * 100 }));
+  });
+
+  /** Profit factor : valeur 2 décimales, ∞ si aucune perte, — si aucune donnée. */
+  protected readonly profitFactorDisplay = computed(() => {
+    const pf = this.summary()?.profitFactor;
+    if (pf == null) return (this.summary()?.totalTrades ?? 0) > 0 ? '∞' : '—';
+    return pf.toFixed(2);
+  });
 
   protected readonly drawdownDisplay = computed(() => {
     const dd = this.summary()?.maxDrawdown ?? 0;
