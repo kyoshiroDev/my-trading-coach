@@ -737,8 +737,8 @@ canvas {
 .limit-banner.reached .limit-banner-btn:hover { opacity: 0.85; }
 .limit-banner-btn.ghost {
   background: transparent;
-  border: 1px solid rgba(234, 179, 8, 0.5);
-  color: #eab308;
+  border: 1px solid var(--yellow);
+  color: var(--yellow);
 }
 .limit-banner-btn.ghost:hover { background: rgba(234, 179, 8, 0.08); }
 @media (max-width: 768px) {
@@ -749,8 +749,8 @@ canvas {
 .firstrun-hero {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
   border-radius: 12px; padding: 18px 20px; margin-bottom: 16px;
-  background: linear-gradient(135deg, rgba(0, 212, 170, 0.10), rgba(0, 212, 170, 0.02));
-  border: 1px solid rgba(0, 212, 170, 0.3);
+  background: linear-gradient(135deg, var(--blue-glow), rgba(59, 130, 246, 0.04));
+  border: 1px solid rgba(59, 130, 246, 0.3);
 }
 .firstrun-text { flex: 1; min-width: 0; }
 .firstrun-title { font-size: 16px; font-weight: 700; color: var(--text); }
@@ -762,52 +762,18 @@ canvas {
   transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center;
 }
 .firstrun-btn.primary {
-  background: #00d4aa; border: 1px solid #00d4aa; color: #062018;
-  box-shadow: 0 0 18px rgba(0, 212, 170, 0.25);
+  background: var(--blue); border: 1px solid var(--blue); color: #fff;
+  box-shadow: 0 0 18px rgba(59, 130, 246, 0.3);
 }
-.firstrun-btn.primary:hover { opacity: 0.9; }
+.firstrun-btn.primary:hover { background: var(--blue-bright); }
 .firstrun-btn.ghost {
-  background: transparent; border: 1px solid rgba(0, 212, 170, 0.5); color: #00d4aa;
+  background: transparent; border: 1px solid rgba(59, 130, 246, 0.5); color: var(--blue-bright);
 }
-.firstrun-btn.ghost:hover { background: rgba(0, 212, 170, 0.08); }
+.firstrun-btn.ghost:hover { background: rgba(59, 130, 246, 0.08); }
 @media (max-width: 768px) {
   .firstrun-hero { flex-direction: column; align-items: flex-start; }
   .firstrun-actions { width: 100%; }
   .firstrun-btn { flex: 1; justify-content: center; }
-}
-
-/* ── Header row greeting + Discord badge ── */
-.dashboard-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 28px;
-}
-.dashboard-header-row .greeting-title { margin-bottom: 0; }
-
-.discord-badge {
-  display: flex; align-items: center; gap: 8px;
-  background: rgba(88, 101, 242, 0.08);
-  border: 1px solid rgba(88, 101, 242, 0.2);
-  border-radius: 8px; padding: 6px 10px;
-  flex-shrink: 0;
-}
-.discord-badge-ic { font-size: 14px; }
-.discord-badge-link {
-  font-size: 12px; font-weight: 500;
-  color: #7289da; text-decoration: none; white-space: nowrap;
-  transition: color 0.15s;
-}
-.discord-badge-link:hover { color: #99aab5; }
-.discord-badge-dismiss {
-  background: transparent; border: none; color: var(--text-3);
-  cursor: pointer; font-size: 12px; padding: 2px 4px; border-radius: 4px; line-height: 1;
-}
-.discord-badge-dismiss:hover { color: var(--text); }
-@media (max-width: 768px) {
-  .dashboard-header-row { flex-wrap: wrap; }
-  .discord-badge { order: -1; }
 }
 
 /* ─── V2 Session Mode — tabs ─── */
