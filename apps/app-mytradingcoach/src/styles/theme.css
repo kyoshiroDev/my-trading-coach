@@ -31,6 +31,7 @@
   --text: #e2eaf5;
   --text-2: #8fa3bf;
   --text-3: #7090b0;
+  --text-faint: #4a5f7a; /* libellés discrets (axes, jours non tradés) — flagship dashboard */
 
   /* ─── Typography ─── */
   --font-display: 'Space Grotesk', sans-serif;

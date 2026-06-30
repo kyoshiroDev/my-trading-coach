@@ -2,15 +2,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  ElementRef,
-  ViewChild,
   computed,
   effect,
   inject,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DatePipe, DecimalPipe, TitleCasePipe, UpperCasePipe } from '@angular/common';
+import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { BillingApi } from '../../core/api/billing.api';
 import { httpResource } from '@angular/common/http';
@@ -34,14 +32,11 @@ import {
 import { ActivityCalendarComponent } from '../../shared/components/activity-calendar/activity-calendar.component';
 import {
   EmotionColorPipe,
-  EmotionEmojiPipe,
   EmotionLabelPipe,
-  PnlColorPipe,
   PnlFormatPipe,
 } from '../../shared/pipes';
 import { EMOTION_COLORS } from '../../shared/pipes/emotion-color.pipe';
 import { environment } from '../../../environments/environment';
-import { ChartService } from '../../core/services/chart.service';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 
 @Component({
@@ -51,15 +46,12 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
     RouterLink,
     DatePipe,
     DecimalPipe,
-    TitleCasePipe,
     UpperCasePipe,
     TopbarComponent,
     TradeFormComponent,
     CsvImportComponent,
     PlanModalComponent,
-    PnlColorPipe,
     PnlFormatPipe,
-    EmotionEmojiPipe,
     EmotionLabelPipe,
     EmotionColorPipe,
     ActivityCalendarComponent,
@@ -166,202 +158,247 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
       }
 
       @if (!isLoading()) {
-        <div class="stats-row has-capital">
-          <div class="stat-card">
-            <div class="stat-label">Capital</div>
-            <div class="stat-value mono" data-testid="dashboard-capital" [style.color]="capitalColor()">{{ capitalDisplay() }}</div>
-            <div class="stat-sub">
-              @if (capitalPct() !== 0) {
-                <span class="change" [class]="capitalPct() > 0 ? 'up' : 'down'">
-                  {{ capitalPct() > 0 ? '▲' : '▼' }} {{ capitalPct() | number: '1.1-1' }}%
-                </span>
-              } @else {
-                <span style="color:var(--text-3)">base</span>
-              }
+        <div class="mtc-kpis">
+          <!-- Capital -->
+          <div class="mtc-kpi" style="--glow:var(--blue)">
+            <div class="mtc-kpi-l">
+              <div class="mtc-kpi-lab">Capital</div>
+              <div class="mtc-kpi-val" data-testid="dashboard-capital" [style.color]="capitalColor()">{{ capitalDisplay() }}</div>
+              <div class="mtc-kpi-sub">
+                @if (capitalPct() !== 0) {
+                  <span [style.color]="capitalPct() > 0 ? 'var(--green)' : 'var(--red)'">{{ capitalPct() > 0 ? '+' : '' }}{{ capitalPct() | number:'1.1-1' }}% ce mois</span>
+                } @else { base }
+              </div>
             </div>
-            <div class="stat-bg-icon">💼</div>
+            @let cap = sparkPath(capitalSeries());
+            @if (cap.line) {
+              <svg class="mtc-spark" viewBox="0 0 72 42" preserveAspectRatio="none" width="72" height="42">
+                <path [attr.d]="cap.area" fill="var(--blue)" fill-opacity="0.13" />
+                <path [attr.d]="cap.line" fill="none" stroke="var(--blue-bright)" stroke-width="1.6" stroke-linejoin="round" />
+                <circle [attr.cx]="cap.cx" [attr.cy]="cap.cy" r="1.9" fill="var(--blue-bright)" />
+              </svg>
+            }
           </div>
-          <div class="stat-card">
-            <div class="stat-label">P&amp;L Total</div>
-            <div class="stat-value" [style.color]="pnlColor()">{{ summary()?.totalPnl ?? 0 | pnlFormat }}</div>
-            <div class="stat-sub">
-              @if ((summary()?.totalTrades ?? 0) > 0) {
-                <span class="change" [class]="(summary()?.totalPnl ?? 0) >= 0 ? 'up' : 'down'">
-                  {{ (summary()?.totalPnl ?? 0) >= 0 ? '▲' : '▼' }} ce mois
-                </span>
-              } @else {
-                <span style="color:var(--text-3)">Aucune donnée</span>
-              }
+          <!-- P&L net mois -->
+          <div class="mtc-kpi" style="--glow:var(--green)">
+            <div class="mtc-kpi-l">
+              <div class="mtc-kpi-lab">P&amp;L net · mois</div>
+              <div class="mtc-kpi-val" [style.color]="pnlColor()">{{ summary()?.totalPnl ?? 0 | pnlFormat }}</div>
+              <div class="mtc-kpi-sub">
+                @if ((summary()?.totalTrades ?? 0) > 0) { ce mois } @else { Aucune donnée }
+              </div>
             </div>
-            <div class="stat-bg-icon">💰</div>
+            @let pnl = sparkPath(eqSeries());
+            @if (pnl.line) {
+              <svg class="mtc-spark" viewBox="0 0 72 42" preserveAspectRatio="none" width="72" height="42">
+                <path [attr.d]="pnl.area" fill="var(--green)" fill-opacity="0.13" />
+                <path [attr.d]="pnl.line" fill="none" stroke="var(--green)" stroke-width="1.6" stroke-linejoin="round" />
+                <circle [attr.cx]="pnl.cx" [attr.cy]="pnl.cy" r="1.9" fill="var(--green)" />
+              </svg>
+            }
           </div>
-          <div class="stat-card">
-            <div class="stat-label">Win Rate</div>
-            <div class="stat-value" [style.color]="winRateColor()">{{ (summary()?.winRate ?? 0).toFixed(1) }}%</div>
-            <div class="stat-sub">
-              @if ((summary()?.totalTrades ?? 0) > 0) {
-                <span>vs mois précédent</span>
-              } @else {
-                <span style="color:var(--text-3)">Aucune donnée</span>
-              }
+          <!-- Win rate -->
+          <div class="mtc-kpi" style="--glow:var(--blue)">
+            <div class="mtc-kpi-l">
+              <div class="mtc-kpi-lab">Win rate</div>
+              <div class="mtc-kpi-val" [style.color]="winRateColor()">{{ (summary()?.winRate ?? 0).toFixed(1) }}%</div>
+              <div class="mtc-kpi-sub">
+                @if ((summary()?.totalTrades ?? 0) > 0) { sur {{ summary()?.totalTrades }} trades } @else { Aucune donnée }
+              </div>
             </div>
-            <div class="stat-bg-icon">🎯</div>
+            <div class="mtc-mini-donut" [style.background]="winRateDonut()"><span></span></div>
           </div>
-          <div class="stat-card">
-            <div class="stat-label">Drawdown Max</div>
-            <div class="stat-value" [style.color]="drawdownColor()">{{ drawdownDisplay() | pnlFormat }}</div>
-            <div class="stat-sub">
-              @if ((summary()?.totalTrades ?? 0) > 0) {
-                <span>sur capital</span>
-              } @else {
-                <span style="color:var(--text-3)">Aucune donnée</span>
+          <!-- Trades pris -->
+          <div class="mtc-kpi" style="--glow:var(--green)">
+            <div class="mtc-kpi-l">
+              <div class="mtc-kpi-lab">Trades pris</div>
+              <div class="mtc-kpi-val">{{ summary()?.totalTrades ?? tradesStore.trades().length }}</div>
+              <div class="mtc-kpi-sub">
+                @if ((summary()?.streak ?? 0) > 0) { <span style="color:var(--green)">+{{ summary()?.streak }} streak</span> }
+                @else if ((summary()?.streak ?? 0) < 0) { <span style="color:var(--red)">{{ summary()?.streak }} streak</span> }
+                @else { ce mois }
+              </div>
+            </div>
+            <div class="mtc-minibars">
+              @for (b of [.45,.7,.4,.85,.55,.95,.6,.75,.5,.9,.65,.8]; track $index) {
+                <span [style.height.%]="b * 100" [style.opacity]="0.4 + b * 0.5"></span>
               }
             </div>
-            <div class="stat-bg-icon">📉</div>
           </div>
-          <div class="stat-card">
-            <div class="stat-label">Trades</div>
-            <div class="stat-value">{{ summary()?.totalTrades ?? tradesStore.trades().length }}</div>
-            <div class="stat-sub">
-              @if ((summary()?.totalTrades ?? 0) === 0) {
-                <span style="color:var(--text-3)">Aucune donnée</span>
-              } @else if ((summary()?.streak ?? 0) > 0) {
-                <span class="change up">▲ +{{ summary()?.streak }} streak</span>
-              } @else if ((summary()?.streak ?? 0) < 0) {
-                <span class="change down">▼ {{ summary()?.streak }} streak</span>
-              } @else {
-                <span class="change">— pas de streak</span>
-              }
+          <!-- Drawdown max -->
+          <div class="mtc-kpi" style="--glow:var(--red)">
+            <div class="mtc-kpi-l">
+              <div class="mtc-kpi-lab">Drawdown max</div>
+              <div class="mtc-kpi-val" [style.color]="drawdownColor()">{{ drawdownDisplay() | pnlFormat }}</div>
+              <div class="mtc-kpi-sub">
+                @if ((summary()?.totalTrades ?? 0) > 0) { sur capital } @else { Aucune donnée }
+              </div>
             </div>
-            <div class="stat-bg-icon">🔢</div>
+            @let dd = sparkPath(ddSeries());
+            @if (dd.line) {
+              <svg class="mtc-spark" viewBox="0 0 72 42" preserveAspectRatio="none" width="72" height="42">
+                <path [attr.d]="dd.area" fill="var(--red)" fill-opacity="0.13" />
+                <path [attr.d]="dd.line" fill="none" stroke="var(--red)" stroke-width="1.6" stroke-linejoin="round" />
+                <circle [attr.cx]="dd.cx" [attr.cy]="dd.cy" r="1.9" fill="var(--red)" />
+              </svg>
+            }
           </div>
         </div>
       } @else {
-        <div class="stats-row">
-          @for (_ of [0, 1, 2, 3]; track $index) {
-            <div class="stat-card stat-skeleton"></div>
+        <div class="mtc-kpis">
+          @for (_ of [0, 1, 2, 3, 4]; track $index) {
+            <div class="mtc-kpi stat-skeleton" style="height:96px"></div>
           }
         </div>
       }
 
-      <!-- LIGNE 1 : Equity Curve + Calendrier côte à côte -->
-      <div class="top-charts-row">
-        <div class="card equity-card">
-          <div class="card-header">
-            <div class="card-title">Equity Curve</div>
-            <div style="display:flex;align-items:center;gap:10px;">
-              <span style="font-size:11px;color:var(--text-3);font-family:var(--font-mono);">
-                {{ currentMonthLabel() }}
-              </span>
-              <a routerLink="/analytics" class="card-action">Détails →</a>
-            </div>
+      <!-- Grille flagship : équité, stratégies, P&L/jour, AI coach, émotions, calendrier -->
+      <div class="mtc-grid">
+        <div class="mtc-panel span2">
+          <div class="mtc-panel-head">
+            <div><div class="mtc-panel-title">Courbe d'équité</div><div class="mtc-panel-sub">{{ currentMonthLabel() }}</div></div>
+            <a routerLink="/analytics" class="card-action">Détails →</a>
           </div>
-          <div class="chart-container">
-            <canvas #equityChart></canvas>
-            @if (!userStore.isStarterOrAbove() || equityCurve().length === 0) {
-              <div class="empty-chart">
-                @if (!userStore.isStarterOrAbove()) { Courbe disponible dès Starter } @else { Aucun trade ce mois }
+          <div class="mtc-panel-body">
+            @let eg = equityGlow();
+            @if (eg && userStore.isStarterOrAbove()) {
+              <svg class="mtc-equity" [attr.viewBox]="'0 0 ' + eg.W + ' ' + eg.H" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="mtcEqFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" [attr.stop-color]="eg.color" stop-opacity="0.32" />
+                    <stop offset="100%" [attr.stop-color]="eg.color" stop-opacity="0" />
+                  </linearGradient>
+                  <filter id="mtcEqGlow" x="-20%" y="-50%" width="140%" height="200%">
+                    <feGaussianBlur stdDeviation="3.2" result="b" />
+                    <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+                  </filter>
+                </defs>
+                <path [attr.d]="eg.area" fill="url(#mtcEqFill)" />
+                <path [attr.d]="eg.line" fill="none" [attr.stroke]="eg.color" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" filter="url(#mtcEqGlow)" />
+                <circle [attr.cx]="eg.lastX" [attr.cy]="eg.lastY" r="3.4" [attr.fill]="eg.color" />
+              </svg>
+            } @else {
+              <div class="mtc-empty">@if (!userStore.isStarterOrAbove()) { Courbe disponible dès Starter } @else { Aucun trade ce mois }</div>
+            }
+          </div>
+        </div>
+
+        <div class="mtc-panel">
+          <div class="mtc-panel-head"><div><div class="mtc-panel-title">Répartition stratégies</div><div class="mtc-panel-sub">% des trades par setup</div></div></div>
+          <div class="mtc-panel-body">
+            @let sd = setupsDonut();
+            @if (sd) {
+              <div class="mtc-donut-row">
+                <div class="mtc-donut" [style.background]="sd.gradient"><div class="mtc-donut-hole"><span class="mtc-donut-v">{{ sd.centerValue }}</span><span class="mtc-donut-l">{{ sd.centerLabel }}</span></div></div>
+                <div class="mtc-legend">
+                  @for (l of sd.legend; track l.label) {
+                    <div class="mtc-legend-item"><span class="mtc-legend-dot" [style.background]="l.color"></span><span class="mtc-legend-lab">{{ l.label }}</span><span class="mtc-legend-pct">{{ l.pct }}%</span></div>
+                  }
+                </div>
+              </div>
+            } @else { <p class="empty-widget-msg">Tes setups apparaîtront<br />après tes premiers trades</p> }
+          </div>
+        </div>
+
+        <div class="mtc-panel">
+          <div class="mtc-panel-head"><div><div class="mtc-panel-title">P&amp;L par jour</div><div class="mtc-panel-sub">{{ currentMonthLabel() }}</div></div></div>
+          <div class="mtc-panel-body">
+            @let pl = plByDay();
+            @if (pl) {
+              <div class="mtc-plday">
+                @for (d of pl; track d.day) {
+                  <div class="mtc-plday-col" [title]="d.day + ' · ' + (d.pnl >= 0 ? '+' : '') + d.pnl + '$'">
+                    <div class="mtc-plday-cell">
+                      <div class="mtc-plday-bar" [class.pos]="d.pos && d.traded" [class.neg]="!d.pos && d.traded" [style.height.%]="d.traded ? (5 + d.mag * 42) : 0"></div>
+                    </div>
+                    <span class="mtc-plday-day" [class.traded]="d.traded">{{ d.day }}</span>
+                  </div>
+                }
+              </div>
+            } @else { <div class="mtc-empty">Aucune activité ce mois</div> }
+          </div>
+        </div>
+
+        <div class="mtc-panel" [class.mtc-ai]="userStore.isStarterOrAbove()">
+          <div class="mtc-panel-head">
+            <div class="mtc-panel-title">AI Coach · feedback</div>
+            <span class="mtc-live"><span class="mtc-live-dot"></span>LIVE</span>
+          </div>
+          <div class="mtc-panel-body">
+            @if (userStore.isPremium()) {
+              <div class="mtc-coach-cta">
+                <div class="mtc-coach-ic">✨</div>
+                <div class="mtc-coach-t">Ton coach analyse tes patterns</div>
+                <div class="mtc-coach-s">Insights personnalisés, points forts et axes de progrès sur tes derniers trades.</div>
+                <a routerLink="/analytics" class="mtc-coach-btn">Voir mon coaching complet</a>
+              </div>
+            } @else {
+              <div class="mtc-coach-lock">
+                <div class="mtc-lock-ic">🔒</div>
+                <div class="mtc-lock-t">Coach IA réservé au Premium</div>
+                <div class="mtc-lock-s">Analyse de tes patterns, chat coach IA et recommandations personnalisées.</div>
+                <button class="mtc-lock-cta" (click)="showPlanModal.set(true)">Débloquer — {{ PRICING.premium.monthly }}€/mois</button>
               </div>
             }
           </div>
         </div>
-        <div class="card calendar-dashboard-card">
-          <mtc-activity-calendar
-            [data]="monthlyActivity()"
-            [loading]="monthlyActivityLoading()"
-            [showNavigation]="false"
-            [year]="calYear()"
-            [month]="calMonth()"
-          />
+
+        <div class="mtc-panel">
+          <div class="mtc-panel-head"><div><div class="mtc-panel-title">États émotionnels</div><div class="mtc-panel-sub">par fréquence</div></div><a routerLink="/analytics" class="card-action">Détails →</a></div>
+          <div class="mtc-panel-body">
+            @let ed = emotionsDonut();
+            @if (ed) {
+              <div class="mtc-donut-row">
+                <div class="mtc-donut" [style.background]="ed.gradient"><div class="mtc-donut-hole"><span class="mtc-donut-v">{{ ed.centerValue }}</span><span class="mtc-donut-l">{{ ed.centerLabel | emotionLabel }}</span></div></div>
+                <div class="mtc-legend">
+                  @for (e of emotionStats(); track e.emotion) {
+                    <div class="mtc-legend-item"><span class="mtc-legend-dot" [style.background]="e.emotion | emotionColor"></span><span class="mtc-legend-lab">{{ e.emotion | emotionLabel }}</span><span class="mtc-legend-pct">{{ e.pct }}%</span></div>
+                  }
+                </div>
+              </div>
+            } @else { <p class="empty-widget-msg">Enregistre tes premiers trades<br />pour voir tes états émotionnels</p> }
+          </div>
+        </div>
+
+        <div class="mtc-panel mtc-cal-panel">
+          <div class="mtc-panel-head"><div class="mtc-panel-title">Activité du mois</div></div>
+          <div class="mtc-panel-body">
+            <mtc-activity-calendar [data]="monthlyActivity()" [loading]="monthlyActivityLoading()" [showNavigation]="false" [year]="calYear()" [month]="calMonth()" />
+          </div>
         </div>
       </div>
 
-      <!-- LIGNE 2 : Trades + Win Rate + Émotions -->
-      <div class="bottom-widgets-row">
-        <div class="card recent-trades-card">
-          <div class="card-header">
-            <div class="card-title">Derniers trades</div>
-            <a routerLink="/journal" class="card-action">Voir →</a>
-          </div>
-          @if (tradesStore.trades().length === 0) {
-            <div class="empty-state"><p>Aucun trade</p><small>Enregistre ton premier trade</small></div>
-          } @else {
-            <div class="trade-list-compact">
-              @for (trade of tradesStore.trades().slice(0, 4); track trade.id) {
-                <div class="trade-row-compact">
-                  <div class="trade-row-top">
-                    <span class="trade-side" [class]="trade.side === 'LONG' ? 'long' : 'short'">{{ trade.side }}</span>
-                    <span class="trade-asset-compact">{{ trade.asset | uppercase }}</span>
-                    <span class="trade-emotion">{{ trade.emotion | emotionEmoji }}</span>
-                  </div>
-                  <div class="trade-row-bottom">
-                    <span class="trade-setup-compact">
-                      <span class="setup-dot-sm" [style.background]="trade.setup.color"></span>{{ trade.setup.title }}
-                    </span>
-                    <span class="trade-pnl" [style.color]="trade.pnl | pnlColor">{{ trade.pnl | pnlFormat: trade.entry }}</span>
-                  </div>
-                </div>
-              }
-            </div>
-          }
-        </div>
-        <div class="card fill-card">
-          <div class="card-header">
-            <div class="card-title">Win Rate / stratégie</div>
-            <a routerLink="/analytics" class="card-action">Voir →</a>
-          </div>
-          @if (topSetups().length === 0) {
-            <p class="empty-widget-msg">Tes setups apparaîtront<br />après tes premiers trades</p>
-          } @else {
-            <div class="wr-header">
-              <span class="wr-global-label">Win rate global</span>
-              <span class="wr-global-val">{{ (summary()?.winRate ?? 0).toFixed(0) }}%</span>
-            </div>
-            <div class="vbars">
-              @for (s of topSetups(); track s.setupId) {
-                <div class="vbar">
-                  <span class="vbar-val">{{ (s.winRate ?? 0).toFixed(0) }}%</span>
-                  <div class="vbar-track">
-                    <div class="vbar-fill"
-                         [style.height.%]="s.winRate ?? 0"
-                         [style.background]="s.color"></div>
-                  </div>
-                  <span class="vbar-label">{{ s.title }}</span>
-                </div>
-              }
-            </div>
-          }
-        </div>
-        <div class="card fill-card">
-          <div class="card-header">
-            <div class="card-title">États émotionnels</div>
-            <a routerLink="/analytics" class="card-action">Détails →</a>
-          </div>
-          @if (emotionStats().length === 0) {
-            <p class="empty-widget-msg">Enregistre tes premiers trades<br />pour voir tes états émotionnels</p>
-          } @else {
-            <div class="pie-wrap">
-              <div class="pie" [style.background]="emotionPie().gradient">
-                @for (s of emotionPie().slices; track s.emotion) {
-                  @if (s.show) {
-                    <span class="slice-pct"
-                          [class.dom]="$first"
-                          [style.left.%]="s.x"
-                          [style.top.%]="s.y">{{ s.pct }}%</span>
-                  }
+      <!-- Historique des trades -->
+      <div class="mtc-panel">
+        <div class="mtc-panel-head"><div class="mtc-panel-title">Historique des trades</div><a routerLink="/journal" class="card-action">Tout le journal →</a></div>
+        @if (tradeRows().length === 0) {
+          <div class="empty-state"><p>Aucun trade</p><small>Enregistre ton premier trade</small></div>
+        } @else {
+          <div class="mtc-table-wrap">
+            <table class="mtc-table">
+              <thead><tr>
+                <th>Date</th><th>Actif</th><th>Direction</th><th>Stratégie</th>
+                <th class="r">Entrée</th><th class="r">Sortie</th><th class="r">R:R</th><th class="r">P&amp;L</th><th class="r">P&amp;L %</th><th class="c">Résultat</th>
+              </tr></thead>
+              <tbody>
+                @for (t of tradeRows(); track t.id) {
+                  <tr>
+                    <td class="mono dim">{{ t.tradedAt | date:'d MMM' }}</td>
+                    <td class="mono strong">{{ t.asset | uppercase }}</td>
+                    <td><span class="mtc-side" [class.long]="t.side === 'LONG'">{{ t.side }}</span></td>
+                    <td><span class="mtc-setup-cell"><span class="setup-dot-sm" [style.background]="t.setup.color"></span>{{ t.setup.title }}</span></td>
+                    <td class="mono dim r">{{ t.entry | number:'1.0-2' }}</td>
+                    <td class="mono dim r">{{ t.exit !== null ? (t.exit | number:'1.0-2') : '—' }}</td>
+                    <td class="mono dim r">{{ t.riskReward !== null ? ((t.riskReward >= 0 ? '+' : '') + (t.riskReward | number:'1.1-1')) : '—' }}</td>
+                    <td class="mono strong r" [style.color]="t.win ? 'var(--green)' : 'var(--red)'">{{ t.pnl | pnlFormat }}</td>
+                    <td class="mono r" [style.color]="t.win ? 'var(--green)' : 'var(--red)'">{{ (t.pct >= 0 ? '+' : '') + (t.pct | number:'1.2-2') }}%</td>
+                    <td class="c"><span class="mtc-res" [class.win]="t.win">{{ t.win ? 'WIN' : 'LOSS' }}</span></td>
+                  </tr>
                 }
-              </div>
-              <div class="pie-legend">
-                @for (e of emotionStats(); track e.emotion) {
-                  <div class="pl-item">
-                    <span class="pl-dot" [style.background]="e.emotion | emotionColor"></span>
-                    {{ e.emotion | emotionLabel }}
-                  </div>
-                }
-              </div>
-            </div>
-          }
-        </div>
+              </tbody>
+            </table>
+          </div>
+        }
       </div>
 
       <mtc-trade-form
@@ -384,8 +421,6 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
   `,
 })
 export class DashboardComponent {
-  @ViewChild('equityChart') canvasRef?: ElementRef<HTMLCanvasElement>;
-
   protected readonly userStore    = inject(UserStore);
   protected readonly tradesStore  = inject(TradesStore);
   protected readonly sessionStore = inject(SessionStore);
@@ -394,7 +429,6 @@ export class DashboardComponent {
   private  readonly tradesApi     = inject(TradesApi);
   private  readonly analyticsApi  = inject(AnalyticsApi);
   private  readonly destroyRef    = inject(DestroyRef);
-  private  readonly chartService  = inject(ChartService);
   private  readonly router        = inject(Router);
 
   protected goToSettings(): void { this.router.navigate(['/profil']); }
@@ -493,9 +527,6 @@ export class DashboardComponent {
   protected readonly equityCurve = computed(
     () => this.equityCurveResource.value()?.data?.points ?? [],
   );
-  private readonly initialCapitalFromCurve = computed(
-    () => this.equityCurveResource.value()?.data?.startingCapital ?? null,
-  );
   protected readonly currentMonthLabel = computed(() =>
     new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
   );
@@ -530,18 +561,6 @@ export class DashboardComponent {
       const known = this.knownTradesCount();
       if (known !== -1 && count > known) this.summaryResource.reload();
       this.knownTradesCount.set(count);
-    });
-
-    // Equity chart — reconstruction quand les données changent
-    effect(() => {
-      const points  = this.equityCurve();
-      const capital = this.initialCapitalFromCurve();
-      setTimeout(() => {
-        const canvas = this.canvasRef?.nativeElement;
-        if (canvas && points.length >= 2) {
-          this.chartService.buildEquityChart(canvas, points, capital);
-        }
-      }, 50);
     });
   }
 
@@ -583,6 +602,96 @@ export class DashboardComponent {
       .filter(e => e.pct > 0)
       .sort((a, b) => b.pct - a.pct)
       .slice(0, 4);
+  });
+
+  // ── Viz flagship (SVG/donuts dérivés des vraies données) ───────────────────
+  protected readonly eqSeries = computed(() => this.equityCurve().map((p) => p.cumulativePnl));
+  protected readonly capitalSeries = computed(() => {
+    const b = this.baseCapital();
+    return this.eqSeries().map((v) => b + v);
+  });
+  /** Drawdown courant (val − pic) le long de la courbe — série rouge des KPI. */
+  protected readonly ddSeries = computed(() => {
+    let peak = -Infinity;
+    return this.eqSeries().map((v) => { peak = Math.max(peak, v); return v - peak; });
+  });
+
+  /** Sparkline (line + area) sur un viewBox w×h. */
+  protected sparkPath(series: number[], w = 72, h = 42): { line: string; area: string; cx: number; cy: number } {
+    if (series.length < 2) return { line: '', area: '', cx: 0, cy: 0 };
+    const min = Math.min(...series), max = Math.max(...series), rng = max - min || 1;
+    const step = w / (series.length - 1);
+    const pts = series.map((v, i) => [i * step, h - 2 - ((v - min) / rng) * (h - 4)] as const);
+    const line = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+    const last = pts[pts.length - 1];
+    return { line, area: `${line} L${w},${h} L0,${h} Z`, cx: last[0], cy: last[1] };
+  }
+
+  /** Courbe d'équité « glow » : line + area + point final, viewBox 660×230. */
+  protected readonly equityGlow = computed(() => {
+    const series = this.eqSeries();
+    const W = 660, H = 230;
+    if (series.length < 2) return null;
+    const min = Math.min(...series), max = Math.max(...series), rng = max - min || 1;
+    const step = W / (series.length - 1);
+    const xy = series.map((v, i) => [i * step, H - 16 - ((v - min) / rng) * (H - 34)] as const);
+    const line = xy.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+    const last = xy[xy.length - 1];
+    const positive = (this.summary()?.totalPnl ?? 0) >= 0;
+    return { line, area: `${line} L${W},${H} L0,${H} Z`, lastX: last[0], lastY: last[1], W, H, color: positive ? 'var(--green)' : 'var(--red)' };
+  });
+
+  /** Donut « répartition stratégies » (conic-gradient + légende + centre best setup). */
+  protected readonly setupsDonut = computed(() => {
+    const setups = this.bySetup().filter((s) => s.count > 0).slice(0, 6);
+    if (!setups.length) return null;
+    const total = setups.reduce((s, x) => s + x.count, 0) || 1;
+    let cum = 0;
+    const stops: string[] = [];
+    const legend = setups.map((s) => {
+      const a = (cum / total) * 100; cum += s.count; const b = (cum / total) * 100;
+      stops.push(`${s.color} ${a.toFixed(2)}% ${b.toFixed(2)}%`);
+      return { label: s.title, color: s.color, pct: Math.round((s.count / total) * 100) };
+    });
+    const best = setups.reduce((a, b) => ((b.winRate ?? 0) > (a.winRate ?? 0) ? b : a), setups[0]);
+    return { gradient: `conic-gradient(${stops.join(', ')})`, legend, centerValue: `${Math.round(best.winRate ?? 0)}%`, centerLabel: best.title };
+  });
+
+  /** Donut mini win rate (KPI). */
+  protected readonly winRateDonut = computed(() => {
+    const wr = Math.max(0, Math.min(100, this.summary()?.winRate ?? 0));
+    return `conic-gradient(var(--blue) 0% ${wr}%, rgba(143,163,191,.18) ${wr}% 100%)`;
+  });
+
+  /** Barres P&L par jour (depuis l'activité du mois courant). */
+  protected readonly plByDay = computed(() => {
+    const days = this.monthlyActivity()?.days ?? [];
+    if (!days.length) return null;
+    const maxAbs = Math.max(...days.map((d) => Math.abs(d.pnl)), 1);
+    return days.map((d) => ({
+      day: parseInt(d.date.slice(8, 10), 10),
+      pnl: d.pnl,
+      traded: d.pnl !== 0,
+      pos: d.pnl >= 0,
+      mag: Math.min(1, Math.abs(d.pnl) / maxAbs),
+    }));
+  });
+
+  /** Donut états émotionnels (réutilise emotionPie + top état au centre). */
+  protected readonly emotionsDonut = computed(() => {
+    const stats = this.emotionStats();
+    if (!stats.length) return null;
+    return { gradient: this.emotionPie().gradient, centerValue: `${stats[0].pct}%`, centerLabel: stats[0].emotion };
+  });
+
+  /** Lignes du tableau « historique des trades » (vrais trades récents). */
+  protected readonly tradeRows = computed(() => {
+    const base = this.baseCapital() || 1;
+    return this.tradesStore.trades().slice(0, 8).map((t) => ({
+      ...t,
+      win: (t.pnl ?? 0) >= 0,
+      pct: ((t.pnl ?? 0) / base) * 100,
+    }));
   });
 
   protected readonly discordBannerDismissed = signal(
