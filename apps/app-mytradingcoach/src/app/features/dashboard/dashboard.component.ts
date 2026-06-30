@@ -10,6 +10,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
+import { LucideAngularModule, TrendingUp, Coins, BarChart3, Sparkles, Layers, HeartPulse, List } from 'lucide-angular';
 import { BillingApi } from '../../core/api/billing.api';
 import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
@@ -30,7 +31,6 @@ import {
   EmotionStat,
   TopAsset,
 } from '../../core/api/analytics.api';
-import { ActivityCalendarComponent } from '../../shared/components/activity-calendar/activity-calendar.component';
 import {
   EmotionColorPipe,
   EmotionLabelPipe,
@@ -55,7 +55,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
     PnlFormatPipe,
     EmotionLabelPipe,
     EmotionColorPipe,
-    ActivityCalendarComponent,
+    LucideAngularModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './dashboard.component.css',
@@ -271,12 +271,13 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
         </div>
       }
 
-      <!-- Grille flagship : équité, stratégies, P&L/jour, AI coach, émotions, calendrier -->
+      <!-- Grille flagship (fidèle au design : 6 panels en 2 colonnes, sans calendrier) -->
       <div class="mtc-grid">
-        <div class="mtc-panel span2">
+        <!-- Courbe d'équité -->
+        <div class="mtc-panel">
           <div class="mtc-panel-head">
-            <div><div class="mtc-panel-title">Courbe d'équité</div><div class="mtc-panel-sub">{{ currentMonthLabel() }}</div></div>
-            <a routerLink="/analytics" class="card-action">Détails →</a>
+            <div class="mtc-panel-head-l"><lucide-icon [img]="EquityIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">Courbe d'équité</div><div class="mtc-panel-sub">{{ currentMonthLabel() }}</div></div></div>
+            <div class="mtc-eq-tabs"><span>1S</span><span class="on">1M</span><span>3M</span><span>YTD</span></div>
           </div>
           <div class="mtc-panel-body">
             @let eg = equityGlow();
@@ -284,11 +285,11 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
               <svg class="mtc-equity" [attr.viewBox]="'0 0 ' + eg.W + ' ' + eg.H" preserveAspectRatio="none">
                 <defs>
                   <linearGradient id="mtcEqFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" [attr.stop-color]="eg.color" stop-opacity="0.32" />
+                    <stop offset="0%" [attr.stop-color]="eg.color" stop-opacity="0.35" />
                     <stop offset="100%" [attr.stop-color]="eg.color" stop-opacity="0" />
                   </linearGradient>
                   <filter id="mtcEqGlow" x="-20%" y="-50%" width="140%" height="200%">
-                    <feGaussianBlur stdDeviation="3.2" result="b" />
+                    <feGaussianBlur stdDeviation="3.4" result="b" />
                     <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
                   </filter>
                 </defs>
@@ -302,25 +303,9 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
           </div>
         </div>
 
+        <!-- Top actifs -->
         <div class="mtc-panel">
-          <div class="mtc-panel-head"><div><div class="mtc-panel-title">Répartition stratégies</div><div class="mtc-panel-sub">% des trades par setup</div></div></div>
-          <div class="mtc-panel-body">
-            @let sd = setupsDonut();
-            @if (sd) {
-              <div class="mtc-donut-row">
-                <div class="mtc-donut" [style.background]="sd.gradient"><div class="mtc-donut-hole"><span class="mtc-donut-v">{{ sd.centerValue }}</span><span class="mtc-donut-l">{{ sd.centerLabel }}</span></div></div>
-                <div class="mtc-legend">
-                  @for (l of sd.legend; track l.label) {
-                    <div class="mtc-legend-item"><span class="mtc-legend-dot" [style.background]="l.color"></span><span class="mtc-legend-lab">{{ l.label }}</span><span class="mtc-legend-pct">{{ l.pct }}%</span></div>
-                  }
-                </div>
-              </div>
-            } @else { <p class="empty-widget-msg">Tes setups apparaîtront<br />après tes premiers trades</p> }
-          </div>
-        </div>
-
-        <div class="mtc-panel">
-          <div class="mtc-panel-head"><div><div class="mtc-panel-title">Top actifs</div><div class="mtc-panel-sub">P&amp;L par instrument</div></div><a routerLink="/analytics" class="card-action">Voir →</a></div>
+          <div class="mtc-panel-head"><div class="mtc-panel-head-l"><lucide-icon [img]="AssetsIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">Top actifs</div><div class="mtc-panel-sub">P&amp;L par instrument</div></div></div></div>
           <div class="mtc-panel-body">
             @if (topAssets().length) {
               <div class="mtc-hbars">
@@ -339,8 +324,9 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
           </div>
         </div>
 
+        <!-- P&L par jour -->
         <div class="mtc-panel">
-          <div class="mtc-panel-head"><div><div class="mtc-panel-title">P&amp;L par jour</div><div class="mtc-panel-sub">{{ currentMonthLabel() }}</div></div></div>
+          <div class="mtc-panel-head"><div class="mtc-panel-head-l"><lucide-icon [img]="PlDayIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">P&amp;L par jour</div><div class="mtc-panel-sub">{{ currentMonthLabel() }}</div></div></div></div>
           <div class="mtc-panel-body">
             @let pl = plByDay();
             @if (pl) {
@@ -358,9 +344,10 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
           </div>
         </div>
 
+        <!-- AI Coach -->
         <div class="mtc-panel" [class.mtc-ai]="userStore.isStarterOrAbove()">
           <div class="mtc-panel-head">
-            <div class="mtc-panel-title">AI Coach · feedback</div>
+            <div class="mtc-panel-head-l"><lucide-icon [img]="CoachIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">AI Coach · feedback</div></div></div>
             <span class="mtc-live"><span class="mtc-live-dot"></span>LIVE</span>
           </div>
           <div class="mtc-panel-body">
@@ -382,8 +369,27 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
           </div>
         </div>
 
+        <!-- Répartition stratégies -->
         <div class="mtc-panel">
-          <div class="mtc-panel-head"><div><div class="mtc-panel-title">États émotionnels</div><div class="mtc-panel-sub">par fréquence</div></div><a routerLink="/analytics" class="card-action">Détails →</a></div>
+          <div class="mtc-panel-head"><div class="mtc-panel-head-l"><lucide-icon [img]="SetupsIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">Répartition stratégies</div><div class="mtc-panel-sub">% des trades par setup</div></div></div></div>
+          <div class="mtc-panel-body">
+            @let sd = setupsDonut();
+            @if (sd) {
+              <div class="mtc-donut-row">
+                <div class="mtc-donut" [style.background]="sd.gradient"><div class="mtc-donut-hole"><span class="mtc-donut-v">{{ sd.centerValue }}</span><span class="mtc-donut-l">{{ sd.centerLabel }}</span></div></div>
+                <div class="mtc-legend">
+                  @for (l of sd.legend; track l.label) {
+                    <div class="mtc-legend-item"><span class="mtc-legend-dot" [style.background]="l.color"></span><span class="mtc-legend-lab">{{ l.label }}</span><span class="mtc-legend-pct">{{ l.pct }}%</span></div>
+                  }
+                </div>
+              </div>
+            } @else { <p class="empty-widget-msg">Tes setups apparaîtront<br />après tes premiers trades</p> }
+          </div>
+        </div>
+
+        <!-- États émotionnels -->
+        <div class="mtc-panel">
+          <div class="mtc-panel-head"><div class="mtc-panel-head-l"><lucide-icon [img]="EmotionIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">États émotionnels</div><div class="mtc-panel-sub">par fréquence</div></div></div></div>
           <div class="mtc-panel-body">
             @let ed = emotionsDonut();
             @if (ed) {
@@ -398,20 +404,13 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
             } @else { <p class="empty-widget-msg">Enregistre tes premiers trades<br />pour voir tes états émotionnels</p> }
           </div>
         </div>
-
-        <div class="mtc-panel mtc-cal-panel">
-          <div class="mtc-panel-head"><div class="mtc-panel-title">Activité du mois</div></div>
-          <div class="mtc-panel-body">
-            <mtc-activity-calendar [data]="monthlyActivity()" [loading]="monthlyActivityLoading()" [showNavigation]="false" [year]="calYear()" [month]="calMonth()" />
-          </div>
-        </div>
       </div>
 
       <!-- Historique des trades -->
       <div class="mtc-panel">
-        <div class="mtc-panel-head"><div class="mtc-panel-title">Historique des trades</div><a routerLink="/journal" class="card-action">Tout le journal →</a></div>
+        <div class="mtc-panel-head"><div class="mtc-panel-head-l"><lucide-icon [img]="TableIcon" [size]="15" class="mtc-phi" /><div class="mtc-panel-title">Historique des trades</div></div><a routerLink="/journal" class="card-action">Tout le journal →</a></div>
         @if (tradeRows().length === 0) {
-          <div class="empty-state"><p>Aucun trade</p><small>Enregistre ton premier trade</small></div>
+          <div class="empty-state" style="margin:0 18px 18px"><p>Aucun trade</p><small>Enregistre ton premier trade</small></div>
         } @else {
           <div class="mtc-table-wrap">
             <table class="mtc-table">
@@ -478,6 +477,15 @@ export class DashboardComponent {
   protected readonly isSavingTrade = signal(false);
   protected readonly today = new Date();
   protected readonly PRICING = PRICING;
+
+  // Icônes d'en-tête de panel (Lucide) — fidélité design.
+  protected readonly EquityIcon   = TrendingUp;
+  protected readonly AssetsIcon   = Coins;
+  protected readonly PlDayIcon     = BarChart3;
+  protected readonly CoachIcon    = Sparkles;
+  protected readonly SetupsIcon   = Layers;
+  protected readonly EmotionIcon  = HeartPulse;
+  protected readonly TableIcon    = List;
 
   protected readonly monthlyActivity        = signal<MonthlyActivitySummary | null>(null);
   protected readonly monthlyActivityLoading = signal(false);
