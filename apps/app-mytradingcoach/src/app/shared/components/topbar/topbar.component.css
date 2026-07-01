@@ -1,15 +1,15 @@
 .topbar {
   position: sticky;
   top: 0;
-  background: rgba(8, 12, 20, 0.85);
+  background: rgba(8, 12, 20, 0.97);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
-  padding: 0 28px;
-  height: 60px;
+  padding: 0 22px;
+  height: 56px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   z-index: 5;
 }
 
@@ -18,16 +18,23 @@
   min-width: 0;
   display: flex;
   align-items: baseline;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .page-title {
   font-family: var(--font-display);
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: -0.3px;
   color: var(--text);
+}
+
+/* Période à côté du titre (design chrome.jsx : « Dashboard · juin 2026 ») */
+.topbar-period {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-2);
 }
 
 /* Note « tous comptes confondus » (écrans IA globaux) */
@@ -41,13 +48,109 @@
 /* Sélecteur de compte global, sous l'en-tête (écrans scopés par compte) */
 .topbar-accounts {
   position: sticky;
-  top: 60px;
-  background: rgba(8, 12, 20, 0.85);
+  top: 56px;
+  background: rgba(8, 12, 20, 0.97);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
-  padding: 10px 28px;
+  padding: 9px 22px;
   z-index: 4;
+}
+
+/* ─── Quota mensuel (FREE) — design chrome.jsx HeaderQuota ─── */
+.tb-quota-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tb-quota {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 11px;
+  border-radius: 9px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  transition: all 0.15s;
+  min-width: 148px;
+}
+.tb-quota:hover {
+  border-color: var(--border-hover);
+  background: var(--bg-3);
+}
+.tb-quota-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+.tb-quota-lab {
+  font-size: 10.5px;
+  color: var(--text-3);
+}
+.tb-quota-count {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+.tb-quota-sep {
+  color: var(--text-3);
+}
+.tb-quota.near .tb-quota-count { color: var(--yellow); }
+.tb-quota.reached .tb-quota-count { color: var(--red); }
+.tb-quota-track {
+  height: 4px;
+  width: 134px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.tb-quota-fill {
+  height: 100%;
+  background: var(--blue);
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+.tb-quota.near .tb-quota-fill { background: var(--yellow); }
+.tb-quota.reached .tb-quota-fill { background: var(--red); }
+.tb-quota-cta {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  color: var(--blue-bright);
+  white-space: nowrap;
+}
+
+/* ─── Bouton Discord (design chrome.jsx) ─── */
+.tb-discord {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-2);
+  text-decoration: none;
+  font-size: 12.5px;
+  font-family: var(--font-body);
+  white-space: nowrap;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.tb-discord:hover {
+  background: var(--bg-3);
+  border-color: var(--border-hover);
+}
+.tb-discord-ic {
+  color: #7289da;
+  display: inline-flex;
 }
 
 .topbar-actions {
@@ -192,4 +295,9 @@
   .btn-ghost .btn-text {
     display: none;
   }
+
+  /* Le quota + le libellé Discord encombrent la barre 56px sur mobile */
+  .tb-quota-wrap { display: none; }
+  .tb-discord-label { display: none; }
+  .tb-discord { padding: 7px 9px; }
 }

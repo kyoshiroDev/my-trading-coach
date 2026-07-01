@@ -62,6 +62,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
   template: `
     <mtc-topbar
       title="Dashboard"
+      [period]="currentMonthLabel()"
       addLabel="⚡ Ajouter trade"
       [showAccountSelector]="true"
       (addClick)="goToJournal()"
@@ -79,14 +80,6 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
     </mtc-topbar>
 
     <div class="content">
-      <div class="page-header">
-        <div class="greeting-block">
-          <h1 class="greeting-title">Bonjour, {{ userStore.displayName() }} 👋</h1>
-          <div class="greeting-sub">{{ today | date:'EEEE d MMMM' }}</div>
-        </div>
-        <div class="header-spacer"></div>
-      </div>
-
       @if (!isLoading() && tradesStore.totalTrades() === 0) {
         <div class="firstrun-hero">
           <div class="firstrun-text">
@@ -475,7 +468,6 @@ export class DashboardComponent {
   protected readonly showCsvImport = signal(false);
   protected readonly showPlanModal = signal(false);
   protected readonly isSavingTrade = signal(false);
-  protected readonly today = new Date();
   protected readonly PRICING = PRICING;
 
   // Icônes d'en-tête de panel (Lucide) — fidélité design.

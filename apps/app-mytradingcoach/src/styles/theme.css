@@ -33,6 +33,9 @@
   --text-3: #8398b5;
   --text-faint: #6c84a6; /* libellés discrets (axes, jours non tradés) — flagship dashboard */
 
+  /* ─── Brand gradient — logo mark + avatars uniquement ─── */
+  --grad-brand: linear-gradient(135deg, #3b82f6, #8b5cf6);
+
   /* ─── Typography ─── */
   --font-display: 'Space Grotesk', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
