@@ -422,7 +422,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
                     <td class="mono dim r">{{ t.exit !== null ? (t.exit | number:'1.0-2') : '—' }}</td>
                     <td class="mono dim r">{{ t.riskReward !== null ? ((t.riskReward >= 0 ? '+' : '') + (t.riskReward | number:'1.1-1')) : '—' }}</td>
                     <td class="mono strong r" [style.color]="t.win ? 'var(--green)' : 'var(--red)'">{{ t.pnl | pnlFormat }}</td>
-                    <td class="mono r" [style.color]="t.win ? 'var(--green)' : 'var(--red)'">{{ (t.pct >= 0 ? '+' : '') + (t.pct | number:'1.2-2') }}%</td>
+                    <td class="mono r" [style.color]="t.pct === null ? 'var(--text-3)' : (t.win ? 'var(--green)' : 'var(--red)')">{{ t.pct === null ? '—' : ((t.pct >= 0 ? '+' : '') + (t.pct | number:'1.2-2') + '%') }}</td>
                     <td class="c"><span class="mtc-res" [class.win]="t.win">{{ t.win ? 'WIN' : 'LOSS' }}</span></td>
                   </tr>
                 }
@@ -740,13 +740,17 @@ export class DashboardComponent {
     return { gradient: this.emotionPie().gradient, centerValue: `${stats[0].pct}%`, centerLabel: stats[0].emotion };
   });
 
-  /** Lignes du tableau « historique des trades » (vrais trades récents). */
+  /**
+   * Lignes du tableau « historique des trades » (vrais trades récents).
+   * P&L % = rendement sur le capital de base ; `null` si ce capital est
+   * inconnu/0 (sinon la division /1 produit des pourcentages absurdes → « — »).
+   */
   protected readonly tradeRows = computed(() => {
-    const base = this.baseCapital() || 1;
+    const base = this.baseCapital();
     return this.tradesStore.trades().slice(0, 8).map((t) => ({
       ...t,
       win: (t.pnl ?? 0) >= 0,
-      pct: ((t.pnl ?? 0) / base) * 100,
+      pct: base > 0 ? ((t.pnl ?? 0) / base) * 100 : null,
     }));
   });
 
