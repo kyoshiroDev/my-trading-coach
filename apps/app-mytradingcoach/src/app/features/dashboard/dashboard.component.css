@@ -911,7 +911,7 @@ canvas {
 .mtc-plday-day { font-family: var(--font-mono); font-size: 8.5px; text-align: center; color: var(--text-faint); margin-top: 5px; }
 .mtc-plday-day.traded { color: var(--blue-bright); font-weight: 600; }
 /* Valeur P&L au-dessus (gain) / en dessous (perte) de chaque barre */
-.mtc-plday-val { position: absolute; left: -6px; right: -6px; text-align: center; font-family: var(--font-mono); font-size: 15px; font-weight: 600; line-height: 1; white-space: nowrap; pointer-events: none; }
+.mtc-plday-val { position: absolute; left: -6px; right: -6px; text-align: center; font-family: var(--font-mono); font-size: 13px; font-weight: 600; line-height: 1; white-space: nowrap; pointer-events: none; }
 .mtc-plday-val.pos { color: var(--green); margin-bottom: 2px; }
 .mtc-plday-val.neg { color: var(--red); margin-top: 2px; }
 
