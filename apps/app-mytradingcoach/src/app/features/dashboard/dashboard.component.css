@@ -882,6 +882,8 @@ canvas {
 .mtc-live { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 10px; color: var(--cyan); }
 .mtc-live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); animation: mtcBlink 2s ease infinite; }
 @keyframes mtcBlink { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+.mtc-eq-pulse { animation: mtcGlow 2s ease-in-out infinite; }
+@keyframes mtcGlow { 0%, 100% { opacity: .25; } 50% { opacity: .55; } }
 
 .mtc-equity { width: 100%; height: 230px; display: block; overflow: visible; }
 .mtc-empty { display: flex; align-items: center; justify-content: center; min-height: 180px; color: var(--text-3); font-size: 13px; text-align: center; }
@@ -908,6 +910,13 @@ canvas {
 .mtc-plday-bar.neg { top: 50%; background: var(--red); box-shadow: 0 0 10px -3px var(--red); border-radius: 0 0 2px 2px; }
 .mtc-plday-day { font-family: var(--font-mono); font-size: 8.5px; text-align: center; color: var(--text-faint); margin-top: 5px; }
 .mtc-plday-day.traded { color: var(--blue-bright); font-weight: 600; }
+
+/* AI Coach — liste d'insights (données réelles) */
+.mtc-coach-list { display: flex; flex-direction: column; }
+.mtc-coach-item { display: flex; gap: 9px; align-items: flex-start; padding: 7px 0; }
+.mtc-coach-item-ic { margin-top: 1px; flex-shrink: 0; display: inline-flex; }
+.mtc-coach-item-t { font-size: 12.5px; color: var(--text-2); line-height: 1.5; }
+.mtc-coach-list .mtc-coach-btn { margin-top: 12px; width: 100%; justify-content: center; }
 
 /* AI Coach card */
 .mtc-coach-cta, .mtc-coach-lock { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 9px; min-height: 200px; padding: 12px; }

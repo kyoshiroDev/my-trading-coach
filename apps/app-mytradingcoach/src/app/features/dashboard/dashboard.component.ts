@@ -10,7 +10,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { LucideAngularModule, TrendingUp, Coins, BarChart3, Sparkles, Layers, HeartPulse, List } from 'lucide-angular';
+import { LucideAngularModule, TrendingUp, Coins, BarChart3, Sparkles, Layers, HeartPulse, List, CheckCircle2, AlertTriangle, XCircle } from 'lucide-angular';
 import { BillingApi } from '../../core/api/billing.api';
 import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
@@ -309,7 +309,9 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
                     </filter>
                   </defs>
                   <path [attr.d]="eg.area" fill="url(#mtcEqFill)" />
+                  <path [attr.d]="eg.trend" fill="none" stroke="rgba(143,163,191,.4)" stroke-width="1" stroke-dasharray="3 4" />
                   <path [attr.d]="eg.line" fill="none" [attr.stroke]="eg.color" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" filter="url(#mtcEqGlow)" />
+                  <circle class="mtc-eq-pulse" [attr.cx]="eg.lastX" [attr.cy]="eg.lastY" r="7" [attr.fill]="eg.color" opacity="0.25" />
                   <circle [attr.cx]="eg.lastX" [attr.cy]="eg.lastY" r="3.4" [attr.fill]="eg.color" />
                 </svg>
               } @else {
@@ -391,12 +393,24 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
           </div>
           <div class="mtc-panel-body">
             @if (userStore.isPremium()) {
-              <div class="mtc-coach-cta">
-                <div class="mtc-coach-ic">✨</div>
-                <div class="mtc-coach-t">Ton coach analyse tes patterns</div>
-                <div class="mtc-coach-s">Insights personnalisés, points forts et axes de progrès sur tes derniers trades.</div>
-                <a routerLink="/analytics" class="mtc-coach-btn">Voir mon coaching complet</a>
-              </div>
+              @if (coachInsights().length) {
+                <div class="mtc-coach-list">
+                  @for (i of coachInsights(); track i.text) {
+                    <div class="mtc-coach-item">
+                      <lucide-icon [img]="coachIcon(i.tone)" [size]="16" [style.color]="coachColor(i.tone)" class="mtc-coach-item-ic" />
+                      <span class="mtc-coach-item-t">{{ i.text }}</span>
+                    </div>
+                  }
+                  <a routerLink="/analytics" class="mtc-coach-btn">Voir mon coaching complet</a>
+                </div>
+              } @else {
+                <div class="mtc-coach-cta">
+                  <div class="mtc-coach-ic">✨</div>
+                  <div class="mtc-coach-t">Ton coach analyse tes patterns</div>
+                  <div class="mtc-coach-s">Enregistre quelques trades pour débloquer tes premiers insights personnalisés.</div>
+                  <a routerLink="/analytics" class="mtc-coach-btn">Voir mon coaching complet</a>
+                </div>
+              }
             } @else {
               <div class="mtc-coach-lock">
                 <div class="mtc-lock-ic">🔒</div>
@@ -560,6 +574,11 @@ export class DashboardComponent {
   protected readonly SetupsIcon   = Layers;
   protected readonly EmotionIcon  = HeartPulse;
   protected readonly TableIcon    = List;
+  protected readonly CoachGood    = CheckCircle2;
+  protected readonly CoachWarn    = AlertTriangle;
+  protected readonly CoachBad     = XCircle;
+  protected coachIcon(tone: string) { return tone === 'good' ? this.CoachGood : tone === 'warn' ? this.CoachWarn : this.CoachBad; }
+  protected coachColor(tone: string) { return tone === 'good' ? 'var(--green)' : tone === 'warn' ? 'var(--yellow)' : 'var(--red)'; }
 
   protected readonly monthlyActivity        = signal<MonthlyActivitySummary | null>(null);
   protected readonly monthlyActivityLoading = signal(false);
@@ -776,7 +795,9 @@ export class DashboardComponent {
     const line = xy.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
     const last = xy[xy.length - 1];
     const positive = (this.summary()?.totalPnl ?? 0) >= 0;
-    return { line, area: `${line} L${W},${H} L0,${H} Z`, lastX: last[0], lastY: last[1], W, H, color: positive ? 'var(--green)' : 'var(--red)' };
+    // Ligne de tendance pointillée (bas-gauche → point final), comme la maquette.
+    const trend = `M0,${(H - 16).toFixed(1)} L${W},${last[1].toFixed(1)}`;
+    return { line, area: `${line} L${W},${H} L0,${H} Z`, trend, lastX: last[0], lastY: last[1], W, H, color: positive ? 'var(--green)' : 'var(--red)' };
   });
 
   /** Donut « répartition stratégies » (conic-gradient + légende + centre best setup). */
@@ -801,18 +822,23 @@ export class DashboardComponent {
     return `conic-gradient(var(--blue) 0% ${wr}%, rgba(143,163,191,.18) ${wr}% 100%)`;
   });
 
-  /** Barres P&L par jour (depuis l'activité du mois courant). */
+  /**
+   * Barres P&L par jour — TOUS les jours du mois (le back ne renvoie que les jours
+   * tradés). On reconstruit 1→N pour afficher le mois complet, jours vides à plat.
+   */
   protected readonly plByDay = computed(() => {
-    const days = this.monthlyActivity()?.days ?? [];
-    if (!days.length) return null;
-    const maxAbs = Math.max(...days.map((d) => Math.abs(d.pnl)), 1);
-    return days.map((d) => ({
-      day: parseInt(d.date.slice(8, 10), 10),
-      pnl: d.pnl,
-      traded: d.pnl !== 0,
-      pos: d.pnl >= 0,
-      mag: Math.min(1, Math.abs(d.pnl) / maxAbs),
-    }));
+    const activity = this.monthlyActivity();
+    if (!activity) return null;
+    const byDay = new Map<number, number>();
+    for (const d of activity.days) byDay.set(parseInt(d.date.slice(8, 10), 10), d.pnl);
+    // month est 1-based (juillet = 7) → new Date(y, m, 0) = dernier jour du mois.
+    const daysInMonth = new Date(activity.year, activity.month, 0).getDate();
+    const maxAbs = Math.max(...activity.days.map((d) => Math.abs(d.pnl)), 1);
+    return Array.from({ length: daysInMonth }, (_, i) => {
+      const day = i + 1;
+      const pnl = byDay.get(day) ?? 0;
+      return { day, pnl, traded: pnl !== 0, pos: pnl >= 0, mag: Math.min(1, Math.abs(pnl) / maxAbs) };
+    });
   });
 
   /** Donut états émotionnels (réutilise emotionPie + top état au centre). */
@@ -820,6 +846,50 @@ export class DashboardComponent {
     const stats = this.emotionStats();
     if (!stats.length) return null;
     return { gradient: this.emotionPie().gradient, centerValue: `${stats[0].pct}%`, centerLabel: stats[0].emotion };
+  });
+
+  /** Stats par émotion (R moyen / win rate) — source du feedback coach. */
+  protected readonly byEmotion = computed(() => this.byEmotionResource.value()?.data ?? []);
+
+  /**
+   * Feedback « AI Coach » dérivé des VRAIES données (summary + émotions + setups) —
+   * jamais de texte codé en dur. Chaque insight a un ton (good/warn/bad).
+   */
+  protected readonly coachInsights = computed(() => {
+    const s = this.summary();
+    if (!s || s.totalTrades === 0) return [];
+    const lbl: Record<string, string> = {
+      CONFIDENT: 'confiant', FOCUSED: 'concentré', NEUTRAL: 'neutre',
+      STRESSED: 'stressé', FEAR: 'peur', REVENGE: 'revenge',
+    };
+    const out: { tone: 'good' | 'warn' | 'bad'; text: string }[] = [];
+
+    if (s.winRate >= 50) out.push({ tone: 'good', text: `Ton win rate est de ${s.winRate.toFixed(0)}% ce mois — au-dessus de la barre des 50%.` });
+    else out.push({ tone: 'warn', text: `Ton win rate est de ${s.winRate.toFixed(0)}% ce mois. Vise 50%+ en filtrant mieux tes setups.` });
+
+    if (s.profitFactor != null) {
+      if (s.profitFactor >= 1.5) out.push({ tone: 'good', text: `Profit factor de ${s.profitFactor.toFixed(2)} : tes gains couvrent largement tes pertes.` });
+      else if (s.profitFactor < 1) out.push({ tone: 'bad', text: `Profit factor de ${s.profitFactor.toFixed(2)} : tu perds plus que tu ne gagnes. Resserre ton risque.` });
+    }
+
+    if (s.streak >= 3) out.push({ tone: 'good', text: `Série de ${s.streak} trades gagnants — garde ta taille, ne force pas le suivant.` });
+    else if (s.streak <= -3) out.push({ tone: 'bad', text: `Série de ${Math.abs(s.streak)} pertes d'affilée. Coupe et fais une pause.` });
+
+    const emos = this.byEmotion().filter((e) => e.count > 0);
+    if (emos.length) {
+      const best = emos.reduce((a, b) => ((b.avgRR ?? 0) > (a.avgRR ?? 0) ? b : a));
+      const worst = emos.reduce((a, b) => ((b.avgRR ?? 0) < (a.avgRR ?? 0) ? b : a));
+      if ((best.avgRR ?? 0) > 0) out.push({ tone: 'good', text: `Tu performes le mieux en état « ${lbl[best.emotion] ?? best.emotion} » (+${best.avgRR.toFixed(2)}R en moyenne).` });
+      if ((worst.avgRR ?? 0) < 0) out.push({ tone: 'bad', text: `L'état « ${lbl[worst.emotion] ?? worst.emotion} » te coûte ${worst.avgRR.toFixed(2)}R en moyenne. Évite de trader ainsi.` });
+    }
+
+    const setups = this.bySetup().filter((x) => (x.count ?? 0) > 0 && x.winRate != null);
+    if (setups.length) {
+      const b = setups.reduce((a, c) => (c.winRate! > a.winRate! ? c : a));
+      if (b.winRate! >= 55) out.push({ tone: 'good', text: `Ton setup « ${b.title} » affiche ${b.winRate!.toFixed(0)}% de réussite — c'est ton edge.` });
+    }
+
+    return out.slice(0, 5);
   });
 
   /**
