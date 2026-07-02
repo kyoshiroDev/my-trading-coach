@@ -269,7 +269,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
         <!-- Courbe d'équité -->
         <div class="mtc-panel">
           <div class="mtc-panel-head">
-            <div class="mtc-panel-head-l"><lucide-icon [img]="EquityIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">Courbe d'équité</div><div class="mtc-panel-sub">{{ currentMonthLabel() }}</div></div></div>
+            <div class="mtc-panel-head-l"><lucide-icon [img]="EquityIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">Courbe d'équité</div><div class="mtc-panel-sub">{{ equitySub() }}</div></div></div>
             <div class="mtc-eq-tabs"><span>1S</span><span class="on">1M</span><span>3M</span><span>YTD</span></div>
           </div>
           <div class="mtc-panel-body">
@@ -375,7 +375,12 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
                 @for (d of pl; track d.day) {
                   <div class="mtc-plday-col" [title]="d.day + ' · ' + (d.pnl >= 0 ? '+' : '') + d.pnl + '$'">
                     <div class="mtc-plday-cell">
-                      <div class="mtc-plday-bar" [class.pos]="d.pos && d.traded" [class.neg]="!d.pos && d.traded" [style.height.%]="d.traded ? (5 + d.mag * 42) : 0"></div>
+                      <div class="mtc-plday-bar" [class.pos]="d.pos && d.traded" [class.neg]="!d.pos && d.traded" [style.height.%]="d.barPct"></div>
+                      @if (d.traded) {
+                        <span class="mtc-plday-val" [class.pos]="d.pos" [class.neg]="!d.pos"
+                          [style.bottom]="d.pos ? 'calc(50% + ' + d.barPct + '%)' : null"
+                          [style.top]="!d.pos ? 'calc(50% + ' + d.barPct + '%)' : null">{{ d.label }}</span>
+                      }
                     </div>
                     <span class="mtc-plday-day" [class.traded]="d.traded">{{ d.day }}</span>
                   </div>
@@ -672,6 +677,14 @@ export class DashboardComponent {
     const start = this.baseCapital();
     return start <= 0 ? 0 : ((this.summary()?.totalPnl ?? 0) / start) * 100;
   });
+  /** Sous-titre courbe d'équité : « +$X ce mois · base $Y » (comme la maquette). */
+  protected readonly equitySub = computed(() => {
+    const base  = this.baseCapital();
+    const month = this.monthlyActivity()?.totalPnl ?? this.summary()?.totalPnl ?? 0;
+    const sym   = (this.userStore.user()?.currency ?? 'USD') === 'EUR' ? '€' : '$';
+    const fmt   = (n: number) => `${sym}${Math.round(Math.abs(n)).toLocaleString('en-US')}`;
+    return `${month >= 0 ? '+' : '−'}${fmt(month)} ce mois · base ${fmt(base)}`;
+  });
   protected readonly capitalColor = computed(() => {
     const start = this.baseCapital();
     if (start <= 0) return 'var(--text-2)';
@@ -834,10 +847,19 @@ export class DashboardComponent {
     // month est 1-based (juillet = 7) → new Date(y, m, 0) = dernier jour du mois.
     const daysInMonth = new Date(activity.year, activity.month, 0).getDate();
     const maxAbs = Math.max(...activity.days.map((d) => Math.abs(d.pnl)), 1);
+    const fmt = (v: number) => {
+      const a = Math.abs(v);
+      return (v > 0 ? '+' : '−') + (a >= 1000 ? (a / 1000).toFixed(1).replace('.0', '') + 'k' : Math.round(a));
+    };
     return Array.from({ length: daysInMonth }, (_, i) => {
       const day = i + 1;
       const pnl = byDay.get(day) ?? 0;
-      return { day, pnl, traded: pnl !== 0, pos: pnl >= 0, mag: Math.min(1, Math.abs(pnl) / maxAbs) };
+      const mag = Math.min(1, Math.abs(pnl) / maxAbs);
+      return {
+        day, pnl, traded: pnl !== 0, pos: pnl >= 0, mag,
+        barPct: pnl !== 0 ? 5 + mag * 42 : 0,
+        label: pnl !== 0 ? fmt(pnl) : '',
+      };
     });
   });
 
