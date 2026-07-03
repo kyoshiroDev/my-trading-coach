@@ -907,7 +907,7 @@ canvas {
 .mtc-plday-cell::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--border); }
 .mtc-plday-bar { position: absolute; left: 15%; right: 15%; border-radius: 2px; }
 .mtc-plday-bar.pos { bottom: 50%; background: var(--green); box-shadow: 0 0 10px -3px var(--green); border-radius: 2px 2px 0 0; }
-.mtc-plday-bar.neg { top: 50%; left: 50%; right: auto; width: 1px; transform: translateX(-50%); background: var(--red); box-shadow: 0 0 10px -3px var(--red); border-radius: 0 0 2px 2px; }
+.mtc-plday-bar.neg { top: 50%; left: 50%; right: auto; width: 2px; transform: translateX(-50%); background: var(--red); box-shadow: 0 0 10px -3px var(--red); border-radius: 0 0 2px 2px; }
 .mtc-plday-day { font-family: var(--font-mono); font-size: 8.5px; text-align: center; color: var(--text-faint); margin-top: 5px; }
 .mtc-plday-day.traded { color: var(--blue-bright); font-weight: 600; }
 /* Valeur P&L au-dessus (gain) / en dessous (perte) de chaque barre */
