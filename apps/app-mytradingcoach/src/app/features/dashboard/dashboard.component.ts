@@ -258,10 +258,8 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
           </div>
           <div class="chart-container">
             <canvas #equityChart></canvas>
-            @if (!userStore.isStarterOrAbove() || equityCurve().length === 0) {
-              <div class="empty-chart">
-                @if (!userStore.isStarterOrAbove()) { Courbe disponible dès Starter } @else { Aucun trade ce mois }
-              </div>
+            @if (equityCurve().length === 0) {
+              <div class="empty-chart">Aucun trade ce mois</div>
             }
           </div>
         </div>
@@ -421,13 +419,10 @@ export class DashboardComponent {
   private readonly summaryResource = httpResource<{ data: AnalyticsSummary }>(
     () => `${environment.apiUrl}/analytics/summary${this.accQuery()}`,
   );
+  // Courbe d'équité simple = vue de base FREE (on ne verrouille pas la vue de ses données).
   private readonly equityCurveResource = httpResource<{
     data: { points: EquityPoint[]; startingCapital: number | null };
-  }>(() =>
-    this.userStore.isStarterOrAbove()
-      ? `${environment.apiUrl}/analytics/equity-curve/current-month${this.accQuery()}`
-      : undefined,
-  );
+  }>(() => `${environment.apiUrl}/analytics/equity-curve/current-month${this.accQuery()}`);
   private readonly bySetupResource = httpResource<{ data: SetupStat[] }>(() =>
     this.userStore.isStarterOrAbove() ? `${environment.apiUrl}/analytics/by-setup${this.accQuery()}` : undefined,
   );
@@ -504,13 +499,14 @@ export class DashboardComponent {
   protected readonly topSetups = computed(() =>
     this.bySetup().filter((s) => s.winRate !== null).slice(0, 4),
   );
+  // Chargement des vues de base (summary + equity), désormais servies aussi en FREE.
+  // Les ressources Starter (bySetup/byEmotion) ont une URL undefined en FREE → isLoading=false.
   protected readonly isLoading = computed(
     () =>
-      this.userStore.isStarterOrAbove() &&
-      (this.summaryResource.isLoading() ||
-        this.equityCurveResource.isLoading() ||
-        this.bySetupResource.isLoading() ||
-        this.byEmotionResource.isLoading()),
+      this.summaryResource.isLoading() ||
+      this.equityCurveResource.isLoading() ||
+      this.bySetupResource.isLoading() ||
+      this.byEmotionResource.isLoading(),
   );
 
   private readonly knownTradesCount = signal(-1);
