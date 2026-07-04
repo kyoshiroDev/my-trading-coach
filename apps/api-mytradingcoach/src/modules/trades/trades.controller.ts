@@ -15,6 +15,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Plan, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { PremiumGuard } from '../../common/guards/premium.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { TradesService } from './trades.service';
 import { CoinGeckoService } from './coingecko.service';
@@ -39,20 +40,27 @@ export class TradesController {
     private readonly setups: SetupsService,
   ) {}
 
+  // Contexte marché live (DXY, taux US, indices + Treasury Rates) = PREMIUM (cf. landing Pricing).
   @Get('market-context')
+  @UseGuards(PremiumGuard)
   getMarketContext() { return this.marketData.getMarketContext(); }
 
+  // News live filtrées = PREMIUM (cf. landing). La traduction FR déclenche un appel Anthropic
+  // → doit rester derrière PremiumGuard (règle : tout appel Anthropic = PREMIUM).
   @Get('news')
+  @UseGuards(PremiumGuard)
   getMarketNews(@Query('symbols') symbols: string) {
     return this.marketData.getNews(symbols ?? '');
   }
 
   // Traduction paresseuse du corps d'une news : déclenchée à l'ouverture de la modale.
   @Get('news/:id/text')
+  @UseGuards(PremiumGuard)
   async getNewsText(@Param('id') id: string): Promise<{ text: string | null }> {
     return { text: await this.marketData.ensureNewsTextFr(id) };
   }
 
+  // live-price reste FREE : il alimente la saisie « trade rapide » du compagnon de session (FREE).
   @Get('live-price')
   async getLivePrice(@Query('symbol') symbol: string): Promise<{ price: number | null; symbol: string; cached: boolean }> {
     if (!symbol?.trim()) return { price: null, symbol: '', cached: false };

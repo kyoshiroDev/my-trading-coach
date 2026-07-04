@@ -24,6 +24,7 @@ import { SessionRecapComponent } from '../session-recap/session-recap.component'
 import { MarketContextBarComponent } from '../market-context-bar/market-context-bar.component';
 import { EcoSocketService } from '../../../../core/services/eco-socket.service';
 import { UserStore } from '../../../../core/stores/user.store';
+import { PremiumLockComponent } from '../../../../shared/components/premium-lock/premium-lock.component';
 import { SetupsStore } from '../../../../core/stores/setups.store';
 import { formatDuration } from '../../../../core/utils/time.utils';
 import { parseDecimal } from '../../../../core/utils/parse-decimal';
@@ -79,7 +80,7 @@ const EMOTIONS = [
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-live.component.css',
-  imports: [SessionRecapComponent, MarketContextBarComponent, LiveNewsComponent, LiveFeedComponent, NumericInputDirective],
+  imports: [SessionRecapComponent, MarketContextBarComponent, LiveNewsComponent, LiveFeedComponent, NumericInputDirective, PremiumLockComponent],
   template: `
     <div data-testid="session-live-view">
 
@@ -137,7 +138,12 @@ const EMOTIONS = [
           </div>
 
           <div class="news-feed">
-            @if (newsItems().length === 0) {
+            @if (!isPremium()) {
+              <mtc-premium-lock
+                title="News live · Premium"
+                subtitle="Actus filtrées sur tes actifs, en direct pendant ta session."
+              />
+            } @else if (newsItems().length === 0) {
               <div class="news-empty">Aucune news pour le moment</div>
             } @else {
               @for (item of newsItems(); track item.publishedDate) {
@@ -704,6 +710,9 @@ export class SessionLiveComponent {
   private readonly userStore = inject(UserStore);
   private readonly tradesApi = inject(TradesApi);
   protected readonly setupsStore = inject(SetupsStore);
+
+  // News live + contexte marché = PREMIUM (endpoints gardés côté API) → verrou d'upsell sinon.
+  protected readonly isPremium = computed(() => this.userStore.isPremium());
 
   // Timer
   private readonly now = signal(new Date());

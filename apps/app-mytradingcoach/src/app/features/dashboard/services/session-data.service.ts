@@ -2,11 +2,13 @@ import { Injectable, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TradesApi, MarketContext, NewsItem } from '../../../core/api/trades.api';
 import { POLLING_MS } from '../../../core/constants/polling.const';
+import { UserStore } from '../../../core/stores/user.store';
 
 @Injectable()
 export class SessionDataService {
   private readonly destroyRef = inject(DestroyRef);
   private readonly tradesApi  = inject(TradesApi);
+  private readonly userStore  = inject(UserStore);
 
   readonly marketCtx    = signal<MarketContext | null>(null);
   readonly newsItems    = signal<NewsItem[]>([]);
@@ -16,6 +18,9 @@ export class SessionDataService {
   private newsInterval?: ReturnType<typeof setInterval>;
 
   startPolling(getTradeSymbols: () => string[]): void {
+    // Contexte marché live + News = PREMIUM (endpoints gardés côté API). Inutile de
+    // poller pour un non-Premium : les panneaux affichent un verrou d'upsell.
+    if (!this.userStore.isPremium()) return;
     this.fetchMarketContext();
     this.fetchNewsItems(getTradeSymbols());
     this.marketCtxInterval = setInterval(() => this.fetchMarketContext(), POLLING_MS.MARKET_CONTEXT);
