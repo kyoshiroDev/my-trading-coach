@@ -15,6 +15,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Plan, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { StarterGuard } from '../../common/guards/starter.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { TradesService } from './trades.service';
 import { CoinGeckoService } from './coingecko.service';
@@ -39,15 +40,20 @@ export class TradesController {
     private readonly setups: SetupsService,
   ) {}
 
+  // Contexte marché (DXY / taux US / indices) = IA mutualisée, réservé Starter+.
+  @UseGuards(StarterGuard)
   @Get('market-context')
   getMarketContext() { return this.marketData.getMarketContext(); }
 
+  // News filtrées sur tes actifs = feature Starter+.
+  @UseGuards(StarterGuard)
   @Get('news')
   getMarketNews(@Query('symbols') symbols: string) {
     return this.marketData.getNews(symbols ?? '');
   }
 
   // Traduction paresseuse du corps d'une news : déclenchée à l'ouverture de la modale.
+  @UseGuards(StarterGuard)
   @Get('news/:id/text')
   async getNewsText(@Param('id') id: string): Promise<{ text: string | null }> {
     return { text: await this.marketData.ensureNewsTextFr(id) };

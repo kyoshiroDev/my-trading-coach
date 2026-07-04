@@ -141,7 +141,7 @@ export const appRoutes: Routes = [
       },
       {
         path: 'eco-calendar',
-        // Affichage du calendrier accessible à tous (FREE) — l'analyse IA reste premium côté API.
+        // Affichage du calendrier accessible à tous (FREE) — l'analyse IA reste Starter+ côté API.
         data: {
           seo: {
             title: 'Calendrier économique',

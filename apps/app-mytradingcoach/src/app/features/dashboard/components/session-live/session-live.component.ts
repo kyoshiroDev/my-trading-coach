@@ -938,23 +938,23 @@ export class SessionLiveComponent {
     // Arrêter le polling prix au destroy
     this.destroyRef.onDestroy(() => this.stopLivePricePolling());
 
-    // WebSocket éco — connecter quand session active + Premium
+    // WebSocket éco — connecter quand session active + Starter+ (analyse IA éco = Starter+)
     effect(() => {
       const s = this.session();
-      if (s?.status === 'ACTIVE' && this.userStore.isPremium()) {
+      if (s?.status === 'ACTIVE' && this.userStore.isStarterOrAbove()) {
         this.ecoSocket.connect();
       } else {
         this.ecoSocket.disconnect();
       }
     });
 
-    // Analyse IA des events DÉJÀ publiés à l'ouverture (Premium + session active, hors démo).
+    // Analyse IA des events DÉJÀ publiés à l'ouverture (Starter+ + session active, hors démo).
     // Limité au FORT impact : ce sont eux qui bougent le marché. Sur une grosse journée
     // (~19 events US), ça évite une rafale d'appels modèle à la 1re ouverture ; le cache
     // mutualisé sert les suivantes. Les releases live restent couvertes par newReleases$.
     effect(() => {
       const s = this.session();
-      if (s?.status !== 'ACTIVE' || !this.userStore.isPremium() || this.userStore.isDemo()) return;
+      if (s?.status !== 'ACTIVE' || !this.userStore.isStarterOrAbove() || this.userStore.isDemo()) return;
       const released = this.sessionEcoEvents().filter(
         (e) => e.impact === 'high' && e.isReleased && e.actual != null && !!e.name?.trim(),
       );
