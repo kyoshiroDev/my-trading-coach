@@ -203,6 +203,7 @@
   border: none;
   width: 100%;
   text-align: left;
+  justify-content: flex-start;
 }
 
 /* ─── FOOTER ─── */
