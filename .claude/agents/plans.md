@@ -24,6 +24,17 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
 
 ---
 
+## Principe de gating — RÈGLE FONDAMENTALE
+> **On ne verrouille JAMAIS la vue de ses propres données. On verrouille la PROFONDEUR d'analyse.**
+
+- **FREE = le *quoi*** : voir ses chiffres et ses vues de base (courbe d'équité simple, P&L/jour, répartition setups/actifs en %, émotions, KPIs). Voir ce qu'on a fait est gratuit — c'est la récompense de logger, donc le moteur d'activation.
+- **STARTER = le *comment*** : la profondeur d'analyse par-dessus les mêmes données (win rate par setup/actif, heatmaps jour/heure, drawdown détaillé, filtres et comparaisons croisées, multi-comptes, export).
+- **PREMIUM = le *pourquoi / quoi faire*** : la couche IA (insights sur les patterns, recommandations, coach). Pas des graphes verrouillés, de l'analyse IA.
+
+**Corollaire design** : on ne verrouille pas une **carte**, on verrouille la **couche de profondeur** dedans (vue de base visible en Free · bouton/onglet « analyse avancée » en Starter · IA en Premium). Un teaser flouté + cadenas est réservé aux couches réellement payantes, jamais aux données de base de l'utilisateur.
+
+---
+
 ## Matrice feature × plan (grille de référence)
 
 **Socle (FREE et +)** : compagnon de session (pré-session + live + débrief de base), journal (émotions, setups), import + historique illimité (l'historique ne compte pas dans la limite FREE), `/analytics/summary` (win rate, P&L, streak).
@@ -41,6 +52,26 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
 - 🌙 **Recap journalier email 17h30**
 
 ¹ **Chat coach** : usage réel mesuré ≈ **0 %** (admin, 30 j). NE PAS en faire l'ancre Premium ni investir dessus sans demande confirmée. Statut : sous revue (retirer / recadrer en contextuel-rétrospectif AMF). L'ancre Premium réelle = Insights + Debrief riche + comptes illimités.
+
+---
+
+## Gating du dashboard — carte par carte
+Application de la règle fondamentale à l'écran principal. Vue de base = FREE ; profondeur = STARTER ; IA = PREMIUM.
+
+| Carte | FREE (visible) | STARTER (profondeur) | PREMIUM |
+|---|---|---|---|
+| KPIs (Capital, P&L, Win rate, Profit factor, Trades, Drawdown) | ✅ tout | – | – |
+| Courbe d'équité | ✅ courbe simple | drawdown détaillé, périodes comparées, annotations | – |
+| P&L par jour | ✅ | – | – |
+| Top actifs (P&L/instrument) | ✅ vue simple | win rate/actif, filtres croisés actif×session×setup | – |
+| Répartition stratégies (par setup) | ✅ camembert % | **win rate & rentabilité par setup** | – |
+| États émotionnels | ✅ (tracking émotionnel = socle Free) | – | – |
+| AI Coach / Insights | – | – | ✅ teaser flouté + cadenas |
+
+Règles :
+- **Une seule carte verrouillée** sur le dashboard : l'IA Coach. Le reste montre les données de l'utilisateur.
+- Ne JAMAIS afficher une pastille `● LIVE` sur une carte verrouillée (contradiction). Le lock l'emporte.
+- Le badge d'un item (sidebar/carte) doit refléter le plan RÉEL de la feature ET ce que le backend livre (cf. Règle d'or).
 
 ---
 
@@ -99,3 +130,4 @@ Appliqué à **tout** checkout si `!user.trialUsed` (Starter ET Premium). Ne jam
 2. **Contexte marché · calendrier éco IA · news** : ouvrir l'accès aux **STARTER** (guards backend + `isStarterOrAbove` front + landing).
 3. **CLAUDE.md** : ligne 18 « Starter n'a pas d'IA » et ligne 21 « éco IA = PREMIUM » → réaligner sur cette grille (Starter a l'IA bornée/mutualisée).
 4. **daily-recap.service** : retirer le test mort `STARTER || PREMIUM` (recap = PREMIUM only).
+5. **Dashboard / analytics** : les endpoints alimentant les **vues de base** (courbe d'équité simple, P&L/jour, répartition setups/actifs en %, émotions) doivent être accessibles en **FREE**. Vérifier qu'aucun n'est gated Starter/Premium par erreur. Seule la **profondeur** (win rate par setup/actif, heatmaps, drawdown détaillé) est Starter, et l'IA Premium.
