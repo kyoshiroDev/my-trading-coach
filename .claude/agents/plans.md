@@ -125,9 +125,13 @@ Appliqué à **tout** checkout si `!user.trialUsed` (Starter ET Premium). Ne jam
 
 ---
 
-## ⚠️ Deltas d'implémentation à corriger (état actuel ≠ grille cible)
-1. **Weekly Debrief** : `debrief.getEligibleUsers()` = `OR[{PREMIUM},{ADMIN}]` → **inclure STARTER** (+ BETA_TESTER) pour matcher le StarterGuard et la promesse landing/front.
-2. **Contexte marché · calendrier éco IA · news** : ouvrir l'accès aux **STARTER** (guards backend + `isStarterOrAbove` front + landing).
-3. **CLAUDE.md** : ligne 18 « Starter n'a pas d'IA » et ligne 21 « éco IA = PREMIUM » → réaligner sur cette grille (Starter a l'IA bornée/mutualisée).
-4. **daily-recap.service** : retirer le test mort `STARTER || PREMIUM` (recap = PREMIUM only).
-5. **Dashboard / analytics** : les endpoints alimentant les **vues de base** (courbe d'équité simple, P&L/jour, répartition setups/actifs en %, émotions) doivent être accessibles en **FREE**. Vérifier qu'aucun n'est gated Starter/Premium par erreur. Seule la **profondeur** (win rate par setup/actif, heatmaps, drawdown détaillé) est Starter, et l'IA Premium.
+## ✅ Deltas alignés sur la grille cible (résolus)
+Les écarts historiques ont été corrigés — état du code == grille cible :
+1. **Weekly Debrief** ✅ : `debrief.getEligibleUsers()` inclut désormais `STARTER, PREMIUM, ADMIN, BETA_TESTER` (matche le StarterGuard + landing/front).
+2. **Contexte marché · calendrier éco IA · news** ✅ : accès **Starter+** — éco IA `StarterGuard` (`eco-calendar.controller`), `market-context` + `news` `StarterGuard` (`trades.controller`), landing sous STARTER, front gaté `isStarterOrAbove` (polling `session.store`, websocket/analyse éco `session-live`).
+3. **CLAUDE.md** ✅ : plans dé-dupliqués → pointeur vers ce fichier (plus de « Starter n'a pas d'IA »).
+4. **daily-recap.service** ✅ : recap = **PREMIUM only** (test mort `STARTER || PREMIUM` retiré).
+5. **Dashboard vues de base = FREE** ✅ : `equity-curve` (+ `current-month`, `daily`), `by-emotion`, `top-assets` dégatés (FREE) ; carte Equity déverrouillée pour FREE. Restent Starter : `by-hour`, `by-setup`, `activity/:year/:month` (profondeur).
+
+### ⏳ Reste à construire (gap de feature, pas un mis-gating)
+- **Répartition setups « camembert % » FREE** : la seule carte setup du dashboard est « Win Rate / stratégie » (win rate par setup = **profondeur Starter**). La vue de base FREE (part de chaque setup en %) n'existe pas encore — à ajouter pour respecter la ligne « Répartition stratégies : FREE camembert % » de la table dashboard.
