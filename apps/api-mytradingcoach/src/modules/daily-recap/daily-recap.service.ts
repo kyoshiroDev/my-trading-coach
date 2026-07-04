@@ -70,7 +70,8 @@ export class DailyRecapService {
       },
     });
 
-    if ((user?.plan === Plan.STARTER || user?.plan === Plan.PREMIUM) && trades.length >= 3) {
+    // Recap IA = PREMIUM only (le cron ne sélectionne que les users PREMIUM).
+    if (user?.plan === Plan.PREMIUM && trades.length >= 3) {
       const sevenDaysAgo = new Date(date);
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
