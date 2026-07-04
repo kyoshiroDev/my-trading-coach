@@ -31,14 +31,27 @@ pnl       = ticks × tickValue × qty
 
 ---
 
+## Règle P&L absolue — le réalisé prime sur le recalcul
+Si un `pnl` réalisé est fourni (import broker, ou édition sans changement de prix/qty), il fait FOI :
+`calculatePnl` retourne `dto.pnl - commission` AVANT tout recalcul `points × qty`.
+On ne recalcule (points × tickValue × qty) que si AUCUN pnl n'est fourni.
+`update()` ne recalcule le pnl QUE si un champ de prix change (entry/exit/quantity/commission/pnl).
+
+⚠️ Crypto / MEXC : la quantité importée est en CONTRATS (« Closing Qty (Cont.) »), pas en coins
+(1 contrat BTC = 0.0001 BTC). Un recalcul `points × quantité(contrats)` gonfle le P&L d'un facteur =
+taille du contrat (×10000 sur BTC). D'où la priorité au pnl réalisé du fichier. Ne jamais réintroduire
+un recalcul qui écrase un pnl réalisé fourni.
+
+---
+
 ## Modes de calcul — `calculationMode`
 
 | Mode | Condition | Formule |
 |------|-----------|---------|
 | `futures` | `category === 'FUTURES_US'` | `(rawPoints / tickSize) × tickValue × qty` |
 | `forex` | `category === 'FOREX'` | `(rawPoints / pipSize) × tickValue × qty` où `pipSize = 10^-pipDecimals` |
-| `crypto-spot` | `category === 'CRYPTO'`, levier = 1 | `variation% × capital` |
-| `crypto-leverage` | `category === 'CRYPTO'`, levier > 1 | `variation% × capital × levier` |
+| `crypto-spot` | `CRYPTO`, levier = 1 | capital > 0 → `variation% × capital` ; sinon back : `points × quantity` |
+| `crypto-leverage` | `CRYPTO`, levier > 1 | `variation% × capital × levier` |
 | `null` (CFD/Actions) | `tickValue === null` | `variation% × capital` |
 
 ---

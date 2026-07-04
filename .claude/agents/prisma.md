@@ -76,7 +76,8 @@ model Trade {
   pnl             Float?
   riskReward      Float?
   emotion         EmotionState
-  setup           SetupType
+  setupId         String                           // FK → Setup (setup défini par l'user)
+  setup           Setup           @relation(fields: [setupId], references: [id], onDelete: NoAction)
   session         TradingSessionLabel
   sessionId       String?                          // ← V2 — lien vers TradingSession
   tradingSession  TradingSession? @relation(fields: [sessionId], references: [id])
@@ -88,7 +89,7 @@ model Trade {
 
   @@index([userId, tradedAt])
   @@index([userId, emotion])
-  @@index([userId, setup])
+  @@index([userId, setupId])
   @@index([userId, session])
   @@index([userId, sessionId])
 }
@@ -180,11 +181,12 @@ enum Plan                { FREE PREMIUM }
 enum Role                { USER ADMIN BETA_TESTER }
 enum TradeSide           { LONG SHORT }
 enum EmotionState        { CONFIDENT STRESSED REVENGE FEAR FOCUSED NEUTRAL }
-enum SetupType           { BREAKOUT PULLBACK RANGE REVERSAL SCALPING NEWS }
 enum TradingSessionLabel { LONDON NEW_YORK ASIAN PRE_MARKET OVERLAP }  // label session trade
 enum MoodState           { CONFIDENT FOCUSED NEUTRAL TIRED STRESSED }   // ← V2
 enum SessionStatus       { ACTIVE CLOSED }                              // ← V2
 ```
+
+> **Setups** : setups définis par l'utilisateur (modèle `Setup` : `title`, `color`, `description`, `sortOrder`, `archived`). 6 défauts seedés au signup et pour la démo (Breakout `#10b981`, Pullback `#3b82f6`, Range `#f59e0b`, Reversal `#ef4444`, Scalping `#8b5cf6`, News `#60a5fa`). L'ancien enum `SetupType` a été migré en table (remap par titre, zéro régression). `Trade.setupId` (FK, `onDelete: NoAction`) → `Setup` ; la suppression d'un setup encore référencé par des trades est bloquée par `SetupsService` (+ backstop FK).
 
 ---
 
