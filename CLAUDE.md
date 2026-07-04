@@ -63,6 +63,7 @@ Pour l'app **admin**, la maquette `admin-mytradingcoach.html` (racine) reste LA 
 
 ### Après
 6. Commit atomique : `feat(scope):` / `fix(scope):` / `perf(scope):`
+7. Mettre à jour l'agent concerné dans `.claude/agents/` dès qu'une feature ou un correctif change le comportement/les règles : schéma & migrations → `prisma.md` · DTO/back → `nestjs.md` · calcul P&L / instruments → `instruments.md` · plans/prix/gating/coût IA → `plans.md` · front → `angular.md` · landing → `astro.md` · déploiement → `deploy.md` · design → `design.md` · sécurité → `security.md` · tests → `tests.md`. Un agent périmé est pire que pas d'agent.
 
 ---
 
