@@ -328,13 +328,22 @@ export class DebriefService {
     return this.generate(userId, Role.USER, true, opts);
   }
 
-  /** Éligibles au débrief auto : non-démo, opt-in, accès premium (PREMIUM ou ADMIN). */
+  /**
+   * Éligibles au débrief auto : non-démo, opt-in, accès Starter+.
+   * Doit matcher le StarterGuard du controller ET la promesse landing/front :
+   * plan ∈ {STARTER, PREMIUM} ou role ∈ {ADMIN, BETA_TESTER}.
+   */
   getEligibleUsers() {
     return this.prisma.user.findMany({
       where: {
         isDemo: false,
         debriefAutomatic: true,
-        OR: [{ plan: Plan.PREMIUM }, { role: Role.ADMIN }],
+        OR: [
+          { plan: Plan.STARTER },
+          { plan: Plan.PREMIUM },
+          { role: Role.ADMIN },
+          { role: Role.BETA_TESTER },
+        ],
       },
       select: { id: true, email: true },
     });
