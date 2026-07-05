@@ -499,14 +499,13 @@ export class DashboardComponent {
   protected readonly topSetups = computed(() =>
     this.bySetup().filter((s) => s.winRate !== null).slice(0, 4),
   );
-  // Chargement des vues de base (summary + equity), désormais servies aussi en FREE.
-  // Les ressources Starter (bySetup/byEmotion) ont une URL undefined en FREE → isLoading=false.
   protected readonly isLoading = computed(
     () =>
-      this.summaryResource.isLoading() ||
-      this.equityCurveResource.isLoading() ||
-      this.bySetupResource.isLoading() ||
-      this.byEmotionResource.isLoading(),
+      this.userStore.isStarterOrAbove() &&
+      (this.summaryResource.isLoading() ||
+        this.equityCurveResource.isLoading() ||
+        this.bySetupResource.isLoading() ||
+        this.byEmotionResource.isLoading()),
   );
 
   private readonly knownTradesCount = signal(-1);
