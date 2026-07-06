@@ -273,50 +273,28 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
             <div class="mtc-eq-tabs"><span>1S</span><span class="on">1M</span><span>3M</span><span>YTD</span></div>
           </div>
           <div class="mtc-panel-body">
-            @if (!userStore.isStarterOrAbove()) {
-              <div class="mtc-lockwrap">
-                <div class="mtc-lockprev">
-                  <svg class="mtc-equity" viewBox="0 0 660 230" preserveAspectRatio="none">
-                    <defs>
-                      <linearGradient id="mtcEqPrev" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="var(--green)" stop-opacity="0.35" />
-                        <stop offset="100%" stop-color="var(--green)" stop-opacity="0" />
-                      </linearGradient>
-                    </defs>
-                    <path d="M0,182 L110,150 L220,166 L330,108 L440,132 L550,66 L660,48 L660,230 L0,230 Z" fill="url(#mtcEqPrev)" />
-                    <path d="M0,182 L110,150 L220,166 L330,108 L440,132 L550,66 L660,48" fill="none" stroke="var(--green)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" />
-                  </svg>
-                </div>
-                <div class="mtc-lockov">
-                  <div class="mtc-lock-ic">🔒</div>
-                  <div class="mtc-lock-t">Courbe d'équité — dès Starter</div>
-                  <div class="mtc-lock-s">Suis l'évolution de ton capital jour après jour. Débloquée avec les analytics avancés.</div>
-                  <button class="mtc-lock-cta" (click)="showPlanModal.set(true)">Passer Starter</button>
-                </div>
-              </div>
+            <!-- Courbe d'équité simple = vue de base FREE (profondeur = page /analytics). -->
+            @let eg = equityGlow();
+            @if (eg) {
+              <svg class="mtc-equity" [attr.viewBox]="'0 0 ' + eg.W + ' ' + eg.H" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="mtcEqFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" [attr.stop-color]="eg.color" stop-opacity="0.35" />
+                    <stop offset="100%" [attr.stop-color]="eg.color" stop-opacity="0" />
+                  </linearGradient>
+                  <filter id="mtcEqGlow" x="-20%" y="-50%" width="140%" height="200%">
+                    <feGaussianBlur stdDeviation="3.4" result="b" />
+                    <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+                  </filter>
+                </defs>
+                <path [attr.d]="eg.area" fill="url(#mtcEqFill)" />
+                <path [attr.d]="eg.trend" fill="none" stroke="rgba(143,163,191,.4)" stroke-width="1" stroke-dasharray="3 4" />
+                <path [attr.d]="eg.line" fill="none" [attr.stroke]="eg.color" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" filter="url(#mtcEqGlow)" />
+                <circle class="mtc-eq-pulse" [attr.cx]="eg.lastX" [attr.cy]="eg.lastY" r="7" [attr.fill]="eg.color" opacity="0.25" />
+                <circle [attr.cx]="eg.lastX" [attr.cy]="eg.lastY" r="3.4" [attr.fill]="eg.color" />
+              </svg>
             } @else {
-              @let eg = equityGlow();
-              @if (eg) {
-                <svg class="mtc-equity" [attr.viewBox]="'0 0 ' + eg.W + ' ' + eg.H" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="mtcEqFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" [attr.stop-color]="eg.color" stop-opacity="0.35" />
-                      <stop offset="100%" [attr.stop-color]="eg.color" stop-opacity="0" />
-                    </linearGradient>
-                    <filter id="mtcEqGlow" x="-20%" y="-50%" width="140%" height="200%">
-                      <feGaussianBlur stdDeviation="3.4" result="b" />
-                      <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-                    </filter>
-                  </defs>
-                  <path [attr.d]="eg.area" fill="url(#mtcEqFill)" />
-                  <path [attr.d]="eg.trend" fill="none" stroke="rgba(143,163,191,.4)" stroke-width="1" stroke-dasharray="3 4" />
-                  <path [attr.d]="eg.line" fill="none" [attr.stroke]="eg.color" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" filter="url(#mtcEqGlow)" />
-                  <circle class="mtc-eq-pulse" [attr.cx]="eg.lastX" [attr.cy]="eg.lastY" r="7" [attr.fill]="eg.color" opacity="0.25" />
-                  <circle [attr.cx]="eg.lastX" [attr.cy]="eg.lastY" r="3.4" [attr.fill]="eg.color" />
-                </svg>
-              } @else {
-                <div class="mtc-empty">Aucun trade ce mois</div>
-              }
+              <div class="mtc-empty">Aucun trade ce mois</div>
             }
           </div>
         </div>
@@ -325,36 +303,14 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
         <div class="mtc-panel">
           <div class="mtc-panel-head"><div class="mtc-panel-head-l"><lucide-icon [img]="AssetsIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">Top actifs</div><div class="mtc-panel-sub">P&amp;L par instrument</div></div></div></div>
           <div class="mtc-panel-body">
-            @if (!userStore.isStarterOrAbove()) {
-              <div class="mtc-lockwrap">
-                <div class="mtc-lockprev">
-                  <div class="mtc-hbars">
-                    @for (a of assetsPreview; track a.name) {
-                      <div class="mtc-hbar">
-                        <div class="mtc-hbar-l">
-                          <div class="mtc-hbar-name">{{ a.name }}</div>
-                          <div class="mtc-hbar-meta">{{ a.meta }}</div>
-                        </div>
-                        <div class="mtc-hbar-track"><div class="mtc-hbar-fill" [style.width.%]="a.w"></div></div>
-                        <div class="mtc-hbar-v" style="color:var(--green)">{{ a.v }}</div>
-                      </div>
-                    }
-                  </div>
-                </div>
-                <div class="mtc-lockov">
-                  <div class="mtc-lock-ic">🔒</div>
-                  <div class="mtc-lock-t">Top actifs — dès Starter</div>
-                  <div class="mtc-lock-s">Vois quels instruments te rapportent le plus. Débloqué avec les analytics avancés.</div>
-                  <button class="mtc-lock-cta" (click)="showPlanModal.set(true)">Passer Starter</button>
-                </div>
-              </div>
-            } @else if (topAssets().length) {
+            <!-- Top actifs (P&L par instrument) = vue de base FREE ; win rate/actif = profondeur Starter. -->
+            @if (topAssets().length) {
               <div class="mtc-hbars">
                 @for (a of topAssets(); track a.asset) {
                   <div class="mtc-hbar">
                     <div class="mtc-hbar-l">
                       <div class="mtc-hbar-name">{{ a.asset | uppercase }}</div>
-                      <div class="mtc-hbar-meta">{{ a.count }} trade{{ a.count > 1 ? 's' : '' }} · {{ a.winRate.toFixed(0) }}%</div>
+                      <div class="mtc-hbar-meta">{{ a.count }} trade{{ a.count > 1 ? 's' : '' }}@if (userStore.isStarterOrAbove()) { · {{ a.winRate.toFixed(0) }}%}</div>
                     </div>
                     <div class="mtc-hbar-track"><div class="mtc-hbar-fill" [class.neg]="a.pnl < 0" [style.width.%]="a.barPct"></div></div>
                     <div class="mtc-hbar-v" [style.color]="a.pnl >= 0 ? 'var(--green)' : 'var(--red)'">{{ a.pnl | pnlFormat }}</div>
@@ -431,38 +387,18 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
         <div class="mtc-panel">
           <div class="mtc-panel-head"><div class="mtc-panel-head-l"><lucide-icon [img]="SetupsIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">Répartition stratégies</div><div class="mtc-panel-sub">% des trades par setup</div></div></div></div>
           <div class="mtc-panel-body">
-            @if (!userStore.isStarterOrAbove()) {
-              <div class="mtc-lockwrap">
-                <div class="mtc-lockprev">
-                  <div class="mtc-donut-row">
-                    <div class="mtc-donut" style="background:conic-gradient(var(--green) 0% 44%, var(--blue) 44% 73%, var(--yellow) 73% 90%, var(--purple) 90% 100%)"><div class="mtc-donut-hole"><span class="mtc-donut-v">74%</span><span class="mtc-donut-l">Best</span></div></div>
-                    <div class="mtc-legend">
-                      @for (l of setupsPreview; track l.label) {
-                        <div class="mtc-legend-item"><span class="mtc-legend-dot" [style.background]="l.color"></span><span class="mtc-legend-lab">{{ l.label }}</span><span class="mtc-legend-pct">{{ l.pct }}%</span></div>
-                      }
-                    </div>
-                  </div>
-                </div>
-                <div class="mtc-lockov">
-                  <div class="mtc-lock-ic">🔒</div>
-                  <div class="mtc-lock-t">Répartition stratégies — dès Starter</div>
-                  <div class="mtc-lock-s">Identifie tes setups les plus rentables. Débloquée avec les analytics avancés.</div>
-                  <button class="mtc-lock-cta" (click)="showPlanModal.set(true)">Passer Starter</button>
+            <!-- Répartition % des setups = vue de base FREE (client-side) ; centre win rate = Starter. -->
+            @let sd = setupsDonutView();
+            @if (sd) {
+              <div class="mtc-donut-row">
+                <div class="mtc-donut" [style.background]="sd.gradient"><div class="mtc-donut-hole"><span class="mtc-donut-v">{{ sd.centerValue }}</span><span class="mtc-donut-l">{{ sd.centerLabel }}</span></div></div>
+                <div class="mtc-legend">
+                  @for (l of sd.legend; track l.label) {
+                    <div class="mtc-legend-item"><span class="mtc-legend-dot" [style.background]="l.color"></span><span class="mtc-legend-lab">{{ l.label }}</span><span class="mtc-legend-pct">{{ l.pct }}%</span></div>
+                  }
                 </div>
               </div>
-            } @else {
-              @let sd = setupsDonut();
-              @if (sd) {
-                <div class="mtc-donut-row">
-                  <div class="mtc-donut" [style.background]="sd.gradient"><div class="mtc-donut-hole"><span class="mtc-donut-v">{{ sd.centerValue }}</span><span class="mtc-donut-l">{{ sd.centerLabel }}</span></div></div>
-                  <div class="mtc-legend">
-                    @for (l of sd.legend; track l.label) {
-                      <div class="mtc-legend-item"><span class="mtc-legend-dot" [style.background]="l.color"></span><span class="mtc-legend-lab">{{ l.label }}</span><span class="mtc-legend-pct">{{ l.pct }}%</span></div>
-                    }
-                  </div>
-                </div>
-              } @else { <p class="empty-widget-msg">Tes setups apparaîtront<br />après tes premiers trades</p> }
-            }
+            } @else { <p class="empty-widget-msg">Tes setups apparaîtront<br />après tes premiers trades</p> }
           </div>
         </div>
 
@@ -556,21 +492,6 @@ export class DashboardComponent {
   protected readonly isSavingTrade = signal(false);
   protected readonly PRICING = PRICING;
 
-  // Aperçus statiques (flou derrière l'overlay « dès Starter ») — purement visuels,
-  // jamais de vraies données ; les analytics avancés restent gatés Starter+.
-  protected readonly assetsPreview = [
-    { name: 'BTC/USDT', meta: '12 trades · 75%', w: 92, v: '+$1 320' },
-    { name: 'ES', meta: '9 trades · 67%', w: 58, v: '+$680' },
-    { name: 'XAU/USD', meta: '7 trades · 71%', w: 44, v: '+$540' },
-    { name: 'NQ', meta: '5 trades · 60%', w: 22, v: '+$220' },
-  ];
-  protected readonly setupsPreview = [
-    { label: 'FVG', color: 'var(--green)', pct: 44 },
-    { label: 'Order Block', color: 'var(--blue)', pct: 29 },
-    { label: 'Breakout', color: 'var(--yellow)', pct: 17 },
-    { label: 'Liq. grab', color: 'var(--purple)', pct: 10 },
-  ];
-
   // Icônes d'en-tête de panel (Lucide) — fidélité design.
   protected readonly EquityIcon   = TrendingUp;
   protected readonly AssetsIcon   = Coins;
@@ -610,8 +531,9 @@ export class DashboardComponent {
   private readonly byEmotionResource = httpResource<{ data: EmotionStat[] }>(() =>
     this.userStore.isStarterOrAbove() ? `${environment.apiUrl}/analytics/by-emotion${this.accQuery()}` : undefined,
   );
+  // Top actifs (P&L par instrument) vue simple = vue de base FREE.
   private readonly topAssetsResource = httpResource<{ data: TopAsset[] }>(() =>
-    this.userStore.isStarterOrAbove() ? `${environment.apiUrl}/analytics/top-assets${this.accQuery()}` : undefined,
+    `${environment.apiUrl}/analytics/top-assets${this.accQuery()}`,
   );
 
   protected readonly summary = computed(() => this.summaryResource.value()?.data ?? null);
@@ -825,6 +747,38 @@ export class DashboardComponent {
     const best = setups.reduce((a, b) => ((b.winRate ?? 0) > (a.winRate ?? 0) ? b : a), setups[0]);
     return { gradient: `conic-gradient(${stops.join(', ')})`, legend, centerValue: `${Math.round(best.winRate ?? 0)}%`, centerLabel: best.title };
   });
+
+  /**
+   * Donut « répartition stratégies » vue de base FREE : % des trades par setup,
+   * calculé client-side depuis les trades chargés (by-setup = profondeur Starter).
+   * Centre = setup dominant. La profondeur (win rate/rentabilité) reste Starter.
+   */
+  protected readonly setupsDonutFree = computed(() => {
+    const trades = this.tradesStore.trades();
+    if (!trades.length) return null;
+    const map = new Map<string, { title: string; color: string; count: number }>();
+    for (const t of trades) {
+      const cur = map.get(t.setupId) ?? { title: t.setup?.title ?? '—', color: t.setup?.color ?? 'var(--text-3)', count: 0 };
+      cur.count++;
+      map.set(t.setupId, cur);
+    }
+    const setups = [...map.values()].sort((a, b) => b.count - a.count).slice(0, 6);
+    const total = setups.reduce((s, x) => s + x.count, 0) || 1;
+    let cum = 0;
+    const stops: string[] = [];
+    const legend = setups.map((s) => {
+      const a = (cum / total) * 100; cum += s.count; const b = (cum / total) * 100;
+      stops.push(`${s.color} ${a.toFixed(2)}% ${b.toFixed(2)}%`);
+      return { label: s.title, color: s.color, pct: Math.round((s.count / total) * 100) };
+    });
+    const top = setups[0];
+    return { gradient: `conic-gradient(${stops.join(', ')})`, legend, centerValue: `${Math.round((top.count / total) * 100)}%`, centerLabel: top.title };
+  });
+
+  /** Vue donut setups selon le plan : profondeur (win rate) en Starter+, répartition % en FREE. */
+  protected readonly setupsDonutView = computed(() =>
+    this.userStore.isStarterOrAbove() ? this.setupsDonut() : this.setupsDonutFree(),
+  );
 
   /** Donut mini win rate (KPI). */
   protected readonly winRateDonut = computed(() => {
