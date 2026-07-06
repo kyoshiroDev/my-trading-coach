@@ -272,10 +272,6 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
             <div class="mtc-panel-head-l"><lucide-icon [img]="EquityIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">Courbe d'équité</div><div class="mtc-panel-sub">{{ equitySub() }}</div></div></div>
             <div class="mtc-eq-tabs"><span>1S</span><span class="on">1M</span><span>3M</span><span>YTD</span></div>
           </div>
-          <div class="chart-container">
-            <canvas #equityChart></canvas>
-            @if (equityCurve().length === 0) {
-              <div class="empty-chart">Aucun trade ce mois</div>
           <div class="mtc-panel-body">
             @if (!userStore.isStarterOrAbove()) {
               <div class="mtc-lockwrap">
