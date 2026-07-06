@@ -29,7 +29,11 @@ function setup(opts: SetupOpts = {}) {
     savePins: vi.fn(() => of({ data: [] })),
     analyzeResult: vi.fn(() => of({ data: opts.analysis ?? { interpretation: 'interp', assetSentiments: [] } })),
   };
-  const userStore = { user: signal(opts.user ?? null) };
+  const userStore = {
+    user: signal(opts.user ?? null),
+    // Analyse IA éco = Starter+ ; les tests d'analyse simulent un accès autorisé.
+    isStarterOrAbove: () => true,
+  };
 
   TestBed.configureTestingModule({
     providers: [
