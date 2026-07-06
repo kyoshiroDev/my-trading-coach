@@ -329,6 +329,9 @@ export class DebriefService {
   }
 
   /**
+   * Éligibles au débrief auto : non-démo, opt-in, accès Starter+.
+   * Doit matcher le StarterGuard du controller ET la promesse landing/front :
+   * plan ∈ {STARTER, PREMIUM} ou role ∈ {ADMIN, BETA_TESTER}.
    * Éligibles au débrief auto : non-démo, opt-in, accès Starter+ (le Weekly
    * Debrief automatique est vendu dès le plan Starter — cf. landing Pricing).
    * → plan STARTER/PREMIUM, rôle ADMIN, ou essai (trial) en cours.
@@ -339,6 +342,10 @@ export class DebriefService {
         isDemo: false,
         debriefAutomatic: true,
         OR: [
+          { plan: Plan.STARTER },
+          { plan: Plan.PREMIUM },
+          { role: Role.ADMIN },
+          { role: Role.BETA_TESTER },
           { plan: { in: [Plan.STARTER, Plan.PREMIUM] } },
           { role: Role.ADMIN },
           { trialEndsAt: { gt: new Date() } },

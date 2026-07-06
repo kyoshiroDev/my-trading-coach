@@ -90,7 +90,8 @@ export class SessionStore {
         if (this.activeSession()?.status === 'ACTIVE') this.refreshLiveStats();
       });
 
-    // Polling market context + news : actif seulement pendant session active
+    // Polling market context + news : session active ET plan Starter+
+    // (contexte marché + news filtrées = features Starter+, guards backend en place).
     toObservable(this.activeSession)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((session) => {
@@ -98,6 +99,7 @@ export class SessionStore {
         clearInterval(this.newsInterval);
         this.marketCtxInterval = undefined;
         this.newsInterval      = undefined;
+        if (session?.status === 'ACTIVE' && this.userStore.isStarterOrAbove()) {
         // Contexte marché live + News = PREMIUM (endpoints gardés côté API) : on ne
         // poll que pour un Premium ; sinon les panneaux affichent un verrou d'upsell.
         if (session?.status === 'ACTIVE' && this.userStore.isPremium()) {

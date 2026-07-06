@@ -262,6 +262,7 @@
   letter-spacing: 0.5px;
 }
 .user-plan.premium { color: var(--badge-premium-color); }
+.user-plan.starter { color: var(--blue-bright, #60a5fa); }
 .user-plan.starter { color: var(--blue-bright); }
 .user-plan.free    { color: var(--badge-free-color); }
 .user-plan.beta    { color: var(--badge-beta-color); }

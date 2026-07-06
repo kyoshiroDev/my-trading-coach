@@ -272,6 +272,10 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
             <div class="mtc-panel-head-l"><lucide-icon [img]="EquityIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">Courbe d'équité</div><div class="mtc-panel-sub">{{ equitySub() }}</div></div></div>
             <div class="mtc-eq-tabs"><span>1S</span><span class="on">1M</span><span>3M</span><span>YTD</span></div>
           </div>
+          <div class="chart-container">
+            <canvas #equityChart></canvas>
+            @if (equityCurve().length === 0) {
+              <div class="empty-chart">Aucun trade ce mois</div>
           <div class="mtc-panel-body">
             @if (!userStore.isStarterOrAbove()) {
               <div class="mtc-lockwrap">
@@ -600,13 +604,10 @@ export class DashboardComponent {
   private readonly summaryResource = httpResource<{ data: AnalyticsSummary }>(
     () => `${environment.apiUrl}/analytics/summary${this.accQuery()}`,
   );
+  // Courbe d'équité simple = vue de base FREE (on ne verrouille pas la vue de ses données).
   private readonly equityCurveResource = httpResource<{
     data: { points: EquityPoint[]; startingCapital: number | null };
-  }>(() =>
-    this.userStore.isStarterOrAbove()
-      ? `${environment.apiUrl}/analytics/equity-curve/current-month${this.accQuery()}`
-      : undefined,
-  );
+  }>(() => `${environment.apiUrl}/analytics/equity-curve/current-month${this.accQuery()}`);
   private readonly bySetupResource = httpResource<{ data: SetupStat[] }>(() =>
     this.userStore.isStarterOrAbove() ? `${environment.apiUrl}/analytics/by-setup${this.accQuery()}` : undefined,
   );

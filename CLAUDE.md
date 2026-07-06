@@ -9,20 +9,8 @@
 
 **MyTradingCoach** — SaaS freemium de journal de trading intelligent pour traders particuliers (crypto, forex, actions). L'IA analyse émotions et comportements pour aider les traders à progresser.
 
-**Plans (source de vérité tarifaire : landing `Pricing.astro` + `core/constants/pricing.const.ts`) :**
-- **FREE** — gratuit : 30 trades/mois, historique illimité, journal complet, stats de base, **compagnon de session** (pré-session + session live + débrief de session), **calendrier éco brut** (events + épingles), tracking émotionnel
-- **STARTER** — **39 €/mois** ou **349 €/an** (~29 €/mois annualisé, économie 119 €) : tout FREE + trades illimités, analytics avancés, Weekly Debrief automatique, Score trader /100, Export PDF — essai **7 jours** sans CB
-- **PREMIUM** — **79 €/mois** ou **699 €/an** (~58 €/mois annualisé, économie 249 €) : tout Starter + IA Insights, Chat Coach IA, Calendrier éco IA, News live filtrées, contexte marché live, Treasury Rates, Recap email 17h30 — essai **7 jours** sans CB
-
-**Règles business absolues :**
-- Tout appel Anthropic = PREMIUM uniquement (Starter n'a pas d'IA)
-- `/analytics/summary` accessible FREE (win rate, P&L, streak)
-- Compagnon de session (pré-session, live, débrief de session) = FREE (hook) ; Weekly Debrief = Starter
-- Calendrier éco : affichage + épingles = FREE ; analyse IA (bull/bear) = PREMIUM (guard au niveau méthode)
-- Historique trades = illimité pour FREE (pas de filtre date)
-- Limite FREE = 30 trades/mois uniquement
-- Trial = 7 jours (jamais 14)
-- Prix : ne jamais coder une valeur tarifaire en dur → toujours `pricing.const.ts` (front), aligné sur la landing. Prix Stripe réels pilotés par les `STRIPE_*_PRICE_*`.
+**Plans** — 3 paliers : FREE (0€), STARTER (39€/mois · 349€/an), PREMIUM (79€/mois · 699€/an), essai 7 j sur les deux payants.
+➡️ **Source de vérité plans / prix / features / gating / coût IA : `.claude/agents/plans.md`.** Ne pas dupliquer ni redéfinir les règles de plan ici.
 
 ---
 
@@ -67,6 +55,7 @@ Pour l'app **admin**, la maquette `admin-mytradingcoach.html` (racine) reste LA 
 1. Lire l'agent pertinent dans `.claude/agents/`
 2. Lire `admin-mytradingcoach.html` avant tout travail sur l'app admin
 3. Lire la maquette dédiée (`maquette-*.html`) si elle existe pour la vue concernée
+4. Toute tâche touchant prix / features gated / accès par plan → lire `.claude/agents/plans.md` (cohérence obligatoire aux 4 points : landing, front, guard, cron).
 
 ### Pendant
 4. Builder après chaque partie — zéro erreur avant de continuer
@@ -74,6 +63,7 @@ Pour l'app **admin**, la maquette `admin-mytradingcoach.html` (racine) reste LA 
 
 ### Après
 6. Commit atomique : `feat(scope):` / `fix(scope):` / `perf(scope):`
+7. Mettre à jour l'agent concerné dans `.claude/agents/` dès qu'une feature ou un correctif change le comportement/les règles : schéma & migrations → `prisma.md` · DTO/back → `nestjs.md` · calcul P&L / instruments → `instruments.md` · plans/prix/gating/coût IA → `plans.md` · front → `angular.md` · landing → `astro.md` · déploiement → `deploy.md` · design → `design.md` · sécurité → `security.md` · tests → `tests.md`. Un agent périmé est pire que pas d'agent.
 
 ---
 

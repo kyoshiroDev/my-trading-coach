@@ -32,7 +32,7 @@ export class AnalyticsController {
     return this.analyticsService.getBySetup(user.id, await this.accountId(user.id, accountId));
   }
 
-  @UseGuards(StarterGuard)
+  // Vue de base (États émotionnels) = socle FREE.
   @Get('by-emotion')
   async getByEmotion(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
     return this.analyticsService.getByEmotion(user.id, await this.accountId(user.id, accountId));
@@ -44,19 +44,20 @@ export class AnalyticsController {
     return this.analyticsService.getByHour(user.id, await this.accountId(user.id, accountId));
   }
 
-  @UseGuards(StarterGuard)
+  // Courbe d'équité simple = vue de base FREE (la profondeur — drawdown détaillé,
+  // comparaisons de périodes — vit dans la page /analytics gardée Starter).
   @Get('equity-curve')
   async getEquityCurve(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
     return this.analyticsService.getEquityCurve(user.id, await this.accountId(user.id, accountId));
   }
 
-  @UseGuards(StarterGuard)
+  // Courbe d'équité du mois courant = alimente la carte Equity du dashboard (FREE).
   @Get('equity-curve/current-month')
   async getEquityCurrentMonth(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
     return this.analyticsService.getEquityCurveCurrentMonth(user.id, await this.accountId(user.id, accountId));
   }
 
-  @UseGuards(StarterGuard)
+  // P&L par jour = vue de base FREE.
   @Get('equity-curve/daily')
   async getEquityDaily(
     @CurrentUser() user: { id: string },
@@ -72,7 +73,7 @@ export class AnalyticsController {
     );
   }
 
-  @UseGuards(StarterGuard)
+  // Top actifs (P&L par instrument) vue simple = vue de base FREE.
   @Get('top-assets')
   async getTopAssets(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
     return this.analyticsService.getTopAssets(user.id, await this.accountId(user.id, accountId));

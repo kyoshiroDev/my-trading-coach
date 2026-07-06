@@ -153,9 +153,9 @@ const DEMO_ECO_EVENTS: EcoEvent[] = [
             <div class="empty-state">Objectifs générés après ton Weekly Debrief</div>
           } @else {
             @for (obj of objectives(); track $index; let i = $index) {
-              @if (!userStore.isPremium() && i >= 1) {
+              @if (!userStore.isStarterOrAbove() && i >= 1) {
                 @if (i === 1) {
-                  <!-- 2e objectif flou — aperçu Premium -->
+                  <!-- 2e objectif flou — aperçu Starter -->
                   <div style="position:relative;margin-top:4px;">
                     <div class="obj-item" style="filter:blur(3px);pointer-events:none;user-select:none;">
                       <div class="obj-check">·</div>
