@@ -296,9 +296,12 @@ import { environment } from '../../../../environments/environment';
               <div class="user-name">{{ userStore.displayName() }}</div>
               <div class="user-plan"
                 [class.premium]="userStore.isPremium()"
-                [class.free]="!userStore.isPremium()">
+                [class.starter]="!userStore.isPremium() && userStore.isStarterOrAbove()"
+                [class.free]="!userStore.isStarterOrAbove()">
                 @if (userStore.isPremium()) {
                   ★ PREMIUM
+                } @else if (userStore.isStarterOrAbove()) {
+                  ★ STARTER
                 } @else {
                   FREE
                 }
