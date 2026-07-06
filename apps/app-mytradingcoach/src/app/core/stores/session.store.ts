@@ -99,10 +99,9 @@ export class SessionStore {
         clearInterval(this.newsInterval);
         this.marketCtxInterval = undefined;
         this.newsInterval      = undefined;
+        // Contexte marché + news = features Starter+ (endpoints gardés côté API) :
+        // on ne poll que pour un Starter+ ; sinon les panneaux affichent un upsell.
         if (session?.status === 'ACTIVE' && this.userStore.isStarterOrAbove()) {
-        // Contexte marché live + News = PREMIUM (endpoints gardés côté API) : on ne
-        // poll que pour un Premium ; sinon les panneaux affichent un verrou d'upsell.
-        if (session?.status === 'ACTIVE' && this.userStore.isPremium()) {
           this.fetchMarketContext();
           this.fetchNewsItems();
           this.marketCtxInterval = setInterval(() => this.fetchMarketContext(), POLLING_MS.MARKET_CONTEXT);

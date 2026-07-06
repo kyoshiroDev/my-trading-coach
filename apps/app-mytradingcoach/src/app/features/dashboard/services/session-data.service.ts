@@ -18,9 +18,9 @@ export class SessionDataService {
   private newsInterval?: ReturnType<typeof setInterval>;
 
   startPolling(getTradeSymbols: () => string[]): void {
-    // Contexte marché live + News = PREMIUM (endpoints gardés côté API). Inutile de
-    // poller pour un non-Premium : les panneaux affichent un verrou d'upsell.
-    if (!this.userStore.isPremium()) return;
+    // Contexte marché + news = features Starter+ (endpoints gardés côté API).
+    // Inutile de poller pour un FREE : les panneaux affichent un upsell.
+    if (!this.userStore.isStarterOrAbove()) return;
     this.fetchMarketContext();
     this.fetchNewsItems(getTradeSymbols());
     this.marketCtxInterval = setInterval(() => this.fetchMarketContext(), POLLING_MS.MARKET_CONTEXT);
