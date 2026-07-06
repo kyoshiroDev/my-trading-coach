@@ -81,6 +81,7 @@ export class AnalyticsService {
         totalPnl: 0,
         totalTrades: 0,
         maxDrawdown: 0,
+        profitFactor: null,
         streak: 0,
         topSession: '—',
         topSessionWinRate: 0,
@@ -92,6 +93,11 @@ export class AnalyticsService {
     const wins = trades.filter((t) => (t.pnl ?? 0) > 0).length;
     const winRate = (wins / totalTrades) * 100;
     const totalPnl = trades.reduce((acc, t) => acc + (t.pnl ?? 0), 0);
+
+    // Profit factor = profits bruts / pertes brutes. null si aucune perte (∞ → géré côté front).
+    const grossProfit = trades.reduce((a, t) => a + Math.max(0, t.pnl ?? 0), 0);
+    const grossLoss = trades.reduce((a, t) => a + Math.max(0, -(t.pnl ?? 0)), 0);
+    const profitFactor = grossLoss > 0 ? Math.round((grossProfit / grossLoss) * 100) / 100 : null;
 
     let peak = 0;
     let cumPnl = 0;
@@ -158,6 +164,7 @@ export class AnalyticsService {
       totalPnl,
       totalTrades,
       maxDrawdown,
+      profitFactor,
       streak,
       topSession,
       topSessionWinRate: Math.round(topSessionWinRate),
