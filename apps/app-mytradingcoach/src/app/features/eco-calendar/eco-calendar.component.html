@@ -196,14 +196,22 @@
                           <td class="c-ia" data-label="IA">
                             @switch (iaState(event)) {
                               @case ('ready') {
-                                <button class="ia-cell" [class]="analysisFor(event) ? sentCls(ccySent(event)) : 'neutral'"
-                                        (click)="toggleAnalysis(event)"
-                                        [title]="event.currency + (analysisFor(event) ? ' : ' + sentLabel(ccySent(event)) : ' — analyse IA')">
-                                  <span class="ia-ccy">{{ event.currency }}</span>
-                                  @if (analysisFor(event)) { <span class="ia-arrow">{{ sentArrow(ccySent(event)) }}</span> }
-                                  <span class="ia-spark">✨</span>
-                                  <span class="ia-chev">{{ expandedEvent() === event.name ? '▴' : '▾' }}</span>
-                                </button>
+                                @if (canAnalyze()) {
+                                  <button class="ia-cell" [class]="analysisFor(event) ? sentCls(ccySent(event)) : 'neutral'"
+                                          (click)="toggleAnalysis(event)"
+                                          [title]="event.currency + (analysisFor(event) ? ' : ' + sentLabel(ccySent(event)) : ' — analyse IA')">
+                                    <span class="ia-ccy">{{ event.currency }}</span>
+                                    @if (analysisFor(event)) { <span class="ia-arrow">{{ sentArrow(ccySent(event)) }}</span> }
+                                    <span class="ia-spark">✨</span>
+                                    <span class="ia-chev">{{ expandedEvent() === event.name ? '▴' : '▾' }}</span>
+                                  </button>
+                                } @else {
+                                  <span class="ia-cell ia-locked" title="Analyse IA — disponible dès Starter">
+                                    <span class="ia-ccy">{{ event.currency }}</span>
+                                    <span class="ia-spark">✨</span>
+                                    <span class="ia-chev">🔒</span>
+                                  </span>
+                                }
                               }
                               @case ('wait') { <span class="ia-wait">⏳ après chiffres</span> }
                               @default { <span class="ia-na">—</span> }

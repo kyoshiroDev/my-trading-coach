@@ -138,9 +138,9 @@ const EMOTIONS = [
           </div>
 
           <div class="news-feed">
-            @if (!isPremium()) {
+            @if (!isStarterOrAbove()) {
               <mtc-premium-lock
-                title="News live · Premium"
+                title="News live · Starter"
                 subtitle="Actus filtrées sur tes actifs, en direct pendant ta session."
               />
             } @else if (newsItems().length === 0) {
@@ -224,7 +224,7 @@ const EMOTIONS = [
 
             @if (!ecoCalendar()) {
               <div style="font-size:12px;color:var(--text-3);text-align:center;padding:20px 0;">
-                Calendrier disponible en Premium
+                Calendrier disponible dès Starter
               </div>
             } @else {
               <div class="cal-events-list">
@@ -711,8 +711,8 @@ export class SessionLiveComponent {
   private readonly tradesApi = inject(TradesApi);
   protected readonly setupsStore = inject(SetupsStore);
 
-  // News live + contexte marché = PREMIUM (endpoints gardés côté API) → verrou d'upsell sinon.
-  protected readonly isPremium = computed(() => this.userStore.isPremium());
+  // News live + contexte marché = Starter+ (endpoints gardés côté API) → verrou d'upsell sinon.
+  protected readonly isStarterOrAbove = computed(() => this.userStore.isStarterOrAbove());
 
   // Timer
   private readonly now = signal(new Date());
