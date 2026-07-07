@@ -40,73 +40,74 @@
   overflow: hidden;
 }
 
-/* ── Page header ── */
-.page-header {
+/* ── Rangée d'onglets — segmented control centré (design « Ma session ») ── */
+.session-tabs-row {
+  position: relative;
   display: flex;
   align-items: center;
-  padding: 20px 30px 0;
-  margin-bottom: 20px;
-  gap: 0;
-  flex-shrink: 0;
-}
-.greeting-block {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex-shrink: 0;
-  min-width: 200px;
-}
-.greeting-title {
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text);
-}
-.greeting-sub {
-  font-size: 13px;
-  color: var(--text-2);
-}
-.tabs-block {
-  flex: 1;
-  display: flex;
   justify-content: center;
-  align-items: center;
-  gap: 8px;
-}
-.header-spacer {
+  padding: 16px 30px 18px;
   flex-shrink: 0;
-  min-width: 200px;
-  flex: 1;
-  max-width: 400px;
 }
-
-/* ── Onglets session ── */
-.session-tab {
-  background: transparent;
+.seg-tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--bg-2);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 14px;
-  font-size: 12.5px;
-  font-family: var(--font-body);
-  cursor: pointer;
-  transition: all .13s;
-  color: var(--text-3);
-  white-space: nowrap;
+  border-radius: 12px;
+}
+.seg-tab {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-}
-.session-tab:hover {
-  background: var(--blue-glow);
-  border-color: rgba(59,130,246,.35);
-  color: var(--text-2);
-}
-.session-tab.active {
-  background: rgba(59,130,246,.12);
-  border-color: rgba(59,130,246,.4);
-  color: var(--blue-bright);
+  gap: 7px;
+  padding: 8px 18px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-3);
+  font-family: var(--font-body);
+  font-size: 13px;
   font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color .15s, background .15s, border-color .15s;
 }
+.seg-tab lucide-icon { display: inline-flex; }
+.seg-tab:hover { color: var(--text-2); }
+.seg-tab.active {
+  background: var(--bg-card);
+  border-color: var(--border-hover);
+  color: var(--text);
+  box-shadow: 0 2px 8px -4px rgba(0,0,0,.5);
+}
+.seg-tab.active lucide-icon { color: var(--blue-bright); }
+.session-tabs-row .closed-badge {
+  position: absolute;
+  right: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* ── Action shell (topbar) : Démarrer / Clôturer ── */
+.sess-start-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--green-dim);
+  border: 1px solid rgba(16,185,129,.3);
+  color: var(--green);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, border-color .15s;
+}
+.sess-start-cta:hover { background: rgba(16,185,129,.18); border-color: rgba(16,185,129,.5); }
+.sess-start-cta lucide-icon { display: inline-flex; }
 
 /* ── Session pill dans la topbar ── */
 .sess-status-pill {
@@ -126,18 +127,19 @@
   0%, 100% { opacity: 1; transform: scale(1); }
   50%       { opacity: .5; transform: scale(.8); }
 }
+.sess-active-lbl { font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; color: var(--green); }
 .sess-timer-top { font-family: var(--font-mono); font-size: 13px; font-weight: 700; letter-spacing: .8px; color: var(--text); }
 .sess-sep       { color: var(--text-3); font-size: 11px; }
 .sess-cnt-top   { font-size: 12px; color: var(--text-2); font-family: var(--font-mono); }
-.sess-pnl-top   { font-family: var(--font-mono); font-size: 13px; font-weight: 700; }
-.sess-emo-top   { font-size: 14px; }
 .sess-stop-top {
+  display: inline-flex; align-items: center; gap: 6px;
   background: rgba(139,92,246,.1); border: 1px solid rgba(139,92,246,.28);
-  color: var(--purple-bright); border-radius: 7px; padding: 6px 13px;
-  font-size: 12px; font-weight: 500; cursor: pointer;
+  color: var(--purple-bright); border-radius: 8px; padding: 7px 14px;
+  font-size: 12.5px; font-weight: 500; cursor: pointer;
   font-family: var(--font-body); white-space: nowrap; transition: all .15s;
 }
 .sess-stop-top:hover { background: rgba(139,92,246,.18); }
+.sess-stop-top lucide-icon { display: inline-flex; }
 
 /* ── Onglet Débrief ── */
 .session-debrief { display: flex; flex-direction: column; gap: 18px; padding: 4px 30px 30px; }

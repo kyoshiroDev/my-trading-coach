@@ -9,9 +9,10 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { DatePipe, DecimalPipe, registerLocaleData } from '@angular/common';
+import { DatePipe, registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
 registerLocaleData(localeFr);
+import { LucideAngularModule, Play, Sunrise, Activity, Moon } from 'lucide-angular';
 import { SessionStore } from '../../core/stores/session.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { SessionMorningComponent } from '../dashboard/components/session-morning/session-morning.component';
@@ -44,25 +45,28 @@ const EMOTION_COLORS: Record<string, string> = {
 @Component({
   selector: 'mtc-session-day',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, TopbarComponent, SessionMorningComponent, SessionLiveComponent, AccountSelectorComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
+  imports: [DatePipe, LucideAngularModule, TopbarComponent, SessionMorningComponent, SessionLiveComponent, AccountSelectorComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-day.component.css',
   template: `
-    <mtc-topbar title="Ma session" [showAddButton]="false">
-      @if (activeTab() === 'live' && store.activeSession()?.status === 'ACTIVE') {
+    <mtc-topbar title="Ma session" [period]="headerSub()" [showAddButton]="false">
+      @if (store.activeSession()?.status === 'ACTIVE') {
         <div class="sess-status-pill">
           <div class="sess-pulse-dot"></div>
+          <span class="sess-active-lbl">Session active</span>
           <span class="sess-timer-top">{{ store.sessionTimer() }}</span>
-          <span class="sess-sep">·</span>
-          <span class="sess-cnt-top">{{ store.todayTrades().length }} trade{{ store.todayTrades().length > 1 ? 's' : '' }}</span>
-          <span class="sess-sep">·</span>
-          <span class="sess-pnl-top" [style.color]="(store.todayStats()?.totalPnl ?? 0) >= 0 ? 'var(--green)' : 'var(--red)'">
-            {{ (store.todayStats()?.totalPnl ?? 0) >= 0 ? '+' : '' }}{{ (store.todayStats()?.totalPnl ?? 0).toFixed(0) }}$
-          </span>
-          <span class="sess-sep">·</span>
-          <span class="sess-emo-top">{{ store.moodEmoji(store.activeSession()?.moodStart) }}</span>
+          @if (activeAccountLabel(); as label) {
+            <span class="sess-sep">·</span>
+            <span class="sess-cnt-top">{{ label }}</span>
+          }
         </div>
-        <button class="sess-stop-top" (click)="confirmCloseOpen.set(true)">🌙 Clôturer</button>
+        <button class="sess-stop-top" (click)="confirmCloseOpen.set(true)">
+          <lucide-icon [img]="DebriefIcon" [size]="14" /> Clôturer
+        </button>
+      } @else {
+        <button class="sess-start-cta" data-testid="start-session" (click)="startSession()">
+          <lucide-icon [img]="PlayIcon" [size]="15" /> Démarrer la session
+        </button>
       }
     </mtc-topbar>
 
@@ -85,43 +89,34 @@ const EMOTION_COLORS: Record<string, string> = {
     }
 
     <div class="session-page" [class.live-mode]="activeTab() === 'live'">
-      <div class="page-header">
-        <div class="greeting-block">
-          <h1 class="greeting-title">Ma session</h1>
-          <div class="greeting-sub" style="text-transform:capitalize">
-            {{ today | date:'EEEE d MMMM':'':'fr-FR' }}
-            @if (activeAccountLabel(); as label) {
-              <span class="sd-acct-chip">· {{ label }}</span>
-            }
-          </div>
+      <div class="session-tabs-row">
+        <div class="seg-tabs" role="tablist">
+          <button class="seg-tab" role="tab" [class.active]="activeTab() === 'morning'"
+                  [attr.aria-selected]="activeTab() === 'morning'"
+                  data-testid="tab-morning" (click)="selectTab('morning')">
+            <lucide-icon [img]="MorningIcon" [size]="15" /> Pré-session
+          </button>
+          <button class="seg-tab" role="tab" [class.active]="activeTab() === 'live'"
+                  [attr.aria-selected]="activeTab() === 'live'"
+                  data-testid="tab-live" (click)="selectTab('live')">
+            <lucide-icon [img]="LiveIcon" [size]="15" /> Session live
+          </button>
+          <button class="seg-tab" role="tab" [class.active]="activeTab() === 'debrief'"
+                  [attr.aria-selected]="activeTab() === 'debrief'"
+                  data-testid="tab-debrief" (click)="selectTab('debrief')">
+            <lucide-icon [img]="DebriefIcon" [size]="15" /> Débrief
+          </button>
         </div>
-        <div class="tabs-and-badge">
-          <div class="tabs-block">
-            <button class="session-tab" [class.active]="activeTab() === 'morning'"
-                    data-testid="tab-morning" (click)="selectTab('morning')">
-              ☀️ Pré-session
-            </button>
-            <button class="session-tab" [class.active]="activeTab() === 'live'"
-                    data-testid="tab-live" (click)="selectTab('live')">
-              ⚡ Session live
-            </button>
-            <button class="session-tab" [class.active]="activeTab() === 'debrief'"
-                    data-testid="tab-debrief" (click)="selectTab('debrief')">
-              🌙 Débrief
-            </button>
-          </div>
-          @if (activeTab() === 'debrief' && store.activeSession()?.status === 'CLOSED') {
-            <div class="closed-badge">
-              <span class="cb-ic">✓</span>
-              <div>
-                <div class="cb-t">Session clôturée</div>
-                <div class="cb-d">Durée : {{ sessionDuration() }}</div>
-              </div>
-              @if (savedFlash()) { <span class="saved-pill">✓ Enregistré</span> }
+        @if (activeTab() === 'debrief' && store.activeSession()?.status === 'CLOSED') {
+          <div class="closed-badge">
+            <span class="cb-ic">✓</span>
+            <div>
+              <div class="cb-t">Session clôturée</div>
+              <div class="cb-d">Durée : {{ sessionDuration() }}</div>
             </div>
-          }
-        </div>
-        <div class="header-spacer"></div>
+            @if (savedFlash()) { <span class="saved-pill">✓ Enregistré</span> }
+          </div>
+        }
       </div>
 
       @if (activeTab() === 'morning') {
@@ -382,6 +377,21 @@ export class SessionDayComponent implements OnInit, OnDestroy {
   protected readonly needsAccount      = signal(false);
   protected readonly moods             = MOODS;
   protected readonly today             = new Date();
+
+  // Icônes Lucide (segmented control + actions du shell).
+  protected readonly PlayIcon    = Play;
+  protected readonly MorningIcon = Sunrise;
+  protected readonly LiveIcon    = Activity;
+  protected readonly DebriefIcon = Moon;
+
+  private readonly frDate = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+  // Sous-titre du header : « Vendredi 27 juin · FTMO 100K » (date + compte de session).
+  protected readonly headerSub = computed(() => {
+    const d = this.frDate.format(this.today);
+    const date = d.charAt(0).toUpperCase() + d.slice(1);
+    const acct = this.activeAccountLabel();
+    return acct ? `${date} · ${acct}` : date;
+  });
 
   // ── Compte de la session ────────────────────────────────────────────────
   // Vrai si l'utilisateur (Starter et +) a des comptes mais reste sur « Tous » :
