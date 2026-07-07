@@ -211,6 +211,8 @@ table.cal { width: 100%; border-collapse: collapse; font-size: 13px; }
 .ia-cell.neutral { color: var(--text-2); }
 .ia-cell.ia-locked { cursor: default; color: var(--text-3); opacity: .65; }
 .ia-cell.ia-locked:hover { border-color: var(--border); background: none; }
+.ia-lock { display: inline-flex; }
+.ia-lock svg { width: 12px; height: 12px; }
 .ia-ccy { font-weight: 600; letter-spacing: .3px; }
 .ia-arrow { font-size: 13px; font-weight: 700; }
 .ia-spark { font-size: 11px; }

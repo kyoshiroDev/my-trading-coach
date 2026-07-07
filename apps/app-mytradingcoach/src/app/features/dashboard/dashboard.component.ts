@@ -10,7 +10,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { LucideAngularModule, TrendingUp, Coins, BarChart3, Sparkles, Layers, HeartPulse, List, CheckCircle2, AlertTriangle, XCircle } from 'lucide-angular';
+import { LucideAngularModule, TrendingUp, Coins, BarChart3, Sparkles, Layers, HeartPulse, List, CheckCircle2, AlertTriangle, XCircle, Lock } from 'lucide-angular';
 import { BillingApi } from '../../core/api/billing.api';
 import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
@@ -377,7 +377,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
               }
             } @else {
               <div class="mtc-coach-lock">
-                <div class="mtc-lock-ic">🔒</div>
+                <div class="mtc-lock-ic"><lucide-icon [img]="LockIcon" [size]="20" /></div>
                 <div class="mtc-lock-t">Coach IA réservé au Premium</div>
                 <div class="mtc-lock-s">Analyse de tes patterns, chat coach IA et recommandations personnalisées.</div>
                 <button class="mtc-lock-cta" (click)="showPlanModal.set(true)">Débloquer — {{ PRICING.premium.monthly }}€/mois</button>
@@ -506,6 +506,7 @@ export class DashboardComponent {
   protected readonly CoachGood    = CheckCircle2;
   protected readonly CoachWarn    = AlertTriangle;
   protected readonly CoachBad     = XCircle;
+  protected readonly LockIcon     = Lock;
   protected coachIcon(tone: string) { return tone === 'good' ? this.CoachGood : tone === 'warn' ? this.CoachWarn : this.CoachBad; }
   protected coachColor(tone: string) { return tone === 'good' ? 'var(--green)' : tone === 'warn' ? 'var(--yellow)' : 'var(--red)'; }
 
