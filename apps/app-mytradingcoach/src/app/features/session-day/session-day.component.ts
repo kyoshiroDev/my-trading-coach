@@ -120,17 +120,6 @@ const EMOTION_COLORS: Record<string, string> = {
       </div>
 
       @if (activeTab() === 'morning') {
-        @if (userStore.isStarterOrAbove() && selectedAccount.activeAccounts().length > 0) {
-          <div class="sd-acct-bar">
-            <span class="sd-acct-bar-lbl">Compte de la session</span>
-            <mtc-account-selector />
-            @if (needsAccount()) {
-              <span class="sd-acct-bar-hint" data-testid="account-required">
-                Choisis un compte précis (pas « Tous les comptes ») pour lancer la session.
-              </span>
-            }
-          </div>
-        }
         <mtc-session-morning
           [yesterdayRecap]="store.yesterdayRecap()"
           [objectives]="store.currentObjectives()"
@@ -141,7 +130,19 @@ const EMOTION_COLORS: Record<string, string> = {
           (sessionStarted)="startSession()"
           (objectiveNoteAdded)="store.updateObjectiveNote($event)"
           (planNoteChanged)="store.savePlanNote($event)"
-        />
+        >
+          @if (userStore.isStarterOrAbove() && selectedAccount.activeAccounts().length > 0) {
+            <div session-account class="sd-acct-row">
+              <span class="sd-acct-lbl">Compte de la session</span>
+              <mtc-account-selector />
+              @if (needsAccount()) {
+                <span class="sd-acct-hint" data-testid="account-required">
+                  Choisis un compte précis (pas « Tous les comptes ») pour lancer la session.
+                </span>
+              }
+            </div>
+          }
+        </mtc-session-morning>
       }
 
       @if (activeTab() === 'live') {

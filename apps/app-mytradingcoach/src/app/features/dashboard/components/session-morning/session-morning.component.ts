@@ -11,6 +11,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { LucideAngularModule, Target, CalendarDays, TriangleAlert } from 'lucide-angular';
 import { translateEcoEvent } from '../../../../core/data/eco-event-translations';
 import { normalizeEventKey, eventKey } from '../../../../core/data/eco-event-key';
 import { filterMorningEvents } from './session-morning.util';
@@ -38,20 +39,26 @@ const DEMO_ECO_EVENTS: EcoEvent[] = [
 @Component({
   selector: 'mtc-session-morning',
   standalone: true,
-  imports: [DatePipe, RouterLink, PremiumLockComponent],
+  imports: [DatePipe, RouterLink, LucideAngularModule, PremiumLockComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-morning.component.css',
   template: `
     <div data-testid="session-morning-view">
 
-      <!-- Session banner — mood check + démarrer -->
-      <div class="session-banner">
-        <div class="sb-left">
-          <div class="sb-title">
-            🎯 Prépare ta session
-           
+      <div class="session-layout">
+
+      <!-- Colonne gauche : préparation + hier + objectifs -->
+      <div class="daily-row" data-testid="yesterday-recap">
+
+        <!-- Card : Prépare ta session -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <lucide-icon [img]="PrepareIcon" [size]="15" class="ch-ic" /> Prépare ta session
+            </div>
           </div>
-          <div class="sb-sub">Comment tu te sens ce matin ? Ça influence tes décisions.</div>
+          <div class="prepare-sub">Comment tu te sens ce matin ? Ça influence tes décisions.</div>
+          <ng-content select="[session-account]"></ng-content>
           <div class="mood-row">
             @for (mood of moods; track mood.value) {
               <button
@@ -59,7 +66,7 @@ const DEMO_ECO_EVENTS: EcoEvent[] = [
                 [class.sel]="selectedMood() === mood.value"
                 [attr.data-testid]="'mood-' + mood.value.toLowerCase()"
                 (click)="moodSelected.emit(mood.value)"
-              >{{ mood.emoji }} {{ mood.label }}</button>
+              ><span class="mood-emo">{{ mood.emoji }}</span> {{ mood.label }}</button>
             }
           </div>
           <div class="plan-input-wrap">
@@ -74,12 +81,7 @@ const DEMO_ECO_EVENTS: EcoEvent[] = [
             ></textarea>
           </div>
         </div>
-      </div>
 
-      <div class="session-layout">
-
-      <!-- Daily row — hier + objectifs -->
-      <div class="daily-row" data-testid="yesterday-recap">
         <!-- Card : recap hier -->
         <div class="card">
           @if (yesterdayRecap()) {
@@ -220,8 +222,7 @@ const DEMO_ECO_EVENTS: EcoEvent[] = [
       <div class="eco-card" data-testid="eco-calendar">
         <div class="card-header">
           <div class="card-title">
-            📅 {{ nextTradingLabel() }}
-           
+            <lucide-icon [img]="AgendaIcon" [size]="15" class="ch-ic" /> {{ nextTradingLabel() }}
           </div>
           <div style="display:flex;align-items:center;gap:6px;">
             <span class="ai-badge">AI</span>
@@ -264,7 +265,7 @@ const DEMO_ECO_EVENTS: EcoEvent[] = [
 
           @if (highImpactCount() > 0) {
             <div class="eco-warning">
-              <span>⚠️</span>
+              <lucide-icon [img]="WarnIcon" [size]="14" class="ew-ic" />
               <span>{{ highImpactCount() }} événement(s) à fort impact {{ isNextDay() ? "demain" : "aujourd'hui" }}</span>
             </div>
           }
@@ -413,6 +414,11 @@ export class SessionMorningComponent {
 
   protected readonly moods = MOODS;
   protected readonly planNote = signal('');
+
+  // Icônes Lucide (headers de panels — design « Ma session »).
+  protected readonly PrepareIcon = Target;
+  protected readonly AgendaIcon  = CalendarDays;
+  protected readonly WarnIcon    = TriangleAlert;
 
   // Pins chargés directement depuis l'API — indépendant du cache getTodayEvents
   private readonly freshPins = signal<string[] | null>(null);
