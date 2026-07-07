@@ -314,7 +314,7 @@ import { environment } from '../../../../environments/environment';
         @if (userStore.isDemo()) {
           <div class="demo-banner">
             <span class="demo-banner-text">
-              🔍 <strong>Mode démo</strong> — tu explores MyTradingCoach avec des données d'exemple.
+              🔍 <strong>Mode démo</strong> : tu explores MyTradingCoach avec des données d'exemple.
             </span>
             <a class="demo-banner-cta" [href]="landingUrl + '/#pricing'">Créer mon compte gratuit →</a>
           </div>

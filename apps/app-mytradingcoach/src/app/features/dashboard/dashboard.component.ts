@@ -84,7 +84,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
         <div class="firstrun-hero">
           <div class="firstrun-text">
             <h2 class="firstrun-title">Fais ton premier pas 🚀</h2>
-            <p class="firstrun-sub">Logge ton premier trade ou démarre une session — c'est là que ton coach commence à t'aider.</p>
+            <p class="firstrun-sub">Logge ton premier trade ou démarre une session : c'est là que ton coach commence à t'aider.</p>
           </div>
           <div class="firstrun-actions">
             <button class="firstrun-btn primary" (click)="goToJournal()">Enregistrer mon premier trade</button>
@@ -380,7 +380,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
                 <div class="mtc-lock-ic"><lucide-icon [img]="LockIcon" [size]="20" /></div>
                 <div class="mtc-lock-t">Coach IA réservé au Premium</div>
                 <div class="mtc-lock-s">Analyse de tes patterns, chat coach IA et recommandations personnalisées.</div>
-                <button class="mtc-lock-cta" (click)="showPlanModal.set(true)">Débloquer — {{ PRICING.premium.monthly }}€/mois</button>
+                <button class="mtc-lock-cta" (click)="showPlanModal.set(true)">Débloquer à {{ PRICING.premium.monthly }} €/mois</button>
               </div>
             }
           </div>
@@ -841,7 +841,7 @@ export class DashboardComponent {
     };
     const out: { tone: 'good' | 'warn' | 'bad'; text: string }[] = [];
 
-    if (s.winRate >= 50) out.push({ tone: 'good', text: `Ton win rate est de ${s.winRate.toFixed(0)}% ce mois — au-dessus de la barre des 50%.` });
+    if (s.winRate >= 50) out.push({ tone: 'good', text: `Ton win rate est de ${s.winRate.toFixed(0)}% ce mois, au-dessus de la barre des 50%.` });
     else out.push({ tone: 'warn', text: `Ton win rate est de ${s.winRate.toFixed(0)}% ce mois. Vise 50%+ en filtrant mieux tes setups.` });
 
     if (s.profitFactor != null) {
@@ -849,7 +849,7 @@ export class DashboardComponent {
       else if (s.profitFactor < 1) out.push({ tone: 'bad', text: `Profit factor de ${s.profitFactor.toFixed(2)} : tu perds plus que tu ne gagnes. Resserre ton risque.` });
     }
 
-    if (s.streak >= 3) out.push({ tone: 'good', text: `Série de ${s.streak} trades gagnants — garde ta taille, ne force pas le suivant.` });
+    if (s.streak >= 3) out.push({ tone: 'good', text: `Série de ${s.streak} trades gagnants : garde ta taille, ne force pas le suivant.` });
     else if (s.streak <= -3) out.push({ tone: 'bad', text: `Série de ${Math.abs(s.streak)} pertes d'affilée. Coupe et fais une pause.` });
 
     const emos = this.byEmotion().filter((e) => e.count > 0);
@@ -863,7 +863,7 @@ export class DashboardComponent {
     const setups = this.bySetup().filter((x) => (x.count ?? 0) > 0 && x.winRate != null);
     if (setups.length) {
       const b = setups.reduce((a, c) => (c.winRate! > a.winRate! ? c : a));
-      if (b.winRate! >= 55) out.push({ tone: 'good', text: `Ton setup « ${b.title} » affiche ${b.winRate!.toFixed(0)}% de réussite — c'est ton edge.` });
+      if (b.winRate! >= 55) out.push({ tone: 'good', text: `Ton setup « ${b.title} » affiche ${b.winRate!.toFixed(0)}% de réussite : c'est ton edge.` });
     }
 
     return out.slice(0, 5);

@@ -40,8 +40,8 @@ export const ECO_EVENT_TRANSLATIONS: Record<string, string> = {
   'Employment Change': 'Variation emploi',
   'Employment Level': 'Niveau emploi',
   'Claimant Count Change': 'Demandeurs emploi (RU)',
-  'Non-Farm Payrolls': 'NFP — Emplois non-agricoles',
-  'Nonfarm Payrolls': 'NFP — Emplois non-agricoles',
+  'Non-Farm Payrolls': 'NFP · Emplois non-agricoles',
+  'Nonfarm Payrolls': 'NFP · Emplois non-agricoles',
   'ADP Non-Farm Employment Change': 'ADP emplois privés',
   'ADP Employment Change': 'ADP emplois privés',
 

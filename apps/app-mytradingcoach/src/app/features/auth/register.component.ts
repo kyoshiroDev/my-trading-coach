@@ -45,7 +45,7 @@ import { BillingApi } from '../../core/api/billing.api';
 
         @if (referralCode()) {
           <div class="referral-notice">
-            🎉 Invitation de <strong>{{ referralCode() }}</strong> — 7 jours d'essai Premium offerts
+            🎉 Invitation de <strong>{{ referralCode() }}</strong> : 7 jours d'essai Premium offerts
           </div>
         }
 

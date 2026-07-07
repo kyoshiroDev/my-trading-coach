@@ -65,7 +65,7 @@ const DEMO_ECO_EVENTS: EcoEvent[] = [
           <div class="plan-input-wrap">
             <textarea
               class="plan-input"
-              placeholder="Plan du jour (optionnel) — ex: Breakouts NQ uniquement, max 5 trades..."
+              placeholder="Plan du jour (optionnel) : ex. Breakouts NQ uniquement, max 5 trades..."
               rows="2"
               [value]="planNote()"
               (input)="planNote.set($any($event.target).value)"
@@ -84,7 +84,7 @@ const DEMO_ECO_EVENTS: EcoEvent[] = [
         <div class="card">
           @if (yesterdayRecap()) {
             <div class="card-header">
-              <div class="card-title">Hier — {{ yesterdayRecap()!.date | date:'EEEE d MMMM' }}</div>
+              <div class="card-title">Hier · {{ yesterdayRecap()!.date | date:'EEEE d MMMM' }}</div>
               <span style="font-size:11px;color:var(--text-3);font-family:var(--font-mono)">{{ yesterdayRecap()!.tradesCount }} trades</span>
             </div>
             <div class="recap-stats">
@@ -241,9 +241,9 @@ const DEMO_ECO_EVENTS: EcoEvent[] = [
             <div style="font-size:24px;margin-bottom:6px;opacity:.4;">📅</div>
             <div class="eco-empty-text">
               @if (isNextDay()) {
-                Aucun événement économique majeur prévu — lundi calme pour tes actifs.
+                Aucun événement économique majeur prévu : lundi calme pour tes actifs.
               } @else {
-                Aucun événement majeur prévu — journée calme pour tes actifs.
+                Aucun événement majeur prévu : journée calme pour tes actifs.
               }
             </div>
           </div>
@@ -273,12 +273,12 @@ const DEMO_ECO_EVENTS: EcoEvent[] = [
           @if (pinnedKeys().size > 0) {
             <div class="eco-pinned-notice">
               📌 {{ pinnedKeys().size }} event{{ pinnedKeys().size > 1 ? 's' : '' }} épinglé{{ pinnedKeys().size > 1 ? 's' : '' }} du jour
-              — <a routerLink="/eco-calendar" class="eco-pinned-link">Gérer</a>
+              · <a routerLink="/eco-calendar" class="eco-pinned-link">Gérer</a>
             </div>
           } @else {
             <div class="eco-pinned-reminder">
               📌 Sélectionne tes annonces du jour
-              — <a routerLink="/eco-calendar" class="eco-pinned-link">Calendrier éco →</a>
+              · <a routerLink="/eco-calendar" class="eco-pinned-link">Calendrier éco →</a>
             </div>
           }
 
