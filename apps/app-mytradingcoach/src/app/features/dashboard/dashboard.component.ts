@@ -350,7 +350,10 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
         <div class="mtc-panel" [class.mtc-ai]="userStore.isStarterOrAbove()">
           <div class="mtc-panel-head">
             <div class="mtc-panel-head-l"><lucide-icon [img]="CoachIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">AI Coach · feedback</div></div></div>
-            <span class="mtc-live"><span class="mtc-live-dot"></span>LIVE</span>
+            <!-- Pastille LIVE réservée à la carte réellement active (Premium) — jamais sur un teaser verrouillé. -->
+            @if (userStore.isPremium()) {
+              <span class="mtc-live"><span class="mtc-live-dot"></span>LIVE</span>
+            }
           </div>
           <div class="mtc-panel-body">
             @if (userStore.isPremium()) {

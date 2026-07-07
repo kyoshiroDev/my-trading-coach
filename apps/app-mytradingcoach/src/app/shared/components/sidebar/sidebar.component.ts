@@ -281,13 +281,11 @@ import { environment } from '../../../../environments/environment';
               <div class="user-plan"
                 [class.premium]="userStore.isPremium()"
                 [class.starter]="!userStore.isPremium() && userStore.isStarterOrAbove()"
-                [class.starter]="userStore.isStarterOrAbove() && !userStore.isPremium()"
                 [class.free]="!userStore.isStarterOrAbove()">
                 @if (userStore.isPremium()) {
                   ★ PREMIUM
                 } @else if (userStore.isStarterOrAbove()) {
                   ★ STARTER
-                  STARTER
                 } @else {
                   GRATUIT
                 }
