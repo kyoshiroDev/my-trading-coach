@@ -179,7 +179,7 @@ const EMOTION_COLORS: Record<string, string> = {
               <div class="debrief-zero-banner">
                 <span class="dzb-icon">🧘</span>
                 <div>
-                  <div class="dzb-title">Pas de trade aujourd'hui — et c'est OK</div>
+                  <div class="dzb-title">Pas de trade aujourd'hui, et c'est OK</div>
                   <div class="dzb-sub">Parfois, la meilleure décision est de rester à l'écart quand il n'y a pas de setup clair. Savoir ne pas trader est une vraie compétence.</div>
                 </div>
               </div>
@@ -261,7 +261,7 @@ const EMOTION_COLORS: Record<string, string> = {
                     <span>{{ t.emotion | emotionEmoji }}</span>
                     <span class="dtc-pnl" [style.color]="t.pnl | pnlColor">{{ t.pnl | pnlFormat }}</span>
                   </div>
-                } @else { <div class="dtc-empty">Rien à analyser — journée sans trade</div> }
+                } @else { <div class="dtc-empty">Rien à analyser, journée sans trade</div> }
               </div>
             </div>
 
@@ -453,7 +453,7 @@ export class SessionDayComponent implements OnInit, OnDestroy {
     if (ok !== false) return '';
     const p = o.check?.params ?? {};
     switch (o.check?.type) {
-      case 'max_trades':      return `${trades.length} trades — dépassé`;
+      case 'max_trades':      return `${trades.length} trades (dépassé)`;
       case 'min_trades':      return `${trades.length}/${Number(p['min'])} trades`;
       case 'no_revenge':      return 'revenge trade détecté';
       case 'all_stops':       return 'stop loss manquant';
@@ -465,7 +465,7 @@ export class SessionDayComponent implements OnInit, OnDestroy {
       case 'journal_filled':  return 'journal trop court';
       case 'trade_window':    return `aucun trade ${String(p['start'])}-${String(p['end'])}`;
       case 'setup_only':      return 'setup hors liste';
-      case 'max_loss_trades': return `${trades.filter((t) => (t.pnl ?? 0) < 0).length} pertes — dépassé`;
+      case 'max_loss_trades': return `${trades.filter((t) => (t.pnl ?? 0) < 0).length} pertes (dépassé)`;
       default:                return '';
     }
   }
@@ -492,10 +492,10 @@ export class SessionDayComponent implements OnInit, OnDestroy {
     if (this.noTrades()) return "Tu n'as pas forcé de trade aujourd'hui. C'est de la discipline.";
     const s = this.disciplineScore();
     const revenge = this.store.todayTrades().filter(t => t.emotion === 'REVENGE').length;
-    if (revenge > 0) return `${revenge} revenge trade${revenge > 1 ? 's' : ''} détecté${revenge > 1 ? 's' : ''} — travailler la gestion émotionnelle.`;
-    if (s >= 85) return 'Excellente gestion — plan respecté, émotions sous contrôle.';
+    if (revenge > 0) return `${revenge} revenge trade${revenge > 1 ? 's' : ''} détecté${revenge > 1 ? 's' : ''} : travailler la gestion émotionnelle.`;
+    if (s >= 85) return 'Excellente gestion : plan respecté, émotions sous contrôle.';
     if (s >= 70) return "Bonne session dans l'ensemble. Quelques petits ajustements possibles.";
-    return 'Score indicatif basé sur ta session — revenge trades, stops, objectifs.';
+    return 'Score indicatif basé sur ta session : revenge trades, stops, objectifs.';
   });
   protected readonly scoreColor = computed(() => {
     const s = this.disciplineScore();

@@ -27,7 +27,7 @@ import { AuthService } from '../../core/auth/auth.service';
 
         <h1 class="auth-title">Mot de passe oublié ?</h1>
         <p class="auth-subtitle">
-          Saisis ton email — on t'envoie un lien de réinitialisation
+          Saisis ton email : on t'envoie un lien de réinitialisation
         </p>
 
         @if (success()) {

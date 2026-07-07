@@ -10,7 +10,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { LucideAngularModule, TrendingUp, Coins, BarChart3, Sparkles, Layers, HeartPulse, List, CheckCircle2, AlertTriangle, XCircle } from 'lucide-angular';
+import { LucideAngularModule, TrendingUp, Coins, BarChart3, Sparkles, Layers, HeartPulse, List, CheckCircle2, AlertTriangle, XCircle, Lock } from 'lucide-angular';
 import { BillingApi } from '../../core/api/billing.api';
 import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
@@ -84,7 +84,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
         <div class="firstrun-hero">
           <div class="firstrun-text">
             <h2 class="firstrun-title">Fais ton premier pas 🚀</h2>
-            <p class="firstrun-sub">Logge ton premier trade ou démarre une session — c'est là que ton coach commence à t'aider.</p>
+            <p class="firstrun-sub">Logge ton premier trade ou démarre une session : c'est là que ton coach commence à t'aider.</p>
           </div>
           <div class="firstrun-actions">
             <button class="firstrun-btn primary" (click)="goToJournal()">Enregistrer mon premier trade</button>
@@ -350,7 +350,10 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
         <div class="mtc-panel" [class.mtc-ai]="userStore.isStarterOrAbove()">
           <div class="mtc-panel-head">
             <div class="mtc-panel-head-l"><lucide-icon [img]="CoachIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">AI Coach · feedback</div></div></div>
-            <span class="mtc-live"><span class="mtc-live-dot"></span>LIVE</span>
+            <!-- Pastille LIVE réservée à la carte réellement active (Premium) — jamais sur un teaser verrouillé. -->
+            @if (userStore.isPremium()) {
+              <span class="mtc-live"><span class="mtc-live-dot"></span>LIVE</span>
+            }
           </div>
           <div class="mtc-panel-body">
             @if (userStore.isPremium()) {
@@ -374,10 +377,10 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
               }
             } @else {
               <div class="mtc-coach-lock">
-                <div class="mtc-lock-ic">🔒</div>
+                <div class="mtc-lock-ic"><lucide-icon [img]="LockIcon" [size]="20" /></div>
                 <div class="mtc-lock-t">Coach IA réservé au Premium</div>
                 <div class="mtc-lock-s">Analyse de tes patterns, chat coach IA et recommandations personnalisées.</div>
-                <button class="mtc-lock-cta" (click)="showPlanModal.set(true)">Débloquer — {{ PRICING.premium.monthly }}€/mois</button>
+                <button class="mtc-lock-cta" (click)="showPlanModal.set(true)">Débloquer à {{ PRICING.premium.monthly }} €/mois</button>
               </div>
             }
           </div>
@@ -503,6 +506,7 @@ export class DashboardComponent {
   protected readonly CoachGood    = CheckCircle2;
   protected readonly CoachWarn    = AlertTriangle;
   protected readonly CoachBad     = XCircle;
+  protected readonly LockIcon     = Lock;
   protected coachIcon(tone: string) { return tone === 'good' ? this.CoachGood : tone === 'warn' ? this.CoachWarn : this.CoachBad; }
   protected coachColor(tone: string) { return tone === 'good' ? 'var(--green)' : tone === 'warn' ? 'var(--yellow)' : 'var(--red)'; }
 
@@ -837,7 +841,7 @@ export class DashboardComponent {
     };
     const out: { tone: 'good' | 'warn' | 'bad'; text: string }[] = [];
 
-    if (s.winRate >= 50) out.push({ tone: 'good', text: `Ton win rate est de ${s.winRate.toFixed(0)}% ce mois — au-dessus de la barre des 50%.` });
+    if (s.winRate >= 50) out.push({ tone: 'good', text: `Ton win rate est de ${s.winRate.toFixed(0)}% ce mois, au-dessus de la barre des 50%.` });
     else out.push({ tone: 'warn', text: `Ton win rate est de ${s.winRate.toFixed(0)}% ce mois. Vise 50%+ en filtrant mieux tes setups.` });
 
     if (s.profitFactor != null) {
@@ -845,7 +849,7 @@ export class DashboardComponent {
       else if (s.profitFactor < 1) out.push({ tone: 'bad', text: `Profit factor de ${s.profitFactor.toFixed(2)} : tu perds plus que tu ne gagnes. Resserre ton risque.` });
     }
 
-    if (s.streak >= 3) out.push({ tone: 'good', text: `Série de ${s.streak} trades gagnants — garde ta taille, ne force pas le suivant.` });
+    if (s.streak >= 3) out.push({ tone: 'good', text: `Série de ${s.streak} trades gagnants : garde ta taille, ne force pas le suivant.` });
     else if (s.streak <= -3) out.push({ tone: 'bad', text: `Série de ${Math.abs(s.streak)} pertes d'affilée. Coupe et fais une pause.` });
 
     const emos = this.byEmotion().filter((e) => e.count > 0);
@@ -859,7 +863,7 @@ export class DashboardComponent {
     const setups = this.bySetup().filter((x) => (x.count ?? 0) > 0 && x.winRate != null);
     if (setups.length) {
       const b = setups.reduce((a, c) => (c.winRate! > a.winRate! ? c : a));
-      if (b.winRate! >= 55) out.push({ tone: 'good', text: `Ton setup « ${b.title} » affiche ${b.winRate!.toFixed(0)}% de réussite — c'est ton edge.` });
+      if (b.winRate! >= 55) out.push({ tone: 'good', text: `Ton setup « ${b.title} » affiche ${b.winRate!.toFixed(0)}% de réussite : c'est ton edge.` });
     }
 
     return out.slice(0, 5);

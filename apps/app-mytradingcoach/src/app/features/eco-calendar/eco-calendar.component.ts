@@ -460,7 +460,7 @@ export class EcoCalendarComponent implements OnInit {
     friday.setDate(friday.getDate() + 4);
     const fmt = (d: Date) =>
       d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-    return `Semaine du ${fmt(monday)} — ${fmt(friday)}`;
+    return `Semaine du ${fmt(monday)} au ${fmt(friday)}`;
   }
 
   protected formatDayLabel(date: string): string {

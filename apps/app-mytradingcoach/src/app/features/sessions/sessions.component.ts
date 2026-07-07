@@ -266,7 +266,7 @@ interface WeekGroup {
                   <div class="detail-footer">
                     <span class="detail-date-full">
                       {{ session.startedAt | date:'EEEE d MMMM yyyy · HH:mm' : '' : 'fr-FR' }}
-                      @if (session.endedAt) { — {{ session.endedAt | date:'HH:mm' }} }
+                      @if (session.endedAt) { → {{ session.endedAt | date:'HH:mm' }} }
                     </span>
                     <a class="detail-link"
                        [routerLink]="['/journal']"
@@ -427,6 +427,6 @@ export class SessionsComponent {
     sunday.setDate(monday.getDate() + 6);
     const fmt = (dt: Date) =>
       dt.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-    return `Semaine ${this.getWeekNumber(date)} — ${fmt(monday)} au ${fmt(sunday)}`;
+    return `Semaine ${this.getWeekNumber(date)} · ${fmt(monday)} au ${fmt(sunday)}`;
   }
 }

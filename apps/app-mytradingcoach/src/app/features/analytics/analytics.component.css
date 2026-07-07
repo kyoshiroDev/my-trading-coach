@@ -409,7 +409,12 @@
 }
 
 .locked-icon {
-  font-size: 26px;
+  display: inline-flex;
+  color: var(--badge-premium-color, var(--text-3));
+}
+.locked-icon svg {
+  width: 26px;
+  height: 26px;
 }
 
 .locked-title {

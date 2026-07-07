@@ -173,7 +173,7 @@ const EMOTIONS = [
           <div class="cal-card">
             <div class="col-title-row">
               <div class="col-title">
-                📅 Calendrier — Session en cours
+                📅 Calendrier · Session en cours
                 <div class="pulse-dot"></div>
               </div>
             </div>
@@ -210,7 +210,7 @@ const EMOTIONS = [
                   }
                   @case ('ready') {
                     <div class="era-ai-ready" data-testid="era-ai-ready">
-                      ✦ Analyse prête — détail dans le calendrier ci-dessous ↓
+                      ✦ Analyse prête : détail dans le calendrier ci-dessous ↓
                     </div>
                   }
                   @case ('error') {
