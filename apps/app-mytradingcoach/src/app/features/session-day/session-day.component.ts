@@ -12,7 +12,7 @@ import {
 import { DatePipe, registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
 registerLocaleData(localeFr);
-import { LucideAngularModule, Play, Sunrise, Activity, Moon } from 'lucide-angular';
+import { LucideAngularModule, Play, Sunrise, Activity, Moon, Trophy, TrendingDown, NotebookPen } from 'lucide-angular';
 import { SessionStore } from '../../core/stores/session.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { SessionMorningComponent } from '../dashboard/components/session-morning/session-morning.component';
@@ -203,67 +203,66 @@ const EMOTION_COLORS: Record<string, string> = {
               </div>
             </div>
 
-            <!-- ÉMOTIONS + SCORE -->
-            <div class="debrief-top-row">
-              <div class="debrief-mood-card">
-                <h3 class="debrief-mood-title">Comment tu te sens en fin de session ?</h3>
-                <div class="mood-row">
-                  @for (mood of moods; track mood.value) {
-                    <button class="mood-btn" [class.sel]="closeMood() === mood.value"
-                            (click)="selectCloseMood(mood.value)">
-                      {{ mood.emoji }} {{ mood.label }}
-                    </button>
-                  }
-                </div>
-              </div>
-              <div class="debrief-card debrief-score-card">
-                <div class="score-ring-wrap">
-                  <div class="score-ring"
-                       [style.background]="'conic-gradient(' + scoreColor() + ' ' + disciplineScore() + '%, var(--bg-3) 0)'">
-                    <div class="score-ring-inner">
-                      <span class="score-val">{{ disciplineScore() }}</span>
-                      <span class="score-unit">/100</span>
+            <!-- Corps : analyse (gauche) | journal pleine hauteur (droite) -->
+            <div class="debrief-grid">
+              <div class="debrief-main">
+
+                <!-- Mood de fin + Score de discipline -->
+                <div class="debrief-top-row">
+                  <div class="debrief-mood-card">
+                    <h3 class="debrief-mood-title">Comment tu te sens en fin de session ?</h3>
+                    <div class="mood-row">
+                      @for (mood of moods; track mood.value) {
+                        <button class="mood-btn" [class.sel]="closeMood() === mood.value"
+                                (click)="selectCloseMood(mood.value)">
+                          <span class="mood-emo">{{ mood.emoji }}</span> {{ mood.label }}
+                        </button>
+                      }
                     </div>
                   </div>
-                  <div class="score-label-wrap">
-                    <div class="score-label" [style.color]="scoreColor()">{{ disciplineLabel() }}</div>
-                    <div class="score-desc">Score de discipline</div>
-                    <div class="score-hint">{{ disciplinePhrase() }}</div>
+                  <div class="debrief-card debrief-score-card">
+                    <div class="score-ring-wrap">
+                      <div class="score-ring"
+                           [style.background]="'conic-gradient(' + scoreColor() + ' ' + disciplineScore() + '%, var(--bg-3) 0)'">
+                        <div class="score-ring-inner">
+                          <span class="score-val">{{ disciplineScore() }}</span>
+                          <span class="score-unit">/100</span>
+                        </div>
+                      </div>
+                      <div class="score-label-wrap">
+                        <div class="score-label" [style.color]="scoreColor()">{{ disciplineLabel() }}</div>
+                        <div class="score-desc">Score de discipline</div>
+                        <div class="score-hint">{{ disciplinePhrase() }}</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-
-            <!-- Meilleur / trade à revoir -->
-            <div class="debrief-two-col">
-              <div class="debrief-trade-card best">
-                <div class="dtc-header"><span class="dtc-icon">🏆</span><span class="dtc-title">Meilleur trade</span></div>
-                @if (bestTrade(); as t) {
-                  <div class="dtc-asset">{{ t.asset }} <span class="dtc-side" [class]="t.side.toLowerCase()">{{ t.side }}</span></div>
-                  <div class="dtc-row">
-                    <span class="dtc-time">{{ t.tradedAt | date:'HH:mm' }}</span>
-                    <span>{{ t.emotion | emotionEmoji }}</span>
-                    <span class="dtc-pnl" [style.color]="t.pnl | pnlColor">{{ t.pnl | pnlFormat }}</span>
+                <!-- Meilleur / trade à revoir -->
+                <div class="debrief-two-col">
+                  <div class="debrief-trade-card best">
+                    <div class="dtc-header"><lucide-icon [img]="BestIcon" [size]="15" class="dtc-ic best" /><span class="dtc-title">Meilleur trade</span></div>
+                    @if (bestTrade(); as t) {
+                      <div class="dtc-asset">{{ t.asset }} <span class="dtc-side" [class]="t.side.toLowerCase()">{{ t.side }}</span></div>
+                      <div class="dtc-row">
+                        <span class="dtc-time">{{ t.tradedAt | date:'HH:mm' }}</span>
+                        <span>{{ t.emotion | emotionEmoji }}</span>
+                        <span class="dtc-pnl" [style.color]="t.pnl | pnlColor">{{ t.pnl | pnlFormat }}</span>
+                      </div>
+                    } @else { <div class="dtc-empty">Aucun trade clôturé aujourd'hui</div> }
                   </div>
-                } @else { <div class="dtc-empty">Aucun trade clôturé aujourd'hui</div> }
-              </div>
-              <div class="debrief-trade-card worst">
-                <div class="dtc-header"><span class="dtc-icon">📉</span><span class="dtc-title">Trade à revoir</span></div>
-                @if (worstTrade(); as t) {
-                  <div class="dtc-asset">{{ t.asset }} <span class="dtc-side" [class]="t.side.toLowerCase()">{{ t.side }}</span></div>
-                  <div class="dtc-row">
-                    <span class="dtc-time">{{ t.tradedAt | date:'HH:mm' }}</span>
-                    <span>{{ t.emotion | emotionEmoji }}</span>
-                    <span class="dtc-pnl" [style.color]="t.pnl | pnlColor">{{ t.pnl | pnlFormat }}</span>
+                  <div class="debrief-trade-card worst">
+                    <div class="dtc-header"><lucide-icon [img]="WorstIcon" [size]="15" class="dtc-ic worst" /><span class="dtc-title">Trade à revoir</span></div>
+                    @if (worstTrade(); as t) {
+                      <div class="dtc-asset">{{ t.asset }} <span class="dtc-side" [class]="t.side.toLowerCase()">{{ t.side }}</span></div>
+                      <div class="dtc-row">
+                        <span class="dtc-time">{{ t.tradedAt | date:'HH:mm' }}</span>
+                        <span>{{ t.emotion | emotionEmoji }}</span>
+                        <span class="dtc-pnl" [style.color]="t.pnl | pnlColor">{{ t.pnl | pnlFormat }}</span>
+                      </div>
+                    } @else { <div class="dtc-empty">Rien à analyser, journée sans trade</div> }
                   </div>
-                } @else { <div class="dtc-empty">Rien à analyser, journée sans trade</div> }
-              </div>
-            </div>
-
-            <!-- Trio : émotions+objectifs GAUCHE / journal DROITE -->
-            <div class="debrief-trio">
-              <div class="trio-left">
+                </div>
 
                 <!-- États émotionnels -->
                 <div class="debrief-card">
@@ -322,10 +321,10 @@ const EMOTION_COLORS: Record<string, string> = {
               </div>
 
               <!-- Journal pleine hauteur DROITE -->
-              <div class="trio-right">
+              <div class="debrief-side">
                 <div class="session-journal journal-card">
                   <div class="sj-header">
-                    <span class="sj-icon">📓</span>
+                    <lucide-icon [img]="JournalIcon" [size]="16" class="sj-ic" />
                     <div>
                       <div class="sj-title">Ton journal de session</div>
                       <div class="sj-sub">Écris librement : ce qui a marché, tes émotions, ce que tu retiens. C'est ton espace.</div>
@@ -384,6 +383,9 @@ export class SessionDayComponent implements OnInit, OnDestroy {
   protected readonly MorningIcon = Sunrise;
   protected readonly LiveIcon    = Activity;
   protected readonly DebriefIcon = Moon;
+  protected readonly BestIcon    = Trophy;
+  protected readonly WorstIcon   = TrendingDown;
+  protected readonly JournalIcon = NotebookPen;
 
   private readonly frDate = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
   // Sous-titre du header : « Vendredi 27 juin · FTMO 100K » (date + compte de session).
