@@ -107,6 +107,23 @@ const EMOTIONS = [
         </div>
       }
 
+      <!-- News live — ticker horizontal (Starter+) -->
+      @if (isStarterOrAbove() && newsItems().length > 0) {
+        <div class="news-ticker">
+          <span class="news-ticker-lbl"><lucide-icon [img]="NewsIcon" [size]="13" class="ct-ic" /> News live</span>
+          <div class="news-ticker-track">
+            @for (item of newsItems(); track item.publishedDate) {
+              <button type="button" class="news-tick" (click)="openNews(item)">
+                <span class="news-tick-tag">{{ item.symbol }}</span>
+                <span class="news-tick-title">{{ item.title }}</span>
+                <span class="news-tick-time">{{ formatNewsTime(item.publishedDate) }}</span>
+              </button>
+              <span class="news-tick-sep">·</span>
+            }
+          </div>
+        </div>
+      }
+
       <!-- Mini stats row -->
       <div class="mini-stats-row">
         <div class="mini-stat">
@@ -132,42 +149,7 @@ const EMOTIONS = [
       <!-- Live layout 4 colonnes -->
       <div class="live-layout">
 
-        <!-- ═══ COL 1 : NEWS LIVE ═══ -->
-        <div class="news-col">
-          <div class="col-title-row">
-            <div class="col-title"><lucide-icon [img]="NewsIcon" [size]="14" class="ct-ic" /> News live</div>
-          </div>
-
-          <div class="news-feed">
-            @if (!isStarterOrAbove()) {
-              <mtc-premium-lock
-                title="News live · Starter"
-                subtitle="Actus filtrées sur tes actifs, en direct pendant ta session."
-              />
-            } @else if (newsItems().length === 0) {
-              <div class="news-empty">Aucune news pour le moment</div>
-            } @else {
-              @for (item of newsItems(); track item.publishedDate) {
-                <div class="news-item"
-                     role="button"
-                     tabindex="0"
-                     (click)="openNews(item)"
-                     (keyup.enter)="openNews(item)">
-                  <div class="news-item-top">
-                    <span class="news-asset-tag">{{ item.symbol }}</span>
-                    <span class="news-sentiment" [class]="item.sentiment ?? 'neutral'">
-                      {{ item.sentiment === 'bull' ? '▲ Bull' : item.sentiment === 'bear' ? '▼ Bear' : '— Neutre' }}
-                    </span>
-                    <span class="news-time">{{ formatNewsTime(item.publishedDate) }}</span>
-                  </div>
-                  <div class="news-title">{{ item.title }}</div>
-                </div>
-              }
-            }
-          </div>
-        </div>
-
-        <!-- ═══ COL 2 : CALENDRIER + TREASURY ═══ -->
+        <!-- ═══ COL 1 : CALENDRIER + TREASURY ═══ -->
         <div class="cal-col">
 
           <!-- Calendrier éco -->
