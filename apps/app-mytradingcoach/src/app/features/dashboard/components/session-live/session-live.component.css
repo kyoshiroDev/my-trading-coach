@@ -857,6 +857,8 @@
   color: var(--text-3); display: flex; align-items: center; gap: 6px;
   margin-bottom: 10px; flex-shrink: 0;
 }
+.ct-ic { display: inline-flex; color: var(--text-3); flex-shrink: 0; }
+.qt-title .ct-ic { color: var(--blue-bright); }
 .col-title-row {
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 10px; flex-shrink: 0;

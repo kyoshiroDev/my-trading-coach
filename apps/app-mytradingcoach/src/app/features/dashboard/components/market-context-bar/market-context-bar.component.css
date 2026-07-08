@@ -5,8 +5,9 @@
   width: 5px; height: 5px; border-radius: 50%;
   background: var(--green); animation: pulse 2s infinite; flex-shrink: 0;
 }
+.ctx-ic { display: inline-flex; color: var(--cyan); flex-shrink: 0; }
 .ctx-lbl { font-size: 9px; color: var(--text-3); text-transform: uppercase; letter-spacing: .7px; }
-.ctx-upd { font-size: 9px; color: var(--text-3); margin-left: auto; }
+.ctx-upd { font-size: 9px; color: var(--text-3); margin-left: auto; display: inline-flex; align-items: center; gap: 5px; }
 
 .ctx-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; }
 

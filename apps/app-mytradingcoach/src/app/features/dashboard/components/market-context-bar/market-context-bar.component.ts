@@ -1,20 +1,21 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
+import { LucideAngularModule, Activity } from 'lucide-angular';
 import { MarketContext } from '../../../../core/api/trades.api';
 
 @Component({
   selector: 'mtc-market-context-bar',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, LucideAngularModule],
   styleUrl: './market-context-bar.component.css',
   template: `
     @if (ctx()) {
       <div class="ctx-wrap">
         <div class="ctx-header">
-          <div class="ctx-pulse-dot"></div>
+          <lucide-icon [img]="CtxIcon" [size]="14" class="ctx-ic" />
           <span class="ctx-lbl">Contexte marché</span>
-          <span class="ctx-upd">MAJ 15s · {{ updatedLabel() }}</span>
+          <span class="ctx-upd"><span class="ctx-pulse-dot"></span> MAJ 15s · {{ updatedLabel() }}</span>
         </div>
 
         <div class="ctx-grid">
@@ -110,6 +111,7 @@ import { MarketContext } from '../../../../core/api/trades.api';
   `,
 })
 export class MarketContextBarComponent {
+  protected readonly CtxIcon = Activity;
   readonly ctx = input<MarketContext | null>(null);
   readonly breakingNews = input<string | null>(null);
 

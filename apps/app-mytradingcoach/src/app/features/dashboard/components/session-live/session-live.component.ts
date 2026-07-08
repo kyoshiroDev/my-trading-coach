@@ -13,6 +13,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { LucideAngularModule, Newspaper, CalendarDays, ListOrdered, Zap } from 'lucide-angular';
 import { Subject, forkJoin, interval, of, timer } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent, EcoResultAnalysis } from '../../../../core/api/eco-calendar.api';
@@ -80,7 +81,7 @@ const EMOTIONS = [
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-live.component.css',
-  imports: [SessionRecapComponent, MarketContextBarComponent, LiveNewsComponent, LiveFeedComponent, NumericInputDirective, PremiumLockComponent],
+  imports: [LucideAngularModule, SessionRecapComponent, MarketContextBarComponent, LiveNewsComponent, LiveFeedComponent, NumericInputDirective, PremiumLockComponent],
   template: `
     <div data-testid="session-live-view">
 
@@ -134,7 +135,7 @@ const EMOTIONS = [
         <!-- ═══ COL 1 : NEWS LIVE ═══ -->
         <div class="news-col">
           <div class="col-title-row">
-            <div class="col-title">📰 News live</div>
+            <div class="col-title"><lucide-icon [img]="NewsIcon" [size]="14" class="ct-ic" /> News live</div>
           </div>
 
           <div class="news-feed">
@@ -173,7 +174,7 @@ const EMOTIONS = [
           <div class="cal-card">
             <div class="col-title-row">
               <div class="col-title">
-                📅 Calendrier · Session en cours
+                <lucide-icon [img]="CalIcon" [size]="14" class="ct-ic" /> Calendrier · Session en cours
                 <div class="pulse-dot"></div>
               </div>
             </div>
@@ -318,7 +319,7 @@ const EMOTIONS = [
         <!-- ═══ COL 3 : LIVE FEED ═══ -->
         <div class="feed-col" data-testid="live-feed">
           <div class="col-title">
-            Live feed
+            <lucide-icon [img]="FeedIcon" [size]="14" class="ct-ic" /> Live feed
             <div class="pulse-dot"></div>
           </div>
 
@@ -413,8 +414,8 @@ const EMOTIONS = [
         <!-- ═══ COL 4 : TRADE RAPIDE ═══ -->
         <div class="qt-panel" data-testid="quick-trade-form">
           <div class="qt-title">
-            ⚡ Trade rapide
-           
+            <lucide-icon [img]="QuickIcon" [size]="14" class="ct-ic" /> Trade rapide
+
           </div>
 
           <!-- Asset select -->
@@ -713,6 +714,12 @@ export class SessionLiveComponent {
 
   // News live + contexte marché = Starter+ (endpoints gardés côté API) → verrou d'upsell sinon.
   protected readonly isStarterOrAbove = computed(() => this.userStore.isStarterOrAbove());
+
+  // Icônes Lucide (headers de colonnes — design « Session live »).
+  protected readonly NewsIcon  = Newspaper;
+  protected readonly CalIcon   = CalendarDays;
+  protected readonly FeedIcon  = ListOrdered;
+  protected readonly QuickIcon = Zap;
 
   // Timer
   private readonly now = signal(new Date());
