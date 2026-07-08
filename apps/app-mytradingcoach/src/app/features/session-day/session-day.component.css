@@ -20,7 +20,27 @@
   text-transform: uppercase;
   color: var(--text-3);
 }
-.sd-acct-row mtc-account-selector { display: block; width: 100%; }
+.sd-acct-select {
+  width: 100%;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 34px 10px 12px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238398b5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition: border-color .15s;
+}
+.sd-acct-select:hover { border-color: var(--border-hover); }
+.sd-acct-select:focus { border-color: var(--blue); }
+.sd-acct-select option { background: var(--bg-card); color: var(--text); }
 .sd-acct-hint {
   font-size: 12px;
   color: var(--red);

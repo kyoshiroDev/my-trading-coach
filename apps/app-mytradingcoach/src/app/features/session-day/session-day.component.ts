@@ -20,8 +20,8 @@ import { SessionLiveComponent } from '../dashboard/components/session-live/sessi
 import { LiveModeService } from '../../core/services/live-mode.service';
 import { MoodState, SessionApi, SessionTrade } from '../../core/api/session.api';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
+import { TradingAccount } from '../../core/api/accounts.api';
 import { UserStore } from '../../core/stores/user.store';
-import { AccountSelectorComponent } from '../../shared/components/account-selector/account-selector.component';
 import { DebriefObjective } from '../../core/api/debrief.api';
 import { evaluateObjectiveCheck } from './objective-check.util';
 import { EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe } from '../../shared/pipes';
@@ -45,7 +45,7 @@ const EMOTION_COLORS: Record<string, string> = {
 @Component({
   selector: 'mtc-session-day',
   standalone: true,
-  imports: [DatePipe, LucideAngularModule, TopbarComponent, SessionMorningComponent, SessionLiveComponent, AccountSelectorComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
+  imports: [DatePipe, LucideAngularModule, TopbarComponent, SessionMorningComponent, SessionLiveComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-day.component.css',
   template: `
@@ -134,7 +134,14 @@ const EMOTION_COLORS: Record<string, string> = {
           @if (userStore.isStarterOrAbove() && selectedAccount.activeAccounts().length > 0) {
             <div session-account class="sd-acct-row">
               <span class="sd-acct-lbl">Compte de la session</span>
-              <mtc-account-selector />
+              <select class="sd-acct-select" data-testid="session-account-select"
+                      [value]="selectedAccount.selectedAccountId()"
+                      (change)="selectedAccount.select($any($event.target).value)">
+                <option value="all">Tous les comptes</option>
+                @for (a of selectedAccount.activeAccounts(); track a.id) {
+                  <option [value]="a.id">{{ acctOption(a) }}</option>
+                }
+              </select>
               @if (needsAccount()) {
                 <span class="sd-acct-hint" data-testid="account-required">
                   Choisis un compte précis (pas « Tous les comptes ») pour lancer la session.
@@ -404,6 +411,12 @@ export class SessionDayComponent implements OnInit, OnDestroy {
       && this.selectedAccount.activeAccounts().length > 0
       && this.selectedAccount.accountParam() === undefined,
   );
+
+  /** Libellé d'option du dropdown compte : « FTMO 100K · Éval · Apex ». */
+  protected acctOption(a: TradingAccount): string {
+    const type = a.type === 'EVALUATION' ? 'Éval' : a.type === 'FUNDED' ? 'Funded' : a.type === 'PERSONAL' ? 'Perso' : 'Démo';
+    return a.broker ? `${a.label} · ${type} · ${a.broker}` : `${a.label} · ${type}`;
+  }
 
   // Libellé du compte rattaché à la session active (en-tête « Session · Apex 50k »).
   protected readonly activeAccountLabel = computed(() => {
