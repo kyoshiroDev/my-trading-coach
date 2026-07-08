@@ -57,21 +57,31 @@ src/app/
 └── app.routes.ts
 ```
 
-### Dashboard V2 — logique d'affichage (BETA_TESTER + ADMIN uniquement)
+### « Ma session » — route `/session` (générale, tous plans)
+
+`session-day.component.ts` (features/session-day/) : shell à 3 onglets aligné sur
+la maquette design (« The Terminal »).
 
 ```typescript
-// Onglets : 'dashboard' | 'morning' | 'live'
-// activeTab = signal<'dashboard' | 'morning' | 'live'>('morning')
+// activeTab = signal<'morning' | 'live' | 'debrief'>('morning')
 // effect() auto-switch vers 'live' si activeSession()?.status === 'ACTIVE'
 // Polling interval(30s) pour refreshLiveStats() pendant session active
-// isBeta() false → aucun changement, dashboard V1 intact
 ```
 
-Données chargées au démarrage (beta users) :
-- `GET /session/active` → `activeSession` signal
-- `GET /analytics/daily-recap/yesterday` → `yesterdayRecap` signal
-- `GET /eco-calendar/today` → `ecoCalendar` signal (PREMIUM)
-- `GET /debrief/current` → `currentObjectives` signal
+- **Shell** : topbar (titre + sous-titre date · compte) + segmented control (icônes
+  Lucide Sunrise/Activity/Moon) + action à droite « Démarrer la session » (vert) /
+  pill « Session active + timer » + « Clôturer ».
+- **Onglet Pré-session** → `session-morning.component` (features/dashboard/components/) :
+  carte Prépare (mood/plan/compte projeté) + Hier + Objectifs · Agenda du jour IA.
+- **Onglet Session live** → `session-live.component` : Contexte marché + News (ticker
+  horizontal) + mini-stats + 3 colonnes (Calendrier | Live feed | Trade rapide).
+- **Onglet Débrief** (inline dans session-day) : 4 stats · analyse (mood fin, score de
+  discipline, meilleur/pire trade, émotions, objectifs) · journal pleine hauteur à droite.
+
+Le compagnon de session (pré-session + live + débrief de base) est **FREE** ; le gating
+IA (contexte marché, news, calendrier éco IA, recap) suit `plans.md`. Données chargées
+via `SessionStore` : `/session/active`, `/analytics/daily-recap/yesterday`,
+`/eco-calendar/*`, `/debrief/current`, `/trades/market-context`, `/trades/news`.
 
 ---
 
@@ -106,30 +116,29 @@ SetupColorPipe    // couleur selon setup
 
 ---
 
-## Features Premium — règles obligatoires
+## Features gated — règles obligatoires
 
-Import CSV et Export PDF sont réservés aux membres Premium.
+⚠️ Le gating n'est PAS « Premium partout » : cf. `.claude/agents/plans.md` (source de
+vérité). `isStarterOrAbove()` = STARTER+ (analytics avancés, weekly debrief, contexte
+marché, news, éco IA…) · `isPremium()` = PREMIUM (IA Insights, chat coach, recap 17h30).
 
-**Pattern obligatoire dans les composants qui accèdent à ces features :**
+**Pattern dans les composants qui gate une feature :**
 
 ```typescript
 private readonly userStore = inject(UserStore);
-protected readonly isPremium = this.userStore.isPremium;
+protected readonly isStarterOrAbove = this.userStore.isStarterOrAbove; // ou isPremium
 ```
 
 ```html
-@if (isPremium()) {
+@if (isStarterOrAbove()) {
   <!-- feature accessible -->
 } @else {
-  <div class="paywall">
-    <span>⚡</span>
-    <p>Fonctionnalité Premium</p>
-    <a routerLink="/settings">Essayer 7 jours gratuit →</a>
-  </div>
+  <mtc-premium-lock title="Titre de la feature" subtitle="Disponible dès Starter" />
 }
 ```
 
-Si l'API retourne `{ code: 'PREMIUM_REQUIRED' }` → rediriger vers `/settings`.
+Si l'API retourne `{ code: 'PREMIUM_REQUIRED' | 'STARTER_REQUIRED' }` → afficher le lock
+(ou rediriger vers `/settings`). Cohérence obligatoire aux 4 points de `plans.md`.
 
 ---
 
@@ -164,19 +173,26 @@ this.aiService.insights().pipe(
 
 ---
 
-## Blocs Premium verrouillés
+## Blocs verrouillés (teaser + overlay)
+
+Deux approches : le composant partagé `mtc-premium-lock` (simple), ou l'overlay
+teaser flouté pour les vues riches. **Le cadenas est une icône Lucide `Lock`**
+(ou un SVG inline au tracé Lucide) — plus jamais l'emoji 🔒 (incohérent avec les
+autres icônes). L'aperçu derrière l'overlay est un **mock** (jamais la vraie donnée
+→ pas de fuite).
 
 ```html
-<!-- Pattern pour les blocs PREMIUM sur FREE -->
 <div class="locked-feature">
   <div class="locked-preview" aria-hidden="true">
-    <!-- aperçu flou du contenu -->
+    <!-- aperçu MOCK flou du contenu -->
   </div>
   <div class="locked-overlay">
-    <span class="locked-icon">🔒</span>
+    <span class="locked-icon">
+      <lucide-icon [img]="LockIcon" [size]="20" /> <!-- ou svg inline tracé Lucide -->
+    </span>
     <h3>Titre de la feature</h3>
     <p>Description de la valeur ajoutée</p>
-    <button (click)="startTrial()">Essayer 7 jours gratuit →</button>
+    <button (click)="showPlanModal.set(true)">Débloquer →</button>
   </div>
 </div>
 ```
@@ -207,29 +223,19 @@ export const environment = {
 
 ---
 
-## Synchronisation app-mytradingcoach.html — OBLIGATOIRE
+## Source de vérité design
 
-Après chaque modification de composant, mettre à jour la section correspondante dans `app-mytradingcoach.html` à la racine. Ce fichier est la référence design — il doit toujours refléter l'état réel de l'app.
+Le miroir statique `app-mytradingcoach.html` a été **retiré** (commit `581875e`) — ne
+plus s'y référer ni tenter de le synchroniser. La source de vérité du design c'est :
+1. **le composant lui-même** (`*.component.html` / `.ts` inline + `.css`), aligné sur les
+   tokens de `styles/theme.css` (« The Terminal » — cf. `.claude/agents/design.md`) ;
+2. les **maquettes dédiées** du dépôt (`maquette-*.html`) et le projet Claude Design
+   quand ils existent pour la vue concernée.
 
-**Procédure :**
-1. Lire le composant Angular modifié
-2. Trouver la section correspondante dans `app-mytradingcoach.html`
-3. Reproduire le HTML/CSS — ne pas inventer
-4. Inclure dans le même commit
-
-**Table de correspondance :**
-| Composant | Section dans app-mytradingcoach.html |
-|---|---|
-| dashboard.component | `id="view-dashboard"` |
-| journal.component | `id="view-journal"` |
-| trade-form.component | modal `id="modal-trade"` |
-| analytics.component | `id="view-analytics"` |
-| ai-insights.component | `id="view-ai"` |
-| debrief.component | `id="view-debrief"` |
-| scoring.component | `id="view-scoring"` |
-| settings.component | `id="view-settings"` |
-| sidebar.component | `aside.sidebar` |
-| topbar.component | `header.topbar` |
+Règles design non négociables (détail dans `design.md`) : dark only, tokens CSS (jamais
+de valeur en dur), chiffres/labels en `--font-mono` + `tabular-nums`, **icônes Lucide**
+(jamais d'emoji dans les headers — seuls les émotions trader et watermarks décoratifs
+sont tolérés), pas de barre d'accent `::before` sur les cartes de contenu.
 
 ---
 
