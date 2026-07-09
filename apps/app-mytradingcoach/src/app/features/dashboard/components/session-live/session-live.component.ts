@@ -111,15 +111,26 @@ const EMOTIONS = [
       @if (isStarterOrAbove() && newsItems().length > 0) {
         <div class="news-ticker">
           <span class="news-ticker-lbl"><lucide-icon [img]="NewsIcon" [size]="13" class="ct-ic" /> News live</span>
-          <div class="news-ticker-track">
-            @for (item of newsItems(); track item.publishedDate) {
-              <button type="button" class="news-tick" (click)="openNews(item)">
-                <span class="news-tick-tag">{{ item.symbol }}</span>
-                <span class="news-tick-title">{{ item.title }}</span>
-                <span class="news-tick-time">{{ formatNewsTime(item.publishedDate) }}</span>
-              </button>
-              <span class="news-tick-sep">·</span>
-            }
+          <div class="news-ticker-viewport">
+            <div class="news-ticker-track">
+              @for (item of newsItems(); track item.publishedDate) {
+                <button type="button" class="news-tick" (click)="openNews(item)">
+                  <span class="news-tick-tag">{{ item.symbol }}</span>
+                  <span class="news-tick-title">{{ item.title }}</span>
+                  <span class="news-tick-time">{{ formatNewsTime(item.publishedDate) }}</span>
+                </button>
+                <span class="news-tick-sep">·</span>
+              }
+              <!-- Copie pour un défilement continu (marquee) -->
+              @for (item of newsItems(); track 'dup-' + item.publishedDate) {
+                <button type="button" class="news-tick" tabindex="-1" aria-hidden="true" (click)="openNews(item)">
+                  <span class="news-tick-tag">{{ item.symbol }}</span>
+                  <span class="news-tick-title">{{ item.title }}</span>
+                  <span class="news-tick-time">{{ formatNewsTime(item.publishedDate) }}</span>
+                </button>
+                <span class="news-tick-sep" aria-hidden="true">·</span>
+              }
+            </div>
           </div>
         </div>
       }
