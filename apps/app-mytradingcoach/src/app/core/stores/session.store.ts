@@ -13,6 +13,7 @@ import { DailyRecapApi, DailyRecap } from '../api/daily-recap.api';
 import { DebriefApi, DebriefObjective } from '../api/debrief.api';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent } from '../api/eco-calendar.api';
 import { UserStore } from './user.store';
+import { TradesStore } from './trades.store';
 import { todayParis, toParisDateStr } from '../utils/paris-date';
 import { POLLING_MS } from '../constants/polling.const';
 
@@ -24,6 +25,7 @@ export class SessionStore {
   private readonly debriefApi      = inject(DebriefApi);
   private readonly ecoCalendarApi  = inject(EcoCalendarApi);
   private readonly userStore       = inject(UserStore);
+  private readonly tradesStore     = inject(TradesStore);
   private readonly destroyRef      = inject(DestroyRef);
 
   // ── State ─────────────────────────────────────────────────────────────────
@@ -206,6 +208,7 @@ export class SessionStore {
       .subscribe({
         next: () => {
           this.refreshLiveStats();
+          this.tradesStore.registerCreatedTrade(); // maj instantanée du compteur mensuel (limite FREE)
           this.flashFeedback('success', 'Trade loggué');
         },
         error: (err) =>

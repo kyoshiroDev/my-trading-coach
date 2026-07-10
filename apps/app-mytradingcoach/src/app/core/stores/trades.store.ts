@@ -157,6 +157,14 @@ export class TradesStore {
 
   addTrade(trade: Trade) {
     this.trades.update((trades) => [trade, ...trades]);
+    this.registerCreatedTrade();
+  }
+
+  /**
+   * Incrément local du compteur mensuel — feedback instantané après un log rapide
+   * (Trade rapide de la session live) qui ne passe pas par addTrade().
+   */
+  registerCreatedTrade(): void {
     if (this.monthlyLoaded()) this.monthlyCount.update((c) => c + 1);
   }
 
