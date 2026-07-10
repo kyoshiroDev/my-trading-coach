@@ -136,32 +136,35 @@ const EMOTIONS = [
         </div>
       }
 
-      <!-- Mini stats row -->
-      <div class="mini-stats-row">
-        <div class="mini-stat">
-          <div class="mini-stat-val" [class.green]="(liveStats()?.totalPnl ?? 0) >= 0" [class.red]="(liveStats()?.totalPnl ?? 0) < 0">
-            {{ pnlDisplay() }}
-          </div>
-          <div class="mini-stat-lbl">P&amp;L jour</div>
-        </div>
-        <div class="mini-stat">
-          <div class="mini-stat-val">{{ (liveStats()?.winRate ?? 0).toFixed(0) }}%</div>
-          <div class="mini-stat-lbl">Win Rate</div>
-        </div>
-        <div class="mini-stat">
-          <div class="mini-stat-val" style="font-size:22px;">{{ moodEmoji(session()?.moodStart) }}</div>
-          <div class="mini-stat-lbl">État actuel</div>
-        </div>
-        <div class="mini-stat">
-          <div class="mini-stat-val blue">{{ liveStats()?.tradesCount ?? 0 }}</div>
-          <div class="mini-stat-lbl">Trades logués</div>
-        </div>
-      </div>
-
-      <!-- Live layout 4 colonnes -->
+      <!-- Live layout : zone gauche (stats + calendrier + live feed) / Trade rapide pleine hauteur à droite -->
       <div class="live-layout">
+        <div class="live-main">
 
-        <!-- ═══ COL 1 : CALENDRIER + TREASURY ═══ -->
+          <!-- Mini stats row (largeur calendrier + live feed uniquement) -->
+          <div class="mini-stats-row">
+            <div class="mini-stat">
+              <div class="mini-stat-val" [class.green]="(liveStats()?.totalPnl ?? 0) >= 0" [class.red]="(liveStats()?.totalPnl ?? 0) < 0">
+                {{ pnlDisplay() }}
+              </div>
+              <div class="mini-stat-lbl">P&amp;L jour</div>
+            </div>
+            <div class="mini-stat">
+              <div class="mini-stat-val">{{ (liveStats()?.winRate ?? 0).toFixed(0) }}%</div>
+              <div class="mini-stat-lbl">Win Rate</div>
+            </div>
+            <div class="mini-stat">
+              <div class="mini-stat-val" style="font-size:22px;">{{ moodEmoji(session()?.moodStart) }}</div>
+              <div class="mini-stat-lbl">État actuel</div>
+            </div>
+            <div class="mini-stat">
+              <div class="mini-stat-val blue">{{ liveStats()?.tradesCount ?? 0 }}</div>
+              <div class="mini-stat-lbl">Trades logués</div>
+            </div>
+          </div>
+
+          <div class="live-cols">
+
+            <!-- ═══ COL 1 : CALENDRIER + TREASURY ═══ -->
         <div class="cal-col">
 
           <!-- Calendrier éco -->
@@ -389,7 +392,10 @@ const EMOTIONS = [
           }
         </div>
 
-        <!-- ═══ COL 4 : TRADE RAPIDE ═══ -->
+          </div><!-- /live-cols -->
+        </div><!-- /live-main -->
+
+        <!-- ═══ COL 4 : TRADE RAPIDE (colonne pleine hauteur à droite) ═══ -->
         <div class="qt-panel" data-testid="quick-trade-form">
           <div class="qt-title">
             <lucide-icon [img]="QuickIcon" [size]="14" class="ct-ic" /> Trade rapide

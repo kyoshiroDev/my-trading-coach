@@ -20,16 +20,22 @@ import { TradesStore } from '../../../core/stores/trades.store';
   styleUrl: './topbar.component.css',
   host: { '[attr.title]': 'null' },
   template: `
-    <header class="topbar">
+    <header class="topbar" [class.hero]="heroHeader()">
       <div class="topbar-title-wrap">
         <h1 class="page-title">{{ title() }}</h1>
         @if (period()) {
-          <span class="topbar-period">· {{ period() }}</span>
+          <span class="topbar-period">{{ heroHeader() ? '' : '· ' }}{{ period() }}</span>
         }
         @if (globalScopeNote() && userStore.isStarterOrAbove()) {
           <span class="topbar-scope">analyse tous comptes confondus</span>
         }
       </div>
+
+      @if (heroHeader()) {
+        <div class="topbar-center">
+          <ng-content select="[topbar-center]" />
+        </div>
+      }
 
       <div class="topbar-actions">
         @if (showAddButton()) {
@@ -127,6 +133,7 @@ export class TopbarComponent {
   title = input('');
   /** Période affichée à côté du titre (ex. « juin 2026 ») — design chrome.jsx. */
   period = input('');
+  heroHeader = input(false);
   showAddButton = input(false);
   addLabel = input('Nouveau');
   addDisabled = input(false);

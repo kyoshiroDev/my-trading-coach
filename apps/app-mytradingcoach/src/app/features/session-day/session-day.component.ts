@@ -49,7 +49,24 @@ const EMOTION_COLORS: Record<string, string> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-day.component.css',
   template: `
-    <mtc-topbar title="Ma session" [period]="headerSub()" [showAddButton]="false">
+    <mtc-topbar title="Ma session" [period]="headerSub()" [showAddButton]="false" [heroHeader]="true">
+      <div class="seg-tabs" role="tablist" topbar-center>
+        <button class="seg-tab" role="tab" [class.active]="activeTab() === 'morning'"
+                [attr.aria-selected]="activeTab() === 'morning'"
+                data-testid="tab-morning" (click)="selectTab('morning')">
+          <lucide-icon [img]="MorningIcon" [size]="15" /> Pré-session
+        </button>
+        <button class="seg-tab" role="tab" [class.active]="activeTab() === 'live'"
+                [attr.aria-selected]="activeTab() === 'live'"
+                data-testid="tab-live" (click)="selectTab('live')">
+          <lucide-icon [img]="LiveIcon" [size]="15" /> Session live
+        </button>
+        <button class="seg-tab" role="tab" [class.active]="activeTab() === 'debrief'"
+                [attr.aria-selected]="activeTab() === 'debrief'"
+                data-testid="tab-debrief" (click)="selectTab('debrief')">
+          <lucide-icon [img]="DebriefIcon" [size]="15" /> Débrief
+        </button>
+      </div>
       @if (store.activeSession()?.status === 'ACTIVE') {
         <div class="sess-status-pill">
           <div class="sess-pulse-dot"></div>
@@ -89,25 +106,8 @@ const EMOTION_COLORS: Record<string, string> = {
     }
 
     <div class="session-page" [class.live-mode]="activeTab() === 'live'">
-      <div class="session-tabs-row">
-        <div class="seg-tabs" role="tablist">
-          <button class="seg-tab" role="tab" [class.active]="activeTab() === 'morning'"
-                  [attr.aria-selected]="activeTab() === 'morning'"
-                  data-testid="tab-morning" (click)="selectTab('morning')">
-            <lucide-icon [img]="MorningIcon" [size]="15" /> Pré-session
-          </button>
-          <button class="seg-tab" role="tab" [class.active]="activeTab() === 'live'"
-                  [attr.aria-selected]="activeTab() === 'live'"
-                  data-testid="tab-live" (click)="selectTab('live')">
-            <lucide-icon [img]="LiveIcon" [size]="15" /> Session live
-          </button>
-          <button class="seg-tab" role="tab" [class.active]="activeTab() === 'debrief'"
-                  [attr.aria-selected]="activeTab() === 'debrief'"
-                  data-testid="tab-debrief" (click)="selectTab('debrief')">
-            <lucide-icon [img]="DebriefIcon" [size]="15" /> Débrief
-          </button>
-        </div>
-        @if (activeTab() === 'debrief' && store.activeSession()?.status === 'CLOSED') {
+      @if (activeTab() === 'debrief' && store.activeSession()?.status === 'CLOSED') {
+        <div class="session-tabs-row">
           <div class="closed-badge">
             <span class="cb-ic">✓</span>
             <div>
@@ -116,8 +116,8 @@ const EMOTION_COLORS: Record<string, string> = {
             </div>
             @if (savedFlash()) { <span class="saved-pill">✓ Enregistré</span> }
           </div>
-        }
-      </div>
+        </div>
+      }
 
       @if (activeTab() === 'morning') {
         <mtc-session-morning
