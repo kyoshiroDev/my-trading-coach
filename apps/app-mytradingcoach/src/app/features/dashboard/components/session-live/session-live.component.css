@@ -219,11 +219,10 @@
   color: var(--text-3);
 }
 .feed-row {
-  display: grid;
-  grid-template-columns: 34px 36px 1fr 46px 46px 44px 24px;
-  gap: 3px;
+  display: flex;
   align-items: center;
-  padding: 5px 4px;
+  gap: 8px;
+  padding: 7px 6px;
   border-bottom: 1px solid rgba(99,155,255,.05);
 }
 .feed-row.live-row {
@@ -232,7 +231,8 @@
   transition: background .15s;
 }
 .feed-row.live-row:hover { background: rgba(99,155,255,.04); }
-.feed-time { font-family: var(--font-mono); font-size: 9px; color: var(--text-3); }
+.feed-emo { font-size: 13px; line-height: 1; }
+.feed-time { font-family: var(--font-mono); font-size: 9px; color: var(--text-3); min-width: 30px; }
 .trade-side {
   font-family: var(--font-mono);
   font-size: 8px;

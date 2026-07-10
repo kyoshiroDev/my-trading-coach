@@ -30,6 +30,7 @@ import { SetupsStore } from '../../../../core/stores/setups.store';
 import { formatDuration } from '../../../../core/utils/time.utils';
 import { parseDecimal } from '../../../../core/utils/parse-decimal';
 import { NumericInputDirective } from '../../../../core/directives/numeric-input.directive';
+import { EmotionEmojiPipe } from '../../../../shared/pipes/emotion-emoji.pipe';
 import { POLLING_MS } from '../../../../core/constants/polling.const';
 import { LiveNewsComponent } from './components/live-news/live-news.component';
 import { LiveFeedComponent } from './components/live-feed/live-feed.component';
@@ -81,7 +82,7 @@ const EMOTIONS = [
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-live.component.css',
-  imports: [LucideAngularModule, SessionRecapComponent, MarketContextBarComponent, LiveNewsComponent, LiveFeedComponent, NumericInputDirective, PremiumLockComponent],
+  imports: [LucideAngularModule, SessionRecapComponent, MarketContextBarComponent, LiveNewsComponent, LiveFeedComponent, NumericInputDirective, PremiumLockComponent, EmotionEmojiPipe],
   template: `
     <div data-testid="session-live-view">
 
@@ -329,44 +330,28 @@ const EMOTIONS = [
             <div class="feed-list">
               @for (trade of todayTrades(); track trade.id) {
                 @if (trade.pnl !== null) {
-                  <div class="feed-row-2l">
-                    <div class="feed-l1">
-                      <span class="feed-time">{{ tradeTime(trade.tradedAt) }}</span>
-                      <span class="trade-side" [class]="trade.side.toLowerCase()">{{ trade.side }}</span>
-                      <span class="feed-asset">{{ trade.asset }}</span>
-                      <span class="feed-badge" [class]="closeBadgeClass(trade.tags)" style="margin-left:auto;">
-                        {{ closeBadgeLabel(trade.tags) }}
-                      </span>
-                    </div>
-                    <div class="feed-l2">
-                      <span class="feed-price">Entrée: {{ (trade.entry && trade.entry > 0) ? trade.entry : '—' }}</span>
-                      <span class="feed-sep">·</span>
-                      <span class="feed-price">Sortie: {{ trade.exit ?? '—' }}</span>
-                      <span class="feed-pnl" [class.green]="trade.pnl >= 0" [class.red]="trade.pnl < 0" style="margin-left:auto;">
-                        {{ trade.pnl >= 0 ? '+' : '' }}{{ trade.pnl.toFixed(0) }}$
-                      </span>
-                    </div>
+                  <div class="feed-row">
+                    <span class="feed-time">{{ tradeTime(trade.tradedAt) }}</span>
+                    <span class="feed-asset">{{ trade.asset }}</span>
+                    <span class="trade-side" [class]="trade.side.toLowerCase()">{{ trade.side === 'LONG' ? '▲' : '▼' }} {{ trade.side }}</span>
+                    <span class="feed-emo" [title]="trade.emotion">{{ trade.emotion | emotionEmoji }}</span>
+                    <span class="feed-pnl" [class.green]="trade.pnl >= 0" [class.red]="trade.pnl < 0" style="margin-left:auto;">
+                      {{ trade.pnl >= 0 ? '+' : '' }}{{ trade.pnl.toFixed(0) }}$
+                    </span>
                   </div>
                 } @else {
                   <div
-                    class="feed-row-2l live-row"
+                    class="feed-row live-row"
                     role="button"
                     tabindex="0"
                     (click)="openClosePanel(trade.id)"
                     (keyup.enter)="openClosePanel(trade.id)"
                   >
-                    <div class="feed-l1">
-                      <span class="feed-time">{{ tradeTime(trade.tradedAt) }}</span>
-                      <span class="trade-side" [class]="trade.side.toLowerCase()">{{ trade.side }}</span>
-                      <span class="feed-asset">{{ trade.asset }}</span>
-                      <span class="feed-status">En cours</span>
-                      <span class="live-tag">● LIVE</span>
-                    </div>
-                    <div class="feed-l2">
-                      <span class="feed-price">Entrée: {{ (trade.entry && trade.entry > 0) ? trade.entry : '—' }}</span>
-                      <span class="feed-sep">·</span>
-                      <span class="feed-price">Sortie: —</span>
-                    </div>
+                    <span class="feed-time">{{ tradeTime(trade.tradedAt) }}</span>
+                    <span class="feed-asset">{{ trade.asset }}</span>
+                    <span class="trade-side" [class]="trade.side.toLowerCase()">{{ trade.side === 'LONG' ? '▲' : '▼' }} {{ trade.side }}</span>
+                    <span class="feed-emo" [title]="trade.emotion">{{ trade.emotion | emotionEmoji }}</span>
+                    <span class="live-tag" style="margin-left:auto;">● LIVE</span>
                   </div>
 
                   @if (closingTradeId() === trade.id) {
