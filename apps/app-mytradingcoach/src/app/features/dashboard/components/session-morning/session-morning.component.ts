@@ -86,7 +86,7 @@ const DEMO_ECO_EVENTS: EcoEvent[] = [
         <div class="card">
           @if (yesterdayRecap()) {
             <div class="card-header">
-              <div class="card-title">Hier · {{ yesterdayRecap()!.date | date:'EEEE d MMMM' }}</div>
+              <div class="card-title">Hier — {{ yesterdayRecap()!.date | date:'EEEE d MMMM' }}</div>
               <span style="font-size:11px;color:var(--text-3);font-family:var(--font-mono)">{{ yesterdayRecap()!.tradesCount }} trades</span>
             </div>
             <div class="recap-stats">
@@ -300,19 +300,6 @@ const DEMO_ECO_EVENTS: EcoEvent[] = [
                 <span class="eco-filter-dot medium"></span> Moyen
               </button>
             </div>
-
-            <select class="eco-filter-select"
-                    [value]="filterCurrency()"
-                    (change)="filterCurrency.set($any($event.target).value)">
-              <option value="all">Toutes les devises</option>
-              @for (c of availableCurrencies(); track c) {
-                <option [value]="c">{{ getFlag({ currency: c }) }} {{ c }}</option>
-              }
-            </select>
-
-            <span class="eco-filter-count">
-              {{ agendaEvents().length }} événement{{ agendaEvents().length > 1 ? 's' : '' }}
-            </span>
           </div>
 
           <!-- Liste des événements filtrés -->

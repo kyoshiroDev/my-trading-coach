@@ -167,7 +167,7 @@ const EMOTIONS = [
           <div class="cal-card">
             <div class="col-title-row">
               <div class="col-title">
-                <lucide-icon [img]="CalIcon" [size]="14" class="ct-ic" /> Calendrier · Session en cours
+                <lucide-icon [img]="CalIcon" [size]="14" class="ct-ic" /> Calendrier — Session en cours
                 <div class="pulse-dot"></div>
               </div>
             </div>
