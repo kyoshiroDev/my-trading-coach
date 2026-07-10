@@ -77,6 +77,17 @@ const EMOTIONS = [
   { value: 'REVENGE',   emoji: '🤬', title: 'Revenge' },
 ] as const;
 
+// Devise d'un événement éco → instruments les plus impactés (fidélité maquette).
+// USD (marché domestique de nos traders) → indices US ; devises étrangères → paire vs USD.
+const BASE_CCY = new Set(['EUR', 'GBP', 'AUD', 'NZD']); // cotées XXX/USD
+function currencyToInstruments(currency: string | null | undefined): string {
+  const c = (currency ?? '').toUpperCase();
+  if (!c) return '';
+  if (c === 'USD') return 'NQ/ES';
+  if (BASE_CCY.has(c)) return `${c}/USD`;
+  return `USD/${c}`;
+}
+
 @Component({
   selector: 'mtc-session-live',
   standalone: true,
@@ -258,7 +269,7 @@ const EMOTIONS = [
                           }
                         </span>
                       </div>
-                      <span class="eco-currency-tag">{{ event.currency }}</span>
+                      <span class="eco-currency-tag" [attr.title]="event.currency">{{ impactedInstruments(event.currency) }}</span>
                       <span class="eco-impact-badge" [class.high]="event.impact === 'high'">
                         {{ event.impact === 'high' ? 'Fort' : 'Moyen' }}
                       </span>
@@ -730,6 +741,9 @@ export class SessionLiveComponent {
   protected readonly expandedEcoEvent = signal<string | null>(null);
   protected toggleEcoEvent(name: string): void {
     this.expandedEcoEvent.update((v) => (v === name ? null : name));
+  }
+  protected impactedInstruments(currency: string | null | undefined): string {
+    return currencyToInstruments(currency);
   }
 
   // Timer
