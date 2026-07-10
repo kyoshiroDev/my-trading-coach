@@ -68,13 +68,20 @@ la maquette design (« The Terminal »).
 // Polling interval(30s) pour refreshLiveStats() pendant session active
 ```
 
-- **Shell** : topbar (titre + sous-titre date · compte) + segmented control (icônes
-  Lucide Sunrise/Activity/Moon) + action à droite « Démarrer la session » (vert) /
-  pill « Session active + timer » + « Clôturer ».
+- **Shell** : `mtc-topbar` en **mode hero** (`[heroHeader]="true"`) — titre « Ma session »
+  + date · compte **empilés sur 2 lignes**, segmented control (icônes Lucide
+  Sunrise/Activity/Moon) **centré sur la ligne du header** via le slot `[topbar-center]`,
+  action à droite « Démarrer la session » (vert) / pill « Session active + timer » +
+  « Clôturer ». La **sidebar se replie en icônes** dès qu'une session est active
+  (`SessionStore.hasActiveSession()` → effet dans `sidebar.component`, état manuel
+  restauré à la clôture, préférence localStorage non écrasée).
 - **Onglet Pré-session** → `session-morning.component` (features/dashboard/components/) :
   carte Prépare (mood/plan/compte projeté) + Hier + Objectifs · Agenda du jour IA.
-- **Onglet Session live** → `session-live.component` : Contexte marché + News (ticker
-  horizontal) + mini-stats + 3 colonnes (Calendrier | Live feed | Trade rapide).
+- **Onglet Session live** → `session-live.component` : Contexte marché (cellules
+  « Ticker (Descripteur) » + valeur/variation sur une ligne) + News (ticker horizontal)
+  + **zone gauche** (4 mini-stats sur la largeur Calendrier+Live feed, puis Calendrier |
+  Live feed) + **Trade rapide en colonne pleine hauteur à droite**. Live feed en **ligne
+  compacte** : heure · asset · sens (▲/▼) · émotion (`emotionEmojiPipe`) · P&L / ● LIVE.
 - **Onglet Débrief** (inline dans session-day) : 4 stats · analyse (mood fin, score de
   discipline, meilleur/pire trade, émotions, objectifs) · journal pleine hauteur à droite.
 
