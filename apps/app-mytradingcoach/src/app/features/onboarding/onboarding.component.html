@@ -265,10 +265,15 @@
                   <div class="ob-setup-name">{{ s.title }}</div>
                   <div class="ob-setup-desc">{{ s.description || 'Pas de description' }}</div>
                 </div>
-                <button class="ob-setup-rm" type="button" title="Retirer" (click)="removeSetup(s.id)">✕</button>
+                <button class="ob-setup-rm" type="button" title="Retirer"
+                        [disabled]="setupsStore.active().length <= 1"
+                        (click)="removeSetup(s.id)">✕</button>
               </div>
             }
           </div>
+          @if (setupMsg(); as msg) {
+            <p class="ob-setup-msg" role="status">{{ msg }}</p>
+          }
           <button class="ob-addbtn" type="button" (click)="openSetupModal()">+ Ajouter un setup</button>
 
           <div class="wizard-footer">

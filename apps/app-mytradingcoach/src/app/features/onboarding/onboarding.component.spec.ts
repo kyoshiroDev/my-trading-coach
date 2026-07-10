@@ -38,7 +38,12 @@ const mockTradesApi = {
 const mockTradesStore = { loadTrades: vi.fn() };
 const mockSetupsStore = {
   load: vi.fn(),
-  active: () => [],
+  // ≥2 setups actifs : le garde-fou « garder au moins un » ne bloque pas removeSetup,
+  // et aucun ne s'appelle « ORB » → l'anti-doublon laisse passer la création.
+  active: () => [
+    { id: 's1', title: 'Breakout', color: '#22c55e', description: '', archived: false, sortOrder: 0 },
+    { id: 's2', title: 'Range', color: '#f59e0b', description: '', archived: false, sortOrder: 1 },
+  ],
   create: vi.fn(),
   remove: vi.fn(),
 };
@@ -246,12 +251,16 @@ describe('OnboardingComponent', () => {
     c.openSetupModal();
     expect(c.showSetupModal()).toBe(true);
     c.onSetupSave({ title: 'ORB', color: '#22d3ee', description: '' });
-    expect(mockSetupsStore.create).toHaveBeenCalledWith({ title: 'ORB', color: '#22d3ee', description: '' });
+    expect(mockSetupsStore.create).toHaveBeenCalledWith(
+      { title: 'ORB', color: '#22d3ee', description: '' },
+      undefined,
+      expect.any(Function),
+    );
     expect(c.showSetupModal()).toBe(false);
 
-    // Retrait → store.remove.
+    // Retrait → store.remove (avec callback d'erreur).
     c.removeSetup('s1');
-    expect(mockSetupsStore.remove).toHaveBeenCalledWith('s1');
+    expect(mockSetupsStore.remove).toHaveBeenCalledWith('s1', expect.any(Function));
   });
 
   it("après sauvegarde des actifs, le store est à jour → pas de faux « Complète ton profil » (PROMPT-089)", () => {

@@ -47,6 +47,14 @@
   flex-shrink: 0;
 }
 .ob-setup-rm:hover { color: var(--red); }
+.ob-setup-rm:disabled { opacity: 0.3; cursor: not-allowed; }
+.ob-setup-rm:disabled:hover { color: var(--text-3); }
+.ob-setup-msg {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--yellow);
+  font-family: var(--font-mono);
+}
 .ob-addbtn {
   align-self: flex-start;
   background: rgba(59, 130, 246, 0.1);
