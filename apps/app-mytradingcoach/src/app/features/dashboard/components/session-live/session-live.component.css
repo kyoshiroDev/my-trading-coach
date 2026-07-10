@@ -362,6 +362,31 @@
   padding: 9px 11px;
   background: var(--bg-2);
 }
+.eco-live-event.expandable .eco-live-header { cursor: pointer; }
+.eco-live-event.expandable:hover { border-color: var(--blue); }
+
+.eco-time { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); width: 36px; flex-shrink: 0; }
+.eco-impact-bar { width: 4px; height: 26px; border-radius: 2px; flex-shrink: 0; background: var(--yellow); }
+.eco-impact-bar.high { background: var(--red); }
+.eco-name-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.eco-name { font-size: 11px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.eco-sub { font-size: 9px; font-family: var(--font-mono); color: var(--text-3); display: flex; gap: 4px; flex-wrap: wrap; }
+.eco-sub-actual { color: var(--text-2); }
+.eco-sub-sep { opacity: .5; }
+.eco-currency-tag {
+  font-size: 9px; background: var(--blue-glow); color: var(--blue-bright);
+  border: 1px solid rgba(59,130,246,.2); padding: 2px 5px; border-radius: 4px;
+  font-family: var(--font-mono); flex-shrink: 0;
+}
+.eco-impact-badge {
+  font-size: 9px; font-family: var(--font-mono); font-weight: 700;
+  padding: 2px 6px; border-radius: 4px; flex-shrink: 0;
+  background: rgba(245,158,11,.12); color: var(--yellow);
+}
+.eco-impact-badge.high { background: rgba(239,68,68,.12); color: var(--red); }
+.eco-chevron { color: var(--text-3); flex-shrink: 0; transition: transform .15s; }
+.eco-live-event.expanded .eco-chevron { transform: rotate(90deg); }
+.eco-countdown { font-size: 9px; color: var(--text-3); font-family: var(--font-mono); flex-shrink: 0; }
 
 /* Compteur d'événements masqués (hors fenêtre de session) */
 .cal-more {

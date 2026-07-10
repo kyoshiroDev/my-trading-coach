@@ -13,7 +13,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { LucideAngularModule, Newspaper, CalendarDays, ListOrdered, Zap } from 'lucide-angular';
+import { LucideAngularModule, Newspaper, CalendarDays, ListOrdered, Zap, ChevronRight } from 'lucide-angular';
 import { Subject, forkJoin, interval, of, timer } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent, EcoResultAnalysis } from '../../../../core/api/eco-calendar.api';
@@ -171,7 +171,7 @@ const EMOTIONS = [
           <div class="cal-card">
             <div class="col-title-row">
               <div class="col-title">
-                <lucide-icon [img]="CalIcon" [size]="14" class="ct-ic" /> Calendrier — Session en cours
+                <lucide-icon [img]="CalIcon" [size]="14" class="ct-ic" /> Calendrier économique
                 <div class="pulse-dot"></div>
               </div>
             </div>
@@ -231,25 +231,45 @@ const EMOTIONS = [
                     class="eco-live-event"
                     [class.released]="event.isReleased"
                     [class.dim]="!event.isReleased && isOutsideSession(event.time)"
+                    [class.expandable]="event.isReleased"
+                    [class.expanded]="expandedEcoEvent() === event.name"
                   >
-                    <div class="eco-live-header">
-                      <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-3);width:36px;flex-shrink:0;">
-                        {{ formatTime(event.time) }}
-                      </span>
-                      <div style="width:4px;height:22px;border-radius:2px;flex-shrink:0;" [style.background]="event.impact === 'high' ? 'var(--red)' : 'var(--yellow)'"></div>
+                    <div class="eco-live-header"
+                         [attr.role]="event.isReleased ? 'button' : null"
+                         [attr.tabindex]="event.isReleased ? 0 : null"
+                         (click)="event.isReleased && toggleEcoEvent(event.name)"
+                         (keyup.enter)="event.isReleased && toggleEcoEvent(event.name)">
+                      <span class="eco-time">{{ formatTime(event.time) }}</span>
+                      <div class="eco-impact-bar" [class.high]="event.impact === 'high'"></div>
                       <span class="eco-flag-sm">{{ getFlag(event) }}</span>
-                      <span style="font-size:11px;font-weight:600;color:var(--text);flex:1;">{{ translate(event.name) }}</span>
-                      <span style="font-size:9px;background:var(--blue-glow);color:var(--blue-bright);border:1px solid rgba(59,130,246,.2);padding:2px 5px;border-radius:4px;font-family:var(--font-mono);">
-                        {{ event.currency }}
+                      <div class="eco-name-wrap">
+                        <span class="eco-name">{{ translate(event.name) }}</span>
+                        <span class="eco-sub">
+                          @if (event.isReleased && event.actual !== null) {
+                            <span class="eco-sub-actual">Actuel : {{ event.actual }}{{ event.unit ?? '' }}</span>
+                            @if (event.estimate !== null || event.previous !== null) { <span class="eco-sub-sep">·</span> }
+                          }
+                          @if (event.estimate !== null) {
+                            <span>Prévu : {{ event.estimate }}{{ event.unit ?? '' }}</span>
+                            @if (event.previous !== null) { <span class="eco-sub-sep">·</span> }
+                          }
+                          @if (event.previous !== null) {
+                            <span>Préc. : {{ event.previous }}{{ event.unit ?? '' }}</span>
+                          }
+                        </span>
+                      </div>
+                      <span class="eco-currency-tag">{{ event.currency }}</span>
+                      <span class="eco-impact-badge" [class.high]="event.impact === 'high'">
+                        {{ event.impact === 'high' ? 'Fort' : 'Moyen' }}
                       </span>
                       @if (event.isReleased) {
-                        <span style="font-size:9px;background:var(--green-dim);color:var(--green);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);">✓ Publié</span>
+                        <lucide-icon [img]="ChevronIcon" [size]="14" class="eco-chevron" />
                       } @else {
-                        <span style="font-size:9px;color:var(--text-3);font-family:var(--font-mono);">dans {{ minutesUntil(event.time) }} min</span>
+                        <span class="eco-countdown">dans {{ minutesUntil(event.time) }} min</span>
                       }
                     </div>
 
-                    @if (event.isReleased) {
+                    @if (event.isReleased && expandedEcoEvent() === event.name) {
                       <div class="eco-live-released">
                         <div class="eco-result-row">
                           <div class="eco-result-item">
@@ -704,6 +724,13 @@ export class SessionLiveComponent {
   protected readonly CalIcon   = CalendarDays;
   protected readonly FeedIcon  = ListOrdered;
   protected readonly QuickIcon = Zap;
+  protected readonly ChevronIcon = ChevronRight;
+
+  // Calendrier éco : événement publié déplié au clic (null = tous repliés, style maquette compact)
+  protected readonly expandedEcoEvent = signal<string | null>(null);
+  protected toggleEcoEvent(name: string): void {
+    this.expandedEcoEvent.update((v) => (v === name ? null : name));
+  }
 
   // Timer
   private readonly now = signal(new Date());
