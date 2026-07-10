@@ -34,21 +34,21 @@
 .ctx-cell.inverted         { border-color: rgba(239,68,68,.25); background: rgba(239,68,68,.025); }
 .ctx-cell.inverted::before { background: rgba(239,68,68,.7); }
 
-.ctx-cell-name { font-size: 8.5px; font-family: var(--font-mono); color: var(--text-3); display: flex; align-items: center; justify-content: space-between; }
-.ctx-cell-val  { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--text); line-height: 1; margin: 2px 0; }
+.ctx-cell-name { font-size: 8.5px; font-family: var(--font-mono); color: var(--text-3); display: flex; align-items: baseline; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ctx-desc { color: var(--text-3); opacity: .7; font-size: 8px; }
+.ctx-desc.risk-off { color: var(--red); opacity: 1; }
+.ctx-desc.risk-on  { color: var(--green); opacity: 1; }
+.ctx-cell-line { display: flex; align-items: baseline; justify-content: space-between; gap: 4px; margin-top: 3px; }
+.ctx-cell-val  { font-family: var(--font-mono); font-size: 14px; font-weight: 700; color: var(--text); line-height: 1; font-variant-numeric: tabular-nums; }
 .ctx-cell-val.yellow { color: var(--yellow); }
 .ctx-cell-val.blue   { color: var(--blue-bright); }
 .ctx-cell-val.green  { color: var(--green); }
 .ctx-cell-val.red    { color: var(--red); }
 .ctx-cell-val.small  { font-size: 10.5px; }
-.ctx-cell-sub { font-size: 8px; color: var(--text-3); font-family: var(--font-mono); display: flex; align-items: center; gap: 3px; }
-.ctx-cell-sub.green { color: var(--green); }
-.ctx-cell-sub.red   { color: var(--red); }
+.ctx-cell-chg { font-size: 8.5px; color: var(--text-3); font-family: var(--font-mono); white-space: nowrap; }
+.ctx-cell-chg.green { color: var(--green); }
+.ctx-cell-chg.red   { color: var(--red); }
 .ctx-cell-name.red  { color: var(--red); }
-
-.dxy-badge { font-size: 7px; padding: 0 3px; border-radius: 2px; font-weight: 700; }
-.dxy-badge.risk-off { background: rgba(239,68,68,.11); color: var(--red); }
-.dxy-badge.risk-on  { background: rgba(16,185,129,.11); color: var(--green); }
 
 .ctx-breaking {
   grid-column: 1 / -1;

@@ -3,8 +3,10 @@ import {
   Component,
   DestroyRef,
   computed,
+  effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { RouterModule, RouterLink, RouterLinkActive } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -33,6 +35,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { UsersApi } from '../../../core/api/users.api';
 import { AmbassadorNotifService } from '../../../core/services/ambassador-notif.service';
 import { LiveModeService } from '../../../core/services/live-mode.service';
+import { SessionStore } from '../../../core/stores/session.store';
 import { DemoService } from '../../../core/services/demo.service';
 import { OnboardingComponent } from '../../../features/onboarding/onboarding.component';
 import { environment } from '../../../../environments/environment';
@@ -349,6 +352,7 @@ export class SidebarComponent {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly ambassadorNotif = inject(AmbassadorNotifService);
   protected readonly liveModeService = inject(LiveModeService);
+  private readonly sessionStore = inject(SessionStore);
   protected readonly demo = inject(DemoService);
   protected readonly landingUrl = environment.landingUrl;
 
@@ -412,8 +416,25 @@ export class SidebarComponent {
     return !!user && user.onboardingCompleted === false;
   });
 
+  // Mode focus « session live » : quand une session est active, on replie la
+  // sidebar en icônes (fidélité maquette). L'état manuel de l'utilisateur est
+  // mémorisé puis restauré à la clôture — la préférence localStorage n'est jamais
+  // écrasée (collapsed.set n'écrit pas le localStorage, seul toggleCollapse le fait).
+  private collapsedBeforeSession: boolean | null = null;
+
   constructor() {
     this.tradesStore.loadMonthlyCount();
+
+    effect(() => {
+      const active = this.sessionStore.hasActiveSession();
+      if (active && this.collapsedBeforeSession === null) {
+        this.collapsedBeforeSession = untracked(() => this.collapsed());
+        this.collapsed.set(true);
+      } else if (!active && this.collapsedBeforeSession !== null) {
+        this.collapsed.set(this.collapsedBeforeSession);
+        this.collapsedBeforeSession = null;
+      }
+    });
 
     const onFocus = () => {
       if (!this.auth.isAuthenticated()) return;

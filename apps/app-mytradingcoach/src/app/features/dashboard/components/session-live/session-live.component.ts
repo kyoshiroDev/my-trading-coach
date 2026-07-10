@@ -554,7 +554,7 @@ const EMOTIONS = [
 
           <div class="qt-pnl-row">
             <div>
-              <div class="qt-lbl">ENTRY (au clic)</div>
+              <div class="qt-lbl">ENTRÉE</div>
               <div class="qt-entry-readonly" data-testid="qt-entry-auto">
                 {{ livePrice() !== null ? livePricePlaceholder() : '—' }}
               </div>
