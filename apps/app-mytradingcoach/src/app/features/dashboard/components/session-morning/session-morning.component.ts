@@ -73,7 +73,7 @@ const DEMO_ECO_EVENTS: EcoEvent[] = [
             <textarea
               class="plan-input"
               placeholder="Plan du jour (optionnel) : ex. Breakouts NQ uniquement, max 5 trades..."
-              rows="2"
+              rows="5"
               [value]="planNote()"
               (input)="planNote.set($any($event.target).value)"
               (blur)="planNoteChanged.emit(planNote())"

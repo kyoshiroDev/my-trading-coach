@@ -53,10 +53,11 @@
 .plan-input-wrap { margin-top: 14px; }
 .plan-input {
   width: 100%;
+  min-height: 120px;
   background: var(--bg-3);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 10px 12px;
   color: var(--text);
   font-family: var(--font-body);
   font-size: 12px;
