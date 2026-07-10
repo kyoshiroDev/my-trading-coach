@@ -48,6 +48,7 @@ function setup(opts: SetupOpts = {}) {
       template: '<div></div>',
       styleUrls: [],
       styleUrl: undefined as unknown as string,
+      imports: [],
       schemas: [NO_ERRORS_SCHEMA],
     },
   });

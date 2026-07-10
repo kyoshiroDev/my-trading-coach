@@ -14,6 +14,7 @@ import { EcoCalendarApi, EcoEvent, EcoResultAnalysis } from '../../core/api/eco-
 import { translateEcoEvent } from '../../core/data/eco-event-translations';
 import { todayParis, toParisDateStr } from '../../core/utils/paris-date';
 import { UserStore } from '../../core/stores/user.store';
+import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 
 type EcoSession = 'asia' | 'europe' | 'us';
 interface SessionGroup { asia: EcoEvent[]; europe: EcoEvent[]; us: EcoEvent[]; }
@@ -39,6 +40,7 @@ interface TableRow {
   selector: 'mtc-eco-calendar-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [PlanModalComponent],
   templateUrl: './eco-calendar.component.html',
   styleUrl: './eco-calendar.component.css',
 })
@@ -49,6 +51,7 @@ export class EcoCalendarComponent implements OnInit {
 
   /** Analyse IA éco (bull/bear) = feature Starter+ (StarterGuard côté API). */
   protected readonly canAnalyze = this.userStore.isStarterOrAbove;
+  protected readonly showPlanModal = signal(false);
 
   protected readonly currentWeekStart = signal(this.getMonday(new Date()));
   protected readonly isLoading = signal(false);
