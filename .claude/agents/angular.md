@@ -41,7 +41,9 @@ src/app/
 │   │       └── session-live/     ← V2 : vue session active (live feed, quick trade, éco live)
 │   │           session-live.component.ts + .css
 │   ├── journal/            journal.component · trade-form.component · trade-row.component
-│   │                       csv-import.component   ← Premium uniquement
+│   │                       csv-import.component   ← import historique GRATUIT (tous plans)
+│   │                       (register : « 30 trades/mois hors import historique » ;
+│   │                        levier d'acquisition, dispo onboarding + bouton CSV du Journal)
 │   ├── analytics/          analytics.component · heatmap.component
 │   ├── ai-insights/        ai-insights.component · insight-card.component
 │   ├── weekly-debrief/     debrief.component · debrief-objectives · debrief-emotions

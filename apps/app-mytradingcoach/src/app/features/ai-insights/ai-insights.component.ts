@@ -88,7 +88,7 @@ function insightVariant(type: string): InsightVariant {
     <div class="content">
       @if (!userStore.isPremium()) {
         <div data-testid="ai-paywall" class="premium-paywall">
-          <div class="paywall-icon">✨</div>
+          <div class="paywall-icon"><lucide-icon [img]="SparklesIcon" [size]="40" /></div>
           <h3 class="paywall-title">Fonctionnalité Premium</h3>
           <p class="paywall-desc">
             Les IA Insights sont disponibles avec le plan Premium.<br />Analyse
