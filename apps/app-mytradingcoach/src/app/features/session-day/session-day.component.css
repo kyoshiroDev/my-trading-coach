@@ -163,8 +163,8 @@
 .card4-emoji   { font-family: var(--font-body); font-size: 26px; }
 .card4-l { font-size: 11px; color: var(--text-3); margin-top: 4px; }
 
-/* Ligne du haut : mood | score */
-.debrief-top-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+/* Bloc 2×2 : mood · score (rangée 1) · meilleur · pire (rangée 2) — une seule grille */
+.debrief-2x2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: stretch; }
 
 /* Tabs + badge clôture sur la même ligne */
 .tabs-and-badge { display: flex; align-items: center; gap: 14px; flex: 1; justify-content: center; }
@@ -213,7 +213,7 @@
 .sj-ic { display: inline-flex; color: var(--blue-bright); flex-shrink: 0; margin-top: 1px; }
 
 @media (max-width: 820px) {
-  .debrief-top-row { grid-template-columns: 1fr; }
+  .debrief-2x2 { grid-template-columns: 1fr; }
   .debrief-grid { grid-template-columns: 1fr; }
   .tabs-and-badge { flex-direction: column; gap: 8px; }
   .closed-badge { order: -1; }

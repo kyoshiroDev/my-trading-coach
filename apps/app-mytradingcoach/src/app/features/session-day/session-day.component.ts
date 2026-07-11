@@ -231,8 +231,8 @@ const EMOTION_COLORS: Record<string, string> = {
             <div class="debrief-grid">
               <div class="debrief-main">
 
-                <!-- Mood de fin + Score de discipline -->
-                <div class="debrief-top-row">
+                <!-- Bloc 2×2 : mood · score · meilleur · pire (une seule grille) -->
+                <div class="debrief-2x2">
                   <div class="debrief-mood-card">
                     <h3 class="debrief-mood-title">Comment tu te sens en fin de session ?</h3>
                     <div class="mood-row">
@@ -260,10 +260,6 @@ const EMOTION_COLORS: Record<string, string> = {
                       </div>
                     </div>
                   </div>
-                </div>
-
-                <!-- Meilleur / trade à revoir -->
-                <div class="debrief-two-col">
                   <div class="debrief-trade-card best">
                     <div class="dtc-header"><lucide-icon [img]="BestIcon" [size]="15" class="dtc-ic best" /><span class="dtc-title">Meilleur trade</span></div>
                     @if (bestTrade(); as t) {
