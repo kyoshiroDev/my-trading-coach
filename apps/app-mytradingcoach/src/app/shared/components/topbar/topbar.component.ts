@@ -80,16 +80,18 @@ import { TradesStore } from '../../../core/stores/trades.store';
           </div>
         }
 
-        <a
-          href="https://discord.gg/TDK2npvkSN"
-          target="_blank"
-          rel="noopener"
-          class="tb-discord"
-          title="Rejoindre la communauté Discord"
-        >
-          <lucide-icon [img]="DiscordIcon" [size]="15" class="tb-discord-ic" />
-          <span class="tb-discord-label">Discord</span>
-        </a>
+        @if (!heroHeader()) {
+          <a
+            href="https://discord.gg/TDK2npvkSN"
+            target="_blank"
+            rel="noopener"
+            class="tb-discord"
+            title="Rejoindre la communauté Discord"
+          >
+            <lucide-icon [img]="DiscordIcon" [size]="15" class="tb-discord-ic" />
+            <span class="tb-discord-label">Discord</span>
+          </a>
+        }
 
         @if (showNotifications()) {
           <button class="btn btn-ghost icon-btn" title="Notifications">
