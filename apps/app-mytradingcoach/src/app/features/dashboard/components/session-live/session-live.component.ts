@@ -122,11 +122,41 @@ const MOCK_MARKET_CTX: MarketContext = {
 
       <!-- Barre contextuelle marché FMP (Starter+) -->
       @if (marketCtx()) {
-        <div class="ctx-bar-wrap">
-          <mtc-market-context-bar
-            [ctx]="marketCtx()"
-            [breakingNews]="breakingNews()"
-          />
+        <!-- Carte marché unique : contexte marché + news ticker (source : LiveTab card) -->
+        <div class="mkt-card">
+          <div class="ctx-bar-wrap">
+            <mtc-market-context-bar
+              [ctx]="marketCtx()"
+              [breakingNews]="breakingNews()"
+            />
+          </div>
+          <!-- News live — ticker horizontal (Starter+), dans la carte marché -->
+          @if (isStarterOrAbove() && newsItems().length > 0) {
+            <div class="news-ticker">
+              <span class="news-ticker-lbl"><lucide-icon [img]="NewsIcon" [size]="13" class="news-live-ic" /> News live</span>
+              <div class="news-ticker-viewport">
+                <div class="news-ticker-track">
+                  @for (item of newsItems(); track item.publishedDate) {
+                    <button type="button" class="news-tick" (click)="openNews(item)">
+                      <span class="news-tick-tag">{{ item.symbol }}</span>
+                      <span class="news-tick-title">{{ item.title }}</span>
+                      <span class="news-tick-time">{{ formatNewsTime(item.publishedDate) }}</span>
+                    </button>
+                    <span class="news-tick-sep">·</span>
+                  }
+                  <!-- Copie pour un défilement continu (marquee) -->
+                  @for (item of newsItems(); track 'dup-' + item.publishedDate) {
+                    <button type="button" class="news-tick" tabindex="-1" aria-hidden="true" (click)="openNews(item)">
+                      <span class="news-tick-tag">{{ item.symbol }}</span>
+                      <span class="news-tick-title">{{ item.title }}</span>
+                      <span class="news-tick-time">{{ formatNewsTime(item.publishedDate) }}</span>
+                    </button>
+                    <span class="news-tick-sep" aria-hidden="true">·</span>
+                  }
+                </div>
+              </div>
+            </div>
+          }
         </div>
       } @else if (!isStarterOrAbove()) {
         <!-- Teaser flouté : le contexte marché live est réservé dès Starter -->
@@ -141,34 +171,6 @@ const MOCK_MARKET_CTX: MarketContext = {
               <span>Indices, DXY et taux US en direct — disponible dès Starter</span>
             </div>
             <button class="ctx-teaser-cta" type="button" (click)="showPlanModal.set(true)">Débloquer →</button>
-          </div>
-        </div>
-      }
-
-      <!-- News live — ticker horizontal (Starter+) -->
-      @if (isStarterOrAbove() && newsItems().length > 0) {
-        <div class="news-ticker">
-          <span class="news-ticker-lbl"><lucide-icon [img]="NewsIcon" [size]="13" class="news-live-ic" /> News live</span>
-          <div class="news-ticker-viewport">
-            <div class="news-ticker-track">
-              @for (item of newsItems(); track item.publishedDate) {
-                <button type="button" class="news-tick" (click)="openNews(item)">
-                  <span class="news-tick-tag">{{ item.symbol }}</span>
-                  <span class="news-tick-title">{{ item.title }}</span>
-                  <span class="news-tick-time">{{ formatNewsTime(item.publishedDate) }}</span>
-                </button>
-                <span class="news-tick-sep">·</span>
-              }
-              <!-- Copie pour un défilement continu (marquee) -->
-              @for (item of newsItems(); track 'dup-' + item.publishedDate) {
-                <button type="button" class="news-tick" tabindex="-1" aria-hidden="true" (click)="openNews(item)">
-                  <span class="news-tick-tag">{{ item.symbol }}</span>
-                  <span class="news-tick-title">{{ item.title }}</span>
-                  <span class="news-tick-time">{{ formatNewsTime(item.publishedDate) }}</span>
-                </button>
-                <span class="news-tick-sep" aria-hidden="true">·</span>
-              }
-            </div>
           </div>
         </div>
       }

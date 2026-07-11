@@ -140,16 +140,23 @@
   min-height: 0;
 }
 
-/* ── News live — ticker horizontal ── */
+/* ── Carte marché unique (contexte marché + news ticker) — source LiveTab ── */
+.mkt-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  flex-shrink: 0;
+}
+
+/* ── News live — ticker horizontal (dans la carte marché : ligne à bordure haute) ── */
 .news-ticker {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 8px 14px;
-  margin-bottom: 12px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
   flex-shrink: 0;
   min-width: 0;
   overflow: hidden;
@@ -919,7 +926,7 @@
 }
 
 /* Market context bar wrapper */
-.ctx-bar-wrap { padding: 10px 0 8px; flex-shrink: 0; }
+.ctx-bar-wrap { padding: 0; flex-shrink: 0; }
 
 /* Teaser flouté « Contexte marché » (FREE) — layout maquette derrière + cadenas */
 .ctx-teaser { position: relative; padding: 10px 0 8px; flex-shrink: 0; overflow: hidden; border-radius: 12px; }
