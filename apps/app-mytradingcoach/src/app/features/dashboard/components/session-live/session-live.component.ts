@@ -95,7 +95,7 @@ const MOCK_MARKET_CTX: MarketContext = {
   nq:  { value: 20142, changePct: 0.62, source: 'mock' },
   spx: { value: 5487, changePct: 0.31, source: 'mock' },
   dxy: { value: 104.18, changePct: -0.08, source: 'mock' },
-  treasury: { t2y: 4.07, t5y: 4.12, t10y: 4.38, t30y: 4.87 },
+  treasury: { t2y: 4.07, t2yChg: 0.02, t5y: 4.12, t5yChg: 0.01, t10y: 4.38, t10yChg: -0.01, t30y: 4.87, t30yChg: -0.02 },
   updatedAt: '2026-01-01T15:52:00Z',
 };
 

@@ -1,13 +1,13 @@
 .ctx-wrap { display: flex; flex-direction: column; gap: 5px; flex-shrink: 0; }
 
-.ctx-header { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); }
+.ctx-header { display: flex; align-items: center; gap: 6px; }
 .ctx-pulse-dot {
   width: 5px; height: 5px; border-radius: 50%;
   background: var(--green); animation: pulse 2s infinite; flex-shrink: 0;
 }
-.ctx-ic { display: inline-flex; color: var(--cyan); flex-shrink: 0; }
-.ctx-lbl { font-size: 9px; color: var(--text-3); text-transform: uppercase; letter-spacing: .7px; }
-.ctx-upd { font-size: 9px; color: var(--text-3); margin-left: auto; display: inline-flex; align-items: center; gap: 5px; }
+.ctx-ic { display: inline-flex; color: var(--text-3); flex-shrink: 0; }
+.ctx-lbl { font-family: var(--font-display); font-size: 12px; font-weight: 600; color: var(--text-3); }
+.ctx-upd { font-family: var(--font-mono); font-size: 9px; color: var(--text-3); margin-left: auto; display: inline-flex; align-items: center; gap: 5px; }
 
 .ctx-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; }
 
