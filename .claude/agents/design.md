@@ -161,6 +161,36 @@ body: padding 18px.
 }
 ```
 
+### Page « Ma session » — patterns réutilisables (session-day)
+
+La page `session` a un **header propre** (pas le `mtc-topbar` partagé). Source de vérité
+des valeurs : `maquettes/new/src/session-mockup-source/` (fichiers `.jsx`/`.css` lisibles ;
+le `.html` standalone n'est qu'une cible visuelle). Conteneur page : `padding: 16px 18px;
+display:flex; flex-direction:column; gap:14px; container-type:inline-size`.
+
+- **Header** (grille `1fr auto 1fr`) : titre `Space Grotesk 21px/700 -.4px` + sous-titre
+  `12.5px --text-3` (gauche) · segmented control (centre) · StartButton/SessionActivePill (droite).
+- **Segmented control** (`.mtc-sess-tabs`) : `bg-2` + `border`, radius 11, padding 4 ; onglet
+  `padding:8px 14px; radius:8; 12.5px`, actif = `bg-card` + `box-shadow:0 1px 3px rgba(0,0,0,.3)`
+  + icône `--blue-bright`, inactif = transparent `--text-3`. Onglets : Pré-session=`Sunrise`,
+  Session live=`Zap` (⚡), Débrief=`Moon`.
+- **StartButton** : `green-dim`→`--green` au hover (texte `#06281c`, glow `0 0 22px rgba(16,185,129,.35)`),
+  `Space Grotesk 14/700`, radius 11, border `rgba(16,185,129,.3)`.
+- **SessionActivePill** : `linear-gradient(135deg, var(--green-dim), var(--bg-card))` + border
+  `rgba(16,185,129,.3)`, point vert `mtc-blink 1.6s`, `SESSION ACTIVE` mono 10.5/600 `--green`,
+  timer mono 16/700, compte mono 10 `--text-3`, bouton « Clôturer » (icône `moon`) neutre.
+- **Cartes session** : `radius 14`, `padding 18` (banner `20`, contexte marché/live `14/16`).
+  Banner Pré-session = `linear-gradient(135deg, var(--blue-glow), var(--bg-card))`. Titre de
+  section = `Space Grotesk 13.5/600 --text` (pas de label mono uppercase pour ces titres).
+- **MoodRow** : boutons transparents `1px --border`, sélection = border `--blue-bright` + fond
+  `--blue-glow` + texte `--text` (jamais violet). Grille 2 col en fin de session, flex sinon.
+- **Contexte marché** (live) : cellule `bg-2`, radius 10, valeur mono 15px, variation mono
+  10.5/600 (vert/rouge), descripteur `--text-faint`, **sans barre d'accent**. Contexte + grille
+  + news ticker dans **une seule carte** (`.mkt-card`).
+- **Anti-pattern** : ne jamais réintroduire un accent `::before` sur ces cellules/cartes, ni le
+  violet sur la mood row de fin de session (bleu = sélection).
+- `@keyframes mtc-blink { 0%,100%{opacity:1} 50%{opacity:.25} }` — pill session active.
+
 ---
 
 ## Dimensions fixes
