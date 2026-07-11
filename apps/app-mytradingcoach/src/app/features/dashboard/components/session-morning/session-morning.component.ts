@@ -65,11 +65,11 @@ const DEMO_OBJECTIVES: DebriefObjective[] = [
       <!-- Colonne gauche : préparation + hier + objectifs -->
       <div class="daily-row" data-testid="yesterday-recap">
 
-        <!-- Card : Prépare ta session -->
-        <div class="card">
+        <!-- Card : Prépare ta session (banner gradient) -->
+        <div class="card mtc-banner">
           <div class="card-header">
             <div class="card-title">
-              <lucide-icon [img]="PrepareIcon" [size]="15" class="ch-ic" /> Prépare ta session
+              <lucide-icon [img]="PrepareIcon" [size]="17" class="ch-ic" /> Prépare ta session
             </div>
           </div>
           <div class="prepare-sub">Comment tu te sens ce matin ? Ça influence tes décisions.</div>
@@ -236,12 +236,12 @@ const DEMO_OBJECTIVES: DebriefObjective[] = [
       <!-- Eco Calendar — toujours affiché -->
       <div class="eco-card" data-testid="eco-calendar">
         <div class="card-header">
-          <div class="card-title">
-            <lucide-icon [img]="AgendaIcon" [size]="15" class="ch-ic" /> {{ nextTradingLabel() }}
+          <div class="card-title eco-title">
+            <lucide-icon [img]="AgendaIcon" [size]="16" class="ch-ic" /> {{ nextTradingLabel() }}
           </div>
           <div style="display:flex;align-items:center;gap:6px;">
             <span class="ai-badge">AI</span>
-            <span style="font-size:10px;color:var(--text-3);">Filtré pour ton profil</span>
+            <span style="font-size:10.5px;color:var(--text-3);">Filtré pour ton profil</span>
           </div>
         </div>
 
