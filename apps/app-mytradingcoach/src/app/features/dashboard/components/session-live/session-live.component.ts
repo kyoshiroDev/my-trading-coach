@@ -13,7 +13,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { LucideAngularModule, Newspaper, CalendarDays, ListOrdered, Zap, ChevronRight, Lock } from 'lucide-angular';
+import { LucideAngularModule, Newspaper, CalendarDays, ListOrdered, Sparkle, ChevronRight, Lock } from 'lucide-angular';
 import { Subject, forkJoin, interval, of, timer } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent, EcoResultAnalysis } from '../../../../core/api/eco-calendar.api';
@@ -148,7 +148,7 @@ const MOCK_MARKET_CTX: MarketContext = {
       <!-- News live — ticker horizontal (Starter+) -->
       @if (isStarterOrAbove() && newsItems().length > 0) {
         <div class="news-ticker">
-          <span class="news-ticker-lbl"><lucide-icon [img]="NewsIcon" [size]="13" class="ct-ic" /> News live</span>
+          <span class="news-ticker-lbl"><span class="news-live-dot"></span> NEWS LIVE</span>
           <div class="news-ticker-viewport">
             <div class="news-ticker-track">
               @for (item of newsItems(); track item.publishedDate) {
@@ -656,7 +656,7 @@ const MOCK_MARKET_CTX: MarketContext = {
             data-testid="quick-trade-submit"
             [disabled]="!canSubmitQuickTrade() || qtSubmitting()"
             (click)="submitQuickTrade()"
-          >{{ qtSubmitting() ? 'Capture…' : '⚡ Logger ce trade' }}</button>
+          >@if (qtSubmitting()) { Capture… } @else { <lucide-icon [img]="QuickIcon" [size]="14" /> Logger ce trade }</button>
           <div class="qt-hint">Asset + direction + émotion suffisent</div>
 
           <!-- Retour d'action (succès / erreur) — annoncé aux lecteurs d'écran -->
@@ -764,7 +764,7 @@ export class SessionLiveComponent {
   protected readonly NewsIcon  = Newspaper;
   protected readonly CalIcon   = CalendarDays;
   protected readonly FeedIcon  = ListOrdered;
-  protected readonly QuickIcon = Zap;
+  protected readonly QuickIcon = Sparkle;
   protected readonly ChevronIcon = ChevronRight;
   protected readonly LockIcon = Lock;
   protected readonly MOCK_MARKET_CTX = MOCK_MARKET_CTX;
@@ -872,9 +872,9 @@ export class SessionLiveComponent {
     const price = this.livePrice();
     if (price === null) return '0.00';
     const symbol = this.qtSelectedAsset()?.symbol ?? '';
-    if (symbol.includes('/') && !symbol.includes('USDT')) return price.toFixed(4);
-    if (price < 10) return price.toFixed(4);
-    return price.toFixed(2);
+    const dec = ((symbol.includes('/') && !symbol.includes('USDT')) || price < 10) ? 4 : 2;
+    // Milliers espace + décimale point (fidélité maquette : « 20 142.25 »)
+    return price.toLocaleString('fr-FR', { minimumFractionDigits: dec, maximumFractionDigits: dec }).replace(',', '.');
   });
 
   protected readonly pinnedKeys = computed(() => {

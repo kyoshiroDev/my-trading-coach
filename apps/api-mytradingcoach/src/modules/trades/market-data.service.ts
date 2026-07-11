@@ -54,7 +54,7 @@ export class MarketDataService {
     const empty = { price: null, changePct: null };
     const [nq, spx, dxy, treasury] = await Promise.allSettled([
       this.fetchYahooQuote('NQ=F'),
-      this.fetchFmpQuote('SPY'),
+      this.fetchYahooQuote('^GSPC'), // indice S&P 500 réel (~5 487), pas l'ETF SPY (~755)
       this.fetchYahooQuote('DX-Y.NYB'),
       this.fetchTreasuryRates(),
     ]);
@@ -65,7 +65,7 @@ export class MarketDataService {
 
     const result: MarketContextDto = {
       nq:       { value: nqV.price,  changePct: nqV.changePct,  source: 'yahoo' },
-      spx:      { value: spxV.price, changePct: spxV.changePct, source: 'fmp'   },
+      spx:      { value: spxV.price, changePct: spxV.changePct, source: 'yahoo' },
       dxy:      { value: dxyV.price, changePct: dxyV.changePct, source: 'yahoo' },
       treasury: treasury.status === 'fulfilled' ? treasury.value : TREASURY_EMPTY,
       updatedAt: new Date().toISOString(),
