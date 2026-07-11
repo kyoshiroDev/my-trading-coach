@@ -73,7 +73,6 @@ const EMOTION_COLORS: Record<string, string> = {
           <span class="sess-active-lbl">Session active</span>
           <span class="sess-timer-top">{{ store.sessionTimer() }}</span>
           @if (activeAccountLabel(); as label) {
-            <span class="sess-sep">·</span>
             <span class="sess-cnt-top">{{ label }}</span>
           }
         </div>

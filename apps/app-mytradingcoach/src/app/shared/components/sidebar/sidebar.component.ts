@@ -172,7 +172,7 @@ import { environment } from '../../../../environments/environment';
             <lucide-icon [img]="AiIcon" [size]="16" class="nav-icon" />
             <span class="nav-label">IA Insights</span>
             @if (!userStore.isPremium()) {
-              <span class="badge">AI</span>
+              <span class="badge premium">PREMIUM</span>
             }
           </a>
 
