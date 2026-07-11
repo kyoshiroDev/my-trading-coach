@@ -12,9 +12,8 @@ import {
 import { DatePipe, registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
 registerLocaleData(localeFr);
-import { LucideAngularModule, Play, Sunrise, Radio, Moon, Trophy, TrendingDown, NotebookPen } from 'lucide-angular';
+import { LucideAngularModule, Play, Sunrise, Zap, Moon, Trophy, TrendingDown, NotebookPen, Menu } from 'lucide-angular';
 import { SessionStore } from '../../core/stores/session.store';
-import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { SessionMorningComponent } from '../dashboard/components/session-morning/session-morning.component';
 import { SessionLiveComponent } from '../dashboard/components/session-live/session-live.component';
 import { LiveModeService } from '../../core/services/live-mode.service';
@@ -45,47 +44,10 @@ const EMOTION_COLORS: Record<string, string> = {
 @Component({
   selector: 'mtc-session-day',
   standalone: true,
-  imports: [DatePipe, LucideAngularModule, TopbarComponent, SessionMorningComponent, SessionLiveComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
+  imports: [DatePipe, LucideAngularModule, SessionMorningComponent, SessionLiveComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-day.component.css',
   template: `
-    <mtc-topbar title="Ma session" [period]="headerSub()" [showAddButton]="false" [heroHeader]="true">
-      <div class="seg-tabs" role="tablist" topbar-center>
-        <button class="seg-tab" role="tab" [class.active]="activeTab() === 'morning'"
-                [attr.aria-selected]="activeTab() === 'morning'"
-                data-testid="tab-morning" (click)="selectTab('morning')">
-          <lucide-icon [img]="MorningIcon" [size]="15" /> Pré-session
-        </button>
-        <button class="seg-tab" role="tab" [class.active]="activeTab() === 'live'"
-                [attr.aria-selected]="activeTab() === 'live'"
-                data-testid="tab-live" (click)="selectTab('live')">
-          <lucide-icon [img]="LiveIcon" [size]="15" /> Session live
-        </button>
-        <button class="seg-tab" role="tab" [class.active]="activeTab() === 'debrief'"
-                [attr.aria-selected]="activeTab() === 'debrief'"
-                data-testid="tab-debrief" (click)="selectTab('debrief')">
-          <lucide-icon [img]="DebriefIcon" [size]="15" /> Débrief
-        </button>
-      </div>
-      @if (store.activeSession()?.status === 'ACTIVE') {
-        <div class="sess-status-pill">
-          <div class="sess-pulse-dot"></div>
-          <span class="sess-active-lbl">Session active</span>
-          <span class="sess-timer-top">{{ store.sessionTimer() }}</span>
-          @if (activeAccountLabel(); as label) {
-            <span class="sess-cnt-top">{{ label }}</span>
-          }
-        </div>
-        <button class="sess-stop-top" (click)="confirmCloseOpen.set(true)">
-          <lucide-icon [img]="DebriefIcon" [size]="14" /> Clôturer
-        </button>
-      } @else {
-        <button class="sess-start-cta" data-testid="start-session" (click)="startSession()">
-          <lucide-icon [img]="PlayIcon" [size]="15" /> Démarrer la session
-        </button>
-      }
-    </mtc-topbar>
-
     <!-- Confirmation de clôture -->
     @if (confirmCloseOpen()) {
       <div class="confirm-overlay" role="button" tabindex="0"
@@ -105,6 +67,62 @@ const EMOTION_COLORS: Record<string, string> = {
     }
 
     <div class="session-page" [class.live-mode]="activeTab() === 'live'">
+
+      <!-- Header propre à la page (grille 1fr auto 1fr) — source 06-session-page.jsx -->
+      <header class="mtc-sess-header">
+        <div class="mtc-sess-h-left">
+          <div class="mtc-sess-titles">
+            <h1 class="mtc-sess-h1">Ma session</h1>
+            <div class="mtc-sess-sub">{{ headerSub() }}</div>
+          </div>
+        </div>
+
+        <div class="mtc-sess-h-center">
+          <div class="mtc-sess-tabs" role="tablist">
+            <button class="mtc-sess-tab" role="tab" [class.active]="activeTab() === 'morning'"
+                    [attr.aria-selected]="activeTab() === 'morning'"
+                    data-testid="tab-morning" (click)="selectTab('morning')">
+              <lucide-icon [img]="MorningIcon" [size]="14" class="mtc-tab-ic" />
+              <span class="mtc-tab-label">Pré-session</span>
+            </button>
+            <button class="mtc-sess-tab" role="tab" [class.active]="activeTab() === 'live'"
+                    [attr.aria-selected]="activeTab() === 'live'"
+                    data-testid="tab-live" (click)="selectTab('live')">
+              <lucide-icon [img]="LiveIcon" [size]="14" class="mtc-tab-ic" />
+              <span class="mtc-tab-label">Session live</span>
+            </button>
+            <button class="mtc-sess-tab" role="tab" [class.active]="activeTab() === 'debrief'"
+                    [attr.aria-selected]="activeTab() === 'debrief'"
+                    data-testid="tab-debrief" (click)="selectTab('debrief')">
+              <lucide-icon [img]="DebriefIcon" [size]="14" class="mtc-tab-ic" />
+              <span class="mtc-tab-label">Débrief</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="mtc-sess-pill">
+          @if (store.activeSession()?.status === 'ACTIVE') {
+            <div class="mtc-active-pill">
+              <div class="mtc-ap-left">
+                <span class="mtc-ap-dot"></span>
+                <span class="mtc-ap-lbl">SESSION ACTIVE</span>
+              </div>
+              <span class="mtc-ap-timer">{{ store.sessionTimer() }}</span>
+              @if (activeAccountLabel(); as label) {
+                <span class="mtc-pill-acct">{{ label }}</span>
+              }
+              <button class="mtc-ap-close" (click)="confirmCloseOpen.set(true)">
+                <lucide-icon [img]="DebriefIcon" [size]="13" class="mtc-ap-close-ic" /> Clôturer
+              </button>
+            </div>
+          } @else {
+            <button class="mtc-start-btn" data-testid="start-session" (click)="startSession()">
+              <lucide-icon [img]="PlayIcon" [size]="16" /> Démarrer la session
+            </button>
+          }
+        </div>
+      </header>
+
       @if (activeTab() === 'debrief' && store.activeSession()?.status === 'CLOSED') {
         <div class="session-tabs-row">
           <div class="closed-badge">
@@ -386,8 +404,9 @@ export class SessionDayComponent implements OnInit, OnDestroy {
 
   // Icônes Lucide (segmented control + actions du shell).
   protected readonly PlayIcon    = Play;
+  protected readonly MenuIcon    = Menu;
   protected readonly MorningIcon = Sunrise;
-  protected readonly LiveIcon    = Radio;
+  protected readonly LiveIcon    = Zap;
   protected readonly DebriefIcon = Moon;
   protected readonly BestIcon    = Trophy;
   protected readonly WorstIcon   = TrendingDown;
