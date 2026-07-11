@@ -148,7 +148,7 @@ const MOCK_MARKET_CTX: MarketContext = {
       <!-- News live — ticker horizontal (Starter+) -->
       @if (isStarterOrAbove() && newsItems().length > 0) {
         <div class="news-ticker">
-          <span class="news-ticker-lbl"><span class="news-live-dot"></span> NEWS LIVE</span>
+          <span class="news-ticker-lbl"><lucide-icon [img]="NewsIcon" [size]="13" class="news-live-ic" /> News live</span>
           <div class="news-ticker-viewport">
             <div class="news-ticker-track">
               @for (item of newsItems(); track item.publishedDate) {
