@@ -12,7 +12,7 @@ import {
 import { DatePipe, registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
 registerLocaleData(localeFr);
-import { LucideAngularModule, Play, Sunrise, Activity, Moon, Trophy, TrendingDown, NotebookPen } from 'lucide-angular';
+import { LucideAngularModule, Play, Sunrise, Radio, Moon, Trophy, TrendingDown, NotebookPen } from 'lucide-angular';
 import { SessionStore } from '../../core/stores/session.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { SessionMorningComponent } from '../dashboard/components/session-morning/session-morning.component';
@@ -387,7 +387,7 @@ export class SessionDayComponent implements OnInit, OnDestroy {
   // Icônes Lucide (segmented control + actions du shell).
   protected readonly PlayIcon    = Play;
   protected readonly MorningIcon = Sunrise;
-  protected readonly LiveIcon    = Activity;
+  protected readonly LiveIcon    = Radio;
   protected readonly DebriefIcon = Moon;
   protected readonly BestIcon    = Trophy;
   protected readonly WorstIcon   = TrendingDown;

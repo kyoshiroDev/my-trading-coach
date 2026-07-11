@@ -13,7 +13,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { LucideAngularModule, Newspaper, CalendarDays, ListOrdered, Zap, ChevronRight } from 'lucide-angular';
+import { LucideAngularModule, Newspaper, CalendarDays, ListOrdered, Zap, ChevronRight, Lock } from 'lucide-angular';
 import { Subject, forkJoin, interval, of, timer } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent, EcoResultAnalysis } from '../../../../core/api/eco-calendar.api';
@@ -26,6 +26,7 @@ import { MarketContextBarComponent } from '../market-context-bar/market-context-
 import { EcoSocketService } from '../../../../core/services/eco-socket.service';
 import { UserStore } from '../../../../core/stores/user.store';
 import { PremiumLockComponent } from '../../../../shared/components/premium-lock/premium-lock.component';
+import { PlanModalComponent } from '../../../../shared/components/plan-modal/plan-modal.component';
 import { SetupsStore } from '../../../../core/stores/setups.store';
 import { formatDuration } from '../../../../core/utils/time.utils';
 import { parseDecimal } from '../../../../core/utils/parse-decimal';
@@ -88,12 +89,22 @@ function currencyToInstruments(currency: string | null | undefined): string {
   return `USD/${c}`;
 }
 
+// Mock affiché FLOUTÉ derrière le teaser « Contexte marché » en FREE (jamais de vraie
+// donnée → pas de fuite). Le contexte marché live est Starter+ (plans.md).
+const MOCK_MARKET_CTX: MarketContext = {
+  nq:  { value: 20142, changePct: 0.62, source: 'mock' },
+  spx: { value: 5487, changePct: 0.31, source: 'mock' },
+  dxy: { value: 104.18, changePct: -0.08, source: 'mock' },
+  treasury: { t2y: 4.07, t5y: 4.12, t10y: 4.38, t30y: 4.87 },
+  updatedAt: '2026-01-01T15:52:00Z',
+};
+
 @Component({
   selector: 'mtc-session-live',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-live.component.css',
-  imports: [LucideAngularModule, SessionRecapComponent, MarketContextBarComponent, LiveNewsComponent, LiveFeedComponent, NumericInputDirective, PremiumLockComponent, EmotionEmojiPipe],
+  imports: [LucideAngularModule, SessionRecapComponent, MarketContextBarComponent, LiveNewsComponent, LiveFeedComponent, NumericInputDirective, PremiumLockComponent, PlanModalComponent, EmotionEmojiPipe],
   template: `
     <div data-testid="session-live-view">
 
@@ -109,13 +120,28 @@ function currencyToInstruments(currency: string | null | undefined): string {
         </div>
       } @else {
 
-      <!-- Barre contextuelle marché FMP -->
+      <!-- Barre contextuelle marché FMP (Starter+) -->
       @if (marketCtx()) {
         <div class="ctx-bar-wrap">
           <mtc-market-context-bar
             [ctx]="marketCtx()"
             [breakingNews]="breakingNews()"
           />
+        </div>
+      } @else if (!isStarterOrAbove()) {
+        <!-- Teaser flouté : le contexte marché live est réservé dès Starter -->
+        <div class="ctx-teaser">
+          <div class="ctx-teaser-preview" aria-hidden="true">
+            <mtc-market-context-bar [ctx]="MOCK_MARKET_CTX" [breakingNews]="null" />
+          </div>
+          <div class="ctx-teaser-overlay">
+            <span class="ctx-teaser-lock"><lucide-icon [img]="LockIcon" [size]="16" /></span>
+            <div class="ctx-teaser-txt">
+              <strong>Contexte marché live</strong>
+              <span>Indices, DXY et taux US en direct — disponible dès Starter</span>
+            </div>
+            <button class="ctx-teaser-cta" type="button" (click)="showPlanModal.set(true)">Débloquer →</button>
+          </div>
         </div>
       }
 
@@ -700,6 +726,10 @@ function currencyToInstruments(currency: string | null | undefined): string {
     }
 
     </div>
+
+    @if (showPlanModal()) {
+      <mtc-plan-modal (closed)="showPlanModal.set(false)" />
+    }
   `,
 })
 export class SessionLiveComponent {
@@ -736,6 +766,9 @@ export class SessionLiveComponent {
   protected readonly FeedIcon  = ListOrdered;
   protected readonly QuickIcon = Zap;
   protected readonly ChevronIcon = ChevronRight;
+  protected readonly LockIcon = Lock;
+  protected readonly MOCK_MARKET_CTX = MOCK_MARKET_CTX;
+  protected readonly showPlanModal = signal(false);
 
   // Calendrier éco : événement publié déplié au clic (null = tous repliés, style maquette compact)
   protected readonly expandedEcoEvent = signal<string | null>(null);
