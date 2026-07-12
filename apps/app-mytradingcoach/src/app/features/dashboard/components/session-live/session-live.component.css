@@ -805,22 +805,14 @@
   cursor: pointer;
 }
 
-@media (max-width: 1400px) {
-  .live-layout {
-    grid-template-columns: 1fr;
-    grid-template-rows: none;
-    overflow-y: auto;
-  }
-  .mini-stats-row { grid-template-columns: repeat(4, 1fr); }
+/* Container-queries — répondent à la largeur du conteneur .session-page (source §6).
+   ≤1200 : zone de travail 1 colonne · ≤680 : calendrier/feed 1 colonne.
+   Les mini-stats sont en auto-fit (min 130px) → reflow automatique. */
+@container (max-width: 1200px) {
+  .live-layout { grid-template-columns: 1fr; grid-template-rows: none; overflow-y: auto; }
 }
-@media (max-width: 768px) {
-  .live-layout {
-    grid-template-columns: 1fr;
-    grid-template-rows: none;
-    overflow-y: auto;
-  }
+@container (max-width: 680px) {
   .live-cols { grid-template-columns: 1fr; }
-  .mini-stats-row { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* ── Eco release alert (WebSocket temps réel) ─────────────────────────────── */
@@ -965,7 +957,7 @@
   transition: filter .15s;
 }
 .ctx-teaser-cta:hover { filter: brightness(1.1); }
-@media (max-width: 768px) {
+@container (max-width: 680px) {
   .ctx-teaser-overlay { flex-direction: column; gap: 8px; padding: 12px; text-align: center; }
 }
 

@@ -473,7 +473,8 @@
 .eco-empty-text { font-size: 11px; color: var(--text-3); line-height: 1.5; }
 
 /* Responsive : mobile → 1 colonne, scroll page normal (aligné container-query maquette ≤820px) */
-@media (max-width: 820px) {
+/* Container-query — répond à la largeur du conteneur .session-page (source §6). */
+@container (max-width: 820px) {
   :host { display: block; overflow: visible; }
   [data-testid="session-morning-view"] { display: block; overflow: visible; }
   .session-layout { grid-template-columns: 1fr; overflow: visible; min-height: auto; }
