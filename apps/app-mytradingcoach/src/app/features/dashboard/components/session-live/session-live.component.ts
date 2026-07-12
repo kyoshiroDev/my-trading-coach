@@ -13,7 +13,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { LucideAngularModule, Newspaper, CalendarDays, ListOrdered, Sparkle, ChevronRight, Lock } from 'lucide-angular';
+import { LucideAngularModule, Newspaper, CalendarDays, ListOrdered, Zap, ChevronRight, Lock } from 'lucide-angular';
 import { Subject, forkJoin, interval, of, timer } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent, EcoResultAnalysis } from '../../../../core/api/eco-calendar.api';
@@ -766,7 +766,7 @@ export class SessionLiveComponent {
   protected readonly NewsIcon  = Newspaper;
   protected readonly CalIcon   = CalendarDays;
   protected readonly FeedIcon  = ListOrdered;
-  protected readonly QuickIcon = Sparkle;
+  protected readonly QuickIcon = Zap;
   protected readonly ChevronIcon = ChevronRight;
   protected readonly LockIcon = Lock;
   protected readonly MOCK_MARKET_CTX = MOCK_MARKET_CTX;
