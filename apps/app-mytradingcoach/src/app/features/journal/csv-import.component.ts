@@ -317,7 +317,7 @@ export class CsvImportComponent {
   );
 
   /** Au-delà : un total global réparti au prorata donnerait des frais faux. */
-  private readonly FEES_INPUT_MAX_TRADES = 100;
+  private readonly FEES_INPUT_MAX_TRADES = 5000;
 
   constructor() {
     if (!this.accountStore.loaded()) this.accountStore.load();
