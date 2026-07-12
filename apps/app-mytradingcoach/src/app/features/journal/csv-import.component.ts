@@ -83,7 +83,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
               }
               @if (result()!.limitBlocked > 0) {
                 <p class="result-sub result-limit">
-                  {{ result()!.limitBlocked }} non importé(s) — limite FREE atteinte
+                  {{ result()!.limitBlocked }} non importé(s) : limite FREE atteinte
                   (30/mois). Passe Starter pour l'illimité.
                 </p>
               }
@@ -175,14 +175,14 @@ const EMOTION_EMOJIS: Record<string, string> = {
               @switch (feesDisabledReason()) {
                 @case ('has_fees_column') {
                   <p class="fees-note">
-                    ✓ Frais détectés dans ton fichier — ils sont déjà pris en
+                    ✓ Frais détectés dans ton fichier : ils sont déjà pris en
                     compte. Pas besoin de les saisir.
                   </p>
                 }
                 @case ('too_many') {
                   <p class="fees-note">
                     Import volumineux (plus de 100 trades). Les frais ne peuvent
-                    pas être saisis en un total global sur autant de trades —
+                    pas être saisis en un total global sur autant de trades :
                     importe par période plus courte pour les inclure.
                   </p>
                 }
@@ -317,7 +317,7 @@ export class CsvImportComponent {
   );
 
   /** Au-delà : un total global réparti au prorata donnerait des frais faux. */
-  private readonly FEES_INPUT_MAX_TRADES = 100;
+  private readonly FEES_INPUT_MAX_TRADES = 5000;
 
   constructor() {
     if (!this.accountStore.loaded()) this.accountStore.load();

@@ -9,18 +9,18 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { DatePipe, DecimalPipe, registerLocaleData } from '@angular/common';
+import { DatePipe, registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
 registerLocaleData(localeFr);
+import { LucideAngularModule, Play, Sunrise, Zap, Moon, Trophy, TrendingDown, NotebookPen, Menu } from 'lucide-angular';
 import { SessionStore } from '../../core/stores/session.store';
-import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { SessionMorningComponent } from '../dashboard/components/session-morning/session-morning.component';
 import { SessionLiveComponent } from '../dashboard/components/session-live/session-live.component';
 import { LiveModeService } from '../../core/services/live-mode.service';
 import { MoodState, SessionApi, SessionTrade } from '../../core/api/session.api';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
+import { TradingAccount } from '../../core/api/accounts.api';
 import { UserStore } from '../../core/stores/user.store';
-import { AccountSelectorComponent } from '../../shared/components/account-selector/account-selector.component';
 import { DebriefObjective } from '../../core/api/debrief.api';
 import { evaluateObjectiveCheck } from './objective-check.util';
 import { EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe } from '../../shared/pipes';
@@ -44,28 +44,10 @@ const EMOTION_COLORS: Record<string, string> = {
 @Component({
   selector: 'mtc-session-day',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, TopbarComponent, SessionMorningComponent, SessionLiveComponent, AccountSelectorComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
+  imports: [DatePipe, LucideAngularModule, SessionMorningComponent, SessionLiveComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-day.component.css',
   template: `
-    <mtc-topbar title="Ma session" [showAddButton]="false">
-      @if (activeTab() === 'live' && store.activeSession()?.status === 'ACTIVE') {
-        <div class="sess-status-pill">
-          <div class="sess-pulse-dot"></div>
-          <span class="sess-timer-top">{{ store.sessionTimer() }}</span>
-          <span class="sess-sep">·</span>
-          <span class="sess-cnt-top">{{ store.todayTrades().length }} trade{{ store.todayTrades().length > 1 ? 's' : '' }}</span>
-          <span class="sess-sep">·</span>
-          <span class="sess-pnl-top" [style.color]="(store.todayStats()?.totalPnl ?? 0) >= 0 ? 'var(--green)' : 'var(--red)'">
-            {{ (store.todayStats()?.totalPnl ?? 0) >= 0 ? '+' : '' }}{{ (store.todayStats()?.totalPnl ?? 0).toFixed(0) }}$
-          </span>
-          <span class="sess-sep">·</span>
-          <span class="sess-emo-top">{{ store.moodEmoji(store.activeSession()?.moodStart) }}</span>
-        </div>
-        <button class="sess-stop-top" (click)="confirmCloseOpen.set(true)">🌙 Clôturer</button>
-      }
-    </mtc-topbar>
-
     <!-- Confirmation de clôture -->
     @if (confirmCloseOpen()) {
       <div class="confirm-overlay" role="button" tabindex="0"
@@ -85,57 +67,76 @@ const EMOTION_COLORS: Record<string, string> = {
     }
 
     <div class="session-page" [class.live-mode]="activeTab() === 'live'">
-      <div class="page-header">
-        <div class="greeting-block">
-          <h1 class="greeting-title">Ma session</h1>
-          <div class="greeting-sub" style="text-transform:capitalize">
-            {{ today | date:'EEEE d MMMM':'':'fr-FR' }}
-            @if (activeAccountLabel(); as label) {
-              <span class="sd-acct-chip">· {{ label }}</span>
-            }
+
+      <!-- Header propre à la page (grille 1fr auto 1fr) — source 06-session-page.jsx -->
+      <header class="mtc-sess-header">
+        <div class="mtc-sess-h-left">
+          <div class="mtc-sess-titles">
+            <h1 class="mtc-sess-h1">Ma session</h1>
+            <div class="mtc-sess-sub">{{ headerSub() }}</div>
           </div>
         </div>
-        <div class="tabs-and-badge">
-          <div class="tabs-block">
-            <button class="session-tab" [class.active]="activeTab() === 'morning'"
+
+        <div class="mtc-sess-h-center">
+          <div class="mtc-sess-tabs" role="tablist">
+            <button class="mtc-sess-tab" role="tab" [class.active]="activeTab() === 'morning'"
+                    [attr.aria-selected]="activeTab() === 'morning'"
                     data-testid="tab-morning" (click)="selectTab('morning')">
-              ☀️ Pré-session
+              <lucide-icon [img]="MorningIcon" [size]="14" class="mtc-tab-ic" />
+              <span class="mtc-tab-label">Pré-session</span>
             </button>
-            <button class="session-tab" [class.active]="activeTab() === 'live'"
+            <button class="mtc-sess-tab" role="tab" [class.active]="activeTab() === 'live'"
+                    [attr.aria-selected]="activeTab() === 'live'"
                     data-testid="tab-live" (click)="selectTab('live')">
-              ⚡ Session live
+              <lucide-icon [img]="LiveIcon" [size]="14" class="mtc-tab-ic" />
+              <span class="mtc-tab-label">Session live</span>
             </button>
-            <button class="session-tab" [class.active]="activeTab() === 'debrief'"
+            <button class="mtc-sess-tab" role="tab" [class.active]="activeTab() === 'debrief'"
+                    [attr.aria-selected]="activeTab() === 'debrief'"
                     data-testid="tab-debrief" (click)="selectTab('debrief')">
-              🌙 Débrief
+              <lucide-icon [img]="DebriefIcon" [size]="14" class="mtc-tab-ic" />
+              <span class="mtc-tab-label">Débrief</span>
             </button>
           </div>
-          @if (activeTab() === 'debrief' && store.activeSession()?.status === 'CLOSED') {
-            <div class="closed-badge">
-              <span class="cb-ic">✓</span>
-              <div>
-                <div class="cb-t">Session clôturée</div>
-                <div class="cb-d">Durée : {{ sessionDuration() }}</div>
+        </div>
+
+        <div class="mtc-sess-pill">
+          @if (store.activeSession()?.status === 'ACTIVE') {
+            <div class="mtc-active-pill">
+              <div class="mtc-ap-left">
+                <span class="mtc-ap-dot"></span>
+                <span class="mtc-ap-lbl">SESSION ACTIVE</span>
               </div>
-              @if (savedFlash()) { <span class="saved-pill">✓ Enregistré</span> }
+              <span class="mtc-ap-timer">{{ store.sessionTimer() }}</span>
+              @if (activeAccountLabel(); as label) {
+                <span class="mtc-pill-acct">{{ label }}</span>
+              }
+              <button class="mtc-ap-close" (click)="confirmCloseOpen.set(true)">
+                <lucide-icon [img]="DebriefIcon" [size]="13" class="mtc-ap-close-ic" /> Clôturer
+              </button>
             </div>
+          } @else {
+            <button class="mtc-start-btn" data-testid="start-session" (click)="startSession()">
+              <lucide-icon [img]="PlayIcon" [size]="16" /> Démarrer la session
+            </button>
           }
         </div>
-        <div class="header-spacer"></div>
-      </div>
+      </header>
+
+      @if (activeTab() === 'debrief' && store.activeSession()?.status === 'CLOSED') {
+        <div class="session-tabs-row">
+          <div class="closed-badge">
+            <span class="cb-ic">✓</span>
+            <div>
+              <div class="cb-t">Session clôturée</div>
+              <div class="cb-d">Durée : {{ sessionDuration() }}</div>
+            </div>
+            @if (savedFlash()) { <span class="saved-pill">✓ Enregistré</span> }
+          </div>
+        </div>
+      }
 
       @if (activeTab() === 'morning') {
-        @if (userStore.isStarterOrAbove() && selectedAccount.activeAccounts().length > 0) {
-          <div class="sd-acct-bar">
-            <span class="sd-acct-bar-lbl">Compte de la session</span>
-            <mtc-account-selector />
-            @if (needsAccount()) {
-              <span class="sd-acct-bar-hint" data-testid="account-required">
-                Choisis un compte précis (pas « Tous les comptes ») pour lancer la session.
-              </span>
-            }
-          </div>
-        }
         <mtc-session-morning
           [yesterdayRecap]="store.yesterdayRecap()"
           [objectives]="store.currentObjectives()"
@@ -146,7 +147,26 @@ const EMOTION_COLORS: Record<string, string> = {
           (sessionStarted)="startSession()"
           (objectiveNoteAdded)="store.updateObjectiveNote($event)"
           (planNoteChanged)="store.savePlanNote($event)"
-        />
+        >
+          @if (userStore.isStarterOrAbove() && selectedAccount.activeAccounts().length > 0) {
+            <div session-account class="sd-acct-row">
+              <span class="sd-acct-lbl">Compte de la session</span>
+              <select class="sd-acct-select" data-testid="session-account-select"
+                      [value]="selectedAccount.selectedAccountId()"
+                      (change)="selectedAccount.select($any($event.target).value)">
+                <option value="all">Tous les comptes</option>
+                @for (a of selectedAccount.activeAccounts(); track a.id) {
+                  <option [value]="a.id">{{ acctOption(a) }}</option>
+                }
+              </select>
+              @if (needsAccount()) {
+                <span class="sd-acct-hint" data-testid="account-required">
+                  Choisis un compte précis (pas « Tous les comptes ») pour lancer la session.
+                </span>
+              }
+            </div>
+          }
+        </mtc-session-morning>
       }
 
       @if (activeTab() === 'live') {
@@ -179,7 +199,7 @@ const EMOTION_COLORS: Record<string, string> = {
               <div class="debrief-zero-banner">
                 <span class="dzb-icon">🧘</span>
                 <div>
-                  <div class="dzb-title">Pas de trade aujourd'hui — et c'est OK</div>
+                  <div class="dzb-title">Pas de trade aujourd'hui, et c'est OK</div>
                   <div class="dzb-sub">Parfois, la meilleure décision est de rester à l'écart quand il n'y a pas de setup clair. Savoir ne pas trader est une vraie compétence.</div>
                 </div>
               </div>
@@ -207,67 +227,62 @@ const EMOTION_COLORS: Record<string, string> = {
               </div>
             </div>
 
-            <!-- ÉMOTIONS + SCORE -->
-            <div class="debrief-top-row">
-              <div class="debrief-mood-card">
-                <h3 class="debrief-mood-title">Comment tu te sens en fin de session ?</h3>
-                <div class="mood-row">
-                  @for (mood of moods; track mood.value) {
-                    <button class="mood-btn" [class.sel]="closeMood() === mood.value"
-                            (click)="selectCloseMood(mood.value)">
-                      {{ mood.emoji }} {{ mood.label }}
-                    </button>
-                  }
-                </div>
-              </div>
-              <div class="debrief-card debrief-score-card">
-                <div class="score-ring-wrap">
-                  <div class="score-ring"
-                       [style.background]="'conic-gradient(' + scoreColor() + ' ' + disciplineScore() + '%, var(--bg-3) 0)'">
-                    <div class="score-ring-inner">
-                      <span class="score-val">{{ disciplineScore() }}</span>
-                      <span class="score-unit">/100</span>
+            <!-- Corps : analyse (gauche) | journal pleine hauteur (droite) -->
+            <div class="debrief-grid">
+              <div class="debrief-main">
+
+                <!-- Bloc 2×2 : mood · score · meilleur · pire (une seule grille) -->
+                <div class="debrief-2x2">
+                  <div class="debrief-mood-card">
+                    <h3 class="debrief-mood-title">Comment tu te sens en fin de session ?</h3>
+                    <div class="mood-row">
+                      @for (mood of moods; track mood.value) {
+                        <button class="mood-btn" [class.sel]="closeMood() === mood.value"
+                                (click)="selectCloseMood(mood.value)">
+                          <span class="mood-emo">{{ mood.emoji }}</span> {{ mood.label }}
+                        </button>
+                      }
                     </div>
                   </div>
-                  <div class="score-label-wrap">
-                    <div class="score-label" [style.color]="scoreColor()">{{ disciplineLabel() }}</div>
-                    <div class="score-desc">Score de discipline</div>
-                    <div class="score-hint">{{ disciplinePhrase() }}</div>
+                  <div class="debrief-card debrief-score-card">
+                    <div class="score-ring-wrap">
+                      <div class="score-ring"
+                           [style.background]="'conic-gradient(' + scoreColor() + ' ' + disciplineScore() + '%, var(--bg-3) 0)'">
+                        <div class="score-ring-inner">
+                          <span class="score-val">{{ disciplineScore() }}</span>
+                          <span class="score-unit">/100</span>
+                        </div>
+                      </div>
+                      <div class="score-label-wrap">
+                        <div class="score-label" [style.color]="scoreColor()">{{ disciplineLabel() }}</div>
+                        <div class="score-desc">Score de discipline</div>
+                        <div class="score-hint">{{ disciplinePhrase() }}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="debrief-trade-card best">
+                    <div class="dtc-header"><lucide-icon [img]="BestIcon" [size]="15" class="dtc-ic best" /><span class="dtc-title">Meilleur trade</span></div>
+                    @if (bestTrade(); as t) {
+                      <div class="dtc-asset">{{ t.asset }} <span class="dtc-side" [class]="t.side.toLowerCase()">{{ t.side }}</span></div>
+                      <div class="dtc-row">
+                        <span class="dtc-time">{{ t.tradedAt | date:'HH:mm' }}</span>
+                        <span>{{ t.emotion | emotionEmoji }}</span>
+                        <span class="dtc-pnl" [style.color]="t.pnl | pnlColor">{{ t.pnl | pnlFormat }}</span>
+                      </div>
+                    } @else { <div class="dtc-empty">Aucun trade clôturé aujourd'hui</div> }
+                  </div>
+                  <div class="debrief-trade-card worst">
+                    <div class="dtc-header"><lucide-icon [img]="WorstIcon" [size]="15" class="dtc-ic worst" /><span class="dtc-title">Trade à revoir</span></div>
+                    @if (worstTrade(); as t) {
+                      <div class="dtc-asset">{{ t.asset }} <span class="dtc-side" [class]="t.side.toLowerCase()">{{ t.side }}</span></div>
+                      <div class="dtc-row">
+                        <span class="dtc-time">{{ t.tradedAt | date:'HH:mm' }}</span>
+                        <span>{{ t.emotion | emotionEmoji }}</span>
+                        <span class="dtc-pnl" [style.color]="t.pnl | pnlColor">{{ t.pnl | pnlFormat }}</span>
+                      </div>
+                    } @else { <div class="dtc-empty">Rien à analyser, journée sans trade</div> }
                   </div>
                 </div>
-              </div>
-            </div>
-
-
-            <!-- Meilleur / trade à revoir -->
-            <div class="debrief-two-col">
-              <div class="debrief-trade-card best">
-                <div class="dtc-header"><span class="dtc-icon">🏆</span><span class="dtc-title">Meilleur trade</span></div>
-                @if (bestTrade(); as t) {
-                  <div class="dtc-asset">{{ t.asset }} <span class="dtc-side" [class]="t.side.toLowerCase()">{{ t.side }}</span></div>
-                  <div class="dtc-row">
-                    <span class="dtc-time">{{ t.tradedAt | date:'HH:mm' }}</span>
-                    <span>{{ t.emotion | emotionEmoji }}</span>
-                    <span class="dtc-pnl" [style.color]="t.pnl | pnlColor">{{ t.pnl | pnlFormat }}</span>
-                  </div>
-                } @else { <div class="dtc-empty">Aucun trade clôturé aujourd'hui</div> }
-              </div>
-              <div class="debrief-trade-card worst">
-                <div class="dtc-header"><span class="dtc-icon">📉</span><span class="dtc-title">Trade à revoir</span></div>
-                @if (worstTrade(); as t) {
-                  <div class="dtc-asset">{{ t.asset }} <span class="dtc-side" [class]="t.side.toLowerCase()">{{ t.side }}</span></div>
-                  <div class="dtc-row">
-                    <span class="dtc-time">{{ t.tradedAt | date:'HH:mm' }}</span>
-                    <span>{{ t.emotion | emotionEmoji }}</span>
-                    <span class="dtc-pnl" [style.color]="t.pnl | pnlColor">{{ t.pnl | pnlFormat }}</span>
-                  </div>
-                } @else { <div class="dtc-empty">Rien à analyser — journée sans trade</div> }
-              </div>
-            </div>
-
-            <!-- Trio : émotions+objectifs GAUCHE / journal DROITE -->
-            <div class="debrief-trio">
-              <div class="trio-left">
 
                 <!-- États émotionnels -->
                 <div class="debrief-card">
@@ -326,10 +341,10 @@ const EMOTION_COLORS: Record<string, string> = {
               </div>
 
               <!-- Journal pleine hauteur DROITE -->
-              <div class="trio-right">
+              <div class="debrief-side">
                 <div class="session-journal journal-card">
                   <div class="sj-header">
-                    <span class="sj-icon">📓</span>
+                    <lucide-icon [img]="JournalIcon" [size]="16" class="sj-ic" />
                     <div>
                       <div class="sj-title">Ton journal de session</div>
                       <div class="sj-sub">Écris librement : ce qui a marché, tes émotions, ce que tu retiens. C'est ton espace.</div>
@@ -383,6 +398,25 @@ export class SessionDayComponent implements OnInit, OnDestroy {
   protected readonly moods             = MOODS;
   protected readonly today             = new Date();
 
+  // Icônes Lucide (segmented control + actions du shell).
+  protected readonly PlayIcon    = Play;
+  protected readonly MenuIcon    = Menu;
+  protected readonly MorningIcon = Sunrise;
+  protected readonly LiveIcon    = Zap;
+  protected readonly DebriefIcon = Moon;
+  protected readonly BestIcon    = Trophy;
+  protected readonly WorstIcon   = TrendingDown;
+  protected readonly JournalIcon = NotebookPen;
+
+  private readonly frDate = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+  // Sous-titre du header : « Vendredi 27 juin · FTMO 100K » (date + compte de session).
+  protected readonly headerSub = computed(() => {
+    const d = this.frDate.format(this.today);
+    const date = d.charAt(0).toUpperCase() + d.slice(1);
+    const acct = this.activeAccountLabel();
+    return acct ? `${date} · ${acct}` : date;
+  });
+
   // ── Compte de la session ────────────────────────────────────────────────
   // Vrai si l'utilisateur (Starter et +) a des comptes mais reste sur « Tous » :
   // une session = un compte → on demande un choix précis avant de lancer.
@@ -391,6 +425,12 @@ export class SessionDayComponent implements OnInit, OnDestroy {
       && this.selectedAccount.activeAccounts().length > 0
       && this.selectedAccount.accountParam() === undefined,
   );
+
+  /** Libellé d'option du dropdown compte : « FTMO 100K · Éval · Apex ». */
+  protected acctOption(a: TradingAccount): string {
+    const type = a.type === 'EVALUATION' ? 'Éval' : a.type === 'FUNDED' ? 'Funded' : a.type === 'PERSONAL' ? 'Perso' : 'Démo';
+    return a.broker ? `${a.label} · ${type} · ${a.broker}` : `${a.label} · ${type}`;
+  }
 
   // Libellé du compte rattaché à la session active (en-tête « Session · Apex 50k »).
   protected readonly activeAccountLabel = computed(() => {
@@ -453,7 +493,7 @@ export class SessionDayComponent implements OnInit, OnDestroy {
     if (ok !== false) return '';
     const p = o.check?.params ?? {};
     switch (o.check?.type) {
-      case 'max_trades':      return `${trades.length} trades — dépassé`;
+      case 'max_trades':      return `${trades.length} trades (dépassé)`;
       case 'min_trades':      return `${trades.length}/${Number(p['min'])} trades`;
       case 'no_revenge':      return 'revenge trade détecté';
       case 'all_stops':       return 'stop loss manquant';
@@ -465,7 +505,7 @@ export class SessionDayComponent implements OnInit, OnDestroy {
       case 'journal_filled':  return 'journal trop court';
       case 'trade_window':    return `aucun trade ${String(p['start'])}-${String(p['end'])}`;
       case 'setup_only':      return 'setup hors liste';
-      case 'max_loss_trades': return `${trades.filter((t) => (t.pnl ?? 0) < 0).length} pertes — dépassé`;
+      case 'max_loss_trades': return `${trades.filter((t) => (t.pnl ?? 0) < 0).length} pertes (dépassé)`;
       default:                return '';
     }
   }
@@ -492,10 +532,10 @@ export class SessionDayComponent implements OnInit, OnDestroy {
     if (this.noTrades()) return "Tu n'as pas forcé de trade aujourd'hui. C'est de la discipline.";
     const s = this.disciplineScore();
     const revenge = this.store.todayTrades().filter(t => t.emotion === 'REVENGE').length;
-    if (revenge > 0) return `${revenge} revenge trade${revenge > 1 ? 's' : ''} détecté${revenge > 1 ? 's' : ''} — travailler la gestion émotionnelle.`;
-    if (s >= 85) return 'Excellente gestion — plan respecté, émotions sous contrôle.';
+    if (revenge > 0) return `${revenge} revenge trade${revenge > 1 ? 's' : ''} détecté${revenge > 1 ? 's' : ''} : travailler la gestion émotionnelle.`;
+    if (s >= 85) return 'Excellente gestion : plan respecté, émotions sous contrôle.';
     if (s >= 70) return "Bonne session dans l'ensemble. Quelques petits ajustements possibles.";
-    return 'Score indicatif basé sur ta session — revenge trades, stops, objectifs.';
+    return 'Score indicatif basé sur ta session : revenge trades, stops, objectifs.';
   });
   protected readonly scoreColor = computed(() => {
     const s = this.disciplineScore();

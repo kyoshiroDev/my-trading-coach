@@ -30,7 +30,7 @@ const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
       <div class="cal-header">
         <div class="cal-title-row">
           <span class="cal-title">
-            Activité — {{ monthLabel() }}
+            Activité · {{ monthLabel() }}
           </span>
           @if (data()) {
             <span class="cal-summary">
@@ -169,7 +169,7 @@ export class ActivityCalendarComponent {
     if (!cell.activity) return cell.date;
     const { pnl, tradesCount, winRate } = cell.activity;
     const sign = pnl >= 0 ? '+' : '';
-    return `${cell.date} — ${sign}${pnl.toFixed(0)}$ · ${tradesCount} trades · ${winRate.toFixed(0)}% WR`;
+    return `${cell.date} · ${sign}${pnl.toFixed(0)}$ · ${tradesCount} trades · ${winRate.toFixed(0)}% WR`;
   }
 
   protected formatPnl(pnl: number): string {

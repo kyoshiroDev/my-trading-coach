@@ -1,26 +1,40 @@
 @if (userStore.isStarterOrAbove()) {
-  <div class="acct-tabs" data-testid="account-selector">
-    <button class="acct-tab"
+  <div class="acct-bar" data-testid="account-selector">
+    <button class="acct-pill"
             data-testid="account-option-all"
             [class.active]="store.selectedAccountId() === 'all'"
             (click)="store.select('all')">
-      <span class="dot" style="background:var(--blue-bright)"></span>
-      Tous les comptes
+      <lucide-icon [img]="LayersIcon" [size]="13" class="acct-pill-ic" />
+      <span class="acct-pill-txt">
+        <span class="acct-pill-name">Tous les comptes</span>
+        <span class="acct-pill-tag">Agrégé</span>
+      </span>
+      <span class="acct-pill-bal">{{ totalBalanceStr() }}</span>
     </button>
+
     @for (a of store.accounts(); track a.id) {
-      <button class="acct-tab"
+      <button class="acct-pill"
               [attr.data-testid]="'account-option-' + a.id"
               [class.active]="store.selectedAccountId() === a.id"
               (click)="store.select(a.id)">
-        <span class="dot" [style.background]="dotColor(a)"></span>
-        {{ a.label }}
+        <span class="acct-pill-dot" [style.background]="dotColor(a)" [style.boxShadow]="'0 0 8px ' + dotColor(a)"></span>
+        <span class="acct-pill-txt">
+          <span class="acct-pill-name">{{ a.label }}</span>
+          <span class="acct-pill-tag">{{ tagFor(a) }}</span>
+        </span>
+        <span class="acct-pill-bal">{{ balanceFor(a) }}</span>
       </button>
     }
+
+    <a routerLink="/accounts" class="acct-add">
+      <lucide-icon [img]="PlusIcon" [size]="14" />
+      Compte
+    </a>
   </div>
 } @else {
   <!-- FREE : option désactivée + mini-CTA Starter (aucun appel /accounts). -->
   <button class="acct-locked" type="button" (click)="showPlanModal.set(true)">
-    <span class="dot" style="background:var(--text-3)"></span>
+    <span class="acct-pill-dot" style="background:var(--text-3)"></span>
     Multi-comptes
     <span class="acct-premium-badge">STARTER</span>
   </button>

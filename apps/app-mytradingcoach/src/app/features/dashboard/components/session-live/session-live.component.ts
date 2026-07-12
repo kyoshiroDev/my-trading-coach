@@ -13,6 +13,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { LucideAngularModule, Newspaper, CalendarDays, ListOrdered, Zap, ChevronRight, Lock } from 'lucide-angular';
 import { Subject, forkJoin, interval, of, timer } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent, EcoResultAnalysis } from '../../../../core/api/eco-calendar.api';
@@ -24,10 +25,13 @@ import { SessionRecapComponent } from '../session-recap/session-recap.component'
 import { MarketContextBarComponent } from '../market-context-bar/market-context-bar.component';
 import { EcoSocketService } from '../../../../core/services/eco-socket.service';
 import { UserStore } from '../../../../core/stores/user.store';
+import { PremiumLockComponent } from '../../../../shared/components/premium-lock/premium-lock.component';
+import { PlanModalComponent } from '../../../../shared/components/plan-modal/plan-modal.component';
 import { SetupsStore } from '../../../../core/stores/setups.store';
 import { formatDuration } from '../../../../core/utils/time.utils';
 import { parseDecimal } from '../../../../core/utils/parse-decimal';
 import { NumericInputDirective } from '../../../../core/directives/numeric-input.directive';
+import { EmotionEmojiPipe } from '../../../../shared/pipes/emotion-emoji.pipe';
 import { POLLING_MS } from '../../../../core/constants/polling.const';
 import { LiveNewsComponent } from './components/live-news/live-news.component';
 import { LiveFeedComponent } from './components/live-feed/live-feed.component';
@@ -74,12 +78,33 @@ const EMOTIONS = [
   { value: 'REVENGE',   emoji: '🤬', title: 'Revenge' },
 ] as const;
 
+// Devise d'un événement éco → instruments les plus impactés (fidélité maquette).
+// USD (marché domestique de nos traders) → indices US ; devises étrangères → paire vs USD.
+const BASE_CCY = new Set(['EUR', 'GBP', 'AUD', 'NZD']); // cotées XXX/USD
+function currencyToInstruments(currency: string | null | undefined): string {
+  const c = (currency ?? '').toUpperCase();
+  if (!c) return '';
+  if (c === 'USD') return 'NQ/ES';
+  if (BASE_CCY.has(c)) return `${c}/USD`;
+  return `USD/${c}`;
+}
+
+// Mock affiché FLOUTÉ derrière le teaser « Contexte marché » en FREE (jamais de vraie
+// donnée → pas de fuite). Le contexte marché live est Starter+ (plans.md).
+const MOCK_MARKET_CTX: MarketContext = {
+  nq:  { value: 20142, changePct: 0.62, source: 'mock' },
+  spx: { value: 5487, changePct: 0.31, source: 'mock' },
+  dxy: { value: 104.18, changePct: -0.08, source: 'mock' },
+  treasury: { t2y: 4.07, t2yChg: 0.02, t5y: 4.12, t5yChg: 0.01, t10y: 4.38, t10yChg: -0.01, t30y: 4.87, t30yChg: -0.02 },
+  updatedAt: '2026-01-01T15:52:00Z',
+};
+
 @Component({
   selector: 'mtc-session-live',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-live.component.css',
-  imports: [SessionRecapComponent, MarketContextBarComponent, LiveNewsComponent, LiveFeedComponent, NumericInputDirective],
+  imports: [LucideAngularModule, SessionRecapComponent, MarketContextBarComponent, LiveNewsComponent, LiveFeedComponent, NumericInputDirective, PremiumLockComponent, PlanModalComponent, EmotionEmojiPipe],
   template: `
     <div data-testid="session-live-view">
 
@@ -95,79 +120,97 @@ const EMOTIONS = [
         </div>
       } @else {
 
-      <!-- Barre contextuelle marché FMP -->
+      <!-- Barre contextuelle marché FMP (Starter+) -->
       @if (marketCtx()) {
-        <div class="ctx-bar-wrap">
-          <mtc-market-context-bar
-            [ctx]="marketCtx()"
-            [breakingNews]="breakingNews()"
-          />
+        <!-- Carte marché unique : contexte marché + news ticker (source : LiveTab card) -->
+        <div class="mkt-card">
+          <div class="ctx-bar-wrap">
+            <mtc-market-context-bar
+              [ctx]="marketCtx()"
+              [breakingNews]="breakingNews()"
+            />
+          </div>
+          <!-- News live — ticker horizontal (Starter+), dans la carte marché -->
+          @if (isStarterOrAbove() && newsItems().length > 0) {
+            <div class="news-ticker">
+              <span class="news-ticker-lbl"><lucide-icon [img]="NewsIcon" [size]="13" class="news-live-ic" /> News live</span>
+              <div class="news-ticker-viewport">
+                <div class="news-ticker-track">
+                  @for (item of newsItems(); track item.publishedDate) {
+                    <button type="button" class="news-tick" (click)="openNews(item)">
+                      <span class="news-tick-tag">{{ item.symbol }}</span>
+                      <span class="news-tick-title">{{ item.title }}</span>
+                      <span class="news-tick-time">{{ formatNewsTime(item.publishedDate) }}</span>
+                    </button>
+                    <span class="news-tick-sep">·</span>
+                  }
+                  <!-- Copie pour un défilement continu (marquee) -->
+                  @for (item of newsItems(); track 'dup-' + item.publishedDate) {
+                    <button type="button" class="news-tick" tabindex="-1" aria-hidden="true" (click)="openNews(item)">
+                      <span class="news-tick-tag">{{ item.symbol }}</span>
+                      <span class="news-tick-title">{{ item.title }}</span>
+                      <span class="news-tick-time">{{ formatNewsTime(item.publishedDate) }}</span>
+                    </button>
+                    <span class="news-tick-sep" aria-hidden="true">·</span>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      } @else if (!isStarterOrAbove()) {
+        <!-- Teaser flouté : le contexte marché live est réservé dès Starter -->
+        <div class="ctx-teaser">
+          <div class="ctx-teaser-preview" aria-hidden="true">
+            <mtc-market-context-bar [ctx]="MOCK_MARKET_CTX" [breakingNews]="null" />
+          </div>
+          <div class="ctx-teaser-overlay">
+            <span class="ctx-teaser-lock"><lucide-icon [img]="LockIcon" [size]="16" /></span>
+            <div class="ctx-teaser-txt">
+              <strong>Contexte marché live</strong>
+              <span>Indices, DXY et taux US en direct — disponible dès Starter</span>
+            </div>
+            <button class="ctx-teaser-cta" type="button" (click)="showPlanModal.set(true)">Débloquer →</button>
+          </div>
         </div>
       }
 
-      <!-- Mini stats row -->
-      <div class="mini-stats-row">
-        <div class="mini-stat">
-          <div class="mini-stat-val" [class.green]="(liveStats()?.totalPnl ?? 0) >= 0" [class.red]="(liveStats()?.totalPnl ?? 0) < 0">
-            {{ pnlDisplay() }}
-          </div>
-          <div class="mini-stat-lbl">P&amp;L jour</div>
-        </div>
-        <div class="mini-stat">
-          <div class="mini-stat-val">{{ (liveStats()?.winRate ?? 0).toFixed(0) }}%</div>
-          <div class="mini-stat-lbl">Win Rate</div>
-        </div>
-        <div class="mini-stat">
-          <div class="mini-stat-val" style="font-size:22px;">{{ moodEmoji(session()?.moodStart) }}</div>
-          <div class="mini-stat-lbl">État actuel</div>
-        </div>
-        <div class="mini-stat">
-          <div class="mini-stat-val blue">{{ liveStats()?.tradesCount ?? 0 }}</div>
-          <div class="mini-stat-lbl">Trades logués</div>
-        </div>
-      </div>
-
-      <!-- Live layout 4 colonnes -->
+      <!-- Live layout : zone gauche (stats + calendrier + live feed) / Trade rapide pleine hauteur à droite -->
       <div class="live-layout">
+        <div class="live-main">
 
-        <!-- ═══ COL 1 : NEWS LIVE ═══ -->
-        <div class="news-col">
-          <div class="col-title-row">
-            <div class="col-title">📰 News live</div>
+          <!-- Mini stats row (largeur calendrier + live feed uniquement) -->
+          <div class="mini-stats-row">
+            <div class="mini-stat">
+              <div class="mini-stat-val" [class.green]="(liveStats()?.totalPnl ?? 0) >= 0" [class.red]="(liveStats()?.totalPnl ?? 0) < 0">
+                {{ pnlDisplay() }}
+              </div>
+              <div class="mini-stat-lbl">P&amp;L jour</div>
+            </div>
+            <div class="mini-stat">
+              <div class="mini-stat-val">{{ (liveStats()?.winRate ?? 0).toFixed(0) }}%</div>
+              <div class="mini-stat-lbl">Win Rate</div>
+            </div>
+            <div class="mini-stat">
+              <div class="mini-stat-val" style="font-size:22px;">{{ moodEmoji(session()?.moodStart) }}</div>
+              <div class="mini-stat-lbl">État actuel</div>
+            </div>
+            <div class="mini-stat">
+              <div class="mini-stat-val blue">{{ liveStats()?.tradesCount ?? 0 }}</div>
+              <div class="mini-stat-lbl">Trades logués</div>
+            </div>
           </div>
 
-          <div class="news-feed">
-            @if (newsItems().length === 0) {
-              <div class="news-empty">Aucune news pour le moment</div>
-            } @else {
-              @for (item of newsItems(); track item.publishedDate) {
-                <div class="news-item"
-                     role="button"
-                     tabindex="0"
-                     (click)="openNews(item)"
-                     (keyup.enter)="openNews(item)">
-                  <div class="news-item-top">
-                    <span class="news-asset-tag">{{ item.symbol }}</span>
-                    <span class="news-sentiment" [class]="item.sentiment ?? 'neutral'">
-                      {{ item.sentiment === 'bull' ? '▲ Bull' : item.sentiment === 'bear' ? '▼ Bear' : '— Neutre' }}
-                    </span>
-                    <span class="news-time">{{ formatNewsTime(item.publishedDate) }}</span>
-                  </div>
-                  <div class="news-title">{{ item.title }}</div>
-                </div>
-              }
-            }
-          </div>
-        </div>
+          <div class="live-cols">
 
-        <!-- ═══ COL 2 : CALENDRIER + TREASURY ═══ -->
+            <!-- ═══ COL 1 : CALENDRIER + TREASURY ═══ -->
         <div class="cal-col">
 
           <!-- Calendrier éco -->
           <div class="cal-card">
             <div class="col-title-row">
               <div class="col-title">
-                📅 Calendrier — Session en cours
+                <lucide-icon [img]="CalIcon" [size]="14" class="ct-ic" /> Calendrier économique
                 <div class="pulse-dot"></div>
               </div>
             </div>
@@ -204,7 +247,7 @@ const EMOTIONS = [
                   }
                   @case ('ready') {
                     <div class="era-ai-ready" data-testid="era-ai-ready">
-                      ✦ Analyse prête — détail dans le calendrier ci-dessous ↓
+                      ✦ Analyse prête : détail dans le calendrier ci-dessous ↓
                     </div>
                   }
                   @case ('error') {
@@ -218,7 +261,7 @@ const EMOTIONS = [
 
             @if (!ecoCalendar()) {
               <div style="font-size:12px;color:var(--text-3);text-align:center;padding:20px 0;">
-                Calendrier disponible en Premium
+                Calendrier disponible dès Starter
               </div>
             } @else {
               <div class="cal-events-list">
@@ -227,25 +270,45 @@ const EMOTIONS = [
                     class="eco-live-event"
                     [class.released]="event.isReleased"
                     [class.dim]="!event.isReleased && isOutsideSession(event.time)"
+                    [class.expandable]="event.isReleased"
+                    [class.expanded]="expandedEcoEvent() === event.name"
                   >
-                    <div class="eco-live-header">
-                      <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-3);width:36px;flex-shrink:0;">
-                        {{ formatTime(event.time) }}
-                      </span>
-                      <div style="width:4px;height:22px;border-radius:2px;flex-shrink:0;" [style.background]="event.impact === 'high' ? 'var(--red)' : 'var(--yellow)'"></div>
+                    <div class="eco-live-header"
+                         [attr.role]="event.isReleased ? 'button' : null"
+                         [attr.tabindex]="event.isReleased ? 0 : null"
+                         (click)="event.isReleased && toggleEcoEvent(event.name)"
+                         (keyup.enter)="event.isReleased && toggleEcoEvent(event.name)">
+                      <span class="eco-time">{{ formatTime(event.time) }}</span>
+                      <div class="eco-impact-bar" [class.high]="event.impact === 'high'"></div>
                       <span class="eco-flag-sm">{{ getFlag(event) }}</span>
-                      <span style="font-size:11px;font-weight:600;color:var(--text);flex:1;">{{ translate(event.name) }}</span>
-                      <span style="font-size:9px;background:var(--blue-glow);color:var(--blue-bright);border:1px solid rgba(59,130,246,.2);padding:2px 5px;border-radius:4px;font-family:var(--font-mono);">
-                        {{ event.currency }}
+                      <div class="eco-name-wrap">
+                        <span class="eco-name">{{ translate(event.name) }}</span>
+                        <span class="eco-sub">
+                          @if (event.isReleased && event.actual !== null) {
+                            <span class="eco-sub-actual">Actuel : {{ event.actual }}{{ event.unit ?? '' }}</span>
+                            @if (event.estimate !== null || event.previous !== null) { <span class="eco-sub-sep">·</span> }
+                          }
+                          @if (event.estimate !== null) {
+                            <span>Prévu : {{ event.estimate }}{{ event.unit ?? '' }}</span>
+                            @if (event.previous !== null) { <span class="eco-sub-sep">·</span> }
+                          }
+                          @if (event.previous !== null) {
+                            <span>Préc. : {{ event.previous }}{{ event.unit ?? '' }}</span>
+                          }
+                        </span>
+                      </div>
+                      <span class="eco-currency-tag" [attr.title]="event.currency">{{ impactedInstruments(event.currency) }}</span>
+                      <span class="eco-impact-badge" [class.high]="event.impact === 'high'">
+                        {{ event.impact === 'high' ? 'Fort' : 'Moyen' }}
                       </span>
                       @if (event.isReleased) {
-                        <span style="font-size:9px;background:var(--green-dim);color:var(--green);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);">✓ Publié</span>
+                        <lucide-icon [img]="ChevronIcon" [size]="14" class="eco-chevron" />
                       } @else {
-                        <span style="font-size:9px;color:var(--text-3);font-family:var(--font-mono);">dans {{ minutesUntil(event.time) }} min</span>
+                        <span class="eco-countdown">dans {{ minutesUntil(event.time) }} min</span>
                       }
                     </div>
 
-                    @if (event.isReleased) {
+                    @if (event.isReleased && expandedEcoEvent() === event.name) {
                       <div class="eco-live-released">
                         <div class="eco-result-row">
                           <div class="eco-result-item">
@@ -312,7 +375,7 @@ const EMOTIONS = [
         <!-- ═══ COL 3 : LIVE FEED ═══ -->
         <div class="feed-col" data-testid="live-feed">
           <div class="col-title">
-            Live feed
+            <lucide-icon [img]="FeedIcon" [size]="14" class="ct-ic" /> Live feed
             <div class="pulse-dot"></div>
           </div>
 
@@ -329,44 +392,28 @@ const EMOTIONS = [
             <div class="feed-list">
               @for (trade of todayTrades(); track trade.id) {
                 @if (trade.pnl !== null) {
-                  <div class="feed-row-2l">
-                    <div class="feed-l1">
-                      <span class="feed-time">{{ tradeTime(trade.tradedAt) }}</span>
-                      <span class="trade-side" [class]="trade.side.toLowerCase()">{{ trade.side }}</span>
-                      <span class="feed-asset">{{ trade.asset }}</span>
-                      <span class="feed-badge" [class]="closeBadgeClass(trade.tags)" style="margin-left:auto;">
-                        {{ closeBadgeLabel(trade.tags) }}
-                      </span>
-                    </div>
-                    <div class="feed-l2">
-                      <span class="feed-price">Entrée: {{ (trade.entry && trade.entry > 0) ? trade.entry : '—' }}</span>
-                      <span class="feed-sep">·</span>
-                      <span class="feed-price">Sortie: {{ trade.exit ?? '—' }}</span>
-                      <span class="feed-pnl" [class.green]="trade.pnl >= 0" [class.red]="trade.pnl < 0" style="margin-left:auto;">
-                        {{ trade.pnl >= 0 ? '+' : '' }}{{ trade.pnl.toFixed(0) }}$
-                      </span>
-                    </div>
+                  <div class="feed-row">
+                    <span class="feed-time">{{ tradeTime(trade.tradedAt) }}</span>
+                    <span class="feed-asset">{{ trade.asset }}</span>
+                    <span class="trade-side" [class]="trade.side.toLowerCase()">{{ trade.side === 'LONG' ? '▲' : '▼' }} {{ trade.side }}</span>
+                    <span class="feed-emo" [title]="trade.emotion">{{ trade.emotion | emotionEmoji }}</span>
+                    <span class="feed-pnl" [class.green]="trade.pnl >= 0" [class.red]="trade.pnl < 0" style="margin-left:auto;">
+                      {{ trade.pnl >= 0 ? '+' : '' }}{{ trade.pnl.toFixed(0) }}$
+                    </span>
                   </div>
                 } @else {
                   <div
-                    class="feed-row-2l live-row"
+                    class="feed-row live-row"
                     role="button"
                     tabindex="0"
                     (click)="openClosePanel(trade.id)"
                     (keyup.enter)="openClosePanel(trade.id)"
                   >
-                    <div class="feed-l1">
-                      <span class="feed-time">{{ tradeTime(trade.tradedAt) }}</span>
-                      <span class="trade-side" [class]="trade.side.toLowerCase()">{{ trade.side }}</span>
-                      <span class="feed-asset">{{ trade.asset }}</span>
-                      <span class="feed-status">En cours</span>
-                      <span class="live-tag">● LIVE</span>
-                    </div>
-                    <div class="feed-l2">
-                      <span class="feed-price">Entrée: {{ (trade.entry && trade.entry > 0) ? trade.entry : '—' }}</span>
-                      <span class="feed-sep">·</span>
-                      <span class="feed-price">Sortie: —</span>
-                    </div>
+                    <span class="feed-time">{{ tradeTime(trade.tradedAt) }}</span>
+                    <span class="feed-asset">{{ trade.asset }}</span>
+                    <span class="trade-side" [class]="trade.side.toLowerCase()">{{ trade.side === 'LONG' ? '▲' : '▼' }} {{ trade.side }}</span>
+                    <span class="feed-emo" [title]="trade.emotion">{{ trade.emotion | emotionEmoji }}</span>
+                    <span class="live-tag" style="margin-left:auto;">● LIVE</span>
                   </div>
 
                   @if (closingTradeId() === trade.id) {
@@ -404,11 +451,14 @@ const EMOTIONS = [
           }
         </div>
 
-        <!-- ═══ COL 4 : TRADE RAPIDE ═══ -->
+          </div><!-- /live-cols -->
+        </div><!-- /live-main -->
+
+        <!-- ═══ COL 4 : TRADE RAPIDE (colonne pleine hauteur à droite) ═══ -->
         <div class="qt-panel" data-testid="quick-trade-form">
           <div class="qt-title">
-            ⚡ Trade rapide
-           
+            <lucide-icon [img]="QuickIcon" [size]="14" class="ct-ic" /> Trade rapide
+
           </div>
 
           <!-- Asset select -->
@@ -554,7 +604,7 @@ const EMOTIONS = [
 
           <div class="qt-pnl-row">
             <div>
-              <div class="qt-lbl">ENTRY (au clic)</div>
+              <div class="qt-lbl">ENTRÉE</div>
               <div class="qt-entry-readonly" data-testid="qt-entry-auto">
                 {{ livePrice() !== null ? livePricePlaceholder() : '—' }}
               </div>
@@ -608,7 +658,7 @@ const EMOTIONS = [
             data-testid="quick-trade-submit"
             [disabled]="!canSubmitQuickTrade() || qtSubmitting()"
             (click)="submitQuickTrade()"
-          >{{ qtSubmitting() ? 'Capture…' : '⚡ Logger ce trade' }}</button>
+          >@if (qtSubmitting()) { Capture… } @else { <lucide-icon [img]="QuickIcon" [size]="14" /> Logger ce trade }</button>
           <div class="qt-hint">Asset + direction + émotion suffisent</div>
 
           <!-- Retour d'action (succès / erreur) — annoncé aux lecteurs d'écran -->
@@ -678,6 +728,10 @@ const EMOTIONS = [
     }
 
     </div>
+
+    @if (showPlanModal()) {
+      <mtc-plan-modal (closed)="showPlanModal.set(false)" />
+    }
   `,
 })
 export class SessionLiveComponent {
@@ -704,6 +758,28 @@ export class SessionLiveComponent {
   private readonly userStore = inject(UserStore);
   private readonly tradesApi = inject(TradesApi);
   protected readonly setupsStore = inject(SetupsStore);
+
+  // News live + contexte marché = Starter+ (endpoints gardés côté API) → verrou d'upsell sinon.
+  protected readonly isStarterOrAbove = computed(() => this.userStore.isStarterOrAbove());
+
+  // Icônes Lucide (headers de colonnes — design « Session live »).
+  protected readonly NewsIcon  = Newspaper;
+  protected readonly CalIcon   = CalendarDays;
+  protected readonly FeedIcon  = ListOrdered;
+  protected readonly QuickIcon = Zap;
+  protected readonly ChevronIcon = ChevronRight;
+  protected readonly LockIcon = Lock;
+  protected readonly MOCK_MARKET_CTX = MOCK_MARKET_CTX;
+  protected readonly showPlanModal = signal(false);
+
+  // Calendrier éco : événement publié déplié au clic (null = tous repliés, style maquette compact)
+  protected readonly expandedEcoEvent = signal<string | null>(null);
+  protected toggleEcoEvent(name: string): void {
+    this.expandedEcoEvent.update((v) => (v === name ? null : name));
+  }
+  protected impactedInstruments(currency: string | null | undefined): string {
+    return currencyToInstruments(currency);
+  }
 
   // Timer
   private readonly now = signal(new Date());
@@ -798,9 +874,9 @@ export class SessionLiveComponent {
     const price = this.livePrice();
     if (price === null) return '0.00';
     const symbol = this.qtSelectedAsset()?.symbol ?? '';
-    if (symbol.includes('/') && !symbol.includes('USDT')) return price.toFixed(4);
-    if (price < 10) return price.toFixed(4);
-    return price.toFixed(2);
+    const dec = ((symbol.includes('/') && !symbol.includes('USDT')) || price < 10) ? 4 : 2;
+    // Milliers espace + décimale point (fidélité maquette : « 20 142.25 »)
+    return price.toLocaleString('fr-FR', { minimumFractionDigits: dec, maximumFractionDigits: dec }).replace(',', '.');
   });
 
   protected readonly pinnedKeys = computed(() => {
@@ -938,23 +1014,23 @@ export class SessionLiveComponent {
     // Arrêter le polling prix au destroy
     this.destroyRef.onDestroy(() => this.stopLivePricePolling());
 
-    // WebSocket éco — connecter quand session active + Premium
+    // WebSocket éco — connecter quand session active + Starter+ (analyse IA éco = Starter+)
     effect(() => {
       const s = this.session();
-      if (s?.status === 'ACTIVE' && this.userStore.isPremium()) {
+      if (s?.status === 'ACTIVE' && this.userStore.isStarterOrAbove()) {
         this.ecoSocket.connect();
       } else {
         this.ecoSocket.disconnect();
       }
     });
 
-    // Analyse IA des events DÉJÀ publiés à l'ouverture (Premium + session active, hors démo).
+    // Analyse IA des events DÉJÀ publiés à l'ouverture (Starter+ + session active, hors démo).
     // Limité au FORT impact : ce sont eux qui bougent le marché. Sur une grosse journée
     // (~19 events US), ça évite une rafale d'appels modèle à la 1re ouverture ; le cache
     // mutualisé sert les suivantes. Les releases live restent couvertes par newReleases$.
     effect(() => {
       const s = this.session();
-      if (s?.status !== 'ACTIVE' || !this.userStore.isPremium() || this.userStore.isDemo()) return;
+      if (s?.status !== 'ACTIVE' || !this.userStore.isStarterOrAbove() || this.userStore.isDemo()) return;
       const released = this.sessionEcoEvents().filter(
         (e) => e.impact === 'high' && e.isReleased && e.actual != null && !!e.name?.trim(),
       );

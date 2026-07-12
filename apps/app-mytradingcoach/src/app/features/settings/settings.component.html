@@ -3,7 +3,7 @@
 <div class="settings-content">
 
   @if (checkoutParam() === 'success') {
-    <div class="alert alert-success">✓ Abonnement activé — bienvenue !</div>
+    <div class="alert alert-success">✓ Abonnement activé, bienvenue !</div>
   }
   @if (checkoutParam() === 'canceled') {
     <div class="alert alert-cancel">Paiement annulé. Tu peux réessayer quand tu veux.</div>
@@ -72,7 +72,7 @@
               <input
                 class="asset-search-input"
                 type="text"
-                placeholder="Rechercher un actif — NQ, MES, BTC, EUR/USD..."
+                placeholder="Rechercher un actif : NQ, MES, BTC, EUR/USD..."
                 [value]="assetSearchQuery()"
                 (input)="onAssetSearch($any($event.target).value)"
                 style="text-transform: uppercase;"
@@ -104,7 +104,7 @@
                       class="asset-fav"
                       [class.active]="asset.isFavorite"
                       [disabled]="assetsSaving()"
-                      [title]="asset.isFavorite ? 'Favori — pré-sélectionné en saisie rapide' : 'Définir comme favori'"
+                      [title]="asset.isFavorite ? 'Favori, pré-sélectionné en saisie rapide' : 'Définir comme favori'"
                       (click)="setFavoriteAssetSetting(asset.symbol)"
                     >★</button>
                     <div class="asset-chip" [class.is-fav]="asset.isFavorite">
@@ -142,7 +142,7 @@
                 <span class="stp-dot" [style.background]="s.color"></span>
                 <div class="stp-main">
                   <div class="stp-name">{{ s.title }}</div>
-                  <div class="stp-desc">{{ s.description || '— pas de description' }}</div>
+                  <div class="stp-desc">{{ s.description || 'Pas de description' }}</div>
                   <div class="stp-meta">
                     @if (s.tradeCount > 0) {
                       <div class="stp-bar">
@@ -283,7 +283,7 @@
                 <div class="settings-row-left">
                   <span class="settings-row-label">Mot de passe</span>
                   @if (passwordResetSent()) {
-                    <span class="settings-row-hint success-hint">Email envoyé — vérifie ta boîte mail</span>
+                    <span class="settings-row-hint success-hint">Email envoyé, vérifie ta boîte mail</span>
                   } @else {
                     <span class="settings-row-value">••••••••••••</span>
                   }
@@ -391,7 +391,7 @@
                   <div class="plan-badge-dot"></div>
                   PREMIUM
                 </div>
-                <p class="plan-desc">Accès à tout — IA Insights, Chat coach IA, Calendrier éco IA, news &amp; contexte marché, recap email 17h30.</p>
+                <p class="plan-desc">Accès à tout : IA Insights, Chat coach IA, Calendrier éco IA, news &amp; contexte marché, recap email 17h30.</p>
                 @if (userStore.user()?.stripeCurrentPeriodEnd) {
                   <p class="plan-renewal">
                     Renouvellement : {{ userStore.user()?.stripeCurrentPeriodEnd | date:'dd/MM/yyyy' }}
@@ -430,7 +430,7 @@
                 <div class="plan-badge free">FREE</div>
                 <p class="plan-desc">30 trades/mois (hors import historique) · Journal complet · Stats de base · Historique illimité.</p>
                 <p class="plan-upgrade-hint">
-                  Passe à Starter pour les trades illimités, les analytics et le Weekly Debrief — ou Premium pour l'IA (coach, insights, calendrier éco IA).
+                  Passe à Starter pour les trades illimités, les analytics et le Weekly Debrief, ou Premium pour l'IA (coach, insights, calendrier éco IA).
                 </p>
                 <div class="plan-actions">
                   <button class="btn btn-primary" (click)="showPlanModal.set(true)">

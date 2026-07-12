@@ -25,7 +25,7 @@ const MAX_KNOWN_ROWS = 10_000;
 
 // Au-delà, un total global réparti au prorata donnerait des frais lissés faux :
 // on désactive la saisie d'un total des frais (front) et on l'ignore (back).
-const FEES_INPUT_MAX_TRADES = 100;
+const FEES_INPUT_MAX_TRADES = 5000;
 const MAX_AI_ROWS = 2000;
 const AI_BATCH = 250;
 

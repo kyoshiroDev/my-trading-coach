@@ -15,6 +15,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Plan, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { StarterGuard } from '../../common/guards/starter.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { TradesService } from './trades.service';
 import { CoinGeckoService } from './coingecko.service';
@@ -39,20 +40,26 @@ export class TradesController {
     private readonly setups: SetupsService,
   ) {}
 
+  // Contexte marché (DXY / taux US / indices) = IA mutualisée (coût O(1)), réservé Starter+.
+  @UseGuards(StarterGuard)
   @Get('market-context')
   getMarketContext() { return this.marketData.getMarketContext(); }
 
+  // News filtrées sur tes actifs = feature Starter+ (grille plans.md).
+  @UseGuards(StarterGuard)
   @Get('news')
   getMarketNews(@Query('symbols') symbols: string) {
     return this.marketData.getNews(symbols ?? '');
   }
 
-  // Traduction paresseuse du corps d'une news : déclenchée à l'ouverture de la modale.
+  // Traduction paresseuse du corps d'une news (Haiku, 1×/article, cachée) = Starter+.
+  @UseGuards(StarterGuard)
   @Get('news/:id/text')
   async getNewsText(@Param('id') id: string): Promise<{ text: string | null }> {
     return { text: await this.marketData.ensureNewsTextFr(id) };
   }
 
+  // live-price reste FREE : il alimente la saisie « trade rapide » du compagnon de session (FREE).
   @Get('live-price')
   async getLivePrice(@Query('symbol') symbol: string): Promise<{ price: number | null; symbol: string; cached: boolean }> {
     if (!symbol?.trim()) return { price: null, symbol: '', cached: false };

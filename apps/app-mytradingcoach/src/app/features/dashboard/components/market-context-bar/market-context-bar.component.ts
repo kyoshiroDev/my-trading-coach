@@ -1,20 +1,20 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { LucideAngularModule, Activity } from 'lucide-angular';
 import { MarketContext } from '../../../../core/api/trades.api';
 
 @Component({
   selector: 'mtc-market-context-bar',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DecimalPipe],
+  imports: [LucideAngularModule],
   styleUrl: './market-context-bar.component.css',
   template: `
     @if (ctx()) {
       <div class="ctx-wrap">
         <div class="ctx-header">
-          <div class="ctx-pulse-dot"></div>
+          <lucide-icon [img]="CtxIcon" [size]="14" class="ctx-ic" />
           <span class="ctx-lbl">Contexte marché</span>
-          <span class="ctx-upd">MAJ 15s · {{ updatedLabel() }}</span>
+          <span class="ctx-upd"><span class="ctx-pulse-dot"></span> MAJ 15s · {{ updatedLabel() }}</span>
         </div>
 
         <div class="ctx-grid">
@@ -31,77 +31,98 @@ import { MarketContext } from '../../../../core/api/trades.api';
           <div class="ctx-cell"
                [class.bull]="dir(ctx()!.nq.changePct) === 'up'"
                [class.bear]="dir(ctx()!.nq.changePct) === 'down'">
-            <div class="ctx-cell-name">NQ100</div>
-            <div class="ctx-cell-val">{{ ctx()!.nq.value !== null ? (ctx()!.nq.value | number:'1.0-0') : '—' }}</div>
-            <div class="ctx-cell-sub"
-                 [class.green]="dir(ctx()!.nq.changePct) === 'up'"
-                 [class.red]="dir(ctx()!.nq.changePct) === 'down'">{{ pctLabel(ctx()!.nq.changePct) }}</div>
+            <div class="ctx-cell-name">NQ100 <span class="ctx-desc">(Nasdaq)</span></div>
+            <div class="ctx-cell-line">
+              <span class="ctx-cell-val">{{ fmt(ctx()!.nq.value, 0, 0) }}</span>
+              <span class="ctx-cell-chg"
+                    [class.green]="dir(ctx()!.nq.changePct) === 'up'"
+                    [class.red]="dir(ctx()!.nq.changePct) === 'down'">{{ pctLabel(ctx()!.nq.changePct) }}</span>
+            </div>
           </div>
 
           <div class="ctx-cell"
                [class.bull]="dir(ctx()!.spx.changePct) === 'up'"
                [class.bear]="dir(ctx()!.spx.changePct) === 'down'">
-            <div class="ctx-cell-name">SPX</div>
-            <div class="ctx-cell-val">{{ ctx()!.spx.value !== null ? (ctx()!.spx.value | number:'1.0-0') : '—' }}</div>
-            <div class="ctx-cell-sub"
-                 [class.green]="dir(ctx()!.spx.changePct) === 'up'"
-                 [class.red]="dir(ctx()!.spx.changePct) === 'down'">{{ pctLabel(ctx()!.spx.changePct) }}</div>
+            <div class="ctx-cell-name">SPX <span class="ctx-desc">(S&amp;P 500)</span></div>
+            <div class="ctx-cell-line">
+              <span class="ctx-cell-val">{{ fmt(ctx()!.spx.value, 0, 0) }}</span>
+              <span class="ctx-cell-chg"
+                    [class.green]="dir(ctx()!.spx.changePct) === 'up'"
+                    [class.red]="dir(ctx()!.spx.changePct) === 'down'">{{ pctLabel(ctx()!.spx.changePct) }}</span>
+            </div>
           </div>
 
           <div class="ctx-cell"
                [class.bull]="dir(ctx()!.dxy.changePct) === 'up'"
                [class.bear]="dir(ctx()!.dxy.changePct) === 'down'">
-            <div class="ctx-cell-name">DXY</div>
-            <div class="ctx-cell-val">{{ ctx()!.dxy.value !== null ? (ctx()!.dxy.value | number:'1.2-2') : '—' }}</div>
-            <div class="ctx-cell-sub"
-                 [class.green]="dir(ctx()!.dxy.changePct) === 'up'"
-                 [class.red]="dir(ctx()!.dxy.changePct) === 'down'">
-              {{ pctLabel(ctx()!.dxy.changePct) }}
-              @if (dxyLabel()) {
-                <span class="dxy-badge"
+            <div class="ctx-cell-name">DXY @if (dxyLabel()) {<span class="ctx-desc"
                       [class.risk-off]="dxyLabel() === 'risk-off'"
-                      [class.risk-on]="dxyLabel() === 'risk-on'">
-                  {{ dxyLabel() }}
-                </span>
-              }
+                      [class.risk-on]="dxyLabel() === 'risk-on'">({{ dxyLabel() }})</span>}</div>
+            <div class="ctx-cell-line">
+              <span class="ctx-cell-val">{{ fmt(ctx()!.dxy.value, 2, 2) }}</span>
+              <span class="ctx-cell-chg"
+                    [class.green]="dir(ctx()!.dxy.changePct) === 'up'"
+                    [class.red]="dir(ctx()!.dxy.changePct) === 'down'">{{ pctLabel(ctx()!.dxy.changePct) }}</span>
             </div>
           </div>
 
           <div class="ctx-cell trate2">
-            <div class="ctx-cell-name">US 2Y</div>
-            <div class="ctx-cell-val blue">{{ ctx()!.treasury.t2y !== null ? (ctx()!.treasury.t2y | number:'1.2-2') + '%' : '—' }}</div>
-            <div class="ctx-cell-sub">Taux court</div>
+            <div class="ctx-cell-name">US 2Y <span class="ctx-desc">(Taux court)</span></div>
+            <div class="ctx-cell-line">
+              <span class="ctx-cell-val blue">{{ ctx()!.treasury.t2y !== null ? fmt(ctx()!.treasury.t2y, 2, 2) + '%' : '—' }}</span>
+              <span class="ctx-cell-chg"
+                    [class.green]="dir(ctx()!.treasury.t2yChg) === 'up'"
+                    [class.red]="dir(ctx()!.treasury.t2yChg) === 'down'">{{ pctLabel(ctx()!.treasury.t2yChg) }}</span>
+            </div>
           </div>
 
           <div class="ctx-cell trate5">
-            <div class="ctx-cell-name">US 5Y</div>
-            <div class="ctx-cell-val blue">{{ ctx()!.treasury.t5y !== null ? (ctx()!.treasury.t5y | number:'1.2-2') + '%' : '—' }}</div>
-            <div class="ctx-cell-sub">Taux moyen</div>
+            <div class="ctx-cell-name">US 5Y <span class="ctx-desc">(Taux moyen)</span></div>
+            <div class="ctx-cell-line">
+              <span class="ctx-cell-val blue">{{ ctx()!.treasury.t5y !== null ? fmt(ctx()!.treasury.t5y, 2, 2) + '%' : '—' }}</span>
+              <span class="ctx-cell-chg"
+                    [class.green]="dir(ctx()!.treasury.t5yChg) === 'up'"
+                    [class.red]="dir(ctx()!.treasury.t5yChg) === 'down'">{{ pctLabel(ctx()!.treasury.t5yChg) }}</span>
+            </div>
           </div>
 
           <div class="ctx-cell trate10">
-            <div class="ctx-cell-name">US 10Y</div>
-            <div class="ctx-cell-val yellow">{{ ctx()!.treasury.t10y !== null ? (ctx()!.treasury.t10y | number:'1.2-2') + '%' : '—' }}</div>
-            <div class="ctx-cell-sub">Référence</div>
+            <div class="ctx-cell-name">US 10Y <span class="ctx-desc">(Référence)</span></div>
+            <div class="ctx-cell-line">
+              <span class="ctx-cell-val yellow">{{ ctx()!.treasury.t10y !== null ? fmt(ctx()!.treasury.t10y, 2, 2) + '%' : '—' }}</span>
+              <span class="ctx-cell-chg"
+                    [class.green]="dir(ctx()!.treasury.t10yChg) === 'up'"
+                    [class.red]="dir(ctx()!.treasury.t10yChg) === 'down'">{{ pctLabel(ctx()!.treasury.t10yChg) }}</span>
+            </div>
           </div>
 
           <div class="ctx-cell trate30">
-            <div class="ctx-cell-name">US 30Y</div>
-            <div class="ctx-cell-val yellow">{{ ctx()!.treasury.t30y !== null ? (ctx()!.treasury.t30y | number:'1.2-2') + '%' : '—' }}</div>
-            <div class="ctx-cell-sub">Taux long</div>
+            <div class="ctx-cell-name">US 30Y <span class="ctx-desc">(Taux long)</span></div>
+            <div class="ctx-cell-line">
+              <span class="ctx-cell-val yellow">{{ ctx()!.treasury.t30y !== null ? fmt(ctx()!.treasury.t30y, 2, 2) + '%' : '—' }}</span>
+              <span class="ctx-cell-chg"
+                    [class.green]="dir(ctx()!.treasury.t30yChg) === 'up'"
+                    [class.red]="dir(ctx()!.treasury.t30yChg) === 'down'">{{ pctLabel(ctx()!.treasury.t30yChg) }}</span>
+            </div>
           </div>
 
           @if (isInverted()) {
             <div class="ctx-cell inverted">
-              <div class="ctx-cell-name red">Courbe</div>
-              <div class="ctx-cell-val red small">2Y &gt; 10Y</div>
-              <div class="ctx-cell-sub red">⚠ +{{ spread() }}%</div>
+              <div class="ctx-cell-name red">Courbe <span class="ctx-desc">(2Y &gt; 10Y)</span></div>
+              <div class="ctx-cell-line">
+                <span class="ctx-cell-val red small">⚠ {{ fmt(spread(), 2, 2) }}%</span>
+                <span class="ctx-cell-chg red">{{ pctLabel(spreadChg()) }}</span>
+              </div>
             </div>
           } @else {
             <div class="ctx-cell">
-              <div class="ctx-cell-name">Spread</div>
-              <div class="ctx-cell-val green">{{ spread() !== null ? spread() + '%' : '—' }}</div>
-              <div class="ctx-cell-sub">10Y - 2Y</div>
+              <div class="ctx-cell-name">Spread <span class="ctx-desc">(10Y - 2Y)</span></div>
+              <div class="ctx-cell-line">
+                <span class="ctx-cell-val green">{{ spread() !== null ? (spread()! > 0 ? '+' : '') + fmt(spread(), 2, 2) + '%' : '—' }}</span>
+                <span class="ctx-cell-chg"
+                      [class.green]="dir(spreadChg()) === 'up'"
+                      [class.red]="dir(spreadChg()) === 'down'">{{ pctLabel(spreadChg()) }}</span>
+              </div>
             </div>
           }
         </div>
@@ -110,6 +131,7 @@ import { MarketContext } from '../../../../core/api/trades.api';
   `,
 })
 export class MarketContextBarComponent {
+  protected readonly CtxIcon = Activity;
   readonly ctx = input<MarketContext | null>(null);
   readonly breakingNews = input<string | null>(null);
 
@@ -128,14 +150,29 @@ export class MarketContextBarComponent {
     return `${v}%`;
   }
 
+  /** Formatage nombre : séparateur de milliers espace + décimale POINT (fidélité maquette). */
+  protected fmt(v: number | null | undefined, min = 0, max = 2): string {
+    if (v == null) return '—';
+    return v.toLocaleString('fr-FR', { minimumFractionDigits: min, maximumFractionDigits: max }).replace(',', '.');
+  }
+
+  /** Spread de courbe = 10Y − 2Y (positif = courbe normale). */
   protected readonly spread = computed(() => {
     const t2  = this.ctx()?.treasury.t2y;
     const t10 = this.ctx()?.treasury.t10y;
     if (t2 == null || t10 == null) return null;
-    return parseFloat((t2 - t10).toFixed(2));
+    return parseFloat((t10 - t2).toFixed(2));
   });
 
-  protected readonly isInverted = computed(() => (this.spread() ?? 0) > 0);
+  /** Variation du spread (10Y − 2Y) = variation 10Y − variation 2Y. */
+  protected readonly spreadChg = computed(() => {
+    const c2  = this.ctx()?.treasury.t2yChg;
+    const c10 = this.ctx()?.treasury.t10yChg;
+    if (c2 == null || c10 == null) return null;
+    return parseFloat((c10 - c2).toFixed(2));
+  });
+
+  protected readonly isInverted = computed(() => (this.spread() ?? 0) < 0);
 
   protected readonly dxyLabel = computed(() => {
     const v = this.ctx()?.dxy.value;

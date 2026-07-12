@@ -6,6 +6,7 @@ import {
   signal,
 } from '@angular/core';
 import { httpResource } from '@angular/common/http';
+import { LucideAngularModule, Trophy } from 'lucide-angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { UserStore } from '../../core/stores/user.store';
@@ -140,7 +141,7 @@ const LOCKED_BADGES = [
 @Component({
   selector: 'mtc-scoring',
   standalone: true,
-  imports: [TopbarComponent, PlanModalComponent],
+  imports: [TopbarComponent, PlanModalComponent, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './scoring.component.html',
   styleUrl: './scoring.component.css',
@@ -148,6 +149,7 @@ const LOCKED_BADGES = [
 export class ScoringComponent {
   protected readonly userStore = inject(UserStore);
   protected readonly showPlanModal = signal(false);
+  protected readonly TrophyIcon = Trophy;
 
   private readonly tradesResource = httpResource<{ data: { data: Trade[] } }>(
     () => `${environment.apiUrl}/trades?limit=100`,

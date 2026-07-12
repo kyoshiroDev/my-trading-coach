@@ -7,11 +7,20 @@ import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 import { INSTRUMENTS } from './instruments.const';
 
 export interface MarketContextItem { value: number | null; changePct: number | null; source: 'fmp' | 'yahoo' | 'binance'; }
-export interface TreasuryRates { t2y: number | null; t5y: number | null; t10y: number | null; t30y: number | null; }
+export interface TreasuryRates {
+  t2y: number | null;  t2yChg: number | null;
+  t5y: number | null;  t5yChg: number | null;
+  t10y: number | null; t10yChg: number | null;
+  t30y: number | null; t30yChg: number | null;
+}
 export interface MarketContextDto {
   nq: MarketContextItem; spx: MarketContextItem; dxy: MarketContextItem;
   treasury: TreasuryRates; updatedAt: string;
 }
+const TREASURY_EMPTY: TreasuryRates = {
+  t2y: null, t2yChg: null, t5y: null, t5yChg: null,
+  t10y: null, t10yChg: null, t30y: null, t30yChg: null,
+};
 export interface NewsItem {
   id: string; title: string; symbol: string; publishedDate: string;
   sentiment?: 'bull' | 'bear' | 'neutral'; url?: string; text?: string; image?: string; site?: string;
@@ -45,7 +54,7 @@ export class MarketDataService {
     const empty = { price: null, changePct: null };
     const [nq, spx, dxy, treasury] = await Promise.allSettled([
       this.fetchYahooQuote('NQ=F'),
-      this.fetchFmpQuote('SPY'),
+      this.fetchYahooQuote('^GSPC'), // indice S&P 500 réel (~5 487), pas l'ETF SPY (~755)
       this.fetchYahooQuote('DX-Y.NYB'),
       this.fetchTreasuryRates(),
     ]);
@@ -56,9 +65,9 @@ export class MarketDataService {
 
     const result: MarketContextDto = {
       nq:       { value: nqV.price,  changePct: nqV.changePct,  source: 'yahoo' },
-      spx:      { value: spxV.price, changePct: spxV.changePct, source: 'fmp'   },
+      spx:      { value: spxV.price, changePct: spxV.changePct, source: 'yahoo' },
       dxy:      { value: dxyV.price, changePct: dxyV.changePct, source: 'yahoo' },
-      treasury: treasury.status === 'fulfilled' ? treasury.value : { t2y: null, t5y: null, t10y: null, t30y: null },
+      treasury: treasury.status === 'fulfilled' ? treasury.value : TREASURY_EMPTY,
       updatedAt: new Date().toISOString(),
     };
     try { await this.redisService.client.setex(cacheKey, CACHE_TTL.MARKET_CTX, JSON.stringify(result)); } catch { /* ignore */ }
@@ -305,23 +314,36 @@ export class MarketDataService {
 
   private async fetchTreasuryRates(): Promise<TreasuryRates> {
     const apiKey = this.config.get<string>('FMP_API_KEY');
-    const empty: TreasuryRates = { t2y: null, t5y: null, t10y: null, t30y: null };
-    if (!apiKey) return empty;
+    if (!apiKey) return TREASURY_EMPTY;
     try {
       const res = await fetch(`https://financialmodelingprep.com/stable/treasury-rates?apikey=${apiKey}`);
-      if (!res.ok) return empty;
+      if (!res.ok) return TREASURY_EMPTY;
       const data = await res.json() as Array<Record<string, number>>;
       const latest = data?.[0];
-      if (!latest) return empty;
+      if (!latest) return TREASURY_EMPTY;
+      // data[1] = veille (l'endpoint renvoie l'historique) → variation en points de %.
+      const prev = data?.[1] ?? null;
+      const pick = (row: Record<string, number> | null, keys: string[]): number | null => {
+        if (!row) return null;
+        for (const k of keys) if (row[k] != null) return row[k];
+        return null;
+      };
+      const K2 = ['year2', 'twoYear', '2Year'];
+      const K5 = ['year5', 'fiveYear', '5Year'];
+      const K10 = ['year10', 'tenYear', '10Year'];
+      const K30 = ['year30', 'thirtyYear', '30Year'];
+      const chg = (cur: number | null, old: number | null): number | null =>
+        cur != null && old != null ? Number((cur - old).toFixed(2)) : null;
+      const t2y = pick(latest, K2), t5y = pick(latest, K5), t10y = pick(latest, K10), t30y = pick(latest, K30);
       return {
-        t2y:  latest['year2']   ?? latest['twoYear']    ?? latest['2Year']   ?? null,
-        t5y:  latest['year5']   ?? latest['fiveYear']   ?? latest['5Year']   ?? null,
-        t10y: latest['year10']  ?? latest['tenYear']    ?? latest['10Year']  ?? null,
-        t30y: latest['year30']  ?? latest['thirtyYear'] ?? latest['30Year']  ?? null,
+        t2y,  t2yChg:  chg(t2y,  pick(prev, K2)),
+        t5y,  t5yChg:  chg(t5y,  pick(prev, K5)),
+        t10y, t10yChg: chg(t10y, pick(prev, K10)),
+        t30y, t30yChg: chg(t30y, pick(prev, K30)),
       };
     } catch (err) {
       this.logger.warn(`Treasury rates failed: ${(err as Error).message}`);
-      return empty;
+      return TREASURY_EMPTY;
     }
   }
 

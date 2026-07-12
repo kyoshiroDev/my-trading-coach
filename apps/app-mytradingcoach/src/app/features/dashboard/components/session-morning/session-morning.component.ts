@@ -11,6 +11,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { LucideAngularModule, Target, CalendarDays, TriangleAlert } from 'lucide-angular';
 import { translateEcoEvent } from '../../../../core/data/eco-event-translations';
 import { normalizeEventKey, eventKey } from '../../../../core/data/eco-event-key';
 import { filterMorningEvents } from './session-morning.util';
@@ -28,30 +29,51 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
   { value: 'TIRED',     label: 'Fatigué',  emoji: '😰' },
 ];
 
-// Agenda éco d'exemple (mode démo) — affiché si aucun événement réel à montrer,
-// pour que la carte « Agenda du jour » ne soit jamais vide côté vitrine.
+// Agenda éco d'exemple (mode démo) — vitrine « pleine » de la carte Agenda du jour.
 const DEMO_ECO_EVENTS: EcoEvent[] = [
   { time: '14:30', name: 'Non-Farm Payrolls', currency: 'USD', country: 'US', impact: 'high', actual: null, estimate: 185, previous: 206, isReleased: false, unit: 'K' },
-  { time: '16:00', name: 'ISM Manufacturing PMI', currency: 'USD', country: 'US', impact: 'high', actual: null, estimate: 48.5, previous: 48.7, isReleased: false, unit: null },
+  { time: '14:30', name: 'Taux de chômage', currency: 'USD', country: 'US', impact: 'high', actual: null, estimate: 4.1, previous: 4.0, isReleased: false, unit: '%' },
+  { time: '16:00', name: 'ISM Manufacturing PMI', currency: 'USD', country: 'US', impact: 'medium', actual: null, estimate: 48.5, previous: 48.7, isReleased: false, unit: null },
+  { time: '11:00', name: 'IPC Zone Euro (final)', currency: 'EUR', country: 'EU', impact: 'medium', actual: 2.4, estimate: 2.4, previous: 2.4, isReleased: true, unit: '%' },
+];
+const DEMO_ECO_SUMMARY = "Journée chargée côté USD : les chiffres de l'emploi peuvent créer de la volatilité sur NQ et ES en début d'après-midi.";
+const DEMO_ECO_RECO = "Évite d'ouvrir une position 5 min avant le NFP (14:30).";
+// Recap « Hier » d'exemple (mode démo).
+const DEMO_RECAP: DailyRecap = {
+  id: 'demo', date: new Date(Date.now() - 864e5).toISOString(),
+  tradesCount: 5, pnl: 320, winRate: 68, dominantEmotion: 'FOCUSED',
+  aiOneLiner: 'Belle discipline hier : tu as coupé tes pertes vite et laissé courir ton meilleur trade.',
+};
+const DEMO_OBJECTIVES: DebriefObjective[] = [
+  { title: 'Max 5 trades par session', reason: '' },
+  { title: 'Aucun revenge trade', reason: '' },
+  { title: 'Stop loss sur 100% des trades', reason: '' },
+  { title: 'Journal rempli en fin de session', reason: '' },
 ];
 
 @Component({
   selector: 'mtc-session-morning',
   standalone: true,
-  imports: [DatePipe, RouterLink, PremiumLockComponent],
+  imports: [DatePipe, RouterLink, LucideAngularModule, PremiumLockComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-morning.component.css',
   template: `
     <div data-testid="session-morning-view">
 
-      <!-- Session banner — mood check + démarrer -->
-      <div class="session-banner">
-        <div class="sb-left">
-          <div class="sb-title">
-            🎯 Prépare ta session
-           
+      <div class="session-layout">
+
+      <!-- Colonne gauche : préparation + hier + objectifs -->
+      <div class="daily-row" data-testid="yesterday-recap">
+
+        <!-- Card : Prépare ta session (banner gradient) -->
+        <div class="card mtc-banner">
+          <div class="card-header">
+            <div class="card-title">
+              <lucide-icon [img]="PrepareIcon" [size]="17" class="ch-ic" /> Prépare ta session
+            </div>
           </div>
-          <div class="sb-sub">Comment tu te sens ce matin ? Ça influence tes décisions.</div>
+          <div class="prepare-sub">Comment tu te sens ce matin ? Ça influence tes décisions.</div>
+          <ng-content select="[session-account]"></ng-content>
           <div class="mood-row">
             @for (mood of moods; track mood.value) {
               <button
@@ -59,14 +81,14 @@ const DEMO_ECO_EVENTS: EcoEvent[] = [
                 [class.sel]="selectedMood() === mood.value"
                 [attr.data-testid]="'mood-' + mood.value.toLowerCase()"
                 (click)="moodSelected.emit(mood.value)"
-              >{{ mood.emoji }} {{ mood.label }}</button>
+              ><span class="mood-emo">{{ mood.emoji }}</span> {{ mood.label }}</button>
             }
           </div>
           <div class="plan-input-wrap">
             <textarea
               class="plan-input"
-              placeholder="Plan du jour (optionnel) — ex: Breakouts NQ uniquement, max 5 trades..."
-              rows="2"
+              placeholder="Plan du jour (optionnel) : ex. Breakouts NQ uniquement, max 5 trades..."
+              rows="5"
               [value]="planNote()"
               (input)="planNote.set($any($event.target).value)"
               (blur)="planNoteChanged.emit(planNote())"
@@ -74,43 +96,38 @@ const DEMO_ECO_EVENTS: EcoEvent[] = [
             ></textarea>
           </div>
         </div>
-      </div>
 
-      <div class="session-layout">
-
-      <!-- Daily row — hier + objectifs -->
-      <div class="daily-row" data-testid="yesterday-recap">
         <!-- Card : recap hier -->
         <div class="card">
-          @if (yesterdayRecap()) {
+          @if (recapView(); as recap) {
             <div class="card-header">
-              <div class="card-title">Hier — {{ yesterdayRecap()!.date | date:'EEEE d MMMM' }}</div>
-              <span style="font-size:11px;color:var(--text-3);font-family:var(--font-mono)">{{ yesterdayRecap()!.tradesCount }} trades</span>
+              <div class="card-title">Hier — {{ recap.date | date:'EEEE d MMMM' }}</div>
+              <span style="font-size:11px;color:var(--text-3);font-family:var(--font-mono)">{{ recap.tradesCount }} trades</span>
             </div>
             <div class="recap-stats">
               <div class="recap-stat">
-                <div class="recap-stat-val" [class.green]="yesterdayRecap()!.pnl >= 0" [class.red]="yesterdayRecap()!.pnl < 0">
-                  {{ yesterdayRecap()!.pnl >= 0 ? '+' : '' }}{{ yesterdayRecap()!.pnl.toFixed(0) }}$
+                <div class="recap-stat-val" [class.green]="recap.pnl >= 0" [class.red]="recap.pnl < 0">
+                  {{ recap.pnl >= 0 ? '+' : '' }}{{ recap.pnl.toFixed(0) }}$
                 </div>
                 <div class="recap-stat-lbl">P&L</div>
               </div>
               <div class="recap-stat">
-                <div class="recap-stat-val">{{ yesterdayRecap()!.winRate.toFixed(0) }}%</div>
+                <div class="recap-stat-val">{{ recap.winRate.toFixed(0) }}%</div>
                 <div class="recap-stat-lbl">Win Rate</div>
               </div>
               <div class="recap-stat">
                 <div class="recap-stat-val" style="font-size:22px;">
-                  {{ emotionEmoji(yesterdayRecap()!.dominantEmotion) }}
+                  {{ emotionEmoji(recap.dominantEmotion) }}
                 </div>
                 <div class="recap-stat-lbl">Émotion dom.</div>
               </div>
             </div>
-            @if (userStore.isPremium() && yesterdayRecap()!.aiOneLiner) {
+            @if ((userStore.isPremium() || isDemo()) && recap.aiOneLiner) {
               <div class="ai-oneliner" data-testid="ai-oneliner">
                 <span class="ai-star">✦</span>
-                <span>{{ yesterdayRecap()!.aiOneLiner }}</span>
+                <span>{{ recap.aiOneLiner }}</span>
               </div>
-            } @else if (!userStore.isPremium()) {
+            } @else if (!userStore.isPremium() && !isDemo()) {
               <div class="ai-oneliner" style="position:relative;min-height:40px;">
                 <span class="ai-star" style="filter:blur(2px)">✦</span>
                 <span style="filter:blur(4px);user-select:none;pointer-events:none;">
@@ -145,17 +162,17 @@ const DEMO_ECO_EVENTS: EcoEvent[] = [
               Objectifs semaine
              
             </div>
-            @if (objectives().length) {
-              <span style="font-size:11px;color:var(--text-3);font-family:var(--font-mono)">{{ objectives().length }} obj.</span>
+            @if (objectivesView().length) {
+              <span style="font-size:11px;color:var(--text-3);font-family:var(--font-mono)">{{ objectivesView().length }} obj.</span>
             }
           </div>
-          @if (objectives().length === 0) {
+          @if (objectivesView().length === 0) {
             <div class="empty-state">Objectifs générés après ton Weekly Debrief</div>
           } @else {
-            @for (obj of objectives(); track $index; let i = $index) {
-              @if (!userStore.isPremium() && i >= 1) {
+            @for (obj of objectivesView(); track $index; let i = $index) {
+              @if (!userStore.isStarterOrAbove() && i >= 1) {
                 @if (i === 1) {
-                  <!-- 2e objectif flou — aperçu Premium -->
+                  <!-- 2e objectif flou — aperçu Starter -->
                   <div style="position:relative;margin-top:4px;">
                     <div class="obj-item" style="filter:blur(3px);pointer-events:none;user-select:none;">
                       <div class="obj-check">·</div>
@@ -219,53 +236,52 @@ const DEMO_ECO_EVENTS: EcoEvent[] = [
       <!-- Eco Calendar — toujours affiché -->
       <div class="eco-card" data-testid="eco-calendar">
         <div class="card-header">
-          <div class="card-title">
-            📅 {{ nextTradingLabel() }}
-           
+          <div class="card-title eco-title">
+            <lucide-icon [img]="AgendaIcon" [size]="16" class="ch-ic" /> {{ nextTradingLabel() }}
           </div>
           <div style="display:flex;align-items:center;gap:6px;">
             <span class="ai-badge">AI</span>
-            <span style="font-size:10px;color:var(--text-3);">Filtré pour ton profil</span>
+            <span style="font-size:10.5px;color:var(--text-3);">Filtré pour ton profil</span>
           </div>
         </div>
 
-        @if (!ecoCalendar()) {
+        @if (!ecoCalendar() && !isDemo()) {
           <div class="empty-state" style="padding:20px 0;">
             <div style="font-size:11px;color:var(--text-3);line-height:1.6;">
               ✦ Données économiques en cours de chargement...<br>
               Les événements s'afficheront automatiquement.
             </div>
           </div>
-        } @else if (ecoCalendar()!.events.length === 0) {
+        } @else if (!isDemo() && ecoCalendar()!.events.length === 0) {
           <div class="eco-empty">
             <div style="font-size:24px;margin-bottom:6px;opacity:.4;">📅</div>
             <div class="eco-empty-text">
               @if (isNextDay()) {
-                Aucun événement économique majeur prévu — lundi calme pour tes actifs.
+                Aucun événement économique majeur prévu : lundi calme pour tes actifs.
               } @else {
-                Aucun événement majeur prévu — journée calme pour tes actifs.
+                Aucun événement majeur prévu : journée calme pour tes actifs.
               }
             </div>
           </div>
         } @else {
-          @if (ecoCalendar()!.analysis.summary) {
+          @if (ecoSummaryText()) {
             <div class="eco-ai-block">
               <span style="font-size:16px;flex-shrink:0;margin-top:1px;">✦</span>
               <div>
-                {{ ecoCalendar()!.analysis.summary }}
-                @if (ecoCalendar()!.analysis.recommendation) {
+                {{ ecoSummaryText() }}
+                @if (ecoRecoText()) {
                   <strong style="color:var(--yellow);display:block;margin-top:4px;">
-                    {{ ecoCalendar()!.analysis.recommendation }}
+                    {{ ecoRecoText() }}
                   </strong>
                 }
               </div>
             </div>
           }
 
-          @if (highImpactCount() > 0) {
+          @if (highImpactCountView() > 0) {
             <div class="eco-warning">
-              <span>⚠️</span>
-              <span>{{ highImpactCount() }} événement(s) à fort impact {{ isNextDay() ? "demain" : "aujourd'hui" }}</span>
+              <lucide-icon [img]="WarnIcon" [size]="14" class="ew-ic" />
+              <span>{{ highImpactCountView() }} événement(s) à fort impact {{ isNextDay() ? "demain" : "aujourd'hui" }}</span>
             </div>
           }
 
@@ -273,12 +289,12 @@ const DEMO_ECO_EVENTS: EcoEvent[] = [
           @if (pinnedKeys().size > 0) {
             <div class="eco-pinned-notice">
               📌 {{ pinnedKeys().size }} event{{ pinnedKeys().size > 1 ? 's' : '' }} épinglé{{ pinnedKeys().size > 1 ? 's' : '' }} du jour
-              — <a routerLink="/eco-calendar" class="eco-pinned-link">Gérer</a>
+              · <a routerLink="/eco-calendar" class="eco-pinned-link">Gérer</a>
             </div>
           } @else {
             <div class="eco-pinned-reminder">
               📌 Sélectionne tes annonces du jour
-              — <a routerLink="/eco-calendar" class="eco-pinned-link">Calendrier éco →</a>
+              · <a routerLink="/eco-calendar" class="eco-pinned-link">Calendrier éco →</a>
             </div>
           }
 
@@ -299,19 +315,6 @@ const DEMO_ECO_EVENTS: EcoEvent[] = [
                 <span class="eco-filter-dot medium"></span> Moyen
               </button>
             </div>
-
-            <select class="eco-filter-select"
-                    [value]="filterCurrency()"
-                    (change)="filterCurrency.set($any($event.target).value)">
-              <option value="all">Toutes les devises</option>
-              @for (c of availableCurrencies(); track c) {
-                <option [value]="c">{{ getFlag({ currency: c }) }} {{ c }}</option>
-              }
-            </select>
-
-            <span class="eco-filter-count">
-              {{ agendaEvents().length }} événement{{ agendaEvents().length > 1 ? 's' : '' }}
-            </span>
           </div>
 
           <!-- Liste des événements filtrés -->
@@ -414,6 +417,11 @@ export class SessionMorningComponent {
   protected readonly moods = MOODS;
   protected readonly planNote = signal('');
 
+  // Icônes Lucide (headers de panels — design « Ma session »).
+  protected readonly PrepareIcon = Target;
+  protected readonly AgendaIcon  = CalendarDays;
+  protected readonly WarnIcon    = TriangleAlert;
+
   // Pins chargés directement depuis l'API — indépendant du cache getTodayEvents
   private readonly freshPins = signal<string[] | null>(null);
 
@@ -458,12 +466,32 @@ export class SessionMorningComponent {
     ),
   );
 
-  /** Agenda affiché : événements réels, ou exemples figés en démo si rien à montrer. */
+  protected readonly isDemo = computed(() => this.userStore.isDemo());
+
+  /** Agenda affiché : en démo = vitrine figée (4 events) filtrée par impact ; sinon réel. */
   protected readonly agendaEvents = computed(() => {
-    const real = this.filteredEvents();
-    if (real.length > 0) return real;
-    return this.userStore.isDemo() ? DEMO_ECO_EVENTS : real;
+    if (this.isDemo()) {
+      const imp = this.filterImpact();
+      return imp === 'all' ? DEMO_ECO_EVENTS : DEMO_ECO_EVENTS.filter(e => e.impact === imp);
+    }
+    return this.filteredEvents();
   });
+
+  /** Recap « Hier » : réel, ou exemple en démo. */
+  protected readonly recapView = computed(() => this.yesterdayRecap() ?? (this.isDemo() ? DEMO_RECAP : null));
+  /** Résumé/reco IA de l'agenda : réel, ou exemple en démo. */
+  protected readonly ecoSummaryText = computed(() => this.ecoCalendar()?.analysis.summary || (this.isDemo() ? DEMO_ECO_SUMMARY : ''));
+  protected readonly ecoRecoText    = computed(() => this.ecoCalendar()?.analysis.recommendation || (this.isDemo() ? DEMO_ECO_RECO : ''));
+  /** Nb d'events fort impact (démo-aware). */
+  protected readonly highImpactCountView = computed(() =>
+    this.isDemo()
+      ? DEMO_ECO_EVENTS.filter(e => e.impact === 'high').length
+      : (this.ecoCalendar()?.events.filter(e => e.impact === 'high').length ?? 0),
+  );
+  /** Objectifs semaine : réels, ou exemples en démo. */
+  protected readonly objectivesView = computed(() =>
+    this.objectives().length ? this.objectives() : (this.isDemo() ? DEMO_OBJECTIVES : []),
+  );
 
   protected readonly hasMatchingPins = computed(() => {
     const events = this.ecoCalendar()?.events ?? [];

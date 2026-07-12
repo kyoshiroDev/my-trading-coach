@@ -13,6 +13,7 @@ import { DailyRecapApi, DailyRecap } from '../api/daily-recap.api';
 import { DebriefApi, DebriefObjective } from '../api/debrief.api';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent } from '../api/eco-calendar.api';
 import { UserStore } from './user.store';
+import { TradesStore } from './trades.store';
 import { todayParis, toParisDateStr } from '../utils/paris-date';
 import { POLLING_MS } from '../constants/polling.const';
 
@@ -24,6 +25,7 @@ export class SessionStore {
   private readonly debriefApi      = inject(DebriefApi);
   private readonly ecoCalendarApi  = inject(EcoCalendarApi);
   private readonly userStore       = inject(UserStore);
+  private readonly tradesStore     = inject(TradesStore);
   private readonly destroyRef      = inject(DestroyRef);
 
   // ── State ─────────────────────────────────────────────────────────────────
@@ -90,7 +92,8 @@ export class SessionStore {
         if (this.activeSession()?.status === 'ACTIVE') this.refreshLiveStats();
       });
 
-    // Polling market context + news : actif seulement pendant session active
+    // Polling market context + news : session active ET plan Starter+
+    // (contexte marché + news filtrées = features Starter+, guards backend en place).
     toObservable(this.activeSession)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((session) => {
@@ -98,7 +101,9 @@ export class SessionStore {
         clearInterval(this.newsInterval);
         this.marketCtxInterval = undefined;
         this.newsInterval      = undefined;
-        if (session?.status === 'ACTIVE') {
+        // Contexte marché + news = features Starter+ (endpoints gardés côté API) :
+        // on ne poll que pour un Starter+ ; sinon les panneaux affichent un upsell.
+        if (session?.status === 'ACTIVE' && this.userStore.isStarterOrAbove()) {
           this.fetchMarketContext();
           this.fetchNewsItems();
           this.marketCtxInterval = setInterval(() => this.fetchMarketContext(), POLLING_MS.MARKET_CONTEXT);
@@ -203,6 +208,7 @@ export class SessionStore {
       .subscribe({
         next: () => {
           this.refreshLiveStats();
+          this.tradesStore.registerCreatedTrade(); // maj instantanée du compteur mensuel (limite FREE)
           this.flashFeedback('success', 'Trade loggué');
         },
         error: (err) =>

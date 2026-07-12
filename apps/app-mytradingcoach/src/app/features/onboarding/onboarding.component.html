@@ -122,7 +122,7 @@
             />
           </div>
 
-          <p class="capital-hint">Pas de bonne ou mauvaise réponse — modifiable à tout moment dans tes paramètres.</p>
+          <p class="capital-hint">Pas de bonne ou mauvaise réponse, modifiable à tout moment dans tes paramètres.</p>
 
           <div class="wizard-footer">
             <button class="btn-back" type="button" (click)="prevStep()">← Retour</button>
@@ -183,7 +183,7 @@
         <div class="wizard-body">
           <div class="step-label">{{ stepLabel }}</div>
           <h2 class="step-title">Tes actifs principaux</h2>
-          <p class="step-desc">1 à 3 instruments que tu trades. Le premier devient ton favori — utilisé pour ton premier trade.</p>
+          <p class="step-desc">1 à 3 instruments que tu trades. Le premier devient ton favori, utilisé pour ton premier trade.</p>
 
           <div class="field-label">Suggestions</div>
           <div class="strat-tags">
@@ -263,12 +263,17 @@
                 <span class="ob-cd" [style.background]="s.color"></span>
                 <div class="ob-setup-main">
                   <div class="ob-setup-name">{{ s.title }}</div>
-                  <div class="ob-setup-desc">{{ s.description || '— pas de description' }}</div>
+                  <div class="ob-setup-desc">{{ s.description || 'Pas de description' }}</div>
                 </div>
-                <button class="ob-setup-rm" type="button" title="Retirer" (click)="removeSetup(s.id)">✕</button>
+                <button class="ob-setup-rm" type="button" title="Retirer"
+                        [disabled]="setupsStore.active().length <= 1"
+                        (click)="removeSetup(s.id)">✕</button>
               </div>
             }
           </div>
+          @if (setupMsg(); as msg) {
+            <p class="ob-setup-msg" role="status">{{ msg }}</p>
+          }
           <button class="ob-addbtn" type="button" (click)="openSetupModal()">+ Ajouter un setup</button>
 
           <div class="wizard-footer">

@@ -432,7 +432,7 @@ export class CreateTradeDto {
   @IsOptional() @IsNumber() stopLoss?: number;
   @IsOptional() @IsNumber() takeProfit?: number;
   @IsEnum(EmotionState) emotion: EmotionState;
-  @IsEnum(SetupType) setup: SetupType;
+  @IsString() @IsNotEmpty() setupId: string;   // setup défini par l'user (table Setup) — plus d'enum
   @IsEnum(TradingSession) session: TradingSession;
   @IsString() timeframe: string;
   @IsOptional() @IsString() notes?: string;

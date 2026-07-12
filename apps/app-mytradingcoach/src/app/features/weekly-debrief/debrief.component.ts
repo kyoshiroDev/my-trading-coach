@@ -118,7 +118,7 @@ function typeBadge(type: string): { label: string; cls: string } | null {
     <div class="content">
       @if (!userStore.isStarterOrAbove()) {
         <div data-testid="debrief-paywall" class="premium-paywall">
-          <div class="paywall-icon">📅</div>
+          <div class="paywall-icon"><lucide-icon [img]="CalendarDaysIcon" [size]="40" /></div>
           <h3 class="paywall-title">Fonctionnalité Starter</h3>
           <p class="paywall-desc">
             Le Weekly Debrief est disponible avec le plan Starter.<br />Reçois
@@ -169,7 +169,7 @@ function typeBadge(type: string): { label: string; cls: string } | null {
           <div class="debrief-header">
             <div>
               <h2 class="week-title">
-                Semaine {{ debrief()!.weekNumber }} — {{ debrief()!.year }}
+                Semaine {{ debrief()!.weekNumber }} · {{ debrief()!.year }}
               </h2>
               <div class="week-meta">
                 <lucide-icon [img]="CalendarDaysIcon" [size]="12" color="var(--text-3)" />

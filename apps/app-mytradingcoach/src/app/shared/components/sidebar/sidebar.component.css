@@ -9,7 +9,7 @@
 /* ─── Flèche de repli sur le bord (desktop) ─── */
 .collapse-edge {
   position: absolute;
-  left: 220px; /* couture sidebar/contenu (largeur déployée) */
+  left: 200px; /* couture sidebar/contenu (largeur déployée) */
   top: 50%;
   transform: translate(-50%, -50%);
   z-index: 20;
@@ -36,8 +36,8 @@
 
 /* ─── SIDEBAR ─── */
 .sidebar {
-  width: 220px;
-  min-width: 220px;
+  width: 200px;
+  min-width: 200px;
   background: var(--bg-2);
   border-right: 1px solid var(--border);
   display: flex;
@@ -68,15 +68,17 @@
 
 /* ─── LOGO ─── */
 .logo {
-  display: block;
-  padding: 20px 16px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 13px 16px 10px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   text-decoration: none;
 }
 
 .logo img {
-  height: 40px;
+  height: 30px;
   width: auto;
 }
 
@@ -89,10 +91,11 @@
   flex: 1;
   min-height: 0; /* permet au flex-enfant de scroller dans un conteneur flex column */
   overflow-y: auto;
-  padding: 16px 12px;
+  overflow-x: hidden;
+  padding: 7px 10px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE / Edge */
 }
@@ -102,25 +105,24 @@
 
 .nav-section {
   font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 1.1px;
-  color: #4a6080;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  color: var(--text-3);
   text-transform: uppercase;
-  padding: 12px 8px 6px;
-  margin-top: 4px;
+  padding: 8px 8px 3px;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 12px;
+  padding: 6px 12px;
   border-radius: 8px;
   cursor: pointer;
   font-size: 13.5px;
-  font-weight: 400;
-  color: #4a6080;
+  font-weight: 450;
+  color: var(--text-2);
   transition: all 0.15s;
   position: relative;
   text-decoration: none;
@@ -128,13 +130,13 @@
 
 .nav-item:hover {
   background: var(--blue-glow);
-  color: var(--text-2);
+  color: var(--text);
 }
 
 .nav-item.active {
   background: rgba(59, 130, 246, 0.12);
   color: var(--blue-bright);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .nav-item.active::before {
@@ -144,20 +146,16 @@
   top: 50%;
   transform: translateY(-50%);
   width: 3px;
-  height: 20px;
+  height: 18px;
   background: var(--blue);
   border-radius: 0 3px 3px 0;
 }
 
 .nav-icon {
-  width: 18px;
-  height: 18px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-size: 14px;
-  line-height: 1;
 }
 
 .badge {
@@ -205,110 +203,12 @@
   border: none;
   width: 100%;
   text-align: left;
+  justify-content: flex-start;
 }
-
-/* ─── Discord button ─── */
-.discord-sidebar-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  margin: 0 8px 8px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text-3);
-  text-decoration: none;
-  font-size: 12px;
-  font-weight: 500;
-  transition: all 0.15s;
-}
-.discord-sidebar-btn:hover {
-  background: var(--blue-glow);
-  border-color: var(--border-hover);
-  color: var(--text-2);
-}
-.discord-sidebar-btn span { flex: 1; }
-.discord-sidebar-arrow {
-  font-size: 11px;
-  opacity: 0.5;
-  flex: none !important;
-}
-
-/* ─── Monthly counter ─── */
-.monthly-counter {
-  background: var(--bg-3);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 10px;
-}
-.monthly-counter.near  { border-color: rgba(234, 179, 8, 0.4); }
-.monthly-counter.reached { border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.05); }
-
-.mc-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-.mc-label {
-  font-size: 11px;
-  color: var(--text-3);
-  font-weight: 500;
-}
-.mc-count {
-  font-size: 12px;
-  font-weight: 600;
-  font-family: var(--font-mono);
-  color: var(--text);
-}
-.monthly-counter.near  .mc-count { color: #eab308; }
-.monthly-counter.reached .mc-count { color: var(--red); }
-.mc-sep { opacity: 0.4; }
-
-.mc-track {
-  height: 4px;
-  background: var(--border);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.mc-fill {
-  height: 100%;
-  background: var(--blue);
-  border-radius: 2px;
-  transition: width 0.4s ease;
-}
-.monthly-counter.near  .mc-fill { background: #eab308; }
-.monthly-counter.reached .mc-fill { background: var(--red); }
-
-.mc-upgrade {
-  margin-top: 8px;
-  width: 100%;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 10px;
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  font-family: var(--font-body);
-  transition: all 0.15s;
-}
-.mc-upgrade.reached {
-  background: var(--red);
-  color: #fff;
-}
-.mc-upgrade.reached:hover { opacity: 0.85; }
-.mc-upgrade.near {
-  background: transparent;
-  border: 1px solid rgba(234, 179, 8, 0.4);
-  color: #eab308;
-}
-.mc-upgrade.near:hover { background: rgba(234, 179, 8, 0.08); }
 
 /* ─── FOOTER ─── */
 .sidebar-footer {
-  padding: 16px 12px;
+  padding: 8px 12px 10px;
   border-top: 1px solid var(--border);
   flex-shrink: 0;
 }
@@ -331,11 +231,11 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--blue), var(--purple));
+  background: var(--grad-brand, linear-gradient(135deg, var(--blue), var(--purple)));
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   font-family: var(--font-display);
   color: white;
@@ -357,11 +257,12 @@
 }
 
 .user-plan {
-  font-size: 10px;
+  font-size: 9.5px;
   font-family: var(--font-mono);
   letter-spacing: 0.5px;
 }
 .user-plan.premium { color: var(--badge-premium-color); }
+.user-plan.starter { color: var(--blue-bright, #60a5fa); }
 .user-plan.free    { color: var(--badge-free-color); }
 .user-plan.beta    { color: var(--badge-beta-color); }
 
@@ -551,10 +452,8 @@
   .sidebar.collapsed .nav-section,
   .sidebar.collapsed .badge,
   .sidebar.collapsed .nav-badge-notif,
-  .sidebar.collapsed .discord-sidebar-arrow,
   .sidebar.collapsed .user-info,
-  .sidebar.collapsed .logo-full,
-  .sidebar.collapsed .monthly-counter {
+  .sidebar.collapsed .logo-full {
     display: none;
   }
 
@@ -578,14 +477,8 @@
     padding: 9px 0;
   }
 
-  /* Footer : Discord en icône, carte user en avatar seul */
-  .sidebar.collapsed .sidebar-footer { padding: 16px 8px; }
-  .sidebar.collapsed .discord-sidebar-btn {
-    justify-content: center;
-    gap: 0;
-    padding: 8px 0;
-    margin: 0 0 8px;
-  }
+  /* Footer : carte user en avatar seul */
+  .sidebar.collapsed .sidebar-footer { padding: 8px 8px 10px; }
   .sidebar.collapsed .user-card {
     justify-content: center;
     padding: 10px 0;
