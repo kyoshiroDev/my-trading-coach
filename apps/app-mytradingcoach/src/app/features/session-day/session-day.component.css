@@ -113,9 +113,14 @@
   border: 1px solid rgba(16,185,129,.3); transition: all .15s;
 }
 .mtc-start-btn lucide-icon { display: inline-flex; }
-.mtc-start-btn:hover {
+.mtc-start-btn:hover:not(:disabled) {
   background: var(--green); color: #06281c; border-color: var(--green);
   box-shadow: 0 0 22px rgba(16,185,129,.35);
+}
+.mtc-start-btn:disabled {
+  opacity: .4; cursor: not-allowed;
+  background: var(--bg-2); color: var(--text-faint); border-color: var(--border);
+  box-shadow: none;
 }
 
 /* SESSION ACTIVE pill — gradient + point clignotant + timer mono + compte + Clôturer */

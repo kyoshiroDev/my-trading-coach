@@ -60,7 +60,17 @@
   transition: opacity .15s;
   margin-top: 4px;
 }
-.session-start-btn:hover { opacity: .88; }
+.session-start-btn:hover:not(:disabled) { opacity: .88; }
+.session-start-btn:disabled {
+  opacity: .4; cursor: not-allowed;
+  background: var(--bg-2); color: var(--text-faint);
+}
+.no-session-hint {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-faint);
+  font-style: italic;
+}
 
 /* ─── Session active bar ─── */
 .pulse-dot {

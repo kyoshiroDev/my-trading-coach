@@ -114,9 +114,15 @@ const MOCK_MARKET_CTX: MarketContext = {
           <div class="no-session-icon">🎯</div>
           <div class="no-session-title">Pas de session en cours</div>
           <div class="no-session-sub">Démarre une session pour tracker tes trades en live et accéder au calendrier économique.</div>
-          <button class="session-start-btn" data-testid="start-session-live" (click)="startSession.emit()">
+          <button class="session-start-btn" data-testid="start-session-live"
+                  [disabled]="startDisabled()"
+                  [title]="startDisabled() ? 'Choisis un compte dans la Pré-session' : ''"
+                  (click)="startSession.emit()">
             Démarrer la session →
           </button>
+          @if (startDisabled()) {
+            <div class="no-session-hint">Choisis un compte dans l'onglet Pré-session pour lancer la session.</div>
+          }
         </div>
       } @else {
 
@@ -744,6 +750,8 @@ export class SessionLiveComponent {
   readonly breakingNews = input<string | null>(null);
   readonly triggerCloseModal = input<boolean>(false);
   readonly liveFeedback = input<{ type: 'success' | 'error'; text: string; ts: number } | null>(null);
+  /** Désactive le CTA « Démarrer » tant qu'aucun compte précis n'est choisi (règle 1 session = 1 compte). */
+  readonly startDisabled = input<boolean>(false);
 
   readonly startSession = output<void>();
   readonly tradeClosed = output<{ tradeId: string; exitPrice: number }>();
