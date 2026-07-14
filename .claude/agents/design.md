@@ -166,7 +166,20 @@ body: padding 18px.
 La page `session` a un **header propre** (pas le `mtc-topbar` partagé). Source de vérité
 des valeurs : `maquettes/new/src/session-mockup-source/` (fichiers `.jsx`/`.css` lisibles ;
 le `.html` standalone n'est qu'une cible visuelle). Conteneur page : `padding: 16px 18px;
-display:flex; flex-direction:column; gap:14px; container-type:inline-size`.
+display:block; container-type:inline-size; flex:1; min-height:0; overflow-y:auto`
+(espacement header/contenu via `margin-bottom:14px` sur `.mtc-sess-header`).
+
+- **Scroll = la page, un seul conteneur** : `.session-page` est en `display:block` +
+  `overflow-y:auto` — c'est le **seul** scroll de la page, valable pour les 3 onglets. Ne jamais
+  la repasser en `display:flex; flex-direction:column` : un conteneur flex-column **fige son
+  `scrollHeight`** quand un enfant est plus haut que lui → le contenu déborde et est clippé au
+  lieu de scroller (bug historique : bouton « Logger ce trade » inatteignable en laptop court).
+  Les panneaux (`.qt-panel`, `.cal-card`, `.feed-col`…) se **dimensionnent à leur contenu**
+  (jamais `flex:1 + overflow:hidden` pour « remplir la hauteur d'écran »). Seules les **listes
+  longues** (`.feed-list`, `.cal-events-list`) gardent un `overflow-y:auto` interne, borné par
+  un `max-height` sur le panneau parent (≈420px). Container-queries live : `.live-layout` 1 col
+  ≤1100 · `.live-cols` 1 col ≤820 · `.mini-stats-row` 2 col ≤820 puis 1 col ≤520 · `.ctx-grid`
+  4 col ≤1100 puis 2 col ≤680 · `.qt-pnl-row` 1 col ≤520.
 
 - **Header** (grille `1fr auto 1fr`) : titre `Space Grotesk 21px/700 -.4px` + sous-titre
   `12.5px --text-3` (gauche) · segmented control (centre) · StartButton/SessionActivePill (droite).
