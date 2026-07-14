@@ -421,8 +421,12 @@
   margin-top: 4px;
   transition: opacity 0.15s;
 }
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   opacity: 0.85;
+}
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .btn-ghost {
