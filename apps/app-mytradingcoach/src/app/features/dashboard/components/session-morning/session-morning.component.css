@@ -472,6 +472,16 @@
 .eco-empty { padding: 24px 20px; text-align: center; }
 .eco-empty-text { font-size: 11px; color: var(--text-3); line-height: 1.5; }
 
+/* Desktop (≥981px = header compact 1 ligne) : la Pré-session tient dans l'écran.
+   Les deux colonnes (récap gauche + agenda droite) sont plafonnées à la hauteur visible ;
+   ce qui dépasse scrolle À L'INTÉRIEUR de la colonne (.daily-row / .eco-events) au lieu
+   d'allonger la page. Offset 103px = padding-top(16) + header(57) + margin(14) + padding-bottom(16).
+   .session-page colle au haut du viewport → 100vh est la bonne référence. */
+@container (min-width: 981px) {
+  .daily-row,
+  .eco-card { max-height: calc(100vh - 103px); min-height: 0; }
+}
+
 /* Responsive : mobile → 1 colonne, scroll page normal (aligné container-query maquette ≤820px) */
 /* Container-query — répond à la largeur du conteneur .session-page (source §6). */
 @container (max-width: 820px) {
