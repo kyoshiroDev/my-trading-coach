@@ -180,6 +180,13 @@ display:block; container-type:inline-size; flex:1; min-height:0; overflow-y:auto
   un `max-height` sur le panneau parent (≈420px). Container-queries live : `.live-layout` 1 col
   ≤1100 · `.live-cols` 1 col ≤820 · `.mini-stats-row` 2 col ≤820 puis 1 col ≤520 · `.ctx-grid`
   4 col ≤1100 puis 2 col ≤680 · `.qt-pnl-row` 1 col ≤520.
+- **Exception Pré-session desktop** (`@container (min-width:981px)`, header compact) : les 2
+  colonnes de `.session-layout` (récap gauche + agenda droite) sont **plafonnées à la hauteur
+  d'écran** (`max-height: calc(100vh - 103px)`) ; le trop-plein scrolle **à l'intérieur** de la
+  colonne (`.daily-row`, `.eco-events`) au lieu d'allonger la page — l'agenda éco, souvent long,
+  ne doit jamais faire déborder la page. Offset 103 = padding-top 16 + header 57 + margin 14 +
+  padding-bottom 16 ; `.session-page` colle au haut du viewport donc `100vh` est la bonne réf.
+  Sous 820px (mobile, 1 col) : pas de plafond → flow + scroll page normal.
 
 - **Header** (grille `1fr auto 1fr`) : titre `Space Grotesk 21px/700 -.4px` + sous-titre
   `12.5px --text-3` (gauche) · segmented control (centre) · StartButton/SessionActivePill (droite).
