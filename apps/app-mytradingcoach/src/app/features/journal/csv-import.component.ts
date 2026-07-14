@@ -150,7 +150,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
                   </div>
 
                   <div class="import-field">
-                    <label class="import-label" for="tvFeesInput">2. Fichier des frais (Cash history) — optionnel</label>
+                    <label class="import-label" for="tvFeesInput">2. Fichier des frais (Cash history) — obligatoire</label>
                     @if (feesFile()) {
                       <div class="file-pill">
                         <lucide-icon [img]="UploadIcon" [size]="16" color="var(--blue)" />
@@ -166,7 +166,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
                       <button class="btn-ghost fees-add-btn" (click)="tvFeesInput.click()">
                         Choisir le fichier des frais
                       </button>
-                      <p class="import-help">Optionnel. Onglet Cash history de Tradovate → frais exacts au centime, sans saisie manuelle.</p>
+                      <p class="import-help">Onglet Cash history de Tradovate → frais exacts au centime, sans saisie manuelle. Requis pour l'import Tradovate.</p>
                     }
                     <input #tvFeesInput id="tvFeesInput" type="file"
                       accept=".csv,.txt,.xlsx,.xls" style="display:none" (change)="onFeesFileChange($event)" />
@@ -323,8 +323,11 @@ const EMOTION_EMOJIS: Record<string, string> = {
               @if (!canImport()) {
                 <p class="import-help import-warn">Choisis le compte de destination pour importer.</p>
               }
+              @if (tradovateMode() && selectedFile() && !feesFile()) {
+                <p class="import-help import-warn">Ajoute le fichier des frais (Cash history) — obligatoire pour l'import Tradovate.</p>
               }
-              <button class="btn-primary" (click)="upload()" [disabled]="!selectedFile() || !canImport()">Importer</button>
+              }
+              <button class="btn-primary" (click)="upload()" [disabled]="!canSubmit()">Importer</button>
             </div>
           } @else {
             <div
@@ -437,6 +440,16 @@ export class CsvImportComponent {
   protected readonly canImport = computed(
     () => this.accountStore.activeAccounts().length === 0 || this.accountId() !== '',
   );
+
+  /**
+   * Bouton Importer actif : fichier des trades présent + compte OK. En mode Tradovate,
+   * le Cash history est OBLIGATOIRE (frais exacts au centime → on impose les deux fichiers).
+   */
+  protected readonly canSubmit = computed(() => {
+    if (!this.selectedFile() || !this.canImport()) return false;
+    if (this.tradovateMode() && !this.feesFile()) return false;
+    return true;
+  });
 
   /** Au-delà : un total global réparti au prorata donnerait des frais faux. */
   private readonly FEES_INPUT_MAX_TRADES = 5000;
