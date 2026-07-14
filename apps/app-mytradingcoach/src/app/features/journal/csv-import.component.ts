@@ -31,6 +31,13 @@ interface ImportResult {
   failed: number;
   limitBlocked: number;
   total: number;
+  /** Présent quand un fichier de frais (Tradovate Cash history) a été fusionné. */
+  feesImported?: {
+    assigned: number;
+    expected: number;
+    reconciled: boolean;
+    count: number;
+  };
 }
 
 // Émotions (mêmes valeurs que le form de trade) appliquées à tout le lot.
@@ -90,6 +97,14 @@ const EMOTION_EMOJIS: Record<string, string> = {
               @if (result()!.failed > 0) {
                 <p class="result-sub">
                   {{ result()!.failed }} ligne(s) ignorée(s) (format invalide)
+                </p>
+              }
+              @if (result()!.feesImported; as f) {
+                <p class="result-sub result-fees">
+                  Frais importés : {{ f.assigned.toFixed(2) }} $ sur {{ f.count }} trade(s)
+                  @if (!f.reconciled) {
+                    <span class="result-fees-warn"> · frais partiellement rapprochés</span>
+                  }
                 </p>
               }
               <button class="btn-primary" (click)="reset()">
@@ -172,44 +187,86 @@ const EMOTION_EMOJIS: Record<string, string> = {
                 </div>
               }
 
-              @switch (feesDisabledReason()) {
-                @case ('has_fees_column') {
-                  <p class="fees-note">
-                    ✓ Frais détectés dans ton fichier : ils sont déjà pris en
-                    compte. Pas besoin de les saisir.
-                  </p>
-                }
-                @case ('too_many') {
-                  <p class="fees-note">
-                    Import volumineux (plus de 100 trades). Les frais ne peuvent
-                    pas être saisis en un total global sur autant de trades :
-                    importe par période plus courte pour les inclure.
-                  </p>
-                }
-                @default {
-                  <div class="fees-field">
-                    <label class="fees-label" for="totalFees">
-                      Total des frais (optionnel)
-                    </label>
-                    <div class="fees-input-wrap">
-                      <input
-                        id="totalFees"
-                        type="text"
-                        inputmode="decimal"
-                        mtcNumericInput
-                        placeholder="0,00"
-                        class="fees-input"
-                        [value]="totalFees()"
-                        (input)="totalFees.set($any($event.target).value)"
-                      />
-                      <span class="fees-unit">€</span>
+              <!-- Fichier des frais (Tradovate Cash history) — frais exacts par fusion -->
+              @if (allowFeesFile()) {
+                <div class="import-field">
+                  <label class="import-label" for="feesFileInput">Fichier des frais (Tradovate — Cash history)</label>
+                  @if (feesFile()) {
+                    <div class="file-pill">
+                      <lucide-icon [img]="UploadIcon" [size]="16" color="var(--blue)" />
+                      <span class="file-name">{{ feesFile()!.name }}</span>
+                      <button class="file-change" (click)="clearFeesFile()">Retirer</button>
                     </div>
-                    <p class="fees-help">
-                      Indique le total des commissions de ton broker pour cet import
-                      (ex. 7,28). Le P&amp;L sera affiché net de frais. Laisse vide si
-                      déjà inclus.
+                    @if (feesFileValid()) {
+                      <p class="fees-note">
+                        ✓ Cash history reconnu — frais exacts par trade, sans saisie manuelle.
+                      </p>
+                    } @else {
+                      <p class="import-help import-warn">
+                        Ce fichier ne ressemble pas à un Cash history Tradovate — vérifie l'export.
+                      </p>
+                    }
+                  } @else {
+                    <button class="btn-ghost fees-add-btn" (click)="feesInput.click()">
+                      + Ajouter le fichier des frais
+                    </button>
+                    <p class="import-help">
+                      Optionnel. Exporte l'onglet Cash history de Tradovate pour des frais exacts,
+                      sans saisie manuelle.
                     </p>
-                  </div>
+                  }
+                  <input
+                    #feesInput
+                    id="feesFileInput"
+                    type="file"
+                    accept=".csv,.txt,.xlsx,.xls"
+                    style="display:none"
+                    (change)="onFeesFileChange($event)"
+                  />
+                </div>
+              }
+
+              <!-- Saisie manuelle des frais — masquée si un Cash history valide est fourni -->
+              @if (!feesFileValid()) {
+                @switch (feesDisabledReason()) {
+                  @case ('has_fees_column') {
+                    <p class="fees-note">
+                      ✓ Frais détectés dans ton fichier : ils sont déjà pris en
+                      compte. Pas besoin de les saisir.
+                    </p>
+                  }
+                  @case ('too_many') {
+                    <p class="fees-note">
+                      Import volumineux (plus de 100 trades). Les frais ne peuvent
+                      pas être saisis en un total global sur autant de trades :
+                      importe par période plus courte pour les inclure.
+                    </p>
+                  }
+                  @default {
+                    <div class="fees-field">
+                      <label class="fees-label" for="totalFees">
+                        Total des frais (optionnel)
+                      </label>
+                      <div class="fees-input-wrap">
+                        <input
+                          id="totalFees"
+                          type="text"
+                          inputmode="decimal"
+                          mtcNumericInput
+                          placeholder="0,00"
+                          class="fees-input"
+                          [value]="totalFees()"
+                          (input)="totalFees.set($any($event.target).value)"
+                        />
+                        <span class="fees-unit">€</span>
+                      </div>
+                      <p class="fees-help">
+                        Indique le total des commissions de ton broker pour cet import
+                        (ex. 7,28). Le P&amp;L sera affiché net de frais. Laisse vide si
+                        déjà inclus.
+                      </p>
+                    </div>
+                  }
                 }
               }
 
@@ -276,6 +333,8 @@ const EMOTION_EMOJIS: Record<string, string> = {
 })
 export class CsvImportComponent {
   readonly open = input(false);
+  /** Affiche le sélecteur « Fichier des frais » (Tradovate Cash history). Onboarding → false. */
+  readonly allowFeesFile = input(true);
   readonly dismissed = output<void>();
   readonly imported = output<void>();
 
@@ -298,6 +357,10 @@ export class CsvImportComponent {
   protected readonly totalFees = signal<string>('');
   // null = champ frais actif ; sinon raison de désactivation.
   protected readonly feesDisabledReason = signal<null | 'has_fees_column' | 'too_many'>(null);
+  // Fichier des frais (Tradovate Cash history) — optionnel, remplace la saisie manuelle.
+  protected readonly feesFile = signal<File | null>(null);
+  // true si l'en-tête ressemble à un Cash history Tradovate (frais exacts par fusion).
+  protected readonly feesFileValid = signal(false);
 
   // Defaults appliqués à tout le lot.
   protected readonly accountId = signal<string>('');
@@ -395,6 +458,30 @@ export class CsvImportComponent {
     this.selectedFile.set(null);
     this.totalFees.set('');
     this.feesDisabledReason.set(null);
+    this.clearFeesFile();
+  }
+
+  // Fichier des frais (Cash history) : lecture légère de l'en-tête pour valider et,
+  // si valide, masquer la saisie manuelle (les frais viennent du fichier).
+  onFeesFileChange(e: Event) {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.feesFile.set(file);
+    this.feesFileValid.set(false);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const header = String(reader.result ?? '').split(/\r?\n/)[0]?.toLowerCase() ?? '';
+      this.feesFileValid.set(
+        header.includes('transaction id') && header.includes('cash change type'),
+      );
+    };
+    reader.onerror = () => this.feesFileValid.set(false);
+    reader.readAsText(file);
+  }
+
+  protected clearFeesFile() {
+    this.feesFile.set(null);
+    this.feesFileValid.set(false);
   }
 
   // Étape 2 : confirmation → upload avec les frais éventuels.
@@ -405,9 +492,16 @@ export class CsvImportComponent {
     const formData = new FormData();
     formData.append('file', file, file.name);
 
-    const fees = parseDecimal(this.totalFees());
-    if (this.feesDisabledReason() === null && fees != null && fees > 0) {
-      formData.append('totalFees', String(fees));
+    // Fichier des frais (Tradovate Cash history) → frais exacts par fusion. Prioritaire
+    // sur la saisie manuelle : quand il est fourni, on n'envoie pas totalFees.
+    const feesFile = this.feesFile();
+    if (feesFile) {
+      formData.append('fees', feesFile, feesFile.name);
+    } else {
+      const fees = parseDecimal(this.totalFees());
+      if (this.feesDisabledReason() === null && fees != null && fees > 0) {
+        formData.append('totalFees', String(fees));
+      }
     }
 
     // Defaults du lot : compte cible (si choisi), émotion, setup.
@@ -443,5 +537,6 @@ export class CsvImportComponent {
     this.selectedFile.set(null);
     this.totalFees.set('');
     this.feesDisabledReason.set(null);
+    this.clearFeesFile();
   }
 }

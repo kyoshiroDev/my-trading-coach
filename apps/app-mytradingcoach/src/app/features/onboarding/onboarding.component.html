@@ -360,6 +360,7 @@
 <!-- CSV import (gère son propre overlay via [open]) -->
 <mtc-csv-import
   [open]="csvOpen()"
+  [allowFeesFile]="false"
   (imported)="onCsvImported()"
   (dismissed)="onCsvDismissed()"
 />
