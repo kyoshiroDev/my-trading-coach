@@ -169,24 +169,27 @@ le `.html` standalone n'est qu'une cible visuelle). Conteneur page : `padding: 1
 display:block; container-type:inline-size; flex:1; min-height:0; overflow-y:auto`
 (espacement header/contenu via `margin-bottom:14px` sur `.mtc-sess-header`).
 
-- **Scroll = la page, un seul conteneur** : `.session-page` est en `display:block` +
-  `overflow-y:auto` — c'est le **seul** scroll de la page, valable pour les 3 onglets. Ne jamais
-  la repasser en `display:flex; flex-direction:column` : un conteneur flex-column **fige son
+- **Conteneur page** : `.session-page` en `display:block` + `overflow-y:auto`. Ne **jamais** la
+  repasser en `display:flex; flex-direction:column` : un conteneur flex-column **fige son
   `scrollHeight`** quand un enfant est plus haut que lui → le contenu déborde et est clippé au
   lieu de scroller (bug historique : bouton « Logger ce trade » inatteignable en laptop court).
   Les panneaux (`.qt-panel`, `.cal-card`, `.feed-col`…) se **dimensionnent à leur contenu**
-  (jamais `flex:1 + overflow:hidden` pour « remplir la hauteur d'écran »). Seules les **listes
-  longues** (`.feed-list`, `.cal-events-list`) gardent un `overflow-y:auto` interne, borné par
-  un `max-height` sur le panneau parent (≈420px). Container-queries live : `.live-layout` 1 col
-  ≤1100 · `.live-cols` 1 col ≤820 · `.mini-stats-row` 2 col ≤820 puis 1 col ≤520 · `.ctx-grid`
-  4 col ≤1100 puis 2 col ≤680 · `.qt-pnl-row` 1 col ≤520.
-- **Exception Pré-session desktop** (`@container (min-width:981px)`, header compact) : les 2
-  colonnes de `.session-layout` (récap gauche + agenda droite) sont **plafonnées à la hauteur
-  d'écran** (`max-height: calc(100vh - 103px)`) ; le trop-plein scrolle **à l'intérieur** de la
-  colonne (`.daily-row`, `.eco-events`) au lieu d'allonger la page — l'agenda éco, souvent long,
-  ne doit jamais faire déborder la page. Offset 103 = padding-top 16 + header 57 + margin 14 +
-  padding-bottom 16 ; `.session-page` colle au haut du viewport donc `100vh` est la bonne réf.
-  Sous 820px (mobile, 1 col) : pas de plafond → flow + scroll page normal.
+  (jamais `flex:1 + overflow:hidden` pour « remplir la hauteur d'écran »).
+- **Deux régimes de scroll selon la largeur** :
+  - **Desktop `@container (min-width:981px)`** (header compact 1 ligne) : chaque onglet **tient
+    dans l'écran**, plafonné à `max-height: calc(100vh - 103px)`, le trop-plein scrolle **à
+    l'intérieur du composant** (pas d'allongement de page, header toujours visible). Cibles du
+    plafond : Pré-session → les 2 colonnes `.daily-row` + `.eco-card` (liste `.eco-events` scrolle) ·
+    Session live → `[data-testid="session-live-view"]` · Débrief → `.session-debrief`.
+    Offset 103 = padding-top 16 + header 57 + margin 14 + padding-bottom 16 ; `.session-page`
+    colle au haut du viewport donc `100vh` est la bonne référence (robuste aux écrans courts).
+  - **Tablette/mobile `≤980px`** : **pas** de plafond → flow naturel + **scroll de page**
+    (`.session-page`). Sur mobile la Pré-session repasse aussi les colonnes en `display:block;
+    overflow:visible` (`@container (max-width:820px)`).
+- Listes internes toujours bornées : `.feed-list`, `.cal-events-list` gardent `overflow-y:auto`
+  borné par `max-height` sur le panneau parent (≈420px). Container-queries live : `.live-layout`
+  1 col ≤1100 · `.live-cols` 1 col ≤820 · `.mini-stats-row` 2 col ≤820 puis 1 col ≤520 ·
+  `.ctx-grid` 4 col ≤1100 puis 2 col ≤680 · `.qt-pnl-row` 1 col ≤520.
 
 - **Header** (grille `1fr auto 1fr`) : titre `Space Grotesk 21px/700 -.4px` + sous-titre
   `12.5px --text-3` (gauche) · segmented control (centre) · StartButton/SessionActivePill (droite).
