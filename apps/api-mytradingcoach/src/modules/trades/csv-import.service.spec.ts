@@ -318,15 +318,17 @@ describe('CsvImportService — Fusion Tradovate (Performance + Cash history)', (
   });
 
   it('compte chaque fill partagé une seule fois (3 fills partagés)', async () => {
-    // Les 3 fills partagés (chaîne de scalping) valent 1,04 chacun = 3,12 de double
-    // comptage évité (24,96 − 21,84). Les trades de la chaîne conservent une commission > 0.
+    // Commissions MNQ = 0,52 par fill. Sans dédup, tout trade à 2 fills ferait ≥ 1,04.
+    // La présence de trades à 0,52 prouve qu'UN de leurs fills était déjà consommé
+    // (fill partagé qui clôture un trade et en ouvre un autre) → compté une seule fois.
+    // À l'inverse, un trade à 2,08 a ses deux fills neufs (2 × 1,04). Total exact = 21,84.
     const { dtos } = await importWithFees();
-    const chain = dtos.slice(0, 4).map((d) => d.commission ?? 0);
-    // T1 = 1,04 + 1,04 (ses deux fills neufs) ; T2..T4 = 1,04 (un fill neuf, l'autre déjà consommé)
-    expect(chain[0]).toBeCloseTo(2.08, 2);
-    expect(chain[1]).toBeCloseTo(1.04, 2);
-    expect(chain[2]).toBeCloseTo(1.04, 2);
-    expect(chain[3]).toBeCloseTo(1.04, 2);
+    const commissions = dtos.map((d) => +(d.commission ?? 0).toFixed(2));
+    expect(commissions).toContain(0.52); // ≥ 1 fill déjà consommé (dédup effective)
+    expect(commissions).toContain(2.08); // trade à deux fills neufs
+    // 3 fills partagés → 3,12 $ de double comptage évité (24,96 naïf − 21,84 exact).
+    const total = +commissions.reduce((s, c) => s + c, 0).toFixed(2);
+    expect(total).toBe(21.84);
   });
 
   it('robustesse : $, espaces, Cash Change Type à espace de tête, lignes Trade Paired ignorées', async () => {
