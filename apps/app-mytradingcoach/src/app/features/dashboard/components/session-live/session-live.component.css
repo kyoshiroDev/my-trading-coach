@@ -831,9 +831,11 @@
     min-height: 0;
     grid-template-rows: minmax(0, 1fr);
   }
-  /* Panneaux étirés (on lève le plafond 420px) ; les listes internes gardent leur scroll. */
-  .cal-card,
-  .feed-col { flex: 1; min-height: 0; max-height: none; }
+  /* Panneaux étirés (on lève le plafond 420px) ; les listes internes gardent leur scroll.
+     Sélecteurs descendants (.live-cols …) pour une spécificité > à la règle de base
+     `.cal-card { max-height: 420px }` déclarée plus bas dans le fichier (sinon elle gagnerait). */
+  .live-cols .cal-card,
+  .live-cols .feed-col { flex: 1; min-height: 0; max-height: none; }
   .qt-panel { min-height: 0; overflow-y: auto; }
 }
 
