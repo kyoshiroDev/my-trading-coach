@@ -51,9 +51,11 @@
    Source : 06-session-page.jsx + 00-DESIGN-SYSTEM.css (transcription pixel). */
 .session-page {
   padding: 16px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  /* display:block (et non flex-column) : un conteneur flex-column clippe un enfant plus haut
+     que lui sans scroller (scrollHeight figé). En bloc, overflow-y:auto scrolle de façon fiable
+     — la page est le SEUL conteneur de scroll pour les 3 onglets. L'espacement header/contenu
+     (ex-gap:14px) est repris via .mtc-sess-header { margin-bottom }. */
+  display: block;
   box-sizing: border-box;
   container-type: inline-size;
   flex: 1;
@@ -70,6 +72,7 @@
   align-items: center;
   gap: 16px;
   flex-shrink: 0;
+  margin-bottom: 14px; /* reprend l'ancien gap:14px de .session-page (passée en display:block) */
 }
 .mtc-sess-h-left { justify-self: start; display: flex; align-items: center; gap: 12px; }
 .mtc-sess-h-center { justify-self: center; }
