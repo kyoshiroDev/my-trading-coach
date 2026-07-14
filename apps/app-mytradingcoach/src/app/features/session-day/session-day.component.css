@@ -217,6 +217,16 @@
 .sj-ic { display: inline-flex; color: var(--blue-bright); flex-shrink: 0; margin-top: 1px; }
 
 /* Container-queries — répondent à la largeur du conteneur .session-page (source §6). */
+/* Desktop (≥981px = header compact) : l'onglet Débrief tient dans l'écran. Le contenu
+   est plafonné à la hauteur visible ; le trop-plein scrolle À L'INTÉRIEUR du débrief au
+   lieu d'allonger la page. Offset 103 identique aux autres onglets. Sous 980px : scroll page. */
+@container (min-width: 981px) {
+  .session-debrief {
+    max-height: calc(100vh - 103px);
+    overflow-y: auto;
+    min-height: 0;
+  }
+}
 @container (max-width: 1000px) {
   .debrief-grid { grid-template-columns: 1fr; }
 }

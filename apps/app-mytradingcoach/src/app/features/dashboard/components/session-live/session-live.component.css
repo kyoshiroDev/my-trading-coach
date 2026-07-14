@@ -805,6 +805,19 @@
   .qt-pnl-row { grid-template-columns: 1fr; }
 }
 
+/* Desktop (≥981px = header compact) : l'onglet Session live tient dans l'écran.
+   La vue est plafonnée à la hauteur visible ; ce qui dépasse (Trade rapide long, etc.)
+   scrolle À L'INTÉRIEUR de la vue au lieu d'allonger la page. Offset 103 = padding-top 16
+   + header 57 + margin 14 + padding-bottom 16 ; .session-page colle au haut du viewport.
+   Sous 980px (tablette/mobile) : pas de plafond → scroll page normal. */
+@container (min-width: 981px) {
+  [data-testid="session-live-view"] {
+    max-height: calc(100vh - 103px);
+    overflow-y: auto;
+    min-height: 0;
+  }
+}
+
 /* ── Eco release alert (WebSocket temps réel) ─────────────────────────────── */
 .eco-release-alert {
   background: var(--bg-2);
