@@ -92,6 +92,18 @@ export class SessionStore {
         if (this.activeSession()?.status === 'ACTIVE') this.refreshLiveStats();
       });
 
+    // Polling calendrier éco (Starter+, session active) : recharge la donnée fraîche
+    // (actuals + analyse IA) toutes les 60 s. Filet de sécurité indépendant du broadcast
+    // WebSocket transitoire — la fenêtre ouverte rattrape même si un broadcast est manqué
+    // (reconnexion socket après déploiement, cycle de détection raté côté cron, etc.).
+    interval(POLLING_MS.ECO_CALENDAR)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (this.activeSession()?.status === 'ACTIVE' && this.userStore.isStarterOrAbove()) {
+          this.loadWeekEcoCalendar();
+        }
+      });
+
     // Polling market context + news : session active ET plan Starter+
     // (contexte marché + news filtrées = features Starter+, guards backend en place).
     toObservable(this.activeSession)
@@ -282,6 +294,21 @@ export class SessionStore {
           this.breakingNews.set(breaking?.title ?? null);
         },
       });
+  }
+
+  /**
+   * Applique une donnée « today » fraîche (reçue via le broadcast WebSocket eco:new-releases,
+   * qui déclenche un refresh-today côté composant) dans la map hebdo → mise à jour immédiate
+   * du calendrier affiché. Le polling 60 s reste le filet de sécurité si le broadcast est manqué.
+   */
+  applyEcoRefresh(data: EcoCalendarData | null): void {
+    if (!data) return;
+    const today = todayParis();
+    this.weekEcoEvents.update((prev) => {
+      const next = new Map(prev);
+      next.set(today, data.events);
+      return next;
+    });
   }
 
   private loadWeekEcoCalendar(): void {

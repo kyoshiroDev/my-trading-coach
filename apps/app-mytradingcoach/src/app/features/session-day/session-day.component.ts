@@ -186,6 +186,7 @@ const EMOTION_COLORS: Record<string, string> = {
             [liveFeedback]="store.liveFeedback()"
             [startDisabled]="accountChoiceRequired()"
             (startSession)="startSession()"
+            (ecoCalendarRefreshed)="store.applyEcoRefresh($event)"
             (tradeClosed)="store.confirmCloseTrade($event)"
             (tradeLogged)="store.logQuickTrade($event)"
             (goToDebrief)="closeAndGoToDebrief()"
