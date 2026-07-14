@@ -60,7 +60,8 @@
   min-height: 0;
   overflow-y: auto;
 }
-.session-page.live-mode { overflow: hidden; }
+/* La page est le SEUL conteneur de scroll, y compris en mode live : les panneaux
+   de l'onglet live se dimensionnent à leur contenu (fin du terminal à hauteur fixe). */
 
 /* Header : titre (gauche) · onglets (centre) · pill/Start (droite) — grille 1fr auto 1fr */
 .mtc-sess-header {

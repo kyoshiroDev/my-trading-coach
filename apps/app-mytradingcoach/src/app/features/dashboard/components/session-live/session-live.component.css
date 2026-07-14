@@ -1,17 +1,13 @@
+/* Onglet live : hauteur pilotée par le contenu — la page (.session-page) est le seul
+   conteneur de scroll. Aucun remplissage vertical forcé (fin du terminal à hauteur fixe). */
 :host {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  overflow: hidden;
-  min-height: 0;
 }
 
 [data-testid="session-live-view"] {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  overflow: hidden;
-  min-height: 0;
   padding: 0 30px 10px;
 }
 
@@ -113,14 +109,10 @@
 .live-layout {
   display: grid;
   grid-template-columns: minmax(0, 2.6fr) minmax(0, 1fr);
-  grid-template-rows: 1fr; /* force la grille à remplir la hauteur disponible */
   gap: 12px;
-  align-items: stretch;
+  align-items: start; /* colonnes pilotées par leur contenu — plus de remplissage forcé */
   width: 100%;
   min-width: 0;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
 }
 /* Zone gauche : mini-stats au-dessus des 2 colonnes calendrier/live feed */
 .live-main { gap: 12px; }
@@ -128,16 +120,12 @@
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); /* Calendrier un peu plus large que Live feed */
   gap: 12px;
-  flex: 1;
   min-width: 0;
-  min-height: 0;
 }
 .live-cols > * {
   min-width: 0;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
-  min-height: 0;
 }
 
 /* ── Carte marché unique (contexte marché + news ticker) — source LiveTab ── */
@@ -228,10 +216,8 @@
 
 .live-layout > * {
   min-width: 0;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
-  min-height: 0;
 }
 
 /* ─── Live feed ─── */
@@ -475,9 +461,7 @@
   display: flex;
   flex-direction: column;
   gap: 9px;
-  overflow-y: auto;
-  min-height: 0;
-  flex: 1;
+  /* Grandit avec son contenu : le bouton « Logger ce trade » reste atteignable via le scroll de page. */
 }
 .qt-title {
   font-family: var(--font-display);
@@ -806,13 +790,19 @@
 }
 
 /* Container-queries — répondent à la largeur du conteneur .session-page (source §6).
-   ≤1200 : zone de travail 1 colonne · ≤680 : calendrier/feed 1 colonne.
-   Les mini-stats sont en auto-fit (min 130px) → reflow automatique. */
-@container (max-width: 1200px) {
-  .live-layout { grid-template-columns: 1fr; grid-template-rows: none; overflow-y: auto; }
+   ≤1100 : zone de travail 1 colonne · ≤820 : feed/calendrier empilés + stats 2 col ·
+   ≤520 : stats 1 col + rangées QuickTrade empilées. La grille marché (.ctx-grid) est
+   gérée dans market-context-bar.component.css. */
+@container (max-width: 1100px) {
+  .live-layout { grid-template-columns: 1fr; }
 }
-@container (max-width: 680px) {
+@container (max-width: 820px) {
   .live-cols { grid-template-columns: 1fr; }
+  .mini-stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container (max-width: 520px) {
+  .mini-stats-row { grid-template-columns: 1fr; }
+  .qt-pnl-row { grid-template-columns: 1fr; }
 }
 
 /* ── Eco release alert (WebSocket temps réel) ─────────────────────────────── */
@@ -989,15 +979,17 @@
 .news-empty { font-size: 11px; color: var(--text-3); text-align: center; padding: 20px 0; }
 
 /* ─── Colonnes wrappers ─── */
+/* Panneaux à hauteur pilotée par le contenu, bornée par max-height : seule la liste
+   interne (feed / événements calendrier) garde un scroll, borné par ce max-height. */
 .feed-col {
-  display: flex; flex-direction: column; overflow: hidden; min-height: 0;
+  display: flex; flex-direction: column; min-height: 220px; max-height: 420px;
   background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: 12px; padding: 14px; flex: 1;
+  border-radius: 12px; padding: 14px;
 }
-.cal-col  { display: flex; flex-direction: column; gap: 12px; overflow: hidden; min-height: 0; flex: 1; }
+.cal-col  { display: flex; flex-direction: column; gap: 12px; }
 .cal-card {
   background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: 12px; padding: 14px; flex: 1; overflow: hidden; min-height: 0;
+  border-radius: 12px; padding: 14px; min-height: 220px; max-height: 420px;
   display: flex; flex-direction: column;
 }
 .cal-events-list {
