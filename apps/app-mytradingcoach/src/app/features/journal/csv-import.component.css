@@ -360,6 +360,54 @@
   font-size: 12px;
 }
 
+/* Entrée « Tradovate — 2 fichiers » (zone de dépôt) */
+.tv-entry-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 9px 16px;
+  background: var(--blue-glow);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+  color: var(--blue-bright);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.tv-entry-btn:hover {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+/* Panneau Tradovate — deux sélecteurs de fichiers */
+.tv-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 12px;
+  background: var(--bg-2);
+}
+.tv-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.tv-back {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--text-3);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 0;
+}
+.tv-back:hover {
+  color: var(--text);
+}
+
 .btn-primary {
   background: var(--blue);
   color: #fff;

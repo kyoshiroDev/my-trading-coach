@@ -125,14 +125,64 @@ const EMOTION_EMOJIS: Record<string, string> = {
               <p class="result-sub">{{ error() }}</p>
               <button class="btn-primary" (click)="reset()">Réessayer</button>
             </div>
-          } @else if (selectedFile() && !isLoading()) {
+          } @else if ((selectedFile() || tradovateMode()) && !isLoading()) {
             <div class="confirm-block">
-              <div class="file-pill">
-                <lucide-icon [img]="UploadIcon" [size]="16" color="var(--blue)" />
-                <span class="file-name">{{ selectedFile()!.name }}</span>
-                <button class="file-change" (click)="clearFile()">Changer</button>
-              </div>
+              @if (tradovateMode()) {
+                <!-- Mode Tradovate : les deux fichiers (trades + frais) affichés ensemble -->
+                <div class="tv-panel">
+                  <p class="tv-title">Import Tradovate — 2 fichiers</p>
 
+                  <div class="import-field">
+                    <label class="import-label" for="tvTradesInput">1. Fichier des trades (Performance)</label>
+                    @if (selectedFile()) {
+                      <div class="file-pill">
+                        <lucide-icon [img]="UploadIcon" [size]="16" color="var(--blue)" />
+                        <span class="file-name">{{ selectedFile()!.name }}</span>
+                        <button class="file-change" (click)="clearTradesFile()">Changer</button>
+                      </div>
+                    } @else {
+                      <button class="btn-ghost fees-add-btn" (click)="tvTradesInput.click()">
+                        Choisir le fichier des trades
+                      </button>
+                    }
+                    <input #tvTradesInput id="tvTradesInput" type="file"
+                      accept=".csv,.txt,.xlsx,.xls" style="display:none" (change)="onFileChange($event)" />
+                  </div>
+
+                  <div class="import-field">
+                    <label class="import-label" for="tvFeesInput">2. Fichier des frais (Cash history) — optionnel</label>
+                    @if (feesFile()) {
+                      <div class="file-pill">
+                        <lucide-icon [img]="UploadIcon" [size]="16" color="var(--blue)" />
+                        <span class="file-name">{{ feesFile()!.name }}</span>
+                        <button class="file-change" (click)="clearFeesFile()">Retirer</button>
+                      </div>
+                      @if (feesFileValid()) {
+                        <p class="fees-note">✓ Cash history reconnu — frais exacts par trade, sans saisie manuelle.</p>
+                      } @else {
+                        <p class="import-help import-warn">Ce fichier ne ressemble pas à un Cash history Tradovate — vérifie l'export.</p>
+                      }
+                    } @else {
+                      <button class="btn-ghost fees-add-btn" (click)="tvFeesInput.click()">
+                        Choisir le fichier des frais
+                      </button>
+                      <p class="import-help">Optionnel. Onglet Cash history de Tradovate → frais exacts au centime, sans saisie manuelle.</p>
+                    }
+                    <input #tvFeesInput id="tvFeesInput" type="file"
+                      accept=".csv,.txt,.xlsx,.xls" style="display:none" (change)="onFeesFileChange($event)" />
+                  </div>
+
+                  <button class="tv-back" (click)="exitTradovateMode()">← Retour à l'import simple</button>
+                </div>
+              } @else {
+                <div class="file-pill">
+                  <lucide-icon [img]="UploadIcon" [size]="16" color="var(--blue)" />
+                  <span class="file-name">{{ selectedFile()!.name }}</span>
+                  <button class="file-change" (click)="clearFile()">Changer</button>
+                </div>
+              }
+
+              @if (selectedFile()) {
               <!-- Compte cible (corrige le rattachement multi-compte) -->
               @if (accountStore.activeAccounts().length > 0) {
                 <div class="import-field">
@@ -187,8 +237,8 @@ const EMOTION_EMOJIS: Record<string, string> = {
                 </div>
               }
 
-              <!-- Fichier des frais (Tradovate Cash history) — frais exacts par fusion -->
-              @if (allowFeesFile()) {
+              <!-- Fichier des frais (mode simple) — en mode Tradovate, le panneau 2-fichiers gère déjà les frais -->
+              @if (!tradovateMode() && allowFeesFile()) {
                 <div class="import-field">
                   <label class="import-label" for="feesFileInput">Fichier des frais (Tradovate — Cash history)</label>
                   @if (feesFile()) {
@@ -226,8 +276,8 @@ const EMOTION_EMOJIS: Record<string, string> = {
                 </div>
               }
 
-              <!-- Saisie manuelle des frais — masquée si un Cash history valide est fourni -->
-              @if (!feesFileValid()) {
+              <!-- Saisie manuelle des frais — masquée en mode Tradovate ou si un Cash history valide est fourni -->
+              @if (!tradovateMode() && !feesFileValid()) {
                 @switch (feesDisabledReason()) {
                   @case ('has_fees_column') {
                     <p class="fees-note">
@@ -273,7 +323,8 @@ const EMOTION_EMOJIS: Record<string, string> = {
               @if (!canImport()) {
                 <p class="import-help import-warn">Choisis le compte de destination pour importer.</p>
               }
-              <button class="btn-primary" (click)="upload()" [disabled]="!canImport()">Importer</button>
+              }
+              <button class="btn-primary" (click)="upload()" [disabled]="!selectedFile() || !canImport()">Importer</button>
             </div>
           } @else {
             <div
@@ -318,6 +369,12 @@ const EMOTION_EMOJIS: Record<string, string> = {
               CSV ou Excel · exporte tes <strong>trades fermés</strong> depuis ton
               broker · jusqu'à 2000 trades
             </p>
+            @if (allowFeesFile()) {
+              <button class="tv-entry-btn" (click)="enterTradovateMode()">
+                <lucide-icon [img]="UploadIcon" [size]="14" />
+                Tradovate — import 2 fichiers (trades + frais exacts)
+              </button>
+            }
             <input
               #fileInput
               type="file"
@@ -361,6 +418,8 @@ export class CsvImportComponent {
   protected readonly feesFile = signal<File | null>(null);
   // true si l'en-tête ressemble à un Cash history Tradovate (frais exacts par fusion).
   protected readonly feesFileValid = signal(false);
+  // Mode Tradovate : affiche d'emblée les deux sélecteurs (trades + frais) côte à côte.
+  protected readonly tradovateMode = signal(false);
 
   // Defaults appliqués à tout le lot.
   protected readonly accountId = signal<string>('');
@@ -455,10 +514,27 @@ export class CsvImportComponent {
   }
 
   protected clearFile() {
+    this.clearTradesFile();
+    this.clearFeesFile();
+  }
+
+  // Retire uniquement le fichier des trades (conserve le fichier des frais en mode Tradovate).
+  protected clearTradesFile() {
     this.selectedFile.set(null);
     this.totalFees.set('');
     this.feesDisabledReason.set(null);
-    this.clearFeesFile();
+  }
+
+  // Mode Tradovate (2 fichiers) : ouvre le panneau avec les deux sélecteurs.
+  protected enterTradovateMode() {
+    this.error.set(null);
+    this.tradovateMode.set(true);
+    this.initAccountSelection();
+  }
+
+  protected exitTradovateMode() {
+    this.tradovateMode.set(false);
+    this.clearFile();
   }
 
   // Fichier des frais (Cash history) : lecture légère de l'en-tête pour valider et,
@@ -537,6 +613,7 @@ export class CsvImportComponent {
     this.selectedFile.set(null);
     this.totalFees.set('');
     this.feesDisabledReason.set(null);
+    this.tradovateMode.set(false);
     this.clearFeesFile();
   }
 }
