@@ -8,18 +8,18 @@ import {
   Patch,
   Post,
   Query,
-  UploadedFile,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { Plan, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { StarterGuard } from '../../common/guards/starter.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { TradesService } from './trades.service';
 import { CoinGeckoService } from './coingecko.service';
-import { CsvImportService } from './csv-import.service';
+import { CsvImportService, type FeesReport } from './csv-import.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
@@ -83,25 +83,34 @@ export class TradesController {
 
   @Post('import')
   @UseInterceptors(
-    FileInterceptor('file', {
-      limits: { fileSize: 5 * 1024 * 1024 },
-      fileFilter: (_req, file, cb) => {
-        if (!file.originalname.match(/\.(csv|txt|xlsx|xls)$/i)) {
-          return cb(
-            new BadRequestException('Formats acceptés : CSV, TXT, Excel (.xlsx)'),
-            false,
-          );
-        }
-        cb(null, true);
+    FileFieldsInterceptor(
+      [
+        { name: 'file', maxCount: 1 }, // trades — obligatoire (rétro-compat front)
+        { name: 'fees', maxCount: 1 }, // Cash history Tradovate — optionnel (frais exacts)
+      ],
+      {
+        limits: { fileSize: 5 * 1024 * 1024 },
+        fileFilter: (_req, file, cb) => {
+          if (!file.originalname.match(/\.(csv|txt|xlsx|xls)$/i)) {
+            return cb(
+              new BadRequestException('Formats acceptés : CSV, TXT, Excel (.xlsx)'),
+              false,
+            );
+          }
+          cb(null, true);
+        },
       },
-    }),
+    ),
   )
   async importCSV(
     @CurrentUser() user: { id: string; plan: Plan; role: Role; trialEndsAt?: Date | null },
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFiles()
+    files: { file?: Express.Multer.File[]; fees?: Express.Multer.File[] },
     @Body() body: { totalFees?: string; accountId?: string; emotion?: string; setupId?: string },
   ) {
+    const file = files?.file?.[0];
     if (!file) throw new BadRequestException('Fichier manquant');
+    const feesUpload = files?.fees?.[0];
 
     // Total des frais (multipart → string) réparti au prorata des contrats. Optionnel.
     const rawFees = body?.totalFees != null ? Math.abs(parseFloat(body.totalFees)) : NaN;
@@ -113,6 +122,8 @@ export class TradesController {
     // Setup en lot : s'il est fourni, il doit appartenir au user et être actif.
     if (body.setupId) await this.setups.assertOwnedActive(user.id, body.setupId);
 
+    // Rapport de rapprochement des frais (fusion Tradovate) — rempli si un Cash history valide.
+    const report: { fees?: FeesReport } = {};
     const parsed = await this.csvImportService.parseCSV(
       file.buffer,
       file.originalname,
@@ -120,15 +131,20 @@ export class TradesController {
       { plan: user.plan, role: user.role, trialEndsAt: user.trialEndsAt },
       totalFees,
       { accountId, emotion: body.emotion, setupId: body.setupId },
+      feesUpload ? { buffer: feesUpload.buffer, filename: feesUpload.originalname } : undefined,
+      report,
     );
 
     // Déduplication à l'import : ne recrée pas un trade déjà présent (ré-essais, ré-imports).
-    return this.tradesService.importTrades(
+    const result = await this.tradesService.importTrades(
       user.id,
       parsed,
       user.plan,
       user.role,
     );
+
+    // Résumé frais exacts (fusion fichier) exposé au front, non bloquant.
+    return report.fees ? { ...result, feesImported: report.fees } : result;
   }
 
   @Post()
