@@ -13,6 +13,8 @@ import { buildDebriefPrompt } from './prompts/debrief.prompt';
 import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
+// import type only (aucune dépendance runtime → pas de cycle avec eco-calendar.service)
+import type { EcoAnalysis, EcoResultAnalysis } from '../eco-calendar/eco-calendar.service';
 import { AnthropicClientService } from '../shared/anthropic-client.service';
 import { buildUserTradingContext, UserTradingProfile } from './user-context.builder';
 import { todayParis } from '../../common/utils/paris-date';
@@ -347,6 +349,45 @@ Réponds UNIQUEMENT avec la phrase coaching, sans guillemets, sans préambule.`,
 
   // ── Eco calendar — morning analysis + released event ─────────────────────
 
+  /**
+   * Parse tolérant d'un JSON produit par le modèle : retire le markdown, isole l'objet
+   * { … } et, si le JSON est tronqué (max_tokens atteint → « Unterminated string »), tente
+   * une réparation (ferme chaîne/brackets ouverts, retire virgule pendante) avant d'échouer.
+   * Évite qu'une réponse légèrement coupée ne fasse tomber toute l'analyse en fallback.
+   */
+  private parseModelJson<T>(raw: string): T {
+    const cleaned = raw.replace(/```json\n?|\n?```/g, '').trim();
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+    const candidate = start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned;
+    try {
+      return JSON.parse(candidate) as T;
+    } catch {
+      return JSON.parse(this.repairTruncatedJson(candidate)) as T;
+    }
+  }
+
+  /** Ferme les structures ouvertes d'un JSON tronqué (chaîne, objets, tableaux) + virgule pendante. */
+  private repairTruncatedJson(s: string): string {
+    let inStr = false;
+    let esc = false;
+    const stack: string[] = [];
+    for (const c of s) {
+      if (esc) { esc = false; continue; }
+      if (c === '\\') { esc = true; continue; }
+      if (inStr) { if (c === '"') inStr = false; continue; }
+      if (c === '"') { inStr = true; continue; }
+      if (c === '{' || c === '[') stack.push(c);
+      else if (c === '}' || c === ']') stack.pop();
+    }
+    let out = inStr ? `${s}"` : s;
+    out = out.replace(/,\s*$/, '').replace(/:\s*$/, ': null');
+    for (let i = stack.length - 1; i >= 0; i--) {
+      out += stack[i] === '{' ? '}' : ']';
+    }
+    return out;
+  }
+
   async analyzeEcoEvents(data: {
     userId: string;
     events: Array<{ time: string; name: string; impact: string; currency: string }>;
@@ -365,14 +406,14 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
     const response = await this.anthropicClient.create(
       {
         model: MODEL,
-        max_tokens: 500,
+        max_tokens: 1024,
         messages: [{ role: 'user', content: prompt }],
       },
       { feature: 'eco_calendar', userId: data.userId },
     );
 
     const text = response.content[0]?.type === 'text' ? response.content[0].text : '{}';
-    return JSON.parse(text.replace(/```json\n?|\n?```/g, '').trim());
+    return this.parseModelJson<EcoAnalysis>(text);
   }
 
   async analyzeEcoResult(data: {
@@ -402,14 +443,14 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
     const response = await this.anthropicClient.create(
       {
         model: MODEL,
-        max_tokens: 300,
+        max_tokens: 700,
         messages: [{ role: 'user', content: prompt }],
       },
       { feature: 'eco_calendar', userId: data.userId },
     );
 
     const text = response.content[0]?.type === 'text' ? response.content[0].text : '{}';
-    return JSON.parse(text.replace(/```json\n?|\n?```/g, '').trim());
+    return this.parseModelJson<EcoResultAnalysis>(text);
   }
 
   // ── Debrief — delegates to debrief agent ──────────────────────────────────
