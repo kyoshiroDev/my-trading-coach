@@ -116,7 +116,10 @@ const EMOTION_COLORS: Record<string, string> = {
               </button>
             </div>
           } @else {
-            <button class="mtc-start-btn" data-testid="start-session" (click)="startSession()">
+            <button class="mtc-start-btn" data-testid="start-session"
+                    [disabled]="accountChoiceRequired()"
+                    [title]="accountChoiceRequired() ? 'Choisis un compte dans la Pré-session' : ''"
+                    (click)="startSession()">
               <lucide-icon [img]="PlayIcon" [size]="16" /> Démarrer la session
             </button>
           }
@@ -154,14 +157,14 @@ const EMOTION_COLORS: Record<string, string> = {
               <select class="sd-acct-select" data-testid="session-account-select"
                       [value]="selectedAccount.selectedAccountId()"
                       (change)="selectedAccount.select($any($event.target).value)">
-                <option value="all">Tous les comptes</option>
+                <option value="all" disabled>Choisis un compte (obligatoire)</option>
                 @for (a of selectedAccount.activeAccounts(); track a.id) {
                   <option [value]="a.id">{{ acctOption(a) }}</option>
                 }
               </select>
-              @if (needsAccount()) {
+              @if (accountChoiceRequired()) {
                 <span class="sd-acct-hint" data-testid="account-required">
-                  Choisis un compte précis (pas « Tous les comptes ») pour lancer la session.
+                  Choisis un compte pour lancer la session.
                 </span>
               }
             </div>
@@ -181,7 +184,9 @@ const EMOTION_COLORS: Record<string, string> = {
             [breakingNews]="store.breakingNews()"
             [triggerCloseModal]="store.triggerCloseModal()"
             [liveFeedback]="store.liveFeedback()"
+            [startDisabled]="accountChoiceRequired()"
             (startSession)="startSession()"
+            (ecoCalendarRefreshed)="store.applyEcoRefresh($event)"
             (tradeClosed)="store.confirmCloseTrade($event)"
             (tradeLogged)="store.logQuickTrade($event)"
             (goToDebrief)="closeAndGoToDebrief()"
@@ -394,7 +399,6 @@ export class SessionDayComponent implements OnInit, OnDestroy {
   protected readonly journalText       = signal('');
   protected readonly journalSaved      = signal(false);
   protected readonly savedFlash        = signal(false);
-  protected readonly needsAccount      = signal(false);
   protected readonly moods             = MOODS;
   protected readonly today             = new Date();
 
@@ -612,12 +616,9 @@ export class SessionDayComponent implements OnInit, OnDestroy {
 
   protected selectTab(tab: 'morning' | 'live' | 'debrief'): void { this.activeTab.set(tab); }
   protected startSession(): void {
-    // 1 session = 1 compte : si « Tous » est sélectionné (Premium + comptes), on bloque.
-    if (this.accountChoiceRequired()) {
-      this.needsAccount.set(true);
-      return;
-    }
-    this.needsAccount.set(false);
+    // 1 session = 1 compte : sécurité serveur/UX même si les boutons sont déjà désactivés
+    // (accountChoiceRequired) quand aucun compte précis n'est choisi.
+    if (this.accountChoiceRequired()) return;
     this.store.startSession(this.selectedAccount.accountParam());
     this.activeTab.set('live');
   }
