@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
-import { EmotionState } from '@prisma/client';
+import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
 
 export interface EquityPoint {
   date: Date;
@@ -223,20 +223,28 @@ export class AnalyticsService {
   private async computeByEmotion(userId: string, accountId?: string) {
     const trades = await this.prisma.trade.findMany({
       where: { userId, ...this.accCond(accountId), pnl: { not: null } },
-      select: { emotion: true, pnl: true, riskReward: true },
+      // Émotion effective : override du trade, sinon humeur de la session.
+      select: {
+        emotion: true,
+        tradeSession: { select: { moodStart: true } },
+        pnl: true,
+        riskReward: true,
+      },
     });
 
     const grouped = new Map<
-      EmotionState,
+      string,
       { pnl: number; rr: number[]; count: number; wins: number }
     >();
     for (const t of trades) {
-      const g = grouped.get(t.emotion) ?? { pnl: 0, rr: [], count: 0, wins: 0 };
+      const emotion = effectiveEmotion(t);
+      if (!emotion) continue; // non renseignée → exclue des répartitions
+      const g = grouped.get(emotion) ?? { pnl: 0, rr: [], count: 0, wins: 0 };
       g.count++;
       g.pnl += t.pnl ?? 0;
       if ((t.pnl ?? 0) > 0) g.wins++;
       if (t.riskReward) g.rr.push(t.riskReward);
-      grouped.set(t.emotion, g);
+      grouped.set(emotion, g);
     }
 
     return Array.from(grouped.entries()).map(([emotion, g]) => ({

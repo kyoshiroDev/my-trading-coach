@@ -182,8 +182,8 @@
                   <span class="td-rr mono">{{ trade.riskReward !== null && trade.riskReward !== undefined ? trade.riskReward.toFixed(2) : '—' }}</span>
                   <span class="td-emotion">
                     <span class="emotion-cell">
-                      {{ trade.emotion | emotionEmoji }}
-                      <span class="emotion-text">{{ trade.emotion }}</span>
+                      {{ trade.effectiveEmotion | emotionEmoji }}
+                      <span class="emotion-text">{{ (trade.effectiveEmotion | titlecase) || '—' }}</span>
                     </span>
                   </span>
                   <span class="td-setup"><span class="setup-badge"><span class="setup-badge-dot" [style.background]="trade.setup.color"></span>{{ trade.setup.title }}</span></span>

@@ -1,5 +1,6 @@
 import { Injectable, ForbiddenException, NotFoundException, Logger } from '@nestjs/common';
 import { Plan, Role, WeeklyDebrief } from '@prisma/client';
+import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
 import { DebriefPdfData } from '../pdf/pdf.service';
 import { OBJECTIVE_CHECK_TYPES, DebriefAccountInput } from '../ai/prompts/debrief.prompt';
 
@@ -146,13 +147,15 @@ export class DebriefService {
           side: true,
           pnl: true,
           emotion: true,
+          tradeSession: { select: { moodStart: true } },
           setup: { select: { title: true } },
           session: true,
           tradedAt: true,
           accountId: true,
         },
       })
-    ).map((t) => ({ ...t, setup: t.setup?.title ?? null }));
+      // Émotion effective (override sinon humeur de session ; null = non renseignée).
+    ).map((t) => ({ ...t, setup: t.setup?.title ?? null, emotion: effectiveEmotion(t) }));
 
     // Comptes non archivés (avec leurs règles prop firm) pour l'analyse par compte.
     const accounts = await this.prisma.tradingAccount.findMany({

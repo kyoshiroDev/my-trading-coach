@@ -52,7 +52,7 @@ import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
     </td>
     <td>
       <span class="emotion-cell">
-        {{ trade().emotion | emotionEmoji }} {{ trade().emotion | titlecase }}
+        {{ trade().effectiveEmotion | emotionEmoji }} {{ (trade().effectiveEmotion | titlecase) || '—' }}
       </span>
     </td>
     <td>

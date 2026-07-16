@@ -685,12 +685,16 @@ export class DashboardComponent {
 
   protected readonly emotionStats = computed(() => {
     const trades = this.tradesStore.trades();
-    if (!trades.length) return [];
-    const total = trades.length;
-    return (['REVENGE', 'STRESSED', 'CONFIDENT', 'FOCUSED', 'FEAR', 'NEUTRAL'] as const)
+    // Émotion effective (override sinon humeur de session) ; non renseignées exclues du total.
+    const withEmotion = trades
+      .map(t => t.effectiveEmotion ?? t.emotion)
+      .filter((e): e is string => !!e);
+    const total = withEmotion.length;
+    if (!total) return [];
+    return (['REVENGE', 'STRESSED', 'CONFIDENT', 'FOCUSED', 'FEAR', 'NEUTRAL', 'TIRED'] as const)
       .map(emotion => ({
         emotion,
-        pct: Math.round((trades.filter(t => t.emotion === emotion).length / total) * 100),
+        pct: Math.round((withEmotion.filter(e => e === emotion).length / total) * 100),
       }))
       .filter(e => e.pct > 0)
       .sort((a, b) => b.pct - a.pct)

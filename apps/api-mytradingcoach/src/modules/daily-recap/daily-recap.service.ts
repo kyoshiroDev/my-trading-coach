@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Plan } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
+import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
 
 @Injectable()
 export class DailyRecapService {
@@ -29,6 +30,8 @@ export class DailyRecapService {
         side: true,
         pnl: true,
         emotion: true,
+        // Humeur de la journée → émotion effective quand le trade n'a pas d'override.
+        tradeSession: { select: { moodStart: true } },
         setup: { select: { title: true } },
         session: true,
         timeframe: true,
@@ -47,10 +50,12 @@ export class DailyRecapService {
     const pnl = trades.reduce((s, t) => s + (t.pnl ?? 0), 0);
     const winRate = (wins.length / trades.length) * 100;
 
+    // Émotion dominante sur les émotions EFFECTIVES non renseignées exclues (plus de NEUTRAL forcé).
     const emotionMap = new Map<string, number>();
-    trades.forEach((t) =>
-      emotionMap.set(t.emotion, (emotionMap.get(t.emotion) ?? 0) + 1),
-    );
+    trades.forEach((t) => {
+      const e = effectiveEmotion(t);
+      if (e) emotionMap.set(e, (emotionMap.get(e) ?? 0) + 1);
+    });
     const dominantEmotion =
       [...emotionMap.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
 
@@ -111,7 +116,8 @@ export class DailyRecapService {
           trades: trades.map((t) => ({ ...t, setup: t.setup?.title })),
           pnl,
           winRate,
-          dominantEmotion: dominantEmotion ?? 'NEUTRAL',
+          // Émotion effective dominante (null = non renseignée) — plus de NEUTRAL forcé.
+          dominantEmotion,
           date,
           userProfile: user
             ? {

@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Plan, Role, Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { SetupsService } from '../setups/setups.service';
@@ -294,11 +295,17 @@ export class TradesService {
       cursor: cursor ? { id: cursor } : undefined,
       where,
       orderBy: { tradedAt: 'desc' },
-      include: { setup: { select: { id: true, title: true, color: true } } },
+      include: {
+        setup: { select: { id: true, title: true, color: true } },
+        // Humeur de la journée → émotion effective côté front (affichage + « — » si null).
+        tradeSession: { select: { moodStart: true } },
+      },
     });
 
     const hasNextPage = trades.length > limit;
-    const data = hasNextPage ? trades.slice(0, limit) : trades;
+    const sliced = hasNextPage ? trades.slice(0, limit) : trades;
+    // Émotion effective exposée au front : override du trade sinon humeur de session, sinon null.
+    const data = sliced.map((t) => ({ ...t, effectiveEmotion: effectiveEmotion(t) }));
     const nextCursor = hasNextPage ? data[data.length - 1].id : null;
 
     return { data, nextCursor, hasNextPage };
