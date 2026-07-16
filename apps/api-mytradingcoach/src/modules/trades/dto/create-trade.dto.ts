@@ -65,8 +65,11 @@ export class CreateTradeDto {
   @IsOptional()
   capitalEngaged?: number;
 
+  // Émotion = override optionnel (PROMPT-163). Absente/null → héritera de l'humeur de session
+  // (TradeSession.moodStart) au moment de la lecture (émotion effective). Plus de NEUTRAL forcé.
   @IsEnum(EmotionState)
-  emotion!: EmotionState;
+  @IsOptional()
+  emotion?: EmotionState | null;
 
   @IsString()
   setupId!: string;

@@ -33,13 +33,17 @@ export interface Trade {
   riskReward: number | null;
   quantity: number | null;
   capitalEngaged: number | null;
+  // Override optionnel (PROMPT-163) — null = non renseignée (héritera de l'humeur de session).
   emotion:
     | 'CONFIDENT'
     | 'STRESSED'
     | 'REVENGE'
     | 'FEAR'
     | 'FOCUSED'
-    | 'NEUTRAL';
+    | 'NEUTRAL'
+    | null;
+  // Émotion EFFECTIVE calculée côté API (override sinon humeur de session sinon null) : à afficher.
+  effectiveEmotion?: string | null;
   setupId: string;
   setup: TradeSetup;
   session: 'LONDON' | 'NEW_YORK' | 'ASIAN';
@@ -62,7 +66,7 @@ export interface CreateTradeDto {
   riskReward?: number;
   quantity?: number;
   capitalEngaged?: number;
-  emotion: Trade['emotion'];
+  emotion?: Trade['emotion']; // optionnel (override) — absent/null = hérite de l'humeur de session
   setupId: string;
   session: Trade['session'];
   timeframe: string;

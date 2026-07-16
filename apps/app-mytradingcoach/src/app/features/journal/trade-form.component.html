@@ -302,10 +302,19 @@
             </div>
           </div>
 
-          <!-- 7. État émotionnel -->
+          <!-- 7. État émotionnel (optionnel — override de l'humeur de session) -->
           <div class="form-group">
-            <span class="section-label">État émotionnel</span>
+            <span class="section-label">État émotionnel <span class="label-optional">(optionnel)</span></span>
             <div class="emotion-grid">
+              <button
+                type="button"
+                class="emotion-btn"
+                data-testid="emotion-none"
+                [class.selected]="!form().emotion"
+                (click)="setEmotion(null)"
+              >
+                — Non renseignée
+              </button>
               @for (e of EMOTIONS; track e) {
                 <button
                   type="button"
@@ -318,6 +327,7 @@
                 </button>
               }
             </div>
+            <span class="form-hint">Laisse vide pour hériter de l'humeur de ta session.</span>
           </div>
 
           <!-- 8. Setup -->

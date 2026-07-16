@@ -23,7 +23,8 @@ export interface Trade {
   riskReward: number | null;
   quantity: number | null;
   capitalEngaged: number | null;
-  emotion: string;
+  emotion: string | null; // override optionnel (PROMPT-163)
+  effectiveEmotion?: string | null; // émotion effective calculée API (override sinon humeur session)
   setupId: string;
   setup: { id: string; title: string; color: string };
   session: string;

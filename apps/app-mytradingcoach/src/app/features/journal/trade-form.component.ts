@@ -24,7 +24,7 @@ import {
 import { CreateTradeSchema } from '../../core/schemas/trade.schema';
 import { SetupsStore } from '../../core/stores/setups.store';
 
-const EMOTIONS: Trade['emotion'][] = [
+const EMOTIONS: NonNullable<Trade['emotion']>[] = [
   'CONFIDENT',
   'FOCUSED',
   'NEUTRAL',
@@ -248,10 +248,11 @@ export class TradeFormComponent {
     this.recalculate();
   }
 
-  protected setEmotion(emotion: string): void {
+  protected setEmotion(emotion: string | null): void {
+    // Toggle : re-cliquer l'émotion sélectionnée la désélectionne (→ null, non renseignée).
     this.form.update((f) => ({
       ...f,
-      emotion: emotion as CreateTradeDto['emotion'],
+      emotion: (f.emotion === emotion ? null : emotion) as CreateTradeDto['emotion'],
     }));
   }
 
@@ -431,7 +432,8 @@ export class TradeFormComponent {
   private emptyForm(): Partial<CreateTradeDto> {
     return {
       side: 'LONG' as const,
-      emotion: 'FOCUSED' as const,
+      // Émotion optionnelle (PROMPT-163) : défaut non renseignée → hérite de l'humeur de session.
+      emotion: null,
       setupId: this.setupsStore.active()[0]?.id ?? '',
       session: 'LONDON' as const,
       timeframe: '1h',
