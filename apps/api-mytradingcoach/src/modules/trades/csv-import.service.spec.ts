@@ -251,20 +251,28 @@ describe('CsvImportService — defaults du lot (compte / émotion / setup)', () 
     expect(dtos[0].setupId).toBe('setup-7');
   });
 
-  it('émotion invalide → NEUTRAL (pas de crash) ; setup absent → défaut du user', async () => {
+  it('émotion invalide → null (plus de NEUTRAL forcé) ; setup absent → défaut du user', async () => {
     const svc = makeService();
     const dtos = await svc.parseCSV(Buffer.from(csv()), 'mexc.csv', 'user-1', undefined, undefined, {
       emotion: 'PAS_UNE_EMOTION',
     });
-    expect(dtos[0].emotion).toBe('NEUTRAL');
+    expect(dtos[0].emotion).toBeNull();
     expect(dtos[0].setupId).toBe('setup-default');
   });
 
-  it('sans defaults → émotion NEUTRAL + setup par défaut du user', async () => {
+  it('sans choix d\'émotion → null (PROMPT-163, héritera de l\'humeur de session)', async () => {
     const svc = makeService();
     const dtos = await svc.parseCSV(Buffer.from(csv()), 'mexc.csv', 'user-1');
-    expect(dtos[0].emotion).toBe('NEUTRAL');
+    expect(dtos[0].emotion).toBeNull();
     expect(dtos[0].setupId).toBe('setup-default');
+  });
+
+  it('émotion de lot valide → override appliqué à tous les trades', async () => {
+    const svc = makeService();
+    const dtos = await svc.parseCSV(Buffer.from(csv()), 'mexc.csv', 'user-1', undefined, undefined, {
+      emotion: 'REVENGE',
+    });
+    expect(dtos.every((d) => d.emotion === 'REVENGE')).toBe(true);
   });
 });
 

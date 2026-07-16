@@ -201,20 +201,21 @@ const EMOTION_EMOJIS: Record<string, string> = {
                 </div>
               }
 
-              <!-- Émotion en lot -->
+              <!-- Émotion en lot (optionnel — override de l'humeur de session) -->
               <div class="import-field">
-                <label class="import-label" for="importEmotion">Émotion (appliquée à tous les trades)</label>
+                <label class="import-label" for="importEmotion">Émotion (optionnel, appliquée à tout le lot)</label>
                 <select
                   id="importEmotion"
                   class="import-select"
                   [value]="emotion()"
                   (change)="emotion.set($any($event.target).value)"
                 >
+                  <option value="">— Non renseignée</option>
                   @for (e of EMOTIONS; track e) {
                     <option [value]="e">{{ emotionEmoji(e) }} {{ e }}</option>
                   }
                 </select>
-                <p class="import-help">Tu pourras affiner trade par trade ensuite.</p>
+                <p class="import-help">Laisse « Non renseignée » pour hériter de l'humeur de ta session ; tu pourras affiner trade par trade ensuite.</p>
               </div>
 
               <!-- Setup en lot (setups actifs du user) -->
@@ -426,7 +427,8 @@ export class CsvImportComponent {
 
   // Defaults appliqués à tout le lot.
   protected readonly accountId = signal<string>('');
-  protected readonly emotion = signal<string>('NEUTRAL');
+  // Émotion de lot optionnelle (PROMPT-163) : '' = non renseignée (rien envoyé → héritera de la session).
+  protected readonly emotion = signal<string>('');
   protected readonly setupId = signal<string>('');
   // Setups actifs du user (store partagé — liste dynamique).
   protected readonly setups = this.setupsStore.active;
@@ -593,9 +595,9 @@ export class CsvImportComponent {
       }
     }
 
-    // Defaults du lot : compte cible (si choisi), émotion, setup.
+    // Defaults du lot : compte cible (si choisi), émotion (override — rien si non renseignée), setup.
     if (this.accountId()) formData.append('accountId', this.accountId());
-    formData.append('emotion', this.emotion());
+    if (this.emotion()) formData.append('emotion', this.emotion());
     if (this.setupId()) formData.append('setupId', this.setupId());
 
     this.isLoading.set(true);

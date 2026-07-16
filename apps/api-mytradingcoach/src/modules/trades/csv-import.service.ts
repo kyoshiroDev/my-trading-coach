@@ -171,7 +171,9 @@ export class CsvImportService {
     // Defaults appliqués à TOUT le lot : compte cible, émotion, setup.
     // - accountId : le compte choisi (validé en amont) → create() le résout ; sinon
     //   fallback backend existant (session active / compte par défaut).
-    // - emotion : choix unique, sinon NEUTRAL (pas de régression). Valeur invalide → NEUTRAL.
+    // - emotion : override OPTIONNEL (PROMPT-163). Si le lot choisit une émotion, on l'applique
+    //   à tous les trades ; sinon `null` (non renseignée) → héritera de l'humeur de session à la
+    //   lecture. Plus jamais de NEUTRAL forcé à l'import.
     // - setupId : choix unique, sinon le setup par défaut du user (sortOrder le plus bas).
     const batchEmotion = this.normalizeEmotion(defaults?.emotion);
     const setupId =
@@ -191,12 +193,14 @@ export class CsvImportService {
     });
   }
 
-  /** Valide une émotion contre l'enum Prisma ; valeur absente/invalide → NEUTRAL. */
-  private normalizeEmotion(value?: string): EmotionState {
+  /**
+   * Valide une émotion de lot contre l'enum Prisma. Valeur absente/invalide → `null`
+   * (non renseignée) : PLUS de NEUTRAL forcé. L'émotion effective sera dérivée de l'humeur
+   * de session à la lecture (voir effective-emotion.util).
+   */
+  private normalizeEmotion(value?: string | null): EmotionState | null {
     const allowed = Object.values(EmotionState) as string[];
-    return value && allowed.includes(value)
-      ? (value as EmotionState)
-      : EmotionState.NEUTRAL;
+    return value && allowed.includes(value) ? (value as EmotionState) : null;
   }
 
   /**
@@ -973,7 +977,7 @@ ${csv}`;
         quantity: t.quantity || 1,
         pnl: t.pnl,
         commission: t.commission ?? undefined,
-        emotion: 'NEUTRAL' as const,
+        emotion: null, // override optionnel — réassigné par le lot (ou null) dans parseCSV
         // setupId affecté en aval (parseCSV) : setup par défaut du user, ou fourni par l'import (PROMPT-138).
         session: this.detectSession(t.tradedAt),
         timeframe: '1h',
@@ -1043,7 +1047,7 @@ ${csv}`;
         quantity: isFinite(quantity) && quantity > 0 ? quantity : 1,
         pnl: isFinite(pnl) ? pnl : 0,
         commission: isFinite(commission) ? Math.abs(commission) : undefined,
-        emotion: 'NEUTRAL' as const,
+        emotion: null, // override optionnel — réassigné par le lot (ou null) dans parseCSV
         // setupId affecté en aval (parseCSV) : setup par défaut du user, ou fourni par l'import (PROMPT-138).
         session: this.detectSession(tradedAt),
         timeframe: '1h',
