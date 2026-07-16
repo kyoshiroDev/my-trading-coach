@@ -39,6 +39,15 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
 
 **Socle (FREE et +)** : compagnon de session (pré-session + live + débrief de base), journal (émotions, setups), import + historique illimité (l'historique ne compte pas dans la limite FREE), `/analytics/summary` (win rate, P&L, streak).
 
+> **Modèle émotion (PROMPT-163)** : l'émotion de base d'un trade vient de la **journée/session**
+> (`TradeSession.moodStart`, renseignée en pré-session) ; `Trade.emotion` est un **override optionnel**
+> (surtout REVENGE/FEAR dans l'instant), plus jamais forcé à NEUTRAL. **Émotion effective = override
+> du trade sinon humeur de la session sinon `null`** (non renseignée → exclue des agrégations, jamais
+> de faux NEUTRAL). Toute lecture d'émotion pour un calcul (émotion dominante, analytics, IA, note
+> d'exécution) passe par le helper `effectiveEmotion` + `isRiskyEmotion`/`isHealthyEmotion`
+> (`common/utils/effective-emotion.util.ts`). Conséquence UX : même journée = même émotion dominante
+> partout (daily-recap, débrief IA, dashboard). Détails schéma → `prisma.md`.
+
 **STARTER (et +)** : trades illimités · 3 comptes · analytics avancés (heatmap, equity curve) · Score trader /100 · Export PDF mensuel · **IA bornée/mutualisée** :
 - 📋 **Weekly Debrief IA** (auto, 1/user/semaine)
 - 📊 **Contexte marché** (DXY, taux US, indices)

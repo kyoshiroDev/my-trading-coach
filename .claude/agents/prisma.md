@@ -75,7 +75,7 @@ model Trade {
   takeProfit      Float?
   pnl             Float?
   riskReward      Float?
-  emotion         EmotionState
+  emotion         EmotionState?                    // override OPTIONNEL (PROMPT-163) — null = non renseignée
   setupId         String                           // FK → Setup (setup défini par l'user)
   setup           Setup           @relation(fields: [setupId], references: [id], onDelete: NoAction)
   session         TradingSessionLabel
@@ -187,6 +187,8 @@ enum SessionStatus       { ACTIVE CLOSED }                              // ← V
 ```
 
 > **Setups** : setups définis par l'utilisateur (modèle `Setup` : `title`, `color`, `description`, `sortOrder`, `archived`). 6 défauts seedés au signup et pour la démo (Breakout `#10b981`, Pullback `#3b82f6`, Range `#f59e0b`, Reversal `#ef4444`, Scalping `#8b5cf6`, News `#60a5fa`). L'ancienne énumération de setups a été migrée en table (remap par titre, zéro régression). `Trade.setupId` (FK, `onDelete: NoAction`) → `Setup` ; la suppression d'un setup encore référencé par des trades est bloquée par `SetupsService` (+ backstop FK).
+
+> **Émotion (PROMPT-163)** : `Trade.emotion` est **nullable** — un **override optionnel** (surtout REVENGE/FEAR dans l'instant). L'émotion de base vient de la journée : `TradeSession.moodStart` (`MoodState`, inclut `TIRED`). **Émotion effective = `trade.emotion ?? trade.tradeSession?.moodStart ?? null`** — helper unique `common/utils/effective-emotion.util.ts` (`effectiveEmotion`, `isRiskyEmotion` = STRESSED/REVENGE/FEAR/TIRED, `isHealthyEmotion` = CONFIDENT/FOCUSED/NEUTRAL). `null` = non renseignée → **exclue** des agrégations (dominante, analytics, IA, note d'exécution renormalisée), **jamais** de faux NEUTRAL. Toute requête qui a besoin de l'émotion effective doit `select`/`include` `tradeSession: { select: { moodStart: true } }`. L'API `GET /trades` expose `effectiveEmotion` par trade ; le front l'affiche (« — » si null). Les deux enums restent distincts (`EmotionState` trade vs `MoodState` journée).
 
 ---
 
