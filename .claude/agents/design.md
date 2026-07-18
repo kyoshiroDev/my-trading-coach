@@ -148,6 +148,23 @@ body: padding 18px.
 }
 ```
 
+### Sélecteur de source (boutons pairs — ex. modal d'import)
+
+Deux boutons pairs en grille `1fr 1fr` qui révèlent un panneau inline en dessous (pas de bascule-écran). L'état actif = bordure bleue + halo `box-shadow: 0 0 0 3px var(--blue-glow)` + check `var(--blue-bright)` en haut à droite. Le vert reste réservé aux repères de valeur (tag « Frais exacts ») — jamais pour l'état sélectionné.
+
+```css
+.src-btn.active {
+  border-color: var(--blue);
+  background: var(--blue-glow);
+  box-shadow: 0 0 0 3px var(--blue-glow);
+}
+.src-tag-green {           /* repère de valeur, PAS l'état */
+  background: var(--green-dim);
+  border-color: color-mix(in srgb, var(--green) 35%, transparent);
+  color: var(--green);
+}
+```
+
 ### Navigation sidebar (barre d'accent — réservée à la nav)
 
 ```css
