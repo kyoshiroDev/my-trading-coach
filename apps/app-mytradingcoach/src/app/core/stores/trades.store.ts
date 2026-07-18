@@ -26,6 +26,9 @@ export interface Trade {
   capitalEngaged: number | null;
   emotion: string | null; // override optionnel (PROMPT-163)
   effectiveEmotion?: string | null; // émotion effective calculée API (override sinon humeur session)
+  // Note d'exécution CALCULÉE (PROMPT-161) — null = « Non évalué ».
+  executionScore?: number | null;
+  executionGrade?: 'EXCELLENT' | 'BON' | 'MOYEN' | 'MAUVAIS' | null;
   setupId: string;
   setup: { id: string; title: string; color: string };
   session: string;

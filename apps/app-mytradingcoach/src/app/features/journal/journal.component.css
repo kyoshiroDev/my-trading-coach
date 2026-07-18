@@ -134,7 +134,7 @@
 /* ── Header colonnes unique ── */
 .table-header {
   display: grid;
-  grid-template-columns: 44px 1.2fr 0.7fr 0.9fr 0.9fr 1.3fr 0.5fr 0.6fr 1.3fr 1.1fr 64px;
+  grid-template-columns: 44px 1.2fr 0.7fr 0.9fr 0.9fr 1.3fr 0.5fr 0.6fr 0.9fr 1.3fr 1.1fr 64px;
   padding: 5px 16px 5px 32px;
   border-bottom: 1px solid var(--border);
   background: var(--bg-2);
@@ -296,7 +296,7 @@
 .day-trades { background: var(--bg); }
 .trade-row {
   display: grid;
-  grid-template-columns: 44px 1.2fr 0.7fr 0.9fr 0.9fr 1.3fr 0.5fr 0.6fr 1.3fr 1.1fr 64px;
+  grid-template-columns: 44px 1.2fr 0.7fr 0.9fr 0.9fr 1.3fr 0.5fr 0.6fr 0.9fr 1.3fr 1.1fr 64px;
   align-items: center;
   padding: 7px 16px 7px 32px;
   border-top: 1px solid var(--border);
@@ -321,6 +321,19 @@
 
 .emotion-cell { display: inline-flex; align-items: center; gap: 5px; }
 .emotion-text { font-size: 10px; color: var(--text-3); font-family: var(--font-mono); }
+
+/* Note d'exécution calculée (PROMPT-161) — badge coloré, « — » si non évaluée. */
+.grade-badge {
+  display: inline-flex; align-items: center;
+  font-size: 10.5px; font-weight: 600; line-height: 1;
+  padding: 3px 8px; border-radius: 6px; white-space: nowrap;
+  border: 1px solid transparent; cursor: default;
+}
+.grade-badge[data-grade='EXCELLENT'] { background: var(--green-dim); color: var(--green); border-color: rgba(16,185,129,.25); }
+.grade-badge[data-grade='BON']       { background: var(--blue-glow); color: var(--blue-bright); border-color: rgba(59,130,246,.25); }
+.grade-badge[data-grade='MOYEN']     { background: rgba(245,158,11,.14); color: var(--amber, #f59e0b); border-color: rgba(245,158,11,.28); }
+.grade-badge[data-grade='MAUVAIS']   { background: var(--red-dim); color: var(--red); border-color: rgba(239,68,68,.25); }
+.grade-none { color: var(--text-faint); font-family: var(--font-mono); }
 
 .setup-badge {
   display: inline-flex; align-items: center; gap: 5px;
@@ -377,7 +390,7 @@
   .td-asset  { grid-column: 1; grid-row: 1; font-size: 12px; }
   .td-side   { grid-column: 2; grid-row: 1; }
   .td-price:first-of-type { grid-column: 3; grid-row: 1; font-size: 11px; }
-  .td-price:last-of-type, .td-qty, .td-rr, .td-emotion, .td-setup { display: none; }
+  .td-price:last-of-type, .td-qty, .td-rr, .td-exec, .td-emotion, .td-setup { display: none; }
   .td-pnl    { grid-column: 3; grid-row: 2; font-size: 12px; }
   .td-actions { grid-column: 4; grid-row: 1 / 3; }
   .day-label { font-size: 12px; }

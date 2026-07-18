@@ -124,6 +124,11 @@ export class JournalComponent {
   protected readonly TrashIcon        = Trash2;
   protected readonly ReassignIcon     = ArrowRightLeft;
 
+  /** Libellé FR de la note d'exécution calculée (PROMPT-161) ; '—' si non évaluée. */
+  protected gradeLabel(g: string | null | undefined): string {
+    return { EXCELLENT: 'Excellent', BON: 'Bon', MOYEN: 'Moyen', MAUVAIS: 'Mauvais' }[g ?? ''] ?? '—';
+  }
+
   protected readonly showModal        = signal(false);
   protected readonly showImport       = signal(false);
   protected readonly isSubmitting     = signal(false);

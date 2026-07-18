@@ -109,6 +109,7 @@
         <span class="th-pnl">P&L</span>
         <span class="th-qty">Qté</span>
         <span class="th-rr">R/R</span>
+        <span class="th-exec">Exécution</span>
         <span class="th-emotion">Émotion</span>
         <span class="th-setup">Setup</span>
         <span class="th-actions"></span>
@@ -180,6 +181,16 @@
                   </span>
                   <span class="td-qty mono">{{ trade.quantity ?? 1 }}</span>
                   <span class="td-rr mono">{{ trade.riskReward !== null && trade.riskReward !== undefined ? trade.riskReward.toFixed(2) : '—' }}</span>
+                  <span class="td-exec">
+                    @if (trade.executionGrade) {
+                      <span class="grade-badge" [attr.data-grade]="trade.executionGrade"
+                            [title]="'Note d\'exécution calculée : ' + trade.executionScore + '/100'">
+                        {{ gradeLabel(trade.executionGrade) }}
+                      </span>
+                    } @else {
+                      <span class="grade-none" title="Non évalué (données insuffisantes)">—</span>
+                    }
+                  </span>
                   <span class="td-emotion">
                     <span class="emotion-cell">
                       {{ trade.effectiveEmotion | emotionEmoji }}
