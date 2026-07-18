@@ -13,6 +13,7 @@
   >?</button>
 
   @if (open()) {
-    <span id="it-content" class="it-content" role="tooltip">{{ text() }}</span>
+    <span id="it-content" class="it-content" role="tooltip"
+      [style.top.px]="anchor().top" [style.left.px]="anchor().left">{{ text() }}</span>
   }
 </span>

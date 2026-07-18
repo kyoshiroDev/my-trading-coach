@@ -11,9 +11,12 @@
 .it-btn:hover, .it-btn:focus-visible { color: var(--blue-bright); border-color: var(--blue); }
 .it-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--blue-glow); }
 
+/* position:fixed + top/left posés en JS (ancre viewport) → échappe les conteneurs
+   overflow:hidden (barre de stats, wrapper du journal). Le transform décale la bulle
+   au-dessus du « ? » : translateY(-100%) = ouverture vers le haut sans mesurer la hauteur. */
 .it-content {
-  position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%);
-  width: max-content; max-width: 220px; z-index: 100;
+  position: fixed; transform: translate(-50%, -100%);
+  width: max-content; max-width: 220px; z-index: 200;
   background: var(--bg-3); border: 1px solid var(--border-hover); border-radius: 8px;
   padding: 9px 11px;
   font-family: var(--font-body); font-size: 11.5px; font-weight: 400; line-height: 1.5;
@@ -21,9 +24,10 @@
   white-space: normal; box-shadow: 0 8px 24px rgba(0, 0, 0, .5); pointer-events: none;
 }
 
-/* Recadrage près des bords (la classe est posée sur l'hôte <mtc-info-tooltip>) */
-:host(.align-end) .it-content { left: auto; right: 0; transform: none; }
-:host(.align-start) .it-content { left: 0; transform: none; }
+/* Recadrage près des bords (classe posée sur l'hôte <mtc-info-tooltip>) : l'ancre gauche
+   change (droite / gauche du « ? ») et le transform aligne la bulle en conséquence. */
+:host(.align-end) .it-content { transform: translate(-100%, -100%); }
+:host(.align-start) .it-content { transform: translateY(-100%); }
 
 @media (max-width: 640px) { .it-content { max-width: 180px; } }
 @media (prefers-reduced-motion: reduce) { .it-btn { transition: none; } }
