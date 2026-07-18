@@ -9,6 +9,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { TradesApi, JournalStats } from '../api/trades.api';
+import { computeTradeStats } from '../utils/trade-stats.util';
 
 export interface Trade {
   id: string;
@@ -74,14 +75,11 @@ export class TradesStore {
   readonly nearLimit    = computed(() => this.monthlyLoaded() && this.monthlyPercent() >= 80 && this.monthlyPercent() < 100);
   readonly limitReached = computed(() => this.monthlyLoaded() && this.monthlyCount() >= this.monthlyLimit());
 
-  readonly totalTrades = computed(() => this.trades().length);
-  readonly winningTrades = computed(
-    () => this.trades().filter((t) => (t.pnl ?? 0) > 0).length,
-  );
-  readonly winRate = computed(() => {
-    const total = this.totalTrades();
-    return total > 0 ? (this.winningTrades() / total) * 100 : 0;
-  });
+  // Stats locales via le helper unique (BE exclus du win rate — PROMPT-160).
+  private readonly localStats = computed(() => computeTradeStats(this.trades()));
+  readonly totalTrades = computed(() => this.localStats().total);
+  readonly winningTrades = computed(() => this.localStats().wins);
+  readonly winRate = computed(() => this.localStats().winRate);
 
   // Charge une première page (remplace les trades existants)
   loadTrades(filters?: Record<string, string>) {

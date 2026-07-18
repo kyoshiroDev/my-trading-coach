@@ -8,6 +8,7 @@ import {
 import { Plan, Role, Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
+import { computeTradeStats } from '../../common/utils/trade-stats.util';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { SetupsService } from '../setups/setups.service';
@@ -258,9 +259,11 @@ export class TradesService {
       return { totalTrades: 0, winRate: 0, pnlBrut: 0, fees: 0, pnlNet: 0, bestTrade: 0, worstTrade: 0 };
     }
 
+    // Win rate via le helper unique (BE exclus du dénominateur — PROMPT-160).
+    const { winRate } = computeTradeStats(trades);
+
     let pnlBrut = 0;
     let fees = 0;
-    let wins = 0;
     let bestTrade = -Infinity;
     let worstTrade = Infinity;
     for (const t of trades) {
@@ -268,7 +271,6 @@ export class TradesService {
       const fee = Math.abs(t.commission ?? 0);
       pnlBrut += pnl;
       fees += fee;
-      if (pnl > 0) wins++; // même définition « gagnant » que le reste de l'app
       const net = pnl - fee;
       if (net > bestTrade) bestTrade = net;
       if (net < worstTrade) worstTrade = net;
@@ -276,7 +278,7 @@ export class TradesService {
 
     return {
       totalTrades,
-      winRate: (wins / totalTrades) * 100,
+      winRate,
       pnlBrut,
       fees,
       pnlNet: pnlBrut - fees,

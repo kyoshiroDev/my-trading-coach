@@ -14,6 +14,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
+import { computeTradeStats } from '../../common/utils/trade-stats.util';
 
 type RuleTrade = { pnl: number | null; tradedAt: Date };
 
@@ -119,9 +120,11 @@ export class AccountsService {
     const realizedPnl = sorted.reduce((s, t) => s + (t.pnl ?? 0), 0);
     const currentBalance = startingBalance + realizedPnl;
 
-    // Taux de réussite (sur trades fermés) — réutilise `sorted`, aucune requête.
-    const wins = sorted.filter((t) => (t.pnl ?? 0) > 0).length;
-    const winRate = sorted.length > 0 ? wins / sorted.length : null;
+    // Taux de réussite via le helper unique (BE exclus du dénominateur — PROMPT-160).
+    // Ce champ est un RATIO 0..1 (null si aucun trade décisif) ; le helper renvoie un %.
+    const accStats = computeTradeStats(sorted);
+    const winRate =
+      accStats.wins + accStats.losses > 0 ? accStats.winRate / 100 : null;
 
     // PnL cumulé par jour (clé = date calendaire UTC du tradedAt) → meilleur / pire jour.
     // Groupement UTC volontairement simple, cohérent avec le cadrage « estimé » (pas de fuseau user).

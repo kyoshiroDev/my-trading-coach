@@ -3,6 +3,7 @@ import { Plan } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
+import { computeTradeStats } from '../../common/utils/trade-stats.util';
 
 @Injectable()
 export class DailyRecapService {
@@ -46,9 +47,10 @@ export class DailyRecapService {
 
     if (trades.length === 0) return null;
 
-    const wins = trades.filter((t) => (t.pnl ?? 0) > 0);
-    const pnl = trades.reduce((s, t) => s + (t.pnl ?? 0), 0);
-    const winRate = (wins.length / trades.length) * 100;
+    // Win rate via le helper unique (BE exclus du dénominateur — PROMPT-160).
+    const stats = computeTradeStats(trades);
+    const pnl = stats.totalPnl;
+    const winRate = stats.winRate;
 
     // Émotion dominante sur les émotions EFFECTIVES non renseignées exclues (plus de NEUTRAL forcé).
     const emotionMap = new Map<string, number>();

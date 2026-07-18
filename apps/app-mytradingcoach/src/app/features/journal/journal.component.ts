@@ -4,6 +4,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
+import { computeTradeStats } from '../../core/utils/trade-stats.util';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
 import { LucideAngularModule, X, Pencil, Upload, ChevronDown, ChevronRight, Calendar, Trash2, ArrowRightLeft } from 'lucide-angular';
@@ -174,15 +175,17 @@ export class JournalComponent {
         const label = d.toLocaleDateString('fr-FR', {
           weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
         });
-        const totalPnl        = dayTrades.reduce((s, t) => s + (t.pnl ?? 0), 0);
         const totalCommission = dayTrades.reduce((s, t) => s + Math.abs(t.commission ?? 0), 0);
+        // Stats du jour via le helper unique (BE exclus du win rate — PROMPT-160).
+        const st              = computeTradeStats(dayTrades);
+        const totalPnl        = st.totalPnl;
         const totalPnlNet     = totalPnl - totalCommission;
-        const winCount        = dayTrades.filter(t => (t.pnl ?? 0) > 0).length;
         return {
           key, label,
           trades: dayTrades.sort((a, b) => new Date(b.tradedAt).getTime() - new Date(a.tradedAt).getTime()),
           totalPnl, totalPnlNet, totalCommission,
-          count: dayTrades.length, winCount,
+          count: dayTrades.length, winCount: st.wins,
+          lossCount: st.losses, breakeven: st.breakeven, winRate: st.winRate,
         };
       });
   });

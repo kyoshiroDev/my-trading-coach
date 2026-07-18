@@ -1,6 +1,7 @@
 import { Injectable, ForbiddenException, NotFoundException, Logger } from '@nestjs/common';
 import { Plan, Role, WeeklyDebrief } from '@prisma/client';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
+import { computeTradeStats } from '../../common/utils/trade-stats.util';
 import { DebriefPdfData } from '../pdf/pdf.service';
 import { OBJECTIVE_CHECK_TYPES, DebriefAccountInput } from '../ai/prompts/debrief.prompt';
 
@@ -289,13 +290,12 @@ export class DebriefService {
 
   /** Stats déterministes d'un compte sur la semaine (jamais l'IA pour les chiffres). */
   private accountStats(trades: { pnl: number | null }[]) {
-    const total = trades.length;
-    const wins = trades.filter((t) => (t.pnl ?? 0) > 0).length;
-    const totalPnl = trades.reduce((s, t) => s + (t.pnl ?? 0), 0);
+    // Helper unique : BE exclus du win rate (PROMPT-160).
+    const stats = computeTradeStats(trades);
     return {
-      totalTrades: total,
-      winRate: total > 0 ? (wins / total) * 100 : 0,
-      totalPnl,
+      totalTrades: stats.total,
+      winRate: stats.winRate,
+      totalPnl: stats.totalPnl,
     };
   }
 
@@ -408,7 +408,8 @@ export class DebriefService {
     });
 
     const pnlValues = trades.map((t) => t.pnl ?? 0);
-    const wins = pnlValues.filter((p) => p > 0);
+    // Win rate via le helper unique (BE exclus du dénominateur — PROMPT-160).
+    const pdfStats = computeTradeStats(trades);
 
     const storedInsights = debrief.insights as {
       strengths?: { badge: string; text: string }[];
@@ -458,7 +459,7 @@ export class DebriefService {
       summary: debrief.aiSummary ?? '',
       stats: {
         totalTrades: trades.length,
-        winRate: trades.length > 0 ? (wins.length / trades.length) * 100 : 0,
+        winRate: pdfStats.winRate,
         totalPnl: pnlValues.reduce((a, b) => a + b, 0),
         avgRR:
           trades.reduce((acc, t) => acc + (t.riskReward ?? 0), 0) /

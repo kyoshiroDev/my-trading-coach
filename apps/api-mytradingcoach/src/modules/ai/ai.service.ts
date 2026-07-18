@@ -14,6 +14,7 @@ import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
+import { computeTradeStats } from '../../common/utils/trade-stats.util';
 // import type only (aucune dépendance runtime → pas de cycle avec eco-calendar.service)
 import type { EcoAnalysis, EcoResultAnalysis } from '../eco-calendar/eco-calendar.service';
 import { AnthropicClientService } from '../shared/anthropic-client.service';
@@ -117,9 +118,10 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
     if (recentTrades.length === 0) {
       contextSummary = "Ce trader n'a encore enregistré aucun trade.";
     } else {
-      const wins = recentTrades.filter((t) => (t.pnl ?? 0) > 0).length;
-      const winRate = Math.round((wins / recentTrades.length) * 100);
-      const totalPnl = recentTrades.reduce((sum, t) => sum + (t.pnl ?? 0), 0);
+      // Stats via le helper unique (BE exclus du win rate — PROMPT-160).
+      const s = computeTradeStats(recentTrades);
+      const winRate = Math.round(s.winRate);
+      const totalPnl = s.totalPnl;
       const emotions = [
         ...new Set(recentTrades.map((t) => effectiveEmotion(t)).filter(Boolean)),
       ].join(', ');
