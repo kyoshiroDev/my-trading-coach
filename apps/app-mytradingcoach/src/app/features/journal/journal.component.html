@@ -298,7 +298,15 @@
                     {{ trade.pnl | pnlFormat: trade.entry }}
                   </span>
                   <span class="td-qty mono">{{ trade.quantity ?? 1 }}</span>
-                  <span class="td-rr mono">{{ trade.riskReward !== null && trade.riskReward !== undefined ? trade.riskReward.toFixed(2) : '—' }}</span>
+                  <span class="td-rr mono">
+                    @if (trade.riskReward !== null && trade.riskReward !== undefined) {
+                      {{ trade.riskReward.toFixed(2) }}
+                    } @else {
+                      —
+                      <mtc-info-tooltip label="Pourquoi le R:R est vide"
+                        text="R:R incalculable : stop loss ou take profit non renseigné sur ce trade." />
+                    }
+                  </span>
                   <span class="td-exec">
                     @if (trade.executionGrade) {
                       <span class="grade-badge" [attr.data-grade]="trade.executionGrade"
@@ -306,7 +314,9 @@
                         {{ gradeLabel(trade.executionGrade) }}
                       </span>
                     } @else {
-                      <span class="grade-none" title="Non évalué (données insuffisantes)">—</span>
+                      <span class="exec-none">Non évaluée</span>
+                      <mtc-info-tooltip label="Pourquoi cette note est indisponible"
+                        text="Note indisponible : il faut au moins 2 critères mesurables. Ici le stop loss et le take profit ne sont pas renseignés (fréquent sur les imports broker)." />
                     }
                   </span>
                   <span class="td-emotion">
