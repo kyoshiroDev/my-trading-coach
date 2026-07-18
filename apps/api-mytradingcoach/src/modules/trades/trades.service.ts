@@ -9,6 +9,11 @@ import { Plan, Role, Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
 import { computeTradeStats } from '../../common/utils/trade-stats.util';
+import {
+  computeExecutionGrade,
+  ExecutionTradeInput,
+  ExecutionGradeResult,
+} from '../../common/utils/execution-grade.util';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { SetupsService } from '../setups/setups.service';
@@ -61,7 +66,7 @@ export class TradesService {
 
     const activeSession = await this.prisma.tradeSession.findFirst({
       where: { userId, status: SessionStatus.ACTIVE },
-      select: { id: true, accountId: true },
+      select: { id: true, accountId: true, moodStart: true },
     });
 
     // accountId : fourni (validé) → sinon hérité de la session active → sinon compte
@@ -73,14 +78,23 @@ export class TradesService {
     if (!accountId) accountId = activeSession?.accountId ?? undefined;
     if (!accountId) accountId = await this.accounts.ensureDefaultAccountId(userId);
 
+    const rr = dto.riskReward ?? riskReward;
+    // Note d'exécution CALCULÉE (déterministe, zéro IA, indépendante du P&L — PROMPT-161).
+    const { score: executionScore, grade: executionGrade } = await this.computeExecution(
+      accountId,
+      { ...dto, riskReward: rr, tradeSession: { moodStart: activeSession?.moodStart ?? null } },
+    );
+
     const trade = await this.prisma.trade.create({
       data: {
         ...dto,
         entry: dto.entry ?? 0,
         pnl: dto.pnl ?? pnl,
-        riskReward: dto.riskReward ?? riskReward,
+        riskReward: rr,
         quantity: dto.quantity ?? 1,
         capitalEngaged: dto.capitalEngaged ?? null,
+        executionScore,
+        executionGrade,
         userId,
         sessionId: activeSession?.id ?? null,
         accountId,
@@ -340,6 +354,32 @@ export class TradesService {
     const newPnl = priceFieldsChanged ? this.calculatePnl(merged) : undefined;
     const newRR = priceFieldsChanged ? this.calculateRiskReward(merged) : undefined;
 
+    // Recalcul de la note d'exécution si un champ concerné change (PROMPT-161).
+    const execRelevant =
+      priceFieldsChanged ||
+      dto.stopLoss !== undefined ||
+      dto.takeProfit !== undefined ||
+      dto.side !== undefined ||
+      dto.riskReward !== undefined ||
+      dto.emotion !== undefined ||
+      dto.capitalEngaged !== undefined;
+    let exec: ExecutionGradeResult | null = null;
+    if (execRelevant) {
+      const moodStart = existing.sessionId
+        ? (
+            await this.prisma.tradeSession.findUnique({
+              where: { id: existing.sessionId },
+              select: { moodStart: true },
+            })
+          )?.moodStart ?? null
+        : null;
+      exec = await this.computeExecution(existing.accountId ?? undefined, {
+        ...merged,
+        riskReward: newRR ?? merged.riskReward,
+        tradeSession: { moodStart },
+      });
+    }
+
     const result = await this.prisma.trade.update({
       where: { id },
       data: {
@@ -347,6 +387,7 @@ export class TradesService {
         tradedAt: dto.tradedAt ? new Date(dto.tradedAt) : undefined,
         ...(newPnl !== undefined ? { pnl: newPnl } : {}),
         ...(newRR !== undefined ? { riskReward: newRR } : {}),
+        ...(exec ? { executionScore: exec.score, executionGrade: exec.grade } : {}),
       },
       include: { setup: { select: { id: true, title: true, color: true } } },
     });
@@ -527,6 +568,23 @@ export class TradesService {
       where: { id: userId },
       data: { favoriteAsset: asset },
     });
+  }
+
+  /**
+   * Note d'exécution CALCULÉE (PROMPT-161) : récupère le capital du compte cible et délègue
+   * au util déterministe. Aucune IA. Retourne { score, grade } (null si < 2 critères applicables).
+   */
+  private async computeExecution(
+    accountId: string | undefined,
+    trade: ExecutionTradeInput,
+  ): Promise<ExecutionGradeResult> {
+    const account = accountId
+      ? await this.prisma.tradingAccount.findUnique({
+          where: { id: accountId },
+          select: { startingBalance: true, accountSize: true },
+        })
+      : null;
+    return computeExecutionGrade(trade, account);
   }
 
   private calculatePnl(dto: CreateTradeDto): number | undefined {
