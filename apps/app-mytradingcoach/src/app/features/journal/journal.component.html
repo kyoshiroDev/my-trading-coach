@@ -302,7 +302,7 @@
                     @if (trade.riskReward !== null && trade.riskReward !== undefined) {
                       {{ trade.riskReward.toFixed(2) }}
                     } @else {
-                      —
+                      <span class="exec-none">Non évaluée</span>
                       <mtc-info-tooltip label="Pourquoi le R:R est vide"
                         text="R:R incalculable : stop loss ou take profit non renseigné sur ce trade." />
                     }
