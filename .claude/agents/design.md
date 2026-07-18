@@ -179,6 +179,16 @@ Quand une liste de filtres est dynamique ou déborde (setups, résultat, exécut
 
 Bouton « Réinitialiser » associé : même gabarit, ton plus discret (`--text-3`, hover `--border-hover`). Compteur `.filter-count` en `--font-mono` `--text-3`.
 
+### Info-bulle d'aide (`mtc-info-tooltip`) — métriques calculées
+
+Petite icône `?` (14px, cercle bordure `--border`) posée **après le libellé** d'une métrique calculée ou ambiguë, qui explique **comment la donnée est calculée** au survol / tap / focus clavier (+ Échap et clic-extérieur pour fermer). Composant partagé `shared/components/info-tooltip`.
+
+- **Réservé aux données calculées/ambiguës** (win rate, R:R, note d'exécution, drawdown, profit factor, émotion effective, frais…). **Jamais décoratif** : pas sur Date, Actif, Direction, Entrée, Sortie, Quantité, Setup — sinon l'icône devient du bruit et l'utilisateur l'ignore.
+- Uniquement sur les **en-têtes de colonnes et libellés de KPI**, jamais sur les cellules de données.
+- Couleurs **neutres/bleues** uniquement (`--text-3`, hover `--blue-bright`) — jamais vert/rouge (réservés gains/pertes).
+- Le contenu remet `text-transform:none` + `letter-spacing:normal` (les libellés parents sont souvent en majuscules espacées).
+- Bords : `class="align-end"` (métrique la plus à droite) / `align-start` (la plus à gauche) sur `<mtc-info-tooltip>` — géré via `:host(.align-end)` — pour éviter le débordement horizontal.
+
 ### Navigation sidebar (barre d'accent — réservée à la nav)
 
 ```css
