@@ -38,6 +38,17 @@ interface DayGroup {
   winCount: number;
 }
 
+interface WeekGroup {
+  key: string;        // clé stable = lundi ISO de la semaine (ex. 'week-2026-07-06')
+  label: string;      // 'Semaine du 06/07/2026 au 12/07/2026'
+  days: DayGroup[];   // jours de la semaine, du plus récent au plus ancien
+  count: number;
+  winCount: number;
+  totalPnl: number;
+  totalPnlNet: number;
+  totalCommission: number;
+}
+
 @Component({
   selector: 'mtc-journal',
   standalone: true,
@@ -226,6 +237,52 @@ export class JournalComponent {
         };
       });
   });
+
+  // ── Vue par semaine (niveau au-dessus des jours) ────────────────────────────
+  // Regroupe les DayGroup en semaines ISO (lundi → dimanche). Les agrégats sont
+  // recalculés sur TOUS les trades de la semaine (win rate juste, pas une moyenne
+  // de moyennes ; BE exclus via computeTradeStats). Même base de date que les jours.
+
+  protected readonly tradesByWeek = computed((): WeekGroup[] => {
+    const days = this.tradesByDay();
+    if (!days.length) return [];
+
+    const map = new Map<string, { days: DayGroup[]; label: string }>();
+    for (const day of days) {
+      const { key, label } = this.isoWeek(day.key);
+      const bucket = map.get(key) ?? { days: [], label };
+      bucket.days.push(day);
+      map.set(key, bucket);
+    }
+
+    return Array.from(map.entries())
+      .sort(([a], [b]) => b.localeCompare(a)) // semaines du plus récent au plus ancien
+      .map(([key, { days: weekDays, label }]) => {
+        const allTrades = weekDays.flatMap((d) => d.trades);
+        const st = computeTradeStats(allTrades);
+        const totalCommission = weekDays.reduce((s, d) => s + d.totalCommission, 0);
+        const totalPnl = st.totalPnl;
+        return {
+          key, label, days: weekDays,
+          count: st.total, winCount: st.wins,
+          totalPnl, totalPnlNet: totalPnl - totalCommission, totalCommission,
+        };
+      });
+  });
+
+  /** Semaine ISO (lundi → dimanche) d'une clé jour 'YYYY-MM-DD'. Clé = lundi, libellé = plage. */
+  private isoWeek(dayKey: string): { key: string; label: string } {
+    const date = new Date(dayKey + 'T12:00:00'); // midi → insensible au fuseau/DST
+    const dow = (date.getDay() + 6) % 7;          // lundi = 0 … dimanche = 6
+    const monday = new Date(date);
+    monday.setDate(date.getDate() - dow);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const iso = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const fr = (d: Date) => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+    return { key: `week-${iso(monday)}`, label: `Semaine du ${fr(monday)} au ${fr(sunday)}` };
+  }
 
   // ── Stats période ─────────────────────────────────────────────────────────
   // KPIs issus de l'agrégat backend (ensemble filtré complet, hors pagination).

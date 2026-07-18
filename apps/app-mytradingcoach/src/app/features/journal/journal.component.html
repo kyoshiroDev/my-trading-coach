@@ -197,8 +197,16 @@
         <span class="th-actions"></span>
       </div>
 
-      <!-- Groupes par jour -->
-      @for (day of tradesByDay(); track day.key) {
+      <!-- Groupes par semaine → jour -->
+      @for (week of tradesByWeek(); track week.key) {
+        <div class="week-group">
+
+          <div class="week-header">
+            <div class="week-accent" [style.background]="week.totalPnlNet >= 0 ? 'var(--green)' : 'var(--red)'"></div>
+            <div class="week-label">{{ week.label }}</div>
+          </div>
+
+      @for (day of week.days; track day.key) {
         <div class="day-group">
 
           <div class="day-header" role="button" tabindex="0"
@@ -292,6 +300,8 @@
               }
             </div>
           }
+        </div>
+      }
         </div>
       }
     </div>

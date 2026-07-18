@@ -185,6 +185,33 @@
   letter-spacing: 0.1em;
 }
 
+/* ── Niveau semaine (parent des jours) — même grammaire que l'en-tête jour, légèrement plus fort ── */
+.week-group { border-bottom: 1px solid var(--border); }
+.week-group:last-child { border-bottom: none; }
+
+.week-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background 0.12s;
+  user-select: none;
+  position: relative;
+  background: var(--bg-2);
+}
+.week-header:hover { background: var(--bg-3); }
+.week-accent { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+.week-toggle { color: var(--text-3); display: flex; align-items: center; flex-shrink: 0; }
+.week-label {
+  font-size: 13px; font-weight: 600; color: var(--text);
+  font-family: var(--font-display); flex: 1; min-width: 0;
+}
+
+/* Jours imbriqués : légère indentation de l'en-tête + du rail d'accent pour lire la hiérarchie */
+.week-group .day-header { padding-left: 28px; }
+.week-group .day-accent { left: 12px; }
+
 /* ── Groupes par jour ── */
 .day-group { border-bottom: 1px solid var(--border); }
 .day-group:last-child { border-bottom: none; }
