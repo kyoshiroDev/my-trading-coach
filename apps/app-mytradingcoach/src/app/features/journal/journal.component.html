@@ -124,7 +124,10 @@
         <span class="period-value">{{ s.count }}</span>
       </div>
       <div class="period-stat">
-        <span class="period-label">Win rate</span>
+        <span class="period-label">Win rate
+          <mtc-info-tooltip label="Comment le win rate est calculé"
+            text="Trades gagnants ÷ (gagnants + perdants). Les trades break-even ne sont pas comptés dans le calcul." />
+        </span>
         <span class="period-value">{{ s.winRate | number:'1.0-0' }}%</span>
       </div>
       <div class="period-stat">
@@ -134,7 +137,10 @@
         </span>
       </div>
       <div class="period-stat">
-        <span class="period-label">Frais</span>
+        <span class="period-label">Frais
+          <mtc-info-tooltip label="Ce que représentent les frais"
+            text="Total des commissions et frais de la période, déjà déduits du P&L net." />
+        </span>
         <span class="period-value" style="color:var(--red)">
           -${{ s.totalCommissions | number:'1.2-2' }}
         </span>
@@ -170,11 +176,23 @@
         <span class="th-side">Sens</span>
         <span class="th-price">Entry</span>
         <span class="th-price">Exit</span>
-        <span class="th-pnl">P&L</span>
+        <span class="th-pnl">P&L
+          <mtc-info-tooltip label="Comment le P&L est calculé"
+            text="Résultat net du trade, commissions et frais déduits." />
+        </span>
         <span class="th-qty">Qté</span>
-        <span class="th-rr">R/R</span>
-        <span class="th-exec">Exécution</span>
-        <span class="th-emotion">Émotion</span>
+        <span class="th-rr">R/R
+          <mtc-info-tooltip label="Comment le R/R est calculé"
+            text="Ratio risque/rendement du trade. Affiche « — » quand le stop loss ou le take profit n'est pas renseigné." />
+        </span>
+        <span class="th-exec">Exécution
+          <mtc-info-tooltip label="Comment la note d'exécution est calculée"
+            text="Note d'exécution calculée par MTC, indépendante du résultat. 4 critères pondérés : stop respecté (35), R:R (25), émotion (20), risque engagé (20). Un trade perdant bien exécuté peut être Excellent." />
+        </span>
+        <span class="th-emotion">Émotion
+          <mtc-info-tooltip class="align-end" label="Comment l'émotion est déterminée"
+            text="Émotion du trade si tu l'as renseignée, sinon l'humeur de ta session ce jour-là. « — » si aucune des deux." />
+        </span>
         <span class="th-setup">Setup</span>
         <span class="th-actions"></span>
       </div>

@@ -16,6 +16,7 @@ import { TopbarComponent } from '../../shared/components/topbar/topbar.component
 import { TradeFormComponent } from './trade-form.component';
 import { CsvImportComponent } from './csv-import.component';
 import { PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe } from '../../shared/pipes';
+import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
 import { environment } from '../../../environments/environment';
 
 type FilterSide = 'ALL' | 'LONG' | 'SHORT';
@@ -43,7 +44,7 @@ interface DayGroup {
   imports: [
     DatePipe, DecimalPipe, TitleCasePipe, LucideAngularModule,
     TopbarComponent, TradeFormComponent, CsvImportComponent,
-    PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe,
+    PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe, InfoTooltipComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './journal.component.css',
