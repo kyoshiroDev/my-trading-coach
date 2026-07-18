@@ -158,7 +158,6 @@
 .period-stat:last-child { border-right: none; }
 .period-label     { font-size: 9px; font-family: var(--font-mono); color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; }
 .period-value     { font-size: 14px; font-weight: 600; font-family: var(--font-mono); color: var(--text); }
-.period-sub-label { font-size: 9px; font-family: var(--font-mono); color: var(--text-3); margin-top: 2px; display: block; }
 
 /* ── Wrapper journal ── */
 .journal-wrap {

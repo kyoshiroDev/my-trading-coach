@@ -132,11 +132,12 @@
         <span class="period-value" [style.color]="s.totalPnl >= 0 ? 'var(--green)' : 'var(--red)'">
           {{ s.totalPnl >= 0 ? '+' : '' }}${{ s.totalPnl | number:'1.2-2' }}
         </span>
-        @if (s.totalCommissions > 0) {
-          <span class="period-sub-label">
-            brut ${{ s.totalPnlBrut | number:'1.2-2' }} · frais ${{ s.totalCommissions | number:'1.2-2' }}
-          </span>
-        }
+      </div>
+      <div class="period-stat">
+        <span class="period-label">Frais</span>
+        <span class="period-value" style="color:var(--red)">
+          -${{ s.totalCommissions | number:'1.2-2' }}
+        </span>
       </div>
       <div class="period-stat">
         <span class="period-label">Meilleur</span>
