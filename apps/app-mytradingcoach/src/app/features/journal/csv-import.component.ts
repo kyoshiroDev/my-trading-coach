@@ -109,6 +109,13 @@ const EMOTION_EMOJIS: Record<string, string> = {
                   }
                 </p>
               }
+              <!-- Note informative (non bloquante) : les exports broker n'ont ni SL ni TP → R:R et note d'exécution indispo. -->
+              @if (result()!.created > 0) {
+                <p class="import-no-stop-note">
+                  Tes trades n'ont ni stop loss ni take profit — c'est normal, ton broker ne les exporte pas.
+                  Le R:R et la note d'exécution resteront indisponibles pour ces trades.
+                </p>
+              }
               <button class="btn-primary" (click)="reset()">
                 Importer un autre fichier
               </button>
