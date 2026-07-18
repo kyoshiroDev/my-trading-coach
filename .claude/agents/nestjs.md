@@ -106,6 +106,12 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
 
 ## Règles obligatoires
 
+- **Stats de trades = helper unique** (PROMPT-160) : `computeTradeStats(trades)` de
+  `common/utils/trade-stats.util.ts` (`{ total, closed, wins, losses, breakeven, winRate, totalPnl }`).
+  Toute mesure win/loss/win rate/P&L d'un lot de trades passe par lui — **jamais** de
+  `filter(t => t.pnl > 0)` suivi d'une division inline. Règle break-even : win `pnl > ε`,
+  loss `pnl < -ε`, BE `|pnl| <= ε` (`ε` défaut 0) ; **win rate = wins / (wins + losses)** (BE exclus du
+  dénominateur) ; trades ouverts (pnl null) hors calcul. Miroir front : `core/utils/trade-stats.util.ts`.
 - `@UseGuards(JwtAuthGuard)` sur toutes les routes protégées
 - `@UseGuards(PremiumGuard)` sur routes IA et analytics avancés
 - `@UseGuards(JwtAuthGuard, AdminGuard)` sur TOUTES les routes `/vps/*`, `/docker/*`, `/admin/*`

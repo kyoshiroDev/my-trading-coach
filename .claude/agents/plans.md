@@ -48,6 +48,14 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
 > (`common/utils/effective-emotion.util.ts`). Conséquence UX : même journée = même émotion dominante
 > partout (daily-recap, débrief IA, dashboard). Détails schéma → `prisma.md`.
 
+> **Win rate + break-even (PROMPT-160)** : un trade clôturé a **3 résultats** — win (`pnl > ε`),
+> loss (`pnl < -ε`), **break-even** (`|pnl| <= ε`, `ε` défaut 0). **Win rate = wins / (wins + losses)** :
+> les BE ne sont **PAS** au dénominateur (un trade nul n'est ni gagnant ni perdant). Trades ouverts
+> (pnl null) hors calcul. Calcul centralisé dans le helper unique `computeTradeStats`
+> (`common/utils/trade-stats.util.ts` back + miroir `core/utils/trade-stats.util.ts` front) — plus
+> aucun `filter(pnl > 0)` / division par `length` dispersé. Conséquence : même win rate partout
+> (dashboard, analytics, calendrier, daily-recap, débrief IA).
+
 **STARTER (et +)** : trades illimités · 3 comptes · analytics avancés (heatmap, equity curve) · Score trader /100 · Export PDF mensuel · **IA bornée/mutualisée** :
 - 📋 **Weekly Debrief IA** (auto, 1/user/semaine)
 - 📊 **Contexte marché** (DXY, taux US, indices)
