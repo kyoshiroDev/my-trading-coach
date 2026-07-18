@@ -75,6 +75,16 @@
         </select>
         <lucide-icon class="fs-chev" [img]="ChevronDownIcon" [size]="10" />
       </span>
+
+      @if (hasActiveFilters()) {
+        <button class="filter-reset" (click)="resetFilters()" aria-label="Réinitialiser les filtres">
+          <lucide-icon [img]="XIcon" [size]="10" /> Réinitialiser
+        </button>
+      }
+
+      @if (tradesStore.stats(); as st) {
+        <span class="filter-count">{{ st.totalTrades }} trade{{ st.totalTrades > 1 ? 's' : '' }}</span>
+      }
     </div>
 
     <div class="filter-right">

@@ -64,6 +64,18 @@
   pointer-events: none; color: currentColor;
 }
 
+/* Réinitialiser : même gabarit que .filter-chip, ton plus discret */
+.filter-reset {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 12px; border-radius: 8px;
+  font-size: 11px; font-family: var(--font-mono);
+  border: 1px solid var(--border); color: var(--text-3);
+  background: transparent; cursor: pointer; transition: all .15s;
+}
+.filter-reset:hover { border-color: var(--border-hover); color: var(--text-2); }
+
+.filter-count { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); padding: 5px 2px; }
+
 /* ── Presets date ── */
 .date-presets {
   display: flex;

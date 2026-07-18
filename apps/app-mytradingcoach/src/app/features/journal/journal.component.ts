@@ -163,6 +163,23 @@ export class JournalComponent {
   protected readonly filterExecution = signal<FilterExecution>('ALL');
   protected readonly filterEmotion   = signal<FilterEmotion>('ALL');
   protected readonly collapsedDays  = signal<Set<string>>(new Set());
+
+  /** Vrai dès qu'un filtre (hors période/compte) est actif → affiche « Réinitialiser ». */
+  protected readonly hasActiveFilters = computed(() =>
+    this.filterSide() !== 'ALL' ||
+    this.filterSetup() !== null ||
+    this.filterResult() !== 'ALL' ||
+    this.filterExecution() !== 'ALL' ||
+    this.filterEmotion() !== 'ALL',
+  );
+
+  protected resetFilters(): void {
+    this.filterSide.set('ALL');
+    this.filterSetup.set(null);
+    this.filterResult.set('ALL');
+    this.filterExecution.set('ALL');
+    this.filterEmotion.set('ALL');
+  }
   protected readonly datePreset     = signal<DatePreset>('all');
   protected readonly showCustomDate = signal(false);
   protected readonly dateFrom       = signal('');
@@ -271,10 +288,6 @@ export class JournalComponent {
     this.showModal.set(false);
     this.selectedTrade.set(null);
     this.submitError.set(null);
-  }
-
-  toggleSetupFilter(setup: string): void {
-    this.filterSetup.set(this.filterSetup() === setup ? null : setup);
   }
 
   submitTrade(dto: CreateTradeDto): void {
