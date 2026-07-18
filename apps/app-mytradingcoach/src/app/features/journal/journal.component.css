@@ -39,6 +39,31 @@
   color: var(--blue-bright);
 }
 
+/* Select de filtre : reprend le gabarit exact de .filter-chip */
+.filter-select { position: relative; display: inline-flex; align-items: center; }
+
+.filter-select select {
+  appearance: none;
+  padding: 5px 26px 5px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  background: transparent;
+  cursor: pointer;
+  transition: all .15s;
+}
+.filter-select select:hover { background: var(--blue-glow); border-color: var(--blue); color: var(--blue-bright); }
+.filter-select select:focus-visible { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
+.filter-select.active select { background: var(--blue-glow); border-color: var(--blue); color: var(--blue-bright); }
+.filter-select select option { background: var(--bg-3); color: var(--text); font-family: var(--font-body); }
+
+.filter-select .fs-chev {
+  position: absolute; right: 9px; opacity: .6;
+  pointer-events: none; color: currentColor;
+}
+
 /* ── Presets date ── */
 .date-presets {
   display: flex;

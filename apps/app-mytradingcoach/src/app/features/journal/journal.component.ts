@@ -19,6 +19,11 @@ import { PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe } from '../../shared/pipe
 import { environment } from '../../../environments/environment';
 
 type FilterSide = 'ALL' | 'LONG' | 'SHORT';
+type FilterResult = 'ALL' | 'WIN' | 'LOSS' | 'BREAKEVEN';
+type FilterExecution = 'ALL' | 'EXCELLENT' | 'BON' | 'MOYEN' | 'MAUVAIS' | 'NONE';
+type FilterEmotion =
+  | 'ALL' | 'CONFIDENT' | 'FOCUSED' | 'NEUTRAL' | 'STRESSED'
+  | 'REVENGE' | 'FEAR' | 'TIRED' | 'NONE';
 type DatePreset = 'today' | 'week' | 'month' | 'custom' | 'all';
 
 interface DayGroup {
@@ -69,6 +74,12 @@ export class JournalComponent {
     if (side !== 'ALL') f['side'] = side;
     const setup = this.filterSetup();
     if (setup) f['setupId'] = setup;
+    const result = this.filterResult();
+    if (result !== 'ALL') f['result'] = result;
+    const exec = this.filterExecution();
+    if (exec !== 'ALL') f['executionGrade'] = exec;
+    const emo = this.filterEmotion();
+    if (emo !== 'ALL') f['emotion'] = emo;
     const { dateFrom, dateTo } = this.dateRange();
     if (dateFrom) f['dateFrom'] = dateFrom;
     if (dateTo) f['dateTo'] = dateTo;
@@ -146,8 +157,11 @@ export class JournalComponent {
   protected readonly canReassign      = computed(() =>
     this.activeAccounts().some((a) => a.id !== this.currentAccountId()),
   );
-  protected readonly filterSide     = signal<FilterSide>('ALL');
-  protected readonly filterSetup    = signal<string | null>(null);
+  protected readonly filterSide      = signal<FilterSide>('ALL');
+  protected readonly filterSetup     = signal<string | null>(null);
+  protected readonly filterResult    = signal<FilterResult>('ALL');
+  protected readonly filterExecution = signal<FilterExecution>('ALL');
+  protected readonly filterEmotion   = signal<FilterEmotion>('ALL');
   protected readonly collapsedDays  = signal<Set<string>>(new Set());
   protected readonly datePreset     = signal<DatePreset>('all');
   protected readonly showCustomDate = signal(false);

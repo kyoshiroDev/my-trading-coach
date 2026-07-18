@@ -16,12 +16,65 @@
       <button class="filter-chip" [class.active]="filterSide() === 'ALL'" (click)="filterSide.set('ALL')">Tous</button>
       <button class="filter-chip" [class.active]="filterSide() === 'LONG'" (click)="filterSide.set('LONG')">LONG</button>
       <button class="filter-chip" [class.active]="filterSide() === 'SHORT'" (click)="filterSide.set('SHORT')">SHORT</button>
-      @for (s of setupsStore.active(); track s.id) {
-        <button class="filter-chip" [class.active]="filterSetup() === s.id"
-          (click)="toggleSetupFilter(s.id)">
-          <span class="filter-chip-dot" [style.background]="s.color"></span>{{ s.title }}
-        </button>
-      }
+
+      <!-- Résultat -->
+      <span class="filter-select" [class.active]="filterResult() !== 'ALL'">
+        <select aria-label="Filtrer par résultat"
+          [value]="filterResult()"
+          (change)="filterResult.set($any($event.target).value)">
+          <option value="ALL">Résultat : tous</option>
+          <option value="WIN">Win</option>
+          <option value="LOSS">Loss</option>
+          <option value="BREAKEVEN">Break-even</option>
+        </select>
+        <lucide-icon class="fs-chev" [img]="ChevronDownIcon" [size]="10" />
+      </span>
+
+      <!-- Setup (remplace les chips) -->
+      <span class="filter-select" [class.active]="filterSetup() !== null">
+        <select aria-label="Filtrer par setup"
+          [value]="filterSetup() ?? ''"
+          (change)="filterSetup.set($any($event.target).value || null)">
+          <option value="">Setup : tous</option>
+          @for (s of setupsStore.active(); track s.id) {
+            <option [value]="s.id">{{ s.title }}</option>
+          }
+        </select>
+        <lucide-icon class="fs-chev" [img]="ChevronDownIcon" [size]="10" />
+      </span>
+
+      <!-- Execution -->
+      <span class="filter-select" [class.active]="filterExecution() !== 'ALL'">
+        <select aria-label="Filtrer par note d'exécution"
+          [value]="filterExecution()"
+          (change)="filterExecution.set($any($event.target).value)">
+          <option value="ALL">Execution : toutes</option>
+          <option value="EXCELLENT">Excellent</option>
+          <option value="BON">Bon</option>
+          <option value="MOYEN">Moyen</option>
+          <option value="MAUVAIS">Mauvais</option>
+          <option value="NONE">Non évaluée</option>
+        </select>
+        <lucide-icon class="fs-chev" [img]="ChevronDownIcon" [size]="10" />
+      </span>
+
+      <!-- Émotion (effective) -->
+      <span class="filter-select" [class.active]="filterEmotion() !== 'ALL'">
+        <select aria-label="Filtrer par émotion"
+          [value]="filterEmotion()"
+          (change)="filterEmotion.set($any($event.target).value)">
+          <option value="ALL">Émotion : toutes</option>
+          <option value="CONFIDENT">Confiant</option>
+          <option value="FOCUSED">Focus</option>
+          <option value="NEUTRAL">Neutre</option>
+          <option value="STRESSED">Stressé</option>
+          <option value="REVENGE">Revenge</option>
+          <option value="FEAR">Peur</option>
+          <option value="TIRED">Fatigué</option>
+          <option value="NONE">Non renseignée</option>
+        </select>
+        <lucide-icon class="fs-chev" [img]="ChevronDownIcon" [size]="10" />
+      </span>
     </div>
 
     <div class="filter-right">
