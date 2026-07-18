@@ -44,6 +44,9 @@ export interface Trade {
     | null;
   // Émotion EFFECTIVE calculée côté API (override sinon humeur de session sinon null) : à afficher.
   effectiveEmotion?: string | null;
+  // Note d'exécution CALCULÉE (PROMPT-161) — déterministe, jamais saisie. null = « Non évalué ».
+  executionScore?: number | null;
+  executionGrade?: 'EXCELLENT' | 'BON' | 'MOYEN' | 'MAUVAIS' | null;
   setupId: string;
   setup: TradeSetup;
   session: 'LONDON' | 'NEW_YORK' | 'ASIAN';
