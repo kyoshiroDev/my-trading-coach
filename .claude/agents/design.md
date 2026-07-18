@@ -165,6 +165,20 @@ Deux boutons pairs en grille `1fr 1fr` qui révèlent un panneau inline en desso
 }
 ```
 
+### Select de filtre (`.filter-select`) — aligné sur le gabarit chip
+
+Quand une liste de filtres est dynamique ou déborde (setups, résultat, exécution, émotion…), remplacer les chips par un `<select>` stylé **au même gabarit visuel que `.filter-chip`** (même padding, radius 8px, `font-mono` 11px, bordure `--border`, actif = `--blue-glow` + `--blue`). `appearance: none` + chevron lucide en `position:absolute` à droite. L'état `.active` (filtre ≠ défaut) reprend exactement le hover bleu.
+
+```css
+.filter-select select { appearance: none; padding: 5px 26px 5px 12px; border-radius: 8px;
+  font: 11px var(--font-mono); border: 1px solid var(--border); color: var(--text-2); background: transparent; }
+.filter-select.active select,
+.filter-select select:hover { background: var(--blue-glow); border-color: var(--blue); color: var(--blue-bright); }
+.filter-select .fs-chev { position: absolute; right: 9px; opacity: .6; pointer-events: none; }
+```
+
+Bouton « Réinitialiser » associé : même gabarit, ton plus discret (`--text-3`, hover `--border-hover`). Compteur `.filter-count` en `--font-mono` `--text-3`.
+
 ### Navigation sidebar (barre d'accent — réservée à la nav)
 
 ```css
