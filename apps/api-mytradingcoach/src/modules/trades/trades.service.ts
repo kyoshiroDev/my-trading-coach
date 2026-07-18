@@ -5,10 +5,21 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Plan, Role, Prisma, SessionStatus } from '@prisma/client';
+import {
+  Plan,
+  Role,
+  Prisma,
+  SessionStatus,
+  EmotionState,
+  MoodState,
+  ExecutionGrade,
+} from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
-import { computeTradeStats } from '../../common/utils/trade-stats.util';
+import {
+  computeTradeStats,
+  BREAKEVEN_EPSILON,
+} from '../../common/utils/trade-stats.util';
 import {
   computeExecutionGrade,
   ExecutionTradeInput,
@@ -237,13 +248,53 @@ export class TradesService {
    */
   private buildTradeWhere(
     userId: string,
-    f: Pick<TradeFiltersDto, 'accountId' | 'side' | 'setupId' | 'emotion' | 'dateFrom' | 'dateTo'>,
+    f: Pick<
+      TradeFiltersDto,
+      | 'accountId'
+      | 'side'
+      | 'setupId'
+      | 'emotion'
+      | 'result'
+      | 'executionGrade'
+      | 'dateFrom'
+      | 'dateTo'
+    >,
   ): Prisma.TradeWhereInput {
     const where: Prisma.TradeWhereInput = { userId };
     if (f.accountId && f.accountId !== 'all') where.accountId = f.accountId;
     if (f.side) where.side = f.side;
     if (f.setupId) where.setupId = f.setupId;
-    if (f.emotion) where.emotion = f.emotion;
+
+    // Résultat : mêmes seuils ε que trade-stats.util (les null/ouverts sont exclus par
+    // les comparaisons SQL). WIN pnl>ε · LOSS pnl<-ε · BREAKEVEN -ε≤pnl≤ε.
+    if (f.result === 'WIN') where.pnl = { gt: BREAKEVEN_EPSILON };
+    else if (f.result === 'LOSS') where.pnl = { lt: -BREAKEVEN_EPSILON };
+    else if (f.result === 'BREAKEVEN')
+      where.pnl = { gte: -BREAKEVEN_EPSILON, lte: BREAKEVEN_EPSILON };
+
+    // Note d'exécution : enum direct ; 'NONE' → non évaluée (null).
+    if (f.executionGrade === 'NONE') where.executionGrade = null;
+    else if (f.executionGrade)
+      where.executionGrade = f.executionGrade as ExecutionGrade;
+
+    // Émotion effective = override du trade ?? humeur de la session. Filtre en OR sur les
+    // deux sources ; les valeurs propres à un seul enum ne génèrent que la branche valide
+    // (TIRED → MoodState uniquement, REVENGE/FEAR → EmotionState uniquement).
+    if (f.emotion === 'NONE') {
+      where.emotion = null;
+      where.OR = [{ sessionId: null }, { tradeSession: { moodStart: null } }];
+    } else if (f.emotion) {
+      const branches: Prisma.TradeWhereInput[] = [];
+      if ((Object.values(EmotionState) as string[]).includes(f.emotion))
+        branches.push({ emotion: f.emotion as EmotionState });
+      if ((Object.values(MoodState) as string[]).includes(f.emotion))
+        branches.push({
+          emotion: null,
+          tradeSession: { moodStart: f.emotion as MoodState },
+        });
+      if (branches.length) where.OR = branches;
+    }
+
     if (f.dateFrom || f.dateTo) {
       where.tradedAt = {};
       if (f.dateFrom) where.tradedAt.gte = new Date(f.dateFrom);
