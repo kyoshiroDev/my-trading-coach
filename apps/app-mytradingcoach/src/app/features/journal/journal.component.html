@@ -198,14 +198,42 @@
       </div>
 
       <!-- Groupes par semaine → jour -->
-      @for (week of tradesByWeek(); track week.key) {
+      @for (week of tradesByWeek(); track week.key; let wi = $index) {
         <div class="week-group">
 
-          <div class="week-header">
+          <div class="week-header" role="button" tabindex="0"
+            (click)="toggleWeek(week.key, wi)"
+            (keydown.enter)="toggleWeek(week.key, wi)">
             <div class="week-accent" [style.background]="week.totalPnlNet >= 0 ? 'var(--green)' : 'var(--red)'"></div>
+            <div class="week-toggle">
+              @if (isWeekCollapsed(week.key, wi)) {
+                <lucide-icon [img]="ChevronRightIcon" [size]="14" />
+              } @else {
+                <lucide-icon [img]="ChevronDownIcon" [size]="14" />
+              }
+            </div>
             <div class="week-label">{{ week.label }}</div>
+            <div class="day-stats">
+              <span class="day-count">{{ week.count }} trades</span>
+              <span class="day-dot">·</span>
+              <span class="day-winrate">{{ week.winCount }}/{{ week.count }}</span>
+              <span class="day-dot">·</span>
+              @if (week.totalCommission > 0) {
+                <span class="day-pnl" [class.positive]="week.totalPnlNet >= 0" [class.negative]="week.totalPnlNet < 0">
+                  {{ week.totalPnlNet >= 0 ? '+' : '' }}${{ week.totalPnlNet | number:'1.2-2' }}
+                </span>
+                <span class="day-fees" title="Frais : -${{ week.totalCommission | number:'1.2-2' }}">
+                  -${{ week.totalCommission | number:'1.2-2' }} frais
+                </span>
+              } @else {
+                <span class="day-pnl" [class.positive]="week.totalPnl >= 0" [class.negative]="week.totalPnl < 0">
+                  {{ week.totalPnl >= 0 ? '+' : '' }}${{ week.totalPnl | number:'1.2-2' }}
+                </span>
+              }
+            </div>
           </div>
 
+          @if (!isWeekCollapsed(week.key, wi)) {
       @for (day of week.days; track day.key) {
         <div class="day-group">
 
@@ -302,6 +330,7 @@
           }
         </div>
       }
+          }
         </div>
       }
     </div>

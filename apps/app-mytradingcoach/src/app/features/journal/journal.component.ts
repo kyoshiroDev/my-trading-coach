@@ -175,6 +175,10 @@ export class JournalComponent {
   protected readonly filterExecution = signal<FilterExecution>('ALL');
   protected readonly filterEmotion   = signal<FilterEmotion>('ALL');
   protected readonly collapsedDays  = signal<Set<string>>(new Set());
+  // Repli des semaines : override explicite de l'utilisateur (clé → repliée?). Par défaut,
+  // seule la semaine la plus récente (index 0) est dépliée ; les autres repliées. Survit à
+  // la pagination (les semaines plus anciennes révélées restent repliées par défaut).
+  protected readonly weekOverrides = signal<Map<string, boolean>>(new Map());
 
   /** Vrai dès qu'un filtre (hors période/compte) est actif → affiche « Réinitialiser ». */
   protected readonly hasActiveFilters = computed(() =>
@@ -308,6 +312,21 @@ export class JournalComponent {
     this.collapsedDays.update(set => {
       const next = new Set(set);
       if (next.has(key)) { next.delete(key); } else { next.add(key); }
+      return next;
+    });
+  }
+
+  /** Repli effectif d'une semaine : override utilisateur sinon défaut (repliée si pas la plus récente). */
+  protected isWeekCollapsed(key: string, index: number): boolean {
+    const o = this.weekOverrides();
+    return o.has(key) ? o.get(key)! : index !== 0;
+  }
+
+  toggleWeek(key: string, index: number): void {
+    const collapsed = this.isWeekCollapsed(key, index);
+    this.weekOverrides.update(map => {
+      const next = new Map(map);
+      next.set(key, !collapsed);
       return next;
     });
   }
