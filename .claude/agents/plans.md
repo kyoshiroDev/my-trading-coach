@@ -39,6 +39,34 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
 
 **Socle (FREE et +)** : compagnon de session (pré-session + live + débrief de base), journal (émotions, setups), import + historique illimité (l'historique ne compte pas dans la limite FREE), `/analytics/summary` (win rate, P&L, streak).
 
+> **Modèle émotion (PROMPT-163)** : l'émotion de base d'un trade vient de la **journée/session**
+> (`TradeSession.moodStart`, renseignée en pré-session) ; `Trade.emotion` est un **override optionnel**
+> (surtout REVENGE/FEAR dans l'instant), plus jamais forcé à NEUTRAL. **Émotion effective = override
+> du trade sinon humeur de la session sinon `null`** (non renseignée → exclue des agrégations, jamais
+> de faux NEUTRAL). Toute lecture d'émotion pour un calcul (émotion dominante, analytics, IA, note
+> d'exécution) passe par le helper `effectiveEmotion` + `isRiskyEmotion`/`isHealthyEmotion`
+> (`common/utils/effective-emotion.util.ts`). Conséquence UX : même journée = même émotion dominante
+> partout (daily-recap, débrief IA, dashboard). Détails schéma → `prisma.md`.
+
+> **Win rate + break-even (PROMPT-160)** : un trade clôturé a **3 résultats** — win (`pnl > ε`),
+> loss (`pnl < -ε`), **break-even** (`|pnl| <= ε`, `ε` défaut 0). **Win rate = wins / (wins + losses)** :
+> les BE ne sont **PAS** au dénominateur (un trade nul n'est ni gagnant ni perdant). Trades ouverts
+> (pnl null) hors calcul. Calcul centralisé dans le helper unique `computeTradeStats`
+> (`common/utils/trade-stats.util.ts` back + miroir `core/utils/trade-stats.util.ts` front) — plus
+> aucun `filter(pnl > 0)` / division par `length` dispersé. Conséquence : même win rate partout
+> (dashboard, analytics, calendrier, daily-recap, débrief IA).
+
+> **Note d'exécution (PROMPT-161)** — **calculée, pas saisie** ; **déterministe, zéro token IA**
+> (respect directive coûts) ; **indépendante du P&L** (un perdant bien exécuté peut être EXCELLENT).
+> 4 critères pondérés (fraction ∈ [0..1] du poids ; critère non évaluable ignoré + renormalisation) :
+> **stop respecté** (35) · **R:R ≥ 1.5** (25, 0.5 entre 1 et 1.5) · **émotion effective saine** (20,
+> cf. PROMPT-163) · **risque ≤ 1%** du capital (20, 0.5 jusqu'à 2%). `score = round(100·Σ(pᵢ·fᵢ)/Σpᵢ)`.
+> Grade : ≥80 EXCELLENT · 60-79 BON · 40-59 MOYEN · <40 MAUVAIS. **< 2 critères applicables →
+> `null` (« Non évalué »)**. Helper `computeExecutionGrade` (`common/utils/execution-grade.util.ts`),
+> persisté (`executionScore`/`executionGrade`) à la création/édition/import. Aucun champ « éval » dans
+> le formulaire. L'IA ne sert PAS au calcul (elle pourra ajouter une phrase qualitative au Weekly
+> Debrief, mutualisé/borné — hors périmètre).
+
 **STARTER (et +)** : trades illimités · 3 comptes · analytics avancés (heatmap, equity curve) · Score trader /100 · Export PDF mensuel · **IA bornée/mutualisée** :
 - 📋 **Weekly Debrief IA** (auto, 1/user/semaine)
 - 📊 **Contexte marché** (DXY, taux US, indices)

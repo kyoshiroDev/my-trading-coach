@@ -16,11 +16,74 @@
       <button class="filter-chip" [class.active]="filterSide() === 'ALL'" (click)="filterSide.set('ALL')">Tous</button>
       <button class="filter-chip" [class.active]="filterSide() === 'LONG'" (click)="filterSide.set('LONG')">LONG</button>
       <button class="filter-chip" [class.active]="filterSide() === 'SHORT'" (click)="filterSide.set('SHORT')">SHORT</button>
-      @for (s of setupsStore.active(); track s.id) {
-        <button class="filter-chip" [class.active]="filterSetup() === s.id"
-          (click)="toggleSetupFilter(s.id)">
-          <span class="filter-chip-dot" [style.background]="s.color"></span>{{ s.title }}
+
+      <!-- Résultat -->
+      <span class="filter-select" [class.active]="filterResult() !== 'ALL'">
+        <select aria-label="Filtrer par résultat"
+          [value]="filterResult()"
+          (change)="filterResult.set($any($event.target).value)">
+          <option value="ALL">Résultat : tous</option>
+          <option value="WIN">Win</option>
+          <option value="LOSS">Loss</option>
+          <option value="BREAKEVEN">Break-even</option>
+        </select>
+        <lucide-icon class="fs-chev" [img]="ChevronDownIcon" [size]="10" />
+      </span>
+
+      <!-- Setup (remplace les chips) -->
+      <span class="filter-select" [class.active]="filterSetup() !== null">
+        <select aria-label="Filtrer par setup"
+          [value]="filterSetup() ?? ''"
+          (change)="filterSetup.set($any($event.target).value || null)">
+          <option value="">Setup : tous</option>
+          @for (s of setupsStore.active(); track s.id) {
+            <option [value]="s.id">{{ s.title }}</option>
+          }
+        </select>
+        <lucide-icon class="fs-chev" [img]="ChevronDownIcon" [size]="10" />
+      </span>
+
+      <!-- Execution -->
+      <span class="filter-select" [class.active]="filterExecution() !== 'ALL'">
+        <select aria-label="Filtrer par note d'exécution"
+          [value]="filterExecution()"
+          (change)="filterExecution.set($any($event.target).value)">
+          <option value="ALL">Execution : toutes</option>
+          <option value="EXCELLENT">Excellent</option>
+          <option value="BON">Bon</option>
+          <option value="MOYEN">Moyen</option>
+          <option value="MAUVAIS">Mauvais</option>
+          <option value="NONE">Non évaluée</option>
+        </select>
+        <lucide-icon class="fs-chev" [img]="ChevronDownIcon" [size]="10" />
+      </span>
+
+      <!-- Émotion (effective) -->
+      <span class="filter-select" [class.active]="filterEmotion() !== 'ALL'">
+        <select aria-label="Filtrer par émotion"
+          [value]="filterEmotion()"
+          (change)="filterEmotion.set($any($event.target).value)">
+          <option value="ALL">Émotion : toutes</option>
+          <option value="CONFIDENT">Confiant</option>
+          <option value="FOCUSED">Focus</option>
+          <option value="NEUTRAL">Neutre</option>
+          <option value="STRESSED">Stressé</option>
+          <option value="REVENGE">Revenge</option>
+          <option value="FEAR">Peur</option>
+          <option value="TIRED">Fatigué</option>
+          <option value="NONE">Non renseignée</option>
+        </select>
+        <lucide-icon class="fs-chev" [img]="ChevronDownIcon" [size]="10" />
+      </span>
+
+      @if (hasActiveFilters()) {
+        <button class="filter-reset" (click)="resetFilters()" aria-label="Réinitialiser les filtres">
+          <lucide-icon [img]="XIcon" [size]="10" /> Réinitialiser
         </button>
+      }
+
+      @if (tradesStore.stats(); as st) {
+        <span class="filter-count">{{ st.totalTrades }} trade{{ st.totalTrades > 1 ? 's' : '' }}</span>
       }
     </div>
 
@@ -61,7 +124,10 @@
         <span class="period-value">{{ s.count }}</span>
       </div>
       <div class="period-stat">
-        <span class="period-label">Win rate</span>
+        <span class="period-label">Win rate
+          <mtc-info-tooltip label="Comment le win rate est calculé"
+            text="Trades gagnants ÷ (gagnants + perdants). Les trades break-even ne sont pas comptés dans le calcul." />
+        </span>
         <span class="period-value">{{ s.winRate | number:'1.0-0' }}%</span>
       </div>
       <div class="period-stat">
@@ -69,11 +135,15 @@
         <span class="period-value" [style.color]="s.totalPnl >= 0 ? 'var(--green)' : 'var(--red)'">
           {{ s.totalPnl >= 0 ? '+' : '' }}${{ s.totalPnl | number:'1.2-2' }}
         </span>
-        @if (s.totalCommissions > 0) {
-          <span class="period-sub-label">
-            brut ${{ s.totalPnlBrut | number:'1.2-2' }} · frais ${{ s.totalCommissions | number:'1.2-2' }}
-          </span>
-        }
+      </div>
+      <div class="period-stat">
+        <span class="period-label">Frais
+          <mtc-info-tooltip label="Ce que représentent les frais"
+            text="Total des commissions et frais de la période, déjà déduits du P&L net." />
+        </span>
+        <span class="period-value" style="color:var(--red)">
+          -${{ s.totalCommissions | number:'1.2-2' }}
+        </span>
       </div>
       <div class="period-stat">
         <span class="period-label">Meilleur</span>
@@ -106,16 +176,65 @@
         <span class="th-side">Sens</span>
         <span class="th-price">Entry</span>
         <span class="th-price">Exit</span>
-        <span class="th-pnl">P&L</span>
+        <span class="th-pnl">P&L
+          <mtc-info-tooltip label="Comment le P&L est calculé"
+            text="Résultat net du trade, commissions et frais déduits." />
+        </span>
         <span class="th-qty">Qté</span>
-        <span class="th-rr">R/R</span>
-        <span class="th-emotion">Émotion</span>
+        <span class="th-rr">R/R
+          <mtc-info-tooltip label="Comment le R/R est calculé"
+            text="Ratio risque/rendement du trade. Affiche « — » quand le stop loss ou le take profit n'est pas renseigné." />
+        </span>
+        <span class="th-exec">Exécution
+          <mtc-info-tooltip label="Comment la note d'exécution est calculée"
+            text="Note d'exécution calculée par MTC, indépendante du résultat. 4 critères pondérés : stop respecté (35), R:R (25), émotion (20), risque engagé (20). Un trade perdant bien exécuté peut être Excellent." />
+        </span>
+        <span class="th-emotion">Émotion
+          <mtc-info-tooltip class="align-end" label="Comment l'émotion est déterminée"
+            text="Émotion du trade si tu l'as renseignée, sinon l'humeur de ta session ce jour-là. « — » si aucune des deux." />
+        </span>
         <span class="th-setup">Setup</span>
         <span class="th-actions"></span>
       </div>
 
-      <!-- Groupes par jour -->
-      @for (day of tradesByDay(); track day.key) {
+      <!-- Groupes par semaine → jour -->
+      @for (week of tradesByWeek(); track week.key; let wi = $index) {
+        <div class="week-group">
+
+          <div class="week-header" role="button" tabindex="0"
+            (click)="toggleWeek(week.key, wi)"
+            (keydown.enter)="toggleWeek(week.key, wi)">
+            <div class="week-accent" [style.background]="week.totalPnlNet >= 0 ? 'var(--green)' : 'var(--red)'"></div>
+            <div class="week-toggle">
+              @if (isWeekCollapsed(week.key, wi)) {
+                <lucide-icon [img]="ChevronRightIcon" [size]="14" />
+              } @else {
+                <lucide-icon [img]="ChevronDownIcon" [size]="14" />
+              }
+            </div>
+            <div class="week-label">{{ week.label }}</div>
+            <div class="day-stats">
+              <span class="day-count">{{ week.count }} trades</span>
+              <span class="day-dot">·</span>
+              <span class="day-winrate">{{ week.winCount }}/{{ week.count }}</span>
+              <span class="day-dot">·</span>
+              @if (week.totalCommission > 0) {
+                <span class="day-pnl" [class.positive]="week.totalPnlNet >= 0" [class.negative]="week.totalPnlNet < 0">
+                  {{ week.totalPnlNet >= 0 ? '+' : '' }}${{ week.totalPnlNet | number:'1.2-2' }}
+                </span>
+                <span class="day-fees" title="Frais : -${{ week.totalCommission | number:'1.2-2' }}">
+                  -${{ week.totalCommission | number:'1.2-2' }} frais
+                </span>
+              } @else {
+                <span class="day-pnl" [class.positive]="week.totalPnl >= 0" [class.negative]="week.totalPnl < 0">
+                  {{ week.totalPnl >= 0 ? '+' : '' }}${{ week.totalPnl | number:'1.2-2' }}
+                </span>
+              }
+            </div>
+          </div>
+
+          @if (!isWeekCollapsed(week.key, wi)) {
+      @for (day of week.days; track day.key) {
         <div class="day-group">
 
           <div class="day-header" role="button" tabindex="0"
@@ -179,11 +298,31 @@
                     {{ trade.pnl | pnlFormat: trade.entry }}
                   </span>
                   <span class="td-qty mono">{{ trade.quantity ?? 1 }}</span>
-                  <span class="td-rr mono">{{ trade.riskReward !== null && trade.riskReward !== undefined ? trade.riskReward.toFixed(2) : '—' }}</span>
+                  <span class="td-rr mono">
+                    @if (trade.riskReward !== null && trade.riskReward !== undefined) {
+                      {{ trade.riskReward.toFixed(2) }}
+                    } @else {
+                      0
+                      <mtc-info-tooltip label="Pourquoi le R:R vaut 0"
+                        text="R:R incalculable : stop loss ou take profit non renseigné sur ce trade." />
+                    }
+                  </span>
+                  <span class="td-exec">
+                    @if (trade.executionGrade) {
+                      <span class="grade-badge" [attr.data-grade]="trade.executionGrade"
+                            [title]="'Note d\'exécution calculée : ' + trade.executionScore + '/100'">
+                        {{ gradeLabel(trade.executionGrade) }}
+                      </span>
+                    } @else {
+                      <span class="exec-none">Non évaluée</span>
+                      <mtc-info-tooltip label="Pourquoi cette note est indisponible"
+                        text="Note indisponible : il faut au moins 2 critères mesurables. Ici le stop loss et le take profit ne sont pas renseignés (fréquent sur les imports broker)." />
+                    }
+                  </span>
                   <span class="td-emotion">
                     <span class="emotion-cell">
-                      {{ trade.emotion | emotionEmoji }}
-                      <span class="emotion-text">{{ trade.emotion }}</span>
+                      {{ trade.effectiveEmotion | emotionEmoji }}
+                      <span class="emotion-text">{{ (trade.effectiveEmotion | titlecase) || '—' }}</span>
                     </span>
                   </span>
                   <span class="td-setup"><span class="setup-badge"><span class="setup-badge-dot" [style.background]="trade.setup.color"></span>{{ trade.setup.title }}</span></span>
@@ -198,6 +337,9 @@
                 </div>
               }
             </div>
+          }
+        </div>
+      }
           }
         </div>
       }

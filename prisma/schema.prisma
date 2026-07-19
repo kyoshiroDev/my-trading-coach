@@ -145,7 +145,13 @@ model Trade {
   riskReward     Float?
   quantity       Float?
   capitalEngaged Float?
-  emotion        EmotionState
+  // Note d'exécution CALCULÉE (PROMPT-161) — déterministe, zéro IA, indépendante du P&L.
+  // Non saisie par l'utilisateur. Dérivée de stop/RR/émotion effective/risque (voir execution-grade.util).
+  executionScore Int?             // 0-100, null si < 2 critères applicables (« Non évalué »)
+  executionGrade ExecutionGrade?  // dérivé du score (EXCELLENT/BON/MOYEN/MAUVAIS)
+  // Override optionnel de l'émotion du trade (surtout REVENGE/FEAR dans l'instant).
+  // Émotion effective = emotion ?? tradeSession.moodStart ?? null (voir effective-emotion.util).
+  emotion        EmotionState?
   setupId        String
   // NoAction (vérif en fin d'instruction) : la suppression d'un user cascade ses
   // trades ET ses setups sans violer la FK. La règle "pas de delete si trades" est
@@ -387,6 +393,14 @@ enum EmotionState {
   FEAR
   FOCUSED
   NEUTRAL
+}
+
+/// Note d'exécution calculée d'un trade (PROMPT-161) — dérivée du score 0-100, jamais saisie.
+enum ExecutionGrade {
+  EXCELLENT
+  BON
+  MOYEN
+  MAUVAIS
 }
 
 enum TradingSession {

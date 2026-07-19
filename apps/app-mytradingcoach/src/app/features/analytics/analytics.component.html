@@ -4,7 +4,10 @@
   <!-- ── 4 Stats FREE (visibles par tous) ── -->
   <div class="stats-row">
     <div class="stat-card">
-      <div class="stat-label">WIN RATE GLOBAL</div>
+      <div class="stat-label">WIN RATE GLOBAL
+        <mtc-info-tooltip label="Comment le win rate global est calculé"
+          text="Trades gagnants ÷ (gagnants + perdants). Les break-even sont exclus du calcul." />
+      </div>
       <div
         class="stat-value"
         data-testid="analytics-win-rate"
@@ -18,7 +21,10 @@
     </div>
 
     <div class="stat-card">
-      <div class="stat-label">P&amp;L TOTAL</div>
+      <div class="stat-label">P&amp;L TOTAL
+        <mtc-info-tooltip label="Comment le P&L total est calculé"
+          text="Somme des résultats nets de la période, frais déduits." />
+      </div>
       <div
         class="stat-value"
         data-testid="analytics-pnl"
@@ -31,7 +37,10 @@
     </div>
 
     <div class="stat-card">
-      <div class="stat-label">TOP SESSION</div>
+      <div class="stat-label">TOP SESSION
+        <mtc-info-tooltip label="Ce que représente la top session"
+          text="Session où ton résultat cumulé est le meilleur sur la période." />
+      </div>
       <div class="stat-value text-blue">
         {{ summary() ? (summary()!.topSession | sessionLabel) : '—' }}
       </div>
@@ -41,7 +50,10 @@
     </div>
 
     <div class="stat-card">
-      <div class="stat-label">HEURE TOP</div>
+      <div class="stat-label">HEURE TOP
+        <mtc-info-tooltip class="align-end" label="Ce que représente l'heure top"
+          text="Heure de la journée où ton résultat cumulé est le meilleur sur la période." />
+      </div>
       <div class="stat-value text-blue">
         {{ summary()?.topHour ?? '—' }}
       </div>
@@ -98,7 +110,10 @@
 
       <div class="card">
         <div class="card-header">
-          <div class="card-title">Courbe de Drawdown</div>
+          <div class="card-title">Courbe de Drawdown
+            <mtc-info-tooltip label="Ce que représente le drawdown"
+              text="Écart entre ton P&L cumulé et son plus haut niveau atteint. Mesure la baisse depuis un pic, pas une perte définitive." />
+          </div>
           @if (summary()) {
             <span class="card-meta text-red">
               {{ -summary()!.maxDrawdown | pnlFormat }} max
@@ -120,7 +135,10 @@
       <!-- Heatmap (gauche — plus large) -->
       <div class="card heatmap-card">
         <div class="card-header">
-          <div class="card-title">Heatmap horaire : win rate par heure</div>
+          <div class="card-title">Heatmap horaire : win rate par heure
+            <mtc-info-tooltip label="Comment lire la heatmap"
+              text="Win rate par heure de la journée. Vert ≥ 65 %, orange 50–65 %, rouge < 50 %." />
+          </div>
           <div class="heatmap-legend">
             <span class="legend-dot dot-red"></span
             ><span class="legend-txt">&lt;50%</span>
@@ -231,7 +249,10 @@
 
       <div class="card">
         <div class="card-header">
-          <div class="card-title">Performance par setup</div>
+          <div class="card-title">Performance par setup
+            <mtc-info-tooltip label="Ce que montre la performance par setup"
+              text="Résultat cumulé et nombre de trades par setup, sur la période sélectionnée." />
+          </div>
         </div>
         <table class="perf-table">
           <thead>
@@ -239,7 +260,10 @@
               <th>SETUP</th>
               <th>TRADES</th>
               <th>WIN RATE</th>
-              <th>RR MOY.</th>
+              <th>RR MOY.
+                <mtc-info-tooltip class="align-end" label="Comment le RR moyen est calculé"
+                  text="Moyenne des ratios risque/rendement des trades où stop loss et take profit sont renseignés." />
+              </th>
             </tr>
           </thead>
           <tbody>

@@ -55,6 +55,24 @@ interface ClaudeResponse {
   errors: string[];
 }
 
+/** DTO d'import enrichi de métadonnées internes (fill ids Tradovate) — non persistées. */
+type ImportDto = Partial<CreateTradeDto> & {
+  _buyFillId?: string;
+  _sellFillId?: string;
+};
+
+/** Rapport de rapprochement des frais (fusion Tradovate Performance + Cash history). */
+export interface FeesReport {
+  /** Σ commissions attribuées aux trades (après dédup des fills partagés). */
+  assigned: number;
+  /** Σ |Delta| des lignes Commission du Cash history (checksum attendu). */
+  expected: number;
+  /** true si |assigned − expected| < 0,01 (frais rapprochés au centime). */
+  reconciled: boolean;
+  /** Nombre de trades de l'import. */
+  count: number;
+}
+
 @Injectable()
 export class CsvImportService {
   private readonly logger = new Logger(CsvImportService.name);
@@ -72,6 +90,10 @@ export class CsvImportService {
     access?: AiImportAccess,
     totalFees?: number,
     defaults?: { accountId?: string; emotion?: string; setupId?: string },
+    // Fichier de frais optionnel (Tradovate Cash history) → commissions exactes par trade.
+    feesFile?: { buffer: Buffer; filename: string },
+    // Rapport de rapprochement des frais (out-param, non-bloquant) — lu par le controller.
+    report?: { fees?: FeesReport },
   ): Promise<Partial<CreateTradeDto>[]> {
     // 1. Obtenir du texte CSV (Excel converti localement, sinon UTF-8)
     const content = this.toCsvText(buffer, filename);
@@ -85,7 +107,7 @@ export class CsvImportService {
     if (normalizedLines.length < 2)
       throw new BadRequestException(this.emptyMessage());
 
-    let dtos: Partial<CreateTradeDto>[];
+    let dtos: ImportDto[];
 
     if (broker !== 'unknown') {
       // 3. Broker connu → parsing local, gratuit, sans IA
@@ -114,10 +136,28 @@ export class CsvImportService {
 
     if (!dtos.length) throw new BadRequestException(this.emptyMessage());
 
+    // Fusion frais Tradovate (Performance + Cash history) → commissions exactes par trade.
+    // Prioritaire sur le total manuel : ne s'applique QUE si les trades sont un Tradovate
+    // Performance ET qu'un fichier de frais valide (Cash history) est fourni.
+    let feesMerged = false;
+    if (broker === 'tradovate' && feesFile) {
+      const feesText = this.toCsvText(feesFile.buffer, feesFile.filename);
+      const merge = feesText ? this.mergeTradovateFees(dtos, feesText) : null;
+      if (merge) {
+        feesMerged = true;
+        if (report) report.fees = merge;
+        this.logger.log(
+          `Fusion frais Tradovate : ${merge.assigned}$ attribués sur ${merge.count} trades ` +
+          `(attendu ${merge.expected}$, ${merge.reconciled ? 'rapproché' : 'écart'}).`,
+        );
+      }
+    }
+
     // Frais saisis par l'utilisateur → répartis au prorata des contrats (P&L net).
+    // Ignorés si la fusion fichier a déjà posé les commissions exactes.
     // Double sécurité (le front protège déjà) : jamais d'addition par-dessus des
     // frais déjà présents dans le CSV, ni de lissage sur un gros import.
-    if (totalFees != null && totalFees > 0 && dtos.length > 0) {
+    if (!feesMerged && totalFees != null && totalFees > 0 && dtos.length > 0) {
       const hasCsvFees = dtos.some((d) => (d.commission ?? 0) > 0);
       if (hasCsvFees) {
         this.logger.warn('totalFees ignoré : frais déjà présents dans le CSV (anti double comptage).');
@@ -131,7 +171,9 @@ export class CsvImportService {
     // Defaults appliqués à TOUT le lot : compte cible, émotion, setup.
     // - accountId : le compte choisi (validé en amont) → create() le résout ; sinon
     //   fallback backend existant (session active / compte par défaut).
-    // - emotion : choix unique, sinon NEUTRAL (pas de régression). Valeur invalide → NEUTRAL.
+    // - emotion : override OPTIONNEL (PROMPT-163). Si le lot choisit une émotion, on l'applique
+    //   à tous les trades ; sinon `null` (non renseignée) → héritera de l'humeur de session à la
+    //   lecture. Plus jamais de NEUTRAL forcé à l'import.
     // - setupId : choix unique, sinon le setup par défaut du user (sortOrder le plus bas).
     const batchEmotion = this.normalizeEmotion(defaults?.emotion);
     const setupId =
@@ -142,15 +184,23 @@ export class CsvImportService {
       if (setupId) d.setupId = setupId;
     }
 
-    return dtos;
+    // Retirer les métadonnées internes (fill ids) avant persistance.
+    return dtos.map((d) => {
+      const clean: ImportDto = { ...d };
+      delete clean._buyFillId;
+      delete clean._sellFillId;
+      return clean;
+    });
   }
 
-  /** Valide une émotion contre l'enum Prisma ; valeur absente/invalide → NEUTRAL. */
-  private normalizeEmotion(value?: string): EmotionState {
+  /**
+   * Valide une émotion de lot contre l'enum Prisma. Valeur absente/invalide → `null`
+   * (non renseignée) : PLUS de NEUTRAL forcé. L'émotion effective sera dérivée de l'humeur
+   * de session à la lecture (voir effective-emotion.util).
+   */
+  private normalizeEmotion(value?: string | null): EmotionState | null {
     const allowed = Object.values(EmotionState) as string[];
-    return value && allowed.includes(value)
-      ? (value as EmotionState)
-      : EmotionState.NEUTRAL;
+    return value && allowed.includes(value) ? (value as EmotionState) : null;
   }
 
   /**
@@ -172,6 +222,97 @@ export class CsvImportService {
       const commission = +((d.commission ?? 0) + fee).toFixed(2);
       return { ...d, commission };
     });
+  }
+
+  /** Montant robuste en valeur absolue : retire `$`, espaces et séparateurs de milliers. */
+  private parseMoneyAbs(raw: string): number {
+    let s = (raw ?? '').replace(/[$\s]/g, '').trim();
+    const neg = s.startsWith('(') && s.endsWith(')');
+    if (neg) s = s.slice(1, -1);
+    // Format US : `,` = milliers, `.` = décimale → on retire les virgules.
+    s = s.replace(/,/g, '');
+    const n = parseFloat(s);
+    return Number.isFinite(n) ? Math.abs(n) : 0;
+  }
+
+  /** Normalise un fill id (numérique) → chaîne canonique, ou null si invalide. */
+  private normFillId(raw?: string): string | null {
+    if (!raw) return null;
+    const n = parseInt(String(raw).trim(), 10);
+    return Number.isFinite(n) ? String(n) : null;
+  }
+
+  /**
+   * Fusion Tradovate : rapproche les commissions EXACTES par trade à partir du Cash history.
+   *
+   * Jointure (validée sur données réelles) : `fillId = (Transaction ID) − 1`, une entrée par fill.
+   * Dédup obligatoire : un même fill peut clôturer un trade ET en ouvrir un autre (scalping) → sa
+   * commission ne doit compter qu'UNE fois sur tout l'import, sinon le net est double-compté.
+   * On parcourt les trades dans l'ordre du fichier avec un Set de fills consommés.
+   * Garantit `Σ commission(trade) == Σ |Delta| Commission` (checksum au centime).
+   *
+   * Mute `commission` (positive) sur chaque DTO ; le P&L net déduit ensuite `commission`.
+   * Retourne le rapport (assigned/expected/reconciled) ou null si le fichier n'est pas un Cash history.
+   */
+  private mergeTradovateFees(dtos: ImportDto[], feesText: string): FeesReport | null {
+    const lines = feesText.split(/\r?\n/).filter((l) => l.trim());
+    if (lines.length < 2) return null;
+
+    const header = lines[0].toLowerCase();
+    // Détection du fichier de frais : Cash history (Transaction ID + Cash Change Type).
+    if (!header.includes('transaction id') || !header.includes('cash change type')) {
+      this.logger.warn('Fichier de frais ignoré : en-tête Cash history non reconnu (Transaction ID / Cash Change Type).');
+      return null;
+    }
+
+    const cols0 = this.splitCsvLine(lines[0]).map((h) => h.trim().toLowerCase());
+    const iTxn = cols0.indexOf('transaction id');
+    const iDelta = cols0.indexOf('delta');
+    const iType = cols0.indexOf('cash change type');
+    if (iTxn < 0 || iDelta < 0 || iType < 0) {
+      this.logger.warn('Fichier de frais ignoré : colonnes Transaction ID / Delta / Cash Change Type introuvables.');
+      return null;
+    }
+
+    // commissionParFill[fillId] = |Delta| — une entrée par ligne Commission (fillId = TxnID − 1).
+    const commissionParFill = new Map<string, number>();
+    let expected = 0;
+    for (let i = 1; i < lines.length; i++) {
+      const c = this.splitCsvLine(lines[i]);
+      if ((c[iType] ?? '').trim() !== 'Commission') continue; // ignore Trade Paired & co
+      const txnId = parseInt((c[iTxn] ?? '').trim(), 10);
+      if (!Number.isFinite(txnId)) continue;
+      const amount = this.parseMoneyAbs(c[iDelta] ?? '');
+      if (amount <= 0) continue;
+      commissionParFill.set(String(txnId - 1), amount);
+      expected += amount;
+    }
+    expected = +expected.toFixed(2);
+
+    // Attribution + dédup : ordre du fichier, chaque fill consommé une seule fois.
+    const consumed = new Set<string>();
+    let assigned = 0;
+    for (const d of dtos) {
+      let fee = 0;
+      for (const fid of [this.normFillId(d._buyFillId), this.normFillId(d._sellFillId)]) {
+        if (fid && commissionParFill.has(fid) && !consumed.has(fid)) {
+          fee += commissionParFill.get(fid) ?? 0;
+          consumed.add(fid);
+        }
+      }
+      d.commission = +fee.toFixed(2);
+      assigned += fee;
+    }
+    assigned = +assigned.toFixed(2);
+
+    const reconciled = Math.abs(assigned - expected) < 0.01;
+    if (!reconciled) {
+      this.logger.warn(
+        `Frais Tradovate partiellement rapprochés : attribué ${assigned} vs attendu ${expected} ` +
+        `(${commissionParFill.size} fills, ${consumed.size} consommés).`,
+      );
+    }
+    return { assigned, expected, reconciled, count: dtos.length };
   }
 
   /**
@@ -450,7 +591,12 @@ export class CsvImportService {
   // ── Parsers → CSV normalisé ─────────────────────────────────────────────────
 
   private parseTradovate(lines: string[]): string {
-    const result: string[] = ['symbol,side,entry,exit,qty,pnl,tradedAt'];
+    // Fill ids lus PAR NOM (l'export Performance peut varier de colonnes) → jointure frais.
+    const header = this.splitCsvLine(lines[0]).map((h) => h.trim().toLowerCase());
+    const iBuyFill = header.indexOf('buyfillid');
+    const iSellFill = header.indexOf('sellfillid');
+
+    const result: string[] = ['symbol,side,entry,exit,qty,pnl,tradedAt,buyFillId,sellFillId'];
 
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -465,6 +611,8 @@ export class CsvImportService {
       const rawPnl = cols[9].trim();
       const boughtAt = cols[10].trim();
       const soldAt = cols[11].trim();
+      const buyFillId = iBuyFill >= 0 ? (cols[iBuyFill] ?? '').trim() : '';
+      const sellFillId = iSellFill >= 0 ? (cols[iSellFill] ?? '').trim() : '';
 
       if (isNaN(buyPrice) || isNaN(sellPrice)) continue;
 
@@ -479,7 +627,7 @@ export class CsvImportService {
       const exit = side === 'LONG' ? sellPrice : buyPrice;
       const tradedAt = (side === 'LONG' ? soldDate : boughtDate).toISOString();
 
-      result.push(`${symbol},${side},${entry},${exit},${qty},${pnl},${tradedAt}`);
+      result.push(`${symbol},${side},${entry},${exit},${qty},${pnl},${tradedAt},${buyFillId},${sellFillId}`);
     }
     return result.join('\n');
   }
@@ -829,7 +977,7 @@ ${csv}`;
         quantity: t.quantity || 1,
         pnl: t.pnl,
         commission: t.commission ?? undefined,
-        emotion: 'NEUTRAL' as const,
+        emotion: null, // override optionnel — réassigné par le lot (ou null) dans parseCSV
         // setupId affecté en aval (parseCSV) : setup par défaut du user, ou fourni par l'import (PROMPT-138).
         session: this.detectSession(t.tradedAt),
         timeframe: '1h',
@@ -844,7 +992,7 @@ ${csv}`;
    * et l'éventuelle colonne commission (MEXC). Estime l'entrée quand le broker
    * n'exporte pas le prix d'entrée (entry=0), comme le faisait le prompt Claude.
    */
-  private mapNormalizedCsvToDto(csv: string): Partial<CreateTradeDto>[] {
+  private mapNormalizedCsvToDto(csv: string): ImportDto[] {
     const lines = csv.split('\n').filter((l) => l.trim());
     if (lines.length < 2) return [];
 
@@ -864,8 +1012,11 @@ ${csv}`;
     const iPnl = at('pnl');
     const iComm = at('commission');
     const iDate = at('tradedat');
+    // Fill ids Tradovate (métadonnée interne pour la fusion des frais) — absents des autres brokers.
+    const iBuyFill = at('buyfillid');
+    const iSellFill = at('sellfillid');
 
-    const out: Partial<CreateTradeDto>[] = [];
+    const out: ImportDto[] = [];
     for (let i = 1; i < lines.length; i++) {
       const c = this.splitCsvLine(lines[i]);
       const asset = (c[iSym] ?? '').trim();
@@ -896,12 +1047,15 @@ ${csv}`;
         quantity: isFinite(quantity) && quantity > 0 ? quantity : 1,
         pnl: isFinite(pnl) ? pnl : 0,
         commission: isFinite(commission) ? Math.abs(commission) : undefined,
-        emotion: 'NEUTRAL' as const,
+        emotion: null, // override optionnel — réassigné par le lot (ou null) dans parseCSV
         // setupId affecté en aval (parseCSV) : setup par défaut du user, ou fourni par l'import (PROMPT-138).
         session: this.detectSession(tradedAt),
         timeframe: '1h',
         tradedAt: tradedAt || new Date().toISOString(),
         notes: undefined,
+        // Métadonnées internes (jointure frais Tradovate), retirées avant persistance.
+        _buyFillId: iBuyFill >= 0 ? (c[iBuyFill] ?? '').trim() || undefined : undefined,
+        _sellFillId: iSellFill >= 0 ? (c[iSellFill] ?? '').trim() || undefined : undefined,
       });
     }
     return out;

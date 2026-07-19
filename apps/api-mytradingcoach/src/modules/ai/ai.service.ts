@@ -13,6 +13,8 @@ import { buildDebriefPrompt } from './prompts/debrief.prompt';
 import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
+import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
+import { computeTradeStats } from '../../common/utils/trade-stats.util';
 // import type only (aucune dépendance runtime → pas de cycle avec eco-calendar.service)
 import type { EcoAnalysis, EcoResultAnalysis } from '../eco-calendar/eco-calendar.service';
 import { AnthropicClientService } from '../shared/anthropic-client.service';
@@ -87,6 +89,7 @@ export class AiService {
         side: true,
         pnl: true,
         emotion: true,
+        tradeSession: { select: { moodStart: true } },
         setup: { select: { title: true, description: true } },
         session: true,
         tradedAt: true,
@@ -115,11 +118,12 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
     if (recentTrades.length === 0) {
       contextSummary = "Ce trader n'a encore enregistré aucun trade.";
     } else {
-      const wins = recentTrades.filter((t) => (t.pnl ?? 0) > 0).length;
-      const winRate = Math.round((wins / recentTrades.length) * 100);
-      const totalPnl = recentTrades.reduce((sum, t) => sum + (t.pnl ?? 0), 0);
+      // Stats via le helper unique (BE exclus du win rate — PROMPT-160).
+      const s = computeTradeStats(recentTrades);
+      const winRate = Math.round(s.winRate);
+      const totalPnl = s.totalPnl;
       const emotions = [
-        ...new Set(recentTrades.map((t) => t.emotion).filter(Boolean)),
+        ...new Set(recentTrades.map((t) => effectiveEmotion(t)).filter(Boolean)),
       ].join(', ');
       const setups = [
         ...new Set(recentTrades.map((t) => t.setup.title).filter(Boolean)),
@@ -217,7 +221,8 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
       side: string;
       asset: string;
       pnl: number | null;
-      emotion?: string;
+      emotion?: string | null;
+      tradeSession?: { moodStart?: string | null } | null;
       setup?: string;
       session?: string;
       timeframe?: string;
@@ -229,7 +234,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
     }>;
     pnl: number;
     winRate: number;
-    dominantEmotion: string;
+    dominantEmotion: string | null;
     date: Date;
     userProfile?: UserTradingProfile;
     patterns7d?: {
@@ -274,7 +279,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
           t.side,
           t.asset,
           t.setup ?? '?',
-          t.emotion ?? '?',
+          effectiveEmotion(t) ?? '?',
           pnlStr,
           exitLabel,
         ]
@@ -315,7 +320,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
 
     // ── Prompt final ────────────────────────────────────────────────────────
     const prompt = `${profileCtx}
-Journée du ${dateStr} : ${data.trades.length} trades, P&L ${data.pnl >= 0 ? '+' : ''}${data.pnl.toFixed(0)}$, win rate ${data.winRate.toFixed(0)}%, émotion dominante : ${data.dominantEmotion}.
+Journée du ${dateStr} : ${data.trades.length} trades, P&L ${data.pnl >= 0 ? '+' : ''}${data.pnl.toFixed(0)}$, win rate ${data.winRate.toFixed(0)}%, émotion dominante : ${data.dominantEmotion ?? 'non renseignée'}.
 
 Détail des trades :
 ${tradesDetail}

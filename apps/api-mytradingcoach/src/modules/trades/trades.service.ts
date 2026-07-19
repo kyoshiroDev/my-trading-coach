@@ -5,8 +5,26 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Plan, Role, Prisma, SessionStatus } from '@prisma/client';
+import {
+  Plan,
+  Role,
+  Prisma,
+  SessionStatus,
+  EmotionState,
+  MoodState,
+  ExecutionGrade,
+} from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
+import {
+  computeTradeStats,
+  BREAKEVEN_EPSILON,
+} from '../../common/utils/trade-stats.util';
+import {
+  computeExecutionGrade,
+  ExecutionTradeInput,
+  ExecutionGradeResult,
+} from '../../common/utils/execution-grade.util';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { SetupsService } from '../setups/setups.service';
@@ -59,7 +77,7 @@ export class TradesService {
 
     const activeSession = await this.prisma.tradeSession.findFirst({
       where: { userId, status: SessionStatus.ACTIVE },
-      select: { id: true, accountId: true },
+      select: { id: true, accountId: true, moodStart: true },
     });
 
     // accountId : fourni (validé) → sinon hérité de la session active → sinon compte
@@ -71,14 +89,23 @@ export class TradesService {
     if (!accountId) accountId = activeSession?.accountId ?? undefined;
     if (!accountId) accountId = await this.accounts.ensureDefaultAccountId(userId);
 
+    const rr = dto.riskReward ?? riskReward;
+    // Note d'exécution CALCULÉE (déterministe, zéro IA, indépendante du P&L — PROMPT-161).
+    const { score: executionScore, grade: executionGrade } = await this.computeExecution(
+      accountId,
+      { ...dto, riskReward: rr, tradeSession: { moodStart: activeSession?.moodStart ?? null } },
+    );
+
     const trade = await this.prisma.trade.create({
       data: {
         ...dto,
         entry: dto.entry ?? 0,
         pnl: dto.pnl ?? pnl,
-        riskReward: dto.riskReward ?? riskReward,
+        riskReward: rr,
         quantity: dto.quantity ?? 1,
         capitalEngaged: dto.capitalEngaged ?? null,
+        executionScore,
+        executionGrade,
         userId,
         sessionId: activeSession?.id ?? null,
         accountId,
@@ -221,13 +248,53 @@ export class TradesService {
    */
   private buildTradeWhere(
     userId: string,
-    f: Pick<TradeFiltersDto, 'accountId' | 'side' | 'setupId' | 'emotion' | 'dateFrom' | 'dateTo'>,
+    f: Pick<
+      TradeFiltersDto,
+      | 'accountId'
+      | 'side'
+      | 'setupId'
+      | 'emotion'
+      | 'result'
+      | 'executionGrade'
+      | 'dateFrom'
+      | 'dateTo'
+    >,
   ): Prisma.TradeWhereInput {
     const where: Prisma.TradeWhereInput = { userId };
     if (f.accountId && f.accountId !== 'all') where.accountId = f.accountId;
     if (f.side) where.side = f.side;
     if (f.setupId) where.setupId = f.setupId;
-    if (f.emotion) where.emotion = f.emotion;
+
+    // Résultat : mêmes seuils ε que trade-stats.util (les null/ouverts sont exclus par
+    // les comparaisons SQL). WIN pnl>ε · LOSS pnl<-ε · BREAKEVEN -ε≤pnl≤ε.
+    if (f.result === 'WIN') where.pnl = { gt: BREAKEVEN_EPSILON };
+    else if (f.result === 'LOSS') where.pnl = { lt: -BREAKEVEN_EPSILON };
+    else if (f.result === 'BREAKEVEN')
+      where.pnl = { gte: -BREAKEVEN_EPSILON, lte: BREAKEVEN_EPSILON };
+
+    // Note d'exécution : enum direct ; 'NONE' → non évaluée (null).
+    if (f.executionGrade === 'NONE') where.executionGrade = null;
+    else if (f.executionGrade)
+      where.executionGrade = f.executionGrade as ExecutionGrade;
+
+    // Émotion effective = override du trade ?? humeur de la session. Filtre en OR sur les
+    // deux sources ; les valeurs propres à un seul enum ne génèrent que la branche valide
+    // (TIRED → MoodState uniquement, REVENGE/FEAR → EmotionState uniquement).
+    if (f.emotion === 'NONE') {
+      where.emotion = null;
+      where.OR = [{ sessionId: null }, { tradeSession: { moodStart: null } }];
+    } else if (f.emotion) {
+      const branches: Prisma.TradeWhereInput[] = [];
+      if ((Object.values(EmotionState) as string[]).includes(f.emotion))
+        branches.push({ emotion: f.emotion as EmotionState });
+      if ((Object.values(MoodState) as string[]).includes(f.emotion))
+        branches.push({
+          emotion: null,
+          tradeSession: { moodStart: f.emotion as MoodState },
+        });
+      if (branches.length) where.OR = branches;
+    }
+
     if (f.dateFrom || f.dateTo) {
       where.tradedAt = {};
       if (f.dateFrom) where.tradedAt.gte = new Date(f.dateFrom);
@@ -257,9 +324,11 @@ export class TradesService {
       return { totalTrades: 0, winRate: 0, pnlBrut: 0, fees: 0, pnlNet: 0, bestTrade: 0, worstTrade: 0 };
     }
 
+    // Win rate via le helper unique (BE exclus du dénominateur — PROMPT-160).
+    const { winRate } = computeTradeStats(trades);
+
     let pnlBrut = 0;
     let fees = 0;
-    let wins = 0;
     let bestTrade = -Infinity;
     let worstTrade = Infinity;
     for (const t of trades) {
@@ -267,7 +336,6 @@ export class TradesService {
       const fee = Math.abs(t.commission ?? 0);
       pnlBrut += pnl;
       fees += fee;
-      if (pnl > 0) wins++; // même définition « gagnant » que le reste de l'app
       const net = pnl - fee;
       if (net > bestTrade) bestTrade = net;
       if (net < worstTrade) worstTrade = net;
@@ -275,7 +343,7 @@ export class TradesService {
 
     return {
       totalTrades,
-      winRate: (wins / totalTrades) * 100,
+      winRate,
       pnlBrut,
       fees,
       pnlNet: pnlBrut - fees,
@@ -294,11 +362,17 @@ export class TradesService {
       cursor: cursor ? { id: cursor } : undefined,
       where,
       orderBy: { tradedAt: 'desc' },
-      include: { setup: { select: { id: true, title: true, color: true } } },
+      include: {
+        setup: { select: { id: true, title: true, color: true } },
+        // Humeur de la journée → émotion effective côté front (affichage + « — » si null).
+        tradeSession: { select: { moodStart: true } },
+      },
     });
 
     const hasNextPage = trades.length > limit;
-    const data = hasNextPage ? trades.slice(0, limit) : trades;
+    const sliced = hasNextPage ? trades.slice(0, limit) : trades;
+    // Émotion effective exposée au front : override du trade sinon humeur de session, sinon null.
+    const data = sliced.map((t) => ({ ...t, effectiveEmotion: effectiveEmotion(t) }));
     const nextCursor = hasNextPage ? data[data.length - 1].id : null;
 
     return { data, nextCursor, hasNextPage };
@@ -331,6 +405,32 @@ export class TradesService {
     const newPnl = priceFieldsChanged ? this.calculatePnl(merged) : undefined;
     const newRR = priceFieldsChanged ? this.calculateRiskReward(merged) : undefined;
 
+    // Recalcul de la note d'exécution si un champ concerné change (PROMPT-161).
+    const execRelevant =
+      priceFieldsChanged ||
+      dto.stopLoss !== undefined ||
+      dto.takeProfit !== undefined ||
+      dto.side !== undefined ||
+      dto.riskReward !== undefined ||
+      dto.emotion !== undefined ||
+      dto.capitalEngaged !== undefined;
+    let exec: ExecutionGradeResult | null = null;
+    if (execRelevant) {
+      const moodStart = existing.sessionId
+        ? (
+            await this.prisma.tradeSession.findUnique({
+              where: { id: existing.sessionId },
+              select: { moodStart: true },
+            })
+          )?.moodStart ?? null
+        : null;
+      exec = await this.computeExecution(existing.accountId ?? undefined, {
+        ...merged,
+        riskReward: newRR ?? merged.riskReward,
+        tradeSession: { moodStart },
+      });
+    }
+
     const result = await this.prisma.trade.update({
       where: { id },
       data: {
@@ -338,6 +438,7 @@ export class TradesService {
         tradedAt: dto.tradedAt ? new Date(dto.tradedAt) : undefined,
         ...(newPnl !== undefined ? { pnl: newPnl } : {}),
         ...(newRR !== undefined ? { riskReward: newRR } : {}),
+        ...(exec ? { executionScore: exec.score, executionGrade: exec.grade } : {}),
       },
       include: { setup: { select: { id: true, title: true, color: true } } },
     });
@@ -518,6 +619,23 @@ export class TradesService {
       where: { id: userId },
       data: { favoriteAsset: asset },
     });
+  }
+
+  /**
+   * Note d'exécution CALCULÉE (PROMPT-161) : récupère le capital du compte cible et délègue
+   * au util déterministe. Aucune IA. Retourne { score, grade } (null si < 2 critères applicables).
+   */
+  private async computeExecution(
+    accountId: string | undefined,
+    trade: ExecutionTradeInput,
+  ): Promise<ExecutionGradeResult> {
+    const account = accountId
+      ? await this.prisma.tradingAccount.findUnique({
+          where: { id: accountId },
+          select: { startingBalance: true, accountSize: true },
+        })
+      : null;
+    return computeExecutionGrade(trade, account);
   }
 
   private calculatePnl(dto: CreateTradeDto): number | undefined {

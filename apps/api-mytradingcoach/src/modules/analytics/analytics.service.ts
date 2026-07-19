@@ -2,7 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
-import { EmotionState } from '@prisma/client';
+import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
+import { computeTradeStats } from '../../common/utils/trade-stats.util';
 
 export interface EquityPoint {
   date: Date;
@@ -90,9 +91,10 @@ export class AnalyticsService {
     }
 
     const totalTrades = trades.length;
-    const wins = trades.filter((t) => (t.pnl ?? 0) > 0).length;
-    const winRate = (wins / totalTrades) * 100;
-    const totalPnl = trades.reduce((acc, t) => acc + (t.pnl ?? 0), 0);
+    // Win rate via le helper unique (BE exclus du dénominateur — PROMPT-160).
+    const stats = computeTradeStats(trades);
+    const winRate = stats.winRate;
+    const totalPnl = stats.totalPnl;
 
     // Profit factor = profits bruts / pertes brutes. null si aucune perte (∞ → géré côté front).
     const grossProfit = trades.reduce((a, t) => a + Math.max(0, t.pnl ?? 0), 0);
@@ -120,18 +122,18 @@ export class AnalyticsService {
     if (!direction) streak = -streak;
 
     // Top session
-    const sessionMap = new Map<string, { wins: number; count: number }>();
+    const sessionMap = new Map<string, { wins: number; losses: number; count: number }>();
     for (const t of trades) {
       const s = t.session as string;
-      const g = sessionMap.get(s) ?? { wins: 0, count: 0 };
+      const g = sessionMap.get(s) ?? { wins: 0, losses: 0, count: 0 };
       g.count++;
-      if ((t.pnl ?? 0) > 0) g.wins++;
+      if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
       sessionMap.set(s, g);
     }
     let topSession = '—';
     let topSessionWinRate = 0;
     for (const [session, g] of sessionMap.entries()) {
-      const wr = g.count > 0 ? (g.wins / g.count) * 100 : 0;
+      const wr = (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : 0;
       if (wr > topSessionWinRate) {
         topSessionWinRate = wr;
         topSession = session;
@@ -139,18 +141,18 @@ export class AnalyticsService {
     }
 
     // Top hour
-    const hourMap = new Map<number, { wins: number; count: number }>();
+    const hourMap = new Map<number, { wins: number; losses: number; count: number }>();
     for (const t of trades) {
       const h = new Date(t.tradedAt).getHours();
-      const g = hourMap.get(h) ?? { wins: 0, count: 0 };
+      const g = hourMap.get(h) ?? { wins: 0, losses: 0, count: 0 };
       g.count++;
-      if ((t.pnl ?? 0) > 0) g.wins++;
+      if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
       hourMap.set(h, g);
     }
     let topHourNum = -1;
     let topHourWr = 0;
     for (const [h, g] of hourMap.entries()) {
-      const wr = g.count > 0 ? (g.wins / g.count) * 100 : 0;
+      const wr = (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : 0;
       if (wr > topHourWr) {
         topHourWr = wr;
         topHourNum = h;
@@ -192,19 +194,19 @@ export class AnalyticsService {
       }),
     ]);
 
-    type Agg = { title: string; color: string; pnl: number; rr: number[]; count: number; wins: number };
+    type Agg = { title: string; color: string; pnl: number; rr: number[]; count: number; wins: number; losses: number };
     const grouped = new Map<string, Agg>();
     // Setups actifs d'abord (ordre stable, présents même à 0 trade).
     for (const s of activeSetups) {
-      grouped.set(s.id, { title: s.title, color: s.color, pnl: 0, rr: [], count: 0, wins: 0 });
+      grouped.set(s.id, { title: s.title, color: s.color, pnl: 0, rr: [], count: 0, wins: 0, losses: 0 });
     }
     for (const t of trades) {
       const g = grouped.get(t.setupId) ?? {
-        title: t.setup.title, color: t.setup.color, pnl: 0, rr: [], count: 0, wins: 0,
+        title: t.setup.title, color: t.setup.color, pnl: 0, rr: [], count: 0, wins: 0, losses: 0,
       };
       g.count++;
       g.pnl += t.pnl ?? 0;
-      if ((t.pnl ?? 0) > 0) g.wins++;
+      if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
       if (t.riskReward) g.rr.push(t.riskReward);
       grouped.set(t.setupId, g);
     }
@@ -216,32 +218,40 @@ export class AnalyticsService {
       count: g.count,
       pnl: g.pnl,
       avgRR: g.rr.length ? g.rr.reduce((a, b) => a + b, 0) / g.rr.length : 0,
-      winRate: g.count > 0 ? (g.wins / g.count) * 100 : null,
+      winRate: (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : null,
     }));
   }
 
   private async computeByEmotion(userId: string, accountId?: string) {
     const trades = await this.prisma.trade.findMany({
       where: { userId, ...this.accCond(accountId), pnl: { not: null } },
-      select: { emotion: true, pnl: true, riskReward: true },
+      // Émotion effective : override du trade, sinon humeur de la session.
+      select: {
+        emotion: true,
+        tradeSession: { select: { moodStart: true } },
+        pnl: true,
+        riskReward: true,
+      },
     });
 
     const grouped = new Map<
-      EmotionState,
-      { pnl: number; rr: number[]; count: number; wins: number }
+      string,
+      { pnl: number; rr: number[]; count: number; wins: number; losses: number }
     >();
     for (const t of trades) {
-      const g = grouped.get(t.emotion) ?? { pnl: 0, rr: [], count: 0, wins: 0 };
+      const emotion = effectiveEmotion(t);
+      if (!emotion) continue; // non renseignée → exclue des répartitions
+      const g = grouped.get(emotion) ?? { pnl: 0, rr: [], count: 0, wins: 0, losses: 0 };
       g.count++;
       g.pnl += t.pnl ?? 0;
-      if ((t.pnl ?? 0) > 0) g.wins++;
+      if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
       if (t.riskReward) g.rr.push(t.riskReward);
-      grouped.set(t.emotion, g);
+      grouped.set(emotion, g);
     }
 
     return Array.from(grouped.entries()).map(([emotion, g]) => ({
       emotion,
-      winRate: g.count > 0 ? (g.wins / g.count) * 100 : 0,
+      winRate: (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : 0,
       avgRR: g.rr.length ? g.rr.reduce((a, b) => a + b, 0) / g.rr.length : 0,
       count: g.count,
     }));
@@ -256,23 +266,23 @@ export class AnalyticsService {
     const DAY_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
     const grouped = new Map<
       string,
-      { count: number; wins: number; day: string; hour: number }
+      { count: number; wins: number; losses: number; day: string; hour: number }
     >();
     for (const t of trades) {
       const d = new Date(t.tradedAt);
       const day = DAY_LABELS[d.getDay()];
       const hour = d.getHours();
       const key = `${day}:${hour}`;
-      const g = grouped.get(key) ?? { count: 0, wins: 0, day, hour };
+      const g = grouped.get(key) ?? { count: 0, wins: 0, losses: 0, day, hour };
       g.count++;
-      if ((t.pnl ?? 0) > 0) g.wins++;
+      if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
       grouped.set(key, g);
     }
 
     return Array.from(grouped.values()).map((g) => ({
       day: g.day,
       hour: g.hour,
-      winRate: g.count > 0 ? (g.wins / g.count) * 100 : 0,
+      winRate: (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : 0,
       count: g.count,
     }));
   }
@@ -392,7 +402,7 @@ export class AnalyticsService {
       orderBy: { tradedAt: 'asc' },
     });
 
-    const byDate = new Map<string, { pnl: number; count: number; wins: number }>();
+    const byDate = new Map<string, { pnl: number; count: number; wins: number; losses: number }>();
     for (const t of trades) {
       const d = new Date(t.tradedAt);
       const key = d.toLocaleDateString('fr-FR', {
@@ -403,10 +413,10 @@ export class AnalyticsService {
       });
       const [day, mon, yr] = key.split('/');
       const dateKey = `${yr}-${mon}-${day}`;
-      const g = byDate.get(dateKey) ?? { pnl: 0, count: 0, wins: 0 };
+      const g = byDate.get(dateKey) ?? { pnl: 0, count: 0, wins: 0, losses: 0 };
       g.count++;
       g.pnl += t.pnl ?? 0;
-      if ((t.pnl ?? 0) > 0) g.wins++;
+      if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
       byDate.set(dateKey, g);
     }
 
@@ -414,7 +424,7 @@ export class AnalyticsService {
       date,
       pnl: g.pnl,
       tradesCount: g.count,
-      winRate: g.count > 0 ? (g.wins / g.count) * 100 : 0,
+      winRate: (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : 0,
     }));
 
     return {
@@ -435,20 +445,20 @@ export class AnalyticsService {
 
     const grouped = new Map<
       string,
-      { pnl: number; count: number; wins: number }
+      { pnl: number; count: number; wins: number; losses: number }
     >();
     for (const t of trades) {
-      const g = grouped.get(t.asset) ?? { pnl: 0, count: 0, wins: 0 };
+      const g = grouped.get(t.asset) ?? { pnl: 0, count: 0, wins: 0, losses: 0 };
       g.count++;
       g.pnl += t.pnl ?? 0;
-      if ((t.pnl ?? 0) > 0) g.wins++;
+      if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
       grouped.set(t.asset, g);
     }
 
     return Array.from(grouped.entries())
       .map(([asset, g]) => ({
         asset,
-        winRate: g.count > 0 ? (g.wins / g.count) * 100 : 0,
+        winRate: (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : 0,
         pnl: g.pnl,
         count: g.count,
       }))

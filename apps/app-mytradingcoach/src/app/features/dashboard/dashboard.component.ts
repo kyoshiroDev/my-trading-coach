@@ -21,6 +21,7 @@ import { TopbarComponent } from '../../shared/components/topbar/topbar.component
 import { TradeFormComponent } from '../journal/trade-form.component';
 import { CsvImportComponent } from '../journal/csv-import.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
+import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
 import { CreateTradeDto, TradesApi } from '../../core/api/trades.api';
 import {
   AnalyticsApi,
@@ -56,6 +57,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
     EmotionLabelPipe,
     EmotionColorPipe,
     LucideAngularModule,
+    InfoTooltipComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './dashboard.component.css',
@@ -156,7 +158,10 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
           <!-- Capital -->
           <div class="mtc-kpi" style="--glow:var(--blue)">
             <div class="mtc-kpi-l">
-              <div class="mtc-kpi-lab">Capital</div>
+              <div class="mtc-kpi-lab">Capital
+                <mtc-info-tooltip class="align-start" label="Comment le capital est calculé"
+                  text="Capital de départ du compte, ajusté du P&L net de tes trades." />
+              </div>
               <div class="mtc-kpi-val" data-testid="dashboard-capital" [style.color]="capitalColor()">{{ capitalDisplay() }}</div>
               <div class="mtc-kpi-sub">
                 @if (capitalPct() !== 0) {
@@ -194,7 +199,10 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
           <!-- Win rate -->
           <div class="mtc-kpi" style="--glow:var(--blue)">
             <div class="mtc-kpi-l">
-              <div class="mtc-kpi-lab">Win rate</div>
+              <div class="mtc-kpi-lab">Win rate
+                <mtc-info-tooltip label="Comment le win rate est calculé"
+                  text="Trades gagnants ÷ (gagnants + perdants). Les break-even sont exclus du calcul." />
+              </div>
               <div class="mtc-kpi-val" [style.color]="winRateColor()">{{ (summary()?.winRate ?? 0).toFixed(1) }}%</div>
               <div class="mtc-kpi-sub">
                 @if ((summary()?.totalTrades ?? 0) > 0) { sur {{ summary()?.totalTrades }} trades } @else { Aucune donnée }
@@ -205,7 +213,10 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
           <!-- Profit factor -->
           <div class="mtc-kpi" style="--glow:var(--purple)">
             <div class="mtc-kpi-l">
-              <div class="mtc-kpi-lab">Profit factor</div>
+              <div class="mtc-kpi-lab">Profit factor
+                <mtc-info-tooltip label="Comment le profit factor est calculé"
+                  text="Somme des gains ÷ somme des pertes. Au-dessus de 1, tes gains dépassent tes pertes. Affiche « — » tant que tu n'as aucune perte." />
+              </div>
               <div class="mtc-kpi-val">{{ profitFactorDisplay() }}</div>
               <div class="mtc-kpi-sub">
                 @if ((summary()?.totalTrades ?? 0) > 0) { profits / pertes } @else { Aucune donnée }
@@ -223,7 +234,10 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
           <!-- Trades pris -->
           <div class="mtc-kpi" style="--glow:var(--green)">
             <div class="mtc-kpi-l">
-              <div class="mtc-kpi-lab">Trades pris</div>
+              <div class="mtc-kpi-lab">Trades pris
+                <mtc-info-tooltip label="Ce que compte « Trades pris »"
+                  text="Nombre de trades clôturés sur la période." />
+              </div>
               <div class="mtc-kpi-val">{{ summary()?.totalTrades ?? tradesStore.trades().length }}</div>
               <div class="mtc-kpi-sub">
                 @if ((summary()?.streak ?? 0) > 0) { <span style="color:var(--green)">+{{ summary()?.streak }} streak</span> }
@@ -240,7 +254,10 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
           <!-- Drawdown max -->
           <div class="mtc-kpi" style="--glow:var(--red)">
             <div class="mtc-kpi-l">
-              <div class="mtc-kpi-lab">Drawdown max</div>
+              <div class="mtc-kpi-lab">Drawdown max
+                <mtc-info-tooltip class="align-end" label="Comment le drawdown max est calculé"
+                  text="Plus forte baisse de ton P&L cumulé depuis un sommet, sur la période affichée." />
+              </div>
               <div class="mtc-kpi-val" [style.color]="drawdownColor()">{{ drawdownDisplay() | pnlFormat }}</div>
               <div class="mtc-kpi-sub">
                 @if ((summary()?.totalTrades ?? 0) > 0) { sur capital } @else { Aucune donnée }
@@ -685,12 +702,16 @@ export class DashboardComponent {
 
   protected readonly emotionStats = computed(() => {
     const trades = this.tradesStore.trades();
-    if (!trades.length) return [];
-    const total = trades.length;
-    return (['REVENGE', 'STRESSED', 'CONFIDENT', 'FOCUSED', 'FEAR', 'NEUTRAL'] as const)
+    // Émotion effective (override sinon humeur de session) ; non renseignées exclues du total.
+    const withEmotion = trades
+      .map(t => t.effectiveEmotion ?? t.emotion)
+      .filter((e): e is string => !!e);
+    const total = withEmotion.length;
+    if (!total) return [];
+    return (['REVENGE', 'STRESSED', 'CONFIDENT', 'FOCUSED', 'FEAR', 'NEUTRAL', 'TIRED'] as const)
       .map(emotion => ({
         emotion,
-        pct: Math.round((trades.filter(t => t.emotion === emotion).length / total) * 100),
+        pct: Math.round((withEmotion.filter(e => e === emotion).length / total) * 100),
       }))
       .filter(e => e.pct > 0)
       .sort((a, b) => b.pct - a.pct)

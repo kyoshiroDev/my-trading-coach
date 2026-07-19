@@ -3,7 +3,8 @@ import {
   computed, effect, inject, signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
+import { computeTradeStats } from '../../core/utils/trade-stats.util';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
 import { LucideAngularModule, X, Pencil, Upload, ChevronDown, ChevronRight, Calendar, Trash2, ArrowRightLeft } from 'lucide-angular';
@@ -15,9 +16,15 @@ import { TopbarComponent } from '../../shared/components/topbar/topbar.component
 import { TradeFormComponent } from './trade-form.component';
 import { CsvImportComponent } from './csv-import.component';
 import { PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe } from '../../shared/pipes';
+import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
 import { environment } from '../../../environments/environment';
 
 type FilterSide = 'ALL' | 'LONG' | 'SHORT';
+type FilterResult = 'ALL' | 'WIN' | 'LOSS' | 'BREAKEVEN';
+type FilterExecution = 'ALL' | 'EXCELLENT' | 'BON' | 'MOYEN' | 'MAUVAIS' | 'NONE';
+type FilterEmotion =
+  | 'ALL' | 'CONFIDENT' | 'FOCUSED' | 'NEUTRAL' | 'STRESSED'
+  | 'REVENGE' | 'FEAR' | 'TIRED' | 'NONE';
 type DatePreset = 'today' | 'week' | 'month' | 'custom' | 'all';
 
 interface DayGroup {
@@ -31,13 +38,24 @@ interface DayGroup {
   winCount: number;
 }
 
+interface WeekGroup {
+  key: string;        // clé stable = lundi ISO de la semaine (ex. 'week-2026-07-06')
+  label: string;      // 'Semaine du 06/07/2026 au 12/07/2026'
+  days: DayGroup[];   // jours de la semaine, du plus récent au plus ancien
+  count: number;
+  winCount: number;
+  totalPnl: number;
+  totalPnlNet: number;
+  totalCommission: number;
+}
+
 @Component({
   selector: 'mtc-journal',
   standalone: true,
   imports: [
-    DatePipe, DecimalPipe, LucideAngularModule,
+    DatePipe, DecimalPipe, TitleCasePipe, LucideAngularModule,
     TopbarComponent, TradeFormComponent, CsvImportComponent,
-    PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe,
+    PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe, InfoTooltipComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './journal.component.css',
@@ -68,6 +86,12 @@ export class JournalComponent {
     if (side !== 'ALL') f['side'] = side;
     const setup = this.filterSetup();
     if (setup) f['setupId'] = setup;
+    const result = this.filterResult();
+    if (result !== 'ALL') f['result'] = result;
+    const exec = this.filterExecution();
+    if (exec !== 'ALL') f['executionGrade'] = exec;
+    const emo = this.filterEmotion();
+    if (emo !== 'ALL') f['emotion'] = emo;
     const { dateFrom, dateTo } = this.dateRange();
     if (dateFrom) f['dateFrom'] = dateFrom;
     if (dateTo) f['dateTo'] = dateTo;
@@ -123,6 +147,11 @@ export class JournalComponent {
   protected readonly TrashIcon        = Trash2;
   protected readonly ReassignIcon     = ArrowRightLeft;
 
+  /** Libellé FR de la note d'exécution calculée (PROMPT-161) ; '—' si non évaluée. */
+  protected gradeLabel(g: string | null | undefined): string {
+    return { EXCELLENT: 'Excellent', BON: 'Bon', MOYEN: 'Moyen', MAUVAIS: 'Mauvais' }[g ?? ''] ?? '—';
+  }
+
   protected readonly showModal        = signal(false);
   protected readonly showImport       = signal(false);
   protected readonly isSubmitting     = signal(false);
@@ -140,9 +169,33 @@ export class JournalComponent {
   protected readonly canReassign      = computed(() =>
     this.activeAccounts().some((a) => a.id !== this.currentAccountId()),
   );
-  protected readonly filterSide     = signal<FilterSide>('ALL');
-  protected readonly filterSetup    = signal<string | null>(null);
+  protected readonly filterSide      = signal<FilterSide>('ALL');
+  protected readonly filterSetup     = signal<string | null>(null);
+  protected readonly filterResult    = signal<FilterResult>('ALL');
+  protected readonly filterExecution = signal<FilterExecution>('ALL');
+  protected readonly filterEmotion   = signal<FilterEmotion>('ALL');
   protected readonly collapsedDays  = signal<Set<string>>(new Set());
+  // Repli des semaines : override explicite de l'utilisateur (clé → repliée?). Par défaut,
+  // seule la semaine la plus récente (index 0) est dépliée ; les autres repliées. Survit à
+  // la pagination (les semaines plus anciennes révélées restent repliées par défaut).
+  protected readonly weekOverrides = signal<Map<string, boolean>>(new Map());
+
+  /** Vrai dès qu'un filtre (hors période/compte) est actif → affiche « Réinitialiser ». */
+  protected readonly hasActiveFilters = computed(() =>
+    this.filterSide() !== 'ALL' ||
+    this.filterSetup() !== null ||
+    this.filterResult() !== 'ALL' ||
+    this.filterExecution() !== 'ALL' ||
+    this.filterEmotion() !== 'ALL',
+  );
+
+  protected resetFilters(): void {
+    this.filterSide.set('ALL');
+    this.filterSetup.set(null);
+    this.filterResult.set('ALL');
+    this.filterExecution.set('ALL');
+    this.filterEmotion.set('ALL');
+  }
   protected readonly datePreset     = signal<DatePreset>('all');
   protected readonly showCustomDate = signal(false);
   protected readonly dateFrom       = signal('');
@@ -174,18 +227,66 @@ export class JournalComponent {
         const label = d.toLocaleDateString('fr-FR', {
           weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
         });
-        const totalPnl        = dayTrades.reduce((s, t) => s + (t.pnl ?? 0), 0);
         const totalCommission = dayTrades.reduce((s, t) => s + Math.abs(t.commission ?? 0), 0);
+        // Stats du jour via le helper unique (BE exclus du win rate — PROMPT-160).
+        const st              = computeTradeStats(dayTrades);
+        const totalPnl        = st.totalPnl;
         const totalPnlNet     = totalPnl - totalCommission;
-        const winCount        = dayTrades.filter(t => (t.pnl ?? 0) > 0).length;
         return {
           key, label,
           trades: dayTrades.sort((a, b) => new Date(b.tradedAt).getTime() - new Date(a.tradedAt).getTime()),
           totalPnl, totalPnlNet, totalCommission,
-          count: dayTrades.length, winCount,
+          count: dayTrades.length, winCount: st.wins,
+          lossCount: st.losses, breakeven: st.breakeven, winRate: st.winRate,
         };
       });
   });
+
+  // ── Vue par semaine (niveau au-dessus des jours) ────────────────────────────
+  // Regroupe les DayGroup en semaines ISO (lundi → dimanche). Les agrégats sont
+  // recalculés sur TOUS les trades de la semaine (win rate juste, pas une moyenne
+  // de moyennes ; BE exclus via computeTradeStats). Même base de date que les jours.
+
+  protected readonly tradesByWeek = computed((): WeekGroup[] => {
+    const days = this.tradesByDay();
+    if (!days.length) return [];
+
+    const map = new Map<string, { days: DayGroup[]; label: string }>();
+    for (const day of days) {
+      const { key, label } = this.isoWeek(day.key);
+      const bucket = map.get(key) ?? { days: [], label };
+      bucket.days.push(day);
+      map.set(key, bucket);
+    }
+
+    return Array.from(map.entries())
+      .sort(([a], [b]) => b.localeCompare(a)) // semaines du plus récent au plus ancien
+      .map(([key, { days: weekDays, label }]) => {
+        const allTrades = weekDays.flatMap((d) => d.trades);
+        const st = computeTradeStats(allTrades);
+        const totalCommission = weekDays.reduce((s, d) => s + d.totalCommission, 0);
+        const totalPnl = st.totalPnl;
+        return {
+          key, label, days: weekDays,
+          count: st.total, winCount: st.wins,
+          totalPnl, totalPnlNet: totalPnl - totalCommission, totalCommission,
+        };
+      });
+  });
+
+  /** Semaine ISO (lundi → dimanche) d'une clé jour 'YYYY-MM-DD'. Clé = lundi, libellé = plage. */
+  private isoWeek(dayKey: string): { key: string; label: string } {
+    const date = new Date(dayKey + 'T12:00:00'); // midi → insensible au fuseau/DST
+    const dow = (date.getDay() + 6) % 7;          // lundi = 0 … dimanche = 6
+    const monday = new Date(date);
+    monday.setDate(date.getDate() - dow);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const iso = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const fr = (d: Date) => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+    return { key: `week-${iso(monday)}`, label: `Semaine du ${fr(monday)} au ${fr(sunday)}` };
+  }
 
   // ── Stats période ─────────────────────────────────────────────────────────
   // KPIs issus de l'agrégat backend (ensemble filtré complet, hors pagination).
@@ -211,6 +312,21 @@ export class JournalComponent {
     this.collapsedDays.update(set => {
       const next = new Set(set);
       if (next.has(key)) { next.delete(key); } else { next.add(key); }
+      return next;
+    });
+  }
+
+  /** Repli effectif d'une semaine : override utilisateur sinon défaut (repliée si pas la plus récente). */
+  protected isWeekCollapsed(key: string, index: number): boolean {
+    const o = this.weekOverrides();
+    return o.has(key) ? o.get(key)! : index !== 0;
+  }
+
+  toggleWeek(key: string, index: number): void {
+    const collapsed = this.isWeekCollapsed(key, index);
+    this.weekOverrides.update(map => {
+      const next = new Map(map);
+      next.set(key, !collapsed);
       return next;
     });
   }
@@ -249,10 +365,6 @@ export class JournalComponent {
     this.showModal.set(false);
     this.selectedTrade.set(null);
     this.submitError.set(null);
-  }
-
-  toggleSetupFilter(setup: string): void {
-    this.filterSetup.set(this.filterSetup() === setup ? null : setup);
   }
 
   submitTrade(dto: CreateTradeDto): void {

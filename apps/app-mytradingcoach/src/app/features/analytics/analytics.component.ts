@@ -30,6 +30,7 @@ import {
 import { BillingApi } from '../../core/api/billing.api';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { ActivityCalendarComponent } from '../../shared/components/activity-calendar/activity-calendar.component';
+import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
 import { environment } from '../../../environments/environment';
 import { ChartService } from '../../core/services/chart.service';
 
@@ -50,6 +51,7 @@ const MOCK_SETUP_BARS = [88, 72, 65, 54, 38] as const;
     SessionLabelPipe,
     PlanModalComponent,
     ActivityCalendarComponent,
+    InfoTooltipComponent,
   ],
   templateUrl: './analytics.component.html',
   styleUrl: './analytics.component.css',

@@ -12,6 +12,7 @@ import { PRICING_EUR } from '../../common/constants/pricing.const';
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
+import { computeTradeStats } from '../../common/utils/trade-stats.util';
 
 const USER_SELECT = {
   id: true,
@@ -546,9 +547,10 @@ export class UsersService {
         }),
       ]);
 
-    const totalPnl      = pnlData.reduce((s, t) => s + (t.pnl ?? 0), 0);
-    const winCount      = pnlData.filter(t => (t.pnl ?? 0) > 0).length;
-    const winRate       = pnlData.length > 0 ? Math.round((winCount / pnlData.length) * 100) : 0;
+    // Stats via le helper unique (BE exclus du win rate — PROMPT-160).
+    const stats         = computeTradeStats(pnlData);
+    const totalPnl      = stats.totalPnl;
+    const winRate       = Math.round(stats.winRate);
     const totalTokens   = aiLogs.reduce((a, l) => a + l.inputTokens + l.outputTokens, 0);
     const totalCostUsd  = aiLogs.reduce((a, l) => a + l.costUsd, 0);
 

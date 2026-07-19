@@ -39,6 +39,43 @@
   color: var(--blue-bright);
 }
 
+/* Select de filtre : reprend le gabarit exact de .filter-chip */
+.filter-select { position: relative; display: inline-flex; align-items: center; }
+
+.filter-select select {
+  appearance: none;
+  padding: 5px 26px 5px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  background: transparent;
+  cursor: pointer;
+  transition: all .15s;
+}
+.filter-select select:hover { background: var(--blue-glow); border-color: var(--blue); color: var(--blue-bright); }
+.filter-select select:focus-visible { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
+.filter-select.active select { background: var(--blue-glow); border-color: var(--blue); color: var(--blue-bright); }
+.filter-select select option { background: var(--bg-3); color: var(--text); font-family: var(--font-body); }
+
+.filter-select .fs-chev {
+  position: absolute; right: 9px; opacity: .6;
+  pointer-events: none; color: currentColor;
+}
+
+/* Réinitialiser : même gabarit que .filter-chip, ton plus discret */
+.filter-reset {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 12px; border-radius: 8px;
+  font-size: 11px; font-family: var(--font-mono);
+  border: 1px solid var(--border); color: var(--text-3);
+  background: transparent; cursor: pointer; transition: all .15s;
+}
+.filter-reset:hover { border-color: var(--border-hover); color: var(--text-2); }
+
+.filter-count { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); padding: 5px 2px; }
+
 /* ── Presets date ── */
 .date-presets {
   display: flex;
@@ -121,7 +158,6 @@
 .period-stat:last-child { border-right: none; }
 .period-label     { font-size: 9px; font-family: var(--font-mono); color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; }
 .period-value     { font-size: 14px; font-weight: 600; font-family: var(--font-mono); color: var(--text); }
-.period-sub-label { font-size: 9px; font-family: var(--font-mono); color: var(--text-3); margin-top: 2px; display: block; }
 
 /* ── Wrapper journal ── */
 .journal-wrap {
@@ -134,7 +170,7 @@
 /* ── Header colonnes unique ── */
 .table-header {
   display: grid;
-  grid-template-columns: 44px 1.2fr 0.7fr 0.9fr 0.9fr 1.3fr 0.5fr 0.6fr 1.3fr 1.1fr 64px;
+  grid-template-columns: 44px 1.2fr 0.7fr 0.9fr 0.9fr 1.3fr 0.5fr 0.6fr 0.9fr 1.3fr 1.1fr 64px;
   padding: 5px 16px 5px 32px;
   border-bottom: 1px solid var(--border);
   background: var(--bg-2);
@@ -148,6 +184,33 @@
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
+
+/* ── Niveau semaine (parent des jours) — même grammaire que l'en-tête jour, légèrement plus fort ── */
+.week-group { border-bottom: 1px solid var(--border); }
+.week-group:last-child { border-bottom: none; }
+
+.week-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background 0.12s;
+  user-select: none;
+  position: relative;
+  background: var(--bg-2);
+}
+.week-header:hover { background: var(--bg-3); }
+.week-accent { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+.week-toggle { color: var(--text-3); display: flex; align-items: center; flex-shrink: 0; }
+.week-label {
+  font-size: 13px; font-weight: 600; color: var(--text);
+  font-family: var(--font-display); flex: 1; min-width: 0;
+}
+
+/* Jours imbriqués : légère indentation de l'en-tête + du rail d'accent pour lire la hiérarchie */
+.week-group .day-header { padding-left: 28px; }
+.week-group .day-accent { left: 12px; }
 
 /* ── Groupes par jour ── */
 .day-group { border-bottom: 1px solid var(--border); }
@@ -296,7 +359,7 @@
 .day-trades { background: var(--bg); }
 .trade-row {
   display: grid;
-  grid-template-columns: 44px 1.2fr 0.7fr 0.9fr 0.9fr 1.3fr 0.5fr 0.6fr 1.3fr 1.1fr 64px;
+  grid-template-columns: 44px 1.2fr 0.7fr 0.9fr 0.9fr 1.3fr 0.5fr 0.6fr 0.9fr 1.3fr 1.1fr 64px;
   align-items: center;
   padding: 7px 16px 7px 32px;
   border-top: 1px solid var(--border);
@@ -321,6 +384,21 @@
 
 .emotion-cell { display: inline-flex; align-items: center; gap: 5px; }
 .emotion-text { font-size: 10px; color: var(--text-3); font-family: var(--font-mono); }
+
+/* Note d'exécution calculée (PROMPT-161) — badge coloré, « — » si non évaluée. */
+.grade-badge {
+  display: inline-flex; align-items: center;
+  font-size: 10.5px; font-weight: 600; line-height: 1;
+  padding: 3px 8px; border-radius: 6px; white-space: nowrap;
+  border: 1px solid transparent; cursor: default;
+}
+.grade-badge[data-grade='EXCELLENT'] { background: var(--green-dim); color: var(--green); border-color: rgba(16,185,129,.25); }
+.grade-badge[data-grade='BON']       { background: var(--blue-glow); color: var(--blue-bright); border-color: rgba(59,130,246,.25); }
+.grade-badge[data-grade='MOYEN']     { background: rgba(245,158,11,.14); color: var(--amber, #f59e0b); border-color: rgba(245,158,11,.28); }
+.grade-badge[data-grade='MAUVAIS']   { background: var(--red-dim); color: var(--red); border-color: rgba(239,68,68,.25); }
+/* État vide de la note d'exécution : discret (text-3), jamais un badge coloré (PROMPT-167). */
+.exec-none { color: var(--text-3); font-family: var(--font-mono); font-size: 10.5px; }
+.td-exec { display: inline-flex; align-items: center; }
 
 .setup-badge {
   display: inline-flex; align-items: center; gap: 5px;
@@ -377,7 +455,7 @@
   .td-asset  { grid-column: 1; grid-row: 1; font-size: 12px; }
   .td-side   { grid-column: 2; grid-row: 1; }
   .td-price:first-of-type { grid-column: 3; grid-row: 1; font-size: 11px; }
-  .td-price:last-of-type, .td-qty, .td-rr, .td-emotion, .td-setup { display: none; }
+  .td-price:last-of-type, .td-qty, .td-rr, .td-exec, .td-emotion, .td-setup { display: none; }
   .td-pnl    { grid-column: 3; grid-row: 2; font-size: 12px; }
   .td-actions { grid-column: 4; grid-row: 1 / 3; }
   .day-label { font-size: 12px; }

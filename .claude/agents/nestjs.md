@@ -106,6 +106,22 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
 
 ## Règles obligatoires
 
+- **Stats de trades = helper unique** (PROMPT-160) : `computeTradeStats(trades)` de
+  `common/utils/trade-stats.util.ts` (`{ total, closed, wins, losses, breakeven, winRate, totalPnl }`).
+  Toute mesure win/loss/win rate/P&L d'un lot de trades passe par lui — **jamais** de
+  `filter(t => t.pnl > 0)` suivi d'une division inline. Règle break-even : win `pnl > ε`,
+  loss `pnl < -ε`, BE `|pnl| <= ε` (`ε` défaut 0) ; **win rate = wins / (wins + losses)** (BE exclus du
+  dénominateur) ; trades ouverts (pnl null) hors calcul. Miroir front : `core/utils/trade-stats.util.ts`.
+- **Filtre journal « émotion effective »** (PROMPT-166) : l'émotion effective d'un trade =
+  `trade.emotion` (override) `??` `tradeSession.moodStart` (humeur de session). Filtrer dessus dans
+  `buildTradeWhere` = un **`OR` Prisma** sur les deux sources — `[{ emotion: V }, { emotion: null,
+  tradeSession: { moodStart: V } }]`. Ne générer une branche que si `V` appartient à l'enum concerné
+  (`Object.values(EmotionState/MoodState).includes(V)`), sinon Prisma throw sur enum invalide :
+  `TIRED` → MoodState seul (2ᵉ branche), `REVENGE`/`FEAR` → EmotionState seul (1ʳᵉ branche).
+  `NONE` = `{ emotion: null, OR: [{ sessionId: null }, { tradeSession: { moodStart: null } }] }`.
+  Filtre `result` : réutiliser le **même `ε`** (`BREAKEVEN_EPSILON`) que `trade-stats.util`, jamais un
+  seuil local. **Mêmes filtres appliqués à la liste ET aux stats** (`buildTradeWhere` factorisé) sinon
+  les KPIs mentent.
 - `@UseGuards(JwtAuthGuard)` sur toutes les routes protégées
 - `@UseGuards(PremiumGuard)` sur routes IA et analytics avancés
 - `@UseGuards(JwtAuthGuard, AdminGuard)` sur TOUTES les routes `/vps/*`, `/docker/*`, `/admin/*`

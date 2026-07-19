@@ -5,6 +5,7 @@ import { PatternAgent } from './pattern.agent';
 import { CoachAgent, Advice } from './coach.agent';
 import { Pattern } from './pattern.agent';
 import { buildUserTradingContext } from '../user-context.builder';
+import { effectiveEmotion } from '../../../common/utils/effective-emotion.util';
 
 export interface InsightItem {
   type: 'strength' | 'weakness' | 'pattern';
@@ -41,6 +42,7 @@ export class OrchestratorAgent {
         orderBy: { tradedAt: 'desc' },
         take: 50,
         select: { asset: true, side: true, pnl: true, emotion: true,
+                  tradeSession: { select: { moodStart: true } },
                   setup: { select: { title: true, description: true } },
                   session: true, tradedAt: true,
                   riskReward: true, timeframe: true, notes: true },
@@ -56,7 +58,12 @@ export class OrchestratorAgent {
     ]);
     const userContext = userProfile ? buildUserTradingContext(userProfile) : '';
     // DataAgent attend un setup en string : on l'alimente avec le TITRE du setup.
-    const summaryTrades = trades.map((t) => ({ ...t, setup: t.setup.title }));
+    // Émotion = effective (override du trade sinon humeur de session) ; '' si non renseignée.
+    const summaryTrades = trades.map((t) => ({
+      ...t,
+      setup: t.setup.title,
+      emotion: effectiveEmotion(t) ?? '',
+    }));
     const summary = this.dataAgent.buildTradesSummary(summaryTrades);
     const summaryWithContext = userContext ? `${userContext}\n${summary}` : summary;
 

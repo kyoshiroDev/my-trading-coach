@@ -148,14 +148,7 @@
   margin: 0 20px 20px;
 }
 
-/* ── Confirm (fichier sélectionné + frais) ── */
-.confirm-block {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 20px;
-}
-
+/* ── Fichier sélectionné ── */
 .file-pill {
   display: flex;
   align-items: center;
@@ -173,72 +166,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.file-change {
-  background: none;
-  border: none;
-  color: var(--blue);
-  font-size: 12px;
-  cursor: pointer;
-  padding: 2px 4px;
-  flex-shrink: 0;
-}
-.file-change:hover {
-  text-decoration: underline;
-}
-
-.fees-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.fees-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-2);
-  font-family: var(--font-display);
-}
-
-.fees-input-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.fees-input {
-  width: 100%;
-  background: var(--bg-3);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 9px 28px 9px 12px;
-  font-size: 13px;
-  color: var(--text);
-  font-family: var(--font-body);
-  transition: border-color 0.15s;
-}
-.fees-input:focus {
-  outline: none;
-  border-color: var(--blue);
-}
-.fees-input::placeholder {
-  color: var(--text-3);
-}
-
-.fees-unit {
-  position: absolute;
-  right: 12px;
-  font-size: 13px;
-  color: var(--text-3);
-  pointer-events: none;
-}
-
-.fees-help {
-  font-size: 11px;
-  color: var(--text-3);
-  line-height: 1.5;
-  margin: 0;
 }
 
 /* ── Defaults du lot : compte / émotion / setup ── */
@@ -294,17 +221,6 @@
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.06);
 }
 
-.fees-note {
-  font-size: 12px;
-  color: var(--text-2);
-  line-height: 1.5;
-  margin: 0;
-  background: var(--bg-3);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-}
-
 /* ── Spinner ── */
 .spinner {
   width: 24px;
@@ -345,6 +261,170 @@
 .result-sub.result-limit {
   color: var(--amber, #f59e0b);
 }
+.result-sub.result-fees {
+  color: var(--green);
+  font-weight: 600;
+}
+.result-fees-warn {
+  color: var(--amber, #f59e0b);
+  font-weight: 500;
+}
+/* Note informative post-import (PROMPT-167) : ni erreur ni échec → pas d'icône, pas de rouge. */
+.import-no-stop-note {
+  font-size: 11.5px;
+  color: var(--text-3);
+  line-height: 1.5;
+  margin: 4px 0 0;
+  max-width: 300px;
+}
+/* ── Écran de sélection (source + panneaux inline + options + footer) ── */
+.import-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  max-height: calc(100dvh - 120px);
+  overflow-y: auto;
+}
+
+/* Sélecteur de source — deux boutons pairs */
+.src-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.src-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 12px 12px 11px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    box-shadow 0.15s;
+}
+.src-btn:hover {
+  border-color: var(--text-3);
+}
+.src-btn.active {
+  border-color: var(--blue);
+  background: var(--blue-glow);
+  box-shadow: 0 0 0 3px var(--blue-glow);
+}
+.src-check {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  color: var(--blue-bright);
+}
+.src-ic {
+  color: var(--text-2);
+}
+.src-btn.active .src-ic {
+  color: var(--blue-bright);
+}
+.src-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  font-family: var(--font-display);
+}
+.src-sub {
+  font-size: 10.5px;
+  color: var(--text-3);
+  line-height: 1.4;
+}
+
+/* Petit tag (Frais exacts / Performance · requis / Cash history · optionnel) */
+.src-tag {
+  display: inline-block;
+  vertical-align: middle;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+}
+.import-label .src-tag {
+  margin-left: 6px;
+}
+/* Vert réservé au repère « frais exacts » */
+.src-tag-green {
+  background: var(--green-dim);
+  border-color: color-mix(in srgb, var(--green) 35%, transparent);
+  color: var(--green);
+}
+
+/* Bouton « Choisir un fichier » (panneau Tradovate) */
+.file-choose {
+  align-self: flex-start;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  color: var(--text-2);
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+}
+.file-choose:hover {
+  border-color: var(--blue);
+  color: var(--text);
+}
+
+/* Croix pour retirer un fichier sélectionné */
+.file-x {
+  background: none;
+  border: none;
+  color: var(--text-3);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.file-x:hover {
+  color: var(--red);
+}
+
+/* Footer du modal (Annuler + Importer) */
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.modal-footer .btn-primary,
+.modal-footer .btn-ghost {
+  margin-top: 0;
+}
+
+/* Spinner compact dans le bouton Importer */
+.spinner-sm {
+  width: 13px;
+  height: 13px;
+  margin: 0 6px 0 0;
+  vertical-align: -1px;
+  border-width: 2px;
+  display: inline-block;
+}
 
 .btn-primary {
   background: var(--blue);
@@ -359,8 +439,12 @@
   margin-top: 4px;
   transition: opacity 0.15s;
 }
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   opacity: 0.85;
+}
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .btn-ghost {

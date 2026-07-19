@@ -65,6 +65,11 @@ const mockPrisma = {
   },
   tradeSession: {
     findFirst: vi.fn().mockResolvedValue(null),
+    findUnique: vi.fn().mockResolvedValue(null), // moodStart (note d'exécution, PROMPT-161)
+  },
+  // Compte cible pour la note d'exécution (capital) — null par défaut (critère risque ignoré).
+  tradingAccount: {
+    findUnique: vi.fn().mockResolvedValue(null),
   },
   // Inscription ancienne par défaut → les trades de test (datés récemment) sont post-inscription.
   user: {
