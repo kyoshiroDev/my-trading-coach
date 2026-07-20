@@ -77,6 +77,7 @@ model Trade {
   riskReward      Float?
   executionScore  Int?                             // note d'exécution CALCULÉE 0-100 (PROMPT-161), null si non évaluable
   executionGrade  ExecutionGrade?                  // EXCELLENT/BON/MOYEN/MAUVAIS dérivé du score
+  executionMethod ExecutionMethod?                 // barème ayant produit la note (STOP_BASED / BEHAVIORAL), null si non notée (PROMPT-168)
   emotion         EmotionState?                    // override OPTIONNEL (PROMPT-163) — null = non renseignée
   setupId         String                           // FK → Setup (setup défini par l'user)
   setup           Setup           @relation(fields: [setupId], references: [id], onDelete: NoAction)

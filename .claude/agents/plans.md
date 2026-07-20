@@ -66,6 +66,28 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
 > persisté (`executionScore`/`executionGrade`) à la création/édition/import. Aucun champ « éval » dans
 > le formulaire. L'IA ne sert PAS au calcul (elle pourra ajouter une phrase qualitative au Weekly
 > Debrief, mutualisé/borné — hors périmètre).
+>
+> **Deux barèmes selon la présence d'un stop (PROMPT-168)** — détection **au niveau du trade**, jamais
+> du trader (un même user pose un stop sur ses swings, pas sur ses scalps). `Trade.executionMethod`
+> (`STOP_BASED` | `BEHAVIORAL` | null) **trace lequel a servi** (à afficher — les deux ne mesurent PAS la
+> même chose, **non comparables**).
+> - **Barème A — STOP_BASED** (`stopLoss` présent) : les 4 critères intrinsèques ci-dessus. **Inchangé.**
+> - **Barème B — BEHAVIORAL** (`stopLoss` absent : scalp manuel, imports broker sans stop) : 3 critères
+>   **relatifs à l'historique du compte** (médianes) — **perte contenue** (40, substitut du stop, applicable
+>   sur trade perdant : `L≤1.5×Lméd`→1, `≤3×`→0.5, sinon 0) · **pas de revenge** (35, délai depuis la clôture
+>   du dernier perdant du **même jour** : `<2 min`→0, `2-10`→0.5, `>10`→1) · **taille constante** (25,
+>   anti-martingale strict, applicable si le trade précédent est une perte : `Q≤Qméd`→1, `≤2×`→0.5, sinon 0).
+>   Même mécanique de score/grade/renormalisation (helper `scoreFromCriteria`). Aucun critère n'utilise le
+>   **signe du P&L comme mesure de réussite**.
+> - **Garde-fous barème B** : **historique minimum 20 trades clôturés** sur le compte (sinon médianes non
+>   fiables → `null`) ; **< 2 critères applicables → `null`** ; trades ouverts jamais notés.
+> - **Contextuel ⇒ recalcul par lot** : la note dépend de l'historique donc ne peut se figer à la création.
+>   `TradesService.recomputeBehavioralGrades(accountId)` recalcule **en une passe** (médianes une fois, pas
+>   de N+1) tous les trades sans stop du compte, déclenché après **import / édition / suppression /
+>   réaffectation**. La note d'un trade **évolue** quand l'historique s'étoffe (attendu). Constantes
+>   ajustables dans `execution-grade.util.ts` (`LOSS_SOFT/HARD_FACTOR`, `REVENGE_MIN/SAFE_MINUTES`,
+>   `SIZE_SOFT/HARD_FACTOR`, `BEHAVIORAL_MIN_TRADES`). **Calibrage** : si tout ressort MAUVAIS ou tout
+>   EXCELLENT sur données réelles → ajuster les constantes, **pas** la structure.
 
 **STARTER (et +)** : trades illimités · 3 comptes · analytics avancés (heatmap, equity curve) · Score trader /100 · Export PDF mensuel · **IA bornée/mutualisée** :
 - 📋 **Weekly Debrief IA** (auto, 1/user/semaine)
