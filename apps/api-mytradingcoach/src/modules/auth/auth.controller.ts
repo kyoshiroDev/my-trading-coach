@@ -104,9 +104,4 @@ export class AuthController {
   getMe(@CurrentUser() user: { id: string }) {
     return this.authService.getMe(user.id);
   }
-
-  @Post('start-trial')
-  startTrial(@CurrentUser() user: { id: string }) {
-    return this.authService.startTrial(user.id);
-  }
 }

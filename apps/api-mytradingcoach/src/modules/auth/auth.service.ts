@@ -15,7 +15,6 @@ import { ResendService } from '../resend/resend.service';
 import { SetupsService } from '../setups/setups.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { TRIAL_PERIOD_DAYS } from '../../common/constants/pricing.const';
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 heure
 
@@ -181,29 +180,6 @@ export class AuthService {
     });
     if (!user) throw new UnauthorizedException('Utilisateur introuvable');
     return user;
-  }
-
-  async startTrial(userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new UnauthorizedException('Utilisateur introuvable');
-    if (user.trialUsed) throw new BadRequestException('Essai déjà utilisé');
-
-    const updated = await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        trialEndsAt: new Date(Date.now() + TRIAL_PERIOD_DAYS * 24 * 60 * 60 * 1000),
-        trialUsed: true,
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        plan: true,
-        trialEndsAt: true,
-        trialUsed: true,
-      },
-    });
-    return updated;
   }
 
   async forgotPassword(email: string): Promise<void> {
