@@ -68,7 +68,7 @@
 }
 .acct-add:hover { color: var(--text-2); border-color: var(--blue-bright); }
 
-/* FREE : chip verrouillé + badge Starter */
+/* Sélecteur de compte (FREE : 1 compte · Premium : illimité) */
 .acct-locked {
   display: flex; align-items: center; gap: 7px;
   padding: 7px 13px; border-radius: 8px;

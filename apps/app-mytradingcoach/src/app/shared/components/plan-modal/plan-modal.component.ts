@@ -10,9 +10,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BillingApi } from '../../../core/api/billing.api';
 import { PRICING } from '../../../core/constants/pricing.const';
 
-type PlanTier = 'starter' | 'premium';
 type Interval = 'monthly' | 'yearly';
-type PlanId = `${PlanTier}_${Interval}`;
+type PlanId = `premium_${Interval}`;
 
 @Component({
   selector: 'mtc-plan-modal',
@@ -29,15 +28,10 @@ export class PlanModalComponent {
 
   protected readonly PRICING = PRICING;
 
-  // Plan (carte) et intervalle (global) sont indépendants → les 2 cartes
-  // suivent toujours le même intervalle (corrige l'incohérence d'affichage).
-  protected selectedTier = signal<PlanTier>('starter'); // entrée de gamme par défaut (39€, moins effrayant)
-  protected interval = signal<Interval>('monthly'); // mensuel par défaut ; Premium reste "Recommandé" (badge)
+  // Palier payant unique (Premium) depuis PROMPT-169 : seul l'intervalle est réglable.
+  // L'essai 30j n'est accordé qu'au mensuel (l'annuel est facturé immédiatement).
+  protected interval = signal<Interval>('monthly');
   protected isLoading = signal(false);
-
-  protected selectTier(tier: PlanTier) {
-    this.selectedTier.set(tier);
-  }
 
   protected setInterval(value: Interval) {
     this.interval.set(value);
@@ -45,18 +39,18 @@ export class PlanModalComponent {
 
   /** Recompose l'id attendu par l'API checkout. */
   protected planId(): PlanId {
-    return `${this.selectedTier()}_${this.interval()}`;
+    return `premium_${this.interval()}`;
   }
 
-  /** Pourcentage d'économie de l'annuel vs 12× mensuel (~25%). */
-  protected savingsPct(tier: PlanTier): number {
-    const p = PRICING[tier];
+  /** Pourcentage d'économie de l'annuel vs 12× mensuel (~17%). */
+  protected savingsPct(): number {
+    const p = PRICING.premium;
     return Math.round((1 - p.yearly / (p.monthly * 12)) * 100);
   }
 
-  /** Libellé prix sous le CTA selon plan + intervalle sélectionnés. */
+  /** Libellé prix sous le CTA selon l'intervalle sélectionné. */
   protected ctaPriceLabel(): string {
-    const p = PRICING[this.selectedTier()];
+    const p = PRICING.premium;
     return this.interval() === 'yearly'
       ? `${p.yearly}€/an (économise ${p.savings}€)`
       : `${p.monthly}€/mois`;

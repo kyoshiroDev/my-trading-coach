@@ -476,7 +476,7 @@ canvas {
 }
 
 /* ─── Premium upsell banner ─── */
-/* Bannière d'upgrade vers Starter — accent bleu (Starter), pas violet (Premium) */
+/* Bannière d'upgrade vers Premium */
 .premium-banner {
   background: linear-gradient(
     135deg,
@@ -932,7 +932,7 @@ canvas {
 .mtc-lock-cta { margin-top: 4px; padding: 9px 18px; border-radius: 9px; border: none; background: var(--blue); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 0 18px rgba(59, 130, 246, .4); }
 
 /* Teaser verrouillé — analytics avancés gatés en FREE (équité, top actifs, stratégies).
-   Aperçu flouté + overlay « dès Starter », même pattern que le lock AI Coach. */
+   Aperçu flouté + overlay premium, même pattern que le lock AI Coach. */
 .mtc-lockwrap { position: relative; min-height: 200px; }
 .mtc-lockprev { filter: blur(3px); opacity: .35; pointer-events: none; height: 100%; }
 .mtc-lockov {

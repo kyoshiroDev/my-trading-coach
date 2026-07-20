@@ -53,12 +53,10 @@ interface WeekGroup {
     </select>
   </div>
 
-  <!-- Sélecteur de compte global (multi-comptes Starter+) -->
-  @if (userStore.isStarterOrAbove()) {
-    <div class="sessions-accounts">
-      <mtc-account-selector />
-    </div>
-  }
+  <!-- Sélecteur de compte global (multi-comptes, accessible à tous) -->
+  <div class="sessions-accounts">
+    <mtc-account-selector />
+  </div>
 
   <!-- Résumé du mois -->
   @if (sessions().length > 0) {

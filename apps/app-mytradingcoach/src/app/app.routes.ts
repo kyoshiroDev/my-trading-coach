@@ -141,7 +141,7 @@ export const appRoutes: Routes = [
       },
       {
         path: 'eco-calendar',
-        // Affichage du calendrier accessible à tous (FREE) — l'analyse IA reste Starter+ côté API.
+        // Calendrier économique (affichage + analyse IA) = IA mutualisée → FREE (PROMPT-169).
         data: {
           seo: {
             title: 'Calendrier économique',

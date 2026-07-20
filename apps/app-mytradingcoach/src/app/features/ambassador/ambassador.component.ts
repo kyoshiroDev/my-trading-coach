@@ -53,10 +53,10 @@ export class AmbassadorComponent implements OnInit {
     return `${environment.landingUrl}/?ref=${code}`;
   });
 
-  /** Filleuls payants (plan Starter/Premium). */
+  /** Filleuls payants (plan Premium). */
   protected readonly paidCount = computed(() => {
     const s = this.stats();
-    return s ? s.starter + s.premium : 0;
+    return s ? s.premium : 0;
   });
 
   /** Commission du mois courant (données réelles ReferralCommission). */
@@ -113,13 +113,12 @@ export class AmbassadorComponent implements OnInit {
   }
 
   protected isPaid(u: ReferralUser): boolean {
-    return u.plan === 'STARTER' || u.plan === 'PREMIUM';
+    return u.plan === 'PREMIUM';
   }
 
-  /** Commission mensuelle estimée du filleul (20% de la mensualité du plan). */
+  /** Commission mensuelle estimée du filleul (20% de la mensualité Premium). */
   protected monthlyCommission(u: ReferralUser): number {
     if (u.plan === 'PREMIUM') return +(PRICING.premium.monthly * COMMISSION_RATE).toFixed(2);
-    if (u.plan === 'STARTER') return +(PRICING.starter.monthly * COMMISSION_RATE).toFixed(2);
     return 0;
   }
 

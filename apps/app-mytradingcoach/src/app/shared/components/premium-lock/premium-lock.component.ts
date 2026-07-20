@@ -18,7 +18,7 @@ import { RouterLink } from '@angular/router';
           }
         </div>
         <a routerLink="/parametres" [queryParams]="{ upgrade: true }" class="pl-btn">
-          Essayer 7 jours →
+          Essayer Premium — 1 mois offert →
         </a>
       </div>
     </div>

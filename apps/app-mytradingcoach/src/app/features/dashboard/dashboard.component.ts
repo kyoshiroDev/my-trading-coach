@@ -96,30 +96,6 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
         </div>
       }
 
-      @if (!userStore.isStarterOrAbove() && tradesStore.limitReached()) {
-        <div class="limit-banner reached">
-          <div class="limit-banner-left">
-            <span class="limit-banner-ic">🚫</span>
-            <div>
-              <div class="limit-banner-title">Limite mensuelle atteinte</div>
-              <div class="limit-banner-sub">Tu as utilisé tes {{ tradesStore.monthlyLimit() }} trades ce mois. Passe à Starter pour trader sans limites.</div>
-            </div>
-          </div>
-          <button class="limit-banner-btn" (click)="showPlanModal.set(true)">Passer Starter</button>
-        </div>
-      } @else if (!userStore.isStarterOrAbove() && tradesStore.nearLimit()) {
-        <div class="limit-banner near">
-          <div class="limit-banner-left">
-            <span class="limit-banner-ic">⚠️</span>
-            <div>
-              <div class="limit-banner-title">{{ tradesStore.monthlyCount() }}/{{ tradesStore.monthlyLimit() }} trades ce mois</div>
-              <div class="limit-banner-sub">Tu approches de ta limite gratuite. Upgrade pour continuer sans restrictions.</div>
-            </div>
-          </div>
-          <button class="limit-banner-btn ghost" (click)="showPlanModal.set(true)">Upgrade</button>
-        </div>
-      }
-
       @if (userStore.profileIncomplete()) {
         <div class="limit-banner near" data-testid="profile-nudge">
           <div class="limit-banner-left">
@@ -133,22 +109,22 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
         </div>
       }
 
-      @if (!userStore.isStarterOrAbove()) {
+      @if (!userStore.isPremium()) {
         <div class="premium-banner">
           <div class="premium-banner-left">
             <span class="premium-banner-icon">⚡</span>
             <div>
-              <div class="premium-banner-title">Passe à Starter</div>
-              <div class="premium-banner-sub">Trades illimités, analytics avancés, Weekly Debrief, Score trader</div>
+              <div class="premium-banner-title">Passe à Premium</div>
+              <div class="premium-banner-sub">Weekly Debrief, IA Insights, Chat coach, analytics avancés &amp; comptes illimités</div>
             </div>
           </div>
           <div class="premium-banner-right">
             <div class="premium-banner-price">
-              <span class="premium-banner-amount">{{ PRICING.starter.monthly }}€</span>
+              <span class="premium-banner-amount">{{ PRICING.premium.monthly }}€</span>
               <span class="premium-banner-period">/mois</span>
-              <div class="premium-banner-trial">7 jours gratuits · sans CB</div>
+              <div class="premium-banner-trial">1 mois offert · carte requise</div>
             </div>
-            <button class="premium-banner-btn" (click)="showPlanModal.set(true)">Essayer gratuitement</button>
+            <button class="premium-banner-btn" (click)="showPlanModal.set(true)">Essayer Premium</button>
           </div>
         </div>
       }
@@ -320,14 +296,14 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
         <div class="mtc-panel">
           <div class="mtc-panel-head"><div class="mtc-panel-head-l"><lucide-icon [img]="AssetsIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">Top actifs</div><div class="mtc-panel-sub">P&amp;L par instrument</div></div></div></div>
           <div class="mtc-panel-body">
-            <!-- Top actifs (P&L par instrument) = vue de base FREE ; win rate/actif = profondeur Starter. -->
+            <!-- Top actifs (P&L par instrument) = vue de base FREE ; win rate/actif = profondeur Premium. -->
             @if (topAssets().length) {
               <div class="mtc-hbars">
                 @for (a of topAssets(); track a.asset) {
                   <div class="mtc-hbar">
                     <div class="mtc-hbar-l">
                       <div class="mtc-hbar-name">{{ a.asset | uppercase }}</div>
-                      <div class="mtc-hbar-meta">{{ a.count }} trade{{ a.count > 1 ? 's' : '' }}@if (userStore.isStarterOrAbove()) { · {{ a.winRate.toFixed(0) }}%}</div>
+                      <div class="mtc-hbar-meta">{{ a.count }} trade{{ a.count > 1 ? 's' : '' }}@if (userStore.isPremium()) { · {{ a.winRate.toFixed(0) }}%}</div>
                     </div>
                     <div class="mtc-hbar-track"><div class="mtc-hbar-fill" [class.neg]="a.pnl < 0" [style.width.%]="a.barPct"></div></div>
                     <div class="mtc-hbar-v" [style.color]="a.pnl >= 0 ? 'var(--green)' : 'var(--red)'">{{ a.pnl | pnlFormat }}</div>
@@ -364,7 +340,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
         </div>
 
         <!-- AI Coach -->
-        <div class="mtc-panel" [class.mtc-ai]="userStore.isStarterOrAbove()">
+        <div class="mtc-panel" [class.mtc-ai]="userStore.isPremium()">
           <div class="mtc-panel-head">
             <div class="mtc-panel-head-l"><lucide-icon [img]="CoachIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">AI Coach · feedback</div></div></div>
             <!-- Pastille LIVE réservée à la carte réellement active (Premium) — jamais sur un teaser verrouillé. -->
@@ -407,7 +383,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
         <div class="mtc-panel">
           <div class="mtc-panel-head"><div class="mtc-panel-head-l"><lucide-icon [img]="SetupsIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">Répartition stratégies</div><div class="mtc-panel-sub">% des trades par setup</div></div></div></div>
           <div class="mtc-panel-body">
-            <!-- Répartition % des setups = vue de base FREE (client-side) ; centre win rate = Starter. -->
+            <!-- Répartition % des setups = vue de base FREE (client-side) ; centre win rate = Premium. -->
             @let sd = setupsDonutView();
             @if (sd) {
               <div class="mtc-donut-row">
@@ -547,10 +523,10 @@ export class DashboardComponent {
     data: { points: EquityPoint[]; startingCapital: number | null };
   }>(() => `${environment.apiUrl}/analytics/equity-curve/current-month${this.accQuery()}`);
   private readonly bySetupResource = httpResource<{ data: SetupStat[] }>(() =>
-    this.userStore.isStarterOrAbove() ? `${environment.apiUrl}/analytics/by-setup${this.accQuery()}` : undefined,
+    this.userStore.isPremium() ? `${environment.apiUrl}/analytics/by-setup${this.accQuery()}` : undefined,
   );
   private readonly byEmotionResource = httpResource<{ data: EmotionStat[] }>(() =>
-    this.userStore.isStarterOrAbove() ? `${environment.apiUrl}/analytics/by-emotion${this.accQuery()}` : undefined,
+    this.userStore.isPremium() ? `${environment.apiUrl}/analytics/by-emotion${this.accQuery()}` : undefined,
   );
   // Top actifs (P&L par instrument) vue simple = vue de base FREE.
   private readonly topAssetsResource = httpResource<{ data: TopAsset[] }>(() =>
@@ -590,10 +566,10 @@ export class DashboardComponent {
    * - compte sélectionné → son `metrics.startingBalance` ;
    * - « Tous les comptes » → somme des `startingBalance` des comptes non archivés
    *   (cf. `trackedCapital` dans accounts.component) ;
-   * - FREE / comptes non chargés → fallback sur le capital du profil user.
+   * - comptes non chargés → fallback sur le capital du profil user.
    */
   protected readonly baseCapital = computed(() => {
-    if (!this.userStore.isStarterOrAbove() || !this.selectedAccount.loaded()) {
+    if (!this.selectedAccount.loaded()) {
       return this.userStore.startingCapital();
     }
     const account = this.selectedAccount.selected();
@@ -647,7 +623,7 @@ export class DashboardComponent {
   );
   protected readonly isLoading = computed(
     () =>
-      this.userStore.isStarterOrAbove() &&
+      this.userStore.isPremium() &&
       (this.summaryResource.isLoading() ||
         this.equityCurveResource.isLoading() ||
         this.bySetupResource.isLoading() ||
@@ -775,8 +751,8 @@ export class DashboardComponent {
 
   /**
    * Donut « répartition stratégies » vue de base FREE : % des trades par setup,
-   * calculé client-side depuis les trades chargés (by-setup = profondeur Starter).
-   * Centre = setup dominant. La profondeur (win rate/rentabilité) reste Starter.
+   * calculé client-side depuis les trades chargés (by-setup = profondeur Premium).
+   * Centre = setup dominant. La profondeur (win rate/rentabilité) reste Premium.
    */
   protected readonly setupsDonutFree = computed(() => {
     const trades = this.tradesStore.trades();
@@ -800,9 +776,9 @@ export class DashboardComponent {
     return { gradient: `conic-gradient(${stops.join(', ')})`, legend, centerValue: `${Math.round((top.count / total) * 100)}%`, centerLabel: top.title };
   });
 
-  /** Vue donut setups selon le plan : profondeur (win rate) en Starter+, répartition % en FREE. */
+  /** Vue donut setups selon le plan : profondeur (win rate) en Premium, répartition % en FREE. */
   protected readonly setupsDonutView = computed(() =>
-    this.userStore.isStarterOrAbove() ? this.setupsDonut() : this.setupsDonutFree(),
+    this.userStore.isPremium() ? this.setupsDonut() : this.setupsDonutFree(),
   );
 
   /** Donut mini win rate (KPI). */
@@ -951,7 +927,7 @@ export class DashboardComponent {
 
   protected startTrial() {
     this.billingApi
-      .checkout('starter_monthly')
+      .checkout('premium_monthly')
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({ next: (res) => { window.location.href = res.data.url; } });
   }

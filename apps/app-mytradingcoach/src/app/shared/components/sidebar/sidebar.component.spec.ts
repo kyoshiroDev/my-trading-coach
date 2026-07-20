@@ -7,49 +7,33 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { SidebarComponent } from './sidebar.component';
 import { UserStore } from '../../../core/stores/user.store';
-import { TradesStore } from '../../../core/stores/trades.store';
 import { AuthService } from '../../../core/auth/auth.service';
 import { UsersApi } from '../../../core/api/users.api';
 import { AmbassadorNotifService } from '../../../core/services/ambassador-notif.service';
 import { LiveModeService } from '../../../core/services/live-mode.service';
 import { DemoService } from '../../../core/services/demo.service';
 
-type Plan = 'FREE' | 'STARTER' | 'PREMIUM';
+type Plan = 'FREE' | 'PREMIUM';
 
-// Template minimal reproduisant exactement les conditions de badges + le toggle
-// de repli. On teste la logique de plan (store réutilisé) et la persistance.
+// Template minimal reproduisant les conditions de badge Premium + le toggle de repli.
+// 2 paliers depuis PROMPT-169 : le badge PREMIUM s'affiche pour tout non-Premium.
 const MINIMAL_TEMPLATE = `
-  @if (!userStore.isStarterOrAbove()) {
-    <span data-testid="badge-starter" class="badge starter">STARTER</span>
-  }
   @if (!userStore.isPremium()) {
-    <span data-testid="badge-ai" class="badge">AI</span>
+    <span data-testid="badge-premium" class="badge premium">PREMIUM</span>
   }
   <aside [class.collapsed]="collapsed()"></aside>
 `;
 
 function setup(plan: Plan) {
-  const isStarterOrAbove = () => plan === 'STARTER' || plan === 'PREMIUM';
   const isPremium = () => plan === 'PREMIUM';
 
   const userStore = {
-    isStarterOrAbove,
-    isStarter: isStarterOrAbove,
     isPremium,
     isDemo: () => false,
     isAmbassador: () => false,
     displayName: () => 'Greg',
     initials: () => 'GR',
     user: () => ({ onboardingCompleted: true }),
-  };
-  const tradesStore = {
-    loadMonthlyCount: vi.fn(),
-    monthlyLoaded: () => false,
-    monthlyCount: () => 0,
-    monthlyLimit: () => 30,
-    monthlyPercent: () => 0,
-    nearLimit: () => false,
-    limitReached: () => false,
   };
 
   TestBed.configureTestingModule({
@@ -58,7 +42,6 @@ function setup(plan: Plan) {
       provideHttpClient(),
       provideHttpClientTesting(),
       { provide: UserStore, useValue: userStore },
-      { provide: TradesStore, useValue: tradesStore },
       { provide: AuthService, useValue: { isAuthenticated: () => false, fetchMe: () => of(null), logout: vi.fn() } },
       { provide: UsersApi, useValue: { finishOnboarding: () => of({ data: {} }) } },
       { provide: AmbassadorNotifService, useValue: { newReferrals: () => 0 } },
@@ -80,28 +63,20 @@ function setup(plan: Plan) {
   return fixture;
 }
 
-describe('SidebarComponent — badges conditionnels au plan', () => {
+describe('SidebarComponent — badge conditionnel au plan', () => {
   beforeEach(() => {
     TestBed.resetTestingModule();
     localStorage.clear();
   });
 
-  it('FREE : badges STARTER et AI visibles', () => {
+  it('FREE : badge PREMIUM visible', () => {
     const el = setup('FREE').nativeElement;
-    expect(el.querySelector('[data-testid="badge-starter"]')).toBeTruthy();
-    expect(el.querySelector('[data-testid="badge-ai"]')).toBeTruthy();
-  });
-
-  it('STARTER : badge AI visible, badge STARTER masqué', () => {
-    const el = setup('STARTER').nativeElement;
-    expect(el.querySelector('[data-testid="badge-starter"]')).toBeFalsy();
-    expect(el.querySelector('[data-testid="badge-ai"]')).toBeTruthy();
+    expect(el.querySelector('[data-testid="badge-premium"]')).toBeTruthy();
   });
 
   it('PREMIUM : aucun badge', () => {
     const el = setup('PREMIUM').nativeElement;
-    expect(el.querySelector('[data-testid="badge-starter"]')).toBeFalsy();
-    expect(el.querySelector('[data-testid="badge-ai"]')).toBeFalsy();
+    expect(el.querySelector('[data-testid="badge-premium"]')).toBeFalsy();
   });
 });
 

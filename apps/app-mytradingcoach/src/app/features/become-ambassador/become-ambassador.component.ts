@@ -60,7 +60,7 @@ import { ReferralApi } from '../../core/api/referral.api';
           <div class="card">
             <div class="card-title">Comment ça marche</div>
             <div class="vstep"><div class="n">1</div><div><h4>Partage ton lien</h4><p>À ta communauté, sur tes contenus. Le code est attribué automatiquement à l'inscription.</p></div></div>
-            <div class="vstep"><div class="n">2</div><div><h4>Ton filleul s'abonne</h4><p>Il passe Starter ou Premium. Rien n'est dû tant qu'il est en essai.</p></div></div>
+            <div class="vstep"><div class="n">2</div><div><h4>Ton filleul s'abonne</h4><p>Il passe Premium. Rien n'est dû tant qu'il est en essai.</p></div></div>
             <div class="vstep"><div class="n">3</div><div><h4>Tu touches 20%</h4><p>Sur chaque paiement, chaque mois, tant qu'il reste client. Tu factures, on te paie par virement.</p></div></div>
           </div>
 

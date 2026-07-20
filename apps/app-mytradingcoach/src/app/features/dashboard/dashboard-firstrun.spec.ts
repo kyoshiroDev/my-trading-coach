@@ -20,13 +20,12 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 // d'affichage du « premier pas » : visible à 0 trade, masqué dès ≥1.
 function setup(totalTrades: number) {
   const userStore = {
-    displayName: () => 'Test', isStarterOrAbove: () => false,
+    displayName: () => 'Test', isPremium: () => false,
     profileIncomplete: () => false, startingCapital: () => 0, user: () => ({}),
   };
   const tradesStore = {
-    limitReached: () => false, monthlyCount: () => 0, monthlyLimit: () => 30,
-    nearLimit: () => false, totalTrades: signal(totalTrades), trades: signal([]),
-    loadTrades: vi.fn(), loadMonthlyCount: vi.fn(), reset: vi.fn(),
+    totalTrades: signal(totalTrades), trades: signal([]),
+    loadTrades: vi.fn(), reset: vi.fn(),
   };
   const sessionStore = { hasActiveSession: () => false, todayStats: () => null };
 

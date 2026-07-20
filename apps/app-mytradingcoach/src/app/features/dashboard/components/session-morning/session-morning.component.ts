@@ -170,9 +170,9 @@ const DEMO_OBJECTIVES: DebriefObjective[] = [
             <div class="empty-state">Objectifs générés après ton Weekly Debrief</div>
           } @else {
             @for (obj of objectivesView(); track $index; let i = $index) {
-              @if (!userStore.isStarterOrAbove() && i >= 1) {
+              @if (!userStore.isPremium() && i >= 1) {
                 @if (i === 1) {
-                  <!-- 2e objectif flou — aperçu Starter -->
+                  <!-- 2e objectif flou — aperçu Premium -->
                   <div style="position:relative;margin-top:4px;">
                     <div class="obj-item" style="filter:blur(3px);pointer-events:none;user-select:none;">
                       <div class="obj-check">·</div>

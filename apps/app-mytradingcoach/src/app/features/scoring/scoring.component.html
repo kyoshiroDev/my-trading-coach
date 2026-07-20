@@ -1,19 +1,19 @@
 <mtc-topbar title="Score Trader" [globalScopeNote]="true" />
 
 <div class="content">
-  @if (!userStore.isStarterOrAbove()) {
+  @if (!userStore.isPremium()) {
     <div class="premium-paywall">
       <div class="paywall-icon"><lucide-icon [img]="TrophyIcon" [size]="40" /></div>
-      <h2 class="paywall-title">Fonctionnalité Starter</h2>
+      <h2 class="paywall-title">Fonctionnalité Premium</h2>
       <p class="paywall-desc">
         Le Trader Score analyse tes performances globales et te donne un score
         de 0 à 100 basé sur ta discipline, ta rentabilité et ta gestion du
         risque.
       </p>
       <button class="btn-primary" (click)="showPlanModal.set(true)">
-        Essayer 7 jours gratuit →
+        Essayer Premium — 1 mois offert →
       </button>
-      <p class="paywall-hint">Sans CB · Annulation à tout moment</p>
+      <p class="paywall-hint">Carte requise · annulable en un clic</p>
     </div>
 
     @if (showPlanModal()) {

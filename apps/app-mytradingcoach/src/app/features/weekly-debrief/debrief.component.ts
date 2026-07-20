@@ -108,7 +108,7 @@ function typeBadge(type: string): { label: string; cls: string } | null {
     <mtc-topbar
       title="Weekly Debrief"
       [globalScopeNote]="true"
-      [showAddButton]="userStore.isStarterOrAbove()"
+      [showAddButton]="userStore.isPremium()"
       [addLabel]="isGenerating() ? 'Analyse en cours...' : 'Générer le débrief'"
       [addLoading]="isGenerating()"
       addTestId="debrief-generate-btn"
@@ -116,16 +116,16 @@ function typeBadge(type: string): { label: string; cls: string } | null {
     />
 
     <div class="content">
-      @if (!userStore.isStarterOrAbove()) {
+      @if (!userStore.isPremium()) {
         <div data-testid="debrief-paywall" class="premium-paywall">
           <div class="paywall-icon"><lucide-icon [img]="CalendarDaysIcon" [size]="40" /></div>
-          <h3 class="paywall-title">Fonctionnalité Starter</h3>
+          <h3 class="paywall-title">Fonctionnalité Premium</h3>
           <p class="paywall-desc">
-            Le Weekly Debrief est disponible avec le plan Starter.<br />Reçois
+            Le Weekly Debrief est disponible avec le plan Premium.<br />Reçois
             chaque dimanche un rapport IA complet de ta semaine.
           </p>
           <button class="paywall-cta" (click)="showPlanModal.set(true)">
-            Essayer 7 jours gratuit →
+            Essayer Premium — 1 mois offert →
           </button>
         </div>
         @if (showPlanModal()) {
@@ -180,7 +180,7 @@ function typeBadge(type: string): { label: string; cls: string } | null {
                 {{ debrief()!.generatedAt | date: 'd MMM à HH:mm' }}
               </div>
             </div>
-            @if (userStore.isStarterOrAbove()) {
+            @if (userStore.isPremium()) {
               <button class="export-btn" [disabled]="exportLoading()" (click)="exportPDF()" title="Exporter en PDF">
                 @if (exportLoading()) {
                   <span class="export-spinner"></span>
@@ -387,7 +387,7 @@ export class DebriefComponent {
   });
 
   constructor() {
-    if (!this.userStore.isStarterOrAbove()) {
+    if (!this.userStore.isPremium()) {
       this.isLoading.set(false);
       return;
     }

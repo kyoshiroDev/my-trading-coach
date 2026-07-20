@@ -151,7 +151,7 @@ const EMOTION_COLORS: Record<string, string> = {
           (objectiveNoteAdded)="store.updateObjectiveNote($event)"
           (planNoteChanged)="store.savePlanNote($event)"
         >
-          @if (userStore.isStarterOrAbove() && selectedAccount.activeAccounts().length > 0) {
+          @if (selectedAccount.activeAccounts().length > 0) {
             <div session-account class="sd-acct-row">
               <span class="sd-acct-lbl">Compte de la session</span>
               <select class="sd-acct-select" data-testid="session-account-select"
@@ -422,11 +422,10 @@ export class SessionDayComponent implements OnInit, OnDestroy {
   });
 
   // ── Compte de la session ────────────────────────────────────────────────
-  // Vrai si l'utilisateur (Starter et +) a des comptes mais reste sur « Tous » :
+  // Vrai si l'utilisateur a plusieurs comptes mais reste sur « Tous » :
   // une session = un compte → on demande un choix précis avant de lancer.
   protected readonly accountChoiceRequired = computed(
-    () => this.userStore.isStarterOrAbove()
-      && this.selectedAccount.activeAccounts().length > 0
+    () => this.selectedAccount.activeAccounts().length > 0
       && this.selectedAccount.accountParam() === undefined,
   );
 

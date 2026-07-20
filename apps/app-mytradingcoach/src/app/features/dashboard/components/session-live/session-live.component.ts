@@ -13,7 +13,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { LucideAngularModule, Newspaper, CalendarDays, ListOrdered, Zap, ChevronRight, Lock } from 'lucide-angular';
+import { LucideAngularModule, Newspaper, CalendarDays, ListOrdered, Zap, ChevronRight } from 'lucide-angular';
 import { Subject, forkJoin, interval, of, timer } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent, EcoResultAnalysis } from '../../../../core/api/eco-calendar.api';
@@ -25,8 +25,6 @@ import { SessionRecapComponent } from '../session-recap/session-recap.component'
 import { MarketContextBarComponent } from '../market-context-bar/market-context-bar.component';
 import { EcoSocketService } from '../../../../core/services/eco-socket.service';
 import { UserStore } from '../../../../core/stores/user.store';
-import { PremiumLockComponent } from '../../../../shared/components/premium-lock/premium-lock.component';
-import { PlanModalComponent } from '../../../../shared/components/plan-modal/plan-modal.component';
 import { SetupsStore } from '../../../../core/stores/setups.store';
 import { formatDuration } from '../../../../core/utils/time.utils';
 import { parseDecimal } from '../../../../core/utils/parse-decimal';
@@ -89,22 +87,12 @@ function currencyToInstruments(currency: string | null | undefined): string {
   return `USD/${c}`;
 }
 
-// Mock affiché FLOUTÉ derrière le teaser « Contexte marché » en FREE (jamais de vraie
-// donnée → pas de fuite). Le contexte marché live est Starter+ (plans.md).
-const MOCK_MARKET_CTX: MarketContext = {
-  nq:  { value: 20142, changePct: 0.62, source: 'mock' },
-  spx: { value: 5487, changePct: 0.31, source: 'mock' },
-  dxy: { value: 104.18, changePct: -0.08, source: 'mock' },
-  treasury: { t2y: 4.07, t2yChg: 0.02, t5y: 4.12, t5yChg: 0.01, t10y: 4.38, t10yChg: -0.01, t30y: 4.87, t30yChg: -0.02 },
-  updatedAt: '2026-01-01T15:52:00Z',
-};
-
 @Component({
   selector: 'mtc-session-live',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-live.component.css',
-  imports: [LucideAngularModule, SessionRecapComponent, MarketContextBarComponent, LiveNewsComponent, LiveFeedComponent, NumericInputDirective, PremiumLockComponent, PlanModalComponent, EmotionEmojiPipe],
+  imports: [LucideAngularModule, SessionRecapComponent, MarketContextBarComponent, LiveNewsComponent, LiveFeedComponent, NumericInputDirective, EmotionEmojiPipe],
   template: `
     <div data-testid="session-live-view">
 
@@ -126,7 +114,7 @@ const MOCK_MARKET_CTX: MarketContext = {
         </div>
       } @else {
 
-      <!-- Barre contextuelle marché FMP (Starter+) -->
+      <!-- Barre contextuelle marché FMP (IA mutualisée → FREE) -->
       @if (marketCtx()) {
         <!-- Carte marché unique : contexte marché + news ticker (source : LiveTab card) -->
         <div class="mkt-card">
@@ -136,8 +124,8 @@ const MOCK_MARKET_CTX: MarketContext = {
               [breakingNews]="breakingNews()"
             />
           </div>
-          <!-- News live — ticker horizontal (Starter+), dans la carte marché -->
-          @if (isStarterOrAbove() && newsItems().length > 0) {
+          <!-- News live — ticker horizontal (IA mutualisée → FREE), dans la carte marché -->
+          @if (newsItems().length > 0) {
             <div class="news-ticker">
               <span class="news-ticker-lbl"><lucide-icon [img]="NewsIcon" [size]="13" class="news-live-ic" /> News live</span>
               <div class="news-ticker-viewport">
@@ -163,21 +151,6 @@ const MOCK_MARKET_CTX: MarketContext = {
               </div>
             </div>
           }
-        </div>
-      } @else if (!isStarterOrAbove()) {
-        <!-- Teaser flouté : le contexte marché live est réservé dès Starter -->
-        <div class="ctx-teaser">
-          <div class="ctx-teaser-preview" aria-hidden="true">
-            <mtc-market-context-bar [ctx]="MOCK_MARKET_CTX" [breakingNews]="null" />
-          </div>
-          <div class="ctx-teaser-overlay">
-            <span class="ctx-teaser-lock"><lucide-icon [img]="LockIcon" [size]="16" /></span>
-            <div class="ctx-teaser-txt">
-              <strong>Contexte marché live</strong>
-              <span>Indices, DXY et taux US en direct — disponible dès Starter</span>
-            </div>
-            <button class="ctx-teaser-cta" type="button" (click)="showPlanModal.set(true)">Débloquer →</button>
-          </div>
         </div>
       }
 
@@ -267,7 +240,7 @@ const MOCK_MARKET_CTX: MarketContext = {
 
             @if (!ecoCalendar()) {
               <div style="font-size:12px;color:var(--text-3);text-align:center;padding:20px 0;">
-                Calendrier disponible dès Starter
+                Calendrier économique indisponible pour le moment.
               </div>
             } @else {
               <div class="cal-events-list">
@@ -734,10 +707,6 @@ const MOCK_MARKET_CTX: MarketContext = {
     }
 
     </div>
-
-    @if (showPlanModal()) {
-      <mtc-plan-modal (closed)="showPlanModal.set(false)" />
-    }
   `,
 })
 export class SessionLiveComponent {
@@ -767,8 +736,7 @@ export class SessionLiveComponent {
   private readonly tradesApi = inject(TradesApi);
   protected readonly setupsStore = inject(SetupsStore);
 
-  // News live + contexte marché = Starter+ (endpoints gardés côté API) → verrou d'upsell sinon.
-  protected readonly isStarterOrAbove = computed(() => this.userStore.isStarterOrAbove());
+  // News live + contexte marché = IA mutualisée → FREE (PROMPT-169), accessible à tous.
 
   // Icônes Lucide (headers de colonnes — design « Session live »).
   protected readonly NewsIcon  = Newspaper;
@@ -776,9 +744,6 @@ export class SessionLiveComponent {
   protected readonly FeedIcon  = ListOrdered;
   protected readonly QuickIcon = Zap;
   protected readonly ChevronIcon = ChevronRight;
-  protected readonly LockIcon = Lock;
-  protected readonly MOCK_MARKET_CTX = MOCK_MARKET_CTX;
-  protected readonly showPlanModal = signal(false);
 
   // Calendrier éco : événement publié déplié au clic (null = tous repliés, style maquette compact)
   protected readonly expandedEcoEvent = signal<string | null>(null);
@@ -1022,23 +987,23 @@ export class SessionLiveComponent {
     // Arrêter le polling prix au destroy
     this.destroyRef.onDestroy(() => this.stopLivePricePolling());
 
-    // WebSocket éco — connecter quand session active + Starter+ (analyse IA éco = Starter+)
+    // WebSocket éco — connecter quand session active (analyse IA éco = IA mutualisée → FREE).
     effect(() => {
       const s = this.session();
-      if (s?.status === 'ACTIVE' && this.userStore.isStarterOrAbove()) {
+      if (s?.status === 'ACTIVE') {
         this.ecoSocket.connect();
       } else {
         this.ecoSocket.disconnect();
       }
     });
 
-    // Analyse IA des events DÉJÀ publiés à l'ouverture (Starter+ + session active, hors démo).
+    // Analyse IA des events DÉJÀ publiés à l'ouverture (session active, hors démo).
     // Limité au FORT impact : ce sont eux qui bougent le marché. Sur une grosse journée
     // (~19 events US), ça évite une rafale d'appels modèle à la 1re ouverture ; le cache
     // mutualisé sert les suivantes. Les releases live restent couvertes par newReleases$.
     effect(() => {
       const s = this.session();
-      if (s?.status !== 'ACTIVE' || !this.userStore.isStarterOrAbove() || this.userStore.isDemo()) return;
+      if (s?.status !== 'ACTIVE' || this.userStore.isDemo()) return;
       const released = this.sessionEcoEvents().filter(
         (e) => e.impact === 'high' && e.isReleased && e.actual != null && !!e.name?.trim(),
       );

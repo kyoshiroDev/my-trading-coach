@@ -404,37 +404,15 @@
                     </button>
                   </div>
                 }
-              } @else if (userStore.isStarterOrAbove()) {
-                <div class="plan-badge starter">
-                  <div class="plan-badge-dot"></div>
-                  STARTER
-                </div>
-                <p class="plan-desc">Trades illimités · Analytics avancés · Weekly Debrief · Score trader · Export PDF.</p>
-                @if (userStore.user()?.stripeCurrentPeriodEnd) {
-                  <p class="plan-renewal">
-                    Renouvellement : {{ userStore.user()?.stripeCurrentPeriodEnd | date:'dd/MM/yyyy' }}
-                  </p>
-                }
-                <p class="plan-upgrade-hint">
-                  Passe à Premium pour l'IA : Chat coach, IA Insights, Calendrier éco IA, news &amp; contexte marché.
-                </p>
-                <div class="plan-actions">
-                  <button class="btn btn-secondary" (click)="openPortal()">
-                    Gérer mon abonnement →
-                  </button>
-                  <button class="btn btn-primary" (click)="showPlanModal.set(true)">
-                    Passer Premium →
-                  </button>
-                </div>
               } @else {
-                <div class="plan-badge free">FREE</div>
-                <p class="plan-desc">30 trades/mois (hors import historique) · Journal complet · Stats de base · Historique illimité.</p>
+                <div class="plan-badge free">GRATUIT</div>
+                <p class="plan-desc">Trades illimités · Journal complet · Import · Historique illimité · IA mutualisée (contexte marché, calendrier éco, news).</p>
                 <p class="plan-upgrade-hint">
-                  Passe à Starter pour les trades illimités, les analytics et le Weekly Debrief, ou Premium pour l'IA (coach, insights, calendrier éco IA).
+                  Passe à Premium pour l'IA personnelle : Weekly Debrief, Chat coach, IA Insights, analytics avancés &amp; comptes illimités.
                 </p>
                 <div class="plan-actions">
                   <button class="btn btn-primary" (click)="showPlanModal.set(true)">
-                    ⚡ Essayer 7 jours gratuit →
+                    ⚡ Essayer Premium — 1 mois offert →
                   </button>
                 </div>
               }
@@ -477,13 +455,13 @@
             <div class="settings-row">
               <div class="settings-row-left">
                 <span class="settings-row-label">Weekly Debrief automatique</span>
-                <span class="settings-row-hint">Génération automatique chaque dimanche. Starter uniquement.</span>
+                <span class="settings-row-hint">Génération automatique chaque dimanche. Premium uniquement.</span>
               </div>
               <label class="settings-toggle">
                 <input type="checkbox" [checked]="prefDebrief()"
-                  [disabled]="!userStore.isStarterOrAbove()"
+                  [disabled]="!userStore.isPremium()"
                   (change)="prefDebrief.set($any($event.target).checked)" />
-                <span class="toggle-track" [class.disabled]="!userStore.isStarterOrAbove()"></span>
+                <span class="toggle-track" [class.disabled]="!userStore.isPremium()"></span>
               </label>
             </div>
 
