@@ -29,6 +29,8 @@ export interface Trade {
   // Note d'exécution CALCULÉE (PROMPT-161) — null = « Non évalué ».
   executionScore?: number | null;
   executionGrade?: 'EXCELLENT' | 'BON' | 'MOYEN' | 'MAUVAIS' | null;
+  // Barème ayant produit la note (PROMPT-168) : stop-based (4 critères) ou comportemental (sans stop).
+  executionMethod?: 'STOP_BASED' | 'BEHAVIORAL' | null;
   setupId: string;
   setup: { id: string; title: string; color: string };
   session: string;
