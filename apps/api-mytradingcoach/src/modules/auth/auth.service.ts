@@ -15,6 +15,7 @@ import { ResendService } from '../resend/resend.service';
 import { SetupsService } from '../setups/setups.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { TRIAL_PERIOD_DAYS } from '../../common/constants/pricing.const';
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 heure
 
@@ -190,7 +191,7 @@ export class AuthService {
     const updated = await this.prisma.user.update({
       where: { id: userId },
       data: {
-        trialEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        trialEndsAt: new Date(Date.now() + TRIAL_PERIOD_DAYS * 24 * 60 * 60 * 1000),
         trialUsed: true,
       },
       select: {
