@@ -109,3 +109,88 @@ describe('computeExecutionGrade — indépendance au P&L', () => {
     expect(EXECUTION_GRADE_WEIGHTS).toEqual({ stop: 35, rr: 25, emotion: 20, risk: 20 });
   });
 });
+// ── Barème B — comportemental (PROMPT-168) ──────────────────────────────────
+import {
+  computeBehavioralGrade,
+  scoreFromCriteria,
+  median,
+  BEHAVIORAL_GRADE_WEIGHTS,
+} from './execution-grade.util';
+
+describe('median', () => {
+  it('impair / pair / vide', () => {
+    expect(median([3, 1, 2])).toBe(2);
+    expect(median([1, 2, 3, 4])).toBe(2.5);
+    expect(median([])).toBe(0);
+  });
+});
+
+describe('scoreFromCriteria', () => {
+  it('< 2 critères applicables → null', () => {
+    expect(scoreFromCriteria([{ weight: 40, frac: 1 }, { weight: 35, frac: null }, { weight: 25, frac: null }]))
+      .toEqual({ score: null, grade: null });
+  });
+  it('renormalise sur les poids applicables', () => {
+    // revenge 1 (35) + size 0.5 (25) sur base 60 → (35 + 12.5)/60 = 79.2 → 79 → BON
+    const r = scoreFromCriteria([{ weight: 40, frac: null }, { weight: 35, frac: 1 }, { weight: 25, frac: 0.5 }]);
+    expect(r.score).toBe(79);
+    expect(r.grade).toBe('BON');
+  });
+});
+
+describe('computeBehavioralGrade', () => {
+  const base = {
+    quantity: 1,
+    tradedAt: new Date('2026-07-10T15:00:00Z'),
+    medianLoss: 100,
+    medianQuantity: 1,
+    previousIsLoss: true,
+    lastSameDayLossAt: new Date('2026-07-10T14:59:30Z'), // 30 s avant
+  };
+
+  it('perte 5× médiane, ré-entrée 30 s après une perte, taille 3× médiane → tout 0 → MAUVAIS', () => {
+    const r = computeBehavioralGrade({ ...base, pnl: -500, quantity: 3 });
+    expect(r.score).toBe(0);
+    expect(r.grade).toBe('MAUVAIS');
+  });
+
+  it('perte ≈ médiane, ré-entrée > 10 min, taille standard (après une perte) → tout 1 → EXCELLENT', () => {
+    const r = computeBehavioralGrade({
+      ...base, pnl: -100, quantity: 1,
+      lastSameDayLossAt: new Date('2026-07-10T14:40:00Z'), // 20 min avant
+    });
+    expect(r.score).toBe(100);
+    expect(r.grade).toBe('EXCELLENT');
+  });
+
+  it('trade GAGNANT : « perte contenue » non applicable → note renormalisée sur 60 pts (revenge + taille)', () => {
+    const r = computeBehavioralGrade({
+      ...base, pnl: 250, quantity: 1,
+      lastSameDayLossAt: new Date('2026-07-10T14:45:00Z'), // 15 min → revenge 1
+    });
+    // loss N/A ; revenge 1 (35) + size 1 (25) sur base 60 → 100 → EXCELLENT
+    expect(r.score).toBe(100);
+    expect(r.grade).toBe('EXCELLENT');
+  });
+
+  it('un seul critère applicable (perte isolée, pas de perte précédente ni de trade précédent perdant) → null', () => {
+    const r = computeBehavioralGrade({
+      ...base, pnl: -100, previousIsLoss: false, lastSameDayLossAt: null,
+    });
+    expect(r).toEqual({ score: null, grade: null });
+  });
+
+  it('revenge : 2–10 min → 0.5 ; taille 1–2× médiane → 0.5', () => {
+    const r = computeBehavioralGrade({
+      ...base, pnl: -100, quantity: 1.5,
+      lastSameDayLossAt: new Date('2026-07-10T14:55:00Z'), // 5 min → revenge 0.5
+    });
+    // loss 1 (40) + revenge 0.5 (35) + size 0.5 (25) → (40 + 17.5 + 12.5)/100 = 70 → BON
+    expect(r.score).toBe(70);
+    expect(r.grade).toBe('BON');
+  });
+
+  it('poids comportementaux = 40/35/25', () => {
+    expect(BEHAVIORAL_GRADE_WEIGHTS).toEqual({ loss: 40, revenge: 35, size: 25 });
+  });
+});

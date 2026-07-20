@@ -47,6 +47,8 @@ export interface Trade {
   // Note d'exécution CALCULÉE (PROMPT-161) — déterministe, jamais saisie. null = « Non évalué ».
   executionScore?: number | null;
   executionGrade?: 'EXCELLENT' | 'BON' | 'MOYEN' | 'MAUVAIS' | null;
+  // Barème ayant produit la note (PROMPT-168) : stop-based ou comportemental.
+  executionMethod?: 'STOP_BASED' | 'BEHAVIORAL' | null;
   setupId: string;
   setup: TradeSetup;
   session: 'LONDON' | 'NEW_YORK' | 'ASIAN';

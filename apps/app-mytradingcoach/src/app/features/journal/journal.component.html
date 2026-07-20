@@ -309,14 +309,15 @@
                   </span>
                   <span class="td-exec">
                     @if (trade.executionGrade) {
-                      <span class="grade-badge" [attr.data-grade]="trade.executionGrade"
-                            [title]="'Note d\'exécution calculée : ' + trade.executionScore + '/100'">
+                      <span class="grade-badge" [attr.data-grade]="trade.executionGrade">
                         {{ gradeLabel(trade.executionGrade) }}
                       </span>
+                      <mtc-info-tooltip class="align-end" label="Détail de la note d'exécution"
+                        [text]="gradeTooltip(trade)" />
                     } @else {
                       <span class="exec-none">Non évaluée</span>
-                      <mtc-info-tooltip label="Pourquoi cette note est indisponible"
-                        text="Note indisponible : il faut au moins 2 critères mesurables. Ici le stop loss et le take profit ne sont pas renseignés (fréquent sur les imports broker)." />
+                      <mtc-info-tooltip class="align-end" label="Pourquoi cette note est indisponible"
+                        text="Note indisponible : soit le trade a un stop loss mais moins de 2 critères mesurables, soit il n'a pas de stop et l'historique est insuffisant (moins de 20 trades clôturés sur le compte) pour la note comportementale." />
                     }
                   </span>
                   <span class="td-emotion">

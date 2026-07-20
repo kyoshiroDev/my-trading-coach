@@ -63,6 +63,8 @@ const mockPrisma = {
     deleteMany: vi.fn(),
     count: vi.fn(),
   },
+  // Recalcul comportemental par lot (PROMPT-168) : transaction des updates.
+  $transaction: vi.fn((ops) => Promise.resolve(Array.isArray(ops) ? ops : [])),
   tradeSession: {
     findFirst: vi.fn().mockResolvedValue(null),
     findUnique: vi.fn().mockResolvedValue(null), // moodStart (note d'exécution, PROMPT-161)
@@ -105,6 +107,9 @@ describe('TradesService', () => {
     mockAccounts.accountWhere.mockResolvedValue({ accountId: 'acc-1' });
     mockAccounts.ensureDefaultAccountId.mockResolvedValue('acc-default');
     mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
+    // Défaut : le recalcul comportemental par lot ne trouve aucun trade (no-op) sauf override par test.
+    mockPrisma.trade.findMany.mockResolvedValue([]);
+    mockPrisma.$transaction.mockImplementation((ops) => Promise.resolve(Array.isArray(ops) ? ops : []));
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -735,6 +740,54 @@ describe('TradesService', () => {
       expect(arg.where.tradedAt.gte).toEqual(new Date('2026-06-01T00:00:00.000Z'));
       expect(arg.where.tradedAt.lte).toEqual(new Date('2026-06-30T23:59:59.000Z'));
       expect(arg.select).toEqual({ pnl: true, commission: true });
+    });
+  });
+
+  // ── Recalcul comportemental par lot (PROMPT-168) ──────────────────────────
+  describe('recomputeBehavioralGrades', () => {
+    // Fabrique N trades sans stop, même jour, espacés de 20 min, tous perdants (-100, qty 1).
+    const buildTrades = (n: number) =>
+      Array.from({ length: n }, (_, i) => ({
+        id: `t${i}`,
+        pnl: -100,
+        quantity: 1,
+        tradedAt: new Date(2026, 6, 10, 14, i * 20, 0), // 14:00, 14:20, 14:40…
+        stopLoss: null,
+        executionScore: null,
+        executionGrade: null,
+        executionMethod: null,
+      }));
+
+    it('19 trades clôturés → historique insuffisant → aucune note posée', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue(buildTrades(19));
+      await service.recomputeBehavioralGrades('acc-1');
+      expect(mockPrisma.trade.findMany).toHaveBeenCalledTimes(1); // une seule passe, pas de N+1
+      expect(mockPrisma.trade.update).not.toHaveBeenCalled();
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('20 trades → grades comportementaux posés (BEHAVIORAL), en une transaction', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue(buildTrades(20));
+      await service.recomputeBehavioralGrades('acc-1');
+      expect(mockPrisma.trade.findMany).toHaveBeenCalledTimes(1);
+      // 1er trade : ni perte précédente ni prior same-day loss → 1 critère → null (pas d'update).
+      // Trades 1..19 : perte contenue + revenge (>10 min) + taille constante → EXCELLENT.
+      expect(mockPrisma.trade.update).toHaveBeenCalledTimes(19);
+      const call = mockPrisma.trade.update.mock.calls[0][0];
+      expect(call.data.executionGrade).toBe('EXCELLENT');
+      expect(call.data.executionMethod).toBe('BEHAVIORAL');
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it('trade AVEC stop loss ignoré par le barème comportemental (barème A conservé)', async () => {
+      const trades = buildTrades(20);
+      trades[5].stopLoss = 42; // ce trade relève du barème A → non touché
+      trades[5].executionGrade = 'BON';
+      trades[5].executionMethod = 'STOP_BASED';
+      mockPrisma.trade.findMany.mockResolvedValue(trades);
+      await service.recomputeBehavioralGrades('acc-1');
+      const updatedIds = mockPrisma.trade.update.mock.calls.map((c) => c[0].where.id);
+      expect(updatedIds).not.toContain('t5');
     });
   });
 });

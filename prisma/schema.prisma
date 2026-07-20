@@ -149,6 +149,7 @@ model Trade {
   // Non saisie par l'utilisateur. Dérivée de stop/RR/émotion effective/risque (voir execution-grade.util).
   executionScore Int?             // 0-100, null si < 2 critères applicables (« Non évalué »)
   executionGrade ExecutionGrade?  // dérivé du score (EXCELLENT/BON/MOYEN/MAUVAIS)
+  executionMethod ExecutionMethod? // barème ayant produit la note (STOP_BASED / BEHAVIORAL), null si non notée (PROMPT-168)
   // Override optionnel de l'émotion du trade (surtout REVENGE/FEAR dans l'instant).
   // Émotion effective = emotion ?? tradeSession.moodStart ?? null (voir effective-emotion.util).
   emotion        EmotionState?
@@ -401,6 +402,13 @@ enum ExecutionGrade {
   BON
   MOYEN
   MAUVAIS
+}
+
+/// Barème ayant produit la note (PROMPT-168). STOP_BASED = trade avec stop (4 critères intrinsèques) ;
+/// BEHAVIORAL = trade sans stop (3 critères comportementaux, relatifs à l'historique). Non comparables.
+enum ExecutionMethod {
+  STOP_BASED
+  BEHAVIORAL
 }
 
 enum TradingSession {
