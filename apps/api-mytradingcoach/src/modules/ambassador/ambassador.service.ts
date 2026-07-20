@@ -41,7 +41,6 @@ export interface AmbassadorStats {
   referrals: ReferralUser[];
   total: number;
   free: number;
-  starter: number;
   premium: number;
   earningsByMonth: Record<string, number>;
   totalEarned: number;
@@ -161,7 +160,6 @@ export class AmbassadorService {
     email: string;
     referralCode: string;
     totalReferrals: number;
-    starterReferrals: number;
     premiumReferrals: number;
     totalEarned: number;
     pendingPayout: number;
@@ -185,12 +183,6 @@ export class AmbassadorService {
       _count: { _all: true },
     });
 
-    const starterCounts = await this.prisma.user.groupBy({
-      by: ['referredBy'],
-      where: { referredBy: { not: null }, plan: 'STARTER' },
-      _count: { _all: true },
-    });
-
     const premiumCounts = await this.prisma.user.groupBy({
       by: ['referredBy'],
       where: { referredBy: { not: null }, plan: 'PREMIUM' },
@@ -199,9 +191,6 @@ export class AmbassadorService {
 
     const totalMap = Object.fromEntries(
       referralCounts.map((r) => [r.referredBy!, r._count._all]),
-    );
-    const starterMap = Object.fromEntries(
-      starterCounts.map((r) => [r.referredBy!, r._count._all]),
     );
     const premiumMap = Object.fromEntries(
       premiumCounts.map((r) => [r.referredBy!, r._count._all]),
@@ -218,7 +207,6 @@ export class AmbassadorService {
         email: a.email,
         referralCode: a.referralCode!,
         totalReferrals:   totalMap[a.referralCode!]   ?? 0,
-        starterReferrals: starterMap[a.referralCode!]  ?? 0,
         premiumReferrals: premiumMap[a.referralCode!]  ?? 0,
         totalEarned: +totalEarned.toFixed(2),
         pendingPayout: +pendingPayout.toFixed(2),
@@ -258,7 +246,6 @@ export class AmbassadorService {
         referrals: [],
         total: 0,
         free: 0,
-        starter: 0,
         premium: 0,
         earningsByMonth: {},
         totalEarned: 0,
@@ -280,7 +267,6 @@ export class AmbassadorService {
     });
 
     const free    = referredUsers.filter(u => u.plan === 'FREE').length;
-    const starter = referredUsers.filter(u => u.plan === 'STARTER').length;
     const premium = referredUsers.filter(u => u.plan === 'PREMIUM').length;
 
     const commissions = await this.prisma.referralCommission.findMany({
@@ -311,7 +297,6 @@ export class AmbassadorService {
       })),
       total: referredUsers.length,
       free,
-      starter,
       premium,
       earningsByMonth,
       totalEarned,

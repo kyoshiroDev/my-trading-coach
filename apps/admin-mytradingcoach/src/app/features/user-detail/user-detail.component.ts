@@ -111,7 +111,7 @@ export function buildSignals(
             <div class="ud-mailrow">
               <span class="ud-mail">{{ pseudo() }} · {{ d.identity.email }}</span>
               <span class="ud-badges">
-                <span class="badge" [class.b-premium]="d.identity.plan==='PREMIUM'" [class.b-starter]="d.identity.plan==='STARTER'" [class.b-free]="d.identity.plan==='FREE'">{{ d.identity.plan }}</span>
+                <span class="badge" [class.b-premium]="d.identity.plan==='PREMIUM'" [class.b-free]="d.identity.plan==='FREE'">{{ d.identity.plan }}</span>
                 <span class="badge" [class.b-ok]="status()==='actif'" [class.b-free]="status()!=='actif'">● {{ statusLabel() }}</span>
                 @if (d.identity.role !== 'USER') { <span class="role-tag purple">{{ d.identity.role }}</span> }
               </span>

@@ -24,7 +24,6 @@ import { PRICING_EUR } from '../../core/constants/pricing.const';
       <div class="kpi-strip">
         <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Ambassadeurs</div><div class="kpi-value purple">{{ ambassadors().length }}</div><div class="kpi-sub">actifs</div></div>
         <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Total référés</div><div class="kpi-value blue">{{ totalReferrals() }}</div><div class="kpi-sub">via liens</div></div>
-        <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Référés Starter</div><div class="kpi-value amber">{{ totalStarter() }}</div><div class="kpi-sub">{{ pricing.STARTER.monthly }}€/mois</div></div>
         <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Référés Premium</div><div class="kpi-value blue">{{ totalPremium() }}</div><div class="kpi-sub">{{ pricing.PREMIUM.monthly }}€/mois</div></div>
         <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Commissions dues</div><div class="kpi-value amber">{{ totalPending() | number:'1.2-2' }}€</div><div class="kpi-sub">à verser</div></div>
         <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Total payé</div><div class="kpi-value teal">{{ totalPaid() | number:'1.2-2' }}€</div><div class="kpi-sub">versé</div></div>
@@ -38,7 +37,7 @@ import { PRICING_EUR } from '../../core/constants/pricing.const';
           <div class="empty">Aucun ambassadeur configuré</div>
         } @else {
           <table class="tbl">
-            <thead><tr><th>Ambassadeur</th><th>Code / Lien</th><th>Taux</th><th>Référés</th><th>Starter / Prem.</th><th class="num">Dû</th><th class="num">Total payé</th><th class="actions-col">Actions</th></tr></thead>
+            <thead><tr><th>Ambassadeur</th><th>Code / Lien</th><th>Taux</th><th>Référés</th><th>Premium</th><th class="num">Dû</th><th class="num">Total payé</th><th class="actions-col">Actions</th></tr></thead>
             <tbody>
               @for (amb of ambassadors(); track amb.id) {
                 <tr [class.row-selected]="selectedId() === amb.id" (click)="selectAmbassador(amb)">
@@ -46,7 +45,7 @@ import { PRICING_EUR } from '../../core/constants/pricing.const';
                   <td data-label="Code / Lien"><div class="code-cell"><span class="pill teal-pill">{{ amb.referralCode }}</span><button class="pill" (click)="$event.stopPropagation(); copyLink(amb.referralCode)">Copier lien</button></div><div class="amb-link">mytradingcoach.app?ref={{ amb.referralCode }}</div></td>
                   <td data-label="Taux" class="td-mono blue">20%</td>
                   <td data-label="Référés" class="td-mono">{{ amb.totalReferrals }}</td>
-                  <td data-label="Starter / Prem." class="td-mono">{{ amb.starterReferrals }} S / {{ amb.premiumReferrals }} P</td>
+                  <td data-label="Premium" class="td-mono">{{ amb.premiumReferrals }} P</td>
                   <td data-label="Dû" class="td-mono num amber">{{ amb.pendingPayout | number:'1.2-2' }}€</td>
                   <td data-label="Total payé" class="td-mono num">{{ (amb.totalEarned - amb.pendingPayout) | number:'1.2-2' }}€</td>
                   <td data-label="Actions"><div class="row-actions"><button class="btn pay-btn" [disabled]="amb.pendingPayout === 0" (click)="$event.stopPropagation(); payAmbassador(amb)">✓ Payer</button><button class="btn revoke-btn" (click)="$event.stopPropagation(); askRevoke(amb)">Retirer</button></div></td>
@@ -65,7 +64,6 @@ import { PRICING_EUR } from '../../core/constants/pricing.const';
             <div class="mini-stats">
               <div class="mini"><span class="mini-v blue">{{ detail.total }}</span><span class="mini-l">Inscrits</span></div>
               <div class="mini"><span class="mini-v green">{{ detail.premium }}</span><span class="mini-l">Premium</span></div>
-              <div class="mini"><span class="mini-v">{{ detail.starter }}</span><span class="mini-l">Starter</span></div>
               <div class="mini"><span class="mini-v">{{ detail.free }}</span><span class="mini-l">Free</span></div>
               <div class="mini"><span class="mini-v amber">{{ detail.pendingPayout | number:'1.2-2' }}€</span><span class="mini-l">À payer</span></div>
               <div class="mini"><span class="mini-v green">{{ detail.totalEarned | number:'1.2-2' }}€</span><span class="mini-l">Total gagné</span></div>
@@ -87,7 +85,7 @@ import { PRICING_EUR } from '../../core/constants/pricing.const';
                       @for (ref of detail.referrals; track ref.id) {
                         <tr>
                           <td data-label="Email" class="td-mono">{{ ref.email }}</td>
-                          <td data-label="Plan"><span class="badge" [class.b-premium]="ref.plan==='PREMIUM'" [class.b-starter]="ref.plan==='STARTER'" [class.b-free]="ref.plan==='FREE'">{{ ref.plan }}</span></td>
+                          <td data-label="Plan"><span class="badge" [class.b-premium]="ref.plan==='PREMIUM'" [class.b-free]="ref.plan==='FREE'">{{ ref.plan }}</span></td>
                           <td data-label="Actif"><span [class.act-on]="ref.isActive" [class.act-off]="!ref.isActive">{{ ref.isActive ? '✓' : '—' }}</span></td>
                           <td data-label="Inscrit" class="td-mono muted">{{ ref.createdAt | date:'dd/MM/yyyy' }}</td>
                         </tr>
@@ -184,7 +182,6 @@ export class AmbassadeursComponent implements OnInit {
   protected readonly revoking = signal(false);
 
   protected readonly totalReferrals = computed(() => this.ambassadors().reduce((s, a) => s + a.totalReferrals, 0));
-  protected readonly totalStarter = computed(() => this.ambassadors().reduce((s, a) => s + a.starterReferrals, 0));
   protected readonly totalPremium = computed(() => this.ambassadors().reduce((s, a) => s + a.premiumReferrals, 0));
   protected readonly totalPending = computed(() => this.ambassadors().reduce((s, a) => s + a.pendingPayout, 0));
   protected readonly totalPaid = computed(() => this.ambassadors().reduce((s, a) => s + a.totalEarned - a.pendingPayout, 0));

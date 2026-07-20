@@ -105,7 +105,7 @@ export class MetricsSnapshotCron {
       arr: stats.arr,
       totalUsers: stats.totalUsers,
       freeUsers: stats.freeUsers,
-      starterUsers: stats.totalStarter,
+      starterUsers: 0, // palier STARTER supprimé (PROMPT-169) ; colonne conservée pour l'historique
       premiumUsers: stats.totalPremium,
       trials: stats.trials,
       newThisDay,

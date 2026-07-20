@@ -51,7 +51,7 @@ import { CHART_COLORS, gridAxis, noLegend } from '../../shared/charts/chart-them
                       <td data-label="Inscrit le" class="td-mono muted">{{ a.signedUpAt | date:'dd/MM/yyyy' }}</td>
                       <td data-label="Supprimé le" class="td-mono" [style.color]="isDeletedToday(a.deletedAt) ? 'var(--red)' : null">{{ a.deletedAt | date:'dd/MM/yyyy' }}</td>
                       <td data-label="Durée de vie" class="td-mono">{{ lifetime(a.lifetimeDays) }}</td>
-                      <td data-label="Plan"><span class="badge" [class.b-premium]="a.plan==='PREMIUM'" [class.b-starter]="a.plan==='STARTER'" [class.b-free]="a.plan==='FREE'">{{ a.plan }}</span></td>
+                      <td data-label="Plan"><span class="badge" [class.b-premium]="a.plan==='PREMIUM'" [class.b-free]="a.plan==='FREE'">{{ a.plan }}</span></td>
                       <td data-label="A tradé">@if (a.hadTraded) { <span class="badge b-ok">oui</span> } @else { <span class="badge b-free">jamais</span> }</td>
                       <td data-label="Parrainé par" class="td-mono" [class.muted]="!a.referredBy" [class.ref]="a.referredBy">{{ a.referredBy ?? '—' }}</td>
                       <td data-label="Par"><span class="role-tag">{{ a.deletedBy === 'self' ? 'utilisateur' : 'admin' }}</span></td>
