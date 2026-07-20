@@ -227,7 +227,7 @@ export function welcomeFreeTemplate(params: {
       <div style="margin:16px 0;">
         <div style="margin-bottom:10px;">
           <span style="color:#10b981;">✓</span>
-          <span style="${FONT}font-size:13px;color:#9db4ce;margin-left:8px;">30 trades par mois · Journal complet · Stats de base</span>
+          <span style="${FONT}font-size:13px;color:#9db4ce;margin-left:8px;">Trades illimités · Journal complet · Stats de base</span>
         </div>
         <div style="margin-bottom:10px;">
           <span style="color:#10b981;">✓</span>
@@ -255,7 +255,7 @@ export function welcomeFreeTemplate(params: {
 
     <div style="background:rgba(59,130,246,.04);border:1px solid rgba(59,130,246,.12);border-radius:8px;padding:16px;text-align:center;">
       <p style="${FONT}font-size:12px;color:#6b8299;margin:0;">
-        Tu veux la couche IA ? <a href="${appUrl}/parametres" style="color:#60a5fa;text-decoration:none;font-weight:600;">Essaie Premium 7 jours gratuits</a> :
+        Tu veux la couche IA ? <a href="${appUrl}/parametres" style="color:#60a5fa;text-decoration:none;font-weight:600;">Essaie Premium 1 mois offert</a> :
         analytics avancés, IA Coach et Weekly Debrief automatique.
       </p>
     </div>
@@ -288,7 +288,7 @@ export function welcomePremiumTemplate(params: {
   const content = `
     ${card(`
       <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">
-        ${isTrial ? 'Essai gratuit · 7 jours' : 'Premium activé'}
+        ${isTrial ? 'Essai gratuit · 30 jours' : 'Premium activé'}
       </p>
       <h1 style="${FONT}font-size:24px;font-weight:700;color:#e2eaf5;margin:0 0 16px 0;letter-spacing:-.5px;">
         ${isTrial ? 'Ton compagnon Premium est actif 🚀' : 'Bienvenue en Premium 🚀'}
@@ -297,7 +297,7 @@ export function welcomePremiumTemplate(params: {
       <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 20px 0;line-height:1.7;">
         Bonjour ${userName || 'Trader'},
         ${isTrial
-          ? `ton essai gratuit de <strong style="color:#e2eaf5;">7 jours</strong> est activé. Aucun prélèvement avant la fin.`
+          ? `ton essai gratuit de <strong style="color:#e2eaf5;">30 jours</strong> est activé. Aucun prélèvement avant la fin — annulable en un clic.`
           : `ton abonnement Premium est actif. Profite de toutes les fonctionnalités de ton compagnon.`
         }
       </p>
@@ -330,7 +330,7 @@ export function welcomePremiumTemplate(params: {
     subject: isTrial
       ? '🚀 Ton essai Premium démarre'
       : '🚀 Bienvenue en Premium',
-    html: emailWrapper(content, isTrial ? '7 jours gratuits, aucun prélèvement.' : 'Accès complet activé.'),
+    html: emailWrapper(content, isTrial ? '30 jours offerts, aucun prélèvement.' : 'Accès complet activé.'),
   };
 }
 
