@@ -9,7 +9,7 @@
 
 **MyTradingCoach** — SaaS freemium de journal de trading intelligent pour traders particuliers (crypto, forex, actions). L'IA analyse émotions et comportements pour aider les traders à progresser.
 
-**Plans** — 3 paliers : FREE (0€), STARTER (39€/mois · 349€/an), PREMIUM (79€/mois · 699€/an), essai 7 j sur les deux payants.
+**Plans** — 2 paliers (PROMPT-169) : FREE (0€, trades illimités, IA mutualisée), PREMIUM (49€/mois · 490€/an, IA personnelle). Essai 30 j, mensuel uniquement (carte requise).
 ➡️ **Source de vérité plans / prix / features / gating / coût IA : `.claude/agents/plans.md`.** Ne pas dupliquer ni redéfinir les règles de plan ici.
 
 ---
@@ -88,9 +88,10 @@ Dev
 - `npm` / `npx` → `pnpm` / `pnpm dlx`
 - `console.log` NestJS → Logger NestJS
 - Prisma dans controllers → passer par les services
-- Trial 14 jours → 7 jours
-- Historique FREE 30 jours → illimité
-- Prix Premium = **79 €** (pas 39 € — 39 € = Starter) · valeurs en dur → `pricing.const.ts`
+- Trial 7/14 jours → **30 jours** (mensuel uniquement ; annuel facturé direct)
+- Quota FREE 30 trades/mois → **illimité** · Historique FREE → illimité
+- Palier STARTER **supprimé** (PROMPT-169) : ne subsiste que FREE + PREMIUM
+- Prix Premium = **49 €** · 490 €/an · valeurs en dur → `pricing.const.ts`
 - CSS inline dans `.ts` → toujours dans `.css`
 - `@nestjs/bull` → `@nestjs/bullmq`
 - Compte démo (`isDemo`) : nouvelle mutation → déjà bloquée par `DemoReadOnlyGuard` (rien à faire) ; nouvelle métrique/agrégat admin ou cron/email ciblant des users → **exclure `isDemo: false`** ; nouvelle feature avec données → vérifier l'affichage démo + enrichir le seed

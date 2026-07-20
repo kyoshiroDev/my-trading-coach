@@ -48,7 +48,6 @@ src/common/
 POST   /api/auth/register
 POST   /api/auth/login
 POST   /api/auth/refresh
-POST   /api/auth/start-trial           → trial 7 jours
 
 GET    /api/trades                     ?page&limit&side&setup&emotion&dateFrom&dateTo
 POST   /api/trades                     → vérifier limite 30/mois FREE avant création

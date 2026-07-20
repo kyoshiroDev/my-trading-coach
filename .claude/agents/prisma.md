@@ -232,21 +232,10 @@ const trades = await prisma.trade.findMany({
 const nextCursor = trades.length === limit ? trades[trades.length - 1].id : null;
 ```
 
-### Limite 30 trades/mois FREE
+### Trades FREE — illimités (PROMPT-169)
 
-```typescript
-const startOfMonth = new Date();
-startOfMonth.setDate(1);
-startOfMonth.setHours(0, 0, 0, 0);
-
-const count = await prisma.trade.count({
-  where: { userId, createdAt: { gte: startOfMonth } }
-});
-
-if (user.plan === 'FREE' && count >= 30) {
-  throw new HttpException('Limite de 30 trades/mois atteinte. Passe à Premium.', 403);
-}
-```
+Le quota mensuel de 30 trades FREE a été **supprimé** : plus de `checkMonthlyLimit`,
+`countThisMonth`, ni code `FREE_LIMIT_REACHED`. Tous les plans loggent sans limite.
 
 ### Stats analytics summary
 
