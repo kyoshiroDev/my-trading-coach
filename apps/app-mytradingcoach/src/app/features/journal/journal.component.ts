@@ -152,6 +152,16 @@ export class JournalComponent {
     return { EXCELLENT: 'Excellent', BON: 'Bon', MOYEN: 'Moyen', MAUVAIS: 'Mauvais' }[g ?? ''] ?? '—';
   }
 
+  /** Explication de la note selon le barème utilisé (PROMPT-168). */
+  protected gradeTooltip(t: Trade): string {
+    const base = `Note calculée : ${t.executionScore}/100. `;
+    return t.executionMethod === 'BEHAVIORAL'
+      ? base +
+          'Note comportementale (aucun stop loss sur ce trade) : perte contenue, absence de revenge trading, régularité de la taille de position.'
+      : base +
+          "Barème standard : stop respecté, R:R, émotion effective et risque engagé.";
+  }
+
   protected readonly showModal        = signal(false);
   protected readonly showImport       = signal(false);
   protected readonly isSubmitting     = signal(false);

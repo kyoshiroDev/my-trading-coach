@@ -13,6 +13,7 @@ import {
   EmotionState,
   MoodState,
   ExecutionGrade,
+  ExecutionMethod,
 } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
@@ -22,6 +23,9 @@ import {
 } from '../../common/utils/trade-stats.util';
 import {
   computeExecutionGrade,
+  computeBehavioralGrade,
+  median,
+  BEHAVIORAL_MIN_TRADES,
   ExecutionTradeInput,
   ExecutionGradeResult,
 } from '../../common/utils/execution-grade.util';
@@ -68,6 +72,7 @@ export class TradesService {
     dto: CreateTradeDto,
     plan: Plan = Plan.FREE,
     role: Role = Role.USER,
+    opts: { deferBehavioral?: boolean } = {},
   ) {
     await this.checkMonthlyLimit(userId, plan, role, dto.tradedAt);
     // Le setup doit appartenir au user et être actif (sinon 400).
@@ -90,11 +95,22 @@ export class TradesService {
     if (!accountId) accountId = await this.accounts.ensureDefaultAccountId(userId);
 
     const rr = dto.riskReward ?? riskReward;
-    // Note d'exécution CALCULÉE (déterministe, zéro IA, indépendante du P&L — PROMPT-161).
-    const { score: executionScore, grade: executionGrade } = await this.computeExecution(
-      accountId,
-      { ...dto, riskReward: rr, tradeSession: { moodStart: activeSession?.moodStart ?? null } },
-    );
+    // Barème A (stop présent) : intrinsèque, calculé ici (PROMPT-161). Trade SANS stop → barème B
+    // comportemental, dépendant de l'historique → laissé null ici, renseigné par le recalcul par lot
+    // (PROMPT-168). On ne mélange jamais les deux : stop absent ⇒ jamais de note STOP_BASED.
+    let executionScore: number | null = null;
+    let executionGrade: ExecutionGrade | null = null;
+    let executionMethod: ExecutionMethod | null = null;
+    if (dto.stopLoss != null) {
+      const a = await this.computeExecution(accountId, {
+        ...dto,
+        riskReward: rr,
+        tradeSession: { moodStart: activeSession?.moodStart ?? null },
+      });
+      executionScore = a.score;
+      executionGrade = a.grade;
+      executionMethod = a.grade != null ? ExecutionMethod.STOP_BASED : null;
+    }
 
     const trade = await this.prisma.trade.create({
       data: {
@@ -106,6 +122,7 @@ export class TradesService {
         capitalEngaged: dto.capitalEngaged ?? null,
         executionScore,
         executionGrade,
+        executionMethod,
         userId,
         sessionId: activeSession?.id ?? null,
         accountId,
@@ -114,6 +131,22 @@ export class TradesService {
       include: { setup: { select: { id: true, title: true, color: true } } },
     });
     await this.analyticsService.invalidateUserCache(userId);
+
+    // Le nouveau trade décale les médianes du compte → recalcul du barème comportemental
+    // (sauf import : différé pour une seule passe par compte, cf. importTrades).
+    if (!opts.deferBehavioral && accountId) {
+      await this.recomputeBehavioralGrades(accountId);
+      // Re-lecture des champs d'exécution (le recalcul a pu poser la note comportementale de CE trade).
+      const fresh = await this.prisma.trade.findUnique({
+        where: { id: trade.id },
+        select: { executionScore: true, executionGrade: true, executionMethod: true },
+      });
+      if (fresh) {
+        trade.executionScore = fresh.executionScore;
+        trade.executionGrade = fresh.executionGrade;
+        trade.executionMethod = fresh.executionMethod;
+      }
+    }
     return trade;
   }
 
@@ -153,6 +186,8 @@ export class TradesService {
     let failed = 0;
     let limitBlocked = 0; // trades post-inscription non importés car la limite FREE (30/mois) est atteinte
     let limitHit = false;
+    // Comptes touchés → un seul recalcul comportemental par compte à la fin (pas de N+1 — PROMPT-168).
+    const affectedAccounts = new Set<string>();
 
     for (const dto of dtos) {
       const key = this.dedupeKey(dto);
@@ -167,7 +202,10 @@ export class TradesService {
         continue;
       }
       try {
-        await this.create(userId, dto as CreateTradeDto, plan, role);
+        const t = await this.create(userId, dto as CreateTradeDto, plan, role, {
+          deferBehavioral: true,
+        });
+        if (t.accountId) affectedAccounts.add(t.accountId);
         created++;
       } catch (err) {
         if (this.isFreeLimitError(err)) {
@@ -178,6 +216,11 @@ export class TradesService {
           failed++;
         }
       }
+    }
+
+    // Barème comportemental recalculé une fois par compte, sur l'ensemble de son historique.
+    for (const accountId of affectedAccounts) {
+      await this.recomputeBehavioralGrades(accountId);
     }
 
     return { created, duplicates, failed, limitBlocked, total: dtos.length };
@@ -414,21 +457,36 @@ export class TradesService {
       dto.riskReward !== undefined ||
       dto.emotion !== undefined ||
       dto.capitalEngaged !== undefined;
-    let exec: ExecutionGradeResult | null = null;
+    // Barème A si stop présent (intrinsèque) ; sinon on efface la note — le recalcul comportemental
+    // (barème B) la repose ensuite. Un trade sans stop n'obtient JAMAIS une note STOP_BASED.
+    let execData: {
+      executionScore?: number | null;
+      executionGrade?: ExecutionGrade | null;
+      executionMethod?: ExecutionMethod | null;
+    } = {};
     if (execRelevant) {
-      const moodStart = existing.sessionId
-        ? (
-            await this.prisma.tradeSession.findUnique({
-              where: { id: existing.sessionId },
-              select: { moodStart: true },
-            })
-          )?.moodStart ?? null
-        : null;
-      exec = await this.computeExecution(existing.accountId ?? undefined, {
-        ...merged,
-        riskReward: newRR ?? merged.riskReward,
-        tradeSession: { moodStart },
-      });
+      if (merged.stopLoss != null) {
+        const moodStart = existing.sessionId
+          ? (
+              await this.prisma.tradeSession.findUnique({
+                where: { id: existing.sessionId },
+                select: { moodStart: true },
+              })
+            )?.moodStart ?? null
+          : null;
+        const a = await this.computeExecution(existing.accountId ?? undefined, {
+          ...merged,
+          riskReward: newRR ?? merged.riskReward,
+          tradeSession: { moodStart },
+        });
+        execData = {
+          executionScore: a.score,
+          executionGrade: a.grade,
+          executionMethod: a.grade != null ? ExecutionMethod.STOP_BASED : null,
+        };
+      } else {
+        execData = { executionScore: null, executionGrade: null, executionMethod: null };
+      }
     }
 
     const result = await this.prisma.trade.update({
@@ -438,31 +496,58 @@ export class TradesService {
         tradedAt: dto.tradedAt ? new Date(dto.tradedAt) : undefined,
         ...(newPnl !== undefined ? { pnl: newPnl } : {}),
         ...(newRR !== undefined ? { riskReward: newRR } : {}),
-        ...(exec ? { executionScore: exec.score, executionGrade: exec.grade } : {}),
+        ...execData,
       },
       include: { setup: { select: { id: true, title: true, color: true } } },
     });
     await this.analyticsService.invalidateUserCache(userId);
+
+    // L'édition (P&L, quantité…) modifie les médianes du compte → recalcul comportemental (une passe).
+    if (execRelevant && existing.accountId) {
+      await this.recomputeBehavioralGrades(existing.accountId);
+      const fresh = await this.prisma.trade.findUnique({
+        where: { id },
+        select: { executionScore: true, executionGrade: true, executionMethod: true },
+      });
+      if (fresh) {
+        result.executionScore = fresh.executionScore;
+        result.executionGrade = fresh.executionGrade;
+        result.executionMethod = fresh.executionMethod;
+      }
+    }
     return result;
   }
 
   async remove(userId: string, id: string) {
-    await this.findOne(userId, id);
+    const existing = await this.findOne(userId, id);
     await this.prisma.trade.delete({ where: { id } });
     await this.analyticsService.invalidateUserCache(userId);
+    // La suppression modifie les médianes du compte → recalcul comportemental (PROMPT-168).
+    if (existing.accountId) await this.recomputeBehavioralGrades(existing.accountId);
   }
 
   /**
    * Réaffecte un lot de trades à un autre compte. Le `userId` dans le `where`
-   * garantit qu'on ne touche que les trades du user (anti-IDOR). Seul `accountId`
-   * change : les métriques compte se recalculent à la lecture (rien à recalculer ici).
+   * garantit qu'on ne touche que les trades du user (anti-IDOR). Le déplacement change
+   * les médianes des comptes source ET cible → recalcul comportemental des deux côtés (PROMPT-168).
    */
   async reassignAccount(userId: string, tradeIds: string[], accountId: string) {
+    // Comptes source (avant déplacement) pour recalculer leur barème comportemental.
+    const before = await this.prisma.trade.findMany({
+      where: { id: { in: tradeIds }, userId },
+      select: { accountId: true },
+    });
     const result = await this.prisma.trade.updateMany({
       where: { id: { in: tradeIds }, userId },
       data: { accountId },
     });
     await this.analyticsService.invalidateUserCache(userId);
+
+    const accounts = new Set<string>([
+      accountId,
+      ...before.map((t) => t.accountId).filter((a): a is string => a != null),
+    ]);
+    for (const acc of accounts) await this.recomputeBehavioralGrades(acc);
     return { moved: result.count };
   }
 
@@ -636,6 +721,87 @@ export class TradesService {
         })
       : null;
     return computeExecutionGrade(trade, account);
+  }
+
+  /**
+   * Recalcul par lot du barème comportemental (PROMPT-168) d'un compte, EN UNE SEULE PASSE.
+   * Ne touche QUE les trades sans stop (ceux avec stop gardent leur barème A intrinsèque). Contextuel :
+   * les 3 critères dépendent des médianes du compte → la note d'un trade évolue quand l'historique
+   * s'étoffe (attendu). Charge les trades clôturés triés une fois, calcule les médianes une fois,
+   * puis parcourt — aucune requête par trade (N+1 évité). Écritures limitées aux trades dont la note change.
+   */
+  async recomputeBehavioralGrades(accountId: string): Promise<void> {
+    const trades = await this.prisma.trade.findMany({
+      where: { accountId, pnl: { not: null } }, // clôturés seulement
+      select: {
+        id: true, pnl: true, quantity: true, tradedAt: true, stopLoss: true,
+        executionScore: true, executionGrade: true, executionMethod: true,
+      },
+      orderBy: { tradedAt: 'asc' },
+    });
+
+    const eps = BREAKEVEN_EPSILON;
+    const isLoss = (pnl: number | null) => pnl != null && pnl < -eps;
+    // Garde-fou : sous 20 trades clôturés, les médianes n'ont pas de sens → tout reste « Non évaluée ».
+    const enoughHistory = trades.length >= BEHAVIORAL_MIN_TRADES;
+
+    // Médianes sur TOUS les trades clôturés du compte (référence de l'historique du trader).
+    const medianLoss = median(
+      trades.filter((t) => isLoss(t.pnl)).map((t) => Math.abs(t.pnl as number)),
+    );
+    const medianQuantity = median(trades.map((t) => t.quantity ?? 1));
+
+    const updates: Prisma.PrismaPromise<unknown>[] = [];
+
+    for (let i = 0; i < trades.length; i++) {
+      const t = trades[i];
+      if (t.stopLoss != null) continue; // barème A → on ne touche pas
+
+      let score: number | null = null;
+      let grade: ExecutionGrade | null = null;
+      let method: ExecutionMethod | null = null;
+
+      if (enoughHistory) {
+        const prev = trades[i - 1];
+        const previousIsLoss = prev ? isLoss(prev.pnl) : false;
+
+        // Dernier trade perdant le MÊME jour, avant celui-ci (revenge).
+        const day = t.tradedAt.toISOString().slice(0, 10);
+        let lastSameDayLossAt: Date | null = null;
+        for (let j = i - 1; j >= 0; j--) {
+          if (trades[j].tradedAt.toISOString().slice(0, 10) !== day) break; // trié asc → sorti du jour
+          if (isLoss(trades[j].pnl)) { lastSameDayLossAt = trades[j].tradedAt; break; }
+        }
+
+        const b = computeBehavioralGrade({
+          pnl: t.pnl as number,
+          quantity: t.quantity ?? 1,
+          tradedAt: t.tradedAt,
+          medianLoss,
+          medianQuantity,
+          previousIsLoss,
+          lastSameDayLossAt,
+        });
+        score = b.score;
+        grade = b.grade;
+        method = b.grade != null ? ExecutionMethod.BEHAVIORAL : null;
+      }
+
+      if (
+        score !== t.executionScore ||
+        grade !== t.executionGrade ||
+        method !== t.executionMethod
+      ) {
+        updates.push(
+          this.prisma.trade.update({
+            where: { id: t.id },
+            data: { executionScore: score, executionGrade: grade, executionMethod: method },
+          }),
+        );
+      }
+    }
+
+    if (updates.length) await this.prisma.$transaction(updates);
   }
 
   private calculatePnl(dto: CreateTradeDto): number | undefined {
