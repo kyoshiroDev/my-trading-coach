@@ -1,42 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   BadRequestException,
-  ExecutionContext,
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
 import { AccountsService } from './accounts.service';
-import { StarterGuard } from '../../common/guards/starter.guard';
 
-// Le AccountsController est gardé par @UseGuards(JwtAuthGuard, StarterGuard) :
-// le multi-comptes est ouvert à Starter et + (quota par plan), bloqué pour FREE.
-const ctxWith = (user: unknown): ExecutionContext =>
-  ({ switchToHttp: () => ({ getRequest: () => ({ user }) }) }) as ExecutionContext;
-
-describe('AccountsController — gating Starter', () => {
-  const guard = new StarterGuard();
-
-  it('user FREE (hors trial) → 403', () => {
-    expect(() =>
-      guard.canActivate(ctxWith({ plan: 'FREE', role: 'USER', trialEndsAt: null })),
-    ).toThrow(ForbiddenException);
-  });
-
-  it('user STARTER → autorisé', () => {
-    expect(guard.canActivate(ctxWith({ plan: 'STARTER', role: 'USER' }))).toBe(true);
-  });
-
-  it('user PREMIUM → autorisé', () => {
-    expect(guard.canActivate(ctxWith({ plan: 'PREMIUM', role: 'USER' }))).toBe(true);
-  });
-
-  it('user en trial → autorisé', () => {
-    const future = new Date(Date.now() + 3 * 86400_000);
-    expect(
-      guard.canActivate(ctxWith({ plan: 'FREE', role: 'USER', trialEndsAt: future })),
-    ).toBe(true);
-  });
-});
+// Le AccountsController n'est gardé que par JwtAuthGuard (PROMPT-169) : le multi-comptes
+// est ouvert à FREE (1 compte) comme à PREMIUM (illimité) ; le plafond vit dans le service.
 
 function makePrisma() {
   return {
@@ -77,7 +48,6 @@ describe('AccountsService', () => {
       (svc as unknown as { resolveAccountLimit: (c?: unknown) => number | null }).resolveAccountLimit(ctx);
 
     it('FREE → 1', () => expect(limit({ plan: 'FREE', role: 'USER' })).toBe(1));
-    it('STARTER → 3', () => expect(limit({ plan: 'STARTER', role: 'USER' })).toBe(3));
     it('PREMIUM → illimité (null)', () => expect(limit({ plan: 'PREMIUM', role: 'USER' })).toBeNull());
     it('trial actif (FREE + trialEndsAt futur) → illimité', () => {
       expect(limit({ plan: 'FREE', role: 'USER', trialEndsAt: new Date(Date.now() + 86_400_000) })).toBeNull();
@@ -94,23 +64,15 @@ describe('AccountsService', () => {
     const ctx = (plan: string, extra: Record<string, unknown> = {}) =>
       ({ plan, role: 'USER', ...extra }) as never;
 
-    it('STARTER sous le quota (2/3) → crée, ne compte que les comptes ACTIVE', async () => {
-      prisma.tradingAccount.count.mockResolvedValue(2);
-      prisma.tradingAccount.create.mockResolvedValue({ id: 'a4' });
-      await svc.create('u1', { label: 'C3' } as never, ctx('STARTER'));
+    it('FREE sous le quota (0/1) → crée, ne compte que les comptes ACTIVE', async () => {
+      prisma.tradingAccount.count.mockResolvedValue(0);
+      prisma.tradingAccount.create.mockResolvedValue({ id: 'a1' });
+      await svc.create('u1', { label: 'C1' } as never, ctx('FREE', { trialEndsAt: null }));
       // Slot = comptes ACTIVE uniquement (PASSED / FAILED / ARCHIVED libèrent le slot).
       expect(prisma.tradingAccount.count).toHaveBeenCalledWith({
         where: { userId: 'u1', status: 'ACTIVE' },
       });
       expect(prisma.tradingAccount.create).toHaveBeenCalled();
-    });
-
-    it('STARTER au quota (3/3) → 403 ACCOUNT_LIMIT_REACHED, aucune création', async () => {
-      prisma.tradingAccount.count.mockResolvedValue(3);
-      await expect(
-        svc.create('u1', { label: 'C4' } as never, ctx('STARTER')),
-      ).rejects.toBeInstanceOf(ForbiddenException);
-      expect(prisma.tradingAccount.create).not.toHaveBeenCalled();
     });
 
     it('PREMIUM → illimité (aucun comptage, crée même à 50 comptes)', async () => {
@@ -143,9 +105,9 @@ describe('AccountsService', () => {
 
     it('réactivation (FAILED → ACTIVE) au quota → 403 ACCOUNT_LIMIT_REACHED, pas d\'update', async () => {
       prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'FAILED' });
-      prisma.tradingAccount.count.mockResolvedValue(3); // déjà 3 ACTIVE (Starter plein)
+      prisma.tradingAccount.count.mockResolvedValue(1); // déjà 1 ACTIVE (FREE plein)
       await expect(
-        svc.update('u1', 'a1', { status: 'ACTIVE' } as never, ctx('STARTER')),
+        svc.update('u1', 'a1', { status: 'ACTIVE' } as never, ctx('FREE', { trialEndsAt: null })),
       ).rejects.toBeInstanceOf(ForbiddenException);
       expect(prisma.tradingAccount.count).toHaveBeenCalledWith({
         where: { userId: 'u1', status: 'ACTIVE' },
@@ -155,9 +117,9 @@ describe('AccountsService', () => {
 
     it('réactivation (ARCHIVED → ACTIVE) sous le quota → applique', async () => {
       prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'ARCHIVED' });
-      prisma.tradingAccount.count.mockResolvedValue(2); // 2/3 → reste de la place
+      prisma.tradingAccount.count.mockResolvedValue(0); // 0/1 → reste de la place
       prisma.tradingAccount.update.mockResolvedValue({ id: 'a1', status: 'ACTIVE' });
-      await svc.update('u1', 'a1', { status: 'ACTIVE' } as never, ctx('STARTER'));
+      await svc.update('u1', 'a1', { status: 'ACTIVE' } as never, ctx('FREE', { trialEndsAt: null }));
       expect(prisma.tradingAccount.update).toHaveBeenCalledWith({
         where: { id: 'a1' },
         data: { status: 'ACTIVE' },
@@ -175,7 +137,7 @@ describe('AccountsService', () => {
     it('passage ACTIVE → FAILED (libère un slot) → aucune vérif de quota', async () => {
       prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'ACTIVE' });
       prisma.tradingAccount.update.mockResolvedValue({ id: 'a1', status: 'FAILED' });
-      await svc.update('u1', 'a1', { status: 'FAILED' } as never, ctx('STARTER'));
+      await svc.update('u1', 'a1', { status: 'FAILED' } as never, ctx('FREE', { trialEndsAt: null }));
       expect(prisma.tradingAccount.count).not.toHaveBeenCalled();
       expect(prisma.tradingAccount.update).toHaveBeenCalled();
     });
@@ -183,7 +145,7 @@ describe('AccountsService', () => {
     it('update sans changement de statut (label) → aucune vérif de quota', async () => {
       prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'ACTIVE' });
       prisma.tradingAccount.update.mockResolvedValue({ id: 'a1' });
-      await svc.update('u1', 'a1', { label: 'Renommé' } as never, ctx('STARTER'));
+      await svc.update('u1', 'a1', { label: 'Renommé' } as never, ctx('FREE', { trialEndsAt: null }));
       expect(prisma.tradingAccount.count).not.toHaveBeenCalled();
       expect(prisma.tradingAccount.update).toHaveBeenCalled();
     });
@@ -191,7 +153,7 @@ describe('AccountsService', () => {
     it('déjà ACTIVE, dto ACTIVE (no-op statut) → aucune vérif de quota', async () => {
       prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'ACTIVE' });
       prisma.tradingAccount.update.mockResolvedValue({ id: 'a1' });
-      await svc.update('u1', 'a1', { status: 'ACTIVE' } as never, ctx('STARTER'));
+      await svc.update('u1', 'a1', { status: 'ACTIVE' } as never, ctx('FREE', { trialEndsAt: null }));
       expect(prisma.tradingAccount.count).not.toHaveBeenCalled();
       expect(prisma.tradingAccount.update).toHaveBeenCalled();
     });

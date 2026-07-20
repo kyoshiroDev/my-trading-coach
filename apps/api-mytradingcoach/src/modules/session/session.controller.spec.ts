@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { SessionController } from './session.controller';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { StarterGuard } from '../../common/guards/starter.guard';
+import { PremiumGuard } from '../../common/guards/premium.guard';
 
 // Le compagnon de session est le hook du plan FREE : accessible à tout compte connecté.
-// Ce test verrouille le contrat — si quelqu'un re-applique StarterGuard, il casse.
+// Ce test verrouille le contrat — si quelqu'un ajoute PremiumGuard, il casse (PROMPT-169).
 describe('SessionController — accès', () => {
   const guards = (Reflect.getMetadata('__guards__', SessionController) ?? []) as unknown[];
 
@@ -12,7 +12,7 @@ describe('SessionController — accès', () => {
     expect(guards).toContain(JwtAuthGuard);
   });
 
-  it("n'est PAS gardé par StarterGuard (session accessible en FREE)", () => {
-    expect(guards).not.toContain(StarterGuard);
+  it("n'est PAS gardé par PremiumGuard (session accessible en FREE)", () => {
+    expect(guards).not.toContain(PremiumGuard);
   });
 });

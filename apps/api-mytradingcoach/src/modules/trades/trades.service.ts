@@ -1,13 +1,9 @@
 import {
   ForbiddenException,
-  HttpException,
-  HttpStatus,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import {
-  Plan,
-  Role,
   Prisma,
   SessionStatus,
   EmotionState,
@@ -70,11 +66,8 @@ export class TradesService {
   async create(
     userId: string,
     dto: CreateTradeDto,
-    plan: Plan = Plan.FREE,
-    role: Role = Role.USER,
     opts: { deferBehavioral?: boolean } = {},
   ) {
-    await this.checkMonthlyLimit(userId, plan, role, dto.tradedAt);
     // Le setup doit appartenir au user et être actif (sinon 400).
     await this.setups.assertOwnedActive(userId, dto.setupId);
     const pnl = this.calculatePnl(dto);
@@ -159,33 +152,21 @@ export class TradesService {
   async importTrades(
     userId: string,
     dtos: Partial<CreateTradeDto>[],
-    plan: Plan = Plan.FREE,
-    role: Role = Role.USER,
   ): Promise<{
     created: number;
     duplicates: number;
     failed: number;
-    limitBlocked: number;
     total: number;
   }> {
-    const [existing, user] = await Promise.all([
-      this.prisma.trade.findMany({
-        where: { userId },
-        select: { asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true },
-      }),
-      this.prisma.user.findUnique({ where: { id: userId }, select: { createdAt: true } }),
-    ]);
+    const existing = await this.prisma.trade.findMany({
+      where: { userId },
+      select: { asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true },
+    });
     const seen = new Set(existing.map((t) => this.dedupeKey(t)));
-
-    // Historique = trade daté AVANT l'inscription → toujours importé, hors limite FREE.
-    const isHistorical = (t: Partial<CreateTradeDto>): boolean =>
-      !!user && t.tradedAt != null && new Date(t.tradedAt) < user.createdAt;
 
     let created = 0;
     let duplicates = 0;
     let failed = 0;
-    let limitBlocked = 0; // trades post-inscription non importés car la limite FREE (30/mois) est atteinte
-    let limitHit = false;
     // Comptes touchés → un seul recalcul comportemental par compte à la fin (pas de N+1 — PROMPT-168).
     const affectedAccounts = new Set<string>();
 
@@ -196,25 +177,14 @@ export class TradesService {
         continue;
       }
       seen.add(key); // dédup intra-lot (même trade présent 2× dans le fichier)
-      // Limite atteinte : on ne saute QUE les trades courants ; l'historique passe toujours.
-      if (limitHit && !isHistorical(dto)) {
-        limitBlocked++;
-        continue;
-      }
       try {
-        const t = await this.create(userId, dto as CreateTradeDto, plan, role, {
+        const t = await this.create(userId, dto as CreateTradeDto, {
           deferBehavioral: true,
         });
         if (t.accountId) affectedAccounts.add(t.accountId);
         created++;
-      } catch (err) {
-        if (this.isFreeLimitError(err)) {
-          // Ne peut concerner qu'un trade post-inscription (l'historique est exempté).
-          limitHit = true;
-          limitBlocked++;
-        } else {
-          failed++;
-        }
+      } catch {
+        failed++;
       }
     }
 
@@ -223,20 +193,7 @@ export class TradesService {
       await this.recomputeBehavioralGrades(accountId);
     }
 
-    return { created, duplicates, failed, limitBlocked, total: dtos.length };
-  }
-
-  /** Vrai si l'erreur est le refus de quota FREE (FREE_LIMIT_REACHED). */
-  private isFreeLimitError(err: unknown): boolean {
-    if (err instanceof HttpException) {
-      const res = err.getResponse();
-      return (
-        typeof res === 'object' &&
-        res !== null &&
-        (res as { code?: string }).code === 'FREE_LIMIT_REACHED'
-      );
-    }
-    return false;
+    return { created, duplicates, failed, total: dtos.length };
   }
 
   /** Clé d'unicité d'un trade : asset + side + tradedAt + entry + exit + pnl. */
@@ -549,69 +506,6 @@ export class TradesService {
     ]);
     for (const acc of accounts) await this.recomputeBehavioralGrades(acc);
     return { moved: result.count };
-  }
-
-  async checkMonthlyLimit(
-    userId: string,
-    plan: Plan,
-    role: Role = Role.USER,
-    tradedAt?: string | Date | null,
-  ): Promise<void> {
-    if (role === Role.ADMIN || role === Role.BETA_TESTER || plan === Plan.STARTER || plan === Plan.PREMIUM)
-      return;
-
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { createdAt: true },
-    });
-
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-
-    // Le trade en cours est-il de l'historique (avant inscription) ou hors mois courant ?
-    // → il ne consomme PAS la limite des 30/mois.
-    const td = tradedAt ? new Date(tradedAt) : new Date();
-    if (user && td < user.createdAt) return; // historique importé
-    if (td < startOfMonth) return; // hors mois courant
-
-    // Compter l'activité courante : trades du mois courant ET postérieurs à l'inscription.
-    const since = user && user.createdAt > startOfMonth ? user.createdAt : startOfMonth;
-    const count = await this.prisma.trade.count({
-      where: { userId, tradedAt: { gte: since } },
-    });
-
-    if (count >= 30) {
-      throw new HttpException(
-        {
-          code: 'FREE_LIMIT_REACHED',
-          message: 'Limite de 30 trades/mois atteinte',
-        },
-        HttpStatus.FORBIDDEN,
-      );
-    }
-  }
-
-  async countThisMonth(userId: string, plan: Plan, role: Role = Role.USER): Promise<{ count: number; limit: number; isPremium: boolean }> {
-    const isPremium = plan === Plan.STARTER || plan === Plan.PREMIUM || role === Role.ADMIN || role === Role.BETA_TESTER;
-    if (isPremium) return { count: 0, limit: 0, isPremium: true };
-
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { createdAt: true },
-    });
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-
-    // Activité courante uniquement : trades du mois ET postérieurs à l'inscription.
-    // L'historique importé (tradedAt < inscription) n'est pas décompté.
-    const since = user && user.createdAt > startOfMonth ? user.createdAt : startOfMonth;
-    const count = await this.prisma.trade.count({
-      where: { userId, tradedAt: { gte: since } },
-    });
-
-    return { count, limit: 30, isPremium: false };
   }
 
   async getUserAssets(userId: string): Promise<UserAssetItem[]> {

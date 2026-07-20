@@ -68,7 +68,7 @@ export class AdminController {
 
   /**
    * Re-synchronise le rôle Discord de tous les comptes liés (idempotent).
-   * Corrige les STARTER existants qui avaient le rôle Membre avant le fix isPremiumAccess.
+   * Réaligne le rôle Membre/Premium sur isPremiumAccess après un changement de plan.
    */
   @Post('discord/resync')
   async resyncDiscordRoles() {
