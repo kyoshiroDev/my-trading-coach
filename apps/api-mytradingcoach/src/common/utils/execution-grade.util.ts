@@ -4,6 +4,7 @@ import {
   isHealthyEmotion,
   isRiskyEmotion,
 } from './effective-emotion.util';
+import { BREAKEVEN_EPSILON } from './trade-stats.util';
 
 /**
  * Note d'exécution CALCULÉE d'un trade (PROMPT-161).
@@ -50,6 +51,30 @@ export function gradeFromScore(score: number): ExecutionGrade {
   if (score >= 60) return ExecutionGrade.BON;
   if (score >= 40) return ExecutionGrade.MOYEN;
   return ExecutionGrade.MAUVAIS;
+}
+
+/**
+ * Mécanique commune aux deux barèmes : somme pondérée des critères applicables, renormalisée
+ * sur les poids applicables. < 2 critères applicables → `null` (on ne note pas sur un seul critère).
+ */
+export function scoreFromCriteria(
+  criteria: { weight: number; frac: number | null }[],
+): ExecutionGradeResult {
+  const applicable = criteria.filter((c) => c.frac != null);
+  if (applicable.length < 2) return { score: null, grade: null };
+
+  const weightSum = applicable.reduce((s, c) => s + c.weight, 0);
+  const weighted = applicable.reduce((s, c) => s + c.weight * (c.frac as number), 0);
+  const score = Math.round((100 * weighted) / weightSum);
+  return { score, grade: gradeFromScore(score) };
+}
+
+/** Médiane d'une liste (0 si vide). Utilisée par le barème comportemental. */
+export function median(values: number[]): number {
+  if (!values.length) return 0;
+  const s = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 === 1 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
 }
 
 /** Critère « stop respecté » — besoin de stopLoss + exit. LONG : exit ≥ stop ; SHORT : exit ≤ stop. */
@@ -108,12 +133,83 @@ export function computeExecutionGrade(
     { weight: W.risk, frac: fracRisk(trade, account) },
   ];
 
-  const applicable = criteria.filter((c) => c.frac != null);
-  if (applicable.length < 2) return { score: null, grade: null };
+  return scoreFromCriteria(criteria);
+}
 
-  const weightSum = applicable.reduce((s, c) => s + c.weight, 0);
-  const weighted = applicable.reduce((s, c) => s + c.weight * (c.frac as number), 0);
-  const score = Math.round((100 * weighted) / weightSum);
+// ── Barème B — comportemental (PROMPT-168) ──────────────────────────────────
+// Utilisé quand le trade n'a PAS de stop loss (scalp manuel, imports broker). Ne mesure PAS la même
+// chose que le barème A → non comparable ; on trace lequel a servi (executionMethod). Contextuel :
+// dépend de l'historique du trader sur le compte (médianes) → recalcul par lot (voir service).
 
-  return { score, grade: gradeFromScore(score) };
+export const BEHAVIORAL_GRADE_WEIGHTS = { loss: 40, revenge: 35, size: 25 } as const;
+/** Historique minimum de trades clôturés sur le compte pour que les médianes aient du sens. */
+export const BEHAVIORAL_MIN_TRADES = 20;
+export const LOSS_SOFT_FACTOR = 1.5; // perte ≤ 1.5× médiane → contenue
+export const LOSS_HARD_FACTOR = 3; // perte > 3× médiane → hors contrôle
+export const REVENGE_MIN_MINUTES = 2; // ré-entrée < 2 min après une perte → revenge
+export const REVENGE_SAFE_MINUTES = 10; // ré-entrée > 10 min → serein
+export const SIZE_SOFT_FACTOR = 1; // taille ≤ médiane → constante
+export const SIZE_HARD_FACTOR = 2; // taille > 2× médiane → martingale
+
+export interface BehavioralTradeInput {
+  /** P&L clôturé (le signe sert seulement à identifier une perte, jamais comme mesure de réussite). */
+  pnl: number;
+  quantity: number;
+  tradedAt: Date;
+  /** Médiane des pertes (magnitudes) des trades clôturés du compte. */
+  medianLoss: number;
+  /** Médiane des quantités des trades clôturés du compte. */
+  medianQuantity: number;
+  /** Le trade chronologiquement précédent (même compte) est-il une perte ? (sizing anti-martingale) */
+  previousIsLoss: boolean;
+  /** Clôture du dernier trade perdant le même jour, avant ce trade (revenge) ; null si aucun. */
+  lastSameDayLossAt: Date | null;
+  /** Seuil break-even (défaut identique à trade-stats). */
+  epsilon?: number;
+}
+
+/** Perte contenue (substitut du « stop respecté ») — applicable uniquement sur un trade perdant. */
+function fracLossContained(t: BehavioralTradeInput): number | null {
+  const eps = t.epsilon ?? BREAKEVEN_EPSILON;
+  if (t.pnl >= -eps) return null; // gagnant ou BE → on ne récompense pas le fait d'avoir gagné
+  if (t.medianLoss <= 0) return null;
+  const ratio = Math.abs(t.pnl) / t.medianLoss;
+  if (ratio <= LOSS_SOFT_FACTOR) return 1;
+  if (ratio <= LOSS_HARD_FACTOR) return 0.5;
+  return 0;
+}
+
+/** Pas de revenge trading — délai depuis la clôture du dernier perdant du jour. */
+function fracRevenge(t: BehavioralTradeInput): number | null {
+  if (t.lastSameDayLossAt == null) return null; // pas de perte précédente le même jour → non applicable
+  const deltaMin = (t.tradedAt.getTime() - t.lastSameDayLossAt.getTime()) / 60000;
+  if (deltaMin < REVENGE_MIN_MINUTES) return 0;
+  if (deltaMin <= REVENGE_SAFE_MINUTES) return 0.5;
+  return 1;
+}
+
+/** Taille de position constante (anti-martingale, strict) — applicable si le trade précédent est une perte. */
+function fracSize(t: BehavioralTradeInput): number | null {
+  if (!t.previousIsLoss) return null;
+  if (t.medianQuantity <= 0) return null;
+  const ratio = t.quantity / t.medianQuantity;
+  if (ratio <= SIZE_SOFT_FACTOR) return 1;
+  if (ratio <= SIZE_HARD_FACTOR) return 0.5;
+  return 0;
+}
+
+/**
+ * Note comportementale d'un trade sans stop. Même mécanique/score/grade que le barème A mais 3 critères
+ * relatifs à l'historique. < 2 critères applicables → `{ null, null }`. Le garde-fou « historique < 20 »
+ * est géré côté appelant (les médianes n'ont pas de sens en dessous).
+ */
+export function computeBehavioralGrade(
+  input: BehavioralTradeInput,
+): ExecutionGradeResult {
+  const W = BEHAVIORAL_GRADE_WEIGHTS;
+  return scoreFromCriteria([
+    { weight: W.loss, frac: fracLossContained(input) },
+    { weight: W.revenge, frac: fracRevenge(input) },
+    { weight: W.size, frac: fracSize(input) },
+  ]);
 }
