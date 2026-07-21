@@ -227,6 +227,26 @@
   color: var(--text-3);
 }
 
+.trial-status {
+  margin: 4px 0 2px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+.trial-status-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 4px;
+}
+.trial-status-sub {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.5;
+  margin: 0;
+}
+
 .plan-upgrade-hint {
   font-size: 12px;
   color: var(--text-3);

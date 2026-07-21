@@ -391,8 +391,15 @@
                   <div class="plan-badge-dot"></div>
                   PREMIUM
                 </div>
-                <p class="plan-desc">Accès à tout : IA Insights, Chat coach IA, Calendrier éco IA, news &amp; contexte marché, recap email 17h30.</p>
-                @if (userStore.user()?.stripeCurrentPeriodEnd) {
+                <p class="plan-desc">Accès à tout : IA Insights, Chat coach IA, Weekly Debrief, analytics avancés, comptes illimités.</p>
+                @if (isInTrial()) {
+                  <div class="trial-status">
+                    <p class="trial-status-title">🎁 Essai gratuit — il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
+                    <p class="trial-status-sub">
+                      Premier prélèvement le {{ trialEndsAt() | date:'dd/MM/yyyy' }}. Annulable en un clic, aucun prélèvement si tu annules avant.
+                    </p>
+                  </div>
+                } @else if (userStore.user()?.stripeCurrentPeriodEnd) {
                   <p class="plan-renewal">
                     Renouvellement : {{ userStore.user()?.stripeCurrentPeriodEnd | date:'dd/MM/yyyy' }}
                   </p>
@@ -400,7 +407,7 @@
                 @if (!userStore.isDemo()) {
                   <div class="plan-actions">
                     <button class="btn btn-secondary" (click)="openPortal()">
-                      Gérer mon abonnement →
+                      {{ isInTrial() ? 'Gérer / annuler mon essai →' : 'Gérer mon abonnement →' }}
                     </button>
                   </div>
                 }
