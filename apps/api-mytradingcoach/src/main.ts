@@ -62,7 +62,10 @@ async function bootstrap() {
   );
   app.use(compression());
   app.use(cookieParser());
-  app.setGlobalPrefix('api');
+  // `robots.txt` doit répondre à la RACINE du sous-domaine (api.mytradingcoach.app/robots.txt),
+  // pas sous /api → exclu du préfixe global. `health` reste sous /api/health (ne pas casser le
+  // health check existant).
+  app.setGlobalPrefix('api', { exclude: ['robots.txt'] });
 
   const corsOrigins = process.env['CORS_ORIGINS']?.split(',') ?? [
     'http://localhost:4200',
