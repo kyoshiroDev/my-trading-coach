@@ -65,6 +65,20 @@ export class SettingsComponent implements OnInit {
   // Onglets Profil trader / Paramètres (deep-link ?tab=params)
   protected readonly activeProfileTab = signal<ProfileTab>('trader');
 
+  // Statut d'essai (PROMPT-169 §5.2) — N calculé depuis trialEndsAt Stripe, pas l'inscription.
+  protected readonly isInTrial = computed(() => {
+    const end = this.userStore.user()?.trialEndsAt;
+    return !!end && new Date(end).getTime() > Date.now();
+  });
+  /** Jours restants avant le 1er prélèvement (arrondi au jour supérieur, min 0). */
+  protected readonly trialDaysLeft = computed(() => {
+    const end = this.userStore.user()?.trialEndsAt;
+    if (!end) return 0;
+    const ms = new Date(end).getTime() - Date.now();
+    return Math.max(0, Math.ceil(ms / 86_400_000));
+  });
+  protected readonly trialEndsAt = computed(() => this.userStore.user()?.trialEndsAt ?? null);
+
   // Compte — nom
   protected readonly editingName = signal(false);
   protected readonly nameInput = signal('');
@@ -252,7 +266,7 @@ export class SettingsComponent implements OnInit {
     });
   }
 
-  protected startTrial(plan: 'starter_monthly' | 'starter_yearly' = 'starter_monthly') {
+  protected startTrial(plan: 'premium_monthly' | 'premium_yearly' = 'premium_monthly') {
     this.billingApi
       .checkout(plan)
       .pipe(takeUntilDestroyed(this.destroyRef))

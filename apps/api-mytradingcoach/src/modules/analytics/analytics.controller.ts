@@ -1,7 +1,7 @@
 import { Controller, Get, Param, ParseIntPipe, Query, UseGuards } from '@nestjs/common';
 import { Plan, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { StarterGuard } from '../../common/guards/starter.guard';
+import { PremiumGuard } from '../../common/guards/premium.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AnalyticsService } from './analytics.service';
 import { DailyRecapService } from '../daily-recap/daily-recap.service';
@@ -26,7 +26,7 @@ export class AnalyticsController {
     return this.analyticsService.getSummary(user.id, await this.accountId(user.id, accountId));
   }
 
-  @UseGuards(StarterGuard)
+  @UseGuards(PremiumGuard)
   @Get('by-setup')
   async getBySetup(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
     return this.analyticsService.getBySetup(user.id, await this.accountId(user.id, accountId));
@@ -38,14 +38,14 @@ export class AnalyticsController {
     return this.analyticsService.getByEmotion(user.id, await this.accountId(user.id, accountId));
   }
 
-  @UseGuards(StarterGuard)
+  @UseGuards(PremiumGuard)
   @Get('by-hour')
   async getByHour(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
     return this.analyticsService.getByHour(user.id, await this.accountId(user.id, accountId));
   }
 
   // Courbe d'équité simple = vue de base FREE (la profondeur — drawdown détaillé,
-  // comparaisons de périodes — vit dans la page /analytics gardée Starter).
+  // comparaisons de périodes — vit dans la page /analytics gardée Premium).
   @Get('equity-curve')
   async getEquityCurve(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
     return this.analyticsService.getEquityCurve(user.id, await this.accountId(user.id, accountId));
@@ -90,7 +90,7 @@ export class AnalyticsController {
     );
   }
 
-  @UseGuards(StarterGuard)
+  @UseGuards(PremiumGuard)
   @Get('activity/:year/:month')
   async getMonthActivity(
     @CurrentUser() user: { id: string },

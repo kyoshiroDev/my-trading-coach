@@ -10,17 +10,8 @@ export class UserStore {
   readonly user = this.auth.currentUser;
   readonly isAuthenticated = this.auth.isAuthenticated;
   readonly isLoggedIn = computed(() => !!this.user());
-  readonly isStarter = computed(() => {
-    const user = this.user();
-    if (!user) return false;
-    if (user.role === 'ADMIN' || user.role === 'BETA_TESTER') return true;
-    if (user.trialEndsAt && new Date() < new Date(user.trialEndsAt)) return true;
-    return user.plan === 'STARTER' || user.plan === 'PREMIUM';
-  });
 
-  /** Alias explicite : plan Starter OU supérieur (Premium / trial / rôle privilégié). */
-  readonly isStarterOrAbove = this.isStarter;
-
+  /** Accès payant : plan PREMIUM, essai en cours, ou rôle privilégié (admin / beta). */
   readonly isPremium = computed(() => {
     const user = this.user();
     if (!user) return false;
@@ -31,11 +22,10 @@ export class UserStore {
 
   /**
    * Quota de comptes de trading du plan courant : `null` = illimité.
-   * Premium / trial / admin → illimité · Starter → 3 · Free → 1. Aligné backend.
+   * Premium / trial / admin → illimité · Free → 1. Aligné backend (PROMPT-169).
    */
   readonly maxAccounts = computed<number | null>(() => {
     if (this.isPremium()) return ACCOUNT_LIMITS.premium; // null (illimité)
-    if (this.isStarterOrAbove()) return ACCOUNT_LIMITS.starter;
     return ACCOUNT_LIMITS.free;
   });
 

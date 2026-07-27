@@ -21,8 +21,8 @@ function setup() {
     providers: [
       provideHttpClient(),
       provideHttpClientTesting(),
-      // isStarterOrAbove=false → le constructeur ne lance pas le polling (aucun HTTP).
-      { provide: UserStore, useValue: { isStarterOrAbove: () => false } },
+      // isPremium=false → le constructeur ne lance pas le polling (aucun HTTP).
+      { provide: UserStore, useValue: { isPremium: () => false } },
     ],
   });
   TestBed.overrideComponent(DebriefComponent, {

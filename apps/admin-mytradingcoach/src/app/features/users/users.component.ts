@@ -46,7 +46,6 @@ import { PRICING_EUR } from '../../core/constants/pricing.const';
       @if (stats(); as s) {
         <div class="kpi-strip">
           <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">MRR</div><div class="kpi-value teal">{{ s.mrr }}€</div><div class="kpi-sub">ARR {{ s.arr }}€</div></div>
-          <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Starter actifs</div><div class="kpi-value amber">{{ s.totalStarter }}</div><div class="kpi-sub">{{ s.starterMonthly }}m · {{ s.starterAnnual }}an</div></div>
           <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Premium actifs</div><div class="kpi-value blue">{{ s.totalPremium }}</div><div class="kpi-sub">{{ s.premiumMonthly }}m · {{ s.premiumAnnual }}an · {{ s.trials }} essai</div></div>
           <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Ambassadeurs</div><div class="kpi-value purple">{{ s.ambassadors }}</div><div class="kpi-sub">{{ s.betaTesters }} bêta testeur{{ s.betaTesters > 1 ? 's' : '' }}</div></div>
           <div class="kpi"><div class="kpi-top green"></div><div class="kpi-label">Nouveaux ce mois</div><div class="kpi-value">{{ s.newThisMonth }}</div><div class="kpi-sub">inscrits en {{ getMonthLabel() }}</div></div>
@@ -78,7 +77,7 @@ import { PRICING_EUR } from '../../core/constants/pricing.const';
                 <tr class="clickable" (click)="goToDetail(u.id)">
                   <td data-label="Utilisateur"><div class="u-cell"><div class="u-av">{{ initials(u) }}</div><div><div class="u-name">{{ u.name ?? '—' }}</div><div class="u-mail">{{ u.email }}</div></div></div></td>
                   <td data-label="Rôle"><span class="role-tag" [class.purple]="u.role !== 'USER'">{{ u.role }}</span></td>
-                  <td data-label="Plan"><span class="badge" [class.b-premium]="u.plan==='PREMIUM'" [class.b-starter]="u.plan==='STARTER'" [class.b-free]="u.plan==='FREE'">{{ u.plan }}</span></td>
+                  <td data-label="Plan"><span class="badge" [class.b-premium]="u.plan==='PREMIUM'" [class.b-free]="u.plan==='FREE'">{{ u.plan }}</span></td>
                   <td data-label="Abonnement">
                     @if (u.plan !== 'FREE') { <span [class]="'sub-badge sub-badge--' + subType(u)">{{ subLabel(u) }}</span> }
                     @else { <span class="muted">–</span> }
@@ -129,7 +128,6 @@ import { PRICING_EUR } from '../../core/constants/pricing.const';
                 <label for="modal-edit-plan">Plan</label>
                 <select id="modal-edit-plan" class="field-select" [(ngModel)]="editPlan">
                   <option value="FREE">FREE</option>
-                  <option value="STARTER">STARTER · {{ pricing.STARTER.monthly }}€/mois</option>
                   <option value="PREMIUM">PREMIUM · {{ pricing.PREMIUM.monthly }}€/mois</option>
                 </select>
               </div>
@@ -198,7 +196,7 @@ export class UsersComponent implements OnInit {
 
   // ── Tri du tableau (défaut : activité = récence, plus récent en haut) ───────
   private readonly ROLE_RANK: Record<string, number> = { USER: 0, BETA_TESTER: 1, AMBASSADOR: 2, ADMIN: 3 };
-  private readonly PLAN_RANK: Record<string, number> = { FREE: 0, STARTER: 1, PREMIUM: 2 };
+  private readonly PLAN_RANK: Record<string, number> = { FREE: 0, PREMIUM: 1 };
   protected readonly sort = new TableSort<AdminUser>(
     {
       n: (u) => (u.name ?? u.email).toLowerCase(),
@@ -214,7 +212,7 @@ export class UsersComponent implements OnInit {
   protected readonly sortedUsers = this.sort.connect(this.users);
 
   protected editName = '';
-  protected editPlan: 'FREE' | 'STARTER' | 'PREMIUM' = 'FREE';
+  protected editPlan: 'FREE' | 'PREMIUM' = 'FREE';
   protected editRole: 'USER' | 'BETA_TESTER' | 'AMBASSADOR' = 'USER';
 
   ngOnInit() {

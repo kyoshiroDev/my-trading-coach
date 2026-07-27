@@ -24,7 +24,6 @@ type PlanContext = { plan: Plan; role: Role; trialEndsAt?: Date | null };
 // Quota de comptes par plan — aligné front `ACCOUNT_LIMITS` (pricing.const.ts).
 // Premium / trial / admin / beta = illimité. Seuls les comptes ACTIVE consomment un
 // slot (PASSED / FAILED / ARCHIVED le libèrent).
-const STARTER_ACCOUNT_LIMIT = 3;
 const FREE_ACCOUNT_LIMIT = 1;
 
 const RULE_DISCLAIMER =
@@ -194,7 +193,7 @@ export class AccountsService {
 
   /**
    * Quota de comptes du plan : `null` = illimité.
-   * Premium / trial / admin / beta → illimité · Starter → 3 · Free → 1.
+   * Premium / trial / admin / beta → illimité · Free → 1.
    * Sans contexte (appels internes) → non plafonné.
    */
   private resolveAccountLimit(ctx?: PlanContext): number | null {
@@ -203,7 +202,6 @@ export class AccountsService {
     if (role === Role.ADMIN || role === Role.BETA_TESTER) return null;
     const inTrial = !!(trialEndsAt && new Date() < new Date(trialEndsAt));
     if (plan === Plan.PREMIUM || inTrial) return null;
-    if (plan === Plan.STARTER) return STARTER_ACCOUNT_LIMIT;
     return FREE_ACCOUNT_LIMIT;
   }
 

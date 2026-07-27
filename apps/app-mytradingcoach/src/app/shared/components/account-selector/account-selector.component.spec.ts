@@ -3,12 +3,11 @@ import { TestBed } from '@angular/core/testing';
 import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
 import { AccountSelectorComponent } from './account-selector.component';
 import { SelectedAccountStore } from '../../../core/stores/selected-account.store';
-import { UserStore } from '../../../core/stores/user.store';
 import { TradingAccount } from '../../../core/api/accounts.api';
 
 const acc = (over: Partial<TradingAccount>): TradingAccount => over as TradingAccount;
 
-function setup(opts: { premium?: boolean; loaded?: boolean } = {}) {
+function setup(opts: { loaded?: boolean } = {}) {
   const store = {
     accounts: signal<TradingAccount[]>([]),
     selectedAccountId: signal<string | 'all'>('all'),
@@ -17,13 +16,10 @@ function setup(opts: { premium?: boolean; loaded?: boolean } = {}) {
     select: vi.fn(),
     load: vi.fn(),
   };
-  const eligible = opts.premium ?? true;
-  const userStore = { isStarterOrAbove: () => eligible, isPremium: () => eligible };
 
   TestBed.configureTestingModule({
     providers: [
       { provide: SelectedAccountStore, useValue: store },
-      { provide: UserStore, useValue: userStore },
     ],
   });
   TestBed.overrideComponent(AccountSelectorComponent, {
@@ -38,18 +34,13 @@ function setup(opts: { premium?: boolean; loaded?: boolean } = {}) {
 describe('AccountSelectorComponent', () => {
   beforeEach(() => TestBed.resetTestingModule());
 
-  it('Starter+ + non chargé → charge les comptes à l\'init', () => {
-    const { store } = setup({ premium: true, loaded: false });
+  it('non chargé → charge les comptes à l\'init', () => {
+    const { store } = setup({ loaded: false });
     expect(store.load).toHaveBeenCalledTimes(1);
   });
 
-  it('FREE → ne charge pas (aucun appel /accounts)', () => {
-    const { store } = setup({ premium: false });
-    expect(store.load).not.toHaveBeenCalled();
-  });
-
   it('déjà chargé → ne recharge pas', () => {
-    const { store } = setup({ premium: true, loaded: true });
+    const { store } = setup({ loaded: true });
     expect(store.load).not.toHaveBeenCalled();
   });
 

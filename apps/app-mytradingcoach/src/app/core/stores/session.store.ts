@@ -13,7 +13,6 @@ import { DailyRecapApi, DailyRecap } from '../api/daily-recap.api';
 import { DebriefApi, DebriefObjective } from '../api/debrief.api';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent } from '../api/eco-calendar.api';
 import { UserStore } from './user.store';
-import { TradesStore } from './trades.store';
 import { todayParis, toParisDateStr } from '../utils/paris-date';
 import { POLLING_MS } from '../constants/polling.const';
 
@@ -25,7 +24,6 @@ export class SessionStore {
   private readonly debriefApi      = inject(DebriefApi);
   private readonly ecoCalendarApi  = inject(EcoCalendarApi);
   private readonly userStore       = inject(UserStore);
-  private readonly tradesStore     = inject(TradesStore);
   private readonly destroyRef      = inject(DestroyRef);
 
   // ── State ─────────────────────────────────────────────────────────────────
@@ -92,20 +90,20 @@ export class SessionStore {
         if (this.activeSession()?.status === 'ACTIVE') this.refreshLiveStats();
       });
 
-    // Polling calendrier éco (Starter+, session active) : recharge la donnée fraîche
-    // (actuals + analyse IA) toutes les 60 s. Filet de sécurité indépendant du broadcast
-    // WebSocket transitoire — la fenêtre ouverte rattrape même si un broadcast est manqué
-    // (reconnexion socket après déploiement, cycle de détection raté côté cron, etc.).
+    // Polling calendrier éco (IA mutualisée = FREE, session active) : recharge la donnée
+    // fraîche (actuals + analyse IA) toutes les 60 s. Filet de sécurité indépendant du
+    // broadcast WebSocket transitoire — la fenêtre ouverte rattrape même si un broadcast
+    // est manqué (reconnexion socket après déploiement, cycle de détection raté, etc.).
     interval(POLLING_MS.ECO_CALENDAR)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        if (this.activeSession()?.status === 'ACTIVE' && this.userStore.isStarterOrAbove()) {
+        if (this.activeSession()?.status === 'ACTIVE') {
           this.loadWeekEcoCalendar();
         }
       });
 
-    // Polling market context + news : session active ET plan Starter+
-    // (contexte marché + news filtrées = features Starter+, guards backend en place).
+    // Polling market context + news : session active (contexte marché + news = IA
+    // mutualisée → FREE depuis PROMPT-169, accessible à tous les utilisateurs connectés).
     toObservable(this.activeSession)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((session) => {
@@ -113,9 +111,7 @@ export class SessionStore {
         clearInterval(this.newsInterval);
         this.marketCtxInterval = undefined;
         this.newsInterval      = undefined;
-        // Contexte marché + news = features Starter+ (endpoints gardés côté API) :
-        // on ne poll que pour un Starter+ ; sinon les panneaux affichent un upsell.
-        if (session?.status === 'ACTIVE' && this.userStore.isStarterOrAbove()) {
+        if (session?.status === 'ACTIVE') {
           this.fetchMarketContext();
           this.fetchNewsItems();
           this.marketCtxInterval = setInterval(() => this.fetchMarketContext(), POLLING_MS.MARKET_CONTEXT);
@@ -144,9 +140,9 @@ export class SessionStore {
 
     this.loadWeekEcoCalendar();
 
-    // Le débrief (objectifs) est une feature Starter+ : ne pas appeler l'endpoint
-    // (StarterGuard) pour un FREE, sinon 403. La session de base reste accessible.
-    if (this.userStore.isStarterOrAbove()) {
+    // Le débrief (objectifs) est une feature Premium : ne pas appeler l'endpoint
+    // (PremiumGuard) pour un FREE, sinon 403. La session de base reste accessible.
+    if (this.userStore.isPremium()) {
       this.debriefApi
         .getCurrent()
         .pipe(takeUntilDestroyed(this.destroyRef))
@@ -220,7 +216,6 @@ export class SessionStore {
       .subscribe({
         next: () => {
           this.refreshLiveStats();
-          this.tradesStore.registerCreatedTrade(); // maj instantanée du compteur mensuel (limite FREE)
           this.flashFeedback('success', 'Trade loggué');
         },
         error: (err) =>

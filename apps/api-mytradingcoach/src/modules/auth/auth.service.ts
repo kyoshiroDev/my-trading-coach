@@ -182,29 +182,6 @@ export class AuthService {
     return user;
   }
 
-  async startTrial(userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new UnauthorizedException('Utilisateur introuvable');
-    if (user.trialUsed) throw new BadRequestException('Essai déjà utilisé');
-
-    const updated = await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        trialEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        trialUsed: true,
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        plan: true,
-        trialEndsAt: true,
-        trialUsed: true,
-      },
-    });
-    return updated;
-  }
-
   async forgotPassword(email: string): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { email } });
     // Réponse identique que l'utilisateur existe ou non (anti-énumération)

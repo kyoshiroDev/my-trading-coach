@@ -61,17 +61,17 @@
     </div>
   </div>
 
-  <!-- ── Séparateur STARTER ── -->
+  <!-- ── Séparateur PREMIUM ── -->
   <div class="premium-separator">
     <div class="separator-line"></div>
-    <span class="separator-label">ANALYTICS AVANCÉS · STARTER</span>
+    <span class="separator-label">ANALYTICS AVANCÉS · PREMIUM</span>
     <div class="separator-line"></div>
   </div>
 
   <!-- ══════════════════════════════════════════
-       CONTENU STARTER
+       CONTENU PREMIUM
   ══════════════════════════════════════════ -->
-  @if (userStore.isStarterOrAbove()) {
+  @if (userStore.isPremium()) {
     <!-- Equity Curve + Drawdown côte à côte -->
     <div class="grid-2 mb-16">
       <div class="card">
@@ -300,7 +300,7 @@
   <!-- ══════════════════════════════════════════
        BLOCS VERROUILLÉS — FREE
   ══════════════════════════════════════════ -->
-  @if (!userStore.isStarterOrAbove()) {
+  @if (!userStore.isPremium()) {
     <div class="locked-blocks">
       <!-- Bloc 1 — Equity Curve & Drawdown -->
       <div class="locked-feature">
@@ -360,7 +360,7 @@
             data-testid="upgrade-cta"
             (click)="showPlanModal.set(true)"
           >
-            Essayer 7 jours gratuit →
+            Essayer Premium — 1 mois offert →
           </button>
         </div>
       </div>
@@ -392,7 +392,7 @@
             data-testid="upgrade-cta"
             (click)="showPlanModal.set(true)"
           >
-            Essayer 7 jours gratuit →
+            Essayer Premium — 1 mois offert →
           </button>
         </div>
       </div>
@@ -423,7 +423,7 @@
             data-testid="upgrade-cta"
             (click)="showPlanModal.set(true)"
           >
-            Essayer 7 jours gratuit →
+            Essayer Premium — 1 mois offert →
           </button>
         </div>
       </div>

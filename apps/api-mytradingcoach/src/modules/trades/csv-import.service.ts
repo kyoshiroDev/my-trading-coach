@@ -319,7 +319,7 @@ export class CsvImportService {
    * Le chemin IA d'import (broker inconnu → Anthropic) n'est autorisé que :
    * - en production (garde NODE_ENV : zéro dépense IA hors prod), ET
    * - pour un accès Premium strict (PREMIUM / ADMIN / BETA_TESTER / trial actif).
-   * Aligné sur PremiumGuard — STARTER N'A PAS d'IA (CLAUDE.md).
+   * Aligné sur PremiumGuard — l'import IA (broker inconnu) est une IA personnelle → PREMIUM (PROMPT-169).
    */
   private aiImportAllowed(access?: AiImportAccess): boolean {
     if (process.env['NODE_ENV'] !== 'production') return false;

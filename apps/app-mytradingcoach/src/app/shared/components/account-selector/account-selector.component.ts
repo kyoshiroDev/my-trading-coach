@@ -4,30 +4,25 @@ import {
   OnInit,
   computed,
   inject,
-  signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { LucideAngularModule, Layers, Plus } from 'lucide-angular';
 import { SelectedAccountStore } from '../../../core/stores/selected-account.store';
-import { UserStore } from '../../../core/stores/user.store';
 import { AccountType, TradingAccount } from '../../../core/api/accounts.api';
-import { PlanModalComponent } from '../plan-modal/plan-modal.component';
 
 // Sélecteur de compte réutilisable (dashboard, etc.). Pills « Tous les comptes » + 1 par
-// compte (pastille de statut + tag + solde, fidèle à la maquette). Réservé Starter et +
-// → sinon CTA upsell, aucun appel /accounts.
+// compte (pastille de statut + tag + solde, fidèle à la maquette). Accessible à tous
+// (FREE : 1 compte · Premium : illimité).
 @Component({
   selector: 'mtc-account-selector',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, LucideAngularModule, PlanModalComponent],
+  imports: [RouterLink, LucideAngularModule],
   templateUrl: './account-selector.component.html',
   styleUrl: './account-selector.component.css',
 })
 export class AccountSelectorComponent implements OnInit {
   protected readonly store = inject(SelectedAccountStore);
-  protected readonly userStore = inject(UserStore);
-  protected readonly showPlanModal = signal(false);
 
   protected readonly LayersIcon = Layers;
   protected readonly PlusIcon = Plus;
@@ -41,8 +36,7 @@ export class AccountSelectorComponent implements OnInit {
   );
 
   ngOnInit(): void {
-    // Charge les comptes si Starter et + (le store no-op pour les FREE).
-    if (this.userStore.isStarterOrAbove() && !this.store.loaded() && !this.store.isLoading()) {
+    if (!this.store.loaded() && !this.store.isLoading()) {
       this.store.load();
     }
   }

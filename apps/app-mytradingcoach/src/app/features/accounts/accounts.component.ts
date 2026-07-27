@@ -126,7 +126,7 @@ export class AccountsComponent implements OnInit {
     this.store.accounts().some((a) => a.type === 'EVALUATION' || a.type === 'FUNDED'),
   );
 
-  // ── Quota par plan (Starter 3 · Premium illimité). null = illimité. ──────
+  // ── Quota par plan (FREE 1 · Premium illimité). null = illimité. ──────────
   // Seuls les comptes ACTIVE consomment le quota (aligné backend).
   protected readonly accountLimit = this.userStore.maxAccounts;
   protected readonly atLimit = computed(() => {
@@ -135,7 +135,7 @@ export class AccountsComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    if (this.userStore.isStarterOrAbove() && !this.store.loaded() && !this.store.isLoading()) {
+    if (!this.store.loaded() && !this.store.isLoading()) {
       this.store.load();
     }
   }

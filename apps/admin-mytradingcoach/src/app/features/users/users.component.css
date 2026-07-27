@@ -59,7 +59,6 @@
 .profile-since { font-size: 11px; color: var(--text3); }
 .plan-badge { font-size: 9.5px; font-weight: 600; font-family: var(--mono); padding: 2px 8px; border-radius: 5px; border: 1px solid transparent; }
 .plan-badge.premium { background: var(--blue-dim); color: var(--blue); border-color: rgba(74,158,255,.25); }
-.plan-badge.starter { background: var(--amber-dim); color: var(--amber); border-color: rgba(245,166,35,.25); }
 .plan-badge.free { background: rgba(255,255,255,.04); color: var(--text3); border-color: rgba(255,255,255,.08); }
 .plan-badge.beta { background: rgba(167,139,250,.12); color: var(--purple); border-color: rgba(167,139,250,.25); }
 .plan-badge.ambassador { background: var(--teal-dim); color: var(--teal); border-color: rgba(0,212,170,.25); }

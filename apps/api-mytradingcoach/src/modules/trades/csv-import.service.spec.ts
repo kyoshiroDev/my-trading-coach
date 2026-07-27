@@ -168,25 +168,6 @@ describe('CsvImportService — chemin IA réservé Premium', () => {
     expect(create).not.toHaveBeenCalled();
   });
 
-  it('refuse aussi un STARTER (Starter n’a pas d’IA)', async () => {
-    const oldEnv = process.env['NODE_ENV'];
-    process.env['NODE_ENV'] = 'production';
-    try {
-      const create = vi.fn();
-      (svc as any).anthropicClient.create = create;
-      const csv = ['foo,bar,baz', 'v1,w,z'].join('\n');
-      await expect(
-        svc.parseCSV(Buffer.from(csv), 'unknown.csv', undefined, {
-          plan: Plan.STARTER,
-          role: Role.USER,
-          trialEndsAt: null,
-        }),
-      ).rejects.toThrow(/Premium/);
-      expect(create).not.toHaveBeenCalled();
-    } finally {
-      process.env['NODE_ENV'] = oldEnv;
-    }
-  });
 });
 
 describe('CsvImportService — chemin IA par lots', () => {

@@ -179,46 +179,6 @@ describe('AuthService', () => {
     });
   });
 
-  describe('startTrial', () => {
-    it('active le trial pour exactement 7 jours', async () => {
-      const now = Date.now();
-      mockPrisma.user.findUnique.mockResolvedValue({
-        ...mockUser,
-        trialUsed: false,
-      });
-      mockPrisma.user.update.mockImplementation(({ data }) => ({
-        ...mockUser,
-        ...data,
-      }));
-
-      const result = await service.startTrial('user-123');
-
-      const trialMs = new Date(result.trialEndsAt!).getTime() - now;
-      const trialDays = trialMs / (1000 * 60 * 60 * 24);
-
-      expect(trialDays).toBeCloseTo(7, 0);
-      expect(result.trialUsed).toBe(true);
-    });
-
-    it('lance BadRequestException si trial déjà utilisé', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({
-        ...mockUser,
-        trialUsed: true,
-      });
-
-      await expect(service.startTrial('user-123')).rejects.toThrow(
-        BadRequestException,
-      );
-    });
-
-    it('lance UnauthorizedException si user introuvable', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
-
-      await expect(service.startTrial('unknown-id')).rejects.toThrow(
-        UnauthorizedException,
-      );
-    });
-  });
 
   describe('forgotPassword', () => {
     it("ne fait rien si l'email n'existe pas (anti-énumération)", async () => {

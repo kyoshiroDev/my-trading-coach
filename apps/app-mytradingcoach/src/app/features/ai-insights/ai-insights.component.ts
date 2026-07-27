@@ -95,7 +95,7 @@ function insightVariant(type: string): InsightVariant {
             tes patterns comportementaux avec le coach IA.
           </p>
           <button class="paywall-cta" (click)="showPlanModal.set(true)">
-            Essayer 7 jours gratuit →
+            Essayer Premium — 1 mois offert →
           </button>
         </div>
         @if (showPlanModal()) {

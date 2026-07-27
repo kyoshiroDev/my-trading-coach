@@ -30,7 +30,6 @@ import {
   LogOut,
 } from 'lucide-angular';
 import { UserStore } from '../../../core/stores/user.store';
-import { TradesStore } from '../../../core/stores/trades.store';
 import { AuthService } from '../../../core/auth/auth.service';
 import { UsersApi } from '../../../core/api/users.api';
 import { AmbassadorNotifService } from '../../../core/services/ambassador-notif.service';
@@ -106,19 +105,17 @@ import { environment } from '../../../../environments/environment';
             <span class="nav-label">Ma session</span>
           </a>
 
-          @if (userStore.isStarterOrAbove()) {
-            <a
-              routerLink="/accounts"
-              routerLinkActive="active"
-              class="nav-item"
-              data-testid="nav-accounts"
-              [attr.title]="collapsed() ? 'Mes comptes' : null"
-              (click)="closeSidebar()"
-            >
-              <lucide-icon [img]="AccountsIcon" [size]="16" class="nav-icon" />
-              <span class="nav-label">Mes comptes</span>
-            </a>
-          }
+          <a
+            routerLink="/accounts"
+            routerLinkActive="active"
+            class="nav-item"
+            data-testid="nav-accounts"
+            [attr.title]="collapsed() ? 'Mes comptes' : null"
+            (click)="closeSidebar()"
+          >
+            <lucide-icon [img]="AccountsIcon" [size]="16" class="nav-icon" />
+            <span class="nav-label">Mes comptes</span>
+          </a>
 
           <a
             routerLink="/journal"
@@ -154,8 +151,8 @@ import { environment } from '../../../../environments/environment';
           >
             <lucide-icon [img]="AnalyticsIcon" [size]="16" class="nav-icon" />
             <span class="nav-label">Analytics</span>
-            @if (!userStore.isStarterOrAbove()) {
-              <span class="badge starter">STARTER</span>
+            @if (!userStore.isPremium()) {
+              <span class="badge premium">PREMIUM</span>
             }
           </a>
 
@@ -186,8 +183,8 @@ import { environment } from '../../../../environments/environment';
           >
             <lucide-icon [img]="DebriefIcon" [size]="16" class="nav-icon" />
             <span class="nav-label">Weekly Debrief</span>
-            @if (!userStore.isStarterOrAbove()) {
-              <span class="badge starter">STARTER</span>
+            @if (!userStore.isPremium()) {
+              <span class="badge premium">PREMIUM</span>
             }
           </a>
 
@@ -246,8 +243,8 @@ import { environment } from '../../../../environments/environment';
           >
             <lucide-icon [img]="ScoringIcon" [size]="16" class="nav-icon" />
             <span class="nav-label">Scoring</span>
-            @if (!userStore.isStarterOrAbove()) {
-              <span class="badge starter">STARTER</span>
+            @if (!userStore.isPremium()) {
+              <span class="badge premium">PREMIUM</span>
             }
           </a>
 
@@ -283,12 +280,9 @@ import { environment } from '../../../../environments/environment';
               <div class="user-name">{{ userStore.displayName() }}</div>
               <div class="user-plan"
                 [class.premium]="userStore.isPremium()"
-                [class.starter]="!userStore.isPremium() && userStore.isStarterOrAbove()"
-                [class.free]="!userStore.isStarterOrAbove()">
+                [class.free]="!userStore.isPremium()">
                 @if (userStore.isPremium()) {
                   ★ PREMIUM
-                } @else if (userStore.isStarterOrAbove()) {
-                  ★ STARTER
                 } @else {
                   GRATUIT
                 }
@@ -346,7 +340,6 @@ import { environment } from '../../../../environments/environment';
 })
 export class SidebarComponent {
   protected readonly userStore = inject(UserStore);
-  protected readonly tradesStore = inject(TradesStore);
   private readonly auth = inject(AuthService);
   private readonly usersApi = inject(UsersApi);
   private readonly destroyRef = inject(DestroyRef);
@@ -423,8 +416,6 @@ export class SidebarComponent {
   private collapsedBeforeSession: boolean | null = null;
 
   constructor() {
-    this.tradesStore.loadMonthlyCount();
-
     effect(() => {
       const active = this.sessionStore.hasActiveSession();
       if (active && this.collapsedBeforeSession === null) {

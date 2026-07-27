@@ -42,7 +42,7 @@ src/app/
 │   │           session-live.component.ts + .css
 │   ├── journal/            journal.component · trade-form.component · trade-row.component
 │   │                       csv-import.component   ← import historique GRATUIT (tous plans)
-│   │                       (register : « 30 trades/mois hors import historique » ;
+│   │                       (register : « trades illimités, sans CB » ;
 │   │                        levier d'acquisition, dispo onboarding + bouton CSV du Journal)
 │   ├── analytics/          analytics.component · heatmap.component
 │   ├── ai-insights/        ai-insights.component · insight-card.component
@@ -127,27 +127,29 @@ SetupColorPipe    // couleur selon setup
 
 ## Features gated — règles obligatoires
 
-⚠️ Le gating n'est PAS « Premium partout » : cf. `.claude/agents/plans.md` (source de
-vérité). `isStarterOrAbove()` = STARTER+ (analytics avancés, weekly debrief, contexte
-marché, news, éco IA…) · `isPremium()` = PREMIUM (IA Insights, chat coach, recap 17h30).
+⚠️ 2 paliers depuis PROMPT-169 : cf. `.claude/agents/plans.md` (source de vérité).
+`isPremium()` = PREMIUM / trial / admin / beta. L'alias `isStarterOrAbove` a été
+**supprimé**. L'IA **mutualisée** (contexte marché, news, calendrier éco IA) est **FREE**
+(aucun gate front) ; la profondeur d'analyse + l'IA personnelle (analytics avancés, Weekly
+Debrief, IA Insights, chat coach, score, recap 17h30) sont **PREMIUM** (`isPremium`).
 
-**Pattern dans les composants qui gate une feature :**
+**Pattern dans les composants qui gate une feature PREMIUM :**
 
 ```typescript
 private readonly userStore = inject(UserStore);
-protected readonly isStarterOrAbove = this.userStore.isStarterOrAbove; // ou isPremium
+// on utilise directement userStore.isPremium() dans le template
 ```
 
 ```html
-@if (isStarterOrAbove()) {
+@if (userStore.isPremium()) {
   <!-- feature accessible -->
 } @else {
-  <mtc-premium-lock title="Titre de la feature" subtitle="Disponible dès Starter" />
+  <mtc-premium-lock title="Titre de la feature" subtitle="Disponible en Premium" />
 }
 ```
 
-Si l'API retourne `{ code: 'PREMIUM_REQUIRED' | 'STARTER_REQUIRED' }` → afficher le lock
-(ou rediriger vers `/settings`). Cohérence obligatoire aux 4 points de `plans.md`.
+Si l'API retourne `{ code: 'PREMIUM_REQUIRED' }` → afficher le lock (ou rediriger vers
+`/settings`). Cohérence obligatoire aux 4 points de `plans.md`.
 
 ---
 

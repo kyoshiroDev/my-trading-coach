@@ -378,7 +378,6 @@ enum Role {
 
 enum Plan {
   FREE
-  STARTER
   PREMIUM
 }
 

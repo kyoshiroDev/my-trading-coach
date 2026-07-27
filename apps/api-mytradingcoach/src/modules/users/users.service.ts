@@ -8,7 +8,7 @@ import { Plan, Role, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
-import { PRICING_EUR } from '../../common/constants/pricing.const';
+import { PRICING_EUR, TRIAL_PERIOD_DAYS } from '../../common/constants/pricing.const';
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
@@ -247,22 +247,15 @@ export class UsersService {
     const REAL_USERS = { isDemo: false, role: { not: Role.ADMIN } } as const;
 
     const [
-      starterMonthly, starterAnnual,
       premiumMonthly, premiumAnnual,
       trials, freeUsers, newThisMonth, churnedThisMonth,
       betaTesters, ambassadors,
-      totalUsers, totalStarter, totalPremium,
+      totalUsers, totalPremium,
       tradersActifs7d, tradersActifs30d,
       comptesSupprimesMois, comptesSupprimesTotal,
     ] = await Promise.all([
       // MRR = revenu réellement encaissé → abonnements 'active' uniquement (les essais
       // 'trialing' ne paient pas et sont déjà comptés à part dans `trials`).
-      this.prisma.user.count({
-        where: { ...REAL_USERS, plan: 'STARTER', stripeInterval: 'month', stripeSubscriptionStatus: 'active' },
-      }),
-      this.prisma.user.count({
-        where: { ...REAL_USERS, plan: 'STARTER', stripeInterval: 'year', stripeSubscriptionStatus: 'active' },
-      }),
       this.prisma.user.count({
         where: { ...REAL_USERS, plan: 'PREMIUM', stripeInterval: 'month', stripeSubscriptionStatus: 'active' },
       }),
@@ -277,10 +270,9 @@ export class UsersService {
       // role spécifique → écrase le `role: { not: ADMIN }` du spread (un user a un seul rôle).
       this.prisma.user.count({ where: { ...REAL_USERS, role: 'BETA_TESTER' } }),
       this.prisma.user.count({ where: { ...REAL_USERS, role: 'AMBASSADOR' } }),
-      // Total réel (tous plans/rôles, hors démo + hors admin) + comptes PAR PLAN (inclut les
-      // Premium/Starter octroyés sans abonnement Stripe : beta, ambassadeur, comp).
+      // Total réel (tous plans/rôles, hors démo + hors admin) + comptes Premium (inclut les
+      // Premium octroyés sans abonnement Stripe : beta, ambassadeur, comp).
       this.prisma.user.count({ where: { ...REAL_USERS } }),
-      this.prisma.user.count({ where: { ...REAL_USERS, plan: 'STARTER' } }),
       this.prisma.user.count({ where: { ...REAL_USERS, plan: 'PREMIUM' } }),
       // Engagement par récence : ≥1 trade sur 7j / 30j (distinct users, hors démo+admin).
       // À ne pas confondre avec l'activation (= a tradé au moins une fois).
@@ -292,21 +284,18 @@ export class UsersService {
       this.prisma.deletedAccount.count(),
     ]);
 
-    // MRR/ARR restent basés sur les abonnements Stripe payants (pas les comptes par plan).
-    const mrr = starterMonthly * PRICING_EUR.STARTER.monthly
-      + Math.round((starterAnnual * PRICING_EUR.STARTER.annual) / 12)
-      + premiumMonthly * PRICING_EUR.PREMIUM.monthly
+    // MRR/ARR sur le palier payant unique Premium (49€/mois · 490€/an — PROMPT-169).
+    const mrr = premiumMonthly * PRICING_EUR.PREMIUM.monthly
       + Math.round((premiumAnnual * PRICING_EUR.PREMIUM.annual) / 12);
     const arr = mrr * 12;
 
-    const monthly = starterMonthly + premiumMonthly;
-    const annual = starterAnnual + premiumAnnual;
+    const monthly = premiumMonthly;
+    const annual = premiumAnnual;
 
     return {
       mrr, arr,
       totalUsers,
-      totalStarter, totalPremium,
-      starterMonthly, starterAnnual,
+      totalPremium,
       premiumMonthly, premiumAnnual,
       monthly, annual,
       trials, freeUsers, newThisMonth, churnedThisMonth,
@@ -332,7 +321,7 @@ export class UsersService {
 
   async activateTrial(userId: string) {
     const trialEndsAt = new Date();
-    trialEndsAt.setDate(trialEndsAt.getDate() + 7);
+    trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_PERIOD_DAYS);
     return this.prisma.user.update({
       where: { id: userId },
       data: { trialEndsAt, trialUsed: true },
@@ -475,11 +464,11 @@ export class UsersService {
       plan: 'PREMIUM' as Plan,
       stripeInterval: { not: null },
     };
-    // « Accès manuels » = TOUT accès élevé (Starter/Premium) octroyé SANS abonnement
-    // Stripe (bêta, ambassadeur, comp) — pas seulement le rôle BETA_TESTER. Hors démo.
+    // « Accès manuels » = accès Premium octroyé SANS abonnement Stripe
+    // (bêta, ambassadeur, comp) — pas seulement le rôle BETA_TESTER. Hors démo.
     const manualWhere = {
       isDemo: false,
-      plan: { in: ['STARTER', 'PREMIUM'] as Plan[] },
+      plan: 'PREMIUM' as Plan,
       stripeInterval: null,
     };
     const [stripeUsers, stripeTotal, betaTesters] = await Promise.all([

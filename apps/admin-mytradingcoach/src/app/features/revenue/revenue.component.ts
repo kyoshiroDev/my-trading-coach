@@ -101,8 +101,8 @@ export class RevenueComponent {
     return {
       type: 'doughnut',
       data: {
-        labels: ['Starter mensuel', 'Starter annuel', 'Premium mensuel', 'Premium annuel'],
-        datasets: [{ data: [s?.starterMonthly ?? 0, s?.starterAnnual ?? 0, s?.premiumMonthly ?? 0, s?.premiumAnnual ?? 0], backgroundColor: [CHART_COLORS.amber, '#c9851a', CHART_COLORS.blue, '#2f6fc4'], borderColor: '#0c0e10', borderWidth: 2 }],
+        labels: ['Premium mensuel', 'Premium annuel'],
+        datasets: [{ data: [s?.premiumMonthly ?? 0, s?.premiumAnnual ?? 0], backgroundColor: [CHART_COLORS.blue, '#2f6fc4'], borderColor: '#0c0e10', borderWidth: 2 }],
       },
       options: { maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'right', labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, padding: 12 } } } },
     } as ChartConfiguration;

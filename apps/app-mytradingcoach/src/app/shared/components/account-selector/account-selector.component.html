@@ -1,4 +1,3 @@
-@if (userStore.isStarterOrAbove()) {
   <div class="acct-bar" data-testid="account-selector">
     <button class="acct-pill"
             data-testid="account-option-all"
@@ -31,14 +30,3 @@
       Compte
     </a>
   </div>
-} @else {
-  <!-- FREE : option désactivée + mini-CTA Starter (aucun appel /accounts). -->
-  <button class="acct-locked" type="button" (click)="showPlanModal.set(true)">
-    <span class="acct-pill-dot" style="background:var(--text-3)"></span>
-    Multi-comptes
-    <span class="acct-premium-badge">STARTER</span>
-  </button>
-  @if (showPlanModal()) {
-    <mtc-plan-modal (closed)="showPlanModal.set(false)" />
-  }
-}

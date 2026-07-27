@@ -104,17 +104,17 @@ export class AnalyticsComponent {
   );
   private readonly heatmapResource = httpResource<{ data: HeatmapCell[] }>(
     () =>
-      this.userStore.isStarterOrAbove()
+      this.userStore.isPremium()
         ? `${environment.apiUrl}/analytics/by-hour${this.accQuery()}`
         : undefined,
   );
   private readonly topAssetsResource = httpResource<{ data: TopAsset[] }>(() =>
-    this.userStore.isStarterOrAbove()
+    this.userStore.isPremium()
       ? `${environment.apiUrl}/analytics/top-assets${this.accQuery()}`
       : undefined,
   );
   private readonly setupResource = httpResource<{ data: SetupStat[] }>(() =>
-    this.userStore.isStarterOrAbove()
+    this.userStore.isPremium()
       ? `${environment.apiUrl}/analytics/by-setup${this.accQuery()}`
       : undefined,
   );
@@ -192,7 +192,7 @@ export class AnalyticsComponent {
 
     // Recharge les données impératives (courbe equity + calendrier) au changement de
     // compte sélectionné. Les httpResources se refetchent seules via accQuery().
-    if (this.userStore.isStarterOrAbove()) {
+    if (this.userStore.isPremium()) {
       effect(() => {
         this.selectedAccount.accountParam(); // seule dépendance réactive (selectedAccountId)
         untracked(() => {
@@ -204,7 +204,7 @@ export class AnalyticsComponent {
   }
 
   protected loadEquityCurve(): void {
-    if (!this.userStore.isStarterOrAbove()) return;
+    if (!this.userStore.isPremium()) return;
     this.equityLoading.set(true);
     const { from, to } = this.equityDateRange();
     const accountId = this.selectedAccount.accountParam();
@@ -269,7 +269,7 @@ export class AnalyticsComponent {
     return 'var(--text-2)';
   }
 
-  protected startTrial(plan: 'starter_monthly' | 'starter_yearly' = 'starter_monthly'): void {
+  protected startTrial(plan: 'premium_monthly' | 'premium_yearly' = 'premium_monthly'): void {
     this.billingApi
       .checkout(plan)
       .pipe(takeUntilDestroyed(this.destroyRef))

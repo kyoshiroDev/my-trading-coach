@@ -284,7 +284,7 @@
 .premium-col:not(.selected-col) {
   border-color: rgba(139,92,246,.35);
 }
-/* Premium SÉLECTIONNÉ — halo violet franc (distinct du "recommandé" et du bleu Starter) */
+/* Premium — halo violet franc */
 .premium-col.selected-col {
   border-color: var(--purple);
   background: rgba(139,92,246,.10);

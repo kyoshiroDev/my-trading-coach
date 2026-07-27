@@ -38,9 +38,6 @@ import { CHART_COLORS, gridAxis, noLegend, type ChartTone } from '../../shared/c
           <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Utilisateurs</div>
             <div class="kpi-value">{{ totalUsers() }}</div>
             <div class="kpi-sub">+{{ s.newThisMonth }} ce mois</div></div>
-          <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Starter</div>
-            <div class="kpi-value amber">{{ s.totalStarter }}</div>
-            <div class="kpi-sub">{{ s.starterMonthly }}m · {{ s.starterAnnual }}an</div></div>
           <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Premium</div>
             <div class="kpi-value blue">{{ s.totalPremium }}</div>
             <div class="kpi-sub">{{ s.premiumMonthly }}m · {{ s.premiumAnnual }}an · {{ s.trials }} essai</div></div>
@@ -128,7 +125,7 @@ import { CHART_COLORS, gridAxis, noLegend, type ChartTone } from '../../shared/c
                       <div><div class="u-name">{{ u.name ?? u.email }}</div>
                         @if (u.name) { <div class="u-mail">{{ u.email }}</div> }</div>
                       <div class="meta">
-                        <span class="badge" [class.b-premium]="u.plan==='PREMIUM'" [class.b-starter]="u.plan==='STARTER'" [class.b-free]="u.plan==='FREE'">{{ u.plan }}</span>
+                        <span class="badge" [class.b-premium]="u.plan==='PREMIUM'" [class.b-free]="u.plan==='FREE'">{{ u.plan }}</span>
                         <span class="timer">⏱ {{ sessionDuration(u) }}</span>
                       </div>
                     </div>

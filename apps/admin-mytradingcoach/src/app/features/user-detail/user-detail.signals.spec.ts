@@ -4,7 +4,7 @@ import { UserDetailData } from '../../core/api/admin.api';
 
 function makeData(over: {
   totalTrades?: number;
-  plan?: 'FREE' | 'STARTER' | 'PREMIUM';
+  plan?: 'FREE' | 'PREMIUM';
   activeDays?: number;
   sessions?: number;
 }): UserDetailData {

@@ -7,7 +7,7 @@ import { FEATURES } from '../config';
     <div class="reveal" style="text-align:center;max-width:640px;margin:0 auto">
       <span class="sec-label">Tarifs</span>
       <h2>Simple. <em>Transparent.</em></h2>
-      <p class="sec-sub">Gratuit pour vivre le compagnon au quotidien. Starter pour passer à l'illimité. Premium pour la puissance IA. 7 jours d'essai, aucun prélèvement avant la fin.</p>
+      <p class="sec-sub">Gratuit pour vivre le compagnon au quotidien, trades illimités inclus. Premium pour la puissance IA personnelle. 1 mois offert sur le mensuel, aucun prélèvement avant la fin.</p>
     </div>
     <div class="price-grid reveal" style="transition-delay:.1s">
 
@@ -27,52 +27,17 @@ import { FEATURES } from '../config';
         )}
         <div class="price-divider"></div>
         <ul class="price-feats">
-          <li>30 trades/mois (ton historique importé ne compte pas)</li>
+          <li>Trades illimités</li>
           <li>Journal complet : émotions, setup, notes</li>
           <li>🌅 Pré-session : humeur &amp; objectifs du jour</li>
           <li>⚡ Session live : trade rapide &amp; suivi</li>
           <li>🌙 Débrief de session : P&amp;L, émotion, journal</li>
-          <li>📅 Calendrier éco : événements &amp; épingles</li>
-          <li>Stats de base : win rate, P&amp;L</li>
-          <li>Historique illimité</li>
-          <li>Import CSV universel</li>
-          <li>Multi-marché : Futures, Crypto, Forex</li>
+          <li>📅 Calendrier éco IA : analyse bull/bear</li>
+          <li>📰 News live &amp; contexte marché (DXY, taux US, indices)</li>
+          <li>Stats de base : win rate, P&amp;L · Historique illimité</li>
+          <li>Import CSV universel · Futures, Crypto, Forex</li>
         </ul>
         <a href="https://app.mytradingcoach.app/register" class="price-cta ghost">Commencer gratuitement</a>
-      </div>
-
-      <!-- STARTER -->
-      <div class="price-card starter-card" style="padding-top:44px">
-        <div class="price-pop starter-pop">★ Starter</div>
-        <div class="price-name">Starter</div>
-        <div class="price-amt">
-          <span class="price-amt-num">39</span>
-          <span class="price-amt-cur">€</span>
-          <span class="price-amt-per">/mois</span>
-        </div>
-        <div class="price-period">ou 349 €/an, tu économises 119 €</div>
-        {FEATURES.multiAccounts && (
-          <div class="price-accts">
-            <span class="acct-n">3</span>
-            <span class="acct-t">comptes actifs en parallèle</span>
-          </div>
-        )}
-        <div class="price-divider"></div>
-        <ul class="price-feats">
-          <li>Tout le plan Gratuit inclus</li>
-          <li>Trades illimités</li>
-          <li>Analytics avancés : heatmap, equity curve</li>
-          <li>📋 Weekly Debrief automatique</li>
-          <li>🏆 Score trader /100 hebdomadaire</li>
-          <li>📄 Export PDF rapport mensuel</li>
-          <li>📅 Calendrier éco IA : analyse bull/bear &amp; filtrage sur tes actifs</li>
-          <li>📰 News live filtrées sur tes actifs</li>
-          <li>📊 Contexte marché live : DXY, taux US, indices</li>
-        </ul>
-        <a href="https://app.mytradingcoach.app/register?plan=starter" class="price-cta starter-cta">
-          <span class="cta-main">Essayer 7 jours gratuit →</span>
-          <span class="cta-sub-text">🔥 Aucun prélèvement avant la fin</span>
-        </a>
       </div>
 
       <!-- PREMIUM -->
@@ -80,11 +45,11 @@ import { FEATURES } from '../config';
         <div class="price-pop">⭐ Recommandé</div>
         <div class="price-name">Premium</div>
         <div class="price-amt">
-          <span class="price-amt-num">79</span>
+          <span class="price-amt-num">49</span>
           <span class="price-amt-cur">€</span>
           <span class="price-amt-per">/mois</span>
         </div>
-        <div class="price-period">ou 699 €/an, tu économises 249 €</div>
+        <div class="price-period">ou 490 €/an, tu économises 98 €</div>
         {FEATURES.multiAccounts && (
           <div class="price-accts">
             <span class="acct-n">∞</span>
@@ -93,20 +58,24 @@ import { FEATURES } from '../config';
         )}
         <div class="price-divider"></div>
         <ul class="price-feats">
-          <li>Tout le plan Starter inclus</li>
+          <li>Tout le plan Gratuit inclus</li>
           <li>✨ IA Insights : analyse de tes patterns</li>
           <li>💬 Chat coach IA personnalisé</li>
+          <li>📋 Weekly Debrief automatique</li>
+          <li>🏆 Score trader /100 hebdomadaire</li>
+          <li>Analytics avancés : heatmap, equity curve</li>
+          <li>📄 Export PDF rapport mensuel</li>
           <li>🌙 Recap journalier email 17h30</li>
         </ul>
         <a href="https://app.mytradingcoach.app/register?plan=premium" class="price-cta prim">
-          <span class="cta-main">Essayer 7 jours gratuit →</span>
-          <span class="cta-sub-text">🔥 Aucun prélèvement avant la fin</span>
+          <span class="cta-main">Essayer Premium — 1 mois offert →</span>
+          <span class="cta-sub-text">🔥 Carte requise · annulable en un clic</span>
         </a>
       </div>
 
     </div>
     <div class="pricing-guarantee reveal">
-      <div class="guarantee-item">✓ Annulation à tout moment</div>
+      <div class="guarantee-item">✓ Annulation en un clic</div>
       <div class="guarantee-item">✓ Données exportables</div>
       <div class="guarantee-item">✓ Support Discord direct</div>
       <div class="guarantee-item">✓ Hébergé en France 🇫🇷</div>
@@ -117,9 +86,9 @@ import { FEATURES } from '../config';
 <style>
   .price-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 20px;
-    max-width: 1100px;
+    max-width: 760px;
     margin: 48px auto 0;
   }
 
@@ -130,12 +99,6 @@ import { FEATURES } from '../config';
     padding: 36px 28px;
     display: flex;
     flex-direction: column;
-  }
-
-  .starter-card {
-    border-color: rgba(16,185,129,.35);
-    background: linear-gradient(160deg, rgba(16,185,129,.07), rgba(16,185,129,.03));
-    position: relative;
   }
 
   .price-card.feat {
@@ -161,11 +124,6 @@ import { FEATURES } from '../config';
     box-shadow: 0 4px 14px rgba(59,130,246,.4);
   }
 
-  .starter-pop {
-    background: linear-gradient(90deg, #10b981, #059669);
-    box-shadow: 0 4px 14px rgba(16,185,129,.4);
-  }
-
   .cta-main { display: block; font-size: 14px; font-weight: 600; }
   .cta-sub-text {
     display: block;
@@ -187,7 +145,6 @@ import { FEATURES } from '../config';
     text-align: center;
   }
   .price-card.feat .price-name { color: var(--blue2); }
-  .starter-card .price-name { color: #10b981; }
 
   .price-amt {
     display: flex;
@@ -258,8 +215,6 @@ import { FEATURES } from '../config';
   }
   .price-cta.prim { background: linear-gradient(90deg, var(--blue), #6366f1); color: white; box-shadow: 0 0 28px rgba(59,130,246,.4); }
   .price-cta.prim:hover { transform: translateY(-1px); box-shadow: 0 0 36px rgba(59,130,246,.5); }
-  .price-cta.starter-cta { background: linear-gradient(90deg, #10b981, #059669); color: white; box-shadow: 0 0 24px rgba(16,185,129,.3); }
-  .price-cta.starter-cta:hover { transform: translateY(-1px); box-shadow: 0 0 32px rgba(16,185,129,.4); }
   .price-cta.ghost { background: transparent; color: var(--txt2); border: 1px solid var(--b2); }
   .price-cta.ghost:hover { color: var(--txt); border-color: var(--blue); background: rgba(59,130,246,.05); }
 
@@ -271,13 +226,13 @@ import { FEATURES } from '../config';
     margin-top: 24px;
     padding-top: 20px;
     border-top: 1px solid var(--b);
-    max-width: 1100px;
+    max-width: 760px;
     margin-left: auto;
     margin-right: auto;
   }
   .guarantee-item { font-size: 12px; font-family: var(--mono); color: var(--txt3); }
 
-  @media (max-width: 900px) {
+  @media (max-width: 760px) {
     .price-grid { grid-template-columns: 1fr; gap: 20px; max-width: 480px; }
   }
   @media (max-width: 480px) {

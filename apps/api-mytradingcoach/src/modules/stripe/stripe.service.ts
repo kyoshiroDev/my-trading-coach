@@ -19,6 +19,7 @@ import {
   CachedStripeStatus,
   StripeWebhookJobPayload,
 } from './stripe.types';
+import { TRIAL_PERIOD_DAYS } from '../../common/constants/pricing.const';
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
@@ -175,9 +176,12 @@ export class StripeService {
     const customerId = await this.ensureStripeCustomer(userId, userEmail);
 
     // ── Créer la session ───────────────────────────────────────────────────────
-    const subscriptionData = user.trialUsed
-      ? { metadata: { userId } }
-      : { trial_period_days: 7, metadata: { userId } };
+    // Essai 30j MENSUEL uniquement : accordé si jamais utilisé ET prix mensuel (PROMPT-169).
+    // L'annuel est facturé immédiatement (pas d'essai → évite contestations sur 490€).
+    const trialGranted = !user.trialUsed && this.isMonthlyPrice(priceId);
+    const subscriptionData = trialGranted
+      ? { trial_period_days: TRIAL_PERIOD_DAYS, metadata: { userId } }
+      : { metadata: { userId } };
 
     // Réduc filleul : -10% sur la première année, routée selon l'intervalle
     // (annuel → coupon once, mensuel → coupon repeating 12 mois). RÉSERVÉ au parrainage
@@ -226,7 +230,7 @@ export class StripeService {
     }
 
     this.logger.log(
-      `Checkout créé — user: ${userId}, trial: ${!user.trialUsed}, price: ${priceId}`,
+      `Checkout créé — user: ${userId}, trial: ${trialGranted}, price: ${priceId}`,
     );
 
     return { url: session.url };
@@ -540,7 +544,6 @@ export class StripeService {
 
     const status: Stripe.Subscription['status'] = subscription.status;
     const isActive = ACTIVE_STATUSES.has(status);
-    const isTrialing = status === 'trialing';
 
     const firstItem = subscription.items.data[0];
     const priceId = firstItem?.price.id ?? null;
@@ -549,13 +552,14 @@ export class StripeService {
       ? new Date(firstItem.current_period_end * 1000)
       : null;
 
-    const starterPriceIds = [
-      process.env['STRIPE_STARTER_PRICE_MONTHLY'],
-      process.env['STRIPE_STARTER_PRICE_YEARLY'],
-    ].filter(Boolean);
-    const isStarter = starterPriceIds.includes(priceId ?? '');
+    // 2 paliers (PROMPT-169) : tout abonnement actif → PREMIUM ; sinon FREE.
+    const newPlan = isActive ? Plan.PREMIUM : Plan.FREE;
 
-    const newPlan = isActive ? (isStarter ? Plan.STARTER : Plan.PREMIUM) : Plan.FREE;
+    // Ne marquer l'essai « consommé » QUE si un essai a réellement été accordé
+    // (trial_end présent). Sinon un abonné annuel direct — jamais en trial — perdrait
+    // à tort son droit à l'essai (bug PROMPT-169). trial_end reste renseigné après
+    // conversion, donc le flag reste vrai une fois posé.
+    const trialGranted = subscription.trial_end != null;
 
     await this.prisma.user.update({
       where: { id: user.id },
@@ -566,7 +570,7 @@ export class StripeService {
         stripeInterval: interval,
         stripeCurrentPeriodEnd: periodEnd,
         stripeSubscriptionStatus: status,
-        trialUsed: user.trialUsed || !isTrialing,
+        trialUsed: user.trialUsed || trialGranted,
         // Réabonnement actif → on efface la date de churn (ne plus compter comme résilié).
         subscriptionCanceledAt: isActive ? null : undefined,
       },
@@ -790,7 +794,7 @@ export class StripeService {
     );
   }
 
-  /** Montant d'un mois en cents : mensualité du parrain s'il est abonné, sinon Starter mensuel. */
+  /** Montant d'un mois en cents : mensualité du parrain s'il est abonné, sinon Premium mensuel. */
   private async resolveFreeMonthCents(parrainSubId: string | null): Promise<number> {
     if (parrainSubId) {
       const sub = await this.stripe.subscriptions.retrieve(parrainSubId).catch(() => null);
@@ -801,10 +805,10 @@ export class StripeService {
           : price.unit_amount;
       }
     }
-    // Défaut prudent (protège la marge) : mensualité Starter.
-    const starterMonthly = this.config.get<string>('STRIPE_STARTER_PRICE_MONTHLY');
-    if (starterMonthly) {
-      const price = await this.stripe.prices.retrieve(starterMonthly).catch(() => null);
+    // Défaut prudent (protège la marge) : mensualité Premium (49€).
+    const premiumMonthly = this.config.get<string>('STRIPE_PREMIUM_PRICE_MONTHLY_V2');
+    if (premiumMonthly) {
+      const price = await this.stripe.prices.retrieve(premiumMonthly).catch(() => null);
       if (price?.unit_amount != null) return price.unit_amount;
     }
     return 0;
@@ -825,22 +829,14 @@ export class StripeService {
     return balance < 0 ? +(-balance / 100).toFixed(2) : 0;
   }
 
-  /** Détecte un priceId annuel (Starter ou Premium) via la config. */
+  /** Détecte le priceId annuel Premium via la config. */
   private isAnnualPrice(priceId: string): boolean {
-    const yearly = [
-      this.config.get<string>('STRIPE_STARTER_PRICE_YEARLY'),
-      this.config.get<string>('STRIPE_PREMIUM_PRICE_YEARLY_V2'),
-    ].filter(Boolean);
-    return yearly.includes(priceId);
+    return priceId === this.config.get<string>('STRIPE_PREMIUM_PRICE_YEARLY_V2');
   }
 
-  /** Détecte un priceId mensuel (Starter ou Premium) via la config. */
+  /** Détecte le priceId mensuel Premium via la config. */
   private isMonthlyPrice(priceId: string): boolean {
-    const monthly = [
-      this.config.get<string>('STRIPE_STARTER_PRICE_MONTHLY'),
-      this.config.get<string>('STRIPE_PREMIUM_PRICE_MONTHLY_V2'),
-    ].filter(Boolean);
-    return monthly.includes(priceId);
+    return priceId === this.config.get<string>('STRIPE_PREMIUM_PRICE_MONTHLY_V2');
   }
 
   private referralCouponId(kind: ReferralCouponKind): string {

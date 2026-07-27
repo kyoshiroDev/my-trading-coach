@@ -21,7 +21,7 @@ function acc(startingBalance: number, status = 'ACTIVE'): any {
 }
 
 interface Cfg {
-  isStarterOrAbove?: boolean;
+  isPremium?: boolean;
   startingCapital?: number;
   loaded?: boolean;
    
@@ -33,15 +33,14 @@ interface Cfg {
 function setup(cfg: Cfg) {
   const userStore = {
     displayName: () => 'Test',
-    isStarterOrAbove: () => cfg.isStarterOrAbove ?? true,
+    isPremium: () => cfg.isPremium ?? true,
     profileIncomplete: () => false,
     startingCapital: () => cfg.startingCapital ?? 10000,
     user: () => ({ currency: 'USD', currencyRate: 1 }),
   };
   const tradesStore = {
-    limitReached: () => false, monthlyCount: () => 0, monthlyLimit: () => 30,
-    nearLimit: () => false, totalTrades: signal(1), trades: signal([]),
-    loadTrades: vi.fn(), loadMonthlyCount: vi.fn(), reset: vi.fn(),
+    totalTrades: signal(1), trades: signal([]),
+    loadTrades: vi.fn(), reset: vi.fn(),
   };
   const sessionStore = { hasActiveSession: () => false, todayStats: () => null };
   const selectedAccount = {
@@ -86,11 +85,6 @@ describe('DashboardComponent — card capital scopée au compte', () => {
   it('« Tous les comptes » → somme des starting balance non archivés', () => {
     const cmp = setup({ selected: null, accounts: [acc(0), acc(50000), acc(99999, 'ARCHIVED')] });
     expect(cmp.baseCapital()).toBe(50000); // 0 + 50000, archivé exclu
-  });
-
-  it('FREE (pas de multi-comptes) → fallback sur le capital du profil', () => {
-    const cmp = setup({ isStarterOrAbove: false, startingCapital: 10000, selected: acc(50000) });
-    expect(cmp.baseCapital()).toBe(10000);
   });
 
   it('comptes non chargés → fallback sur le capital du profil', () => {

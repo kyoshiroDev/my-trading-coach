@@ -9,8 +9,8 @@ import { VpsApi } from '../../core/api/vps.api';
 
 function makeStats(over: Partial<AdminStats> = {}): AdminStats {
   return {
-    mrr: 0, arr: 0, totalUsers: 10, totalStarter: 0, totalPremium: 0,
-    starterMonthly: 0, starterAnnual: 0, premiumMonthly: 0, premiumAnnual: 0,
+    mrr: 0, arr: 0, totalUsers: 10, totalPremium: 0,
+    premiumMonthly: 0, premiumAnnual: 0,
     monthly: 0, annual: 0, trials: 0, freeUsers: 10, newThisMonth: 3, churnedThisMonth: 0,
     betaTesters: 0, ambassadors: 0,
     tradersActifs7d: 4, tradersActifs30d: 7,
