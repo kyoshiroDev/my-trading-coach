@@ -1,6 +1,7 @@
 {
   "github": { "enabled": false },
   "outputDirectory": "dist",
+  "trailingSlash": false,
   "headers": [
     {
       "source": "/_astro/(.*)",
