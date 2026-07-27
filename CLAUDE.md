@@ -71,12 +71,12 @@ Pour l'app **admin**, la maquette `admin-mytradingcoach.html` (racine) reste LA 
 
 ```
 Production
-├── mytradingcoach.app           ← Landing (Vercel)
-├── app.mytradingcoach.app       ← App Angular (Vercel)
+├── mytradingcoach.app           ← Landing (VPS/Nginx derrière Traefik)
+├── app.mytradingcoach.app       ← App Angular (VPS/Nginx derrière Traefik)
 └── api.mytradingcoach.app       ← NestJS (VPS OVH Docker)
 
 Dev
-├── dev.app.mytradingcoach.app   ← App Angular dev (Vercel)
+├── dev.app.mytradingcoach.app   ← App Angular dev (VPS/Nginx derrière Traefik)
 └── dev.api.mytradingcoach.app   ← NestJS dev (VPS OVH port 3001)
 ```
 

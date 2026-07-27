@@ -152,18 +152,13 @@ exec node main.js
 ## CI/CD GitHub Actions
 
 ### Branches
-- `dev` → deploy automatique en dev (VPS + Vercel preview)
+- `dev` → deploy automatique en dev (VPS via rsync GitHub Actions)
 - `main` → deploy production (après CI verte + PR)
 
 ### Secrets GitHub requis
 
 **Environment `production` :**
-- `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`
-- `VERCEL_TOKEN`, `VERCEL_ORG_ID`
-- `VERCEL_APP_PROJECT_ID`, `VERCEL_LANDING_PROJECT_ID`
-
-**Environment `development` :**
-- Même secrets + `DEV_API_URL`
+- `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` (le front est rsync sur le VPS, plus de Vercel)
 
 ### Deploy prod VPS
 
@@ -186,12 +181,20 @@ docker compose up -d --force-recreate api
 
 ---
 
-## Vercel
+## Front statique sur le VPS (plus de Vercel)
 
-- **App Angular** : `app-mytradingcoach` → `app.mytradingcoach.app`
-- **Landing Astro** : `landing-mytradingcoach` → `mytradingcoach.app`
-- Build via `--prebuilt` depuis GitHub Actions (Vercel ne build pas lui-même)
-- Ignored Build Step : `exit 1` (build géré par CI)
+App Angular, admin et landing Astro sont **buildés dans GitHub Actions** (cd.yml) puis **rsync** vers
+le VPS, servis par des conteneurs **nginx:alpine derrière Traefik** (TLS letsencrypt + routing par
+Host + redirect non-www→www en middleware Traefik).
+
+- App Angular : `dist/apps/app-mytradingcoach/browser/` → `/opt/static/app-prod` → `app.mytradingcoach.app`
+- Admin : `dist/apps/admin-mytradingcoach/browser/` → `/opt/static/admin-prod` → `admin.mytradingcoach.app`
+- Landing Astro : `apps/landing-mytradingcoach/dist/` → `/opt/static/landing-prod` → `www.mytradingcoach.app`
+
+⚠️ La config nginx de chaque site vit **sur le VPS** (`/opt/infra/static/nginx/*.conf`), pas dans le
+dépôt (le `nginx/nginx.conf` du dépôt est un vestige mort). Compose infra : `/opt/infra/static/`.
+La landing exige `PUBLIC_FEATURE_MULTI_ACCOUNTS=true` + `PUBLIC_FEATURE_REFERRAL=true` au build
+(sinon `/journal-trading-prop-firm` et `/ambassadeur` redirigent vers `/`) — déjà dans cd.yml/ci.yml.
 
 ---
 
