@@ -183,6 +183,11 @@ jobs:
 
       - name: Build Astro landing
         run: pnpm nx build landing-mytradingcoach
+        env:
+          # Astro fige les flags au build : les pages /journal-trading-prop-firm et
+          # /ambassadeur ne sont publiées (et entrent au sitemap) que si ON ici (PROMPT-173).
+          PUBLIC_FEATURE_MULTI_ACCOUNTS: 'true'
+          PUBLIC_FEATURE_REFERRAL: 'true'
 
       - name: Setup SSH
         run: |

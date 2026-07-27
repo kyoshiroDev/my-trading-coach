@@ -129,6 +129,11 @@ jobs:
 
       - name: Astro build
         run: pnpm nx build landing-mytradingcoach
+        env:
+          # Flags multi-comptes / parrainage ON au build (PROMPT-173) : sinon les pages
+          # /journal-trading-prop-firm et /ambassadeur redirigent vers / et sortent du sitemap.
+          PUBLIC_FEATURE_MULTI_ACCOUNTS: 'true'
+          PUBLIC_FEATURE_REFERRAL: 'true'
 
   # ── Tests Angular ─────────────────────────────────────────────────────────
   test-angular:
@@ -321,6 +326,8 @@ jobs:
         env:
           PUBLIC_APP_URL: https://dev.app.mytradingcoach.app
           PUBLIC_API_URL: https://dev.api.mytradingcoach.app/api
+          PUBLIC_FEATURE_MULTI_ACCOUNTS: 'true'
+          PUBLIC_FEATURE_REFERRAL: 'true'
 
       - name: Setup SSH
         run: |
