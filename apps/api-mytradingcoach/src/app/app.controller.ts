@@ -1,4 +1,5 @@
-import { Controller, Get, Header } from '@nestjs/common';
+import { Controller, Get, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { Public } from '../common/decorators/public.decorator';
 
 @Controller()
@@ -11,10 +12,11 @@ export class AppController {
 
   // Sous-domaine API non indexable : robots.txt à la racine (exclu du préfixe /api dans main.ts).
   // Supprime le 404 GSC sur api.mytradingcoach.app/ et empêche Google de re-crawler le sous-domaine.
+  // @Res() : on écrit la réponse nous-mêmes pour CONTOURNER le ResponseInterceptor global qui
+  // emballe tout dans { data: ... } (sinon Google recevrait du JSON, pas un robots.txt valide).
   @Public()
   @Get('robots.txt')
-  @Header('Content-Type', 'text/plain')
-  robots(): string {
-    return 'User-agent: *\nDisallow: /\n';
+  robots(@Res() res: Response): void {
+    res.type('text/plain').send('User-agent: *\nDisallow: /\n');
   }
 }

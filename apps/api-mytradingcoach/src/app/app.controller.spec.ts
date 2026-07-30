@@ -1,11 +1,13 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
+import { ResponseInterceptor } from '../common/interceptors/response.interceptor';
 
 // Verrouille le contrat de routing SEO (PROMPT-172) : robots.txt à la RACINE du sous-domaine,
-// health conservé sous /api. On monte un app minimal (juste AppController, aucune DB / guard global)
-// avec le même setGlobalPrefix + exclude que main.ts.
+// health conservé sous /api. On enregistre le ResponseInterceptor GLOBAL (comme en prod) pour
+// prouver que robots.txt sort en texte BRUT (et non emballé { data: ... }, bug PROMPT-173).
 describe('AppController — routing SEO (robots.txt / health)', () => {
   let app: INestApplication;
   let base: string;
@@ -13,6 +15,7 @@ describe('AppController — routing SEO (robots.txt / health)', () => {
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       controllers: [AppController],
+      providers: [{ provide: APP_INTERCEPTOR, useClass: ResponseInterceptor }],
     }).compile();
     app = moduleRef.createNestApplication();
     app.setGlobalPrefix('api', { exclude: ['robots.txt'] });
@@ -24,10 +27,11 @@ describe('AppController — routing SEO (robots.txt / health)', () => {
     await app?.close();
   });
 
-  it('GET /robots.txt → 200, text/plain, bloque tout le sous-domaine', async () => {
+  it('GET /robots.txt → 200, text/plain, corps BRUT (pas emballé { data })', async () => {
     const r = await fetch(`${base}/robots.txt`);
     expect(r.status).toBe(200);
     expect(r.headers.get('content-type')).toContain('text/plain');
+    // Corps exactement le robots.txt, PAS {"data":"..."} (contournement du ResponseInterceptor).
     expect(await r.text()).toBe('User-agent: *\nDisallow: /\n');
   });
 
@@ -36,10 +40,10 @@ describe('AppController — routing SEO (robots.txt / health)', () => {
     expect(r.status).toBe(404);
   });
 
-  it('GET /api/health → 200 (health reste sous /api, non déplacé)', async () => {
+  it('GET /api/health → 200 (health reste sous /api, emballé par le ResponseInterceptor)', async () => {
     const r = await fetch(`${base}/api/health`);
     expect(r.status).toBe(200);
-    expect(await r.json()).toEqual({ status: 'ok' });
+    expect(await r.json()).toEqual({ data: { status: 'ok' } });
   });
 
   it('GET /health → 404 (health non exposé à la racine)', async () => {
