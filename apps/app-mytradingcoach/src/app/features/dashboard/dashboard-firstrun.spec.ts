@@ -41,13 +41,13 @@ function setup(totalTrades: number) {
       { provide: ChartService, useValue: { buildEquityChart: vi.fn() } },
       { provide: BillingApi, useValue: {} },
       { provide: TradesApi, useValue: {} },
-      { provide: SelectedAccountStore, useValue: { accountParam: () => undefined, load: vi.fn(), loaded: signal(true), isLoading: signal(false) } },
+      { provide: SelectedAccountStore, useValue: { accounts: signal([]), accountParam: () => undefined, load: vi.fn(), loaded: signal(true), isLoading: signal(false) } },
     ],
   });
   TestBed.overrideComponent(DashboardComponent, {
     set: {
       template:
-        `@if (!isLoading() && tradesStore.totalTrades() === 0) {
+        `@if (selectedAccount.loaded() && tradesStore.totalTrades() === 0) {
           <div class="firstrun-hero">
             <button data-testid="firstrun-import" (click)="openCsvImport()">Importer mes trades</button>
           </div>

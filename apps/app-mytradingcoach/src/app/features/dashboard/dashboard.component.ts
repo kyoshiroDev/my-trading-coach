@@ -82,7 +82,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
     </mtc-topbar>
 
     <div class="content">
-      @if (!isLoading() && tradesStore.totalTrades() === 0) {
+      @if (selectedAccount.loaded() && tradesStore.totalTrades() === 0) {
         <div class="firstrun-hero">
           <div class="firstrun-text">
             <h2 class="firstrun-title">Fais ton premier pas 🚀</h2>
@@ -621,16 +621,25 @@ export class DashboardComponent {
   protected readonly topSetups = computed(() =>
     this.bySetup().filter((s) => s.winRate !== null).slice(0, 4),
   );
+  /**
+   * Chargement du dashboard : on affiche un squelette (jamais des zéros) tant que les
+   * comptes ou les données de base (summary, courbe d'équité) ne sont PAS chargés — pour
+   * FREE comme Premium. Le gating `isPremium()` d'avant rendait `isLoading` toujours faux
+   * en FREE, d'où « Capital $0 / 0 compte » affiché au premier rendu post-onboarding (PROMPT-175).
+   * Les resources by-setup/by-emotion ne comptent que pour un Premium (chargées pour lui seul).
+   */
   protected readonly isLoading = computed(
     () =>
-      this.userStore.isPremium() &&
-      (this.summaryResource.isLoading() ||
-        this.equityCurveResource.isLoading() ||
-        this.bySetupResource.isLoading() ||
-        this.byEmotionResource.isLoading()),
+      !this.selectedAccount.loaded() ||
+      this.selectedAccount.isLoading() ||
+      this.summaryResource.isLoading() ||
+      this.equityCurveResource.isLoading() ||
+      (this.userStore.isPremium() &&
+        (this.bySetupResource.isLoading() || this.byEmotionResource.isLoading())),
   );
 
   private readonly knownTradesCount = signal(-1);
+  private readonly knownAccountsCount = signal(-1);
 
   constructor() {
     // Trades récents + activité du compte sélectionné. L'effect relit `accountParam()` →
@@ -647,6 +656,15 @@ export class DashboardComponent {
       const known = this.knownTradesCount();
       if (known !== -1 && count > known) this.summaryResource.reload();
       this.knownTradesCount.set(count);
+    });
+
+    // Recharge summary quand la LISTE de comptes change (import onboarding qui crée le
+    // compte par défaut, sans forcément passer par le compteur de trades ci-dessus).
+    effect(() => {
+      const n = this.selectedAccount.accounts().length;
+      const known = this.knownAccountsCount();
+      if (known !== -1 && n !== known) this.summaryResource.reload();
+      this.knownAccountsCount.set(n);
     });
   }
 
