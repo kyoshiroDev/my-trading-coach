@@ -43,11 +43,16 @@ export class UserStore {
   readonly tradingAssets = computed(() => this.user()?.tradingAssets ?? []);
   readonly favoriteAsset = computed(() => this.user()?.favoriteAsset ?? null);
 
-  /** Profil IA incomplet : pas de stratégie OU pas d'actif (comptes créés avant l'onboarding enrichi). */
+  /**
+   * Profil IA incomplet : pas de stratégie OU pas d'actif (comptes créés avant l'onboarding enrichi).
+   * La stratégie est renseignée dès qu'on a un STYLE, une DESCRIPTION ou le tableau de stratégies :
+   * l'onboarding enregistre `tradingStyle` + `strategyDescription` (jamais `tradingStrategy`), donc
+   * exiger le seul tableau affichait la bannière à tout nouvel utilisateur pourtant onboardé.
+   */
   readonly profileIncomplete = computed(() => {
     const u = this.user();
     if (!u) return false;
-    const noStrategy = !u.tradingStyle || !(u.tradingStrategy?.length);
+    const noStrategy = !u.tradingStyle && !u.strategyDescription && !(u.tradingStrategy?.length);
     const noAsset = !u.favoriteAsset && !(u.tradingAssets?.length);
     return noStrategy || noAsset;
   });
