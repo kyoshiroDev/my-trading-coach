@@ -1,32 +1,80 @@
-  <div class="acct-bar" data-testid="account-selector">
-    <button class="acct-pill"
-            data-testid="account-option-all"
-            [class.active]="store.selectedAccountId() === 'all'"
-            (click)="store.select('all')">
-      <lucide-icon [img]="LayersIcon" [size]="13" class="acct-pill-ic" />
-      <span class="acct-pill-txt">
-        <span class="acct-pill-name">Tous les comptes</span>
-        <span class="acct-pill-tag">Agrégé</span>
-      </span>
-      <span class="acct-pill-bal">{{ totalBalanceStr() }}</span>
+<div class="acct-row" data-testid="account-selector">
+  <div class="acct-select" [class.open]="open()">
+    <!-- Trigger : compte courant ou vue agrégée -->
+    <button
+      type="button"
+      class="acct-trigger"
+      data-testid="acct-trigger"
+      aria-haspopup="listbox"
+      [attr.aria-expanded]="open()"
+      (click)="toggle()"
+    >
+      @if (isAll()) {
+        <span class="acct-ic"><lucide-icon [img]="LayersIcon" [size]="14" /></span>
+        <span class="acct-txt">
+          <span class="acct-name">Tous les comptes</span>
+          <span class="acct-tag">Agrégé</span>
+        </span>
+        <span class="acct-bal">{{ totalBalanceStr() }}</span>
+      } @else if (store.selected(); as sel) {
+        <span class="acct-dot" [style.background]="dotColor(sel)" [style.boxShadow]="'0 0 8px ' + dotColor(sel)"></span>
+        <span class="acct-txt">
+          <span class="acct-name">{{ sel.label }}</span>
+          <span class="acct-tag">{{ tagFor(sel) }}</span>
+        </span>
+        <span class="acct-bal">{{ balanceFor(sel) }}</span>
+      }
+      <lucide-icon [img]="ChevronDownIcon" [size]="14" class="acct-chev" />
     </button>
 
-    @for (a of store.accounts(); track a.id) {
-      <button class="acct-pill"
-              [attr.data-testid]="'account-option-' + a.id"
-              [class.active]="store.selectedAccountId() === a.id"
-              (click)="store.select(a.id)">
-        <span class="acct-pill-dot" [style.background]="dotColor(a)" [style.boxShadow]="'0 0 8px ' + dotColor(a)"></span>
-        <span class="acct-pill-txt">
-          <span class="acct-pill-name">{{ a.label }}</span>
-          <span class="acct-pill-tag">{{ tagFor(a) }}</span>
+    <!-- Menu déroulant -->
+    <div class="acct-menu" role="listbox">
+      <div class="menu-lbl">Vue</div>
+      <button
+        type="button"
+        class="opt"
+        role="option"
+        data-testid="account-option-all"
+        [class.active]="isAll()"
+        [attr.aria-selected]="isAll()"
+        (click)="pick('all')"
+      >
+        <span class="acct-ic"><lucide-icon [img]="LayersIcon" [size]="14" /></span>
+        <span class="opt-txt">
+          <span class="opt-name">Tous les comptes</span>
+          <span class="opt-tag">Agrégé</span>
         </span>
-        <span class="acct-pill-bal">{{ balanceFor(a) }}</span>
+        <span class="opt-bal">{{ totalBalanceStr() }}</span>
+        <span class="opt-check"><lucide-icon [img]="CheckIcon" [size]="14" /></span>
       </button>
-    }
 
-    <a routerLink="/accounts" class="acct-add">
-      <lucide-icon [img]="PlusIcon" [size]="14" />
-      Compte
-    </a>
+      <div class="menu-sep"></div>
+      <div class="menu-lbl">Comptes</div>
+
+      @for (a of store.accounts(); track a.id) {
+        <button
+          type="button"
+          class="opt"
+          role="option"
+          [attr.data-testid]="'account-option-' + a.id"
+          [class.active]="store.selectedAccountId() === a.id"
+          [attr.aria-selected]="store.selectedAccountId() === a.id"
+          (click)="pick(a.id)"
+        >
+          <span class="acct-dot" [style.background]="dotColor(a)"></span>
+          <span class="opt-txt">
+            <span class="opt-name">{{ a.label }}</span>
+            <span class="opt-tag">{{ tagFor(a) }}</span>
+          </span>
+          <span class="opt-bal">{{ balanceFor(a) }}</span>
+          <span class="opt-check"><lucide-icon [img]="CheckIcon" [size]="14" /></span>
+        </button>
+      }
+    </div>
   </div>
+
+  <a routerLink="/accounts" class="acct-add">
+    <lucide-icon [img]="PlusIcon" [size]="14" />
+    Compte
+  </a>
+</div>
