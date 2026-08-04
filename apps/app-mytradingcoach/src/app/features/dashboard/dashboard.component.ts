@@ -24,10 +24,8 @@ import { PlanModalComponent } from '../../shared/components/plan-modal/plan-moda
 import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
 import { CreateTradeDto, TradesApi } from '../../core/api/trades.api';
 import {
-  AnalyticsApi,
   AnalyticsSummary,
   EquityPoint,
-  MonthlyActivitySummary,
   SetupStat,
   EmotionStat,
   TopAsset,
@@ -64,7 +62,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
   template: `
     <mtc-topbar
       title="Dashboard"
-      [period]="currentMonthLabel()"
+      [period]="periodLabel()"
       addLabel="⚡ Ajouter trade"
       [showAccountSelector]="true"
       (addClick)="goToJournal()"
@@ -263,7 +261,11 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
         <div class="mtc-panel">
           <div class="mtc-panel-head">
             <div class="mtc-panel-head-l"><lucide-icon [img]="EquityIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">Courbe d'équité</div><div class="mtc-panel-sub">{{ equitySub() }}</div></div></div>
-            <div class="mtc-eq-tabs"><span>1S</span><span class="on">1M</span><span>3M</span><span>YTD</span></div>
+            <div class="mtc-eq-tabs">
+              @for (p of periods; track p.key) {
+                <button type="button" [class.on]="dashboardPeriod() === p.key" (click)="setPeriod(p.key)">{{ p.label }}</button>
+              }
+            </div>
           </div>
           <div class="mtc-panel-body">
             <!-- Courbe d'équité simple = vue de base FREE (profondeur = page /analytics). -->
@@ -287,7 +289,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
                 <circle [attr.cx]="eg.lastX" [attr.cy]="eg.lastY" r="3.4" [attr.fill]="eg.color" />
               </svg>
             } @else {
-              <div class="mtc-empty">Aucun trade ce mois</div>
+              <div class="mtc-empty">Aucun trade sur la période</div>
             }
           </div>
         </div>
@@ -316,26 +318,26 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 
         <!-- P&L par jour -->
         <div class="mtc-panel">
-          <div class="mtc-panel-head"><div class="mtc-panel-head-l"><lucide-icon [img]="PlDayIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">P&amp;L par jour</div><div class="mtc-panel-sub">{{ currentMonthLabel() }}</div></div></div></div>
+          <div class="mtc-panel-head"><div class="mtc-panel-head-l"><lucide-icon [img]="PlDayIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">{{ plTitle() }} <mtc-info-tooltip [text]="plTooltip()" /></div><div class="mtc-panel-sub">{{ periodLabel() }}</div></div></div></div>
           <div class="mtc-panel-body">
-            @let pl = plByDay();
-            @if (pl) {
+            @let pl = plBuckets();
+            @if (pl && pl.length) {
               <div class="mtc-plday">
-                @for (d of pl; track d.day) {
-                  <div class="mtc-plday-col" [title]="d.day + ' · ' + (d.pnl >= 0 ? '+' : '') + d.pnl + '$'">
+                @for (d of pl; track d.key) {
+                  <div class="mtc-plday-col" [title]="d.title + ' · ' + (d.pnl >= 0 ? '+' : '') + (d.pnl | number: '1.0-0') + '$'">
                     <div class="mtc-plday-cell">
                       <div class="mtc-plday-bar" [class.pos]="d.pos && d.traded" [class.neg]="!d.pos && d.traded" [style.height.%]="d.barPct"></div>
-                      @if (d.traded) {
+                      @if (d.traded && d.label) {
                         <span class="mtc-plday-val" [class.pos]="d.pos" [class.neg]="!d.pos"
                           [style.bottom]="d.pos ? 'calc(50% + ' + d.barPct + '%)' : null"
                           [style.top]="!d.pos ? 'calc(50% + ' + d.barPct + '%)' : null">{{ d.label }}</span>
                       }
                     </div>
-                    <span class="mtc-plday-day" [class.traded]="d.traded">{{ d.day }}</span>
+                    <span class="mtc-plday-day" [class.traded]="d.traded">{{ d.axisLabel }}</span>
                   </div>
                 }
               </div>
-            } @else { <div class="mtc-empty">Aucune activité ce mois</div> }
+            } @else { <div class="mtc-empty">Aucune activité sur la période</div> }
           </div>
         </div>
 
@@ -476,7 +478,6 @@ export class DashboardComponent {
   protected readonly selectedAccount = inject(SelectedAccountStore);
   private  readonly billingApi    = inject(BillingApi);
   private  readonly tradesApi     = inject(TradesApi);
-  private  readonly analyticsApi  = inject(AnalyticsApi);
   private  readonly destroyRef    = inject(DestroyRef);
   private  readonly router        = inject(Router);
 
@@ -503,10 +504,49 @@ export class DashboardComponent {
   protected coachIcon(tone: string) { return tone === 'good' ? this.CoachGood : tone === 'warn' ? this.CoachWarn : this.CoachBad; }
   protected coachColor(tone: string) { return tone === 'good' ? 'var(--green)' : tone === 'warn' ? 'var(--yellow)' : 'var(--red)'; }
 
-  protected readonly monthlyActivity        = signal<MonthlyActivitySummary | null>(null);
-  protected readonly monthlyActivityLoading = signal(false);
-  protected readonly calYear  = signal(new Date().getFullYear());
-  protected readonly calMonth = signal(new Date().getMonth() + 1);
+  // ── Période unique du dashboard ────────────────────────────────────────────
+  // KPIs, courbe d'équité et P&L par jour lisent TOUS cette même période (PROMPT-175).
+  // Fenêtres glissantes (to = maintenant) pour que l'historique importé d'un mois passé
+  // réapparaisse dès qu'on élargit la période. 'ALL' = tout l'historique (pas de borne basse).
+  protected readonly periods = [
+    { key: '1M', label: '1M' },
+    { key: '3M', label: '3M' },
+    { key: '6M', label: '6M' },
+    { key: 'ALL', label: 'Tout' },
+  ] as const;
+  protected readonly dashboardPeriod = signal<'1M' | '3M' | '6M' | 'ALL'>('1M');
+  protected setPeriod(p: '1M' | '3M' | '6M' | 'ALL'): void { this.dashboardPeriod.set(p); }
+
+  /** Bornes glissantes de la période courante. `from = null` → tout l'historique. */
+  protected readonly periodRange = computed<{ from: Date | null; to: Date }>(() => {
+    const to = new Date();
+    const p = this.dashboardPeriod();
+    if (p === 'ALL') return { from: null, to };
+    const days = p === '1M' ? 30 : p === '3M' ? 90 : 180;
+    const from = new Date(to);
+    from.setDate(from.getDate() - days);
+    from.setHours(0, 0, 0, 0);
+    return { from, to };
+  });
+
+  /** Libellé humain de la période (topbar + sous-titres). */
+  protected readonly periodLabel = computed(() => {
+    switch (this.dashboardPeriod()) {
+      case '1M': return '30 derniers jours';
+      case '3M': return '3 derniers mois';
+      case '6M': return '6 derniers mois';
+      default:   return "Tout l'historique";
+    }
+  });
+  /** Suffixe court pour le sous-titre de la courbe d'équité (« +X sur 3 mois »). */
+  protected readonly periodShort = computed(() => {
+    switch (this.dashboardPeriod()) {
+      case '1M': return 'sur 30 jours';
+      case '3M': return 'sur 3 mois';
+      case '6M': return 'sur 6 mois';
+      default:   return 'au total';
+    }
+  });
 
   // Suffixe query du compte sélectionné (multi-comptes). « Tous » → '' (agrégé). Lu dans les
   // URL des resources → tout se refetch automatiquement au changement de compte.
@@ -515,13 +555,31 @@ export class DashboardComponent {
     return id ? `?accountId=${encodeURIComponent(id)}` : '';
   }
 
+  // Query compte + bornes de période (KPIs / équité / P&L par jour). Lu dans les URL des
+  // resources → refetch auto au changement de compte OU de période.
+  private rangeQuery(): string {
+    const { from, to } = this.periodRange();
+    const parts: string[] = [];
+    const id = this.selectedAccount.accountParam();
+    if (id) parts.push(`accountId=${encodeURIComponent(id)}`);
+    if (from) parts.push(`from=${from.toISOString()}`);
+    parts.push(`to=${to.toISOString()}`);
+    return `?${parts.join('&')}`;
+  }
+
+  // KPIs scopés à la période sélectionnée (from/to glissants).
   private readonly summaryResource = httpResource<{ data: AnalyticsSummary }>(
-    () => `${environment.apiUrl}/analytics/summary${this.accQuery()}`,
+    () => `${environment.apiUrl}/analytics/summary${this.rangeQuery()}`,
   );
   // Courbe d'équité simple = vue de base FREE (on ne verrouille pas la vue de ses données).
+  // Scopée à la même période que les KPIs.
   private readonly equityCurveResource = httpResource<{
     data: { points: EquityPoint[]; startingCapital: number | null };
-  }>(() => `${environment.apiUrl}/analytics/equity-curve/current-month${this.accQuery()}`);
+  }>(() => `${environment.apiUrl}/analytics/equity-curve/daily${this.rangeQuery()}`);
+  // Activité journalière (P&L par jour) sur la même période — agrégée jour/semaine/mois côté front.
+  private readonly activityResource = httpResource<{
+    data: { days: { date: string; pnl: number; tradesCount: number }[] };
+  }>(() => `${environment.apiUrl}/analytics/activity/range${this.rangeQuery()}`);
   private readonly bySetupResource = httpResource<{ data: SetupStat[] }>(() =>
     this.userStore.isPremium() ? `${environment.apiUrl}/analytics/by-setup${this.accQuery()}` : undefined,
   );
@@ -593,13 +651,13 @@ export class DashboardComponent {
     const start = this.baseCapital();
     return start <= 0 ? 0 : ((this.summary()?.totalPnl ?? 0) / start) * 100;
   });
-  /** Sous-titre courbe d'équité : « +$X ce mois · base $Y » (comme la maquette). */
+  /** Sous-titre courbe d'équité : « +$X sur 3 mois · base $Y » (période courante). */
   protected readonly equitySub = computed(() => {
-    const base  = this.baseCapital();
-    const month = this.monthlyActivity()?.totalPnl ?? this.summary()?.totalPnl ?? 0;
-    const sym   = (this.userStore.user()?.currency ?? 'USD') === 'EUR' ? '€' : '$';
-    const fmt   = (n: number) => `${sym}${Math.round(Math.abs(n)).toLocaleString('en-US')}`;
-    return `${month >= 0 ? '+' : '−'}${fmt(month)} ce mois · base ${fmt(base)}`;
+    const base   = this.baseCapital();
+    const period = this.summary()?.totalPnl ?? 0;
+    const sym    = (this.userStore.user()?.currency ?? 'USD') === 'EUR' ? '€' : '$';
+    const fmt    = (n: number) => `${sym}${Math.round(Math.abs(n)).toLocaleString('en-US')}`;
+    return `${period >= 0 ? '+' : '−'}${fmt(period)} ${this.periodShort()} · base ${fmt(base)}`;
   });
   protected readonly capitalColor = computed(() => {
     const start = this.baseCapital();
@@ -612,9 +670,6 @@ export class DashboardComponent {
   );
   protected readonly equityCurve = computed(
     () => this.equityCurveResource.value()?.data?.points ?? [],
-  );
-  protected readonly currentMonthLabel = computed(() =>
-    new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
   );
   protected readonly bySetup = computed(() => this.bySetupResource.value()?.data ?? []);
   // Top 4 setups réellement utilisés (win rate défini) pour le widget « Win Rate / stratégie ».
@@ -647,25 +702,33 @@ export class DashboardComponent {
     effect(() => {
       const accountId = this.selectedAccount.accountParam();
       this.tradesStore.loadTrades(accountId ? { limit: '6', accountId } : { limit: '6' });
-      this.loadMonthlyActivity(accountId);
+      // L'activité (P&L par jour) est un httpResource keyé sur rangeQuery() → refetch auto.
     });
 
-    // Recharge summary si un trade est ajouté depuis l'extérieur (wizard)
+    // Recharge les analytics si un trade est ajouté depuis l'extérieur (wizard)
     effect(() => {
       const count = this.tradesStore.totalTrades();
       const known = this.knownTradesCount();
-      if (known !== -1 && count > known) this.summaryResource.reload();
+      if (known !== -1 && count > known) this.reloadAnalytics();
       this.knownTradesCount.set(count);
     });
 
-    // Recharge summary quand la LISTE de comptes change (import onboarding qui crée le
+    // Recharge les analytics quand la LISTE de comptes change (import onboarding qui crée le
     // compte par défaut, sans forcément passer par le compteur de trades ci-dessus).
     effect(() => {
       const n = this.selectedAccount.accounts().length;
       const known = this.knownAccountsCount();
-      if (known !== -1 && n !== known) this.summaryResource.reload();
+      if (known !== -1 && n !== known) this.reloadAnalytics();
       this.knownAccountsCount.set(n);
     });
+  }
+
+  /** Recharge toutes les resources analytics scopées à la période (après import / nouveau trade). */
+  private reloadAnalytics(): void {
+    this.summaryResource.reload();
+    this.equityCurveResource.reload();
+    this.activityResource.reload();
+    this.topAssetsResource.reload();
   }
 
   protected readonly emotionPie = computed(() => {
@@ -806,29 +869,136 @@ export class DashboardComponent {
   });
 
   /**
-   * Barres P&L par jour — TOUS les jours du mois (le back ne renvoie que les jours
-   * tradés). On reconstruit 1→N pour afficher le mois complet, jours vides à plat.
+   * Granularité des barres « P&L par jour » — pilotée par le NOMBRE de barres, pas par le nom
+   * de la période : on vise ≤ 31 barres. jour (≤ 31 j) → semaine (≤ ~31 sem.) → mois (au-delà).
+   * 1M = jour · 3M / 6M = semaine · Tout = mois.
    */
-  protected readonly plByDay = computed(() => {
-    const activity = this.monthlyActivity();
-    if (!activity) return null;
-    const byDay = new Map<number, number>();
-    for (const d of activity.days) byDay.set(parseInt(d.date.slice(8, 10), 10), d.pnl);
-    // month est 1-based (juillet = 7) → new Date(y, m, 0) = dernier jour du mois.
-    const daysInMonth = new Date(activity.year, activity.month, 0).getDate();
-    const maxAbs = Math.max(...activity.days.map((d) => Math.abs(d.pnl)), 1);
+  protected readonly plGranularity = computed<'day' | 'week' | 'month'>(() => {
+    const { from, to } = this.periodRange();
+    if (!from) return 'month'; // ALL → mensuel
+    const spanDays = Math.round((to.getTime() - from.getTime()) / 86_400_000);
+    if (spanDays <= 31) return 'day';
+    if (spanDays <= 31 * 7) return 'week';
+    return 'month';
+  });
+  /** Titre dynamique du panneau selon la granularité (jamais trompeur). */
+  protected readonly plTitle = computed(() =>
+    this.plGranularity() === 'day' ? 'P&L par jour'
+      : this.plGranularity() === 'week' ? 'P&L par semaine'
+        : 'P&L par mois',
+  );
+  /** Info-bulle précisant l'agrégation (mtc-info-tooltip). */
+  protected readonly plTooltip = computed(() => {
+    switch (this.plGranularity()) {
+      case 'day':
+        return 'Chaque barre = le P&L net réalisé sur une journée (frais inclus). Les jours sans trade sont à plat.';
+      case 'week':
+        return 'La période est trop longue pour un affichage jour par jour : les barres sont agrégées par semaine ISO (lundi → dimanche, comme le journal). Chaque barre = le P&L net de la semaine.';
+      default:
+        return 'La période est trop longue pour un affichage plus fin : les barres sont agrégées par mois. Chaque barre = le P&L net du mois.';
+    }
+  });
+
+  // Helpers de dates (front) — semaine ISO alignée sur le journal (PROMPT-170), pas de getDay() brut.
+  private parseDay(dateStr: string): Date { return new Date(dateStr + 'T12:00:00'); }
+  private atNoon(d: Date): Date { const c = new Date(d); c.setHours(12, 0, 0, 0); return c; }
+  private isoDate(d: Date): string {
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+  private frDate(d: Date): string {
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`;
+  }
+  /** Lundi de la semaine ISO d'une date — même définition que le journal ((getDay()+6)%7). */
+  private mondayOf(d: Date): Date {
+    const dow = (d.getDay() + 6) % 7; // lundi = 0 … dimanche = 6
+    const m = new Date(d);
+    m.setDate(d.getDate() - dow);
+    return this.atNoon(m);
+  }
+
+  /**
+   * Barres P&L par période — agrégées jour / semaine / mois selon `plGranularity`. Les jours
+   * tradés viennent du back (P&L net déjà agrégé, BE gérés comme le journal) ; on pré-remplit
+   * les buckets vides de la plage pour un axe continu (barres vides à plat). Vert gain / rouge perte.
+   */
+  protected readonly plBuckets = computed(() => {
+    const days = this.activityResource.value()?.data?.days ?? null;
+    if (days === null) return null;
+    const gran = this.plGranularity();
+    const { from, to } = this.periodRange();
+
+    const pnlByDate = new Map<string, number>();
+    for (const d of days) pnlByDate.set(d.date, d.pnl);
+
+    const first = from ?? (days.length ? this.parseDay(days[0].date) : new Date(to));
+    type Raw = { key: string; axisLabel: string; title: string; pnl: number; traded: boolean };
+    const raw: Raw[] = [];
+
+    if (gran === 'day') {
+      const cur = this.atNoon(first);
+      const end = this.atNoon(to);
+      while (cur <= end) {
+        const key = this.isoDate(cur);
+        raw.push({ key, axisLabel: String(cur.getDate()), title: this.frDate(cur),
+          pnl: pnlByDate.get(key) ?? 0, traded: pnlByDate.has(key) });
+        cur.setDate(cur.getDate() + 1);
+      }
+    } else if (gran === 'week') {
+      const map = new Map<string, { monday: Date; pnl: number; traded: boolean }>();
+      const cur = this.mondayOf(this.atNoon(first));
+      const end = this.atNoon(to);
+      while (cur <= end) { // pré-remplit chaque semaine de la plage
+        const key = this.isoDate(cur);
+        if (!map.has(key)) map.set(key, { monday: new Date(cur), pnl: 0, traded: false });
+        cur.setDate(cur.getDate() + 7);
+      }
+      for (const [date, pnl] of pnlByDate) {
+        const monday = this.mondayOf(this.parseDay(date));
+        const key = this.isoDate(monday);
+        const b = map.get(key) ?? { monday, pnl: 0, traded: false };
+        b.pnl += pnl; b.traded = true;
+        map.set(key, b);
+      }
+      for (const [key, b] of [...map.entries()].sort(([a], [c]) => a.localeCompare(c))) {
+        const sunday = new Date(b.monday); sunday.setDate(sunday.getDate() + 6);
+        raw.push({ key, axisLabel: `${b.monday.getDate()}/${b.monday.getMonth() + 1}`,
+          title: `Semaine du ${this.frDate(b.monday)} au ${this.frDate(sunday)}`, pnl: b.pnl, traded: b.traded });
+      }
+    } else {
+      const map = new Map<string, { d: Date; pnl: number; traded: boolean }>();
+      const cur = new Date(first.getFullYear(), first.getMonth(), 1);
+      const end = new Date(to.getFullYear(), to.getMonth(), 1);
+      while (cur <= end) {
+        const key = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}`;
+        if (!map.has(key)) map.set(key, { d: new Date(cur), pnl: 0, traded: false });
+        cur.setMonth(cur.getMonth() + 1);
+      }
+      for (const [date, pnl] of pnlByDate) {
+        const d = this.parseDay(date);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        const b = map.get(key) ?? { d: new Date(d.getFullYear(), d.getMonth(), 1), pnl: 0, traded: false };
+        b.pnl += pnl; b.traded = true;
+        map.set(key, b);
+      }
+      for (const [key, b] of [...map.entries()].sort(([a], [c]) => a.localeCompare(c))) {
+        raw.push({ key, axisLabel: b.d.toLocaleDateString('fr-FR', { month: 'short' }).replace('.', ''),
+          title: b.d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }), pnl: b.pnl, traded: b.traded });
+      }
+    }
+
+    const maxAbs = Math.max(...raw.filter((b) => b.traded).map((b) => Math.abs(b.pnl)), 1);
     const fmt = (v: number) => {
       const a = Math.abs(v);
       return (v > 0 ? '+' : '−') + (a >= 1000 ? (a / 1000).toFixed(1).replace('.0', '') + 'k' : Math.round(a));
     };
-    return Array.from({ length: daysInMonth }, (_, i) => {
-      const day = i + 1;
-      const pnl = byDay.get(day) ?? 0;
-      const mag = Math.min(1, Math.abs(pnl) / maxAbs);
+    return raw.map((b) => {
+      const mag = Math.min(1, Math.abs(b.pnl) / maxAbs);
       return {
-        day, pnl, traded: pnl !== 0, pos: pnl >= 0, mag,
-        barPct: pnl !== 0 ? 5 + mag * 42 : 0,
-        label: pnl !== 0 ? fmt(pnl) : '',
+        ...b, pos: b.pnl >= 0, mag,
+        barPct: b.traded && b.pnl !== 0 ? 5 + mag * 42 : 0,
+        label: b.traded && b.pnl !== 0 ? fmt(b.pnl) : '',
       };
     });
   });
@@ -914,7 +1084,7 @@ export class DashboardComponent {
     this.showCsvImport.set(false);
     this.tradesStore.reset();
     this.tradesStore.loadTrades({ limit: '6' });
-    this.summaryResource.reload();
+    this.reloadAnalytics();
   }
 
   protected saveTrade(dto: CreateTradeDto) {
@@ -927,19 +1097,9 @@ export class DashboardComponent {
           this.tradesStore.addTrade(res.data);
           this.showTradeForm.set(false);
           this.isSavingTrade.set(false);
-          this.summaryResource.reload();
+          this.reloadAnalytics();
         },
         error: () => this.isSavingTrade.set(false),
-      });
-  }
-
-  private loadMonthlyActivity(accountId?: string): void {
-    this.monthlyActivityLoading.set(true);
-    this.analyticsApi.getCurrentMonthActivity(accountId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => { this.monthlyActivity.set(res.data); this.monthlyActivityLoading.set(false); },
-        error: () => this.monthlyActivityLoading.set(false),
       });
   }
 
