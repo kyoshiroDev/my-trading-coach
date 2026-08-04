@@ -4,6 +4,9 @@ import { Router } from '@angular/router';
 import { EMPTY, fromEvent, interval } from 'rxjs';
 import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { SelectedAccountStore } from '../stores/selected-account.store';
+import { TradesStore } from '../stores/trades.store';
+import { SetupsStore } from '../stores/setups.store';
 
 export type UserRole = 'ADMIN' | 'USER' | 'BETA_TESTER' | 'AMBASSADOR';
 
@@ -47,6 +50,11 @@ interface AuthResponse {
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  // Stores user-scoped à purger au logout (anti-fuite inter-comptes). Ces stores n'injectent
+  // jamais AuthService → pas de cycle DI.
+  private readonly accountStore = inject(SelectedAccountStore);
+  private readonly tradesStore = inject(TradesStore);
+  private readonly setupsStore = inject(SetupsStore);
 
   readonly currentUser = signal<AuthUser | null>(null);
   readonly isAuthenticated = signal(false);
@@ -110,6 +118,11 @@ export class AuthService {
     localStorage.removeItem('user');
     this.currentUser.set(null);
     this.isAuthenticated.set(false);
+    // Purge les stores user-scoped : sans ça, un login sur un AUTRE compte dans le même onglet
+    // (navigation SPA sans reload) héritait des comptes/setups/trades du user précédent. PROMPT-175.
+    this.accountStore.reset();
+    this.tradesStore.reset();
+    this.setupsStore.reset();
     this.router.navigate(['/login']);
   }
 

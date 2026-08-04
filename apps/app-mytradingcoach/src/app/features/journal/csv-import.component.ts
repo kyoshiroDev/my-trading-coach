@@ -540,6 +540,12 @@ export class CsvImportComponent {
         next: (res) => {
           this.result.set(res.data);
           this.isLoading.set(false);
+          // Refresh coordonné des stores globalement périmés par l'import (PROMPT-175) :
+          // - comptes : l'import a pu créer le compte par défaut → sinon dashboard « 0 compte / $0 ».
+          // - setups : le `tradeCount` par setup change → sinon « jamais utilisé » sur le Profil.
+          // Les trades/summary sont rechargés par le parent (journal) ou l'effet du dashboard.
+          this.accountStore.load();
+          this.setupsStore.load(true);
           this.imported.emit();
         },
         error: (err) => {

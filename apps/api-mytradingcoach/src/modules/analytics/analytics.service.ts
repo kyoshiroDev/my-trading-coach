@@ -40,8 +40,18 @@ export class AnalyticsService {
   private accCond(accountId?: string): { accountId?: string } { return accountId ? { accountId } : {}; }
   private accKey(accountId?: string): string { return accountId ? `:acc:${accountId}` : ''; }
 
-  async getSummary(userId: string, accountId?: string) {
-    return this.withCache(`analytics:${userId}:summary${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeSummary(userId, accountId));
+  // Filtre de plage de dates (période glissante du dashboard) : fragment `where` + suffixe de clé.
+  private dateCond(from?: Date, to?: Date): { tradedAt?: { gte?: Date; lte?: Date } } {
+    if (!from && !to) return {};
+    return { tradedAt: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } };
+  }
+  private rangeKey(from?: Date, to?: Date): string {
+    return from || to ? `:range:${from?.toISOString() ?? ''}:${to?.toISOString() ?? ''}` : '';
+  }
+
+  async getSummary(userId: string, accountId?: string, from?: Date, to?: Date) {
+    const key = `analytics:${userId}:summary${this.accKey(accountId)}${this.rangeKey(from, to)}`;
+    return this.withCache(key, CACHE_TTL.ANALYTICS, () => this.computeSummary(userId, accountId, from, to));
   }
   async getBySetup(userId: string, accountId?: string) {
     return this.withCache(`analytics:${userId}:setup${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeBySetup(userId, accountId));
@@ -64,15 +74,23 @@ export class AnalyticsService {
   async getMonthlyActivity(userId: string, year: number, month: number, accountId?: string) {
     return this.withCache(`analytics:${userId}:activity:${year}:${month}${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeMonthlyActivity(userId, year, month, accountId));
   }
+  // Activité journalière (P&L par jour) sur une plage glissante — l'agrégation jour/semaine/mois
+  // est faite côté front. Réutilise le même bucketing par jour (fuseau Paris) que l'activité mensuelle.
+  async getActivityRange(userId: string, from?: Date, to?: Date, accountId?: string) {
+    const key = `analytics:${userId}:activity:range${this.rangeKey(from, to)}${this.accKey(accountId)}`;
+    return this.withCache(key, CACHE_TTL.ANALYTICS, async () => ({
+      days: await this.computeDailyActivity(userId, this.dateCond(from, to), accountId),
+    }));
+  }
   async getEquityCurveDaily(userId: string, from?: Date, to?: Date, accountId?: string) {
     const key = `analytics:${userId}:equity:daily:${from?.toISOString() ?? ''}:${to?.toISOString() ?? ''}${this.accKey(accountId)}`;
     return this.withCache(key, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveDaily(userId, from, to, accountId));
   }
 
-  private async computeSummary(userId: string, accountId?: string) {
+  private async computeSummary(userId: string, accountId?: string, from?: Date, to?: Date) {
     const trades = await this.prisma.trade.findMany({
-      where: { userId, ...this.accCond(accountId), pnl: { not: null } },
-      select: { pnl: true, tradedAt: true, session: true },
+      where: { userId, ...this.accCond(accountId), ...this.dateCond(from, to), pnl: { not: null } },
+      select: { pnl: true, commission: true, tradedAt: true, session: true },
       orderBy: { tradedAt: 'asc' },
     });
 
@@ -94,7 +112,10 @@ export class AnalyticsService {
     // Win rate via le helper unique (BE exclus du dénominateur — PROMPT-160).
     const stats = computeTradeStats(trades);
     const winRate = stats.winRate;
-    const totalPnl = stats.totalPnl;
+    // P&L NET = somme des pnl MOINS les frais (commissions). Sans ça le KPI « P&L net » du
+    // dashboard et le capital affichaient le brut, incohérents avec le net du journal (PROMPT-175).
+    const totalCommission = trades.reduce((a, t) => a + (t.commission ?? 0), 0);
+    const totalPnl = stats.totalPnl - totalCommission;
 
     // Profit factor = profits bruts / pertes brutes. null si aucune perte (∞ → géré côté front).
     const grossProfit = trades.reduce((a, t) => a + Math.max(0, t.pnl ?? 0), 0);
@@ -392,12 +413,18 @@ export class AnalyticsService {
     return this.computeEquityCurveDaily(userId, from, to, accountId);
   }
 
-  private async computeMonthlyActivity(userId: string, year: number, month: number, accountId?: string) {
-    const start = new Date(year, month - 1, 1);
-    const end = new Date(year, month, 1);
-
+  /**
+   * Buckets journaliers (date `YYYY-MM-DD` fuseau Paris → P&L net, nombre de trades, win rate)
+   * pour un `where` de dates arbitraire. SOURCE UNIQUE partagée par l'activité mensuelle et la
+   * plage glissante — le win rate exclut les BE (wins / (wins + losses)), P&L net = Σ pnl.
+   */
+  private async computeDailyActivity(
+    userId: string,
+    dateCond: { tradedAt?: { gte?: Date; lte?: Date; lt?: Date } },
+    accountId?: string,
+  ) {
     const trades = await this.prisma.trade.findMany({
-      where: { userId, ...this.accCond(accountId), pnl: { not: null }, tradedAt: { gte: start, lt: end } },
+      where: { userId, ...this.accCond(accountId), pnl: { not: null }, ...dateCond },
       select: { tradedAt: true, pnl: true },
       orderBy: { tradedAt: 'asc' },
     });
@@ -420,12 +447,20 @@ export class AnalyticsService {
       byDate.set(dateKey, g);
     }
 
-    const days = Array.from(byDate.entries()).map(([date, g]) => ({
-      date,
-      pnl: g.pnl,
-      tradesCount: g.count,
-      winRate: (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : 0,
-    }));
+    return Array.from(byDate.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, g]) => ({
+        date,
+        pnl: g.pnl,
+        tradesCount: g.count,
+        winRate: (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : 0,
+      }));
+  }
+
+  private async computeMonthlyActivity(userId: string, year: number, month: number, accountId?: string) {
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 1);
+    const days = await this.computeDailyActivity(userId, { tradedAt: { gte: start, lt: end } }, accountId);
 
     return {
       year,
@@ -440,7 +475,7 @@ export class AnalyticsService {
   private async computeTopAssets(userId: string, accountId?: string) {
     const trades = await this.prisma.trade.findMany({
       where: { userId, ...this.accCond(accountId), pnl: { not: null } },
-      select: { asset: true, pnl: true },
+      select: { asset: true, pnl: true, commission: true },
     });
 
     const grouped = new Map<
@@ -450,7 +485,9 @@ export class AnalyticsService {
     for (const t of trades) {
       const g = grouped.get(t.asset) ?? { pnl: 0, count: 0, wins: 0, losses: 0 };
       g.count++;
-      g.pnl += t.pnl ?? 0;
+      // P&L NET par instrument = pnl − frais, cohérent avec le « P&L net » du dashboard.
+      // Le win/loss reste classé sur le pnl brut (même convention que le win rate global).
+      g.pnl += (t.pnl ?? 0) - (t.commission ?? 0);
       if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
       grouped.set(t.asset, g);
     }

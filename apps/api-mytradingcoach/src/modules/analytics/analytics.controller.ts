@@ -21,9 +21,20 @@ export class AnalyticsController {
     return (await this.accounts.accountWhere(userId, accountId)).accountId;
   }
 
+  // KPIs scopés à la période du dashboard (from/to glissants). Sans bornes → tout l'historique.
   @Get('summary')
-  async getSummary(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
-    return this.analyticsService.getSummary(user.id, await this.accountId(user.id, accountId));
+  async getSummary(
+    @CurrentUser() user: { id: string },
+    @Query('accountId') accountId?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.analyticsService.getSummary(
+      user.id,
+      await this.accountId(user.id, accountId),
+      from ? new Date(from) : undefined,
+      to ? new Date(to) : undefined,
+    );
   }
 
   @UseGuards(PremiumGuard)
@@ -86,6 +97,24 @@ export class AnalyticsController {
       user.id,
       now.getFullYear(),
       now.getMonth() + 1,
+      await this.accountId(user.id, accountId),
+    );
+  }
+
+  // Activité (P&L par jour) sur une plage glissante = vue de base FREE. Sans `from` → tout
+  // l'historique (agrégation mensuelle côté front). L'agrégation jour/semaine/mois est faite
+  // côté front à partir de ces buckets journaliers.
+  @Get('activity/range')
+  async getActivityRange(
+    @CurrentUser() user: { id: string },
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('accountId') accountId?: string,
+  ) {
+    return this.analyticsService.getActivityRange(
+      user.id,
+      from ? new Date(from) : undefined,
+      to ? new Date(to) : undefined,
       await this.accountId(user.id, accountId),
     );
   }

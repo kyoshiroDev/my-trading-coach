@@ -130,6 +130,17 @@ describe('AnalyticsService', () => {
       expect(result.totalPnl).toBe(250);
     });
 
+    it('P&L net = pnl brut MOINS les frais (commission)', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue([
+        { ...makeTrade(100), commission: 3 },
+        { ...makeTrade(200), commission: 2 },
+      ]);
+
+      const result = await service.getSummary('user-123');
+
+      expect(result.totalPnl).toBe(295); // 300 brut − 5 de frais
+    });
+
     it('calcule le streak positif en cours', async () => {
       mockPrisma.trade.findMany.mockResolvedValue([
         makeTrade(-50),
