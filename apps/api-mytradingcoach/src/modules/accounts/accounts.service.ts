@@ -336,8 +336,17 @@ export class AccountsService {
     });
     if (recent) return recent.id;
 
+    // Premier compte cree implicitement (import onboarding) : herite du capital declare au
+    // profil, sinon le dashboard afficherait « base 0 » alors que l'utilisateur a saisi un capital.
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { startingCapital: true },
+    });
+    const startingBalance =
+      user?.startingCapital && user.startingCapital > 0 ? user.startingCapital : null;
+
     const created = await this.prisma.tradingAccount.create({
-      data: { userId, label: 'Compte principal' },
+      data: { userId, label: 'Compte principal', startingBalance },
       select: { id: true },
     });
     return created.id;

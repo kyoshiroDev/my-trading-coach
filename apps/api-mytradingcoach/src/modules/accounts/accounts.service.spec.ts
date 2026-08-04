@@ -22,6 +22,7 @@ function makePrisma() {
     },
     trade: { count: vi.fn() },
     tradeSession: { count: vi.fn() },
+    user: { findUnique: vi.fn() },
   };
 }
 
@@ -39,6 +40,45 @@ describe('AccountsService', () => {
     await svc.create('u1', { label: 'Apex 50k' } as never);
     expect(prisma.tradingAccount.create).toHaveBeenCalledWith({
       data: { userId: 'u1', label: 'Apex 50k' },
+    });
+  });
+
+  describe('ensureDefaultAccountId — compte par défaut hérite du capital profil', () => {
+    it('crée « Compte principal » avec le startingBalance = capital du profil', async () => {
+      prisma.tradingAccount.findFirst.mockResolvedValue(null); // pas de principal, pas de récent
+      prisma.user.findUnique.mockResolvedValue({ startingCapital: 50000 });
+      prisma.tradingAccount.create.mockResolvedValue({ id: 'a1' });
+
+      const id = await svc.ensureDefaultAccountId('u1');
+
+      expect(id).toBe('a1');
+      expect(prisma.tradingAccount.create).toHaveBeenCalledWith({
+        data: { userId: 'u1', label: 'Compte principal', startingBalance: 50000 },
+        select: { id: true },
+      });
+    });
+
+    it('capital profil à 0 → startingBalance null (pas de base factice)', async () => {
+      prisma.tradingAccount.findFirst.mockResolvedValue(null);
+      prisma.user.findUnique.mockResolvedValue({ startingCapital: 0 });
+      prisma.tradingAccount.create.mockResolvedValue({ id: 'a2' });
+
+      await svc.ensureDefaultAccountId('u1');
+
+      expect(prisma.tradingAccount.create).toHaveBeenCalledWith({
+        data: { userId: 'u1', label: 'Compte principal', startingBalance: null },
+        select: { id: true },
+      });
+    });
+
+    it('« Compte principal » déjà présent → renvoie son id sans créer', async () => {
+      prisma.tradingAccount.findFirst.mockResolvedValueOnce({ id: 'existing' });
+
+      const id = await svc.ensureDefaultAccountId('u1');
+
+      expect(id).toBe('existing');
+      expect(prisma.tradingAccount.create).not.toHaveBeenCalled();
+      expect(prisma.user.findUnique).not.toHaveBeenCalled();
     });
   });
 
@@ -251,10 +291,11 @@ describe('AccountsService', () => {
 
     it('aucun compte actif → crée le « Compte principal » (jamais NULL)', async () => {
       prisma.tradingAccount.findFirst.mockResolvedValue(null);
+      prisma.user.findUnique.mockResolvedValue(null); // capital profil inconnu
       prisma.tradingAccount.create.mockResolvedValue({ id: 'created' });
       expect(await svc.ensureDefaultAccountId('u1')).toBe('created');
       expect(prisma.tradingAccount.create).toHaveBeenCalledWith({
-        data: { userId: 'u1', label: 'Compte principal' },
+        data: { userId: 'u1', label: 'Compte principal', startingBalance: null },
         select: { id: true },
       });
     });
