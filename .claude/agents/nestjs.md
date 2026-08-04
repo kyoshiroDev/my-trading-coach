@@ -54,11 +54,16 @@ POST   /api/trades                     → vérifier limite 30/mois FREE avant c
 PATCH  /api/trades/:id
 DELETE /api/trades/:id
 
-GET    /api/analytics/summary                    FREE + PREMIUM (pas de PremiumGuard ici)
+GET    /api/analytics/summary                    FREE + PREMIUM (pas de PremiumGuard). ?from&to = periode glissante du dashboard (sans bornes = tout l'historique)
 GET    /api/analytics/by-setup                   PREMIUM
 GET    /api/analytics/by-emotion                 PREMIUM
 GET    /api/analytics/by-hour                    PREMIUM
 GET    /api/analytics/equity-curve               PREMIUM
+GET    /api/analytics/equity-curve/current-month FREE (carte equite dashboard, legacy)
+GET    /api/analytics/equity-curve/daily         FREE, ?from&to → carte equite scopee periode
+GET    /api/analytics/activity/range             FREE, ?from&to → P&L par jour du dashboard (agregation jour/semaine/mois cote front)
+GET    /api/analytics/activity/current-month     FREE (activite mensuelle)
+GET    /api/analytics/activity/:year/:month      PREMIUM
 GET    /api/analytics/top-assets                 PREMIUM
 GET    /api/analytics/daily-recap/yesterday      JWT → recap de la veille
 
