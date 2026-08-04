@@ -28,6 +28,7 @@ import {
   Award,
   User,
   LogOut,
+  Lock,
 } from 'lucide-angular';
 import { UserStore } from '../../../core/stores/user.store';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -152,7 +153,9 @@ import { environment } from '../../../../environments/environment';
             <lucide-icon [img]="AnalyticsIcon" [size]="16" class="nav-icon" />
             <span class="nav-label">Analytics</span>
             @if (!userStore.isPremium()) {
-              <span class="badge premium">PREMIUM</span>
+              <span class="nav-lock" title="Premium — débloque avec l'abonnement">
+                <lucide-icon [img]="LockIcon" [size]="12" />
+              </span>
             }
           </a>
 
@@ -169,7 +172,9 @@ import { environment } from '../../../../environments/environment';
             <lucide-icon [img]="AiIcon" [size]="16" class="nav-icon" />
             <span class="nav-label">IA Insights</span>
             @if (!userStore.isPremium()) {
-              <span class="badge premium">PREMIUM</span>
+              <span class="nav-lock" title="Premium — débloque avec l'abonnement">
+                <lucide-icon [img]="LockIcon" [size]="12" />
+              </span>
             }
           </a>
 
@@ -184,7 +189,9 @@ import { environment } from '../../../../environments/environment';
             <lucide-icon [img]="DebriefIcon" [size]="16" class="nav-icon" />
             <span class="nav-label">Weekly Debrief</span>
             @if (!userStore.isPremium()) {
-              <span class="badge premium">PREMIUM</span>
+              <span class="nav-lock" title="Premium — débloque avec l'abonnement">
+                <lucide-icon [img]="LockIcon" [size]="12" />
+              </span>
             }
           </a>
 
@@ -244,7 +251,9 @@ import { environment } from '../../../../environments/environment';
             <lucide-icon [img]="ScoringIcon" [size]="16" class="nav-icon" />
             <span class="nav-label">Scoring</span>
             @if (!userStore.isPremium()) {
-              <span class="badge premium">PREMIUM</span>
+              <span class="nav-lock" title="Premium — débloque avec l'abonnement">
+                <lucide-icon [img]="LockIcon" [size]="12" />
+              </span>
             }
           </a>
 
@@ -367,6 +376,7 @@ export class SidebarComponent {
   protected readonly ScoringIcon   = Award;
   protected readonly ProfilIcon    = User;
   protected readonly LogoutIcon    = LogOut;
+  protected readonly LockIcon      = Lock;
 
   protected readonly sidebarOpen   = signal(false);
 
