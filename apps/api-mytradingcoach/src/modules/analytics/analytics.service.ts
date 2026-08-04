@@ -475,7 +475,7 @@ export class AnalyticsService {
   private async computeTopAssets(userId: string, accountId?: string) {
     const trades = await this.prisma.trade.findMany({
       where: { userId, ...this.accCond(accountId), pnl: { not: null } },
-      select: { asset: true, pnl: true },
+      select: { asset: true, pnl: true, commission: true },
     });
 
     const grouped = new Map<
@@ -485,7 +485,9 @@ export class AnalyticsService {
     for (const t of trades) {
       const g = grouped.get(t.asset) ?? { pnl: 0, count: 0, wins: 0, losses: 0 };
       g.count++;
-      g.pnl += t.pnl ?? 0;
+      // P&L NET par instrument = pnl − frais, cohérent avec le « P&L net » du dashboard.
+      // Le win/loss reste classé sur le pnl brut (même convention que le win rate global).
+      g.pnl += (t.pnl ?? 0) - (t.commission ?? 0);
       if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
       grouped.set(t.asset, g);
     }
