@@ -90,7 +90,7 @@ export class AnalyticsService {
   private async computeSummary(userId: string, accountId?: string, from?: Date, to?: Date) {
     const trades = await this.prisma.trade.findMany({
       where: { userId, ...this.accCond(accountId), ...this.dateCond(from, to), pnl: { not: null } },
-      select: { pnl: true, tradedAt: true, session: true },
+      select: { pnl: true, commission: true, tradedAt: true, session: true },
       orderBy: { tradedAt: 'asc' },
     });
 
@@ -112,7 +112,10 @@ export class AnalyticsService {
     // Win rate via le helper unique (BE exclus du dénominateur — PROMPT-160).
     const stats = computeTradeStats(trades);
     const winRate = stats.winRate;
-    const totalPnl = stats.totalPnl;
+    // P&L NET = somme des pnl MOINS les frais (commissions). Sans ça le KPI « P&L net » du
+    // dashboard et le capital affichaient le brut, incohérents avec le net du journal (PROMPT-175).
+    const totalCommission = trades.reduce((a, t) => a + (t.commission ?? 0), 0);
+    const totalPnl = stats.totalPnl - totalCommission;
 
     // Profit factor = profits bruts / pertes brutes. null si aucune perte (∞ → géré côté front).
     const grossProfit = trades.reduce((a, t) => a + Math.max(0, t.pnl ?? 0), 0);

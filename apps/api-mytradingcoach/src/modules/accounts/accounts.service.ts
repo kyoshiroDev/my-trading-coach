@@ -16,7 +16,7 @@ import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { computeTradeStats } from '../../common/utils/trade-stats.util';
 
-type RuleTrade = { pnl: number | null; tradedAt: Date };
+type RuleTrade = { pnl: number | null; commission?: number | null; tradedAt: Date };
 
 /** Contexte plan du user pour le calcul du quota de comptes. */
 type PlanContext = { plan: Plan; role: Role; trialEndsAt?: Date | null };
@@ -77,7 +77,7 @@ export class AccountsService {
         pnl: { not: null },
         accountId: { in: accounts.map((a) => a.id) },
       },
-      select: { accountId: true, pnl: true, tradedAt: true },
+      select: { accountId: true, pnl: true, commission: true, tradedAt: true },
       orderBy: { tradedAt: 'asc' },
     });
     const byAccount = new Map<string, RuleTrade[]>();
@@ -116,7 +116,10 @@ export class AccountsService {
     const sorted = [...trades].sort(
       (a, b) => a.tradedAt.getTime() - b.tradedAt.getTime(),
     );
-    const realizedPnl = sorted.reduce((s, t) => s + (t.pnl ?? 0), 0);
+    // P&L NET par trade = pnl − frais (commission). Le solde/objectif/drawdown sont nets des
+    // frais, cohérents avec le « P&L net » du dashboard et du journal (PROMPT-175).
+    const net = (t: RuleTrade) => (t.pnl ?? 0) - (t.commission ?? 0);
+    const realizedPnl = sorted.reduce((s, t) => s + net(t), 0);
     const currentBalance = startingBalance + realizedPnl;
 
     // Taux de réussite via le helper unique (BE exclus du dénominateur — PROMPT-160).
@@ -133,7 +136,7 @@ export class AccountsService {
       const byDay = new Map<string, number>();
       for (const t of sorted) {
         const key = t.tradedAt.toISOString().slice(0, 10);
-        byDay.set(key, (byDay.get(key) ?? 0) + (t.pnl ?? 0));
+        byDay.set(key, (byDay.get(key) ?? 0) + net(t));
       }
       const sums = [...byDay.values()];
       bestDay = Math.max(...sums);
@@ -157,7 +160,7 @@ export class AccountsService {
         let bal = startingBalance;
         let hwm = startingBalance;
         for (const t of sorted) {
-          bal += t.pnl ?? 0;
+          bal += net(t);
           if (bal > hwm) hwm = bal;
         }
         floor = hwm - account.maxDrawdown;

@@ -306,6 +306,16 @@ describe('AccountsService', () => {
     // Trades : +1000, +2000, -500 → realizedPnl 2500, currentBalance 52500.
     const trades = [t(1000, 1), t(2000, 2), t(-500, 3)];
 
+    it('realizedPnl / solde NET des frais (commission soustraite par trade)', () => {
+      const tc = (pnl: number, commission: number, day: number) => ({ pnl, commission, tradedAt: new Date(2026, 5, day) });
+      const m = svc.computeRuleMetrics(
+        { startingBalance: 50000, accountSize: null, profitTarget: null, maxDrawdown: null, drawdownType: 'STATIC' },
+        [tc(1000, 10, 1), tc(500, 5, 2)],
+      );
+      expect(m.realizedPnl).toBe(1485); // (1000 - 10) + (500 - 5)
+      expect(m.currentBalance).toBe(51485);
+    });
+
     it('STATIC : plancher = startingBalance - maxDrawdown, objectif & marge corrects', () => {
       const m = svc.computeRuleMetrics(
         { startingBalance: 50000, accountSize: null, profitTarget: 3000, maxDrawdown: 2000, drawdownType: 'STATIC' },
