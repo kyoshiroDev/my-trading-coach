@@ -98,7 +98,7 @@
   border-bottom: 1px solid var(--border);
 }
 .wizard-logo { display: flex; align-items: center; gap: 10px; }
-.logo-mark   { width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, var(--blue), var(--purple)); }
+.logo-mark   { width: 28px; height: 28px; border-radius: 8px; object-fit: contain; }
 .logo-text   { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--text); }
 .skip-btn {
   font-size: 12px; font-family: var(--font-mono); color: var(--text-3);
