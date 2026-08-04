@@ -65,6 +65,20 @@ export class SelectedAccountStore {
     try { localStorage.setItem(STORAGE_KEY, id); } catch { /* stockage indispo */ }
   }
 
+  /**
+   * Réinitialise le store (appelé au logout). Sans ça, se connecter à un AUTRE compte dans
+   * le même onglet (navigation SPA, sans reload) laissait la liste des comptes + le compte
+   * sélectionné du user précédent → import qui envoie un accountId d'un compte inaccessible
+   * (« Compte introuvable »). On purge aussi la clé persistée. PROMPT-175.
+   */
+  reset(): void {
+    this.accounts.set([]);
+    this.loaded.set(false);
+    this.isLoading.set(false);
+    this.selectedAccountId.set('all');
+    try { localStorage.removeItem(STORAGE_KEY); } catch { /* stockage indispo */ }
+  }
+
   /** Param à passer en query aux appels stats : undefined si « Tous », sinon l'id du compte. */
   accountParam(): string | undefined {
     const id = this.selectedAccountId();
