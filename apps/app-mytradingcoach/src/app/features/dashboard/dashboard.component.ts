@@ -139,7 +139,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
               <div class="mtc-kpi-val" data-testid="dashboard-capital" [style.color]="capitalColor()">{{ capitalDisplay() }}</div>
               <div class="mtc-kpi-sub">
                 @if (capitalPct() !== 0) {
-                  <span [style.color]="capitalPct() > 0 ? 'var(--green)' : 'var(--red)'">{{ capitalPct() > 0 ? '+' : '' }}{{ capitalPct() | number:'1.1-1' }}% ce mois</span>
+                  <span [style.color]="capitalPct() > 0 ? 'var(--green)' : 'var(--red)'">{{ capitalPct() > 0 ? '+' : '' }}{{ capitalPct() | number:'1.1-1' }}% {{ periodShort() }}</span>
                 } @else { base }
               </div>
             </div>
@@ -155,10 +155,10 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
           <!-- P&L net mois -->
           <div class="mtc-kpi" style="--glow:var(--green)">
             <div class="mtc-kpi-l">
-              <div class="mtc-kpi-lab">P&amp;L net · mois</div>
+              <div class="mtc-kpi-lab">P&amp;L net</div>
               <div class="mtc-kpi-val" [style.color]="pnlColor()">{{ summary()?.totalPnl ?? 0 | pnlFormat }}</div>
               <div class="mtc-kpi-sub">
-                @if ((summary()?.totalTrades ?? 0) > 0) { ce mois } @else { Aucune donnée }
+                @if ((summary()?.totalTrades ?? 0) > 0) { {{ periodShort() }} } @else { Aucune donnée }
               </div>
             </div>
             @let pnl = sparkPath(eqSeries());
@@ -289,7 +289,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
                 <circle [attr.cx]="eg.lastX" [attr.cy]="eg.lastY" r="3.4" [attr.fill]="eg.color" />
               </svg>
             } @else {
-              <div class="mtc-empty">Aucun trade sur la période</div>
+              <div class="mtc-empty">{{ equityEmptyMsg() }}</div>
             }
           </div>
         </div>
@@ -659,6 +659,16 @@ export class DashboardComponent {
     const fmt    = (n: number) => `${sym}${Math.round(Math.abs(n)).toLocaleString('en-US')}`;
     return `${period >= 0 ? '+' : '−'}${fmt(period)} ${this.periodShort()} · base ${fmt(base)}`;
   });
+  /**
+   * Message quand la courbe ne se trace pas : ne JAMAIS dire « aucun trade » si les KPIs en
+   * comptent (critère d'acceptation PROMPT-175). Une courbe a besoin d'au moins 2 jours tradés ;
+   * avec des trades sur un seul jour on l'explique au lieu de contredire les KPIs.
+   */
+  protected readonly equityEmptyMsg = computed(() =>
+    (this.summary()?.totalTrades ?? 0) > 0
+      ? 'Pas assez de jours tradés pour tracer la courbe'
+      : 'Aucun trade sur la période',
+  );
   protected readonly capitalColor = computed(() => {
     const start = this.baseCapital();
     if (start <= 0) return 'var(--text-2)';
