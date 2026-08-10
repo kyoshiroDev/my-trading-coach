@@ -201,10 +201,17 @@ La landing exige `PUBLIC_FEATURE_MULTI_ACCOUNTS=true` + `PUBLIC_FEATURE_REFERRAL
 ## Backups & Monitoring
 
 ```bash
-# Backups automatiques (crons VPS)
-# 22h45 dimanche → backup images Docker + configs → /opt/backups/apps/
-# 23h00 chaque soir → pg_dump prod + dev → /opt/backups/postgres/
-# Rétention 30 jours, notifications Discord par backup
+# Backups automatiques (crons VPS, user greg)
+# 03h00 chaque nuit  → pg_dump prod + dev + beta → /opt/backups/mtc/   (rétention 14 j)
+# 03h30 chaque nuit  → docker system prune + builder prune
+# 04h00 dimanche     → docker buildx prune --keep-storage=8GB
+# 22h45 dimanche     → images Docker + configs   → /opt/backups/apps/  (rétention 30 j)
+# Pas de notification Discord (webhooks morts, retirés) — le contrôle de
+# fraîcheur se fait dans l'app admin, qui lit /opt/backups/mtc.
+#
+# ⚠️ Les logs de ces crons vont dans /opt/backups/*.log et JAMAIS dans /var/log/ :
+# greg ne peut pas y créer de fichier, et une redirection qui échoue à
+# l'ouverture empêche le job de s'exécuter sans laisser la moindre trace.
 
 # Monitoring containers (cron toutes les 2 min)
 # /opt/apps/monitor-containers.sh → Discord si container down/up

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { VpsService } from './vps.service';
 
-export type BackupTarget = 'bdd_prod' | 'bdd_dev' | 'api_prod' | 'api_dev';
+export type BackupTarget = 'bdd_prod' | 'bdd_dev' | 'bdd_beta' | 'api_prod' | 'api_dev';
 
 export interface Backup {
   filename: string;
@@ -11,10 +11,30 @@ export interface Backup {
   target: BackupTarget;
 }
 
+type DbTarget = 'bdd_prod' | 'bdd_dev' | 'bdd_beta';
+
 /** Bases gérées pour le backup manuel à la demande (dumps SQL dans BACKUP_DIR). */
-const DB_BY_TARGET: Record<'bdd_prod' | 'bdd_dev', string> = {
+const DB_BY_TARGET: Record<DbTarget, string> = {
   bdd_prod: 'mytradingcoach_prod',
   bdd_dev: 'mytradingcoach_dev',
+  bdd_beta: 'mytradingcoach_beta',
+};
+
+/** Libellé présent dans le nom de fichier `mtc_<label>_<ts>_<type>.sql.gz`. */
+const LABEL_BY_TARGET: Record<DbTarget, string> = {
+  bdd_prod: 'prod',
+  bdd_dev: 'dev',
+  bdd_beta: 'beta',
+};
+
+/**
+ * Déduit l'environnement depuis le nom de fichier. L'ordre compte : `prod` est
+ * le défaut historique, donc on teste d'abord les libellés explicites.
+ */
+const targetFromFilename = (filename: string): DbTarget => {
+  if (filename.includes('_dev_')) return 'bdd_dev';
+  if (filename.includes('_beta_')) return 'bdd_beta';
+  return 'bdd_prod';
 };
 
 const toMb = (bytes: number): number =>
@@ -43,22 +63,22 @@ export class BackupService {
           sizeMb: toMb(size),
           createdAt: new Date(dateStr).toISOString(),
           type: filename.includes('_manual') ? 'manual' : 'auto',
-          target: filename.includes('_dev_') ? 'bdd_dev' : 'bdd_prod',
+          target: targetFromFilename(filename),
         } as Backup;
       })
       .filter(b => b.filename);
   }
 
   async createBackup(target: BackupTarget = 'bdd_prod'): Promise<Backup> {
-    const db = DB_BY_TARGET[target as 'bdd_prod' | 'bdd_dev'];
+    const db = DB_BY_TARGET[target as DbTarget];
     if (!db) {
       throw new BadRequestException(
-        `Backup manuel non géré pour « ${target} » — seules les bases bdd_prod / bdd_dev sont sauvegardables ici (les images/configs API passent par backup-apps.sh).`,
+        `Backup manuel non géré pour « ${target} » — seules les bases bdd_prod / bdd_dev / bdd_beta sont sauvegardables ici (les images/configs API passent par backup-apps.sh).`,
       );
     }
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '').slice(0, 15);
-    const label = target === 'bdd_dev' ? 'dev' : 'prod';
+    const label = LABEL_BY_TARGET[target as DbTarget];
     const filename = `mtc_${label}_${timestamp}_manual.sql.gz`;
     const path = `${this.backupDir}/${filename}`;
 

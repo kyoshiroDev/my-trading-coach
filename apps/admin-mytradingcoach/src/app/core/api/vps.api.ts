@@ -19,7 +19,7 @@ export interface Backup {
   sizeMb: number;
   createdAt: string;
   type: 'auto' | 'manual';
-  target: 'bdd_prod' | 'bdd_dev' | 'api_prod' | 'api_dev';
+  target: 'bdd_prod' | 'bdd_dev' | 'bdd_beta' | 'api_prod' | 'api_dev';
 }
 
 export interface HealthPoint {
@@ -44,7 +44,7 @@ export class VpsApi {
   deleteContainer(id: string)  { return this.http.delete(`${this.base}/docker/containers/${id}`); }
 
   listBackups() { return this.http.get<{ data: Backup[] }>(`${this.base}/vps/backups`); }
-  createBackup(target: 'bdd_prod' | 'bdd_dev' | 'api_prod' | 'api_dev') {
+  createBackup(target: 'bdd_prod' | 'bdd_dev' | 'bdd_beta' | 'api_prod' | 'api_dev') {
     return this.http.post<{ data: Backup }>(`${this.base}/vps/backups`, { target });
   }
   restoreBackup(filename: string) {

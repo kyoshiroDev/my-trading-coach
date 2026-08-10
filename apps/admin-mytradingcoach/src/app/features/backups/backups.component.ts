@@ -7,11 +7,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LucideAngularModule, RefreshCw, Plus, Trash2, RotateCcw, X, AlertTriangle } from 'lucide-angular';
 import { VpsApi, Backup } from '../../core/api/vps.api';
 
-type BackupTarget = 'bdd_prod' | 'bdd_dev' | 'api_prod' | 'api_dev';
+type BackupTarget = 'bdd_prod' | 'bdd_dev' | 'bdd_beta' | 'api_prod' | 'api_dev';
 
 const TARGET_CONFIG: Record<BackupTarget, { label: string; color: string; icon: string; desc: string }> = {
   bdd_prod: { label: 'BDD Production', color: '#00d4aa', icon: '🗄️', desc: 'PostgreSQL · mytradingcoach_prod' },
   bdd_dev:  { label: 'BDD Dev',        color: '#4a9eff', icon: '🗄️', desc: 'PostgreSQL · mytradingcoach_dev' },
+  bdd_beta: { label: 'BDD Beta',       color: '#e879f9', icon: '🗄️', desc: 'PostgreSQL · mytradingcoach_beta' },
   api_prod: { label: 'Config API Prod',color: '#f5a623', icon: '📦', desc: 'docker-compose.prod.yml' },
   api_dev:  { label: 'Config API Dev', color: '#8b5cf6', icon: '📦', desc: 'docker-compose.dev.yml' },
 };
