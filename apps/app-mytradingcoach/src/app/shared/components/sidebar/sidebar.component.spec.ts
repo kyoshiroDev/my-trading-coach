@@ -15,11 +15,11 @@ import { DemoService } from '../../../core/services/demo.service';
 
 type Plan = 'FREE' | 'PREMIUM';
 
-// Template minimal reproduisant les conditions de badge Premium + le toggle de repli.
-// 2 paliers depuis PROMPT-169 : le badge PREMIUM s'affiche pour tout non-Premium.
+// Template minimal reproduisant les conditions d'indicateur Premium + le toggle de repli.
+// 2 paliers depuis PROMPT-169 : l'indicateur (cadenas) s'affiche pour tout non-Premium.
 const MINIMAL_TEMPLATE = `
   @if (!userStore.isPremium()) {
-    <span data-testid="badge-premium" class="badge premium">PREMIUM</span>
+    <span data-testid="badge-premium" class="nav-lock">lock</span>
   }
   <aside [class.collapsed]="collapsed()"></aside>
 `;

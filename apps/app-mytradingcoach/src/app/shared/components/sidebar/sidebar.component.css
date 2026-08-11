@@ -158,17 +158,23 @@
   flex-shrink: 0;
 }
 
-.badge {
+/* Indicateur Premium compact : un cadenas à droite de l'item (remplace le pill « PREMIUM »
+   qui volait de la largeur et cassait les labels sur 2 lignes). Signal upsell conservé. */
+.nav-label {
+  white-space: nowrap;
+}
+.nav-lock {
   margin-left: auto;
-  background: var(--badge-premium-bg);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
   color: var(--badge-premium-color);
-  border: 1px solid var(--badge-premium-border);
-  font-size: 9px;
-  font-family: var(--font-mono);
-  font-weight: 500;
-  padding: 2px 6px;
-  border-radius: 10px;
-  letter-spacing: 0.5px;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+.nav-item:hover .nav-lock,
+.nav-item.active .nav-lock {
+  opacity: 1;
 }
 
 .nav-badge-notif {
@@ -442,7 +448,7 @@
   /* Tout le texte / les en-têtes / badges disparaissent */
   .sidebar.collapsed .nav-label,
   .sidebar.collapsed .nav-section,
-  .sidebar.collapsed .badge,
+  .sidebar.collapsed .nav-lock,
   .sidebar.collapsed .nav-badge-notif,
   .sidebar.collapsed .user-info,
   .sidebar.collapsed .logo-full {
