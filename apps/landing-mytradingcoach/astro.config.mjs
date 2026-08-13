@@ -26,7 +26,11 @@ export default defineConfig({
       },
       serialize: (item) => {
         // URLs sans slash final (trailingSlash: 'never') : la home est `.../app`, l'index `.../blog`.
-        // Homepage — priorité maximale
+        // Homepage — priorité maximale.
+        // NB : inutile de forcer le slash final ici pour coller au canonical
+        // `https://www.mytradingcoach.app/` — @astrojs/sitemap renormalise les
+        // URL après `serialize` selon `trailingSlash: 'never'`. Sans effet côté
+        // SEO de toute façon : la racine nue et `/` sont la même URL pour Google.
         if (item.url === 'https://www.mytradingcoach.app' || item.url === 'https://www.mytradingcoach.app/') {
           return { ...item, priority: 1.0, changefreq: 'daily' };
         }

@@ -7,6 +7,9 @@ interface Props {
   canonical?: string;
   ogUrl?: string;
   schema?: Record<string, unknown> | Record<string, unknown>[];
+  /** Page à exclure de l'index (404, pages techniques). `follow` est conservé
+   * pour que Google suive quand même les liens sortants de la page. */
+  noindex?: boolean;
 }
 
 const {
@@ -17,7 +20,12 @@ const {
   canonical = `https://www.mytradingcoach.app${Astro.url.pathname.replace(/(.)\/$/, '$1')}`,
   ogUrl = canonical,
   schema,
+  noindex = false,
 } = Astro.props;
+
+const robots = noindex
+  ? 'noindex, follow'
+  : 'index, follow, max-image-preview:large, max-snippet:-1';
 ---
 
 <!DOCTYPE html>
@@ -29,8 +37,8 @@ const {
   <!-- ═══ SEO PRIMARY ═══ -->
   <title>{title}</title>
   <meta name="description" content={description} />
-  <link rel="canonical" href={canonical} />
-  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+  {!noindex && <link rel="canonical" href={canonical} />}
+  <meta name="robots" content={robots} />
   <meta name="author" content="MyTradingCoach" />
   <meta name="geo.region" content="FR" />
   <meta name="language" content="fr" />
