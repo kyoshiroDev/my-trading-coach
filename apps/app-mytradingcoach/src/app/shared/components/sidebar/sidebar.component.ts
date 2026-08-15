@@ -153,7 +153,7 @@ import { environment } from '../../../../environments/environment';
             <lucide-icon [img]="AnalyticsIcon" [size]="16" class="nav-icon" />
             <span class="nav-label">Analytics</span>
             @if (!userStore.isPremium()) {
-              <span class="nav-lock" title="Premium — débloque avec l'abonnement">
+              <span class="nav-lock" title="Premium : débloque avec l'abonnement">
                 <lucide-icon [img]="LockIcon" [size]="12" />
               </span>
             }
@@ -172,7 +172,7 @@ import { environment } from '../../../../environments/environment';
             <lucide-icon [img]="AiIcon" [size]="16" class="nav-icon" />
             <span class="nav-label">IA Insights</span>
             @if (!userStore.isPremium()) {
-              <span class="nav-lock" title="Premium — débloque avec l'abonnement">
+              <span class="nav-lock" title="Premium : débloque avec l'abonnement">
                 <lucide-icon [img]="LockIcon" [size]="12" />
               </span>
             }
@@ -189,7 +189,7 @@ import { environment } from '../../../../environments/environment';
             <lucide-icon [img]="DebriefIcon" [size]="16" class="nav-icon" />
             <span class="nav-label">Weekly Debrief</span>
             @if (!userStore.isPremium()) {
-              <span class="nav-lock" title="Premium — débloque avec l'abonnement">
+              <span class="nav-lock" title="Premium : débloque avec l'abonnement">
                 <lucide-icon [img]="LockIcon" [size]="12" />
               </span>
             }
@@ -251,7 +251,7 @@ import { environment } from '../../../../environments/environment';
             <lucide-icon [img]="ScoringIcon" [size]="16" class="nav-icon" />
             <span class="nav-label">Scoring</span>
             @if (!userStore.isPremium()) {
-              <span class="nav-lock" title="Premium — débloque avec l'abonnement">
+              <span class="nav-lock" title="Premium : débloque avec l'abonnement">
                 <lucide-icon [img]="LockIcon" [size]="12" />
               </span>
             }

@@ -66,7 +66,7 @@ import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
                 <div class="field-group">
                   <label class="field-label" for="preview-subject">Objet *</label>
                   <input id="preview-subject" type="text" class="field-input"
-                    placeholder="ex: 🚀 Nouvelle feature — Import CSV amélioré"
+                    placeholder="ex: 🚀 Nouvelle feature : Import CSV amélioré"
                     [ngModel]="announcementSubject()"
                     (ngModelChange)="announcementSubject.set($event)" />
                 </div>
@@ -120,7 +120,7 @@ import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
               <div class="field-group">
                 <label class="field-label" for="announce-subject">Sujet *</label>
                 <input id="announce-subject" type="text" class="field-input"
-                  placeholder="ex: 🚀 Nouvelle feature — Import CSV amélioré"
+                  placeholder="ex: 🚀 Nouvelle feature : Import CSV amélioré"
                   [ngModel]="announcementSubject()"
                   (ngModelChange)="announcementSubject.set($event)" />
               </div>

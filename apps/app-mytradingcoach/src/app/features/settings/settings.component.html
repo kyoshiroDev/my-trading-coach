@@ -394,7 +394,7 @@
                 <p class="plan-desc">Accès à tout : IA Insights, Chat coach IA, Weekly Debrief, analytics avancés, comptes illimités.</p>
                 @if (isInTrial()) {
                   <div class="trial-status">
-                    <p class="trial-status-title">🎁 Essai gratuit — il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
+                    <p class="trial-status-title">🎁 Essai gratuit : il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
                     <p class="trial-status-sub">
                       Premier prélèvement le {{ trialEndsAt() | date:'dd/MM/yyyy' }}. Annulable en un clic, aucun prélèvement si tu annules avant.
                     </p>

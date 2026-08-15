@@ -220,7 +220,7 @@ export function buildSignals(
             <div class="card-head"><span class="card-label">Consommation IA</span><span class="card-action ud-static">{{ aiHead() }}</span></div>
             <div class="card-body">
               @if (d.aiByFeature.length === 0) {
-                <div class="ud-ai-empty">Aucun appel IA — {{ d.identity.plan === 'FREE' ? 'plan FREE (IA réservée au Premium)' : 'pas encore utilisé' }}.</div>
+                <div class="ud-ai-empty">Aucun appel IA : {{ d.identity.plan === 'FREE' ? 'plan FREE (IA réservée au Premium)' : 'pas encore utilisé' }}.</div>
               } @else {
                 <div class="donut" [style.background]="donutGradient()">
                   <div class="donut-c"><b>{{ '$' + d.kpis.ai.usd.toFixed(2) }}</b><span>{{ totalKTokens() }}k tokens</span></div>

@@ -111,7 +111,7 @@ const GB = 1_073_741_824;
                 <span><i class="ub-dot maint"></i> Maintenance</span>
               </div>
               @if (allUnknown()) {
-                <div class="uptime-note">Pas encore de données — le suivi de santé démarre au prochain relevé quotidien.</div>
+                <div class="uptime-note">Pas encore de données : le suivi de santé démarre au prochain relevé quotidien.</div>
               }
             </div>
           </div>

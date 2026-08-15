@@ -189,7 +189,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
             <div class="mtc-kpi-l">
               <div class="mtc-kpi-lab">Profit factor
                 <mtc-info-tooltip label="Comment le profit factor est calculé"
-                  text="Somme des gains ÷ somme des pertes. Au-dessus de 1, tes gains dépassent tes pertes. Affiche « — » tant que tu n'as aucune perte." />
+                  text="Somme des gains ÷ somme des pertes. Au-dessus de 1, tes gains dépassent tes pertes. Affiche « - » tant que tu n'as aucune perte." />
               </div>
               <div class="mtc-kpi-val">{{ profitFactorDisplay() }}</div>
               <div class="mtc-kpi-sub">
@@ -1067,7 +1067,7 @@ export class DashboardComponent {
   /**
    * Lignes du tableau « historique des trades » (vrais trades récents).
    * P&L % = rendement sur le capital de base ; `null` si ce capital est
-   * inconnu/0 (sinon la division /1 produit des pourcentages absurdes → « — »).
+   * inconnu/0 (sinon la division /1 produit des pourcentages absurdes → « - »).
    */
   protected readonly tradeRows = computed(() => {
     const base = this.baseCapital();

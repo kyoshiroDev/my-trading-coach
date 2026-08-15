@@ -51,18 +51,18 @@ const DEMO_LIVE_ECO_EVENTS: EcoEvent[] = [
 // Analyse IA figée par événement (keyée sur le name brut). Zéro appel modèle.
 const DEMO_ECO_ANALYSIS: Record<string, EcoResultAnalysis> = {
   'PMI manufacturier': {
-    interpretation: "PMI au-dessus des attentes (49.2 vs 49.0) — léger soutien pour l'EUR, sentiment risk-on modéré.",
+    interpretation: "PMI au-dessus des attentes (49.2 vs 49.0) : léger soutien pour l'EUR, sentiment risk-on modéré.",
     assetSentiments: [{ asset: 'EUR/USD', sentiment: 'bull', shortReason: 'PMI meilleur que prévu' }],
   },
   'Inflation CPI (US)': {
-    interpretation: "CPI US sous les attentes (3.1% vs 3.2%) — désinflation confirmée : pression baissière sur le dollar, soutien des indices US.",
+    interpretation: "CPI US sous les attentes (3.1% vs 3.2%), désinflation confirmée : pression baissière sur le dollar, soutien des indices US.",
     assetSentiments: [
       { asset: 'MNQ', sentiment: 'bull', shortReason: 'CPI plus bas → indices en hausse' },
       { asset: 'EUR/USD', sentiment: 'bull', shortReason: 'Dollar plus faible' },
     ],
   },
   'Balance courante': {
-    interpretation: "Balance courante japonaise au-dessus des attentes — léger soutien du yen, impact indirect sur tes actifs (indices US, EUR/USD).",
+    interpretation: "Balance courante japonaise au-dessus des attentes : léger soutien du yen, impact indirect sur tes actifs (indices US, EUR/USD).",
     assetSentiments: [{ asset: 'EUR/USD', sentiment: 'neutral', shortReason: 'Impact indirect via le yen' }],
   },
 };

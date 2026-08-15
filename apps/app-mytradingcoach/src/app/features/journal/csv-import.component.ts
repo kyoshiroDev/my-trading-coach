@@ -105,7 +105,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
               <!-- Note informative (non bloquante) : les exports broker n'ont ni SL ni TP → R:R et note d'exécution indispo. -->
               @if (result()!.created > 0) {
                 <p class="import-no-stop-note">
-                  Tes trades n'ont ni stop loss ni take profit — c'est normal, ton broker ne les exporte pas.
+                  Tes trades n'ont ni stop loss ni take profit : c'est normal, ton broker ne les exporte pas.
                   Le R:R et la note d'exécution resteront indisponibles pour ces trades.
                 </p>
               }
@@ -194,7 +194,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
                     </div>
                     @if (!feesFileValid()) {
                       <p class="import-help import-warn">
-                        Ce fichier ne ressemble pas à un Cash history Tradovate — vérifie l'export.
+                        Ce fichier ne ressemble pas à un Cash history Tradovate. Vérifie l'export.
                       </p>
                     }
                   } @else {

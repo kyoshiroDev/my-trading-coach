@@ -10,7 +10,7 @@
   @if (loading()) {
     <div class="card"><div class="empty">Chargement…</div></div>
   } @else if (error()) {
-    <div class="card"><div class="empty">Module Usage IA non disponible — l'endpoint /admin/ai-cost n'est pas déployé.</div></div>
+    <div class="card"><div class="empty">Module Usage IA non disponible : l'endpoint /admin/ai-cost n'est pas déployé.</div></div>
   } @else if (data(); as d) {
 
     <!-- BANDEAU RÉEL (autoritatif) -->
