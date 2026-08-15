@@ -147,9 +147,9 @@ export class JournalComponent {
   protected readonly TrashIcon        = Trash2;
   protected readonly ReassignIcon     = ArrowRightLeft;
 
-  /** Libellé FR de la note d'exécution calculée (PROMPT-161) ; '—' si non évaluée. */
+  /** Libellé FR de la note d'exécution calculée (PROMPT-161) ; '-' si non évaluée. */
   protected gradeLabel(g: string | null | undefined): string {
-    return { EXCELLENT: 'Excellent', BON: 'Bon', MOYEN: 'Moyen', MAUVAIS: 'Mauvais' }[g ?? ''] ?? '—';
+    return { EXCELLENT: 'Excellent', BON: 'Bon', MOYEN: 'Moyen', MAUVAIS: 'Mauvais' }[g ?? ''] ?? '-';
   }
 
   /** Explication de la note selon le barème utilisé (PROMPT-168). */

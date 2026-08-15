@@ -596,7 +596,7 @@ export class SessionMorningComponent {
   }
 
   protected formatTime(iso: string): string {
-    if (!iso) return '—';
+    if (!iso) return '-';
     if (iso.includes('T')) {
       const d = new Date(iso);
       return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });

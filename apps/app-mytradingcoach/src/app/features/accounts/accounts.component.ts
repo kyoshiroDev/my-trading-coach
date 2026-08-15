@@ -253,15 +253,15 @@ export class AccountsComponent implements OnInit {
   }
   protected bestDayLabel(a: TradingAccount): string {
     const v = a.metrics.bestDay;
-    return v == null ? '—' : `${v > 0 ? '+' : ''}${this.fmt0(v)} $`;
+    return v == null ? '-' : `${v > 0 ? '+' : ''}${this.fmt0(v)} $`;
   }
   protected worstDayLabel(a: TradingAccount): string {
     const v = a.metrics.worstDay;
-    return v == null ? '—' : `${this.fmt0(v)} $`;
+    return v == null ? '-' : `${this.fmt0(v)} $`;
   }
   protected winRateLabel(a: TradingAccount): string {
     const v = a.metrics.winRate;
-    return v == null ? '—' : `${this.fmt0(v * 100)} %`;
+    return v == null ? '-' : `${this.fmt0(v * 100)} %`;
   }
 
   // ── Menu carte ──────────────────────────────────────────────────────────

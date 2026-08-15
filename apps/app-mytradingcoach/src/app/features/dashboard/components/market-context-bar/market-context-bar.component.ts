@@ -69,7 +69,7 @@ import { MarketContext } from '../../../../core/api/trades.api';
           <div class="ctx-cell trate2">
             <div class="ctx-cell-name">US 2Y <span class="ctx-desc">(Taux court)</span></div>
             <div class="ctx-cell-line">
-              <span class="ctx-cell-val blue">{{ ctx()!.treasury.t2y !== null ? fmt(ctx()!.treasury.t2y, 2, 2) + '%' : '—' }}</span>
+              <span class="ctx-cell-val blue">{{ ctx()!.treasury.t2y !== null ? fmt(ctx()!.treasury.t2y, 2, 2) + '%' : '-' }}</span>
               <span class="ctx-cell-chg"
                     [class.green]="dir(ctx()!.treasury.t2yChg) === 'up'"
                     [class.red]="dir(ctx()!.treasury.t2yChg) === 'down'">{{ pctLabel(ctx()!.treasury.t2yChg) }}</span>
@@ -79,7 +79,7 @@ import { MarketContext } from '../../../../core/api/trades.api';
           <div class="ctx-cell trate5">
             <div class="ctx-cell-name">US 5Y <span class="ctx-desc">(Taux moyen)</span></div>
             <div class="ctx-cell-line">
-              <span class="ctx-cell-val blue">{{ ctx()!.treasury.t5y !== null ? fmt(ctx()!.treasury.t5y, 2, 2) + '%' : '—' }}</span>
+              <span class="ctx-cell-val blue">{{ ctx()!.treasury.t5y !== null ? fmt(ctx()!.treasury.t5y, 2, 2) + '%' : '-' }}</span>
               <span class="ctx-cell-chg"
                     [class.green]="dir(ctx()!.treasury.t5yChg) === 'up'"
                     [class.red]="dir(ctx()!.treasury.t5yChg) === 'down'">{{ pctLabel(ctx()!.treasury.t5yChg) }}</span>
@@ -89,7 +89,7 @@ import { MarketContext } from '../../../../core/api/trades.api';
           <div class="ctx-cell trate10">
             <div class="ctx-cell-name">US 10Y <span class="ctx-desc">(Référence)</span></div>
             <div class="ctx-cell-line">
-              <span class="ctx-cell-val yellow">{{ ctx()!.treasury.t10y !== null ? fmt(ctx()!.treasury.t10y, 2, 2) + '%' : '—' }}</span>
+              <span class="ctx-cell-val yellow">{{ ctx()!.treasury.t10y !== null ? fmt(ctx()!.treasury.t10y, 2, 2) + '%' : '-' }}</span>
               <span class="ctx-cell-chg"
                     [class.green]="dir(ctx()!.treasury.t10yChg) === 'up'"
                     [class.red]="dir(ctx()!.treasury.t10yChg) === 'down'">{{ pctLabel(ctx()!.treasury.t10yChg) }}</span>
@@ -99,7 +99,7 @@ import { MarketContext } from '../../../../core/api/trades.api';
           <div class="ctx-cell trate30">
             <div class="ctx-cell-name">US 30Y <span class="ctx-desc">(Taux long)</span></div>
             <div class="ctx-cell-line">
-              <span class="ctx-cell-val yellow">{{ ctx()!.treasury.t30y !== null ? fmt(ctx()!.treasury.t30y, 2, 2) + '%' : '—' }}</span>
+              <span class="ctx-cell-val yellow">{{ ctx()!.treasury.t30y !== null ? fmt(ctx()!.treasury.t30y, 2, 2) + '%' : '-' }}</span>
               <span class="ctx-cell-chg"
                     [class.green]="dir(ctx()!.treasury.t30yChg) === 'up'"
                     [class.red]="dir(ctx()!.treasury.t30yChg) === 'down'">{{ pctLabel(ctx()!.treasury.t30yChg) }}</span>
@@ -118,7 +118,7 @@ import { MarketContext } from '../../../../core/api/trades.api';
             <div class="ctx-cell">
               <div class="ctx-cell-name">Spread <span class="ctx-desc">(10Y - 2Y)</span></div>
               <div class="ctx-cell-line">
-                <span class="ctx-cell-val green">{{ spread() !== null ? (spread()! > 0 ? '+' : '') + fmt(spread(), 2, 2) + '%' : '—' }}</span>
+                <span class="ctx-cell-val green">{{ spread() !== null ? (spread()! > 0 ? '+' : '') + fmt(spread(), 2, 2) + '%' : '-' }}</span>
                 <span class="ctx-cell-chg"
                       [class.green]="dir(spreadChg()) === 'up'"
                       [class.red]="dir(spreadChg()) === 'down'">{{ pctLabel(spreadChg()) }}</span>
@@ -143,7 +143,7 @@ export class MarketContextBarComponent {
 
   /** Libellé variation : « ▲ +0.45% » / « ▼ -0.32% », ou « — » si indisponible. */
   protected pctLabel(pct: number | null | undefined): string {
-    if (pct == null) return '—';
+    if (pct == null) return '-';
     const v = pct.toFixed(2);
     if (pct > 0) return `▲ +${v}%`;
     if (pct < 0) return `▼ ${v}%`;
@@ -152,7 +152,7 @@ export class MarketContextBarComponent {
 
   /** Formatage nombre : séparateur de milliers espace + décimale POINT (fidélité maquette). */
   protected fmt(v: number | null | undefined, min = 0, max = 2): string {
-    if (v == null) return '—';
+    if (v == null) return '-';
     return v.toLocaleString('fr-FR', { minimumFractionDigits: min, maximumFractionDigits: max }).replace(',', '.');
   }
 

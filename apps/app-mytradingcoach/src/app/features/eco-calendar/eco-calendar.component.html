@@ -184,7 +184,7 @@
                             } @else if (row.state === 'next') {
                               <span class="state nx">{{ relTime(event) }}</span>
                             } @else {
-                              <span style="color:var(--text-3)">—</span>
+                              <span style="color:var(--text-3)">-</span>
                             }
                           </td>
                           <td class="r num hide-sm" data-label="Prév.">
@@ -206,7 +206,7 @@
                                 </button>
                               }
                               @case ('wait') { <span class="ia-wait">⏳ après chiffres</span> }
-                              @default { <span class="ia-na">—</span> }
+                              @default { <span class="ia-na">-</span> }
                             }
                           </td>
                         </tr>

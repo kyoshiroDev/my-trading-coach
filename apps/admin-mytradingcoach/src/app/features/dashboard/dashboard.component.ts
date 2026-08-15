@@ -329,7 +329,7 @@ export class DashboardComponent {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   protected sessionDuration(user: AdminOnlineUser): string {
-    if (!user.lastLoginAt) return '—';
+    if (!user.lastLoginAt) return '-';
     const totalMin = Math.floor((Date.now() - new Date(user.lastLoginAt).getTime()) / 60_000);
     const h = Math.floor(totalMin / 60);
     const m = totalMin % 60;

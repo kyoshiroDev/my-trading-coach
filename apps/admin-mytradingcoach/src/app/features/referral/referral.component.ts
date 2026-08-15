@@ -104,7 +104,7 @@ import { AdminApi, ReferralAdminOverview } from '../../core/api/admin.api';
                     </td>
                     <td class="num td-mono">{{ f.date | date:'dd/MM' }}</td>
                     <td class="num" [class.cell-green]="f.status === 'payant'">
-                      {{ f.status === 'payant' ? '+1 mois' : (f.status === 'essai' ? 'en attente' : '—') }}
+                      {{ f.status === 'payant' ? '+1 mois' : (f.status === 'essai' ? 'en attente' : '-') }}
                     </td>
                   </tr>
                 }

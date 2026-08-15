@@ -324,7 +324,7 @@ function currencyToInstruments(currency: string | null | undefined): string {
                           <div class="sentiment-chips">
                             @for (s of getEventAnalysis(event.name)!.assetSentiments; track s.asset) {
                               <div class="chip" [class]="s.sentiment">
-                                {{ s.sentiment === 'bull' ? '▲' : s.sentiment === 'bear' ? '▼' : '—' }}
+                                {{ s.sentiment === 'bull' ? '▲' : s.sentiment === 'bear' ? '▼' : '-' }}
                                 {{ s.asset }} {{ s.sentiment.toUpperCase() }}
                               </div>
                             }
@@ -512,7 +512,7 @@ function currencyToInstruments(currency: string | null | undefined): string {
                     <span class="qt-live-value">{{ livePricePlaceholder() }}</span>
                     <span class="qt-live-label">prix actuel</span>
                   } @else {
-                    <span class="qt-live-unavailable">—</span>
+                    <span class="qt-live-unavailable">-</span>
                   }
                 </div>
               }
@@ -585,7 +585,7 @@ function currencyToInstruments(currency: string | null | undefined): string {
             <div>
               <div class="qt-lbl">ENTRÉE</div>
               <div class="qt-entry-readonly" data-testid="qt-entry-auto">
-                {{ livePrice() !== null ? livePricePlaceholder() : '—' }}
+                {{ livePrice() !== null ? livePricePlaceholder() : '-' }}
               </div>
             </div>
             <div>
@@ -1098,7 +1098,7 @@ export class SessionLiveComponent {
   protected closeBadgeLabel(tags: string[]): string {
     if (tags.includes('TP')) return 'TP';
     if (tags.includes('SL')) return 'SL';
-    return '—';
+    return '-';
   }
 
   protected isOutsideSession(time: string): boolean {
@@ -1107,7 +1107,7 @@ export class SessionLiveComponent {
   }
 
   protected formatTime(iso: string): string {
-    if (!iso) return '—';
+    if (!iso) return '-';
     if (iso.includes('T')) {
       const d = new Date(iso);
       return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });

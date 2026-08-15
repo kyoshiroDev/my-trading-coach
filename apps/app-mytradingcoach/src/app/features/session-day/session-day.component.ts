@@ -223,7 +223,7 @@ const EMOTION_COLORS: Record<string, string> = {
                 <div class="card4-l">Trades</div>
               </div>
               <div class="card4">
-                <div class="card4-v">{{ (store.todayStats()?.winRate ?? 0) > 0 ? (store.todayStats()!.winRate.toFixed(0) + '%') : '—' }}</div>
+                <div class="card4-v">{{ (store.todayStats()?.winRate ?? 0) > 0 ? (store.todayStats()!.winRate.toFixed(0) + '%') : '-' }}</div>
                 <div class="card4-l">Win Rate</div>
               </div>
               <div class="card4">
@@ -445,7 +445,7 @@ export class SessionDayComponent implements OnInit, OnDestroy {
   // ── Session duration ──────────────────────────────────────────────────────
   protected readonly sessionDuration = computed(() => {
     const s = this.store.activeSession();
-    if (!s?.startedAt) return '—';
+    if (!s?.startedAt) return '-';
     const end = s.endedAt ? new Date(s.endedAt) : new Date();
     const diff = Math.floor((end.getTime() - new Date(s.startedAt).getTime()) / 1000);
     const h = Math.floor(diff / 3600);

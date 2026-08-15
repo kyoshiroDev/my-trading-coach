@@ -122,7 +122,7 @@
                   [value]="form().exit ?? ''"
                   (input)="filterNumeric($event, 'exit')"
                   name="exit"
-                  placeholder="—"
+                  placeholder="-"
                 />
               </div>
               <div class="price-field">
@@ -151,7 +151,7 @@
                 [value]="form().stopLoss ?? ''"
                 (input)="filterNumeric($event, 'stopLoss')"
                 name="stopLoss"
-                placeholder="—"
+                placeholder="-"
                 class="input-sl"
               />
             </div>
@@ -165,7 +165,7 @@
                 [value]="form().takeProfit ?? ''"
                 (input)="filterNumeric($event, 'takeProfit')"
                 name="takeProfit"
-                placeholder="—"
+                placeholder="-"
                 class="input-tp"
               />
             </div>
@@ -267,7 +267,7 @@
             <div class="rr-badge" [class.rr-win]="(autoRR() ?? 0) >= 1">
               <div class="rr-label">R/R</div>
               <div class="rr-value">
-                {{ autoRR() !== undefined ? autoRR()!.toFixed(1) : '—' }}
+                {{ autoRR() !== undefined ? autoRR()!.toFixed(1) : '-' }}
               </div>
             </div>
           </div>

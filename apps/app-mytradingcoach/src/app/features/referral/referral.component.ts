@@ -139,7 +139,7 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
                   </div>
                   <span class="f-status" [class]="statusClass(f.status)">{{ statusLabel(f.status) }}</span>
                   <span class="f-reward" [class.r-yes]="f.rewarded" [class.r-no]="!f.rewarded">
-                    {{ f.rewarded ? '+1 mois' : (f.status === 'essai' ? 'en attente' : '—') }}
+                    {{ f.rewarded ? '+1 mois' : (f.status === 'essai' ? 'en attente' : '-') }}
                   </span>
                 </div>
               }

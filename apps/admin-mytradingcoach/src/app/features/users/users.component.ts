@@ -75,7 +75,7 @@ import { PRICING_EUR } from '../../core/constants/pricing.const';
             <tbody>
               @for (u of sortedUsers(); track u.id) {
                 <tr class="clickable" (click)="goToDetail(u.id)">
-                  <td data-label="Utilisateur"><div class="u-cell"><div class="u-av">{{ initials(u) }}</div><div><div class="u-name">{{ u.name ?? '—' }}</div><div class="u-mail">{{ u.email }}</div></div></div></td>
+                  <td data-label="Utilisateur"><div class="u-cell"><div class="u-av">{{ initials(u) }}</div><div><div class="u-name">{{ u.name ?? '-' }}</div><div class="u-mail">{{ u.email }}</div></div></div></td>
                   <td data-label="Rôle"><span class="role-tag" [class.purple]="u.role !== 'USER'">{{ u.role }}</span></td>
                   <td data-label="Plan"><span class="badge" [class.b-premium]="u.plan==='PREMIUM'" [class.b-free]="u.plan==='FREE'">{{ u.plan }}</span></td>
                   <td data-label="Abonnement">
@@ -275,7 +275,7 @@ export class UsersComponent implements OnInit {
     return 'manual';
   }
   protected subLabel(user: AdminUser): string {
-    return ({ trial: 'Essai', annual: 'Annuel', monthly: 'Mensuel', manual: 'Manuel' })[this.subType(user)] ?? '—';
+    return ({ trial: 'Essai', annual: 'Annuel', monthly: 'Mensuel', manual: 'Manuel' })[this.subType(user)] ?? '-';
   }
 
   protected getMonthLabel(): string {

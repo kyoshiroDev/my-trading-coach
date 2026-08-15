@@ -13,7 +13,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
 @Pipe({ name: 'emotionEmoji', standalone: true })
 export class EmotionEmojiPipe implements PipeTransform {
   transform(emotion: string | null | undefined): string {
-    if (!emotion) return '—';
-    return EMOTION_EMOJIS[emotion] ?? '—';
+    if (!emotion) return '-';
+    return EMOTION_EMOJIS[emotion] ?? '-';
   }
 }

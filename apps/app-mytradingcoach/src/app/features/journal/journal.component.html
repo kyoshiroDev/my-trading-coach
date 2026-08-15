@@ -293,7 +293,7 @@
                     <span class="trade-side" [class]="trade.side === 'LONG' ? 'long' : 'short'">{{ trade.side }}</span>
                   </span>
                   <span class="td-price mono">{{ trade.entry }}</span>
-                  <span class="td-price mono">{{ trade.exit ?? '—' }}</span>
+                  <span class="td-price mono">{{ trade.exit ?? '-' }}</span>
                   <span class="td-pnl mono" data-testid="trade-pnl" [style.color]="trade.pnl | pnlColor">
                     {{ trade.pnl | pnlFormat: trade.entry }}
                   </span>
@@ -323,7 +323,7 @@
                   <span class="td-emotion">
                     <span class="emotion-cell">
                       {{ trade.effectiveEmotion | emotionEmoji }}
-                      <span class="emotion-text">{{ (trade.effectiveEmotion | titlecase) || '—' }}</span>
+                      <span class="emotion-text">{{ (trade.effectiveEmotion | titlecase) || '-' }}</span>
                     </span>
                   </span>
                   <span class="td-setup"><span class="setup-badge"><span class="setup-badge-dot" [style.background]="trade.setup.color"></span>{{ trade.setup.title }}</span></span>

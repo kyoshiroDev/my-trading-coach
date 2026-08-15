@@ -29,7 +29,7 @@ export class SessionLabelPipe implements PipeTransform {
   };
 
   transform(value: string | null | undefined): string {
-    if (!value) return '—';
+    if (!value) return '-';
     return SessionLabelPipe.LABELS[value] ?? value;
   }
 }

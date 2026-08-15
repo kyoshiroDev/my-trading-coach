@@ -15,7 +15,7 @@ describe('SessionRecapComponent', () => {
     it('retourne — si aucun trade (stats nulles)', () => {
       const c = makeInstance();
       TestBed.flushEffects();
-      expect((c as unknown as { winRateDisplay: () => string }).winRateDisplay()).toBe('—');
+      expect((c as unknown as { winRateDisplay: () => string }).winRateDisplay()).toBe('-');
     });
   });
 
@@ -24,7 +24,7 @@ describe('SessionRecapComponent', () => {
       const c = makeInstance();
       TestBed.flushEffects();
       const dur = (c as unknown as { sessionDuration: () => string }).sessionDuration();
-      expect(dur).toBe('—');
+      expect(dur).toBe('-');
     });
   });
 });

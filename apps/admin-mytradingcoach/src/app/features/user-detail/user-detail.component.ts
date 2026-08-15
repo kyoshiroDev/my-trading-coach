@@ -40,7 +40,7 @@ const GOAL_LABELS: Record<string, string> = { DISCIPLINE: 'Discipline', PERFORMA
 const STYLE_LABELS: Record<string, string> = { SCALPING: 'Scalping', DAY_TRADING: 'Day trading', SWING: 'Swing', POSITION: 'Long terme' };
 const SESSION_LABELS: Record<string, string> = { LONDON: 'Londres', NEW_YORK: 'New York', ASIAN: 'Asie' };
 function lbl(map: Record<string, string>, v: string | null | undefined): string {
-  return v ? (map[v] ?? v) : '—';
+  return v ? (map[v] ?? v) : '-';
 }
 
 export interface Signal { cls: 'ok' | 'warn' | 'bad'; ic: string; text: string; sub: string; }
@@ -327,15 +327,15 @@ export class UserDetailComponent {
   protected readonly styleLabel   = computed(() => lbl(STYLE_LABELS, this.profile()?.tradingStyle));
   protected readonly sessionsLabel = computed(() => {
     const s = this.profile()?.tradingSessions ?? [];
-    return s.length ? s.map((x) => SESSION_LABELS[x] ?? x).join(', ') : '—';
+    return s.length ? s.map((x) => SESSION_LABELS[x] ?? x).join(', ') : '-';
   });
   protected readonly strategyLabel = computed(() => {
     const t = this.profile()?.tradingStrategy ?? [];
-    return t.length ? t.join(', ') : '—';
+    return t.length ? t.join(', ') : '-';
   });
   protected readonly capitalLabel = computed(() => {
     const p = this.profile();
-    if (!p || !p.startingCapital) return '—';
+    if (!p || !p.startingCapital) return '-';
     const sym = p.currency === 'EUR' ? '€' : '$';
     return `${sym}${p.startingCapital.toLocaleString('en-US')}`;
   });
@@ -349,7 +349,7 @@ export class UserDetailComponent {
   });
   protected readonly topAssetsLabel = computed(() => {
     const a = this.data()?.topAssets ?? [];
-    return a.length ? a.map((x) => `${x.asset} (${x.count})`).join(', ') : '—';
+    return a.length ? a.map((x) => `${x.asset} (${x.count})`).join(', ') : '-';
   });
 
   // ── Usage ──
@@ -368,7 +368,7 @@ export class UserDetailComponent {
   });
   protected readonly aiHead = computed(() => {
     const ai = this.data()?.kpis.ai;
-    return ai && ai.tokens ? `$${ai.usd.toFixed(2)} · ${Math.round(ai.tokens / 1000)}k tokens` : '—';
+    return ai && ai.tokens ? `$${ai.usd.toFixed(2)} · ${Math.round(ai.tokens / 1000)}k tokens` : '-';
   });
   /** Total tokens en milliers (centre du donut). */
   protected readonly totalKTokens = computed(() =>
@@ -436,7 +436,7 @@ export class UserDetailComponent {
     return mood ? (MOOD_EMOJI[mood] ?? '·') : '·';
   }
   protected fmtDuration(mins: number | null): string {
-    if (mins === null) return '—';
+    if (mins === null) return '-';
     const h = Math.floor(mins / 60);
     const m = mins % 60;
     return h > 0 ? `${h}h${String(m).padStart(2, '0')}` : `${m}min`;
@@ -451,7 +451,7 @@ export class UserDetailComponent {
     return `${Math.floor(h / 24)}j`;
   }
   private fmtMinutes(mins: number | null): string {
-    if (mins === null) return '—';
+    if (mins === null) return '-';
     const h = Math.floor(mins / 60);
     const m = mins % 60;
     return h === 0 ? `${m}min` : m === 0 ? `${h}h` : `${h}h${m}min`;

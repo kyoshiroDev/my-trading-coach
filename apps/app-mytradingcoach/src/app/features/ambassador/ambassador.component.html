@@ -116,7 +116,7 @@
                 <div class="f-date">{{ u.createdAt | date:'d MMM yyyy' }}</div>
               </div>
               <span class="f-comm" [class.c-yes]="isPaid(u)" [class.c-no]="!isPaid(u)">
-                {{ isPaid(u) ? (monthlyCommission(u) | number:'1.2-2') + '€ / mois' : '—' }}
+                {{ isPaid(u) ? (monthlyCommission(u) | number:'1.2-2') + '€ / mois' : '-' }}
               </span>
             </div>
           }

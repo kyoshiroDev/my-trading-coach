@@ -41,7 +41,7 @@ import { PRICING_EUR } from '../../core/constants/pricing.const';
             <tbody>
               @for (amb of ambassadors(); track amb.id) {
                 <tr [class.row-selected]="selectedId() === amb.id" (click)="selectAmbassador(amb)">
-                  <td data-label="Ambassadeur"><div class="u-cell"><div class="u-av amb-av">{{ (amb.name || amb.email).slice(0,2).toUpperCase() }}</div><div><div class="u-name">{{ amb.name ?? '—' }}</div><div class="u-mail">{{ amb.email }}</div></div></div></td>
+                  <td data-label="Ambassadeur"><div class="u-cell"><div class="u-av amb-av">{{ (amb.name || amb.email).slice(0,2).toUpperCase() }}</div><div><div class="u-name">{{ amb.name ?? '-' }}</div><div class="u-mail">{{ amb.email }}</div></div></div></td>
                   <td data-label="Code / Lien"><div class="code-cell"><span class="pill teal-pill">{{ amb.referralCode }}</span><button class="pill" (click)="$event.stopPropagation(); copyLink(amb.referralCode)">Copier lien</button></div><div class="amb-link">mytradingcoach.app?ref={{ amb.referralCode }}</div></td>
                   <td data-label="Taux" class="td-mono blue">20%</td>
                   <td data-label="Référés" class="td-mono">{{ amb.totalReferrals }}</td>
@@ -86,7 +86,7 @@ import { PRICING_EUR } from '../../core/constants/pricing.const';
                         <tr>
                           <td data-label="Email" class="td-mono">{{ ref.email }}</td>
                           <td data-label="Plan"><span class="badge" [class.b-premium]="ref.plan==='PREMIUM'" [class.b-free]="ref.plan==='FREE'">{{ ref.plan }}</span></td>
-                          <td data-label="Actif"><span [class.act-on]="ref.isActive" [class.act-off]="!ref.isActive">{{ ref.isActive ? '✓' : '—' }}</span></td>
+                          <td data-label="Actif"><span [class.act-on]="ref.isActive" [class.act-off]="!ref.isActive">{{ ref.isActive ? '✓' : '-' }}</span></td>
                           <td data-label="Inscrit" class="td-mono muted">{{ ref.createdAt | date:'dd/MM/yyyy' }}</td>
                         </tr>
                       }

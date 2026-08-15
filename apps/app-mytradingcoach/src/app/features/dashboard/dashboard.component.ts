@@ -439,10 +439,10 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
                     <td><span class="mtc-side" [class.long]="t.side === 'LONG'">{{ t.side }}</span></td>
                     <td><span class="mtc-setup-cell"><span class="setup-dot-sm" [style.background]="t.setup.color"></span>{{ t.setup.title }}</span></td>
                     <td class="mono dim r">{{ t.entry | number:'1.0-2' }}</td>
-                    <td class="mono dim r">{{ t.exit !== null ? (t.exit | number:'1.0-2') : '—' }}</td>
-                    <td class="mono dim r">{{ t.riskReward !== null ? ((t.riskReward >= 0 ? '+' : '') + (t.riskReward | number:'1.1-1')) : '—' }}</td>
+                    <td class="mono dim r">{{ t.exit !== null ? (t.exit | number:'1.0-2') : '-' }}</td>
+                    <td class="mono dim r">{{ t.riskReward !== null ? ((t.riskReward >= 0 ? '+' : '') + (t.riskReward | number:'1.1-1')) : '-' }}</td>
                     <td class="mono strong r" [style.color]="t.win ? 'var(--green)' : 'var(--red)'">{{ t.pnl | pnlFormat }}</td>
-                    <td class="mono r" [style.color]="t.pct === null ? 'var(--text-3)' : (t.win ? 'var(--green)' : 'var(--red)')">{{ t.pct === null ? '—' : ((t.pct >= 0 ? '+' : '') + (t.pct | number:'1.2-2') + '%') }}</td>
+                    <td class="mono r" [style.color]="t.pct === null ? 'var(--text-3)' : (t.win ? 'var(--green)' : 'var(--red)')">{{ t.pct === null ? '-' : ((t.pct >= 0 ? '+' : '') + (t.pct | number:'1.2-2') + '%') }}</td>
                     <td class="c"><span class="mtc-res" [class.win]="t.win">{{ t.win ? 'WIN' : 'LOSS' }}</span></td>
                   </tr>
                 }
@@ -603,7 +603,7 @@ export class DashboardComponent {
   /** Profit factor : valeur 2 décimales, ∞ si aucune perte, — si aucune donnée. */
   protected readonly profitFactorDisplay = computed(() => {
     const pf = this.summary()?.profitFactor;
-    if (pf == null) return (this.summary()?.totalTrades ?? 0) > 0 ? '∞' : '—';
+    if (pf == null) return (this.summary()?.totalTrades ?? 0) > 0 ? '∞' : '-';
     return pf.toFixed(2);
   });
 
@@ -850,7 +850,7 @@ export class DashboardComponent {
     if (!trades.length) return null;
     const map = new Map<string, { title: string; color: string; count: number }>();
     for (const t of trades) {
-      const cur = map.get(t.setupId) ?? { title: t.setup?.title ?? '—', color: t.setup?.color ?? 'var(--text-3)', count: 0 };
+      const cur = map.get(t.setupId) ?? { title: t.setup?.title ?? '-', color: t.setup?.color ?? 'var(--text-3)', count: 0 };
       cur.count++;
       map.set(t.setupId, cur);
     }
