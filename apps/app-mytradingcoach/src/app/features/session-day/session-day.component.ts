@@ -68,7 +68,7 @@ const EMOTION_COLORS: Record<string, string> = {
 
     <div class="session-page" [class.live-mode]="activeTab() === 'live'">
 
-      <!-- Header propre à la page (grille 1fr auto 1fr) — source 06-session-page.jsx -->
+      <!-- Header propre à la page (grille 1fr auto 1fr) : source 06-session-page.jsx -->
       <header class="mtc-sess-header">
         <div class="mtc-sess-h-left">
           <div class="mtc-sess-titles">

@@ -106,7 +106,7 @@ export class DeletedComponent {
     ).subscribe((r) => { if (r) this.data.set(r.data); });
   }
 
-  // Libellé du mois courant (« juin 2026 ») — sans dépendance de locale enregistrée.
+  // Libellé du mois courant (« juin 2026 ») : sans dépendance de locale enregistrée.
   private static readonly MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   protected readonly monthLabel = (() => {
     const d = new Date();

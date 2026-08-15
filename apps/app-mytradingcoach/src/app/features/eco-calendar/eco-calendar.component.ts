@@ -480,7 +480,7 @@ export class EcoCalendarComponent implements OnInit {
     return this.pinnedUpcoming().length;
   }
 
-  // Session de marché par région de la devise (et plus par heure) — ex. EUR 14:15 → Europe.
+  // Session de marché par région de la devise (et plus par heure) : ex. EUR 14:15 → Europe.
   private static readonly SESSION_BY_CCY: Record<string, EcoSession> = {
     // Asie / Pacifique
     JPY: 'asia', CNY: 'asia', AUD: 'asia', NZD: 'asia', KRW: 'asia', INR: 'asia',
@@ -495,7 +495,7 @@ export class EcoCalendarComponent implements OnInit {
   private sessionOf(event: EcoEvent): EcoSession {
     const byCcy = EcoCalendarComponent.SESSION_BY_CCY[event.currency?.toUpperCase()];
     if (byCcy) return byCcy;
-    // Repli si devise non mappée : par heure (Europe/Paris) — avant 14h ⇒ europe, sinon us
+    // Repli si devise non mappée : par heure (Europe/Paris), avant 14h ⇒ europe, sinon us
     const [h, m] = (event.time ?? '00:00').split(':').map(Number);
     return ((h || 0) * 60 + (m || 0)) >= 14 * 60 ? 'us' : 'europe';
   }

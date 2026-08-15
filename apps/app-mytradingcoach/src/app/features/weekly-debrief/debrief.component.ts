@@ -84,7 +84,7 @@ function badgeClass(badge: string): string {
   return map[badge] ?? 'blue';
 }
 
-/** Badge de type compte (ÉVAL / FUNDED) — null pour les comptes perso. */
+/** Badge de type compte (ÉVAL / FUNDED) : null pour les comptes perso. */
 function typeBadge(type: string): { label: string; cls: string } | null {
   if (type === 'EVALUATION') return { label: 'ÉVAL', cls: 'eval' };
   if (type === 'FUNDED') return { label: 'FUNDED', cls: 'funded' };

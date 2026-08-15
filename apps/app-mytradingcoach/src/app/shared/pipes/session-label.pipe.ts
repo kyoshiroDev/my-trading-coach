@@ -8,7 +8,7 @@ import { Pipe, PipeTransform } from '@angular/core';
  * On utilise un pipe plutôt qu'une méthode dans le composant car :
  * - La même table de correspondance serait dupliquée dans chaque composant
  *   qui affiche des sessions (analytics, journal, debrief...)
- * - La logique de formatage n'appartient pas au composant — c'est une règle de présentation
+ * - La logique de formatage n'appartient pas au composant : c'est une règle de présentation
  * - Le template reste déclaratif : {{ trade.session | sessionLabel }}
  *
  * @example

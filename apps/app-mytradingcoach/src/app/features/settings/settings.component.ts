@@ -65,7 +65,7 @@ export class SettingsComponent implements OnInit {
   // Onglets Profil trader / Paramètres (deep-link ?tab=params)
   protected readonly activeProfileTab = signal<ProfileTab>('trader');
 
-  // Statut d'essai (PROMPT-169 §5.2) — N calculé depuis trialEndsAt Stripe, pas l'inscription.
+  // Statut d'essai (PROMPT-169 §5.2) : N calculé depuis trialEndsAt Stripe, pas l'inscription.
   protected readonly isInTrial = computed(() => {
     const end = this.userStore.user()?.trialEndsAt;
     return !!end && new Date(end).getTime() > Date.now();
@@ -79,17 +79,17 @@ export class SettingsComponent implements OnInit {
   });
   protected readonly trialEndsAt = computed(() => this.userStore.user()?.trialEndsAt ?? null);
 
-  // Compte — nom
+  // Compte : nom
   protected readonly editingName = signal(false);
   protected readonly nameInput = signal('');
   protected readonly isSavingName = signal(false);
 
-  // Compte — email
+  // Compte : email
   protected readonly editingEmail = signal(false);
   protected readonly emailInput = signal('');
   protected readonly isSavingEmail = signal(false);
 
-  // Compte — mot de passe
+  // Compte : mot de passe
   protected readonly passwordResetSent = signal(false);
 
   // Préférences
@@ -110,7 +110,7 @@ export class SettingsComponent implements OnInit {
   protected readonly strategyDesc     = signal('');
   protected readonly isSavingStrategy = signal(false);
 
-  // Modale stratégie — brouillon (édité dans la modale, annulé sans persistance)
+  // Modale stratégie : brouillon (édité dans la modale, annulé sans persistance)
   protected readonly showStrategyModal = signal(false);
   protected readonly draftCapital  = signal('');
   protected readonly draftStyle    = signal<string | null>(null);
@@ -123,7 +123,7 @@ export class SettingsComponent implements OnInit {
     !!(this.tradingStyle() || this.strategyDesc().trim()),
   );
 
-  // Actifs tradés — auto-save (chaque mutation persiste immédiatement)
+  // Actifs tradés : auto-save (chaque mutation persiste immédiatement)
   protected readonly tradingAssets = signal<UserAssetItem[]>([]);
   protected readonly assetsSaving = signal(false);
   protected readonly assetSearchQuery = signal('');
@@ -145,7 +145,7 @@ export class SettingsComponent implements OnInit {
   protected readonly dedupeRemoved = signal<number | null>(null);
 
   constructor() {
-    // Sync prefs uniquement — les signaux stratégie sont gérés dans ngOnInit + saveStrategy
+    // Sync prefs uniquement : les signaux stratégie sont gérés dans ngOnInit + saveStrategy
     effect(() => {
       const user = this.userStore.user();
       if (!user) return;
@@ -345,7 +345,7 @@ export class SettingsComponent implements OnInit {
           setTimeout(() => this.passwordResetSent.set(false), 4000);
         },
         error: () => {
-          /* silently ignore — user stays on page */
+          /* silently ignore : user stays on page */
         },
       });
   }

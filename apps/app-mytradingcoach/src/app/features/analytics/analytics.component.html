@@ -129,10 +129,10 @@
       </div>
     </div>
 
-    <!-- Heatmap + Calendrier côte à côte — même hauteur -->
+    <!-- Heatmap + Calendrier côte à côte : même hauteur -->
     <div class="grid-heatmap-calendar mb-16">
 
-      <!-- Heatmap (gauche — plus large) -->
+      <!-- Heatmap (gauche, plus large) -->
       <div class="card heatmap-card">
         <div class="card-header">
           <div class="card-title">Heatmap horaire : win rate par heure
@@ -193,7 +193,7 @@
         </div>
       </div>
 
-      <!-- Calendrier (droite — plus compact) -->
+      <!-- Calendrier (droite, plus compact) -->
       <div class="cal-analytics-wrap">
         <mtc-activity-calendar
           [data]="calData()"
@@ -298,11 +298,11 @@
   }
 
   <!-- ══════════════════════════════════════════
-       BLOCS VERROUILLÉS — FREE
+       BLOCS VERROUILLÉS : FREE
   ══════════════════════════════════════════ -->
   @if (!userStore.isPremium()) {
     <div class="locked-blocks">
-      <!-- Bloc 1 — Equity Curve & Drawdown -->
+      <!-- Bloc 1 : Equity Curve & Drawdown -->
       <div class="locked-feature">
         <div class="locked-preview">
           <div class="preview-curves">
@@ -365,7 +365,7 @@
         </div>
       </div>
 
-      <!-- Bloc 2 — Heatmap horaire -->
+      <!-- Bloc 2 : Heatmap horaire -->
       <div class="locked-feature">
         <div class="locked-preview">
           <div class="heatmap-preview-mock">
@@ -397,7 +397,7 @@
         </div>
       </div>
 
-      <!-- Bloc 3 — Top Actifs & Setup -->
+      <!-- Bloc 3 : Top Actifs & Setup -->
       <div class="locked-feature">
         <div class="locked-preview">
           <div class="bars-preview-mock">

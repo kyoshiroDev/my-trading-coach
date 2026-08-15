@@ -214,7 +214,7 @@ export class OnboardingComponent {
 
   protected finishAndGoDiscord() { this.step.set(9); }
 
-  // ── Étape Tes setups (7) — réutilise la modale partagée + SetupsStore ──
+  // ── Étape Tes setups (7) : réutilise la modale partagée + SetupsStore ──
   protected openSetupModal(): void { this.setupMsg.set(null); this.showSetupModal.set(true); }
   protected onSetupSave(value: SetupFormValue): void {
     this.showSetupModal.set(false);
@@ -244,7 +244,7 @@ export class OnboardingComponent {
 
   // Étape Stratégie (5) → enregistre le profil IA (SANS terminer l'onboarding)
   // puis va aux Actifs (6). Marquer l'onboarding fini ici sauterait les étapes
-  // Actifs (6) et Premier trade (7) — le flag n'est posé qu'à l'écran final.
+  // Actifs (6) et Premier trade (7) : le flag n'est posé qu'à l'écran final.
   private saveProfileThenGoAssets(): void {
     this.isSaving.set(true);
     this.usersApi

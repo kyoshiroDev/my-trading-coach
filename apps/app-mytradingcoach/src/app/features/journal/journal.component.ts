@@ -238,7 +238,7 @@ export class JournalComponent {
           weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
         });
         const totalCommission = dayTrades.reduce((s, t) => s + Math.abs(t.commission ?? 0), 0);
-        // Stats du jour via le helper unique (BE exclus du win rate — PROMPT-160).
+        // Stats du jour via le helper unique (BE exclus du win rate, PROMPT-160).
         const st              = computeTradeStats(dayTrades);
         const totalPnl        = st.totalPnl;
         const totalPnlNet     = totalPnl - totalCommission;

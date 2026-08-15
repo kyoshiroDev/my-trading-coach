@@ -141,7 +141,7 @@ export class MarketContextBarComponent {
     return pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
   }
 
-  /** Libellé variation : « ▲ +0.45% » / « ▼ -0.32% », ou « — » si indisponible. */
+  /** Libellé variation : « ▲ +0.45% » / « ▼ -0.32% », ou « - » si indisponible. */
   protected pctLabel(pct: number | null | undefined): string {
     if (pct == null) return '-';
     const v = pct.toFixed(2);

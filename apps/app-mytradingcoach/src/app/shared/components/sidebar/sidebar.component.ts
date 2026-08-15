@@ -301,7 +301,7 @@ import { environment } from '../../../../environments/environment';
         </div>
       </aside>
 
-      <!-- Flèche de repli sur le bord (desktop) — ancrée sur .app-layout pour ne pas
+      <!-- Flèche de repli sur le bord (desktop) : ancrée sur .app-layout pour ne pas
            être coupée par l'overflow:hidden de .sidebar -->
       <button
         type="button"
@@ -361,7 +361,7 @@ export class SidebarComponent {
   protected readonly ChevronLeftIcon = ChevronLeft;
   protected readonly ChevronRightIcon = ChevronRight;
 
-  // Icônes de navigation (Lucide) — fidélité design « The Terminal » (chrome.jsx)
+  // Icônes de navigation (Lucide) : fidélité design « The Terminal » (chrome.jsx)
   protected readonly DashboardIcon = LayoutDashboard;
   protected readonly SessionIcon   = Activity;
   protected readonly AccountsIcon  = Briefcase;
@@ -409,7 +409,7 @@ export class SidebarComponent {
     });
   }
 
-  // Signal local — une fois mis à true, le wizard ne peut plus revenir dans la session
+  // Signal local : une fois mis à true, le wizard ne peut plus revenir dans la session
   // même si fetchMe() renvoie onboardingCompleted: false (race condition réseau)
   private readonly onboardingDismissed = signal(false);
 
@@ -421,7 +421,7 @@ export class SidebarComponent {
 
   // Mode focus « session live » : quand une session est active, on replie la
   // sidebar en icônes (fidélité maquette). L'état manuel de l'utilisateur est
-  // mémorisé puis restauré à la clôture — la préférence localStorage n'est jamais
+  // mémorisé puis restauré à la clôture : la préférence localStorage n'est jamais
   // écrasée (collapsed.set n'écrit pas le localStorage, seul toggleCollapse le fait).
   private collapsedBeforeSession: boolean | null = null;
 
@@ -459,7 +459,7 @@ export class SidebarComponent {
       this.auth.setCurrentUser({ ...user, onboardingCompleted: true });
     }
     // C'est ICI (écran final du wizard) que l'onboarding est marqué terminé en
-    // base — jamais à l'étape stratégie, sinon les étapes Actifs/Premier trade
+    // base : jamais à l'étape stratégie, sinon les étapes Actifs/Premier trade
     // seraient sautées. Optimiste : le flag local est déjà posé ci-dessus.
     this.usersApi
       .finishOnboarding()

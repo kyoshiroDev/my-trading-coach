@@ -7,7 +7,7 @@ const STORAGE_KEY = 'mtc.selectedAccount';
 
 /**
  * Compte sélectionné (multi-comptes) + liste des comptes (avec métriques règles de 089).
- * Accessible à tous (FREE : 1 compte · Premium : illimité — quota appliqué côté API).
+ * Accessible à tous (FREE : 1 compte · Premium : illimité, quota appliqué côté API).
  */
 @Injectable({ providedIn: 'root' })
 export class SelectedAccountStore {

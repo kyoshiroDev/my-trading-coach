@@ -5,11 +5,11 @@ import {
 /**
  * Icône d'aide « ? » + info-bulle expliquant comment une métrique est calculée.
  * Accessible : survol (desktop), tap (mobile), focus clavier + Échap.
- * À réserver aux données calculées ou ambiguës — jamais décoratif.
+ * À réserver aux données calculées ou ambiguës : jamais décoratif.
  *
  * La bulle est rendue dans `document.body` (portail manuel) pour échapper à TOUT conteneur
  * `overflow:hidden` ET à tout contexte d'empilement d'un ancêtre (sinon la bulle passe
- * derrière les cartes voisines — cas Dashboard/Analytics).
+ * derrière les cartes voisines : cas Dashboard/Analytics).
  */
 @Component({
   selector: 'mtc-info-tooltip',

@@ -1,5 +1,5 @@
 /**
- * Statistiques de trades — SOURCE UNIQUE côté front (PROMPT-160). Miroir du helper backend
+ * Statistiques de trades : SOURCE UNIQUE côté front (PROMPT-160). Miroir du helper backend
  * (`apps/api-mytradingcoach/src/common/utils/trade-stats.util.ts`).
  *
  * Résultat d'un trade clôturé : win (`pnl > ε`) · loss (`pnl < -ε`) · break-even (`|pnl| <= ε`).
@@ -22,7 +22,7 @@ export interface TradeStats {
   wins: number;
   losses: number;
   breakeven: number;
-  /** wins / (wins + losses), en POURCENTAGE (0–100). 0 si (wins + losses) === 0. */
+  /** wins / (wins + losses), en POURCENTAGE (0-100). 0 si (wins + losses) === 0. */
   winRate: number;
   totalPnl: number;
 }

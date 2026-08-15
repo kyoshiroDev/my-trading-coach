@@ -195,7 +195,7 @@ export class AuthService {
       );
   }
 
-  /** @deprecated — utiliser fetchMe() directement */
+  /** @deprecated : utiliser fetchMe() directement */
   refreshUser() {
     return this.fetchMe();
   }

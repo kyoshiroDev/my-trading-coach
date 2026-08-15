@@ -26,7 +26,7 @@ function featLabel(key: string): { full: string; short: string } {
   return FEATURE_LABELS[key] ?? { full: key, short: key.replace(/_/g, ' ') };
 }
 
-/** Emoji d'humeur (enum MoodState) — pas de pipe émoji côté admin. */
+/** Emoji d'humeur (enum MoodState) : pas de pipe émoji côté admin. */
 const MOOD_EMOJI: Record<string, string> = {
   CONFIDENT: '😎', FOCUSED: '🎯', NEUTRAL: '😐', TIRED: '😴', STRESSED: '😰',
 };
@@ -122,7 +122,7 @@ export function buildSignals(
           }
         </div>
 
-        <!-- Bandeau KPI usage réel (trades) — compact, liseré coloré conservé -->
+        <!-- Bandeau KPI usage réel (trades) : compact, liseré coloré conservé -->
         <div class="kpi-strip cols-4 ud-kpis">
           <div class="kpi">
             <div class="kpi-top teal"></div>
@@ -408,7 +408,7 @@ export class UserDetailComponent {
     return `conic-gradient(${stops})`;
   });
 
-  /** Signaux dérivés (icône ok/warn/bad) — délégué à une fonction pure testable. */
+  /** Signaux dérivés (icône ok/warn/bad) : délégué à une fonction pure testable. */
   protected readonly signals = computed<Signal[]>(() => {
     const d = this.data();
     if (!d) return [];
@@ -421,13 +421,13 @@ export class UserDetailComponent {
     return ref ? `?ref=${ref}` : 'directe';
   });
 
-  /** Dernière activité en relatif (« il y a 19h ») — même donnée que le KPI d'avant. */
+  /** Dernière activité en relatif (« il y a 19h ») : même donnée que le KPI d'avant. */
   protected readonly lastActivity = computed(() => {
     const iso = this.data()?.identity.lastActivityAt;
     return iso ? this.relTime(iso) : 'jamais';
   });
 
-  /** Mois courant (FR) — libellé indicatif du calendrier de connexions. */
+  /** Mois courant (FR) : libellé indicatif du calendrier de connexions. */
   protected readonly calMonthLabel = computed(() =>
     new Date().toLocaleDateString('fr-FR', { month: 'long' }),
   );

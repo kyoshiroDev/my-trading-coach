@@ -124,7 +124,7 @@ function currencyToInstruments(currency: string | null | undefined): string {
               [breakingNews]="breakingNews()"
             />
           </div>
-          <!-- News live — ticker horizontal (IA mutualisée → FREE), dans la carte marché -->
+          <!-- News live : ticker horizontal (IA mutualisée → FREE), dans la carte marché -->
           @if (newsItems().length > 0) {
             <div class="news-ticker">
               <span class="news-ticker-lbl"><lucide-icon [img]="NewsIcon" [size]="13" class="news-live-ic" /> News live</span>
@@ -640,7 +640,7 @@ function currencyToInstruments(currency: string | null | undefined): string {
           >@if (qtSubmitting()) { Capture… } @else { <lucide-icon [img]="QuickIcon" [size]="14" /> Logger ce trade }</button>
           <div class="qt-hint">Asset + direction + émotion suffisent</div>
 
-          <!-- Retour d'action (succès / erreur) — annoncé aux lecteurs d'écran -->
+          <!-- Retour d'action (succès / erreur) : annoncé aux lecteurs d'écran -->
           <div class="qt-feedback" role="status" aria-live="polite">
             @if (feedbackToast(); as fb) {
               <div class="qt-feedback-toast" [class.ok]="fb.type === 'success'" [class.err]="fb.type === 'error'">
@@ -738,7 +738,7 @@ export class SessionLiveComponent {
 
   // News live + contexte marché = IA mutualisée → FREE (PROMPT-169), accessible à tous.
 
-  // Icônes Lucide (headers de colonnes — design « Session live »).
+  // Icônes Lucide (headers de colonnes, design « Session live »).
   protected readonly NewsIcon  = Newspaper;
   protected readonly CalIcon   = CalendarDays;
   protected readonly FeedIcon  = ListOrdered;
@@ -813,7 +813,7 @@ export class SessionLiveComponent {
   protected readonly feedbackToast = signal<{ type: 'success' | 'error'; text: string } | null>(null);
   private feedbackTimer?: ReturnType<typeof setTimeout>;
 
-  // Quick trade form — asset selection
+  // Quick trade form : asset selection
   protected readonly userAssets = signal<UserAssetItem[]>([]);
   protected readonly assetsLoading = signal(false);
   protected readonly assetsError = signal(false);
@@ -835,7 +835,7 @@ export class SessionLiveComponent {
   // Eco results cache
   private readonly ecoResults = signal<Record<string, EcoResultAnalysis>>({});
 
-  // Pins chargés directement depuis l'API — indépendant du cache getTodayEvents
+  // Pins chargés directement depuis l'API : indépendant du cache getTodayEvents
   private readonly freshPins = signal<string[] | null>(null);
 
   // Prix temps réel FMP
@@ -903,7 +903,7 @@ export class SessionLiveComponent {
     Math.max(0, this.relevantEcoEvents().length - this.MAX_ECO_EVENTS),
   );
 
-  // Eco WebSocket — nouvelles releases temps réel
+  // Eco WebSocket : nouvelles releases temps réel
   protected readonly newReleases = signal<EcoEvent[]>([]);
   protected readonly showReleaseAlert = signal(false);
   protected readonly releaseAlertState = signal<'analyzing' | 'ready' | 'error'>('analyzing');
@@ -961,7 +961,7 @@ export class SessionLiveComponent {
       if (this.selectedNews() && dialog) dialog.focus();
     });
 
-    // Assets chargés immédiatement — indépendamment de la session
+    // Assets chargés immédiatement : indépendamment de la session
     this.loadUserAssets();
 
     // Recherche d'instrument (saisie libre d'actif)
@@ -979,7 +979,7 @@ export class SessionLiveComponent {
       )
       .subscribe((res) => this.customAssetResults.set(res.data ?? []));
 
-    // Pins chargés directement — pas de dépendance au cache getTodayEvents
+    // Pins chargés directement : pas de dépendance au cache getTodayEvents
     this.ecoCalendarApi.getPins()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(res => this.freshPins.set(res.data ?? []));
@@ -987,7 +987,7 @@ export class SessionLiveComponent {
     // Arrêter le polling prix au destroy
     this.destroyRef.onDestroy(() => this.stopLivePricePolling());
 
-    // WebSocket éco — connecter quand session active (analyse IA éco = IA mutualisée → FREE).
+    // WebSocket éco : connecter quand session active (analyse IA éco = IA mutualisée → FREE).
     effect(() => {
       const s = this.session();
       if (s?.status === 'ACTIVE') {
@@ -1259,7 +1259,7 @@ export class SessionLiveComponent {
 
   private applyAssetSelection(asset: UserAssetItem): void {
     this.qtSelectedAsset.set(asset);
-    // L'entry est capturée automatiquement au clic (prix marché de l'instant) — pas de saisie.
+    // L'entry est capturée automatiquement au clic (prix marché de l'instant) : pas de saisie.
     if (asset.lastQty != null) this.qtQty.set(String(asset.lastQty));
     this.startLivePricePolling(asset.symbol);
   }

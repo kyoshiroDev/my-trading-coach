@@ -345,7 +345,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
         <div class="mtc-panel" [class.mtc-ai]="userStore.isPremium()">
           <div class="mtc-panel-head">
             <div class="mtc-panel-head-l"><lucide-icon [img]="CoachIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">AI Coach · feedback</div></div></div>
-            <!-- Pastille LIVE réservée à la carte réellement active (Premium) — jamais sur un teaser verrouillé. -->
+            <!-- Pastille LIVE réservée à la carte réellement active (Premium) : jamais sur un teaser verrouillé. -->
             @if (userStore.isPremium()) {
               <span class="mtc-live"><span class="mtc-live-dot"></span>LIVE</span>
             }
@@ -489,7 +489,7 @@ export class DashboardComponent {
   protected readonly isSavingTrade = signal(false);
   protected readonly PRICING = PRICING;
 
-  // Icônes d'en-tête de panel (Lucide) — fidélité design.
+  // Icônes d'en-tête de panel (Lucide) : fidélité design.
   protected readonly EquityIcon   = TrendingUp;
   protected readonly AssetsIcon   = Coins;
   protected readonly PlDayIcon     = BarChart3;
@@ -576,7 +576,7 @@ export class DashboardComponent {
   private readonly equityCurveResource = httpResource<{
     data: { points: EquityPoint[]; startingCapital: number | null };
   }>(() => `${environment.apiUrl}/analytics/equity-curve/daily${this.rangeQuery()}`);
-  // Activité journalière (P&L par jour) sur la même période — agrégée jour/semaine/mois côté front.
+  // Activité journalière (P&L par jour) sur la même période : agrégée jour/semaine/mois côté front.
   private readonly activityResource = httpResource<{
     data: { days: { date: string; pnl: number; tradesCount: number }[] };
   }>(() => `${environment.apiUrl}/analytics/activity/range${this.rangeQuery()}`);
@@ -593,14 +593,14 @@ export class DashboardComponent {
 
   protected readonly summary = computed(() => this.summaryResource.value()?.data ?? null);
 
-  /** Top actifs par P&L (HBars) — largeur de barre précalculée sur le max absolu. */
+  /** Top actifs par P&L (HBars) : largeur de barre précalculée sur le max absolu. */
   protected readonly topAssets = computed(() => {
     const list = (this.topAssetsResource.value()?.data ?? []).slice(0, 5);
     const max = Math.max(...list.map((a) => Math.abs(a.pnl)), 1);
     return list.map((a) => ({ ...a, barPct: (Math.abs(a.pnl) / max) * 100 }));
   });
 
-  /** Profit factor : valeur 2 décimales, ∞ si aucune perte, — si aucune donnée. */
+  /** Profit factor : valeur 2 décimales, ∞ si aucune perte, - si aucune donnée. */
   protected readonly profitFactorDisplay = computed(() => {
     const pf = this.summary()?.profitFactor;
     if (pf == null) return (this.summary()?.totalTrades ?? 0) > 0 ? '∞' : '-';
@@ -619,7 +619,7 @@ export class DashboardComponent {
     (this.summary()?.winRate ?? 0) === 0 ? 'var(--text-2)' : 'var(--blue-bright)',
   );
   /**
-   * Capital de base, source unique scopée au compte sélectionné — miroir EXACT
+   * Capital de base, source unique scopée au compte sélectionné : miroir EXACT
    * de la page Mes comptes :
    * - compte sélectionné → son `metrics.startingBalance` ;
    * - « Tous les comptes » → somme des `startingBalance` des comptes non archivés
@@ -688,7 +688,7 @@ export class DashboardComponent {
   );
   /**
    * Chargement du dashboard : on affiche un squelette (jamais des zéros) tant que les
-   * comptes ou les données de base (summary, courbe d'équité) ne sont PAS chargés — pour
+   * comptes ou les données de base (summary, courbe d'équité) ne sont PAS chargés, pour
    * FREE comme Premium. Le gating `isPremium()` d'avant rendait `isLoading` toujours faux
    * en FREE, d'où « Capital $0 / 0 compte » affiché au premier rendu post-onboarding (PROMPT-175).
    * Les resources by-setup/by-emotion ne comptent que pour un Premium (chargées pour lui seul).
@@ -791,7 +791,7 @@ export class DashboardComponent {
     const b = this.baseCapital();
     return this.eqSeries().map((v) => b + v);
   });
-  /** Drawdown courant (val − pic) le long de la courbe — série rouge des KPI. */
+  /** Drawdown courant (val − pic) le long de la courbe : série rouge des KPI. */
   protected readonly ddSeries = computed(() => {
     let peak = -Infinity;
     return this.eqSeries().map((v) => { peak = Math.max(peak, v); return v - peak; });
@@ -879,7 +879,7 @@ export class DashboardComponent {
   });
 
   /**
-   * Granularité des barres « P&L par jour » — pilotée par le NOMBRE de barres, pas par le nom
+   * Granularité des barres « P&L par jour » : pilotée par le NOMBRE de barres, pas par le nom
    * de la période : on vise ≤ 31 barres. jour (≤ 31 j) → semaine (≤ ~31 sem.) → mois (au-delà).
    * 1M = jour · 3M / 6M = semaine · Tout = mois.
    */
@@ -909,7 +909,7 @@ export class DashboardComponent {
     }
   });
 
-  // Helpers de dates (front) — semaine ISO alignée sur le journal (PROMPT-170), pas de getDay() brut.
+  // Helpers de dates (front) : semaine ISO alignée sur le journal (PROMPT-170), pas de getDay() brut.
   private parseDay(dateStr: string): Date { return new Date(dateStr + 'T12:00:00'); }
   private atNoon(d: Date): Date { const c = new Date(d); c.setHours(12, 0, 0, 0); return c; }
   private isoDate(d: Date): string {
@@ -920,7 +920,7 @@ export class DashboardComponent {
     const p = (n: number) => String(n).padStart(2, '0');
     return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`;
   }
-  /** Lundi de la semaine ISO d'une date — même définition que le journal ((getDay()+6)%7). */
+  /** Lundi de la semaine ISO d'une date : même définition que le journal ((getDay()+6)%7). */
   private mondayOf(d: Date): Date {
     const dow = (d.getDay() + 6) % 7; // lundi = 0 … dimanche = 6
     const m = new Date(d);
@@ -929,7 +929,7 @@ export class DashboardComponent {
   }
 
   /**
-   * Barres P&L par période — agrégées jour / semaine / mois selon `plGranularity`. Les jours
+   * Barres P&L par période : agrégées jour / semaine / mois selon `plGranularity`. Les jours
    * tradés viennent du back (P&L net déjà agrégé, BE gérés comme le journal) ; on pré-remplit
    * les buckets vides de la plage pour un axe continu (barres vides à plat). Vert gain / rouge perte.
    */
@@ -1020,11 +1020,11 @@ export class DashboardComponent {
     return { gradient: this.emotionPie().gradient, centerValue: `${stats[0].pct}%`, centerLabel: stats[0].emotion };
   });
 
-  /** Stats par émotion (R moyen / win rate) — source du feedback coach. */
+  /** Stats par émotion (R moyen / win rate) : source du feedback coach. */
   protected readonly byEmotion = computed(() => this.byEmotionResource.value()?.data ?? []);
 
   /**
-   * Feedback « AI Coach » dérivé des VRAIES données (summary + émotions + setups) —
+   * Feedback « AI Coach » dérivé des VRAIES données (summary + émotions + setups) :
    * jamais de texte codé en dur. Chaque insight a un ton (good/warn/bad).
    */
   protected readonly coachInsights = computed(() => {

@@ -3,7 +3,7 @@
 export const APP_URL =
   import.meta.env.PUBLIC_APP_URL ?? 'https://app.mytradingcoach.app';
 
-// URL de l'API (préfixe /api inclus — cf. setGlobalPrefix). Surchargée via PUBLIC_API_URL.
+// URL de l'API (préfixe /api inclus, cf. setGlobalPrefix). Surchargée via PUBLIC_API_URL.
 export const API_URL =
   import.meta.env.PUBLIC_API_URL ?? 'https://api.mytradingcoach.app/api';
 

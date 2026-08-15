@@ -58,7 +58,7 @@ function emptyForm(): AccountFormState {
   };
 }
 
-// « Mes comptes » (PREMIUM) — CRUD des comptes + barres de règles prop firm
+// « Mes comptes » (PREMIUM) : CRUD des comptes + barres de règles prop firm
 // ESTIMÉES d'après les trades loggés (objectif + marge drawdown), avec disclaimer obligatoire.
 @Component({
   selector: 'mtc-accounts',
@@ -113,7 +113,7 @@ export class AccountsComponent implements OnInit {
   protected readonly totalTrades = computed(() =>
     this.visibleAccounts().reduce((s, a) => s + a.metrics.tradesCount, 0),
   );
-  // Comptes proches du drawdown (marge ≤ 25 % du max, ou dépassée) — à surveiller.
+  // Comptes proches du drawdown (marge ≤ 25 % du max, ou dépassée) : à surveiller.
   protected readonly atRiskCount = computed(
     () =>
       this.visibleAccounts().filter((a) => {

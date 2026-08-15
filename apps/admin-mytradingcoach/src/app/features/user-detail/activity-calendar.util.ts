@@ -6,7 +6,7 @@ export interface CalCell {
   state: CalState;
 }
 
-/** Clé jour 'YYYY-MM-DD' (mois 0-based) — même format que les activeDates backend. */
+/** Clé jour 'YYYY-MM-DD' (mois 0-based) : même format que les activeDates backend. */
 export function ymd(year: number, month: number, day: number): string {
   return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }

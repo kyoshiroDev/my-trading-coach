@@ -12,7 +12,7 @@ import {
 import { Chart, CHART_COLORS, RING_TRACK, type ChartTone } from '../../charts/chart-theme';
 
 /**
- * Anneau radial réutilisable (CPU/RAM/Disque…) — doughnut chart.js plein cercle,
+ * Anneau radial réutilisable (CPU/RAM/Disque…) : doughnut chart.js plein cercle,
  * cutout 76 %, 2 segments (valeur + reste), couleur selon le ton.
  * Init dans afterNextRender, mise à jour réactive via effect, destroy via DestroyRef.
  *
@@ -38,7 +38,7 @@ import { Chart, CHART_COLORS, RING_TRACK, type ChartTone } from '../../charts/ch
   `,
 })
 export class RadialGaugeComponent {
-  /** Valeur 0–100 (%). */
+  /** Valeur 0-100 (%). */
   readonly value = input.required<number>();
   /** Ton couleur de l'anneau. */
   readonly tone = input<ChartTone>('teal');

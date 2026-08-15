@@ -29,7 +29,7 @@ export class UserStore {
     return ACCOUNT_LIMITS.free;
   });
 
-  /** Compte démo vitrine (lecture seule) — bandeau + actions redirigées vers l'inscription. */
+  /** Compte démo vitrine (lecture seule) : bandeau + actions redirigées vers l'inscription. */
   readonly isDemo = computed(() => this.user()?.isDemo === true);
 
   readonly isAdmin = computed(() => this.user()?.role === 'ADMIN');
