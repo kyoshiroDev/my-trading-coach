@@ -132,7 +132,7 @@ export function premiumTemplate({ userName, appUrl, unsubUrl }: CampaignBuildCtx
     `, 'rgba(99,92,246,.4)') + marketingFooter(unsubUrl);
 
   return {
-    subject: '⚡ Passe à Premium — 1 mois offert',
+    subject: '⚡ Passe à Premium · 1 mois offert',
     html: emailWrapper(content, 'Coach IA, Weekly Debrief, analytics avancés.'),
   };
 }

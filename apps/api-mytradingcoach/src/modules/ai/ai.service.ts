@@ -34,7 +34,7 @@ const DEMO_INSIGHTS = {
     { type: 'strength', title: 'Edge clair sur Londres', description: '72% de win rate sur la session de Londres (breakouts/pullbacks).', badge: 'Force' },
     { type: 'weakness', title: 'Session asiatique à éviter', description: 'Win rate 38% en session asiatique, hors de ta zone.', badge: 'Attention' },
     { type: 'pattern', title: 'Overtrading en fin de journée', description: 'Tes trades après le 3ᵉ de la journée sont majoritairement perdants.', badge: 'Pattern' },
-    { type: 'strength', title: 'Bonne gestion du risque', description: 'R:R moyen 1.9 — tu coupes tes pertes.', badge: 'Force' },
+    { type: 'strength', title: 'Bonne gestion du risque', description: 'R:R moyen 1.9, tu coupes tes pertes.', badge: 'Force' },
   ],
 };
 const DEMO_CHAT_REPLY =
@@ -110,7 +110,7 @@ export class AiService {
     const userContext = userProfile ? buildUserTradingContext(userProfile) : '';
 
     const CHAT_SYSTEM = `Tu es un coach de trading professionnel, bienveillant et direct.
-Tutoiement. Réponds en texte naturel uniquement — jamais de JSON, jamais de markdown, pas de ** ni de tirets listes.
+Tutoiement. Réponds en texte naturel uniquement : jamais de JSON, jamais de markdown, pas de ** ni de tirets listes.
 Sois concis (3-5 phrases). Si le trader a des données, base-toi dessus pour répondre précisément.
 ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en garde sur des comportements qui font partie de sa stratégie normale.`;
 
@@ -149,7 +149,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
       ].slice(0, 8);
       const glossary = setupDefs.length
         ? `\nDéfinitions setups :\n${setupDefs
-            .map(([title, desc]) => `  • ${title} — ${desc.slice(0, 120)}`)
+            .map(([title, desc]) => `  • ${title} : ${desc.slice(0, 120)}`)
             .join('\n')}`
         : '';
 

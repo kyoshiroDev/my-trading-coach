@@ -297,7 +297,7 @@ export function welcomePremiumTemplate(params: {
       <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 20px 0;line-height:1.7;">
         Bonjour ${userName || 'Trader'},
         ${isTrial
-          ? `ton essai gratuit de <strong style="color:#e2eaf5;">30 jours</strong> est activé. Aucun prélèvement avant la fin — annulable en un clic.`
+          ? `ton essai gratuit de <strong style="color:#e2eaf5;">30 jours</strong> est activé. Aucun prélèvement avant la fin, annulable en un clic.`
           : `ton abonnement Premium est actif. Profite de toutes les fonctionnalités de ton compagnon.`
         }
       </p>

@@ -319,7 +319,7 @@ export class EcoCalendarService {
     const fallback: EcoAnalysis = {
       summary:
         events.length === 0
-          ? 'Aucun événement économique majeur prévu — journée calme pour tes actifs.'
+          ? 'Aucun événement économique majeur prévu : journée calme pour tes actifs.'
           : 'Données IA indisponibles.',
       recommendation: '',
       assetImpacts: [],

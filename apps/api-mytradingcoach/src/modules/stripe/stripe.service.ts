@@ -779,7 +779,7 @@ export class StripeService {
       {
         amount: -monthCents,
         currency: 'eur',
-        description: `Mois offert — parrainage (filleul ${filleulId})`,
+        description: `Mois offert · parrainage (filleul ${filleulId})`,
       },
       { idempotencyKey: `referral-reward-${filleulId}` },
     );

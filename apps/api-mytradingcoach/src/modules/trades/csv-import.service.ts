@@ -373,7 +373,7 @@ export class CsvImportService {
         select: { tradingStyle: true, tradesPerDayMax: true },
       });
       if (user?.tradingStyle === 'SCALPING' || (user?.tradesPerDayMax != null && user.tradesPerDayMax > 20)) {
-        styleNote = `\nNote : Ce trader est scalper avec une fréquence élevée de trades — c'est normal pour son style.`;
+        styleNote = `\nNote : Ce trader est scalper avec une fréquence élevée de trades, c'est normal pour son style.`;
       }
     }
 

@@ -50,15 +50,15 @@ export const buildDebriefPrompt = (data: {
     ? accounts
         .map((a) => {
           const rules = a.maxDrawdown != null || a.profitTarget != null
-            ? ` — départ ${a.startingBalance ?? '?'}$, objectif ${a.profitTarget ?? 'aucun'}$, drawdown max ${a.maxDrawdown ?? 'aucun'}$ (${a.drawdownType ?? 'STATIC'})`
+            ? ` : départ ${a.startingBalance ?? '?'}$, objectif ${a.profitTarget ?? 'aucun'}$, drawdown max ${a.maxDrawdown ?? 'aucun'}$ (${a.drawdownType ?? 'STATIC'})`
             : '';
-          return `- [${a.accountId}] "${a.name}" (${a.type})${rules} — ${a.tradesCount} trade(s) cette semaine.`;
+          return `- [${a.accountId}] "${a.name}" (${a.type})${rules}. ${a.tradesCount} trade(s) cette semaine.`;
         })
         .join('\n')
-    : '(aucun compte enregistré — analyse le compte « unassigned » uniquement)';
+    : '(aucun compte enregistré, analyse le compte « unassigned » uniquement)';
 
   return `
-Semaine ${data.weekNumber} de ${data.year} — ${data.trades.length} trades, ${accounts.length} compte(s).
+Semaine ${data.weekNumber} de ${data.year} : ${data.trades.length} trades, ${accounts.length} compte(s).
 ${data.userProfile ? buildUserTradingContext(data.userProfile) : ''}
 Stats globales de la semaine :
 ${JSON.stringify(data.stats, null, 2)}

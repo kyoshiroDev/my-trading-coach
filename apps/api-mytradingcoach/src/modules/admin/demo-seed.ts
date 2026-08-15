@@ -259,7 +259,7 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
   const recaps = [
     { daysAgo: 2, emotion: 'FOCUSED', line: "Session disciplinée : 2 trades, R:R respecté. Continue sur cette lancée, la régularité paie." },
     { daysAgo: 6, emotion: 'NEUTRAL', line: "Bonne gestion du risque autour du NFP. Travaille ton timing d'entrée sur les news." },
-    { daysAgo: 11, emotion: 'CONFIDENT', line: "Léger overtrading aujourd'hui. Tes meilleurs trades sont tes 2 premiers — sache t'arrêter." },
+    { daysAgo: 11, emotion: 'CONFIDENT', line: "Léger overtrading aujourd'hui. Tes meilleurs trades sont tes 2 premiers : sache t'arrêter." },
   ];
   for (const rc of recaps) {
     const day = trades.filter(t => t.daysAgo === rc.daysAgo);

@@ -206,7 +206,7 @@ export class ResendService {
         from: 'noreply@mytradingcoach.app',
         to: CONTACT_INBOX,
         replyTo: params.email,
-        subject: `🤝 Demande ambassadeur — ${params.name}`,
+        subject: `🤝 Demande ambassadeur · ${params.name}`,
         html: `<pre style="font-family:monospace;font-size:14px">${escapeHtml(body)}</pre>`,
       });
     } catch (err) {
@@ -227,7 +227,7 @@ export class ResendService {
       from: this.from,
       to: CONTACT_INBOX,
       replyTo: params.ambassadorEmail,
-      subject: `Relevé de commissions — ${escapeHtml(params.ambassadorName)} (${params.period})`,
+      subject: `Relevé de commissions · ${escapeHtml(params.ambassadorName)} (${params.period})`,
       html:
         `<p>Relevé de commissions de <strong>${escapeHtml(params.ambassadorName)}</strong> ` +
         `pour la période ${params.period} en pièce jointe.</p>` +

@@ -102,9 +102,9 @@ export class AnalyticsService {
         maxDrawdown: 0,
         profitFactor: null,
         streak: 0,
-        topSession: '—',
+        topSession: '-',
         topSessionWinRate: 0,
-        topHour: '—',
+        topHour: '-',
       };
     }
 
@@ -151,7 +151,7 @@ export class AnalyticsService {
       if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
       sessionMap.set(s, g);
     }
-    let topSession = '—';
+    let topSession = '-';
     let topSessionWinRate = 0;
     for (const [session, g] of sessionMap.entries()) {
       const wr = (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : 0;
@@ -180,7 +180,7 @@ export class AnalyticsService {
       }
     }
     const topHour =
-      topHourNum >= 0 ? `${String(topHourNum).padStart(2, '0')}:00` : '—';
+      topHourNum >= 0 ? `${String(topHourNum).padStart(2, '0')}:00` : '-';
 
     return {
       winRate,

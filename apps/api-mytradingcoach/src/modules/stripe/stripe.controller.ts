@@ -71,7 +71,7 @@ export class StripeController {
     }
     if (!req.rawBody) {
       throw new BadRequestException(
-        'Corps brut manquant — vérifier rawBody: true dans main.ts',
+        'Corps brut manquant : vérifier rawBody: true dans main.ts',
       );
     }
     return this.stripe.handleWebhook(req.rawBody, signature);

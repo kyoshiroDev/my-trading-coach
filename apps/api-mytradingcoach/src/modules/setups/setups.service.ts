@@ -76,7 +76,7 @@ export class SetupsService {
     const count = await this.prisma.trade.count({ where: { setupId: id } });
     if (count > 0) {
       throw new BadRequestException(
-        'Ce setup a un historique de trades — archive-le plutôt que de le supprimer.',
+        'Ce setup a un historique de trades : archive-le plutôt que de le supprimer.',
       );
     }
     await this.prisma.setup.delete({ where: { id } });

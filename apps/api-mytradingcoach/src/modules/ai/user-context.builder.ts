@@ -54,7 +54,7 @@ export function buildUserTradingContext(profile: UserTradingProfile): string {
   if (profile.tradesPerDayMin != null && profile.tradesPerDayMax != null) {
     lines.push(
       `Fréquence normale : ${profile.tradesPerDayMin}-${profile.tradesPerDayMax} trades par jour` +
-      ` — NE PAS considérer cette fréquence comme un problème, c'est sa stratégie normale.`,
+      `. NE PAS considérer cette fréquence comme un problème, c'est sa stratégie normale.`,
     );
   } else if (profile.tradesPerDayMax != null) {
     lines.push(`Fréquence normale : jusqu'à ${profile.tradesPerDayMax} trades par jour.`);

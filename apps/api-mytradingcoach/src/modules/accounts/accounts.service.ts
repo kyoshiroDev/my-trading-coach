@@ -27,7 +27,7 @@ type PlanContext = { plan: Plan; role: Role; trialEndsAt?: Date | null };
 const FREE_ACCOUNT_LIMIT = 1;
 
 const RULE_DISCLAIMER =
-  "Estimation basée uniquement sur les trades loggés dans MyTradingCoach — pas " +
+  "Estimation basée uniquement sur les trades loggés dans MyTradingCoach, pas " +
   "l'equity temps réel ni le calcul officiel de la prop firm (positions ouvertes, " +
   "fuseau, trailing intraday). Le statut du compte reste piloté par toi.";
 
