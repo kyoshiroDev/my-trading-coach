@@ -30,7 +30,7 @@ import { NewsItem } from '../../../../../../core/api/trades.api';
               <div class="news-item-top">
                 <span class="news-asset-tag">{{ item.symbol }}</span>
                 <span class="news-sentiment" [class]="item.sentiment ?? 'neutral'">
-                  {{ item.sentiment === 'bull' ? '▲ Bull' : item.sentiment === 'bear' ? '▼ Bear' : '— Neutre' }}
+                  {{ item.sentiment === 'bull' ? '▲ Bull' : item.sentiment === 'bear' ? '▼ Bear' : '- Neutre' }}
                 </span>
                 <span class="news-time">{{ formatNewsTime(item.publishedDate) }}</span>
               </div>

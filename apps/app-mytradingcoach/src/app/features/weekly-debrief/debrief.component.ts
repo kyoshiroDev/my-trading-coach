@@ -125,7 +125,7 @@ function typeBadge(type: string): { label: string; cls: string } | null {
             chaque dimanche un rapport IA complet de ta semaine.
           </p>
           <button class="paywall-cta" (click)="showPlanModal.set(true)">
-            Essayer Premium — 1 mois offert →
+            Essayer Premium · 1 mois offert →
           </button>
         </div>
         @if (showPlanModal()) {

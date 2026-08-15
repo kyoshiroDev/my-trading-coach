@@ -59,7 +59,7 @@ import { CHART_COLORS, gridAxis, noLegend, type ChartTone } from '../../shared/c
         <!-- Gauche, pleine hauteur : Évolution + Entonnoir -->
         <div class="area-left dcol">
           <div class="card grow-chart">
-            <div class="card-head"><span class="card-label">Évolution — inscrits par semaine{{ showMrrLine() ? ' + MRR' : '' }}</span><span class="card-label muted">snapshots</span></div>
+            <div class="card-head"><span class="card-label">Évolution · inscrits par semaine{{ showMrrLine() ? ' + MRR' : '' }}</span><span class="card-label muted">snapshots</span></div>
             <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="trendConfig()" /></div></div>
           </div>
           <div class="card">

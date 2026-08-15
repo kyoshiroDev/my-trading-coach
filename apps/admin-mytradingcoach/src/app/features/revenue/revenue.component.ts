@@ -66,8 +66,8 @@ import { CHART_COLORS, fade, gridAxis, noLegend } from '../../shared/charts/char
             @if (r.divergences.inDbNotStripe.length === 0 && r.divergences.inStripeNotDb.length === 0) {
               <div class="reconcile-ok">✓ Aucune divergence — DB et Stripe cohérents.</div>
             }
-            @for (d of r.divergences.inDbNotStripe; track d.userId) { <div class="diverge-row red">DB sans Stripe — {{ d.email }} · {{ d.plan }} · {{ d.status }}</div> }
-            @for (d of r.divergences.inStripeNotDb; track d.subscriptionId) { <div class="diverge-row amber">Stripe sans DB — {{ d.subscriptionId }} · {{ d.status }} · €{{ d.monthly }}/mois</div> }
+            @for (d of r.divergences.inDbNotStripe; track d.userId) { <div class="diverge-row red">DB sans Stripe · {{ d.email }} · {{ d.plan }} · {{ d.status }}</div> }
+            @for (d of r.divergences.inStripeNotDb; track d.subscriptionId) { <div class="diverge-row amber">Stripe sans DB · {{ d.subscriptionId }} · {{ d.status }} · €{{ d.monthly }}/mois</div> }
           }
         </div>
       </div>

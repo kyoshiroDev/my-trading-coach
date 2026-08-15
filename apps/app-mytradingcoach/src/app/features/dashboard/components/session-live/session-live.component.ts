@@ -677,7 +677,7 @@ function currencyToInstruments(currency: string | null | undefined): string {
                 <span class="nm-source">{{ news.site }}</span>
               }
               <span class="news-sentiment" [class]="news.sentiment ?? 'neutral'">
-                {{ news.sentiment === 'bull' ? '▲ Bull' : news.sentiment === 'bear' ? '▼ Bear' : '— Neutre' }}
+                {{ news.sentiment === 'bull' ? '▲ Bull' : news.sentiment === 'bear' ? '▼ Bear' : '- Neutre' }}
               </span>
               <span class="nm-date">{{ formatNewsTime(news.publishedDate) }}</span>
             </div>

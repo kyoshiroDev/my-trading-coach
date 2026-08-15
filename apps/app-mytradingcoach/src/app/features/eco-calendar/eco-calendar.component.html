@@ -188,10 +188,10 @@
                             }
                           </td>
                           <td class="r num hide-sm" data-label="Prév.">
-                            @if (event.estimate !== null) { {{ event.estimate }}{{ event.unit }} } @else { — }
+                            @if (event.estimate !== null) { {{ event.estimate }}{{ event.unit }} } @else { - }
                           </td>
                           <td class="r num hide-sm" data-label="Précédent">
-                            @if (event.previous !== null) { {{ event.previous }}{{ event.unit }} } @else { — }
+                            @if (event.previous !== null) { {{ event.previous }}{{ event.unit }} } @else { - }
                           </td>
                           <td class="c-ia" data-label="IA">
                             @switch (iaState(event)) {

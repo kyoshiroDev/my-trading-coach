@@ -80,10 +80,10 @@ import { PRICING_EUR } from '../../core/constants/pricing.const';
                   <td data-label="Plan"><span class="badge" [class.b-premium]="u.plan==='PREMIUM'" [class.b-free]="u.plan==='FREE'">{{ u.plan }}</span></td>
                   <td data-label="Abonnement">
                     @if (u.plan !== 'FREE') { <span [class]="'sub-badge sub-badge--' + subType(u)">{{ subLabel(u) }}</span> }
-                    @else { <span class="muted">–</span> }
+                    @else { <span class="muted">-</span> }
                   </td>
                   <td data-label="Activité" class="td-mono" [class.muted]="!u.lastSeenAt">{{ relativeTime(u.lastSeenAt) }}</td>
-                  <td data-label="Session" class="td-mono">{{ u.lastLoginAt ? sessionDuration(u.lastLoginAt) : '–' }}</td>
+                  <td data-label="Session" class="td-mono">{{ u.lastLoginAt ? sessionDuration(u.lastLoginAt) : '-' }}</td>
                   <td data-label="Inscrit" class="td-mono muted">{{ u.createdAt | date:'dd/MM/yyyy' }}</td>
                   <td data-label="Actions">
                     <div class="row-actions">
@@ -134,9 +134,9 @@ import { PRICING_EUR } from '../../core/constants/pricing.const';
               <div class="field">
                 <label for="modal-edit-role">Rôle</label>
                 <select id="modal-edit-role" class="field-select" [(ngModel)]="editRole">
-                  <option value="USER">USER — Utilisateur standard</option>
-                  <option value="BETA_TESTER">BETA_TESTER — Premium offert</option>
-                  <option value="AMBASSADOR">AMBASSADOR — Programme ambassadeur</option>
+                  <option value="USER">USER · Utilisateur standard</option>
+                  <option value="BETA_TESTER">BETA_TESTER · Premium offert</option>
+                  <option value="AMBASSADOR">AMBASSADOR · Programme ambassadeur</option>
                 </select>
               </div>
             </div>
@@ -243,7 +243,7 @@ export class UsersComponent implements OnInit {
   }
 
   protected sessionDuration(lastLoginAt: string | null): string {
-    if (!lastLoginAt) return '–';
+    if (!lastLoginAt) return '-';
     const totalMin = Math.floor((Date.now() - new Date(lastLoginAt).getTime()) / 60_000);
     const h = Math.floor(totalMin / 60);
     const m = totalMin % 60;

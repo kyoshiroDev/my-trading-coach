@@ -137,13 +137,13 @@
         <div class="card-header">
           <div class="card-title">Heatmap horaire : win rate par heure
             <mtc-info-tooltip label="Comment lire la heatmap"
-              text="Win rate par heure de la journée. Vert ≥ 65 %, orange 50–65 %, rouge < 50 %." />
+              text="Win rate par heure de la journée. Vert ≥ 65 %, orange 50-65 %, rouge < 50 %." />
           </div>
           <div class="heatmap-legend">
             <span class="legend-dot dot-red"></span
             ><span class="legend-txt">&lt;50%</span>
             <span class="legend-dot dot-orange"></span
-            ><span class="legend-txt">50–65%</span>
+            ><span class="legend-txt">50-65%</span>
             <span class="legend-dot dot-green"></span
             ><span class="legend-txt">&gt;65%</span>
           </div>
@@ -274,7 +274,7 @@
                 </td>
                 <td class="mono">{{ setup.count }}</td>
                 <td class="mono" [style.color]="setup.winRate !== null ? rateColor(setup.winRate) : null">
-                  @if (setup.winRate !== null) { {{ setup.winRate.toFixed(0) }}% } @else { — }
+                  @if (setup.winRate !== null) { {{ setup.winRate.toFixed(0) }}% } @else { - }
                 </td>
                 <td
                   class="mono"
@@ -360,7 +360,7 @@
             data-testid="upgrade-cta"
             (click)="showPlanModal.set(true)"
           >
-            Essayer Premium — 1 mois offert →
+            Essayer Premium · 1 mois offert →
           </button>
         </div>
       </div>
@@ -392,7 +392,7 @@
             data-testid="upgrade-cta"
             (click)="showPlanModal.set(true)"
           >
-            Essayer Premium — 1 mois offert →
+            Essayer Premium · 1 mois offert →
           </button>
         </div>
       </div>
@@ -423,7 +423,7 @@
             data-testid="upgrade-cta"
             (click)="showPlanModal.set(true)"
           >
-            Essayer Premium — 1 mois offert →
+            Essayer Premium · 1 mois offert →
           </button>
         </div>
       </div>

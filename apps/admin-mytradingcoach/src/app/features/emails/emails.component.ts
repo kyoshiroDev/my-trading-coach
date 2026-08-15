@@ -55,7 +55,7 @@ import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
         <div class="modal modal-preview" role="dialog" aria-modal="true"
           (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
           <div class="modal-header">
-            <h2 class="modal-title">{{ previewCampaign()!.emoji }} Aperçu — {{ previewCampaign()!.label }}</h2>
+            <h2 class="modal-title">{{ previewCampaign()!.emoji }} Aperçu · {{ previewCampaign()!.label }}</h2>
             <button class="modal-close" (click)="previewCampaign.set(null)" aria-label="Fermer">
               <lucide-icon [img]="XIcon" [size]="16" />
             </button>

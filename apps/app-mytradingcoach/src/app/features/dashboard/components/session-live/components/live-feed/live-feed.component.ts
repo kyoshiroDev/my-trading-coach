@@ -55,7 +55,7 @@ import { parseDecimal } from '../../../../../../core/utils/parse-decimal';
                 <div class="feed-l2">
                   <span class="feed-price">Entrée: {{ (trade.entry && trade.entry > 0) ? trade.entry : '-' }}</span>
                   <span class="feed-sep">·</span>
-                  <span class="feed-price">Sortie: —</span>
+                  <span class="feed-price">Sortie: -</span>
                 </div>
               </div>
               @if (closingTradeId() === trade.id) {

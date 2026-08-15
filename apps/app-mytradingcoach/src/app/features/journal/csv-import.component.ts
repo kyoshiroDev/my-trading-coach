@@ -269,7 +269,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
                   [value]="emotion()"
                   (change)="emotion.set($any($event.target).value)"
                 >
-                  <option value="">— Non renseignée</option>
+                  <option value="">- Non renseignée</option>
                   @for (e of EMOTIONS; track e) {
                     <option [value]="e">{{ emotionEmoji(e) }} {{ e }}</option>
                   }

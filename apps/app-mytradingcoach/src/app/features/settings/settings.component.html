@@ -43,7 +43,7 @@
               <span class="ssum-v">
                 @if (tradingStyle()) {
                   {{ styleEmoji(tradingStyle()) }} {{ styleLabel(tradingStyle()) }}
-                } @else { — }
+                } @else { - }
               </span>
             </div>
             <div class="ssum-row">
@@ -54,7 +54,7 @@
             </div>
             <div class="ssum-row">
               <span class="ssum-k">Trades/jour</span>
-              <span class="ssum-v">{{ tradesPerDayMin() }}–{{ tradesPerDayMax() }}</span>
+              <span class="ssum-v">{{ tradesPerDayMin() }}-{{ tradesPerDayMax() }}</span>
             </div>
             <div class="ssum-row">
               <span class="ssum-k">Description</span>
@@ -419,7 +419,7 @@
                 </p>
                 <div class="plan-actions">
                   <button class="btn btn-primary" (click)="showPlanModal.set(true)">
-                    ⚡ Essayer Premium — 1 mois offert →
+                    ⚡ Essayer Premium · 1 mois offert →
                   </button>
                 </div>
               }
@@ -555,7 +555,7 @@
 
         <!-- Trades / jour -->
         <div class="stp-fld">
-          <div class="stp-fld-label">Trades / jour habituels <span class="opt">{{ draftMin() }}–{{ draftMax() }}</span></div>
+          <div class="stp-fld-label">Trades / jour habituels <span class="opt">{{ draftMin() }}-{{ draftMax() }}</span></div>
           <div class="freq-slider-row">
             <span class="freq-slider-label">Min</span>
             <input type="range" class="freq-slider" min="0" max="50"

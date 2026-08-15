@@ -101,7 +101,7 @@ const DEMO_OBJECTIVES: DebriefObjective[] = [
         <div class="card">
           @if (recapView(); as recap) {
             <div class="card-header">
-              <div class="card-title">Hier — {{ recap.date | date:'EEEE d MMMM' }}</div>
+              <div class="card-title">Hier · {{ recap.date | date:'EEEE d MMMM' }}</div>
               <span style="font-size:11px;color:var(--text-3);font-family:var(--font-mono)">{{ recap.tradesCount }} trades</span>
             </div>
             <div class="recap-stats">

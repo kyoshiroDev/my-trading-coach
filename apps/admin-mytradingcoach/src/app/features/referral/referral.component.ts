@@ -93,7 +93,7 @@ import { AdminApi, ReferralAdminOverview } from '../../core/api/admin.api';
                 @for (f of d.filleulsRecents; track f.pseudo + f.date) {
                   <tr>
                     <td><b class="td-strong">{{ f.pseudo }}</b></td>
-                    <td>@if (f.parrainCode) { <span class="code-pill">{{ f.parrainCode }}</span> } @else { — }</td>
+                    <td>@if (f.parrainCode) { <span class="code-pill">{{ f.parrainCode }}</span> } @else { - }</td>
                     <td>
                       <span class="pill"
                         [class.pill-active]="f.status === 'payant'"

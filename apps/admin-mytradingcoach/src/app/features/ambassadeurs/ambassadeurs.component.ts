@@ -58,7 +58,7 @@ import { PRICING_EUR } from '../../core/constants/pricing.const';
 
       @if (selectedDetail(); as detail) {
         <div class="card fill">
-          <div class="card-head"><span class="card-label">Détail — {{ selectedAmbassador()?.name ?? selectedAmbassador()?.email }}</span>
+          <div class="card-head"><span class="card-label">Détail · {{ selectedAmbassador()?.name ?? selectedAmbassador()?.email }}</span>
             <button class="btn" [disabled]="detail.pendingPayout === 0 || paying()" (click)="paySelected()">{{ paying() ? 'En cours…' : '✓ Marquer tout payé (' + (detail.pendingPayout | number:'1.2-2') + '€)' }}</button></div>
           <div class="card-body">
             <div class="mini-stats">
@@ -97,7 +97,7 @@ import { PRICING_EUR } from '../../core/constants/pricing.const';
             </div>
 
             <div class="sql-wrap">
-              <div class="card-label sect">SQL — marquer payé manuellement</div>
+              <div class="card-label sect">SQL · marquer payé manuellement</div>
               <div class="sql-block"><span class="kw">UPDATE</span> <span class="str">"ReferralCommission"</span> <span class="kw">SET</span> status = <span class="str">'paid'</span><br><span class="kw">WHERE</span> "ambassadorId" = <span class="str">'{{ selectedId() }}'</span><br><span class="kw">AND</span> status = <span class="str">'pending'</span>;</div>
             </div>
           </div>
