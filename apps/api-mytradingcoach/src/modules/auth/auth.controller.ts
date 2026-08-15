@@ -90,7 +90,7 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     await this.authService.forgotPassword(dto.email);
-    // 204 sans body — même réponse si l'email existe ou non (anti-énumération)
+    // 204 sans body : même réponse si l'email existe ou non (anti-énumération)
   }
 
   @Public()

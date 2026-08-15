@@ -47,7 +47,7 @@ export class DailyRecapService {
 
     if (trades.length === 0) return null;
 
-    // Win rate via le helper unique (BE exclus du dénominateur — PROMPT-160).
+    // Win rate via le helper unique (BE exclus du dénominateur, PROMPT-160).
     const stats = computeTradeStats(trades);
     const pnl = stats.totalPnl;
     const winRate = stats.winRate;
@@ -118,7 +118,7 @@ export class DailyRecapService {
           trades: trades.map((t) => ({ ...t, setup: t.setup?.title })),
           pnl,
           winRate,
-          // Émotion effective dominante (null = non renseignée) — plus de NEUTRAL forcé.
+          // Émotion effective dominante (null = non renseignée) : plus de NEUTRAL forcé.
           dominantEmotion,
           date,
           userProfile: user

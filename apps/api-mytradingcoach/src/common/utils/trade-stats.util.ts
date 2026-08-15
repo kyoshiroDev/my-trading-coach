@@ -1,12 +1,12 @@
 /**
- * Statistiques de trades — SOURCE UNIQUE (PROMPT-160).
+ * Statistiques de trades : SOURCE UNIQUE (PROMPT-160).
  *
  * Un trade clôturé est classé en 3 résultats :
  *  - **win**       si `pnl >  ε`
  *  - **loss**      si `pnl < -ε`
  *  - **breakeven** si `|pnl| <= ε`
  *
- * `ε` (BREAKEVEN_EPSILON) est configurable — défaut `0` (BE = pnl exactement nul) ; élargissable
+ * `ε` (BREAKEVEN_EPSILON) est configurable : défaut `0` (BE = pnl exactement nul) ; élargissable
  * plus tard (near-BE). Un trade **ouvert** (pnl non renseigné) est hors calcul.
  *
  * **Win rate = wins / (wins + losses)** → les break-even ne sont PAS au dénominateur.
@@ -32,7 +32,7 @@ export interface TradeStats {
   wins: number;
   losses: number;
   breakeven: number;
-  /** wins / (wins + losses), en POURCENTAGE (0–100). 0 si (wins + losses) === 0 (pas de /0). */
+  /** wins / (wins + losses), en POURCENTAGE (0-100). 0 si (wins + losses) === 0 (pas de /0). */
   winRate: number;
   /** Σ pnl des trades clôturés. */
   totalPnl: number;

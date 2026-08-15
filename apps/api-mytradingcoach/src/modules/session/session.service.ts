@@ -111,7 +111,7 @@ export class SessionService {
     });
 
     const closed = trades.filter((t) => t.pnl !== null);
-    // Stats via le helper unique (BE exclus du win rate — PROMPT-160).
+    // Stats via le helper unique (BE exclus du win rate, PROMPT-160).
     const { totalPnl, winRate } = computeTradeStats(trades);
 
     // Drawdown max
@@ -265,7 +265,7 @@ export class SessionService {
 
   async getLiveStats(userId: string) {
     const todayTrades = await this.getTodayTrades(userId);
-    // Stats via le helper unique (BE exclus du win rate — PROMPT-160).
+    // Stats via le helper unique (BE exclus du win rate, PROMPT-160).
     const stats = computeTradeStats(todayTrades);
 
     return {

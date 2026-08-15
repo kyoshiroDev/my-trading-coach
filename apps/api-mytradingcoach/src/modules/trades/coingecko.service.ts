@@ -64,7 +64,7 @@ export class CoinGeckoService {
       return instruments;
     } catch {
       this.logger.warn(
-        'CoinGecko API indisponible — fallback sur liste statique',
+        'CoinGecko API indisponible : fallback sur liste statique',
       );
       return this.getStaticCryptoFallback();
     }

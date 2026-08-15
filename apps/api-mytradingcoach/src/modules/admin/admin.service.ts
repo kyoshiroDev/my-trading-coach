@@ -30,17 +30,17 @@ export class AdminService {
     const start30 = new Date(today.getTime() - 30 * 86_400_000);
 
     const [billedRows, attrAgg, byFeatureRaw, topUsersRaw] = await Promise.all([
-      // RÉEL — cache Cost API, borné aux 30 derniers jours.
+      // RÉEL : cache Cost API, borné aux 30 derniers jours.
       this.prisma.anthropicCostDaily.findMany({ where: { date: { gte: cutoff } } }),
-      // ESTIMÉ — total attribué (logs prod).
+      // ESTIMÉ : total attribué (logs prod).
       this.prisma.aiUsageLog.aggregate({ where: { createdAt: { gte: start30 } }, _sum: { costUsd: true } }),
-      // ESTIMÉ — par feature.
+      // ESTIMÉ : par feature.
       this.prisma.aiUsageLog.groupBy({
         by: ['feature'],
         where: { createdAt: { gte: start30 } },
         _sum: { costUsd: true },
       }),
-      // ESTIMÉ — top users (hors jobs système userId null), par coût.
+      // ESTIMÉ : top users (hors jobs système userId null), par coût.
       this.prisma.aiUsageLog.groupBy({
         by: ['userId'],
         where: { createdAt: { gte: start30 }, userId: { not: null } },
@@ -108,7 +108,7 @@ export class AdminService {
 
   /**
    * Métriques de rétention / activation. Tout en agrégats SQL (count + 1 requête
-   * raw bornée) — aucune boucle JS sur l'ensemble des users.
+   * raw bornée) : aucune boucle JS sur l'ensemble des users.
    */
   async getRetention() {
     const now = Date.now();
@@ -172,7 +172,7 @@ export class AdminService {
   }
 
   /**
-   * Réconciliation MRR DB vs Stripe (LECTURE SEULE — ne modifie jamais la DB).
+   * Réconciliation MRR DB vs Stripe (LECTURE SEULE, ne modifie jamais la DB).
    * Signale les écarts : abonnement actif en DB mais absent chez Stripe (webhook
    * raté), ou actif chez Stripe mais pas marqué actif en DB.
    */

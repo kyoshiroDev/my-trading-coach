@@ -35,13 +35,13 @@ export class MetricsSnapshotCron {
     private readonly redisService: RedisService,
   ) {}
 
-  // 00h05 Paris chaque jour — snapshot du jour (idempotent par date)
+  // 00h05 Paris chaque jour : snapshot du jour (idempotent par date)
   @Cron('5 0 * * *', { timeZone: 'Europe/Paris' })
   async snapshotDaily(): Promise<void> {
     const snap = await this.takeSnapshot();
     const health = await this.recordHealthPoint();
     this.logger.log(
-      `📸 Snapshot métriques ${snap.date} — MRR ${snap.mrr}€, ${snap.totalUsers} users, ${snap.activeUsers} actifs · santé VPS: ${health ?? 'inconnue'}`,
+      `📸 Snapshot métriques ${snap.date} : MRR ${snap.mrr}€, ${snap.totalUsers} users, ${snap.activeUsers} actifs · santé VPS: ${health ?? 'inconnue'}`,
     );
   }
 
@@ -62,7 +62,7 @@ export class MetricsSnapshotCron {
     try {
       await this.redisService.client.setex(`${HEALTH_PREFIX}${todayParis()}`, HEALTH_TTL, status);
     } catch {
-      // Redis indisponible — non bloquant
+      // Redis indisponible : non bloquant
     }
     return status;
   }

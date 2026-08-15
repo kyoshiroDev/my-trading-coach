@@ -21,7 +21,7 @@ type RuleTrade = { pnl: number | null; commission?: number | null; tradedAt: Dat
 /** Contexte plan du user pour le calcul du quota de comptes. */
 type PlanContext = { plan: Plan; role: Role; trialEndsAt?: Date | null };
 
-// Quota de comptes par plan — aligné front `ACCOUNT_LIMITS` (pricing.const.ts).
+// Quota de comptes par plan : aligné front `ACCOUNT_LIMITS` (pricing.const.ts).
 // Premium / trial / admin / beta = illimité. Seuls les comptes ACTIVE consomment un
 // slot (PASSED / FAILED / ARCHIVED le libèrent).
 const FREE_ACCOUNT_LIMIT = 1;
@@ -103,7 +103,7 @@ export class AccountsService {
    * Métriques « règles prop firm » ESTIMÉES à partir des trades fermés (pnl net) triés par
    * tradedAt. Objectif (vs profitTarget) + marge avant drawdown selon STATIC/TRAILING.
    * Honnêteté : `estimated: true` + `disclaimer` que le front DOIT afficher. Aucun statut
-   * PASSED/FAILED positionné ici (piloté par l'user) — on se contente d'estimer.
+   * PASSED/FAILED positionné ici (piloté par l'user) : on se contente d'estimer.
    */
   computeRuleMetrics(
     account: Pick<
@@ -122,7 +122,7 @@ export class AccountsService {
     const realizedPnl = sorted.reduce((s, t) => s + net(t), 0);
     const currentBalance = startingBalance + realizedPnl;
 
-    // Taux de réussite via le helper unique (BE exclus du dénominateur — PROMPT-160).
+    // Taux de réussite via le helper unique (BE exclus du dénominateur, PROMPT-160).
     // Ce champ est un RATIO 0..1 (null si aucun trade décisif) ; le helper renvoie un %.
     const accStats = computeTradeStats(sorted);
     const winRate =
@@ -210,7 +210,7 @@ export class AccountsService {
 
   /**
    * Vérifie qu'un slot est disponible avant d'ouvrir un compte ACTIVE.
-   * Règle de slot : seuls les comptes ACTIVE consomment le quota — PASSED, FAILED et
+   * Règle de slot : seuls les comptes ACTIVE consomment le quota ; PASSED, FAILED et
    * ARCHIVED libèrent leur slot (un éval terminé/cramé ne bloque pas une création).
    * Throw `ACCOUNT_LIMIT_REACHED` si la limite du plan serait dépassée.
    */
@@ -323,7 +323,7 @@ export class AccountsService {
    * Compte par défaut (anti-NULL) pour une écriture sans accountId explicite :
    * le « Compte principal » actif, sinon le compte actif le plus récent, sinon on
    * CRÉE le « Compte principal ». Renvoie toujours un id (jamais NULL).
-   * (Les comptes démo sont read-only — bloqués en amont par DemoReadOnlyGuard.)
+   * (Les comptes démo sont read-only, bloqués en amont par DemoReadOnlyGuard.)
    */
   async ensureDefaultAccountId(userId: string): Promise<string> {
     const principal = await this.prisma.tradingAccount.findFirst({

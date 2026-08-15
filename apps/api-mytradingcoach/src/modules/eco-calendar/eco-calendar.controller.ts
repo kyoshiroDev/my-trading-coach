@@ -78,7 +78,7 @@ export class EcoCalendarController {
     return this.service.updateUserPins(user.id, pins ?? []);
   }
 
-  // Admin — forcer un fetch sans attendre 6h00
+  // Admin : forcer un fetch sans attendre 6h00
   @Post('fetch/:date')
   @UseGuards(AdminGuard)
   async forceFetch(@Param('date') date: string) {

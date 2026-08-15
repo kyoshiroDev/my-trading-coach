@@ -77,7 +77,7 @@ export function median(values: number[]): number {
   return s.length % 2 === 1 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
 }
 
-/** Critère « stop respecté » — besoin de stopLoss + exit. LONG : exit ≥ stop ; SHORT : exit ≤ stop. */
+/** Critère « stop respecté » : besoin de stopLoss + exit. LONG : exit ≥ stop ; SHORT : exit ≤ stop. */
 function fracStop(t: ExecutionTradeInput): number | null {
   if (t.stopLoss == null || t.exit == null) return null;
   const short = String(t.side).toUpperCase() === 'SHORT';
@@ -85,7 +85,7 @@ function fracStop(t: ExecutionTradeInput): number | null {
   return respected ? 1 : 0;
 }
 
-/** R:R : ≥1.5 → 1 ; 1.0–1.5 → 0.5 ; <1 → 0. Recalcule le R:R depuis entry/SL/TP si absent. */
+/** R:R : ≥1.5 → 1 ; 1.0-1.5 → 0.5 ; <1 → 0. Recalcule le R:R depuis entry/SL/TP si absent. */
 function fracRr(t: ExecutionTradeInput): number | null {
   let rr = t.riskReward ?? null;
   if (rr == null && t.entry != null && t.stopLoss != null && t.takeProfit != null) {
@@ -136,7 +136,7 @@ export function computeExecutionGrade(
   return scoreFromCriteria(criteria);
 }
 
-// ── Barème B — comportemental (PROMPT-168) ──────────────────────────────────
+// ── Barème B : comportemental (PROMPT-168) ──────────────────────────────────
 // Utilisé quand le trade n'a PAS de stop loss (scalp manuel, imports broker). Ne mesure PAS la même
 // chose que le barème A → non comparable ; on trace lequel a servi (executionMethod). Contextuel :
 // dépend de l'historique du trader sur le compte (médianes) → recalcul par lot (voir service).
@@ -168,7 +168,7 @@ export interface BehavioralTradeInput {
   epsilon?: number;
 }
 
-/** Perte contenue (substitut du « stop respecté ») — applicable uniquement sur un trade perdant. */
+/** Perte contenue (substitut du « stop respecté ») : applicable uniquement sur un trade perdant. */
 function fracLossContained(t: BehavioralTradeInput): number | null {
   const eps = t.epsilon ?? BREAKEVEN_EPSILON;
   if (t.pnl >= -eps) return null; // gagnant ou BE → on ne récompense pas le fait d'avoir gagné
@@ -179,7 +179,7 @@ function fracLossContained(t: BehavioralTradeInput): number | null {
   return 0;
 }
 
-/** Pas de revenge trading — délai depuis la clôture du dernier perdant du jour. */
+/** Pas de revenge trading : délai depuis la clôture du dernier perdant du jour. */
 function fracRevenge(t: BehavioralTradeInput): number | null {
   if (t.lastSameDayLossAt == null) return null; // pas de perte précédente le même jour → non applicable
   const deltaMin = (t.tradedAt.getTime() - t.lastSameDayLossAt.getTime()) / 60000;
@@ -188,7 +188,7 @@ function fracRevenge(t: BehavioralTradeInput): number | null {
   return 1;
 }
 
-/** Taille de position constante (anti-martingale, strict) — applicable si le trade précédent est une perte. */
+/** Taille de position constante (anti-martingale, strict) : applicable si le trade précédent est une perte. */
 function fracSize(t: BehavioralTradeInput): number | null {
   if (!t.previousIsLoss) return null;
   if (t.medianQuantity <= 0) return null;

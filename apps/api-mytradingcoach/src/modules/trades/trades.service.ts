@@ -144,7 +144,7 @@ export class TradesService {
   }
 
   /**
-   * Import en masse avec déduplication — empêche la création de doublons.
+   * Import en masse avec déduplication : empêche la création de doublons.
    * Clé d'unicité applicative : userId + asset + side + tradedAt + entry + exit + pnl.
    * Skip les trades déjà présents en base ET les doublons internes au même lot
    * (un fichier ré-importé ne recrée donc rien). Pas de migration : dédup applicative.
@@ -167,7 +167,7 @@ export class TradesService {
     let created = 0;
     let duplicates = 0;
     let failed = 0;
-    // Comptes touchés → un seul recalcul comportemental par compte à la fin (pas de N+1 — PROMPT-168).
+    // Comptes touchés → un seul recalcul comportemental par compte à la fin (pas de N+1, PROMPT-168).
     const affectedAccounts = new Set<string>();
 
     for (const dto of dtos) {
@@ -324,7 +324,7 @@ export class TradesService {
       return { totalTrades: 0, winRate: 0, pnlBrut: 0, fees: 0, pnlNet: 0, bestTrade: 0, worstTrade: 0 };
     }
 
-    // Win rate via le helper unique (BE exclus du dénominateur — PROMPT-160).
+    // Win rate via le helper unique (BE exclus du dénominateur, PROMPT-160).
     const { winRate } = computeTradeStats(trades);
 
     let pnlBrut = 0;
@@ -364,7 +364,7 @@ export class TradesService {
       orderBy: { tradedAt: 'desc' },
       include: {
         setup: { select: { id: true, title: true, color: true } },
-        // Humeur de la journée → émotion effective côté front (affichage + « — » si null).
+        // Humeur de la journée → émotion effective côté front (affichage + «, » si null).
         tradeSession: { select: { moodStart: true } },
       },
     });
@@ -414,7 +414,7 @@ export class TradesService {
       dto.riskReward !== undefined ||
       dto.emotion !== undefined ||
       dto.capitalEngaged !== undefined;
-    // Barème A si stop présent (intrinsèque) ; sinon on efface la note — le recalcul comportemental
+    // Barème A si stop présent (intrinsèque) ; sinon on efface la note : le recalcul comportemental
     // (barème B) la repose ensuite. Un trade sans stop n'obtient JAMAIS une note STOP_BASED.
     let execData: {
       executionScore?: number | null;
@@ -622,7 +622,7 @@ export class TradesService {
    * Ne touche QUE les trades sans stop (ceux avec stop gardent leur barème A intrinsèque). Contextuel :
    * les 3 critères dépendent des médianes du compte → la note d'un trade évolue quand l'historique
    * s'étoffe (attendu). Charge les trades clôturés triés une fois, calcule les médianes une fois,
-   * puis parcourt — aucune requête par trade (N+1 évité). Écritures limitées aux trades dont la note change.
+   * puis parcourt : aucune requête par trade (N+1 évité). Écritures limitées aux trades dont la note change.
    */
   async recomputeBehavioralGrades(accountId: string): Promise<void> {
     const trades = await this.prisma.trade.findMany({

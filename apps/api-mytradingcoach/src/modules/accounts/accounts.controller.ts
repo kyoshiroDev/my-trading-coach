@@ -15,7 +15,7 @@ import { AccountsService } from './accounts.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 
-// Multi-comptes (prop firms + perso) — quota par plan (FREE 1 · Premium illimité).
+// Multi-comptes (prop firms + perso) : quota par plan (FREE 1 · Premium illimité).
 // Le plafond est appliqué dans AccountsService.create (FREE peut gérer son 1 compte).
 @Controller('accounts')
 @UseGuards(JwtAuthGuard)

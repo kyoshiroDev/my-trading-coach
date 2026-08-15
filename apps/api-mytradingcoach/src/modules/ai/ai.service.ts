@@ -24,7 +24,7 @@ import { todayParis } from '../../common/utils/paris-date';
 const MODEL = 'claude-sonnet-4-6';
 const AI_MONTHLY_QUOTA = 100;
 
-// Contenu IA figé pour le compte démo — AUCUN appel modèle (coût zéro).
+// Contenu IA figé pour le compte démo : AUCUN appel modèle (coût zéro).
 const DEMO_INSIGHTS = {
   topPattern:
     "Tes meilleurs trades sont des breakouts/pullbacks en session de Londres, en état FOCALISÉ. Tes pertes se concentrent en session asiatique.",
@@ -52,7 +52,7 @@ export class AiService {
     private readonly redisService: RedisService,
   ) {}
 
-  // ── Insights — delegates to orchestrator ──────────────────────────────────
+  // ── Insights : delegates to orchestrator ──────────────────────────────────
 
   async getInsights(userId: string, role: Role, isDemo = false) {
     if (isDemo) return DEMO_INSIGHTS; // données figées, zéro appel modèle
@@ -65,7 +65,7 @@ export class AiService {
     return result;
   }
 
-  // ── Chat — direct Anthropic call with trader context ─────────────────────
+  // ── Chat : direct Anthropic call with trader context ─────────────────────
 
   async chat(
     userId: string,
@@ -118,7 +118,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
     if (recentTrades.length === 0) {
       contextSummary = "Ce trader n'a encore enregistré aucun trade.";
     } else {
-      // Stats via le helper unique (BE exclus du win rate — PROMPT-160).
+      // Stats via le helper unique (BE exclus du win rate, PROMPT-160).
       const s = computeTradeStats(recentTrades);
       const winRate = Math.round(s.winRate);
       const totalPnl = s.totalPnl;
@@ -352,7 +352,7 @@ Réponds UNIQUEMENT avec la phrase coaching, sans guillemets, sans préambule.`,
       : '';
   }
 
-  // ── Eco calendar — morning analysis + released event ─────────────────────
+  // ── Eco calendar : morning analysis + released event ─────────────────────
 
   /**
    * Parse tolérant d'un JSON produit par le modèle : retire le markdown, isole l'objet
@@ -458,7 +458,7 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
     return this.parseModelJson<EcoResultAnalysis>(text);
   }
 
-  // ── Debrief — delegates to debrief agent ──────────────────────────────────
+  // ── Debrief : delegates to debrief agent ──────────────────────────────────
 
   async generateDebrief(data: Parameters<typeof buildDebriefPrompt>[0], userId?: string) {
     return this.debriefAgent.generate(data, userId);
@@ -528,7 +528,7 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
       return val ? parseInt(val) : 0;
     } catch {
       this.logger.error(
-        'Redis unavailable — quota check failed, blocking AI call',
+        'Redis unavailable : quota check failed, blocking AI call',
       );
       throw new ServiceUnavailableException(
         'Service IA temporairement indisponible, veuillez réessayer dans quelques instants',

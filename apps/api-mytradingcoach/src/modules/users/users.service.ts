@@ -100,7 +100,7 @@ export class UsersService {
     });
   }
 
-  // ── Admin — utilisateurs en ligne (actifs < 5min) ─────────────────────────
+  // ── Admin : utilisateurs en ligne (actifs < 5min) ─────────────────────────
 
   async getOnlineUsers() {
     const threshold = new Date(Date.now() - 5 * 60 * 1000);
@@ -119,7 +119,7 @@ export class UsersService {
     });
   }
 
-  // ── Admin — liste paginée ─────────────────────────────────────────────────
+  // ── Admin : liste paginée ─────────────────────────────────────────────────
 
   async adminFindAll(page = 1, limit = 20, search?: string) {
     // Hors démo (cohérence avec le KPI « Utilisateurs » du dashboard).
@@ -148,7 +148,7 @@ export class UsersService {
     return { users, total, page, limit };
   }
 
-  // ── Admin — update plan/role/name ─────────────────────────────────────────
+  // ── Admin : update plan/role/name ─────────────────────────────────────────
 
   async adminUpdate(
     targetId: string,
@@ -174,7 +174,7 @@ export class UsersService {
     });
   }
 
-  // ── Admin — suppression ───────────────────────────────────────────────────
+  // ── Admin : suppression ───────────────────────────────────────────────────
 
   async adminDelete(targetId: string): Promise<void> {
     const target = await this.prisma.user.findUnique({
@@ -278,13 +278,13 @@ export class UsersService {
       // À ne pas confondre avec l'activation (= a tradé au moins une fois).
       this.prisma.user.count({ where: { ...REAL_USERS, trades: { some: { tradedAt: { gte: sevenDaysAgo } } } } }),
       this.prisma.user.count({ where: { ...REAL_USERS, trades: { some: { tradedAt: { gte: thirtyDaysAgo } } } } }),
-      // Comptes supprimés (trace DeletedAccount) — distinct du churn d'abonnement.
+      // Comptes supprimés (trace DeletedAccount) : distinct du churn d'abonnement.
       // Les comptes démo ne sont jamais supprimés → naturellement hors démo.
       this.prisma.deletedAccount.count({ where: { deletedAt: { gte: startOfMonth } } }),
       this.prisma.deletedAccount.count(),
     ]);
 
-    // MRR/ARR sur le palier payant unique Premium (49€/mois · 490€/an — PROMPT-169).
+    // MRR/ARR sur le palier payant unique Premium (49€/mois · 490€/an, PROMPT-169).
     const mrr = premiumMonthly * PRICING_EUR.PREMIUM.monthly
       + Math.round((premiumAnnual * PRICING_EUR.PREMIUM.annual) / 12);
     const arr = mrr * 12;
@@ -379,7 +379,7 @@ export class UsersService {
     });
   }
 
-  /** Marque l'onboarding terminé — appelé uniquement à l'écran final du wizard. */
+  /** Marque l'onboarding terminé : appelé uniquement à l'écran final du wizard. */
   async finishOnboarding(userId: string) {
     return this.prisma.user.update({
       where: { id: userId },
@@ -440,7 +440,7 @@ export class UsersService {
       return data.rates['EUR'] ?? FALLBACK_RATE;
     } catch (err) {
       this.logger.warn(
-        `Exchange rate API unavailable, using fallback ${FALLBACK_RATE} — ${(err as Error).message}`,
+        `Exchange rate API unavailable, using fallback ${FALLBACK_RATE} : ${(err as Error).message}`,
       );
       return FALLBACK_RATE;
     }
@@ -465,7 +465,7 @@ export class UsersService {
       stripeInterval: { not: null },
     };
     // « Accès manuels » = accès Premium octroyé SANS abonnement Stripe
-    // (bêta, ambassadeur, comp) — pas seulement le rôle BETA_TESTER. Hors démo.
+    // (bêta, ambassadeur, comp) : pas seulement le rôle BETA_TESTER. Hors démo.
     const manualWhere = {
       isDemo: false,
       plan: 'PREMIUM' as Plan,
@@ -536,7 +536,7 @@ export class UsersService {
         }),
       ]);
 
-    // Stats via le helper unique (BE exclus du win rate — PROMPT-160).
+    // Stats via le helper unique (BE exclus du win rate, PROMPT-160).
     const stats         = computeTradeStats(pnlData);
     const totalPnl      = stats.totalPnl;
     const winRate       = Math.round(stats.winRate);

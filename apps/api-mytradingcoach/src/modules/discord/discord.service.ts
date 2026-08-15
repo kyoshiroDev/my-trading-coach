@@ -28,7 +28,7 @@ export class DiscordService {
       : process.env['DISCORD_ROLE_PREMIUM_ID'];
 
     if (!guildId || !botToken || !roleToAdd || !roleToRemove) {
-      this.logger.warn('Discord env vars manquantes — sync ignoré');
+      this.logger.warn('Discord env vars manquantes : sync ignoré');
       return;
     }
 
@@ -40,12 +40,12 @@ export class DiscordService {
     );
     await fetch(`${base}/${roleToAdd}`, { method: 'PUT', headers }).catch(
       (err) => {
-        this.logger.error(`Discord role sync échoué — user: ${userId}`, err);
+        this.logger.error(`Discord role sync échoué | user: ${userId}`, err);
       },
     );
 
     this.logger.log(
-      `Discord role sync — user: ${userId}, premium: ${isPremium}`,
+      `Discord role sync | user: ${userId}, premium: ${isPremium}`,
     );
   }
 }

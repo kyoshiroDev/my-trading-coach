@@ -26,7 +26,7 @@ export const SETUP_PALETTE = [
 
 /**
  * Idempotent : crée les 6 setups par défaut si le user n'en a aucun.
- * Réutilisé par le signup (SetupsService), la démo (demo-seed) — la migration
+ * Réutilisé par le signup (SetupsService), la démo (demo-seed) : la migration
  * fait l'équivalent en SQL pour les users existants.
  */
 export async function seedDefaultSetups(prisma: PrismaClient, userId: string): Promise<boolean> {

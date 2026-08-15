@@ -1,5 +1,5 @@
 // ── Templates emails MyTradingCoach ─────────────────────────────────────────
-// Templates HTML inline — pas de dépendance externe pour le rendu
+// Templates HTML inline : pas de dépendance externe pour le rendu
 
 // ── Base système ──────────────────────────────────────────────────────────────
 

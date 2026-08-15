@@ -48,7 +48,7 @@ export class TradeFiltersDto {
   @IsOptional()
   setupId?: string;
 
-  // Filtre « émotion effective » (override du trade OU humeur de session) — voir buildTradeWhere.
+  // Filtre « émotion effective » (override du trade OU humeur de session) : voir buildTradeWhere.
   @IsIn(EFFECTIVE_EMOTION_FILTER_VALUES as unknown as string[])
   @IsOptional()
   emotion?: string;

@@ -59,6 +59,6 @@ export class AutoCampaignsCron {
       }
     }
 
-    this.logger.log(`Auto-campaigns run terminé — ${sent} email(s) marketing envoyé(s).`);
+    this.logger.log(`Auto-campaigns run terminé : ${sent} email(s) marketing envoyé(s).`);
   }
 }

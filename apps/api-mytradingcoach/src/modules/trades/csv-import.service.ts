@@ -29,7 +29,7 @@ const FEES_INPUT_MAX_TRADES = 5000;
 const MAX_AI_ROWS = 2000;
 const AI_BATCH = 250;
 
-/** Accès requis pour le chemin IA d'import (broker inconnu) — Premium strict. */
+/** Accès requis pour le chemin IA d'import (broker inconnu) : Premium strict. */
 interface AiImportAccess {
   plan: Plan;
   role: Role;
@@ -55,7 +55,7 @@ interface ClaudeResponse {
   errors: string[];
 }
 
-/** DTO d'import enrichi de métadonnées internes (fill ids Tradovate) — non persistées. */
+/** DTO d'import enrichi de métadonnées internes (fill ids Tradovate) : non persistées. */
 type ImportDto = Partial<CreateTradeDto> & {
   _buyFillId?: string;
   _sellFillId?: string;
@@ -92,7 +92,7 @@ export class CsvImportService {
     defaults?: { accountId?: string; emotion?: string; setupId?: string },
     // Fichier de frais optionnel (Tradovate Cash history) → commissions exactes par trade.
     feesFile?: { buffer: Buffer; filename: string },
-    // Rapport de rapprochement des frais (out-param, non-bloquant) — lu par le controller.
+    // Rapport de rapprochement des frais (out-param, non-bloquant) : lu par le controller.
     report?: { fees?: FeesReport },
   ): Promise<Partial<CreateTradeDto>[]> {
     // 1. Obtenir du texte CSV (Excel converti localement, sinon UTF-8)
@@ -274,7 +274,7 @@ export class CsvImportService {
       return null;
     }
 
-    // commissionParFill[fillId] = |Delta| — une entrée par ligne Commission (fillId = TxnID − 1).
+    // commissionParFill[fillId] = |Delta| : une entrée par ligne Commission (fillId = TxnID − 1).
     const commissionParFill = new Map<string, number>();
     let expected = 0;
     for (let i = 1; i < lines.length; i++) {
@@ -319,7 +319,7 @@ export class CsvImportService {
    * Le chemin IA d'import (broker inconnu → Anthropic) n'est autorisé que :
    * - en production (garde NODE_ENV : zéro dépense IA hors prod), ET
    * - pour un accès Premium strict (PREMIUM / ADMIN / BETA_TESTER / trial actif).
-   * Aligné sur PremiumGuard — l'import IA (broker inconnu) est une IA personnelle → PREMIUM (PROMPT-169).
+   * Aligné sur PremiumGuard : l'import IA (broker inconnu) est une IA personnelle → PREMIUM (PROMPT-169).
    */
   private aiImportAllowed(access?: AiImportAccess): boolean {
     if (process.env['NODE_ENV'] !== 'production') return false;
@@ -385,7 +385,7 @@ export class CsvImportService {
         const parsed = await this.callClaudeForChunk(chunk, filename, styleNote, userId);
         allTrades.push(...parsed.trades);
         if (parsed.errors?.length) {
-          this.logger.warn(`CSV "${filename}" — erreurs: ${parsed.errors.join(', ')}`);
+          this.logger.warn(`CSV "${filename}" | erreurs: ${parsed.errors.join(', ')}`);
         }
       }
     } catch (err) {
@@ -400,7 +400,7 @@ export class CsvImportService {
     return this.mapToDto(allTrades);
   }
 
-  /** Un appel Claude pour un lot de lignes — extrait pour le batch des gros fichiers. */
+  /** Un appel Claude pour un lot de lignes : extrait pour le batch des gros fichiers. */
   private async callClaudeForChunk(
     chunk: string,
     filename: string,
@@ -522,7 +522,7 @@ export class CsvImportService {
   private detectBroker(header: string): BrokerType {
     const h = header.toLowerCase();
 
-    // MEXC Futures — signature unique (en-tête `;`), ne collisionne avec aucun autre parser
+    // MEXC Futures : signature unique (en-tête `;`), ne collisionne avec aucun autre parser
     if (
       h.includes('futures') &&
       h.includes('avg entry price') &&
@@ -810,7 +810,7 @@ export class CsvImportService {
   }
 
   /**
-   * MEXC Futures — parser local (gratuit, sans IA).
+   * MEXC Futures : parser local (gratuit, sans IA).
    * En-tête réel (export CSV et XLSX, identiques) :
    *   Futures;Open Time;Close Time;Margin Mode;Avg Entry Price;Avg Close Price;
    *   Direction;Closing Qty (Cont.);Trading Fee;Realized PNL;Status;UID
@@ -977,7 +977,7 @@ ${csv}`;
         quantity: t.quantity || 1,
         pnl: t.pnl,
         commission: t.commission ?? undefined,
-        emotion: null, // override optionnel — réassigné par le lot (ou null) dans parseCSV
+        emotion: null, // override optionnel : réassigné par le lot (ou null) dans parseCSV
         // setupId affecté en aval (parseCSV) : setup par défaut du user, ou fourni par l'import (PROMPT-138).
         session: this.detectSession(t.tradedAt),
         timeframe: '1h',
@@ -1012,7 +1012,7 @@ ${csv}`;
     const iPnl = at('pnl');
     const iComm = at('commission');
     const iDate = at('tradedat');
-    // Fill ids Tradovate (métadonnée interne pour la fusion des frais) — absents des autres brokers.
+    // Fill ids Tradovate (métadonnée interne pour la fusion des frais) : absents des autres brokers.
     const iBuyFill = at('buyfillid');
     const iSellFill = at('sellfillid');
 
@@ -1047,7 +1047,7 @@ ${csv}`;
         quantity: isFinite(quantity) && quantity > 0 ? quantity : 1,
         pnl: isFinite(pnl) ? pnl : 0,
         commission: isFinite(commission) ? Math.abs(commission) : undefined,
-        emotion: null, // override optionnel — réassigné par le lot (ou null) dans parseCSV
+        emotion: null, // override optionnel : réassigné par le lot (ou null) dans parseCSV
         // setupId affecté en aval (parseCSV) : setup par défaut du user, ou fourni par l'import (PROMPT-138).
         session: this.detectSession(tradedAt),
         timeframe: '1h',

@@ -98,7 +98,7 @@ export class BackupService {
   }
 
   async deleteBackup(filename: string): Promise<void> {
-    // Sanitize filename — allow only safe chars
+    // Sanitize filename : allow only safe chars
     if (!/^[\w\-.]+\.sql\.gz$/.test(filename)) {
       throw new Error('Nom de fichier invalide');
     }

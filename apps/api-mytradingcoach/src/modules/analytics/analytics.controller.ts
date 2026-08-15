@@ -55,8 +55,8 @@ export class AnalyticsController {
     return this.analyticsService.getByHour(user.id, await this.accountId(user.id, accountId));
   }
 
-  // Courbe d'équité simple = vue de base FREE (la profondeur — drawdown détaillé,
-  // comparaisons de périodes — vit dans la page /analytics gardée Premium).
+  // Courbe d'équité simple = vue de base FREE (la profondeur : drawdown détaillé,
+  // comparaisons de périodes : vit dans la page /analytics gardée Premium).
   @Get('equity-curve')
   async getEquityCurve(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
     return this.analyticsService.getEquityCurve(user.id, await this.accountId(user.id, accountId));

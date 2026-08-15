@@ -74,8 +74,8 @@ export class TradesController {
   @UseInterceptors(
     FileFieldsInterceptor(
       [
-        { name: 'file', maxCount: 1 }, // trades — obligatoire (rétro-compat front)
-        { name: 'fees', maxCount: 1 }, // Cash history Tradovate — optionnel (frais exacts)
+        { name: 'file', maxCount: 1 }, // trades : obligatoire (rétro-compat front)
+        { name: 'fees', maxCount: 1 }, // Cash history Tradovate : optionnel (frais exacts)
       ],
       {
         limits: { fileSize: 5 * 1024 * 1024 },
@@ -111,7 +111,7 @@ export class TradesController {
     // Setup en lot : s'il est fourni, il doit appartenir au user et être actif.
     if (body.setupId) await this.setups.assertOwnedActive(user.id, body.setupId);
 
-    // Rapport de rapprochement des frais (fusion Tradovate) — rempli si un Cash history valide.
+    // Rapport de rapprochement des frais (fusion Tradovate) : rempli si un Cash history valide.
     const report: { fees?: FeesReport } = {};
     const parsed = await this.csvImportService.parseCSV(
       file.buffer,
@@ -149,7 +149,7 @@ export class TradesController {
     return this.tradesService.findAll(user.id, filters);
   }
 
-  // KPIs agrégés sur l'ensemble filtré complet (hors pagination) — déclaré avant ':id'.
+  // KPIs agrégés sur l'ensemble filtré complet (hors pagination) : déclaré avant ':id'.
   @Get('stats')
   async stats(
     @CurrentUser() user: { id: string },

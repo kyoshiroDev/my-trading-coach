@@ -74,7 +74,7 @@ export class AnalyticsService {
   async getMonthlyActivity(userId: string, year: number, month: number, accountId?: string) {
     return this.withCache(`analytics:${userId}:activity:${year}:${month}${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeMonthlyActivity(userId, year, month, accountId));
   }
-  // Activité journalière (P&L par jour) sur une plage glissante — l'agrégation jour/semaine/mois
+  // Activité journalière (P&L par jour) sur une plage glissante : l'agrégation jour/semaine/mois
   // est faite côté front. Réutilise le même bucketing par jour (fuseau Paris) que l'activité mensuelle.
   async getActivityRange(userId: string, from?: Date, to?: Date, accountId?: string) {
     const key = `analytics:${userId}:activity:range${this.rangeKey(from, to)}${this.accKey(accountId)}`;
@@ -109,7 +109,7 @@ export class AnalyticsService {
     }
 
     const totalTrades = trades.length;
-    // Win rate via le helper unique (BE exclus du dénominateur — PROMPT-160).
+    // Win rate via le helper unique (BE exclus du dénominateur, PROMPT-160).
     const stats = computeTradeStats(trades);
     const winRate = stats.winRate;
     // P&L NET = somme des pnl MOINS les frais (commissions). Sans ça le KPI « P&L net » du
@@ -416,7 +416,7 @@ export class AnalyticsService {
   /**
    * Buckets journaliers (date `YYYY-MM-DD` fuseau Paris → P&L net, nombre de trades, win rate)
    * pour un `where` de dates arbitraire. SOURCE UNIQUE partagée par l'activité mensuelle et la
-   * plage glissante — le win rate exclut les BE (wins / (wins + losses)), P&L net = Σ pnl.
+   * plage glissante : le win rate exclut les BE (wins / (wins + losses)), P&L net = Σ pnl.
    */
   private async computeDailyActivity(
     userId: string,

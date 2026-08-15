@@ -22,13 +22,13 @@ export class StripeController {
     private readonly config: ConfigService,
   ) {}
 
-  // GET /api/billing/status — Plan, statut abo, trial, dates
+  // GET /api/billing/status : Plan, statut abo, trial, dates
   @Get('status')
   async status(@CurrentUser() user: { id: string }) {
     return this.stripe.getBillingStatus(user.id);
   }
 
-  // POST /api/billing/checkout — Crée une session Stripe Checkout
+  // POST /api/billing/checkout : Crée une session Stripe Checkout
   @Post('checkout')
   async checkout(
     @CurrentUser() user: { id: string; email: string },
@@ -51,7 +51,7 @@ export class StripeController {
     );
   }
 
-  // GET /api/billing/portal — Portail de gestion abonnement Stripe
+  // GET /api/billing/portal : Portail de gestion abonnement Stripe
   @Get('portal')
   async portal(@CurrentUser() user: { id: string }) {
     const frontendUrl =
@@ -59,7 +59,7 @@ export class StripeController {
     return this.stripe.createPortalSession(user.id, frontendUrl);
   }
 
-  // POST /api/billing/webhook — PUBLIC (Stripe appelle directement, sans JWT)
+  // POST /api/billing/webhook : PUBLIC (Stripe appelle directement, sans JWT)
   @Public()
   @Post('webhook')
   async webhook(

@@ -6,7 +6,7 @@ import * as argon2 from 'argon2';
 import { seedDefaultSetups } from '../setups/setups.defaults';
 
 /**
- * Logique de seed du compte DÉMO vitrine — source de vérité unique, utilisée par
+ * Logique de seed du compte DÉMO vitrine : source de vérité unique, utilisée par
  * l'endpoint admin (PrismaService) ET le script standalone (PrismaClient adapter).
  *
  * IDEMPOTENT : upsert du user + purge/recréation de SES données uniquement
@@ -36,7 +36,7 @@ const ASSETS = [
   { sym: 'GC',       base: 2_350,  ptVal: 100,     qty: 1, dec: 1 },
 ];
 const EMOTIONS: EmotionState[] = ['CONFIDENT', 'FOCUSED', 'NEUTRAL', 'STRESSED', 'FEAR', 'REVENGE'];
-// Titres des setups par défaut (cf. setups.defaults) — la démo affecte les trades par titre.
+// Titres des setups par défaut (cf. setups.defaults) : la démo affecte les trades par titre.
 const SETUPS: string[] = ['Breakout', 'Pullback', 'Range', 'Reversal', 'Scalping', 'News'];
 const TF = ['1m', '5m', '15m', '1h'];
 
@@ -116,7 +116,7 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
     create: { email: DEMO_EMAIL, password, ...PROFILE },
   });
 
-  // Purge scopée (trades d'abord — FK session).
+  // Purge scopée (trades d'abord, FK session).
   await prisma.trade.deleteMany({ where: { userId: user.id } });
   await prisma.tradeSession.deleteMany({ where: { userId: user.id } });
   await prisma.weeklyDebrief.deleteMany({ where: { userId: user.id } });
@@ -221,7 +221,7 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
       totalPnl: pnl, totalTrades: yTrades.length, winRate: Math.round((wins / yTrades.length) * 100),
       bestTradePnl: best.pnl, bestTradeAsset: best.asset,
     } });
-    const d = dateOf(1, 18); d.setHours(0, 0, 0, 0); // hier 00:00 — clé du recap "yesterday"
+    const d = dateOf(1, 18); d.setHours(0, 0, 0, 0); // hier 00:00 : clé du recap "yesterday"
     await prisma.dailyRecap.create({ data: {
       userId: user.id, date: d, tradesCount: yTrades.length, pnl,
       winRate: Math.round((wins / yTrades.length) * 100), dominantEmotion: 'CONFIDENT',
@@ -332,7 +332,7 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
       create: { date: today, name: e.name, currency: e.currency, ...data },
     });
   }
-  // Favoris épinglés (format "name:currency") — matchés via normalizeEventKey côté front.
+  // Favoris épinglés (format "name:currency") : matchés via normalizeEventKey côté front.
   await prisma.user.update({
     where: { id: user.id },
     data: { pinnedEcoEvents: ['Inflation CPI (US):USD', 'Discours BCE:EUR'] },

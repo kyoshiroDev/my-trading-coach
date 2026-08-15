@@ -83,7 +83,7 @@ export class SetupsService {
     return { deleted: true };
   }
 
-  /** Setup par défaut du user (sortOrder le plus bas, non archivé) — fallback import CSV. */
+  /** Setup par défaut du user (sortOrder le plus bas, non archivé) : fallback import CSV. */
   async getDefaultSetupId(userId: string): Promise<string | null> {
     const s = await this.prisma.setup.findFirst({
       where: { userId, archived: false },
