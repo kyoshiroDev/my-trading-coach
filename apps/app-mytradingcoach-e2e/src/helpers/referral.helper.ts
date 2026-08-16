@@ -11,6 +11,8 @@
  * supprimé en fin de test : le test est rejouable sans collision.
  */
 import { PrismaClient, Role } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 
 export const API_URL = process.env['E2E_API_URL'] ?? 'http://localhost:3000/api';
 export const TEST_PASSWORD = 'TestPassword123!';
@@ -18,20 +20,44 @@ export const TEST_PASSWORD = 'TestPassword123!';
 const PREFIX = 'e2e-referral-';
 
 let prisma: PrismaClient | null = null;
+let pool: Pool | null = null;
 
+/**
+ * Client Prisma construit comme celui de l'API : driver adapter `PrismaPg` sur un
+ * pool `pg`. En Prisma 7, `schema.prisma` ne porte que le `provider` (l'URL vit
+ * dans `prisma.config.ts`, côté CLI uniquement) — un `new PrismaClient()` nu
+ * échoue donc au runtime avec « needs to be constructed with a non-empty, valid
+ * PrismaClientOptions ».
+ */
 export function db(): PrismaClient {
-  if (!prisma) prisma = new PrismaClient();
+  if (!prisma) {
+    pool = new Pool({ connectionString: process.env['DATABASE_URL'], max: 5 });
+    const adapter = new PrismaPg(pool);
+    prisma = new PrismaClient({
+      adapter,
+    } as ConstructorParameters<typeof PrismaClient>[0]);
+  }
   return prisma;
 }
 
 export async function closeDb(): Promise<void> {
   await prisma?.$disconnect();
+  await pool?.end();
   prisma = null;
+  pool = null;
 }
 
-/** Identité unique par run : rejouable sans collision d'email ni de code. */
+/**
+ * Identité unique par run : rejouable sans collision d'email ni de code.
+ *
+ * Base 36 et non un timestamp décimal : `RegisterDto.referralCode` est plafonné à
+ * 20 caractères (`@MaxLength(20)`), et `E2EAMB` + timestamp décimal les dépassait
+ * → 400 à l'inscription du filleul. Ici : 6 + ~11 = ~17 caractères.
+ */
 export function uniqueSuffix(): string {
-  return `${Date.now()}${Math.floor(Math.random() * 1000)}`;
+  const ts = Date.now().toString(36);
+  const rnd = Math.floor(Math.random() * 46_655).toString(36); // ≤ 3 caractères
+  return `${ts}${rnd}`;
 }
 
 export function ambassadorEmail(suffix: string): string {
