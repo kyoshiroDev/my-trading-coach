@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { parseAnthropicJson } from './parse-json.util';
 import { handleAnthropicError } from './anthropic-errors.util';
 import { AnthropicClientService } from '../../shared/anthropic-client.service';
+import { NO_EM_DASH_RULE } from '../prompts/style.prompt';
 
 export type InsightType = 'strength' | 'weakness' | 'pattern';
 
@@ -23,6 +24,7 @@ const PATTERN_SYSTEM = `Tu es un analyste quantitatif de trading.
 Tu identifies les patterns comportementaux significatifs et les corrélations émotion/performance.
 Réponds TOUJOURS en JSON valide. Jamais de markdown.
 LONGUEUR STRICTE : chaque champ texte = 1 seule phrase, 12 mots maximum, pas de saut de ligne.
+${NO_EM_DASH_RULE}
 Format :
 {
   "patterns": [{ "type": "strength"|"weakness"|"pattern", "title": "string (5 mots max)", "description": "string (1 phrase, 12 mots max)", "badge": "Force"|"Attention"|"Pattern" }],

@@ -10,6 +10,7 @@ import { Role } from '@prisma/client';
 import { OrchestratorAgent } from './agents/orchestrator.agent';
 import { DebriefAgent } from './agents/debrief.agent';
 import { buildDebriefPrompt } from './prompts/debrief.prompt';
+import { NO_EM_DASH_RULE } from './prompts/style.prompt';
 import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
@@ -111,6 +112,7 @@ export class AiService {
 
     const CHAT_SYSTEM = `Tu es un coach de trading professionnel, bienveillant et direct.
 Tutoiement. Réponds en texte naturel uniquement : jamais de JSON, jamais de markdown, pas de ** ni de tirets listes.
+${NO_EM_DASH_RULE}
 Sois concis (3-5 phrases). Si le trader a des données, base-toi dessus pour répondre précisément.
 ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en garde sur des comportements qui font partie de sa stratégie normale.`;
 
@@ -341,6 +343,7 @@ Règles :
         max_tokens: 200,
         system: `Tu es un coach de trading expert qui connaît en profondeur la stratégie et les habitudes de ce trader.
 Tu analyses ses données réelles pour donner un conseil ultra-personnalisé, jamais générique.
+${NO_EM_DASH_RULE}
 Réponds UNIQUEMENT avec la phrase coaching, sans guillemets, sans préambule.`,
         messages: [{ role: 'user', content: prompt }],
       },
@@ -401,6 +404,7 @@ Réponds UNIQUEMENT avec la phrase coaching, sans guillemets, sans préambule.`,
     const prompt = `Tu es un coach de trading expert.
 Actifs du trader : ${data.userAssets.join(', ')}.
 Événements économiques du jour : ${JSON.stringify(data.events, null, 2)}.
+${NO_EM_DASH_RULE}
 Génère un JSON strict (pas de markdown, pas de texte autour) :
 {
   "summary": "1-2 phrases sur les risques du jour pour ce trader précis",
@@ -439,6 +443,7 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
 Résultat : ${actual} | Prévu : ${estimate} | Précédent : ${data.event.previous ?? 'N/A'}.
 Surprise : ${surprise >= 0 ? '+' : ''}${surprise.toFixed(2)}.
 Actifs tradés : ${data.userAssets.join(', ')}.
+${NO_EM_DASH_RULE}
 Génère un JSON strict (pas de markdown, pas de texte autour) :
 {
   "interpretation": "phrase courte expliquant la surprise",
