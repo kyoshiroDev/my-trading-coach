@@ -240,6 +240,11 @@ jobs:
     name: Intégration parrainage (webhook signé)
     runs-on: ubuntu-latest
     needs: build
+    # STRIPE_SECRET_KEY_TEST vit dans l'environment `development` (comme les secrets
+    # VPS et E2E_*), pas au niveau dépôt : sans cette ligne le secret serait vide et
+    # l'étape de vérification échouerait. Aucune règle de protection sur cet
+    # environment, donc pas d'approbation manuelle à attendre.
+    environment: development
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       NX_NO_CLOUD: true
