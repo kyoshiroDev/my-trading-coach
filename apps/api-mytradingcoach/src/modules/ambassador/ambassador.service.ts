@@ -164,8 +164,11 @@ export class AmbassadorService {
     totalEarned: number;
     pendingPayout: number;
   }[]> {
+    // Le SEUL critère d'ambassadeur est le rôle. `referralCode` est partagé avec le
+    // parrainage grand public : un USER qui génère son code en a un sans être
+    // ambassadeur, et l'ancien `OR` le faisait apparaître ici (PROMPT-176).
     const ambassadors = await this.prisma.user.findMany({
-      where: { OR: [{ referralCode: { not: null } }, { role: 'AMBASSADOR' }] },
+      where: { role: Role.AMBASSADOR },
       select: {
         id: true,
         name: true,
