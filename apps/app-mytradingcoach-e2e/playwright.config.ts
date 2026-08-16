@@ -1,4 +1,14 @@
 import { defineConfig, devices } from '@playwright/test';
+import { config as loadEnv } from 'dotenv';
+import { resolve } from 'node:path';
+
+// Les specs de paiement (11-referral-ambassador) lisent DATABASE_URL et les clés
+// Stripe de TEST depuis l'environnement. Playwright ne charge pas `.env` tout seul :
+// on le fait ici. `override: false` → une variable déjà exportée gagne toujours,
+// et rien n'est chargé en CI (secrets injectés par le workflow).
+if (!process.env['CI']) {
+  loadEnv({ path: resolve(__dirname, '../../.env'), override: false });
+}
 
 const baseURL = process.env['BASE_URL'] ?? 'http://localhost:4200';
 const isCI = !!process.env['CI'];
