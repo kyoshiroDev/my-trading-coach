@@ -51,7 +51,11 @@ function missingRequirement(): string | null {
   if (!process.env['STRIPE_SECRET_KEY']) return 'STRIPE_SECRET_KEY absente';
   // Le webhook n'écrit rien lui-même : il enqueue dans BullMQ, et c'est le
   // StripeProcessor qui crée la commission. Sans Redis, le test attendrait pour rien.
-  if (!process.env['REDIS_URL']) return 'REDIS_URL absente (worker BullMQ requis)';
+  // L'API lit REDIS_HOST/REDIS_PORT (cf. BullModule) ; REDIS_URL n'est qu'une
+  // commodité locale — accepter les deux, sinon le job CI skipperait à tort.
+  if (!process.env['REDIS_URL'] && !process.env['REDIS_HOST']) {
+    return 'REDIS_URL/REDIS_HOST absente (worker BullMQ requis)';
+  }
   if (MODE === 'webhook' && !process.env['STRIPE_WEBHOOK_SECRET']) {
     return 'STRIPE_WEBHOOK_SECRET absente (nécessaire pour signer l\'événement)';
   }
@@ -181,6 +185,16 @@ test.describe('Parrainage ambassadeur : lien → paiement → commission 20 %', 
     ).toBeCloseTo(expected, 2);
 
     expect(commission.status, 'Une commission fraîche doit être « pending »').toBe('pending');
+
+    // Règle de coexistence (PROMPT-176) : le rôle du parrain décide. Un AMBASSADOR
+    // touche la commission cash et JAMAIS le mois offert du parrainage grand public.
+    const reward = await db().referralReward.findFirst({
+      where: { parrainId: ambassador.id },
+    });
+    expect(
+      reward,
+      'Un ambassadeur ne doit jamais recevoir de mois offert (ReferralReward)',
+    ).toBeNull();
 
     // Restitution côté ambassadeur, via sa propre API.
     const { data: stats } = await getAmbassadorStats(ambassador.token);
