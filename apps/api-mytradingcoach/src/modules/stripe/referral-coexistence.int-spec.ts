@@ -11,11 +11,15 @@
  * le passage réel par la file BullMQ, et les écritures réellement acceptées par
  * le schéma. Un mock ne dit rien de tout ça.
  *
- * AUCUN compte Stripe nécessaire :
- *  - le test SIGNE lui-même l'événement avec `STRIPE_WEBHOOK_SECRET`, que l'API
- *    utilise pour vérifier — les deux côtés partagent la même valeur ;
- *  - la branche « mois offert » crée le `ReferralReward` en PENDING AVANT tout
- *    appel Stripe, et `resolveFreeMonthCents` échoue en silence sans clé valide.
+ * Pas de `stripe listen` : le test SIGNE lui-même l'événement avec
+ * `STRIPE_WEBHOOK_SECRET`, que l'API utilise pour vérifier — les deux côtés
+ * partagent la même valeur, qui n'a pas besoin d'être un vrai `whsec_`.
+ *
+ * En revanche une VRAIE clé `sk_test_` est nécessaire : `processWebhookEvent`
+ * appelle `syncSubscription` AVANT `processReferral`, et celle-ci absorbe un
+ * `StripeInvalidRequestError` (abonnement inconnu, normal ici) mais RELANCE un
+ * `StripeAuthenticationError`. Avec une clé bidon, rien n'est jamais écrit et les
+ * trois tests expirent — constaté en reproduisant l'environnement CI en local.
  *
  * ⚠️ L'événement déclencheur est `invoice.payment_succeeded`, pas
  * `checkout.session.completed` : c'est lui qui appelle `processReferral`.

@@ -251,10 +251,21 @@ jobs:
       JWT_REFRESH_SECRET: test-refresh-secret-64-chars-minimum-xxxxxxxxxxxxxxxxxxxxxxxxx
       ANTHROPIC_API_KEY: sk-ant-test
       AI_ENABLED: 'false'
-      # Secret de signature partagé test ↔ API. Ce n'est PAS un vrai `whsec_` Stripe :
-      # aucune clé réelle n'est nécessaire, et jamais de `sk_live_` en CI.
+      # Secret de signature partagé test ↔ API : le test signe l'événement, l'API le
+      # vérifie avec la même valeur. Ce n'est PAS un vrai `whsec_` Stripe, aucun
+      # `stripe listen` n'est nécessaire.
       STRIPE_WEBHOOK_SECRET: whsec_ci_signature_partagee_test_only
-      STRIPE_SECRET_KEY: sk_test_ci_placeholder
+      # En revanche la clé Stripe doit être une VRAIE clé de test. `processWebhookEvent`
+      # appelle `syncSubscription` AVANT `processReferral` ; celle-ci absorbe un
+      # StripeInvalidRequestError (abonnement inconnu → normal ici) mais RELANCE un
+      # StripeAuthenticationError. Avec une clé bidon, la commission n'est donc jamais
+      # écrite et les tests expirent. Vérifié en reproduisant cet env en local.
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY_TEST }}
+      # Ces trois-là ne servent qu'à satisfaire les `getOrThrow` du boot d'AppModule :
+      # aucun appel réel ne les utilise dans ce test.
+      STRIPE_PREMIUM_PRICE_MONTHLY_V2: price_ci_placeholder_monthly
+      STRIPE_PREMIUM_PRICE_YEARLY_V2: price_ci_placeholder_yearly
+      RESEND_API_KEY: re_ci_placeholder
 
     services:
       postgres:
@@ -264,7 +275,7 @@ jobs:
           POSTGRES_USER: mtc_user
           POSTGRES_PASSWORD: devpassword
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U mtc_user -d mytradingcoach_int"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -296,6 +307,19 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
+
+      # Échoue vite et clairement plutôt que de laisser les tests expirer en 30 s
+      # sur un timeout opaque, ou pire, de « passer » sans rien vérifier.
+      - name: Vérifier le secret Stripe de test
+        run: |
+          if [ -z "$STRIPE_SECRET_KEY" ]; then
+            echo "::error title=Secret manquant::Ajouter le secret de dépôt STRIPE_SECRET_KEY_TEST (une clé sk_test_… du compte Stripe de test). Sans elle, syncSubscription leve une StripeAuthenticationError et la commission n'est jamais ecrite : ce job ne verifierait plus rien."
+            exit 1
+          fi
+          case "$STRIPE_SECRET_KEY" in
+            sk_test_*) echo "Clé Stripe de TEST détectée." ;;
+            *) echo "::error title=Clé non-test::STRIPE_SECRET_KEY_TEST doit commencer par sk_test_. Jamais de cle LIVE en CI."; exit 1 ;;
+          esac
 
       - name: Prisma generate
         run: pnpm exec prisma generate --config=./prisma/prisma.config.ts
