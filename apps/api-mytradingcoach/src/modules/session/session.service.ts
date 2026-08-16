@@ -7,6 +7,7 @@ import { MoodState, Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 import { AccountsService } from '../accounts/accounts.service';
+import { computeTradeStats } from '../../common/utils/trade-stats.util';
 
 export interface SessionHistoryItem {
   id: string;
@@ -110,9 +111,8 @@ export class SessionService {
     });
 
     const closed = trades.filter((t) => t.pnl !== null);
-    const wins = closed.filter((t) => (t.pnl ?? 0) > 0);
-    const totalPnl = closed.reduce((s, t) => s + (t.pnl ?? 0), 0);
-    const winRate = closed.length > 0 ? (wins.length / closed.length) * 100 : 0;
+    // Stats via le helper unique (BE exclus du win rate, PROMPT-160).
+    const { totalPnl, winRate } = computeTradeStats(trades);
 
     // Drawdown max
     let peak = 0, maxDrawdown = 0, cumPnl = 0;
@@ -265,14 +265,14 @@ export class SessionService {
 
   async getLiveStats(userId: string) {
     const todayTrades = await this.getTodayTrades(userId);
-    const closed = todayTrades.filter((t) => t.pnl !== null);
-    const wins = closed.filter((t) => (t.pnl ?? 0) > 0);
+    // Stats via le helper unique (BE exclus du win rate, PROMPT-160).
+    const stats = computeTradeStats(todayTrades);
 
     return {
-      totalPnl: closed.reduce((s, t) => s + (t.pnl ?? 0), 0),
-      winRate: closed.length > 0 ? (wins.length / closed.length) * 100 : 0,
+      totalPnl: stats.totalPnl,
+      winRate: stats.winRate,
       tradesCount: todayTrades.length,
-      closedCount: closed.length,
+      closedCount: stats.closed,
       trades: todayTrades,
     };
   }

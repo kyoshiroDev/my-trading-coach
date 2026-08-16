@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { computeTradeStats } from '../../../common/utils/trade-stats.util';
 
 export type TradeSummaryInput = {
   asset: string;
@@ -14,7 +15,7 @@ export type TradeSummaryInput = {
 };
 
 /**
- * Pure-computation agent — zero Anthropic calls.
+ * Pure-computation agent : zero Anthropic calls.
  * Transforms raw trade records into a compact text summary
  * consumed by downstream LLM agents.
  */
@@ -24,11 +25,10 @@ export class DataAgent {
     const closed = trades.filter(
       (t): t is TradeSummaryInput & { pnl: number } => t.pnl !== null,
     );
-    const wins = closed.filter((t) => t.pnl > 0);
-    const winRate = closed.length
-      ? ((wins.length / closed.length) * 100).toFixed(1)
-      : '0';
-    const totalPnl = closed.reduce((s, t) => s + t.pnl, 0).toFixed(2);
+    // Stats via le helper unique (BE exclus du win rate, PROMPT-160).
+    const stats = computeTradeStats(trades);
+    const winRate = stats.winRate.toFixed(1);
+    const totalPnl = stats.totalPnl.toFixed(2);
 
     const groupStats = (key: keyof TradeSummaryInput): string => {
       const groups = trades.reduce<Record<string, TradeSummaryInput[]>>(
@@ -91,7 +91,7 @@ export class DataAgent {
       .map((t) => {
         const base = `${t.asset} ${t.side} ${t.setup} ${t.emotion} ${t.pnl >= 0 ? '+' : ''}${t.pnl}$`;
         const rr = t.riskReward != null ? ` R:R ${t.riskReward.toFixed(1)}` : '';
-        const note = t.notes ? ` — « ${t.notes.slice(0, 120)} »` : '';
+        const note = t.notes ? ` · « ${t.notes.slice(0, 120)} »` : '';
         return base + rr + note;
       });
 

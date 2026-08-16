@@ -10,12 +10,12 @@
   <div class="plan-modal-card" role="dialog" aria-modal="true">
     <!-- Header -->
     <div class="plan-modal-header">
-      <h2>Choisir ton plan ⚡</h2>
-      <p>7 jours gratuits · Sans CB · Annulation à tout moment</p>
+      <h2>Passer à Premium ⚡</h2>
+      <p>1 mois offert · carte requise · annulable en un clic</p>
       <button class="plan-modal-close" (click)="close()" aria-label="Fermer">✕</button>
     </div>
 
-    <!-- Toggle d'intervalle GLOBAL (pilote les 2 cartes) -->
+    <!-- Toggle d'intervalle -->
     <div class="plan-interval-toggle" role="group" aria-label="Intervalle de facturation">
       <button
         class="interval-opt"
@@ -28,57 +28,14 @@
         (click)="setInterval('yearly')"
       >
         Annuel
-        <span class="interval-save">−{{ savingsPct(selectedTier()) }}%</span>
+        <span class="interval-save">−{{ savingsPct() }}%</span>
       </button>
     </div>
 
-    <!-- Deux plans côte à côte -->
+    <!-- Plan Premium unique -->
     <div class="plan-cols">
-
-      <!-- STARTER -->
-      <div
-        class="plan-col"
-        role="button"
-        tabindex="0"
-        [class.selected-col]="selectedTier() === 'starter'"
-        (click)="selectTier('starter')"
-        (keydown.enter)="selectTier('starter')"
-        (keydown.space)="selectTier('starter')"
-      >
-        @if (selectedTier() === 'starter') { <span class="plan-col-check">✓ Sélectionné</span> }
-        <div class="plan-col-name">Starter</div>
-        <div class="plan-col-price">
-          @if (interval() === 'yearly') {
-            <span class="price">{{ PRICING.starter.yearly }}€</span><span class="period">/an</span>
-            <div class="plan-col-detail save">économise {{ PRICING.starter.savings }}€</div>
-          } @else {
-            <span class="price">{{ PRICING.starter.monthly }}€</span><span class="period">/mois</span>
-            <div class="plan-col-detail">Facturé chaque mois</div>
-          }
-        </div>
-        <ul class="plan-col-feats">
-          <li>✓ Tout le plan Gratuit inclus</li>
-          <li>✓ Trades illimités</li>
-          <li>✓ Analytics avancés</li>
-          <li>✓ Weekly Debrief</li>
-          <li>✓ Score trader /100</li>
-          <li>✓ Export PDF</li>
-          <li class="feat-upsell">+ IA Insights, Chat coach &amp; Calendrier éco dans Premium →</li>
-        </ul>
-      </div>
-
-      <!-- PREMIUM -->
-      <div
-        class="plan-col premium-col"
-        role="button"
-        tabindex="0"
-        [class.selected-col]="selectedTier() === 'premium'"
-        (click)="selectTier('premium')"
-        (keydown.enter)="selectTier('premium')"
-        (keydown.space)="selectTier('premium')"
-      >
-        <div class="plan-col-badge">Recommandé</div>
-        @if (selectedTier() === 'premium') { <span class="plan-col-check">✓ Sélectionné</span> }
+      <div class="plan-col premium-col selected-col">
+        <div class="plan-col-badge">Premium</div>
         <div class="plan-col-name">Premium</div>
         <div class="plan-col-price">
           @if (interval() === 'yearly') {
@@ -90,17 +47,16 @@
           }
         </div>
         <ul class="plan-col-feats">
-          <li>✓ Tout Starter inclus</li>
-          <li>✓ IA Insights</li>
-          <li>✓ Chat coach IA</li>
-          <li>✓ Calendrier éco IA</li>
-          <li>✓ News live filtrées</li>
-          <li>✓ Contexte marché live</li>
-          <li>✓ Treasury Rates</li>
+          <li>✓ Tout le plan Gratuit inclus</li>
+          <li>✓ Weekly Debrief IA</li>
+          <li>✓ IA Insights &amp; Chat coach</li>
+          <li>✓ Analytics avancés</li>
+          <li>✓ Score trader /100</li>
+          <li>✓ Comptes illimités</li>
+          <li>✓ Règles prop firm &amp; sync crypto</li>
           <li>✓ Recap email 17h30</li>
         </ul>
       </div>
-
     </div>
 
     <!-- CTA -->
@@ -112,9 +68,16 @@
       @if (isLoading()) {
         <span class="btn-spinner"></span> Redirection...
       } @else {
-        Essayer {{ selectedTier() === 'premium' ? 'Premium' : 'Starter' }} 7 jours gratuit →
+        @if (interval() === 'monthly') { Essayer Premium · 1 mois offert → }
+        @else { Passer à Premium annuel → }
       }
     </button>
-    <p class="plan-modal-hint">Puis {{ ctaPriceLabel() }} · Sans CB · Annulation à tout moment</p>
+    <p class="plan-modal-hint">
+      @if (interval() === 'monthly') {
+        Puis {{ ctaPriceLabel() }} · carte requise · annulable en un clic
+      } @else {
+        {{ ctaPriceLabel() }} · facturé aujourd'hui · annulable en un clic
+      }
+    </p>
   </div>
 </div>

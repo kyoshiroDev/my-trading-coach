@@ -41,7 +41,7 @@ export class PublicService {
   }
 
   /**
-   * Nombre de traders inscrits (réels) — exclut le compte démo et l'admin.
+   * Nombre de traders inscrits (réels) : exclut le compte démo et l'admin.
    * Caché 10 min dans Redis pour ne pas taper la BDD à chaque visite de la landing.
    */
   async getTradersCount(): Promise<number> {
@@ -59,7 +59,7 @@ export class PublicService {
     try {
       await this.redis.setex(CACHE_KEY, CACHE_TTL, String(count));
     } catch {
-      // Redis indisponible — pas de cache, ce n'est pas bloquant
+      // Redis indisponible : pas de cache, ce n'est pas bloquant
     }
     return count;
   }

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { AdminUser, AdminUserDetail } from '../../../core/api/admin.api';
 
-/** Modal de détail utilisateur — extraction de users.component.ts */
+/** Modal de détail utilisateur : extraction de users.component.ts */
 @Component({
   selector: 'mtc-admin-user-detail-modal',
   standalone: true,

@@ -64,10 +64,10 @@ import { CHART_COLORS, fade, gridAxis, noLegend } from '../../shared/charts/char
           </div>
           @if (reconcileData(); as r) {
             @if (r.divergences.inDbNotStripe.length === 0 && r.divergences.inStripeNotDb.length === 0) {
-              <div class="reconcile-ok">✓ Aucune divergence — DB et Stripe cohérents.</div>
+              <div class="reconcile-ok">✓ Aucune divergence : DB et Stripe cohérents.</div>
             }
-            @for (d of r.divergences.inDbNotStripe; track d.userId) { <div class="diverge-row red">DB sans Stripe — {{ d.email }} · {{ d.plan }} · {{ d.status }}</div> }
-            @for (d of r.divergences.inStripeNotDb; track d.subscriptionId) { <div class="diverge-row amber">Stripe sans DB — {{ d.subscriptionId }} · {{ d.status }} · €{{ d.monthly }}/mois</div> }
+            @for (d of r.divergences.inDbNotStripe; track d.userId) { <div class="diverge-row red">DB sans Stripe · {{ d.email }} · {{ d.plan }} · {{ d.status }}</div> }
+            @for (d of r.divergences.inStripeNotDb; track d.subscriptionId) { <div class="diverge-row amber">Stripe sans DB · {{ d.subscriptionId }} · {{ d.status }} · €{{ d.monthly }}/mois</div> }
           }
         </div>
       </div>
@@ -101,8 +101,8 @@ export class RevenueComponent {
     return {
       type: 'doughnut',
       data: {
-        labels: ['Starter mensuel', 'Starter annuel', 'Premium mensuel', 'Premium annuel'],
-        datasets: [{ data: [s?.starterMonthly ?? 0, s?.starterAnnual ?? 0, s?.premiumMonthly ?? 0, s?.premiumAnnual ?? 0], backgroundColor: [CHART_COLORS.amber, '#c9851a', CHART_COLORS.blue, '#2f6fc4'], borderColor: '#0c0e10', borderWidth: 2 }],
+        labels: ['Premium mensuel', 'Premium annuel'],
+        datasets: [{ data: [s?.premiumMonthly ?? 0, s?.premiumAnnual ?? 0], backgroundColor: [CHART_COLORS.blue, '#2f6fc4'], borderColor: '#0c0e10', borderWidth: 2 }],
       },
       options: { maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'right', labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, padding: 12 } } } },
     } as ChartConfiguration;

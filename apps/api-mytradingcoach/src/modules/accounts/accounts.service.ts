@@ -14,20 +14,20 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
+import { computeTradeStats } from '../../common/utils/trade-stats.util';
 
-type RuleTrade = { pnl: number | null; tradedAt: Date };
+type RuleTrade = { pnl: number | null; commission?: number | null; tradedAt: Date };
 
 /** Contexte plan du user pour le calcul du quota de comptes. */
 type PlanContext = { plan: Plan; role: Role; trialEndsAt?: Date | null };
 
-// Quota de comptes par plan — aligné front `ACCOUNT_LIMITS` (pricing.const.ts).
+// Quota de comptes par plan : aligné front `ACCOUNT_LIMITS` (pricing.const.ts).
 // Premium / trial / admin / beta = illimité. Seuls les comptes ACTIVE consomment un
 // slot (PASSED / FAILED / ARCHIVED le libèrent).
-const STARTER_ACCOUNT_LIMIT = 3;
 const FREE_ACCOUNT_LIMIT = 1;
 
 const RULE_DISCLAIMER =
-  "Estimation basée uniquement sur les trades loggés dans MyTradingCoach — pas " +
+  "Estimation basée uniquement sur les trades loggés dans MyTradingCoach, pas " +
   "l'equity temps réel ni le calcul officiel de la prop firm (positions ouvertes, " +
   "fuseau, trailing intraday). Le statut du compte reste piloté par toi.";
 
@@ -77,7 +77,7 @@ export class AccountsService {
         pnl: { not: null },
         accountId: { in: accounts.map((a) => a.id) },
       },
-      select: { accountId: true, pnl: true, tradedAt: true },
+      select: { accountId: true, pnl: true, commission: true, tradedAt: true },
       orderBy: { tradedAt: 'asc' },
     });
     const byAccount = new Map<string, RuleTrade[]>();
@@ -103,7 +103,7 @@ export class AccountsService {
    * Métriques « règles prop firm » ESTIMÉES à partir des trades fermés (pnl net) triés par
    * tradedAt. Objectif (vs profitTarget) + marge avant drawdown selon STATIC/TRAILING.
    * Honnêteté : `estimated: true` + `disclaimer` que le front DOIT afficher. Aucun statut
-   * PASSED/FAILED positionné ici (piloté par l'user) — on se contente d'estimer.
+   * PASSED/FAILED positionné ici (piloté par l'user) : on se contente d'estimer.
    */
   computeRuleMetrics(
     account: Pick<
@@ -116,12 +116,17 @@ export class AccountsService {
     const sorted = [...trades].sort(
       (a, b) => a.tradedAt.getTime() - b.tradedAt.getTime(),
     );
-    const realizedPnl = sorted.reduce((s, t) => s + (t.pnl ?? 0), 0);
+    // P&L NET par trade = pnl − frais (commission). Le solde/objectif/drawdown sont nets des
+    // frais, cohérents avec le « P&L net » du dashboard et du journal (PROMPT-175).
+    const net = (t: RuleTrade) => (t.pnl ?? 0) - (t.commission ?? 0);
+    const realizedPnl = sorted.reduce((s, t) => s + net(t), 0);
     const currentBalance = startingBalance + realizedPnl;
 
-    // Taux de réussite (sur trades fermés) — réutilise `sorted`, aucune requête.
-    const wins = sorted.filter((t) => (t.pnl ?? 0) > 0).length;
-    const winRate = sorted.length > 0 ? wins / sorted.length : null;
+    // Taux de réussite via le helper unique (BE exclus du dénominateur, PROMPT-160).
+    // Ce champ est un RATIO 0..1 (null si aucun trade décisif) ; le helper renvoie un %.
+    const accStats = computeTradeStats(sorted);
+    const winRate =
+      accStats.wins + accStats.losses > 0 ? accStats.winRate / 100 : null;
 
     // PnL cumulé par jour (clé = date calendaire UTC du tradedAt) → meilleur / pire jour.
     // Groupement UTC volontairement simple, cohérent avec le cadrage « estimé » (pas de fuseau user).
@@ -131,7 +136,7 @@ export class AccountsService {
       const byDay = new Map<string, number>();
       for (const t of sorted) {
         const key = t.tradedAt.toISOString().slice(0, 10);
-        byDay.set(key, (byDay.get(key) ?? 0) + (t.pnl ?? 0));
+        byDay.set(key, (byDay.get(key) ?? 0) + net(t));
       }
       const sums = [...byDay.values()];
       bestDay = Math.max(...sums);
@@ -155,7 +160,7 @@ export class AccountsService {
         let bal = startingBalance;
         let hwm = startingBalance;
         for (const t of sorted) {
-          bal += t.pnl ?? 0;
+          bal += net(t);
           if (bal > hwm) hwm = bal;
         }
         floor = hwm - account.maxDrawdown;
@@ -191,7 +196,7 @@ export class AccountsService {
 
   /**
    * Quota de comptes du plan : `null` = illimité.
-   * Premium / trial / admin / beta → illimité · Starter → 3 · Free → 1.
+   * Premium / trial / admin / beta → illimité · Free → 1.
    * Sans contexte (appels internes) → non plafonné.
    */
   private resolveAccountLimit(ctx?: PlanContext): number | null {
@@ -200,13 +205,12 @@ export class AccountsService {
     if (role === Role.ADMIN || role === Role.BETA_TESTER) return null;
     const inTrial = !!(trialEndsAt && new Date() < new Date(trialEndsAt));
     if (plan === Plan.PREMIUM || inTrial) return null;
-    if (plan === Plan.STARTER) return STARTER_ACCOUNT_LIMIT;
     return FREE_ACCOUNT_LIMIT;
   }
 
   /**
    * Vérifie qu'un slot est disponible avant d'ouvrir un compte ACTIVE.
-   * Règle de slot : seuls les comptes ACTIVE consomment le quota — PASSED, FAILED et
+   * Règle de slot : seuls les comptes ACTIVE consomment le quota ; PASSED, FAILED et
    * ARCHIVED libèrent leur slot (un éval terminé/cramé ne bloque pas une création).
    * Throw `ACCOUNT_LIMIT_REACHED` si la limite du plan serait dépassée.
    */
@@ -319,7 +323,7 @@ export class AccountsService {
    * Compte par défaut (anti-NULL) pour une écriture sans accountId explicite :
    * le « Compte principal » actif, sinon le compte actif le plus récent, sinon on
    * CRÉE le « Compte principal ». Renvoie toujours un id (jamais NULL).
-   * (Les comptes démo sont read-only — bloqués en amont par DemoReadOnlyGuard.)
+   * (Les comptes démo sont read-only, bloqués en amont par DemoReadOnlyGuard.)
    */
   async ensureDefaultAccountId(userId: string): Promise<string> {
     const principal = await this.prisma.tradingAccount.findFirst({
@@ -335,8 +339,17 @@ export class AccountsService {
     });
     if (recent) return recent.id;
 
+    // Premier compte cree implicitement (import onboarding) : herite du capital declare au
+    // profil, sinon le dashboard afficherait « base 0 » alors que l'utilisateur a saisi un capital.
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { startingCapital: true },
+    });
+    const startingBalance =
+      user?.startingCapital && user.startingCapital > 0 ? user.startingCapital : null;
+
     const created = await this.prisma.tradingAccount.create({
-      data: { userId, label: 'Compte principal' },
+      data: { userId, label: 'Compte principal', startingBalance },
       select: { id: true },
     });
     return created.id;

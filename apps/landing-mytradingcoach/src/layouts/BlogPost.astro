@@ -14,7 +14,8 @@ interface Props {
 
 const { title, seoTitle, description, publishDate, updatedDate, tags = [] } = Astro.props;
 
-const canonical = `https://www.mytradingcoach.app${Astro.url.pathname}`;
+// trailingSlash: 'never' → canonical sans slash de dossier (`/blog/x/` servi comme `/blog/x`).
+const canonical = `https://www.mytradingcoach.app${Astro.url.pathname.replace(/(.)\/$/, '$1')}`;
 
 const schema = [
   {

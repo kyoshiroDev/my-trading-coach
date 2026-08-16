@@ -1,38 +1,68 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
+  HostListener,
   OnInit,
   computed,
   inject,
   signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { LucideAngularModule, Layers, Plus } from 'lucide-angular';
+import { LucideAngularModule, Layers, Plus, Check, ChevronDown } from 'lucide-angular';
 import { SelectedAccountStore } from '../../../core/stores/selected-account.store';
-import { UserStore } from '../../../core/stores/user.store';
 import { AccountType, TradingAccount } from '../../../core/api/accounts.api';
-import { PlanModalComponent } from '../plan-modal/plan-modal.component';
 
-// Sélecteur de compte réutilisable (dashboard, etc.). Pills « Tous les comptes » + 1 par
-// compte (pastille de statut + tag + solde, fidèle à la maquette). Réservé Starter et +
-// → sinon CTA upsell, aucun appel /accounts.
+// Sélecteur de compte réutilisable (dashboard, etc.) : trigger compact affichant le compte
+// courant (ou « Tous les comptes ») + menu déroulant listant tous les comptes. Largeur fixe,
+// quel que soit le nombre de comptes (remplace la barre de pills qui débordait à 7+ comptes).
+// Accessible à tous (FREE : 1 compte · Premium : illimité). Aucun gating ici, c'est côté API.
 @Component({
   selector: 'mtc-account-selector',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, LucideAngularModule, PlanModalComponent],
+  imports: [RouterLink, LucideAngularModule],
   templateUrl: './account-selector.component.html',
   styleUrl: './account-selector.component.css',
 })
 export class AccountSelectorComponent implements OnInit {
   protected readonly store = inject(SelectedAccountStore);
-  protected readonly userStore = inject(UserStore);
-  protected readonly showPlanModal = signal(false);
+  private readonly host = inject(ElementRef<HTMLElement>);
 
   protected readonly LayersIcon = Layers;
   protected readonly PlusIcon = Plus;
+  protected readonly CheckIcon = Check;
+  protected readonly ChevronDownIcon = ChevronDown;
 
-  /** Solde agrégé (comptes non archivés) — affiché sur la pill « Tous les comptes ». */
+  /** État d'ouverture du menu déroulant. */
+  protected readonly open = signal(false);
+  protected toggle(): void {
+    this.open.update((v) => !v);
+  }
+  protected close(): void {
+    this.open.set(false);
+  }
+
+  /** Vrai quand la vue agrégée (« Tous les comptes ») est active. */
+  protected readonly isAll = computed(() => this.store.selectedAccountId() === 'all');
+
+  /** Sélectionne un compte (ou 'all') et referme le menu. */
+  protected pick(id: string | 'all'): void {
+    this.store.select(id);
+    this.close();
+  }
+
+  /** Ferme le menu au clic hors du composant. */
+  @HostListener('document:click', ['$event'])
+  protected onDocClick(e: MouseEvent): void {
+    if (!this.host.nativeElement.contains(e.target as Node)) this.close();
+  }
+  @HostListener('document:keydown.escape')
+  protected onEscape(): void {
+    this.close();
+  }
+
+  /** Solde agrégé (comptes non archivés) : affiché sur l'option « Tous les comptes ». */
   protected readonly totalBalance = computed(() =>
     this.store
       .accounts()
@@ -41,8 +71,7 @@ export class AccountSelectorComponent implements OnInit {
   );
 
   ngOnInit(): void {
-    // Charge les comptes si Starter et + (le store no-op pour les FREE).
-    if (this.userStore.isStarterOrAbove() && !this.store.loaded() && !this.store.isLoading()) {
+    if (!this.store.loaded() && !this.store.isLoading()) {
       this.store.load();
     }
   }
@@ -59,7 +88,7 @@ export class AccountSelectorComponent implements OnInit {
     return t === 'EVALUATION' ? 'Éval' : t === 'FUNDED' ? 'Funded' : t === 'PERSONAL' ? 'Perso' : 'Démo';
   }
 
-  /** Sous-titre de la pill : « Perso · Bybit » / « Éval · FTMO »… */
+  /** Sous-titre : « Perso · Bybit » / « Éval · FTMO »… */
   protected tagFor(a: TradingAccount): string {
     return a.broker ? `${this.typeLabel(a.type)} · ${a.broker}` : this.typeLabel(a.type);
   }

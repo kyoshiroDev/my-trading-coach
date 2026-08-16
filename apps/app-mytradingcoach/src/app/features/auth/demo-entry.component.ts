@@ -7,7 +7,7 @@ import { environment } from '../../../environments/environment';
 /**
  * Point d'entrée de la démo : connecte automatiquement le visiteur au compte
  * démo (lecture seule) puis redirige vers le dashboard. La landing pointe
- * simplement vers /demo — pas de token à transférer entre domaines.
+ * simplement vers /demo : pas de token à transférer entre domaines.
  */
 @Component({
   selector: 'mtc-demo-entry',

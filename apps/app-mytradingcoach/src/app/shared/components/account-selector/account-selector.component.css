@@ -1,64 +1,218 @@
-/* Barre de comptes — pills riches (pastille + nom + tag + solde), fidèle à la maquette AccountBar */
-.acct-bar {
+/* Sélecteur de compte — dropdown compact (trigger + menu), fidèle à mtc-account-selector-mockup.html.
+   Largeur fixe : la ligne ne déborde plus, quel que soit le nombre de comptes. */
+
+/* Ligne : select + bouton « + Compte » */
+.acct-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  overflow-x: auto;
-  scrollbar-width: none;
 }
-.acct-bar::-webkit-scrollbar { display: none; }
 
-.acct-pill {
+/* Trigger du dropdown (compte sélectionné ou vue agrégée) */
+.acct-select {
+  position: relative;
+}
+.acct-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  border-radius: 9px;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  min-width: 260px;
   cursor: pointer;
-  flex-shrink: 0;
-  white-space: nowrap;
   border: 1px solid var(--border);
   background: var(--bg-2);
   transition: all 0.15s;
 }
-.acct-pill:hover {
+.acct-trigger:hover {
   border-color: var(--border-hover);
   background: var(--bg-3);
 }
-.acct-pill.active {
+.acct-select.open .acct-trigger {
   border-color: rgba(59, 130, 246, 0.45);
-  background: rgba(59, 130, 246, 0.12);
+  background: var(--blue-glow);
 }
 
-.acct-pill-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.acct-pill-ic { color: var(--text-3); display: inline-flex; flex-shrink: 0; }
-.acct-pill.active .acct-pill-ic { color: var(--blue-bright); }
+.acct-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.acct-ic {
+  color: var(--text-3);
+  display: inline-flex;
+  flex-shrink: 0;
+}
 
-.acct-pill-txt { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
-.acct-pill-name { font-size: 13.5px; font-weight: 450; color: var(--text-2); }
-.acct-pill.active .acct-pill-name { font-weight: 600; color: var(--text); }
-.acct-pill-tag { font-family: var(--font-body); font-size: 11.5px; color: var(--text-3); }
-
-.acct-pill-bal {
-  font-family: var(--font-mono);
+.acct-txt {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+  flex: 1;
+  min-width: 0;
+}
+.acct-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+.acct-tag {
+  font-family: var(--font-body);
   font-size: 11.5px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.acct-bal {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blue-bright);
+  margin-left: auto;
+}
+.acct-chev {
+  color: var(--text-3);
+  flex-shrink: 0;
+  transition: transform 0.18s;
+}
+.acct-select.open .acct-chev {
+  transform: rotate(180deg);
+  color: var(--blue-bright);
+}
+
+/* Menu déroulant */
+.acct-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 50;
+  min-width: 340px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-hover);
+  border-radius: 12px;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.55);
+  display: none;
+}
+.acct-select.open .acct-menu {
+  display: block;
+  animation: acct-pop 0.16s ease;
+}
+@keyframes acct-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.acct-menu::-webkit-scrollbar {
+  width: 6px;
+}
+.acct-menu::-webkit-scrollbar-thumb {
+  background: var(--border-hover);
+  border-radius: 3px;
+}
+
+.menu-sep {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 4px;
+}
+.menu-lbl {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding: 6px 10px 4px;
+}
+
+/* Options du menu */
+.opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.opt:hover {
+  background: var(--bg-3);
+}
+.opt.active {
+  background: var(--blue-glow);
+}
+.opt-txt {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+  flex: 1;
+  min-width: 0;
+}
+.opt-name {
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.opt.active .opt-name {
+  font-weight: 600;
+  color: var(--text);
+}
+.opt-tag {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.opt-bal {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-3);
-  margin-left: 4px;
+  margin-left: auto;
+  white-space: nowrap;
 }
-.acct-pill.active .acct-pill-bal { color: var(--blue-bright); }
+.opt.active .opt-bal {
+  color: var(--blue-bright);
+}
+.opt-check {
+  color: var(--blue-bright);
+  flex-shrink: 0;
+  width: 14px;
+  display: inline-flex;
+  justify-content: center;
+}
+.opt:not(.active) .opt-check {
+  visibility: hidden;
+}
 
-/* Bouton « + Compte » (pointillé) */
+/* Bouton « + Compte » (pointillé) — repris de l'ancien .acct-add */
 .acct-add {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 12px;
-  border-radius: 9px;
+  padding: 9px 13px;
+  border-radius: 10px;
   border: 1px dashed var(--border-hover);
   background: transparent;
   color: var(--text-3);
-  font-size: 12px;
+  font-size: 12.5px;
   font-family: var(--font-body);
   text-decoration: none;
   cursor: pointer;
@@ -66,21 +220,19 @@
   white-space: nowrap;
   transition: all 0.15s;
 }
-.acct-add:hover { color: var(--text-2); border-color: var(--blue-bright); }
-
-/* FREE : chip verrouillé + badge Starter */
-.acct-locked {
-  display: flex; align-items: center; gap: 7px;
-  padding: 7px 13px; border-radius: 8px;
-  border: 1px solid var(--border); background: var(--bg-card);
-  font-size: 12.5px; color: var(--text-3); cursor: pointer;
-  font-family: var(--font-mono); transition: all 0.15s;
+.acct-add:hover {
+  color: var(--text-2);
+  border-color: var(--blue-bright);
 }
-.acct-locked:hover { border-color: var(--border-hover); }
-.acct-locked .acct-pill-dot { width: 7px; height: 7px; }
-.acct-premium-badge {
-  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
-  letter-spacing: 0.5px; padding: 2px 6px; border-radius: 5px;
-  background: var(--blue-glow); color: var(--blue-bright);
-  border: 1px solid rgba(59, 130, 246, 0.25);
+
+/* Mobile : le trigger prend la largeur dispo, le menu s'adapte. */
+@media (max-width: 640px) {
+  .acct-trigger {
+    min-width: 0;
+    flex: 1;
+  }
+  .acct-menu {
+    min-width: 0;
+    width: max(280px, 100%);
+  }
 }

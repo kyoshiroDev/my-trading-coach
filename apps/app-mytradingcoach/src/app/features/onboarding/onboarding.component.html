@@ -6,7 +6,7 @@
       <!-- Header -->
       <div class="wizard-header">
         <div class="wizard-logo">
-          <div class="logo-mark"></div>
+          <img class="logo-mark" src="logo.svg" alt="MyTradingCoach" width="28" height="28" />
           <span class="logo-text">MyTradingCoach</span>
         </div>
       </div>
@@ -16,7 +16,7 @@
         <div class="progress-fill" [style.width.%]="progress"></div>
       </div>
 
-      <!-- ── Étape 1 — Promesse ── -->
+      <!-- ── Étape 1 : Promesse ── -->
       @if (step() === 1) {
         <div class="wizard-body">
           <h2 class="step-title">Ton trading va changer.</h2>
@@ -46,7 +46,7 @@
         </div>
       }
 
-      <!-- ── Étape 2 — Marché ── -->
+      <!-- ── Étape 2 : Marché ── -->
       @if (step() === 2) {
         <div class="wizard-body">
           <div class="step-label">{{ stepLabel }}</div>
@@ -76,7 +76,7 @@
         </div>
       }
 
-      <!-- ── Étape 3 — Objectif ── -->
+      <!-- ── Étape 3 : Objectif ── -->
       @if (step() === 3) {
         <div class="wizard-body">
           <div class="step-label">{{ stepLabel }}</div>
@@ -100,7 +100,7 @@
         </div>
       }
 
-      <!-- ── Étape 4 — Capital ── -->
+      <!-- ── Étape 4 : Capital ── -->
       @if (step() === 4) {
         <div class="wizard-body">
           <div class="step-label">{{ stepLabel }}</div>
@@ -133,7 +133,7 @@
         </div>
       }
 
-      <!-- ── Étape 5 — Stratégie (obligatoire) ── -->
+      <!-- ── Étape 5 : Stratégie (obligatoire) ── -->
       @if (step() === 5) {
         <div class="wizard-body">
           <div class="step-label">{{ stepLabel }}</div>
@@ -178,7 +178,7 @@
         </div>
       }
 
-      <!-- ── Étape 6 — Actifs (obligatoire) ── -->
+      <!-- ── Étape 6 : Actifs (obligatoire) ── -->
       @if (step() === 6) {
         <div class="wizard-body">
           <div class="step-label">{{ stepLabel }}</div>
@@ -246,7 +246,7 @@
         </div>
       }
 
-      <!-- ── Étape 7 — Tes setups ── -->
+      <!-- ── Étape 7 : Tes setups ── -->
       @if (step() === 7) {
         <div class="wizard-body">
           <div class="step-label">{{ stepLabel }}</div>
@@ -265,10 +265,15 @@
                   <div class="ob-setup-name">{{ s.title }}</div>
                   <div class="ob-setup-desc">{{ s.description || 'Pas de description' }}</div>
                 </div>
-                <button class="ob-setup-rm" type="button" title="Retirer" (click)="removeSetup(s.id)">✕</button>
+                <button class="ob-setup-rm" type="button" title="Retirer"
+                        [disabled]="setupsStore.active().length <= 1"
+                        (click)="removeSetup(s.id)">✕</button>
               </div>
             }
           </div>
+          @if (setupMsg(); as msg) {
+            <p class="ob-setup-msg" role="status">{{ msg }}</p>
+          }
           <button class="ob-addbtn" type="button" (click)="openSetupModal()">+ Ajouter un setup</button>
 
           <div class="wizard-footer">
@@ -278,7 +283,7 @@
         </div>
       }
 
-      <!-- ── Étape 8 — Choix premier trade ── -->
+      <!-- ── Étape 8 : Choix premier trade ── -->
       @if (step() === 8 && tradeChoice() === 'choice') {
         <div class="wizard-body">
           <div class="step-label">{{ stepLabel }}</div>
@@ -310,7 +315,7 @@
         </div>
       }
 
-      <!-- ── Étape 9 — Discord récompense ── -->
+      <!-- ── Étape 9 : Discord récompense ── -->
       @if (step() === 9) {
         <div class="wizard-body">
           <div class="celebrate"><span class="celebrate-ic">🎉</span></div>
@@ -342,7 +347,7 @@
   </div>
 }
 
-<!-- TradeForm (gère son propre overlay) — affiché quand choix manuel -->
+<!-- TradeForm (gère son propre overlay) : affiché quand choix manuel -->
 @if (step() === 8 && tradeChoice() === 'manual') {
   <mtc-trade-form
     [open]="true"
@@ -355,6 +360,7 @@
 <!-- CSV import (gère son propre overlay via [open]) -->
 <mtc-csv-import
   [open]="csvOpen()"
+  [allowFeesFile]="true"
   (imported)="onCsvImported()"
   (dismissed)="onCsvDismissed()"
 />

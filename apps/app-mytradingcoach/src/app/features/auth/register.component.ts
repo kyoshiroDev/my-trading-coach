@@ -45,7 +45,7 @@ import { BillingApi } from '../../core/api/billing.api';
 
         @if (referralCode()) {
           <div class="referral-notice">
-            🎉 Invitation de <strong>{{ referralCode() }}</strong> : 7 jours d'essai Premium offerts
+            🎉 Invitation de <strong>{{ referralCode() }}</strong> : 1 mois d'essai Premium offert
           </div>
         }
 
@@ -189,9 +189,9 @@ import { BillingApi } from '../../core/api/billing.api';
 
         <p class="free-note">
           @if (isPremiumFlow()) {
-            Essai 7 jours gratuit · Sans CB requise · Annuler à tout moment
+            1 mois offert · carte requise · annulable en un clic
           } @else {
-            Aucune CB requise · 30 trades/mois (hors import historique) · Annuler à tout moment
+            Gratuit · trades illimités · sans carte
           }
         </p>
 
@@ -304,7 +304,7 @@ export class RegisterComponent {
         next: () => {
           if (this.isPremiumFlow()) {
             this.billingApi
-              .checkout('starter_monthly')
+              .checkout('premium_monthly')
               .pipe(takeUntilDestroyed(this.destroyRef))
               .subscribe({
                 next: (res) => {

@@ -38,7 +38,7 @@ import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
     </td>
     <td class="td-num">{{ trade().entry | number: '1.2-5' }}</td>
     <td class="td-num">
-      {{ trade().exit !== null ? (trade().exit | number: '1.2-5') : '—' }}
+      {{ trade().exit !== null ? (trade().exit | number: '1.2-5') : '-' }}
     </td>
     <td class="td-num" [class]="trade().pnl | pnlColor">
       {{ trade().pnl | pnlFormat }}
@@ -47,12 +47,12 @@ import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
       {{
         trade().riskReward !== null
           ? (trade().riskReward | number: '1.2-2')
-          : '—'
+          : '-'
       }}
     </td>
     <td>
       <span class="emotion-cell">
-        {{ trade().emotion | emotionEmoji }} {{ trade().emotion | titlecase }}
+        {{ trade().effectiveEmotion | emotionEmoji }} {{ (trade().effectiveEmotion | titlecase) || '-' }}
       </span>
     </td>
     <td>

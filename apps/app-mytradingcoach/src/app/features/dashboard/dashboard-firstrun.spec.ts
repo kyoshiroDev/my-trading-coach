@@ -20,13 +20,12 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 // d'affichage du « premier pas » : visible à 0 trade, masqué dès ≥1.
 function setup(totalTrades: number) {
   const userStore = {
-    displayName: () => 'Test', isStarterOrAbove: () => false,
+    displayName: () => 'Test', isPremium: () => false,
     profileIncomplete: () => false, startingCapital: () => 0, user: () => ({}),
   };
   const tradesStore = {
-    limitReached: () => false, monthlyCount: () => 0, monthlyLimit: () => 30,
-    nearLimit: () => false, totalTrades: signal(totalTrades), trades: signal([]),
-    loadTrades: vi.fn(), loadMonthlyCount: vi.fn(), reset: vi.fn(),
+    totalTrades: signal(totalTrades), trades: signal([]),
+    loadTrades: vi.fn(), reset: vi.fn(),
   };
   const sessionStore = { hasActiveSession: () => false, todayStats: () => null };
 
@@ -42,13 +41,13 @@ function setup(totalTrades: number) {
       { provide: ChartService, useValue: { buildEquityChart: vi.fn() } },
       { provide: BillingApi, useValue: {} },
       { provide: TradesApi, useValue: {} },
-      { provide: SelectedAccountStore, useValue: { accountParam: () => undefined, load: vi.fn(), loaded: signal(true), isLoading: signal(false) } },
+      { provide: SelectedAccountStore, useValue: { accounts: signal([]), accountParam: () => undefined, load: vi.fn(), loaded: signal(true), isLoading: signal(false) } },
     ],
   });
   TestBed.overrideComponent(DashboardComponent, {
     set: {
       template:
-        `@if (!isLoading() && tradesStore.totalTrades() === 0) {
+        `@if (selectedAccount.loaded() && tradesStore.totalTrades() === 0) {
           <div class="firstrun-hero">
             <button data-testid="firstrun-import" (click)="openCsvImport()">Importer mes trades</button>
           </div>

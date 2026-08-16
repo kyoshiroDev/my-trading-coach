@@ -1,35 +1,36 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  inject,
   input,
   output,
-  signal,
 } from '@angular/core';
 import { LucideAngularModule, Plus, Bell, MessageCircle } from 'lucide-angular';
 import { AccountSelectorComponent } from '../account-selector/account-selector.component';
-import { PlanModalComponent } from '../plan-modal/plan-modal.component';
-import { UserStore } from '../../../core/stores/user.store';
-import { TradesStore } from '../../../core/stores/trades.store';
 
 @Component({
   selector: 'mtc-topbar',
   standalone: true,
-  imports: [LucideAngularModule, AccountSelectorComponent, PlanModalComponent],
+  imports: [LucideAngularModule, AccountSelectorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './topbar.component.css',
   host: { '[attr.title]': 'null' },
   template: `
-    <header class="topbar">
+    <header class="topbar" [class.hero]="heroHeader()">
       <div class="topbar-title-wrap">
         <h1 class="page-title">{{ title() }}</h1>
         @if (period()) {
-          <span class="topbar-period">· {{ period() }}</span>
+          <span class="topbar-period">{{ heroHeader() ? '' : '· ' }}{{ period() }}</span>
         }
-        @if (globalScopeNote() && userStore.isStarterOrAbove()) {
+        @if (globalScopeNote()) {
           <span class="topbar-scope">analyse tous comptes confondus</span>
         }
       </div>
+
+      @if (heroHeader()) {
+        <div class="topbar-center">
+          <ng-content select="[topbar-center]" />
+        </div>
+      }
 
       <div class="topbar-actions">
         @if (showAddButton()) {
@@ -49,41 +50,18 @@ import { TradesStore } from '../../../core/stores/trades.store';
           </button>
         }
 
-        <!-- Quota mensuel (FREE) — déplacé depuis la sidebar (design chrome.jsx).
-             Cliquable → modale des forfaits. -->
-        @if (!userStore.isStarterOrAbove() && tradesStore.monthlyLoaded()) {
-          <div class="tb-quota-wrap">
-            <button
-              class="tb-quota"
-              [class.near]="tradesStore.nearLimit()"
-              [class.reached]="tradesStore.limitReached()"
-              (click)="showPlanModal.set(true)"
-              title="Trades utilisés ce mois"
-            >
-              <div class="tb-quota-head">
-                <span class="tb-quota-lab">Trades ce mois</span>
-                <span class="tb-quota-count">{{ tradesStore.monthlyCount() }}<span class="tb-quota-sep">/{{ tradesStore.monthlyLimit() }}</span></span>
-              </div>
-              <div class="tb-quota-track">
-                <div class="tb-quota-fill" [style.width.%]="tradesStore.monthlyPercent()"></div>
-              </div>
-            </button>
-            @if (tradesStore.nearLimit() || tradesStore.limitReached()) {
-              <button class="tb-quota-cta" (click)="showPlanModal.set(true)">Augmenter →</button>
-            }
-          </div>
+        @if (!heroHeader()) {
+          <a
+            href="https://discord.gg/TDK2npvkSN"
+            target="_blank"
+            rel="noopener"
+            class="tb-discord"
+            title="Rejoindre la communauté Discord"
+          >
+            <lucide-icon [img]="DiscordIcon" [size]="15" class="tb-discord-ic" />
+            <span class="tb-discord-label">Discord</span>
+          </a>
         }
-
-        <a
-          href="https://discord.gg/TDK2npvkSN"
-          target="_blank"
-          rel="noopener"
-          class="tb-discord"
-          title="Rejoindre la communauté Discord"
-        >
-          <lucide-icon [img]="DiscordIcon" [size]="15" class="tb-discord-ic" />
-          <span class="tb-discord-label">Discord</span>
-        </a>
 
         @if (showNotifications()) {
           <button class="btn btn-ghost icon-btn" title="Notifications">
@@ -94,8 +72,8 @@ import { TradesStore } from '../../../core/stores/trades.store';
       </div>
     </header>
 
-    <!-- Sélecteur de compte global (multi-comptes Starter+) — source unique. -->
-    @if (showAccountSelector() && userStore.isStarterOrAbove()) {
+    <!-- Sélecteur de compte global (multi-comptes, accessible à tous) : source unique. -->
+    @if (showAccountSelector()) {
       <div class="topbar-accounts">
         <mtc-account-selector />
       </div>
@@ -117,31 +95,25 @@ import { TradesStore } from '../../../core/stores/trades.store';
         }
       </button>
     }
-
-    @if (showPlanModal()) {
-      <mtc-plan-modal (closed)="showPlanModal.set(false)" />
-    }
   `,
 })
 export class TopbarComponent {
   title = input('');
-  /** Période affichée à côté du titre (ex. « juin 2026 ») — design chrome.jsx. */
+  /** Période affichée à côté du titre (ex. « juin 2026 ») : design chrome.jsx. */
   period = input('');
+  heroHeader = input(false);
   showAddButton = input(false);
   addLabel = input('Nouveau');
   addDisabled = input(false);
   addLoading = input(false);
   addTestId = input('');
   showNotifications = input(false);
-  /** Affiche le sélecteur de compte global (écrans scopés par compte, Starter+). */
+  /** Affiche le sélecteur de compte global (écrans scopés par compte). */
   showAccountSelector = input(false);
-  /** Libellé « analyse tous comptes confondus » (écrans IA globaux, Starter+). */
+  /** Libellé « analyse tous comptes confondus » (écrans agrégés). */
   globalScopeNote = input(false);
   addClick = output<void>();
 
-  protected readonly userStore = inject(UserStore);
-  protected readonly tradesStore = inject(TradesStore);
-  protected readonly showPlanModal = signal(false);
   protected readonly PlusIcon = Plus;
   protected readonly BellIcon = Bell;
   protected readonly DiscordIcon = MessageCircle;

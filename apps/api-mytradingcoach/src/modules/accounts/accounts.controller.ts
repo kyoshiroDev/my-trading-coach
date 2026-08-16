@@ -9,16 +9,16 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { StarterGuard } from '../../common/guards/starter.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Plan, Role } from '@prisma/client';
 import { AccountsService } from './accounts.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 
-// Multi-comptes (prop firms + perso) — quota par plan (Starter 3 · Premium illimité).
+// Multi-comptes (prop firms + perso) : quota par plan (FREE 1 · Premium illimité).
+// Le plafond est appliqué dans AccountsService.create (FREE peut gérer son 1 compte).
 @Controller('accounts')
-@UseGuards(JwtAuthGuard, StarterGuard)
+@UseGuards(JwtAuthGuard)
 export class AccountsController {
   constructor(private readonly accounts: AccountsService) {}
 

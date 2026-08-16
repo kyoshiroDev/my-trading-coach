@@ -21,7 +21,7 @@ const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 heure
 // Champs renvoyés au front pour représenter l'utilisateur courant.
 // Source de vérité unique utilisée par getMe / refresh / login / register
 // afin que le store front (et profileIncomplete) ait toujours les mêmes
-// données — notamment tradingAssets/favoriteAsset (sinon nudge faux positif).
+// données : notamment tradingAssets/favoriteAsset (sinon nudge faux positif).
 const ME_SELECT = {
   id: true,
   email: true,
@@ -113,17 +113,17 @@ export class AuthService {
       select: ME_SELECT,
     });
 
-    // Email de bienvenue à l'utilisateur — fire-and-forget
+    // Email de bienvenue à l'utilisateur : fire-and-forget
     this.resend
       .sendWelcomeFree({ to: user.email, userName: user.name ?? '' })
       .catch((err: unknown) =>
         this.logger.error(`Welcome email failed: ${String(err)}`),
       );
 
-    // Notification admin — fire-and-forget
+    // Notification admin : fire-and-forget
     this.resend
       .sendAdminAlert(
-        `🆕 Nouvel inscrit — ${user.email}`,
+        `🆕 Nouvel inscrit : ${user.email}`,
         `Nom : ${user.name ?? '(non renseigné)'}\nEmail : ${user.email}\nDate : ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}`,
       )
       .catch((err: unknown) =>
@@ -180,29 +180,6 @@ export class AuthService {
     });
     if (!user) throw new UnauthorizedException('Utilisateur introuvable');
     return user;
-  }
-
-  async startTrial(userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new UnauthorizedException('Utilisateur introuvable');
-    if (user.trialUsed) throw new BadRequestException('Essai déjà utilisé');
-
-    const updated = await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        trialEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        trialUsed: true,
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        plan: true,
-        trialEndsAt: true,
-        trialUsed: true,
-      },
-    });
-    return updated;
   }
 
   async forgotPassword(email: string): Promise<void> {

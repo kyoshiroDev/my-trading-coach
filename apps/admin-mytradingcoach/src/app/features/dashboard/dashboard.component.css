@@ -10,7 +10,7 @@
 .kpi-link { cursor: pointer; text-decoration: none; color: inherit; }
 .kpi-link:hover { border-color: rgba(255,255,255,.12); }
 
-/* 7 KPIs sur une ligne en desktop (MRR, users, starter, premium, ambassadeurs, churn, supprimés) */
+/* 7 KPIs sur une ligne en desktop (MRR, users, premium, ambassadeurs, churn, supprimés) */
 @media (min-width: 1100px) {
   .kpi-strip.dash-kpis { grid-template-columns: repeat(7, 1fr); }
 }

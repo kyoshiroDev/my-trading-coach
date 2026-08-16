@@ -88,14 +88,14 @@ function insightVariant(type: string): InsightVariant {
     <div class="content">
       @if (!userStore.isPremium()) {
         <div data-testid="ai-paywall" class="premium-paywall">
-          <div class="paywall-icon">✨</div>
+          <div class="paywall-icon"><lucide-icon [img]="SparklesIcon" [size]="40" /></div>
           <h3 class="paywall-title">Fonctionnalité Premium</h3>
           <p class="paywall-desc">
             Les IA Insights sont disponibles avec le plan Premium.<br />Analyse
             tes patterns comportementaux avec le coach IA.
           </p>
           <button class="paywall-cta" (click)="showPlanModal.set(true)">
-            Essayer 7 jours gratuit →
+            Essayer Premium · 1 mois offert →
           </button>
         </div>
         @if (showPlanModal()) {
@@ -416,7 +416,7 @@ export class AiInsightsComponent implements AfterViewChecked {
         ? Math.max(0, parseInt(stored, 10))
         : this.QUOTA_MAX;
     } catch {
-      /* localStorage indisponible (SSR ou permission refusée) — retourne quota max */
+      /* localStorage indisponible (SSR ou permission refusée) : retourne quota max */
       return this.QUOTA_MAX;
     }
   }
@@ -425,7 +425,7 @@ export class AiInsightsComponent implements AfterViewChecked {
     try {
       localStorage.setItem(this.getQuotaKey(), String(value));
     } catch {
-      /* localStorage indisponible — quota non persisté */
+      /* localStorage indisponible : quota non persisté */
     }
   }
 

@@ -9,6 +9,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { TradesApi, JournalStats } from '../api/trades.api';
+import { computeTradeStats } from '../utils/trade-stats.util';
 
 export interface Trade {
   id: string;
@@ -23,7 +24,13 @@ export interface Trade {
   riskReward: number | null;
   quantity: number | null;
   capitalEngaged: number | null;
-  emotion: string;
+  emotion: string | null; // override optionnel (PROMPT-163)
+  effectiveEmotion?: string | null; // émotion effective calculée API (override sinon humeur session)
+  // Note d'exécution CALCULÉE (PROMPT-161) : null = « Non évalué ».
+  executionScore?: number | null;
+  executionGrade?: 'EXCELLENT' | 'BON' | 'MOYEN' | 'MAUVAIS' | null;
+  // Barème ayant produit la note (PROMPT-168) : stop-based (4 critères) ou comportemental (sans stop).
+  executionMethod?: 'STOP_BASED' | 'BEHAVIORAL' | null;
   setupId: string;
   setup: { id: string; title: string; color: string };
   session: string;
@@ -58,29 +65,14 @@ export class TradesStore {
   readonly stats = signal<JournalStats | null>(null);
   readonly isLoadingStats = signal(false);
 
-  readonly monthlyCount  = signal<number>(0);
-  readonly monthlyLimit  = signal<number>(30);
-  readonly monthlyLoaded = signal(false);
-
-  /** Derniers filtres de loadTrades (ex. accountId) — réappliqués par loadMore. */
+  /** Derniers filtres de loadTrades (ex. accountId) : réappliqués par loadMore. */
   private lastFilters: Record<string, string> = {};
 
-  readonly monthlyPercent = computed(() =>
-    this.monthlyLimit() > 0
-      ? Math.min(100, Math.round((this.monthlyCount() / this.monthlyLimit()) * 100))
-      : 0,
-  );
-  readonly nearLimit    = computed(() => this.monthlyLoaded() && this.monthlyPercent() >= 80 && this.monthlyPercent() < 100);
-  readonly limitReached = computed(() => this.monthlyLoaded() && this.monthlyCount() >= this.monthlyLimit());
-
-  readonly totalTrades = computed(() => this.trades().length);
-  readonly winningTrades = computed(
-    () => this.trades().filter((t) => (t.pnl ?? 0) > 0).length,
-  );
-  readonly winRate = computed(() => {
-    const total = this.totalTrades();
-    return total > 0 ? (this.winningTrades() / total) * 100 : 0;
-  });
+  // Stats locales via le helper unique (BE exclus du win rate, PROMPT-160).
+  private readonly localStats = computed(() => computeTradeStats(this.trades()));
+  readonly totalTrades = computed(() => this.localStats().total);
+  readonly winningTrades = computed(() => this.localStats().wins);
+  readonly winRate = computed(() => this.localStats().winRate);
 
   // Charge une première page (remplace les trades existants)
   loadTrades(filters?: Record<string, string>) {
@@ -106,7 +98,7 @@ export class TradesStore {
       });
   }
 
-  // Charge la page suivante (APPEND — ne remplace pas)
+  // Charge la page suivante (APPEND, ne remplace pas)
   loadMore() {
     const cursor = this.nextCursor();
     if (!cursor || this.isLoadingMore()) return;
@@ -142,22 +134,8 @@ export class TradesStore {
       });
   }
 
-  loadMonthlyCount(): void {
-    this.http
-      .get<{ data: { count: number; limit: number; isPremium: boolean } }>(`${this.baseUrl}/monthly-count`)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => {
-          this.monthlyCount.set(res.data.count);
-          this.monthlyLimit.set(res.data.limit || 30);
-          this.monthlyLoaded.set(!res.data.isPremium);
-        },
-      });
-  }
-
   addTrade(trade: Trade) {
     this.trades.update((trades) => [trade, ...trades]);
-    if (this.monthlyLoaded()) this.monthlyCount.update((c) => c + 1);
   }
 
   updateTrade(updated: Trade) {

@@ -30,13 +30,13 @@ URLs prod :
 4. **Créer un trade** — depuis le Journal, ajouter un trade → il apparaît dans la liste
    et incrémente les stats. Le supprimer ensuite pour ne pas polluer.
 
-5. **Changer de compte met à jour les chiffres** (multi-comptes, Starter+) — le sélecteur
+5. **Changer de compte met à jour les chiffres** (multi-comptes, tous plans) — le sélecteur
    de compte dans le topbar change le **capital de départ**, le **P&L** et le **nombre de
    trades** sur le Dashboard, et filtre le Journal/Analytics/Sessions. « Tous les comptes »
    → agrégat. (Régressions 104-106.)
 
-6. **Quota comptes** — un FREE ne peut pas créer un 2e compte (CTA upgrade). Un Starter
-   est bloqué au 4e compte actif. (107.)
+6. **Quota comptes** — un FREE ne peut pas créer un 2e compte (CTA upgrade Premium). Un
+   Premium a des comptes illimités. (107.)
 
 7. **Checkout Stripe s'ouvre** — depuis Paramètres/Pricing, cliquer « Passer Premium »
    ouvre bien la page de paiement Stripe (mode prod = clés LIVE). NE PAS payer. Vérifier

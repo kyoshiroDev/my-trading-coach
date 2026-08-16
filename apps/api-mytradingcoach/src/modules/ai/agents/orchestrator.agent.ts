@@ -5,6 +5,7 @@ import { PatternAgent } from './pattern.agent';
 import { CoachAgent, Advice } from './coach.agent';
 import { Pattern } from './pattern.agent';
 import { buildUserTradingContext } from '../user-context.builder';
+import { effectiveEmotion } from '../../../common/utils/effective-emotion.util';
 
 export interface InsightItem {
   type: 'strength' | 'weakness' | 'pattern';
@@ -20,7 +21,7 @@ export interface InsightsFlowResult {
 }
 
 /**
- * Orchestrator — zero direct Anthropic calls.
+ * Orchestrator : zero direct Anthropic calls.
  * Coordinates DataAgent → PatternAgent → CoachAgent and assembles
  * the final response matching the existing /ai/insights API contract.
  */
@@ -34,13 +35,14 @@ export class OrchestratorAgent {
   ) {}
 
   async runInsightsFlow(userId: string): Promise<InsightsFlowResult> {
-    // Step 1 — Data (0 Anthropic tokens)
+    // Step 1 : Data (0 Anthropic tokens)
     const [trades, userProfile] = await Promise.all([
       this.prisma.trade.findMany({
         where: { userId },
         orderBy: { tradedAt: 'desc' },
         take: 50,
         select: { asset: true, side: true, pnl: true, emotion: true,
+                  tradeSession: { select: { moodStart: true } },
                   setup: { select: { title: true, description: true } },
                   session: true, tradedAt: true,
                   riskReward: true, timeframe: true, notes: true },
@@ -56,14 +58,19 @@ export class OrchestratorAgent {
     ]);
     const userContext = userProfile ? buildUserTradingContext(userProfile) : '';
     // DataAgent attend un setup en string : on l'alimente avec le TITRE du setup.
-    const summaryTrades = trades.map((t) => ({ ...t, setup: t.setup.title }));
+    // Émotion = effective (override du trade sinon humeur de session) ; '' si non renseignée.
+    const summaryTrades = trades.map((t) => ({
+      ...t,
+      setup: t.setup.title,
+      emotion: effectiveEmotion(t) ?? '',
+    }));
     const summary = this.dataAgent.buildTradesSummary(summaryTrades);
     const summaryWithContext = userContext ? `${userContext}\n${summary}` : summary;
 
-    // Step 2 — Pattern detection (1 Anthropic call, system cached)
+    // Step 2 : Pattern detection (1 Anthropic call, system cached)
     const analysis = await this.patternAgent.analyze(summaryWithContext, userId);
 
-    // Step 3 — Actionable advice (1 Anthropic call, system cached)
+    // Step 3 : Actionable advice (1 Anthropic call, system cached)
     const advice = await this.coachAgent.generateAdvice({
       patterns: analysis.patterns,
       summary: summaryWithContext,

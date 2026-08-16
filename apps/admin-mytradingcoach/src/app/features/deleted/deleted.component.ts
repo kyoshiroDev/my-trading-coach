@@ -47,15 +47,15 @@ import { CHART_COLORS, gridAxis, noLegend } from '../../shared/charts/chart-them
                 <tbody>
                   @for (a of d.accounts; track a.id) {
                     <tr>
-                      <td data-label="Utilisateur"><div class="u-cell"><div class="u-av del-av">{{ initials(a) }}</div><div><div class="u-name">{{ a.name ?? 'anonymisé' }}</div><div class="u-mail">{{ a.email ?? '—' }}</div></div></div></td>
+                      <td data-label="Utilisateur"><div class="u-cell"><div class="u-av del-av">{{ initials(a) }}</div><div><div class="u-name">{{ a.name ?? 'anonymisé' }}</div><div class="u-mail">{{ a.email ?? '-' }}</div></div></div></td>
                       <td data-label="Inscrit le" class="td-mono muted">{{ a.signedUpAt | date:'dd/MM/yyyy' }}</td>
                       <td data-label="Supprimé le" class="td-mono" [style.color]="isDeletedToday(a.deletedAt) ? 'var(--red)' : null">{{ a.deletedAt | date:'dd/MM/yyyy' }}</td>
                       <td data-label="Durée de vie" class="td-mono">{{ lifetime(a.lifetimeDays) }}</td>
-                      <td data-label="Plan"><span class="badge" [class.b-premium]="a.plan==='PREMIUM'" [class.b-starter]="a.plan==='STARTER'" [class.b-free]="a.plan==='FREE'">{{ a.plan }}</span></td>
+                      <td data-label="Plan"><span class="badge" [class.b-premium]="a.plan==='PREMIUM'" [class.b-free]="a.plan==='FREE'">{{ a.plan }}</span></td>
                       <td data-label="A tradé">@if (a.hadTraded) { <span class="badge b-ok">oui</span> } @else { <span class="badge b-free">jamais</span> }</td>
-                      <td data-label="Parrainé par" class="td-mono" [class.muted]="!a.referredBy" [class.ref]="a.referredBy">{{ a.referredBy ?? '—' }}</td>
+                      <td data-label="Parrainé par" class="td-mono" [class.muted]="!a.referredBy" [class.ref]="a.referredBy">{{ a.referredBy ?? '-' }}</td>
                       <td data-label="Par"><span class="role-tag">{{ a.deletedBy === 'self' ? 'utilisateur' : 'admin' }}</span></td>
-                      <td data-label="Motif" class="td-mono" [class.muted]="!a.reason">{{ a.reason ?? '—' }}</td>
+                      <td data-label="Motif" class="td-mono" [class.muted]="!a.reason">{{ a.reason ?? '-' }}</td>
                     </tr>
                   } @empty {
                     <tr><td colspan="9" class="empty">Aucun compte supprimé</td></tr>
@@ -106,7 +106,7 @@ export class DeletedComponent {
     ).subscribe((r) => { if (r) this.data.set(r.data); });
   }
 
-  // Libellé du mois courant (« juin 2026 ») — sans dépendance de locale enregistrée.
+  // Libellé du mois courant (« juin 2026 ») : sans dépendance de locale enregistrée.
   private static readonly MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   protected readonly monthLabel = (() => {
     const d = new Date();

@@ -75,7 +75,10 @@ model Trade {
   takeProfit      Float?
   pnl             Float?
   riskReward      Float?
-  emotion         EmotionState
+  executionScore  Int?                             // note d'exécution CALCULÉE 0-100 (PROMPT-161), null si non évaluable
+  executionGrade  ExecutionGrade?                  // EXCELLENT/BON/MOYEN/MAUVAIS dérivé du score
+  executionMethod ExecutionMethod?                 // barème ayant produit la note (STOP_BASED / BEHAVIORAL), null si non notée (PROMPT-168)
+  emotion         EmotionState?                    // override OPTIONNEL (PROMPT-163) — null = non renseignée
   setupId         String                           // FK → Setup (setup défini par l'user)
   setup           Setup           @relation(fields: [setupId], references: [id], onDelete: NoAction)
   session         TradingSessionLabel
@@ -188,6 +191,17 @@ enum SessionStatus       { ACTIVE CLOSED }                              // ← V
 
 > **Setups** : setups définis par l'utilisateur (modèle `Setup` : `title`, `color`, `description`, `sortOrder`, `archived`). 6 défauts seedés au signup et pour la démo (Breakout `#10b981`, Pullback `#3b82f6`, Range `#f59e0b`, Reversal `#ef4444`, Scalping `#8b5cf6`, News `#60a5fa`). L'ancienne énumération de setups a été migrée en table (remap par titre, zéro régression). `Trade.setupId` (FK, `onDelete: NoAction`) → `Setup` ; la suppression d'un setup encore référencé par des trades est bloquée par `SetupsService` (+ backstop FK).
 
+> **Émotion (PROMPT-163)** : `Trade.emotion` est **nullable** — un **override optionnel** (surtout REVENGE/FEAR dans l'instant). L'émotion de base vient de la journée : `TradeSession.moodStart` (`MoodState`, inclut `TIRED`). **Émotion effective = `trade.emotion ?? trade.tradeSession?.moodStart ?? null`** — helper unique `common/utils/effective-emotion.util.ts` (`effectiveEmotion`, `isRiskyEmotion` = STRESSED/REVENGE/FEAR/TIRED, `isHealthyEmotion` = CONFIDENT/FOCUSED/NEUTRAL). `null` = non renseignée → **exclue** des agrégations (dominante, analytics, IA, note d'exécution renormalisée), **jamais** de faux NEUTRAL. Toute requête qui a besoin de l'émotion effective doit `select`/`include` `tradeSession: { select: { moodStart: true } }`. L'API `GET /trades` expose `effectiveEmotion` par trade ; le front l'affiche (« — » si null). Les deux enums restent distincts (`EmotionState` trade vs `MoodState` journée).
+
+> **Note d'exécution (PROMPT-161)** : `executionScore` (0-100) + `executionGrade`
+> (`ExecutionGrade` = EXCELLENT/BON/MOYEN/MAUVAIS) **calculés** (déterministe, **zéro IA**,
+> **indépendants du P&L**), **jamais saisis**. Helper pur `computeExecutionGrade(trade, account)`
+> (`common/utils/execution-grade.util.ts`) : 4 critères pondérés (stop respecté 35 · R:R 25 ·
+> émotion effective saine 20 · risque ≤ max 20) ; critère non évaluable ignoré + renormalisation ;
+> < 2 critères applicables → `null` (« Non évalué »). Recalculé à la **création / édition / import**
+> (donnée stable persistée, jamais recalculée à la lecture) ; **backfill SQL** dans la migration.
+> Seuils par défaut exposés : `RR_MIN=1.5`, `RISK_MAX_PCT=1`, `RISK_SOFT_PCT=2`, poids `{35,25,20,20}`.
+
 ---
 
 ## Règles de nommage
@@ -218,21 +232,10 @@ const trades = await prisma.trade.findMany({
 const nextCursor = trades.length === limit ? trades[trades.length - 1].id : null;
 ```
 
-### Limite 30 trades/mois FREE
+### Trades FREE — illimités (PROMPT-169)
 
-```typescript
-const startOfMonth = new Date();
-startOfMonth.setDate(1);
-startOfMonth.setHours(0, 0, 0, 0);
-
-const count = await prisma.trade.count({
-  where: { userId, createdAt: { gte: startOfMonth } }
-});
-
-if (user.plan === 'FREE' && count >= 30) {
-  throw new HttpException('Limite de 30 trades/mois atteinte. Passe à Premium.', 403);
-}
-```
+Le quota mensuel de 30 trades FREE a été **supprimé** : plus de `checkMonthlyLimit`,
+`countThisMonth`, ni code `FREE_LIMIT_REACHED`. Tous les plans loggent sans limite.
 
 ### Stats analytics summary
 

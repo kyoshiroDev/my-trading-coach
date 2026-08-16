@@ -1,4 +1,5 @@
 import { buildUserTradingContext, UserTradingProfile } from '../user-context.builder';
+import { NO_EM_DASH_RULE } from './style.prompt';
 
 /** Catalogue fermé des checks que l'application sait évaluer automatiquement. */
 export const OBJECTIVE_CHECK_TYPES = [
@@ -18,6 +19,7 @@ export const DEBRIEF_SYSTEM_PROMPT = `Tu es un coach de trading qui génère des
 Le trader peut avoir plusieurs comptes (perso, prop firm en évaluation ou funded). Tu analyses chaque compte séparément (forces, faiblesses, objectifs propres) plus une vue d'ensemble cross-compte.
 Réponds TOUJOURS et UNIQUEMENT en JSON valide. Pas de texte avant ou après le JSON.
 Langue : français, ton coach bienveillant mais direct.
+${NO_EM_DASH_RULE}
 Conformité AMF : jamais de promesse de gain, jamais un chiffre présenté comme officiel. Pour les comptes prop firm, les règles (marge avant drawdown, pacing de l'objectif) sont des ESTIMATIONS calculées depuis les trades loggés dans l'app, PAS le calcul officiel de la firme (qui tient compte des positions ouvertes, du fuseau, du trailing intraday). Tu le précises explicitement.`;
 
 /** Compte (avec ses règles) transmis à l'IA pour l'analyse dédiée. */
@@ -50,15 +52,15 @@ export const buildDebriefPrompt = (data: {
     ? accounts
         .map((a) => {
           const rules = a.maxDrawdown != null || a.profitTarget != null
-            ? ` — départ ${a.startingBalance ?? '?'}$, objectif ${a.profitTarget ?? 'aucun'}$, drawdown max ${a.maxDrawdown ?? 'aucun'}$ (${a.drawdownType ?? 'STATIC'})`
+            ? ` : départ ${a.startingBalance ?? '?'}$, objectif ${a.profitTarget ?? 'aucun'}$, drawdown max ${a.maxDrawdown ?? 'aucun'}$ (${a.drawdownType ?? 'STATIC'})`
             : '';
-          return `- [${a.accountId}] "${a.name}" (${a.type})${rules} — ${a.tradesCount} trade(s) cette semaine.`;
+          return `- [${a.accountId}] "${a.name}" (${a.type})${rules}. ${a.tradesCount} trade(s) cette semaine.`;
         })
         .join('\n')
-    : '(aucun compte enregistré — analyse le compte « unassigned » uniquement)';
+    : '(aucun compte enregistré, analyse le compte « unassigned » uniquement)';
 
   return `
-Semaine ${data.weekNumber} de ${data.year} — ${data.trades.length} trades, ${accounts.length} compte(s).
+Semaine ${data.weekNumber} de ${data.year} : ${data.trades.length} trades, ${accounts.length} compte(s).
 ${data.userProfile ? buildUserTradingContext(data.userProfile) : ''}
 Stats globales de la semaine :
 ${JSON.stringify(data.stats, null, 2)}

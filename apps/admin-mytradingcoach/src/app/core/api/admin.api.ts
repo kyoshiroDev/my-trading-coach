@@ -4,7 +4,7 @@ import { environment } from '../../../environments/environment';
 
 export interface AdminUser {
   id: string; email: string; name: string | null;
-  plan: 'FREE' | 'STARTER' | 'PREMIUM'; role: 'ADMIN' | 'USER' | 'BETA_TESTER' | 'AMBASSADOR';
+  plan: 'FREE' | 'PREMIUM'; role: 'ADMIN' | 'USER' | 'BETA_TESTER' | 'AMBASSADOR';
   trialEndsAt: string | null; stripeInterval: 'month' | 'year' | null;
   stripeCurrentPeriodEnd: string | null;
   lastSeenAt: string | null; lastLoginAt: string | null; createdAt: string;
@@ -13,22 +13,21 @@ export interface AdminUser {
 export interface AdminStats {
   mrr: number; arr: number;
   totalUsers: number;
-  totalStarter: number; totalPremium: number;
-  starterMonthly: number; starterAnnual: number;
+  totalPremium: number;
   premiumMonthly: number; premiumAnnual: number;
   monthly: number; annual: number;
   trials: number;
   freeUsers: number; newThisMonth: number; churnedThisMonth: number;
   betaTesters: number; ambassadors: number;
-  // Engagement par récence (≥1 trade sur la fenêtre) — distinct de l'activation.
+  // Engagement par récence (≥1 trade sur la fenêtre) : distinct de l'activation.
   tradersActifs7d: number; tradersActifs30d: number;
-  // Comptes supprimés (trace RGPD) — distinct du churn d'abonnement.
+  // Comptes supprimés (trace RGPD) : distinct du churn d'abonnement.
   comptesSupprimesMois: number; comptesSupprimesTotal: number;
 }
 
 export interface AdminOnlineUser {
   id: string; email: string; name: string | null;
-  plan: 'FREE' | 'STARTER' | 'PREMIUM'; role: 'ADMIN' | 'USER' | 'BETA_TESTER' | 'AMBASSADOR';
+  plan: 'FREE' | 'PREMIUM'; role: 'ADMIN' | 'USER' | 'BETA_TESTER' | 'AMBASSADOR';
   lastSeenAt: string; lastLoginAt: string | null;
 }
 
@@ -111,7 +110,6 @@ export interface AdminAmbassador {
   email: string;
   referralCode: string;
   totalReferrals: number;
-  starterReferrals: number;
   premiumReferrals: number;
   totalEarned: number;
   pendingPayout: number;
@@ -131,13 +129,12 @@ export interface AdminAmbassadorDetail {
     id: string;
     name: string | null;
     email: string;
-    plan: 'FREE' | 'STARTER' | 'PREMIUM';
+    plan: 'FREE' | 'PREMIUM';
     createdAt: string;
     isActive: boolean;
   }>;
   total: number;
   free: number;
-  starter: number;
   premium: number;
   earningsByMonth: Record<string, number>;
   totalEarned: number;
@@ -166,7 +163,7 @@ export interface DeletedAccount {
   signedUpAt: string;
   deletedAt: string;
   lifetimeDays: number;
-  plan: 'FREE' | 'STARTER' | 'PREMIUM';
+  plan: 'FREE' | 'PREMIUM';
   hadTraded: boolean;
   tradesCount: number;
   referredBy: string | null;
@@ -209,7 +206,7 @@ export interface UserDetailData {
     id: string;
     name: string | null;
     email: string;
-    plan: 'FREE' | 'STARTER' | 'PREMIUM';
+    plan: 'FREE' | 'PREMIUM';
     role: 'ADMIN' | 'USER' | 'BETA_TESTER' | 'AMBASSADOR';
     subscriptionStatus: string | null;
     ambassadorRefCode: string | null;
@@ -279,7 +276,7 @@ export class AdminApi {
     return this.http.get<{ data: { users: AdminUser[]; total: number } }>(this.base, { params });
   }
   detail(id: string)    { return this.http.get<{ data: AdminUserDetail }>(`${this.base}/${id}/detail`); }
-  update(id: string, dto: { name?: string; plan?: 'FREE' | 'STARTER' | 'PREMIUM'; role?: 'USER' | 'BETA_TESTER' | 'AMBASSADOR' }) {
+  update(id: string, dto: { name?: string; plan?: 'FREE' | 'PREMIUM'; role?: 'USER' | 'BETA_TESTER' | 'AMBASSADOR' }) {
     return this.http.patch<{ data: AdminUser }>(`${this.base}/${id}`, dto);
   }
   delete(id: string)    { return this.http.delete<void>(`${this.base}/${id}`); }

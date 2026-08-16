@@ -3,53 +3,49 @@ import { TestBed } from '@angular/core/testing';
 import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
 import { AccountSelectorComponent } from './account-selector.component';
 import { SelectedAccountStore } from '../../../core/stores/selected-account.store';
-import { UserStore } from '../../../core/stores/user.store';
 import { TradingAccount } from '../../../core/api/accounts.api';
 
 const acc = (over: Partial<TradingAccount>): TradingAccount => over as TradingAccount;
 
-function setup(opts: { premium?: boolean; loaded?: boolean } = {}) {
+function setup(opts: { loaded?: boolean; selectedId?: string | 'all' } = {}) {
   const store = {
     accounts: signal<TradingAccount[]>([]),
-    selectedAccountId: signal<string | 'all'>('all'),
+    selectedAccountId: signal<string | 'all'>(opts.selectedId ?? 'all'),
+    selected: signal<TradingAccount | null>(null),
     isLoading: signal(false),
     loaded: signal(opts.loaded ?? false),
     select: vi.fn(),
     load: vi.fn(),
   };
-  const eligible = opts.premium ?? true;
-  const userStore = { isStarterOrAbove: () => eligible, isPremium: () => eligible };
 
   TestBed.configureTestingModule({
-    providers: [
-      { provide: SelectedAccountStore, useValue: store },
-      { provide: UserStore, useValue: userStore },
-    ],
+    providers: [{ provide: SelectedAccountStore, useValue: store }],
   });
   TestBed.overrideComponent(AccountSelectorComponent, {
-    set: { template: '<div></div>', imports: [], styleUrls: [], styleUrl: undefined as unknown as string, schemas: [NO_ERRORS_SCHEMA] },
+    set: {
+      template: '<div></div>',
+      imports: [],
+      styleUrls: [],
+      styleUrl: undefined as unknown as string,
+      schemas: [NO_ERRORS_SCHEMA],
+    },
   });
   const fixture = TestBed.createComponent(AccountSelectorComponent);
   fixture.detectChanges();
-   
+
   return { fixture, cmp: fixture.componentInstance as any, store };
 }
 
 describe('AccountSelectorComponent', () => {
   beforeEach(() => TestBed.resetTestingModule());
 
-  it('Starter+ + non chargé → charge les comptes à l\'init', () => {
-    const { store } = setup({ premium: true, loaded: false });
+  it("non chargé → charge les comptes à l'init", () => {
+    const { store } = setup({ loaded: false });
     expect(store.load).toHaveBeenCalledTimes(1);
   });
 
-  it('FREE → ne charge pas (aucun appel /accounts)', () => {
-    const { store } = setup({ premium: false });
-    expect(store.load).not.toHaveBeenCalled();
-  });
-
   it('déjà chargé → ne recharge pas', () => {
-    const { store } = setup({ premium: true, loaded: true });
+    const { store } = setup({ loaded: true });
     expect(store.load).not.toHaveBeenCalled();
   });
 
@@ -60,5 +56,49 @@ describe('AccountSelectorComponent', () => {
     expect(cmp.dotColor(acc({ status: 'FAILED', type: 'EVALUATION' }))).toBe('var(--red)');
     expect(cmp.dotColor(acc({ status: 'ARCHIVED', type: 'FUNDED' }))).toBe('var(--text-3)');
     expect(cmp.dotColor(acc({ status: 'PASSED', type: 'EVALUATION' }))).toBe('var(--green)');
+  });
+
+  it('isAll() reflète la vue agrégée', () => {
+    const allView = setup({ selectedId: 'all' });
+    expect(allView.cmp.isAll()).toBe(true);
+    TestBed.resetTestingModule();
+    const oneAcc = setup({ selectedId: 'a1' });
+    expect(oneAcc.cmp.isAll()).toBe(false);
+  });
+
+  it('toggle() ouvre puis referme le menu', () => {
+    const { cmp } = setup();
+    expect(cmp.open()).toBe(false);
+    cmp.toggle();
+    expect(cmp.open()).toBe(true);
+    cmp.toggle();
+    expect(cmp.open()).toBe(false);
+  });
+
+  it('pick(id) sélectionne le compte ET referme le menu', () => {
+    const { cmp, store } = setup();
+    cmp.toggle();
+    expect(cmp.open()).toBe(true);
+    cmp.pick('a2');
+    expect(store.select).toHaveBeenCalledWith('a2');
+    expect(cmp.open()).toBe(false);
+  });
+
+  it('Échap ferme le menu', () => {
+    const { cmp } = setup();
+    cmp.toggle();
+    cmp.onEscape();
+    expect(cmp.open()).toBe(false);
+  });
+
+  it('clic extérieur ferme, clic intérieur garde ouvert', () => {
+    const { cmp, fixture } = setup();
+    cmp.toggle();
+    // Cible interne (le host lui-même) → reste ouvert.
+    cmp.onDocClick({ target: fixture.nativeElement } as MouseEvent);
+    expect(cmp.open()).toBe(true);
+    // Cible externe (le body, qui n'est pas contenu dans le host) → ferme.
+    cmp.onDocClick({ target: document.body } as MouseEvent);
+    expect(cmp.open()).toBe(false);
   });
 });

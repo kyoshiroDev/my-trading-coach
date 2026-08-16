@@ -34,9 +34,9 @@ import { parseDecimal } from '../../../../../../core/utils/parse-decimal';
                   </span>
                 </div>
                 <div class="feed-l2">
-                  <span class="feed-price">Entrée: {{ (trade.entry && trade.entry > 0) ? trade.entry : '—' }}</span>
+                  <span class="feed-price">Entrée: {{ (trade.entry && trade.entry > 0) ? trade.entry : '-' }}</span>
                   <span class="feed-sep">·</span>
-                  <span class="feed-price">Sortie: {{ trade.exit ?? '—' }}</span>
+                  <span class="feed-price">Sortie: {{ trade.exit ?? '-' }}</span>
                   <span class="feed-pnl" [class.green]="trade.pnl >= 0" [class.red]="trade.pnl < 0" style="margin-left:auto">
                     {{ trade.pnl >= 0 ? '+' : '' }}{{ trade.pnl.toFixed(0) }}$
                   </span>
@@ -53,9 +53,9 @@ import { parseDecimal } from '../../../../../../core/utils/parse-decimal';
                   <span class="live-tag">● LIVE</span>
                 </div>
                 <div class="feed-l2">
-                  <span class="feed-price">Entrée: {{ (trade.entry && trade.entry > 0) ? trade.entry : '—' }}</span>
+                  <span class="feed-price">Entrée: {{ (trade.entry && trade.entry > 0) ? trade.entry : '-' }}</span>
                   <span class="feed-sep">·</span>
-                  <span class="feed-price">Sortie: —</span>
+                  <span class="feed-price">Sortie: -</span>
                 </div>
               </div>
               @if (closingTradeId() === trade.id) {
@@ -123,7 +123,7 @@ export class LiveFeedComponent {
   protected closeBadgeLabel(tags: string[]): string {
     if (tags.includes('TP')) return 'TP';
     if (tags.includes('SL')) return 'SL';
-    return '—';
+    return '-';
   }
 
   protected detectCloseType(trade: SessionTrade, exitPrice: number): string {

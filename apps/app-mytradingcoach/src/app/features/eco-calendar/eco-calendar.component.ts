@@ -39,6 +39,7 @@ interface TableRow {
   selector: 'mtc-eco-calendar-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [],
   templateUrl: './eco-calendar.component.html',
   styleUrl: './eco-calendar.component.css',
 })
@@ -47,8 +48,6 @@ export class EcoCalendarComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly userStore = inject(UserStore);
 
-  /** Analyse IA éco (bull/bear) = feature Starter+ (StarterGuard côté API). */
-  protected readonly canAnalyze = this.userStore.isStarterOrAbove;
 
   protected readonly currentWeekStart = signal(this.getMonday(new Date()));
   protected readonly isLoading = signal(false);
@@ -322,8 +321,6 @@ export class EcoCalendarComponent implements OnInit {
 
   /** Replie/déplie l'analyse d'un event. 1 seul appel réseau au 1er dépliage (puis cache). */
   protected toggleAnalysis(event: EcoEvent): void {
-    // Analyse IA = Starter+ : ne pas déclencher l'appel (403) pour un FREE.
-    if (!this.canAnalyze()) return;
     const name = event.name;
     if (this.expandedEvent() === name) { this.expandedEvent.set(null); return; }
     this.expandedEvent.set(name);
@@ -483,7 +480,7 @@ export class EcoCalendarComponent implements OnInit {
     return this.pinnedUpcoming().length;
   }
 
-  // Session de marché par région de la devise (et plus par heure) — ex. EUR 14:15 → Europe.
+  // Session de marché par région de la devise (et plus par heure) : ex. EUR 14:15 → Europe.
   private static readonly SESSION_BY_CCY: Record<string, EcoSession> = {
     // Asie / Pacifique
     JPY: 'asia', CNY: 'asia', AUD: 'asia', NZD: 'asia', KRW: 'asia', INR: 'asia',
@@ -498,7 +495,7 @@ export class EcoCalendarComponent implements OnInit {
   private sessionOf(event: EcoEvent): EcoSession {
     const byCcy = EcoCalendarComponent.SESSION_BY_CCY[event.currency?.toUpperCase()];
     if (byCcy) return byCcy;
-    // Repli si devise non mappée : par heure (Europe/Paris) — avant 14h ⇒ europe, sinon us
+    // Repli si devise non mappée : par heure (Europe/Paris), avant 14h ⇒ europe, sinon us
     const [h, m] = (event.time ?? '00:00').split(':').map(Number);
     return ((h || 0) * 60 + (m || 0)) >= 14 * 60 ? 'us' : 'europe';
   }

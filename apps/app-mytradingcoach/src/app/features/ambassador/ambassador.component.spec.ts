@@ -11,9 +11,8 @@ function makeStats(partial: Partial<AmbassadorStats> = {}): AmbassadorStats {
   return {
     referralCode: 'VAL',
     referrals: [],
-    total: 5,
+    total: 4,
     free: 3,
-    starter: 1,
     premium: 1,
     earningsByMonth: {},
     totalEarned: 94.4,

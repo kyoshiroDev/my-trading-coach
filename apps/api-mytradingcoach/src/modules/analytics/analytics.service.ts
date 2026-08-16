@@ -2,7 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
-import { EmotionState } from '@prisma/client';
+import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
+import { computeTradeStats } from '../../common/utils/trade-stats.util';
 
 export interface EquityPoint {
   date: Date;
@@ -39,8 +40,18 @@ export class AnalyticsService {
   private accCond(accountId?: string): { accountId?: string } { return accountId ? { accountId } : {}; }
   private accKey(accountId?: string): string { return accountId ? `:acc:${accountId}` : ''; }
 
-  async getSummary(userId: string, accountId?: string) {
-    return this.withCache(`analytics:${userId}:summary${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeSummary(userId, accountId));
+  // Filtre de plage de dates (période glissante du dashboard) : fragment `where` + suffixe de clé.
+  private dateCond(from?: Date, to?: Date): { tradedAt?: { gte?: Date; lte?: Date } } {
+    if (!from && !to) return {};
+    return { tradedAt: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } };
+  }
+  private rangeKey(from?: Date, to?: Date): string {
+    return from || to ? `:range:${from?.toISOString() ?? ''}:${to?.toISOString() ?? ''}` : '';
+  }
+
+  async getSummary(userId: string, accountId?: string, from?: Date, to?: Date) {
+    const key = `analytics:${userId}:summary${this.accKey(accountId)}${this.rangeKey(from, to)}`;
+    return this.withCache(key, CACHE_TTL.ANALYTICS, () => this.computeSummary(userId, accountId, from, to));
   }
   async getBySetup(userId: string, accountId?: string) {
     return this.withCache(`analytics:${userId}:setup${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeBySetup(userId, accountId));
@@ -63,15 +74,23 @@ export class AnalyticsService {
   async getMonthlyActivity(userId: string, year: number, month: number, accountId?: string) {
     return this.withCache(`analytics:${userId}:activity:${year}:${month}${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeMonthlyActivity(userId, year, month, accountId));
   }
+  // Activité journalière (P&L par jour) sur une plage glissante : l'agrégation jour/semaine/mois
+  // est faite côté front. Réutilise le même bucketing par jour (fuseau Paris) que l'activité mensuelle.
+  async getActivityRange(userId: string, from?: Date, to?: Date, accountId?: string) {
+    const key = `analytics:${userId}:activity:range${this.rangeKey(from, to)}${this.accKey(accountId)}`;
+    return this.withCache(key, CACHE_TTL.ANALYTICS, async () => ({
+      days: await this.computeDailyActivity(userId, this.dateCond(from, to), accountId),
+    }));
+  }
   async getEquityCurveDaily(userId: string, from?: Date, to?: Date, accountId?: string) {
     const key = `analytics:${userId}:equity:daily:${from?.toISOString() ?? ''}:${to?.toISOString() ?? ''}${this.accKey(accountId)}`;
     return this.withCache(key, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveDaily(userId, from, to, accountId));
   }
 
-  private async computeSummary(userId: string, accountId?: string) {
+  private async computeSummary(userId: string, accountId?: string, from?: Date, to?: Date) {
     const trades = await this.prisma.trade.findMany({
-      where: { userId, ...this.accCond(accountId), pnl: { not: null } },
-      select: { pnl: true, tradedAt: true, session: true },
+      where: { userId, ...this.accCond(accountId), ...this.dateCond(from, to), pnl: { not: null } },
+      select: { pnl: true, commission: true, tradedAt: true, session: true },
       orderBy: { tradedAt: 'asc' },
     });
 
@@ -83,16 +102,20 @@ export class AnalyticsService {
         maxDrawdown: 0,
         profitFactor: null,
         streak: 0,
-        topSession: '—',
+        topSession: '-',
         topSessionWinRate: 0,
-        topHour: '—',
+        topHour: '-',
       };
     }
 
     const totalTrades = trades.length;
-    const wins = trades.filter((t) => (t.pnl ?? 0) > 0).length;
-    const winRate = (wins / totalTrades) * 100;
-    const totalPnl = trades.reduce((acc, t) => acc + (t.pnl ?? 0), 0);
+    // Win rate via le helper unique (BE exclus du dénominateur, PROMPT-160).
+    const stats = computeTradeStats(trades);
+    const winRate = stats.winRate;
+    // P&L NET = somme des pnl MOINS les frais (commissions). Sans ça le KPI « P&L net » du
+    // dashboard et le capital affichaient le brut, incohérents avec le net du journal (PROMPT-175).
+    const totalCommission = trades.reduce((a, t) => a + (t.commission ?? 0), 0);
+    const totalPnl = stats.totalPnl - totalCommission;
 
     // Profit factor = profits bruts / pertes brutes. null si aucune perte (∞ → géré côté front).
     const grossProfit = trades.reduce((a, t) => a + Math.max(0, t.pnl ?? 0), 0);
@@ -120,18 +143,18 @@ export class AnalyticsService {
     if (!direction) streak = -streak;
 
     // Top session
-    const sessionMap = new Map<string, { wins: number; count: number }>();
+    const sessionMap = new Map<string, { wins: number; losses: number; count: number }>();
     for (const t of trades) {
       const s = t.session as string;
-      const g = sessionMap.get(s) ?? { wins: 0, count: 0 };
+      const g = sessionMap.get(s) ?? { wins: 0, losses: 0, count: 0 };
       g.count++;
-      if ((t.pnl ?? 0) > 0) g.wins++;
+      if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
       sessionMap.set(s, g);
     }
-    let topSession = '—';
+    let topSession = '-';
     let topSessionWinRate = 0;
     for (const [session, g] of sessionMap.entries()) {
-      const wr = g.count > 0 ? (g.wins / g.count) * 100 : 0;
+      const wr = (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : 0;
       if (wr > topSessionWinRate) {
         topSessionWinRate = wr;
         topSession = session;
@@ -139,25 +162,25 @@ export class AnalyticsService {
     }
 
     // Top hour
-    const hourMap = new Map<number, { wins: number; count: number }>();
+    const hourMap = new Map<number, { wins: number; losses: number; count: number }>();
     for (const t of trades) {
       const h = new Date(t.tradedAt).getHours();
-      const g = hourMap.get(h) ?? { wins: 0, count: 0 };
+      const g = hourMap.get(h) ?? { wins: 0, losses: 0, count: 0 };
       g.count++;
-      if ((t.pnl ?? 0) > 0) g.wins++;
+      if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
       hourMap.set(h, g);
     }
     let topHourNum = -1;
     let topHourWr = 0;
     for (const [h, g] of hourMap.entries()) {
-      const wr = g.count > 0 ? (g.wins / g.count) * 100 : 0;
+      const wr = (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : 0;
       if (wr > topHourWr) {
         topHourWr = wr;
         topHourNum = h;
       }
     }
     const topHour =
-      topHourNum >= 0 ? `${String(topHourNum).padStart(2, '0')}:00` : '—';
+      topHourNum >= 0 ? `${String(topHourNum).padStart(2, '0')}:00` : '-';
 
     return {
       winRate,
@@ -192,19 +215,19 @@ export class AnalyticsService {
       }),
     ]);
 
-    type Agg = { title: string; color: string; pnl: number; rr: number[]; count: number; wins: number };
+    type Agg = { title: string; color: string; pnl: number; rr: number[]; count: number; wins: number; losses: number };
     const grouped = new Map<string, Agg>();
     // Setups actifs d'abord (ordre stable, présents même à 0 trade).
     for (const s of activeSetups) {
-      grouped.set(s.id, { title: s.title, color: s.color, pnl: 0, rr: [], count: 0, wins: 0 });
+      grouped.set(s.id, { title: s.title, color: s.color, pnl: 0, rr: [], count: 0, wins: 0, losses: 0 });
     }
     for (const t of trades) {
       const g = grouped.get(t.setupId) ?? {
-        title: t.setup.title, color: t.setup.color, pnl: 0, rr: [], count: 0, wins: 0,
+        title: t.setup.title, color: t.setup.color, pnl: 0, rr: [], count: 0, wins: 0, losses: 0,
       };
       g.count++;
       g.pnl += t.pnl ?? 0;
-      if ((t.pnl ?? 0) > 0) g.wins++;
+      if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
       if (t.riskReward) g.rr.push(t.riskReward);
       grouped.set(t.setupId, g);
     }
@@ -216,32 +239,40 @@ export class AnalyticsService {
       count: g.count,
       pnl: g.pnl,
       avgRR: g.rr.length ? g.rr.reduce((a, b) => a + b, 0) / g.rr.length : 0,
-      winRate: g.count > 0 ? (g.wins / g.count) * 100 : null,
+      winRate: (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : null,
     }));
   }
 
   private async computeByEmotion(userId: string, accountId?: string) {
     const trades = await this.prisma.trade.findMany({
       where: { userId, ...this.accCond(accountId), pnl: { not: null } },
-      select: { emotion: true, pnl: true, riskReward: true },
+      // Émotion effective : override du trade, sinon humeur de la session.
+      select: {
+        emotion: true,
+        tradeSession: { select: { moodStart: true } },
+        pnl: true,
+        riskReward: true,
+      },
     });
 
     const grouped = new Map<
-      EmotionState,
-      { pnl: number; rr: number[]; count: number; wins: number }
+      string,
+      { pnl: number; rr: number[]; count: number; wins: number; losses: number }
     >();
     for (const t of trades) {
-      const g = grouped.get(t.emotion) ?? { pnl: 0, rr: [], count: 0, wins: 0 };
+      const emotion = effectiveEmotion(t);
+      if (!emotion) continue; // non renseignée → exclue des répartitions
+      const g = grouped.get(emotion) ?? { pnl: 0, rr: [], count: 0, wins: 0, losses: 0 };
       g.count++;
       g.pnl += t.pnl ?? 0;
-      if ((t.pnl ?? 0) > 0) g.wins++;
+      if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
       if (t.riskReward) g.rr.push(t.riskReward);
-      grouped.set(t.emotion, g);
+      grouped.set(emotion, g);
     }
 
     return Array.from(grouped.entries()).map(([emotion, g]) => ({
       emotion,
-      winRate: g.count > 0 ? (g.wins / g.count) * 100 : 0,
+      winRate: (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : 0,
       avgRR: g.rr.length ? g.rr.reduce((a, b) => a + b, 0) / g.rr.length : 0,
       count: g.count,
     }));
@@ -256,23 +287,23 @@ export class AnalyticsService {
     const DAY_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
     const grouped = new Map<
       string,
-      { count: number; wins: number; day: string; hour: number }
+      { count: number; wins: number; losses: number; day: string; hour: number }
     >();
     for (const t of trades) {
       const d = new Date(t.tradedAt);
       const day = DAY_LABELS[d.getDay()];
       const hour = d.getHours();
       const key = `${day}:${hour}`;
-      const g = grouped.get(key) ?? { count: 0, wins: 0, day, hour };
+      const g = grouped.get(key) ?? { count: 0, wins: 0, losses: 0, day, hour };
       g.count++;
-      if ((t.pnl ?? 0) > 0) g.wins++;
+      if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
       grouped.set(key, g);
     }
 
     return Array.from(grouped.values()).map((g) => ({
       day: g.day,
       hour: g.hour,
-      winRate: g.count > 0 ? (g.wins / g.count) * 100 : 0,
+      winRate: (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : 0,
       count: g.count,
     }));
   }
@@ -382,17 +413,23 @@ export class AnalyticsService {
     return this.computeEquityCurveDaily(userId, from, to, accountId);
   }
 
-  private async computeMonthlyActivity(userId: string, year: number, month: number, accountId?: string) {
-    const start = new Date(year, month - 1, 1);
-    const end = new Date(year, month, 1);
-
+  /**
+   * Buckets journaliers (date `YYYY-MM-DD` fuseau Paris → P&L net, nombre de trades, win rate)
+   * pour un `where` de dates arbitraire. SOURCE UNIQUE partagée par l'activité mensuelle et la
+   * plage glissante : le win rate exclut les BE (wins / (wins + losses)), P&L net = Σ pnl.
+   */
+  private async computeDailyActivity(
+    userId: string,
+    dateCond: { tradedAt?: { gte?: Date; lte?: Date; lt?: Date } },
+    accountId?: string,
+  ) {
     const trades = await this.prisma.trade.findMany({
-      where: { userId, ...this.accCond(accountId), pnl: { not: null }, tradedAt: { gte: start, lt: end } },
+      where: { userId, ...this.accCond(accountId), pnl: { not: null }, ...dateCond },
       select: { tradedAt: true, pnl: true },
       orderBy: { tradedAt: 'asc' },
     });
 
-    const byDate = new Map<string, { pnl: number; count: number; wins: number }>();
+    const byDate = new Map<string, { pnl: number; count: number; wins: number; losses: number }>();
     for (const t of trades) {
       const d = new Date(t.tradedAt);
       const key = d.toLocaleDateString('fr-FR', {
@@ -403,19 +440,27 @@ export class AnalyticsService {
       });
       const [day, mon, yr] = key.split('/');
       const dateKey = `${yr}-${mon}-${day}`;
-      const g = byDate.get(dateKey) ?? { pnl: 0, count: 0, wins: 0 };
+      const g = byDate.get(dateKey) ?? { pnl: 0, count: 0, wins: 0, losses: 0 };
       g.count++;
       g.pnl += t.pnl ?? 0;
-      if ((t.pnl ?? 0) > 0) g.wins++;
+      if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
       byDate.set(dateKey, g);
     }
 
-    const days = Array.from(byDate.entries()).map(([date, g]) => ({
-      date,
-      pnl: g.pnl,
-      tradesCount: g.count,
-      winRate: g.count > 0 ? (g.wins / g.count) * 100 : 0,
-    }));
+    return Array.from(byDate.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, g]) => ({
+        date,
+        pnl: g.pnl,
+        tradesCount: g.count,
+        winRate: (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : 0,
+      }));
+  }
+
+  private async computeMonthlyActivity(userId: string, year: number, month: number, accountId?: string) {
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 1);
+    const days = await this.computeDailyActivity(userId, { tradedAt: { gte: start, lt: end } }, accountId);
 
     return {
       year,
@@ -430,25 +475,27 @@ export class AnalyticsService {
   private async computeTopAssets(userId: string, accountId?: string) {
     const trades = await this.prisma.trade.findMany({
       where: { userId, ...this.accCond(accountId), pnl: { not: null } },
-      select: { asset: true, pnl: true },
+      select: { asset: true, pnl: true, commission: true },
     });
 
     const grouped = new Map<
       string,
-      { pnl: number; count: number; wins: number }
+      { pnl: number; count: number; wins: number; losses: number }
     >();
     for (const t of trades) {
-      const g = grouped.get(t.asset) ?? { pnl: 0, count: 0, wins: 0 };
+      const g = grouped.get(t.asset) ?? { pnl: 0, count: 0, wins: 0, losses: 0 };
       g.count++;
-      g.pnl += t.pnl ?? 0;
-      if ((t.pnl ?? 0) > 0) g.wins++;
+      // P&L NET par instrument = pnl − frais, cohérent avec le « P&L net » du dashboard.
+      // Le win/loss reste classé sur le pnl brut (même convention que le win rate global).
+      g.pnl += (t.pnl ?? 0) - (t.commission ?? 0);
+      if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
       grouped.set(t.asset, g);
     }
 
     return Array.from(grouped.entries())
       .map(([asset, g]) => ({
         asset,
-        winRate: g.count > 0 ? (g.wins / g.count) * 100 : 0,
+        winRate: (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : 0,
         pnl: g.pnl,
         count: g.count,
       }))

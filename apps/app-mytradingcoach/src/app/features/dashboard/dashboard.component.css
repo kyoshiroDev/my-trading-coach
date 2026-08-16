@@ -476,7 +476,7 @@ canvas {
 }
 
 /* ─── Premium upsell banner ─── */
-/* Bannière d'upgrade vers Starter — accent bleu (Starter), pas violet (Premium) */
+/* Bannière d'upgrade vers Premium */
 .premium-banner {
   background: linear-gradient(
     135deg,
@@ -875,8 +875,10 @@ canvas {
 .mtc-panel-sub { font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); margin-top: 2px; }
 .mtc-panel-body { padding: 18px; flex: 1; min-height: 0; }
 .mtc-eq-tabs { display: flex; gap: 4px; flex-shrink: 0; }
-.mtc-eq-tabs span { font-family: var(--font-mono); font-size: 10px; padding: 3px 8px; border-radius: 5px; color: var(--text-faint); }
-.mtc-eq-tabs span.on { color: var(--green); background: var(--green-dim); }
+.mtc-eq-tabs button { font-family: var(--font-mono); font-size: 10px; padding: 3px 8px; border: none; background: transparent; border-radius: 5px; color: var(--text-faint); cursor: pointer; transition: color .15s, background .15s; }
+.mtc-eq-tabs button:hover { color: var(--text-2); }
+.mtc-eq-tabs button.on { color: var(--green); background: var(--green-dim); }
+.mtc-eq-tabs button.on:hover { color: var(--green); }
 
 .mtc-ai { border-color: rgba(34, 211, 238, .32); background: linear-gradient(180deg, rgba(34, 211, 238, .05), var(--bg-card)); }
 .mtc-live { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 10px; color: var(--cyan); }
@@ -932,7 +934,7 @@ canvas {
 .mtc-lock-cta { margin-top: 4px; padding: 9px 18px; border-radius: 9px; border: none; background: var(--blue); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 0 18px rgba(59, 130, 246, .4); }
 
 /* Teaser verrouillé — analytics avancés gatés en FREE (équité, top actifs, stratégies).
-   Aperçu flouté + overlay « dès Starter », même pattern que le lock AI Coach. */
+   Aperçu flouté + overlay premium, même pattern que le lock AI Coach. */
 .mtc-lockwrap { position: relative; min-height: 200px; }
 .mtc-lockprev { filter: blur(3px); opacity: .35; pointer-events: none; height: 100%; }
 .mtc-lockov {

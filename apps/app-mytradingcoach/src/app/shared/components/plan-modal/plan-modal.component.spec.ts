@@ -48,9 +48,7 @@ describe('PlanModalComponent', () => {
   });
 
   type ModalApi = {
-    selectedTier: () => string;
     interval: () => string;
-    selectTier: (t: string) => void;
     setInterval: (i: string) => void;
     planId: () => string;
     confirmPlan: () => void;
@@ -62,30 +60,23 @@ describe('PlanModalComponent', () => {
     return fixture.componentInstance as unknown as ModalApi;
   };
 
-  it('par défaut: tier starter + intervalle mensuel', () => {
+  it('par défaut: palier premium + intervalle mensuel', () => {
     const c = instance();
-    expect(c.selectedTier()).toBe('starter');
     expect(c.interval()).toBe('monthly');
-    expect(c.planId()).toBe('starter_monthly');
+    expect(c.planId()).toBe('premium_monthly');
   });
 
-  it('selectTier() change la carte sélectionnée', () => {
+  it('setInterval() change l’intervalle (annuel)', () => {
     const c = instance();
-    c.selectTier('starter');
-    expect(c.selectedTier()).toBe('starter');
+    c.setInterval('yearly');
+    expect(c.interval()).toBe('yearly');
+    expect(c.planId()).toBe('premium_yearly');
   });
 
-  it('setInterval() change l’intervalle (global aux 2 cartes)', () => {
+  it('planId() recompose premium_interval', () => {
     const c = instance();
     c.setInterval('monthly');
-    expect(c.interval()).toBe('monthly');
-  });
-
-  it('planId() recompose tier_interval', () => {
-    const c = instance();
-    c.selectTier('starter');
-    c.setInterval('monthly');
-    expect(c.planId()).toBe('starter_monthly');
+    expect(c.planId()).toBe('premium_monthly');
   });
 
   it("close() émet l'output closed", () => {
@@ -97,17 +88,16 @@ describe('PlanModalComponent', () => {
     expect(closedSpy).toHaveBeenCalledOnce();
   });
 
-  it('confirmPlan() appelle checkout avec le planId composé', () => {
+  it('confirmPlan() appelle checkout avec le planId composé (annuel)', () => {
     const c = instance();
-    c.selectTier('starter');
-    c.setInterval('monthly');
+    c.setInterval('yearly');
     c.confirmPlan();
-    expect(mockBillingApi.checkout).toHaveBeenCalledWith('starter_monthly');
+    expect(mockBillingApi.checkout).toHaveBeenCalledWith('premium_yearly');
   });
 
-  it('confirmPlan() par défaut → checkout("starter_monthly")', () => {
+  it('confirmPlan() par défaut → checkout("premium_monthly")', () => {
     const c = instance();
     c.confirmPlan();
-    expect(mockBillingApi.checkout).toHaveBeenCalledWith('starter_monthly');
+    expect(mockBillingApi.checkout).toHaveBeenCalledWith('premium_monthly');
   });
 });

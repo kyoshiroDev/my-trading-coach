@@ -31,8 +31,6 @@ function setup(opts: SetupOpts = {}) {
   };
   const userStore = {
     user: signal(opts.user ?? null),
-    // Analyse IA éco = Starter+ ; les tests d'analyse simulent un accès autorisé.
-    isStarterOrAbove: () => true,
   };
 
   TestBed.configureTestingModule({
@@ -48,6 +46,7 @@ function setup(opts: SetupOpts = {}) {
       template: '<div></div>',
       styleUrls: [],
       styleUrl: undefined as unknown as string,
+      imports: [],
       schemas: [NO_ERRORS_SCHEMA],
     },
   });

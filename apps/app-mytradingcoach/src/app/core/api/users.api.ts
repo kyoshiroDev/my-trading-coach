@@ -49,14 +49,14 @@ export class UsersApi {
     return this.http.patch<{ data: AuthUser }>(`${this.base}/me`, dto);
   }
 
-  /** Sauvegarde le profil (étape stratégie) — ne termine PAS l'onboarding. */
+  /** Sauvegarde le profil (étape stratégie) : ne termine PAS l'onboarding. */
   saveOnboardingProfile(
     dto: CompleteOnboardingDto,
   ): Observable<{ data: AuthUser }> {
     return this.http.patch<{ data: AuthUser }>(`${this.base}/onboarding`, dto);
   }
 
-  /** Marque l'onboarding terminé — appelé uniquement à l'écran final. */
+  /** Marque l'onboarding terminé : appelé uniquement à l'écran final. */
   finishOnboarding(): Observable<{ data: AuthUser }> {
     return this.http.patch<{ data: AuthUser }>(`${this.base}/onboarding/finish`, {});
   }

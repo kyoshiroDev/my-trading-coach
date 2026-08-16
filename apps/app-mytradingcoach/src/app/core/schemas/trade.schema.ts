@@ -16,14 +16,10 @@ export const CreateTradeSchema = z.object({
   takeProfit: optPositive,
   pnl: optNumber,
   riskReward: optNumber,
-  emotion: z.enum([
-    'CONFIDENT',
-    'STRESSED',
-    'REVENGE',
-    'FEAR',
-    'FOCUSED',
-    'NEUTRAL',
-  ]),
+  // Émotion = override optionnel (PROMPT-163) : nullable, absente = hérite de l'humeur de session.
+  emotion: z
+    .enum(['CONFIDENT', 'STRESSED', 'REVENGE', 'FEAR', 'FOCUSED', 'NEUTRAL'])
+    .nullish(),
   setupId: z.string().min(1, 'Setup requis'),
   session: z.enum(['LONDON', 'NEW_YORK', 'ASIAN']),
   timeframe: z.string().min(1),

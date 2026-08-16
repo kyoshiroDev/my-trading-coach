@@ -30,6 +30,7 @@ import {
 import { BillingApi } from '../../core/api/billing.api';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { ActivityCalendarComponent } from '../../shared/components/activity-calendar/activity-calendar.component';
+import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
 import { environment } from '../../../environments/environment';
 import { ChartService } from '../../core/services/chart.service';
 
@@ -50,6 +51,7 @@ const MOCK_SETUP_BARS = [88, 72, 65, 54, 38] as const;
     SessionLabelPipe,
     PlanModalComponent,
     ActivityCalendarComponent,
+    InfoTooltipComponent,
   ],
   templateUrl: './analytics.component.html',
   styleUrl: './analytics.component.css',
@@ -96,23 +98,23 @@ export class AnalyticsComponent {
   protected readonly equityData = signal<{ points: EquityPoint[]; startingCapital: number | null } | null>(null);
   protected readonly equityLoading = signal(false);
 
-  // ── httpResource — pattern déclaratif, cancel auto, loading state natif ──
+  // ── httpResource : pattern déclaratif, cancel auto, loading state natif ──
   private readonly summaryResource = httpResource<{ data: AnalyticsSummary }>(
     () => `${environment.apiUrl}/analytics/summary${this.accQuery()}`,
   );
   private readonly heatmapResource = httpResource<{ data: HeatmapCell[] }>(
     () =>
-      this.userStore.isStarterOrAbove()
+      this.userStore.isPremium()
         ? `${environment.apiUrl}/analytics/by-hour${this.accQuery()}`
         : undefined,
   );
   private readonly topAssetsResource = httpResource<{ data: TopAsset[] }>(() =>
-    this.userStore.isStarterOrAbove()
+    this.userStore.isPremium()
       ? `${environment.apiUrl}/analytics/top-assets${this.accQuery()}`
       : undefined,
   );
   private readonly setupResource = httpResource<{ data: SetupStat[] }>(() =>
-    this.userStore.isStarterOrAbove()
+    this.userStore.isPremium()
       ? `${environment.apiUrl}/analytics/by-setup${this.accQuery()}`
       : undefined,
   );
@@ -190,7 +192,7 @@ export class AnalyticsComponent {
 
     // Recharge les données impératives (courbe equity + calendrier) au changement de
     // compte sélectionné. Les httpResources se refetchent seules via accQuery().
-    if (this.userStore.isStarterOrAbove()) {
+    if (this.userStore.isPremium()) {
       effect(() => {
         this.selectedAccount.accountParam(); // seule dépendance réactive (selectedAccountId)
         untracked(() => {
@@ -202,7 +204,7 @@ export class AnalyticsComponent {
   }
 
   protected loadEquityCurve(): void {
-    if (!this.userStore.isStarterOrAbove()) return;
+    if (!this.userStore.isPremium()) return;
     this.equityLoading.set(true);
     const { from, to } = this.equityDateRange();
     const accountId = this.selectedAccount.accountParam();
@@ -267,7 +269,7 @@ export class AnalyticsComponent {
     return 'var(--text-2)';
   }
 
-  protected startTrial(plan: 'starter_monthly' | 'starter_yearly' = 'starter_monthly'): void {
+  protected startTrial(plan: 'premium_monthly' | 'premium_yearly' = 'premium_monthly'): void {
     this.billingApi
       .checkout(plan)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -276,7 +278,7 @@ export class AnalyticsComponent {
           window.location.href = res.data.url;
         },
         error: () => {
-          /* billing error — user stays on page */
+          /* billing error : user stays on page */
         },
       });
   }

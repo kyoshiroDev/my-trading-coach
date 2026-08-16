@@ -6,10 +6,12 @@ import {
   signal,
 } from '@angular/core';
 import { httpResource } from '@angular/common/http';
+import { LucideAngularModule, Trophy } from 'lucide-angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { UserStore } from '../../core/stores/user.store';
 import { environment } from '../../../environments/environment';
+import { computeTradeStats } from '../../core/utils/trade-stats.util';
 
 interface Trade {
   pnl: number | null;
@@ -29,8 +31,8 @@ function computeScore(trades: Trade[]): ScoreBar[] {
   if (!trades.length) return defaultBars(0);
 
   const closed = trades.filter((t) => t.pnl !== null);
-  const wins = closed.filter((t) => (t.pnl ?? 0) > 0);
-  const winRate = closed.length ? (wins.length / closed.length) * 100 : 0;
+  // Win rate via le helper unique (BE exclus du dénominateur, PROMPT-160).
+  const winRate = computeTradeStats(trades).winRate;
 
   const revengeCount = trades.filter((t) => t.emotion === 'REVENGE').length;
   const disciplineScore = Math.min(
@@ -140,7 +142,7 @@ const LOCKED_BADGES = [
 @Component({
   selector: 'mtc-scoring',
   standalone: true,
-  imports: [TopbarComponent, PlanModalComponent],
+  imports: [TopbarComponent, PlanModalComponent, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './scoring.component.html',
   styleUrl: './scoring.component.css',
@@ -148,6 +150,7 @@ const LOCKED_BADGES = [
 export class ScoringComponent {
   protected readonly userStore = inject(UserStore);
   protected readonly showPlanModal = signal(false);
+  protected readonly TrophyIcon = Trophy;
 
   private readonly tradesResource = httpResource<{ data: { data: Trade[] } }>(
     () => `${environment.apiUrl}/trades?limit=100`,

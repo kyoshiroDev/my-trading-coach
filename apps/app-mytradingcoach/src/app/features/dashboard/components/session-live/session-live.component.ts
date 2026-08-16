@@ -13,6 +13,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { LucideAngularModule, Newspaper, CalendarDays, ListOrdered, Zap, ChevronRight } from 'lucide-angular';
 import { Subject, forkJoin, interval, of, timer } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent, EcoResultAnalysis } from '../../../../core/api/eco-calendar.api';
@@ -24,11 +25,11 @@ import { SessionRecapComponent } from '../session-recap/session-recap.component'
 import { MarketContextBarComponent } from '../market-context-bar/market-context-bar.component';
 import { EcoSocketService } from '../../../../core/services/eco-socket.service';
 import { UserStore } from '../../../../core/stores/user.store';
-import { PremiumLockComponent } from '../../../../shared/components/premium-lock/premium-lock.component';
 import { SetupsStore } from '../../../../core/stores/setups.store';
 import { formatDuration } from '../../../../core/utils/time.utils';
 import { parseDecimal } from '../../../../core/utils/parse-decimal';
 import { NumericInputDirective } from '../../../../core/directives/numeric-input.directive';
+import { EmotionEmojiPipe } from '../../../../shared/pipes/emotion-emoji.pipe';
 import { POLLING_MS } from '../../../../core/constants/polling.const';
 import { LiveNewsComponent } from './components/live-news/live-news.component';
 import { LiveFeedComponent } from './components/live-feed/live-feed.component';
@@ -50,18 +51,18 @@ const DEMO_LIVE_ECO_EVENTS: EcoEvent[] = [
 // Analyse IA figée par événement (keyée sur le name brut). Zéro appel modèle.
 const DEMO_ECO_ANALYSIS: Record<string, EcoResultAnalysis> = {
   'PMI manufacturier': {
-    interpretation: "PMI au-dessus des attentes (49.2 vs 49.0) — léger soutien pour l'EUR, sentiment risk-on modéré.",
+    interpretation: "PMI au-dessus des attentes (49.2 vs 49.0) : léger soutien pour l'EUR, sentiment risk-on modéré.",
     assetSentiments: [{ asset: 'EUR/USD', sentiment: 'bull', shortReason: 'PMI meilleur que prévu' }],
   },
   'Inflation CPI (US)': {
-    interpretation: "CPI US sous les attentes (3.1% vs 3.2%) — désinflation confirmée : pression baissière sur le dollar, soutien des indices US.",
+    interpretation: "CPI US sous les attentes (3.1% vs 3.2%), désinflation confirmée : pression baissière sur le dollar, soutien des indices US.",
     assetSentiments: [
       { asset: 'MNQ', sentiment: 'bull', shortReason: 'CPI plus bas → indices en hausse' },
       { asset: 'EUR/USD', sentiment: 'bull', shortReason: 'Dollar plus faible' },
     ],
   },
   'Balance courante': {
-    interpretation: "Balance courante japonaise au-dessus des attentes — léger soutien du yen, impact indirect sur tes actifs (indices US, EUR/USD).",
+    interpretation: "Balance courante japonaise au-dessus des attentes : léger soutien du yen, impact indirect sur tes actifs (indices US, EUR/USD).",
     assetSentiments: [{ asset: 'EUR/USD', sentiment: 'neutral', shortReason: 'Impact indirect via le yen' }],
   },
 };
@@ -75,12 +76,23 @@ const EMOTIONS = [
   { value: 'REVENGE',   emoji: '🤬', title: 'Revenge' },
 ] as const;
 
+// Devise d'un événement éco → instruments les plus impactés (fidélité maquette).
+// USD (marché domestique de nos traders) → indices US ; devises étrangères → paire vs USD.
+const BASE_CCY = new Set(['EUR', 'GBP', 'AUD', 'NZD']); // cotées XXX/USD
+function currencyToInstruments(currency: string | null | undefined): string {
+  const c = (currency ?? '').toUpperCase();
+  if (!c) return '';
+  if (c === 'USD') return 'NQ/ES';
+  if (BASE_CCY.has(c)) return `${c}/USD`;
+  return `USD/${c}`;
+}
+
 @Component({
   selector: 'mtc-session-live',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-live.component.css',
-  imports: [SessionRecapComponent, MarketContextBarComponent, LiveNewsComponent, LiveFeedComponent, NumericInputDirective, PremiumLockComponent],
+  imports: [LucideAngularModule, SessionRecapComponent, MarketContextBarComponent, LiveNewsComponent, LiveFeedComponent, NumericInputDirective, EmotionEmojiPipe],
   template: `
     <div data-testid="session-live-view">
 
@@ -90,90 +102,94 @@ const EMOTIONS = [
           <div class="no-session-icon">🎯</div>
           <div class="no-session-title">Pas de session en cours</div>
           <div class="no-session-sub">Démarre une session pour tracker tes trades en live et accéder au calendrier économique.</div>
-          <button class="session-start-btn" data-testid="start-session-live" (click)="startSession.emit()">
+          <button class="session-start-btn" data-testid="start-session-live"
+                  [disabled]="startDisabled()"
+                  [title]="startDisabled() ? 'Choisis un compte dans la Pré-session' : ''"
+                  (click)="startSession.emit()">
             Démarrer la session →
           </button>
+          @if (startDisabled()) {
+            <div class="no-session-hint">Choisis un compte dans l'onglet Pré-session pour lancer la session.</div>
+          }
         </div>
       } @else {
 
-      <!-- Barre contextuelle marché FMP -->
+      <!-- Barre contextuelle marché FMP (IA mutualisée → FREE) -->
       @if (marketCtx()) {
-        <div class="ctx-bar-wrap">
-          <mtc-market-context-bar
-            [ctx]="marketCtx()"
-            [breakingNews]="breakingNews()"
-          />
+        <!-- Carte marché unique : contexte marché + news ticker (source : LiveTab card) -->
+        <div class="mkt-card">
+          <div class="ctx-bar-wrap">
+            <mtc-market-context-bar
+              [ctx]="marketCtx()"
+              [breakingNews]="breakingNews()"
+            />
+          </div>
+          <!-- News live : ticker horizontal (IA mutualisée → FREE), dans la carte marché -->
+          @if (newsItems().length > 0) {
+            <div class="news-ticker">
+              <span class="news-ticker-lbl"><lucide-icon [img]="NewsIcon" [size]="13" class="news-live-ic" /> News live</span>
+              <div class="news-ticker-viewport">
+                <div class="news-ticker-track">
+                  @for (item of newsItems(); track item.publishedDate) {
+                    <button type="button" class="news-tick" (click)="openNews(item)">
+                      <span class="news-tick-tag">{{ item.symbol }}</span>
+                      <span class="news-tick-title">{{ item.title }}</span>
+                      <span class="news-tick-time">{{ formatNewsTime(item.publishedDate) }}</span>
+                    </button>
+                    <span class="news-tick-sep">·</span>
+                  }
+                  <!-- Copie pour un défilement continu (marquee) -->
+                  @for (item of newsItems(); track 'dup-' + item.publishedDate) {
+                    <button type="button" class="news-tick" tabindex="-1" aria-hidden="true" (click)="openNews(item)">
+                      <span class="news-tick-tag">{{ item.symbol }}</span>
+                      <span class="news-tick-title">{{ item.title }}</span>
+                      <span class="news-tick-time">{{ formatNewsTime(item.publishedDate) }}</span>
+                    </button>
+                    <span class="news-tick-sep" aria-hidden="true">·</span>
+                  }
+                </div>
+              </div>
+            </div>
+          }
         </div>
       }
 
-      <!-- Mini stats row -->
-      <div class="mini-stats-row">
-        <div class="mini-stat">
-          <div class="mini-stat-val" [class.green]="(liveStats()?.totalPnl ?? 0) >= 0" [class.red]="(liveStats()?.totalPnl ?? 0) < 0">
-            {{ pnlDisplay() }}
-          </div>
-          <div class="mini-stat-lbl">P&amp;L jour</div>
-        </div>
-        <div class="mini-stat">
-          <div class="mini-stat-val">{{ (liveStats()?.winRate ?? 0).toFixed(0) }}%</div>
-          <div class="mini-stat-lbl">Win Rate</div>
-        </div>
-        <div class="mini-stat">
-          <div class="mini-stat-val" style="font-size:22px;">{{ moodEmoji(session()?.moodStart) }}</div>
-          <div class="mini-stat-lbl">État actuel</div>
-        </div>
-        <div class="mini-stat">
-          <div class="mini-stat-val blue">{{ liveStats()?.tradesCount ?? 0 }}</div>
-          <div class="mini-stat-lbl">Trades logués</div>
-        </div>
-      </div>
-
-      <!-- Live layout 4 colonnes -->
+      <!-- Live layout : zone gauche (stats + calendrier + live feed) / Trade rapide pleine hauteur à droite -->
       <div class="live-layout">
+        <div class="live-main">
 
-        <!-- ═══ COL 1 : NEWS LIVE ═══ -->
-        <div class="news-col">
-          <div class="col-title-row">
-            <div class="col-title">📰 News live</div>
+          <!-- Mini stats row (largeur calendrier + live feed uniquement) -->
+          <div class="mini-stats-row">
+            <div class="mini-stat">
+              <div class="mini-stat-val" [class.green]="(liveStats()?.totalPnl ?? 0) >= 0" [class.red]="(liveStats()?.totalPnl ?? 0) < 0">
+                {{ pnlDisplay() }}
+              </div>
+              <div class="mini-stat-lbl">P&amp;L jour</div>
+            </div>
+            <div class="mini-stat">
+              <div class="mini-stat-val">{{ (liveStats()?.winRate ?? 0).toFixed(0) }}%</div>
+              <div class="mini-stat-lbl">Win Rate</div>
+            </div>
+            <div class="mini-stat">
+              <div class="mini-stat-val" style="font-size:22px;">{{ moodEmoji(session()?.moodStart) }}</div>
+              <div class="mini-stat-lbl">État actuel</div>
+            </div>
+            <div class="mini-stat">
+              <div class="mini-stat-val blue">{{ liveStats()?.tradesCount ?? 0 }}</div>
+              <div class="mini-stat-lbl">Trades logués</div>
+            </div>
           </div>
 
-          <div class="news-feed">
-            @if (!isStarterOrAbove()) {
-              <mtc-premium-lock
-                title="News live · Starter"
-                subtitle="Actus filtrées sur tes actifs, en direct pendant ta session."
-              />
-            } @else if (newsItems().length === 0) {
-              <div class="news-empty">Aucune news pour le moment</div>
-            } @else {
-              @for (item of newsItems(); track item.publishedDate) {
-                <div class="news-item"
-                     role="button"
-                     tabindex="0"
-                     (click)="openNews(item)"
-                     (keyup.enter)="openNews(item)">
-                  <div class="news-item-top">
-                    <span class="news-asset-tag">{{ item.symbol }}</span>
-                    <span class="news-sentiment" [class]="item.sentiment ?? 'neutral'">
-                      {{ item.sentiment === 'bull' ? '▲ Bull' : item.sentiment === 'bear' ? '▼ Bear' : '— Neutre' }}
-                    </span>
-                    <span class="news-time">{{ formatNewsTime(item.publishedDate) }}</span>
-                  </div>
-                  <div class="news-title">{{ item.title }}</div>
-                </div>
-              }
-            }
-          </div>
-        </div>
+          <div class="live-cols">
 
-        <!-- ═══ COL 2 : CALENDRIER + TREASURY ═══ -->
+            <!-- ═══ COL 1 : CALENDRIER + TREASURY ═══ -->
         <div class="cal-col">
 
           <!-- Calendrier éco -->
           <div class="cal-card">
             <div class="col-title-row">
               <div class="col-title">
-                📅 Calendrier · Session en cours
+                <lucide-icon [img]="CalIcon" [size]="14" class="ct-ic" /> Calendrier économique
                 <div class="pulse-dot"></div>
               </div>
             </div>
@@ -224,7 +240,7 @@ const EMOTIONS = [
 
             @if (!ecoCalendar()) {
               <div style="font-size:12px;color:var(--text-3);text-align:center;padding:20px 0;">
-                Calendrier disponible dès Starter
+                Calendrier économique indisponible pour le moment.
               </div>
             } @else {
               <div class="cal-events-list">
@@ -233,25 +249,45 @@ const EMOTIONS = [
                     class="eco-live-event"
                     [class.released]="event.isReleased"
                     [class.dim]="!event.isReleased && isOutsideSession(event.time)"
+                    [class.expandable]="event.isReleased"
+                    [class.expanded]="expandedEcoEvent() === event.name"
                   >
-                    <div class="eco-live-header">
-                      <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-3);width:36px;flex-shrink:0;">
-                        {{ formatTime(event.time) }}
-                      </span>
-                      <div style="width:4px;height:22px;border-radius:2px;flex-shrink:0;" [style.background]="event.impact === 'high' ? 'var(--red)' : 'var(--yellow)'"></div>
+                    <div class="eco-live-header"
+                         [attr.role]="event.isReleased ? 'button' : null"
+                         [attr.tabindex]="event.isReleased ? 0 : null"
+                         (click)="event.isReleased && toggleEcoEvent(event.name)"
+                         (keyup.enter)="event.isReleased && toggleEcoEvent(event.name)">
+                      <span class="eco-time">{{ formatTime(event.time) }}</span>
+                      <div class="eco-impact-bar" [class.high]="event.impact === 'high'"></div>
                       <span class="eco-flag-sm">{{ getFlag(event) }}</span>
-                      <span style="font-size:11px;font-weight:600;color:var(--text);flex:1;">{{ translate(event.name) }}</span>
-                      <span style="font-size:9px;background:var(--blue-glow);color:var(--blue-bright);border:1px solid rgba(59,130,246,.2);padding:2px 5px;border-radius:4px;font-family:var(--font-mono);">
-                        {{ event.currency }}
+                      <div class="eco-name-wrap">
+                        <span class="eco-name">{{ translate(event.name) }}</span>
+                        <span class="eco-sub">
+                          @if (event.isReleased && event.actual !== null) {
+                            <span class="eco-sub-actual">Actuel : {{ event.actual }}{{ event.unit ?? '' }}</span>
+                            @if (event.estimate !== null || event.previous !== null) { <span class="eco-sub-sep">·</span> }
+                          }
+                          @if (event.estimate !== null) {
+                            <span>Prévu : {{ event.estimate }}{{ event.unit ?? '' }}</span>
+                            @if (event.previous !== null) { <span class="eco-sub-sep">·</span> }
+                          }
+                          @if (event.previous !== null) {
+                            <span>Préc. : {{ event.previous }}{{ event.unit ?? '' }}</span>
+                          }
+                        </span>
+                      </div>
+                      <span class="eco-currency-tag" [attr.title]="event.currency">{{ impactedInstruments(event.currency) }}</span>
+                      <span class="eco-impact-badge" [class.high]="event.impact === 'high'">
+                        {{ event.impact === 'high' ? 'Fort' : 'Moyen' }}
                       </span>
                       @if (event.isReleased) {
-                        <span style="font-size:9px;background:var(--green-dim);color:var(--green);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);">✓ Publié</span>
+                        <lucide-icon [img]="ChevronIcon" [size]="14" class="eco-chevron" />
                       } @else {
-                        <span style="font-size:9px;color:var(--text-3);font-family:var(--font-mono);">dans {{ minutesUntil(event.time) }} min</span>
+                        <span class="eco-countdown">dans {{ minutesUntil(event.time) }} min</span>
                       }
                     </div>
 
-                    @if (event.isReleased) {
+                    @if (event.isReleased && expandedEcoEvent() === event.name) {
                       <div class="eco-live-released">
                         <div class="eco-result-row">
                           <div class="eco-result-item">
@@ -288,7 +324,7 @@ const EMOTIONS = [
                           <div class="sentiment-chips">
                             @for (s of getEventAnalysis(event.name)!.assetSentiments; track s.asset) {
                               <div class="chip" [class]="s.sentiment">
-                                {{ s.sentiment === 'bull' ? '▲' : s.sentiment === 'bear' ? '▼' : '—' }}
+                                {{ s.sentiment === 'bull' ? '▲' : s.sentiment === 'bear' ? '▼' : '-' }}
                                 {{ s.asset }} {{ s.sentiment.toUpperCase() }}
                               </div>
                             }
@@ -318,7 +354,7 @@ const EMOTIONS = [
         <!-- ═══ COL 3 : LIVE FEED ═══ -->
         <div class="feed-col" data-testid="live-feed">
           <div class="col-title">
-            Live feed
+            <lucide-icon [img]="FeedIcon" [size]="14" class="ct-ic" /> Live feed
             <div class="pulse-dot"></div>
           </div>
 
@@ -335,44 +371,28 @@ const EMOTIONS = [
             <div class="feed-list">
               @for (trade of todayTrades(); track trade.id) {
                 @if (trade.pnl !== null) {
-                  <div class="feed-row-2l">
-                    <div class="feed-l1">
-                      <span class="feed-time">{{ tradeTime(trade.tradedAt) }}</span>
-                      <span class="trade-side" [class]="trade.side.toLowerCase()">{{ trade.side }}</span>
-                      <span class="feed-asset">{{ trade.asset }}</span>
-                      <span class="feed-badge" [class]="closeBadgeClass(trade.tags)" style="margin-left:auto;">
-                        {{ closeBadgeLabel(trade.tags) }}
-                      </span>
-                    </div>
-                    <div class="feed-l2">
-                      <span class="feed-price">Entrée: {{ (trade.entry && trade.entry > 0) ? trade.entry : '—' }}</span>
-                      <span class="feed-sep">·</span>
-                      <span class="feed-price">Sortie: {{ trade.exit ?? '—' }}</span>
-                      <span class="feed-pnl" [class.green]="trade.pnl >= 0" [class.red]="trade.pnl < 0" style="margin-left:auto;">
-                        {{ trade.pnl >= 0 ? '+' : '' }}{{ trade.pnl.toFixed(0) }}$
-                      </span>
-                    </div>
+                  <div class="feed-row">
+                    <span class="feed-time">{{ tradeTime(trade.tradedAt) }}</span>
+                    <span class="feed-asset">{{ trade.asset }}</span>
+                    <span class="trade-side" [class]="trade.side.toLowerCase()">{{ trade.side === 'LONG' ? '▲' : '▼' }} {{ trade.side }}</span>
+                    <span class="feed-emo" [title]="trade.emotion">{{ trade.emotion | emotionEmoji }}</span>
+                    <span class="feed-pnl" [class.green]="trade.pnl >= 0" [class.red]="trade.pnl < 0" style="margin-left:auto;">
+                      {{ trade.pnl >= 0 ? '+' : '' }}{{ trade.pnl.toFixed(0) }}$
+                    </span>
                   </div>
                 } @else {
                   <div
-                    class="feed-row-2l live-row"
+                    class="feed-row live-row"
                     role="button"
                     tabindex="0"
                     (click)="openClosePanel(trade.id)"
                     (keyup.enter)="openClosePanel(trade.id)"
                   >
-                    <div class="feed-l1">
-                      <span class="feed-time">{{ tradeTime(trade.tradedAt) }}</span>
-                      <span class="trade-side" [class]="trade.side.toLowerCase()">{{ trade.side }}</span>
-                      <span class="feed-asset">{{ trade.asset }}</span>
-                      <span class="feed-status">En cours</span>
-                      <span class="live-tag">● LIVE</span>
-                    </div>
-                    <div class="feed-l2">
-                      <span class="feed-price">Entrée: {{ (trade.entry && trade.entry > 0) ? trade.entry : '—' }}</span>
-                      <span class="feed-sep">·</span>
-                      <span class="feed-price">Sortie: —</span>
-                    </div>
+                    <span class="feed-time">{{ tradeTime(trade.tradedAt) }}</span>
+                    <span class="feed-asset">{{ trade.asset }}</span>
+                    <span class="trade-side" [class]="trade.side.toLowerCase()">{{ trade.side === 'LONG' ? '▲' : '▼' }} {{ trade.side }}</span>
+                    <span class="feed-emo" [title]="trade.emotion">{{ trade.emotion | emotionEmoji }}</span>
+                    <span class="live-tag" style="margin-left:auto;">● LIVE</span>
                   </div>
 
                   @if (closingTradeId() === trade.id) {
@@ -410,11 +430,14 @@ const EMOTIONS = [
           }
         </div>
 
-        <!-- ═══ COL 4 : TRADE RAPIDE ═══ -->
+          </div><!-- /live-cols -->
+        </div><!-- /live-main -->
+
+        <!-- ═══ COL 4 : TRADE RAPIDE (colonne pleine hauteur à droite) ═══ -->
         <div class="qt-panel" data-testid="quick-trade-form">
           <div class="qt-title">
-            ⚡ Trade rapide
-           
+            <lucide-icon [img]="QuickIcon" [size]="14" class="ct-ic" /> Trade rapide
+
           </div>
 
           <!-- Asset select -->
@@ -489,7 +512,7 @@ const EMOTIONS = [
                     <span class="qt-live-value">{{ livePricePlaceholder() }}</span>
                     <span class="qt-live-label">prix actuel</span>
                   } @else {
-                    <span class="qt-live-unavailable">—</span>
+                    <span class="qt-live-unavailable">-</span>
                   }
                 </div>
               }
@@ -560,9 +583,9 @@ const EMOTIONS = [
 
           <div class="qt-pnl-row">
             <div>
-              <div class="qt-lbl">ENTRY (au clic)</div>
+              <div class="qt-lbl">ENTRÉE</div>
               <div class="qt-entry-readonly" data-testid="qt-entry-auto">
-                {{ livePrice() !== null ? livePricePlaceholder() : '—' }}
+                {{ livePrice() !== null ? livePricePlaceholder() : '-' }}
               </div>
             </div>
             <div>
@@ -614,10 +637,10 @@ const EMOTIONS = [
             data-testid="quick-trade-submit"
             [disabled]="!canSubmitQuickTrade() || qtSubmitting()"
             (click)="submitQuickTrade()"
-          >{{ qtSubmitting() ? 'Capture…' : '⚡ Logger ce trade' }}</button>
+          >@if (qtSubmitting()) { Capture… } @else { <lucide-icon [img]="QuickIcon" [size]="14" /> Logger ce trade }</button>
           <div class="qt-hint">Asset + direction + émotion suffisent</div>
 
-          <!-- Retour d'action (succès / erreur) — annoncé aux lecteurs d'écran -->
+          <!-- Retour d'action (succès / erreur) : annoncé aux lecteurs d'écran -->
           <div class="qt-feedback" role="status" aria-live="polite">
             @if (feedbackToast(); as fb) {
               <div class="qt-feedback-toast" [class.ok]="fb.type === 'success'" [class.err]="fb.type === 'error'">
@@ -654,7 +677,7 @@ const EMOTIONS = [
                 <span class="nm-source">{{ news.site }}</span>
               }
               <span class="news-sentiment" [class]="news.sentiment ?? 'neutral'">
-                {{ news.sentiment === 'bull' ? '▲ Bull' : news.sentiment === 'bear' ? '▼ Bear' : '— Neutre' }}
+                {{ news.sentiment === 'bull' ? '▲ Bull' : news.sentiment === 'bear' ? '▼ Bear' : '- Neutre' }}
               </span>
               <span class="nm-date">{{ formatNewsTime(news.publishedDate) }}</span>
             </div>
@@ -696,6 +719,8 @@ export class SessionLiveComponent {
   readonly breakingNews = input<string | null>(null);
   readonly triggerCloseModal = input<boolean>(false);
   readonly liveFeedback = input<{ type: 'success' | 'error'; text: string; ts: number } | null>(null);
+  /** Désactive le CTA « Démarrer » tant qu'aucun compte précis n'est choisi (règle 1 session = 1 compte). */
+  readonly startDisabled = input<boolean>(false);
 
   readonly startSession = output<void>();
   readonly tradeClosed = output<{ tradeId: string; exitPrice: number }>();
@@ -711,8 +736,23 @@ export class SessionLiveComponent {
   private readonly tradesApi = inject(TradesApi);
   protected readonly setupsStore = inject(SetupsStore);
 
-  // News live + contexte marché = Starter+ (endpoints gardés côté API) → verrou d'upsell sinon.
-  protected readonly isStarterOrAbove = computed(() => this.userStore.isStarterOrAbove());
+  // News live + contexte marché = IA mutualisée → FREE (PROMPT-169), accessible à tous.
+
+  // Icônes Lucide (headers de colonnes, design « Session live »).
+  protected readonly NewsIcon  = Newspaper;
+  protected readonly CalIcon   = CalendarDays;
+  protected readonly FeedIcon  = ListOrdered;
+  protected readonly QuickIcon = Zap;
+  protected readonly ChevronIcon = ChevronRight;
+
+  // Calendrier éco : événement publié déplié au clic (null = tous repliés, style maquette compact)
+  protected readonly expandedEcoEvent = signal<string | null>(null);
+  protected toggleEcoEvent(name: string): void {
+    this.expandedEcoEvent.update((v) => (v === name ? null : name));
+  }
+  protected impactedInstruments(currency: string | null | undefined): string {
+    return currencyToInstruments(currency);
+  }
 
   // Timer
   private readonly now = signal(new Date());
@@ -773,7 +813,7 @@ export class SessionLiveComponent {
   protected readonly feedbackToast = signal<{ type: 'success' | 'error'; text: string } | null>(null);
   private feedbackTimer?: ReturnType<typeof setTimeout>;
 
-  // Quick trade form — asset selection
+  // Quick trade form : asset selection
   protected readonly userAssets = signal<UserAssetItem[]>([]);
   protected readonly assetsLoading = signal(false);
   protected readonly assetsError = signal(false);
@@ -795,7 +835,7 @@ export class SessionLiveComponent {
   // Eco results cache
   private readonly ecoResults = signal<Record<string, EcoResultAnalysis>>({});
 
-  // Pins chargés directement depuis l'API — indépendant du cache getTodayEvents
+  // Pins chargés directement depuis l'API : indépendant du cache getTodayEvents
   private readonly freshPins = signal<string[] | null>(null);
 
   // Prix temps réel FMP
@@ -807,9 +847,9 @@ export class SessionLiveComponent {
     const price = this.livePrice();
     if (price === null) return '0.00';
     const symbol = this.qtSelectedAsset()?.symbol ?? '';
-    if (symbol.includes('/') && !symbol.includes('USDT')) return price.toFixed(4);
-    if (price < 10) return price.toFixed(4);
-    return price.toFixed(2);
+    const dec = ((symbol.includes('/') && !symbol.includes('USDT')) || price < 10) ? 4 : 2;
+    // Milliers espace + décimale point (fidélité maquette : « 20 142.25 »)
+    return price.toLocaleString('fr-FR', { minimumFractionDigits: dec, maximumFractionDigits: dec }).replace(',', '.');
   });
 
   protected readonly pinnedKeys = computed(() => {
@@ -863,7 +903,7 @@ export class SessionLiveComponent {
     Math.max(0, this.relevantEcoEvents().length - this.MAX_ECO_EVENTS),
   );
 
-  // Eco WebSocket — nouvelles releases temps réel
+  // Eco WebSocket : nouvelles releases temps réel
   protected readonly newReleases = signal<EcoEvent[]>([]);
   protected readonly showReleaseAlert = signal(false);
   protected readonly releaseAlertState = signal<'analyzing' | 'ready' | 'error'>('analyzing');
@@ -921,7 +961,7 @@ export class SessionLiveComponent {
       if (this.selectedNews() && dialog) dialog.focus();
     });
 
-    // Assets chargés immédiatement — indépendamment de la session
+    // Assets chargés immédiatement : indépendamment de la session
     this.loadUserAssets();
 
     // Recherche d'instrument (saisie libre d'actif)
@@ -939,7 +979,7 @@ export class SessionLiveComponent {
       )
       .subscribe((res) => this.customAssetResults.set(res.data ?? []));
 
-    // Pins chargés directement — pas de dépendance au cache getTodayEvents
+    // Pins chargés directement : pas de dépendance au cache getTodayEvents
     this.ecoCalendarApi.getPins()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(res => this.freshPins.set(res.data ?? []));
@@ -947,23 +987,23 @@ export class SessionLiveComponent {
     // Arrêter le polling prix au destroy
     this.destroyRef.onDestroy(() => this.stopLivePricePolling());
 
-    // WebSocket éco — connecter quand session active + Starter+ (analyse IA éco = Starter+)
+    // WebSocket éco : connecter quand session active (analyse IA éco = IA mutualisée → FREE).
     effect(() => {
       const s = this.session();
-      if (s?.status === 'ACTIVE' && this.userStore.isStarterOrAbove()) {
+      if (s?.status === 'ACTIVE') {
         this.ecoSocket.connect();
       } else {
         this.ecoSocket.disconnect();
       }
     });
 
-    // Analyse IA des events DÉJÀ publiés à l'ouverture (Starter+ + session active, hors démo).
+    // Analyse IA des events DÉJÀ publiés à l'ouverture (session active, hors démo).
     // Limité au FORT impact : ce sont eux qui bougent le marché. Sur une grosse journée
     // (~19 events US), ça évite une rafale d'appels modèle à la 1re ouverture ; le cache
     // mutualisé sert les suivantes. Les releases live restent couvertes par newReleases$.
     effect(() => {
       const s = this.session();
-      if (s?.status !== 'ACTIVE' || !this.userStore.isStarterOrAbove() || this.userStore.isDemo()) return;
+      if (s?.status !== 'ACTIVE' || this.userStore.isDemo()) return;
       const released = this.sessionEcoEvents().filter(
         (e) => e.impact === 'high' && e.isReleased && e.actual != null && !!e.name?.trim(),
       );
@@ -1058,7 +1098,7 @@ export class SessionLiveComponent {
   protected closeBadgeLabel(tags: string[]): string {
     if (tags.includes('TP')) return 'TP';
     if (tags.includes('SL')) return 'SL';
-    return '—';
+    return '-';
   }
 
   protected isOutsideSession(time: string): boolean {
@@ -1067,7 +1107,7 @@ export class SessionLiveComponent {
   }
 
   protected formatTime(iso: string): string {
-    if (!iso) return '—';
+    if (!iso) return '-';
     if (iso.includes('T')) {
       const d = new Date(iso);
       return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
@@ -1219,7 +1259,7 @@ export class SessionLiveComponent {
 
   private applyAssetSelection(asset: UserAssetItem): void {
     this.qtSelectedAsset.set(asset);
-    // L'entry est capturée automatiquement au clic (prix marché de l'instant) — pas de saisie.
+    // L'entry est capturée automatiquement au clic (prix marché de l'instant) : pas de saisie.
     if (asset.lastQty != null) this.qtQty.set(String(asset.lastQty));
     this.startLivePricePolling(asset.symbol);
   }

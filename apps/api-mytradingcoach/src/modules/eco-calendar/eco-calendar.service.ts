@@ -70,7 +70,7 @@ export class EcoCalendarService {
     const apiKey = process.env['FMP_API_KEY'];
     if (!apiKey) {
       this.logger.error(
-        '❌ FMP_API_KEY non configurée — ' +
+        '❌ FMP_API_KEY non configurée : ' +
         'Plan Starter requis sur https://site.financialmodelingprep.com/pricing-plans',
       );
       return [];
@@ -91,7 +91,7 @@ export class EcoCalendarService {
       const response = await fetch(url);
 
       if (response.status === 402) {
-        this.logger.error('❌ FMP 402 — plan Starter requis pour le calendrier économique');
+        this.logger.error('❌ FMP 402 : plan Starter requis pour le calendrier économique');
         return [];
       }
 
@@ -251,7 +251,7 @@ export class EcoCalendarService {
     );
 
     return rows.map((r) => {
-      // r.time est stocké en heure Paris (HH:MM) — reconstruire pour comparaison
+      // r.time est stocké en heure Paris (HH:MM) : reconstruire pour comparaison
       const eventDateTime = new Date(`${r.date}T${r.time}:00`);
       const dynamicIsReleased = r.actual !== null && eventDateTime <= parisNow;
 
@@ -273,7 +273,7 @@ export class EcoCalendarService {
   // ── Détection nouveaux actual (pour polling temps réel) ───────────────────
 
   async checkNewReleases(date: string): Promise<{ hasNew: boolean; newEvents: EcoEvent[] }> {
-    // Snapshot AVANT fetch — events déjà publiés. On lit via getEventsFromDb pour
+    // Snapshot AVANT fetch : events déjà publiés. On lit via getEventsFromDb pour
     // que les noms soient ceux AFFICHÉS (nameFr en prod), pas l'anglais brut FMP.
     const before = await this.getEventsFromDb(date);
     const prevSet = new Set(
@@ -319,7 +319,7 @@ export class EcoCalendarService {
     const fallback: EcoAnalysis = {
       summary:
         events.length === 0
-          ? 'Aucun événement économique majeur prévu — journée calme pour tes actifs.'
+          ? 'Aucun événement économique majeur prévu : journée calme pour tes actifs.'
           : 'Données IA indisponibles.',
       recommendation: '',
       assetImpacts: [],
@@ -334,7 +334,7 @@ export class EcoCalendarService {
       try {
         return JSON.parse(cached.analysisJson) as EcoAnalysis;
       } catch {
-        // JSON corrompu — on recalcule
+        // JSON corrompu : on recalcule
       }
     }
 
@@ -354,7 +354,7 @@ export class EcoCalendarService {
     }
   }
 
-  // ── getTodayEvents — lecture BDD + cache Redis + analyse IA ───────────────
+  // ── getTodayEvents : lecture BDD + cache Redis + analyse IA ───────────────
 
   async getTodayEvents(userId: string): Promise<EcoCalendarData> {
     const today = todayParis();
@@ -364,7 +364,7 @@ export class EcoCalendarService {
       const cached = await this.redis.get(cacheKey);
       if (cached) return JSON.parse(cached) as EcoCalendarData;
     } catch {
-      // Redis indisponible — continuer sans cache
+      // Redis indisponible : continuer sans cache
     }
 
     const [events, userAssets, userPins] = await Promise.all([
@@ -381,12 +381,12 @@ export class EcoCalendarService {
     try {
       await this.redis.setex(cacheKey, CACHE_TTL.ECO_EVENTS, JSON.stringify(result));
     } catch {
-      // Redis indisponible — pas de cache, c'est OK
+      // Redis indisponible : pas de cache, c'est OK
     }
     return result;
   }
 
-  // ── getTomorrowEvents — lecture BDD ───────────────────────────────────────
+  // ── getTomorrowEvents : lecture BDD ───────────────────────────────────────
 
   async getTomorrowEvents(userId: string): Promise<EcoCalendarData> {
     const nextDay = this.getNextTradingDay();
@@ -397,7 +397,7 @@ export class EcoCalendarService {
       const cached = await this.redis.get(cacheKey);
       if (cached) return JSON.parse(cached) as EcoCalendarData;
     } catch {
-      // Redis indisponible — continuer sans cache
+      // Redis indisponible : continuer sans cache
     }
 
     let events = await this.getEventsFromDb(dateStr);
@@ -420,7 +420,7 @@ export class EcoCalendarService {
     try {
       await this.redis.setex(cacheKey, CACHE_TTL.ECO_EVENTS_LONG, JSON.stringify(result));
     } catch {
-      // Redis indisponible — pas de cache, c'est OK
+      // Redis indisponible : pas de cache, c'est OK
     }
     return result;
   }
@@ -549,7 +549,7 @@ export class EcoCalendarService {
     return day === 0 || day === 6;
   }
 
-  // ── getEventsRange — events sur une plage de dates (vue semaine) ──────────
+  // ── getEventsRange : events sur une plage de dates (vue semaine) ──────────
 
   async getEventsRange(
     userId: string,
@@ -627,10 +627,10 @@ export class EcoCalendarService {
     });
   }
 
-  // ── getPinnedUpcoming — les épinglés du JOUR (sélection quotidienne) ──────────
+  // ── getPinnedUpcoming : les épinglés du JOUR (sélection quotidienne) ──────────
   // La sélection est remise à zéro chaque jour (reset paresseux dans getUserPins).
   // On renvoie donc une entrée par pin correspondant exactement à un event
-  // d'aujourd'hui — plus de scan multi-jours ni de matching par type. Ainsi le
+  // d'aujourd'hui : plus de scan multi-jours ni de matching par type. Ainsi le
   // compteur du bandeau et la liste « Ma sélection » partagent une source unique
   // et restent toujours cohérents (compteur = items = taille de la sélection).
 

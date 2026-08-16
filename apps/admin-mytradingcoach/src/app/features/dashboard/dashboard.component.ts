@@ -38,9 +38,6 @@ import { CHART_COLORS, gridAxis, noLegend, type ChartTone } from '../../shared/c
           <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Utilisateurs</div>
             <div class="kpi-value">{{ totalUsers() }}</div>
             <div class="kpi-sub">+{{ s.newThisMonth }} ce mois</div></div>
-          <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Starter</div>
-            <div class="kpi-value amber">{{ s.totalStarter }}</div>
-            <div class="kpi-sub">{{ s.starterMonthly }}m · {{ s.starterAnnual }}an</div></div>
           <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Premium</div>
             <div class="kpi-value blue">{{ s.totalPremium }}</div>
             <div class="kpi-sub">{{ s.premiumMonthly }}m · {{ s.premiumAnnual }}an · {{ s.trials }} essai</div></div>
@@ -62,7 +59,7 @@ import { CHART_COLORS, gridAxis, noLegend, type ChartTone } from '../../shared/c
         <!-- Gauche, pleine hauteur : Évolution + Entonnoir -->
         <div class="area-left dcol">
           <div class="card grow-chart">
-            <div class="card-head"><span class="card-label">Évolution — inscrits par semaine{{ showMrrLine() ? ' + MRR' : '' }}</span><span class="card-label muted">snapshots</span></div>
+            <div class="card-head"><span class="card-label">Évolution · inscrits par semaine{{ showMrrLine() ? ' + MRR' : '' }}</span><span class="card-label muted">snapshots</span></div>
             <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="trendConfig()" /></div></div>
           </div>
           <div class="card">
@@ -128,7 +125,7 @@ import { CHART_COLORS, gridAxis, noLegend, type ChartTone } from '../../shared/c
                       <div><div class="u-name">{{ u.name ?? u.email }}</div>
                         @if (u.name) { <div class="u-mail">{{ u.email }}</div> }</div>
                       <div class="meta">
-                        <span class="badge" [class.b-premium]="u.plan==='PREMIUM'" [class.b-starter]="u.plan==='STARTER'" [class.b-free]="u.plan==='FREE'">{{ u.plan }}</span>
+                        <span class="badge" [class.b-premium]="u.plan==='PREMIUM'" [class.b-free]="u.plan==='FREE'">{{ u.plan }}</span>
                         <span class="timer">⏱ {{ sessionDuration(u) }}</span>
                       </div>
                     </div>
@@ -332,7 +329,7 @@ export class DashboardComponent {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   protected sessionDuration(user: AdminOnlineUser): string {
-    if (!user.lastLoginAt) return '—';
+    if (!user.lastLoginAt) return '-';
     const totalMin = Math.floor((Date.now() - new Date(user.lastLoginAt).getTime()) / 60_000);
     const h = Math.floor(totalMin / 60);
     const m = totalMin % 60;

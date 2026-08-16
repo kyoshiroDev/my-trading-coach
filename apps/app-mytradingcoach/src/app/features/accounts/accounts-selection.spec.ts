@@ -37,7 +37,7 @@ function setup(selectedId: string | 'all') {
     selectedAccountId: signal<string | 'all'>(selectedId),
     isLoading: signal(false), loaded: signal(true), load: vi.fn(),
   };
-  const userStore = { isPremium: () => true, isStarterOrAbove: () => true, maxAccounts: signal(null) };
+  const userStore = { isPremium: () => true, maxAccounts: signal(null) };
 
   TestBed.configureTestingModule({
     providers: [

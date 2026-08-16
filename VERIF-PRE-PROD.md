@@ -50,7 +50,7 @@ chaque endpoint valide la propriété côté serveur. Builds, lint et tests unit
 | Débrief | ✅ PASS | aucun `accountId` client : groupe les comptes du `userId` (`findMany where userId`) |
 | Quota serveur | ✅ PASS | create + update(réactivation) → `ACCOUNT_LIMIT_REACHED` (tests `accounts.service.spec`) |
 | `@CurrentUser` runtime | ✅ PASS | `jwt.strategy.ts validate()` relit l'user en base → `plan, role, trialEndsAt, isDemo` frais (un downgrade prend effet immédiatement) |
-| Test runtime A≠B | ✅ PASS (live) | FREE `POST /accounts` direct → **403** (StarterGuard), pas de bypass front ; `GET /referral/me` authed → 200 |
+| Test runtime A≠B | ✅ PASS (live) | FREE `POST /accounts` : 1er compte **201**, 2e → **403** `ACCOUNT_LIMIT_REACHED` (quota service, plus de StarterGuard) ; `GET /referral/me` authed → 200 |
 
 ## PHASE 2 — Conformité multi-comptes (104-107) ✅ PASS
 
@@ -58,7 +58,7 @@ chaque endpoint valide la propriété côté serveur. Builds, lint et tests unit
 |-----|------|--------|--------|
 | 104 | Capital scopé au compte sélectionné | ✅ | `dashboard.component baseCapital` + `dashboard-capital.spec` (compte→startingBalance ; all→somme non-archivés ; FREE→capital profil) |
 | 105 | « Mes comptes » highlight + grille auto-fit + KPIs agrégés | ✅ | `.is-selected` + `accounts-selection.spec` ; grille `auto-fit` (109/105) |
-| 106 | Sélecteur global gété FREE | ✅ | topbar `showAccountSelector && isStarterOrAbove` |
+| 106 | Sélecteur global accessible tous plans | ✅ | topbar `showAccountSelector` (plus de gate plan) |
 | 106 | Journal/Analytics/Sessions filtrés + trade sur bon compte + anti-fuite | ✅ | `trades.store.spec` (accountId + loadMore), `journal-account.spec` (POST accountId) |
 | 107 | Slot = ACTIVE only (create + update) | ✅ | `accounts.service assertActiveSlotAvailable` + `accounts.service.spec` |
 | 107 | `remove` garde ≥ 1 actif | ✅ | `remove()` BadRequest si dernier actif (test présent) |
@@ -82,7 +82,7 @@ chaque endpoint valide la propriété côté serveur. Builds, lint et tests unit
 | **Garde `NODE_ENV` (pas d'appel hors prod)** | ✅ **PASS (corrigé 112)** | `debrief.agent.ts` : si `NODE_ENV !== 'production'` ET `AI_DEBRIEF_DEV !== 'true'` → stub `{overview:{summary:'(débrief IA disponible en production)'}, accounts:[]}`, aucun appel modèle. `AI_DEBRIEF_DEV=true` permet le vrai rendu à la demande en dev. Prod inchangé. Testé (`debrief.agent.spec`). Le stub `accounts:[]` rend les onglets sans crash (sections par compte construites depuis la BDD, texte IA vide). |
 | Réponse `{overview, accounts[]}` + rétrocompat | ✅ PASS | service construit la structure ; front `legacyStrengths`/`overviewSummary` fallback (`debrief-tabs.spec`) |
 | `propNote` framé estimation (AMF) | ✅ PASS | `debrief.prompt.ts` : « estimation depuis tes trades loggés, pas le calcul officiel », jamais de chiffre officiel ni promesse |
-| Front onglets, pas de crash si vide, Premium-only | ✅ PASS | tabs overview + par compte ; gété `isStarterOrAbove` (paywall) |
+| Front onglets, pas de crash si vide, Premium-only | ✅ PASS | tabs overview + par compte ; gété `isPremium` (paywall) |
 
 ## PHASE 5 — Landing (109) gating ✅ PASS
 
@@ -99,7 +99,7 @@ chaque endpoint valide la propriété côté serveur. Builds, lint et tests unit
 | Item | Statut | Détail |
 |------|--------|--------|
 | Signature webhook vérifiée | ✅ PASS | `stripe.service.ts:248` `constructEvent(payload, signature, STRIPE_WEBHOOK_SECRET)` ; reject → 400 |
-| Montée/descente de plan | ✅ PASS | `stripe-webhook.service.spec` : checkout→PREMIUM, prix Starter→STARTER, trialing→accès, deleted→FREE+churn daté |
+| Montée/descente de plan | ✅ PASS | `stripe-webhook.service.spec` : checkout→PREMIUM, abo actif→PREMIUM, trialing→accès, annuel direct→trialUsed reste false, deleted→FREE+churn daté |
 | Aucune clé LIVE en clair | ✅ PASS | 0 `sk_live`/`pk_live` dans le source |
 | Premium verrouillé sans plan/trial | ✅ PASS | `premium.guard.ts` (`PREMIUM_REQUIRED`, `trialEndsAt`) |
 
@@ -127,14 +127,14 @@ Exécuté **live** contre la stack dev (API `:3001`, DB locale), user jetable ne
 |-------|--------|---------------|--------|
 | 1 Inscription | `POST /auth/register` | 201, plan FREE, JWT émis (pas de trial auto — cf. I1) | ✅ |
 | — Auth | `GET /referral/me` (authed) | 200 | ✅ |
-| 6 Quota/anti-bypass | FREE `POST /accounts` direct | **403** (StarterGuard, pas de bypass front) | ✅ |
+| 6 Quota/anti-bypass | FREE `POST /accounts` 2e compte | **403** `ACCOUNT_LIMIT_REACHED` (quota service) | ✅ |
 | 10 Nettoyage | `DELETE User` test | 0 ligne restante | ✅ |
 
 Étapes 2-5, 7-9 (onboarding UI, multi-comptes 3 comptes, trade sur compte sélectionné,
 slot ACTIVE-only, débrief onglets, Stripe up/down) : **logique couverte par les tests**
 (`accounts.service.spec` quota+slot, `dashboard-capital.spec`, `journal-account.spec`,
 `debrief-tabs.spec`/`debrief.service.spec`, `stripe-webhook.service.spec`). Le parcours
-**UI navigateur complet** exige la stack de test lancée avec users STARTER/PREMIUM seedés
+**UI navigateur complet** exige la stack de test lancée avec users FREE/PREMIUM seedés
 (non disponible ici sans DB de test isolée) → couvert au niveau logique, à rejouer en UI
 via l'infra E2E (W3) + la checklist `SMOKE-PROD.md` post-déploiement.
 

@@ -18,9 +18,11 @@ import {
   Upload,
   CheckCircle,
   AlertCircle,
+  Zap,
+  FileText,
+  Check,
 } from 'lucide-angular';
 import { environment } from '../../../environments/environment';
-import { NumericInputDirective } from '../../core/directives/numeric-input.directive';
 import { parseDecimal } from '../../core/utils/parse-decimal';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { SetupsStore } from '../../core/stores/setups.store';
@@ -29,8 +31,14 @@ interface ImportResult {
   created: number;
   duplicates: number;
   failed: number;
-  limitBlocked: number;
   total: number;
+  /** Présent quand un fichier de frais (Tradovate Cash history) a été fusionné. */
+  feesImported?: {
+    assigned: number;
+    expected: number;
+    reconciled: boolean;
+    count: number;
+  };
 }
 
 // Émotions (mêmes valeurs que le form de trade) appliquées à tout le lot.
@@ -42,7 +50,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
 @Component({
   selector: 'mtc-csv-import',
   standalone: true,
-  imports: [LucideAngularModule, NumericInputDirective],
+  imports: [LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './csv-import.component.css',
   template: `
@@ -81,15 +89,24 @@ const EMOTION_EMOJIS: Record<string, string> = {
                   {{ result()!.duplicates }} doublon(s) ignoré(s) (déjà présents)
                 </p>
               }
-              @if (result()!.limitBlocked > 0) {
-                <p class="result-sub result-limit">
-                  {{ result()!.limitBlocked }} non importé(s) : limite FREE atteinte
-                  (30/mois). Passe Starter pour l'illimité.
-                </p>
-              }
               @if (result()!.failed > 0) {
                 <p class="result-sub">
                   {{ result()!.failed }} ligne(s) ignorée(s) (format invalide)
+                </p>
+              }
+              @if (result()!.feesImported; as f) {
+                <p class="result-sub result-fees">
+                  Frais importés : {{ f.assigned.toFixed(2) }} $ sur {{ f.count }} trade(s)
+                  @if (!f.reconciled) {
+                    <span class="result-fees-warn"> · frais partiellement rapprochés</span>
+                  }
+                </p>
+              }
+              <!-- Note informative (non bloquante) : les exports broker n'ont ni SL ni TP → R:R et note d'exécution indispo. -->
+              @if (result()!.created > 0) {
+                <p class="import-no-stop-note">
+                  Tes trades n'ont ni stop loss ni take profit : c'est normal, ton broker ne les exporte pas.
+                  Le R:R et la note d'exécution resteront indisponibles pour ces trades.
                 </p>
               }
               <button class="btn-primary" (click)="reset()">
@@ -110,14 +127,121 @@ const EMOTION_EMOJIS: Record<string, string> = {
               <p class="result-sub">{{ error() }}</p>
               <button class="btn-primary" (click)="reset()">Réessayer</button>
             </div>
-          } @else if (selectedFile() && !isLoading()) {
-            <div class="confirm-block">
-              <div class="file-pill">
-                <lucide-icon [img]="UploadIcon" [size]="16" color="var(--blue)" />
-                <span class="file-name">{{ selectedFile()!.name }}</span>
-                <button class="file-change" (click)="clearFile()">Changer</button>
-              </div>
+          } @else {
+            <!-- Écran de sélection unique (source → panneau inline → options → footer). PROMPT-164. -->
+            <div class="import-screen">
 
+              <!-- 1. Sélecteur de source (masqué en onboarding : allowFeesFile=false) -->
+              @if (allowFeesFile()) {
+                <div class="import-field">
+                  <span class="import-label">Source</span>
+                  <div class="src-grid">
+                    <button type="button" class="src-btn" [class.active]="source() === 'tradovate'"
+                            (click)="setSource('tradovate')">
+                      @if (source() === 'tradovate') {
+                        <lucide-icon [img]="CheckIcon" [size]="14" class="src-check" />
+                      }
+                      <lucide-icon [img]="ZapIcon" [size]="18" class="src-ic" />
+                      <span class="src-name">Tradovate</span>
+                      <span class="src-tag src-tag-green">Frais exacts</span>
+                    </button>
+                    <button type="button" class="src-btn" [class.active]="source() === 'other'"
+                            (click)="setSource('other')">
+                      @if (source() === 'other') {
+                        <lucide-icon [img]="CheckIcon" [size]="14" class="src-check" />
+                      }
+                      <lucide-icon [img]="FileTextIcon" [size]="18" class="src-ic" />
+                      <span class="src-name">Autre broker</span>
+                      <span class="src-sub">Binance · MT4/5 · Bybit · MEXC · IBKR</span>
+                    </button>
+                  </div>
+                </div>
+              }
+
+              <!-- 2. Panneau selon la source (dropzone direct en onboarding) -->
+              @if (allowFeesFile() && source() === 'tradovate') {
+                <!-- Tradovate : deux fichiers inline -->
+                <div class="import-field">
+                  <label class="import-label" for="tvTradesInput">
+                    Fichier des trades <span class="src-tag">Performance · requis</span>
+                  </label>
+                  @if (selectedFile()) {
+                    <div class="file-pill">
+                      <lucide-icon [img]="UploadIcon" [size]="16" color="var(--blue)" />
+                      <span class="file-name">{{ selectedFile()!.name }}</span>
+                      <button class="file-x" (click)="clearTradesFile()" aria-label="Retirer le fichier">
+                        <lucide-icon [img]="XIcon" [size]="14" />
+                      </button>
+                    </div>
+                  } @else {
+                    <button class="file-choose" (click)="tvTradesInput.click()">Choisir un fichier</button>
+                  }
+                  <input #tvTradesInput id="tvTradesInput" type="file"
+                    accept=".csv,.txt,.xlsx,.xls" style="display:none" (change)="onFileChange($event)" />
+                </div>
+
+                <div class="import-field">
+                  <label class="import-label" for="tvFeesInput">
+                    Fichier des frais <span class="src-tag src-tag-green">Cash history · optionnel</span>
+                  </label>
+                  @if (feesFile()) {
+                    <div class="file-pill">
+                      <lucide-icon [img]="UploadIcon" [size]="16" color="var(--blue)" />
+                      <span class="file-name">{{ feesFile()!.name }}</span>
+                      <button class="file-x" (click)="clearFeesFile()" aria-label="Retirer le fichier">
+                        <lucide-icon [img]="XIcon" [size]="14" />
+                      </button>
+                    </div>
+                    @if (!feesFileValid()) {
+                      <p class="import-help import-warn">
+                        Ce fichier ne ressemble pas à un Cash history Tradovate. Vérifie l'export.
+                      </p>
+                    }
+                  } @else {
+                    <button class="file-choose" (click)="tvFeesInput.click()">Choisir un fichier</button>
+                  }
+                  <input #tvFeesInput id="tvFeesInput" type="file"
+                    accept=".csv,.txt,.xlsx,.xls" style="display:none" (change)="onFeesFileChange($event)" />
+                </div>
+
+                <p class="import-help">
+                  Ajoute le Cash history et tes frais sont exacts au centime, sans saisie manuelle.
+                </p>
+              } @else {
+                <!-- Autre broker / onboarding : dropzone -->
+                <div
+                  class="drop-zone"
+                  role="button"
+                  tabindex="0"
+                  [class.drag-over]="isDragging()"
+                  (dragover)="onDragOver($event)"
+                  (dragleave)="isDragging.set(false)"
+                  (drop)="onDrop($event)"
+                  (click)="fileInput.click()"
+                  (keydown.enter)="fileInput.click()"
+                  (keydown.space)="fileInput.click()"
+                >
+                  <lucide-icon [img]="UploadIcon" [size]="28" color="var(--text-3)" />
+                  <p class="drop-title">Glisse ton CSV ici</p>
+                  <p class="drop-sub">Tradovate · Binance · MetaTrader · Bybit · ou tout autre broker</p>
+                  <span class="drop-btn">Parcourir</span>
+                </div>
+                <p class="drop-hint">
+                  CSV ou Excel · exporte tes <strong>trades fermés</strong> depuis ton broker · jusqu'à 2000 trades
+                </p>
+                @if (selectedFile()) {
+                  <div class="file-pill">
+                    <lucide-icon [img]="UploadIcon" [size]="16" color="var(--blue)" />
+                    <span class="file-name">{{ selectedFile()!.name }}</span>
+                    <button class="file-x" (click)="clearFile()" aria-label="Retirer le fichier">
+                      <lucide-icon [img]="XIcon" [size]="14" />
+                    </button>
+                  </div>
+                }
+                <input #fileInput type="file" accept=".csv,.txt,.xlsx,.xls" style="display:none" (change)="onFileChange($event)" />
+              }
+
+              <!-- 3. Options communes (compte / émotion / setup) -->
               <!-- Compte cible (corrige le rattachement multi-compte) -->
               @if (accountStore.activeAccounts().length > 0) {
                 <div class="import-field">
@@ -136,20 +260,21 @@ const EMOTION_EMOJIS: Record<string, string> = {
                 </div>
               }
 
-              <!-- Émotion en lot -->
+              <!-- Émotion en lot (optionnel, override de l'humeur de session) -->
               <div class="import-field">
-                <label class="import-label" for="importEmotion">Émotion (appliquée à tous les trades)</label>
+                <label class="import-label" for="importEmotion">Émotion (optionnel, appliquée à tout le lot)</label>
                 <select
                   id="importEmotion"
                   class="import-select"
                   [value]="emotion()"
                   (change)="emotion.set($any($event.target).value)"
                 >
+                  <option value="">- Non renseignée</option>
                   @for (e of EMOTIONS; track e) {
                     <option [value]="e">{{ emotionEmoji(e) }} {{ e }}</option>
                   }
                 </select>
-                <p class="import-help">Tu pourras affiner trade par trade ensuite.</p>
+                <p class="import-help">Laisse « Non renseignée » pour hériter de l'humeur de ta session ; tu pourras affiner trade par trade ensuite.</p>
               </div>
 
               <!-- Setup en lot (setups actifs du user) -->
@@ -172,102 +297,25 @@ const EMOTION_EMOJIS: Record<string, string> = {
                 </div>
               }
 
-              @switch (feesDisabledReason()) {
-                @case ('has_fees_column') {
-                  <p class="fees-note">
-                    ✓ Frais détectés dans ton fichier : ils sont déjà pris en
-                    compte. Pas besoin de les saisir.
-                  </p>
-                }
-                @case ('too_many') {
-                  <p class="fees-note">
-                    Import volumineux (plus de 100 trades). Les frais ne peuvent
-                    pas être saisis en un total global sur autant de trades :
-                    importe par période plus courte pour les inclure.
-                  </p>
-                }
-                @default {
-                  <div class="fees-field">
-                    <label class="fees-label" for="totalFees">
-                      Total des frais (optionnel)
-                    </label>
-                    <div class="fees-input-wrap">
-                      <input
-                        id="totalFees"
-                        type="text"
-                        inputmode="decimal"
-                        mtcNumericInput
-                        placeholder="0,00"
-                        class="fees-input"
-                        [value]="totalFees()"
-                        (input)="totalFees.set($any($event.target).value)"
-                      />
-                      <span class="fees-unit">€</span>
-                    </div>
-                    <p class="fees-help">
-                      Indique le total des commissions de ton broker pour cet import
-                      (ex. 7,28). Le P&amp;L sera affiché net de frais. Laisse vide si
-                      déjà inclus.
-                    </p>
-                  </div>
-                }
-              }
-
+              <!-- 4. Validation + footer -->
               @if (!canImport()) {
                 <p class="import-help import-warn">Choisis le compte de destination pour importer.</p>
               }
-              <button class="btn-primary" (click)="upload()" [disabled]="!canImport()">Importer</button>
+              <div class="modal-footer">
+                <button class="btn-ghost" (click)="dismissed.emit()">Annuler</button>
+                <button
+                  class="btn-primary"
+                  (click)="upload()"
+                  [disabled]="!canSubmit() || isLoading()"
+                >
+                  @if (isLoading()) {
+                    <span class="spinner spinner-sm"></span> Import…
+                  } @else {
+                    Importer
+                  }
+                </button>
+              </div>
             </div>
-          } @else {
-            <div
-              class="drop-zone"
-              role="button"
-              tabindex="0"
-              [class.drag-over]="isDragging()"
-              (dragover)="onDragOver($event)"
-              (dragleave)="isDragging.set(false)"
-              (drop)="onDrop($event)"
-              (click)="fileInput.click()"
-              (keydown.enter)="fileInput.click()"
-              (keydown.space)="fileInput.click()"
-            >
-              <lucide-icon
-                [img]="UploadIcon"
-                [size]="28"
-                color="var(--text-3)"
-              />
-              <p class="drop-title">
-                @if (isLoading()) {
-                  Analyse en cours...
-                } @else {
-                  Glisse ton CSV ici
-                }
-              </p>
-              <p class="drop-sub">
-                @if (isLoading()) {
-                  L'IA structure tes trades…
-                } @else {
-                  Tradovate · Binance · MetaTrader · Bybit · ou tout autre
-                  broker
-                }
-              </p>
-              @if (!isLoading()) {
-                <span class="drop-btn">Parcourir</span>
-              } @else {
-                <div class="spinner"></div>
-              }
-            </div>
-            <p class="drop-hint">
-              CSV ou Excel · exporte tes <strong>trades fermés</strong> depuis ton
-              broker · jusqu'à 2000 trades
-            </p>
-            <input
-              #fileInput
-              type="file"
-              accept=".csv,.txt,.xlsx,.xls"
-              style="display:none"
-              (change)="onFileChange($event)"
-            />
           }
         </div>
       </div>
@@ -276,6 +324,8 @@ const EMOTION_EMOJIS: Record<string, string> = {
 })
 export class CsvImportComponent {
   readonly open = input(false);
+  /** Affiche le sélecteur « Fichier des frais » (Tradovate Cash history). Onboarding → false. */
+  readonly allowFeesFile = input(true);
   readonly dismissed = output<void>();
   readonly imported = output<void>();
 
@@ -288,6 +338,9 @@ export class CsvImportComponent {
   protected readonly UploadIcon = Upload;
   protected readonly CheckCircleIcon = CheckCircle;
   protected readonly AlertCircleIcon = AlertCircle;
+  protected readonly ZapIcon = Zap;
+  protected readonly FileTextIcon = FileText;
+  protected readonly CheckIcon = Check;
   protected readonly EMOTIONS = EMOTIONS;
 
   protected readonly isDragging = signal(false);
@@ -298,12 +351,19 @@ export class CsvImportComponent {
   protected readonly totalFees = signal<string>('');
   // null = champ frais actif ; sinon raison de désactivation.
   protected readonly feesDisabledReason = signal<null | 'has_fees_column' | 'too_many'>(null);
+  // Fichier des frais (Tradovate Cash history) : optionnel, remplace la saisie manuelle.
+  protected readonly feesFile = signal<File | null>(null);
+  // true si l'en-tête ressemble à un Cash history Tradovate (frais exacts par fusion).
+  protected readonly feesFileValid = signal(false);
+  // Source d'import sélectionnée (PROMPT-164) : Tradovate (2 fichiers) présélectionné, ou autre broker (dropzone).
+  protected readonly source = signal<'tradovate' | 'other'>('tradovate');
 
   // Defaults appliqués à tout le lot.
   protected readonly accountId = signal<string>('');
-  protected readonly emotion = signal<string>('NEUTRAL');
+  // Émotion de lot optionnelle (PROMPT-163) : '' = non renseignée (rien envoyé → héritera de la session).
+  protected readonly emotion = signal<string>('');
   protected readonly setupId = signal<string>('');
-  // Setups actifs du user (store partagé — liste dynamique).
+  // Setups actifs du user (store partagé, liste dynamique).
   protected readonly setups = this.setupsStore.active;
 
   /** Couleur du setup sélectionné (pastille à côté du select). */
@@ -316,8 +376,13 @@ export class CsvImportComponent {
     () => this.accountStore.activeAccounts().length === 0 || this.accountId() !== '',
   );
 
+  /** Bouton Importer actif : fichier des trades présent + compte OK (le Cash history reste optionnel). */
+  protected readonly canSubmit = computed(
+    () => !!this.selectedFile() && this.canImport(),
+  );
+
   /** Au-delà : un total global réparti au prorata donnerait des frais faux. */
-  private readonly FEES_INPUT_MAX_TRADES = 100;
+  private readonly FEES_INPUT_MAX_TRADES = 5000;
 
   constructor() {
     if (!this.accountStore.loaded()) this.accountStore.load();
@@ -327,6 +392,17 @@ export class CsvImportComponent {
       const first = this.setupsStore.active()[0];
       if (first && untracked(() => !this.setupId())) this.setupId.set(first.id);
     });
+    // À l'ouverture du modal : présélectionne le compte courant (les options sont visibles d'emblée).
+    effect(() => {
+      if (this.open()) untracked(() => this.initAccountSelection());
+    });
+  }
+
+  /** Sélecteur de source (PROMPT-164). Passer à « Autre » retire le fichier de frais (Tradovate-only). */
+  protected setSource(s: 'tradovate' | 'other'): void {
+    this.source.set(s);
+    this.error.set(null);
+    if (s === 'other') this.clearFeesFile();
   }
 
   protected emotionEmoji(e: string): string {
@@ -392,9 +468,38 @@ export class CsvImportComponent {
   }
 
   protected clearFile() {
+    this.clearTradesFile();
+    this.clearFeesFile();
+  }
+
+  // Retire uniquement le fichier des trades (conserve le fichier des frais en mode Tradovate).
+  protected clearTradesFile() {
     this.selectedFile.set(null);
     this.totalFees.set('');
     this.feesDisabledReason.set(null);
+  }
+
+  // Fichier des frais (Cash history) : lecture légère de l'en-tête pour valider et,
+  // si valide, masquer la saisie manuelle (les frais viennent du fichier).
+  onFeesFileChange(e: Event) {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.feesFile.set(file);
+    this.feesFileValid.set(false);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const header = String(reader.result ?? '').split(/\r?\n/)[0]?.toLowerCase() ?? '';
+      this.feesFileValid.set(
+        header.includes('transaction id') && header.includes('cash change type'),
+      );
+    };
+    reader.onerror = () => this.feesFileValid.set(false);
+    reader.readAsText(file);
+  }
+
+  protected clearFeesFile() {
+    this.feesFile.set(null);
+    this.feesFileValid.set(false);
   }
 
   // Étape 2 : confirmation → upload avec les frais éventuels.
@@ -405,14 +510,21 @@ export class CsvImportComponent {
     const formData = new FormData();
     formData.append('file', file, file.name);
 
-    const fees = parseDecimal(this.totalFees());
-    if (this.feesDisabledReason() === null && fees != null && fees > 0) {
-      formData.append('totalFees', String(fees));
+    // Fichier des frais (Tradovate Cash history) → frais exacts par fusion. Prioritaire
+    // sur la saisie manuelle : quand il est fourni, on n'envoie pas totalFees.
+    const feesFile = this.feesFile();
+    if (feesFile) {
+      formData.append('fees', feesFile, feesFile.name);
+    } else {
+      const fees = parseDecimal(this.totalFees());
+      if (this.feesDisabledReason() === null && fees != null && fees > 0) {
+        formData.append('totalFees', String(fees));
+      }
     }
 
-    // Defaults du lot : compte cible (si choisi), émotion, setup.
+    // Defaults du lot : compte cible (si choisi), émotion (override, rien si non renseignée), setup.
     if (this.accountId()) formData.append('accountId', this.accountId());
-    formData.append('emotion', this.emotion());
+    if (this.emotion()) formData.append('emotion', this.emotion());
     if (this.setupId()) formData.append('setupId', this.setupId());
 
     this.isLoading.set(true);
@@ -428,6 +540,12 @@ export class CsvImportComponent {
         next: (res) => {
           this.result.set(res.data);
           this.isLoading.set(false);
+          // Refresh coordonné des stores globalement périmés par l'import (PROMPT-175) :
+          // - comptes : l'import a pu créer le compte par défaut → sinon dashboard « 0 compte / $0 ».
+          // - setups : le `tradeCount` par setup change → sinon « jamais utilisé » sur le Profil.
+          // Les trades/summary sont rechargés par le parent (journal) ou l'effet du dashboard.
+          this.accountStore.load();
+          this.setupsStore.load(true);
           this.imported.emit();
         },
         error: (err) => {
@@ -443,5 +561,7 @@ export class CsvImportComponent {
     this.selectedFile.set(null);
     this.totalFees.set('');
     this.feesDisabledReason.set(null);
+    this.source.set('tradovate');
+    this.clearFeesFile();
   }
 }

@@ -18,7 +18,7 @@ const DARK = rgb(0.1, 0.12, 0.15);
 const GREY = rgb(0.45, 0.48, 0.52);
 
 /**
- * Relevé de commissions ambassadeur — ce n'est PAS une facture (aucune mention
+ * Relevé de commissions ambassadeur : ce n'est PAS une facture (aucune mention
  * légale, aucun SIRET). Il sert de base à la facture émise par l'ambassadeur.
  */
 export async function buildStatementPdf(data: StatementData): Promise<Buffer> {

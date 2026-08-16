@@ -19,7 +19,7 @@ export class DeletedAccountService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  // 00h15 Paris chaque jour — anonymise les traces de plus de 90 jours
+  // 00h15 Paris chaque jour : anonymise les traces de plus de 90 jours
   @Cron('15 0 * * *', { timeZone: 'Europe/Paris' })
   async anonymizeDaily(): Promise<void> {
     const count = await this.anonymizeOld();

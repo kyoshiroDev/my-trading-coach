@@ -4,6 +4,7 @@ import { parseAnthropicJson } from './parse-json.util';
 import { handleAnthropicError } from './anthropic-errors.util';
 import { Pattern } from './pattern.agent';
 import { AnthropicClientService } from '../../shared/anthropic-client.service';
+import { NO_EM_DASH_RULE } from '../prompts/style.prompt';
 
 export interface Advice {
   title: string;
@@ -15,6 +16,7 @@ const COACH_SYSTEM = `Tu es un coach de trading bienveillant mais direct.
 Tu transformes des patterns détectés en conseils concrets et actionnables.
 Tutoiement. Maximum 3 conseils prioritaires.
 LONGUEUR STRICTE : description = 1 seule phrase, 12 mots maximum, sans saut de ligne.
+${NO_EM_DASH_RULE}
 Réponds TOUJOURS en JSON valide. Jamais de markdown.
 Format JSON : { "advice": [{ "title": "string (5 mots max)", "description": "string (1 phrase, 12 mots max)", "priority": "high"|"medium" }] }`;
 

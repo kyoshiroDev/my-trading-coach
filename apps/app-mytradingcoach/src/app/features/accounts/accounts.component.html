@@ -1,6 +1,6 @@
 <mtc-topbar
   title="Mes comptes"
-  [showAddButton]="userStore.isStarterOrAbove()"
+  [showAddButton]="!atLimit()"
   [showAccountSelector]="true"
   addLabel="Ajouter un compte"
   addTestId="add-account-btn"
@@ -8,22 +8,6 @@
 />
 
 <div class="content">
-
-  @if (!userStore.isStarterOrAbove()) {
-    <!-- ── Upsell (FREE) ── -->
-    <div class="acct-upsell" data-testid="accounts-upsell">
-      <div class="upsell-ic"><lucide-icon [img]="BriefcaseIcon" [size]="36" /></div>
-      <h2 class="upsell-title">Plusieurs comptes, dès le plan Starter</h2>
-      <p class="upsell-sub">
-        Suis tes stats par compte (prop firms, comptes perso), filtre toute l'app par compte,
-        et garde un œil sur ton objectif et ta marge avant drawdown.
-        <br />Starter : jusqu'à 3 comptes · Premium : comptes illimités.
-      </p>
-      <button class="btn" (click)="showPlanModal.set(true)" data-testid="accounts-upsell-cta">
-        Passer au Starter
-      </button>
-    </div>
-  } @else {
 
     <!-- ── Vue agrégée ── -->
     <div class="stats-row">
@@ -180,7 +164,7 @@
         </div>
       }
 
-      <!-- Ajouter / quota atteint — uniquement en vue « Tous les comptes ». -->
+      <!-- Ajouter / quota atteint : uniquement en vue « Tous les comptes ». -->
       @if (store.selectedAccountId() === 'all') {
         @if (atLimit()) {
           <button class="acct-add is-limit" (click)="showPlanModal.set(true)" data-testid="add-account-limit">
@@ -198,7 +182,6 @@
       }
 
     </div>
-  }
 
 </div>
 

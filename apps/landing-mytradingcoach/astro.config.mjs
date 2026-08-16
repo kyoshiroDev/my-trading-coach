@@ -10,6 +10,9 @@ const REFERRAL = flag(process.env.PUBLIC_FEATURE_REFERRAL);
 
 export default defineConfig({
   site: 'https://www.mytradingcoach.app',
+  // Forme d'URL canonique unique : jamais de slash final (sauf la racine `/`).
+  // Évite que `/page` et `/page/` coexistent → « Pages avec redirection » côté GSC.
+  trailingSlash: 'never',
   integrations: [
     sitemap({
       changefreq: 'weekly',
@@ -22,12 +25,17 @@ export default defineConfig({
         return true;
       },
       serialize: (item) => {
-        // Homepage — priorité maximale
-        if (item.url === 'https://www.mytradingcoach.app/') {
+        // URLs sans slash final (trailingSlash: 'never') : la home est `.../app`, l'index `.../blog`.
+        // Homepage — priorité maximale.
+        // NB : inutile de forcer le slash final ici pour coller au canonical
+        // `https://www.mytradingcoach.app/` — @astrojs/sitemap renormalise les
+        // URL après `serialize` selon `trailingSlash: 'never'`. Sans effet côté
+        // SEO de toute façon : la racine nue et `/` sont la même URL pour Google.
+        if (item.url === 'https://www.mytradingcoach.app' || item.url === 'https://www.mytradingcoach.app/') {
           return { ...item, priority: 1.0, changefreq: 'daily' };
         }
         // Page blog index
-        if (item.url === 'https://www.mytradingcoach.app/blog/') {
+        if (item.url === 'https://www.mytradingcoach.app/blog') {
           return { ...item, priority: 0.8, changefreq: 'weekly' };
         }
         // Articles de blog

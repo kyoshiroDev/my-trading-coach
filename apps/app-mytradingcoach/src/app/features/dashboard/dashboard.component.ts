@@ -21,12 +21,11 @@ import { TopbarComponent } from '../../shared/components/topbar/topbar.component
 import { TradeFormComponent } from '../journal/trade-form.component';
 import { CsvImportComponent } from '../journal/csv-import.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
+import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
 import { CreateTradeDto, TradesApi } from '../../core/api/trades.api';
 import {
-  AnalyticsApi,
   AnalyticsSummary,
   EquityPoint,
-  MonthlyActivitySummary,
   SetupStat,
   EmotionStat,
   TopAsset,
@@ -56,13 +55,14 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
     EmotionLabelPipe,
     EmotionColorPipe,
     LucideAngularModule,
+    InfoTooltipComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './dashboard.component.css',
   template: `
     <mtc-topbar
       title="Dashboard"
-      [period]="currentMonthLabel()"
+      [period]="periodLabel()"
       addLabel="⚡ Ajouter trade"
       [showAccountSelector]="true"
       (addClick)="goToJournal()"
@@ -80,7 +80,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
     </mtc-topbar>
 
     <div class="content">
-      @if (!isLoading() && tradesStore.totalTrades() === 0) {
+      @if (selectedAccount.loaded() && tradesStore.totalTrades() === 0) {
         <div class="firstrun-hero">
           <div class="firstrun-text">
             <h2 class="firstrun-title">Fais ton premier pas 🚀</h2>
@@ -91,30 +91,6 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
             <button class="firstrun-btn ghost" data-testid="firstrun-import" (click)="openCsvImport()">Importer mes trades</button>
             <a class="firstrun-btn ghost" routerLink="/session">Démarrer une session</a>
           </div>
-        </div>
-      }
-
-      @if (!userStore.isStarterOrAbove() && tradesStore.limitReached()) {
-        <div class="limit-banner reached">
-          <div class="limit-banner-left">
-            <span class="limit-banner-ic">🚫</span>
-            <div>
-              <div class="limit-banner-title">Limite mensuelle atteinte</div>
-              <div class="limit-banner-sub">Tu as utilisé tes {{ tradesStore.monthlyLimit() }} trades ce mois. Passe à Starter pour trader sans limites.</div>
-            </div>
-          </div>
-          <button class="limit-banner-btn" (click)="showPlanModal.set(true)">Passer Starter</button>
-        </div>
-      } @else if (!userStore.isStarterOrAbove() && tradesStore.nearLimit()) {
-        <div class="limit-banner near">
-          <div class="limit-banner-left">
-            <span class="limit-banner-ic">⚠️</span>
-            <div>
-              <div class="limit-banner-title">{{ tradesStore.monthlyCount() }}/{{ tradesStore.monthlyLimit() }} trades ce mois</div>
-              <div class="limit-banner-sub">Tu approches de ta limite gratuite. Upgrade pour continuer sans restrictions.</div>
-            </div>
-          </div>
-          <button class="limit-banner-btn ghost" (click)="showPlanModal.set(true)">Upgrade</button>
         </div>
       }
 
@@ -131,22 +107,22 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
         </div>
       }
 
-      @if (!userStore.isStarterOrAbove()) {
+      @if (!userStore.isPremium()) {
         <div class="premium-banner">
           <div class="premium-banner-left">
             <span class="premium-banner-icon">⚡</span>
             <div>
-              <div class="premium-banner-title">Passe à Starter</div>
-              <div class="premium-banner-sub">Trades illimités, analytics avancés, Weekly Debrief, Score trader</div>
+              <div class="premium-banner-title">Passe à Premium</div>
+              <div class="premium-banner-sub">Weekly Debrief, IA Insights, Chat coach, analytics avancés &amp; comptes illimités</div>
             </div>
           </div>
           <div class="premium-banner-right">
             <div class="premium-banner-price">
-              <span class="premium-banner-amount">{{ PRICING.starter.monthly }}€</span>
+              <span class="premium-banner-amount">{{ PRICING.premium.monthly }}€</span>
               <span class="premium-banner-period">/mois</span>
-              <div class="premium-banner-trial">7 jours gratuits · sans CB</div>
+              <div class="premium-banner-trial">1 mois offert · carte requise</div>
             </div>
-            <button class="premium-banner-btn" (click)="showPlanModal.set(true)">Essayer gratuitement</button>
+            <button class="premium-banner-btn" (click)="showPlanModal.set(true)">Essayer Premium</button>
           </div>
         </div>
       }
@@ -156,11 +132,14 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
           <!-- Capital -->
           <div class="mtc-kpi" style="--glow:var(--blue)">
             <div class="mtc-kpi-l">
-              <div class="mtc-kpi-lab">Capital</div>
+              <div class="mtc-kpi-lab">Capital
+                <mtc-info-tooltip class="align-start" label="Comment le capital est calculé"
+                  text="Capital de départ du compte, ajusté du P&L net de tes trades." />
+              </div>
               <div class="mtc-kpi-val" data-testid="dashboard-capital" [style.color]="capitalColor()">{{ capitalDisplay() }}</div>
               <div class="mtc-kpi-sub">
                 @if (capitalPct() !== 0) {
-                  <span [style.color]="capitalPct() > 0 ? 'var(--green)' : 'var(--red)'">{{ capitalPct() > 0 ? '+' : '' }}{{ capitalPct() | number:'1.1-1' }}% ce mois</span>
+                  <span [style.color]="capitalPct() > 0 ? 'var(--green)' : 'var(--red)'">{{ capitalPct() > 0 ? '+' : '' }}{{ capitalPct() | number:'1.1-1' }}% {{ periodShort() }}</span>
                 } @else { base }
               </div>
             </div>
@@ -176,10 +155,10 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
           <!-- P&L net mois -->
           <div class="mtc-kpi" style="--glow:var(--green)">
             <div class="mtc-kpi-l">
-              <div class="mtc-kpi-lab">P&amp;L net · mois</div>
+              <div class="mtc-kpi-lab">P&amp;L net</div>
               <div class="mtc-kpi-val" [style.color]="pnlColor()">{{ summary()?.totalPnl ?? 0 | pnlFormat }}</div>
               <div class="mtc-kpi-sub">
-                @if ((summary()?.totalTrades ?? 0) > 0) { ce mois } @else { Aucune donnée }
+                @if ((summary()?.totalTrades ?? 0) > 0) { {{ periodShort() }} } @else { Aucune donnée }
               </div>
             </div>
             @let pnl = sparkPath(eqSeries());
@@ -194,7 +173,10 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
           <!-- Win rate -->
           <div class="mtc-kpi" style="--glow:var(--blue)">
             <div class="mtc-kpi-l">
-              <div class="mtc-kpi-lab">Win rate</div>
+              <div class="mtc-kpi-lab">Win rate
+                <mtc-info-tooltip label="Comment le win rate est calculé"
+                  text="Trades gagnants ÷ (gagnants + perdants). Les break-even sont exclus du calcul." />
+              </div>
               <div class="mtc-kpi-val" [style.color]="winRateColor()">{{ (summary()?.winRate ?? 0).toFixed(1) }}%</div>
               <div class="mtc-kpi-sub">
                 @if ((summary()?.totalTrades ?? 0) > 0) { sur {{ summary()?.totalTrades }} trades } @else { Aucune donnée }
@@ -205,7 +187,10 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
           <!-- Profit factor -->
           <div class="mtc-kpi" style="--glow:var(--purple)">
             <div class="mtc-kpi-l">
-              <div class="mtc-kpi-lab">Profit factor</div>
+              <div class="mtc-kpi-lab">Profit factor
+                <mtc-info-tooltip label="Comment le profit factor est calculé"
+                  text="Somme des gains ÷ somme des pertes. Au-dessus de 1, tes gains dépassent tes pertes. Affiche « - » tant que tu n'as aucune perte." />
+              </div>
               <div class="mtc-kpi-val">{{ profitFactorDisplay() }}</div>
               <div class="mtc-kpi-sub">
                 @if ((summary()?.totalTrades ?? 0) > 0) { profits / pertes } @else { Aucune donnée }
@@ -223,7 +208,10 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
           <!-- Trades pris -->
           <div class="mtc-kpi" style="--glow:var(--green)">
             <div class="mtc-kpi-l">
-              <div class="mtc-kpi-lab">Trades pris</div>
+              <div class="mtc-kpi-lab">Trades pris
+                <mtc-info-tooltip label="Ce que compte « Trades pris »"
+                  text="Nombre de trades clôturés sur la période." />
+              </div>
               <div class="mtc-kpi-val">{{ summary()?.totalTrades ?? tradesStore.trades().length }}</div>
               <div class="mtc-kpi-sub">
                 @if ((summary()?.streak ?? 0) > 0) { <span style="color:var(--green)">+{{ summary()?.streak }} streak</span> }
@@ -240,7 +228,10 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
           <!-- Drawdown max -->
           <div class="mtc-kpi" style="--glow:var(--red)">
             <div class="mtc-kpi-l">
-              <div class="mtc-kpi-lab">Drawdown max</div>
+              <div class="mtc-kpi-lab">Drawdown max
+                <mtc-info-tooltip class="align-end" label="Comment le drawdown max est calculé"
+                  text="Plus forte baisse de ton P&L cumulé depuis un sommet, sur la période affichée." />
+              </div>
               <div class="mtc-kpi-val" [style.color]="drawdownColor()">{{ drawdownDisplay() | pnlFormat }}</div>
               <div class="mtc-kpi-sub">
                 @if ((summary()?.totalTrades ?? 0) > 0) { sur capital } @else { Aucune donnée }
@@ -270,7 +261,11 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
         <div class="mtc-panel">
           <div class="mtc-panel-head">
             <div class="mtc-panel-head-l"><lucide-icon [img]="EquityIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">Courbe d'équité</div><div class="mtc-panel-sub">{{ equitySub() }}</div></div></div>
-            <div class="mtc-eq-tabs"><span>1S</span><span class="on">1M</span><span>3M</span><span>YTD</span></div>
+            <div class="mtc-eq-tabs">
+              @for (p of periods; track p.key) {
+                <button type="button" [class.on]="dashboardPeriod() === p.key" (click)="setPeriod(p.key)">{{ p.label }}</button>
+              }
+            </div>
           </div>
           <div class="mtc-panel-body">
             <!-- Courbe d'équité simple = vue de base FREE (profondeur = page /analytics). -->
@@ -294,7 +289,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
                 <circle [attr.cx]="eg.lastX" [attr.cy]="eg.lastY" r="3.4" [attr.fill]="eg.color" />
               </svg>
             } @else {
-              <div class="mtc-empty">Aucun trade ce mois</div>
+              <div class="mtc-empty">{{ equityEmptyMsg() }}</div>
             }
           </div>
         </div>
@@ -303,14 +298,14 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
         <div class="mtc-panel">
           <div class="mtc-panel-head"><div class="mtc-panel-head-l"><lucide-icon [img]="AssetsIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">Top actifs</div><div class="mtc-panel-sub">P&amp;L par instrument</div></div></div></div>
           <div class="mtc-panel-body">
-            <!-- Top actifs (P&L par instrument) = vue de base FREE ; win rate/actif = profondeur Starter. -->
+            <!-- Top actifs (P&L par instrument) = vue de base FREE ; win rate/actif = profondeur Premium. -->
             @if (topAssets().length) {
               <div class="mtc-hbars">
                 @for (a of topAssets(); track a.asset) {
                   <div class="mtc-hbar">
                     <div class="mtc-hbar-l">
                       <div class="mtc-hbar-name">{{ a.asset | uppercase }}</div>
-                      <div class="mtc-hbar-meta">{{ a.count }} trade{{ a.count > 1 ? 's' : '' }}@if (userStore.isStarterOrAbove()) { · {{ a.winRate.toFixed(0) }}%}</div>
+                      <div class="mtc-hbar-meta">{{ a.count }} trade{{ a.count > 1 ? 's' : '' }}@if (userStore.isPremium()) { · {{ a.winRate.toFixed(0) }}%}</div>
                     </div>
                     <div class="mtc-hbar-track"><div class="mtc-hbar-fill" [class.neg]="a.pnl < 0" [style.width.%]="a.barPct"></div></div>
                     <div class="mtc-hbar-v" [style.color]="a.pnl >= 0 ? 'var(--green)' : 'var(--red)'">{{ a.pnl | pnlFormat }}</div>
@@ -323,34 +318,34 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 
         <!-- P&L par jour -->
         <div class="mtc-panel">
-          <div class="mtc-panel-head"><div class="mtc-panel-head-l"><lucide-icon [img]="PlDayIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">P&amp;L par jour</div><div class="mtc-panel-sub">{{ currentMonthLabel() }}</div></div></div></div>
+          <div class="mtc-panel-head"><div class="mtc-panel-head-l"><lucide-icon [img]="PlDayIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">{{ plTitle() }} <mtc-info-tooltip [text]="plTooltip()" /></div><div class="mtc-panel-sub">{{ periodLabel() }}</div></div></div></div>
           <div class="mtc-panel-body">
-            @let pl = plByDay();
-            @if (pl) {
+            @let pl = plBuckets();
+            @if (pl && pl.length) {
               <div class="mtc-plday">
-                @for (d of pl; track d.day) {
-                  <div class="mtc-plday-col" [title]="d.day + ' · ' + (d.pnl >= 0 ? '+' : '') + d.pnl + '$'">
+                @for (d of pl; track d.key) {
+                  <div class="mtc-plday-col" [title]="d.title + ' · ' + (d.pnl >= 0 ? '+' : '') + (d.pnl | number: '1.0-0') + '$'">
                     <div class="mtc-plday-cell">
                       <div class="mtc-plday-bar" [class.pos]="d.pos && d.traded" [class.neg]="!d.pos && d.traded" [style.height.%]="d.barPct"></div>
-                      @if (d.traded) {
+                      @if (d.traded && d.label) {
                         <span class="mtc-plday-val" [class.pos]="d.pos" [class.neg]="!d.pos"
                           [style.bottom]="d.pos ? 'calc(50% + ' + d.barPct + '%)' : null"
                           [style.top]="!d.pos ? 'calc(50% + ' + d.barPct + '%)' : null">{{ d.label }}</span>
                       }
                     </div>
-                    <span class="mtc-plday-day" [class.traded]="d.traded">{{ d.day }}</span>
+                    <span class="mtc-plday-day" [class.traded]="d.traded">{{ d.axisLabel }}</span>
                   </div>
                 }
               </div>
-            } @else { <div class="mtc-empty">Aucune activité ce mois</div> }
+            } @else { <div class="mtc-empty">Aucune activité sur la période</div> }
           </div>
         </div>
 
         <!-- AI Coach -->
-        <div class="mtc-panel" [class.mtc-ai]="userStore.isStarterOrAbove()">
+        <div class="mtc-panel" [class.mtc-ai]="userStore.isPremium()">
           <div class="mtc-panel-head">
             <div class="mtc-panel-head-l"><lucide-icon [img]="CoachIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">AI Coach · feedback</div></div></div>
-            <!-- Pastille LIVE réservée à la carte réellement active (Premium) — jamais sur un teaser verrouillé. -->
+            <!-- Pastille LIVE réservée à la carte réellement active (Premium) : jamais sur un teaser verrouillé. -->
             @if (userStore.isPremium()) {
               <span class="mtc-live"><span class="mtc-live-dot"></span>LIVE</span>
             }
@@ -390,7 +385,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
         <div class="mtc-panel">
           <div class="mtc-panel-head"><div class="mtc-panel-head-l"><lucide-icon [img]="SetupsIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">Répartition stratégies</div><div class="mtc-panel-sub">% des trades par setup</div></div></div></div>
           <div class="mtc-panel-body">
-            <!-- Répartition % des setups = vue de base FREE (client-side) ; centre win rate = Starter. -->
+            <!-- Répartition % des setups = vue de base FREE (client-side) ; centre win rate = Premium. -->
             @let sd = setupsDonutView();
             @if (sd) {
               <div class="mtc-donut-row">
@@ -444,10 +439,10 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
                     <td><span class="mtc-side" [class.long]="t.side === 'LONG'">{{ t.side }}</span></td>
                     <td><span class="mtc-setup-cell"><span class="setup-dot-sm" [style.background]="t.setup.color"></span>{{ t.setup.title }}</span></td>
                     <td class="mono dim r">{{ t.entry | number:'1.0-2' }}</td>
-                    <td class="mono dim r">{{ t.exit !== null ? (t.exit | number:'1.0-2') : '—' }}</td>
-                    <td class="mono dim r">{{ t.riskReward !== null ? ((t.riskReward >= 0 ? '+' : '') + (t.riskReward | number:'1.1-1')) : '—' }}</td>
+                    <td class="mono dim r">{{ t.exit !== null ? (t.exit | number:'1.0-2') : '-' }}</td>
+                    <td class="mono dim r">{{ t.riskReward !== null ? ((t.riskReward >= 0 ? '+' : '') + (t.riskReward | number:'1.1-1')) : '-' }}</td>
                     <td class="mono strong r" [style.color]="t.win ? 'var(--green)' : 'var(--red)'">{{ t.pnl | pnlFormat }}</td>
-                    <td class="mono r" [style.color]="t.pct === null ? 'var(--text-3)' : (t.win ? 'var(--green)' : 'var(--red)')">{{ t.pct === null ? '—' : ((t.pct >= 0 ? '+' : '') + (t.pct | number:'1.2-2') + '%') }}</td>
+                    <td class="mono r" [style.color]="t.pct === null ? 'var(--text-3)' : (t.win ? 'var(--green)' : 'var(--red)')">{{ t.pct === null ? '-' : ((t.pct >= 0 ? '+' : '') + (t.pct | number:'1.2-2') + '%') }}</td>
                     <td class="c"><span class="mtc-res" [class.win]="t.win">{{ t.win ? 'WIN' : 'LOSS' }}</span></td>
                   </tr>
                 }
@@ -483,7 +478,6 @@ export class DashboardComponent {
   protected readonly selectedAccount = inject(SelectedAccountStore);
   private  readonly billingApi    = inject(BillingApi);
   private  readonly tradesApi     = inject(TradesApi);
-  private  readonly analyticsApi  = inject(AnalyticsApi);
   private  readonly destroyRef    = inject(DestroyRef);
   private  readonly router        = inject(Router);
 
@@ -495,7 +489,7 @@ export class DashboardComponent {
   protected readonly isSavingTrade = signal(false);
   protected readonly PRICING = PRICING;
 
-  // Icônes d'en-tête de panel (Lucide) — fidélité design.
+  // Icônes d'en-tête de panel (Lucide) : fidélité design.
   protected readonly EquityIcon   = TrendingUp;
   protected readonly AssetsIcon   = Coins;
   protected readonly PlDayIcon     = BarChart3;
@@ -510,10 +504,49 @@ export class DashboardComponent {
   protected coachIcon(tone: string) { return tone === 'good' ? this.CoachGood : tone === 'warn' ? this.CoachWarn : this.CoachBad; }
   protected coachColor(tone: string) { return tone === 'good' ? 'var(--green)' : tone === 'warn' ? 'var(--yellow)' : 'var(--red)'; }
 
-  protected readonly monthlyActivity        = signal<MonthlyActivitySummary | null>(null);
-  protected readonly monthlyActivityLoading = signal(false);
-  protected readonly calYear  = signal(new Date().getFullYear());
-  protected readonly calMonth = signal(new Date().getMonth() + 1);
+  // ── Période unique du dashboard ────────────────────────────────────────────
+  // KPIs, courbe d'équité et P&L par jour lisent TOUS cette même période (PROMPT-175).
+  // Fenêtres glissantes (to = maintenant) pour que l'historique importé d'un mois passé
+  // réapparaisse dès qu'on élargit la période. 'ALL' = tout l'historique (pas de borne basse).
+  protected readonly periods = [
+    { key: '1M', label: '1M' },
+    { key: '3M', label: '3M' },
+    { key: '6M', label: '6M' },
+    { key: 'ALL', label: 'Tout' },
+  ] as const;
+  protected readonly dashboardPeriod = signal<'1M' | '3M' | '6M' | 'ALL'>('1M');
+  protected setPeriod(p: '1M' | '3M' | '6M' | 'ALL'): void { this.dashboardPeriod.set(p); }
+
+  /** Bornes glissantes de la période courante. `from = null` → tout l'historique. */
+  protected readonly periodRange = computed<{ from: Date | null; to: Date }>(() => {
+    const to = new Date();
+    const p = this.dashboardPeriod();
+    if (p === 'ALL') return { from: null, to };
+    const days = p === '1M' ? 30 : p === '3M' ? 90 : 180;
+    const from = new Date(to);
+    from.setDate(from.getDate() - days);
+    from.setHours(0, 0, 0, 0);
+    return { from, to };
+  });
+
+  /** Libellé humain de la période (topbar + sous-titres). */
+  protected readonly periodLabel = computed(() => {
+    switch (this.dashboardPeriod()) {
+      case '1M': return '30 derniers jours';
+      case '3M': return '3 derniers mois';
+      case '6M': return '6 derniers mois';
+      default:   return "Tout l'historique";
+    }
+  });
+  /** Suffixe court pour le sous-titre de la courbe d'équité (« +X sur 3 mois »). */
+  protected readonly periodShort = computed(() => {
+    switch (this.dashboardPeriod()) {
+      case '1M': return 'sur 30 jours';
+      case '3M': return 'sur 3 mois';
+      case '6M': return 'sur 6 mois';
+      default:   return 'au total';
+    }
+  });
 
   // Suffixe query du compte sélectionné (multi-comptes). « Tous » → '' (agrégé). Lu dans les
   // URL des resources → tout se refetch automatiquement au changement de compte.
@@ -522,18 +555,36 @@ export class DashboardComponent {
     return id ? `?accountId=${encodeURIComponent(id)}` : '';
   }
 
+  // Query compte + bornes de période (KPIs / équité / P&L par jour). Lu dans les URL des
+  // resources → refetch auto au changement de compte OU de période.
+  private rangeQuery(): string {
+    const { from, to } = this.periodRange();
+    const parts: string[] = [];
+    const id = this.selectedAccount.accountParam();
+    if (id) parts.push(`accountId=${encodeURIComponent(id)}`);
+    if (from) parts.push(`from=${from.toISOString()}`);
+    parts.push(`to=${to.toISOString()}`);
+    return `?${parts.join('&')}`;
+  }
+
+  // KPIs scopés à la période sélectionnée (from/to glissants).
   private readonly summaryResource = httpResource<{ data: AnalyticsSummary }>(
-    () => `${environment.apiUrl}/analytics/summary${this.accQuery()}`,
+    () => `${environment.apiUrl}/analytics/summary${this.rangeQuery()}`,
   );
   // Courbe d'équité simple = vue de base FREE (on ne verrouille pas la vue de ses données).
+  // Scopée à la même période que les KPIs.
   private readonly equityCurveResource = httpResource<{
     data: { points: EquityPoint[]; startingCapital: number | null };
-  }>(() => `${environment.apiUrl}/analytics/equity-curve/current-month${this.accQuery()}`);
+  }>(() => `${environment.apiUrl}/analytics/equity-curve/daily${this.rangeQuery()}`);
+  // Activité journalière (P&L par jour) sur la même période : agrégée jour/semaine/mois côté front.
+  private readonly activityResource = httpResource<{
+    data: { days: { date: string; pnl: number; tradesCount: number }[] };
+  }>(() => `${environment.apiUrl}/analytics/activity/range${this.rangeQuery()}`);
   private readonly bySetupResource = httpResource<{ data: SetupStat[] }>(() =>
-    this.userStore.isStarterOrAbove() ? `${environment.apiUrl}/analytics/by-setup${this.accQuery()}` : undefined,
+    this.userStore.isPremium() ? `${environment.apiUrl}/analytics/by-setup${this.accQuery()}` : undefined,
   );
   private readonly byEmotionResource = httpResource<{ data: EmotionStat[] }>(() =>
-    this.userStore.isStarterOrAbove() ? `${environment.apiUrl}/analytics/by-emotion${this.accQuery()}` : undefined,
+    this.userStore.isPremium() ? `${environment.apiUrl}/analytics/by-emotion${this.accQuery()}` : undefined,
   );
   // Top actifs (P&L par instrument) vue simple = vue de base FREE.
   private readonly topAssetsResource = httpResource<{ data: TopAsset[] }>(() =>
@@ -542,17 +593,17 @@ export class DashboardComponent {
 
   protected readonly summary = computed(() => this.summaryResource.value()?.data ?? null);
 
-  /** Top actifs par P&L (HBars) — largeur de barre précalculée sur le max absolu. */
+  /** Top actifs par P&L (HBars) : largeur de barre précalculée sur le max absolu. */
   protected readonly topAssets = computed(() => {
     const list = (this.topAssetsResource.value()?.data ?? []).slice(0, 5);
     const max = Math.max(...list.map((a) => Math.abs(a.pnl)), 1);
     return list.map((a) => ({ ...a, barPct: (Math.abs(a.pnl) / max) * 100 }));
   });
 
-  /** Profit factor : valeur 2 décimales, ∞ si aucune perte, — si aucune donnée. */
+  /** Profit factor : valeur 2 décimales, ∞ si aucune perte, - si aucune donnée. */
   protected readonly profitFactorDisplay = computed(() => {
     const pf = this.summary()?.profitFactor;
-    if (pf == null) return (this.summary()?.totalTrades ?? 0) > 0 ? '∞' : '—';
+    if (pf == null) return (this.summary()?.totalTrades ?? 0) > 0 ? '∞' : '-';
     return pf.toFixed(2);
   });
 
@@ -568,15 +619,15 @@ export class DashboardComponent {
     (this.summary()?.winRate ?? 0) === 0 ? 'var(--text-2)' : 'var(--blue-bright)',
   );
   /**
-   * Capital de base, source unique scopée au compte sélectionné — miroir EXACT
+   * Capital de base, source unique scopée au compte sélectionné : miroir EXACT
    * de la page Mes comptes :
    * - compte sélectionné → son `metrics.startingBalance` ;
    * - « Tous les comptes » → somme des `startingBalance` des comptes non archivés
    *   (cf. `trackedCapital` dans accounts.component) ;
-   * - FREE / comptes non chargés → fallback sur le capital du profil user.
+   * - comptes non chargés → fallback sur le capital du profil user.
    */
   protected readonly baseCapital = computed(() => {
-    if (!this.userStore.isStarterOrAbove() || !this.selectedAccount.loaded()) {
+    if (!this.selectedAccount.loaded()) {
       return this.userStore.startingCapital();
     }
     const account = this.selectedAccount.selected();
@@ -600,14 +651,24 @@ export class DashboardComponent {
     const start = this.baseCapital();
     return start <= 0 ? 0 : ((this.summary()?.totalPnl ?? 0) / start) * 100;
   });
-  /** Sous-titre courbe d'équité : « +$X ce mois · base $Y » (comme la maquette). */
+  /** Sous-titre courbe d'équité : « +$X sur 3 mois · base $Y » (période courante). */
   protected readonly equitySub = computed(() => {
-    const base  = this.baseCapital();
-    const month = this.monthlyActivity()?.totalPnl ?? this.summary()?.totalPnl ?? 0;
-    const sym   = (this.userStore.user()?.currency ?? 'USD') === 'EUR' ? '€' : '$';
-    const fmt   = (n: number) => `${sym}${Math.round(Math.abs(n)).toLocaleString('en-US')}`;
-    return `${month >= 0 ? '+' : '−'}${fmt(month)} ce mois · base ${fmt(base)}`;
+    const base   = this.baseCapital();
+    const period = this.summary()?.totalPnl ?? 0;
+    const sym    = (this.userStore.user()?.currency ?? 'USD') === 'EUR' ? '€' : '$';
+    const fmt    = (n: number) => `${sym}${Math.round(Math.abs(n)).toLocaleString('en-US')}`;
+    return `${period >= 0 ? '+' : '−'}${fmt(period)} ${this.periodShort()} · base ${fmt(base)}`;
   });
+  /**
+   * Message quand la courbe ne se trace pas : ne JAMAIS dire « aucun trade » si les KPIs en
+   * comptent (critère d'acceptation PROMPT-175). Une courbe a besoin d'au moins 2 jours tradés ;
+   * avec des trades sur un seul jour on l'explique au lieu de contredire les KPIs.
+   */
+  protected readonly equityEmptyMsg = computed(() =>
+    (this.summary()?.totalTrades ?? 0) > 0
+      ? 'Pas assez de jours tradés pour tracer la courbe'
+      : 'Aucun trade sur la période',
+  );
   protected readonly capitalColor = computed(() => {
     const start = this.baseCapital();
     if (start <= 0) return 'var(--text-2)';
@@ -620,24 +681,30 @@ export class DashboardComponent {
   protected readonly equityCurve = computed(
     () => this.equityCurveResource.value()?.data?.points ?? [],
   );
-  protected readonly currentMonthLabel = computed(() =>
-    new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
-  );
   protected readonly bySetup = computed(() => this.bySetupResource.value()?.data ?? []);
   // Top 4 setups réellement utilisés (win rate défini) pour le widget « Win Rate / stratégie ».
   protected readonly topSetups = computed(() =>
     this.bySetup().filter((s) => s.winRate !== null).slice(0, 4),
   );
+  /**
+   * Chargement du dashboard : on affiche un squelette (jamais des zéros) tant que les
+   * comptes ou les données de base (summary, courbe d'équité) ne sont PAS chargés, pour
+   * FREE comme Premium. Le gating `isPremium()` d'avant rendait `isLoading` toujours faux
+   * en FREE, d'où « Capital $0 / 0 compte » affiché au premier rendu post-onboarding (PROMPT-175).
+   * Les resources by-setup/by-emotion ne comptent que pour un Premium (chargées pour lui seul).
+   */
   protected readonly isLoading = computed(
     () =>
-      this.userStore.isStarterOrAbove() &&
-      (this.summaryResource.isLoading() ||
-        this.equityCurveResource.isLoading() ||
-        this.bySetupResource.isLoading() ||
-        this.byEmotionResource.isLoading()),
+      !this.selectedAccount.loaded() ||
+      this.selectedAccount.isLoading() ||
+      this.summaryResource.isLoading() ||
+      this.equityCurveResource.isLoading() ||
+      (this.userStore.isPremium() &&
+        (this.bySetupResource.isLoading() || this.byEmotionResource.isLoading())),
   );
 
   private readonly knownTradesCount = signal(-1);
+  private readonly knownAccountsCount = signal(-1);
 
   constructor() {
     // Trades récents + activité du compte sélectionné. L'effect relit `accountParam()` →
@@ -645,16 +712,33 @@ export class DashboardComponent {
     effect(() => {
       const accountId = this.selectedAccount.accountParam();
       this.tradesStore.loadTrades(accountId ? { limit: '6', accountId } : { limit: '6' });
-      this.loadMonthlyActivity(accountId);
+      // L'activité (P&L par jour) est un httpResource keyé sur rangeQuery() → refetch auto.
     });
 
-    // Recharge summary si un trade est ajouté depuis l'extérieur (wizard)
+    // Recharge les analytics si un trade est ajouté depuis l'extérieur (wizard)
     effect(() => {
       const count = this.tradesStore.totalTrades();
       const known = this.knownTradesCount();
-      if (known !== -1 && count > known) this.summaryResource.reload();
+      if (known !== -1 && count > known) this.reloadAnalytics();
       this.knownTradesCount.set(count);
     });
+
+    // Recharge les analytics quand la LISTE de comptes change (import onboarding qui crée le
+    // compte par défaut, sans forcément passer par le compteur de trades ci-dessus).
+    effect(() => {
+      const n = this.selectedAccount.accounts().length;
+      const known = this.knownAccountsCount();
+      if (known !== -1 && n !== known) this.reloadAnalytics();
+      this.knownAccountsCount.set(n);
+    });
+  }
+
+  /** Recharge toutes les resources analytics scopées à la période (après import / nouveau trade). */
+  private reloadAnalytics(): void {
+    this.summaryResource.reload();
+    this.equityCurveResource.reload();
+    this.activityResource.reload();
+    this.topAssetsResource.reload();
   }
 
   protected readonly emotionPie = computed(() => {
@@ -685,12 +769,16 @@ export class DashboardComponent {
 
   protected readonly emotionStats = computed(() => {
     const trades = this.tradesStore.trades();
-    if (!trades.length) return [];
-    const total = trades.length;
-    return (['REVENGE', 'STRESSED', 'CONFIDENT', 'FOCUSED', 'FEAR', 'NEUTRAL'] as const)
+    // Émotion effective (override sinon humeur de session) ; non renseignées exclues du total.
+    const withEmotion = trades
+      .map(t => t.effectiveEmotion ?? t.emotion)
+      .filter((e): e is string => !!e);
+    const total = withEmotion.length;
+    if (!total) return [];
+    return (['REVENGE', 'STRESSED', 'CONFIDENT', 'FOCUSED', 'FEAR', 'NEUTRAL', 'TIRED'] as const)
       .map(emotion => ({
         emotion,
-        pct: Math.round((trades.filter(t => t.emotion === emotion).length / total) * 100),
+        pct: Math.round((withEmotion.filter(e => e === emotion).length / total) * 100),
       }))
       .filter(e => e.pct > 0)
       .sort((a, b) => b.pct - a.pct)
@@ -703,7 +791,7 @@ export class DashboardComponent {
     const b = this.baseCapital();
     return this.eqSeries().map((v) => b + v);
   });
-  /** Drawdown courant (val − pic) le long de la courbe — série rouge des KPI. */
+  /** Drawdown courant (val − pic) le long de la courbe : série rouge des KPI. */
   protected readonly ddSeries = computed(() => {
     let peak = -Infinity;
     return this.eqSeries().map((v) => { peak = Math.max(peak, v); return v - peak; });
@@ -754,15 +842,15 @@ export class DashboardComponent {
 
   /**
    * Donut « répartition stratégies » vue de base FREE : % des trades par setup,
-   * calculé client-side depuis les trades chargés (by-setup = profondeur Starter).
-   * Centre = setup dominant. La profondeur (win rate/rentabilité) reste Starter.
+   * calculé client-side depuis les trades chargés (by-setup = profondeur Premium).
+   * Centre = setup dominant. La profondeur (win rate/rentabilité) reste Premium.
    */
   protected readonly setupsDonutFree = computed(() => {
     const trades = this.tradesStore.trades();
     if (!trades.length) return null;
     const map = new Map<string, { title: string; color: string; count: number }>();
     for (const t of trades) {
-      const cur = map.get(t.setupId) ?? { title: t.setup?.title ?? '—', color: t.setup?.color ?? 'var(--text-3)', count: 0 };
+      const cur = map.get(t.setupId) ?? { title: t.setup?.title ?? '-', color: t.setup?.color ?? 'var(--text-3)', count: 0 };
       cur.count++;
       map.set(t.setupId, cur);
     }
@@ -779,9 +867,9 @@ export class DashboardComponent {
     return { gradient: `conic-gradient(${stops.join(', ')})`, legend, centerValue: `${Math.round((top.count / total) * 100)}%`, centerLabel: top.title };
   });
 
-  /** Vue donut setups selon le plan : profondeur (win rate) en Starter+, répartition % en FREE. */
+  /** Vue donut setups selon le plan : profondeur (win rate) en Premium, répartition % en FREE. */
   protected readonly setupsDonutView = computed(() =>
-    this.userStore.isStarterOrAbove() ? this.setupsDonut() : this.setupsDonutFree(),
+    this.userStore.isPremium() ? this.setupsDonut() : this.setupsDonutFree(),
   );
 
   /** Donut mini win rate (KPI). */
@@ -791,29 +879,136 @@ export class DashboardComponent {
   });
 
   /**
-   * Barres P&L par jour — TOUS les jours du mois (le back ne renvoie que les jours
-   * tradés). On reconstruit 1→N pour afficher le mois complet, jours vides à plat.
+   * Granularité des barres « P&L par jour » : pilotée par le NOMBRE de barres, pas par le nom
+   * de la période : on vise ≤ 31 barres. jour (≤ 31 j) → semaine (≤ ~31 sem.) → mois (au-delà).
+   * 1M = jour · 3M / 6M = semaine · Tout = mois.
    */
-  protected readonly plByDay = computed(() => {
-    const activity = this.monthlyActivity();
-    if (!activity) return null;
-    const byDay = new Map<number, number>();
-    for (const d of activity.days) byDay.set(parseInt(d.date.slice(8, 10), 10), d.pnl);
-    // month est 1-based (juillet = 7) → new Date(y, m, 0) = dernier jour du mois.
-    const daysInMonth = new Date(activity.year, activity.month, 0).getDate();
-    const maxAbs = Math.max(...activity.days.map((d) => Math.abs(d.pnl)), 1);
+  protected readonly plGranularity = computed<'day' | 'week' | 'month'>(() => {
+    const { from, to } = this.periodRange();
+    if (!from) return 'month'; // ALL → mensuel
+    const spanDays = Math.round((to.getTime() - from.getTime()) / 86_400_000);
+    if (spanDays <= 31) return 'day';
+    if (spanDays <= 31 * 7) return 'week';
+    return 'month';
+  });
+  /** Titre dynamique du panneau selon la granularité (jamais trompeur). */
+  protected readonly plTitle = computed(() =>
+    this.plGranularity() === 'day' ? 'P&L par jour'
+      : this.plGranularity() === 'week' ? 'P&L par semaine'
+        : 'P&L par mois',
+  );
+  /** Info-bulle précisant l'agrégation (mtc-info-tooltip). */
+  protected readonly plTooltip = computed(() => {
+    switch (this.plGranularity()) {
+      case 'day':
+        return 'Chaque barre = le P&L net réalisé sur une journée (frais inclus). Les jours sans trade sont à plat.';
+      case 'week':
+        return 'La période est trop longue pour un affichage jour par jour : les barres sont agrégées par semaine ISO (lundi → dimanche, comme le journal). Chaque barre = le P&L net de la semaine.';
+      default:
+        return 'La période est trop longue pour un affichage plus fin : les barres sont agrégées par mois. Chaque barre = le P&L net du mois.';
+    }
+  });
+
+  // Helpers de dates (front) : semaine ISO alignée sur le journal (PROMPT-170), pas de getDay() brut.
+  private parseDay(dateStr: string): Date { return new Date(dateStr + 'T12:00:00'); }
+  private atNoon(d: Date): Date { const c = new Date(d); c.setHours(12, 0, 0, 0); return c; }
+  private isoDate(d: Date): string {
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+  private frDate(d: Date): string {
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`;
+  }
+  /** Lundi de la semaine ISO d'une date : même définition que le journal ((getDay()+6)%7). */
+  private mondayOf(d: Date): Date {
+    const dow = (d.getDay() + 6) % 7; // lundi = 0 … dimanche = 6
+    const m = new Date(d);
+    m.setDate(d.getDate() - dow);
+    return this.atNoon(m);
+  }
+
+  /**
+   * Barres P&L par période : agrégées jour / semaine / mois selon `plGranularity`. Les jours
+   * tradés viennent du back (P&L net déjà agrégé, BE gérés comme le journal) ; on pré-remplit
+   * les buckets vides de la plage pour un axe continu (barres vides à plat). Vert gain / rouge perte.
+   */
+  protected readonly plBuckets = computed(() => {
+    const days = this.activityResource.value()?.data?.days ?? null;
+    if (days === null) return null;
+    const gran = this.plGranularity();
+    const { from, to } = this.periodRange();
+
+    const pnlByDate = new Map<string, number>();
+    for (const d of days) pnlByDate.set(d.date, d.pnl);
+
+    const first = from ?? (days.length ? this.parseDay(days[0].date) : new Date(to));
+    type Raw = { key: string; axisLabel: string; title: string; pnl: number; traded: boolean };
+    const raw: Raw[] = [];
+
+    if (gran === 'day') {
+      const cur = this.atNoon(first);
+      const end = this.atNoon(to);
+      while (cur <= end) {
+        const key = this.isoDate(cur);
+        raw.push({ key, axisLabel: String(cur.getDate()), title: this.frDate(cur),
+          pnl: pnlByDate.get(key) ?? 0, traded: pnlByDate.has(key) });
+        cur.setDate(cur.getDate() + 1);
+      }
+    } else if (gran === 'week') {
+      const map = new Map<string, { monday: Date; pnl: number; traded: boolean }>();
+      const cur = this.mondayOf(this.atNoon(first));
+      const end = this.atNoon(to);
+      while (cur <= end) { // pré-remplit chaque semaine de la plage
+        const key = this.isoDate(cur);
+        if (!map.has(key)) map.set(key, { monday: new Date(cur), pnl: 0, traded: false });
+        cur.setDate(cur.getDate() + 7);
+      }
+      for (const [date, pnl] of pnlByDate) {
+        const monday = this.mondayOf(this.parseDay(date));
+        const key = this.isoDate(monday);
+        const b = map.get(key) ?? { monday, pnl: 0, traded: false };
+        b.pnl += pnl; b.traded = true;
+        map.set(key, b);
+      }
+      for (const [key, b] of [...map.entries()].sort(([a], [c]) => a.localeCompare(c))) {
+        const sunday = new Date(b.monday); sunday.setDate(sunday.getDate() + 6);
+        raw.push({ key, axisLabel: `${b.monday.getDate()}/${b.monday.getMonth() + 1}`,
+          title: `Semaine du ${this.frDate(b.monday)} au ${this.frDate(sunday)}`, pnl: b.pnl, traded: b.traded });
+      }
+    } else {
+      const map = new Map<string, { d: Date; pnl: number; traded: boolean }>();
+      const cur = new Date(first.getFullYear(), first.getMonth(), 1);
+      const end = new Date(to.getFullYear(), to.getMonth(), 1);
+      while (cur <= end) {
+        const key = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}`;
+        if (!map.has(key)) map.set(key, { d: new Date(cur), pnl: 0, traded: false });
+        cur.setMonth(cur.getMonth() + 1);
+      }
+      for (const [date, pnl] of pnlByDate) {
+        const d = this.parseDay(date);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        const b = map.get(key) ?? { d: new Date(d.getFullYear(), d.getMonth(), 1), pnl: 0, traded: false };
+        b.pnl += pnl; b.traded = true;
+        map.set(key, b);
+      }
+      for (const [key, b] of [...map.entries()].sort(([a], [c]) => a.localeCompare(c))) {
+        raw.push({ key, axisLabel: b.d.toLocaleDateString('fr-FR', { month: 'short' }).replace('.', ''),
+          title: b.d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }), pnl: b.pnl, traded: b.traded });
+      }
+    }
+
+    const maxAbs = Math.max(...raw.filter((b) => b.traded).map((b) => Math.abs(b.pnl)), 1);
     const fmt = (v: number) => {
       const a = Math.abs(v);
       return (v > 0 ? '+' : '−') + (a >= 1000 ? (a / 1000).toFixed(1).replace('.0', '') + 'k' : Math.round(a));
     };
-    return Array.from({ length: daysInMonth }, (_, i) => {
-      const day = i + 1;
-      const pnl = byDay.get(day) ?? 0;
-      const mag = Math.min(1, Math.abs(pnl) / maxAbs);
+    return raw.map((b) => {
+      const mag = Math.min(1, Math.abs(b.pnl) / maxAbs);
       return {
-        day, pnl, traded: pnl !== 0, pos: pnl >= 0, mag,
-        barPct: pnl !== 0 ? 5 + mag * 42 : 0,
-        label: pnl !== 0 ? fmt(pnl) : '',
+        ...b, pos: b.pnl >= 0, mag,
+        barPct: b.traded && b.pnl !== 0 ? 5 + mag * 42 : 0,
+        label: b.traded && b.pnl !== 0 ? fmt(b.pnl) : '',
       };
     });
   });
@@ -825,11 +1020,11 @@ export class DashboardComponent {
     return { gradient: this.emotionPie().gradient, centerValue: `${stats[0].pct}%`, centerLabel: stats[0].emotion };
   });
 
-  /** Stats par émotion (R moyen / win rate) — source du feedback coach. */
+  /** Stats par émotion (R moyen / win rate) : source du feedback coach. */
   protected readonly byEmotion = computed(() => this.byEmotionResource.value()?.data ?? []);
 
   /**
-   * Feedback « AI Coach » dérivé des VRAIES données (summary + émotions + setups) —
+   * Feedback « AI Coach » dérivé des VRAIES données (summary + émotions + setups) :
    * jamais de texte codé en dur. Chaque insight a un ton (good/warn/bad).
    */
   protected readonly coachInsights = computed(() => {
@@ -872,7 +1067,7 @@ export class DashboardComponent {
   /**
    * Lignes du tableau « historique des trades » (vrais trades récents).
    * P&L % = rendement sur le capital de base ; `null` si ce capital est
-   * inconnu/0 (sinon la division /1 produit des pourcentages absurdes → « — »).
+   * inconnu/0 (sinon la division /1 produit des pourcentages absurdes → « - »).
    */
   protected readonly tradeRows = computed(() => {
     const base = this.baseCapital();
@@ -899,7 +1094,7 @@ export class DashboardComponent {
     this.showCsvImport.set(false);
     this.tradesStore.reset();
     this.tradesStore.loadTrades({ limit: '6' });
-    this.summaryResource.reload();
+    this.reloadAnalytics();
   }
 
   protected saveTrade(dto: CreateTradeDto) {
@@ -912,25 +1107,15 @@ export class DashboardComponent {
           this.tradesStore.addTrade(res.data);
           this.showTradeForm.set(false);
           this.isSavingTrade.set(false);
-          this.summaryResource.reload();
+          this.reloadAnalytics();
         },
         error: () => this.isSavingTrade.set(false),
       });
   }
 
-  private loadMonthlyActivity(accountId?: string): void {
-    this.monthlyActivityLoading.set(true);
-    this.analyticsApi.getCurrentMonthActivity(accountId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => { this.monthlyActivity.set(res.data); this.monthlyActivityLoading.set(false); },
-        error: () => this.monthlyActivityLoading.set(false),
-      });
-  }
-
   protected startTrial() {
     this.billingApi
-      .checkout('starter_monthly')
+      .checkout('premium_monthly')
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({ next: (res) => { window.location.href = res.data.url; } });
   }

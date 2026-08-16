@@ -2,12 +2,9 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   ForbiddenException,
-  HttpException,
   NotFoundException,
 } from '@nestjs/common';
 import {
-  Plan,
-  Role,
   TradeSide,
   EmotionState,
   TradingSession,
@@ -63,8 +60,15 @@ const mockPrisma = {
     deleteMany: vi.fn(),
     count: vi.fn(),
   },
+  // Recalcul comportemental par lot (PROMPT-168) : transaction des updates.
+  $transaction: vi.fn((ops) => Promise.resolve(Array.isArray(ops) ? ops : [])),
   tradeSession: {
     findFirst: vi.fn().mockResolvedValue(null),
+    findUnique: vi.fn().mockResolvedValue(null), // moodStart (note d'exécution, PROMPT-161)
+  },
+  // Compte cible pour la note d'exécution (capital) — null par défaut (critère risque ignoré).
+  tradingAccount: {
+    findUnique: vi.fn().mockResolvedValue(null),
   },
   // Inscription ancienne par défaut → les trades de test (datés récemment) sont post-inscription.
   user: {
@@ -100,6 +104,9 @@ describe('TradesService', () => {
     mockAccounts.accountWhere.mockResolvedValue({ accountId: 'acc-1' });
     mockAccounts.ensureDefaultAccountId.mockResolvedValue('acc-default');
     mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
+    // Défaut : le recalcul comportemental par lot ne trouve aucun trade (no-op) sauf override par test.
+    mockPrisma.trade.findMany.mockResolvedValue([]);
+    mockPrisma.$transaction.mockImplementation((ops) => Promise.resolve(Array.isArray(ops) ? ops : []));
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -116,41 +123,13 @@ describe('TradesService', () => {
   });
 
   describe('create', () => {
-    describe('Limite FREE 30 trades/mois', () => {
-      it('bloque le 31ème trade pour un user FREE', async () => {
-        mockPrisma.trade.count.mockResolvedValue(30);
-
-        await expect(
-          service.create('user-123', createTradeDto, Plan.FREE),
-        ).rejects.toThrow(HttpException);
-      });
-
-      it("inclut le code FREE_LIMIT_REACHED dans l'erreur", async () => {
-        mockPrisma.trade.count.mockResolvedValue(30);
-
-        try {
-          await service.create('user-123', createTradeDto, Plan.FREE);
-          expect.fail('Should have thrown');
-        } catch (e: any) {
-          expect(e.response?.code).toBe('FREE_LIMIT_REACHED');
-        }
-      });
-
-      it('autorise les trades illimités pour PREMIUM', async () => {
-        mockPrisma.trade.count.mockResolvedValue(200);
+    describe('Trades illimités (fin du quota FREE — PROMPT-169)', () => {
+      it('crée sans limite quel que soit le nombre de trades existants', async () => {
+        mockPrisma.trade.count.mockResolvedValue(9999);
         mockPrisma.trade.create.mockResolvedValue(mockTrade);
 
         await expect(
-          service.create('user-123', createTradeDto, Plan.PREMIUM),
-        ).resolves.toBeDefined();
-      });
-
-      it('autorise le 30ème trade (limite non encore atteinte) pour FREE', async () => {
-        mockPrisma.trade.count.mockResolvedValue(29);
-        mockPrisma.trade.create.mockResolvedValue(mockTrade);
-
-        await expect(
-          service.create('user-123', createTradeDto, Plan.FREE),
+          service.create('user-123', createTradeDto),
         ).resolves.toBeDefined();
       });
     });
@@ -163,7 +142,7 @@ describe('TradesService', () => {
 
       it('accountId du dto fourni → résolu via accountWhere (priorité 1)', async () => {
         mockAccounts.accountWhere.mockResolvedValue({ accountId: 'acc-dto' });
-        await service.create('user-123', { ...createTradeDto, accountId: 'acc-dto' }, Plan.PREMIUM);
+        await service.create('user-123', { ...createTradeDto, accountId: 'acc-dto' });
         expect(mockAccounts.accountWhere).toHaveBeenCalledWith('user-123', 'acc-dto');
         expect(mockPrisma.trade.create.mock.calls[0][0].data.accountId).toBe('acc-dto');
         expect(mockAccounts.ensureDefaultAccountId).not.toHaveBeenCalled();
@@ -171,14 +150,14 @@ describe('TradesService', () => {
 
       it("dto 'all' (agrégé) → ignoré, hérite de la session active (priorité 2)", async () => {
         mockPrisma.tradeSession.findFirst.mockResolvedValue({ id: 's1', accountId: 'acc-session' });
-        await service.create('user-123', { ...createTradeDto, accountId: 'all' }, Plan.PREMIUM);
+        await service.create('user-123', { ...createTradeDto, accountId: 'all' });
         expect(mockAccounts.accountWhere).not.toHaveBeenCalled();
         expect(mockPrisma.trade.create.mock.calls[0][0].data.accountId).toBe('acc-session');
       });
 
       it('aucun accountId, aucune session → compte par défaut (priorité 3, anti-NULL)', async () => {
         mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
-        await service.create('user-123', createTradeDto, Plan.PREMIUM);
+        await service.create('user-123', createTradeDto);
         expect(mockAccounts.ensureDefaultAccountId).toHaveBeenCalledWith('user-123');
         expect(mockPrisma.trade.create.mock.calls[0][0].data.accountId).toBe('acc-default');
       });
@@ -193,7 +172,6 @@ describe('TradesService', () => {
       const result = await service.create(
         'user-123',
         createTradeDto,
-        Plan.FREE,
       );
 
       expect(result.pnl).toBe(2000); // exit - entry = 52000 - 50000 = 2000 LONG
@@ -289,7 +267,7 @@ describe('TradesService', () => {
         setupId: 'setup-1',
         session: TradingSession.LONDON,
         timeframe: '1m',
-      }, Plan.FREE);
+      });
 
       // NQ: 10 ticks × $20 = $200 brut — commission $5 → net $195
       expect(result.pnl).toBe(195);
@@ -311,7 +289,7 @@ describe('TradesService', () => {
         setupId: 'setup-1',
         session: TradingSession.LONDON,
         timeframe: '5m',
-      }, Plan.FREE);
+      });
 
       // MES: 10 ticks × $5 = $50 brut, pas de commission
       expect(result.pnl).toBeCloseTo(50);
@@ -334,7 +312,7 @@ describe('TradesService', () => {
         setupId: 'setup-1',
         session: TradingSession.LONDON,
         timeframe: '1m',
-      }, Plan.FREE);
+      });
 
       expect(result.pnl).toBe(195);
     });
@@ -356,7 +334,7 @@ describe('TradesService', () => {
         setupId: 'setup-1',
         session: TradingSession.LONDON,
         timeframe: '1h',
-      }, Plan.FREE);
+      });
 
       // dto.pnl prend la priorité dans create() (dto.pnl ?? pnl)
       // donc le result.pnl = dto.pnl = 200 (pas de recalcul côté backend)
@@ -384,7 +362,7 @@ describe('TradesService', () => {
         setupId: 'setup-1',
         session: TradingSession.NEW_YORK,
         timeframe: '5m',
-      }, Plan.FREE);
+      });
 
       expect(result.pnl).toBe(5.136);
       expect(result.pnl).not.toBe(51360);
@@ -436,7 +414,7 @@ describe('TradesService', () => {
         setupId: 'setup-1',
         session: TradingSession.LONDON,
         timeframe: '1m',
-      }, Plan.FREE);
+      });
 
       expect(result.pnl).toBe(200);
     });
@@ -505,40 +483,6 @@ describe('TradesService', () => {
     });
   });
 
-  describe('checkMonthlyLimit', () => {
-    it('ne bloque pas les users PREMIUM peu importe le count', async () => {
-      mockPrisma.trade.count.mockResolvedValue(999);
-
-      await expect(
-        service.checkMonthlyLimit('user-123', Plan.PREMIUM),
-      ).resolves.toBeUndefined();
-    });
-
-    it('ADMIN → aucune limite de trades', async () => {
-      mockPrisma.trade.count.mockResolvedValue(999);
-
-      await expect(
-        service.checkMonthlyLimit('user-123', Plan.FREE, Role.ADMIN),
-      ).resolves.toBeUndefined();
-    });
-
-    it('BETA_TESTER → aucune limite de trades', async () => {
-      mockPrisma.trade.count.mockResolvedValue(999);
-
-      await expect(
-        service.checkMonthlyLimit('user-123', Plan.FREE, Role.BETA_TESTER),
-      ).resolves.toBeUndefined();
-    });
-
-    it('bloque dès que count >= 30 pour FREE', async () => {
-      mockPrisma.trade.count.mockResolvedValue(30);
-
-      await expect(
-        service.checkMonthlyLimit('user-123', Plan.FREE),
-      ).rejects.toThrow(HttpException);
-    });
-  });
-
   describe('importTrades — déduplication', () => {
     it('skip les trades déjà en base ET les doublons internes au lot', async () => {
       const tradedAt = new Date('2026-05-30T14:31:55.000Z');
@@ -559,7 +503,6 @@ describe('TradesService', () => {
       const res = await service.importTrades(
         'user-123',
         [dup, fresh, { ...fresh }], // dup (déjà en base) + ETH + ETH (doublon intra-lot)
-        Plan.PREMIUM,
       );
 
       expect(res.total).toBe(3);
@@ -576,54 +519,12 @@ describe('TradesService', () => {
       const res = await service.importTrades(
         'user-123',
         [createTradeDto, { ...createTradeDto, asset: 'ETH/USDT' }],
-        Plan.PREMIUM,
       );
 
       expect(res.created).toBe(2);
       expect(res.duplicates).toBe(0);
-      expect(res.limitBlocked).toBe(0);
     });
 
-    it('compte separement les trades bloques par la limite FREE (30/mois)', async () => {
-      mockPrisma.trade.findMany.mockResolvedValue([]); // rien en base
-      mockPrisma.trade.count.mockResolvedValue(30); // quota FREE deja atteint
-      mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
-
-      const res = await service.importTrades(
-        'user-123',
-        [createTradeDto, { ...createTradeDto, asset: 'ETH/USDT' }],
-        Plan.FREE,
-      );
-
-      expect(res.created).toBe(0);
-      expect(res.limitBlocked).toBe(2); // bloques par la limite, pas 'failed'
-      expect(res.failed).toBe(0);
-    });
-
-    it("importe l'historique (trades avant inscription) sans le decompter de la limite FREE", async () => {
-      // Inscription recente ; quota courant deja atteint
-      mockPrisma.user.findUnique.mockResolvedValue({ createdAt: new Date('2026-06-01T00:00:00Z') });
-      mockPrisma.trade.findMany.mockResolvedValue([]);
-      mockPrisma.trade.count.mockResolvedValue(30); // limite courante atteinte
-      mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
-      mockPrisma.trade.create.mockResolvedValue(mockTrade);
-
-      const histo = (asset: string): Partial<CreateTradeDto> => ({
-        asset, side: TradeSide.LONG, entry: 100, exit: 110, pnl: 10,
-        emotion: EmotionState.NEUTRAL, setupId: 'setup-1',
-        session: TradingSession.LONDON, timeframe: '1h',
-        tradedAt: '2024-03-15T10:00:00Z', // AVANT inscription (2026-06-01) -> historique
-      });
-
-      const res = await service.importTrades(
-        'user-123',
-        [histo('BTC/USDT'), histo('ETH/USDT')],
-        Plan.FREE,
-      );
-
-      expect(res.created).toBe(2); // historiques crees malgre la limite atteinte
-      expect(res.limitBlocked).toBe(0);
-    });
   });
 
   describe('countDuplicates / removeDuplicates', () => {
@@ -730,6 +631,54 @@ describe('TradesService', () => {
       expect(arg.where.tradedAt.gte).toEqual(new Date('2026-06-01T00:00:00.000Z'));
       expect(arg.where.tradedAt.lte).toEqual(new Date('2026-06-30T23:59:59.000Z'));
       expect(arg.select).toEqual({ pnl: true, commission: true });
+    });
+  });
+
+  // ── Recalcul comportemental par lot (PROMPT-168) ──────────────────────────
+  describe('recomputeBehavioralGrades', () => {
+    // Fabrique N trades sans stop, même jour, espacés de 20 min, tous perdants (-100, qty 1).
+    const buildTrades = (n: number) =>
+      Array.from({ length: n }, (_, i) => ({
+        id: `t${i}`,
+        pnl: -100,
+        quantity: 1,
+        tradedAt: new Date(2026, 6, 10, 14, i * 20, 0), // 14:00, 14:20, 14:40…
+        stopLoss: null,
+        executionScore: null,
+        executionGrade: null,
+        executionMethod: null,
+      }));
+
+    it('19 trades clôturés → historique insuffisant → aucune note posée', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue(buildTrades(19));
+      await service.recomputeBehavioralGrades('acc-1');
+      expect(mockPrisma.trade.findMany).toHaveBeenCalledTimes(1); // une seule passe, pas de N+1
+      expect(mockPrisma.trade.update).not.toHaveBeenCalled();
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('20 trades → grades comportementaux posés (BEHAVIORAL), en une transaction', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue(buildTrades(20));
+      await service.recomputeBehavioralGrades('acc-1');
+      expect(mockPrisma.trade.findMany).toHaveBeenCalledTimes(1);
+      // 1er trade : ni perte précédente ni prior same-day loss → 1 critère → null (pas d'update).
+      // Trades 1..19 : perte contenue + revenge (>10 min) + taille constante → EXCELLENT.
+      expect(mockPrisma.trade.update).toHaveBeenCalledTimes(19);
+      const call = mockPrisma.trade.update.mock.calls[0][0];
+      expect(call.data.executionGrade).toBe('EXCELLENT');
+      expect(call.data.executionMethod).toBe('BEHAVIORAL');
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it('trade AVEC stop loss ignoré par le barème comportemental (barème A conservé)', async () => {
+      const trades = buildTrades(20);
+      trades[5].stopLoss = 42; // ce trade relève du barème A → non touché
+      trades[5].executionGrade = 'BON';
+      trades[5].executionMethod = 'STOP_BASED';
+      mockPrisma.trade.findMany.mockResolvedValue(trades);
+      await service.recomputeBehavioralGrades('acc-1');
+      const updatedIds = mockPrisma.trade.update.mock.calls.map((c) => c[0].where.id);
+      expect(updatedIds).not.toContain('t5');
     });
   });
 });

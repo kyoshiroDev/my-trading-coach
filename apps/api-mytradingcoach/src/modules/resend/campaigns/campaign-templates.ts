@@ -125,14 +125,14 @@ export function premiumTemplate({ userName, appUrl, unsubUrl }: CampaignBuildCtx
         le Coach IA, le Weekly Debrief automatique, les analytics avancés et l'import CSV.
       </p>
       <p style="${FONT}font-size:13px;color:#6b8299;margin:0 0 16px 0;">
-        7 jours gratuits · Sans CB · Annulable à tout moment.
+        1 mois offert · Carte requise · Annulable en un clic.
       </p>
       ${divider}
       ${cta('Essayer Premium →', `${appUrl}/parametres?upgrade=1`)}
     `, 'rgba(99,92,246,.4)') + marketingFooter(unsubUrl);
 
   return {
-    subject: '⚡ Passe à Premium — 7 jours gratuits',
+    subject: '⚡ Passe à Premium · 1 mois offert',
     html: emailWrapper(content, 'Coach IA, Weekly Debrief, analytics avancés.'),
   };
 }

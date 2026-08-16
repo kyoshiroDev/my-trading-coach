@@ -158,24 +158,23 @@
   flex-shrink: 0;
 }
 
-.badge {
-  margin-left: auto;
-  background: var(--badge-premium-bg);
-  color: var(--badge-premium-color);
-  border: 1px solid var(--badge-premium-border);
-  font-size: 9px;
-  font-family: var(--font-mono);
-  font-weight: 500;
-  padding: 2px 6px;
-  border-radius: 10px;
-  letter-spacing: 0.5px;
+/* Indicateur Premium compact : un cadenas à droite de l'item (remplace le pill « PREMIUM »
+   qui volait de la largeur et cassait les labels sur 2 lignes). Signal upsell conservé. */
+.nav-label {
+  white-space: nowrap;
 }
-
-/* Variante Starter (bleu) pour distinguer des features Premium (violet) */
-.badge.starter {
-  background: rgba(59, 130, 246, 0.12);
-  color: var(--blue-bright, #60a5fa);
-  border-color: rgba(59, 130, 246, 0.3);
+.nav-lock {
+  margin-left: auto;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  color: var(--badge-premium-color);
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+.nav-item:hover .nav-lock,
+.nav-item.active .nav-lock {
+  opacity: 1;
 }
 
 .nav-badge-notif {
@@ -262,7 +261,6 @@
   letter-spacing: 0.5px;
 }
 .user-plan.premium { color: var(--badge-premium-color); }
-.user-plan.starter { color: var(--blue-bright, #60a5fa); }
 .user-plan.free    { color: var(--badge-free-color); }
 .user-plan.beta    { color: var(--badge-beta-color); }
 
@@ -450,7 +448,7 @@
   /* Tout le texte / les en-têtes / badges disparaissent */
   .sidebar.collapsed .nav-label,
   .sidebar.collapsed .nav-section,
-  .sidebar.collapsed .badge,
+  .sidebar.collapsed .nav-lock,
   .sidebar.collapsed .nav-badge-notif,
   .sidebar.collapsed .user-info,
   .sidebar.collapsed .logo-full {

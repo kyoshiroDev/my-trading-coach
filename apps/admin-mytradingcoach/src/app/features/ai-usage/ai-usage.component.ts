@@ -36,7 +36,7 @@ export class AiUsageComponent {
     return model.includes('haiku') ? 'haiku' : '';
   }
 
-  // Split du hero (réel) — Haiku vs Sonnet depuis la Cost API.
+  // Split du hero (réel) : Haiku vs Sonnet depuis la Cost API.
   protected readonly haikuBilled = computed(
     () => this.data()?.billed.byModel.find((m) => m.model.includes('haiku')) ?? null,
   );
@@ -58,7 +58,7 @@ export class AiUsageComponent {
     return h <= 0 ? 'maj à l’instant' : `maj il y a ${h} h`;
   });
 
-  // Courbe du coût RÉEL par jour (teal — c'est du facturé, pas de l'estimation).
+  // Courbe du coût RÉEL par jour (teal, c'est du facturé, pas de l'estimation).
   protected readonly dailyConfig = computed<ChartConfiguration>(() => {
     const d = this.data()?.billed.daily ?? [];
     return {

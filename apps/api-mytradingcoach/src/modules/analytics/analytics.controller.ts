@@ -1,7 +1,7 @@
 import { Controller, Get, Param, ParseIntPipe, Query, UseGuards } from '@nestjs/common';
 import { Plan, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { StarterGuard } from '../../common/guards/starter.guard';
+import { PremiumGuard } from '../../common/guards/premium.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AnalyticsService } from './analytics.service';
 import { DailyRecapService } from '../daily-recap/daily-recap.service';
@@ -21,12 +21,23 @@ export class AnalyticsController {
     return (await this.accounts.accountWhere(userId, accountId)).accountId;
   }
 
+  // KPIs scopés à la période du dashboard (from/to glissants). Sans bornes → tout l'historique.
   @Get('summary')
-  async getSummary(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
-    return this.analyticsService.getSummary(user.id, await this.accountId(user.id, accountId));
+  async getSummary(
+    @CurrentUser() user: { id: string },
+    @Query('accountId') accountId?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.analyticsService.getSummary(
+      user.id,
+      await this.accountId(user.id, accountId),
+      from ? new Date(from) : undefined,
+      to ? new Date(to) : undefined,
+    );
   }
 
-  @UseGuards(StarterGuard)
+  @UseGuards(PremiumGuard)
   @Get('by-setup')
   async getBySetup(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
     return this.analyticsService.getBySetup(user.id, await this.accountId(user.id, accountId));
@@ -38,14 +49,14 @@ export class AnalyticsController {
     return this.analyticsService.getByEmotion(user.id, await this.accountId(user.id, accountId));
   }
 
-  @UseGuards(StarterGuard)
+  @UseGuards(PremiumGuard)
   @Get('by-hour')
   async getByHour(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
     return this.analyticsService.getByHour(user.id, await this.accountId(user.id, accountId));
   }
 
-  // Courbe d'équité simple = vue de base FREE (la profondeur — drawdown détaillé,
-  // comparaisons de périodes — vit dans la page /analytics gardée Starter).
+  // Courbe d'équité simple = vue de base FREE (la profondeur : drawdown détaillé,
+  // comparaisons de périodes : vit dans la page /analytics gardée Premium).
   @Get('equity-curve')
   async getEquityCurve(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
     return this.analyticsService.getEquityCurve(user.id, await this.accountId(user.id, accountId));
@@ -90,7 +101,25 @@ export class AnalyticsController {
     );
   }
 
-  @UseGuards(StarterGuard)
+  // Activité (P&L par jour) sur une plage glissante = vue de base FREE. Sans `from` → tout
+  // l'historique (agrégation mensuelle côté front). L'agrégation jour/semaine/mois est faite
+  // côté front à partir de ces buckets journaliers.
+  @Get('activity/range')
+  async getActivityRange(
+    @CurrentUser() user: { id: string },
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('accountId') accountId?: string,
+  ) {
+    return this.analyticsService.getActivityRange(
+      user.id,
+      from ? new Date(from) : undefined,
+      to ? new Date(to) : undefined,
+      await this.accountId(user.id, accountId),
+    );
+  }
+
+  @UseGuards(PremiumGuard)
   @Get('activity/:year/:month')
   async getMonthActivity(
     @CurrentUser() user: { id: string },

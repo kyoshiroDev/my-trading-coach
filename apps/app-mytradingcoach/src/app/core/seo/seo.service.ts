@@ -16,7 +16,7 @@ export class SeoService {
 
   apply(config: SeoConfig): void {
     if (config.title) {
-      this.title.setTitle(`${config.title} — ${BASE_TITLE}`);
+      this.title.setTitle(`${config.title} · ${BASE_TITLE}`);
     }
 
     if (config.description) {

@@ -28,13 +28,13 @@ export class AdminController {
     private readonly demoSeed: DemoSeedService,
   ) {}
 
-  /** Fiche utilisateur détaillée (faits bruts agrégés) — admin only. */
+  /** Fiche utilisateur détaillée (faits bruts agrégés) : admin only. */
   @Get('users/:id')
   getUserDetail(@Param('id') id: string) {
     return this.userDetail.getUserDetail(id);
   }
 
-  /** Comptes supprimés (trace analytique RGPD) — liste récente + agrégats. */
+  /** Comptes supprimés (trace analytique RGPD) : liste récente + agrégats. */
   @Get('deleted-accounts')
   getDeletedAccounts() {
     return this.deletedAccounts.getDeletedAccounts();
@@ -60,7 +60,7 @@ export class AdminController {
     return this.metrics.takeSnapshot();
   }
 
-  /** Historique de santé VPS (uptime 90j) — points réellement enregistrés par le cron. */
+  /** Historique de santé VPS (uptime 90j) : points réellement enregistrés par le cron. */
   @Get('health-history')
   healthHistory(@Query('days') days?: string) {
     return this.metrics.healthHistory(days ? parseInt(days, 10) : 90);
@@ -68,7 +68,7 @@ export class AdminController {
 
   /**
    * Re-synchronise le rôle Discord de tous les comptes liés (idempotent).
-   * Corrige les STARTER existants qui avaient le rôle Membre avant le fix isPremiumAccess.
+   * Réaligne le rôle Membre/Premium sur isPremiumAccess après un changement de plan.
    */
   @Post('discord/resync')
   async resyncDiscordRoles() {
@@ -79,7 +79,7 @@ export class AdminController {
         await this.discordService.syncDiscordRole(u.id);
         ok++;
       } catch {
-        // continue — un échec ponctuel ne doit pas bloquer le batch
+        // continue : un échec ponctuel ne doit pas bloquer le batch
       }
     }
     return { linked: users.length, resynced: ok };

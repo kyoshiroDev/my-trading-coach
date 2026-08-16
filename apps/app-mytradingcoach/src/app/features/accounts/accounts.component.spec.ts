@@ -50,7 +50,6 @@ function setup(opts: { premium: boolean; accounts: TradingAccount[]; limit?: num
   // limit: null = illimité (Premium par défaut dans les tests existants).
   const userStore = {
     isPremium: () => opts.premium,
-    isStarterOrAbove: () => opts.premium,
     maxAccounts: signal(opts.limit ?? null),
   };
 
@@ -173,7 +172,7 @@ describe('AccountsComponent — logique', () => {
     expect(api.create).not.toHaveBeenCalled();
   });
 
-  it('quota STARTER 3/3 → atLimit, openCreate ouvre l\'upsell (pas le formulaire), submit bloqué', () => {
+  it('quota atteint (3/3) → atLimit, openCreate ouvre l\'upsell (pas le formulaire), submit bloqué', () => {
     const c = setup({ premium: true, limit: 3, accounts: [acct({ id: 'a' }), acct({ id: 'b' }), acct({ id: 'c' })] });
     expect((c['atLimit'] as () => boolean)()).toBe(true);
     (c['openCreate'] as () => void)();

@@ -159,6 +159,30 @@
   gap: 10px;
 }
 
+/* ─── Mode « hero » (Ma session) : titre empilé + onglets centrés sur la ligne du header ─── */
+.topbar.hero { height: 60px; }
+.topbar.hero .topbar-title-wrap {
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  flex-wrap: nowrap;
+}
+.topbar.hero .page-title { font-size: 19px; line-height: 1.15; }
+.topbar.hero .topbar-period { font-size: 12px; }
+.topbar-center {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.topbar.hero .topbar-actions { flex: 1; justify-content: flex-end; }
+
+@media (max-width: 768px) {
+  .topbar.hero { height: auto; padding-top: 8px; padding-bottom: 8px; flex-wrap: wrap; }
+  .topbar-center { order: 3; flex: 1 0 100%; justify-content: flex-start; }
+}
+
 .btn {
   display: inline-flex;
   align-items: center;

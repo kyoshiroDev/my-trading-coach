@@ -1,5 +1,7 @@
 import { Injectable, ForbiddenException, NotFoundException, Logger } from '@nestjs/common';
 import { Plan, Role, WeeklyDebrief } from '@prisma/client';
+import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
+import { computeTradeStats } from '../../common/utils/trade-stats.util';
 import { DebriefPdfData } from '../pdf/pdf.service';
 import { OBJECTIVE_CHECK_TYPES, DebriefAccountInput } from '../ai/prompts/debrief.prompt';
 
@@ -130,7 +132,7 @@ export class DebriefService {
     const { weekNumber, year, startDate, endDate } = this.getWeekInfo(opts?.refDate ?? new Date());
 
     // Idempotence : si le débrief de cette semaine existe et qu'on ne force pas, on le renvoie
-    // tel quel — zéro appel IA, zéro doublon. created=false → le processor n'enverra pas d'email.
+    // tel quel : zéro appel IA, zéro doublon. created=false → le processor n'enverra pas d'email.
     const existing = await this.prisma.weeklyDebrief.findUnique({
       where: { userId_weekNumber_year: { userId, weekNumber, year } },
     });
@@ -146,13 +148,15 @@ export class DebriefService {
           side: true,
           pnl: true,
           emotion: true,
+          tradeSession: { select: { moodStart: true } },
           setup: { select: { title: true } },
           session: true,
           tradedAt: true,
           accountId: true,
         },
       })
-    ).map((t) => ({ ...t, setup: t.setup?.title ?? null }));
+      // Émotion effective (override sinon humeur de session ; null = non renseignée).
+    ).map((t) => ({ ...t, setup: t.setup?.title ?? null, emotion: effectiveEmotion(t) }));
 
     // Comptes non archivés (avec leurs règles prop firm) pour l'analyse par compte.
     const accounts = await this.prisma.tradingAccount.findMany({
@@ -286,13 +290,12 @@ export class DebriefService {
 
   /** Stats déterministes d'un compte sur la semaine (jamais l'IA pour les chiffres). */
   private accountStats(trades: { pnl: number | null }[]) {
-    const total = trades.length;
-    const wins = trades.filter((t) => (t.pnl ?? 0) > 0).length;
-    const totalPnl = trades.reduce((s, t) => s + (t.pnl ?? 0), 0);
+    // Helper unique : BE exclus du win rate (PROMPT-160).
+    const stats = computeTradeStats(trades);
     return {
-      totalTrades: total,
-      winRate: total > 0 ? (wins / total) * 100 : 0,
-      totalPnl,
+      totalTrades: stats.total,
+      winRate: stats.winRate,
+      totalPnl: stats.totalPnl,
     };
   }
 
@@ -329,12 +332,10 @@ export class DebriefService {
   }
 
   /**
-   * Éligibles au débrief auto : non-démo, opt-in, accès Starter+.
-   * Doit matcher le StarterGuard du controller ET la promesse landing/front :
-   * plan ∈ {STARTER, PREMIUM} ou role ∈ {ADMIN, BETA_TESTER}.
-   * Éligibles au débrief auto : non-démo, opt-in, accès Starter+ (le Weekly
-   * Debrief automatique est vendu dès le plan Starter — cf. landing Pricing).
-   * → plan STARTER/PREMIUM, rôle ADMIN, ou essai (trial) en cours.
+   * Éligibles au débrief auto : non-démo, opt-in, accès Premium.
+   * Doit matcher le PremiumGuard du controller ET la promesse landing/front :
+   * le Weekly Debrief automatique est une feature Premium (PROMPT-169).
+   * → plan PREMIUM, rôle ADMIN/BETA_TESTER, ou essai (trial) en cours.
    */
   getEligibleUsers() {
     return this.prisma.user.findMany({
@@ -342,12 +343,9 @@ export class DebriefService {
         isDemo: false,
         debriefAutomatic: true,
         OR: [
-          { plan: Plan.STARTER },
           { plan: Plan.PREMIUM },
           { role: Role.ADMIN },
           { role: Role.BETA_TESTER },
-          { plan: { in: [Plan.STARTER, Plan.PREMIUM] } },
-          { role: Role.ADMIN },
           { trialEndsAt: { gt: new Date() } },
         ],
       },
@@ -360,7 +358,7 @@ export class DebriefService {
     return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   }
 
-  /** Lundi midi de la semaine ISO (year, week) — à passer en refDate pour cibler cette semaine. */
+  /** Lundi midi de la semaine ISO (year, week) : à passer en refDate pour cibler cette semaine. */
   weekRefDate(year: number, week: number): Date {
     const jan4 = new Date(year, 0, 4); // toujours en semaine ISO 1
     const dow = jan4.getDay() || 7; // 1 (lun) .. 7 (dim)
@@ -405,7 +403,8 @@ export class DebriefService {
     });
 
     const pnlValues = trades.map((t) => t.pnl ?? 0);
-    const wins = pnlValues.filter((p) => p > 0);
+    // Win rate via le helper unique (BE exclus du dénominateur, PROMPT-160).
+    const pdfStats = computeTradeStats(trades);
 
     const storedInsights = debrief.insights as {
       strengths?: { badge: string; text: string }[];
@@ -455,7 +454,7 @@ export class DebriefService {
       summary: debrief.aiSummary ?? '',
       stats: {
         totalTrades: trades.length,
-        winRate: trades.length > 0 ? (wins.length / trades.length) * 100 : 0,
+        winRate: pdfStats.winRate,
         totalPnl: pnlValues.reduce((a, b) => a + b, 0),
         avgRR:
           trades.reduce((acc, t) => acc + (t.riskReward ?? 0), 0) /

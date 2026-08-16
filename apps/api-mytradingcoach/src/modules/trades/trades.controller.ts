@@ -8,18 +8,17 @@ import {
   Patch,
   Post,
   Query,
-  UploadedFile,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { Plan, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { StarterGuard } from '../../common/guards/starter.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { TradesService } from './trades.service';
 import { CoinGeckoService } from './coingecko.service';
-import { CsvImportService } from './csv-import.service';
+import { CsvImportService, type FeesReport } from './csv-import.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
@@ -40,20 +39,17 @@ export class TradesController {
     private readonly setups: SetupsService,
   ) {}
 
-  // Contexte marché (DXY / taux US / indices) = IA mutualisée (coût O(1)), réservé Starter+.
-  @UseGuards(StarterGuard)
+  // Contexte marché (DXY / taux US / indices) = IA mutualisée (coût O(1)) → FREE (PROMPT-169).
   @Get('market-context')
   getMarketContext() { return this.marketData.getMarketContext(); }
 
-  // News filtrées sur tes actifs = feature Starter+ (grille plans.md).
-  @UseGuards(StarterGuard)
+  // News filtrées sur tes actifs = IA mutualisée → FREE (PROMPT-169).
   @Get('news')
   getMarketNews(@Query('symbols') symbols: string) {
     return this.marketData.getNews(symbols ?? '');
   }
 
-  // Traduction paresseuse du corps d'une news (Haiku, 1×/article, cachée) = Starter+.
-  @UseGuards(StarterGuard)
+  // Traduction paresseuse du corps d'une news (Haiku, 1×/article, cachée, mutualisée) = FREE.
   @Get('news/:id/text')
   async getNewsText(@Param('id') id: string): Promise<{ text: string | null }> {
     return { text: await this.marketData.ensureNewsTextFr(id) };
@@ -66,13 +62,6 @@ export class TradesController {
     return { ...(await this.marketData.getLivePrice(symbol.trim())), symbol };
   }
 
-  @Get('monthly-count')
-  async getMonthlyCount(
-    @CurrentUser() user: { id: string; plan: Plan; role: Role },
-  ) {
-    return this.tradesService.countThisMonth(user.id, user.plan, user.role);
-  }
-
   @Get('instruments')
   async getInstruments() {
     const cryptoInstruments = await this.coinGeckoService.getCryptoInstruments();
@@ -83,25 +72,34 @@ export class TradesController {
 
   @Post('import')
   @UseInterceptors(
-    FileInterceptor('file', {
-      limits: { fileSize: 5 * 1024 * 1024 },
-      fileFilter: (_req, file, cb) => {
-        if (!file.originalname.match(/\.(csv|txt|xlsx|xls)$/i)) {
-          return cb(
-            new BadRequestException('Formats acceptés : CSV, TXT, Excel (.xlsx)'),
-            false,
-          );
-        }
-        cb(null, true);
+    FileFieldsInterceptor(
+      [
+        { name: 'file', maxCount: 1 }, // trades : obligatoire (rétro-compat front)
+        { name: 'fees', maxCount: 1 }, // Cash history Tradovate : optionnel (frais exacts)
+      ],
+      {
+        limits: { fileSize: 5 * 1024 * 1024 },
+        fileFilter: (_req, file, cb) => {
+          if (!file.originalname.match(/\.(csv|txt|xlsx|xls)$/i)) {
+            return cb(
+              new BadRequestException('Formats acceptés : CSV, TXT, Excel (.xlsx)'),
+              false,
+            );
+          }
+          cb(null, true);
+        },
       },
-    }),
+    ),
   )
   async importCSV(
     @CurrentUser() user: { id: string; plan: Plan; role: Role; trialEndsAt?: Date | null },
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFiles()
+    files: { file?: Express.Multer.File[]; fees?: Express.Multer.File[] },
     @Body() body: { totalFees?: string; accountId?: string; emotion?: string; setupId?: string },
   ) {
+    const file = files?.file?.[0];
     if (!file) throw new BadRequestException('Fichier manquant');
+    const feesUpload = files?.fees?.[0];
 
     // Total des frais (multipart → string) réparti au prorata des contrats. Optionnel.
     const rawFees = body?.totalFees != null ? Math.abs(parseFloat(body.totalFees)) : NaN;
@@ -113,6 +111,8 @@ export class TradesController {
     // Setup en lot : s'il est fourni, il doit appartenir au user et être actif.
     if (body.setupId) await this.setups.assertOwnedActive(user.id, body.setupId);
 
+    // Rapport de rapprochement des frais (fusion Tradovate) : rempli si un Cash history valide.
+    const report: { fees?: FeesReport } = {};
     const parsed = await this.csvImportService.parseCSV(
       file.buffer,
       file.originalname,
@@ -120,23 +120,23 @@ export class TradesController {
       { plan: user.plan, role: user.role, trialEndsAt: user.trialEndsAt },
       totalFees,
       { accountId, emotion: body.emotion, setupId: body.setupId },
+      feesUpload ? { buffer: feesUpload.buffer, filename: feesUpload.originalname } : undefined,
+      report,
     );
 
     // Déduplication à l'import : ne recrée pas un trade déjà présent (ré-essais, ré-imports).
-    return this.tradesService.importTrades(
-      user.id,
-      parsed,
-      user.plan,
-      user.role,
-    );
+    const result = await this.tradesService.importTrades(user.id, parsed);
+
+    // Résumé frais exacts (fusion fichier) exposé au front, non bloquant.
+    return report.fees ? { ...result, feesImported: report.fees } : result;
   }
 
   @Post()
   create(
-    @CurrentUser() user: { id: string; plan: Plan; role: Role },
+    @CurrentUser() user: { id: string },
     @Body() dto: CreateTradeDto,
   ) {
-    return this.tradesService.create(user.id, dto, user.plan, user.role);
+    return this.tradesService.create(user.id, dto);
   }
 
   @Get()
@@ -149,7 +149,7 @@ export class TradesController {
     return this.tradesService.findAll(user.id, filters);
   }
 
-  // KPIs agrégés sur l'ensemble filtré complet (hors pagination) — déclaré avant ':id'.
+  // KPIs agrégés sur l'ensemble filtré complet (hors pagination) : déclaré avant ':id'.
   @Get('stats')
   async stats(
     @CurrentUser() user: { id: string },

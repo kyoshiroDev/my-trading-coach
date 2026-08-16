@@ -53,12 +53,10 @@ interface WeekGroup {
     </select>
   </div>
 
-  <!-- Sélecteur de compte global (multi-comptes Starter+) -->
-  @if (userStore.isStarterOrAbove()) {
-    <div class="sessions-accounts">
-      <mtc-account-selector />
-    </div>
-  }
+  <!-- Sélecteur de compte global (multi-comptes, accessible à tous) -->
+  <div class="sessions-accounts">
+    <mtc-account-selector />
+  </div>
 
   <!-- Résumé du mois -->
   @if (sessions().length > 0) {
@@ -165,7 +163,7 @@ interface WeekGroup {
                   </div>
                   <div class="stat">
                     <div class="stat-val">
-                      {{ session.winRate !== null && session.winRate !== undefined ? (session.winRate | number:'1.0-0') + '%' : '—' }}
+                      {{ session.winRate !== null && session.winRate !== undefined ? (session.winRate | number:'1.0-0') + '%' : '-' }}
                     </div>
                     <div class="stat-lbl">Win Rate</div>
                   </div>
@@ -391,7 +389,7 @@ export class SessionsComponent {
   }
 
   protected formatDuration(startedAt: string, endedAt?: string | null): string {
-    if (!endedAt) return '—';
+    if (!endedAt) return '-';
     const diff = Math.floor((new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 1000);
     const h = Math.floor(diff / 3600);
     const m = Math.floor((diff % 3600) / 60);
@@ -399,7 +397,7 @@ export class SessionsComponent {
   }
 
   protected formatDurationSeconds(seconds: number): string {
-    if (!seconds) return '—';
+    if (!seconds) return '-';
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     return h > 0 ? `${h}h ${m}min` : `${m}min`;

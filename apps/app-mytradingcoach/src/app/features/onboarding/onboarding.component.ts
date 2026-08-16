@@ -78,6 +78,7 @@ export class OnboardingComponent {
 
   // Étape Tes setups (les 6 défauts sont seedés au signup).
   protected readonly showSetupModal = signal(false);
+  protected readonly setupMsg = signal<string | null>(null);
 
   protected readonly MARKETS        = MARKETS;
   protected readonly GOALS          = GOALS;
@@ -213,17 +214,37 @@ export class OnboardingComponent {
 
   protected finishAndGoDiscord() { this.step.set(9); }
 
-  // ── Étape Tes setups (7) — réutilise la modale partagée + SetupsStore ──
-  protected openSetupModal(): void { this.showSetupModal.set(true); }
+  // ── Étape Tes setups (7) : réutilise la modale partagée + SetupsStore ──
+  protected openSetupModal(): void { this.setupMsg.set(null); this.showSetupModal.set(true); }
   protected onSetupSave(value: SetupFormValue): void {
-    this.setupsStore.create(value);
     this.showSetupModal.set(false);
+    // Anti-doublon : un même titre (insensible à la casse) ne peut pas être ajouté 2 fois.
+    const title = value.title.trim().toLowerCase();
+    if (this.setupsStore.active().some((s) => s.title.trim().toLowerCase() === title)) {
+      this.setupMsg.set(`« ${value.title.trim()} » existe déjà.`);
+      return;
+    }
+    this.setupMsg.set(null);
+    this.setupsStore.create(
+      value,
+      undefined,
+      (msg) => this.setupMsg.set(msg),
+    );
   }
-  protected removeSetup(id: string): void { this.setupsStore.remove(id); }
+  protected removeSetup(id: string): void {
+    // Garde-fou : au moins un setup doit rester, sinon le sélecteur de trade
+    // de l'étape suivante est vide et le premier trade échoue (setupId requis).
+    if (this.setupsStore.active().length <= 1) {
+      this.setupMsg.set('Garde au moins un setup pour pouvoir logger tes trades.');
+      return;
+    }
+    this.setupMsg.set(null);
+    this.setupsStore.remove(id, (msg) => this.setupMsg.set(msg));
+  }
 
   // Étape Stratégie (5) → enregistre le profil IA (SANS terminer l'onboarding)
   // puis va aux Actifs (6). Marquer l'onboarding fini ici sauterait les étapes
-  // Actifs (6) et Premier trade (7) — le flag n'est posé qu'à l'écran final.
+  // Actifs (6) et Premier trade (7) : le flag n'est posé qu'à l'écran final.
   private saveProfileThenGoAssets(): void {
     this.isSaving.set(true);
     this.usersApi

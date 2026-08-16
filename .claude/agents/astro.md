@@ -1,7 +1,8 @@
 # Agent Astro — landing-mytradingcoach
 
 ## Stack
-Astro 6 · Tailwind 4 · Static output · Vercel CDN
+Astro 6 · Tailwind 4 · Static output · servi sur le VPS (conteneur nginx:alpine derrière Traefik,
+rsync depuis GitHub Actions vers `/opt/static/landing-prod`). Plus de Vercel.
 
 ---
 

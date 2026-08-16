@@ -30,7 +30,7 @@ const GB = 1_073_741_824;
         </button>
       </div>
 
-      <!-- ── 4 KPI (tous issus de /vps/stats — aucune valeur inventée) ── -->
+      <!-- ── 4 KPI (tous issus de /vps/stats, aucune valeur inventée) ── -->
       <div class="kpi-strip cols-4">
         @if (stats(); as s) {
           <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">CPU VPS</div><div class="kpi-value teal">{{ s.cpu }}%</div><div class="kpi-sub">charge processeur</div></div>
@@ -111,7 +111,7 @@ const GB = 1_073_741_824;
                 <span><i class="ub-dot maint"></i> Maintenance</span>
               </div>
               @if (allUnknown()) {
-                <div class="uptime-note">Pas encore de données — le suivi de santé démarre au prochain relevé quotidien.</div>
+                <div class="uptime-note">Pas encore de données : le suivi de santé démarre au prochain relevé quotidien.</div>
               }
             </div>
           </div>

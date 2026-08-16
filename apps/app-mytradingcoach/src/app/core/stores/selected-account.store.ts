@@ -2,19 +2,16 @@ import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { AccountsApi, TradingAccount } from '../api/accounts.api';
-import { UserStore } from './user.store';
 
 const STORAGE_KEY = 'mtc.selectedAccount';
 
 /**
  * Compte sélectionné (multi-comptes) + liste des comptes (avec métriques règles de 089).
- * Réservé STARTER et + (quota par plan : Starter 3, Premium illimité) : aucun appel
- * `/accounts` ni filtrage par compte pour un FREE.
+ * Accessible à tous (FREE : 1 compte · Premium : illimité, quota appliqué côté API).
  */
 @Injectable({ providedIn: 'root' })
 export class SelectedAccountStore {
   private readonly api = inject(AccountsApi);
-  private readonly userStore = inject(UserStore);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly accounts = signal<TradingAccount[]>([]);
@@ -36,16 +33,8 @@ export class SelectedAccountStore {
     this.accounts().filter((a) => a.status === 'ACTIVE'),
   );
 
-  /** Charge les comptes (Starter et +). FREE → liste vide, aucun appel réseau. */
+  /** Charge les comptes de l'utilisateur (FREE : 1 compte · Premium : illimité). */
   load(): void {
-    if (!this.userStore.isStarterOrAbove()) {
-      this.accounts.set([]);
-      this.loaded.set(true);
-      // Anti-fuite : un plan déchu (Starter/Premium → FREE) laisserait une sélection
-      // persistée → on repasse à l'agrégé pour ne jamais filtrer les stats par compte.
-      if (this.selectedAccountId() !== 'all') this.select('all');
-      return;
-    }
     this.isLoading.set(true);
     this.api
       .getAll()
@@ -77,11 +66,21 @@ export class SelectedAccountStore {
   }
 
   /**
-   * Param à passer en query aux appels stats : undefined si « Tous » — et toujours
-   * undefined pour un FREE (gating global : aucune stat filtrée par compte).
+   * Réinitialise le store (appelé au logout). Sans ça, se connecter à un AUTRE compte dans
+   * le même onglet (navigation SPA, sans reload) laissait la liste des comptes + le compte
+   * sélectionné du user précédent → import qui envoie un accountId d'un compte inaccessible
+   * (« Compte introuvable »). On purge aussi la clé persistée. PROMPT-175.
    */
+  reset(): void {
+    this.accounts.set([]);
+    this.loaded.set(false);
+    this.isLoading.set(false);
+    this.selectedAccountId.set('all');
+    try { localStorage.removeItem(STORAGE_KEY); } catch { /* stockage indispo */ }
+  }
+
+  /** Param à passer en query aux appels stats : undefined si « Tous », sinon l'id du compte. */
   accountParam(): string | undefined {
-    if (!this.userStore.isStarterOrAbove()) return undefined;
     const id = this.selectedAccountId();
     return id === 'all' ? undefined : id;
   }

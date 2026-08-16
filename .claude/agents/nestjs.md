@@ -48,18 +48,22 @@ src/common/
 POST   /api/auth/register
 POST   /api/auth/login
 POST   /api/auth/refresh
-POST   /api/auth/start-trial           → trial 7 jours
 
 GET    /api/trades                     ?page&limit&side&setup&emotion&dateFrom&dateTo
 POST   /api/trades                     → vérifier limite 30/mois FREE avant création
 PATCH  /api/trades/:id
 DELETE /api/trades/:id
 
-GET    /api/analytics/summary                    FREE + PREMIUM (pas de PremiumGuard ici)
+GET    /api/analytics/summary                    FREE + PREMIUM (pas de PremiumGuard). ?from&to = periode glissante du dashboard (sans bornes = tout l'historique)
 GET    /api/analytics/by-setup                   PREMIUM
 GET    /api/analytics/by-emotion                 PREMIUM
 GET    /api/analytics/by-hour                    PREMIUM
 GET    /api/analytics/equity-curve               PREMIUM
+GET    /api/analytics/equity-curve/current-month FREE (carte equite dashboard, legacy)
+GET    /api/analytics/equity-curve/daily         FREE, ?from&to → carte equite scopee periode
+GET    /api/analytics/activity/range             FREE, ?from&to → P&L par jour du dashboard (agregation jour/semaine/mois cote front)
+GET    /api/analytics/activity/current-month     FREE (activite mensuelle)
+GET    /api/analytics/activity/:year/:month      PREMIUM
 GET    /api/analytics/top-assets                 PREMIUM
 GET    /api/analytics/daily-recap/yesterday      JWT → recap de la veille
 
@@ -106,6 +110,22 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
 
 ## Règles obligatoires
 
+- **Stats de trades = helper unique** (PROMPT-160) : `computeTradeStats(trades)` de
+  `common/utils/trade-stats.util.ts` (`{ total, closed, wins, losses, breakeven, winRate, totalPnl }`).
+  Toute mesure win/loss/win rate/P&L d'un lot de trades passe par lui — **jamais** de
+  `filter(t => t.pnl > 0)` suivi d'une division inline. Règle break-even : win `pnl > ε`,
+  loss `pnl < -ε`, BE `|pnl| <= ε` (`ε` défaut 0) ; **win rate = wins / (wins + losses)** (BE exclus du
+  dénominateur) ; trades ouverts (pnl null) hors calcul. Miroir front : `core/utils/trade-stats.util.ts`.
+- **Filtre journal « émotion effective »** (PROMPT-166) : l'émotion effective d'un trade =
+  `trade.emotion` (override) `??` `tradeSession.moodStart` (humeur de session). Filtrer dessus dans
+  `buildTradeWhere` = un **`OR` Prisma** sur les deux sources — `[{ emotion: V }, { emotion: null,
+  tradeSession: { moodStart: V } }]`. Ne générer une branche que si `V` appartient à l'enum concerné
+  (`Object.values(EmotionState/MoodState).includes(V)`), sinon Prisma throw sur enum invalide :
+  `TIRED` → MoodState seul (2ᵉ branche), `REVENGE`/`FEAR` → EmotionState seul (1ʳᵉ branche).
+  `NONE` = `{ emotion: null, OR: [{ sessionId: null }, { tradeSession: { moodStart: null } }] }`.
+  Filtre `result` : réutiliser le **même `ε`** (`BREAKEVEN_EPSILON`) que `trade-stats.util`, jamais un
+  seuil local. **Mêmes filtres appliqués à la liste ET aux stats** (`buildTradeWhere` factorisé) sinon
+  les KPIs mentent.
 - `@UseGuards(JwtAuthGuard)` sur toutes les routes protégées
 - `@UseGuards(PremiumGuard)` sur routes IA et analytics avancés
 - `@UseGuards(JwtAuthGuard, AdminGuard)` sur TOUTES les routes `/vps/*`, `/docker/*`, `/admin/*`
@@ -238,6 +258,56 @@ Format JSON strict :
   "objectives": [{ "title": string, "reason": string }]
 }`;
 ```
+
+---
+
+## Style des textes générés : pas de tiret cadratin (PROMPT-174)
+
+Le tiret cadratin (U+2014) et le demi-cadratin (U+2013) ont été retirés de toute
+l'interface : ils se lisent comme une marque de texte généré par IA. Les sorties du
+modèle sont lues par l'utilisateur (debrief, patterns, conseils, chat, recap 17h30,
+analyses éco, news traduites) : elles ne doivent pas les réintroduire.
+
+**Règle unique** : `NO_EM_DASH_RULE` dans `modules/ai/prompts/style.prompt.ts`.
+Tout nouveau prompt dont la sortie est affichée à l'utilisateur doit l'injecter :
+
+```typescript
+import { NO_EM_DASH_RULE } from '../prompts/style.prompt';
+
+const MON_SYSTEM = `Tu es …
+${NO_EM_DASH_RULE}
+Format JSON : { … }`;
+```
+
+- Prompt avec bloc `system:` → l'injecter dans le système.
+- Prompt sans bloc `system:` (message user seul) → l'injecter dans le prompt user.
+- Prompt à sortie **structurée non rédactionnelle** (extraction CSV) → inutile.
+- Les 2 caractères sont écrits en **échappement unicode** dans la constante
+  (`\u2014` / `\u2013`) : le modèle reçoit le caractère réel, et le contrôle
+  `grep -rnP "\x{2014}|\x{2013}" apps/*/src | grep -v spec` reste **vide**.
+  Ne jamais les réécrire en littéral.
+
+### Où vivent réellement les prompts
+
+`modules/ai/prompts/` ne contient que `debrief.prompt.ts` et `style.prompt.ts`.
+Les autres prompts sont **au plus près de leur agent** :
+
+| Sortie | Prompt | Fichier |
+|---|---|---|
+| Weekly Debrief | `DEBRIEF_SYSTEM_PROMPT` | `prompts/debrief.prompt.ts` |
+| Patterns (IA Insights) | `PATTERN_SYSTEM` | `agents/pattern.agent.ts` |
+| Conseils (IA Insights) | `COACH_SYSTEM` | `agents/coach.agent.ts` |
+| Chat coach | `CHAT_SYSTEM` (inline) | `ai.service.ts` |
+| Recap 17h30 | system inline | `ai.service.ts` |
+| Analyses éco | prompt user | `ai.service.ts` |
+| Traductions news | prompt user | `trades/market-data.service.ts` |
+
+`CHAT_SYSTEM` est **volontairement inline** et non extrait en constante : il interpole
+le profil du trader (`${userContext}`), impossible depuis une constante de module.
+C'est la raison pour laquelle l'ancien `prompts/insights.prompt.ts` (1ʳᵉ génération,
+pré-multi-agents) a été débranché le 2026-04-27 puis **supprimé** : il est resté 3 mois
+en code mort, invisible au compilateur car entièrement `export` (TS/ESLint ne signalent
+pas les exports inutilisés). Le relire donnait l'illusion de modifier le chat.
 
 ---
 

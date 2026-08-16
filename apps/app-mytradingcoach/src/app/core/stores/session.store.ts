@@ -38,7 +38,7 @@ export class SessionStore {
   readonly newsItems         = signal<NewsItem[]>([]);
   readonly breakingNews      = signal<string | null>(null);
   readonly triggerCloseModal = signal(false);
-  /** Retour d'action live (log / clôture trade) — succès ou erreur, pour feedback UI. */
+  /** Retour d'action live (log / clôture trade) : succès ou erreur, pour feedback UI. */
   readonly liveFeedback      = signal<{ type: 'success' | 'error'; text: string; ts: number } | null>(null);
 
   private readonly weekEcoEvents       = signal<Map<string, EcoEvent[]>>(new Map());
@@ -90,8 +90,20 @@ export class SessionStore {
         if (this.activeSession()?.status === 'ACTIVE') this.refreshLiveStats();
       });
 
-    // Polling market context + news : session active ET plan Starter+
-    // (contexte marché + news filtrées = features Starter+, guards backend en place).
+    // Polling calendrier éco (IA mutualisée = FREE, session active) : recharge la donnée
+    // fraîche (actuals + analyse IA) toutes les 60 s. Filet de sécurité indépendant du
+    // broadcast WebSocket transitoire : la fenêtre ouverte rattrape même si un broadcast
+    // est manqué (reconnexion socket après déploiement, cycle de détection raté, etc.).
+    interval(POLLING_MS.ECO_CALENDAR)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (this.activeSession()?.status === 'ACTIVE') {
+          this.loadWeekEcoCalendar();
+        }
+      });
+
+    // Polling market context + news : session active (contexte marché + news = IA
+    // mutualisée → FREE depuis PROMPT-169, accessible à tous les utilisateurs connectés).
     toObservable(this.activeSession)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((session) => {
@@ -99,9 +111,7 @@ export class SessionStore {
         clearInterval(this.newsInterval);
         this.marketCtxInterval = undefined;
         this.newsInterval      = undefined;
-        // Contexte marché + news = features Starter+ (endpoints gardés côté API) :
-        // on ne poll que pour un Starter+ ; sinon les panneaux affichent un upsell.
-        if (session?.status === 'ACTIVE' && this.userStore.isStarterOrAbove()) {
+        if (session?.status === 'ACTIVE') {
           this.fetchMarketContext();
           this.fetchNewsItems();
           this.marketCtxInterval = setInterval(() => this.fetchMarketContext(), POLLING_MS.MARKET_CONTEXT);
@@ -130,9 +140,9 @@ export class SessionStore {
 
     this.loadWeekEcoCalendar();
 
-    // Le débrief (objectifs) est une feature Starter+ : ne pas appeler l'endpoint
-    // (StarterGuard) pour un FREE, sinon 403. La session de base reste accessible.
-    if (this.userStore.isStarterOrAbove()) {
+    // Le débrief (objectifs) est une feature Premium : ne pas appeler l'endpoint
+    // (PremiumGuard) pour un FREE, sinon 403. La session de base reste accessible.
+    if (this.userStore.isPremium()) {
       this.debriefApi
         .getCurrent()
         .pipe(takeUntilDestroyed(this.destroyRef))
@@ -279,6 +289,21 @@ export class SessionStore {
           this.breakingNews.set(breaking?.title ?? null);
         },
       });
+  }
+
+  /**
+   * Applique une donnée « today » fraîche (reçue via le broadcast WebSocket eco:new-releases,
+   * qui déclenche un refresh-today côté composant) dans la map hebdo → mise à jour immédiate
+   * du calendrier affiché. Le polling 60 s reste le filet de sécurité si le broadcast est manqué.
+   */
+  applyEcoRefresh(data: EcoCalendarData | null): void {
+    if (!data) return;
+    const today = todayParis();
+    this.weekEcoEvents.update((prev) => {
+      const next = new Map(prev);
+      next.set(today, data.events);
+      return next;
+    });
   }
 
   private loadWeekEcoCalendar(): void {

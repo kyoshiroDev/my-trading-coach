@@ -2,7 +2,7 @@ import Chart from 'chart.js/auto';
 import type { ScriptableContext } from 'chart.js';
 
 /**
- * Thème graphes admin — source de vérité : admin-mytradingcoach.html (objet `C`).
+ * Thème graphes admin. Source de vérité : admin-mytradingcoach.html (objet `C`).
  * Toutes les couleurs sont calées sur les tokens du design system.
  */
 export const CHART_COLORS = {

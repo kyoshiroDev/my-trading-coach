@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { StripeService } from './stripe.service';
 
 // Test d'intégration du handler de webhook Stripe (cœur du tunnel argent) :
@@ -53,12 +53,7 @@ function subscription(over: Record<string, any> = {}): any {
 }
 
 describe('StripeService.processWebhookEvent — tunnel argent', () => {
-  beforeEach(() => {
-    delete process.env['STRIPE_STARTER_PRICE_MONTHLY'];
-    delete process.env['STRIPE_STARTER_PRICE_YEARLY'];
-  });
-
-  it('checkout.session.completed (sub active, prix non-starter) → user passe PREMIUM + mail bienvenue', async () => {
+  it('checkout.session.completed (sub active) → user passe PREMIUM + mail bienvenue', async () => {
     const { svc, prisma, resend, retrieve } = makeSvc();
     retrieve.mockResolvedValue(subscription());
     prisma.user.findUnique.mockResolvedValue({ id: 'user_1', email: 'u@t.com', name: 'U', trialUsed: false, stripeSubscriptionStatus: null });
@@ -66,7 +61,7 @@ describe('StripeService.processWebhookEvent — tunnel argent', () => {
     await svc.processWebhookEvent({
       type: 'checkout.session.completed',
       data: { object: { mode: 'subscription', subscription: 'sub_1', client_reference_id: 'user_1' } },
-       
+
     } as any);
 
     expect(prisma.user.update).toHaveBeenCalledTimes(1);
@@ -76,19 +71,34 @@ describe('StripeService.processWebhookEvent — tunnel argent', () => {
     expect(resend.sendWelcomePremium).toHaveBeenCalledOnce();
   });
 
-  it('prix Starter (env) → user passe STARTER, pas PREMIUM', async () => {
-    process.env['STRIPE_STARTER_PRICE_MONTHLY'] = 'price_starter';
+  // PROMPT-169 §5.1 : un abonné annuel DIRECT (sans trial_end) ne doit PAS voir son
+  // essai marqué consommé — sinon il perd son droit à l'essai après une résiliation.
+  it('sub active sans trial_end → trialUsed reste false', async () => {
     const { svc, prisma, retrieve } = makeSvc();
-    retrieve.mockResolvedValue(subscription({ items: { data: [{ price: { id: 'price_starter', recurring: { interval: 'month' } }, current_period_end: 1_893_456_000 }] } }));
-    prisma.user.findUnique.mockResolvedValue({ id: 'user_1', email: 'u@t.com', name: 'U', trialUsed: true });
+    retrieve.mockResolvedValue(subscription({ trial_end: null, items: { data: [{ price: { id: 'price_premium', recurring: { interval: 'year' } }, current_period_end: 1_893_456_000 }] } }));
+    prisma.user.findUnique.mockResolvedValue({ id: 'user_1', email: 'u@t.com', name: 'U', trialUsed: false });
 
     await svc.processWebhookEvent({
       type: 'customer.subscription.updated',
-      data: { object: subscription({ items: { data: [{ price: { id: 'price_starter' } }] } }) },
-       
+      data: { object: subscription({ trial_end: null }) },
+
     } as any);
 
-    expect(prisma.user.update.mock.calls[0][0].data.plan).toBe('STARTER');
+    expect(prisma.user.update.mock.calls[0][0].data.trialUsed).toBe(false);
+  });
+
+  it('sub avec trial_end (essai accordé) → trialUsed passe true', async () => {
+    const { svc, prisma, retrieve } = makeSvc();
+    retrieve.mockResolvedValue(subscription({ status: 'trialing', trial_end: 1_893_456_000 }));
+    prisma.user.findUnique.mockResolvedValue({ id: 'user_1', email: 'u@t.com', name: 'U', trialUsed: false });
+
+    await svc.processWebhookEvent({
+      type: 'customer.subscription.updated',
+      data: { object: subscription({ status: 'trialing', trial_end: 1_893_456_000 }) },
+
+    } as any);
+
+    expect(prisma.user.update.mock.calls[0][0].data.trialUsed).toBe(true);
   });
 
   it('sub trialing → PREMIUM (accès) avec status trialing', async () => {

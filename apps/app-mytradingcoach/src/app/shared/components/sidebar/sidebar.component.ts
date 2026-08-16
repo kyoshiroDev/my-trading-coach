@@ -3,8 +3,10 @@ import {
   Component,
   DestroyRef,
   computed,
+  effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { RouterModule, RouterLink, RouterLinkActive } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -26,13 +28,14 @@ import {
   Award,
   User,
   LogOut,
+  Lock,
 } from 'lucide-angular';
 import { UserStore } from '../../../core/stores/user.store';
-import { TradesStore } from '../../../core/stores/trades.store';
 import { AuthService } from '../../../core/auth/auth.service';
 import { UsersApi } from '../../../core/api/users.api';
 import { AmbassadorNotifService } from '../../../core/services/ambassador-notif.service';
 import { LiveModeService } from '../../../core/services/live-mode.service';
+import { SessionStore } from '../../../core/stores/session.store';
 import { DemoService } from '../../../core/services/demo.service';
 import { OnboardingComponent } from '../../../features/onboarding/onboarding.component';
 import { environment } from '../../../../environments/environment';
@@ -103,19 +106,17 @@ import { environment } from '../../../../environments/environment';
             <span class="nav-label">Ma session</span>
           </a>
 
-          @if (userStore.isStarterOrAbove()) {
-            <a
-              routerLink="/accounts"
-              routerLinkActive="active"
-              class="nav-item"
-              data-testid="nav-accounts"
-              [attr.title]="collapsed() ? 'Mes comptes' : null"
-              (click)="closeSidebar()"
-            >
-              <lucide-icon [img]="AccountsIcon" [size]="16" class="nav-icon" />
-              <span class="nav-label">Mes comptes</span>
-            </a>
-          }
+          <a
+            routerLink="/accounts"
+            routerLinkActive="active"
+            class="nav-item"
+            data-testid="nav-accounts"
+            [attr.title]="collapsed() ? 'Mes comptes' : null"
+            (click)="closeSidebar()"
+          >
+            <lucide-icon [img]="AccountsIcon" [size]="16" class="nav-icon" />
+            <span class="nav-label">Mes comptes</span>
+          </a>
 
           <a
             routerLink="/journal"
@@ -151,8 +152,10 @@ import { environment } from '../../../../environments/environment';
           >
             <lucide-icon [img]="AnalyticsIcon" [size]="16" class="nav-icon" />
             <span class="nav-label">Analytics</span>
-            @if (!userStore.isStarterOrAbove()) {
-              <span class="badge starter">STARTER</span>
+            @if (!userStore.isPremium()) {
+              <span class="nav-lock" title="Premium : débloque avec l'abonnement">
+                <lucide-icon [img]="LockIcon" [size]="12" />
+              </span>
             }
           </a>
 
@@ -169,7 +172,9 @@ import { environment } from '../../../../environments/environment';
             <lucide-icon [img]="AiIcon" [size]="16" class="nav-icon" />
             <span class="nav-label">IA Insights</span>
             @if (!userStore.isPremium()) {
-              <span class="badge">AI</span>
+              <span class="nav-lock" title="Premium : débloque avec l'abonnement">
+                <lucide-icon [img]="LockIcon" [size]="12" />
+              </span>
             }
           </a>
 
@@ -183,8 +188,10 @@ import { environment } from '../../../../environments/environment';
           >
             <lucide-icon [img]="DebriefIcon" [size]="16" class="nav-icon" />
             <span class="nav-label">Weekly Debrief</span>
-            @if (!userStore.isStarterOrAbove()) {
-              <span class="badge starter">STARTER</span>
+            @if (!userStore.isPremium()) {
+              <span class="nav-lock" title="Premium : débloque avec l'abonnement">
+                <lucide-icon [img]="LockIcon" [size]="12" />
+              </span>
             }
           </a>
 
@@ -243,8 +250,10 @@ import { environment } from '../../../../environments/environment';
           >
             <lucide-icon [img]="ScoringIcon" [size]="16" class="nav-icon" />
             <span class="nav-label">Scoring</span>
-            @if (!userStore.isStarterOrAbove()) {
-              <span class="badge starter">STARTER</span>
+            @if (!userStore.isPremium()) {
+              <span class="nav-lock" title="Premium : débloque avec l'abonnement">
+                <lucide-icon [img]="LockIcon" [size]="12" />
+              </span>
             }
           </a>
 
@@ -280,12 +289,9 @@ import { environment } from '../../../../environments/environment';
               <div class="user-name">{{ userStore.displayName() }}</div>
               <div class="user-plan"
                 [class.premium]="userStore.isPremium()"
-                [class.starter]="!userStore.isPremium() && userStore.isStarterOrAbove()"
-                [class.free]="!userStore.isStarterOrAbove()">
+                [class.free]="!userStore.isPremium()">
                 @if (userStore.isPremium()) {
                   ★ PREMIUM
-                } @else if (userStore.isStarterOrAbove()) {
-                  ★ STARTER
                 } @else {
                   GRATUIT
                 }
@@ -295,7 +301,7 @@ import { environment } from '../../../../environments/environment';
         </div>
       </aside>
 
-      <!-- Flèche de repli sur le bord (desktop) — ancrée sur .app-layout pour ne pas
+      <!-- Flèche de repli sur le bord (desktop) : ancrée sur .app-layout pour ne pas
            être coupée par l'overflow:hidden de .sidebar -->
       <button
         type="button"
@@ -343,19 +349,19 @@ import { environment } from '../../../../environments/environment';
 })
 export class SidebarComponent {
   protected readonly userStore = inject(UserStore);
-  protected readonly tradesStore = inject(TradesStore);
   private readonly auth = inject(AuthService);
   private readonly usersApi = inject(UsersApi);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly ambassadorNotif = inject(AmbassadorNotifService);
   protected readonly liveModeService = inject(LiveModeService);
+  private readonly sessionStore = inject(SessionStore);
   protected readonly demo = inject(DemoService);
   protected readonly landingUrl = environment.landingUrl;
 
   protected readonly ChevronLeftIcon = ChevronLeft;
   protected readonly ChevronRightIcon = ChevronRight;
 
-  // Icônes de navigation (Lucide) — fidélité design « The Terminal » (chrome.jsx)
+  // Icônes de navigation (Lucide) : fidélité design « The Terminal » (chrome.jsx)
   protected readonly DashboardIcon = LayoutDashboard;
   protected readonly SessionIcon   = Activity;
   protected readonly AccountsIcon  = Briefcase;
@@ -370,6 +376,7 @@ export class SidebarComponent {
   protected readonly ScoringIcon   = Award;
   protected readonly ProfilIcon    = User;
   protected readonly LogoutIcon    = LogOut;
+  protected readonly LockIcon      = Lock;
 
   protected readonly sidebarOpen   = signal(false);
 
@@ -402,7 +409,7 @@ export class SidebarComponent {
     });
   }
 
-  // Signal local — une fois mis à true, le wizard ne peut plus revenir dans la session
+  // Signal local : une fois mis à true, le wizard ne peut plus revenir dans la session
   // même si fetchMe() renvoie onboardingCompleted: false (race condition réseau)
   private readonly onboardingDismissed = signal(false);
 
@@ -412,8 +419,23 @@ export class SidebarComponent {
     return !!user && user.onboardingCompleted === false;
   });
 
+  // Mode focus « session live » : quand une session est active, on replie la
+  // sidebar en icônes (fidélité maquette). L'état manuel de l'utilisateur est
+  // mémorisé puis restauré à la clôture : la préférence localStorage n'est jamais
+  // écrasée (collapsed.set n'écrit pas le localStorage, seul toggleCollapse le fait).
+  private collapsedBeforeSession: boolean | null = null;
+
   constructor() {
-    this.tradesStore.loadMonthlyCount();
+    effect(() => {
+      const active = this.sessionStore.hasActiveSession();
+      if (active && this.collapsedBeforeSession === null) {
+        this.collapsedBeforeSession = untracked(() => this.collapsed());
+        this.collapsed.set(true);
+      } else if (!active && this.collapsedBeforeSession !== null) {
+        this.collapsed.set(this.collapsedBeforeSession);
+        this.collapsedBeforeSession = null;
+      }
+    });
 
     const onFocus = () => {
       if (!this.auth.isAuthenticated()) return;
@@ -437,7 +459,7 @@ export class SidebarComponent {
       this.auth.setCurrentUser({ ...user, onboardingCompleted: true });
     }
     // C'est ICI (écran final du wizard) que l'onboarding est marqué terminé en
-    // base — jamais à l'étape stratégie, sinon les étapes Actifs/Premier trade
+    // base : jamais à l'étape stratégie, sinon les étapes Actifs/Premier trade
     // seraient sautées. Optimiste : le flag local est déjà posé ci-dessus.
     this.usersApi
       .finishOnboarding()

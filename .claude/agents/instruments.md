@@ -108,3 +108,40 @@ Avant d'ajouter un instrument, vérifier les specs officielles :
 - Toujours spécifier `tickSize` ET `tickValue`
 - Ne jamais mettre `tickValue` = valeur par point entier si `tickSize ≠ 1`
 - Le `tickValue` est la valeur monétaire d'UN tick, pas d'un point entier
+
+## Import Tradovate — frais exacts par trade (fusion Performance + Cash history)
+
+Deux fichiers optionnellement fusionnés à l'import (`csv-import.service.ts`) pour obtenir la
+commission **exacte au centime par trade**, sans saisie manuelle ni limite de nombre de trades :
+- **Performance** (les trades) : header `symbol,…,buyFillId,sellFillId,qty,…`. On capture
+  `buyFillId`/`sellFillId` **par nom de colonne** (portés en métadonnée interne `_buyFillId`/
+  `_sellFillId`, retirés avant persistance).
+- **Cash history** (les frais) : header `Account,Transaction ID,…,Delta,Amount,Cash Change Type,…`.
+  Seules les lignes `Cash Change Type` (trim) == `Commission` comptent ; le montant est **`Delta`**
+  (négatif → on prend `abs`). `Amount` = solde courant → **ignoré**. Lignes `Trade Paired` → ignorées.
+
+**Jointure (validée sur données réelles)** : `fillId = (Transaction ID) − 1`, une entrée par fill →
+`commissionParFill[fillId] = |Delta|`.
+
+**Dédup obligatoire (scalping)** : un même `fillId` peut clôturer un trade ET en ouvrir un autre.
+Sa commission ne compte qu'**une fois** sur tout l'import. On parcourt les trades **dans l'ordre du
+fichier** avec un `Set<fillId>` consommés ; un fill n'ajoute sa commission que s'il n'a pas déjà été
+consommé, puis on le marque. Sinon double comptage (ex. données de Val : naïf 24,96 $ vs exact 21,84 $,
+soit +3,12 $ de 3 fills partagés comptés deux fois).
+
+**Checksum** : `Σ commission(trade) == Σ |Delta| Commission` (à 0,01 près) → `reconciled`. En cas
+d'écart : warning + `reconciled=false` (non bloquant, « frais partiellement rapprochés »), jamais de
+crash.
+
+**Périmètre** : fusion appliquée UNIQUEMENT si le fichier des trades est un **Tradovate Performance**
+ET qu'un **Cash history valide** est fourni (`fees`). Sinon → comportement inchangé (colonne
+commission du CSV si présente, sinon `totalFees` manuel réparti au prorata). La commission posée est
+**positive** ; `calculatePnl` déduit `commission` du P&L net.
+
+**Endpoint** : `POST /trades/import` accepte deux champs multipart via `FileFieldsInterceptor` —
+`file` (trades, obligatoire, nom conservé pour rétro-compat) + `fees` (Cash history, optionnel).
+Le résumé (`feesImported: { assigned, expected, reconciled, count }`) est renvoyé au front.
+
+**Front** : `mtc-csv-import` (composant unique réutilisé journal + dashboard + **onboarding**) porte un
+input `allowFeesFile` (défaut `true`). L'onboarding passe `[allowFeesFile]="false"` → un seul fichier,
+zéro friction. Fixtures de test : `__fixtures__/tradovate-performance.csv` + `tradovate-cash-history.csv`.

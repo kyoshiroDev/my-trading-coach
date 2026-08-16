@@ -6,7 +6,7 @@ import { AdminGuard } from '../../common/guards/admin.guard';
 import { DebriefService } from './debrief.service';
 import { RegenerateDebriefDto } from './dto/regenerate-debrief.dto';
 
-/** Réservé ADMIN — régénération ciblée d'une semaine de débrief (filet de récupération). */
+/** Réservé ADMIN : régénération ciblée d'une semaine de débrief (filet de récupération). */
 @UseGuards(JwtAuthGuard, AdminGuard)
 @Controller('debrief/admin')
 export class DebriefAdminController {

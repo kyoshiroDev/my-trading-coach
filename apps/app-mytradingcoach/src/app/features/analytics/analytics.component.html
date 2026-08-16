@@ -4,13 +4,16 @@
   <!-- ── 4 Stats FREE (visibles par tous) ── -->
   <div class="stats-row">
     <div class="stat-card">
-      <div class="stat-label">WIN RATE GLOBAL</div>
+      <div class="stat-label">WIN RATE GLOBAL
+        <mtc-info-tooltip label="Comment le win rate global est calculé"
+          text="Trades gagnants ÷ (gagnants + perdants). Les break-even sont exclus du calcul." />
+      </div>
       <div
         class="stat-value"
         data-testid="analytics-win-rate"
         [style.color]="winRateColor()"
       >
-        {{ summary() ? summary()!.winRate.toFixed(1) + '%' : '—' }}
+        {{ summary() ? summary()!.winRate.toFixed(1) + '%' : '-' }}
       </div>
       <div class="stat-sub" data-testid="analytics-trades">
         {{ summary()?.totalTrades ?? 0 }} trades
@@ -18,22 +21,28 @@
     </div>
 
     <div class="stat-card">
-      <div class="stat-label">P&amp;L TOTAL</div>
+      <div class="stat-label">P&amp;L TOTAL
+        <mtc-info-tooltip label="Comment le P&L total est calculé"
+          text="Somme des résultats nets de la période, frais déduits." />
+      </div>
       <div
         class="stat-value"
         data-testid="analytics-pnl"
         [class.text-green]="(summary()?.totalPnl ?? 0) > 0"
         [class.text-red]="(summary()?.totalPnl ?? 0) < 0"
       >
-        {{ summary() ? (summary()!.totalPnl | pnlFormat) : '—' }}
+        {{ summary() ? (summary()!.totalPnl | pnlFormat) : '-' }}
       </div>
       <div class="stat-sub">P&amp;L cumulé</div>
     </div>
 
     <div class="stat-card">
-      <div class="stat-label">TOP SESSION</div>
+      <div class="stat-label">TOP SESSION
+        <mtc-info-tooltip label="Ce que représente la top session"
+          text="Session où ton résultat cumulé est le meilleur sur la période." />
+      </div>
       <div class="stat-value text-blue">
-        {{ summary() ? (summary()!.topSession | sessionLabel) : '—' }}
+        {{ summary() ? (summary()!.topSession | sessionLabel) : '-' }}
       </div>
       <div class="stat-sub">
         {{ summary()?.topSessionWinRate ?? 0 }}% win rate
@@ -41,25 +50,28 @@
     </div>
 
     <div class="stat-card">
-      <div class="stat-label">HEURE TOP</div>
+      <div class="stat-label">HEURE TOP
+        <mtc-info-tooltip class="align-end" label="Ce que représente l'heure top"
+          text="Heure de la journée où ton résultat cumulé est le meilleur sur la période." />
+      </div>
       <div class="stat-value text-blue">
-        {{ summary()?.topHour ?? '—' }}
+        {{ summary()?.topHour ?? '-' }}
       </div>
       <div class="stat-sub">meilleure heure</div>
     </div>
   </div>
 
-  <!-- ── Séparateur STARTER ── -->
+  <!-- ── Séparateur PREMIUM ── -->
   <div class="premium-separator">
     <div class="separator-line"></div>
-    <span class="separator-label">ANALYTICS AVANCÉS · STARTER</span>
+    <span class="separator-label">ANALYTICS AVANCÉS · PREMIUM</span>
     <div class="separator-line"></div>
   </div>
 
   <!-- ══════════════════════════════════════════
-       CONTENU STARTER
+       CONTENU PREMIUM
   ══════════════════════════════════════════ -->
-  @if (userStore.isStarterOrAbove()) {
+  @if (userStore.isPremium()) {
     <!-- Equity Curve + Drawdown côte à côte -->
     <div class="grid-2 mb-16">
       <div class="card">
@@ -98,7 +110,10 @@
 
       <div class="card">
         <div class="card-header">
-          <div class="card-title">Courbe de Drawdown</div>
+          <div class="card-title">Courbe de Drawdown
+            <mtc-info-tooltip label="Ce que représente le drawdown"
+              text="Écart entre ton P&L cumulé et son plus haut niveau atteint. Mesure la baisse depuis un pic, pas une perte définitive." />
+          </div>
           @if (summary()) {
             <span class="card-meta text-red">
               {{ -summary()!.maxDrawdown | pnlFormat }} max
@@ -114,18 +129,21 @@
       </div>
     </div>
 
-    <!-- Heatmap + Calendrier côte à côte — même hauteur -->
+    <!-- Heatmap + Calendrier côte à côte : même hauteur -->
     <div class="grid-heatmap-calendar mb-16">
 
-      <!-- Heatmap (gauche — plus large) -->
+      <!-- Heatmap (gauche, plus large) -->
       <div class="card heatmap-card">
         <div class="card-header">
-          <div class="card-title">Heatmap horaire : win rate par heure</div>
+          <div class="card-title">Heatmap horaire : win rate par heure
+            <mtc-info-tooltip label="Comment lire la heatmap"
+              text="Win rate par heure de la journée. Vert ≥ 65 %, orange 50-65 %, rouge < 50 %." />
+          </div>
           <div class="heatmap-legend">
             <span class="legend-dot dot-red"></span
             ><span class="legend-txt">&lt;50%</span>
             <span class="legend-dot dot-orange"></span
-            ><span class="legend-txt">50–65%</span>
+            ><span class="legend-txt">50-65%</span>
             <span class="legend-dot dot-green"></span
             ><span class="legend-txt">&gt;65%</span>
           </div>
@@ -175,7 +193,7 @@
         </div>
       </div>
 
-      <!-- Calendrier (droite — plus compact) -->
+      <!-- Calendrier (droite, plus compact) -->
       <div class="cal-analytics-wrap">
         <mtc-activity-calendar
           [data]="calData()"
@@ -231,7 +249,10 @@
 
       <div class="card">
         <div class="card-header">
-          <div class="card-title">Performance par setup</div>
+          <div class="card-title">Performance par setup
+            <mtc-info-tooltip label="Ce que montre la performance par setup"
+              text="Résultat cumulé et nombre de trades par setup, sur la période sélectionnée." />
+          </div>
         </div>
         <table class="perf-table">
           <thead>
@@ -239,7 +260,10 @@
               <th>SETUP</th>
               <th>TRADES</th>
               <th>WIN RATE</th>
-              <th>RR MOY.</th>
+              <th>RR MOY.
+                <mtc-info-tooltip class="align-end" label="Comment le RR moyen est calculé"
+                  text="Moyenne des ratios risque/rendement des trades où stop loss et take profit sont renseignés." />
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -250,7 +274,7 @@
                 </td>
                 <td class="mono">{{ setup.count }}</td>
                 <td class="mono" [style.color]="setup.winRate !== null ? rateColor(setup.winRate) : null">
-                  @if (setup.winRate !== null) { {{ setup.winRate.toFixed(0) }}% } @else { — }
+                  @if (setup.winRate !== null) { {{ setup.winRate.toFixed(0) }}% } @else { - }
                 </td>
                 <td
                   class="mono"
@@ -274,11 +298,11 @@
   }
 
   <!-- ══════════════════════════════════════════
-       BLOCS VERROUILLÉS — FREE
+       BLOCS VERROUILLÉS : FREE
   ══════════════════════════════════════════ -->
-  @if (!userStore.isStarterOrAbove()) {
+  @if (!userStore.isPremium()) {
     <div class="locked-blocks">
-      <!-- Bloc 1 — Equity Curve & Drawdown -->
+      <!-- Bloc 1 : Equity Curve & Drawdown -->
       <div class="locked-feature">
         <div class="locked-preview">
           <div class="preview-curves">
@@ -336,12 +360,12 @@
             data-testid="upgrade-cta"
             (click)="showPlanModal.set(true)"
           >
-            Essayer 7 jours gratuit →
+            Essayer Premium · 1 mois offert →
           </button>
         </div>
       </div>
 
-      <!-- Bloc 2 — Heatmap horaire -->
+      <!-- Bloc 2 : Heatmap horaire -->
       <div class="locked-feature">
         <div class="locked-preview">
           <div class="heatmap-preview-mock">
@@ -368,12 +392,12 @@
             data-testid="upgrade-cta"
             (click)="showPlanModal.set(true)"
           >
-            Essayer 7 jours gratuit →
+            Essayer Premium · 1 mois offert →
           </button>
         </div>
       </div>
 
-      <!-- Bloc 3 — Top Actifs & Setup -->
+      <!-- Bloc 3 : Top Actifs & Setup -->
       <div class="locked-feature">
         <div class="locked-preview">
           <div class="bars-preview-mock">
@@ -399,7 +423,7 @@
             data-testid="upgrade-cta"
             (click)="showPlanModal.set(true)"
           >
-            Essayer 7 jours gratuit →
+            Essayer Premium · 1 mois offert →
           </button>
         </div>
       </div>

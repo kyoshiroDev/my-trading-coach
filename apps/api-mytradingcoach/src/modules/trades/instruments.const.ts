@@ -8,7 +8,7 @@ export interface Instrument {
 }
 
 // ── Seules les données que FMP ne fournit pas : tickValue/tickSize CME ────────
-// Ces valeurs sont des spécifications contractuelles fixes — jamais dans une API.
+// Ces valeurs sont des spécifications contractuelles fixes : jamais dans une API.
 // Labels/catégories pour le reste → FMP /stable/search
 export const INSTRUMENTS: Instrument[] = [
   // ── Equity Index Futures ──────────────────────────────────────────────────
@@ -45,7 +45,7 @@ export const INSTRUMENTS: Instrument[] = [
   { symbol: '6A',  label: 'Australian Dollar (6A)',          category: 'FUTURES_US', tickValue: 10.0,     tickSize: 0.0001    },
   { symbol: '6C',  label: 'Canadian Dollar (6C)',            category: 'FUTURES_US', tickValue: 10.0,     tickSize: 0.0001    },
   { symbol: '6S',  label: 'Swiss Franc (6S)',                category: 'FUTURES_US', tickValue: 12.5,     tickSize: 0.0001    },
-  // ── Crypto / Forex spot — tickValue null, FMP fournit labels ─────────────
+  // ── Crypto / Forex spot : tickValue null, FMP fournit labels ─────────────
   { symbol: 'BTC/USDT', label: 'Bitcoin (BTC/USDT)',  category: 'CRYPTO', tickValue: null },
   { symbol: 'ETH/USDT', label: 'Ethereum (ETH/USDT)', category: 'CRYPTO', tickValue: null },
   { symbol: 'SOL/USDT', label: 'Solana (SOL/USDT)',   category: 'CRYPTO', tickValue: null },

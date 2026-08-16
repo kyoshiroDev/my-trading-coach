@@ -206,7 +206,7 @@ export class PdfService {
   <div class="header">
     <div>
       <div class="brand">MyTradingCoach</div>
-      <div class="week-title">Weekly Debrief — Semaine ${data.weekNumber}</div>
+      <div class="week-title">Weekly Debrief · Semaine ${data.weekNumber}</div>
       <div class="week-dates">${data.startDate} → ${data.endDate} · ${data.userName}</div>
     </div>
     <div class="pnl-header">

@@ -15,8 +15,6 @@ const REQUIRED_ENV_VARS = [
   'DATABASE_URL',
   'STRIPE_SECRET_KEY',
   'STRIPE_WEBHOOK_SECRET',
-  'STRIPE_STARTER_PRICE_MONTHLY',
-  'STRIPE_STARTER_PRICE_YEARLY',
   'STRIPE_PREMIUM_PRICE_MONTHLY_V2',
   'STRIPE_PREMIUM_PRICE_YEARLY_V2',
   'RESEND_API_KEY',
@@ -64,7 +62,10 @@ async function bootstrap() {
   );
   app.use(compression());
   app.use(cookieParser());
-  app.setGlobalPrefix('api');
+  // `robots.txt` doit répondre à la RACINE du sous-domaine (api.mytradingcoach.app/robots.txt),
+  // pas sous /api → exclu du préfixe global. `health` reste sous /api/health (ne pas casser le
+  // health check existant).
+  app.setGlobalPrefix('api', { exclude: ['robots.txt'] });
 
   const corsOrigins = process.env['CORS_ORIGINS']?.split(',') ?? [
     'http://localhost:4200',
@@ -90,7 +91,7 @@ async function bootstrap() {
   logger.log(`Worker ${process.pid} running on: http://localhost:${port}/api`);
 }
 
-// Clustering uniquement en production — en dev, process unique pour le debug
+// Clustering uniquement en production : en dev, process unique pour le debug
 if (cluster.isPrimary && process.env['NODE_ENV'] === 'production') {
   const numWorkers = availableParallelism();
   logger.log(`Primary ${process.pid} starting ${numWorkers} workers...`);

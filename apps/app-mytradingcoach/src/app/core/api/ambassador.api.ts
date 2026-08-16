@@ -7,7 +7,7 @@ export interface ReferralUser {
   id: string;
   name: string | null;
   email: string;
-  plan: 'FREE' | 'STARTER' | 'PREMIUM';
+  plan: 'FREE' | 'PREMIUM';
   createdAt: string;
   isActive: boolean;
 }
@@ -17,7 +17,6 @@ export interface AmbassadorStats {
   referrals: ReferralUser[];
   total: number;
   free: number;
-  starter: number;
   premium: number;
   earningsByMonth: Record<string, number>;
   totalEarned: number;
