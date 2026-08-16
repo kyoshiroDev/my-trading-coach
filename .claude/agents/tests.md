@@ -16,6 +16,30 @@ pnpm nx test api-mytradingcoach --coverage
 
 ---
 
+## Deux suites côté API : unitaire et intégration
+
+| Suite | Fichiers | Config | Services | Où |
+|---|---|---|---|---|
+| Unitaire | `src/**/*.spec.ts` | `vitest.config.ts` | aucun (mocks) | `pnpm nx test api-mytradingcoach` |
+| Intégration | `src/**/*.int-spec.ts` | `vitest.integration.config.ts` | Postgres + Redis | job CI `integration-referral` |
+
+`*.int-spec.ts` **ne matche pas** `*.spec.ts` : les deux suites ne se mélangent jamais.
+
+```bash
+# intégration, en local (charge le .env de la racine)
+cd apps/api-mytradingcoach
+env $(grep -vE '^#|^$' ../../.env | xargs -d '\n') \
+  pnpm exec vitest run --config vitest.integration.config.ts
+```
+
+> ⚠️ **Arrêter toute API lancée à côté avant de jouer la suite d'intégration.** Un autre
+> process branché sur le même Redis consomme la file BullMQ « stripe » et traite les jobs
+> du test avec SON code : les assertions passent au vert sans rien prouver. Constaté en
+> vrai — un sabotage de `processReferral` est resté invisible tant qu'une API tournait.
+> En CI il n'y a qu'un process, le problème ne se pose pas.
+
+---
+
 ## Config Vitest NestJS
 
 ```typescript
@@ -212,8 +236,31 @@ e2e/
 ├── 06-weekly-debrief.spec.ts    → FREE : paywall / PREMIUM : rapport (mock)
 ├── 07-navigation.spec.ts        → sidebar, routes, 404, mobile burger
 ├── 08-session-mode.spec.ts      ← V2 : vue morning, démarrer session, vue live, quick trade
-└── 09-eco-calendar.spec.ts      ← V2 : events, analyse IA, bull/bear, dim hors session
+├── 09-eco-calendar.spec.ts      ← V2 : events, analyse IA, bull/bear, dim hors session
+├── 10-activity-calendar.spec.ts
+└── 11-referral-ambassador.spec.ts  ← parrainage : lien, paiement Stripe test, commission 20 %
 ```
+
+### `11-referral-ambassador` — paiement réel en mode test
+
+Setup complet dans `apps/app-mytradingcoach-e2e/README.md`. Les points qui ne se
+devinent pas, tous vérifiés en exécution :
+
+- **L'événement qui crée la commission est `invoice.payment_succeeded`**, pas
+  `checkout.session.completed`. Un test bâti sur le second passerait sans rien vérifier.
+- **`handleWebhook` ne fait qu'enqueuer** dans BullMQ et répond `201` ; c'est
+  `StripeProcessor` qui écrit la commission. **Redis est donc obligatoire**, et un `2xx`
+  sur le webhook ne prouve rien → polling, jamais de `sleep`.
+- `stripe trigger` ne convient pas : il crée un customer arbitraire, alors que
+  `processReferral` retrouve le filleul par son `stripeCustomerId`.
+- Le parrain doit avoir le rôle **AMBASSADOR**, sinon branche « mois offert », 0 commission.
+- Client Prisma en e2e : adapter `PrismaPg` sur un pool `pg`, comme `PrismaService`.
+  Un `new PrismaClient()` nu échoue en Prisma 7.
+- `RegisterDto.referralCode` est plafonné à **20 caractères**.
+
+Deux modes via `E2E_STRIPE_MODE` : `webhook` (défaut, déterministe) et `ui` (vraie page
+Stripe hébergée, exige `stripe listen`). Le test skippe avec la raison si l'infra manque,
+et refuse de tourner sur une clé qui n'est pas `sk_test_`.
 
 ### Pattern d'auth E2E pour BETA_TESTER
 

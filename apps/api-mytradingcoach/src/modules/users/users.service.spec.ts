@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { UsersService } from './users.service';
+import { AmbassadorService } from '../ambassador/ambassador.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 
@@ -60,6 +61,9 @@ describe('UsersService', () => {
         { provide: RedisService, useValue: mockRedisService },
         UsersService,
         { provide: PrismaService, useValue: mockPrisma },
+        // setRole délègue à AmbassadorService pour garantir le referralCode
+        // d'un AMBASSADOR (PROMPT-176) ; non sollicité par ces tests.
+        { provide: AmbassadorService, useValue: { promote: vi.fn(), revoke: vi.fn() } },
       ],
     }).compile();
 
