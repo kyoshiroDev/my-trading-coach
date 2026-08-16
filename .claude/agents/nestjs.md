@@ -287,9 +287,27 @@ Format JSON : { … }`;
   `grep -rnP "\x{2014}|\x{2013}" apps/*/src | grep -v spec` reste **vide**.
   Ne jamais les réécrire en littéral.
 
-> `modules/ai/prompts/insights.prompt.ts` est **exporté mais jamais importé** (code
-> mort) : le chat vivant est `CHAT_SYSTEM` inline dans `ai.service.ts`, les insights
-> passent par `pattern.agent` + `coach.agent`.
+### Où vivent réellement les prompts
+
+`modules/ai/prompts/` ne contient que `debrief.prompt.ts` et `style.prompt.ts`.
+Les autres prompts sont **au plus près de leur agent** :
+
+| Sortie | Prompt | Fichier |
+|---|---|---|
+| Weekly Debrief | `DEBRIEF_SYSTEM_PROMPT` | `prompts/debrief.prompt.ts` |
+| Patterns (IA Insights) | `PATTERN_SYSTEM` | `agents/pattern.agent.ts` |
+| Conseils (IA Insights) | `COACH_SYSTEM` | `agents/coach.agent.ts` |
+| Chat coach | `CHAT_SYSTEM` (inline) | `ai.service.ts` |
+| Recap 17h30 | system inline | `ai.service.ts` |
+| Analyses éco | prompt user | `ai.service.ts` |
+| Traductions news | prompt user | `trades/market-data.service.ts` |
+
+`CHAT_SYSTEM` est **volontairement inline** et non extrait en constante : il interpole
+le profil du trader (`${userContext}`), impossible depuis une constante de module.
+C'est la raison pour laquelle l'ancien `prompts/insights.prompt.ts` (1ʳᵉ génération,
+pré-multi-agents) a été débranché le 2026-04-27 puis **supprimé** : il est resté 3 mois
+en code mort, invisible au compilateur car entièrement `export` (TS/ESLint ne signalent
+pas les exports inutilisés). Le relire donnait l'illusion de modifier le chat.
 
 ---
 
