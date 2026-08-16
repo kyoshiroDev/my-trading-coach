@@ -73,7 +73,7 @@ export class BackupService {
     const db = DB_BY_TARGET[target as DbTarget];
     if (!db) {
       throw new BadRequestException(
-        `Backup manuel non géré pour « ${target} » — seules les bases bdd_prod / bdd_dev / bdd_beta sont sauvegardables ici (les images/configs API passent par backup-apps.sh).`,
+        `Backup manuel non géré pour « ${target} » : seules les bases bdd_prod / bdd_dev / bdd_beta sont sauvegardables ici (les images/configs API passent par backup-apps.sh).`,
       );
     }
 
@@ -98,7 +98,7 @@ export class BackupService {
   }
 
   async deleteBackup(filename: string): Promise<void> {
-    // Sanitize filename — allow only safe chars
+    // Sanitize filename : allow only safe chars
     if (!/^[\w\-.]+\.sql\.gz$/.test(filename)) {
       throw new Error('Nom de fichier invalide');
     }

@@ -77,7 +77,7 @@ export class ChartService {
             },
             tension: 0.1,
           },
-          // Ligne de référence — capital de départ
+          // Ligne de référence : capital de départ
           {
             data: values.map(() => base),
             borderColor: 'rgba(99,155,255,0.2)',

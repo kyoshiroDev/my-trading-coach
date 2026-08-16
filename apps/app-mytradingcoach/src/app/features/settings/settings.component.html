@@ -28,7 +28,7 @@
       <!-- ── Colonne gauche : Stratégie + Mes actifs ── -->
       <div class="pcol">
 
-        <!-- ══ STRATÉGIE — vue résumé ══ -->
+        <!-- ══ STRATÉGIE : vue résumé ══ -->
         <div class="settings-section">
           <div class="settings-section-label">Stratégie de trading</div>
           <div class="settings-card strat-summary">
@@ -43,27 +43,27 @@
               <span class="ssum-v">
                 @if (tradingStyle()) {
                   {{ styleEmoji(tradingStyle()) }} {{ styleLabel(tradingStyle()) }}
-                } @else { — }
+                } @else { - }
               </span>
             </div>
             <div class="ssum-row">
               <span class="ssum-k">Sessions</span>
               <span class="ssum-v">
-                {{ tradingSessions().length ? tradingSessions().map(s => sessionLabel(s)).join(', ') : '—' }}
+                {{ tradingSessions().length ? tradingSessions().map(s => sessionLabel(s)).join(', ') : '-' }}
               </span>
             </div>
             <div class="ssum-row">
               <span class="ssum-k">Trades/jour</span>
-              <span class="ssum-v">{{ tradesPerDayMin() }}–{{ tradesPerDayMax() }}</span>
+              <span class="ssum-v">{{ tradesPerDayMin() }}-{{ tradesPerDayMax() }}</span>
             </div>
             <div class="ssum-row">
               <span class="ssum-k">Description</span>
-              <span class="ssum-v desc">{{ strategyDesc().trim() || '—' }}</span>
+              <span class="ssum-v desc">{{ strategyDesc().trim() || '-' }}</span>
             </div>
           </div>
         </div>
 
-        <!-- ══ MES ACTIFS — auto-save ══ -->
+        <!-- ══ MES ACTIFS : auto-save ══ -->
         <div class="settings-section">
           <div class="settings-section-label">Mes actifs</div>
           <div class="strat-card">
@@ -152,7 +152,7 @@
                         {{ s.tradeCount }} trade{{ s.tradeCount > 1 ? 's' : '' }} ·
                         @if (winRateValue(s.id) !== null) {
                           <b [class]="'wr-' + winRateClass(s.id)">{{ winRateValue(s.id) }}% WR</b>
-                        } @else { <b>—</b> }
+                        } @else { <b>-</b> }
                       </span>
                     } @else {
                       <span class="stp-stat stp-stat-empty">jamais utilisé</span>
@@ -269,7 +269,7 @@
                     <button class="btn-inline-cancel" (click)="editingName.set(false)">Annuler</button>
                   </div>
                 } @else {
-                  <span class="settings-row-value">{{ userStore.user()?.name || '—' }}</span>
+                  <span class="settings-row-value">{{ userStore.user()?.name || '-' }}</span>
                 }
               </div>
               @if (!editingName()) {
@@ -297,7 +297,7 @@
           </div>
         </div>
 
-        <!-- ══ MAINTENANCE — NETTOYAGE DOUBLONS ══ -->
+        <!-- ══ MAINTENANCE : NETTOYAGE DOUBLONS ══ -->
         <div class="settings-section">
           <div class="settings-section-label">Maintenance des données</div>
           <div class="settings-card">
@@ -394,7 +394,7 @@
                 <p class="plan-desc">Accès à tout : IA Insights, Chat coach IA, Weekly Debrief, analytics avancés, comptes illimités.</p>
                 @if (isInTrial()) {
                   <div class="trial-status">
-                    <p class="trial-status-title">🎁 Essai gratuit — il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
+                    <p class="trial-status-title">🎁 Essai gratuit : il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
                     <p class="trial-status-sub">
                       Premier prélèvement le {{ trialEndsAt() | date:'dd/MM/yyyy' }}. Annulable en un clic, aucun prélèvement si tu annules avant.
                     </p>
@@ -419,7 +419,7 @@
                 </p>
                 <div class="plan-actions">
                   <button class="btn btn-primary" (click)="showPlanModal.set(true)">
-                    ⚡ Essayer Premium — 1 mois offert →
+                    ⚡ Essayer Premium · 1 mois offert →
                   </button>
                 </div>
               }
@@ -555,7 +555,7 @@
 
         <!-- Trades / jour -->
         <div class="stp-fld">
-          <div class="stp-fld-label">Trades / jour habituels <span class="opt">{{ draftMin() }}–{{ draftMax() }}</span></div>
+          <div class="stp-fld-label">Trades / jour habituels <span class="opt">{{ draftMin() }}-{{ draftMax() }}</span></div>
           <div class="freq-slider-row">
             <span class="freq-slider-label">Min</span>
             <input type="range" class="freq-slider" min="0" max="50"

@@ -78,12 +78,12 @@ export class EcoCalendarController {
     return this.service.updateUserPins(user.id, pins ?? []);
   }
 
-  // Admin — forcer un fetch sans attendre 6h00
+  // Admin : forcer un fetch sans attendre 6h00
   @Post('fetch/:date')
   @UseGuards(AdminGuard)
   async forceFetch(@Param('date') date: string) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      throw new BadRequestException('Format invalide — utiliser YYYY-MM-DD');
+      throw new BadRequestException('Format invalide : utiliser YYYY-MM-DD');
     }
     const events = await this.service.fetchAndStoreEvents(date);
     return { fetched: events.length, date };

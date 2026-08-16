@@ -81,7 +81,7 @@ export const appRoutes: Routes = [
       },
       {
         path: 'accounts',
-        // Pas de premiumGuard — upsell inline intentionnel (preview + UX conversion).
+        // Pas de premiumGuard : upsell inline intentionnel (preview + UX conversion).
         data: { seo: { title: 'Mes comptes', noindex: true } },
         loadComponent: () =>
           import('./features/accounts/accounts.component').then(
@@ -114,7 +114,7 @@ export const appRoutes: Routes = [
       },
       {
         path: 'ai-insights',
-        // Pas de premiumGuard — paywall inline intentionnel (preview + UX conversion)
+        // Pas de premiumGuard : paywall inline intentionnel (preview + UX conversion)
         data: { seo: { title: 'AI Insights', noindex: true } },
         loadComponent: () =>
           import('./features/ai-insights/ai-insights.component').then(
@@ -123,7 +123,7 @@ export const appRoutes: Routes = [
       },
       {
         path: 'debrief',
-        // Pas de premiumGuard — paywall inline intentionnel (preview + UX conversion)
+        // Pas de premiumGuard : paywall inline intentionnel (preview + UX conversion)
         data: { seo: { title: 'Weekly Debrief', noindex: true } },
         loadComponent: () =>
           import('./features/weekly-debrief/debrief.component').then(
@@ -132,7 +132,7 @@ export const appRoutes: Routes = [
       },
       {
         path: 'scoring',
-        // Pas de premiumGuard — paywall inline intentionnel (preview + UX conversion)
+        // Pas de premiumGuard : paywall inline intentionnel (preview + UX conversion)
         data: { seo: { title: 'Scoring', noindex: true } },
         loadComponent: () =>
           import('./features/scoring/scoring.component').then(

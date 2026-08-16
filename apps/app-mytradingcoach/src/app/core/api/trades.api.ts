@@ -33,7 +33,7 @@ export interface Trade {
   riskReward: number | null;
   quantity: number | null;
   capitalEngaged: number | null;
-  // Override optionnel (PROMPT-163) — null = non renseignée (héritera de l'humeur de session).
+  // Override optionnel (PROMPT-163) : null = non renseignée (héritera de l'humeur de session).
   emotion:
     | 'CONFIDENT'
     | 'STRESSED'
@@ -44,7 +44,7 @@ export interface Trade {
     | null;
   // Émotion EFFECTIVE calculée côté API (override sinon humeur de session sinon null) : à afficher.
   effectiveEmotion?: string | null;
-  // Note d'exécution CALCULÉE (PROMPT-161) — déterministe, jamais saisie. null = « Non évalué ».
+  // Note d'exécution CALCULÉE (PROMPT-161) : déterministe, jamais saisie. null = « Non évalué ».
   executionScore?: number | null;
   executionGrade?: 'EXCELLENT' | 'BON' | 'MOYEN' | 'MAUVAIS' | null;
   // Barème ayant produit la note (PROMPT-168) : stop-based ou comportemental.
@@ -71,7 +71,7 @@ export interface CreateTradeDto {
   riskReward?: number;
   quantity?: number;
   capitalEngaged?: number;
-  emotion?: Trade['emotion']; // optionnel (override) — absent/null = hérite de l'humeur de session
+  emotion?: Trade['emotion']; // optionnel (override) : absent/null = hérite de l'humeur de session
   setupId: string;
   session: Trade['session'];
   timeframe: string;

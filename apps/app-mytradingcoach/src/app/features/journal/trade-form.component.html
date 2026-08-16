@@ -122,7 +122,7 @@
                   [value]="form().exit ?? ''"
                   (input)="filterNumeric($event, 'exit')"
                   name="exit"
-                  placeholder="—"
+                  placeholder="-"
                 />
               </div>
               <div class="price-field">
@@ -151,7 +151,7 @@
                 [value]="form().stopLoss ?? ''"
                 (input)="filterNumeric($event, 'stopLoss')"
                 name="stopLoss"
-                placeholder="—"
+                placeholder="-"
                 class="input-sl"
               />
             </div>
@@ -165,7 +165,7 @@
                 [value]="form().takeProfit ?? ''"
                 (input)="filterNumeric($event, 'takeProfit')"
                 name="takeProfit"
-                placeholder="—"
+                placeholder="-"
                 class="input-tp"
               />
             </div>
@@ -260,14 +260,14 @@
                     >
                   }
                 } @else {
-                  —
+                  -
                 }
               </div>
             </div>
             <div class="rr-badge" [class.rr-win]="(autoRR() ?? 0) >= 1">
               <div class="rr-label">R/R</div>
               <div class="rr-value">
-                {{ autoRR() !== undefined ? autoRR()!.toFixed(1) : '—' }}
+                {{ autoRR() !== undefined ? autoRR()!.toFixed(1) : '-' }}
               </div>
             </div>
           </div>
@@ -302,7 +302,7 @@
             </div>
           </div>
 
-          <!-- 7. État émotionnel (optionnel — override de l'humeur de session) -->
+          <!-- 7. État émotionnel (optionnel, override de l'humeur de session) -->
           <div class="form-group">
             <span class="section-label">État émotionnel <span class="label-optional">(optionnel)</span></span>
             <div class="emotion-grid">
@@ -313,7 +313,7 @@
                 [class.selected]="!form().emotion"
                 (click)="setEmotion(null)"
               >
-                — Non renseignée
+                - Non renseignée
               </button>
               @for (e of EMOTIONS; track e) {
                 <button

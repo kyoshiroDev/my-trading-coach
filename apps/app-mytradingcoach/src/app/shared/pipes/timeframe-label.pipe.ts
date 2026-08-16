@@ -20,6 +20,6 @@ import { Pipe, PipeTransform } from '@angular/core';
 @Pipe({ name: 'timeframeLabel', standalone: true })
 export class TimeframeLabelPipe implements PipeTransform {
   transform(value: string | null | undefined): string {
-    return value ?? '—';
+    return value ?? '-';
   }
 }

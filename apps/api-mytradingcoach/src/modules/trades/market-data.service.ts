@@ -5,6 +5,7 @@ import { RedisService } from '../shared/redis.service';
 import { AnthropicClientService } from '../shared/anthropic-client.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 import { INSTRUMENTS } from './instruments.const';
+import { NO_EM_DASH_RULE } from '../ai/prompts/style.prompt';
 
 export interface MarketContextItem { value: number | null; changePct: number | null; source: 'fmp' | 'yahoo' | 'binance'; }
 export interface TreasuryRates {
@@ -147,7 +148,7 @@ export class MarketDataService {
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 800,
         messages: [{ role: 'user', content:
-          `Traduis en français ces titres de news financières. Réponds UNIQUEMENT avec un tableau JSON d'objets {title} dans le même ordre, sans texte autour.\n\n${JSON.stringify(titles)}` }],
+          `Traduis en français ces titres de news financières. ${NO_EM_DASH_RULE} Réponds UNIQUEMENT avec un tableau JSON d'objets {title} dans le même ordre, sans texte autour.\n\n${JSON.stringify(titles)}` }],
       }, { feature: 'news_translation', userId: null });
       const txt = msg.content[0]?.type === 'text' ? msg.content[0].text : '';
       const s = txt.indexOf('['), e = txt.lastIndexOf(']');
@@ -184,7 +185,7 @@ export class MarketDataService {
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 700,
         messages: [{ role: 'user', content:
-          `Traduis en français ce texte de news financière. Réponds UNIQUEMENT avec la traduction, sans préambule ni guillemets.\n\n${news.text}` }],
+          `Traduis en français ce texte de news financière. ${NO_EM_DASH_RULE} Réponds UNIQUEMENT avec la traduction, sans préambule ni guillemets.\n\n${news.text}` }],
       }, { feature: 'news_translation', userId: null });
       const fr = msg.content[0]?.type === 'text' ? msg.content[0].text.trim() : '';
       if (!fr) return news.textFr ?? news.text;

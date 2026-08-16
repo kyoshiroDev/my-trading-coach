@@ -16,7 +16,7 @@ import { AccountType, TradingAccount } from '../../../core/api/accounts.api';
 // Sélecteur de compte réutilisable (dashboard, etc.) : trigger compact affichant le compte
 // courant (ou « Tous les comptes ») + menu déroulant listant tous les comptes. Largeur fixe,
 // quel que soit le nombre de comptes (remplace la barre de pills qui débordait à 7+ comptes).
-// Accessible à tous (FREE : 1 compte · Premium : illimité) — aucun gating ici, c'est côté API.
+// Accessible à tous (FREE : 1 compte · Premium : illimité). Aucun gating ici, c'est côté API.
 @Component({
   selector: 'mtc-account-selector',
   standalone: true,
@@ -62,7 +62,7 @@ export class AccountSelectorComponent implements OnInit {
     this.close();
   }
 
-  /** Solde agrégé (comptes non archivés) — affiché sur l'option « Tous les comptes ». */
+  /** Solde agrégé (comptes non archivés) : affiché sur l'option « Tous les comptes ». */
   protected readonly totalBalance = computed(() =>
     this.store
       .accounts()

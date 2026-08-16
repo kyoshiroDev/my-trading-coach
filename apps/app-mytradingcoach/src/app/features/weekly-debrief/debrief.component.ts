@@ -84,7 +84,7 @@ function badgeClass(badge: string): string {
   return map[badge] ?? 'blue';
 }
 
-/** Badge de type compte (ÉVAL / FUNDED) — null pour les comptes perso. */
+/** Badge de type compte (ÉVAL / FUNDED) : null pour les comptes perso. */
 function typeBadge(type: string): { label: string; cls: string } | null {
   if (type === 'EVALUATION') return { label: 'ÉVAL', cls: 'eval' };
   if (type === 'FUNDED') return { label: 'FUNDED', cls: 'funded' };
@@ -125,7 +125,7 @@ function typeBadge(type: string): { label: string; cls: string } | null {
             chaque dimanche un rapport IA complet de ta semaine.
           </p>
           <button class="paywall-cta" (click)="showPlanModal.set(true)">
-            Essayer Premium — 1 mois offert →
+            Essayer Premium · 1 mois offert →
           </button>
         </div>
         @if (showPlanModal()) {
@@ -241,7 +241,7 @@ function typeBadge(type: string): { label: string; cls: string } | null {
                       </div>
                       <div class="cmp-stat"><span class="cmp-l">Trades</span>{{ a.stats.totalTrades }}</div>
                       <div class="cmp-stat"><span class="cmp-l">Win rate</span>
-                        @if (a.stats.totalTrades) { <span class="b">{{ a.stats.winRate.toFixed(1) }}%</span> } @else { <span class="muted">—</span> }
+                        @if (a.stats.totalTrades) { <span class="b">{{ a.stats.winRate.toFixed(1) }}%</span> } @else { <span class="muted">-</span> }
                       </div>
                       <div class="cmp-stat"><span class="cmp-l">P&amp;L</span>
                         <span [class.g]="a.stats.totalPnl >= 0" [class.r]="a.stats.totalPnl < 0">{{ a.stats.totalPnl | pnlFormat }}</span>
@@ -292,12 +292,12 @@ function typeBadge(type: string): { label: string; cls: string } | null {
             <div class="stats-row">
               <div class="stat-card"><div class="stat-label">Trades</div><div class="stat-value">{{ a.stats.totalTrades }}</div></div>
               @if (isProp(a) && a.rules) {
-                <div class="stat-card"><div class="stat-label">Objectif</div><div class="stat-value small">{{ a.rules.profitTarget !== null ? (a.rules.profitTarget | number) + ' $' : '—' }}</div></div>
-                <div class="stat-card"><div class="stat-label">Drawdown max</div><div class="stat-value small text-amber">{{ a.rules.maxDrawdown !== null ? (a.rules.maxDrawdown | number) + ' $' : '—' }}</div></div>
+                <div class="stat-card"><div class="stat-label">Objectif</div><div class="stat-value small">{{ a.rules.profitTarget !== null ? (a.rules.profitTarget | number) + ' $' : '-' }}</div></div>
+                <div class="stat-card"><div class="stat-label">Drawdown max</div><div class="stat-value small text-amber">{{ a.rules.maxDrawdown !== null ? (a.rules.maxDrawdown | number) + ' $' : '-' }}</div></div>
               } @else {
                 <div class="stat-card"><div class="stat-label">Win Rate</div>
                   <div class="stat-value" [class.text-green]="a.stats.winRate >= 50" [class.text-red]="a.stats.winRate > 0 && a.stats.winRate < 50" [class.text-muted]="!a.stats.totalTrades">
-                    {{ a.stats.totalTrades ? a.stats.winRate.toFixed(1) + '%' : '—' }}
+                    {{ a.stats.totalTrades ? a.stats.winRate.toFixed(1) + '%' : '-' }}
                   </div>
                 </div>
                 <div class="stat-card"><div class="stat-label">P&amp;L</div><div class="stat-value" [class.text-green]="a.stats.totalPnl >= 0" [class.text-red]="a.stats.totalPnl < 0">{{ a.stats.totalPnl | pnlFormat }}</div></div>

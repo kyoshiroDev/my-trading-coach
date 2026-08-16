@@ -21,7 +21,7 @@ export interface InsightsFlowResult {
 }
 
 /**
- * Orchestrator — zero direct Anthropic calls.
+ * Orchestrator : zero direct Anthropic calls.
  * Coordinates DataAgent → PatternAgent → CoachAgent and assembles
  * the final response matching the existing /ai/insights API contract.
  */
@@ -35,7 +35,7 @@ export class OrchestratorAgent {
   ) {}
 
   async runInsightsFlow(userId: string): Promise<InsightsFlowResult> {
-    // Step 1 — Data (0 Anthropic tokens)
+    // Step 1 : Data (0 Anthropic tokens)
     const [trades, userProfile] = await Promise.all([
       this.prisma.trade.findMany({
         where: { userId },
@@ -67,10 +67,10 @@ export class OrchestratorAgent {
     const summary = this.dataAgent.buildTradesSummary(summaryTrades);
     const summaryWithContext = userContext ? `${userContext}\n${summary}` : summary;
 
-    // Step 2 — Pattern detection (1 Anthropic call, system cached)
+    // Step 2 : Pattern detection (1 Anthropic call, system cached)
     const analysis = await this.patternAgent.analyze(summaryWithContext, userId);
 
-    // Step 3 — Actionable advice (1 Anthropic call, system cached)
+    // Step 3 : Actionable advice (1 Anthropic call, system cached)
     const advice = await this.coachAgent.generateAdvice({
       patterns: analysis.patterns,
       summary: summaryWithContext,

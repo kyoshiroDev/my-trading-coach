@@ -9,7 +9,7 @@ import {
 import { AccountStatus, AccountType, DrawdownType } from '@prisma/client';
 
 // Tous les champs optionnels (update partiel). Le `status` est piloté par l'user
-// (PASSED / FAILED / ARCHIVED) — jamais positionné automatiquement par le backend.
+// (PASSED / FAILED / ARCHIVED) : jamais positionné automatiquement par le backend.
 export class UpdateAccountDto {
   @IsOptional()
   @IsString()

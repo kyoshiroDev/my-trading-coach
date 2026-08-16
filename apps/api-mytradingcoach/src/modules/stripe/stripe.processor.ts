@@ -4,7 +4,7 @@ import { Job } from 'bullmq';
 import { StripeService } from './stripe.service';
 import { StripeWebhookJobPayload } from './stripe.types';
 
-// ── Processor BullMQ — Traitement async des webhooks Stripe ──────────────────
+// ── Processor BullMQ : Traitement async des webhooks Stripe ──────────────────
 //
 // Ce processor tourne en arrière-plan et traite les events Stripe de façon
 // asynchrone. BullMQ gère automatiquement les retries avec backoff exponentiel.
@@ -26,7 +26,7 @@ export class StripeProcessor extends WorkerHost {
     const { event } = job.data;
 
     this.logger.log(
-      `Processing webhook — type: ${event.type}, id: ${event.id}, attempt: ${job.attemptsMade + 1}`,
+      `Processing webhook | type: ${event.type}, id: ${event.id}, attempt: ${job.attemptsMade + 1}`,
     );
 
     await this.stripeService.processWebhookEvent(event);
@@ -35,7 +35,7 @@ export class StripeProcessor extends WorkerHost {
   @OnWorkerEvent('completed')
   onCompleted(job: Job<StripeWebhookJobPayload>): void {
     this.logger.log(
-      `Webhook traité avec succès — type: ${job.data.event.type}, id: ${job.data.event.id}`,
+      `Webhook traité avec succès | type: ${job.data.event.type}, id: ${job.data.event.id}`,
     );
   }
 
@@ -45,7 +45,7 @@ export class StripeProcessor extends WorkerHost {
     const { event } = job.data;
 
     this.logger.error(
-      `Webhook échoué (${job.attemptsMade}/${job.opts.attempts ?? '?'} tentatives) — type: ${event.type}, id: ${event.id} : ${error.message}`,
+      `Webhook échoué (${job.attemptsMade}/${job.opts.attempts ?? '?'} tentatives) | type: ${event.type}, id: ${event.id} : ${error.message}`,
       error.stack,
     );
 
@@ -53,7 +53,7 @@ export class StripeProcessor extends WorkerHost {
     const maxAttempts = job.opts.attempts ?? 5;
     if (job.attemptsMade >= maxAttempts) {
       this.logger.error(
-        `[MONITORING CRITIQUE] Job ${job.id} définitivement échoué — event: ${event.type} [${event.id}]. Inspection manuelle requise.`,
+        `[MONITORING CRITIQUE] Job ${job.id} définitivement échoué | event: ${event.type} [${event.id}]. Inspection manuelle requise.`,
       );
       if (process.env['SENTRY_DSN']) {
         const Sentry = await import('@sentry/nestjs');

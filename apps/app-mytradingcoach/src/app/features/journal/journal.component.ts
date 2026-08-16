@@ -147,9 +147,9 @@ export class JournalComponent {
   protected readonly TrashIcon        = Trash2;
   protected readonly ReassignIcon     = ArrowRightLeft;
 
-  /** Libellé FR de la note d'exécution calculée (PROMPT-161) ; '—' si non évaluée. */
+  /** Libellé FR de la note d'exécution calculée (PROMPT-161) ; '-' si non évaluée. */
   protected gradeLabel(g: string | null | undefined): string {
-    return { EXCELLENT: 'Excellent', BON: 'Bon', MOYEN: 'Moyen', MAUVAIS: 'Mauvais' }[g ?? ''] ?? '—';
+    return { EXCELLENT: 'Excellent', BON: 'Bon', MOYEN: 'Moyen', MAUVAIS: 'Mauvais' }[g ?? ''] ?? '-';
   }
 
   /** Explication de la note selon le barème utilisé (PROMPT-168). */
@@ -238,7 +238,7 @@ export class JournalComponent {
           weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
         });
         const totalCommission = dayTrades.reduce((s, t) => s + Math.abs(t.commission ?? 0), 0);
-        // Stats du jour via le helper unique (BE exclus du win rate — PROMPT-160).
+        // Stats du jour via le helper unique (BE exclus du win rate, PROMPT-160).
         const st              = computeTradeStats(dayTrades);
         const totalPnl        = st.totalPnl;
         const totalPnlNet     = totalPnl - totalCommission;

@@ -13,7 +13,7 @@
         data-testid="analytics-win-rate"
         [style.color]="winRateColor()"
       >
-        {{ summary() ? summary()!.winRate.toFixed(1) + '%' : '—' }}
+        {{ summary() ? summary()!.winRate.toFixed(1) + '%' : '-' }}
       </div>
       <div class="stat-sub" data-testid="analytics-trades">
         {{ summary()?.totalTrades ?? 0 }} trades
@@ -31,7 +31,7 @@
         [class.text-green]="(summary()?.totalPnl ?? 0) > 0"
         [class.text-red]="(summary()?.totalPnl ?? 0) < 0"
       >
-        {{ summary() ? (summary()!.totalPnl | pnlFormat) : '—' }}
+        {{ summary() ? (summary()!.totalPnl | pnlFormat) : '-' }}
       </div>
       <div class="stat-sub">P&amp;L cumulé</div>
     </div>
@@ -42,7 +42,7 @@
           text="Session où ton résultat cumulé est le meilleur sur la période." />
       </div>
       <div class="stat-value text-blue">
-        {{ summary() ? (summary()!.topSession | sessionLabel) : '—' }}
+        {{ summary() ? (summary()!.topSession | sessionLabel) : '-' }}
       </div>
       <div class="stat-sub">
         {{ summary()?.topSessionWinRate ?? 0 }}% win rate
@@ -55,7 +55,7 @@
           text="Heure de la journée où ton résultat cumulé est le meilleur sur la période." />
       </div>
       <div class="stat-value text-blue">
-        {{ summary()?.topHour ?? '—' }}
+        {{ summary()?.topHour ?? '-' }}
       </div>
       <div class="stat-sub">meilleure heure</div>
     </div>
@@ -129,21 +129,21 @@
       </div>
     </div>
 
-    <!-- Heatmap + Calendrier côte à côte — même hauteur -->
+    <!-- Heatmap + Calendrier côte à côte : même hauteur -->
     <div class="grid-heatmap-calendar mb-16">
 
-      <!-- Heatmap (gauche — plus large) -->
+      <!-- Heatmap (gauche, plus large) -->
       <div class="card heatmap-card">
         <div class="card-header">
           <div class="card-title">Heatmap horaire : win rate par heure
             <mtc-info-tooltip label="Comment lire la heatmap"
-              text="Win rate par heure de la journée. Vert ≥ 65 %, orange 50–65 %, rouge < 50 %." />
+              text="Win rate par heure de la journée. Vert ≥ 65 %, orange 50-65 %, rouge < 50 %." />
           </div>
           <div class="heatmap-legend">
             <span class="legend-dot dot-red"></span
             ><span class="legend-txt">&lt;50%</span>
             <span class="legend-dot dot-orange"></span
-            ><span class="legend-txt">50–65%</span>
+            ><span class="legend-txt">50-65%</span>
             <span class="legend-dot dot-green"></span
             ><span class="legend-txt">&gt;65%</span>
           </div>
@@ -193,7 +193,7 @@
         </div>
       </div>
 
-      <!-- Calendrier (droite — plus compact) -->
+      <!-- Calendrier (droite, plus compact) -->
       <div class="cal-analytics-wrap">
         <mtc-activity-calendar
           [data]="calData()"
@@ -274,7 +274,7 @@
                 </td>
                 <td class="mono">{{ setup.count }}</td>
                 <td class="mono" [style.color]="setup.winRate !== null ? rateColor(setup.winRate) : null">
-                  @if (setup.winRate !== null) { {{ setup.winRate.toFixed(0) }}% } @else { — }
+                  @if (setup.winRate !== null) { {{ setup.winRate.toFixed(0) }}% } @else { - }
                 </td>
                 <td
                   class="mono"
@@ -298,11 +298,11 @@
   }
 
   <!-- ══════════════════════════════════════════
-       BLOCS VERROUILLÉS — FREE
+       BLOCS VERROUILLÉS : FREE
   ══════════════════════════════════════════ -->
   @if (!userStore.isPremium()) {
     <div class="locked-blocks">
-      <!-- Bloc 1 — Equity Curve & Drawdown -->
+      <!-- Bloc 1 : Equity Curve & Drawdown -->
       <div class="locked-feature">
         <div class="locked-preview">
           <div class="preview-curves">
@@ -360,12 +360,12 @@
             data-testid="upgrade-cta"
             (click)="showPlanModal.set(true)"
           >
-            Essayer Premium — 1 mois offert →
+            Essayer Premium · 1 mois offert →
           </button>
         </div>
       </div>
 
-      <!-- Bloc 2 — Heatmap horaire -->
+      <!-- Bloc 2 : Heatmap horaire -->
       <div class="locked-feature">
         <div class="locked-preview">
           <div class="heatmap-preview-mock">
@@ -392,12 +392,12 @@
             data-testid="upgrade-cta"
             (click)="showPlanModal.set(true)"
           >
-            Essayer Premium — 1 mois offert →
+            Essayer Premium · 1 mois offert →
           </button>
         </div>
       </div>
 
-      <!-- Bloc 3 — Top Actifs & Setup -->
+      <!-- Bloc 3 : Top Actifs & Setup -->
       <div class="locked-feature">
         <div class="locked-preview">
           <div class="bars-preview-mock">
@@ -423,7 +423,7 @@
             data-testid="upgrade-cta"
             (click)="showPlanModal.set(true)"
           >
-            Essayer Premium — 1 mois offert →
+            Essayer Premium · 1 mois offert →
           </button>
         </div>
       </div>

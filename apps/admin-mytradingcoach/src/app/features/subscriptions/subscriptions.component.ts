@@ -34,15 +34,15 @@ import { AdminApi, AdminStats, SubscriptionsData } from '../../core/api/admin.ap
             <tbody>
               @for (u of d.stripeUsers; track u.id) {
                 <tr>
-                  <td data-label="Utilisateur"><div class="u-cell"><div class="u-av">{{ av(u.name, u.email) }}</div><div><div class="u-name">{{ u.name ?? '—' }}</div><div class="u-mail">{{ u.email }}</div></div></div></td>
+                  <td data-label="Utilisateur"><div class="u-cell"><div class="u-av">{{ av(u.name, u.email) }}</div><div><div class="u-name">{{ u.name ?? '-' }}</div><div class="u-mail">{{ u.email }}</div></div></div></td>
                   <td data-label="Plan"><span class="badge b-premium">{{ u.plan }}</span></td>
                   <td data-label="Intervalle" class="td-mono">{{ u.stripeInterval === 'month' ? 'Mensuel' : 'Annuel' }}</td>
                   <td data-label="Statut"><span class="badge b-ok">actif</span></td>
-                  <td data-label="Renouvellement" class="td-mono muted">{{ u.stripeCurrentPeriodEnd ? (u.stripeCurrentPeriodEnd | date:'dd/MM/yyyy') : '—' }}</td>
-                  <td data-label="Montant" class="td-mono num">—</td>
+                  <td data-label="Renouvellement" class="td-mono muted">{{ u.stripeCurrentPeriodEnd ? (u.stripeCurrentPeriodEnd | date:'dd/MM/yyyy') : '-' }}</td>
+                  <td data-label="Montant" class="td-mono num">-</td>
                 </tr>
               } @empty {
-                <tr><td><div class="u-cell"><div class="u-av muted-av">—</div><div><div class="u-name muted">Aucun abonnement Stripe actif</div><div class="u-mail">les accès Premium actuels sont manuels</div></div></div></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td><div class="u-cell"><div class="u-av muted-av">-</div><div><div class="u-name muted">Aucun abonnement Stripe actif</div><div class="u-mail">les accès Premium actuels sont manuels</div></div></div></td><td></td><td></td><td></td><td></td><td></td></tr>
               }
             </tbody>
           </table>
@@ -55,7 +55,7 @@ import { AdminApi, AdminStats, SubscriptionsData } from '../../core/api/admin.ap
             <tbody>
               @for (u of d.betaTesters; track u.id) {
                 <tr>
-                  <td data-label="Utilisateur"><div class="u-cell"><div class="u-av">{{ av(u.name, u.email) }}</div><div><div class="u-name">{{ u.name ?? '—' }}</div><div class="u-mail">{{ u.email }}</div></div></div></td>
+                  <td data-label="Utilisateur"><div class="u-cell"><div class="u-av">{{ av(u.name, u.email) }}</div><div><div class="u-name">{{ u.name ?? '-' }}</div><div class="u-mail">{{ u.email }}</div></div></div></td>
                   <td data-label="Rôle"><span class="role-tag purple">{{ u.role }}</span></td>
                   <td data-label="Plan accordé"><span class="badge b-premium">{{ u.plan }}</span></td>
                   <td data-label="Depuis" class="td-mono muted">{{ u.createdAt | date:'dd/MM/yyyy' }}</td>

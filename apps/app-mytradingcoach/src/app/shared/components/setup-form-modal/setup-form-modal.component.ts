@@ -29,7 +29,7 @@ export const SETUP_PALETTE = [
 
 /**
  * Modale de formulaire setup PARTAGÉE (Profil, wizard, import CSV).
- * Émet `save` / `cancel` — la persistance est gérée par le parent (store).
+ * Émet `save` / `cancel` : la persistance est gérée par le parent (store).
  */
 @Component({
   selector: 'mtc-setup-form-modal',

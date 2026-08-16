@@ -132,7 +132,7 @@ export class DebriefService {
     const { weekNumber, year, startDate, endDate } = this.getWeekInfo(opts?.refDate ?? new Date());
 
     // Idempotence : si le débrief de cette semaine existe et qu'on ne force pas, on le renvoie
-    // tel quel — zéro appel IA, zéro doublon. created=false → le processor n'enverra pas d'email.
+    // tel quel : zéro appel IA, zéro doublon. created=false → le processor n'enverra pas d'email.
     const existing = await this.prisma.weeklyDebrief.findUnique({
       where: { userId_weekNumber_year: { userId, weekNumber, year } },
     });
@@ -358,7 +358,7 @@ export class DebriefService {
     return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   }
 
-  /** Lundi midi de la semaine ISO (year, week) — à passer en refDate pour cibler cette semaine. */
+  /** Lundi midi de la semaine ISO (year, week) : à passer en refDate pour cibler cette semaine. */
   weekRefDate(year: number, week: number): Date {
     const jan4 = new Date(year, 0, 4); // toujours en semaine ISO 1
     const dow = jan4.getDay() || 7; // 1 (lun) .. 7 (dim)
@@ -403,7 +403,7 @@ export class DebriefService {
     });
 
     const pnlValues = trades.map((t) => t.pnl ?? 0);
-    // Win rate via le helper unique (BE exclus du dénominateur — PROMPT-160).
+    // Win rate via le helper unique (BE exclus du dénominateur, PROMPT-160).
     const pdfStats = computeTradeStats(trades);
 
     const storedInsights = debrief.insights as {

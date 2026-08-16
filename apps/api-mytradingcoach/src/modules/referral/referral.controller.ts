@@ -19,7 +19,7 @@ import { ApplyAmbassadorDto } from './dto/apply-ambassador.dto';
 export class ReferralController {
   constructor(private readonly service: ReferralService) {}
 
-  // Stats parrain (app) — tout user authentifié
+  // Stats parrain (app) : tout user authentifié
   @Get('me')
   getMe(@CurrentUser() user: { id: string }) {
     return this.service.getMyReferral(user.id);
@@ -32,13 +32,13 @@ export class ReferralController {
     return this.service.getAdminOverview();
   }
 
-  // Demande pour devenir ambassadeur — email à l'équipe, pas de passage auto
+  // Demande pour devenir ambassadeur : email à l'équipe, pas de passage auto
   @Post('ambassador/apply')
   apply(@CurrentUser() user: { id: string }, @Body() dto: ApplyAmbassadorDto) {
     return this.service.applyAmbassador(user.id, dto);
   }
 
-  // Relevé de commissions (PDF, PAS une facture) — réservé aux ambassadeurs
+  // Relevé de commissions (PDF, PAS une facture) : réservé aux ambassadeurs
   @Post('ambassador/statement')
   @UseGuards(AmbassadorGuard)
   @Header('Content-Type', 'application/pdf')

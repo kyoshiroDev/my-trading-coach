@@ -16,7 +16,7 @@ export class AiLoggerService {
   }): void {
     const inputTokens = opts.usage.input_tokens;
     const outputTokens = opts.usage.output_tokens;
-    // Coût au tarif réel du modèle appelé (Haiku ≠ Sonnet) — cf. ai-pricing.const.ts
+    // Coût au tarif réel du modèle appelé (Haiku ≠ Sonnet) : cf. ai-pricing.const.ts
     const cost = costUsd(opts.model, inputTokens, outputTokens);
 
     this.prisma.aiUsageLog

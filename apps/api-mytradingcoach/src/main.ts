@@ -91,7 +91,7 @@ async function bootstrap() {
   logger.log(`Worker ${process.pid} running on: http://localhost:${port}/api`);
 }
 
-// Clustering uniquement en production — en dev, process unique pour le debug
+// Clustering uniquement en production : en dev, process unique pour le debug
 if (cluster.isPrimary && process.env['NODE_ENV'] === 'production') {
   const numWorkers = availableParallelism();
   logger.log(`Primary ${process.pid} starting ${numWorkers} workers...`);

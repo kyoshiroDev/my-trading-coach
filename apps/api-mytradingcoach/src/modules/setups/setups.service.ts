@@ -76,14 +76,14 @@ export class SetupsService {
     const count = await this.prisma.trade.count({ where: { setupId: id } });
     if (count > 0) {
       throw new BadRequestException(
-        'Ce setup a un historique de trades — archive-le plutôt que de le supprimer.',
+        'Ce setup a un historique de trades : archive-le plutôt que de le supprimer.',
       );
     }
     await this.prisma.setup.delete({ where: { id } });
     return { deleted: true };
   }
 
-  /** Setup par défaut du user (sortOrder le plus bas, non archivé) — fallback import CSV. */
+  /** Setup par défaut du user (sortOrder le plus bas, non archivé) : fallback import CSV. */
   async getDefaultSetupId(userId: string): Promise<string | null> {
     const s = await this.prisma.setup.findFirst({
       where: { userId, archived: false },

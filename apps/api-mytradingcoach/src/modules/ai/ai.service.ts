@@ -10,6 +10,7 @@ import { Role } from '@prisma/client';
 import { OrchestratorAgent } from './agents/orchestrator.agent';
 import { DebriefAgent } from './agents/debrief.agent';
 import { buildDebriefPrompt } from './prompts/debrief.prompt';
+import { NO_EM_DASH_RULE } from './prompts/style.prompt';
 import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
@@ -24,7 +25,7 @@ import { todayParis } from '../../common/utils/paris-date';
 const MODEL = 'claude-sonnet-4-6';
 const AI_MONTHLY_QUOTA = 100;
 
-// Contenu IA figé pour le compte démo — AUCUN appel modèle (coût zéro).
+// Contenu IA figé pour le compte démo : AUCUN appel modèle (coût zéro).
 const DEMO_INSIGHTS = {
   topPattern:
     "Tes meilleurs trades sont des breakouts/pullbacks en session de Londres, en état FOCALISÉ. Tes pertes se concentrent en session asiatique.",
@@ -34,7 +35,7 @@ const DEMO_INSIGHTS = {
     { type: 'strength', title: 'Edge clair sur Londres', description: '72% de win rate sur la session de Londres (breakouts/pullbacks).', badge: 'Force' },
     { type: 'weakness', title: 'Session asiatique à éviter', description: 'Win rate 38% en session asiatique, hors de ta zone.', badge: 'Attention' },
     { type: 'pattern', title: 'Overtrading en fin de journée', description: 'Tes trades après le 3ᵉ de la journée sont majoritairement perdants.', badge: 'Pattern' },
-    { type: 'strength', title: 'Bonne gestion du risque', description: 'R:R moyen 1.9 — tu coupes tes pertes.', badge: 'Force' },
+    { type: 'strength', title: 'Bonne gestion du risque', description: 'R:R moyen 1.9, tu coupes tes pertes.', badge: 'Force' },
   ],
 };
 const DEMO_CHAT_REPLY =
@@ -52,7 +53,7 @@ export class AiService {
     private readonly redisService: RedisService,
   ) {}
 
-  // ── Insights — delegates to orchestrator ──────────────────────────────────
+  // ── Insights : delegates to orchestrator ──────────────────────────────────
 
   async getInsights(userId: string, role: Role, isDemo = false) {
     if (isDemo) return DEMO_INSIGHTS; // données figées, zéro appel modèle
@@ -65,7 +66,7 @@ export class AiService {
     return result;
   }
 
-  // ── Chat — direct Anthropic call with trader context ─────────────────────
+  // ── Chat : direct Anthropic call with trader context ─────────────────────
 
   async chat(
     userId: string,
@@ -110,7 +111,8 @@ export class AiService {
     const userContext = userProfile ? buildUserTradingContext(userProfile) : '';
 
     const CHAT_SYSTEM = `Tu es un coach de trading professionnel, bienveillant et direct.
-Tutoiement. Réponds en texte naturel uniquement — jamais de JSON, jamais de markdown, pas de ** ni de tirets listes.
+Tutoiement. Réponds en texte naturel uniquement : jamais de JSON, jamais de markdown, pas de ** ni de tirets listes.
+${NO_EM_DASH_RULE}
 Sois concis (3-5 phrases). Si le trader a des données, base-toi dessus pour répondre précisément.
 ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en garde sur des comportements qui font partie de sa stratégie normale.`;
 
@@ -118,7 +120,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
     if (recentTrades.length === 0) {
       contextSummary = "Ce trader n'a encore enregistré aucun trade.";
     } else {
-      // Stats via le helper unique (BE exclus du win rate — PROMPT-160).
+      // Stats via le helper unique (BE exclus du win rate, PROMPT-160).
       const s = computeTradeStats(recentTrades);
       const winRate = Math.round(s.winRate);
       const totalPnl = s.totalPnl;
@@ -149,7 +151,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
       ].slice(0, 8);
       const glossary = setupDefs.length
         ? `\nDéfinitions setups :\n${setupDefs
-            .map(([title, desc]) => `  • ${title} — ${desc.slice(0, 120)}`)
+            .map(([title, desc]) => `  • ${title} : ${desc.slice(0, 120)}`)
             .join('\n')}`
         : '';
 
@@ -341,6 +343,7 @@ Règles :
         max_tokens: 200,
         system: `Tu es un coach de trading expert qui connaît en profondeur la stratégie et les habitudes de ce trader.
 Tu analyses ses données réelles pour donner un conseil ultra-personnalisé, jamais générique.
+${NO_EM_DASH_RULE}
 Réponds UNIQUEMENT avec la phrase coaching, sans guillemets, sans préambule.`,
         messages: [{ role: 'user', content: prompt }],
       },
@@ -352,7 +355,7 @@ Réponds UNIQUEMENT avec la phrase coaching, sans guillemets, sans préambule.`,
       : '';
   }
 
-  // ── Eco calendar — morning analysis + released event ─────────────────────
+  // ── Eco calendar : morning analysis + released event ─────────────────────
 
   /**
    * Parse tolérant d'un JSON produit par le modèle : retire le markdown, isole l'objet
@@ -401,6 +404,7 @@ Réponds UNIQUEMENT avec la phrase coaching, sans guillemets, sans préambule.`,
     const prompt = `Tu es un coach de trading expert.
 Actifs du trader : ${data.userAssets.join(', ')}.
 Événements économiques du jour : ${JSON.stringify(data.events, null, 2)}.
+${NO_EM_DASH_RULE}
 Génère un JSON strict (pas de markdown, pas de texte autour) :
 {
   "summary": "1-2 phrases sur les risques du jour pour ce trader précis",
@@ -439,6 +443,7 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
 Résultat : ${actual} | Prévu : ${estimate} | Précédent : ${data.event.previous ?? 'N/A'}.
 Surprise : ${surprise >= 0 ? '+' : ''}${surprise.toFixed(2)}.
 Actifs tradés : ${data.userAssets.join(', ')}.
+${NO_EM_DASH_RULE}
 Génère un JSON strict (pas de markdown, pas de texte autour) :
 {
   "interpretation": "phrase courte expliquant la surprise",
@@ -458,7 +463,7 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
     return this.parseModelJson<EcoResultAnalysis>(text);
   }
 
-  // ── Debrief — delegates to debrief agent ──────────────────────────────────
+  // ── Debrief : delegates to debrief agent ──────────────────────────────────
 
   async generateDebrief(data: Parameters<typeof buildDebriefPrompt>[0], userId?: string) {
     return this.debriefAgent.generate(data, userId);
@@ -528,7 +533,7 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
       return val ? parseInt(val) : 0;
     } catch {
       this.logger.error(
-        'Redis unavailable — quota check failed, blocking AI call',
+        'Redis unavailable : quota check failed, blocking AI call',
       );
       throw new ServiceUnavailableException(
         'Service IA temporairement indisponible, veuillez réessayer dans quelques instants',

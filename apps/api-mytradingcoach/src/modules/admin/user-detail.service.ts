@@ -26,7 +26,7 @@ export interface AdminUserDetailDto {
   };
   activeDates: string[];
   aiByFeature: { feature: string; tokens: number; costUsd: number }[];
-  // Profil trader (saisi à l'onboarding) — qui est ce trader.
+  // Profil trader (saisi à l'onboarding) : qui est ce trader.
   profile: {
     market: string | null;
     goal: string | null;
@@ -39,7 +39,7 @@ export interface AdminUserDetailDto {
     startingCapital: number;
     currency: string;
   };
-  // Usage réel (trades) — est-ce qu'il utilise vraiment l'app.
+  // Usage réel (trades) : est-ce qu'il utilise vraiment l'app.
   usage: {
     totalTrades: number;
     tradesThisMonth: number;
@@ -157,7 +157,7 @@ export class UserDetailService {
         take: 3,
       }),
     ]);
-    // Stats via le helper unique (BE exclus du win rate — PROMPT-160).
+    // Stats via le helper unique (BE exclus du win rate, PROMPT-160).
     const uStats = computeTradeStats(pnlRows);
     const totalPnl = uStats.totalPnl;
     const winRate = Math.round(uStats.winRate);

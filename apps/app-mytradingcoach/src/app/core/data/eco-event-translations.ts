@@ -1,4 +1,4 @@
-// Traductions FR — noms exacts issus de l'API FMP
+// Traductions FR : noms exacts issus de l'API FMP
 // Format FMP : "CPI MoM", "GDP Growth Rate QoQ", "Unemployment Rate" (sans suffixe de période)
 // Le suffixe "(Apr)", "(May/23)", "(Q1)"... est retiré avant la recherche
 export const ECO_EVENT_TRANSLATIONS: Record<string, string> = {
@@ -153,7 +153,7 @@ export function translateEcoEvent(name: string): string {
     return ECO_EVENT_TRANSLATIONS[withoutPeriod];
   }
 
-  // 3. Correspondance partielle (startsWith) — couvre les variantes mineures
+  // 3. Correspondance partielle (startsWith) : couvre les variantes mineures
   const lower = withoutPeriod.toLowerCase();
   for (const [en, fr] of Object.entries(ECO_EVENT_TRANSLATIONS)) {
     if (lower.startsWith(en.toLowerCase())) return fr;

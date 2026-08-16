@@ -54,12 +54,12 @@ describe('PnlFormatPipe — USD (default)', () => {
 
   it('pnl = null → —', () => {
     const pipe = makePipe();
-    expect(pipe.transform(null)).toBe('—');
+    expect(pipe.transform(null)).toBe('-');
   });
 
   it('pnl = undefined → —', () => {
     const pipe = makePipe();
-    expect(pipe.transform(undefined)).toBe('—');
+    expect(pipe.transform(undefined)).toBe('-');
   });
 
   it('pnl > 0 avec entry → affiche le pourcentage', () => {

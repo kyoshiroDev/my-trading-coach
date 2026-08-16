@@ -98,7 +98,7 @@ export class AnalyticsComponent {
   protected readonly equityData = signal<{ points: EquityPoint[]; startingCapital: number | null } | null>(null);
   protected readonly equityLoading = signal(false);
 
-  // ── httpResource — pattern déclaratif, cancel auto, loading state natif ──
+  // ── httpResource : pattern déclaratif, cancel auto, loading state natif ──
   private readonly summaryResource = httpResource<{ data: AnalyticsSummary }>(
     () => `${environment.apiUrl}/analytics/summary${this.accQuery()}`,
   );
@@ -278,7 +278,7 @@ export class AnalyticsComponent {
           window.location.href = res.data.url;
         },
         error: () => {
-          /* billing error — user stays on page */
+          /* billing error : user stays on page */
         },
       });
   }

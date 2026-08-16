@@ -59,7 +59,7 @@ import { CHART_COLORS, gridAxis, noLegend, type ChartTone } from '../../shared/c
         <!-- Gauche, pleine hauteur : Évolution + Entonnoir -->
         <div class="area-left dcol">
           <div class="card grow-chart">
-            <div class="card-head"><span class="card-label">Évolution — inscrits par semaine{{ showMrrLine() ? ' + MRR' : '' }}</span><span class="card-label muted">snapshots</span></div>
+            <div class="card-head"><span class="card-label">Évolution · inscrits par semaine{{ showMrrLine() ? ' + MRR' : '' }}</span><span class="card-label muted">snapshots</span></div>
             <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="trendConfig()" /></div></div>
           </div>
           <div class="card">
@@ -329,7 +329,7 @@ export class DashboardComponent {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   protected sessionDuration(user: AdminOnlineUser): string {
-    if (!user.lastLoginAt) return '—';
+    if (!user.lastLoginAt) return '-';
     const totalMin = Math.floor((Date.now() - new Date(user.lastLoginAt).getTime()) / 60_000);
     const h = Math.floor(totalMin / 60);
     const m = totalMin % 60;

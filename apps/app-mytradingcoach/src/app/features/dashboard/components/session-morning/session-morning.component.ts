@@ -29,7 +29,7 @@ const MOODS: { value: MoodState; label: string; emoji: string }[] = [
   { value: 'TIRED',     label: 'Fatigué',  emoji: '😰' },
 ];
 
-// Agenda éco d'exemple (mode démo) — vitrine « pleine » de la carte Agenda du jour.
+// Agenda éco d'exemple (mode démo) : vitrine « pleine » de la carte Agenda du jour.
 const DEMO_ECO_EVENTS: EcoEvent[] = [
   { time: '14:30', name: 'Non-Farm Payrolls', currency: 'USD', country: 'US', impact: 'high', actual: null, estimate: 185, previous: 206, isReleased: false, unit: 'K' },
   { time: '14:30', name: 'Taux de chômage', currency: 'USD', country: 'US', impact: 'high', actual: null, estimate: 4.1, previous: 4.0, isReleased: false, unit: '%' },
@@ -101,7 +101,7 @@ const DEMO_OBJECTIVES: DebriefObjective[] = [
         <div class="card">
           @if (recapView(); as recap) {
             <div class="card-header">
-              <div class="card-title">Hier — {{ recap.date | date:'EEEE d MMMM' }}</div>
+              <div class="card-title">Hier · {{ recap.date | date:'EEEE d MMMM' }}</div>
               <span style="font-size:11px;color:var(--text-3);font-family:var(--font-mono)">{{ recap.tradesCount }} trades</span>
             </div>
             <div class="recap-stats">
@@ -172,7 +172,7 @@ const DEMO_OBJECTIVES: DebriefObjective[] = [
             @for (obj of objectivesView(); track $index; let i = $index) {
               @if (!userStore.isPremium() && i >= 1) {
                 @if (i === 1) {
-                  <!-- 2e objectif flou — aperçu Premium -->
+                  <!-- 2e objectif flou : aperçu Premium -->
                   <div style="position:relative;margin-top:4px;">
                     <div class="obj-item" style="filter:blur(3px);pointer-events:none;user-select:none;">
                       <div class="obj-check">·</div>
@@ -233,7 +233,7 @@ const DEMO_OBJECTIVES: DebriefObjective[] = [
         </div>
       </div>
 
-      <!-- Eco Calendar — toujours affiché -->
+      <!-- Eco Calendar : toujours affiché -->
       <div class="eco-card" data-testid="eco-calendar">
         <div class="card-header">
           <div class="card-title eco-title">
@@ -417,12 +417,12 @@ export class SessionMorningComponent {
   protected readonly moods = MOODS;
   protected readonly planNote = signal('');
 
-  // Icônes Lucide (headers de panels — design « Ma session »).
+  // Icônes Lucide (headers de panels, design « Ma session »).
   protected readonly PrepareIcon = Target;
   protected readonly AgendaIcon  = CalendarDays;
   protected readonly WarnIcon    = TriangleAlert;
 
-  // Pins chargés directement depuis l'API — indépendant du cache getTodayEvents
+  // Pins chargés directement depuis l'API : indépendant du cache getTodayEvents
   private readonly freshPins = signal<string[] | null>(null);
 
   private readonly FLAGS: Record<string, string> = {
@@ -596,7 +596,7 @@ export class SessionMorningComponent {
   }
 
   protected formatTime(iso: string): string {
-    if (!iso) return '—';
+    if (!iso) return '-';
     if (iso.includes('T')) {
       const d = new Date(iso);
       return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });

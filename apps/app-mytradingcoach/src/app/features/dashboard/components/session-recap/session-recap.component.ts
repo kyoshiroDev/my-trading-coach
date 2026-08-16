@@ -51,13 +51,13 @@ export class SessionRecapComponent {
 
   protected readonly winRateDisplay = computed(() => {
     const stats = this.liveStats();
-    if (!stats || stats.tradesCount === 0) return '—';
+    if (!stats || stats.tradesCount === 0) return '-';
     return stats.winRate.toFixed(0) + '%';
   });
 
   protected readonly sessionDuration = computed(() => {
     const s = this.session();
-    if (!s?.startedAt) return '—';
+    if (!s?.startedAt) return '-';
     const end = s.endedAt ? new Date(s.endedAt) : new Date();
     const diff = Math.floor((end.getTime() - new Date(s.startedAt).getTime()) / 1000);
     const h = Math.floor(diff / 3600);

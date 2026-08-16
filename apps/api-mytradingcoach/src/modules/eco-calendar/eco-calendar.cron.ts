@@ -13,7 +13,7 @@ export class EcoCalendarCron {
     private readonly gateway: EcoCalendarGateway,
   ) {}
 
-  // 6h00 Paris — charger today + tomorrow (2 appels FMP)
+  // 6h00 Paris : charger today + tomorrow (2 appels FMP)
   @Cron('0 6 * * 1-5', { timeZone: 'Europe/Paris' })
   async prefetchDay() {
     const today = todayParis();
@@ -25,19 +25,19 @@ export class EcoCalendarCron {
     ]);
   }
 
-  // Toutes les 60s, 8h-18h Paris, lun-ven — polling temps réel actual values
+  // Toutes les 60s, 8h-18h Paris, lun-ven : polling temps réel actual values
   @Cron('*/1 8-17 * * 1-5', { timeZone: 'Europe/Paris' })
   async pollLiveReleases() {
     const today = todayParis();
     const { hasNew, newEvents } = await this.ecoCalendarService.checkNewReleases(today);
 
     if (hasNew) {
-      this.logger.log(`🔔 ${newEvents.length} nouveaux résultats détectés — broadcast WebSocket`);
+      this.logger.log(`🔔 ${newEvents.length} nouveaux résultats détectés : broadcast WebSocket`);
       this.gateway.notifyNewReleases(newEvents);
     }
   }
 
-  // 18h30 Paris — refresh final + vider cache Redis
+  // 18h30 Paris : refresh final + vider cache Redis
   @Cron('30 18 * * 1-5', { timeZone: 'Europe/Paris' })
   async finalRefresh() {
     const today = todayParis();
@@ -47,7 +47,7 @@ export class EcoCalendarCron {
     const keys = await this.ecoCalendarService.redis.keys(`eco:calendar:${today}:*`);
     if (keys.length > 0) {
       await this.ecoCalendarService.redis.del(...keys);
-      this.logger.log(`🗑️ Cache Redis vidé — ${keys.length} clés supprimées`);
+      this.logger.log(`🗑️ Cache Redis vidé : ${keys.length} clés supprimées`);
     }
   }
 }

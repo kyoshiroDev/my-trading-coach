@@ -80,7 +80,7 @@ export class StripeService {
     this.stripe = new Stripe(
       this.config.getOrThrow<string>('STRIPE_SECRET_KEY'),
       // Version d'API épinglée (comportement testé). Cast car le type du SDK
-      // Stripe 22.2 pointe vers une version plus récente — runtime inchangé.
+      // Stripe 22.2 pointe vers une version plus récente : runtime inchangé.
       { apiVersion: '2024-06-20' as Stripe.LatestApiVersion },
     );
   }
@@ -91,7 +91,7 @@ export class StripeService {
     // 1. Tenter le cache Redis
     const cached = await this.redis.get(cacheKey(userId)).catch(() => null);
     if (cached) {
-      this.logger.debug(`Cache hit billing status — user: ${userId}`);
+      this.logger.debug(`Cache hit billing status | user: ${userId}`);
       const parsed = JSON.parse(cached) as CachedStripeStatus;
       return {
         ...parsed,
@@ -166,7 +166,7 @@ export class StripeService {
 
       if (openSessions?.data[0]?.url) {
         this.logger.log(
-          `Session checkout existante réutilisée — user: ${userId}`,
+          `Session checkout existante réutilisée | user: ${userId}`,
         );
         return { url: openSessions.data[0].url };
       }
@@ -186,7 +186,7 @@ export class StripeService {
     // Réduc filleul : -10% sur la première année, routée selon l'intervalle
     // (annuel → coupon once, mensuel → coupon repeating 12 mois). RÉSERVÉ au parrainage
     // classique : jamais pour les filleuls d'ambassadeur (l'ambassadeur touche déjà ses
-    // 20% via le webhook — sinon double coût). Même test de rôle que processReferral.
+    // 20% via le webhook : sinon double coût). Même test de rôle que processReferral.
     // Stripe interdit discounts + allow_promotion_codes ensemble → si pas de coupon,
     // on garde les codes promo manuels ouverts.
     let discounts: Stripe.Checkout.SessionCreateParams.Discount[] | undefined;
@@ -230,7 +230,7 @@ export class StripeService {
     }
 
     this.logger.log(
-      `Checkout créé — user: ${userId}, trial: ${trialGranted}, price: ${priceId}`,
+      `Checkout créé | user: ${userId}, trial: ${trialGranted}, price: ${priceId}`,
     );
 
     return { url: session.url };
@@ -259,7 +259,7 @@ export class StripeService {
     return { url: session.url };
   }
 
-  // ── Webhook — validation + enqueue async ─────────────────────────────────────
+  // ── Webhook : validation + enqueue async ─────────────────────────────────────
 
   async handleWebhook(
     payload: Buffer,
@@ -275,7 +275,7 @@ export class StripeService {
       );
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'signature invalide';
-      this.logger.warn(`Webhook rejeté — ${message}`);
+      this.logger.warn(`Webhook rejeté : ${message}`);
       throw new BadRequestException(`Webhook invalide : ${message}`);
     }
 
@@ -284,7 +284,7 @@ export class StripeService {
     // ── Idempotence (race-condition safe) ─────────────────────────────────────
     const alreadyProcessed = await this.markEventAsProcessing(event);
     if (alreadyProcessed) {
-      this.logger.debug(`Event ${event.id} déjà traité — skip`);
+      this.logger.debug(`Event ${event.id} déjà traité : skip`);
       return { received: true };
     }
 
@@ -300,7 +300,7 @@ export class StripeService {
       },
     );
 
-    this.logger.debug(`Event ${event.id} enqueued — type: ${event.type}`);
+    this.logger.debug(`Event ${event.id} enqueued | type: ${event.type}`);
     return { received: true };
   }
 
@@ -322,7 +322,7 @@ export class StripeService {
             });
           }
           this.logger.log(
-            `Checkout complété — sub: ${subscriptionId}, user: ${session.client_reference_id ?? 'unknown'}`,
+            `Checkout complété | sub: ${subscriptionId}, user: ${session.client_reference_id ?? 'unknown'}`,
           );
         }
         break;
@@ -342,7 +342,7 @@ export class StripeService {
         ) {
           const customerId = extractId(subscription.customer);
           this.logger.error(
-            `[MONITORING] Subscription ${subscription.id} — status: ${subscription.status} — customer: ${customerId ?? 'unknown'}`,
+            `[MONITORING] Subscription ${subscription.id} | status: ${subscription.status}, customer: ${customerId ?? 'unknown'}`,
           );
           if (process.env['SENTRY_DSN']) {
             const Sentry = await import('@sentry/nestjs');
@@ -442,14 +442,14 @@ export class StripeService {
       }
 
       case 'invoice.payment_failed': {
-        // ⚠️ Ne pas dégrader vers FREE — Stripe retry via dunning automatique.
+        // ⚠️ Ne pas dégrader vers FREE : Stripe retry via dunning automatique.
         // La dégradation est gérée par customer.subscription.updated (status → past_due).
         const invoice = event.data.object as Stripe.Invoice;
         const customerId = extractId(invoice.customer);
         const attemptCount = invoice.attempt_count ?? 1;
 
         this.logger.warn(
-          `Paiement échoué — customer: ${customerId ?? 'unknown'}, tentative: ${attemptCount}`,
+          `Paiement échoué | customer: ${customerId ?? 'unknown'}, tentative: ${attemptCount}`,
         );
 
         // Envoyer un email de notification à l'utilisateur
@@ -467,7 +467,7 @@ export class StripeService {
             });
             await this.resend
               .sendAdminAlert(
-                `⚠️ Paiement échoué — ${user.email}`,
+                `⚠️ Paiement échoué : ${user.email}`,
                 `Email     : ${user.email}\nTentative : ${attemptCount}/3\nDate      : ${new Date().toLocaleDateString('fr-FR')}`,
               )
               .catch(() => undefined);
@@ -485,7 +485,7 @@ export class StripeService {
         if (subscriptionId) {
           await this.syncSubscription(subscriptionId);
           this.logger.log(
-            `Paiement réussi — subscription: ${subscriptionId} synchronisée`,
+            `Paiement réussi | subscription: ${subscriptionId} synchronisée`,
           );
         }
         await this.processReferral(invoice);
@@ -527,7 +527,7 @@ export class StripeService {
 
     const customerId = extractId(subscription.customer);
     if (!customerId) {
-      this.logger.warn(`Subscription ${subscriptionId} — customer ID manquant`);
+      this.logger.warn(`Subscription ${subscriptionId} : customer ID manquant`);
       return null;
     }
 
@@ -556,7 +556,7 @@ export class StripeService {
     const newPlan = isActive ? Plan.PREMIUM : Plan.FREE;
 
     // Ne marquer l'essai « consommé » QUE si un essai a réellement été accordé
-    // (trial_end présent). Sinon un abonné annuel direct — jamais en trial — perdrait
+    // (trial_end présent). Sinon un abonné annuel direct, jamais en trial, perdrait
     // à tort son droit à l'essai (bug PROMPT-169). trial_end reste renseigné après
     // conversion, donc le flag reste vrai une fois posé.
     const trialGranted = subscription.trial_end != null;
@@ -580,7 +580,7 @@ export class StripeService {
     await this.redis.del(cacheKey(user.id)).catch(() => null);
 
     this.logger.log(
-      `Sync — user: ${user.id}, plan: ${newPlan}, status: ${status}`,
+      `Sync | user: ${user.id}, plan: ${newPlan}, status: ${status}`,
     );
 
     return {
@@ -618,7 +618,7 @@ export class StripeService {
         { idempotencyKey: `customer-create-${userId}` },
       );
       customerId = customer.id;
-      this.logger.log(`Customer Stripe créé : ${customerId} — user: ${userId}`);
+      this.logger.log(`Customer Stripe créé : ${customerId} | user: ${userId}`);
     }
 
     await this.prisma.user.update({
@@ -766,7 +766,7 @@ export class StripeService {
 
     const monthCents = await this.resolveFreeMonthCents(parrain.stripeSubscriptionId);
     if (monthCents <= 0) {
-      this.logger.warn(`Mois offert non chiffrable (parrain ${parrainId}) — reward laissé PENDING`);
+      this.logger.warn(`Mois offert non chiffrable (parrain ${parrainId}) : reward laissé PENDING`);
       return; // reste PENDING : visible dans « mois à appliquer » côté admin
     }
 
@@ -779,7 +779,7 @@ export class StripeService {
       {
         amount: -monthCents,
         currency: 'eur',
-        description: `Mois offert — parrainage (filleul ${filleulId})`,
+        description: `Mois offert · parrainage (filleul ${filleulId})`,
       },
       { idempotencyKey: `referral-reward-${filleulId}` },
     );
@@ -895,7 +895,7 @@ export class StripeService {
 
   /**
    * Liste les abonnements actifs + en essai chez Stripe (LECTURE SEULE).
-   * Paginé et BORNÉ (max 20 pages × 100 par statut) — pour la réconciliation admin.
+   * Paginé et BORNÉ (max 20 pages × 100 par statut) : pour la réconciliation admin.
    */
   async listActiveSubscriptions(): Promise<Stripe.Subscription[]> {
     const out: Stripe.Subscription[] = [];

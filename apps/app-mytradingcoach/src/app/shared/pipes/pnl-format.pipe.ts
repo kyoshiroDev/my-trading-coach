@@ -6,7 +6,7 @@ export class PnlFormatPipe implements PipeTransform {
   private readonly userStore = inject(UserStore);
 
   transform(value: number | null | undefined, entry?: number | null): string {
-    if (value == null) return '—';
+    if (value == null) return '-';
 
     const currency = this.userStore.user()?.currency ?? 'USD';
     const rate = this.userStore.user()?.currencyRate ?? 1;

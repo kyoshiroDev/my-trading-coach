@@ -62,7 +62,7 @@ export class UsersController {
     return this.usersService.saveOnboardingProfile(user.id, dto);
   }
 
-  // Marque l'onboarding terminé — appelé uniquement à l'écran final
+  // Marque l'onboarding terminé : appelé uniquement à l'écran final
   @Patch('onboarding/finish')
   finishOnboarding(@CurrentUser() user: { id: string }) {
     return this.usersService.finishOnboarding(user.id);

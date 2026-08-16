@@ -72,7 +72,7 @@ import { AccountSelectorComponent } from '../account-selector/account-selector.c
       </div>
     </header>
 
-    <!-- Sélecteur de compte global (multi-comptes, accessible à tous) — source unique. -->
+    <!-- Sélecteur de compte global (multi-comptes, accessible à tous) : source unique. -->
     @if (showAccountSelector()) {
       <div class="topbar-accounts">
         <mtc-account-selector />
@@ -99,7 +99,7 @@ import { AccountSelectorComponent } from '../account-selector/account-selector.c
 })
 export class TopbarComponent {
   title = input('');
-  /** Période affichée à côté du titre (ex. « juin 2026 ») — design chrome.jsx. */
+  /** Période affichée à côté du titre (ex. « juin 2026 ») : design chrome.jsx. */
   period = input('');
   heroHeader = input(false);
   showAddButton = input(false);

@@ -95,7 +95,7 @@ function insightVariant(type: string): InsightVariant {
             tes patterns comportementaux avec le coach IA.
           </p>
           <button class="paywall-cta" (click)="showPlanModal.set(true)">
-            Essayer Premium — 1 mois offert →
+            Essayer Premium · 1 mois offert →
           </button>
         </div>
         @if (showPlanModal()) {
@@ -416,7 +416,7 @@ export class AiInsightsComponent implements AfterViewChecked {
         ? Math.max(0, parseInt(stored, 10))
         : this.QUOTA_MAX;
     } catch {
-      /* localStorage indisponible (SSR ou permission refusée) — retourne quota max */
+      /* localStorage indisponible (SSR ou permission refusée) : retourne quota max */
       return this.QUOTA_MAX;
     }
   }
@@ -425,7 +425,7 @@ export class AiInsightsComponent implements AfterViewChecked {
     try {
       localStorage.setItem(this.getQuotaKey(), String(value));
     } catch {
-      /* localStorage indisponible — quota non persisté */
+      /* localStorage indisponible : quota non persisté */
     }
   }
 

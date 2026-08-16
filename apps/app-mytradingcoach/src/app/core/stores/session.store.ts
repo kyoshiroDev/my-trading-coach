@@ -38,7 +38,7 @@ export class SessionStore {
   readonly newsItems         = signal<NewsItem[]>([]);
   readonly breakingNews      = signal<string | null>(null);
   readonly triggerCloseModal = signal(false);
-  /** Retour d'action live (log / clôture trade) — succès ou erreur, pour feedback UI. */
+  /** Retour d'action live (log / clôture trade) : succès ou erreur, pour feedback UI. */
   readonly liveFeedback      = signal<{ type: 'success' | 'error'; text: string; ts: number } | null>(null);
 
   private readonly weekEcoEvents       = signal<Map<string, EcoEvent[]>>(new Map());
@@ -92,7 +92,7 @@ export class SessionStore {
 
     // Polling calendrier éco (IA mutualisée = FREE, session active) : recharge la donnée
     // fraîche (actuals + analyse IA) toutes les 60 s. Filet de sécurité indépendant du
-    // broadcast WebSocket transitoire — la fenêtre ouverte rattrape même si un broadcast
+    // broadcast WebSocket transitoire : la fenêtre ouverte rattrape même si un broadcast
     // est manqué (reconnexion socket après déploiement, cycle de détection raté, etc.).
     interval(POLLING_MS.ECO_CALENDAR)
       .pipe(takeUntilDestroyed(this.destroyRef))

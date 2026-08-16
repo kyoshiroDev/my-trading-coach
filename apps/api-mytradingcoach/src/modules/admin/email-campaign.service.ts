@@ -9,7 +9,7 @@ import {
 import { announcementTemplate } from '../resend/campaigns/campaign-templates';
 
 // Types exposés à l'admin (compat front). Chacun pointe vers une campagne du
-// registre — source unique des segments et des templates.
+// registre : source unique des segments et des templates.
 export type CampaignType =
   | 'discord_invite'
   | 'premium_upsell'
@@ -80,7 +80,7 @@ export class EmailCampaignService {
   async listCampaigns(): Promise<CampaignMeta[]> {
     const now = new Date();
 
-    // Derniers envois par campagne (résumés) — table d'historique admin.
+    // Derniers envois par campagne (résumés) : table d'historique admin.
     const logs = await this.prisma.emailCampaignLog.findMany({
       orderBy: { sentAt: 'desc' },
       take: 60,
@@ -136,7 +136,7 @@ export class EmailCampaignService {
   }
 
   /**
-   * Envoi manuel — passe par EmailDispatchService (log EmailSend + plafond +
+   * Envoi manuel : passe par EmailDispatchService (log EmailSend + plafond +
    * consentement). Par défaut, n'envoie qu'aux NOUVEAUX (oneShot non encore
    * reçu). `force=true` renvoie à tous ceux qui matchent (ignore le oneShot,
    * jamais le consentement).

@@ -16,7 +16,7 @@ export interface StripeStatusResponse {
   subscriptionStatus: Stripe.Subscription['status'] | null;
   currentPeriodEnd: string | null; // ISO 8601
   trialUsed: boolean;
-  trialEndsAt: string | null; // ISO 8601 — présent seulement en phase trial
+  trialEndsAt: string | null; // ISO 8601 : présent seulement en phase trial
 }
 
 // ── Cache ─────────────────────────────────────────────────────────────────────

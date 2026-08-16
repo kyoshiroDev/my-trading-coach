@@ -31,7 +31,7 @@ function computeScore(trades: Trade[]): ScoreBar[] {
   if (!trades.length) return defaultBars(0);
 
   const closed = trades.filter((t) => t.pnl !== null);
-  // Win rate via le helper unique (BE exclus du dénominateur — PROMPT-160).
+  // Win rate via le helper unique (BE exclus du dénominateur, PROMPT-160).
   const winRate = computeTradeStats(trades).winRate;
 
   const revengeCount = trades.filter((t) => t.emotion === 'REVENGE').length;

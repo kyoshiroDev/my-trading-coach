@@ -7,14 +7,14 @@ import type { Server, ServerOptions } from 'socket.io';
 /**
  * Adapter socket.io basé sur Redis (pub/sub) pour propager les broadcasts entre
  * les workers du cluster Node (main.ts). Sans lui, un `server.emit(...)` n'atteint
- * que les clients connectés au worker émetteur — d'où l'éco live (« actuel » +
+ * que les clients connectés au worker émetteur : d'où l'éco live (« actuel » +
  * analyse IA) qui ne remontait pas en prod (le cron émet sur 1 worker, le client
  * est connecté à un autre).
  *
  * Réutilise la même config Redis que RedisService (REDIS_HOST/PORT/PASSWORD).
  * Résilient : si Redis est indisponible, les clients ioredis se reconnectent en
  * arrière-plan et la diffusion cross-worker reprend automatiquement ; en attendant,
- * la livraison locale (mono-worker) continue de fonctionner — comportement actuel.
+ * la livraison locale (mono-worker) continue de fonctionner : comportement actuel.
  */
 export class RedisIoAdapter extends IoAdapter {
   private readonly logger = new Logger(RedisIoAdapter.name);

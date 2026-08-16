@@ -105,7 +105,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
               <!-- Note informative (non bloquante) : les exports broker n'ont ni SL ni TP → R:R et note d'exécution indispo. -->
               @if (result()!.created > 0) {
                 <p class="import-no-stop-note">
-                  Tes trades n'ont ni stop loss ni take profit — c'est normal, ton broker ne les exporte pas.
+                  Tes trades n'ont ni stop loss ni take profit : c'est normal, ton broker ne les exporte pas.
                   Le R:R et la note d'exécution resteront indisponibles pour ces trades.
                 </p>
               }
@@ -194,7 +194,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
                     </div>
                     @if (!feesFileValid()) {
                       <p class="import-help import-warn">
-                        Ce fichier ne ressemble pas à un Cash history Tradovate — vérifie l'export.
+                        Ce fichier ne ressemble pas à un Cash history Tradovate. Vérifie l'export.
                       </p>
                     }
                   } @else {
@@ -260,7 +260,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
                 </div>
               }
 
-              <!-- Émotion en lot (optionnel — override de l'humeur de session) -->
+              <!-- Émotion en lot (optionnel, override de l'humeur de session) -->
               <div class="import-field">
                 <label class="import-label" for="importEmotion">Émotion (optionnel, appliquée à tout le lot)</label>
                 <select
@@ -269,7 +269,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
                   [value]="emotion()"
                   (change)="emotion.set($any($event.target).value)"
                 >
-                  <option value="">— Non renseignée</option>
+                  <option value="">- Non renseignée</option>
                   @for (e of EMOTIONS; track e) {
                     <option [value]="e">{{ emotionEmoji(e) }} {{ e }}</option>
                   }
@@ -351,7 +351,7 @@ export class CsvImportComponent {
   protected readonly totalFees = signal<string>('');
   // null = champ frais actif ; sinon raison de désactivation.
   protected readonly feesDisabledReason = signal<null | 'has_fees_column' | 'too_many'>(null);
-  // Fichier des frais (Tradovate Cash history) — optionnel, remplace la saisie manuelle.
+  // Fichier des frais (Tradovate Cash history) : optionnel, remplace la saisie manuelle.
   protected readonly feesFile = signal<File | null>(null);
   // true si l'en-tête ressemble à un Cash history Tradovate (frais exacts par fusion).
   protected readonly feesFileValid = signal(false);
@@ -363,7 +363,7 @@ export class CsvImportComponent {
   // Émotion de lot optionnelle (PROMPT-163) : '' = non renseignée (rien envoyé → héritera de la session).
   protected readonly emotion = signal<string>('');
   protected readonly setupId = signal<string>('');
-  // Setups actifs du user (store partagé — liste dynamique).
+  // Setups actifs du user (store partagé, liste dynamique).
   protected readonly setups = this.setupsStore.active;
 
   /** Couleur du setup sélectionné (pastille à côté du select). */
@@ -522,7 +522,7 @@ export class CsvImportComponent {
       }
     }
 
-    // Defaults du lot : compte cible (si choisi), émotion (override — rien si non renseignée), setup.
+    // Defaults du lot : compte cible (si choisi), émotion (override, rien si non renseignée), setup.
     if (this.accountId()) formData.append('accountId', this.accountId());
     if (this.emotion()) formData.append('emotion', this.emotion());
     if (this.setupId()) formData.append('setupId', this.setupId());

@@ -36,7 +36,7 @@ export class AnthropicCostService implements OnModuleInit {
     }
   }
 
-  // 06h00 chaque jour (worker cron only) — le re-upsert des 30j corrige les révisions tardives.
+  // 06h00 chaque jour (worker cron only) : le re-upsert des 30j corrige les révisions tardives.
   @Cron('0 6 * * *')
   async scheduledRefresh(): Promise<void> {
     const { rows, total30d } = await this.refreshLast30Days();
@@ -53,13 +53,13 @@ export class AnthropicCostService implements OnModuleInit {
   }
 
   /**
-   * Appelle la Cost API (fetch natif — l'Admin API n'est pas couverte par le SDK messages).
+   * Appelle la Cost API (fetch natif, l'Admin API n'est pas couverte par le SDK messages).
    * Pagination via has_more/next_page. Montants en cents (chaînes) → /100 USD.
    * ADMIN_KEY absente ou erreur → [] (best-effort, ne throw pas).
    */
   async fetchCostReport(startIso: string, endIso: string): Promise<DailyModelCost[]> {
     if (!this.adminKey) {
-      this.logger.warn('ANTHROPIC_ADMIN_KEY non configuré — bloc coût réel ignoré.');
+      this.logger.warn('ANTHROPIC_ADMIN_KEY non configuré : bloc coût réel ignoré.');
       return [];
     }
 

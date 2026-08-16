@@ -20,7 +20,7 @@ const KINDS = ['annual', 'monthly'] as const;
 
 async function main(): Promise<void> {
   const key = process.env['STRIPE_SECRET_KEY'] ?? '';
-  if (!key) throw new Error('STRIPE_SECRET_KEY absent — refuse de tourner.');
+  if (!key) throw new Error('STRIPE_SECRET_KEY absent, refuse de tourner.');
 
   const mode = key.startsWith('sk_live_')
     ? 'LIVE'
@@ -28,7 +28,7 @@ async function main(): Promise<void> {
       ? 'TEST'
       : 'INCONNU';
   if (mode === 'INCONNU') {
-    console.warn('⚠️  Préfixe de clé inattendu (ni sk_live_ ni sk_test_) — vérifie STRIPE_SECRET_KEY.');
+    console.warn('⚠️  Préfixe de clé inattendu (ni sk_live_ ni sk_test_) : vérifie STRIPE_SECRET_KEY.');
   }
   console.log(`Mode clé Stripe : ${mode}`);
 

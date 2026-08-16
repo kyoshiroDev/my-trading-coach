@@ -1,5 +1,5 @@
 /**
- * Tarifs EUR — source de vérité produit : landing `Pricing.astro` + front
+ * Tarifs EUR. Source de vérité produit : landing `Pricing.astro` + front
  * `pricing.const.ts`. Affichage admin uniquement. Ne jamais coder un prix en
  * dur dans les composants : référencer cette constante.
  *

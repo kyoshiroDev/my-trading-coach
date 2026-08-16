@@ -26,7 +26,7 @@ export interface Trade {
   capitalEngaged: number | null;
   emotion: string | null; // override optionnel (PROMPT-163)
   effectiveEmotion?: string | null; // émotion effective calculée API (override sinon humeur session)
-  // Note d'exécution CALCULÉE (PROMPT-161) — null = « Non évalué ».
+  // Note d'exécution CALCULÉE (PROMPT-161) : null = « Non évalué ».
   executionScore?: number | null;
   executionGrade?: 'EXCELLENT' | 'BON' | 'MOYEN' | 'MAUVAIS' | null;
   // Barème ayant produit la note (PROMPT-168) : stop-based (4 critères) ou comportemental (sans stop).
@@ -65,10 +65,10 @@ export class TradesStore {
   readonly stats = signal<JournalStats | null>(null);
   readonly isLoadingStats = signal(false);
 
-  /** Derniers filtres de loadTrades (ex. accountId) — réappliqués par loadMore. */
+  /** Derniers filtres de loadTrades (ex. accountId) : réappliqués par loadMore. */
   private lastFilters: Record<string, string> = {};
 
-  // Stats locales via le helper unique (BE exclus du win rate — PROMPT-160).
+  // Stats locales via le helper unique (BE exclus du win rate, PROMPT-160).
   private readonly localStats = computed(() => computeTradeStats(this.trades()));
   readonly totalTrades = computed(() => this.localStats().total);
   readonly winningTrades = computed(() => this.localStats().wins);
@@ -98,7 +98,7 @@ export class TradesStore {
       });
   }
 
-  // Charge la page suivante (APPEND — ne remplace pas)
+  // Charge la page suivante (APPEND, ne remplace pas)
   loadMore() {
     const cursor = this.nextCursor();
     if (!cursor || this.isLoadingMore()) return;

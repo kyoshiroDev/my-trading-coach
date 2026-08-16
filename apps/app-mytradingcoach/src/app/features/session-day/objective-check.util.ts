@@ -14,7 +14,7 @@ export function toParisHHMM(iso: string): string {
 /**
  * Évalue un check structuré d'objectif contre les trades du jour.
  * Retourne true/false si auto-évaluable, ou null si le check est absent/inconnu
- * (l'objectif reste alors en validation manuelle — rétro-compat).
+ * (l'objectif reste alors en validation manuelle, rétro-compat).
  */
 export function evaluateObjectiveCheck(
   check: ObjectiveCheck | null | undefined,

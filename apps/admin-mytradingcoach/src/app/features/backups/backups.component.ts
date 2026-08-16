@@ -39,8 +39,8 @@ const TARGET_CONFIG: Record<BackupTarget, { label: string; color: string; icon: 
           @if (lastBackupAt() === null) {
             <div><strong>Aucune sauvegarde trouvée.</strong> <span class="backup-alert-sub">Lance un backup ou vérifie le cron sur le VPS.</span></div>
           } @else {
-            <div><strong>Dernière sauvegarde il y a {{ hoursSinceLastBackup() }} h</strong>
-              <span class="backup-alert-sub">— au-delà du seuil de {{ staleThresholdH }} h ({{ lastBackupAt() | date:'dd/MM/yyyy HH:mm' }}). Vérifie le backup automatique.</span></div>
+            <div><strong>Dernière sauvegarde il y a {{ hoursSinceLastBackup() }} h</strong>,
+              <span class="backup-alert-sub">au-delà du seuil de {{ staleThresholdH }} h ({{ lastBackupAt() | date:'dd/MM/yyyy HH:mm' }}). Vérifie le backup automatique.</span></div>
           }
         </div>
       }

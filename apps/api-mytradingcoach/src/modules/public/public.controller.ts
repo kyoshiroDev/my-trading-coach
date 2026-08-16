@@ -8,7 +8,7 @@ import { PublicAmbassadorApplyDto } from './dto/ambassador-apply.dto';
 export class PublicController {
   constructor(private readonly publicService: PublicService) {}
 
-  /** Stats publiques (lecture seule, sans auth) — n'expose que le nombre de traders. */
+  /** Stats publiques (lecture seule, sans auth) : n'expose que le nombre de traders. */
   @Public()
   @Throttle({ default: { ttl: 60_000, limit: 60 } })
   @Get('stats')

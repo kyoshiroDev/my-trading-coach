@@ -15,7 +15,7 @@ export type TradeSummaryInput = {
 };
 
 /**
- * Pure-computation agent — zero Anthropic calls.
+ * Pure-computation agent : zero Anthropic calls.
  * Transforms raw trade records into a compact text summary
  * consumed by downstream LLM agents.
  */
@@ -25,7 +25,7 @@ export class DataAgent {
     const closed = trades.filter(
       (t): t is TradeSummaryInput & { pnl: number } => t.pnl !== null,
     );
-    // Stats via le helper unique (BE exclus du win rate — PROMPT-160).
+    // Stats via le helper unique (BE exclus du win rate, PROMPT-160).
     const stats = computeTradeStats(trades);
     const winRate = stats.winRate.toFixed(1);
     const totalPnl = stats.totalPnl.toFixed(2);
@@ -91,7 +91,7 @@ export class DataAgent {
       .map((t) => {
         const base = `${t.asset} ${t.side} ${t.setup} ${t.emotion} ${t.pnl >= 0 ? '+' : ''}${t.pnl}$`;
         const rr = t.riskReward != null ? ` R:R ${t.riskReward.toFixed(1)}` : '';
-        const note = t.notes ? ` — « ${t.notes.slice(0, 120)} »` : '';
+        const note = t.notes ? ` · « ${t.notes.slice(0, 120)} »` : '';
         return base + rr + note;
       });
 

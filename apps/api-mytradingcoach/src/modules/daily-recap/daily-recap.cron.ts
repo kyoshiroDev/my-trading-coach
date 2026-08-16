@@ -14,7 +14,7 @@ export class DailyRecapCron {
     private readonly resend: ResendService,
   ) {}
 
-  // 17h30 Paris, lundi–vendredi — fermeture session London/NY overlap
+  // 17h30 Paris, lundi-vendredi : fermeture session London/NY overlap
   @Cron('30 17 * * 1-5', { timeZone: 'Europe/Paris' })
   async generateDailyRecaps() {
     this.logger.log('Generating daily recaps...');
@@ -47,6 +47,6 @@ export class DailyRecapCron {
       }),
     );
 
-    this.logger.log(`Daily recaps done — ${activeUsers.length} users processed`);
+    this.logger.log(`Daily recaps done : ${activeUsers.length} users processed`);
   }
 }

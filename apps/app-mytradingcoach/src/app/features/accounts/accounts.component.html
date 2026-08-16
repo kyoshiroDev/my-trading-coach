@@ -164,7 +164,7 @@
         </div>
       }
 
-      <!-- Ajouter / quota atteint — uniquement en vue « Tous les comptes ». -->
+      <!-- Ajouter / quota atteint : uniquement en vue « Tous les comptes ». -->
       @if (store.selectedAccountId() === 'all') {
         @if (atLimit()) {
           <button class="acct-add is-limit" (click)="showPlanModal.set(true)" data-testid="add-account-limit">

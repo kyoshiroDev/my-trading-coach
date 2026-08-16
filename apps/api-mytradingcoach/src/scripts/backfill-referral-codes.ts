@@ -12,10 +12,10 @@ import { ReferralService } from '../modules/referral/referral.service';
 
 async function main(): Promise<void> {
   const url = process.env['DATABASE_URL'] ?? '';
-  if (!url) throw new Error('DATABASE_URL absent — refuse de tourner.');
+  if (!url) throw new Error('DATABASE_URL absent, refuse de tourner.');
   // Garde-fou : refuser une URL qui ressemble a la prod (heuristique simple, a confirmer a la main).
   if (/prod|production/i.test(url)) {
-    throw new Error('DATABASE_URL semble pointer vers la prod — execution refusee.');
+    throw new Error('DATABASE_URL semble pointer vers la prod, execution refusee.');
   }
   console.log(`DB cible : ${url.replace(/(:)[^:@]+(@)/, '$1***$2')}`);
 

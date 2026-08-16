@@ -43,7 +43,7 @@ export class ResendService {
       this.config.get<string>('FRONTEND_URL') ??
       'https://app.mytradingcoach.app';
     this.logger.log(
-      `ResendService init — from: ${this.from} | key: ${apiKey.slice(0, 8)}...`,
+      `ResendService init | from: ${this.from} | key: ${apiKey.slice(0, 8)}...`,
     );
   }
 
@@ -206,7 +206,7 @@ export class ResendService {
         from: 'noreply@mytradingcoach.app',
         to: CONTACT_INBOX,
         replyTo: params.email,
-        subject: `🤝 Demande ambassadeur — ${params.name}`,
+        subject: `🤝 Demande ambassadeur · ${params.name}`,
         html: `<pre style="font-family:monospace;font-size:14px">${escapeHtml(body)}</pre>`,
       });
     } catch (err) {
@@ -215,7 +215,7 @@ export class ResendService {
     }
   }
 
-  // ── Relevé de commissions ambassadeur (PDF — PAS une facture) ──────────────
+  // ── Relevé de commissions ambassadeur (PDF, PAS une facture) ──────────────
 
   async sendAmbassadorStatement(params: {
     ambassadorName: string;
@@ -227,7 +227,7 @@ export class ResendService {
       from: this.from,
       to: CONTACT_INBOX,
       replyTo: params.ambassadorEmail,
-      subject: `Relevé de commissions — ${escapeHtml(params.ambassadorName)} (${params.period})`,
+      subject: `Relevé de commissions · ${escapeHtml(params.ambassadorName)} (${params.period})`,
       html:
         `<p>Relevé de commissions de <strong>${escapeHtml(params.ambassadorName)}</strong> ` +
         `pour la période ${params.period} en pièce jointe.</p>` +
@@ -249,7 +249,7 @@ export class ResendService {
     html: string;
   }): Promise<void> {
     this.logger.debug(
-      `Envoi email — from: "${this.from}" to: "${params.to}" subject: "${params.subject}"`,
+      `Envoi email | from: "${this.from}" to: "${params.to}" subject: "${params.subject}"`,
     );
 
     const { data, error } = await this.resend.emails.send({
@@ -267,7 +267,7 @@ export class ResendService {
           `  message: ${error.message}\n` +
           `  details: ${JSON.stringify(error)}`,
       );
-      // Ne pas throw — un email raté ne doit pas faire échouer le job BullMQ
+      // Ne pas throw : un email raté ne doit pas faire échouer le job BullMQ
       return;
     }
 
