@@ -151,11 +151,13 @@ test.describe('Parrainage ambassadeur : lien → paiement → commission 20 %', 
         subscriptionId: `sub_e2e_${suffix}`,
         amountPaidCents: AMOUNT_PAID_CENTS,
       });
+      // NestJS renvoie 201 par défaut sur un @Post : on accepte tout 2xx.
       expect(
         res.status,
         `Webhook refusé (${res.status}) : signature invalide ? STRIPE_WEBHOOK_SECRET ` +
           `de l'API et celui du test doivent être identiques. Corps : ${res.body.slice(0, 200)}`,
-      ).toBe(200);
+      ).toBeGreaterThanOrEqual(200);
+      expect(res.status, `Webhook refusé (${res.status}) : ${res.body.slice(0, 200)}`).toBeLessThan(300);
       expectedAmountPaid = AMOUNT_PAID_EUR;
     }
 

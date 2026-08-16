@@ -14,7 +14,9 @@ import { PrismaClient, Role } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 
-export const API_URL = process.env['E2E_API_URL'] ?? 'http://localhost:3000/api';
+// Défaut aligné sur `environments/environment.ts` (config dev par défaut du front),
+// qui pointe sur le port 3001 — et non 3000 comme l'indique encore `angular.md`.
+export const API_URL = process.env['E2E_API_URL'] ?? 'http://localhost:3001/api';
 export const TEST_PASSWORD = 'TestPassword123!';
 
 const PREFIX = 'e2e-referral-';
