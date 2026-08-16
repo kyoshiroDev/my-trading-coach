@@ -261,6 +261,38 @@ Format JSON strict :
 
 ---
 
+## Style des textes générés : pas de tiret cadratin (PROMPT-174)
+
+Le tiret cadratin (U+2014) et le demi-cadratin (U+2013) ont été retirés de toute
+l'interface : ils se lisent comme une marque de texte généré par IA. Les sorties du
+modèle sont lues par l'utilisateur (debrief, patterns, conseils, chat, recap 17h30,
+analyses éco, news traduites) : elles ne doivent pas les réintroduire.
+
+**Règle unique** : `NO_EM_DASH_RULE` dans `modules/ai/prompts/style.prompt.ts`.
+Tout nouveau prompt dont la sortie est affichée à l'utilisateur doit l'injecter :
+
+```typescript
+import { NO_EM_DASH_RULE } from '../prompts/style.prompt';
+
+const MON_SYSTEM = `Tu es …
+${NO_EM_DASH_RULE}
+Format JSON : { … }`;
+```
+
+- Prompt avec bloc `system:` → l'injecter dans le système.
+- Prompt sans bloc `system:` (message user seul) → l'injecter dans le prompt user.
+- Prompt à sortie **structurée non rédactionnelle** (extraction CSV) → inutile.
+- Les 2 caractères sont écrits en **échappement unicode** dans la constante
+  (`\u2014` / `\u2013`) : le modèle reçoit le caractère réel, et le contrôle
+  `grep -rnP "\x{2014}|\x{2013}" apps/*/src | grep -v spec` reste **vide**.
+  Ne jamais les réécrire en littéral.
+
+> `modules/ai/prompts/insights.prompt.ts` est **exporté mais jamais importé** (code
+> mort) : le chat vivant est `CHAT_SYSTEM` inline dans `ai.service.ts`, les insights
+> passent par `pattern.agent` + `coach.agent`.
+
+---
+
 ## Prompt caching obligatoire
 
 ```typescript
