@@ -7,6 +7,7 @@ import {
 import { Plan, Role, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
+import { AmbassadorService } from '../ambassador/ambassador.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 import { PRICING_EUR, TRIAL_PERIOD_DAYS } from '../../common/constants/pricing.const';
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
@@ -62,6 +63,7 @@ export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly redisService: RedisService,
+    private readonly ambassador: AmbassadorService,
   ) {}
 
   async findById(id: string) {
@@ -307,12 +309,44 @@ export class UsersService {
 
   // ── Rôle ──────────────────────────────────────────────────────────────────
 
+  /**
+   * Change le rôle d'un utilisateur depuis l'admin.
+   *
+   * Le rôle AMBASSADOR implique TOUJOURS un `referralCode` : sans lui, le lien
+   * `?ref=` de l'ambassadeur est cassé et la liste admin affiche une ligne vide.
+   * On délègue donc à `AmbassadorService.promote()` / `revoke()` au lieu d'écrire
+   * le rôle à la main, seul moyen de garantir l'invariant quel que soit le chemin
+   * de promotion (PROMPT-176 : VAL avait le rôle sans code).
+   */
   async setRole(targetUserId: string, role: Role): Promise<void> {
     if (role === Role.ADMIN) {
       throw new ForbiddenException(
         'Impossible de promouvoir un utilisateur au rôle ADMIN via API',
       );
     }
+
+    const current = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { email: true, role: true },
+    });
+    if (!current) throw new NotFoundException('Utilisateur introuvable');
+
+    // Promotion : promote() génère le code s'il manque, et réutilise l'existant sinon.
+    if (role === Role.AMBASSADOR) {
+      await this.ambassador.promote(current.email);
+      return;
+    }
+
+    // Rétrogradation depuis AMBASSADOR : revoke() vide le code (comportement inchangé).
+    // revoke() force USER ; si la cible est un autre rôle, on l'applique ensuite.
+    if (current.role === Role.AMBASSADOR) {
+      await this.ambassador.revoke(current.email);
+      if (role !== Role.USER) {
+        await this.prisma.user.update({ where: { id: targetUserId }, data: { role } });
+      }
+      return;
+    }
+
     await this.prisma.user.update({
       where: { id: targetUserId },
       data: { role },
