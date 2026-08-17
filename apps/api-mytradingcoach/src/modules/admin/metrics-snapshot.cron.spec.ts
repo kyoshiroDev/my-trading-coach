@@ -49,4 +49,52 @@ describe('MetricsSnapshotCron', () => {
       ]);
     });
   });
+
+  /**
+   * PROMPT-177 : la ligne doit être datée du jour qu'elle DÉCRIT. Avant, le cron de
+   * 00h05 comptait 24 h glissantes (donc la veille) et rangeait sous le jour courant,
+   * décalant tout le graphe d'un jour.
+   */
+  describe('takeSnapshot() — fenêtre de comptage des inscrits', () => {
+    let userCount: ReturnType<typeof vi.fn>;
+    let upsert: ReturnType<typeof vi.fn>;
+    let snapCron: MetricsSnapshotCron;
+
+    beforeEach(() => {
+      userCount = vi.fn().mockResolvedValue(0);
+      upsert = vi.fn().mockImplementation((args) => Promise.resolve({ date: args.where.date, ...args.create }));
+      const prisma = {
+        metricsSnapshot: { findMany: vi.fn().mockResolvedValue([]), upsert },
+        user: { count: userCount },
+      } as unknown as PrismaService;
+      const users = {
+        adminStats: vi.fn().mockResolvedValue({
+          mrr: 0, arr: 0, totalUsers: 3, freeUsers: 3, totalPremium: 0,
+          trials: 0, betaTesters: 0, ambassadors: 0,
+        }),
+      } as unknown as UsersService;
+      snapCron = new MetricsSnapshotCron(prisma, users);
+    });
+
+    it('compte les inscrits sur la journée calendaire ciblée, pas sur 24 h glissantes', async () => {
+      await snapCron.takeSnapshot('2026-08-07');
+
+      // 2e appel à user.count = les inscrits (le 1er = les actifs 7 jours).
+      const where = userCount.mock.calls[1][0].where;
+      expect(where.createdAt.gte.toISOString()).toBe('2026-08-06T22:00:00.000Z'); // minuit Paris
+      expect(where.createdAt.lt.toISOString()).toBe('2026-08-07T22:00:00.000Z');
+      expect(where.isDemo).toBe(false);
+    });
+
+    it('date la ligne du jour ciblé, pas du jour où le cron tourne', async () => {
+      await snapCron.takeSnapshot('2026-08-07');
+      expect(upsert.mock.calls[0][0].where.date).toBe('2026-08-07');
+    });
+
+    it('sans argument, photographie aujourd’hui (déclenchement manuel)', async () => {
+      const today = new Date().toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
+      await snapCron.takeSnapshot();
+      expect(upsert.mock.calls[0][0].where.date).toBe(today);
+    });
+  });
 });

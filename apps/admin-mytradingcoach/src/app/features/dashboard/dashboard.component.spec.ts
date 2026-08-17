@@ -59,12 +59,37 @@ describe('DashboardComponent — graphe évolution', () => {
     pt('2026-06-08', 1, 0), // lundi suivant
   ];
 
-  it('agrège les inscrits par semaine (somme par lundi)', () => {
+  it('trace une barre par jour réel, sans regrouper par semaine', () => {
     const cmp = setup(makeStats(), HISTORY);
-    const w = cmp.weekly();
-    expect(w.length).toBe(2);
-    expect(w[0].signups).toBe(5); // 2 + 3
-    expect(w[1].signups).toBe(1);
+    const d = cmp.daily();
+
+    // Un point par snapshot : le mercredi ne fusionne plus avec son lundi.
+    expect(d.length).toBe(3);
+    expect(d.map((x: { signups: number }) => x.signups)).toEqual([2, 3, 1]);
+    expect(d.map((x: { label: string }) => x.label)).toEqual(['01/06', '03/06', '08/06']);
+  });
+
+  it('un inscrit du vendredi est étiqueté au vendredi, pas au lundi de sa semaine', () => {
+    // Le cas qui a motivé PROMPT-177 : 07/08 est un vendredi, son lundi est le 03/08.
+    const cmp = setup(makeStats(), [pt('2026-08-07', 1, 0)]);
+    const d = cmp.daily();
+
+    expect(d[0].label).toBe('07/08');
+    expect(d[0].label).not.toBe('03/08');
+  });
+
+  it('ne perd aucun inscrit : le total des barres est conservé', () => {
+    const cmp = setup(makeStats(), HISTORY);
+    const total = cmp.daily().reduce((s: number, x: { signups: number }) => s + x.signups, 0);
+    expect(total).toBe(6); // 2 + 3 + 1, comme l'agrégation hebdo d'avant
+  });
+
+  it('conserve les jours à zéro (continuité de l\'axe temporel)', () => {
+    const cmp = setup(makeStats(), [pt('2026-06-01', 2, 0), pt('2026-06-02', 0, 0)]);
+    const d = cmp.daily();
+
+    expect(d.length).toBe(2);
+    expect(d[1].signups).toBe(0);
   });
 
   it('aucune ligne MRR tant que le MRR courant vaut 0', () => {

@@ -5,7 +5,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { VpsService } from '../vps/vps.service';
 import { RedisService } from '../shared/redis.service';
-import { todayParis } from '../../common/utils/paris-date';
+import { parisDayRange, todayParis, yesterdayParis } from '../../common/utils/paris-date';
 
 const HEALTH_PREFIX = 'health:'; // health:YYYY-MM-DD -> 'ok' | 'incident'
 const HEALTH_TTL = 100 * 86_400; // 100 jours (couvre l'affichage 90j)
@@ -35,10 +35,17 @@ export class MetricsSnapshotCron {
     private readonly redisService: RedisService,
   ) {}
 
-  // 00h05 Paris chaque jour : snapshot du jour (idempotent par date)
+  /**
+   * 00h05 Paris : CLÔTURE la journée écoulée (idempotent par date).
+   *
+   * La ligne est datée du jour qu'elle DÉCRIT, pas du jour où le cron tourne.
+   * Avant, à 00h05 le 08/08, on comptait les inscrits des dernières 24 h (donc
+   * ceux du 07/08) et on rangeait le tout sous « 08/08 » : le graphe admin
+   * décalait tout d'un jour (PROMPT-177).
+   */
   @Cron('5 0 * * *', { timeZone: 'Europe/Paris' })
   async snapshotDaily(): Promise<void> {
-    const snap = await this.takeSnapshot();
+    const snap = await this.takeSnapshot(yesterdayParis());
     const health = await this.recordHealthPoint();
     this.logger.log(
       `📸 Snapshot métriques ${snap.date} : MRR ${snap.mrr}€, ${snap.totalUsers} users, ${snap.activeUsers} actifs · santé VPS: ${health ?? 'inconnue'}`,
@@ -86,18 +93,33 @@ export class MetricsSnapshotCron {
       .reverse();
   }
 
-  /** Calcule et upsert le snapshot du jour. Réutilise adminStats() (MRR/compteurs). */
-  async takeSnapshot() {
+  /**
+   * Calcule et upsert le snapshot d'une journée. Réutilise adminStats() (MRR/compteurs).
+   *
+   * @param targetDay journée décrite (YYYY-MM-DD Paris). Défaut : aujourd'hui, pour
+   *   le déclenchement manuel « photo maintenant ». Le cron passe la veille, qu'il
+   *   clôture. `newThisDay` compte les inscrits de CETTE journée calendaire, plus
+   *   une fenêtre glissante de 24 h : c'est ce qui garantit que la barre du graphe
+   *   tombe le bon jour.
+   */
+  async takeSnapshot(targetDay?: string) {
+    const date = targetDay ?? todayParis();
+    const { start, end } = parisDayRange(date);
     const stats = await this.users.adminStats();
     const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000);
-    const oneDayAgo = new Date(Date.now() - 86_400_000);
 
     // totalUsers vient d'adminStats() (source unique) → snapshot et KPI live concordent.
     const [activeUsers, newThisDay] = await Promise.all([
       this.prisma.user.count({
         where: { isDemo: false, role: { not: Role.ADMIN }, trades: { some: { tradedAt: { gte: sevenDaysAgo } } } },
       }),
-      this.prisma.user.count({ where: { isDemo: false, role: { not: Role.ADMIN }, createdAt: { gte: oneDayAgo } } }),
+      this.prisma.user.count({
+        where: {
+          isDemo: false,
+          role: { not: Role.ADMIN },
+          createdAt: { gte: start, lt: end },
+        },
+      }),
     ]);
 
     const data = {
@@ -114,7 +136,6 @@ export class MetricsSnapshotCron {
       ambassadors: stats.ambassadors,
     };
 
-    const date = todayParis();
     return this.prisma.metricsSnapshot.upsert({
       where: { date },
       create: { date, ...data },
@@ -147,5 +168,5 @@ export interface MetricsHistoryPoint {
   date: string; // YYYY-MM-DD (Paris)
   users: number;
   mrr: number;
-  newSignups: number; // inscriptions du jour (snapshot.newThisDay) → barres hebdo
+  newSignups: number; // inscrits de CETTE journée calendaire (snapshot.newThisDay)
 }
