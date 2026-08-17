@@ -29,8 +29,11 @@ import { CHART_COLORS, gridAxis, noLegend, type ChartTone } from '../../shared/c
         <div class="page-meta">{{ now | date:'d MMMM yyyy · HH:mm' }}</div>
       </div>
 
-      <!-- KPIs pleine largeur -->
-      @if (stats(); as s) {
+      <div class="dash-grid">
+
+        <!-- KPIs : 2 premières colonnes seulement. La 3e (rail « connectés »)
+             démarre à cette hauteur et descend jusqu'en bas de Docker. -->
+        @if (stats(); as s) {
         <div class="kpi-strip dash-kpis">
           <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">MRR</div>
             <div class="kpi-value teal">€{{ s.mrr | number:'1.0-0' }}</div>
@@ -52,11 +55,9 @@ import { CHART_COLORS, gridAxis, noLegend, type ChartTone } from '../../shared/c
             <div class="kpi-value">{{ s.comptesSupprimesMois }}</div>
             <div class="kpi-sub">{{ s.comptesSupprimesTotal }} au total · ce mois</div></div>
         </div>
-      }
+        }
 
-      <div class="dash-grid">
-
-        <!-- Gauche, pleine hauteur : Évolution + Entonnoir -->
+        <!-- Gauche : Évolution + Entonnoir -->
         <div class="area-left dcol">
           <div class="card grow-chart">
             <div class="card-head"><span class="card-label">Évolution · inscrits par jour{{ showMrrLine() ? ' + MRR' : '' }}</span><span class="card-label muted">snapshots</span></div>

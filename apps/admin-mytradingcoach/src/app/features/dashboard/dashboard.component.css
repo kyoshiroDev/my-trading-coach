@@ -10,9 +10,11 @@
 .kpi-link { cursor: pointer; text-decoration: none; color: inherit; }
 .kpi-link:hover { border-color: rgba(255,255,255,.12); }
 
-/* 7 KPIs sur une ligne en desktop (MRR, users, premium, ambassadeurs, churn, supprimés) */
+/* 6 KPIs sur une ligne (MRR, users, premium, ambassadeurs, churn, supprimés).
+   La bande n'occupe plus que 2 colonnes sur 3 depuis que le rail « connectés »
+   remonte à sa hauteur : `repeat(7)` laissait en plus une colonne vide. */
 @media (min-width: 1100px) {
-  .kpi-strip.dash-kpis { grid-template-columns: repeat(7, 1fr); }
+  .kpi-strip.dash-kpis { grid-template-columns: repeat(6, 1fr); }
 }
 
 /* Fidélisation : entonnoir 5 stats (activation → traders actifs 7j/30j → J+7 → fantômes) */
