@@ -18,7 +18,7 @@
  * fabrique un customer Stripe arbitraire, alors que `processReferral` retrouve le
  * filleul par son `stripeCustomerId`. D'où la forge manuelle ci-dessous.
  */
-import { expect, FrameLocator, Page } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
 import Stripe from 'stripe';
 
 export type StripeMode = 'ui' | 'webhook';
@@ -53,53 +53,51 @@ export function assertStripeTestMode(): void {
 }
 
 /**
- * Remplit la page Stripe Checkout hébergée et valide le paiement.
+ * Remplit la page Stripe Checkout hébergée et valide.
  *
- * Les champs carte vivent dans des iframes Stripe. On les cible par leur `title`
- * (stable côté Stripe et localisé), avec un repli sur le premier iframe de la page.
- * Timeouts volontairement généreux : page tierce + réseau.
+ * Ciblage par RÔLE + libellé accessible, pas par `name=` dans un iframe : sur la
+ * page hébergée actuelle, les champs carte sont dans le document principal et
+ * portent des labels accessibles (`Numéro de carte`, `Date d'expiration`,
+ * `Code de sécurité`). L'ancien ciblage `iframe[name^="__privateStripeFrame"]`
+ * ne matchait rien — cet iframe n'héberge que les boutons Apple Pay / Link.
+ *
+ * Les libellés sont en français : la session est créée avec `locale: 'fr'`
+ * (cf. `createCheckoutSession`). Si Stripe change ses libellés, l'échec est
+ * explicite et confiné à ce helper.
+ *
+ * Timeouts généreux : page tierce + réseau.
  */
 export async function payOnHostedCheckout(page: Page): Promise<void> {
   await page.waitForURL(/checkout\.stripe\.com/, { timeout: 60_000 });
 
-  const frame = await resolveCardFrame(page);
-
-  await frame.locator('[name="cardNumber"]').fill(TEST_CARD.number);
-  await frame.locator('[name="cardExpiry"]').fill(TEST_CARD.expiry);
-  await frame.locator('[name="cardCvc"]').fill(TEST_CARD.cvc);
-
-  // Champs conditionnels selon le pays / la config du compte Stripe.
-  const name = frame.locator('[name="billingName"]');
-  if (await name.isVisible({ timeout: 3_000 }).catch(() => false)) {
-    await name.fill('Filleul E2E');
-  }
-  const zip = frame.locator('[name="billingPostalCode"]');
-  if (await zip.isVisible({ timeout: 3_000 }).catch(() => false)) {
-    await zip.fill(TEST_CARD.zip);
-  }
-
-  await page.locator('[data-testid="hosted-payment-submit-button"]').click();
-}
-
-/** Iframe portant les champs carte, avec repli si Stripe change ses `title`. */
-async function resolveCardFrame(page: Page): Promise<FrameLocator> {
-  const byName = page.frameLocator('iframe[name^="__privateStripeFrame"]').first();
-  if (
-    await byName
-      .locator('[name="cardNumber"]')
-      .isVisible({ timeout: 15_000 })
-      .catch(() => false)
-  ) {
-    return byName;
-  }
-  // Repli : premier iframe contenant un champ carte.
-  const anyFrame = page.frameLocator('iframe').first();
+  const cardNumber = page.getByRole('textbox', { name: 'Numéro de carte' });
   await expect(
-    anyFrame.locator('[name="cardNumber"]'),
-    'Champ carte introuvable sur la page Stripe hébergée : les sélecteurs Stripe ' +
-      'ont probablement changé. Basculer sur E2E_STRIPE_MODE=webhook et ouvrir un ticket.',
-  ).toBeVisible({ timeout: 15_000 });
-  return anyFrame;
+    cardNumber,
+    'Champ « Numéro de carte » introuvable sur la page Stripe hébergée : les libellés ' +
+      'ou la structure ont changé. Repli : E2E_STRIPE_MODE=webhook, et corriger ce helper.',
+  ).toBeVisible({ timeout: 30_000 });
+
+  await cardNumber.fill(TEST_CARD.number);
+  await page.getByRole('textbox', { name: "Date d'expiration" }).fill(TEST_CARD.expiry);
+  await page.getByRole('textbox', { name: 'Code de sécurité' }).fill(TEST_CARD.cvc);
+
+  // Champs conditionnels selon le pays et la config du compte Stripe.
+  const holder = page.getByRole('textbox', { name: 'Nom du titulaire de la carte' });
+  if (await holder.isVisible({ timeout: 3_000 }).catch(() => false)) {
+    await holder.fill('Filleul E2E');
+  }
+
+  // Le libellé du bouton dépend de l'offre : « Démarrer la période d'essai » quand
+  // un essai est accordé, « S'abonner » / « Payer » sinon. On prend le bouton de
+  // soumission du formulaire plutôt que de deviner le texte.
+  const submit = page
+    .locator('form button[type="submit"]')
+    .filter({ hasNotText: 'Appliquer' })
+    .last();
+  await expect(submit, 'Bouton de validation du paiement introuvable').toBeVisible({
+    timeout: 15_000,
+  });
+  await submit.click();
 }
 
 /**

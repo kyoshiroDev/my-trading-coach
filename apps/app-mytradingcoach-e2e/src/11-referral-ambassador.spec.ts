@@ -120,6 +120,17 @@ test.describe('Parrainage ambassadeur : lien → paiement → commission 20 %', 
     // ── 3. Checkout Premium mensuel ────────────────────────────────────────────
     // Passe par l'API pour récupérer l'URL : c'est aussi ce qui crée et attache le
     // stripeCustomerId au filleul, sans lequel processReferral ne le retrouve pas.
+
+    // En mode UI, on doit provoquer un VRAI paiement. Or `createCheckoutSession`
+    // accorde 30 jours d'essai à tout mensuel dont `trialUsed` est faux : la page
+    // affiche alors « Total dû aujourd'hui : 0,00 € », aucune facture n'est payée,
+    // et `processReferral` sort sur `amountPaid <= 0`. Aucune commission ne serait
+    // créée, et le test échouerait pour une raison qui n'a rien à voir avec la
+    // règle testée. On marque donc l'essai comme déjà consommé.
+    if (MODE === 'ui') {
+      await db().user.update({ where: { email }, data: { trialUsed: true } });
+    }
+
     const token = await loginUser(email);
     const { data: checkout } = await createCheckout(token, 'premium_monthly');
     expect(checkout.url, 'Pas d\'URL de checkout Stripe renvoyée').toContain('checkout.stripe.com');

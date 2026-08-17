@@ -56,30 +56,40 @@ Teste la vraie logique de commission (`processReferral`), avec un montant maîtr
 (49 € → 9,80 €). Ne vérifie pas le passage `PREMIUM` du filleul, qui dépend d'un
 abonnement Stripe réel (`syncSubscription`) : cette assertion n'est faite qu'en mode `ui`.
 
-#### `ui` — parcours réel
+#### `ui` — parcours réel ✅ validé
 
 Chrome remplit la carte de test `4242 4242 4242 4242` sur la page Stripe hébergée.
 **Exige `stripe listen`**, sinon le webhook n'atteint jamais `localhost` : le paiement
 « réussit » à l'écran et **aucune commission n'est créée**.
 
-Dans un terminal séparé, avant le test :
+Dans un terminal séparé, avant le test — noter le port **3001**, celui de l'API dev :
 
 ```bash
-stripe listen --forward-to http://localhost:3000/api/billing/webhook
+stripe listen --forward-to http://localhost:3001/api/billing/webhook
 ```
 
-La CLI affiche un `whsec_…` **propre à cette session**. Il doit être celui de l'API :
+> Si la CLI répond `api_key_expired`, sa clé stockée a expiré. Plutôt qu'un
+> `stripe login` interactif, lui passer directement la clé de test :
+> `stripe listen --api-key "$STRIPE_SECRET_KEY" --forward-to …`
 
-```bash
-# .env (ou l'env de l'API), puis relancer l'API
-STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxx
-```
-
-Puis :
+La CLI affiche un `whsec_…`. Il doit être **celui que lit l'API**, c'est-à-dire celui
+de **`.env.local`** (chargé par `ConfigModule`), pas seulement celui du `.env` racine.
+S'ils diffèrent, mettre à jour `.env.local` et relancer l'API.
 
 ```bash
 E2E_STRIPE_MODE=ui pnpm exec playwright test 11-referral-ambassador
 ```
+
+**Le piège de l'essai gratuit.** `createCheckoutSession` accorde 30 jours d'essai à
+tout mensuel dont `trialUsed` est faux. La page affiche alors « Total dû aujourd'hui :
+0,00 € » : aucune facture n'est payée, `processReferral` sort sur `amountPaid <= 0`, et
+**aucune commission n'est créée**. Le test force donc `trialUsed: true` sur le filleul
+avant le checkout, uniquement en mode `ui`. Sans ça, l'échec serait incompréhensible.
+
+Les champs carte sont ciblés par **libellé accessible** (`Numéro de carte`,
+`Date d'expiration`, `Code de sécurité`), en français car la session est créée avec
+`locale: 'fr'`. Ils ne sont **pas** dans un iframe `__privateStripeFrame` : celui-ci
+n'héberge que les boutons Apple Pay / Link.
 
 En cas d'échec, le message distingue « webhook non livré » (infra) d'une commission
 absente ou fausse (produit).
