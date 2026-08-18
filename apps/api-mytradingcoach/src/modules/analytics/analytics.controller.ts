@@ -119,7 +119,11 @@ export class AnalyticsController {
     );
   }
 
-  @UseGuards(PremiumGuard)
+  // Calendrier d'activité = les données propres de l'utilisateur (le « quoi ») → FREE.
+  // Le guard qui vivait ici était de toute façon fantôme : `activity/range` sert
+  // exactement la même donnée (même `computeDailyActivity`) sans aucun guard, un
+  // compte FREE l'obtenait donc en changeant d'URL. On ne verrouille pas la vue de
+  // ses propres données (cf. plans.md) ; la profondeur d'analyse reste Premium.
   @Get('activity/:year/:month')
   async getMonthActivity(
     @CurrentUser() user: { id: string },
