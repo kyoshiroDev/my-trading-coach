@@ -131,6 +131,74 @@ describe('StripeService — processReferral (coexistence)', () => {
 });
 
 /**
+ * PROMPT-185 #4 — une panne transitoire doit déclencher le retry, pas être avalée.
+ *
+ * Le `catch` se contentait de logger : le job BullMQ finissait en succès, aucune
+ * des 5 tentatives n'était utilisée, et l'event étant déjà marqué traité, la
+ * commission était perdue pour de bon.
+ */
+describe('StripeService — processReferral relance ses erreurs', () => {
+  const run = (service: StripeService, inv: unknown) =>
+    (service as unknown as { processReferral: (i: unknown) => Promise<void> }).processReferral(inv);
+
+  function invoice() {
+    return {
+      customer: 'cus_filleul',
+      amount_paid: 4900,
+      period_start: Math.floor(Date.UTC(2026, 0, 15) / 1000),
+      parent: { subscription_details: { subscription: 'sub_123' } },
+    } as never;
+  }
+
+  const stripeStub = () => ({
+    subscriptions: { retrieve: vi.fn() },
+    prices: { retrieve: vi.fn() },
+    customers: { createBalanceTransaction: vi.fn() },
+  });
+
+  it('erreur transitoire sur l\'ecriture → relancee (le job echoue, BullMQ retente)', async () => {
+    const prisma = {
+      user: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
+      referralCommission: { upsert: vi.fn().mockRejectedValue(new Error('DB indisponible')) },
+      referralReward: { create: vi.fn(), update: vi.fn() },
+    };
+    prisma.user.findFirst
+      .mockResolvedValueOnce({ id: 'filleul', referredBy: 'AMBCODE', plan: 'PREMIUM' })
+      .mockResolvedValueOnce({ id: 'amb', role: 'AMBASSADOR' });
+
+    await expect(
+      run(makeService(prisma, stripeStub()), invoice()),
+      'Sans rethrow, le job finit en succès et la commission est perdue',
+    ).rejects.toThrow('DB indisponible');
+  });
+
+  it('rejeu apres echec → un seul upsert par (sub, periode), pas de double credit', async () => {
+    const prisma = {
+      user: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
+      referralCommission: { upsert: vi.fn().mockResolvedValue({}) },
+      referralReward: { create: vi.fn(), update: vi.fn() },
+    };
+    prisma.user.findFirst.mockResolvedValue({ id: 'filleul', referredBy: 'AMBCODE', plan: 'PREMIUM' });
+    prisma.user.findFirst
+      .mockResolvedValueOnce({ id: 'filleul', referredBy: 'AMBCODE', plan: 'PREMIUM' })
+      .mockResolvedValueOnce({ id: 'amb', role: 'AMBASSADOR' })
+      .mockResolvedValueOnce({ id: 'filleul', referredBy: 'AMBCODE', plan: 'PREMIUM' })
+      .mockResolvedValueOnce({ id: 'amb', role: 'AMBASSADOR' });
+    const service = makeService(prisma, stripeStub());
+
+    await run(service, invoice());
+    await run(service, invoice()); // rejeu du même event
+
+    // Deux appels, mais même clé d'unicité → la 2e écriture met à jour, ne duplique pas.
+    const keys = prisma.referralCommission.upsert.mock.calls.map(
+      (c: [{ where: { subscriptionId_period: { subscriptionId: string; period: string } } }]) =>
+        `${c[0].where.subscriptionId_period.subscriptionId}|${c[0].where.subscriptionId_period.period}`,
+    );
+    expect(keys[0]).toBe(keys[1]);
+  });
+});
+
+/**
  * PROMPT-185 #3 — le mois de rattachement vient de la FACTURE, pas de l'horloge.
  *
  * La clé d'unicité est `(subscriptionId, period)`. Quand `period` venait de

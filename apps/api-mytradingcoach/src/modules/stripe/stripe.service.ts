@@ -750,7 +750,17 @@ export class StripeService {
         });
       }
     } catch (err) {
-      this.logger.error('Erreur traitement parrainage', err);
+      // On loggue PUIS on relance : avaler l'erreur faisait finir le job BullMQ en
+      // succès, donc aucune des 5 tentatives n'était utilisée et l'event était déjà
+      // marqué traité → commission ou mois offert définitivement perdu sur une
+      // simple panne transitoire. Même comportement que `syncSubscription`, juste
+      // au-dessus, qui laisse déjà remonter.
+      //
+      // Rejouable sans double crédit : la commission passe par un `upsert` sur
+      // (subscriptionId, period), le mois offert par `@unique(filleulId)`, et le
+      // crédit Stripe par une `idempotencyKey` dérivée du filleul.
+      this.logger.error('Erreur traitement parrainage (retry BullMQ déclenché)', err);
+      throw err;
     }
   }
 
