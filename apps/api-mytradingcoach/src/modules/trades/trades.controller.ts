@@ -108,8 +108,12 @@ export class TradesController {
     // Compte cible : valide l'ownership (gère 'all'/absent → pas de compte forcé,
     // fallback backend). C'est le correctif du rattachement multi-compte.
     const { accountId } = await this.accounts.accountWhere(user.id, body.accountId);
-    // Setup en lot : s'il est fourni, il doit appartenir au user et être actif.
-    if (body.setupId) await this.setups.assertOwnedActive(user.id, body.setupId);
+    // Setup en lot : JAMAIS bloquant. Un id périmé (setup supprimé/archivé après
+    // que le front l'a présélectionné) faisait rejeter tout l'import en 400 — des
+    // dizaines de trades perdus pour un champ accessoire (bug Val). On retombe
+    // sur le setup par défaut, ou sur aucun setup. La validation stricte reste
+    // en place pour la création manuelle d'un trade (POST /trades).
+    const setupId = await this.setups.resolveBatchSetupId(user.id, body.setupId);
 
     // Rapport de rapprochement des frais (fusion Tradovate) : rempli si un Cash history valide.
     const report: { fees?: FeesReport } = {};
@@ -119,7 +123,7 @@ export class TradesController {
       user.id,
       { plan: user.plan, role: user.role, trialEndsAt: user.trialEndsAt },
       totalFees,
-      { accountId, emotion: body.emotion, setupId: body.setupId },
+      { accountId, emotion: body.emotion, setupId: setupId ?? undefined },
       feesUpload ? { buffer: feesUpload.buffer, filename: feesUpload.originalname } : undefined,
       report,
     );
