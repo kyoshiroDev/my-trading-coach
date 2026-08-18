@@ -29,8 +29,11 @@ import { CHART_COLORS, gridAxis, noLegend, type ChartTone } from '../../shared/c
         <div class="page-meta">{{ now | date:'d MMMM yyyy · HH:mm' }}</div>
       </div>
 
-      <!-- KPIs pleine largeur -->
-      @if (stats(); as s) {
+      <div class="dash-grid">
+
+        <!-- KPIs : 2 premières colonnes seulement. La 3e (rail « connectés »)
+             démarre à cette hauteur et descend jusqu'en bas de Docker. -->
+        @if (stats(); as s) {
         <div class="kpi-strip dash-kpis">
           <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">MRR</div>
             <div class="kpi-value teal">€{{ s.mrr | number:'1.0-0' }}</div>
@@ -52,14 +55,12 @@ import { CHART_COLORS, gridAxis, noLegend, type ChartTone } from '../../shared/c
             <div class="kpi-value">{{ s.comptesSupprimesMois }}</div>
             <div class="kpi-sub">{{ s.comptesSupprimesTotal }} au total · ce mois</div></div>
         </div>
-      }
+        }
 
-      <div class="dash-grid">
-
-        <!-- Gauche, pleine hauteur : Évolution + Entonnoir -->
+        <!-- Gauche : Évolution + Entonnoir -->
         <div class="area-left dcol">
           <div class="card grow-chart">
-            <div class="card-head"><span class="card-label">Évolution · inscrits par semaine{{ showMrrLine() ? ' + MRR' : '' }}</span><span class="card-label muted">snapshots</span></div>
+            <div class="card-head"><span class="card-label">Évolution · inscrits par jour{{ showMrrLine() ? ' + MRR' : '' }}</span><span class="card-label muted">snapshots</span></div>
             <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="trendConfig()" /></div></div>
           </div>
           <div class="card">
@@ -194,32 +195,34 @@ export class DashboardComponent {
 
   // ── Configs graphes ───────────────────────────────────────────────────────
 
-  /** Agrège les snapshots quotidiens en semaines (rythme d'acquisition + MRR). */
-  protected readonly weekly = computed(() => {
-    const pts = this.history(); // ordonnés du plus ancien au plus récent
-    const buckets = new Map<string, { label: string; signups: number; mrr: number; order: number }>();
-    for (const p of pts) {
-      const monday = this.mondayOf(p.date);
-      const key = monday.toISOString().slice(0, 10);
-      const ex = buckets.get(key);
-      if (ex) {
-        ex.signups += p.newSignups;
-        ex.mrr = p.mrr; // dernier snapshot de la semaine = MRR de fin de semaine
-      } else {
-        buckets.set(key, { label: this.weekLabel(monday), signups: p.newSignups, mrr: p.mrr, order: monday.getTime() });
-      }
-    }
-    return [...buckets.values()].sort((a, b) => a.order - b.order);
-  });
+  /**
+   * Snapshots quotidiens tracés tels quels : une barre par JOUR réel (PROMPT-177).
+   *
+   * L'agrégation hebdomadaire d'avant étiquetait chaque barre par le lundi de la
+   * semaine, si bien qu'un inscrit du vendredi 07/08 apparaissait sur « 03/08 ».
+   * `history()` porte déjà `newSignups` par jour : il n'y a rien à agréger.
+   * Le `sort` est une sécurité, la source étant déjà ordonnée du plus ancien au
+   * plus récent.
+   */
+  protected readonly daily = computed(() =>
+    this.history()
+      .map((p) => ({
+        label: this.dayLabel(p.date),
+        signups: p.newSignups,
+        mrr: p.mrr,
+        order: new Date(p.date + 'T00:00:00').getTime(),
+      }))
+      .sort((a, b) => a.order - b.order),
+  );
 
   /** Ligne MRR affichée uniquement quand le MRR courant dépasse 0 (pas de faux axe). */
   protected readonly showMrrLine = computed(() => (this.stats()?.mrr ?? 0) > 0);
 
   protected readonly trendConfig = computed<ChartConfiguration>(() => {
-    const w = this.weekly();
+    const w = this.daily();
     const showMrr = this.showMrrLine();
 
-    // Barres = nouveaux inscrits par semaine (le rythme que les cards ne montrent pas).
+    // Barres = nouveaux inscrits par jour (le rythme que les cards ne montrent pas).
     const datasets: ChartConfiguration['data']['datasets'] = [
       {
         type: 'bar',
@@ -350,17 +353,11 @@ export class DashboardComponent {
     if (value > 65) return 'amber';
     return base;
   }
-  /** Lundi de la semaine d'une date ISO (YYYY-MM-DD), pour grouper par semaine. */
-  private mondayOf(iso: string): Date {
+  /** Libellé `dd/mm` d'une date ISO (YYYY-MM-DD) pour l'axe du graphe. */
+  private dayLabel(iso: string): string {
     const d = new Date(iso + 'T00:00:00');
-    const offset = (d.getDay() + 6) % 7; // 0 = lundi
-    d.setDate(d.getDate() - offset);
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }
-  private weekLabel(monday: Date): string {
-    const dd = String(monday.getDate()).padStart(2, '0');
-    const mm = String(monday.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
     return `${dd}/${mm}`;
   }
 }

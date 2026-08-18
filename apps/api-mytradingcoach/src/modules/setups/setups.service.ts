@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateSetupDto } from './dto/create-setup.dto';
 import { UpdateSetupDto } from './dto/update-setup.dto';
@@ -6,6 +6,8 @@ import { seedDefaultSetups } from './setups.defaults';
 
 @Injectable()
 export class SetupsService {
+  private readonly logger = new Logger(SetupsService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   /** Crée les 6 setups par défaut pour un nouvel utilisateur (idempotent). */
@@ -102,6 +104,35 @@ export class SetupsService {
     if (!s) {
       throw new BadRequestException('Setup invalide (inconnu, archivé, ou hors de ton compte).');
     }
+  }
+
+  /**
+   * Résout le setup d'un import EN LOT, sans jamais jeter.
+   *
+   * Un id périmé (inconnu, archivé, hors compte) ne doit pas faire rejeter des
+   * dizaines de trades : le front pouvait envoyer le setup présélectionné à
+   * l'ouverture du wizard puis supprimé à l'étape suivante — tout l'import
+   * partait alors en 400 (bug Val). On retombe sur le setup par défaut, et sur
+   * `null` si le user n'en a aucun (trades valides, setup non renseigné).
+   *
+   * Volontairement distinct d'`assertOwnedActive`, qui reste STRICT pour la
+   * création manuelle d'un trade : là, le setup est un choix explicite de
+   * l'utilisateur sur un seul trade, une erreur doit se voir immédiatement.
+   */
+  async resolveBatchSetupId(userId: string, setupId?: string): Promise<string | null> {
+    if (setupId) {
+      const owned = await this.prisma.setup.findFirst({
+        where: { id: setupId, userId, archived: false },
+        select: { id: true },
+      });
+      if (owned) return owned.id;
+      // Trace le repli : sans ça, un front qui envoie durablement un id périmé
+      // passe inaperçu (les trades atterrissent silencieusement sur le défaut).
+      this.logger.warn(
+        `Import : setupId ${setupId} invalide pour le user ${userId} → repli sur le setup par défaut.`,
+      );
+    }
+    return this.getDefaultSetupId(userId);
   }
 
   private async assertOwned(userId: string, id: string): Promise<void> {

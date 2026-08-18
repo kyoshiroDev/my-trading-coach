@@ -346,12 +346,16 @@ router-outlet { display: none; }
 .online-list { display: flex; flex-direction: column; gap: 10px; }
 
 @media (min-width: 1024px) {
-  .dash-grid { grid-template-columns: 1fr 1fr 326px; grid-template-rows: minmax(0,1fr) auto; flex: 1; min-height: 0; }
-  .area-left   { grid-column: 1; grid-row: 1 / span 2; }
-  .area-middle { grid-column: 2; grid-row: 1; }
-  .area-rail   { grid-column: 3; grid-row: 1; }
+  /* 3 rangées : KPIs · contenu · bandeau. Les KPIs ne couvrent que les 2 premières
+     colonnes ; le rail « connectés » couvre la rangée KPIs ET la rangée contenu,
+     c'est ce qui le fait remonter et supprime le vide de sa card. */
+  .dash-grid { grid-template-columns: 1fr 1fr 326px; grid-template-rows: auto minmax(0,1fr) auto; flex: 1; min-height: 0; }
+  .dash-grid > .dash-kpis { grid-column: 1 / 3; grid-row: 1; }
+  .area-left   { grid-column: 1; grid-row: 2; }
+  .area-middle { grid-column: 2; grid-row: 2; }
+  .area-rail   { grid-column: 3; grid-row: 1 / span 2; }
   .area-rail > .card { height: 100%; display: flex; flex-direction: column; min-height: 0; }
-  .area-strip  { grid-column: 2 / span 2; grid-row: 2; }
+  .area-strip  { grid-column: 1 / -1; grid-row: 3; }
   .online-list { flex: 1; min-height: 0; overflow-y: auto; }
 
   .dash-body { grid-template-columns: 1fr 326px; grid-template-rows: minmax(0,1fr); align-items: stretch; flex: 1; min-height: 0; }

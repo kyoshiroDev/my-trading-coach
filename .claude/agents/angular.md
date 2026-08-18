@@ -222,15 +222,22 @@ export const environment = {
   landingUrl: 'https://mytradingcoach.app',
 };
 
-// environment.development.ts
+// environment.ts  ← config par DÉFAUT en dev (il n'y a PAS d'environment.development.ts)
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:3000',
-  appName: 'MyTradingCoach [DEV]',
+  apiUrl: 'http://localhost:3001/api',   // 3001, pas 3000
+  wsUrl: 'http://localhost:3001',
+  appName: 'MyTradingCoach',
   appUrl: 'http://localhost:4200',
   landingUrl: 'http://localhost:4321',
 };
 ```
+
+Fichiers réellement présents : `environment.ts` (défaut dev), `environment.dev.ts`,
+`environment.beta.ts`, `environment.production.ts` — substitués via `fileReplacements`
+dans `project.json`. **L'API dev écoute sur 3001** : lancer `PORT=3001 pnpm nx serve
+api-mytradingcoach`, sinon le front tape dans le vide. Les helpers e2e prennent la même
+valeur par défaut (`E2E_API_URL`).
 
 ---
 

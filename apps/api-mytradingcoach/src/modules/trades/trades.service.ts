@@ -68,8 +68,13 @@ export class TradesService {
     dto: CreateTradeDto,
     opts: { deferBehavioral?: boolean } = {},
   ) {
-    // Le setup doit appartenir au user et être actif (sinon 400).
-    await this.setups.assertOwnedActive(userId, dto.setupId);
+    // Le setup doit appartenir au user et être actif (sinon 400). Validation
+    // STRICTE conservée pour la création manuelle : `setupId` y est obligatoire
+    // (CreateTradeDto + ValidationPipe global), donc la garde ci-dessous ne relâche
+    // rien sur ce chemin. Elle ne s'ouvre que pour l'import en lot, qui appelle
+    // `create()` directement avec un setup déjà résolu (resolveBatchSetupId) —
+    // éventuellement absent si le user n'a plus aucun setup actif.
+    if (dto.setupId) await this.setups.assertOwnedActive(userId, dto.setupId);
     const pnl = this.calculatePnl(dto);
     const riskReward = this.calculateRiskReward(dto);
 

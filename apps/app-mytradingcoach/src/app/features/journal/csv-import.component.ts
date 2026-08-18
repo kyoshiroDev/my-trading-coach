@@ -62,7 +62,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
         (click)="onOverlayClick($event)"
         (keydown.escape)="dismissed.emit()"
       >
-        <div class="modal">
+        <div class="modal" data-testid="csv-import-modal">
           <div class="modal-header">
             <span class="modal-title">Importer CSV</span>
             <button class="close-btn" (click)="dismissed.emit()">
@@ -176,7 +176,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
                   } @else {
                     <button class="file-choose" (click)="tvTradesInput.click()">Choisir un fichier</button>
                   }
-                  <input #tvTradesInput id="tvTradesInput" type="file"
+                  <input #tvTradesInput id="tvTradesInput" type="file" data-testid="import-trades-input"
                     accept=".csv,.txt,.xlsx,.xls" style="display:none" (change)="onFileChange($event)" />
                 </div>
 
@@ -200,7 +200,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
                   } @else {
                     <button class="file-choose" (click)="tvFeesInput.click()">Choisir un fichier</button>
                   }
-                  <input #tvFeesInput id="tvFeesInput" type="file"
+                  <input #tvFeesInput id="tvFeesInput" type="file" data-testid="import-fees-input"
                     accept=".csv,.txt,.xlsx,.xls" style="display:none" (change)="onFeesFileChange($event)" />
                 </div>
 
@@ -305,6 +305,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
                 <button class="btn-ghost" (click)="dismissed.emit()">Annuler</button>
                 <button
                   class="btn-primary"
+                  data-testid="import-submit"
                   (click)="upload()"
                   [disabled]="!canSubmit() || isLoading()"
                 >
@@ -387,10 +388,20 @@ export class CsvImportComponent {
   constructor() {
     if (!this.accountStore.loaded()) this.accountStore.load();
     this.setupsStore.load();
-    // Défaut = 1er setup actif, dès que la liste est disponible.
+    // Le setup sélectionné est REVALIDÉ à chaque changement de la liste active, et
+    // pas seulement fixé une fois : un setup supprimé ou archivé entre-temps (étape
+    // « Tes setups » du wizard, écran Profil, autre onglet) laissait sinon `setupId`
+    // figé sur un id fantôme — `<select>` vide à l'écran, et surtout import ENTIER
+    // rejeté en 400 par `assertOwnedActive`. C'est le bug remonté par Val.
     effect(() => {
-      const first = this.setupsStore.active()[0];
-      if (first && untracked(() => !this.setupId())) this.setupId.set(first.id);
+      const active = this.setupsStore.active();
+      untracked(() => {
+        // Choix utilisateur toujours valide → on n'y touche pas.
+        if (this.setupId() && active.some((s) => s.id === this.setupId())) return;
+        // Sinon : premier setup actif, ou '' si le user n'en a plus aucun
+        // (rien ne part alors dans le FormData, le back choisira le défaut).
+        this.setupId.set(active[0]?.id ?? '');
+      });
     });
     // À l'ouverture du modal : présélectionne le compte courant (les options sont visibles d'emblée).
     effect(() => {

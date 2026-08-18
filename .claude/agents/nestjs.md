@@ -126,6 +126,20 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   Filtre `result` : réutiliser le **même `ε`** (`BREAKEVEN_EPSILON`) que `trade-stats.util`, jamais un
   seuil local. **Mêmes filtres appliqués à la liste ET aux stats** (`buildTradeWhere` factorisé) sinon
   les KPIs mentent.
+- **Ambassadeur = `role === 'AMBASSADOR'`, JAMAIS « a un referralCode »** (PROMPT-176).
+  `User.referralCode` est **partagé** entre les deux parrainages : un USER qui génère
+  son code en a un **sans** être ambassadeur. Tout filtre/compteur basé sur la présence
+  d'un code est faux (le bug : Lucas le compte démo et un BETA_TESTER remontaient dans
+  la liste admin). Corollaire : un `AMBASSADOR` doit **toujours** avoir un code — les
+  changements de rôle passent par `AmbassadorService.promote()` / `revoke()`, jamais par
+  un `user.update({ data: { role } })` direct. `UsersService.setRole` y délègue.
+  Backfill : `scripts/backfill-ambassador-codes.ts` (idempotent).
+- **Règle de coexistence du parrainage** : c'est le **rôle du parrain** qui décide, dans
+  `processReferral` (`stripe.service.ts`). Parrain `AMBASSADOR` → commission cash 20 %
+  (`ReferralCommission`), **jamais** de mois offert. Parrain `USER` → mois offert
+  (`ReferralReward`) + coupon filleul au checkout, **jamais** les 20 %. Auto-parrainage
+  ignoré. Couvert par `stripe-referral.service.spec.ts` (unitaire) et
+  `referral-coexistence.int-spec.ts` (intégration, vraie stack).
 - `@UseGuards(JwtAuthGuard)` sur toutes les routes protégées
 - `@UseGuards(PremiumGuard)` sur routes IA et analytics avancés
 - `@UseGuards(JwtAuthGuard, AdminGuard)` sur TOUTES les routes `/vps/*`, `/docker/*`, `/admin/*`

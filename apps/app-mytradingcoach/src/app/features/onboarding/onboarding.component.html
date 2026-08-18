@@ -41,7 +41,7 @@
           </div>
 
           <div class="wizard-footer">
-            <button class="btn-next" (click)="nextStep()">C'est parti →</button>
+            <button class="btn-next" data-testid="onboarding-start" (click)="nextStep()">C'est parti →</button>
           </div>
         </div>
       }
@@ -55,7 +55,7 @@
 
           <div class="choice-grid">
             @for (m of MARKETS; track m.value) {
-              <button class="choice-card" [class.selected]="selectedMarket() === m.value" (click)="selectMarket(m.value)">
+              <button class="choice-card" [attr.data-testid]="'onboarding-market-' + m.value" [class.selected]="selectedMarket() === m.value" (click)="selectMarket(m.value)">
                 <span class="choice-emoji">
                   @if (m.icon) {
                     <lucide-icon [img]="m.icon" [size]="24" [style.color]="m.iconColor" />
@@ -71,7 +71,7 @@
 
           <div class="wizard-footer">
             <button class="btn-back" type="button" (click)="prevStep()">← Retour</button>
-            <button class="btn-next" (click)="nextStep()" [disabled]="!selectedMarket()">Continuer →</button>
+            <button class="btn-next" data-testid="market-continue" (click)="nextStep()" [disabled]="!selectedMarket()">Continuer →</button>
           </div>
         </div>
       }
@@ -85,7 +85,7 @@
 
           <div class="choice-grid goal-grid">
             @for (g of GOALS; track g.value) {
-              <button class="choice-card" [class.selected]="selectedGoal() === g.value" (click)="selectGoal(g.value)">
+              <button class="choice-card" [attr.data-testid]="'onboarding-goal-' + g.value" [class.selected]="selectedGoal() === g.value" (click)="selectGoal(g.value)">
                 <span class="choice-emoji">{{ g.emoji }}</span>
                 <span class="choice-label">{{ g.label }}</span>
                 <span class="choice-desc">{{ g.desc }}</span>
@@ -95,7 +95,7 @@
 
           <div class="wizard-footer">
             <button class="btn-back" type="button" (click)="prevStep()">← Retour</button>
-            <button class="btn-next" (click)="nextStep()" [disabled]="!selectedGoal()">Continuer →</button>
+            <button class="btn-next" data-testid="goal-continue" (click)="nextStep()" [disabled]="!selectedGoal()">Continuer →</button>
           </div>
         </div>
       }
@@ -126,7 +126,7 @@
 
           <div class="wizard-footer">
             <button class="btn-back" type="button" (click)="prevStep()">← Retour</button>
-            <button class="btn-next" (click)="nextStep()" [disabled]="!capitalValid() || isSaving()">
+            <button class="btn-next" data-testid="capital-continue" (click)="nextStep()" [disabled]="!capitalValid() || isSaving()">
               {{ isSaving() ? 'Enregistrement…' : 'Continuer →' }}
             </button>
           </div>
@@ -143,7 +143,7 @@
           <div class="field-label">Ton style</div>
           <div class="choice-grid strat-style-grid">
             @for (st of TRADING_STYLES; track st.value) {
-              <button class="choice-card compact" [class.selected]="selectedStyle() === st.value" (click)="selectStyle(st.value)">
+              <button class="choice-card compact" [attr.data-testid]="'onboarding-style-' + st.value" [class.selected]="selectedStyle() === st.value" (click)="selectStyle(st.value)">
                 <span class="choice-emoji">{{ st.emoji }}</span>
                 <span class="choice-label">{{ st.label }}</span>
                 <span class="choice-desc">{{ st.desc }}</span>
@@ -154,6 +154,7 @@
           <div class="field-label">Décris ta stratégie <span class="field-req">· min 15 caractères</span></div>
           <textarea
             class="strat-desc"
+            data-testid="strategy-description"
             rows="3"
             [value]="strategyDescription()"
             (input)="onStrategyDescription($event)"
@@ -163,7 +164,7 @@
           <div class="field-label">Tes sessions <span class="field-req">· au moins 1</span></div>
           <div class="strat-tags">
             @for (se of SESSIONS; track se.value) {
-              <button class="strat-tag" [class.sel]="selectedSessions().includes(se.value)" (click)="toggleSession(se.value)">
+              <button class="strat-tag" [attr.data-testid]="'onboarding-session-' + se.value" [class.sel]="selectedSessions().includes(se.value)" (click)="toggleSession(se.value)">
                 {{ se.label }} <span class="strat-tag-sub">{{ se.time }}</span>
               </button>
             }
@@ -210,7 +211,7 @@
               placeholder="Cherche ou saisis un symbole (ex : NQ, BTC/USDT)…"
             />
             @if (assetQuery().trim()) {
-              <button class="asset-add-btn" type="button" (click)="submitAssetQuery()" [disabled]="selectedAssets().length >= 3">Ajouter</button>
+              <button class="asset-add-btn" type="button" data-testid="onboarding-asset-add" (click)="submitAssetQuery()" [disabled]="selectedAssets().length >= 3">Ajouter</button>
             }
           </div>
           @if (assetResults().length > 0) {
@@ -336,7 +337,7 @@
           </a>
 
           <div class="wizard-footer">
-            <button class="btn-next btn-dashboard" (click)="completed.emit()">
+            <button class="btn-next btn-dashboard" data-testid="onboarding-dashboard" (click)="completed.emit()">
               Accéder à mon dashboard →
             </button>
           </div>
