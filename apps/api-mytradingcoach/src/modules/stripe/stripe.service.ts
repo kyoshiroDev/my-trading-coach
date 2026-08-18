@@ -289,16 +289,34 @@ export class StripeService {
     }
 
     // ── Enqueue pour traitement async (BullMQ) ────────────────────────────────
-    await this.webhookQueue.add(
-      'process-webhook',
-      { event },
-      {
-        attempts: 5,
-        backoff: { type: 'exponential', delay: 5_000 },
-        removeOnComplete: { count: 100 }, // Garde les 100 derniers succès
-        removeOnFail: false, // Garde les échecs pour inspection
-      },
-    );
+    // La marque d'idempotence est posée AVANT (insert unique = verrou anti-course :
+    // deux livraisons simultanées du même event ne peuvent pas enfiler deux jobs).
+    // Contrepartie : si l'enqueue échoue — Redis indisponible, déjà vu sur ce VPS —
+    // la marque resterait en base et la redélivrance de Stripe serait ignorée comme
+    // « déjà traitée ». L'event serait alors perdu pour de bon : client qui paie et
+    // reste FREE, commission jamais créée, sans trace. On COMPENSE donc en retirant
+    // la marque, puis on laisse remonter l'erreur pour répondre 5xx à Stripe, qui
+    // redélivrera. Inverser l'ordre (enqueue puis marque) supprimerait le verrou.
+    try {
+      await this.webhookQueue.add(
+        'process-webhook',
+        { event },
+        {
+          attempts: 5,
+          backoff: { type: 'exponential', delay: 5_000 },
+          removeOnComplete: { count: 100 }, // Garde les 100 derniers succès
+          removeOnFail: false, // Garde les échecs pour inspection
+        },
+      );
+    } catch (err: unknown) {
+      await this.unmarkEvent(event.id);
+      this.logger.error(
+        `Enqueue impossible pour l'event ${event.id} (${event.type}) : ${
+          err instanceof Error ? err.message : String(err)
+        }. Marque d'idempotence retirée → la redélivrance Stripe sera retraitée.`,
+      );
+      throw err;
+    }
 
     this.logger.debug(`Event ${event.id} enqueued | type: ${event.type}`);
     return { received: true };
@@ -640,6 +658,17 @@ export class StripeService {
       if (isUniqueConstraintError(err)) return true;
       throw err;
     }
+  }
+
+  /**
+   * Retire la marque d'idempotence : uniquement en compensation d'un enqueue raté,
+   * pour que la redélivrance Stripe du même event soit bien retraitée.
+   * Best-effort — si la suppression échoue, l'erreur d'origine reste prioritaire.
+   */
+  private async unmarkEvent(eventId: string): Promise<void> {
+    await this.prisma.stripeEvent
+      .delete({ where: { id: eventId } })
+      .catch(() => undefined);
   }
 
   /** Invalide le cache Redis d'un user via son stripeCustomerId */
