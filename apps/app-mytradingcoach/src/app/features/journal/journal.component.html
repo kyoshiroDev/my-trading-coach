@@ -121,7 +121,7 @@
     <div class="period-summary">
       <div class="period-stat">
         <span class="period-label">Trades</span>
-        <span class="period-value">{{ s.count }}</span>
+        <span class="period-value" data-testid="period-trades-count">{{ s.count }}</span>
       </div>
       <div class="period-stat">
         <span class="period-label">Win rate
@@ -132,7 +132,7 @@
       </div>
       <div class="period-stat">
         <span class="period-label">P&L Net</span>
-        <span class="period-value" [style.color]="s.totalPnl >= 0 ? 'var(--green)' : 'var(--red)'">
+        <span class="period-value" data-testid="period-pnl-net" [style.color]="s.totalPnl >= 0 ? 'var(--green)' : 'var(--red)'">
           {{ s.totalPnl >= 0 ? '+' : '' }}${{ s.totalPnl | number:'1.2-2' }}
         </span>
       </div>
@@ -141,7 +141,7 @@
           <mtc-info-tooltip label="Ce que représentent les frais"
             text="Total des commissions et frais de la période, déjà déduits du P&L net." />
         </span>
-        <span class="period-value" style="color:var(--red)">
+        <span class="period-value" data-testid="period-fees" style="color:var(--red)">
           -${{ s.totalCommissions | number:'1.2-2' }}
         </span>
       </div>

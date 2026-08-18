@@ -62,7 +62,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
         (click)="onOverlayClick($event)"
         (keydown.escape)="dismissed.emit()"
       >
-        <div class="modal">
+        <div class="modal" data-testid="csv-import-modal">
           <div class="modal-header">
             <span class="modal-title">Importer CSV</span>
             <button class="close-btn" (click)="dismissed.emit()">
@@ -176,7 +176,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
                   } @else {
                     <button class="file-choose" (click)="tvTradesInput.click()">Choisir un fichier</button>
                   }
-                  <input #tvTradesInput id="tvTradesInput" type="file"
+                  <input #tvTradesInput id="tvTradesInput" type="file" data-testid="import-trades-input"
                     accept=".csv,.txt,.xlsx,.xls" style="display:none" (change)="onFileChange($event)" />
                 </div>
 
@@ -200,7 +200,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
                   } @else {
                     <button class="file-choose" (click)="tvFeesInput.click()">Choisir un fichier</button>
                   }
-                  <input #tvFeesInput id="tvFeesInput" type="file"
+                  <input #tvFeesInput id="tvFeesInput" type="file" data-testid="import-fees-input"
                     accept=".csv,.txt,.xlsx,.xls" style="display:none" (change)="onFeesFileChange($event)" />
                 </div>
 
@@ -305,6 +305,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
                 <button class="btn-ghost" (click)="dismissed.emit()">Annuler</button>
                 <button
                   class="btn-primary"
+                  data-testid="import-submit"
                   (click)="upload()"
                   [disabled]="!canSubmit() || isLoading()"
                 >
