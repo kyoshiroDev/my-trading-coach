@@ -1,23 +1,16 @@
 /**
- * PROMPT-181 — régression Val : import CSV rejeté par un `setupId` périmé.
+ * PROMPT-181/182 — régression Val : import CSV rejeté par un `setupId` périmé.
  *
- * Constat terrain (2026-08-18) : le wizard d'onboarding fixe `setupId` sur le
- * PREMIER setup actif au montage du composant CSV import (étape 1), puis ne le
- * revalide jamais. Si l'utilisateur supprime/archive ce setup à l'étape « Tes
- * setups » (7), le formulaire envoie encore l'ancien id à l'étape 8 → 400 sur
- * tout le lot, alors qu'il reste au moins un setup actif.
+ * Constat terrain (2026-08-18) : le wizard d'onboarding fixait `setupId` sur le
+ * PREMIER setup actif au montage du composant CSV import (étape 1) sans jamais
+ * le revalider. En supprimant ce setup à l'étape « Tes setups » (7),
+ * l'utilisateur envoyait un id fantôme à l'étape 8 → 400 sur TOUT le lot, alors
+ * qu'il lui restait des setups actifs.
  *
- * Comportement ATTENDU (documenté ici, PAS encore implémenté) : un `setupId`
- * fourni mais invalide (archivé ou hors compte) doit être traité comme absent
- * — l'import retombe sur `getDefaultSetupId` au lieu de rejeter tout le lot.
- *
- * ⚠️ Le code actuel (`trades.controller.ts` → `assertOwnedActive` AVANT
- * `parseCSV`) jette encore une `BadRequestException` : ces deux tests
- * ÉCHOUENT intentionnellement (`it.fails`), ce qui les fait apparaître
- * PASS dans le rapport tant que le bug n'est pas corrigé, et les ferait
- * échouer pour de vrai (donc visibles) le jour où quelqu'un corrige sans
- * mettre à jour le test. Ne pas patcher l'app ici — cf. prompt de correction
- * séparé. Retirer `.fails` une fois le comportement corrigé.
+ * Comportement corrigé (PROMPT-182), vérifié ici : un `setupId` invalide
+ * (archivé ou hors compte) est traité comme absent — l'import retombe sur le
+ * setup par défaut (`resolveBatchSetupId`) au lieu de rejeter le lot. Un
+ * `setupId` valide reste évidemment respecté.
  *
  * Nécessite une vraie base : c'est `TradesController` (guard + interceptor
  * multer + services réels) qui est exercé, pas `CsvImportService` seul —
@@ -92,8 +85,8 @@ afterAll(async () => {
   await app?.close().catch(() => undefined);
 });
 
-describe('Import CSV — setupId périmé (régression Val, PROMPT-181)', () => {
-  it.fails('setup ARCHIVÉ → import retombe sur le setup par défaut au lieu de rejeter le lot', async () => {
+describe('Import CSV — setupId périmé (régression Val, PROMPT-181/182)', () => {
+  it('setup ARCHIVÉ → import retombe sur le setup par défaut au lieu de rejeter le lot', async () => {
     const s = uid();
     const email = `${PREFIX}archived-${s}@test.local`;
     const { id: userId, token } = await registerUser(email);
@@ -124,7 +117,7 @@ describe('Import CSV — setupId périmé (régression Val, PROMPT-181)', () => 
     ).toBe(fallback.id);
   });
 
-  it.fails('setup HORS COMPTE → import retombe sur le setup par défaut au lieu de rejeter le lot', async () => {
+  it('setup HORS COMPTE → import retombe sur le setup par défaut au lieu de rejeter le lot', async () => {
     const s = uid();
     const emailA = `${PREFIX}victim-${s}@test.local`;
     const emailB = `${PREFIX}other-${s}@test.local`;
@@ -152,5 +145,55 @@ describe('Import CSV — setupId périmé (régression Val, PROMPT-181)', () => 
     const trade = await prisma.trade.findFirst({ where: { userId: userA } });
     expect(trade, 'Aucun trade créé : le lot entier a été rejeté').toBeTruthy();
     expect(trade!.setupId).toBe(fallback!.id);
+
+    // Le setup d'autrui ne doit évidemment jamais être utilisé.
+    expect(trade!.setupId).not.toBe(otherUserSetup!.id);
+  });
+
+  it('setup VALIDE → respecté (le repli ne s\'applique qu\'aux id périmés)', async () => {
+    const s = uid();
+    const email = `${PREFIX}valid-${s}@test.local`;
+    const { id: userId, token } = await registerUser(email);
+
+    // Un setup explicite qui n'est PAS le défaut (sortOrder le plus bas) : si le
+    // repli s'appliquait à tort, le trade atterrirait sur "Breakout" (sortOrder 0).
+    const setups = await prisma.setup.findMany({ where: { userId }, orderBy: { sortOrder: 'asc' } });
+    const chosen = setups[3];
+
+    const res = await importCsv(token, chosen.id);
+    expect(res.ok, `Import rejeté (${res.status}) avec un setup pourtant valide`).toBe(true);
+
+    const trade = await prisma.trade.findFirst({ where: { userId } });
+    expect(trade!.setupId, `Le setup choisi (${chosen.title}) doit être respecté`).toBe(chosen.id);
+  });
+
+  it('AUCUN setup actif → le lot n\'est plus rejeté en bloc (400)', async () => {
+    const s = uid();
+    const email = `${PREFIX}nosetup-${s}@test.local`;
+    const { id: userId, token } = await registerUser(email);
+
+    const setups = await prisma.setup.findMany({ where: { userId } });
+    const stale = setups[0].id;
+    // Cas dégénéré atteignable via l'API (archivage/suppression sans minimum imposé
+    // côté back) : plus aucun setup actif, donc plus aucun défaut sur lequel replier.
+    await prisma.setup.updateMany({ where: { userId }, data: { archived: true } });
+
+    const res = await importCsv(token, stale);
+
+    // Le point de ce correctif : l'import ne part plus en 400. `resolveBatchSetupId`
+    // renvoie null, et la requête aboutit.
+    expect(
+      res.status,
+      `L'import ne doit plus être rejeté en bloc : ${await res.clone().text()}`,
+    ).toBeLessThan(400);
+
+    // ⚠️ Limite ASSUMÉE, non corrigée ici : `Trade.setupId` est NOT NULL avec une FK
+    // obligatoire (prisma/schema.prisma). Sans setup sur lequel replier, les trades
+    // ne peuvent donc pas être créés — ils sont comptés en `failed` au lieu de faire
+    // échouer la requête. Rendre `setupId` nullable exige une migration + la reprise
+    // des agrégats par setup : décision produit à part entière, hors périmètre.
+    const body = (await res.json()) as { data: { created: number; failed: number } };
+    expect(body.data.created, 'Sans setup, la FK NOT NULL empêche la création').toBe(0);
+    expect(body.data.failed, 'Les trades sont comptés en échec, sans 400 global').toBe(1);
   });
 });
