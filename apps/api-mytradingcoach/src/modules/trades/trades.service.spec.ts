@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
+  BadRequestException,
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
@@ -480,6 +481,57 @@ describe('TradesService', () => {
 
       // P&L inchangé — pas de recalcul
       expect(result.pnl).toBe(2000);
+    });
+  });
+
+  // PROMPT-185 #2 — un setup archivé ne doit plus geler les trades qui l'utilisent.
+  // Le front renvoie le DTO complet à chaque édition : revalider un `setupId`
+  // inchangé rendait tout trade historique non modifiable dès que son setup était
+  // archivé (« Setup invalide » en corrigeant une simple note).
+  describe('update — setup archivé', () => {
+    let setups: { assertOwnedActive: ReturnType<typeof vi.fn> };
+
+    beforeEach(() => {
+      setups = service['setups'] as unknown as { assertOwnedActive: ReturnType<typeof vi.fn> };
+      setups.assertOwnedActive.mockReset().mockResolvedValue(undefined);
+      mockPrisma.trade.findUnique.mockResolvedValue(mockTrade); // setupId: 'setup-1'
+      mockPrisma.trade.update.mockImplementation(({ data }: { data: object }) =>
+        Promise.resolve({ ...mockTrade, ...data }),
+      );
+    });
+
+    it('setupId inchangé (même archivé) → pas de revalidation, édition acceptée', async () => {
+      await service.update('user-123', 'trade-123', {
+        setupId: 'setup-1', // identique à l'existant
+        notes: 'correction de note',
+      });
+
+      expect(
+        setups.assertOwnedActive,
+        "Un setup qu'on ne modifie pas ne doit pas être revalidé",
+      ).not.toHaveBeenCalled();
+    });
+
+    it('changement de setup → validation stricte conservée', async () => {
+      await service.update('user-123', 'trade-123', { setupId: 'setup-2' });
+
+      expect(setups.assertOwnedActive).toHaveBeenCalledWith('user-123', 'setup-2');
+    });
+
+    it('changement vers un setup archivé → rejeté', async () => {
+      setups.assertOwnedActive.mockRejectedValue(
+        new BadRequestException('Setup invalide (inconnu, archivé, ou hors de ton compte).'),
+      );
+
+      await expect(
+        service.update('user-123', 'trade-123', { setupId: 'setup-archive' }),
+      ).rejects.toThrow('Setup invalide');
+    });
+
+    it('édition sans setupId → aucune validation de setup', async () => {
+      await service.update('user-123', 'trade-123', { notes: 'juste une note' });
+
+      expect(setups.assertOwnedActive).not.toHaveBeenCalled();
     });
   });
 
