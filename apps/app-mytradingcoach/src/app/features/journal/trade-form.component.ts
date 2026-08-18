@@ -172,14 +172,20 @@ export class TradeFormComponent {
   constructor() {
     this.setupsStore.load();
 
-    // Quand les setups arrivent après l'ouverture (création, champ vide) → défaut.
+    // CRÉATION : le setup par défaut suit la liste active (arrivée tardive du
+    // chargement, ou setup supprimé ailleurs) — on ne fige pas un id qui pourrait
+    // ne plus exister à l'enregistrement.
+    // ÉDITION : volontairement laissée intacte. `setupOptions` conserve le setup
+    // archivé du trade, et le back tolère désormais un `setupId` inchangé
+    // (PROMPT-185 #2) : recaler ici changerait en douce le setup d'un vieux trade
+    // qu'on ouvre juste pour corriger une note.
     effect(() => {
-      const first = this.setupsStore.active()[0];
-      if (!first) return;
+      const active = this.setupsStore.active();
       untracked(() => {
-        if (!this.editTrade() && !this.form().setupId) {
-          this.form.update((f) => ({ ...f, setupId: first.id }));
-        }
+        if (this.editTrade()) return;
+        const current = this.form().setupId;
+        if (current && active.some((s) => s.id === current)) return;
+        this.form.update((f) => ({ ...f, setupId: active[0]?.id ?? '' }));
       });
     });
 

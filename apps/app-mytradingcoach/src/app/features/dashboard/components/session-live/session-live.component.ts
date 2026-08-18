@@ -915,11 +915,18 @@ export class SessionLiveComponent {
   protected readonly emotions = EMOTIONS;
 
   constructor() {
-    // Setups du user pour le sélecteur de trade rapide (défaut = 1er actif).
+    // Setups du user pour le sélecteur de trade rapide. Le choix est REVALIDÉ à
+    // chaque changement de la liste active, jamais figé : le compagnon de session
+    // vit des heures, et un setup supprimé/archivé entre-temps laissait sinon
+    // `qtSetup` sur un id fantôme → 400 sur chaque trade rapide loggé (même défaut
+    // que l'import CSV, PROMPT-182). Écriture dans `untracked` pour ne pas boucler.
     this.setupsStore.load();
     effect(() => {
-      const first = this.setupsStore.active()[0];
-      if (first && untracked(() => !this.qtSetup())) this.qtSetup.set(first.id);
+      const active = this.setupsStore.active();
+      untracked(() => {
+        if (this.qtSetup() && active.some((s) => s.id === this.qtSetup())) return;
+        this.qtSetup.set(active[0]?.id ?? '');
+      });
     });
 
     // Démo : analyse IA figée pour les annonces du calendrier (zéro appel modèle).
