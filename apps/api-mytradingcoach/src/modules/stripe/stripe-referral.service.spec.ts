@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Prisma } from '@prisma/client';
 import { StripeService } from './stripe.service';
 
@@ -127,5 +127,91 @@ describe('StripeService — processReferral (coexistence)', () => {
 
     expect(prisma.referralReward.create).not.toHaveBeenCalled();
     expect(prisma.referralCommission.upsert).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * PROMPT-185 #3 — le mois de rattachement vient de la FACTURE, pas de l'horloge.
+ *
+ * La clé d'unicité est `(subscriptionId, period)`. Quand `period` venait de
+ * `Date.now()`, une facture de janvier traitée en février (retry BullMQ,
+ * redélivrance après indisponibilité) prenait la clé de février, puis l'`upsert`
+ * de la vraie facture de février écrasait la ligne : un mois de commission perdu
+ * pour l'ambassadeur.
+ */
+describe('StripeService — période de commission dérivée de la facture', () => {
+  // 15/01/2026 12:00 UTC : période facturée de janvier.
+  const JANUARY_EPOCH = Math.floor(Date.UTC(2026, 0, 15, 12) / 1000);
+  const FEBRUARY_EPOCH = Math.floor(Date.UTC(2026, 1, 15, 12) / 1000);
+
+  function invoiceAt(periodStart: number, created = periodStart) {
+    return {
+      customer: 'cus_filleul',
+      amount_paid: 4900,
+      created,
+      period_start: periodStart,
+      parent: { subscription_details: { subscription: 'sub_123' } },
+    } as never;
+  }
+
+  function setup() {
+    const prisma = {
+      user: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
+      referralCommission: { upsert: vi.fn().mockResolvedValue({}) },
+      referralReward: { create: vi.fn(), update: vi.fn() },
+    };
+    prisma.user.findFirst
+      .mockResolvedValueOnce({ id: 'filleul', referredBy: 'AMBCODE', plan: 'PREMIUM' })
+      .mockResolvedValueOnce({ id: 'amb', role: 'AMBASSADOR' });
+    const service = makeService(prisma, {
+      subscriptions: { retrieve: vi.fn() },
+      prices: { retrieve: vi.fn() },
+      customers: { createBalanceTransaction: vi.fn() },
+    });
+    return { prisma, service };
+  }
+
+  const run = (service: StripeService, inv: unknown) =>
+    (service as unknown as { processReferral: (i: unknown) => Promise<void> }).processReferral(inv);
+
+  afterEach(() => vi.useRealTimers());
+
+  it('facture de janvier traitée en février → commission rattachée à JANVIER', async () => {
+    // L'horloge est en février : sans le correctif, la période serait 2026-02.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-02-01T00:05:00Z'));
+
+    const { prisma, service } = setup();
+    await run(service, invoiceAt(JANUARY_EPOCH));
+
+    const where = prisma.referralCommission.upsert.mock.calls[0][0].where;
+    expect(
+      where.subscriptionId_period.period,
+      "La commission doit suivre la facture, pas l'heure de traitement",
+    ).toBe('2026-01');
+  });
+
+  it('deux mois distincts → deux clés distinctes (aucun écrasement)', async () => {
+    const jan = setup();
+    await run(jan.service, invoiceAt(JANUARY_EPOCH));
+    const feb = setup();
+    await run(feb.service, invoiceAt(FEBRUARY_EPOCH));
+
+    expect(jan.prisma.referralCommission.upsert.mock.calls[0][0].where.subscriptionId_period.period).toBe('2026-01');
+    expect(feb.prisma.referralCommission.upsert.mock.calls[0][0].where.subscriptionId_period.period).toBe('2026-02');
+  });
+
+  it('sans period_start → repli sur created', async () => {
+    const { prisma, service } = setup();
+    const inv = {
+      customer: 'cus_filleul',
+      amount_paid: 4900,
+      created: JANUARY_EPOCH,
+      parent: { subscription_details: { subscription: 'sub_123' } },
+    } as never;
+
+    await run(service, inv);
+
+    expect(prisma.referralCommission.upsert.mock.calls[0][0].where.subscriptionId_period.period).toBe('2026-01');
   });
 });

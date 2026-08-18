@@ -56,6 +56,24 @@ function isUniqueConstraintError(err: unknown): boolean {
   );
 }
 
+/**
+ * Mois de rattachement d'une commission (`YYYY-MM`), dérivé de la FACTURE.
+ *
+ * Jamais `Date.now()` : la clé d'unicité est `(subscriptionId, period)`, et un
+ * traitement décalé (retry BullMQ, redélivrance Stripe après une indisponibilité)
+ * rangeait la commission dans le mois du traitement. Une facture de janvier
+ * traitée le 1ᵉʳ février prenait la clé de février, puis l'`upsert` de la vraie
+ * facture de février ÉCRASAIT cette ligne : l'ambassadeur perdait un mois.
+ *
+ * `period_start` fait foi (début de la période facturée) ; `created` sert de
+ * repli, et l'heure de traitement n'intervient qu'en dernier recours théorique.
+ */
+function invoicePeriod(invoice: Stripe.Invoice): string {
+  const epoch = invoice.period_start ?? invoice.created ?? null;
+  const date = epoch != null ? new Date(epoch * 1000) : new Date();
+  return date.toISOString().slice(0, 7);
+}
+
 // ── Service ──────────────────────────────────────────────────────────────────
 
 @Injectable()
@@ -722,6 +740,7 @@ export class StripeService {
           filleul,
           subscriptionId,
           amountPaid,
+          period: invoicePeriod(invoice),
         });
       } else {
         await this.grantReferralFreeMonth({
@@ -741,10 +760,11 @@ export class StripeService {
     filleul: { id: string; referredBy: string | null; plan: Plan };
     subscriptionId: string;
     amountPaid: number;
+    /** Mois de RATTACHEMENT, dérivé de la facture (jamais de l'heure de traitement). */
+    period: string;
   }): Promise<void> {
-    const { ambassadorId, filleul, subscriptionId, amountPaid } = args;
+    const { ambassadorId, filleul, subscriptionId, amountPaid, period } = args;
     const commission = +(amountPaid * 0.2).toFixed(2);
-    const period = new Date().toISOString().slice(0, 7);
 
     await this.prisma.referralCommission.upsert({
       where: { subscriptionId_period: { subscriptionId, period } },
