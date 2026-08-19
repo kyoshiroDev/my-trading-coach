@@ -56,6 +56,24 @@ function isUniqueConstraintError(err: unknown): boolean {
   );
 }
 
+/**
+ * Mois de rattachement d'une commission (`YYYY-MM`), dérivé de la FACTURE.
+ *
+ * Jamais `Date.now()` : la clé d'unicité est `(subscriptionId, period)`, et un
+ * traitement décalé (retry BullMQ, redélivrance Stripe après une indisponibilité)
+ * rangeait la commission dans le mois du traitement. Une facture de janvier
+ * traitée le 1ᵉʳ février prenait la clé de février, puis l'`upsert` de la vraie
+ * facture de février ÉCRASAIT cette ligne : l'ambassadeur perdait un mois.
+ *
+ * `period_start` fait foi (début de la période facturée) ; `created` sert de
+ * repli, et l'heure de traitement n'intervient qu'en dernier recours théorique.
+ */
+function invoicePeriod(invoice: Stripe.Invoice): string {
+  const epoch = invoice.period_start ?? invoice.created ?? null;
+  const date = epoch != null ? new Date(epoch * 1000) : new Date();
+  return date.toISOString().slice(0, 7);
+}
+
 // ── Service ──────────────────────────────────────────────────────────────────
 
 @Injectable()
@@ -289,16 +307,34 @@ export class StripeService {
     }
 
     // ── Enqueue pour traitement async (BullMQ) ────────────────────────────────
-    await this.webhookQueue.add(
-      'process-webhook',
-      { event },
-      {
-        attempts: 5,
-        backoff: { type: 'exponential', delay: 5_000 },
-        removeOnComplete: { count: 100 }, // Garde les 100 derniers succès
-        removeOnFail: false, // Garde les échecs pour inspection
-      },
-    );
+    // La marque d'idempotence est posée AVANT (insert unique = verrou anti-course :
+    // deux livraisons simultanées du même event ne peuvent pas enfiler deux jobs).
+    // Contrepartie : si l'enqueue échoue — Redis indisponible, déjà vu sur ce VPS —
+    // la marque resterait en base et la redélivrance de Stripe serait ignorée comme
+    // « déjà traitée ». L'event serait alors perdu pour de bon : client qui paie et
+    // reste FREE, commission jamais créée, sans trace. On COMPENSE donc en retirant
+    // la marque, puis on laisse remonter l'erreur pour répondre 5xx à Stripe, qui
+    // redélivrera. Inverser l'ordre (enqueue puis marque) supprimerait le verrou.
+    try {
+      await this.webhookQueue.add(
+        'process-webhook',
+        { event },
+        {
+          attempts: 5,
+          backoff: { type: 'exponential', delay: 5_000 },
+          removeOnComplete: { count: 100 }, // Garde les 100 derniers succès
+          removeOnFail: false, // Garde les échecs pour inspection
+        },
+      );
+    } catch (err: unknown) {
+      await this.unmarkEvent(event.id);
+      this.logger.error(
+        `Enqueue impossible pour l'event ${event.id} (${event.type}) : ${
+          err instanceof Error ? err.message : String(err)
+        }. Marque d'idempotence retirée → la redélivrance Stripe sera retraitée.`,
+      );
+      throw err;
+    }
 
     this.logger.debug(`Event ${event.id} enqueued | type: ${event.type}`);
     return { received: true };
@@ -642,6 +678,17 @@ export class StripeService {
     }
   }
 
+  /**
+   * Retire la marque d'idempotence : uniquement en compensation d'un enqueue raté,
+   * pour que la redélivrance Stripe du même event soit bien retraitée.
+   * Best-effort — si la suppression échoue, l'erreur d'origine reste prioritaire.
+   */
+  private async unmarkEvent(eventId: string): Promise<void> {
+    await this.prisma.stripeEvent
+      .delete({ where: { id: eventId } })
+      .catch(() => undefined);
+  }
+
   /** Invalide le cache Redis d'un user via son stripeCustomerId */
   private async invalidateCacheByCustomerId(customerId: string): Promise<void> {
     const user = await this.prisma.user
@@ -693,6 +740,7 @@ export class StripeService {
           filleul,
           subscriptionId,
           amountPaid,
+          period: invoicePeriod(invoice),
         });
       } else {
         await this.grantReferralFreeMonth({
@@ -702,7 +750,17 @@ export class StripeService {
         });
       }
     } catch (err) {
-      this.logger.error('Erreur traitement parrainage', err);
+      // On loggue PUIS on relance : avaler l'erreur faisait finir le job BullMQ en
+      // succès, donc aucune des 5 tentatives n'était utilisée et l'event était déjà
+      // marqué traité → commission ou mois offert définitivement perdu sur une
+      // simple panne transitoire. Même comportement que `syncSubscription`, juste
+      // au-dessus, qui laisse déjà remonter.
+      //
+      // Rejouable sans double crédit : la commission passe par un `upsert` sur
+      // (subscriptionId, period), le mois offert par `@unique(filleulId)`, et le
+      // crédit Stripe par une `idempotencyKey` dérivée du filleul.
+      this.logger.error('Erreur traitement parrainage (retry BullMQ déclenché)', err);
+      throw err;
     }
   }
 
@@ -712,10 +770,11 @@ export class StripeService {
     filleul: { id: string; referredBy: string | null; plan: Plan };
     subscriptionId: string;
     amountPaid: number;
+    /** Mois de RATTACHEMENT, dérivé de la facture (jamais de l'heure de traitement). */
+    period: string;
   }): Promise<void> {
-    const { ambassadorId, filleul, subscriptionId, amountPaid } = args;
+    const { ambassadorId, filleul, subscriptionId, amountPaid, period } = args;
     const commission = +(amountPaid * 0.2).toFixed(2);
-    const period = new Date().toISOString().slice(0, 7);
 
     await this.prisma.referralCommission.upsert({
       where: { subscriptionId_period: { subscriptionId, period } },
@@ -744,18 +803,29 @@ export class StripeService {
   }): Promise<void> {
     const { parrainId, filleulId, subscriptionId } = args;
 
-    // 1 récompense par filleul : la contrainte @unique(filleulId) tranche.
+    // 1 récompense par filleul : la contrainte @unique(filleulId) tranche. La ligne
+    // est créée AVANT le chiffrage et sert d'ancre d'idempotence durable (la clé
+    // d'idempotence Stripe, elle, expire au bout de ~24 h).
     let reward;
     try {
       reward = await this.prisma.referralReward.create({
         data: { parrainId, filleulId, subscriptionId, status: 'PENDING', amountEur: 0 },
       });
     } catch (err) {
-      if (isUniqueConstraintError(err)) {
+      if (!isUniqueConstraintError(err)) throw err;
+      // Récompense déjà enregistrée. Si elle a été APPLIQUÉE, il n'y a rien à faire.
+      // Si elle est restée PENDING (chiffrage impossible au passage précédent :
+      // parrain non abonné, prix Stripe injoignable), on REJOUE ici. Sans ça, la
+      // contrainte d'unicité gelait définitivement le mois offert : plus aucune
+      // facture ultérieure ne pouvait le débloquer, seul un rattrapage admin
+      // manuel restait possible.
+      const existing = await this.prisma.referralReward.findUnique({ where: { filleulId } });
+      if (!existing || existing.status === 'APPLIED') {
         this.logger.debug(`Mois offert déjà accordé pour le filleul ${filleulId}`);
         return;
       }
-      throw err;
+      this.logger.log(`Mois offert encore PENDING pour le filleul ${filleulId} : nouvelle tentative.`);
+      reward = existing;
     }
 
     const parrain = await this.prisma.user.findUnique({
@@ -766,23 +836,38 @@ export class StripeService {
 
     const monthCents = await this.resolveFreeMonthCents(parrain.stripeSubscriptionId);
     if (monthCents <= 0) {
-      this.logger.warn(`Mois offert non chiffrable (parrain ${parrainId}) : reward laissé PENDING`);
+      this.logger.warn(
+        `Mois offert non chiffrable (parrain ${parrainId}) : reward laissé PENDING, ` +
+        'il sera rejoué à la prochaine facture du filleul.',
+      );
       return; // reste PENDING : visible dans « mois à appliquer » côté admin
     }
 
     const customerId =
       parrain.stripeCustomerId ?? (await this.ensureStripeCustomer(parrainId, parrain.email));
 
-    // Avoir sur le solde client (négatif = crédit) → appliqué à sa prochaine facture.
-    await this.stripe.customers.createBalanceTransaction(
-      customerId,
-      {
-        amount: -monthCents,
-        currency: 'eur',
-        description: `Mois offert · parrainage (filleul ${filleulId})`,
-      },
-      { idempotencyKey: `referral-reward-${filleulId}` },
-    );
+    // Garde-fou durable contre le double crédit : la clé d'idempotence Stripe ne
+    // protège que ~24 h, or un rejeu peut intervenir un mois plus tard (crash entre
+    // le crédit et le passage en APPLIED). On vérifie donc côté Stripe qu'aucun
+    // avoir ne porte déjà ce filleul avant d'en créer un.
+    if (await this.hasReferralCredit(customerId, filleulId)) {
+      this.logger.warn(
+        `Avoir de parrainage déjà présent chez Stripe pour le filleul ${filleulId} : ` +
+        'pas de second crédit, la ligne est juste réconciliée.',
+      );
+    } else {
+      // Avoir sur le solde client (négatif = crédit) → appliqué à sa prochaine facture.
+      await this.stripe.customers.createBalanceTransaction(
+        customerId,
+        {
+          amount: -monthCents,
+          currency: 'eur',
+          description: `Mois offert · parrainage (filleul ${filleulId})`,
+          metadata: { referralFilleulId: filleulId },
+        },
+        { idempotencyKey: `referral-reward-${filleulId}` },
+      );
+    }
 
     await this.prisma.referralReward.update({
       where: { id: reward.id },
@@ -791,6 +876,23 @@ export class StripeService {
 
     this.logger.log(
       `Mois offert (${(monthCents / 100).toFixed(2)}€) crédité au parrain ${parrainId} (filleul ${filleulId})`,
+    );
+  }
+
+  /**
+   * Un avoir de parrainage pour ce filleul existe-t-il déjà chez Stripe ?
+   *
+   * Dédoublonnage durable, là où `idempotencyKey` expire (~24 h) alors qu'un rejeu
+   * peut survenir à la facture suivante, un mois plus tard. En cas d'erreur réseau
+   * on répond `false` : la clé d'idempotence reste le filet de court terme, et un
+   * mois offert manquant se rattrape — mieux que de bloquer sur une lecture ratée.
+   */
+  private async hasReferralCredit(customerId: string, filleulId: string): Promise<boolean> {
+    const list = await this.stripe.customers
+      .listBalanceTransactions(customerId, { limit: 100 })
+      .catch(() => null);
+    return (
+      list?.data.some((t) => t.metadata?.['referralFilleulId'] === filleulId) ?? false
     );
   }
 

@@ -395,8 +395,15 @@ export class TradesService {
 
   async update(userId: string, id: string, dto: UpdateTradeDto) {
     const existing = await this.findOne(userId, id);
-    // Changement de setup → revalider l'ownership + actif.
-    if (dto.setupId) await this.setups.assertOwnedActive(userId, dto.setupId);
+    // Setup revalidé UNIQUEMENT s'il change réellement. Le front renvoie le DTO
+    // complet à chaque édition : exiger un setup actif sur un `setupId` inchangé
+    // gelait tout trade dont le setup avait été archivé depuis — corriger une note
+    // renvoyait « Setup invalide », alors que l'archivage est précisément l'action
+    // recommandée pour un setup qui a un historique. Un choix historique qu'on ne
+    // modifie pas n'a pas à être revalidé ; changer de setup reste strict.
+    if (dto.setupId && dto.setupId !== existing.setupId) {
+      await this.setups.assertOwnedActive(userId, dto.setupId);
+    }
 
     const merged = { ...existing, ...dto } as CreateTradeDto;
 

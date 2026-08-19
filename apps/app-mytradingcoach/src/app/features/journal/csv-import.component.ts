@@ -32,11 +32,13 @@ interface ImportResult {
   duplicates: number;
   failed: number;
   total: number;
-  /** Présent quand un fichier de frais (Tradovate Cash history) a été fusionné. */
+  /** Présent dès qu'un fichier de frais (Tradovate Cash history) a été fourni. */
   feesImported?: {
     assigned: number;
     expected: number;
     reconciled: boolean;
+    /** false = fichier fourni mais inexploitable → import sans frais, P&L brut. */
+    merged?: boolean;
     count: number;
   };
 }
@@ -95,12 +97,24 @@ const EMOTION_EMOJIS: Record<string, string> = {
                 </p>
               }
               @if (result()!.feesImported; as f) {
-                <p class="result-sub result-fees">
-                  Frais importés : {{ f.assigned.toFixed(2) }} $ sur {{ f.count }} trade(s)
-                  @if (!f.reconciled) {
-                    <span class="result-fees-warn"> · frais partiellement rapprochés</span>
-                  }
-                </p>
+                @if (f.merged === false) {
+                  <!-- Fichier de frais fourni mais inexploitable : le dire, plutôt que
+                       de laisser croire à un P&L net alors qu'il est brut. -->
+                  <p class="result-sub result-fees-warn" data-testid="import-fees-warning">
+                    ⚠ Frais non rapprochés · P&L brut affiché
+                    <span class="result-fees-hint">
+                      Ton Cash history n'a pas pu être lu : réexporte-le depuis Tradovate
+                      (Transaction ID · Delta · Cash Change Type), ou saisis le total des frais.
+                    </span>
+                  </p>
+                } @else {
+                  <p class="result-sub result-fees">
+                    Frais importés : {{ f.assigned.toFixed(2) }} $ sur {{ f.count }} trade(s)
+                    @if (!f.reconciled) {
+                      <span class="result-fees-warn"> · frais partiellement rapprochés</span>
+                    }
+                  </p>
+                }
               }
               <!-- Note informative (non bloquante) : les exports broker n'ont ni SL ni TP → R:R et note d'exécution indispo. -->
               @if (result()!.created > 0) {
