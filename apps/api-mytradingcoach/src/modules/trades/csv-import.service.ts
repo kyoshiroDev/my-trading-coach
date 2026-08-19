@@ -69,6 +69,13 @@ export interface FeesReport {
   expected: number;
   /** true si |assigned − expected| < 0,01 (frais rapprochés au centime). */
   reconciled: boolean;
+  /**
+   * false quand un fichier de frais a été fourni mais n'a PAS pu être exploité
+   * (Cash history illisible / en-tête non reconnu) : l'import aboutit sans frais,
+   * le P&L affiché est donc brut. Absent (undefined) ⇒ fusion réussie, pour ne pas
+   * casser les consommateurs existants du rapport.
+   */
+  merged?: boolean;
   /** Nombre de trades de l'import. */
   count: number;
 }
@@ -149,6 +156,16 @@ export class CsvImportService {
         this.logger.log(
           `Fusion frais Tradovate : ${merge.assigned}$ attribués sur ${merge.count} trades ` +
           `(attendu ${merge.expected}$, ${merge.reconciled ? 'rapproché' : 'écart'}).`,
+        );
+      } else if (report) {
+        // Échec de fusion (Cash history illisible, en-tête ou colonnes non reconnues) :
+        // l'import réussissait en silence, SANS aucun frais, et le P&L net affiché était
+        // surestimé à l'insu de l'utilisateur. On ne bloque pas — les trades restent
+        // valides — mais on remonte l'échec pour que le front puisse l'afficher.
+        report.fees = { assigned: 0, expected: 0, reconciled: false, merged: false, count: dtos.length };
+        this.logger.warn(
+          `Frais Tradovate NON rapprochés : le Cash history "${feesFile.filename}" n'a pas pu être exploité. ` +
+          `Import poursuivi sans frais (${dtos.length} trades) — P&L brut.`,
         );
       }
     }

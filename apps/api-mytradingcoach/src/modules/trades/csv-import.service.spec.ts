@@ -339,13 +339,43 @@ describe('CsvImportService — Fusion Tradovate (Performance + Cash history)', (
     expect(dtos.every((d) => d.commission == null)).toBe(true);
   });
 
-  it('fichier de frais non-Cash-history → ignoré, pas de fusion', async () => {
+  // PROMPT-185 #8 — un fichier de frais inexploitable ne doit plus passer en silence.
+  // Avant, l'import réussissait sans aucun frais et sans le dire : le P&L net affiché
+  // était surestimé (21,84 $ manquants sur ces fixtures) à l'insu de l'utilisateur.
+  it('fichier de frais non-Cash-history → import poursuivi MAIS frais signalés non rapprochés', async () => {
     const report: { fees?: FeesReport } = {};
-    await svc.parseCSV(
+    const dtos = await svc.parseCSV(
       perf(), 'Performance.csv', undefined, undefined, undefined, undefined,
       { buffer: Buffer.from('a,b,c\n1,2,3'), filename: 'autre.csv' }, report,
     );
-    expect(report.fees).toBeUndefined();
+
+    // Non bloquant : les trades restent valides.
+    expect(dtos).toHaveLength(20);
+    expect(dtos.every((d) => d.commission == null)).toBe(true);
+
+    // Mais l'échec est remonté, pour que le front affiche « P&L brut ».
+    expect(report.fees, 'Un échec de fusion doit être visible, pas silencieux').toBeDefined();
+    expect(report.fees?.merged).toBe(false);
+    expect(report.fees?.reconciled).toBe(false);
+    expect(report.fees?.assigned).toBe(0);
+    expect(report.fees?.count).toBe(20);
+  });
+
+  it('Cash history illisible (vide) → même signalement, import non bloqué', async () => {
+    const report: { fees?: FeesReport } = {};
+    const dtos = await svc.parseCSV(
+      perf(), 'Performance.csv', undefined, undefined, undefined, undefined,
+      { buffer: Buffer.from(''), filename: 'CashHistory.csv' }, report,
+    );
+
+    expect(dtos).toHaveLength(20);
+    expect(report.fees?.merged).toBe(false);
+  });
+
+  it('fusion réussie → aucun signalement d\'échec (merged non false)', async () => {
+    const { report } = await importWithFees();
+    expect(report.fees?.merged).not.toBe(false);
+    expect(report.fees?.assigned).toBe(21.84);
   });
 
   it('métadonnées internes de fill id retirées avant persistance', async () => {
