@@ -37,24 +37,40 @@ describe('StripeService — processReferral (coexistence)', () => {
   let prisma: {
     user: { findFirst: ReturnType<typeof vi.fn>; findUnique: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
     referralCommission: { upsert: ReturnType<typeof vi.fn> };
-    referralReward: { create: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
+    referralReward: {
+      create: ReturnType<typeof vi.fn>;
+      update: ReturnType<typeof vi.fn>;
+      findUnique: ReturnType<typeof vi.fn>;
+    };
   };
   let stripe: {
     subscriptions: { retrieve: ReturnType<typeof vi.fn> };
     prices: { retrieve: ReturnType<typeof vi.fn> };
-    customers: { createBalanceTransaction: ReturnType<typeof vi.fn> };
+    customers: {
+      createBalanceTransaction: ReturnType<typeof vi.fn>;
+      listBalanceTransactions: ReturnType<typeof vi.fn>;
+    };
   };
 
   beforeEach(() => {
     prisma = {
       user: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
       referralCommission: { upsert: vi.fn().mockResolvedValue({}) },
-      referralReward: { create: vi.fn(), update: vi.fn().mockResolvedValue({}) },
+      referralReward: {
+        create: vi.fn(),
+        update: vi.fn().mockResolvedValue({}),
+        // Consulté quand la ligne existe déjà, pour rejouer un PENDING (#7).
+        findUnique: vi.fn().mockResolvedValue(null),
+      },
     };
     stripe = {
       subscriptions: { retrieve: vi.fn().mockResolvedValue({ items: { data: [{ price: { unit_amount: 3900, recurring: { interval: 'month' } } }] } }) },
       prices: { retrieve: vi.fn().mockResolvedValue({ unit_amount: 3900 }) },
-      customers: { createBalanceTransaction: vi.fn().mockResolvedValue({}) },
+      customers: {
+        createBalanceTransaction: vi.fn().mockResolvedValue({}),
+        // Dédoublonnage durable des avoirs de parrainage (#7).
+        listBalanceTransactions: vi.fn().mockResolvedValue({ data: [] }),
+      },
     };
   });
 
@@ -127,6 +143,136 @@ describe('StripeService — processReferral (coexistence)', () => {
 
     expect(prisma.referralReward.create).not.toHaveBeenCalled();
     expect(prisma.referralCommission.upsert).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * PROMPT-185 #7 — un mois offert non chiffrable ne doit plus rester bloqué.
+ *
+ * La ligne `ReferralReward` est créée avant le chiffrage (ancre d'idempotence).
+ * Avant, si `resolveFreeMonthCents` renvoyait 0, elle restait PENDING et la
+ * contrainte `@unique(filleulId)` faisait ressortir immédiatement toute facture
+ * ultérieure : le crédit n'était JAMAIS retenté. Il est désormais rejoué, avec un
+ * garde-fou durable contre le double crédit (la clé d'idempotence Stripe expire
+ * en ~24 h, or le rejeu arrive un mois plus tard).
+ */
+describe('StripeService — mois offert : rejeu des PENDING', () => {
+  const run = (service: StripeService, inv: unknown) =>
+    (service as unknown as { processReferral: (i: unknown) => Promise<void> }).processReferral(inv);
+
+  const invoice = () =>
+    ({
+      customer: 'cus_filleul',
+      amount_paid: 4900,
+      period_start: Math.floor(Date.UTC(2026, 1, 15) / 1000),
+      parent: { subscription_details: { subscription: 'sub_123' } },
+    }) as never;
+
+  function setup(opts: {
+    existingReward?: { id: string; status: string } | null;
+    monthCents?: number;
+    existingCredits?: { metadata: Record<string, string> }[];
+  }) {
+    const prisma = {
+      user: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
+      referralCommission: { upsert: vi.fn() },
+      referralReward: {
+        create: opts.existingReward
+          ? vi.fn().mockRejectedValue(
+              new Prisma.PrismaClientKnownRequestError('dup', { code: 'P2002', clientVersion: 'x' }),
+            )
+          : vi.fn().mockResolvedValue({ id: 'rw_new', status: 'PENDING' }),
+        findUnique: vi.fn().mockResolvedValue(opts.existingReward ?? null),
+        update: vi.fn().mockResolvedValue({}),
+      },
+    };
+    prisma.user.findFirst
+      .mockResolvedValueOnce({ id: 'filleul', referredBy: 'GREGCODE', plan: 'PREMIUM' })
+      .mockResolvedValueOnce({ id: 'parrain', role: 'USER' });
+    prisma.user.findUnique.mockResolvedValue({
+      email: 'p@x.com', stripeCustomerId: 'cus_parrain', stripeSubscriptionId: 'sub_parrain',
+    });
+
+    const cents = opts.monthCents ?? 4900;
+    const stripe = {
+      subscriptions: {
+        retrieve: cents > 0
+          ? vi.fn().mockResolvedValue({ items: { data: [{ price: { unit_amount: cents, recurring: { interval: 'month' } } }] } })
+          : vi.fn().mockRejectedValue(new Error('injoignable')),
+      },
+      prices: { retrieve: vi.fn().mockRejectedValue(new Error('placeholder')) },
+      customers: {
+        createBalanceTransaction: vi.fn().mockResolvedValue({}),
+        listBalanceTransactions: vi.fn().mockResolvedValue({ data: opts.existingCredits ?? [] }),
+      },
+    };
+    return { prisma, stripe, service: makeService(prisma, stripe) };
+  }
+
+  it('reward PENDING existante → le credit est REJOUE (plus de blocage definitif)', async () => {
+    const { prisma, stripe, service } = setup({
+      existingReward: { id: 'rw_pending', status: 'PENDING' },
+    });
+
+    await run(service, invoice());
+
+    expect(
+      stripe.customers.createBalanceTransaction,
+      'Un PENDING doit être rejoué à la facture suivante, pas ignoré',
+    ).toHaveBeenCalledTimes(1);
+    expect(prisma.referralReward.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'rw_pending' },
+        data: expect.objectContaining({ status: 'APPLIED' }),
+      }),
+    );
+  });
+
+  it('reward deja APPLIED → aucun second credit', async () => {
+    const { stripe, service } = setup({ existingReward: { id: 'rw_ok', status: 'APPLIED' } });
+
+    await run(service, invoice());
+
+    expect(stripe.customers.createBalanceTransaction).not.toHaveBeenCalled();
+  });
+
+  it('avoir deja present chez Stripe → reconciliation sans double credit', async () => {
+    // Cas du crash entre le crédit et le passage en APPLIED, rejoué > 24 h plus tard :
+    // la clé d'idempotence Stripe a expiré, seul ce garde-fou empêche le doublon.
+    const { prisma, stripe, service } = setup({
+      existingReward: { id: 'rw_pending', status: 'PENDING' },
+      existingCredits: [{ metadata: { referralFilleulId: 'filleul' } }],
+    });
+
+    await run(service, invoice());
+
+    expect(
+      stripe.customers.createBalanceTransaction,
+      'Le crédit existe déjà chez Stripe : en recréer un doublerait le cadeau',
+    ).not.toHaveBeenCalled();
+    // La ligne est tout de même réconciliée en APPLIED.
+    expect(prisma.referralReward.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ status: 'APPLIED' }) }),
+    );
+  });
+
+  it('chiffrage impossible → reste PENDING, sans credit, en attente du prochain passage', async () => {
+    const { prisma, stripe, service } = setup({ monthCents: 0 });
+
+    await run(service, invoice());
+
+    expect(stripe.customers.createBalanceTransaction).not.toHaveBeenCalled();
+    expect(prisma.referralReward.update).not.toHaveBeenCalled();
+  });
+
+  it('le credit porte le filleul en metadata (base du dedoublonnage durable)', async () => {
+    const { stripe, service } = setup({});
+
+    await run(service, invoice());
+
+    expect(stripe.customers.createBalanceTransaction.mock.calls[0][1].metadata).toEqual({
+      referralFilleulId: 'filleul',
+    });
   });
 });
 
