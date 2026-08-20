@@ -434,4 +434,32 @@ describe('CsvImportService — fichier non reconnu vs broker inconnu', () => {
     const msg = await expectMessage('');
     expect(msg).toContain('Fichier vide');
   });
+
+  // PROMPT-187 — garde-fou acquisition : le jour où NinjaTrader nous envoie du trafic,
+  // leurs exports ne doivent SURTOUT pas tomber dans « format invalide ». Ils sont
+  // encore non supportés, donc leur place est la branche « broker non reconnu → IA
+  // Premium », qui elle a du sens. Ce test fige ce classement.
+  it.each([
+    [
+      'NinjaTrader (Trade Performance)',
+      'Instrument,Account,Market pos.,Quantity,Entry price,Exit price,Entry time,Exit time,Profit,Commission\n' +
+        'MNQ 09-26,Sim101,Long,1,29903.50,29915.00,10/07/2026 15:33:34,10/07/2026 15:34:00,23.00,0.52\n',
+    ],
+    [
+      'NinjaTrader (Executions)',
+      'Instrument,Time,Action,Quantity,Price,Commission,Account\n' +
+        'MNQ 09-26,10/07/2026 15:33:34,Buy,1,29903.50,0.52,Sim101\n',
+    ],
+    [
+      'export générique plausible',
+      'Date,Symbol,Side,Qty,Price,PnL\n2026-07-10,MNQ,BUY,1,29903.5,23\n',
+    ],
+  ])('%s → classé « broker non reconnu » (IA Premium), pas « format invalide »', async (_label, csv) => {
+    const msg = await expectMessage(csv);
+    expect(
+      msg,
+      'Un export broker plausible ne doit jamais être rejeté comme un fichier cassé',
+    ).not.toContain('ne ressemble pas à un export de trades');
+    expect(msg).toContain('Premium');
+  });
 });
