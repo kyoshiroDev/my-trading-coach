@@ -136,8 +136,9 @@ describe('CsvImportService — séparateur européen & limites', () => {
     const oldEnv = process.env['NODE_ENV'];
     process.env['NODE_ENV'] = 'production'; // débloque le chemin IA pour atteindre la limite
     try {
-      const rows = Array.from({ length: 2001 }, (_, i) => `v${i},w,z`);
-      const csv = ['foo,bar,baz', ...rows].join('\n');
+      const rows = Array.from({ length: 2001 }, (_, i) => `AAPL,BUY,1,${100 + i},2026-01-05`);
+      // En-tête crédible mais broker non supporté (cf. looksLikeTradeExport).
+      const csv = ['symbol,side,quantity,price,date', ...rows].join('\n');
       await expect(
         svc.parseCSV(Buffer.from(csv), 'unknown.csv', undefined, PREMIUM_ACCESS),
       ).rejects.toThrow(/2000/);
@@ -156,7 +157,7 @@ describe('CsvImportService — chemin IA réservé Premium', () => {
   it('refuse le broker inconnu sans Premium (message clair, 0 appel Anthropic)', async () => {
     const create = vi.fn();
     (svc as any).anthropicClient.create = create;
-    const csv = ['foo,bar,baz', 'v1,w,z', 'v2,w,z'].join('\n');
+    const csv = ['symbol,side,quantity,price,date', 'AAPL,BUY,1,180,2026-01-05', 'MSFT,SELL,2,400,2026-01-06'].join('\n');
 
     await expect(
       svc.parseCSV(Buffer.from(csv), 'unknown.csv', undefined, {
@@ -201,8 +202,8 @@ describe('CsvImportService — chemin IA par lots', () => {
     const oldEnv = process.env['NODE_ENV'];
     process.env['NODE_ENV'] = 'production'; // chemin IA actif (Premium + prod)
     try {
-      const rows = Array.from({ length: 600 }, (_, i) => `v${i},w,z`);
-      const csv = ['foo,bar,baz', ...rows].join('\n');
+      const rows = Array.from({ length: 600 }, (_, i) => `AAPL,BUY,1,${100 + i},2026-01-05`);
+      const csv = ['symbol,side,quantity,price,date', ...rows].join('\n');
       const dtos = await svc.parseCSV(
         Buffer.from(csv),
         'unknown.csv',
@@ -384,5 +385,81 @@ describe('CsvImportService — Fusion Tradovate (Performance + Cash history)', (
       expect(d).not.toHaveProperty('_buyFillId');
       expect(d).not.toHaveProperty('_sellFillId');
     }
+  });
+});
+
+// PROMPT-186 #6 — un fichier hors sujet ne doit pas déclencher l'upsell Premium.
+// Constat navigateur : un CSV quelconque ou une image renommée .csv renvoyaient
+// « … L'import intelligent par IA est réservé au plan Premium », alors que Premium
+// n'aurait rien résolu — un débutant qui se trompe de fichier comprenait « il faut payer ».
+describe('CsvImportService — fichier non reconnu vs broker inconnu', () => {
+  const FREE_ACCESS = { plan: Plan.FREE, role: Role.USER, trialEndsAt: null };
+
+  async function expectMessage(csv: string | Buffer, access = FREE_ACCESS) {
+    const svc = makeService();
+    const buf = Buffer.isBuffer(csv) ? csv : Buffer.from(csv);
+    try {
+      await svc.parseCSV(buf, 'fichier.csv', 'user-1', access);
+      throw new Error('aurait dû lever');
+    } catch (e) {
+      return (e as Error).message;
+    }
+  }
+
+  it('CSV aux colonnes arbitraires → « ne ressemble pas à un export de trades », SANS upsell', async () => {
+    const msg = await expectMessage('colonneA,colonneB\nsalut,monde\n');
+    expect(msg).toContain('ne ressemble pas à un export de trades');
+    expect(msg, "Pas d'upsell : Premium ne résoudrait rien ici").not.toContain('Premium');
+  });
+
+  it('image renommée .csv → même message neutre', async () => {
+    const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 1, 2, 3, 4, 5, 10, 65, 66]);
+    const msg = await expectMessage(png);
+    expect(msg).toContain('ne ressemble pas à un export de trades');
+    expect(msg).not.toContain('Premium');
+  });
+
+  it('vrai export de trades d\'un broker inconnu → upsell Premium légitime', async () => {
+    // En-tête crédible (symbol/side/qty/price/date) mais broker non supporté.
+    const msg = await expectMessage(
+      'symbol,side,quantity,price,date\nAAPL,BUY,10,180.5,2026-01-05\n',
+    );
+    expect(
+      msg,
+      'Ici Premium résout réellement le problème (import IA) : upsell attendu',
+    ).toContain('Premium');
+  });
+
+  it('fichier vide → message dédié (inchangé)', async () => {
+    const msg = await expectMessage('');
+    expect(msg).toContain('Fichier vide');
+  });
+
+  // PROMPT-187 — garde-fou acquisition : le jour où NinjaTrader nous envoie du trafic,
+  // leurs exports ne doivent SURTOUT pas tomber dans « format invalide ». Ils sont
+  // encore non supportés, donc leur place est la branche « broker non reconnu → IA
+  // Premium », qui elle a du sens. Ce test fige ce classement.
+  it.each([
+    [
+      'NinjaTrader (Trade Performance)',
+      'Instrument,Account,Market pos.,Quantity,Entry price,Exit price,Entry time,Exit time,Profit,Commission\n' +
+        'MNQ 09-26,Sim101,Long,1,29903.50,29915.00,10/07/2026 15:33:34,10/07/2026 15:34:00,23.00,0.52\n',
+    ],
+    [
+      'NinjaTrader (Executions)',
+      'Instrument,Time,Action,Quantity,Price,Commission,Account\n' +
+        'MNQ 09-26,10/07/2026 15:33:34,Buy,1,29903.50,0.52,Sim101\n',
+    ],
+    [
+      'export générique plausible',
+      'Date,Symbol,Side,Qty,Price,PnL\n2026-07-10,MNQ,BUY,1,29903.5,23\n',
+    ],
+  ])('%s → classé « broker non reconnu » (IA Premium), pas « format invalide »', async (_label, csv) => {
+    const msg = await expectMessage(csv);
+    expect(
+      msg,
+      'Un export broker plausible ne doit jamais être rejeté comme un fichier cassé',
+    ).not.toContain('ne ressemble pas à un export de trades');
+    expect(msg).toContain('Premium');
   });
 });

@@ -321,6 +321,34 @@
         <div class="wizard-body">
           <div class="celebrate"><span class="celebrate-ic">🎉</span></div>
           <h2 class="step-title center">Tu es prêt !</h2>
+
+          <!-- Récapitulatif d'import : la modale se ferme aussitôt, l'utilisateur n'a
+               jamais vu son résultat. Sans ça, il finit l'onboarding sans savoir si
+               son historique est bien arrivé. -->
+          @if (importSummary(); as imp) {
+            <div class="ob-import-recap" data-testid="onboarding-import-recap">
+              <div class="ob-recap-main">
+                ✅ {{ imp.created }} trade{{ imp.created > 1 ? 's' : '' }} importé{{ imp.created > 1 ? 's' : '' }}
+                @if (imp.duplicates > 0) {
+                  <span class="ob-recap-sub">· {{ imp.duplicates }} doublon(s) ignoré(s)</span>
+                }
+              </div>
+              @if (imp.feesImported; as f) {
+                @if (f.merged === false) {
+                  <div class="ob-recap-warn" data-testid="onboarding-import-fees-warning">
+                    ⚠ Frais non rapprochés · P&L brut affiché — ton Cash history n'a pas pu être lu.
+                  </div>
+                } @else {
+                  <div class="ob-recap-sub">Frais importés : {{ f.assigned.toFixed(2) }} $ sur {{ f.count }} trade(s)</div>
+                }
+              } @else {
+                <div class="ob-recap-warn" data-testid="onboarding-import-fees-warning">
+                  ⚠ Frais non importés · P&L brut — ajoute ton Cash history depuis le journal pour des frais exacts.
+                </div>
+              }
+            </div>
+          }
+
           <p class="step-desc center">Ton compagnon t'attend. Une dernière chose si tu veux aller plus loin :</p>
 
           <a class="discord-card discord-card-link" [href]="discordUrl" target="_blank" rel="noopener">
@@ -337,7 +365,7 @@
           </a>
 
           <div class="wizard-footer">
-            <button class="btn-next btn-dashboard" data-testid="onboarding-dashboard" (click)="completed.emit()">
+            <button class="btn-next btn-dashboard" data-testid="onboarding-dashboard" (click)="finish()">
               Accéder à mon dashboard →
             </button>
           </div>
@@ -362,7 +390,7 @@
 <mtc-csv-import
   [open]="csvOpen()"
   [allowFeesFile]="true"
-  (imported)="onCsvImported()"
+  (imported)="onCsvImported($event)"
   (dismissed)="onCsvDismissed()"
 />
 

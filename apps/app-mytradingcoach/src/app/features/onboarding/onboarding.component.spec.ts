@@ -66,11 +66,22 @@ const MINIMAL_TEMPLATE = `
   @if (step() > 2) {
     <div>step {{ step() }}</div>
   }
+  @if (step() === 9 && importSummary(); as imp) {
+    <div data-testid="onboarding-import-recap">{{ imp.created }} importés</div>
+    @if (imp.feesImported; as f) {
+      @if (f.merged === false) { <div data-testid="onboarding-import-fees-warning">frais non rapprochés</div> }
+    } @else {
+      <div data-testid="onboarding-import-fees-warning">frais non importés</div>
+    }
+  }
 `;
 
 describe('OnboardingComponent', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
+    // Le wizard persiste sa progression (PROMPT-186 #8) : sans purge, un test
+    // reprendrait l'étape laissée par le précédent.
+    localStorage.clear();
 
     TestBed.configureTestingModule({
       imports: [OnboardingComponent],
@@ -285,5 +296,138 @@ describe('OnboardingComponent', () => {
     expect(u.tradingAssets).toEqual(['BTCUSDT']);
     expect(u.favoriteAsset).toBe('BTCUSDT');
     expect(userStore.profileIncomplete()).toBe(false);
+  });
+
+  // PROMPT-186 #4 — la modale d'import se ferme aussitôt (step 9) : sans récapitulatif,
+  // l'utilisateur terminait l'onboarding sans savoir si son historique était arrivé.
+  describe("confirmation d'import à l'écran final", () => {
+    function importer(result: unknown) {
+      const fixture = TestBed.createComponent(OnboardingComponent);
+      fixture.detectChanges();
+      const c = fixture.componentInstance as unknown as { onCsvImported: (r: unknown) => void };
+      c.onCsvImported(result);
+      fixture.detectChanges();
+      return fixture;
+    }
+
+    it('affiche le nombre de trades importés', () => {
+      const fixture = importer({ created: 20, duplicates: 0, failed: 0, total: 20,
+        feesImported: { assigned: 21.84, expected: 21.84, reconciled: true, count: 20 } });
+
+      const recap = fixture.nativeElement.querySelector('[data-testid="onboarding-import-recap"]');
+      expect(recap, "Le récapitulatif d'import doit être visible avant l'écran final").toBeTruthy();
+      expect(recap.textContent).toContain('20');
+      expect(fixture.nativeElement.querySelector('[data-testid="onboarding-import-fees-warning"]')).toBeFalsy();
+    });
+
+    it('relaie l\'avertissement « frais non rapprochés » (PROMPT-185 #8)', () => {
+      const fixture = importer({ created: 20, duplicates: 0, failed: 0, total: 20,
+        feesImported: { assigned: 0, expected: 0, reconciled: false, merged: false, count: 20 } });
+
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="onboarding-import-fees-warning"]'),
+        "L'avertissement frais était invisible dans le parcours onboarding",
+      ).toBeTruthy();
+    });
+
+    it('import sans Cash history → rappel frais non importés (#7)', () => {
+      const fixture = importer({ created: 20, duplicates: 0, failed: 0, total: 20 });
+
+      expect(fixture.nativeElement.querySelector('[data-testid="onboarding-import-fees-warning"]')).toBeTruthy();
+    });
+
+    it('aucun import (saisie manuelle / skip) → pas de récapitulatif', () => {
+      const fixture = TestBed.createComponent(OnboardingComponent);
+      fixture.detectChanges();
+      const c = fixture.componentInstance as unknown as { step: { set: (n: number) => void } };
+      c.step.set(9);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('[data-testid="onboarding-import-recap"]')).toBeFalsy();
+    });
+  });
+});
+
+// PROMPT-186 #8 — un rechargement au milieu du wizard ne doit plus tout reperdre.
+// Constat navigateur : reload après l'étape Capital → retour à l'étape 1, marché,
+// objectif et capital à ressaisir (rien n'est persisté côté serveur avant l'étape 5).
+describe('OnboardingComponent — reprise après rechargement', () => {
+  const KEY = 'mtc.onboarding.progress';
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    localStorage.clear();
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [OnboardingComponent],
+      providers: [
+        { provide: UsersApi, useValue: mockUsersApi },
+        { provide: TradesApi, useValue: mockTradesApi },
+        { provide: TradesStore, useValue: mockTradesStore },
+        { provide: SetupsStore, useValue: mockSetupsStore },
+        { provide: AuthService, useValue: mockAuth },
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    });
+    TestBed.overrideComponent(OnboardingComponent, {
+      set: { template: '<div></div>', styleUrls: [], styleUrl: undefined as unknown as string, schemas: [NO_ERRORS_SCHEMA] },
+    });
+    await TestBed.compileComponents();
+  });
+
+  function mount() {
+    const fixture = TestBed.createComponent(OnboardingComponent);
+    fixture.detectChanges();
+    return { fixture, c: fixture.componentInstance as any };
+  }
+
+  it('reprend a l etape atteinte, avec les saisies (marche, objectif, capital)', () => {
+    const first = mount();
+    first.c.selectMarket('CRYPTO');
+    first.c.selectGoal('DISCIPLINE');
+    first.c.capitalInput.set('5000');
+    first.c.step.set(5);
+    first.fixture.detectChanges();
+
+    // « Rechargement » : nouveau composant, même stockage local.
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [OnboardingComponent],
+      providers: [
+        { provide: UsersApi, useValue: mockUsersApi },
+        { provide: TradesApi, useValue: mockTradesApi },
+        { provide: TradesStore, useValue: mockTradesStore },
+        { provide: SetupsStore, useValue: mockSetupsStore },
+        { provide: AuthService, useValue: mockAuth },
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    });
+    TestBed.overrideComponent(OnboardingComponent, {
+      set: { template: '<div></div>', styleUrls: [], styleUrl: undefined as unknown as string, schemas: [NO_ERRORS_SCHEMA] },
+    });
+    const again = mount();
+
+    expect(again.c.step(), 'Le wizard doit reprendre a l etape atteinte, pas a 1').toBe(5);
+    expect(again.c.selectedMarket()).toBe('CRYPTO');
+    expect(again.c.selectedGoal()).toBe('DISCIPLINE');
+    expect(again.c.capitalInput()).toBe('5000');
+  });
+
+  it('la fin de l onboarding purge la progression', () => {
+    const { c } = mount();
+    c.step.set(9);
+    c.finish();
+    expect(localStorage.getItem(KEY)).toBeNull();
+  });
+
+  it('snapshot illisible → repart proprement a l etape 1', () => {
+    localStorage.setItem(KEY, '{ ceci nest pas du json');
+    const { c } = mount();
+    expect(c.step()).toBe(1);
+  });
+
+  it('etape hors bornes → ignoree', () => {
+    localStorage.setItem(KEY, JSON.stringify({ step: 42, market: 'CRYPTO' }));
+    const { c } = mount();
+    expect(c.step()).toBe(1);
   });
 });
