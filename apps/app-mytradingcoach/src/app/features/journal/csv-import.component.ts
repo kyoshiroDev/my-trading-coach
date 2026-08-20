@@ -116,6 +116,16 @@ const EMOTION_EMOJIS: Record<string, string> = {
                   </p>
                 }
               }
+              @if (feesReminder()) {
+                <!-- Rien n'était dit après coup : le P&L paraissait net alors qu'il est brut. -->
+                <p class="result-sub result-fees-warn" data-testid="import-fees-reminder">
+                  ⚠ Frais non importés · P&L brut
+                  <span class="result-fees-hint">
+                    Ajoute ton Cash history Tradovate (ou saisis le total des frais)
+                    pour un P&L net au centime.
+                  </span>
+                </p>
+              }
               <!-- Note informative (non bloquante) : les exports broker n'ont ni SL ni TP → R:R et note d'exécution indispo. -->
               @if (result()!.created > 0) {
                 <p class="import-no-stop-note">
@@ -385,6 +395,21 @@ export class CsvImportComponent {
   protected readonly setupId = signal<string>('');
   // Setups actifs du user (store partagé, liste dynamique).
   protected readonly setups = this.setupsStore.active;
+
+  /**
+   * Import Tradovate abouti SANS aucun frais : ni Cash history, ni total saisi.
+   * Un hint existait avant l'import, plus rien après — l'écart (21,84 $ sur nos
+   * fixtures) passait inaperçu et le P&L affiché paraissait net (PROMPT-186 #7).
+   * Restreint à Tradovate : chez les autres brokers, les frais sont dans le CSV.
+   */
+  protected readonly feesReminder = computed(() => {
+    const r = this.result();
+    if (!r || r.created === 0) return false;
+    if (r.feesImported) return false; // frais fusionnés, ou échec déjà signalé
+    if (this.source() !== 'tradovate') return false;
+    if (this.feesFile()) return false;
+    return parseDecimal(this.totalFees()) == null;
+  });
 
   /** Couleur du setup sélectionné (pastille à côté du select). */
   protected readonly selectedSetupColor = computed(
