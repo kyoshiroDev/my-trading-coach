@@ -3,6 +3,7 @@ import {
   Component,
   DestroyRef,
   computed,
+  effect,
   inject,
   output,
   signal,
@@ -57,6 +58,29 @@ const GOALS: { value: Goal; label: string; emoji: string; desc: string }[] = [
 ];
 
 const DISCORD_URL = 'https://discord.gg/TDK2npvkSN';
+
+/**
+ * Progression du wizard, conservée localement (PROMPT-186 #8).
+ *
+ * Le wizard bloque toutes les routes tant qu'il n'est pas terminé — c'est voulu —
+ * mais un simple rechargement repartait à l'étape 1 : marché, objectif et capital
+ * étaient à ressaisir, puisque rien n'est persisté côté serveur avant l'étape 5.
+ * Un débutant interrompu (onglet fermé, réseau, curiosité) payait plein pot.
+ */
+const PROGRESS_KEY = 'mtc.onboarding.progress';
+
+interface OnboardingProgress {
+  step: Step;
+  market: Market | null;
+  goal: Goal | null;
+  currency: 'USD' | 'EUR';
+  capital: string;
+  style: TradingStyle | null;
+  strategy: string;
+  sessions: TradingSession[];
+  assets: string[];
+  favorite: string | null;
+}
 
 @Component({
   selector: 'mtc-onboarding',
@@ -123,6 +147,27 @@ export class OnboardingComponent {
 
   constructor() {
     this.setupsStore.load();
+    this.restoreProgress();
+
+    // Sauvegarde à chaque changement : l'effet lit les signaux (donc les suit) et
+    // n'écrit que dans le stockage local — aucune boucle possible.
+    effect(() => {
+      const snapshot: OnboardingProgress = {
+        step: this.step(),
+        market: this.selectedMarket(),
+        goal: this.selectedGoal(),
+        currency: this.selectedCurrency(),
+        capital: this.capitalInput(),
+        style: this.selectedStyle(),
+        strategy: this.strategyDescription(),
+        sessions: this.selectedSessions(),
+        assets: this.selectedAssets(),
+        favorite: this.favoriteAsset(),
+      };
+      try {
+        localStorage.setItem(PROGRESS_KEY, JSON.stringify(snapshot));
+      } catch { /* stockage indispo (mode privé) : on dégrade sans bruit */ }
+    });
     this.assetSearch$
       .pipe(
         debounceTime(300),
@@ -136,6 +181,41 @@ export class OnboardingComponent {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((res) => this.assetResults.set(res.data ?? []));
+  }
+
+  /** Reprend là où l'utilisateur s'était arrêté. Toute anomalie → repart proprement à 1. */
+  private restoreProgress(): void {
+    let raw: string | null = null;
+    try { raw = localStorage.getItem(PROGRESS_KEY); } catch { return; }
+    if (!raw) return;
+    try {
+      const p = JSON.parse(raw) as Partial<OnboardingProgress>;
+      const step = p.step;
+      if (typeof step !== 'number' || step < 1 || step > 9) return;
+      this.selectedMarket.set(p.market ?? null);
+      this.selectedGoal.set(p.goal ?? null);
+      this.selectedCurrency.set(p.currency === 'EUR' ? 'EUR' : 'USD');
+      this.capitalInput.set(typeof p.capital === 'string' ? p.capital : '');
+      this.selectedStyle.set(p.style ?? null);
+      this.strategyDescription.set(typeof p.strategy === 'string' ? p.strategy : '');
+      this.selectedSessions.set(Array.isArray(p.sessions) ? p.sessions : []);
+      this.selectedAssets.set(Array.isArray(p.assets) ? p.assets : []);
+      this.favoriteAsset.set(p.favorite ?? null);
+      // L'étape 8 se rouvre sur le CHOIX du premier trade : rouvrir d'autorité une
+      // modale de saisie ou d'import après un rechargement serait déroutant.
+      this.step.set(step as Step);
+      this.tradeChoice.set('choice');
+    } catch { /* snapshot illisible : on ignore, l'utilisateur repart de l'étape 1 */ }
+  }
+
+  private clearProgress(): void {
+    try { localStorage.removeItem(PROGRESS_KEY); } catch { /* rien à nettoyer */ }
+  }
+
+  /** Fin de l'onboarding : la progression n'a plus lieu d'être conservée. */
+  protected finish(): void {
+    this.clearProgress();
+    this.completed.emit();
   }
 
   protected selectMarket(m: Market)          { this.selectedMarket.set(m); }
