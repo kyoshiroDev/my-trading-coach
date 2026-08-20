@@ -639,10 +639,14 @@ export class DashboardComponent {
     }
     const account = this.selectedAccount.selected();
     if (account) return account.metrics.startingBalance ?? 0;
-    return this.selectedAccount
-      .accounts()
-      .filter((a) => a.status !== 'ARCHIVED')
-      .reduce((s, a) => s + (a.metrics.startingBalance ?? 0), 0);
+    const active = this.selectedAccount.accounts().filter((a) => a.status !== 'ARCHIVED');
+    // AUCUN compte (l'utilisateur a passé l'ajout de trade : le compte n'est créé
+    // qu'au premier trade) → le capital déclaré à l'onboarding faisait place à
+    // « $0.00 », comme si sa saisie avait été perdue. On retombe donc sur le profil,
+    // exactement comme le backend le fait à la création implicite du compte
+    // (accounts.service ensureDefaultAccountId). PROMPT-186 #5.
+    if (active.length === 0) return this.userStore.startingCapital();
+    return active.reduce((s, a) => s + (a.metrics.startingBalance ?? 0), 0);
   });
   protected readonly currentCapital = computed(() =>
     this.baseCapital() + (this.summary()?.totalPnl ?? 0),
