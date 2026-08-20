@@ -18,6 +18,22 @@ import { LoginDto } from './dto/login.dto';
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 heure
 
+/**
+ * Violation d'unicité Prisma sur l'email (P2002) : deux inscriptions concurrentes
+ * avec la même adresse. On la traduit en 409 plutôt que de laisser filer un 500.
+ */
+function isEmailAlreadyTaken(err: unknown): boolean {
+  if (!(err instanceof Prisma.PrismaClientKnownRequestError) || err.code !== 'P2002') {
+    return false;
+  }
+  const target = err.meta?.['target'];
+  // `target` = champs en conflit ; absent selon l'adaptateur → on reste prudent et
+  // on considère le conflit comme portant sur l'email (seul unique de la création).
+  if (Array.isArray(target)) return target.includes('email');
+  if (typeof target === 'string') return target.includes('email');
+  return true;
+}
+
 // Champs renvoyés au front pour représenter l'utilisateur courant.
 // Source de vérité unique utilisée par getMe / refresh / login / register
 // afin que le store front (et profileIncomplete) ait toujours les mêmes
@@ -80,26 +96,39 @@ export class AuthService {
       if (ambassador?.referralCode) referredBy = ambassador.referralCode;
     }
 
-    const user = await this.prisma.user.create({
-      data: {
-        email: dto.email,
-        password: hashedPassword,
-        name: dto.name,
-        referredBy,
-        unsubToken: crypto.randomBytes(32).toString('hex'),
-        marketingConsent: dto.marketingConsent === true,
-        marketingConsentAt: dto.marketingConsent === true ? new Date() : null,
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        plan: true,
-        role: true,
-        onboardingCompleted: true,
-        createdAt: true,
-      },
-    });
+    // Le `findUnique` ci-dessus donne un message rapide, mais ne protège PAS de la
+    // concurrence : sur un double-clic, les deux requêtes le passent et la seconde
+    // violait `User_email_key` → P2002 non rattrapé → 500 sur le tout premier geste
+    // du nouvel utilisateur (PROMPT-186 #3). La contrainte de base est la vraie
+    // garantie ; on la traduit ici dans le 409 que le front sait déjà afficher.
+    let user;
+    try {
+      user = await this.prisma.user.create({
+        data: {
+          email: dto.email,
+          password: hashedPassword,
+          name: dto.name,
+          referredBy,
+          unsubToken: crypto.randomBytes(32).toString('hex'),
+          marketingConsent: dto.marketingConsent === true,
+          marketingConsentAt: dto.marketingConsent === true ? new Date() : null,
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          plan: true,
+          role: true,
+          onboardingCompleted: true,
+          createdAt: true,
+        },
+      });
+    } catch (err) {
+      if (isEmailAlreadyTaken(err)) {
+        throw new ConflictException('Cet email est déjà utilisé');
+      }
+      throw err;
+    }
 
     // Setups par défaut dès le signup : le sélecteur de trade n'est jamais vide
     // et le coach IA a du contexte dès le 1er trade (aucune étape obligatoire).
