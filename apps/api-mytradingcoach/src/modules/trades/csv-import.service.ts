@@ -128,8 +128,22 @@ export class CsvImportService {
       dtos = this.mapNormalizedCsvToDto(csv);
       this.logger.log(`CSV "${filename}" [${broker}] → ${dtos.length} trades (local, sans IA)`);
     } else {
-      // 4. Broker inconnu → chemin IA (Anthropic) : réservé Premium + prod uniquement.
-      //    Les brokers connus (ci-dessus) restent gratuits pour tous les plans.
+      // 4a. Le fichier ressemble-t-il seulement à un export de trades ? Un fichier
+      //     hors sujet (image renommée .csv, tableur quelconque) renvoyait le message
+      //     « broker non reconnu → passe Premium » : on vendait un upgrade qui n'aurait
+      //     rien résolu, et un débutant qui se trompe de fichier comprenait « il faut
+      //     payer » (PROMPT-186 #6). Message neutre, aucun upsell, quel que soit le plan.
+      if (!this.looksLikeTradeExport(normalizedLines[0] ?? '', content)) {
+        throw new BadRequestException(
+          "Ce fichier ne ressemble pas à un export de trades. " +
+          "Vérifie que tu exportes bien l'historique de tes trades depuis ton broker (CSV ou Excel). " +
+          "Formats reconnus automatiquement : Tradovate, MEXC, Binance, Bybit, MT4/5, IBKR.",
+        );
+      }
+
+      // 4b. Vrai fichier de trades, mais broker inconnu → chemin IA (Anthropic) :
+      //     réservé Premium + prod. Ici l'upsell est légitime : Premium résoudrait
+      //     réellement le problème. Les brokers connus restent gratuits pour tous.
       if (!this.aiImportAllowed(access)) {
         throw new BadRequestException(
           "Ce broker n'est pas encore reconnu automatiquement. " +
@@ -330,6 +344,34 @@ export class CsvImportService {
       );
     }
     return { assigned, expected, reconciled, count: dtos.length };
+  }
+
+  /**
+   * Le fichier ressemble-t-il à un export de trades d'un broker (fût-il inconnu) ?
+   *
+   * Sert à ne PAS proposer l'upsell Premium quand il ne résoudrait rien : une image
+   * renommée `.csv` ou un tableur hors sujet ne deviendront pas importables avec un
+   * abonnement. Deux garde-fous, volontairement permissifs (on préfère laisser passer
+   * un vrai export exotique vers le chemin IA que bloquer un utilisateur légitime) :
+   *  - contenu binaire (octets de contrôle) → ce n'est pas un CSV ;
+   *  - en-tête sans au moins deux mots du vocabulaire d'un export de trades.
+   */
+  private looksLikeTradeExport(header: string, content: string): boolean {
+    // Une image/PDF renommé .csv contient des octets de contrôle dès les 1ers Ko.
+    if (/[\u0000-\u0008\u000E-\u001F]/.test(content.slice(0, 2000))) return false;
+
+    const h = header.toLowerCase();
+    const vocabulary = [
+      'symbol', 'ticker', 'instrument', 'asset', 'contract', 'market', 'pair',
+      'price', 'entry', 'exit', 'open', 'close', 'fill',
+      'qty', 'quantity', 'size', 'volume', 'lots',
+      'side', 'direction', 'type', 'buy', 'sell', 'long', 'short',
+      'pnl', 'p&l', 'profit', 'realized', 'realised', 'gain',
+      'date', 'time', 'timestamp',
+      'commission', 'fee', 'order', 'trade', 'position',
+    ];
+    const hits = vocabulary.filter((word) => h.includes(word));
+    return new Set(hits).size >= 2;
   }
 
   /**
