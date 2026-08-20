@@ -360,6 +360,9 @@ export class CsvImportComponent {
 
   protected readonly isDragging = signal(false);
   protected readonly isLoading = signal(false);
+  /** Verrou anti-double-soumission : champ simple (pas un signal) pour être vu
+   *  immédiatement par le 2ᵉ clic, sans attendre un cycle de rendu. */
+  private uploading = false;
   protected readonly result = signal<ImportResult | null>(null);
   protected readonly error = signal<string | null>(null);
   protected readonly selectedFile = signal<File | null>(null);
@@ -531,6 +534,12 @@ export class CsvImportComponent {
   protected upload() {
     const file = this.selectedFile();
     if (!file || !this.canImport()) return;
+    // Verrou SYNCHRONE, posé avant tout await : `[disabled]="isLoading()"` ne protège
+    // pas d'un double-clic natif, dont les deux événements partent avant le re-render
+    // Angular — d'où deux imports concurrents et un historique dupliqué (PROMPT-186 #1).
+    // La contrainte d'unicité en base reste le filet définitif ; ceci évite l'aller-retour.
+    if (this.uploading) return;
+    this.uploading = true;
 
     const formData = new FormData();
     formData.append('file', file, file.name);
@@ -565,6 +574,7 @@ export class CsvImportComponent {
         next: (res) => {
           this.result.set(res.data);
           this.isLoading.set(false);
+          this.uploading = false;
           // Refresh coordonné des stores globalement périmés par l'import (PROMPT-175) :
           // - comptes : l'import a pu créer le compte par défaut → sinon dashboard « 0 compte / $0 ».
           // - setups : le `tradeCount` par setup change → sinon « jamais utilisé » sur le Profil.
@@ -576,6 +586,7 @@ export class CsvImportComponent {
         error: (err) => {
           this.error.set(err.error?.message ?? "Erreur lors de l'importation");
           this.isLoading.set(false);
+          this.uploading = false;
         },
       });
   }
@@ -587,6 +598,7 @@ export class CsvImportComponent {
     this.totalFees.set('');
     this.feesDisabledReason.set(null);
     this.source.set('tradovate');
+    this.uploading = false;
     this.clearFeesFile();
   }
 }
