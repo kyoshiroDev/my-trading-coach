@@ -357,8 +357,14 @@ export class CsvImportService {
    *  - en-tête sans au moins deux mots du vocabulaire d'un export de trades.
    */
   private looksLikeTradeExport(header: string, content: string): boolean {
-    // Une image/PDF renommé .csv contient des octets de contrôle dès les 1ers Ko.
-    if (/[\u0000-\u0008\u000E-\u001F]/.test(content.slice(0, 2000))) return false;
+    // Une image/PDF renommé .csv contient des octets de contrôle dès les 1ers Ko
+    // (on épargne \t \n \r, légitimes dans un CSV).
+    const head = content.slice(0, 2000);
+    for (let i = 0; i < head.length; i++) {
+      const code = head.charCodeAt(i);
+      const isControl = code < 32 && code !== 9 && code !== 10 && code !== 13;
+      if (isControl) return false;
+    }
 
     const h = header.toLowerCase();
     const vocabulary = [
