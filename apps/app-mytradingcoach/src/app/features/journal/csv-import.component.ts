@@ -27,7 +27,7 @@ import { parseDecimal } from '../../core/utils/parse-decimal';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { SetupsStore } from '../../core/stores/setups.store';
 
-interface ImportResult {
+export interface ImportResult {
   created: number;
   duplicates: number;
   failed: number;
@@ -342,7 +342,9 @@ export class CsvImportComponent {
   /** Affiche le sélecteur « Fichier des frais » (Tradovate Cash history). Onboarding → false. */
   readonly allowFeesFile = input(true);
   readonly dismissed = output<void>();
-  readonly imported = output<void>();
+  /** Émet le résultat : l'onboarding en fait son écran de confirmation (il ferme la
+   *  modale avant que l'utilisateur ait pu le lire). */
+  readonly imported = output<ImportResult>();
 
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
@@ -581,7 +583,7 @@ export class CsvImportComponent {
           // Les trades/summary sont rechargés par le parent (journal) ou l'effet du dashboard.
           this.accountStore.load();
           this.setupsStore.load(true);
-          this.imported.emit();
+          this.imported.emit(res.data);
         },
         error: (err) => {
           this.error.set(err.error?.message ?? "Erreur lors de l'importation");

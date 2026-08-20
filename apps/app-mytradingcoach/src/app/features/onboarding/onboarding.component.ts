@@ -16,7 +16,7 @@ import { TradesStore } from '../../core/stores/trades.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { LucideAngularModule, Bitcoin } from 'lucide-angular';
 import { TradeFormComponent } from '../journal/trade-form.component';
-import { CsvImportComponent } from '../journal/csv-import.component';
+import { CsvImportComponent, ImportResult } from '../journal/csv-import.component';
 import { SetupsStore } from '../../core/stores/setups.store';
 import {
   SetupFormModalComponent,
@@ -89,6 +89,8 @@ export class OnboardingComponent {
   protected readonly step         = signal<Step>(1);
   protected readonly tradeChoice  = signal<'choice'|'manual'|'csv'>('choice');
   protected readonly csvOpen      = signal(false);
+  /** Résultat du dernier import, affiché en récapitulatif à l'écran final. */
+  protected readonly importSummary = signal<ImportResult | null>(null);
   protected readonly selectedMarket   = signal<Market | null>(null);
   protected readonly selectedGoal     = signal<Goal | null>(null);
   protected readonly selectedCurrency = signal<'USD' | 'EUR'>('USD');
@@ -300,8 +302,16 @@ export class OnboardingComponent {
   // TradeForm fermé sans sauvegarder → retour au choix
   protected onTradeFormDismissed(): void { this.tradeChoice.set('choice'); }
 
-  // CSV importé → étape Discord
-  protected onCsvImported(): void { this.csvOpen.set(false); this.step.set(9); }
+  // CSV importé → étape Discord. On CONSERVE le résultat : la modale se ferme
+  // aussitôt, donc son écran « N trade(s) importé(s) » n'était jamais lu. Sans
+  // récapitulatif, l'utilisateur terminait l'onboarding sans la moindre preuve que
+  // son import avait fonctionné (PROMPT-186 #4) — et l'avertissement sur les frais
+  // non rapprochés (PROMPT-185 #8) restait invisible dans ce chemin.
+  protected onCsvImported(result: ImportResult): void {
+    this.importSummary.set(result);
+    this.csvOpen.set(false);
+    this.step.set(9);
+  }
   protected onCsvDismissed(): void { this.csvOpen.set(false); this.tradeChoice.set('choice'); }
 
   protected get progress(): number {

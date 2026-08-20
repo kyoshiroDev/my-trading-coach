@@ -232,6 +232,25 @@
 .celebrate    { text-align: center; margin-bottom: 8px; }
 .celebrate-ic { font-size: 48px; line-height: 1; }
 
+/* Récapitulatif d'import de l'écran final : confirme que l'historique est bien
+   arrivé (la modale d'import se ferme avant que l'utilisateur ait pu la lire). */
+.ob-import-recap {
+  background: rgba(16, 185, 129, .08);
+  border: 1px solid rgba(16, 185, 129, .25);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 0 0 18px;
+  text-align: center;
+}
+.ob-recap-main { font-size: 14px; font-weight: 600; color: var(--text-1); }
+.ob-recap-sub  { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+.ob-recap-warn {
+  font-size: 12px;
+  color: var(--amber, #f59e0b);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
 .discord-card-link {
   display: flex; align-items: center; gap: 14px;
   background: rgba(88,101,242,.1); border: 1px solid rgba(88,101,242,.3);

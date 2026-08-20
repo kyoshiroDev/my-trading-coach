@@ -66,6 +66,14 @@ const MINIMAL_TEMPLATE = `
   @if (step() > 2) {
     <div>step {{ step() }}</div>
   }
+  @if (step() === 9 && importSummary(); as imp) {
+    <div data-testid="onboarding-import-recap">{{ imp.created }} importés</div>
+    @if (imp.feesImported; as f) {
+      @if (f.merged === false) { <div data-testid="onboarding-import-fees-warning">frais non rapprochés</div> }
+    } @else {
+      <div data-testid="onboarding-import-fees-warning">frais non importés</div>
+    }
+  }
 `;
 
 describe('OnboardingComponent', () => {
@@ -285,5 +293,53 @@ describe('OnboardingComponent', () => {
     expect(u.tradingAssets).toEqual(['BTCUSDT']);
     expect(u.favoriteAsset).toBe('BTCUSDT');
     expect(userStore.profileIncomplete()).toBe(false);
+  });
+
+  // PROMPT-186 #4 — la modale d'import se ferme aussitôt (step 9) : sans récapitulatif,
+  // l'utilisateur terminait l'onboarding sans savoir si son historique était arrivé.
+  describe("confirmation d'import à l'écran final", () => {
+    function importer(result: unknown) {
+      const fixture = TestBed.createComponent(OnboardingComponent);
+      fixture.detectChanges();
+      const c = fixture.componentInstance as unknown as { onCsvImported: (r: unknown) => void };
+      c.onCsvImported(result);
+      fixture.detectChanges();
+      return fixture;
+    }
+
+    it('affiche le nombre de trades importés', () => {
+      const fixture = importer({ created: 20, duplicates: 0, failed: 0, total: 20,
+        feesImported: { assigned: 21.84, expected: 21.84, reconciled: true, count: 20 } });
+
+      const recap = fixture.nativeElement.querySelector('[data-testid="onboarding-import-recap"]');
+      expect(recap, "Le récapitulatif d'import doit être visible avant l'écran final").toBeTruthy();
+      expect(recap.textContent).toContain('20');
+      expect(fixture.nativeElement.querySelector('[data-testid="onboarding-import-fees-warning"]')).toBeFalsy();
+    });
+
+    it('relaie l\'avertissement « frais non rapprochés » (PROMPT-185 #8)', () => {
+      const fixture = importer({ created: 20, duplicates: 0, failed: 0, total: 20,
+        feesImported: { assigned: 0, expected: 0, reconciled: false, merged: false, count: 20 } });
+
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="onboarding-import-fees-warning"]'),
+        "L'avertissement frais était invisible dans le parcours onboarding",
+      ).toBeTruthy();
+    });
+
+    it('import sans Cash history → rappel frais non importés (#7)', () => {
+      const fixture = importer({ created: 20, duplicates: 0, failed: 0, total: 20 });
+
+      expect(fixture.nativeElement.querySelector('[data-testid="onboarding-import-fees-warning"]')).toBeTruthy();
+    });
+
+    it('aucun import (saisie manuelle / skip) → pas de récapitulatif', () => {
+      const fixture = TestBed.createComponent(OnboardingComponent);
+      fixture.detectChanges();
+      const c = fixture.componentInstance as unknown as { step: { set: (n: number) => void } };
+      c.step.set(9);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('[data-testid="onboarding-import-recap"]')).toBeFalsy();
+    });
   });
 });
