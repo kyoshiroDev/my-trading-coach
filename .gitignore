@@ -5,6 +5,11 @@ dist
 tmp
 VPS.md
 .claude/prompts
+.articles-blog
+# Ancre a la racine : sans le `/`, tout dossier `test/` du monorepo
+# (ex. apps/*/test/) serait ignore en silence.
+/test
+mytradingcoach.app-Google-Search-Console
 
 # template
 app-mytradingcoach.html
@@ -71,10 +76,10 @@ playwright-report
 blob-report
 playwright/.cache
 .env
-.env.local
-.env.dev
-.env.development
-.env.production
+.env.*
+.env.
+!.env.example
+!.env.local.example
 SECRETS.md
 
 .nx/self-healing
