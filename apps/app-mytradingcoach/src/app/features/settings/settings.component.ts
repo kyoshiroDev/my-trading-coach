@@ -185,7 +185,19 @@ export class SettingsComponent implements OnInit {
     this.setupsStore.load();
     this.analyticsApi.getBySetup()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: (res) => this.setupStats.set(res.data ?? []) });
+      .subscribe({
+        next: (res) => this.setupStats.set(res.data ?? []),
+        // `by-setup` est un endpoint Premium : en FREE, le 403 est ATTENDU (le win
+        // rate par setup est un bonus, la liste des setups s'affiche sans lui). Sans
+        // gestionnaire d'erreur, RxJS le remontait en `ERROR HttpErrorResponse` dans
+        // la console — bruit qui masque les vrais problèmes (PROMPT-186 #9).
+        // Toute AUTRE erreur reste visible : on ne filtre que le cas paywall connu.
+        error: (err: { status?: number }) => {
+          if (err?.status !== 403) {
+            console.error('[settings] analytics by-setup indisponible', err);
+          }
+        },
+      });
   }
 
   // ── Mes setups ──────────────────────────────────────────────────────────────

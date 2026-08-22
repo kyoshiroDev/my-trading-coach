@@ -3,6 +3,7 @@ import {
   Component,
   DestroyRef,
   computed,
+  effect,
   inject,
   output,
   signal,
@@ -16,7 +17,7 @@ import { TradesStore } from '../../core/stores/trades.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { LucideAngularModule, Bitcoin } from 'lucide-angular';
 import { TradeFormComponent } from '../journal/trade-form.component';
-import { CsvImportComponent } from '../journal/csv-import.component';
+import { CsvImportComponent, ImportResult } from '../journal/csv-import.component';
 import { SetupsStore } from '../../core/stores/setups.store';
 import {
   SetupFormModalComponent,
@@ -58,6 +59,29 @@ const GOALS: { value: Goal; label: string; emoji: string; desc: string }[] = [
 
 const DISCORD_URL = 'https://discord.gg/TDK2npvkSN';
 
+/**
+ * Progression du wizard, conservée localement (PROMPT-186 #8).
+ *
+ * Le wizard bloque toutes les routes tant qu'il n'est pas terminé — c'est voulu —
+ * mais un simple rechargement repartait à l'étape 1 : marché, objectif et capital
+ * étaient à ressaisir, puisque rien n'est persisté côté serveur avant l'étape 5.
+ * Un débutant interrompu (onglet fermé, réseau, curiosité) payait plein pot.
+ */
+const PROGRESS_KEY = 'mtc.onboarding.progress';
+
+interface OnboardingProgress {
+  step: Step;
+  market: Market | null;
+  goal: Goal | null;
+  currency: 'USD' | 'EUR';
+  capital: string;
+  style: TradingStyle | null;
+  strategy: string;
+  sessions: TradingSession[];
+  assets: string[];
+  favorite: string | null;
+}
+
 @Component({
   selector: 'mtc-onboarding',
   standalone: true,
@@ -89,6 +113,8 @@ export class OnboardingComponent {
   protected readonly step         = signal<Step>(1);
   protected readonly tradeChoice  = signal<'choice'|'manual'|'csv'>('choice');
   protected readonly csvOpen      = signal(false);
+  /** Résultat du dernier import, affiché en récapitulatif à l'écran final. */
+  protected readonly importSummary = signal<ImportResult | null>(null);
   protected readonly selectedMarket   = signal<Market | null>(null);
   protected readonly selectedGoal     = signal<Goal | null>(null);
   protected readonly selectedCurrency = signal<'USD' | 'EUR'>('USD');
@@ -121,6 +147,27 @@ export class OnboardingComponent {
 
   constructor() {
     this.setupsStore.load();
+    this.restoreProgress();
+
+    // Sauvegarde à chaque changement : l'effet lit les signaux (donc les suit) et
+    // n'écrit que dans le stockage local — aucune boucle possible.
+    effect(() => {
+      const snapshot: OnboardingProgress = {
+        step: this.step(),
+        market: this.selectedMarket(),
+        goal: this.selectedGoal(),
+        currency: this.selectedCurrency(),
+        capital: this.capitalInput(),
+        style: this.selectedStyle(),
+        strategy: this.strategyDescription(),
+        sessions: this.selectedSessions(),
+        assets: this.selectedAssets(),
+        favorite: this.favoriteAsset(),
+      };
+      try {
+        localStorage.setItem(PROGRESS_KEY, JSON.stringify(snapshot));
+      } catch { /* stockage indispo (mode privé) : on dégrade sans bruit */ }
+    });
     this.assetSearch$
       .pipe(
         debounceTime(300),
@@ -134,6 +181,41 @@ export class OnboardingComponent {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((res) => this.assetResults.set(res.data ?? []));
+  }
+
+  /** Reprend là où l'utilisateur s'était arrêté. Toute anomalie → repart proprement à 1. */
+  private restoreProgress(): void {
+    let raw: string | null = null;
+    try { raw = localStorage.getItem(PROGRESS_KEY); } catch { return; }
+    if (!raw) return;
+    try {
+      const p = JSON.parse(raw) as Partial<OnboardingProgress>;
+      const step = p.step;
+      if (typeof step !== 'number' || step < 1 || step > 9) return;
+      this.selectedMarket.set(p.market ?? null);
+      this.selectedGoal.set(p.goal ?? null);
+      this.selectedCurrency.set(p.currency === 'EUR' ? 'EUR' : 'USD');
+      this.capitalInput.set(typeof p.capital === 'string' ? p.capital : '');
+      this.selectedStyle.set(p.style ?? null);
+      this.strategyDescription.set(typeof p.strategy === 'string' ? p.strategy : '');
+      this.selectedSessions.set(Array.isArray(p.sessions) ? p.sessions : []);
+      this.selectedAssets.set(Array.isArray(p.assets) ? p.assets : []);
+      this.favoriteAsset.set(p.favorite ?? null);
+      // L'étape 8 se rouvre sur le CHOIX du premier trade : rouvrir d'autorité une
+      // modale de saisie ou d'import après un rechargement serait déroutant.
+      this.step.set(step as Step);
+      this.tradeChoice.set('choice');
+    } catch { /* snapshot illisible : on ignore, l'utilisateur repart de l'étape 1 */ }
+  }
+
+  private clearProgress(): void {
+    try { localStorage.removeItem(PROGRESS_KEY); } catch { /* rien à nettoyer */ }
+  }
+
+  /** Fin de l'onboarding : la progression n'a plus lieu d'être conservée. */
+  protected finish(): void {
+    this.clearProgress();
+    this.completed.emit();
   }
 
   protected selectMarket(m: Market)          { this.selectedMarket.set(m); }
@@ -300,8 +382,16 @@ export class OnboardingComponent {
   // TradeForm fermé sans sauvegarder → retour au choix
   protected onTradeFormDismissed(): void { this.tradeChoice.set('choice'); }
 
-  // CSV importé → étape Discord
-  protected onCsvImported(): void { this.csvOpen.set(false); this.step.set(9); }
+  // CSV importé → étape Discord. On CONSERVE le résultat : la modale se ferme
+  // aussitôt, donc son écran « N trade(s) importé(s) » n'était jamais lu. Sans
+  // récapitulatif, l'utilisateur terminait l'onboarding sans la moindre preuve que
+  // son import avait fonctionné (PROMPT-186 #4) — et l'avertissement sur les frais
+  // non rapprochés (PROMPT-185 #8) restait invisible dans ce chemin.
+  protected onCsvImported(result: ImportResult): void {
+    this.importSummary.set(result);
+    this.csvOpen.set(false);
+    this.step.set(9);
+  }
   protected onCsvDismissed(): void { this.csvOpen.set(false); this.tradeChoice.set('choice'); }
 
   protected get progress(): number {

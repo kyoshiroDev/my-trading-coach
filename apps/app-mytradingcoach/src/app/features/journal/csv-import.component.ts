@@ -27,16 +27,18 @@ import { parseDecimal } from '../../core/utils/parse-decimal';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { SetupsStore } from '../../core/stores/setups.store';
 
-interface ImportResult {
+export interface ImportResult {
   created: number;
   duplicates: number;
   failed: number;
   total: number;
-  /** Présent quand un fichier de frais (Tradovate Cash history) a été fusionné. */
+  /** Présent dès qu'un fichier de frais (Tradovate Cash history) a été fourni. */
   feesImported?: {
     assigned: number;
     expected: number;
     reconciled: boolean;
+    /** false = fichier fourni mais inexploitable → import sans frais, P&L brut. */
+    merged?: boolean;
     count: number;
   };
 }
@@ -95,11 +97,33 @@ const EMOTION_EMOJIS: Record<string, string> = {
                 </p>
               }
               @if (result()!.feesImported; as f) {
-                <p class="result-sub result-fees">
-                  Frais importés : {{ f.assigned.toFixed(2) }} $ sur {{ f.count }} trade(s)
-                  @if (!f.reconciled) {
-                    <span class="result-fees-warn"> · frais partiellement rapprochés</span>
-                  }
+                @if (f.merged === false) {
+                  <!-- Fichier de frais fourni mais inexploitable : le dire, plutôt que
+                       de laisser croire à un P&L net alors qu'il est brut. -->
+                  <p class="result-sub result-fees-warn" data-testid="import-fees-warning">
+                    ⚠ Frais non rapprochés · P&L brut affiché
+                    <span class="result-fees-hint">
+                      Ton Cash history n'a pas pu être lu : réexporte-le depuis Tradovate
+                      (Transaction ID · Delta · Cash Change Type), ou saisis le total des frais.
+                    </span>
+                  </p>
+                } @else {
+                  <p class="result-sub result-fees">
+                    Frais importés : {{ f.assigned.toFixed(2) }} $ sur {{ f.count }} trade(s)
+                    @if (!f.reconciled) {
+                      <span class="result-fees-warn"> · frais partiellement rapprochés</span>
+                    }
+                  </p>
+                }
+              }
+              @if (feesReminder()) {
+                <!-- Rien n'était dit après coup : le P&L paraissait net alors qu'il est brut. -->
+                <p class="result-sub result-fees-warn" data-testid="import-fees-reminder">
+                  ⚠ Frais non importés · P&L brut
+                  <span class="result-fees-hint">
+                    Ajoute ton Cash history Tradovate (ou saisis le total des frais)
+                    pour un P&L net au centime.
+                  </span>
                 </p>
               }
               <!-- Note informative (non bloquante) : les exports broker n'ont ni SL ni TP → R:R et note d'exécution indispo. -->
@@ -328,7 +352,9 @@ export class CsvImportComponent {
   /** Affiche le sélecteur « Fichier des frais » (Tradovate Cash history). Onboarding → false. */
   readonly allowFeesFile = input(true);
   readonly dismissed = output<void>();
-  readonly imported = output<void>();
+  /** Émet le résultat : l'onboarding en fait son écran de confirmation (il ferme la
+   *  modale avant que l'utilisateur ait pu le lire). */
+  readonly imported = output<ImportResult>();
 
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
@@ -346,6 +372,9 @@ export class CsvImportComponent {
 
   protected readonly isDragging = signal(false);
   protected readonly isLoading = signal(false);
+  /** Verrou anti-double-soumission : champ simple (pas un signal) pour être vu
+   *  immédiatement par le 2ᵉ clic, sans attendre un cycle de rendu. */
+  private uploading = false;
   protected readonly result = signal<ImportResult | null>(null);
   protected readonly error = signal<string | null>(null);
   protected readonly selectedFile = signal<File | null>(null);
@@ -366,6 +395,21 @@ export class CsvImportComponent {
   protected readonly setupId = signal<string>('');
   // Setups actifs du user (store partagé, liste dynamique).
   protected readonly setups = this.setupsStore.active;
+
+  /**
+   * Import Tradovate abouti SANS aucun frais : ni Cash history, ni total saisi.
+   * Un hint existait avant l'import, plus rien après — l'écart (21,84 $ sur nos
+   * fixtures) passait inaperçu et le P&L affiché paraissait net (PROMPT-186 #7).
+   * Restreint à Tradovate : chez les autres brokers, les frais sont dans le CSV.
+   */
+  protected readonly feesReminder = computed(() => {
+    const r = this.result();
+    if (!r || r.created === 0) return false;
+    if (r.feesImported) return false; // frais fusionnés, ou échec déjà signalé
+    if (this.source() !== 'tradovate') return false;
+    if (this.feesFile()) return false;
+    return parseDecimal(this.totalFees()) == null;
+  });
 
   /** Couleur du setup sélectionné (pastille à côté du select). */
   protected readonly selectedSetupColor = computed(
@@ -517,6 +561,12 @@ export class CsvImportComponent {
   protected upload() {
     const file = this.selectedFile();
     if (!file || !this.canImport()) return;
+    // Verrou SYNCHRONE, posé avant tout await : `[disabled]="isLoading()"` ne protège
+    // pas d'un double-clic natif, dont les deux événements partent avant le re-render
+    // Angular — d'où deux imports concurrents et un historique dupliqué (PROMPT-186 #1).
+    // La contrainte d'unicité en base reste le filet définitif ; ceci évite l'aller-retour.
+    if (this.uploading) return;
+    this.uploading = true;
 
     const formData = new FormData();
     formData.append('file', file, file.name);
@@ -551,17 +601,19 @@ export class CsvImportComponent {
         next: (res) => {
           this.result.set(res.data);
           this.isLoading.set(false);
+          this.uploading = false;
           // Refresh coordonné des stores globalement périmés par l'import (PROMPT-175) :
           // - comptes : l'import a pu créer le compte par défaut → sinon dashboard « 0 compte / $0 ».
           // - setups : le `tradeCount` par setup change → sinon « jamais utilisé » sur le Profil.
           // Les trades/summary sont rechargés par le parent (journal) ou l'effet du dashboard.
           this.accountStore.load();
           this.setupsStore.load(true);
-          this.imported.emit();
+          this.imported.emit(res.data);
         },
         error: (err) => {
           this.error.set(err.error?.message ?? "Erreur lors de l'importation");
           this.isLoading.set(false);
+          this.uploading = false;
         },
       });
   }
@@ -573,6 +625,7 @@ export class CsvImportComponent {
     this.totalFees.set('');
     this.feesDisabledReason.set(null);
     this.source.set('tradovate');
+    this.uploading = false;
     this.clearFeesFile();
   }
 }

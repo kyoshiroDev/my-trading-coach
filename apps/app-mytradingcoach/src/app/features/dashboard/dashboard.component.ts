@@ -6,6 +6,7 @@ import {
   effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
@@ -515,7 +516,13 @@ export class DashboardComponent {
     { key: 'ALL', label: 'Tout' },
   ] as const;
   protected readonly dashboardPeriod = signal<'1M' | '3M' | '6M' | 'ALL'>('1M');
-  protected setPeriod(p: '1M' | '3M' | '6M' | 'ALL'): void { this.dashboardPeriod.set(p); }
+  /** L'élargissement auto (fenêtre vide + historique existant) n'a lieu qu'une fois,
+   *  et jamais après un choix explicite : sinon on écraserait la volonté de l'utilisateur. */
+  private periodAutoAdjusted = false;
+  protected setPeriod(p: '1M' | '3M' | '6M' | 'ALL'): void {
+    this.periodAutoAdjusted = true;
+    this.dashboardPeriod.set(p);
+  }
 
   /** Bornes glissantes de la période courante. `from = null` → tout l'historique. */
   protected readonly periodRange = computed<{ from: Date | null; to: Date }>(() => {
@@ -632,10 +639,14 @@ export class DashboardComponent {
     }
     const account = this.selectedAccount.selected();
     if (account) return account.metrics.startingBalance ?? 0;
-    return this.selectedAccount
-      .accounts()
-      .filter((a) => a.status !== 'ARCHIVED')
-      .reduce((s, a) => s + (a.metrics.startingBalance ?? 0), 0);
+    const active = this.selectedAccount.accounts().filter((a) => a.status !== 'ARCHIVED');
+    // AUCUN compte (l'utilisateur a passé l'ajout de trade : le compte n'est créé
+    // qu'au premier trade) → le capital déclaré à l'onboarding faisait place à
+    // « $0.00 », comme si sa saisie avait été perdue. On retombe donc sur le profil,
+    // exactement comme le backend le fait à la création implicite du compte
+    // (accounts.service ensureDefaultAccountId). PROMPT-186 #5.
+    if (active.length === 0) return this.userStore.startingCapital();
+    return active.reduce((s, a) => s + (a.metrics.startingBalance ?? 0), 0);
   });
   protected readonly currentCapital = computed(() =>
     this.baseCapital() + (this.summary()?.totalPnl ?? 0),
@@ -730,6 +741,24 @@ export class DashboardComponent {
       const known = this.knownAccountsCount();
       if (known !== -1 && n !== known) this.reloadAnalytics();
       this.knownAccountsCount.set(n);
+    });
+
+    // Fenêtre par défaut CONSCIENTE DES DONNÉES (PROMPT-186 #2).
+    // Un historique importé date presque toujours de plus de 30 jours : la fenêtre 1M
+    // par défaut affichait alors « Aucune donnée / 0 trade » juste après un import
+    // réussi, pendant que « Top actifs » montrait les trades — l'import paraissait raté.
+    // Si la fenêtre courante est vide ALORS que le compte a des trades, on l'élargit
+    // une seule fois à « Tout ». L'utilisateur reste maître ensuite (cf. setPeriod).
+    effect(() => {
+      if (this.periodAutoAdjusted) return;
+      const summary = this.summary();
+      if (!summary) return; // KPIs pas encore chargés
+      if (summary.totalTrades > 0) { this.periodAutoAdjusted = true; return; }
+      // `tradesStore` charge les derniers trades SANS borne de date : s'il en voit,
+      // c'est que le compte a un historique, simplement hors de la fenêtre.
+      if (this.tradesStore.totalTrades() === 0) return;
+      this.periodAutoAdjusted = true;
+      untracked(() => this.dashboardPeriod.set('ALL'));
     });
   }
 

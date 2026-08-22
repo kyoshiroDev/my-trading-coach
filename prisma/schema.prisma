@@ -168,7 +168,15 @@ model Trade {
   account        TradingAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
   tradedAt       DateTime        @default(now())
   createdAt      DateTime        @default(now())
+  /// Empreinte d'un trade IMPORTÉ (asset+side+tradedAt+entry+exit+pnl), posée par
+  /// `importTrades`. `null` pour les trades saisis à la main : en Postgres, plusieurs
+  /// NULL ne violent pas une contrainte d'unique, donc la saisie manuelle n'est pas
+  /// contrainte (deux scalps identiques à la même seconde restent possibles).
+  /// C'est la déduplication d'import portée par la BASE : la version applicative
+  /// (lire puis écrire) laissait un double-clic créer deux fois l'historique.
+  importHash     String?
 
+  @@unique([userId, importHash])
   @@index([userId, tradedAt])
   @@index([userId, emotion])
   @@index([userId, setupId])

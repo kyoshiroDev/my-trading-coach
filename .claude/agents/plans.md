@@ -49,7 +49,7 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
 - ✨ **IA Insights à la demande** (analyse de tes patterns)
 - 💬 **Chat coach IA**¹
 - 🏆 **Score trader /100** hebdomadaire
-- 📈 **Analytics avancés** (heatmap heure, equity/drawdown détaillé, by-setup, activité mensuelle)
+- 📈 **Analytics avancés** (heatmap heure, equity/drawdown détaillé, by-setup)
 - 📄 **Export PDF** rapport mensuel
 - 🌙 **Recap journalier email 17h30**
 - **Comptes illimités** + règles prop firm par compte · sync crypto
@@ -140,7 +140,8 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
 ## Gating — qui gouverne quoi
 - **PremiumGuard** passe : ADMIN, BETA_TESTER, essai actif (`trialEndsAt`), PREMIUM.
 - **IA mutualisée (contexte marché, news, calendrier éco bull/bear)** : **FREE** — aucun guard (juste `JwtAuthGuard`).
-- **Analytics avancés** (`by-setup`, `by-hour`, `activity/:year/:month`) : `PremiumGuard`.
+- **Analytics avancés** (`by-setup`, `by-hour`) : `PremiumGuard`.
+- **Activité / calendrier** (`activity/:year/:month`, `activity/range`, `activity/current-month`) : **FREE**, aucun guard. Ce sont les données propres de l'utilisateur (le *quoi*) — on ne verrouille pas la vue de ses propres données. Le guard qui vivait sur `:year/:month` était en plus contournable via `activity/range`, qui sert la même donnée (PROMPT-185). Contrat verrouillé par `analytics.controller.spec.ts`.
 - **Weekly Debrief** : controller `PremiumGuard` **ET** cron `getEligibleUsers()` doivent matcher → `plan === PREMIUM` ou `role ∈ {ADMIN, BETA_TESTER}` ou essai.
 - **Daily recap** : PREMIUM only.
 - **Comptes** : controller **non gaté** (FREE accède à son 1 compte) — le plafond est appliqué dans `AccountsService` (FREE 1, Premium illimité).

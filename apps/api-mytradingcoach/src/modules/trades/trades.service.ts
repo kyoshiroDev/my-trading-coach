@@ -33,6 +33,13 @@ import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
 import { getTickValue, getTickSize, INSTRUMENTS } from './instruments.const';
 
+/** Violation d'unicité Prisma (P2002) : ici, un import concurrent a déjà écrit ce trade. */
+function isUniqueConstraintError(err: unknown): boolean {
+  return (
+    err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002'
+  );
+}
+
 export interface UserAssetItem {
   symbol: string;
   label: string;
@@ -66,7 +73,7 @@ export class TradesService {
   async create(
     userId: string,
     dto: CreateTradeDto,
-    opts: { deferBehavioral?: boolean } = {},
+    opts: { deferBehavioral?: boolean; importHash?: string } = {},
   ) {
     // Le setup doit appartenir au user et être actif (sinon 400). Validation
     // STRICTE conservée pour la création manuelle : `setupId` y est obligatoire
@@ -125,6 +132,9 @@ export class TradesService {
         sessionId: activeSession?.id ?? null,
         accountId,
         tradedAt: dto.tradedAt ? new Date(dto.tradedAt) : new Date(),
+        // Renseigné par l'import uniquement : c'est lui qui porte la contrainte
+        // d'unicité anti-doublon. Saisie manuelle → null, donc jamais contrainte.
+        importHash: opts.importHash ?? null,
       },
       include: { setup: { select: { id: true, title: true, color: true } } },
     });
@@ -150,9 +160,18 @@ export class TradesService {
 
   /**
    * Import en masse avec déduplication : empêche la création de doublons.
-   * Clé d'unicité applicative : userId + asset + side + tradedAt + entry + exit + pnl.
-   * Skip les trades déjà présents en base ET les doublons internes au même lot
-   * (un fichier ré-importé ne recrée donc rien). Pas de migration : dédup applicative.
+   * Clé d'unicité : userId + asset + side + tradedAt + entry + exit + pnl.
+   *
+   * Deux niveaux, volontairement :
+   *  1. comparaison applicative en amont (rapide, et seule protection pour les trades
+   *     importés AVANT la migration `importHash`, restés à NULL) ;
+   *  2. contrainte d'unicité `@@unique([userId, importHash])` en base, qui tranche les
+   *     accès CONCURRENTS. Le niveau 1 seul laissait un double-clic sur « Importer »
+   *     créer l'historique deux fois : les deux requêtes lisaient le même état vide
+   *     avant d'insérer (PROMPT-186 #1).
+   *
+   * Un conflit d'unicité n'est donc pas une erreur : c'est un doublon, on le compte
+   * comme tel — un ré-import du même fichier ne recrée toujours rien.
    */
   async importTrades(
     userId: string,
@@ -185,11 +204,15 @@ export class TradesService {
       try {
         const t = await this.create(userId, dto as CreateTradeDto, {
           deferBehavioral: true,
+          importHash: key,
         });
         if (t.accountId) affectedAccounts.add(t.accountId);
         created++;
-      } catch {
-        failed++;
+      } catch (err) {
+        // P2002 = un import concurrent (double-clic) a déjà écrit ce trade : doublon,
+        // pas échec. Toute autre erreur reste un échec de ligne.
+        if (isUniqueConstraintError(err)) duplicates++;
+        else failed++;
       }
     }
 
@@ -395,8 +418,15 @@ export class TradesService {
 
   async update(userId: string, id: string, dto: UpdateTradeDto) {
     const existing = await this.findOne(userId, id);
-    // Changement de setup → revalider l'ownership + actif.
-    if (dto.setupId) await this.setups.assertOwnedActive(userId, dto.setupId);
+    // Setup revalidé UNIQUEMENT s'il change réellement. Le front renvoie le DTO
+    // complet à chaque édition : exiger un setup actif sur un `setupId` inchangé
+    // gelait tout trade dont le setup avait été archivé depuis — corriger une note
+    // renvoyait « Setup invalide », alors que l'archivage est précisément l'action
+    // recommandée pour un setup qui a un historique. Un choix historique qu'on ne
+    // modifie pas n'a pas à être revalidé ; changer de setup reste strict.
+    if (dto.setupId && dto.setupId !== existing.setupId) {
+      await this.setups.assertOwnedActive(userId, dto.setupId);
+    }
 
     const merged = { ...existing, ...dto } as CreateTradeDto;
 
