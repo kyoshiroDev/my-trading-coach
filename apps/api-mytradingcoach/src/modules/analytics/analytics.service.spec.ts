@@ -105,6 +105,61 @@ describe('AnalyticsService', () => {
       expect(result.profitFactor).toBeCloseTo(3.75);
     });
 
+    // PROMPT-190 — trous de couverture des KPIs « argent » du dashboard.
+    // `maxDrawdown` n'était vérifié que sur le cas « aucun trade » (donc 0) : la
+    // formule elle-même — plus forte baisse du P&L CUMULÉ depuis son plus haut —
+    // n'était figée nulle part. Idem pour le profit factor sans aucune perte.
+    describe('drawdown maximum', () => {
+      it('mesure la plus forte baisse depuis le pic du P&L cumulé', async () => {
+        // Cumulé : 100 → 300 → 250 → 60 → 160. Pic 300, creux 60 → drawdown 240.
+        // Le calcul doit repartir du PIC, pas du dernier point ni du départ.
+        mockPrisma.trade.findMany.mockResolvedValue([
+          makeTrade(100), makeTrade(200), makeTrade(-50), makeTrade(-190), makeTrade(100),
+        ]);
+
+        const result = await service.getSummary('user-123');
+
+        expect(result.maxDrawdown).toBe(240);
+      });
+
+      it('retient la PLUS FORTE baisse, pas la dernière', async () => {
+        // Cumulé : 500 → 200 (−300) → 600 → 500 (−100). Le second repli est plus
+        // récent mais plus petit : c'est 300 qui doit rester.
+        mockPrisma.trade.findMany.mockResolvedValue([
+          makeTrade(500), makeTrade(-300), makeTrade(400), makeTrade(-100),
+        ]);
+
+        const result = await service.getSummary('user-123');
+
+        expect(result.maxDrawdown).toBe(300);
+      });
+
+      it('série uniquement gagnante → aucun drawdown', async () => {
+        mockPrisma.trade.findMany.mockResolvedValue([
+          makeTrade(100), makeTrade(50), makeTrade(75),
+        ]);
+
+        expect((await service.getSummary('user-123')).maxDrawdown).toBe(0);
+      });
+
+      it('compte perdant dès le premier trade → drawdown depuis le pic 0', async () => {
+        // Pic initial = 0 (avant tout trade) : une série perdante creuse depuis 0.
+        mockPrisma.trade.findMany.mockResolvedValue([makeTrade(-80), makeTrade(-40)]);
+
+        expect((await service.getSummary('user-123')).maxDrawdown).toBe(120);
+      });
+    });
+
+    it('profit factor null quand il n\'y a aucune perte (division par zéro évitée)', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue([makeTrade(100), makeTrade(250)]);
+
+      const result = await service.getSummary('user-123');
+
+      // Ni 0 ni Infinity : `null`, que le front affiche « — ».
+      expect(result.profitFactor).toBeNull();
+      expect(result.winRate).toBe(100);
+    });
+
     it("retourne des zéros s'il n'y a aucun trade", async () => {
       mockPrisma.trade.findMany.mockResolvedValue([]);
 
