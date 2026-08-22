@@ -75,11 +75,18 @@ async function postSignedInvoicePaid(args: {
   stripeCustomerId: string;
   subscriptionId: string;
   amountPaidCents: number;
+  /** Époque (s) de la période facturée : sert à dater la commission (PROMPT-185 #3). */
+  periodStart?: number;
+  /** Rejouer le MÊME id d'event : c'est la redélivrance que Stripe pratique. */
+  eventId?: string;
+  /** Une redélivrance déjà traitée est ignorée : on n'attend alors pas un 2xx « utile ». */
+  expectOk?: boolean;
 }) {
+  const created = Math.floor(Date.now() / 1000);
   const event = {
-    id: `evt_int_${uid()}`,
+    id: args.eventId ?? `evt_int_${uid()}`,
     object: 'event',
-    created: Math.floor(Date.now() / 1000),
+    created,
     type: 'invoice.payment_succeeded',
     livemode: false,
     data: {
@@ -89,6 +96,8 @@ async function postSignedInvoicePaid(args: {
         customer: args.stripeCustomerId,
         amount_paid: args.amountPaidCents,
         currency: 'eur',
+        created,
+        period_start: args.periodStart ?? created,
         parent: {
           type: 'subscription_details',
           subscription_details: { subscription: args.subscriptionId },
@@ -112,6 +121,7 @@ async function postSignedInvoicePaid(args: {
     res.ok,
     `Webhook refusé (${res.status}) : STRIPE_WEBHOOK_SECRET de l'API et du test doivent être identiques`,
   ).toBe(true);
+  return event.id;
 }
 
 /**
@@ -266,5 +276,93 @@ describe('Coexistence parrainage : le rôle du parrain décide de la récompense
       await prisma.referralReward.findFirst({ where: { parrainId: self.id } }),
       'Auto-parrainage : aucun mois offert',
     ).toBeNull();
+  });
+});
+
+/**
+ * PROMPT-190 — garanties de niveau BASE sur le tunnel argent.
+ *
+ * Ces deux règles étaient déjà couvertes en unitaire, mais avec Prisma mocké : le
+ * test vérifiait l'appel, pas ce qui atterrit vraiment en base. Ici, vraie base,
+ * vraie contrainte d'unicité, vraie colonne.
+ *
+ * Non couvert volontairement : la compensation d'un enqueue raté (PROMPT-185 #1).
+ * Elle suppose de rendre Redis indisponible en plein test, ce qui casserait la
+ * file partagée du job CI ; elle reste vérifiée en unitaire.
+ */
+describe('Webhook Stripe — garanties en base', () => {
+  // Deux protections se superposent ici, volontairement : la marque d'idempotence
+  // sur l'event ET la clé d'unicité (subscriptionId, period) de l'upsert. Ce test
+  // fige l'invariant qui compte pour l'argent — une redélivrance ne crée jamais de
+  // seconde commission — sans présumer laquelle des deux a joué.
+  it('même event redélivré après traitement réussi → toujours une seule commission', async () => {
+    const s = uid();
+    const code = `INTIDEM${s}`.toUpperCase();
+    const customerId = `cus_int_idem_${s}`;
+
+    const parrain = await createUser({ suffix: s, kind: 'parrain', role: Role.AMBASSADOR, referralCode: code });
+    await createUser({ suffix: s, kind: 'filleul', referredBy: code, stripeCustomerId: customerId });
+
+    const eventId = await postSignedInvoicePaid({
+      stripeCustomerId: customerId,
+      subscriptionId: `sub_int_idem_${s}`,
+      amountPaidCents: 4900,
+    });
+    const first = await waitFor(
+      () => prisma.referralCommission.findFirst({ where: { ambassadorId: parrain.id } }),
+      'Commission du premier passage',
+    );
+
+    // Stripe redélivre le MÊME event (retry après un 5xx transitoire, par exemple).
+    await postSignedInvoicePaid({
+      stripeCustomerId: customerId,
+      subscriptionId: `sub_int_idem_${s}`,
+      amountPaidCents: 4900,
+      eventId,
+    });
+    await settle();
+
+    const commissions = await prisma.referralCommission.findMany({
+      where: { ambassadorId: parrain.id },
+    });
+    expect(
+      commissions,
+      'Une redélivrance ne doit jamais créer une seconde commission',
+    ).toHaveLength(1);
+    expect(commissions[0].amount).toBeCloseTo(9.8, 2);
+    expect(
+      commissions[0].id,
+      'La ligne d\'origine doit être conservée, pas recréée',
+    ).toBe(first.id);
+  });
+
+  it('commission datée de la FACTURE, même traitée un autre mois (PROMPT-185 #3)', async () => {
+    const s = uid();
+    const code = `INTPER${s}`.toUpperCase();
+    const customerId = `cus_int_per_${s}`;
+
+    const parrain = await createUser({ suffix: s, kind: 'parrain', role: Role.AMBASSADOR, referralCode: code });
+    await createUser({ suffix: s, kind: 'filleul', referredBy: code, stripeCustomerId: customerId });
+
+    // Facture de janvier 2026, traitée aujourd'hui : la période stockée doit suivre
+    // la facture. Avec l'ancien `new Date()`, elle aurait pris le mois courant et
+    // écrasé, plus tard, la vraie commission de ce mois-là.
+    const january = Math.floor(Date.UTC(2026, 0, 15, 12) / 1000);
+    await postSignedInvoicePaid({
+      stripeCustomerId: customerId,
+      subscriptionId: `sub_int_per_${s}`,
+      amountPaidCents: 4900,
+      periodStart: january,
+    });
+
+    const commission = await waitFor(
+      () => prisma.referralCommission.findFirst({ where: { ambassadorId: parrain.id } }),
+      'Commission datée de la facture',
+    );
+
+    expect(
+      commission.period,
+      "La période vient de la facture, pas de l'heure de traitement",
+    ).toBe('2026-01');
   });
 });
