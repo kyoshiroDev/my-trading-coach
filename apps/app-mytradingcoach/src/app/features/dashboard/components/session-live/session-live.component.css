@@ -820,10 +820,12 @@
    Trade rapide) s'étirent jusqu'en bas et le trop-plein scrolle À L'INTÉRIEUR de chaque panneau
    (listes éco/feed + Trade rapide) — jamais la page. Offset 103 = padding-top 16 + header 57 +
    margin 14 + padding-bottom 16 ; .session-page colle au haut du viewport → 100vh est la réf.
+   --demo-banner-h (0 hors démo) retranche le bandeau « Mode démo », qui s'intercale
+   au-dessus de la vue : sans lui, la démo débordait de 52 px et scrollait (PROMPT-192).
    Sous 980px (tablette/mobile) : pas de hauteur imposée → contenu naturel + scroll page normal. */
 @container (min-width: 981px) {
   [data-testid="session-live-view"] {
-    height: calc(100vh - 103px);
+    height: calc(100vh - 103px - var(--demo-banner-h, 0px));
     overflow: hidden;
     min-height: 0;
   }

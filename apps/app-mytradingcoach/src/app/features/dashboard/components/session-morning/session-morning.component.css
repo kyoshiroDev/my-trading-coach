@@ -476,10 +476,11 @@
    Les deux colonnes (récap gauche + agenda droite) sont plafonnées à la hauteur visible ;
    ce qui dépasse scrolle À L'INTÉRIEUR de la colonne (.daily-row / .eco-events) au lieu
    d'allonger la page. Offset 103px = padding-top(16) + header(57) + margin(14) + padding-bottom(16).
-   .session-page colle au haut du viewport → 100vh est la bonne référence. */
+   .session-page colle au haut du viewport → 100vh est la bonne référence.
+   --demo-banner-h (0 hors démo) retranche le bandeau « Mode démo » posé au-dessus. */
 @container (min-width: 981px) {
   .daily-row,
-  .eco-card { max-height: calc(100vh - 103px); min-height: 0; }
+  .eco-card { max-height: calc(100vh - 103px - var(--demo-banner-h, 0px)); min-height: 0; }
 }
 
 /* Responsive : mobile → 1 colonne, scroll page normal (aligné container-query maquette ≤820px) */
