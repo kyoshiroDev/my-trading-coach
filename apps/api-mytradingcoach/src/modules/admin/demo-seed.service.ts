@@ -12,7 +12,7 @@ export class DemoSeedService {
   async run(): Promise<DemoSeedResult> {
     const res = await seedDemo(this.prisma);
     this.logger.log(
-      `Compte démo seedé : ${res.trades} trades · WR ${res.winRate}% · P&L +$${res.pnl}`,
+      `Compte démo seedé : ${res.trades} trades sur ${res.accounts} comptes · WR ${res.winRate}% · P&L +$${res.pnl}`,
     );
     return res;
   }
