@@ -532,11 +532,16 @@ pendant que « Mes comptes » et le sélecteur agrégé, qui passent par les com
 affichaient **0 $ / 0 trade / 0 compte**. Deux pages qui se contredisent.
 
 `DEMO_ACCOUNTS` crée 2 comptes ACTIVE et route les trades par actif :
-`Éval Futures · 20k` (EVALUATION, Apex, futures purs MNQ/MES/GC) et
+`Éval Futures · 20k` (EVALUATION, broker `Prop firm`, futures purs MNQ/MES/GC) et
 `Compte perso · Forex & Crypto` (PERSONAL, EUR/USD + BTC/USDT). Une éval futures qui
 loggerait de l'EUR/USD spot ou du BTC n'existe pas — d'où le routage par actif, pas
 « tout sur la prop firm ». Deux comptes plutôt qu'un : le multi-comptes est l'une des
 ancres Premium (`plans.md`).
+
+**Aucune marque de prop firm dans les libellés démo** (PROMPT-194) : la base de 20 000 $
+imposée par le contrat de cohérence ci-dessous ne correspond au palier d'aucune firme
+réelle (le plus petit palier Apex est à 25 000 $). Citer une firme exposait la démo à
+une incohérence repérable par un prospect, sans rien apporter.
 
 **Contrat de cohérence, à ne pas casser** :
 

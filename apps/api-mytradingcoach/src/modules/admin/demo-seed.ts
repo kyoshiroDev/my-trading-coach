@@ -47,7 +47,11 @@ const DEMO_ACCOUNTS = [
   {
     key: 'futures' as const,
     label: 'Éval Futures · 20k',
-    broker: 'Apex',
+    // Intitulé volontairement générique : aucune marque de prop firm. Nommer une firme
+    // réelle n'apporte rien à la démo, et la base de 20 000 $ imposée par le contrat de
+    // cohérence ne correspond au palier d'aucune firme connue (le plus petit palier Apex
+    // est à 25 000 $) — un prospect qui connaît la firme citée aurait tiqué.
+    broker: 'Prop firm',
     type: AccountType.EVALUATION,
     accountSize: 20_000,
     startingBalance: 20_000,
