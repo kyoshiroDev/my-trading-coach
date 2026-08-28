@@ -71,6 +71,7 @@ function fakePrisma(calls: Call[]) {
     dailyRecap: model('dailyRecap'),
     setup: model('setup'),
     ecoEvent: model('ecoEvent'),
+    tradingAccount: model('tradingAccount'),
   };
   return { prisma: prisma as unknown as PrismaClient, created };
 }
@@ -80,7 +81,7 @@ describe('seedDemo — re-seed idempotent (le cron quotidien ne doit pas empiler
     const calls: Call[] = [];
     await seedDemo(fakePrisma(calls).prisma);
 
-    for (const m of ['trade', 'tradeSession', 'weeklyDebrief', 'dailyRecap']) {
+    for (const m of ['trade', 'tradeSession', 'tradingAccount', 'weeklyDebrief', 'dailyRecap']) {
       const purge = calls.findIndex((c) => c.model === m && c.op === 'deleteMany');
       const firstCreate = calls.findIndex((c) => c.model === m && c.op === 'create');
       expect(purge, `${m} : aucune purge → un 2e run empilerait les données`).toBeGreaterThan(-1);
@@ -114,6 +115,107 @@ describe('seedDemo — re-seed idempotent (le cron quotidien ne doit pas empiler
     expect(b).toEqual(a);
     expect(second.created['trade']?.length).toBe(first.created['trade']?.length);
     expect(second.created['tradeSession']?.length).toBe(first.created['tradeSession']?.length);
+    expect(
+      second.created['tradingAccount']?.length,
+      'Les comptes s\'empilent : 2 runs doivent laisser 2 comptes, pas 4',
+    ).toBe(first.created['tradingAccount']?.length);
+  });
+
+  it('purge les comptes APRÈS les trades et les sessions (onDelete SetNull)', () => {
+    // TradingAccount est reférencé par Trade.accountId / TradeSession.accountId en
+    // onDelete: SetNull. Purger les comptes d'abord détacherait les lignes au lieu de
+    // les supprimer : elles survivraient au re-seed, orphelines et invisibles.
+    const calls: Call[] = [];
+    return seedDemo(fakePrisma(calls).prisma).then(() => {
+      const at = (m: string) => calls.findIndex((c) => c.model === m && c.op === 'deleteMany');
+      expect(at('tradingAccount')).toBeGreaterThan(at('trade'));
+      expect(at('tradingAccount')).toBeGreaterThan(at('tradeSession'));
+    });
+  });
+});
+
+describe('seedDemo — comptes de trading (cohérence dashboard / Mes comptes)', () => {
+  it('crée 2 comptes actifs : une prop firm et un compte perso', async () => {
+    const { prisma, created } = fakePrisma([]);
+    const res = await seedDemo(prisma);
+
+    const accounts = created['tradingAccount'];
+    expect(accounts).toHaveLength(2);
+    expect(res.accounts).toBe(2);
+    expect(accounts.every((a) => a['status'] === 'ACTIVE')).toBe(true);
+    expect(accounts.map((a) => a['type']).sort()).toEqual(['EVALUATION', 'PERSONAL']);
+  });
+
+  it('Σ startingBalance des comptes === capital du profil (sinon les 2 pages divergent)', async () => {
+    const calls: Call[] = [];
+    const { prisma, created } = fakePrisma(calls);
+    await seedDemo(prisma);
+
+    // dashboard.baseCapital somme les startingBalance dès qu'un compte existe, et ne
+    // retombe sur user.startingCapital que s'il n'y en a aucun ; accounts.trackedCapital
+    // fait la même somme. Les deux doivent coller, sinon les pages se contredisent.
+    const upsert = calls.find((c) => c.model === 'user' && c.op === 'upsert');
+    const profileCapital = (upsert?.args['create'] as { startingCapital: number })
+      .startingCapital;
+    const sumBalances = created['tradingAccount'].reduce(
+      (s, a) => s + (a['startingBalance'] as number),
+      0,
+    );
+
+    expect(
+      sumBalances,
+      `Σ startingBalance = ${sumBalances} mais capital profil = ${profileCapital}`,
+    ).toBe(profileCapital);
+  });
+
+  it('AUCUN trade ne reste flottant : tous rattachés à un compte', async () => {
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma);
+
+    const ids = new Set(created['tradingAccount'].map((_, i) => `tradingAccount-${i + 1}`));
+    const orphans = created['trade'].filter((t) => !t['accountId']);
+    expect(
+      orphans.length,
+      `${orphans.length} trades sans accountId → « Mes comptes » et le sélecteur agrégé afficheraient 0`,
+    ).toBe(0);
+    expect(created['trade'].every((t) => ids.has(t['accountId'] as string))).toBe(true);
+  });
+
+  it('les sessions aussi sont rattachées (pas de session flottante)', async () => {
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma);
+
+    expect(created['tradeSession'].every((s) => !!s['accountId'])).toBe(true);
+  });
+
+  it('route forex + crypto vers le perso, futures purs vers la prop firm', async () => {
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma);
+
+    const idOf = (label: string) =>
+      `tradingAccount-${created['tradingAccount'].findIndex((a) => a['label'] === label) + 1}`;
+    const perso = idOf('Compte perso · Forex & Crypto');
+    const futures = idOf('Éval Futures · 20k');
+
+    // La prop firm ne porte QUE des futures : pas d'EUR/USD spot ni de BTC sur une éval.
+    const personal = ['BTC/USDT', 'EUR/USD'];
+    const onPerso = created['trade'].filter((t) => personal.includes(t['asset'] as string));
+    expect(onPerso.length).toBeGreaterThan(0);
+    expect(onPerso.every((t) => t['accountId'] === perso)).toBe(true);
+
+    const onFutures = created['trade'].filter((t) => !personal.includes(t['asset'] as string));
+    expect(onFutures.every((t) => t['accountId'] === futures)).toBe(true);
+    expect(onFutures.every((t) => ['MNQ', 'MES', 'GC'].includes(t['asset'] as string))).toBe(true);
+  });
+
+  it('les deux comptes portent des trades (aucun compte vide à 0)', async () => {
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma);
+
+    for (let i = 1; i <= created['tradingAccount'].length; i++) {
+      const n = created['trade'].filter((t) => t['accountId'] === `tradingAccount-${i}`).length;
+      expect(n, `Le compte ${i} n'a aucun trade : il afficherait 0 partout`).toBeGreaterThan(0);
+    }
   });
 });
 

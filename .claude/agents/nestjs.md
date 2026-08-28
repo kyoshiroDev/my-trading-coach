@@ -524,6 +524,39 @@ et **scopée `userId`** (un re-run remplace, il n'empile pas) · tous les trades
 P&L total < 15 % du capital et pertes visibles (sobriété AMF : on montre la
 fonctionnalité, jamais une performance).
 
+### Comptes de trading de la démo (PROMPT-193)
+
+Le seed créait 56 trades mais **aucun `TradingAccount`** : trades « flottants »
+(`accountId` null). Le dashboard lit les trades bruts et affichait un capital plein,
+pendant que « Mes comptes » et le sélecteur agrégé, qui passent par les comptes,
+affichaient **0 $ / 0 trade / 0 compte**. Deux pages qui se contredisent.
+
+`DEMO_ACCOUNTS` crée 2 comptes ACTIVE et route les trades par actif :
+`Éval Futures · 20k` (EVALUATION, Apex, futures purs MNQ/MES/GC) et
+`Compte perso · Forex & Crypto` (PERSONAL, EUR/USD + BTC/USDT). Une éval futures qui
+loggerait de l'EUR/USD spot ou du BTC n'existe pas — d'où le routage par actif, pas
+« tout sur la prop firm ». Deux comptes plutôt qu'un : le multi-comptes est l'une des
+ancres Premium (`plans.md`).
+
+**Contrat de cohérence, à ne pas casser** :
+
+```
+Σ startingBalance des comptes ACTIVE === PROFILE.startingCapital   (25 000)
+```
+
+`dashboard.baseCapital` somme les `startingBalance` **dès qu'un compte existe** et ne
+retombe sur `user.startingCapital` que s'il n'y en a aucun ; `accounts.trackedCapital`
+fait la même somme. Tout écart et les deux pages divergent à nouveau. Changer un
+`startingBalance` impose donc d'ajuster l'autre compte, pas `startingCapital`.
+
+Deux pièges d'ordonnancement :
+- **Purger `tradingAccount` APRÈS `trade` et `tradeSession`** : les deux FK sont en
+  `onDelete: SetNull`. Purger les comptes en premier détache les lignes au lieu de les
+  supprimer — elles survivent au re-seed, orphelines.
+- **Aucune session sans compte** : `SessionService.startSession` garantit
+  « anti-NULL, jamais de session sans compte ». Les sessions démo portent donc un
+  `accountId` (le compte futures), sinon la démo ne reflète pas l'app réelle.
+
 ---
 
 ## Validation DTOs (Zod via class-validator)
