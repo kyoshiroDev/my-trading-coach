@@ -1,0 +1,199 @@
+/**
+ * PROMPT-192 — le compte démo doit rester peuplé ET récent.
+ *
+ * Constat prod (2026-08-28) : la démo affichait « P&L +0$ · Win Rate 0% · 0 trade loggé »
+ * avec une session active depuis 1978 h. Le seed avait tourné une seule fois, le
+ * 2026-06-07 ; ses dates étant relatives au run, tout était vieux de 82 jours.
+ *
+ * Le correctif rend le seed récurrent (DemoSeedCron). Ce qui doit donc être verrouillé :
+ *  1. un re-seed REMPLACE les données démo (purge avant recréation) — il n'empile pas ;
+ *  2. la purge reste scopée au user démo (aucun deleteMany sans userId) ;
+ *  3. tous les trades générés tiennent dans la fenêtre « 1M » par défaut du dashboard.
+ */
+import { describe, it, expect, vi } from 'vitest';
+import { PrismaClient } from '@prisma/client';
+import { seedDemo, DEMO_EMAIL, DEMO_WINDOW_DAYS } from './demo-seed';
+
+interface Call {
+  model: string;
+  op: string;
+  args: Record<string, unknown>;
+}
+
+const DEMO_ID = 'demo-user-id';
+
+/** Prisma double : enregistre les appels, renvoie le minimum exploité par seedDemo(). */
+function fakePrisma(calls: Call[]) {
+  const created: Record<string, Record<string, unknown>[]> = {};
+  const model = (name: string) => ({
+    upsert: vi.fn(async (args: Record<string, unknown>) => {
+      calls.push({ model: name, op: 'upsert', args });
+      return { id: DEMO_ID, email: DEMO_EMAIL };
+    }),
+    create: vi.fn(async (args: Record<string, unknown>) => {
+      calls.push({ model: name, op: 'create', args });
+      (created[name] ??= []).push(args['data'] as Record<string, unknown>);
+      return { id: `${name}-${(created[name] ?? []).length}` };
+    }),
+    createMany: vi.fn(async (args: Record<string, unknown>) => {
+      calls.push({ model: name, op: 'createMany', args });
+      return { count: 0 };
+    }),
+    count: vi.fn(async (args: Record<string, unknown>) => {
+      calls.push({ model: name, op: 'count', args });
+      return 0;
+    }),
+    deleteMany: vi.fn(async (args: Record<string, unknown>) => {
+      calls.push({ model: name, op: 'deleteMany', args });
+      return { count: 0 };
+    }),
+    update: vi.fn(async (args: Record<string, unknown>) => {
+      calls.push({ model: name, op: 'update', args });
+      return {};
+    }),
+    findMany: vi.fn(async (args: Record<string, unknown>) => {
+      calls.push({ model: name, op: 'findMany', args });
+      // Les setups par défaut, tels que seedDefaultSetups vient de les poser.
+      return name === 'setup'
+        ? ['Breakout', 'Pullback', 'Range', 'Reversal', 'Scalping', 'News'].map((title) => ({
+            id: `setup-${title}`,
+            title,
+          }))
+        : [];
+    }),
+  });
+
+  const prisma = {
+    user: model('user'),
+    trade: model('trade'),
+    tradeSession: model('tradeSession'),
+    weeklyDebrief: model('weeklyDebrief'),
+    dailyRecap: model('dailyRecap'),
+    setup: model('setup'),
+    ecoEvent: model('ecoEvent'),
+  };
+  return { prisma: prisma as unknown as PrismaClient, created };
+}
+
+describe('seedDemo — re-seed idempotent (le cron quotidien ne doit pas empiler)', () => {
+  it('purge les données démo AVANT d\'en recréer, pour chaque modèle seedé', async () => {
+    const calls: Call[] = [];
+    await seedDemo(fakePrisma(calls).prisma);
+
+    for (const m of ['trade', 'tradeSession', 'weeklyDebrief', 'dailyRecap']) {
+      const purge = calls.findIndex((c) => c.model === m && c.op === 'deleteMany');
+      const firstCreate = calls.findIndex((c) => c.model === m && c.op === 'create');
+      expect(purge, `${m} : aucune purge → un 2e run empilerait les données`).toBeGreaterThan(-1);
+      expect(
+        firstCreate === -1 || purge < firstCreate,
+        `${m} : la purge doit précéder la recréation`,
+      ).toBe(true);
+    }
+  });
+
+  it('ne purge que le user démo (jamais les données des vrais comptes)', async () => {
+    const calls: Call[] = [];
+    await seedDemo(fakePrisma(calls).prisma);
+
+    const purges = calls.filter((c) => c.op === 'deleteMany');
+    expect(purges.length).toBeGreaterThan(0);
+    for (const p of purges) {
+      expect(
+        (p.args['where'] as { userId?: string } | undefined)?.userId,
+        `deleteMany sur ${p.model} non scopé au user démo`,
+      ).toBe(DEMO_ID);
+    }
+  });
+
+  it('deux runs successifs produisent le même volume (remplacement, pas accumulation)', async () => {
+    const first = fakePrisma([]);
+    const a = await seedDemo(first.prisma);
+    const second = fakePrisma([]);
+    const b = await seedDemo(second.prisma);
+
+    expect(b).toEqual(a);
+    expect(second.created['trade']?.length).toBe(first.created['trade']?.length);
+    expect(second.created['tradeSession']?.length).toBe(first.created['tradeSession']?.length);
+  });
+});
+
+describe('seedDemo — fraîcheur des données (visible sans changer de filtre)', () => {
+  it('tous les trades tiennent dans les 30 derniers jours', async () => {
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma);
+
+    const now = Date.now();
+    const oldest = created['trade'].reduce(
+      (min, t) => Math.min(min, (t['tradedAt'] as Date).getTime()),
+      now,
+    );
+    const ageDays = (now - oldest) / 86_400_000;
+    expect(
+      ageDays,
+      `Le trade le plus ancien a ${ageDays.toFixed(1)} j : hors de la fenêtre 1M par défaut`,
+    ).toBeLessThanOrEqual(DEMO_WINDOW_DAYS);
+  });
+
+  it('la journée en cours et la veille sont peuplées (session live + carte « Hier »)', async () => {
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma);
+
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const startOfYesterday = new Date(startOfToday);
+    startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+
+    const at = (t: Record<string, unknown>) => (t['tradedAt'] as Date).getTime();
+    const today = created['trade'].filter((t) => at(t) >= startOfToday.getTime());
+    const yesterday = created['trade'].filter(
+      (t) => at(t) >= startOfYesterday.getTime() && at(t) < startOfToday.getTime(),
+    );
+
+    expect(today.length, 'Session live démo vide → « Aucun trade loggé »').toBeGreaterThan(0);
+    expect(yesterday.length, 'Carte « Hier » de la pré-session vide').toBeGreaterThan(0);
+  });
+
+  it('la session du jour est ACTIVE et démarrée aujourd\'hui (pas un compteur à 1978 h)', async () => {
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma);
+
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const active = created['tradeSession'].filter((s) => s['status'] === 'ACTIVE');
+
+    expect(active.length, 'Aucune session active : la démo ne montre pas le mode live').toBe(1);
+    expect((active[0]['startedAt'] as Date).getTime()).toBeGreaterThanOrEqual(
+      startOfToday.getTime(),
+    );
+  });
+});
+
+describe('seedDemo — sobriété AMF (montrer la fonctionnalité, pas une performance)', () => {
+  it('le P&L total reste modeste au regard du capital de départ', async () => {
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma);
+
+    const pnl = created['trade'].reduce((s, t) => s + (t['pnl'] as number), 0);
+    const startingCapital = 25_000; // PROFILE.startingCapital
+    const pct = (pnl / startingCapital) * 100;
+
+    expect(pnl, 'Le P&L démo doit rester positif (produit crédible)').toBeGreaterThan(0);
+    expect(
+      pct,
+      `+${pct.toFixed(1)} % sur la fenêtre démo : ça se lit comme une promesse de gain`,
+    ).toBeLessThan(15);
+  });
+
+  it('des pertes restent visibles (jamais une démo 100 % gagnante)', async () => {
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma);
+
+    const losses = created['trade'].filter((t) => (t['pnl'] as number) < 0);
+    const wins = created['trade'].filter((t) => (t['pnl'] as number) > 0);
+    const winRate = (wins.length / (wins.length + losses.length)) * 100;
+
+    expect(losses.length, 'Aucune perte affichée : démo malhonnête').toBeGreaterThan(0);
+    expect(winRate).toBeGreaterThan(45);
+    expect(winRate, 'Win rate trop beau pour être vrai').toBeLessThan(70);
+  });
+});

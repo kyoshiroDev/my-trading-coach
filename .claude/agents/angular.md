@@ -92,6 +92,21 @@ IA (contexte marché, news, calendrier éco IA, recap) suit `plans.md`. Données
 via `SessionStore` : `/session/active`, `/analytics/daily-recap/yesterday`,
 `/eco-calendar/*`, `/debrief/current`, `/trades/market-context`, `/trades/news`.
 
+#### Hauteurs calées sur le viewport → `--demo-banner-h` (PROMPT-192)
+
+Les 3 onglets se dimensionnent en `calc(100vh - 103px - var(--demo-banner-h, 0px))`
+(≥981px). Le `103px` suppose que `.session-page` colle au haut du viewport — faux en
+mode démo, où le bandeau « Mode démo » s'intercale dans `.main-content` : la vue
+débordait de 52 px et créait un scroll parasite sur des écrans conçus pour tenir
+dans la fenêtre.
+
+`--demo-banner-h` est publiée par `.main-content.has-demo-banner` (sidebar.component.css),
+vaut `0px` hors démo, et le bandeau a une **hauteur fixe égale à la variable**
+(`flex: 0 0 var(--demo-banner-h)`, `flex-wrap: nowrap`) pour que l'offset ne puisse pas
+mentir. Sous 768px : 40px, la phrase longue (`.demo-banner-long`) tombe, le CTA reste.
+
+**Toute nouvelle vue calée sur `100vh` doit retrancher `var(--demo-banner-h, 0px)`.**
+
 ---
 
 ## Pipes obligatoires — ne jamais dupliquer la logique

@@ -7,6 +7,7 @@ import { MetricsSnapshotCron } from './metrics-snapshot.cron';
 import { DeletedAccountService } from './deleted-account.service';
 import { UserDetailService } from './user-detail.service';
 import { DemoSeedService } from './demo-seed.service';
+import { DemoSeedCron } from './demo-seed.cron';
 import { ResendModule } from '../resend/resend.module';
 import { UsersModule } from '../users/users.module';
 import { PrismaModule } from '../../prisma/prisma.module';
@@ -17,6 +18,6 @@ import { VpsModule } from '../vps/vps.module';
 @Module({
   imports: [ResendModule, UsersModule, PrismaModule, DiscordModule, StripeModule, VpsModule],
   controllers: [AdminController],
-  providers: [AdminService, AnthropicCostService, EmailCampaignService, MetricsSnapshotCron, DeletedAccountService, UserDetailService, DemoSeedService],
+  providers: [AdminService, AnthropicCostService, EmailCampaignService, MetricsSnapshotCron, DeletedAccountService, UserDetailService, DemoSeedService, DemoSeedCron],
 })
 export class AdminModule {}

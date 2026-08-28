@@ -352,6 +352,13 @@
 }
 
 /* ─── Mode démo ─── */
+/* Hauteur du bandeau, publiée en variable pour que les vues calées sur le viewport
+   (Pré-session / Session live / Débrief : calc(100vh - 103px)) la retranchent.
+   Sans ça le bandeau s'ajoutait au flux : contenu poussé vers le bas et scroll
+   parasite de 52 px sur des écrans conçus pour tenir dans la fenêtre. 0 hors démo. */
+.main-content { --demo-banner-h: 0px; }
+.main-content.has-demo-banner { --demo-banner-h: 44px; }
+
 .demo-banner {
   position: sticky;
   top: 0;
@@ -359,15 +366,27 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  padding: 10px 18px;
+  flex-wrap: nowrap;
+  gap: 16px;
+  /* Hauteur FIXE = la valeur retranchée par les vues : la variable ne peut pas mentir
+     (un bandeau qui passait à la ligne rendait l'offset faux). */
+  height: var(--demo-banner-h);
+  flex: 0 0 var(--demo-banner-h);
+  box-sizing: border-box;
+  padding: 0 18px;
+  overflow: hidden;
   background: linear-gradient(135deg, rgba(59,130,246,.16), rgba(139,92,246,.12));
   border-bottom: 1px solid rgba(59,130,246,.28);
   font-size: 13px;
   color: var(--text);
 }
-.demo-banner-text { color: var(--text-2); }
+.demo-banner-text {
+  color: var(--text-2);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .demo-banner-cta {
   background: var(--blue);
   color: #fff;
@@ -380,6 +399,15 @@
   transition: opacity .15s;
 }
 .demo-banner-cta:hover { opacity: .88; }
+
+/* Mobile : bandeau ras du sol (la phrase longue tombe, le CTA reste). Il doit rester
+   une ligne d'information, jamais un demi-écran mangé sur un téléphone. */
+@media (max-width: 768px) {
+  .main-content.has-demo-banner { --demo-banner-h: 40px; }
+  .demo-banner { gap: 10px; padding: 0 12px; font-size: 12px; }
+  .demo-banner-long { display: none; }
+  .demo-banner-cta { font-size: 11px; padding: 5px 10px; }
+}
 
 .demo-modal-overlay {
   position: fixed;

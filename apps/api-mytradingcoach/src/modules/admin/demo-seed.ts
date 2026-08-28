@@ -15,7 +15,16 @@ import { seedDefaultSetups } from '../setups/setups.defaults';
 
 export const DEMO_EMAIL = 'demo@mytradingcoach.app';
 const DEMO_NAME = 'Lucas Mercier';
-const STARTING_CAPITAL = 10_000;
+// Capital cohérent avec les contrats tradés (2 MNQ + 2 MES + GC) : un compte à 10 000 $
+// rendait le P&L démo énorme en relatif (+43 %), ce qui se lit comme une promesse de gain.
+const STARTING_CAPITAL = 25_000;
+
+/**
+ * Fenêtre de génération : tous les trades démo tiennent dans les 30 derniers jours,
+ * donc dans la fenêtre « 1M » par défaut du dashboard. Avant (72 jours), un prospect
+ * voyait « Aucune donnée » tant qu'il n'avait pas cliqué sur « Tout ».
+ */
+export const DEMO_WINDOW_DAYS = 30;
 
 // PRNG déterministe (mulberry32) → données stables.
 function rng(seed: number) {
@@ -43,7 +52,7 @@ const TF = ['1m', '5m', '15m', '1h'];
 interface GenTrade {
   asset: string; side: TradeSide; entry: number; exit: number; pnl: number;
   rr: number; qty: number; emotion: EmotionState; setup: string;
-  session: TradingSession; tf: string; daysAgo: number; hour: number;
+  session: TradingSession; tf: string; daysAgo: number; hour: number; seq: number;
 }
 
 function buildTrades(): GenTrade[] {
@@ -55,7 +64,9 @@ function buildTrades(): GenTrade[] {
     const a = ASSETS[i % ASSETS.length];
     const side: TradeSide = r() < 0.62 ? 'LONG' : 'SHORT';
     const win = (i * 37) % 100 < 57; // WR ~57 %, motif déterministe
-    const pnl = win ? Math.round(90 + r() * 230) : -Math.round(60 + r() * 110);
+    // Amplitudes volontairement modestes : la démo vend la FONCTIONNALITÉ (journal,
+    // courbe, émotions), jamais une performance. Profit factor visé ~1.5, pas 2.8.
+    const pnl = win ? Math.round(55 + r() * 145) : -Math.round(55 + r() * 115);
 
     const drift = (r() - 0.5) * a.base * 0.02;
     const entry = +(a.base + drift).toFixed(a.dec);
@@ -75,7 +86,7 @@ function buildTrades(): GenTrade[] {
       rr: +(1.2 + r() * 1.7).toFixed(1),
       qty: a.qty, emotion, setup: SETUPS[Math.floor(r() * SETUPS.length)],
       session, tf: TF[Math.floor(r() * TF.length)],
-      daysAgo: 2 + Math.round(i * 1.35), hour,
+      daysAgo: 2 + Math.round(i * ((DEMO_WINDOW_DAYS - 4) / (N - 1))), hour, seq: i,
     });
   }
   return out;
@@ -133,10 +144,13 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
     setupIdByTitle.get(title) ?? demoSetups[0].id;
 
   const trades = buildTrades();
-  const dateOf = (daysAgo: number, hour: number) => {
+  // `seq` (index du trade) entre dans les minutes : la fenêtre resserrée met ~2 trades
+  // par jour, souvent sur la même session donc la même heure. Sans lui, deux trades du
+  // même jour tombaient à la minute près au même horodatage.
+  const dateOf = (daysAgo: number, hour: number, seq = 0) => {
     const d = new Date();
     d.setDate(d.getDate() - daysAgo);
-    d.setHours(hour, (daysAgo * 7) % 55, 0, 0);
+    d.setHours(hour, (daysAgo * 7 + seq * 13) % 55, 0, 0);
     return d;
   };
 
@@ -171,7 +185,7 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
         userId: user.id, asset: t.asset, side: t.side, entry: t.entry, exit: t.exit,
         pnl: t.pnl, riskReward: t.rr, quantity: t.qty, emotion: t.emotion,
         setupId: setupIdFor(t.setup), session: t.session, timeframe: t.tf, tags: ['DEMO'],
-        tradedAt: dateOf(t.daysAgo, t.hour),
+        tradedAt: dateOf(t.daysAgo, t.hour, t.seq),
         ...(sessionIdByDay.has(t.daysAgo) ? { sessionId: sessionIdByDay.get(t.daysAgo) } : {}),
       },
     });
@@ -203,8 +217,8 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
     },
   });
   const yTrades = [
-    { asset: 'MNQ', side: 'LONG' as TradeSide, entry: 18500, exit: 18545, pnl: 180, rr: 2.2, qty: 2, emotion: 'CONFIDENT' as EmotionState, setup: 'Breakout', session: 'LONDON' as TradingSession, tf: '5m', hour: 9 },
-    { asset: 'MES', side: 'LONG' as TradeSide, entry: 5200, exit: 5198.6, pnl: -70, rr: 1.4, qty: 2, emotion: 'NEUTRAL' as EmotionState, setup: 'Pullback', session: 'NEW_YORK' as TradingSession, tf: '5m', hour: 15 },
+    { asset: 'MNQ', side: 'LONG' as TradeSide, entry: 18500, exit: 18530, pnl: 120, rr: 1.8, qty: 2, emotion: 'CONFIDENT' as EmotionState, setup: 'Breakout', session: 'LONDON' as TradingSession, tf: '5m', hour: 9 },
+    { asset: 'MES', side: 'LONG' as TradeSide, entry: 5200, exit: 5191.5, pnl: -85, rr: 1.4, qty: 2, emotion: 'NEUTRAL' as EmotionState, setup: 'Pullback', session: 'NEW_YORK' as TradingSession, tf: '5m', hour: 15 },
   ];
   for (const t of yTrades) {
     await prisma.trade.create({ data: {
@@ -245,7 +259,7 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
     },
   });
   const tTrades = [
-    { asset: 'MNQ', side: 'LONG' as TradeSide, entry: 18600, exit: 18640, stopLoss: 18560, pnl: 160, rr: 2.1, qty: 2, emotion: 'CONFIDENT' as EmotionState, setup: 'Breakout', session: 'LONDON' as TradingSession, tf: '5m', hour: 9 },
+    { asset: 'MNQ', side: 'LONG' as TradeSide, entry: 18600, exit: 18627.5, stopLoss: 18580, pnl: 110, rr: 1.5, qty: 2, emotion: 'CONFIDENT' as EmotionState, setup: 'Breakout', session: 'LONDON' as TradingSession, tf: '5m', hour: 9 },
     { asset: 'EUR/USD', side: 'LONG' as TradeSide, entry: 1.0850, exit: 1.0853, stopLoss: 1.0835, pnl: 30, rr: 1.5, qty: 1, emotion: 'FOCUSED' as EmotionState, setup: 'Pullback', session: 'LONDON' as TradingSession, tf: '15m', hour: 10 },
   ];
   for (const t of tTrades) {

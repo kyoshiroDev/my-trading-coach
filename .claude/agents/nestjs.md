@@ -502,6 +502,27 @@ Toujours passer `{ userId, feature }` dans les options. Features valides :
 |---|---|---|
 | `DailyRecapCron` | `30 17 * * 1-5` Paris | Génère recap + envoie email aux users actifs du jour |
 | `EcoCalendarCron` | `0 7 * * 1-5` Paris | Pré-génère le calendrier pour tous les users Premium |
+| `DemoSeedCron` | `20 3 * * *` Paris | Re-seed le compte démo (dates relatives recalculées) |
+
+### Compte démo : le seed doit rester récurrent (PROMPT-192)
+
+`seedDemo()` génère des dates **relatives au moment du run**. Appelé une seule fois
+(endpoint admin), il vieillit en silence : seedée le 2026-06-07, la démo prod affichait
+le 2026-08-28 « P&L jour +0$ · Win Rate 0% · 0 trade loggé » et une session active depuis
+1978 h, alors que les données live (marché, calendrier, news) étaient pleines — un
+prospect voyait un produit vide.
+
+Filets posés par `DemoSeedCron` (`modules/admin/demo-seed.cron.ts`) :
+- `@Cron('20 3 * * *')` → re-seed quotidien ;
+- `onModuleInit` gardé par `IS_CRON_WORKER === 'true'` (**obligatoire** : sinon les 8
+  workers du cluster purgent/recréent le même user en concurrence) → rattrape une API
+  restée éteinte plus d'une journée.
+
+Invariants verrouillés par `demo-seed-idempotence.spec.ts` : purge **avant** recréation
+et **scopée `userId`** (un re-run remplace, il n'empile pas) · tous les trades dans les
+`DEMO_WINDOW_DAYS` (30) derniers jours · J-0 et J-1 peuplés · session du jour ACTIVE ·
+P&L total < 15 % du capital et pertes visibles (sobriété AMF : on montre la
+fonctionnalité, jamais une performance).
 
 ---
 
