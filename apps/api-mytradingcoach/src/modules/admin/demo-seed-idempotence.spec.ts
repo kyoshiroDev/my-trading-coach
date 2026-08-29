@@ -195,7 +195,7 @@ describe('seedDemo — comptes de trading (cohérence dashboard / Mes comptes)',
     const idOf = (label: string) =>
       `tradingAccount-${created['tradingAccount'].findIndex((a) => a['label'] === label) + 1}`;
     const perso = idOf('Compte perso · Forex & Crypto');
-    const futures = idOf('Éval Futures · 20k');
+    const futures = idOf('Apex 50k · Éval');
 
     // La prop firm ne porte QUE des futures : pas d'EUR/USD spot ni de BTC sur une éval.
     const personal = ['BTC/USDT', 'EUR/USD'];
@@ -206,6 +206,62 @@ describe('seedDemo — comptes de trading (cohérence dashboard / Mes comptes)',
     const onFutures = created['trade'].filter((t) => !personal.includes(t['asset'] as string));
     expect(onFutures.every((t) => t['accountId'] === futures)).toBe(true);
     expect(onFutures.every((t) => ['MNQ', 'MES', 'GC'].includes(t['asset'] as string))).toBe(true);
+  });
+
+  it('le compte prop firm porte les vraies règles Apex 50k', async () => {
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma);
+
+    const apex = created['tradingAccount'].find((a) => a['type'] === 'EVALUATION')!;
+    // Apex 50k Full Evaluation : base 50 000, objectif +3 000, trailing drawdown 2 500.
+    // Le palier doit exister réellement — le 20k générique d'avant n'était proposé par
+    // aucune firme, ce qu'un prospect qui connaît Apex repérait.
+    expect(apex['startingBalance']).toBe(50_000);
+    expect(apex['accountSize']).toBe(50_000);
+    expect(apex['profitTarget']).toBe(3_000);
+    expect(apex['maxDrawdown']).toBe(2_500);
+    expect(apex['drawdownType']).toBe('TRAILING');
+  });
+
+  it('l\'évaluation est EN COURS : P&L sous l\'objectif, drawdown loin du seuil', async () => {
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma);
+
+    const accounts = created['tradingAccount'];
+    const idx = accounts.findIndex((a) => a['type'] === 'EVALUATION');
+    const apex = accounts[idx];
+    const trades = created['trade'].filter(
+      (t) => t['accountId'] === `tradingAccount-${idx + 1}`,
+    );
+    const pnl = trades.reduce((s, t) => s + (t['pnl'] as number), 0);
+    const target = apex['profitTarget'] as number;
+
+    // Une éval déjà passée (P&L ≥ objectif) enlèverait tout intérêt à la carte « pacing »,
+    // et un P&L qui frôle l'objectif se lirait comme une promesse de réussite.
+    expect(pnl).toBeGreaterThan(0);
+    expect(pnl, `P&L ${pnl} ≥ objectif ${target} : l'éval serait déjà passée`).toBeLessThan(
+      target,
+    );
+    expect(pnl / target).toBeLessThan(0.8);
+
+    // Marge de drawdown confortable : on montre une éval saine, pas au bord de la
+    // liquidation. Trailing → plancher qui suit le plus haut solde atteint.
+    const sorted = [...trades].sort(
+      (a, b) => (a['tradedAt'] as Date).getTime() - (b['tradedAt'] as Date).getTime(),
+    );
+    let bal = apex['startingBalance'] as number;
+    let hwm = bal;
+    let worstGap = 0;
+    for (const t of sorted) {
+      bal += t['pnl'] as number;
+      if (bal > hwm) hwm = bal;
+      worstGap = Math.max(worstGap, hwm - bal);
+    }
+    const maxDd = apex['maxDrawdown'] as number;
+    expect(
+      worstGap,
+      `Drawdown max ${worstGap} sur ${maxDd} autorisés : la démo frôle la liquidation`,
+    ).toBeLessThan(maxDd * 0.5);
   });
 
   it('les deux comptes portent des trades (aucun compte vide à 0)', async () => {
@@ -272,11 +328,16 @@ describe('seedDemo — fraîcheur des données (visible sans changer de filtre)'
 
 describe('seedDemo — sobriété AMF (montrer la fonctionnalité, pas une performance)', () => {
   it('le P&L total reste modeste au regard du capital de départ', async () => {
-    const { prisma, created } = fakePrisma([]);
+    const calls: Call[] = [];
+    const { prisma, created } = fakePrisma(calls);
     await seedDemo(prisma);
 
     const pnl = created['trade'].reduce((s, t) => s + (t['pnl'] as number), 0);
-    const startingCapital = 25_000; // PROFILE.startingCapital
+    // Lu depuis le seed, jamais en dur : le capital a déjà bougé (25 000 → 55 000 avec
+    // le passage au palier Apex 50k réel) et un nombre figé aurait faussé le ratio.
+    const upsert = calls.find((c) => c.model === 'user' && c.op === 'upsert');
+    const startingCapital = (upsert?.args['create'] as { startingCapital: number })
+      .startingCapital;
     const pct = (pnl / startingCapital) * 100;
 
     expect(pnl, 'Le P&L démo doit rester positif (produit crédible)').toBeGreaterThan(0);

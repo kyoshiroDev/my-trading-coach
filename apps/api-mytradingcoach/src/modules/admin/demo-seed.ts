@@ -16,9 +16,11 @@ import { seedDefaultSetups } from '../setups/setups.defaults';
 
 export const DEMO_EMAIL = 'demo@mytradingcoach.app';
 const DEMO_NAME = 'Lucas Mercier';
-// Capital cohérent avec les contrats tradés (2 MNQ + 2 MES + GC) : un compte à 10 000 $
-// rendait le P&L démo énorme en relatif (+43 %), ce qui se lit comme une promesse de gain.
-const STARTING_CAPITAL = 25_000;
+// Somme imposée par le contrat de cohérence : 50 000 (Apex 50k) + 5 000 (perso).
+// Cf. DEMO_ACCOUNTS — ce total n'est pas libre, il DOIT valoir Σ startingBalance.
+// Il sert aussi de dénominateur au P&L relatif : plus il est bas, plus la démo ressemble
+// à une promesse de gain (le compte à 10 000 $ d'origine affichait +43 %).
+const STARTING_CAPITAL = 55_000;
 
 /**
  * Fenêtre de génération : tous les trades démo tiennent dans les 30 derniers jours,
@@ -34,7 +36,7 @@ export const DEMO_WINDOW_DAYS = 30;
  * affichaient 0 $ partout. Un prospect voyait deux pages se contredire.
  *
  * Contrat de cohérence, à ne pas casser :
- *   Σ startingBalance des comptes ACTIVE === STARTING_CAPITAL
+ *   Σ startingBalance des comptes ACTIVE === STARTING_CAPITAL   (50 000 + 5 000 = 55 000)
  * `dashboard.baseCapital` somme les `startingBalance` dès qu'un compte existe, et ne
  * retombe sur `user.startingCapital` que s'il n'y en a aucun ; `accounts.trackedCapital`
  * fait la même somme. Un écart et les deux pages se remettent à diverger.
@@ -46,17 +48,22 @@ export const DEMO_WINDOW_DAYS = 30;
 const DEMO_ACCOUNTS = [
   {
     key: 'futures' as const,
-    label: 'Éval Futures · 20k',
-    // Intitulé volontairement générique : aucune marque de prop firm. Nommer une firme
-    // réelle n'apporte rien à la démo, et la base de 20 000 $ imposée par le contrat de
-    // cohérence ne correspond au palier d'aucune firme connue (le plus petit palier Apex
-    // est à 25 000 $) — un prospect qui connaît la firme citée aurait tiqué.
-    broker: 'Prop firm',
+    // Vraies règles Apex 50k Full Evaluation : base 50 000, objectif +3 000 (→ 53 000),
+    // trailing drawdown 2 500 (seuil de liquidation initial 47 500). Le palier existe
+    // réellement, contrairement au 20k générique d'avant qu'aucune firme ne propose.
+    //
+    // ⚠ Ces valeurs sont les RÈGLES de la firme, pas une prétention à reproduire son
+    // calcul officiel. L'app estime marge et pacing depuis les seuls trades loggés
+    // (RULE_DISCLAIMER dans accounts.service, et la clause conformité du prompt débrief) :
+    // ni trailing intraday, ni positions ouvertes, ni fuseau. Ne pas laisser la démo
+    // suggérer le contraire.
+    label: 'Apex 50k · Éval',
+    broker: 'Apex',
     type: AccountType.EVALUATION,
-    accountSize: 20_000,
-    startingBalance: 20_000,
-    profitTarget: 2_400,
-    maxDrawdown: 1_250,
+    accountSize: 50_000,
+    startingBalance: 50_000,
+    profitTarget: 3_000,
+    maxDrawdown: 2_500,
     drawdownType: DrawdownType.TRAILING,
   },
   {
