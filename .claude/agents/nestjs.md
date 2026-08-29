@@ -522,7 +522,9 @@ Invariants verrouillés par `demo-seed-idempotence.spec.ts` : purge **avant** re
 et **scopée `userId`** (un re-run remplace, il n'empile pas) · tous les trades dans les
 `DEMO_WINDOW_DAYS` (30) derniers jours · J-0 et J-1 peuplés · session du jour ACTIVE ·
 P&L total < 15 % du capital et pertes visibles (sobriété AMF : on montre la
-fonctionnalité, jamais une performance).
+fonctionnalité, jamais une performance). Le capital n'y est **jamais en dur** : les tests
+le relisent depuis l'upsert du seed, sinon chaque rééquilibrage (25 000 → 55 000) fausse
+silencieusement le ratio au lieu d'échouer.
 
 ### Comptes de trading de la démo (PROMPT-193)
 
@@ -532,21 +534,31 @@ pendant que « Mes comptes » et le sélecteur agrégé, qui passent par les com
 affichaient **0 $ / 0 trade / 0 compte**. Deux pages qui se contredisent.
 
 `DEMO_ACCOUNTS` crée 2 comptes ACTIVE et route les trades par actif :
-`Éval Futures · 20k` (EVALUATION, broker `Prop firm`, futures purs MNQ/MES/GC) et
+`Apex 50k · Éval` (EVALUATION, futures purs MNQ/MES/GC) et
 `Compte perso · Forex & Crypto` (PERSONAL, EUR/USD + BTC/USDT). Une éval futures qui
 loggerait de l'EUR/USD spot ou du BTC n'existe pas — d'où le routage par actif, pas
 « tout sur la prop firm ». Deux comptes plutôt qu'un : le multi-comptes est l'une des
 ancres Premium (`plans.md`).
 
-**Aucune marque de prop firm dans les libellés démo** (PROMPT-194) : la base de 20 000 $
-imposée par le contrat de cohérence ci-dessous ne correspond au palier d'aucune firme
-réelle (le plus petit palier Apex est à 25 000 $). Citer une firme exposait la démo à
-une incohérence repérable par un prospect, sans rien apporter.
+**Règles prop firm : de vraies valeurs, jamais un palier inventé** (PROMPT-195).
+Le compte porte les règles réelles Apex 50k Full Evaluation — base 50 000, objectif
++3 000, trailing drawdown 2 500. L'itération précédente utilisait un 20k générique que
+*aucune* firme ne propose : un prospect qui connaît le marché le repérait. Si un jour on
+change de firme ou de palier, reprendre des valeurs réelles, ou revenir à un libellé
+sans marque — mais pas une marque sur un palier fictif.
+
+**Ce que la démo n'affirme pas** : renseigner les règles de la firme n'est pas prétendre
+reproduire son calcul officiel. L'app estime marge et pacing depuis les seuls trades
+loggés — pas de trailing intraday, pas de positions ouvertes, pas de fuseau. C'est déjà
+porté par `RULE_DISCLAIMER` (`accounts.service`) et la clause conformité du
+`DEBRIEF_SYSTEM_PROMPT` : ne rien écrire dans la démo qui les contredise. L'éval doit
+aussi rester **en cours** (P&L < objectif) et loin du seuil de liquidation — une éval
+déjà passée se lirait comme une promesse de réussite.
 
 **Contrat de cohérence, à ne pas casser** :
 
 ```
-Σ startingBalance des comptes ACTIVE === PROFILE.startingCapital   (25 000)
+Σ startingBalance des comptes ACTIVE === PROFILE.startingCapital   (50 000 + 5 000 = 55 000)
 ```
 
 `dashboard.baseCapital` somme les `startingBalance` **dès qu'un compte existe** et ne
