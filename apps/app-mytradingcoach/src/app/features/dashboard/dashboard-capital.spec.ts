@@ -39,7 +39,7 @@ function setup(cfg: Cfg) {
     user: () => ({ currency: 'USD', currencyRate: 1 }),
   };
   const tradesStore = {
-    totalTrades: signal(1), trades: signal([]),
+    totalTrades: signal(1), trades: signal([]), loaded: signal(true),
     loadTrades: vi.fn(), reset: vi.fn(),
   };
   const sessionStore = { hasActiveSession: () => false, todayStats: () => null };

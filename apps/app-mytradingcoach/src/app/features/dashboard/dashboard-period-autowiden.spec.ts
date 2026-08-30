@@ -44,7 +44,7 @@ function setup(tradesInStore: number, summaryTotal: number | null) {
       {
         provide: TradesStore,
         useValue: {
-          totalTrades: signal(tradesInStore), trades: signal([]),
+          totalTrades: signal(tradesInStore), trades: signal([]), loaded: signal(true),
           loadTrades: vi.fn(), reset: vi.fn(),
         },
       },

@@ -24,7 +24,7 @@ function setup(totalTrades: number) {
     profileIncomplete: () => false, startingCapital: () => 0, user: () => ({}),
   };
   const tradesStore = {
-    totalTrades: signal(totalTrades), trades: signal([]),
+    totalTrades: signal(totalTrades), trades: signal([]), loaded: signal(true),
     loadTrades: vi.fn(), reset: vi.fn(),
   };
   const sessionStore = { hasActiveSession: () => false, todayStats: () => null };

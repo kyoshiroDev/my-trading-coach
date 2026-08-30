@@ -92,6 +92,23 @@ IA (contexte marché, news, calendrier éco IA, recap) suit `plans.md`. Données
 via `SessionStore` : `/session/active`, `/analytics/daily-recap/yesterday`,
 `/eco-calendar/*`, `/debrief/current`, `/trades/market-context`, `/trades/news`.
 
+### Stores : un compteur à 0 n'est pas une donnée (PROMPT-196)
+
+`TradesStore` expose `loaded` **en plus** de `totalTrades`, comme `SelectedAccountStore`.
+Sans lui, `totalTrades() === 0` était ambigu — avant tout chargement, PENDANT un
+reset+recharge, et pour un compte réellement vide. Le dashboard lisait ce 0 comme
+« compte vide » et affichait « Fais ton premier pas » juste après un import réussi :
+l'utilisateur venait d'importer son historique et lisait « tu n'as rien fait ».
+
+Règle : **ne jamais conclure « vide » depuis un compteur seul**. Un état vide se déduit
+de `loaded() && total === 0`. Le dashboard passe par `accountReallyEmpty()`.
+`loaded` ne passe à `true` que sur une réponse **reçue** (pas sur erreur) et retombe à
+`false` dans `reset()` : après un échec ou pendant un rechargement, l'état est
+« inconnu », jamais « il n'a rien ».
+
+Corollaire pour l'auto-élargissement de la fenêtre : ne pas désarmer sur un compte vide
+(`periodAutoAdjusted`), sinon l'import qui suit n'élargit plus jamais la période.
+
 #### Hauteurs calées sur le viewport → `--demo-banner-h` (PROMPT-192)
 
 Les 3 onglets se dimensionnent en `calc(100vh - 103px - var(--demo-banner-h, 0px))`
