@@ -10,9 +10,11 @@
   <div class="plan-modal-card" role="dialog" aria-modal="true">
     <!-- Header -->
     <div class="plan-modal-header">
-      <h2>Passer à Premium ⚡</h2>
+      <h2>Passer à Premium <lucide-icon [img]="ZapIcon" [size]="19" /></h2>
       <p>1 mois offert · carte requise · annulable en un clic</p>
-      <button class="plan-modal-close" (click)="close()" aria-label="Fermer">✕</button>
+      <button class="plan-modal-close" (click)="close()" aria-label="Fermer">
+        <lucide-icon [img]="XIcon" [size]="13" />
+      </button>
     </div>
 
     <!-- Toggle d'intervalle -->
@@ -32,31 +34,29 @@
       </button>
     </div>
 
-    <!-- Plan Premium unique -->
-    <div class="plan-cols">
-      <div class="plan-col premium-col selected-col">
-        <div class="plan-col-badge">Premium</div>
-        <div class="plan-col-name">Premium</div>
-        <div class="plan-col-price">
-          @if (interval() === 'yearly') {
-            <span class="price">{{ PRICING.premium.yearly }}€</span><span class="period">/an</span>
-            <div class="plan-col-detail save">économise {{ PRICING.premium.savings }}€</div>
-          } @else {
-            <span class="price">{{ PRICING.premium.monthly }}€</span><span class="period">/mois</span>
-            <div class="plan-col-detail">Facturé chaque mois</div>
-          }
-        </div>
-        <ul class="plan-col-feats">
-          <li>✓ Tout le plan Gratuit inclus</li>
-          <li>✓ Weekly Debrief IA</li>
-          <li>✓ IA Insights &amp; Chat coach</li>
-          <li>✓ Analytics avancés</li>
-          <li>✓ Score trader /100</li>
-          <li>✓ Comptes illimités</li>
-          <li>✓ Règles prop firm &amp; sync crypto</li>
-          <li>✓ Recap email 17h30</li>
-        </ul>
+    <!-- Palier unique (PROMPT-169) : plus de wrapper grille, la colonne EST le bloc. -->
+    <div class="plan-col premium-col selected-col">
+      <div class="plan-col-badge">Premium</div>
+      <div class="plan-col-name">Premium</div>
+      <div class="plan-col-price">
+        @if (interval() === 'yearly') {
+          <span class="price">{{ PRICING.premium.yearly }}€</span><span class="period">/an</span>
+          <div class="plan-col-detail save">économise {{ PRICING.premium.savings }}€</div>
+        } @else {
+          <span class="price">{{ PRICING.premium.monthly }}€</span><span class="period">/mois</span>
+          <div class="plan-col-detail">Facturé chaque mois</div>
+        }
       </div>
+      <ul class="plan-col-feats">
+        <li><lucide-icon [img]="CheckIcon" [size]="14" /> Tout le plan Gratuit inclus</li>
+        <li><lucide-icon [img]="CheckIcon" [size]="14" /> Weekly Debrief IA</li>
+        <li><lucide-icon [img]="CheckIcon" [size]="14" /> IA Insights &amp; Chat coach</li>
+        <li><lucide-icon [img]="CheckIcon" [size]="14" /> Analytics avancés</li>
+        <li><lucide-icon [img]="CheckIcon" [size]="14" /> Score trader /100</li>
+        <li><lucide-icon [img]="CheckIcon" [size]="14" /> Comptes illimités</li>
+        <li><lucide-icon [img]="CheckIcon" [size]="14" /> Règles prop firm &amp; sync crypto</li>
+        <li><lucide-icon [img]="CheckIcon" [size]="14" /> Recap email 17h30</li>
+      </ul>
     </div>
 
     <!-- CTA -->
