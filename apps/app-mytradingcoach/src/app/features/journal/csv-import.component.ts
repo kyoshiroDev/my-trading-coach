@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
   computed,
   effect,
   inject,
@@ -9,6 +10,7 @@ import {
   output,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
@@ -206,7 +208,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
 
                 <div class="import-field">
                   <label class="import-label" for="tvFeesInput">
-                    Fichier des frais <span class="src-tag src-tag-green">Cash history · optionnel</span>
+                    Fichier des frais <span class="src-tag src-tag-green">Cash history · recommandé</span>
                   </label>
                   @if (feesFile()) {
                     <div class="file-pill">
@@ -222,14 +224,23 @@ const EMOTION_EMOJIS: Record<string, string> = {
                       </p>
                     }
                   } @else {
-                    <button class="file-choose" (click)="tvFeesInput.click()">Choisir un fichier</button>
+                    <button #feesChooseBtn class="file-choose" data-testid="import-fees-choose"
+                      (click)="tvFeesInput.click()">Choisir un fichier</button>
                   }
                   <input #tvFeesInput id="tvFeesInput" type="file" data-testid="import-fees-input"
                     accept=".csv,.txt,.xlsx,.xls" style="display:none" (change)="onFeesFileChange($event)" />
                 </div>
 
-                <p class="import-help">
-                  Ajoute le Cash history et tes frais sont exacts au centime, sans saisie manuelle.
+                <!-- L'ancien hint vantait le confort (« sans saisie manuelle ») ; il faut
+                     d'abord dire ce qu'on perd sans le fichier, sinon « optionnel » se lit
+                     « accessoire » et le P&L brut passe pour net. -->
+                <p class="import-help import-fees-pitch">
+                  <lucide-icon [img]="AlertCircleIcon" [size]="14" class="import-fees-pitch-ic" />
+                  <span>
+                    Sans le Cash history, ton P&amp;L est affiché <strong>brut</strong> (frais non
+                    déduits) : tes chiffres seront optimistes. Ajoute-le pour un P&amp;L net exact
+                    au centime.
+                  </span>
                 </p>
               } @else {
                 <!-- Autre broker / onboarding : dropzone -->
@@ -325,6 +336,24 @@ const EMOTION_EMOJIS: Record<string, string> = {
               @if (!canImport()) {
                 <p class="import-help import-warn">Choisis le compte de destination pour importer.</p>
               }
+              <!-- Confirmation DOUCE (jamais bloquante) : l'import sans Cash history reste
+                   possible en un clic, mais le choix devient conscient. Le bouton Importer
+                   n'est jamais désactivé pour cause de frais manquants. -->
+              @if (showFeesConfirm()) {
+                <div class="fees-confirm" data-testid="import-fees-confirm">
+                  <p class="fees-confirm-title">Importer sans le Cash history ?</p>
+                  <p class="fees-confirm-text">
+                    Ton P&amp;L sera <strong>brut</strong> : les frais ne seront pas déduits.
+                    Tu pourras toujours les ajouter plus tard depuis le journal.
+                  </p>
+                  <div class="fees-confirm-actions">
+                    <button class="btn-ghost" data-testid="import-fees-confirm-add"
+                      (click)="addFeesFromConfirm()">Ajouter le Cash history</button>
+                    <button class="btn-primary" data-testid="import-fees-confirm-anyway"
+                      (click)="importAnyway()">Importer quand même</button>
+                  </div>
+                </div>
+              }
               <div class="modal-footer">
                 <button class="btn-ghost" (click)="dismissed.emit()">Annuler</button>
                 <button
@@ -349,7 +378,8 @@ const EMOTION_EMOJIS: Record<string, string> = {
 })
 export class CsvImportComponent {
   readonly open = input(false);
-  /** Affiche le sélecteur « Fichier des frais » (Tradovate Cash history). Onboarding → false. */
+  /** Affiche le sélecteur « Fichier des frais » (Tradovate Cash history). Aussi vrai
+   *  dans l'onboarding : la confirmation « sans frais » y est donc active également. */
   readonly allowFeesFile = input(true);
   readonly dismissed = output<void>();
   /** Émet le résultat : l'onboarding en fait son écran de confirmation (il ferme la
@@ -385,6 +415,12 @@ export class CsvImportComponent {
   protected readonly feesFile = signal<File | null>(null);
   // true si l'en-tête ressemble à un Cash history Tradovate (frais exacts par fusion).
   protected readonly feesFileValid = signal(false);
+  /** Panneau de confirmation « importer sans frais » affiché. */
+  protected readonly showFeesConfirm = signal(false);
+  /** L'utilisateur a déjà tranché pour CE lot : on ne le redemande pas. */
+  private feesConfirmed = false;
+  /** Bouton « Choisir un fichier » du champ frais, pour y renvoyer le focus. */
+  private readonly feesChooseBtn = viewChild<ElementRef<HTMLButtonElement>>('feesChooseBtn');
   // Source d'import sélectionnée (PROMPT-164) : Tradovate (2 fichiers) présélectionné, ou autre broker (dropzone).
   protected readonly source = signal<'tradovate' | 'other'>('tradovate');
 
@@ -414,6 +450,19 @@ export class CsvImportComponent {
   /** Couleur du setup sélectionné (pastille à côté du select). */
   protected readonly selectedSetupColor = computed(
     () => this.setups().find((s) => s.id === this.setupId())?.color ?? 'transparent',
+  );
+
+  /**
+   * Faut-il demander confirmation avant d'importer ? Mêmes conditions que `feesReminder`,
+   * mais AVANT l'import : Tradovate, aucun Cash history, aucun total saisi. Chez les
+   * autres brokers les frais sont déjà dans le CSV, la question n'a pas lieu d'être.
+   */
+  protected readonly needsFeesConfirm = computed(
+    () =>
+      this.source() === 'tradovate' &&
+      this.allowFeesFile() &&
+      !this.feesFile() &&
+      parseDecimal(this.totalFees()) == null,
   );
 
   /** Import autorisé : pas de comptes (FREE → compte par défaut backend) OU un compte choisi. */
@@ -499,6 +548,8 @@ export class CsvImportComponent {
     this.error.set(null);
     this.totalFees.set('');
     this.feesDisabledReason.set(null);
+    this.feesConfirmed = false;
+    this.showFeesConfirm.set(false);
     this.initAccountSelection();
 
     // Lecture légère (en-tête + nb de lignes) pour décider si le champ frais
@@ -555,10 +606,38 @@ export class CsvImportComponent {
   protected clearFeesFile() {
     this.feesFile.set(null);
     this.feesFileValid.set(false);
+    this.feesConfirmed = false;
+  }
+
+  /**
+   * Clic sur « Importer ». Si le lot Tradovate part sans aucun frais, on interpose UNE
+   * confirmation douce — jamais un blocage : « Importer quand même » est à un clic et
+   * le bouton Importer n'est jamais désactivé pour cette raison.
+   */
+  protected upload() {
+    if (this.needsFeesConfirm() && !this.feesConfirmed && !this.uploading) {
+      this.showFeesConfirm.set(true);
+      return;
+    }
+    this.doUpload();
+  }
+
+  /** « Importer quand même » : le choix est tranché pour ce lot, on n'insiste plus. */
+  protected importAnyway(): void {
+    this.feesConfirmed = true;
+    this.showFeesConfirm.set(false);
+    this.doUpload();
+  }
+
+  /** « Ajouter le Cash history » : on referme et on renvoie l'utilisateur sur le champ. */
+  protected addFeesFromConfirm(): void {
+    this.showFeesConfirm.set(false);
+    // Focus après le rendu : le bouton n'existe que lorsque le panneau est refermé.
+    setTimeout(() => this.feesChooseBtn()?.nativeElement.focus(), 0);
   }
 
   // Étape 2 : confirmation → upload avec les frais éventuels.
-  protected upload() {
+  private doUpload() {
     const file = this.selectedFile();
     if (!file || !this.canImport()) return;
     // Verrou SYNCHRONE, posé avant tout await : `[disabled]="isLoading()"` ne protège
@@ -626,6 +705,10 @@ export class CsvImportComponent {
     this.feesDisabledReason.set(null);
     this.source.set('tradovate');
     this.uploading = false;
+    // Nouveau lot = nouvelle décision : sans ça, un import « quand même » aurait
+    // dispensé de confirmation tous les imports suivants de la session.
+    this.feesConfirmed = false;
+    this.showFeesConfirm.set(false);
     this.clearFeesFile();
   }
 }
