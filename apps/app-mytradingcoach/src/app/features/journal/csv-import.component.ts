@@ -241,15 +241,22 @@ const EMOTION_EMOJIS: Record<string, string> = {
 
                 <!-- L'ancien hint vantait le confort (« sans saisie manuelle ») ; il faut
                      d'abord dire ce qu'on perd sans le fichier, sinon « optionnel » se lit
-                     « accessoire » et le P&L brut passe pour net. -->
-                <p class="import-help import-fees-pitch">
-                  <lucide-icon [img]="AlertCircleIcon" [size]="14" class="import-fees-pitch-ic" />
-                  <span>
-                    Sans le Cash history, ton P&amp;L est affiché <strong>brut</strong> (frais non
-                    déduits) : tes chiffres seront optimistes. Ajoute-le pour un P&amp;L net exact
-                    au centime.
-                  </span>
-                </p>
+                     « accessoire » et le P&L brut passe pour net.
+                     Uniquement TANT QU'aucun fichier n'est choisi : une fois choisi, il
+                     restait affiché sous le nom du fichier et laissait croire que rien
+                     n'avait été pris en compte. Les messages « vide » / « mauvais
+                     format » couvrent déjà les cas où les frais ne seront pas déduits ;
+                     un fichier valide n'a rien à annoncer. -->
+                @if (!feesFile()) {
+                  <p class="import-help import-fees-pitch" data-testid="fees-pitch">
+                    <lucide-icon [img]="AlertCircleIcon" [size]="14" class="import-fees-pitch-ic" />
+                    <span>
+                      Sans le Cash history, ton P&amp;L est affiché <strong>brut</strong> (frais non
+                      déduits) : tes chiffres seront optimistes. Ajoute-le pour un P&amp;L net exact
+                      au centime.
+                    </span>
+                  </p>
+                }
               } @else {
                 <!-- Autre broker / onboarding : dropzone -->
                 <div
