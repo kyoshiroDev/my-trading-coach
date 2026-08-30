@@ -7,6 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { LucideAngularModule, Check, X, Zap } from 'lucide-angular';
 import { BillingApi } from '../../../core/api/billing.api';
 import { PRICING } from '../../../core/constants/pricing.const';
 
@@ -16,6 +17,7 @@ type PlanId = `premium_${Interval}`;
 @Component({
   selector: 'mtc-plan-modal',
   standalone: true,
+  imports: [LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './plan-modal.component.html',
   styleUrl: './plan-modal.component.css',
@@ -27,6 +29,12 @@ export class PlanModalComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly PRICING = PRICING;
+
+  // Icônes lucide, comme partout ailleurs dans l'app : les glyphes texte (✕ ⚡ ✓) ne
+  // suivaient ni la graisse ni l'alignement du reste de l'interface.
+  protected readonly XIcon = X;
+  protected readonly ZapIcon = Zap;
+  protected readonly CheckIcon = Check;
 
   // Palier payant unique (Premium) depuis PROMPT-169 : seul l'intervalle est réglable.
   // L'essai 30j n'est accordé qu'au mensuel (l'annuel est facturé immédiatement).

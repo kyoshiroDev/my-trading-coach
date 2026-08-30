@@ -1,6 +1,6 @@
 <mtc-topbar
   title="Mes comptes"
-  [showAddButton]="!atLimit()"
+  [showAddButton]="true"
   [showAccountSelector]="true"
   addLabel="Ajouter un compte"
   addTestId="add-account-btn"
@@ -164,21 +164,24 @@
         </div>
       }
 
-      <!-- Ajouter / quota atteint : uniquement en vue « Tous les comptes ». -->
-      @if (store.selectedAccountId() === 'all') {
-        @if (atLimit()) {
-          <button class="acct-add is-limit" (click)="showPlanModal.set(true)" data-testid="add-account-limit">
-            <div class="plus"><lucide-icon [img]="LockIcon" [size]="24" /></div>
-            <div>Limite de {{ accountLimit() }} compte(s) atteinte</div>
-            <div class="acct-add-sub">Passe au Premium pour des comptes illimités</div>
-          </button>
-        } @else {
-          <button class="acct-add" (click)="openCreate()" data-testid="add-account-tile">
-            <div class="plus"><lucide-icon [img]="PlusIcon" [size]="24" /></div>
-            <div>Ajouter un compte</div>
-            <div class="acct-add-sub">prop firm ou perso</div>
-          </button>
-        }
+      <!-- Quota atteint : visible dans TOUTES les vues. C'est le seul chemin vers la
+           modale Premium depuis cette page, et un FREE au quota n'a qu'UN compte : le
+           sélecteur pointe donc sur ce compte, jamais sur « Tous les comptes ». La tuile
+           ne s'affichait jamais pour celui qui en avait le plus besoin.
+           La tuile d'AJOUT, elle, reste réservée à la vue d'ensemble : masquer les
+           actions de création dans une vue filtrée est un choix délibéré (e4eba29). -->
+      @if (atLimit()) {
+        <button class="acct-add is-limit" (click)="showPlanModal.set(true)" data-testid="add-account-limit">
+          <div class="plus"><lucide-icon [img]="LockIcon" [size]="24" /></div>
+          <div>Limite de {{ accountLimit() }} compte(s) atteinte</div>
+          <div class="acct-add-sub">Passe au Premium pour des comptes illimités</div>
+        </button>
+      } @else if (store.selectedAccountId() === 'all') {
+        <button class="acct-add" (click)="openCreate()" data-testid="add-account-tile">
+          <div class="plus"><lucide-icon [img]="PlusIcon" [size]="24" /></div>
+          <div>Ajouter un compte</div>
+          <div class="acct-add-sub">prop firm ou perso</div>
+        </button>
       }
 
     </div>
