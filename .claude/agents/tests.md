@@ -25,12 +25,29 @@ pnpm nx test api-mytradingcoach --coverage
 
 `*.int-spec.ts` **ne matche pas** `*.spec.ts` : les deux suites ne se mélangent jamais.
 
+**Quand l'intégration est nécessaire, et pas seulement confortable** : dès que le
+comportement testé dépend de ce que Prisma renvoie *réellement*. Un double Prisma
+répond ce qu'on lui dit quel que soit l'`include` — il ne peut donc pas prouver qu'un
+`include` est correct. Cas vécu (PROMPT-200) : `effectiveEmotion` était absent de
+`create`/`update` faute d'`include tradeSession`, et un test unitaire vérifiant la
+valeur de sortie serait passé au vert avec le bug intact en production. Deux parades,
+complémentaires : en unitaire, inspecter l'argument passé à Prisma
+(`mock.calls[0][0].include`) ; en intégration, laisser le vrai moteur répondre. Vérifier
+qu'un test échoue en réinjectant **chaque moitié** du bug séparément (ici : l'`include`
+seul, puis le champ calculé seul).
+
 ```bash
 # intégration, en local (charge le .env de la racine)
 cd apps/api-mytradingcoach
 env $(grep -vE '^#|^$' ../../.env | xargs -d '\n') \
   pnpm exec vitest run --config vitest.integration.config.ts
 ```
+
+> ⚠️ **Schéma local souvent périmé.** Le volume `postgres_local_data` survit aux
+> `docker compose down` : une base démarrée après une pause a des migrations de retard,
+> et les `int-spec` échouent sur une colonne inexistante (`The column X does not exist`)
+> qui n'a rien à voir avec le test. Lancer
+> `pnpm exec prisma migrate deploy --config=./prisma/prisma.config.ts` avant la suite.
 
 > ⚠️ **Arrêter toute API lancée à côté avant de jouer la suite d'intégration.** Un autre
 > process branché sur le même Redis consomme la file BullMQ « stripe » et traite les jobs
