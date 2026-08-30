@@ -35,7 +35,6 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { UsersApi } from '../../../core/api/users.api';
 import { AmbassadorNotifService } from '../../../core/services/ambassador-notif.service';
 import { LiveModeService } from '../../../core/services/live-mode.service';
-import { SessionStore } from '../../../core/stores/session.store';
 import { DemoService } from '../../../core/services/demo.service';
 import { OnboardingComponent } from '../../../features/onboarding/onboarding.component';
 import { environment } from '../../../../environments/environment';
@@ -358,7 +357,6 @@ export class SidebarComponent {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly ambassadorNotif = inject(AmbassadorNotifService);
   protected readonly liveModeService = inject(LiveModeService);
-  private readonly sessionStore = inject(SessionStore);
   protected readonly demo = inject(DemoService);
   protected readonly landingUrl = environment.landingUrl;
 
@@ -423,21 +421,32 @@ export class SidebarComponent {
     return !!user && user.onboardingCompleted === false;
   });
 
-  // Mode focus « session live » : quand une session est active, on replie la
-  // sidebar en icônes (fidélité maquette). L'état manuel de l'utilisateur est
-  // mémorisé puis restauré à la clôture : la préférence localStorage n'est jamais
-  // écrasée (collapsed.set n'écrit pas le localStorage, seul toggleCollapse le fait).
-  private collapsedBeforeSession: boolean | null = null;
+  /**
+   * Mode focus : la sidebar se replie en icônes **pendant qu'on regarde l'onglet
+   * Session live**, et seulement là.
+   *
+   * Le déclencheur était `hasActiveSession()`, c'est-à-dire « une session est ouverte »
+   * — un état qui dure toute la journée de trading. La sidebar restait donc repliée sur
+   * le Dashboard, le Journal et partout ailleurs, sans rapport avec le focus voulu.
+   * `liveModeService.isLive()` vaut vrai uniquement tant que l'onglet live est affiché
+   * (posé par session-day, retiré au changement d'onglet ET en quittant la route).
+   *
+   * L'état d'avant est mémorisé puis restauré en sortant : la préférence localStorage
+   * n'est jamais écrasée, `collapsed.set` ne l'écrit pas (seul `toggleCollapse` le fait).
+   * L'effet ne lit `collapsed()` que dans un `untracked` : replier ou déplier à la main
+   * pendant le live ne le redéclenche pas, donc le choix de l'utilisateur tient.
+   */
+  private collapsedBeforeLive: boolean | null = null;
 
   constructor() {
     effect(() => {
-      const active = this.sessionStore.hasActiveSession();
-      if (active && this.collapsedBeforeSession === null) {
-        this.collapsedBeforeSession = untracked(() => this.collapsed());
+      const live = this.liveModeService.isLive();
+      if (live && this.collapsedBeforeLive === null) {
+        this.collapsedBeforeLive = untracked(() => this.collapsed());
         this.collapsed.set(true);
-      } else if (!active && this.collapsedBeforeSession !== null) {
-        this.collapsed.set(this.collapsedBeforeSession);
-        this.collapsedBeforeSession = null;
+      } else if (!live && this.collapsedBeforeLive !== null) {
+        this.collapsed.set(this.collapsedBeforeLive);
+        this.collapsedBeforeLive = null;
       }
     });
 
