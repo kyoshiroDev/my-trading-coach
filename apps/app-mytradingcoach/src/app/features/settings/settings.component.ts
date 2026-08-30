@@ -137,6 +137,13 @@ export class SettingsComponent implements OnInit {
   protected readonly deleteInput = signal('');
   protected readonly deleteReason = signal('');
   protected readonly isDeleting = signal(false);
+  /**
+   * Échec de suppression de compte. Le handler `error` se contentait de relâcher le
+   * spinner : l'utilisateur voyait « Suppression… » s'arrêter, puis plus rien, et
+   * restait connecté sans savoir pourquoi. Sur une action irréversible qu'il vient de
+   * confirmer en tapant SUPPRIMER, le silence est le pire retour possible.
+   */
+  protected readonly deleteError = signal<string | null>(null);
 
   // Nettoyage des doublons (maintenance)
   protected readonly duplicateCount = signal<number | null>(null); // null = pas encore analysé
@@ -557,6 +564,7 @@ export class SettingsComponent implements OnInit {
   protected confirmDelete() {
     if (this.deleteInput() !== 'SUPPRIMER') return;
     this.isDeleting.set(true);
+    this.deleteError.set(null);
     this.usersApi
       .deleteMe(this.deleteReason() || undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -564,8 +572,12 @@ export class SettingsComponent implements OnInit {
         next: () => {
           this.auth.logout();
         },
-        error: () => {
+        error: (err) => {
           this.isDeleting.set(false);
+          this.deleteError.set(
+            err?.error?.message ??
+              "Ton compte n'a pas pu être supprimé. Réessaie, et contacte le support si ça persiste.",
+          );
         },
       });
   }

@@ -362,9 +362,14 @@
                   </select>
                   <input class="delete-input" type="text" [value]="deleteInput()"
                     (input)="deleteInput.set($any($event.target).value)" placeholder="SUPPRIMER" />
+                  @if (deleteError()) {
+                    <p class="delete-error" role="alert" data-testid="account-delete-error">
+                      {{ deleteError() }}
+                    </p>
+                  }
                   <div class="delete-actions">
                     <button class="btn btn-secondary"
-                      (click)="showDeleteConfirm.set(false); deleteInput.set('')">Annuler</button>
+                      (click)="showDeleteConfirm.set(false); deleteInput.set(''); deleteError.set(null)">Annuler</button>
                     <button class="btn btn-danger" (click)="confirmDelete()"
                       [disabled]="deleteInput() !== 'SUPPRIMER' || isDeleting()">
                       {{ isDeleting() ? 'Suppression…' : 'Supprimer définitivement' }}
