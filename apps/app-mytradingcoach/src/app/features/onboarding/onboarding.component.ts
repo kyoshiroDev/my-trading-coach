@@ -118,20 +118,28 @@ export class OnboardingComponent {
   protected readonly selectedMarket   = signal<Market | null>(null);
   protected readonly selectedGoal     = signal<Goal | null>(null);
   protected readonly selectedCurrency = signal<'USD' | 'EUR'>('USD');
-  protected readonly capitalInput     = signal('');
+  /**
+   * Pré-rempli : l'étape ne bloque plus (PROMPT-198). Laisser le champ vide aurait
+   * cascadé en « CAPITAL $0.00 » — `User.startingCapital` vaut 0 par défaut, le compte
+   * créé au premier trade hérite alors d'un `startingBalance` null, et le dashboard
+   * comme « Mes comptes » affichent 0. Une valeur ronde ajustable vaut mieux qu'un mur
+   * en 3ᵉ écran sur la question la plus sensible du parcours.
+   */
+  protected readonly capitalInput     = signal('10000');
   protected readonly isSaving         = signal(false);
 
   // Étape Stratégie
   protected readonly selectedStyle        = signal<TradingStyle | null>(null);
   protected readonly strategyDescription  = signal('');
   protected readonly selectedSessions     = signal<TradingSession[]>([]);
-  // Stratégie : style + ≥1 session + description ≥ 15 caractères (contexte IA exploitable).
-  // Les tags d'approche ont été retirés (redondants avec les setups + la description libre).
+  /**
+   * Style + au moins une session. La description libre reste envoyée au contexte IA
+   * mais n'est plus exigée (PROMPT-198) : c'était la seule étape demandant de RÉDIGER,
+   * et le minimum de 15 caractères en faisait le décrochage le plus probable du wizard.
+   * Les tags d'approche ont été retirés (redondants avec les setups + la description).
+   */
   protected readonly strategyValid = computed(
-    () =>
-      !!this.selectedStyle() &&
-      this.selectedSessions().length > 0 &&
-      this.strategyDescription().trim().length >= 15,
+    () => !!this.selectedStyle() && this.selectedSessions().length > 0,
   );
 
   // Étape Actifs
@@ -218,6 +226,16 @@ export class OnboardingComponent {
     this.completed.emit();
   }
 
+  /**
+   * « Passer, je remplirai plus tard » : même sortie que `finish()`, donc l'onboarding
+   * est marqué terminé et le wizard ne se rouvre pas à chaque chargement. Ce qui a déjà
+   * été saisi reste enregistré (le profil est sauvegardé à l'étape stratégie) ; le reste
+   * se complète depuis Profil. Le dashboard sait vivre avec un profil partiel.
+   */
+  protected skip(): void {
+    this.finish();
+  }
+
   protected selectMarket(m: Market)          { this.selectedMarket.set(m); }
   protected selectGoal(g: Goal)              { this.selectedGoal.set(g); }
   protected selectCurrency(c: 'USD'|'EUR')   { this.selectedCurrency.set(c); }
@@ -269,9 +287,6 @@ export class OnboardingComponent {
     input.value = input.value.replace(/[^\d.,]/g, '');
     this.capitalInput.set(input.value);
   }
-
-  // Capital obligatoire : « Continuer » bloqué tant que > 0 n'est pas saisi.
-  protected readonly capitalValid = computed(() => this.parseCapital() > 0);
 
   protected nextStep(): void {
     const s = this.step();
@@ -333,7 +348,9 @@ export class OnboardingComponent {
       .saveOnboardingProfile({
         market: this.selectedMarket(),
         goal: this.selectedGoal(),
-        startingCapital: this.parseCapital(),
+        // 0 (champ vidé) → on n'envoie rien : le back ne réécrit que si non-null, donc
+        // la valeur déjà en base est préservée au lieu d'être écrasée par un 0.
+        startingCapital: this.parseCapital() || undefined,
         currency: this.selectedCurrency(),
         tradingStyle: this.selectedStyle() ?? undefined,
         strategyDescription: this.strategyDescription().trim() || undefined,
@@ -394,8 +411,13 @@ export class OnboardingComponent {
   }
   protected onCsvDismissed(): void { this.csvOpen.set(false); this.tradeChoice.set('choice'); }
 
+  /**
+   * Aligné sur ce que l'utilisateur LIT (« Étape n sur 7 ») : l'écran de promesse (1)
+   * et l'écran final (9) ne sont pas des étapes. `step()/9` affichait 89 % au moment
+   * précis où le libellé annonçait « Étape 7 sur 7 ».
+   */
   protected get progress(): number {
-    return Math.round((this.step() / 9) * 100);
+    return Math.round(Math.min(1, (this.step() - 1) / 7) * 100);
   }
 
   protected get stepLabel(): string {

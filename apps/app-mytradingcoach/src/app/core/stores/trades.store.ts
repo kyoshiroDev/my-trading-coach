@@ -55,6 +55,15 @@ export class TradesStore {
   private readonly baseUrl = `${environment.apiUrl}/trades`;
 
   readonly trades = signal<Trade[]>([]);
+  /**
+   * Une première page a-t-elle abouti ? Sans cet état, `totalTrades() === 0` est
+   * ambigu : il vaut 0 avant tout chargement, PENDANT un rechargement (reset + load),
+   * et pour un compte réellement vide. Le dashboard lisait ce 0 comme « compte vide »
+   * et affichait « Fais ton premier pas » juste après un import réussi (PROMPT-196).
+   * Mis à `true` uniquement sur une réponse reçue : une erreur réseau laisse
+   * « on ne sait pas », jamais « il n'a rien ». Miroir de `SelectedAccountStore.loaded`.
+   */
+  readonly loaded = signal(false);
   readonly isLoading = signal(false);
   readonly isLoadingMore = signal(false);
   readonly error = signal<string | null>(null);
@@ -89,6 +98,7 @@ export class TradesStore {
           this.trades.set(res.data.data);
           this.nextCursor.set(res.data.nextCursor);
           this.hasNextPage.set(res.data.hasNextPage);
+          this.loaded.set(true);
           this.isLoading.set(false);
         },
         error: (err) => {
@@ -148,8 +158,14 @@ export class TradesStore {
     this.trades.update((trades) => trades.filter((t) => t.id !== id));
   }
 
+  /**
+   * Vide le store. `loaded` retombe à false : après un reset on ne sait plus ce que
+   * le compte contient tant que le rechargement n'a pas répondu — c'est exactement la
+   * fenêtre pendant laquelle le dashboard affichait « premier pas » à tort.
+   */
   reset() {
     this.trades.set([]);
+    this.loaded.set(false);
     this.nextCursor.set(null);
     this.hasNextPage.set(false);
   }

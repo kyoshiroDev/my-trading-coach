@@ -81,7 +81,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
     </mtc-topbar>
 
     <div class="content">
-      @if (selectedAccount.loaded() && tradesStore.totalTrades() === 0) {
+      @if (accountReallyEmpty()) {
         <div class="firstrun-hero">
           <div class="firstrun-text">
             <h2 class="firstrun-title">Fais ton premier pas 🚀</h2>
@@ -714,6 +714,22 @@ export class DashboardComponent {
         (this.bySetupResource.isLoading() || this.byEmotionResource.isLoading())),
   );
 
+  /**
+   * « Fais ton premier pas » : le compte n'a RÉELLEMENT aucun trade.
+   * Les trois conditions comptent — comptes chargés, trades chargés, et seulement
+   * alors un total à 0. Sans le `tradesStore.loaded()`, le bandeau s'affichait
+   * pendant la fenêtre reset+recharge d'un import réussi : l'utilisateur venait
+   * d'importer son historique et lisait « tu n'as rien fait » (PROMPT-196).
+   * Hors fenêtre de date ≠ inexistant : le store charge sans borne de date, donc un
+   * historique ancien le remplit même quand les KPIs de la période sont à zéro.
+   */
+  protected readonly accountReallyEmpty = computed(
+    () =>
+      this.selectedAccount.loaded() &&
+      this.tradesStore.loaded() &&
+      this.tradesStore.totalTrades() === 0,
+  );
+
   private readonly knownTradesCount = signal(-1);
   private readonly knownAccountsCount = signal(-1);
 
@@ -754,8 +770,14 @@ export class DashboardComponent {
       const summary = this.summary();
       if (!summary) return; // KPIs pas encore chargés
       if (summary.totalTrades > 0) { this.periodAutoAdjusted = true; return; }
+      // Store pas encore chargé (ou rechargé après un import) : son 0 signifie
+      // « on ne sait pas », pas « compte vide ». On ne conclut rien et surtout on ne
+      // désarme pas — l'effect rejoue dès que `loaded` passe (PROMPT-196).
+      if (!this.tradesStore.loaded()) return;
       // `tradesStore` charge les derniers trades SANS borne de date : s'il en voit,
       // c'est que le compte a un historique, simplement hors de la fenêtre.
+      // Compte réellement vide → rien à élargir, mais on reste armé : l'import qui
+      // suit remplira le store et déclenchera l'élargissement.
       if (this.tradesStore.totalTrades() === 0) return;
       this.periodAutoAdjusted = true;
       untracked(() => this.dashboardPeriod.set('ALL'));
@@ -1121,8 +1143,14 @@ export class DashboardComponent {
 
   protected onCsvImported(): void {
     this.showCsvImport.set(false);
+    // Le premier import crée le compte de trading côté backend : sans ce rechargement,
+    // le sélecteur et le capital restaient sur « aucun compte ».
+    this.selectedAccount.load();
     this.tradesStore.reset();
-    this.tradesStore.loadTrades({ limit: '6' });
+    // Même filtre de compte que le chargement nominal : un `limit` seul ramenait les
+    // trades de TOUS les comptes alors qu'un compte précis pouvait être sélectionné.
+    const accountId = this.selectedAccount.accountParam();
+    this.tradesStore.loadTrades(accountId ? { limit: '6', accountId } : { limit: '6' });
     this.reloadAnalytics();
   }
 

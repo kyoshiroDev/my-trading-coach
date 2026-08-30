@@ -502,6 +502,77 @@ Toujours passer `{ userId, feature }` dans les options. Features valides :
 |---|---|---|
 | `DailyRecapCron` | `30 17 * * 1-5` Paris | Génère recap + envoie email aux users actifs du jour |
 | `EcoCalendarCron` | `0 7 * * 1-5` Paris | Pré-génère le calendrier pour tous les users Premium |
+| `DemoSeedCron` | `20 3 * * *` Paris | Re-seed le compte démo (dates relatives recalculées) |
+
+### Compte démo : le seed doit rester récurrent (PROMPT-192)
+
+`seedDemo()` génère des dates **relatives au moment du run**. Appelé une seule fois
+(endpoint admin), il vieillit en silence : seedée le 2026-06-07, la démo prod affichait
+le 2026-08-28 « P&L jour +0$ · Win Rate 0% · 0 trade loggé » et une session active depuis
+1978 h, alors que les données live (marché, calendrier, news) étaient pleines — un
+prospect voyait un produit vide.
+
+Filets posés par `DemoSeedCron` (`modules/admin/demo-seed.cron.ts`) :
+- `@Cron('20 3 * * *')` → re-seed quotidien ;
+- `onModuleInit` gardé par `IS_CRON_WORKER === 'true'` (**obligatoire** : sinon les 8
+  workers du cluster purgent/recréent le même user en concurrence) → rattrape une API
+  restée éteinte plus d'une journée.
+
+Invariants verrouillés par `demo-seed-idempotence.spec.ts` : purge **avant** recréation
+et **scopée `userId`** (un re-run remplace, il n'empile pas) · tous les trades dans les
+`DEMO_WINDOW_DAYS` (30) derniers jours · J-0 et J-1 peuplés · session du jour ACTIVE ·
+P&L total < 15 % du capital et pertes visibles (sobriété AMF : on montre la
+fonctionnalité, jamais une performance). Le capital n'y est **jamais en dur** : les tests
+le relisent depuis l'upsert du seed, sinon chaque rééquilibrage (25 000 → 55 000) fausse
+silencieusement le ratio au lieu d'échouer.
+
+### Comptes de trading de la démo (PROMPT-193)
+
+Le seed créait 56 trades mais **aucun `TradingAccount`** : trades « flottants »
+(`accountId` null). Le dashboard lit les trades bruts et affichait un capital plein,
+pendant que « Mes comptes » et le sélecteur agrégé, qui passent par les comptes,
+affichaient **0 $ / 0 trade / 0 compte**. Deux pages qui se contredisent.
+
+`DEMO_ACCOUNTS` crée 2 comptes ACTIVE et route les trades par actif :
+`Apex 50k · Éval` (EVALUATION, futures purs MNQ/MES/GC) et
+`Compte perso · Forex & Crypto` (PERSONAL, EUR/USD + BTC/USDT). Une éval futures qui
+loggerait de l'EUR/USD spot ou du BTC n'existe pas — d'où le routage par actif, pas
+« tout sur la prop firm ». Deux comptes plutôt qu'un : le multi-comptes est l'une des
+ancres Premium (`plans.md`).
+
+**Règles prop firm : de vraies valeurs, jamais un palier inventé** (PROMPT-195).
+Le compte porte les règles réelles Apex 50k Full Evaluation — base 50 000, objectif
++3 000, trailing drawdown 2 500. L'itération précédente utilisait un 20k générique que
+*aucune* firme ne propose : un prospect qui connaît le marché le repérait. Si un jour on
+change de firme ou de palier, reprendre des valeurs réelles, ou revenir à un libellé
+sans marque — mais pas une marque sur un palier fictif.
+
+**Ce que la démo n'affirme pas** : renseigner les règles de la firme n'est pas prétendre
+reproduire son calcul officiel. L'app estime marge et pacing depuis les seuls trades
+loggés — pas de trailing intraday, pas de positions ouvertes, pas de fuseau. C'est déjà
+porté par `RULE_DISCLAIMER` (`accounts.service`) et la clause conformité du
+`DEBRIEF_SYSTEM_PROMPT` : ne rien écrire dans la démo qui les contredise. L'éval doit
+aussi rester **en cours** (P&L < objectif) et loin du seuil de liquidation — une éval
+déjà passée se lirait comme une promesse de réussite.
+
+**Contrat de cohérence, à ne pas casser** :
+
+```
+Σ startingBalance des comptes ACTIVE === PROFILE.startingCapital   (50 000 + 5 000 = 55 000)
+```
+
+`dashboard.baseCapital` somme les `startingBalance` **dès qu'un compte existe** et ne
+retombe sur `user.startingCapital` que s'il n'y en a aucun ; `accounts.trackedCapital`
+fait la même somme. Tout écart et les deux pages divergent à nouveau. Changer un
+`startingBalance` impose donc d'ajuster l'autre compte, pas `startingCapital`.
+
+Deux pièges d'ordonnancement :
+- **Purger `tradingAccount` APRÈS `trade` et `tradeSession`** : les deux FK sont en
+  `onDelete: SetNull`. Purger les comptes en premier détache les lignes au lieu de les
+  supprimer — elles survivent au re-seed, orphelines.
+- **Aucune session sans compte** : `SessionService.startSession` garantit
+  « anti-NULL, jamais de session sans compte ». Les sessions démo portent donc un
+  `accountId` (le compte futures), sinon la démo ne reflète pas l'app réelle.
 
 ---
 

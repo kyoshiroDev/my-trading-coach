@@ -251,10 +251,17 @@ describe('OnboardingComponent', () => {
       removeSetup: (id: string) => void;
     };
 
-    // Wizard 9 étapes : progression + label de l'étape Setups (7).
+    // Wizard 9 écrans, 7 étapes annoncées : la barre suit le libellé, pas le nombre
+    // d'écrans (PROMPT-198). L'assertion porte sur l'intention, pas sur la formule.
     c.step.set(7);
-    expect(c.progress).toBe(Math.round((7 / 9) * 100));
     expect(c.stepLabel).toBe('Étape 6 sur 7');
+    expect(c.progress).toBe(Math.round((6 / 7) * 100));
+    c.step.set(8);
+    expect(c.stepLabel).toBe('Étape 7 sur 7');
+    expect(
+      c.progress,
+      'Dernière étape annoncée : la barre doit être pleine, pas à 89 %',
+    ).toBe(100);
     c.step.set(9);
     expect(c.progress).toBe(100);
 

@@ -205,6 +205,50 @@
 .import-warn {
   color: var(--yellow);
 }
+
+/* Enjeu des frais AVANT l'import : présent sans être alarmant. Ni gris discret
+   (l'ancien hint passait inaperçu) ni rouge (rien n'est cassé, l'import marche). */
+.import-fees-pitch {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--yellow-dim);
+  border: 1px solid color-mix(in srgb, var(--yellow) 28%, transparent);
+  color: var(--text-2);
+}
+.import-fees-pitch strong { color: var(--yellow); font-weight: 600; }
+.import-fees-pitch-ic { flex-shrink: 0; margin-top: 1px; color: var(--yellow); }
+
+/* Confirmation douce « importer sans frais » : un encart au-dessus du footer, pas
+   une modale par-dessus la modale (et surtout pas un confirm() natif, qui bloque). */
+.fees-confirm {
+  margin-top: 4px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--bg-2);
+  border: 1px solid color-mix(in srgb, var(--yellow) 32%, transparent);
+}
+.fees-confirm-title {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.fees-confirm-text {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.fees-confirm-text strong { color: var(--yellow); }
+.fees-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 .import-setup-row {
   display: flex;
   align-items: center;

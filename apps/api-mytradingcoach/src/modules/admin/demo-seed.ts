@@ -1,6 +1,7 @@
 import {
   PrismaClient, Plan, TradeSide, EmotionState,
   TradingSession, MoodState, SessionStatus,
+  AccountType, AccountStatus, DrawdownType,
 } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { seedDefaultSetups } from '../setups/setups.defaults';
@@ -15,7 +16,78 @@ import { seedDefaultSetups } from '../setups/setups.defaults';
 
 export const DEMO_EMAIL = 'demo@mytradingcoach.app';
 const DEMO_NAME = 'Lucas Mercier';
-const STARTING_CAPITAL = 10_000;
+// Somme imposée par le contrat de cohérence : 50 000 (Apex 50k) + 5 000 (perso).
+// Cf. DEMO_ACCOUNTS — ce total n'est pas libre, il DOIT valoir Σ startingBalance.
+// Il sert aussi de dénominateur au P&L relatif : plus il est bas, plus la démo ressemble
+// à une promesse de gain (le compte à 10 000 $ d'origine affichait +43 %).
+const STARTING_CAPITAL = 55_000;
+
+/**
+ * Fenêtre de génération : tous les trades démo tiennent dans les 30 derniers jours,
+ * donc dans la fenêtre « 1M » par défaut du dashboard. Avant (72 jours), un prospect
+ * voyait « Aucune donnée » tant qu'il n'avait pas cliqué sur « Tout ».
+ */
+export const DEMO_WINDOW_DAYS = 30;
+
+/**
+ * Comptes de trading de la démo. Sans eux, les 56 trades étaient « flottants »
+ * (`accountId` null) : le dashboard lit les trades bruts et affichait un capital plein,
+ * pendant que « Mes comptes » et le sélecteur agrégé, qui s'appuient sur les comptes,
+ * affichaient 0 $ partout. Un prospect voyait deux pages se contredire.
+ *
+ * Contrat de cohérence, à ne pas casser :
+ *   Σ startingBalance des comptes ACTIVE === STARTING_CAPITAL   (50 000 + 5 000 = 55 000)
+ * `dashboard.baseCapital` somme les `startingBalance` dès qu'un compte existe, et ne
+ * retombe sur `user.startingCapital` que s'il n'y en a aucun ; `accounts.trackedCapital`
+ * fait la même somme. Un écart et les deux pages se remettent à diverger.
+ *
+ * Deux comptes plutôt qu'un : le multi-comptes est une fonctionnalité Premium
+ * (« comptes illimités », plans.md), et la paire prop firm + perso est la
+ * configuration réelle de la cible prop firm.
+ */
+const DEMO_ACCOUNTS = [
+  {
+    key: 'futures' as const,
+    // Vraies règles Apex 50k Full Evaluation : base 50 000, objectif +3 000 (→ 53 000),
+    // trailing drawdown 2 500 (seuil de liquidation initial 47 500). Le palier existe
+    // réellement, contrairement au 20k générique d'avant qu'aucune firme ne propose.
+    //
+    // ⚠ Ces valeurs sont les RÈGLES de la firme, pas une prétention à reproduire son
+    // calcul officiel. L'app estime marge et pacing depuis les seuls trades loggés
+    // (RULE_DISCLAIMER dans accounts.service, et la clause conformité du prompt débrief) :
+    // ni trailing intraday, ni positions ouvertes, ni fuseau. Ne pas laisser la démo
+    // suggérer le contraire.
+    label: 'Apex 50k · Éval',
+    broker: 'Apex',
+    type: AccountType.EVALUATION,
+    accountSize: 50_000,
+    startingBalance: 50_000,
+    profitTarget: 3_000,
+    maxDrawdown: 2_500,
+    drawdownType: DrawdownType.TRAILING,
+  },
+  {
+    key: 'perso' as const,
+    label: 'Compte perso · Forex & Crypto',
+    broker: 'IBKR',
+    type: AccountType.PERSONAL,
+    accountSize: 5_000,
+    startingBalance: 5_000,
+    profitTarget: null,
+    maxDrawdown: null,
+    drawdownType: DrawdownType.STATIC,
+  },
+];
+
+/**
+ * Routage des trades. La prop firm ne porte QUE des futures (MNQ/MES/GC) : une éval
+ * futures qui loggerait de l'EUR/USD spot ou du BTC n'existe pas. Le forex et la crypto
+ * vont sur le compte perso, ce qui lui donne aussi de quoi exister (avec le seul BTC il
+ * pesait 10 trades pour -3 $, une carte qui semblait morte).
+ */
+const PERSONAL_ASSETS = new Set(['BTC/USDT', 'EUR/USD']);
+const accountKeyFor = (asset: string): 'futures' | 'perso' =>
+  PERSONAL_ASSETS.has(asset) ? 'perso' : 'futures';
 
 // PRNG déterministe (mulberry32) → données stables.
 function rng(seed: number) {
@@ -43,7 +115,7 @@ const TF = ['1m', '5m', '15m', '1h'];
 interface GenTrade {
   asset: string; side: TradeSide; entry: number; exit: number; pnl: number;
   rr: number; qty: number; emotion: EmotionState; setup: string;
-  session: TradingSession; tf: string; daysAgo: number; hour: number;
+  session: TradingSession; tf: string; daysAgo: number; hour: number; seq: number;
 }
 
 function buildTrades(): GenTrade[] {
@@ -55,7 +127,9 @@ function buildTrades(): GenTrade[] {
     const a = ASSETS[i % ASSETS.length];
     const side: TradeSide = r() < 0.62 ? 'LONG' : 'SHORT';
     const win = (i * 37) % 100 < 57; // WR ~57 %, motif déterministe
-    const pnl = win ? Math.round(90 + r() * 230) : -Math.round(60 + r() * 110);
+    // Amplitudes volontairement modestes : la démo vend la FONCTIONNALITÉ (journal,
+    // courbe, émotions), jamais une performance. Profit factor visé ~1.5, pas 2.8.
+    const pnl = win ? Math.round(55 + r() * 145) : -Math.round(55 + r() * 115);
 
     const drift = (r() - 0.5) * a.base * 0.02;
     const entry = +(a.base + drift).toFixed(a.dec);
@@ -75,7 +149,7 @@ function buildTrades(): GenTrade[] {
       rr: +(1.2 + r() * 1.7).toFixed(1),
       qty: a.qty, emotion, setup: SETUPS[Math.floor(r() * SETUPS.length)],
       session, tf: TF[Math.floor(r() * TF.length)],
-      daysAgo: 2 + Math.round(i * 1.35), hour,
+      daysAgo: 2 + Math.round(i * ((DEMO_WINDOW_DAYS - 4) / (N - 1))), hour, seq: i,
     });
   }
   return out;
@@ -103,7 +177,7 @@ const PROFILE = {
 
 export interface DemoSeedResult {
   email: string; trades: number; winRate: number; pnl: number;
-  sessions: number; recaps: number; debriefs: number;
+  sessions: number; recaps: number; debriefs: number; accounts: number;
 }
 
 /** Seed/refresh complet du compte démo. `prisma` = PrismaService ou PrismaClient adapter. */
@@ -116,11 +190,33 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
     create: { email: DEMO_EMAIL, password, ...PROFILE },
   });
 
-  // Purge scopée (trades d'abord, FK session).
+  // Purge scopée (trades d'abord, FK session). Les comptes viennent APRÈS les trades et
+  // les sessions : `Trade.accountId` / `TradeSession.accountId` sont en onDelete SetNull,
+  // donc purger les comptes en premier détacherait silencieusement des lignes au lieu de
+  // les supprimer. Sans cette purge, chaque run empilait 2 comptes de plus.
   await prisma.trade.deleteMany({ where: { userId: user.id } });
   await prisma.tradeSession.deleteMany({ where: { userId: user.id } });
+  await prisma.tradingAccount.deleteMany({ where: { userId: user.id } });
   await prisma.weeklyDebrief.deleteMany({ where: { userId: user.id } });
   await prisma.dailyRecap.deleteMany({ where: { userId: user.id } });
+
+  // Comptes de trading : Σ startingBalance === STARTING_CAPITAL (cf. DEMO_ACCOUNTS).
+  const accountIdByKey = new Map<'futures' | 'perso', string>();
+  for (const a of DEMO_ACCOUNTS) {
+    const created = await prisma.tradingAccount.create({
+      data: {
+        userId: user.id, label: a.label, broker: a.broker, type: a.type,
+        status: AccountStatus.ACTIVE, accountSize: a.accountSize,
+        startingBalance: a.startingBalance, profitTarget: a.profitTarget,
+        maxDrawdown: a.maxDrawdown, drawdownType: a.drawdownType, currency: 'USD',
+      },
+    });
+    accountIdByKey.set(a.key, created.id);
+  }
+  const accountIdFor = (asset: string): string =>
+    accountIdByKey.get(accountKeyFor(asset)) ?? accountIdByKey.get('futures')!;
+  // Les sessions démo sont futures (plans MNQ/MES) → rattachées au compte prop firm.
+  const sessionAccountId = accountIdByKey.get('futures')!;
 
   // Setups par défaut (idempotent) + map titre→id pour affecter les trades démo.
   await seedDefaultSetups(prisma, user.id);
@@ -133,10 +229,13 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
     setupIdByTitle.get(title) ?? demoSetups[0].id;
 
   const trades = buildTrades();
-  const dateOf = (daysAgo: number, hour: number) => {
+  // `seq` (index du trade) entre dans les minutes : la fenêtre resserrée met ~2 trades
+  // par jour, souvent sur la même session donc la même heure. Sans lui, deux trades du
+  // même jour tombaient à la minute près au même horodatage.
+  const dateOf = (daysAgo: number, hour: number, seq = 0) => {
     const d = new Date();
     d.setDate(d.getDate() - daysAgo);
-    d.setHours(hour, (daysAgo * 7) % 55, 0, 0);
+    d.setHours(hour, (daysAgo * 7 + seq * 13) % 55, 0, 0);
     return d;
   };
 
@@ -156,7 +255,8 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
   for (const s of sessionDefs) {
     const created = await prisma.tradeSession.create({
       data: {
-        userId: user.id, startedAt: dateOf(s.daysAgo, 8), endedAt: dateOf(s.daysAgo, 17),
+        userId: user.id, accountId: sessionAccountId,
+        startedAt: dateOf(s.daysAgo, 8), endedAt: dateOf(s.daysAgo, 17),
         status: SessionStatus.CLOSED, moodStart: s.mood, moodEnd: s.moodEnd,
         planNote: s.plan, reflectionNote: s.reflection,
         reflectionQuestion: "As-tu respecté ton plan de trading aujourd'hui ?",
@@ -168,10 +268,11 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
   for (const t of trades) {
     await prisma.trade.create({
       data: {
-        userId: user.id, asset: t.asset, side: t.side, entry: t.entry, exit: t.exit,
+        userId: user.id, accountId: accountIdFor(t.asset),
+        asset: t.asset, side: t.side, entry: t.entry, exit: t.exit,
         pnl: t.pnl, riskReward: t.rr, quantity: t.qty, emotion: t.emotion,
         setupId: setupIdFor(t.setup), session: t.session, timeframe: t.tf, tags: ['DEMO'],
-        tradedAt: dateOf(t.daysAgo, t.hour),
+        tradedAt: dateOf(t.daysAgo, t.hour, t.seq),
         ...(sessionIdByDay.has(t.daysAgo) ? { sessionId: sessionIdByDay.get(t.daysAgo) } : {}),
       },
     });
@@ -195,7 +296,8 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
   // ── Hier (J-1) : session CLOSED + 2 trades + recap (carte « Hier » pré-session) ──
   const yClosed = await prisma.tradeSession.create({
     data: {
-      userId: user.id, startedAt: dateOf(1, 8), endedAt: dateOf(1, 17),
+      userId: user.id, accountId: sessionAccountId,
+      startedAt: dateOf(1, 8), endedAt: dateOf(1, 17),
       status: SessionStatus.CLOSED, moodStart: 'NEUTRAL' as MoodState, moodEnd: 'CONFIDENT' as MoodState,
       planNote: "Plan : breakouts MNQ sur Londres, patience sur New York. 2 trades max, R:R ≥ 1.5.",
       reflectionNote: "Journée propre : plan suivi, perte coupée tôt et gagnant laissé courir. À reproduire.",
@@ -203,12 +305,13 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
     },
   });
   const yTrades = [
-    { asset: 'MNQ', side: 'LONG' as TradeSide, entry: 18500, exit: 18545, pnl: 180, rr: 2.2, qty: 2, emotion: 'CONFIDENT' as EmotionState, setup: 'Breakout', session: 'LONDON' as TradingSession, tf: '5m', hour: 9 },
-    { asset: 'MES', side: 'LONG' as TradeSide, entry: 5200, exit: 5198.6, pnl: -70, rr: 1.4, qty: 2, emotion: 'NEUTRAL' as EmotionState, setup: 'Pullback', session: 'NEW_YORK' as TradingSession, tf: '5m', hour: 15 },
+    { asset: 'MNQ', side: 'LONG' as TradeSide, entry: 18500, exit: 18530, pnl: 120, rr: 1.8, qty: 2, emotion: 'CONFIDENT' as EmotionState, setup: 'Breakout', session: 'LONDON' as TradingSession, tf: '5m', hour: 9 },
+    { asset: 'MES', side: 'LONG' as TradeSide, entry: 5200, exit: 5191.5, pnl: -85, rr: 1.4, qty: 2, emotion: 'NEUTRAL' as EmotionState, setup: 'Pullback', session: 'NEW_YORK' as TradingSession, tf: '5m', hour: 15 },
   ];
   for (const t of yTrades) {
     await prisma.trade.create({ data: {
-      userId: user.id, asset: t.asset, side: t.side, entry: t.entry, exit: t.exit,
+      userId: user.id, accountId: accountIdFor(t.asset),
+      asset: t.asset, side: t.side, entry: t.entry, exit: t.exit,
       pnl: t.pnl, riskReward: t.rr, quantity: t.qty, emotion: t.emotion, setupId: setupIdFor(t.setup),
       session: t.session, timeframe: t.tf, tags: ['DEMO'], tradedAt: dateOf(1, t.hour), sessionId: yClosed.id,
     } });
@@ -233,7 +336,8 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
   // Pas de totalPnl/totalTrades figés : les stats du jour se calculent via getTodayTrades.
   const todaySession = await prisma.tradeSession.create({
     data: {
-      userId: user.id, startedAt: dateOf(0, 8), endedAt: null,
+      userId: user.id, accountId: sessionAccountId,
+      startedAt: dateOf(0, 8), endedAt: null,
       status: SessionStatus.ACTIVE, moodStart: 'FOCUSED' as MoodState,
       // moodEnd + notes (journal) sur session ACTIVE → le débrief riche démo est
       // cohérent avec le live (mêmes trades) tout en gardant la session active.
@@ -245,12 +349,13 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
     },
   });
   const tTrades = [
-    { asset: 'MNQ', side: 'LONG' as TradeSide, entry: 18600, exit: 18640, stopLoss: 18560, pnl: 160, rr: 2.1, qty: 2, emotion: 'CONFIDENT' as EmotionState, setup: 'Breakout', session: 'LONDON' as TradingSession, tf: '5m', hour: 9 },
+    { asset: 'MNQ', side: 'LONG' as TradeSide, entry: 18600, exit: 18627.5, stopLoss: 18580, pnl: 110, rr: 1.5, qty: 2, emotion: 'CONFIDENT' as EmotionState, setup: 'Breakout', session: 'LONDON' as TradingSession, tf: '5m', hour: 9 },
     { asset: 'EUR/USD', side: 'LONG' as TradeSide, entry: 1.0850, exit: 1.0853, stopLoss: 1.0835, pnl: 30, rr: 1.5, qty: 1, emotion: 'FOCUSED' as EmotionState, setup: 'Pullback', session: 'LONDON' as TradingSession, tf: '15m', hour: 10 },
   ];
   for (const t of tTrades) {
     await prisma.trade.create({ data: {
-      userId: user.id, asset: t.asset, side: t.side, entry: t.entry, exit: t.exit, stopLoss: t.stopLoss,
+      userId: user.id, accountId: accountIdFor(t.asset),
+      asset: t.asset, side: t.side, entry: t.entry, exit: t.exit, stopLoss: t.stopLoss,
       pnl: t.pnl, riskReward: t.rr, quantity: t.qty, emotion: t.emotion, setupId: setupIdFor(t.setup),
       session: t.session, timeframe: t.tf, tags: ['DEMO'], tradedAt: dateOf(0, t.hour), sessionId: todaySession.id,
     } });
@@ -344,5 +449,6 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
     email: user.email, trades: trades.length + 4, // +2 hier +2 aujourd'hui
     winRate: Math.round((wins / trades.length) * 100), pnl: total,
     sessions: sessionDefs.length + 2, recaps: recaps.length + 1, debriefs: 2,
+    accounts: DEMO_ACCOUNTS.length,
   };
 }

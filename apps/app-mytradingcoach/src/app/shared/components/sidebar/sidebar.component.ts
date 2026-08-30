@@ -315,12 +315,16 @@ import { environment } from '../../../../environments/environment';
       </button>
 
       <!-- ─── MAIN ─── -->
+      <!-- La classe has-demo-banner publie --demo-banner-h : les vues calées sur le
+           viewport (Pré-session / Session live / Débrief) en retranchent la hauteur
+           du bandeau au lieu de déborder de 52 px. -->
       <main class="main-content"
+            [class.has-demo-banner]="userStore.isDemo()"
             [style.overflow]="liveModeService.isLive() ? 'hidden' : null">
         @if (userStore.isDemo()) {
           <div class="demo-banner">
             <span class="demo-banner-text">
-              🔍 <strong>Mode démo</strong> : tu explores MyTradingCoach avec des données d'exemple.
+              🔍 <strong>Mode démo</strong><span class="demo-banner-long"> : tu explores MyTradingCoach avec des données d'exemple.</span>
             </span>
             <a class="demo-banner-cta" [href]="landingUrl + '/#pricing'">Créer mon compte gratuit →</a>
           </div>

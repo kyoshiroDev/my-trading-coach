@@ -224,10 +224,11 @@
 /* Container-queries — répondent à la largeur du conteneur .session-page (source §6). */
 /* Desktop (≥981px = header compact) : l'onglet Débrief tient dans l'écran. Le contenu
    est plafonné à la hauteur visible ; le trop-plein scrolle À L'INTÉRIEUR du débrief au
-   lieu d'allonger la page. Offset 103 identique aux autres onglets. Sous 980px : scroll page. */
+   lieu d'allonger la page. Offset 103 identique aux autres onglets. Sous 980px : scroll page.
+   --demo-banner-h (0 hors démo) retranche le bandeau « Mode démo » posé au-dessus. */
 @container (min-width: 981px) {
   .session-debrief {
-    max-height: calc(100vh - 103px);
+    max-height: calc(100vh - 103px - var(--demo-banner-h, 0px));
     overflow-y: auto;
     min-height: 0;
   }
