@@ -92,6 +92,37 @@ IA (contexte marché, news, calendrier éco IA, recap) suit `plans.md`. Données
 via `SessionStore` : `/session/active`, `/analytics/daily-recap/yesterday`,
 `/eco-calendar/*`, `/debrief/current`, `/trades/market-context`, `/trades/news`.
 
+### Wizard onboarding : checkpoint unique et z-index (PROMPT-198/199)
+
+**Rien n'est persisté avant l'étape Stratégie.** Le wizard accumule ses choix dans des
+signaux + un snapshot localStorage (`mtc.onboarding.progress`), et ne fait ses appels
+réseau qu'à `saveProfileThenGoAssets()` — profil IA **puis** création du compte de
+trading déclaré à l'étape 3. Toute nouvelle donnée d'étape suit ce schéma : signal,
+champ dans `OnboardingProgress`, restauration dans `restoreProgress()`, envoi au
+checkpoint. Ne pas ajouter d'appel réseau au clic « Continuer » d'une étape isolée.
+
+**Le checkpoint est rejouable** : un retour arrière depuis l'étape Actifs puis une
+ré-avance le redéclenche. Toute création faite là doit donc être idempotente. Pour le
+compte de trading, deux filets : un flag mémoire (`accountCreated`, posé **avant**
+l'appel, pour le double-clic) **et** un `getAll()` préalable — le flag seul ne survit ni
+au rechargement, ni au localStorage vidé, ni à un second onglet. Chacun est couvert par
+son propre test.
+
+**Le compte est créé à l'onboarding, plus au premier trade.** `ensureDefaultAccountId`
+(back) reste le filet, mais il produit un PERSONAL « Compte principal » sans règles :
+c'est le mauvais compte pour la cible prop firm. L'étape 3 capture perso/prop firm,
+broker, objectif et drawdown, tous optionnels — un `profitTarget: 0` n'est **pas**
+envoyé, sinon « Mes comptes » affiche une barre d'objectif vide au lieu de masquer la
+carte de règles.
+
+**Z-index — hiérarchie de l'app** : `300` overlay onboarding · `1000` modales
+top-level (csv-import, plan-modal, setup-form-modal, session-live fullscreen) ·
+`10000` toasts (`styles.css`). Une modale partagée ouverte **depuis** le wizard doit
+être au palier 1000 : à 200, `setup-form-modal` s'ouvrait sous l'overlay et
+« + Ajouter un setup » semblait mort. jsdom ne calcule aucun contexte d'empilement,
+donc aucun test de rendu n'attrape ça — l'invariant est verrouillé en lisant les deux
+CSS (`onboarding-friction.spec.ts`).
+
 ### Stores : un compteur à 0 n'est pas une donnée (PROMPT-196)
 
 `TradesStore` expose `loaded` **en plus** de `totalTrades`, comme `SelectedAccountStore`.
