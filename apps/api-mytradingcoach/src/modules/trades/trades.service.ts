@@ -136,7 +136,12 @@ export class TradesService {
         // d'unicité anti-doublon. Saisie manuelle → null, donc jamais contrainte.
         importHash: opts.importHash ?? null,
       },
-      include: { setup: { select: { id: true, title: true, color: true } } },
+      include: {
+        setup: { select: { id: true, title: true, color: true } },
+        // Meme forme que findAll : sans elle, `effectiveEmotion` ne peut pas retomber
+        // sur l'humeur de session.
+        tradeSession: { select: { moodStart: true } },
+      },
     });
     await this.analyticsService.invalidateUserCache(userId);
 
@@ -155,7 +160,10 @@ export class TradesService {
         trade.executionMethod = fresh.executionMethod;
       }
     }
-    return trade;
+    // Le front remplace l'objet en store par CETTE reponse : sans le champ calcule,
+    // un trade fraichement logge affichait « non renseignee » jusqu'au rechargement.
+    // Apres le bloc ci-dessus, qui reecrit les champs d'execution.
+    return { ...trade, effectiveEmotion: effectiveEmotion(trade) };
   }
 
   /**
@@ -490,7 +498,10 @@ export class TradesService {
         ...(newRR !== undefined ? { riskReward: newRR } : {}),
         ...execData,
       },
-      include: { setup: { select: { id: true, title: true, color: true } } },
+      include: {
+        setup: { select: { id: true, title: true, color: true } },
+        tradeSession: { select: { moodStart: true } },
+      },
     });
     await this.analyticsService.invalidateUserCache(userId);
 
@@ -507,7 +518,9 @@ export class TradesService {
         result.executionMethod = fresh.executionMethod;
       }
     }
-    return result;
+    // APRES le bloc d'execution : `result` y est reecrit, un calcul place avant
+    // renverrait un objet construit sur des champs perimes.
+    return { ...result, effectiveEmotion: effectiveEmotion(result) };
   }
 
   async remove(userId: string, id: string) {

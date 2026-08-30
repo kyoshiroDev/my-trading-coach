@@ -733,4 +733,132 @@ describe('TradesService', () => {
       expect(updatedIds).not.toContain('t5');
     });
   });
+
+  /**
+   * PROMPT-200 — `create()` et `update()` doivent renvoyer `effectiveEmotion`.
+   *
+   * Retour de Nath (Discord) : apres un changement d'emotion, l'UI affichait
+   * « non renseignee » jusqu'a F5. `findAll()` calculait bien le champ, pas les deux
+   * autres — et `trades.store.updateTrade()` remplace l'objet en store par la reponse
+   * de l'API, donc le champ absent ecrasait la valeur affichee.
+   *
+   * Attention en lisant ces tests : le double Prisma renvoie ce qu'on lui dit, quel que
+   * soit l'`include`. Verifier seulement la valeur de sortie passerait au vert meme sans
+   * le `tradeSession` dans l'include — c'est-a-dire avec le bug intact en production, ou
+   * `moodStart` ne serait jamais charge. Chaque test verifie donc AUSSI l'include.
+   */
+  describe('effectiveEmotion dans la reponse immediate (create / update)', () => {
+    const withSession = (moodStart: string | null, emotion: string | null) => ({
+      ...mockTrade,
+      emotion,
+      sessionId: 'sess-1',
+      tradeSession: moodStart === null ? null : { moodStart },
+    });
+
+    it('create : sans emotion, herite du moodStart de la session ouverte', async () => {
+      mockPrisma.trade.create.mockResolvedValue(
+        withSession(EmotionState.CONFIDENT, null),
+      );
+
+      const res = await service.create('user-123', {
+        ...createTradeDto,
+        emotion: undefined,
+      } as CreateTradeDto);
+
+      expect(res.effectiveEmotion).toBe(EmotionState.CONFIDENT);
+    });
+
+    it('create : demande bien tradeSession.moodStart a Prisma', async () => {
+      mockPrisma.trade.create.mockResolvedValue(withSession(EmotionState.FOCUSED, null));
+
+      await service.create('user-123', createTradeDto);
+
+      const { include } = mockPrisma.trade.create.mock.calls[0][0];
+      expect(
+        include.tradeSession,
+        'Sans cet include, moodStart est absent en prod et effectiveEmotion vaut toujours null',
+      ).toEqual({ select: { moodStart: true } });
+    });
+
+    it('create : l\'emotion du trade prime sur le moodStart (override)', async () => {
+      mockPrisma.trade.create.mockResolvedValue(
+        withSession(EmotionState.NEUTRAL, EmotionState.REVENGE),
+      );
+
+      const res = await service.create('user-123', createTradeDto);
+
+      expect(res.effectiveEmotion).toBe(EmotionState.REVENGE);
+    });
+
+    it('create : ni emotion ni session → null, jamais un faux NEUTRAL', async () => {
+      mockPrisma.trade.create.mockResolvedValue(withSession(null, null));
+
+      const res = await service.create('user-123', createTradeDto);
+
+      expect(res.effectiveEmotion).toBeNull();
+    });
+
+    it('update : le changement d\'emotion revient dans la reponse (bug Nath)', async () => {
+      mockPrisma.trade.findUnique.mockResolvedValue(withSession(EmotionState.NEUTRAL, null));
+      mockPrisma.trade.update.mockImplementation(({ data }) =>
+        Promise.resolve({ ...withSession(EmotionState.NEUTRAL, null), ...data }),
+      );
+
+      const res = await service.update('user-123', 'trade-123', {
+        emotion: EmotionState.STRESSED,
+      });
+
+      expect(
+        res.effectiveEmotion,
+        'Le store remplace le trade par cette reponse : sans le champ, l\'UI affiche « non renseignee »',
+      ).toBe(EmotionState.STRESSED);
+    });
+
+    it('update : demande bien tradeSession.moodStart a Prisma', async () => {
+      mockPrisma.trade.findUnique.mockResolvedValue(withSession(EmotionState.FOCUSED, null));
+      mockPrisma.trade.update.mockResolvedValue(withSession(EmotionState.FOCUSED, null));
+
+      await service.update('user-123', 'trade-123', { notes: 'rien' });
+
+      const { include } = mockPrisma.trade.update.mock.calls[0][0];
+      expect(include.tradeSession).toEqual({ select: { moodStart: true } });
+    });
+
+    it('update : retirer l\'override fait retomber sur le moodStart', async () => {
+      mockPrisma.trade.findUnique.mockResolvedValue(
+        withSession(EmotionState.FOCUSED, EmotionState.REVENGE),
+      );
+      mockPrisma.trade.update.mockImplementation(({ data }) =>
+        Promise.resolve({ ...withSession(EmotionState.FOCUSED, null), ...data }),
+      );
+
+      const res = await service.update('user-123', 'trade-123', { emotion: null } as never);
+
+      expect(res.effectiveEmotion).toBe(EmotionState.FOCUSED);
+    });
+
+    it('update : calcule APRES le recalcul des champs d\'execution', async () => {
+      // `result` est reecrit par le bloc comportemental (executionScore/Grade/Method).
+      // Un calcul place avant renverrait un objet construit sur des champs perimes :
+      // ce test echoue si les deux se croisent.
+      const base = withSession(EmotionState.CONFIDENT, null);
+      mockPrisma.trade.findUnique
+        .mockResolvedValueOnce({ ...base, accountId: 'acc-1', stopLoss: null })
+        .mockResolvedValueOnce({
+          executionScore: 77,
+          executionGrade: 'BON',
+          executionMethod: 'BEHAVIORAL',
+        });
+      mockPrisma.trade.update.mockImplementation(({ data }) =>
+        Promise.resolve({ ...base, accountId: 'acc-1', ...data }),
+      );
+
+      const res = await service.update('user-123', 'trade-123', { pnl: 500 });
+
+      expect(res.executionScore, 'Champs d\'execution rafraichis').toBe(77);
+      expect(res.effectiveEmotion, 'Emotion effective presente sur le meme objet').toBe(
+        EmotionState.CONFIDENT,
+      );
+    });
+  });
 });

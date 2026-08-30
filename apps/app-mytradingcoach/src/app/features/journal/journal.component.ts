@@ -1,6 +1,6 @@
 import {
   ChangeDetectionStrategy, Component, DestroyRef,
-  computed, effect, inject, signal,
+  computed, effect, inject, signal, untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
@@ -75,6 +75,37 @@ export class JournalComponent {
     // (compte, preset/dates, side, setup). Les KPIs viennent de l'agrégat backend
     // → stables, indépendants de « Charger plus ».
     effect(() => this.refreshJournal());
+
+    // Fige l'ouverture de la semaine la plus récente dès son apparition : sans override
+    // explicite, elle se replierait au prochain trade plus récent (défaut positionnel).
+    effect(() => {
+      const weeks = this.tradesByWeek();
+      untracked(() => this.freezeNewWeeks(weeks));
+    });
+  }
+
+  /**
+   * Pose un override explicite pour chaque semaine vue pour la première fois, à la
+   * valeur que le défaut lui donne À CET INSTANT. Une semaine ouverte le reste donc
+   * quand une plus récente la pousse d'un cran ; une semaine repliée reste repliée.
+   * L'utilisateur garde la main : `toggleWeek` écrase l'override.
+   */
+  private freezeNewWeeks(weeks: { key: string }[]): void {
+    const nouvelles = weeks
+      .map((w, i) => ({ key: w.key, index: i }))
+      .filter((w) => !this.seenWeeks.has(w.key));
+    if (!nouvelles.length) return;
+
+    const map = this.weekOverrides();
+    const next = new Map(map);
+    let changed = false;
+    for (const { key, index } of nouvelles) {
+      this.seenWeeks.add(key);
+      if (next.has(key)) continue; // choix utilisateur déjà enregistré
+      next.set(key, index !== 0);
+      changed = true;
+    }
+    if (changed) this.weekOverrides.set(next);
   }
 
   /** Filtres serveur dérivés des signaux (n'inclut que les valeurs définies). */
@@ -189,6 +220,15 @@ export class JournalComponent {
   // seule la semaine la plus récente (index 0) est dépliée ; les autres repliées. Survit à
   // la pagination (les semaines plus anciennes révélées restent repliées par défaut).
   protected readonly weekOverrides = signal<Map<string, boolean>>(new Map());
+  /**
+   * Semaines déjà rencontrées. Le défaut de `isWeekCollapsed` est POSITIONNEL
+   * (`index !== 0`) : il se réévalue donc quand la liste bouge. Logger un trade dans une
+   * semaine plus récente décalait l'ancienne à l'index 1 et la repliait toute seule —
+   * le journal semblait s'être vidé alors qu'on venait d'y ajouter quelque chose.
+   * On fige l'état d'ouverture au moment où une semaine apparaît, pour qu'il ne dépende
+   * plus que de l'utilisateur.
+   */
+  private readonly seenWeeks = new Set<string>();
 
   /** Vrai dès qu'un filtre (hors période/compte) est actif → affiche « Réinitialiser ». */
   protected readonly hasActiveFilters = computed(() =>

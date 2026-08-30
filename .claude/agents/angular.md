@@ -74,9 +74,15 @@ la maquette design (« The Terminal »).
   + date · compte **empilés sur 2 lignes**, segmented control (icônes Lucide
   Sunrise/Activity/Moon) **centré sur la ligne du header** via le slot `[topbar-center]`,
   action à droite « Démarrer la session » (vert) / pill « Session active + timer » +
-  « Clôturer ». La **sidebar se replie en icônes** dès qu'une session est active
-  (`SessionStore.hasActiveSession()` → effet dans `sidebar.component`, état manuel
-  restauré à la clôture, préférence localStorage non écrasée).
+  « Clôturer ». La **sidebar se replie en icônes pendant qu'on regarde l'onglet Session
+  live**, et seulement là : l'effet de `sidebar.component` suit
+  `LiveModeService.isLive()`, posé par `session-day` sur `activeTab === 'live'` et retiré
+  au changement d'onglet comme en quittant la route. Le déclencheur était
+  `SessionStore.hasActiveSession()` — un état qui dure toute la séance, donc la sidebar
+  restait repliée sur le Dashboard et le Journal, bien après avoir quitté le live. L'état
+  d'avant est restauré en sortant, et le repli/dépli manuel tient (l'effet lit
+  `collapsed()` dans un `untracked`, il ne se redéclenche pas). La préférence localStorage
+  n'est jamais écrasée : `collapsed.set` ne l'écrit pas, seul `toggleCollapse` le fait.
 - **Onglet Pré-session** → `session-morning.component` (features/dashboard/components/) :
   carte Prépare (mood/plan/compte projeté) + Hier + Objectifs · Agenda du jour IA.
 - **Onglet Session live** → `session-live.component` : Contexte marché (cellules
@@ -130,6 +136,18 @@ top-level (csv-import, plan-modal, setup-form-modal, session-live fullscreen) ·
 « + Ajouter un setup » semblait mort. jsdom ne calcule aucun contexte d'empilement,
 donc aucun test de rendu n'attrape ça — l'invariant est verrouillé en lisant les deux
 CSS (`onboarding-friction.spec.ts`).
+
+### Un défaut positionnel se réévalue dans ton dos (journal)
+
+`isWeekCollapsed(key, index)` retombait sur `index !== 0` quand l'utilisateur n'avait
+rien choisi : « seule la plus récente est ouverte ». Le défaut dépendait donc de la
+POSITION, qui bouge. Logger un trade dans une semaine plus récente décalait la semaine
+consultée de l'index 0 à l'index 1 et la repliait toute seule — le journal semblait se
+vider au moment précis où on venait d'y ajouter quelque chose.
+
+Règle : un état d'affichage dont le défaut dépend du rang dans une liste doit être
+**figé à l'apparition de l'élément** (`freezeNewWeeks`), pas recalculé à chaque rendu.
+L'override explicite de l'utilisateur reste prioritaire et n'est jamais écrasé.
 
 ### Stores : un compteur à 0 n'est pas une donnée (PROMPT-196)
 
