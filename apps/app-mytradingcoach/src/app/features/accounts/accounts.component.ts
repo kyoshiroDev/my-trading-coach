@@ -4,8 +4,10 @@ import {
   DestroyRef,
   OnInit,
   computed,
+  effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,7 +17,7 @@ import {
   User, Target, Building2, FlaskConical,
   Wallet, TrendingUp, List, Eye, Layers,
   ClipboardList, MoreHorizontal, Info, Plus, Lock,
-  Pencil, Trash2, X, Briefcase,
+  Pencil, Trash2, X, Briefcase, AlertCircle,
 } from 'lucide-angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
@@ -101,6 +103,26 @@ export class AccountsComponent implements OnInit {
   });
   // Quota : seuls les comptes ACTIVE consomment un slot (aligné backend). PASSED /
   // FAILED / ARCHIVED le libèrent → c'est ce count qu'on affiche et qui borne le quota.
+  /**
+   * Échec de suppression (règle métier du back). Sans lui, un 400 ne produisait
+   * strictement RIEN à l'écran : le compte restait dans la liste, sans explication.
+   * Retour Val : « je rafraîchis la page il est toujours dessus c'est normal ? ».
+   */
+  protected readonly deleteError = signal<string | null>(null);
+
+  /**
+   * Suppression vouée à échouer : dernier compte ACTIVE ET porteur d'historique.
+   * Sous-ensemble VOLONTAIREMENT conservateur de la règle back (`accounts.service.remove`),
+   * qui compte aussi les sessions — invisibles depuis le front. On ne désactive donc que
+   * les cas certains : jamais on ne bloque une suppression que le back accepterait.
+   * Le reste (compte sans trade mais avec sessions) part, échoue, et `deleteError`
+   * l'explique. Le back reste la seule autorité.
+   */
+  protected readonly suppressionBloquee = (a: TradingAccount): boolean =>
+    a.status === 'ACTIVE' &&
+    this.activeAccountsCount() <= 1 &&
+    (a.metrics?.tradesCount ?? 0) > 0;
+
   protected readonly activeAccountsCount = computed(
     () => this.store.accounts().filter((a) => a.status === 'ACTIVE').length,
   );
@@ -134,6 +156,15 @@ export class AccountsComponent implements OnInit {
     return limit !== null && this.activeAccountsCount() >= limit;
   });
 
+  constructor() {
+    // Changement de vue (sélecteur de compte) : le message ne décrit plus la liste
+    // affichée, on le retire. `untracked` pour ne pas se réveiller sur sa propre écriture.
+    effect(() => {
+      this.store.selectedAccountId();
+      untracked(() => this.deleteError.set(null));
+    });
+  }
+
   ngOnInit(): void {
     if (!this.store.loaded() && !this.store.isLoading()) {
       this.store.load();
@@ -141,6 +172,7 @@ export class AccountsComponent implements OnInit {
   }
 
   // ── Icônes lucide ────────────────────────────────────────────────────────
+  protected readonly AlertCircleIcon = AlertCircle;
   protected readonly UserIcon = User;
   protected readonly TargetIcon = Target;
   protected readonly Building2Icon = Building2;
@@ -266,6 +298,9 @@ export class AccountsComponent implements OnInit {
 
   // ── Menu carte ──────────────────────────────────────────────────────────
   protected toggleMenu(id: string): void {
+    // Une nouvelle interaction efface le message : sinon il traîne indéfiniment sous
+    // une liste qui a pu changer entre-temps, et ne décrit plus rien.
+    this.deleteError.set(null);
     this.menuOpenId.update((cur) => (cur === id ? null : id));
   }
 
@@ -349,9 +384,16 @@ export class AccountsComponent implements OnInit {
       `Supprimer « ${a.label} » ? Les trades et sessions rattachés ne sont pas supprimés ` +
       `mais perdent leur compte. Un compte avec historique est archivé plutôt que supprimé.`;
     if (!confirm(msg)) return;
+    this.deleteError.set(null);
     this.api
       .remove(a.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: () => this.store.load() });
+      .subscribe({
+        next: () => this.store.load(),
+        // Le back refuse d'archiver le dernier compte actif porteur d'historique. Son
+        // message est déjà clair et actionnable : on l'affiche tel quel.
+        error: (err) =>
+          this.deleteError.set(err?.error?.message ?? 'Suppression impossible.'),
+      });
   }
 }
