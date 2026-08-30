@@ -111,6 +111,7 @@ describe('Onboarding — le capital de départ ne bloque plus', () => {
     expect(mockUsersApi.saveOnboardingProfile.mock.calls[0][0].startingCapital).toBe(7500);
   });
 });
+
 describe('Onboarding — la description de stratégie est optionnelle', () => {
   beforeEach(() => { vi.clearAllMocks(); localStorage.clear(); });
 
@@ -161,6 +162,7 @@ describe('Onboarding — la description de stratégie est optionnelle', () => {
     );
   });
 });
+
 describe('Onboarding — sortie de secours', () => {
   beforeEach(() => { vi.clearAllMocks(); localStorage.clear(); });
 
@@ -180,5 +182,23 @@ describe('Onboarding — sortie de secours', () => {
       Object.keys(localStorage).some((k) => k.includes('onboarding')),
       'Progression laissée derrière : le wizard rouvrirait sur l\'étape abandonnée',
     ).toBe(false);
+  });
+});
+
+describe('Onboarding — barre de progression alignée sur le libellé', () => {
+  beforeEach(() => { vi.clearAllMocks(); localStorage.clear(); });
+
+  it('la barre est pleine à l\'étape annoncée comme la dernière', async () => {
+    const c = await mount();
+    c.step.set(8);
+    expect(c.stepLabel).toBe('Étape 7 sur 7');
+    expect(c.progress).toBe(100);
+  });
+
+  it('l\'écran de promesse est à 0 % (ce n\'est pas une étape)', async () => {
+    const c = await mount();
+    c.step.set(1);
+    expect(c.stepLabel).toBe('');
+    expect(c.progress).toBe(0);
   });
 });

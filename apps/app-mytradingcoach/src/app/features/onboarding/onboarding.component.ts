@@ -411,8 +411,13 @@ export class OnboardingComponent {
   }
   protected onCsvDismissed(): void { this.csvOpen.set(false); this.tradeChoice.set('choice'); }
 
+  /**
+   * Aligné sur ce que l'utilisateur LIT (« Étape n sur 7 ») : l'écran de promesse (1)
+   * et l'écran final (9) ne sont pas des étapes. `step()/9` affichait 89 % au moment
+   * précis où le libellé annonçait « Étape 7 sur 7 ».
+   */
   protected get progress(): number {
-    return Math.round((this.step() / 9) * 100);
+    return Math.round(Math.min(1, (this.step() - 1) / 7) * 100);
   }
 
   protected get stepLabel(): string {
