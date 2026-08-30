@@ -126,6 +126,16 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   Filtre `result` : réutiliser le **même `ε`** (`BREAKEVEN_EPSILON`) que `trade-stats.util`, jamais un
   seuil local. **Mêmes filtres appliqués à la liste ET aux stats** (`buildTradeWhere` factorisé) sinon
   les KPIs mentent.
+- **`effectiveEmotion` sur TOUTE réponse portant un trade** (PROMPT-200). Le champ est
+  calculé, pas stocké : chaque endpoint qui renvoie un trade doit inclure
+  `tradeSession: { select: { moodStart: true } }` **et** poser
+  `effectiveEmotion: effectiveEmotion(t)`. `findAll` le faisait, `create`/`update` non :
+  le front remplace l'objet en store par la réponse, donc un champ absent **écrasait**
+  la valeur affichée et l'UI retombait sur « non renseignée » jusqu'au rechargement
+  (retour Nath). Dans `update`, le calcul va **après** le bloc de recalcul d'exécution,
+  qui réécrit `result`. Piège de test : un double Prisma renvoie `tradeSession` quel que
+  soit l'`include` — un test qui ne vérifie que la valeur passe au vert avec le bug
+  intact. Vérifier l'`include` lui-même.
 - **Ambassadeur = `role === 'AMBASSADOR'`, JAMAIS « a un referralCode »** (PROMPT-176).
   `User.referralCode` est **partagé** entre les deux parrainages : un USER qui génère
   son code en a un **sans** être ambassadeur. Tout filtre/compteur basé sur la présence
