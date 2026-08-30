@@ -54,6 +54,16 @@
       <div class="acct-empty">Chargement des comptes…</div>
     }
 
+    <!-- Échec de suppression : le message du back est déjà clair et actionnable, on
+         l'affiche tel quel plutôt que de le reformuler. Placé au-dessus de la liste,
+         là où l'utilisateur vient de cliquer. -->
+    @if (deleteError()) {
+      <div class="acct-delete-error" role="alert" data-testid="account-delete-error">
+        <lucide-icon [img]="AlertCircleIcon" [size]="15" />
+        <span>{{ deleteError() }}</span>
+      </div>
+    }
+
     <!-- ── Cartes comptes ── -->
     <div class="acct-grid">
 
@@ -79,7 +89,17 @@
               @if (menuOpenId() === a.id) {
                 <div class="menu-pop">
                   <button class="menu-item" (click)="openEdit(a)"><lucide-icon [img]="PencilIcon" [size]="13" /> Modifier</button>
-                  <button class="menu-item danger" (click)="confirmDelete(a)"><lucide-icon [img]="TrashIcon" [size]="13" /> Supprimer</button>
+                  <!-- Désactivé quand l'échec est CERTAIN (dernier compte actif avec
+                       trades) : éviter l'erreur vaut mieux que l'afficher. Les cas
+                       incertains partent quand même et `deleteError` les explique. -->
+                  <button class="menu-item danger" (click)="confirmDelete(a)"
+                    [disabled]="suppressionBloquee(a)"
+                    [attr.title]="suppressionBloquee(a)
+                      ? 'Garde au moins un compte actif. Crée-en un autre avant d\'archiver celui-ci.'
+                      : null"
+                    [attr.data-testid]="'account-delete-' + a.id">
+                    <lucide-icon [img]="TrashIcon" [size]="13" /> Supprimer
+                  </button>
                 </div>
               }
             </div>

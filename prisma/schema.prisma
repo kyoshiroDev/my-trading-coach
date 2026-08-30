@@ -106,7 +106,10 @@ model ReferralCommission {
   status         String   @default("pending")
   createdAt      DateTime @default(now())
 
-  ambassador User @relation("AmbassadorCommissions", fields: [ambassadorId], references: [id])
+  // Cascade comme les 9 autres relations vers User : sans onDelete, Postgres applique
+  // RESTRICT et un ambassadeur porteur d'une commission ne peut PLUS supprimer son
+  // compte — la transaction de `archiveAndDelete` echoue, et le front n'en disait rien.
+  ambassador User @relation("AmbassadorCommissions", fields: [ambassadorId], references: [id], onDelete: Cascade)
 
   @@unique([subscriptionId, period])
   @@index([ambassadorId])
@@ -125,7 +128,9 @@ model ReferralReward {
   status         String   @default("PENDING") // PENDING | APPLIED
   createdAt      DateTime @default(now())
 
-  parrain User @relation("ParrainRewards", fields: [parrainId], references: [id])
+  // Idem : un parrain avec un mois offert restait bloque. La trace analytique du depart
+  // vit dans DeletedAccount, pas ici.
+  parrain User @relation("ParrainRewards", fields: [parrainId], references: [id], onDelete: Cascade)
 
   @@index([parrainId])
 }

@@ -698,3 +698,15 @@ textarea.stp-inp { resize: vertical; min-height: 76px; line-height: 1.5; font-si
 .stp-row.arch { align-items: center; }
 .stp-row.arch .stp-name { color: var(--text-3); text-decoration: line-through; text-decoration-color: rgba(255,255,255,.2); }
 .stp-row.arch .stp-dot { opacity: .4; margin-top: 0; }
+
+/* Echec de suppression de compte : rouge, comme la zone de danger qui l'entoure. */
+.delete-error {
+  margin: 10px 0 0;
+  padding: 9px 11px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--red) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--red) 32%, transparent);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
