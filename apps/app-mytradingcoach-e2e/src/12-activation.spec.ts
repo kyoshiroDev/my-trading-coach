@@ -207,12 +207,10 @@ test.describe('Activation : déclaration prop firm à l\'étape 4', () => {
     // contrainte laisserait la base à 1 compte tout en prouvant que la garde a sauté.
     // Le POST est le fait observable, la ligne n'en est que la conséquence.
     const email = uniqueEmail('activation-propfirm-doublon');
+    const estRouteComptes = (url: string) => new URL(url).pathname.endsWith('/accounts');
     const creations: string[] = [];
-    const lectures: string[] = [];
     page.on('request', (req) => {
-      if (!/\/accounts$/.test(new URL(req.url()).pathname)) return;
-      if (req.method() === 'POST') creations.push(req.url());
-      if (req.method() === 'GET') lectures.push(req.url());
+      if (estRouteComptes(req.url()) && req.method() === 'POST') creations.push(req.url());
     });
 
     try {
@@ -230,25 +228,37 @@ test.describe('Activation : déclaration prop firm à l\'étape 4', () => {
       await page.reload();
       await expect(page.locator('[data-testid="onboarding-asset-search"]')).toBeVisible({ timeout: 10_000 });
 
-      const lecturesAvant = lectures.length;
       await page.click('[data-testid="onboarding-back"]');
       await expect(page.locator('[data-testid="strategy-continue"]')).toBeVisible();
+
+      // La garde est ASYNCHRONE : elle relit la liste des comptes et ne déciderait de
+      // créer qu'ENSUITE. On arme l'attente de cette relecture AVANT le clic, sinon sa
+      // réponse peut arriver pendant qu'on s'apprête à l'attendre.
+      const relecture = page.waitForResponse(
+        (r) => estRouteComptes(r.url()) && r.request().method() === 'GET',
+        { timeout: 10_000 },
+      );
       await page.click('[data-testid="strategy-continue"]');
       await expect(page.locator('[data-testid="onboarding-asset-search"]')).toBeVisible({ timeout: 10_000 });
+      await relecture;
 
-      // La garde est ASYNCHRONE : elle relit d'abord la liste des comptes, et ne
-      // déciderait de créer qu'ensuite. Attendre cette relecture avant de conclure —
-      // sans quoi on constaterait « pas de POST » simplement parce qu'il n'a pas encore
-      // eu le temps de partir.
-      await expect
-        .poll(() => lectures.length, { timeout: 10_000 })
-        .toBeGreaterThan(lecturesAvant);
-      await page.waitForLoadState('networkidle');
+      // Prouver une ABSENCE demande une fenêtre bornée : on laisse au POST fautif le
+      // temps de partir, et c'est le dépassement du délai qui vaut succès. Conclure
+      // dès le retour de la relecture constaterait « pas de POST » simplement parce
+      // qu'il n'a pas encore eu le temps d'être émis.
+      const secondeCreation = await page
+        .waitForRequest(
+          (r) => estRouteComptes(r.url()) && r.method() === 'POST',
+          { timeout: 3_000 },
+        )
+        .then(() => true)
+        .catch(() => false);
 
       expect(
-        creations,
+        secondeCreation,
         'Un second compte a été créé au re-franchissement du checkpoint',
-      ).toHaveLength(1);
+      ).toBe(false);
+      expect(creations).toHaveLength(1);
 
       const comptes = await accountsOf(email);
       expect(comptes).toHaveLength(1);
