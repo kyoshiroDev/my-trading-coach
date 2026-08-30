@@ -448,3 +448,118 @@ describe('Onboarding — le compte n\'est jamais créé deux fois', () => {
     expect(mockAccountsApi.create).toHaveBeenCalledTimes(2);
   });
 });
+
+/**
+ * PROMPT-199 suite — l'échec d'enregistrement du profil ne doit plus être silencieux.
+ *
+ * Constaté sur dev : après une traversée complète du wizard, `market`, `goal` et
+ * `tradingStyle` étaient nuls en base et `startingCapital` à 0. La branche `error` de
+ * `saveProfileThenGoAssets` faisait `step.set(6)` exactement comme la branche `next` :
+ * l'appel échouait, le wizard avançait, l'utilisateur terminait son onboarding avec un
+ * profil vide sans le moindre signal. Depuis l'ajout du compte de trading, le même
+ * échec emportait aussi sa création.
+ *
+ * On ne bloque pas pour autant : « Continuer quand même » reste à un clic, cohérent
+ * avec la sortie de secours du wizard.
+ */
+describe('Onboarding — échec d\'enregistrement du profil', () => {
+  beforeEach(() => {
+    vi.clearAllMocks(); localStorage.clear();
+    mockAccountsApi.getAll.mockReturnValue(of({ data: [] }));
+    mockAccountsApi.create.mockReturnValue(of({ data: { id: 'acc-1' } }));
+    mockUsersApi.saveOnboardingProfile.mockReturnValue(of({ data: { onboardingCompleted: false } }));
+  });
+
+  function atStrategy(c: any) {
+    c.selectedStyle.set('DAY_TRADING');
+    c.selectedSessions.set(['LONDON']);
+    c.step.set(5);
+  }
+
+  it('échec → on RESTE sur l\'étape et le message est affiché', async () => {
+    mockUsersApi.saveOnboardingProfile.mockReturnValue(
+      throwError(() => ({ error: { message: 'Session expirée.' } })),
+    );
+    const c = await mount();
+    atStrategy(c);
+
+    c.nextStep();
+
+    expect(c.step(), 'Le wizard a avancé malgré l\'échec : perte silencieuse').toBe(5);
+    expect(c.profileSaveError()).toBe('Session expirée.');
+    expect(c.isSaving()).toBe(false);
+  });
+
+  it('échec sans message serveur → repli lisible, jamais « undefined »', async () => {
+    mockUsersApi.saveOnboardingProfile.mockReturnValue(throwError(() => new Error('net')));
+    const c = await mount();
+    atStrategy(c);
+
+    c.nextStep();
+
+    expect(c.profileSaveError()).toBe("Ton profil n'a pas pu être enregistré.");
+  });
+
+  it('échec → le compte n\'est pas créé non plus (rien ne part à moitié)', async () => {
+    mockUsersApi.saveOnboardingProfile.mockReturnValue(throwError(() => new Error('net')));
+    const c = await mount();
+    atStrategy(c);
+
+    c.nextStep();
+
+    expect(mockAccountsApi.create).not.toHaveBeenCalled();
+  });
+
+  it('« Réessayer » rejoue le checkpoint et avance si ça passe', async () => {
+    mockUsersApi.saveOnboardingProfile.mockReturnValueOnce(throwError(() => new Error('net')));
+    const c = await mount();
+    atStrategy(c);
+    c.nextStep();
+    expect(c.step()).toBe(5);
+
+    mockUsersApi.saveOnboardingProfile.mockReturnValue(of({ data: { onboardingCompleted: false } }));
+    c.retryProfileSave();
+
+    expect(c.step()).toBe(6);
+    expect(c.profileSaveError()).toBeNull();
+    expect(mockAccountsApi.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('« Continuer quand même » avance ET tente quand même le compte', async () => {
+    // Le profil et le compte sont deux endpoints : la déclaration de l'étape 3
+    // (capital, règles prop firm) a plus de valeur que les champs de profil.
+    mockUsersApi.saveOnboardingProfile.mockReturnValue(throwError(() => new Error('net')));
+    const c = await mount();
+    atStrategy(c);
+    c.nextStep();
+
+    c.continueWithoutProfile();
+
+    expect(c.step()).toBe(6);
+    expect(c.profileSaveError()).toBeNull();
+    expect(mockAccountsApi.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('un retour en arrière efface le message', async () => {
+    mockUsersApi.saveOnboardingProfile.mockReturnValue(throwError(() => new Error('net')));
+    const c = await mount();
+    atStrategy(c);
+    c.nextStep();
+    expect(c.profileSaveError()).not.toBeNull();
+
+    c.prevStep();
+
+    expect(c.profileSaveError()).toBeNull();
+    expect(c.step()).toBe(4);
+  });
+
+  it('succès → aucun message, parcours inchangé (non-régression)', async () => {
+    const c = await mount();
+    atStrategy(c);
+
+    c.nextStep();
+
+    expect(c.step()).toBe(6);
+    expect(c.profileSaveError()).toBeNull();
+  });
+});

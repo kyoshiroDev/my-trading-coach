@@ -237,6 +237,27 @@
             }
           </div>
 
+          <!-- L'enregistrement a echoue : on reste sur l'etape et on rend la main.
+               Avant, le wizard avancait quand meme et l'utilisateur finissait avec un
+               profil vide sans jamais le savoir. -->
+          @if (profileSaveError()) {
+            <div class="save-error" data-testid="profile-save-error">
+              <p class="save-error-title">{{ profileSaveError() }}</p>
+              <p class="save-error-text">
+                Tes réponses sont conservées. Réessaie, ou continue : tu pourras compléter
+                ton profil depuis Profil.
+              </p>
+              <div class="save-error-actions">
+                <button class="btn-back" type="button" data-testid="profile-save-skip"
+                  (click)="continueWithoutProfile()">Continuer quand même</button>
+                <button class="btn-next save-error-retry" type="button" data-testid="profile-save-retry"
+                  [disabled]="isSaving()" (click)="retryProfileSave()">
+                  {{ isSaving() ? 'Enregistrement…' : 'Réessayer' }}
+                </button>
+              </div>
+            </div>
+          }
+
           <div class="wizard-footer">
             <button class="btn-back" type="button" (click)="prevStep()">← Retour</button>
             <button class="btn-next" data-testid="strategy-continue" (click)="nextStep()" [disabled]="!strategyValid() || isSaving()">

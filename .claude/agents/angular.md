@@ -115,6 +115,14 @@ broker, objectif et drawdown, tous optionnels — un `profitTarget: 0` n'est **p
 envoyé, sinon « Mes comptes » affiche une barre d'objectif vide au lieu de masquer la
 carte de règles.
 
+**Un checkpoint qui échoue ne doit jamais avancer.** La branche `error` de
+`saveProfileThenGoAssets` faisait `step.set(6)` comme la branche `next` : l'appel
+échouait, le wizard avançait, l'utilisateur terminait avec un profil vide sans le
+moindre signal (constaté en base sur dev). Règle : un appel réseau porteur de données
+ne se solde jamais par une avancée silencieuse — on reste sur l'étape, on affiche
+`err.error?.message` avec un repli lisible, et on offre **réessayer** *et* **continuer
+quand même**. Bloquer serait aussi faux : le wizard doit toujours laisser sortir.
+
 **Z-index — hiérarchie de l'app** : `300` overlay onboarding · `1000` modales
 top-level (csv-import, plan-modal, setup-form-modal, session-live fullscreen) ·
 `10000` toasts (`styles.css`). Une modale partagée ouverte **depuis** le wizard doit

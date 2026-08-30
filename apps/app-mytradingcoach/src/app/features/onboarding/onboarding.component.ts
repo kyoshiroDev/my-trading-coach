@@ -163,6 +163,11 @@ export class OnboardingComponent {
   /** Le compte a deja ete cree pour cet onboarding : garde-fou anti-doublon. */
   private readonly accountCreated  = signal(false);
   protected readonly isSaving         = signal(false);
+  /**
+   * Echec d'enregistrement du profil a l'etape Strategie. Non nul = on reste sur
+   * l'etape et on rend la main a l'utilisateur (reessayer / continuer quand meme).
+   */
+  protected readonly profileSaveError = signal<string | null>(null);
 
   // Étape Stratégie
   protected readonly selectedStyle        = signal<TradingStyle | null>(null);
@@ -346,6 +351,7 @@ export class OnboardingComponent {
   }
 
   protected prevStep(): void {
+    this.profileSaveError.set(null);
     const s = this.step();
     if (s === 8) { this.tradeChoice.set('choice'); this.step.set(7); } // premier trade → Setups
     else if (s > 1 && s < 9) { this.step.set((s - 1) as Step); }
@@ -408,10 +414,39 @@ export class OnboardingComponent {
           this.auth.setCurrentUser(res.data);
           this.createAccountOnce();
           this.isSaving.set(false);
+          this.profileSaveError.set(null);
           this.step.set(6);
         },
-        error: () => { this.isSaving.set(false); this.step.set(6); },
+        // AVANT : `step.set(6)` ici aussi. L'echec etait donc invisible — l'utilisateur
+        // terminait son onboarding avec un profil vide (constate sur dev : market, goal
+        // et tradingStyle nuls apres une traversee complete), et depuis l'ajout du
+        // compte de trading, l'echec emportait aussi sa creation. On s'arrete et on
+        // rend la main : jamais de perte silencieuse, jamais d'impasse non plus.
+        error: (err) => {
+          this.isSaving.set(false);
+          this.profileSaveError.set(
+            err?.error?.message ?? "Ton profil n'a pas pu être enregistré.",
+          );
+        },
       });
+  }
+
+  /** « Réessayer » : rejoue le checkpoint tel quel. */
+  protected retryProfileSave(): void {
+    this.saveProfileThenGoAssets();
+  }
+
+  /**
+   * « Continuer quand même » : on avance sans le profil, mais on tente tout de meme la
+   * creation du compte — c'est un autre endpoint, et la declaration de l'etape 3
+   * (capital, regles prop firm) a plus de valeur que les champs de profil. Si elle
+   * echoue aussi, `createAccountOnce` se rearme et le back recreera un compte au
+   * premier trade.
+   */
+  protected continueWithoutProfile(): void {
+    this.profileSaveError.set(null);
+    this.createAccountOnce();
+    this.step.set(6);
   }
 
   /**
