@@ -6,7 +6,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
 import { computeTradeStats } from '../../core/utils/trade-stats.util';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of, map, catchError } from 'rxjs';
 import { LucideAngularModule, X, Pencil, Upload, ChevronDown, ChevronRight, Calendar, Trash2, ArrowRightLeft } from 'lucide-angular';
 import { TradesStore, Trade } from '../../core/stores/trades.store';
 import { CreateTradeDto, TradesApi } from '../../core/api/trades.api';
@@ -81,6 +81,14 @@ export class JournalComponent {
     effect(() => {
       const weeks = this.tradesByWeek();
       untracked(() => this.freezeNewWeeks(weeks));
+    });
+
+    // Un echec ne doit ni survivre a la fermeture de la modale, ni suivre
+    // l'utilisateur sur une autre journee. `deleteDay` ecrit son message SANS
+    // toucher a la cle : cet effet ne le rejoue donc pas dans son dos.
+    effect(() => {
+      this.confirmDeleteDayKey();
+      untracked(() => this.deleteDayError.set(null));
     });
   }
 
@@ -198,8 +206,18 @@ export class JournalComponent {
   protected readonly isSubmitting     = signal(false);
   protected readonly submitError      = signal<string | null>(null);
   protected readonly selectedTrade    = signal<Trade | null>(null);
-  protected readonly confirmDeleteDay = signal<DayGroup | null>(null);
+  // On memorise la CLE du jour, pas le DayGroup lui-même : ces groupes sont
+  // recalcules a chaque changement du store, et un instantane pris a l'ouverture de
+  // la modale se perime des qu'un trade part. Il annoncait alors un nombre faux et,
+  // pire, `deleteDay` rejouait des ids deja supprimes (cf. deleteDay).
+  protected readonly confirmDeleteDayKey = signal<string | null>(null);
+  protected readonly confirmDeleteDay = computed(() => {
+    const key = this.confirmDeleteDayKey();
+    return key === null ? null : this.tradesByDay().find((d) => d.key === key) ?? null;
+  });
   protected readonly isDeletingDay    = signal(false);
+  protected readonly deleteDayError   = signal<string | null>(null);
+  protected readonly deleteRowError   = signal<string | null>(null);
   // Réaffectation d'une journée vers un autre compte.
   protected readonly reassignDay      = signal<DayGroup | null>(null);
   protected readonly isReassigning    = signal(false);
@@ -446,25 +464,79 @@ export class JournalComponent {
     });
   }
 
-  deleteTrade(id: string): void {
-    this.http.delete(`${environment.apiUrl}/trades/${id}`)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: () => { this.tradesStore.removeTrade(id); this.refreshStats(); } });
+  /** Retire la ligne du store et rafraichit les agregats. */
+  private forgetTrade(id: string): void {
+    this.tradesStore.removeTrade(id);
+    this.refreshStats();
   }
 
-  protected deleteDay(day: DayGroup): void {
-    this.isDeletingDay.set(true);
-    const ids = day.trades.map(t => t.id);
-    forkJoin(ids.map(id => this.http.delete(`${environment.apiUrl}/trades/${id}`)))
+  deleteTrade(id: string): void {
+    this.deleteRowError.set(null);
+    this.http.delete(`${environment.apiUrl}/trades/${id}`)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: () => {
-          ids.forEach(id => this.tradesStore.removeTrade(id));
-          this.refreshStats();
-          this.isDeletingDay.set(false);
-          this.confirmDeleteDay.set(null);
+        next: () => this.forgetTrade(id),
+        // AVANT : aucun handler `error`. Un refus partait dans le vide et la ligne
+        // restait affichee — l'utilisateur cliquait sans rien voir se passer.
+        error: (err: HttpErrorResponse) => {
+          // 404 : le trade n'est deja plus la (autre onglet, suppression precedente).
+          // L'objectif est atteint : on retire la ligne au lieu de crier a l'erreur.
+          if (err?.status === 404) { this.forgetTrade(id); return; }
+          this.deleteRowError.set(
+            (err?.error as { message?: string })?.message ?? "Ce trade n'a pas pu être supprimé.",
+          );
         },
-        error: () => this.isDeletingDay.set(false),
+      });
+  }
+
+  /**
+   * Supprime tous les trades d'une journee.
+   *
+   * Deux defauts corriges ici, constates ensemble sur dev :
+   *
+   * 1. Le `forkJoin` s'arretait a la PREMIERE erreur. Les suppressions parties en
+   *    parallele aboutissaient quand meme cote serveur, mais la branche d'erreur ne
+   *    retirait aucune ligne : l'ecran continuait d'afficher des trades qui
+   *    n'existaient plus, et seul un rechargement revelait la verite.
+   * 2. Cette branche d'erreur ne faisait que relacher le spinner. Modale figee
+   *    ouverte, aucun message — l'echec etait invisible.
+   *
+   * On traite donc chaque suppression separement et on rend compte du resultat reel :
+   * ce qui est parti disparait, ce qui resiste est nomme.
+   */
+  protected deleteDay(day: DayGroup): void {
+    const ids = day.trades.map(t => t.id);
+    if (!ids.length) { this.confirmDeleteDayKey.set(null); return; }
+
+    this.isDeletingDay.set(true);
+    this.deleteDayError.set(null);
+
+    forkJoin(
+      ids.map(id =>
+        this.http.delete(`${environment.apiUrl}/trades/${id}`).pipe(
+          map(() => ({ id, parti: true })),
+          // Un 404 vaut succes : le trade n'est plus la, c'est ce qu'on voulait.
+          catchError((err: HttpErrorResponse) => of({ id, parti: err?.status === 404 })),
+        ),
+      ),
+    )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((resultats) => {
+        resultats.filter(r => r.parti).forEach(r => this.tradesStore.removeTrade(r.id));
+        this.refreshStats();
+        this.isDeletingDay.set(false);
+
+        const restants = resultats.filter(r => !r.parti).length;
+        if (restants === 0) { this.confirmDeleteDayKey.set(null); return; }
+
+        // Modale laissee ouverte : elle se recalcule sur les trades restants, donc
+        // elle montre exactement ce qui n'est pas parti, et « Reessayer » porte sur
+        // eux seuls.
+        this.deleteDayError.set(
+          restants > 1
+            ? `${restants} trades n'ont pas pu être supprimés.`
+            : "1 trade n'a pas pu être supprimé.",
+        );
       });
   }
 

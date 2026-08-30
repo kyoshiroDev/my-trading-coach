@@ -9,6 +9,12 @@
 
 <div class="content">
 
+  <!-- Echec de suppression d'une ligne : sans ce bandeau, le clic sur la croix
+       ne produisait rien de visible et la ligne restait en place. -->
+  @if (deleteRowError(); as erreur) {
+    <div class="row-delete-error" role="alert" data-testid="delete-row-error">{{ erreur }}</div>
+  }
+
   <!-- ── Barre filtres ── -->
   <div class="filters-bar">
 
@@ -277,8 +283,8 @@
             }
             <button class="day-delete-btn"
               title="Supprimer tous les trades de ce jour"
-              (click)="$event.stopPropagation(); confirmDeleteDay.set(day)"
-              (keydown.enter)="$event.stopPropagation(); confirmDeleteDay.set(day)">
+              (click)="$event.stopPropagation(); confirmDeleteDayKey.set(day.key)"
+              (keydown.enter)="$event.stopPropagation(); confirmDeleteDayKey.set(day.key)">
               <lucide-icon [img]="TrashIcon" [size]="12" />
             </button>
           </div>
@@ -369,7 +375,7 @@
 
 @if (confirmDeleteDay(); as day) {
   <div class="modal-overlay" role="button" tabindex="0" aria-label="Annuler"
-    (click)="confirmDeleteDay.set(null)" (keydown.escape)="confirmDeleteDay.set(null)">
+    (click)="confirmDeleteDayKey.set(null)" (keydown.escape)="confirmDeleteDayKey.set(null)">
     <div class="confirm-modal" role="dialog" aria-modal="true"
       (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
       <div class="confirm-modal-header">
@@ -383,9 +389,12 @@
         Tu vas supprimer <strong>{{ day.count }} trade{{ day.count > 1 ? 's' : '' }}</strong>
         de cette journée. Cette action est irréversible.
       </p>
+      @if (deleteDayError(); as erreur) {
+        <p class="confirm-modal-error" role="alert" data-testid="delete-day-error">{{ erreur }}</p>
+      }
       <div class="confirm-modal-actions">
         <button class="confirm-btn-cancel"
-          (click)="confirmDeleteDay.set(null)"
+          (click)="confirmDeleteDayKey.set(null)"
           [disabled]="isDeletingDay()">
           Annuler
         </button>
@@ -393,6 +402,7 @@
           (click)="deleteDay(day)"
           [disabled]="isDeletingDay()">
           @if (isDeletingDay()) { Suppression... }
+          @else if (deleteDayError()) { Réessayer sur {{ day.count }} trade{{ day.count > 1 ? 's' : '' }} }
           @else { Supprimer {{ day.count }} trade{{ day.count > 1 ? 's' : '' }} }
         </button>
       </div>
