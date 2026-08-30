@@ -131,6 +131,18 @@ top-level (csv-import, plan-modal, setup-form-modal, session-live fullscreen) ·
 donc aucun test de rendu n'attrape ça — l'invariant est verrouillé en lisant les deux
 CSS (`onboarding-friction.spec.ts`).
 
+### Un défaut positionnel se réévalue dans ton dos (journal)
+
+`isWeekCollapsed(key, index)` retombait sur `index !== 0` quand l'utilisateur n'avait
+rien choisi : « seule la plus récente est ouverte ». Le défaut dépendait donc de la
+POSITION, qui bouge. Logger un trade dans une semaine plus récente décalait la semaine
+consultée de l'index 0 à l'index 1 et la repliait toute seule — le journal semblait se
+vider au moment précis où on venait d'y ajouter quelque chose.
+
+Règle : un état d'affichage dont le défaut dépend du rang dans une liste doit être
+**figé à l'apparition de l'élément** (`freezeNewWeeks`), pas recalculé à chaque rendu.
+L'override explicite de l'utilisateur reste prioritaire et n'est jamais écrasé.
+
 ### Stores : un compteur à 0 n'est pas une donnée (PROMPT-196)
 
 `TradesStore` expose `loaded` **en plus** de `totalTrades`, comme `SelectedAccountStore`.
