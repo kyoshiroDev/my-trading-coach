@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * PROMPT-205 — le pitch « Sans le Cash history… » ne doit vivre que tant qu'aucun
  * fichier de frais n'est choisi.
