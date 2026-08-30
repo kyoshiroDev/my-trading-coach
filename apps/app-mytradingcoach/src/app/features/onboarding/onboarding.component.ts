@@ -132,13 +132,14 @@ export class OnboardingComponent {
   protected readonly selectedStyle        = signal<TradingStyle | null>(null);
   protected readonly strategyDescription  = signal('');
   protected readonly selectedSessions     = signal<TradingSession[]>([]);
-  // Stratégie : style + ≥1 session + description ≥ 15 caractères (contexte IA exploitable).
-  // Les tags d'approche ont été retirés (redondants avec les setups + la description libre).
+  /**
+   * Style + au moins une session. La description libre reste envoyée au contexte IA
+   * mais n'est plus exigée (PROMPT-198) : c'était la seule étape demandant de RÉDIGER,
+   * et le minimum de 15 caractères en faisait le décrochage le plus probable du wizard.
+   * Les tags d'approche ont été retirés (redondants avec les setups + la description).
+   */
   protected readonly strategyValid = computed(
-    () =>
-      !!this.selectedStyle() &&
-      this.selectedSessions().length > 0 &&
-      this.strategyDescription().trim().length >= 15,
+    () => !!this.selectedStyle() && this.selectedSessions().length > 0,
   );
 
   // Étape Actifs

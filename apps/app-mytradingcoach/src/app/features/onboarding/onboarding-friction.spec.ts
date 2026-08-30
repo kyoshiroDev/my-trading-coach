@@ -111,3 +111,53 @@ describe('Onboarding — le capital de départ ne bloque plus', () => {
     expect(mockUsersApi.saveOnboardingProfile.mock.calls[0][0].startingCapital).toBe(7500);
   });
 });
+describe('Onboarding — la description de stratégie est optionnelle', () => {
+  beforeEach(() => { vi.clearAllMocks(); localStorage.clear(); });
+
+  it('style + session suffisent, sans un mot de description', async () => {
+    const c = await mount();
+    c.selectedStyle.set('DAY_TRADING');
+    c.selectedSessions.set(['LONDON']);
+    c.strategyDescription.set('');
+
+    expect(
+      c.strategyValid(),
+      'La description redevient obligatoire : c\'est le décrochage le plus probable',
+    ).toBe(true);
+  });
+
+  it('une description courte passe aussi (plus de minimum de 15 caractères)', async () => {
+    const c = await mount();
+    c.selectedStyle.set('DAY_TRADING');
+    c.selectedSessions.set(['NEW_YORK']);
+    c.strategyDescription.set('Stop.');
+
+    expect(c.strategyValid()).toBe(true);
+  });
+
+  it('style ou session manquants → toujours bloqué (on ne vide pas l\'étape)', async () => {
+    const c = await mount();
+
+    c.selectedStyle.set(null);
+    c.selectedSessions.set(['LONDON']);
+    expect(c.strategyValid()).toBe(false);
+
+    c.selectedStyle.set('DAY_TRADING');
+    c.selectedSessions.set([]);
+    expect(c.strategyValid()).toBe(false);
+  });
+
+  it('la description reste envoyée quand elle est remplie', async () => {
+    const c = await mount();
+    c.selectedStyle.set('SCALPING');
+    c.selectedSessions.set(['LONDON']);
+    c.strategyDescription.set('Je respecte mon stop.');
+    c.step.set(5);
+
+    c.nextStep();
+
+    expect(mockUsersApi.saveOnboardingProfile.mock.calls[0][0].strategyDescription).toBe(
+      'Je respecte mon stop.',
+    );
+  });
+});

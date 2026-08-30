@@ -151,14 +151,16 @@
             }
           </div>
 
-          <div class="field-label">Décris ta stratégie <span class="field-req">· min 15 caractères</span></div>
+          <!-- Optionnel (PROMPT-198) : le placeholder-exemple complet posait implicitement
+               une barre à deux phrases sur la seule étape qui demande de rédiger. -->
+          <div class="field-label">Décris ta stratégie <span class="field-opt">· optionnel</span></div>
           <textarea
             class="strat-desc"
             data-testid="strategy-description"
-            rows="3"
+            rows="2"
             [value]="strategyDescription()"
             (input)="onStrategyDescription($event)"
-            placeholder="Ton approche globale : ce que tu trades, tes règles de risque, ce sur quoi tu veux progresser. Ex : Je scalpe NQ sur la session de Londres, 3 trades max par jour, je coupe vite mes pertes et je travaille mon FOMO."
+            placeholder="En une ligne, ta règle clé. Ex : je respecte toujours mon stop."
           ></textarea>
 
           <div class="field-label">Tes sessions <span class="field-req">· au moins 1</span></div>

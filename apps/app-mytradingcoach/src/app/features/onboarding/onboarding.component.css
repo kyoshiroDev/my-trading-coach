@@ -280,6 +280,9 @@
 /* ── Champs (étapes Stratégie / Actifs) ── */
 .field-label { font-size: 12px; font-weight: 600; color: var(--text-2); margin: 4px 0 8px; }
 .field-req { font-family: var(--font-mono); font-size: 10px; color: var(--blue-bright); font-weight: 500; }
+/* « optionnel » : même graphie que field-req mais en gris — la contrainte se lit d'un
+   coup d'oeil comme une non-contrainte, sans relire le libellé. */
+.field-opt { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); font-weight: 500; }
 .field-opt { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); font-weight: 500; }
 
 /* Grille de styles compacte */
