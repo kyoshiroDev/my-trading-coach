@@ -113,9 +113,25 @@
       @if (step() === 4) {
         <div class="wizard-body">
           <div class="step-label">{{ stepLabel }}</div>
-          <h2 class="step-title">Quel est ton capital de départ ?</h2>
+          <h2 class="step-title">Ton compte de trading</h2>
           <p class="step-desc">Juste pour calculer ton P&L en %. Ça reste entre nous, modifiable à tout moment.</p>
 
+          <!-- Perso / prop firm : le compte créé au premier trade était toujours
+               PERSONAL générique, quel que soit le profil réel du trader. -->
+          <div class="acc-mode" role="group" aria-label="Type de compte">
+            <button type="button" class="acc-mode-btn" data-testid="account-mode-perso"
+              [class.on]="accountMode() === 'PERSO'" (click)="setAccountMode('PERSO')">
+              Compte perso
+            </button>
+            <button type="button" class="acc-mode-btn" data-testid="account-mode-propfirm"
+              [class.on]="accountMode() === 'PROPFIRM'" (click)="setAccountMode('PROPFIRM')">
+              Prop firm
+            </button>
+          </div>
+
+          <div class="field-label">
+            {{ accountMode() === 'PROPFIRM' ? 'Taille du compte' : 'Capital de départ' }}
+          </div>
           <div class="capital-field">
             <div class="currency-toggle">
               <button type="button" class="currency-btn" [class.active-usd]="selectedCurrency() === 'USD'" (click)="selectCurrency('USD')">$ USD</button>
@@ -130,6 +146,46 @@
               data-testid="capital-input"
             />
           </div>
+
+          <!-- Tout le bloc prop firm est optionnel : rien n'y conditionne « Continuer ».
+               Ces valeurs sont les règles DE TON compte, saisies par toi — l'app les
+               reprend telles quelles pour estimer ta marge, elle ne promet aucun gain. -->
+          @if (accountMode() === 'PROPFIRM') {
+            <div class="prop-block">
+              <div class="field-label">Prop firm <span class="field-opt">· optionnel</span></div>
+              <input type="text" class="capital-input prop-input" data-testid="account-broker"
+                [value]="broker()" (input)="onBrokerInput($event)" placeholder="Ex : Apex, Lucid, Topstep…" />
+
+              <div class="prop-row">
+                <div class="prop-col">
+                  <div class="field-label">Objectif de profit <span class="field-opt">· optionnel</span></div>
+                  <input type="text" class="capital-input prop-input" data-testid="account-profit-target"
+                    [value]="profitTarget()" (input)="onProfitTargetInput($event)" placeholder="Ex : 3000" />
+                </div>
+                <div class="prop-col">
+                  <div class="field-label">Drawdown max <span class="field-opt">· optionnel</span></div>
+                  <input type="text" class="capital-input prop-input" data-testid="account-max-drawdown"
+                    [value]="maxDrawdown()" (input)="onMaxDrawdownInput($event)" placeholder="Ex : 2500" />
+                </div>
+              </div>
+
+              <div class="field-label">Type de drawdown</div>
+              <div class="acc-mode" role="group" aria-label="Type de drawdown">
+                <button type="button" class="acc-mode-btn" data-testid="drawdown-trailing"
+                  [class.on]="drawdownType() === 'TRAILING'" (click)="setDrawdownType('TRAILING')">
+                  Trailing
+                </button>
+                <button type="button" class="acc-mode-btn" data-testid="drawdown-static"
+                  [class.on]="drawdownType() === 'STATIC'" (click)="setDrawdownType('STATIC')">
+                  Statique
+                </button>
+              </div>
+              <p class="capital-hint">
+                Les règles de ta firm, telles que tu les connais. MyTradingCoach s'en sert pour
+                estimer ta marge d'après tes trades loggés, jamais comme un calcul officiel.
+              </p>
+            </div>
+          }
 
           <p class="capital-hint">Une valeur par défaut est proposée : ajuste-la ou continue, c'est modifiable à tout moment dans tes paramètres.</p>
 
@@ -180,6 +236,27 @@
               </button>
             }
           </div>
+
+          <!-- L'enregistrement a echoue : on reste sur l'etape et on rend la main.
+               Avant, le wizard avancait quand meme et l'utilisateur finissait avec un
+               profil vide sans jamais le savoir. -->
+          @if (profileSaveError()) {
+            <div class="save-error" data-testid="profile-save-error">
+              <p class="save-error-title">{{ profileSaveError() }}</p>
+              <p class="save-error-text">
+                Tes réponses sont conservées. Réessaie, ou continue : tu pourras compléter
+                ton profil depuis Profil.
+              </p>
+              <div class="save-error-actions">
+                <button class="btn-back" type="button" data-testid="profile-save-skip"
+                  (click)="continueWithoutProfile()">Continuer quand même</button>
+                <button class="btn-next save-error-retry" type="button" data-testid="profile-save-retry"
+                  [disabled]="isSaving()" (click)="retryProfileSave()">
+                  {{ isSaving() ? 'Enregistrement…' : 'Réessayer' }}
+                </button>
+              </div>
+            </div>
+          }
 
           <div class="wizard-footer">
             <button class="btn-back" type="button" (click)="prevStep()">← Retour</button>

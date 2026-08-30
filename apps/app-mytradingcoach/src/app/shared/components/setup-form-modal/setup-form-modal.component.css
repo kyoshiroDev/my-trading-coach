@@ -4,7 +4,11 @@
   background: rgba(4, 7, 12, 0.72);
   backdrop-filter: blur(3px);
   display: flex; align-items: center; justify-content: center;
-  padding: 20px; z-index: 200;
+  /* Palier « modale top-level » de l'app (plan-modal, csv-import, session-live
+     fullscreen). A 200, la modale passait SOUS l'overlay de l'onboarding (z-index 300)
+     et « + Ajouter un setup » a l'etape 7 semblait ne rien faire. Le 300 de
+     l'onboarding n'est pas touche : d'autres ecrans en dependent. */
+  padding: 20px; z-index: 1000;
 }
 .stp-modal {
   width: 100%; max-width: 460px;
