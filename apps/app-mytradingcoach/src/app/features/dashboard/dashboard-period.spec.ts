@@ -21,7 +21,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 // alignées sur le journal (pas de getDay() brut).
 function setup() {
   const userStore = { isPremium: () => false, startingCapital: () => 0, user: () => ({}) };
-  const tradesStore = { totalTrades: signal(0), trades: signal([]), loadTrades: vi.fn(), reset: vi.fn() };
+  const tradesStore = { totalTrades: signal(0), trades: signal([]), loaded: signal(true), loadTrades: vi.fn(), reset: vi.fn() };
   const sessionStore = { hasActiveSession: () => false, todayStats: () => null };
 
   TestBed.configureTestingModule({

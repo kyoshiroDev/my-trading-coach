@@ -47,7 +47,7 @@ function setup(opts: { startingCapital: number; accounts: TestAccount[]; loaded?
       },
       {
         provide: TradesStore,
-        useValue: { totalTrades: signal(0), trades: signal([]), loadTrades: vi.fn(), reset: vi.fn() },
+        useValue: { totalTrades: signal(0), trades: signal([]), loaded: signal(true), loadTrades: vi.fn(), reset: vi.fn() },
       },
       { provide: SessionStore, useValue: { hasActiveSession: () => false, todayStats: () => null } },
       { provide: AnalyticsApi, useValue: { getCurrentMonthActivity: () => of({ data: null }) } },
