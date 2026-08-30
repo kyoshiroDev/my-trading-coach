@@ -118,7 +118,14 @@ export class OnboardingComponent {
   protected readonly selectedMarket   = signal<Market | null>(null);
   protected readonly selectedGoal     = signal<Goal | null>(null);
   protected readonly selectedCurrency = signal<'USD' | 'EUR'>('USD');
-  protected readonly capitalInput     = signal('');
+  /**
+   * Pré-rempli : l'étape ne bloque plus (PROMPT-198). Laisser le champ vide aurait
+   * cascadé en « CAPITAL $0.00 » — `User.startingCapital` vaut 0 par défaut, le compte
+   * créé au premier trade hérite alors d'un `startingBalance` null, et le dashboard
+   * comme « Mes comptes » affichent 0. Une valeur ronde ajustable vaut mieux qu'un mur
+   * en 3ᵉ écran sur la question la plus sensible du parcours.
+   */
+  protected readonly capitalInput     = signal('10000');
   protected readonly isSaving         = signal(false);
 
   // Étape Stratégie
@@ -270,9 +277,6 @@ export class OnboardingComponent {
     this.capitalInput.set(input.value);
   }
 
-  // Capital obligatoire : « Continuer » bloqué tant que > 0 n'est pas saisi.
-  protected readonly capitalValid = computed(() => this.parseCapital() > 0);
-
   protected nextStep(): void {
     const s = this.step();
     if (s === 5) {
@@ -333,7 +337,9 @@ export class OnboardingComponent {
       .saveOnboardingProfile({
         market: this.selectedMarket(),
         goal: this.selectedGoal(),
-        startingCapital: this.parseCapital(),
+        // 0 (champ vidé) → on n'envoie rien : le back ne réécrit que si non-null, donc
+        // la valeur déjà en base est préservée au lieu d'être écrasée par un 0.
+        startingCapital: this.parseCapital() || undefined,
         currency: this.selectedCurrency(),
         tradingStyle: this.selectedStyle() ?? undefined,
         strategyDescription: this.strategyDescription().trim() || undefined,

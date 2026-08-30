@@ -122,11 +122,11 @@
             />
           </div>
 
-          <p class="capital-hint">Pas de bonne ou mauvaise réponse, modifiable à tout moment dans tes paramètres.</p>
+          <p class="capital-hint">Une valeur par défaut est proposée : ajuste-la ou continue, c'est modifiable à tout moment dans tes paramètres.</p>
 
           <div class="wizard-footer">
             <button class="btn-back" type="button" (click)="prevStep()">← Retour</button>
-            <button class="btn-next" data-testid="capital-continue" (click)="nextStep()" [disabled]="!capitalValid() || isSaving()">
+            <button class="btn-next" data-testid="capital-continue" (click)="nextStep()" [disabled]="isSaving()">
               {{ isSaving() ? 'Enregistrement…' : 'Continuer →' }}
             </button>
           </div>
