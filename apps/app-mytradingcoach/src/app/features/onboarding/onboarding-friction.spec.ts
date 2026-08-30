@@ -161,3 +161,24 @@ describe('Onboarding — la description de stratégie est optionnelle', () => {
     );
   });
 });
+describe('Onboarding — sortie de secours', () => {
+  beforeEach(() => { vi.clearAllMocks(); localStorage.clear(); });
+
+  it('« passer » termine l\'onboarding et purge la progression', async () => {
+    const c = await mount();
+    const done = vi.fn();
+    c.completed.subscribe(done);
+    c.step.set(4);
+    localStorage.setItem('mtc.onboarding.progress', '{"step":4}');
+
+    c.skip();
+
+    // `completed` est ce que la sidebar écoute pour fermer le wizard ET appeler
+    // finishOnboarding : sans lui, le wizard se rouvrirait au prochain chargement.
+    expect(done).toHaveBeenCalled();
+    expect(
+      Object.keys(localStorage).some((k) => k.includes('onboarding')),
+      'Progression laissée derrière : le wizard rouvrirait sur l\'étape abandonnée',
+    ).toBe(false);
+  });
+});

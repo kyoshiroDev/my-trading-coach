@@ -226,6 +226,16 @@ export class OnboardingComponent {
     this.completed.emit();
   }
 
+  /**
+   * « Passer, je remplirai plus tard » : même sortie que `finish()`, donc l'onboarding
+   * est marqué terminé et le wizard ne se rouvre pas à chaque chargement. Ce qui a déjà
+   * été saisi reste enregistré (le profil est sauvegardé à l'étape stratégie) ; le reste
+   * se complète depuis Profil. Le dashboard sait vivre avec un profil partiel.
+   */
+  protected skip(): void {
+    this.finish();
+  }
+
   protected selectMarket(m: Market)          { this.selectedMarket.set(m); }
   protected selectGoal(g: Goal)              { this.selectedGoal.set(g); }
   protected selectCurrency(c: 'USD'|'EUR')   { this.selectedCurrency.set(c); }

@@ -375,6 +375,16 @@
       }
 
     </div>
+
+    <!-- Sortie de secours (PROMPT-198) : hors de la carte et discrète, pour guider vers
+         l'onboarding complet sans jamais enfermer. Absente de l'écran de promesse (rien
+         à passer encore) et de l'écran final (le bouton principal fait déjà le travail).
+         Marque l'onboarding terminé : le profil se complète ensuite depuis Profil. -->
+    @if (step() > 1 && step() < 9) {
+      <button type="button" class="skip-link" data-testid="onboarding-skip" (click)="skip()">
+        Passer, je remplirai plus tard
+      </button>
+    }
   </div>
 }
 
