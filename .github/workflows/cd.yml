@@ -156,7 +156,7 @@ jobs:
       - name: rsync Admin → VPS
         run: |
           rsync -az --delete dist/apps/admin-mytradingcoach/browser/ \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/static/admin-prod/
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/static/admin/
 
   # ── Deploy Astro Landing → VPS static ────────────────────────────────────
   deploy-landing:
