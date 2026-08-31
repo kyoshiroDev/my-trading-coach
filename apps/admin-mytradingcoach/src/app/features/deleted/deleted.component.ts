@@ -35,7 +35,17 @@ import { CHART_COLORS, gridAxis, noLegend } from '../../shared/charts/chart-them
             </div>
             <div class="card grow">
               <div class="card-head"><span class="card-label">Motifs de départ</span><span class="card-label muted">si renseigné</span></div>
-              <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="reasonConfig()" /></div></div>
+              <!-- Sans suppression, le donut ne dessinait rien : la carte se lisait comme
+                   un bloc casse plutot que comme une absence de donnees. byReason n'est
+                   vide QUE si la table l'est (un motif nul devient « Non renseigne », qui
+                   reste une entree) — d'ou le meme libelle que la liste voisine. -->
+              <div class="card-body">
+                @if (d.byReason.length) {
+                  <div class="chart-box"><mtc-admin-chart [config]="reasonConfig()" /></div>
+                } @else {
+                  <div class="empty" data-testid="reason-empty">Aucun compte supprimé</div>
+                }
+              </div>
             </div>
           </div>
 
