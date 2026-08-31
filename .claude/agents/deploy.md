@@ -188,7 +188,17 @@ le VPS, servis par des conteneurs **nginx:alpine derrière Traefik** (TLS letsen
 Host + redirect non-www→www en middleware Traefik).
 
 - App Angular : `dist/apps/app-mytradingcoach/browser/` → `/opt/static/app-prod` → `app.mytradingcoach.app`
-- Admin : `dist/apps/admin-mytradingcoach/browser/` → `/opt/static/admin-prod` → `admin.mytradingcoach.app`
+- Admin : `dist/apps/admin-mytradingcoach/browser/` → `/opt/static/admin` → `admin.mytradingcoach.app`
+
+> ⚠️ **L'admin se déploie depuis `main`, comme l'app et la landing.** Jusqu'au 31/08/2026
+> deux chaînes coexistaient : `ci.yml` publiait l'admin sur un push `dev` vers
+> `/opt/static/admin` (le répertoire réellement servi), pendant que `cd.yml` publiait
+> depuis `main` vers `/opt/static/admin-prod`, que **rien ne montait**. Résultat : la
+> production admin était alimentée par `dev`, et les déploiements issus de `main`
+> partaient dans le vide depuis le 17/08/2026. Le job admin de `ci.yml` a été supprimé,
+> `cd.yml` pointe désormais sur `/opt/static/admin`, et `admin-prod` a été supprimé du
+> VPS. Le répertoire servi est celui monté par `mtc_admin` dans
+> `/opt/infra/static/docker-compose.yml` — c'est lui qui fait foi, pas le nom du dossier.
 - Landing Astro : `apps/landing-mytradingcoach/dist/` → `/opt/static/landing-prod` → `www.mytradingcoach.app`
 
 ⚠️ La config nginx de chaque site vit **sur le VPS** (`/opt/infra/static/nginx/*.conf`), pas dans le
