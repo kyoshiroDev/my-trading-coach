@@ -412,7 +412,7 @@
 
 @if (reassignDay(); as day) {
   <div class="modal-overlay" role="button" tabindex="0" aria-label="Annuler"
-    (click)="reassignDay.set(null)" (keydown.escape)="reassignDay.set(null)">
+    (click)="reassignDayKey.set(null)" (keydown.escape)="reassignDayKey.set(null)">
     <div class="confirm-modal" role="dialog" aria-modal="true"
       (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
       <div class="confirm-modal-header">
@@ -443,7 +443,7 @@
       }
       <div class="confirm-modal-actions">
         <button class="confirm-btn-cancel"
-          (click)="reassignDay.set(null)"
+          (click)="reassignDayKey.set(null)"
           [disabled]="isReassigning()">
           Annuler
         </button>

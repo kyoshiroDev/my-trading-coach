@@ -26,7 +26,7 @@ import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { JournalComponent } from './journal.component';
 import { TradesStore, Trade } from '../../core/stores/trades.store';
 import { UserStore } from '../../core/stores/user.store';
@@ -61,8 +61,12 @@ function storeVivant(trades: Trade[]) {
   };
 }
 
-function mount(trades: Trade[]) {
+function mount(trades: Trade[], reassignImpl: () => unknown = () => of({ data: { moved: 0 } })) {
   const store = storeVivant(trades);
+  const tradesApi = {
+    getStats: () => of({ data: null }),
+    reassign: vi.fn(reassignImpl),
+  };
   TestBed.configureTestingModule({
     providers: [
       provideRouter([]),
@@ -85,7 +89,7 @@ function mount(trades: Trade[]) {
           load: vi.fn(), loaded: signal(true), isLoading: signal(false),
         },
       },
-      { provide: TradesApi, useValue: { getStats: () => of({ data: null }) } },
+      { provide: TradesApi, useValue: tradesApi },
     ],
   });
   TestBed.overrideComponent(JournalComponent, {
@@ -97,7 +101,7 @@ function mount(trades: Trade[]) {
   const fixture = TestBed.createComponent(JournalComponent);
   fixture.detectChanges();
   const http = TestBed.inject(HttpTestingController);
-  return { c: fixture.componentInstance as any, http, store, fixture };
+  return { c: fixture.componentInstance as any, http, store, fixture, tradesApi };
 }
 
 /** Répond aux DELETE en attente : `sorts` donne le statut par id (200 par défaut). */
@@ -293,5 +297,98 @@ describe('Journal — un échec de suppression de ligne est désormais visible',
 
     expect(store.trades().map((t: Trade) => t.id)).toEqual(['b']);
     expect(c.deleteRowError()).toBeNull();
+  });
+});
+
+describe('Journal — la modale de déplacement suit elle aussi les trades', () => {
+  it('déplace les ids réellement présents, pas ceux de l\'ouverture', () => {
+    const { c, http, fixture, tradesApi } = mount([trade('a'), trade('b'), trade('c')]);
+    c.openReassign(c.tradesByDay()[0]);
+    fixture.detectChanges(); // la modale s'affiche avant tout clic
+
+    c.deleteTrade('a');
+    repondre(http);
+    fixture.detectChanges();
+
+    c.reassignTo(c.reassignDay(), 'compte-2');
+
+    expect(
+      tradesApi.reassign.mock.calls[0][0].sort(),
+      'Le trade « a » est déplacé alors qu\'il n\'existe plus',
+    ).toEqual(['b', 'c']);
+  });
+
+  it('le compte annoncé suit les suppressions faites entre-temps', () => {
+    const { c, http, fixture } = mount([trade('a'), trade('b')]);
+    c.openReassign(c.tradesByDay()[0]);
+    fixture.detectChanges();
+    expect(c.reassignDay().count).toBe(2);
+
+    c.deleteTrade('a');
+    repondre(http);
+    fixture.detectChanges();
+
+    expect(c.reassignDay().count).toBe(1);
+  });
+
+  it('journée vidée entre-temps : rien n\'est envoyé, la modale se ferme', () => {
+    // Sinon on déplacerait une liste vide, et le back répondrait un refus incompréhensible.
+    const { c, http, fixture, tradesApi } = mount([trade('a')]);
+    c.openReassign(c.tradesByDay()[0]);
+    fixture.detectChanges();
+
+    c.deleteTrade('a');
+    repondre(http);
+    fixture.detectChanges();
+
+    c.reassignTo({ key: c.reassignDayKey(), trades: [] } as any, 'compte-2');
+
+    expect(tradesApi.reassign).not.toHaveBeenCalled();
+    expect(c.reassignDayKey()).toBeNull();
+  });
+
+  it('succès → modale fermée même si la journée existe encore (vue tous comptes)', () => {
+    const { c, fixture } = mount([trade('a')]);
+    c.openReassign(c.tradesByDay()[0]);
+    fixture.detectChanges();
+
+    c.reassignTo(c.reassignDay(), 'compte-2');
+    fixture.detectChanges();
+
+    expect(
+      c.reassignDayKey(),
+      'Hors filtre par compte la journée subsiste : sans fermeture explicite la modale reste ouverte',
+    ).toBeNull();
+    expect(c.isReassigning()).toBe(false);
+  });
+
+  it('refus serveur → message affiché, modale laissée ouverte (non-régression)', () => {
+    const { c, fixture } = mount(
+      [trade('a')],
+      () => throwError(() => ({ error: { message: 'Compte cible invalide.' } })),
+    );
+    c.openReassign(c.tradesByDay()[0]);
+    fixture.detectChanges();
+
+    c.reassignTo(c.reassignDay(), 'compte-2');
+    fixture.detectChanges();
+
+    expect(c.reassignError()).toBe('Compte cible invalide.');
+    expect(c.reassignDayKey()).not.toBeNull();
+    expect(c.isReassigning()).toBe(false);
+  });
+
+  it('fermer la modale efface le message', () => {
+    const { c, fixture } = mount([trade('a')], () => throwError(() => new Error('net')));
+    c.openReassign(c.tradesByDay()[0]);
+    fixture.detectChanges();
+    c.reassignTo(c.reassignDay(), 'compte-2');
+    fixture.detectChanges();
+    expect(c.reassignError()).not.toBeNull();
+
+    c.reassignDayKey.set(null);
+    fixture.detectChanges();
+
+    expect(c.reassignError()).toBeNull();
   });
 });

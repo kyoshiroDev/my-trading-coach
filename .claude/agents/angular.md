@@ -308,6 +308,14 @@ Corollaire : un message d'erreur lié à cette modale se nettoie via un `effect`
 **clé**, pas à la fermeture — il ne survit alors ni à la fermeture ni au passage sur un
 autre élément, et l'écriture du message (clé inchangée) ne le rejoue pas.
 
+Deux pièges de ce passage à la clé, tous deux dans le journal :
+
+- **La fermeture après succès reste explicite.** On pourrait croire que la modale se
+  referme d'elle-même puisque le groupe disparaît — c'est vrai d'une suppression, faux
+  d'un déplacement : hors filtre par compte, la journée existe toujours après coup.
+- **Prévoir le groupe devenu vide** entre l'ouverture et le clic : sans garde, on envoie
+  une liste d'ids vide et le back répond un refus incompréhensible.
+
 ---
 
 ## Blocs verrouillés (teaser + overlay)

@@ -90,6 +90,10 @@ export class JournalComponent {
       this.confirmDeleteDayKey();
       untracked(() => this.deleteDayError.set(null));
     });
+    effect(() => {
+      this.reassignDayKey();
+      untracked(() => this.reassignError.set(null));
+    });
   }
 
   /**
@@ -219,7 +223,14 @@ export class JournalComponent {
   protected readonly deleteDayError   = signal<string | null>(null);
   protected readonly deleteRowError   = signal<string | null>(null);
   // Réaffectation d'une journée vers un autre compte.
-  protected readonly reassignDay      = signal<DayGroup | null>(null);
+  // Meme regle que `confirmDeleteDayKey` : la cle, jamais l'objet. Un instantane du
+  // DayGroup se perime des que le store bouge, et `reassignTo` deplacerait alors des
+  // ids obsoletes.
+  protected readonly reassignDayKey   = signal<string | null>(null);
+  protected readonly reassignDay = computed(() => {
+    const key = this.reassignDayKey();
+    return key === null ? null : this.tradesByDay().find((d) => d.key === key) ?? null;
+  });
   protected readonly isReassigning    = signal(false);
   protected readonly reassignError    = signal<string | null>(null);
   protected readonly activeAccounts   = computed(() => this.selectedAccount.activeAccounts());
@@ -541,21 +552,26 @@ export class JournalComponent {
   }
 
   protected openReassign(day: DayGroup): void {
-    this.reassignError.set(null);
-    this.reassignDay.set(day);
+    this.reassignDayKey.set(day.key);
   }
 
   protected reassignTo(day: DayGroup, accountId: string): void {
     if (this.isReassigning()) return;
+    const ids = day.trades.map((t) => t.id);
+    // La journee a pu se vider entre l'ouverture et le clic : deplacer zero trade
+    // afficherait un refus du back pour une liste vide.
+    if (!ids.length) { this.reassignDayKey.set(null); return; }
+
     this.isReassigning.set(true);
     this.reassignError.set(null);
-    const ids = day.trades.map((t) => t.id);
     this.tradesApi.reassign(ids, accountId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.isReassigning.set(false);
-          this.reassignDay.set(null);
+          // Fermeture EXPLICITE : hors filtre par compte, la journee existe toujours
+          // apres le deplacement, donc la modale ne se refermerait pas d'elle-meme.
+          this.reassignDayKey.set(null);
           // Les trades changent de compte → recharger liste + KPIs du filtre courant.
           this.refreshJournal();
         },
