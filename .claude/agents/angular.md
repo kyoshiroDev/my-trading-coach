@@ -271,6 +271,51 @@ this.aiService.insights().pipe(
 )
 ```
 
+### Suppressions : jamais de `subscribe` sans branche d'erreur
+
+Trois échecs silencieux corrigés à ce jour, tous de la même forme — `subscribe({ next })`
+sans `error`, ou un `error` qui ne fait que relâcher un spinner. L'utilisateur clique,
+rien ne bouge, il conclut que l'app est cassée (« je rafraîchis la page il est toujours
+dessus c'est normal ? », retour Discord). Points de contrôle :
+
+- **Toute mutation a une branche `error` qui écrit un message affiché.** Repli lisible
+  si le serveur n'en fournit pas — jamais `undefined` à l'écran.
+- **Un `404` sur une suppression vaut succès** : la ligne n'est plus là, c'est
+  l'objectif. La compter comme un échec affiche une erreur pour un but atteint et
+  laisse à l'écran une ligne qui n'existe plus.
+- **`forkJoin` s'arrête à la première erreur** et perd le sort des autres requêtes —
+  qui, elles, ont abouti côté serveur. Pour une suppression en lot, encapsuler chaque
+  requête (`map` + `catchError` → `{ id, parti }`) puis rendre compte du résultat réel :
+  ce qui est parti disparaît, ce qui résiste est nommé. Sinon l'écran ment sur l'état
+  du serveur jusqu'au prochain rechargement.
+
+### Ne jamais figer un objet dérivé dans un signal
+
+Une modale qui mémorise l'objet (`signal<DayGroup>`) au lieu de sa **clé** garde un
+instantané qui se périme dès que la source change. Constaté sur le journal : la modale
+annonçait « 22 trades » alors qu'il en restait 20, et rejouait des ids déjà supprimés.
+
+```typescript
+// ✅ la clé dans le signal, l'objet recalculé depuis la source vivante
+readonly confirmDeleteDayKey = signal<string | null>(null);
+readonly confirmDeleteDay = computed(() => {
+  const key = this.confirmDeleteDayKey();
+  return key === null ? null : this.tradesByDay().find(d => d.key === key) ?? null;
+});
+```
+
+Corollaire : un message d'erreur lié à cette modale se nettoie via un `effect` sur la
+**clé**, pas à la fermeture — il ne survit alors ni à la fermeture ni au passage sur un
+autre élément, et l'écriture du message (clé inchangée) ne le rejoue pas.
+
+Deux pièges de ce passage à la clé, tous deux dans le journal :
+
+- **La fermeture après succès reste explicite.** On pourrait croire que la modale se
+  referme d'elle-même puisque le groupe disparaît — c'est vrai d'une suppression, faux
+  d'un déplacement : hors filtre par compte, la journée existe toujours après coup.
+- **Prévoir le groupe devenu vide** entre l'ouverture et le clic : sans garde, on envoie
+  une liste d'ids vide et le back répond un refus incompréhensible.
+
 ---
 
 ## Blocs verrouillés (teaser + overlay)

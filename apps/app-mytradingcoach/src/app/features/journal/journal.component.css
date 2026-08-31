@@ -314,6 +314,26 @@
   color: var(--red);
   margin: 8px 0 0;
 }
+/* Echec de suppression d'une ligne : meme traitement que le bandeau de « Mes
+   comptes », pour que les deux refus se ressemblent d'un ecran a l'autre. */
+.row-delete-error {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: var(--yellow-dim);
+  border: 1px solid color-mix(in srgb, var(--yellow) 30%, transparent);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+/* Dans la modale, l'erreur passe en rouge : elle porte sur l'action qu'on vient
+   de declencher, pas sur un etat de la page. */
+.confirm-modal-error {
+  font-size: 12.5px;
+  color: var(--red);
+  line-height: 1.5;
+  margin: 10px 0 0;
+}
 
 /* ── Modal confirm suppression journée ── */
 .modal-overlay {
