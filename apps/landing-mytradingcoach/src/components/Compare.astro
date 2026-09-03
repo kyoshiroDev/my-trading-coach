@@ -1,4 +1,53 @@
 ---
+// Une seule source de verite pour les lignes : le tableau desktop (5 colonnes) et
+// la version mobile (2 colonnes) sont rendus depuis les memes donnees, donc ils ne
+// peuvent pas diverger. En mobile, les 3 concurrents sont fusionnes en « Les autres ».
+type Val = boolean | string;
+
+interface Row {
+  label: string;
+  isNew?: boolean;
+  pulse?: boolean;  // coche MTC en couleur accent
+  hl?: boolean;     // ligne mise en avant
+  mtc: Val;
+  rivals: [Val, Val, Val];  // TraderSync · TradesViz · Edgely
+  othersLabel?: string;     // fusion explicite quand les valeurs ne sont pas booleennes
+}
+
+const rows: Row[] = [
+  { label: 'Journal de trading', mtc: true, rivals: [true, true, true] },
+  { label: 'Analytics avancés', mtc: true, rivals: [true, true, true] },
+  { label: 'Tracking émotionnel', mtc: true, rivals: [false, false, false] },
+  { label: 'Coach IA conversationnel', mtc: true, rivals: [false, false, false] },
+  { label: 'Weekly Debrief IA automatique', mtc: true, rivals: [false, false, false], pulse: true, hl: true },
+  { label: 'Pré-session matin', isNew: true, mtc: true, rivals: [false, false, false], pulse: true },
+  { label: 'Session live + trade rapide', isNew: true, mtc: true, rivals: [false, false, false], pulse: true },
+  { label: 'Calendrier éco IA filtré', isNew: true, mtc: true, rivals: [false, false, false], pulse: true },
+  { label: 'Recap journalier email 17h30', isNew: true, mtc: true, rivals: [false, false, false], pulse: true },
+  { label: 'Import CSV universel (broker-agnostic)', mtc: true, rivals: [true, true, false] },
+  { label: 'Hébergé en France 🇫🇷', mtc: true, rivals: [false, false, false] },
+  { label: 'Prix mensuel', mtc: 'dès 49 €/mois', rivals: ['30-80 $', '10-29 $', '~€15'], othersLabel: '10-80 $' },
+];
+
+type Cell = { cls: string; text: string; accent?: boolean };
+
+const cell = (v: Val, opts: { pulse?: boolean; hlPrice?: boolean } = {}): Cell => {
+  if (v === true) return { cls: 'comp-yes', text: '✓', accent: opts.pulse };
+  if (v === false) return { cls: 'comp-no', text: '-' };
+  return { cls: opts.hlPrice ? 'comp-price-hl' : 'comp-price', text: v };
+};
+
+// Fusion « Les autres » : ✓ seulement si les trois l'ont, - seulement si aucun ne
+// l'a. Des que c'est mixte on affiche « partiel » — jamais un - qui effacerait un
+// concurrent qui propose la fonctionnalite.
+const merge = (row: Row): Cell => {
+  if (row.othersLabel) return { cls: 'comp-price', text: row.othersLabel };
+  const bools = row.rivals.filter((v): v is boolean => typeof v === 'boolean');
+  if (bools.length !== row.rivals.length) return { cls: 'comp-partial', text: 'partiel' };
+  if (bools.every(Boolean)) return { cls: 'comp-yes', text: '✓' };
+  if (!bools.some(Boolean)) return { cls: 'comp-no', text: '-' };
+  return { cls: 'comp-partial', text: 'partiel' };
+};
 ---
 
 <section class="comp-section" id="compare">
@@ -14,25 +63,31 @@
           <thead>
             <tr>
               <th style="text-align:left">Fonctionnalité</th>
-              <th class="hl">MyTradingCoach</th>
-              <th>TraderSync</th>
-              <th>TradesViz</th>
-              <th>Edgely</th>
+              <th class="hl">MyTrading<wbr />Coach</th>
+              <th class="c-rival">TraderSync</th>
+              <th class="c-rival">TradesViz</th>
+              <th class="c-rival">Edgely</th>
+              <th class="c-others">Les autres</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td>Journal de trading</td><td><span class="comp-yes">✓</span></td><td><span class="comp-yes">✓</span></td><td><span class="comp-yes">✓</span></td><td><span class="comp-yes">✓</span></td></tr>
-            <tr><td>Analytics avancés</td><td><span class="comp-yes">✓</span></td><td><span class="comp-yes">✓</span></td><td><span class="comp-yes">✓</span></td><td><span class="comp-yes">✓</span></td></tr>
-            <tr><td>Tracking émotionnel</td><td><span class="comp-yes">✓</span></td><td><span class="comp-no">-</span></td><td><span class="comp-no">-</span></td><td><span class="comp-no">-</span></td></tr>
-            <tr><td>Coach IA conversationnel</td><td><span class="comp-yes">✓</span></td><td><span class="comp-no">-</span></td><td><span class="comp-no">-</span></td><td><span class="comp-no">-</span></td></tr>
-            <tr style="background:rgba(34,211,238,.02)"><td style="font-weight:500;color:var(--txt)">Weekly Debrief IA automatique</td><td><span class="comp-yes" style="color:var(--pulse)">✓</span></td><td><span class="comp-no">-</span></td><td><span class="comp-no">-</span></td><td><span class="comp-no">-</span></td></tr>
-            <tr><td>Pré-session matin <span class="comp-new">NEW</span></td><td><span class="comp-yes" style="color:var(--pulse)">✓</span></td><td><span class="comp-no">-</span></td><td><span class="comp-no">-</span></td><td><span class="comp-no">-</span></td></tr>
-            <tr><td>Session live + trade rapide <span class="comp-new">NEW</span></td><td><span class="comp-yes" style="color:var(--pulse)">✓</span></td><td><span class="comp-no">-</span></td><td><span class="comp-no">-</span></td><td><span class="comp-no">-</span></td></tr>
-            <tr><td>Calendrier éco IA filtré <span class="comp-new">NEW</span></td><td><span class="comp-yes" style="color:var(--pulse)">✓</span></td><td><span class="comp-no">-</span></td><td><span class="comp-no">-</span></td><td><span class="comp-no">-</span></td></tr>
-            <tr><td>Recap journalier email 17h30 <span class="comp-new">NEW</span></td><td><span class="comp-yes" style="color:var(--pulse)">✓</span></td><td><span class="comp-no">-</span></td><td><span class="comp-no">-</span></td><td><span class="comp-no">-</span></td></tr>
-            <tr><td>Import CSV universel (broker-agnostic)</td><td><span class="comp-yes">✓</span></td><td><span class="comp-yes">✓</span></td><td><span class="comp-yes">✓</span></td><td><span class="comp-no">-</span></td></tr>
-            <tr><td>Hébergé en France 🇫🇷</td><td><span class="comp-yes">✓</span></td><td><span class="comp-no">-</span></td><td><span class="comp-no">-</span></td><td><span class="comp-no">-</span></td></tr>
-            <tr><td>Prix mensuel</td><td><span class="comp-price-hl">dès 49 €/mois</span></td><td><span class="comp-price">30-80 $</span></td><td><span class="comp-price">10-29 $</span></td><td><span class="comp-price">~€15</span></td></tr>
+            {rows.map((row) => {
+              const mtc = cell(row.mtc, { pulse: row.pulse, hlPrice: typeof row.mtc === 'string' });
+              const others = merge(row);
+              return (
+                <tr class={row.hl ? 'row-hl' : undefined}>
+                  <td class={row.hl ? 'cell-hl' : undefined}>
+                    {row.label}{row.isNew && <span class="comp-new">NEW</span>}
+                  </td>
+                  <td><span class={mtc.cls} style={mtc.accent ? 'color:var(--pulse)' : undefined}>{mtc.text}</span></td>
+                  {row.rivals.map((v) => {
+                    const c = cell(v);
+                    return <td class="c-rival"><span class={c.cls}>{c.text}</span></td>;
+                  })}
+                  <td class="c-others"><span class={others.cls}>{others.text}</span></td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -85,11 +140,22 @@
   .comp-table tr:last-child td { border-bottom: none; }
   .comp-table tr:hover td { background: rgba(99,155,255,.02); }
 
+  .row-hl { background: rgba(34,211,238,.02); }
+  .comp-table .row-hl .cell-hl { font-weight: 500; color: var(--txt); }
+
+  /* Colonne agregee « Les autres » : absente en desktop, elle remplace les trois
+     colonnes concurrentes en mobile. Une seule source de donnees, zero duplication. */
+  .comp-table .c-others { display: none; }
+
   .comp-yes { color: var(--green); font-size: 14px; }
   .comp-no  { color: var(--txt3); }
+  /* Fusion mixte : au moins un concurrent propose la fonctionnalite. */
+  .comp-partial { color: var(--txt3); font-family: var(--mono); font-size: 11px; }
   .comp-price { font-family: var(--mono); font-size: 12px; }
   .comp-price-hl { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--pulse); }
   .comp-new {
+    margin-left: 6px;
+    white-space: nowrap;
     font-size: 9px;
     background: rgba(245,158,11,.1);
     color: var(--yel);
@@ -110,8 +176,17 @@
 
   @media (max-width: 768px) {
     .comp-section { padding: 64px 16px; }
-    .comp-table { font-size: 12px; min-width: 560px; }
-    .comp-table th, .comp-table td { padding: 10px 12px; }
+    /* Plus de min-width : les 3 colonnes restantes tiennent dans le viewport,
+       donc plus de scroll horizontal. */
+    .comp-table { font-size: 12px; table-layout: fixed; }
+    .comp-table th, .comp-table td { padding: 10px 8px; }
+    .comp-table th { font-size: 9px; letter-spacing: .5px; overflow-wrap: break-word; }
     .table-wrapper { margin-top: 28px; border-radius: 8px; }
+
+    .comp-table .c-rival { display: none; }
+    .comp-table .c-others { display: table-cell; }
+
+    .comp-table th:first-child, .comp-table td:first-child { width: 52%; }
+    .comp-table th:not(:first-child), .comp-table td:not(:first-child) { width: 24%; }
   }
 </style>
