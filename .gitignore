@@ -83,3 +83,6 @@ playwright/.cache
 SECRETS.md
 
 .nx/self-healing
+
+# Assets NinjaTrader (media kit, hors dépôt)
+/Ninja Trader/
