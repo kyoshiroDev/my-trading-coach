@@ -16,6 +16,7 @@ maquettes
 
 # fichier md
 CONFORMITE-JURIDIQUE.md
+TEST-PARRAINAGE.md
 
 # Vercel
 .vercel
@@ -61,6 +62,7 @@ Thumbs.db
 .github/instructions/nx.instructions.md
 
 .claude/worktrees
+.claude/projects
 .claude/settings.local.json
 .nx/polygraph
 .angular
