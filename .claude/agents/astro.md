@@ -73,6 +73,22 @@ Règles :
 
 ---
 
+## Tableau comparatif (`Compare.astro`)
+
+Les 12 lignes sont **une seule source de vérité** (tableau `rows` dans le frontmatter) : le rendu
+desktop 5 colonnes et le rendu mobile 2 colonnes en sortent tous les deux, ils ne peuvent pas diverger.
+
+- Ajouter une ligne = un objet dans `rows` (`mtc` + `rivals: [TraderSync, TradesViz, Edgely]`).
+- La colonne mobile « Les autres » est **calculée** par `merge()`, jamais saisie à la main :
+  `✓` seulement si les trois concurrents l'ont · `-` seulement si aucun ne l'a · `partiel` dès que
+  c'est mixte. **Ne jamais afficher `-` quand un concurrent propose la fonctionnalité** — ce serait
+  une affirmation fausse.
+- Valeurs non booléennes (prix) : renseigner `othersLabel` avec une fourchette couvrant les trois.
+- Bascule purement CSS : `.c-rival` (masqué < 768px) / `.c-others` (masqué ≥ 768px). Pas de
+  `min-width` en mobile — le tableau doit tenir dans le viewport sans scroll horizontal.
+
+---
+
 ## Pricing — limites IA à afficher
 
 Dans la section pricing PREMIUM, mentionner les limites de façon positive :
