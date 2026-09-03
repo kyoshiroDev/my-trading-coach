@@ -9,9 +9,10 @@ rsync depuis GitHub Actions vers `/opt/static/landing-prod`). Plus de Vercel.
 ## Règles absolues
 
 - `output: 'static'` — HTML pur, zéro JS client par défaut
-- Lire `landing-mytradingcoach.html` avant tout travail — c'est la source de vérité design
+- Le miroir `landing-mytradingcoach.html` a été retiré du dépôt (commit `581875e`) : la source de
+  vérité design est le composant `.astro` lui-même, plus les `maquette-*.html` du dossier
+  `maquettes/` (gitignoré, local)
 - Ne pas inventer de sections, couleurs ou composants
-- Reproduire pixel pour pixel le fichier de référence
 
 ---
 
@@ -41,6 +42,34 @@ src/
 └── layouts/
     └── Layout.astro             ← meta SEO, fonts, analytics
 ```
+
+---
+
+## Compliance NinjaTrader Ecosystem (PROMPT-201)
+
+MyTradingCoach est référencé dans l'écosystème NinjaTrader, ce qui impose 4 avertissements
+au texte **non modifiable** (source : `Ninja Trader/3. Disclaimers_VF.docx`, hors dépôt) :
+
+| Avertissement | Où |
+|---|---|
+| Risques · Performances hypothétiques · Live Trade Room · Témoignages | `src/pages/disclaimer.astro`, section 7 |
+
+Règles :
+- **Ne jamais paraphraser, résumer ni tronquer** ces 4 textes — ce sont des mentions réglementaires
+  imposées. Toute retouche doit repartir de la `.docx`.
+- Le `footer` doit conserver les mentions clés (risque de perte, performances passées,
+  résultats hypothétiques) + le lien vers `/disclaimer`.
+
+### Wordmark NinjaTrader
+
+- Assets : `public/ninjatrader/` — wordmark `NinjaTrader_Wordmark_color_RGB.png` (2376×300, `#FF4200`
+  sur transparent) + 5 bannières publicitaires (`ninjatrader-banner-*.png`).
+- Affiché dans `Footer.astro` (`.footer-eco`) : hauteur 24 px desktop / 20 px mobile, `width:auto`,
+  `aspect-ratio:2376/300` (zéro CLS), `object-fit:contain`. **Ne pas recolorer, déformer ni rogner.**
+- Les bannières ne sont **pas utilisées** : ce sont des créatives publicitaires avec CTA « Learn More »,
+  elles supposent un lien d'affiliation actif.
+- `NINJATRADER_URL` dans `Footer.astro` est un **placeholder à `null`** : tant qu'il vaut `null`, le
+  wordmark s'affiche sans lien. Ne pas y coder un lien d'affiliation non validé.
 
 ---
 
