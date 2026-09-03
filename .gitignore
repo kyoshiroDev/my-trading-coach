@@ -83,3 +83,9 @@ SECRETS.md
 
 # Assets NinjaTrader (media kit, hors dépôt)
 /Ninja Trader/
+
+# Artefacts de build TypeScript
+*.tsbuildinfo
+
+# Sorties de tests Playwright
+test-results/
