@@ -7,20 +7,7 @@ const NINJATRADER_URL: string | null = null;
 ---
 
 <footer>
-  <div class="footer-top">
-    <div class="footer-logo">MyTradingCoach</div>
-    <div class="footer-links">
-      <a href="/mentions-legales">Mentions légales</a>
-      <a href="/politique-confidentialite">Confidentialité</a>
-      <a href="/cgu">CGU</a>
-      <a href="/disclaimer">Avertissement financier</a>
-      <a href="https://www.mediateur-du-numerique.fr" target="_blank" rel="noopener">Médiation numérique</a>
-      <a href="mailto:hello@mytradingcoach.app">Contact</a>
-      <a href="/blog">Blog</a>
-    </div>
-    <div class="footer-right">© 2026 MyTradingCoach · Grégory Tahir · SIRET 512 926 460 00027 · Hébergé en France 🇫🇷</div>
-  </div>
-  <div class="footer-eco">
+<div class="footer-eco">
     <span class="footer-eco-label">Référencé dans l'écosystème</span>
     {NINJATRADER_URL ? (
       <a href={NINJATRADER_URL} target="_blank" rel="noopener sponsored" aria-label="NinjaTrader">
@@ -49,6 +36,20 @@ const NINJATRADER_URL: string | null = null;
   <div class="footer-disclaimer">
     ⚠️ MyTradingCoach est un outil de <strong>journal de trading et d'analyse comportementale</strong> destiné exclusivement à l'auto-documentation et à l'amélioration de la discipline personnelle. Il ne constitue pas un conseil en investissement financier, ne dispose d'aucun agrément AMF, et n'est soumis à aucune réglementation au titre de MiFID II. Les analyses générées par l'IA sont basées sur vos propres données enregistrées. Le trading comporte un risque élevé de perte en capital. Les performances passées ne préjugent pas des performances futures. Les résultats présentés sur ce site sont illustratifs ou hypothétiques : ils ont des limitations inhérentes et ne garantissent aucun profit. <a href="/disclaimer">Lire l'avertissement complet →</a>
   </div>
+  <div class="footer-top">
+    <div class="footer-logo">MyTradingCoach</div>
+    <div class="footer-links">
+      <a href="/mentions-legales">Mentions légales</a>
+      <a href="/politique-confidentialite">Confidentialité</a>
+      <a href="/cgu">CGU</a>
+      <a href="/disclaimer">Avertissement financier</a>
+      <a href="https://www.mediateur-du-numerique.fr" target="_blank" rel="noopener">Médiation numérique</a>
+      <a href="mailto:hello@mytradingcoach.app">Contact</a>
+      <a href="/blog">Blog</a>
+    </div>
+    <div class="footer-right">© 2026 MyTradingCoach · Grégory Tahir · SIRET 512 926 460 00027 · Hébergé en France 🇫🇷</div>
+  </div>
+
 </footer>
 
 <style>
