@@ -71,8 +71,12 @@ Règles :
   devant la marque « MyTradingCoach » (22 px).
 - Les bannières ne sont **pas utilisées** : ce sont des créatives publicitaires avec CTA « Learn More »,
   elles supposent un lien d'affiliation actif.
-- `NINJATRADER_URL` dans `Footer.astro` est un **placeholder à `null`** : tant qu'il vaut `null`, le
-  wordmark s'affiche sans lien. Ne pas y coder un lien d'affiliation non validé.
+- Le wordmark est un **lien d'affiliation** (PROMPT-204) : `NINJATRADER_AFFILIATE_URL` dans
+  `Footer.astro`, `rel="noopener sponsored nofollow"` + `target="_blank"`. L'ID vendeur `7724604`
+  est dans l'URL — la modifier casse le tracking.
+- **Lien affilié = divulgation obligatoire**, aux deux endroits : mention « Lien affilié » à côté du
+  logo *et* paragraphe « Divulgation d'affiliation » en section 7 de `disclaimer.astro`. Ne jamais
+  retirer l'un sans l'autre, ni le lien sans les deux.
 
 ---
 

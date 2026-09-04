@@ -1,9 +1,9 @@
 ---
-// Lien porte par le wordmark NinjaTrader.
-// Laisse a `null` tant que la decision affiliation n'est pas prise (PROMPT-201) :
-// le wordmark s'affiche alors sans lien. Renseigner ici le lien d'affiliation
-// NinjaTrader, ou a defaut la fiche MyTradingCoach de l'ecosysteme.
-const NINJATRADER_URL: string | null = null;
+// Lien d'affiliation NinjaTrader porte par le wordmark du footer (PROMPT-204).
+// L'identifiant vendeur (7724604) est dans l'URL : la remplacer casse le tracking.
+// Lien affilie => `rel="sponsored nofollow"` cote SEO et divulgation visible a
+// cote du logo + phrase complete sur /disclaimer. Ne pas retirer l'un sans l'autre.
+const NINJATRADER_AFFILIATE_URL = 'https://ninjatraderdomesticvendor.sjv.io/c/7724604/3069488/37581';
 ---
 
 <footer>
@@ -26,13 +26,16 @@ const NINJATRADER_URL: string | null = null;
 
   <div class="footer-eco">
     <span class="footer-eco-label">Référencé dans l'écosystème</span>
-    {NINJATRADER_URL ? (
-      <a href={NINJATRADER_URL} target="_blank" rel="noopener sponsored" aria-label="NinjaTrader">
-        <img class="footer-eco-mark" src="/ninjatrader/NinjaTrader_Wordmark_color_RGB.png" alt="NinjaTrader" width="2376" height="300" loading="lazy" decoding="async" />
-      </a>
-    ) : (
+    <a
+      class="footer-eco-link"
+      href={NINJATRADER_AFFILIATE_URL}
+      target="_blank"
+      rel="noopener sponsored nofollow"
+      aria-label="NinjaTrader — lien affilié, ouvre un nouvel onglet"
+    >
       <img class="footer-eco-mark" src="/ninjatrader/NinjaTrader_Wordmark_color_RGB.png" alt="NinjaTrader" width="2376" height="300" loading="lazy" decoding="async" />
-    )}
+    </a>
+    <span class="footer-eco-aff">Lien affilié</span>
   </div>
 
 </footer>
@@ -90,6 +93,23 @@ const NINJATRADER_URL: string | null = null;
   .footer-eco-label {
     font-size: 10px;
     color: var(--txt3);
+    letter-spacing: 0.02em;
+  }
+
+  /* Le padding elargit la zone cliquable (~30px de haut) et la marge negative
+     l'annule visuellement : taille et placement du wordmark restent ceux du 203. */
+  .footer-eco-link {
+    display: inline-flex;
+    padding: 6px 4px;
+    margin: -6px -4px;
+    line-height: 0;
+  }
+
+  /* Divulgation d'affiliation : obligatoire des lors que le logo est un lien. */
+  .footer-eco-aff {
+    font-size: 9px;
+    color: var(--txt3);
+    opacity: 0.75;
     letter-spacing: 0.02em;
   }
 
