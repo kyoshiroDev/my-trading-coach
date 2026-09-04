@@ -21,19 +21,18 @@ const NINJATRADER_URL: string | null = null;
       <a href="mailto:hello@mytradingcoach.app">Contact</a>
       <a href="/blog">Blog</a>
     </div>
-    <div class="footer-meta">
-      <div class="footer-right">© 2026 MyTradingCoach · Grégory Tahir · SIRET 512 926 460 00027 · Hébergé en France 🇫🇷</div>
-      <div class="footer-eco">
-        <span class="footer-eco-label">Référencé dans l'écosystème</span>
-        {NINJATRADER_URL ? (
-          <a href={NINJATRADER_URL} target="_blank" rel="noopener sponsored" aria-label="NinjaTrader">
-            <img class="footer-eco-mark" src="/ninjatrader/NinjaTrader_Wordmark_color_RGB.png" alt="NinjaTrader" width="2376" height="300" loading="lazy" decoding="async" />
-          </a>
-        ) : (
-          <img class="footer-eco-mark" src="/ninjatrader/NinjaTrader_Wordmark_color_RGB.png" alt="NinjaTrader" width="2376" height="300" loading="lazy" decoding="async" />
-        )}
-      </div>
-    </div>
+    <div class="footer-right">© 2026 MyTradingCoach · Grégory Tahir · SIRET 512 926 460 00027 · Hébergé en France 🇫🇷</div>
+  </div>
+
+  <div class="footer-eco">
+    <span class="footer-eco-label">Référencé dans l'écosystème</span>
+    {NINJATRADER_URL ? (
+      <a href={NINJATRADER_URL} target="_blank" rel="noopener sponsored" aria-label="NinjaTrader">
+        <img class="footer-eco-mark" src="/ninjatrader/NinjaTrader_Wordmark_color_RGB.png" alt="NinjaTrader" width="2376" height="300" loading="lazy" decoding="async" />
+      </a>
+    ) : (
+      <img class="footer-eco-mark" src="/ninjatrader/NinjaTrader_Wordmark_color_RGB.png" alt="NinjaTrader" width="2376" height="300" loading="lazy" decoding="async" />
+    )}
   </div>
 
 </footer>
@@ -74,25 +73,22 @@ const NINJATRADER_URL: string | null = null;
 
   .footer-right { font-size: 11px; color: var(--txt3); font-family: var(--mono); }
 
-  /* Mention ecosysteme : alignee avec les mentions legales (SIRET / (c)),
-     pas de separateur ni de pleine largeur — elle ne doit pas former de bande. */
-  .footer-meta {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 8px;
-  }
-
+  /* Mention ecosysteme : ligne dediee et centree, sous la barre legale.
+     Badge de credibilite = present mais discret, il ne doit pas primer sur
+     « MyTradingCoach ». Le levier est la taille, pas la couleur : le wordmark
+     est fourni par NinjaTrader et ne doit pas etre recolore. */
   .footer-eco {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 7px;
     flex-wrap: wrap;
-    justify-content: flex-end;
+    width: 100%;
+    margin-top: 22px;
   }
 
   .footer-eco-label {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--txt3);
     letter-spacing: 0.02em;
   }
@@ -100,7 +96,7 @@ const NINJATRADER_URL: string | null = null;
   /* Wordmark 2376x300 (ratio 7.92:1) : hauteur contrainte + width auto pour
      garder le ratio. aspect-ratio fige la place avant chargement (zero CLS). */
   .footer-eco-mark {
-    height: 22px;
+    height: 18px;
     width: auto;
     aspect-ratio: 2376 / 300;
     max-width: 100%;
@@ -130,9 +126,9 @@ const NINJATRADER_URL: string | null = null;
     .footer-top { flex-direction: column; gap: 20px; }
     .footer-links { justify-content: center; gap: 14px; flex-wrap: wrap; }
     .footer-right { text-align: center; }
-    .footer-meta { align-items: center; }
-    .footer-eco { justify-content: center; }
-    .footer-eco-mark { height: 20px; }
+    .footer-eco { margin-top: 18px; gap: 6px; }
+    .footer-eco-label { font-size: 9.5px; }
+    .footer-eco-mark { height: 18px; }
     .footer-disclaimer { text-align: left; }
   }
 </style>

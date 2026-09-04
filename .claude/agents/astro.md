@@ -64,8 +64,11 @@ Règles :
 
 - Assets : `public/ninjatrader/` — wordmark `NinjaTrader_Wordmark_color_RGB.png` (2376×300, `#FF4200`
   sur transparent) + 5 bannières publicitaires (`ninjatrader-banner-*.png`).
-- Affiché dans `Footer.astro` (`.footer-eco`) : hauteur 24 px desktop / 20 px mobile, `width:auto`,
-  `aspect-ratio:2376/300` (zéro CLS), `object-fit:contain`. **Ne pas recolorer, déformer ni rogner.**
+- Affiché dans `Footer.astro` (`.footer-eco`) : **ligne dédiée centrée** sous la barre légale,
+  hauteur **18 px** (`width:auto`, `aspect-ratio:2376/300` pour zéro CLS, `object-fit:contain`).
+  **Ne pas recolorer, déformer ni rogner** — le seul levier de discrétion est la taille : le
+  orange `#FF4200` domine tout le footer dès qu'on dépasse ~20 px, et doit rester secondaire
+  devant la marque « MyTradingCoach » (22 px).
 - Les bannières ne sont **pas utilisées** : ce sont des créatives publicitaires avec CTA « Learn More »,
   elles supposent un lien d'affiliation actif.
 - `NINJATRADER_URL` dans `Footer.astro` est un **placeholder à `null`** : tant qu'il vaut `null`, le
