@@ -14,13 +14,14 @@ import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
 import * as angularCore from '@angular/core';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { OnboardingComponent } from './onboarding.component';
 import { UsersApi } from '../../core/api/users.api';
 import { TradesApi } from '../../core/api/trades.api';
 import { TradesStore } from '../../core/stores/trades.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { SetupsStore } from '../../core/stores/setups.store';
+import { AccountsApi } from '../../core/api/accounts.api';
 
 const resolveComponentResources = (angularCore as Record<string, unknown>)[
   'ɵresolveComponentResources'
@@ -44,6 +45,10 @@ const mockSetupsStore = {
   create: vi.fn(),
   remove: vi.fn(),
 };
+const mockAccountsApi = {
+  getAll: vi.fn().mockReturnValue(of({ data: [] })),
+  create: vi.fn().mockReturnValue(of({ data: { id: 'acc-1' } })),
+};
 const authUser = signal<unknown>(null);
 
 async function mount() {
@@ -54,6 +59,7 @@ async function mount() {
       { provide: TradesApi, useValue: { create: vi.fn().mockReturnValue(of({})), saveUserAssets: vi.fn().mockReturnValue(of({ data: null })) } },
       { provide: TradesStore, useValue: { loadTrades: vi.fn() } },
       { provide: SetupsStore, useValue: mockSetupsStore },
+      { provide: AccountsApi, useValue: mockAccountsApi },
       {
         provide: AuthService,
         useValue: { currentUser: authUser, setCurrentUser: vi.fn((u: unknown) => authUser.set(u)) },
@@ -74,7 +80,13 @@ async function mount() {
 }
 
 describe('Onboarding — le capital de départ ne bloque plus', () => {
-  beforeEach(() => { vi.clearAllMocks(); localStorage.clear(); });
+  beforeEach(() => {
+    vi.clearAllMocks(); localStorage.clear();
+    // clearAllMocks efface aussi les valeurs de retour : les re-armer.
+    mockAccountsApi.getAll.mockReturnValue(of({ data: [] }));
+    mockAccountsApi.create.mockReturnValue(of({ data: { id: 'acc-1' } }));
+    mockUsersApi.saveOnboardingProfile.mockReturnValue(of({ data: { onboardingCompleted: false } }));
+  });
 
   it('le champ est pré-rempli avec une valeur exploitable', async () => {
     const c = await mount();
@@ -113,7 +125,13 @@ describe('Onboarding — le capital de départ ne bloque plus', () => {
 });
 
 describe('Onboarding — la description de stratégie est optionnelle', () => {
-  beforeEach(() => { vi.clearAllMocks(); localStorage.clear(); });
+  beforeEach(() => {
+    vi.clearAllMocks(); localStorage.clear();
+    // clearAllMocks efface aussi les valeurs de retour : les re-armer.
+    mockAccountsApi.getAll.mockReturnValue(of({ data: [] }));
+    mockAccountsApi.create.mockReturnValue(of({ data: { id: 'acc-1' } }));
+    mockUsersApi.saveOnboardingProfile.mockReturnValue(of({ data: { onboardingCompleted: false } }));
+  });
 
   it('style + session suffisent, sans un mot de description', async () => {
     const c = await mount();
@@ -164,7 +182,13 @@ describe('Onboarding — la description de stratégie est optionnelle', () => {
 });
 
 describe('Onboarding — sortie de secours', () => {
-  beforeEach(() => { vi.clearAllMocks(); localStorage.clear(); });
+  beforeEach(() => {
+    vi.clearAllMocks(); localStorage.clear();
+    // clearAllMocks efface aussi les valeurs de retour : les re-armer.
+    mockAccountsApi.getAll.mockReturnValue(of({ data: [] }));
+    mockAccountsApi.create.mockReturnValue(of({ data: { id: 'acc-1' } }));
+    mockUsersApi.saveOnboardingProfile.mockReturnValue(of({ data: { onboardingCompleted: false } }));
+  });
 
   it('« passer » termine l\'onboarding et purge la progression', async () => {
     const c = await mount();
@@ -186,7 +210,13 @@ describe('Onboarding — sortie de secours', () => {
 });
 
 describe('Onboarding — barre de progression alignée sur le libellé', () => {
-  beforeEach(() => { vi.clearAllMocks(); localStorage.clear(); });
+  beforeEach(() => {
+    vi.clearAllMocks(); localStorage.clear();
+    // clearAllMocks efface aussi les valeurs de retour : les re-armer.
+    mockAccountsApi.getAll.mockReturnValue(of({ data: [] }));
+    mockAccountsApi.create.mockReturnValue(of({ data: { id: 'acc-1' } }));
+    mockUsersApi.saveOnboardingProfile.mockReturnValue(of({ data: { onboardingCompleted: false } }));
+  });
 
   it('la barre est pleine à l\'étape annoncée comme la dernière', async () => {
     const c = await mount();
@@ -200,5 +230,287 @@ describe('Onboarding — barre de progression alignée sur le libellé', () => {
     c.step.set(1);
     expect(c.stepLabel).toBe('');
     expect(c.progress).toBe(0);
+  });
+});
+
+/**
+ * PROMPT-199 tâche 2 — le compte de trading est déclaré à l'étape 3.
+ *
+ * Avant, le compte n'existait qu'au premier trade, créé par `ensureDefaultAccountId` :
+ * toujours PERSONAL, libellé « Compte principal », sans broker ni règles. Un trader
+ * prop firm — la cible principale — démarrait donc avec un compte faux, alors que
+ * `TradingAccount` porte déjà type / broker / profitTarget / maxDrawdown / drawdownType.
+ */
+describe('Onboarding — compte perso vs prop firm', () => {
+  beforeEach(() => {
+    vi.clearAllMocks(); localStorage.clear();
+    // clearAllMocks efface aussi les valeurs de retour : les re-armer.
+    mockAccountsApi.getAll.mockReturnValue(of({ data: [] }));
+    mockAccountsApi.create.mockReturnValue(of({ data: { id: 'acc-1' } }));
+    mockUsersApi.saveOnboardingProfile.mockReturnValue(of({ data: { onboardingCompleted: false } }));
+  });
+
+  it('mode perso → PERSONAL, aucun champ prop firm envoyé', async () => {
+    const c = await mount();
+    c.accountMode.set('PERSO');
+    c.capitalInput.set('5000');
+    // Renseignés puis mode perso : ils ne doivent PAS fuiter dans le payload.
+    c.broker.set('Apex');
+    c.profitTarget.set('3000');
+    c.maxDrawdown.set('2500');
+
+    const p = c.buildAccountPayload();
+
+    expect(p.type).toBe('PERSONAL');
+    expect(p.label).toBe('Compte principal');
+    expect(p.accountSize).toBe(5000);
+    expect(p.startingBalance).toBe(5000);
+    expect(p.broker).toBeUndefined();
+    expect(p.profitTarget).toBeUndefined();
+    expect(p.maxDrawdown).toBeUndefined();
+    expect(p.drawdownType).toBeUndefined();
+  });
+
+  it('mode prop firm → EVALUATION avec les règles saisies', async () => {
+    const c = await mount();
+    c.accountMode.set('PROPFIRM');
+    c.capitalInput.set('50000');
+    c.broker.set('Apex');
+    c.profitTarget.set('3000');
+    c.maxDrawdown.set('2500');
+    c.drawdownType.set('TRAILING');
+
+    const p = c.buildAccountPayload();
+
+    expect(p.type).toBe('EVALUATION');
+    expect(p.label).toBe('Apex #1');
+    expect(p.broker).toBe('Apex');
+    expect(p.accountSize).toBe(50000);
+    expect(p.profitTarget).toBe(3000);
+    expect(p.maxDrawdown).toBe(2500);
+    expect(p.drawdownType).toBe('TRAILING');
+  });
+
+  it('prop firm sans règles renseignées → aucun champ vide envoyé', async () => {
+    const c = await mount();
+    c.accountMode.set('PROPFIRM');
+    c.capitalInput.set('50000');
+
+    const p = c.buildAccountPayload();
+
+    expect(p.type).toBe('EVALUATION');
+    // Sans broker, pas de « undefined #1 » : on retombe sur le libellé neutre.
+    expect(p.label).toBe('Compte principal');
+    // Envoyer 0 afficherait une barre d'objectif vide au lieu de masquer la carte.
+    expect(p.profitTarget).toBeUndefined();
+    expect(p.maxDrawdown).toBeUndefined();
+    expect(p.drawdownType).toBeUndefined();
+  });
+
+  it('un objectif à 0 n\'est pas envoyé (0 n\'est pas une règle)', async () => {
+    const c = await mount();
+    c.accountMode.set('PROPFIRM');
+    c.profitTarget.set('0');
+    c.maxDrawdown.set('0');
+
+    const p = c.buildAccountPayload();
+    expect(p.profitTarget).toBeUndefined();
+    expect(p.maxDrawdown).toBeUndefined();
+  });
+});
+
+describe('Onboarding — le compte n\'est jamais créé deux fois', () => {
+  beforeEach(() => {
+    vi.clearAllMocks(); localStorage.clear();
+    // clearAllMocks efface aussi les valeurs de retour : les re-armer.
+    mockAccountsApi.getAll.mockReturnValue(of({ data: [] }));
+    mockAccountsApi.create.mockReturnValue(of({ data: { id: 'acc-1' } }));
+    mockUsersApi.saveOnboardingProfile.mockReturnValue(of({ data: { onboardingCompleted: false } }));
+  });
+
+  /** Avance de l'étape Stratégie (5) vers Actifs (6) : c'est là que tout est persisté. */
+  function goPastStrategy(c: any) {
+    c.selectedStyle.set('DAY_TRADING');
+    c.selectedSessions.set(['LONDON']);
+    c.step.set(5);
+    c.nextStep();
+  }
+
+  it('crée le compte au checkpoint quand le compte n\'en a aucun', async () => {
+    mockAccountsApi.getAll.mockReturnValue(of({ data: [] }));
+    const c = await mount();
+    goPastStrategy(c);
+
+    expect(mockAccountsApi.getAll).toHaveBeenCalledTimes(1);
+    expect(mockAccountsApi.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('retour étape 6 → 5 puis ré-avance : PAS de 2e compte', async () => {
+    mockAccountsApi.getAll.mockReturnValue(of({ data: [] }));
+    const c = await mount();
+
+    goPastStrategy(c);                 // 1er passage : création
+    expect(mockAccountsApi.create).toHaveBeenCalledTimes(1);
+
+    c.prevStep();                      // Actifs (6) → Stratégie (5)
+    c.nextStep();                      // ré-avance : le checkpoint se rejoue
+
+    expect(
+      mockAccountsApi.create,
+      'Un aller-retour dans le wizard a créé un second compte',
+    ).toHaveBeenCalledTimes(1);
+  });
+
+  it('un compte existant côté serveur → aucune création', async () => {
+    // Filet indépendant du client : rechargement, localStorage vidé, autre onglet.
+    mockAccountsApi.getAll.mockReturnValue(of({ data: [{ id: 'acc-1' }] }));
+    const c = await mount();
+    goPastStrategy(c);
+
+    expect(mockAccountsApi.getAll).toHaveBeenCalledTimes(1);
+    expect(mockAccountsApi.create).not.toHaveBeenCalled();
+  });
+
+  it('un échec de création ne bloque pas l\'onboarding et reste rejouable', async () => {
+    mockAccountsApi.getAll.mockReturnValue(of({ data: [] }));
+    mockAccountsApi.create.mockReturnValueOnce(throwError(() => new Error('boom')));
+    const c = await mount();
+
+    goPastStrategy(c);
+    expect(c.step()).toBe(6); // le parcours continue malgré l'échec
+
+    mockAccountsApi.create.mockReturnValue(of({ data: { id: 'acc-1' } }));
+    c.prevStep();
+    c.nextStep();
+    expect(mockAccountsApi.create).toHaveBeenCalledTimes(2);
+  });
+});
+
+/**
+ * PROMPT-199 suite — l'échec d'enregistrement du profil ne doit plus être silencieux.
+ *
+ * Constaté sur dev : après une traversée complète du wizard, `market`, `goal` et
+ * `tradingStyle` étaient nuls en base et `startingCapital` à 0. La branche `error` de
+ * `saveProfileThenGoAssets` faisait `step.set(6)` exactement comme la branche `next` :
+ * l'appel échouait, le wizard avançait, l'utilisateur terminait son onboarding avec un
+ * profil vide sans le moindre signal. Depuis l'ajout du compte de trading, le même
+ * échec emportait aussi sa création.
+ *
+ * On ne bloque pas pour autant : « Continuer quand même » reste à un clic, cohérent
+ * avec la sortie de secours du wizard.
+ */
+describe('Onboarding — échec d\'enregistrement du profil', () => {
+  beforeEach(() => {
+    vi.clearAllMocks(); localStorage.clear();
+    mockAccountsApi.getAll.mockReturnValue(of({ data: [] }));
+    mockAccountsApi.create.mockReturnValue(of({ data: { id: 'acc-1' } }));
+    mockUsersApi.saveOnboardingProfile.mockReturnValue(of({ data: { onboardingCompleted: false } }));
+  });
+
+  function atStrategy(c: any) {
+    c.selectedStyle.set('DAY_TRADING');
+    c.selectedSessions.set(['LONDON']);
+    c.step.set(5);
+  }
+
+  it('échec → on RESTE sur l\'étape et le message est affiché', async () => {
+    mockUsersApi.saveOnboardingProfile.mockReturnValue(
+      throwError(() => ({ error: { message: 'Session expirée.' } })),
+    );
+    const c = await mount();
+    atStrategy(c);
+
+    c.nextStep();
+
+    expect(c.step(), 'Le wizard a avancé malgré l\'échec : perte silencieuse').toBe(5);
+    expect(c.profileSaveError()).toBe('Session expirée.');
+    expect(c.isSaving()).toBe(false);
+  });
+
+  it('échec sans message serveur → repli lisible, jamais « undefined »', async () => {
+    mockUsersApi.saveOnboardingProfile.mockReturnValue(throwError(() => new Error('net')));
+    const c = await mount();
+    atStrategy(c);
+
+    c.nextStep();
+
+    expect(c.profileSaveError()).toBe("Ton profil n'a pas pu être enregistré.");
+  });
+
+  it('échec → le compte n\'est pas créé non plus (rien ne part à moitié)', async () => {
+    mockUsersApi.saveOnboardingProfile.mockReturnValue(throwError(() => new Error('net')));
+    const c = await mount();
+    atStrategy(c);
+
+    c.nextStep();
+
+    expect(mockAccountsApi.create).not.toHaveBeenCalled();
+  });
+
+  it('« Réessayer » rejoue le checkpoint et avance si ça passe', async () => {
+    mockUsersApi.saveOnboardingProfile.mockReturnValueOnce(throwError(() => new Error('net')));
+    const c = await mount();
+    atStrategy(c);
+    c.nextStep();
+    expect(c.step()).toBe(5);
+
+    mockUsersApi.saveOnboardingProfile.mockReturnValue(of({ data: { onboardingCompleted: false } }));
+    c.retryProfileSave();
+
+    expect(c.step()).toBe(6);
+    expect(c.profileSaveError()).toBeNull();
+    expect(mockAccountsApi.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('« Continuer quand même » avance ET tente quand même le compte', async () => {
+    // Le profil et le compte sont deux endpoints : la déclaration de l'étape 3
+    // (capital, règles prop firm) a plus de valeur que les champs de profil.
+    mockUsersApi.saveOnboardingProfile.mockReturnValue(throwError(() => new Error('net')));
+    const c = await mount();
+    atStrategy(c);
+    c.nextStep();
+
+    c.continueWithoutProfile();
+
+    expect(c.step()).toBe(6);
+    expect(c.profileSaveError()).toBeNull();
+    expect(mockAccountsApi.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('un retour en arrière efface le message', async () => {
+    mockUsersApi.saveOnboardingProfile.mockReturnValue(throwError(() => new Error('net')));
+    const c = await mount();
+    atStrategy(c);
+    c.nextStep();
+    expect(c.profileSaveError()).not.toBeNull();
+
+    c.prevStep();
+
+    expect(c.profileSaveError()).toBeNull();
+    expect(c.step()).toBe(4);
+  });
+
+  it('succès → aucun message, parcours inchangé (non-régression)', async () => {
+    const c = await mount();
+    atStrategy(c);
+
+    c.nextStep();
+
+    expect(c.step()).toBe(6);
+    expect(c.profileSaveError()).toBeNull();
+  });
+});
+
+describe('Onboarding — la modale de setup s\'ouvre depuis l\'étape Setups', () => {
+  beforeEach(() => { vi.clearAllMocks(); localStorage.clear(); });
+
+  // L'invariant de z-index qui garantit qu'elle est VISIBLE vit dans
+  // setup-modal-zindex.spec.ts : il lit les CSS, donc tourne en environnement node.
+  it('le bouton « + Ajouter un setup » ouvre bien la modale', async () => {
+    const c = await mount();
+    c.step.set(7);
+    expect(c.showSetupModal()).toBe(false);
+    c.openSetupModal();
+    expect(c.showSetupModal()).toBe(true);
   });
 });

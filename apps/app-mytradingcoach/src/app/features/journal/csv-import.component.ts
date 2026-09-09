@@ -218,8 +218,16 @@ const EMOTION_EMOJIS: Record<string, string> = {
                         <lucide-icon [img]="XIcon" [size]="14" />
                       </button>
                     </div>
-                    @if (!feesFileValid()) {
-                      <p class="import-help import-warn">
+                    <!-- Vide et « mauvais format » appellent des actions differentes :
+                         l'un renvoie vers Tradovate, l'autre vers le bon fichier. -->
+                    @if (feesFileEmpty()) {
+                      <p class="import-help import-warn" data-testid="fees-file-empty">
+                        Ce fichier est vide ou n'a pas pu être lu. L'export a probablement échoué
+                        côté Tradovate (vérifie que le compte sélectionné a bien de l'activité sur
+                        la période) : réexporte-le et réessaie.
+                      </p>
+                    } @else if (!feesFileValid()) {
+                      <p class="import-help import-warn" data-testid="fees-file-invalid">
                         Ce fichier ne ressemble pas à un Cash history Tradovate. Vérifie l'export.
                       </p>
                     }
@@ -233,15 +241,22 @@ const EMOTION_EMOJIS: Record<string, string> = {
 
                 <!-- L'ancien hint vantait le confort (« sans saisie manuelle ») ; il faut
                      d'abord dire ce qu'on perd sans le fichier, sinon « optionnel » se lit
-                     « accessoire » et le P&L brut passe pour net. -->
-                <p class="import-help import-fees-pitch">
-                  <lucide-icon [img]="AlertCircleIcon" [size]="14" class="import-fees-pitch-ic" />
-                  <span>
-                    Sans le Cash history, ton P&amp;L est affiché <strong>brut</strong> (frais non
-                    déduits) : tes chiffres seront optimistes. Ajoute-le pour un P&amp;L net exact
-                    au centime.
-                  </span>
-                </p>
+                     « accessoire » et le P&L brut passe pour net.
+                     Uniquement TANT QU'aucun fichier n'est choisi : une fois choisi, il
+                     restait affiché sous le nom du fichier et laissait croire que rien
+                     n'avait été pris en compte. Les messages « vide » / « mauvais
+                     format » couvrent déjà les cas où les frais ne seront pas déduits ;
+                     un fichier valide n'a rien à annoncer. -->
+                @if (!feesFile()) {
+                  <p class="import-help import-fees-pitch" data-testid="fees-pitch">
+                    <lucide-icon [img]="AlertCircleIcon" [size]="14" class="import-fees-pitch-ic" />
+                    <span>
+                      Sans le Cash history, ton P&amp;L est affiché <strong>brut</strong> (frais non
+                      déduits) : tes chiffres seront optimistes. Ajoute-le pour un P&amp;L net exact
+                      au centime.
+                    </span>
+                  </p>
+                }
               } @else {
                 <!-- Autre broker / onboarding : dropzone -->
                 <div
@@ -415,6 +430,14 @@ export class CsvImportComponent {
   protected readonly feesFile = signal<File | null>(null);
   // true si l'en-tête ressemble à un Cash history Tradovate (frais exacts par fusion).
   protected readonly feesFileValid = signal(false);
+  /**
+   * Fichier de frais vide ou illisible — distinct du « mauvais format ». Cas réel
+   * (Val) : un export Tradovate raté produit un fichier de 9 octets contenant
+   * littéralement « undefined ». Le message générique « ce n'est pas un Cash history »
+   * envoyait alors chercher le bon fichier, alors que le bon fichier n'existe pas :
+   * c'est l'export côté broker qu'il faut refaire.
+   */
+  protected readonly feesFileEmpty = signal(false);
   /** Panneau de confirmation « importer sans frais » affiché. */
   protected readonly showFeesConfirm = signal(false);
   /** L'utilisateur a déjà tranché pour CE lot : on ne le redemande pas. */
@@ -592,20 +615,35 @@ export class CsvImportComponent {
     if (!file) return;
     this.feesFile.set(file);
     this.feesFileValid.set(false);
+    this.feesFileEmpty.set(false);
     const reader = new FileReader();
     reader.onload = () => {
-      const header = String(reader.result ?? '').split(/\r?\n/)[0]?.toLowerCase() ?? '';
+      const text = String(reader.result ?? '').trim();
+      // Vide AVANT le test d'en-tête : sur du vide il échouerait de toute façon, et
+      // c'est le diagnostic qui change, pas seulement le message. Deux critères, car un
+      // export raté n'est pas forcément un fichier de 0 octet : trop court pour porter
+      // un en-tête, ou aucune virgule donc aucune structure CSV (le cas « undefined »).
+      if (text.length < 20 || !text.includes(',')) {
+        this.feesFileEmpty.set(true);
+        return;
+      }
+      const header = text.split(/\r?\n/)[0]?.toLowerCase() ?? '';
       this.feesFileValid.set(
         header.includes('transaction id') && header.includes('cash change type'),
       );
     };
-    reader.onerror = () => this.feesFileValid.set(false);
+    // Illisible : même signal côté utilisateur, l'export est à refaire.
+    reader.onerror = () => {
+      this.feesFileValid.set(false);
+      this.feesFileEmpty.set(true);
+    };
     reader.readAsText(file);
   }
 
   protected clearFeesFile() {
     this.feesFile.set(null);
     this.feesFileValid.set(false);
+    this.feesFileEmpty.set(false);
     this.feesConfirmed = false;
   }
 

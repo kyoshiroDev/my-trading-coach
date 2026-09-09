@@ -26,8 +26,26 @@ export async function register(page: Page, email: string): Promise<void> {
   await expect(page.locator('[data-testid="onboarding-wizard"]')).toBeVisible();
 }
 
-/** Étapes 1 à 4 (Promesse → Marché → Objectif → Capital), communes à tout parcours. */
-export async function goThroughIntro(page: Page): Promise<void> {
+/**
+ * Déclaration de compte de l'étape 4 (« Ton compte de trading »).
+ *
+ * Par défaut PERSO — c'est le mode initial du wizard, et le seul que traversaient
+ * les parcours existants. `PROPFIRM` ouvre le bloc de règles (firm, objectif,
+ * drawdown), tous optionnels côté produit : on peut donc n'en renseigner qu'une
+ * partie, et les tests s'en servent pour vérifier que le payload n'envoie que les
+ * champs réellement saisis.
+ */
+export interface DeclarationCompte {
+  mode?: 'PERSO' | 'PROPFIRM';
+  capital?: string;
+  broker?: string;
+  profitTarget?: string;
+  maxDrawdown?: string;
+  drawdownType?: 'TRAILING' | 'STATIC';
+}
+
+/** Étapes 1 à 4 (Promesse → Marché → Objectif → Compte), communes à tout parcours. */
+export async function goThroughIntro(page: Page, compte: DeclarationCompte = {}): Promise<void> {
   await page.click('[data-testid="onboarding-start"]');
 
   await page.click('[data-testid="onboarding-market-CRYPTO"]');
@@ -36,12 +54,41 @@ export async function goThroughIntro(page: Page): Promise<void> {
   await page.click('[data-testid="onboarding-goal-DISCIPLINE"]');
   await page.click('[data-testid="goal-continue"]');
 
-  await page.fill('[data-testid="capital-input"]', '5000');
+  const prop = compte.mode === 'PROPFIRM';
+  if (prop) {
+    await page.click('[data-testid="account-mode-propfirm"]');
+    // Le bloc de règles n'existe dans le DOM que dans ce mode : l'attendre évite
+    // un remplissage sur un champ pas encore rendu.
+    await expect(page.locator('[data-testid="account-broker"]')).toBeVisible();
+  }
+
+  await page.fill('[data-testid="capital-input"]', compte.capital ?? '5000');
+
+  if (prop) {
+    if (compte.broker !== undefined) {
+      await page.fill('[data-testid="account-broker"]', compte.broker);
+    }
+    if (compte.profitTarget !== undefined) {
+      await page.fill('[data-testid="account-profit-target"]', compte.profitTarget);
+    }
+    if (compte.maxDrawdown !== undefined) {
+      await page.fill('[data-testid="account-max-drawdown"]', compte.maxDrawdown);
+    }
+    if (compte.drawdownType === 'STATIC') {
+      await page.click('[data-testid="drawdown-static"]');
+    }
+  }
+
   await page.click('[data-testid="capital-continue"]');
 }
 
-/** Étapes 5 à 7 (Stratégie → Actifs → Setups), obligatoires avant le premier trade. */
-export async function goThroughProfile(page: Page): Promise<void> {
+/**
+ * Étape 5 (Stratégie) puis franchissement du checkpoint : le clic sur
+ * « Continuer » y enregistre le profil IA ET crée le compte de trading déclaré à
+ * l'étape 4. On attend l'étape Actifs pour ne pas enchaîner sur un écran encore
+ * en cours d'enregistrement.
+ */
+export async function crossProfileCheckpoint(page: Page): Promise<void> {
   await page.click('[data-testid="onboarding-style-SCALPING"]');
   await page.fill(
     '[data-testid="strategy-description"]',
@@ -49,6 +96,16 @@ export async function goThroughProfile(page: Page): Promise<void> {
   );
   await page.click('[data-testid="onboarding-session-LONDON"]');
   await page.click('[data-testid="strategy-continue"]');
+
+  await expect(
+    page.locator('[data-testid="onboarding-asset-search"]'),
+    "Le checkpoint de l'étape 5 n'a pas abouti : ni profil enregistré, ni compte créé",
+  ).toBeVisible({ timeout: 15_000 });
+}
+
+/** Étapes 5 à 7 (Stratégie → Actifs → Setups), obligatoires avant le premier trade. */
+export async function goThroughProfile(page: Page): Promise<void> {
+  await crossProfileCheckpoint(page);
 
   await page.fill('[data-testid="onboarding-asset-search"]', 'BTC/USDT');
   await page.click('[data-testid="onboarding-asset-add"]');
@@ -59,9 +116,13 @@ export async function goThroughProfile(page: Page): Promise<void> {
 }
 
 /** Enchaîne les étapes 1-7 : place le wizard sur l'écran « Ajoute ton premier trade ». */
-export async function completeOnboardingUpToTradeChoice(page: Page, email: string): Promise<void> {
+export async function completeOnboardingUpToTradeChoice(
+  page: Page,
+  email: string,
+  compte: DeclarationCompte = {},
+): Promise<void> {
   await register(page, email);
-  await goThroughIntro(page);
+  await goThroughIntro(page, compte);
   await goThroughProfile(page);
 }
 
@@ -89,6 +150,32 @@ function db(): PrismaClient {
 /** Supprime l'utilisateur (trades/setups/comptes cascadent via onDelete: Cascade). */
 export async function cleanupUser(email: string): Promise<void> {
   await db().user.deleteMany({ where: { email } }).catch(() => undefined);
+}
+
+/**
+ * Comptes de trading de l'utilisateur, lus en base.
+ *
+ * Pourquoi la base plutôt que l'écran « Mes comptes » : ce qu'on veut prouver ici,
+ * c'est le PAYLOAD envoyé au checkpoint (type, règles, champs volontairement
+ * absents). L'écran met en forme, arrondit et masque les règles nulles — il ne
+ * distingue pas un `profitTarget` absent d'un `profitTarget` à 0. La base, si.
+ */
+export async function accountsOf(email: string) {
+  return db().tradingAccount.findMany({
+    where: { user: { email } },
+    orderBy: { createdAt: 'asc' },
+    select: {
+      label: true,
+      broker: true,
+      type: true,
+      accountSize: true,
+      startingBalance: true,
+      currency: true,
+      profitTarget: true,
+      maxDrawdown: true,
+      drawdownType: true,
+    },
+  });
 }
 
 export async function closeDb(): Promise<void> {

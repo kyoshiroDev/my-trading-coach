@@ -9,9 +9,10 @@ rsync depuis GitHub Actions vers `/opt/static/landing-prod`). Plus de Vercel.
 ## Règles absolues
 
 - `output: 'static'` — HTML pur, zéro JS client par défaut
-- Lire `landing-mytradingcoach.html` avant tout travail — c'est la source de vérité design
+- Le miroir `landing-mytradingcoach.html` a été retiré du dépôt (commit `581875e`) : la source de
+  vérité design est le composant `.astro` lui-même, plus les `maquette-*.html` du dossier
+  `maquettes/` (gitignoré, local)
 - Ne pas inventer de sections, couleurs ou composants
-- Reproduire pixel pour pixel le fichier de référence
 
 ---
 
@@ -41,6 +42,57 @@ src/
 └── layouts/
     └── Layout.astro             ← meta SEO, fonts, analytics
 ```
+
+---
+
+## Compliance NinjaTrader Ecosystem (PROMPT-201)
+
+MyTradingCoach est référencé dans l'écosystème NinjaTrader, ce qui impose 4 avertissements
+au texte **non modifiable** (source : `Ninja Trader/3. Disclaimers_VF.docx`, hors dépôt) :
+
+| Avertissement | Où |
+|---|---|
+| Risques · Performances hypothétiques · Live Trade Room · Témoignages | `src/pages/disclaimer.astro`, section 7 |
+
+Règles :
+- **Ne jamais paraphraser, résumer ni tronquer** ces 4 textes — ce sont des mentions réglementaires
+  imposées. Toute retouche doit repartir de la `.docx`.
+- Le `footer` doit conserver les mentions clés (risque de perte, performances passées,
+  résultats hypothétiques) + le lien vers `/disclaimer`.
+
+### Wordmark NinjaTrader
+
+- Assets : `public/ninjatrader/` — wordmark `NinjaTrader_Wordmark_color_RGB.png` (2376×300, `#FF4200`
+  sur transparent) + 5 bannières publicitaires (`ninjatrader-banner-*.png`).
+- Affiché dans `Footer.astro` (`.footer-eco`) : **ligne dédiée centrée** sous la barre légale,
+  hauteur **18 px** (`width:auto`, `aspect-ratio:2376/300` pour zéro CLS, `object-fit:contain`).
+  **Ne pas recolorer, déformer ni rogner** — le seul levier de discrétion est la taille : le
+  orange `#FF4200` domine tout le footer dès qu'on dépasse ~20 px, et doit rester secondaire
+  devant la marque « MyTradingCoach » (22 px).
+- Les bannières ne sont **pas utilisées** : ce sont des créatives publicitaires avec CTA « Learn More »,
+  elles supposent un lien d'affiliation actif.
+- Le wordmark est un **lien d'affiliation** (PROMPT-204) : `NINJATRADER_AFFILIATE_URL` dans
+  `Footer.astro`, `rel="noopener sponsored nofollow"` + `target="_blank"`. L'ID vendeur `7724604`
+  est dans l'URL — la modifier casse le tracking.
+- **Lien affilié = divulgation obligatoire**, aux deux endroits : mention « Lien affilié » à côté du
+  logo *et* paragraphe « Divulgation d'affiliation » en section 7 de `disclaimer.astro`. Ne jamais
+  retirer l'un sans l'autre, ni le lien sans les deux.
+
+---
+
+## Tableau comparatif (`Compare.astro`)
+
+Les 12 lignes sont **une seule source de vérité** (tableau `rows` dans le frontmatter) : le rendu
+desktop 5 colonnes et le rendu mobile 2 colonnes en sortent tous les deux, ils ne peuvent pas diverger.
+
+- Ajouter une ligne = un objet dans `rows` (`mtc` + `rivals: [TraderSync, TradesViz, Edgely]`).
+- La colonne mobile « Les autres » est **calculée** par `merge()`, jamais saisie à la main :
+  `✓` seulement si les trois concurrents l'ont · `-` seulement si aucun ne l'a · `partiel` dès que
+  c'est mixte. **Ne jamais afficher `-` quand un concurrent propose la fonctionnalité** — ce serait
+  une affirmation fausse.
+- Valeurs non booléennes (prix) : renseigner `othersLabel` avec une fourchette couvrant les trois.
+- Bascule purement CSS : `.c-rival` (masqué < 768px) / `.c-others` (masqué ≥ 768px). Pas de
+  `min-width` en mobile — le tableau doit tenir dans le viewport sans scroll horizontal.
 
 ---
 

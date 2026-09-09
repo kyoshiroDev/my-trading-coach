@@ -25,12 +25,29 @@ pnpm nx test api-mytradingcoach --coverage
 
 `*.int-spec.ts` **ne matche pas** `*.spec.ts` : les deux suites ne se mélangent jamais.
 
+**Quand l'intégration est nécessaire, et pas seulement confortable** : dès que le
+comportement testé dépend de ce que Prisma renvoie *réellement*. Un double Prisma
+répond ce qu'on lui dit quel que soit l'`include` — il ne peut donc pas prouver qu'un
+`include` est correct. Cas vécu (PROMPT-200) : `effectiveEmotion` était absent de
+`create`/`update` faute d'`include tradeSession`, et un test unitaire vérifiant la
+valeur de sortie serait passé au vert avec le bug intact en production. Deux parades,
+complémentaires : en unitaire, inspecter l'argument passé à Prisma
+(`mock.calls[0][0].include`) ; en intégration, laisser le vrai moteur répondre. Vérifier
+qu'un test échoue en réinjectant **chaque moitié** du bug séparément (ici : l'`include`
+seul, puis le champ calculé seul).
+
 ```bash
 # intégration, en local (charge le .env de la racine)
 cd apps/api-mytradingcoach
 env $(grep -vE '^#|^$' ../../.env | xargs -d '\n') \
   pnpm exec vitest run --config vitest.integration.config.ts
 ```
+
+> ⚠️ **Schéma local souvent périmé.** Le volume `postgres_local_data` survit aux
+> `docker compose down` : une base démarrée après une pause a des migrations de retard,
+> et les `int-spec` échouent sur une colonne inexistante (`The column X does not exist`)
+> qui n'a rien à voir avec le test. Lancer
+> `pnpm exec prisma migrate deploy --config=./prisma/prisma.config.ts` avant la suite.
 
 > ⚠️ **Arrêter toute API lancée à côté avant de jouer la suite d'intégration.** Un autre
 > process branché sur le même Redis consomme la file BullMQ « stripe » et traite les jobs
@@ -238,8 +255,39 @@ e2e/
 ├── 08-session-mode.spec.ts      ← V2 : vue morning, démarrer session, vue live, quick trade
 ├── 09-eco-calendar.spec.ts      ← V2 : events, analyse IA, bull/bear, dim hors session
 ├── 10-activity-calendar.spec.ts
-└── 11-referral-ambassador.spec.ts  ← parrainage : lien, paiement Stripe test, commission 20 %
+├── 11-referral-ambassador.spec.ts  ← parrainage : lien, paiement Stripe test, commission 20 %
+├── 12-activation.spec.ts           ← funnel n°1 : inscription → wizard → premier trade
+└── 13-import-tradovate.spec.ts     ← onboarding puis import CSV (trades + frais)
 ```
+
+### `12-activation` — le wizard d'onboarding
+
+Helper partagé `src/helpers/onboarding.helper.ts` (utilisé aussi par `13-import`) :
+
+- `goThroughIntro(page, compte?)` — étapes 1-4. Le second paramètre déclare le compte
+  de l'étape 4 : sans lui c'est le mode **PERSO**, `{ mode: 'PROPFIRM', broker,
+  profitTarget, maxDrawdown, drawdownType }` ouvre le bloc de règles. Les champs prop
+  firm n'existent dans le DOM **que** dans ce mode — d'où l'attente sur
+  `account-broker` avant de les remplir.
+- `crossProfileCheckpoint(page)` — étape 5. **C'est ce clic qui crée le compte de
+  trading**, pas l'étape 4 : celle-ci ne fait que déclarer. Se tromper de point
+  d'observation fait écrire un test qui ne vérifie rien.
+- `accountsOf(email)` — comptes lus **en base**. L'écran « Mes comptes » met en forme et
+  masque les règles nulles : il ne distingue pas un `profitTarget` absent d'un
+  `profitTarget` à 0, alors que c'est précisément ce que le payload doit garantir.
+
+Points qui ne se devinent pas :
+
+- **L'anti-doublon utile est côté serveur** (`getAll` puis création si zéro compte). Le
+  drapeau mémoire du composant ne survit pas à un rechargement : un test qui ne recharge
+  pas la page passe même sans la garde. Le test recharge donc **expressément** avant de
+  repasser le checkpoint.
+- **Compter les POST `/accounts`**, pas les lignes en base : une création refusée par une
+  contrainte laisserait la base à 1 compte tout en prouvant que la garde a sauté. Et
+  comme la garde est asynchrone, attendre le GET de relecture avant de conclure —
+  sinon on constate « pas de POST » simplement parce qu'il n'est pas encore parti.
+- Le bouton « Retour » du wizard porte `data-testid="onboarding-back"` sur toutes les
+  étapes : une seule est rendue à la fois, le sélecteur reste donc unique.
 
 ### `11-referral-ambassador` — paiement réel en mode test
 

@@ -78,44 +78,6 @@
   color: var(--text);
 }
 
-/* ─── Plan options ─── */
-.plan-modal-options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.plan-option {
-  background: var(--bg-2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
-  cursor: pointer;
-  transition: all 0.15s;
-  text-align: center;
-  position: relative;
-}
-
-.plan-option:hover {
-  border-color: var(--border-hover);
-}
-
-.plan-option.recommended,
-.plan-option.selected {
-  border-color: var(--blue);
-  background: var(--blue-glow);
-}
-
-.plan-option-badge {
-  font-size: 10px;
-  font-family: var(--font-mono);
-  color: var(--blue-bright);
-  margin-bottom: 8px;
-  letter-spacing: 0.5px;
-  min-height: 14px;
-}
-
 .price {
   font-family: var(--font-mono);
   font-size: 28px;
@@ -126,19 +88,6 @@
 .period {
   font-size: 13px;
   color: var(--text-3);
-}
-
-.plan-option-detail {
-  font-size: 11px;
-  color: var(--text-3);
-  margin-top: 4px;
-}
-
-.plan-option-saving {
-  font-size: 11px;
-  color: var(--green);
-  margin-top: 2px;
-  min-height: 14px;
 }
 
 /* ─── CTA ─── */
@@ -194,19 +143,14 @@
   to { transform: rotate(360deg); }
 }
 
-/* ─── Nouveau layout 2 plans ─── */
-.plan-modal-card { max-width: 620px; }
-
-.plan-cols {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.plan-cols { align-items: stretch; }
+/* Palier unique depuis PROMPT-169 (STARTER supprime). Le CSS avait garde la grille
+   deux colonnes et la largeur 620px : la seule colonne restante se retrouvait collee a
+   gauche avec un grand vide a droite. Le wrapper .plan-cols est supprime du HTML, la
+   marge basse qu'il portait passe sur .plan-col. */
+.plan-modal-card { max-width: 400px; }
 
 .plan-col {
+  margin-bottom: 16px;
   background: var(--bg-2);
   border: 1.5px solid var(--border);
   border-radius: 12px;
@@ -226,18 +170,6 @@
   box-shadow: 0 0 0 1px var(--blue-bright), 0 10px 30px -12px rgba(59,130,246,.5);
   transform: translateY(-2px);
 }
-
-/* Pastille explicite "✓ Sélectionné" */
-.plan-col-check {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 10px;
-  font-weight: 700;
-  font-family: var(--font-mono);
-  color: var(--blue-bright);
-}
-.premium-col .plan-col-check { color: var(--purple); }
 
 /* Toggle d'intervalle global */
 .plan-interval-toggle {
@@ -320,37 +252,5 @@
 .plan-col-detail { font-size: 11px; color: var(--text-3); margin-top: 2px; }
 .plan-col-detail.save { color: var(--green); font-weight: 600; }
 
-.plan-col-intervals { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
-.plan-interval-btn {
-  background: var(--bg-3);
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  padding: 6px 10px;
-  font-size: 11px;
-  font-family: var(--font-mono);
-  color: var(--text-3);
-  cursor: pointer;
-  transition: all .13s;
-  text-align: left;
-}
-.plan-interval-btn:hover { border-color: rgba(59,130,246,.3); color: var(--text-2); }
-.plan-interval-btn.active {
-  background: rgba(59,130,246,.1);
-  border-color: rgba(59,130,246,.35);
-  color: var(--blue-bright);
-}
-
 .plan-col-feats { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
 .plan-col-feats li { font-size: 11px; color: var(--text-2); }
-.plan-col-feats li.feat-no { color: var(--text-3); }
-.plan-col-feats li.feat-upsell {
-  color: var(--purple-bright);
-  margin-top: 4px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-  font-size: 10.5px;
-}
-
-@media (max-width: 600px) {
-  .plan-cols { grid-template-columns: 1fr; }
-}

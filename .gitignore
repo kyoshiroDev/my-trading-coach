@@ -12,13 +12,11 @@ VPS.md
 mytradingcoach.app-Google-Search-Console
 
 # template
-app-mytradingcoach.html
-landing-mytradingcoach.html
-mtc-admin.html
-PROMPT-029-session-live-final.html
+maquettes
 
 # fichier md
 CONFORMITE-JURIDIQUE.md
+TEST-PARRAINAGE.md
 
 # Vercel
 .vercel
@@ -64,6 +62,7 @@ Thumbs.db
 .github/instructions/nx.instructions.md
 
 .claude/worktrees
+.claude/projects
 .claude/settings.local.json
 .nx/polygraph
 .angular
@@ -83,3 +82,12 @@ playwright/.cache
 SECRETS.md
 
 .nx/self-healing
+
+# Assets NinjaTrader (media kit, hors dépôt)
+/Ninja Trader/
+
+# Artefacts de build TypeScript
+*.tsbuildinfo
+
+# Sorties de tests Playwright
+test-results/

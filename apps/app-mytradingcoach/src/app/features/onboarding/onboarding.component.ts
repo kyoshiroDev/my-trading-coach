@@ -14,6 +14,7 @@ import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from '
 import { UsersApi } from '../../core/api/users.api';
 import { TradesApi, CreateTradeDto, InstrumentSearchResult } from '../../core/api/trades.api';
 import { TradesStore } from '../../core/stores/trades.store';
+import { AccountsApi, CreateAccountPayload, DrawdownType } from '../../core/api/accounts.api';
 import { AuthService } from '../../core/auth/auth.service';
 import { LucideAngularModule, Bitcoin } from 'lucide-angular';
 import { TradeFormComponent } from '../journal/trade-form.component';
@@ -69,12 +70,31 @@ const DISCORD_URL = 'https://discord.gg/TDK2npvkSN';
  */
 const PROGRESS_KEY = 'mtc.onboarding.progress';
 
+type AccountMode = 'PERSO' | 'PROPFIRM';
+
+/** `null` si vide ou illisible — distingue « non renseigne » de « zero ». */
+function parseNumber(raw: string): number | null {
+  const v = parseFloat(raw.replace(',', '.'));
+  return isNaN(v) ? null : v;
+}
+
+/** Filtre la saisie sur place (chiffres, point, virgule) et renvoie la valeur nettoyee. */
+function numericOnly(input: HTMLInputElement): string {
+  input.value = input.value.replace(/[^\d.,]/g, '');
+  return input.value;
+}
+
 interface OnboardingProgress {
   step: Step;
   market: Market | null;
   goal: Goal | null;
   currency: 'USD' | 'EUR';
   capital: string;
+  accountMode: AccountMode;
+  broker: string;
+  profitTarget: string;
+  maxDrawdown: string;
+  drawdownType: DrawdownType;
   style: TradingStyle | null;
   strategy: string;
   sessions: TradingSession[];
@@ -96,6 +116,7 @@ export class OnboardingComponent {
   private readonly usersApi    = inject(UsersApi);
   private readonly tradesApi   = inject(TradesApi);
   private readonly tradesStore = inject(TradesStore);
+  private readonly accountsApi = inject(AccountsApi);
   protected readonly setupsStore = inject(SetupsStore);
   private readonly auth        = inject(AuthService);
   private readonly destroyRef  = inject(DestroyRef);
@@ -126,7 +147,27 @@ export class OnboardingComponent {
    * en 3ᵉ écran sur la question la plus sensible du parcours.
    */
   protected readonly capitalInput     = signal('10000');
+
+  // ── Étape 3 : profil de compte ──────────────────────────────────────────────
+  /**
+   * Perso ou prop firm. Le compte cree implicitement au premier trade
+   * (`ensureDefaultAccountId`) etait toujours PERSONAL « Compte principal », quel que
+   * soit le profil reel — un trader prop firm demarrait donc avec un compte faux, sans
+   * objectif ni drawdown, alors que `TradingAccount` porte deja tous ces champs.
+   */
+  protected readonly accountMode   = signal<AccountMode>('PERSO');
+  protected readonly broker        = signal('');
+  protected readonly profitTarget  = signal('');
+  protected readonly maxDrawdown   = signal('');
+  protected readonly drawdownType  = signal<DrawdownType>('TRAILING');
+  /** Le compte a deja ete cree pour cet onboarding : garde-fou anti-doublon. */
+  private readonly accountCreated  = signal(false);
   protected readonly isSaving         = signal(false);
+  /**
+   * Echec d'enregistrement du profil a l'etape Strategie. Non nul = on reste sur
+   * l'etape et on rend la main a l'utilisateur (reessayer / continuer quand meme).
+   */
+  protected readonly profileSaveError = signal<string | null>(null);
 
   // Étape Stratégie
   protected readonly selectedStyle        = signal<TradingStyle | null>(null);
@@ -166,6 +207,11 @@ export class OnboardingComponent {
         goal: this.selectedGoal(),
         currency: this.selectedCurrency(),
         capital: this.capitalInput(),
+        accountMode: this.accountMode(),
+        broker: this.broker(),
+        profitTarget: this.profitTarget(),
+        maxDrawdown: this.maxDrawdown(),
+        drawdownType: this.drawdownType(),
         style: this.selectedStyle(),
         strategy: this.strategyDescription(),
         sessions: this.selectedSessions(),
@@ -204,6 +250,11 @@ export class OnboardingComponent {
       this.selectedGoal.set(p.goal ?? null);
       this.selectedCurrency.set(p.currency === 'EUR' ? 'EUR' : 'USD');
       this.capitalInput.set(typeof p.capital === 'string' ? p.capital : '');
+      this.accountMode.set(p.accountMode === 'PROPFIRM' ? 'PROPFIRM' : 'PERSO');
+      this.broker.set(typeof p.broker === 'string' ? p.broker : '');
+      this.profitTarget.set(typeof p.profitTarget === 'string' ? p.profitTarget : '');
+      this.maxDrawdown.set(typeof p.maxDrawdown === 'string' ? p.maxDrawdown : '');
+      this.drawdownType.set(p.drawdownType === 'STATIC' ? 'STATIC' : 'TRAILING');
       this.selectedStyle.set(p.style ?? null);
       this.strategyDescription.set(typeof p.strategy === 'string' ? p.strategy : '');
       this.selectedSessions.set(Array.isArray(p.sessions) ? p.sessions : []);
@@ -300,6 +351,7 @@ export class OnboardingComponent {
   }
 
   protected prevStep(): void {
+    this.profileSaveError.set(null);
     const s = this.step();
     if (s === 8) { this.tradeChoice.set('choice'); this.step.set(7); } // premier trade → Setups
     else if (s > 1 && s < 9) { this.step.set((s - 1) as Step); }
@@ -358,9 +410,108 @@ export class OnboardingComponent {
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (res) => { this.auth.setCurrentUser(res.data); this.isSaving.set(false); this.step.set(6); },
-        error: () => { this.isSaving.set(false); this.step.set(6); },
+        next: (res) => {
+          this.auth.setCurrentUser(res.data);
+          this.createAccountOnce();
+          this.isSaving.set(false);
+          this.profileSaveError.set(null);
+          this.step.set(6);
+        },
+        // AVANT : `step.set(6)` ici aussi. L'echec etait donc invisible — l'utilisateur
+        // terminait son onboarding avec un profil vide (constate sur dev : market, goal
+        // et tradingStyle nuls apres une traversee complete), et depuis l'ajout du
+        // compte de trading, l'echec emportait aussi sa creation. On s'arrete et on
+        // rend la main : jamais de perte silencieuse, jamais d'impasse non plus.
+        error: (err) => {
+          this.isSaving.set(false);
+          this.profileSaveError.set(
+            err?.error?.message ?? "Ton profil n'a pas pu être enregistré.",
+          );
+        },
       });
+  }
+
+  /** « Réessayer » : rejoue le checkpoint tel quel. */
+  protected retryProfileSave(): void {
+    this.saveProfileThenGoAssets();
+  }
+
+  /**
+   * « Continuer quand même » : on avance sans le profil, mais on tente tout de meme la
+   * creation du compte — c'est un autre endpoint, et la declaration de l'etape 3
+   * (capital, regles prop firm) a plus de valeur que les champs de profil. Si elle
+   * echoue aussi, `createAccountOnce` se rearme et le back recreera un compte au
+   * premier trade.
+   */
+  protected continueWithoutProfile(): void {
+    this.profileSaveError.set(null);
+    this.createAccountOnce();
+    this.step.set(6);
+  }
+
+  /**
+   * Cree le compte de trading declare a l'etape 3, UNE SEULE FOIS.
+   *
+   * Sans ce checkpoint, le compte n'etait cree qu'au premier trade par
+   * `ensureDefaultAccountId` : toujours PERSONAL, libelle « Compte principal », sans
+   * broker ni regles. Un trader prop firm demarrait donc avec un compte faux.
+   *
+   * Anti-doublon : `saveProfileThenGoAssets` se redeclenche si l'utilisateur revient de
+   * l'etape 6 vers la 5 puis re-avance. Le flag memoire ne suffit pas (rechargement,
+   * localStorage vide, autre onglet) : on interroge d'abord le serveur, seule source
+   * de verite. Zero compte cote back = aucune creation n'a encore eu lieu.
+   *
+   * Non bloquant : un echec laisse l'onboarding continuer. Le compte sera cree au
+   * premier trade par le back, comme avant — on perd le profil prop firm, pas le
+   * parcours.
+   */
+  private createAccountOnce(): void {
+    if (this.accountCreated()) return;
+    this.accountCreated.set(true); // pose AVANT l'appel : deux clics rapides ne passent pas
+
+    this.accountsApi
+      .getAll()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          if ((res.data?.length ?? 0) > 0) return; // deja un compte : ne rien creer
+          this.accountsApi
+            .create(this.buildAccountPayload())
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({ error: () => this.accountCreated.set(false) });
+        },
+        error: () => this.accountCreated.set(false),
+      });
+  }
+
+  /**
+   * Payload du compte issu de l'etape 3. Les champs prop firm ne sont envoyes que
+   * renseignes : un `profitTarget: 0` ferait afficher une barre d'objectif vide dans
+   * « Mes comptes » au lieu de masquer la carte de regles.
+   */
+  protected buildAccountPayload(): CreateAccountPayload {
+    const prop = this.accountMode() === 'PROPFIRM';
+    const size = this.parseCapital() || null;
+    const brokerName = this.broker().trim();
+
+    const payload: CreateAccountPayload = {
+      label: prop && brokerName ? `${brokerName} #1` : 'Compte principal',
+      type: prop ? 'EVALUATION' : 'PERSONAL',
+      accountSize: size,
+      startingBalance: size,
+      currency: this.selectedCurrency(),
+    };
+    if (!prop) return payload;
+
+    if (brokerName) payload.broker = brokerName;
+    const target = parseNumber(this.profitTarget());
+    if (target != null && target > 0) payload.profitTarget = target;
+    const dd = parseNumber(this.maxDrawdown());
+    if (dd != null && dd > 0) {
+      payload.maxDrawdown = dd;
+      payload.drawdownType = this.drawdownType();
+    }
+    return payload;
   }
 
   // Étape Actifs (6) → persiste actifs + favori puis va au premier trade (7)
@@ -425,6 +576,12 @@ export class OnboardingComponent {
     if (s === 1 || s === 9) return '';
     return `Étape ${s - 1} sur 7`;
   }
+
+  protected onBrokerInput(e: Event)       { this.broker.set((e.target as HTMLInputElement).value); }
+  protected onProfitTargetInput(e: Event) { this.profitTarget.set(numericOnly(e.target as HTMLInputElement)); }
+  protected onMaxDrawdownInput(e: Event)  { this.maxDrawdown.set(numericOnly(e.target as HTMLInputElement)); }
+  protected setAccountMode(m: AccountMode) { this.accountMode.set(m); }
+  protected setDrawdownType(t: DrawdownType) { this.drawdownType.set(t); }
 
   private parseCapital(): number {
     const raw = this.capitalInput().replace(',', '.');

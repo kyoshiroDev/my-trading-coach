@@ -387,3 +387,56 @@
 /* Etape trade : 3 options equivalentes (CSV / manuel / zero) */
 .choice-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
 @media (max-width: 640px) { .choice-grid-3 { grid-template-columns: 1fr; } }
+
+/* ── Étape 3 : perso / prop firm ─────────────────────────────────────────────── */
+/* Segmented control, meme graphie que le toggle de devise juste en dessous. */
+.acc-mode {
+  display: flex; gap: 6px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 16px;
+}
+.acc-mode-btn {
+  flex: 1;
+  padding: 9px 12px;
+  background: transparent; border: none; border-radius: 7px;
+  font-family: var(--font-body); font-size: 13px; font-weight: 500;
+  color: var(--text-3); cursor: pointer; transition: all 0.15s;
+}
+.acc-mode-btn:hover { color: var(--text-2); }
+.acc-mode-btn.on { background: var(--bg-card); color: var(--text); font-weight: 600; }
+.acc-mode-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+
+/* Bloc prop firm : optionnel, donc visuellement en retrait du capital. */
+.prop-block {
+  margin-top: 16px; padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.prop-input { font-size: 14px; padding: 10px 12px; }
+.prop-row { display: flex; gap: 12px; }
+.prop-col { flex: 1; min-width: 0; }
+
+@media (max-width: 460px) {
+  .prop-row { flex-direction: column; gap: 0; }
+}
+
+/* Echec d'enregistrement du profil : present sans etre alarmant (rien n'est casse,
+   le parcours continue), et surtout jamais une impasse. */
+.save-error {
+  margin: 16px 0 4px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--bg-2);
+  border: 1px solid color-mix(in srgb, var(--yellow) 32%, transparent);
+}
+.save-error-title { margin: 0 0 4px; font-size: 13px; font-weight: 600; color: var(--yellow); }
+.save-error-text  { margin: 0 0 10px; font-size: 12px; line-height: 1.5; color: var(--text-2); }
+.save-error-actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex-wrap: wrap; }
+/* `.btn-back` porte un margin-right:auto (Retour a gauche du footer) : neutralise ici,
+   sinon les deux actions se retrouvent aux extremites du panneau. */
+.save-error-actions .btn-back { margin-right: 0; }
+/* Reessayer : meme bouton que Continuer, en plus discret — c'est une reprise, pas
+   l'action principale de l'etape. */
+.save-error-retry { padding: 8px 18px; font-size: 13px; box-shadow: none; }

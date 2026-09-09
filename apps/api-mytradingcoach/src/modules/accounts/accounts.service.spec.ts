@@ -130,6 +130,33 @@ describe('AccountsService', () => {
       expect(prisma.tradingAccount.create).toHaveBeenCalled();
     });
 
+    it('inscrit du jour (0 compte) → son 1er compte prop firm passe avec ses règles', async () => {
+      // Cas de l'onboarding (PROMPT-199) : le wizard crée le compte au checkpoint de
+      // l'étape Stratégie. Un FREE fraîchement inscrit est à 0 compte, donc sous le
+      // quota — vérifié plutôt que supposé, et les règles doivent traverser jusqu'à
+      // Prisma (le ValidationPipe global est en forbidNonWhitelisted : un champ hors
+      // DTO ferait un 400 invisible en unitaire côté front).
+      prisma.tradingAccount.count.mockResolvedValue(0);
+      prisma.tradingAccount.create.mockResolvedValue({ id: 'acc-1' });
+
+      const dto = {
+        label: 'Apex #1',
+        broker: 'Apex',
+        type: 'EVALUATION',
+        accountSize: 50000,
+        startingBalance: 50000,
+        currency: 'USD',
+        profitTarget: 3000,
+        maxDrawdown: 2500,
+        drawdownType: 'TRAILING',
+      };
+      await svc.create('u-new', dto as never, ctx('FREE', { trialEndsAt: null }));
+
+      expect(prisma.tradingAccount.create).toHaveBeenCalledWith({
+        data: { userId: 'u-new', ...dto },
+      });
+    });
+
     it('FREE au quota (1/1) → 403', async () => {
       prisma.tradingAccount.count.mockResolvedValue(1);
       await expect(

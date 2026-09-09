@@ -74,9 +74,15 @@ la maquette design (« The Terminal »).
   + date · compte **empilés sur 2 lignes**, segmented control (icônes Lucide
   Sunrise/Activity/Moon) **centré sur la ligne du header** via le slot `[topbar-center]`,
   action à droite « Démarrer la session » (vert) / pill « Session active + timer » +
-  « Clôturer ». La **sidebar se replie en icônes** dès qu'une session est active
-  (`SessionStore.hasActiveSession()` → effet dans `sidebar.component`, état manuel
-  restauré à la clôture, préférence localStorage non écrasée).
+  « Clôturer ». La **sidebar se replie en icônes pendant qu'on regarde l'onglet Session
+  live**, et seulement là : l'effet de `sidebar.component` suit
+  `LiveModeService.isLive()`, posé par `session-day` sur `activeTab === 'live'` et retiré
+  au changement d'onglet comme en quittant la route. Le déclencheur était
+  `SessionStore.hasActiveSession()` — un état qui dure toute la séance, donc la sidebar
+  restait repliée sur le Dashboard et le Journal, bien après avoir quitté le live. L'état
+  d'avant est restauré en sortant, et le repli/dépli manuel tient (l'effet lit
+  `collapsed()` dans un `untracked`, il ne se redéclenche pas). La préférence localStorage
+  n'est jamais écrasée : `collapsed.set` ne l'écrit pas, seul `toggleCollapse` le fait.
 - **Onglet Pré-session** → `session-morning.component` (features/dashboard/components/) :
   carte Prépare (mood/plan/compte projeté) + Hier + Objectifs · Agenda du jour IA.
 - **Onglet Session live** → `session-live.component` : Contexte marché (cellules
@@ -91,6 +97,57 @@ Le compagnon de session (pré-session + live + débrief de base) est **FREE** ; 
 IA (contexte marché, news, calendrier éco IA, recap) suit `plans.md`. Données chargées
 via `SessionStore` : `/session/active`, `/analytics/daily-recap/yesterday`,
 `/eco-calendar/*`, `/debrief/current`, `/trades/market-context`, `/trades/news`.
+
+### Wizard onboarding : checkpoint unique et z-index (PROMPT-198/199)
+
+**Rien n'est persisté avant l'étape Stratégie.** Le wizard accumule ses choix dans des
+signaux + un snapshot localStorage (`mtc.onboarding.progress`), et ne fait ses appels
+réseau qu'à `saveProfileThenGoAssets()` — profil IA **puis** création du compte de
+trading déclaré à l'étape 3. Toute nouvelle donnée d'étape suit ce schéma : signal,
+champ dans `OnboardingProgress`, restauration dans `restoreProgress()`, envoi au
+checkpoint. Ne pas ajouter d'appel réseau au clic « Continuer » d'une étape isolée.
+
+**Le checkpoint est rejouable** : un retour arrière depuis l'étape Actifs puis une
+ré-avance le redéclenche. Toute création faite là doit donc être idempotente. Pour le
+compte de trading, deux filets : un flag mémoire (`accountCreated`, posé **avant**
+l'appel, pour le double-clic) **et** un `getAll()` préalable — le flag seul ne survit ni
+au rechargement, ni au localStorage vidé, ni à un second onglet. Chacun est couvert par
+son propre test.
+
+**Le compte est créé à l'onboarding, plus au premier trade.** `ensureDefaultAccountId`
+(back) reste le filet, mais il produit un PERSONAL « Compte principal » sans règles :
+c'est le mauvais compte pour la cible prop firm. L'étape 3 capture perso/prop firm,
+broker, objectif et drawdown, tous optionnels — un `profitTarget: 0` n'est **pas**
+envoyé, sinon « Mes comptes » affiche une barre d'objectif vide au lieu de masquer la
+carte de règles.
+
+**Un checkpoint qui échoue ne doit jamais avancer.** La branche `error` de
+`saveProfileThenGoAssets` faisait `step.set(6)` comme la branche `next` : l'appel
+échouait, le wizard avançait, l'utilisateur terminait avec un profil vide sans le
+moindre signal (constaté en base sur dev). Règle : un appel réseau porteur de données
+ne se solde jamais par une avancée silencieuse — on reste sur l'étape, on affiche
+`err.error?.message` avec un repli lisible, et on offre **réessayer** *et* **continuer
+quand même**. Bloquer serait aussi faux : le wizard doit toujours laisser sortir.
+
+**Z-index — hiérarchie de l'app** : `300` overlay onboarding · `1000` modales
+top-level (csv-import, plan-modal, setup-form-modal, session-live fullscreen) ·
+`10000` toasts (`styles.css`). Une modale partagée ouverte **depuis** le wizard doit
+être au palier 1000 : à 200, `setup-form-modal` s'ouvrait sous l'overlay et
+« + Ajouter un setup » semblait mort. jsdom ne calcule aucun contexte d'empilement,
+donc aucun test de rendu n'attrape ça — l'invariant est verrouillé en lisant les deux
+CSS (`onboarding-friction.spec.ts`).
+
+### Un défaut positionnel se réévalue dans ton dos (journal)
+
+`isWeekCollapsed(key, index)` retombait sur `index !== 0` quand l'utilisateur n'avait
+rien choisi : « seule la plus récente est ouverte ». Le défaut dépendait donc de la
+POSITION, qui bouge. Logger un trade dans une semaine plus récente décalait la semaine
+consultée de l'index 0 à l'index 1 et la repliait toute seule — le journal semblait se
+vider au moment précis où on venait d'y ajouter quelque chose.
+
+Règle : un état d'affichage dont le défaut dépend du rang dans une liste doit être
+**figé à l'apparition de l'élément** (`freezeNewWeeks`), pas recalculé à chaque rendu.
+L'override explicite de l'utilisateur reste prioritaire et n'est jamais écrasé.
 
 ### Stores : un compteur à 0 n'est pas une donnée (PROMPT-196)
 
@@ -213,6 +270,51 @@ this.aiService.insights().pipe(
   })
 )
 ```
+
+### Suppressions : jamais de `subscribe` sans branche d'erreur
+
+Trois échecs silencieux corrigés à ce jour, tous de la même forme — `subscribe({ next })`
+sans `error`, ou un `error` qui ne fait que relâcher un spinner. L'utilisateur clique,
+rien ne bouge, il conclut que l'app est cassée (« je rafraîchis la page il est toujours
+dessus c'est normal ? », retour Discord). Points de contrôle :
+
+- **Toute mutation a une branche `error` qui écrit un message affiché.** Repli lisible
+  si le serveur n'en fournit pas — jamais `undefined` à l'écran.
+- **Un `404` sur une suppression vaut succès** : la ligne n'est plus là, c'est
+  l'objectif. La compter comme un échec affiche une erreur pour un but atteint et
+  laisse à l'écran une ligne qui n'existe plus.
+- **`forkJoin` s'arrête à la première erreur** et perd le sort des autres requêtes —
+  qui, elles, ont abouti côté serveur. Pour une suppression en lot, encapsuler chaque
+  requête (`map` + `catchError` → `{ id, parti }`) puis rendre compte du résultat réel :
+  ce qui est parti disparaît, ce qui résiste est nommé. Sinon l'écran ment sur l'état
+  du serveur jusqu'au prochain rechargement.
+
+### Ne jamais figer un objet dérivé dans un signal
+
+Une modale qui mémorise l'objet (`signal<DayGroup>`) au lieu de sa **clé** garde un
+instantané qui se périme dès que la source change. Constaté sur le journal : la modale
+annonçait « 22 trades » alors qu'il en restait 20, et rejouait des ids déjà supprimés.
+
+```typescript
+// ✅ la clé dans le signal, l'objet recalculé depuis la source vivante
+readonly confirmDeleteDayKey = signal<string | null>(null);
+readonly confirmDeleteDay = computed(() => {
+  const key = this.confirmDeleteDayKey();
+  return key === null ? null : this.tradesByDay().find(d => d.key === key) ?? null;
+});
+```
+
+Corollaire : un message d'erreur lié à cette modale se nettoie via un `effect` sur la
+**clé**, pas à la fermeture — il ne survit alors ni à la fermeture ni au passage sur un
+autre élément, et l'écriture du message (clé inchangée) ne le rejoue pas.
+
+Deux pièges de ce passage à la clé, tous deux dans le journal :
+
+- **La fermeture après succès reste explicite.** On pourrait croire que la modale se
+  referme d'elle-même puisque le groupe disparaît — c'est vrai d'une suppression, faux
+  d'un déplacement : hors filtre par compte, la journée existe toujours après coup.
+- **Prévoir le groupe devenu vide** entre l'ouverture et le clic : sans garde, on envoie
+  une liste d'ids vide et le back répond un refus incompréhensible.
 
 ---
 
