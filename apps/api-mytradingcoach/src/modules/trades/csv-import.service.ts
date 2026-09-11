@@ -5,6 +5,12 @@ import type { CreateTradeDto } from './dto/create-trade.dto';
 import { AnthropicClientService } from '../shared/anthropic-client.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SetupsService } from '../setups/setups.service';
+import {
+  assignFeesOncePerFill,
+  detectTradingSession,
+  normalizeFuturesSymbol,
+  resolvePairDirection,
+} from './tradovate-pair.util';
 
 const MODEL = 'claude-sonnet-4-6';
 
@@ -266,13 +272,6 @@ export class CsvImportService {
     return Number.isFinite(n) ? Math.abs(n) : 0;
   }
 
-  /** Normalise un fill id (numérique) → chaîne canonique, ou null si invalide. */
-  private normFillId(raw?: string): string | null {
-    if (!raw) return null;
-    const n = parseInt(String(raw).trim(), 10);
-    return Number.isFinite(n) ? String(n) : null;
-  }
-
   /**
    * Fusion Tradovate : rapproche les commissions EXACTES par trade à partir du Cash history.
    *
@@ -320,27 +319,15 @@ export class CsvImportService {
     }
     expected = +expected.toFixed(2);
 
-    // Attribution + dédup : ordre du fichier, chaque fill consommé une seule fois.
-    const consumed = new Set<string>();
-    let assigned = 0;
-    for (const d of dtos) {
-      let fee = 0;
-      for (const fid of [this.normFillId(d._buyFillId), this.normFillId(d._sellFillId)]) {
-        if (fid && commissionParFill.has(fid) && !consumed.has(fid)) {
-          fee += commissionParFill.get(fid) ?? 0;
-          consumed.add(fid);
-        }
-      }
-      d.commission = +fee.toFixed(2);
-      assigned += fee;
-    }
-    assigned = +assigned.toFixed(2);
+    // Attribution + dédup : ordre du fichier, chaque fill consommé une seule fois
+    // (règle partagée avec la synchro API, cf. tradovate-pair.util).
+    const { assigned, consumed } = assignFeesOncePerFill(dtos, commissionParFill);
 
     const reconciled = Math.abs(assigned - expected) < 0.01;
     if (!reconciled) {
       this.logger.warn(
         `Frais Tradovate partiellement rapprochés : attribué ${assigned} vs attendu ${expected} ` +
-        `(${commissionParFill.size} fills, ${consumed.size} consommés).`,
+        `(${commissionParFill.size} fills, ${consumed} consommés).`,
       );
     }
     return { assigned, expected, reconciled, count: dtos.length };
@@ -682,17 +669,20 @@ export class CsvImportService {
       if (isNaN(buyPrice) || isNaN(sellPrice)) continue;
 
       // Normaliser symbole : MNQM6 → MNQ, ESZ25 → ES, 6EH6 → 6E
-      const symbol = rawSymbol.replace(/[FGHJKMNQUVXZ]\d{1,2}$/, '');
+      const symbol = normalizeFuturesSymbol(rawSymbol);
 
       const pnl = this.parseTradovatePnl(rawPnl);
-      const boughtDate = new Date(boughtAt);
-      const soldDate = new Date(soldAt);
-      const side = boughtDate <= soldDate ? 'LONG' : 'SHORT';
-      const entry = side === 'LONG' ? buyPrice : sellPrice;
-      const exit = side === 'LONG' ? sellPrice : buyPrice;
-      const tradedAt = (side === 'LONG' ? soldDate : boughtDate).toISOString();
+      // Sens / entrée / sortie / date : règle partagée avec la synchro API (tradovate-pair.util).
+      const { side, entry, exit, tradedAt } = resolvePairDirection({
+        buyPrice,
+        sellPrice,
+        boughtAt: new Date(boughtAt),
+        soldAt: new Date(soldAt),
+      });
 
-      result.push(`${symbol},${side},${entry},${exit},${qty},${pnl},${tradedAt},${buyFillId},${sellFillId}`);
+      result.push(
+        `${symbol},${side},${entry},${exit},${qty},${pnl},${tradedAt.toISOString()},${buyFillId},${sellFillId}`,
+      );
     }
     return result.join('\n');
   }
@@ -1127,14 +1117,6 @@ ${csv}`;
   }
 
   private detectSession(iso: string): 'LONDON' | 'NEW_YORK' | 'ASIAN' {
-    try {
-      const hour = new Date(iso).getUTCHours();
-      if (hour >= 0 && hour < 8)   return 'ASIAN';
-      if (hour >= 8 && hour < 13)  return 'LONDON';
-      if (hour >= 13 && hour < 22) return 'NEW_YORK';
-      return 'LONDON';
-    } catch {
-      return 'NEW_YORK';
-    }
+    return detectTradingSession(iso);
   }
 }
