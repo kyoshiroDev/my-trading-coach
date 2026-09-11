@@ -274,3 +274,13 @@ const trades = await prisma.trade.findMany({
 
 - `password` dans les réponses API → toujours `select: { password: false }` ou spread sans password
 - `stripeCustomerId` dans les réponses publiques
+
+> **Connexions broker (PROMPT-207)** : `BrokerConnection` = une connexion API par
+> `(accountId, provider)` (`@@unique`), jamais au niveau `User`. Enum `BrokerProvider`
+> (`TRADOVATE`, à étendre : Binance, Bybit) et `BrokerConnectionStatus` (`CONNECTED`,
+> `NEEDS_RECONNECT`). Colonnes `accessTokenEnc` / `refreshTokenEnc` **chiffrées**
+> (`token-cipher.util`), à ne JAMAIS sélectionner dans une réponse API. `externalAccountId` +
+> `externalEnv` (`live`/`demo`) = compte broker choisi ; `availableAccounts` (Json) = comptes
+> vus au consentement. Cascade explicite sur `User` ET `TradingAccount` (migration
+> `20260910182250_broker_connection`). Le seed démo en crée une (placeholder de token, jamais
+> déchiffré : le compte démo ne peut pas synchroniser).

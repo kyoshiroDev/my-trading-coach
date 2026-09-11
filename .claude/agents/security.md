@@ -223,3 +223,21 @@ ThrottlerModule.forRoot([{
 @UseGuards(ThrottlerGuard)
 @Throttle({ ai: { limit: 20, ttl: 60000 } })
 ```
+
+---
+
+## Secrets broker & OAuth (PROMPT-207)
+
+- **Tokens broker chiffrés en base** (AES-256-GCM, `common/utils/token-cipher.util.ts`, format
+  `v1:iv:tag:ct`), clé dédiée `BROKER_TOKEN_ENCRYPTION_KEY` (32 octets base64), distincte de
+  `JWT_SECRET`. Aucune route ne renvoie les colonnes `*Enc` ; les logs n'impriment jamais un
+  corps de réponse d'auth du broker.
+- **MTC ne voit jamais le mot de passe Tradovate** : OAuth, échange du code côté serveur
+  uniquement (le `client_secret` ne transite jamais par le navigateur).
+- **`state` OAuth** : HMAC-SHA256 avec une clé DÉRIVÉE de `JWT_SECRET` (pas un JWT : il passe
+  dans une URL tierce, il ne doit pas pouvoir servir de Bearer). TTL 10 min. Doublé d'un
+  **cookie httpOnly obligatoire** au callback (anti « connexion forcée » : sans lui, un tiers
+  ferait consentir une victime avec son lien et recevrait ses trades).
+- Déconnexion = suppression des tokens en base (la Trade API n'expose pas de révocation
+  documentée). Suppression d'un compte ou d'un user → cascade.
+- Client broker **lecture seule** : aucune méthode d'écriture (ordres) n'existe côté API MTC.

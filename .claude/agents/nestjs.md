@@ -102,6 +102,13 @@ GET    /api/admin/ai-usage             ADMIN → stats tokens/coût
 GET    /api/users/admin/:id/detail     ADMIN → fiche utilisateur complète
 GET    /api/users/admin/subscriptions  ADMIN → liste abonnements Premium
 
+GET    /api/integrations/tradovate/connections                 JWT → état de connexion par compte (jamais de token)
+POST   /api/integrations/tradovate/accounts/:accountId/authorize  JWT → { url } + cookie httpOnly de state
+POST   /api/integrations/tradovate/accounts/:accountId/select     JWT → choix du compte Tradovate { externalAccountId }
+POST   /api/integrations/tradovate/accounts/:accountId/sync       JWT → synchro manuelle (FREE, pas de cron en V1)
+DELETE /api/integrations/tradovate/accounts/:accountId            JWT → déconnexion (tokens supprimés, trades gardés)
+GET    /integrations/tradovate/callback   PUBLIC, HORS /api (redirect_uri enregistré) → 302 vers l'app
+
 GET    /api/health
 POST   /api/test/upgrade-user          NODE_ENV=test uniquement
 ```
@@ -603,3 +610,61 @@ export class CreateTradeDto {
   @IsOptional() @IsString() notes?: string;
 }
 ```
+
+---
+
+## Synchro broker par API — pattern (PROMPT-207, Tradovate / NinjaTrader)
+
+Premier broker synchronisé par **API** plutôt que par fichier. Module
+`modules/integrations/tradovate/`. À reprendre tel quel pour Binance / Bybit.
+
+**Règles réutilisables**
+- **Une connexion = un `TradingAccount`** (`BrokerConnection`, `@@unique([accountId, provider])`),
+  jamais au niveau `User` : chaque prop firm donne ses propres identifiants. Nouveau broker =
+  nouvelle valeur de l'enum `BrokerProvider`, même table.
+- **Secrets chiffrés** (`common/utils/token-cipher.util.ts`, AES-256-GCM, clé
+  `BROKER_TOKEN_ENCRYPTION_KEY`), jamais renvoyés : les vues publiques (`toView`) excluent
+  toute colonne `*Enc`. Pour une clé API Binance : même colonnes, même chiffrement.
+- **Mapper PUR** (`tradovate-trade.mapper.ts`) : entités broker → `Partial<CreateTradeDto>`,
+  sans I/O, testé unitairement. Puis **`TradesService.importTrades`** — jamais un
+  `trade.create` direct : c'est lui qui porte la dédup `importHash` + contrainte
+  d'unicité, le compte cible et le recalcul du barème comportemental. Un trade API doit avoir
+  EXACTEMENT la forme d'un trade CSV du même broker (règles partagées dans
+  `trades/tradovate-pair.util.ts`, utilisées par les DEUX chemins).
+- **Client HTTP en lecture seule** (`tradovate-api.client.ts`) : que des GET de données + les
+  appels d'auth. Aucune méthode d'écriture (ordre, risque) — contrat NinjaTrader.
+- **Erreurs** : `TradovateException(code)` → message FR clair + `code` machine (relayé par
+  `HttpExceptionFilter`, qui transmet désormais `code` s'il est présent). Jamais de réponse
+  brute du broker, jamais de stack. **Aucun autre broker nommé** dans ces messages (clause 2.ii).
+- **Verrou Redis** par connexion pendant la synchro (double-clic) ; Redis down → on continue,
+  la contrainte d'unicité reste le filet.
+- **Pas de PremiumGuard** : même règle que l'import CSV d'un broker connu (cf. `plans.md`).
+
+**Spécificités Tradovate (vérifiées)**
+- OAuth **toujours sur Live** (`trader.tradovate.com/oauth`, `live.tradovateapi.com/auth/oauthtoken`,
+  échange en `x-www-form-urlencoded`). Les **données** sont sur 2 hôtes : `live` (comptes réels)
+  et `demo` (comptes simulés = comptes de prop firm). `account/list` est interrogé sur les deux,
+  l'hôte est mémorisé par compte (`externalEnv`).
+- Le token endpoint renvoie un **`refresh_token`** (non documenté) : renouvellement 5 min avant
+  expiration (≈ 80 min) par `grant_type=refresh_token`, repli `GET /auth/renewaccesstoken`, sinon
+  `NEEDS_RECONNECT` (409 `TRADOVATE_RECONNECT_REQUIRED`). Jamais de consentement toutes les 80 min.
+- **Callback hors `/api`** (exclu dans `main.ts`) : le redirect_uri enregistré est
+  `https://<api>/integrations/tradovate/callback`. Ne pas le déplacer sans mettre à jour
+  l'inscription OAuth côté Tradovate.
+- **`state` signé + cookie httpOnly** (`mtc_tradovate_oauth`, SameSite=Lax, path du callback).
+  Le cookie est **obligatoire** au callback : sans lui, un tiers pourrait faire consentir une
+  victime avec SON lien et recevoir les trades de la victime. La doc ne dit pas si Tradovate
+  renvoie `state` : s'il le renvoie, il doit égaler le cookie. Côté front, l'appel `authorize`
+  doit partir **avec credentials** pour que le cookie soit posé.
+- Chaîne de lecture : `position/list` (seul lien fill → compte) → `fillPair/list` (paires =
+  lignes de l'export Performance) → `fill/items` → `fillFee/items` (frais exacts, optionnels)
+  → `contract` / `contractMaturity` / `product` (symbole, `valuePerPoint`).
+- P&L = **brut** `(vente − achat) × qty × valuePerPoint`, frais dans `commission` (comme le CSV).
+  `tradedAt` tronqué à la seconde (granularité de l'export).
+- **Rapprochement CSV ↔ API** : l'export Performance est en heure LOCALE sans fuseau, parsée
+  dans le fuseau du serveur (`TZ=Europe/Paris` en beta). L'empreinte exacte ne coïncide donc
+  pas ; `isCrossSourceDuplicate` reconnaît le même trade décalé d'un nombre entier de
+  demi-heures (≤ 14 h), mêmes prix, même P&L.
+- ⚠ **Profondeur d'historique non garantie** : l'API REST pourrait ne renvoyer que les
+  positions / paires récentes. À mesurer en beta sur un vrai compte ; si c'est le cas, un
+  import CSV reste nécessaire pour le passé et la synchro sert au fil de l'eau.

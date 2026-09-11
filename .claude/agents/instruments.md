@@ -145,3 +145,11 @@ Le résumé (`feesImported: { assigned, expected, reconciled, count }`) est renv
 **Front** : `mtc-csv-import` (composant unique réutilisé journal + dashboard + **onboarding**) porte un
 input `allowFeesFile` (défaut `true`). L'onboarding passe `[allowFeesFile]="false"` → un seul fichier,
 zéro friction. Fixtures de test : `__fixtures__/tradovate-performance.csv` + `tradovate-cash-history.csv`.
+
+## P&L des trades synchronisés Tradovate (PROMPT-207)
+
+`(prix de vente − prix d'achat) × qty × valuePerPoint`, **brut**, arrondi au centime — identique
+à la colonne `pnl` de l'export Performance. `valuePerPoint` vient du `product` Tradovate ; repli
+sur `tickValue / tickSize` de `instruments.const.ts` (MNQ : 0,5 / 0,25 = 2 $/pt). Paire ignorée
+(et comptée dans `skipped`) si ni l'un ni l'autre n'est connu : jamais de P&L inventé.
+Symbole normalisé par `normalizeFuturesSymbol` (MNQU6 → MNQ), partagé avec l'import CSV.
