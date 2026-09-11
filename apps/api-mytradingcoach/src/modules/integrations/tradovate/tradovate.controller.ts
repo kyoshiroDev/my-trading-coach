@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Logger,
   Delete,
   Get,
   Param,
@@ -16,6 +17,9 @@ import { Public } from '../../../common/decorators/public.decorator';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateSyncService } from './tradovate-sync.service';
 import { SelectTradovateAccountDto } from './dto/select-tradovate-account.dto';
+import { AuthorizeTradovateDto } from './dto/authorize-tradovate.dto';
+import type { FirstSyncSummary } from './tradovate-connection.service';
+import type { TradovateSyncResult } from './tradovate-sync.service';
 
 /** Cookie httpOnly qui double le `state` OAuth (preuve que CE navigateur a lancé la connexion). */
 export const TRADOVATE_STATE_COOKIE = 'mtc_tradovate_oauth';
@@ -51,9 +55,14 @@ export class TradovateController {
   async authorize(
     @CurrentUser() user: { id: string },
     @Param('accountId') accountId: string,
+    @Body() dto: AuthorizeTradovateDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { url, state } = await this.connections.startAuthorization(user.id, accountId);
+    const { url, state } = await this.connections.startAuthorization(
+      user.id,
+      accountId,
+      dto.origin,
+    );
     res.cookie(TRADOVATE_STATE_COOKIE, state, {
       httpOnly: true,
       secure: process.env['NODE_ENV'] === 'production',
@@ -97,7 +106,12 @@ export class TradovateController {
  */
 @Controller('integrations/tradovate')
 export class TradovateCallbackController {
-  constructor(private readonly connections: TradovateConnectionService) {}
+  private readonly logger = new Logger(TradovateCallbackController.name);
+
+  constructor(
+    private readonly connections: TradovateConnectionService,
+    private readonly syncService: TradovateSyncService,
+  ) {}
 
   @Public()
   @Get('callback')
@@ -109,8 +123,31 @@ export class TradovateCallbackController {
     @Res() res: Response,
   ) {
     const cookieState = (req.cookies as Record<string, string> | undefined)?.[TRADOVATE_STATE_COOKIE];
-    const target = await this.connections.completeAuthorization({ code, state, error }, cookieState);
+    const outcome = await this.connections.completeAuthorization({ code, state, error }, cookieState);
+
+    // Première synchro dès le retour (PROMPT-208) : l'utilisateur revient avec ses trades,
+    // pas avec un compte connecté mais vide. Jamais bloquante : si elle échoue, la connexion
+    // reste faite et le front propose « Synchroniser » (`sync=error`).
+    let summary: FirstSyncSummary | undefined;
+    if (outcome.status === 'connected') {
+      try {
+        summary = toSummary(await this.syncService.sync(outcome.userId, outcome.accountId));
+      } catch (err) {
+        this.logger.warn(`Première synchro Tradovate en échec : ${(err as Error).message}`);
+        summary = { created: null };
+      }
+    }
+
     res.clearCookie(TRADOVATE_STATE_COOKIE, { path: `/${TRADOVATE_CALLBACK_PATH}` });
-    res.redirect(302, target);
+    res.redirect(302, this.connections.frontendRedirect(outcome, summary));
   }
+}
+
+/** Frais de la première synchro, résumés pour l'URL de retour (même lecture que le CSV). */
+function toSummary(r: TradovateSyncResult): FirstSyncSummary {
+  const fees = r.feesImported;
+  return {
+    created: r.created,
+    fees: fees.merged === false ? 'none' : fees.reconciled ? 'ok' : 'partial',
+  };
 }

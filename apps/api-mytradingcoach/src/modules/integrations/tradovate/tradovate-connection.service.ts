@@ -10,7 +10,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { decryptToken, encryptToken, loadTokenKey } from '../../../common/utils/token-cipher.util';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateApiError, TradovateException } from './tradovate.errors';
-import { signOAuthState, verifyOAuthState } from './oauth-state.util';
+import { OAuthOrigin, signOAuthState, verifyOAuthState } from './oauth-state.util';
 import type {
   ExternalAccountRef,
   TradovateAccount,
@@ -38,10 +38,22 @@ export interface TradovateConnectionView {
   connectedAt: Date;
 }
 
-/** Issue du callback, lue par le front dans l'URL de retour (`?tradovate=…&reason=…`). */
-type CallbackOutcome =
-  | { status: 'connected' | 'select_account'; accountId: string }
-  | { status: 'error'; reason: string; accountId?: string };
+/**
+ * Issue du callback. Lue par le front dans l'URL de retour (`?tradovate=…&reason=…`), et
+ * par le controller qui enchaîne la première synchro quand un compte est déjà choisi.
+ * `origin` décide de la page de retour : l'utilisateur revient là d'où il est parti.
+ */
+export type CallbackOutcome =
+  | { status: 'connected' | 'select_account'; accountId: string; userId: string; origin: OAuthOrigin }
+  | { status: 'error'; reason: string; accountId?: string; origin: OAuthOrigin };
+
+/** Résumé de la première synchro, ajouté à l'URL de retour (jamais bloquant). */
+export interface FirstSyncSummary {
+  /** Trades créés ; null = la synchro a échoué (la connexion, elle, est faite). */
+  created: number | null;
+  /** 'ok' rapprochés · 'partial' incomplets · 'none' indisponibles (P&L brut). */
+  fees?: 'ok' | 'partial' | 'none';
+}
 
 /**
  * Cycle de vie d'une connexion Tradovate PAR TradingAccount (PROMPT-207) : consentement OAuth,
@@ -67,16 +79,17 @@ export class TradovateConnectionService {
   async startAuthorization(
     userId: string,
     accountId: string,
+    origin: OAuthOrigin = 'settings',
   ): Promise<{ url: string; state: string }> {
     this.assertConfigured();
     await this.assertAccountOwned(userId, accountId);
-    const state = signOAuthState({ userId, accountId }, this.stateSecret());
+    const state = signOAuthState({ userId, accountId, origin }, this.stateSecret());
     return { url: this.api.buildAuthorizeUrl(state), state };
   }
 
   /**
-   * Retour de Tradovate. Ne lève jamais : renvoie toujours l'URL de l'app où rediriger, avec
-   * le résultat en query param. L'utilisateur ne voit jamais une page d'erreur de l'API.
+   * Retour de Tradovate. Ne lève jamais : renvoie toujours un résultat, converti en URL de
+   * l'app par `frontendRedirect`. L'utilisateur ne voit jamais une page d'erreur de l'API.
    *
    * `cookieState` (posé par l'API au démarrage, httpOnly) est OBLIGATOIRE : il prouve que ce
    * navigateur a lui-même lancé la connexion. Sans lui, un tiers pourrait envoyer son propre
@@ -86,38 +99,32 @@ export class TradovateConnectionService {
   async completeAuthorization(
     query: { code?: string; state?: string; error?: string },
     cookieState?: string,
-  ): Promise<string> {
-    return this.frontendRedirect(await this.handleCallback(query, cookieState));
-  }
-
-  private async handleCallback(
-    query: { code?: string; state?: string; error?: string },
-    cookieState?: string,
   ): Promise<CallbackOutcome> {
     const payload = verifyOAuthState(cookieState, this.stateSecret());
-    if (!payload) return { status: 'error', reason: 'session_expired' };
+    // Sans state lisible, on ne sait pas d'où il vient : les réglages, jamais une page morte.
+    if (!payload) return { status: 'error', reason: 'session_expired', origin: 'settings' };
+    const { userId, accountId, origin } = payload;
     if (query.state && query.state !== cookieState) {
-      return { status: 'error', reason: 'state_mismatch', accountId: payload.accountId };
+      return { status: 'error', reason: 'state_mismatch', accountId, origin };
     }
-    const { userId, accountId } = payload;
-    if (query.error) return { status: 'error', reason: 'denied', accountId };
-    if (!query.code) return { status: 'error', reason: 'missing_code', accountId };
+    if (query.error) return { status: 'error', reason: 'denied', accountId, origin };
+    if (!query.code) return { status: 'error', reason: 'missing_code', accountId, origin };
 
     const account = await this.prisma.tradingAccount.findFirst({
       where: { id: accountId, userId },
       select: { id: true },
     });
-    if (!account) return { status: 'error', reason: 'account_not_found' };
+    if (!account) return { status: 'error', reason: 'account_not_found', origin };
 
     try {
       this.assertConfigured();
       const tokens = await this.api.exchangeCode(query.code);
       const available = await this.discoverAccounts(tokens.access_token as string);
       const conn = await this.saveConnection(userId, accountId, tokens, available);
-      if (available.length === 0) return { status: 'error', reason: 'no_account', accountId };
+      if (available.length === 0) return { status: 'error', reason: 'no_account', accountId, origin };
       return conn.externalAccountId
-        ? { status: 'connected', accountId }
-        : { status: 'select_account', accountId };
+        ? { status: 'connected', accountId, userId, origin }
+        : { status: 'select_account', accountId, userId, origin };
     } catch (err) {
       const reason =
         err instanceof TradovateApiError && err.kind === 'rate_limited'
@@ -126,7 +133,7 @@ export class TradovateConnectionService {
             ? 'not_configured'
             : 'exchange_failed';
       this.logger.warn(`Callback Tradovate en échec (user=${userId}) : ${(err as Error).message}`);
-      return { status: 'error', reason, accountId };
+      return { status: 'error', reason, accountId, origin };
     }
   }
 
@@ -356,11 +363,25 @@ export class TradovateConnectionService {
     };
   }
 
-  private frontendRedirect(outcome: CallbackOutcome): string {
+  /**
+   * URL de retour dans l'app. Wizard → `/dashboard` (l'overlay d'onboarding s'y rouvre et
+   * reprend à l'écran final, `from=wizard`) ; réglages → `/accounts`. Le front nettoie ces
+   * paramètres une fois lus.
+   */
+  frontendRedirect(outcome: CallbackOutcome, sync?: FirstSyncSummary): string {
     const base = this.config.get<string>('FRONTEND_URL') ?? 'https://app.mytradingcoach.app';
     const params = new URLSearchParams({ tradovate: outcome.status });
     if (outcome.accountId) params.set('accountId', outcome.accountId);
     if (outcome.status === 'error') params.set('reason', outcome.reason);
+    if (sync) {
+      if (sync.created === null) params.set('sync', 'error');
+      else params.set('trades', String(sync.created));
+      if (sync.fees) params.set('fees', sync.fees);
+    }
+    if (outcome.origin === 'wizard') {
+      params.set('from', 'wizard');
+      return `${base}/dashboard?${params.toString()}`;
+    }
     return `${base}/accounts?${params.toString()}`;
   }
 

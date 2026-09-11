@@ -8,7 +8,7 @@
  * rapprochement avec un import CSV antérieur, et l'absence de tout appel d'écriture au broker.
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
-import { INestApplication, RequestMethod } from '@nestjs/common';
+import { INestApplication, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { getStorageToken } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
@@ -138,6 +138,8 @@ beforeAll(async () => {
   app.setGlobalPrefix('api', {
     exclude: ['robots.txt', { path: 'integrations/tradovate/callback', method: RequestMethod.GET }],
   });
+  // Même validation que main.ts (sans elle, un DTO invalide passerait en test seulement).
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
   await app.init();
   await app.listen(0);
   baseUrl = await app.getUrl();
@@ -174,8 +176,14 @@ const api = (token: string, path: string, method = 'GET', extra: RequestInit = {
   });
 
 /** Démarre le consentement puis simule le retour Tradovate. Renvoie la redirection vers l'app. */
-async function connect(token: string, accountId: string, opts: { sendCookie?: boolean; code?: string; state?: string } = {}) {
-  const res = await api(token, `/accounts/${accountId}/authorize`, 'POST');
+async function connect(
+  token: string,
+  accountId: string,
+  opts: { sendCookie?: boolean; code?: string; state?: string; origin?: 'wizard' | 'settings' } = {},
+) {
+  const res = await api(token, `/accounts/${accountId}/authorize`, 'POST', {
+    body: opts.origin ? JSON.stringify({ origin: opts.origin }) : undefined,
+  });
   expect(res.status, await res.clone().text()).toBeLessThan(300);
   const { data } = (await res.json()) as { data: { url: string } };
   const authorize = new URL(data.url);
@@ -210,6 +218,11 @@ describe('Tradovate — consentement', () => {
     expect(location.origin + location.pathname).toBe('https://app.test/accounts');
     expect(location.searchParams.get('tradovate')).toBe('connected');
     expect(location.searchParams.get('accountId')).toBe(account.id);
+    // Première synchro faite au retour (PROMPT-208) : l'utilisateur revient avec ses trades.
+    expect(location.searchParams.get('trades')).toBe('3');
+    expect(location.searchParams.get('fees')).toBe('ok');
+    expect(location.searchParams.get('from')).toBeNull();
+    expect(await prisma.trade.count({ where: { userId } })).toBe(3);
 
     // Le client_secret n'a voyagé que serveur → Tradovate, jamais dans l'URL navigateur.
     expect(authorize.toString()).not.toContain('client-secret-de-test');
@@ -223,6 +236,25 @@ describe('Tradovate — consentement', () => {
     expect(conn.accessTokenEnc.startsWith('v1:')).toBe(true);
     // Un seul compte (simulé, hôte demo) → choisi automatiquement.
     expect(conn).toMatchObject({ externalAccountId: String(EXT_ACCOUNT), externalEnv: 'demo', status: 'CONNECTED' });
+  });
+
+  it('parti du wizard : retour sur /dashboard (overlay d’onboarding) avec from=wizard', async () => {
+    const { id: userId, token } = await registerUser();
+    const account = await createAccount(userId, 'Apex');
+    const { location } = await connect(token, account.id, { origin: 'wizard' });
+    expect(location.pathname).toBe('/dashboard');
+    expect(location.searchParams.get('from')).toBe('wizard');
+    expect(location.searchParams.get('tradovate')).toBe('connected');
+    expect(location.searchParams.get('trades')).toBe('3');
+  });
+
+  it('origine invalide refusée par la validation', async () => {
+    const { id: userId, token } = await registerUser();
+    const account = await createAccount(userId, 'Compte');
+    const res = await api(token, `/accounts/${account.id}/authorize`, 'POST', {
+      body: JSON.stringify({ origin: 'ailleurs' }),
+    });
+    expect(res.status).toBe(400);
   });
 
   it('sans le cookie de state : refus (un tiers ne peut pas faire atterrir SON Tradovate chez une victime)', async () => {
@@ -274,17 +306,19 @@ describe('Tradovate — synchro', () => {
     expect(csv.ok, await csv.clone().text()).toBe(true);
     expect(await prisma.trade.count({ where: { userId } })).toBe(20);
 
-    // 2. Connexion puis synchro.
-    await connect(token, account.id);
+    // 2. Connexion : la première synchro part au retour. 3 paires du compte 777 : 2 déjà
+    // importées par CSV (décalage de fuseau toléré), 1 nouvelle. Le compte 999 n'est pas touché.
+    const { location } = await connect(token, account.id);
+    expect(location.searchParams.get('trades')).toBe('1');
+    expect(await prisma.trade.count({ where: { userId } })).toBe(21);
+
+    // Synchro manuelle : rapport complet, tout est déjà là.
     calls = [];
     const first = await api(token, `/accounts/${account.id}/sync`, 'POST');
     expect(first.status, await first.clone().text()).toBe(201);
     const r1 = ((await first.json()) as { data: Record<string, unknown> }).data;
-    // 3 paires du compte 777 : 2 déjà importées par CSV (décalage de fuseau toléré), 1 nouvelle.
-    // La paire du compte 999 n'est jamais touchée.
-    expect(r1).toMatchObject({ created: 1, duplicates: 2, failed: 0, total: 3, skipped: 0, openPositions: 1 });
+    expect(r1).toMatchObject({ created: 0, duplicates: 3, failed: 0, total: 3, skipped: 0, openPositions: 1 });
     expect(r1['feesImported']).toMatchObject({ reconciled: true, assigned: 3.12, expected: 3.12 });
-    expect(await prisma.trade.count({ where: { userId } })).toBe(21);
 
     // Même forme qu'un trade CSV : compte cible, setup par défaut, empreinte, frais, P&L brut.
     const synced = await prisma.trade.findFirstOrThrow({
@@ -304,10 +338,6 @@ describe('Tradovate — synchro', () => {
     expect(dataCalls.every((c) => c.url.startsWith('https://demo.tradovateapi.com/v1/'))).toBe(true);
     expect(dataCalls.every((c) => c.auth === 'Bearer AT-1')).toBe(true);
 
-    // 3. Re-synchro : rien de nouveau, tout en doublon.
-    const second = await api(token, `/accounts/${account.id}/sync`, 'POST');
-    const r2 = ((await second.json()) as { data: Record<string, unknown> }).data;
-    expect(r2).toMatchObject({ created: 0, duplicates: 3 });
     expect(await prisma.trade.count({ where: { userId } })).toBe(21);
 
     // 4. État exposé au front : jamais de token.
@@ -377,7 +407,7 @@ describe('Tradovate — synchro', () => {
     await connect(token, account.id);
     await api(token, `/accounts/${account.id}/sync`, 'POST');
     const trades = await prisma.trade.count({ where: { userId } });
-    expect(trades).toBe(3);
+    expect(trades).toBe(3); // première synchro au retour + synchro manuelle sans doublon
 
     expect((await api(token, `/accounts/${account.id}`, 'DELETE')).status).toBe(200);
     expect(await prisma.brokerConnection.count({ where: { accountId: account.id } })).toBe(0);
