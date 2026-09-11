@@ -2,6 +2,7 @@ import {
   PrismaClient, Plan, TradeSide, EmotionState,
   TradingSession, MoodState, SessionStatus,
   AccountType, AccountStatus, DrawdownType,
+  BrokerProvider, BrokerConnectionStatus,
 } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { seedDefaultSetups } from '../setups/setups.defaults';
@@ -196,6 +197,9 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
   // les supprimer. Sans cette purge, chaque run empilait 2 comptes de plus.
   await prisma.trade.deleteMany({ where: { userId: user.id } });
   await prisma.tradeSession.deleteMany({ where: { userId: user.id } });
+  // Connexion Tradovate démo : purgée explicitement (la cascade depuis tradingAccount suffirait,
+  // mais la règle du seed est « chaque modèle seedé a sa purge scopée »).
+  await prisma.brokerConnection.deleteMany({ where: { userId: user.id } });
   await prisma.tradingAccount.deleteMany({ where: { userId: user.id } });
   await prisma.weeklyDebrief.deleteMany({ where: { userId: user.id } });
   await prisma.dailyRecap.deleteMany({ where: { userId: user.id } });
@@ -441,6 +445,32 @@ export async function seedDemo(prisma: PrismaClient): Promise<DemoSeedResult> {
   await prisma.user.update({
     where: { id: user.id },
     data: { pinnedEcoEvents: ['Inflation CPI (US):USD', 'Discours BCE:EUR'] },
+  });
+
+  // Synchro Tradovate (PROMPT-207) : le compte prop firm apparaît « Connecté », dernière synchro
+  // récente, N trades importés, pour que le prospect voie la fonctionnalité. Aucun vrai token :
+  // le compte démo ne peut ni synchroniser ni connecter (DemoReadOnlyGuard bloque les POST), la
+  // valeur n'est donc jamais déchiffrée. Pas de mention d'un autre broker (clause 2.ii).
+  const futuresAccountId = accountIdByKey.get('futures')!;
+  const futuresTrades = await prisma.trade.count({
+    where: { userId: user.id, accountId: futuresAccountId },
+  });
+  const demoTradovateAccount = { id: '0', name: 'APEX-DEMO-01', env: 'demo' };
+  await prisma.brokerConnection.create({
+    data: {
+      userId: user.id,
+      accountId: futuresAccountId,
+      provider: BrokerProvider.TRADOVATE,
+      status: BrokerConnectionStatus.CONNECTED,
+      accessTokenEnc: 'demo:aucun-token',
+      accessTokenExpiresAt: new Date(Date.now() + 80 * 60 * 1000),
+      externalAccountId: demoTradovateAccount.id,
+      externalAccountName: demoTradovateAccount.name,
+      externalEnv: demoTradovateAccount.env,
+      availableAccounts: [demoTradovateAccount],
+      lastSyncAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+      tradesImported: futuresTrades,
+    },
   });
 
   const total = trades.reduce((s, t) => s + t.pnl, 0);
