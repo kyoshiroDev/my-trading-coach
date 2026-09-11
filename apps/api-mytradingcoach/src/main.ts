@@ -1,6 +1,6 @@
 import cluster from 'node:cluster';
 import { availableParallelism } from 'node:os';
-import { ConsoleLogger, Logger, ValidationPipe } from '@nestjs/common';
+import { ConsoleLogger, Logger, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
@@ -65,7 +65,11 @@ async function bootstrap() {
   // `robots.txt` doit répondre à la RACINE du sous-domaine (api.mytradingcoach.app/robots.txt),
   // pas sous /api → exclu du préfixe global. `health` reste sous /api/health (ne pas casser le
   // health check existant).
-  app.setGlobalPrefix('api', { exclude: ['robots.txt'] });
+  // Le callback OAuth Tradovate aussi : son redirect_uri est enregistré chez Tradovate SANS
+  // `/api` (`https://api.mytradingcoach.app/integrations/tradovate/callback`, PROMPT-207).
+  app.setGlobalPrefix('api', {
+    exclude: ['robots.txt', { path: 'integrations/tradovate/callback', method: RequestMethod.GET }],
+  });
 
   const corsOrigins = process.env['CORS_ORIGINS']?.split(',') ?? [
     'http://localhost:4200',

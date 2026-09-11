@@ -300,3 +300,21 @@ FRONTEND_URL=https://app.mytradingcoach.app
 CORS_ORIGINS=https://app.mytradingcoach.app,https://mytradingcoach.app
 PORT=3000
 ```
+
+### Tradovate / NinjaTrader (PROMPT-207) — optionnelles, feature désactivée sans elles
+
+```bash
+TRADOVATE_OAUTH_CLIENT_ID=...        # inscription OAuth MTC (≠ TRADOVATE_API_CID perso)
+TRADOVATE_OAUTH_CLIENT_SECRET=...
+TRADOVATE_OAUTH_REDIRECT_URI=https://api.mytradingcoach.app/integrations/tradovate/callback
+BROKER_TOKEN_ENCRYPTION_KEY=...      # openssl rand -base64 32 — UNE par env, jamais réutilisée
+```
+
+- Pendant le développement, l'inscription OAuth côté Tradovate pointe sur **beta**
+  (`https://beta.api.mytradingcoach.app/integrations/tradovate/callback`) : `.env.beta` porte
+  cette URI. Repasser l'inscription ET `.env.production` sur l'URL prod uniquement au ship.
+- Le callback est servi **hors `/api`** : Traefik route tout l'hôte `api.` vers le conteneur,
+  rien à ajouter. Vérif post-deploy : `curl -sI https://<api>/integrations/tradovate/callback`
+  → `302` vers `<FRONTEND_URL>/accounts?tradovate=error&reason=session_expired` (normal sans cookie).
+- Changer `BROKER_TOKEN_ENCRYPTION_KEY` rend toutes les connexions illisibles : les users
+  devront se reconnecter (aucun trade perdu).

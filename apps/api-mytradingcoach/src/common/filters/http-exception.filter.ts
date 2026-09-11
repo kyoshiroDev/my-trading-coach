@@ -27,10 +27,19 @@ export class HttpExceptionFilter implements ExceptionFilter {
         ? (exceptionResponse as { message: string | string[] }).message
         : exception.message;
 
+    // Code machine optionnel (ex. TRADOVATE_RECONNECT_REQUIRED) : le front choisit l'état
+    // d'écran sans parser le message, qui reste destiné à l'utilisateur.
+    const code =
+      typeof exceptionResponse === 'object' &&
+      typeof (exceptionResponse as { code?: unknown }).code === 'string'
+        ? (exceptionResponse as { code: string }).code
+        : undefined;
+
     this.log(status, request, message);
 
     response.status(status).json({
       statusCode: status,
+      ...(code ? { code } : {}),
       message,
       timestamp: new Date().toISOString(),
       path: request.url,
