@@ -18,6 +18,7 @@ import { join } from 'node:path';
 import { BrokerConnectionStatus } from '@prisma/client';
 import { AppModule } from '../../../app/app.module';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { TradovateTokenRefreshCron } from './tradovate-token-refresh.cron';
 
 const PREFIX = 'int-tradovate-';
 const uid = () => `${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
@@ -119,7 +120,7 @@ let baseUrl: string;
 const realFetch = globalThis.fetch;
 
 beforeAll(async () => {
-  vi.stubGlobal('fetch', (input: RequestInfo | URL, init?: RequestInit) => {
+  vi.stubGlobal('fetch', (input: Parameters<typeof fetch>[0], init?: RequestInit) => {
     const url = input instanceof Request ? input.url : String(input);
     if (/^https:\/\/(live|demo)\.tradovateapi\.com\//.test(url)) return Promise.resolve(tradovate(url, init));
     return realFetch(input, init);
@@ -427,5 +428,43 @@ describe('Tradovate — synchro', () => {
     const rows = await prisma.brokerConnection.findMany({ where: { userId } });
     expect(rows.map((r) => r.accountId).sort()).toEqual([apex.id, lucid.id].sort());
     expect(rows[0].accessTokenEnc).not.toBe(rows[1].accessTokenEnc);
+  });
+});
+
+describe('Tradovate — cron de maintien des tokens (vraie base)', () => {
+  it('renouvelle seulement les connexions proches de l’échéance, hors comptes démo', async () => {
+    const soon = await registerUser();
+    const later = await registerUser();
+    const demo = await registerUser();
+    const [aSoon, aLater, aDemo] = await Promise.all([
+      createAccount(soon.id, 'Bientôt'), createAccount(later.id, 'Plus tard'), createAccount(demo.id, 'Démo'),
+    ]);
+    await connect(soon.token, aSoon.id);
+    await connect(later.token, aLater.id);
+    await connect(demo.token, aDemo.id);
+    await prisma.user.update({ where: { id: demo.id }, data: { isDemo: true } });
+    const in2h = new Date(Date.now() + 2 * 3600_000);
+    await prisma.brokerConnection.updateMany({ where: { accountId: { in: [aSoon.id, aDemo.id] } }, data: { refreshTokenExpiresAt: in2h } });
+    await prisma.brokerConnection.updateMany({ where: { accountId: aLater.id }, data: { refreshTokenExpiresAt: new Date(Date.now() + 24 * 3600_000) } });
+    const before = await prisma.brokerConnection.findMany({ where: { accountId: { in: [aSoon.id, aLater.id, aDemo.id] } } });
+    calls = [];
+
+    const r = await app.get(TradovateTokenRefreshCron).refreshExpiring();
+
+    // D'autres connexions de la base peuvent être dues : on vérifie les nôtres.
+    expect(r.refreshed).toBeGreaterThanOrEqual(1);
+    const refreshCalls = calls.filter((c) => c.body?.includes('grant_type=refresh_token'));
+    expect(refreshCalls.length).toBeGreaterThanOrEqual(1);
+    expect(calls.every((c) => c.url.endsWith('/auth/oauthtoken')), 'aucune lecture de trades').toBe(true);
+
+    const after = await prisma.brokerConnection.findMany({ where: { accountId: { in: [aSoon.id, aLater.id, aDemo.id] } } });
+    const changed = (id: string) =>
+      after.find((c) => c.accountId === id)!.accessTokenEnc !== before.find((c) => c.accountId === id)!.accessTokenEnc;
+    expect(changed(aSoon.id), 'proche de l’échéance → renouvelée').toBe(true);
+    expect(changed(aLater.id), 'encore 24 h → laissée tranquille').toBe(false);
+    expect(changed(aDemo.id), 'compte démo → jamais ciblé').toBe(false);
+    const renewed = after.find((c) => c.accountId === aSoon.id)!;
+    expect(renewed.refreshTokenExpiresAt!.getTime()).toBeGreaterThan(Date.now() + 20 * 24 * 3600_000);
+    expect(renewed.status).toBe('CONNECTED');
   });
 });

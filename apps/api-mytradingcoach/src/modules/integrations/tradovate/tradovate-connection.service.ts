@@ -7,6 +7,7 @@ import {
   Prisma,
 } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { RedisService } from '../../shared/redis.service';
 import { decryptToken, encryptToken, loadTokenKey } from '../../../common/utils/token-cipher.util';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateApiError, TradovateException } from './tradovate.errors';
@@ -20,6 +21,13 @@ import type {
 
 /** Marge avant expiration : on renouvelle l'access token 5 min avant sa fin (≈ 80 min). */
 const REFRESH_MARGIN_MS = 5 * 60 * 1000;
+/**
+ * Verrou par connexion, partagé par la synchro et le cron de renouvellement : Tradovate FAIT
+ * TOURNER le refresh_token à chaque renouvellement. Deux renouvellements simultanés = l'un
+ * présente un token déjà remplacé, se voit refuser, et la connexion passerait à tort en
+ * « à reconnecter ».
+ */
+const LOCK_TTL_S = 120;
 const ENVS: TradovateEnv[] = ['live', 'demo'];
 
 /** Vue publique d'une connexion : JAMAIS de token, même chiffré. */
@@ -71,6 +79,7 @@ export class TradovateConnectionService {
     private readonly prisma: PrismaService,
     private readonly api: TradovateApiClient,
     private readonly config: ConfigService,
+    private readonly redis: RedisService,
   ) {}
 
   // ── Consentement ──────────────────────────────────────────────────────────
@@ -261,12 +270,7 @@ export class TradovateConnectionService {
       (!conn.refreshTokenExpiresAt || conn.refreshTokenExpiresAt.getTime() > now);
     if (refreshValid) {
       try {
-        const tokens = await this.api.refresh(decryptToken(conn.refreshTokenEnc as string, key));
-        await this.prisma.brokerConnection.update({
-          where: { id: conn.id },
-          data: this.tokenColumns(tokens, conn),
-        });
-        return tokens.access_token as string;
+        return await this.refreshWithToken(conn);
       } catch (err) {
         if (err instanceof TradovateApiError && err.kind !== 'unauthorized') throw err.toException();
         this.logger.warn(`refresh_token Tradovate refusé (connexion ${conn.id}), repli renew.`);
@@ -291,6 +295,58 @@ export class TradovateConnectionService {
 
     await this.markNeedsReconnect(conn.id);
     throw new TradovateException('TRADOVATE_RECONNECT_REQUIRED');
+  }
+
+  /**
+   * Renouvellement IMMÉDIAT par refresh_token, sans lire de données (cron de maintien).
+   * `reconnect` = Tradovate refuse le refresh_token (expiré, révoqué) : la connexion est
+   * marquée à reconnecter. `retry` = Tradovate injoignable ou limité : on ne touche à rien,
+   * le passage suivant réessaiera — jamais de connexion dégradée pour une panne réseau.
+   */
+  async refreshNow(conn: BrokerConnection): Promise<'refreshed' | 'reconnect' | 'retry'> {
+    if (!conn.refreshTokenEnc) {
+      await this.markNeedsReconnect(conn.id);
+      return 'reconnect';
+    }
+    try {
+      await this.refreshWithToken(conn);
+      return 'refreshed';
+    } catch (err) {
+      if (err instanceof TradovateApiError && err.kind === 'unauthorized') {
+        await this.markNeedsReconnect(conn.id);
+        return 'reconnect';
+      }
+      this.logger.warn(`Renouvellement Tradovate reporté (connexion ${conn.id}) : ${(err as Error).message}`);
+      return 'retry';
+    }
+  }
+
+  /** Échange le refresh_token (rotation incluse) et persiste les nouveaux tokens chiffrés. */
+  private async refreshWithToken(conn: BrokerConnection): Promise<string> {
+    const tokens = await this.api.refresh(decryptToken(conn.refreshTokenEnc as string, this.tokenKey()));
+    await this.prisma.brokerConnection.update({
+      where: { id: conn.id },
+      data: this.tokenColumns(tokens, conn),
+    });
+    return tokens.access_token as string;
+  }
+
+  /** Verrou de la connexion (cf. LOCK_TTL_S). Redis indisponible → on laisse passer. */
+  async tryLock(connectionId: string): Promise<boolean> {
+    try {
+      return (await this.redis.client.set(`tradovate:sync:${connectionId}`, '1', 'EX', LOCK_TTL_S, 'NX')) === 'OK';
+    } catch (err) {
+      this.logger.warn(`Verrou Tradovate indisponible (${(err as Error).message}), on continue.`);
+      return true;
+    }
+  }
+
+  async unlock(connectionId: string): Promise<void> {
+    try {
+      await this.redis.client.del(`tradovate:sync:${connectionId}`);
+    } catch {
+      // expirera seul (TTL)
+    }
   }
 
   async markNeedsReconnect(connectionId: string): Promise<void> {

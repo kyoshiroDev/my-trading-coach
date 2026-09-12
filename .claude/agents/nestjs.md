@@ -520,6 +520,7 @@ Toujours passer `{ userId, feature }` dans les options. Features valides :
 | `DailyRecapCron` | `30 17 * * 1-5` Paris | Génère recap + envoie email aux users actifs du jour |
 | `EcoCalendarCron` | `0 7 * * 1-5` Paris | Pré-génère le calendrier pour tous les users Premium |
 | `DemoSeedCron` | `20 3 * * *` Paris | Re-seed le compte démo (dates relatives recalculées) |
+| `TradovateTokenRefreshCron` | `17 */6 * * *` Paris | Renouvelle les tokens Tradovate qui expirent sous 18 h (aucun import de trades, hors démo) |
 
 ### Compte démo : le seed doit rester récurrent (PROMPT-192)
 
@@ -648,6 +649,14 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
 - Le token endpoint renvoie un **`refresh_token`** (non documenté) : renouvellement 5 min avant
   expiration (≈ 80 min) par `grant_type=refresh_token`, repli `GET /auth/renewaccesstoken`, sinon
   `NEEDS_RECONNECT` (409 `TRADOVATE_RECONNECT_REQUIRED`). Jamais de consentement toutes les 80 min.
+- **Mesuré en beta** : le grant `refresh_token` fonctionne, et Tradovate **fait tourner** le
+  refresh_token (nouveau à chaque renouvellement, durée ≈ **26 h**, fenêtre glissante). La
+  synchro étant manuelle, `TradovateTokenRefreshCron` maintient les connexions : toutes les 6 h,
+  celles qui expirent sous 18 h (≈ un renouvellement / 12 h, 2 passages manqués couverts).
+  `refreshNow` : refus → `NEEDS_RECONNECT` ; panne / limite → reporté, connexion intacte.
+- **Verrou partagé synchro + cron** (`tryLock` / `unlock` du service de connexion, clé
+  `tradovate:sync:<id>`) : deux renouvellements concurrents présenteraient un refresh_token
+  déjà remplacé et marqueraient à tort la connexion « à reconnecter ».
 - **Callback hors `/api`** (exclu dans `main.ts`) : le redirect_uri enregistré est
   `https://<api>/integrations/tradovate/callback`. Ne pas le déplacer sans mettre à jour
   l'inscription OAuth côté Tradovate.

@@ -20,7 +20,8 @@ describe('TradovateConnectionService.getAccessToken', () => {
   function setup(overrides: Partial<BrokerConnection> = {}) {
     const prisma = { brokerConnection: { update: vi.fn().mockResolvedValue({}) } };
     const api = { refresh: vi.fn(), renewAccessToken: vi.fn() };
-    const service = new TradovateConnectionService(prisma as never, api as never, config as never);
+    const redis = { client: { set: vi.fn().mockResolvedValue('OK'), del: vi.fn() } };
+    const service = new TradovateConnectionService(prisma as never, api as never, config as never, redis as never);
     const conn = {
       id: 'c1',
       userId: 'u1',
@@ -63,6 +64,31 @@ describe('TradovateConnectionService.getAccessToken', () => {
     api.refresh.mockRejectedValue(new TradovateApiError('unavailable', 503, 'oauthtoken'));
     await expect(service.getAccessToken(conn)).rejects.toMatchObject({ code: 'TRADOVATE_UNAVAILABLE' });
     expect(prisma.brokerConnection.update).not.toHaveBeenCalled();
+  });
+
+  describe('refreshNow (cron de maintien)', () => {
+    it('renouvelle par refresh_token : nouveaux tokens chiffrés persistés', async () => {
+      const { service, api, prisma, conn } = setup();
+      api.refresh.mockResolvedValue({ access_token: 'AT-2', expires_in: 4800, refresh_token: 'RT-2', refresh_token_expires_in: 93600 });
+      await expect(service.refreshNow(conn)).resolves.toBe('refreshed');
+      const data = prisma.brokerConnection.update.mock.calls[0][0].data;
+      expect(data.refreshTokenEnc).not.toContain('RT-2');
+      expect(data.refreshTokenExpiresAt.getTime()).toBeGreaterThan(Date.now() + 25 * 3600_000);
+    });
+
+    it('refresh_token refusé → à reconnecter', async () => {
+      const { service, api, prisma, conn } = setup();
+      api.refresh.mockRejectedValue(new TradovateApiError('unauthorized', 400, 'invalid_grant'));
+      await expect(service.refreshNow(conn)).resolves.toBe('reconnect');
+      expect(prisma.brokerConnection.update.mock.calls[0][0].data.status).toBe('NEEDS_RECONNECT');
+    });
+
+    it('Tradovate injoignable → reporté, connexion intacte', async () => {
+      const { service, api, prisma, conn } = setup();
+      api.refresh.mockRejectedValue(new TradovateApiError('unavailable', 503, 'oauthtoken'));
+      await expect(service.refreshNow(conn)).resolves.toBe('retry');
+      expect(prisma.brokerConnection.update).not.toHaveBeenCalled();
+    });
   });
 
   it('connexion déjà à reconnecter → erreur immédiate', async () => {

@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BrokerConnection } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { RedisService } from '../../shared/redis.service';
 import { TradesService } from '../../trades/trades.service';
 import { SetupsService } from '../../setups/setups.service';
 import type { CreateTradeDto } from '../../trades/dto/create-trade.dto';
@@ -24,8 +23,6 @@ import type {
 
 /** Taille des lots d'ids pour les endpoints `/xxx/items?ids=…` (URL raisonnable). */
 const ITEMS_BATCH = 100;
-/** Verrou de synchro : un double-clic ne lance pas deux lectures ni deux imports. */
-const LOCK_TTL_S = 120;
 
 export interface TradovateSyncResult {
   created: number;
@@ -57,7 +54,6 @@ export class TradovateSyncService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly redis: RedisService,
     private readonly api: TradovateApiClient,
     private readonly connections: TradovateConnectionService,
     private readonly trades: TradesService,
@@ -71,8 +67,8 @@ export class TradovateSyncService {
       throw new TradovateException('TRADOVATE_ACCOUNT_SELECTION_REQUIRED');
     }
 
-    const lockKey = `tradovate:sync:${conn.id}`;
-    const locked = await this.acquireLock(lockKey);
+    // Verrou de la connexion : double-clic, et cron de renouvellement des tokens (rotation).
+    const locked = await this.connections.tryLock(conn.id);
     if (!locked) throw new TradovateException('TRADOVATE_SYNC_IN_PROGRESS');
 
     try {
@@ -104,7 +100,7 @@ export class TradovateSyncService {
       this.logger.warn(`Synchro Tradovate en échec (connexion ${conn.id}) : ${(err as Error).message}`);
       throw exception ?? err;
     } finally {
-      await this.releaseLock(lockKey);
+      await this.connections.unlock(conn.id);
     }
   }
 
@@ -212,24 +208,6 @@ export class TradovateSyncService {
         return null;
       }
       throw err;
-    }
-  }
-
-  private async acquireLock(key: string): Promise<boolean> {
-    try {
-      return (await this.redis.client.set(key, '1', 'EX', LOCK_TTL_S, 'NX')) === 'OK';
-    } catch (err) {
-      // Redis indisponible : la contrainte d'unicité en base protège déjà des doublons.
-      this.logger.warn(`Verrou de synchro indisponible (${(err as Error).message}), on continue.`);
-      return true;
-    }
-  }
-
-  private async releaseLock(key: string): Promise<void> {
-    try {
-      await this.redis.client.del(key);
-    } catch {
-      // expirera seul (TTL)
     }
   }
 }
