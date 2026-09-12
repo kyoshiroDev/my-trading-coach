@@ -25,6 +25,42 @@ pnpm nx test api-mytradingcoach --coverage
 
 `*.int-spec.ts` **ne matche pas** `*.spec.ts` : les deux suites ne se mélangent jamais.
 
+### Bootstrap des `*.int-spec.ts` : TOUJOURS `createIntegrationApp()` (PROMPT-209)
+
+Tout `*.int-spec.ts` qui démarre `AppModule` passe par
+`src/test/integration-app.helper.ts`, **jamais** par un
+`Test.createTestingModule({ imports: [AppModule] })` direct :
+
+```ts
+let app: INestApplication;
+let baseUrl: string;
+let resend: ResendMock; // optionnel : pour vérifier qu'un email a été DÉCLENCHÉ
+
+beforeAll(async () => {
+  ({ app, baseUrl, resend } = await createIntegrationApp());
+  // besoins spécifiques : createIntegrationApp({ configure: (b) => b.overrideProvider(…)…,
+  //                                              setup: (app) => { app.use(…); app.setGlobalPrefix(…) } })
+}, 120_000);
+// expect(resend.sendWelcomeFree).toHaveBeenCalledWith(expect.objectContaining({ to: email }));
+```
+
+Pourquoi : en local la suite lit le `.env` du développeur, qui porte une **vraie clé
+Resend** — chaque run envoyait de vrais emails (inscription, reset…) et consommait le
+quota. Le helper remplace `ResendService` par un double dérivé de son **prototype** (toute
+nouvelle méthode est neutralisée d'office, aucune liste à maintenir). Par défaut il reproduit
+l'ancien bootstrap : `rawBody`, préfixe `api`, `init`, `listen(0)`.
+
+Deux filets, verrouillés par `src/test/resend-neutralized.int-spec.ts` :
+- **exécution** : `src/test/integration.setup.ts` (setupFiles de la config d'intégration)
+  remplace le SDK `resend` par une classe qui **lève à la construction**. Un spec qui
+  oublierait le helper échoue avec un message qui le nomme. Volontairement indépendant de
+  `NODE_ENV` : en local la suite tourne avec `NODE_ENV=development` (le `.env` racine).
+- **statique** : le spec lit tous les `*.int-spec.ts` et échoue s'il trouve un bootstrap
+  direct d'`AppModule`, en nommant le fichier.
+
+Même logique pour tout futur service à effet externe réel (autre fournisseur d'email,
+SMS…) : le neutraliser dans le helper, pas fichier par fichier.
+
 **Quand l'intégration est nécessaire, et pas seulement confortable** : dès que le
 comportement testé dépend de ce que Prisma renvoie *réellement*. Un double Prisma
 répond ce qu'on lui dit quel que soit l'`include` — il ne peut donc pas prouver qu'un
