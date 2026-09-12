@@ -10,6 +10,8 @@ import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LucideAngularModule, Check } from 'lucide-angular';
 import { ReferralApi } from '../../core/api/referral.api';
+import { ToastService } from '../../core/services/toast.service';
+import { apiErrorMessage } from '../../core/utils/api-error';
 
 @Component({
   selector: 'mtc-become-ambassador',
@@ -90,9 +92,6 @@ import { ReferralApi } from '../../core/api/referral.api';
               ></textarea>
             </div>
 
-            @if (error()) {
-              <div class="form-error">Envoi impossible pour le moment. Réessaie dans un instant.</div>
-            }
 
             <button
               class="submit-btn"
@@ -112,13 +111,13 @@ import { ReferralApi } from '../../core/api/referral.api';
 export class BecomeAmbassadorComponent {
   private readonly api = inject(ReferralApi);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
 
   protected readonly CheckIcon = Check;
 
   protected readonly socials = signal('');
   protected readonly message = signal('');
   protected readonly isSubmitting = signal(false);
-  protected readonly error = signal(false);
   protected readonly submitted = signal(false);
 
   protected readonly canSubmit = computed(() => this.socials().trim().length >= 3);
@@ -129,13 +128,15 @@ export class BecomeAmbassadorComponent {
   protected submit(): void {
     if (!this.canSubmit() || this.isSubmitting()) return;
     this.isSubmitting.set(true);
-    this.error.set(false);
     this.api
       .applyAmbassador({ socials: this.socials().trim(), message: this.message().trim() || undefined })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => { this.isSubmitting.set(false); this.submitted.set(true); },
-        error: () => { this.isSubmitting.set(false); this.error.set(true); },
+        error: (err) => {
+          this.isSubmitting.set(false);
+          this.toast.error(apiErrorMessage(err, 'Envoi impossible pour le moment. Réessaie dans un instant.'));
+        },
       });
   }
 }

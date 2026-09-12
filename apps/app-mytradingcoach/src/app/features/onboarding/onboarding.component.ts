@@ -28,6 +28,7 @@ import {
 import { TradovateConnectModalComponent } from '../../shared/components/tradovate-connect/tradovate-connect-modal.component';
 import { TradovateAccountPickerComponent } from '../../shared/components/tradovate-connect/tradovate-account-picker.component';
 import { TradovateStore, tradovateErrorText } from '../../core/stores/tradovate.store';
+import { ToastService } from '../../core/services/toast.service';
 import {
   FeesState,
   TRADOVATE_RETURN_PARAMS,
@@ -136,6 +137,7 @@ export class OnboardingComponent {
   protected readonly setupsStore = inject(SetupsStore);
   private readonly auth        = inject(AuthService);
   private readonly destroyRef  = inject(DestroyRef);
+  private readonly toast       = inject(ToastService);
   private readonly router      = inject(Router);
   protected readonly tvStore   = inject(TradovateStore);
 
@@ -501,12 +503,8 @@ export class OnboardingComponent {
     if (!accountId) return;
     this.tvError.set(null);
     this.tvStore.selectThenSync(accountId, externalId, (r) => {
-      if (!r) {
-        this.tvError.set(
-          `${this.tvStore.feedback()[accountId]?.error ?? 'La synchronisation a échoué.'} Tu peux réessayer ou importer un CSV.`,
-        );
-        return;
-      }
+      // Échec : le store a déjà affiché le toast d'erreur ; le sélecteur reste là pour réessayer.
+      if (!r) return;
       this.tvPickAccountId.set(null);
       this.tvSummary.set({ created: r.created, fees: feesState(r) });
       if (r.created > 0) this.tradesStore.reset();
@@ -682,7 +680,12 @@ export class OnboardingComponent {
           this.isSaving.set(false);
           this.step.set(7);
         },
-        error: () => { this.isSaving.set(false); this.step.set(7); },
+        // Non bloquant (le wizard avance), mais plus muet : les actifs se complètent depuis Profil.
+        error: () => {
+          this.isSaving.set(false);
+          this.toast.warning('Tes actifs n’ont pas pu être enregistrés : tu pourras les ajouter depuis ton Profil.');
+          this.step.set(7);
+        },
       });
   }
 
@@ -694,7 +697,12 @@ export class OnboardingComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => { this.tradesStore.addTrade(res.data); this.isSaving.set(false); this.step.set(9); },
-        error: () => { this.isSaving.set(false); this.step.set(9); },
+        // Non bloquant (on termine l'onboarding), mais plus muet.
+        error: () => {
+          this.isSaving.set(false);
+          this.toast.error('Ton trade n’a pas pu être enregistré : tu pourras le saisir depuis le journal.');
+          this.step.set(9);
+        },
       });
   }
 

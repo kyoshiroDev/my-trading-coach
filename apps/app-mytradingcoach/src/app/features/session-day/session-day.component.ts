@@ -24,6 +24,7 @@ import { UserStore } from '../../core/stores/user.store';
 import { DebriefObjective } from '../../core/api/debrief.api';
 import { evaluateObjectiveCheck } from './objective-check.util';
 import { EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe } from '../../shared/pipes';
+import { ToastService } from '../../core/services/toast.service';
 
 const MOODS: { value: MoodState; label: string; emoji: string }[] = [
   { value: 'CONFIDENT', label: 'Confiant', emoji: '😎' },
@@ -183,7 +184,6 @@ const EMOTION_COLORS: Record<string, string> = {
             [newsItems]="store.newsItems()"
             [breakingNews]="store.breakingNews()"
             [triggerCloseModal]="store.triggerCloseModal()"
-            [liveFeedback]="store.liveFeedback()"
             [startDisabled]="accountChoiceRequired()"
             (startSession)="startSession()"
             (ecoCalendarRefreshed)="store.applyEcoRefresh($event)"
@@ -389,6 +389,7 @@ export class SessionDayComponent implements OnInit, OnDestroy {
   private  readonly liveModeService = inject(LiveModeService);
   private  readonly sessionApi      = inject(SessionApi);
   private  readonly destroyRef      = inject(DestroyRef);
+  private  readonly toast           = inject(ToastService);
 
   private  journalSaveTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -563,7 +564,11 @@ export class SessionDayComponent implements OnInit, OnDestroy {
     const s = this.store.activeSession();
     if (!s?.id) return;
     this.sessionApi.updateSession(s.id, data as Parameters<SessionApi['updateSession']>[1])
-      .subscribe({ next: () => { this.journalSaved.set(true); this.flashSaved(); } });
+      .subscribe({
+        next: () => { this.journalSaved.set(true); this.flashSaved(); },
+        // AVANT : échec muet, l'utilisateur croyait sa saisie enregistrée.
+        error: () => this.toast.error('Ta saisie n’a pas pu être enregistrée. Réessaie.'),
+      });
   }
 
   protected selectCloseMood(mood: MoodState): void {

@@ -12,6 +12,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LucideAngularModule, Eye, EyeOff } from 'lucide-angular';
 import { AuthService } from '../../core/auth/auth.service';
 import { BillingApi } from '../../core/api/billing.api';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'mtc-register',
@@ -208,6 +209,7 @@ export class RegisterComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
 
   protected readonly EyeIcon = Eye;
   protected readonly EyeOffIcon = EyeOff;
@@ -310,8 +312,10 @@ export class RegisterComponent {
                 next: (res) => {
                   window.location.href = res.data.url;
                 },
+                // Compte créé mais paiement indisponible : on continue, sans le cacher.
                 error: () => {
                   this.isLoading.set(false);
+                  this.toast.warning('Ton compte est créé. Le paiement n’a pas pu démarrer : tu peux lancer ton essai depuis ton Profil.');
                   this.router.navigate(['/dashboard']);
                 },
               });

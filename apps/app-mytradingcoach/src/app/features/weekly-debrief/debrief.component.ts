@@ -20,6 +20,8 @@ import {
 } from 'lucide-angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { environment } from '../../../environments/environment';
+import { ToastService } from '../../core/services/toast.service';
+import { apiErrorMessage } from '../../core/utils/api-error';
 import { timer } from 'rxjs';
 import { switchMap, map, takeWhile } from 'rxjs/operators';
 
@@ -132,9 +134,6 @@ function typeBadge(type: string): { label: string; cls: string } | null {
           <mtc-plan-modal (closed)="showPlanModal.set(false)" />
         }
       } @else {
-        @if (error()) {
-          <div class="error-msg">{{ error() }}</div>
-        }
 
         @if (isGenerating()) {
           <div class="generating-state">
@@ -351,6 +350,7 @@ function typeBadge(type: string): { label: string; cls: string } | null {
 export class DebriefComponent {
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
   protected readonly userStore = inject(UserStore);
   protected readonly showPlanModal = signal(false);
 
@@ -362,7 +362,6 @@ export class DebriefComponent {
   protected readonly isLoading = signal(true);
   protected readonly isGenerating = signal(false);
   protected readonly exportLoading = signal(false);
-  protected readonly error = signal<string | null>(null);
 
   protected readonly activeTab = signal<string>(this.readTab());
 
@@ -406,7 +405,11 @@ export class DebriefComponent {
           this.debrief.set(data);
           this.isLoading.set(false);
         },
-        error: () => this.isLoading.set(false),
+        // AVANT : échec muet, la page restait vide sans explication.
+        error: (err) => {
+          this.isLoading.set(false);
+          this.toast.error(apiErrorMessage(err, 'Ton débrief n’a pas pu être chargé. Réessaie dans un instant.'));
+        },
       });
   }
 
@@ -448,14 +451,17 @@ export class DebriefComponent {
           URL.revokeObjectURL(url);
           this.exportLoading.set(false);
         },
-        error: () => this.exportLoading.set(false),
+        // AVANT : échec muet, le bouton se réactivait sans rien dire.
+        error: () => {
+          this.exportLoading.set(false);
+          this.toast.error('Export PDF impossible pour le moment. Réessaie.');
+        },
       });
   }
 
   generateDebrief() {
     if (this.isGenerating()) return;
     this.isGenerating.set(true);
-    this.error.set(null);
     this.http
       .post<{ data: WeeklyDebrief }>(`${environment.apiUrl}/debrief/generate`, {})
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -465,8 +471,8 @@ export class DebriefComponent {
           this.isGenerating.set(false);
         },
         error: (err) => {
-          this.error.set(err.error?.message ?? 'Erreur lors de la génération du débrief');
           this.isGenerating.set(false);
+          this.toast.error(apiErrorMessage(err, 'Erreur lors de la génération du débrief'));
         },
       });
   }

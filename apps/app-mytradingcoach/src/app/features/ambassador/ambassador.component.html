@@ -15,7 +15,7 @@
         <div class="link-lbl">Ton lien ambassadeur</div>
         <div class="link-row">
           <input class="link-input" type="text" readonly [value]="referralLink()" aria-label="Ton lien ambassadeur" />
-          <button class="btn btn-blue" (click)="copyLink()">{{ copied() ? '✓ Copié' : 'Copier' }}</button>
+          <button class="btn btn-blue" data-testid="ambassador-copy" (click)="copyLink()">Copier</button>
         </div>
         <div class="hero-note">Partage-le à ta communauté. Tu touches <b>20% récurrent</b> sur chaque abonnement, chaque mois.</div>
       </div>
@@ -90,9 +90,6 @@
         <button class="btn-full" data-testid="generate-statement" [disabled]="statementLoading()" (click)="generateStatement()">
           {{ statementLoading() ? 'Génération…' : 'Générer mon relevé' }}
         </button>
-        @if (statementError()) {
-          <div class="bill-err">Génération impossible pour le moment. Réessaie.</div>
-        }
         <div class="bill-note">TVA non applicable, art. 293 B du CGI<br>Ce relevé sert de base à ta facture.</div>
       </div>
     </div>

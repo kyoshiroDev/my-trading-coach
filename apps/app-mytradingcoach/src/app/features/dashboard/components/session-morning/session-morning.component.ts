@@ -20,6 +20,7 @@ import { EcoCalendarApi, EcoCalendarData, EcoEvent } from '../../../../core/api/
 import { MoodState } from '../../../../core/api/session.api';
 import { DebriefApi, DebriefObjective } from '../../../../core/api/debrief.api';
 import { UserStore } from '../../../../core/stores/user.store';
+import { ToastService } from '../../../../core/services/toast.service';
 import { PremiumLockComponent } from '../../../../shared/components/premium-lock/premium-lock.component';
 
 const MOODS: { value: MoodState; label: string; emoji: string }[] = [
@@ -411,6 +412,7 @@ export class SessionMorningComponent {
 
   private readonly debriefApi = inject(DebriefApi);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
   private readonly ecoApi = inject(EcoCalendarApi);
   protected readonly userStore = inject(UserStore);
 
@@ -512,7 +514,7 @@ export class SessionMorningComponent {
     // Persistance backend (même API que eco-calendar)
     this.ecoApi.savePins(next)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe();
+      .subscribe({ error: () => this.toast.error('Désépinglage non enregistré. Réessaie.') });
   }
 
   protected readonly dayLabel = computed(() => {
@@ -566,7 +568,10 @@ export class SessionMorningComponent {
           this.expandedObjectiveIdx.set(null);
           this.isSavingNote.set(false);
         },
-        error: () => this.isSavingNote.set(false),
+        error: () => {
+          this.isSavingNote.set(false);
+          this.toast.error('Ta note n’a pas pu être enregistrée. Réessaie.');
+        },
       });
   }
 

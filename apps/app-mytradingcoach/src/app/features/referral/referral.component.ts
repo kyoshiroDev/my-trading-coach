@@ -12,6 +12,7 @@ import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LucideAngularModule, Users, CircleCheck, Gift, Wallet } from 'lucide-angular';
 import { ReferralApi, MyReferral, FilleulStatus } from '../../core/api/referral.api';
+import { ToastService } from '../../core/services/toast.service';
 
 const GOAL = 12; // 12 filleuls payants = 1 an offert
 
@@ -40,7 +41,7 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
             <div class="link-lbl">Ton lien de parrainage</div>
             <div class="link-row">
               <input class="link-input" type="text" readonly [value]="d.link" aria-label="Ton lien de parrainage" />
-              <button class="btn btn-blue" (click)="copy(d.link)">{{ copied() ? '✓ Copié' : 'Copier' }}</button>
+              <button class="btn btn-blue" data-testid="referral-copy" (click)="copy(d.link)">Copier</button>
             </div>
             <div class="hero-note">Ton filleul démarre avec <b>-10%</b> sur sa première année, et tu gagnes <b>1 mois offert</b> dès qu'il s'abonne.</div>
           </div>
@@ -159,6 +160,7 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
 export class ReferralComponent implements OnInit {
   private readonly api = inject(ReferralApi);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
 
   protected readonly UsersIcon = Users;
   protected readonly CircleCheckIcon = CircleCheck;
@@ -169,7 +171,6 @@ export class ReferralComponent implements OnInit {
   protected readonly data = signal<MyReferral | null>(null);
   protected readonly isLoading = signal(true);
   protected readonly error = signal(false);
-  protected readonly copied = signal(false);
 
   protected readonly goalPercent = computed(() =>
     Math.min(100, Math.round(((this.data()?.subscribed ?? 0) / GOAL) * 100)),
@@ -187,11 +188,12 @@ export class ReferralComponent implements OnInit {
       });
   }
 
+  /** Feedback transitoire → toast (PROMPT-210). L'échec du presse-papiers était muet. */
   protected copy(link: string): void {
-    navigator.clipboard.writeText(link).then(() => {
-      this.copied.set(true);
-      setTimeout(() => this.copied.set(false), 2000);
-    });
+    navigator.clipboard.writeText(link).then(
+      () => this.toast.success('Lien copié'),
+      () => this.toast.error('Copie impossible : sélectionne le lien et copie-le à la main.'),
+    );
   }
 
   protected avatar(pseudo: string): string {

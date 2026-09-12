@@ -13,6 +13,7 @@ import { LucideAngularModule, Users, CircleCheck, TrendingUp, Award, Check } fro
 import { AmbassadorApi, AmbassadorStats, ReferralUser } from '../../core/api/ambassador.api';
 import { ReferralApi } from '../../core/api/referral.api';
 import { AmbassadorNotifService } from '../../core/services/ambassador-notif.service';
+import { ToastService } from '../../core/services/toast.service';
 import { PRICING } from '../../core/constants/pricing.const';
 import { environment } from '../../../environments/environment';
 
@@ -32,6 +33,7 @@ export class AmbassadorComponent implements OnInit {
   private readonly referralApi = inject(ReferralApi);
   private readonly notif = inject(AmbassadorNotifService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
 
   protected readonly UsersIcon = Users;
   protected readonly CircleCheckIcon = CircleCheck;
@@ -41,10 +43,8 @@ export class AmbassadorComponent implements OnInit {
 
   protected readonly stats = signal<AmbassadorStats | null>(null);
   protected readonly isLoading = signal(true);
-  protected readonly copied = signal(false);
 
   protected readonly statementLoading = signal(false);
-  protected readonly statementError = signal(false);
 
   protected readonly referralLink = computed(() => {
     const code = this.stats()?.referralCode;
@@ -85,17 +85,17 @@ export class AmbassadorComponent implements OnInit {
   }
 
   protected copyLink(): void {
-    navigator.clipboard.writeText(this.referralLink()).then(() => {
-      this.copied.set(true);
-      setTimeout(() => this.copied.set(false), 2000);
-    });
+    // Feedback transitoire → toast (PROMPT-210). L'échec du presse-papiers était muet.
+    navigator.clipboard.writeText(this.referralLink()).then(
+      () => this.toast.success('Lien copié'),
+      () => this.toast.error('Copie impossible : sélectionne le lien et copie-le à la main.'),
+    );
   }
 
   /** Génère le relevé de commissions (PDF) : telechargement + email à l'équipe. */
   protected generateStatement(): void {
     if (this.statementLoading()) return;
     this.statementLoading.set(true);
-    this.statementError.set(false);
     this.referralApi.generateStatement()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -107,8 +107,12 @@ export class AmbassadorComponent implements OnInit {
           a.click();
           URL.revokeObjectURL(url);
           this.statementLoading.set(false);
+          this.toast.success('Relevé généré');
         },
-        error: () => { this.statementLoading.set(false); this.statementError.set(true); },
+        error: () => {
+          this.statementLoading.set(false);
+          this.toast.error('Génération du relevé impossible pour le moment. Réessaie.');
+        },
       });
   }
 
