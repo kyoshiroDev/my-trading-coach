@@ -440,3 +440,32 @@
 /* Reessayer : meme bouton que Continuer, en plus discret — c'est une reprise, pas
    l'action principale de l'etape. */
 .save-error-retry { padding: 8px 18px; font-size: 13px; box-shadow: none; }
+
+/* ── Étape 8 : 4 options (CSV · Tradovate · manuel · zéro), PROMPT-208 ─────────── */
+/* 2 × 2 : la carte Tradovate s'ajoute sans remplacer le CSV (maquette validée). */
+.choice-grid-4 { grid-template-columns: 1fr 1fr; }
+@media (max-width: 640px) { .choice-grid-4 { grid-template-columns: 1fr; } }
+.choice-tradovate { position: relative; padding-right: 16px; }
+.choice-tradovate .choice-label { padding-right: 96px; }
+.choice-tag.nt {
+  position: absolute; top: 12px; right: 12px; margin-top: 0;
+  background: var(--nt-dim); color: var(--nt); border-color: rgba(255, 90, 31, 0.25);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.nt-word { color: var(--nt); font-weight: 700; }
+@media (max-width: 640px) {
+  .choice-tradovate .choice-label { padding-right: 0; }
+  .choice-tag.nt { position: static; align-self: flex-start; margin-bottom: 6px; }
+}
+
+.ob-tv-error {
+  margin: 0 0 14px; padding: 10px 12px; border-radius: 8px;
+  background: var(--red-dim); color: var(--red); font-size: 12px; line-height: 1.45;
+}
+.ob-tv-pick {
+  margin: 0 0 16px; padding: 14px; border-radius: 12px;
+  background: var(--bg-2); border: 1px solid var(--border-hover);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.ob-tv-pick-title { font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--text); }
+.ob-tv-pick-loading { margin: 0; font-size: 12px; color: var(--text-3); }
