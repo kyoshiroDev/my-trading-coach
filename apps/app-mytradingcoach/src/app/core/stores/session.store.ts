@@ -262,6 +262,11 @@ export class SessionStore {
     return map[mood ?? ''] ?? '😐';
   }
 
+  /** Stats + Live feed rechargés (trade Tradovate poussé en direct, PROMPT-210 live). */
+  refreshLive(): void {
+    this.refreshLiveStats();
+  }
+
   // ── Private helpers ───────────────────────────────────────────────────────
 
   private refreshLiveStats(): void {

@@ -684,3 +684,38 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
 - ⚠ **Profondeur d'historique non garantie** : l'API REST pourrait ne renvoyer que les
   positions / paires récentes. À mesurer en beta sur un vrai compte ; si c'est le cas, un
   import CSV reste nécessaire pour le passé et la synchro sert au fil de l'eau.
+  (Vérifié : la synchro n'envoie AUCUNE borne de date — `position/list` et `fillPair/list` n'ont
+  pas de paramètre ; test « première synchro : tout l'historique » dans `tradovate-sync.int-spec`.)
+
+**Temps réel (PROMPT-210 live) — calé sur la PRÉSENCE dans l'app**
+- Canal applicatif `/tradovate-live` (`tradovate-live.gateway.ts`, même pattern que `/eco`) mais
+  **authentifié** : JWT de l'app dans `handshake.auth.token`, vérifié par `JwtService`
+  (`AuthModule` importé) ; invalide ou `isDemo` → `disconnect(true)`. Room `user:<id>`.
+- `TradovateLiveService` : 1er client d'un user sur le worker → **rattrapage REST** (la synchro
+  existante, sautée si `lastSyncAt` < 60 s) puis **un WebSocket Tradovate par compte connecté**.
+  Dernier client parti → WebSockets fermés (1000). Rien ne tourne app fermée.
+- **Un seul WebSocket par user, tous workers et onglets confondus** : bail Redis
+  `tradovate:live:<userId>` (SET NX PX 30 s, renouvelé / rendu par script Lua « si c'est le
+  mien »). Worker titulaire sans clients → il rend le bail, un autre reprend ≤ 10 s. Redis down →
+  on laisse passer (au pire 1 WS par worker). `isLive(userId)` = le bail existe.
+- `tradovate-live.connection.ts` : `authorize\n0\n\n<token>` (même access_token que le REST,
+  pris **sous le verrou `tradovate:sync:<id>`** : rotation du refresh_token), puis
+  `user/syncrequest` `{ accounts: [id], entityTypes: ['fill','fillPair','position'] }`
+  (`entityTypes` obligatoire), heartbeat `[]` / 2,5 s. Coupure → backoff 1 s → 60 s ;
+  `shutdown ConnectionQuotaReached` → 5 min ; jeton irrécupérable → abandon + événement
+  `tradovate:status` (le bouton manuel reste le filet).
+- **Aucun trade créé depuis l'événement** : `props` utile → regroupement 1,5 s →
+  `TradovateSyncService.sync` (mapper, frais, dédup, verrou). `SYNC_IN_PROGRESS` → 3 essais / 3 s.
+  Trades créés → `tradovate:trades { accountId, created, duplicates, total, source }`.
+- Hôtes WS : `wss://{live|demo}.tradovateapi.com/v1/websocket` (même hôte que le REST du compte ;
+  la doc NinjaTrader écrit `tradovateapi.com` sans `live.` pour le réel — à confirmer au 1er
+  compte réel). WebSocket natif Node 22 (`LIVE_SOCKET_FACTORY`, remplacé en test).
+- **Limites documentées** : 50 connexions WebSocket simultanées **par user Tradovate**, 15
+  appareils, `shutdown ConnectionQuotaReached`. **Aucune limite par `cid` / application
+  documentée** → à confirmer avec NinjaTrader avant la montée en charge prod (pas bloquant à
+  2-3 users de test).
+- Filet de fond `TradovateBackgroundRefreshCron` (`7,37 * * * *` Paris, worker cron) : connexions
+  sans synchro depuis 25 min, **users dont l'app est ouverte sautés** (le WebSocket s'en charge),
+  démo exclus. Sert le récap journalier / Weekly Debrief, jamais le temps réel.
+- Limite connue : un compte connecté PENDANT que l'app est ouverte n'est suivi en direct qu'à la
+  prochaine ouverture (liste des connexions lue à l'arrivée du 1er client).

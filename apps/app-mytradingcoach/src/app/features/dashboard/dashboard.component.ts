@@ -40,6 +40,7 @@ import { EMOTION_COLORS } from '../../shared/pipes/emotion-color.pipe';
 import { environment } from '../../../environments/environment';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { ToastService } from '../../core/services/toast.service';
+import { TradovateLiveSocketService } from '../../core/services/tradovate-live-socket.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
 
 @Component({
@@ -737,6 +738,11 @@ export class DashboardComponent {
   private readonly knownAccountsCount = signal(-1);
 
   constructor() {
+    // Trades Tradovate poussés en direct (PROMPT-210 live) : mêmes rechargements qu'après un import.
+    inject(TradovateLiveSocketService)
+      .imported$.pipe(takeUntilDestroyed())
+      .subscribe(() => this.reloadAfterImport());
+
     // Trades récents + activité du compte sélectionné. L'effect relit `accountParam()` →
     // refetch automatique au changement de compte ('all' = agrégé, sans param).
     effect(() => {
@@ -1146,6 +1152,10 @@ export class DashboardComponent {
 
   protected onCsvImported(): void {
     this.showCsvImport.set(false);
+    this.reloadAfterImport();
+  }
+
+  private reloadAfterImport(): void {
     // Le premier import crée le compte de trading côté backend : sans ce rechargement,
     // le sélecteur et le capital restaient sur « aucun compte ».
     this.selectedAccount.load();
