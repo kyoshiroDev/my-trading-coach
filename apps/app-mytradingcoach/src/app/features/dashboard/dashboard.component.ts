@@ -39,6 +39,8 @@ import {
 import { EMOTION_COLORS } from '../../shared/pipes/emotion-color.pipe';
 import { environment } from '../../../environments/environment';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
+import { ToastService } from '../../core/services/toast.service';
+import { apiErrorMessage } from '../../core/utils/api-error';
 
 @Component({
   selector: 'mtc-dashboard',
@@ -480,6 +482,7 @@ export class DashboardComponent {
   private  readonly billingApi    = inject(BillingApi);
   private  readonly tradesApi     = inject(TradesApi);
   private  readonly destroyRef    = inject(DestroyRef);
+  private  readonly toast         = inject(ToastService);
   private  readonly router        = inject(Router);
 
   protected goToSettings(): void { this.router.navigate(['/profil']); }
@@ -1165,8 +1168,13 @@ export class DashboardComponent {
           this.showTradeForm.set(false);
           this.isSavingTrade.set(false);
           this.reloadAnalytics();
+          this.toast.success('Trade enregistré');
         },
-        error: () => this.isSavingTrade.set(false),
+        // AVANT : échec muet, le formulaire restait ouvert sans explication.
+        error: (err) => {
+          this.isSavingTrade.set(false);
+          this.toast.error(apiErrorMessage(err, 'Ton trade n’a pas pu être enregistré.'));
+        },
       });
   }
 
@@ -1174,6 +1182,9 @@ export class DashboardComponent {
     this.billingApi
       .checkout('premium_monthly')
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: (res) => { window.location.href = res.data.url; } });
+      .subscribe({
+        next: (res) => { window.location.href = res.data.url; },
+        error: (err) => this.toast.error(apiErrorMessage(err, 'Le paiement n’a pas pu démarrer. Réessaie dans un instant.')),
+      });
   }
 }

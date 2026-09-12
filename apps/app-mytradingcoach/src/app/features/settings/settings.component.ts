@@ -30,6 +30,8 @@ import { TradesApi, InstrumentSearchResult, UserAssetItem } from '../../core/api
 import { SetupsStore } from '../../core/stores/setups.store';
 import { Setup } from '../../core/api/setups.api';
 import { AnalyticsApi, SetupStat } from '../../core/api/analytics.api';
+import { ToastService } from '../../core/services/toast.service';
+import { apiErrorMessage } from '../../core/utils/api-error';
 import {
   SetupFormModalComponent,
   SetupFormValue,
@@ -57,6 +59,7 @@ export class SettingsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
 
   protected readonly checkoutParam = toSignal(
     this.route.queryParamMap.pipe(map((p) => p.get('checkout'))),
@@ -293,6 +296,7 @@ export class SettingsComponent implements OnInit {
         next: (res) => {
           window.location.href = res.data.url;
         },
+        error: (err) => this.toast.error(apiErrorMessage(err, 'Le paiement n’a pas pu démarrer. Réessaie dans un instant.')),
       });
   }
 
@@ -304,6 +308,7 @@ export class SettingsComponent implements OnInit {
         next: (res) => {
           window.location.href = res.data.url;
         },
+        error: (err) => this.toast.error(apiErrorMessage(err, 'L’espace de facturation est indisponible pour le moment.')),
       });
   }
 
@@ -387,8 +392,10 @@ export class SettingsComponent implements OnInit {
           this.prefSaved.set(true);
           setTimeout(() => this.prefSaved.set(false), 2500);
         },
-        error: () => {
+        // AVANT : échec muet, le bouton se réactivait sans rien dire.
+        error: (err) => {
           this.isSavingPrefs.set(false);
+          this.toast.error(apiErrorMessage(err, 'Tes préférences n’ont pas pu être enregistrées.'));
         },
       });
   }
@@ -451,8 +458,12 @@ export class SettingsComponent implements OnInit {
           this.auth.setCurrentUser(res.data);
           this.isSavingStrategy.set(false);
           this.showStrategyModal.set(false);
+          this.toast.success('Stratégie enregistrée');
         },
-        error: () => this.isSavingStrategy.set(false),
+        error: (err) => {
+          this.isSavingStrategy.set(false);
+          this.toast.error(apiErrorMessage(err, 'Ta stratégie n’a pas pu être enregistrée.'));
+        },
       });
   }
 
@@ -593,7 +604,10 @@ export class SettingsComponent implements OnInit {
           this.duplicateCount.set(res.data.duplicates);
           this.dedupeScanning.set(false);
         },
-        error: () => this.dedupeScanning.set(false),
+        error: () => {
+          this.dedupeScanning.set(false);
+          this.toast.error('La recherche de doublons a échoué. Réessaie.');
+        },
       });
   }
 
@@ -608,7 +622,10 @@ export class SettingsComponent implements OnInit {
           this.duplicateCount.set(0);
           this.dedupeRemoving.set(false);
         },
-        error: () => this.dedupeRemoving.set(false),
+        error: (err) => {
+          this.dedupeRemoving.set(false);
+          this.toast.error(apiErrorMessage(err, 'Les doublons n’ont pas pu être supprimés.'));
+        },
       });
   }
 

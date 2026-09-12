@@ -14,6 +14,7 @@ import { EcoCalendarApi, EcoEvent, EcoResultAnalysis } from '../../core/api/eco-
 import { translateEcoEvent } from '../../core/data/eco-event-translations';
 import { todayParis, toParisDateStr } from '../../core/utils/paris-date';
 import { UserStore } from '../../core/stores/user.store';
+import { ToastService } from '../../core/services/toast.service';
 
 type EcoSession = 'asia' | 'europe' | 'us';
 interface SessionGroup { asia: EcoEvent[]; europe: EcoEvent[]; us: EcoEvent[]; }
@@ -46,6 +47,7 @@ interface TableRow {
 export class EcoCalendarComponent implements OnInit {
   private readonly api = inject(EcoCalendarApi);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
   private readonly userStore = inject(UserStore);
 
 
@@ -333,7 +335,10 @@ export class EcoCalendarComponent implements OnInit {
           if (res?.data) this.analysisCache.set(name, res.data);
           this.loadingAnalysis.set(null);
         },
-        error: () => this.loadingAnalysis.set(null),
+        error: () => {
+          this.loadingAnalysis.set(null);
+          this.toast.error('Analyse indisponible pour le moment. Réessaie.');
+        },
       });
   }
 
@@ -405,7 +410,11 @@ export class EcoCalendarComponent implements OnInit {
     this.isSavingPins.set(true);
     this.api.savePins([...pins])
       .pipe(finalize(() => this.isSavingPins.set(false)))
-      .subscribe(() => this.loadPinnedUpcoming());
+      .subscribe({
+        next: () => this.loadPinnedUpcoming(),
+        // AVANT : échec muet, l'épingle affichée ne correspondait plus au serveur.
+        error: () => this.toast.error('Épinglage non enregistré. Réessaie.'),
+      });
   }
 
   private loadPinnedUpcoming(): void {
