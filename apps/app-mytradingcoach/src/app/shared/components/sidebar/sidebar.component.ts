@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { RouterModule, RouterLink, RouterLinkActive } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TradovateLiveSocketService } from '../../../core/services/tradovate-live-socket.service';
 import {
   LucideAngularModule,
   ChevronLeft,
@@ -358,6 +359,7 @@ export class SidebarComponent {
   protected readonly ambassadorNotif = inject(AmbassadorNotifService);
   protected readonly liveModeService = inject(LiveModeService);
   protected readonly demo = inject(DemoService);
+  private readonly tradovateLive = inject(TradovateLiveSocketService);
   protected readonly landingUrl = environment.landingUrl;
 
   protected readonly ChevronLeftIcon = ChevronLeft;
@@ -449,6 +451,14 @@ export class SidebarComponent {
         this.collapsedBeforeLive = null;
       }
     });
+
+    // Temps réel Tradovate (PROMPT-210 live) : ouvert tant que l'app l'est (le shell vit sur
+    // toutes les pages connectées), fermé au logout / à la fermeture de l'onglet. Démo exclue.
+    effect(() => {
+      const on = this.auth.isAuthenticated() && !this.userStore.isDemo();
+      untracked(() => (on ? this.tradovateLive.connect() : this.tradovateLive.disconnect()));
+    });
+    this.destroyRef.onDestroy(() => this.tradovateLive.disconnect());
 
     const onFocus = () => {
       if (!this.auth.isAuthenticated()) return;

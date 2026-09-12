@@ -473,6 +473,14 @@ Réutilisable pour tout broker synchronisé par API (cf. `nestjs.md` pour le bac
   Chaque ouverture repart sur la reco. Onboarding (`allowFeesFile=false`) et « Autre broker »
   inchangés. Wizard étape 8 : carte Tradovate en tête pleine largeur (`choice-featured`, accent
   `--nt`), CSV / manuel / zéro au second plan. Verrouillé par `csv-import-tradovate-*.spec.ts`.
+- **Temps réel (PROMPT-210 live)** : `TradovateLiveSocketService` (root, socket.io
+  `/tradovate-live`). Connecté par le **shell** (`SidebarComponent`, effet
+  `isAuthenticated && !isDemo`), pas par l'écran Session live : app ouverte = connecté, logout /
+  onglet fermé = coupé. `auth` est une FONCTION (jeton relu à chaque reconnexion) ; rejet
+  serveur (`io server disconnect`) → nouvel essai espacé 2 s → 60 s. Échec = silence, le
+  bouton « Synchroniser » reste le filet. `tradovate:trades` → toast, `SelectedAccountStore` +
+  `TradovateStore` rechargés, `SessionStore.refreshLive()` si session ouverte (Live feed), puis
+  `imported$` : journal et dashboard s'y abonnent pour se recharger.
 - **Clause 2.ii NinjaTrader** : aucun autre broker nommé dans ces écrans et messages
   (verrouillé par `tradovate-return.util.spec.ts`). Aucun bouton ne suggère un ordre.
 - **Tests sur le VRAI template** : `import TEMPLATE from './x.component.html?raw'` puis

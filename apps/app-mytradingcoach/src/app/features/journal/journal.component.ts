@@ -19,6 +19,7 @@ import { PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe } from '../../shared/pipe
 import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
 import { environment } from '../../../environments/environment';
 import { ToastService } from '../../core/services/toast.service';
+import { TradovateLiveSocketService } from '../../core/services/tradovate-live-socket.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
 
 type FilterSide = 'ALL' | 'LONG' | 'SHORT';
@@ -71,6 +72,7 @@ export class JournalComponent {
   private readonly selectedAccount = inject(SelectedAccountStore);
   protected readonly setupsStore = inject(SetupsStore);
   private readonly toast         = inject(ToastService);
+  private readonly tradovateLive = inject(TradovateLiveSocketService);
 
   constructor() {
     this.setupsStore.load();
@@ -78,6 +80,11 @@ export class JournalComponent {
     // (compte, preset/dates, side, setup). Les KPIs viennent de l'agrégat backend
     // → stables, indépendants de « Charger plus ».
     effect(() => this.refreshJournal());
+
+    // Trades Tradovate poussés en direct (PROMPT-210 live) : le journal ouvert se met à jour.
+    this.tradovateLive.imported$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.refreshJournal());
 
     // Fige l'ouverture de la semaine la plus récente dès son apparition : sans override
     // explicite, elle se replierait au prochain trade plus récent (défaut positionnel).
