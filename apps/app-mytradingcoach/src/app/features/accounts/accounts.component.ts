@@ -12,15 +12,30 @@ import {
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import {
   LucideAngularModule,
   User, Target, Building2, FlaskConical,
   Wallet, TrendingUp, List, Eye, Layers,
   ClipboardList, MoreHorizontal, Info, Plus, Lock,
   Pencil, Trash2, X, Briefcase, AlertCircle,
+  Link2, RefreshCw, CheckCircle2,
 } from 'lucide-angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
+import { TradovateConnectModalComponent } from '../../shared/components/tradovate-connect/tradovate-connect-modal.component';
+import { TradovateAccountPickerComponent } from '../../shared/components/tradovate-connect/tradovate-account-picker.component';
+import { TradovateStore } from '../../core/stores/tradovate.store';
+import { TradesStore } from '../../core/stores/trades.store';
+import type { TradovateSyncResult } from '../../core/api/tradovate.api';
+import {
+  TRADOVATE_RETURN_PARAMS,
+  feesLine,
+  parseTradovateReturn,
+  relativeTime,
+  tradesLine,
+  tradovateErrorMessage,
+} from '../../core/utils/tradovate-return.util';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { UserStore } from '../../core/stores/user.store';
 import {
@@ -66,7 +81,10 @@ function emptyForm(): AccountFormState {
   selector: 'mtc-accounts',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DecimalPipe, FormsModule, LucideAngularModule, TopbarComponent, PlanModalComponent],
+  imports: [
+    DecimalPipe, FormsModule, LucideAngularModule, TopbarComponent, PlanModalComponent,
+    TradovateConnectModalComponent, TradovateAccountPickerComponent,
+  ],
   templateUrl: './accounts.component.html',
   styleUrl: './accounts.component.css',
 })
@@ -75,6 +93,18 @@ export class AccountsComponent implements OnInit {
   protected readonly userStore = inject(UserStore);
   private readonly api = inject(AccountsApi);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
+  private readonly tradesStore = inject(TradesStore);
+
+  // ── Connexion Tradovate par compte (PROMPT-208) ──────────────────────────
+  protected readonly tv = inject(TradovateStore);
+  /** Compte pour lequel l'écran de réassurance est ouvert. */
+  protected readonly connectTarget = signal<{ id: string; label: string } | null>(null);
+  /** Déconnexion en attente de confirmation (clé, pas l'objet : cf. angular.md). */
+  protected readonly confirmDisconnectId = signal<string | null>(null);
+  /** Résultat du retour OAuth, affiché en tête de page puis retiré de l'URL. */
+  protected readonly tvBanner = signal<{ kind: 'success' | 'error' | 'info'; text: string; sub?: string } | null>(null);
+  protected readonly relativeTime = relativeTime;
 
   protected readonly showPlanModal = signal(false);
   protected readonly formOpen = signal(false);
@@ -169,6 +199,85 @@ export class AccountsComponent implements OnInit {
     if (!this.store.loaded() && !this.store.isLoading()) {
       this.store.load();
     }
+    this.tv.load();
+    this.readTradovateReturn();
+  }
+
+  /**
+   * Retour du consentement Tradovate lancé depuis cette page (`/accounts?tradovate=…`).
+   * Le retour « wizard » est lu par l'onboarding, pas ici. Les paramètres sont retirés de
+   * l'URL aussitôt lus : un rechargement ne rejoue pas le message.
+   */
+  private readTradovateReturn(): void {
+    const ret = parseTradovateReturn(
+      this.router.routerState.snapshot.root.queryParams as Record<string, string>,
+    );
+    if (!ret || ret.fromWizard) return;
+
+    if (ret.status === 'error') {
+      this.tvBanner.set({ kind: 'error', text: tradovateErrorMessage(ret.reason, false) });
+    } else if (ret.status === 'select_account') {
+      this.tvBanner.set({
+        kind: 'info',
+        text: 'Compte Tradovate connecté.',
+        sub: 'Choisis ci-dessous le compte Tradovate à synchroniser.',
+      });
+    } else if (ret.syncFailed) {
+      this.tvBanner.set({
+        kind: 'info',
+        text: 'Compte Tradovate connecté.',
+        sub: "La première synchronisation n'a pas abouti : relance-la avec « Synchroniser ».",
+      });
+    } else {
+      this.tvBanner.set({
+        kind: 'success',
+        text: `Compte connecté · ${tradesLine(ret.trades ?? 0)}`,
+        sub: feesLine(ret.fees)?.text,
+      });
+      if ((ret.trades ?? 0) > 0) this.refreshAfterImport();
+    }
+
+    const cleared = Object.fromEntries(TRADOVATE_RETURN_PARAMS.map((k) => [k, null]));
+    // Commandes vides : même chemin, seuls les paramètres Tradovate disparaissent.
+    this.router.navigate([], {
+      queryParams: cleared,
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  protected openTradovateConnect(a: TradingAccount): void {
+    this.tvBanner.set(null);
+    this.connectTarget.set({ id: a.id, label: a.label });
+  }
+
+  protected syncTradovate(a: TradingAccount): void {
+    this.tvBanner.set(null);
+    this.tv.sync(a.id, (r) => this.onSynced(r));
+  }
+
+  protected pickTradovateAccount(a: TradingAccount, externalId: string): void {
+    this.tvBanner.set(null);
+    this.tv.selectThenSync(a.id, externalId, (r) => this.onSynced(r));
+  }
+
+  protected askDisconnect(a: TradingAccount): void {
+    this.confirmDisconnectId.set(a.id);
+  }
+
+  protected confirmDisconnect(a: TradingAccount): void {
+    this.confirmDisconnectId.set(null);
+    this.tv.disconnect(a.id);
+  }
+
+  private onSynced(r: TradovateSyncResult | null): void {
+    if (r && r.created > 0) this.refreshAfterImport();
+  }
+
+  /** Nouveaux trades : métriques des comptes et journal/dashboard repartent du serveur. */
+  private refreshAfterImport(): void {
+    this.store.load();
+    this.tradesStore.reset();
   }
 
   // ── Icônes lucide ────────────────────────────────────────────────────────
@@ -191,6 +300,9 @@ export class AccountsComponent implements OnInit {
   protected readonly TrashIcon = Trash2;
   protected readonly XIcon = X;
   protected readonly BriefcaseIcon = Briefcase;
+  protected readonly LinkIcon = Link2;
+  protected readonly RefreshIcon = RefreshCw;
+  protected readonly CheckIcon = CheckCircle2;
 
   // ── Helpers d'affichage ─────────────────────────────────────────────────
   // Icône lucide selon le type de compte.

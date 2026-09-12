@@ -64,6 +64,20 @@
       </div>
     }
 
+    <!-- Retour du consentement Tradovate (PROMPT-208) : lu puis retiré de l'URL. -->
+    @if (tvBanner(); as b) {
+      <div class="tv-banner {{ b.kind }}" role="status" data-testid="tradovate-return-banner">
+        <lucide-icon [img]="b.kind === 'error' ? AlertCircleIcon : CheckIcon" [size]="15" />
+        <div>
+          <div class="tv-banner-main">{{ b.text }}</div>
+          @if (b.sub) { <div class="tv-banner-sub">{{ b.sub }}</div> }
+        </div>
+        <button class="tv-banner-x" type="button" aria-label="Fermer" (click)="tvBanner.set(null)">
+          <lucide-icon [img]="XIcon" [size]="14" />
+        </button>
+      </div>
+    }
+
     <!-- ── Cartes comptes ── -->
     <div class="acct-grid">
 
@@ -181,6 +195,84 @@
               </div>
             </div>
           }
+
+          <!-- ── Connexion Tradovate de CE compte (un compte = une connexion) ── -->
+          @let conn = tv.byAccount().get(a.id);
+          @let busy = tv.busy()[a.id];
+          @let fb = tv.feedback()[a.id];
+          <div class="tv-row" [attr.data-testid]="'tradovate-row-' + a.id">
+            <div class="tv-head">
+              <span class="tv-label">Synchro <span class="nt-word">Tradovate</span></span>
+              @if (!conn) {
+                <span class="tv-pill off" [attr.data-testid]="'tradovate-status-' + a.id">Non connecté</span>
+              } @else if (conn.status === 'NEEDS_RECONNECT') {
+                <span class="tv-pill warn" [attr.data-testid]="'tradovate-status-' + a.id">À reconnecter</span>
+              } @else {
+                <span class="tv-pill on" [attr.data-testid]="'tradovate-status-' + a.id">● Connecté</span>
+              }
+            </div>
+
+            @if (!conn) {
+              <div class="tv-line">
+                <span class="tv-text">Connecte ce compte pour synchroniser ses trades automatiquement.</span>
+                @if (a.status !== 'ARCHIVED') {
+                  <button class="tv-btn connect" type="button" (click)="openTradovateConnect(a)"
+                          [attr.data-testid]="'tradovate-connect-' + a.id">
+                    <lucide-icon [img]="LinkIcon" [size]="13" /> Connecter Tradovate
+                  </button>
+                }
+              </div>
+            } @else if (conn.status === 'NEEDS_RECONNECT') {
+              <div class="tv-line">
+                <span class="tv-text">{{ conn.lastSyncError ?? 'Connexion expirée ou révoquée.' }}</span>
+                <button class="tv-btn connect" type="button" (click)="openTradovateConnect(a)"
+                        [attr.data-testid]="'tradovate-reconnect-' + a.id">
+                  <lucide-icon [img]="LinkIcon" [size]="13" /> Reconnecter
+                </button>
+              </div>
+            } @else if (conn.needsAccountSelection) {
+              <mtc-tradovate-account-picker
+                [accounts]="conn.availableAccounts"
+                [busy]="busy === 'select' || busy === 'sync'"
+                (picked)="pickTradovateAccount(a, $event)" />
+            } @else {
+              <div class="tv-line">
+                <span class="tv-text" [attr.data-testid]="'tradovate-last-sync-' + a.id">
+                  @if (conn.externalAccountName) { <span class="tv-ext">{{ conn.externalAccountName }}</span> · }
+                  Dernière synchro : {{ relativeTime(conn.lastSyncAt) }} · {{ conn.tradesImported }} trade{{ conn.tradesImported > 1 ? 's' : '' }} importé{{ conn.tradesImported > 1 ? 's' : '' }}
+                </span>
+                <div class="tv-actions">
+                  @if (confirmDisconnectId() === a.id) {
+                    <span class="tv-confirm">Déconnecter ce compte&nbsp;?</span>
+                    <button class="tv-btn danger" type="button" (click)="confirmDisconnect(a)"
+                            [attr.data-testid]="'tradovate-disconnect-confirm-' + a.id">Oui, déconnecter</button>
+                    <button class="tv-btn ghost" type="button" (click)="confirmDisconnectId.set(null)">Annuler</button>
+                  } @else {
+                    <button class="tv-btn sync" type="button" (click)="syncTradovate(a)" [disabled]="!!busy"
+                            [attr.data-testid]="'tradovate-sync-' + a.id">
+                      <lucide-icon [img]="RefreshIcon" [size]="13" [class.spin]="busy === 'sync'" />
+                      {{ busy === 'sync' ? 'Synchronisation…' : 'Synchroniser' }}
+                    </button>
+                    <button class="tv-btn ghost" type="button" (click)="askDisconnect(a)" [disabled]="!!busy"
+                            [attr.data-testid]="'tradovate-disconnect-' + a.id">
+                      {{ busy === 'disconnect' ? 'Déconnexion…' : 'Déconnecter' }}
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+
+            @if (fb) {
+              <div class="tv-feedback" [attr.data-testid]="'tradovate-feedback-' + a.id" role="status">
+                @if (fb.error) {
+                  <div class="tv-fb warn">{{ fb.error }}</div>
+                }
+                @for (l of fb.lines; track $index) {
+                  <div class="tv-fb" [class.warn]="l.warn">{{ l.text }}</div>
+                }
+              </div>
+            }
+          </div>
         </div>
       }
 
@@ -206,7 +298,20 @@
 
     </div>
 
+    <p class="tv-disclaimer" data-testid="tradovate-disclaimer">
+      MyTradingCoach est référencé dans l'écosystème NinjaTrader. Synchronisation en lecture seule,
+      aucun ordre n'est passé. Le trading comporte un risque de perte en capital.
+    </p>
+
 </div>
+
+@if (connectTarget(); as t) {
+  <mtc-tradovate-connect-modal
+    [accountId]="t.id"
+    [accountLabel]="t.label"
+    origin="settings"
+    (closed)="connectTarget.set(null)" />
+}
 
 <!-- ── Modal create / edit ── -->
 @if (formOpen()) {
