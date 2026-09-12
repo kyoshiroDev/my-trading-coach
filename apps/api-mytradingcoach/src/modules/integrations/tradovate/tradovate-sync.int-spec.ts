@@ -9,14 +9,13 @@
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { INestApplication, RequestMethod } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
 import { getStorageToken } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { BrokerConnectionStatus } from '@prisma/client';
-import { AppModule } from '../../../app/app.module';
+import { createIntegrationApp } from '../../../test/integration-app.helper';
 import { PrismaService } from '../../../prisma/prisma.service';
 
 const PREFIX = 'int-tradovate-';
@@ -126,21 +125,19 @@ beforeAll(async () => {
   });
   // Le @Throttle réel (10 authorize / min / IP) est voulu en prod ; ici toutes les requêtes
   // viennent de la même IP, on neutralise donc le compteur (pas la logique testée).
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-    .overrideProvider(getStorageToken())
-    .useValue({
-      increment: async () => ({ totalHits: 1, timeToExpire: 60, isBlocked: false, timeToBlockExpire: 0 }),
-    })
-    .compile();
-  app = moduleRef.createNestApplication({ rawBody: true });
-  app.use(cookieParser());
-  // Même préfixe que main.ts, callback exclu (redirect_uri enregistré sans /api).
-  app.setGlobalPrefix('api', {
-    exclude: ['robots.txt', { path: 'integrations/tradovate/callback', method: RequestMethod.GET }],
-  });
-  await app.init();
-  await app.listen(0);
-  baseUrl = await app.getUrl();
+  ({ app, baseUrl } = await createIntegrationApp({
+    configure: (b) =>
+      b.overrideProvider(getStorageToken()).useValue({
+        increment: async () => ({ totalHits: 1, timeToExpire: 60, isBlocked: false, timeToBlockExpire: 0 }),
+      }),
+    setup: (a) => {
+      a.use(cookieParser());
+      // Même préfixe que main.ts, callback exclu (redirect_uri enregistré sans /api).
+      a.setGlobalPrefix('api', {
+        exclude: ['robots.txt', { path: 'integrations/tradovate/callback', method: RequestMethod.GET }],
+      });
+    },
+  }));
   prisma = app.get(PrismaService);
 }, 120_000);
 
