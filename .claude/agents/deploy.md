@@ -313,6 +313,11 @@ BROKER_TOKEN_ENCRYPTION_KEY=...      # openssl rand -base64 32 — UNE par env, 
 - Pendant le développement, l'inscription OAuth côté Tradovate pointe sur **beta**
   (`https://beta.api.mytradingcoach.app/integrations/tradovate/callback`) : `.env.beta` porte
   cette URI. Repasser l'inscription ET `.env.production` sur l'URL prod uniquement au ship.
+- **Temps réel (PROMPT-210 live)** : aucune variable en plus. Le canal `/tradovate-live` passe
+  par socket.io sur l'hôte `api.` (comme `/eco`, déjà routé par Traefik) ; l'API ouvre en
+  sortie des `wss://{live|demo}.tradovateapi.com`. Redis requis pour le bail « un WebSocket
+  Tradovate par user » entre workers (sans Redis : au pire un par worker). Nouveau cron
+  `TradovateBackgroundRefreshCron` (toutes les 30 min, worker cron uniquement).
 - Le callback est servi **hors `/api`** : Traefik route tout l'hôte `api.` vers le conteneur,
   rien à ajouter. Vérif post-deploy : `curl -sI https://<api>/integrations/tradovate/callback`
   → `302` vers `<FRONTEND_URL>/accounts?tradovate=error&reason=session_expired` (normal sans cookie).

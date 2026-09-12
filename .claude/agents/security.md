@@ -241,3 +241,8 @@ ThrottlerModule.forRoot([{
 - Déconnexion = suppression des tokens en base (la Trade API n'expose pas de révocation
   documentée). Suppression d'un compte ou d'un user → cascade.
 - Client broker **lecture seule** : aucune méthode d'écriture (ordres) n'existe côté API MTC.
+- **Canal temps réel `/tradovate-live` authentifié** (PROMPT-210 live) : contrairement à `/eco`
+  (données publiques), il porte des trades. JWT vérifié au handshake (`JwtService`), comptes
+  démo refusés, émissions uniquement vers la room `user:<id>` — jamais de `server.emit` global.
+  Le JWT n'est contrôlé qu'à la connexion : le client en renvoie un frais à chaque reconnexion.
+  Le WebSocket Tradovate côté serveur n'envoie que `authorize`, `user/syncrequest` et `[]`.

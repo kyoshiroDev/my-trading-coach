@@ -2,10 +2,15 @@ import { Module } from '@nestjs/common';
 import { PrismaModule } from '../../../prisma/prisma.module';
 import { TradesModule } from '../../trades/trades.module';
 import { SetupsModule } from '../../setups/setups.module';
+import { AuthModule } from '../../auth/auth.module';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateSyncService } from './tradovate-sync.service';
 import { TradovateTokenRefreshCron } from './tradovate-token-refresh.cron';
+import { TradovateBackgroundRefreshCron } from './tradovate-background-refresh.cron';
+import { LIVE_SOCKET_FACTORY, TradovateLiveService } from './tradovate-live.service';
+import { nativeSocketFactory } from './tradovate-live.connection';
+import { TradovateLiveGateway } from './tradovate-live.gateway';
 import { TradovateCallbackController, TradovateController } from './tradovate.controller';
 
 /**
@@ -15,8 +20,20 @@ import { TradovateCallbackController, TradovateController } from './tradovate.co
  * pour les suivants (Binance, Bybit).
  */
 @Module({
-  imports: [PrismaModule, TradesModule, SetupsModule],
+  // AuthModule : JwtService pour authentifier le handshake du canal temps réel.
+  imports: [PrismaModule, TradesModule, SetupsModule, AuthModule],
   controllers: [TradovateController, TradovateCallbackController],
-  providers: [TradovateApiClient, TradovateConnectionService, TradovateSyncService, TradovateTokenRefreshCron],
+  providers: [
+    TradovateApiClient,
+    TradovateConnectionService,
+    TradovateSyncService,
+    TradovateTokenRefreshCron,
+    // Temps réel (PROMPT-210 live) : WebSocket Tradovate calé sur la présence dans l'app.
+    TradovateLiveService,
+    // WebSocket natif (Node ≥ 22) ; remplacé par un faux serveur Tradovate en test.
+    { provide: LIVE_SOCKET_FACTORY, useValue: nativeSocketFactory },
+    TradovateLiveGateway,
+    TradovateBackgroundRefreshCron,
+  ],
 })
 export class TradovateModule {}

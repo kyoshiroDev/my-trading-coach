@@ -1,0 +1,230 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import {
+  CATCH_UP_FRESH_MS,
+  LIVE_EVENT_DEBOUNCE_MS,
+  LIVE_LEASE_RENEW_MS,
+  TradovateLiveService,
+  liveLeaseKey,
+} from './tradovate-live.service';
+import type { LiveSocket } from './tradovate-live.connection';
+import { TradovateException } from './tradovate.errors';
+
+/**
+ * Présence → WebSocket Tradovate (PROMPT-210 live). Verrouille le contrat de portée :
+ * app ouverte = connexion + rattrapage ; app fermée = plus rien ; un seul WebSocket par
+ * user même avec plusieurs onglets / workers ; les trades passent par la synchro existante.
+ */
+
+class FakeSocket implements LiveSocket {
+  readyState = 1;
+  sent: string[] = [];
+  closed: number | null = null;
+  onmessage: ((ev: { data: unknown }) => void) | null = null;
+  onclose: ((ev: { code?: number }) => void) | null = null;
+  onerror: ((ev: unknown) => void) | null = null;
+  constructor(readonly url: string) {}
+  send(d: string) { this.sent.push(d); }
+  close(code = 1000) { this.closed = code; this.readyState = 3; this.onclose?.({ code }); }
+  server(raw: string) { this.onmessage?.({ data: raw }); }
+}
+
+const conn = (over: Record<string, unknown> = {}) => ({
+  id: 'bc-1', userId: 'u1', accountId: 'acc-1', externalAccountId: '777', externalEnv: 'demo',
+  status: 'CONNECTED', lastSyncAt: null as Date | null, ...over,
+});
+
+/** Redis en mémoire : SET NX PX, scripts renew / release (propriétaire uniquement), EXISTS. */
+function fakeRedis() {
+  const store = new Map<string, string>();
+  const client = {
+    set: vi.fn(async (k: string, v: string, _px: string, _ttl: number, nx?: string) => {
+      if (nx === 'NX' && store.has(k)) return null;
+      store.set(k, v);
+      return 'OK';
+    }),
+    eval: vi.fn(async (script: string, _n: number, k: string, id: string) => {
+      if (store.get(k) !== id) return 0;
+      if (script.includes("'del'")) store.delete(k);
+      return 1;
+    }),
+    exists: vi.fn(async (k: string) => (store.has(k) ? 1 : 0)),
+  };
+  return { store, client };
+}
+
+function setup(opts: { conns?: ReturnType<typeof conn>[]; redis?: ReturnType<typeof fakeRedis> } = {}) {
+  const conns = opts.conns ?? [conn()];
+  const redis = opts.redis ?? fakeRedis();
+  const sockets: FakeSocket[] = [];
+  const prisma = {
+    brokerConnection: {
+      findMany: vi.fn(async () => conns),
+      findUnique: vi.fn(async ({ where }: { where: { id: string } }) => conns.find((c) => c.id === where.id) ?? null),
+    },
+  };
+  const connections = {
+    assertConfigured: vi.fn(),
+    tryLock: vi.fn(async () => true),
+    unlock: vi.fn(async () => undefined),
+    getAccessToken: vi.fn(async () => 'AT-1'),
+  };
+  const sync = {
+    sync: vi.fn(async () => ({ created: 0, duplicates: 0, failed: 0, total: 0 })),
+  };
+  const service = new TradovateLiveService(
+    prisma as never, redis as never, connections as never, sync as never,
+    (url) => { const s = new FakeSocket(url); sockets.push(s); return s; },
+  );
+  const emitted: { userId: string; event: string; payload: unknown }[] = [];
+  service.bindEmitter((userId, event, payload) => emitted.push({ userId, event, payload }));
+  return { service, prisma, redis, connections, sync, sockets, emitted };
+}
+
+const settle = () => vi.advanceTimersByTimeAsync(0);
+
+describe('Tradovate live — présence dans l’app', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it('app ouverte → rattrapage REST PUIS WebSocket Tradovate du compte connecté', async () => {
+    const { service, sync, sockets } = setup();
+    await service.attach('u1', 'tab-1');
+    await settle();
+    expect(sync.sync).toHaveBeenCalledWith('u1', 'acc-1');
+    expect(sockets).toHaveLength(1);
+    expect(sockets[0].url).toBe('wss://demo.tradovateapi.com/v1/websocket');
+    expect(service.openConnectionCount()).toBe(1);
+  });
+
+  it('plusieurs onglets → UN seul WebSocket et un seul rattrapage', async () => {
+    const { service, sync, sockets } = setup();
+    await service.attach('u1', 'tab-1');
+    await service.attach('u1', 'tab-2');
+    await settle();
+    expect(sockets).toHaveLength(1);
+    expect(sync.sync).toHaveBeenCalledTimes(1);
+  });
+
+  it('fermer un onglet sur deux → la connexion reste ; fermer le dernier → WebSocket fermé, bail rendu', async () => {
+    const { service, sockets, redis } = setup();
+    await service.attach('u1', 'tab-1');
+    await service.attach('u1', 'tab-2');
+    await settle();
+    service.detach('u1', 'tab-1');
+    await settle();
+    expect(sockets[0].closed).toBeNull();
+    service.detach('u1', 'tab-2');
+    await settle();
+    expect(sockets[0].closed).toBe(1000);
+    expect(service.openConnectionCount()).toBe(0);
+    expect(redis.store.has(liveLeaseKey('u1'))).toBe(false);
+    // Plus rien ne tourne : aucune reconnexion, aucun heartbeat.
+    const sent = sockets[0].sent.length;
+    await vi.advanceTimersByTimeAsync(120_000);
+    expect(sockets).toHaveLength(1);
+    expect(sockets[0].sent).toHaveLength(sent);
+  });
+
+  it('aucun compte connecté (ou compte démo, exclu par la requête) → rien n’est ouvert', async () => {
+    const { service, sync, sockets } = setup({ conns: [] });
+    await service.attach('u1', 'tab-1');
+    await settle();
+    expect(sockets).toHaveLength(0);
+    expect(sync.sync).not.toHaveBeenCalled();
+  });
+
+  it('autre worker titulaire du bail → pas de 2e WebSocket ; bail libéré → reprise au tick suivant', async () => {
+    const redis = fakeRedis();
+    redis.store.set(liveLeaseKey('u1'), 'autre-worker');
+    const { service, sockets } = setup({ redis });
+    await service.attach('u1', 'tab-1');
+    await settle();
+    expect(sockets).toHaveLength(0);
+    redis.store.delete(liveLeaseKey('u1'));
+    await vi.advanceTimersByTimeAsync(LIVE_LEASE_RENEW_MS);
+    expect(sockets).toHaveLength(1);
+    await service.onModuleDestroy();
+  });
+
+  it('synchro récente (< 60 s) → rattrapage sauté, le WebSocket s’ouvre quand même', async () => {
+    const { service, sync, sockets } = setup({
+      conns: [conn({ lastSyncAt: new Date(Date.now() - CATCH_UP_FRESH_MS / 2) })],
+    });
+    await service.attach('u1', 'tab-1');
+    await settle();
+    expect(sync.sync).not.toHaveBeenCalled();
+    expect(sockets).toHaveLength(1);
+    await service.onModuleDestroy();
+  });
+});
+
+describe('Tradovate live — événements → synchro existante', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  async function live(created = 1) {
+    const ctx = setup({ conns: [conn({ lastSyncAt: new Date() })] }); // pas de rattrapage
+    ctx.sync.sync.mockResolvedValue({ created, duplicates: 0, failed: 0, total: created });
+    await ctx.service.attach('u1', 'tab-1');
+    await settle();
+    const s = ctx.sockets[0];
+    s.server('o');
+    s.server('a[{"s":200,"i":0}]');
+    const push = (entityType: string) =>
+      s.server(`a[{"e":"props","d":{"entityType":"${entityType}","eventType":"Created","entity":{}}}]`);
+    return { ...ctx, push };
+  }
+
+  it('rafale fill + fill + fillPair → UNE synchro après regroupement, trade relayé au user', async () => {
+    const { service, sync, emitted, push } = await live(1);
+    push('fill');
+    push('fill');
+    push('fillPair');
+    await vi.advanceTimersByTimeAsync(LIVE_EVENT_DEBOUNCE_MS - 1);
+    expect(sync.sync).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(sync.sync).toHaveBeenCalledTimes(1);
+    expect(sync.sync).toHaveBeenCalledWith('u1', 'acc-1');
+    expect(emitted).toEqual([
+      { userId: 'u1', event: 'tradovate:trades', payload: { accountId: 'acc-1', created: 1, duplicates: 0, total: 1, source: 'live' } },
+    ]);
+    await service.onModuleDestroy();
+  });
+
+  it('rien de nouveau (doublons) → aucun événement vers l’app', async () => {
+    const { service, emitted, push } = await live(0);
+    push('fillPair');
+    await vi.advanceTimersByTimeAsync(LIVE_EVENT_DEBOUNCE_MS);
+    expect(emitted).toEqual([]);
+    await service.onModuleDestroy();
+  });
+
+  it('synchro déjà en cours (bouton, autre onglet) → nouvel essai quelques secondes plus tard', async () => {
+    const { service, sync, push } = await live(1);
+    sync.sync.mockRejectedValueOnce(new TradovateException('TRADOVATE_SYNC_IN_PROGRESS'));
+    push('fillPair');
+    await vi.advanceTimersByTimeAsync(LIVE_EVENT_DEBOUNCE_MS);
+    expect(sync.sync).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(3_000);
+    expect(sync.sync).toHaveBeenCalledTimes(2);
+    await service.onModuleDestroy();
+  });
+
+  it('connexion à refaire → statut relayé (la carte « Mes comptes » l’affiche)', async () => {
+    const { service, sync, emitted, push } = await live(1);
+    sync.sync.mockRejectedValueOnce(new TradovateException('TRADOVATE_RECONNECT_REQUIRED'));
+    push('fillPair');
+    await vi.advanceTimersByTimeAsync(LIVE_EVENT_DEBOUNCE_MS);
+    expect(emitted).toEqual([
+      { userId: 'u1', event: 'tradovate:status', payload: { accountId: 'acc-1', status: 'NEEDS_RECONNECT' } },
+    ]);
+    await service.onModuleDestroy();
+  });
+
+  it('jeton pris sous le verrou partagé (rotation du refresh_token), puis rendu', async () => {
+    const { service, connections } = await live(0);
+    expect(connections.tryLock).toHaveBeenCalledWith('bc-1');
+    expect(connections.unlock).toHaveBeenCalledWith('bc-1');
+    await service.onModuleDestroy();
+  });
+});
