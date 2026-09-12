@@ -13,6 +13,8 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['src/**/*.int-spec.ts'],
+    // Filet PROMPT-209 : le SDK Resend lève s'il est construit (cf. createIntegrationApp).
+    setupFiles: ['src/test/integration.setup.ts'],
     passWithNoTests: false,
     // Séquentiel : les tests partagent la base et la file.
     fileParallelism: false,

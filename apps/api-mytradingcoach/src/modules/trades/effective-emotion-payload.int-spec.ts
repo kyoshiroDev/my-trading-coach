@@ -19,9 +19,8 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
 import { EmotionState, MoodState, SessionStatus, TradeSide, TradingSession } from '@prisma/client';
-import { AppModule } from '../../app/app.module';
+import { createIntegrationApp } from '../../test/integration-app.helper';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TradesService } from './trades.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
@@ -77,12 +76,8 @@ const dto = (setupId: string, emotion?: EmotionState): CreateTradeDto =>
   }) as CreateTradeDto;
 
 beforeAll(async () => {
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-  app = moduleRef.createNestApplication({ rawBody: true });
-  app.setGlobalPrefix('api');
-  await app.init();
-  await app.listen(0);
-  baseUrl = await app.getUrl();
+  // Bootstrap partagé : ResendService neutralisé (PROMPT-209), aucun vrai email envoyé.
+  ({ app, baseUrl } = await createIntegrationApp());
   prisma = app.get(PrismaService);
   trades = app.get(TradesService);
 }, 120_000);
