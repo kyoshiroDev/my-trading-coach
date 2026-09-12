@@ -465,6 +465,14 @@ Réutilisable pour tout broker synchronisé par API (cf. `nestjs.md` pour le bac
   `TradesStore.reset()`, sinon dashboard et métriques restent sur l'ancien cache.
 - **Déconnexion** : confirmation en ligne (pas de `confirm()` natif), `404` = déjà
   déconnecté = succès.
+- **Synchro = option principale, CSV = repli (PROMPT-211).** Dans `csv-import`, source
+  « Tradovate » hors onboarding (`allowFeesFile()`) → encart `import-tradovate-reco` d'abord
+  (connecter → `mtc-tradovate-connect-modal` origin `settings` pour le compte choisi ; déjà
+  connecté → `TradovateStore.sync`, résultat émis par `imported` comme un import), puis lien
+  discret « ou importer un fichier CSV Tradovate » (`tvCsvOpen`) qui déroule les deux fichiers.
+  Chaque ouverture repart sur la reco. Onboarding (`allowFeesFile=false`) et « Autre broker »
+  inchangés. Wizard étape 8 : carte Tradovate en tête pleine largeur (`choice-featured`, accent
+  `--nt`), CSV / manuel / zéro au second plan. Verrouillé par `csv-import-tradovate-*.spec.ts`.
 - **Clause 2.ii NinjaTrader** : aucun autre broker nommé dans ces écrans et messages
   (verrouillé par `tradovate-return.util.spec.ts`). Aucun bouton ne suggère un ordre.
 - **Tests sur le VRAI template** : `import TEMPLATE from './x.component.html?raw'` puis

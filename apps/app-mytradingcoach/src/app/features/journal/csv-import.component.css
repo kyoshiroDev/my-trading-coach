@@ -519,3 +519,46 @@
   border-color: var(--text-3);
   color: var(--text);
 }
+
+/* ── Tradovate : synchro API recommandée, CSV en repli (PROMPT-211) ── */
+.nt-word { color: var(--nt); font-weight: 700; }
+.tv-reco {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 14px; border-radius: 12px;
+  background: var(--nt-dim);
+  border: 1px solid rgba(255, 90, 31, 0.4);
+}
+.tv-reco-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tv-reco-ic { color: var(--nt); }
+.tv-reco-title { font-weight: 600; font-size: 14px; color: var(--text); }
+.tv-reco-tag {
+  margin-left: auto;
+  font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 2px 8px; border-radius: 20px;
+  color: var(--nt); background: rgba(255, 90, 31, 0.12); border: 1px solid rgba(255, 90, 31, 0.3);
+}
+.tv-reco-text { margin: 0; font-size: 12px; color: var(--text-2); line-height: 1.5; }
+.tv-reco-state { margin: 0; font-size: 12px; color: var(--text); }
+.tv-reco-btn {
+  align-self: flex-start;
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--nt); color: var(--nt-ink);
+  border: none; border-radius: 8px; padding: 9px 16px;
+  font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.tv-reco-btn:disabled { opacity: 0.55; cursor: default; }
+.tv-reco-hint { margin: 0; font-size: 11px; color: var(--text-3); line-height: 1.45; }
+/* Repli CSV : discret, mais un vrai bouton (clavier, lecteur d'écran). */
+.tv-csv-alt {
+  align-self: flex-start;
+  background: none; border: none; padding: 2px 0;
+  font-family: var(--font-body); font-size: 12px; color: var(--text-3);
+  text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+}
+.tv-csv-alt:hover,
+.tv-csv-alt:focus-visible { color: var(--text); outline: none; }
+.tv-csv-back { margin-bottom: 4px; }
+@media (max-width: 480px) {
+  .tv-reco-btn { align-self: stretch; justify-content: center; }
+}
