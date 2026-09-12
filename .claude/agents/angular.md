@@ -496,6 +496,12 @@ this.toast.warning('…', { duration: null }); // null = fermeture manuelle uniq
   type + même message déjà affiché → relancé, pas empilé (double-clic).
 - A11y : succès/info/warning `role="status"` + `aria-live="polite"` ; erreur `role="alert"` +
   `aria-live="assertive"`. `prefers-reduced-motion` respecté.
+- Animations : entrée CSS `toast-in` (0,18 s) ; sortie via **`animate.leave="toast-leave"`**
+  (API native Angular ≥ 20.2, pas `@angular/animations`) — Angular garde l'élément pendant
+  `toast-out` (0,16 s, fondu + glissement : à droite en desktop, vers le bas en mobile) puis le
+  retire. En mouvement réduit, `animation: none` → retrait immédiat. jsdom ne joue pas les
+  animations : le câblage est verrouillé par `toasts-animation.spec.ts`, qui lit template et
+  CSS avec `node:fs` en `@vitest-environment node` (un `.css?raw` est VIDE sous vitest).
 - Position : bas-droite desktop ; mobile centré en bas **au-dessus du FAB « + »** (92 px) — le
   haut est pris par le burger. z-index 10000 (au-dessus des modales 1000).
 - Message d'erreur API : **toujours** `apiErrorMessage(err, repli)` (`core/utils/api-error.ts`) —

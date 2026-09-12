@@ -1,6 +1,9 @@
 <div class="toasts" data-testid="toasts">
   @for (t of toasts.visible(); track t.id) {
+    <!-- animate.leave (API native Angular ≥ 20.2) : Angular garde le toast le temps de
+         l'animation de sortie `.toast-leave`, puis le retire. -->
     <div class="toast {{ t.type }}"
+         animate.leave="toast-leave"
          [attr.role]="t.type === 'error' ? 'alert' : 'status'"
          [attr.aria-live]="live(t.type)"
          aria-atomic="true"

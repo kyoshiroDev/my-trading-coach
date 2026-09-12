@@ -73,6 +73,17 @@
   to   { opacity: 1; transform: none; }
 }
 
+/* Sortie (minuteur ou croix) : posée par `animate.leave`, Angular retire l'élément à la
+   fin de l'animation. Plus courte que l'entrée : on ne fait pas attendre l'utilisateur. */
+.toast-leave {
+  pointer-events: none; /* un toast qui part ne capte plus de clic ni de survol */
+  animation: toast-out 0.16s ease-in forwards;
+}
+@keyframes toast-out {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: translateX(16px); }
+}
+
 /* Mobile : centré en bas, AU-DESSUS du bouton flottant « + » (56px à 24px du bas, topbar)
    — le haut est pris par le burger. */
 @media (max-width: 768px) {
@@ -84,8 +95,15 @@
     align-items: stretch;
   }
   .toast-queue { align-self: center; }
+  /* En mobile la pile est centrée : la sortie descend plutôt que de glisser de côté. */
+  @keyframes toast-out {
+    from { opacity: 1; transform: none; }
+    to   { opacity: 0; transform: translateY(8px); }
+  }
 }
 
+/* Sans animation, Angular n'a rien à attendre : le toast part immédiatement. */
 @media (prefers-reduced-motion: reduce) {
-  .toast { animation: none; }
+  .toast,
+  .toast-leave { animation: none; }
 }
