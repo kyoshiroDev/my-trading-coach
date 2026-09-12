@@ -9,6 +9,7 @@ import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateApiError, TradovateException } from './tradovate.errors';
 import { isCrossSourceDuplicate, mapTradovatePairs } from './tradovate-trade.mapper';
+import { describeTradovateSnapshot } from './tradovate-sync-diagnostics';
 import type {
   TradovateAccount,
   TradovateContract,
@@ -159,9 +160,14 @@ export class TradovateSyncService {
     });
 
     const imported = await this.trades.importTrades(userId, dtos);
+    // Ce que Tradovate a renvoyé, pas seulement ce qui a été créé (PROMPT-212) : distingue
+    // « rien renvoyé » de « données écartées » (autre compte du login, paire orpheline).
     this.logger.log(
       `Synchro Tradovate ${conn.id} : ${imported.created} créés, ` +
-        `${imported.duplicates + crossSourceDuplicates} doublons, ${mapped.skipped} ignorés.`,
+        `${imported.duplicates + crossSourceDuplicates} doublons, ${mapped.skipped} ignorés. ` +
+        describeTradovateSnapshot({
+          accounts, positions, pairs: allPairs, externalAccountId: externalId, fillsFetched: fills.size,
+        }),
     );
 
     return {

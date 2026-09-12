@@ -21,6 +21,8 @@ export interface TradovatePosition {
   accountId: number;
   contractId: number;
   netPos: number;
+  /** Séance de la position (Tradovate ouvre une position par séance). Sert au diagnostic. */
+  tradeDate?: { year: number; month: number; day: number };
 }
 
 /** Paire achat/vente appariée par Tradovate = une ligne de l'export Performance. */
