@@ -8,9 +8,13 @@ import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypt
  * une URL tierce (historique, logs du broker) — s'il était signé comme un access token, il
  * pourrait servir de Bearer sur l'API. Ici, format et clé différents : inutilisable ailleurs.
  */
+/** D'où l'utilisateur a lancé la connexion : le retour le ramène exactement là (PROMPT-208). */
+export type OAuthOrigin = 'wizard' | 'settings';
+
 export interface OAuthStatePayload {
   userId: string;
   accountId: string;
+  origin: OAuthOrigin;
 }
 
 const TTL_MS = 10 * 60 * 1000;
@@ -28,6 +32,7 @@ export function signOAuthState(
     JSON.stringify({
       u: payload.userId,
       a: payload.accountId,
+      o: payload.origin,
       n: randomBytes(12).toString('base64url'),
       exp: now + TTL_MS,
     }),
@@ -52,11 +57,11 @@ export function verifyOAuthState(
 
   try {
     const p = JSON.parse(Buffer.from(body, 'base64url').toString('utf8')) as {
-      u?: unknown; a?: unknown; exp?: unknown;
+      u?: unknown; a?: unknown; o?: unknown; exp?: unknown;
     };
     if (typeof p.u !== 'string' || typeof p.a !== 'string' || typeof p.exp !== 'number') return null;
     if (p.exp < now) return null;
-    return { userId: p.u, accountId: p.a };
+    return { userId: p.u, accountId: p.a, origin: p.o === 'wizard' ? 'wizard' : 'settings' };
   } catch {
     return null;
   }

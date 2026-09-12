@@ -50,6 +50,8 @@
 /* Accents secondaires */
 --purple: #8b5cf6;  --purple-bright: #a78bfa;  --purple-dim: rgba(139, 92, 246, 0.12); /* mark / beta */
 --cyan: #22d3ee;                                                                        /* live / IA */
+/* Partenaire — flux Tradovate uniquement (PROMPT-208) */
+--nt: #ff5a1f;  --nt-dim: rgba(255, 90, 31, 0.14);  --nt-ink: #150701;  /* orange NinjaTrader, texte sur --nt */
 
 /* Texte — 4 niveaux */
 --text: #e2eaf5;        /* primaire — titres, valeurs */
@@ -97,6 +99,7 @@
 | `--yellow` | Warnings, attention, urgence | Succès, gains |
 | `--cyan` | Indicateurs live / IA (pulse) | Décoratif, CTA |
 | `--purple` | Logo mark, avatars, badge beta | Statuts, CTA |
+| `--nt` | Flux Tradovate : carte « le plus complet », bouton « Connecter », mot « Tradovate » | Tout le reste de l'app (ce n'est pas un accent de marque MTC) |
 
 ---
 

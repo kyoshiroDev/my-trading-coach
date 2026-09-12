@@ -103,11 +103,11 @@ GET    /api/users/admin/:id/detail     ADMIN → fiche utilisateur complète
 GET    /api/users/admin/subscriptions  ADMIN → liste abonnements Premium
 
 GET    /api/integrations/tradovate/connections                 JWT → état de connexion par compte (jamais de token)
-POST   /api/integrations/tradovate/accounts/:accountId/authorize  JWT → { url } + cookie httpOnly de state
+POST   /api/integrations/tradovate/accounts/:accountId/authorize  JWT → { url } + cookie httpOnly de state · body { origin?: 'wizard'|'settings' }
 POST   /api/integrations/tradovate/accounts/:accountId/select     JWT → choix du compte Tradovate { externalAccountId }
 POST   /api/integrations/tradovate/accounts/:accountId/sync       JWT → synchro manuelle (FREE, pas de cron en V1)
 DELETE /api/integrations/tradovate/accounts/:accountId            JWT → déconnexion (tokens supprimés, trades gardés)
-GET    /integrations/tradovate/callback   PUBLIC, HORS /api (redirect_uri enregistré) → 302 vers l'app
+GET    /integrations/tradovate/callback   PUBLIC, HORS /api (redirect_uri enregistré) → 1re synchro puis 302 vers l'app
 
 GET    /api/health
 POST   /api/test/upgrade-user          NODE_ENV=test uniquement
@@ -520,6 +520,7 @@ Toujours passer `{ userId, feature }` dans les options. Features valides :
 | `DailyRecapCron` | `30 17 * * 1-5` Paris | Génère recap + envoie email aux users actifs du jour |
 | `EcoCalendarCron` | `0 7 * * 1-5` Paris | Pré-génère le calendrier pour tous les users Premium |
 | `DemoSeedCron` | `20 3 * * *` Paris | Re-seed le compte démo (dates relatives recalculées) |
+| `TradovateTokenRefreshCron` | `17 */6 * * *` Paris | Renouvelle les tokens Tradovate qui expirent sous 18 h (aucun import de trades, hors démo) |
 
 ### Compte démo : le seed doit rester récurrent (PROMPT-192)
 
@@ -648,6 +649,14 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
 - Le token endpoint renvoie un **`refresh_token`** (non documenté) : renouvellement 5 min avant
   expiration (≈ 80 min) par `grant_type=refresh_token`, repli `GET /auth/renewaccesstoken`, sinon
   `NEEDS_RECONNECT` (409 `TRADOVATE_RECONNECT_REQUIRED`). Jamais de consentement toutes les 80 min.
+- **Mesuré en beta** : le grant `refresh_token` fonctionne, et Tradovate **fait tourner** le
+  refresh_token (nouveau à chaque renouvellement, durée ≈ **26 h**, fenêtre glissante). La
+  synchro étant manuelle, `TradovateTokenRefreshCron` maintient les connexions : toutes les 6 h,
+  celles qui expirent sous 18 h (≈ un renouvellement / 12 h, 2 passages manqués couverts).
+  `refreshNow` : refus → `NEEDS_RECONNECT` ; panne / limite → reporté, connexion intacte.
+- **Verrou partagé synchro + cron** (`tryLock` / `unlock` du service de connexion, clé
+  `tradovate:sync:<id>`) : deux renouvellements concurrents présenteraient un refresh_token
+  déjà remplacé et marqueraient à tort la connexion « à reconnecter ».
 - **Callback hors `/api`** (exclu dans `main.ts`) : le redirect_uri enregistré est
   `https://<api>/integrations/tradovate/callback`. Ne pas le déplacer sans mettre à jour
   l'inscription OAuth côté Tradovate.
@@ -656,6 +665,13 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
   victime avec SON lien et recevoir les trades de la victime. La doc ne dit pas si Tradovate
   renvoie `state` : s'il le renvoie, il doit égaler le cookie. Côté front, l'appel `authorize`
   doit partir **avec credentials** pour que le cookie soit posé.
+- **Retour au point de départ** (PROMPT-208) : l'origine (`wizard` | `settings`) est signée
+  dans le `state`. Le callback lance une **première synchro** (jamais bloquante : échec →
+  `sync=error`, la connexion reste faite) puis redirige : wizard → `/dashboard?…&from=wizard`
+  (l'overlay d'onboarding s'y rouvre), réglages → `/accounts?…`. Query params : `tradovate`
+  (`connected`|`select_account`|`error`), `accountId`, `reason`, `trades`, `fees`
+  (`ok`|`partial`|`none`), `sync`, `from`. Un `state` illisible renvoie vers les réglages,
+  jamais sur une page morte.
 - Chaîne de lecture : `position/list` (seul lien fill → compte) → `fillPair/list` (paires =
   lignes de l'export Performance) → `fill/items` → `fillFee/items` (frais exacts, optionnels)
   → `contract` / `contractMaturity` / `product` (symbole, `valuePerPoint`).

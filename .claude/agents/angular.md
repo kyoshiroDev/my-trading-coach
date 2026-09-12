@@ -432,3 +432,45 @@ sont tolérés), pas de barre d'accent `::before` sur les cartes de contenu.
 <input data-testid="trade-exit-price" />
 <div data-testid="trade-close-type" />
 ```
+
+---
+
+## Connexion broker par compte — pattern (PROMPT-208, Tradovate)
+
+Réutilisable pour tout broker synchronisé par API (cf. `nestjs.md` pour le back).
+
+- **Un compte = une connexion.** L'état vit dans `TradovateStore` (root) : `connections`,
+  `byAccount` (Map accountId → connexion), et **par compte** `busy` (`sync` | `select` |
+  `disconnect`) et `feedback` (lignes + erreur). Deux comptes (Apex + Lucid) ne se bloquent
+  jamais l'un l'autre. Le wizard et « Mes comptes » partagent ce store.
+- **Écran de réassurance AVANT de quitter l'app** (`mtc-tradovate-connect-modal`, palier
+  z-index 1000 pour passer au-dessus de l'overlay d'onboarding) : compte cible, 3 étapes,
+  encadré lecture seule (icône Lucide `Lock`, pas l'emoji). Rien n'est créé avant le retour
+  de Tradovate : fermer l'onglet en cours de route ne laisse aucun demi-état.
+- **Le cookie de `state` exige `withCredentials`** sur l'appel `authorize` (l'intercepteur
+  le pose déjà partout ; `TradovateApi.authorize` le redemande explicitement).
+- **Retour OAuth** : tout ce qui se lit et s'affiche est dans
+  `core/utils/tradovate-return.util.ts` (pur, testé) : `parseTradovateReturn`,
+  `tradovateErrorMessage`, `tradesLine`, `feesLine`, `syncResultLines`, `relativeTime`.
+  - `from=wizard` → lu par l'**onboarding** dans `window.location.search`, APRÈS
+    `restoreProgress()` : réussite → étape 9 avec le récap (classe `ob-import-recap`, comme le
+    CSV) ; échec → étape 8 + message non bloquant (« tu peux réessayer ou importer un CSV ») ;
+    plusieurs comptes → sélecteur à l'étape 8. **Jamais l'étape 1**, même si le localStorage a
+    disparu.
+  - sinon → lu par « Mes comptes » (`router.routerState.snapshot.root.queryParams`).
+  - Dans les deux cas, paramètres retirés aussitôt : `router.navigate([], { queryParams:
+    {…: null}, queryParamsHandling: 'merge', replaceUrl: true })` — commandes vides = même
+    chemin, et un rechargement ne rejoue pas le message.
+- **Après une synchro qui crée des trades** : `SelectedAccountStore.load()` +
+  `TradesStore.reset()`, sinon dashboard et métriques restent sur l'ancien cache.
+- **Déconnexion** : confirmation en ligne (pas de `confirm()` natif), `404` = déjà
+  déconnecté = succès.
+- **Clause 2.ii NinjaTrader** : aucun autre broker nommé dans ces écrans et messages
+  (verrouillé par `tradovate-return.util.spec.ts`). Aucun bouton ne suggère un ordre.
+- **Tests sur le VRAI template** : `import TEMPLATE from './x.component.html?raw'` puis
+  `overrideComponent({ set: { template: TEMPLATE, imports: [pipes nécessaires], schemas:
+  [NO_ERRORS_SCHEMA] } })`. **Pas `node:fs`** dans un spec jsdom : sous l'exécuteur nx
+  (`pnpm nx test`, celui de la CI), `node:path` est externalisé et le fichier entier échoue
+  sans message, alors que `vitest run` direct passe. Les entrées signal (`input()`) ne
+  s'alimentent pas en JIT : remplacer `cmp.accountId = signal(…)` avant le premier
+  `detectChanges()`.

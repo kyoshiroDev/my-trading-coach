@@ -2,10 +2,15 @@ import { signOAuthState, verifyOAuthState } from './oauth-state.util';
 
 describe('oauth-state.util', () => {
   const secret = 'jwt-secret-de-test';
-  const payload = { userId: 'user_1', accountId: 'acc_1' };
+  const payload = { userId: 'user_1', accountId: 'acc_1', origin: 'wizard' as const };
 
   it('vérifie un state qu’il a signé (user + compte restitués)', () => {
     expect(verifyOAuthState(signOAuthState(payload, secret), secret)).toEqual(payload);
+  });
+
+  it('restitue l’origine (wizard / réglages), réglages par défaut', () => {
+    expect(verifyOAuthState(signOAuthState({ ...payload, origin: 'settings' }, secret), secret)?.origin).toBe('settings');
+    expect(verifyOAuthState(signOAuthState(payload, secret), secret)?.origin).toBe('wizard');
   });
 
   it('refuse un state expiré (10 min)', () => {

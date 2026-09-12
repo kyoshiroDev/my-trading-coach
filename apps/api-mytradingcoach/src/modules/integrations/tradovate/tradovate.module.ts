@@ -5,6 +5,7 @@ import { SetupsModule } from '../../setups/setups.module';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateSyncService } from './tradovate-sync.service';
+import { TradovateTokenRefreshCron } from './tradovate-token-refresh.cron';
 import { TradovateCallbackController, TradovateController } from './tradovate.controller';
 
 /**
@@ -16,6 +17,6 @@ import { TradovateCallbackController, TradovateController } from './tradovate.co
 @Module({
   imports: [PrismaModule, TradesModule, SetupsModule],
   controllers: [TradovateController, TradovateCallbackController],
-  providers: [TradovateApiClient, TradovateConnectionService, TradovateSyncService],
+  providers: [TradovateApiClient, TradovateConnectionService, TradovateSyncService, TradovateTokenRefreshCron],
 })
 export class TradovateModule {}

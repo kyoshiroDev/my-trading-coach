@@ -1,0 +1,75 @@
+/* Écran de réassurance Tradovate — maquette proto-connexion-tradovate.html (écran 2). */
+.tvc-ov {
+  position: fixed; inset: 0;
+  background: rgba(4, 7, 12, 0.72);
+  backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center;
+  /* Palier « modale top-level » : s'ouvre AU-DESSUS de l'overlay d'onboarding (300). */
+  padding: 20px; z-index: 1000;
+}
+.tvc-modal {
+  position: relative;
+  width: 100%; max-width: 560px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-hover);
+  border-radius: 16px;
+  padding: 26px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  max-height: calc(100dvh - 40px); overflow-y: auto;
+}
+.tvc-x {
+  position: absolute; top: 14px; right: 14px;
+  background: none; border: none; color: var(--text-3); cursor: pointer;
+  display: flex; padding: 4px;
+}
+.tvc-title {
+  font-family: var(--font-display); font-size: 18px; font-weight: 700;
+  color: var(--text); margin: 0 28px 4px 0;
+}
+.nt-word { color: var(--nt); font-weight: 700; }
+.tvc-target { color: var(--text-2); font-size: 12px; margin-bottom: 20px; }
+.tvc-target strong { color: var(--text); }
+
+.tvc-steps { list-style: none; padding: 0; margin: 0 0 20px; }
+.tvc-steps li {
+  display: flex; gap: 12px; padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px; color: var(--text-2); line-height: 1.5;
+}
+.tvc-steps li:last-child { border-bottom: none; }
+.tvc-steps strong { color: var(--text); }
+.tvc-num {
+  width: 22px; height: 22px; flex: 0 0 22px; border-radius: 50%;
+  background: var(--blue-glow); color: var(--blue-bright);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-family: var(--font-mono);
+}
+
+.tvc-note {
+  display: flex; gap: 9px; align-items: flex-start;
+  background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 14px; margin-bottom: 20px;
+  font-size: 12px; color: var(--text-2); line-height: 1.5;
+}
+.tvc-note strong { color: var(--text); }
+.tvc-lock { color: var(--green); flex: 0 0 auto; margin-top: 1px; }
+
+.tvc-error {
+  margin: 0 0 16px; padding: 10px 12px; border-radius: 8px;
+  background: var(--red-dim); color: var(--red); font-size: 12px; line-height: 1.45;
+}
+
+.tvc-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.tvc-btn {
+  border-radius: 10px; padding: 11px 22px; font-weight: 600; font-size: 14px;
+  font-family: var(--font-body); cursor: pointer; min-width: 0;
+}
+.tvc-btn:disabled { opacity: 0.6; cursor: default; }
+.tvc-btn.nt { background: var(--nt); color: var(--nt-ink); border: none; }
+.tvc-btn.ghost { background: transparent; border: 1px solid var(--border-hover); color: var(--text); }
+
+@media (max-width: 480px) {
+  .tvc-modal { padding: 22px 18px; }
+  .tvc-actions { flex-direction: column-reverse; }
+  .tvc-btn { width: 100%; }
+}
