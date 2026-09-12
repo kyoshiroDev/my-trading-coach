@@ -347,6 +347,26 @@ describe('Tradovate — synchro', () => {
     expect(view['lastSyncAt']).toBeTruthy();
   });
 
+  it('première synchro : tout l’historique, y compris les fills ANTÉRIEURS à la connexion (aucune borne de date)', async () => {
+    const { id: userId, token } = await registerUser();
+    const account = await createAccount(userId, 'Apex tout juste connecté');
+    const connectedAt = new Date();
+
+    calls = [];
+    const { location } = await connect(token, account.id);
+
+    // Fills du 10-11/07/2026, bien avant la connexion : tous importés dès le premier passage.
+    expect(location.searchParams.get('trades')).toBe('3');
+    const trades = await prisma.trade.findMany({ where: { userId }, select: { tradedAt: true } });
+    expect(trades).toHaveLength(3);
+    expect(trades.every((t) => t.tradedAt < connectedAt)).toBe(true);
+
+    // Les routes list partent SANS aucun filtre : ni date de connexion, ni lastSyncAt.
+    const lists = calls.filter((c) => /\/(position|fillPair)\/list/.test(c.url));
+    expect(lists.map((c) => new URL(c.url).pathname)).toEqual(['/v1/position/list', '/v1/fillPair/list']);
+    expect(lists.every((c) => new URL(c.url).search === '')).toBe(true);
+  });
+
   it('token expiré → renouvelé par refresh_token, sans nouveau consentement', async () => {
     const { id: userId, token } = await registerUser();
     const account = await createAccount(userId, 'Compte');
