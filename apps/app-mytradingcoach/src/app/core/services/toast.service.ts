@@ -17,6 +17,11 @@ export interface Toast {
   message: string;
   /** ms avant fermeture auto ; `null` = reste jusqu'à la croix. */
   duration: number | null;
+  /**
+   * Incrémenté quand le même message est relancé (double-clic) : le minuteur repart de
+   * zéro, et la barre de compte à rebours du conteneur est recréée pour repartir avec lui.
+   */
+  version: number;
 }
 
 export interface ToastOptions {
@@ -45,7 +50,8 @@ interface Timer {
 export class ToastService {
   private readonly all = signal<Toast[]>([]);
   private readonly timers = new Map<number, Timer>();
-  private readonly paused = new Set<number>();
+  /** Toasts en pause (survol, focus, glisser) : lu par la barre de compte à rebours. */
+  private readonly pausedIds = signal<ReadonlySet<number>>(new Set());
   private nextId = 1;
 
   /** Toasts affichés (les plus anciens d'abord), au plus MAX_VISIBLE_TOASTS. */
@@ -66,7 +72,7 @@ export class ToastService {
       return twin.id;
     }
     const duration = opts.duration === undefined ? TOAST_DURATIONS[type] : opts.duration;
-    const toast: Toast = { id: this.nextId++, type, message, duration };
+    const toast: Toast = { id: this.nextId++, type, message, duration, version: 0 };
     this.all.update((list) => [...list, toast]);
     this.syncTimers();
     return toast.id;
@@ -74,21 +80,25 @@ export class ToastService {
 
   dismiss(id: number): void {
     this.clearTimer(id);
-    this.paused.delete(id);
+    this.setPaused(id, false);
     this.all.update((list) => list.filter((t) => t.id !== id));
     this.syncTimers(); // un toast en file prend la place libérée
   }
 
   clear(): void {
     for (const id of [...this.timers.keys()]) this.clearTimer(id);
-    this.paused.clear();
+    this.pausedIds.set(new Set());
     this.all.set([]);
   }
 
-  /** Survol / focus : le temps de lecture est suspendu, repris à la sortie. */
+  isPaused(id: number): boolean {
+    return this.pausedIds().has(id);
+  }
+
+  /** Survol / focus / glisser : le temps de lecture est suspendu, repris à la sortie. */
   pause(id: number): void {
+    this.setPaused(id, true);
     const timer = this.timers.get(id);
-    this.paused.add(id);
     if (!timer?.handle) return;
     clearTimeout(timer.handle);
     timer.remaining -= Date.now() - timer.startedAt;
@@ -96,7 +106,7 @@ export class ToastService {
   }
 
   resume(id: number): void {
-    this.paused.delete(id);
+    this.setPaused(id, false);
     const timer = this.timers.get(id);
     if (!timer || timer.handle) return;
     this.arm(id, Math.max(0, timer.remaining));
@@ -107,7 +117,7 @@ export class ToastService {
     for (const t of this.visible()) {
       if (t.duration === null || this.timers.has(t.id)) continue;
       this.timers.set(t.id, { handle: null, remaining: t.duration, startedAt: Date.now() });
-      if (!this.paused.has(t.id)) this.arm(t.id, t.duration);
+      if (!this.isPaused(t.id)) this.arm(t.id, t.duration);
     }
   }
 
@@ -122,8 +132,19 @@ export class ToastService {
   private restart(t: Toast): void {
     if (t.duration === null || !this.visible().some((v) => v.id === t.id)) return;
     this.clearTimer(t.id);
+    this.all.update((list) => list.map((x) => (x.id === t.id ? { ...x, version: x.version + 1 } : x)));
     this.timers.set(t.id, { handle: null, remaining: t.duration, startedAt: Date.now() });
-    if (!this.paused.has(t.id)) this.arm(t.id, t.duration);
+    if (!this.isPaused(t.id)) this.arm(t.id, t.duration);
+  }
+
+  private setPaused(id: number, paused: boolean): void {
+    if (this.pausedIds().has(id) === paused) return;
+    this.pausedIds.update((set) => {
+      const next = new Set(set);
+      if (paused) next.add(id);
+      else next.delete(id);
+      return next;
+    });
   }
 
   private clearTimer(id: number): void {

@@ -496,12 +496,20 @@ this.toast.warning('…', { duration: null }); // null = fermeture manuelle uniq
   type + même message déjà affiché → relancé, pas empilé (double-clic).
 - A11y : succès/info/warning `role="status"` + `aria-live="polite"` ; erreur `role="alert"` +
   `aria-live="assertive"`. `prefers-reduced-motion` respecté.
-- Animations : entrée CSS `toast-in` (0,18 s) ; sortie via **`animate.leave="toast-leave"`**
-  (API native Angular ≥ 20.2, pas `@angular/animations`) — Angular garde l'élément pendant
-  `toast-out` (0,16 s, fondu + glissement : à droite en desktop, vers le bas en mobile) puis le
-  retire. En mouvement réduit, `animation: none` → retrait immédiat. jsdom ne joue pas les
-  animations : le câblage est verrouillé par `toasts-animation.spec.ts`, qui lit template et
-  CSS avec `node:fs` en `@vitest-environment node` (un `.css?raw` est VIDE sous vitest).
+- Comportement (usuel, PROMPT-210 bis) : chaque toast vit dans une **case repliable**
+  (`.toast-slot`, `grid-template-rows` 0fr ↔ 1fr) : la pile se décale en douceur à l'entrée
+  comme à la sortie, sans saut. **Entrée** : glisse depuis le bord droit (0,28 s, léger
+  ressort ; depuis le bas en mobile). **Barre de compte à rebours EN HAUT** (`.toast-bar`,
+  `scaleX` 1 → 0 sur la durée réelle, figée via `ToastService.isPaused` = même état que le
+  minuteur ; recréée quand le même message est relancé grâce à `Toast.version` ; absente si
+  `duration: null`). **Sortie** : `[animate.leave]="leaveClass(id)"` (API native Angular
+  ≥ 20.2, pas `@angular/animations`) — le toast repart vers le bord puis la case se replie ;
+  Angular retire la case à la fin. **Glisser pour fermer** (souris ou doigt,
+  `touch-action: pan-y`) : au-delà de max(80 px, 35 % de la largeur) le toast part du côté
+  du geste, sinon il revient ; minuteur suspendu pendant le geste. **Mouvement réduit** :
+  ni glissement ni repli animé, barre par paliers (`steps`). jsdom ne joue pas les
+  animations : `toasts-animation.spec.ts` verrouille les sources (template + CSS lus avec
+  `node:fs` en `@vitest-environment node` — un `.css?raw` est VIDE sous vitest).
 - Position : bas-droite desktop ; mobile centré en bas **au-dessus du FAB « + »** (92 px) — le
   haut est pris par le burger. z-index 10000 (au-dessus des modales 1000).
 - Message d'erreur API : **toujours** `apiErrorMessage(err, repli)` (`core/utils/api-error.ts`) —

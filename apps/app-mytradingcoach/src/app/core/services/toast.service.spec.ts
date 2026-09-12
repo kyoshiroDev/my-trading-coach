@@ -92,6 +92,25 @@ describe('ToastService — file, durées, pause (PROMPT-210)', () => {
     expect(messages()).toEqual(['Échec réseau']); // relancé, pas expiré
   });
 
+  it('état de pause exposé (lu par la barre de compte à rebours), nettoyé à la fermeture', () => {
+    const id = toast.success('x');
+    expect(toast.isPaused(id)).toBe(false);
+    toast.pause(id);
+    expect(toast.isPaused(id)).toBe(true);
+    toast.resume(id);
+    expect(toast.isPaused(id)).toBe(false);
+    toast.pause(id);
+    toast.dismiss(id);
+    expect(toast.isPaused(id)).toBe(false);
+  });
+
+  it('relance d’un même message : version incrémentée (la barre repart de zéro)', () => {
+    toast.error('Échec réseau');
+    expect(toast.visible()[0].version).toBe(0);
+    toast.error('Échec réseau');
+    expect(toast.visible()[0].version).toBe(1);
+  });
+
   it('clear() vide tout, minuteurs compris', () => {
     toast.success('a'); toast.error('b');
     toast.clear();
