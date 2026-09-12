@@ -5,6 +5,7 @@ import { of, throwError } from 'rxjs';
 import { AmbassadorComponent } from './ambassador.component';
 import { AmbassadorApi, AmbassadorStats } from '../../core/api/ambassador.api';
 import { ReferralApi } from '../../core/api/referral.api';
+import { ToastService } from '../../core/services/toast.service';
 import { AmbassadorNotifService } from '../../core/services/ambassador-notif.service';
 
 function makeStats(partial: Partial<AmbassadorStats> = {}): AmbassadorStats {
@@ -66,13 +67,13 @@ describe('AmbassadorComponent', () => {
     expect(referralApi.generateStatement).toHaveBeenCalled();
     expect(URL.createObjectURL).toHaveBeenCalled();
     expect(cmp.statementLoading()).toBe(false);
-    expect(cmp.statementError()).toBe(false);
+    expect(TestBed.inject(ToastService).visible().map((t) => t.type)).toEqual(['success']);
   });
 
   it('remonte une erreur de relevé sans casser le composant', () => {
     const { cmp } = setup({ generateStatement: vi.fn(() => throwError(() => new Error('boom'))) });
     cmp.generateStatement();
-    expect(cmp.statementError()).toBe(true);
+    expect(TestBed.inject(ToastService).visible()[0]).toMatchObject({ type: 'error' });
     expect(cmp.statementLoading()).toBe(false);
   });
 

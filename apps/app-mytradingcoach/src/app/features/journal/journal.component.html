@@ -9,12 +9,6 @@
 
 <div class="content">
 
-  <!-- Echec de suppression d'une ligne : sans ce bandeau, le clic sur la croix
-       ne produisait rien de visible et la ligne restait en place. -->
-  @if (deleteRowError(); as erreur) {
-    <div class="row-delete-error" role="alert" data-testid="delete-row-error">{{ erreur }}</div>
-  }
-
   <!-- ── Barre filtres ── -->
   <div class="filters-bar">
 
@@ -438,9 +432,6 @@
           </button>
         }
       </div>
-      @if (reassignError()) {
-        <p class="reassign-error">{{ reassignError() }}</p>
-      }
       <div class="confirm-modal-actions">
         <button class="confirm-btn-cancel"
           (click)="reassignDayKey.set(null)"

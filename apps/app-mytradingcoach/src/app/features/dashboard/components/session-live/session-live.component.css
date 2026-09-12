@@ -572,17 +572,6 @@
 }
 .qt-retry-btn:hover { border-color: var(--border-hover); }
 
-/* Toast retour d'action (succès / erreur) */
-.qt-feedback-toast {
-  margin-top: 2px; padding: 7px 10px; border-radius: 7px;
-  font-size: 11px; font-family: var(--font-body); font-weight: 500;
-  display: flex; align-items: center; gap: 6px;
-  animation: fbIn .18s ease;
-}
-.qt-feedback-toast.ok  { background: var(--green-dim); color: var(--green); border: 1px solid rgba(16,185,129,.25); }
-.qt-feedback-toast.err { background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(239,68,68,.25); }
-@keyframes fbIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
-
 /* Indicateurs de focus clavier (accessibilité) */
 .qt-emo:focus-visible,
 .qt-side:focus-visible,
@@ -1170,7 +1159,6 @@
   }
   .eco-release-alert,
   .close-panel,
-  .qt-feedback-toast,
   .news-modal,
   .news-modal-overlay {
     animation: none !important;

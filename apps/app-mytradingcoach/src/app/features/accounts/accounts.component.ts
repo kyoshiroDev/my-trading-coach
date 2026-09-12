@@ -19,7 +19,7 @@ import {
   Wallet, TrendingUp, List, Eye, Layers,
   ClipboardList, MoreHorizontal, Info, Plus, Lock,
   Pencil, Trash2, X, Briefcase, AlertCircle,
-  Link2, RefreshCw, CheckCircle2,
+  Link2, RefreshCw,
 } from 'lucide-angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
@@ -27,6 +27,8 @@ import { TradovateConnectModalComponent } from '../../shared/components/tradovat
 import { TradovateAccountPickerComponent } from '../../shared/components/tradovate-connect/tradovate-account-picker.component';
 import { TradovateStore } from '../../core/stores/tradovate.store';
 import { TradesStore } from '../../core/stores/trades.store';
+import { ToastService } from '../../core/services/toast.service';
+import { apiErrorMessage } from '../../core/utils/api-error';
 import type { TradovateSyncResult } from '../../core/api/tradovate.api';
 import {
   TRADOVATE_RETURN_PARAMS,
@@ -95,6 +97,7 @@ export class AccountsComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly tradesStore = inject(TradesStore);
+  private readonly toast = inject(ToastService);
 
   // ── Connexion Tradovate par compte (PROMPT-208) ──────────────────────────
   protected readonly tv = inject(TradovateStore);
@@ -102,8 +105,6 @@ export class AccountsComponent implements OnInit {
   protected readonly connectTarget = signal<{ id: string; label: string } | null>(null);
   /** Déconnexion en attente de confirmation (clé, pas l'objet : cf. angular.md). */
   protected readonly confirmDisconnectId = signal<string | null>(null);
-  /** Résultat du retour OAuth, affiché en tête de page puis retiré de l'URL. */
-  protected readonly tvBanner = signal<{ kind: 'success' | 'error' | 'info'; text: string; sub?: string } | null>(null);
   protected readonly relativeTime = relativeTime;
 
   protected readonly showPlanModal = signal(false);
@@ -214,26 +215,18 @@ export class AccountsComponent implements OnInit {
     );
     if (!ret || ret.fromWizard) return;
 
+    // Retour ponctuel → toasts (PROMPT-210). L'état durable (pilule, sélecteur de compte,
+    // « à reconnecter ») vit dans la carte du compte.
     if (ret.status === 'error') {
-      this.tvBanner.set({ kind: 'error', text: tradovateErrorMessage(ret.reason, false) });
+      this.toast.error(tradovateErrorMessage(ret.reason, false));
     } else if (ret.status === 'select_account') {
-      this.tvBanner.set({
-        kind: 'info',
-        text: 'Compte Tradovate connecté.',
-        sub: 'Choisis ci-dessous le compte Tradovate à synchroniser.',
-      });
+      this.toast.info('Compte Tradovate connecté : choisis ci-dessous le compte à synchroniser.');
     } else if (ret.syncFailed) {
-      this.tvBanner.set({
-        kind: 'info',
-        text: 'Compte Tradovate connecté.',
-        sub: "La première synchronisation n'a pas abouti : relance-la avec « Synchroniser ».",
-      });
+      this.toast.warning("Compte Tradovate connecté, mais la première synchronisation n'a pas abouti : relance-la avec « Synchroniser ».");
     } else {
-      this.tvBanner.set({
-        kind: 'success',
-        text: `Compte connecté · ${tradesLine(ret.trades ?? 0)}`,
-        sub: feesLine(ret.fees)?.text,
-      });
+      this.toast.success(`Compte connecté · ${tradesLine(ret.trades ?? 0)}`);
+      const fees = feesLine(ret.fees);
+      if (fees) this.toast.warning(fees.text);
       if ((ret.trades ?? 0) > 0) this.refreshAfterImport();
     }
 
@@ -247,17 +240,14 @@ export class AccountsComponent implements OnInit {
   }
 
   protected openTradovateConnect(a: TradingAccount): void {
-    this.tvBanner.set(null);
     this.connectTarget.set({ id: a.id, label: a.label });
   }
 
   protected syncTradovate(a: TradingAccount): void {
-    this.tvBanner.set(null);
     this.tv.sync(a.id, (r) => this.onSynced(r));
   }
 
   protected pickTradovateAccount(a: TradingAccount, externalId: string): void {
-    this.tvBanner.set(null);
     this.tv.selectThenSync(a.id, externalId, (r) => this.onSynced(r));
   }
 
@@ -302,7 +292,6 @@ export class AccountsComponent implements OnInit {
   protected readonly BriefcaseIcon = Briefcase;
   protected readonly LinkIcon = Link2;
   protected readonly RefreshIcon = RefreshCw;
-  protected readonly CheckIcon = CheckCircle2;
 
   // ── Helpers d'affichage ─────────────────────────────────────────────────
   // Icône lucide selon le type de compte.
@@ -484,8 +473,13 @@ export class AccountsComponent implements OnInit {
         this.saving.set(false);
         this.formOpen.set(false);
         this.store.load(); // recharge la liste + métriques
+        this.toast.success(id ? 'Compte mis à jour' : 'Compte créé');
       },
-      error: () => this.saving.set(false),
+      // AVANT : échec muet, la modale restait ouverte sans explication (quota, champ refusé…).
+      error: (err) => {
+        this.saving.set(false);
+        this.toast.error(apiErrorMessage(err, "Le compte n'a pas pu être enregistré."));
+      },
     });
   }
 

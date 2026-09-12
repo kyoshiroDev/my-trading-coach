@@ -12,6 +12,7 @@ import { UserStore } from '../../core/stores/user.store';
 import { TradesStore } from '../../core/stores/trades.store';
 import { TradovateStore, TradovateFeedback, TradovateBusy } from '../../core/stores/tradovate.store';
 import type { TradovateConnection } from '../../core/api/tradovate.api';
+import { ToastService } from '../../core/services/toast.service';
 import TEMPLATE from './accounts.component.html?raw';
 
 /**
@@ -203,18 +204,20 @@ describe('Mes comptes — connexion Tradovate par compte', () => {
   });
 });
 
-describe('Mes comptes — retour du consentement Tradovate', () => {
+describe('Mes comptes — retour du consentement Tradovate (toasts)', () => {
   beforeEach(() => TestBed.resetTestingModule());
+  const toasts = () => TestBed.inject(ToastService).visible().map((t) => ({ type: t.type, message: t.message }));
 
-  it('succès : « Compte connecté · N trades synchronisés », données rechargées, URL nettoyée', () => {
-    const { q, router, store, tradesStore } = setup({
+  it('succès : toast « Compte connecté · N trades synchronisés » + alerte frais, données rechargées, URL nettoyée', () => {
+    const { el, router, store, tradesStore } = setup({
       accounts: [acct('a', 'A')],
       query: { tradovate: 'connected', accountId: 'a', trades: '34', fees: 'partial' },
     });
-    const banner = q('tradovate-return-banner')!;
-    expect(banner.classList).toContain('success');
-    expect(banner.textContent).toContain('Compte connecté · 34 trades synchronisés');
-    expect(banner.textContent).toContain('Frais non rapprochés');
+    expect(toasts()).toEqual([
+      { type: 'success', message: 'Compte connecté · 34 trades synchronisés' },
+      { type: 'warning', message: 'Frais non rapprochés sur certains trades · vérifie le P&L net.' },
+    ]);
+    expect(el.querySelector('[data-testid="tradovate-return-banner"]'), 'plus de bandeau').toBeNull();
     expect(store.load).toHaveBeenCalled();
     expect(tradesStore.reset).toHaveBeenCalled();
 
@@ -224,30 +227,29 @@ describe('Mes comptes — retour du consentement Tradovate', () => {
     expect(extras.queryParams).toMatchObject({ tradovate: null, trades: null, accountId: null, reason: null });
   });
 
-  it('première synchro en échec : connecté quand même, invitation à relancer', () => {
-    const { q } = setup({ accounts: [acct('a', 'A')], query: { tradovate: 'connected', accountId: 'a', sync: 'error' } });
-    expect(q('tradovate-return-banner')!.textContent).toContain('Synchroniser');
+  it('première synchro en échec : connecté quand même, alerte pour relancer', () => {
+    setup({ accounts: [acct('a', 'A')], query: { tradovate: 'connected', accountId: 'a', sync: 'error' } });
+    expect(toasts()[0].type).toBe('warning');
+    expect(toasts()[0].message).toContain('Synchroniser');
   });
 
-  it('échec : message clair et non bloquant', () => {
-    const { q } = setup({ accounts: [acct('a', 'A')], query: { tradovate: 'error', reason: 'denied', accountId: 'a' } });
-    const banner = q('tradovate-return-banner')!;
-    expect(banner.classList).toContain('error');
-    expect(banner.textContent).toContain("Tu as refusé l'accès");
+  it('échec : toast d’erreur clair', () => {
+    setup({ accounts: [acct('a', 'A')], query: { tradovate: 'error', reason: 'denied', accountId: 'a' } });
+    expect(toasts()).toEqual([{ type: 'error', message: "Tu as refusé l'accès sur Tradovate : aucune donnée n'a été lue." }]);
   });
 
   it('retour destiné au wizard : ignoré ici (l’onboarding le traite)', () => {
-    const { q, router } = setup({
+    const { router } = setup({
       accounts: [acct('a', 'A')],
       query: { tradovate: 'connected', accountId: 'a', trades: '3', from: 'wizard' },
     });
-    expect(q('tradovate-return-banner')).toBeNull();
+    expect(toasts()).toEqual([]);
     expect(router.navigate).not.toHaveBeenCalled();
   });
 
-  it('aucun retour : ni bannière ni navigation', () => {
-    const { q, router } = setup({ accounts: [acct('a', 'A')] });
-    expect(q('tradovate-return-banner')).toBeNull();
+  it('aucun retour : ni toast ni navigation', () => {
+    const { router } = setup({ accounts: [acct('a', 'A')] });
+    expect(toasts()).toEqual([]);
     expect(router.navigate).not.toHaveBeenCalled();
   });
 });

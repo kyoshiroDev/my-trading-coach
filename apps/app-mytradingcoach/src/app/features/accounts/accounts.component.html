@@ -64,20 +64,6 @@
       </div>
     }
 
-    <!-- Retour du consentement Tradovate (PROMPT-208) : lu puis retiré de l'URL. -->
-    @if (tvBanner(); as b) {
-      <div class="tv-banner {{ b.kind }}" role="status" data-testid="tradovate-return-banner">
-        <lucide-icon [img]="b.kind === 'error' ? AlertCircleIcon : CheckIcon" [size]="15" />
-        <div>
-          <div class="tv-banner-main">{{ b.text }}</div>
-          @if (b.sub) { <div class="tv-banner-sub">{{ b.sub }}</div> }
-        </div>
-        <button class="tv-banner-x" type="button" aria-label="Fermer" (click)="tvBanner.set(null)">
-          <lucide-icon [img]="XIcon" [size]="14" />
-        </button>
-      </div>
-    }
-
     <!-- ── Cartes comptes ── -->
     <div class="acct-grid">
 

@@ -8,6 +8,7 @@ import {
   TradovateSyncResult,
 } from '../api/tradovate.api';
 import { syncResultLines } from '../utils/tradovate-return.util';
+import { ToastService } from '../services/toast.service';
 
 /** Action en cours sur un compte : pilote les spinners et désactive les boutons. */
 export type TradovateBusy = 'sync' | 'select' | 'disconnect' | 'connect';
@@ -32,6 +33,7 @@ export function tradovateErrorText(err: unknown, fallback: string): string {
 @Injectable({ providedIn: 'root' })
 export class TradovateStore {
   private readonly api = inject(TradovateApi);
+  private readonly toast = inject(ToastService);
 
   readonly connections = signal<TradovateConnection[]>([]);
   readonly loaded = signal(false);
@@ -65,16 +67,18 @@ export class TradovateStore {
     this.api.sync(accountId).subscribe({
       next: (res) => {
         this.setBusy(accountId, undefined);
-        this.setFeedback(accountId, { lines: syncResultLines(res.data), error: null });
+        // « 34 trades synchronisés » = transitoire → toast. Frais non rapprochés, position
+        // ouverte, trades écartés = à relire → restent dans la carte du compte (PROMPT-210).
+        const [main, ...durables] = syncResultLines(res.data);
+        this.toast.success(main.text);
+        this.setFeedback(accountId, durables.length ? { lines: durables, error: null } : undefined);
         this.load(); // dernière synchro + cumul à jour
         done?.(res.data);
       },
       error: (err) => {
         this.setBusy(accountId, undefined);
-        this.setFeedback(accountId, {
-          lines: [],
-          error: tradovateErrorText(err, 'La synchronisation a échoué. Réessaie dans un instant.'),
-        });
+        this.setFeedback(accountId, undefined);
+        this.toast.error(tradovateErrorText(err, 'La synchronisation a échoué. Réessaie dans un instant.'));
         this.load(); // l'API a pu passer la connexion en « à reconnecter »
         done?.(null);
       },
@@ -98,10 +102,7 @@ export class TradovateStore {
       },
       error: (err) => {
         this.setBusy(accountId, undefined);
-        this.setFeedback(accountId, {
-          lines: [],
-          error: tradovateErrorText(err, "Ce compte Tradovate n'a pas pu être choisi."),
-        });
+        this.toast.error(tradovateErrorText(err, "Ce compte Tradovate n'a pas pu être choisi."));
         done?.(null);
       },
     });
@@ -119,10 +120,7 @@ export class TradovateStore {
           return;
         }
         this.setBusy(accountId, undefined);
-        this.setFeedback(accountId, {
-          lines: [],
-          error: tradovateErrorText(err, 'La déconnexion a échoué. Réessaie.'),
-        });
+        this.toast.error(tradovateErrorText(err, 'La déconnexion a échoué. Réessaie.'));
       },
     });
   }
@@ -134,10 +132,8 @@ export class TradovateStore {
   private afterDisconnect(accountId: string): void {
     this.setBusy(accountId, undefined);
     this.connections.update((list) => list.filter((c) => c.accountId !== accountId));
-    this.setFeedback(accountId, {
-      lines: [{ text: 'Compte déconnecté. Tes trades déjà importés restent dans ton journal.', warn: false }],
-      error: null,
-    });
+    this.setFeedback(accountId, undefined);
+    this.toast.success('Compte Tradovate déconnecté. Tes trades déjà importés restent dans ton journal.');
   }
 
   private upsert(conn: TradovateConnection): void {

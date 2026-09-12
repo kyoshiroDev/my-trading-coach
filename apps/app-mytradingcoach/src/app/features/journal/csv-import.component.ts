@@ -28,6 +28,7 @@ import { environment } from '../../../environments/environment';
 import { parseDecimal } from '../../core/utils/parse-decimal';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { SetupsStore } from '../../core/stores/setups.store';
+import { ToastService } from '../../core/services/toast.service';
 
 export interface ImportResult {
   created: number;
@@ -403,6 +404,7 @@ export class CsvImportComponent {
 
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
   protected readonly accountStore = inject(SelectedAccountStore);
   private readonly setupsStore = inject(SetupsStore);
 
@@ -725,6 +727,10 @@ export class CsvImportComponent {
           // Les trades/summary sont rechargés par le parent (journal) ou l'effet du dashboard.
           this.accountStore.load();
           this.setupsStore.load(true);
+          // Bref signal transitoire ; le récap détaillé (trades, frais, avertissements) reste
+          // un bloc à relire — il n'est PAS remplacé par ce toast (PROMPT-210).
+          const n = res.data.created;
+          this.toast.success(n > 0 ? `Import terminé · ${n} trade${n > 1 ? 's' : ''} importé${n > 1 ? 's' : ''}` : 'Import terminé');
           this.imported.emit(res.data);
         },
         error: (err) => {

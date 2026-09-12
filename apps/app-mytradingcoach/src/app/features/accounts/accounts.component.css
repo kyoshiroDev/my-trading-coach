@@ -349,18 +349,6 @@
 
 /* ── Connexion Tradovate par compte (PROMPT-208, maquette proto-connexion-tradovate.html) ── */
 .nt-word { color: var(--nt); font-weight: 700; }
-.tv-banner {
-  display: flex; align-items: flex-start; gap: 10px;
-  padding: 12px 14px; margin-bottom: 16px; border-radius: 10px;
-  border: 1px solid var(--border); background: var(--bg-card); font-size: 13px;
-}
-.tv-banner.success { border-color: rgba(16, 185, 129, 0.35); color: var(--green); }
-.tv-banner.error { border-color: rgba(239, 68, 68, 0.35); color: var(--red); }
-.tv-banner.info { border-color: var(--border-hover); color: var(--blue-bright); }
-.tv-banner > div { flex: 1; min-width: 0; }
-.tv-banner-main { color: var(--text); font-weight: 600; }
-.tv-banner-sub { color: var(--text-2); font-size: 12px; margin-top: 2px; }
-.tv-banner-x { background: none; border: none; color: var(--text-3); cursor: pointer; display: flex; padding: 2px; }
 
 .tv-row {
   margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);

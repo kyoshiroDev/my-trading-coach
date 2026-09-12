@@ -33,6 +33,7 @@ import { EmotionEmojiPipe } from '../../../../shared/pipes/emotion-emoji.pipe';
 import { POLLING_MS } from '../../../../core/constants/polling.const';
 import { LiveNewsComponent } from './components/live-news/live-news.component';
 import { LiveFeedComponent } from './components/live-feed/live-feed.component';
+import { ToastService } from '../../../../core/services/toast.service';
 
 const MOODS: { value: MoodState; label: string; emoji: string }[] = [
   { value: 'CONFIDENT', label: 'Confiant', emoji: '😎' },
@@ -640,14 +641,6 @@ function currencyToInstruments(currency: string | null | undefined): string {
           >@if (qtSubmitting()) { Capture… } @else { <lucide-icon [img]="QuickIcon" [size]="14" /> Logger ce trade }</button>
           <div class="qt-hint">Asset + direction + émotion suffisent</div>
 
-          <!-- Retour d'action (succès / erreur) : annoncé aux lecteurs d'écran -->
-          <div class="qt-feedback" role="status" aria-live="polite">
-            @if (feedbackToast(); as fb) {
-              <div class="qt-feedback-toast" [class.ok]="fb.type === 'success'" [class.err]="fb.type === 'error'">
-                {{ fb.type === 'success' ? '✓' : '⚠' }} {{ fb.text }}
-              </div>
-            }
-          </div>
         </div>
 
       </div>
@@ -718,7 +711,6 @@ export class SessionLiveComponent {
   readonly newsItems = input<NewsItem[]>([]);
   readonly breakingNews = input<string | null>(null);
   readonly triggerCloseModal = input<boolean>(false);
-  readonly liveFeedback = input<{ type: 'success' | 'error'; text: string; ts: number } | null>(null);
   /** Désactive le CTA « Démarrer » tant qu'aucun compte précis n'est choisi (règle 1 session = 1 compte). */
   readonly startDisabled = input<boolean>(false);
 
@@ -735,6 +727,7 @@ export class SessionLiveComponent {
   private readonly userStore = inject(UserStore);
   private readonly tradesApi = inject(TradesApi);
   protected readonly setupsStore = inject(SetupsStore);
+  private readonly toast = inject(ToastService);
 
   // News live + contexte marché = IA mutualisée → FREE (PROMPT-169), accessible à tous.
 
@@ -809,9 +802,6 @@ export class SessionLiveComponent {
     this.newsTrigger = null;
   }
 
-  // Retour d'action live (toast succès/erreur, auto-effacé)
-  protected readonly feedbackToast = signal<{ type: 'success' | 'error'; text: string } | null>(null);
-  private feedbackTimer?: ReturnType<typeof setTimeout>;
 
   // Quick trade form : asset selection
   protected readonly userAssets = signal<UserAssetItem[]>([]);
@@ -951,16 +941,6 @@ export class SessionLiveComponent {
         this.startTime.set(null);
       }
     });
-
-    // Retour d'action live → toast auto-effacé après 3,5 s (annoncé via aria-live)
-    effect(() => {
-      const fb = this.liveFeedback();
-      if (!fb) return;
-      this.feedbackToast.set({ type: fb.type, text: fb.text });
-      clearTimeout(this.feedbackTimer);
-      this.feedbackTimer = setTimeout(() => this.feedbackToast.set(null), 3500);
-    });
-    this.destroyRef.onDestroy(() => clearTimeout(this.feedbackTimer));
 
     // Modale news → focus sur le dialogue à l'ouverture (accessibilité clavier)
     effect(() => {
@@ -1307,13 +1287,17 @@ export class SessionLiveComponent {
     const asset = this.qtSelectedAsset();
     if (!asset) return;
     const newFav = asset.isFavorite ? null : asset.symbol;
-    this.tradesApi.setFavoriteAsset(newFav).subscribe(() => {
-      this.userAssets.update((list) =>
-        list.map((a) => ({ ...a, isFavorite: a.symbol === newFav })),
-      );
-      this.qtSelectedAsset.update((a) =>
-        a ? { ...a, isFavorite: !a.isFavorite } : null,
-      );
+    this.tradesApi.setFavoriteAsset(newFav).subscribe({
+      next: () => {
+        this.userAssets.update((list) =>
+          list.map((a) => ({ ...a, isFavorite: a.symbol === newFav })),
+        );
+        this.qtSelectedAsset.update((a) =>
+          a ? { ...a, isFavorite: !a.isFavorite } : null,
+        );
+      },
+      // AVANT : échec muet, l'étoile ne changeait pas sans explication.
+      error: () => this.toast.error('Favori non enregistré. Réessaie.'),
     });
   }
 
