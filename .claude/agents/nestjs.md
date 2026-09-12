@@ -103,11 +103,11 @@ GET    /api/users/admin/:id/detail     ADMIN → fiche utilisateur complète
 GET    /api/users/admin/subscriptions  ADMIN → liste abonnements Premium
 
 GET    /api/integrations/tradovate/connections                 JWT → état de connexion par compte (jamais de token)
-POST   /api/integrations/tradovate/accounts/:accountId/authorize  JWT → { url } + cookie httpOnly de state
+POST   /api/integrations/tradovate/accounts/:accountId/authorize  JWT → { url } + cookie httpOnly de state · body { origin?: 'wizard'|'settings' }
 POST   /api/integrations/tradovate/accounts/:accountId/select     JWT → choix du compte Tradovate { externalAccountId }
 POST   /api/integrations/tradovate/accounts/:accountId/sync       JWT → synchro manuelle (FREE, pas de cron en V1)
 DELETE /api/integrations/tradovate/accounts/:accountId            JWT → déconnexion (tokens supprimés, trades gardés)
-GET    /integrations/tradovate/callback   PUBLIC, HORS /api (redirect_uri enregistré) → 302 vers l'app
+GET    /integrations/tradovate/callback   PUBLIC, HORS /api (redirect_uri enregistré) → 1re synchro puis 302 vers l'app
 
 GET    /api/health
 POST   /api/test/upgrade-user          NODE_ENV=test uniquement
@@ -656,6 +656,13 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
   victime avec SON lien et recevoir les trades de la victime. La doc ne dit pas si Tradovate
   renvoie `state` : s'il le renvoie, il doit égaler le cookie. Côté front, l'appel `authorize`
   doit partir **avec credentials** pour que le cookie soit posé.
+- **Retour au point de départ** (PROMPT-208) : l'origine (`wizard` | `settings`) est signée
+  dans le `state`. Le callback lance une **première synchro** (jamais bloquante : échec →
+  `sync=error`, la connexion reste faite) puis redirige : wizard → `/dashboard?…&from=wizard`
+  (l'overlay d'onboarding s'y rouvre), réglages → `/accounts?…`. Query params : `tradovate`
+  (`connected`|`select_account`|`error`), `accountId`, `reason`, `trades`, `fees`
+  (`ok`|`partial`|`none`), `sync`, `from`. Un `state` illisible renvoie vers les réglages,
+  jamais sur une page morte.
 - Chaîne de lecture : `position/list` (seul lien fill → compte) → `fillPair/list` (paires =
   lignes de l'export Performance) → `fill/items` → `fillFee/items` (frais exacts, optionnels)
   → `contract` / `contractMaturity` / `product` (symbole, `valuePerPoint`).
