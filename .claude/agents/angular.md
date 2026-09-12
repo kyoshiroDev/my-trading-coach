@@ -474,3 +474,50 @@ Réutilisable pour tout broker synchronisé par API (cf. `nestjs.md` pour le bac
   sans message, alors que `vitest run` direct passe. Les entrées signal (`input()`) ne
   s'alimentent pas en JIT : remplacer `cmp.accountId = signal(…)` avant le premier
   `detectChanges()`.
+
+---
+
+## Feedback utilisateur : toast · inline · bloc persistant (PROMPT-210)
+
+**Un seul système de toasts** : `core/services/toast.service.ts` (`ToastService`, root, signals)
+et **un seul conteneur** `mtc-toasts` monté dans `app.ts` (`<router-outlet /><mtc-toasts />`,
+hors routeur : il survit aux navigations). Ne JAMAIS recréer un toast local dans un composant
+(l'ancien `feedbackToast` de session-live a été retiré).
+
+```typescript
+private readonly toast = inject(ToastService);
+this.toast.success('Trade supprimé');
+this.toast.error(apiErrorMessage(err, "Ce trade n'a pas pu être supprimé."));
+this.toast.warning('…', { duration: null }); // null = fermeture manuelle uniquement
+```
+
+- Durées : success/info 4 s · warning/error 7 s. Pause au survol ET au focus. Croix sur chaque
+  toast. 3 visibles max, les suivants en file (le minuteur ne part qu'à l'affichage). Même
+  type + même message déjà affiché → relancé, pas empilé (double-clic).
+- A11y : succès/info/warning `role="status"` + `aria-live="polite"` ; erreur `role="alert"` +
+  `aria-live="assertive"`. `prefers-reduced-motion` respecté.
+- Position : bas-droite desktop ; mobile centré en bas **au-dessus du FAB « + »** (92 px) — le
+  haut est pris par le burger. z-index 10000 (au-dessus des modales 1000).
+- Message d'erreur API : **toujours** `apiErrorMessage(err, repli)` (`core/utils/api-error.ts`) —
+  message du back s'il existe (tableaux ValidationPipe joints), sinon repli lisible, jamais
+  `undefined`.
+
+**Règle de choix — ne pas tout convertir :**
+
+| Nature | Forme | Exemples |
+|---|---|---|
+| « Quelque chose vient de se passer, tu peux continuer » | **toast** | Lien copié · Trade enregistré/supprimé/déplacé · échec d'une action ponctuelle · retour OAuth Tradovate · « Import terminé » |
+| « Corrige ça ici » | **inline, à côté du champ** | validation de formulaire (trade-form, auth), erreur API rendue dans un formulaire encore ouvert (`[apiError]` de trade-form) |
+| « Information à consulter » | **bloc persistant** | récap d'import CSV, frais non rapprochés · P&L brut, position ouverte, avertissements Tradovate de la carte compte |
+| État de la page | **pas un toast** | chargement, vide, paywall, « Impossible de charger ton parrainage », carte « Demande envoyée », succès mot de passe oublié / réinitialisé (le bloc REMPLACE le formulaire) |
+| Échec partiel actionnable dans une modale ouverte | **inline dans la modale** | suppression d'une journée : trades restants + « Réessayer sur N trades » |
+
+**Plus d'échec muet** : toute mutation déclenchée par l'utilisateur a une branche `error` qui
+affiche un toast (ou un message inline si c'est une validation). Les chargements de fond et
+rafraîchissements périodiques restent silencieux (état de page). Repérage utilisé en PROMPT-210 :
+chercher les `subscribe(` sans `error`, ou dont l'`error` ne fait que relâcher un spinner.
+
+**Tests** : `TestBed.inject(ToastService).visible()` donne `{ type, message }` des toasts
+affichés (service réel, pas besoin de le mocker). Pour un composant qui monte `mtc-toasts`
+(`app.spec.ts`) : `ɵresolveComponentResources` avec un résolveur vide dans `beforeAll`, puis
+`overrideComponent(ToastsComponent, …)` AVANT `compileComponents()`.
