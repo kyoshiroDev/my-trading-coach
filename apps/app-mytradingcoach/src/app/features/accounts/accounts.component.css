@@ -408,5 +408,7 @@
 
 @media (max-width: 560px) {
   .tv-line { flex-direction: column; align-items: stretch; }
+  /* En colonne, la base de 200px deviendrait une HAUTEUR : grand vide sous le texte. */
+  .tv-text { flex: 0 0 auto; }
   .tv-actions .tv-btn { flex: 1 1 auto; justify-content: center; }
 }

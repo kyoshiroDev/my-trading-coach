@@ -445,18 +445,14 @@
 /* 2 × 2 : la carte Tradovate s'ajoute sans remplacer le CSV (maquette validée). */
 .choice-grid-4 { grid-template-columns: 1fr 1fr; }
 @media (max-width: 640px) { .choice-grid-4 { grid-template-columns: 1fr; } }
-.choice-tradovate { position: relative; padding-right: 16px; }
-.choice-tradovate .choice-label { padding-right: 96px; }
+.choice-tradovate { position: relative; }
 .choice-tag.nt {
   position: absolute; top: 12px; right: 12px; margin-top: 0;
   background: var(--nt-dim); color: var(--nt); border-color: rgba(255, 90, 31, 0.25);
   text-transform: uppercase; letter-spacing: 0.5px;
 }
 .nt-word { color: var(--nt); font-weight: 700; }
-@media (max-width: 640px) {
-  .choice-tradovate .choice-label { padding-right: 0; }
-  .choice-tag.nt { position: static; align-self: flex-start; margin-bottom: 6px; }
-}
+/* Le badge partage la ligne de l'icône (en haut à droite) : le titre garde toute la largeur. */
 
 .ob-tv-error {
   margin: 0 0 14px; padding: 10px 12px; border-radius: 8px;
