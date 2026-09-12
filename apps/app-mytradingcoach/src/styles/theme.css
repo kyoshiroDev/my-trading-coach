@@ -26,6 +26,10 @@
   --purple-dim: rgba(139, 92, 246, 0.12);
   --cyan: #22d3ee;
   --accent: #3b82f6;
+  /* Orange NinjaTrader : réservé au flux Tradovate (carte, connexion), jamais ailleurs. */
+  --nt: #ff5a1f;
+  --nt-dim: rgba(255, 90, 31, 0.14);
+  --nt-ink: #150701; /* texte sur fond --nt */
 
   /* ─── Text ─── */
   --text: #e2eaf5;
