@@ -86,15 +86,19 @@ describe('Onboarding — étape 8 : carte « Connecter mon compte Tradovate »',
     saveProgress(8);
   });
 
-  it('4 cartes : CSV conservé, Tradovate ajoutée juste après, manuel et zéro intacts', () => {
+  it('4 cartes : Tradovate EN TÊTE et mise en avant, CSV conservé au second plan (PROMPT-211)', () => {
     const { el, q } = mount();
     const ids = [...el.querySelectorAll('.choice-grid-4 [data-testid]')].map((n) => n.getAttribute('data-testid'));
     expect(ids).toEqual([
-      'onboarding-choice-csv',
       'onboarding-choice-tradovate',
+      'onboarding-choice-csv',
       'onboarding-choice-manual',
       'onboarding-choice-skip',
     ]);
+    expect(q('onboarding-choice-tradovate')!.classList).toContain('choice-featured');
+    expect(q('onboarding-choice-csv')!.classList).not.toContain('choice-featured');
+    // Plus de badge concurrent sur la carte CSV : une seule option mise en avant.
+    expect(q('onboarding-choice-csv')!.querySelector('.choice-tag')).toBeNull();
     const card = q('onboarding-choice-tradovate')!.textContent!.replace(/\s+/g, ' ');
     expect(card).toContain('Le plus complet');
     expect(card).toContain('Connecter mon compte Tradovate');

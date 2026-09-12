@@ -402,13 +402,9 @@
           }
 
           <div class="choice-grid choice-grid-4">
-            <div class="choice-card choice-action" (click)="chooseCsv()" role="button" tabindex="0" (keydown.enter)="chooseCsv()" data-testid="onboarding-choice-csv">
-              <div class="choice-ic blue">📥</div>
-              <span class="choice-label">Importer mon historique (CSV)</span>
-              <span class="choice-desc">Tu viens d'un autre broker ou journal ? Importe ton historique pour démarrer avec tes vraies données.</span>
-              <div class="choice-tag">Le plus rapide</div>
-            </div>
-            <div class="choice-card choice-action choice-tradovate" (click)="chooseTradovate()" role="button" tabindex="0"
+            <!-- PROMPT-211 : Tradovate EN TÊTE (pleine largeur, accent --nt) ; le CSV reste pour
+                 les autres brokers, mais au second plan avec le manuel et « zéro ». -->
+            <div class="choice-card choice-action choice-tradovate choice-featured" (click)="chooseTradovate()" role="button" tabindex="0"
                  (keydown.enter)="chooseTradovate()" [attr.aria-busy]="tvPreparing()" data-testid="onboarding-choice-tradovate">
               <div class="choice-tag nt">Le plus complet</div>
               <div class="choice-ic nt">🔗</div>
@@ -416,6 +412,11 @@
               <span class="choice-desc">
                 {{ tvPreparing() ? 'Préparation de ton compte…' : 'Apex, Lucid Trading, TopStep… tes trades arrivent tout seuls, sans exporter de fichier.' }}
               </span>
+            </div>
+            <div class="choice-card choice-action" (click)="chooseCsv()" role="button" tabindex="0" (keydown.enter)="chooseCsv()" data-testid="onboarding-choice-csv">
+              <div class="choice-ic blue">📥</div>
+              <span class="choice-label">Importer mon historique (CSV)</span>
+              <span class="choice-desc">Tu viens d'un autre broker ou journal ? Importe ton historique pour démarrer avec tes vraies données.</span>
             </div>
             <div class="choice-card choice-action" (click)="chooseManual()" role="button" tabindex="0" (keydown.enter)="chooseManual()" data-testid="onboarding-choice-manual">
               <div class="choice-ic blue">✏️</div>

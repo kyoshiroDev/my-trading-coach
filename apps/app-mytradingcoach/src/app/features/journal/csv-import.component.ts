@@ -23,12 +23,15 @@ import {
   Zap,
   FileText,
   Check,
+  Link2,
 } from 'lucide-angular';
 import { environment } from '../../../environments/environment';
 import { parseDecimal } from '../../core/utils/parse-decimal';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { SetupsStore } from '../../core/stores/setups.store';
 import { ToastService } from '../../core/services/toast.service';
+import { TradovateStore } from '../../core/stores/tradovate.store';
+import { TradovateConnectModalComponent } from '../../shared/components/tradovate-connect/tradovate-connect-modal.component';
 
 export interface ImportResult {
   created: number;
@@ -55,7 +58,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
 @Component({
   selector: 'mtc-csv-import',
   standalone: true,
-  imports: [LucideAngularModule],
+  imports: [LucideAngularModule, TradovateConnectModalComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './csv-import.component.css',
   template: `
@@ -187,6 +190,56 @@ const EMOTION_EMOJIS: Record<string, string> = {
 
               <!-- 2. Panneau selon la source (dropzone direct en onboarding) -->
               @if (allowFeesFile() && source() === 'tradovate') {
+                @if (!tvCsvOpen()) {
+                <!-- PROMPT-211 : pour Tradovate, la synchro API est l'option PRINCIPALE (pas de
+                     fichier, frais exacts, à jour). Le CSV reste accessible juste en dessous, en
+                     repli (pas de connexion voulue, souci OAuth, vieil historique). -->
+                <div class="tv-reco" data-testid="import-tradovate-reco">
+                  <div class="tv-reco-head">
+                    <lucide-icon [img]="LinkIcon" [size]="16" class="tv-reco-ic" />
+                    <span class="tv-reco-title">Connecter mon compte <span class="nt-word">Tradovate</span></span>
+                    <span class="tv-reco-tag">Recommandé</span>
+                  </div>
+                  <p class="tv-reco-text">
+                    Synchro automatique en lecture seule : tes trades et leurs frais exacts arrivent
+                    tout seuls, sans exporter de fichier.
+                  </p>
+                  @switch (tvState()) {
+                    @case ('sync') {
+                      <p class="tv-reco-state">Ce compte est déjà connecté à Tradovate.</p>
+                      <button type="button" class="tv-reco-btn" data-testid="import-tradovate-sync"
+                              (click)="syncTradovate()" [disabled]="tvBusy()">
+                        {{ tvBusy() ? 'Synchronisation…' : 'Synchroniser maintenant' }}
+                      </button>
+                    }
+                    @case ('finish') {
+                      <p class="tv-reco-state">
+                        Connexion à finaliser : choisis le compte Tradovate à synchroniser depuis « Mes comptes ».
+                      </p>
+                    }
+                    @default {
+                      <button type="button" class="tv-reco-btn" data-testid="import-tradovate-connect"
+                              (click)="openTradovateConnect()" [disabled]="!tvTarget()">
+                        <lucide-icon [img]="LinkIcon" [size]="14" />
+                        {{ tvState() === 'reconnect' ? 'Reconnecter mon compte Tradovate' : 'Connecter mon compte Tradovate' }}
+                      </button>
+                      <p class="tv-reco-hint">
+                        @if (!tvTarget()) {
+                          {{ accountStore.activeAccounts().length === 0
+                            ? 'Crée d’abord ton compte de trading dans « Mes comptes ».'
+                            : 'Choisis ci-dessous le compte à connecter.' }}
+                        } @else {
+                          Après l’autorisation chez Tradovate, tu arrives sur « Mes comptes » avec tes trades synchronisés.
+                        }
+                      </p>
+                    }
+                  }
+                </div>
+                <button type="button" class="tv-csv-alt" data-testid="import-tradovate-csv-toggle"
+                        (click)="tvCsvOpen.set(true)">ou importer un fichier CSV Tradovate</button>
+                } @else {
+                <button type="button" class="tv-csv-alt tv-csv-back" data-testid="import-tradovate-back"
+                        (click)="tvCsvOpen.set(false)">← plutôt connecter mon compte (recommandé)</button>
                 <!-- Tradovate : deux fichiers inline -->
                 <div class="import-field">
                   <label class="import-label" for="tvTradesInput">
@@ -258,6 +311,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
                     </span>
                   </p>
                 }
+                }
               } @else {
                 <!-- Autre broker / onboarding : dropzone -->
                 <div
@@ -274,7 +328,8 @@ const EMOTION_EMOJIS: Record<string, string> = {
                 >
                   <lucide-icon [img]="UploadIcon" [size]="28" color="var(--text-3)" />
                   <p class="drop-title">Glisse ton CSV ici</p>
-                  <p class="drop-sub">Tradovate · Binance · MetaTrader · Bybit · ou tout autre broker</p>
+                  <!-- « Autre broker » : Tradovate a son propre choix (synchro ou CSV) juste au-dessus. -->
+                  <p class="drop-sub">{{ allowFeesFile() ? 'Binance · MetaTrader · Bybit · IBKR · ou tout autre broker' : 'Tradovate · Binance · MetaTrader · Bybit · ou tout autre broker' }}</p>
                   <span class="drop-btn">Parcourir</span>
                 </div>
                 <p class="drop-hint">
@@ -296,7 +351,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
               <!-- Compte cible (corrige le rattachement multi-compte) -->
               @if (accountStore.activeAccounts().length > 0) {
                 <div class="import-field">
-                  <label class="import-label" for="importAccount">Importer dans le compte</label>
+                  <label class="import-label" for="importAccount">{{ tvReco() ? 'Compte à connecter' : 'Importer dans le compte' }}</label>
                   <select
                     id="importAccount"
                     class="import-select"
@@ -311,6 +366,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
                 </div>
               }
 
+              @if (!tvReco()) {
               <!-- Émotion en lot (optionnel, override de l'humeur de session) -->
               <div class="import-field">
                 <label class="import-label" for="importEmotion">Émotion (optionnel, appliquée à tout le lot)</label>
@@ -348,9 +404,11 @@ const EMOTION_EMOJIS: Record<string, string> = {
                 </div>
               }
 
+              }
+
               <!-- 4. Validation + footer -->
               @if (!canImport()) {
-                <p class="import-help import-warn">Choisis le compte de destination pour importer.</p>
+                <p class="import-help import-warn">{{ tvReco() ? 'Choisis le compte à connecter à Tradovate.' : 'Choisis le compte de destination pour importer.' }}</p>
               }
               <!-- Confirmation DOUCE (jamais bloquante) : l'import sans Cash history reste
                    possible en un clic, mais le choix devient conscient. Le bouton Importer
@@ -372,6 +430,8 @@ const EMOTION_EMOJIS: Record<string, string> = {
               }
               <div class="modal-footer">
                 <button class="btn-ghost" (click)="dismissed.emit()">Annuler</button>
+                <!-- Mode connexion : pas de fichier, donc pas de bouton « Importer ». -->
+                @if (!tvReco()) {
                 <button
                   class="btn-primary"
                   data-testid="import-submit"
@@ -384,11 +444,20 @@ const EMOTION_EMOJIS: Record<string, string> = {
                     Importer
                   }
                 </button>
+                }
               </div>
             </div>
           }
         </div>
       </div>
+      <!-- Réassurance avant OAuth : composant partagé (PROMPT-208), aucune logique dupliquée. -->
+      @if (tvConnectTarget(); as t) {
+        <mtc-tradovate-connect-modal
+          [accountId]="t.id"
+          [accountLabel]="t.label"
+          origin="settings"
+          (closed)="tvConnectTarget.set(null)" />
+      }
     }
   `,
 })
@@ -407,6 +476,36 @@ export class CsvImportComponent {
   private readonly toast = inject(ToastService);
   protected readonly accountStore = inject(SelectedAccountStore);
   private readonly setupsStore = inject(SetupsStore);
+  protected readonly tv = inject(TradovateStore);
+  protected readonly LinkIcon = Link2;
+
+  // ── Tradovate : synchro API en option principale, CSV en repli (PROMPT-211) ──
+  /** L'utilisateur a choisi le repli « importer un fichier CSV Tradovate ». */
+  protected readonly tvCsvOpen = signal(false);
+  /** Compte pour lequel l'écran de réassurance Tradovate est ouvert. */
+  protected readonly tvConnectTarget = signal<{ id: string; label: string } | null>(null);
+  /** Mode « connexion recommandée » : source Tradovate, hors onboarding, CSV non déroulé. */
+  protected readonly tvReco = computed(
+    () => this.allowFeesFile() && this.source() === 'tradovate' && !this.tvCsvOpen(),
+  );
+  /** Compte cible choisi dans « Compte » (la connexion est PAR compte). */
+  protected readonly tvTarget = computed(() => {
+    const a = this.accountStore.activeAccounts().find((x) => x.id === this.accountId());
+    return a ? { id: a.id, label: a.label } : null;
+  });
+  /** connect : pas encore connecté · sync : déjà connecté · reconnect : jeton expiré · finish : choix du compte Tradovate en attente. */
+  protected readonly tvState = computed<'connect' | 'sync' | 'reconnect' | 'finish'>(() => {
+    const t = this.tvTarget();
+    const c = t ? this.tv.byAccount().get(t.id) : undefined;
+    if (!c) return 'connect';
+    if (c.status === 'NEEDS_RECONNECT') return 'reconnect';
+    if (c.needsAccountSelection) return 'finish';
+    return 'sync';
+  });
+  protected readonly tvBusy = computed(() => {
+    const t = this.tvTarget();
+    return !!t && !!this.tv.busy()[t.id];
+  });
 
   protected readonly XIcon = X;
   protected readonly UploadIcon = Upload;
@@ -523,7 +622,13 @@ export class CsvImportComponent {
     });
     // À l'ouverture du modal : présélectionne le compte courant (les options sont visibles d'emblée).
     effect(() => {
-      if (this.open()) untracked(() => this.initAccountSelection());
+      if (!this.open()) return;
+      untracked(() => {
+        this.initAccountSelection();
+        // Chaque ouverture repart sur la recommandation (connexion) ; états de connexion à jour.
+        this.tvCsvOpen.set(false);
+        if (this.allowFeesFile()) this.tv.load();
+      });
     });
   }
 
@@ -532,6 +637,28 @@ export class CsvImportComponent {
     this.source.set(s);
     this.error.set(null);
     if (s === 'other') this.clearFeesFile();
+  }
+
+  protected openTradovateConnect(): void {
+    const t = this.tvTarget();
+    if (t) this.tvConnectTarget.set(t);
+  }
+
+  /** Compte déjà connecté : synchro directe (store partagé) ; le résultat suit le même chemin qu'un import. */
+  protected syncTradovate(): void {
+    const t = this.tvTarget();
+    if (!t) return;
+    this.tv.sync(t.id, (r) => {
+      if (!r) return; // échec : toast d'erreur déjà affiché par le store
+      if (r.created > 0) this.accountStore.load();
+      this.imported.emit({
+        created: r.created,
+        duplicates: r.duplicates,
+        failed: r.failed,
+        total: r.total,
+        feesImported: r.feesImported,
+      });
+    });
   }
 
   protected emotionEmoji(e: string): string {

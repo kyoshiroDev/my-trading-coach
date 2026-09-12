@@ -443,9 +443,13 @@
 
 /* ── Étape 8 : 4 options (CSV · Tradovate · manuel · zéro), PROMPT-208 ─────────── */
 /* 2 × 2 : la carte Tradovate s'ajoute sans remplacer le CSV (maquette validée). */
-.choice-grid-4 { grid-template-columns: 1fr 1fr; }
+/* Hiérarchie (PROMPT-211) : Tradovate en tête sur toute la largeur, accent --nt ; puis les
+   3 options secondaires (CSV, manuel, zéro) sur une ligne. */
+.choice-grid-4 { grid-template-columns: repeat(3, 1fr); }
+.choice-featured { grid-column: 1 / -1; }
 @media (max-width: 640px) { .choice-grid-4 { grid-template-columns: 1fr; } }
-.choice-tradovate { position: relative; }
+.choice-tradovate { position: relative; border-color: rgba(255, 90, 31, 0.45); background: var(--nt-dim); }
+.choice-tradovate:hover { border-color: var(--nt); background: rgba(255, 90, 31, 0.18); }
 .choice-tag.nt {
   position: absolute; top: 12px; right: 12px; margin-top: 0;
   background: var(--nt-dim); color: var(--nt); border-color: rgba(255, 90, 31, 0.25);
