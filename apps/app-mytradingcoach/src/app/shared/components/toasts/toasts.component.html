@@ -1,0 +1,21 @@
+<div class="toasts" data-testid="toasts">
+  @for (t of toasts.visible(); track t.id) {
+    <div class="toast {{ t.type }}"
+         [attr.role]="t.type === 'error' ? 'alert' : 'status'"
+         [attr.aria-live]="live(t.type)"
+         aria-atomic="true"
+         [attr.data-testid]="'toast-' + t.type"
+         (mouseenter)="toasts.pause(t.id)" (mouseleave)="toasts.resume(t.id)"
+         (focusin)="toasts.pause(t.id)" (focusout)="toasts.resume(t.id)">
+      <lucide-icon class="toast-ic" [img]="icon(t.type)" [size]="16" aria-hidden="true" />
+      <p class="toast-msg">{{ t.message }}</p>
+      <button class="toast-x" type="button" aria-label="Fermer la notification"
+              data-testid="toast-close" (click)="toasts.dismiss(t.id)">
+        <lucide-icon [img]="XIcon" [size]="14" aria-hidden="true" />
+      </button>
+    </div>
+  }
+  @if (toasts.queued() > 0) {
+    <div class="toast-queue" aria-hidden="true">+{{ toasts.queued() }}</div>
+  }
+</div>

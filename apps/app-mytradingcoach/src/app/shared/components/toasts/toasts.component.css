@@ -1,0 +1,91 @@
+/* Toasts globaux (PROMPT-210) — discrets, tokens theme.css. Palier z-index 10000
+   (au-dessus des modales 1000 et de l'overlay d'onboarding 300). */
+.toasts {
+  position: fixed;
+  right: 24px;
+  bottom: calc(env(safe-area-inset-bottom) + 24px);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  width: min(380px, calc(100vw - 32px));
+  pointer-events: none; /* la zone vide ne bloque pas les clics de la page */
+}
+
+.toast {
+  --tc: var(--blue);
+  pointer-events: auto;
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 10px 11px 13px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-hover);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  font-family: var(--font-body);
+  animation: toast-in 0.18s ease-out;
+}
+.toast.success { --tc: var(--green); border-color: rgba(16, 185, 129, 0.3); }
+.toast.error   { --tc: var(--red);   border-color: rgba(239, 68, 68, 0.35); }
+.toast.warning { --tc: var(--yellow); border-color: rgba(245, 158, 11, 0.35); }
+.toast.info    { --tc: var(--blue);  border-color: var(--border-hover); }
+
+.toast-ic { color: var(--tc); flex: 0 0 auto; margin-top: 1px; }
+.toast-msg {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.toast-x {
+  flex: 0 0 auto;
+  display: flex;
+  padding: 3px;
+  margin: -2px 0 0;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-3);
+  cursor: pointer;
+}
+.toast-x:hover,
+.toast-x:focus-visible { color: var(--text); background: var(--bg-2); outline: none; }
+
+.toast-queue {
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-3);
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Mobile : centré en bas, AU-DESSUS du bouton flottant « + » (56px à 24px du bas, topbar)
+   — le haut est pris par le burger. */
+@media (max-width: 768px) {
+  .toasts {
+    left: 16px;
+    right: 16px;
+    bottom: calc(env(safe-area-inset-bottom) + 92px);
+    width: auto;
+    align-items: stretch;
+  }
+  .toast-queue { align-self: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast { animation: none; }
+}
