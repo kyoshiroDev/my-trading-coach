@@ -686,6 +686,12 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
   import CSV reste nécessaire pour le passé et la synchro sert au fil de l'eau.
   (Vérifié : la synchro n'envoie AUCUNE borne de date — `position/list` et `fillPair/list` n'ont
   pas de paramètre ; test « première synchro : tout l'historique » dans `tradovate-sync.int-spec`.)
+  **Mesuré le 2026-09-12 (samedi, PROMPT-212)** : sur 2 logins réels (4 comptes prop firm),
+  `position/list`, `fillPair/list`, `fill/list` et `order/list` renvoient 0 entité alors que
+  l'utilisateur avait tradé avant la connexion → très probablement, ces routes n'exposent que la
+  séance en cours. À confirmer un jour de bourse. Chaque synchro logue désormais ce que Tradovate
+  a RENVOYÉ (`describeTradovateSnapshot` : comptes, positions du compte / des autres comptes du
+  login, séances, paires rattachées ou orphelines, fills lus) — jamais de prix ni de P&L.
 
 **Temps réel (PROMPT-210 live) — calé sur la PRÉSENCE dans l'app**
 - Canal applicatif `/tradovate-live` (`tradovate-live.gateway.ts`, même pattern que `/eco`) mais
