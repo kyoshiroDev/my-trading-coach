@@ -78,6 +78,17 @@ Règles :
   logo *et* paragraphe « Divulgation d'affiliation » en section 7 de `disclaimer.astro`. Ne jamais
   retirer l'un sans l'autre, ni le lien sans les deux.
 
+### Annonce de la synchro Tradovate (PROMPT-211)
+
+- `Features.astro` (carte 07 « Synchro Tradovate & import CSV ») et `FAQ.astro` (« Quels brokers
+  sont compatibles ? ») présentent la **connexion Tradovate** (synchro auto des trades + frais, en
+  lecture seule) comme voie principale, l'import CSV pour les autres brokers et en repli.
+- **Formulation factuelle uniquement (clause 17)** : jamais « Partenaire officiel de NinjaTrader »,
+  « Recommandé / Approuvé par NinjaTrader » ni aucune caution. Le logo NinjaTrader reste **au seul
+  footer**. Aucune promesse de gain (AMF) : on décrit ce que fait la synchro, pas un résultat.
+- `Compare.astro` **inchangé volontairement** : TraderSync et TradesViz proposent une synchro
+  broker ; une ligne « Synchro broker directe » les montrerait à tort sans (cf. règle ci-dessous).
+
 ---
 
 ## Tableau comparatif (`Compare.astro`)
