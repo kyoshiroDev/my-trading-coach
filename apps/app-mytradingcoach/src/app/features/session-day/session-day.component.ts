@@ -12,7 +12,17 @@ import {
 import { DatePipe, registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
 registerLocaleData(localeFr);
-import { LucideAngularModule, Play, Sunrise, Zap, Moon, Trophy, TrendingDown, NotebookPen, Menu } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucidePlay as Play,
+  LucideSunrise as Sunrise,
+  LucideZap as Zap,
+  LucideMoon as Moon,
+  LucideTrophy as Trophy,
+  LucideTrendingDown as TrendingDown,
+  LucideNotebookPen as NotebookPen,
+  LucideMenu as Menu,
+} from '@lucide/angular';
 import { SessionStore } from '../../core/stores/session.store';
 import { SessionMorningComponent } from '../dashboard/components/session-morning/session-morning.component';
 import { SessionLiveComponent } from '../dashboard/components/session-live/session-live.component';
@@ -44,7 +54,7 @@ const EMOTION_COLORS: Record<string, string> = {
 
 @Component({
   selector: 'mtc-session-day',
-  imports: [DatePipe, LucideAngularModule, SessionMorningComponent, SessionLiveComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
+  imports: [DatePipe, LucideDynamicIcon, SessionMorningComponent, SessionLiveComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-day.component.css',
   templateUrl: './session-day.component.html',

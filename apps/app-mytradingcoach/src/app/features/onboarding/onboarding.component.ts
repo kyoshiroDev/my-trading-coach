@@ -17,7 +17,10 @@ import { TradesApi, CreateTradeDto, InstrumentSearchResult } from '../../core/ap
 import { TradesStore } from '../../core/stores/trades.store';
 import { AccountsApi, CreateAccountPayload, DrawdownType } from '../../core/api/accounts.api';
 import { AuthService } from '../../core/auth/auth.service';
-import { LucideAngularModule, Bitcoin } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideBitcoin as Bitcoin,
+} from '@lucide/angular';
 import { TradeFormComponent } from '../journal/trade-form.component';
 import { CsvImportComponent, ImportResult } from '../journal/csv-import.component';
 import { SetupsStore } from '../../core/stores/setups.store';
@@ -120,7 +123,7 @@ interface OnboardingProgress {
 @Component({
   selector: 'mtc-onboarding',
   imports: [
-    LucideAngularModule, TradeFormComponent, CsvImportComponent, SetupFormModalComponent,
+    LucideDynamicIcon, TradeFormComponent, CsvImportComponent, SetupFormModalComponent,
     TradovateConnectModalComponent, TradovateAccountPickerComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

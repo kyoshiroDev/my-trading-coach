@@ -67,7 +67,7 @@
               <button class="choice-card" [attr.data-testid]="'onboarding-market-' + m.value" [class.selected]="selectedMarket() === m.value" (click)="selectMarket(m.value)">
                 <span class="choice-emoji">
                   @if (m.icon) {
-                    <lucide-icon [img]="m.icon" [size]="24" [style.color]="m.iconColor" />
+                    <svg [lucideIcon]="m.icon" [size]="24" [style.color]="m.iconColor"></svg>
                   } @else {
                     {{ m.emoji }}
                   }

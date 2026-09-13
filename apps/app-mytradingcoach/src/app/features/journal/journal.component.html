@@ -27,7 +27,7 @@
           <option value="LOSS">Loss</option>
           <option value="BREAKEVEN">Break-even</option>
         </select>
-        <lucide-icon class="fs-chev" [img]="ChevronDownIcon" [size]="10" />
+        <svg class="fs-chev" [lucideIcon]="ChevronDownIcon" [size]="10"></svg>
       </span>
 
       <!-- Setup (remplace les chips) -->
@@ -40,7 +40,7 @@
             <option [value]="s.id">{{ s.title }}</option>
           }
         </select>
-        <lucide-icon class="fs-chev" [img]="ChevronDownIcon" [size]="10" />
+        <svg class="fs-chev" [lucideIcon]="ChevronDownIcon" [size]="10"></svg>
       </span>
 
       <!-- Execution -->
@@ -55,7 +55,7 @@
           <option value="MAUVAIS">Mauvais</option>
           <option value="NONE">Non évaluée</option>
         </select>
-        <lucide-icon class="fs-chev" [img]="ChevronDownIcon" [size]="10" />
+        <svg class="fs-chev" [lucideIcon]="ChevronDownIcon" [size]="10"></svg>
       </span>
 
       <!-- Émotion (effective) -->
@@ -73,12 +73,12 @@
           <option value="TIRED">Fatigué</option>
           <option value="NONE">Non renseignée</option>
         </select>
-        <lucide-icon class="fs-chev" [img]="ChevronDownIcon" [size]="10" />
+        <svg class="fs-chev" [lucideIcon]="ChevronDownIcon" [size]="10"></svg>
       </span>
 
       @if (hasActiveFilters()) {
         <button class="filter-reset" (click)="resetFilters()" aria-label="Réinitialiser les filtres">
-          <lucide-icon [img]="XIcon" [size]="10" /> Réinitialiser
+          <svg [lucideIcon]="XIcon" [size]="10"></svg> Réinitialiser
         </button>
       }
 
@@ -94,7 +94,7 @@
         <button class="date-preset" [class.active]="datePreset() === 'month'" (click)="setDatePreset('month')">Mois</button>
         <button class="date-preset" [class.active]="datePreset() === 'all'" (click)="setDatePreset('all')">Tout</button>
         <button class="date-preset date-custom" [class.active]="datePreset() === 'custom'" (click)="toggleCustomDate()">
-          <lucide-icon [img]="CalendarIcon" [size]="11" />
+          <svg [lucideIcon]="CalendarIcon" [size]="11"></svg>
           Custom
         </button>
       </div>
@@ -110,7 +110,7 @@
       <button class="filter-chip import-btn"
         (click)="showImport.set(true)"
         title="Importer un CSV">
-        <lucide-icon [img]="UploadIcon" [size]="12" />
+        <svg [lucideIcon]="UploadIcon" [size]="12"></svg>
         CSV
       </button>
     </div>
@@ -207,9 +207,9 @@
             <div class="week-accent" [style.background]="week.totalPnlNet >= 0 ? 'var(--green)' : 'var(--red)'"></div>
             <div class="week-toggle">
               @if (isWeekCollapsed(week.key, wi)) {
-                <lucide-icon [img]="ChevronRightIcon" [size]="14" />
+                <svg [lucideIcon]="ChevronRightIcon" [size]="14"></svg>
               } @else {
-                <lucide-icon [img]="ChevronDownIcon" [size]="14" />
+                <svg [lucideIcon]="ChevronDownIcon" [size]="14"></svg>
               }
             </div>
             <div class="week-label">{{ week.label }}</div>
@@ -243,9 +243,9 @@
             <div class="day-accent" [style.background]="day.totalPnlNet >= 0 ? 'var(--green)' : 'var(--red)'"></div>
             <div class="day-toggle">
               @if (collapsedDays().has(day.key)) {
-                <lucide-icon [img]="ChevronRightIcon" [size]="14" />
+                <svg [lucideIcon]="ChevronRightIcon" [size]="14"></svg>
               } @else {
-                <lucide-icon [img]="ChevronDownIcon" [size]="14" />
+                <svg [lucideIcon]="ChevronDownIcon" [size]="14"></svg>
               }
             </div>
             <div class="day-label">{{ day.label }}</div>
@@ -272,14 +272,14 @@
                 title="Déplacer tous les trades de ce jour vers un autre compte"
                 (click)="$event.stopPropagation(); openReassign(day)"
                 (keydown.enter)="$event.stopPropagation(); openReassign(day)">
-                <lucide-icon [img]="ReassignIcon" [size]="12" />
+                <svg [lucideIcon]="ReassignIcon" [size]="12"></svg>
               </button>
             }
             <button class="day-delete-btn"
               title="Supprimer tous les trades de ce jour"
               (click)="$event.stopPropagation(); confirmDeleteDayKey.set(day.key)"
               (keydown.enter)="$event.stopPropagation(); confirmDeleteDayKey.set(day.key)">
-              <lucide-icon [img]="TrashIcon" [size]="12" />
+              <svg [lucideIcon]="TrashIcon" [size]="12"></svg>
             </button>
           </div>
 
@@ -329,10 +329,10 @@
                   <span class="td-setup"><span class="setup-badge"><span class="setup-badge-dot" [style.background]="trade.setup.color"></span>{{ trade.setup.title }}</span></span>
                   <span class="td-actions">
                     <button class="btn-edit" (click)="openEditModal(trade)" title="Modifier">
-                      <lucide-icon [img]="PencilIcon" [size]="12" />
+                      <svg [lucideIcon]="PencilIcon" [size]="12"></svg>
                     </button>
                     <button class="btn-delete" data-testid="trade-delete" (click)="deleteTrade(trade.id)" title="Supprimer">
-                      <lucide-icon [img]="XIcon" [size]="12" />
+                      <svg [lucideIcon]="XIcon" [size]="12"></svg>
                     </button>
                   </span>
                 </div>

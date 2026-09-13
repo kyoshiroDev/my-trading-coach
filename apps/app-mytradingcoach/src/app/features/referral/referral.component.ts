@@ -10,7 +10,13 @@ import {
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { LucideAngularModule, Users, CircleCheck, Gift, Wallet } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideUsers as Users,
+  LucideCircleCheck as CircleCheck,
+  LucideGift as Gift,
+  LucideWallet as Wallet,
+} from '@lucide/angular';
 import { ReferralApi, MyReferral, FilleulStatus } from '../../core/api/referral.api';
 import { ToastService } from '../../core/services/toast.service';
 
@@ -19,7 +25,7 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
 @Component({
   selector: 'mtc-referral',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, DecimalPipe, RouterLink, LucideAngularModule],
+  imports: [DatePipe, DecimalPipe, RouterLink, LucideDynamicIcon],
   styleUrl: './referral.component.css',
   template: `
     <div class="content">
@@ -69,7 +75,7 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
               <div class="stat-v v-blue">{{ d.invited }}</div>
               <div class="stat-foot">via ton lien</div>
             </div>
-            <span class="stat-ic v-blue"><lucide-icon [img]="UsersIcon" [size]="24" /></span>
+            <span class="stat-ic v-blue"><svg [lucideIcon]="UsersIcon" [size]="24"></svg></span>
           </div>
           <div class="stat-card">
             <div class="stat-text">
@@ -77,7 +83,7 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
               <div class="stat-v v-green">{{ d.subscribed }}</div>
               <div class="stat-foot">payants</div>
             </div>
-            <span class="stat-ic v-green"><lucide-icon [img]="CircleCheckIcon" [size]="24" /></span>
+            <span class="stat-ic v-green"><svg [lucideIcon]="CircleCheckIcon" [size]="24"></svg></span>
           </div>
           <div class="stat-card">
             <div class="stat-text">
@@ -85,7 +91,7 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
               <div class="stat-v v-violet">{{ d.freeMonthsEarned }}</div>
               <div class="stat-foot">depuis le début</div>
             </div>
-            <span class="stat-ic v-violet"><lucide-icon [img]="GiftIcon" [size]="24" /></span>
+            <span class="stat-ic v-violet"><svg [lucideIcon]="GiftIcon" [size]="24"></svg></span>
           </div>
           <div class="stat-card">
             <div class="stat-text">
@@ -93,7 +99,7 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
               <div class="stat-v v-amber">{{ d.creditAvailable | number:'1.0-2' }}€</div>
               <div class="stat-foot">prochain renouvellement</div>
             </div>
-            <span class="stat-ic v-amber"><lucide-icon [img]="WalletIcon" [size]="24" /></span>
+            <span class="stat-ic v-amber"><svg [lucideIcon]="WalletIcon" [size]="24"></svg></span>
           </div>
         </div>
 

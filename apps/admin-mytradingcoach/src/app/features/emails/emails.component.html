@@ -2,7 +2,7 @@
   <div class="page-head">
     <div class="page-title">Campagnes Email</div>
     <button class="refresh-tag refresh-btn" (click)="load()" aria-label="Rafraîchir">
-      <lucide-icon [img]="RefreshIcon" [size]="12" /> ↻
+      <svg [lucideIcon]="RefreshIcon" [size]="12"></svg> ↻
     </button>
   </div>
 
@@ -21,8 +21,8 @@
           <div class="camp-right">
             <span class="camp-when">{{ c.lastSent ? ('Dernier · ' + (c.lastSent | date:'dd/MM HH:mm') + ' · ' + c.lastCount + ' envoyés') : 'Jamais envoyé' }}</span>
             <div class="camp-btns">
-              <button class="btn" (click)="openPreview(c)" [disabled]="c.targetCount === 0"><lucide-icon [img]="EyeIcon" [size]="12" /> Aperçu</button>
-              <button class="btn btn-primary" (click)="openSend(c)" [disabled]="c.targetCount === 0"><lucide-icon [img]="SendIcon" [size]="12" /> Envoyer</button>
+              <button class="btn" (click)="openPreview(c)" [disabled]="c.targetCount === 0"><svg [lucideIcon]="EyeIcon" [size]="12"></svg> Aperçu</button>
+              <button class="btn btn-primary" (click)="openSend(c)" [disabled]="c.targetCount === 0"><svg [lucideIcon]="SendIcon" [size]="12"></svg> Envoyer</button>
             </div>
           </div>
         </div>
@@ -39,7 +39,7 @@
       <div class="modal-header">
         <h2 class="modal-title">{{ previewCampaign()!.emoji }} Aperçu · {{ previewCampaign()!.label }}</h2>
         <button class="modal-close" (click)="previewCampaign.set(null)" aria-label="Fermer">
-          <lucide-icon [img]="XIcon" [size]="16" />
+          <svg [lucideIcon]="XIcon" [size]="16"></svg>
         </button>
       </div>
       <div class="modal-body">
@@ -94,7 +94,7 @@
       <div class="modal-header">
         <h2 class="modal-title">{{ sendCampaignModal()!.emoji }} {{ sendCampaignModal()!.label }}</h2>
         <button class="modal-close" (click)="sendCampaignModal.set(null)" aria-label="Fermer">
-          <lucide-icon [img]="XIcon" [size]="16" />
+          <svg [lucideIcon]="XIcon" [size]="16"></svg>
         </button>
       </div>
       <div class="modal-body">
@@ -152,7 +152,7 @@
         <button class="btn-primary" [disabled]="sending() || !canSend()" (click)="doSend()">
           @if (sending()) { Envoi en cours... }
           @else {
-            <lucide-icon [img]="SendIcon" [size]="13" />
+            <svg [lucideIcon]="SendIcon" [size]="13"></svg>
             Envoyer à {{ sendCount() }} {{ sendCount() === 1 ? 'personne' : 'personnes' }}
           }
         </button>

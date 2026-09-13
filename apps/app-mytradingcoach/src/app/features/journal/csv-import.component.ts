@@ -14,16 +14,16 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
-  LucideAngularModule,
-  X,
-  Upload,
-  CheckCircle,
-  AlertCircle,
-  Zap,
-  FileText,
-  Check,
-  Link2,
-} from 'lucide-angular';
+  LucideDynamicIcon,
+  LucideX as X,
+  LucideUpload as Upload,
+  LucideCheckCircle as CheckCircle,
+  LucideAlertCircle as AlertCircle,
+  LucideZap as Zap,
+  LucideFileText as FileText,
+  LucideCheck as Check,
+  LucideLink2 as Link2,
+} from '@lucide/angular';
 import { parseDecimal } from '../../core/utils/parse-decimal';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { SetupsStore } from '../../core/stores/setups.store';
@@ -57,7 +57,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
 
 @Component({
   selector: 'mtc-csv-import',
-  imports: [LucideAngularModule, TradovateConnectModalComponent],
+  imports: [LucideDynamicIcon, TradovateConnectModalComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './csv-import.component.css',
   templateUrl: './csv-import.component.html',

@@ -11,7 +11,20 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { LucideAngularModule, TrendingUp, Coins, BarChart3, Sparkles, Layers, HeartPulse, List, CheckCircle2, AlertTriangle, XCircle, Lock } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideTrendingUp as TrendingUp,
+  LucideCoins as Coins,
+  LucideBarChart3 as BarChart3,
+  LucideSparkles as Sparkles,
+  LucideLayers as Layers,
+  LucideHeartPulse as HeartPulse,
+  LucideList as List,
+  LucideCheckCircle2 as CheckCircle2,
+  LucideAlertTriangle as AlertTriangle,
+  LucideXCircle as XCircle,
+  LucideLock as Lock,
+} from '@lucide/angular';
 import { BillingApi } from '../../core/api/billing.api';
 import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
@@ -57,7 +70,7 @@ import { apiErrorMessage } from '../../core/utils/api-error';
     PnlFormatPipe,
     EmotionLabelPipe,
     EmotionColorPipe,
-    LucideAngularModule,
+    LucideDynamicIcon,
     InfoTooltipComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

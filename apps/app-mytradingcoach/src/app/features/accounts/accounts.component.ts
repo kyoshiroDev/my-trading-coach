@@ -14,13 +14,29 @@ import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import {
-  LucideAngularModule,
-  User, Target, Building2, FlaskConical,
-  Wallet, TrendingUp, List, Eye, Layers,
-  ClipboardList, MoreHorizontal, Info, Plus, Lock,
-  Pencil, Trash2, X, Briefcase, AlertCircle,
-  Link2, RefreshCw,
-} from 'lucide-angular';
+  LucideDynamicIcon,
+  LucideUser as User,
+  LucideTarget as Target,
+  LucideBuilding2 as Building2,
+  LucideFlaskConical as FlaskConical,
+  LucideWallet as Wallet,
+  LucideTrendingUp as TrendingUp,
+  LucideList as List,
+  LucideEye as Eye,
+  LucideLayers as Layers,
+  LucideClipboardList as ClipboardList,
+  LucideMoreHorizontal as MoreHorizontal,
+  LucideInfo as Info,
+  LucidePlus as Plus,
+  LucideLock as Lock,
+  LucidePencil as Pencil,
+  LucideTrash2 as Trash2,
+  LucideX as X,
+  LucideBriefcase as Briefcase,
+  LucideAlertCircle as AlertCircle,
+  LucideLink2 as Link2,
+  LucideRefreshCw as RefreshCw,
+} from '@lucide/angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { TradovateConnectModalComponent } from '../../shared/components/tradovate-connect/tradovate-connect-modal.component';
@@ -83,7 +99,7 @@ function emptyForm(): AccountFormState {
   selector: 'mtc-accounts',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DecimalPipe, FormsModule, LucideAngularModule, TopbarComponent, PlanModalComponent,
+    DecimalPipe, FormsModule, LucideDynamicIcon, TopbarComponent, PlanModalComponent,
     TradovateConnectModalComponent, TradovateAccountPickerComponent,
   ],
   templateUrl: './accounts.component.html',

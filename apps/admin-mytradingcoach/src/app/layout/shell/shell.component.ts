@@ -1,15 +1,26 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import {
-  LucideAngularModule,
-  LayoutDashboard, Users, CreditCard, Activity, Database,
-  TrendingUp, Brain, Mail, LogOut, Handshake, Menu, UserX, Gift,
-} from 'lucide-angular';
+  LucideDynamicIcon,
+  LucideLayoutDashboard as LayoutDashboard,
+  LucideUsers as Users,
+  LucideCreditCard as CreditCard,
+  LucideActivity as Activity,
+  LucideDatabase as Database,
+  LucideTrendingUp as TrendingUp,
+  LucideBrain as Brain,
+  LucideMail as Mail,
+  LucideLogOut as LogOut,
+  LucideHandshake as Handshake,
+  LucideMenu as Menu,
+  LucideUserX as UserX,
+  LucideGift as Gift,
+} from '@lucide/angular';
 import { AdminAuthService } from '../../core/auth/admin-auth.service';
 
 @Component({
   selector: 'mtc-admin-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, LucideAngularModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './shell.component.css',
   template: `
@@ -27,49 +38,49 @@ import { AdminAuthService } from '../../core/auth/admin-auth.service';
         <div class="nav-group">
           <div class="nav-group-label">Overview</div>
           <a class="nav-item" routerLink="/dashboard" routerLinkActive="active" (click)="navOpen.set(false)">
-            <lucide-icon [img]="DashboardIcon" [size]="14" /> Dashboard
+            <svg [lucideIcon]="DashboardIcon" [size]="14"></svg> Dashboard
           </a>
         </div>
 
         <div class="nav-group">
           <div class="nav-group-label">Utilisateurs</div>
           <a class="nav-item" routerLink="/users" routerLinkActive="active" (click)="navOpen.set(false)">
-            <lucide-icon [img]="UsersIcon" [size]="14" /> Utilisateurs
+            <svg [lucideIcon]="UsersIcon" [size]="14"></svg> Utilisateurs
           </a>
           <a class="nav-item" routerLink="/subscriptions" routerLinkActive="active" (click)="navOpen.set(false)">
-            <lucide-icon [img]="CreditCardIcon" [size]="14" /> Abonnements
+            <svg [lucideIcon]="CreditCardIcon" [size]="14"></svg> Abonnements
           </a>
           <a class="nav-item" routerLink="/deleted" routerLinkActive="active" (click)="navOpen.set(false)">
-            <lucide-icon [img]="UserXIcon" [size]="14" /> Comptes supprimés
+            <svg [lucideIcon]="UserXIcon" [size]="14"></svg> Comptes supprimés
           </a>
         </div>
 
         <div class="nav-group">
           <div class="nav-group-label">Infrastructure</div>
           <a class="nav-item" routerLink="/surveillance" routerLinkActive="active" (click)="navOpen.set(false)">
-            <lucide-icon [img]="ActivityIcon" [size]="14" /> Surveillance
+            <svg [lucideIcon]="ActivityIcon" [size]="14"></svg> Surveillance
           </a>
           <a class="nav-item" routerLink="/backups" routerLinkActive="active" (click)="navOpen.set(false)">
-            <lucide-icon [img]="DatabaseIcon" [size]="14" /> Sauvegardes
+            <svg [lucideIcon]="DatabaseIcon" [size]="14"></svg> Sauvegardes
           </a>
         </div>
 
         <div class="nav-group">
           <div class="nav-group-label">Business</div>
           <a class="nav-item" routerLink="/revenue" routerLinkActive="active" (click)="navOpen.set(false)">
-            <lucide-icon [img]="TrendingUpIcon" [size]="14" /> Revenus
+            <svg [lucideIcon]="TrendingUpIcon" [size]="14"></svg> Revenus
           </a>
           <a class="nav-item" routerLink="/ai-usage" routerLinkActive="active" (click)="navOpen.set(false)">
-            <lucide-icon [img]="BrainIcon" [size]="14" /> Usage IA
+            <svg [lucideIcon]="BrainIcon" [size]="14"></svg> Usage IA
           </a>
           <a class="nav-item" routerLink="/emails" routerLinkActive="active" (click)="navOpen.set(false)">
-            <lucide-icon [img]="MailIcon" [size]="14" /> Emails
+            <svg [lucideIcon]="MailIcon" [size]="14"></svg> Emails
           </a>
           <a class="nav-item" routerLink="/ambassadeurs" routerLinkActive="active" (click)="navOpen.set(false)">
-            <lucide-icon [img]="HandshakeIcon" [size]="14" /> Ambassadeurs
+            <svg [lucideIcon]="HandshakeIcon" [size]="14"></svg> Ambassadeurs
           </a>
           <a class="nav-item" routerLink="/parrainage" routerLinkActive="active" (click)="navOpen.set(false)">
-            <lucide-icon [img]="GiftIcon" [size]="14" /> Parrainage
+            <svg [lucideIcon]="GiftIcon" [size]="14"></svg> Parrainage
           </a>
         </div>
 
@@ -81,7 +92,7 @@ import { AdminAuthService } from '../../core/auth/admin-auth.service';
               <div class="avatar-role">super admin</div>
             </div>
             <button class="logout-btn" (click)="auth.logout()" title="Déconnexion">
-              <lucide-icon [img]="LogOutIcon" [size]="12" />
+              <svg [lucideIcon]="LogOutIcon" [size]="12"></svg>
             </button>
           </div>
         </div>
@@ -95,7 +106,7 @@ import { AdminAuthService } from '../../core/auth/admin-auth.service';
             <span class="tb-meta">VPS OVH · Paris</span>
           </div>
           <button class="hamburger" (click)="navOpen.update(v => !v)" aria-label="Ouvrir le menu">
-            <lucide-icon [img]="MenuIcon" [size]="18" />
+            <svg [lucideIcon]="MenuIcon" [size]="18"></svg>
           </button>
         </div>
         <div class="content">

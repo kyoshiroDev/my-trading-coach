@@ -15,14 +15,14 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import {
-  LucideAngularModule,
-  Sparkles,
-  AlertTriangle,
-  Info,
-  Lightbulb,
-  AlertCircle,
-  Send,
-} from 'lucide-angular';
+  LucideDynamicIcon,
+  LucideSparkles as Sparkles,
+  LucideAlertTriangle as AlertTriangle,
+  LucideInfo as Info,
+  LucideLightbulb as Lightbulb,
+  LucideAlertCircle as AlertCircle,
+  LucideSend as Send,
+} from '@lucide/angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { interval } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
@@ -58,7 +58,7 @@ function insightVariant(type: string): InsightVariant {
   selector: 'mtc-ai-insights',
   imports: [
     FormsModule,
-    LucideAngularModule,
+    LucideDynamicIcon,
     TopbarComponent,
     PlanModalComponent,
   ],

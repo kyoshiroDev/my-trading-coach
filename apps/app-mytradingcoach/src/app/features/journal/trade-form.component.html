@@ -19,7 +19,7 @@
           {{ editTrade() ? 'Modifier le trade' : 'Nouveau trade' }}
         </h2>
         <button class="close-btn" (click)="dismissed.emit()">
-          <lucide-icon [img]="XIcon" [size]="16" />
+          <svg [lucideIcon]="XIcon" [size]="16"></svg>
         </button>
       </div>
 

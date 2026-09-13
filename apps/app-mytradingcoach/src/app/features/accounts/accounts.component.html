@@ -12,29 +12,29 @@
     <!-- ── Vue agrégée ── -->
     <div class="stats-row">
       <div class="stat-card" style="--c:var(--blue)">
-        <div class="stat-label"><lucide-icon [img]="WalletIcon" [size]="13" />Capital suivi</div>
+        <div class="stat-label"><svg [lucideIcon]="WalletIcon" [size]="13"></svg>Capital suivi</div>
         <div class="stat-value">{{ trackedCapital() | number:'1.0-0' }} $</div>
         <div class="stat-sub">{{ visibleAccounts().length }} compte(s) suivi(s)</div>
       </div>
       <div class="stat-card" style="--c:var(--green)">
-        <div class="stat-label"><lucide-icon [img]="TrendingUpIcon" [size]="13" />P&amp;L cumulé</div>
+        <div class="stat-label"><svg [lucideIcon]="TrendingUpIcon" [size]="13"></svg>P&amp;L cumulé</div>
         <div class="stat-value" [class.text-green]="totalPnl() >= 0" [class.text-red]="totalPnl() < 0">
           {{ totalPnl() >= 0 ? '+' : '' }}{{ totalPnl() | number:'1.0-0' }} $
         </div>
         <div class="stat-sub">{{ selectedAccountName() ?? 'tous comptes' }} · estimé</div>
       </div>
       <div class="stat-card" style="--c:var(--purple)">
-        <div class="stat-label"><lucide-icon [img]="ListIcon" [size]="13" />Trades cumulés</div>
+        <div class="stat-label"><svg [lucideIcon]="ListIcon" [size]="13"></svg>Trades cumulés</div>
         <div class="stat-value">{{ totalTrades() }}</div>
         <div class="stat-sub">trades loggés</div>
       </div>
       <div class="stat-card" style="--c:var(--yellow)">
-        <div class="stat-label"><lucide-icon [img]="EyeIcon" [size]="13" />À surveiller</div>
+        <div class="stat-label"><svg [lucideIcon]="EyeIcon" [size]="13"></svg>À surveiller</div>
         <div class="stat-value" [class.text-yellow]="atRiskCount() > 0">{{ atRiskCount() }}</div>
         <div class="stat-sub">proche du drawdown</div>
       </div>
       <div class="stat-card" style="--c:var(--cyan)">
-        <div class="stat-label"><lucide-icon [img]="LayersIcon" [size]="13" />Comptes</div>
+        <div class="stat-label"><svg [lucideIcon]="LayersIcon" [size]="13"></svg>Comptes</div>
         <div class="stat-value">{{ activeAccountsCount() }}</div>
         <div class="stat-sub" data-testid="account-quota">
           {{ accountLimit() === null ? 'actifs · illimité' : 'actifs / ' + accountLimit() + ' max' }}
@@ -45,7 +45,7 @@
     <!-- Disclaimer UNIQUE (au lieu d'être répété sur chaque carte prop firm) -->
     @if (hasPropAccount()) {
       <div class="global-note">
-        <lucide-icon [img]="InfoIcon" [size]="15" />
+        <svg [lucideIcon]="InfoIcon" [size]="15"></svg>
         <span><b>Règles prop firm estimées</b> d'après tes trades loggés dans MyTradingCoach, pas l'equity temps réel ni le calcul officiel des firms (positions ouvertes, fuseau, trailing intraday). Le statut de chaque compte reste piloté par toi.</span>
       </div>
     }
@@ -59,7 +59,7 @@
          là où l'utilisateur vient de cliquer. -->
     @if (deleteError()) {
       <div class="acct-delete-error" role="alert" data-testid="account-delete-error">
-        <lucide-icon [img]="AlertCircleIcon" [size]="15" />
+        <svg [lucideIcon]="AlertCircleIcon" [size]="15"></svg>
         <span>{{ deleteError() }}</span>
       </div>
     }
@@ -73,7 +73,7 @@
              [attr.data-testid]="'account-card-' + a.id"
              [class.is-archived]="a.status === 'ARCHIVED'">
           <div class="acct-top">
-            <div class="acct-ic"><lucide-icon [img]="typeIcon(a.type)" [size]="18" /></div>
+            <div class="acct-ic"><svg [lucideIcon]="typeIcon(a.type)" [size]="18"></svg></div>
             <div class="acct-id">
               <div class="acct-name">{{ a.label }}</div>
               <div class="acct-meta">
@@ -85,10 +85,10 @@
               </div>
             </div>
             <div class="acct-menu-wrap">
-              <button class="acct-menu" (click)="toggleMenu(a.id)" [attr.data-testid]="'account-menu-' + a.id"><lucide-icon [img]="MoreHorizontalIcon" [size]="18" /></button>
+              <button class="acct-menu" (click)="toggleMenu(a.id)" [attr.data-testid]="'account-menu-' + a.id"><svg [lucideIcon]="MoreHorizontalIcon" [size]="18"></svg></button>
               @if (menuOpenId() === a.id) {
                 <div class="menu-pop">
-                  <button class="menu-item" (click)="openEdit(a)"><lucide-icon [img]="PencilIcon" [size]="13" /> Modifier</button>
+                  <button class="menu-item" (click)="openEdit(a)"><svg [lucideIcon]="PencilIcon" [size]="13"></svg> Modifier</button>
                   <!-- Désactivé quand l'échec est CERTAIN (dernier compte actif avec
                        trades) : éviter l'erreur vaut mieux que l'afficher. Les cas
                        incertains partent quand même et `deleteError` les explique. -->
@@ -98,7 +98,7 @@
                       ? 'Garde au moins un compte actif. Crée-en un autre avant d\'archiver celui-ci.'
                       : null"
                     [attr.data-testid]="'account-delete-' + a.id">
-                    <lucide-icon [img]="TrashIcon" [size]="13" /> Supprimer
+                    <svg [lucideIcon]="TrashIcon" [size]="13"></svg> Supprimer
                   </button>
                 </div>
               }
@@ -127,7 +127,7 @@
           </div>
 
           @if (a.metrics.objective || a.metrics.drawdown) {
-            <div class="rules-head"><lucide-icon [img]="ClipboardListIcon" [size]="12" /> Règles prop firm <span class="est-pill">estimé</span></div>
+            <div class="rules-head"><svg [lucideIcon]="ClipboardListIcon" [size]="12"></svg> Règles prop firm <span class="est-pill">estimé</span></div>
 
             @if (a.metrics.objective; as obj) {
               <div class="obj">
@@ -204,7 +204,7 @@
                 @if (a.status !== 'ARCHIVED') {
                   <button class="tv-btn connect" type="button" (click)="openTradovateConnect(a)"
                           [attr.data-testid]="'tradovate-connect-' + a.id">
-                    <lucide-icon [img]="LinkIcon" [size]="13" /> Connecter Tradovate
+                    <svg [lucideIcon]="LinkIcon" [size]="13"></svg> Connecter Tradovate
                   </button>
                 }
               </div>
@@ -213,7 +213,7 @@
                 <span class="tv-text">{{ conn.lastSyncError ?? 'Connexion expirée ou révoquée.' }}</span>
                 <button class="tv-btn connect" type="button" (click)="openTradovateConnect(a)"
                         [attr.data-testid]="'tradovate-reconnect-' + a.id">
-                  <lucide-icon [img]="LinkIcon" [size]="13" /> Reconnecter
+                  <svg [lucideIcon]="LinkIcon" [size]="13"></svg> Reconnecter
                 </button>
               </div>
             } @else if (conn.needsAccountSelection) {
@@ -236,7 +236,7 @@
                   } @else {
                     <button class="tv-btn sync" type="button" (click)="syncTradovate(a)" [disabled]="!!busy"
                             [attr.data-testid]="'tradovate-sync-' + a.id">
-                      <lucide-icon [img]="RefreshIcon" [size]="13" [class.spin]="busy === 'sync'" />
+                      <svg [lucideIcon]="RefreshIcon" [size]="13" [class]="(busy === 'sync') ? 'spin' : ''"></svg>
                       {{ busy === 'sync' ? 'Synchronisation…' : 'Synchroniser' }}
                     </button>
                     <button class="tv-btn ghost" type="button" (click)="askDisconnect(a)" [disabled]="!!busy"
@@ -270,13 +270,13 @@
            actions de création dans une vue filtrée est un choix délibéré (e4eba29). -->
       @if (atLimit()) {
         <button class="acct-add is-limit" (click)="showPlanModal.set(true)" data-testid="add-account-limit">
-          <div class="plus"><lucide-icon [img]="LockIcon" [size]="24" /></div>
+          <div class="plus"><svg [lucideIcon]="LockIcon" [size]="24"></svg></div>
           <div>Limite de {{ accountLimit() }} compte(s) atteinte</div>
           <div class="acct-add-sub">Passe au Premium pour des comptes illimités</div>
         </button>
       } @else if (store.selectedAccountId() === 'all') {
         <button class="acct-add" (click)="openCreate()" data-testid="add-account-tile">
-          <div class="plus"><lucide-icon [img]="PlusIcon" [size]="24" /></div>
+          <div class="plus"><svg [lucideIcon]="PlusIcon" [size]="24"></svg></div>
           <div>Ajouter un compte</div>
           <div class="acct-add-sub">prop firm ou perso</div>
         </button>
@@ -307,7 +307,7 @@
          (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
       <div class="modal-head">
         <h3 class="modal-title">{{ editingId() ? 'Modifier le compte' : 'Nouveau compte' }}</h3>
-        <button class="modal-x" (click)="closeForm()"><lucide-icon [img]="XIcon" [size]="16" /></button>
+        <button class="modal-x" (click)="closeForm()"><svg [lucideIcon]="XIcon" [size]="16"></svg></button>
       </div>
 
       <div class="modal-body">

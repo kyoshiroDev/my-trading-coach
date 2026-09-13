@@ -32,19 +32,19 @@
         <button class="mtc-sess-tab" role="tab" [class.active]="activeTab() === 'morning'"
                 [attr.aria-selected]="activeTab() === 'morning'"
                 data-testid="tab-morning" (click)="selectTab('morning')">
-          <lucide-icon [img]="MorningIcon" [size]="14" class="mtc-tab-ic" />
+          <svg [lucideIcon]="MorningIcon" [size]="14" class="mtc-tab-ic"></svg>
           <span class="mtc-tab-label">Pré-session</span>
         </button>
         <button class="mtc-sess-tab" role="tab" [class.active]="activeTab() === 'live'"
                 [attr.aria-selected]="activeTab() === 'live'"
                 data-testid="tab-live" (click)="selectTab('live')">
-          <lucide-icon [img]="LiveIcon" [size]="14" class="mtc-tab-ic" />
+          <svg [lucideIcon]="LiveIcon" [size]="14" class="mtc-tab-ic"></svg>
           <span class="mtc-tab-label">Session live</span>
         </button>
         <button class="mtc-sess-tab" role="tab" [class.active]="activeTab() === 'debrief'"
                 [attr.aria-selected]="activeTab() === 'debrief'"
                 data-testid="tab-debrief" (click)="selectTab('debrief')">
-          <lucide-icon [img]="DebriefIcon" [size]="14" class="mtc-tab-ic" />
+          <svg [lucideIcon]="DebriefIcon" [size]="14" class="mtc-tab-ic"></svg>
           <span class="mtc-tab-label">Débrief</span>
         </button>
       </div>
@@ -62,7 +62,7 @@
             <span class="mtc-pill-acct">{{ label }}</span>
           }
           <button class="mtc-ap-close" (click)="confirmCloseOpen.set(true)">
-            <lucide-icon [img]="DebriefIcon" [size]="13" class="mtc-ap-close-ic" /> Clôturer
+            <svg [lucideIcon]="DebriefIcon" [size]="13" class="mtc-ap-close-ic"></svg> Clôturer
           </button>
         </div>
       } @else {
@@ -70,7 +70,7 @@
                 [disabled]="accountChoiceRequired()"
                 [title]="accountChoiceRequired() ? 'Choisis un compte dans la Pré-session' : ''"
                 (click)="startSession()">
-          <lucide-icon [img]="PlayIcon" [size]="16" /> Démarrer la session
+          <svg [lucideIcon]="PlayIcon" [size]="16"></svg> Démarrer la session
         </button>
       }
     </div>
@@ -215,7 +215,7 @@
                 </div>
               </div>
               <div class="debrief-trade-card best">
-                <div class="dtc-header"><lucide-icon [img]="BestIcon" [size]="15" class="dtc-ic best" /><span class="dtc-title">Meilleur trade</span></div>
+                <div class="dtc-header"><svg [lucideIcon]="BestIcon" [size]="15" class="dtc-ic best"></svg><span class="dtc-title">Meilleur trade</span></div>
                 @if (bestTrade(); as t) {
                   <div class="dtc-asset">{{ t.asset }} <span class="dtc-side" [class]="t.side.toLowerCase()">{{ t.side }}</span></div>
                   <div class="dtc-row">
@@ -226,7 +226,7 @@
                 } @else { <div class="dtc-empty">Aucun trade clôturé aujourd'hui</div> }
               </div>
               <div class="debrief-trade-card worst">
-                <div class="dtc-header"><lucide-icon [img]="WorstIcon" [size]="15" class="dtc-ic worst" /><span class="dtc-title">Trade à revoir</span></div>
+                <div class="dtc-header"><svg [lucideIcon]="WorstIcon" [size]="15" class="dtc-ic worst"></svg><span class="dtc-title">Trade à revoir</span></div>
                 @if (worstTrade(); as t) {
                   <div class="dtc-asset">{{ t.asset }} <span class="dtc-side" [class]="t.side.toLowerCase()">{{ t.side }}</span></div>
                   <div class="dtc-row">
@@ -298,7 +298,7 @@
           <div class="debrief-side">
             <div class="session-journal journal-card">
               <div class="sj-header">
-                <lucide-icon [img]="JournalIcon" [size]="16" class="sj-ic" />
+                <svg [lucideIcon]="JournalIcon" [size]="16" class="sj-ic"></svg>
                 <div>
                   <div class="sj-title">Ton journal de session</div>
                   <div class="sj-sub">Écris librement : ce qui a marché, tes émotions, ce que tu retiens. C'est ton espace.</div>

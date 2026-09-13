@@ -198,7 +198,7 @@
     <!-- Courbe d'équité -->
     <div class="mtc-panel">
       <div class="mtc-panel-head">
-        <div class="mtc-panel-head-l"><lucide-icon [img]="EquityIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">Courbe d'équité</div><div class="mtc-panel-sub">{{ equitySub() }}</div></div></div>
+        <div class="mtc-panel-head-l"><svg [lucideIcon]="EquityIcon" [size]="15" class="mtc-phi"></svg><div><div class="mtc-panel-title">Courbe d'équité</div><div class="mtc-panel-sub">{{ equitySub() }}</div></div></div>
         <div class="mtc-eq-tabs">
           @for (p of periods; track p.key) {
             <button type="button" [class.on]="dashboardPeriod() === p.key" (click)="setPeriod(p.key)">{{ p.label }}</button>
@@ -234,7 +234,7 @@
 
     <!-- Top actifs -->
     <div class="mtc-panel">
-      <div class="mtc-panel-head"><div class="mtc-panel-head-l"><lucide-icon [img]="AssetsIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">Top actifs</div><div class="mtc-panel-sub">P&amp;L par instrument</div></div></div></div>
+      <div class="mtc-panel-head"><div class="mtc-panel-head-l"><svg [lucideIcon]="AssetsIcon" [size]="15" class="mtc-phi"></svg><div><div class="mtc-panel-title">Top actifs</div><div class="mtc-panel-sub">P&amp;L par instrument</div></div></div></div>
       <div class="mtc-panel-body">
         <!-- Top actifs (P&L par instrument) = vue de base FREE ; win rate/actif = profondeur Premium. -->
         @if (topAssets().length) {
@@ -256,7 +256,7 @@
 
     <!-- P&L par jour -->
     <div class="mtc-panel">
-      <div class="mtc-panel-head"><div class="mtc-panel-head-l"><lucide-icon [img]="PlDayIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">{{ plTitle() }} <mtc-info-tooltip [text]="plTooltip()" /></div><div class="mtc-panel-sub">{{ periodLabel() }}</div></div></div></div>
+      <div class="mtc-panel-head"><div class="mtc-panel-head-l"><svg [lucideIcon]="PlDayIcon" [size]="15" class="mtc-phi"></svg><div><div class="mtc-panel-title">{{ plTitle() }} <mtc-info-tooltip [text]="plTooltip()" /></div><div class="mtc-panel-sub">{{ periodLabel() }}</div></div></div></div>
       <div class="mtc-panel-body">
         @let pl = plBuckets();
         @if (pl && pl.length) {
@@ -282,7 +282,7 @@
     <!-- AI Coach -->
     <div class="mtc-panel" [class.mtc-ai]="userStore.isPremium()">
       <div class="mtc-panel-head">
-        <div class="mtc-panel-head-l"><lucide-icon [img]="CoachIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">AI Coach · feedback</div></div></div>
+        <div class="mtc-panel-head-l"><svg [lucideIcon]="CoachIcon" [size]="15" class="mtc-phi"></svg><div><div class="mtc-panel-title">AI Coach · feedback</div></div></div>
         <!-- Pastille LIVE réservée à la carte réellement active (Premium) : jamais sur un teaser verrouillé. -->
         @if (userStore.isPremium()) {
           <span class="mtc-live"><span class="mtc-live-dot"></span>LIVE</span>
@@ -294,7 +294,7 @@
             <div class="mtc-coach-list">
               @for (i of coachInsights(); track i.text) {
                 <div class="mtc-coach-item">
-                  <lucide-icon [img]="coachIcon(i.tone)" [size]="16" [style.color]="coachColor(i.tone)" class="mtc-coach-item-ic" />
+                  <svg [lucideIcon]="coachIcon(i.tone)" [size]="16" [style.color]="coachColor(i.tone)" class="mtc-coach-item-ic"></svg>
                   <span class="mtc-coach-item-t">{{ i.text }}</span>
                 </div>
               }
@@ -310,7 +310,7 @@
           }
         } @else {
           <div class="mtc-coach-lock">
-            <div class="mtc-lock-ic"><lucide-icon [img]="LockIcon" [size]="20" /></div>
+            <div class="mtc-lock-ic"><svg [lucideIcon]="LockIcon" [size]="20"></svg></div>
             <div class="mtc-lock-t">Coach IA réservé au Premium</div>
             <div class="mtc-lock-s">Analyse de tes patterns, chat coach IA et recommandations personnalisées.</div>
             <button class="mtc-lock-cta" (click)="showPlanModal.set(true)">Débloquer à {{ PRICING.premium.monthly }} €/mois</button>
@@ -321,7 +321,7 @@
 
     <!-- Répartition stratégies -->
     <div class="mtc-panel">
-      <div class="mtc-panel-head"><div class="mtc-panel-head-l"><lucide-icon [img]="SetupsIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">Répartition stratégies</div><div class="mtc-panel-sub">% des trades par setup</div></div></div></div>
+      <div class="mtc-panel-head"><div class="mtc-panel-head-l"><svg [lucideIcon]="SetupsIcon" [size]="15" class="mtc-phi"></svg><div><div class="mtc-panel-title">Répartition stratégies</div><div class="mtc-panel-sub">% des trades par setup</div></div></div></div>
       <div class="mtc-panel-body">
         <!-- Répartition % des setups = vue de base FREE (client-side) ; centre win rate = Premium. -->
         @let sd = setupsDonutView();
@@ -340,7 +340,7 @@
 
     <!-- États émotionnels -->
     <div class="mtc-panel">
-      <div class="mtc-panel-head"><div class="mtc-panel-head-l"><lucide-icon [img]="EmotionIcon" [size]="15" class="mtc-phi" /><div><div class="mtc-panel-title">États émotionnels</div><div class="mtc-panel-sub">par fréquence</div></div></div></div>
+      <div class="mtc-panel-head"><div class="mtc-panel-head-l"><svg [lucideIcon]="EmotionIcon" [size]="15" class="mtc-phi"></svg><div><div class="mtc-panel-title">États émotionnels</div><div class="mtc-panel-sub">par fréquence</div></div></div></div>
       <div class="mtc-panel-body">
         @let ed = emotionsDonut();
         @if (ed) {
@@ -359,7 +359,7 @@
 
   <!-- Historique des trades -->
   <div class="mtc-panel">
-    <div class="mtc-panel-head"><div class="mtc-panel-head-l"><lucide-icon [img]="TableIcon" [size]="15" class="mtc-phi" /><div class="mtc-panel-title">Historique des trades</div></div><a routerLink="/journal" class="card-action">Tout le journal →</a></div>
+    <div class="mtc-panel-head"><div class="mtc-panel-head-l"><svg [lucideIcon]="TableIcon" [size]="15" class="mtc-phi"></svg><div class="mtc-panel-title">Historique des trades</div></div><a routerLink="/journal" class="card-action">Tout le journal →</a></div>
     @if (tradeRows().length === 0) {
       <div class="empty-state" style="margin:0 18px 18px"><p>Aucun trade</p><small>Enregistre ton premier trade</small></div>
     } @else {

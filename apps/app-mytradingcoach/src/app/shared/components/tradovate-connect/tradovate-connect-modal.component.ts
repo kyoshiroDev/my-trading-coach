@@ -1,6 +1,10 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { LucideAngularModule, Lock, X } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideLock as Lock,
+  LucideX as X,
+} from '@lucide/angular';
 import { TradovateStore } from '../../../core/stores/tradovate.store';
 import type { TradovateOrigin } from '../../../core/api/tradovate.api';
 import { apiErrorMessage } from '../../../core/utils/api-error';
@@ -15,7 +19,7 @@ import { apiErrorMessage } from '../../../core/utils/api-error';
  */
 @Component({
   selector: 'mtc-tradovate-connect-modal',
-  imports: [LucideAngularModule],
+  imports: [LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tradovate-connect-modal.component.html',
   styleUrl: './tradovate-connect-modal.component.css',

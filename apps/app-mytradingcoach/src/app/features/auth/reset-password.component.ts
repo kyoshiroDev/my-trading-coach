@@ -8,13 +8,17 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { LucideAngularModule, Eye, EyeOff } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideEye as Eye,
+  LucideEyeOff as EyeOff,
+} from '@lucide/angular';
 import { AuthService } from '../../core/auth/auth.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
 
 @Component({
   selector: 'mtc-reset-password',
-  imports: [FormsModule, RouterLink, LucideAngularModule],
+  imports: [FormsModule, RouterLink, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './login.component.css',
   template: `
@@ -72,11 +76,10 @@ import { apiErrorMessage } from '../../core/utils/api-error';
                     class="eye-btn"
                     (click)="showPassword.set(!showPassword())"
                   >
-                    <lucide-icon
-                      [img]="showPassword() ? EyeOffIcon : EyeIcon"
+                    <svg
+                      [lucideIcon]="showPassword() ? EyeOffIcon : EyeIcon"
                       [size]="15"
-                      color="var(--text-2)"
-                    />
+                      color="var(--text-2)"></svg>
                   </button>
                 </div>
               </div>

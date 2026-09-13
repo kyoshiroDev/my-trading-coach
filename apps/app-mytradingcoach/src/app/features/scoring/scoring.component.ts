@@ -6,7 +6,10 @@ import {
   signal,
 } from '@angular/core';
 import { httpResource } from '@angular/common/http';
-import { LucideAngularModule, Trophy } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideTrophy as Trophy,
+} from '@lucide/angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { UserStore } from '../../core/stores/user.store';
@@ -141,7 +144,7 @@ const LOCKED_BADGES = [
 
 @Component({
   selector: 'mtc-scoring',
-  imports: [TopbarComponent, PlanModalComponent, LucideAngularModule],
+  imports: [TopbarComponent, PlanModalComponent, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './scoring.component.html',
   styleUrl: './scoring.component.css',

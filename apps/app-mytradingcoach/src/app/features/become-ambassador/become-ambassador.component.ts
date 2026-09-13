@@ -8,7 +8,10 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { LucideAngularModule, Check } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideCheck as Check,
+} from '@lucide/angular';
 import { ReferralApi } from '../../core/api/referral.api';
 import { ToastService } from '../../core/services/toast.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
@@ -16,7 +19,7 @@ import { apiErrorMessage } from '../../core/utils/api-error';
 @Component({
   selector: 'mtc-become-ambassador',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, LucideAngularModule],
+  imports: [RouterLink, LucideDynamicIcon],
   styleUrl: './become-ambassador.component.css',
   template: `
     <div class="content">
@@ -27,7 +30,7 @@ import { apiErrorMessage } from '../../core/utils/api-error';
 
       @if (submitted()) {
         <div class="card success">
-          <div class="success-ic"><lucide-icon [img]="CheckIcon" [size]="22" /></div>
+          <div class="success-ic"><svg [lucideIcon]="CheckIcon" [size]="22"></svg></div>
           <div class="success-t">Demande envoyée</div>
           <div class="success-d">
             Ta demande est étudiée manuellement, je reviens vers toi rapidement.
@@ -49,10 +52,10 @@ import { apiErrorMessage } from '../../core/utils/api-error';
         <div class="card">
           <div class="card-title">📋 Conditions</div>
           <div class="elig-grid">
-            <div class="elig"><span class="elig-ic"><lucide-icon [img]="CheckIcon" [size]="12" /></span><span><b>Statut pro</b> : micro-entreprise ou société (la micro est gratuite et se crée en 15 min).</span></div>
-            <div class="elig"><span class="elig-ic"><lucide-icon [img]="CheckIcon" [size]="12" /></span><span><b>Justificatif</b> : avis de situation SIRENE, ou Kbis si société.</span></div>
-            <div class="elig"><span class="elig-ic"><lucide-icon [img]="CheckIcon" [size]="12" /></span><span><b>RIB</b> au nom de l'entreprise pour le versement.</span></div>
-            <div class="elig"><span class="elig-ic"><lucide-icon [img]="CheckIcon" [size]="12" /></span><span><b>Facture mensuelle</b> des commissions dues, payée par virement.</span></div>
+            <div class="elig"><span class="elig-ic"><svg [lucideIcon]="CheckIcon" [size]="12"></svg></span><span><b>Statut pro</b> : micro-entreprise ou société (la micro est gratuite et se crée en 15 min).</span></div>
+            <div class="elig"><span class="elig-ic"><svg [lucideIcon]="CheckIcon" [size]="12"></svg></span><span><b>Justificatif</b> : avis de situation SIRENE, ou Kbis si société.</span></div>
+            <div class="elig"><span class="elig-ic"><svg [lucideIcon]="CheckIcon" [size]="12"></svg></span><span><b>RIB</b> au nom de l'entreprise pour le versement.</span></div>
+            <div class="elig"><span class="elig-ic"><svg [lucideIcon]="CheckIcon" [size]="12"></svg></span><span><b>Facture mensuelle</b> des commissions dues, payée par virement.</span></div>
           </div>
         </div>
 

@@ -9,12 +9,16 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { LucideAngularModule, Eye, EyeOff } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideEye as Eye,
+  LucideEyeOff as EyeOff,
+} from '@lucide/angular';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'mtc-login',
-  imports: [FormsModule, RouterLink, LucideAngularModule],
+  imports: [FormsModule, RouterLink, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './login.component.css',
   template: `
@@ -69,11 +73,10 @@ import { AuthService } from '../../core/auth/auth.service';
                 class="eye-btn"
                 (click)="showPassword.set(!showPassword())"
               >
-                <lucide-icon
-                  [img]="showPassword() ? EyeOffIcon : EyeIcon"
+                <svg
+                  [lucideIcon]="showPassword() ? EyeOffIcon : EyeIcon"
                   [size]="15"
-                  color="var(--text-2)"
-                />
+                  color="var(--text-2)"></svg>
               </button>
             </div>
             @if (passwordError()) {

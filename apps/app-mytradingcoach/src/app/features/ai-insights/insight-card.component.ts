@@ -5,12 +5,12 @@ import {
   input,
 } from '@angular/core';
 import {
-  LucideAngularModule,
-  Lightbulb,
-  AlertCircle,
-  Info,
-  TrendingUp,
-} from 'lucide-angular';
+  LucideDynamicIcon,
+  LucideLightbulb as Lightbulb,
+  LucideAlertCircle as AlertCircle,
+  LucideInfo as Info,
+  LucideTrendingUp as TrendingUp,
+} from '@lucide/angular';
 
 export type InsightType = 'tip' | 'warning' | 'info' | 'strength';
 
@@ -44,12 +44,12 @@ const ICON_COLOR_MAP: Record<InsightType, string> = {
 
 @Component({
   selector: 'mtc-insight-card',
-  imports: [LucideAngularModule],
+  imports: [LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="insight-item">
       <div class="insight-icon" [style.background]="iconBg()">
-        <lucide-icon [img]="icon()" [size]="16" [color]="iconColor()" />
+        <svg [lucideIcon]="icon()" [size]="16" [color]="iconColor()"></svg>
       </div>
       <div class="insight-content">
         <div class="insight-title">{{ insight().title }}</div>

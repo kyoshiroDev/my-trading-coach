@@ -1,7 +1,7 @@
 # Agent Angular — app-mytradingcoach
 
 ## Stack
-Angular 21 · Signals · Standalone Components · lucide-angular · Vitest · Nx 22
+Angular 21 · Signals · Standalone Components · @lucide/angular · Vitest · Nx 22
 
 ---
 
@@ -14,7 +14,11 @@ Angular 21 · Signals · Standalone Components · lucide-angular · Vitest · Nx
 - `@defer` pour le lazy loading des composants lourds
 - Standalone Components exclusivement — pas de NgModules
 - Prefix composants : `mtc-`
-- Icônes : `lucide-angular` exclusivement (jamais d'autres libs d'icônes)
+- Icônes : `@lucide/angular` exclusivement (jamais d'autres libs d'icônes). Motif :
+  `<svg [lucideIcon]="XIcon" [size]="16" class="…" />` avec `LucideDynamicIcon` dans `imports`
+  et `import { LucideX as X } from '@lucide/angular'` (le `<svg>` EST l'icône, classe `lucide`
+  posée par la librairie → CSS sur `svg.lucide`, jamais sur `lucide-icon`). La librairie réécrit
+  l'attribut `class` à chaque rendu : pas de `[class.x]` sur l'icône, passer par `[class]`.
 - CSS dans `.css` uniquement — jamais inline dans `.ts`
 - `OnPush` sur les composants sans signals
 

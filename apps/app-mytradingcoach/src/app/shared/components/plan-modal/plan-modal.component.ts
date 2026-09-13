@@ -7,7 +7,12 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { LucideAngularModule, Check, X, Zap } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideCheck as Check,
+  LucideX as X,
+  LucideZap as Zap,
+} from '@lucide/angular';
 import { BillingApi } from '../../../core/api/billing.api';
 import { PRICING } from '../../../core/constants/pricing.const';
 import { ToastService } from '../../../core/services/toast.service';
@@ -18,7 +23,7 @@ type PlanId = `premium_${Interval}`;
 
 @Component({
   selector: 'mtc-plan-modal',
-  imports: [LucideAngularModule],
+  imports: [LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './plan-modal.component.html',
   styleUrl: './plan-modal.component.css',

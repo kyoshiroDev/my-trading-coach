@@ -14,7 +14,15 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, finalize } from 'rxjs/operators';
-import { LucideAngularModule, Pencil, Archive, Trash2, RotateCcw, ChevronDown, ChevronRight } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucidePencil as Pencil,
+  LucideArchive as Archive,
+  LucideTrash2 as Trash2,
+  LucideRotateCcw as RotateCcw,
+  LucideChevronDown as ChevronDown,
+  LucideChevronRight as ChevronRight,
+} from '@lucide/angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { UserStore } from '../../core/stores/user.store';
@@ -42,7 +50,7 @@ type ProfileTab = 'trader' | 'params';
 
 @Component({
   selector: 'mtc-settings',
-  imports: [TopbarComponent, DatePipe, DecimalPipe, PlanModalComponent, SetupFormModalComponent, LucideAngularModule],
+  imports: [TopbarComponent, DatePipe, DecimalPipe, PlanModalComponent, SetupFormModalComponent, LucideDynamicIcon],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

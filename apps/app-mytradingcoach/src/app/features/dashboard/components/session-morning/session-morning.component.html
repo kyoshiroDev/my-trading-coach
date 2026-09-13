@@ -9,7 +9,7 @@
     <div class="card mtc-banner">
       <div class="card-header">
         <div class="card-title">
-          <lucide-icon [img]="PrepareIcon" [size]="17" class="ch-ic" /> Prépare ta session
+          <svg [lucideIcon]="PrepareIcon" [size]="17" class="ch-ic"></svg> Prépare ta session
         </div>
       </div>
       <div class="prepare-sub">Comment tu te sens ce matin ? Ça influence tes décisions.</div>
@@ -177,7 +177,7 @@
   <div class="eco-card" data-testid="eco-calendar">
     <div class="card-header">
       <div class="card-title eco-title">
-        <lucide-icon [img]="AgendaIcon" [size]="16" class="ch-ic" /> {{ nextTradingLabel() }}
+        <svg [lucideIcon]="AgendaIcon" [size]="16" class="ch-ic"></svg> {{ nextTradingLabel() }}
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
         <span class="ai-badge">AI</span>
@@ -220,7 +220,7 @@
 
       @if (highImpactCountView() > 0) {
         <div class="eco-warning">
-          <lucide-icon [img]="WarnIcon" [size]="14" class="ew-ic" />
+          <svg [lucideIcon]="WarnIcon" [size]="14" class="ew-ic"></svg>
           <span>{{ highImpactCountView() }} événement(s) à fort impact {{ isNextDay() ? "demain" : "aujourd'hui" }}</span>
         </div>
       }

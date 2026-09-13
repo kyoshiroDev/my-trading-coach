@@ -8,11 +8,11 @@
 
 /* Alerte fraîcheur */
 .backup-alert { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--amber-dim); border: 1px solid rgba(245,166,35,.3); border-radius: var(--r-md); color: var(--text); font-size: 13px; line-height: 1.4; }
-.backup-alert lucide-icon { color: var(--amber); flex-shrink: 0; }
+.backup-alert svg.lucide { color: var(--amber); flex-shrink: 0; }
 .backup-alert strong { font-weight: 700; }
 .backup-alert-sub { color: var(--text2); }
 .backup-alert.critical { background: var(--red-dim); border-color: rgba(255,85,99,.3); }
-.backup-alert.critical lucide-icon { color: var(--red); }
+.backup-alert.critical svg.lucide { color: var(--red); }
 
 /* Modals */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(4px); z-index: 100; display: flex; align-items: center; justify-content: center; animation: fadeIn .15s; }

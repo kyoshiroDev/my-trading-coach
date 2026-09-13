@@ -35,7 +35,7 @@
         [attr.title]="collapsed() ? 'Dashboard' : null"
         (click)="closeSidebar()"
       >
-        <lucide-icon [img]="DashboardIcon" [size]="16" class="nav-icon" />
+        <svg [lucideIcon]="DashboardIcon" [size]="16" class="nav-icon"></svg>
         <span class="nav-label">Dashboard</span>
       </a>
 
@@ -47,7 +47,7 @@
         [attr.title]="collapsed() ? 'Ma session' : null"
         (click)="closeSidebar()"
       >
-        <lucide-icon [img]="SessionIcon" [size]="16" class="nav-icon" />
+        <svg [lucideIcon]="SessionIcon" [size]="16" class="nav-icon"></svg>
         <span class="nav-label">Ma session</span>
       </a>
 
@@ -59,7 +59,7 @@
         [attr.title]="collapsed() ? 'Mes comptes' : null"
         (click)="closeSidebar()"
       >
-        <lucide-icon [img]="AccountsIcon" [size]="16" class="nav-icon" />
+        <svg [lucideIcon]="AccountsIcon" [size]="16" class="nav-icon"></svg>
         <span class="nav-label">Mes comptes</span>
       </a>
 
@@ -71,7 +71,7 @@
         [attr.title]="collapsed() ? 'Journal' : null"
         (click)="closeSidebar()"
       >
-        <lucide-icon [img]="JournalIcon" [size]="16" class="nav-icon" />
+        <svg [lucideIcon]="JournalIcon" [size]="16" class="nav-icon"></svg>
         <span class="nav-label">Journal</span>
       </a>
 
@@ -83,7 +83,7 @@
         [attr.title]="collapsed() ? 'Mes sessions' : null"
         (click)="closeSidebar()"
       >
-        <lucide-icon [img]="SessionsIcon" [size]="16" class="nav-icon" />
+        <svg [lucideIcon]="SessionsIcon" [size]="16" class="nav-icon"></svg>
         <span class="nav-label">Mes sessions</span>
       </a>
 
@@ -95,11 +95,11 @@
         [attr.title]="collapsed() ? 'Analytics' : null"
         (click)="closeSidebar()"
       >
-        <lucide-icon [img]="AnalyticsIcon" [size]="16" class="nav-icon" />
+        <svg [lucideIcon]="AnalyticsIcon" [size]="16" class="nav-icon"></svg>
         <span class="nav-label">Analytics</span>
         @if (!userStore.isPremium()) {
           <span class="nav-lock" title="Premium : débloque avec l'abonnement">
-            <lucide-icon [img]="LockIcon" [size]="12" />
+            <svg [lucideIcon]="LockIcon" [size]="12"></svg>
           </span>
         }
       </a>
@@ -114,11 +114,11 @@
         [attr.title]="collapsed() ? 'IA Insights' : null"
         (click)="closeSidebar()"
       >
-        <lucide-icon [img]="AiIcon" [size]="16" class="nav-icon" />
+        <svg [lucideIcon]="AiIcon" [size]="16" class="nav-icon"></svg>
         <span class="nav-label">IA Insights</span>
         @if (!userStore.isPremium()) {
           <span class="nav-lock" title="Premium : débloque avec l'abonnement">
-            <lucide-icon [img]="LockIcon" [size]="12" />
+            <svg [lucideIcon]="LockIcon" [size]="12"></svg>
           </span>
         }
       </a>
@@ -131,11 +131,11 @@
         [attr.title]="collapsed() ? 'Weekly Debrief' : null"
         (click)="closeSidebar()"
       >
-        <lucide-icon [img]="DebriefIcon" [size]="16" class="nav-icon" />
+        <svg [lucideIcon]="DebriefIcon" [size]="16" class="nav-icon"></svg>
         <span class="nav-label">Weekly Debrief</span>
         @if (!userStore.isPremium()) {
           <span class="nav-lock" title="Premium : débloque avec l'abonnement">
-            <lucide-icon [img]="LockIcon" [size]="12" />
+            <svg [lucideIcon]="LockIcon" [size]="12"></svg>
           </span>
         }
       </a>
@@ -148,7 +148,7 @@
         [attr.title]="collapsed() ? 'Calendrier éco' : null"
         (click)="closeSidebar()"
       >
-        <lucide-icon [img]="EcoIcon" [size]="16" class="nav-icon" />
+        <svg [lucideIcon]="EcoIcon" [size]="16" class="nav-icon"></svg>
         <span class="nav-label">Calendrier éco</span>
       </a>
 
@@ -162,7 +162,7 @@
           [attr.title]="collapsed() ? 'Ambassadeur' : null"
           (click)="closeSidebar()"
         >
-          <lucide-icon [img]="AmbassadorIcon" [size]="16" class="nav-icon" />
+          <svg [lucideIcon]="AmbassadorIcon" [size]="16" class="nav-icon"></svg>
           <span class="nav-label">Ambassadeur</span>
           @if (ambassadorNotif.newReferrals() > 0) {
             <span class="nav-badge-notif">{{ ambassadorNotif.newReferrals() }}</span>
@@ -178,7 +178,7 @@
           [attr.title]="collapsed() ? 'Parrainage' : null"
           (click)="closeSidebar()"
         >
-          <lucide-icon [img]="ParrainageIcon" [size]="16" class="nav-icon" />
+          <svg [lucideIcon]="ParrainageIcon" [size]="16" class="nav-icon"></svg>
           <span class="nav-label">Parrainage</span>
         </a>
       }
@@ -193,11 +193,11 @@
         [attr.title]="collapsed() ? 'Scoring' : null"
         (click)="closeSidebar()"
       >
-        <lucide-icon [img]="ScoringIcon" [size]="16" class="nav-icon" />
+        <svg [lucideIcon]="ScoringIcon" [size]="16" class="nav-icon"></svg>
         <span class="nav-label">Scoring</span>
         @if (!userStore.isPremium()) {
           <span class="nav-lock" title="Premium : débloque avec l'abonnement">
-            <lucide-icon [img]="LockIcon" [size]="12" />
+            <svg [lucideIcon]="LockIcon" [size]="12"></svg>
           </span>
         }
       </a>
@@ -210,7 +210,7 @@
         [attr.title]="collapsed() ? 'Profil' : null"
         (click)="closeSidebar()"
       >
-        <lucide-icon [img]="ProfilIcon" [size]="16" class="nav-icon" />
+        <svg [lucideIcon]="ProfilIcon" [size]="16" class="nav-icon"></svg>
         <span class="nav-label">Profil</span>
       </a>
 
@@ -220,7 +220,7 @@
         [attr.title]="collapsed() ? (userStore.isDemo() ? 'Quitter la démo' : 'Déconnexion') : null"
         (click)="closeSidebar(); logout()"
       >
-        <lucide-icon [img]="LogoutIcon" [size]="16" class="nav-icon" />
+        <svg [lucideIcon]="LogoutIcon" [size]="16" class="nav-icon"></svg>
         <span class="nav-label">@if (userStore.isDemo()) { Quitter la démo } @else { Déconnexion }</span>
       </button>
     </nav>
@@ -256,7 +256,7 @@
     (click)="toggleCollapse()"
     [attr.aria-label]="collapsed() ? 'Déplier la barre latérale' : 'Replier la barre latérale'"
   >
-    <lucide-icon [img]="collapsed() ? ChevronRightIcon : ChevronLeftIcon" [size]="16" />
+    <svg [lucideIcon]="collapsed() ? ChevronRightIcon : ChevronLeftIcon" [size]="16"></svg>
   </button>
 
   <!-- ─── MAIN ─── -->
