@@ -1,7 +1,7 @@
 import { Controller, Get, Query, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { Public } from '../../common/decorators/public.decorator';
-import { PrismaService } from '../../prisma/prisma.service';
+import { EmailsService } from './emails.service';
 
 /**
  * Endpoints publics liés aux emails. La désinscription est sans authentification
@@ -9,17 +9,12 @@ import { PrismaService } from '../../prisma/prisma.service';
  */
 @Controller('emails')
 export class EmailsController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly emails: EmailsService) {}
 
   @Public()
   @Get('unsubscribe')
   async unsubscribe(@Query('token') token: string, @Res() res: Response) {
-    if (token) {
-      await this.prisma.user.updateMany({
-        where: { unsubToken: token },
-        data: { marketingConsent: false, marketingConsentAt: null },
-      });
-    }
+    await this.emails.unsubscribe(token);
     res.type('html').send(
       `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Désinscription</title></head>
        <body style="margin:0;background:#080c14;font-family:'DM Sans',-apple-system,Arial,sans-serif;color:#e2eaf5;">
