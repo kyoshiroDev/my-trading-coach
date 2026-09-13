@@ -19,10 +19,10 @@
 ```
 .claude/agents/     ← agents spécialisés (lire le pertinent avant de coder)
 apps/
-├── app-mytradingcoach/     ← Angular 21 (port 4200)
-├── admin-mytradingcoach/   ← Angular 21 (back-office, accès ADMIN)
+├── app-mytradingcoach/     ← Angular 22 (port 4200)
+├── admin-mytradingcoach/   ← Angular 22 (back-office, accès ADMIN)
 ├── api-mytradingcoach/     ← NestJS 11 (port 3000)
-└── landing-mytradingcoach/ ← Astro 6 (port 4321)
+└── landing-mytradingcoach/ ← Astro 7 (port 4321)
 prisma/schema.prisma
 
 admin-mytradingcoach.html   ← référence design admin   ← LIRE AVANT TRAVAIL ADMIN

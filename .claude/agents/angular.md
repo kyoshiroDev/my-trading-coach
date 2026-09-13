@@ -1,11 +1,11 @@
 # Agent Angular — app-mytradingcoach
 
 ## Stack
-Angular 21 · Signals · Standalone Components · @lucide/angular · Vitest · Nx 22
+Angular 22 · Signals · Standalone Components · @lucide/angular · Vitest · Nx 23 · TypeScript 6.0
 
 ---
 
-## Règles Angular 21 — ABSOLUES
+## Règles Angular 22 — ABSOLUES
 
 - `@if` / `@for` / `@switch` dans les templates — jamais `*ngIf` / `*ngFor`
 - `inject()` plutôt que constructeur
@@ -584,3 +584,20 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
   dans le `.ts` lit maintenant `.ts` + `.html` (cf. `csv-import-*.spec.ts`).
 - Mock de `TradesApi` dans un spec qui intercepte le HTTP : lui donner une méthode qui émet la
   vraie requête (`TestBed.inject(HttpClient).delete(...)`), pour garder `HttpTestingController`.
+
+## Migration Angular 22 / Nx 23 / TypeScript 6.0 (étape 5 de l'audit, 2026-09-13)
+
+- Faite par `nx migrate latest` + `--run-migrations` (Angular 22.1.6, CLI/build 22.1.8, Nx 23.2.1,
+  TypeScript 6.0.3 — Angular 22 exige TS `>=6.0 <6.1`, donc **pas TypeScript 7**).
+- **Migration `safe-optional-chaining` volontairement NON appliquée** : en Angular 22, `a?.b` dans un
+  template suit la sémantique JS (`undefined`, plus `null`). La migration aurait entouré les 76 `?.`
+  de `$safeNavigationMigration(…)` pour garder `null`. Aucun n'était comparé à `null` et l'affichage
+  est identique (`??` traite les deux pareil). Règle désormais : ne pas écrire `=== null` sur le
+  résultat d'un `?.` dans un template ; une entrée typée `T | null` qui reçoit un `?.` le verra au
+  build (strictTemplates).
+- `strict-safe-navigation-narrow` : les diagnostics `nullishCoalescingNotNullable` et
+  `optionalChainNotNullable` sont mis en `suppress` dans les `tsconfig.app.json`.
+- TypeScript 6 : `ignoreDeprecations: "6.0"` et, dans `tsconfig.base.json`, `types: ["*"]` +
+  `noUncheckedSideEffectImports: false` pour garder le comportement de TS 5 (TS 6 change ces défauts).
+  Chaque tsconfig a un `rootDir` explicite : `../..` pour l'app, l'admin et leurs specs (ils incluent
+  `libs/shared`), sinon `@mtc/shared` sort de la racine et TypeScript refuse le fichier.

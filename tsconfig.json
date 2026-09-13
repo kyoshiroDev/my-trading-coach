@@ -21,5 +21,8 @@
     {
       "path": "./apps/admin-mytradingcoach"
     }
-  ]
+  ],
+  "compilerOptions": {
+    "ignoreDeprecations": "6.0"
+  }
 }
