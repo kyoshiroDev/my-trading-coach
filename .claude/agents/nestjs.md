@@ -152,11 +152,20 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   un `user.update({ data: { role } })` direct. `UsersService.setRole` y délègue.
   Backfill : `scripts/backfill-ambassador-codes.ts` (idempotent).
 - **Règle de coexistence du parrainage** : c'est le **rôle du parrain** qui décide, dans
-  `processReferral` (`stripe.service.ts`). Parrain `AMBASSADOR` → commission cash 20 %
+  `processReferral` (`stripe-referral.service.ts`). Parrain `AMBASSADOR` → commission cash 20 %
   (`ReferralCommission`), **jamais** de mois offert. Parrain `USER` → mois offert
   (`ReferralReward`) + coupon filleul au checkout, **jamais** les 20 %. Auto-parrainage
   ignoré. Couvert par `stripe-referral.service.spec.ts` (unitaire) et
   `referral-coexistence.int-spec.ts` (intégration, vraie stack).
+- **Module Stripe** (`modules/stripe/`), un service par responsabilité, tous sur le même
+  client injecté `STRIPE_CLIENT` (`stripe.client.ts`, version d'API épinglée) :
+  `StripeBillingService` (routes /billing : statut en cache Redis, checkout, portail) ·
+  `StripeWebhookService` (signature + idempotence + enqueue, puis un handler par type
+  d'événement) · `StripeSubscriptionService` (synchro DB ← Stripe, cache, liste admin) ·
+  `StripeReferralService` (commission / mois offert) · `StripeCustomerService` (customer
+  sans doublon, avoir) · `StripeCouponService` (coupons filleul). Nouvel événement webhook
+  = un `case` + un handler privé dans `StripeWebhookService`. Dans les specs, passer un
+  mock Stripe au constructeur ; ne pas réassigner un champ privé.
 - `@UseGuards(JwtAuthGuard)` sur toutes les routes protégées
 - `@UseGuards(PremiumGuard)` sur routes IA et analytics avancés
 - `@UseGuards(JwtAuthGuard, AdminGuard)` sur TOUTES les routes `/vps/*`, `/docker/*`, `/admin/*`

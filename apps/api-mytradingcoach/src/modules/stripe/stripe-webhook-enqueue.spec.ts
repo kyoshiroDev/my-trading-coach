@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { Prisma } from '@prisma/client';
-import { StripeService } from './stripe.service';
+import { StripeWebhookService } from './stripe-webhook.service';
 
 /**
  * PROMPT-185 #1 — la marque d'idempotence ne doit jamais survivre à un enqueue raté.
@@ -26,17 +26,17 @@ function makeSvc(opts: { enqueueFails?: boolean } = {}) {
   };
   const config = { getOrThrow: vi.fn(() => 'whsec_fake') };
 
-  const svc = new StripeService(
-    config as never, prisma as never, {} as never,
-    {} as never, queue as never, {} as never,
-  );
   // Signature validée : ce test porte sur l'ordre marque/enqueue, pas sur la crypto.
+  const stripe = { webhooks: { constructEvent: vi.fn(() => EVENT) } };
 
-  (svc as any).stripe = { webhooks: { constructEvent: vi.fn(() => EVENT) } };
+  const svc = new StripeWebhookService(
+    config as never, prisma as never, {} as never, {} as never,
+    {} as never, {} as never, queue as never, stripe as never,
+  );
   return { svc, stripeEvent, queue };
 }
 
-describe('StripeService.handleWebhook — idempotence vs enqueue', () => {
+describe('StripeWebhookService.handleWebhook — idempotence vs enqueue', () => {
   it('enqueue OK → event marqué traité, job enfilé', async () => {
     const { svc, stripeEvent, queue } = makeSvc();
 

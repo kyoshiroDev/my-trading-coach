@@ -13,19 +13,21 @@ import type { Request } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
-import { StripeService } from './stripe.service';
+import { StripeBillingService } from './stripe-billing.service';
+import { StripeWebhookService } from './stripe-webhook.service';
 
 @Controller('billing')
 export class StripeController {
   constructor(
-    private readonly stripe: StripeService,
+    private readonly billing: StripeBillingService,
+    private readonly webhooks: StripeWebhookService,
     private readonly config: ConfigService,
   ) {}
 
   // GET /api/billing/status : Plan, statut abo, trial, dates
   @Get('status')
   async status(@CurrentUser() user: { id: string }) {
-    return this.stripe.getBillingStatus(user.id);
+    return this.billing.getBillingStatus(user.id);
   }
 
   // POST /api/billing/checkout : Crée une session Stripe Checkout
@@ -43,7 +45,7 @@ export class StripeController {
     const frontendUrl =
       this.config.get<string>('FRONTEND_URL') ?? 'http://localhost:4200';
 
-    return this.stripe.createCheckoutSession(
+    return this.billing.createCheckoutSession(
       user.id,
       user.email,
       priceId,
@@ -56,7 +58,7 @@ export class StripeController {
   async portal(@CurrentUser() user: { id: string }) {
     const frontendUrl =
       this.config.get<string>('FRONTEND_URL') ?? 'http://localhost:4200';
-    return this.stripe.createPortalSession(user.id, frontendUrl);
+    return this.billing.createPortalSession(user.id, frontendUrl);
   }
 
   // POST /api/billing/webhook : PUBLIC (Stripe appelle directement, sans JWT)
@@ -74,6 +76,6 @@ export class StripeController {
         'Corps brut manquant : vérifier rawBody: true dans main.ts',
       );
     }
-    return this.stripe.handleWebhook(req.rawBody, signature);
+    return this.webhooks.handleWebhook(req.rawBody, signature);
   }
 }

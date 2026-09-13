@@ -10,7 +10,7 @@ const mockPrisma = {
 const service = new AdminService(
   mockPrisma,
   {} as never, // UsersService — non utilisé par getAiCost
-  {} as never, // StripeService
+  {} as never, // StripeSubscriptionService
   {} as never, // AnthropicCostService
 );
 
