@@ -562,3 +562,21 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
 - `core/constants/pricing.const.ts` garde ses exports (`PRICING`, `ACCOUNT_LIMITS`,
   `yearlyPerMonth`) mais lit ses VALEURS dans `@mtc/shared` : un prix ne se change plus que dans
   `libs/shared/src/pricing.ts` (+ la landing `Pricing.astro`, non branchée à la lib).
+
+## Couche HTTP, erreurs et templates (étape 4 de l'audit, 2026-09-13)
+
+- **Aucun `HttpClient` dans un composant** : tout appel passe par `core/api/*.api.ts`
+  (`AiApi` créé pour cooldown / insights / chat ; `TradesApi.importCsv`, `DebriefApi.exportPdf`,
+  `AnalyticsApi.getDailyEquityCurve` ajoutés). Un type de réponse propre à un écran reste dans
+  l'écran : la méthode d'API le reçoit en générique (`importCsv<ImportResult>`,
+  `insights<InsightsResponse>`). `trades.store` garde son appel direct : sa forme de page
+  (`nextCursor`/`hasNextPage`) diffère de `TradesApi.getAll` (`meta`) — à aligner à part.
+- **Un seul helper d'erreur** : `apiErrorMessage(err, repli)` vit dans `@mtc/shared` (sans
+  Angular), ré-exporté par `core/utils/api-error.ts` ; l'admin l'importe directement. Plus de
+  `err.error?.message ?? …` en ligne ni de `tradovateErrorText`.
+- **Templates de plus de ~150 lignes → `templateUrl` (.html)** : 12 composants migrés
+  (session-live, dashboard, csv-import, session-morning, session-day, sidebar, sessions,
+  debrief, ai-insights, register ; admin : user-detail, emails). Un spec qui lisait le template
+  dans le `.ts` lit maintenant `.ts` + `.html` (cf. `csv-import-*.spec.ts`).
+- Mock de `TradesApi` dans un spec qui intercepte le HTTP : lui donner une méthode qui émet la
+  vraie requête (`TestBed.inject(HttpClient).delete(...)`), pour garder `HttpTestingController`.

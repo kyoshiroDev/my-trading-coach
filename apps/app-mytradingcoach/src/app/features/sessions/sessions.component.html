@@ -1,0 +1,251 @@
+<div class="sessions-page" data-testid="sessions-page">
+
+  <!-- Header + filtre -->
+  <div class="page-header">
+    <div>
+      <div class="page-title">Mes sessions</div>
+      <div class="page-sub">
+        {{ monthSummary().sessionCount }} session{{ monthSummary().sessionCount > 1 ? 's' : '' }}
+        · {{ weekGroups().length }} semaine{{ weekGroups().length > 1 ? 's' : '' }}
+      </div>
+    </div>
+    <select class="month-select"
+            [value]="selectedMonth()"
+            (change)="onMonthChange($any($event.target).value)">
+      @for (m of availableMonths(); track m.value) {
+        <option [value]="m.value">{{ m.label }}</option>
+      }
+    </select>
+  </div>
+
+  <!-- Sélecteur de compte global (multi-comptes, accessible à tous) -->
+  <div class="sessions-accounts">
+    <mtc-account-selector />
+  </div>
+
+  <!-- Résumé du mois -->
+  @if (sessions().length > 0) {
+    <div class="month-summary">
+      <div class="ms-card">
+        <div class="ms-val" [class.g]="monthSummary().totalPnl >= 0" [class.r]="monthSummary().totalPnl < 0">
+          {{ monthSummary().totalPnl | pnlFormat }}
+        </div>
+        <div class="ms-lbl">P&L du mois</div>
+      </div>
+      <div class="ms-card">
+        <div class="ms-val b">{{ monthSummary().sessionCount }}</div>
+        <div class="ms-lbl">Sessions</div>
+      </div>
+      <div class="ms-card">
+        <div class="ms-val b">{{ monthSummary().totalTrades }}</div>
+        <div class="ms-lbl">Trades</div>
+      </div>
+      <div class="ms-card">
+        <div class="ms-val b">{{ monthSummary().avgWinRate | number:'1.0-0' }}%</div>
+        <div class="ms-lbl">Win Rate moy.</div>
+      </div>
+      <div class="ms-card">
+        <div class="ms-val b">{{ formatDurationSeconds(monthSummary().avgDuration) }}</div>
+        <div class="ms-lbl">Durée moy.</div>
+      </div>
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="sessions-list">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="skel-card"></div>
+      }
+    </div>
+  } @else if (sessions().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">📋</div>
+      <div class="empty-title">Aucune session ce mois-ci</div>
+      <div class="empty-sub">Démarre une session depuis le dashboard pour commencer à tracker tes journées.</div>
+    </div>
+  } @else {
+    @for (group of weekGroups(); track group.weekNumber) {
+      <div class="week-group">
+        <div class="week-header">
+          <div class="week-label">{{ group.label }}</div>
+          <div class="week-line"></div>
+          <div class="week-stats">
+            <span class="week-pnl" [class.g]="group.totalPnl >= 0" [class.r]="group.totalPnl < 0">
+              {{ group.totalPnl | pnlFormat }}
+            </span>
+            <span class="week-sep">·</span>
+            <span class="week-count">{{ group.sessionCount }} session{{ group.sessionCount > 1 ? 's' : '' }}</span>
+            <span class="week-sep">·</span>
+            <span class="week-count">{{ group.totalTrades }} trades</span>
+          </div>
+        </div>
+
+        <div class="sessions-list">
+          @for (session of group.sessions; track session.id) {
+            <div class="session-card"
+                 [class.positive]="(session.totalPnl ?? 0) > 0"
+                 [class.negative]="(session.totalPnl ?? 0) < 0"
+                 [class.neutral]="(session.totalPnl ?? 0) === 0"
+                 [class.expanded]="expandedId() === session.id"
+                 role="button"
+                 tabindex="0"
+                 (click)="toggleExpand(session.id)"
+                 (keyup.enter)="toggleExpand(session.id)">
+
+              <!-- Barre principale -->
+              <div class="session-row">
+
+                <!-- GAUCHE : Date + emojis -->
+                <div class="session-when">
+                  <div class="session-date-block">
+                    <div class="session-day">{{ session.startedAt | date:'EEEE d MMM' : '' : 'fr-FR' }}</div>
+                    <div class="session-meta">
+                      <span>{{ formatDuration(session.startedAt, session.endedAt) }}</span>
+                      <span class="meta-dot">·</span>
+                      <span>{{ session.startedAt | date:'HH:mm' }}</span>
+                    </div>
+                  </div>
+                  <div class="session-moods">
+                    <span class="mood-e">{{ session.moodStart | emotionEmoji }}</span>
+                    <span class="mood-sep">→</span>
+                    <span class="mood-e">{{ session.moodEnd | emotionEmoji }}</span>
+                  </div>
+                </div>
+
+                <!-- CENTRE : Stats centrées -->
+                <div class="session-center">
+                  <div class="stat">
+                    <div class="stat-val"
+                         [class.g]="(session.totalPnl ?? 0) > 0"
+                         [class.r]="(session.totalPnl ?? 0) < 0">
+                      {{ session.totalPnl | pnlFormat }}
+                    </div>
+                    <div class="stat-lbl">P&L</div>
+                  </div>
+                  <div class="stat">
+                    <div class="stat-val">{{ session.totalTrades }}</div>
+                    <div class="stat-lbl">Trades</div>
+                  </div>
+                  <div class="stat">
+                    <div class="stat-val">
+                      {{ session.winRate !== null && session.winRate !== undefined ? (session.winRate | number:'1.0-0') + '%' : '-' }}
+                    </div>
+                    <div class="stat-lbl">Win Rate</div>
+                  </div>
+                </div>
+
+                <!-- DROITE : Assets + indicateurs -->
+                <div class="session-right">
+                  @if (session.topAssets?.length) {
+                    <div class="session-assets">
+                      @for (asset of session.topAssets.slice(0, 3); track asset) {
+                        <span class="asset-chip">{{ asset }}</span>
+                      }
+                    </div>
+                  }
+                  @if (session.planNote) {
+                    <div class="plan-pill">📋 Plan</div>
+                  }
+                  @if (session.aiOneLiner) {
+                    <div class="ai-dot">✦</div>
+                  }
+                  <div class="chevron">{{ expandedId() === session.id ? '▲' : '▼' }}</div>
+                </div>
+
+              </div>
+
+              <!-- Détail expandé -->
+              @if (expandedId() === session.id) {
+                <div class="session-detail"
+                     tabindex="0"
+                     (click)="$event.stopPropagation()"
+                     (keydown)="$event.stopPropagation()">
+
+                  @if (session.planNote || session.marketContext || session.maxDrawdown !== null && session.maxDrawdown !== undefined || session.bestTradePnl !== null && session.bestTradePnl !== undefined) {
+                    <div class="detail-fields">
+                      @if (session.planNote) {
+                        <div class="detail-field">
+                          <div class="df-label">📋 Plan du jour</div>
+                          <div class="df-value">{{ session.planNote }}</div>
+                        </div>
+                      }
+                      @if (session.marketContext) {
+                        <div class="detail-field">
+                          <div class="df-label">📊 Contexte marché</div>
+                          <div class="df-value">{{ session.marketContext }}</div>
+                        </div>
+                      }
+                      @if (session.maxDrawdown !== null && session.maxDrawdown !== undefined) {
+                        <div class="detail-field">
+                          <div class="df-label">📉 Drawdown intra-session</div>
+                          <div class="df-value mono" [class.r]="session.maxDrawdown < 0">
+                            {{ session.maxDrawdown | pnlFormat }}
+                          </div>
+                        </div>
+                      }
+                      @if (session.bestTradePnl !== null && session.bestTradePnl !== undefined) {
+                        <div class="detail-field">
+                          <div class="df-label">🏆 Meilleur trade</div>
+                          <div class="df-value mono g">
+                            {{ session.bestTradePnl | pnlFormat }}
+                            @if (session.bestTradeAsset) { · {{ session.bestTradeAsset }} }
+                          </div>
+                        </div>
+                      }
+                    </div>
+                    <div class="detail-divider"></div>
+                  }
+
+                  @if (session.aiOneLiner) {
+                    <div class="detail-ai">
+                      <div class="detail-ai-lbl">
+                        <span class="ai-star">✦</span> Analyse de ton compagnon
+                      </div>
+                      <div class="detail-ai-text">{{ session.aiOneLiner }}</div>
+                    </div>
+                  }
+
+                  @if (session.reflectionQuestion) {
+                    <div class="detail-refl">
+                      <div class="detail-r-lbl">💭 Question de réflexion</div>
+                      <div class="detail-r-q">{{ session.reflectionQuestion }}</div>
+                      @if (session.reflectionNote) {
+                        <div class="detail-r-ans">
+                          <span class="qmark">"</span>{{ session.reflectionNote }}<span class="qmark">"</span>
+                        </div>
+                      } @else {
+                        <div class="detail-r-empty">Aucune réponse enregistrée.</div>
+                      }
+                    </div>
+                  }
+
+                  @if (session.notes) {
+                    <div class="detail-notes">
+                      <div class="detail-notes-lbl">📓 Journal</div>
+                      <div class="detail-notes-txt">{{ session.notes }}</div>
+                    </div>
+                  }
+
+                  <div class="detail-footer">
+                    <span class="detail-date-full">
+                      {{ session.startedAt | date:'EEEE d MMMM yyyy · HH:mm' : '' : 'fr-FR' }}
+                      @if (session.endedAt) { → {{ session.endedAt | date:'HH:mm' }} }
+                    </span>
+                    <a class="detail-link"
+                       [routerLink]="['/journal']"
+                       [queryParams]="{ date: (session.startedAt | date:'yyyy-MM-dd') }"
+                       (click)="$event.stopPropagation()">
+                      Voir les {{ session.totalTrades }} trades →
+                    </a>
+                  </div>
+
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+
+</div>

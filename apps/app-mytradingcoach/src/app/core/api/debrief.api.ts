@@ -66,6 +66,11 @@ export class DebriefApi {
     return this.http.get<{ data: WeeklyDebrief[] }>(`${this.base}/history`);
   }
 
+  /** PDF du débrief d'une semaine (blob à télécharger). */
+  exportPdf(year: number, week: number): Observable<Blob> {
+    return this.http.get(`${this.base}/${year}/${week}/pdf`, { responseType: 'blob' });
+  }
+
   generate(): Observable<{ data: WeeklyDebrief }> {
     return this.http.post<{ data: WeeklyDebrief }>(`${this.base}/generate`, {});
   }

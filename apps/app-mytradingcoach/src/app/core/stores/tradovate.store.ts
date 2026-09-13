@@ -9,6 +9,7 @@ import {
 } from '../api/tradovate.api';
 import { syncResultLines } from '../utils/tradovate-return.util';
 import { ToastService } from '../services/toast.service';
+import { apiErrorMessage } from '../utils/api-error';
 
 /** Action en cours sur un compte : pilote les spinners et désactive les boutons. */
 export type TradovateBusy = 'sync' | 'select' | 'disconnect' | 'connect';
@@ -16,13 +17,6 @@ export type TradovateBusy = 'sync' | 'select' | 'disconnect' | 'connect';
 export interface TradovateFeedback {
   lines: { text: string; warn: boolean }[];
   error: string | null;
-}
-
-/** Message lisible d'une erreur API (le back envoie toujours un message FR clair + un code). */
-export function tradovateErrorText(err: unknown, fallback: string): string {
-  const e = err instanceof HttpErrorResponse ? err.error : (err as { error?: unknown })?.error;
-  const msg = (e as { message?: unknown } | null)?.message;
-  return typeof msg === 'string' && msg ? msg : fallback;
 }
 
 /**
@@ -78,7 +72,7 @@ export class TradovateStore {
       error: (err) => {
         this.setBusy(accountId, undefined);
         this.setFeedback(accountId, undefined);
-        this.toast.error(tradovateErrorText(err, 'La synchronisation a échoué. Réessaie dans un instant.'));
+        this.toast.error(apiErrorMessage(err, 'La synchronisation a échoué. Réessaie dans un instant.'));
         this.load(); // l'API a pu passer la connexion en « à reconnecter »
         done?.(null);
       },
@@ -102,7 +96,7 @@ export class TradovateStore {
       },
       error: (err) => {
         this.setBusy(accountId, undefined);
-        this.toast.error(tradovateErrorText(err, "Ce compte Tradovate n'a pas pu être choisi."));
+        this.toast.error(apiErrorMessage(err, "Ce compte Tradovate n'a pas pu être choisi."));
         done?.(null);
       },
     });
@@ -120,7 +114,7 @@ export class TradovateStore {
           return;
         }
         this.setBusy(accountId, undefined);
-        this.toast.error(tradovateErrorText(err, 'La déconnexion a échoué. Réessaie.'));
+        this.toast.error(apiErrorMessage(err, 'La déconnexion a échoué. Réessaie.'));
       },
     });
   }

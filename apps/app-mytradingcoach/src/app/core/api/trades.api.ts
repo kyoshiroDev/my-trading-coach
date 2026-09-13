@@ -189,6 +189,11 @@ export class TradesApi {
     return this.http.post<{ data: Trade }>(this.base, dto);
   }
 
+  /** Import CSV (multipart). `T` = le récap d'import, typé par l'écran qui l'affiche. */
+  importCsv<T>(form: FormData): Observable<{ data: T }> {
+    return this.http.post<{ data: T }>(`${this.base}/import`, form);
+  }
+
   update(id: string, dto: UpdateTradeDto): Observable<{ data: Trade }> {
     return this.http.patch<{ data: Trade }>(`${this.base}/${id}`, dto);
   }

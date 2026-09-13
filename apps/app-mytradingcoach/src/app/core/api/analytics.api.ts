@@ -99,6 +99,20 @@ export class AnalyticsApi {
     );
   }
 
+  /** Courbe d'équité jour par jour, bornée (`from`/`to`) et scopée compte (`accountId`). */
+  getDailyEquityCurve(query: { from?: string | null; to?: string | null; accountId?: string | null }): Observable<{
+    data: { points: EquityPoint[]; startingCapital: number | null };
+  }> {
+    const params: Record<string, string> = {};
+    if (query.from) params['from'] = query.from;
+    if (query.to) params['to'] = query.to;
+    if (query.accountId) params['accountId'] = query.accountId;
+    return this.http.get<{ data: { points: EquityPoint[]; startingCapital: number | null } }>(
+      `${this.base}/equity-curve/daily`,
+      { params },
+    );
+  }
+
   getTopAssets(): Observable<{ data: TopAsset[] }> {
     return this.http.get<{ data: TopAsset[] }>(`${this.base}/top-assets`);
   }

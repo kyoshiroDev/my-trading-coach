@@ -9,7 +9,10 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const SRC = readFileSync(join(__dirname, 'csv-import.component.ts'), 'utf-8');
+// Template dans le .html depuis l'étape 4 de l'audit : on lit le composant ET son template.
+const SRC =
+  readFileSync(join(__dirname, 'csv-import.component.ts'), 'utf-8') + '\n' +
+  readFileSync(join(__dirname, 'csv-import.component.html'), 'utf-8');
 const at = (needle: string) => {
   const i = SRC.indexOf(needle);
   expect(i, `introuvable : ${needle}`).toBeGreaterThan(-1);

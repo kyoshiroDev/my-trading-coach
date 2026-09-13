@@ -5,7 +5,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
 import { computeTradeStats } from '@mtc/shared';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, of, map, catchError } from 'rxjs';
 import { LucideAngularModule, X, Pencil, Upload, ChevronDown, ChevronRight, Calendar, Trash2, ArrowRightLeft } from 'lucide-angular';
 import { TradesStore, Trade } from '../../core/stores/trades.store';
@@ -17,7 +17,6 @@ import { TradeFormComponent } from './trade-form.component';
 import { CsvImportComponent } from './csv-import.component';
 import { PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe } from '../../shared/pipes';
 import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
-import { environment } from '../../../environments/environment';
 import { ToastService } from '../../core/services/toast.service';
 import { TradovateLiveSocketService } from '../../core/services/tradovate-live-socket.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
@@ -66,7 +65,6 @@ interface WeekGroup {
 export class JournalComponent {
   protected readonly tradesStore = inject(TradesStore);
   private readonly tradesApi     = inject(TradesApi);
-  private readonly http          = inject(HttpClient);
   private readonly destroyRef    = inject(DestroyRef);
   private readonly selectedAccount = inject(SelectedAccountStore);
   protected readonly setupsStore = inject(SetupsStore);
@@ -461,7 +459,7 @@ export class JournalComponent {
 
     const obs = edit
       ? this.tradesApi.update(edit.id, dto)
-      : this.http.post<{ data: Trade }>(`${environment.apiUrl}/trades`, payload);
+      : this.tradesApi.create(payload);
 
     obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res: { data: Trade }) => {
@@ -486,7 +484,7 @@ export class JournalComponent {
   }
 
   deleteTrade(id: string): void {
-    this.http.delete(`${environment.apiUrl}/trades/${id}`)
+    this.tradesApi.delete(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => { this.forgetTrade(id); this.toast.success('Trade supprimé'); },
@@ -526,7 +524,7 @@ export class JournalComponent {
 
     forkJoin(
       ids.map(id =>
-        this.http.delete(`${environment.apiUrl}/trades/${id}`).pipe(
+        this.tradesApi.delete(id).pipe(
           map(() => ({ id, parti: true })),
           // Un 404 vaut succes : le trade n'est plus la, c'est ce qu'on voulait.
           catchError((err: HttpErrorResponse) => of({ id, parti: err?.status === 404 })),

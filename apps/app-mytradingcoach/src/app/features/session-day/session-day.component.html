@@ -1,0 +1,331 @@
+<!-- Confirmation de clôture -->
+@if (confirmCloseOpen()) {
+  <div class="confirm-overlay" role="button" tabindex="0"
+       (click)="confirmCloseOpen.set(false)"
+       (keyup.escape)="confirmCloseOpen.set(false)">
+    <div class="confirm-modal" role="dialog" aria-modal="true"
+         (click)="$event.stopPropagation()"
+         (keydown)="$event.stopPropagation()">
+      <div class="cm-title">Clôturer la session ?</div>
+      <div class="cm-sub">Tu pourras compléter ton débrief juste après.</div>
+      <div class="cm-actions">
+        <button class="cm-cancel" (click)="confirmCloseOpen.set(false)">Annuler</button>
+        <button class="cm-confirm" (click)="closeAndGoToDebrief()">Clôturer →</button>
+      </div>
+    </div>
+  </div>
+}
+
+<div class="session-page" [class.live-mode]="activeTab() === 'live'">
+
+  <!-- Header propre à la page (grille 1fr auto 1fr) : source 06-session-page.jsx -->
+  <header class="mtc-sess-header">
+    <div class="mtc-sess-h-left">
+      <div class="mtc-sess-titles">
+        <h1 class="mtc-sess-h1">Ma session</h1>
+        <div class="mtc-sess-sub">{{ headerSub() }}</div>
+      </div>
+    </div>
+
+    <div class="mtc-sess-h-center">
+      <div class="mtc-sess-tabs" role="tablist">
+        <button class="mtc-sess-tab" role="tab" [class.active]="activeTab() === 'morning'"
+                [attr.aria-selected]="activeTab() === 'morning'"
+                data-testid="tab-morning" (click)="selectTab('morning')">
+          <lucide-icon [img]="MorningIcon" [size]="14" class="mtc-tab-ic" />
+          <span class="mtc-tab-label">Pré-session</span>
+        </button>
+        <button class="mtc-sess-tab" role="tab" [class.active]="activeTab() === 'live'"
+                [attr.aria-selected]="activeTab() === 'live'"
+                data-testid="tab-live" (click)="selectTab('live')">
+          <lucide-icon [img]="LiveIcon" [size]="14" class="mtc-tab-ic" />
+          <span class="mtc-tab-label">Session live</span>
+        </button>
+        <button class="mtc-sess-tab" role="tab" [class.active]="activeTab() === 'debrief'"
+                [attr.aria-selected]="activeTab() === 'debrief'"
+                data-testid="tab-debrief" (click)="selectTab('debrief')">
+          <lucide-icon [img]="DebriefIcon" [size]="14" class="mtc-tab-ic" />
+          <span class="mtc-tab-label">Débrief</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="mtc-sess-pill">
+      @if (store.activeSession()?.status === 'ACTIVE') {
+        <div class="mtc-active-pill">
+          <div class="mtc-ap-left">
+            <span class="mtc-ap-dot"></span>
+            <span class="mtc-ap-lbl">SESSION ACTIVE</span>
+          </div>
+          <span class="mtc-ap-timer">{{ store.sessionTimer() }}</span>
+          @if (activeAccountLabel(); as label) {
+            <span class="mtc-pill-acct">{{ label }}</span>
+          }
+          <button class="mtc-ap-close" (click)="confirmCloseOpen.set(true)">
+            <lucide-icon [img]="DebriefIcon" [size]="13" class="mtc-ap-close-ic" /> Clôturer
+          </button>
+        </div>
+      } @else {
+        <button class="mtc-start-btn" data-testid="start-session"
+                [disabled]="accountChoiceRequired()"
+                [title]="accountChoiceRequired() ? 'Choisis un compte dans la Pré-session' : ''"
+                (click)="startSession()">
+          <lucide-icon [img]="PlayIcon" [size]="16" /> Démarrer la session
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (activeTab() === 'debrief' && store.activeSession()?.status === 'CLOSED') {
+    <div class="session-tabs-row">
+      <div class="closed-badge">
+        <span class="cb-ic">✓</span>
+        <div>
+          <div class="cb-t">Session clôturée</div>
+          <div class="cb-d">Durée : {{ sessionDuration() }}</div>
+        </div>
+        @if (savedFlash()) { <span class="saved-pill">✓ Enregistré</span> }
+      </div>
+    </div>
+  }
+
+  @if (activeTab() === 'morning') {
+    <mtc-session-morning
+      [yesterdayRecap]="store.yesterdayRecap()"
+      [objectives]="store.currentObjectives()"
+      [debriefId]="store.currentDebriefId()"
+      [ecoCalendar]="store.ecoCalendarDay()"
+      [selectedMood]="store.selectedMood()"
+      (moodSelected)="store.selectMood($event)"
+      (sessionStarted)="startSession()"
+      (objectiveNoteAdded)="store.updateObjectiveNote($event)"
+      (planNoteChanged)="store.savePlanNote($event)"
+    >
+      @if (selectedAccount.activeAccounts().length > 0) {
+        <div session-account class="sd-acct-row">
+          <span class="sd-acct-lbl">Compte de la session</span>
+          <select class="sd-acct-select" data-testid="session-account-select"
+                  [value]="selectedAccount.selectedAccountId()"
+                  (change)="selectedAccount.select($any($event.target).value)">
+            <option value="all" disabled>Choisis un compte (obligatoire)</option>
+            @for (a of selectedAccount.activeAccounts(); track a.id) {
+              <option [value]="a.id">{{ acctOption(a) }}</option>
+            }
+          </select>
+          @if (accountChoiceRequired()) {
+            <span class="sd-acct-hint" data-testid="account-required">
+              Choisis un compte pour lancer la session.
+            </span>
+          }
+        </div>
+      }
+    </mtc-session-morning>
+  }
+
+  @if (activeTab() === 'live') {
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;">
+      <mtc-session-live
+        [session]="store.activeSession()"
+        [todayTrades]="store.todayTrades()"
+        [liveStats]="store.todayStats()"
+        [ecoCalendar]="store.ecoCalendarDay()"
+        [marketCtx]="store.marketCtx()"
+        [newsItems]="store.newsItems()"
+        [breakingNews]="store.breakingNews()"
+        [triggerCloseModal]="store.triggerCloseModal()"
+        [startDisabled]="accountChoiceRequired()"
+        (startSession)="startSession()"
+        (ecoCalendarRefreshed)="store.applyEcoRefresh($event)"
+        (tradeClosed)="store.confirmCloseTrade($event)"
+        (tradeLogged)="store.logQuickTrade($event)"
+        (goToDebrief)="closeAndGoToDebrief()"
+      />
+    </div>
+  }
+
+  @if (activeTab() === 'debrief') {
+    <div class="session-debrief">
+
+      @if (store.activeSession(); as session) {
+
+        <!-- BANDEAU 0 TRADE (au-dessus des 4 cartes) -->
+        @if (noTrades()) {
+          <div class="debrief-zero-banner">
+            <span class="dzb-icon">🧘</span>
+            <div>
+              <div class="dzb-title">Pas de trade aujourd'hui, et c'est OK</div>
+              <div class="dzb-sub">Parfois, la meilleure décision est de rester à l'écart quand il n'y a pas de setup clair. Savoir ne pas trader est une vraie compétence.</div>
+            </div>
+          </div>
+        }
+
+        <!-- 4 CARDS EN HAUT -->
+        <div class="debrief-cards-row">
+          <div class="card4">
+            <div class="card4-v" [class.green]="(store.todayStats()?.totalPnl ?? 0) >= 0" [class.red]="(store.todayStats()?.totalPnl ?? 0) < 0">
+              {{ store.todayStats()?.totalPnl | pnlFormat }}
+            </div>
+            <div class="card4-l">P&L session</div>
+          </div>
+          <div class="card4">
+            <div class="card4-v">{{ store.todayStats()?.tradesCount ?? 0 }}</div>
+            <div class="card4-l">Trades</div>
+          </div>
+          <div class="card4">
+            <div class="card4-v">{{ (store.todayStats()?.winRate ?? 0) > 0 ? (store.todayStats()!.winRate.toFixed(0) + '%') : '-' }}</div>
+            <div class="card4-l">Win Rate</div>
+          </div>
+          <div class="card4">
+            <div class="card4-v card4-emoji">{{ session.moodEnd | emotionEmoji }}</div>
+            <div class="card4-l">Humeur finale</div>
+          </div>
+        </div>
+
+        <!-- Corps : analyse (gauche) | journal pleine hauteur (droite) -->
+        <div class="debrief-grid">
+          <div class="debrief-main">
+
+            <!-- Bloc 2×2 : mood · score · meilleur · pire (une seule grille) -->
+            <div class="debrief-2x2">
+              <div class="debrief-mood-card">
+                <h3 class="debrief-mood-title">Comment tu te sens en fin de session ?</h3>
+                <div class="mood-row">
+                  @for (mood of moods; track mood.value) {
+                    <button class="mood-btn" [class.sel]="closeMood() === mood.value"
+                            (click)="selectCloseMood(mood.value)">
+                      <span class="mood-emo">{{ mood.emoji }}</span> {{ mood.label }}
+                    </button>
+                  }
+                </div>
+              </div>
+              <div class="debrief-card debrief-score-card">
+                <div class="score-ring-wrap">
+                  <div class="score-ring"
+                       [style.background]="'conic-gradient(' + scoreColor() + ' ' + disciplineScore() + '%, var(--bg-3) 0)'">
+                    <div class="score-ring-inner">
+                      <span class="score-val">{{ disciplineScore() }}</span>
+                      <span class="score-unit">/100</span>
+                    </div>
+                  </div>
+                  <div class="score-label-wrap">
+                    <div class="score-label" [style.color]="scoreColor()">{{ disciplineLabel() }}</div>
+                    <div class="score-desc">Score de discipline</div>
+                    <div class="score-hint">{{ disciplinePhrase() }}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="debrief-trade-card best">
+                <div class="dtc-header"><lucide-icon [img]="BestIcon" [size]="15" class="dtc-ic best" /><span class="dtc-title">Meilleur trade</span></div>
+                @if (bestTrade(); as t) {
+                  <div class="dtc-asset">{{ t.asset }} <span class="dtc-side" [class]="t.side.toLowerCase()">{{ t.side }}</span></div>
+                  <div class="dtc-row">
+                    <span class="dtc-time">{{ t.tradedAt | date:'HH:mm' }}</span>
+                    <span>{{ t.emotion | emotionEmoji }}</span>
+                    <span class="dtc-pnl" [style.color]="t.pnl | pnlColor">{{ t.pnl | pnlFormat }}</span>
+                  </div>
+                } @else { <div class="dtc-empty">Aucun trade clôturé aujourd'hui</div> }
+              </div>
+              <div class="debrief-trade-card worst">
+                <div class="dtc-header"><lucide-icon [img]="WorstIcon" [size]="15" class="dtc-ic worst" /><span class="dtc-title">Trade à revoir</span></div>
+                @if (worstTrade(); as t) {
+                  <div class="dtc-asset">{{ t.asset }} <span class="dtc-side" [class]="t.side.toLowerCase()">{{ t.side }}</span></div>
+                  <div class="dtc-row">
+                    <span class="dtc-time">{{ t.tradedAt | date:'HH:mm' }}</span>
+                    <span>{{ t.emotion | emotionEmoji }}</span>
+                    <span class="dtc-pnl" [style.color]="t.pnl | pnlColor">{{ t.pnl | pnlFormat }}</span>
+                  </div>
+                } @else { <div class="dtc-empty">Rien à analyser, journée sans trade</div> }
+              </div>
+            </div>
+
+            <!-- États émotionnels -->
+            <div class="debrief-card">
+              <div class="debrief-section-title">États émotionnels de la session</div>
+              @if (emotionBreakdown().length > 0) {
+                <div class="emo-list">
+                  @for (e of emotionBreakdown(); track e.emotion) {
+                    <div class="emo-row">
+                      <span class="emo-emoji">{{ e.emotion | emotionEmoji }}</span>
+                      <div class="emo-bar-wrap">
+                        <div class="emo-bar" [style.width.%]="e.pct" [style.background]="emoColor(e.emotion)"></div>
+                      </div>
+                      <span class="emo-stat">{{ e.count }} ({{ e.pct }}%)</span>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <div class="emo-session-fallback">
+                  <div class="esf-item">
+                    <span class="esf-lbl">Au démarrage</span>
+                    <span class="esf-emo">{{ store.selectedMood() | emotionEmoji }}</span>
+                  </div>
+                  <div class="esf-item">
+                    <span class="esf-lbl">En fin de session</span>
+                    <span class="esf-emo">{{ closeMood() | emotionEmoji }}</span>
+                  </div>
+                  <div class="esf-note">Pas de trade pour analyser les émotions en action.</div>
+                </div>
+              }
+            </div>
+
+            <!-- Objectifs du matin -->
+            @if (objectivesReview().length > 0) {
+              <div class="debrief-card">
+                <div class="debrief-section-title">Objectifs du matin</div>
+                <div class="obj-list">
+                  @for (obj of objectivesReview(); track $index) {
+                    <div class="obj-row" [class.obj-ok]="obj.ok === true" [class.obj-ko]="obj.ok === false">
+                      @if (obj.auto) {
+                        <span class="obj-check-auto">{{ obj.ok ? '✓' : '✗' }}</span>
+                      } @else {
+                        <input type="checkbox" class="obj-check-manual"
+                               [checked]="objectiveChecks()[$index] ?? false"
+                               (change)="toggleObjCheck($index)" />
+                      }
+                      <div class="obj-body">
+                        <span class="obj-title">{{ obj.title }}</span>
+                        @if (obj.detail) { <span class="obj-detail">{{ obj.detail }}</span> }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+          </div>
+
+          <!-- Journal pleine hauteur DROITE -->
+          <div class="debrief-side">
+            <div class="session-journal journal-card">
+              <div class="sj-header">
+                <lucide-icon [img]="JournalIcon" [size]="16" class="sj-ic" />
+                <div>
+                  <div class="sj-title">Ton journal de session</div>
+                  <div class="sj-sub">Écris librement : ce qui a marché, tes émotions, ce que tu retiens. C'est ton espace.</div>
+                </div>
+              </div>
+              <textarea class="sj-textarea"
+                [value]="journalText()"
+                (input)="onJournalInput($any($event.target).value)"
+                placeholder="Aujourd'hui, j'ai remarqué que..."
+                rows="6"></textarea>
+              <div class="sj-footer">
+                <span class="sj-count">{{ journalText().length }} caractères</span>
+                @if (journalSaved()) { <span class="sj-saved">✓ Enregistré</span> }
+                @else if (journalText().length > 0) { <span class="sj-saving">Enregistrement…</span> }
+              </div>
+            </div>
+          </div>
+        </div>
+
+      } @else {
+        <div class="debrief-empty">
+          <div class="debrief-empty-icon">🌙</div>
+          <p>Aucune session en cours à débriefer.</p>
+          <p class="debrief-empty-sub">Lance une session depuis l'onglet ☀️ Pré-session,<br>puis reviens ici pour la clôturer.</p>
+        </div>
+      }
+
+    </div>
+  }
+</div>

@@ -6,5 +6,6 @@
  * `paths`, `resolve.alias` vitest, webpack de l'API) — cf. `.claude/agents/angular.md` et
  * `nestjs.md`.
  */
+export * from './api-error';
 export * from './pricing';
 export * from './trade-stats';

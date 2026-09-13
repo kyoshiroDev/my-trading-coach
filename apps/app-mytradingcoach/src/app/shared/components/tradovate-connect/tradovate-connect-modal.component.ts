@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LucideAngularModule, Lock, X } from 'lucide-angular';
-import { TradovateStore, tradovateErrorText } from '../../../core/stores/tradovate.store';
+import { TradovateStore } from '../../../core/stores/tradovate.store';
 import type { TradovateOrigin } from '../../../core/api/tradovate.api';
+import { apiErrorMessage } from '../../../core/utils/api-error';
 
 /**
  * Écran de réassurance AVANT de quitter l'app pour Tradovate (PROMPT-208, écran 2).
@@ -46,7 +47,7 @@ export class TradovateConnectModalComponent {
         error: (err) => {
           this.redirecting.set(false);
           this.error.set(
-            tradovateErrorText(err, "La connexion Tradovate n'a pas pu démarrer. Réessaie dans un instant."),
+            apiErrorMessage(err, "La connexion Tradovate n'a pas pu démarrer. Réessaie dans un instant."),
           );
         },
       });

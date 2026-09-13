@@ -18,7 +18,10 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const source = () => readFileSync(join(__dirname, 'csv-import.component.ts'), 'utf-8');
+// Template dans le .html depuis l'étape 4 de l'audit : on lit le composant ET son template.
+const source = () =>
+  readFileSync(join(__dirname, 'csv-import.component.ts'), 'utf-8') + '\n' +
+  readFileSync(join(__dirname, 'csv-import.component.html'), 'utf-8');
 
 /**
  * Condition du bloc `@if (…) { … }` le plus proche qui englobe un marqueur donné.
