@@ -10,7 +10,7 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
 ---
 
 ## Sources de vérité (code)
-- **Prix affichés** : `apps/app-mytradingcoach/src/app/core/constants/pricing.const.ts` (`PRICING`, `ACCOUNT_LIMITS`) **+** landing `apps/landing-mytradingcoach/src/components/Pricing.astro`. Miroirs côté MRR : `api/.../common/constants/pricing.const.ts` (`PRICING_EUR`, `TRIAL_PERIOD_DAYS`) et `admin/.../core/constants/pricing.const.ts`. Les 3 pricing.const + la landing + le JSON-LD (`Base.astro`) + les CGU DOIVENT afficher les mêmes montants.
+- **Prix affichés** : `apps/app-mytradingcoach/src/app/core/constants/pricing.const.ts` (`PRICING`, `ACCOUNT_LIMITS`) **+** landing `apps/landing-mytradingcoach/src/components/Pricing.astro`. Les VALEURS viennent de `libs/shared/src/pricing.ts` (`@mtc/shared`) ; les `pricing.const.ts` de l'API (`PRICING_EUR`, `TRIAL_PERIOD_DAYS`, MRR) et de l'admin en dérivent. La lib + la landing + le JSON-LD (`Base.astro`) + les CGU DOIVENT afficher les mêmes montants.
 - **Facturation** : price IDs Stripe en env — `STRIPE_PREMIUM_PRICE_MONTHLY_V2` / `_YEARLY_V2` (les vars `STRIPE_STARTER_*` ont été supprimées). ⚠️ Les **montants réels vivent dans Stripe** (pas en dur backend) → vérifier que `_V2` = **49€ / 490€**.
 - **Quotas comptes** : `apps/api-mytradingcoach/src/modules/accounts/accounts.service.ts` (`FREE_ACCOUNT_LIMIT` 1 · Premium `null` = illimité). Miroir front `ACCOUNT_LIMITS` (`free: 1`, `premium: null`).
 - **Trades FREE** : **illimités** — le quota mensuel (`checkMonthlyLimit` / `FREE_LIMIT_REACHED`) a été **supprimé**.
@@ -63,7 +63,7 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
 
 > **Win rate + break-even (PROMPT-160)** : 3 résultats — win (`pnl > ε`), loss (`pnl < -ε`), **break-even**
 > (`|pnl| <= ε`). **Win rate = wins / (wins + losses)** (BE hors dénominateur). Calcul centralisé dans
-> `computeTradeStats` (`common/utils/trade-stats.util.ts` + miroir front).
+> `computeTradeStats` (`@mtc/shared`, source unique front + back).
 
 > **Note d'exécution (PROMPT-161)** — **calculée, pas saisie** ; **déterministe, zéro token IA** ;
 > **indépendante du P&L**. Grade : ≥80 EXCELLENT · 60-79 BON · 40-59 MOYEN · <40 MAUVAIS ; **< 2 critères
@@ -157,9 +157,14 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
 ---
 
 ## Checklist avant TOUT changement de plan/feature
-- [ ] Prix identiques dans les **3 pricing.const**, la landing, le JSON-LD et les CGU.
+- [ ] Prix identiques dans **`libs/shared/src/pricing.ts`**, la landing, le JSON-LD et les CGU.
 - [ ] Feature gated cohérente aux **4 points** (landing / front / guard / cron).
 - [ ] Nouvelle feature IA classée **mutualisé (FREE) / borné (PREMIUM) / scale (PREMIUM)**.
 - [ ] Quota comptes modifié → `accounts.service` **et** `ACCOUNT_LIMITS` (front) alignés.
 - [ ] Copie AMF-compliant (aucune promesse de gain).
 - [ ] Compte démo : nouvelle feature à données → vérifier l'affichage démo + enrichir le seed.
+
+> **Valeurs tarifaires centralisées (2026-09-13)** : 49 € / 490 €, essai 30 j et quotas de comptes
+> vivent dans `libs/shared/src/pricing.ts` (`@mtc/shared`). Les `pricing.const.ts` de l'API, de
+> l'app et de l'admin en dérivent (mêmes noms d'export qu'avant). Changer un prix = ce fichier +
+> la landing `Pricing.astro` + les `STRIPE_*_PRICE_*`.

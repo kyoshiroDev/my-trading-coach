@@ -11,7 +11,7 @@ import { TopbarComponent } from '../../shared/components/topbar/topbar.component
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { UserStore } from '../../core/stores/user.store';
 import { environment } from '../../../environments/environment';
-import { computeTradeStats } from '../../core/utils/trade-stats.util';
+import { computeTradeStats } from '@mtc/shared';
 
 interface Trade {
   pnl: number | null;

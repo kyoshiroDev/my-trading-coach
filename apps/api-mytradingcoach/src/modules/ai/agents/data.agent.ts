@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { computeTradeStats } from '../../../common/utils/trade-stats.util';
+import { computeTradeStats } from '@mtc/shared';
 
 export type TradeSummaryInput = {
   asset: string;

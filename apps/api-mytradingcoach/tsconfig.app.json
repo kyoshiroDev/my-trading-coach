@@ -5,13 +5,24 @@
     "moduleResolution": "bundler",
     "isolatedModules": false,
     "outDir": "dist",
-    "types": ["node", "multer"],
-    "rootDir": "src",
+    "types": [
+      "node",
+      "multer"
+    ],
+    "rootDir": "../..",
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "target": "es2021"
+    "target": "es2021",
+    "paths": {
+      "@mtc/shared": [
+        "../../libs/shared/src/index.ts"
+      ]
+    }
   },
-  "include": ["src/**/*.ts"],
+  "include": [
+    "src/**/*.ts",
+    "../../libs/shared/src/**/*.ts"
+  ],
   "exclude": []
 }

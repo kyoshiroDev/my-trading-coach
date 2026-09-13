@@ -3,7 +3,7 @@ import {
   computeTradeStats,
   classifyTrade,
   BREAKEVEN_EPSILON,
-} from './trade-stats.util';
+} from '@mtc/shared';
 
 const t = (pnl: number | null) => ({ pnl });
 

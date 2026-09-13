@@ -15,7 +15,7 @@ import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
-import { computeTradeStats } from '../../common/utils/trade-stats.util';
+import { computeTradeStats } from '@mtc/shared';
 // import type only (aucune dépendance runtime → pas de cycle avec eco-calendar.service)
 import type { EcoAnalysis, EcoResultAnalysis } from '../eco-calendar/eco-calendar.service';
 import { AnthropicClientService } from '../shared/anthropic-client.service';

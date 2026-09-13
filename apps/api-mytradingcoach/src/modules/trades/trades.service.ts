@@ -16,7 +16,7 @@ import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
 import {
   computeTradeStats,
   BREAKEVEN_EPSILON,
-} from '../../common/utils/trade-stats.util';
+} from '@mtc/shared';
 import {
   computeExecutionGrade,
   computeBehavioralGrade,

@@ -1,5 +1,6 @@
 /**
- * Statistiques de trades : SOURCE UNIQUE (PROMPT-160).
+ * Statistiques de trades : SOURCE UNIQUE front + back (PROMPT-160, centralisée à l'étape 3 de
+ * l'audit du 2026-09-13 — il y avait deux copies « miroir », identiques en logique).
  *
  * Un trade clôturé est classé en 3 résultats :
  *  - **win**       si `pnl >  ε`
@@ -12,6 +13,8 @@
  * **Win rate = wins / (wins + losses)** → les break-even ne sont PAS au dénominateur.
  * Toute mesure de win/loss/winRate dans le code doit passer par ce helper (plus de
  * `filter(t => t.pnl > 0)` suivi d'une division par `length` dispersé).
+ *
+ * Code PUR, sans dépendance : importable tel quel par Angular (esbuild) et NestJS (webpack).
  */
 
 /** Seuil break-even : `|pnl| <= ε` → BE. Défaut 0 (BE = pnl exactement nul). */

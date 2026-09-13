@@ -551,3 +551,14 @@ chercher les `subscribe(` sans `error`, ou dont l'`error` ne fait que relâcher 
 affichés (service réel, pas besoin de le mocker). Pour un composant qui monte `mtc-toasts`
 (`app.spec.ts`) : `ɵresolveComponentResources` avec un résolveur vide dans `beforeAll`, puis
 `overrideComponent(ToastsComponent, …)` AVANT `compileComponents()`.
+
+## Librairie partagée `@mtc/shared` (2026-09-13)
+
+- Import `from '@mtc/shared'` (stats de trades, valeurs tarifaires) — source unique avec l'API.
+  Détails et règles de la lib : `nestjs.md` § « Librairie partagée ».
+- Branchement : `paths` dans `tsconfig.json` de l'app et de l'admin (lu par esbuild et par le
+  builder de tests de l'admin), la lib dans l'`include` de `tsconfig.spec.json` de l'app
+  (projet `composite`), et `resolve.alias` dans `apps/app-mytradingcoach/vitest.config.ts`.
+- `core/constants/pricing.const.ts` garde ses exports (`PRICING`, `ACCOUNT_LIMITS`,
+  `yearlyPerMonth`) mais lit ses VALEURS dans `@mtc/shared` : un prix ne se change plus que dans
+  `libs/shared/src/pricing.ts` (+ la landing `Pricing.astro`, non branchée à la lib).
