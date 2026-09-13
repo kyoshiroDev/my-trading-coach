@@ -65,133 +65,17 @@
     </div>
   }
 
-  @if (!isLoading()) {
-    <div class="mtc-kpis">
-      <!-- Capital -->
-      <div class="mtc-kpi" style="--glow:var(--blue)">
-        <div class="mtc-kpi-l">
-          <div class="mtc-kpi-lab">Capital
-            <mtc-info-tooltip class="align-start" label="Comment le capital est calculé"
-              text="Capital de départ du compte, ajusté du P&L net de tes trades." />
-          </div>
-          <div class="mtc-kpi-val" data-testid="dashboard-capital" [style.color]="capitalColor()">{{ capitalDisplay() }}</div>
-          <div class="mtc-kpi-sub">
-            @if (capitalPct() !== 0) {
-              <span [style.color]="capitalPct() > 0 ? 'var(--green)' : 'var(--red)'">{{ capitalPct() > 0 ? '+' : '' }}{{ capitalPct() | number:'1.1-1' }}% {{ periodShort() }}</span>
-            } @else { base }
-          </div>
-        </div>
-        @let cap = sparkPath(capitalSeries());
-        @if (cap.line) {
-          <svg class="mtc-spark" viewBox="0 0 72 42" preserveAspectRatio="none" width="72" height="42">
-            <path [attr.d]="cap.area" fill="var(--blue)" fill-opacity="0.13" />
-            <path [attr.d]="cap.line" fill="none" stroke="var(--blue-bright)" stroke-width="1.6" stroke-linejoin="round" />
-            <circle [attr.cx]="cap.cx" [attr.cy]="cap.cy" r="1.9" fill="var(--blue-bright)" />
-          </svg>
-        }
-      </div>
-      <!-- P&L net mois -->
-      <div class="mtc-kpi" style="--glow:var(--green)">
-        <div class="mtc-kpi-l">
-          <div class="mtc-kpi-lab">P&amp;L net</div>
-          <div class="mtc-kpi-val" [style.color]="pnlColor()">{{ summary()?.totalPnl ?? 0 | pnlFormat }}</div>
-          <div class="mtc-kpi-sub">
-            @if ((summary()?.totalTrades ?? 0) > 0) { {{ periodShort() }} } @else { Aucune donnée }
-          </div>
-        </div>
-        @let pnl = sparkPath(eqSeries());
-        @if (pnl.line) {
-          <svg class="mtc-spark" viewBox="0 0 72 42" preserveAspectRatio="none" width="72" height="42">
-            <path [attr.d]="pnl.area" fill="var(--green)" fill-opacity="0.13" />
-            <path [attr.d]="pnl.line" fill="none" stroke="var(--green)" stroke-width="1.6" stroke-linejoin="round" />
-            <circle [attr.cx]="pnl.cx" [attr.cy]="pnl.cy" r="1.9" fill="var(--green)" />
-          </svg>
-        }
-      </div>
-      <!-- Win rate -->
-      <div class="mtc-kpi" style="--glow:var(--blue)">
-        <div class="mtc-kpi-l">
-          <div class="mtc-kpi-lab">Win rate
-            <mtc-info-tooltip label="Comment le win rate est calculé"
-              text="Trades gagnants ÷ (gagnants + perdants). Les break-even sont exclus du calcul." />
-          </div>
-          <div class="mtc-kpi-val" [style.color]="winRateColor()">{{ (summary()?.winRate ?? 0).toFixed(1) }}%</div>
-          <div class="mtc-kpi-sub">
-            @if ((summary()?.totalTrades ?? 0) > 0) { sur {{ summary()?.totalTrades }} trades } @else { Aucune donnée }
-          </div>
-        </div>
-        <div class="mtc-mini-donut" [style.background]="winRateDonut()"><span></span></div>
-      </div>
-      <!-- Profit factor -->
-      <div class="mtc-kpi" style="--glow:var(--purple)">
-        <div class="mtc-kpi-l">
-          <div class="mtc-kpi-lab">Profit factor
-            <mtc-info-tooltip label="Comment le profit factor est calculé"
-              text="Somme des gains ÷ somme des pertes. Au-dessus de 1, tes gains dépassent tes pertes. Affiche « - » tant que tu n'as aucune perte." />
-          </div>
-          <div class="mtc-kpi-val">{{ profitFactorDisplay() }}</div>
-          <div class="mtc-kpi-sub">
-            @if ((summary()?.totalTrades ?? 0) > 0) { profits / pertes } @else { Aucune donnée }
-          </div>
-        </div>
-        @let pf = sparkPath(eqSeries());
-        @if (pf.line) {
-          <svg class="mtc-spark" viewBox="0 0 72 42" preserveAspectRatio="none" width="72" height="42">
-            <path [attr.d]="pf.area" fill="var(--purple)" fill-opacity="0.13" />
-            <path [attr.d]="pf.line" fill="none" stroke="var(--purple-bright)" stroke-width="1.6" stroke-linejoin="round" />
-            <circle [attr.cx]="pf.cx" [attr.cy]="pf.cy" r="1.9" fill="var(--purple-bright)" />
-          </svg>
-        }
-      </div>
-      <!-- Trades pris -->
-      <div class="mtc-kpi" style="--glow:var(--green)">
-        <div class="mtc-kpi-l">
-          <div class="mtc-kpi-lab">Trades pris
-            <mtc-info-tooltip label="Ce que compte « Trades pris »"
-              text="Nombre de trades clôturés sur la période." />
-          </div>
-          <div class="mtc-kpi-val">{{ summary()?.totalTrades ?? tradesStore.trades().length }}</div>
-          <div class="mtc-kpi-sub">
-            @if ((summary()?.streak ?? 0) > 0) { <span style="color:var(--green)">+{{ summary()?.streak }} streak</span> }
-            @else if ((summary()?.streak ?? 0) < 0) { <span style="color:var(--red)">{{ summary()?.streak }} streak</span> }
-            @else { ce mois }
-          </div>
-        </div>
-        <div class="mtc-minibars">
-          @for (b of [.45,.7,.4,.85,.55,.95,.6,.75,.5,.9,.65,.8]; track $index) {
-            <span [style.height.%]="b * 100" [style.opacity]="0.4 + b * 0.5"></span>
-          }
-        </div>
-      </div>
-      <!-- Drawdown max -->
-      <div class="mtc-kpi" style="--glow:var(--red)">
-        <div class="mtc-kpi-l">
-          <div class="mtc-kpi-lab">Drawdown max
-            <mtc-info-tooltip class="align-end" label="Comment le drawdown max est calculé"
-              text="Plus forte baisse de ton P&L cumulé depuis un sommet, sur la période affichée." />
-          </div>
-          <div class="mtc-kpi-val" [style.color]="drawdownColor()">{{ drawdownDisplay() | pnlFormat }}</div>
-          <div class="mtc-kpi-sub">
-            @if ((summary()?.totalTrades ?? 0) > 0) { sur capital } @else { Aucune donnée }
-          </div>
-        </div>
-        @let dd = sparkPath(ddSeries());
-        @if (dd.line) {
-          <svg class="mtc-spark" viewBox="0 0 72 42" preserveAspectRatio="none" width="72" height="42">
-            <path [attr.d]="dd.area" fill="var(--red)" fill-opacity="0.13" />
-            <path [attr.d]="dd.line" fill="none" stroke="var(--red)" stroke-width="1.6" stroke-linejoin="round" />
-            <circle [attr.cx]="dd.cx" [attr.cy]="dd.cy" r="1.9" fill="var(--red)" />
-          </svg>
-        }
-      </div>
-    </div>
-  } @else {
-    <div class="mtc-kpis">
-      @for (_ of [0, 1, 2, 3, 4]; track $index) {
-        <div class="mtc-kpi stat-skeleton" style="height:96px"></div>
-      }
-    </div>
-  }
+  <mtc-dashboard-kpis
+    [loading]="isLoading()"
+    [summary]="summary()"
+    [baseCapital]="baseCapital()"
+    [currentCapital]="currentCapital()"
+    [equitySeries]="eqSeries()"
+    [periodShort]="periodShort()"
+    [currency]="currency()"
+    [currencyRate]="currencyRate()"
+    [fallbackTradesCount]="tradesStore.trades().length"
+  />
 
   <!-- Grille flagship (fidèle au design : 6 panels en 2 colonnes, sans calendrier) -->
   <div class="mtc-grid">
@@ -209,23 +93,7 @@
         <!-- Courbe d'équité simple = vue de base FREE (profondeur = page /analytics). -->
         @let eg = equityGlow();
         @if (eg) {
-          <svg class="mtc-equity" [attr.viewBox]="'0 0 ' + eg.W + ' ' + eg.H" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="mtcEqFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" [attr.stop-color]="eg.color" stop-opacity="0.35" />
-                <stop offset="100%" [attr.stop-color]="eg.color" stop-opacity="0" />
-              </linearGradient>
-              <filter id="mtcEqGlow" x="-20%" y="-50%" width="140%" height="200%">
-                <feGaussianBlur stdDeviation="3.4" result="b" />
-                <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-              </filter>
-            </defs>
-            <path [attr.d]="eg.area" fill="url(#mtcEqFill)" />
-            <path [attr.d]="eg.trend" fill="none" stroke="rgba(143,163,191,.4)" stroke-width="1" stroke-dasharray="3 4" />
-            <path [attr.d]="eg.line" fill="none" [attr.stroke]="eg.color" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" filter="url(#mtcEqGlow)" />
-            <circle class="mtc-eq-pulse" [attr.cx]="eg.lastX" [attr.cy]="eg.lastY" r="7" [attr.fill]="eg.color" opacity="0.25" />
-            <circle [attr.cx]="eg.lastX" [attr.cy]="eg.lastY" r="3.4" [attr.fill]="eg.color" />
-          </svg>
+          <mtc-equity-chart [glow]="eg" />
         } @else {
           <div class="mtc-empty">{{ equityEmptyMsg() }}</div>
         }
@@ -238,18 +106,7 @@
       <div class="mtc-panel-body">
         <!-- Top actifs (P&L par instrument) = vue de base FREE ; win rate/actif = profondeur Premium. -->
         @if (topAssets().length) {
-          <div class="mtc-hbars">
-            @for (a of topAssets(); track a.asset) {
-              <div class="mtc-hbar">
-                <div class="mtc-hbar-l">
-                  <div class="mtc-hbar-name">{{ a.asset | uppercase }}</div>
-                  <div class="mtc-hbar-meta">{{ a.count }} trade{{ a.count > 1 ? 's' : '' }}@if (userStore.isPremium()) { · {{ a.winRate.toFixed(0) }}%}</div>
-                </div>
-                <div class="mtc-hbar-track"><div class="mtc-hbar-fill" [class.neg]="a.pnl < 0" [style.width.%]="a.barPct"></div></div>
-                <div class="mtc-hbar-v" [style.color]="a.pnl >= 0 ? 'var(--green)' : 'var(--red)'">{{ a.pnl | pnlFormat }}</div>
-              </div>
-            }
-          </div>
+          <mtc-top-assets [assets]="topAssets()" [showWinRate]="userStore.isPremium()" />
         } @else { <p class="empty-widget-msg">Tes actifs apparaîtront<br />après tes premiers trades</p> }
       </div>
     </div>
@@ -260,21 +117,7 @@
       <div class="mtc-panel-body">
         @let pl = plBuckets();
         @if (pl && pl.length) {
-          <div class="mtc-plday">
-            @for (d of pl; track d.key) {
-              <div class="mtc-plday-col" [title]="d.title + ' · ' + (d.pnl >= 0 ? '+' : '') + (d.pnl | number: '1.0-0') + '$'">
-                <div class="mtc-plday-cell">
-                  <div class="mtc-plday-bar" [class.pos]="d.pos && d.traded" [class.neg]="!d.pos && d.traded" [style.height.%]="d.barPct"></div>
-                  @if (d.traded && d.label) {
-                    <span class="mtc-plday-val" [class.pos]="d.pos" [class.neg]="!d.pos"
-                      [style.bottom]="d.pos ? 'calc(50% + ' + d.barPct + '%)' : null"
-                      [style.top]="!d.pos ? 'calc(50% + ' + d.barPct + '%)' : null">{{ d.label }}</span>
-                  }
-                </div>
-                <span class="mtc-plday-day" [class.traded]="d.traded">{{ d.axisLabel }}</span>
-              </div>
-            }
-          </div>
+          <mtc-pl-bars [buckets]="pl" />
         } @else { <div class="mtc-empty">Aucune activité sur la période</div> }
       </div>
     </div>
@@ -289,33 +132,12 @@
         }
       </div>
       <div class="mtc-panel-body">
-        @if (userStore.isPremium()) {
-          @if (coachInsights().length) {
-            <div class="mtc-coach-list">
-              @for (i of coachInsights(); track i.text) {
-                <div class="mtc-coach-item">
-                  <svg [lucideIcon]="coachIcon(i.tone)" [size]="16" [style.color]="coachColor(i.tone)" class="mtc-coach-item-ic"></svg>
-                  <span class="mtc-coach-item-t">{{ i.text }}</span>
-                </div>
-              }
-              <a routerLink="/analytics" class="mtc-coach-btn">Voir mon coaching complet</a>
-            </div>
-          } @else {
-            <div class="mtc-coach-cta">
-              <div class="mtc-coach-ic">✨</div>
-              <div class="mtc-coach-t">Ton coach analyse tes patterns</div>
-              <div class="mtc-coach-s">Enregistre quelques trades pour débloquer tes premiers insights personnalisés.</div>
-              <a routerLink="/analytics" class="mtc-coach-btn">Voir mon coaching complet</a>
-            </div>
-          }
-        } @else {
-          <div class="mtc-coach-lock">
-            <div class="mtc-lock-ic"><svg [lucideIcon]="LockIcon" [size]="20"></svg></div>
-            <div class="mtc-lock-t">Coach IA réservé au Premium</div>
-            <div class="mtc-lock-s">Analyse de tes patterns, chat coach IA et recommandations personnalisées.</div>
-            <button class="mtc-lock-cta" (click)="showPlanModal.set(true)">Débloquer à {{ PRICING.premium.monthly }} €/mois</button>
-          </div>
-        }
+        <mtc-coach-feedback
+          [premium]="userStore.isPremium()"
+          [insights]="coachInsights()"
+          [monthlyPrice]="PRICING.premium.monthly"
+          (unlock)="showPlanModal.set(true)"
+        />
       </div>
     </div>
 
@@ -326,14 +148,7 @@
         <!-- Répartition % des setups = vue de base FREE (client-side) ; centre win rate = Premium. -->
         @let sd = setupsDonutView();
         @if (sd) {
-          <div class="mtc-donut-row">
-            <div class="mtc-donut" [style.background]="sd.gradient"><div class="mtc-donut-hole"><span class="mtc-donut-v">{{ sd.centerValue }}</span><span class="mtc-donut-l">{{ sd.centerLabel }}</span></div></div>
-            <div class="mtc-legend">
-              @for (l of sd.legend; track l.label) {
-                <div class="mtc-legend-item"><span class="mtc-legend-dot" [style.background]="l.color"></span><span class="mtc-legend-lab">{{ l.label }}</span><span class="mtc-legend-pct">{{ l.pct }}%</span></div>
-              }
-            </div>
-          </div>
+          <mtc-donut-chart [donut]="sd" />
         } @else { <p class="empty-widget-msg">Tes setups apparaîtront<br />après tes premiers trades</p> }
       </div>
     </div>
@@ -344,14 +159,7 @@
       <div class="mtc-panel-body">
         @let ed = emotionsDonut();
         @if (ed) {
-          <div class="mtc-donut-row">
-            <div class="mtc-donut" [style.background]="ed.gradient"><div class="mtc-donut-hole"><span class="mtc-donut-v">{{ ed.centerValue }}</span><span class="mtc-donut-l">{{ ed.centerLabel | emotionLabel }}</span></div></div>
-            <div class="mtc-legend">
-              @for (e of emotionStats(); track e.emotion) {
-                <div class="mtc-legend-item"><span class="mtc-legend-dot" [style.background]="e.emotion | emotionColor"></span><span class="mtc-legend-lab">{{ e.emotion | emotionLabel }}</span><span class="mtc-legend-pct">{{ e.pct }}%</span></div>
-              }
-            </div>
-          </div>
+          <mtc-donut-chart [donut]="ed" />
         } @else { <p class="empty-widget-msg">Enregistre tes premiers trades<br />pour voir tes états émotionnels</p> }
       </div>
     </div>
@@ -363,30 +171,7 @@
     @if (tradeRows().length === 0) {
       <div class="empty-state" style="margin:0 18px 18px"><p>Aucun trade</p><small>Enregistre ton premier trade</small></div>
     } @else {
-      <div class="mtc-table-wrap">
-        <table class="mtc-table">
-          <thead><tr>
-            <th>Date</th><th>Actif</th><th>Direction</th><th>Stratégie</th>
-            <th class="r">Entrée</th><th class="r">Sortie</th><th class="r">R:R</th><th class="r">P&amp;L</th><th class="r">P&amp;L %</th><th class="c">Résultat</th>
-          </tr></thead>
-          <tbody>
-            @for (t of tradeRows(); track t.id) {
-              <tr>
-                <td class="mono dim">{{ t.tradedAt | date:'d MMM' }}</td>
-                <td class="mono strong">{{ t.asset | uppercase }}</td>
-                <td><span class="mtc-side" [class.long]="t.side === 'LONG'">{{ t.side }}</span></td>
-                <td><span class="mtc-setup-cell"><span class="setup-dot-sm" [style.background]="t.setup.color"></span>{{ t.setup.title }}</span></td>
-                <td class="mono dim r">{{ t.entry | number:'1.0-2' }}</td>
-                <td class="mono dim r">{{ t.exit !== null ? (t.exit | number:'1.0-2') : '-' }}</td>
-                <td class="mono dim r">{{ t.riskReward !== null ? ((t.riskReward >= 0 ? '+' : '') + (t.riskReward | number:'1.1-1')) : '-' }}</td>
-                <td class="mono strong r" [style.color]="t.win ? 'var(--green)' : 'var(--red)'">{{ t.pnl | pnlFormat }}</td>
-                <td class="mono r" [style.color]="t.pct === null ? 'var(--text-3)' : (t.win ? 'var(--green)' : 'var(--red)')">{{ t.pct === null ? '-' : ((t.pct >= 0 ? '+' : '') + (t.pct | number:'1.2-2') + '%') }}</td>
-                <td class="c"><span class="mtc-res" [class.win]="t.win">{{ t.win ? 'WIN' : 'LOSS' }}</span></td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+      <mtc-recent-trades-table [rows]="tradeRows()" />
     }
   </div>
 

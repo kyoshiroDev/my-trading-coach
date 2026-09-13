@@ -1,0 +1,254 @@
+/* Hôte = cellule de la grille .live-cols du parent : colonne flex étirée sur la rangée. */
+:host {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Panneau à hauteur pilotée par le contenu, borné par max-height : seule la liste
+   des événements garde un scroll interne. */
+.cal-col  { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
+.cal-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px; min-height: 220px; max-height: 420px;
+  display: flex; flex-direction: column;
+}
+.cal-events-list {
+  flex: 1; overflow-y: auto; min-height: 0;
+  display: flex; flex-direction: column; gap: 6px;
+}
+
+/* ─── Titre de colonne ─── */
+.col-title {
+  font-family: var(--font-display); font-size: 12px; font-weight: 600;
+  color: var(--text-3); display: flex; align-items: center; gap: 6px;
+  margin-bottom: 10px; flex-shrink: 0;
+}
+.ct-ic { display: inline-flex; color: var(--text-3); flex-shrink: 0; }
+.col-title-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px; flex-shrink: 0;
+}
+.pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .5; transform: scale(.8); }
+}
+
+/* ─── Eco calendar live ─── */
+.eco-live-event {
+  border-radius: 7px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+  transition: border-color .12s;
+}
+.eco-live-event:hover { border-color: var(--border-hover); }
+.eco-live-event.released { border-color: rgba(59,130,246,.25); }
+.eco-live-event.dim { opacity: .55; }
+.eco-live-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 9px 11px;
+  background: var(--bg-2);
+}
+.eco-live-event.expandable .eco-live-header { cursor: pointer; }
+.eco-live-event.expandable:hover { border-color: var(--blue); }
+
+.eco-time { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); width: 36px; flex-shrink: 0; }
+.eco-impact-bar { width: 4px; height: 26px; border-radius: 2px; flex-shrink: 0; background: var(--yellow); }
+.eco-impact-bar.high { background: var(--red); }
+.eco-flag-sm { font-size: 14px; line-height: 1; flex-shrink: 0; }
+.eco-name-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.eco-name { font-size: 11px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.eco-sub { font-size: 9px; font-family: var(--font-mono); color: var(--text-3); display: flex; gap: 4px; flex-wrap: wrap; }
+.eco-sub-actual { color: var(--text-2); }
+.eco-sub-sep { opacity: .5; }
+.eco-currency-tag {
+  font-size: 9px; background: var(--blue-glow); color: var(--blue-bright);
+  border: 1px solid rgba(59,130,246,.2); padding: 2px 5px; border-radius: 4px;
+  font-family: var(--font-mono); flex-shrink: 0;
+}
+.eco-impact-badge {
+  font-size: 9px; font-family: var(--font-mono); font-weight: 700;
+  padding: 2px 6px; border-radius: 4px; flex-shrink: 0;
+  background: rgba(245,158,11,.12); color: var(--yellow);
+}
+.eco-impact-badge.high { background: rgba(239,68,68,.12); color: var(--red); }
+.eco-chevron { color: var(--text-3); flex-shrink: 0; transition: transform .15s; }
+.eco-live-event.expanded .eco-chevron { transform: rotate(90deg); }
+.eco-countdown { font-size: 9px; color: var(--text-3); font-family: var(--font-mono); flex-shrink: 0; }
+
+/* Compteur d'événements masqués (hors fenêtre de session) */
+.cal-more {
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-3);
+  padding: 7px 0 2px;
+}
+.eco-live-released {
+  padding: 8px 12px;
+  background: rgba(59,130,246,.03);
+  border-top: 1px solid rgba(59,130,246,.1);
+}
+.eco-result-row { display: flex; gap: 14px; margin-bottom: 8px; }
+.eco-result-item span:first-child {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--text-3);
+  display: block;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.eco-result-val { font-family: var(--font-mono); font-size: 13px; font-weight: 700; }
+.eco-result-val.green { color: var(--green); }
+.eco-ai-block-sm {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 7px 10px;
+  background: var(--bg-3);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--text-2);
+  line-height: 1.45;
+  margin-bottom: 8px;
+}
+.sentiment-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+.chip.bull { background: var(--green-dim); color: var(--green); border-color: rgba(16,185,129,.2); }
+.chip.bear { background: var(--red-dim); color: var(--red); border-color: rgba(239,68,68,.2); }
+.chip.neutral { background: var(--bg-3); color: var(--text-3); border-color: var(--border); }
+
+/* Calendrier — état vide */
+.cal-empty {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; text-align: center; padding: 24px 12px;
+}
+.cal-empty-icon { font-size: 22px; opacity: .55; margin-bottom: 2px; }
+.cal-empty-title { font-size: 12px; font-weight: 600; color: var(--text-2); }
+.cal-empty-sub { font-size: 11px; color: var(--text-3); line-height: 1.4; max-width: 200px; }
+
+/* ── Eco release alert (WebSocket temps réel) ─────────────────────────────── */
+.eco-release-alert {
+  background: var(--bg-2);
+  border: 1px solid rgba(245,158,11,.3);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  animation: alertSlideIn .3s ease;
+}
+@keyframes alertSlideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: none; }
+}
+.era-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.era-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--yellow);
+  flex-shrink: 0;
+  animation: pulseEra 1s ease infinite;
+}
+@keyframes pulseEra {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: .4; transform: scale(.8); }
+}
+.era-title { font-size: 12px; font-weight: 600; color: var(--yellow); flex: 1; }
+.era-close {
+  background: none; border: none;
+  color: var(--text-3); cursor: pointer;
+  font-size: 16px; line-height: 1; padding: 0;
+}
+.era-event {
+  background: var(--bg-3);
+  border-radius: 7px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+.era-event-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.era-currency {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-3);
+  margin-left: 4px;
+}
+.era-values {
+  display: flex;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.era-actual { font-weight: 700; color: var(--text-2); }
+.era-actual.positive { color: var(--green); }
+.era-actual.negative { color: var(--red); }
+.era-estimate { color: var(--text-3); }
+.era-ai-loading {
+  font-size: 11px;
+  color: var(--blue-bright);
+  font-family: var(--font-mono);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.era-spin { animation: spinEra 1s linear infinite; display: inline-block; }
+@keyframes spinEra { to { transform: rotate(360deg); } }
+.era-ai-ready {
+  margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(245,158,11,.15);
+  font-size: 11px; color: var(--green); font-family: var(--font-mono);
+}
+.era-ai-error {
+  margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(245,158,11,.15);
+  font-size: 11px; color: var(--text-3); font-family: var(--font-mono);
+}
+
+/* Desktop (≥981px) : la vue live remplit l'écran, le panneau s'étire jusqu'en bas et
+   seule la liste d'événements scrolle (cf. session-live.component.css). */
+@container (min-width: 981px) {
+  .cal-card { flex: 1; min-height: 0; max-height: none; }
+}
+
+/* ─── Réduction des animations (accessibilité) ─── */
+@media (prefers-reduced-motion: reduce) {
+  .pulse-dot,
+  .era-dot,
+  .era-spin,
+  .eco-release-alert {
+    animation: none !important;
+  }
+}

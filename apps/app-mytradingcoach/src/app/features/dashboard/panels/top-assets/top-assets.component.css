@@ -1,0 +1,12 @@
+:host { display: block; }
+
+/* Top actifs — barres horizontales (HBars) */
+.mtc-hbars { display: flex; flex-direction: column; gap: 11px; }
+.mtc-hbar { display: grid; grid-template-columns: 84px 1fr 72px; align-items: center; gap: 10px; }
+.mtc-hbar-l { min-width: 0; }
+.mtc-hbar-name { font-size: 12px; color: var(--text); font-weight: 500; font-family: var(--font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mtc-hbar-meta { font-family: var(--font-mono); font-size: 9.5px; color: var(--text-faint); margin-top: 2px; }
+.mtc-hbar-track { height: 8px; background: var(--bg-3); border-radius: 4px; overflow: hidden; }
+.mtc-hbar-fill { height: 100%; background: var(--green); opacity: .85; border-radius: 4px; }
+.mtc-hbar-fill.neg { background: var(--red); }
+.mtc-hbar-v { font-family: var(--font-mono); font-size: 12px; font-weight: 600; text-align: right; }

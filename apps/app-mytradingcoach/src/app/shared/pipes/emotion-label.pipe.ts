@@ -9,9 +9,14 @@ const EMOTION_LABELS: Record<string, string> = {
   REVENGE: '😤 Revenge trading',
 };
 
+/** Libellé lisible d'une émotion (même rendu que le pipe, utilisable hors template). */
+export function emotionLabel(emotion: string): string {
+  return EMOTION_LABELS[emotion] ?? emotion;
+}
+
 @Pipe({ name: 'emotionLabel' })
 export class EmotionLabelPipe implements PipeTransform {
   transform(emotion: string): string {
-    return EMOTION_LABELS[emotion] ?? emotion;
+    return emotionLabel(emotion);
   }
 }

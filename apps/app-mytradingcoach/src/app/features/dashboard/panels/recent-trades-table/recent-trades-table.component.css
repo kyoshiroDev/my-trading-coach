@@ -1,0 +1,25 @@
+:host { display: block; }
+
+/* Tableau historique des trades */
+.mtc-table-wrap { overflow-x: auto; margin-top: 14px; }
+.mtc-table { width: 100%; min-width: 760px; border-collapse: collapse; }
+.mtc-table th { padding: 11px 12px; text-align: left; font-family: var(--font-mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: .6px; color: var(--text-3); border-bottom: 1px solid var(--border); background: var(--bg-2); }
+.mtc-table td { padding: 11px 12px; font-size: 12.5px; color: var(--text-2); border-bottom: 1px solid var(--border); white-space: nowrap; }
+.mtc-table tbody tr:last-child td { border-bottom: none; }
+.mtc-table tbody tr:hover td { background: var(--bg-2); }
+.mtc-table .r { text-align: right; }
+.mtc-table .c { text-align: center; }
+.mtc-table .mono { font-family: var(--font-mono); }
+.mtc-table .dim { color: var(--text-3); }
+.mtc-table .strong { font-weight: 600; color: var(--text); }
+.mtc-side { font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; letter-spacing: .5px; padding: 3px 9px; border-radius: 5px; background: var(--red-dim); color: var(--red); }
+.mtc-side.long { background: var(--green-dim); color: var(--green); }
+.mtc-setup-cell { display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase; font-size: 11px; }
+.setup-dot-sm {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.mtc-res { display: inline-flex; align-items: center; font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; letter-spacing: .4px; padding: 4px 10px; border-radius: 100px; background: var(--red-dim); color: var(--red); border: 1px solid rgba(239, 68, 68, .25); }
+.mtc-res.win { background: var(--green-dim); color: var(--green); border-color: rgba(16, 185, 129, .25); }
