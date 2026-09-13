@@ -19,7 +19,6 @@ import { AccountType, TradingAccount } from '../../../core/api/accounts.api';
 // Accessible à tous (FREE : 1 compte · Premium : illimité). Aucun gating ici, c'est côté API.
 @Component({
   selector: 'mtc-account-selector',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, LucideAngularModule],
   templateUrl: './account-selector.component.html',

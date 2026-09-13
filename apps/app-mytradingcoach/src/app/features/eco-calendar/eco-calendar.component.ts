@@ -38,7 +38,6 @@ interface TableRow {
 
 @Component({
   selector: 'mtc-eco-calendar-page',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [],
   templateUrl: './eco-calendar.component.html',

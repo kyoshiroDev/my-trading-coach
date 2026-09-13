@@ -9,7 +9,6 @@ import { EcoEvent } from '../../core/api/eco-calendar.api';
 
 @Component({
   selector: 'mtc-eco-event-row',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   styleUrl: './eco-event-row.component.css',

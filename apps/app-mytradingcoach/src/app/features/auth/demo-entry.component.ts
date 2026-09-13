@@ -11,7 +11,6 @@ import { environment } from '../../../environments/environment';
  */
 @Component({
   selector: 'mtc-demo-entry',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="demo-entry">

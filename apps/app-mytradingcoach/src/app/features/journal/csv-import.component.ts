@@ -57,7 +57,6 @@ const EMOTION_EMOJIS: Record<string, string> = {
 
 @Component({
   selector: 'mtc-csv-import',
-  standalone: true,
   imports: [LucideAngularModule, TradovateConnectModalComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './csv-import.component.css',

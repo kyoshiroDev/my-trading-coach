@@ -42,7 +42,6 @@ import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'mtc-sidebar',
-  standalone: true,
   imports: [
     RouterModule,
     RouterLink,

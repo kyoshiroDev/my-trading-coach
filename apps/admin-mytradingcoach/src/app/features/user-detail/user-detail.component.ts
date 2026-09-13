@@ -89,7 +89,6 @@ export function buildSignals(
 
 @Component({
   selector: 'mtc-admin-user-detail',
-  standalone: true,
   imports: [DatePipe, RouterLink, ActivityCalendarComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './user-detail.component.css',

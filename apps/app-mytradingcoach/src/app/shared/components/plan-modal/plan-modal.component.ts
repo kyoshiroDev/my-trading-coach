@@ -18,7 +18,6 @@ type PlanId = `premium_${Interval}`;
 
 @Component({
   selector: 'mtc-plan-modal',
-  standalone: true,
   imports: [LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './plan-modal.component.html',

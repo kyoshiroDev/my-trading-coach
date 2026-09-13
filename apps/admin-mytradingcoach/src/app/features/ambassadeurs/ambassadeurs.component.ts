@@ -11,7 +11,6 @@ import { PRICING_EUR } from '../../core/constants/pricing.const';
 
 @Component({
   selector: 'mtc-admin-ambassadeurs',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [DatePipe, DecimalPipe, ChartCanvasComponent],
   styleUrl: './ambassadeurs.component.css',

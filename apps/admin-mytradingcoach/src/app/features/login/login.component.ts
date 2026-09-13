@@ -6,7 +6,6 @@ import { AdminAuthService } from '../../core/auth/admin-auth.service';
 
 @Component({
   selector: 'mtc-admin-login',
-  standalone: true,
   imports: [FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './login.component.css',

@@ -11,7 +11,6 @@ import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
 
 @Component({
   selector: 'mtc-admin-emails',
-  standalone: true,
   imports: [FormsModule, DatePipe, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './emails.component.css',

@@ -54,7 +54,6 @@ interface WeekGroup {
 
 @Component({
   selector: 'mtc-journal',
-  standalone: true,
   imports: [
     DatePipe, DecimalPipe, TitleCasePipe, LucideAngularModule,
     TopbarComponent, TradeFormComponent, CsvImportComponent,

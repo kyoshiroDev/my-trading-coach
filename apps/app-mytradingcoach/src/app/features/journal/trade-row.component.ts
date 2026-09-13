@@ -14,7 +14,6 @@ import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
 /* eslint-disable @angular-eslint/component-selector */
 @Component({
   selector: '[mtc-trade-row]',
-  standalone: true,
   imports: [
     DatePipe,
     DecimalPipe,

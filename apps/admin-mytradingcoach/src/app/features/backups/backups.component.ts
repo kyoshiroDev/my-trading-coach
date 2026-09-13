@@ -19,7 +19,6 @@ const TARGET_CONFIG: Record<BackupTarget, { label: string; color: string; icon: 
 
 @Component({
   selector: 'mtc-admin-backups',
-  standalone: true,
   imports: [DatePipe, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './backups.component.css',

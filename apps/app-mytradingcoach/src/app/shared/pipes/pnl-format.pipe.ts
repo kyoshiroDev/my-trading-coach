@@ -1,7 +1,7 @@
 import { Pipe, PipeTransform, inject } from '@angular/core';
 import { UserStore } from '../../core/stores/user.store';
 
-@Pipe({ name: 'pnlFormat', standalone: true, pure: false })
+@Pipe({ name: 'pnlFormat', pure: false })
 export class PnlFormatPipe implements PipeTransform {
   private readonly userStore = inject(UserStore);
 

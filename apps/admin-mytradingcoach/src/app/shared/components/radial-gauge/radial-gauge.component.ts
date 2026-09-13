@@ -23,7 +23,6 @@ import { Chart, CHART_COLORS, RING_TRACK, type ChartTone } from '../../charts/ch
  */
 @Component({
   selector: 'mtc-admin-radial-gauge',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './radial-gauge.component.css',
   template: `

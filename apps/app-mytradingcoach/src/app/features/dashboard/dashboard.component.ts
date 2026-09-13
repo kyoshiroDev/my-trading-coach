@@ -45,7 +45,6 @@ import { apiErrorMessage } from '../../core/utils/api-error';
 
 @Component({
   selector: 'mtc-dashboard',
-  standalone: true,
   imports: [
     RouterLink,
     DatePipe,

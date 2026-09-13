@@ -9,7 +9,6 @@ import { AccountSelectorComponent } from '../account-selector/account-selector.c
 
 @Component({
   selector: 'mtc-topbar',
-  standalone: true,
   imports: [LucideAngularModule, AccountSelectorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './topbar.component.css',

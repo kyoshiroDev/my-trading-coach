@@ -90,7 +90,6 @@ function currencyToInstruments(currency: string | null | undefined): string {
 
 @Component({
   selector: 'mtc-session-live',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-live.component.css',
   imports: [LucideAngularModule, SessionRecapComponent, MarketContextBarComponent, LiveNewsComponent, LiveFeedComponent, NumericInputDirective, EmotionEmojiPipe],

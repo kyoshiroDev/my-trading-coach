@@ -28,7 +28,6 @@ interface WeekGroup {
 
 @Component({
   selector: 'mtc-sessions',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './sessions.component.css',
   imports: [DatePipe, DecimalPipe, PnlFormatPipe, EmotionEmojiPipe, RouterLink, AccountSelectorComponent],

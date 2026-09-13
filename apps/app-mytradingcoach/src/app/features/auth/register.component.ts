@@ -16,7 +16,6 @@ import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'mtc-register',
-  standalone: true,
   imports: [FormsModule, RouterLink, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './register.component.css',

@@ -14,7 +14,6 @@ function heatColor(winRate: number, count: number): string {
 
 @Component({
   selector: 'mtc-heatmap',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="heatmap-wrap">

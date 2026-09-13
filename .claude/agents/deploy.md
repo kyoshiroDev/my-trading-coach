@@ -101,7 +101,7 @@ networks:
 
 ```dockerfile
 FROM node:22-slim AS builder
-RUN npm install -g pnpm@10 --no-fund --no-audit
+RUN npm install -g pnpm@11.6.0 --no-fund --no-audit
 WORKDIR /app
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/api-mytradingcoach/package.json ./apps/api-mytradingcoach/
@@ -111,7 +111,7 @@ COPY . .
 RUN pnpm nx build api-mytradingcoach --configuration=production --skip-nx-cache
 
 FROM node:22-alpine AS migrator
-RUN npm install -g pnpm@10 --no-fund --no-audit
+RUN npm install -g pnpm@11.6.0 --no-fund --no-audit
 WORKDIR /app
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/api-mytradingcoach/package.json ./apps/api-mytradingcoach/

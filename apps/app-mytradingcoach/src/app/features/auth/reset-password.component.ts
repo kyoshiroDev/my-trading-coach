@@ -13,7 +13,6 @@ import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'mtc-reset-password',
-  standalone: true,
   imports: [FormsModule, RouterLink, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './login.component.css',

@@ -6,7 +6,6 @@ import { AdminApi, AdminStats, SubscriptionsData } from '../../core/api/admin.ap
 
 @Component({
   selector: 'mtc-admin-subscriptions',
-  standalone: true,
   imports: [DatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './subscriptions.component.css',

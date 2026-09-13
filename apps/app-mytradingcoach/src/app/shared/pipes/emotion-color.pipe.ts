@@ -9,7 +9,7 @@ export const EMOTION_COLORS: Record<string, string> = {
   REVENGE: '#dc2626',
 };
 
-@Pipe({ name: 'emotionColor', standalone: true })
+@Pipe({ name: 'emotionColor' })
 export class EmotionColorPipe implements PipeTransform {
   transform(emotion: string): string {
     return EMOTION_COLORS[emotion] ?? '#6b7280';

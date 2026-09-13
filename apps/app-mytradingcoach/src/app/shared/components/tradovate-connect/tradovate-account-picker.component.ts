@@ -8,7 +8,6 @@ import type { TradovateExternalAccount } from '../../../core/api/tradovate.api';
  */
 @Component({
   selector: 'mtc-tradovate-account-picker',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="tvp" data-testid="tradovate-account-picker">

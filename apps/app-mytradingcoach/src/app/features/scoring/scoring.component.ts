@@ -141,7 +141,6 @@ const LOCKED_BADGES = [
 
 @Component({
   selector: 'mtc-scoring',
-  standalone: true,
   imports: [TopbarComponent, PlanModalComponent, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './scoring.component.html',

@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
-@Pipe({ name: 'pnlSign', standalone: true })
+@Pipe({ name: 'pnlSign' })
 export class PnlSignPipe implements PipeTransform {
   transform(value: number | null | undefined): string {
     if (value == null) return '-';

@@ -14,7 +14,6 @@ import type { TradovateOrigin } from '../../../core/api/tradovate.api';
  */
 @Component({
   selector: 'mtc-tradovate-connect-modal',
-  standalone: true,
   imports: [LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tradovate-connect-modal.component.html',

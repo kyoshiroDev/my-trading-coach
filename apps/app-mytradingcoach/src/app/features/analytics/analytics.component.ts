@@ -44,7 +44,6 @@ const MOCK_SETUP_BARS = [88, 72, 65, 54, 38] as const;
 
 @Component({
   selector: 'mtc-analytics',
-  standalone: true,
   imports: [
     TopbarComponent,
     PnlFormatPipe,

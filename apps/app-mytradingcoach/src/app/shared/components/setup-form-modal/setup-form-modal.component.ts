@@ -33,7 +33,6 @@ export const SETUP_PALETTE = [
  */
 @Component({
   selector: 'mtc-setup-form-modal',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './setup-form-modal.component.css',
   template: `

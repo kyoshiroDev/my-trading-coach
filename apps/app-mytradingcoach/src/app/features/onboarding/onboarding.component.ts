@@ -118,7 +118,6 @@ interface OnboardingProgress {
 
 @Component({
   selector: 'mtc-onboarding',
-  standalone: true,
   imports: [
     LucideAngularModule, TradeFormComponent, CsvImportComponent, SetupFormModalComponent,
     TradovateConnectModalComponent, TradovateAccountPickerComponent,

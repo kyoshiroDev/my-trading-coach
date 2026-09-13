@@ -54,7 +54,6 @@ const DEMO_OBJECTIVES: DebriefObjective[] = [
 
 @Component({
   selector: 'mtc-session-morning',
-  standalone: true,
   imports: [DatePipe, RouterLink, LucideAngularModule, PremiumLockComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-morning.component.css',

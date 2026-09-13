@@ -81,7 +81,6 @@ function emptyForm(): AccountFormState {
 // ESTIMÉES d'après les trades loggés (objectif + marge drawdown), avec disclaimer obligatoire.
 @Component({
   selector: 'mtc-accounts',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DecimalPipe, FormsModule, LucideAngularModule, TopbarComponent, PlanModalComponent,

@@ -4,7 +4,6 @@ import { AdminUser, AdminUserDetail } from '../../../core/api/admin.api';
 /** Modal de détail utilisateur : extraction de users.component.ts */
 @Component({
   selector: 'mtc-admin-user-detail-modal',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `<!-- Template à extraire de users.component.ts @if (viewingUser()) block -->`,
 })

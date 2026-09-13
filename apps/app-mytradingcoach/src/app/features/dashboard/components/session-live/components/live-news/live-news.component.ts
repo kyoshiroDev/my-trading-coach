@@ -3,7 +3,6 @@ import { NewsItem } from '../../../../../../core/api/trades.api';
 
 @Component({
   selector: 'mtc-live-news',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="news-col">

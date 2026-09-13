@@ -9,7 +9,6 @@ import { AdminAuthService } from '../../core/auth/admin-auth.service';
 
 @Component({
   selector: 'mtc-admin-shell',
-  standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './shell.component.css',

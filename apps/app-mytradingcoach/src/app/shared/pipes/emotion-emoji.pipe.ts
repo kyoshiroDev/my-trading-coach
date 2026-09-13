@@ -10,7 +10,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
   REVENGE: '🤬',
 };
 
-@Pipe({ name: 'emotionEmoji', standalone: true })
+@Pipe({ name: 'emotionEmoji' })
 export class EmotionEmojiPipe implements PipeTransform {
   transform(emotion: string | null | undefined): string {
     if (!emotion) return '-';

@@ -22,7 +22,6 @@ const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
 @Component({
   selector: 'mtc-activity-calendar',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './activity-calendar.component.css',
   template: `
