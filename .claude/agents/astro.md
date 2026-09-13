@@ -1,7 +1,7 @@
 # Agent Astro — landing-mytradingcoach
 
 ## Stack
-Astro 6 · Tailwind 4 · Static output · servi sur le VPS (conteneur nginx:alpine derrière Traefik,
+Astro 7 · Tailwind 4 · Static output · servi sur le VPS (conteneur nginx:alpine derrière Traefik,
 rsync depuis GitHub Actions vers `/opt/static/landing-prod`). Plus de Vercel.
 
 ---
@@ -157,14 +157,14 @@ CTA en fin de chaque article :
 ```json
 {
   "dependencies": {
-    "@astrojs/sitemap": "^3.7.2",
-    "astro": "^6.1.1",
-    "tailwindcss": "^4.2.2"
+    "@astrojs/sitemap": "^3.7.4",
+    "astro": "^7.3.2",
+    "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.4",
-    "@tailwindcss/vite": "^4.2.2",
-    "typescript": "^5.8.3"
+    "@astrojs/check": "0.9.10",
+    "@tailwindcss/vite": "^4.3.3",
+    "typescript": "^5.9.2"
   }
 }
 ```
