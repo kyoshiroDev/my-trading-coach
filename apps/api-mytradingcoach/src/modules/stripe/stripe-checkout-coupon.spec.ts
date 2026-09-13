@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { StripeService } from './stripe.service';
+import { StripeBillingService } from './stripe-billing.service';
+import { StripeCouponService } from './stripe-coupon.service';
+import { StripeCustomerService } from './stripe-customer.service';
 
 // Coupon filleul -10% sur la première année : appliqué au checkout si le filleul a
 // un parrain ET un priceId connu — annuel (coupon once) ou mensuel (coupon repeating
@@ -38,18 +40,19 @@ function makeSvc(referredBy: string | null, parrainRole: 'USER' | 'AMBASSADOR' =
     coupons: { retrieve: vi.fn().mockResolvedValue({}), create: vi.fn() },
     customers: { search: vi.fn(), create: vi.fn() },
   };
-  const svc = new StripeService(
-    config as never, prisma as never, {} as never, {} as never,
-    { add: vi.fn() } as never, { client: {} } as never,
+  const svc = new StripeBillingService(
+    config as never, prisma as never, { client: {} } as never,
+    new StripeCustomerService(prisma as never, stripe as never),
+    new StripeCouponService(stripe as never),
+    stripe as never,
   );
-  (svc as unknown as { stripe: unknown }).stripe = stripe;
   return { svc, create };
 }
 
-const run = (svc: StripeService, priceId: string) =>
+const run = (svc: StripeBillingService, priceId: string) =>
   svc.createCheckoutSession('filleul', 'f@test.com', priceId, 'https://app');
 
-describe('StripeService.createCheckoutSession — coupon filleul -10%', () => {
+describe('StripeBillingService.createCheckoutSession — coupon filleul -10%', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('parrain (referredBy) + annuel → coupon once applique, pas de codes promo ouverts', async () => {
