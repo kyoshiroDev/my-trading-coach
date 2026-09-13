@@ -17,7 +17,6 @@ const GB = 1_073_741_824;
 
 @Component({
   selector: 'mtc-admin-surveillance',
-  standalone: true,
   imports: [DecimalPipe, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './surveillance.component.css',

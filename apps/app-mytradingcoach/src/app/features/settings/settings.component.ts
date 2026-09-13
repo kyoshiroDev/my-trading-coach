@@ -42,7 +42,6 @@ type ProfileTab = 'trader' | 'params';
 
 @Component({
   selector: 'mtc-settings',
-  standalone: true,
   imports: [TopbarComponent, DatePipe, DecimalPipe, PlanModalComponent, SetupFormModalComponent, LucideAngularModule],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',

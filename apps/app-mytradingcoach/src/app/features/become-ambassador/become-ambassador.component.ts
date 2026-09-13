@@ -15,7 +15,6 @@ import { apiErrorMessage } from '../../core/utils/api-error';
 
 @Component({
   selector: 'mtc-become-ambassador',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, LucideAngularModule],
   styleUrl: './become-ambassador.component.css',

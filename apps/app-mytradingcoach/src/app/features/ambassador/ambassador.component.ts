@@ -22,7 +22,6 @@ const COMMISSION_RATE = 0.2;
 
 @Component({
   selector: 'mtc-ambassador',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [DatePipe, DecimalPipe, TitleCasePipe, LucideAngularModule],
   templateUrl: './ambassador.component.html',

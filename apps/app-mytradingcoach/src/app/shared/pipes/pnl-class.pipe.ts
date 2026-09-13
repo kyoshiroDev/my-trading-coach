@@ -15,7 +15,7 @@ import { Pipe, PipeTransform } from '@angular/core';
  * [class]="trade.pnl | pnlClass"   // trade.pnl = -120 → "text-red"
  * [class]="trade.pnl | pnlClass"   // trade.pnl = 0    → ""
  */
-@Pipe({ name: 'pnlClass', standalone: true })
+@Pipe({ name: 'pnlClass' })
 export class PnlClassPipe implements PipeTransform {
   transform(value: number | null | undefined): string {
     if (value == null || value === 0) return '';

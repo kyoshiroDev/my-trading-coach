@@ -5,7 +5,6 @@ import { parseDecimal } from '../../../../../../core/utils/parse-decimal';
 
 @Component({
   selector: 'mtc-live-feed',
-  standalone: true,
   imports: [NumericInputDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `

@@ -44,7 +44,6 @@ const EMOTION_COLORS: Record<string, string> = {
 
 @Component({
   selector: 'mtc-session-day',
-  standalone: true,
   imports: [DatePipe, LucideAngularModule, SessionMorningComponent, SessionLiveComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-day.component.css',

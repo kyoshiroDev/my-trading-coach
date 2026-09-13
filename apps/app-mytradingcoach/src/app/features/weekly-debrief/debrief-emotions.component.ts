@@ -27,7 +27,6 @@ function emotionColor(winRate: number): string {
 
 @Component({
   selector: 'mtc-debrief-emotions',
-  standalone: true,
   imports: [TitleCasePipe, PnlFormatPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './debrief-emotions.component.css',

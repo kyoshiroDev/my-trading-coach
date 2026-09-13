@@ -3,7 +3,6 @@ import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'mtc-premium-lock',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './premium-lock.component.css',
   imports: [RouterLink],

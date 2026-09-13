@@ -9,7 +9,6 @@ import { CHART_COLORS, fade, gridAxis, noLegend } from '../../shared/charts/char
 
 @Component({
   selector: 'mtc-admin-revenue',
-  standalone: true,
   imports: [DecimalPipe, ChartCanvasComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './revenue.component.css',

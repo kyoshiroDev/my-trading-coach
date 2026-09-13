@@ -4,7 +4,6 @@ import { MarketContext } from '../../../../core/api/trades.api';
 
 @Component({
   selector: 'mtc-market-context-bar',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [LucideAngularModule],
   styleUrl: './market-context-bar.component.css',

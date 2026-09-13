@@ -19,7 +19,6 @@ import { PRICING_EUR } from '../../core/constants/pricing.const';
 
 @Component({
   selector: 'mtc-admin-users',
-  standalone: true,
   imports: [DatePipe, FormsModule, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './users.component.css',

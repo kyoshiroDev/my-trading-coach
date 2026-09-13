@@ -56,7 +56,6 @@ function insightVariant(type: string): InsightVariant {
 
 @Component({
   selector: 'mtc-ai-insights',
-  standalone: true,
   imports: [
     FormsModule,
     LucideAngularModule,

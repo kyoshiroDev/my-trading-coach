@@ -24,7 +24,6 @@ interface Drag {
  */
 @Component({
   selector: 'mtc-toasts',
-  standalone: true,
   imports: [LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './toasts.component.html',

@@ -9,7 +9,7 @@ const EMOTION_LABELS: Record<string, string> = {
   REVENGE: '😤 Revenge trading',
 };
 
-@Pipe({ name: 'emotionLabel', standalone: true })
+@Pipe({ name: 'emotionLabel' })
 export class EmotionLabelPipe implements PipeTransform {
   transform(emotion: string): string {
     return EMOTION_LABELS[emotion] ?? emotion;

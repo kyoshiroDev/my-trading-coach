@@ -55,7 +55,6 @@ type NumericField =
 
 @Component({
   selector: 'mtc-trade-form',
-  standalone: true,
   imports: [FormsModule, TitleCasePipe, DecimalPipe, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './trade-form.component.html',

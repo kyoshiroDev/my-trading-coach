@@ -44,7 +44,6 @@ const ICON_COLOR_MAP: Record<InsightType, string> = {
 
 @Component({
   selector: 'mtc-insight-card',
-  standalone: true,
   imports: [LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `

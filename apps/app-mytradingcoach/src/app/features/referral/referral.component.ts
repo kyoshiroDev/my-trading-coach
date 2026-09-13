@@ -18,7 +18,6 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
 
 @Component({
   selector: 'mtc-referral',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [DatePipe, DecimalPipe, RouterLink, LucideAngularModule],
   styleUrl: './referral.component.css',

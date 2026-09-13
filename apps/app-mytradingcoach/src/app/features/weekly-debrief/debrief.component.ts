@@ -95,7 +95,6 @@ function typeBadge(type: string): { label: string; cls: string } | null {
 
 @Component({
   selector: 'mtc-debrief',
-  standalone: true,
   imports: [
     DatePipe,
     DecimalPipe,
