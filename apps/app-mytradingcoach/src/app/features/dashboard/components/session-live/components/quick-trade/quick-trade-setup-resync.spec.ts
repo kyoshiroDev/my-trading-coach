@@ -11,13 +11,10 @@ import { TestBed } from '@angular/core/testing';
 import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { EMPTY, of } from 'rxjs';
-import { SessionLiveComponent } from './session-live.component';
-import { SetupsStore } from '../../../../core/stores/setups.store';
-import { UserStore } from '../../../../core/stores/user.store';
-import { TradesApi } from '../../../../core/api/trades.api';
-import { EcoCalendarApi } from '../../../../core/api/eco-calendar.api';
-import { EcoSocketService } from '../../../../core/services/eco-socket.service';
+import { of } from 'rxjs';
+import { QuickTradeComponent } from './quick-trade.component';
+import { SetupsStore } from '../../../../../../core/stores/setups.store';
+import { TradesApi } from '../../../../../../core/api/trades.api';
 
 interface TestSetup {
   id: string;
@@ -44,33 +41,19 @@ function mount(initial: TestSetup[]) {
       provideHttpClient(),
       provideHttpClientTesting(),
       { provide: SetupsStore, useValue: { active, load: vi.fn(), loaded: signal(true) } },
-      { provide: UserStore, useValue: { isDemo: () => false, isPremium: () => false, user: () => ({}) } },
       {
         provide: TradesApi,
         useValue: {
           getUserAssets: vi.fn(() => of({ data: [] })),
           getLivePrice: vi.fn(() => of({ data: null })),
-          newsText: vi.fn(() => of({ data: null })),
           saveUserAssets: vi.fn(() => of({ data: null })),
           searchInstruments: vi.fn(() => of({ data: [] })),
           setFavoriteAsset: vi.fn(() => of({ data: null })),
         },
       },
-      {
-        provide: EcoCalendarApi,
-        useValue: {
-          analyzeResult: vi.fn(() => of({ data: null })),
-          getPins: vi.fn(() => of({ data: [] })),
-          refreshAnalysis: vi.fn(() => of({ data: null })),
-        },
-      },
-      {
-        provide: EcoSocketService,
-        useValue: { newReleases$: EMPTY, connect: vi.fn(), disconnect: vi.fn() },
-      },
     ],
   });
-  TestBed.overrideComponent(SessionLiveComponent, {
+  TestBed.overrideComponent(QuickTradeComponent, {
     set: {
       template: '<div></div>',
       imports: [],
@@ -80,13 +63,13 @@ function mount(initial: TestSetup[]) {
     },
   });
 
-  const fixture = TestBed.createComponent(SessionLiveComponent);
+  const fixture = TestBed.createComponent(QuickTradeComponent);
   fixture.detectChanges();
 
   return { fixture, active, cmp: fixture.componentInstance as any };
 }
 
-describe('SessionLiveComponent — resync du setup du trade rapide', () => {
+describe('QuickTradeComponent — resync du setup du trade rapide', () => {
   beforeEach(() => TestBed.resetTestingModule());
 
   it('sélectionne le premier setup actif au montage', () => {

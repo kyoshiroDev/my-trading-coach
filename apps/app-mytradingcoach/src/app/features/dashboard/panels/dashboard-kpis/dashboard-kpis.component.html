@@ -1,0 +1,127 @@
+@if (!loading()) {
+  <div class="mtc-kpis">
+    <!-- Capital -->
+    <div class="mtc-kpi" style="--glow:var(--blue)">
+      <div class="mtc-kpi-l">
+        <div class="mtc-kpi-lab">Capital
+          <mtc-info-tooltip class="align-start" label="Comment le capital est calculé"
+            text="Capital de départ du compte, ajusté du P&L net de tes trades." />
+        </div>
+        <div class="mtc-kpi-val" data-testid="dashboard-capital" [style.color]="capitalColor()">{{ capitalDisplay() }}</div>
+        <div class="mtc-kpi-sub">
+          @if (capitalPct() !== 0) {
+            <span [style.color]="capitalPct() > 0 ? 'var(--green)' : 'var(--red)'">{{ capitalPct() > 0 ? '+' : '' }}{{ capitalPct() | number:'1.1-1' }}% {{ periodShort() }}</span>
+          } @else { base }
+        </div>
+      </div>
+      @let cap = sparkPath(capitalSeries());
+      @if (cap.line) {
+        <svg class="mtc-spark" viewBox="0 0 72 42" preserveAspectRatio="none" width="72" height="42">
+          <path [attr.d]="cap.area" fill="var(--blue)" fill-opacity="0.13" />
+          <path [attr.d]="cap.line" fill="none" stroke="var(--blue-bright)" stroke-width="1.6" stroke-linejoin="round" />
+          <circle [attr.cx]="cap.cx" [attr.cy]="cap.cy" r="1.9" fill="var(--blue-bright)" />
+        </svg>
+      }
+    </div>
+    <!-- P&L net mois -->
+    <div class="mtc-kpi" style="--glow:var(--green)">
+      <div class="mtc-kpi-l">
+        <div class="mtc-kpi-lab">P&amp;L net</div>
+        <div class="mtc-kpi-val" [style.color]="pnlColor()">{{ summary()?.totalPnl ?? 0 | pnlFormat }}</div>
+        <div class="mtc-kpi-sub">
+          @if ((summary()?.totalTrades ?? 0) > 0) { {{ periodShort() }} } @else { Aucune donnée }
+        </div>
+      </div>
+      @let pnl = sparkPath(equitySeries());
+      @if (pnl.line) {
+        <svg class="mtc-spark" viewBox="0 0 72 42" preserveAspectRatio="none" width="72" height="42">
+          <path [attr.d]="pnl.area" fill="var(--green)" fill-opacity="0.13" />
+          <path [attr.d]="pnl.line" fill="none" stroke="var(--green)" stroke-width="1.6" stroke-linejoin="round" />
+          <circle [attr.cx]="pnl.cx" [attr.cy]="pnl.cy" r="1.9" fill="var(--green)" />
+        </svg>
+      }
+    </div>
+    <!-- Win rate -->
+    <div class="mtc-kpi" style="--glow:var(--blue)">
+      <div class="mtc-kpi-l">
+        <div class="mtc-kpi-lab">Win rate
+          <mtc-info-tooltip label="Comment le win rate est calculé"
+            text="Trades gagnants ÷ (gagnants + perdants). Les break-even sont exclus du calcul." />
+        </div>
+        <div class="mtc-kpi-val" [style.color]="winRateColor()">{{ (summary()?.winRate ?? 0).toFixed(1) }}%</div>
+        <div class="mtc-kpi-sub">
+          @if ((summary()?.totalTrades ?? 0) > 0) { sur {{ summary()?.totalTrades }} trades } @else { Aucune donnée }
+        </div>
+      </div>
+      <div class="mtc-mini-donut" [style.background]="winRateDonut()"><span></span></div>
+    </div>
+    <!-- Profit factor -->
+    <div class="mtc-kpi" style="--glow:var(--purple)">
+      <div class="mtc-kpi-l">
+        <div class="mtc-kpi-lab">Profit factor
+          <mtc-info-tooltip label="Comment le profit factor est calculé"
+            text="Somme des gains ÷ somme des pertes. Au-dessus de 1, tes gains dépassent tes pertes. Affiche « - » tant que tu n'as aucune perte." />
+        </div>
+        <div class="mtc-kpi-val">{{ profitFactorDisplay() }}</div>
+        <div class="mtc-kpi-sub">
+          @if ((summary()?.totalTrades ?? 0) > 0) { profits / pertes } @else { Aucune donnée }
+        </div>
+      </div>
+      @let pf = sparkPath(equitySeries());
+      @if (pf.line) {
+        <svg class="mtc-spark" viewBox="0 0 72 42" preserveAspectRatio="none" width="72" height="42">
+          <path [attr.d]="pf.area" fill="var(--purple)" fill-opacity="0.13" />
+          <path [attr.d]="pf.line" fill="none" stroke="var(--purple-bright)" stroke-width="1.6" stroke-linejoin="round" />
+          <circle [attr.cx]="pf.cx" [attr.cy]="pf.cy" r="1.9" fill="var(--purple-bright)" />
+        </svg>
+      }
+    </div>
+    <!-- Trades pris -->
+    <div class="mtc-kpi" style="--glow:var(--green)">
+      <div class="mtc-kpi-l">
+        <div class="mtc-kpi-lab">Trades pris
+          <mtc-info-tooltip label="Ce que compte « Trades pris »"
+            text="Nombre de trades clôturés sur la période." />
+        </div>
+        <div class="mtc-kpi-val">{{ summary()?.totalTrades ?? fallbackTradesCount() }}</div>
+        <div class="mtc-kpi-sub">
+          @if ((summary()?.streak ?? 0) > 0) { <span style="color:var(--green)">+{{ summary()?.streak }} streak</span> }
+          @else if ((summary()?.streak ?? 0) < 0) { <span style="color:var(--red)">{{ summary()?.streak }} streak</span> }
+          @else { ce mois }
+        </div>
+      </div>
+      <div class="mtc-minibars">
+        @for (b of [.45,.7,.4,.85,.55,.95,.6,.75,.5,.9,.65,.8]; track $index) {
+          <span [style.height.%]="b * 100" [style.opacity]="0.4 + b * 0.5"></span>
+        }
+      </div>
+    </div>
+    <!-- Drawdown max -->
+    <div class="mtc-kpi" style="--glow:var(--red)">
+      <div class="mtc-kpi-l">
+        <div class="mtc-kpi-lab">Drawdown max
+          <mtc-info-tooltip class="align-end" label="Comment le drawdown max est calculé"
+            text="Plus forte baisse de ton P&L cumulé depuis un sommet, sur la période affichée." />
+        </div>
+        <div class="mtc-kpi-val" [style.color]="drawdownColor()">{{ drawdownDisplay() | pnlFormat }}</div>
+        <div class="mtc-kpi-sub">
+          @if ((summary()?.totalTrades ?? 0) > 0) { sur capital } @else { Aucune donnée }
+        </div>
+      </div>
+      @let dd = sparkPath(ddSeries());
+      @if (dd.line) {
+        <svg class="mtc-spark" viewBox="0 0 72 42" preserveAspectRatio="none" width="72" height="42">
+          <path [attr.d]="dd.area" fill="var(--red)" fill-opacity="0.13" />
+          <path [attr.d]="dd.line" fill="none" stroke="var(--red)" stroke-width="1.6" stroke-linejoin="round" />
+          <circle [attr.cx]="dd.cx" [attr.cy]="dd.cy" r="1.9" fill="var(--red)" />
+        </svg>
+      }
+    </div>
+  </div>
+} @else {
+  <div class="mtc-kpis">
+    @for (_ of [0, 1, 2, 3, 4]; track $index) {
+      <div class="mtc-kpi stat-skeleton" style="height:96px"></div>
+    }
+  </div>
+}

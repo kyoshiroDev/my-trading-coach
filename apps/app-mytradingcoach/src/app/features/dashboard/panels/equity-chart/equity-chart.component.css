@@ -1,0 +1,5 @@
+:host { display: block; }
+
+.mtc-equity { width: 100%; height: 230px; display: block; overflow: visible; }
+.mtc-eq-pulse { animation: mtcGlow 2s ease-in-out infinite; }
+@keyframes mtcGlow { 0%, 100% { opacity: .25; } 50% { opacity: .55; } }

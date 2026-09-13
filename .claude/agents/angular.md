@@ -38,12 +38,17 @@ src/app/
 │   └── stores/     trades.store.ts · user.store.ts
 │                   user.store : isBeta = computed(() => role === 'BETA_TESTER' || 'ADMIN')
 ├── features/
-│   ├── dashboard/          dashboard.component.ts + .css
+│   ├── dashboard/          dashboard.component.ts + .html + .css (état, cadre, états vides)
+│   │   ├── dashboard-charts.util.ts   ← calculs purs des viz (sparklines, donuts, P&L, coach)
+│   │   ├── panels/                    ← viz présentationnelles : dashboard-kpis · equity-chart ·
+│   │   │                                top-assets · pl-bars · coach-feedback · donut-chart ·
+│   │   │                                recent-trades-table
 │   │   └── components/
 │   │       ├── session-morning/  ← V2 : vue pré-session (mood, recap hier, objectifs, éco calendar)
 │   │       │   session-morning.component.ts + .css
-│   │       └── session-live/     ← V2 : vue session active (live feed, quick trade, éco live)
+│   │       └── session-live/     ← V2 : vue session active (cadre + mini-stats + socket éco)
 │   │           session-live.component.ts + .css
+│   │           └── components/   live-eco-calendar · live-feed · quick-trade · live-news
 │   ├── journal/            journal.component · trade-form.component · trade-row.component
 │   │                       csv-import.component   ← import historique GRATUIT (tous plans)
 │   │                       (register : « trades illimités, sans CB » ;
@@ -584,6 +589,31 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
   dans le `.ts` lit maintenant `.ts` + `.html` (cf. `csv-import-*.spec.ts`).
 - Mock de `TradesApi` dans un spec qui intercepte le HTTP : lui donner une méthode qui émet la
   vraie requête (`TestBed.inject(HttpClient).delete(...)`), pour garder `HttpTestingController`.
+
+## Découpage dashboard / session-live (audit, 2026-09-13)
+
+- **Dashboard** : le parent garde l'état (période, compte, `httpResource`), le chrome des
+  panneaux (`.mtc-panel` + en-tête) et les **états vides** ; chaque viz est un composant de
+  `panels/` qui ne reçoit que des données prêtes (`input`). Les calculs vivent dans
+  `dashboard-charts.util.ts` (fonctions pures, testées dans `dashboard-charts.util.spec.ts`).
+  Les specs du dashboard lisent des membres du parent (`summary`, `baseCapital`,
+  `currentCapital`, `accountReallyEmpty`, `dashboardPeriod`, `setPeriod`, `plGranularity`,
+  `plTitle`, `periodRange`, `showCsvImport`) : ne pas les déplacer dans un panneau.
+- **Session live** : le parent garde le cadre (CTA sans session, carte marché, mini-stats,
+  grilles `.live-layout` / `.live-cols`) et la **connexion du WebSocket éco** (c'est l'état de
+  la session qui décide, déconnexion comprise). Calendrier éco, live feed, trade rapide et news
+  (ticker + modale) sont dans `session-live/components/`.
+- **CSS encapsulée** : le style d'une viz vit dans SON composant (un sélecteur du parent ne
+  descend pas dans l'enfant). L'hôte d'un panneau de grille est un flex colonne
+  (`:host { display:flex; flex-direction:column; min-width:0; min-height:0 }`) et le bloc
+  interne s'étire (`flex:1`) : c'est ce qui reproduit l'étirement de la grille d'avant. Les
+  `@container` fonctionnent dans les composants enfants (conteneur résolu dans le DOM).
+  Une règle partagée par deux panneaux (`.pulse-dot`, `.col-title`) est dupliquée dans chacun,
+  keyframes comprises (Angular préfixe les `@keyframes` d'un composant).
+- Vérification d'un tel découpage : empreinte de mise en page (tag, classes, position, taille
+  de chaque élément hors hôtes `mtc-*` et icônes) avant / après sur beta avec le compte démo,
+  plus un script qui vérifie que chaque classe utilisée par un template a sa règle dans le CSS
+  du même composant.
 
 ## Migration Angular 22 / Nx 23 / TypeScript 6.0 (étape 5 de l'audit, 2026-09-13)
 
