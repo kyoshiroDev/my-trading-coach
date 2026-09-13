@@ -14,7 +14,10 @@ import { DecimalPipe, TitleCasePipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
-import { LucideAngularModule, X } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideX as X,
+} from '@lucide/angular';
 import { Trade } from '../../core/stores/trades.store';
 import {
   CreateTradeDto,
@@ -55,7 +58,7 @@ type NumericField =
 
 @Component({
   selector: 'mtc-trade-form',
-  imports: [FormsModule, TitleCasePipe, DecimalPipe, LucideAngularModule],
+  imports: [FormsModule, TitleCasePipe, DecimalPipe, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './trade-form.component.html',
   styleUrl: './trade-form.component.css',

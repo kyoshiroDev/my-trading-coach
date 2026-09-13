@@ -13,7 +13,14 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { LucideAngularModule, Newspaper, CalendarDays, ListOrdered, Zap, ChevronRight } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideNewspaper as Newspaper,
+  LucideCalendarDays as CalendarDays,
+  LucideListOrdered as ListOrdered,
+  LucideZap as Zap,
+  LucideChevronRight as ChevronRight,
+} from '@lucide/angular';
 import { Subject, forkJoin, interval, of, timer } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent, EcoResultAnalysis } from '../../../../core/api/eco-calendar.api';
@@ -92,7 +99,7 @@ function currencyToInstruments(currency: string | null | undefined): string {
   selector: 'mtc-session-live',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-live.component.css',
-  imports: [LucideAngularModule, SessionRecapComponent, MarketContextBarComponent, LiveNewsComponent, LiveFeedComponent, NumericInputDirective, EmotionEmojiPipe],
+  imports: [LucideDynamicIcon, SessionRecapComponent, MarketContextBarComponent, LiveNewsComponent, LiveFeedComponent, NumericInputDirective, EmotionEmojiPipe],
   templateUrl: './session-live.component.html',
 })
 export class SessionLiveComponent {

@@ -20,7 +20,7 @@
 <div class="content">
   @if (!userStore.isPremium()) {
     <div data-testid="ai-paywall" class="premium-paywall">
-      <div class="paywall-icon"><lucide-icon [img]="SparklesIcon" [size]="40" /></div>
+      <div class="paywall-icon"><svg [lucideIcon]="SparklesIcon" [size]="40"></svg></div>
       <h3 class="paywall-title">Fonctionnalité Premium</h3>
       <p class="paywall-desc">
         Les IA Insights sont disponibles avec le plan Premium.<br />Analyse
@@ -84,32 +84,28 @@
                 <div class="insight-icon" [class]="variant">
                   @switch (variant) {
                     @case ('tip') {
-                      <lucide-icon
-                        [img]="LightbulbIcon"
+                      <svg
+                        [lucideIcon]="LightbulbIcon"
                         [size]="15"
-                        color="#10b981"
-                      />
+                        color="#10b981"></svg>
                     }
                     @case ('alert') {
-                      <lucide-icon
-                        [img]="AlertCircleIcon"
+                      <svg
+                        [lucideIcon]="AlertCircleIcon"
                         [size]="15"
-                        color="#ef4444"
-                      />
+                        color="#ef4444"></svg>
                     }
                     @case ('warn') {
-                      <lucide-icon
-                        [img]="AlertTriangleIcon"
+                      <svg
+                        [lucideIcon]="AlertTriangleIcon"
                         [size]="15"
-                        color="#f59e0b"
-                      />
+                        color="#f59e0b"></svg>
                     }
                     @default {
-                      <lucide-icon
-                        [img]="InfoIcon"
+                      <svg
+                        [lucideIcon]="InfoIcon"
                         [size]="15"
-                        color="#60a5fa"
-                      />
+                        color="#60a5fa"></svg>
                     }
                   }
                 </div>
@@ -125,12 +121,11 @@
           </div>
         } @else if (!insightsLoading()) {
           <div class="empty-insights">
-            <lucide-icon
-              [img]="SparklesIcon"
+            <svg
+              [lucideIcon]="SparklesIcon"
               [size]="32"
               color="var(--text-3)"
-              style="margin-bottom:12px"
-            />
+              style="margin-bottom:12px"></svg>
             <p>Lance une analyse pour obtenir tes insights personnalisés</p>
             <small
               >L'IA analyse tes 50 derniers trades pour identifier tes
@@ -145,11 +140,10 @@
         <div class="chat-header">
           <div class="chat-title-row">
             <div class="chat-title">
-              <lucide-icon
-                [img]="SparklesIcon"
+              <svg
+                [lucideIcon]="SparklesIcon"
                 [size]="14"
-                color="var(--blue-bright)"
-              />
+                color="var(--blue-bright)"></svg>
               Coach IA
             </div>
             @if (userStore.isAdmin()) {
@@ -222,7 +216,7 @@
               (!userStore.isAdmin() && quotaExhausted())
             "
           >
-            <lucide-icon [img]="SendIcon" [size]="14" />
+            <svg [lucideIcon]="SendIcon" [size]="14"></svg>
           </button>
         </div>
       </div>

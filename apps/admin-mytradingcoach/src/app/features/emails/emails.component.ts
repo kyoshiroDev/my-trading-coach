@@ -6,12 +6,18 @@ import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { LucideAngularModule, Send, Eye, X, RefreshCw } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideSend as Send,
+  LucideEye as Eye,
+  LucideX as X,
+  LucideRefreshCw as RefreshCw,
+} from '@lucide/angular';
 import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
 
 @Component({
   selector: 'mtc-admin-emails',
-  imports: [FormsModule, DatePipe, LucideAngularModule],
+  imports: [FormsModule, DatePipe, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './emails.component.css',
   templateUrl: './emails.component.html',

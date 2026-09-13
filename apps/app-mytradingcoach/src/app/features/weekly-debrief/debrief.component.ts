@@ -12,11 +12,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UserStore } from '../../core/stores/user.store';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import {
-  LucideAngularModule,
-  CalendarDays,
-  RefreshCw,
-  Download,
-} from 'lucide-angular';
+  LucideDynamicIcon,
+  LucideCalendarDays as CalendarDays,
+  LucideRefreshCw as RefreshCw,
+  LucideDownload as Download,
+} from '@lucide/angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { ToastService } from '../../core/services/toast.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
@@ -97,7 +97,7 @@ function typeBadge(type: string): { label: string; cls: string } | null {
   imports: [
     DatePipe,
     DecimalPipe,
-    LucideAngularModule,
+    LucideDynamicIcon,
     TopbarComponent,
     PlanModalComponent,
     PnlFormatPipe,

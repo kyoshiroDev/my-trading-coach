@@ -1,5 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { LucideAngularModule, CheckCircle2, AlertCircle, Info, AlertTriangle, X } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideCheckCircle2 as CheckCircle2,
+  LucideAlertCircle as AlertCircle,
+  LucideInfo as Info,
+  LucideAlertTriangle as AlertTriangle,
+  LucideX as X,
+} from '@lucide/angular';
 import { ToastService, ToastType } from '../../../core/services/toast.service';
 
 /** Distance minimale de glisser pour fermer (px), ou 35 % de la largeur si plus grand. */
@@ -24,7 +31,7 @@ interface Drag {
  */
 @Component({
   selector: 'mtc-toasts',
-  imports: [LucideAngularModule],
+  imports: [LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './toasts.component.html',
   styleUrl: './toasts.component.css',

@@ -112,7 +112,7 @@
   padding: 10px 14px;
   margin-bottom: 22px;
 }
-.global-note lucide-icon { flex-shrink: 0; margin-top: 2px; color: var(--yellow); }
+.global-note svg.lucide { flex-shrink: 0; margin-top: 2px; color: var(--yellow); }
 .global-note b { color: var(--text-2); font-weight: 600; }
 
 .acct-empty { color: var(--text-3); font-size: 13px; padding: 12px 0; }
@@ -342,7 +342,7 @@
   line-height: 1.5;
   color: var(--text-2);
 }
-.acct-delete-error lucide-icon { flex-shrink: 0; margin-top: 1px; color: var(--yellow); }
+.acct-delete-error svg.lucide { flex-shrink: 0; margin-top: 1px; color: var(--yellow); }
 
 /* Suppression impossible : l'option reste lisible mais inerte, avec son title. */
 .menu-item.danger:disabled { opacity: 0.45; cursor: not-allowed; }

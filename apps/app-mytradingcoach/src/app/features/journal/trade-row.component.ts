@@ -5,7 +5,11 @@ import {
   output,
 } from '@angular/core';
 import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
-import { LucideAngularModule, Trash2, Edit2 } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideTrash2 as Trash2,
+  LucideEdit2 as Edit2,
+} from '@lucide/angular';
 import { Trade } from '../../core/stores/trades.store';
 import { PnlColorPipe } from '../../shared/pipes/pnl-color.pipe';
 import { PnlFormatPipe } from '../../shared/pipes/pnl-format.pipe';
@@ -18,7 +22,7 @@ import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
     DatePipe,
     DecimalPipe,
     TitleCasePipe,
-    LucideAngularModule,
+    LucideDynamicIcon,
     PnlColorPipe,
     PnlFormatPipe,
     EmotionEmojiPipe,
@@ -66,14 +70,14 @@ import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
         title="Modifier"
         (click)="edit.emit(trade())"
       >
-        <lucide-icon [img]="Edit2Icon" [size]="13" />
+        <svg [lucideIcon]="Edit2Icon" [size]="13"></svg>
       </button>
       <button
         class="action-btn del-btn"
         title="Supprimer"
         (click)="delete.emit(trade().id)"
       >
-        <lucide-icon [img]="Trash2Icon" [size]="13" />
+        <svg [lucideIcon]="Trash2Icon" [size]="13"></svg>
       </button>
     </td>
   `,

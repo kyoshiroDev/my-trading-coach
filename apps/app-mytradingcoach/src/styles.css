@@ -109,20 +109,13 @@ button {
   gap: 6px;
 }
 
-/* ===== Lucide icons — centrage vertical global ===== */
-/* lucide-icon est display:inline par défaut ce qui l'aligne sur la  */
-/* baseline du texte. inline-flex + line-height:0 corrige ça partout */
-/* (boutons, nav-items, insight-icons, etc.).                        */
-lucide-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+/* Icônes Lucide (@lucide/angular) : le <svg> EST l'icône — plus d'enveloppe <lucide-icon>.
+   inline-block + flex-shrink:0 reproduisent la boîte et l'alignement de l'ancienne enveloppe
+   (inline-flex autour d'un svg block : base alignée sur le bas de l'icône). Classe `lucide`
+   posée par la librairie sur chaque icône. */
+svg.lucide {
+  display: inline-block;
   flex-shrink: 0;
-  line-height: 0;
-}
-
-lucide-icon svg {
-  display: block;
 }
 
 input,

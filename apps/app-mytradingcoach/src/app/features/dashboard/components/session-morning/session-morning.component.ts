@@ -11,7 +11,12 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { LucideAngularModule, Target, CalendarDays, TriangleAlert } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideTarget as Target,
+  LucideCalendarDays as CalendarDays,
+  LucideTriangleAlert as TriangleAlert,
+} from '@lucide/angular';
 import { translateEcoEvent } from '../../../../core/data/eco-event-translations';
 import { normalizeEventKey, eventKey } from '../../../../core/data/eco-event-key';
 import { filterMorningEvents } from './session-morning.util';
@@ -54,7 +59,7 @@ const DEMO_OBJECTIVES: DebriefObjective[] = [
 
 @Component({
   selector: 'mtc-session-morning',
-  imports: [DatePipe, RouterLink, LucideAngularModule, PremiumLockComponent],
+  imports: [DatePipe, RouterLink, LucideDynamicIcon, PremiumLockComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-morning.component.css',
   templateUrl: './session-morning.component.html',

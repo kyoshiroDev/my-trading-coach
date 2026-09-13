@@ -9,7 +9,13 @@ import {
   signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { LucideAngularModule, Layers, Plus, Check, ChevronDown } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideLayers as Layers,
+  LucidePlus as Plus,
+  LucideCheck as Check,
+  LucideChevronDown as ChevronDown,
+} from '@lucide/angular';
 import { SelectedAccountStore } from '../../../core/stores/selected-account.store';
 import { AccountType, TradingAccount } from '../../../core/api/accounts.api';
 
@@ -20,7 +26,7 @@ import { AccountType, TradingAccount } from '../../../core/api/accounts.api';
 @Component({
   selector: 'mtc-account-selector',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, LucideAngularModule],
+  imports: [RouterLink, LucideDynamicIcon],
   templateUrl: './account-selector.component.html',
   styleUrl: './account-selector.component.css',
 })

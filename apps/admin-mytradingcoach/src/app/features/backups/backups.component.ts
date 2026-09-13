@@ -4,7 +4,15 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { LucideAngularModule, RefreshCw, Plus, Trash2, RotateCcw, X, AlertTriangle } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideRefreshCw as RefreshCw,
+  LucidePlus as Plus,
+  LucideTrash2 as Trash2,
+  LucideRotateCcw as RotateCcw,
+  LucideX as X,
+  LucideAlertTriangle as AlertTriangle,
+} from '@lucide/angular';
 import { VpsApi, Backup } from '../../core/api/vps.api';
 
 type BackupTarget = 'bdd_prod' | 'bdd_dev' | 'bdd_beta' | 'api_prod' | 'api_dev';
@@ -19,7 +27,7 @@ const TARGET_CONFIG: Record<BackupTarget, { label: string; color: string; icon: 
 
 @Component({
   selector: 'mtc-admin-backups',
-  imports: [DatePipe, LucideAngularModule],
+  imports: [DatePipe, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './backups.component.css',
   template: `
@@ -27,14 +35,14 @@ const TARGET_CONFIG: Record<BackupTarget, { label: string; color: string; icon: 
       <div class="page-head">
         <div class="page-title">Sauvegardes</div>
         <div class="head-actions">
-          <button class="icon-btn" title="Rafraîchir" (click)="load()" [disabled]="loading()"><lucide-icon [img]="RefreshIcon" [size]="14" /></button>
-          <button class="btn btn-primary" (click)="showModal.set(true)"><lucide-icon [img]="PlusIcon" [size]="13" /> Nouveau backup</button>
+          <button class="icon-btn" title="Rafraîchir" (click)="load()" [disabled]="loading()"><svg [lucideIcon]="RefreshIcon" [size]="14"></svg></button>
+          <button class="btn btn-primary" (click)="showModal.set(true)"><svg [lucideIcon]="PlusIcon" [size]="13"></svg> Nouveau backup</button>
         </div>
       </div>
 
       @if (backupStale()) {
         <div class="backup-alert" [class.critical]="lastBackupAt() === null">
-          <lucide-icon [img]="AlertIcon" [size]="18" />
+          <svg [lucideIcon]="AlertIcon" [size]="18"></svg>
           @if (lastBackupAt() === null) {
             <div><strong>Aucune sauvegarde trouvée.</strong> <span class="backup-alert-sub">Lance un backup ou vérifie le cron sur le VPS.</span></div>
           } @else {
@@ -69,8 +77,8 @@ const TARGET_CONFIG: Record<BackupTarget, { label: string; color: string; icon: 
                     <td data-label="Taille" class="td-mono">{{ b.sizeMb }} Mo</td>
                     <td data-label="Créée" class="td-mono muted">{{ b.createdAt | date:'dd/MM HH:mm' }}</td>
                     <td data-label="Actions"><div class="row-actions">
-                      <button class="icon-btn" title="Restaurer" (click)="confirmRestore(b)" [disabled]="restoring() === b.filename"><lucide-icon [img]="RestoreIcon" [size]="12" /></button>
-                      <button class="icon-btn danger" title="Supprimer" (click)="confirmDeleteB(b)"><lucide-icon [img]="TrashIcon" [size]="12" /></button>
+                      <button class="icon-btn" title="Restaurer" (click)="confirmRestore(b)" [disabled]="restoring() === b.filename"><svg [lucideIcon]="RestoreIcon" [size]="12"></svg></button>
+                      <button class="icon-btn danger" title="Supprimer" (click)="confirmDeleteB(b)"><svg [lucideIcon]="TrashIcon" [size]="12"></svg></button>
                     </div></td>
                   </tr>
                 } @empty { <tr><td colspan="5" class="empty">Aucune sauvegarde prod</td></tr> }
@@ -90,8 +98,8 @@ const TARGET_CONFIG: Record<BackupTarget, { label: string; color: string; icon: 
                     <td data-label="Taille" class="td-mono">{{ b.sizeMb }} Mo</td>
                     <td data-label="Créée" class="td-mono muted">{{ b.createdAt | date:'dd/MM HH:mm' }}</td>
                     <td data-label="Actions"><div class="row-actions">
-                      <button class="icon-btn" title="Restaurer" (click)="confirmRestore(b)" [disabled]="restoring() === b.filename"><lucide-icon [img]="RestoreIcon" [size]="12" /></button>
-                      <button class="icon-btn danger" title="Supprimer" (click)="confirmDeleteB(b)"><lucide-icon [img]="TrashIcon" [size]="12" /></button>
+                      <button class="icon-btn" title="Restaurer" (click)="confirmRestore(b)" [disabled]="restoring() === b.filename"><svg [lucideIcon]="RestoreIcon" [size]="12"></svg></button>
+                      <button class="icon-btn danger" title="Supprimer" (click)="confirmDeleteB(b)"><svg [lucideIcon]="TrashIcon" [size]="12"></svg></button>
                     </div></td>
                   </tr>
                 } @empty { <tr><td colspan="5" class="empty">Aucune sauvegarde dev</td></tr> }
@@ -106,7 +114,7 @@ const TARGET_CONFIG: Record<BackupTarget, { label: string; color: string; icon: 
         <div class="modal-overlay" role="button" tabindex="0" (click)="showModal.set(false)" (keydown.escape)="showModal.set(false)">
           <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
             <div class="modal-header"><h2 class="modal-title">Nouveau backup manuel</h2>
-              <button class="icon-btn" (click)="showModal.set(false)" aria-label="Fermer"><lucide-icon [img]="XIcon" [size]="16" /></button></div>
+              <button class="icon-btn" (click)="showModal.set(false)" aria-label="Fermer"><svg [lucideIcon]="XIcon" [size]="16"></svg></button></div>
             <div class="modal-body">
               <p class="modal-desc">Sélectionne ce que tu veux sauvegarder :</p>
               <div class="target-grid">
@@ -133,7 +141,7 @@ const TARGET_CONFIG: Record<BackupTarget, { label: string; color: string; icon: 
         <div class="modal-overlay" role="button" tabindex="0" (click)="restoreTarget.set(null)" (keydown.escape)="restoreTarget.set(null)">
           <div class="modal modal-sm" role="dialog" aria-modal="true" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
             <div class="modal-header"><h2 class="modal-title danger-title">⚠️ Confirmer la restauration</h2>
-              <button class="icon-btn" (click)="restoreTarget.set(null)" aria-label="Fermer"><lucide-icon [img]="XIcon" [size]="16" /></button></div>
+              <button class="icon-btn" (click)="restoreTarget.set(null)" aria-label="Fermer"><svg [lucideIcon]="XIcon" [size]="16"></svg></button></div>
             <div class="modal-body">
               <p class="modal-desc">Tu es sur le point de restaurer :<br /><strong>{{ restoreTarget()!.filename }}</strong></p>
               <div class="warning-box">⚠️ Cette action écrase les données actuelles. Irréversible.</div>
@@ -154,7 +162,7 @@ const TARGET_CONFIG: Record<BackupTarget, { label: string; color: string; icon: 
         <div class="modal-overlay" role="button" tabindex="0" (click)="deleteTarget.set(null)" (keydown.escape)="deleteTarget.set(null)">
           <div class="modal modal-sm" role="dialog" aria-modal="true" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
             <div class="modal-header"><h2 class="modal-title danger-title">Supprimer ce backup ?</h2>
-              <button class="icon-btn" (click)="deleteTarget.set(null)" aria-label="Fermer"><lucide-icon [img]="XIcon" [size]="16" /></button></div>
+              <button class="icon-btn" (click)="deleteTarget.set(null)" aria-label="Fermer"><svg [lucideIcon]="XIcon" [size]="16"></svg></button></div>
             <div class="modal-body"><p class="modal-desc">Supprimer définitivement :<br /><strong>{{ deleteTarget()!.filename }}</strong></p></div>
             <div class="modal-footer">
               <button class="btn" (click)="deleteTarget.set(null)">Annuler</button>

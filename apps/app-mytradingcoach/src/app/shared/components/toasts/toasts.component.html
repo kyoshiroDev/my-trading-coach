@@ -28,11 +28,11 @@
                    [class.paused]="toasts.isPaused(t.id)"></div>
             }
           }
-          <lucide-icon class="toast-ic" [img]="icon(t.type)" [size]="16" aria-hidden="true" />
+          <svg class="toast-ic" [lucideIcon]="icon(t.type)" [size]="16" aria-hidden="true"></svg>
           <p class="toast-msg">{{ t.message }}</p>
           <button class="toast-x" type="button" aria-label="Fermer la notification"
                   data-testid="toast-close" (click)="toasts.dismiss(t.id)">
-            <lucide-icon [img]="XIcon" [size]="14" aria-hidden="true" />
+            <svg [lucideIcon]="XIcon" [size]="14" aria-hidden="true"></svg>
           </button>
         </div>
       </div>

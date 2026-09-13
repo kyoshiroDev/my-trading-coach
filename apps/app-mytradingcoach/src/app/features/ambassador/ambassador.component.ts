@@ -9,7 +9,14 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
-import { LucideAngularModule, Users, CircleCheck, TrendingUp, Award, Check } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideUsers as Users,
+  LucideCircleCheck as CircleCheck,
+  LucideTrendingUp as TrendingUp,
+  LucideAward as Award,
+  LucideCheck as Check,
+} from '@lucide/angular';
 import { AmbassadorApi, AmbassadorStats, ReferralUser } from '../../core/api/ambassador.api';
 import { ReferralApi } from '../../core/api/referral.api';
 import { AmbassadorNotifService } from '../../core/services/ambassador-notif.service';
@@ -23,7 +30,7 @@ const COMMISSION_RATE = 0.2;
 @Component({
   selector: 'mtc-ambassador',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, DecimalPipe, TitleCasePipe, LucideAngularModule],
+  imports: [DatePipe, DecimalPipe, TitleCasePipe, LucideDynamicIcon],
   templateUrl: './ambassador.component.html',
   styleUrl: './ambassador.component.css',
 })

@@ -31,7 +31,7 @@
       <!-- News live : ticker horizontal (IA mutualisée → FREE), dans la carte marché -->
       @if (newsItems().length > 0) {
         <div class="news-ticker">
-          <span class="news-ticker-lbl"><lucide-icon [img]="NewsIcon" [size]="13" class="news-live-ic" /> News live</span>
+          <span class="news-ticker-lbl"><svg [lucideIcon]="NewsIcon" [size]="13" class="news-live-ic"></svg> News live</span>
           <div class="news-ticker-viewport">
             <div class="news-ticker-track">
               @for (item of newsItems(); track item.publishedDate) {
@@ -93,7 +93,7 @@
       <div class="cal-card">
         <div class="col-title-row">
           <div class="col-title">
-            <lucide-icon [img]="CalIcon" [size]="14" class="ct-ic" /> Calendrier économique
+            <svg [lucideIcon]="CalIcon" [size]="14" class="ct-ic"></svg> Calendrier économique
             <div class="pulse-dot"></div>
           </div>
         </div>
@@ -185,7 +185,7 @@
                     {{ event.impact === 'high' ? 'Fort' : 'Moyen' }}
                   </span>
                   @if (event.isReleased) {
-                    <lucide-icon [img]="ChevronIcon" [size]="14" class="eco-chevron" />
+                    <svg [lucideIcon]="ChevronIcon" [size]="14" class="eco-chevron"></svg>
                   } @else {
                     <span class="eco-countdown">dans {{ minutesUntil(event.time) }} min</span>
                   }
@@ -258,7 +258,7 @@
     <!-- ═══ COL 3 : LIVE FEED ═══ -->
     <div class="feed-col" data-testid="live-feed">
       <div class="col-title">
-        <lucide-icon [img]="FeedIcon" [size]="14" class="ct-ic" /> Live feed
+        <svg [lucideIcon]="FeedIcon" [size]="14" class="ct-ic"></svg> Live feed
         <div class="pulse-dot"></div>
       </div>
 
@@ -340,7 +340,7 @@
     <!-- ═══ COL 4 : TRADE RAPIDE (colonne pleine hauteur à droite) ═══ -->
     <div class="qt-panel" data-testid="quick-trade-form">
       <div class="qt-title">
-        <lucide-icon [img]="QuickIcon" [size]="14" class="ct-ic" /> Trade rapide
+        <svg [lucideIcon]="QuickIcon" [size]="14" class="ct-ic"></svg> Trade rapide
 
       </div>
 
@@ -541,7 +541,7 @@
         data-testid="quick-trade-submit"
         [disabled]="!canSubmitQuickTrade() || qtSubmitting()"
         (click)="submitQuickTrade()"
-      >@if (qtSubmitting()) { Capture… } @else { <lucide-icon [img]="QuickIcon" [size]="14" /> Logger ce trade }</button>
+      >@if (qtSubmitting()) { Capture… } @else { <svg [lucideIcon]="QuickIcon" [size]="14"></svg> Logger ce trade }</button>
       <div class="qt-hint">Asset + direction + émotion suffisent</div>
 
     </div>

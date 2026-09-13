@@ -7,7 +7,17 @@ import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
 import { computeTradeStats } from '@mtc/shared';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, of, map, catchError } from 'rxjs';
-import { LucideAngularModule, X, Pencil, Upload, ChevronDown, ChevronRight, Calendar, Trash2, ArrowRightLeft } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideX as X,
+  LucidePencil as Pencil,
+  LucideUpload as Upload,
+  LucideChevronDown as ChevronDown,
+  LucideChevronRight as ChevronRight,
+  LucideCalendar as Calendar,
+  LucideTrash2 as Trash2,
+  LucideArrowRightLeft as ArrowRightLeft,
+} from '@lucide/angular';
 import { TradesStore, Trade } from '../../core/stores/trades.store';
 import { CreateTradeDto, TradesApi } from '../../core/api/trades.api';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
@@ -54,7 +64,7 @@ interface WeekGroup {
 @Component({
   selector: 'mtc-journal',
   imports: [
-    DatePipe, DecimalPipe, TitleCasePipe, LucideAngularModule,
+    DatePipe, DecimalPipe, TitleCasePipe, LucideDynamicIcon,
     TopbarComponent, TradeFormComponent, CsvImportComponent,
     PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe, InfoTooltipComponent,
   ],

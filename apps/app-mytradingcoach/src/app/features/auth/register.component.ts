@@ -9,14 +9,18 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { LucideAngularModule, Eye, EyeOff } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideEye as Eye,
+  LucideEyeOff as EyeOff,
+} from '@lucide/angular';
 import { AuthService } from '../../core/auth/auth.service';
 import { BillingApi } from '../../core/api/billing.api';
 import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'mtc-register',
-  imports: [FormsModule, RouterLink, LucideAngularModule],
+  imports: [FormsModule, RouterLink, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './register.component.css',
   templateUrl: './register.component.html',

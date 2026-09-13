@@ -83,11 +83,10 @@
             class="eye-btn"
             (click)="showPassword.set(!showPassword())"
           >
-            <lucide-icon
-              [img]="showPassword() ? EyeOffIcon : EyeIcon"
+            <svg
+              [lucideIcon]="showPassword() ? EyeOffIcon : EyeIcon"
               [size]="15"
-              color="var(--text-2)"
-            />
+              color="var(--text-2)"></svg>
           </button>
         </div>
         @if (passwordError()) {
@@ -114,11 +113,10 @@
             class="eye-btn"
             (click)="showConfirm.set(!showConfirm())"
           >
-            <lucide-icon
-              [img]="showConfirm() ? EyeOffIcon : EyeIcon"
+            <svg
+              [lucideIcon]="showConfirm() ? EyeOffIcon : EyeIcon"
               [size]="15"
-              color="var(--text-2)"
-            />
+              color="var(--text-2)"></svg>
           </button>
         </div>
         @if (confirmError()) {

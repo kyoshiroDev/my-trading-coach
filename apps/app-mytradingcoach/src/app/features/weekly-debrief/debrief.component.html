@@ -11,7 +11,7 @@
 <div class="content">
   @if (!userStore.isPremium()) {
     <div data-testid="debrief-paywall" class="premium-paywall">
-      <div class="paywall-icon"><lucide-icon [img]="CalendarDaysIcon" [size]="40" /></div>
+      <div class="paywall-icon"><svg [lucideIcon]="CalendarDaysIcon" [size]="40"></svg></div>
       <h3 class="paywall-title">Fonctionnalité Premium</h3>
       <p class="paywall-desc">
         Le Weekly Debrief est disponible avec le plan Premium.<br />Reçois
@@ -38,12 +38,11 @@
       <div class="loading">Chargement du débrief...</div>
     } @else if (!debrief()) {
       <div class="empty-state">
-        <lucide-icon
-          [img]="CalendarDaysIcon"
+        <svg
+          [lucideIcon]="CalendarDaysIcon"
           [size]="40"
           color="var(--text-3)"
-          style="margin-bottom:16px"
-        />
+          style="margin-bottom:16px"></svg>
         <p>Aucun débrief pour cette semaine</p>
         <small>Clique sur "Générer le débrief" pour créer ton rapport IA</small>
         <small>Les debriefs sont générés automatiquement chaque dimanche à 23h</small>
@@ -62,7 +61,7 @@
             Semaine {{ debrief()!.weekNumber }} · {{ debrief()!.year }}
           </h2>
           <div class="week-meta">
-            <lucide-icon [img]="CalendarDaysIcon" [size]="12" color="var(--text-3)" />
+            <svg [lucideIcon]="CalendarDaysIcon" [size]="12" color="var(--text-3)"></svg>
             {{ debrief()!.startDate | date: 'd MMM' }} →
             {{ debrief()!.endDate | date: 'd MMM yyyy' }} ·
             {{ debrief()!.stats.totalTrades }} trades ·
@@ -75,7 +74,7 @@
             @if (exportLoading()) {
               <span class="export-spinner"></span>
             } @else {
-              <lucide-icon [img]="DownloadIcon" [size]="13" />
+              <svg [lucideIcon]="DownloadIcon" [size]="13"></svg>
             }
             Export PDF
           </button>

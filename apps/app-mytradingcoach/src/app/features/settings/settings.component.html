@@ -161,15 +161,15 @@
                 </div>
                 <div class="stp-acts">
                   <button class="stp-ico" type="button" title="Modifier" (click)="openEditSetup(s)">
-                    <lucide-icon [img]="PencilIcon" [size]="15" />
+                    <svg [lucideIcon]="PencilIcon" [size]="15"></svg>
                   </button>
                   @if (s.tradeCount > 0) {
                     <button class="stp-ico" type="button" title="Archiver" (click)="archiveSetup(s.id)">
-                      <lucide-icon [img]="ArchiveIcon" [size]="15" />
+                      <svg [lucideIcon]="ArchiveIcon" [size]="15"></svg>
                     </button>
                   } @else {
                     <button class="stp-ico dg" type="button" title="Supprimer" (click)="deleteSetup(s.id)">
-                      <lucide-icon [img]="TrashIcon" [size]="15" />
+                      <svg [lucideIcon]="TrashIcon" [size]="15"></svg>
                     </button>
                   }
                 </div>
@@ -187,7 +187,7 @@
             @if (setupsStore.archived().length > 0) {
               <button class="stp-arch-h" type="button" (click)="showSetupsArchived.set(!showSetupsArchived())">
                 <span class="a">
-                  <lucide-icon [img]="showSetupsArchived() ? ChevronDownIcon : ChevronRightIcon" [size]="12" />
+                  <svg [lucideIcon]="showSetupsArchived() ? ChevronDownIcon : ChevronRightIcon" [size]="12"></svg>
                   Archivés ({{ setupsStore.archived().length }})
                 </span>
                 <span class="b">cachés du sélecteur, gardés en stats</span>
@@ -203,7 +203,7 @@
                         <button class="stp-mini" type="button" (click)="restoreSetup(s.id)">Restaurer</button>
                         @if (s.tradeCount === 0) {
                           <button class="stp-ico dg" type="button" title="Supprimer" (click)="deleteSetup(s.id)">
-                            <lucide-icon [img]="TrashIcon" [size]="15" />
+                            <svg [lucideIcon]="TrashIcon" [size]="15"></svg>
                           </button>
                         }
                       </div>

@@ -12,25 +12,25 @@ import { RouterModule, RouterLink, RouterLinkActive } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TradovateLiveSocketService } from '../../../core/services/tradovate-live-socket.service';
 import {
-  LucideAngularModule,
-  ChevronLeft,
-  ChevronRight,
-  LayoutDashboard,
-  Activity,
-  Briefcase,
-  BookOpen,
-  ClipboardList,
-  TrendingUp,
-  Sparkles,
-  CalendarCheck,
-  Globe,
-  Users,
-  Gift,
-  Award,
-  User,
-  LogOut,
-  Lock,
-} from 'lucide-angular';
+  LucideDynamicIcon,
+  LucideChevronLeft as ChevronLeft,
+  LucideChevronRight as ChevronRight,
+  LucideLayoutDashboard as LayoutDashboard,
+  LucideActivity as Activity,
+  LucideBriefcase as Briefcase,
+  LucideBookOpen as BookOpen,
+  LucideClipboardList as ClipboardList,
+  LucideTrendingUp as TrendingUp,
+  LucideSparkles as Sparkles,
+  LucideCalendarCheck as CalendarCheck,
+  LucideGlobe as Globe,
+  LucideUsers as Users,
+  LucideGift as Gift,
+  LucideAward as Award,
+  LucideUser as User,
+  LucideLogOut as LogOut,
+  LucideLock as Lock,
+} from '@lucide/angular';
 import { UserStore } from '../../../core/stores/user.store';
 import { AuthService } from '../../../core/auth/auth.service';
 import { UsersApi } from '../../../core/api/users.api';
@@ -46,7 +46,7 @@ import { environment } from '../../../../environments/environment';
     RouterModule,
     RouterLink,
     RouterLinkActive,
-    LucideAngularModule,
+    LucideDynamicIcon,
     OnboardingComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

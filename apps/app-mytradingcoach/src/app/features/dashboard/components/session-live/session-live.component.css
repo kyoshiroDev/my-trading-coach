@@ -629,7 +629,7 @@
   justify-content: center;
   gap: 7px;
 }
-.qt-log lucide-icon { display: inline-flex; }
+.qt-log svg.lucide { display: inline-flex; }
 .qt-log:hover { opacity: .88; }
 .qt-log:disabled { opacity: .4; cursor: not-allowed; }
 .qt-hint { font-size: 10.5px; color: var(--text-faint); text-align: center; font-style: italic; }
