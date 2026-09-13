@@ -744,3 +744,14 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
   `nx sync` (lancé dans le Dockerfile) réécrirait les références TS.
 - Types d'API front/back (27 noms en double) : PAS encore partagés — les dates y sont `Date` côté
   API et `string` côté front (JSON) ; à traiter avec un type de transport dédié.
+
+## Import CSV : parseurs purs (étape 4 de l'audit, 2026-09-13)
+
+- `trades/csv-parsers.ts` : détection du broker, normalisation au CSV pivot (Tradovate, Binance
+  futures/spot, Bybit, IBKR, MEXC, MT4/MT5), séparateur européen, `splitCsvLine`,
+  `mapNormalizedCsvToDto`, `detectSession`, et les types `BrokerType` / `ImportDto`. Fonctions
+  PURES : aucun service injecté, testables directement (`csv-import.service.spec.ts` les importe).
+- `CsvImportService` (≈ 570 lignes au lieu de 1 120) garde l'orchestration : plan / accès IA,
+  formats inconnus via Claude, fusion des frais Tradovate, persistance.
+- Nouveau broker = une fonction `parseXxx(lines)` dans `csv-parsers.ts` + un cas dans
+  `detectBroker` / `preprocessCsv` — pas de nouvelle méthode dans le service.
