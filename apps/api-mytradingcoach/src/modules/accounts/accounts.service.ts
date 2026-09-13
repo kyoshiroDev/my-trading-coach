@@ -14,7 +14,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
-import { computeTradeStats } from '../../common/utils/trade-stats.util';
+import { computeTradeStats } from '@mtc/shared';
 
 type RuleTrade = { pnl: number | null; commission?: number | null; tradedAt: Date };
 

@@ -4,7 +4,7 @@ import {
   isHealthyEmotion,
   isRiskyEmotion,
 } from './effective-emotion.util';
-import { BREAKEVEN_EPSILON } from './trade-stats.util';
+import { BREAKEVEN_EPSILON } from '@mtc/shared';
 
 /**
  * Note d'exécution CALCULÉE d'un trade (PROMPT-161).

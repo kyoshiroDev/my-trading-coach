@@ -9,7 +9,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { TradesApi, JournalStats } from '../api/trades.api';
-import { computeTradeStats } from '../utils/trade-stats.util';
+import { computeTradeStats } from '@mtc/shared';
 
 export interface Trade {
   id: string;

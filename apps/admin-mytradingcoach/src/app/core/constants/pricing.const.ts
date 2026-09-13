@@ -1,10 +1,9 @@
+import { PREMIUM_PRICE_EUR } from '@mtc/shared';
+
 /**
- * Tarifs EUR. Source de vérité produit : landing `Pricing.astro` + front
- * `pricing.const.ts`. Affichage admin uniquement. Ne jamais coder un prix en
- * dur dans les composants : référencer cette constante.
- *
- * 2 paliers depuis PROMPT-169 : FREE (0€) et PREMIUM (49€/mois · 490€/an).
+ * Tarifs EUR, affichage admin uniquement. VALEURS : `@mtc/shared` (source unique API + app +
+ * admin). Ne jamais coder un prix en dur dans les composants : référencer cette constante.
  */
 export const PRICING_EUR = {
-  PREMIUM: { monthly: 49, annual: 490 },
+  PREMIUM: PREMIUM_PRICE_EUR,
 } as const;

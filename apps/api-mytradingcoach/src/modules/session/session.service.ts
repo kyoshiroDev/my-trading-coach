@@ -7,7 +7,7 @@ import { MoodState, Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 import { AccountsService } from '../accounts/accounts.service';
-import { computeTradeStats } from '../../common/utils/trade-stats.util';
+import { computeTradeStats } from '@mtc/shared';
 
 export interface SessionHistoryItem {
   id: string;

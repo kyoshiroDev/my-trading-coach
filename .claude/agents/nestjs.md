@@ -118,11 +118,11 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
 ## Règles obligatoires
 
 - **Stats de trades = helper unique** (PROMPT-160) : `computeTradeStats(trades)` de
-  `common/utils/trade-stats.util.ts` (`{ total, closed, wins, losses, breakeven, winRate, totalPnl }`).
+  `@mtc/shared` (`libs/shared/src/trade-stats.ts`, source unique front + back) (`{ total, closed, wins, losses, breakeven, winRate, totalPnl }`).
   Toute mesure win/loss/win rate/P&L d'un lot de trades passe par lui — **jamais** de
   `filter(t => t.pnl > 0)` suivi d'une division inline. Règle break-even : win `pnl > ε`,
   loss `pnl < -ε`, BE `|pnl| <= ε` (`ε` défaut 0) ; **win rate = wins / (wins + losses)** (BE exclus du
-  dénominateur) ; trades ouverts (pnl null) hors calcul. Miroir front : `core/utils/trade-stats.util.ts`.
+  dénominateur) ; trades ouverts (pnl null) hors calcul. Le front importe le MÊME helper (`@mtc/shared`).
 - **Filtre journal « émotion effective »** (PROMPT-166) : l'émotion effective d'un trade =
   `trade.emotion` (override) `??` `tradeSession.moodStart` (humeur de session). Filtrer dessus dans
   `buildTradeWhere` = un **`OR` Prisma** sur les deux sources — `[{ emotion: V }, { emotion: null,
@@ -130,7 +130,7 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   (`Object.values(EmotionState/MoodState).includes(V)`), sinon Prisma throw sur enum invalide :
   `TIRED` → MoodState seul (2ᵉ branche), `REVENGE`/`FEAR` → EmotionState seul (1ʳᵉ branche).
   `NONE` = `{ emotion: null, OR: [{ sessionId: null }, { tradeSession: { moodStart: null } }] }`.
-  Filtre `result` : réutiliser le **même `ε`** (`BREAKEVEN_EPSILON`) que `trade-stats.util`, jamais un
+  Filtre `result` : réutiliser le **même `ε`** (`BREAKEVEN_EPSILON`, `@mtc/shared`), jamais un
   seuil local. **Mêmes filtres appliqués à la liste ET aux stats** (`buildTradeWhere` factorisé) sinon
   les KPIs mentent.
 - **`effectiveEmotion` sur TOUTE réponse portant un trade** (PROMPT-200). Le champ est
@@ -725,3 +725,22 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
   démo exclus. Sert le récap journalier / Weekly Debrief, jamais le temps réel.
 - Limite connue : un compte connecté PENDANT que l'app est ouverte n'est suivi en direct qu'à la
   prochaine ouverture (liste des connexions lue à l'arrivée du 1er client).
+
+## Librairie partagée `@mtc/shared` (étape 3 de l'audit, 2026-09-13)
+
+- `libs/shared/src` : code PUR commun à l'API, l'app et l'admin (aucune dépendance, aucun effet
+  de bord). Aujourd'hui : `computeTradeStats` / `classifyTrade` (règle du win rate) et les valeurs
+  tarifaires (`PREMIUM_PRICE_EUR`, `TRIAL_PERIOD_DAYS`, `ACCOUNT_LIMITS`,
+  `PREMIUM_ANNUAL_SAVINGS_EUR`). Import : `from '@mtc/shared'`.
+- Branchement côté API (3 endroits, tous nécessaires) :
+  - `tsconfig.app.json` : `paths` + la lib dans `include` (projet `composite`) + `rootDir: ../..` ;
+  - `webpack.config.js` : alias posé dans le hook `NodeModulesExternalsPlugin` (le plugin paths de
+    Nx ne lit pas nos `paths`) ET `@mtc/*` exclu des externals — sinon `require('@mtc/shared')`
+    au démarrage, introuvable dans node_modules ;
+  - `vitest.config.ts` et `vitest.integration.config.ts` : `resolve.alias`.
+- Ré-exporter une valeur de la lib : `export { X } from '@mtc/shared'` — jamais un import suivi de
+  `export { X }`, effacé par la transpilation fichier par fichier (webpack : « export not found »).
+- Pas de `tsconfig` dans `libs/shared` (volontaire) : le plugin TS de Nx y ajouterait des cibles et
+  `nx sync` (lancé dans le Dockerfile) réécrirait les références TS.
+- Types d'API front/back (27 noms en double) : PAS encore partagés — les dates y sont `Date` côté
+  API et `string` côté front (JSON) ; à traiter avec un type de transport dédié.

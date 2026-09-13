@@ -13,7 +13,7 @@ import { PRICING_EUR, TRIAL_PERIOD_DAYS } from '../../common/constants/pricing.c
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
-import { computeTradeStats } from '../../common/utils/trade-stats.util';
+import { computeTradeStats } from '@mtc/shared';
 
 const USER_SELECT = {
   id: true,
