@@ -1,0 +1,168 @@
+<div class="screen">
+  <a class="ud-back" routerLink="/users">← Utilisateurs</a>
+
+  @if (detail.isLoading()) {
+    <div class="card"><div class="empty">Chargement…</div></div>
+  } @else if (detail.error()) {
+    <div class="card"><div class="empty">⚠ Utilisateur introuvable</div></div>
+  } @else if (data(); as d) {
+
+    <!-- En-tête identité -->
+    <div class="card ud-head">
+      <div class="ud-av">{{ initials() }}</div>
+      <div>
+        <div class="ud-name">{{ d.identity.name ?? d.identity.email }}</div>
+        <div class="ud-mailrow">
+          <span class="ud-mail">{{ pseudo() }} · {{ d.identity.email }}</span>
+          <span class="ud-badges">
+            <span class="badge" [class.b-premium]="d.identity.plan==='PREMIUM'" [class.b-free]="d.identity.plan==='FREE'">{{ d.identity.plan }}</span>
+            <span class="badge" [class.b-ok]="status()==='actif'" [class.b-free]="status()!=='actif'">● {{ statusLabel() }}</span>
+            @if (d.identity.role !== 'USER') { <span class="role-tag purple">{{ d.identity.role }}</span> }
+          </span>
+        </div>
+      </div>
+      @if (d.identity.ambassadorRefCode) {
+        <span class="badge b-manual ud-ref">🔗 ref={{ d.identity.ambassadorRefCode }}</span>
+      }
+    </div>
+
+    <!-- Bandeau KPI usage réel (trades) : compact, liseré coloré conservé -->
+    <div class="kpi-strip cols-4 ud-kpis">
+      <div class="kpi">
+        <div class="kpi-top teal"></div>
+        <div class="kpi-label">Total trades</div>
+        <div class="kpi-value teal">{{ d.usage.totalTrades }}</div>
+        <div class="kpi-sub">{{ d.usage.totalTrades === 0 ? 'aucun trade' : 'loggés / importés' }}</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-top blue"></div>
+        <div class="kpi-label">Trades ce mois</div>
+        <div class="kpi-value blue">{{ d.usage.tradesThisMonth }}</div>
+        <div class="kpi-sub">mois en cours</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-top" [class.green]="d.usage.totalPnl > 0" [class.red]="d.usage.totalPnl < 0" [class.teal]="d.usage.totalPnl === 0"></div>
+        <div class="kpi-label">P&amp;L total</div>
+        <div class="kpi-value" [class.green]="d.usage.totalPnl > 0" [class.red]="d.usage.totalPnl < 0" [class.teal]="d.usage.totalPnl === 0">{{ pnlDisplay() }}</div>
+        <div class="kpi-sub">sur trades clos</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-top amber"></div>
+        <div class="kpi-label">Win rate</div>
+        <div class="kpi-value amber">{{ d.usage.winRate }}%</div>
+        <div class="kpi-sub">trades gagnants</div>
+      </div>
+    </div>
+
+    <!-- Rangée : Profil trader | Compte & engagement -->
+    <div class="ud-g2">
+      <!-- Profil trader (onboarding) en grille compacte 2 colonnes -->
+      <div class="card">
+        <div class="card-head"><span class="card-label">Profil trader</span><span class="card-action ud-static">onboarding</span></div>
+        <div class="card-body">
+          @if (hasProfile()) {
+            <div class="pgrid">
+              <div class="pf"><div class="pf-l">Marché</div><div class="pf-v">{{ marketLabel() }}</div></div>
+              <div class="pf"><div class="pf-l">Objectif</div><div class="pf-v">{{ goalLabel() }}</div></div>
+              <div class="pf"><div class="pf-l">Style</div><div class="pf-v">{{ styleLabel() }}</div></div>
+              <div class="pf"><div class="pf-l">Capital de départ</div><div class="pf-v">{{ capitalLabel() }}</div></div>
+              <div class="pf"><div class="pf-l">Sessions</div><div class="pf-v">{{ sessionsLabel() }}</div></div>
+              @if (frequencyLabel()) {
+                <div class="pf"><div class="pf-l">Fréquence</div><div class="pf-v">{{ frequencyLabel() }}</div></div>
+              }
+              <div class="pf full"><div class="pf-l">Approche</div><div class="pf-v">{{ strategyLabel() }}</div></div>
+              <div class="pf full"><div class="pf-l">Actifs les plus tradés</div><div class="pf-v">{{ topAssetsLabel() }}</div></div>
+              @if (profile()?.strategyDescription) {
+                <div class="pf full"><div class="pf-l">Description</div><div class="pf-v pf-desc">{{ profile()?.strategyDescription }}</div></div>
+              }
+            </div>
+          } @else {
+            <div class="empty-ai">Profil non renseigné (onboarding incomplet).</div>
+          }
+        </div>
+      </div>
+
+      <!-- Compte & engagement : liste de stats fusionnée (zéro doublon) -->
+      <div class="card">
+        <div class="card-head"><span class="card-label">Compte &amp; engagement</span></div>
+        <div class="card-body">
+          <div class="slist">
+            <div class="srow"><span class="s-l">Plan</span><span class="s-v" [class.purple]="d.identity.plan !== 'FREE'">{{ d.identity.plan }} · {{ planSub() }}</span></div>
+            <div class="srow"><span class="s-l">Rôle / Source</span><span class="s-v">{{ d.identity.role }} · {{ sourceLabel() }}</span></div>
+            <div class="srow"><span class="s-l">Inscrit</span><span class="s-v">{{ d.identity.createdAt | date:'dd/MM/yyyy' }} · J+{{ d.kpis.daysSinceSignup }}</span></div>
+            <div class="srow"><span class="s-l">Dernière activité</span><span class="s-v" [class.teal]="status() === 'actif'">{{ d.identity.lastActivityAt ? lastActivity() : 'jamais' }}</span></div>
+            <div class="srow"><span class="s-l">Jours actifs</span><span class="s-v green">{{ d.kpis.activeDays }} / {{ d.kpis.totalDays }} · {{ engagementPct() }}%</span></div>
+            <div class="srow"><span class="s-l">Temps de session cumulé</span><span class="s-v">{{ sessionTime() }}</span></div>
+            <div class="srow"><span class="s-l">Coût IA</span><span class="s-v amber">{{ '$' + d.kpis.ai.usd.toFixed(2) }} · {{ aiSub() }}</span></div>
+            @if (d.sessions.length === 0) {
+              <div class="srow"><span class="s-l">Dernières sessions</span><span class="s-v">aucune</span></div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rangée : Signaux | Connexions | Consommation IA -->
+    <div class="ud-g3">
+      <div class="card">
+        <div class="card-head"><span class="card-label">Signaux</span></div>
+        <div class="card-body">
+          @for (s of signals(); track s.text) {
+            <div class="sig"><div class="sig-ic" [class]="s.cls">{{ s.ic }}</div><div><div class="sig-tx">{{ s.text }}</div><div class="sig-sub">{{ s.sub }}</div></div></div>
+          }
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="card-label">Connexions · {{ calMonthLabel() }}</span></div>
+        <div class="card-body">
+          <mtc-admin-activity-calendar [activeDates]="d.activeDates" [createdAt]="d.identity.createdAt" [compact]="true" />
+        </div>
+      </div>
+
+      <div class="card ud-fill">
+        <div class="card-head"><span class="card-label">Consommation IA</span><span class="card-action ud-static">{{ aiHead() }}</span></div>
+        <div class="card-body">
+          @if (d.aiByFeature.length === 0) {
+            <div class="ud-ai-empty">Aucun appel IA : {{ d.identity.plan === 'FREE' ? 'plan FREE (IA réservée au Premium)' : 'pas encore utilisé' }}.</div>
+          } @else {
+            <div class="donut" [style.background]="donutGradient()">
+              <div class="donut-c"><b>{{ '$' + d.kpis.ai.usd.toFixed(2) }}</b><span>{{ totalKTokens() }}k tokens</span></div>
+            </div>
+            <div class="leg">
+              @for (seg of aiSegments(); track seg.feature) {
+                <div class="leg-row" [title]="seg.full + ' · $' + seg.costUsd.toFixed(2)">
+                  <span class="leg-dot" [style.background]="seg.color"></span>{{ seg.short }} <span class="v">{{ seg.tokLabel }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Dernières sessions : table compacte, affichée uniquement si données -->
+    @if (d.sessions.length > 0) {
+      <div class="card ud-sessions">
+        <div class="card-head"><span class="card-label">Dernières sessions</span><span class="card-action ud-static">lecture seule</span></div>
+        <div class="card-body">
+          <table class="tbl">
+            <thead><tr><th>Date</th><th>Trades</th><th>P&amp;L</th><th>Win rate</th><th>Humeur</th><th>Durée</th></tr></thead>
+            <tbody>
+              @for (s of d.sessions; track s.date) {
+                <tr>
+                  <td data-label="Date" class="td-mono">{{ s.date | date:'dd/MM' }}</td>
+                  <td data-label="Trades">{{ s.trades }}</td>
+                  <td data-label="P&L" class="td-mono" [class.pnl-pos]="s.pnl >= 0" [class.pnl-neg]="s.pnl < 0">{{ s.pnl >= 0 ? '+' : '' }}{{ s.pnl.toFixed(2) }}$</td>
+                  <td data-label="Win rate" class="td-mono">{{ s.winRate }}%</td>
+                  <td data-label="Humeur">{{ moodEmoji(s.emotion) }}</td>
+                  <td data-label="Durée" class="td-mono">{{ fmtDuration(s.durationMinutes) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  }
+</div>

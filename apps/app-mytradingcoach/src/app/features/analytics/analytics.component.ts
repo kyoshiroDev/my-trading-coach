@@ -12,7 +12,7 @@ import {
   untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { HttpClient, httpResource } from '@angular/common/http';
+import { httpResource } from '@angular/common/http';
 import { finalize } from 'rxjs';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PnlFormatPipe, SessionLabelPipe } from '../../shared/pipes';
@@ -64,7 +64,6 @@ export class AnalyticsComponent {
   protected readonly userStore = inject(UserStore);
   private readonly billingApi = inject(BillingApi);
   private readonly analyticsApi = inject(AnalyticsApi);
-  private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
   private readonly chartService = inject(ChartService);
   private readonly selectedAccount = inject(SelectedAccountStore);
@@ -207,12 +206,8 @@ export class AnalyticsComponent {
     this.equityLoading.set(true);
     const { from, to } = this.equityDateRange();
     const accountId = this.selectedAccount.accountParam();
-    const params = [from ? `from=${from}` : '', to ? `to=${to}` : '', accountId ? `accountId=${encodeURIComponent(accountId)}` : '']
-      .filter(Boolean)
-      .join('&');
-    const url = `${environment.apiUrl}/analytics/equity-curve/daily${params ? '?' + params : ''}`;
-    this.http
-      .get<{ data: { points: EquityPoint[]; startingCapital: number | null } }>(url)
+    this.analyticsApi
+      .getDailyEquityCurve({ from, to, accountId })
       .pipe(
         finalize(() => this.equityLoading.set(false)),
         takeUntilDestroyed(this.destroyRef),

@@ -27,7 +27,7 @@ import {
 } from '../../shared/components/setup-form-modal/setup-form-modal.component';
 import { TradovateConnectModalComponent } from '../../shared/components/tradovate-connect/tradovate-connect-modal.component';
 import { TradovateAccountPickerComponent } from '../../shared/components/tradovate-connect/tradovate-account-picker.component';
-import { TradovateStore, tradovateErrorText } from '../../core/stores/tradovate.store';
+import { TradovateStore } from '../../core/stores/tradovate.store';
 import { ToastService } from '../../core/services/toast.service';
 import {
   FeesState,
@@ -45,6 +45,7 @@ import {
   TradingStyle,
   TradingSession,
 } from './onboarding.constants';
+import { apiErrorMessage } from '../../core/utils/api-error';
 
 type Market = 'CRYPTO' | 'FOREX' | 'ACTIONS' | 'MULTI';
 type Goal   = 'DISCIPLINE' | 'PERFORMANCE' | 'PSYCHOLOGIE';
@@ -492,7 +493,7 @@ export class OnboardingComponent {
   private failTradovate(err: unknown): void {
     this.tvPreparing.set(false);
     this.tvError.set(
-      `${tradovateErrorText(err, "Ton compte n'a pas pu être préparé.")} Tu peux réessayer ou importer un CSV.`,
+      `${apiErrorMessage(err, "Ton compte n'a pas pu être préparé.")} Tu peux réessayer ou importer un CSV.`,
     );
   }
 

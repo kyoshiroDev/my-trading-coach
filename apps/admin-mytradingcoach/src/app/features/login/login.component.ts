@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AdminAuthService } from '../../core/auth/admin-auth.service';
+import { apiErrorMessage } from '@mtc/shared';
 
 @Component({
   selector: 'mtc-admin-login',
@@ -57,7 +58,7 @@ export class LoginComponent {
       .subscribe({
         next: () => this.router.navigate(['/dashboard']),
         error: (err) => {
-          this.error.set(err.error?.message ?? 'Identifiants incorrects');
+          this.error.set(apiErrorMessage(err, 'Identifiants incorrects'));
           this.loading.set(false);
         },
       });

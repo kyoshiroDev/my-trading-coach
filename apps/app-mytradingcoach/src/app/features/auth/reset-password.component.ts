@@ -10,6 +10,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { LucideAngularModule, Eye, EyeOff } from 'lucide-angular';
 import { AuthService } from '../../core/auth/auth.service';
+import { apiErrorMessage } from '../../core/utils/api-error';
 
 @Component({
   selector: 'mtc-reset-password',
@@ -157,8 +158,7 @@ export class ResetPasswordComponent {
         },
         error: (err) => {
           this.error.set(
-            err.error?.message ??
-              'Lien invalide ou expiré. Fais une nouvelle demande.',
+            apiErrorMessage(err, 'Lien invalide ou expiré. Fais une nouvelle demande.'),
           );
           this.isLoading.set(false);
         },

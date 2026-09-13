@@ -8,6 +8,7 @@ import { AdminApi, AdminAmbassador, AdminAmbassadorDetail, AdminAmbassadorPromot
 import { ChartCanvasComponent } from '../../shared/components/chart-canvas/chart-canvas.component';
 import { CHART_COLORS, gridAxis, noLegend } from '../../shared/charts/chart-theme';
 import { PRICING_EUR } from '../../core/constants/pricing.const';
+import { apiErrorMessage } from '@mtc/shared';
 
 @Component({
   selector: 'mtc-admin-ambassadeurs',
@@ -244,7 +245,7 @@ export class AmbassadeursComponent implements OnInit {
         this.adding.set(false);
         if (err.status === 404) this.addError.set('Aucun utilisateur avec cet email.');
         else if (err.status === 409) this.addError.set('Ce code est déjà utilisé, choisis-en un autre.');
-        else this.addError.set(err.error?.message ?? 'Une erreur est survenue.');
+        else this.addError.set(apiErrorMessage(err, 'Une erreur est survenue.'));
       },
     });
   }

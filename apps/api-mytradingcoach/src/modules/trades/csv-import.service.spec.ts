@@ -4,6 +4,8 @@ import { join } from 'node:path';
 import { Plan, Role } from '@prisma/client';
 import * as XLSX from 'xlsx';
 import { CsvImportService, type FeesReport } from './csv-import.service';
+// Parseurs extraits en fonctions pures (étape 4 de l'audit) : testés directement.
+import { detectBroker, normalizeMexcSymbol, normalizeSeparator, parseMexc } from './csv-parsers';
 
 // Anthropic SDK lit la clé à la construction → fournir une valeur factice en test
 process.env['ANTHROPIC_API_KEY'] = 'test-key';
@@ -36,7 +38,7 @@ describe('CsvImportService — MEXC (parser dédié, sans IA)', () => {
   });
 
   it("détecte l'en-tête MEXC", () => {
-    expect((svc as any).detectBroker(MEXC_HEADER)).toBe('mexc');
+    expect(detectBroker(MEXC_HEADER)).toBe('mexc');
   });
 
   it('parse un fichier MEXC réel (CRLF) sans IA', async () => {
@@ -70,15 +72,15 @@ describe('CsvImportService — MEXC (parser dédié, sans IA)', () => {
   });
 
   it('normalise BTCUSDT → BTC/USDT et laisse les exotiques intacts', () => {
-    expect((svc as any).normalizeMexcSymbol('BTCUSDT')).toBe('BTC/USDT');
-    expect((svc as any).normalizeMexcSymbol('ETHUSDT')).toBe('ETH/USDT');
-    expect((svc as any).normalizeMexcSymbol('GOLD(XAUT)USDT')).toBe('GOLD(XAUT)USDT');
-    expect((svc as any).normalizeMexcSymbol('NAS100USDT')).toBe('NAS100/USDT');
+    expect(normalizeMexcSymbol('BTCUSDT')).toBe('BTC/USDT');
+    expect(normalizeMexcSymbol('ETHUSDT')).toBe('ETH/USDT');
+    expect(normalizeMexcSymbol('GOLD(XAUT)USDT')).toBe('GOLD(XAUT)USDT');
+    expect(normalizeMexcSymbol('NAS100USDT')).toBe('NAS100/USDT');
   });
 
   it('ignore les lignes dont le Status ≠ closed', () => {
     const openRow = MEXC_ROW.replace(';All Closed', ';Open');
-    const csv = (svc as any).parseMexc([MEXC_HEADER, openRow, MEXC_ROW]) as string;
+    const csv = parseMexc([MEXC_HEADER, openRow, MEXC_ROW]) as string;
     const lines = csv.split('\n').filter((l: string) => l.trim());
     expect(lines).toHaveLength(2); // header + 1 trade fermé seulement
   });
@@ -124,12 +126,12 @@ describe('CsvImportService — séparateur européen & limites', () => {
 
   it('normalise le séparateur `;` et les décimales `,`→`.`', () => {
     const input = 'a;b;c\n1,5;2,5;x';
-    expect((svc as any).normalizeSeparator(input)).toBe('a,b,c\n1.5,2.5,x');
+    expect(normalizeSeparator(input)).toBe('a,b,c\n1.5,2.5,x');
   });
 
   it('laisse intact un CSV déjà en virgules', () => {
     const input = 'a,b,c\n1.5,2.5,x';
-    expect((svc as any).normalizeSeparator(input)).toBe(input);
+    expect(normalizeSeparator(input)).toBe(input);
   });
 
   it('refuse le chemin IA au-delà de 2000 lignes avec un message clair', async () => {

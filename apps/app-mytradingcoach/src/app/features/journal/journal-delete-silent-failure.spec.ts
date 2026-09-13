@@ -24,7 +24,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 import { JournalComponent } from './journal.component';
@@ -34,6 +34,7 @@ import { SetupsStore } from '../../core/stores/setups.store';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { TradesApi } from '../../core/api/trades.api';
 import { ToastService } from '../../core/services/toast.service';
+import { environment } from '../../../environments/environment';
 
 const JOUR = '2026-07-10T16:41:00.000Z';
 
@@ -67,6 +68,9 @@ function mount(trades: Trade[], reassignImpl: () => unknown = () => of({ data: {
   const tradesApi = {
     getStats: () => of({ data: null }),
     reassign: vi.fn(reassignImpl),
+    // Le journal supprime via TradesApi (étape 4 de l'audit) : le mock émet la VRAIE requête
+    // DELETE, pour que HttpTestingController continue de simuler 404 / refus / échecs partiels.
+    delete: (id: string) => TestBed.inject(HttpClient).delete<void>(`${environment.apiUrl}/trades/${id}`),
   };
   TestBed.configureTestingModule({
     providers: [

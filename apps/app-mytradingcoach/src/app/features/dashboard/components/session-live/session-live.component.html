@@ -1,0 +1,605 @@
+<div data-testid="session-live-view">
+
+  @if (!session() || session()?.status !== 'ACTIVE') {
+    <!-- Pas de session active : CTA démarrer -->
+    <div class="no-session-cta">
+      <div class="no-session-icon">🎯</div>
+      <div class="no-session-title">Pas de session en cours</div>
+      <div class="no-session-sub">Démarre une session pour tracker tes trades en live et accéder au calendrier économique.</div>
+      <button class="session-start-btn" data-testid="start-session-live"
+              [disabled]="startDisabled()"
+              [title]="startDisabled() ? 'Choisis un compte dans la Pré-session' : ''"
+              (click)="startSession.emit()">
+        Démarrer la session →
+      </button>
+      @if (startDisabled()) {
+        <div class="no-session-hint">Choisis un compte dans l'onglet Pré-session pour lancer la session.</div>
+      }
+    </div>
+  } @else {
+
+  <!-- Barre contextuelle marché FMP (IA mutualisée → FREE) -->
+  @if (marketCtx()) {
+    <!-- Carte marché unique : contexte marché + news ticker (source : LiveTab card) -->
+    <div class="mkt-card">
+      <div class="ctx-bar-wrap">
+        <mtc-market-context-bar
+          [ctx]="marketCtx()"
+          [breakingNews]="breakingNews()"
+        />
+      </div>
+      <!-- News live : ticker horizontal (IA mutualisée → FREE), dans la carte marché -->
+      @if (newsItems().length > 0) {
+        <div class="news-ticker">
+          <span class="news-ticker-lbl"><lucide-icon [img]="NewsIcon" [size]="13" class="news-live-ic" /> News live</span>
+          <div class="news-ticker-viewport">
+            <div class="news-ticker-track">
+              @for (item of newsItems(); track item.publishedDate) {
+                <button type="button" class="news-tick" (click)="openNews(item)">
+                  <span class="news-tick-tag">{{ item.symbol }}</span>
+                  <span class="news-tick-title">{{ item.title }}</span>
+                  <span class="news-tick-time">{{ formatNewsTime(item.publishedDate) }}</span>
+                </button>
+                <span class="news-tick-sep">·</span>
+              }
+              <!-- Copie pour un défilement continu (marquee) -->
+              @for (item of newsItems(); track 'dup-' + item.publishedDate) {
+                <button type="button" class="news-tick" tabindex="-1" aria-hidden="true" (click)="openNews(item)">
+                  <span class="news-tick-tag">{{ item.symbol }}</span>
+                  <span class="news-tick-title">{{ item.title }}</span>
+                  <span class="news-tick-time">{{ formatNewsTime(item.publishedDate) }}</span>
+                </button>
+                <span class="news-tick-sep" aria-hidden="true">·</span>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Live layout : zone gauche (stats + calendrier + live feed) / Trade rapide pleine hauteur à droite -->
+  <div class="live-layout">
+    <div class="live-main">
+
+      <!-- Mini stats row (largeur calendrier + live feed uniquement) -->
+      <div class="mini-stats-row">
+        <div class="mini-stat">
+          <div class="mini-stat-val" [class.green]="(liveStats()?.totalPnl ?? 0) >= 0" [class.red]="(liveStats()?.totalPnl ?? 0) < 0">
+            {{ pnlDisplay() }}
+          </div>
+          <div class="mini-stat-lbl">P&amp;L jour</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-val">{{ (liveStats()?.winRate ?? 0).toFixed(0) }}%</div>
+          <div class="mini-stat-lbl">Win Rate</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-val" style="font-size:22px;">{{ moodEmoji(session()?.moodStart) }}</div>
+          <div class="mini-stat-lbl">État actuel</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-val blue">{{ liveStats()?.tradesCount ?? 0 }}</div>
+          <div class="mini-stat-lbl">Trades logués</div>
+        </div>
+      </div>
+
+      <div class="live-cols">
+
+        <!-- ═══ COL 1 : CALENDRIER + TREASURY ═══ -->
+    <div class="cal-col">
+
+      <!-- Calendrier éco -->
+      <div class="cal-card">
+        <div class="col-title-row">
+          <div class="col-title">
+            <lucide-icon [img]="CalIcon" [size]="14" class="ct-ic" /> Calendrier économique
+            <div class="pulse-dot"></div>
+          </div>
+        </div>
+
+        @if (showReleaseAlert() && newReleases().length > 0) {
+          <div class="eco-release-alert" data-testid="eco-release-alert">
+            <div class="era-header">
+              <span class="era-dot"></span>
+              <span class="era-title">
+                🔔 {{ newReleases().length === 1 ? 'Résultat publié' : newReleases().length + ' résultats publiés' }}
+              </span>
+              <button class="era-close" (click)="showReleaseAlert.set(false)">×</button>
+            </div>
+            @for (ev of newReleases(); track ev.name) {
+              <div class="era-event">
+                <div class="era-event-name">{{ translate(ev.name) }} <span class="era-currency">{{ ev.currency }}</span></div>
+                <div class="era-values">
+                  <span class="era-actual"
+                        [class.positive]="(ev.actual ?? 0) > (ev.estimate ?? 0)"
+                        [class.negative]="(ev.actual ?? 0) < (ev.estimate ?? 0)">
+                    Actuel : {{ ev.actual }}{{ ev.unit }}
+                  </span>
+                  @if (ev.estimate !== null) {
+                    <span class="era-estimate">Prévu : {{ ev.estimate }}{{ ev.unit }}</span>
+                  }
+                </div>
+              </div>
+            }
+            @switch (releaseAlertState()) {
+              @case ('analyzing') {
+                <div class="era-ai-loading" data-testid="era-ai-loading">
+                  <span class="era-spin">⟳</span> Ton compagnon analyse l'impact...
+                </div>
+              }
+              @case ('ready') {
+                <div class="era-ai-ready" data-testid="era-ai-ready">
+                  ✦ Analyse prête : détail dans le calendrier ci-dessous ↓
+                </div>
+              }
+              @case ('error') {
+                <div class="era-ai-error">
+                  Analyse indisponible pour le moment.
+                </div>
+              }
+            }
+          </div>
+        }
+
+        @if (!ecoCalendar()) {
+          <div style="font-size:12px;color:var(--text-3);text-align:center;padding:20px 0;">
+            Calendrier économique indisponible pour le moment.
+          </div>
+        } @else {
+          <div class="cal-events-list">
+            @for (event of visibleEcoEvents(); track event.name) {
+              <div
+                class="eco-live-event"
+                [class.released]="event.isReleased"
+                [class.dim]="!event.isReleased && isOutsideSession(event.time)"
+                [class.expandable]="event.isReleased"
+                [class.expanded]="expandedEcoEvent() === event.name"
+              >
+                <div class="eco-live-header"
+                     [attr.role]="event.isReleased ? 'button' : null"
+                     [attr.tabindex]="event.isReleased ? 0 : null"
+                     (click)="event.isReleased && toggleEcoEvent(event.name)"
+                     (keyup.enter)="event.isReleased && toggleEcoEvent(event.name)">
+                  <span class="eco-time">{{ formatTime(event.time) }}</span>
+                  <div class="eco-impact-bar" [class.high]="event.impact === 'high'"></div>
+                  <span class="eco-flag-sm">{{ getFlag(event) }}</span>
+                  <div class="eco-name-wrap">
+                    <span class="eco-name">{{ translate(event.name) }}</span>
+                    <span class="eco-sub">
+                      @if (event.isReleased && event.actual !== null) {
+                        <span class="eco-sub-actual">Actuel : {{ event.actual }}{{ event.unit ?? '' }}</span>
+                        @if (event.estimate !== null || event.previous !== null) { <span class="eco-sub-sep">·</span> }
+                      }
+                      @if (event.estimate !== null) {
+                        <span>Prévu : {{ event.estimate }}{{ event.unit ?? '' }}</span>
+                        @if (event.previous !== null) { <span class="eco-sub-sep">·</span> }
+                      }
+                      @if (event.previous !== null) {
+                        <span>Préc. : {{ event.previous }}{{ event.unit ?? '' }}</span>
+                      }
+                    </span>
+                  </div>
+                  <span class="eco-currency-tag" [attr.title]="event.currency">{{ impactedInstruments(event.currency) }}</span>
+                  <span class="eco-impact-badge" [class.high]="event.impact === 'high'">
+                    {{ event.impact === 'high' ? 'Fort' : 'Moyen' }}
+                  </span>
+                  @if (event.isReleased) {
+                    <lucide-icon [img]="ChevronIcon" [size]="14" class="eco-chevron" />
+                  } @else {
+                    <span class="eco-countdown">dans {{ minutesUntil(event.time) }} min</span>
+                  }
+                </div>
+
+                @if (event.isReleased && expandedEcoEvent() === event.name) {
+                  <div class="eco-live-released">
+                    <div class="eco-result-row">
+                      <div class="eco-result-item">
+                        <span>Résultat</span>
+                        <span class="eco-result-val green">{{ event.actual }}</span>
+                      </div>
+                      @if (event.estimate !== null) {
+                        <div class="eco-result-item">
+                          <span>Prévu</span>
+                          <span class="eco-result-val" style="color:var(--text-2);">{{ event.estimate }}</span>
+                        </div>
+                      }
+                      @if (event.previous !== null) {
+                        <div class="eco-result-item">
+                          <span>Précédent</span>
+                          <span class="eco-result-val" style="color:var(--text-2);">{{ event.previous }}</span>
+                        </div>
+                      }
+                      @if (event.actual !== null && event.estimate !== null) {
+                        <div class="eco-result-item">
+                          <span>Surprise</span>
+                          <span class="eco-result-val" [class.green]="(event.actual - event.estimate) > 0">
+                            {{ event.actual - event.estimate > 0 ? '+' : '' }}{{ (event.actual - event.estimate).toFixed(2) }} {{ event.actual > event.estimate ? '▲' : '▼' }}
+                          </span>
+                        </div>
+                      }
+                    </div>
+
+                    @if (getEventAnalysis(event.name)) {
+                      <div class="eco-ai-block-sm">
+                        <span style="font-size:13px;flex-shrink:0;">✦</span>
+                        <span>{{ getEventAnalysis(event.name)!.interpretation }}</span>
+                      </div>
+                      <div class="sentiment-chips">
+                        @for (s of getEventAnalysis(event.name)!.assetSentiments; track s.asset) {
+                          <div class="chip" [class]="s.sentiment">
+                            {{ s.sentiment === 'bull' ? '▲' : s.sentiment === 'bear' ? '▼' : '-' }}
+                            {{ s.asset }} {{ s.sentiment.toUpperCase() }}
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            } @empty {
+              <div class="cal-empty">
+                <div class="cal-empty-icon">📅</div>
+                <div class="cal-empty-title">Aucun événement</div>
+                <div class="cal-empty-sub">Pas d'annonce économique pour cette session.</div>
+              </div>
+            }
+            @if (hiddenEcoCount() > 0) {
+              <div class="cal-more">+{{ hiddenEcoCount() }} autre{{ hiddenEcoCount() > 1 ? 's' : '' }} événement{{ hiddenEcoCount() > 1 ? 's' : '' }} hors fenêtre de session</div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Treasury Rates → déplacés dans la barre de contexte marché (haut) -->
+
+    </div><!-- /cal-col -->
+
+    <!-- ═══ COL 3 : LIVE FEED ═══ -->
+    <div class="feed-col" data-testid="live-feed">
+      <div class="col-title">
+        <lucide-icon [img]="FeedIcon" [size]="14" class="ct-ic" /> Live feed
+        <div class="pulse-dot"></div>
+      </div>
+
+      @if (todayTrades().length === 0) {
+        <div class="empty-feed">
+          <div class="empty-feed-icon">📋</div>
+          <div class="empty-feed-title">Aucun trade loggué</div>
+          <div class="empty-feed-sub">
+            Utilise le formulaire →<br>
+            Asset + direction + émotion suffisent
+          </div>
+        </div>
+      } @else {
+        <div class="feed-list">
+          @for (trade of todayTrades(); track trade.id) {
+            @if (trade.pnl !== null) {
+              <div class="feed-row">
+                <span class="feed-time">{{ tradeTime(trade.tradedAt) }}</span>
+                <span class="feed-asset">{{ trade.asset }}</span>
+                <span class="trade-side" [class]="trade.side.toLowerCase()">{{ trade.side === 'LONG' ? '▲' : '▼' }} {{ trade.side }}</span>
+                <span class="feed-emo" [title]="trade.emotion">{{ trade.emotion | emotionEmoji }}</span>
+                <span class="feed-pnl" [class.green]="trade.pnl >= 0" [class.red]="trade.pnl < 0" style="margin-left:auto;">
+                  {{ trade.pnl >= 0 ? '+' : '' }}{{ trade.pnl.toFixed(0) }}$
+                </span>
+              </div>
+            } @else {
+              <div
+                class="feed-row live-row"
+                role="button"
+                tabindex="0"
+                (click)="openClosePanel(trade.id)"
+                (keyup.enter)="openClosePanel(trade.id)"
+              >
+                <span class="feed-time">{{ tradeTime(trade.tradedAt) }}</span>
+                <span class="feed-asset">{{ trade.asset }}</span>
+                <span class="trade-side" [class]="trade.side.toLowerCase()">{{ trade.side === 'LONG' ? '▲' : '▼' }} {{ trade.side }}</span>
+                <span class="feed-emo" [title]="trade.emotion">{{ trade.emotion | emotionEmoji }}</span>
+                <span class="live-tag" style="margin-left:auto;">● LIVE</span>
+              </div>
+
+              @if (closingTradeId() === trade.id) {
+                <div class="close-panel" data-testid="trade-close-panel">
+                  <div class="close-panel-title">
+                    {{ trade.side }} {{ trade.asset }} · Clôture
+                  </div>
+                  <div class="close-panel-row">
+                    <div class="close-input-wrap">
+                      <div class="close-input-lbl">PRIX DE SORTIE</div>
+                      <input
+                        class="close-input"
+                        type="text"
+                        inputmode="decimal"
+                        mtcNumericInput
+                        placeholder="0.00"
+                        data-testid="trade-exit-price"
+                        [value]="exitPriceInput()"
+                        (input)="exitPriceInput.set($any($event.target).value)"
+                      />
+                    </div>
+                    <button class="close-btn-ok" (click)="submitClose()">OK →</button>
+                    <button class="close-btn-cancel" (click)="cancelClose()">✕</button>
+                  </div>
+                  @if (exitPriceInput()) {
+                    <div data-testid="trade-close-type" style="margin-top:6px;font-size:10px;color:var(--text-3);font-family:var(--font-mono);">
+                      → {{ detectCloseType(trade, exitPriceInput()) }}
+                    </div>
+                  }
+                </div>
+              }
+            }
+          }
+        </div>
+      }
+    </div>
+
+      </div><!-- /live-cols -->
+    </div><!-- /live-main -->
+
+    <!-- ═══ COL 4 : TRADE RAPIDE (colonne pleine hauteur à droite) ═══ -->
+    <div class="qt-panel" data-testid="quick-trade-form">
+      <div class="qt-title">
+        <lucide-icon [img]="QuickIcon" [size]="14" class="ct-ic" /> Trade rapide
+
+      </div>
+
+      <!-- Asset select -->
+      <div class="qt-asset-wrap">
+        <div class="qt-lbl">ACTIF</div>
+        @if (assetsLoading()) {
+          <div class="qt-asset-skel"></div>
+        } @else if (assetsError()) {
+          <div class="qt-asset-error" role="alert">
+            <span>Impossible de charger tes actifs.</span>
+            <button type="button" class="qt-retry-btn" (click)="loadUserAssets()">Réessayer</button>
+          </div>
+        } @else {
+          <div style="display:flex;gap:6px;align-items:center;">
+            <select
+              class="qt-asset-select"
+              data-testid="quick-trade-asset"
+              (change)="onAssetSelect($event)"
+            >
+              <option value="">-- Choisir --</option>
+              @for (a of userAssets(); track a.symbol) {
+                <option [value]="a.symbol" [selected]="qtSelectedAsset()?.symbol === a.symbol">
+                  {{ a.isFavorite ? '★ ' : '' }}{{ a.symbol }}{{ a.tradeCount > 0 ? ' · ' + a.tradeCount + ' trade' + (a.tradeCount > 1 ? 's' : '') : '' }}
+                </option>
+              }
+              <option value="__custom__">➕ Autre actif…</option>
+            </select>
+            @if (qtSelectedAsset()) {
+              <button
+                class="qt-fav-btn"
+                [class.active]="qtSelectedAsset()!.isFavorite"
+                title="Marquer comme favori"
+                (click)="setFavorite()"
+              >★</button>
+            }
+          </div>
+
+          @if (customAssetMode()) {
+            <div class="qt-custom-asset">
+              <div class="qt-custom-row">
+                <input
+                  class="qt-input"
+                  type="text"
+                  data-testid="quick-trade-custom-asset"
+                  [value]="customAssetQuery()"
+                  (input)="onCustomAssetSearch($event)"
+                  (keydown.enter)="submitCustomAsset()"
+                  placeholder="Cherche ou saisis (ex : NQ, BTC/USDT)…"
+                  style="font-size:12px;"
+                />
+                <button class="qt-custom-add" type="button" [disabled]="!customAssetQuery().trim()" (click)="submitCustomAsset()">OK</button>
+                <button class="qt-custom-cancel" type="button" (click)="cancelCustomAsset()">✕</button>
+              </div>
+              @if (customAssetResults().length > 0) {
+                <div class="qt-custom-results">
+                  @for (r of customAssetResults(); track r.symbol) {
+                    <button class="qt-custom-result" type="button" (click)="addCustomAsset(r.symbol)">
+                      <span class="qt-custom-sym">{{ r.symbol }}</span>
+                      <span class="qt-custom-lbl">{{ r.label }}</span>
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Prix temps réel -->
+          @if (qtSelectedAsset()) {
+            <div class="qt-live-price">
+              @if (livePrice() !== null) {
+                <span class="qt-live-dot">●</span>
+                <span class="qt-live-value">{{ livePricePlaceholder() }}</span>
+                <span class="qt-live-label">prix actuel</span>
+              } @else {
+                <span class="qt-live-unavailable">-</span>
+              }
+            </div>
+          }
+          @if (userAssets().length === 0 && !customAssetMode()) {
+            <div class="qt-asset-hint">Choisis « ➕ Autre actif… » pour saisir ton premier instrument.</div>
+          }
+        }
+      </div>
+
+      <div>
+        <div class="qt-lbl">DIRECTION</div>
+        <div class="qt-sides">
+          <button
+            class="qt-side lng"
+            [class.sel]="qtSide() === 'LONG'"
+            [attr.aria-pressed]="qtSide() === 'LONG'"
+            data-testid="quick-trade-long"
+            (click)="qtSide.set('LONG')"
+          >▲ LONG</button>
+          <button
+            class="qt-side sht"
+            [class.sel]="qtSide() === 'SHORT'"
+            [attr.aria-pressed]="qtSide() === 'SHORT'"
+            data-testid="quick-trade-short"
+            (click)="qtSide.set('SHORT')"
+          >▼ SHORT</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="qt-lbl">ÉMOTION</div>
+        <div class="qt-emos">
+          @for (emo of emotions; track emo.value) {
+            <button
+              type="button"
+              class="qt-emo"
+              [class.sel]="qtEmotion() === emo.value"
+              [title]="emo.title"
+              [attr.aria-label]="emo.title"
+              [attr.aria-pressed]="qtEmotion() === emo.value"
+              (click)="qtEmotion.set(emo.value)"
+            >{{ emo.emoji }}</button>
+          }
+        </div>
+      </div>
+
+      <div class="qt-secondary">
+        <select class="qt-select"
+                [value]="qtSetup()"
+                (change)="qtSetup.set($any($event.target).value)">
+          @for (s of setupsStore.active(); track s.id) {
+            <option [value]="s.id">{{ s.title }}</option>
+          }
+        </select>
+        <select class="qt-select"
+                [value]="qtTimeframe()"
+                (change)="qtTimeframe.set($any($event.target).value)">
+          <option value="1m">1m</option>
+          <option value="5m">5m</option>
+          <option value="15m">15m</option>
+          <option value="1h">1h</option>
+          <option value="4h">4h</option>
+        </select>
+      </div>
+
+      <div class="qt-divider"></div>
+      <div class="qt-optional-lbl">OPTIONNEL</div>
+
+      <div class="qt-pnl-row">
+        <div>
+          <div class="qt-lbl">ENTRÉE</div>
+          <div class="qt-entry-readonly" data-testid="qt-entry-auto">
+            {{ livePrice() !== null ? livePricePlaceholder() : '-' }}
+          </div>
+        </div>
+        <div>
+          <div class="qt-lbl">QUANTITÉ</div>
+          <input
+            class="qt-input"
+            type="text"
+            inputmode="decimal"
+            mtcNumericInput
+            placeholder="1"
+            style="font-size:12px;"
+            [value]="qtQty()"
+            (input)="qtQty.set($any($event.target).value)"
+          />
+        </div>
+      </div>
+
+      <div class="qt-pnl-row">
+        <div>
+          <div class="qt-lbl" style="color:rgba(239,68,68,.7);">STOP LOSS</div>
+          <input
+            class="qt-input qt-sl-input"
+            type="text"
+            inputmode="decimal"
+            mtcNumericInput
+            placeholder="0.00"
+            style="font-size:12px;"
+            [value]="qtSl()"
+            (input)="qtSl.set($any($event.target).value)"
+          />
+        </div>
+        <div>
+          <div class="qt-lbl" style="color:rgba(16,185,129,.7);">TAKE PROFIT</div>
+          <input
+            class="qt-input qt-tp-input"
+            type="text"
+            inputmode="decimal"
+            mtcNumericInput
+            placeholder="0.00"
+            style="font-size:12px;"
+            [value]="qtTp()"
+            (input)="qtTp.set($any($event.target).value)"
+          />
+        </div>
+      </div>
+
+      <button
+        class="qt-log"
+        data-testid="quick-trade-submit"
+        [disabled]="!canSubmitQuickTrade() || qtSubmitting()"
+        (click)="submitQuickTrade()"
+      >@if (qtSubmitting()) { Capture… } @else { <lucide-icon [img]="QuickIcon" [size]="14" /> Logger ce trade }</button>
+      <div class="qt-hint">Asset + direction + émotion suffisent</div>
+
+    </div>
+
+  </div>
+
+  } <!-- /if session ACTIVE -->
+
+<!-- Modale news -->
+@if (selectedNews(); as news) {
+  <div class="news-modal-overlay"
+       role="button"
+       tabindex="0"
+       (click)="closeNews()"
+       (keyup.escape)="closeNews()">
+    <div #newsDialog class="news-modal"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="news-modal-title"
+         tabindex="-1"
+         (click)="$event.stopPropagation()"
+         (keydown.escape)="closeNews()"
+         (keydown)="$event.stopPropagation()">
+      <!-- Header -->
+      <div class="nm-header">
+        <div class="nm-meta">
+          <span class="news-asset-tag">{{ news.symbol }}</span>
+          @if (news.site) {
+            <span class="nm-source">{{ news.site }}</span>
+          }
+          <span class="news-sentiment" [class]="news.sentiment ?? 'neutral'">
+            {{ news.sentiment === 'bull' ? '▲ Bull' : news.sentiment === 'bear' ? '▼ Bear' : '- Neutre' }}
+          </span>
+          <span class="nm-date">{{ formatNewsTime(news.publishedDate) }}</span>
+        </div>
+        <button class="nm-close" (click)="closeNews()" aria-label="Fermer">✕</button>
+      </div>
+
+      <!-- Zone scrollable : image + titre + corps + lien -->
+      <div class="nm-body-wrap">
+        @if (news.image) {
+          <img class="nm-image" [src]="news.image" [alt]="news.title" loading="lazy" />
+        }
+        <h2 id="news-modal-title" class="nm-title">{{ news.title }}</h2>
+        @if (translatingNewsText()) {
+          <p class="nm-translating" aria-live="polite">Traduction…</p>
+        }
+        @if (news.text) {
+          <p class="nm-body">{{ news.text }}</p>
+        }
+        @if (news.url) {
+          <a class="nm-cta" [href]="news.url" target="_blank" rel="noopener noreferrer">
+            Lire l'article complet ↗
+          </a>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+</div>
