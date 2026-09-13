@@ -246,3 +246,19 @@ ThrottlerModule.forRoot([{
   démo refusés, émissions uniquement vers la room `user:<id>` — jamais de `server.emit` global.
   Le JWT n'est contrôlé qu'à la connexion : le client en renvoie un frais à chaque reconnexion.
   Le WebSocket Tradovate côté serveur n'envoie que `authorize`, `user/syncrequest` et `[]`.
+
+## Dépendances vulnérables (audit du 2026-09-13)
+
+- Contrôle : `pnpm audit --prod`. Ordre de traitement : correctifs **dans la majeure installée**
+  d'abord (`pnpm update` dans les plages, ou version exacte pour NestJS), montées majeures ensuite,
+  sur une branche dédiée.
+- Les failles **transitives** qu'aucune version à jour ne corrige se ferment par des
+  `overrides` dans `pnpm-workspace.yaml` (pnpm ≥ 11 ne lit plus le champ `pnpm` de
+  `package.json`) — toujours sous la forme d'un **plancher borné à la même majeure**
+  (`'ws@>=8.0.0 <8.21.0': '^8.21.0'`), jamais un saut de majeure implicite. Chaque plancher est
+  commenté (pourquoi, depuis quand).
+- NestJS : `core` + `common` + `platform-express` épinglés ensemble à la même version exacte
+  (overrides + `package.json` racine + API). Une double instance fait crash-loop l'API au boot.
+- Résultat de l'étape 1 : 108 → 19 alertes. Restent, volontairement : Astro (critique, corrigée
+  seulement en 7.2.8 → montée majeure), `sharp` 0.35 (0.x, mineure cassante), `deepmerge-ts` 8
+  (majeure, CLI Prisma), `extract-zip` et `image-size` 2 (aucun correctif publié).

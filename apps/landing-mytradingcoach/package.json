@@ -13,8 +13,8 @@
     "check": "astro check"
   },
   "dependencies": {
-    "@astrojs/sitemap": "^3.7.2",
-    "astro": "^6.4.5",
+    "@astrojs/sitemap": "^3.7.4",
+    "astro": "^6.4.8",
     "tailwindcss": "^4.2.2"
   },
   "devDependencies": {
