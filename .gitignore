@@ -91,3 +91,5 @@ SECRETS.md
 
 # Sorties de tests Playwright
 test-results/
+
+.nx/migrate-runs
