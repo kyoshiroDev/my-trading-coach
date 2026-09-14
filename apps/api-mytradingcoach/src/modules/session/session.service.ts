@@ -7,7 +7,7 @@ import { MoodState, Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 import { AccountsService } from '../accounts/accounts.service';
-import { computeTradeStats } from '@mtc/shared';
+import { computeTradeStats, netPnl } from '@mtc/shared';
 
 export interface SessionHistoryItem {
   id: string;
@@ -106,7 +106,7 @@ export class SessionService {
 
     const trades = await this.prisma.trade.findMany({
       where: { userId, sessionId },
-      select: { pnl: true, asset: true },
+      select: { pnl: true, commission: true, asset: true },
       orderBy: { tradedAt: 'asc' },
     });
 
@@ -117,17 +117,17 @@ export class SessionService {
     // Drawdown max
     let peak = 0, maxDrawdown = 0, cumPnl = 0;
     for (const t of closed) {
-      cumPnl += t.pnl ?? 0;
+      cumPnl += netPnl(t) ?? 0; // net des frais, comme le total (PROMPT-213)
       if (cumPnl > peak) peak = cumPnl;
       const dd = cumPnl - peak;
       if (dd < maxDrawdown) maxDrawdown = dd;
     }
 
-    // Meilleur trade
-    const best = closed.reduce<{ pnl: number | null; asset: string } | null>(
-      (max, t) => ((t.pnl ?? -Infinity) > (max?.pnl ?? -Infinity) ? t : max),
-      null,
-    );
+    // Meilleur trade, en net comme le total
+    const best = closed.reduce<{ pnl: number | null; asset: string } | null>((max, t) => {
+      const n = netPnl(t);
+      return n != null && n > (max?.pnl ?? -Infinity) ? { pnl: n, asset: t.asset } : max;
+    }, null);
 
     const session = await this.prisma.tradeSession.update({
       where: { id: sessionId, userId },

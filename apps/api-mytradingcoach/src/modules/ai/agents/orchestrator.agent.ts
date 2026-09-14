@@ -41,7 +41,7 @@ export class OrchestratorAgent {
         where: { userId },
         orderBy: { tradedAt: 'desc' },
         take: 50,
-        select: { asset: true, side: true, pnl: true, emotion: true,
+        select: { asset: true, side: true, pnl: true, commission: true, emotion: true,
                   tradeSession: { select: { moodStart: true } },
                   setup: { select: { title: true, description: true } },
                   session: true, tradedAt: true,

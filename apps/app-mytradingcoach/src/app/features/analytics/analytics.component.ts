@@ -91,7 +91,9 @@ export class AnalyticsComponent {
     if (this.equityPeriod() === '1m') from.setMonth(from.getMonth() - 1);
     else if (this.equityPeriod() === '3m') from.setMonth(from.getMonth() - 3);
     else from.setMonth(from.getMonth() - 6);
-    return { from: from.toISOString().slice(0, 10), to: now.toISOString().slice(0, 10) };
+    // Horodatages complets : une date seule en `to` valait minuit et excluait les trades du
+    // jour même (courbe vide pour un compte qui n'avait tradé qu'aujourd'hui, PROMPT-213).
+    return { from: from.toISOString(), to: now.toISOString() };
   });
   protected readonly equityData = signal<{ points: EquityPoint[]; startingCapital: number | null } | null>(null);
   protected readonly equityLoading = signal(false);
@@ -176,7 +178,8 @@ export class AnalyticsComponent {
   constructor() {
     afterRenderEffect(() => {
       const curve = this.equityCurve();
-      if (curve.length >= 2) {
+      // Un seul jour tradé suffit : les graphes partent d'un point « Départ » à 0.
+      if (curve.length >= 1) {
         const equityCanvas = this.equityCanvasRef?.nativeElement;
         const drawdownCanvas = this.drawdownCanvasRef?.nativeElement;
         if (equityCanvas) {

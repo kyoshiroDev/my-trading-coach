@@ -17,6 +17,7 @@ import { CreateTradeDto } from './dto/create-trade.dto';
 import { RedisService } from '../shared/redis.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { SetupsService } from '../setups/setups.service';
+import { netPnl } from '@mtc/shared';
 
 const mockTrade = {
   id: 'trade-123',
@@ -116,7 +117,7 @@ describe('TradesService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AnalyticsService, useValue: mockAnalytics },
         { provide: AccountsService, useValue: mockAccounts },
-        { provide: SetupsService, useValue: { assertOwnedActive: vi.fn().mockResolvedValue(undefined), getDefaultSetupId: vi.fn().mockResolvedValue('setup-default') } },
+        { provide: SetupsService, useValue: { assertOwnedActive: vi.fn().mockResolvedValue(undefined), getImportSetupId: vi.fn().mockResolvedValue('setup-default') } },
       ],
     }).compile();
 
@@ -270,8 +271,10 @@ describe('TradesService', () => {
         timeframe: '1m',
       });
 
-      // NQ: 10 ticks × $20 = $200 brut — commission $5 → net $195
-      expect(result.pnl).toBe(195);
+      // NQ: 10 ticks × $20 = $200 BRUT stocké ; les $5 de frais restent dans `commission`
+      // (net $195 calculé à la lecture par netPnl, PROMPT-213).
+      expect(result.pnl).toBe(200);
+      expect(result.commission).toBe(5);
     });
 
     it('fonctionne sans commission (commission = 0)', async () => {
@@ -315,10 +318,12 @@ describe('TradesService', () => {
         timeframe: '1m',
       });
 
-      expect(result.pnl).toBe(195);
+      // P&L stocké brut ; le net (valeur absolue des frais) : netPnl → 195
+      expect(result.pnl).toBe(200);
+      expect(netPnl(result)).toBe(195);
     });
 
-    it('soustrait la commission d\'un P&L fourni manuellement', async () => {
+    it('garde BRUT un P&L fourni manuellement (frais à part)', async () => {
       mockPrisma.trade.count.mockResolvedValue(0);
       mockPrisma.trade.create.mockImplementation(({ data }) =>
         Promise.resolve({ ...mockTrade, ...data }),
@@ -446,7 +451,7 @@ describe('TradesService', () => {
       expect(result.pnl).toBe(100);
     });
 
-    it('recalcule le P&L si commission est ajoutée', async () => {
+    it('garde le P&L BRUT quand une commission est ajoutée (frais à part, PROMPT-213)', async () => {
       const existingTrade = {
         ...mockTrade,
         asset: 'NQ',
@@ -464,8 +469,10 @@ describe('TradesService', () => {
         commission: 10,
       });
 
-      // NQ: 10 ticks × $20 = $200 − $10 commission = $190
-      expect(result.pnl).toBe(190);
+      // NQ: 10 ticks × $20 = $200 brut ; les $10 de frais restent dans `commission`
+      // (le net 190 est calculé à la lecture par netPnl).
+      expect(result.pnl).toBe(200);
+      expect(result.commission).toBe(10);
     });
 
     it('ne recalcule pas le P&L si seuls setup/emotion changent', async () => {

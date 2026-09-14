@@ -1,7 +1,7 @@
 import { Injectable, ForbiddenException, NotFoundException, Logger } from '@nestjs/common';
 import { Plan, Role, WeeklyDebrief } from '@prisma/client';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
-import { computeTradeStats } from '@mtc/shared';
+import { computeTradeStats, netPnl } from '@mtc/shared';
 import { DebriefPdfData } from '../pdf/pdf.service';
 import { OBJECTIVE_CHECK_TYPES, DebriefAccountInput } from '../ai/prompts/debrief.prompt';
 
@@ -147,6 +147,7 @@ export class DebriefService {
           asset: true,
           side: true,
           pnl: true,
+          commission: true, // stats sur le net (PROMPT-213)
           emotion: true,
           tradeSession: { select: { moodStart: true } },
           setup: { select: { title: true } },
@@ -289,7 +290,7 @@ export class DebriefService {
   }
 
   /** Stats déterministes d'un compte sur la semaine (jamais l'IA pour les chiffres). */
-  private accountStats(trades: { pnl: number | null }[]) {
+  private accountStats(trades: { pnl: number | null; commission?: number | null }[]) {
     // Helper unique : BE exclus du win rate (PROMPT-160).
     const stats = computeTradeStats(trades);
     return {
@@ -305,7 +306,7 @@ export class DebriefService {
     name: string,
     type: string,
     status: string,
-    trades: { pnl: number | null }[],
+    trades: { pnl: number | null; commission?: number | null }[],
     rules: DebriefAccountSection['rules'],
     ai: DebriefAccountAi | undefined,
   ): DebriefAccountSection {
@@ -402,7 +403,10 @@ export class DebriefService {
       orderBy: { pnl: 'desc' },
     });
 
-    const pnlValues = trades.map((t) => t.pnl ?? 0);
+    // Montants en NET (frais déduits), comme le win rate (PROMPT-213). Tri par net décroissant
+    // pour le top 5 (l'orderBy SQL trie sur le brut).
+    trades.sort((a, b) => (netPnl(b) ?? 0) - (netPnl(a) ?? 0));
+    const pnlValues = trades.map((t) => netPnl(t) ?? 0);
     // Win rate via le helper unique (BE exclus du dénominateur, PROMPT-160).
     const pdfStats = computeTradeStats(trades);
 
@@ -467,7 +471,7 @@ export class DebriefService {
       topTrades: trades.slice(0, 5).map((t) => ({
         asset: t.asset,
         side: t.side,
-        pnl: t.pnl ?? 0,
+        pnl: netPnl(t) ?? 0,
         tradedAt: t.tradedAt.toISOString(),
       })),
     };

@@ -200,10 +200,10 @@ export class CsvImportService {
     // - emotion : override OPTIONNEL (PROMPT-163). Si le lot choisit une émotion, on l'applique
     //   à tous les trades ; sinon `null` (non renseignée) → héritera de l'humeur de session à la
     //   lecture. Plus jamais de NEUTRAL forcé à l'import.
-    // - setupId : choix unique, sinon le setup par défaut du user (sortOrder le plus bas).
+    // - setupId : choix unique, sinon « Sans setup » (créé à la volée, PROMPT-213).
     const batchEmotion = this.normalizeEmotion(defaults?.emotion);
     const setupId =
-      defaults?.setupId ?? (userId ? await this.setups.getDefaultSetupId(userId) : null);
+      defaults?.setupId ?? (userId ? await this.setups.getImportSetupId(userId) : null);
     for (const d of dtos) {
       if (defaults?.accountId) d.accountId = defaults.accountId;
       d.emotion = batchEmotion;

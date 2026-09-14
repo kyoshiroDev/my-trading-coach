@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { computeTradeStats } from '@mtc/shared';
+import { computeTradeStats, netPnl } from '@mtc/shared';
 
 export type TradeSummaryInput = {
   asset: string;
   side: string;
   pnl: number | null;
+  /** Frais : tous les montants et le classement W/L sont en net (PROMPT-213). */
+  commission?: number | null;
   emotion: string;
   setup: string;
   session: string;
@@ -21,7 +23,10 @@ export type TradeSummaryInput = {
  */
 @Injectable()
 export class DataAgent {
-  buildTradesSummary(trades: TradeSummaryInput[]): string {
+  buildTradesSummary(rawTrades: TradeSummaryInput[]): string {
+    // Montants en NET (frais déduits) pour tout le résumé : `pnl` devient le net, `commission`
+    // retombe à 0 pour que computeTradeStats ne déduise pas les frais une seconde fois.
+    const trades: TradeSummaryInput[] = rawTrades.map((t) => ({ ...t, pnl: netPnl(t), commission: 0 }));
     const closed = trades.filter(
       (t): t is TradeSummaryInput & { pnl: number } => t.pnl !== null,
     );

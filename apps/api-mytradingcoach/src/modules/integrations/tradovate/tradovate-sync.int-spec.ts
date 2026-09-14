@@ -365,10 +365,12 @@ describe('Tradovate — synchro', () => {
     expect(r1).toMatchObject({ created: 0, duplicates: 3, failed: 0, total: 3, skipped: 0, openPositions: 1 });
     expect(r1['feesImported']).toMatchObject({ reconciled: true, assigned: 3.12, expected: 3.12 });
 
-    // Même forme qu'un trade CSV : compte cible, setup par défaut, empreinte, frais, P&L brut.
+    // Même forme qu'un trade CSV : compte cible, « Sans setup », empreinte, frais, P&L brut.
     const synced = await prisma.trade.findFirstOrThrow({
       where: { userId, tradedAt: new Date('2026-07-11T14:05:00Z') },
+      include: { setup: true },
     });
+    expect(synced.setup.title).toBe('Sans setup');
     expect(synced).toMatchObject({
       accountId: account.id, asset: 'MNQ', side: 'LONG', entry: 30000, exit: 30010,
       pnl: 20, commission: 1.04, quantity: 1, emotion: null,

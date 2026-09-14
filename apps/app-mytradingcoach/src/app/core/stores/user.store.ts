@@ -2,6 +2,7 @@ import { Injectable, computed, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { ACCOUNT_LIMITS } from '../constants/pricing.const';
+import { MoneyFormat, MoneyOptions, formatMoney } from '../utils/money';
 
 @Injectable({ providedIn: 'root' })
 export class UserStore {
@@ -40,6 +41,17 @@ export class UserStore {
     () => this.user()?.role === 'AMBASSADOR' || this.user()?.role === 'ADMIN',
   );
   readonly startingCapital = computed(() => this.user()?.startingCapital ?? 0);
+
+  /** Devise d'affichage + taux de conversion depuis l'USD : source de `formatMoney`. */
+  readonly moneyFormat = computed<MoneyFormat>(() => ({
+    currency: this.user()?.currency === 'EUR' ? 'EUR' : 'USD',
+    rate: this.user()?.currencyRate ?? 1,
+  }));
+
+  /** Montant USD → texte dans la devise du user (cf. core/utils/money.ts). */
+  formatMoney(usd: number, opts?: MoneyOptions): string {
+    return formatMoney(usd, this.moneyFormat(), opts);
+  }
   readonly tradingAssets = computed(() => this.user()?.tradingAssets ?? []);
   readonly favoriteAsset = computed(() => this.user()?.favoriteAsset ?? null);
 

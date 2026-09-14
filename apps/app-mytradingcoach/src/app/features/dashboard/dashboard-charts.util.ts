@@ -199,6 +199,12 @@ function mondayOf(d: Date): Date {
   return atNoon(m);
 }
 
+/** Libellé compact par défaut d'une barre P&L, sans devise : `+60`, `−1.2k`. */
+function compactPnl(v: number): string {
+  const a = Math.abs(v);
+  return (v > 0 ? '+' : '−') + (a >= 1000 ? (a / 1000).toFixed(1).replace('.0', '') + 'k' : Math.round(a));
+}
+
 export interface PlBucket {
   key: string; axisLabel: string; title: string; pnl: number; traded: boolean;
   pos: boolean; mag: number; barPct: number; label: string;
@@ -213,6 +219,8 @@ export function buildPlBuckets(
   days: { date: string; pnl: number }[],
   gran: PlGranularity,
   { from, to }: PeriodRange,
+  /** Libellé d'une barre : le dashboard passe le formateur de devise du user. */
+  fmt: (v: number) => string = compactPnl,
 ): PlBucket[] {
   const pnlByDate = new Map<string, number>();
   for (const d of days) pnlByDate.set(d.date, d.pnl);
@@ -274,10 +282,6 @@ export function buildPlBuckets(
   }
 
   const maxAbs = Math.max(...raw.filter((b) => b.traded).map((b) => Math.abs(b.pnl)), 1);
-  const fmt = (v: number) => {
-    const a = Math.abs(v);
-    return (v > 0 ? '+' : '−') + (a >= 1000 ? (a / 1000).toFixed(1).replace('.0', '') + 'k' : Math.round(a));
-  };
   return raw.map((b) => {
     const mag = Math.min(1, Math.abs(b.pnl) / maxAbs);
     return {

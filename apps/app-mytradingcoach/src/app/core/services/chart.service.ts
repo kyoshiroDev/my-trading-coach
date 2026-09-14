@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {
   Chart,
   LineController,
@@ -11,10 +11,20 @@ import {
   ScriptableContext,
 } from 'chart.js';
 import { EquityPoint } from '../api/analytics.api';
+import { UserStore } from '../stores/user.store';
+
+/** Libellé du point de départ ajouté devant chaque courbe (capital de base / drawdown 0). */
+const START_LABEL = 'Départ';
 
 @Injectable({ providedIn: 'root' })
 export class ChartService {
   private static registered = false;
+  private readonly userStore = inject(UserStore);
+
+  /** Montant USD → devise du user, compact (1.2k) : axes et infobulles des courbes. */
+  private money(v: number, sign = false): string {
+    return this.userStore.formatMoney(v, { decimals: 0, compact: true, sign });
+  }
 
   private register(): void {
     if (ChartService.registered) return;
@@ -35,14 +45,15 @@ export class ChartService {
     points: EquityPoint[],
     startingCapital: number | null,
   ): Chart | null {
-    if (points.length < 2) return null;
+    // Un seul jour suffit : la courbe part du capital de base (point « Départ »).
+    if (points.length < 1) return null;
     this.register();
     Chart.getChart(canvas)?.destroy();
 
     const base = startingCapital ?? 0;
     const values = [base, ...points.map((p) => base + p.cumulativePnl)];
     const labels = [
-      new Date(points[0]!.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
+      START_LABEL,
       ...points.map((p) =>
         new Date(p.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
       ),
@@ -108,11 +119,7 @@ export class ChartService {
               label: (ctx) => {
                 if (ctx.datasetIndex === 1) return '';
                 const v: number = ctx.parsed.y ?? 0;
-                const pnl = v - base;
-                const fmt = (n: number) =>
-                  Math.abs(n) >= 1000 ? `$${(n / 1000).toFixed(2)}k` : `$${n.toFixed(0)}`;
-                const pnlStr = pnl >= 0 ? `+${fmt(pnl)}` : `-${fmt(Math.abs(pnl))}`;
-                return `Capital: ${fmt(v)}  (${pnlStr})`;
+                return `Capital: ${this.money(v)}  (${this.money(v - base, true)})`;
               },
             },
           },
@@ -137,12 +144,7 @@ export class ChartService {
             ticks: {
               color: 'rgba(112,144,176,0.6)',
               font: { family: '"JetBrains Mono", monospace', size: 10 },
-              callback: (v) => {
-                const num = Number(v);
-                return Math.abs(num) >= 1000
-                  ? `$${(num / 1000).toFixed(1)}k`
-                  : `$${num.toFixed(0)}`;
-              },
+              callback: (v) => this.money(Number(v)),
             },
           },
         },
@@ -151,19 +153,26 @@ export class ChartService {
   }
 
   buildDrawdownChart(canvas: HTMLCanvasElement, points: EquityPoint[]): Chart | null {
-    if (points.length < 2) return null;
+    if (points.length < 1) return null;
     this.register();
     Chart.getChart(canvas)?.destroy();
 
+    // Départ à 0 (pic initial) : un seul jour perdant trace déjà la baisse.
     let peak = 0;
-    const drawdowns = points.map((p) => {
-      if (p.cumulativePnl > peak) peak = p.cumulativePnl;
-      return p.cumulativePnl - peak;
-    });
+    const drawdowns = [
+      0,
+      ...points.map((p) => {
+        if (p.cumulativePnl > peak) peak = p.cumulativePnl;
+        return p.cumulativePnl - peak;
+      }),
+    ];
 
-    const labels = points.map((p) =>
-      new Date(p.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
-    );
+    const labels = [
+      START_LABEL,
+      ...points.map((p) =>
+        new Date(p.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
+      ),
+    ];
 
     return new Chart(canvas, {
       type: 'line',
@@ -203,14 +212,7 @@ export class ChartService {
             bodyFont: { family: '"JetBrains Mono", monospace', size: 13, weight: 'bold' },
             titleFont: { family: '"JetBrains Mono", monospace', size: 10 },
             callbacks: {
-              label: (ctx) => {
-                const v: number = ctx.parsed.y ?? 0;
-                if (v === 0) return '$0';
-                const abs = Math.abs(v);
-                return abs >= 1000
-                  ? `-$${(abs / 1000).toFixed(1)}k`
-                  : `-$${abs.toFixed(0)}`;
-              },
+              label: (ctx) => this.money(ctx.parsed.y ?? 0),
             },
           },
         },
@@ -232,14 +234,7 @@ export class ChartService {
             ticks: {
               color: 'rgba(112,144,176,0.6)',
               font: { family: '"JetBrains Mono", monospace', size: 10 },
-              callback: (v) => {
-                const num = Number(v);
-                if (num === 0) return '$0';
-                const abs = Math.abs(num);
-                return abs >= 1000
-                  ? `-$${(abs / 1000).toFixed(1)}k`
-                  : `-$${abs.toFixed(0)}`;
-              },
+              callback: (v) => this.money(Number(v)),
             },
           },
         },

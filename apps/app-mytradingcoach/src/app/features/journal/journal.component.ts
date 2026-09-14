@@ -25,7 +25,7 @@ import { SetupsStore } from '../../core/stores/setups.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { TradeFormComponent } from './trade-form.component';
 import { CsvImportComponent } from './csv-import.component';
-import { PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe } from '../../shared/pipes';
+import { MoneyPipe, PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe } from '../../shared/pipes';
 import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
 import { ToastService } from '../../core/services/toast.service';
 import { TradovateLiveSocketService } from '../../core/services/tradovate-live-socket.service';
@@ -66,7 +66,7 @@ interface WeekGroup {
   imports: [
     DatePipe, DecimalPipe, TitleCasePipe, LucideDynamicIcon,
     TopbarComponent, TradeFormComponent, CsvImportComponent,
-    PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe, InfoTooltipComponent,
+    PnlColorPipe, PnlFormatPipe, MoneyPipe, EmotionEmojiPipe, InfoTooltipComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './journal.component.css',

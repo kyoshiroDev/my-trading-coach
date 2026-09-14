@@ -122,8 +122,8 @@
         </div>
         <div class="chart-container">
           <canvas #drawdownCanvas class="chart-canvas"></canvas>
-          @if (equityCurve().length === 0) {
-            <div class="empty-chart">Aucun trade clôturé</div>
+          @if (equityCurve().length === 0 && !equityLoading()) {
+            <div class="empty-chart">Aucun trade sur cette période</div>
           }
         </div>
       </div>
@@ -276,13 +276,17 @@
                 <td class="mono" [style.color]="setup.winRate !== null ? rateColor(setup.winRate) : null">
                   @if (setup.winRate !== null) { {{ setup.winRate.toFixed(0) }}% } @else { - }
                 </td>
-                <td
-                  class="mono"
-                  [class.text-green]="setup.avgRR >= 1"
-                  [class.text-red]="setup.avgRR < 1"
-                >
-                  {{ setup.avgRR.toFixed(2) }}
-                </td>
+                @if (setup.avgRR !== null) {
+                  <td
+                    class="mono"
+                    [class.text-green]="setup.avgRR >= 1"
+                    [class.text-red]="setup.avgRR < 1"
+                  >
+                    {{ setup.avgRR.toFixed(2) }}
+                  </td>
+                } @else {
+                  <td class="mono" title="Renseigne un stop et un objectif pour mesurer le R:R">–</td>
+                }
               </tr>
             }
             @if (setupData().length === 0) {

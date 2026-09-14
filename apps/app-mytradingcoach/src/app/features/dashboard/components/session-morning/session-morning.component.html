@@ -47,7 +47,7 @@
         <div class="recap-stats">
           <div class="recap-stat">
             <div class="recap-stat-val" [class.green]="recap.pnl >= 0" [class.red]="recap.pnl < 0">
-              {{ recap.pnl >= 0 ? '+' : '' }}{{ recap.pnl.toFixed(0) }}$
+              {{ recap.pnl | money:0 }}
             </div>
             <div class="recap-stat-lbl">P&L</div>
           </div>

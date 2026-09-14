@@ -27,7 +27,7 @@ function makeService() {
   const anthropicClient = { create: vi.fn() } as any;
   const prisma = { user: { findUnique: vi.fn().mockResolvedValue(null) } } as any;
   // SetupsService : setup par défaut du user (fallback import).
-  const setups = { getDefaultSetupId: vi.fn().mockResolvedValue('setup-default') } as any;
+  const setups = { getImportSetupId: vi.fn().mockResolvedValue('setup-default') } as any;
   return new CsvImportService(anthropicClient, prisma, setups);
 }
 

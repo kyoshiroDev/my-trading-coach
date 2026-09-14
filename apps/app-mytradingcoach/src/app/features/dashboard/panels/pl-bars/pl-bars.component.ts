@@ -1,17 +1,17 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
 import { PlBucket } from '../../dashboard-charts.util';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 
 /** Barres P&L divergentes depuis la ligne médiane (jour, semaine ou mois selon la période). */
 @Component({
   selector: 'mtc-pl-bars',
-  imports: [DecimalPipe],
+  imports: [MoneyPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './pl-bars.component.css',
   template: `
     <div class="mtc-plday">
       @for (d of buckets(); track d.key) {
-        <div class="mtc-plday-col" [title]="d.title + ' · ' + (d.pnl >= 0 ? '+' : '') + (d.pnl | number: '1.0-0') + '$'">
+        <div class="mtc-plday-col" [title]="d.title + ' · ' + (d.pnl | money: 0)">
           <div class="mtc-plday-cell">
             <div class="mtc-plday-bar" [class.pos]="d.pos && d.traded" [class.neg]="!d.pos && d.traded" [style.height.%]="d.barPct"></div>
             @if (d.traded && d.label) {
