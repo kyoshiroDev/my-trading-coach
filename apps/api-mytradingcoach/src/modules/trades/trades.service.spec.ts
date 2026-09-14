@@ -586,6 +586,30 @@ describe('TradesService', () => {
       expect(hashes().map((h: string) => h.split('#')[1])).toEqual(['2', '3', '4']);
     });
 
+    it('CSV importé après la synchro : même trade décalé d’un fuseau entier → doublon, un-pour-un', async () => {
+      // Export Performance sans fuseau, lu à l'heure de Paris (14:31:55 UTC → 12:31:55), face à
+      // 2 paires identiques déjà synchronisées par l'API.
+      mockPrisma.trade.findMany.mockResolvedValue([row('ETH/USDT'), row('ETH/USDT')]);
+      mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
+      mockPrisma.trade.create.mockResolvedValue(mockTrade);
+      const paris = { ...dto('ETH/USDT'), tradedAt: '2026-05-30T12:31:55.000Z' };
+
+      const res = await service.importTrades('user-123', [paris, { ...paris }, { ...paris }]);
+
+      // 2 lignes absorbées par les 2 trades synchronisés ; la 3e est un trade de plus.
+      expect(res).toMatchObject({ created: 1, duplicates: 2 });
+    });
+
+    it('écart qui n’est pas un fuseau entier → trade distinct, importé', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue([row('ETH/USDT')]);
+      mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
+      mockPrisma.trade.create.mockResolvedValue(mockTrade);
+
+      const res = await service.importTrades('user-123', [{ ...dto('ETH/USDT'), tradedAt: '2026-05-30T12:32:55.000Z' }]);
+
+      expect(res).toMatchObject({ created: 1, duplicates: 0 });
+    });
+
     it('crée tous les trades quand aucun doublon', async () => {
       mockPrisma.trade.findMany.mockResolvedValue([]);
       mockPrisma.tradeSession.findFirst.mockResolvedValue(null);

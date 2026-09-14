@@ -644,8 +644,9 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
   mêmes prix et même seconde de clôture. La n-ième prend l'empreinte `clé#n` (`occurrenceHash`) :
   réimporter la source ne recrée rien, une répétition manquante en base est créée. Le nettoyage
   des doublons (`GET/DELETE /trades/duplicates`) raisonne sur `importHash ?? clé` pour ne jamais
-  supprimer une répétition légitime, et `isCrossSourceDuplicate` (fuseau CSV) exclut l'écart nul
-  et consomme un trade existant par paire. Avant ce correctif, 5 des 28 paires de Val (14/09/2026)
+  supprimer une répétition légitime, et le rapprochement « même trade, autre fuseau »
+  (`CrossSourcePool`, `trades/import-dedupe.util.ts`) se fait dans `importTrades` : écart nul
+  exclu, un trade existant par ligne. Avant ce correctif, 5 des 28 paires de Val (14/09/2026)
   étaient écartées comme doublons. Un trade API doit avoir
   EXACTEMENT la forme d'un trade CSV du même broker (règles partagées dans
   `trades/tradovate-pair.util.ts`, utilisées par les DEUX chemins).
@@ -705,7 +706,10 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
 - **Rapprochement CSV ↔ API** : l'export Performance est en heure LOCALE sans fuseau, parsée
   dans le fuseau du serveur (`TZ=Europe/Paris` en beta). L'empreinte exacte ne coïncide donc
   pas ; `isCrossSourceDuplicate` reconnaît le même trade décalé d'un nombre entier de
-  demi-heures (≤ 14 h), mêmes prix, même P&L.
+  demi-heures (≤ 14 h), mêmes prix, même P&L. Appliqué par `importTrades` dans les DEUX sens :
+  CSV importé avant la synchro, ou après (avant le 14/09/2026, seul le premier sens était
+  couvert : un CSV importé après la synchro recréait les trades en double si le Tradovate de
+  l'utilisateur n'affichait pas l'heure du serveur).
 - ⚠ **Profondeur d'historique non garantie** : l'API REST pourrait ne renvoyer que les
   positions / paires récentes. À mesurer en beta sur un vrai compte ; si c'est le cas, un
   import CSV reste nécessaire pour le passé et la synchro sert au fil de l'eau.

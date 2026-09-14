@@ -498,6 +498,26 @@ describe('Tradovate — synchro', () => {
     expect(conn).toMatchObject({ status: BrokerConnectionStatus.CONNECTED, lastSyncError: null });
   });
 
+  it('CSV Performance importé APRÈS la synchro : les trades déjà synchronisés ne sont pas recréés', async () => {
+    // Sens inverse du premier test : la synchro crée les 3 trades, puis l'utilisateur importe
+    // son export Performance (heures locales sans fuseau). Les 2 trades communs = doublons.
+    const { id: userId, token } = await registerUser();
+    const account = await createAccount(userId, 'Synchro puis CSV');
+    const { location } = await connect(token, account.id);
+    expect(location.searchParams.get('trades')).toBe('3');
+
+    const form = new FormData();
+    form.append('file', new Blob([PERF_CSV], { type: 'text/csv' }), 'Performance.csv');
+    form.append('accountId', account.id);
+    const csv = await fetch(`${baseUrl}/api/trades/import`, {
+      method: 'POST', headers: { authorization: `Bearer ${token}` }, body: form,
+    });
+    expect(csv.ok, await csv.clone().text()).toBe(true);
+    const { data } = (await csv.json()) as { data: { created: number; duplicates: number } };
+    expect(data).toMatchObject({ created: 18, duplicates: 2 });
+    expect(await prisma.trade.count({ where: { userId } })).toBe(21);
+  });
+
   it('trade à plusieurs contrats (paires identiques) : chaque paire devient un trade, resynchro sans doublon', async () => {
     // Synchro de Val (14/09/2026) : 4 paires d'un contrat, même fill de vente, mêmes prix →
     // même empreinte ; 3 étaient écartées comme « doublons » (contrats et P&L perdus).

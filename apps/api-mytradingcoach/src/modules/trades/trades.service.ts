@@ -28,6 +28,7 @@ import {
 import { AnalyticsService } from '../analytics/analytics.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { SetupsService } from '../setups/setups.service';
+import { CrossSourcePool } from './import-dedupe.util';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
@@ -208,6 +209,9 @@ export class TradesService {
       where: { userId },
       select: { asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true },
     });
+    // Même trade déjà en base mais daté dans un autre fuseau (export CSV sans fuseau ↔ API en
+    // UTC) : doublon, un-pour-un. Vaut dans les deux sens : CSV avant OU après la synchro.
+    const otherTimezone = new CrossSourcePool(existing);
     // Empreintes déjà prises : la clé, puis `#2`, `#3`… autant de fois que la clé existe en base.
     const seen = new Set<string>();
     const inBase = new Map<string, number>();
@@ -227,6 +231,10 @@ export class TradesService {
     const inSource = new Map<string, number>();
 
     for (const dto of dtos) {
+      if (otherTimezone.take(dto)) {
+        duplicates++;
+        continue;
+      }
       const key = this.dedupeKey(dto);
       const n = (inSource.get(key) ?? 0) + 1;
       inSource.set(key, n);
