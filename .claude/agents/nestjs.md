@@ -123,6 +123,21 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   `filter(t => t.pnl > 0)` suivi d'une division inline. Règle break-even : win `pnl > ε`,
   loss `pnl < -ε`, BE `|pnl| <= ε` (`ε` défaut 0) ; **win rate = wins / (wins + losses)** (BE exclus du
   dénominateur) ; trades ouverts (pnl null) hors calcul. Le front importe le MÊME helper (`@mtc/shared`).
+- **P&L = NET partout, via `netPnl`** (PROMPT-213) : `Trade.pnl` est stocké BRUT, les frais dans
+  `commission`. `computeTradeStats` classe et somme sur `netPnl(t)` = `pnl − |commission|` : **toute
+  requête Prisma qui alimente une stat sélectionne `commission` avec `pnl`** (sinon le calcul retombe
+  sur le brut sans erreur). Même règle pour les agrégats écrits à la main (analytics : drawdown,
+  profit factor, série, par setup/émotion/heure, courbe, calendrier, top actifs ; session ; débrief ;
+  récap et agents IA). Seule exception assumée : la note d'exécution (`execution-grade.util`).
+  `AnalyticsService` passe par son helper local `net(t)`. `SetupStat.avgRR` vaut `null` (pas 0)
+  quand aucun trade du setup n'a de R:R.
+- **Borne haute des périodes analytics** : un `to` date seule (`2026-09-14`) couvre la journée
+  entière (`AnalyticsController.endBound`) ; lu tel quel il valait minuit et excluait les trades du jour.
+- **Setup des trades importés = « Sans setup »** (PROMPT-213) : la synchro broker, l'import CSV sans
+  setup choisi et le repli d'un `setupId` périmé (`resolveBatchSetupId`) passent par
+  `SetupsService.getImportSetupId`, qui trouve ou crée (ou désarchive) le setup `IMPORT_SETUP_TITLE`
+  (`#6b7280`, sortOrder 999). Plus de repli sur le premier setup du user (qui rangeait tout en
+  « Breakout » et faussait les stats par setup).
 - **Filtre journal « émotion effective »** (PROMPT-166) : l'émotion effective d'un trade =
   `trade.emotion` (override) `??` `tradeSession.moodStart` (humeur de session). Filtrer dessus dans
   `buildTradeWhere` = un **`OR` Prisma** sur les deux sources — `[{ emotion: V }, { emotion: null,

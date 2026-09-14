@@ -197,11 +197,28 @@ mentir. Sous 768px : 40px, la phrase longue (`.demo-banner-long`) tombe, le CTA 
 ```typescript
 // Toujours utiliser les pipes, jamais de logique inline
 PnlColorPipe      // couleur verte/rouge selon pnl
-PnlFormatPipe     // formatage $ avec signe
+PnlFormatPipe     // montant signé dans la devise du user (+$1,234.56 / -€92.00), % optionnel
+MoneyPipe         // idem avec décimales / sans « + » : {{ pnl | money:0 }}, {{ fees | money:2:false }}
 EmotionEmojiPipe  // emoji selon état émotionnel
 SessionLabelPipe  // label lisible de la session
 SetupColorPipe    // couleur selon setup
 ```
+
+**Montants = formateur unique** (PROMPT-213) : l'API renvoie des USD ; la conversion (`currency` +
+`currencyRate` du user) et le symbole passent TOUS par `formatMoney` (`core/utils/money.ts`), exposé
+par `UserStore.formatMoney()` / `moneyFormat` et les pipes `pnlFormat` / `money`. **Jamais de `$` en
+dur** dans un template, un graphe Chart.js (`ChartService`) ou un libellé calculé : le calendrier et
+les courbes affichaient un `$` sans conversion pour un compte en EUR. Exception : les soldes de
+`TradingAccount` (devise du compte, `account-selector`, page Comptes).
+
+**P&L affiché = net** : un montant par trade se lit via `netPnl(t)` de `@mtc/shared`
+(`pnl` brut − frais), jamais `t.pnl` brut (tableau des trades récents, live feed). Les agrégats de
+l'API sont déjà nets. Le formulaire de trade envoie le **brut** (`form().pnl ?? autoPnl()`) et la
+commission à part : envoyer `pnlNet` faisait déduire les frais deux fois.
+
+**Courbe d'équité / drawdown** : `ChartService` préfixe un point « Départ » (capital de base,
+drawdown 0) : un seul jour tradé trace déjà la courbe (`curve.length >= 1`). Les bornes de période
+envoyées à l'API sont des horodatages ISO complets.
 
 ---
 

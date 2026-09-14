@@ -73,7 +73,7 @@ model Trade {
   exitPrice       Float?          // alias de exit pour clarté — V2
   stopLoss        Float?
   takeProfit      Float?
-  pnl             Float?
+  pnl             Float?          // P&L BRUT (frais dans `commission`) ; net = netPnl() à la lecture (PROMPT-213)
   riskReward      Float?
   executionScore  Int?                             // note d'exécution CALCULÉE 0-100 (PROMPT-161), null si non évaluable
   executionGrade  ExecutionGrade?                  // EXCELLENT/BON/MOYEN/MAUVAIS dérivé du score
@@ -202,6 +202,10 @@ enum SessionStatus       { ACTIVE CLOSED }                              // ← V
 > prouver (`delete-me-referral.int-spec.ts`).
 
 > **Setups** : setups définis par l'utilisateur (modèle `Setup` : `title`, `color`, `description`, `sortOrder`, `archived`). 6 défauts seedés au signup et pour la démo (Breakout `#10b981`, Pullback `#3b82f6`, Range `#f59e0b`, Reversal `#ef4444`, Scalping `#8b5cf6`, News `#60a5fa`). L'ancienne énumération de setups a été migrée en table (remap par titre, zéro régression). `Trade.setupId` (FK, `onDelete: NoAction`) → `Setup` ; la suppression d'un setup encore référencé par des trades est bloquée par `SetupsService` (+ backstop FK).
+>
+> **« Sans setup »** (PROMPT-213) : `Trade.setupId` restant NOT NULL, les trades importés sans setup choisi (synchro broker, CSV, `setupId` périmé) sont rangés dans un setup `Sans setup` (`#6b7280`, sortOrder 999) créé à la volée par `SetupsService.getImportSetupId` — pas de migration. Les trades importés AVANT ce correctif restent sur le premier setup du user (souvent « Breakout ») : ne pas les déplacer sans accord.
+>
+> **P&L** : `Trade.pnl` = BRUT, `Trade.commission` = frais (positifs). Aucune colonne « net » : le net se calcule (`netPnl` de `@mtc/shared`). Vérifié le 2026-09-14 (lecture seule) : aucun trade manuel avec frais depuis le 20/08, les anciens trades à frais sont bruts ou indéterminables → pas de migration.
 
 > **Émotion (PROMPT-163)** : `Trade.emotion` est **nullable** — un **override optionnel** (surtout REVENGE/FEAR dans l'instant). L'émotion de base vient de la journée : `TradeSession.moodStart` (`MoodState`, inclut `TIRED`). **Émotion effective = `trade.emotion ?? trade.tradeSession?.moodStart ?? null`** — helper unique `common/utils/effective-emotion.util.ts` (`effectiveEmotion`, `isRiskyEmotion` = STRESSED/REVENGE/FEAR/TIRED, `isHealthyEmotion` = CONFIDENT/FOCUSED/NEUTRAL). `null` = non renseignée → **exclue** des agrégations (dominante, analytics, IA, note d'exécution renormalisée), **jamais** de faux NEUTRAL. Toute requête qui a besoin de l'émotion effective doit `select`/`include` `tradeSession: { select: { moodStart: true } }`. L'API `GET /trades` expose `effectiveEmotion` par trade ; le front l'affiche (« — » si null). Les deux enums restent distincts (`EmotionState` trade vs `MoodState` journée).
 
