@@ -179,43 +179,6 @@ function assignFees(
   };
 }
 
-/** Existant minimal pour le rapprochement inter-sources. */
-export interface ExistingTradeKey {
-  asset: string;
-  side: string;
-  entry: number;
-  exit: number | null;
-  pnl: number | null;
-  tradedAt: Date;
-}
-
-const HALF_HOUR_MS = 30 * 60 * 1000;
-const MAX_TZ_OFFSET_MS = 14 * 60 * 60 * 1000;
-
-/**
- * Le trade synchronisé existe-t-il déjà, importé par CSV ?
- *
- * L'empreinte exacte (`importHash`) ne suffit pas : l'export Performance donne des heures
- * LOCALES sans fuseau (`07/10/2026 15:34:00`), que le serveur interprète dans SON fuseau.
- * L'API donne l'UTC réel. Le même trade diffère donc d'un décalage horaire entier (ou d'une
- * demi-heure pour certains fuseaux) — et de rien d'autre : mêmes prix, même P&L, mêmes
- * minutes et secondes. On reconnaît ce cas précis, borné à ±14 h.
- *
- * Écart nul exclu : à la même heure exacte l'empreinte coïncide, et c'est `importTrades` qui
- * tranche en comptant les répétitions. L'accepter ici faisait absorber par UN trade existant
- * toutes les paires identiques d'un trade à plusieurs contrats.
- */
-export function isCrossSourceDuplicate(
-  dto: TradovateTradeDto,
-  existing: ExistingTradeKey[],
-): boolean {
-  if (!dto.tradedAt) return false;
-  const at = new Date(dto.tradedAt).getTime();
-  return existing.some((e) => {
-    if (e.asset !== dto.asset || e.side !== dto.side) return false;
-    if (e.entry !== dto.entry || (e.exit ?? null) !== (dto.exit ?? null)) return false;
-    if (e.pnl == null || dto.pnl == null || Math.abs(e.pnl - dto.pnl) >= 0.005) return false;
-    const delta = Math.abs(e.tradedAt.getTime() - at);
-    return delta > 0 && delta <= MAX_TZ_OFFSET_MS && delta % HALF_HOUR_MS === 0;
-  });
-}
+// Rapprochement « même trade, autre fuseau » (export CSV ↔ API) : règle partagée avec l'import
+// CSV, appliquée par `TradesService.importTrades` dans les deux sens (trades/import-dedupe.util.ts).
+export { isCrossSourceDuplicate } from '../../trades/import-dedupe.util';

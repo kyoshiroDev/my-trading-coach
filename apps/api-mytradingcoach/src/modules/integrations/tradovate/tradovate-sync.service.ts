@@ -8,7 +8,7 @@ import type { FeesReport } from '../../trades/csv-import.service';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateApiError, TradovateException } from './tradovate.errors';
-import { isCrossSourceDuplicate, mapTradovatePairs } from './tradovate-trade.mapper';
+import { mapTradovatePairs } from './tradovate-trade.mapper';
 import { describeTradovateSnapshot } from './tradovate-sync-diagnostics';
 import type {
   TradovateAccount,
@@ -146,25 +146,12 @@ export class TradovateSyncService {
 
     const mapped = mapTradovatePairs({ pairs, fills, fees, contracts, maturities, products });
 
-    // Rapprochement avec un import CSV antérieur (décalage de fuseau, cf. mapper).
-    const existing = await this.prisma.trade.findMany({
-      where: { userId, asset: { in: [...new Set(mapped.trades.map((t) => t.asset as string))] } },
-      select: { asset: true, side: true, entry: true, exit: true, pnl: true, tradedAt: true },
-    });
-    // Un-pour-un : un trade CSV n'absorbe qu'UNE paire (4 paires identiques face à 1 trade CSV
-    // → 3 restent à importer). À heure identique, c'est `importTrades` qui tranche.
-    const pool = [...existing];
-    const fresh = mapped.trades.filter((t) => {
-      const i = pool.findIndex((e) => isCrossSourceDuplicate(t, [e]));
-      if (i === -1) return true;
-      pool.splice(i, 1);
-      return false;
-    });
-    const crossSourceDuplicates = mapped.trades.length - fresh.length;
+    // Rapprochement avec un import CSV (même trade, autre fuseau) : fait par `importTrades`,
+    // un-pour-un, pour la synchro comme pour l'import CSV (trades/import-dedupe.util.ts).
 
     // Mêmes valeurs de lot que l'import CSV : compte cible, setup par défaut, émotion non renseignée.
     const setupId = await this.setups.getDefaultSetupId(userId);
-    const dtos: Partial<CreateTradeDto>[] = fresh.map((t) => {
+    const dtos: Partial<CreateTradeDto>[] = mapped.trades.map((t) => {
       const dto: typeof t = { ...t, accountId: conn.accountId, emotion: null };
       if (setupId) dto.setupId = setupId;
       delete dto._buyFillId; // métadonnées internes : jamais persistées
@@ -177,7 +164,7 @@ export class TradovateSyncService {
     // « rien renvoyé » de « données écartées » (autre compte du login, paire orpheline).
     this.logger.log(
       `Synchro Tradovate ${conn.id} : ${imported.created} créés, ` +
-        `${imported.duplicates + crossSourceDuplicates} doublons, ${mapped.skipped} ignorés. ` +
+        `${imported.duplicates} doublons, ${mapped.skipped} ignorés. ` +
         describeTradovateSnapshot({
           accounts, positions, pairs: allPairs, externalAccountId: externalId, fillsFetched: fills.size,
         }),
@@ -185,7 +172,7 @@ export class TradovateSyncService {
 
     return {
       created: imported.created,
-      duplicates: imported.duplicates + crossSourceDuplicates,
+      duplicates: imported.duplicates,
       failed: imported.failed,
       total: mapped.trades.length,
       skipped: mapped.skipped,
