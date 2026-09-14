@@ -60,6 +60,31 @@ type Call = { method: string; url: string; auth: string | null; body: string | n
 let calls: Call[] = [];
 let refreshMode: 'ok' | 'refused' = 'ok';
 
+// Comportements du vrai Tradovate reproduits à la demande (synchro de Val, 14/09/2026).
+const ITEMS_LIMIT = 10;             // au-delà, Tradovate répond 404 (corps vide) à /fill/items et /fillFee/items
+let extraPairs = 0;                 // paires supplémentaires sur le compte 777 (compte actif)
+let listOmits = new Set<number>();  // fills absents de /fill/list et /fillFee/list
+let itemsNotFound = false;          // /fill/items répond 404 quoi qu'on demande
+let pairListNotFound = false;       // /fillPair/list répond 404
+
+const EXTRA_BASE = 700000000000;
+const at = (minute: number, second: number) => new Date(Date.UTC(2026, 6, 12, 14, minute, second)).toISOString();
+const extraFills = () =>
+  Array.from({ length: extraPairs }, (_, i) => [
+    fill(EXTRA_BASE + 2 * i, 'Buy', 31000 + i, at(i, 0)),
+    fill(EXTRA_BASE + 2 * i + 1, 'Sell', 31004 + i, at(i, 30)),
+  ]).flat();
+const extraPairsOf = () =>
+  Array.from({ length: extraPairs }, (_, i) => ({
+    id: 100 + i, positionId: 9, buyFillId: EXTRA_BASE + 2 * i, sellFillId: EXTRA_BASE + 2 * i + 1,
+    qty: 1, buyPrice: 31000 + i, sellPrice: 31004 + i, active: true,
+  }));
+const allFills = () => [...FILLS, ...extraFills()];
+const allPairs = () => [...PAIRS, ...extraPairsOf()];
+const feeOf = (f: { id: number }) => ({ id: f.id, commission: 0.35, exchangeFee: 0.1, clearingFee: 0.05, nfaFee: 0.02 });
+const notFound = () => new Response('', { status: 404 });
+const tooMany = (url: URL) => (url.searchParams.get('ids') ?? '').split(',').filter(Boolean).length > ITEMS_LIMIT;
+
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 }
@@ -101,11 +126,11 @@ function tradovate(rawUrl: string, init?: RequestInit): Response {
       { id: 11, accountId: EXT_ACCOUNT, contractId: CONTRACT, netPos: 1 },
     ]);
   }
-  if (path === '/fillPair/list') return json(PAIRS);
-  if (path === '/fill/items') return json(byIds(url, FILLS));
-  if (path === '/fillFee/items') {
-    return json(byIds(url, FILLS).map((f) => ({ id: f.id, commission: 0.35, exchangeFee: 0.1, clearingFee: 0.05, nfaFee: 0.02 })));
-  }
+  if (path === '/fillPair/list') return pairListNotFound ? notFound() : json(allPairs());
+  if (path === '/fill/list') return json(allFills().filter((f) => !listOmits.has(f.id)));
+  if (path === '/fill/items') return itemsNotFound || tooMany(url) ? notFound() : json(byIds(url, allFills()));
+  if (path === '/fillFee/list') return json(allFills().filter((f) => !listOmits.has(f.id)).map(feeOf));
+  if (path === '/fillFee/items') return tooMany(url) ? notFound() : json(byIds(url, allFills()).map(feeOf));
   if (path === '/contract/items') return json([{ id: CONTRACT, name: 'MNQU6', contractMaturityId: 5001 }]);
   if (path === '/contractMaturity/items') return json([{ id: 5001, productId: 6001 }]);
   if (path === '/product/items') return json([{ id: 6001, name: 'MNQ', valuePerPoint: 2, tickSize: 0.25 }]);
@@ -153,6 +178,10 @@ afterAll(async () => {
 beforeEach(() => {
   calls = [];
   refreshMode = 'ok';
+  extraPairs = 0;
+  listOmits = new Set();
+  itemsNotFound = false;
+  pairListNotFound = false;
 });
 
 async function registerUser(): Promise<{ id: string; token: string }> {
@@ -362,8 +391,10 @@ describe('Tradovate — synchro', () => {
     expect(trades.every((t) => t.tradedAt < connectedAt)).toBe(true);
 
     // Les routes list partent SANS aucun filtre : ni date de connexion, ni lastSyncAt.
-    const lists = calls.filter((c) => /\/(position|fillPair)\/list/.test(c.url));
-    expect(lists.map((c) => new URL(c.url).pathname)).toEqual(['/v1/position/list', '/v1/fillPair/list']);
+    const lists = calls.filter((c) => /\/(position|fillPair|fill|fillFee)\/list/.test(c.url));
+    expect(lists.map((c) => new URL(c.url).pathname)).toEqual([
+      '/v1/position/list', '/v1/fillPair/list', '/v1/fill/list', '/v1/fillFee/list',
+    ]);
     expect(lists.every((c) => new URL(c.url).search === '')).toBe(true);
   });
 
@@ -406,6 +437,64 @@ describe('Tradovate — synchro', () => {
 
     const conn = await prisma.brokerConnection.findFirstOrThrow({ where: { accountId: account.id } });
     expect(conn.status).toBe(BrokerConnectionStatus.NEEDS_RECONNECT);
+  });
+
+  it('compte actif (> 10 fills) : fills et frais lus par liste, jamais de lot /items au-delà de 10', async () => {
+    // Synchro de Val (14/09/2026) : 28 paires, 41 fills demandés d'un coup à /fill/items →
+    // 404 de Tradovate, synchro entièrement en échec affichée « compte plus accessible ».
+    extraPairs = 12;
+    const { id: userId, token } = await registerUser();
+    const account = await createAccount(userId, 'Compte actif');
+    calls = [];
+    const { location } = await connect(token, account.id);
+
+    expect(location.searchParams.get('tradovate')).toBe('connected');
+    expect(location.searchParams.get('trades')).toBe('15');
+    expect(location.searchParams.get('fees')).toBe('ok');
+    expect(await prisma.trade.count({ where: { userId } })).toBe(15);
+
+    const batches = calls.filter((c) => /\/(fill|fillFee)\/items/.test(c.url));
+    expect(batches.every((c) => (new URL(c.url).searchParams.get('ids') ?? '').split(',').length <= ITEMS_LIMIT)).toBe(true);
+    expect(calls.some((c) => new URL(c.url).pathname === '/v1/fill/list')).toBe(true);
+  });
+
+  it('fill absent de la liste : relu par petit lot ; introuvable, seule sa paire est ignorée', async () => {
+    // Relu par /fill/items (1 id) : les 3 trades sont importés.
+    listOmits = new Set([900000000002]);
+    const a = await registerUser();
+    const accountA = await createAccount(a.id, 'Compte A');
+    calls = [];
+    const first = await connect(a.token, accountA.id);
+    expect(first.location.searchParams.get('trades')).toBe('3');
+    const reread = calls.find((c) => new URL(c.url).pathname === '/v1/fill/items');
+    expect(new URL(reread?.url ?? 'https://none').searchParams.get('ids')).toBe('900000000002');
+
+    // Introuvable même par /fill/items : la synchro aboutit, la paire concernée est ignorée.
+    itemsNotFound = true;
+    const b = await registerUser();
+    const accountB = await createAccount(b.id, 'Compte B');
+    const second = await connect(b.token, accountB.id);
+    expect(second.location.searchParams.get('tradovate')).toBe('connected');
+    expect(second.location.searchParams.get('trades')).toBe('2');
+    const conn = await prisma.brokerConnection.findFirstOrThrow({ where: { accountId: accountB.id } });
+    expect(conn).toMatchObject({ status: BrokerConnectionStatus.CONNECTED, lastSyncError: null });
+  });
+
+  it('404 de Tradovate sur une lecture de données → « momentanément injoignable », connexion intacte', async () => {
+    const { id: userId, token } = await registerUser();
+    const account = await createAccount(userId, 'Compte');
+    await connect(token, account.id);
+    pairListNotFound = true;
+
+    const res = await api(token, `/accounts/${account.id}/sync`, 'POST');
+    expect(res.status).toBe(502);
+    const body = (await res.json()) as { code: string; message: string };
+    expect(body.code).toBe('TRADOVATE_UNAVAILABLE');
+    expect(body.message, 'Une reconnexion ne réglerait rien : ne pas y renvoyer').not.toMatch(/Reconnecte/);
+
+    const conn = await prisma.brokerConnection.findFirstOrThrow({ where: { accountId: account.id } });
+    expect(conn.status).toBe(BrokerConnectionStatus.CONNECTED);
+    expect(conn.lastSyncError ?? '').not.toMatch(/Reconnecte/);
   });
 
   it('compte démo : lecture de l’état autorisée, synchro et connexion bloquées', async () => {

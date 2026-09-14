@@ -87,8 +87,13 @@ export class TradovateApiError extends Error {
         return new TradovateException('TRADOVATE_ACCOUNT_SUSPENDED');
       case 'rate_limited':
         return new TradovateException('TRADOVATE_RATE_LIMITED');
+      // Un 404 de Tradovate sur une lecture de données ne dit PAS que le compte a disparu :
+      // `/fill/items` répond 404 à un lot trop gros, pour un compte parfaitement accessible.
+      // L'afficher comme « compte plus accessible, reconnecte-toi » envoyait l'utilisateur vers
+      // une reconnexion inutile. Le compte absent est levé explicitement (TRADOVATE_ACCOUNT_NOT_FOUND)
+      // là où on le vérifie vraiment : `/account/list` en synchro et à la sélection du compte.
       case 'not_found':
-        return new TradovateException('TRADOVATE_ACCOUNT_NOT_FOUND');
+        return new TradovateException('TRADOVATE_UNAVAILABLE');
       default:
         return new TradovateException('TRADOVATE_UNAVAILABLE');
     }
