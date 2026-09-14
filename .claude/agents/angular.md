@@ -578,8 +578,11 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
   (`AiApi` créé pour cooldown / insights / chat ; `TradesApi.importCsv`, `DebriefApi.exportPdf`,
   `AnalyticsApi.getDailyEquityCurve` ajoutés). Un type de réponse propre à un écran reste dans
   l'écran : la méthode d'API le reçoit en générique (`importCsv<ImportResult>`,
-  `insights<InsightsResponse>`). `trades.store` garde son appel direct : sa forme de page
-  (`nextCursor`/`hasNextPage`) diffère de `TradesApi.getAll` (`meta`) — à aligner à part.
+  `insights<InsightsResponse>`). `trades.store` passe aussi par `TradesApi.getAll`, typé sur la
+  vraie page de l'API (`TradesPage` : `data` + `nextCursor` + `hasNextPage`, pagination par
+  curseur ; l'ancien `PaginatedTrades` à `meta` n'existait pas côté back). Un seul type `Trade`
+  (celui de `trades.api.ts`), ré-exporté par le store. Dans un spec, la query d'une requête
+  construite avec `HttpParams` se lit dans `request.urlWithParams`, pas `request.url`.
 - **Un seul helper d'erreur** : `apiErrorMessage(err, repli)` vit dans `@mtc/shared` (sans
   Angular), ré-exporté par `core/utils/api-error.ts` ; l'admin l'importe directement. Plus de
   `err.error?.message ?? …` en ligne ni de `tradovateErrorText`.
