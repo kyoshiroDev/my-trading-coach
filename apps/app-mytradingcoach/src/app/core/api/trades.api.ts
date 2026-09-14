@@ -83,25 +83,25 @@ export interface CreateTradeDto {
 
 export type UpdateTradeDto = Partial<CreateTradeDto>;
 
+/** Filtres de GET /trades (query string) : miroir de `TradeFiltersDto` côté API. */
 export interface TradeFilters {
-  page?: number;
-  limit?: number;
+  cursor?: string;
+  limit?: number | string;
   side?: Trade['side'];
   setupId?: string;
-  emotion?: Trade['emotion'];
+  emotion?: string;
+  result?: 'WIN' | 'LOSS' | 'BREAKEVEN';
+  executionGrade?: string;
   dateFrom?: string;
   dateTo?: string;
-  cursor?: string;
+  accountId?: string;
 }
 
-export interface PaginatedTrades {
+/** Page de GET /trades (pagination par curseur, `trades.service.findAll`). */
+export interface TradesPage {
   data: Trade[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    nextCursor: string | null;
-  };
+  nextCursor: string | null;
+  hasNextPage: boolean;
 }
 
 /** KPIs du journal agrégés en base sur tout l'ensemble filtré (hors pagination). */
@@ -163,13 +163,14 @@ export class TradesApi {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/trades`;
 
-  getAll(filters: TradeFilters = {}): Observable<{ data: PaginatedTrades }> {
+  /** Une page de trades ; `cursor` = `nextCursor` de la page précédente. */
+  getAll(filters: TradeFilters | Record<string, string> = {}): Observable<{ data: TradesPage }> {
     let params = new HttpParams();
     Object.entries(filters).forEach(([key, val]) => {
       if (val !== undefined && val !== null)
         params = params.set(key, String(val));
     });
-    return this.http.get<{ data: PaginatedTrades }>(this.base, { params });
+    return this.http.get<{ data: TradesPage }>(this.base, { params });
   }
 
   /** KPIs du journal sur l'ensemble filtré complet (mêmes filtres que la liste, sans pagination). */
