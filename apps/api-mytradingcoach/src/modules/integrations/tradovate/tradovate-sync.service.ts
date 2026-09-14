@@ -22,8 +22,13 @@ import type {
   TradovateProduct,
 } from './tradovate.types';
 
-/** Taille des lots d'ids pour les endpoints `/xxx/items?ids=…` (URL raisonnable). */
-const ITEMS_BATCH = 100;
+/**
+ * Taille des lots d'ids pour les endpoints `/xxx/items?ids=…`. Tradovate répond 404 (corps
+ * vide) dès que le lot dépasse une dizaine d'ids : mesuré sur un compte réel, `/fill/items` et
+ * `/fillFee/items` passent avec 1, 2 et 10 ids, et échouent avec 41. À 100, la synchro d'un
+ * compte actif échouait entièrement.
+ */
+const ITEMS_BATCH = 10;
 
 export interface TradovateSyncResult {
   created: number;
@@ -127,7 +132,7 @@ export class TradovateSyncService {
     const pairs = allPairs.filter((p) => positionIds.has(p.positionId));
 
     const fillIds = [...new Set(pairs.flatMap((p) => [p.buyFillId, p.sellFillId]))];
-    const fills = await this.items<TradovateFill>(get, '/fill/items', fillIds);
+    const fills = await this.sessionEntities<TradovateFill>(get, '/fill/list', '/fill/items', fillIds);
     const fees = await this.optionalFees(get, fillIds);
 
     const contractIds = [...new Set([...fills.values()].map((f) => f.contractId))];
@@ -198,6 +203,39 @@ export class TradovateSyncService {
   }
 
   /**
+   * Entités de la séance lues par leur liste (`/xxx/list`, un seul appel) puis filtrées sur `ids` :
+   * les paires viennent de `/fillPair/list`, leurs fills et frais sont donc dans la même séance.
+   * Un id absent de la liste est relu par `/xxx/items` en petits lots ; un lot introuvable (404)
+   * est sauté plutôt que de faire échouer toute la synchro : la paire concernée ressort alors
+   * comme non convertible (`skipped`), les autres sont importées.
+   */
+  private async sessionEntities<T extends { id: number }>(
+    get: <R>(path: string, query?: Record<string, string>) => Promise<R>,
+    listPath: string,
+    itemsPath: string,
+    ids: number[],
+  ): Promise<Map<number, T>> {
+    const out = new Map<number, T>();
+    if (!ids.length) return out;
+    const wanted = new Set(ids);
+    const list = await get<T[]>(listPath);
+    for (const item of Array.isArray(list) ? list : []) {
+      if (wanted.has(item.id)) out.set(item.id, item);
+    }
+    const missing = ids.filter((id) => !out.has(id));
+    for (let i = 0; i < missing.length; i += ITEMS_BATCH) {
+      const chunk = missing.slice(i, i + ITEMS_BATCH);
+      try {
+        for (const [id, item] of await this.items<T>(get, itemsPath, chunk)) out.set(id, item);
+      } catch (err) {
+        if (!(err instanceof TradovateApiError && err.kind === 'not_found')) throw err;
+        this.logger.warn(`${itemsPath} : ${chunk.length} id(s) introuvable(s), paire(s) ignorée(s).`);
+      }
+    }
+    return out;
+  }
+
+  /**
    * Frais par fill. Non bloquant : si Tradovate refuse cette lecture, les trades sont importés
    * sans frais (P&L brut) et le rapport le signale (`merged: false`), comme un CSV sans Cash
    * history exploitable. Une vraie expiration de session reste, elle, remontée.
@@ -207,7 +245,7 @@ export class TradovateSyncService {
     fillIds: number[],
   ): Promise<Map<number, TradovateFillFee> | null> {
     try {
-      return await this.items<TradovateFillFee>(get, '/fillFee/items', fillIds);
+      return await this.sessionEntities<TradovateFillFee>(get, '/fillFee/list', '/fillFee/items', fillIds);
     } catch (err) {
       if (err instanceof TradovateApiError && (err.kind === 'forbidden' || err.kind === 'not_found')) {
         this.logger.warn(`fillFee indisponible : import sans frais (${err.message}).`);

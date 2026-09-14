@@ -5,7 +5,7 @@ export interface TradovateSnapshotInput {
   positions: TradovatePosition[];
   pairs: TradovateFillPair[];
   externalAccountId: number;
-  /** Fills effectivement lus (`fill/items`) pour les paires du compte. */
+  /** Fills effectivement lus (`fill/list`, repli `fill/items`) pour les paires du compte. */
   fillsFetched: number;
 }
 

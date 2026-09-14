@@ -63,7 +63,10 @@ function tradovate(rawUrl: string, init?: RequestInit): Response {
   if (path === '/account/list') return json(env === 'demo' ? [{ id: EXT_ACCOUNT, name: 'APEX-LIVE-01', userId: 1, active: true }] : []);
   if (path === '/position/list') return json([{ id: 9, accountId: EXT_ACCOUNT, contractId: CONTRACT, netPos: 0 }]);
   if (path === '/fillPair/list') return json(PAIRS);
+  // Fills et frais de la séance : lus par liste (cf. tradovate-sync.service, lots items ≤ 10).
+  if (path === '/fill/list') return json(FILLS);
   if (path === '/fill/items') return json(byIds(url, FILLS));
+  if (path === '/fillFee/list') return json(FILLS.map((f) => ({ id: f.id, commission: 0.35, exchangeFee: 0.1, clearingFee: 0.05, nfaFee: 0.02 })));
   if (path === '/fillFee/items') return json(byIds(url, FILLS).map((f) => ({ id: f.id, commission: 0.35, exchangeFee: 0.1, clearingFee: 0.05, nfaFee: 0.02 })));
   if (path === '/contract/items') return json([{ id: CONTRACT, name: 'MNQU6', contractMaturityId: 5001 }]);
   if (path === '/contractMaturity/items') return json([{ id: 5001, productId: 6001 }]);

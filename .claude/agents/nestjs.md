@@ -682,8 +682,16 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
   (`ok`|`partial`|`none`), `sync`, `from`. Un `state` illisible renvoie vers les réglages,
   jamais sur une page morte.
 - Chaîne de lecture : `position/list` (seul lien fill → compte) → `fillPair/list` (paires =
-  lignes de l'export Performance) → `fill/items` → `fillFee/items` (frais exacts, optionnels)
+  lignes de l'export Performance) → `fill/list` + `fillFee/list` (fills et frais exacts de la
+  séance, filtrés sur les paires ; un id absent est relu par `fill/items` / `fillFee/items`)
   → `contract` / `contractMaturity` / `product` (symbole, `valuePerPoint`).
+- ⚠ **Lots `/xxx/items` : 10 ids maximum.** Au-delà, Tradovate répond 404 à corps vide alors que
+  chaque entité existe (mesuré sur le compte de Val le 14/09/2026 : 1, 2 et 10 ids passent,
+  41 → 404). À 100 par lot, la synchro d'un compte actif échouait entièrement. Un fill
+  introuvable n'ignore que sa paire (`skipped`), jamais toute la synchro.
+- **Un 404 de lecture n'est pas « compte introuvable »** : `TradovateApiError('not_found')`
+  → `TRADOVATE_UNAVAILABLE`. Seule l'absence du compte dans `account/list` (synchro, choix du
+  compte) lève `TRADOVATE_ACCOUNT_NOT_FOUND`, qui invite à reconnecter.
 - P&L = **brut** `(vente − achat) × qty × valuePerPoint`, frais dans `commission` (comme le CSV).
   `tradedAt` tronqué à la seconde (granularité de l'export).
 - **Rapprochement CSV ↔ API** : l'export Performance est en heure LOCALE sans fuseau, parsée
