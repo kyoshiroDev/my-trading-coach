@@ -638,7 +638,15 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
 - **Mapper PUR** (`tradovate-trade.mapper.ts`) : entités broker → `Partial<CreateTradeDto>`,
   sans I/O, testé unitairement. Puis **`TradesService.importTrades`** — jamais un
   `trade.create` direct : c'est lui qui porte la dédup `importHash` + contrainte
-  d'unicité, le compte cible et le recalcul du barème comportemental. Un trade API doit avoir
+  d'unicité, le compte cible et le recalcul du barème comportemental.
+  **Répétitions ≠ doublons** : deux lignes identiques d'une même source (fichier, synchro) sont
+  deux trades — un trade à plusieurs contrats arrive souvent en plusieurs paires Tradovate de
+  mêmes prix et même seconde de clôture. La n-ième prend l'empreinte `clé#n` (`occurrenceHash`) :
+  réimporter la source ne recrée rien, une répétition manquante en base est créée. Le nettoyage
+  des doublons (`GET/DELETE /trades/duplicates`) raisonne sur `importHash ?? clé` pour ne jamais
+  supprimer une répétition légitime, et `isCrossSourceDuplicate` (fuseau CSV) exclut l'écart nul
+  et consomme un trade existant par paire. Avant ce correctif, 5 des 28 paires de Val (14/09/2026)
+  étaient écartées comme doublons. Un trade API doit avoir
   EXACTEMENT la forme d'un trade CSV du même broker (règles partagées dans
   `trades/tradovate-pair.util.ts`, utilisées par les DEUX chemins).
 - **Client HTTP en lecture seule** (`tradovate-api.client.ts`) : que des GET de données + les

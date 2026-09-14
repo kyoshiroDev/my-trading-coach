@@ -151,7 +151,15 @@ export class TradovateSyncService {
       where: { userId, asset: { in: [...new Set(mapped.trades.map((t) => t.asset as string))] } },
       select: { asset: true, side: true, entry: true, exit: true, pnl: true, tradedAt: true },
     });
-    const fresh = mapped.trades.filter((t) => !isCrossSourceDuplicate(t, existing));
+    // Un-pour-un : un trade CSV n'absorbe qu'UNE paire (4 paires identiques face à 1 trade CSV
+    // → 3 restent à importer). À heure identique, c'est `importTrades` qui tranche.
+    const pool = [...existing];
+    const fresh = mapped.trades.filter((t) => {
+      const i = pool.findIndex((e) => isCrossSourceDuplicate(t, [e]));
+      if (i === -1) return true;
+      pool.splice(i, 1);
+      return false;
+    });
     const crossSourceDuplicates = mapped.trades.length - fresh.length;
 
     // Mêmes valeurs de lot que l'import CSV : compte cible, setup par défaut, émotion non renseignée.

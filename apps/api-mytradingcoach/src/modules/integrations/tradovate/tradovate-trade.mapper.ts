@@ -200,6 +200,10 @@ const MAX_TZ_OFFSET_MS = 14 * 60 * 60 * 1000;
  * L'API donne l'UTC réel. Le même trade diffère donc d'un décalage horaire entier (ou d'une
  * demi-heure pour certains fuseaux) — et de rien d'autre : mêmes prix, même P&L, mêmes
  * minutes et secondes. On reconnaît ce cas précis, borné à ±14 h.
+ *
+ * Écart nul exclu : à la même heure exacte l'empreinte coïncide, et c'est `importTrades` qui
+ * tranche en comptant les répétitions. L'accepter ici faisait absorber par UN trade existant
+ * toutes les paires identiques d'un trade à plusieurs contrats.
  */
 export function isCrossSourceDuplicate(
   dto: TradovateTradeDto,
@@ -212,6 +216,6 @@ export function isCrossSourceDuplicate(
     if (e.entry !== dto.entry || (e.exit ?? null) !== (dto.exit ?? null)) return false;
     if (e.pnl == null || dto.pnl == null || Math.abs(e.pnl - dto.pnl) >= 0.005) return false;
     const delta = Math.abs(e.tradedAt.getTime() - at);
-    return delta <= MAX_TZ_OFFSET_MS && delta % HALF_HOUR_MS === 0;
+    return delta > 0 && delta <= MAX_TZ_OFFSET_MS && delta % HALF_HOUR_MS === 0;
   });
 }
