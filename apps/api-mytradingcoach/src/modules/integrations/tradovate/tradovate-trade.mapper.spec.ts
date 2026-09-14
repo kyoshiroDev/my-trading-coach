@@ -177,4 +177,11 @@ describe('importHash et rapprochement avec un import CSV', () => {
     expect(isCrossSourceDuplicate(api, [{ ...base, side: 'LONG' }])).toBe(false);
     expect(isCrossSourceDuplicate(api, [{ ...base, tradedAt: new Date('2026-07-09T13:34:00Z') }])).toBe(false); // > 14 h
   });
+
+  it('même heure exacte : pas un « doublon CSV », c’est importTrades qui compte les répétitions', () => {
+    // Sinon UN trade existant absorbait toutes les paires identiques d'un trade à plusieurs contrats.
+    const [api] = mapTradovatePairs(input()).trades;
+    const same = { asset: 'MNQ', side: 'SHORT', entry: 29915, exit: 29903.5, pnl: 23, tradedAt: new Date(api.tradedAt as string) };
+    expect(isCrossSourceDuplicate(api, [same])).toBe(false);
+  });
 });

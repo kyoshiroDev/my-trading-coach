@@ -79,8 +79,25 @@ const extraPairsOf = () =>
     id: 100 + i, positionId: 9, buyFillId: EXTRA_BASE + 2 * i, sellFillId: EXTRA_BASE + 2 * i + 1,
     qty: 1, buyPrice: 31000 + i, sellPrice: 31004 + i, active: true,
   }));
-const allFills = () => [...FILLS, ...extraFills()];
-const allPairs = () => [...PAIRS, ...extraPairsOf()];
+// Trade à N contrats découpé en N paires d'un contrat partageant le fill de vente : mêmes prix,
+// même seconde de clôture → même empreinte (synchro de Val, 14/09/2026).
+let identicalPairs = 0;
+const SPLIT_SELL = 610000000000;
+const splitFills = () =>
+  identicalPairs
+    ? [
+        fill(SPLIT_SELL, 'Sell', 32010, '2026-07-13T15:00:00.000Z'),
+        ...Array.from({ length: identicalPairs }, (_, i) =>
+          fill(SPLIT_SELL + 1 + i, 'Buy', 32000, `2026-07-13T14:59:0${i}.000Z`)),
+      ]
+    : [];
+const splitPairs = () =>
+  Array.from({ length: identicalPairs }, (_, i) => ({
+    id: 200 + i, positionId: 9, buyFillId: SPLIT_SELL + 1 + i, sellFillId: SPLIT_SELL,
+    qty: 1, buyPrice: 32000, sellPrice: 32010, active: true,
+  }));
+const allFills = () => [...FILLS, ...extraFills(), ...splitFills()];
+const allPairs = () => [...PAIRS, ...extraPairsOf(), ...splitPairs()];
 const feeOf = (f: { id: number }) => ({ id: f.id, commission: 0.35, exchangeFee: 0.1, clearingFee: 0.05, nfaFee: 0.02 });
 const notFound = () => new Response('', { status: 404 });
 const tooMany = (url: URL) => (url.searchParams.get('ids') ?? '').split(',').filter(Boolean).length > ITEMS_LIMIT;
@@ -182,6 +199,7 @@ beforeEach(() => {
   listOmits = new Set();
   itemsNotFound = false;
   pairListNotFound = false;
+  identicalPairs = 0;
 });
 
 async function registerUser(): Promise<{ id: string; token: string }> {
@@ -478,6 +496,26 @@ describe('Tradovate — synchro', () => {
     expect(second.location.searchParams.get('trades')).toBe('2');
     const conn = await prisma.brokerConnection.findFirstOrThrow({ where: { accountId: accountB.id } });
     expect(conn).toMatchObject({ status: BrokerConnectionStatus.CONNECTED, lastSyncError: null });
+  });
+
+  it('trade à plusieurs contrats (paires identiques) : chaque paire devient un trade, resynchro sans doublon', async () => {
+    // Synchro de Val (14/09/2026) : 4 paires d'un contrat, même fill de vente, mêmes prix →
+    // même empreinte ; 3 étaient écartées comme « doublons » (contrats et P&L perdus).
+    identicalPairs = 4;
+    const { id: userId, token } = await registerUser();
+    const account = await createAccount(userId, 'Compte multi-contrats');
+    const { location } = await connect(token, account.id);
+
+    expect(location.searchParams.get('trades')).toBe('7'); // 3 de base + 4 paires identiques
+    const split = await prisma.trade.findMany({ where: { userId, entry: 32000 }, select: { importHash: true } });
+    expect(split).toHaveLength(4);
+    expect(new Set(split.map((t) => t.importHash)).size, 'une empreinte distincte par répétition').toBe(4);
+
+    const again = await api(token, `/accounts/${account.id}/sync`, 'POST');
+    expect(again.status, await again.clone().text()).toBe(201);
+    const r = ((await again.json()) as { data: { created: number; duplicates: number } }).data;
+    expect(r).toMatchObject({ created: 0, duplicates: 7 });
+    expect(await prisma.trade.count({ where: { userId } })).toBe(7);
   });
 
   it('404 de Tradovate sur une lecture de données → « momentanément injoignable », connexion intacte', async () => {

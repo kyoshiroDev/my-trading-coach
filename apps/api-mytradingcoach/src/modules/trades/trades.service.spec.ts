@@ -536,31 +536,54 @@ describe('TradesService', () => {
   });
 
   describe('importTrades — déduplication', () => {
-    it('skip les trades déjà en base ET les doublons internes au lot', async () => {
-      const tradedAt = new Date('2026-05-30T14:31:55.000Z');
-      // Un trade déjà présent en base
-      mockPrisma.trade.findMany.mockResolvedValue([
-        { asset: 'BTC/USDT', side: TradeSide.LONG, tradedAt, entry: 100, exit: 110, pnl: 10 },
-      ]);
+    const tradedAt = new Date('2026-05-30T14:31:55.000Z');
+    const row = (asset: string) => ({ asset, side: TradeSide.LONG, tradedAt, entry: 100, exit: 110, pnl: 10 });
+    const dto = (asset: string): Partial<CreateTradeDto> => ({
+      asset, side: TradeSide.LONG, entry: 100, exit: 110, pnl: 10,
+      emotion: EmotionState.NEUTRAL, setupId: 'setup-1',
+      session: TradingSession.LONDON, timeframe: '1h', tradedAt: tradedAt.toISOString(),
+    });
+    const hashes = () => mockPrisma.trade.create.mock.calls.map((c: [{ data: { importHash: string } }]) => c[0].data.importHash);
+
+    it('skip les trades déjà en base ; deux lignes identiques du lot sont deux trades', async () => {
+      // Une ligne répétée dans une même source n'est pas un doublon : un trade à plusieurs
+      // contrats arrive en plusieurs paires Tradovate identiques (synchro de Val, 14/09/2026).
+      mockPrisma.trade.findMany.mockResolvedValue([row('BTC/USDT')]);
       mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
       mockPrisma.trade.create.mockResolvedValue(mockTrade);
 
-      const dup: Partial<CreateTradeDto> = {
-        asset: 'BTC/USDT', side: TradeSide.LONG, entry: 100, exit: 110, pnl: 10,
-        emotion: EmotionState.NEUTRAL, setupId: 'setup-1',
-        session: TradingSession.LONDON, timeframe: '1h', tradedAt: tradedAt.toISOString(),
-      };
-      const fresh: Partial<CreateTradeDto> = { ...dup, asset: 'ETH/USDT' };
-
       const res = await service.importTrades(
         'user-123',
-        [dup, fresh, { ...fresh }], // dup (déjà en base) + ETH + ETH (doublon intra-lot)
+        [dto('BTC/USDT'), dto('ETH/USDT'), dto('ETH/USDT')], // BTC déjà en base + ETH ×2
       );
 
       expect(res.total).toBe(3);
-      expect(res.created).toBe(1); // seul ETH créé une fois
-      expect(res.duplicates).toBe(2); // dup déjà en base + 2e ETH du lot
-      expect(mockPrisma.trade.create).toHaveBeenCalledTimes(1);
+      expect(res.created).toBe(2); // les deux ETH
+      expect(res.duplicates).toBe(1); // BTC déjà en base
+      const [first, second] = hashes();
+      expect(second).toBe(`${first}#2`);
+    });
+
+    it('réimport de la même source : aucune répétition recréée', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue([row('ETH/USDT'), row('ETH/USDT')]);
+      mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
+
+      const res = await service.importTrades('user-123', [dto('ETH/USDT'), dto('ETH/USDT')]);
+
+      expect(res).toMatchObject({ created: 0, duplicates: 2 });
+      expect(mockPrisma.trade.create).not.toHaveBeenCalled();
+    });
+
+    it('répétition présente une seule fois en base : seules les manquantes sont créées', async () => {
+      // Cas de Val : 4 paires identiques, 1 seule importée avant le correctif.
+      mockPrisma.trade.findMany.mockResolvedValue([row('ETH/USDT')]);
+      mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
+      mockPrisma.trade.create.mockResolvedValue(mockTrade);
+
+      const res = await service.importTrades('user-123', [dto('ETH/USDT'), dto('ETH/USDT'), dto('ETH/USDT'), dto('ETH/USDT')]);
+
+      expect(res).toMatchObject({ created: 3, duplicates: 1 });
+      expect(hashes().map((h: string) => h.split('#')[1])).toEqual(['2', '3', '4']);
     });
 
     it('crée tous les trades quand aucun doublon', async () => {
@@ -613,6 +636,17 @@ describe('TradesService', () => {
       const res = await service.removeDuplicates('user-123');
 
       expect(res.removed).toBe(0);
+      expect(mockPrisma.trade.deleteMany).not.toHaveBeenCalled();
+    });
+
+    it('une répétition légitime (empreinte #2) n’est jamais un doublon', async () => {
+      // Deux paires identiques d'un trade à plusieurs contrats : mêmes champs, empreintes distinctes.
+      const key = 'BTC/USDT|LONG|2026-01-01T10:00:00.000Z|100|110|10';
+      const legit = [{ ...dupRows[0], importHash: key }, { ...dupRows[1], importHash: `${key}#2` }];
+      mockPrisma.trade.findMany.mockResolvedValue(legit);
+
+      expect((await service.countDuplicates('user-123')).duplicates).toBe(0);
+      expect((await service.removeDuplicates('user-123')).removed).toBe(0);
       expect(mockPrisma.trade.deleteMany).not.toHaveBeenCalled();
     });
   });
