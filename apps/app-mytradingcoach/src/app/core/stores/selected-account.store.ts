@@ -28,6 +28,21 @@ export class SelectedAccountStore {
     return this.accounts().find((a) => a.id === id) ?? null;
   });
 
+  /**
+   * Devise NATIVE des montants affichés (PROMPT-213) : celle du compte sélectionné ; en « Tous
+   * les comptes », leur devise commune ; `null` si elles diffèrent (on n'additionne pas des USD
+   * et des EUR sous un symbole). Aucune conversion : jamais de `User.currencyRate`. Sans compte
+   * chargé → USD, la devise par défaut d'un `TradingAccount`.
+   */
+  readonly displayCurrency = computed<string | null>(() => {
+    const norm = (c: string | null | undefined) => (c?.trim().toUpperCase() || 'USD');
+    const sel = this.selected();
+    if (sel) return norm(sel.currency);
+    const codes = new Set(this.accounts().map((a) => norm(a.currency)));
+    if (codes.size === 0) return 'USD';
+    return codes.size === 1 ? [...codes][0] : null;
+  });
+
   /** Comptes actifs (pour le choix de session : 1 session = 1 compte actif). */
   readonly activeAccounts = computed(() =>
     this.accounts().filter((a) => a.status === 'ACTIVE'),

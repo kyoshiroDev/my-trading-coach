@@ -7,7 +7,7 @@ import {
   output,
 } from '@angular/core';
 import { MonthlyActivitySummary, DailyActivity } from '../../../core/api/analytics.api';
-import { UserStore } from '../../../core/stores/user.store';
+import { MoneyService } from '../../../core/services/money.service';
 
 export interface CalendarCell {
   date: string;
@@ -108,7 +108,7 @@ export class ActivityCalendarComponent {
 
   readonly monthChange = output<{ year: number; month: number }>();
 
-  private readonly userStore = inject(UserStore);
+  private readonly moneyService = inject(MoneyService);
   protected readonly dayLabels = DAY_LABELS;
 
   protected readonly monthLabel = computed(() => {
@@ -173,14 +173,14 @@ export class ActivityCalendarComponent {
     return `${cell.date} · ${this.money(pnl)} · ${tradesCount} trades · ${winRate.toFixed(0)}% WR`;
   }
 
-  /** P&L net (frais déduits, calculé côté API) dans la devise du user. */
+  /** P&L net (frais déduits, calculé côté API) dans la devise native du compte, sans conversion. */
   protected money(pnl: number): string {
-    return this.userStore.formatMoney(pnl, { decimals: 0 });
+    return this.moneyService.format(pnl, { decimals: 0 });
   }
 
   /** Cellule étroite : compact et sans symbole (le total du mois le porte). */
   protected formatPnl(pnl: number): string {
-    return this.userStore.formatMoney(pnl, { decimals: 0, compact: true, symbol: false });
+    return this.moneyService.format(pnl, { decimals: 0, compact: true, symbol: false });
   }
 
   protected prevMonth(): void {

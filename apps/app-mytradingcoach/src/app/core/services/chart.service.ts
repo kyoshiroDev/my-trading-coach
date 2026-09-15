@@ -11,7 +11,7 @@ import {
   ScriptableContext,
 } from 'chart.js';
 import { EquityPoint } from '../api/analytics.api';
-import { UserStore } from '../stores/user.store';
+import { MoneyService } from './money.service';
 
 /** Libellé du point de départ ajouté devant chaque courbe (capital de base / drawdown 0). */
 const START_LABEL = 'Départ';
@@ -19,11 +19,11 @@ const START_LABEL = 'Départ';
 @Injectable({ providedIn: 'root' })
 export class ChartService {
   private static registered = false;
-  private readonly userStore = inject(UserStore);
+  private readonly moneyService = inject(MoneyService);
 
-  /** Montant USD → devise du user, compact (1.2k) : axes et infobulles des courbes. */
+  /** Montant dans la devise native du compte, compact (1.2k) : axes et infobulles des courbes. */
   private money(v: number, sign = false): string {
-    return this.userStore.formatMoney(v, { decimals: 0, compact: true, sign });
+    return this.moneyService.format(v, { decimals: 0, compact: true, sign });
   }
 
   private register(): void {

@@ -197,19 +197,23 @@ mentir. Sous 768px : 40px, la phrase longue (`.demo-banner-long`) tombe, le CTA 
 ```typescript
 // Toujours utiliser les pipes, jamais de logique inline
 PnlColorPipe      // couleur verte/rouge selon pnl
-PnlFormatPipe     // montant signé dans la devise du user (+$1,234.56 / -€92.00), % optionnel
+PnlFormatPipe     // montant signé dans la devise NATIVE du compte (+$1,234.56), % optionnel
 MoneyPipe         // idem avec décimales / sans « + » : {{ pnl | money:0 }}, {{ fees | money:2:false }}
 EmotionEmojiPipe  // emoji selon état émotionnel
 SessionLabelPipe  // label lisible de la session
 SetupColorPipe    // couleur selon setup
 ```
 
-**Montants = formateur unique** (PROMPT-213) : l'API renvoie des USD ; la conversion (`currency` +
-`currencyRate` du user) et le symbole passent TOUS par `formatMoney` (`core/utils/money.ts`), exposé
-par `UserStore.formatMoney()` / `moneyFormat` et les pipes `pnlFormat` / `money`. **Jamais de `$` en
-dur** dans un template, un graphe Chart.js (`ChartService`) ou un libellé calculé : le calendrier et
-les courbes affichaient un `$` sans conversion pour un compte en EUR. Exception : les soldes de
-`TradingAccount` (devise du compte, `account-selector`, page Comptes).
+**Montants = devise native du compte, ZÉRO conversion** (PROMPT-213) : un montant s'affiche dans la
+devise de son compte de trading (`TradingAccount.currency`), tel que reçu du broker — un compte prop
+firm en USD s'affiche en USD pour tout le monde. Tout passe par `formatMoney(value, currency)`
+(`core/utils/money.ts`), exposé par `MoneyService.format()` et les pipes `pnlFormat` / `money`. La
+devise vient de `SelectedAccountStore.displayCurrency` : compte sélectionné, sinon devise commune de
+« Tous les comptes », `null` (aucun symbole) si les comptes ont des devises différentes — jamais un
+symbole deviné. **`User.currencyRate` et `User.currency` ne servent PLUS à afficher un montant**
+(le taux, pris sur exchangerate-api au choix de la préférence puis figé, multipliait des USD pour les
+afficher en « € ») : ne jamais les réintroduire dans un formatage. **Jamais de `$` en dur** dans un
+template, un graphe Chart.js (`ChartService`) ou un libellé calculé.
 
 **P&L affiché = net** : un montant par trade se lit via `netPnl(t)` de `@mtc/shared`
 (`pnl` brut − frais), jamais `t.pnl` brut (tableau des trades récents, live feed). Les agrégats de

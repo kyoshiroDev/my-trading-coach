@@ -1,16 +1,13 @@
 /**
- * Formatage monétaire UNIQUE de l'app (PROMPT-213). Les montants arrivent de l'API en USD ;
- * ils sont convertis dans la devise d'affichage du user (`currency` + `currencyRate`) et
- * préfixés du bon symbole. Plus de `$` en dur : le calendrier, les courbes et les KPIs
- * affichaient chacun leur format, parfois sans conversion pour un compte en EUR.
+ * Formatage monétaire UNIQUE de l'app (PROMPT-213). Un montant s'affiche dans la devise NATIVE
+ * de son compte de trading (`TradingAccount.currency`), **sans aucune conversion** : un compte
+ * prop firm en USD s'affiche en USD pour tout le monde. Plus de `$` en dur (le calendrier, les
+ * courbes et les KPIs avaient chacun leur format) et plus de taux (`User.currencyRate`, figé au
+ * choix de la préférence, multipliait des montants USD pour les afficher en « € »).
  */
-export type DisplayCurrency = 'USD' | 'EUR';
 
-export interface MoneyFormat {
-  currency: DisplayCurrency;
-  /** Taux USD → devise d'affichage (1 en USD). */
-  rate: number;
-}
+/** Code ISO 4217 du compte (`USD`, `EUR`…) ; `null` = devise inconnue ou comptes de devises mêlées. */
+export type CurrencyCode = string | null;
 
 export interface MoneyOptions {
   /** Décimales (défaut 2). */
@@ -23,19 +20,21 @@ export interface MoneyOptions {
   symbol?: boolean;
 }
 
-export const USD_FORMAT: MoneyFormat = { currency: 'USD', rate: 1 };
+const SYMBOLS: Record<string, string> = { USD: '$', EUR: '€', GBP: '£' };
 
-export function currencySymbol(currency: DisplayCurrency): string {
-  return currency === 'EUR' ? '€' : '$';
+/** `$`, `€`, `£` ; autre code → « CHF » suivi d'une espace ; `null` → rien (jamais de symbole deviné). */
+export function currencySymbol(currency: CurrencyCode): string {
+  if (!currency) return '';
+  const code = currency.trim().toUpperCase();
+  return SYMBOLS[code] ?? `${code} `;
 }
 
-/** `+$1,234.56`, `-€92.00`, `+$1.2k`… à partir d'un montant en USD. */
-export function formatMoney(usd: number, fmt: MoneyFormat, opts: MoneyOptions = {}): string {
+/** `+$1,234.56`, `-€92.00`, `+$1.2k`… Le montant est affiché tel quel, jamais converti. */
+export function formatMoney(value: number, currency: CurrencyCode, opts: MoneyOptions = {}): string {
   const { decimals = 2, sign = true, compact = false, symbol = true } = opts;
-  const value = usd * fmt.rate;
   const abs = Math.abs(value);
   const prefix = value < 0 ? '-' : sign ? '+' : '';
-  const sym = symbol ? currencySymbol(fmt.currency) : '';
+  const sym = symbol ? currencySymbol(currency) : '';
   const body =
     compact && abs >= 1000
       ? `${(abs / 1000).toFixed(1)}k`

@@ -22,6 +22,7 @@ import {
 } from '@lucide/angular';
 import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
+import { MoneyService } from '../../core/services/money.service';
 import { TradesStore } from '../../core/stores/trades.store';
 import { SessionStore } from '../../core/stores/session.store';
 import { PRICING } from '../../core/constants/pricing.const';
@@ -97,6 +98,7 @@ import { netPnl } from '@mtc/shared';
 })
 export class DashboardComponent {
   protected readonly userStore    = inject(UserStore);
+  private  readonly money         = inject(MoneyService);
   protected readonly tradesStore  = inject(TradesStore);
   protected readonly sessionStore = inject(SessionStore);
   protected readonly selectedAccount = inject(SelectedAccountStore);
@@ -246,14 +248,11 @@ export class DashboardComponent {
   protected readonly currentCapital = computed(() =>
     this.baseCapital() + (this.summary()?.totalPnl ?? 0),
   );
-  protected readonly currency = computed(() => this.userStore.user()?.currency ?? 'USD');
-  protected readonly currencyRate = computed(() => this.userStore.user()?.currencyRate ?? 1);
-
   /** Sous-titre courbe d'équité : « +$X sur 3 mois · base $Y » (période courante). */
   protected readonly equitySub = computed(() => {
     const base   = this.baseCapital();
     const period = this.summary()?.totalPnl ?? 0;
-    const fmt    = (n: number, sign: boolean) => this.userStore.formatMoney(n, { decimals: 0, sign });
+    const fmt    = (n: number, sign: boolean) => this.money.format(n, { decimals: 0, sign });
     return `${fmt(period, true)} ${this.periodShort()} · base ${fmt(base, false)}`;
   });
   /**
@@ -401,7 +400,7 @@ export class DashboardComponent {
     return days === null
       ? null
       : buildPlBuckets(days, this.plGranularity(), this.periodRange(), (v) =>
-          this.userStore.formatMoney(v, { decimals: 0, compact: true, symbol: false }),
+          this.money.format(v, { decimals: 0, compact: true, symbol: false }),
         );
   });
 

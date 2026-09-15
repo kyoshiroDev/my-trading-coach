@@ -12,7 +12,7 @@ import { MoodState, TradingSession, LiveStats, SessionTrade } from '../../../../
 import { CreateTradeDto, MarketContext, NewsItem } from '../../../../core/api/trades.api';
 import { MarketContextBarComponent } from '../market-context-bar/market-context-bar.component';
 import { EcoSocketService } from '../../../../core/services/eco-socket.service';
-import { UserStore } from '../../../../core/stores/user.store';
+import { MoneyService } from '../../../../core/services/money.service';
 import { LiveNewsComponent } from './components/live-news/live-news.component';
 import { LiveFeedComponent } from './components/live-feed/live-feed.component';
 import { LiveEcoCalendarComponent } from './components/live-eco-calendar/live-eco-calendar.component';
@@ -73,10 +73,10 @@ export class SessionLiveComponent {
     });
   }
 
-  private readonly userStore = inject(UserStore);
+  private readonly money = inject(MoneyService);
 
   protected readonly pnlDisplay = computed(() =>
-    this.userStore.formatMoney(this.liveStats()?.totalPnl ?? 0, { decimals: 0 }),
+    this.money.format(this.liveStats()?.totalPnl ?? 0, { decimals: 0 }),
   );
 
   protected moodEmoji(mood?: MoodState | null): string {

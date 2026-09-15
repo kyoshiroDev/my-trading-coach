@@ -1,17 +1,17 @@
 import { Pipe, PipeTransform, inject } from '@angular/core';
-import { UserStore } from '../../core/stores/user.store';
+import { MoneyService } from '../../core/services/money.service';
 
+/** Montant signé dans la devise native du compte affiché, sans conversion ; `%` optionnel. */
 @Pipe({ name: 'pnlFormat', pure: false })
 export class PnlFormatPipe implements PipeTransform {
-  private readonly userStore = inject(UserStore);
+  private readonly money = inject(MoneyService);
 
   transform(value: number | null | undefined, entry?: number | null): string {
     if (value == null) return '-';
 
-    let result = this.userStore.formatMoney(value);
+    let result = this.money.format(value);
 
     if (entry != null && entry > 0) {
-      // Le % reste basé sur la valeur originale (ratio inchangé par la conversion)
       const pct = (value / entry) * 100;
       const pctSign = pct >= 0 ? '+' : '';
       result += ` (${pctSign}${pct.toFixed(2)}%)`;
