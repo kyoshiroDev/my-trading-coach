@@ -197,23 +197,34 @@ mentir. Sous 768px : 40px, la phrase longue (`.demo-banner-long`) tombe, le CTA 
 ```typescript
 // Toujours utiliser les pipes, jamais de logique inline
 PnlColorPipe      // couleur verte/rouge selon pnl
-PnlFormatPipe     // montant signé dans la devise NATIVE du compte (+$1,234.56), % optionnel
+PnlFormatPipe     // montant signé dans la devise NATIVE du compte : {{ t.pnl | pnlFormat : t.entry : t.accountId }}
 MoneyPipe         // idem avec décimales / sans « + » : {{ pnl | money:0 }}, {{ fees | money:2:false }}
 EmotionEmojiPipe  // emoji selon état émotionnel
 SessionLabelPipe  // label lisible de la session
 SetupColorPipe    // couleur selon setup
 ```
 
-**Montants = devise native du compte, ZÉRO conversion** (PROMPT-213) : un montant s'affiche dans la
-devise de son compte de trading (`TradingAccount.currency`), tel que reçu du broker — un compte prop
-firm en USD s'affiche en USD pour tout le monde. Tout passe par `formatMoney(value, currency)`
-(`core/utils/money.ts`), exposé par `MoneyService.format()` et les pipes `pnlFormat` / `money`. La
-devise vient de `SelectedAccountStore.displayCurrency` : compte sélectionné, sinon devise commune de
-« Tous les comptes », `null` (aucun symbole) si les comptes ont des devises différentes — jamais un
-symbole deviné. **`User.currencyRate` et `User.currency` ne servent PLUS à afficher un montant**
-(le taux, pris sur exchangerate-api au choix de la préférence puis figé, multipliait des USD pour les
-afficher en « € ») : ne jamais les réintroduire dans un formatage. **Jamais de `$` en dur** dans un
-template, un graphe Chart.js (`ChartService`) ou un libellé calculé.
+**Devise = propriété DU COMPTE, ZÉRO conversion, AUCUNE préférence globale** (PROMPT-213/214) :
+un montant s'affiche dans la devise de son compte de trading (`TradingAccount.currency`), tel que
+reçu — un compte prop firm en USD s'affiche en USD pour tout le monde. Source UNIQUE front + back :
+`@mtc/shared` (`libs/shared/src/currency.ts`) — `ACCOUNT_CURRENCIES` (USD, USDT, EUR : sélecteurs
+de l'onboarding et de la page Comptes, validation API), `formatMoney(value, currency)` (`$1.00`,
+`€1.00`, `1.00 USDT` : code APRÈS le montant pour les devises sans symbole), `commonCurrency`.
+- **Totaux de l'écran** : `MoneyService.format()` / pipes → `SelectedAccountStore.displayCurrency`
+  (compte sélectionné, sinon devise commune de « Tous les comptes »).
+- **Ligne de trade** : devise de SON compte → passer l'`accountId` (`pnlFormat : entry : accountId`,
+  `MoneyService.formatFor`). `Trade.accountId` est exposé par l'API.
+- **Devises mêlées en « Tous les comptes »** (`MoneyService.mixed()`) : pas de totaux (on
+  n'additionne pas des USD et des EUR) → `<mtc-mixed-currency-notice />` (« choisis un compte ») à
+  la place des KPI / courbes / calendrier (dashboard, analytics, résumé et totaux jour/semaine du
+  journal) ; les lignes de trades restent, chacune dans sa devise. Formateur avec devise `null` →
+  aucun symbole, jamais un symbole deviné.
+- **Compte synchronisé** : devise imposée par le broker, sélecteur désactivé (`formSynced`) et refusé
+  côté API. Onboarding : le choix USD / USDT / EUR est la devise du compte créé, rien au profil.
+- **`User.currency` / `User.currencyRate` n'existent plus côté front** (plus de réglage « Devise
+  d'affichage », plus de taux) : ne jamais réintroduire de conversion. **Jamais de `$` en dur**
+  dans un template, un graphe Chart.js (`ChartService`) ou un libellé calculé (récaps d'import
+  compris : devise du compte cible).
 
 **P&L affiché = net** : un montant par trade se lit via `netPnl(t)` de `@mtc/shared`
 (`pnl` brut − frais), jamais `t.pnl` brut (tableau des trades récents, live feed). Les agrégats de

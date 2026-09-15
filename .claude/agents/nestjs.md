@@ -138,6 +138,19 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   `SetupsService.getImportSetupId`, qui trouve ou crée (ou désarchive) le setup `IMPORT_SETUP_TITLE`
   (`#6b7280`, sortOrder 999). Plus de repli sur le premier setup du user (qui rangeait tout en
   « Breakout » et faussait les stats par setup).
+- **Devise = propriété DU COMPTE, jamais convertie, jamais globale** (PROMPT-214) :
+  `TradingAccount.currency` ∈ `ACCOUNT_CURRENCIES` (`@mtc/shared`, liste unique front + back ;
+  DTO create/update : `@Transform(normalizeCurrencyCode)` + `@IsIn`). Compte synchronisé : devise
+  posée par la connexion (`selectAccount` → `TRADOVATE_ACCOUNT_CURRENCY` = USD, **hypothèse avec
+  TODO** : lire `cashBalance.currencyId` dès qu'un compte non-USD apparaît) et **refusée** en
+  update (`AccountsService.update`, 400). Montants serveur visibles (emails débrief / recap, PDF,
+  prompts IA) : `formatMoney` avec la devise du compte, ou `userAmountsCurrency()`
+  (`common/utils/user-currency.util.ts` : devise commune des comptes non archivés, `null` si mêlées
+  → sans symbole). **Plus aucun taux** : `User.currencyRate` n'est plus lu ni écrit (ni
+  exchangerate-api, ni cache). Les champs `currency` des DTO onboarding / préférences sont encore
+  ACCEPTÉS mais IGNORÉS (`@deprecated`, pour ne pas rejeter un front en cache avec
+  `forbidNonWhitelisted`) : à retirer avec les colonnes (migration séparée, cf. `prisma.md`).
+  Seuls `$` en dur tolérés : logs internes (coût Anthropic, réellement en USD).
 - **Filtre journal « émotion effective »** (PROMPT-166) : l'émotion effective d'un trade =
   `trade.emotion` (override) `??` `tradeSession.moodStart` (humeur de session). Filtrer dessus dans
   `buildTradeWhere` = un **`OR` Prisma** sur les deux sources — `[{ emotion: V }, { emotion: null,

@@ -42,6 +42,13 @@ manuelle stockait un net (le formulaire envoyait `pnlNet`, `calculatePnl` retira
 tandis que les imports stockaient du brut, et chaque écran choisissait brut ou net : sur le compte
 de Val, Analytics affichait −41,10 $ et le calendrier +24 $ pour la même journée.
 
+## Devise des montants — celle du compte, jamais convertie (PROMPT-214)
+Un P&L est exprimé dans la devise de son compte de trading (`TradingAccount.currency`) : un contrat
+MNQ sur un compte prop firm USD donne des USD, affichés en USD pour tout le monde. Aucun taux de
+change n'est appliqué nulle part (l'ancien `User.currencyRate` a été retiré). Les calculs de P&L
+(ticks × tickValue, P&L réalisé du broker) ne connaissent pas la devise d'affichage ; seul le
+formateur `formatMoney` de `@mtc/shared` y ajoute le symbole du compte.
+
 ## Règle P&L absolue — le réalisé prime sur le recalcul
 Si un `pnl` réalisé est fourni (import broker, ou édition sans changement de prix/qty), il fait FOI :
 `calculatePnl` retourne `dto.pnl` (brut, arrondi au centime) AVANT tout recalcul `points × qty`.
