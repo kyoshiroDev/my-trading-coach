@@ -437,19 +437,6 @@
           <div class="settings-section-label">Préférences</div>
           <div class="settings-card">
 
-            <!-- Devise -->
-            <div class="settings-row">
-              <div class="settings-row-left">
-                <span class="settings-row-label">Devise d'affichage</span>
-                <span class="settings-row-hint">Utilisée pour l'affichage du P&amp;L</span>
-              </div>
-              <select class="settings-select" [value]="prefCurrency()"
-                (change)="prefCurrency.set($any($event.target).value)">
-                <option value="USD">USD ($)</option>
-                <option value="EUR">EUR (€)</option>
-              </select>
-            </div>
-
             <!-- Notifications -->
             <div class="settings-row">
               <div class="settings-row-left">

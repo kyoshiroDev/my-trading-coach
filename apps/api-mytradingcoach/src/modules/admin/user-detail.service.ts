@@ -36,8 +36,8 @@ export interface AdminUserDetailDto {
     tradesPerDayMin: number | null;
     tradesPerDayMax: number | null;
     strategyDescription: string | null;
+    /** Capital déclaré au profil, sans devise : la devise est celle de chaque compte (PROMPT-214). */
     startingCapital: number;
-    currency: string;
   };
   // Usage réel (trades) : est-ce qu'il utilise vraiment l'app.
   usage: {
@@ -74,7 +74,7 @@ export class UserDetailService {
         createdAt: true, lastSeenAt: true,
         market: true, goal: true, tradingStyle: true, tradingStrategy: true,
         tradingSessions: true, tradesPerDayMin: true, tradesPerDayMax: true,
-        strategyDescription: true, startingCapital: true, currency: true,
+        strategyDescription: true, startingCapital: true,
       },
     });
     if (!user) throw new NotFoundException('Utilisateur introuvable');
@@ -195,7 +195,6 @@ export class UserDetailService {
         tradesPerDayMax: user.tradesPerDayMax ?? null,
         strategyDescription: user.strategyDescription ?? null,
         startingCapital: user.startingCapital ?? 0,
-        currency: user.currency ?? 'USD',
       },
       usage: { totalTrades, tradesThisMonth, totalPnl, winRate },
       topAssets,

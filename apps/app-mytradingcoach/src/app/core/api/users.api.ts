@@ -13,7 +13,6 @@ export interface CompleteOnboardingDto {
   market?: 'CRYPTO' | 'FOREX' | 'ACTIONS' | 'MULTI' | null;
   goal?: 'DISCIPLINE' | 'PERFORMANCE' | 'PSYCHOLOGIE' | null;
   startingCapital?: number;
-  currency?: 'USD' | 'EUR';
   tradingStyle?: string;
   tradingStrategy?: string[];
   tradingSessions?: string[];
@@ -23,7 +22,6 @@ export interface CompleteOnboardingDto {
 }
 
 export interface UpdatePreferencesDto {
-  currency?: 'USD' | 'EUR' | 'GBP';
   startingCapital?: number;
   notificationsEmail?: boolean;
   debriefAutomatic?: boolean;

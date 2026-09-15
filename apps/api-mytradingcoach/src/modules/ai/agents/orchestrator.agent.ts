@@ -6,6 +6,7 @@ import { CoachAgent, Advice } from './coach.agent';
 import { Pattern } from './pattern.agent';
 import { buildUserTradingContext } from '../user-context.builder';
 import { effectiveEmotion } from '../../../common/utils/effective-emotion.util';
+import { userAmountsCurrency } from '../../../common/utils/user-currency.util';
 
 export interface InsightItem {
   type: 'strength' | 'weakness' | 'pattern';
@@ -64,7 +65,10 @@ export class OrchestratorAgent {
       setup: t.setup.title,
       emotion: effectiveEmotion(t) ?? '',
     }));
-    const summary = this.dataAgent.buildTradesSummary(summaryTrades);
+    const summary = this.dataAgent.buildTradesSummary(
+      summaryTrades,
+      await userAmountsCurrency(this.prisma, userId),
+    );
     const summaryWithContext = userContext ? `${userContext}\n${summary}` : summary;
 
     // Step 2 : Pattern detection (1 Anthropic call, system cached)

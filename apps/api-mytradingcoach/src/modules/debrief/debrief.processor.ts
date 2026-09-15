@@ -4,6 +4,7 @@ import { Job } from 'bullmq';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
 import { DebriefService } from './debrief.service';
+import { userAmountsCurrency } from '../../common/utils/user-currency.util';
 
 @Processor('debrief')
 export class DebriefProcessor extends WorkerHost {
@@ -50,6 +51,7 @@ export class DebriefProcessor extends WorkerHost {
         winRate: stats.winRate ?? 0,
         totalPnl: stats.totalPnl ?? 0,
         totalTrades: stats.totalTrades ?? 0,
+        currency: await userAmountsCurrency(this.prisma, userId),
       });
     }
 

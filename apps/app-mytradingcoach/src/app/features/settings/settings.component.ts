@@ -102,8 +102,7 @@ export class SettingsComponent implements OnInit {
   // Compte : mot de passe
   protected readonly passwordResetSent = signal(false);
 
-  // Préférences
-  protected readonly prefCurrency = signal<'USD' | 'EUR' | 'GBP'>('USD');
+  // Préférences (plus de devise : elle est portée par chaque compte, PROMPT-214)
   protected readonly prefNotifications = signal(true);
   protected readonly prefDebrief = signal(true);
   protected readonly prefMarketing = signal(false);
@@ -166,7 +165,6 @@ export class SettingsComponent implements OnInit {
     effect(() => {
       const user = this.userStore.user();
       if (!user) return;
-      this.prefCurrency.set((user.currency as 'USD' | 'EUR' | 'GBP') ?? 'USD');
       this.prefNotifications.set(user.notificationsEmail ?? true);
       this.prefDebrief.set(user.debriefAutomatic ?? true);
       this.prefMarketing.set(user.marketingConsent ?? false);
@@ -384,7 +382,6 @@ export class SettingsComponent implements OnInit {
   protected savePreferences() {
     this.isSavingPrefs.set(true);
     const dto: UpdatePreferencesDto = {
-      currency: this.prefCurrency(),
       notificationsEmail: this.prefNotifications(),
       debriefAutomatic: this.prefDebrief(),
       marketingConsent: this.prefMarketing(),

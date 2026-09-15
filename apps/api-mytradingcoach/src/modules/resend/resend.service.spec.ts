@@ -52,6 +52,7 @@ describe('ResendService', () => {
         winRate: 65.5,
         totalPnl: 234.5,
         totalTrades: 12,
+        currency: 'USD',
       });
 
       expect(mockSend).toHaveBeenCalledOnce();
@@ -59,7 +60,8 @@ describe('ResendService', () => {
       expect(call.to).toBe('trader@test.com');
       expect(call.subject).toContain('17');
       expect(call.html).toContain('65.5');
-      expect(call.html).toContain('+235');
+      // Devise du compte, sans conversion (PROMPT-214).
+      expect(call.html).toContain('+$235');
     });
 
     it('ne throw pas si Resend retourne une erreur', async () => {
@@ -76,6 +78,7 @@ describe('ResendService', () => {
           winRate: 50,
           totalPnl: 0,
           totalTrades: 5,
+          currency: 'USD',
         }),
       ).resolves.not.toThrow();
     });

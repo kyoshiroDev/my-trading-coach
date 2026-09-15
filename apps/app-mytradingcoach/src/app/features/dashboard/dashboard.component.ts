@@ -23,6 +23,7 @@ import {
 import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
 import { MoneyService } from '../../core/services/money.service';
+import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
 import { TradesStore } from '../../core/stores/trades.store';
 import { SessionStore } from '../../core/stores/session.store';
 import { PRICING } from '../../core/constants/pricing.const';
@@ -91,6 +92,7 @@ import { netPnl } from '@mtc/shared';
     DonutChartComponent,
     RecentTradesTableComponent,
     MoneyPipe,
+    MixedCurrencyNoticeComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './dashboard.component.css',
@@ -98,7 +100,7 @@ import { netPnl } from '@mtc/shared';
 })
 export class DashboardComponent {
   protected readonly userStore    = inject(UserStore);
-  private  readonly money         = inject(MoneyService);
+  protected readonly money        = inject(MoneyService);
   protected readonly tradesStore  = inject(TradesStore);
   protected readonly sessionStore = inject(SessionStore);
   protected readonly selectedAccount = inject(SelectedAccountStore);

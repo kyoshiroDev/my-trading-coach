@@ -65,6 +65,10 @@
     </div>
   }
 
+  <!-- Devises mêlées en « Tous les comptes » : pas de totaux (PROMPT-214), l'historique reste. -->
+  @if (money.mixed()) {
+    <mtc-mixed-currency-notice />
+  } @else {
   <mtc-dashboard-kpis
     [loading]="isLoading()"
     [summary]="summary()"
@@ -162,6 +166,7 @@
       </div>
     </div>
   </div>
+  }
 
   <!-- Historique des trades -->
   <div class="mtc-panel">

@@ -18,6 +18,13 @@ import { TradesStore } from '../../core/stores/trades.store';
 import { AccountsApi, CreateAccountPayload, DrawdownType } from '../../core/api/accounts.api';
 import { AuthService } from '../../core/auth/auth.service';
 import {
+  ACCOUNT_CURRENCIES,
+  AccountCurrency,
+  DEFAULT_ACCOUNT_CURRENCY,
+  formatMoney,
+  isAccountCurrency,
+} from '@mtc/shared';
+import {
   LucideDynamicIcon,
   LucideBitcoin as Bitcoin,
 } from '@lucide/angular';
@@ -106,7 +113,8 @@ interface OnboardingProgress {
   step: Step;
   market: Market | null;
   goal: Goal | null;
-  currency: 'USD' | 'EUR';
+  /** Devise DU COMPTE créé à l'étape 3 (PROMPT-214), plus une préférence globale. */
+  currency: AccountCurrency;
   capital: string;
   accountMode: AccountMode;
   broker: string;
@@ -192,7 +200,12 @@ export class OnboardingComponent {
   protected readonly importSummary = signal<ImportResult | null>(null);
   protected readonly selectedMarket   = signal<Market | null>(null);
   protected readonly selectedGoal     = signal<Goal | null>(null);
-  protected readonly selectedCurrency = signal<'USD' | 'EUR'>('USD');
+  /** Devise du compte créé (liste unique `ACCOUNT_CURRENCIES`), jamais une conversion. */
+  protected readonly selectedCurrency = signal<AccountCurrency>(DEFAULT_ACCOUNT_CURRENCY);
+  protected readonly accountCurrencies = ACCOUNT_CURRENCIES;
+  /** Montant du récap d'import, dans la devise du compte créé. */
+  protected readonly feesLabel = (n: number) =>
+    formatMoney(n, this.selectedCurrency(), { sign: false });
   /**
    * Pré-rempli : l'étape ne bloque plus (PROMPT-198). Laisser le champ vide aurait
    * cascadé en « CAPITAL $0.00 » — `User.startingCapital` vaut 0 par défaut, le compte
@@ -304,7 +317,7 @@ export class OnboardingComponent {
       if (typeof step !== 'number' || step < 1 || step > 9) return;
       this.selectedMarket.set(p.market ?? null);
       this.selectedGoal.set(p.goal ?? null);
-      this.selectedCurrency.set(p.currency === 'EUR' ? 'EUR' : 'USD');
+      this.selectedCurrency.set(isAccountCurrency(p.currency) ? p.currency : DEFAULT_ACCOUNT_CURRENCY);
       this.capitalInput.set(typeof p.capital === 'string' ? p.capital : '');
       this.accountMode.set(p.accountMode === 'PROPFIRM' ? 'PROPFIRM' : 'PERSO');
       this.broker.set(typeof p.broker === 'string' ? p.broker : '');
@@ -378,7 +391,7 @@ export class OnboardingComponent {
 
   protected selectMarket(m: Market)          { this.selectedMarket.set(m); }
   protected selectGoal(g: Goal)              { this.selectedGoal.set(g); }
-  protected selectCurrency(c: 'USD'|'EUR')   { this.selectedCurrency.set(c); }
+  protected selectCurrency(c: AccountCurrency) { this.selectedCurrency.set(c); }
 
   // ── Stratégie ──
   protected selectStyle(s: TradingStyle)     { this.selectedStyle.set(s); }
@@ -555,7 +568,7 @@ export class OnboardingComponent {
         // 0 (champ vidé) → on n'envoie rien : le back ne réécrit que si non-null, donc
         // la valeur déjà en base est préservée au lieu d'être écrasée par un 0.
         startingCapital: this.parseCapital() || undefined,
-        currency: this.selectedCurrency(),
+        // Plus de devise au profil (PROMPT-214) : elle part sur le compte créé (payload compte).
         tradingStyle: this.selectedStyle() ?? undefined,
         strategyDescription: this.strategyDescription().trim() || undefined,
         tradingSessions: this.selectedSessions(),

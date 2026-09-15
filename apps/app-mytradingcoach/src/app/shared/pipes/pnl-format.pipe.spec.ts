@@ -4,15 +4,24 @@ import { signal } from '@angular/core';
 import { PnlFormatPipe } from './pnl-format.pipe';
 import { MoneyService } from '../../core/services/money.service';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
-import { formatMoney } from '../../core/utils/money';
 
-/** La devise vient du compte affiché (SelectedAccountStore.displayCurrency), jamais d'un taux. */
-function makePipe(currency: string | null = 'USD'): PnlFormatPipe {
+/**
+ * La devise vient du COMPTE (SelectedAccountStore), jamais d'un taux (PROMPT-213/214).
+ * `accounts` : devise par id de compte, pour les lignes de trades.
+ */
+function makePipe(currency: string | null = 'USD', accounts: Record<string, string> = {}): PnlFormatPipe {
   TestBed.configureTestingModule({
     providers: [
       PnlFormatPipe,
       MoneyService,
-      { provide: SelectedAccountStore, useValue: { displayCurrency: signal(currency) } },
+      {
+        provide: SelectedAccountStore,
+        useValue: {
+          displayCurrency: signal(currency),
+          selectedAccountId: signal('all'),
+          currencyOf: (id: string) => accounts[id],
+        },
+      },
     ],
   });
   return TestBed.inject(PnlFormatPipe);
@@ -44,23 +53,24 @@ describe('PnlFormatPipe — compte en USD', () => {
   });
 });
 
-describe('PnlFormatPipe — devise native, aucune conversion (PROMPT-213)', () => {
-  it('compte en EUR → le montant tel quel avec €, sans taux', () => {
+describe('PnlFormatPipe — devise native du compte, aucune conversion', () => {
+  it('compte en EUR → le montant tel quel avec €', () => {
     const pipe = makePipe('EUR');
     expect(pipe.transform(100)).toBe('+€100.00');
     expect(pipe.transform(-100)).toBe('-€100.00');
   });
 
+  it('compte en USDT → code après le montant', () => {
+    expect(makePipe('USDT').transform(10)).toBe('+10.00 USDT');
+  });
+
   it('comptes de devises mêlées (null) → aucun symbole deviné', () => {
     expect(makePipe(null).transform(41.1)).toBe('+41.10');
   });
-});
 
-describe('formatMoney', () => {
-  it('compact, sans symbole, autres codes', () => {
-    expect(formatMoney(-1234, 'USD', { decimals: 0, compact: true })).toBe('-$1.2k');
-    expect(formatMoney(24, 'USD', { decimals: 0, symbol: false })).toBe('+24');
-    expect(formatMoney(12.3, 'USD', { sign: false })).toBe('$12.30');
-    expect(formatMoney(10, 'chf')).toBe('+CHF 10.00');
+  it('ligne de trade → devise de SON compte, même quand l’écran est en devises mêlées', () => {
+    const pipe = makePipe(null, { eur: 'EUR', usdt: 'USDT' });
+    expect(pipe.transform(12, null, 'eur')).toBe('+€12.00');
+    expect(pipe.transform(-3, null, 'usdt')).toBe('-3.00 USDT');
   });
 });

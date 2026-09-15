@@ -4,6 +4,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
 import { computeTradeStats, netPnl } from '@mtc/shared';
+import { userAmountsCurrency } from '../../common/utils/user-currency.util';
 
 @Injectable()
 export class DailyRecapService {
@@ -124,6 +125,7 @@ export class DailyRecapService {
           // Émotion effective dominante (null = non renseignée) : plus de NEUTRAL forcé.
           dominantEmotion,
           date,
+          currency: await userAmountsCurrency(this.prisma, userId),
           userProfile: user
             ? {
                 market: user.market,

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { computeTradeStats, netPnl } from '@mtc/shared';
+import { computeTradeStats, formatMoney, netPnl } from '@mtc/shared';
 
 export type TradeSummaryInput = {
   asset: string;
@@ -23,7 +23,8 @@ export type TradeSummaryInput = {
  */
 @Injectable()
 export class DataAgent {
-  buildTradesSummary(rawTrades: TradeSummaryInput[]): string {
+  /** `currency` : devise des comptes (PROMPT-214), `null` si elles diffèrent (montants sans symbole). */
+  buildTradesSummary(rawTrades: TradeSummaryInput[], currency: string | null = null): string {
     // Montants en NET (frais déduits) pour tout le résumé : `pnl` devient le net, `commission`
     // retombe à 0 pour que computeTradeStats ne déduise pas les frais une seconde fois.
     const trades: TradeSummaryInput[] = rawTrades.map((t) => ({ ...t, pnl: netPnl(t), commission: 0 }));
@@ -33,7 +34,7 @@ export class DataAgent {
     // Stats via le helper unique (BE exclus du win rate, PROMPT-160).
     const stats = computeTradeStats(trades);
     const winRate = stats.winRate.toFixed(1);
-    const totalPnl = stats.totalPnl.toFixed(2);
+    const totalPnl = formatMoney(stats.totalPnl, currency);
 
     const groupStats = (key: keyof TradeSummaryInput): string => {
       const groups = trades.reduce<Record<string, TradeSummaryInput[]>>(
@@ -94,7 +95,7 @@ export class DataAgent {
       .sort((a, b) => Math.abs(b.pnl) - Math.abs(a.pnl))
       .slice(0, 5)
       .map((t) => {
-        const base = `${t.asset} ${t.side} ${t.setup} ${t.emotion} ${t.pnl >= 0 ? '+' : ''}${t.pnl}$`;
+        const base = `${t.asset} ${t.side} ${t.setup} ${t.emotion} ${formatMoney(t.pnl, currency)}`;
         const rr = t.riskReward != null ? ` R:R ${t.riskReward.toFixed(1)}` : '';
         const note = t.notes ? ` · « ${t.notes.slice(0, 120)} »` : '';
         return base + rr + note;
@@ -110,7 +111,7 @@ export class DataAgent {
     }
 
     return `RÉSUMÉ TRADES (${trades.length} total, ${closed.length} clôturés)
-Win Rate: ${winRate}% | PnL: $${totalPnl}
+Win Rate: ${winRate}% | PnL: ${totalPnl}
 ${rrLine}
 Par émotion: ${groupStats('emotion')}
 Par setup: ${groupStats('setup')}

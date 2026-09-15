@@ -1,5 +1,6 @@
 // ── Templates emails MyTradingCoach ─────────────────────────────────────────
 // Templates HTML inline : pas de dépendance externe pour le rendu
+import { formatMoney } from '@mtc/shared';
 
 // ── Base système ──────────────────────────────────────────────────────────────
 
@@ -105,11 +106,13 @@ export function debriefReadyTemplate(params: {
   winRate: number;
   totalPnl: number;
   totalTrades: number;
+  /** Devise des comptes du débrief (null = devises différentes : montant sans symbole). */
+  currency: string | null;
   appUrl: string;
 }): { subject: string; html: string } {
-  const { userName, weekNumber, winRate, totalPnl, totalTrades, appUrl } = params;
+  const { userName, weekNumber, winRate, totalPnl, totalTrades, currency, appUrl } = params;
   const pnlColor = totalPnl >= 0 ? '#10b981' : '#ef4444';
-  const pnlStr = `${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(0)}$`;
+  const pnlStr = formatMoney(totalPnl, currency, { decimals: 0 });
   const pnlBg = totalPnl >= 0 ? 'rgba(16,185,129,.3)' : 'rgba(239,68,68,.3)';
 
   const content = card(`
@@ -157,11 +160,13 @@ export function dailyRecapTemplate(params: {
   winRate: number;
   tradesCount: number;
   aiOneLiner: string | null;
+  /** Devise des comptes du jour (null = devises différentes : montant sans symbole). */
+  currency: string | null;
   appUrl: string;
 }): { subject: string; html: string } {
-  const { userName, date, pnl, winRate, tradesCount, aiOneLiner, appUrl } = params;
+  const { userName, date, pnl, winRate, tradesCount, aiOneLiner, currency, appUrl } = params;
   const pnlColor = pnl >= 0 ? '#10b981' : '#ef4444';
-  const pnlStr = `${pnl >= 0 ? '+' : ''}${pnl.toFixed(0)}$`;
+  const pnlStr = formatMoney(pnl, currency, { decimals: 0 });
   const pnlBg = pnl >= 0 ? 'rgba(16,185,129,.3)' : 'rgba(239,68,68,.3)';
   const dateStr = date.toLocaleDateString('fr-FR', {
     weekday: 'long', day: 'numeric', month: 'long',

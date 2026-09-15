@@ -214,7 +214,7 @@
 /* ── Capital ── */
 .capital-field { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; }
 .currency-toggle {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px;
   background: var(--bg-2); border: 1px solid var(--border);
   border-radius: 8px; padding: 4px;
 }
@@ -223,8 +223,7 @@
   font-size: 13px; font-family: var(--font-mono); font-weight: 600;
   cursor: pointer; background: transparent; color: var(--text-3); transition: all 0.15s;
 }
-.currency-btn.active-usd,
-.currency-btn.active-eur { background: rgba(59,130,246,.15); color: var(--blue-bright); }
+.currency-btn.on { background: rgba(59,130,246,.15); color: var(--blue-bright); }
 
 .capital-input {
   background: var(--bg-2); border: 1px solid var(--border); color: var(--text);

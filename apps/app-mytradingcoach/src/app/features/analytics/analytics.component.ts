@@ -33,6 +33,8 @@ import { ActivityCalendarComponent } from '../../shared/components/activity-cale
 import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
 import { environment } from '../../../environments/environment';
 import { ChartService } from '../../core/services/chart.service';
+import { MoneyService } from '../../core/services/money.service';
+import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
 
 const MOCK_HEATMAP_CELLS = [
   0.75, 0.45, 0.8, 0.3, 0.65, 0.55, 0.2, 0.6, 0.7, 0.35, 0.85, 0.5, 0.4, 0.72,
@@ -51,6 +53,7 @@ const MOCK_SETUP_BARS = [88, 72, 65, 54, 38] as const;
     PlanModalComponent,
     ActivityCalendarComponent,
     InfoTooltipComponent,
+    MixedCurrencyNoticeComponent,
   ],
   templateUrl: './analytics.component.html',
   styleUrl: './analytics.component.css',
@@ -67,6 +70,8 @@ export class AnalyticsComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly chartService = inject(ChartService);
   private readonly selectedAccount = inject(SelectedAccountStore);
+  /** Devises mêlées en « Tous les comptes » → pas de totaux (PROMPT-214). */
+  protected readonly money = inject(MoneyService);
 
   // Suffixe query du compte sélectionné (multi-comptes). « Tous » → '' (agrégé). Lu dans les
   // URL des resources → refetch auto au changement de compte (pattern dashboard).
