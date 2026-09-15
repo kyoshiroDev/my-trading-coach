@@ -27,6 +27,7 @@ import { DebriefApi, DebriefObjective } from '../../../../core/api/debrief.api';
 import { UserStore } from '../../../../core/stores/user.store';
 import { ToastService } from '../../../../core/services/toast.service';
 import { PremiumLockComponent } from '../../../../shared/components/premium-lock/premium-lock.component';
+import { MoneyPipe } from '../../../../shared/pipes';
 
 const MOODS: { value: MoodState; label: string; emoji: string }[] = [
   { value: 'CONFIDENT', label: 'Confiant', emoji: '😎' },
@@ -59,7 +60,7 @@ const DEMO_OBJECTIVES: DebriefObjective[] = [
 
 @Component({
   selector: 'mtc-session-morning',
-  imports: [DatePipe, RouterLink, LucideDynamicIcon, PremiumLockComponent],
+  imports: [DatePipe, RouterLink, LucideDynamicIcon, PremiumLockComponent, MoneyPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-morning.component.css',
   templateUrl: './session-morning.component.html',

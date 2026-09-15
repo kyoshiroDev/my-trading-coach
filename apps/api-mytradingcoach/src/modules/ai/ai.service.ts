@@ -15,7 +15,7 @@ import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
-import { computeTradeStats } from '@mtc/shared';
+import { computeTradeStats, netPnl } from '@mtc/shared';
 // import type only (aucune dépendance runtime → pas de cycle avec eco-calendar.service)
 import type { EcoAnalysis, EcoResultAnalysis } from '../eco-calendar/eco-calendar.service';
 import { AnthropicClientService } from '../shared/anthropic-client.service';
@@ -89,6 +89,7 @@ export class AiService {
         asset: true,
         side: true,
         pnl: true,
+        commission: true, // stats sur le net (PROMPT-213)
         emotion: true,
         tradeSession: { select: { moodStart: true } },
         setup: { select: { title: true, description: true } },
@@ -223,6 +224,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
       side: string;
       asset: string;
       pnl: number | null;
+      commission?: number | null;
       emotion?: string | null;
       tradeSession?: { moodStart?: string | null } | null;
       setup?: string;
@@ -265,7 +267,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
               timeZone: 'Europe/Paris',
             })
           : '??:??';
-        const pnl = t.pnl ?? 0;
+        const pnl = netPnl(t) ?? 0; // net des frais, comme le P&L du jour
         const pnlStr = `${pnl >= 0 ? '+' : ''}${pnl.toFixed(0)}$`;
 
         let exitLabel = '';

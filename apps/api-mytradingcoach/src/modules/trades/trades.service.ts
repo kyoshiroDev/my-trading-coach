@@ -798,14 +798,18 @@ export class TradesService {
     if (updates.length) await this.prisma.$transaction(updates);
   }
 
+  /**
+   * P&L BRUT du trade (résultat des prix). Les frais restent dans `commission` : le net est
+   * calculé à la lecture par `netPnl` (@mtc/shared), CONVENTION UNIQUE depuis PROMPT-213. Avant,
+   * ce calcul retirait déjà les frais alors que les écrans les retiraient encore : frais
+   * comptés deux fois sur les trades saisis ou édités.
+   */
   private calculatePnl(dto: CreateTradeDto): number | undefined {
     if (dto.entry == null || dto.entry <= 0) return undefined;
 
-    const commission = Math.abs(dto.commission ?? 0);
-
     // P&L réalisé fourni (import broker, ou édition sans changement de prix/qty) = source de vérité.
     // On NE recalcule PAS points × quantité : faux pour la crypto/contrats (qty MEXC en contrats, pas en coins).
-    if (dto.pnl != null) return +(dto.pnl - commission).toFixed(2);
+    if (dto.pnl != null) return +dto.pnl.toFixed(2);
 
     if (dto.exit == null || dto.exit <= 0) return undefined;
     const effectiveExit = dto.exit;
@@ -828,8 +832,6 @@ export class TradesService {
     } else {
       pnl = points * quantity;
     }
-
-    pnl -= commission;
 
     return +pnl.toFixed(2);
   }

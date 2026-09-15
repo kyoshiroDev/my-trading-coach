@@ -149,8 +149,8 @@ export class TradovateSyncService {
     // Rapprochement avec un import CSV (même trade, autre fuseau) : fait par `importTrades`,
     // un-pour-un, pour la synchro comme pour l'import CSV (trades/import-dedupe.util.ts).
 
-    // Mêmes valeurs de lot que l'import CSV : compte cible, setup par défaut, émotion non renseignée.
-    const setupId = await this.setups.getDefaultSetupId(userId);
+    // Mêmes valeurs de lot que l'import CSV : compte cible, « Sans setup », émotion non renseignée.
+    const setupId = await this.setups.getImportSetupId(userId);
     const dtos: Partial<CreateTradeDto>[] = mapped.trades.map((t) => {
       const dto: typeof t = { ...t, accountId: conn.accountId, emotion: null };
       if (setupId) dto.setupId = setupId;

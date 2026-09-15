@@ -2,10 +2,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   output,
 } from '@angular/core';
 import { MonthlyActivitySummary, DailyActivity } from '../../../core/api/analytics.api';
+import { MoneyService } from '../../../core/services/money.service';
 
 export interface CalendarCell {
   date: string;
@@ -34,7 +36,7 @@ const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
           @if (data()) {
             <span class="cal-summary">
               <span class="cal-sum-item" [class.green]="data()!.totalPnl >= 0" [class.red]="data()!.totalPnl < 0">
-                {{ data()!.totalPnl >= 0 ? '+' : '' }}{{ data()!.totalPnl.toFixed(0) }}$
+                {{ money(data()!.totalPnl) }}
               </span>
               <span class="cal-sum-sep">·</span>
               <span class="cal-sum-item">{{ data()!.tradingDays }}j</span>
@@ -106,6 +108,7 @@ export class ActivityCalendarComponent {
 
   readonly monthChange = output<{ year: number; month: number }>();
 
+  private readonly moneyService = inject(MoneyService);
   protected readonly dayLabels = DAY_LABELS;
 
   protected readonly monthLabel = computed(() => {
@@ -167,13 +170,17 @@ export class ActivityCalendarComponent {
   protected cellTitle(cell: CalendarCell): string {
     if (!cell.activity) return cell.date;
     const { pnl, tradesCount, winRate } = cell.activity;
-    const sign = pnl >= 0 ? '+' : '';
-    return `${cell.date} · ${sign}${pnl.toFixed(0)}$ · ${tradesCount} trades · ${winRate.toFixed(0)}% WR`;
+    return `${cell.date} · ${this.money(pnl)} · ${tradesCount} trades · ${winRate.toFixed(0)}% WR`;
   }
 
+  /** P&L net (frais déduits, calculé côté API) dans la devise native du compte, sans conversion. */
+  protected money(pnl: number): string {
+    return this.moneyService.format(pnl, { decimals: 0 });
+  }
+
+  /** Cellule étroite : compact et sans symbole (le total du mois le porte). */
   protected formatPnl(pnl: number): string {
-    if (Math.abs(pnl) >= 1000) return `${pnl >= 0 ? '+' : ''}${(pnl / 1000).toFixed(1)}k`;
-    return `${pnl >= 0 ? '+' : ''}${pnl.toFixed(0)}`;
+    return this.moneyService.format(pnl, { decimals: 0, compact: true, symbol: false });
   }
 
   protected prevMonth(): void {

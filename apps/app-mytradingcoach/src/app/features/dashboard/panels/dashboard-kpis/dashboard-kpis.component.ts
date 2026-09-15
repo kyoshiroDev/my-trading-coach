@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { MoneyService } from '../../../../core/services/money.service';
 import { DecimalPipe } from '@angular/common';
 import { AnalyticsSummary } from '../../../../core/api/analytics.api';
 import { InfoTooltipComponent } from '../../../../shared/components/info-tooltip/info-tooltip.component';
@@ -22,8 +23,6 @@ export class DashboardKpisComponent {
   /** P&L cumulé jour par jour sur la période (source des sparklines). */
   readonly equitySeries = input<number[]>([]);
   readonly periodShort = input('');
-  readonly currency = input('USD');
-  readonly currencyRate = input(1);
   /** Trades chargés : repli du compteur tant que les KPIs n'en donnent pas. */
   readonly fallbackTradesCount = input(0);
 
@@ -47,11 +46,12 @@ export class DashboardKpisComponent {
   protected readonly winRateColor = computed(() =>
     (this.summary()?.winRate ?? 0) === 0 ? 'var(--text-2)' : 'var(--blue-bright)',
   );
-  protected readonly capitalDisplay = computed(() => {
-    const capital  = this.currentCapital();
-    const symbol   = this.currency() === 'EUR' ? '€' : '$';
-    return `${symbol}${Math.abs(capital * this.currencyRate()).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  });
+  private readonly money = inject(MoneyService);
+
+  /** Capital dans la devise native du compte, sans conversion. */
+  protected readonly capitalDisplay = computed(() =>
+    this.money.format(this.currentCapital(), { sign: false }),
+  );
   protected readonly capitalPct = computed(() => {
     const start = this.baseCapital();
     return start <= 0 ? 0 : ((this.summary()?.totalPnl ?? 0) / start) * 100;

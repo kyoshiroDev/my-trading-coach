@@ -197,11 +197,32 @@ mentir. Sous 768px : 40px, la phrase longue (`.demo-banner-long`) tombe, le CTA 
 ```typescript
 // Toujours utiliser les pipes, jamais de logique inline
 PnlColorPipe      // couleur verte/rouge selon pnl
-PnlFormatPipe     // formatage $ avec signe
+PnlFormatPipe     // montant signé dans la devise NATIVE du compte (+$1,234.56), % optionnel
+MoneyPipe         // idem avec décimales / sans « + » : {{ pnl | money:0 }}, {{ fees | money:2:false }}
 EmotionEmojiPipe  // emoji selon état émotionnel
 SessionLabelPipe  // label lisible de la session
 SetupColorPipe    // couleur selon setup
 ```
+
+**Montants = devise native du compte, ZÉRO conversion** (PROMPT-213) : un montant s'affiche dans la
+devise de son compte de trading (`TradingAccount.currency`), tel que reçu du broker — un compte prop
+firm en USD s'affiche en USD pour tout le monde. Tout passe par `formatMoney(value, currency)`
+(`core/utils/money.ts`), exposé par `MoneyService.format()` et les pipes `pnlFormat` / `money`. La
+devise vient de `SelectedAccountStore.displayCurrency` : compte sélectionné, sinon devise commune de
+« Tous les comptes », `null` (aucun symbole) si les comptes ont des devises différentes — jamais un
+symbole deviné. **`User.currencyRate` et `User.currency` ne servent PLUS à afficher un montant**
+(le taux, pris sur exchangerate-api au choix de la préférence puis figé, multipliait des USD pour les
+afficher en « € ») : ne jamais les réintroduire dans un formatage. **Jamais de `$` en dur** dans un
+template, un graphe Chart.js (`ChartService`) ou un libellé calculé.
+
+**P&L affiché = net** : un montant par trade se lit via `netPnl(t)` de `@mtc/shared`
+(`pnl` brut − frais), jamais `t.pnl` brut (tableau des trades récents, live feed). Les agrégats de
+l'API sont déjà nets. Le formulaire de trade envoie le **brut** (`form().pnl ?? autoPnl()`) et la
+commission à part : envoyer `pnlNet` faisait déduire les frais deux fois.
+
+**Courbe d'équité / drawdown** : `ChartService` préfixe un point « Départ » (capital de base,
+drawdown 0) : un seul jour tradé trace déjà la courbe (`curve.length >= 1`). Les bornes de période
+envoyées à l'API sont des horodatages ISO complets.
 
 ---
 

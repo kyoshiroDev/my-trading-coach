@@ -1,90 +1,66 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { PnlFormatPipe } from './pnl-format.pipe';
-import { UserStore } from '../../core/stores/user.store';
-import { AuthService } from '../../core/auth/auth.service';
 import { signal } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
+import { PnlFormatPipe } from './pnl-format.pipe';
+import { MoneyService } from '../../core/services/money.service';
+import { SelectedAccountStore } from '../../core/stores/selected-account.store';
+import { formatMoney } from '../../core/utils/money';
 
-const mockUser = (currency = 'USD', currencyRate = 1) => ({
-  id: 'u1',
-  email: 'test@test.com',
-  name: 'Test',
-  plan: 'FREE' as const,
-  currency,
-  currencyRate,
-  trialEndsAt: null,
-});
-
-function makePipe(currency = 'USD', currencyRate = 1): PnlFormatPipe {
-  const mockAuthService = {
-    currentUser: signal(mockUser(currency, currencyRate)),
-    isAuthenticated: signal(true),
-    fetchMe: vi.fn(),
-    setCurrentUser: vi.fn(),
-  };
+/** La devise vient du compte affiché (SelectedAccountStore.displayCurrency), jamais d'un taux. */
+function makePipe(currency: string | null = 'USD'): PnlFormatPipe {
   TestBed.configureTestingModule({
     providers: [
       PnlFormatPipe,
-      UserStore,
-      { provide: AuthService, useValue: mockAuthService },
-      provideHttpClient(),
-      provideRouter([]),
+      MoneyService,
+      { provide: SelectedAccountStore, useValue: { displayCurrency: signal(currency) } },
     ],
   });
   return TestBed.inject(PnlFormatPipe);
 }
 
-describe('PnlFormatPipe — USD (default)', () => {
+describe('PnlFormatPipe — compte en USD', () => {
   it('pnl > 0 → +$X,XXX.XX', () => {
-    const pipe = makePipe();
-    expect(pipe.transform(5000)).toBe('+$5,000.00');
+    expect(makePipe().transform(5000)).toBe('+$5,000.00');
   });
 
   it('pnl < 0 → -$X.XX', () => {
-    const pipe = makePipe();
-    expect(pipe.transform(-340)).toBe('-$340.00');
+    expect(makePipe().transform(-340)).toBe('-$340.00');
   });
 
   it('pnl = 0 → +$0.00', () => {
-    const pipe = makePipe();
-    expect(pipe.transform(0)).toBe('+$0.00');
+    expect(makePipe().transform(0)).toBe('+$0.00');
   });
 
-  it('pnl = null → —', () => {
+  it('pnl = null / undefined → -', () => {
     const pipe = makePipe();
     expect(pipe.transform(null)).toBe('-');
-  });
-
-  it('pnl = undefined → —', () => {
-    const pipe = makePipe();
     expect(pipe.transform(undefined)).toBe('-');
   });
 
-  it('pnl > 0 avec entry → affiche le pourcentage', () => {
-    const pipe = makePipe();
-    const result = pipe.transform(5000, 60000);
-    expect(result).toContain('+$5,000.00');
-    expect(result).toContain('%');
-  });
-
-  it('pnl < 0 avec entry → affiche le pourcentage négatif', () => {
-    const pipe = makePipe();
-    const result = pipe.transform(-340, 4080);
+  it('avec entry → affiche le pourcentage', () => {
+    const result = makePipe().transform(-340, 4080);
     expect(result).toContain('-$340.00');
     expect(result).toContain('%');
   });
 });
 
-describe('PnlFormatPipe — EUR (rate 0.92)', () => {
-  it('100 USD → €92.00', () => {
-    const pipe = makePipe('EUR', 0.92);
-    expect(pipe.transform(100)).toBe('+€92.00');
+describe('PnlFormatPipe — devise native, aucune conversion (PROMPT-213)', () => {
+  it('compte en EUR → le montant tel quel avec €, sans taux', () => {
+    const pipe = makePipe('EUR');
+    expect(pipe.transform(100)).toBe('+€100.00');
+    expect(pipe.transform(-100)).toBe('-€100.00');
   });
 
-  it('-100 USD → -€92.00', () => {
-    const pipe = makePipe('EUR', 0.92);
-    expect(pipe.transform(-100)).toBe('-€92.00');
+  it('comptes de devises mêlées (null) → aucun symbole deviné', () => {
+    expect(makePipe(null).transform(41.1)).toBe('+41.10');
+  });
+});
+
+describe('formatMoney', () => {
+  it('compact, sans symbole, autres codes', () => {
+    expect(formatMoney(-1234, 'USD', { decimals: 0, compact: true })).toBe('-$1.2k');
+    expect(formatMoney(24, 'USD', { decimals: 0, symbol: false })).toBe('+24');
+    expect(formatMoney(12.3, 'USD', { sign: false })).toBe('$12.30');
+    expect(formatMoney(10, 'chf')).toBe('+CHF 10.00');
   });
 });

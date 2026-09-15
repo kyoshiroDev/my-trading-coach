@@ -4,6 +4,8 @@ import { SessionTrade } from '../../../../../../core/api/session.api';
 import { NumericInputDirective } from '../../../../../../core/directives/numeric-input.directive';
 import { parseDecimal } from '../../../../../../core/utils/parse-decimal';
 import { EmotionEmojiPipe } from '../../../../../../shared/pipes/emotion-emoji.pipe';
+import { MoneyPipe } from '../../../../../../shared/pipes/money.pipe';
+import { netPnl } from '@mtc/shared';
 
 /**
  * Live feed de la session : trades du jour en ligne compacte. Un trade encore ouvert se
@@ -11,7 +13,7 @@ import { EmotionEmojiPipe } from '../../../../../../shared/pipes/emotion-emoji.p
  */
 @Component({
   selector: 'mtc-live-feed',
-  imports: [LucideDynamicIcon, NumericInputDirective, EmotionEmojiPipe],
+  imports: [LucideDynamicIcon, NumericInputDirective, EmotionEmojiPipe, MoneyPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './live-feed.component.css',
   template: `
@@ -39,8 +41,9 @@ import { EmotionEmojiPipe } from '../../../../../../shared/pipes/emotion-emoji.p
                 <span class="feed-asset">{{ trade.asset }}</span>
                 <span class="trade-side" [class]="trade.side.toLowerCase()">{{ trade.side === 'LONG' ? '▲' : '▼' }} {{ trade.side }}</span>
                 <span class="feed-emo" [title]="trade.emotion">{{ trade.emotion | emotionEmoji }}</span>
-                <span class="feed-pnl" [class.green]="trade.pnl >= 0" [class.red]="trade.pnl < 0" style="margin-left:auto;">
-                  {{ trade.pnl >= 0 ? '+' : '' }}{{ trade.pnl.toFixed(0) }}$
+                @let net = netPnl(trade) ?? 0;
+                <span class="feed-pnl" [class.green]="net >= 0" [class.red]="net < 0" style="margin-left:auto;">
+                  {{ net | money:0 }}
                 </span>
               </div>
             } @else {
@@ -99,6 +102,8 @@ export class LiveFeedComponent {
   readonly tradeClosed = output<{ tradeId: string; exitPrice: number }>();
 
   protected readonly FeedIcon = ListOrdered;
+  /** P&L net des frais, comme le total de la session. */
+  protected readonly netPnl = netPnl;
 
   protected readonly closingTradeId = signal<string | null>(null);
   protected readonly exitPriceInput = signal('');

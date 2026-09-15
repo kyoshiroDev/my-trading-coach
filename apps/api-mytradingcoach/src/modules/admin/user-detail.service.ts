@@ -148,7 +148,7 @@ export class UserDetailService {
     const [totalTrades, tradesThisMonth, pnlRows, topAssetRows] = await Promise.all([
       this.prisma.trade.count({ where: { userId: id } }),
       this.prisma.trade.count({ where: { userId: id, createdAt: { gte: startOfMonth } } }),
-      this.prisma.trade.findMany({ where: { userId: id, pnl: { not: null } }, select: { pnl: true } }),
+      this.prisma.trade.findMany({ where: { userId: id, pnl: { not: null } }, select: { pnl: true, commission: true } }),
       this.prisma.trade.groupBy({
         by: ['asset'],
         where: { userId: id },

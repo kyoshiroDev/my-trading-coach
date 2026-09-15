@@ -133,7 +133,7 @@
       <div class="period-stat">
         <span class="period-label">P&L Net</span>
         <span class="period-value" data-testid="period-pnl-net" [style.color]="s.totalPnl >= 0 ? 'var(--green)' : 'var(--red)'">
-          {{ s.totalPnl >= 0 ? '+' : '' }}${{ s.totalPnl | number:'1.2-2' }}
+          {{ s.totalPnl | pnlFormat }}
         </span>
       </div>
       <div class="period-stat">
@@ -142,16 +142,16 @@
             text="Total des commissions et frais de la période, déjà déduits du P&L net." />
         </span>
         <span class="period-value" data-testid="period-fees" style="color:var(--red)">
-          -${{ s.totalCommissions | number:'1.2-2' }}
+          -{{ s.totalCommissions | money:2:false }}
         </span>
       </div>
       <div class="period-stat">
         <span class="period-label">Meilleur</span>
-        <span class="period-value" style="color:var(--green)">+${{ s.bestTrade | number:'1.2-2' }}</span>
+        <span class="period-value" style="color:var(--green)">{{ s.bestTrade | pnlFormat }}</span>
       </div>
       <div class="period-stat">
         <span class="period-label">Pire</span>
-        <span class="period-value" style="color:var(--red)">${{ s.worstTrade | number:'1.2-2' }}</span>
+        <span class="period-value" style="color:var(--red)">{{ s.worstTrade | pnlFormat }}</span>
       </div>
     </div>
   }
@@ -220,14 +220,14 @@
               <span class="day-dot">·</span>
               @if (week.totalCommission > 0) {
                 <span class="day-pnl" [class.positive]="week.totalPnlNet >= 0" [class.negative]="week.totalPnlNet < 0">
-                  {{ week.totalPnlNet >= 0 ? '+' : '' }}${{ week.totalPnlNet | number:'1.2-2' }}
+                  {{ week.totalPnlNet | pnlFormat }}
                 </span>
-                <span class="day-fees" title="Frais : -${{ week.totalCommission | number:'1.2-2' }}">
-                  -${{ week.totalCommission | number:'1.2-2' }} frais
+                <span class="day-fees" title="Frais : -{{ week.totalCommission | money:2:false }}">
+                  -{{ week.totalCommission | money:2:false }} frais
                 </span>
               } @else {
                 <span class="day-pnl" [class.positive]="week.totalPnl >= 0" [class.negative]="week.totalPnl < 0">
-                  {{ week.totalPnl >= 0 ? '+' : '' }}${{ week.totalPnl | number:'1.2-2' }}
+                  {{ week.totalPnl | pnlFormat }}
                 </span>
               }
             </div>
@@ -256,14 +256,14 @@
               <span class="day-dot">·</span>
               @if (day.totalCommission > 0) {
                 <span class="day-pnl" [class.positive]="day.totalPnlNet >= 0" [class.negative]="day.totalPnlNet < 0">
-                  {{ day.totalPnlNet >= 0 ? '+' : '' }}${{ day.totalPnlNet | number:'1.2-2' }}
+                  {{ day.totalPnlNet | pnlFormat }}
                 </span>
-                <span class="day-fees" title="Frais : -${{ day.totalCommission | number:'1.2-2' }}">
-                  -${{ day.totalCommission | number:'1.2-2' }} frais
+                <span class="day-fees" title="Frais : -{{ day.totalCommission | money:2:false }}">
+                  -{{ day.totalCommission | money:2:false }} frais
                 </span>
               } @else {
                 <span class="day-pnl" [class.positive]="day.totalPnl >= 0" [class.negative]="day.totalPnl < 0">
-                  {{ day.totalPnl >= 0 ? '+' : '' }}${{ day.totalPnl | number:'1.2-2' }}
+                  {{ day.totalPnl | pnlFormat }}
                 </span>
               }
             </div>

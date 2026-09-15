@@ -26,6 +26,7 @@ import {
 } from '../../core/api/trades.api';
 import { CreateTradeSchema } from '../../core/schemas/trade.schema';
 import { SetupsStore } from '../../core/stores/setups.store';
+import { PnlFormatPipe } from '../../shared/pipes';
 
 const EMOTIONS: NonNullable<Trade['emotion']>[] = [
   'CONFIDENT',
@@ -58,7 +59,7 @@ type NumericField =
 
 @Component({
   selector: 'mtc-trade-form',
-  imports: [FormsModule, TitleCasePipe, DecimalPipe, LucideDynamicIcon],
+  imports: [FormsModule, TitleCasePipe, DecimalPipe, LucideDynamicIcon, PnlFormatPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './trade-form.component.html',
   styleUrl: './trade-form.component.css',
@@ -419,7 +420,9 @@ export class TradeFormComponent {
     }
     this.form.update((f) => ({
       ...f,
-      pnl: this.pnlNet() ?? this.autoPnl(),
+      // P&L BRUT : les frais partent dans `commission` et le net est calculé à la lecture.
+      // Envoyer le net ici faisait déduire les frais deux fois (PROMPT-213).
+      pnl: this.form().pnl ?? this.autoPnl(),
       riskReward: this.autoRR(),
       tradedAt: tradedAtIso,
     }));

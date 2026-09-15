@@ -10,7 +10,7 @@
       <div class="sess-pulse-dot"></div>
       <span>Session en cours</span>
       <span class="sess-pnl-top" [style.color]="(sessionStore.todayStats()?.totalPnl ?? 0) >= 0 ? 'var(--green)' : 'var(--red)'">
-        {{ (sessionStore.todayStats()?.totalPnl ?? 0) >= 0 ? '+' : '' }}{{ (sessionStore.todayStats()?.totalPnl ?? 0).toFixed(0) }}$
+        {{ sessionStore.todayStats()?.totalPnl ?? 0 | money:0 }}
       </span>
       <span style="color:var(--text-3);font-size:11px;">→</span>
     </a>
@@ -72,8 +72,6 @@
     [currentCapital]="currentCapital()"
     [equitySeries]="eqSeries()"
     [periodShort]="periodShort()"
-    [currency]="currency()"
-    [currencyRate]="currencyRate()"
     [fallbackTradesCount]="tradesStore.trades().length"
   />
 

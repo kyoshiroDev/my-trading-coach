@@ -22,6 +22,7 @@ import {
 } from '@lucide/angular';
 import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
+import { MoneyService } from '../../core/services/money.service';
 import { TradesStore } from '../../core/stores/trades.store';
 import { SessionStore } from '../../core/stores/session.store';
 import { PRICING } from '../../core/constants/pricing.const';
@@ -64,6 +65,8 @@ import { PlBarsComponent } from './panels/pl-bars/pl-bars.component';
 import { CoachFeedbackComponent } from './panels/coach-feedback/coach-feedback.component';
 import { DonutChartComponent } from './panels/donut-chart/donut-chart.component';
 import { RecentTradesTableComponent } from './panels/recent-trades-table/recent-trades-table.component';
+import { MoneyPipe } from '../../shared/pipes';
+import { netPnl } from '@mtc/shared';
 
 /**
  * Dashboard : état (période, compte, resources analytics), cadre des panneaux et états
@@ -87,6 +90,7 @@ import { RecentTradesTableComponent } from './panels/recent-trades-table/recent-
     CoachFeedbackComponent,
     DonutChartComponent,
     RecentTradesTableComponent,
+    MoneyPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './dashboard.component.css',
@@ -94,6 +98,7 @@ import { RecentTradesTableComponent } from './panels/recent-trades-table/recent-
 })
 export class DashboardComponent {
   protected readonly userStore    = inject(UserStore);
+  private  readonly money         = inject(MoneyService);
   protected readonly tradesStore  = inject(TradesStore);
   protected readonly sessionStore = inject(SessionStore);
   protected readonly selectedAccount = inject(SelectedAccountStore);
@@ -243,16 +248,12 @@ export class DashboardComponent {
   protected readonly currentCapital = computed(() =>
     this.baseCapital() + (this.summary()?.totalPnl ?? 0),
   );
-  protected readonly currency = computed(() => this.userStore.user()?.currency ?? 'USD');
-  protected readonly currencyRate = computed(() => this.userStore.user()?.currencyRate ?? 1);
-
   /** Sous-titre courbe d'équité : « +$X sur 3 mois · base $Y » (période courante). */
   protected readonly equitySub = computed(() => {
     const base   = this.baseCapital();
     const period = this.summary()?.totalPnl ?? 0;
-    const sym    = this.currency() === 'EUR' ? '€' : '$';
-    const fmt    = (n: number) => `${sym}${Math.round(Math.abs(n)).toLocaleString('en-US')}`;
-    return `${period >= 0 ? '+' : '−'}${fmt(period)} ${this.periodShort()} · base ${fmt(base)}`;
+    const fmt    = (n: number, sign: boolean) => this.money.format(n, { decimals: 0, sign });
+    return `${fmt(period, true)} ${this.periodShort()} · base ${fmt(base, false)}`;
   });
   /**
    * Message quand la courbe ne se trace pas : ne JAMAIS dire « aucun trade » si les KPIs en
@@ -396,7 +397,11 @@ export class DashboardComponent {
   protected readonly plTooltip = computed(() => plTooltipFor(this.plGranularity()));
   protected readonly plBuckets = computed(() => {
     const days = this.activityResource.value()?.data?.days ?? null;
-    return days === null ? null : buildPlBuckets(days, this.plGranularity(), this.periodRange());
+    return days === null
+      ? null
+      : buildPlBuckets(days, this.plGranularity(), this.periodRange(), (v) =>
+          this.money.format(v, { decimals: 0, compact: true, symbol: false }),
+        );
   });
 
   /** Feedback « AI Coach » dérivé des vraies données (summary + émotions + setups). */
@@ -411,11 +416,16 @@ export class DashboardComponent {
    */
   protected readonly tradeRows = computed<DashboardTradeRow[]>(() => {
     const base = this.baseCapital();
-    return this.tradesStore.trades().slice(0, 8).map((t) => ({
-      ...t,
-      win: (t.pnl ?? 0) >= 0,
-      pct: base > 0 ? ((t.pnl ?? 0) / base) * 100 : null,
-    }));
+    return this.tradesStore.trades().slice(0, 8).map((t) => {
+      // P&L NET (frais déduits), comme les KPIs et le calendrier (PROMPT-213).
+      const net = netPnl(t);
+      return {
+        ...t,
+        pnl: net,
+        win: (net ?? 0) >= 0,
+        pct: base > 0 ? ((net ?? 0) / base) * 100 : null,
+      };
+    });
   });
 
   goToJournal() { this.showTradeForm.set(true); }

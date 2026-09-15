@@ -24,7 +24,23 @@ export type TradeOutcome = 'win' | 'loss' | 'breakeven';
 
 /** Forme minimale d'un trade pour les stats (pnl null/undefined = ouvert → exclu). */
 export interface TradeStatInput {
+  /** P&L BRUT du trade (résultat des prix), frais à part. */
   pnl?: number | null;
+  /** Frais du trade (commission, stockée positive). Déduits pour obtenir le net. */
+  commission?: number | null;
+}
+
+/**
+ * P&L NET d'un trade = pnl (brut) − frais. `null` si le trade est ouvert (pnl non renseigné).
+ *
+ * CONVENTION UNIQUE (PROMPT-213) : `pnl` est stocké BRUT, `commission` à part, et TOUT montant
+ * affiché comme tout classement gagnant/perdant passe par ce net. Un trade à +1 $ brut avec
+ * 1,90 $ de frais est une perte. Un appelant qui ne fournit pas `commission` obtient le brut :
+ * toujours sélectionner `commission` avec `pnl`.
+ */
+export function netPnl(t: TradeStatInput): number | null {
+  if (t.pnl == null) return null;
+  return +(t.pnl - Math.abs(t.commission ?? 0)).toFixed(2);
 }
 
 export interface TradeStats {
@@ -37,7 +53,7 @@ export interface TradeStats {
   breakeven: number;
   /** wins / (wins + losses), en POURCENTAGE (0-100). 0 si (wins + losses) === 0 (pas de /0). */
   winRate: number;
-  /** Σ pnl des trades clôturés. */
+  /** Σ P&L NET (frais déduits) des trades clôturés. */
   totalPnl: number;
 }
 
@@ -52,8 +68,8 @@ export function classifyTrade(
 }
 
 /**
- * Agrège les résultats d'un lot de trades. Les trades ouverts (pnl null/undefined) sont exclus
- * du classement ; `total` les compte quand même.
+ * Agrège les résultats d'un lot de trades, sur le P&L NET (cf. `netPnl`). Les trades ouverts
+ * (pnl null/undefined) sont exclus du classement ; `total` les compte quand même.
  */
 export function computeTradeStats<T extends TradeStatInput>(
   trades: readonly T[],
@@ -66,10 +82,11 @@ export function computeTradeStats<T extends TradeStatInput>(
   let totalPnl = 0;
 
   for (const t of trades) {
-    if (t.pnl == null) continue; // ouvert → hors calcul
+    const net = netPnl(t);
+    if (net == null) continue; // ouvert → hors calcul
     closed++;
-    totalPnl += t.pnl;
-    switch (classifyTrade(t.pnl, epsilon)) {
+    totalPnl += net;
+    switch (classifyTrade(net, epsilon)) {
       case 'win':
         wins++;
         break;
@@ -84,5 +101,5 @@ export function computeTradeStats<T extends TradeStatInput>(
   const decisive = wins + losses;
   const winRate = decisive > 0 ? (wins / decisive) * 100 : 0;
 
-  return { total: trades.length, closed, wins, losses, breakeven, winRate, totalPnl };
+  return { total: trades.length, closed, wins, losses, breakeven, winRate, totalPnl: +totalPnl.toFixed(2) };
 }

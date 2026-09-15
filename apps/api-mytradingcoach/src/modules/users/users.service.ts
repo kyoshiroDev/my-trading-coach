@@ -559,7 +559,7 @@ export class UsersService {
           .catch(() => []),
         this.prisma.trade.findMany({
           where: { userId, pnl: { not: null } },
-          select: { pnl: true, asset: true },
+          select: { pnl: true, commission: true, asset: true },
         }),
         this.prisma.trade.groupBy({
           by: ['asset'],

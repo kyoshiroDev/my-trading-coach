@@ -20,7 +20,8 @@ export interface SetupStat {
   title: string;
   color: string;
   winRate: number | null;
-  avgRR: number;
+  /** null = aucun trade du setup n'a de R:R (pas de stop ni d'objectif) → « – ». */
+  avgRR: number | null;
   count: number;
   pnl: number;
 }
