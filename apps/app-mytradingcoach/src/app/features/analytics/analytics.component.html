@@ -1,6 +1,10 @@
 <mtc-topbar title="Analytics" [showAccountSelector]="true" />
 
 <div class="content">
+  <!-- Devises mêlées en « Tous les comptes » : totaux sans objet (PROMPT-214). -->
+  @if (money.mixed()) {
+    <mtc-mixed-currency-notice />
+  } @else {
   <!-- ── 4 Stats FREE (visibles par tous) ── -->
   <div class="stats-row">
     <div class="stat-card">
@@ -299,6 +303,7 @@
       </div>
 
     </div>
+  }
   }
 
   <!-- ══════════════════════════════════════════

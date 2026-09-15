@@ -50,7 +50,7 @@
               </p>
             } @else {
               <p class="result-sub result-fees">
-                Frais importés : {{ f.assigned.toFixed(2) }} $ sur {{ f.count }} trade(s)
+                Frais importés : {{ feesLabel(f.assigned) }} sur {{ f.count }} trade(s)
                 @if (!f.reconciled) {
                   <span class="result-fees-warn"> · frais partiellement rapprochés</span>
                 }

@@ -44,7 +44,7 @@ import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
       {{ trade().exit !== null ? (trade().exit | number: '1.2-5') : '-' }}
     </td>
     <td class="td-num" [class]="trade().pnl | pnlColor">
-      {{ trade().pnl | pnlFormat }}
+      {{ trade().pnl | pnlFormat : null : trade().accountId }}
     </td>
     <td class="td-num">
       {{

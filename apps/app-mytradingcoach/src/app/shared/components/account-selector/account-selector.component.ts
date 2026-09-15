@@ -18,7 +18,7 @@ import {
 } from '@lucide/angular';
 import { SelectedAccountStore } from '../../../core/stores/selected-account.store';
 import { AccountType, TradingAccount } from '../../../core/api/accounts.api';
-import { CurrencyCode, formatMoney } from '../../../core/utils/money';
+import { formatMoney } from '@mtc/shared';
 
 // Sélecteur de compte réutilisable (dashboard, etc.) : trigger compact affichant le compte
 // courant (ou « Tous les comptes ») + menu déroulant listant tous les comptes. Largeur fixe,
@@ -108,7 +108,7 @@ export class AccountSelectorComponent implements OnInit {
     return this.fmt(this.totalBalance(), this.store.displayCurrency());
   }
 
-  private fmt(n: number, currency: CurrencyCode): string {
+  private fmt(n: number, currency: string | null): string {
     return formatMoney(n, currency, { decimals: 0, sign: false });
   }
 }

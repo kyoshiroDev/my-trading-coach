@@ -255,6 +255,15 @@ export class AccountsService {
     if (dto.status === AccountStatus.ACTIVE && account.status !== AccountStatus.ACTIVE) {
       await this.assertActiveSlotAvailable(userId, ctx);
     }
+    // La devise d'un compte synchronisé vient du broker (PROMPT-214) : non modifiable ici.
+    if (dto.currency !== undefined && dto.currency !== account.currency) {
+      const synced = await this.prisma.brokerConnection.count({ where: { accountId: id } });
+      if (synced > 0) {
+        throw new BadRequestException(
+          "La devise d'un compte synchronisé vient du broker : elle ne se modifie pas.",
+        );
+      }
+    }
     return this.prisma.tradingAccount.update({ where: { id }, data: dto });
   }
 

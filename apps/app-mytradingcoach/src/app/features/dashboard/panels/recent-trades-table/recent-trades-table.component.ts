@@ -26,7 +26,7 @@ import { DashboardTradeRow } from '../../dashboard-charts.util';
               <td class="mono dim r">{{ t.entry | number:'1.0-2' }}</td>
               <td class="mono dim r">{{ t.exit !== null ? (t.exit | number:'1.0-2') : '-' }}</td>
               <td class="mono dim r">{{ t.riskReward !== null ? ((t.riskReward >= 0 ? '+' : '') + (t.riskReward | number:'1.1-1')) : '-' }}</td>
-              <td class="mono strong r" [style.color]="t.win ? 'var(--green)' : 'var(--red)'">{{ t.pnl | pnlFormat }}</td>
+              <td class="mono strong r" [style.color]="t.win ? 'var(--green)' : 'var(--red)'">{{ t.pnl | pnlFormat : null : t.accountId }}</td>
               <td class="mono r" [style.color]="t.pct === null ? 'var(--text-3)' : (t.win ? 'var(--green)' : 'var(--red)')">{{ t.pct === null ? '-' : ((t.pct >= 0 ? '+' : '') + (t.pct | number:'1.2-2') + '%') }}</td>
               <td class="c"><span class="mtc-res" [class.win]="t.win">{{ t.win ? 'WIN' : 'LOSS' }}</span></td>
             </tr>

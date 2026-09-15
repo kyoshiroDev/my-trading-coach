@@ -2,6 +2,7 @@ import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { AccountsApi, TradingAccount } from '../api/accounts.api';
+import { commonCurrency } from '@mtc/shared';
 
 const STORAGE_KEY = 'mtc.selectedAccount';
 
@@ -35,13 +36,16 @@ export class SelectedAccountStore {
    * chargé → USD, la devise par défaut d'un `TradingAccount`.
    */
   readonly displayCurrency = computed<string | null>(() => {
-    const norm = (c: string | null | undefined) => (c?.trim().toUpperCase() || 'USD');
     const sel = this.selected();
-    if (sel) return norm(sel.currency);
-    const codes = new Set(this.accounts().map((a) => norm(a.currency)));
-    if (codes.size === 0) return 'USD';
-    return codes.size === 1 ? [...codes][0] : null;
+    if (sel) return commonCurrency([sel.currency]);
+    return commonCurrency(this.accounts().map((a) => a.currency));
   });
+
+  /** Devise d'un compte donné (ligne de trade) ; `undefined` si le compte n'est pas chargé. */
+  currencyOf(accountId: string): string | undefined {
+    const a = this.accounts().find((x) => x.id === accountId);
+    return a ? (commonCurrency([a.currency]) ?? undefined) : undefined;
+  }
 
   /** Comptes actifs (pour le choix de session : 1 session = 1 compte actif). */
   readonly activeAccounts = computed(() =>

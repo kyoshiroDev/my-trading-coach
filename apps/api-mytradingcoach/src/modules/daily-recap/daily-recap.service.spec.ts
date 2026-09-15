@@ -29,6 +29,8 @@ const mockPrisma = {
   trade: { findMany: vi.fn() },
   user: { findUnique: vi.fn() },
   dailyRecap: { upsert: vi.fn(), findUnique: vi.fn() },
+  // Devise des montants du one-liner = celle des comptes (PROMPT-214).
+  tradingAccount: { findMany: vi.fn().mockResolvedValue([{ currency: 'USD' }]) },
 };
 
 const mockAi = { generateDailyOneLiner: vi.fn() };

@@ -7,5 +7,6 @@
  * `nestjs.md`.
  */
 export * from './api-error';
+export * from './currency';
 export * from './pricing';
 export * from './trade-stats';

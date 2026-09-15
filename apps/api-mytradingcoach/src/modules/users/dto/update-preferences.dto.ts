@@ -1,15 +1,15 @@
-import { IsArray, IsBoolean, IsEnum, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
-
-export enum Currency {
-  USD = 'USD',
-  EUR = 'EUR',
-  GBP = 'GBP',
-}
+import { IsArray, IsBoolean, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 
 export class UpdatePreferencesDto {
-  @IsEnum(Currency)
+  /**
+   * @deprecated PROMPT-214 : IGNORÉ. Il n'existe plus de devise globale (la devise est celle du
+   * compte). Encore accepté pour ne pas rejeter en 400 un front resté en cache ; à retirer avec
+   * les colonnes `User.currency` / `currencyRate` (migration séparée).
+   */
+  @IsString()
+  @MaxLength(8)
   @IsOptional()
-  currency?: Currency;
+  currency?: string;
 
   @IsNumber()
   @Min(0)

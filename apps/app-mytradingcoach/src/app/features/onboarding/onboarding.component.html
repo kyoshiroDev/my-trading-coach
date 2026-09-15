@@ -133,9 +133,12 @@
             {{ accountMode() === 'PROPFIRM' ? 'Taille du compte' : 'Capital de départ' }}
           </div>
           <div class="capital-field">
-            <div class="currency-toggle">
-              <button type="button" class="currency-btn" [class.active-usd]="selectedCurrency() === 'USD'" (click)="selectCurrency('USD')">$ USD</button>
-              <button type="button" class="currency-btn" [class.active-eur]="selectedCurrency() === 'EUR'" (click)="selectCurrency('EUR')">€ EUR</button>
+            <!-- Devise DU COMPTE créé (PROMPT-214) : ses montants s'afficheront dans cette devise. -->
+            <div class="currency-toggle" role="group" aria-label="Devise du compte" title="Devise du compte">
+              @for (c of accountCurrencies; track c) {
+                <button type="button" class="currency-btn" [class.on]="selectedCurrency() === c"
+                  [attr.aria-pressed]="selectedCurrency() === c" (click)="selectCurrency(c)">{{ c }}</button>
+              }
             </div>
             <input
               type="text"
@@ -459,7 +462,7 @@
                     ⚠ Frais non rapprochés · P&L brut affiché — ton Cash history n'a pas pu être lu.
                   </div>
                 } @else {
-                  <div class="ob-recap-sub">Frais importés : {{ f.assigned.toFixed(2) }} $ sur {{ f.count }} trade(s)</div>
+                  <div class="ob-recap-sub">Frais importés : {{ feesLabel(f.assigned) }} sur {{ f.count }} trade(s)</div>
                 }
               } @else {
                 <div class="ob-recap-warn" data-testid="onboarding-import-fees-warning">

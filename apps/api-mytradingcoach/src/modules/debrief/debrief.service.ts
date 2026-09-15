@@ -2,6 +2,7 @@ import { Injectable, ForbiddenException, NotFoundException, Logger } from '@nest
 import { Plan, Role, WeeklyDebrief } from '@prisma/client';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
 import { computeTradeStats, netPnl } from '@mtc/shared';
+import { userAmountsCurrency } from '../../common/utils/user-currency.util';
 import { DebriefPdfData } from '../pdf/pdf.service';
 import { OBJECTIVE_CHECK_TYPES, DebriefAccountInput } from '../ai/prompts/debrief.prompt';
 
@@ -163,7 +164,7 @@ export class DebriefService {
     const accounts = await this.prisma.tradingAccount.findMany({
       where: { userId, status: { not: 'ARCHIVED' } },
       select: {
-        id: true, label: true, type: true, status: true,
+        id: true, label: true, type: true, status: true, currency: true,
         startingBalance: true, profitTarget: true, maxDrawdown: true, drawdownType: true,
       },
       orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
@@ -207,6 +208,7 @@ export class DebriefService {
       accountId: a.id,
       name: a.label,
       type: a.type,
+      currency: a.currency,
       startingBalance: a.startingBalance,
       profitTarget: a.profitTarget,
       maxDrawdown: a.maxDrawdown,
@@ -450,6 +452,7 @@ export class DebriefService {
       (debrief.objectives as { title: string; reason: string }[]) ?? [];
 
     return {
+      currency: await userAmountsCurrency(this.prisma, userId),
       weekNumber,
       year,
       startDate: debrief.startDate.toLocaleDateString('fr-FR'),

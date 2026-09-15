@@ -1,3 +1,4 @@
+import { formatMoney } from '@mtc/shared';
 import { buildUserTradingContext, UserTradingProfile } from '../user-context.builder';
 import { NO_EM_DASH_RULE } from './style.prompt';
 
@@ -27,6 +28,8 @@ export interface DebriefAccountInput {
   accountId: string;
   name: string;
   type: string; // EVALUATION | FUNDED | PERSONAL | DEMO
+  /** Devise du compte : ses montants (règles, P&L) sont dans cette devise, jamais convertis. */
+  currency: string;
   startingBalance: number | null;
   profitTarget: number | null;
   maxDrawdown: number | null;
@@ -51,10 +54,12 @@ export const buildDebriefPrompt = (data: {
   const accountsBlock = accounts.length
     ? accounts
         .map((a) => {
+          const amount = (v: number | null, none: string) =>
+            v == null ? none : formatMoney(v, a.currency, { decimals: 0, sign: false });
           const rules = a.maxDrawdown != null || a.profitTarget != null
-            ? ` : départ ${a.startingBalance ?? '?'}$, objectif ${a.profitTarget ?? 'aucun'}$, drawdown max ${a.maxDrawdown ?? 'aucun'}$ (${a.drawdownType ?? 'STATIC'})`
+            ? ` : départ ${amount(a.startingBalance, '?')}, objectif ${amount(a.profitTarget, 'aucun')}, drawdown max ${amount(a.maxDrawdown, 'aucun')} (${a.drawdownType ?? 'STATIC'})`
             : '';
-          return `- [${a.accountId}] "${a.name}" (${a.type})${rules}. ${a.tradesCount} trade(s) cette semaine.`;
+          return `- [${a.accountId}] "${a.name}" (${a.type}, devise ${a.currency})${rules}. ${a.tradesCount} trade(s) cette semaine.`;
         })
         .join('\n')
     : '(aucun compte enregistré, analyse le compte « unassigned » uniquement)';

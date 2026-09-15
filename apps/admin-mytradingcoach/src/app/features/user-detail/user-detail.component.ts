@@ -166,8 +166,9 @@ export class UserDetailComponent {
   protected readonly capitalLabel = computed(() => {
     const p = this.profile();
     if (!p || !p.startingCapital) return '-';
-    const sym = p.currency === 'EUR' ? '€' : '$';
-    return `${sym}${p.startingCapital.toLocaleString('en-US')}`;
+    // Capital déclaré au profil, sans symbole : il n'existe plus de devise globale, la devise
+    // est celle de chaque compte de trading (PROMPT-214).
+    return p.startingCapital.toLocaleString('en-US');
   });
   protected readonly frequencyLabel = computed<string | null>(() => {
     const p = this.profile();

@@ -47,7 +47,7 @@ describe('UserDetailService', () => {
       market: 'CRYPTO', goal: 'PERFORMANCE', tradingStyle: 'SWING',
       tradingStrategy: ['ICT', 'SMC'], tradingSessions: ['NEW_YORK'],
       tradesPerDayMin: 1, tradesPerDayMax: 3, strategyDescription: 'FVG + OB',
-      startingCapital: 5000, currency: 'EUR',
+      startingCapital: 5000,
     });
     prisma.userDailyActivity.findMany.mockResolvedValue([
       { date: new Date('2026-06-01T00:00:00Z') },
@@ -94,8 +94,10 @@ describe('UserDetailService', () => {
     expect(r.profile).toMatchObject({
       market: 'CRYPTO', goal: 'PERFORMANCE', tradingStyle: 'SWING',
       tradingStrategy: ['ICT', 'SMC'], tradingSessions: ['NEW_YORK'],
-      startingCapital: 5000, currency: 'EUR',
+      startingCapital: 5000,
     });
+    // Plus de devise globale au profil (PROMPT-214) : la devise est celle de chaque compte.
+    expect(r.profile).not.toHaveProperty('currency');
     expect(r.identity.ambassadorRefCode).toBe('VAL');
     expect(r.sessions[0]).toMatchObject({ trades: 3, pnl: 120, winRate: 66, emotion: 'CONFIDENT', durationMinutes: 90 });
     expect(r.kpis.sessionTimeMinutes).toBe(90);

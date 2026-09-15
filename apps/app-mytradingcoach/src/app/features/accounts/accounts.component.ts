@@ -56,6 +56,7 @@ import {
 } from '../../core/utils/tradovate-return.util';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { UserStore } from '../../core/stores/user.store';
+import { ACCOUNT_CURRENCIES, commonCurrency, formatMoney } from '@mtc/shared';
 import {
   AccountType,
   AccountStatus,
@@ -181,6 +182,22 @@ export class AccountsComponent implements OnInit {
   protected readonly totalTrades = computed(() =>
     this.visibleAccounts().reduce((s, a) => s + a.metrics.tradesCount, 0),
   );
+
+  // ── Devise (PROMPT-214) : propriété DU COMPTE, jamais convertie ──────────
+  protected readonly accountCurrencies = ACCOUNT_CURRENCIES;
+  /** Devise des totaux (capital suivi, P&L cumulé) ; null si les comptes affichés en ont plusieurs. */
+  protected readonly totalsCurrency = computed(() =>
+    commonCurrency(this.visibleAccounts().map((a) => a.currency)),
+  );
+  /** Compte synchronisé en édition : sa devise vient du broker, non modifiable. */
+  protected readonly formSynced = computed(() => {
+    const id = this.editingId();
+    return !!id && this.tv.byAccount().has(id);
+  });
+  /** Montant dans la devise donnée (celle du compte), sans conversion. */
+  protected money(value: number | null | undefined, currency: string | null, sign = false): string {
+    return formatMoney(value ?? 0, currency, { decimals: 0, sign });
+  }
   // Comptes proches du drawdown (marge ≤ 25 % du max, ou dépassée) : à surveiller.
   protected readonly atRiskCount = computed(
     () =>

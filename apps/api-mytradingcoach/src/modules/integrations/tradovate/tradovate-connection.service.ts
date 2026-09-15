@@ -12,6 +12,7 @@ import { decryptToken, encryptToken, loadTokenKey } from '../../../common/utils/
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateApiError, TradovateException } from './tradovate.errors';
 import { OAuthOrigin, signOAuthState, verifyOAuthState } from './oauth-state.util';
+import type { AccountCurrency } from '@mtc/shared';
 import type {
   ExternalAccountRef,
   TradovateAccount,
@@ -29,6 +30,17 @@ const REFRESH_MARGIN_MS = 5 * 60 * 1000;
  */
 const LOCK_TTL_S = 120;
 const ENVS: TradovateEnv[] = ['live', 'demo'];
+
+/**
+ * Devise posée sur le TradingAccount lié à un compte Tradovate (PROMPT-214) : la devise d'un compte
+ * synchronisé vient du broker et n'est plus modifiable par l'utilisateur (AccountsService.update).
+ *
+ * TODO(PROMPT-214) : HYPOTHÈSE, pas une lecture du broker. Tous les comptes Tradovate vus à ce jour
+ * (futures CME, prop firms Apex / TakeProfitTrader / Tradeify…) sont en USD, d'où cette constante.
+ * Dès qu'un compte non-USD apparaît, lire la vraie devise : `cashBalance.currencyId` du compte, puis
+ * `/currency/item?id=` pour son code, au moment de `selectAccount`, et poser ce code ici à la place.
+ */
+const TRADOVATE_ACCOUNT_CURRENCY: AccountCurrency = 'USD';
 
 /** Vue publique d'une connexion : JAMAIS de token, même chiffré. */
 export interface TradovateConnectionView {
@@ -224,6 +236,11 @@ export class TradovateConnectionService {
         externalAccountName: target.name,
         externalEnv: target.env,
       },
+    });
+    // La devise du compte suit le broker (cf. TRADOVATE_ACCOUNT_CURRENCY et son TODO).
+    await this.prisma.tradingAccount.update({
+      where: { id: accountId },
+      data: { currency: TRADOVATE_ACCOUNT_CURRENCY },
     });
     return this.toView(updated);
   }

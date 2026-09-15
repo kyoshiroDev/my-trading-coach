@@ -167,7 +167,7 @@ function isoWeek(d: Date): { week: number; year: number } {
 
 const PROFILE = {
   isDemo: true, plan: Plan.PREMIUM, name: DEMO_NAME,
-  onboardingCompleted: true, startingCapital: STARTING_CAPITAL, currency: 'USD', currencyRate: 1,
+  onboardingCompleted: true, startingCapital: STARTING_CAPITAL,
   tradingStyle: 'Day trading', tradingStrategy: ['ICT', 'SMC', 'Price Action'],
   tradingSessions: ['LONDON', 'NEW_YORK'], tradesPerDayMin: 1, tradesPerDayMax: 4,
   strategyDescription: "Je trade les indices et le forex sur les sessions Londres/NY, en suivant les concepts ICT/SMC (order blocks, FVG, liquidité). Discipline : 2 trades max par session, R:R minimum 1.5.",

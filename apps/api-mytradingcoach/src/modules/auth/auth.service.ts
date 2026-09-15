@@ -47,8 +47,6 @@ const ME_SELECT = {
   onboardingCompleted: true,
   market: true,
   goal: true,
-  currency: true,
-  currencyRate: true,
   startingCapital: true,
   notificationsEmail: true,
   debriefAutomatic: true,

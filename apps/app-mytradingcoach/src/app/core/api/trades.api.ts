@@ -51,6 +51,8 @@ export interface Trade {
   executionMethod?: 'STOP_BASED' | 'BEHAVIORAL' | null;
   setupId: string;
   setup: TradeSetup;
+  /** Compte du trade : sa devise est celle de ce compte (PROMPT-214). */
+  accountId?: string | null;
   session: 'LONDON' | 'NEW_YORK' | 'ASIAN';
   timeframe: string;
   notes: string | null;

@@ -13,13 +13,15 @@
     <div class="stats-row">
       <div class="stat-card" style="--c:var(--blue)">
         <div class="stat-label"><svg [lucideIcon]="WalletIcon" [size]="13"></svg>Capital suivi</div>
-        <div class="stat-value">{{ trackedCapital() | number:'1.0-0' }} $</div>
-        <div class="stat-sub">{{ visibleAccounts().length }} compte(s) suivi(s)</div>
+        <div class="stat-value">{{ money(trackedCapital(), totalsCurrency()) }}</div>
+        <div class="stat-sub">
+          {{ totalsCurrency() === null ? 'devises différentes : choisis un compte' : visibleAccounts().length + ' compte(s) suivi(s)' }}
+        </div>
       </div>
       <div class="stat-card" style="--c:var(--green)">
         <div class="stat-label"><svg [lucideIcon]="TrendingUpIcon" [size]="13"></svg>P&amp;L cumulé</div>
         <div class="stat-value" [class.text-green]="totalPnl() >= 0" [class.text-red]="totalPnl() < 0">
-          {{ totalPnl() >= 0 ? '+' : '' }}{{ totalPnl() | number:'1.0-0' }} $
+          {{ money(totalPnl(), totalsCurrency(), true) }}
         </div>
         <div class="stat-sub">{{ selectedAccountName() ?? 'tous comptes' }} · estimé</div>
       </div>
@@ -108,12 +110,12 @@
           <div class="acct-stats">
             <div class="mini">
               <div class="mini-v" [class.text-green]="a.metrics.realizedPnl >= 0" [class.text-red]="a.metrics.realizedPnl < 0">
-                {{ a.metrics.realizedPnl >= 0 ? '+' : '' }}{{ a.metrics.realizedPnl | number:'1.0-0' }} $
+                {{ money(a.metrics.realizedPnl, a.currency, true) }}
               </div>
               <div class="mini-l">P&amp;L</div>
             </div>
             <div class="mini">
-              <div class="mini-v">{{ a.metrics.currentBalance | number:'1.0-0' }} $</div>
+              <div class="mini-v">{{ money(a.metrics.currentBalance, a.currency) }}</div>
               <div class="mini-l">Solde</div>
             </div>
             <div class="mini">
@@ -121,7 +123,7 @@
               <div class="mini-l">Trades</div>
             </div>
             <div class="mini">
-              <div class="mini-v">{{ a.metrics.startingBalance | number:'1.0-0' }} $</div>
+              <div class="mini-v">{{ money(a.metrics.startingBalance, a.currency) }}</div>
               <div class="mini-l">Départ</div>
             </div>
           </div>
@@ -137,7 +139,7 @@
                     <div class="obj-right"><span class="obj-pct done">atteint</span></div>
                   } @else {
                     <div class="obj-right">
-                      <span class="obj-val">{{ obj.current | number:'1.0-0' }} / {{ obj.target | number:'1.0-0' }} $</span>
+                      <span class="obj-val">{{ obj.current | number:'1.0-0' }} / {{ money(obj.target, a.currency) }}</span>
                       <span class="obj-pct">{{ objPct(a) }} %</span>
                     </div>
                   }
@@ -156,7 +158,7 @@
                   @if (dd.breached) {
                     <span class="rule-val text-red">dépassé</span>
                   } @else {
-                    <span class="rule-val" [style.color]="ddColor(a)">{{ dd.margin | number:'1.0-0' }} $ restants</span>
+                    <span class="rule-val" [style.color]="ddColor(a)">{{ money(dd.margin, a.currency) }} restants</span>
                   }
                 </div>
                 <div class="bar-track sm">
@@ -347,10 +349,17 @@
             <input class="inp" type="number" [ngModel]="form().startingBalance"
                    (ngModelChange)="patch({ startingBalance: $event })" placeholder="50000" />
           </label>
+          <!-- Devise DU COMPTE (PROMPT-214) : ses montants s'affichent dans cette devise, sans
+               conversion. Compte synchronisé : imposée par le broker, non modifiable. -->
           <label class="fld fld-sm">
             <span class="fld-lbl">Devise</span>
-            <input class="inp" type="text" [ngModel]="form().currency"
-                   (ngModelChange)="patch({ currency: $event })" placeholder="USD" />
+            <select class="inp" [ngModel]="form().currency" (ngModelChange)="patch({ currency: $event })"
+                    [disabled]="formSynced()" data-testid="account-currency"
+                    [attr.title]="formSynced() ? 'Devise imposée par le broker (compte synchronisé)' : null">
+              @for (c of accountCurrencies; track c) {
+                <option [value]="c">{{ c }}</option>
+              }
+            </select>
           </label>
         </div>
 

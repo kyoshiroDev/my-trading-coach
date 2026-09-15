@@ -27,6 +27,8 @@ import { TradeFormComponent } from './trade-form.component';
 import { CsvImportComponent } from './csv-import.component';
 import { MoneyPipe, PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe } from '../../shared/pipes';
 import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
+import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
+import { MoneyService } from '../../core/services/money.service';
 import { ToastService } from '../../core/services/toast.service';
 import { TradovateLiveSocketService } from '../../core/services/tradovate-live-socket.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
@@ -67,6 +69,7 @@ interface WeekGroup {
     DatePipe, DecimalPipe, TitleCasePipe, LucideDynamicIcon,
     TopbarComponent, TradeFormComponent, CsvImportComponent,
     PnlColorPipe, PnlFormatPipe, MoneyPipe, EmotionEmojiPipe, InfoTooltipComponent,
+    MixedCurrencyNoticeComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './journal.component.css',
@@ -80,6 +83,8 @@ export class JournalComponent {
   protected readonly setupsStore = inject(SetupsStore);
   private readonly toast         = inject(ToastService);
   private readonly tradovateLive = inject(TradovateLiveSocketService);
+  /** Devises mêlées en « Tous les comptes » → pas de totaux, lignes dans la devise de leur compte. */
+  protected readonly money = inject(MoneyService);
 
   constructor() {
     this.setupsStore.load();

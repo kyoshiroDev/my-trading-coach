@@ -32,6 +32,7 @@ import { TradovateStore } from '../../core/stores/tradovate.store';
 import { TradovateConnectModalComponent } from '../../shared/components/tradovate-connect/tradovate-connect-modal.component';
 import { apiErrorMessage } from '../../core/utils/api-error';
 import { TradesApi } from '../../core/api/trades.api';
+import { formatMoney } from '@mtc/shared';
 
 export interface ImportResult {
   created: number;
@@ -93,6 +94,13 @@ export class CsvImportComponent {
     const a = this.accountStore.activeAccounts().find((x) => x.id === this.accountId());
     return a ? { id: a.id, label: a.label } : null;
   });
+  /** Frais importés dans la devise du compte cible, sans conversion (PROMPT-214). */
+  protected readonly feesLabel = (n: number) =>
+    formatMoney(
+      n,
+      this.accountStore.currencyOf(this.accountId()) ?? this.accountStore.displayCurrency(),
+      { sign: false },
+    );
   /** connect : pas encore connecté · sync : déjà connecté · reconnect : jeton expiré · finish : choix du compte Tradovate en attente. */
   protected readonly tvState = computed<'connect' | 'sync' | 'reconnect' | 'finish'>(() => {
     const t = this.tvTarget();
