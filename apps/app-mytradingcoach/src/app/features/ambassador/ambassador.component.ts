@@ -9,10 +9,18 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
-import { LucideAngularModule, Users, CircleCheck, TrendingUp, Award, Check } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideUsers as Users,
+  LucideCircleCheck as CircleCheck,
+  LucideTrendingUp as TrendingUp,
+  LucideAward as Award,
+  LucideCheck as Check,
+} from '@lucide/angular';
 import { AmbassadorApi, AmbassadorStats, ReferralUser } from '../../core/api/ambassador.api';
 import { ReferralApi } from '../../core/api/referral.api';
 import { AmbassadorNotifService } from '../../core/services/ambassador-notif.service';
+import { ToastService } from '../../core/services/toast.service';
 import { PRICING } from '../../core/constants/pricing.const';
 import { environment } from '../../../environments/environment';
 
@@ -21,9 +29,8 @@ const COMMISSION_RATE = 0.2;
 
 @Component({
   selector: 'mtc-ambassador',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, DecimalPipe, TitleCasePipe, LucideAngularModule],
+  imports: [DatePipe, DecimalPipe, TitleCasePipe, LucideDynamicIcon],
   templateUrl: './ambassador.component.html',
   styleUrl: './ambassador.component.css',
 })
@@ -32,6 +39,7 @@ export class AmbassadorComponent implements OnInit {
   private readonly referralApi = inject(ReferralApi);
   private readonly notif = inject(AmbassadorNotifService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
 
   protected readonly UsersIcon = Users;
   protected readonly CircleCheckIcon = CircleCheck;
@@ -41,10 +49,8 @@ export class AmbassadorComponent implements OnInit {
 
   protected readonly stats = signal<AmbassadorStats | null>(null);
   protected readonly isLoading = signal(true);
-  protected readonly copied = signal(false);
 
   protected readonly statementLoading = signal(false);
-  protected readonly statementError = signal(false);
 
   protected readonly referralLink = computed(() => {
     const code = this.stats()?.referralCode;
@@ -85,17 +91,17 @@ export class AmbassadorComponent implements OnInit {
   }
 
   protected copyLink(): void {
-    navigator.clipboard.writeText(this.referralLink()).then(() => {
-      this.copied.set(true);
-      setTimeout(() => this.copied.set(false), 2000);
-    });
+    // Feedback transitoire → toast (PROMPT-210). L'échec du presse-papiers était muet.
+    navigator.clipboard.writeText(this.referralLink()).then(
+      () => this.toast.success('Lien copié'),
+      () => this.toast.error('Copie impossible : sélectionne le lien et copie-le à la main.'),
+    );
   }
 
   /** Génère le relevé de commissions (PDF) : telechargement + email à l'équipe. */
   protected generateStatement(): void {
     if (this.statementLoading()) return;
     this.statementLoading.set(true);
-    this.statementError.set(false);
     this.referralApi.generateStatement()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -107,8 +113,12 @@ export class AmbassadorComponent implements OnInit {
           a.click();
           URL.revokeObjectURL(url);
           this.statementLoading.set(false);
+          this.toast.success('Relevé généré');
         },
-        error: () => { this.statementLoading.set(false); this.statementError.set(true); },
+        error: () => {
+          this.statementLoading.set(false);
+          this.toast.error('Génération du relevé impossible pour le moment. Réessaie.');
+        },
       });
   }
 

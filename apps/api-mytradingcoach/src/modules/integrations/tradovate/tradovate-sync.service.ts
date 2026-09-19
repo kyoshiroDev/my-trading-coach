@@ -1,0 +1,252 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { BrokerConnection } from '@prisma/client';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { TradesService } from '../../trades/trades.service';
+import { SetupsService } from '../../setups/setups.service';
+import type { CreateTradeDto } from '../../trades/dto/create-trade.dto';
+import type { FeesReport } from '../../trades/csv-import.service';
+import { TradovateApiClient } from './tradovate-api.client';
+import { TradovateConnectionService } from './tradovate-connection.service';
+import { TradovateApiError, TradovateException } from './tradovate.errors';
+import { mapTradovatePairs } from './tradovate-trade.mapper';
+import { describeTradovateSnapshot } from './tradovate-sync-diagnostics';
+import type {
+  TradovateAccount,
+  TradovateContract,
+  TradovateContractMaturity,
+  TradovateEnv,
+  TradovateFill,
+  TradovateFillFee,
+  TradovateFillPair,
+  TradovatePosition,
+  TradovateProduct,
+} from './tradovate.types';
+
+/**
+ * Taille des lots d'ids pour les endpoints `/xxx/items?ids=…`. Tradovate répond 404 (corps
+ * vide) dès que le lot dépasse une dizaine d'ids : mesuré sur un compte réel, `/fill/items` et
+ * `/fillFee/items` passent avec 1, 2 et 10 ids, et échouent avec 41. À 100, la synchro d'un
+ * compte actif échouait entièrement.
+ */
+const ITEMS_BATCH = 10;
+
+export interface TradovateSyncResult {
+  created: number;
+  duplicates: number;
+  failed: number;
+  total: number;
+  /** Paires non convertibles (données incomplètes côté broker). */
+  skipped: number;
+  /** Positions encore ouvertes : pas des trades, non importées. */
+  openPositions: number;
+  feesImported: FeesReport;
+  lastSyncAt: Date;
+}
+
+/**
+ * Synchro manuelle d'un compte Tradovate vers SON TradingAccount (PROMPT-207). Lecture seule.
+ *
+ * Chaîne : position (le seul lien fill → compte) → fillPair (paires appariées par Tradovate,
+ * = lignes de l'export Performance) → fill (horodatage, contrat) → fillFee (frais exacts)
+ * → contract / contractMaturity / product (symbole et valeur du point).
+ *
+ * Les trades produits passent par `TradesService.importTrades` : même dédup (`importHash` +
+ * contrainte d'unicité), même création, même recalcul du barème comportemental que le CSV.
+ * Scoring, analytics et débrief ne voient aucune différence de source.
+ */
+@Injectable()
+export class TradovateSyncService {
+  private readonly logger = new Logger(TradovateSyncService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly api: TradovateApiClient,
+    private readonly connections: TradovateConnectionService,
+    private readonly trades: TradesService,
+    private readonly setups: SetupsService,
+  ) {}
+
+  async sync(userId: string, accountId: string): Promise<TradovateSyncResult> {
+    this.connections.assertConfigured();
+    const conn = await this.connections.getConnection(userId, accountId);
+    if (!conn.externalAccountId || !conn.externalEnv) {
+      throw new TradovateException('TRADOVATE_ACCOUNT_SELECTION_REQUIRED');
+    }
+
+    // Verrou de la connexion : double-clic, et cron de renouvellement des tokens (rotation).
+    const locked = await this.connections.tryLock(conn.id);
+    if (!locked) throw new TradovateException('TRADOVATE_SYNC_IN_PROGRESS');
+
+    try {
+      const result = await this.run(userId, conn);
+      await this.prisma.brokerConnection.update({
+        where: { id: conn.id },
+        data: {
+          lastSyncAt: result.lastSyncAt,
+          lastSyncError: null,
+          tradesImported: { increment: result.created },
+        },
+      });
+      return result;
+    } catch (err) {
+      const exception =
+        err instanceof TradovateException
+          ? err
+          : err instanceof TradovateApiError
+            ? err.toException()
+            : null;
+      if (exception?.code === 'TRADOVATE_RECONNECT_REQUIRED') {
+        await this.connections.markNeedsReconnect(conn.id);
+      } else if (exception) {
+        await this.prisma.brokerConnection.update({
+          where: { id: conn.id },
+          data: { lastSyncError: exception.message },
+        });
+      }
+      this.logger.warn(`Synchro Tradovate en échec (connexion ${conn.id}) : ${(err as Error).message}`);
+      throw exception ?? err;
+    } finally {
+      await this.connections.unlock(conn.id);
+    }
+  }
+
+  private async run(userId: string, conn: BrokerConnection): Promise<TradovateSyncResult> {
+    const env = conn.externalEnv as TradovateEnv;
+    const externalId = Number(conn.externalAccountId);
+    const token = await this.connections.getAccessToken(conn);
+    const get = <T>(path: string, query?: Record<string, string>) =>
+      this.api.get<T>(env, path, token, query);
+
+    // Le compte doit toujours être accessible avec cette connexion.
+    const accounts = await get<TradovateAccount[]>('/account/list');
+    const account = accounts.find((a) => a.id === externalId);
+    if (!account) throw new TradovateException('TRADOVATE_ACCOUNT_NOT_FOUND');
+
+    const [positions, allPairs] = await Promise.all([
+      get<TradovatePosition[]>('/position/list'),
+      get<TradovateFillPair[]>('/fillPair/list'),
+    ]);
+    const accountPositions = positions.filter((p) => p.accountId === externalId);
+    const positionIds = new Set(accountPositions.map((p) => p.id));
+    const openPositions = accountPositions.filter((p) => p.netPos !== 0).length;
+    const pairs = allPairs.filter((p) => positionIds.has(p.positionId));
+
+    const fillIds = [...new Set(pairs.flatMap((p) => [p.buyFillId, p.sellFillId]))];
+    const fills = await this.sessionEntities<TradovateFill>(get, '/fill/list', '/fill/items', fillIds);
+    const fees = await this.optionalFees(get, fillIds);
+
+    const contractIds = [...new Set([...fills.values()].map((f) => f.contractId))];
+    const contracts = await this.items<TradovateContract>(get, '/contract/items', contractIds);
+    const maturityIds = [...new Set([...contracts.values()].map((c) => c.contractMaturityId))];
+    const maturities = await this.items<TradovateContractMaturity>(
+      get, '/contractMaturity/items', maturityIds,
+    );
+    const productIds = [...new Set([...maturities.values()].map((m) => m.productId))];
+    const products = await this.items<TradovateProduct>(get, '/product/items', productIds);
+
+    const mapped = mapTradovatePairs({ pairs, fills, fees, contracts, maturities, products });
+
+    // Rapprochement avec un import CSV (même trade, autre fuseau) : fait par `importTrades`,
+    // un-pour-un, pour la synchro comme pour l'import CSV (trades/import-dedupe.util.ts).
+
+    // Mêmes valeurs de lot que l'import CSV : compte cible, « Sans setup », émotion non renseignée.
+    const setupId = await this.setups.getImportSetupId(userId);
+    const dtos: Partial<CreateTradeDto>[] = mapped.trades.map((t) => {
+      const dto: typeof t = { ...t, accountId: conn.accountId, emotion: null };
+      if (setupId) dto.setupId = setupId;
+      delete dto._buyFillId; // métadonnées internes : jamais persistées
+      delete dto._sellFillId;
+      return dto;
+    });
+
+    const imported = await this.trades.importTrades(userId, dtos);
+    // Ce que Tradovate a renvoyé, pas seulement ce qui a été créé (PROMPT-212) : distingue
+    // « rien renvoyé » de « données écartées » (autre compte du login, paire orpheline).
+    this.logger.log(
+      `Synchro Tradovate ${conn.id} : ${imported.created} créés, ` +
+        `${imported.duplicates} doublons, ${mapped.skipped} ignorés. ` +
+        describeTradovateSnapshot({
+          accounts, positions, pairs: allPairs, externalAccountId: externalId, fillsFetched: fills.size,
+        }),
+    );
+
+    return {
+      created: imported.created,
+      duplicates: imported.duplicates,
+      failed: imported.failed,
+      total: mapped.trades.length,
+      skipped: mapped.skipped,
+      openPositions,
+      feesImported: mapped.fees,
+      lastSyncAt: new Date(),
+    };
+  }
+
+  /** `/xxx/items?ids=1,2,3` par lots → Map id → entité. */
+  private async items<T extends { id: number }>(
+    get: <R>(path: string, query?: Record<string, string>) => Promise<R>,
+    path: string,
+    ids: number[],
+  ): Promise<Map<number, T>> {
+    const out = new Map<number, T>();
+    for (let i = 0; i < ids.length; i += ITEMS_BATCH) {
+      const chunk = ids.slice(i, i + ITEMS_BATCH);
+      const list = await get<T[]>(path, { ids: chunk.join(',') });
+      for (const item of Array.isArray(list) ? list : []) out.set(item.id, item);
+    }
+    return out;
+  }
+
+  /**
+   * Entités de la séance lues par leur liste (`/xxx/list`, un seul appel) puis filtrées sur `ids` :
+   * les paires viennent de `/fillPair/list`, leurs fills et frais sont donc dans la même séance.
+   * Un id absent de la liste est relu par `/xxx/items` en petits lots ; un lot introuvable (404)
+   * est sauté plutôt que de faire échouer toute la synchro : la paire concernée ressort alors
+   * comme non convertible (`skipped`), les autres sont importées.
+   */
+  private async sessionEntities<T extends { id: number }>(
+    get: <R>(path: string, query?: Record<string, string>) => Promise<R>,
+    listPath: string,
+    itemsPath: string,
+    ids: number[],
+  ): Promise<Map<number, T>> {
+    const out = new Map<number, T>();
+    if (!ids.length) return out;
+    const wanted = new Set(ids);
+    const list = await get<T[]>(listPath);
+    for (const item of Array.isArray(list) ? list : []) {
+      if (wanted.has(item.id)) out.set(item.id, item);
+    }
+    const missing = ids.filter((id) => !out.has(id));
+    for (let i = 0; i < missing.length; i += ITEMS_BATCH) {
+      const chunk = missing.slice(i, i + ITEMS_BATCH);
+      try {
+        for (const [id, item] of await this.items<T>(get, itemsPath, chunk)) out.set(id, item);
+      } catch (err) {
+        if (!(err instanceof TradovateApiError && err.kind === 'not_found')) throw err;
+        this.logger.warn(`${itemsPath} : ${chunk.length} id(s) introuvable(s), paire(s) ignorée(s).`);
+      }
+    }
+    return out;
+  }
+
+  /**
+   * Frais par fill. Non bloquant : si Tradovate refuse cette lecture, les trades sont importés
+   * sans frais (P&L brut) et le rapport le signale (`merged: false`), comme un CSV sans Cash
+   * history exploitable. Une vraie expiration de session reste, elle, remontée.
+   */
+  private async optionalFees(
+    get: <R>(path: string, query?: Record<string, string>) => Promise<R>,
+    fillIds: number[],
+  ): Promise<Map<number, TradovateFillFee> | null> {
+    try {
+      return await this.sessionEntities<TradovateFillFee>(get, '/fillFee/list', '/fillFee/items', fillIds);
+    } catch (err) {
+      if (err instanceof TradovateApiError && (err.kind === 'forbidden' || err.kind === 'not_found')) {
+        this.logger.warn(`fillFee indisponible : import sans frais (${err.message}).`);
+        return null;
+      }
+      throw err;
+    }
+  }
+}

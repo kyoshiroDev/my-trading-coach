@@ -102,6 +102,13 @@ GET    /api/admin/ai-usage             ADMIN → stats tokens/coût
 GET    /api/users/admin/:id/detail     ADMIN → fiche utilisateur complète
 GET    /api/users/admin/subscriptions  ADMIN → liste abonnements Premium
 
+GET    /api/integrations/tradovate/connections                 JWT → état de connexion par compte (jamais de token)
+POST   /api/integrations/tradovate/accounts/:accountId/authorize  JWT → { url } + cookie httpOnly de state · body { origin?: 'wizard'|'settings' }
+POST   /api/integrations/tradovate/accounts/:accountId/select     JWT → choix du compte Tradovate { externalAccountId }
+POST   /api/integrations/tradovate/accounts/:accountId/sync       JWT → synchro manuelle (FREE, pas de cron en V1)
+DELETE /api/integrations/tradovate/accounts/:accountId            JWT → déconnexion (tokens supprimés, trades gardés)
+GET    /integrations/tradovate/callback   PUBLIC, HORS /api (redirect_uri enregistré) → 1re synchro puis 302 vers l'app
+
 GET    /api/health
 POST   /api/test/upgrade-user          NODE_ENV=test uniquement
 ```
@@ -111,11 +118,39 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
 ## Règles obligatoires
 
 - **Stats de trades = helper unique** (PROMPT-160) : `computeTradeStats(trades)` de
-  `common/utils/trade-stats.util.ts` (`{ total, closed, wins, losses, breakeven, winRate, totalPnl }`).
+  `@mtc/shared` (`libs/shared/src/trade-stats.ts`, source unique front + back) (`{ total, closed, wins, losses, breakeven, winRate, totalPnl }`).
   Toute mesure win/loss/win rate/P&L d'un lot de trades passe par lui — **jamais** de
   `filter(t => t.pnl > 0)` suivi d'une division inline. Règle break-even : win `pnl > ε`,
   loss `pnl < -ε`, BE `|pnl| <= ε` (`ε` défaut 0) ; **win rate = wins / (wins + losses)** (BE exclus du
-  dénominateur) ; trades ouverts (pnl null) hors calcul. Miroir front : `core/utils/trade-stats.util.ts`.
+  dénominateur) ; trades ouverts (pnl null) hors calcul. Le front importe le MÊME helper (`@mtc/shared`).
+- **P&L = NET partout, via `netPnl`** (PROMPT-213) : `Trade.pnl` est stocké BRUT, les frais dans
+  `commission`. `computeTradeStats` classe et somme sur `netPnl(t)` = `pnl − |commission|` : **toute
+  requête Prisma qui alimente une stat sélectionne `commission` avec `pnl`** (sinon le calcul retombe
+  sur le brut sans erreur). Même règle pour les agrégats écrits à la main (analytics : drawdown,
+  profit factor, série, par setup/émotion/heure, courbe, calendrier, top actifs ; session ; débrief ;
+  récap et agents IA). Seule exception assumée : la note d'exécution (`execution-grade.util`).
+  `AnalyticsService` passe par son helper local `net(t)`. `SetupStat.avgRR` vaut `null` (pas 0)
+  quand aucun trade du setup n'a de R:R.
+- **Borne haute des périodes analytics** : un `to` date seule (`2026-09-14`) couvre la journée
+  entière (`AnalyticsController.endBound`) ; lu tel quel il valait minuit et excluait les trades du jour.
+- **Setup des trades importés = « Sans setup »** (PROMPT-213) : la synchro broker, l'import CSV sans
+  setup choisi et le repli d'un `setupId` périmé (`resolveBatchSetupId`) passent par
+  `SetupsService.getImportSetupId`, qui trouve ou crée (ou désarchive) le setup `IMPORT_SETUP_TITLE`
+  (`#6b7280`, sortOrder 999). Plus de repli sur le premier setup du user (qui rangeait tout en
+  « Breakout » et faussait les stats par setup).
+- **Devise = propriété DU COMPTE, jamais convertie, jamais globale** (PROMPT-214) :
+  `TradingAccount.currency` ∈ `ACCOUNT_CURRENCIES` (`@mtc/shared`, liste unique front + back ;
+  DTO create/update : `@Transform(normalizeCurrencyCode)` + `@IsIn`). Compte synchronisé : devise
+  posée par la connexion (`selectAccount` → `TRADOVATE_ACCOUNT_CURRENCY` = USD, **hypothèse avec
+  TODO** : lire `cashBalance.currencyId` dès qu'un compte non-USD apparaît) et **refusée** en
+  update (`AccountsService.update`, 400). Montants serveur visibles (emails débrief / recap, PDF,
+  prompts IA) : `formatMoney` avec la devise du compte, ou `userAmountsCurrency()`
+  (`common/utils/user-currency.util.ts` : devise commune des comptes non archivés, `null` si mêlées
+  → sans symbole). **Plus aucun taux** : `User.currencyRate` n'est plus lu ni écrit (ni
+  exchangerate-api, ni cache). Les champs `currency` des DTO onboarding / préférences sont encore
+  ACCEPTÉS mais IGNORÉS (`@deprecated`, pour ne pas rejeter un front en cache avec
+  `forbidNonWhitelisted`) : à retirer avec les colonnes (migration séparée, cf. `prisma.md`).
+  Seuls `$` en dur tolérés : logs internes (coût Anthropic, réellement en USD).
 - **Filtre journal « émotion effective »** (PROMPT-166) : l'émotion effective d'un trade =
   `trade.emotion` (override) `??` `tradeSession.moodStart` (humeur de session). Filtrer dessus dans
   `buildTradeWhere` = un **`OR` Prisma** sur les deux sources — `[{ emotion: V }, { emotion: null,
@@ -123,7 +158,7 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   (`Object.values(EmotionState/MoodState).includes(V)`), sinon Prisma throw sur enum invalide :
   `TIRED` → MoodState seul (2ᵉ branche), `REVENGE`/`FEAR` → EmotionState seul (1ʳᵉ branche).
   `NONE` = `{ emotion: null, OR: [{ sessionId: null }, { tradeSession: { moodStart: null } }] }`.
-  Filtre `result` : réutiliser le **même `ε`** (`BREAKEVEN_EPSILON`) que `trade-stats.util`, jamais un
+  Filtre `result` : réutiliser le **même `ε`** (`BREAKEVEN_EPSILON`, `@mtc/shared`), jamais un
   seuil local. **Mêmes filtres appliqués à la liste ET aux stats** (`buildTradeWhere` factorisé) sinon
   les KPIs mentent.
 - **`effectiveEmotion` sur TOUTE réponse portant un trade** (PROMPT-200). Le champ est
@@ -145,11 +180,20 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   un `user.update({ data: { role } })` direct. `UsersService.setRole` y délègue.
   Backfill : `scripts/backfill-ambassador-codes.ts` (idempotent).
 - **Règle de coexistence du parrainage** : c'est le **rôle du parrain** qui décide, dans
-  `processReferral` (`stripe.service.ts`). Parrain `AMBASSADOR` → commission cash 20 %
+  `processReferral` (`stripe-referral.service.ts`). Parrain `AMBASSADOR` → commission cash 20 %
   (`ReferralCommission`), **jamais** de mois offert. Parrain `USER` → mois offert
   (`ReferralReward`) + coupon filleul au checkout, **jamais** les 20 %. Auto-parrainage
   ignoré. Couvert par `stripe-referral.service.spec.ts` (unitaire) et
   `referral-coexistence.int-spec.ts` (intégration, vraie stack).
+- **Module Stripe** (`modules/stripe/`), un service par responsabilité, tous sur le même
+  client injecté `STRIPE_CLIENT` (`stripe.client.ts`, version d'API épinglée) :
+  `StripeBillingService` (routes /billing : statut en cache Redis, checkout, portail) ·
+  `StripeWebhookService` (signature + idempotence + enqueue, puis un handler par type
+  d'événement) · `StripeSubscriptionService` (synchro DB ← Stripe, cache, liste admin) ·
+  `StripeReferralService` (commission / mois offert) · `StripeCustomerService` (customer
+  sans doublon, avoir) · `StripeCouponService` (coupons filleul). Nouvel événement webhook
+  = un `case` + un handler privé dans `StripeWebhookService`. Dans les specs, passer un
+  mock Stripe au constructeur ; ne pas réassigner un champ privé.
 - `@UseGuards(JwtAuthGuard)` sur toutes les routes protégées
 - `@UseGuards(PremiumGuard)` sur routes IA et analytics avancés
 - `@UseGuards(JwtAuthGuard, AdminGuard)` sur TOUTES les routes `/vps/*`, `/docker/*`, `/admin/*`
@@ -513,6 +557,7 @@ Toujours passer `{ userId, feature }` dans les options. Features valides :
 | `DailyRecapCron` | `30 17 * * 1-5` Paris | Génère recap + envoie email aux users actifs du jour |
 | `EcoCalendarCron` | `0 7 * * 1-5` Paris | Pré-génère le calendrier pour tous les users Premium |
 | `DemoSeedCron` | `20 3 * * *` Paris | Re-seed le compte démo (dates relatives recalculées) |
+| `TradovateTokenRefreshCron` | `17 */6 * * *` Paris | Renouvelle les tokens Tradovate qui expirent sous 18 h (aucun import de trades, hors démo) |
 
 ### Compte démo : le seed doit rester récurrent (PROMPT-192)
 
@@ -603,3 +648,167 @@ export class CreateTradeDto {
   @IsOptional() @IsString() notes?: string;
 }
 ```
+
+---
+
+## Synchro broker par API — pattern (PROMPT-207, Tradovate / NinjaTrader)
+
+Premier broker synchronisé par **API** plutôt que par fichier. Module
+`modules/integrations/tradovate/`. À reprendre tel quel pour Binance / Bybit.
+
+**Règles réutilisables**
+- **Une connexion = un `TradingAccount`** (`BrokerConnection`, `@@unique([accountId, provider])`),
+  jamais au niveau `User` : chaque prop firm donne ses propres identifiants. Nouveau broker =
+  nouvelle valeur de l'enum `BrokerProvider`, même table.
+- **Secrets chiffrés** (`common/utils/token-cipher.util.ts`, AES-256-GCM, clé
+  `BROKER_TOKEN_ENCRYPTION_KEY`), jamais renvoyés : les vues publiques (`toView`) excluent
+  toute colonne `*Enc`. Pour une clé API Binance : même colonnes, même chiffrement.
+- **Mapper PUR** (`tradovate-trade.mapper.ts`) : entités broker → `Partial<CreateTradeDto>`,
+  sans I/O, testé unitairement. Puis **`TradesService.importTrades`** — jamais un
+  `trade.create` direct : c'est lui qui porte la dédup `importHash` + contrainte
+  d'unicité, le compte cible et le recalcul du barème comportemental.
+  **Répétitions ≠ doublons** : deux lignes identiques d'une même source (fichier, synchro) sont
+  deux trades — un trade à plusieurs contrats arrive souvent en plusieurs paires Tradovate de
+  mêmes prix et même seconde de clôture. La n-ième prend l'empreinte `clé#n` (`occurrenceHash`) :
+  réimporter la source ne recrée rien, une répétition manquante en base est créée. Le nettoyage
+  des doublons (`GET/DELETE /trades/duplicates`) raisonne sur `importHash ?? clé` pour ne jamais
+  supprimer une répétition légitime, et le rapprochement « même trade, autre fuseau »
+  (`CrossSourcePool`, `trades/import-dedupe.util.ts`) se fait dans `importTrades` : écart nul
+  exclu, un trade existant par ligne. Avant ce correctif, 5 des 28 paires de Val (14/09/2026)
+  étaient écartées comme doublons. Un trade API doit avoir
+  EXACTEMENT la forme d'un trade CSV du même broker (règles partagées dans
+  `trades/tradovate-pair.util.ts`, utilisées par les DEUX chemins).
+- **Client HTTP en lecture seule** (`tradovate-api.client.ts`) : que des GET de données + les
+  appels d'auth. Aucune méthode d'écriture (ordre, risque) — contrat NinjaTrader.
+- **Erreurs** : `TradovateException(code)` → message FR clair + `code` machine (relayé par
+  `HttpExceptionFilter`, qui transmet désormais `code` s'il est présent). Jamais de réponse
+  brute du broker, jamais de stack. **Aucun autre broker nommé** dans ces messages (clause 2.ii).
+- **Verrou Redis** par connexion pendant la synchro (double-clic) ; Redis down → on continue,
+  la contrainte d'unicité reste le filet.
+- **Pas de PremiumGuard** : même règle que l'import CSV d'un broker connu (cf. `plans.md`).
+
+**Spécificités Tradovate (vérifiées)**
+- OAuth **toujours sur Live** (`trader.tradovate.com/oauth`, `live.tradovateapi.com/auth/oauthtoken`,
+  échange en `x-www-form-urlencoded`). Les **données** sont sur 2 hôtes : `live` (comptes réels)
+  et `demo` (comptes simulés = comptes de prop firm). `account/list` est interrogé sur les deux,
+  l'hôte est mémorisé par compte (`externalEnv`).
+- Le token endpoint renvoie un **`refresh_token`** (non documenté) : renouvellement 5 min avant
+  expiration (≈ 80 min) par `grant_type=refresh_token`, repli `GET /auth/renewaccesstoken`, sinon
+  `NEEDS_RECONNECT` (409 `TRADOVATE_RECONNECT_REQUIRED`). Jamais de consentement toutes les 80 min.
+- **Mesuré en beta** : le grant `refresh_token` fonctionne, et Tradovate **fait tourner** le
+  refresh_token (nouveau à chaque renouvellement, durée ≈ **26 h**, fenêtre glissante). La
+  synchro étant manuelle, `TradovateTokenRefreshCron` maintient les connexions : toutes les 6 h,
+  celles qui expirent sous 18 h (≈ un renouvellement / 12 h, 2 passages manqués couverts).
+  `refreshNow` : refus → `NEEDS_RECONNECT` ; panne / limite → reporté, connexion intacte.
+- **Verrou partagé synchro + cron** (`tryLock` / `unlock` du service de connexion, clé
+  `tradovate:sync:<id>`) : deux renouvellements concurrents présenteraient un refresh_token
+  déjà remplacé et marqueraient à tort la connexion « à reconnecter ».
+- **Callback hors `/api`** (exclu dans `main.ts`) : le redirect_uri enregistré est
+  `https://<api>/integrations/tradovate/callback`. Ne pas le déplacer sans mettre à jour
+  l'inscription OAuth côté Tradovate.
+- **`state` signé + cookie httpOnly** (`mtc_tradovate_oauth`, SameSite=Lax, path du callback).
+  Le cookie est **obligatoire** au callback : sans lui, un tiers pourrait faire consentir une
+  victime avec SON lien et recevoir les trades de la victime. La doc ne dit pas si Tradovate
+  renvoie `state` : s'il le renvoie, il doit égaler le cookie. Côté front, l'appel `authorize`
+  doit partir **avec credentials** pour que le cookie soit posé.
+- **Retour au point de départ** (PROMPT-208) : l'origine (`wizard` | `settings`) est signée
+  dans le `state`. Le callback lance une **première synchro** (jamais bloquante : échec →
+  `sync=error`, la connexion reste faite) puis redirige : wizard → `/dashboard?…&from=wizard`
+  (l'overlay d'onboarding s'y rouvre), réglages → `/accounts?…`. Query params : `tradovate`
+  (`connected`|`select_account`|`error`), `accountId`, `reason`, `trades`, `fees`
+  (`ok`|`partial`|`none`), `sync`, `from`. Un `state` illisible renvoie vers les réglages,
+  jamais sur une page morte.
+- Chaîne de lecture : `position/list` (seul lien fill → compte) → `fillPair/list` (paires =
+  lignes de l'export Performance) → `fill/list` + `fillFee/list` (fills et frais exacts de la
+  séance, filtrés sur les paires ; un id absent est relu par `fill/items` / `fillFee/items`)
+  → `contract` / `contractMaturity` / `product` (symbole, `valuePerPoint`).
+- ⚠ **Lots `/xxx/items` : 10 ids maximum.** Au-delà, Tradovate répond 404 à corps vide alors que
+  chaque entité existe (mesuré sur le compte de Val le 14/09/2026 : 1, 2 et 10 ids passent,
+  41 → 404). À 100 par lot, la synchro d'un compte actif échouait entièrement. Un fill
+  introuvable n'ignore que sa paire (`skipped`), jamais toute la synchro.
+- **Un 404 de lecture n'est pas « compte introuvable »** : `TradovateApiError('not_found')`
+  → `TRADOVATE_UNAVAILABLE`. Seule l'absence du compte dans `account/list` (synchro, choix du
+  compte) lève `TRADOVATE_ACCOUNT_NOT_FOUND`, qui invite à reconnecter.
+- P&L = **brut** `(vente − achat) × qty × valuePerPoint`, frais dans `commission` (comme le CSV).
+  `tradedAt` tronqué à la seconde (granularité de l'export).
+- **Rapprochement CSV ↔ API** : l'export Performance est en heure LOCALE sans fuseau, parsée
+  dans le fuseau du serveur (`TZ=Europe/Paris` en beta). L'empreinte exacte ne coïncide donc
+  pas ; `isCrossSourceDuplicate` reconnaît le même trade décalé d'un nombre entier de
+  demi-heures (≤ 14 h), mêmes prix, même P&L. Appliqué par `importTrades` dans les DEUX sens :
+  CSV importé avant la synchro, ou après (avant le 14/09/2026, seul le premier sens était
+  couvert : un CSV importé après la synchro recréait les trades en double si le Tradovate de
+  l'utilisateur n'affichait pas l'heure du serveur).
+- ⚠ **Profondeur d'historique non garantie** : l'API REST pourrait ne renvoyer que les
+  positions / paires récentes. À mesurer en beta sur un vrai compte ; si c'est le cas, un
+  import CSV reste nécessaire pour le passé et la synchro sert au fil de l'eau.
+  (Vérifié : la synchro n'envoie AUCUNE borne de date — `position/list` et `fillPair/list` n'ont
+  pas de paramètre ; test « première synchro : tout l'historique » dans `tradovate-sync.int-spec`.)
+  **Mesuré le 2026-09-12 (samedi, PROMPT-212)** : sur 2 logins réels (4 comptes prop firm),
+  `position/list`, `fillPair/list`, `fill/list` et `order/list` renvoient 0 entité alors que
+  l'utilisateur avait tradé avant la connexion → très probablement, ces routes n'exposent que la
+  séance en cours. À confirmer un jour de bourse. Chaque synchro logue désormais ce que Tradovate
+  a RENVOYÉ (`describeTradovateSnapshot` : comptes, positions du compte / des autres comptes du
+  login, séances, paires rattachées ou orphelines, fills lus) — jamais de prix ni de P&L.
+
+**Temps réel (PROMPT-210 live) — calé sur la PRÉSENCE dans l'app**
+- Canal applicatif `/tradovate-live` (`tradovate-live.gateway.ts`, même pattern que `/eco`) mais
+  **authentifié** : JWT de l'app dans `handshake.auth.token`, vérifié par `JwtService`
+  (`AuthModule` importé) ; invalide ou `isDemo` → `disconnect(true)`. Room `user:<id>`.
+- `TradovateLiveService` : 1er client d'un user sur le worker → **rattrapage REST** (la synchro
+  existante, sautée si `lastSyncAt` < 60 s) puis **un WebSocket Tradovate par compte connecté**.
+  Dernier client parti → WebSockets fermés (1000). Rien ne tourne app fermée.
+- **Un seul WebSocket par user, tous workers et onglets confondus** : bail Redis
+  `tradovate:live:<userId>` (SET NX PX 30 s, renouvelé / rendu par script Lua « si c'est le
+  mien »). Worker titulaire sans clients → il rend le bail, un autre reprend ≤ 10 s. Redis down →
+  on laisse passer (au pire 1 WS par worker). `isLive(userId)` = le bail existe.
+- `tradovate-live.connection.ts` : `authorize\n0\n\n<token>` (même access_token que le REST,
+  pris **sous le verrou `tradovate:sync:<id>`** : rotation du refresh_token), puis
+  `user/syncrequest` `{ accounts: [id], entityTypes: ['fill','fillPair','position'] }`
+  (`entityTypes` obligatoire), heartbeat `[]` / 2,5 s. Coupure → backoff 1 s → 60 s ;
+  `shutdown ConnectionQuotaReached` → 5 min ; jeton irrécupérable → abandon + événement
+  `tradovate:status` (le bouton manuel reste le filet).
+- **Aucun trade créé depuis l'événement** : `props` utile → regroupement 1,5 s →
+  `TradovateSyncService.sync` (mapper, frais, dédup, verrou). `SYNC_IN_PROGRESS` → 3 essais / 3 s.
+  Trades créés → `tradovate:trades { accountId, created, duplicates, total, source }`.
+- Hôtes WS : `wss://{live|demo}.tradovateapi.com/v1/websocket` (même hôte que le REST du compte ;
+  la doc NinjaTrader écrit `tradovateapi.com` sans `live.` pour le réel — à confirmer au 1er
+  compte réel). WebSocket natif Node 22 (`LIVE_SOCKET_FACTORY`, remplacé en test).
+- **Limites documentées** : 50 connexions WebSocket simultanées **par user Tradovate**, 15
+  appareils, `shutdown ConnectionQuotaReached`. **Aucune limite par `cid` / application
+  documentée** → à confirmer avec NinjaTrader avant la montée en charge prod (pas bloquant à
+  2-3 users de test).
+- Filet de fond `TradovateBackgroundRefreshCron` (`7,37 * * * *` Paris, worker cron) : connexions
+  sans synchro depuis 25 min, **users dont l'app est ouverte sautés** (le WebSocket s'en charge),
+  démo exclus. Sert le récap journalier / Weekly Debrief, jamais le temps réel.
+- Limite connue : un compte connecté PENDANT que l'app est ouverte n'est suivi en direct qu'à la
+  prochaine ouverture (liste des connexions lue à l'arrivée du 1er client).
+
+## Librairie partagée `@mtc/shared` (étape 3 de l'audit, 2026-09-13)
+
+- `libs/shared/src` : code PUR commun à l'API, l'app et l'admin (aucune dépendance, aucun effet
+  de bord). Aujourd'hui : `computeTradeStats` / `classifyTrade` (règle du win rate) et les valeurs
+  tarifaires (`PREMIUM_PRICE_EUR`, `TRIAL_PERIOD_DAYS`, `ACCOUNT_LIMITS`,
+  `PREMIUM_ANNUAL_SAVINGS_EUR`). Import : `from '@mtc/shared'`.
+- Branchement côté API (3 endroits, tous nécessaires) :
+  - `tsconfig.app.json` : `paths` + la lib dans `include` (projet `composite`) + `rootDir: ../..` ;
+  - `webpack.config.js` : alias posé dans le hook `NodeModulesExternalsPlugin` (le plugin paths de
+    Nx ne lit pas nos `paths`) ET `@mtc/*` exclu des externals — sinon `require('@mtc/shared')`
+    au démarrage, introuvable dans node_modules ;
+  - `vitest.config.ts` et `vitest.integration.config.ts` : `resolve.alias`.
+- Ré-exporter une valeur de la lib : `export { X } from '@mtc/shared'` — jamais un import suivi de
+  `export { X }`, effacé par la transpilation fichier par fichier (webpack : « export not found »).
+- Pas de `tsconfig` dans `libs/shared` (volontaire) : le plugin TS de Nx y ajouterait des cibles et
+  `nx sync` (lancé dans le Dockerfile) réécrirait les références TS.
+- Types d'API front/back (27 noms en double) : PAS encore partagés — les dates y sont `Date` côté
+  API et `string` côté front (JSON) ; à traiter avec un type de transport dédié.
+
+## Import CSV : parseurs purs (étape 4 de l'audit, 2026-09-13)
+
+- `trades/csv-parsers.ts` : détection du broker, normalisation au CSV pivot (Tradovate, Binance
+  futures/spot, Bybit, IBKR, MEXC, MT4/MT5), séparateur européen, `splitCsvLine`,
+  `mapNormalizedCsvToDto`, `detectSession`, et les types `BrokerType` / `ImportDto`. Fonctions
+  PURES : aucun service injecté, testables directement (`csv-import.service.spec.ts` les importe).
+- `CsvImportService` (≈ 570 lignes au lieu de 1 120) garde l'orchestration : plan / accès IA,
+  formats inconnus via Claude, fusion des frais Tradovate, persistance.
+- Nouveau broker = une fonction `parseXxx(lines)` dans `csv-parsers.ts` + un cas dans
+  `detectBroker` / `preprocessCsv` — pas de nouvelle méthode dans le service.

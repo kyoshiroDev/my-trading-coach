@@ -8,7 +8,6 @@ export interface Objective {
 
 @Component({
   selector: 'mtc-debrief-objectives',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './debrief-objectives.component.css',
   template: `

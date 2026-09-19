@@ -9,9 +9,16 @@ import {
   signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { LucideAngularModule, Layers, Plus, Check, ChevronDown } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideLayers as Layers,
+  LucidePlus as Plus,
+  LucideCheck as Check,
+  LucideChevronDown as ChevronDown,
+} from '@lucide/angular';
 import { SelectedAccountStore } from '../../../core/stores/selected-account.store';
 import { AccountType, TradingAccount } from '../../../core/api/accounts.api';
+import { formatMoney } from '@mtc/shared';
 
 // Sélecteur de compte réutilisable (dashboard, etc.) : trigger compact affichant le compte
 // courant (ou « Tous les comptes ») + menu déroulant listant tous les comptes. Largeur fixe,
@@ -19,9 +26,8 @@ import { AccountType, TradingAccount } from '../../../core/api/accounts.api';
 // Accessible à tous (FREE : 1 compte · Premium : illimité). Aucun gating ici, c'est côté API.
 @Component({
   selector: 'mtc-account-selector',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, LucideAngularModule],
+  imports: [RouterLink, LucideDynamicIcon],
   templateUrl: './account-selector.component.html',
   styleUrl: './account-selector.component.css',
 })
@@ -98,11 +104,11 @@ export class AccountSelectorComponent implements OnInit {
   }
 
   protected totalBalanceStr(): string {
-    return this.fmt(this.totalBalance(), this.store.accounts()[0]?.currency ?? 'USD');
+    // Devise commune des comptes (null si mêlées : pas de symbole deviné).
+    return this.fmt(this.totalBalance(), this.store.displayCurrency());
   }
 
-  private fmt(n: number, currency: string): string {
-    const sym = currency === 'EUR' ? '€' : '$';
-    return `${sym}${Math.round(n).toLocaleString('en-US')}`;
+  private fmt(n: number, currency: string | null): string {
+    return formatMoney(n, currency, { decimals: 0, sign: false });
   }
 }

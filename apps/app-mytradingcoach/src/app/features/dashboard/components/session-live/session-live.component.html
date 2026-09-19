@@ -1,0 +1,83 @@
+<div data-testid="session-live-view">
+
+  @if (!session() || session()?.status !== 'ACTIVE') {
+    <!-- Pas de session active : CTA démarrer -->
+    <div class="no-session-cta">
+      <div class="no-session-icon">🎯</div>
+      <div class="no-session-title">Pas de session en cours</div>
+      <div class="no-session-sub">Démarre une session pour tracker tes trades en live et accéder au calendrier économique.</div>
+      <button class="session-start-btn" data-testid="start-session-live"
+              [disabled]="startDisabled()"
+              [title]="startDisabled() ? 'Choisis un compte dans la Pré-session' : ''"
+              (click)="startSession.emit()">
+        Démarrer la session →
+      </button>
+      @if (startDisabled()) {
+        <div class="no-session-hint">Choisis un compte dans l'onglet Pré-session pour lancer la session.</div>
+      }
+    </div>
+  } @else {
+
+  <!-- Barre contextuelle marché FMP (IA mutualisée → FREE) -->
+  @if (marketCtx()) {
+    <!-- Carte marché unique : contexte marché + news ticker (source : LiveTab card) -->
+    <div class="mkt-card">
+      <div class="ctx-bar-wrap">
+        <mtc-market-context-bar
+          [ctx]="marketCtx()"
+          [breakingNews]="breakingNews()"
+        />
+      </div>
+      <!-- News live : ticker horizontal + modale de lecture (IA mutualisée → FREE) -->
+      @if (newsItems().length > 0) {
+        <mtc-live-news [items]="newsItems()" />
+      }
+    </div>
+  }
+
+  <!-- Live layout : zone gauche (stats + calendrier + live feed) / Trade rapide pleine hauteur à droite -->
+  <div class="live-layout">
+    <div class="live-main">
+
+      <!-- Mini stats row (largeur calendrier + live feed uniquement) -->
+      <div class="mini-stats-row">
+        <div class="mini-stat">
+          <div class="mini-stat-val" [class.green]="(liveStats()?.totalPnl ?? 0) >= 0" [class.red]="(liveStats()?.totalPnl ?? 0) < 0">
+            {{ pnlDisplay() }}
+          </div>
+          <div class="mini-stat-lbl">P&amp;L jour</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-val">{{ (liveStats()?.winRate ?? 0).toFixed(0) }}%</div>
+          <div class="mini-stat-lbl">Win Rate</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-val" style="font-size:22px;">{{ moodEmoji(session()?.moodStart) }}</div>
+          <div class="mini-stat-lbl">État actuel</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-val blue">{{ liveStats()?.tradesCount ?? 0 }}</div>
+          <div class="mini-stat-lbl">Trades logués</div>
+        </div>
+      </div>
+
+      <div class="live-cols">
+        <mtc-live-eco-calendar
+          [session]="session()"
+          [ecoCalendar]="ecoCalendar()"
+          (ecoCalendarRefreshed)="ecoCalendarRefreshed.emit($event)"
+        />
+        <mtc-live-feed
+          [trades]="todayTrades()"
+          (tradeClosed)="tradeClosed.emit($event)"
+        />
+      </div>
+    </div>
+
+    <!-- Trade rapide (colonne pleine hauteur à droite) -->
+    <mtc-quick-trade (tradeLogged)="tradeLogged.emit($event)" />
+  </div>
+
+  } <!-- /if session ACTIVE -->
+
+</div>

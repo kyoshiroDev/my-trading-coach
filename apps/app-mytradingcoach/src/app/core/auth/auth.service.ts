@@ -22,8 +22,6 @@ export interface AuthUser {
   onboardingCompleted?: boolean;
   market?: string | null;
   goal?: string | null;
-  currency?: string;
-  currencyRate?: number;
   startingCapital?: number;
   notificationsEmail?: boolean;
   debriefAutomatic?: boolean;

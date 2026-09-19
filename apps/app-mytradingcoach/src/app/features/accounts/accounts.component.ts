@@ -12,17 +12,51 @@ import {
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import {
-  LucideAngularModule,
-  User, Target, Building2, FlaskConical,
-  Wallet, TrendingUp, List, Eye, Layers,
-  ClipboardList, MoreHorizontal, Info, Plus, Lock,
-  Pencil, Trash2, X, Briefcase, AlertCircle,
-} from 'lucide-angular';
+  LucideDynamicIcon,
+  LucideUser as User,
+  LucideTarget as Target,
+  LucideBuilding2 as Building2,
+  LucideFlaskConical as FlaskConical,
+  LucideWallet as Wallet,
+  LucideTrendingUp as TrendingUp,
+  LucideList as List,
+  LucideEye as Eye,
+  LucideLayers as Layers,
+  LucideClipboardList as ClipboardList,
+  LucideMoreHorizontal as MoreHorizontal,
+  LucideInfo as Info,
+  LucidePlus as Plus,
+  LucideLock as Lock,
+  LucidePencil as Pencil,
+  LucideTrash2 as Trash2,
+  LucideX as X,
+  LucideBriefcase as Briefcase,
+  LucideAlertCircle as AlertCircle,
+  LucideLink2 as Link2,
+  LucideRefreshCw as RefreshCw,
+} from '@lucide/angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
+import { TradovateConnectModalComponent } from '../../shared/components/tradovate-connect/tradovate-connect-modal.component';
+import { TradovateAccountPickerComponent } from '../../shared/components/tradovate-connect/tradovate-account-picker.component';
+import { TradovateStore } from '../../core/stores/tradovate.store';
+import { TradesStore } from '../../core/stores/trades.store';
+import { ToastService } from '../../core/services/toast.service';
+import { apiErrorMessage } from '../../core/utils/api-error';
+import type { TradovateSyncResult } from '../../core/api/tradovate.api';
+import {
+  TRADOVATE_RETURN_PARAMS,
+  feesLine,
+  parseTradovateReturn,
+  relativeTime,
+  tradesLine,
+  tradovateErrorMessage,
+} from '../../core/utils/tradovate-return.util';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { UserStore } from '../../core/stores/user.store';
+import { ACCOUNT_CURRENCIES, commonCurrency, formatMoney } from '@mtc/shared';
 import {
   AccountType,
   AccountStatus,
@@ -64,9 +98,11 @@ function emptyForm(): AccountFormState {
 // ESTIMÉES d'après les trades loggés (objectif + marge drawdown), avec disclaimer obligatoire.
 @Component({
   selector: 'mtc-accounts',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DecimalPipe, FormsModule, LucideAngularModule, TopbarComponent, PlanModalComponent],
+  imports: [
+    DecimalPipe, FormsModule, LucideDynamicIcon, TopbarComponent, PlanModalComponent,
+    TradovateConnectModalComponent, TradovateAccountPickerComponent,
+  ],
   templateUrl: './accounts.component.html',
   styleUrl: './accounts.component.css',
 })
@@ -75,6 +111,17 @@ export class AccountsComponent implements OnInit {
   protected readonly userStore = inject(UserStore);
   private readonly api = inject(AccountsApi);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
+  private readonly tradesStore = inject(TradesStore);
+  private readonly toast = inject(ToastService);
+
+  // ── Connexion Tradovate par compte (PROMPT-208) ──────────────────────────
+  protected readonly tv = inject(TradovateStore);
+  /** Compte pour lequel l'écran de réassurance est ouvert. */
+  protected readonly connectTarget = signal<{ id: string; label: string } | null>(null);
+  /** Déconnexion en attente de confirmation (clé, pas l'objet : cf. angular.md). */
+  protected readonly confirmDisconnectId = signal<string | null>(null);
+  protected readonly relativeTime = relativeTime;
 
   protected readonly showPlanModal = signal(false);
   protected readonly formOpen = signal(false);
@@ -135,6 +182,22 @@ export class AccountsComponent implements OnInit {
   protected readonly totalTrades = computed(() =>
     this.visibleAccounts().reduce((s, a) => s + a.metrics.tradesCount, 0),
   );
+
+  // ── Devise (PROMPT-214) : propriété DU COMPTE, jamais convertie ──────────
+  protected readonly accountCurrencies = ACCOUNT_CURRENCIES;
+  /** Devise des totaux (capital suivi, P&L cumulé) ; null si les comptes affichés en ont plusieurs. */
+  protected readonly totalsCurrency = computed(() =>
+    commonCurrency(this.visibleAccounts().map((a) => a.currency)),
+  );
+  /** Compte synchronisé en édition : sa devise vient du broker, non modifiable. */
+  protected readonly formSynced = computed(() => {
+    const id = this.editingId();
+    return !!id && this.tv.byAccount().has(id);
+  });
+  /** Montant dans la devise donnée (celle du compte), sans conversion. */
+  protected money(value: number | null | undefined, currency: string | null, sign = false): string {
+    return formatMoney(value ?? 0, currency, { decimals: 0, sign });
+  }
   // Comptes proches du drawdown (marge ≤ 25 % du max, ou dépassée) : à surveiller.
   protected readonly atRiskCount = computed(
     () =>
@@ -169,6 +232,74 @@ export class AccountsComponent implements OnInit {
     if (!this.store.loaded() && !this.store.isLoading()) {
       this.store.load();
     }
+    this.tv.load();
+    this.readTradovateReturn();
+  }
+
+  /**
+   * Retour du consentement Tradovate lancé depuis cette page (`/accounts?tradovate=…`).
+   * Le retour « wizard » est lu par l'onboarding, pas ici. Les paramètres sont retirés de
+   * l'URL aussitôt lus : un rechargement ne rejoue pas le message.
+   */
+  private readTradovateReturn(): void {
+    const ret = parseTradovateReturn(
+      this.router.routerState.snapshot.root.queryParams as Record<string, string>,
+    );
+    if (!ret || ret.fromWizard) return;
+
+    // Retour ponctuel → toasts (PROMPT-210). L'état durable (pilule, sélecteur de compte,
+    // « à reconnecter ») vit dans la carte du compte.
+    if (ret.status === 'error') {
+      this.toast.error(tradovateErrorMessage(ret.reason, false));
+    } else if (ret.status === 'select_account') {
+      this.toast.info('Compte Tradovate connecté : choisis ci-dessous le compte à synchroniser.');
+    } else if (ret.syncFailed) {
+      this.toast.warning("Compte Tradovate connecté, mais la première synchronisation n'a pas abouti : relance-la avec « Synchroniser ».");
+    } else {
+      this.toast.success(`Compte connecté · ${tradesLine(ret.trades ?? 0)}`);
+      const fees = feesLine(ret.fees);
+      if (fees) this.toast.warning(fees.text);
+      if ((ret.trades ?? 0) > 0) this.refreshAfterImport();
+    }
+
+    const cleared = Object.fromEntries(TRADOVATE_RETURN_PARAMS.map((k) => [k, null]));
+    // Commandes vides : même chemin, seuls les paramètres Tradovate disparaissent.
+    this.router.navigate([], {
+      queryParams: cleared,
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  protected openTradovateConnect(a: TradingAccount): void {
+    this.connectTarget.set({ id: a.id, label: a.label });
+  }
+
+  protected syncTradovate(a: TradingAccount): void {
+    this.tv.sync(a.id, (r) => this.onSynced(r));
+  }
+
+  protected pickTradovateAccount(a: TradingAccount, externalId: string): void {
+    this.tv.selectThenSync(a.id, externalId, (r) => this.onSynced(r));
+  }
+
+  protected askDisconnect(a: TradingAccount): void {
+    this.confirmDisconnectId.set(a.id);
+  }
+
+  protected confirmDisconnect(a: TradingAccount): void {
+    this.confirmDisconnectId.set(null);
+    this.tv.disconnect(a.id);
+  }
+
+  private onSynced(r: TradovateSyncResult | null): void {
+    if (r && r.created > 0) this.refreshAfterImport();
+  }
+
+  /** Nouveaux trades : métriques des comptes et journal/dashboard repartent du serveur. */
+  private refreshAfterImport(): void {
+    this.store.load();
+    this.tradesStore.reset();
   }
 
   // ── Icônes lucide ────────────────────────────────────────────────────────
@@ -191,6 +322,8 @@ export class AccountsComponent implements OnInit {
   protected readonly TrashIcon = Trash2;
   protected readonly XIcon = X;
   protected readonly BriefcaseIcon = Briefcase;
+  protected readonly LinkIcon = Link2;
+  protected readonly RefreshIcon = RefreshCw;
 
   // ── Helpers d'affichage ─────────────────────────────────────────────────
   // Icône lucide selon le type de compte.
@@ -372,8 +505,13 @@ export class AccountsComponent implements OnInit {
         this.saving.set(false);
         this.formOpen.set(false);
         this.store.load(); // recharge la liste + métriques
+        this.toast.success(id ? 'Compte mis à jour' : 'Compte créé');
       },
-      error: () => this.saving.set(false),
+      // AVANT : échec muet, la modale restait ouverte sans explication (quota, champ refusé…).
+      error: (err) => {
+        this.saving.set(false);
+        this.toast.error(apiErrorMessage(err, "Le compte n'a pas pu être enregistré."));
+      },
     });
   }
 

@@ -4,10 +4,20 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
-import { computeTradeStats } from '../../core/utils/trade-stats.util';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { computeTradeStats } from '@mtc/shared';
+import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, of, map, catchError } from 'rxjs';
-import { LucideAngularModule, X, Pencil, Upload, ChevronDown, ChevronRight, Calendar, Trash2, ArrowRightLeft } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideX as X,
+  LucidePencil as Pencil,
+  LucideUpload as Upload,
+  LucideChevronDown as ChevronDown,
+  LucideChevronRight as ChevronRight,
+  LucideCalendar as Calendar,
+  LucideTrash2 as Trash2,
+  LucideArrowRightLeft as ArrowRightLeft,
+} from '@lucide/angular';
 import { TradesStore, Trade } from '../../core/stores/trades.store';
 import { CreateTradeDto, TradesApi } from '../../core/api/trades.api';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
@@ -15,9 +25,13 @@ import { SetupsStore } from '../../core/stores/setups.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { TradeFormComponent } from './trade-form.component';
 import { CsvImportComponent } from './csv-import.component';
-import { PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe } from '../../shared/pipes';
+import { MoneyPipe, PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe } from '../../shared/pipes';
 import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
-import { environment } from '../../../environments/environment';
+import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
+import { MoneyService } from '../../core/services/money.service';
+import { ToastService } from '../../core/services/toast.service';
+import { TradovateLiveSocketService } from '../../core/services/tradovate-live-socket.service';
+import { apiErrorMessage } from '../../core/utils/api-error';
 
 type FilterSide = 'ALL' | 'LONG' | 'SHORT';
 type FilterResult = 'ALL' | 'WIN' | 'LOSS' | 'BREAKEVEN';
@@ -51,11 +65,11 @@ interface WeekGroup {
 
 @Component({
   selector: 'mtc-journal',
-  standalone: true,
   imports: [
-    DatePipe, DecimalPipe, TitleCasePipe, LucideAngularModule,
+    DatePipe, DecimalPipe, TitleCasePipe, LucideDynamicIcon,
     TopbarComponent, TradeFormComponent, CsvImportComponent,
-    PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe, InfoTooltipComponent,
+    PnlColorPipe, PnlFormatPipe, MoneyPipe, EmotionEmojiPipe, InfoTooltipComponent,
+    MixedCurrencyNoticeComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './journal.component.css',
@@ -64,10 +78,13 @@ interface WeekGroup {
 export class JournalComponent {
   protected readonly tradesStore = inject(TradesStore);
   private readonly tradesApi     = inject(TradesApi);
-  private readonly http          = inject(HttpClient);
   private readonly destroyRef    = inject(DestroyRef);
   private readonly selectedAccount = inject(SelectedAccountStore);
   protected readonly setupsStore = inject(SetupsStore);
+  private readonly toast         = inject(ToastService);
+  private readonly tradovateLive = inject(TradovateLiveSocketService);
+  /** Devises mêlées en « Tous les comptes » → pas de totaux, lignes dans la devise de leur compte. */
+  protected readonly money = inject(MoneyService);
 
   constructor() {
     this.setupsStore.load();
@@ -75,6 +92,11 @@ export class JournalComponent {
     // (compte, preset/dates, side, setup). Les KPIs viennent de l'agrégat backend
     // → stables, indépendants de « Charger plus ».
     effect(() => this.refreshJournal());
+
+    // Trades Tradovate poussés en direct (PROMPT-210 live) : le journal ouvert se met à jour.
+    this.tradovateLive.imported$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.refreshJournal());
 
     // Fige l'ouverture de la semaine la plus récente dès son apparition : sans override
     // explicite, elle se replierait au prochain trade plus récent (défaut positionnel).
@@ -89,10 +111,6 @@ export class JournalComponent {
     effect(() => {
       this.confirmDeleteDayKey();
       untracked(() => this.deleteDayError.set(null));
-    });
-    effect(() => {
-      this.reassignDayKey();
-      untracked(() => this.reassignError.set(null));
     });
   }
 
@@ -221,7 +239,6 @@ export class JournalComponent {
   });
   protected readonly isDeletingDay    = signal(false);
   protected readonly deleteDayError   = signal<string | null>(null);
-  protected readonly deleteRowError   = signal<string | null>(null);
   // Réaffectation d'une journée vers un autre compte.
   // Meme regle que `confirmDeleteDayKey` : la cle, jamais l'objet. Un instantane du
   // DayGroup se perime des que le store bouge, et `reassignTo` deplacerait alors des
@@ -232,7 +249,6 @@ export class JournalComponent {
     return key === null ? null : this.tradesByDay().find((d) => d.key === key) ?? null;
   });
   protected readonly isReassigning    = signal(false);
-  protected readonly reassignError    = signal<string | null>(null);
   protected readonly activeAccounts   = computed(() => this.selectedAccount.activeAccounts());
   protected readonly currentAccountId = computed(() => this.selectedAccount.selectedAccountId());
   // Réaffectation utile seulement s'il existe un compte cible ≠ compte courant.
@@ -458,7 +474,7 @@ export class JournalComponent {
 
     const obs = edit
       ? this.tradesApi.update(edit.id, dto)
-      : this.http.post<{ data: Trade }>(`${environment.apiUrl}/trades`, payload);
+      : this.tradesApi.create(payload);
 
     obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res: { data: Trade }) => {
@@ -466,6 +482,7 @@ export class JournalComponent {
         this.refreshStats(); // KPIs recalculés côté serveur sur l'ensemble filtré
         this.closeModal();
         this.isSubmitting.set(false);
+        this.toast.success(edit ? 'Trade modifié' : 'Trade enregistré');
       },
       error: (err: HttpErrorResponse) => {
         const msg = (err?.error as { message?: string | string[] })?.message ?? 'Erreur';
@@ -482,20 +499,18 @@ export class JournalComponent {
   }
 
   deleteTrade(id: string): void {
-    this.deleteRowError.set(null);
-    this.http.delete(`${environment.apiUrl}/trades/${id}`)
+    this.tradesApi.delete(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: () => this.forgetTrade(id),
+        next: () => { this.forgetTrade(id); this.toast.success('Trade supprimé'); },
         // AVANT : aucun handler `error`. Un refus partait dans le vide et la ligne
         // restait affichee — l'utilisateur cliquait sans rien voir se passer.
+        // Feedback transitoire d'une action ponctuelle → toast (PROMPT-210).
         error: (err: HttpErrorResponse) => {
           // 404 : le trade n'est deja plus la (autre onglet, suppression precedente).
           // L'objectif est atteint : on retire la ligne au lieu de crier a l'erreur.
-          if (err?.status === 404) { this.forgetTrade(id); return; }
-          this.deleteRowError.set(
-            (err?.error as { message?: string })?.message ?? "Ce trade n'a pas pu être supprimé.",
-          );
+          if (err?.status === 404) { this.forgetTrade(id); this.toast.success('Trade supprimé'); return; }
+          this.toast.error(apiErrorMessage(err, "Ce trade n'a pas pu être supprimé."));
         },
       });
   }
@@ -524,7 +539,7 @@ export class JournalComponent {
 
     forkJoin(
       ids.map(id =>
-        this.http.delete(`${environment.apiUrl}/trades/${id}`).pipe(
+        this.tradesApi.delete(id).pipe(
           map(() => ({ id, parti: true })),
           // Un 404 vaut succes : le trade n'est plus la, c'est ce qu'on voulait.
           catchError((err: HttpErrorResponse) => of({ id, parti: err?.status === 404 })),
@@ -538,7 +553,13 @@ export class JournalComponent {
         this.isDeletingDay.set(false);
 
         const restants = resultats.filter(r => !r.parti).length;
-        if (restants === 0) { this.confirmDeleteDayKey.set(null); return; }
+        if (restants === 0) {
+          this.confirmDeleteDayKey.set(null);
+          this.toast.success(ids.length > 1 ? `${ids.length} trades supprimés` : 'Trade supprimé');
+          return;
+        }
+        // Échec partiel : message DANS la modale (pas un toast) — elle reste ouverte sur
+        // les trades restants et porte le « Réessayer » ; l'information est actionnable ici.
 
         // Modale laissee ouverte : elle se recalcule sur les trades restants, donc
         // elle montre exactement ce qui n'est pas parti, et « Reessayer » porte sur
@@ -563,7 +584,6 @@ export class JournalComponent {
     if (!ids.length) { this.reassignDayKey.set(null); return; }
 
     this.isReassigning.set(true);
-    this.reassignError.set(null);
     this.tradesApi.reassign(ids, accountId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -574,10 +594,14 @@ export class JournalComponent {
           this.reassignDayKey.set(null);
           // Les trades changent de compte → recharger liste + KPIs du filtre courant.
           this.refreshJournal();
+          const cible = this.activeAccounts().find((a) => a.id === accountId)?.label;
+          const n = ids.length > 1 ? `${ids.length} trades déplacés` : 'Trade déplacé';
+          this.toast.success(cible ? `${n} vers ${cible}` : n);
         },
+        // Modale laissée ouverte pour réessayer ; le message est un toast (PROMPT-210).
         error: (err: HttpErrorResponse) => {
-          this.reassignError.set(err.error?.message ?? 'Erreur lors du déplacement.');
           this.isReassigning.set(false);
+          this.toast.error(apiErrorMessage(err, 'Erreur lors du déplacement.'));
         },
       });
   }

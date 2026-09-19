@@ -9,7 +9,6 @@ const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet'
  */
 @Component({
   selector: 'mtc-admin-activity-calendar',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './activity-calendar.component.css',
   host: { '[class.compact]': 'compact()' },

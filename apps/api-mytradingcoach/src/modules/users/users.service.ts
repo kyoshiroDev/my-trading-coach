@@ -1,19 +1,16 @@
 import {
   ForbiddenException,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { Plan, Role, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
 import { AmbassadorService } from '../ambassador/ambassador.service';
-import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 import { PRICING_EUR, TRIAL_PERIOD_DAYS } from '../../common/constants/pricing.const';
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
-import { computeTradeStats } from '../../common/utils/trade-stats.util';
+import { computeTradeStats } from '@mtc/shared';
 
 const USER_SELECT = {
   id: true,
@@ -26,8 +23,6 @@ const USER_SELECT = {
   onboardingCompleted: true,
   market: true,
   goal: true,
-  currency: true,
-  currencyRate: true,
   startingCapital: true,
   notificationsEmail: true,
   debriefAutomatic: true,
@@ -59,10 +54,8 @@ const ADMIN_USER_SELECT = {
 
 @Injectable()
 export class UsersService {
-  private readonly logger = new Logger(UsersService.name);
   constructor(
     private readonly prisma: PrismaService,
-    private readonly redisService: RedisService,
     private readonly ambassador: AmbassadorService,
   ) {}
 
@@ -387,21 +380,13 @@ export class UsersService {
    * disparaît dès la stratégie et les étapes Actifs/Premier trade sont sautées.
    */
   async saveOnboardingProfile(userId: string, dto: CompleteOnboardingDto) {
-    let currencyRate: number | undefined;
-    if (dto.currency === 'EUR') {
-      currencyRate = await this.fetchEurUsdRate();
-    } else if (dto.currency === 'USD') {
-      currencyRate = 1;
-    }
-
+    // `dto.currency` est ignoré (PROMPT-214) : la devise est celle du compte créé à l'onboarding.
     return this.prisma.user.update({
       where: { id: userId },
       data: {
         market: dto.market ?? null,
         goal: dto.goal ?? null,
         ...(dto.startingCapital != null ? { startingCapital: dto.startingCapital } : {}),
-        ...(dto.currency ? { currency: dto.currency } : {}),
-        ...(currencyRate !== undefined ? { currencyRate } : {}),
         ...(dto.tradingStyle ? { tradingStyle: dto.tradingStyle } : {}),
         ...(dto.tradingStrategy ? { tradingStrategy: dto.tradingStrategy } : {}),
         ...(dto.tradingSessions ? { tradingSessions: dto.tradingSessions } : {}),
@@ -431,12 +416,9 @@ export class UsersService {
   }
 
   async updatePreferences(userId: string, dto: UpdatePreferencesDto) {
-    let currencyRate: number | undefined;
-    if (dto.currency === 'EUR') {
-      currencyRate = await this.fetchEurUsdRate();
-    } else if (dto.currency === 'USD') {
-      currencyRate = 1;
-    }
+    // Plus de devise globale ni de taux (PROMPT-214) : `currency` est ignoré s'il arrive encore.
+    const prefs = { ...dto };
+    delete prefs.currency;
     // Horodate le consentement marketing quand il change (preuve RGPD).
     const consentAt =
       dto.marketingConsent === undefined
@@ -444,40 +426,9 @@ export class UsersService {
         : { marketingConsentAt: dto.marketingConsent ? new Date() : null };
     return this.prisma.user.update({
       where: { id: userId },
-      data: {
-        ...dto,
-        ...(currencyRate !== undefined ? { currencyRate } : {}),
-        ...consentAt,
-      },
+      data: { ...prefs, ...consentAt },
       select: USER_SELECT,
     });
-  }
-
-  private async fetchEurUsdRate(): Promise<number> {
-    const FALLBACK_RATE = 0.92;
-    const cacheKey = 'exchange:rates:USD';
-
-    try {
-      const cached = await this.redisService.client.get(cacheKey);
-      if (cached) {
-        const rates = JSON.parse(cached) as Record<string, number>;
-        return rates['EUR'] ?? FALLBACK_RATE;
-      }
-    } catch { /* Redis indisponible */ }
-
-    try {
-      const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-      const data = (await res.json()) as { rates: Record<string, number> };
-      try {
-        await this.redisService.client.setex(cacheKey, CACHE_TTL.EXCHANGE_RATES, JSON.stringify(data.rates));
-      } catch { /* ignore */ }
-      return data.rates['EUR'] ?? FALLBACK_RATE;
-    } catch (err) {
-      this.logger.warn(
-        `Exchange rate API unavailable, using fallback ${FALLBACK_RATE} : ${(err as Error).message}`,
-      );
-      return FALLBACK_RATE;
-    }
   }
 
   async deleteMe(userId: string, reason?: string): Promise<void> {
@@ -541,7 +492,7 @@ export class UsersService {
         lastSeenAt: true, lastLoginAt: true, createdAt: true,
         tradingStyle: true, tradingStrategy: true, tradingSessions: true,
         tradesPerDayMin: true, tradesPerDayMax: true, strategyDescription: true,
-        market: true, goal: true, currency: true, startingCapital: true,
+        market: true, goal: true, startingCapital: true,
       },
     });
     if (!user) throw new NotFoundException('User not found');
@@ -559,7 +510,7 @@ export class UsersService {
           .catch(() => []),
         this.prisma.trade.findMany({
           where: { userId, pnl: { not: null } },
-          select: { pnl: true, asset: true },
+          select: { pnl: true, commission: true, asset: true },
         }),
         this.prisma.trade.groupBy({
           by: ['asset'],

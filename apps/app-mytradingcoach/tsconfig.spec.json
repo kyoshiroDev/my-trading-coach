@@ -3,7 +3,15 @@
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
     "emitDeclarationOnly": false,
-    "types": ["vitest/globals", "node"]
+    "types": [
+      "vitest/globals",
+      "node"
+    ],
+    "rootDir": "../.."
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "../../libs/shared/src/**/*.ts"
+  ]
 }

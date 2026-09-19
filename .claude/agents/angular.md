@@ -1,11 +1,11 @@
 # Agent Angular — app-mytradingcoach
 
 ## Stack
-Angular 21 · Signals · Standalone Components · lucide-angular · Vitest · Nx 22
+Angular 22 · Signals · Standalone Components · @lucide/angular · Vitest · Nx 23 · TypeScript 6.0
 
 ---
 
-## Règles Angular 21 — ABSOLUES
+## Règles Angular 22 — ABSOLUES
 
 - `@if` / `@for` / `@switch` dans les templates — jamais `*ngIf` / `*ngFor`
 - `inject()` plutôt que constructeur
@@ -14,7 +14,11 @@ Angular 21 · Signals · Standalone Components · lucide-angular · Vitest · Nx
 - `@defer` pour le lazy loading des composants lourds
 - Standalone Components exclusivement — pas de NgModules
 - Prefix composants : `mtc-`
-- Icônes : `lucide-angular` exclusivement (jamais d'autres libs d'icônes)
+- Icônes : `@lucide/angular` exclusivement (jamais d'autres libs d'icônes). Motif :
+  `<svg [lucideIcon]="XIcon" [size]="16" class="…" />` avec `LucideDynamicIcon` dans `imports`
+  et `import { LucideX as X } from '@lucide/angular'` (le `<svg>` EST l'icône, classe `lucide`
+  posée par la librairie → CSS sur `svg.lucide`, jamais sur `lucide-icon`). La librairie réécrit
+  l'attribut `class` à chaque rendu : pas de `[class.x]` sur l'icône, passer par `[class]`.
 - CSS dans `.css` uniquement — jamais inline dans `.ts`
 - `OnPush` sur les composants sans signals
 
@@ -34,12 +38,17 @@ src/app/
 │   └── stores/     trades.store.ts · user.store.ts
 │                   user.store : isBeta = computed(() => role === 'BETA_TESTER' || 'ADMIN')
 ├── features/
-│   ├── dashboard/          dashboard.component.ts + .css
+│   ├── dashboard/          dashboard.component.ts + .html + .css (état, cadre, états vides)
+│   │   ├── dashboard-charts.util.ts   ← calculs purs des viz (sparklines, donuts, P&L, coach)
+│   │   ├── panels/                    ← viz présentationnelles : dashboard-kpis · equity-chart ·
+│   │   │                                top-assets · pl-bars · coach-feedback · donut-chart ·
+│   │   │                                recent-trades-table
 │   │   └── components/
 │   │       ├── session-morning/  ← V2 : vue pré-session (mood, recap hier, objectifs, éco calendar)
 │   │       │   session-morning.component.ts + .css
-│   │       └── session-live/     ← V2 : vue session active (live feed, quick trade, éco live)
+│   │       └── session-live/     ← V2 : vue session active (cadre + mini-stats + socket éco)
 │   │           session-live.component.ts + .css
+│   │           └── components/   live-eco-calendar · live-feed · quick-trade · live-news
 │   ├── journal/            journal.component · trade-form.component · trade-row.component
 │   │                       csv-import.component   ← import historique GRATUIT (tous plans)
 │   │                       (register : « trades illimités, sans CB » ;
@@ -188,11 +197,43 @@ mentir. Sous 768px : 40px, la phrase longue (`.demo-banner-long`) tombe, le CTA 
 ```typescript
 // Toujours utiliser les pipes, jamais de logique inline
 PnlColorPipe      // couleur verte/rouge selon pnl
-PnlFormatPipe     // formatage $ avec signe
+PnlFormatPipe     // montant signé dans la devise NATIVE du compte : {{ t.pnl | pnlFormat : t.entry : t.accountId }}
+MoneyPipe         // idem avec décimales / sans « + » : {{ pnl | money:0 }}, {{ fees | money:2:false }}
 EmotionEmojiPipe  // emoji selon état émotionnel
 SessionLabelPipe  // label lisible de la session
 SetupColorPipe    // couleur selon setup
 ```
+
+**Devise = propriété DU COMPTE, ZÉRO conversion, AUCUNE préférence globale** (PROMPT-213/214) :
+un montant s'affiche dans la devise de son compte de trading (`TradingAccount.currency`), tel que
+reçu — un compte prop firm en USD s'affiche en USD pour tout le monde. Source UNIQUE front + back :
+`@mtc/shared` (`libs/shared/src/currency.ts`) — `ACCOUNT_CURRENCIES` (USD, USDT, EUR : sélecteurs
+de l'onboarding et de la page Comptes, validation API), `formatMoney(value, currency)` (`$1.00`,
+`€1.00`, `1.00 USDT` : code APRÈS le montant pour les devises sans symbole), `commonCurrency`.
+- **Totaux de l'écran** : `MoneyService.format()` / pipes → `SelectedAccountStore.displayCurrency`
+  (compte sélectionné, sinon devise commune de « Tous les comptes »).
+- **Ligne de trade** : devise de SON compte → passer l'`accountId` (`pnlFormat : entry : accountId`,
+  `MoneyService.formatFor`). `Trade.accountId` est exposé par l'API.
+- **Devises mêlées en « Tous les comptes »** (`MoneyService.mixed()`) : pas de totaux (on
+  n'additionne pas des USD et des EUR) → `<mtc-mixed-currency-notice />` (« choisis un compte ») à
+  la place des KPI / courbes / calendrier (dashboard, analytics, résumé et totaux jour/semaine du
+  journal) ; les lignes de trades restent, chacune dans sa devise. Formateur avec devise `null` →
+  aucun symbole, jamais un symbole deviné.
+- **Compte synchronisé** : devise imposée par le broker, sélecteur désactivé (`formSynced`) et refusé
+  côté API. Onboarding : le choix USD / USDT / EUR est la devise du compte créé, rien au profil.
+- **`User.currency` / `User.currencyRate` n'existent plus côté front** (plus de réglage « Devise
+  d'affichage », plus de taux) : ne jamais réintroduire de conversion. **Jamais de `$` en dur**
+  dans un template, un graphe Chart.js (`ChartService`) ou un libellé calculé (récaps d'import
+  compris : devise du compte cible).
+
+**P&L affiché = net** : un montant par trade se lit via `netPnl(t)` de `@mtc/shared`
+(`pnl` brut − frais), jamais `t.pnl` brut (tableau des trades récents, live feed). Les agrégats de
+l'API sont déjà nets. Le formulaire de trade envoie le **brut** (`form().pnl ?? autoPnl()`) et la
+commission à part : envoyer `pnlNet` faisait déduire les frais deux fois.
+
+**Courbe d'équité / drawdown** : `ChartService` préfixe un point « Départ » (capital de base,
+drawdown 0) : un seul jour tradé trace déjà la courbe (`curve.length >= 1`). Les bornes de période
+envoyées à l'API sont des horodatages ISO complets.
 
 ---
 
@@ -432,3 +473,196 @@ sont tolérés), pas de barre d'accent `::before` sur les cartes de contenu.
 <input data-testid="trade-exit-price" />
 <div data-testid="trade-close-type" />
 ```
+
+---
+
+## Connexion broker par compte — pattern (PROMPT-208, Tradovate)
+
+Réutilisable pour tout broker synchronisé par API (cf. `nestjs.md` pour le back).
+
+- **Un compte = une connexion.** L'état vit dans `TradovateStore` (root) : `connections`,
+  `byAccount` (Map accountId → connexion), et **par compte** `busy` (`sync` | `select` |
+  `disconnect`) et `feedback` (lignes + erreur). Deux comptes (Apex + Lucid) ne se bloquent
+  jamais l'un l'autre. Le wizard et « Mes comptes » partagent ce store.
+- **Écran de réassurance AVANT de quitter l'app** (`mtc-tradovate-connect-modal`, palier
+  z-index 1000 pour passer au-dessus de l'overlay d'onboarding) : compte cible, 3 étapes,
+  encadré lecture seule (icône Lucide `Lock`, pas l'emoji). Rien n'est créé avant le retour
+  de Tradovate : fermer l'onglet en cours de route ne laisse aucun demi-état.
+- **Le cookie de `state` exige `withCredentials`** sur l'appel `authorize` (l'intercepteur
+  le pose déjà partout ; `TradovateApi.authorize` le redemande explicitement).
+- **Retour OAuth** : tout ce qui se lit et s'affiche est dans
+  `core/utils/tradovate-return.util.ts` (pur, testé) : `parseTradovateReturn`,
+  `tradovateErrorMessage`, `tradesLine`, `feesLine`, `syncResultLines`, `relativeTime`.
+  - `from=wizard` → lu par l'**onboarding** dans `window.location.search`, APRÈS
+    `restoreProgress()` : réussite → étape 9 avec le récap (classe `ob-import-recap`, comme le
+    CSV) ; échec → étape 8 + message non bloquant (« tu peux réessayer ou importer un CSV ») ;
+    plusieurs comptes → sélecteur à l'étape 8. **Jamais l'étape 1**, même si le localStorage a
+    disparu.
+  - sinon → lu par « Mes comptes » (`router.routerState.snapshot.root.queryParams`).
+  - Dans les deux cas, paramètres retirés aussitôt : `router.navigate([], { queryParams:
+    {…: null}, queryParamsHandling: 'merge', replaceUrl: true })` — commandes vides = même
+    chemin, et un rechargement ne rejoue pas le message.
+- **Après une synchro qui crée des trades** : `SelectedAccountStore.load()` +
+  `TradesStore.reset()`, sinon dashboard et métriques restent sur l'ancien cache.
+- **Déconnexion** : confirmation en ligne (pas de `confirm()` natif), `404` = déjà
+  déconnecté = succès.
+- **Synchro = option principale, CSV = repli (PROMPT-211).** Dans `csv-import`, source
+  « Tradovate » hors onboarding (`allowFeesFile()`) → encart `import-tradovate-reco` d'abord
+  (connecter → `mtc-tradovate-connect-modal` origin `settings` pour le compte choisi ; déjà
+  connecté → `TradovateStore.sync`, résultat émis par `imported` comme un import), puis lien
+  discret « ou importer un fichier CSV Tradovate » (`tvCsvOpen`) qui déroule les deux fichiers.
+  Chaque ouverture repart sur la reco. Onboarding (`allowFeesFile=false`) et « Autre broker »
+  inchangés. Wizard étape 8 : carte Tradovate en tête pleine largeur (`choice-featured`, accent
+  `--nt`), CSV / manuel / zéro au second plan. Verrouillé par `csv-import-tradovate-*.spec.ts`.
+- **Temps réel (PROMPT-210 live)** : `TradovateLiveSocketService` (root, socket.io
+  `/tradovate-live`). Connecté par le **shell** (`SidebarComponent`, effet
+  `isAuthenticated && !isDemo`), pas par l'écran Session live : app ouverte = connecté, logout /
+  onglet fermé = coupé. `auth` est une FONCTION (jeton relu à chaque reconnexion) ; rejet
+  serveur (`io server disconnect`) → nouvel essai espacé 2 s → 60 s. Échec = silence, le
+  bouton « Synchroniser » reste le filet. `tradovate:trades` → toast, `SelectedAccountStore` +
+  `TradovateStore` rechargés, `SessionStore.refreshLive()` si session ouverte (Live feed), puis
+  `imported$` : journal et dashboard s'y abonnent pour se recharger.
+- **Clause 2.ii NinjaTrader** : aucun autre broker nommé dans ces écrans et messages
+  (verrouillé par `tradovate-return.util.spec.ts`). Aucun bouton ne suggère un ordre.
+- **Tests sur le VRAI template** : `import TEMPLATE from './x.component.html?raw'` puis
+  `overrideComponent({ set: { template: TEMPLATE, imports: [pipes nécessaires], schemas:
+  [NO_ERRORS_SCHEMA] } })`. **Pas `node:fs`** dans un spec jsdom : sous l'exécuteur nx
+  (`pnpm nx test`, celui de la CI), `node:path` est externalisé et le fichier entier échoue
+  sans message, alors que `vitest run` direct passe. Les entrées signal (`input()`) ne
+  s'alimentent pas en JIT : remplacer `cmp.accountId = signal(…)` avant le premier
+  `detectChanges()`.
+
+---
+
+## Feedback utilisateur : toast · inline · bloc persistant (PROMPT-210)
+
+**Un seul système de toasts** : `core/services/toast.service.ts` (`ToastService`, root, signals)
+et **un seul conteneur** `mtc-toasts` monté dans `app.ts` (`<router-outlet /><mtc-toasts />`,
+hors routeur : il survit aux navigations). Ne JAMAIS recréer un toast local dans un composant
+(l'ancien `feedbackToast` de session-live a été retiré).
+
+```typescript
+private readonly toast = inject(ToastService);
+this.toast.success('Trade supprimé');
+this.toast.error(apiErrorMessage(err, "Ce trade n'a pas pu être supprimé."));
+this.toast.warning('…', { duration: null }); // null = fermeture manuelle uniquement
+```
+
+- Durées : success/info 4 s · warning/error 7 s. Pause au survol ET au focus. Croix sur chaque
+  toast. 3 visibles max, les suivants en file (le minuteur ne part qu'à l'affichage). Même
+  type + même message déjà affiché → relancé, pas empilé (double-clic).
+- A11y : succès/info/warning `role="status"` + `aria-live="polite"` ; erreur `role="alert"` +
+  `aria-live="assertive"`. `prefers-reduced-motion` respecté.
+- Comportement (usuel, PROMPT-210 bis) : chaque toast vit dans une **case repliable**
+  (`.toast-slot`, `grid-template-rows` 0fr ↔ 1fr) : la pile se décale en douceur à l'entrée
+  comme à la sortie, sans saut. **Entrée** : glisse depuis le bord droit (0,28 s, léger
+  ressort ; depuis le bas en mobile). **Barre de compte à rebours EN HAUT** (`.toast-bar`,
+  `scaleX` 1 → 0 sur la durée réelle, figée via `ToastService.isPaused` = même état que le
+  minuteur ; recréée quand le même message est relancé grâce à `Toast.version` ; absente si
+  `duration: null`). **Sortie** : `[animate.leave]="leaveClass(id)"` (API native Angular
+  ≥ 20.2, pas `@angular/animations`) — le toast repart vers le bord puis la case se replie ;
+  Angular retire la case à la fin. **Glisser pour fermer** (souris ou doigt,
+  `touch-action: pan-y`) : au-delà de max(80 px, 35 % de la largeur) le toast part du côté
+  du geste, sinon il revient ; minuteur suspendu pendant le geste. **Mouvement réduit** :
+  ni glissement ni repli animé, barre par paliers (`steps`). jsdom ne joue pas les
+  animations : `toasts-animation.spec.ts` verrouille les sources (template + CSS lus avec
+  `node:fs` en `@vitest-environment node` — un `.css?raw` est VIDE sous vitest).
+- Position : bas-droite desktop ; mobile centré en bas **au-dessus du FAB « + »** (92 px) — le
+  haut est pris par le burger. z-index 10000 (au-dessus des modales 1000).
+- Message d'erreur API : **toujours** `apiErrorMessage(err, repli)` (`core/utils/api-error.ts`) —
+  message du back s'il existe (tableaux ValidationPipe joints), sinon repli lisible, jamais
+  `undefined`.
+
+**Règle de choix — ne pas tout convertir :**
+
+| Nature | Forme | Exemples |
+|---|---|---|
+| « Quelque chose vient de se passer, tu peux continuer » | **toast** | Lien copié · Trade enregistré/supprimé/déplacé · échec d'une action ponctuelle · retour OAuth Tradovate · « Import terminé » |
+| « Corrige ça ici » | **inline, à côté du champ** | validation de formulaire (trade-form, auth), erreur API rendue dans un formulaire encore ouvert (`[apiError]` de trade-form) |
+| « Information à consulter » | **bloc persistant** | récap d'import CSV, frais non rapprochés · P&L brut, position ouverte, avertissements Tradovate de la carte compte |
+| État de la page | **pas un toast** | chargement, vide, paywall, « Impossible de charger ton parrainage », carte « Demande envoyée », succès mot de passe oublié / réinitialisé (le bloc REMPLACE le formulaire) |
+| Échec partiel actionnable dans une modale ouverte | **inline dans la modale** | suppression d'une journée : trades restants + « Réessayer sur N trades » |
+
+**Plus d'échec muet** : toute mutation déclenchée par l'utilisateur a une branche `error` qui
+affiche un toast (ou un message inline si c'est une validation). Les chargements de fond et
+rafraîchissements périodiques restent silencieux (état de page). Repérage utilisé en PROMPT-210 :
+chercher les `subscribe(` sans `error`, ou dont l'`error` ne fait que relâcher un spinner.
+
+**Tests** : `TestBed.inject(ToastService).visible()` donne `{ type, message }` des toasts
+affichés (service réel, pas besoin de le mocker). Pour un composant qui monte `mtc-toasts`
+(`app.spec.ts`) : `ɵresolveComponentResources` avec un résolveur vide dans `beforeAll`, puis
+`overrideComponent(ToastsComponent, …)` AVANT `compileComponents()`.
+
+## Librairie partagée `@mtc/shared` (2026-09-13)
+
+- Import `from '@mtc/shared'` (stats de trades, valeurs tarifaires) — source unique avec l'API.
+  Détails et règles de la lib : `nestjs.md` § « Librairie partagée ».
+- Branchement : `paths` dans `tsconfig.json` de l'app et de l'admin (lu par esbuild et par le
+  builder de tests de l'admin), la lib dans l'`include` de `tsconfig.spec.json` de l'app
+  (projet `composite`), et `resolve.alias` dans `apps/app-mytradingcoach/vitest.config.ts`.
+- `core/constants/pricing.const.ts` garde ses exports (`PRICING`, `ACCOUNT_LIMITS`,
+  `yearlyPerMonth`) mais lit ses VALEURS dans `@mtc/shared` : un prix ne se change plus que dans
+  `libs/shared/src/pricing.ts` (+ la landing `Pricing.astro`, non branchée à la lib).
+
+## Couche HTTP, erreurs et templates (étape 4 de l'audit, 2026-09-13)
+
+- **Aucun `HttpClient` dans un composant** : tout appel passe par `core/api/*.api.ts`
+  (`AiApi` créé pour cooldown / insights / chat ; `TradesApi.importCsv`, `DebriefApi.exportPdf`,
+  `AnalyticsApi.getDailyEquityCurve` ajoutés). Un type de réponse propre à un écran reste dans
+  l'écran : la méthode d'API le reçoit en générique (`importCsv<ImportResult>`,
+  `insights<InsightsResponse>`). `trades.store` passe aussi par `TradesApi.getAll`, typé sur la
+  vraie page de l'API (`TradesPage` : `data` + `nextCursor` + `hasNextPage`, pagination par
+  curseur ; l'ancien `PaginatedTrades` à `meta` n'existait pas côté back). Un seul type `Trade`
+  (celui de `trades.api.ts`), ré-exporté par le store. Dans un spec, la query d'une requête
+  construite avec `HttpParams` se lit dans `request.urlWithParams`, pas `request.url`.
+- **Un seul helper d'erreur** : `apiErrorMessage(err, repli)` vit dans `@mtc/shared` (sans
+  Angular), ré-exporté par `core/utils/api-error.ts` ; l'admin l'importe directement. Plus de
+  `err.error?.message ?? …` en ligne ni de `tradovateErrorText`.
+- **Templates de plus de ~150 lignes → `templateUrl` (.html)** : 12 composants migrés
+  (session-live, dashboard, csv-import, session-morning, session-day, sidebar, sessions,
+  debrief, ai-insights, register ; admin : user-detail, emails). Un spec qui lisait le template
+  dans le `.ts` lit maintenant `.ts` + `.html` (cf. `csv-import-*.spec.ts`).
+- Mock de `TradesApi` dans un spec qui intercepte le HTTP : lui donner une méthode qui émet la
+  vraie requête (`TestBed.inject(HttpClient).delete(...)`), pour garder `HttpTestingController`.
+
+## Découpage dashboard / session-live (audit, 2026-09-13)
+
+- **Dashboard** : le parent garde l'état (période, compte, `httpResource`), le chrome des
+  panneaux (`.mtc-panel` + en-tête) et les **états vides** ; chaque viz est un composant de
+  `panels/` qui ne reçoit que des données prêtes (`input`). Les calculs vivent dans
+  `dashboard-charts.util.ts` (fonctions pures, testées dans `dashboard-charts.util.spec.ts`).
+  Les specs du dashboard lisent des membres du parent (`summary`, `baseCapital`,
+  `currentCapital`, `accountReallyEmpty`, `dashboardPeriod`, `setPeriod`, `plGranularity`,
+  `plTitle`, `periodRange`, `showCsvImport`) : ne pas les déplacer dans un panneau.
+- **Session live** : le parent garde le cadre (CTA sans session, carte marché, mini-stats,
+  grilles `.live-layout` / `.live-cols`) et la **connexion du WebSocket éco** (c'est l'état de
+  la session qui décide, déconnexion comprise). Calendrier éco, live feed, trade rapide et news
+  (ticker + modale) sont dans `session-live/components/`.
+- **CSS encapsulée** : le style d'une viz vit dans SON composant (un sélecteur du parent ne
+  descend pas dans l'enfant). L'hôte d'un panneau de grille est un flex colonne
+  (`:host { display:flex; flex-direction:column; min-width:0; min-height:0 }`) et le bloc
+  interne s'étire (`flex:1`) : c'est ce qui reproduit l'étirement de la grille d'avant. Les
+  `@container` fonctionnent dans les composants enfants (conteneur résolu dans le DOM).
+  Une règle partagée par deux panneaux (`.pulse-dot`, `.col-title`) est dupliquée dans chacun,
+  keyframes comprises (Angular préfixe les `@keyframes` d'un composant).
+- Vérification d'un tel découpage : empreinte de mise en page (tag, classes, position, taille
+  de chaque élément hors hôtes `mtc-*` et icônes) avant / après sur beta avec le compte démo,
+  plus un script qui vérifie que chaque classe utilisée par un template a sa règle dans le CSS
+  du même composant.
+
+## Migration Angular 22 / Nx 23 / TypeScript 6.0 (étape 5 de l'audit, 2026-09-13)
+
+- Faite par `nx migrate latest` + `--run-migrations` (Angular 22.1.6, CLI/build 22.1.8, Nx 23.2.1,
+  TypeScript 6.0.3 — Angular 22 exige TS `>=6.0 <6.1`, donc **pas TypeScript 7**).
+- **Migration `safe-optional-chaining` volontairement NON appliquée** : en Angular 22, `a?.b` dans un
+  template suit la sémantique JS (`undefined`, plus `null`). La migration aurait entouré les 76 `?.`
+  de `$safeNavigationMigration(…)` pour garder `null`. Aucun n'était comparé à `null` et l'affichage
+  est identique (`??` traite les deux pareil). Règle désormais : ne pas écrire `=== null` sur le
+  résultat d'un `?.` dans un template ; une entrée typée `T | null` qui reçoit un `?.` le verra au
+  build (strictTemplates).
+- `strict-safe-navigation-narrow` : les diagnostics `nullishCoalescingNotNullable` et
+  `optionalChainNotNullable` sont mis en `suppress` dans les `tsconfig.app.json`.
+- TypeScript 6 : `ignoreDeprecations: "6.0"` et, dans `tsconfig.base.json`, `types: ["*"]` +
+  `noUncheckedSideEffectImports: false` pour garder le comportement de TS 5 (TS 6 change ces défauts).
+  Chaque tsconfig a un `rootDir` explicite : `../..` pour l'app, l'admin et leurs specs (ils incluent
+  `libs/shared`), sinon `@mtc/shared` sort de la racine et TypeScript refuse le fichier.

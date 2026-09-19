@@ -16,7 +16,7 @@ import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
 import {
   computeTradeStats,
   BREAKEVEN_EPSILON,
-} from '../../common/utils/trade-stats.util';
+} from '@mtc/shared';
 import {
   computeExecutionGrade,
   computeBehavioralGrade,
@@ -28,6 +28,7 @@ import {
 import { AnalyticsService } from '../analytics/analytics.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { SetupsService } from '../setups/setups.service';
+import { CrossSourcePool } from './import-dedupe.util';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
@@ -59,6 +60,15 @@ export interface JournalStats {
   pnlNet: number;
   bestTrade: number;
   worstTrade: number;
+}
+
+/**
+ * Empreinte de la n-ième occurrence d'un même trade dans une source (fichier, synchro) : la 1ʳᵉ
+ * garde la clé, les suivantes prennent `#n`. Réimporter la même source redonne les mêmes
+ * numéros → aucun doublon ; une répétition absente de la base est, elle, bien créée.
+ */
+function occurrenceHash(key: string, n: number): string {
+  return n === 1 ? key : `${key}#${n}`;
 }
 
 @Injectable()
@@ -180,6 +190,11 @@ export class TradesService {
    *
    * Un conflit d'unicité n'est donc pas une erreur : c'est un doublon, on le compte
    * comme tel — un ré-import du même fichier ne recrée toujours rien.
+   *
+   * Deux lignes IDENTIQUES d'une même source sont deux trades, pas un doublon : un trade à
+   * plusieurs contrats arrive souvent en plusieurs paires Tradovate (mêmes prix, même seconde
+   * de clôture). La n-ième répétition prend l'empreinte `clé#n` (cf. `occurrenceHash`) ; les
+   * écarter perdait des contrats et du P&L (synchro de Val, 14/09/2026 : 28 paires → 23 trades).
    */
   async importTrades(
     userId: string,
@@ -194,25 +209,45 @@ export class TradesService {
       where: { userId },
       select: { asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true },
     });
-    const seen = new Set(existing.map((t) => this.dedupeKey(t)));
+    // Même trade déjà en base mais daté dans un autre fuseau (export CSV sans fuseau ↔ API en
+    // UTC) : doublon, un-pour-un. Vaut dans les deux sens : CSV avant OU après la synchro.
+    const otherTimezone = new CrossSourcePool(existing);
+    // Empreintes déjà prises : la clé, puis `#2`, `#3`… autant de fois que la clé existe en base.
+    const seen = new Set<string>();
+    const inBase = new Map<string, number>();
+    for (const t of existing) {
+      const key = this.dedupeKey(t);
+      const n = (inBase.get(key) ?? 0) + 1;
+      inBase.set(key, n);
+      seen.add(occurrenceHash(key, n));
+    }
 
     let created = 0;
     let duplicates = 0;
     let failed = 0;
     // Comptes touchés → un seul recalcul comportemental par compte à la fin (pas de N+1, PROMPT-168).
     const affectedAccounts = new Set<string>();
+    // Rang de chaque clé DANS la source : deux lignes identiques sont deux trades (cf. occurrenceHash).
+    const inSource = new Map<string, number>();
 
     for (const dto of dtos) {
-      const key = this.dedupeKey(dto);
-      if (seen.has(key)) {
+      if (otherTimezone.take(dto)) {
         duplicates++;
         continue;
       }
-      seen.add(key); // dédup intra-lot (même trade présent 2× dans le fichier)
+      const key = this.dedupeKey(dto);
+      const n = (inSource.get(key) ?? 0) + 1;
+      inSource.set(key, n);
+      const hash = occurrenceHash(key, n);
+      if (seen.has(hash)) {
+        duplicates++;
+        continue;
+      }
+      seen.add(hash);
       try {
         const t = await this.create(userId, dto as CreateTradeDto, {
           deferBehavioral: true,
-          importHash: key,
+          importHash: hash,
         });
         if (t.accountId) affectedAccounts.add(t.accountId);
         created++;
@@ -245,15 +280,32 @@ export class TradesService {
     return [t.asset ?? '', t.side ?? '', at, t.entry ?? '', t.exit ?? '', t.pnl ?? ''].join('|');
   }
 
+  /**
+   * Identité d'un trade pour la détection de doublons : son empreinte d'import si elle existe
+   * (une répétition légitime porte `#2`, `#3`… et n'est donc JAMAIS un doublon), sinon la clé
+   * recalculée (trades saisis à la main ou importés avant la migration `importHash`).
+   */
+  private duplicateIdentity(t: {
+    asset?: string | null;
+    side?: string | null;
+    tradedAt?: string | Date | null;
+    entry?: number | null;
+    exit?: number | null;
+    pnl?: number | null;
+    importHash?: string | null;
+  }): string {
+    return t.importHash ?? this.dedupeKey(t);
+  }
+
   /** Compte les doublons existants pour un user (lignes en trop par rapport aux uniques). */
   async countDuplicates(
     userId: string,
   ): Promise<{ total: number; unique: number; duplicates: number }> {
     const trades = await this.prisma.trade.findMany({
       where: { userId },
-      select: { asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true },
+      select: { asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true, importHash: true },
     });
-    const keys = new Set(trades.map((t) => this.dedupeKey(t)));
+    const keys = new Set(trades.map((t) => this.duplicateIdentity(t)));
     return { total: trades.length, unique: keys.size, duplicates: trades.length - keys.size };
   }
 
@@ -261,13 +313,13 @@ export class TradesService {
   async removeDuplicates(userId: string): Promise<{ removed: number; kept: number }> {
     const trades = await this.prisma.trade.findMany({
       where: { userId },
-      select: { id: true, asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true },
+      select: { id: true, asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true, importHash: true },
       orderBy: { createdAt: 'asc' }, // garder la 1ʳᵉ occurrence créée
     });
     const seen = new Set<string>();
     const toDelete: string[] = [];
     for (const t of trades) {
-      const key = this.dedupeKey(t);
+      const key = this.duplicateIdentity(t);
       if (seen.has(key)) toDelete.push(t.id);
       else seen.add(key);
     }
@@ -746,14 +798,18 @@ export class TradesService {
     if (updates.length) await this.prisma.$transaction(updates);
   }
 
+  /**
+   * P&L BRUT du trade (résultat des prix). Les frais restent dans `commission` : le net est
+   * calculé à la lecture par `netPnl` (@mtc/shared), CONVENTION UNIQUE depuis PROMPT-213. Avant,
+   * ce calcul retirait déjà les frais alors que les écrans les retiraient encore : frais
+   * comptés deux fois sur les trades saisis ou édités.
+   */
   private calculatePnl(dto: CreateTradeDto): number | undefined {
     if (dto.entry == null || dto.entry <= 0) return undefined;
 
-    const commission = Math.abs(dto.commission ?? 0);
-
     // P&L réalisé fourni (import broker, ou édition sans changement de prix/qty) = source de vérité.
     // On NE recalcule PAS points × quantité : faux pour la crypto/contrats (qty MEXC en contrats, pas en coins).
-    if (dto.pnl != null) return +(dto.pnl - commission).toFixed(2);
+    if (dto.pnl != null) return +dto.pnl.toFixed(2);
 
     if (dto.exit == null || dto.exit <= 0) return undefined;
     const effectiveExit = dto.exit;
@@ -776,8 +832,6 @@ export class TradesService {
     } else {
       pnl = points * quantity;
     }
-
-    pnl -= commission;
 
     return +pnl.toFixed(2);
   }

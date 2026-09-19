@@ -1,5 +1,5 @@
 FROM node:22-slim AS builder
-RUN npm install -g pnpm@10 --no-fund --no-audit
+RUN npm install -g pnpm@11.6.0 --no-fund --no-audit
 WORKDIR /app
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
 COPY apps/api-mytradingcoach/package.json ./apps/api-mytradingcoach/
@@ -13,7 +13,7 @@ RUN NX_DAEMON=false NX_NO_CLOUD=true pnpm nx build api-mytradingcoach --configur
 
 FROM node:22-alpine AS migrator
 RUN apk add --no-cache python3 make g++
-RUN npm install -g pnpm@10 --no-fund --no-audit
+RUN npm install -g pnpm@11.6.0 --no-fund --no-audit
 WORKDIR /app
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
 COPY apps/api-mytradingcoach/package.json ./apps/api-mytradingcoach/

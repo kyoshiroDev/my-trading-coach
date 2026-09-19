@@ -31,9 +31,27 @@ pnl       = ticks × tickValue × qty
 
 ---
 
+## Convention P&L unique — brut stocké, net calculé (PROMPT-213)
+`Trade.pnl` est TOUJOURS le P&L **BRUT** (résultat des prix) ; les frais vivent dans `commission`
+(positive). Le **net** = `pnl − |commission|` n'est jamais stocké : il est calculé à la lecture par
+`netPnl()` de `@mtc/shared`, et **tout** montant affiché (KPI, calendrier, courbe d'équité, drawdown,
+top actifs, setups, heatmap, débrief, récap IA) comme **tout** classement gagnant/perdant (win rate,
+série, W/L par groupe) passe par ce net : un trade à +1 $ brut avec 1,90 $ de frais est une perte.
+Toute requête qui calcule sur `pnl` sélectionne donc aussi `commission`. Avant PROMPT-213, la saisie
+manuelle stockait un net (le formulaire envoyait `pnlNet`, `calculatePnl` retirait encore les frais)
+tandis que les imports stockaient du brut, et chaque écran choisissait brut ou net : sur le compte
+de Val, Analytics affichait −41,10 $ et le calendrier +24 $ pour la même journée.
+
+## Devise des montants — celle du compte, jamais convertie (PROMPT-214)
+Un P&L est exprimé dans la devise de son compte de trading (`TradingAccount.currency`) : un contrat
+MNQ sur un compte prop firm USD donne des USD, affichés en USD pour tout le monde. Aucun taux de
+change n'est appliqué nulle part (l'ancien `User.currencyRate` a été retiré). Les calculs de P&L
+(ticks × tickValue, P&L réalisé du broker) ne connaissent pas la devise d'affichage ; seul le
+formateur `formatMoney` de `@mtc/shared` y ajoute le symbole du compte.
+
 ## Règle P&L absolue — le réalisé prime sur le recalcul
 Si un `pnl` réalisé est fourni (import broker, ou édition sans changement de prix/qty), il fait FOI :
-`calculatePnl` retourne `dto.pnl - commission` AVANT tout recalcul `points × qty`.
+`calculatePnl` retourne `dto.pnl` (brut, arrondi au centime) AVANT tout recalcul `points × qty`.
 On ne recalcule (points × tickValue × qty) que si AUCUN pnl n'est fourni.
 `update()` ne recalcule le pnl QUE si un champ de prix change (entry/exit/quantity/commission/pnl).
 
@@ -136,7 +154,7 @@ crash.
 **Périmètre** : fusion appliquée UNIQUEMENT si le fichier des trades est un **Tradovate Performance**
 ET qu'un **Cash history valide** est fourni (`fees`). Sinon → comportement inchangé (colonne
 commission du CSV si présente, sinon `totalFees` manuel réparti au prorata). La commission posée est
-**positive** ; `calculatePnl` déduit `commission` du P&L net.
+**positive** ; le `pnl` reste brut et le net est calculé à la lecture (`netPnl`, cf. convention P&L).
 
 **Endpoint** : `POST /trades/import` accepte deux champs multipart via `FileFieldsInterceptor` —
 `file` (trades, obligatoire, nom conservé pour rétro-compat) + `fees` (Cash history, optionnel).
@@ -145,3 +163,11 @@ Le résumé (`feesImported: { assigned, expected, reconciled, count }`) est renv
 **Front** : `mtc-csv-import` (composant unique réutilisé journal + dashboard + **onboarding**) porte un
 input `allowFeesFile` (défaut `true`). L'onboarding passe `[allowFeesFile]="false"` → un seul fichier,
 zéro friction. Fixtures de test : `__fixtures__/tradovate-performance.csv` + `tradovate-cash-history.csv`.
+
+## P&L des trades synchronisés Tradovate (PROMPT-207)
+
+`(prix de vente − prix d'achat) × qty × valuePerPoint`, **brut**, arrondi au centime — identique
+à la colonne `pnl` de l'export Performance. `valuePerPoint` vient du `product` Tradovate ; repli
+sur `tickValue / tickSize` de `instruments.const.ts` (MNQ : 0,5 / 0,25 = 2 $/pt). Paire ignorée
+(et comptée dans `skipped`) si ni l'un ni l'autre n'est connu : jamais de P&L inventé.
+Symbole normalisé par `normalizeFuturesSymbol` (MNQU6 → MNQ), partagé avec l'import CSV.

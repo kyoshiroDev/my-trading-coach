@@ -40,7 +40,6 @@ export interface AdminUserProfile {
   strategyDescription?: string | null;
   market?: string | null;
   goal?: string | null;
-  currency?: string;
   startingCapital?: number;
 }
 
@@ -233,7 +232,6 @@ export interface UserDetailData {
     tradesPerDayMax: number | null;
     strategyDescription: string | null;
     startingCapital: number;
-    currency: string;
   };
   usage: {
     totalTrades: number;

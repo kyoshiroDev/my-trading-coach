@@ -24,7 +24,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 import { JournalComponent } from './journal.component';
@@ -33,6 +33,8 @@ import { UserStore } from '../../core/stores/user.store';
 import { SetupsStore } from '../../core/stores/setups.store';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { TradesApi } from '../../core/api/trades.api';
+import { ToastService } from '../../core/services/toast.service';
+import { environment } from '../../../environments/environment';
 
 const JOUR = '2026-07-10T16:41:00.000Z';
 
@@ -66,6 +68,9 @@ function mount(trades: Trade[], reassignImpl: () => unknown = () => of({ data: {
   const tradesApi = {
     getStats: () => of({ data: null }),
     reassign: vi.fn(reassignImpl),
+    // Le journal supprime via TradesApi (étape 4 de l'audit) : le mock émet la VRAIE requête
+    // DELETE, pour que HttpTestingController continue de simuler 404 / refus / échecs partiels.
+    delete: (id: string) => TestBed.inject(HttpClient).delete<void>(`${environment.apiUrl}/trades/${id}`),
   };
   TestBed.configureTestingModule({
     providers: [
@@ -115,6 +120,8 @@ function repondre(http: HttpTestingController, sorts: Record<string, number> = {
 }
 
 beforeEach(() => TestBed.resetTestingModule());
+/** Toasts affichés (le service réel, racine) : { type, message }. */
+const toasts = () => TestBed.inject(ToastService).visible().map((t) => ({ type: t.type, message: t.message }));
 afterEach(() => TestBed.inject(HttpTestingController).verify());
 
 describe('Journal — la modale de journée reste synchronisée avec les trades', () => {
@@ -235,8 +242,8 @@ describe('Journal — un échec de suppression de journée est désormais visibl
   });
 });
 
-describe('Journal — un échec de suppression de ligne est désormais visible', () => {
-  it('refus serveur → message affiché, ligne conservée', () => {
+describe('Journal — un échec de suppression de ligne est désormais visible (toast)', () => {
+  it('refus serveur → toast d’erreur avec le message du back, ligne conservée', () => {
     const { c, http, store, fixture } = mount([trade('a')]);
 
     c.deleteTrade('a');
@@ -244,9 +251,9 @@ describe('Journal — un échec de suppression de ligne est désormais visible',
     fixture.detectChanges();
 
     expect(
-      c.deleteRowError(),
+      toasts(),
       'Le clic sur la croix ne produit rien de visible et la ligne reste en place',
-    ).toBe('Refus serveur.');
+    ).toEqual([{ type: 'error', message: 'Refus serveur.' }]);
     expect(store.trades()).toHaveLength(1);
   });
 
@@ -259,10 +266,11 @@ describe('Journal — un échec de suppression de ligne est désormais visible',
     }
     fixture.detectChanges();
 
-    expect(c.deleteRowError()).toContain("n'a pas pu être supprimé");
+    expect(toasts()[0].message).toContain("n'a pas pu être supprimé");
+    expect(toasts()[0].message).not.toContain('undefined');
   });
 
-  it('404 → la ligne disparaît quand même, sans message', () => {
+  it('404 → la ligne disparaît quand même, présentée comme un succès', () => {
     // Sinon elle resterait cliquable indéfiniment sur un trade qui n'existe plus.
     const { c, http, store, fixture } = mount([trade('a'), trade('b')]);
 
@@ -271,24 +279,10 @@ describe('Journal — un échec de suppression de ligne est désormais visible',
     fixture.detectChanges();
 
     expect(store.trades().map((t: Trade) => t.id)).toEqual(['b']);
-    expect(c.deleteRowError()).toBeNull();
+    expect(toasts()).toEqual([{ type: 'success', message: 'Trade supprimé' }]);
   });
 
-  it('un nouvel essai repart d\'un message vierge', () => {
-    const { c, http, fixture } = mount([trade('a')]);
-    c.deleteTrade('a');
-    repondre(http, { a: 500 });
-    fixture.detectChanges();
-    expect(c.deleteRowError()).not.toBeNull();
-
-    c.deleteTrade('a');
-    repondre(http);
-    fixture.detectChanges();
-
-    expect(c.deleteRowError()).toBeNull();
-  });
-
-  it('succès → aucun message, ligne retirée (non-régression)', () => {
+  it('succès → toast « Trade supprimé », ligne retirée', () => {
     const { c, http, store, fixture } = mount([trade('a'), trade('b')]);
 
     c.deleteTrade('a');
@@ -296,7 +290,7 @@ describe('Journal — un échec de suppression de ligne est désormais visible',
     fixture.detectChanges();
 
     expect(store.trades().map((t: Trade) => t.id)).toEqual(['b']);
-    expect(c.deleteRowError()).toBeNull();
+    expect(toasts()).toEqual([{ type: 'success', message: 'Trade supprimé' }]);
   });
 });
 
@@ -362,7 +356,7 @@ describe('Journal — la modale de déplacement suit elle aussi les trades', () 
     expect(c.isReassigning()).toBe(false);
   });
 
-  it('refus serveur → message affiché, modale laissée ouverte (non-régression)', () => {
+  it('refus serveur → toast d’erreur, modale laissée ouverte pour réessayer', () => {
     const { c, fixture } = mount(
       [trade('a')],
       () => throwError(() => ({ error: { message: 'Compte cible invalide.' } })),
@@ -373,22 +367,17 @@ describe('Journal — la modale de déplacement suit elle aussi les trades', () 
     c.reassignTo(c.reassignDay(), 'compte-2');
     fixture.detectChanges();
 
-    expect(c.reassignError()).toBe('Compte cible invalide.');
+    expect(toasts()).toEqual([{ type: 'error', message: 'Compte cible invalide.' }]);
     expect(c.reassignDayKey()).not.toBeNull();
     expect(c.isReassigning()).toBe(false);
   });
 
-  it('fermer la modale efface le message', () => {
-    const { c, fixture } = mount([trade('a')], () => throwError(() => new Error('net')));
+  it('succès → toast de confirmation', () => {
+    const { c, fixture } = mount([trade('a'), trade('b')]);
     c.openReassign(c.tradesByDay()[0]);
     fixture.detectChanges();
     c.reassignTo(c.reassignDay(), 'compte-2');
     fixture.detectChanges();
-    expect(c.reassignError()).not.toBeNull();
-
-    c.reassignDayKey.set(null);
-    fixture.detectChanges();
-
-    expect(c.reassignError()).toBeNull();
+    expect(toasts()).toEqual([{ type: 'success', message: '2 trades déplacés' }]);
   });
 });

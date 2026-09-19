@@ -3,7 +3,11 @@ import type { Job } from 'bullmq';
 import { DebriefProcessor } from './debrief.processor';
 
 const mockService = { generateForUser: vi.fn() };
-const mockPrisma = { user: { findUnique: vi.fn() } };
+const mockPrisma = {
+  user: { findUnique: vi.fn() },
+  // Devise de l'email = celle des comptes (PROMPT-214).
+  tradingAccount: { findMany: vi.fn().mockResolvedValue([{ currency: 'USD' }]) },
+};
 const mockResend = { sendDebriefReady: vi.fn() };
 
 const proc = new DebriefProcessor(

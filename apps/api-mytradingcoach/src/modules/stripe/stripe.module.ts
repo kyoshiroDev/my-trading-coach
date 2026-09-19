@@ -4,18 +4,35 @@ import { PrismaModule } from '../../prisma/prisma.module';
 import { ResendModule } from '../resend/resend.module';
 import { DiscordModule } from '../discord/discord.module';
 import { StripeController } from './stripe.controller';
-import { StripeService } from './stripe.service';
 import { StripeProcessor } from './stripe.processor';
+import { stripeClientProvider } from './stripe.client';
+import { STRIPE_QUEUE } from './stripe.helpers';
+import { StripeBillingService } from './stripe-billing.service';
+import { StripeCouponService } from './stripe-coupon.service';
+import { StripeCustomerService } from './stripe-customer.service';
+import { StripeReferralService } from './stripe-referral.service';
+import { StripeSubscriptionService } from './stripe-subscription.service';
+import { StripeWebhookService } from './stripe-webhook.service';
 
 @Module({
   imports: [
-    BullModule.registerQueue({ name: 'stripe' }),
+    BullModule.registerQueue({ name: STRIPE_QUEUE }),
     PrismaModule,
     ResendModule,
     DiscordModule,
   ],
   controllers: [StripeController],
-  providers: [StripeService, StripeProcessor],
-  exports: [StripeService],
+  providers: [
+    stripeClientProvider,
+    StripeCustomerService,
+    StripeCouponService,
+    StripeSubscriptionService,
+    StripeReferralService,
+    StripeBillingService,
+    StripeWebhookService,
+    StripeProcessor,
+  ],
+  // Admin (réconciliation des abonnements) et referral (avoir du parrain).
+  exports: [StripeSubscriptionService, StripeCustomerService],
 })
 export class StripeModule {}

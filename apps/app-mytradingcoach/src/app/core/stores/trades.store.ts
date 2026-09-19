@@ -6,53 +6,16 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
-import { TradesApi, JournalStats } from '../api/trades.api';
-import { computeTradeStats } from '../utils/trade-stats.util';
+import { TradesApi, JournalStats, Trade } from '../api/trades.api';
+import { computeTradeStats } from '@mtc/shared';
 
-export interface Trade {
-  id: string;
-  asset: string;
-  side: 'LONG' | 'SHORT';
-  entry: number;
-  exit: number | null;
-  stopLoss: number | null;
-  takeProfit: number | null;
-  pnl: number | null;
-  commission: number | null;
-  riskReward: number | null;
-  quantity: number | null;
-  capitalEngaged: number | null;
-  emotion: string | null; // override optionnel (PROMPT-163)
-  effectiveEmotion?: string | null; // émotion effective calculée API (override sinon humeur session)
-  // Note d'exécution CALCULÉE (PROMPT-161) : null = « Non évalué ».
-  executionScore?: number | null;
-  executionGrade?: 'EXCELLENT' | 'BON' | 'MOYEN' | 'MAUVAIS' | null;
-  // Barème ayant produit la note (PROMPT-168) : stop-based (4 critères) ou comportemental (sans stop).
-  executionMethod?: 'STOP_BASED' | 'BEHAVIORAL' | null;
-  setupId: string;
-  setup: { id: string; title: string; color: string };
-  session: string;
-  timeframe: string;
-  notes: string | null;
-  tags: string[];
-  tradedAt: string;
-  createdAt: string;
-}
-
-interface TradesPage {
-  data: Trade[];
-  nextCursor: string | null;
-  hasNextPage: boolean;
-}
+// Un seul type Trade (celui de l'API) : ré-exporté pour les imports existants du store.
+export type { Trade };
 
 @Injectable({ providedIn: 'root' })
 export class TradesStore {
-  private readonly http = inject(HttpClient);
   private readonly tradesApi = inject(TradesApi);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly baseUrl = `${environment.apiUrl}/trades`;
 
   readonly trades = signal<Trade[]>([]);
   /**
@@ -89,9 +52,8 @@ export class TradesStore {
     this.error.set(null);
 
     this.lastFilters = filters ?? {};
-    const params = new URLSearchParams(this.lastFilters);
-    this.http
-      .get<{ data: TradesPage }>(`${this.baseUrl}?${params}`)
+    this.tradesApi
+      .getAll(this.lastFilters)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
@@ -114,9 +76,8 @@ export class TradesStore {
     if (!cursor || this.isLoadingMore()) return;
 
     this.isLoadingMore.set(true);
-    const params = new URLSearchParams({ ...this.lastFilters, cursor });
-    this.http
-      .get<{ data: TradesPage }>(`${this.baseUrl}?${params}`)
+    this.tradesApi
+      .getAll({ ...this.lastFilters, cursor })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {

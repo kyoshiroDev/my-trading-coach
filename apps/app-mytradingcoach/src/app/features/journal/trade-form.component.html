@@ -19,7 +19,7 @@
           {{ editTrade() ? 'Modifier le trade' : 'Nouveau trade' }}
         </h2>
         <button class="close-btn" (click)="dismissed.emit()">
-          <lucide-icon [img]="XIcon" [size]="16" />
+          <svg [lucideIcon]="XIcon" [size]="16"></svg>
         </button>
       </div>
 
@@ -252,7 +252,7 @@
               <div class="pnl-label">P&amp;L estimé</div>
               <div class="pnl-value">
                 @if (autoPnl() !== undefined) {
-                  {{ autoPnl()! >= 0 ? '+' : '' }}${{ autoPnl()!.toFixed(2) }}
+                  {{ autoPnl() | pnlFormat }}
                   @if (autoPnlPct() !== undefined) {
                     <span class="pnl-pct"
                       >{{ autoPnlPct()! >= 0 ? '+' : ''
@@ -295,7 +295,7 @@
                 <div class="pnl-net-hint">
                   P&L net :
                   <span [class.text-green]="pnlNet()! >= 0" [class.text-red]="pnlNet()! < 0">
-                    {{ pnlNet()! >= 0 ? '+' : '' }}${{ pnlNet()!.toFixed(2) }}
+                    {{ pnlNet() | pnlFormat }}
                   </span>
                 </div>
               }

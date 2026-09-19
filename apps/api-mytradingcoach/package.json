@@ -17,14 +17,14 @@
         "options": {
           "command": "webpack-cli build",
           "args": [
-            "--node-env=production"
+            "--config-node-env=production"
           ],
           "cwd": "apps/api-mytradingcoach"
         },
         "configurations": {
           "development": {
             "args": [
-              "--node-env=development"
+              "--config-node-env=development"
             ]
           }
         }
@@ -88,48 +88,48 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
     "@nestjs/bullmq": "^11.0.4",
-    "@nestjs/common": "11.1.26",
+    "@nestjs/common": "11.2.3",
     "@nestjs/config": "^4.0.3",
-    "@nestjs/core": "11.1.26",
+    "@nestjs/core": "11.2.3",
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/passport": "^11.0.5",
-    "@nestjs/platform-express": "11.1.26",
-    "@nestjs/platform-socket.io": "^11.1.26",
+    "@nestjs/platform-express": "11.2.3",
+    "@nestjs/platform-socket.io": "^11.2.3",
     "@nestjs/schedule": "^5.0.1",
     "@nestjs/terminus": "^11.1.1",
     "@nestjs/throttler": "^6.5.0",
-    "@nestjs/websockets": "^11.1.26",
-    "@prisma/adapter-pg": "^7.6.0",
-    "@sentry/nestjs": "^10.48.0",
+    "@nestjs/websockets": "^11.2.3",
+    "@prisma/adapter-pg": "^7.10.0",
+    "@sentry/nestjs": "^10.74.0",
     "@socket.io/redis-adapter": "^8.3.0",
     "@types/cookie-parser": "^1.4.10",
     "argon2": "^0.44.0",
     "bullmq": "^5.78.0",
-    "compression": "^1.8.1",
+    "compression": "^1.8.2",
     "cookie-parser": "^1.4.7",
-    "helmet": "^8.1.0",
+    "helmet": "^8.3.0",
     "ioredis": "^5.11.1",
     "node-ssh": "^13.2.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
-    "pg": "^8.20.0",
+    "pg": "^8.23.0",
     "reflect-metadata": "^0.1.14",
-    "resend": "^6.12.4",
+    "resend": "^6.28.0",
     "rxjs": "^7.8.2",
     "socket.io": "^4.8.3",
-    "stripe": "^22.2.0",
+    "stripe": "^22.6.2",
     "tslib": "^2.3.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
-    "@nestjs/testing": "11.1.26",
+    "@nestjs/testing": "11.2.3",
     "@swc/core": "1.15.8",
     "@types/compression": "^1.8.1",
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
     "@types/pg": "^8.20.0",
-    "@vitest/coverage-v8": "^4.1.2",
+    "@vitest/coverage-v8": "^4.1.6",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "unplugin-swc": "^1.5.9",

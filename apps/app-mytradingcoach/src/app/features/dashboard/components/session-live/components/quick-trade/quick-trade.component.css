@@ -1,0 +1,303 @@
+/* Hôte = colonne droite de la grille .live-layout du parent. */
+:host {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* ─── Quick trade panel ─── */
+.qt-panel {
+  background: var(--bg-card);
+  border: 1px solid rgba(59,130,246,.2);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  /* Grandit avec son contenu : le bouton « Logger ce trade » reste atteignable via le scroll de page. */
+}
+.qt-title {
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.ct-ic { display: inline-flex; color: var(--text-3); flex-shrink: 0; }
+.qt-title .ct-ic { color: var(--blue-bright); }
+.qt-lbl {
+  display: block;
+  font-size: 9.5px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  margin-bottom: 6px;
+}
+.qt-input {
+  width: 100%;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  color: var(--text);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color .15s;
+}
+.qt-input:focus { border-color: var(--blue); }
+
+/* ENTRY capturé automatiquement au clic — lecture seule (non interactif) */
+.qt-entry-readonly {
+  width: 100%;
+  background: var(--bg-2);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  color: var(--text-2);
+  cursor: default;
+  box-sizing: border-box;
+}
+.qt-sides { display: flex; gap: 8px; }
+.qt-side {
+  flex: 1;
+  padding: 9px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-3);
+  transition: all .15s;
+}
+.qt-side.lng.sel { background: var(--green-dim); border-color: rgba(16,185,129,.3); color: var(--green); }
+.qt-side.sht.sel { background: var(--red-dim); border-color: rgba(239,68,68,.3); color: var(--red); }
+.qt-emos { display: flex; gap: 6px; flex-wrap: wrap; }
+.qt-emo {
+  appearance: none;
+  width: 34px;
+  height: 31px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 15px;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  transition: all .15s;
+}
+.qt-emo.sel { border-color: var(--blue-bright); background: var(--blue-glow); }
+
+/* Erreur de chargement des actifs + retry */
+.qt-asset-error {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 8px 10px; border-radius: 7px;
+  background: var(--red-dim); border: 1px solid rgba(239,68,68,.25);
+  font-size: 11px; color: var(--text-2);
+}
+.qt-retry-btn {
+  align-self: flex-start;
+  background: var(--bg-3); border: 1px solid var(--border);
+  color: var(--blue-bright); border-radius: 6px;
+  padding: 5px 12px; font-size: 11px; cursor: pointer;
+  font-family: var(--font-body); transition: border-color .15s;
+}
+.qt-retry-btn:hover { border-color: var(--border-hover); }
+
+/* Indicateurs de focus clavier (accessibilité) */
+.qt-emo:focus-visible,
+.qt-side:focus-visible,
+.qt-asset-select:focus-visible,
+.qt-select:focus-visible,
+.qt-retry-btn:focus-visible,
+.qt-log:focus-visible,
+.qt-fav-btn:focus-visible {
+  outline: 2px solid var(--blue-bright);
+  outline-offset: 2px;
+}
+.qt-secondary { display: flex; gap: 6px; }
+.qt-select {
+  flex: 1;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 12.5px;
+  font-family: var(--font-body);
+  color: var(--text);
+  cursor: pointer;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color .15s;
+}
+.qt-select:hover, .qt-select:focus { border-color: var(--border-hover); }
+.qt-divider { height: 1px; background: var(--border); }
+.qt-optional-lbl { font-size: 9px; font-family: var(--font-mono); color: var(--text-faint); text-align: center; text-transform: uppercase; letter-spacing: .6px; }
+.qt-pnl-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.qt-sl-input { border-color: rgba(239,68,68,.25) !important; }
+.qt-sl-input:focus { border-color: var(--red) !important; }
+.qt-tp-input { border-color: rgba(16,185,129,.25) !important; }
+.qt-tp-input:focus { border-color: var(--green) !important; }
+.qt-log {
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  padding: 10px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .15s;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.qt-log svg.lucide { display: inline-flex; }
+.qt-log:hover { opacity: .88; }
+.qt-log:disabled { opacity: .4; cursor: not-allowed; }
+.qt-hint { font-size: 10.5px; color: var(--text-faint); text-align: center; font-style: italic; }
+
+/* ─── Asset select ─── */
+.qt-asset-wrap { display: flex; flex-direction: column; gap: 6px; }
+.qt-asset-select {
+  flex: 1;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 12.5px;
+  font-family: var(--font-body);
+  color: var(--text);
+  cursor: pointer;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color .15s;
+  min-width: 0;
+}
+.qt-asset-select:focus { border-color: var(--blue); }
+.qt-fav-btn {
+  flex-shrink: 0;
+  width: 38px;
+  height: 34px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--yellow);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+  padding: 0;
+}
+.qt-fav-btn.active { color: var(--yellow); border-color: var(--yellow-dim); background: var(--yellow-dim); }
+.qt-fav-btn:hover { border-color: var(--yellow-dim); color: var(--yellow); }
+.qt-asset-skel {
+  height: 32px;
+  border-radius: 7px;
+  background: var(--bg-3);
+  animation: skel-pulse 1.2s ease-in-out infinite;
+}
+.qt-asset-hint { font-size: 10px; color: var(--text-3); font-style: italic; }
+
+/* Saisie libre d'actif */
+.qt-custom-asset { display: flex; flex-direction: column; gap: 5px; margin-top: 5px; }
+.qt-custom-row { display: flex; gap: 5px; align-items: center; }
+.qt-custom-row .qt-input { flex: 1; min-width: 0; }
+.qt-custom-add, .qt-custom-cancel {
+  flex-shrink: 0; height: 32px; border-radius: 6px; cursor: pointer;
+  font-family: var(--font-body); font-size: 11px; font-weight: 600;
+  transition: all .15s;
+}
+.qt-custom-add {
+  padding: 0 12px; background: rgba(59,130,246,.12);
+  border: 1px solid rgba(59,130,246,.3); color: var(--blue-bright);
+}
+.qt-custom-add:hover:not(:disabled) { background: rgba(59,130,246,.2); }
+.qt-custom-add:disabled { opacity: .4; cursor: not-allowed; }
+.qt-custom-cancel {
+  width: 32px; background: var(--bg-3); border: 1px solid var(--border); color: var(--text-3);
+}
+.qt-custom-cancel:hover { color: var(--text); border-color: var(--border-hover); }
+.qt-custom-results {
+  display: flex; flex-direction: column; gap: 2px;
+  max-height: 140px; overflow-y: auto;
+  background: var(--bg-3); border: 1px solid var(--border); border-radius: 6px; padding: 3px;
+}
+.qt-custom-result {
+  display: flex; align-items: baseline; gap: 6px;
+  padding: 6px 8px; border-radius: 5px; cursor: pointer;
+  background: transparent; border: none; text-align: left; width: 100%;
+  transition: background .12s;
+}
+.qt-custom-result:hover { background: rgba(59,130,246,.08); }
+.qt-custom-result:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: -2px; }
+.qt-custom-sym { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--text); }
+.qt-custom-lbl { font-size: 10px; color: var(--text-3); }
+@keyframes skel-pulse {
+  0%, 100% { opacity: .4; }
+  50% { opacity: .8; }
+}
+
+/* ── Prix live ── */
+.qt-live-price {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 12px;
+  background: var(--green-dim);
+  border: 1px solid rgba(16,185,129,.2);
+  border-radius: 9px;
+  box-sizing: border-box;
+}
+.qt-live-dot {
+  font-size: 8px; color: var(--green);
+  animation: livePulse 2s ease-in-out infinite;
+}
+@keyframes livePulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+.qt-live-value {
+  font-family: var(--font-mono); font-size: 14px;
+  font-weight: 700; color: var(--text);
+}
+.qt-live-label {
+  font-family: var(--font-mono); font-size: 9.5px;
+  color: var(--text-3); text-transform: uppercase; letter-spacing: .5px;
+}
+.qt-live-unavailable {
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--text-3);
+}
+
+@container (max-width: 520px) {
+  .qt-pnl-row { grid-template-columns: 1fr; }
+}
+
+/* Desktop (≥981px) : colonne pleine hauteur, le trop-plein scrolle dans le panneau
+   (cf. session-live.component.css). */
+@container (min-width: 981px) {
+  .qt-panel { flex: 1; min-height: 0; overflow-y: auto; }
+}
+
+/* ─── Réduction des animations (accessibilité) ─── */
+@media (prefers-reduced-motion: reduce) {
+  .qt-live-dot,
+  .qt-asset-skel {
+    animation: none !important;
+  }
+}

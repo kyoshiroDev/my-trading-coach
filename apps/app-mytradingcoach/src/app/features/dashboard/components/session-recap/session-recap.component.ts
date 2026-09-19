@@ -10,7 +10,6 @@ import { LiveStats, TradingSession } from '../../../../core/api/session.api';
 
 @Component({
   selector: 'mtc-session-recap',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-recap.component.css',
   imports: [PnlFormatPipe, EmotionEmojiPipe],

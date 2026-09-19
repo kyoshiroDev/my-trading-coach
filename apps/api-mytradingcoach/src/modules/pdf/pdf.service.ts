@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import puppeteer from 'puppeteer';
+import { formatMoney } from '@mtc/shared';
 
 export interface DebriefPdfData {
+  /** Devise des comptes du débrief (PROMPT-214) ; null si elles diffèrent (montants sans symbole). */
+  currency: string | null;
   weekNumber: number;
   year: number;
   startDate: string;
@@ -66,7 +69,7 @@ export class PdfService {
 
   private buildHTML(data: DebriefPdfData): string {
     const pnlColor = data.stats.totalPnl >= 0 ? '#2dd4bf' : '#fc8181';
-    const pnlSign = data.stats.totalPnl >= 0 ? '+' : '';
+    const money = (v: number) => formatMoney(v, data.currency);
 
     const insightsHTML = data.insights
       .map(
@@ -98,12 +101,11 @@ export class PdfService {
       .slice(0, 5)
       .map((trade) => {
         const color = trade.pnl >= 0 ? '#2dd4bf' : '#fc8181';
-        const sign = trade.pnl >= 0 ? '+' : '';
         return `
         <tr>
           <td>${trade.asset}</td>
           <td class="side-${trade.side.toLowerCase()}">${trade.side}</td>
-          <td style="color: ${color}">${sign}$${trade.pnl.toFixed(2)}</td>
+          <td style="color: ${color}">${money(trade.pnl)}</td>
           <td class="date">${new Date(trade.tradedAt).toLocaleDateString('fr-FR')}</td>
         </tr>`;
       })
@@ -211,7 +213,7 @@ export class PdfService {
     </div>
     <div class="pnl-header">
       <div class="pnl-label">P&L semaine</div>
-      <div class="pnl-value">${pnlSign}$${data.stats.totalPnl.toFixed(2)}</div>
+      <div class="pnl-value">${money(data.stats.totalPnl)}</div>
     </div>
   </div>
 
@@ -230,7 +232,7 @@ export class PdfService {
     </div>
     <div class="stat-box">
       <div class="stat-box-label">Best trade</div>
-      <div class="stat-box-value" style="color:#2dd4bf">+$${data.stats.bestTrade.toFixed(2)}</div>
+      <div class="stat-box-value" style="color:#2dd4bf">${money(data.stats.bestTrade)}</div>
     </div>
   </div>
 

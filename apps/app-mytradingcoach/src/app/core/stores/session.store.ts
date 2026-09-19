@@ -15,6 +15,8 @@ import { EcoCalendarApi, EcoCalendarData, EcoEvent } from '../api/eco-calendar.a
 import { UserStore } from './user.store';
 import { todayParis, toParisDateStr } from '../utils/paris-date';
 import { POLLING_MS } from '../constants/polling.const';
+import { ToastService } from '../services/toast.service';
+import { apiErrorMessage } from '../utils/api-error';
 
 @Injectable({ providedIn: 'root' })
 export class SessionStore {
@@ -25,6 +27,7 @@ export class SessionStore {
   private readonly ecoCalendarApi  = inject(EcoCalendarApi);
   private readonly userStore       = inject(UserStore);
   private readonly destroyRef      = inject(DestroyRef);
+  private readonly toast           = inject(ToastService);
 
   // ── State ─────────────────────────────────────────────────────────────────
   readonly activeSession     = signal<TradingSession | null>(null);
@@ -39,7 +42,6 @@ export class SessionStore {
   readonly breakingNews      = signal<string | null>(null);
   readonly triggerCloseModal = signal(false);
   /** Retour d'action live (log / clôture trade) : succès ou erreur, pour feedback UI. */
-  readonly liveFeedback      = signal<{ type: 'success' | 'error'; text: string; ts: number } | null>(null);
 
   private readonly weekEcoEvents       = signal<Map<string, EcoEvent[]>>(new Map());
   private readonly weekEcoPinnedEvents = signal<string[]>([]);
@@ -168,6 +170,8 @@ export class SessionStore {
           this.activeSession.set(res.data);
           this.refreshLiveStats();
         },
+        // AVANT : échec muet, le bouton « Démarrer » semblait ne rien faire.
+        error: (err) => this.toast.error(apiErrorMessage(err, 'La session n’a pas pu démarrer. Réessaie.')),
       });
   }
 
@@ -182,7 +186,10 @@ export class SessionStore {
     this.sessionApi
       .closeSession(session.id, payload.mood, payload.notes, payload.note, payload.question ?? undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: (res) => this.activeSession.set(res.data) });
+      .subscribe({
+        next: (res) => this.activeSession.set(res.data),
+        error: (err) => this.toast.error(apiErrorMessage(err, 'La session n’a pas pu être clôturée. Réessaie.')),
+      });
   }
 
   closeSessionThenDebrief(): void {
@@ -192,7 +199,10 @@ export class SessionStore {
     this.sessionApi
       .closeSession(session.id, 'NEUTRAL' as MoodState)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: (res) => this.activeSession.set(res.data) });
+      .subscribe({
+        next: (res) => this.activeSession.set(res.data),
+        error: (err) => this.toast.error(apiErrorMessage(err, 'La session n’a pas pu être clôturée. Réessaie.')),
+      });
   }
 
   confirmCloseTrade(event: { tradeId: string; exitPrice: number }): void {
@@ -223,8 +233,9 @@ export class SessionStore {
       });
   }
 
+  /** Retour d'action live → toast global (PROMPT-210 ; remplace le toast local de session-live). */
   private flashFeedback(type: 'success' | 'error', text: string): void {
-    this.liveFeedback.set({ type, text, ts: Date.now() });
+    this.toast[type](text);
   }
 
   savePlanNote(note: string): void {
@@ -233,7 +244,7 @@ export class SessionStore {
     this.sessionApi
       .updateSession(session.id, { planNote: note })
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe();
+      .subscribe({ error: () => this.toast.error('Ta note de plan n’a pas pu être enregistrée.') });
   }
 
   updateObjectiveNote(e: { index: number; note: string }): void {
@@ -249,6 +260,11 @@ export class SessionStore {
       CONFIDENT: '😎', FOCUSED: '🎯', NEUTRAL: '😐', TIRED: '😰', STRESSED: '😰',
     };
     return map[mood ?? ''] ?? '😐';
+  }
+
+  /** Stats + Live feed rechargés (trade Tradovate poussé en direct, PROMPT-210 live). */
+  refreshLive(): void {
+    this.refreshLiveStats();
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────

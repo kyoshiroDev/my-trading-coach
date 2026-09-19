@@ -1,12 +1,15 @@
 import {
   IsEnum,
+  IsIn,
   IsNumber,
   IsOptional,
   IsString,
   MaxLength,
   Min,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { AccountStatus, AccountType, DrawdownType } from '@prisma/client';
+import { ACCOUNT_CURRENCIES, normalizeCurrencyCode } from '@mtc/shared';
 
 // Tous les champs optionnels (update partiel). Le `status` est piloté par l'user
 // (PASSED / FAILED / ARCHIVED) : jamais positionné automatiquement par le backend.
@@ -34,9 +37,11 @@ export class UpdateAccountDto {
   @Min(0, { message: 'La taille du compte ne peut pas être négative.' })
   accountSize?: number;
 
+  // Devise DU COMPTE (liste unique @mtc/shared). Refusée sur un compte synchronisé : elle vient
+  // du broker (AccountsService.update).
   @IsOptional()
-  @IsString()
-  @MaxLength(8)
+  @Transform(({ value }) => normalizeCurrencyCode(value) ?? value)
+  @IsIn(ACCOUNT_CURRENCIES, { message: `Devise invalide (${ACCOUNT_CURRENCIES.join(', ')}).` })
   currency?: string;
 
   @IsOptional()

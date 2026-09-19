@@ -1,0 +1,38 @@
+<div class="tvc-ov" role="presentation" (click)="cancel()" (keydown.escape)="cancel()">
+  <div class="tvc-modal" role="dialog" aria-modal="true" aria-labelledby="tvc-title"
+       data-testid="tradovate-connect-modal"
+       (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+    <button class="tvc-x" type="button" aria-label="Fermer" (click)="cancel()" [disabled]="redirecting()">
+      <svg [lucideIcon]="XIcon" [size]="16"></svg>
+    </button>
+
+    <h3 id="tvc-title" class="tvc-title">Connecter ton compte <span class="nt-word">Tradovate</span></h3>
+    @if (accountLabel()) {
+      <div class="tvc-target">Pour le compte : <strong>{{ accountLabel() }}</strong></div>
+    }
+
+    <ol class="tvc-steps">
+      <li><span class="tvc-num">1</span><span>Tu es redirigé vers la page officielle Tradovate / NinjaTrader.</span></li>
+      <li><span class="tvc-num">2</span><span>Tu te connectes avec <strong>tes</strong> identifiants Tradovate et tu autorises MyTradingCoach en lecture seule.</span></li>
+      <li><span class="tvc-num">3</span><span>Tes trades de ce compte se synchronisent. C'est tout.</span></li>
+    </ol>
+
+    <div class="tvc-note" data-testid="tradovate-connect-security">
+      <svg class="tvc-lock" [lucideIcon]="LockIcon" [size]="15"></svg>
+      <span>MyTradingCoach ne voit jamais ton mot de passe et ne peut <strong>que lire</strong> tes trades. Aucun ordre ne peut être passé. Tu peux révoquer l'accès à tout moment.</span>
+    </div>
+
+    @if (error(); as msg) {
+      <p class="tvc-error" role="alert" data-testid="tradovate-connect-error">{{ msg }}</p>
+    }
+
+    <div class="tvc-actions">
+      <button class="tvc-btn nt" type="button" data-testid="tradovate-connect-confirm"
+              (click)="connect()" [disabled]="redirecting()">
+        {{ redirecting() ? 'Redirection vers Tradovate…' : 'Connecter avec Tradovate' }}
+      </button>
+      <button class="tvc-btn ghost" type="button" data-testid="tradovate-connect-cancel"
+              (click)="cancel()" [disabled]="redirecting()">Annuler</button>
+    </div>
+  </div>
+</div>

@@ -23,7 +23,6 @@ import { Chart, applyChartTheme } from '../../charts/chart-theme';
  */
 @Component({
   selector: 'mtc-admin-chart',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './chart-canvas.component.css',
   template: `<canvas #canvas></canvas>`,

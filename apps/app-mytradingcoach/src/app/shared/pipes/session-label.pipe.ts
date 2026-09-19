@@ -18,7 +18,7 @@ import { Pipe, PipeTransform } from '@angular/core';
  * {{ 'PRE_MARKET' | sessionLabel }} // "Pre-Market"
  * {{ 'OVERLAP' | sessionLabel }}    // "Overlap"
  */
-@Pipe({ name: 'sessionLabel', standalone: true })
+@Pipe({ name: 'sessionLabel' })
 export class SessionLabelPipe implements PipeTransform {
   private static readonly LABELS: Record<string, string> = {
     LONDON: 'London',

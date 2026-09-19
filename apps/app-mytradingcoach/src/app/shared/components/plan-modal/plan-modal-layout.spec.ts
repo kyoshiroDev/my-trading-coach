@@ -74,6 +74,6 @@ describe('PlanModalComponent — palier unique, plus de grille 2 colonnes', () =
       expect(h, `Glyphe ${glyphe} encore présent`).not.toContain(glyphe);
     }
     // 8 features + fermeture + éclair du titre.
-    expect((h.match(/<lucide-icon/g) ?? []).length).toBe(10);
+    expect((h.match(/\[lucideIcon\]/g) ?? []).length).toBe(10); // @lucide/angular : <svg [lucideIcon]>
   });
 });

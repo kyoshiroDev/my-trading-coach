@@ -7,12 +7,19 @@
  */
 import { defineConfig } from 'vitest/config';
 import swc from 'unplugin-swc';
+import { resolve } from 'path';
 
 export default defineConfig({
+  resolve: {
+    // Librairie partagée front/back (tsconfig `paths` non lu par vitest).
+    alias: { '@mtc/shared': resolve(__dirname, '../../libs/shared/src/index.ts') },
+  },
   test: {
     globals: true,
     environment: 'node',
     include: ['src/**/*.int-spec.ts'],
+    // Filet PROMPT-209 : le SDK Resend lève s'il est construit (cf. createIntegrationApp).
+    setupFiles: ['src/test/integration.setup.ts'],
     passWithNoTests: false,
     // Séquentiel : les tests partagent la base et la file.
     fileParallelism: false,

@@ -14,21 +14,21 @@ import { UserStore } from '../../core/stores/user.store';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
-import { HttpClient } from '@angular/common/http';
 import {
-  LucideAngularModule,
-  Sparkles,
-  AlertTriangle,
-  Info,
-  Lightbulb,
-  AlertCircle,
-  Send,
-} from 'lucide-angular';
+  LucideDynamicIcon,
+  LucideSparkles as Sparkles,
+  LucideAlertTriangle as AlertTriangle,
+  LucideInfo as Info,
+  LucideLightbulb as Lightbulb,
+  LucideAlertCircle as AlertCircle,
+  LucideSend as Send,
+} from '@lucide/angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
-import { environment } from '../../../environments/environment';
 import { interval } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 import { todayParis } from '../../core/utils/paris-date';
+import { apiErrorMessage } from '../../core/utils/api-error';
+import { AiApi } from '../../core/api/ai.api';
 
 interface Insight {
   type: 'strength' | 'weakness' | 'pattern';
@@ -56,249 +56,15 @@ function insightVariant(type: string): InsightVariant {
 
 @Component({
   selector: 'mtc-ai-insights',
-  standalone: true,
   imports: [
     FormsModule,
-    LucideAngularModule,
+    LucideDynamicIcon,
     TopbarComponent,
     PlanModalComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './ai-insights.component.css',
-  template: `
-    <mtc-topbar
-      title="IA Insights"
-      [globalScopeNote]="true"
-      [showAddButton]="userStore.isPremium()"
-      [addLabel]="
-        insightsLoading()
-          ? 'Analyse en cours...'
-          : !userStore.isAdmin() && cooldownLabel()
-            ? 'Disponible dans ' + cooldownLabel()
-            : 'Analyser maintenant'
-      "
-      [addLoading]="insightsLoading()"
-      [addDisabled]="
-        !userStore.isAdmin() && !!cooldownLabel() && !insightsLoading()
-      "
-      addTestId="analyze-btn"
-      (addClick)="loadInsights()"
-    />
-
-    <div class="content">
-      @if (!userStore.isPremium()) {
-        <div data-testid="ai-paywall" class="premium-paywall">
-          <div class="paywall-icon"><lucide-icon [img]="SparklesIcon" [size]="40" /></div>
-          <h3 class="paywall-title">Fonctionnalité Premium</h3>
-          <p class="paywall-desc">
-            Les IA Insights sont disponibles avec le plan Premium.<br />Analyse
-            tes patterns comportementaux avec le coach IA.
-          </p>
-          <button class="paywall-cta" (click)="showPlanModal.set(true)">
-            Essayer Premium · 1 mois offert →
-          </button>
-        </div>
-        @if (showPlanModal()) {
-          <mtc-plan-modal (closed)="showPlanModal.set(false)" />
-        }
-      } @else {
-        <div class="layout">
-          <!-- Left: insights -->
-          <div class="insights-panel">
-            <div class="panel-header">
-              <span class="panel-title">Analyse IA de tes trades</span>
-              @if (insightsLoading()) {
-                <span class="loading-badge">
-                  <span class="ai-pulse"></span>
-                  Analyse en cours...
-                </span>
-              }
-            </div>
-
-            @if (insightsError()) {
-              <div class="error-msg">{{ insightsError() }}</div>
-            }
-
-            @if (insights()) {
-              @if (insights()!.topPattern) {
-                <div class="ai-summary-block">
-                  <div class="ai-summary-label">
-                    <span class="ai-pulse"></span>
-                    Pattern principal
-                  </div>
-                  <p class="ai-summary-text">{{ insights()!.topPattern }}</p>
-                </div>
-              }
-
-              @if (insights()!.emotionInsight) {
-                <div class="ai-summary-block emotion-block">
-                  <div class="ai-summary-label">
-                    <span
-                      class="ai-pulse"
-                      style="background:var(--green)"
-                    ></span>
-                    Émotion & Performance
-                  </div>
-                  <p class="ai-summary-text">
-                    {{ insights()!.emotionInsight }}
-                  </p>
-                </div>
-              }
-
-              <div class="insight-list" data-testid="insights-list">
-                @for (insight of insights()!.insights; track insight.title) {
-                  @let variant = getVariant(insight.type);
-                  <div class="insight-item" data-testid="insight-card">
-                    <div class="insight-icon" [class]="variant">
-                      @switch (variant) {
-                        @case ('tip') {
-                          <lucide-icon
-                            [img]="LightbulbIcon"
-                            [size]="15"
-                            color="#10b981"
-                          />
-                        }
-                        @case ('alert') {
-                          <lucide-icon
-                            [img]="AlertCircleIcon"
-                            [size]="15"
-                            color="#ef4444"
-                          />
-                        }
-                        @case ('warn') {
-                          <lucide-icon
-                            [img]="AlertTriangleIcon"
-                            [size]="15"
-                            color="#f59e0b"
-                          />
-                        }
-                        @default {
-                          <lucide-icon
-                            [img]="InfoIcon"
-                            [size]="15"
-                            color="#60a5fa"
-                          />
-                        }
-                      }
-                    </div>
-                    <div class="insight-content">
-                      <div class="insight-title">{{ insight.title }}</div>
-                      <div class="insight-desc">{{ insight.description }}</div>
-                    </div>
-                    <span class="insight-tag" [class]="variant">{{
-                      insight.badge
-                    }}</span>
-                  </div>
-                }
-              </div>
-            } @else if (!insightsLoading()) {
-              <div class="empty-insights">
-                <lucide-icon
-                  [img]="SparklesIcon"
-                  [size]="32"
-                  color="var(--text-3)"
-                  style="margin-bottom:12px"
-                />
-                <p>Lance une analyse pour obtenir tes insights personnalisés</p>
-                <small
-                  >L'IA analyse tes 50 derniers trades pour identifier tes
-                  patterns</small
-                >
-              </div>
-            }
-          </div>
-
-          <!-- Right: chat -->
-          <div class="chat-panel">
-            <div class="chat-header">
-              <div class="chat-title-row">
-                <div class="chat-title">
-                  <lucide-icon
-                    [img]="SparklesIcon"
-                    [size]="14"
-                    color="var(--blue-bright)"
-                  />
-                  Coach IA
-                </div>
-                @if (userStore.isAdmin()) {
-                  <span class="quota-badge quota-admin">∞</span>
-                } @else if (quotaExhausted()) {
-                  <span class="quota-badge quota-exhausted"
-                    >Disponible dans {{ chatQuotaCountdown() }}</span
-                  >
-                } @else {
-                  <span class="quota-badge"
-                    >{{ chatQuota() }}/{{ QUOTA_MAX }}</span
-                  >
-                }
-              </div>
-              <span class="chat-sub">Pose tes questions sur ton trading</span>
-            </div>
-
-            <div class="chat-messages" #chatContainer>
-              @if (chatHistory().length === 0) {
-                <div class="chat-welcome">
-                  <p>
-                    Bonjour ! Je suis ton coach IA. Comment puis-je t'aider ?
-                  </p>
-                  <div class="suggestions">
-                    @for (s of SUGGESTIONS; track s) {
-                      <button class="suggestion" (click)="sendSuggestion(s)">
-                        {{ s }}
-                      </button>
-                    }
-                  </div>
-                </div>
-              }
-              @for (msg of chatHistory(); track $index) {
-                <div
-                  class="msg"
-                  data-testid="chat-message"
-                  [class.user]="msg.role === 'user'"
-                  [class.assistant]="msg.role === 'assistant'"
-                >
-                  <div class="msg-bubble">{{ msg.content }}</div>
-                </div>
-              }
-              @if (chatLoading()) {
-                <div class="msg assistant">
-                  <div class="msg-bubble typing">
-                    <span></span><span></span><span></span>
-                  </div>
-                </div>
-              }
-            </div>
-
-            <div class="chat-input-row">
-              <input
-                data-testid="chat-input"
-                [(ngModel)]="chatInput"
-                placeholder="Pose ta question..."
-                (keydown.enter)="sendMessage()"
-                [disabled]="
-                  chatLoading() || (!userStore.isAdmin() && quotaExhausted())
-                "
-                class="chat-input"
-              />
-              <button
-                class="btn-send"
-                data-testid="chat-send"
-                (click)="sendMessage()"
-                [disabled]="
-                  chatLoading() ||
-                  !chatInput.trim() ||
-                  (!userStore.isAdmin() && quotaExhausted())
-                "
-              >
-                <lucide-icon [img]="SendIcon" [size]="14" />
-              </button>
-            </div>
-          </div>
-        </div>
-      }
-      <!-- end @else (premium) -->
-    </div>
-  `,
+  templateUrl: './ai-insights.component.html',
 })
 export class AiInsightsComponent implements AfterViewChecked {
   @ViewChild('chatContainer') chatContainer!: ElementRef<HTMLDivElement>;
@@ -319,8 +85,7 @@ export class AiInsightsComponent implements AfterViewChecked {
     'Quel est mon meilleur setup ?',
     'Comment réduire mon drawdown ?',
   ];
-
-  private readonly http = inject(HttpClient);
+  private readonly aiApi = inject(AiApi);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly insights = signal<InsightsResponse | null>(null);
@@ -386,10 +151,8 @@ export class AiInsightsComponent implements AfterViewChecked {
     // Cooldown = endpoint Premium (PremiumGuard) : ne l'appeler que pour un Premium,
     // sinon 403 inutile (les non-premium voient le paywall).
     if (this.userStore.isPremium()) {
-      this.http
-        .get<{ data: { cooldownSeconds: number } }>(
-          `${environment.apiUrl}/ai/cooldown`,
-        )
+      this.aiApi
+        .cooldown()
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (res) => {
@@ -447,8 +210,8 @@ export class AiInsightsComponent implements AfterViewChecked {
       return;
     this.insightsLoading.set(true);
     this.insightsError.set(null);
-    this.http
-      .post<{ data: InsightsResponse }>(`${environment.apiUrl}/ai/insights`, {})
+    this.aiApi
+      .insights<InsightsResponse>()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
@@ -464,7 +227,7 @@ export class AiInsightsComponent implements AfterViewChecked {
             if (secs) this.cooldownUntil.set(Date.now() + secs * 1000);
           }
           this.insightsError.set(
-            err.error?.message ?? "Erreur lors de l'analyse IA",
+            apiErrorMessage(err, "Erreur lors de l'analyse IA"),
           );
           this.insightsLoading.set(false);
         },
@@ -497,11 +260,8 @@ export class AiInsightsComponent implements AfterViewChecked {
       this.saveChatQuota(newQuota);
     }
 
-    this.http
-      .post<{ data: { response: string } }>(`${environment.apiUrl}/ai/chat`, {
-        message: msg,
-        history: history.slice(-6),
-      })
+    this.aiApi
+      .chat(msg, history.slice(-6))
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
@@ -525,7 +285,7 @@ export class AiInsightsComponent implements AfterViewChecked {
           }
           this.chatHistory.update((h) => [
             ...h,
-            { role: 'assistant', content: err.error?.message ?? 'Erreur IA.' },
+            { role: 'assistant', content: apiErrorMessage(err, 'Erreur IA.') },
           ]);
           this.chatLoading.set(false);
           this.shouldScrollToBottom = true;

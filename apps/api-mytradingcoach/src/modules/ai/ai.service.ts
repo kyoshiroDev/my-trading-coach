@@ -15,7 +15,8 @@ import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
-import { computeTradeStats } from '../../common/utils/trade-stats.util';
+import { computeTradeStats, formatMoney, netPnl } from '@mtc/shared';
+import { userAmountsCurrency } from '../../common/utils/user-currency.util';
 // import type only (aucune dépendance runtime → pas de cycle avec eco-calendar.service)
 import type { EcoAnalysis, EcoResultAnalysis } from '../eco-calendar/eco-calendar.service';
 import { AnthropicClientService } from '../shared/anthropic-client.service';
@@ -89,6 +90,7 @@ export class AiService {
         asset: true,
         side: true,
         pnl: true,
+        commission: true, // stats sur le net (PROMPT-213)
         emotion: true,
         tradeSession: { select: { moodStart: true } },
         setup: { select: { title: true, description: true } },
@@ -155,9 +157,11 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
             .join('\n')}`
         : '';
 
+      // Devise des comptes, sans conversion (PROMPT-214) ; null si elles diffèrent.
+      const currency = await userAmountsCurrency(this.prisma, userId);
       contextSummary = `Données trader (${recentTrades.length} trades récents) :
 - Win rate : ${winRate}%
-- P&L total : ${totalPnl.toFixed(2)}$
+- P&L total : ${formatMoney(totalPnl, currency)}
 - R:R moyen : ${avgRR ?? 'non renseigné'}
 - Émotions : ${emotions || 'non renseignées'}
 - Setups : ${setups || 'non renseignés'}
@@ -223,6 +227,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
       side: string;
       asset: string;
       pnl: number | null;
+      commission?: number | null;
       emotion?: string | null;
       tradeSession?: { moodStart?: string | null } | null;
       setup?: string;
@@ -238,6 +243,8 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
     winRate: number;
     dominantEmotion: string | null;
     date: Date;
+    /** Devise des comptes (PROMPT-214) ; null si elles diffèrent. */
+    currency?: string | null;
     userProfile?: UserTradingProfile;
     patterns7d?: {
       bySidePair: Record<string, { wins: number; total: number; pnl: number }>;
@@ -248,6 +255,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
     const profileCtx = data.userProfile
       ? buildUserTradingContext(data.userProfile)
       : '';
+    const money = (v: number) => formatMoney(v, data.currency ?? null, { decimals: 0 });
 
     // ── 2. Trades du jour détaillés ─────────────────────────────────────────
     const dateStr = data.date.toLocaleDateString('fr-FR', {
@@ -265,8 +273,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
               timeZone: 'Europe/Paris',
             })
           : '??:??';
-        const pnl = t.pnl ?? 0;
-        const pnlStr = `${pnl >= 0 ? '+' : ''}${pnl.toFixed(0)}$`;
+        const pnlStr = money(netPnl(t) ?? 0); // net des frais, comme le P&L du jour
 
         let exitLabel = '';
         if (t.exit != null && t.stopLoss != null && t.takeProfit != null) {
@@ -300,8 +307,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
         .map(([key, v]) => {
           const [side, asset] = key.split('_');
           const wr = ((v.wins / v.total) * 100).toFixed(0);
-          const pnlStr = `${v.pnl >= 0 ? '+' : ''}${v.pnl.toFixed(0)}$`;
-          return `  - ${side} ${asset} : ${v.wins}/${v.total} = ${wr}% WR | ${pnlStr} cumulé (7j)`;
+          return `  - ${side} ${asset} : ${v.wins}/${v.total} = ${wr}% WR | ${money(v.pnl)} cumulé (7j)`;
         })
         .join('\n');
 
@@ -310,8 +316,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
         .sort((a, b) => b[1].total - a[1].total)
         .map(([session, v]) => {
           const wr = ((v.wins / v.total) * 100).toFixed(0);
-          const pnlStr = `${v.pnl >= 0 ? '+' : ''}${v.pnl.toFixed(0)}$`;
-          return `  - ${session} : ${v.wins}/${v.total} = ${wr}% WR | ${pnlStr} (7j)`;
+          return `  - ${session} : ${v.wins}/${v.total} = ${wr}% WR | ${money(v.pnl)} (7j)`;
         })
         .join('\n');
 
@@ -322,7 +327,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
 
     // ── Prompt final ────────────────────────────────────────────────────────
     const prompt = `${profileCtx}
-Journée du ${dateStr} : ${data.trades.length} trades, P&L ${data.pnl >= 0 ? '+' : ''}${data.pnl.toFixed(0)}$, win rate ${data.winRate.toFixed(0)}%, émotion dominante : ${data.dominantEmotion ?? 'non renseignée'}.
+Journée du ${dateStr} : ${data.trades.length} trades, P&L ${money(data.pnl)}, win rate ${data.winRate.toFixed(0)}%, émotion dominante : ${data.dominantEmotion ?? 'non renseignée'}.
 
 Détail des trades :
 ${tradesDetail}

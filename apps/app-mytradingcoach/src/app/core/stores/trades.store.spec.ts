@@ -26,7 +26,7 @@ describe('TradesStore — scope compte conservé à la pagination', () => {
     const { store, http } = setup();
     store.loadTrades({ accountId: 'acc1' });
     const req = http.expectOne((r) => isTrades(r.url));
-    expect(req.request.url).toContain('accountId=acc1');
+    expect(req.request.urlWithParams).toContain('accountId=acc1');
     req.flush(PAGE);
     http.verify();
   });
@@ -38,8 +38,8 @@ describe('TradesStore — scope compte conservé à la pagination', () => {
 
     store.loadMore();
     const more = http.expectOne((r) => isTrades(r.url));
-    expect(more.request.url).toContain('accountId=acc1');
-    expect(more.request.url).toContain('cursor=CUR1');
+    expect(more.request.urlWithParams).toContain('accountId=acc1');
+    expect(more.request.urlWithParams).toContain('cursor=CUR1');
     more.flush({ data: { data: [], nextCursor: null, hasNextPage: false } });
     http.verify();
   });
@@ -48,7 +48,7 @@ describe('TradesStore — scope compte conservé à la pagination', () => {
     const { store, http } = setup();
     store.loadTrades();
     const req = http.expectOne((r) => isTrades(r.url));
-    expect(req.request.url).not.toContain('accountId');
+    expect(req.request.urlWithParams).not.toContain('accountId');
     req.flush(PAGE);
     http.verify();
   });

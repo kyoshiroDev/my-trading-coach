@@ -67,7 +67,7 @@
               <button class="choice-card" [attr.data-testid]="'onboarding-market-' + m.value" [class.selected]="selectedMarket() === m.value" (click)="selectMarket(m.value)">
                 <span class="choice-emoji">
                   @if (m.icon) {
-                    <lucide-icon [img]="m.icon" [size]="24" [style.color]="m.iconColor" />
+                    <svg [lucideIcon]="m.icon" [size]="24" [style.color]="m.iconColor"></svg>
                   } @else {
                     {{ m.emoji }}
                   }
@@ -133,9 +133,12 @@
             {{ accountMode() === 'PROPFIRM' ? 'Taille du compte' : 'Capital de départ' }}
           </div>
           <div class="capital-field">
-            <div class="currency-toggle">
-              <button type="button" class="currency-btn" [class.active-usd]="selectedCurrency() === 'USD'" (click)="selectCurrency('USD')">$ USD</button>
-              <button type="button" class="currency-btn" [class.active-eur]="selectedCurrency() === 'EUR'" (click)="selectCurrency('EUR')">€ EUR</button>
+            <!-- Devise DU COMPTE créé (PROMPT-214) : ses montants s'afficheront dans cette devise. -->
+            <div class="currency-toggle" role="group" aria-label="Devise du compte" title="Devise du compte">
+              @for (c of accountCurrencies; track c) {
+                <button type="button" class="currency-btn" [class.on]="selectedCurrency() === c"
+                  [attr.aria-pressed]="selectedCurrency() === c" (click)="selectCurrency(c)">{{ c }}</button>
+              }
             </div>
             <input
               type="text"
@@ -380,12 +383,43 @@
           <h2 class="step-title">Ajoute ton premier trade</h2>
           <p class="step-desc">C'est maintenant que ça commence. Choisis comment tu veux démarrer.</p>
 
-          <div class="choice-grid choice-grid-3">
+          <!-- Retour Tradovate en échec, ou préparation impossible : non bloquant, les
+               4 options restent disponibles. -->
+          @if (tvError(); as msg) {
+            <p class="ob-tv-error" role="alert" data-testid="onboarding-tradovate-error">{{ msg }}</p>
+          }
+
+          <!-- Login Tradovate à plusieurs comptes : choisir celui de ce compte MTC. -->
+          @if (tvPickAccountId(); as pickId) {
+            <div class="ob-tv-pick" data-testid="onboarding-tradovate-pick">
+              <div class="ob-tv-pick-title">Compte <span class="nt-word">Tradovate</span> connecté</div>
+              @if (tvPickAccounts().length > 0) {
+                <mtc-tradovate-account-picker
+                  [accounts]="tvPickAccounts()"
+                  [busy]="!!tvStore.busy()[pickId]"
+                  (picked)="onTradovatePicked($event)" />
+              } @else {
+                <p class="ob-tv-pick-loading">Chargement de tes comptes Tradovate…</p>
+              }
+            </div>
+          }
+
+          <div class="choice-grid choice-grid-4">
+            <!-- PROMPT-211 : Tradovate EN TÊTE (pleine largeur, accent --nt) ; le CSV reste pour
+                 les autres brokers, mais au second plan avec le manuel et « zéro ». -->
+            <div class="choice-card choice-action choice-tradovate choice-featured" (click)="chooseTradovate()" role="button" tabindex="0"
+                 (keydown.enter)="chooseTradovate()" [attr.aria-busy]="tvPreparing()" data-testid="onboarding-choice-tradovate">
+              <div class="choice-tag nt">Le plus complet</div>
+              <div class="choice-ic nt">🔗</div>
+              <span class="choice-label">Connecter mon compte <span class="nt-word">Tradovate</span></span>
+              <span class="choice-desc">
+                {{ tvPreparing() ? 'Préparation de ton compte…' : 'Apex, Lucid Trading, TopStep… tes trades arrivent tout seuls, sans exporter de fichier.' }}
+              </span>
+            </div>
             <div class="choice-card choice-action" (click)="chooseCsv()" role="button" tabindex="0" (keydown.enter)="chooseCsv()" data-testid="onboarding-choice-csv">
               <div class="choice-ic blue">📥</div>
               <span class="choice-label">Importer mon historique (CSV)</span>
               <span class="choice-desc">Tu viens d'un autre broker ou journal ? Importe ton historique pour démarrer avec tes vraies données.</span>
-              <div class="choice-tag">Le plus rapide</div>
             </div>
             <div class="choice-card choice-action" (click)="chooseManual()" role="button" tabindex="0" (keydown.enter)="chooseManual()" data-testid="onboarding-choice-manual">
               <div class="choice-ic blue">✏️</div>
@@ -428,12 +462,22 @@
                     ⚠ Frais non rapprochés · P&L brut affiché — ton Cash history n'a pas pu être lu.
                   </div>
                 } @else {
-                  <div class="ob-recap-sub">Frais importés : {{ f.assigned.toFixed(2) }} $ sur {{ f.count }} trade(s)</div>
+                  <div class="ob-recap-sub">Frais importés : {{ feesLabel(f.assigned) }} sur {{ f.count }} trade(s)</div>
                 }
               } @else {
                 <div class="ob-recap-warn" data-testid="onboarding-import-fees-warning">
                   ⚠ Frais non importés · P&L brut — ajoute ton Cash history depuis le journal pour des frais exacts.
                 </div>
+              }
+            </div>
+          }
+
+          <!-- Récap de la connexion Tradovate : même style que le récap d'import CSV. -->
+          @if (tvSummary()) {
+            <div class="ob-import-recap" data-testid="onboarding-tradovate-recap">
+              <div class="ob-recap-main">✅ {{ tvRecapMain() }}</div>
+              @if (tvRecapWarn(); as warn) {
+                <div class="ob-recap-warn">⚠ {{ warn }}</div>
               }
             </div>
           }
@@ -463,6 +507,15 @@
 
     </div>
   </div>
+}
+
+<!-- Écran de réassurance avant la redirection vers Tradovate (palier modale 1000). -->
+@if (tvTarget(); as t) {
+  <mtc-tradovate-connect-modal
+    [accountId]="t.id"
+    [accountLabel]="t.label"
+    origin="wizard"
+    (closed)="tvTarget.set(null)" />
 }
 
 <!-- TradeForm (gère son propre overlay) : affiché quand choix manuel -->

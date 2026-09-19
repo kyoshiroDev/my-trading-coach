@@ -56,6 +56,9 @@ export default defineConfig({
     }),
   ],
   output: 'static',
+  // Astro 7 passe la compression HTML par défaut à 'jsx' (supprime des espaces entre éléments
+  // en ligne). On garde le comportement d'Astro 6 : rendu identique, espaces intacts.
+  compressHTML: true,
   build: {
     assets: '_assets',
   },

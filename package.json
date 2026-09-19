@@ -12,173 +12,75 @@
   },
   "private": true,
   "devDependencies": {
-    "@analogjs/vite-plugin-angular": "^2.4.5",
-    "@angular-devkit/core": "~21.2.11",
-    "@angular-devkit/schematics": "~21.2.11",
-    "@angular/build": "~21.2.11",
-    "@angular/cli": "~21.2.11",
-    "@angular/compiler-cli": "~21.2.13",
-    "@angular/language-service": "~21.2.13",
+    "@analogjs/vite-plugin-angular": "2.6.4",
+    "@angular-devkit/core": "22.1.8",
+    "@angular-devkit/schematics": "22.1.8",
+    "@angular/build": "22.1.8",
+    "@angular/cli": "22.1.8",
+    "@angular/compiler-cli": "22.1.6",
+    "@angular/language-service": "22.1.6",
     "@commitlint/cli": "^20.5.0",
     "@commitlint/config-conventional": "^20.5.0",
     "@eslint/js": "^9.8.0",
     "@nestjs/schematics": "^11.1.0",
-    "@nestjs/testing": "11.1.17",
-    "@nx/angular": "22.7.5",
-    "@nx/devkit": "22.7.5",
-    "@nx/eslint": "22.7.5",
-    "@nx/eslint-plugin": "22.7.5",
-    "@nx/js": "22.7.5",
-    "@nx/nest": "22.7.5",
-    "@nx/node": "22.7.5",
-    "@nx/playwright": "22.7.5",
-    "@nx/vite": "22.7.5",
-    "@nx/vitest": "22.7.5",
-    "@nx/web": "22.7.5",
-    "@nx/webpack": "22.7.5",
+    "@nestjs/testing": "11.2.3",
+    "@nx/angular": "23.2.1",
+    "@nx/devkit": "23.2.1",
+    "@nx/eslint": "23.2.1",
+    "@nx/eslint-plugin": "23.2.1",
+    "@nx/js": "23.2.1",
+    "@nx/nest": "23.2.1",
+    "@nx/node": "23.2.1",
+    "@nx/playwright": "23.2.1",
+    "@nx/vite": "23.2.1",
+    "@nx/vitest": "23.2.1",
+    "@nx/web": "23.2.1",
+    "@nx/webpack": "23.2.1",
     "@oxc-project/runtime": "^0.115.0",
     "@playwright/test": "^1.36.0",
-    "@prisma/client": "^7.8.0",
-    "@schematics/angular": "~21.2.0",
+    "@prisma/client": "^7.10.0",
+    "@schematics/angular": "22.1.8",
     "@swc-node/register": "1.11.1",
     "@swc/core": "1.15.8",
     "@swc/helpers": "0.5.18",
     "@types/node": "25.8.0",
     "@typescript-eslint/utils": "^8.59.3",
-    "angular-eslint": "^21.2.0",
+    "angular-eslint": "22.5.0",
     "eslint": "^9.8.0",
     "eslint-config-prettier": "^10.0.0",
     "eslint-plugin-playwright": "^1.6.2",
     "husky": "^9.1.7",
     "jsdom": "^27.1.0",
-    "nx": "22.7.5",
+    "nx": "23.2.1",
     "prettier": "^3.8.1",
-    "prisma": "^7.8.0",
+    "prisma": "^7.10.0",
     "tslib": "^2.3.0",
     "tsx": "^4.21.0",
-    "typescript": "~5.9.2",
+    "typescript": "6.0.3",
     "typescript-eslint": "^8.59.3",
     "vitest": "^4.1.6",
-    "webpack-cli": "^5.1.4"
-  },
-  "pnpm": {
-    "overrides": {
-      "path-to-regexp@>=8.0.0 <8.4.0": ">=8.4.0",
-      "axios@<1.16.0": ">=1.16.0",
-      "shell-quote@<1.8.4": ">=1.8.4",
-      "@babel/plugin-transform-modules-systemjs@<7.29.4": ">=7.29.4",
-      "picomatch@4": "^4.0.4",
-      "lodash@<4.18.0": ">=4.18.0",
-      "@nestjs/core": "11.1.26",
-      "@nestjs/common": "11.1.26",
-      "@nestjs/platform-express": "11.1.26"
-    },
-    "packageExtensions": {
-      "@nestjs/schedule": {
-        "peerDependencies": {
-          "@nestjs/platform-express": "*",
-          "@nestjs/websockets": "*"
-        },
-        "peerDependenciesMeta": {
-          "@nestjs/platform-express": {
-            "optional": true
-          },
-          "@nestjs/websockets": {
-            "optional": true
-          }
-        }
-      },
-      "@nestjs/bullmq": {
-        "peerDependencies": {
-          "@nestjs/platform-express": "*",
-          "@nestjs/websockets": "*"
-        },
-        "peerDependenciesMeta": {
-          "@nestjs/platform-express": {
-            "optional": true
-          },
-          "@nestjs/websockets": {
-            "optional": true
-          }
-        }
-      },
-      "@nestjs/bull-shared": {
-        "peerDependencies": {
-          "@nestjs/platform-express": "*",
-          "@nestjs/websockets": "*"
-        },
-        "peerDependenciesMeta": {
-          "@nestjs/platform-express": {
-            "optional": true
-          },
-          "@nestjs/websockets": {
-            "optional": true
-          }
-        }
-      },
-      "@nestjs/throttler": {
-        "peerDependencies": {
-          "@nestjs/platform-express": "*",
-          "@nestjs/websockets": "*"
-        },
-        "peerDependenciesMeta": {
-          "@nestjs/platform-express": {
-            "optional": true
-          },
-          "@nestjs/websockets": {
-            "optional": true
-          }
-        }
-      },
-      "@sentry/nestjs": {
-        "peerDependencies": {
-          "@nestjs/platform-express": "*",
-          "@nestjs/websockets": "*"
-        },
-        "peerDependenciesMeta": {
-          "@nestjs/platform-express": {
-            "optional": true
-          },
-          "@nestjs/websockets": {
-            "optional": true
-          }
-        }
-      }
-    },
-    "onlyBuiltDependencies": [
-      "@nestjs/core",
-      "@parcel/watcher",
-      "@prisma/engines",
-      "@swc/core",
-      "argon2",
-      "esbuild",
-      "less",
-      "lmdb",
-      "msgpackr-extract",
-      "nx",
-      "prisma",
-      "sharp",
-      "unrs-resolver"
-    ]
+    "webpack-cli": "7.2.3",
+    "webpack-dev-server": "5.2.6",
+    "webpack": "5.110.3"
   },
   "dependencies": {
-    "@angular/common": "~21.2.13",
-    "@angular/compiler": "~21.2.13",
-    "@angular/core": "~21.2.13",
-    "@angular/forms": "~21.2.13",
-    "@angular/platform-browser": "~21.2.13",
-    "@angular/router": "~21.2.13",
+    "@angular/common": "22.1.6",
+    "@angular/compiler": "22.1.6",
+    "@angular/core": "22.1.6",
+    "@angular/forms": "22.1.6",
+    "@angular/platform-browser": "22.1.6",
+    "@angular/router": "22.1.6",
+    "@lucide/angular": "^1.45.0",
     "@nestjs/axios": "^4.0.1",
-    "@nestjs/common": "11.1.17",
-    "@nestjs/core": "11.1.17",
+    "@nestjs/common": "11.2.3",
+    "@nestjs/core": "11.2.3",
     "@nestjs/mapped-types": "^2.1.1",
-    "@nestjs/platform-express": "11.1.17",
+    "@nestjs/platform-express": "11.2.3",
     "@types/multer": "^2.1.0",
-    "axios": "^1.16.0",
+    "axios": "^1.20.0",
     "chart.js": "^4.5.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
-    "lucide-angular": "^1.0.0",
     "node-ssh": "^13.2.1",
     "pdf-lib": "^1.17.1",
     "puppeteer": "^24.43.1",

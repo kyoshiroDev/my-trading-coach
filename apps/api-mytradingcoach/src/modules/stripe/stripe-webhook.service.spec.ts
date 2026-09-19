@@ -1,10 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
-import { StripeService } from './stripe.service';
+import { StripeCustomerService } from './stripe-customer.service';
+import { StripeReferralService } from './stripe-referral.service';
+import { StripeSubscriptionService } from './stripe-subscription.service';
+import { StripeWebhookService } from './stripe-webhook.service';
 
 // Test d'intégration du handler de webhook Stripe (cœur du tunnel argent) :
 // montée de plan (checkout.session.completed → syncSubscription) et descente
 // (customer.subscription.deleted → FREE). Aucune clé LIVE, aucun appel réseau :
-// l'instance Stripe interne est remplacée par un mock.
+// le client Stripe injecté est un mock.
 
 function makePrisma() {
   return {
@@ -28,20 +31,21 @@ function makeSvc() {
   const discord = { syncDiscordRole: vi.fn().mockResolvedValue(undefined) };
   const queue = { add: vi.fn() };
   const redisService = { client: { del: vi.fn().mockResolvedValue(1), get: vi.fn(), setex: vi.fn() } };
-  const config = { getOrThrow: vi.fn(() => 'sk_test_fake') };
-
-  const svc = new StripeService(
-    config as never, prisma as never, resend as never,
-    discord as never, queue as never, redisService as never,
-  );
-  // Remplace l'instance Stripe (réseau) par un mock contrôlé.
+  const config = { getOrThrow: vi.fn(() => 'sk_test_fake'), get: vi.fn() };
   const retrieve = vi.fn();
-   
-  (svc as any).stripe = { subscriptions: { retrieve } };
+  const stripe = { subscriptions: { retrieve } } as never;
+
+  const subscriptions = new StripeSubscriptionService(prisma as never, redisService as never, stripe);
+  const referrals = new StripeReferralService(
+    config as never, prisma as never, new StripeCustomerService(prisma as never, stripe), stripe,
+  );
+  const svc = new StripeWebhookService(
+    config as never, prisma as never, resend as never, discord as never,
+    subscriptions, referrals, queue as never, stripe,
+  );
   return { svc, prisma, resend, discord, retrieve };
 }
 
- 
 function subscription(over: Record<string, any> = {}): any {
   return {
     id: 'sub_1',
@@ -52,7 +56,7 @@ function subscription(over: Record<string, any> = {}): any {
   };
 }
 
-describe('StripeService.processWebhookEvent — tunnel argent', () => {
+describe('StripeWebhookService.processWebhookEvent — tunnel argent', () => {
   it('checkout.session.completed (sub active) → user passe PREMIUM + mail bienvenue', async () => {
     const { svc, prisma, resend, retrieve } = makeSvc();
     retrieve.mockResolvedValue(subscription());
@@ -61,7 +65,6 @@ describe('StripeService.processWebhookEvent — tunnel argent', () => {
     await svc.processWebhookEvent({
       type: 'checkout.session.completed',
       data: { object: { mode: 'subscription', subscription: 'sub_1', client_reference_id: 'user_1' } },
-
     } as any);
 
     expect(prisma.user.update).toHaveBeenCalledTimes(1);
@@ -81,7 +84,6 @@ describe('StripeService.processWebhookEvent — tunnel argent', () => {
     await svc.processWebhookEvent({
       type: 'customer.subscription.updated',
       data: { object: subscription({ trial_end: null }) },
-
     } as any);
 
     expect(prisma.user.update.mock.calls[0][0].data.trialUsed).toBe(false);
@@ -95,7 +97,6 @@ describe('StripeService.processWebhookEvent — tunnel argent', () => {
     await svc.processWebhookEvent({
       type: 'customer.subscription.updated',
       data: { object: subscription({ status: 'trialing', trial_end: 1_893_456_000 }) },
-
     } as any);
 
     expect(prisma.user.update.mock.calls[0][0].data.trialUsed).toBe(true);
@@ -109,7 +110,6 @@ describe('StripeService.processWebhookEvent — tunnel argent', () => {
     await svc.processWebhookEvent({
       type: 'customer.subscription.updated',
       data: { object: subscription({ status: 'trialing' }) },
-       
     } as any);
 
     const data = prisma.user.update.mock.calls[0][0].data;
@@ -124,7 +124,6 @@ describe('StripeService.processWebhookEvent — tunnel argent', () => {
     await svc.processWebhookEvent({
       type: 'customer.subscription.deleted',
       data: { object: subscription({ items: { data: [{ price: { unit_amount: 7900, recurring: { interval: 'month' } } }] } }) },
-       
     } as any);
 
     expect(prisma.user.updateMany).toHaveBeenCalledTimes(1);
@@ -143,7 +142,6 @@ describe('StripeService.processWebhookEvent — tunnel argent', () => {
     await svc.processWebhookEvent({
       type: 'customer.subscription.updated',
       data: { object: subscription() },
-       
     } as any);
 
     expect(prisma.user.update).not.toHaveBeenCalled();

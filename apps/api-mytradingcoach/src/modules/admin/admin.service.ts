@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
-import { StripeService } from '../stripe/stripe.service';
+import { StripeSubscriptionService } from '../stripe/stripe-subscription.service';
 import { AnthropicCostService } from './anthropic-cost.service';
 
 @Injectable()
@@ -10,7 +10,7 @@ export class AdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly users: UsersService,
-    private readonly stripe: StripeService,
+    private readonly stripeSubscriptions: StripeSubscriptionService,
     private readonly anthropicCost: AnthropicCostService,
   ) {}
 
@@ -179,7 +179,7 @@ export class AdminService {
   async reconcileStripe() {
     const [stats, stripeSubs, dbSubs] = await Promise.all([
       this.users.adminStats(),
-      this.stripe.listActiveSubscriptions(),
+      this.stripeSubscriptions.listActiveSubscriptions(),
       this.prisma.user.findMany({
         where: {
           isDemo: false,

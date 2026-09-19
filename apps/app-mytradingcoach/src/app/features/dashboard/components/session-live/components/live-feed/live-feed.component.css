@@ -1,0 +1,170 @@
+/* Hôte = cellule de la grille .live-cols du parent : colonne flex étirée sur la rangée. */
+:host {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Panneau à hauteur pilotée par le contenu, borné par max-height : seule la liste
+   interne garde un scroll. flex:1 reproduit l'étirement sur la rangée de la grille. */
+.feed-col {
+  flex: 1;
+  display: flex; flex-direction: column; min-height: 220px; max-height: 420px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px;
+}
+
+/* ─── Titre de colonne ─── */
+.col-title {
+  font-family: var(--font-display); font-size: 12px; font-weight: 600;
+  color: var(--text-3); display: flex; align-items: center; gap: 6px;
+  margin-bottom: 10px; flex-shrink: 0;
+}
+.ct-ic { display: inline-flex; color: var(--text-3); flex-shrink: 0; }
+.pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .5; transform: scale(.8); }
+}
+
+/* ─── Live feed ─── */
+.feed-list {
+  display: flex; flex-direction: column; gap: 3px;
+  overflow-y: auto; flex: 1; min-height: 0;
+}
+.feed-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 6px;
+  border-bottom: 1px solid rgba(99,155,255,.05);
+}
+.feed-row.live-row {
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background .15s;
+}
+.feed-row.live-row:hover { background: rgba(99,155,255,.04); }
+.feed-emo { font-size: 13px; line-height: 1; }
+.feed-time { font-family: var(--font-mono); font-size: 9px; color: var(--text-3); min-width: 30px; }
+.trade-side {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 3px;
+  text-align: center;
+}
+.trade-side.long { background: rgba(16,185,129,.12); color: var(--green); }
+.trade-side.short { background: rgba(239,68,68,.12); color: var(--red); }
+.feed-asset { font-weight: 600; font-size: 10px; font-family: var(--font-mono); color: var(--blue-bright); }
+.feed-pnl { font-family: var(--font-mono); font-size: 10px; font-weight: 600; }
+.feed-pnl.green { color: var(--green); }
+.feed-pnl.red { color: var(--red); }
+.live-tag {
+  font-size: 8px;
+  background: rgba(16,185,129,.12);
+  color: var(--green);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ─── Empty feed ─── */
+.empty-feed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 24px 12px;
+  text-align: center;
+}
+.empty-feed-icon { font-size: 28px; opacity: .4; }
+.empty-feed-title { font-size: 12px; font-weight: 600; color: var(--text-2); }
+.empty-feed-sub { font-size: 11px; color: var(--text-3); line-height: 1.5; }
+
+/* ─── Close panel ─── */
+.close-panel {
+  margin-top: 8px;
+  background: var(--bg-2);
+  border: 1px solid rgba(59,130,246,.2);
+  border-radius: 8px;
+  padding: 10px;
+  animation: slideDown .2s ease;
+}
+@keyframes slideDown { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+.close-panel-title {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--blue-bright);
+  margin-bottom: 8px;
+}
+.close-panel-row { display: flex; gap: 6px; align-items: flex-end; }
+.close-input-wrap { flex: 1; }
+.close-input-lbl { font-size: 9px; font-family: var(--font-mono); color: var(--text-3); margin-bottom: 3px; }
+.close-input {
+  width: 100%;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+  outline: none;
+  height: 34px;
+}
+.close-input:focus { border-color: var(--blue); }
+.close-btn-ok {
+  background: var(--blue);
+  color: white;
+  border: none;
+  border-radius: 7px;
+  padding: 0 12px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  height: 34px;
+}
+.close-btn-cancel {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--text-3);
+  border-radius: 7px;
+  padding: 0 10px;
+  font-size: 11px;
+  cursor: pointer;
+  height: 34px;
+}
+
+/* Indicateurs de focus clavier (accessibilité) */
+.close-btn-ok:focus-visible,
+.close-btn-cancel:focus-visible {
+  outline: 2px solid var(--blue-bright);
+  outline-offset: 2px;
+}
+
+/* Desktop (≥981px) : le panneau s'étire jusqu'en bas, seule la liste scrolle
+   (cf. session-live.component.css). */
+@container (min-width: 981px) {
+  .feed-col { min-height: 0; max-height: none; }
+}
+
+/* ─── Réduction des animations (accessibilité) ─── */
+@media (prefers-reduced-motion: reduce) {
+  .pulse-dot,
+  .close-panel {
+    animation: none !important;
+  }
+}

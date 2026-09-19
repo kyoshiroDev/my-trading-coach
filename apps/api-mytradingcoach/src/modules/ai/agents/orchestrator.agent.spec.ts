@@ -30,6 +30,8 @@ const mockTrades = [
 const mockPrisma = {
   trade: { findMany: vi.fn().mockResolvedValue(mockTrades) },
   user: { findUnique: vi.fn().mockResolvedValue(null) },
+  // Devise du résumé = celle des comptes (PROMPT-214).
+  tradingAccount: { findMany: vi.fn().mockResolvedValue([{ currency: 'USD' }]) },
 };
 
 const mockPatternResult = {

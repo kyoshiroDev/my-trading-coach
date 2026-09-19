@@ -10,12 +10,22 @@ class NodeModulesExternalsPlugin {
       const arr = Array.isArray(existing) ? existing : [existing];
       arr.push(({ request }, callback) => {
         // Externalise tout ce qui est un package node_modules
-        if (/^[^./]/.test(request)) {
+        // Librairies du monorepo (@mtc/*) : code source TS, résolu par les paths du tsconfig et
+        // BUNDLÉ — externalisées, elles seraient cherchées dans node_modules au démarrage.
+        if (/^[^./]/.test(request) && !request.startsWith('@mtc/')) {
           return callback(null, 'commonjs ' + request);
         }
         callback();
       });
       compiler.options.externals = arr;
+      // Alias des librairies du monorepo : le plugin paths de Nx ne lit pas les `paths` du
+      // tsconfig dans cette config TS (références de projets). Posé ici, APRÈS Nx, pour ne pas
+      // être écrasé — même raison que les externals ci-dessus.
+      compiler.options.resolve = compiler.options.resolve ?? {};
+      compiler.options.resolve.alias = {
+        ...(compiler.options.resolve.alias ?? {}),
+        '@mtc/shared': join(__dirname, '../../libs/shared/src/index.ts'),
+      };
     });
   }
 }

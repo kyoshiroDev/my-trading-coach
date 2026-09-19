@@ -11,7 +11,6 @@ import { AdminApi, ReferralAdminOverview } from '../../core/api/admin.api';
 
 @Component({
   selector: 'mtc-admin-referral',
-  standalone: true,
   imports: [DatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './referral.component.css',

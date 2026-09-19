@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 0
       - uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: 11.6.0
       - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
@@ -34,7 +34,7 @@ jobs:
       - name: Prisma generate
         run: pnpm exec prisma generate --config=./prisma/prisma.config.ts
       - name: Lint
-        run: pnpm nx run-many --target=lint --projects=app-mytradingcoach,api-mytradingcoach --parallel=2
+        run: pnpm nx run-many --target=lint --projects=app-mytradingcoach,api-mytradingcoach,admin-mytradingcoach,landing-mytradingcoach --parallel=3
       - name: Build (app beta + api)
         run: |
           NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=beta --skip-nx-cache
@@ -85,7 +85,7 @@ jobs:
           fetch-depth: 0
       - uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: 11.6.0
       - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
@@ -112,7 +112,7 @@ jobs:
           fetch-depth: 0
       - uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: 11.6.0
       - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
@@ -160,7 +160,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: 11.6.0
       - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'

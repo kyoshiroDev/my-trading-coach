@@ -196,6 +196,20 @@ describe('AnalyticsService', () => {
       expect(result.totalPnl).toBe(295); // 300 brut − 5 de frais
     });
 
+    it('classe gagnant/perdant sur le NET : +1 brut avec 1,90 de frais est une perte (PROMPT-213)', async () => {
+      mockPrisma.trade.findMany.mockResolvedValue([
+        { ...makeTrade(1), commission: 1.9 },
+        { ...makeTrade(100), commission: 2 },
+      ]);
+
+      const result = await service.getSummary('user-123');
+
+      expect(result.winRate).toBe(50);
+      expect(result.totalPnl).toBe(97.1);
+      // drawdown : −0,90 dès le 1er trade (net), pas 0 comme en brut
+      expect(result.maxDrawdown).toBeCloseTo(0.9);
+    });
+
     it('calcule le streak positif en cours', async () => {
       mockPrisma.trade.findMany.mockResolvedValue([
         makeTrade(-50),
@@ -269,6 +283,22 @@ describe('AnalyticsService', () => {
       expect(archivedWithTrades?.title).toBe('Archivé');
       expect(archivedWithTrades?.count).toBe(1);
     });
+
+    it('R:R moyen null (et non 0) quand aucun trade du setup n’a de R:R ; P&L en net', async () => {
+      mockPrisma.setup.findMany.mockResolvedValueOnce([
+        { id: 'setup-sync', title: 'Sans setup', color: '#6b7280' },
+      ]);
+      mockPrisma.trade.findMany.mockResolvedValue([
+        { ...makeTrade(10), riskReward: null, commission: 4, setupId: 'setup-sync', setup: { title: 'Sans setup', color: '#6b7280' } },
+        { ...makeTrade(-10), riskReward: null, commission: 4, setupId: 'setup-sync', setup: { title: 'Sans setup', color: '#6b7280' } },
+      ]);
+
+      const result = await service.getBySetup('user-123');
+
+      const s = result.find((r) => r.setupId === 'setup-sync');
+      expect(s?.avgRR).toBeNull();
+      expect(s?.pnl).toBe(-8);
+    });
   });
 
   describe('getEquityCurve', () => {
@@ -302,6 +332,19 @@ describe('AnalyticsService', () => {
 
       expect(result.points).toHaveLength(1);
       expect(result.points[0].cumulativePnl).toBe(250);
+    });
+
+    it('cumule le P&L NET (frais déduits), comme les KPIs (PROMPT-213)', async () => {
+      const day = new Date('2026-09-14T15:00:00Z');
+      mockPrisma.trade.findMany.mockResolvedValue([
+        { tradedAt: day, pnl: 23.5, commission: 64.6 },
+      ]);
+      mockPrisma.user.findUnique.mockResolvedValue({ startingCapital: null });
+
+      const result = await service.getEquityCurveDaily('user-123');
+
+      expect(result.points).toHaveLength(1);
+      expect(result.points[0].cumulativePnl).toBeCloseTo(-41.1);
     });
 
     it('retourne un point par jour actif dans l\'ordre chronologique', async () => {

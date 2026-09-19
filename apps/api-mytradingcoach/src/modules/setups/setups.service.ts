@@ -4,6 +4,9 @@ import { CreateSetupDto } from './dto/create-setup.dto';
 import { UpdateSetupDto } from './dto/update-setup.dto';
 import { seedDefaultSetups } from './setups.defaults';
 
+/** Titre du setup où atterrissent les trades importés sans setup choisi. */
+export const IMPORT_SETUP_TITLE = 'Sans setup';
+
 @Injectable()
 export class SetupsService {
   private readonly logger = new Logger(SetupsService.name);
@@ -85,14 +88,35 @@ export class SetupsService {
     return { deleted: true };
   }
 
-  /** Setup par défaut du user (sortOrder le plus bas, non archivé) : fallback import CSV. */
-  async getDefaultSetupId(userId: string): Promise<string | null> {
-    const s = await this.prisma.setup.findFirst({
-      where: { userId, archived: false },
-      orderBy: { sortOrder: 'asc' },
+  /**
+   * Setup des trades IMPORTÉS sans setup choisi (synchro broker, import CSV) : « Sans setup »,
+   * créé à la volée s'il n'existe pas (ou désarchivé). Avant, ils tombaient sur le premier setup
+   * du user (souvent « Breakout ») : les stats par setup attribuaient à une stratégie des trades
+   * que le trader n'y avait jamais rangés (PROMPT-213). Le trader les reclasse ensuite.
+   */
+  async getImportSetupId(userId: string): Promise<string> {
+    const existing = await this.prisma.setup.findFirst({
+      where: { userId, title: IMPORT_SETUP_TITLE },
+      orderBy: { archived: 'asc' },
+      select: { id: true, archived: true },
+    });
+    if (existing) {
+      if (existing.archived) {
+        await this.prisma.setup.update({ where: { id: existing.id }, data: { archived: false } });
+      }
+      return existing.id;
+    }
+    const created = await this.prisma.setup.create({
+      data: {
+        userId,
+        title: IMPORT_SETUP_TITLE,
+        color: '#6b7280',
+        description: 'Trades importés (synchro broker, CSV) pas encore rangés dans un setup.',
+        sortOrder: 999,
+      },
       select: { id: true },
     });
-    return s?.id ?? null;
+    return created.id;
   }
 
   /** Valide qu'un setup appartient au user ET est actif (création de trade). */
@@ -112,8 +136,7 @@ export class SetupsService {
    * Un id périmé (inconnu, archivé, hors compte) ne doit pas faire rejeter des
    * dizaines de trades : le front pouvait envoyer le setup présélectionné à
    * l'ouverture du wizard puis supprimé à l'étape suivante — tout l'import
-   * partait alors en 400 (bug Val). On retombe sur le setup par défaut, et sur
-   * `null` si le user n'en a aucun (trades valides, setup non renseigné).
+   * partait alors en 400 (bug Val). On retombe sur « Sans setup » (`getImportSetupId`).
    *
    * Volontairement distinct d'`assertOwnedActive`, qui reste STRICT pour la
    * création manuelle d'un trade : là, le setup est un choix explicite de
@@ -129,10 +152,10 @@ export class SetupsService {
       // Trace le repli : sans ça, un front qui envoie durablement un id périmé
       // passe inaperçu (les trades atterrissent silencieusement sur le défaut).
       this.logger.warn(
-        `Import : setupId ${setupId} invalide pour le user ${userId} → repli sur le setup par défaut.`,
+        `Import : setupId ${setupId} invalide pour le user ${userId} → repli sur « ${IMPORT_SETUP_TITLE} ».`,
       );
     }
-    return this.getDefaultSetupId(userId);
+    return this.getImportSetupId(userId);
   }
 
   private async assertOwned(userId: string, id: string): Promise<void> {

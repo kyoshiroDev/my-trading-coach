@@ -9,6 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { UsersApi } from '../../core/api/users.api';
@@ -16,7 +17,17 @@ import { TradesApi, CreateTradeDto, InstrumentSearchResult } from '../../core/ap
 import { TradesStore } from '../../core/stores/trades.store';
 import { AccountsApi, CreateAccountPayload, DrawdownType } from '../../core/api/accounts.api';
 import { AuthService } from '../../core/auth/auth.service';
-import { LucideAngularModule, Bitcoin } from 'lucide-angular';
+import {
+  ACCOUNT_CURRENCIES,
+  AccountCurrency,
+  DEFAULT_ACCOUNT_CURRENCY,
+  formatMoney,
+  isAccountCurrency,
+} from '@mtc/shared';
+import {
+  LucideDynamicIcon,
+  LucideBitcoin as Bitcoin,
+} from '@lucide/angular';
 import { TradeFormComponent } from '../journal/trade-form.component';
 import { CsvImportComponent, ImportResult } from '../journal/csv-import.component';
 import { SetupsStore } from '../../core/stores/setups.store';
@@ -24,6 +35,19 @@ import {
   SetupFormModalComponent,
   SetupFormValue,
 } from '../../shared/components/setup-form-modal/setup-form-modal.component';
+import { TradovateConnectModalComponent } from '../../shared/components/tradovate-connect/tradovate-connect-modal.component';
+import { TradovateAccountPickerComponent } from '../../shared/components/tradovate-connect/tradovate-account-picker.component';
+import { TradovateStore } from '../../core/stores/tradovate.store';
+import { ToastService } from '../../core/services/toast.service';
+import {
+  FeesState,
+  TRADOVATE_RETURN_PARAMS,
+  feesLine,
+  feesState,
+  parseTradovateReturn,
+  tradesLine,
+  tradovateErrorMessage,
+} from '../../core/utils/tradovate-return.util';
 import {
   TRADING_STYLES,
   SESSIONS,
@@ -31,6 +55,7 @@ import {
   TradingStyle,
   TradingSession,
 } from './onboarding.constants';
+import { apiErrorMessage } from '../../core/utils/api-error';
 
 type Market = 'CRYPTO' | 'FOREX' | 'ACTIONS' | 'MULTI';
 type Goal   = 'DISCIPLINE' | 'PERFORMANCE' | 'PSYCHOLOGIE';
@@ -88,7 +113,8 @@ interface OnboardingProgress {
   step: Step;
   market: Market | null;
   goal: Goal | null;
-  currency: 'USD' | 'EUR';
+  /** Devise DU COMPTE créé à l'étape 3 (PROMPT-214), plus une préférence globale. */
+  currency: AccountCurrency;
   capital: string;
   accountMode: AccountMode;
   broker: string;
@@ -104,8 +130,10 @@ interface OnboardingProgress {
 
 @Component({
   selector: 'mtc-onboarding',
-  standalone: true,
-  imports: [LucideAngularModule, TradeFormComponent, CsvImportComponent, SetupFormModalComponent],
+  imports: [
+    LucideDynamicIcon, TradeFormComponent, CsvImportComponent, SetupFormModalComponent,
+    TradovateConnectModalComponent, TradovateAccountPickerComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './onboarding.component.html',
   styleUrl: './onboarding.component.css',
@@ -120,6 +148,40 @@ export class OnboardingComponent {
   protected readonly setupsStore = inject(SetupsStore);
   private readonly auth        = inject(AuthService);
   private readonly destroyRef  = inject(DestroyRef);
+  private readonly toast       = inject(ToastService);
+  private readonly router      = inject(Router);
+  protected readonly tvStore   = inject(TradovateStore);
+
+  // ── Connexion Tradovate depuis l'étape 8 (PROMPT-208) ────────────────────────
+  /** Compte cible de l'écran de réassurance (ouvert = non null). */
+  protected readonly tvTarget = signal<{ id: string; label: string } | null>(null);
+  /** Recherche / création du compte cible avant d'ouvrir l'écran de réassurance. */
+  protected readonly tvPreparing = signal(false);
+  /** Échec non bloquant : l'étape 8 reste utilisable (réessayer, CSV, manuel, zéro). */
+  protected readonly tvError = signal<string | null>(null);
+  /** Login Tradovate à plusieurs comptes : choix à faire pour ce compte MTC. */
+  protected readonly tvPickAccountId = signal<string | null>(null);
+  protected readonly tvPickAccounts = computed(() => {
+    const id = this.tvPickAccountId();
+    return id ? (this.tvStore.byAccount().get(id)?.availableAccounts ?? []) : [];
+  });
+  /** Récap de l'écran final, même rôle que `importSummary` pour le CSV. */
+  protected readonly tvSummary = signal<{ created: number | null; fees: FeesState | null } | null>(null);
+  protected readonly tvRecapMain = computed(() => {
+    const t = this.tvSummary();
+    if (!t) return '';
+    return t.created === null
+      ? 'Compte Tradovate connecté'
+      : `Compte Tradovate connecté · ${tradesLine(t.created)}`;
+  });
+  protected readonly tvRecapWarn = computed(() => {
+    const t = this.tvSummary();
+    if (!t) return null;
+    if (t.created === null) {
+      return "La première synchronisation n'a pas abouti : relance-la depuis Mes comptes.";
+    }
+    return t.created > 0 ? (feesLine(t.fees)?.text ?? null) : null;
+  });
 
   // Étape Tes setups (les 6 défauts sont seedés au signup).
   protected readonly showSetupModal = signal(false);
@@ -138,7 +200,12 @@ export class OnboardingComponent {
   protected readonly importSummary = signal<ImportResult | null>(null);
   protected readonly selectedMarket   = signal<Market | null>(null);
   protected readonly selectedGoal     = signal<Goal | null>(null);
-  protected readonly selectedCurrency = signal<'USD' | 'EUR'>('USD');
+  /** Devise du compte créé (liste unique `ACCOUNT_CURRENCIES`), jamais une conversion. */
+  protected readonly selectedCurrency = signal<AccountCurrency>(DEFAULT_ACCOUNT_CURRENCY);
+  protected readonly accountCurrencies = ACCOUNT_CURRENCIES;
+  /** Montant du récap d'import, dans la devise du compte créé. */
+  protected readonly feesLabel = (n: number) =>
+    formatMoney(n, this.selectedCurrency(), { sign: false });
   /**
    * Pré-rempli : l'étape ne bloque plus (PROMPT-198). Laisser le champ vide aurait
    * cascadé en « CAPITAL $0.00 » — `User.startingCapital` vaut 0 par défaut, le compte
@@ -197,6 +264,8 @@ export class OnboardingComponent {
   constructor() {
     this.setupsStore.load();
     this.restoreProgress();
+    // APRÈS restoreProgress : le retour Tradovate a le dernier mot sur l'étape affichée.
+    this.readTradovateReturn();
 
     // Sauvegarde à chaque changement : l'effet lit les signaux (donc les suit) et
     // n'écrit que dans le stockage local — aucune boucle possible.
@@ -248,7 +317,7 @@ export class OnboardingComponent {
       if (typeof step !== 'number' || step < 1 || step > 9) return;
       this.selectedMarket.set(p.market ?? null);
       this.selectedGoal.set(p.goal ?? null);
-      this.selectedCurrency.set(p.currency === 'EUR' ? 'EUR' : 'USD');
+      this.selectedCurrency.set(isAccountCurrency(p.currency) ? p.currency : DEFAULT_ACCOUNT_CURRENCY);
       this.capitalInput.set(typeof p.capital === 'string' ? p.capital : '');
       this.accountMode.set(p.accountMode === 'PROPFIRM' ? 'PROPFIRM' : 'PERSO');
       this.broker.set(typeof p.broker === 'string' ? p.broker : '');
@@ -265,6 +334,39 @@ export class OnboardingComponent {
       this.step.set(step as Step);
       this.tradeChoice.set('choice');
     } catch { /* snapshot illisible : on ignore, l'utilisateur repart de l'étape 1 */ }
+  }
+
+  /**
+   * Retour du consentement Tradovate lancé depuis l'étape 8 (`?tradovate=…&from=wizard`).
+   * L'utilisateur revient EXACTEMENT où il était : écran final avec le récap si la connexion a
+   * réussi, étape 8 sinon. Jamais au début du wizard, même si la progression locale a disparu
+   * (autre onglet, stockage vidé). Les paramètres sont retirés de l'URL une fois lus.
+   */
+  private readTradovateReturn(): void {
+    let params: Record<string, string> = {};
+    try {
+      params = Object.fromEntries(new URLSearchParams(window.location.search));
+    } catch { return; }
+    const ret = parseTradovateReturn(params);
+    if (!ret || !ret.fromWizard) return;
+
+    if (ret.status === 'connected') {
+      this.tvSummary.set({ created: ret.syncFailed ? null : (ret.trades ?? 0), fees: ret.fees });
+      if ((ret.trades ?? 0) > 0) this.tradesStore.reset();
+      this.step.set(9);
+    } else {
+      this.step.set(8);
+      this.tradeChoice.set('choice');
+      if (ret.status === 'select_account' && ret.accountId) {
+        this.tvPickAccountId.set(ret.accountId);
+        this.tvStore.load();
+      } else {
+        this.tvError.set(tradovateErrorMessage(ret.reason, true));
+      }
+    }
+
+    const cleared = Object.fromEntries(TRADOVATE_RETURN_PARAMS.map((k) => [k, null]));
+    this.router.navigate([], { queryParams: cleared, queryParamsHandling: 'merge', replaceUrl: true });
   }
 
   private clearProgress(): void {
@@ -289,7 +391,7 @@ export class OnboardingComponent {
 
   protected selectMarket(m: Market)          { this.selectedMarket.set(m); }
   protected selectGoal(g: Goal)              { this.selectedGoal.set(g); }
-  protected selectCurrency(c: 'USD'|'EUR')   { this.selectedCurrency.set(c); }
+  protected selectCurrency(c: AccountCurrency) { this.selectedCurrency.set(c); }
 
   // ── Stratégie ──
   protected selectStyle(s: TradingStyle)     { this.selectedStyle.set(s); }
@@ -363,6 +465,69 @@ export class OnboardingComponent {
 
   protected finishAndGoDiscord() { this.step.set(9); }
 
+  /**
+   * Carte « Connecter mon compte Tradovate » : il faut un TradingAccount cible pour y
+   * rattacher la connexion. Normalement créé au checkpoint Stratégie (`createAccountOnce`) ;
+   * s'il manque (échec réseau à ce moment-là), on le crée ici avec la déclaration de l'étape 3.
+   */
+  protected chooseTradovate(): void {
+    if (this.tvPreparing()) return;
+    this.tvError.set(null);
+    this.tvPreparing.set(true);
+    this.accountsApi
+      .getAll()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          const accounts = res.data ?? [];
+          const existing = accounts.find((a) => a.status === 'ACTIVE') ?? accounts[0];
+          if (existing) {
+            this.openTradovate(existing.id, existing.label);
+            return;
+          }
+          this.accountCreated.set(true);
+          this.accountsApi
+            .create(this.buildAccountPayload())
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+              next: (created) => this.openTradovate(created.data.id, created.data.label),
+              error: (err) => {
+                this.accountCreated.set(false);
+                this.failTradovate(err);
+              },
+            });
+        },
+        error: (err) => this.failTradovate(err),
+      });
+  }
+
+  private openTradovate(id: string, label: string): void {
+    this.tvPreparing.set(false);
+    this.tvTarget.set({ id, label });
+  }
+
+  private failTradovate(err: unknown): void {
+    this.tvPreparing.set(false);
+    this.tvError.set(
+      `${apiErrorMessage(err, "Ton compte n'a pas pu être préparé.")} Tu peux réessayer ou importer un CSV.`,
+    );
+  }
+
+  /** Choix du compte Tradovate au retour (login à plusieurs comptes), puis synchro. */
+  protected onTradovatePicked(externalId: string): void {
+    const accountId = this.tvPickAccountId();
+    if (!accountId) return;
+    this.tvError.set(null);
+    this.tvStore.selectThenSync(accountId, externalId, (r) => {
+      // Échec : le store a déjà affiché le toast d'erreur ; le sélecteur reste là pour réessayer.
+      if (!r) return;
+      this.tvPickAccountId.set(null);
+      this.tvSummary.set({ created: r.created, fees: feesState(r) });
+      if (r.created > 0) this.tradesStore.reset();
+      this.step.set(9);
+    });
+  }
+
   // ── Étape Tes setups (7) : réutilise la modale partagée + SetupsStore ──
   protected openSetupModal(): void { this.setupMsg.set(null); this.showSetupModal.set(true); }
   protected onSetupSave(value: SetupFormValue): void {
@@ -403,7 +568,7 @@ export class OnboardingComponent {
         // 0 (champ vidé) → on n'envoie rien : le back ne réécrit que si non-null, donc
         // la valeur déjà en base est préservée au lieu d'être écrasée par un 0.
         startingCapital: this.parseCapital() || undefined,
-        currency: this.selectedCurrency(),
+        // Plus de devise au profil (PROMPT-214) : elle part sur le compte créé (payload compte).
         tradingStyle: this.selectedStyle() ?? undefined,
         strategyDescription: this.strategyDescription().trim() || undefined,
         tradingSessions: this.selectedSessions(),
@@ -531,7 +696,12 @@ export class OnboardingComponent {
           this.isSaving.set(false);
           this.step.set(7);
         },
-        error: () => { this.isSaving.set(false); this.step.set(7); },
+        // Non bloquant (le wizard avance), mais plus muet : les actifs se complètent depuis Profil.
+        error: () => {
+          this.isSaving.set(false);
+          this.toast.warning('Tes actifs n’ont pas pu être enregistrés : tu pourras les ajouter depuis ton Profil.');
+          this.step.set(7);
+        },
       });
   }
 
@@ -543,7 +713,12 @@ export class OnboardingComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => { this.tradesStore.addTrade(res.data); this.isSaving.set(false); this.step.set(9); },
-        error: () => { this.isSaving.set(false); this.step.set(9); },
+        // Non bloquant (on termine l'onboarding), mais plus muet.
+        error: () => {
+          this.isSaving.set(false);
+          this.toast.error('Ton trade n’a pas pu être enregistré : tu pourras le saisir depuis le journal.');
+          this.step.set(9);
+        },
       });
   }
 

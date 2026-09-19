@@ -1,0 +1,29 @@
+.mcn {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 12px;
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.mcn-ic {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--blue-bright);
+}
+
+.mcn-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.mcn-sub {
+  margin-top: 4px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-2);
+}

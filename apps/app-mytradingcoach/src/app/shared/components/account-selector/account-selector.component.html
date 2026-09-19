@@ -10,7 +10,7 @@
       (click)="toggle()"
     >
       @if (isAll()) {
-        <span class="acct-ic"><lucide-icon [img]="LayersIcon" [size]="14" /></span>
+        <span class="acct-ic"><svg [lucideIcon]="LayersIcon" [size]="14"></svg></span>
         <span class="acct-txt">
           <span class="acct-name">Tous les comptes</span>
           <span class="acct-tag">Agrégé</span>
@@ -24,7 +24,7 @@
         </span>
         <span class="acct-bal">{{ balanceFor(sel) }}</span>
       }
-      <lucide-icon [img]="ChevronDownIcon" [size]="14" class="acct-chev" />
+      <svg [lucideIcon]="ChevronDownIcon" [size]="14" class="acct-chev"></svg>
     </button>
 
     <!-- Menu déroulant -->
@@ -39,13 +39,13 @@
         [attr.aria-selected]="isAll()"
         (click)="pick('all')"
       >
-        <span class="acct-ic"><lucide-icon [img]="LayersIcon" [size]="14" /></span>
+        <span class="acct-ic"><svg [lucideIcon]="LayersIcon" [size]="14"></svg></span>
         <span class="opt-txt">
           <span class="opt-name">Tous les comptes</span>
           <span class="opt-tag">Agrégé</span>
         </span>
         <span class="opt-bal">{{ totalBalanceStr() }}</span>
-        <span class="opt-check"><lucide-icon [img]="CheckIcon" [size]="14" /></span>
+        <span class="opt-check"><svg [lucideIcon]="CheckIcon" [size]="14"></svg></span>
       </button>
 
       <div class="menu-sep"></div>
@@ -67,14 +67,14 @@
             <span class="opt-tag">{{ tagFor(a) }}</span>
           </span>
           <span class="opt-bal">{{ balanceFor(a) }}</span>
-          <span class="opt-check"><lucide-icon [img]="CheckIcon" [size]="14" /></span>
+          <span class="opt-check"><svg [lucideIcon]="CheckIcon" [size]="14"></svg></span>
         </button>
       }
     </div>
   </div>
 
   <a routerLink="/accounts" class="acct-add">
-    <lucide-icon [img]="PlusIcon" [size]="14" />
+    <svg [lucideIcon]="PlusIcon" [size]="14"></svg>
     Compte
   </a>
 </div>

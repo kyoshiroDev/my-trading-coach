@@ -3,7 +3,14 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
-import { computeTradeStats } from '../../common/utils/trade-stats.util';
+import { computeTradeStats, netPnl } from '@mtc/shared';
+
+/**
+ * P&L NET d'un trade (frais déduits), 0 pour un trade ouvert. CONVENTION UNIQUE (PROMPT-213) :
+ * chaque agrégat ci-dessous (KPI, courbe, drawdown, calendrier, top actifs, setups, heatmap)
+ * lit ce même net, et sélectionne donc toujours `commission` avec `pnl`.
+ */
+const net = (t: { pnl?: number | null; commission?: number | null }): number => netPnl(t) ?? 0;
 
 export interface EquityPoint {
   date: Date;
@@ -109,24 +116,22 @@ export class AnalyticsService {
     }
 
     const totalTrades = trades.length;
-    // Win rate via le helper unique (BE exclus du dénominateur, PROMPT-160).
+    // Win rate et P&L via le helper unique, sur le NET (frais déduits, PROMPT-213) ; BE exclus du
+    // dénominateur (PROMPT-160). Toutes les mesures ci-dessous lisent ce même net.
     const stats = computeTradeStats(trades);
     const winRate = stats.winRate;
-    // P&L NET = somme des pnl MOINS les frais (commissions). Sans ça le KPI « P&L net » du
-    // dashboard et le capital affichaient le brut, incohérents avec le net du journal (PROMPT-175).
-    const totalCommission = trades.reduce((a, t) => a + (t.commission ?? 0), 0);
-    const totalPnl = stats.totalPnl - totalCommission;
+    const totalPnl = stats.totalPnl;
 
-    // Profit factor = profits bruts / pertes brutes. null si aucune perte (∞ → géré côté front).
-    const grossProfit = trades.reduce((a, t) => a + Math.max(0, t.pnl ?? 0), 0);
-    const grossLoss = trades.reduce((a, t) => a + Math.max(0, -(t.pnl ?? 0)), 0);
+    // Profit factor = gains nets / pertes nettes. null si aucune perte (∞ → géré côté front).
+    const grossProfit = trades.reduce((a, t) => a + Math.max(0, net(t)), 0);
+    const grossLoss = trades.reduce((a, t) => a + Math.max(0, -net(t)), 0);
     const profitFactor = grossLoss > 0 ? Math.round((grossProfit / grossLoss) * 100) / 100 : null;
 
     let peak = 0;
     let cumPnl = 0;
     let maxDrawdown = 0;
     for (const t of trades) {
-      cumPnl += t.pnl ?? 0;
+      cumPnl += net(t);
       if (cumPnl > peak) peak = cumPnl;
       const drawdown = peak - cumPnl;
       if (drawdown > maxDrawdown) maxDrawdown = drawdown;
@@ -134,10 +139,10 @@ export class AnalyticsService {
 
     let streak = 0;
     const last = trades[trades.length - 1];
-    const isWin = (pnl: number | null) => (pnl ?? 0) > 0;
-    const direction = isWin(last.pnl);
+    const isWin = (t: (typeof trades)[number]) => net(t) > 0;
+    const direction = isWin(last);
     for (let i = trades.length - 1; i >= 0; i--) {
-      if (isWin(trades[i].pnl) === direction) streak++;
+      if (isWin(trades[i]) === direction) streak++;
       else break;
     }
     if (!direction) streak = -streak;
@@ -148,7 +153,7 @@ export class AnalyticsService {
       const s = t.session as string;
       const g = sessionMap.get(s) ?? { wins: 0, losses: 0, count: 0 };
       g.count++;
-      if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
+      if (net(t) > 0) g.wins++; else if (net(t) < 0) g.losses++;
       sessionMap.set(s, g);
     }
     let topSession = '-';
@@ -167,7 +172,7 @@ export class AnalyticsService {
       const h = new Date(t.tradedAt).getHours();
       const g = hourMap.get(h) ?? { wins: 0, losses: 0, count: 0 };
       g.count++;
-      if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
+      if (net(t) > 0) g.wins++; else if (net(t) < 0) g.losses++;
       hourMap.set(h, g);
     }
     let topHourNum = -1;
@@ -209,6 +214,7 @@ export class AnalyticsService {
         select: {
           setupId: true,
           pnl: true,
+          commission: true,
           riskReward: true,
           setup: { select: { title: true, color: true } },
         },
@@ -226,8 +232,8 @@ export class AnalyticsService {
         title: t.setup.title, color: t.setup.color, pnl: 0, rr: [], count: 0, wins: 0, losses: 0,
       };
       g.count++;
-      g.pnl += t.pnl ?? 0;
-      if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
+      g.pnl += net(t);
+      if (net(t) > 0) g.wins++; else if (net(t) < 0) g.losses++;
       if (t.riskReward) g.rr.push(t.riskReward);
       grouped.set(t.setupId, g);
     }
@@ -238,7 +244,9 @@ export class AnalyticsService {
       color: g.color,
       count: g.count,
       pnl: g.pnl,
-      avgRR: g.rr.length ? g.rr.reduce((a, b) => a + b, 0) / g.rr.length : 0,
+      // null quand aucun trade du setup n'a de R:R (sans stop ni objectif, cas des trades
+      // synchronisés) : un « 0.00 » laisserait croire à un R:R nul mesuré.
+      avgRR: g.rr.length ? g.rr.reduce((a, b) => a + b, 0) / g.rr.length : null,
       winRate: (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : null,
     }));
   }
@@ -251,6 +259,7 @@ export class AnalyticsService {
         emotion: true,
         tradeSession: { select: { moodStart: true } },
         pnl: true,
+        commission: true,
         riskReward: true,
       },
     });
@@ -264,8 +273,8 @@ export class AnalyticsService {
       if (!emotion) continue; // non renseignée → exclue des répartitions
       const g = grouped.get(emotion) ?? { pnl: 0, rr: [], count: 0, wins: 0, losses: 0 };
       g.count++;
-      g.pnl += t.pnl ?? 0;
-      if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
+      g.pnl += net(t);
+      if (net(t) > 0) g.wins++; else if (net(t) < 0) g.losses++;
       if (t.riskReward) g.rr.push(t.riskReward);
       grouped.set(emotion, g);
     }
@@ -281,7 +290,7 @@ export class AnalyticsService {
   private async computeByHour(userId: string, accountId?: string) {
     const trades = await this.prisma.trade.findMany({
       where: { userId, ...this.accCond(accountId), pnl: { not: null } },
-      select: { tradedAt: true, pnl: true },
+      select: { tradedAt: true, pnl: true, commission: true },
     });
 
     const DAY_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
@@ -296,7 +305,7 @@ export class AnalyticsService {
       const key = `${day}:${hour}`;
       const g = grouped.get(key) ?? { count: 0, wins: 0, losses: 0, day, hour };
       g.count++;
-      if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
+      if (net(t) > 0) g.wins++; else if (net(t) < 0) g.losses++;
       grouped.set(key, g);
     }
 
@@ -312,7 +321,7 @@ export class AnalyticsService {
     const [trades, user] = await Promise.all([
       this.prisma.trade.findMany({
         where: { userId, ...this.accCond(accountId), pnl: { not: null } },
-        select: { tradedAt: true, pnl: true },
+        select: { tradedAt: true, pnl: true, commission: true },
         orderBy: { tradedAt: 'asc' },
       }),
       this.prisma.user.findUnique({
@@ -328,7 +337,7 @@ export class AnalyticsService {
 
     let cumPnl = 0;
     const points = trades.map((t) => {
-      cumPnl += t.pnl ?? 0;
+      cumPnl += net(t);
       return { date: t.tradedAt, cumulativePnl: cumPnl };
     });
 
@@ -360,7 +369,7 @@ export class AnalyticsService {
               }
             : {}),
         },
-        select: { tradedAt: true, pnl: true },
+        select: { tradedAt: true, pnl: true, commission: true },
         orderBy: { tradedAt: 'asc' },
       }),
     ]);
@@ -384,7 +393,7 @@ export class AnalyticsService {
         .split('/')
         .reverse()
         .join('-'); // YYYY-MM-DD
-      byDay.set(key, (byDay.get(key) ?? 0) + (t.pnl ?? 0));
+      byDay.set(key, (byDay.get(key) ?? 0) + net(t));
     }
 
     const sortedDays = [...byDay.entries()].sort(([a], [b]) =>
@@ -425,7 +434,7 @@ export class AnalyticsService {
   ) {
     const trades = await this.prisma.trade.findMany({
       where: { userId, ...this.accCond(accountId), pnl: { not: null }, ...dateCond },
-      select: { tradedAt: true, pnl: true },
+      select: { tradedAt: true, pnl: true, commission: true },
       orderBy: { tradedAt: 'asc' },
     });
 
@@ -442,8 +451,8 @@ export class AnalyticsService {
       const dateKey = `${yr}-${mon}-${day}`;
       const g = byDate.get(dateKey) ?? { pnl: 0, count: 0, wins: 0, losses: 0 };
       g.count++;
-      g.pnl += t.pnl ?? 0;
-      if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
+      g.pnl += net(t);
+      if (net(t) > 0) g.wins++; else if (net(t) < 0) g.losses++;
       byDate.set(dateKey, g);
     }
 
@@ -485,10 +494,9 @@ export class AnalyticsService {
     for (const t of trades) {
       const g = grouped.get(t.asset) ?? { pnl: 0, count: 0, wins: 0, losses: 0 };
       g.count++;
-      // P&L NET par instrument = pnl − frais, cohérent avec le « P&L net » du dashboard.
-      // Le win/loss reste classé sur le pnl brut (même convention que le win rate global).
-      g.pnl += (t.pnl ?? 0) - (t.commission ?? 0);
-      if ((t.pnl ?? 0) > 0) g.wins++; else if ((t.pnl ?? 0) < 0) g.losses++;
+      // P&L NET par instrument, classé gagnant/perdant sur ce même net (PROMPT-213).
+      g.pnl += net(t);
+      if (net(t) > 0) g.wins++; else if (net(t) < 0) g.losses++;
       grouped.set(t.asset, g);
     }
 

@@ -14,7 +14,10 @@ import { DecimalPipe, TitleCasePipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
-import { LucideAngularModule, X } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideX as X,
+} from '@lucide/angular';
 import { Trade } from '../../core/stores/trades.store';
 import {
   CreateTradeDto,
@@ -23,6 +26,7 @@ import {
 } from '../../core/api/trades.api';
 import { CreateTradeSchema } from '../../core/schemas/trade.schema';
 import { SetupsStore } from '../../core/stores/setups.store';
+import { PnlFormatPipe } from '../../shared/pipes';
 
 const EMOTIONS: NonNullable<Trade['emotion']>[] = [
   'CONFIDENT',
@@ -55,8 +59,7 @@ type NumericField =
 
 @Component({
   selector: 'mtc-trade-form',
-  standalone: true,
-  imports: [FormsModule, TitleCasePipe, DecimalPipe, LucideAngularModule],
+  imports: [FormsModule, TitleCasePipe, DecimalPipe, LucideDynamicIcon, PnlFormatPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './trade-form.component.html',
   styleUrl: './trade-form.component.css',
@@ -417,7 +420,9 @@ export class TradeFormComponent {
     }
     this.form.update((f) => ({
       ...f,
-      pnl: this.pnlNet() ?? this.autoPnl(),
+      // P&L BRUT : les frais partent dans `commission` et le net est calculé à la lecture.
+      // Envoyer le net ici faisait déduire les frais deux fois (PROMPT-213).
+      pnl: this.form().pnl ?? this.autoPnl(),
       riskReward: this.autoRR(),
       tradedAt: tradedAtIso,
     }));

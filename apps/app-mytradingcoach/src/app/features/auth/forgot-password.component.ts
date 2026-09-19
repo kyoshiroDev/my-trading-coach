@@ -12,7 +12,6 @@ import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'mtc-forgot-password',
-  standalone: true,
   imports: [FormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './login.component.css',

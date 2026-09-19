@@ -5,7 +5,13 @@ import {
 import { DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, filter, interval, of, startWith, switchMap } from 'rxjs';
-import { LucideAngularModule, Play, Pause, Trash2, RefreshCw } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucidePlay as Play,
+  LucidePause as Pause,
+  LucideTrash2 as Trash2,
+  LucideRefreshCw as RefreshCw,
+} from '@lucide/angular';
 import { VpsApi, VpsStats, DockerContainer, HealthPoint } from '../../core/api/vps.api';
 import { AdminAuthService } from '../../core/auth/admin-auth.service';
 
@@ -17,8 +23,7 @@ const GB = 1_073_741_824;
 
 @Component({
   selector: 'mtc-admin-surveillance',
-  standalone: true,
-  imports: [DecimalPipe, LucideAngularModule],
+  imports: [DecimalPipe, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './surveillance.component.css',
   template: `
@@ -26,7 +31,7 @@ const GB = 1_073_741_824;
       <div class="page-head">
         <div class="page-title">Surveillance</div>
         <button class="refresh-tag refresh-btn" (click)="refresh()" [disabled]="loadingStats()" aria-label="Forcer le refresh">
-          <lucide-icon [img]="RefreshIcon" [size]="12" /> 15s ⟳
+          <svg [lucideIcon]="RefreshIcon" [size]="12"></svg> 15s ⟳
         </button>
       </div>
 
@@ -142,8 +147,8 @@ const GB = 1_073_741_824;
           <div class="drawer-head">
             <span class="card-label">Logs · {{ lc }}</span>
             <div class="drawer-acts">
-              <button class="icon-btn" (click)="togglePause()" [title]="paused() ? 'Reprendre' : 'Pause'"><lucide-icon [img]="paused() ? PlayIcon : PauseIcon" [size]="12" /></button>
-              <button class="icon-btn" (click)="clearLines()" title="Vider"><lucide-icon [img]="TrashIcon" [size]="12" /></button>
+              <button class="icon-btn" (click)="togglePause()" [title]="paused() ? 'Reprendre' : 'Pause'"><svg [lucideIcon]="paused() ? PlayIcon : PauseIcon" [size]="12"></svg></button>
+              <button class="icon-btn" (click)="clearLines()" title="Vider"><svg [lucideIcon]="TrashIcon" [size]="12"></svg></button>
               <button class="modal-x" (click)="closeLogs()">✕</button>
             </div>
           </div>
