@@ -332,12 +332,15 @@ function quantityFor(r: Rand, asset: Sym, setup: SetupTitle): number {
 
 function generate(now: Date, seed: number): DemoDay[] {
   const r = rng(seed);
-  // Jours ouvrés J-2..J-42 ; J-1 et J-0 sont construits à part (carte « Hier », session live).
+  // JOURS OUVRÉS UNIQUEMENT (lundi-vendredi), y compris « aujourd'hui » et le dernier jour :
+  // les futures ne tradent pas le week-end. Le samedi / dimanche, pas de session live ni de trade
+  // du jour. « lastDay » = dernier jour ouvré avant aujourd'hui (carte « Hier », récap).
+  const isWeekday = (d: number) => { const wd = dayAt(now, d, 12, 0).getDay(); return wd !== 0 && wd !== 6; };
+  const tradesToday = isWeekday(0);
+  let lastDay = 1;
+  while (!isWeekday(lastDay)) lastDay++;
   const weekdays: number[] = [];
-  for (let d = DEMO_WINDOW_DAYS; d >= 2; d--) {
-    const wd = dayAt(now, d, 12, 0).getDay();
-    if (wd !== 0 && wd !== 6) weekdays.push(d);
-  }
+  for (let d = DEMO_WINDOW_DAYS; d > lastDay; d--) if (isWeekday(d)) weekdays.push(d);
   // Journée de revenge : premier jour ouvré à ~3 semaines.
   const revengeDay = weekdays.find((d) => d <= 18) ?? weekdays[Math.floor(weekdays.length / 2)];
   const normalDays = weekdays.filter((d) => d !== revengeDay);
@@ -395,16 +398,16 @@ function generate(now: Date, seed: number): DemoDay[] {
     days.push({ daysAgo: d, account: 'apex', moodStart: 'STRESSED', moodEnd: 'TIRED', kind: 'revenge', trades: [t1, t2, t3] });
   }
 
-  // Hier (J-1) : journée propre, légèrement verte (carte « Hier » + récap).
+  // Dernier jour ouvré (J-1, ou le vendredi le week-end / le lundi) : journée propre, légèrement verte.
   {
-    const d = 1;
+    const d = lastDay;
     const a = buildTrade(r, { account: 'apex', setup: 'Breakout', win: true, asset: 'MNQ', quantity: 3, at: dayAt(now, d, 9, 22), daysAgo: d, moodStart: 'FOCUSED', emotion: 'FOCUSED' });
     const b = buildTrade(r, { account: 'apex', setup: 'Pullback', win: false, asset: 'MES', quantity: 2, at: dayAt(now, d, 15, 47), daysAgo: d, moodStart: 'FOCUSED', lossMult: 0.75, emotion: null });
     days.push({ daysAgo: d, account: 'apex', moodStart: 'FOCUSED', moodEnd: 'CONFIDENT', kind: 'yesterday', trades: [a, b] });
   }
 
-  // Aujourd'hui (J-0) : session ACTIVE, trades placés AVANT `now` (jamais dans le futur).
-  {
+  // Aujourd'hui (J-0), jour ouvré seulement : session ACTIVE, trades placés AVANT `now`.
+  if (tradesToday) {
     const startOfDay = new Date(now); startOfDay.setHours(0, 0, 0, 0);
     const clamp = (ms: number) => new Date(Math.max(startOfDay.getTime() + 5 * 60_000, ms));
     const a = buildTrade(r, { account: 'apex', setup: 'Breakout', win: true, asset: 'MNQ', quantity: 3, at: clamp(now.getTime() - 100 * 60_000), daysAgo: 0, moodStart: 'FOCUSED', emotion: 'CONFIDENT' });
@@ -414,7 +417,25 @@ function generate(now: Date, seed: number): DemoDay[] {
 
   days.sort((x, y) => y.daysAgo - x.daysAgo);
   gradeAll(days);
+  assertDemoCalendar(days);
   return days;
+}
+
+/**
+ * Garde-fou (PROMPT-215) : la démo montre un trader de futures d'indices US. Aucun trade un
+ * samedi ou un dimanche, aucun actif hors MES / MNQ / ES / NQ. Appelé avant TOUTE écriture :
+ * une régression fait échouer le seed au lieu d'afficher une démo incohérente.
+ */
+export function assertDemoCalendar(days: { trades: { tradedAt: Date; asset: string }[] }[]): void {
+  for (const t of days.flatMap((d) => d.trades)) {
+    const wd = t.tradedAt.getDay();
+    if (wd === 0 || wd === 6) {
+      throw new Error(`Seed démo : trade un week-end (${t.tradedAt.toISOString()}), refusé.`);
+    }
+    if (!(t.asset in INSTRUMENTS)) {
+      throw new Error(`Seed démo : actif ${t.asset} hors futures d'indices US, refusé.`);
+    }
+  }
 }
 
 /** Note d'exécution, comme en prod : barème A (stop) par trade, barème B (comportemental) par compte. */
@@ -513,6 +534,7 @@ export interface DemoSeedResult {
 /** Seed/refresh complet du compte démo. `prisma` = PrismaService ou PrismaClient adapter. */
 export async function seedDemo(prisma: PrismaClient, now: Date = new Date()): Promise<DemoSeedResult> {
   const { days, stats } = buildDemoDataset(now);
+  assertDemoCalendar(days); // aucune écriture si un trade tombe un week-end ou hors futures
   const password = await argon2.hash(`demo-${Date.now()}-${Math.random()}`);
 
   const user = await prisma.user.upsert({
