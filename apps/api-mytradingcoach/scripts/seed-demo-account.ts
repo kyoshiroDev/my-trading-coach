@@ -16,7 +16,8 @@ const prisma = new PrismaClient({ adapter } as ConstructorParameters<typeof Pris
 async function main() {
   const res = await seedDemo(prisma);
   console.log(`✅ Seed démo terminé : ${res.email}`);
-  console.log(`   ${res.trades} trades · WR ${res.winRate}% · P&L +$${res.pnl}`);
+  console.log(`   ${res.trades} trades · WR net ${res.winRate}% · brut ${res.grossPnl} $ · frais ${res.fees} $ · net ${res.pnl} $`);
+  console.log(`   ${res.redDays}/${res.tradingDays} jours rouges`);
   console.log(`   ${res.sessions} sessions · ${res.recaps} daily recaps · ${res.debriefs} weekly debriefs`);
 }
 

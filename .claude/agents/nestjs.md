@@ -575,7 +575,9 @@ Filets posés par `DemoSeedCron` (`modules/admin/demo-seed.cron.ts`) :
 
 Invariants verrouillés par `demo-seed-idempotence.spec.ts` : purge **avant** recréation
 et **scopée `userId`** (un re-run remplace, il n'empile pas) · tous les trades dans les
-`DEMO_WINDOW_DAYS` (30) derniers jours · J-0 et J-1 peuplés · session du jour ACTIVE ·
+`DEMO_WINDOW_DAYS` (42, soit 6 semaines) derniers jours, la vue « 1M » restant pleine · J-0 et
+J-1 peuplés · session du jour ACTIVE, démarrée aujourd'hui, **aucun trade après `now`** (même
+quand le cron tourne à 03:20 : les trades du jour sont calés avant l'heure du run) ·
 P&L total < 15 % du capital et pertes visibles (sobriété AMF : on montre la
 fonctionnalité, jamais une performance). Le capital n'y est **jamais en dur** : les tests
 le relisent depuis l'upsert du seed, sinon chaque rééquilibrage (25 000 → 55 000) fausse
@@ -588,12 +590,29 @@ Le seed créait 56 trades mais **aucun `TradingAccount`** : trades « flottants 
 pendant que « Mes comptes » et le sélecteur agrégé, qui passent par les comptes,
 affichaient **0 $ / 0 trade / 0 compte**. Deux pages qui se contredisent.
 
-`DEMO_ACCOUNTS` crée 2 comptes ACTIVE et route les trades par actif :
-`Apex 50k · Éval` (EVALUATION, futures purs MNQ/MES/GC) et
-`Compte perso · Forex & Crypto` (PERSONAL, EUR/USD + BTC/USDT). Une éval futures qui
-loggerait de l'EUR/USD spot ou du BTC n'existe pas — d'où le routage par actif, pas
-« tout sur la prop firm ». Deux comptes plutôt qu'un : le multi-comptes est l'une des
-ancres Premium (`plans.md`).
+`DEMO_ACCOUNTS` crée 2 comptes prop firm ACTIVE en USD (PROMPT-215) : `Apex 50k · Éval`
+(EVALUATION) et `Tradeify 50k · Funded` (FUNDED), **futures d'indices US uniquement**
+(MES / MNQ, quelques ES / NQ). Le compte perso Forex & Crypto et l'or ont été retirés : la
+démo s'adresse à des traders de futures prop firm. Deux comptes plutôt qu'un : le
+multi-comptes est l'une des ancres Premium (`plans.md`).
+
+**Un trader réaliste, pas un gagnant parfait (PROMPT-215, validé par Greg).** `buildDemoDataset(now)`
+(pur, sans base) génère ~6 semaines de jours ouvrés, 2 à 4 trades par jour, frais réels
+(1,24 $ A/R par micro, 4,50 $ par mini) dans `commission`, `pnl` brut. Puis il cherche,
+de façon déterministe, le premier tirage qui respecte `meetsTargets` :
+- win rate NET 52-57 % ;
+- 35-45 % de journées rouges ;
+- brut 1 200-1 800 $, net 650-1 150 $, frais 470-700 $ ;
+- setups contrastés : Breakout le meilleur, Reversal perdant, **Scalping positif en brut
+  et négatif en net** ;
+- éval Apex en cours, drawdown visible mais sous 50 % du seuil ;
+- une journée de **revenge trading** : ré-entrées < 2 min, taille doublée, sans stop.
+
+La note d'exécution est calculée comme en prod (barème A par trade, barème B par compte).
+Il y a un débrief hebdo par semaine terminée (sections par compte) et un récap par jour de
+trading, avec des textes dérivés des vrais chiffres générés. Le texte figé `DEMO_INSIGHTS`
+(`ai.service`) y est aligné, en qualitatif : les chiffres varient légèrement selon le jour
+du run.
 
 **Règles prop firm : de vraies valeurs, jamais un palier inventé** (PROMPT-195).
 Le compte porte les règles réelles Apex 50k Full Evaluation — base 50 000, objectif
@@ -613,7 +632,7 @@ déjà passée se lirait comme une promesse de réussite.
 **Contrat de cohérence, à ne pas casser** :
 
 ```
-Σ startingBalance des comptes ACTIVE === PROFILE.startingCapital   (50 000 + 5 000 = 55 000)
+Σ startingBalance des comptes ACTIVE === PROFILE.startingCapital   (50 000 + 50 000 = 100 000)
 ```
 
 `dashboard.baseCapital` somme les `startingBalance` **dès qu'un compte existe** et ne

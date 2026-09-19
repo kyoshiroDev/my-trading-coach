@@ -74,7 +74,7 @@ export class DemoSeedCron implements OnModuleInit {
   private async reseed(reason: string): Promise<void> {
     const res = await this.demoSeed.run();
     this.logger.log(
-      `Démo re-seedée (${reason}) : ${res.trades} trades sur ${res.accounts} comptes · WR ${res.winRate}% · P&L $${res.pnl}`,
+      `Démo re-seedée (${reason}) : ${res.trades} trades sur ${res.accounts} comptes · WR net ${res.winRate}% · net ${res.pnl} $ (brut ${res.grossPnl} $, frais ${res.fees} $)`,
     );
   }
 }
