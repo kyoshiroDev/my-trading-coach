@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { provideRouter } from '@angular/router';
+import { ToastService } from '../../core/services/toast.service';
 import { BecomeAmbassadorComponent } from './become-ambassador.component';
 import { ReferralApi } from '../../core/api/referral.api';
 
@@ -62,7 +63,8 @@ describe('BecomeAmbassadorComponent', () => {
     const { cmp } = setup({ applyAmbassador: vi.fn(() => throwError(() => new Error('boom'))) });
     cmp.socials.set('@montrading');
     cmp.submit();
-    expect(cmp.error()).toBe(true);
+    // Erreur d'envoi = feedback transitoire → toast (PROMPT-210), plus de bandeau inline.
+    expect(TestBed.inject(ToastService).visible()[0]).toMatchObject({ type: 'error' });
     expect(cmp.submitted()).toBe(false);
   });
 });

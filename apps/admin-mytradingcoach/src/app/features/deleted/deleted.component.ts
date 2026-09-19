@@ -9,7 +9,6 @@ import { CHART_COLORS, gridAxis, noLegend } from '../../shared/charts/chart-them
 
 @Component({
   selector: 'mtc-admin-deleted',
-  standalone: true,
   imports: [DatePipe, ChartCanvasComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './deleted.component.css',

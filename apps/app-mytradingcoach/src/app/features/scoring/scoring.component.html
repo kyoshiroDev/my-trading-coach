@@ -3,7 +3,7 @@
 <div class="content">
   @if (!userStore.isPremium()) {
     <div class="premium-paywall">
-      <div class="paywall-icon"><lucide-icon [img]="TrophyIcon" [size]="40" /></div>
+      <div class="paywall-icon"><svg [lucideIcon]="TrophyIcon" [size]="40"></svg></div>
       <h2 class="paywall-title">Fonctionnalité Premium</h2>
       <p class="paywall-desc">
         Le Trader Score analyse tes performances globales et te donne un score
@@ -27,7 +27,7 @@
         <!-- Left : score ring + bars -->
         <div class="card">
           <div class="card-header">
-            <div class="card-title"><lucide-icon [img]="TrophyIcon" [size]="16" /> Score global du trader</div>
+            <div class="card-title"><svg [lucideIcon]="TrophyIcon" [size]="16"></svg> Score global du trader</div>
           </div>
 
           <div class="score-ring">

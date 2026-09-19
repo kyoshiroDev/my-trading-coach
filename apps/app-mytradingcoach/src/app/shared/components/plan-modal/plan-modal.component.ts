@@ -7,17 +7,23 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { LucideAngularModule, Check, X, Zap } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideCheck as Check,
+  LucideX as X,
+  LucideZap as Zap,
+} from '@lucide/angular';
 import { BillingApi } from '../../../core/api/billing.api';
 import { PRICING } from '../../../core/constants/pricing.const';
+import { ToastService } from '../../../core/services/toast.service';
+import { apiErrorMessage } from '../../../core/utils/api-error';
 
 type Interval = 'monthly' | 'yearly';
 type PlanId = `premium_${Interval}`;
 
 @Component({
   selector: 'mtc-plan-modal',
-  standalone: true,
-  imports: [LucideAngularModule],
+  imports: [LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './plan-modal.component.html',
   styleUrl: './plan-modal.component.css',
@@ -27,6 +33,7 @@ export class PlanModalComponent {
 
   private readonly billingApi = inject(BillingApi);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
 
   protected readonly PRICING = PRICING;
 
@@ -78,7 +85,11 @@ export class PlanModalComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => { window.location.href = res.data.url; },
-        error: () => this.isLoading.set(false),
+        // AVANT : échec muet, le bouton se réactivait sans explication.
+        error: (err) => {
+          this.isLoading.set(false);
+          this.toast.error(apiErrorMessage(err, 'Le paiement n’a pas pu démarrer. Réessaie dans un instant.'));
+        },
       });
   }
 }

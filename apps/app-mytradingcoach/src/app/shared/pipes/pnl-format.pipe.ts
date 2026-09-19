@@ -1,27 +1,21 @@
 import { Pipe, PipeTransform, inject } from '@angular/core';
-import { UserStore } from '../../core/stores/user.store';
+import { MoneyService } from '../../core/services/money.service';
 
-@Pipe({ name: 'pnlFormat', standalone: true, pure: false })
+/**
+ * Montant signé dans la devise NATIVE du compte, sans conversion ; `%` optionnel.
+ * `{{ total | pnlFormat }}` → devise de l'écran ; `{{ t.pnl | pnlFormat : t.entry : t.accountId }}`
+ * → devise du compte du trade (lignes de trades, cf. PROMPT-214).
+ */
+@Pipe({ name: 'pnlFormat', pure: false })
 export class PnlFormatPipe implements PipeTransform {
-  private readonly userStore = inject(UserStore);
+  private readonly money = inject(MoneyService);
 
-  transform(value: number | null | undefined, entry?: number | null): string {
+  transform(value: number | null | undefined, entry?: number | null, accountId?: string | null): string {
     if (value == null) return '-';
 
-    const currency = this.userStore.user()?.currency ?? 'USD';
-    const rate = this.userStore.user()?.currencyRate ?? 1;
-    const converted = value * rate;
-    const symbol = currency === 'EUR' ? '€' : '$';
-
-    const sign = converted >= 0 ? '+' : '-';
-    const formatted = Math.abs(converted).toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-    let result = `${sign}${symbol}${formatted}`;
+    let result = accountId ? this.money.formatFor(accountId, value) : this.money.format(value);
 
     if (entry != null && entry > 0) {
-      // Le % reste basé sur la valeur originale (ratio inchangé par la conversion)
       const pct = (value / entry) * 100;
       const pctSign = pct >= 0 ? '+' : '';
       result += ` (${pctSign}${pct.toFixed(2)}%)`;

@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
-import { StripeService } from '../stripe/stripe.service';
+import { StripeCustomerService } from '../stripe/stripe-customer.service';
 import { buildStatementPdf } from './referral-statement.pdf';
 
 const REFERRAL_BASE = 'https://mytradingcoach.app';
@@ -36,7 +36,7 @@ export class ReferralService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly resend: ResendService,
-    private readonly stripe: StripeService,
+    private readonly stripeCustomers: StripeCustomerService,
   ) {}
 
   // ── ÉTAPE 1 : tout le monde peut être parrain ──────────────────────────────
@@ -108,7 +108,7 @@ export class ReferralService {
       (f) => f.plan !== 'FREE' && f.stripeSubscriptionStatus === 'active',
     ).length;
 
-    const creditAvailable = await this.stripe.getCustomerBalanceCreditEur(userId);
+    const creditAvailable = await this.stripeCustomers.getCustomerBalanceCreditEur(userId);
 
     return {
       referralCode: code,

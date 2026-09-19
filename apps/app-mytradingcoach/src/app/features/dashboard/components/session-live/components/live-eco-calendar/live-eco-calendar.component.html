@@ -1,0 +1,165 @@
+<div class="cal-col">
+
+  <!-- Calendrier éco -->
+  <div class="cal-card">
+    <div class="col-title-row">
+      <div class="col-title">
+        <svg [lucideIcon]="CalIcon" [size]="14" class="ct-ic"></svg> Calendrier économique
+        <div class="pulse-dot"></div>
+      </div>
+    </div>
+
+    @if (showReleaseAlert() && newReleases().length > 0) {
+      <div class="eco-release-alert" data-testid="eco-release-alert">
+        <div class="era-header">
+          <span class="era-dot"></span>
+          <span class="era-title">
+            🔔 {{ newReleases().length === 1 ? 'Résultat publié' : newReleases().length + ' résultats publiés' }}
+          </span>
+          <button class="era-close" (click)="showReleaseAlert.set(false)">×</button>
+        </div>
+        @for (ev of newReleases(); track ev.name) {
+          <div class="era-event">
+            <div class="era-event-name">{{ translate(ev.name) }} <span class="era-currency">{{ ev.currency }}</span></div>
+            <div class="era-values">
+              <span class="era-actual"
+                    [class.positive]="(ev.actual ?? 0) > (ev.estimate ?? 0)"
+                    [class.negative]="(ev.actual ?? 0) < (ev.estimate ?? 0)">
+                Actuel : {{ ev.actual }}{{ ev.unit }}
+              </span>
+              @if (ev.estimate !== null) {
+                <span class="era-estimate">Prévu : {{ ev.estimate }}{{ ev.unit }}</span>
+              }
+            </div>
+          </div>
+        }
+        @switch (releaseAlertState()) {
+          @case ('analyzing') {
+            <div class="era-ai-loading" data-testid="era-ai-loading">
+              <span class="era-spin">⟳</span> Ton compagnon analyse l'impact...
+            </div>
+          }
+          @case ('ready') {
+            <div class="era-ai-ready" data-testid="era-ai-ready">
+              ✦ Analyse prête : détail dans le calendrier ci-dessous ↓
+            </div>
+          }
+          @case ('error') {
+            <div class="era-ai-error">
+              Analyse indisponible pour le moment.
+            </div>
+          }
+        }
+      </div>
+    }
+
+    @if (!ecoCalendar()) {
+      <div style="font-size:12px;color:var(--text-3);text-align:center;padding:20px 0;">
+        Calendrier économique indisponible pour le moment.
+      </div>
+    } @else {
+      <div class="cal-events-list">
+        @for (event of visibleEcoEvents(); track event.name) {
+          <div
+            class="eco-live-event"
+            [class.released]="event.isReleased"
+            [class.dim]="!event.isReleased && isOutsideSession(event.time)"
+            [class.expandable]="event.isReleased"
+            [class.expanded]="expandedEcoEvent() === event.name"
+          >
+            <div class="eco-live-header"
+                 [attr.role]="event.isReleased ? 'button' : null"
+                 [attr.tabindex]="event.isReleased ? 0 : null"
+                 (click)="event.isReleased && toggleEcoEvent(event.name)"
+                 (keyup.enter)="event.isReleased && toggleEcoEvent(event.name)">
+              <span class="eco-time">{{ formatTime(event.time) }}</span>
+              <div class="eco-impact-bar" [class.high]="event.impact === 'high'"></div>
+              <span class="eco-flag-sm">{{ getFlag(event) }}</span>
+              <div class="eco-name-wrap">
+                <span class="eco-name">{{ translate(event.name) }}</span>
+                <span class="eco-sub">
+                  @if (event.isReleased && event.actual !== null) {
+                    <span class="eco-sub-actual">Actuel : {{ event.actual }}{{ event.unit ?? '' }}</span>
+                    @if (event.estimate !== null || event.previous !== null) { <span class="eco-sub-sep">·</span> }
+                  }
+                  @if (event.estimate !== null) {
+                    <span>Prévu : {{ event.estimate }}{{ event.unit ?? '' }}</span>
+                    @if (event.previous !== null) { <span class="eco-sub-sep">·</span> }
+                  }
+                  @if (event.previous !== null) {
+                    <span>Préc. : {{ event.previous }}{{ event.unit ?? '' }}</span>
+                  }
+                </span>
+              </div>
+              <span class="eco-currency-tag" [attr.title]="event.currency">{{ impactedInstruments(event.currency) }}</span>
+              <span class="eco-impact-badge" [class.high]="event.impact === 'high'">
+                {{ event.impact === 'high' ? 'Fort' : 'Moyen' }}
+              </span>
+              @if (event.isReleased) {
+                <svg [lucideIcon]="ChevronIcon" [size]="14" class="eco-chevron"></svg>
+              } @else {
+                <span class="eco-countdown">dans {{ minutesUntil(event.time) }} min</span>
+              }
+            </div>
+
+            @if (event.isReleased && expandedEcoEvent() === event.name) {
+              <div class="eco-live-released">
+                <div class="eco-result-row">
+                  <div class="eco-result-item">
+                    <span>Résultat</span>
+                    <span class="eco-result-val green">{{ event.actual }}</span>
+                  </div>
+                  @if (event.estimate !== null) {
+                    <div class="eco-result-item">
+                      <span>Prévu</span>
+                      <span class="eco-result-val" style="color:var(--text-2);">{{ event.estimate }}</span>
+                    </div>
+                  }
+                  @if (event.previous !== null) {
+                    <div class="eco-result-item">
+                      <span>Précédent</span>
+                      <span class="eco-result-val" style="color:var(--text-2);">{{ event.previous }}</span>
+                    </div>
+                  }
+                  @if (event.actual !== null && event.estimate !== null) {
+                    <div class="eco-result-item">
+                      <span>Surprise</span>
+                      <span class="eco-result-val" [class.green]="(event.actual - event.estimate) > 0">
+                        {{ event.actual - event.estimate > 0 ? '+' : '' }}{{ (event.actual - event.estimate).toFixed(2) }} {{ event.actual > event.estimate ? '▲' : '▼' }}
+                      </span>
+                    </div>
+                  }
+                </div>
+
+                @if (getEventAnalysis(event.name)) {
+                  <div class="eco-ai-block-sm">
+                    <span style="font-size:13px;flex-shrink:0;">✦</span>
+                    <span>{{ getEventAnalysis(event.name)!.interpretation }}</span>
+                  </div>
+                  <div class="sentiment-chips">
+                    @for (s of getEventAnalysis(event.name)!.assetSentiments; track s.asset) {
+                      <div class="chip" [class]="s.sentiment">
+                        {{ s.sentiment === 'bull' ? '▲' : s.sentiment === 'bear' ? '▼' : '-' }}
+                        {{ s.asset }} {{ s.sentiment.toUpperCase() }}
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        } @empty {
+          <div class="cal-empty">
+            <div class="cal-empty-icon">📅</div>
+            <div class="cal-empty-title">Aucun événement</div>
+            <div class="cal-empty-sub">Pas d'annonce économique pour cette session.</div>
+          </div>
+        }
+        @if (hiddenEcoCount() > 0) {
+          <div class="cal-more">+{{ hiddenEcoCount() }} autre{{ hiddenEcoCount() > 1 ? 's' : '' }} événement{{ hiddenEcoCount() > 1 ? 's' : '' }} hors fenêtre de session</div>
+        }
+      </div>
+    }
+  </div>
+
+</div>

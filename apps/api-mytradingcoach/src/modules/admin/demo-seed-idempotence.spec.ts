@@ -72,6 +72,7 @@ function fakePrisma(calls: Call[]) {
     setup: model('setup'),
     ecoEvent: model('ecoEvent'),
     tradingAccount: model('tradingAccount'),
+    brokerConnection: model('brokerConnection'),
   };
   return { prisma: prisma as unknown as PrismaClient, created };
 }
@@ -81,7 +82,7 @@ describe('seedDemo — re-seed idempotent (le cron quotidien ne doit pas empiler
     const calls: Call[] = [];
     await seedDemo(fakePrisma(calls).prisma);
 
-    for (const m of ['trade', 'tradeSession', 'tradingAccount', 'weeklyDebrief', 'dailyRecap']) {
+    for (const m of ['trade', 'tradeSession', 'tradingAccount', 'brokerConnection', 'weeklyDebrief', 'dailyRecap']) {
       const purge = calls.findIndex((c) => c.model === m && c.op === 'deleteMany');
       const firstCreate = calls.findIndex((c) => c.model === m && c.op === 'create');
       expect(purge, `${m} : aucune purge → un 2e run empilerait les données`).toBeGreaterThan(-1);
@@ -358,5 +359,24 @@ describe('seedDemo — sobriété AMF (montrer la fonctionnalité, pas une perfo
     expect(losses.length, 'Aucune perte affichée : démo malhonnête').toBeGreaterThan(0);
     expect(winRate).toBeGreaterThan(45);
     expect(winRate, 'Win rate trop beau pour être vrai').toBeLessThan(70);
+  });
+});
+
+describe('seedDemo — connexion Tradovate démo (PROMPT-207)', () => {
+  it('le compte prop firm apparaît connecté, sans aucun vrai token, et une seule connexion par run', async () => {
+    const calls: Call[] = [];
+    const { prisma, created } = fakePrisma(calls);
+    await seedDemo(prisma);
+
+    const connections = created['brokerConnection'] ?? [];
+    expect(connections).toHaveLength(1);
+    const [conn] = connections;
+    // Rattachée au compte futures (1er compte créé), jamais au user seul.
+    expect(conn['accountId']).toBe('tradingAccount-1');
+    expect(conn).toMatchObject({ provider: 'TRADOVATE', status: 'CONNECTED' });
+    expect(conn['lastSyncAt']).toBeInstanceOf(Date);
+    // Placeholder non déchiffrable : le compte démo ne synchronise jamais (DemoReadOnlyGuard).
+    expect(String(conn['accessTokenEnc']).startsWith('v1:')).toBe(false);
+    expect(conn['refreshTokenEnc']).toBeUndefined();
   });
 });

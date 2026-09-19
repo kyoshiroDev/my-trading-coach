@@ -9,12 +9,6 @@
 
 <div class="content">
 
-  <!-- Echec de suppression d'une ligne : sans ce bandeau, le clic sur la croix
-       ne produisait rien de visible et la ligne restait en place. -->
-  @if (deleteRowError(); as erreur) {
-    <div class="row-delete-error" role="alert" data-testid="delete-row-error">{{ erreur }}</div>
-  }
-
   <!-- ── Barre filtres ── -->
   <div class="filters-bar">
 
@@ -33,7 +27,7 @@
           <option value="LOSS">Loss</option>
           <option value="BREAKEVEN">Break-even</option>
         </select>
-        <lucide-icon class="fs-chev" [img]="ChevronDownIcon" [size]="10" />
+        <svg class="fs-chev" [lucideIcon]="ChevronDownIcon" [size]="10"></svg>
       </span>
 
       <!-- Setup (remplace les chips) -->
@@ -46,7 +40,7 @@
             <option [value]="s.id">{{ s.title }}</option>
           }
         </select>
-        <lucide-icon class="fs-chev" [img]="ChevronDownIcon" [size]="10" />
+        <svg class="fs-chev" [lucideIcon]="ChevronDownIcon" [size]="10"></svg>
       </span>
 
       <!-- Execution -->
@@ -61,7 +55,7 @@
           <option value="MAUVAIS">Mauvais</option>
           <option value="NONE">Non évaluée</option>
         </select>
-        <lucide-icon class="fs-chev" [img]="ChevronDownIcon" [size]="10" />
+        <svg class="fs-chev" [lucideIcon]="ChevronDownIcon" [size]="10"></svg>
       </span>
 
       <!-- Émotion (effective) -->
@@ -79,12 +73,12 @@
           <option value="TIRED">Fatigué</option>
           <option value="NONE">Non renseignée</option>
         </select>
-        <lucide-icon class="fs-chev" [img]="ChevronDownIcon" [size]="10" />
+        <svg class="fs-chev" [lucideIcon]="ChevronDownIcon" [size]="10"></svg>
       </span>
 
       @if (hasActiveFilters()) {
         <button class="filter-reset" (click)="resetFilters()" aria-label="Réinitialiser les filtres">
-          <lucide-icon [img]="XIcon" [size]="10" /> Réinitialiser
+          <svg [lucideIcon]="XIcon" [size]="10"></svg> Réinitialiser
         </button>
       }
 
@@ -100,7 +94,7 @@
         <button class="date-preset" [class.active]="datePreset() === 'month'" (click)="setDatePreset('month')">Mois</button>
         <button class="date-preset" [class.active]="datePreset() === 'all'" (click)="setDatePreset('all')">Tout</button>
         <button class="date-preset date-custom" [class.active]="datePreset() === 'custom'" (click)="toggleCustomDate()">
-          <lucide-icon [img]="CalendarIcon" [size]="11" />
+          <svg [lucideIcon]="CalendarIcon" [size]="11"></svg>
           Custom
         </button>
       </div>
@@ -116,14 +110,16 @@
       <button class="filter-chip import-btn"
         (click)="showImport.set(true)"
         title="Importer un CSV">
-        <lucide-icon [img]="UploadIcon" [size]="12" />
+        <svg [lucideIcon]="UploadIcon" [size]="12"></svg>
         CSV
       </button>
     </div>
   </div>
 
-  <!-- ── Résumé période ── -->
-  @if (periodStats(); as s) {
+  <!-- ── Résumé période ── (devises mêlées : pas de total, PROMPT-214) -->
+  @if (money.mixed()) {
+    <mtc-mixed-currency-notice />
+  } @else if (periodStats(); as s) {
     <div class="period-summary">
       <div class="period-stat">
         <span class="period-label">Trades</span>
@@ -139,7 +135,7 @@
       <div class="period-stat">
         <span class="period-label">P&L Net</span>
         <span class="period-value" data-testid="period-pnl-net" [style.color]="s.totalPnl >= 0 ? 'var(--green)' : 'var(--red)'">
-          {{ s.totalPnl >= 0 ? '+' : '' }}${{ s.totalPnl | number:'1.2-2' }}
+          {{ s.totalPnl | pnlFormat }}
         </span>
       </div>
       <div class="period-stat">
@@ -148,16 +144,16 @@
             text="Total des commissions et frais de la période, déjà déduits du P&L net." />
         </span>
         <span class="period-value" data-testid="period-fees" style="color:var(--red)">
-          -${{ s.totalCommissions | number:'1.2-2' }}
+          -{{ s.totalCommissions | money:2:false }}
         </span>
       </div>
       <div class="period-stat">
         <span class="period-label">Meilleur</span>
-        <span class="period-value" style="color:var(--green)">+${{ s.bestTrade | number:'1.2-2' }}</span>
+        <span class="period-value" style="color:var(--green)">{{ s.bestTrade | pnlFormat }}</span>
       </div>
       <div class="period-stat">
         <span class="period-label">Pire</span>
-        <span class="period-value" style="color:var(--red)">${{ s.worstTrade | number:'1.2-2' }}</span>
+        <span class="period-value" style="color:var(--red)">{{ s.worstTrade | pnlFormat }}</span>
       </div>
     </div>
   }
@@ -213,9 +209,9 @@
             <div class="week-accent" [style.background]="week.totalPnlNet >= 0 ? 'var(--green)' : 'var(--red)'"></div>
             <div class="week-toggle">
               @if (isWeekCollapsed(week.key, wi)) {
-                <lucide-icon [img]="ChevronRightIcon" [size]="14" />
+                <svg [lucideIcon]="ChevronRightIcon" [size]="14"></svg>
               } @else {
-                <lucide-icon [img]="ChevronDownIcon" [size]="14" />
+                <svg [lucideIcon]="ChevronDownIcon" [size]="14"></svg>
               }
             </div>
             <div class="week-label">{{ week.label }}</div>
@@ -223,18 +219,20 @@
               <span class="day-count">{{ week.count }} trades</span>
               <span class="day-dot">·</span>
               <span class="day-winrate">{{ week.winCount }}/{{ week.count }}</span>
+              @if (!money.mixed()) {
               <span class="day-dot">·</span>
               @if (week.totalCommission > 0) {
                 <span class="day-pnl" [class.positive]="week.totalPnlNet >= 0" [class.negative]="week.totalPnlNet < 0">
-                  {{ week.totalPnlNet >= 0 ? '+' : '' }}${{ week.totalPnlNet | number:'1.2-2' }}
+                  {{ week.totalPnlNet | pnlFormat }}
                 </span>
-                <span class="day-fees" title="Frais : -${{ week.totalCommission | number:'1.2-2' }}">
-                  -${{ week.totalCommission | number:'1.2-2' }} frais
+                <span class="day-fees" title="Frais : -{{ week.totalCommission | money:2:false }}">
+                  -{{ week.totalCommission | money:2:false }} frais
                 </span>
               } @else {
                 <span class="day-pnl" [class.positive]="week.totalPnl >= 0" [class.negative]="week.totalPnl < 0">
-                  {{ week.totalPnl >= 0 ? '+' : '' }}${{ week.totalPnl | number:'1.2-2' }}
+                  {{ week.totalPnl | pnlFormat }}
                 </span>
+              }
               }
             </div>
           </div>
@@ -249,9 +247,9 @@
             <div class="day-accent" [style.background]="day.totalPnlNet >= 0 ? 'var(--green)' : 'var(--red)'"></div>
             <div class="day-toggle">
               @if (collapsedDays().has(day.key)) {
-                <lucide-icon [img]="ChevronRightIcon" [size]="14" />
+                <svg [lucideIcon]="ChevronRightIcon" [size]="14"></svg>
               } @else {
-                <lucide-icon [img]="ChevronDownIcon" [size]="14" />
+                <svg [lucideIcon]="ChevronDownIcon" [size]="14"></svg>
               }
             </div>
             <div class="day-label">{{ day.label }}</div>
@@ -259,18 +257,20 @@
               <span class="day-count">{{ day.count }} trade{{ day.count > 1 ? 's' : '' }}</span>
               <span class="day-dot">·</span>
               <span class="day-winrate">{{ day.winCount }}/{{ day.count }}</span>
+              @if (!money.mixed()) {
               <span class="day-dot">·</span>
               @if (day.totalCommission > 0) {
                 <span class="day-pnl" [class.positive]="day.totalPnlNet >= 0" [class.negative]="day.totalPnlNet < 0">
-                  {{ day.totalPnlNet >= 0 ? '+' : '' }}${{ day.totalPnlNet | number:'1.2-2' }}
+                  {{ day.totalPnlNet | pnlFormat }}
                 </span>
-                <span class="day-fees" title="Frais : -${{ day.totalCommission | number:'1.2-2' }}">
-                  -${{ day.totalCommission | number:'1.2-2' }} frais
+                <span class="day-fees" title="Frais : -{{ day.totalCommission | money:2:false }}">
+                  -{{ day.totalCommission | money:2:false }} frais
                 </span>
               } @else {
                 <span class="day-pnl" [class.positive]="day.totalPnl >= 0" [class.negative]="day.totalPnl < 0">
-                  {{ day.totalPnl >= 0 ? '+' : '' }}${{ day.totalPnl | number:'1.2-2' }}
+                  {{ day.totalPnl | pnlFormat }}
                 </span>
+              }
               }
             </div>
             @if (canReassign()) {
@@ -278,14 +278,14 @@
                 title="Déplacer tous les trades de ce jour vers un autre compte"
                 (click)="$event.stopPropagation(); openReassign(day)"
                 (keydown.enter)="$event.stopPropagation(); openReassign(day)">
-                <lucide-icon [img]="ReassignIcon" [size]="12" />
+                <svg [lucideIcon]="ReassignIcon" [size]="12"></svg>
               </button>
             }
             <button class="day-delete-btn"
               title="Supprimer tous les trades de ce jour"
               (click)="$event.stopPropagation(); confirmDeleteDayKey.set(day.key)"
               (keydown.enter)="$event.stopPropagation(); confirmDeleteDayKey.set(day.key)">
-              <lucide-icon [img]="TrashIcon" [size]="12" />
+              <svg [lucideIcon]="TrashIcon" [size]="12"></svg>
             </button>
           </div>
 
@@ -301,7 +301,7 @@
                   <span class="td-price mono">{{ trade.entry }}</span>
                   <span class="td-price mono">{{ trade.exit ?? '-' }}</span>
                   <span class="td-pnl mono" data-testid="trade-pnl" [style.color]="trade.pnl | pnlColor">
-                    {{ trade.pnl | pnlFormat: trade.entry }}
+                    {{ trade.pnl | pnlFormat: trade.entry : trade.accountId }}
                   </span>
                   <span class="td-qty mono">{{ trade.quantity ?? 1 }}</span>
                   <span class="td-rr mono">
@@ -335,10 +335,10 @@
                   <span class="td-setup"><span class="setup-badge"><span class="setup-badge-dot" [style.background]="trade.setup.color"></span>{{ trade.setup.title }}</span></span>
                   <span class="td-actions">
                     <button class="btn-edit" (click)="openEditModal(trade)" title="Modifier">
-                      <lucide-icon [img]="PencilIcon" [size]="12" />
+                      <svg [lucideIcon]="PencilIcon" [size]="12"></svg>
                     </button>
                     <button class="btn-delete" data-testid="trade-delete" (click)="deleteTrade(trade.id)" title="Supprimer">
-                      <lucide-icon [img]="XIcon" [size]="12" />
+                      <svg [lucideIcon]="XIcon" [size]="12"></svg>
                     </button>
                   </span>
                 </div>
@@ -438,9 +438,6 @@
           </button>
         }
       </div>
-      @if (reassignError()) {
-        <p class="reassign-error">{{ reassignError() }}</p>
-      }
       <div class="confirm-modal-actions">
         <button class="confirm-btn-cancel"
           (click)="reassignDayKey.set(null)"

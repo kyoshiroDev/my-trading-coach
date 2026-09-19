@@ -1,0 +1,16 @@
+:host { display: block; }
+
+/* P&L par jour (barres divergentes depuis la ligne médiane) */
+.mtc-plday { display: flex; align-items: stretch; gap: 3px; height: 200px; }
+.mtc-plday-col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.mtc-plday-cell { flex: 1; position: relative; }
+.mtc-plday-cell::after { content: ""; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 8px; height: 2px; border-radius: 1px; background: var(--text-faint); opacity: 0.5; }
+.mtc-plday-bar { position: absolute; left: 15%; right: 15%; border-radius: 2px; }
+.mtc-plday-bar.pos { bottom: 50%; left: 50%; right: auto; width: 4px; transform: translateX(-50%); background: var(--green); box-shadow: 0 0 10px -3px var(--green); border-radius: 2px 2px 0 0; }
+.mtc-plday-bar.neg { top: 50%; left: 50%; right: auto; width: 4px; transform: translateX(-50%); background: var(--red); box-shadow: 0 0 10px -3px var(--red); border-radius: 0 0 2px 2px; }
+.mtc-plday-day { font-family: var(--font-mono); font-size: 8.5px; text-align: center; color: var(--text-faint); margin-top: 5px; }
+.mtc-plday-day.traded { color: var(--blue-bright); font-weight: 600; }
+/* Valeur P&L au-dessus (gain) / en dessous (perte) de chaque barre */
+.mtc-plday-val { position: absolute; left: 50%; transform: translateX(-50%); text-align: center; font-family: var(--font-mono); font-size: 9px; font-weight: 600; line-height: 1; white-space: nowrap; pointer-events: none; }
+.mtc-plday-val.pos { color: var(--green); margin-bottom: 2px; }
+.mtc-plday-val.neg { color: var(--red); margin-top: 2px; }

@@ -1,7 +1,7 @@
 # Agent Astro — landing-mytradingcoach
 
 ## Stack
-Astro 6 · Tailwind 4 · Static output · servi sur le VPS (conteneur nginx:alpine derrière Traefik,
+Astro 7 · Tailwind 4 · Static output · servi sur le VPS (conteneur nginx:alpine derrière Traefik,
 rsync depuis GitHub Actions vers `/opt/static/landing-prod`). Plus de Vercel.
 
 ---
@@ -78,6 +78,17 @@ Règles :
   logo *et* paragraphe « Divulgation d'affiliation » en section 7 de `disclaimer.astro`. Ne jamais
   retirer l'un sans l'autre, ni le lien sans les deux.
 
+### Annonce de la synchro Tradovate (PROMPT-211)
+
+- `Features.astro` (carte 07 « Synchro Tradovate & import CSV ») et `FAQ.astro` (« Quels brokers
+  sont compatibles ? ») présentent la **connexion Tradovate** (synchro auto des trades + frais, en
+  lecture seule) comme voie principale, l'import CSV pour les autres brokers et en repli.
+- **Formulation factuelle uniquement (clause 17)** : jamais « Partenaire officiel de NinjaTrader »,
+  « Recommandé / Approuvé par NinjaTrader » ni aucune caution. Le logo NinjaTrader reste **au seul
+  footer**. Aucune promesse de gain (AMF) : on décrit ce que fait la synchro, pas un résultat.
+- `Compare.astro` **inchangé volontairement** : TraderSync et TradesViz proposent une synchro
+  broker ; une ligne « Synchro broker directe » les montrerait à tort sans (cf. règle ci-dessous).
+
 ---
 
 ## Tableau comparatif (`Compare.astro`)
@@ -146,14 +157,14 @@ CTA en fin de chaque article :
 ```json
 {
   "dependencies": {
-    "@astrojs/sitemap": "^3.7.2",
-    "astro": "^6.1.1",
-    "tailwindcss": "^4.2.2"
+    "@astrojs/sitemap": "^3.7.4",
+    "astro": "^7.3.2",
+    "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.4",
-    "@tailwindcss/vite": "^4.2.2",
-    "typescript": "^5.8.3"
+    "@astrojs/check": "0.9.10",
+    "@tailwindcss/vite": "^4.3.3",
+    "typescript": "^5.9.2"
   }
 }
 ```
@@ -171,3 +182,19 @@ CTA en fin de chaque article :
 - [ ] LCP < 1.2s
 - [ ] CLS < 0.05
 - [ ] Images avec `alt` renseigné
+
+## Astro 7 (étape 5 de l'audit, 2026-09-13)
+
+- Astro 7.3.2 · Vite 8 · compilateur Rust (seul compilateur). Tailwind 4.3.3 (`@tailwindcss/vite`
+  accepte Vite 8), `@astrojs/check` 0.9.10. Motif : faille critique d'Astro 6 (exécution de code via
+  l'optimisation d'images AVIF), corrigée seulement à partir de 7.2.8.
+- `compressHTML: true` posé explicitement dans `astro.config.mjs` : le défaut d'Astro 7 (`'jsx'`)
+  supprime des espaces entre éléments en ligne. Ne pas le retirer sans revérifier le rendu.
+- `z` s'importe de `astro/zod` (celui d'`astro:content` est déprécié).
+- Le compilateur Rust ne corrige plus une imbrication HTML invalide et refuse une balise non
+  fermée : un build qui casse après une modif de template vient souvent de là.
+- Vérification de la migration : HTML des 21 pages comparé à Astro 6 (seuls 78 espacements entre
+  blocs diffèrent, aucun texte ni structure) ; mise en page mesurée élément par élément dans le
+  navigateur (accueil, un article, /ambassadeur ; bureau 2 398 px et mobile 400 px) : identique.
+  La CSS générée change de forme (identifiants `data-astro-cid-*`, media queries en syntaxe
+  d'intervalle `(width>=1200px)`), sans effet sur le rendu.

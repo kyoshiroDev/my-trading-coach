@@ -63,14 +63,16 @@ describe('DataAgent.buildTradesSummary', () => {
   });
 
   it('ne plante pas sans note ni R:R et produit des lignes propres', () => {
-    const out = agent.buildTradesSummary([
-      base({ riskReward: null, timeframe: null, notes: null, pnl: 100 }),
-    ]);
+    const out = agent.buildTradesSummary(
+      [base({ riskReward: null, timeframe: null, notes: null, pnl: 100 })],
+      'USD',
+    );
     expect(out).toContain('RÉSUMÉ TRADES');
     expect(out).toContain('R:R moyen: n/a');
     expect(out).toContain('Par timeframe: n/a');
+    // Montant dans la devise des comptes, sans conversion (PROMPT-214).
     expect(out).toMatch(
-      /Top 5 trades significatifs:\nNQ LONG BREAKOUT CONFIDENT \+100\$/,
+      /Top 5 trades significatifs:\nNQ LONG BREAKOUT CONFIDENT \+\$100\.00/,
     );
   });
 });

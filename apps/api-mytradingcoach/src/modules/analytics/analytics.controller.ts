@@ -33,7 +33,7 @@ export class AnalyticsController {
       user.id,
       await this.accountId(user.id, accountId),
       from ? new Date(from) : undefined,
-      to ? new Date(to) : undefined,
+      to ? this.endBound(to) : undefined,
     );
   }
 
@@ -68,6 +68,16 @@ export class AnalyticsController {
     return this.analyticsService.getEquityCurveCurrentMonth(user.id, await this.accountId(user.id, accountId));
   }
 
+  /**
+   * Borne haute d'une période : une date seule (`2026-09-14`) couvre TOUTE la journée. Lue
+   * `new Date('2026-09-14')`, elle valait minuit et excluait les trades du jour même : la
+   * courbe d'équité de l'écran Analytics restait vide pour un compte qui n'avait tradé
+   * qu'aujourd'hui (PROMPT-213). Un horodatage complet est pris tel quel.
+   */
+  private endBound(to: string): Date {
+    return /^\d{4}-\d{2}-\d{2}$/.test(to) ? new Date(`${to}T23:59:59.999`) : new Date(to);
+  }
+
   // P&L par jour = vue de base FREE.
   @Get('equity-curve/daily')
   async getEquityDaily(
@@ -79,7 +89,7 @@ export class AnalyticsController {
     return this.analyticsService.getEquityCurveDaily(
       user.id,
       from ? new Date(from) : undefined,
-      to ? new Date(to) : undefined,
+      to ? this.endBound(to) : undefined,
       await this.accountId(user.id, accountId),
     );
   }
@@ -114,7 +124,7 @@ export class AnalyticsController {
     return this.analyticsService.getActivityRange(
       user.id,
       from ? new Date(from) : undefined,
-      to ? new Date(to) : undefined,
+      to ? this.endBound(to) : undefined,
       await this.accountId(user.id, accountId),
     );
   }

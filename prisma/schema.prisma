@@ -90,6 +90,7 @@ model User {
   emailSends      EmailSend[]
   referrals       ReferralCommission[] @relation("AmbassadorCommissions")
   parrainRewards  ReferralReward[]     @relation("ParrainRewards")
+  brokerConnections BrokerConnection[]
   lastSeenAt      DateTime?
   lastLoginAt     DateTime?
   createdAt       DateTime             @default(now())
@@ -294,10 +295,51 @@ model TradingAccount {
   drawdownType    DrawdownType   @default(STATIC)
   trades          Trade[]
   tradeSessions   TradeSession[]
+  brokerConnections BrokerConnection[]
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
   @@index([userId, status])
+}
+
+/// Connexion API d'un broker, portée par UN `TradingAccount` (PROMPT-207).
+/// Un compte = une connexion : chaque prop firm fournit ses propres identifiants
+/// Tradovate, un user Apex + Lucid fait donc deux connexions distinctes. Jamais au
+/// niveau `User`, jamais partagée entre comptes.
+/// Les secrets (tokens OAuth, clés API) sont CHIFFRÉS (AES-256-GCM, `token-cipher.util`)
+/// et ne sortent jamais de l'API : aucune route ne renvoie les colonnes `*Enc`.
+model BrokerConnection {
+  id                    String                 @id @default(cuid())
+  userId                String
+  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId             String
+  account               TradingAccount         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  provider              BrokerProvider
+  status                BrokerConnectionStatus @default(CONNECTED)
+  accessTokenEnc        String
+  refreshTokenEnc       String?
+  accessTokenExpiresAt  DateTime
+  refreshTokenExpiresAt DateTime?
+  /// Identifiant du user côté broker (Tradovate userId), pour le diagnostic.
+  externalUserId        String?
+  /// Compte broker synchronisé vers ce TradingAccount (un login Tradovate peut porter
+  /// plusieurs comptes : il faut en choisir un).
+  externalAccountId     String?
+  externalAccountName   String?
+  /// Hôte du compte choisi : 'live' ou 'demo' (les comptes prop firm sont simulés).
+  externalEnv           String?
+  /// Comptes vus à la connexion : [{ id, name, env }]. Sert au choix quand il y en a plusieurs.
+  availableAccounts     Json?
+  lastSyncAt            DateTime?
+  /// Dernière erreur de synchro, en clair et lisible par l'utilisateur (jamais une stack).
+  lastSyncError         String?
+  /// Cumul des trades créés par la synchro (hors doublons).
+  tradesImported        Int                    @default(0)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  @@unique([accountId, provider])
+  @@index([userId])
 }
 
 model DailyRecap {
@@ -427,6 +469,17 @@ enum TradingSession {
   LONDON
   NEW_YORK
   ASIAN
+}
+
+/// Brokers synchronisés par API (lecture seule). Binance / Bybit viendront s'y ajouter.
+enum BrokerProvider {
+  TRADOVATE
+}
+
+enum BrokerConnectionStatus {
+  CONNECTED
+  /// Jeton expiré ou révoqué côté broker : l'utilisateur doit refaire le consentement.
+  NEEDS_RECONNECT
 }
 
 model EcoEvent {

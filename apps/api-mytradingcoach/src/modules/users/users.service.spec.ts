@@ -15,7 +15,6 @@ const mockUser = {
   onboardingCompleted: false,
   market: null,
   goal: null,
-  currency: 'USD',
   notificationsEmail: true,
   debriefAutomatic: true,
   createdAt: new Date(),
@@ -129,37 +128,22 @@ describe('UsersService', () => {
   });
 
   describe('updatePreferences', () => {
-    it('met à jour currency et notificationsEmail', async () => {
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValue({
-          json: vi.fn().mockResolvedValue({ rates: { EUR: 0.92 } }),
-        }),
-      );
-
-      mockPrisma.user.update.mockResolvedValue({
-        ...mockUser,
-        currency: 'EUR',
-        currencyRate: 0.92,
-        notificationsEmail: false,
-      });
+    it('ignore une devise globale envoyée : ni currency ni taux écrits, aucun appel réseau (PROMPT-214)', async () => {
+      const fetchSpy = vi.fn();
+      vi.stubGlobal('fetch', fetchSpy);
+      mockPrisma.user.update.mockResolvedValue({ ...mockUser, notificationsEmail: false });
 
       const result = await service.updatePreferences('user-1', {
         currency: 'EUR',
         notificationsEmail: false,
       });
 
-      expect(mockPrisma.user.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: 'user-1' },
-          data: expect.objectContaining({
-            currency: 'EUR',
-            notificationsEmail: false,
-            currencyRate: expect.any(Number),
-          }),
-        }),
-      );
-      expect(result.currency).toBe('EUR');
+      const call = mockPrisma.user.update.mock.calls[0][0];
+      expect(call.where).toEqual({ id: 'user-1' });
+      expect(call.data).toEqual(expect.objectContaining({ notificationsEmail: false }));
+      expect(call.data).not.toHaveProperty('currency');
+      expect(call.data).not.toHaveProperty('currencyRate');
+      expect(fetchSpy).not.toHaveBeenCalled();
       expect(result.notificationsEmail).toBe(false);
 
       vi.unstubAllGlobals();

@@ -3,7 +3,6 @@ import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'mtc-admin-root',
-  standalone: true,
   imports: [RouterOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `<router-outlet />`,

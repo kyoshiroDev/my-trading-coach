@@ -9,198 +9,21 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { LucideAngularModule, Eye, EyeOff } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideEye as Eye,
+  LucideEyeOff as EyeOff,
+} from '@lucide/angular';
 import { AuthService } from '../../core/auth/auth.service';
 import { BillingApi } from '../../core/api/billing.api';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'mtc-register',
-  standalone: true,
-  imports: [FormsModule, RouterLink, LucideAngularModule],
+  imports: [FormsModule, RouterLink, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './register.component.css',
-  template: `
-    <div class="auth-page">
-      <div class="bg-glow"></div>
-
-      <div class="auth-card">
-        <div class="auth-logo">
-          <img src="icon/logo-navbar.svg" alt="MyTradingCoach" />
-        </div>
-
-        <h1 class="auth-title">
-          @if (isPremiumFlow()) {
-            Créer ton compte Premium
-          } @else {
-            Commence gratuitement
-          }
-        </h1>
-        <p class="auth-subtitle">
-          @if (isPremiumFlow()) {
-            Tu seras redirigé vers le paiement après l'inscription
-          } @else {
-            Rejoins les traders qui progressent avec l'IA
-          }
-        </p>
-
-        @if (referralCode()) {
-          <div class="referral-notice">
-            🎉 Invitation de <strong>{{ referralCode() }}</strong> : 1 mois d'essai Premium offert
-          </div>
-        }
-
-        <form (ngSubmit)="onRegister()">
-          <div class="form-group">
-            <label for="name"
-              >Prénom <span class="optional">(optionnel)</span></label
-            >
-            <input
-              id="name"
-              type="text"
-              [ngModel]="name()"
-              (ngModelChange)="name.set($event)"
-              name="name"
-              placeholder="Alex"
-              autocomplete="given-name"
-            />
-          </div>
-
-          <div class="form-group" [class.input-error]="emailError()">
-            <label for="email">Email</label>
-            <input
-              id="email"
-              data-testid="register-email"
-              type="email"
-              [ngModel]="email()"
-              (ngModelChange)="email.set($event)"
-              name="email"
-              placeholder="trader@email.com"
-              autocomplete="email"
-              (blur)="emailTouched.set(true)"
-            />
-            @if (emailError()) {
-              <span class="field-error">{{ emailError() }}</span>
-            }
-          </div>
-
-          <div class="form-group" [class.input-error]="passwordError()">
-            <label for="password"
-              >Mot de passe
-              <span class="optional">(8 caractères min)</span></label
-            >
-            <div class="input-wrapper">
-              <input
-                id="password"
-                data-testid="register-password"
-                [type]="showPassword() ? 'text' : 'password'"
-                [ngModel]="password()"
-                (ngModelChange)="password.set($event)"
-                name="password"
-                placeholder="••••••••"
-                autocomplete="new-password"
-                (blur)="passwordTouched.set(true)"
-              />
-              <button
-                type="button"
-                class="eye-btn"
-                (click)="showPassword.set(!showPassword())"
-              >
-                <lucide-icon
-                  [img]="showPassword() ? EyeOffIcon : EyeIcon"
-                  [size]="15"
-                  color="var(--text-2)"
-                />
-              </button>
-            </div>
-            @if (passwordError()) {
-              <span class="field-error">{{ passwordError() }}</span>
-            }
-          </div>
-
-          <div class="form-group" [class.input-error]="confirmError()">
-            <label for="confirm-password">Confirmer le mot de passe</label>
-            <div class="input-wrapper">
-              <input
-                id="confirm-password"
-                data-testid="register-confirm"
-                [type]="showConfirm() ? 'text' : 'password'"
-                [ngModel]="confirmPassword()"
-                (ngModelChange)="confirmPassword.set($event)"
-                name="confirmPassword"
-                placeholder="••••••••"
-                autocomplete="new-password"
-                (blur)="confirmTouched.set(true)"
-              />
-              <button
-                type="button"
-                class="eye-btn"
-                (click)="showConfirm.set(!showConfirm())"
-              >
-                <lucide-icon
-                  [img]="showConfirm() ? EyeOffIcon : EyeIcon"
-                  [size]="15"
-                  color="var(--text-2)"
-                />
-              </button>
-            </div>
-            @if (confirmError()) {
-              <span class="field-error">{{ confirmError() }}</span>
-            }
-          </div>
-
-          <label class="consent-check">
-            <input
-              type="checkbox"
-              name="marketingConsent"
-              [ngModel]="marketingConsent()"
-              (ngModelChange)="marketingConsent.set($event)"
-            />
-            <span>J'accepte de recevoir des emails de MyTradingCoach (conseils, nouveautés). Désinscription à tout moment.</span>
-          </label>
-
-          <button
-            type="submit"
-            data-testid="register-submit"
-            [disabled]="isLoading()"
-            class="btn-submit"
-          >
-            @if (isLoading()) {
-              <span class="spinner"></span>
-              @if (isPremiumFlow()) {
-                Création et redirection...
-              } @else {
-                Création...
-              }
-            } @else {
-              @if (isPremiumFlow()) {
-                Créer mon compte et continuer vers le paiement →
-              } @else {
-                Créer mon compte gratuit
-              }
-            }
-          </button>
-
-          @if (apiError()) {
-            <div class="error-msg" data-testid="error-message">
-              {{ apiError() }}
-            </div>
-          }
-        </form>
-
-        <p class="free-note">
-          @if (isPremiumFlow()) {
-            1 mois offert · carte requise · annulable en un clic
-          } @else {
-            Gratuit · trades illimités · sans carte
-          }
-        </p>
-
-        <p class="auth-link">
-          Déjà un compte ? <a routerLink="/login">Se connecter</a>
-        </p>
-      </div>
-    </div>
-  `,
+  templateUrl: './register.component.html',
 })
 export class RegisterComponent {
   private readonly auth = inject(AuthService);
@@ -208,6 +31,7 @@ export class RegisterComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
 
   protected readonly EyeIcon = Eye;
   protected readonly EyeOffIcon = EyeOff;
@@ -310,8 +134,10 @@ export class RegisterComponent {
                 next: (res) => {
                   window.location.href = res.data.url;
                 },
+                // Compte créé mais paiement indisponible : on continue, sans le cacher.
                 error: () => {
                   this.isLoading.set(false);
+                  this.toast.warning('Ton compte est créé. Le paiement n’a pas pu démarrer : tu peux lancer ton essai depuis ton Profil.');
                   this.router.navigate(['/dashboard']);
                 },
               });

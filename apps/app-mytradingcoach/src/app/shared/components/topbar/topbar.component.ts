@@ -4,13 +4,17 @@ import {
   input,
   output,
 } from '@angular/core';
-import { LucideAngularModule, Plus, Bell, MessageCircle } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucidePlus as Plus,
+  LucideBell as Bell,
+  LucideMessageCircle as MessageCircle,
+} from '@lucide/angular';
 import { AccountSelectorComponent } from '../account-selector/account-selector.component';
 
 @Component({
   selector: 'mtc-topbar',
-  standalone: true,
-  imports: [LucideAngularModule, AccountSelectorComponent],
+  imports: [LucideDynamicIcon, AccountSelectorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './topbar.component.css',
   host: { '[attr.title]': 'null' },
@@ -44,7 +48,7 @@ import { AccountSelectorComponent } from '../account-selector/account-selector.c
             @if (addLoading()) {
               <span class="btn-spinner"></span>
             } @else {
-              <lucide-icon [img]="PlusIcon" [size]="14" />
+              <svg [lucideIcon]="PlusIcon" [size]="14"></svg>
             }
             {{ addLabel() }}
           </button>
@@ -58,14 +62,14 @@ import { AccountSelectorComponent } from '../account-selector/account-selector.c
             class="tb-discord"
             title="Rejoindre la communauté Discord"
           >
-            <lucide-icon [img]="DiscordIcon" [size]="15" class="tb-discord-ic" />
+            <svg [lucideIcon]="DiscordIcon" [size]="15" class="tb-discord-ic"></svg>
             <span class="tb-discord-label">Discord</span>
           </a>
         }
 
         @if (showNotifications()) {
           <button class="btn btn-ghost icon-btn" title="Notifications">
-            <lucide-icon [img]="BellIcon" [size]="16" />
+            <svg [lucideIcon]="BellIcon" [size]="16"></svg>
           </button>
         }
         <ng-content />
@@ -91,7 +95,7 @@ import { AccountSelectorComponent } from '../account-selector/account-selector.c
         @if (addLoading()) {
           <span class="btn-spinner"></span>
         } @else {
-          <lucide-icon [img]="PlusIcon" [size]="24" />
+          <svg [lucideIcon]="PlusIcon" [size]="24"></svg>
         }
       </button>
     }

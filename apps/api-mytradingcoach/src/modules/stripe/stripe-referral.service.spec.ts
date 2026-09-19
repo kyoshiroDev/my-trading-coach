@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Prisma } from '@prisma/client';
-import { StripeService } from './stripe.service';
+import { StripeCustomerService } from './stripe-customer.service';
+import { StripeReferralService } from './stripe-referral.service';
 
 /**
  * Règle de coexistence parrainage : parrain AMBASSADOR → commission cash,
@@ -8,21 +9,13 @@ import { StripeService } from './stripe.service';
  * une seule récompense par filleul.
  */
 function makeService(prisma: Record<string, unknown>, stripe: Record<string, unknown>) {
-  const config = {
-    getOrThrow: () => 'sk_test_dummy',
-    get: () => undefined,
-  };
-  const noop = { add: vi.fn() };
-  const service = new StripeService(
+  const config = { get: () => undefined };
+  return new StripeReferralService(
     config as never,
     prisma as never,
-    {} as never, // resend
-    {} as never, // discord
-    noop as never, // queue
-    { client: {} } as never, // redis
+    new StripeCustomerService(prisma as never, stripe as never),
+    stripe as never,
   );
-  (service as unknown as { stripe: unknown }).stripe = stripe;
-  return service;
 }
 
 function invoice() {
@@ -33,7 +26,7 @@ function invoice() {
   } as never;
 }
 
-describe('StripeService — processReferral (coexistence)', () => {
+describe('StripeReferralService —processReferral (coexistence)', () => {
   let prisma: {
     user: { findFirst: ReturnType<typeof vi.fn>; findUnique: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
     referralCommission: { upsert: ReturnType<typeof vi.fn> };
@@ -80,7 +73,7 @@ describe('StripeService — processReferral (coexistence)', () => {
       .mockResolvedValueOnce({ id: 'amb', role: 'AMBASSADOR' });
     const service = makeService(prisma, stripe);
 
-    await (service as unknown as { processReferral: (i: unknown) => Promise<void> }).processReferral(invoice());
+    await service.processReferral(invoice());
 
     expect(prisma.referralCommission.upsert).toHaveBeenCalledTimes(1);
     expect(prisma.referralReward.create).not.toHaveBeenCalled();
@@ -95,7 +88,7 @@ describe('StripeService — processReferral (coexistence)', () => {
     prisma.user.findUnique.mockResolvedValue({ email: 'p@x.com', stripeCustomerId: 'cus_parrain', stripeSubscriptionId: 'sub_parrain' });
     const service = makeService(prisma, stripe);
 
-    await (service as unknown as { processReferral: (i: unknown) => Promise<void> }).processReferral(invoice());
+    await service.processReferral(invoice());
 
     expect(prisma.referralReward.create).toHaveBeenCalledTimes(1);
     expect(stripe.customers.createBalanceTransaction).toHaveBeenCalledTimes(1);
@@ -113,7 +106,7 @@ describe('StripeService — processReferral (coexistence)', () => {
       .mockResolvedValueOnce({ id: 'same', role: 'USER' });
     const service = makeService(prisma, stripe);
 
-    await (service as unknown as { processReferral: (i: unknown) => Promise<void> }).processReferral(invoice());
+    await service.processReferral(invoice());
 
     expect(prisma.referralReward.create).not.toHaveBeenCalled();
     expect(prisma.referralCommission.upsert).not.toHaveBeenCalled();
@@ -129,7 +122,7 @@ describe('StripeService — processReferral (coexistence)', () => {
     );
     const service = makeService(prisma, stripe);
 
-    await (service as unknown as { processReferral: (i: unknown) => Promise<void> }).processReferral(invoice());
+    await service.processReferral(invoice());
 
     expect(stripe.customers.createBalanceTransaction).not.toHaveBeenCalled();
     expect(prisma.referralReward.update).not.toHaveBeenCalled();
@@ -139,7 +132,7 @@ describe('StripeService — processReferral (coexistence)', () => {
     prisma.user.findFirst.mockResolvedValueOnce({ id: 'filleul', referredBy: null, plan: 'PREMIUM' });
     const service = makeService(prisma, stripe);
 
-    await (service as unknown as { processReferral: (i: unknown) => Promise<void> }).processReferral(invoice());
+    await service.processReferral(invoice());
 
     expect(prisma.referralReward.create).not.toHaveBeenCalled();
     expect(prisma.referralCommission.upsert).not.toHaveBeenCalled();
@@ -156,9 +149,9 @@ describe('StripeService — processReferral (coexistence)', () => {
  * garde-fou durable contre le double crédit (la clé d'idempotence Stripe expire
  * en ~24 h, or le rejeu arrive un mois plus tard).
  */
-describe('StripeService — mois offert : rejeu des PENDING', () => {
-  const run = (service: StripeService, inv: unknown) =>
-    (service as unknown as { processReferral: (i: unknown) => Promise<void> }).processReferral(inv);
+describe('StripeReferralService —mois offert : rejeu des PENDING', () => {
+  const run = (service: StripeReferralService, inv: never) =>
+    service.processReferral(inv);
 
   const invoice = () =>
     ({
@@ -283,9 +276,9 @@ describe('StripeService — mois offert : rejeu des PENDING', () => {
  * des 5 tentatives n'était utilisée, et l'event étant déjà marqué traité, la
  * commission était perdue pour de bon.
  */
-describe('StripeService — processReferral relance ses erreurs', () => {
-  const run = (service: StripeService, inv: unknown) =>
-    (service as unknown as { processReferral: (i: unknown) => Promise<void> }).processReferral(inv);
+describe('StripeReferralService —processReferral relance ses erreurs', () => {
+  const run = (service: StripeReferralService, inv: never) =>
+    service.processReferral(inv);
 
   function invoice() {
     return {
@@ -353,7 +346,7 @@ describe('StripeService — processReferral relance ses erreurs', () => {
  * de la vraie facture de février écrasait la ligne : un mois de commission perdu
  * pour l'ambassadeur.
  */
-describe('StripeService — période de commission dérivée de la facture', () => {
+describe('StripeReferralService —période de commission dérivée de la facture', () => {
   // 15/01/2026 12:00 UTC : période facturée de janvier.
   const JANUARY_EPOCH = Math.floor(Date.UTC(2026, 0, 15, 12) / 1000);
   const FEBRUARY_EPOCH = Math.floor(Date.UTC(2026, 1, 15, 12) / 1000);
@@ -385,8 +378,8 @@ describe('StripeService — période de commission dérivée de la facture', () 
     return { prisma, service };
   }
 
-  const run = (service: StripeService, inv: unknown) =>
-    (service as unknown as { processReferral: (i: unknown) => Promise<void> }).processReferral(inv);
+  const run = (service: StripeReferralService, inv: never) =>
+    service.processReferral(inv);
 
   afterEach(() => vi.useRealTimers());
 

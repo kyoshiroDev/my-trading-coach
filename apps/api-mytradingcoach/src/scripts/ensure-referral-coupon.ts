@@ -2,7 +2,7 @@
  * Crée (idempotent) les DEUX coupons de parrainage dans Stripe :
  *   - REFERRAL_FILLEUL_10PCT          (annuel, -10% once)
  *   - REFERRAL_FILLEUL_MONTHLY_10PCT  (mensuel, -10% repeating 12 mois)
- * en REUTILISANT la logique existante (StripeService.ensureReferralCouponNow →
+ * en REUTILISANT la logique existante (StripeCouponService.ensureReferralCouponNow →
  * ensureReferralCoupon, paramètres inchangés).
  *
  * Ecrit VOLONTAIREMENT dans Stripe selon la clé de l'env courant (donc Live sur la prod).
@@ -10,11 +10,12 @@
  * Ne touche PAS la base de données.
  *
  * Usage : charger l'env (STRIPE_SECRET_KEY) puis (le --tsconfig est requis car
- * StripeService utilise des décorateurs de paramètre @InjectQueue) :
+ * StripeCouponService utilise un décorateur de paramètre @Inject) :
  *   node_modules/.bin/tsx --tsconfig apps/api-mytradingcoach/tsconfig.app.json \
  *     apps/api-mytradingcoach/src/scripts/ensure-referral-coupon.ts
  */
-import { StripeService } from '../modules/stripe/stripe.service';
+import { createStripeClient } from '../modules/stripe/stripe.client';
+import { StripeCouponService } from '../modules/stripe/stripe-coupon.service';
 
 const KINDS = ['annual', 'monthly'] as const;
 
@@ -32,28 +33,17 @@ async function main(): Promise<void> {
   }
   console.log(`Mode clé Stripe : ${mode}`);
 
-  // Même mode de bootstrap que backfill-referral-codes : instanciation directe du
-  // vrai StripeService. Seul STRIPE_SECRET_KEY (via config) est utilisé au constructeur ;
-  // le reste (prisma/resend/discord/queue/redis) n'est pas sollicité par le coupon.
-  const config = {
-    getOrThrow: (k: string) => {
-      const v = process.env[k];
-      if (!v) throw new Error(`Config absente : ${k}`);
-      return v;
-    },
-    get: (k: string) => process.env[k],
-  };
-  const stripeService = new StripeService(
-    config as never, {} as never, {} as never, {} as never, {} as never, {} as never,
-  );
+  // Instanciation directe, hors Nest : le service de coupons ne dépend que du
+  // client Stripe, construit avec la clé de l'env courant.
+  const couponService = new StripeCouponService(createStripeClient(key));
 
   // Détecte créé vs déjà présent : on tente un retrieve AVANT l'ensure, par kind.
   const before = {
-    annual: await stripeService.findReferralCoupon('annual'),
-    monthly: await stripeService.findReferralCoupon('monthly'),
+    annual: await couponService.findReferralCoupon('annual'),
+    monthly: await couponService.findReferralCoupon('monthly'),
   };
 
-  const coupons = await stripeService.ensureReferralCouponNow();
+  const coupons = await couponService.ensureReferralCouponNow();
 
   for (const kind of KINDS) {
     const coupon = coupons[kind];

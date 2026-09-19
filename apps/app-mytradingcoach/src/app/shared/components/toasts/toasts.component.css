@@ -1,0 +1,176 @@
+/* Toasts globaux (PROMPT-210) — discrets, tokens theme.css. Palier z-index 10000
+   (au-dessus des modales 1000 et de l'overlay d'onboarding 300).
+   Comportement usuel : entrée depuis le bord, pile qui se décale en douceur, compte à
+   rebours en haut, sortie vers le bord puis repli de la pile, glisser pour fermer. */
+.toasts {
+  position: fixed;
+  right: 24px;
+  bottom: calc(env(safe-area-inset-bottom) + 24px);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  width: min(380px, calc(100vw - 32px));
+  pointer-events: none; /* la zone vide ne bloque pas les clics de la page */
+}
+
+/* Case repliable : grid-template-rows 0fr ↔ 1fr anime la HAUTEUR réelle du toast, donc la
+   pile se décale sans saut. L'espacement vit dans la case (padding du clip) pour se replier
+   avec elle, au lieu d'un `gap` de conteneur qui laisserait un saut de 8px. */
+.toast-slot {
+  width: 100%;
+  display: grid;
+  grid-template-rows: 1fr;
+  animation: toast-slot-in 0.28s cubic-bezier(0.21, 1.02, 0.73, 1);
+}
+.toast-clip {
+  min-height: 0;
+  padding-top: 8px;
+  /* Visible horizontalement pendant le glisser, coupé verticalement pendant le repli. */
+  overflow-x: visible;
+  overflow-y: clip;
+}
+
+.toast {
+  --tc: var(--blue);
+  position: relative;
+  overflow: hidden; /* la barre du haut suit l'arrondi */
+  pointer-events: auto;
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px 10px 11px 13px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-hover);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  font-family: var(--font-body);
+  touch-action: pan-y; /* glisser horizontal = fermer ; le défilement vertical reste possible */
+  user-select: none;
+  animation: toast-in 0.28s cubic-bezier(0.21, 1.02, 0.73, 1);
+  transition: transform 0.2s ease, opacity 0.2s ease; /* retour en place après un glisser court */
+}
+.toast.dragging { transition: none; cursor: grabbing; }
+.toast.success { --tc: var(--green); border-color: rgba(16, 185, 129, 0.3); }
+.toast.error   { --tc: var(--red);   border-color: rgba(239, 68, 68, 0.35); }
+.toast.warning { --tc: var(--yellow); border-color: rgba(245, 158, 11, 0.35); }
+.toast.info    { --tc: var(--blue);  border-color: var(--border-hover); }
+
+/* Compte à rebours EN HAUT : se vide de gauche à droite sur la durée du toast
+   (animation-duration posée par le template), figé tant que le toast est en pause. */
+.toast-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--tc);
+  opacity: 0.85;
+  transform-origin: left center;
+  animation: toast-countdown linear forwards;
+  pointer-events: none;
+}
+.toast-bar.paused { animation-play-state: paused; }
+
+.toast-ic { color: var(--tc); flex: 0 0 auto; margin-top: 1px; }
+.toast-msg {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.toast-x {
+  flex: 0 0 auto;
+  display: flex;
+  padding: 3px;
+  margin: -2px 0 0;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-3);
+  cursor: pointer;
+}
+.toast-x:hover,
+.toast-x:focus-visible { color: var(--text); background: var(--bg-2); outline: none; }
+
+.toast-queue {
+  pointer-events: none;
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-3);
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+/* ── Entrée : la case s'ouvre, le toast glisse depuis le bord droit ── */
+@keyframes toast-slot-in {
+  from { grid-template-rows: 0fr; }
+  to   { grid-template-rows: 1fr; }
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(calc(100% + 24px)); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── Sortie (minuteur, croix ou glisser) : posée par `animate.leave` sur la case.
+   Le toast repart vers le bord, puis la case se replie : la pile se referme en douceur.
+   Angular retire la case à la fin de l'animation la plus longue (le repli). ── */
+.toast-slot.toast-leave {
+  pointer-events: none; /* un toast qui part ne capte plus de clic ni de survol */
+  animation: toast-slot-out 0.34s ease-in forwards;
+}
+.toast-slot.toast-leave .toast {
+  animation: toast-out 0.2s ease-in forwards;
+}
+.toast-slot.toast-leave-left .toast {
+  animation-name: toast-out-left;
+}
+@keyframes toast-slot-out {
+  0%, 50% { grid-template-rows: 1fr; }
+  100%    { grid-template-rows: 0fr; }
+}
+/* Sans `from` : la sortie part de la position courante (utile après un glisser). */
+@keyframes toast-out {
+  to { opacity: 0; transform: translateX(calc(100% + 24px)); }
+}
+@keyframes toast-out-left {
+  to { opacity: 0; transform: translateX(calc(-100% - 24px)); }
+}
+@keyframes toast-countdown {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+/* Mobile : centré en bas, AU-DESSUS du bouton flottant « + » (56px à 24px du bas, topbar)
+   — le haut est pris par le burger. L'entrée monte depuis le bas. */
+@media (max-width: 768px) {
+  .toasts {
+    left: 16px;
+    right: 16px;
+    bottom: calc(env(safe-area-inset-bottom) + 92px);
+    width: auto;
+    align-items: stretch;
+  }
+  .toast-queue { align-self: center; }
+  @keyframes toast-in {
+    from { opacity: 0; transform: translateY(calc(100% + 16px)); }
+    to   { opacity: 1; transform: none; }
+  }
+}
+
+/* Mouvement réduit : ni glissement ni repli animé (entrée et sortie immédiates) ; la barre
+   reste, mais avance par paliers au lieu de glisser. */
+@media (prefers-reduced-motion: reduce) {
+  .toast-slot,
+  .toast,
+  .toast-slot.toast-leave,
+  .toast-slot.toast-leave .toast { animation: none; transition: none; }
+  .toast-bar { animation-timing-function: steps(4, end); }
+}

@@ -1,90 +1,76 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { PnlFormatPipe } from './pnl-format.pipe';
-import { UserStore } from '../../core/stores/user.store';
-import { AuthService } from '../../core/auth/auth.service';
 import { signal } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
+import { PnlFormatPipe } from './pnl-format.pipe';
+import { MoneyService } from '../../core/services/money.service';
+import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 
-const mockUser = (currency = 'USD', currencyRate = 1) => ({
-  id: 'u1',
-  email: 'test@test.com',
-  name: 'Test',
-  plan: 'FREE' as const,
-  currency,
-  currencyRate,
-  trialEndsAt: null,
-});
-
-function makePipe(currency = 'USD', currencyRate = 1): PnlFormatPipe {
-  const mockAuthService = {
-    currentUser: signal(mockUser(currency, currencyRate)),
-    isAuthenticated: signal(true),
-    fetchMe: vi.fn(),
-    setCurrentUser: vi.fn(),
-  };
+/**
+ * La devise vient du COMPTE (SelectedAccountStore), jamais d'un taux (PROMPT-213/214).
+ * `accounts` : devise par id de compte, pour les lignes de trades.
+ */
+function makePipe(currency: string | null = 'USD', accounts: Record<string, string> = {}): PnlFormatPipe {
   TestBed.configureTestingModule({
     providers: [
       PnlFormatPipe,
-      UserStore,
-      { provide: AuthService, useValue: mockAuthService },
-      provideHttpClient(),
-      provideRouter([]),
+      MoneyService,
+      {
+        provide: SelectedAccountStore,
+        useValue: {
+          displayCurrency: signal(currency),
+          selectedAccountId: signal('all'),
+          currencyOf: (id: string) => accounts[id],
+        },
+      },
     ],
   });
   return TestBed.inject(PnlFormatPipe);
 }
 
-describe('PnlFormatPipe — USD (default)', () => {
+describe('PnlFormatPipe — compte en USD', () => {
   it('pnl > 0 → +$X,XXX.XX', () => {
-    const pipe = makePipe();
-    expect(pipe.transform(5000)).toBe('+$5,000.00');
+    expect(makePipe().transform(5000)).toBe('+$5,000.00');
   });
 
   it('pnl < 0 → -$X.XX', () => {
-    const pipe = makePipe();
-    expect(pipe.transform(-340)).toBe('-$340.00');
+    expect(makePipe().transform(-340)).toBe('-$340.00');
   });
 
   it('pnl = 0 → +$0.00', () => {
-    const pipe = makePipe();
-    expect(pipe.transform(0)).toBe('+$0.00');
+    expect(makePipe().transform(0)).toBe('+$0.00');
   });
 
-  it('pnl = null → —', () => {
+  it('pnl = null / undefined → -', () => {
     const pipe = makePipe();
     expect(pipe.transform(null)).toBe('-');
-  });
-
-  it('pnl = undefined → —', () => {
-    const pipe = makePipe();
     expect(pipe.transform(undefined)).toBe('-');
   });
 
-  it('pnl > 0 avec entry → affiche le pourcentage', () => {
-    const pipe = makePipe();
-    const result = pipe.transform(5000, 60000);
-    expect(result).toContain('+$5,000.00');
-    expect(result).toContain('%');
-  });
-
-  it('pnl < 0 avec entry → affiche le pourcentage négatif', () => {
-    const pipe = makePipe();
-    const result = pipe.transform(-340, 4080);
+  it('avec entry → affiche le pourcentage', () => {
+    const result = makePipe().transform(-340, 4080);
     expect(result).toContain('-$340.00');
     expect(result).toContain('%');
   });
 });
 
-describe('PnlFormatPipe — EUR (rate 0.92)', () => {
-  it('100 USD → €92.00', () => {
-    const pipe = makePipe('EUR', 0.92);
-    expect(pipe.transform(100)).toBe('+€92.00');
+describe('PnlFormatPipe — devise native du compte, aucune conversion', () => {
+  it('compte en EUR → le montant tel quel avec €', () => {
+    const pipe = makePipe('EUR');
+    expect(pipe.transform(100)).toBe('+€100.00');
+    expect(pipe.transform(-100)).toBe('-€100.00');
   });
 
-  it('-100 USD → -€92.00', () => {
-    const pipe = makePipe('EUR', 0.92);
-    expect(pipe.transform(-100)).toBe('-€92.00');
+  it('compte en USDT → code après le montant', () => {
+    expect(makePipe('USDT').transform(10)).toBe('+10.00 USDT');
+  });
+
+  it('comptes de devises mêlées (null) → aucun symbole deviné', () => {
+    expect(makePipe(null).transform(41.1)).toBe('+41.10');
+  });
+
+  it('ligne de trade → devise de SON compte, même quand l’écran est en devises mêlées', () => {
+    const pipe = makePipe(null, { eur: 'EUR', usdt: 'USDT' });
+    expect(pipe.transform(12, null, 'eur')).toBe('+€12.00');
+    expect(pipe.transform(-3, null, 'usdt')).toBe('-3.00 USDT');
   });
 });

@@ -6,12 +6,15 @@ import {
   signal,
 } from '@angular/core';
 import { httpResource } from '@angular/common/http';
-import { LucideAngularModule, Trophy } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideTrophy as Trophy,
+} from '@lucide/angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { UserStore } from '../../core/stores/user.store';
 import { environment } from '../../../environments/environment';
-import { computeTradeStats } from '../../core/utils/trade-stats.util';
+import { computeTradeStats } from '@mtc/shared';
 
 interface Trade {
   pnl: number | null;
@@ -141,8 +144,7 @@ const LOCKED_BADGES = [
 
 @Component({
   selector: 'mtc-scoring',
-  standalone: true,
-  imports: [TopbarComponent, PlanModalComponent, LucideAngularModule],
+  imports: [TopbarComponent, PlanModalComponent, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './scoring.component.html',
   styleUrl: './scoring.component.css',

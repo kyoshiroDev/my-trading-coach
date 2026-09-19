@@ -1,7 +1,8 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
-import { StripeService } from './stripe.service';
+import { StripeWebhookService } from './stripe-webhook.service';
+import { STRIPE_QUEUE } from './stripe.helpers';
 import { StripeWebhookJobPayload } from './stripe.types';
 
 // ── Processor BullMQ : Traitement async des webhooks Stripe ──────────────────
@@ -9,16 +10,16 @@ import { StripeWebhookJobPayload } from './stripe.types';
 // Ce processor tourne en arrière-plan et traite les events Stripe de façon
 // asynchrone. BullMQ gère automatiquement les retries avec backoff exponentiel.
 //
-// Retry policy (définie dans StripeService.handleWebhook) :
+// Retry policy (définie dans StripeWebhookService.handleWebhook) :
 //   - Jusqu'à 5 tentatives
 //   - Backoff exponentiel à partir de 5s (5s → 10s → 20s → 40s → 80s)
 //   - removeOnFail: false → les jobs échoués restent dans la queue pour inspection
 
-@Processor('stripe')
+@Processor(STRIPE_QUEUE)
 export class StripeProcessor extends WorkerHost {
   private readonly logger = new Logger(StripeProcessor.name);
 
-  constructor(private readonly stripeService: StripeService) {
+  constructor(private readonly webhooks: StripeWebhookService) {
     super();
   }
 
@@ -29,7 +30,7 @@ export class StripeProcessor extends WorkerHost {
       `Processing webhook | type: ${event.type}, id: ${event.id}, attempt: ${job.attemptsMade + 1}`,
     );
 
-    await this.stripeService.processWebhookEvent(event);
+    await this.webhooks.processWebhookEvent(event);
   }
 
   @OnWorkerEvent('completed')

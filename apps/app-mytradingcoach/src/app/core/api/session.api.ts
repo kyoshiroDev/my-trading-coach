@@ -61,7 +61,9 @@ export interface SessionTrade {
   exit: number | null;
   stopLoss: number | null;
   takeProfit: number | null;
+  /** P&L BRUT ; le net (affiché) = pnl − commission, cf. netPnl (@mtc/shared). */
   pnl: number | null;
+  commission?: number | null;
   emotion: string;
   setupId?: string;
   setup?: { id: string; title: string; color: string };

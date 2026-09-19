@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
-@Pipe({ name: 'pnlColor', standalone: true })
+@Pipe({ name: 'pnlColor' })
 export class PnlColorPipe implements PipeTransform {
   transform(value: number | null | undefined): string {
     if (value == null) return '#6b7280';

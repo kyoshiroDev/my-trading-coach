@@ -101,7 +101,7 @@ networks:
 
 ```dockerfile
 FROM node:22-slim AS builder
-RUN npm install -g pnpm@10 --no-fund --no-audit
+RUN npm install -g pnpm@11.6.0 --no-fund --no-audit
 WORKDIR /app
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/api-mytradingcoach/package.json ./apps/api-mytradingcoach/
@@ -111,7 +111,7 @@ COPY . .
 RUN pnpm nx build api-mytradingcoach --configuration=production --skip-nx-cache
 
 FROM node:22-alpine AS migrator
-RUN npm install -g pnpm@10 --no-fund --no-audit
+RUN npm install -g pnpm@11.6.0 --no-fund --no-audit
 WORKDIR /app
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/api-mytradingcoach/package.json ./apps/api-mytradingcoach/
@@ -300,3 +300,26 @@ FRONTEND_URL=https://app.mytradingcoach.app
 CORS_ORIGINS=https://app.mytradingcoach.app,https://mytradingcoach.app
 PORT=3000
 ```
+
+### Tradovate / NinjaTrader (PROMPT-207) — optionnelles, feature désactivée sans elles
+
+```bash
+TRADOVATE_OAUTH_CLIENT_ID=...        # inscription OAuth MTC (≠ TRADOVATE_API_CID perso)
+TRADOVATE_OAUTH_CLIENT_SECRET=...
+TRADOVATE_OAUTH_REDIRECT_URI=https://api.mytradingcoach.app/integrations/tradovate/callback
+BROKER_TOKEN_ENCRYPTION_KEY=...      # openssl rand -base64 32 — UNE par env, jamais réutilisée
+```
+
+- Pendant le développement, l'inscription OAuth côté Tradovate pointe sur **beta**
+  (`https://beta.api.mytradingcoach.app/integrations/tradovate/callback`) : `.env.beta` porte
+  cette URI. Repasser l'inscription ET `.env.production` sur l'URL prod uniquement au ship.
+- **Temps réel (PROMPT-210 live)** : aucune variable en plus. Le canal `/tradovate-live` passe
+  par socket.io sur l'hôte `api.` (comme `/eco`, déjà routé par Traefik) ; l'API ouvre en
+  sortie des `wss://{live|demo}.tradovateapi.com`. Redis requis pour le bail « un WebSocket
+  Tradovate par user » entre workers (sans Redis : au pire un par worker). Nouveau cron
+  `TradovateBackgroundRefreshCron` (toutes les 30 min, worker cron uniquement).
+- Le callback est servi **hors `/api`** : Traefik route tout l'hôte `api.` vers le conteneur,
+  rien à ajouter. Vérif post-deploy : `curl -sI https://<api>/integrations/tradovate/callback`
+  → `302` vers `<FRONTEND_URL>/accounts?tradovate=error&reason=session_expired` (normal sans cookie).
+- Changer `BROKER_TOKEN_ENCRYPTION_KEY` rend toutes les connexions illisibles : les users
+  devront se reconnecter (aucun trade perdu).

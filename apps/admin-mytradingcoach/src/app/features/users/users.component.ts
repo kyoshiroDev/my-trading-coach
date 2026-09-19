@@ -12,15 +12,20 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
-import { LucideAngularModule, Trash2, Pencil, X, ShieldCheck } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideTrash2 as Trash2,
+  LucidePencil as Pencil,
+  LucideX as X,
+  LucideShieldCheck as ShieldCheck,
+} from '@lucide/angular';
 import { AdminApi, AdminUser, AdminStats } from '../../core/api/admin.api';
 import { TableSort } from '../../shared/tables/table-sort';
 import { PRICING_EUR } from '../../core/constants/pricing.const';
 
 @Component({
   selector: 'mtc-admin-users',
-  standalone: true,
-  imports: [DatePipe, FormsModule, LucideAngularModule],
+  imports: [DatePipe, FormsModule, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './users.component.css',
   template: `
@@ -88,10 +93,10 @@ import { PRICING_EUR } from '../../core/constants/pricing.const';
                   <td data-label="Actions">
                     <div class="row-actions">
                       @if (u.role !== 'ADMIN') {
-                        <button class="icon-btn" (click)="$event.stopPropagation(); openEdit(u)" aria-label="Modifier"><lucide-icon [img]="PencilIcon" [size]="13" /></button>
-                        <button class="icon-btn danger" (click)="$event.stopPropagation(); openDeleteModal(u)" aria-label="Supprimer"><lucide-icon [img]="Trash2Icon" [size]="13" /></button>
+                        <button class="icon-btn" (click)="$event.stopPropagation(); openEdit(u)" aria-label="Modifier"><svg [lucideIcon]="PencilIcon" [size]="13"></svg></button>
+                        <button class="icon-btn danger" (click)="$event.stopPropagation(); openDeleteModal(u)" aria-label="Supprimer"><svg [lucideIcon]="Trash2Icon" [size]="13"></svg></button>
                       } @else {
-                        <lucide-icon [img]="ShieldCheckIcon" [size]="14" color="var(--blue)" />
+                        <svg [lucideIcon]="ShieldCheckIcon" [size]="14" color="var(--blue)"></svg>
                       }
                     </div>
                   </td>
@@ -116,7 +121,7 @@ import { PRICING_EUR } from '../../core/constants/pricing.const';
           <div class="modal" role="dialog" aria-modal="true">
             <div class="modal-header">
               <h2 class="modal-title">Modifier l'utilisateur</h2>
-              <button class="btn-icon" (click)="closeEdit()" aria-label="Fermer"><lucide-icon [img]="XIcon" [size]="14" /></button>
+              <button class="btn-icon" (click)="closeEdit()" aria-label="Fermer"><svg [lucideIcon]="XIcon" [size]="14"></svg></button>
             </div>
             <div class="modal-body">
               <div class="modal-email">{{ editUser()!.email }}</div>
@@ -155,7 +160,7 @@ import { PRICING_EUR } from '../../core/constants/pricing.const';
           <div class="modal modal-sm" role="dialog" aria-modal="true">
             <div class="modal-header">
               <h2 class="modal-title danger-title">Supprimer l'utilisateur</h2>
-              <button class="btn-icon" (click)="closeDeleteModal()" aria-label="Fermer"><lucide-icon [img]="XIcon" [size]="14" /></button>
+              <button class="btn-icon" (click)="closeDeleteModal()" aria-label="Fermer"><svg [lucideIcon]="XIcon" [size]="14"></svg></button>
             </div>
             <div class="modal-body">
               <p class="delete-msg">Supprimer définitivement <strong>{{ deleteModal()!.email }}</strong> ainsi que tous ses trades et debriefs ? Cette action est irréversible.</p>

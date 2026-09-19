@@ -2,8 +2,9 @@ import { describe, it, expect } from 'vitest';
 import {
   computeTradeStats,
   classifyTrade,
+  netPnl,
   BREAKEVEN_EPSILON,
-} from './trade-stats.util';
+} from '@mtc/shared';
 
 const t = (pnl: number | null) => ({ pnl });
 
@@ -65,5 +66,27 @@ describe('computeTradeStats', () => {
 
   it('BREAKEVEN_EPSILON par défaut = 0', () => {
     expect(BREAKEVEN_EPSILON).toBe(0);
+  });
+
+  it('classe et somme sur le NET : +1 brut avec 1,90 de frais est une perte (PROMPT-213)', () => {
+    const s = computeTradeStats([
+      { pnl: 1, commission: 1.9 },
+      { pnl: 100, commission: 2 },
+    ]);
+    expect(s.wins).toBe(1);
+    expect(s.losses).toBe(1);
+    expect(s.totalPnl).toBe(97.1);
+  });
+});
+
+describe('netPnl', () => {
+  it('pnl brut − frais (valeur absolue), arrondi au centime', () => {
+    expect(netPnl({ pnl: 23.5, commission: 64.6 })).toBe(-41.1);
+    expect(netPnl({ pnl: 200, commission: -10 })).toBe(190);
+  });
+  it('sans frais → le pnl ; trade ouvert → null', () => {
+    expect(netPnl({ pnl: 50 })).toBe(50);
+    expect(netPnl({ pnl: 50, commission: null })).toBe(50);
+    expect(netPnl({ pnl: null, commission: 3 })).toBeNull();
   });
 });

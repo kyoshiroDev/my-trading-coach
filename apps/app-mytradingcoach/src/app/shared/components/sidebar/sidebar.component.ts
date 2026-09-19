@@ -10,26 +10,27 @@ import {
 } from '@angular/core';
 import { RouterModule, RouterLink, RouterLinkActive } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TradovateLiveSocketService } from '../../../core/services/tradovate-live-socket.service';
 import {
-  LucideAngularModule,
-  ChevronLeft,
-  ChevronRight,
-  LayoutDashboard,
-  Activity,
-  Briefcase,
-  BookOpen,
-  ClipboardList,
-  TrendingUp,
-  Sparkles,
-  CalendarCheck,
-  Globe,
-  Users,
-  Gift,
-  Award,
-  User,
-  LogOut,
-  Lock,
-} from 'lucide-angular';
+  LucideDynamicIcon,
+  LucideChevronLeft as ChevronLeft,
+  LucideChevronRight as ChevronRight,
+  LucideLayoutDashboard as LayoutDashboard,
+  LucideActivity as Activity,
+  LucideBriefcase as Briefcase,
+  LucideBookOpen as BookOpen,
+  LucideClipboardList as ClipboardList,
+  LucideTrendingUp as TrendingUp,
+  LucideSparkles as Sparkles,
+  LucideCalendarCheck as CalendarCheck,
+  LucideGlobe as Globe,
+  LucideUsers as Users,
+  LucideGift as Gift,
+  LucideAward as Award,
+  LucideUser as User,
+  LucideLogOut as LogOut,
+  LucideLock as Lock,
+} from '@lucide/angular';
 import { UserStore } from '../../../core/stores/user.store';
 import { AuthService } from '../../../core/auth/auth.service';
 import { UsersApi } from '../../../core/api/users.api';
@@ -41,314 +42,16 @@ import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'mtc-sidebar',
-  standalone: true,
   imports: [
     RouterModule,
     RouterLink,
     RouterLinkActive,
-    LucideAngularModule,
+    LucideDynamicIcon,
     OnboardingComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './sidebar.component.css',
-  template: `
-    @if (showOnboarding()) {
-      <mtc-onboarding (completed)="onOnboardingCompleted()" />
-    }
-
-    <button class="burger" (click)="toggleSidebar()" aria-label="Menu">
-      <span></span><span></span><span></span>
-    </button>
-
-    <button
-      class="sidebar-overlay"
-      [class.open]="sidebarOpen()"
-      (click)="closeSidebar()"
-      aria-label="Fermer le menu"
-      tabindex="-1"
-    ></button>
-
-    <div class="app-layout">
-      <!-- ─── SIDEBAR ─── -->
-      <aside class="sidebar" [class.open]="sidebarOpen()" [class.collapsed]="collapsed()">
-        <!-- Logo (complet déplié / marque seule replié) -->
-        <a routerLink="/dashboard" class="logo">
-          <img class="logo-full" src="icon/logo-horizontal.svg" alt="MyTradingCoach" height="40" />
-          <img class="logo-mark" src="logo.svg" alt="MyTradingCoach" height="32" width="32" />
-        </a>
-
-        <!-- Nav -->
-        <nav class="nav">
-          <div class="nav-section">OVERVIEW</div>
-
-          <a
-            routerLink="/dashboard"
-            routerLinkActive="active"
-            class="nav-item"
-            data-testid="nav-dashboard"
-            [attr.title]="collapsed() ? 'Dashboard' : null"
-            (click)="closeSidebar()"
-          >
-            <lucide-icon [img]="DashboardIcon" [size]="16" class="nav-icon" />
-            <span class="nav-label">Dashboard</span>
-          </a>
-
-          <a
-            routerLink="/session"
-            routerLinkActive="active"
-            class="nav-item"
-            data-testid="nav-session"
-            [attr.title]="collapsed() ? 'Ma session' : null"
-            (click)="closeSidebar()"
-          >
-            <lucide-icon [img]="SessionIcon" [size]="16" class="nav-icon" />
-            <span class="nav-label">Ma session</span>
-          </a>
-
-          <a
-            routerLink="/accounts"
-            routerLinkActive="active"
-            class="nav-item"
-            data-testid="nav-accounts"
-            [attr.title]="collapsed() ? 'Mes comptes' : null"
-            (click)="closeSidebar()"
-          >
-            <lucide-icon [img]="AccountsIcon" [size]="16" class="nav-icon" />
-            <span class="nav-label">Mes comptes</span>
-          </a>
-
-          <a
-            routerLink="/journal"
-            routerLinkActive="active"
-            class="nav-item"
-            data-testid="nav-journal"
-            [attr.title]="collapsed() ? 'Journal' : null"
-            (click)="closeSidebar()"
-          >
-            <lucide-icon [img]="JournalIcon" [size]="16" class="nav-icon" />
-            <span class="nav-label">Journal</span>
-          </a>
-
-          <a
-            routerLink="/sessions"
-            routerLinkActive="active"
-            class="nav-item"
-            data-testid="nav-sessions"
-            [attr.title]="collapsed() ? 'Mes sessions' : null"
-            (click)="closeSidebar()"
-          >
-            <lucide-icon [img]="SessionsIcon" [size]="16" class="nav-icon" />
-            <span class="nav-label">Mes sessions</span>
-          </a>
-
-          <a
-            routerLink="/analytics"
-            routerLinkActive="active"
-            class="nav-item"
-            data-testid="nav-analytics"
-            [attr.title]="collapsed() ? 'Analytics' : null"
-            (click)="closeSidebar()"
-          >
-            <lucide-icon [img]="AnalyticsIcon" [size]="16" class="nav-icon" />
-            <span class="nav-label">Analytics</span>
-            @if (!userStore.isPremium()) {
-              <span class="nav-lock" title="Premium : débloque avec l'abonnement">
-                <lucide-icon [img]="LockIcon" [size]="12" />
-              </span>
-            }
-          </a>
-
-          <div class="nav-section">ANALYSE &amp; IA</div>
-
-          <a
-            routerLink="/ai-insights"
-            routerLinkActive="active"
-            class="nav-item"
-            data-testid="nav-ai-insights"
-            [attr.title]="collapsed() ? 'IA Insights' : null"
-            (click)="closeSidebar()"
-          >
-            <lucide-icon [img]="AiIcon" [size]="16" class="nav-icon" />
-            <span class="nav-label">IA Insights</span>
-            @if (!userStore.isPremium()) {
-              <span class="nav-lock" title="Premium : débloque avec l'abonnement">
-                <lucide-icon [img]="LockIcon" [size]="12" />
-              </span>
-            }
-          </a>
-
-          <a
-            routerLink="/debrief"
-            routerLinkActive="active"
-            class="nav-item"
-            data-testid="nav-debrief"
-            [attr.title]="collapsed() ? 'Weekly Debrief' : null"
-            (click)="closeSidebar()"
-          >
-            <lucide-icon [img]="DebriefIcon" [size]="16" class="nav-icon" />
-            <span class="nav-label">Weekly Debrief</span>
-            @if (!userStore.isPremium()) {
-              <span class="nav-lock" title="Premium : débloque avec l'abonnement">
-                <lucide-icon [img]="LockIcon" [size]="12" />
-              </span>
-            }
-          </a>
-
-          <a
-            routerLink="/eco-calendar"
-            routerLinkActive="active"
-            class="nav-item"
-            data-testid="nav-eco-calendar"
-            [attr.title]="collapsed() ? 'Calendrier éco' : null"
-            (click)="closeSidebar()"
-          >
-            <lucide-icon [img]="EcoIcon" [size]="16" class="nav-icon" />
-            <span class="nav-label">Calendrier éco</span>
-          </a>
-
-          <!-- Surface(s) de parrainage selon le rôle. L'admin voit les DEUX. -->
-          @if (userStore.isAmbassador()) {
-            <a
-              routerLink="/ambassador"
-              routerLinkActive="active"
-              class="nav-item"
-              data-testid="nav-ambassador"
-              [attr.title]="collapsed() ? 'Ambassadeur' : null"
-              (click)="closeSidebar()"
-            >
-              <lucide-icon [img]="AmbassadorIcon" [size]="16" class="nav-icon" />
-              <span class="nav-label">Ambassadeur</span>
-              @if (ambassadorNotif.newReferrals() > 0) {
-                <span class="nav-badge-notif">{{ ambassadorNotif.newReferrals() }}</span>
-              }
-            </a>
-          }
-          @if (!userStore.isAmbassador() || userStore.isAdmin()) {
-            <a
-              routerLink="/parrainage"
-              routerLinkActive="active"
-              class="nav-item"
-              data-testid="nav-parrainage"
-              [attr.title]="collapsed() ? 'Parrainage' : null"
-              (click)="closeSidebar()"
-            >
-              <lucide-icon [img]="ParrainageIcon" [size]="16" class="nav-icon" />
-              <span class="nav-label">Parrainage</span>
-            </a>
-          }
-
-          <div class="nav-section">ACCOUNT</div>
-
-          <a
-            routerLink="/scoring"
-            routerLinkActive="active"
-            class="nav-item"
-            data-testid="nav-scoring"
-            [attr.title]="collapsed() ? 'Scoring' : null"
-            (click)="closeSidebar()"
-          >
-            <lucide-icon [img]="ScoringIcon" [size]="16" class="nav-icon" />
-            <span class="nav-label">Scoring</span>
-            @if (!userStore.isPremium()) {
-              <span class="nav-lock" title="Premium : débloque avec l'abonnement">
-                <lucide-icon [img]="LockIcon" [size]="12" />
-              </span>
-            }
-          </a>
-
-          <a
-            routerLink="/profil"
-            routerLinkActive="active"
-            class="nav-item"
-            data-testid="nav-settings"
-            [attr.title]="collapsed() ? 'Profil' : null"
-            (click)="closeSidebar()"
-          >
-            <lucide-icon [img]="ProfilIcon" [size]="16" class="nav-icon" />
-            <span class="nav-label">Profil</span>
-          </a>
-
-          <button
-            class="nav-item settings-item"
-            data-testid="logout-btn"
-            [attr.title]="collapsed() ? (userStore.isDemo() ? 'Quitter la démo' : 'Déconnexion') : null"
-            (click)="closeSidebar(); logout()"
-          >
-            <lucide-icon [img]="LogoutIcon" [size]="16" class="nav-icon" />
-            <span class="nav-label">@if (userStore.isDemo()) { Quitter la démo } @else { Déconnexion }</span>
-          </button>
-        </nav>
-
-        <!-- Profil (design chrome.jsx : logo → nav → logout → profil ;
-             le quota + Discord vivent désormais dans la topbar) -->
-        <div class="sidebar-footer">
-          <div class="user-card" [attr.title]="collapsed() ? userStore.displayName() : null">
-            <div class="avatar">{{ userStore.initials() }}</div>
-            <div class="user-info">
-              <div class="user-name">{{ userStore.displayName() }}</div>
-              <div class="user-plan"
-                [class.premium]="userStore.isPremium()"
-                [class.free]="!userStore.isPremium()">
-                @if (userStore.isPremium()) {
-                  ★ PREMIUM
-                } @else {
-                  GRATUIT
-                }
-              </div>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      <!-- Flèche de repli sur le bord (desktop) : ancrée sur .app-layout pour ne pas
-           être coupée par l'overflow:hidden de .sidebar -->
-      <button
-        type="button"
-        class="collapse-edge"
-        [class.collapsed]="collapsed()"
-        data-testid="sidebar-collapse-toggle"
-        (click)="toggleCollapse()"
-        [attr.aria-label]="collapsed() ? 'Déplier la barre latérale' : 'Replier la barre latérale'"
-      >
-        <lucide-icon [img]="collapsed() ? ChevronRightIcon : ChevronLeftIcon" [size]="16" />
-      </button>
-
-      <!-- ─── MAIN ─── -->
-      <!-- La classe has-demo-banner publie --demo-banner-h : les vues calées sur le
-           viewport (Pré-session / Session live / Débrief) en retranchent la hauteur
-           du bandeau au lieu de déborder de 52 px. -->
-      <main class="main-content"
-            [class.has-demo-banner]="userStore.isDemo()"
-            [style.overflow]="liveModeService.isLive() ? 'hidden' : null">
-        @if (userStore.isDemo()) {
-          <div class="demo-banner">
-            <span class="demo-banner-text">
-              🔍 <strong>Mode démo</strong><span class="demo-banner-long"> : tu explores MyTradingCoach avec des données d'exemple.</span>
-            </span>
-            <a class="demo-banner-cta" [href]="landingUrl + '/#pricing'">Créer mon compte gratuit →</a>
-          </div>
-        }
-        <router-outlet />
-      </main>
-    </div>
-
-    @if (demo.showSignupPrompt()) {
-      <div class="demo-modal-overlay" role="button" tabindex="-1"
-           (click)="demo.dismiss()" (keydown.escape)="demo.dismiss()">
-        <div class="demo-modal" role="dialog"
-             (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
-          <div class="demo-modal-emoji">🚀</div>
-          <h2 class="demo-modal-title">Crée ton compte pour aller plus loin</h2>
-          <p class="demo-modal-text">
-            En mode démo, les données sont en lecture seule. Crée ton compte gratuit
-            pour logger tes vrais trades et débloquer ton coaching personnalisé.
-          </p>
-          <a class="demo-modal-cta" [href]="landingUrl + '/#pricing'">Créer mon compte gratuit →</a>
-          <button class="demo-modal-dismiss" (click)="demo.dismiss()">Continuer la démo</button>
-        </div>
-      </div>
-    }
-  `,
+  templateUrl: './sidebar.component.html',
 })
 export class SidebarComponent {
   protected readonly userStore = inject(UserStore);
@@ -358,6 +61,7 @@ export class SidebarComponent {
   protected readonly ambassadorNotif = inject(AmbassadorNotifService);
   protected readonly liveModeService = inject(LiveModeService);
   protected readonly demo = inject(DemoService);
+  private readonly tradovateLive = inject(TradovateLiveSocketService);
   protected readonly landingUrl = environment.landingUrl;
 
   protected readonly ChevronLeftIcon = ChevronLeft;
@@ -449,6 +153,14 @@ export class SidebarComponent {
         this.collapsedBeforeLive = null;
       }
     });
+
+    // Temps réel Tradovate (PROMPT-210 live) : ouvert tant que l'app l'est (le shell vit sur
+    // toutes les pages connectées), fermé au logout / à la fermeture de l'onglet. Démo exclue.
+    effect(() => {
+      const on = this.auth.isAuthenticated() && !this.userStore.isDemo();
+      untracked(() => (on ? this.tradovateLive.connect() : this.tradovateLive.disconnect()));
+    });
+    this.destroyRef.onDestroy(() => this.tradovateLive.disconnect());
 
     const onFocus = () => {
       if (!this.auth.isAuthenticated()) return;

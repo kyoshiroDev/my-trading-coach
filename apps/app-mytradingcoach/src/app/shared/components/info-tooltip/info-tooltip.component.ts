@@ -13,7 +13,6 @@ import {
  */
 @Component({
   selector: 'mtc-info-tooltip',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <button

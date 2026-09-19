@@ -1,0 +1,18 @@
+.tvp { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.tvp-q { margin: 0; font-size: 12px; color: var(--text-2); line-height: 1.5; }
+.tvp-list { display: flex; flex-direction: column; gap: 6px; }
+.tvp-opt {
+  display: grid; grid-template-columns: auto 1fr; column-gap: 10px; align-items: center;
+  padding: 9px 12px; border-radius: 9px; cursor: pointer;
+  background: var(--bg-2); border: 1px solid var(--border); min-width: 0;
+}
+.tvp-opt.sel { border-color: var(--blue); background: var(--blue-glow); }
+.tvp-opt input { grid-row: span 2; accent-color: var(--blue); }
+.tvp-name { font-family: var(--font-mono); font-size: 13px; color: var(--text); overflow-wrap: anywhere; }
+.tvp-env { font-size: 11px; color: var(--text-3); }
+.tvp-btn {
+  align-self: flex-start;
+  background: var(--blue); color: #fff; border: none; border-radius: 8px;
+  padding: 8px 14px; font-size: 12px; font-weight: 600; font-family: var(--font-body); cursor: pointer;
+}
+.tvp-btn:disabled { opacity: 0.55; cursor: default; }

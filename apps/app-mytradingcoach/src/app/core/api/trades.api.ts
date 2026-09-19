@@ -51,6 +51,8 @@ export interface Trade {
   executionMethod?: 'STOP_BASED' | 'BEHAVIORAL' | null;
   setupId: string;
   setup: TradeSetup;
+  /** Compte du trade : sa devise est celle de ce compte (PROMPT-214). */
+  accountId?: string | null;
   session: 'LONDON' | 'NEW_YORK' | 'ASIAN';
   timeframe: string;
   notes: string | null;
@@ -83,25 +85,25 @@ export interface CreateTradeDto {
 
 export type UpdateTradeDto = Partial<CreateTradeDto>;
 
+/** Filtres de GET /trades (query string) : miroir de `TradeFiltersDto` côté API. */
 export interface TradeFilters {
-  page?: number;
-  limit?: number;
+  cursor?: string;
+  limit?: number | string;
   side?: Trade['side'];
   setupId?: string;
-  emotion?: Trade['emotion'];
+  emotion?: string;
+  result?: 'WIN' | 'LOSS' | 'BREAKEVEN';
+  executionGrade?: string;
   dateFrom?: string;
   dateTo?: string;
-  cursor?: string;
+  accountId?: string;
 }
 
-export interface PaginatedTrades {
+/** Page de GET /trades (pagination par curseur, `trades.service.findAll`). */
+export interface TradesPage {
   data: Trade[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    nextCursor: string | null;
-  };
+  nextCursor: string | null;
+  hasNextPage: boolean;
 }
 
 /** KPIs du journal agrégés en base sur tout l'ensemble filtré (hors pagination). */
@@ -163,13 +165,14 @@ export class TradesApi {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/trades`;
 
-  getAll(filters: TradeFilters = {}): Observable<{ data: PaginatedTrades }> {
+  /** Une page de trades ; `cursor` = `nextCursor` de la page précédente. */
+  getAll(filters: TradeFilters | Record<string, string> = {}): Observable<{ data: TradesPage }> {
     let params = new HttpParams();
     Object.entries(filters).forEach(([key, val]) => {
       if (val !== undefined && val !== null)
         params = params.set(key, String(val));
     });
-    return this.http.get<{ data: PaginatedTrades }>(this.base, { params });
+    return this.http.get<{ data: TradesPage }>(this.base, { params });
   }
 
   /** KPIs du journal sur l'ensemble filtré complet (mêmes filtres que la liste, sans pagination). */
@@ -187,6 +190,11 @@ export class TradesApi {
 
   create(dto: CreateTradeDto): Observable<{ data: Trade }> {
     return this.http.post<{ data: Trade }>(this.base, dto);
+  }
+
+  /** Import CSV (multipart). `T` = le récap d'import, typé par l'écran qui l'affiche. */
+  importCsv<T>(form: FormData): Observable<{ data: T }> {
+    return this.http.post<{ data: T }>(`${this.base}/import`, form);
   }
 
   update(id: string, dto: UpdateTradeDto): Observable<{ data: Trade }> {

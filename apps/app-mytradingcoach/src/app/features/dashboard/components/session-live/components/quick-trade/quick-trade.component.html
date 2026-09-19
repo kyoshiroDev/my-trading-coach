@@ -1,0 +1,207 @@
+<div class="qt-panel" data-testid="quick-trade-form">
+  <div class="qt-title">
+    <svg [lucideIcon]="QuickIcon" [size]="14" class="ct-ic"></svg> Trade rapide
+
+  </div>
+
+  <!-- Asset select -->
+  <div class="qt-asset-wrap">
+    <div class="qt-lbl">ACTIF</div>
+    @if (assetsLoading()) {
+      <div class="qt-asset-skel"></div>
+    } @else if (assetsError()) {
+      <div class="qt-asset-error" role="alert">
+        <span>Impossible de charger tes actifs.</span>
+        <button type="button" class="qt-retry-btn" (click)="loadUserAssets()">Réessayer</button>
+      </div>
+    } @else {
+      <div style="display:flex;gap:6px;align-items:center;">
+        <select
+          class="qt-asset-select"
+          data-testid="quick-trade-asset"
+          (change)="onAssetSelect($event)"
+        >
+          <option value="">-- Choisir --</option>
+          @for (a of userAssets(); track a.symbol) {
+            <option [value]="a.symbol" [selected]="qtSelectedAsset()?.symbol === a.symbol">
+              {{ a.isFavorite ? '★ ' : '' }}{{ a.symbol }}{{ a.tradeCount > 0 ? ' · ' + a.tradeCount + ' trade' + (a.tradeCount > 1 ? 's' : '') : '' }}
+            </option>
+          }
+          <option value="__custom__">➕ Autre actif…</option>
+        </select>
+        @if (qtSelectedAsset()) {
+          <button
+            class="qt-fav-btn"
+            [class.active]="qtSelectedAsset()!.isFavorite"
+            title="Marquer comme favori"
+            (click)="setFavorite()"
+          >★</button>
+        }
+      </div>
+
+      @if (customAssetMode()) {
+        <div class="qt-custom-asset">
+          <div class="qt-custom-row">
+            <input
+              class="qt-input"
+              type="text"
+              data-testid="quick-trade-custom-asset"
+              [value]="customAssetQuery()"
+              (input)="onCustomAssetSearch($event)"
+              (keydown.enter)="submitCustomAsset()"
+              placeholder="Cherche ou saisis (ex : NQ, BTC/USDT)…"
+              style="font-size:12px;"
+            />
+            <button class="qt-custom-add" type="button" [disabled]="!customAssetQuery().trim()" (click)="submitCustomAsset()">OK</button>
+            <button class="qt-custom-cancel" type="button" (click)="cancelCustomAsset()">✕</button>
+          </div>
+          @if (customAssetResults().length > 0) {
+            <div class="qt-custom-results">
+              @for (r of customAssetResults(); track r.symbol) {
+                <button class="qt-custom-result" type="button" (click)="addCustomAsset(r.symbol)">
+                  <span class="qt-custom-sym">{{ r.symbol }}</span>
+                  <span class="qt-custom-lbl">{{ r.label }}</span>
+                </button>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Prix temps réel -->
+      @if (qtSelectedAsset()) {
+        <div class="qt-live-price">
+          @if (livePrice() !== null) {
+            <span class="qt-live-dot">●</span>
+            <span class="qt-live-value">{{ livePricePlaceholder() }}</span>
+            <span class="qt-live-label">prix actuel</span>
+          } @else {
+            <span class="qt-live-unavailable">-</span>
+          }
+        </div>
+      }
+      @if (userAssets().length === 0 && !customAssetMode()) {
+        <div class="qt-asset-hint">Choisis « ➕ Autre actif… » pour saisir ton premier instrument.</div>
+      }
+    }
+  </div>
+
+  <div>
+    <div class="qt-lbl">DIRECTION</div>
+    <div class="qt-sides">
+      <button
+        class="qt-side lng"
+        [class.sel]="qtSide() === 'LONG'"
+        [attr.aria-pressed]="qtSide() === 'LONG'"
+        data-testid="quick-trade-long"
+        (click)="qtSide.set('LONG')"
+      >▲ LONG</button>
+      <button
+        class="qt-side sht"
+        [class.sel]="qtSide() === 'SHORT'"
+        [attr.aria-pressed]="qtSide() === 'SHORT'"
+        data-testid="quick-trade-short"
+        (click)="qtSide.set('SHORT')"
+      >▼ SHORT</button>
+    </div>
+  </div>
+
+  <div>
+    <div class="qt-lbl">ÉMOTION</div>
+    <div class="qt-emos">
+      @for (emo of emotions; track emo.value) {
+        <button
+          type="button"
+          class="qt-emo"
+          [class.sel]="qtEmotion() === emo.value"
+          [title]="emo.title"
+          [attr.aria-label]="emo.title"
+          [attr.aria-pressed]="qtEmotion() === emo.value"
+          (click)="qtEmotion.set(emo.value)"
+        >{{ emo.emoji }}</button>
+      }
+    </div>
+  </div>
+
+  <div class="qt-secondary">
+    <select class="qt-select"
+            [value]="qtSetup()"
+            (change)="qtSetup.set($any($event.target).value)">
+      @for (s of setupsStore.active(); track s.id) {
+        <option [value]="s.id">{{ s.title }}</option>
+      }
+    </select>
+    <select class="qt-select"
+            [value]="qtTimeframe()"
+            (change)="qtTimeframe.set($any($event.target).value)">
+      <option value="1m">1m</option>
+      <option value="5m">5m</option>
+      <option value="15m">15m</option>
+      <option value="1h">1h</option>
+      <option value="4h">4h</option>
+    </select>
+  </div>
+
+  <div class="qt-divider"></div>
+  <div class="qt-optional-lbl">OPTIONNEL</div>
+
+  <div class="qt-pnl-row">
+    <div>
+      <div class="qt-lbl">ENTRÉE</div>
+      <div class="qt-entry-readonly" data-testid="qt-entry-auto">
+        {{ livePrice() !== null ? livePricePlaceholder() : '-' }}
+      </div>
+    </div>
+    <div>
+      <div class="qt-lbl">QUANTITÉ</div>
+      <input
+        class="qt-input"
+        type="text"
+        inputmode="decimal"
+        mtcNumericInput
+        placeholder="1"
+        style="font-size:12px;"
+        [value]="qtQty()"
+        (input)="qtQty.set($any($event.target).value)"
+      />
+    </div>
+  </div>
+
+  <div class="qt-pnl-row">
+    <div>
+      <div class="qt-lbl" style="color:rgba(239,68,68,.7);">STOP LOSS</div>
+      <input
+        class="qt-input qt-sl-input"
+        type="text"
+        inputmode="decimal"
+        mtcNumericInput
+        placeholder="0.00"
+        style="font-size:12px;"
+        [value]="qtSl()"
+        (input)="qtSl.set($any($event.target).value)"
+      />
+    </div>
+    <div>
+      <div class="qt-lbl" style="color:rgba(16,185,129,.7);">TAKE PROFIT</div>
+      <input
+        class="qt-input qt-tp-input"
+        type="text"
+        inputmode="decimal"
+        mtcNumericInput
+        placeholder="0.00"
+        style="font-size:12px;"
+        [value]="qtTp()"
+        (input)="qtTp.set($any($event.target).value)"
+      />
+    </div>
+  </div>
+
+  <button
+    class="qt-log"
+    data-testid="quick-trade-submit"
+    [disabled]="!canSubmitQuickTrade() || qtSubmitting()"
+    (click)="submitQuickTrade()"
+  >@if (qtSubmitting()) { Capture… } @else { <svg [lucideIcon]="QuickIcon" [size]="14"></svg> Logger ce trade }</button>
+  <div class="qt-hint">Asset + direction + émotion suffisent</div>
+
+</div>

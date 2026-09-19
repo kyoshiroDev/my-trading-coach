@@ -12,12 +12,14 @@ import {
 } from '@angular/router';
 import { filter, map } from 'rxjs/operators';
 import { SeoService } from './core/seo/seo.service';
+import { ToastsComponent } from './shared/components/toasts/toasts.component';
 
 @Component({
-  imports: [RouterModule],
+  imports: [RouterModule, ToastsComponent],
   selector: 'mtc-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<router-outlet />`,
+  // Conteneur de toasts monté UNE fois, hors du routeur : il survit aux navigations.
+  template: `<router-outlet /><mtc-toasts />`,
 })
 export class App implements OnInit {
   private readonly router = inject(Router);

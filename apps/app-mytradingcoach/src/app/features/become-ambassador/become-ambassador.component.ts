@@ -8,14 +8,18 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { LucideAngularModule, Check } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideCheck as Check,
+} from '@lucide/angular';
 import { ReferralApi } from '../../core/api/referral.api';
+import { ToastService } from '../../core/services/toast.service';
+import { apiErrorMessage } from '../../core/utils/api-error';
 
 @Component({
   selector: 'mtc-become-ambassador',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, LucideAngularModule],
+  imports: [RouterLink, LucideDynamicIcon],
   styleUrl: './become-ambassador.component.css',
   template: `
     <div class="content">
@@ -26,7 +30,7 @@ import { ReferralApi } from '../../core/api/referral.api';
 
       @if (submitted()) {
         <div class="card success">
-          <div class="success-ic"><lucide-icon [img]="CheckIcon" [size]="22" /></div>
+          <div class="success-ic"><svg [lucideIcon]="CheckIcon" [size]="22"></svg></div>
           <div class="success-t">Demande envoyée</div>
           <div class="success-d">
             Ta demande est étudiée manuellement, je reviens vers toi rapidement.
@@ -48,10 +52,10 @@ import { ReferralApi } from '../../core/api/referral.api';
         <div class="card">
           <div class="card-title">📋 Conditions</div>
           <div class="elig-grid">
-            <div class="elig"><span class="elig-ic"><lucide-icon [img]="CheckIcon" [size]="12" /></span><span><b>Statut pro</b> : micro-entreprise ou société (la micro est gratuite et se crée en 15 min).</span></div>
-            <div class="elig"><span class="elig-ic"><lucide-icon [img]="CheckIcon" [size]="12" /></span><span><b>Justificatif</b> : avis de situation SIRENE, ou Kbis si société.</span></div>
-            <div class="elig"><span class="elig-ic"><lucide-icon [img]="CheckIcon" [size]="12" /></span><span><b>RIB</b> au nom de l'entreprise pour le versement.</span></div>
-            <div class="elig"><span class="elig-ic"><lucide-icon [img]="CheckIcon" [size]="12" /></span><span><b>Facture mensuelle</b> des commissions dues, payée par virement.</span></div>
+            <div class="elig"><span class="elig-ic"><svg [lucideIcon]="CheckIcon" [size]="12"></svg></span><span><b>Statut pro</b> : micro-entreprise ou société (la micro est gratuite et se crée en 15 min).</span></div>
+            <div class="elig"><span class="elig-ic"><svg [lucideIcon]="CheckIcon" [size]="12"></svg></span><span><b>Justificatif</b> : avis de situation SIRENE, ou Kbis si société.</span></div>
+            <div class="elig"><span class="elig-ic"><svg [lucideIcon]="CheckIcon" [size]="12"></svg></span><span><b>RIB</b> au nom de l'entreprise pour le versement.</span></div>
+            <div class="elig"><span class="elig-ic"><svg [lucideIcon]="CheckIcon" [size]="12"></svg></span><span><b>Facture mensuelle</b> des commissions dues, payée par virement.</span></div>
           </div>
         </div>
 
@@ -90,9 +94,6 @@ import { ReferralApi } from '../../core/api/referral.api';
               ></textarea>
             </div>
 
-            @if (error()) {
-              <div class="form-error">Envoi impossible pour le moment. Réessaie dans un instant.</div>
-            }
 
             <button
               class="submit-btn"
@@ -112,13 +113,13 @@ import { ReferralApi } from '../../core/api/referral.api';
 export class BecomeAmbassadorComponent {
   private readonly api = inject(ReferralApi);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
 
   protected readonly CheckIcon = Check;
 
   protected readonly socials = signal('');
   protected readonly message = signal('');
   protected readonly isSubmitting = signal(false);
-  protected readonly error = signal(false);
   protected readonly submitted = signal(false);
 
   protected readonly canSubmit = computed(() => this.socials().trim().length >= 3);
@@ -129,13 +130,15 @@ export class BecomeAmbassadorComponent {
   protected submit(): void {
     if (!this.canSubmit() || this.isSubmitting()) return;
     this.isSubmitting.set(true);
-    this.error.set(false);
     this.api
       .applyAmbassador({ socials: this.socials().trim(), message: this.message().trim() || undefined })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => { this.isSubmitting.set(false); this.submitted.set(true); },
-        error: () => { this.isSubmitting.set(false); this.error.set(true); },
+        error: (err) => {
+          this.isSubmitting.set(false);
+          this.toast.error(apiErrorMessage(err, 'Envoi impossible pour le moment. Réessaie dans un instant.'));
+        },
       });
   }
 }

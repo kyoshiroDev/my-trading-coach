@@ -1,18 +1,20 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { LucideAngularModule, Activity } from 'lucide-angular';
+import {
+  LucideDynamicIcon,
+  LucideActivity as Activity,
+} from '@lucide/angular';
 import { MarketContext } from '../../../../core/api/trades.api';
 
 @Component({
   selector: 'mtc-market-context-bar',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [LucideAngularModule],
+  imports: [LucideDynamicIcon],
   styleUrl: './market-context-bar.component.css',
   template: `
     @if (ctx()) {
       <div class="ctx-wrap">
         <div class="ctx-header">
-          <lucide-icon [img]="CtxIcon" [size]="14" class="ctx-ic" />
+          <svg [lucideIcon]="CtxIcon" [size]="14" class="ctx-ic"></svg>
           <span class="ctx-lbl">Contexte marché</span>
           <span class="ctx-upd"><span class="ctx-pulse-dot"></span> MAJ 15s · {{ updatedLabel() }}</span>
         </div>

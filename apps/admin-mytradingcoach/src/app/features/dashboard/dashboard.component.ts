@@ -18,7 +18,6 @@ import { CHART_COLORS, gridAxis, noLegend, type ChartTone } from '../../shared/c
 
 @Component({
   selector: 'mtc-admin-dashboard',
-  standalone: true,
   imports: [DatePipe, DecimalPipe, RouterLink, ChartCanvasComponent, RadialGaugeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './dashboard.component.css',

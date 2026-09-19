@@ -112,7 +112,7 @@
   font-size: 14px; font-weight: 700; font-family: var(--font-display);
   border: 1px solid rgba(16,185,129,.3); transition: all .15s;
 }
-.mtc-start-btn lucide-icon { display: inline-flex; }
+.mtc-start-btn svg.lucide { display: inline-flex; }
 .mtc-start-btn:hover:not(:disabled) {
   background: var(--green); color: #06281c; border-color: var(--green);
   box-shadow: 0 0 22px rgba(16,185,129,.35);

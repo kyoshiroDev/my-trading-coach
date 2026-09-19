@@ -12,7 +12,7 @@ import {
   untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { HttpClient, httpResource } from '@angular/common/http';
+import { httpResource } from '@angular/common/http';
 import { finalize } from 'rxjs';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PnlFormatPipe, SessionLabelPipe } from '../../shared/pipes';
@@ -33,6 +33,8 @@ import { ActivityCalendarComponent } from '../../shared/components/activity-cale
 import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
 import { environment } from '../../../environments/environment';
 import { ChartService } from '../../core/services/chart.service';
+import { MoneyService } from '../../core/services/money.service';
+import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
 
 const MOCK_HEATMAP_CELLS = [
   0.75, 0.45, 0.8, 0.3, 0.65, 0.55, 0.2, 0.6, 0.7, 0.35, 0.85, 0.5, 0.4, 0.72,
@@ -44,7 +46,6 @@ const MOCK_SETUP_BARS = [88, 72, 65, 54, 38] as const;
 
 @Component({
   selector: 'mtc-analytics',
-  standalone: true,
   imports: [
     TopbarComponent,
     PnlFormatPipe,
@@ -52,6 +53,7 @@ const MOCK_SETUP_BARS = [88, 72, 65, 54, 38] as const;
     PlanModalComponent,
     ActivityCalendarComponent,
     InfoTooltipComponent,
+    MixedCurrencyNoticeComponent,
   ],
   templateUrl: './analytics.component.html',
   styleUrl: './analytics.component.css',
@@ -65,10 +67,11 @@ export class AnalyticsComponent {
   protected readonly userStore = inject(UserStore);
   private readonly billingApi = inject(BillingApi);
   private readonly analyticsApi = inject(AnalyticsApi);
-  private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
   private readonly chartService = inject(ChartService);
   private readonly selectedAccount = inject(SelectedAccountStore);
+  /** Devises mêlées en « Tous les comptes » → pas de totaux (PROMPT-214). */
+  protected readonly money = inject(MoneyService);
 
   // Suffixe query du compte sélectionné (multi-comptes). « Tous » → '' (agrégé). Lu dans les
   // URL des resources → refetch auto au changement de compte (pattern dashboard).
@@ -93,7 +96,9 @@ export class AnalyticsComponent {
     if (this.equityPeriod() === '1m') from.setMonth(from.getMonth() - 1);
     else if (this.equityPeriod() === '3m') from.setMonth(from.getMonth() - 3);
     else from.setMonth(from.getMonth() - 6);
-    return { from: from.toISOString().slice(0, 10), to: now.toISOString().slice(0, 10) };
+    // Horodatages complets : une date seule en `to` valait minuit et excluait les trades du
+    // jour même (courbe vide pour un compte qui n'avait tradé qu'aujourd'hui, PROMPT-213).
+    return { from: from.toISOString(), to: now.toISOString() };
   });
   protected readonly equityData = signal<{ points: EquityPoint[]; startingCapital: number | null } | null>(null);
   protected readonly equityLoading = signal(false);
@@ -178,7 +183,8 @@ export class AnalyticsComponent {
   constructor() {
     afterRenderEffect(() => {
       const curve = this.equityCurve();
-      if (curve.length >= 2) {
+      // Un seul jour tradé suffit : les graphes partent d'un point « Départ » à 0.
+      if (curve.length >= 1) {
         const equityCanvas = this.equityCanvasRef?.nativeElement;
         const drawdownCanvas = this.drawdownCanvasRef?.nativeElement;
         if (equityCanvas) {
@@ -208,12 +214,8 @@ export class AnalyticsComponent {
     this.equityLoading.set(true);
     const { from, to } = this.equityDateRange();
     const accountId = this.selectedAccount.accountParam();
-    const params = [from ? `from=${from}` : '', to ? `to=${to}` : '', accountId ? `accountId=${encodeURIComponent(accountId)}` : '']
-      .filter(Boolean)
-      .join('&');
-    const url = `${environment.apiUrl}/analytics/equity-curve/daily${params ? '?' + params : ''}`;
-    this.http
-      .get<{ data: { points: EquityPoint[]; startingCapital: number | null } }>(url)
+    this.analyticsApi
+      .getDailyEquityCurve({ from, to, accountId })
       .pipe(
         finalize(() => this.equityLoading.set(false)),
         takeUntilDestroyed(this.destroyRef),

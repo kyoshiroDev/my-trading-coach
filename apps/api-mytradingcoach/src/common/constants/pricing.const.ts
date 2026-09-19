@@ -1,19 +1,16 @@
+import { PREMIUM_PRICE_EUR } from '@mtc/shared';
+
 /**
- * Tarifs EUR. Source de vérité produit : landing `Pricing.astro` +
- * front `pricing.const.ts`. Côté API, ces valeurs servent au calcul du MRR/ARR.
- * Les prix Stripe réellement facturés sont pilotés par les `STRIPE_*_PRICE_*`.
+ * Tarifs EUR côté API (calcul du MRR/ARR). VALEURS : `@mtc/shared` (source unique API + app +
+ * admin). Les prix Stripe réellement facturés sont pilotés par les `STRIPE_*_PRICE_*`.
  * Ne jamais coder un prix en dur ailleurs : référencer cette constante.
- *
- * 2 paliers depuis PROMPT-169 : FREE (0€) et PREMIUM (49€/mois · 490€/an).
  */
 export const PRICING_EUR = {
-  PREMIUM: { monthly: 49, annual: 490 },
+  PREMIUM: PREMIUM_PRICE_EUR,
 } as const;
 
 /**
- * Essai gratuit : 30 jours, MENSUEL uniquement (PROMPT-169).
- * L'annuel est facturé immédiatement (un essai suivi d'un prélèvement de 490€
- * génère contestations et remboursements). L'essai n'est accordé que si
- * `!user.trialUsed` ET prix mensuel.
+ * Essai gratuit : 30 jours, MENSUEL uniquement (PROMPT-169) — cf. `@mtc/shared`. Ré-export direct
+ * (`export … from`) : un import puis `export { X }` est effacé en transpilation fichier par fichier.
  */
-export const TRIAL_PERIOD_DAYS = 30;
+export { TRIAL_PERIOD_DAYS } from '@mtc/shared';

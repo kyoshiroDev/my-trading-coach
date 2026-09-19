@@ -41,7 +41,7 @@
   border-radius: 14px;
   padding: 18px;
 }
-.card-title lucide-icon { display: inline-flex; }
+.card-title svg.lucide { display: inline-flex; }
 .card-header {
   display: flex;
   align-items: center;

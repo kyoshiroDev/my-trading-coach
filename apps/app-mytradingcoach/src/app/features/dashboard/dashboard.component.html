@@ -1,0 +1,197 @@
+<mtc-topbar
+  title="Dashboard"
+  [period]="periodLabel()"
+  addLabel="⚡ Ajouter trade"
+  [showAccountSelector]="true"
+  (addClick)="goToJournal()"
+>
+  @if (sessionStore.hasActiveSession()) {
+    <a routerLink="/session" class="sess-active-pill">
+      <div class="sess-pulse-dot"></div>
+      <span>Session en cours</span>
+      <span class="sess-pnl-top" [style.color]="(sessionStore.todayStats()?.totalPnl ?? 0) >= 0 ? 'var(--green)' : 'var(--red)'">
+        {{ sessionStore.todayStats()?.totalPnl ?? 0 | money:0 }}
+      </span>
+      <span style="color:var(--text-3);font-size:11px;">→</span>
+    </a>
+  }
+</mtc-topbar>
+
+<div class="content">
+  @if (accountReallyEmpty()) {
+    <div class="firstrun-hero">
+      <div class="firstrun-text">
+        <h2 class="firstrun-title">Fais ton premier pas 🚀</h2>
+        <p class="firstrun-sub">Logge ton premier trade ou démarre une session : c'est là que ton coach commence à t'aider.</p>
+      </div>
+      <div class="firstrun-actions">
+        <button class="firstrun-btn primary" (click)="goToJournal()">Enregistrer mon premier trade</button>
+        <button class="firstrun-btn ghost" data-testid="firstrun-import" (click)="openCsvImport()">Importer mes trades</button>
+        <a class="firstrun-btn ghost" routerLink="/session">Démarrer une session</a>
+      </div>
+    </div>
+  }
+
+  @if (userStore.profileIncomplete()) {
+    <div class="limit-banner near" data-testid="profile-nudge">
+      <div class="limit-banner-left">
+        <span class="limit-banner-ic">✨</span>
+        <div>
+          <div class="limit-banner-title">Complète ton profil de trader</div>
+          <div class="limit-banner-sub">Stratégie + actifs principaux → analyses IA bien plus personnalisées.</div>
+        </div>
+      </div>
+      <button class="limit-banner-btn" (click)="goToSettings()">Compléter</button>
+    </div>
+  }
+
+  @if (!userStore.isPremium()) {
+    <div class="premium-banner">
+      <div class="premium-banner-left">
+        <span class="premium-banner-icon">⚡</span>
+        <div>
+          <div class="premium-banner-title">Passe à Premium</div>
+          <div class="premium-banner-sub">Weekly Debrief, IA Insights, Chat coach, analytics avancés &amp; comptes illimités</div>
+        </div>
+      </div>
+      <div class="premium-banner-right">
+        <div class="premium-banner-price">
+          <span class="premium-banner-amount">{{ PRICING.premium.monthly }}€</span>
+          <span class="premium-banner-period">/mois</span>
+          <div class="premium-banner-trial">1 mois offert · carte requise</div>
+        </div>
+        <button class="premium-banner-btn" (click)="showPlanModal.set(true)">Essayer Premium</button>
+      </div>
+    </div>
+  }
+
+  <!-- Devises mêlées en « Tous les comptes » : pas de totaux (PROMPT-214), l'historique reste. -->
+  @if (money.mixed()) {
+    <mtc-mixed-currency-notice />
+  } @else {
+  <mtc-dashboard-kpis
+    [loading]="isLoading()"
+    [summary]="summary()"
+    [baseCapital]="baseCapital()"
+    [currentCapital]="currentCapital()"
+    [equitySeries]="eqSeries()"
+    [periodShort]="periodShort()"
+    [fallbackTradesCount]="tradesStore.trades().length"
+  />
+
+  <!-- Grille flagship (fidèle au design : 6 panels en 2 colonnes, sans calendrier) -->
+  <div class="mtc-grid">
+    <!-- Courbe d'équité -->
+    <div class="mtc-panel">
+      <div class="mtc-panel-head">
+        <div class="mtc-panel-head-l"><svg [lucideIcon]="EquityIcon" [size]="15" class="mtc-phi"></svg><div><div class="mtc-panel-title">Courbe d'équité</div><div class="mtc-panel-sub">{{ equitySub() }}</div></div></div>
+        <div class="mtc-eq-tabs">
+          @for (p of periods; track p.key) {
+            <button type="button" [class.on]="dashboardPeriod() === p.key" (click)="setPeriod(p.key)">{{ p.label }}</button>
+          }
+        </div>
+      </div>
+      <div class="mtc-panel-body">
+        <!-- Courbe d'équité simple = vue de base FREE (profondeur = page /analytics). -->
+        @let eg = equityGlow();
+        @if (eg) {
+          <mtc-equity-chart [glow]="eg" />
+        } @else {
+          <div class="mtc-empty">{{ equityEmptyMsg() }}</div>
+        }
+      </div>
+    </div>
+
+    <!-- Top actifs -->
+    <div class="mtc-panel">
+      <div class="mtc-panel-head"><div class="mtc-panel-head-l"><svg [lucideIcon]="AssetsIcon" [size]="15" class="mtc-phi"></svg><div><div class="mtc-panel-title">Top actifs</div><div class="mtc-panel-sub">P&amp;L par instrument</div></div></div></div>
+      <div class="mtc-panel-body">
+        <!-- Top actifs (P&L par instrument) = vue de base FREE ; win rate/actif = profondeur Premium. -->
+        @if (topAssets().length) {
+          <mtc-top-assets [assets]="topAssets()" [showWinRate]="userStore.isPremium()" />
+        } @else { <p class="empty-widget-msg">Tes actifs apparaîtront<br />après tes premiers trades</p> }
+      </div>
+    </div>
+
+    <!-- P&L par jour -->
+    <div class="mtc-panel">
+      <div class="mtc-panel-head"><div class="mtc-panel-head-l"><svg [lucideIcon]="PlDayIcon" [size]="15" class="mtc-phi"></svg><div><div class="mtc-panel-title">{{ plTitle() }} <mtc-info-tooltip [text]="plTooltip()" /></div><div class="mtc-panel-sub">{{ periodLabel() }}</div></div></div></div>
+      <div class="mtc-panel-body">
+        @let pl = plBuckets();
+        @if (pl && pl.length) {
+          <mtc-pl-bars [buckets]="pl" />
+        } @else { <div class="mtc-empty">Aucune activité sur la période</div> }
+      </div>
+    </div>
+
+    <!-- AI Coach -->
+    <div class="mtc-panel" [class.mtc-ai]="userStore.isPremium()">
+      <div class="mtc-panel-head">
+        <div class="mtc-panel-head-l"><svg [lucideIcon]="CoachIcon" [size]="15" class="mtc-phi"></svg><div><div class="mtc-panel-title">AI Coach · feedback</div></div></div>
+        <!-- Pastille LIVE réservée à la carte réellement active (Premium) : jamais sur un teaser verrouillé. -->
+        @if (userStore.isPremium()) {
+          <span class="mtc-live"><span class="mtc-live-dot"></span>LIVE</span>
+        }
+      </div>
+      <div class="mtc-panel-body">
+        <mtc-coach-feedback
+          [premium]="userStore.isPremium()"
+          [insights]="coachInsights()"
+          [monthlyPrice]="PRICING.premium.monthly"
+          (unlock)="showPlanModal.set(true)"
+        />
+      </div>
+    </div>
+
+    <!-- Répartition stratégies -->
+    <div class="mtc-panel">
+      <div class="mtc-panel-head"><div class="mtc-panel-head-l"><svg [lucideIcon]="SetupsIcon" [size]="15" class="mtc-phi"></svg><div><div class="mtc-panel-title">Répartition stratégies</div><div class="mtc-panel-sub">% des trades par setup</div></div></div></div>
+      <div class="mtc-panel-body">
+        <!-- Répartition % des setups = vue de base FREE (client-side) ; centre win rate = Premium. -->
+        @let sd = setupsDonutView();
+        @if (sd) {
+          <mtc-donut-chart [donut]="sd" />
+        } @else { <p class="empty-widget-msg">Tes setups apparaîtront<br />après tes premiers trades</p> }
+      </div>
+    </div>
+
+    <!-- États émotionnels -->
+    <div class="mtc-panel">
+      <div class="mtc-panel-head"><div class="mtc-panel-head-l"><svg [lucideIcon]="EmotionIcon" [size]="15" class="mtc-phi"></svg><div><div class="mtc-panel-title">États émotionnels</div><div class="mtc-panel-sub">par fréquence</div></div></div></div>
+      <div class="mtc-panel-body">
+        @let ed = emotionsDonut();
+        @if (ed) {
+          <mtc-donut-chart [donut]="ed" />
+        } @else { <p class="empty-widget-msg">Enregistre tes premiers trades<br />pour voir tes états émotionnels</p> }
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- Historique des trades -->
+  <div class="mtc-panel">
+    <div class="mtc-panel-head"><div class="mtc-panel-head-l"><svg [lucideIcon]="TableIcon" [size]="15" class="mtc-phi"></svg><div class="mtc-panel-title">Historique des trades</div></div><a routerLink="/journal" class="card-action">Tout le journal →</a></div>
+    @if (tradeRows().length === 0) {
+      <div class="empty-state" style="margin:0 18px 18px"><p>Aucun trade</p><small>Enregistre ton premier trade</small></div>
+    } @else {
+      <mtc-recent-trades-table [rows]="tradeRows()" />
+    }
+  </div>
+
+  <mtc-trade-form
+    [open]="showTradeForm()"
+    [isSaving]="isSavingTrade()"
+    (dismissed)="showTradeForm.set(false)"
+    (formSave)="saveTrade($event)"
+  />
+
+  <mtc-csv-import
+    [open]="showCsvImport()"
+    (dismissed)="showCsvImport.set(false)"
+    (imported)="onCsvImported()"
+  />
+
+  @if (showPlanModal()) {
+    <mtc-plan-modal (closed)="showPlanModal.set(false)" />
+  }
+</div>

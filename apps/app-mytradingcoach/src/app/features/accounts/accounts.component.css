@@ -112,7 +112,7 @@
   padding: 10px 14px;
   margin-bottom: 22px;
 }
-.global-note lucide-icon { flex-shrink: 0; margin-top: 2px; color: var(--yellow); }
+.global-note svg.lucide { flex-shrink: 0; margin-top: 2px; color: var(--yellow); }
 .global-note b { color: var(--text-2); font-weight: 600; }
 
 .acct-empty { color: var(--text-3); font-size: 13px; padding: 12px 0; }
@@ -342,7 +342,61 @@
   line-height: 1.5;
   color: var(--text-2);
 }
-.acct-delete-error lucide-icon { flex-shrink: 0; margin-top: 1px; color: var(--yellow); }
+.acct-delete-error svg.lucide { flex-shrink: 0; margin-top: 1px; color: var(--yellow); }
 
 /* Suppression impossible : l'option reste lisible mais inerte, avec son title. */
 .menu-item.danger:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ── Connexion Tradovate par compte (PROMPT-208, maquette proto-connexion-tradovate.html) ── */
+.nt-word { color: var(--nt); font-weight: 700; }
+
+.tv-row {
+  margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 10px; min-width: 0;
+}
+.tv-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.tv-label {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--text-3);
+}
+.tv-pill { font-size: 11px; padding: 4px 10px; border-radius: 20px; font-family: var(--font-mono); white-space: nowrap; }
+.tv-pill.on { background: var(--green-dim); color: var(--green); }
+.tv-pill.off { background: rgba(99, 155, 255, 0.08); color: var(--text-3); }
+.tv-pill.warn { background: var(--yellow-dim); color: var(--yellow); }
+
+.tv-line {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap; font-size: 12px; color: var(--text-3);
+}
+.tv-text { flex: 1 1 200px; min-width: 0; line-height: 1.5; }
+.tv-ext { font-family: var(--font-mono); color: var(--text-2); }
+.tv-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tv-confirm { font-size: 12px; color: var(--text-2); }
+.tv-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; padding: 7px 12px; border-radius: 8px; cursor: pointer;
+  font-family: var(--font-body); font-weight: 600; white-space: nowrap;
+}
+.tv-btn:disabled { opacity: 0.55; cursor: default; }
+.tv-btn.connect { background: var(--nt); color: var(--nt-ink); border: none; }
+.tv-btn.sync { background: var(--blue-glow); color: var(--blue-bright); border: 1px solid var(--border-hover); }
+.tv-btn.ghost { background: transparent; border: 1px solid var(--border-hover); color: var(--text-3); }
+.tv-btn.danger { background: var(--red-dim); border: 1px solid rgba(239, 68, 68, 0.35); color: var(--red); }
+.tv-btn .spin { animation: tv-spin 0.9s linear infinite; }
+@keyframes tv-spin { to { transform: rotate(360deg); } }
+
+.tv-feedback { display: flex; flex-direction: column; gap: 3px; }
+.tv-fb { font-size: 12px; color: var(--text-2); line-height: 1.45; }
+.tv-fb.warn { color: var(--yellow); }
+
+.tv-disclaimer {
+  color: var(--text-3); font-size: 10px; font-style: italic; line-height: 1.5;
+  margin: 14px 0 0; max-width: 640px;
+}
+
+@media (max-width: 560px) {
+  .tv-line { flex-direction: column; align-items: stretch; }
+  /* En colonne, la base de 200px deviendrait une HAUTEUR : grand vide sous le texte. */
+  .tv-text { flex: 0 0 auto; }
+  .tv-actions .tv-btn { flex: 1 1 auto; justify-content: center; }
+}

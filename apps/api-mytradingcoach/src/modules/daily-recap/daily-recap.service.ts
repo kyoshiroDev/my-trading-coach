@@ -3,7 +3,8 @@ import { Plan } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
-import { computeTradeStats } from '../../common/utils/trade-stats.util';
+import { computeTradeStats, netPnl } from '@mtc/shared';
+import { userAmountsCurrency } from '../../common/utils/user-currency.util';
 
 @Injectable()
 export class DailyRecapService {
@@ -30,6 +31,7 @@ export class DailyRecapService {
         asset: true,
         side: true,
         pnl: true,
+        commission: true, // stats sur le net (PROMPT-213)
         emotion: true,
         // Humeur de la journée → émotion effective quand le trade n'a pas d'override.
         tradeSession: { select: { moodStart: true } },
@@ -88,16 +90,17 @@ export class DailyRecapService {
           tradedAt: { gte: sevenDaysAgo, lt: startOfDay },
           pnl: { not: null },
         },
-        select: { asset: true, side: true, pnl: true, session: true },
+        select: { asset: true, side: true, pnl: true, commission: true, session: true },
       });
 
       const patternMap = new Map<string, { wins: number; total: number; pnl: number }>();
       for (const t of recentTrades) {
         const key = `${t.side}_${t.asset}`;
         const existing = patternMap.get(key) ?? { wins: 0, total: 0, pnl: 0 };
+        const net = netPnl(t) ?? 0;
         existing.total++;
-        existing.pnl += t.pnl ?? 0;
-        if ((t.pnl ?? 0) > 0) existing.wins++;
+        existing.pnl += net;
+        if (net > 0) existing.wins++;
         patternMap.set(key, existing);
       }
 
@@ -105,9 +108,10 @@ export class DailyRecapService {
       for (const t of recentTrades) {
         const key = t.session ?? 'UNKNOWN';
         const existing = sessionMap.get(key) ?? { wins: 0, total: 0, pnl: 0 };
+        const net = netPnl(t) ?? 0;
         existing.total++;
-        existing.pnl += t.pnl ?? 0;
-        if ((t.pnl ?? 0) > 0) existing.wins++;
+        existing.pnl += net;
+        if (net > 0) existing.wins++;
         sessionMap.set(key, existing);
       }
 
@@ -121,6 +125,7 @@ export class DailyRecapService {
           // Émotion effective dominante (null = non renseignée) : plus de NEUTRAL forcé.
           dominantEmotion,
           date,
+          currency: await userAmountsCurrency(this.prisma, userId),
           userProfile: user
             ? {
                 market: user.market,

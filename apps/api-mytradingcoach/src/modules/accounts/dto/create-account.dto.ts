@@ -1,12 +1,15 @@
 import {
   IsEnum,
+  IsIn,
   IsNumber,
   IsOptional,
   IsString,
   MaxLength,
   Min,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { AccountType, DrawdownType } from '@prisma/client';
+import { ACCOUNT_CURRENCIES, normalizeCurrencyCode } from '@mtc/shared';
 
 export class CreateAccountDto {
   @IsString({ message: 'Le libellé du compte est requis.' })
@@ -27,9 +30,11 @@ export class CreateAccountDto {
   @Min(0, { message: 'La taille du compte ne peut pas être négative.' })
   accountSize?: number;
 
+  // Devise DU COMPTE (PROMPT-214) : liste unique `ACCOUNT_CURRENCIES` (@mtc/shared), normalisée
+  // en majuscules. Absente → USD (défaut Prisma). Aucune conversion ailleurs dans l'app.
   @IsOptional()
-  @IsString()
-  @MaxLength(8)
+  @Transform(({ value }) => normalizeCurrencyCode(value) ?? value)
+  @IsIn(ACCOUNT_CURRENCIES, { message: `Devise invalide (${ACCOUNT_CURRENCIES.join(', ')}).` })
   currency?: string;
 
   @IsOptional()

@@ -3,6 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DailyRecapService } from './daily-recap.service';
 import { ResendService } from '../resend/resend.service';
+import { userAmountsCurrency } from '../../common/utils/user-currency.util';
 
 @Injectable()
 export class DailyRecapCron {
@@ -39,7 +40,7 @@ export class DailyRecapCron {
             today,
           );
           if (recap && recap.tradesCount > 0) {
-            await this.resend.sendDailyRecap(user, recap);
+            await this.resend.sendDailyRecap(user, recap, await userAmountsCurrency(this.prisma, user.id));
           }
         } catch (err) {
           this.logger.error(`Recap failed for user ${user.id}`, err);

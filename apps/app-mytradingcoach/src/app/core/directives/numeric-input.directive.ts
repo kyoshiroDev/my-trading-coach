@@ -15,7 +15,6 @@ import { Directive, ElementRef, HostListener, inject, input } from '@angular/cor
  */
 @Directive({
   selector: '[mtcNumericInput]',
-  standalone: true,
 })
 export class NumericInputDirective {
   /** Autoriser un nombre négatif (défaut: false). Usage : [mtcAllowNegative]="true". */

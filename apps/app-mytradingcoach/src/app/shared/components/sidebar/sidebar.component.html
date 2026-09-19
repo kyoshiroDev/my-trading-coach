@@ -1,0 +1,296 @@
+@if (showOnboarding()) {
+  <mtc-onboarding (completed)="onOnboardingCompleted()" />
+}
+
+<button class="burger" (click)="toggleSidebar()" aria-label="Menu">
+  <span></span><span></span><span></span>
+</button>
+
+<button
+  class="sidebar-overlay"
+  [class.open]="sidebarOpen()"
+  (click)="closeSidebar()"
+  aria-label="Fermer le menu"
+  tabindex="-1"
+></button>
+
+<div class="app-layout">
+  <!-- ─── SIDEBAR ─── -->
+  <aside class="sidebar" [class.open]="sidebarOpen()" [class.collapsed]="collapsed()">
+    <!-- Logo (complet déplié / marque seule replié) -->
+    <a routerLink="/dashboard" class="logo">
+      <img class="logo-full" src="icon/logo-horizontal.svg" alt="MyTradingCoach" height="40" />
+      <img class="logo-mark" src="logo.svg" alt="MyTradingCoach" height="32" width="32" />
+    </a>
+
+    <!-- Nav -->
+    <nav class="nav">
+      <div class="nav-section">OVERVIEW</div>
+
+      <a
+        routerLink="/dashboard"
+        routerLinkActive="active"
+        class="nav-item"
+        data-testid="nav-dashboard"
+        [attr.title]="collapsed() ? 'Dashboard' : null"
+        (click)="closeSidebar()"
+      >
+        <svg [lucideIcon]="DashboardIcon" [size]="16" class="nav-icon"></svg>
+        <span class="nav-label">Dashboard</span>
+      </a>
+
+      <a
+        routerLink="/session"
+        routerLinkActive="active"
+        class="nav-item"
+        data-testid="nav-session"
+        [attr.title]="collapsed() ? 'Ma session' : null"
+        (click)="closeSidebar()"
+      >
+        <svg [lucideIcon]="SessionIcon" [size]="16" class="nav-icon"></svg>
+        <span class="nav-label">Ma session</span>
+      </a>
+
+      <a
+        routerLink="/accounts"
+        routerLinkActive="active"
+        class="nav-item"
+        data-testid="nav-accounts"
+        [attr.title]="collapsed() ? 'Mes comptes' : null"
+        (click)="closeSidebar()"
+      >
+        <svg [lucideIcon]="AccountsIcon" [size]="16" class="nav-icon"></svg>
+        <span class="nav-label">Mes comptes</span>
+      </a>
+
+      <a
+        routerLink="/journal"
+        routerLinkActive="active"
+        class="nav-item"
+        data-testid="nav-journal"
+        [attr.title]="collapsed() ? 'Journal' : null"
+        (click)="closeSidebar()"
+      >
+        <svg [lucideIcon]="JournalIcon" [size]="16" class="nav-icon"></svg>
+        <span class="nav-label">Journal</span>
+      </a>
+
+      <a
+        routerLink="/sessions"
+        routerLinkActive="active"
+        class="nav-item"
+        data-testid="nav-sessions"
+        [attr.title]="collapsed() ? 'Mes sessions' : null"
+        (click)="closeSidebar()"
+      >
+        <svg [lucideIcon]="SessionsIcon" [size]="16" class="nav-icon"></svg>
+        <span class="nav-label">Mes sessions</span>
+      </a>
+
+      <a
+        routerLink="/analytics"
+        routerLinkActive="active"
+        class="nav-item"
+        data-testid="nav-analytics"
+        [attr.title]="collapsed() ? 'Analytics' : null"
+        (click)="closeSidebar()"
+      >
+        <svg [lucideIcon]="AnalyticsIcon" [size]="16" class="nav-icon"></svg>
+        <span class="nav-label">Analytics</span>
+        @if (!userStore.isPremium()) {
+          <span class="nav-lock" title="Premium : débloque avec l'abonnement">
+            <svg [lucideIcon]="LockIcon" [size]="12"></svg>
+          </span>
+        }
+      </a>
+
+      <div class="nav-section">ANALYSE &amp; IA</div>
+
+      <a
+        routerLink="/ai-insights"
+        routerLinkActive="active"
+        class="nav-item"
+        data-testid="nav-ai-insights"
+        [attr.title]="collapsed() ? 'IA Insights' : null"
+        (click)="closeSidebar()"
+      >
+        <svg [lucideIcon]="AiIcon" [size]="16" class="nav-icon"></svg>
+        <span class="nav-label">IA Insights</span>
+        @if (!userStore.isPremium()) {
+          <span class="nav-lock" title="Premium : débloque avec l'abonnement">
+            <svg [lucideIcon]="LockIcon" [size]="12"></svg>
+          </span>
+        }
+      </a>
+
+      <a
+        routerLink="/debrief"
+        routerLinkActive="active"
+        class="nav-item"
+        data-testid="nav-debrief"
+        [attr.title]="collapsed() ? 'Weekly Debrief' : null"
+        (click)="closeSidebar()"
+      >
+        <svg [lucideIcon]="DebriefIcon" [size]="16" class="nav-icon"></svg>
+        <span class="nav-label">Weekly Debrief</span>
+        @if (!userStore.isPremium()) {
+          <span class="nav-lock" title="Premium : débloque avec l'abonnement">
+            <svg [lucideIcon]="LockIcon" [size]="12"></svg>
+          </span>
+        }
+      </a>
+
+      <a
+        routerLink="/eco-calendar"
+        routerLinkActive="active"
+        class="nav-item"
+        data-testid="nav-eco-calendar"
+        [attr.title]="collapsed() ? 'Calendrier éco' : null"
+        (click)="closeSidebar()"
+      >
+        <svg [lucideIcon]="EcoIcon" [size]="16" class="nav-icon"></svg>
+        <span class="nav-label">Calendrier éco</span>
+      </a>
+
+      <!-- Surface(s) de parrainage selon le rôle. L'admin voit les DEUX. -->
+      @if (userStore.isAmbassador()) {
+        <a
+          routerLink="/ambassador"
+          routerLinkActive="active"
+          class="nav-item"
+          data-testid="nav-ambassador"
+          [attr.title]="collapsed() ? 'Ambassadeur' : null"
+          (click)="closeSidebar()"
+        >
+          <svg [lucideIcon]="AmbassadorIcon" [size]="16" class="nav-icon"></svg>
+          <span class="nav-label">Ambassadeur</span>
+          @if (ambassadorNotif.newReferrals() > 0) {
+            <span class="nav-badge-notif">{{ ambassadorNotif.newReferrals() }}</span>
+          }
+        </a>
+      }
+      @if (!userStore.isAmbassador() || userStore.isAdmin()) {
+        <a
+          routerLink="/parrainage"
+          routerLinkActive="active"
+          class="nav-item"
+          data-testid="nav-parrainage"
+          [attr.title]="collapsed() ? 'Parrainage' : null"
+          (click)="closeSidebar()"
+        >
+          <svg [lucideIcon]="ParrainageIcon" [size]="16" class="nav-icon"></svg>
+          <span class="nav-label">Parrainage</span>
+        </a>
+      }
+
+      <div class="nav-section">ACCOUNT</div>
+
+      <a
+        routerLink="/scoring"
+        routerLinkActive="active"
+        class="nav-item"
+        data-testid="nav-scoring"
+        [attr.title]="collapsed() ? 'Scoring' : null"
+        (click)="closeSidebar()"
+      >
+        <svg [lucideIcon]="ScoringIcon" [size]="16" class="nav-icon"></svg>
+        <span class="nav-label">Scoring</span>
+        @if (!userStore.isPremium()) {
+          <span class="nav-lock" title="Premium : débloque avec l'abonnement">
+            <svg [lucideIcon]="LockIcon" [size]="12"></svg>
+          </span>
+        }
+      </a>
+
+      <a
+        routerLink="/profil"
+        routerLinkActive="active"
+        class="nav-item"
+        data-testid="nav-settings"
+        [attr.title]="collapsed() ? 'Profil' : null"
+        (click)="closeSidebar()"
+      >
+        <svg [lucideIcon]="ProfilIcon" [size]="16" class="nav-icon"></svg>
+        <span class="nav-label">Profil</span>
+      </a>
+
+      <button
+        class="nav-item settings-item"
+        data-testid="logout-btn"
+        [attr.title]="collapsed() ? (userStore.isDemo() ? 'Quitter la démo' : 'Déconnexion') : null"
+        (click)="closeSidebar(); logout()"
+      >
+        <svg [lucideIcon]="LogoutIcon" [size]="16" class="nav-icon"></svg>
+        <span class="nav-label">@if (userStore.isDemo()) { Quitter la démo } @else { Déconnexion }</span>
+      </button>
+    </nav>
+
+    <!-- Profil (design chrome.jsx : logo → nav → logout → profil ;
+         le quota + Discord vivent désormais dans la topbar) -->
+    <div class="sidebar-footer">
+      <div class="user-card" [attr.title]="collapsed() ? userStore.displayName() : null">
+        <div class="avatar">{{ userStore.initials() }}</div>
+        <div class="user-info">
+          <div class="user-name">{{ userStore.displayName() }}</div>
+          <div class="user-plan"
+            [class.premium]="userStore.isPremium()"
+            [class.free]="!userStore.isPremium()">
+            @if (userStore.isPremium()) {
+              ★ PREMIUM
+            } @else {
+              GRATUIT
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Flèche de repli sur le bord (desktop) : ancrée sur .app-layout pour ne pas
+       être coupée par l'overflow:hidden de .sidebar -->
+  <button
+    type="button"
+    class="collapse-edge"
+    [class.collapsed]="collapsed()"
+    data-testid="sidebar-collapse-toggle"
+    (click)="toggleCollapse()"
+    [attr.aria-label]="collapsed() ? 'Déplier la barre latérale' : 'Replier la barre latérale'"
+  >
+    <svg [lucideIcon]="collapsed() ? ChevronRightIcon : ChevronLeftIcon" [size]="16"></svg>
+  </button>
+
+  <!-- ─── MAIN ─── -->
+  <!-- La classe has-demo-banner publie --demo-banner-h : les vues calées sur le
+       viewport (Pré-session / Session live / Débrief) en retranchent la hauteur
+       du bandeau au lieu de déborder de 52 px. -->
+  <main class="main-content"
+        [class.has-demo-banner]="userStore.isDemo()"
+        [style.overflow]="liveModeService.isLive() ? 'hidden' : null">
+    @if (userStore.isDemo()) {
+      <div class="demo-banner">
+        <span class="demo-banner-text">
+          🔍 <strong>Mode démo</strong><span class="demo-banner-long"> : tu explores MyTradingCoach avec des données d'exemple.</span>
+        </span>
+        <a class="demo-banner-cta" [href]="landingUrl + '/#pricing'">Créer mon compte gratuit →</a>
+      </div>
+    }
+    <router-outlet />
+  </main>
+</div>
+
+@if (demo.showSignupPrompt()) {
+  <div class="demo-modal-overlay" role="button" tabindex="-1"
+       (click)="demo.dismiss()" (keydown.escape)="demo.dismiss()">
+    <div class="demo-modal" role="dialog"
+         (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+      <div class="demo-modal-emoji">🚀</div>
+      <h2 class="demo-modal-title">Crée ton compte pour aller plus loin</h2>
+      <p class="demo-modal-text">
+        En mode démo, les données sont en lecture seule. Crée ton compte gratuit
+        pour logger tes vrais trades et débloquer ton coaching personnalisé.
+      </p>
+      <a class="demo-modal-cta" [href]="landingUrl + '/#pricing'">Créer mon compte gratuit →</a>
+      <button class="demo-modal-dismiss" (click)="demo.dismiss()">Continuer la démo</button>
+    </div>
+  </div>
+}

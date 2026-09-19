@@ -1,0 +1,44 @@
+<div class="toasts" data-testid="toasts">
+  @for (t of toasts.visible(); track t.id) {
+    <!-- Case repliable : sa hauteur s'ouvre à l'entrée et se replie à la sortie, pour que la
+         pile se décale en douceur. animate.leave (API native Angular ≥ 20.2) garde la case le
+         temps de l'animation de sortie, puis la retire. -->
+    <div class="toast-slot" [animate.leave]="leaveClass(t.id)">
+      <div class="toast-clip">
+        <div class="toast {{ t.type }}"
+             [class.dragging]="drag()?.id === t.id"
+             [style.transform]="dragTransform(t.id)"
+             [style.opacity]="dragOpacity(t.id)"
+             [attr.role]="t.type === 'error' ? 'alert' : 'status'"
+             [attr.aria-live]="live(t.type)"
+             aria-atomic="true"
+             [attr.data-testid]="'toast-' + t.type"
+             (mouseenter)="toasts.pause(t.id)" (mouseleave)="toasts.resume(t.id)"
+             (focusin)="toasts.pause(t.id)" (focusout)="toasts.resume(t.id)"
+             (pointerdown)="onPointerDown($event, t.id)"
+             (pointermove)="onPointerMove($event, t.id)"
+             (pointerup)="onPointerUp($event, t.id)"
+             (pointercancel)="onPointerCancel(t.id)">
+          <!-- Compte à rebours EN HAUT : se vide sur la durée du toast, figé pendant la pause.
+               Recréé (@for sur la version) quand le même message est relancé. -->
+          @if (t.duration !== null) {
+            @for (v of [t.version]; track v) {
+              <div class="toast-bar" aria-hidden="true" data-testid="toast-bar"
+                   [style.animation-duration.ms]="t.duration"
+                   [class.paused]="toasts.isPaused(t.id)"></div>
+            }
+          }
+          <svg class="toast-ic" [lucideIcon]="icon(t.type)" [size]="16" aria-hidden="true"></svg>
+          <p class="toast-msg">{{ t.message }}</p>
+          <button class="toast-x" type="button" aria-label="Fermer la notification"
+                  data-testid="toast-close" (click)="toasts.dismiss(t.id)">
+            <svg [lucideIcon]="XIcon" [size]="14" aria-hidden="true"></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+  @if (toasts.queued() > 0) {
+    <div class="toast-queue" aria-hidden="true">+{{ toasts.queued() }}</div>
+  }
+</div>
