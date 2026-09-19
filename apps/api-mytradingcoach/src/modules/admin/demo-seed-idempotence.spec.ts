@@ -11,8 +11,27 @@
  *  3. tous les trades générés tiennent dans la fenêtre « 1M » par défaut du dashboard.
  */
 import { describe, it, expect, vi } from 'vitest';
+
+// Chaque test lance le seed complet (hash du mot de passe + recherche du tirage) : sous la
+// charge de la suite complète, deux runs dépassent les 5 s par défaut.
+vi.setConfig({ testTimeout: 20_000 });
 import { PrismaClient } from '@prisma/client';
-import { seedDemo, DEMO_EMAIL, DEMO_WINDOW_DAYS } from './demo-seed';
+import { seedDemo, assertDemoCalendar, DEMO_EMAIL, DEMO_WINDOW_DAYS } from './demo-seed';
+
+/** Un jour ouvré (mercredi) à l'heure donnée, pour les tests de la démo « live ». */
+function weekdayAt(hour: number, minute = 0): Date {
+  const d = new Date();
+  d.setDate(d.getDate() + ((3 - d.getDay() + 7) % 7)); // prochain mercredi (ou aujourd'hui)
+  d.setHours(hour, minute, 0, 0);
+  return d;
+}
+/** Un samedi à l'heure donnée. */
+function saturdayAt(hour: number): Date {
+  const d = new Date();
+  d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7));
+  d.setHours(hour, 0, 0, 0);
+  return d;
+}
 
 interface Call {
   model: string;
@@ -136,7 +155,7 @@ describe('seedDemo — re-seed idempotent (le cron quotidien ne doit pas empiler
 });
 
 describe('seedDemo — comptes de trading (cohérence dashboard / Mes comptes)', () => {
-  it('crée 2 comptes actifs : une prop firm et un compte perso', async () => {
+  it('crée 2 comptes prop firm actifs en USD : Apex (éval) et Tradeify (funded)', async () => {
     const { prisma, created } = fakePrisma([]);
     const res = await seedDemo(prisma);
 
@@ -144,7 +163,9 @@ describe('seedDemo — comptes de trading (cohérence dashboard / Mes comptes)',
     expect(accounts).toHaveLength(2);
     expect(res.accounts).toBe(2);
     expect(accounts.every((a) => a['status'] === 'ACTIVE')).toBe(true);
-    expect(accounts.map((a) => a['type']).sort()).toEqual(['EVALUATION', 'PERSONAL']);
+    expect(accounts.every((a) => a['currency'] === 'USD')).toBe(true);
+    expect(accounts.map((a) => a['type']).sort()).toEqual(['EVALUATION', 'FUNDED']);
+    expect(accounts.map((a) => a['broker']).sort()).toEqual(['Apex', 'Tradeify']);
   });
 
   it('Σ startingBalance des comptes === capital du profil (sinon les 2 pages divergent)', async () => {
@@ -189,24 +210,13 @@ describe('seedDemo — comptes de trading (cohérence dashboard / Mes comptes)',
     expect(created['tradeSession'].every((s) => !!s['accountId'])).toBe(true);
   });
 
-  it('route forex + crypto vers le perso, futures purs vers la prop firm', async () => {
+  it("futures d'indices US uniquement (MES, MNQ, ES, NQ) : ni forex, ni crypto, ni or", async () => {
     const { prisma, created } = fakePrisma([]);
     await seedDemo(prisma);
 
-    const idOf = (label: string) =>
-      `tradingAccount-${created['tradingAccount'].findIndex((a) => a['label'] === label) + 1}`;
-    const perso = idOf('Compte perso · Forex & Crypto');
-    const futures = idOf('Apex 50k · Éval');
-
-    // La prop firm ne porte QUE des futures : pas d'EUR/USD spot ni de BTC sur une éval.
-    const personal = ['BTC/USDT', 'EUR/USD'];
-    const onPerso = created['trade'].filter((t) => personal.includes(t['asset'] as string));
-    expect(onPerso.length).toBeGreaterThan(0);
-    expect(onPerso.every((t) => t['accountId'] === perso)).toBe(true);
-
-    const onFutures = created['trade'].filter((t) => !personal.includes(t['asset'] as string));
-    expect(onFutures.every((t) => t['accountId'] === futures)).toBe(true);
-    expect(onFutures.every((t) => ['MNQ', 'MES', 'GC'].includes(t['asset'] as string))).toBe(true);
+    const assets = new Set(created['trade'].map((t) => t['asset'] as string));
+    expect([...assets].every((a) => ['MES', 'MNQ', 'ES', 'NQ'].includes(a))).toBe(true);
+    expect(assets.has('MNQ') && assets.has('MES')).toBe(true);
   });
 
   it('le compte prop firm porte les vraies règles Apex 50k', async () => {
@@ -234,7 +244,8 @@ describe('seedDemo — comptes de trading (cohérence dashboard / Mes comptes)',
     const trades = created['trade'].filter(
       (t) => t['accountId'] === `tradingAccount-${idx + 1}`,
     );
-    const pnl = trades.reduce((s, t) => s + (t['pnl'] as number), 0);
+    const net = (t: Record<string, unknown>) => (t['pnl'] as number) - (t['commission'] as number);
+    const pnl = trades.reduce((s, t) => s + net(t), 0);
     const target = apex['profitTarget'] as number;
 
     // Une éval déjà passée (P&L ≥ objectif) enlèverait tout intérêt à la carte « pacing »,
@@ -254,7 +265,7 @@ describe('seedDemo — comptes de trading (cohérence dashboard / Mes comptes)',
     let hwm = bal;
     let worstGap = 0;
     for (const t of sorted) {
-      bal += t['pnl'] as number;
+      bal += net(t);
       if (bal > hwm) hwm = bal;
       worstGap = Math.max(worstGap, hwm - bal);
     }
@@ -277,27 +288,24 @@ describe('seedDemo — comptes de trading (cohérence dashboard / Mes comptes)',
 });
 
 describe('seedDemo — fraîcheur des données (visible sans changer de filtre)', () => {
-  it('tous les trades tiennent dans les 30 derniers jours', async () => {
+  it('tous les trades tiennent dans la fenêtre de 6 semaines, et la vue « 1M » reste pleine', async () => {
     const { prisma, created } = fakePrisma([]);
     await seedDemo(prisma);
 
     const now = Date.now();
-    const oldest = created['trade'].reduce(
-      (min, t) => Math.min(min, (t['tradedAt'] as Date).getTime()),
-      now,
-    );
-    const ageDays = (now - oldest) / 86_400_000;
-    expect(
-      ageDays,
-      `Le trade le plus ancien a ${ageDays.toFixed(1)} j : hors de la fenêtre 1M par défaut`,
-    ).toBeLessThanOrEqual(DEMO_WINDOW_DAYS);
+    const ages = created['trade'].map((t) => (now - (t['tradedAt'] as Date).getTime()) / 86_400_000);
+    const oldest = Math.max(...ages);
+    expect(oldest, `Trade le plus ancien : ${oldest.toFixed(1)} j`).toBeLessThanOrEqual(DEMO_WINDOW_DAYS);
+    // La fenêtre « 1M » par défaut du dashboard doit être bien remplie, pas seulement la fin.
+    expect(ages.filter((a) => a <= 30).length).toBeGreaterThanOrEqual(45);
   });
 
-  it('la journée en cours et la veille sont peuplées (session live + carte « Hier »)', async () => {
+  it('un jour ouvré : la journée en cours et la veille sont peuplées (session live + carte « Hier »)', async () => {
+    const now = weekdayAt(15);
     const { prisma, created } = fakePrisma([]);
-    await seedDemo(prisma);
+    await seedDemo(prisma, now);
 
-    const startOfToday = new Date();
+    const startOfToday = new Date(now);
     startOfToday.setHours(0, 0, 0, 0);
     const startOfYesterday = new Date(startOfToday);
     startOfYesterday.setDate(startOfYesterday.getDate() - 1);
@@ -312,11 +320,12 @@ describe('seedDemo — fraîcheur des données (visible sans changer de filtre)'
     expect(yesterday.length, 'Carte « Hier » de la pré-session vide').toBeGreaterThan(0);
   });
 
-  it('la session du jour est ACTIVE et démarrée aujourd\'hui (pas un compteur à 1978 h)', async () => {
+  it('un jour ouvré : la session du jour est ACTIVE et démarrée aujourd\'hui (pas un compteur à 1978 h)', async () => {
+    const now = weekdayAt(15);
     const { prisma, created } = fakePrisma([]);
-    await seedDemo(prisma);
+    await seedDemo(prisma, now);
 
-    const startOfToday = new Date();
+    const startOfToday = new Date(now);
     startOfToday.setHours(0, 0, 0, 0);
     const active = created['tradeSession'].filter((s) => s['status'] === 'ACTIVE');
 
@@ -333,7 +342,11 @@ describe('seedDemo — sobriété AMF (montrer la fonctionnalité, pas une perfo
     const { prisma, created } = fakePrisma(calls);
     await seedDemo(prisma);
 
-    const pnl = created['trade'].reduce((s, t) => s + (t['pnl'] as number), 0);
+    // P&L NET (frais déduits), comme partout dans l'app (PROMPT-213).
+    const pnl = created['trade'].reduce(
+      (s, t) => s + (t['pnl'] as number) - (t['commission'] as number),
+      0,
+    );
     // Lu depuis le seed, jamais en dur : le capital a déjà bougé (25 000 → 55 000 avec
     // le passage au palier Apex 50k réel) et un nombre figé aurait faussé le ratio.
     const upsert = calls.find((c) => c.model === 'user' && c.op === 'upsert');
@@ -378,5 +391,143 @@ describe('seedDemo — connexion Tradovate démo (PROMPT-207)', () => {
     // Placeholder non déchiffrable : le compte démo ne synchronise jamais (DemoReadOnlyGuard).
     expect(String(conn['accessTokenEnc']).startsWith('v1:')).toBe(false);
     expect(conn['refreshTokenEnc']).toBeUndefined();
+  });
+});
+
+describe('seedDemo — réalisme validé (PROMPT-215) : un trader crédible, pas un gagnant parfait', () => {
+  const net = (t: Record<string, unknown>) => (t['pnl'] as number) - (t['commission'] as number);
+  const dayKey = (t: Record<string, unknown>) => (t['tradedAt'] as Date).toDateString();
+
+  it('des frais réels sur chaque trade : le net est visiblement sous le brut', async () => {
+    const { prisma, created } = fakePrisma([]);
+    const res = await seedDemo(prisma);
+
+    expect(created['trade'].every((t) => (t['commission'] as number) > 0)).toBe(true);
+    expect(res.fees).toBeGreaterThan(400);
+    expect(res.grossPnl - res.pnl).toBeCloseTo(res.fees, 1);
+    expect(res.pnl).toBeLessThan(res.grossPnl);
+  });
+
+  it('win rate NET crédible (52-57 %) et ~40 % de journées rouges', async () => {
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma);
+
+    const wins = created['trade'].filter((t) => net(t) > 0).length;
+    const losses = created['trade'].filter((t) => net(t) < 0).length;
+    const wr = (wins / (wins + losses)) * 100;
+    expect(wr).toBeGreaterThanOrEqual(52);
+    expect(wr).toBeLessThanOrEqual(57);
+
+    const byDay = new Map<string, number>();
+    for (const t of created['trade']) byDay.set(dayKey(t), (byDay.get(dayKey(t)) ?? 0) + net(t));
+    const red = [...byDay.values()].filter((v) => v < 0).length / byDay.size;
+    expect(red).toBeGreaterThanOrEqual(0.35);
+    expect(red).toBeLessThanOrEqual(0.45);
+  });
+
+  it('jours ouvrés UNIQUEMENT : zéro trade samedi / dimanche, quel que soit le jour du run', async () => {
+    for (let i = 0; i < 7; i++) {
+      const now = weekdayAt(3, 20);
+      now.setDate(now.getDate() + i); // mercredi … mardi, week-end compris
+      const { prisma, created } = fakePrisma([]);
+      await seedDemo(prisma, now);
+      const weekend = created['trade'].filter((t) => [0, 6].includes((t['tradedAt'] as Date).getDay()));
+      expect(weekend, `run du ${now.toDateString()}`).toHaveLength(0);
+    }
+  });
+
+  it('le week-end : pas de session live ni de trade du jour, le dernier jour tradé est vendredi', async () => {
+    const now = saturdayAt(11);
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma, now);
+
+    expect(created['tradeSession'].filter((x) => x['status'] === 'ACTIVE')).toHaveLength(0);
+    const last = Math.max(...created['trade'].map((t) => (t['tradedAt'] as Date).getTime()));
+    expect(new Date(last).getDay()).toBe(5);
+  });
+
+  it('garde-fou : un trade un week-end ou hors futures fait échouer le seed', () => {
+    const saturday = saturdayAt(10);
+    const monday = weekdayAt(10);
+    expect(() => assertDemoCalendar([{ trades: [{ tradedAt: saturday, asset: 'MNQ' }] }])).toThrow(/week-end/);
+    expect(() => assertDemoCalendar([{ trades: [{ tradedAt: monday, asset: 'BTC/USDT' }] }])).toThrow(/hors futures/);
+    expect(() => assertDemoCalendar([{ trades: [{ tradedAt: monday, asset: 'MES' }] }])).not.toThrow();
+  });
+
+  it('setups contrastés : Breakout meilleur, Reversal perdant, Scalping positif en brut mais négatif en net', async () => {
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma);
+
+    const of = (title: string) => created['trade'].filter((t) => t['setupId'] === `setup-${title}`);
+    const wr = (ts: Record<string, unknown>[]) => ts.filter((t) => net(t) > 0).length / ts.length;
+    const titles = ['Breakout', 'Pullback', 'Range', 'Reversal', 'News', 'Scalping'];
+    const rates = Object.fromEntries(titles.map((x) => [x, wr(of(x))]));
+    expect(rates['Breakout']).toBeGreaterThanOrEqual(Math.max(rates['Pullback'], rates['Range'], rates['Reversal'], rates['News']));
+    expect(rates['Reversal']).toBeLessThanOrEqual(Math.min(rates['Breakout'], rates['Pullback'], rates['Range'], rates['News']));
+    expect(of('Reversal').reduce((a, t) => a + net(t), 0)).toBeLessThan(0);
+
+    const scalp = of('Scalping');
+    expect(scalp.reduce((a, t) => a + (t['pnl'] as number), 0), 'Scalping brut').toBeGreaterThan(0);
+    expect(scalp.reduce((a, t) => a + net(t), 0), 'Scalping net : les frais doivent le rendre négatif').toBeLessThan(0);
+  });
+
+  it('une séquence de revenge trading : ré-entrées REVENGE < 2 min après une perte, taille doublée', async () => {
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma);
+
+    const revenge = created['trade'].filter((t) => t['emotion'] === 'REVENGE');
+    expect(revenge.length).toBeGreaterThanOrEqual(2);
+    const sorted = [...created['trade']].sort((a, b) => (a['tradedAt'] as Date).getTime() - (b['tradedAt'] as Date).getTime());
+    const first = sorted.indexOf(revenge[0]);
+    const prev = sorted[first - 1];
+    expect(net(prev)).toBeLessThan(0);
+    expect(((revenge[0]['tradedAt'] as Date).getTime() - (prev['tradedAt'] as Date).getTime()) / 60_000).toBeLessThan(2);
+    expect(revenge[0]['quantity'] as number).toBeGreaterThanOrEqual(2 * (prev['quantity'] as number));
+    expect(revenge[0]['stopLoss']).toBeNull();
+  });
+
+  it('note d’exécution renseignée et contrastée (les deux barèmes, du EXCELLENT au MAUVAIS)', async () => {
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma);
+
+    const grades = new Set(created['trade'].map((t) => t['executionGrade']));
+    expect(grades.has('EXCELLENT') && grades.has('MAUVAIS')).toBe(true);
+    const methods = new Set(created['trade'].map((t) => t['executionMethod']));
+    expect(methods.has('STOP_BASED') && methods.has('BEHAVIORAL')).toBe(true);
+  });
+
+  it('débriefs hebdo par compte et un récap par jour de trading', async () => {
+    const { prisma, created } = fakePrisma([]);
+    const res = await seedDemo(prisma, weekdayAt(15));
+
+    expect(res.debriefs).toBeGreaterThanOrEqual(5);
+    const d = created['weeklyDebrief'][0];
+    const insights = d['insights'] as { accounts: { stats: { totalTrades: number } }[]; summary: string };
+    expect(insights.accounts).toHaveLength(2);
+    expect(insights.summary).toMatch(/frais/);
+    expect(created['dailyRecap'].length).toBe(res.tradingDays - 1); // tous sauf aujourd'hui
+  });
+});
+
+describe('seedDemo — dates relatives au run (cron quotidien de 03:20)', () => {
+  it('à 03:20 : aucun trade dans le futur, session du jour démarrée aujourd’hui, récap daté d’hier', async () => {
+    const now = weekdayAt(3, 20);
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma, now);
+
+    expect(created['trade'].filter((t) => (t['tradedAt'] as Date) > now)).toHaveLength(0);
+
+    const startOfToday = new Date(now);
+    startOfToday.setHours(0, 0, 0, 0);
+    const active = created['tradeSession'].filter((x) => x['status'] === 'ACTIVE');
+    expect(active).toHaveLength(1);
+    expect((active[0]['startedAt'] as Date).getTime()).toBeGreaterThanOrEqual(startOfToday.getTime());
+    expect((active[0]['startedAt'] as Date).getTime()).toBeLessThanOrEqual(now.getTime());
+
+    const yesterday = new Date(startOfToday);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const recapDates = created['dailyRecap'].map((r) => (r['date'] as Date).getTime());
+    expect(recapDates).toContain(yesterday.getTime());
+    expect(Math.max(...recapDates)).toBe(yesterday.getTime());
   });
 });

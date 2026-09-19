@@ -51,7 +51,7 @@ export class DemoSeedCron implements OnModuleInit {
     }
   }
 
-  /** Démo absente, sans trade, ou dont le dernier trade ne date pas d'aujourd'hui. */
+  /** Démo absente, sans trade, ou sans trade depuis le dernier jour ouvré (aujourd'hui, ou vendredi le week-end). */
   private async isStale(): Promise<boolean> {
     const user = await this.prisma.user.findUnique({
       where: { email: DEMO_EMAIL },
@@ -66,15 +66,19 @@ export class DemoSeedCron implements OnModuleInit {
     });
     if (!last) return true;
 
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    return last.tradedAt < startOfToday;
+    // Jours ouvrés uniquement (PROMPT-215) : le week-end, le dernier trade attendu est vendredi.
+    const lastTradingDay = new Date();
+    lastTradingDay.setHours(0, 0, 0, 0);
+    while (lastTradingDay.getDay() === 0 || lastTradingDay.getDay() === 6) {
+      lastTradingDay.setDate(lastTradingDay.getDate() - 1);
+    }
+    return last.tradedAt < lastTradingDay;
   }
 
   private async reseed(reason: string): Promise<void> {
     const res = await this.demoSeed.run();
     this.logger.log(
-      `Démo re-seedée (${reason}) : ${res.trades} trades sur ${res.accounts} comptes · WR ${res.winRate}% · P&L $${res.pnl}`,
+      `Démo re-seedée (${reason}) : ${res.trades} trades sur ${res.accounts} comptes · WR net ${res.winRate}% · net ${res.pnl} $ (brut ${res.grossPnl} $, frais ${res.fees} $)`,
     );
   }
 }

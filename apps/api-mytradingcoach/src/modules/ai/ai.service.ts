@@ -28,15 +28,17 @@ const AI_MONTHLY_QUOTA = 100;
 
 // Contenu IA figé pour le compte démo : AUCUN appel modèle (coût zéro).
 const DEMO_INSIGHTS = {
+  // Aligné sur le seed démo (PROMPT-215) : qualitatif, sans pourcentage figé (les chiffres du
+  // seed varient légèrement selon le jour du run).
   topPattern:
-    "Tes meilleurs trades sont des breakouts/pullbacks en session de Londres, en état FOCALISÉ. Tes pertes se concentrent en session asiatique.",
+    "Ton edge est net sur les breakouts MNQ/MES à l'ouverture : c'est ton setup le plus rentable. Tes Reversals, eux, te coûtent de l'argent semaine après semaine.",
   emotionInsight:
-    'CONFIANT/FOCALISÉ → win rate > 70%. FATIGUÉ → sous 40% : évite de trader fatigué.',
+    'FOCALISÉ ou CONFIANT, tes entrées sont sélectives et ton net est positif. STRESSÉ ou FATIGUÉ, tu enchaînes les trades moyens, et ta pire journée a commencé par une perte suivie de ré-entrées immédiates.',
   insights: [
-    { type: 'strength', title: 'Edge clair sur Londres', description: '72% de win rate sur la session de Londres (breakouts/pullbacks).', badge: 'Force' },
-    { type: 'weakness', title: 'Session asiatique à éviter', description: 'Win rate 38% en session asiatique, hors de ta zone.', badge: 'Attention' },
-    { type: 'pattern', title: 'Overtrading en fin de journée', description: 'Tes trades après le 3ᵉ de la journée sont majoritairement perdants.', badge: 'Pattern' },
-    { type: 'strength', title: 'Bonne gestion du risque', description: 'R:R moyen 1.9, tu coupes tes pertes.', badge: 'Force' },
+    { type: 'strength', title: 'Edge clair sur les breakouts', description: 'Ton setup Breakout porte l’essentiel de ton P&L net sur 6 semaines.', badge: 'Force' },
+    { type: 'weakness', title: 'Le scalping ne paie pas les frais', description: 'Positif en brut, négatif en net : sur 6 contrats, les frais mangent tout le gain.', badge: 'Attention' },
+    { type: 'pattern', title: 'Revenge trading après une perte', description: 'Deux ré-entrées en moins de 2 minutes, taille doublée et sans stop : ta pire journée du mois.', badge: 'Pattern' },
+    { type: 'weakness', title: 'Reversal perdant', description: 'Win rate le plus bas de tes setups et net négatif : à suspendre ou à retravailler.', badge: 'Attention' },
   ],
 };
 const DEMO_CHAT_REPLY =
