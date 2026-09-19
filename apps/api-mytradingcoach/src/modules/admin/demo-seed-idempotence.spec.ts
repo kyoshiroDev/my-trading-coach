@@ -11,8 +11,27 @@
  *  3. tous les trades générés tiennent dans la fenêtre « 1M » par défaut du dashboard.
  */
 import { describe, it, expect, vi } from 'vitest';
+
+// Chaque test lance le seed complet (hash du mot de passe + recherche du tirage) : sous la
+// charge de la suite complète, deux runs dépassent les 5 s par défaut.
+vi.setConfig({ testTimeout: 20_000 });
 import { PrismaClient } from '@prisma/client';
-import { seedDemo, DEMO_EMAIL, DEMO_WINDOW_DAYS } from './demo-seed';
+import { seedDemo, assertDemoCalendar, DEMO_EMAIL, DEMO_WINDOW_DAYS } from './demo-seed';
+
+/** Un jour ouvré (mercredi) à l'heure donnée, pour les tests de la démo « live ». */
+function weekdayAt(hour: number, minute = 0): Date {
+  const d = new Date();
+  d.setDate(d.getDate() + ((3 - d.getDay() + 7) % 7)); // prochain mercredi (ou aujourd'hui)
+  d.setHours(hour, minute, 0, 0);
+  return d;
+}
+/** Un samedi à l'heure donnée. */
+function saturdayAt(hour: number): Date {
+  const d = new Date();
+  d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7));
+  d.setHours(hour, 0, 0, 0);
+  return d;
+}
 
 interface Call {
   model: string;
@@ -281,11 +300,12 @@ describe('seedDemo — fraîcheur des données (visible sans changer de filtre)'
     expect(ages.filter((a) => a <= 30).length).toBeGreaterThanOrEqual(45);
   });
 
-  it('la journée en cours et la veille sont peuplées (session live + carte « Hier »)', async () => {
+  it('un jour ouvré : la journée en cours et la veille sont peuplées (session live + carte « Hier »)', async () => {
+    const now = weekdayAt(15);
     const { prisma, created } = fakePrisma([]);
-    await seedDemo(prisma);
+    await seedDemo(prisma, now);
 
-    const startOfToday = new Date();
+    const startOfToday = new Date(now);
     startOfToday.setHours(0, 0, 0, 0);
     const startOfYesterday = new Date(startOfToday);
     startOfYesterday.setDate(startOfYesterday.getDate() - 1);
@@ -300,11 +320,12 @@ describe('seedDemo — fraîcheur des données (visible sans changer de filtre)'
     expect(yesterday.length, 'Carte « Hier » de la pré-session vide').toBeGreaterThan(0);
   });
 
-  it('la session du jour est ACTIVE et démarrée aujourd\'hui (pas un compteur à 1978 h)', async () => {
+  it('un jour ouvré : la session du jour est ACTIVE et démarrée aujourd\'hui (pas un compteur à 1978 h)', async () => {
+    const now = weekdayAt(15);
     const { prisma, created } = fakePrisma([]);
-    await seedDemo(prisma);
+    await seedDemo(prisma, now);
 
-    const startOfToday = new Date();
+    const startOfToday = new Date(now);
     startOfToday.setHours(0, 0, 0, 0);
     const active = created['tradeSession'].filter((s) => s['status'] === 'ACTIVE');
 
@@ -404,15 +425,33 @@ describe('seedDemo — réalisme validé (PROMPT-215) : un trader crédible, pas
     expect(red).toBeLessThanOrEqual(0.45);
   });
 
-  it('jours ouvrés uniquement (hors hier / aujourd’hui, gardés pour la démo live)', async () => {
-    const { prisma, created } = fakePrisma([]);
-    await seedDemo(prisma);
+  it('jours ouvrés UNIQUEMENT : zéro trade samedi / dimanche, quel que soit le jour du run', async () => {
+    for (let i = 0; i < 7; i++) {
+      const now = weekdayAt(3, 20);
+      now.setDate(now.getDate() + i); // mercredi … mardi, week-end compris
+      const { prisma, created } = fakePrisma([]);
+      await seedDemo(prisma, now);
+      const weekend = created['trade'].filter((t) => [0, 6].includes((t['tradedAt'] as Date).getDay()));
+      expect(weekend, `run du ${now.toDateString()}`).toHaveLength(0);
+    }
+  });
 
-    const startOfYesterday = new Date();
-    startOfYesterday.setHours(0, 0, 0, 0);
-    startOfYesterday.setDate(startOfYesterday.getDate() - 1);
-    const older = created['trade'].filter((t) => (t['tradedAt'] as Date) < startOfYesterday);
-    expect(older.filter((t) => [0, 6].includes((t['tradedAt'] as Date).getDay()))).toHaveLength(0);
+  it('le week-end : pas de session live ni de trade du jour, le dernier jour tradé est vendredi', async () => {
+    const now = saturdayAt(11);
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma, now);
+
+    expect(created['tradeSession'].filter((x) => x['status'] === 'ACTIVE')).toHaveLength(0);
+    const last = Math.max(...created['trade'].map((t) => (t['tradedAt'] as Date).getTime()));
+    expect(new Date(last).getDay()).toBe(5);
+  });
+
+  it('garde-fou : un trade un week-end ou hors futures fait échouer le seed', () => {
+    const saturday = saturdayAt(10);
+    const monday = weekdayAt(10);
+    expect(() => assertDemoCalendar([{ trades: [{ tradedAt: saturday, asset: 'MNQ' }] }])).toThrow(/week-end/);
+    expect(() => assertDemoCalendar([{ trades: [{ tradedAt: monday, asset: 'BTC/USDT' }] }])).toThrow(/hors futures/);
+    expect(() => assertDemoCalendar([{ trades: [{ tradedAt: monday, asset: 'MES' }] }])).not.toThrow();
   });
 
   it('setups contrastés : Breakout meilleur, Reversal perdant, Scalping positif en brut mais négatif en net', async () => {
@@ -459,7 +498,7 @@ describe('seedDemo — réalisme validé (PROMPT-215) : un trader crédible, pas
 
   it('débriefs hebdo par compte et un récap par jour de trading', async () => {
     const { prisma, created } = fakePrisma([]);
-    const res = await seedDemo(prisma);
+    const res = await seedDemo(prisma, weekdayAt(15));
 
     expect(res.debriefs).toBeGreaterThanOrEqual(5);
     const d = created['weeklyDebrief'][0];
@@ -472,8 +511,7 @@ describe('seedDemo — réalisme validé (PROMPT-215) : un trader crédible, pas
 
 describe('seedDemo — dates relatives au run (cron quotidien de 03:20)', () => {
   it('à 03:20 : aucun trade dans le futur, session du jour démarrée aujourd’hui, récap daté d’hier', async () => {
-    const now = new Date();
-    now.setHours(3, 20, 0, 0);
+    const now = weekdayAt(3, 20);
     const { prisma, created } = fakePrisma([]);
     await seedDemo(prisma, now);
 
