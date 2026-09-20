@@ -117,41 +117,81 @@
 
 .acct-empty { color: var(--text-3); font-size: 13px; padding: 12px 0; }
 
-/* ── Grille de comptes ──────────────────────────────────────────────────── */
-.acct-grid {
-  display: grid;
-  /* Grille déterministe qui remplit la largeur : 4 colonnes (paliers responsive plus bas). */
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-@media (max-width: 1500px) { .acct-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 1080px) { .acct-grid { grid-template-columns: repeat(2, 1fr); } }
-.acct-card {
-  position: relative;
+/* ── Tableau des comptes ────────────────────────────────────────────────────
+   Une ligne par compte : même grammaire que le Journal (en-tête de colonnes en
+   mono minuscule, lignes en grille alignée). Pas d'`overflow: hidden` sur le
+   wrapper, sinon le menu « … » de la dernière ligne serait coupé. */
+.acct-table {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 18px;
-  transition: border-color .2s, box-shadow .2s;
+  border-radius: 12px;
 }
-/* Accent couleur par compte : trait fin en haut (radius clippé, pas d'overflow:hidden
-   sur la carte sinon le menu déroulant serait coupé). */
-.acct-card::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--ac, var(--blue)), transparent);
-  opacity: .5;
-  border-top-left-radius: 14px;
-  border-top-right-radius: 14px;
+
+/* Colonnes : compte · solde · P&L · trades · objectif · marge · synchro · menu */
+.acct-thead,
+.acct-line {
+  display: grid;
+  grid-template-columns:
+    minmax(210px, 1.7fr) 0.8fr 0.8fr 0.5fr minmax(120px, 1.15fr)
+    minmax(120px, 1.15fr) minmax(150px, 1.3fr) 38px;
+  gap: 0 14px;
+  align-items: center;
 }
-.acct-card:hover { border-color: var(--border-hover); }
-.acct-card.is-archived { opacity: .6; }
-.acct-top { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 14px; }
+
+.acct-thead {
+  padding: 7px 14px 7px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-2);
+  border-radius: 12px 12px 0 0;
+}
+.acct-thead > span {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.acct-thead > span.right { text-align: right; }
+
+/* Une ligne = un compte. L'accent couleur du compte devient un liseré à gauche,
+   là où la carte l'affichait en haut : même repère, sans occuper de place. */
+.acct-block {
+  border-top: 1px solid var(--border);
+  position: relative;
+}
+.acct-block:first-of-type { border-top: none; }
+.acct-block.is-archived { opacity: 0.6; }
+
+.acct-line {
+  padding: 10px 14px 10px 16px;
+  border-left: 2px solid var(--ac, var(--blue));
+  border-radius: 0;
+  transition: background 0.12s;
+}
+.acct-block:hover .acct-line { background: var(--bg-2); }
+
+.cell { min-width: 0; }
+.cell.num { font-family: var(--font-mono); font-size: 12.5px; color: var(--text); }
+.cell.num.right { text-align: right; }
+.cell.num.strong { font-weight: 600; }
+.cell.num.dim { color: var(--text-3); }
+.cell-none { color: var(--text-3); font-family: var(--font-mono); font-size: 12px; }
+
+/* 1 · Compte */
+.cell-acct { display: flex; align-items: center; gap: 9px; }
+.acct-expand {
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: none; cursor: pointer;
+  color: var(--text-3); padding: 2px; border-radius: 6px;
+  flex-shrink: 0;
+  transition: transform 0.15s, color 0.12s;
+}
+.acct-expand:hover { color: var(--text); background: var(--bg-3); }
+.acct-block.is-open .acct-expand { transform: rotate(180deg); color: var(--text-2); }
 .acct-ic {
-  width: 38px; height: 38px;
-  border-radius: 10px;
+  width: 30px; height: 30px;
+  border-radius: 9px;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   background: color-mix(in srgb, var(--ac, var(--blue)) 14%, transparent);
@@ -159,27 +199,65 @@
   color: var(--ac, var(--blue));
 }
 .acct-id { min-width: 0; }
-.acct-name { font-family: var(--font-display); font-weight: 600; font-size: 15px; line-height: 1.15; }
-.acct-meta { display: flex; align-items: center; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+.acct-name {
+  font-family: var(--font-display); font-weight: 600; font-size: 13.5px; line-height: 1.2;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.acct-meta { display: flex; align-items: center; gap: 5px; margin-top: 3px; flex-wrap: wrap; }
 .tag {
   font-family: var(--font-mono);
-  font-size: 9px; font-weight: 500;
-  padding: 2px 7px; border-radius: 5px;
+  font-size: 8.5px; font-weight: 500;
+  padding: 2px 6px; border-radius: 5px;
   text-transform: uppercase; letter-spacing: .4px;
+  white-space: nowrap;
 }
 .tag.firm { background: color-mix(in srgb, var(--ac, var(--blue)) 14%, transparent); color: var(--ac, var(--blue)); border: 1px solid color-mix(in srgb, var(--ac, var(--blue)) 25%, transparent); }
 .tag.funded { background: var(--green-dim); color: var(--green); border: 1px solid rgba(16,185,129,.2); }
 .tag.eval { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(245,158,11,.2); }
 .tag.perso { background: #1e293b; color: var(--text-2); border: 1px solid var(--border); }
-.acct-status { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-2); font-family: var(--font-mono); }
-.acct-status .dot { width: 6px; height: 6px; border-radius: 50%; }
+.acct-status { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text-3); font-family: var(--font-mono); white-space: nowrap; }
+.acct-status .dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
 
-.acct-menu-wrap { margin-left: auto; position: relative; align-self: flex-start; }
+/* 5 et 6 · Jauges inline : la barre des cartes, en version fine */
+.cell-gauge { display: flex; flex-direction: column; gap: 4px; }
+/* Valeur et suffixe COLLÉS : repoussé à droite de la cellule, le « 30 % » ou le
+   « restants » se lisait comme appartenant à la colonne voisine. */
+.gauge-top { display: flex; align-items: baseline; justify-content: flex-start; gap: 5px; min-width: 0; }
+.gauge-val {
+  font-family: var(--font-mono); font-size: 11.5px; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0;
+}
+.gauge-pct { font-family: var(--font-mono); font-size: 9.5px; color: var(--text-3); white-space: nowrap; }
+.bar-track { height: 9px; background: var(--bg-3); border-radius: 5px; overflow: hidden; }
+.bar-track.xs { height: 4px; border-radius: 3px; }
+.bar-fill { height: 100%; border-radius: 5px; transition: width .3s; }
+
+/* 7 · Synchro : pastille + actions compactes */
+.cell-sync { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.tv-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; flex-shrink: 0;
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 7px; color: var(--text-3); cursor: pointer;
+}
+.tv-icon:hover:not(:disabled) { color: var(--text); border-color: var(--border-hover); background: var(--bg-3); }
+.tv-icon.danger:hover:not(:disabled) { color: var(--red); border-color: rgba(239,68,68,.35); }
+.tv-icon:disabled { opacity: .55; cursor: default; }
+/* Le libellé reste dans le DOM : nom accessible du bouton, et état « Synchronisation… »
+   lisible par les lecteurs d'écran alors que l'icône seule tourne. */
+.tv-icon-lbl {
+  position: absolute; width: 1px; height: 1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+
+/* 8 · Menu */
+.cell-menu { display: flex; justify-content: flex-end; }
+.acct-menu-wrap { position: relative; }
 .acct-menu {
   display: flex; align-items: center; justify-content: center;
   background: transparent; border: none;
   color: var(--text-3); cursor: pointer;
-  line-height: 1; padding: 2px 6px; border-radius: 6px;
+  line-height: 1; padding: 3px 5px; border-radius: 6px;
 }
 .acct-menu:hover { color: var(--text); background: var(--bg-3); }
 .menu-pop {
@@ -202,79 +280,37 @@
 .menu-item:hover { background: var(--bg-3); color: var(--text); }
 .menu-item.danger:hover { color: var(--red); }
 
-.acct-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  padding: 14px 0;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 14px;
+/* Sous-ligne discrète (détail de synchro, sélecteur de compte broker, résultat d'import) */
+.acct-sub {
+  padding: 0 14px 9px 57px;
+  border-left: 2px solid var(--ac, var(--blue));
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  font-size: 11px; color: var(--text-3); line-height: 1.5;
 }
-.mini { text-align: center; }
-.mini-v { font-family: var(--font-mono); font-size: 14px; font-weight: 500; line-height: 1; }
-.mini-l { font-size: 9px; color: var(--text-3); text-transform: uppercase; letter-spacing: .5px; margin-top: 5px; font-family: var(--font-mono); }
+.acct-sub .tv-text { min-width: 0; }
+.acct-sub .tv-ext { font-family: var(--font-mono); color: var(--text-2); }
 
-/* ── Barres de règles prop firm ─────────────────────────────────────────── */
-.rules-head {
-  font-size: 9.5px; font-family: var(--font-mono);
-  color: var(--text-3); text-transform: uppercase; letter-spacing: .8px;
-  margin-bottom: 10px;
-  display: flex; align-items: center; gap: 6px;
-}
-.rules-head.muted { opacity: .5; }
-.est-pill {
-  font-size: 8.5px; letter-spacing: .4px;
-  padding: 1px 6px; border-radius: 5px;
-  background: var(--yellow-dim); color: var(--yellow);
-  border: 1px solid rgba(245,158,11,.2);
-}
-/* Objectif en héros : libellé + valeur + % en pastille + barre épaisse */
-.obj { margin-bottom: 13px; }
-.obj-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-.obj-name { font-size: 12px; color: var(--text-2); font-weight: 600; }
-.obj-right { display: flex; align-items: baseline; gap: 8px; }
-.obj-val { font-family: var(--font-mono); font-size: 13px; font-weight: 500; color: var(--text); }
-.obj-pct {
-  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
-  padding: 2px 7px; border-radius: 6px;
-  background: var(--blue-glow); color: var(--blue-bright);
-  border: 1px solid rgba(59,130,246,.25);
-}
-.obj-pct.done { background: var(--green-dim); color: var(--green); border-color: rgba(16,185,129,.25); }
+/* Compte perso : pas de règles prop firm, mais son activité reste utile — au dépli. */
+.acct-activity { display: none; gap: 16px; }
+.acct-block.is-open .acct-activity { display: flex; }
+.acct-activity .ai { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-3); }
+.acct-activity .ai b { font-weight: 600; font-size: 12px; margin-right: 4px; }
 
-.rule { margin-bottom: 4px; }
-.rule-top { display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 5px; }
-.rule-name { color: var(--text-2); }
-.rule-val { font-family: var(--font-mono); font-size: 11px; color: var(--text); }
-.bar-track { height: 9px; background: var(--bg-3); border-radius: 5px; overflow: hidden; }
-.bar-track.sm { height: 7px; }
-.bar-fill { height: 100%; border-radius: 5px; transition: width .3s; }
-
-/* Carte perso : bloc « Activité » (meilleur jour / pire jour / win rate) */
-.perso-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.pi { background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px; padding: 11px 10px; text-align: center; }
-.pi-v { font-family: var(--font-mono); font-size: 14px; font-weight: 500; line-height: 1; }
-.pi-l { font-family: var(--font-mono); font-size: 8.5px; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: .4px; margin-top: 6px; }
-
-/* ── Tuile ajouter ──────────────────────────────────────────────────────── */
-.acct-add {
-  border: 1.5px dashed var(--border-hover);
-  border-radius: 14px;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 8px;
-  color: var(--text-3); cursor: pointer;
-  min-height: 200px;
-  background: transparent;
-  font-family: var(--font-body); font-size: 13px;
-  transition: all .2s;
+/* ── Quota atteint (seul chemin vers la modale Premium depuis cette page) ─── */
+.quota-banner {
+  display: flex; align-items: center; gap: 9px;
+  width: 100%; margin-top: 12px;
+  padding: 11px 14px;
+  background: var(--yellow-dim);
+  border: 1px solid rgba(245,158,11,.3);
+  border-radius: 10px;
+  color: var(--yellow);
+  font-family: var(--font-body); font-size: 12.5px; text-align: left;
+  cursor: pointer;
 }
-.acct-add:hover { border-color: var(--blue); color: var(--blue-bright); background: var(--blue-glow); }
-.acct-add .plus { display: flex; }
-.acct-add-sub { font-size: 11px; color: var(--text-3); }
-.acct-add.is-limit { border-color: rgba(245,158,11,.35); color: var(--yellow); }
-.acct-add.is-limit:hover { border-color: var(--yellow); background: var(--yellow-dim); color: var(--yellow); }
+.quota-banner:hover { border-color: var(--yellow); }
+.quota-banner svg.lucide { flex-shrink: 0; }
+.quota-banner b { font-weight: 600; }
 
 /* ── Modal ──────────────────────────────────────────────────────────────── */
 .modal-overlay {
@@ -321,10 +357,53 @@
   border-top: 1px solid var(--border);
 }
 
+/* ── Repli tablette : 8 colonnes ne tiennent plus, les jauges passent au dépli ── */
+@media (max-width: 1100px) {
+  .acct-thead { display: none; }
+  .acct-line {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    gap: 7px 12px;
+    padding: 11px 12px 11px 14px;
+  }
+  .cell-acct { grid-column: 1 / 3; grid-row: 1; }
+  .cell-menu { grid-column: 3; grid-row: 1; align-self: start; }
+  /* Solde · P&L · Trades sur une ligne, alignés à gauche : sans en-tête de colonnes,
+     un nombre collé à droite n'est plus rattachable à quoi que ce soit. */
+  /* `.cell.num.right` (3 classes) bat un simple `.cell.num` : sans ce sélecteur
+     plus fort, les nombres restaient alignés à droite, loin de leur étiquette. */
+  .acct-line .cell.num.right { grid-row: 2; text-align: left; font-size: 12px; }
+  .cell-balance { grid-column: 1; }
+  .cell-pnl { grid-column: 2; }
+  .cell-trades { grid-column: 3; }
+  .cell.num::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 8.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--text-3); margin-bottom: 2px;
+  }
+  .cell-sync { grid-column: 1 / -1; grid-row: 3; }
+  /* Jauges : masquées tant que la ligne n'est pas dépliée. */
+  .cell-gauge { display: none; grid-column: 1 / -1; }
+  .acct-block.is-open .cell-gauge { display: flex; }
+  .acct-block.is-open .cell-obj { grid-row: 4; }
+  .acct-block.is-open .cell-dd { grid-row: 5; }
+  .cell-gauge::before {
+    content: attr(data-label);
+    font-size: 8.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--text-3);
+  }
+  .acct-sub { padding-left: 14px; }
+}
+
 @media (max-width: 720px) {
   .stats-row { grid-template-columns: repeat(2, 1fr); }
-  .acct-grid { grid-template-columns: 1fr; }
   .fld-row { flex-wrap: wrap; }
+  .acct-line { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+  .acct-name { font-size: 13px; }
+  /* Trades passe au dépli : sur un écran étroit, solde et P&L suffisent à décider. */
+  .cell-trades { display: none; }
+  .acct-block.is-open .cell-trades { display: block; grid-column: 1; grid-row: 6; }
+  .cell-sync .tv-btn { flex: 1 1 auto; justify-content: center; }
 }
 
 /* Echec de suppression : present sans dramatiser — rien n'est casse, une regle metier
@@ -350,33 +429,21 @@
 /* ── Connexion Tradovate par compte (PROMPT-208, maquette proto-connexion-tradovate.html) ── */
 .nt-word { color: var(--nt); font-weight: 700; }
 
-.tv-row {
-  margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
-  display: flex; flex-direction: column; gap: 10px; min-width: 0;
-}
-.tv-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.tv-label {
-  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--text-3);
-}
-.tv-pill { font-size: 11px; padding: 4px 10px; border-radius: 20px; font-family: var(--font-mono); white-space: nowrap; }
+.tv-pill { font-size: 10.5px; padding: 3px 9px; border-radius: 20px; font-family: var(--font-mono); white-space: nowrap; }
 .tv-pill.on { background: var(--green-dim); color: var(--green); }
 .tv-pill.off { background: rgba(99, 155, 255, 0.08); color: var(--text-3); }
 .tv-pill.warn { background: var(--yellow-dim); color: var(--yellow); }
 
-.tv-line {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  flex-wrap: wrap; font-size: 12px; color: var(--text-3);
-}
-.tv-text { flex: 1 1 200px; min-width: 0; line-height: 1.5; }
+.tv-text { min-width: 0; line-height: 1.5; }
 .tv-ext { font-family: var(--font-mono); color: var(--text-2); }
-.tv-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.tv-confirm { font-size: 12px; color: var(--text-2); }
+.tv-confirm { font-size: 11.5px; color: var(--text-2); }
 .tv-btn {
   display: inline-flex; align-items: center; gap: 6px;
   font-size: 12px; padding: 7px 12px; border-radius: 8px; cursor: pointer;
   font-family: var(--font-body); font-weight: 600; white-space: nowrap;
 }
+/* Version ligne : le bouton doit tenir dans une cellule, pas dans une carte. */
+.tv-btn.sm { font-size: 11px; padding: 5px 9px; border-radius: 7px; gap: 4px; }
 .tv-btn:disabled { opacity: 0.55; cursor: default; }
 .tv-btn.connect { background: var(--nt); color: var(--nt-ink); border: none; }
 .tv-btn.sync { background: var(--blue-glow); color: var(--blue-bright); border: 1px solid var(--border-hover); }
@@ -385,8 +452,8 @@
 .tv-btn .spin { animation: tv-spin 0.9s linear infinite; }
 @keyframes tv-spin { to { transform: rotate(360deg); } }
 
-.tv-feedback { display: flex; flex-direction: column; gap: 3px; }
-.tv-fb { font-size: 12px; color: var(--text-2); line-height: 1.45; }
+.tv-feedback { flex-direction: column; align-items: flex-start; gap: 3px; }
+.tv-fb { font-size: 11.5px; color: var(--text-2); line-height: 1.45; }
 .tv-fb.warn { color: var(--yellow); }
 
 .tv-disclaimer {
@@ -395,8 +462,7 @@
 }
 
 @media (max-width: 560px) {
-  .tv-line { flex-direction: column; align-items: stretch; }
-  /* En colonne, la base de 200px deviendrait une HAUTEUR : grand vide sous le texte. */
-  .tv-text { flex: 0 0 auto; }
-  .tv-actions .tv-btn { flex: 1 1 auto; justify-content: center; }
+  /* Ligne étroite : la pastille garde sa place, le bouton de connexion prend le reste. */
+  .cell-sync { gap: 5px; }
+  .cell-sync .tv-btn.connect { flex: 1 1 100%; justify-content: center; }
 }
