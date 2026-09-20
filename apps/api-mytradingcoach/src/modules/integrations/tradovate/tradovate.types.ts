@@ -60,6 +60,24 @@ export interface TradovateFillFee {
   orderRoutingFee?: number;
 }
 
+/** Solde d'un compte : porte la devise du compte, sous forme d'identifiant INTERNE Tradovate. */
+export interface TradovateCashBalance {
+  id: number;
+  accountId: number;
+  currencyId: number;
+}
+
+/**
+ * Devise Tradovate. `id` est un identifiant maison (1 = USD, 2 = EUR…), PAS un code ISO 4217 :
+ * seul `name` porte le code lisible. Mesuré le 2026-09-20 sur un compte réel (cf.
+ * `docs/tradovate-api-capabilities.md` §2) : `/currency/item?id=1` → `{"name":"USD","symbol":"$"}`.
+ */
+export interface TradovateCurrency {
+  id: number;
+  name: string;
+  symbol?: string;
+}
+
 export interface TradovateContract {
   id: number;
   name: string; // ex. MNQU6
