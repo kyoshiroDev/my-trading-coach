@@ -12,10 +12,13 @@ import { decryptToken, encryptToken, loadTokenKey } from '../../../common/utils/
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateApiError, TradovateException } from './tradovate.errors';
 import { OAuthOrigin, signOAuthState, verifyOAuthState } from './oauth-state.util';
+import { DEFAULT_ACCOUNT_CURRENCY, isAccountCurrency, normalizeCurrencyCode } from '@mtc/shared';
 import type { AccountCurrency } from '@mtc/shared';
 import type {
   ExternalAccountRef,
   TradovateAccount,
+  TradovateCashBalance,
+  TradovateCurrency,
   TradovateEnv,
   TradovateOAuthTokenResponse,
 } from './tradovate.types';
@@ -35,12 +38,15 @@ const ENVS: TradovateEnv[] = ['live', 'demo'];
  * Devise posée sur le TradingAccount lié à un compte Tradovate (PROMPT-214) : la devise d'un compte
  * synchronisé vient du broker et n'est plus modifiable par l'utilisateur (AccountsService.update).
  *
- * TODO(PROMPT-214) : HYPOTHÈSE, pas une lecture du broker. Tous les comptes Tradovate vus à ce jour
- * (futures CME, prop firms Apex / TakeProfitTrader / Tradeify…) sont en USD, d'où cette constante.
- * Dès qu'un compte non-USD apparaît, lire la vraie devise : `cashBalance.currencyId` du compte, puis
- * `/currency/item?id=` pour son code, au moment de `selectAccount`, et poser ce code ici à la place.
+ * Elle est désormais LUE chez le broker, plus supposée : `cashBalance.currencyId` du compte, puis
+ * `/currency/item?id=` pour son code (cf. `resolveAccountCurrency`). Piège confirmé le 2026-09-20 sur
+ * un compte réel : `currencyId` est un identifiant INTERNE Tradovate (1 = USD, 2 = EUR…), jamais un
+ * code ISO 4217 — le prendre pour un code, ou le mapper de tête, donne une devise fausse en silence.
+ *
+ * Repli quand la lecture échoue ou que la devise n'est pas gérée par MTC : `DEFAULT_ACCOUNT_CURRENCY`
+ * (USD), la devise de tous les comptes Tradovate vus à ce jour (futures CME, prop firms).
  */
-const TRADOVATE_ACCOUNT_CURRENCY: AccountCurrency = 'USD';
+const FALLBACK_ACCOUNT_CURRENCY: AccountCurrency = DEFAULT_ACCOUNT_CURRENCY;
 
 /** Vue publique d'une connexion : JAMAIS de token, même chiffré. */
 export interface TradovateConnectionView {
@@ -203,11 +209,18 @@ export class TradovateConnectionService {
       availableAccounts: available as unknown as Prisma.InputJsonValue,
       lastSyncError: null,
     };
-    return this.prisma.brokerConnection.upsert({
+    const saved = await this.prisma.brokerConnection.upsert({
       where,
       create: { userId, accountId, provider: BrokerProvider.TRADOVATE, ...data },
       update: data,
     });
+    // Compte choisi automatiquement (un seul compte, ou reconnexion) : il ne passe jamais par
+    // selectAccount, sa devise doit donc être alignée ici — sinon elle resterait celle saisie à la
+    // main à la création du compte MTC, souvent EUR pour un compte broker en USD.
+    if (chosen) {
+      await this.syncAccountCurrency(accountId, saved, chosen, tokens.access_token as string);
+    }
+    return saved;
   }
 
   // ── Gestion ───────────────────────────────────────────────────────────────
@@ -237,12 +250,75 @@ export class TradovateConnectionService {
         externalEnv: target.env,
       },
     });
-    // La devise du compte suit le broker (cf. TRADOVATE_ACCOUNT_CURRENCY et son TODO).
-    await this.prisma.tradingAccount.update({
-      where: { id: accountId },
-      data: { currency: TRADOVATE_ACCOUNT_CURRENCY },
-    });
+    // La devise du compte suit le broker, lue chez lui (cf. resolveAccountCurrency).
+    await this.syncAccountCurrency(accountId, conn, target);
     return this.toView(updated);
+  }
+
+  /**
+   * Aligne la devise du TradingAccount sur celle du compte broker. Best-effort et JAMAIS bloquant :
+   * un token expiré ou un `/cashBalance` indisponible ne doit pas faire échouer le choix du compte,
+   * la devise reste alors celle déjà posée et sera corrigée à la prochaine sélection.
+   */
+  private async syncAccountCurrency(
+    accountId: string,
+    conn: BrokerConnection,
+    target: ExternalAccountRef,
+    knownToken?: string,
+  ): Promise<void> {
+    const accessToken = knownToken ?? (await this.getAccessToken(conn).catch(() => null));
+    if (!accessToken) {
+      this.logger.warn(`Devise du compte ${target.id} non relue : aucun token exploitable.`);
+      return;
+    }
+    const currency = await this.resolveAccountCurrency(target, accessToken);
+    await this.prisma.tradingAccount.update({ where: { id: accountId }, data: { currency } });
+  }
+
+  /**
+   * Devise réelle d'un compte Tradovate : `cashBalance.currencyId` → `/currency/item?id=`.
+   *
+   * `currencyId` est un identifiant interne (1 = USD, 2 = EUR…), donc seul `/currency/item` donne le
+   * code : aucune table de correspondance en dur ici, elle finirait fausse. Ne lève jamais — toute
+   * lecture ratée ou devise hors `ACCOUNT_CURRENCIES` retombe sur le repli, en le signalant.
+   */
+  private async resolveAccountCurrency(
+    target: ExternalAccountRef,
+    accessToken: string,
+  ): Promise<AccountCurrency> {
+    try {
+      const balances = await this.api.get<TradovateCashBalance[]>(
+        target.env,
+        '/cashBalance/list',
+        accessToken,
+      );
+      const balance = (Array.isArray(balances) ? balances : []).find(
+        (b) => String(b.accountId) === target.id,
+      );
+      if (!balance?.currencyId) {
+        this.logger.warn(`Aucun cashBalance pour le compte ${target.id} : repli ${FALLBACK_ACCOUNT_CURRENCY}.`);
+        return FALLBACK_ACCOUNT_CURRENCY;
+      }
+      const currency = await this.api.get<TradovateCurrency>(
+        target.env,
+        '/currency/item',
+        accessToken,
+        { id: String(balance.currencyId) },
+      );
+      const code = normalizeCurrencyCode(currency?.name);
+      if (!isAccountCurrency(code)) {
+        this.logger.warn(
+          `Devise Tradovate « ${code ?? '?'} » (currencyId ${balance.currencyId}) non gérée par MTC : repli ${FALLBACK_ACCOUNT_CURRENCY}.`,
+        );
+        return FALLBACK_ACCOUNT_CURRENCY;
+      }
+      return code;
+    } catch (err) {
+      this.logger.warn(
+        `Devise du compte Tradovate ${target.id} illisible (${(err as Error).message}) : repli ${FALLBACK_ACCOUNT_CURRENCY}.`,
+      );
+      return FALLBACK_ACCOUNT_CURRENCY;
+    }
   }
 
   /**
