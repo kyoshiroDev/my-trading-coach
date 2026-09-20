@@ -181,12 +181,18 @@
 /* 1 · Compte */
 .cell-acct { display: flex; align-items: center; gap: 9px; }
 .acct-expand {
-  display: flex; align-items: center; justify-content: center;
+  /* Desktop : les 8 colonnes sont à l'écran, le chevron ne déplierait que du vide.
+     Il ne reste que sur les lignes qui cachent vraiment quelque chose (compte perso
+     et son activité), et revient pour tout le monde au repli mobile.
+     `visibility` et non `display` : la place reste réservée, sinon les lignes prop firm
+     seraient décalées de 19 px par rapport aux lignes perso, dans le même tableau. */
+  display: flex; visibility: hidden; align-items: center; justify-content: center;
   background: transparent; border: none; cursor: pointer;
   color: var(--text-3); padding: 2px; border-radius: 6px;
   flex-shrink: 0;
   transition: transform 0.15s, color 0.12s;
 }
+.acct-block.has-detail .acct-expand { visibility: visible; }
 .acct-expand:hover { color: var(--text); background: var(--bg-3); }
 .acct-block.is-open .acct-expand { transform: rotate(180deg); color: var(--text-2); }
 .acct-ic {
@@ -367,6 +373,8 @@
 /* ── Repli tablette : 8 colonnes ne tiennent plus, les jauges passent au dépli ── */
 @media (max-width: 1100px) {
   .acct-thead { display: none; }
+  /* En repli, chaque ligne cache des colonnes : le chevron redevient utile partout. */
+  .acct-expand { visibility: visible; }
   .acct-line {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
     gap: 7px 12px;
@@ -467,7 +475,7 @@
 
 .tv-disclaimer {
   color: var(--text-3); font-size: 10px; font-style: italic; line-height: 1.5;
-  margin: 14px 0 0; max-width: 640px;
+  margin: 14px 0 0; width: 100%;
 }
 
 @media (max-width: 560px) {
