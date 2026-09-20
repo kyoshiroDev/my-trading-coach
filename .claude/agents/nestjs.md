@@ -141,9 +141,14 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
 - **Devise = propriété DU COMPTE, jamais convertie, jamais globale** (PROMPT-214) :
   `TradingAccount.currency` ∈ `ACCOUNT_CURRENCIES` (`@mtc/shared`, liste unique front + back ;
   DTO create/update : `@Transform(normalizeCurrencyCode)` + `@IsIn`). Compte synchronisé : devise
-  posée par la connexion (`selectAccount` → `TRADOVATE_ACCOUNT_CURRENCY` = USD, **hypothèse avec
-  TODO** : lire `cashBalance.currencyId` dès qu'un compte non-USD apparaît) et **refusée** en
-  update (`AccountsService.update`, 400). Montants serveur visibles (emails débrief / recap, PDF,
+  **lue chez le broker** par `TradovateConnectionService.resolveAccountCurrency`
+  (`/cashBalance/list` → `currencyId` du compte, puis `/currency/item?id=` pour le code), posée à la
+  sélection du compte ET à la connexion quand le compte est choisi automatiquement ; **refusée** en
+  update (`AccountsService.update`, 400). ⚠️ **`currencyId` est un identifiant INTERNE Tradovate**
+  (1 = USD, 2 = EUR…), **pas un code ISO 4217** : jamais de table en dur, toujours `/currency/item`
+  (mesuré le 2026-09-20, cf. `docs/tradovate-api-capabilities.md` §2). Lecture best-effort : token
+  inexploitable, endpoint indisponible ou devise hors `ACCOUNT_CURRENCIES` (ex. CAD) → repli
+  `DEFAULT_ACCOUNT_CURRENCY` + `logger.warn`, jamais d'échec de la sélection de compte. Montants serveur visibles (emails débrief / recap, PDF,
   prompts IA) : `formatMoney` avec la devise du compte, ou `userAmountsCurrency()`
   (`common/utils/user-currency.util.ts` : devise commune des comptes non archivés, `null` si mêlées
   → sans symbole). **Plus aucun taux** : `User.currencyRate` n'est plus lu ni écrit (ni
