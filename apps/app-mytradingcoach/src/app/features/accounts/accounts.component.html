@@ -171,8 +171,11 @@
               }
             </div>
 
-            <!-- 7 · Synchro : pastille d'état + action principale -->
+            <!-- 7 · Synchro : pastille d'état, actions, puis le détail en texte discret.
+                 Ce détail vivait sous le nom du compte : il parlait de la synchro tout en
+                 pointant la colonne Compte. Il est désormais sous la pastille qu'il explique. -->
             <div class="cell cell-sync" data-label="Synchro">
+              <div class="sync-head">
               @if (!conn) {
                 <span class="tv-pill off" [attr.data-testid]="'tradovate-status-' + a.id">Non connecté</span>
                 @if (a.status !== 'ARCHIVED') {
@@ -209,6 +212,14 @@
                   </button>
                 }
               }
+              </div>
+
+              @if (conn && conn.status === 'CONNECTED' && !conn.needsAccountSelection) {
+                <span class="sync-detail" [attr.data-testid]="'tradovate-last-sync-' + a.id">
+                  @if (conn.externalAccountName) { <span class="tv-ext">{{ conn.externalAccountName }}</span><br /> }
+                  Dernière synchro : {{ relativeTime(conn.lastSyncAt) }} · {{ conn.tradesImported }} trade{{ conn.tradesImported > 1 ? 's' : '' }} importé{{ conn.tradesImported > 1 ? 's' : '' }}
+                </span>
+              }
             </div>
 
             <!-- 8 · Menu actions -->
@@ -235,8 +246,9 @@
             </div>
           </div>
 
-          <!-- Sous-ligne discrète : détail de synchro, sélecteur de compte broker,
-               résultat du dernier import. Rien d'essentiel à la lecture du tableau. -->
+          <!-- Sous-ligne : seulement ce qui a besoin de TOUTE la largeur — message d'erreur
+               de connexion et sélecteur de compte broker. Le détail de synchro, lui, est
+               remonté dans la colonne Synchro. -->
           @if (conn) {
             @if (conn.status === 'NEEDS_RECONNECT') {
               <div class="acct-sub">
@@ -248,13 +260,6 @@
                   [accounts]="conn.availableAccounts"
                   [busy]="busy === 'select' || busy === 'sync'"
                   (picked)="pickTradovateAccount(a, $event)" />
-              </div>
-            } @else {
-              <div class="acct-sub">
-                <span class="tv-text" [attr.data-testid]="'tradovate-last-sync-' + a.id">
-                  @if (conn.externalAccountName) { <span class="tv-ext">{{ conn.externalAccountName }}</span> · }
-                  Dernière synchro : {{ relativeTime(conn.lastSyncAt) }} · {{ conn.tradesImported }} trade{{ conn.tradesImported > 1 ? 's' : '' }} importé{{ conn.tradesImported > 1 ? 's' : '' }}
-                </span>
               </div>
             }
           }
