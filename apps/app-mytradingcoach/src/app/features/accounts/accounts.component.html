@@ -66,225 +66,234 @@
       </div>
     }
 
-    <!-- ── Cartes comptes ── -->
-    <div class="acct-grid">
+    <!-- ── Tableau des comptes ──────────────────────────────────────────────
+         Une LIGNE par compte (et non plus une grosse carte) : colonnes alignées,
+         comparables d'un coup d'œil, et lisible à 6 comptes comme à 1. Les jauges
+         objectif / marge drawdown des cartes sont conservées, en version inline. -->
+    <div class="acct-table" data-testid="accounts-table">
+
+      <div class="acct-thead" aria-hidden="true">
+        <span>Compte</span>
+        <span class="right">Solde</span>
+        <span class="right">P&amp;L</span>
+        <span class="right">Trades</span>
+        <span>Objectif</span>
+        <span>Marge drawdown</span>
+        <span>Synchro</span>
+        <span></span>
+      </div>
 
       @for (a of displayedAccounts(); track a.id) {
-        <div class="acct-card"
-             [style.--ac]="accentVar(a)"
-             [attr.data-testid]="'account-card-' + a.id"
-             [class.is-archived]="a.status === 'ARCHIVED'">
-          <div class="acct-top">
-            <div class="acct-ic"><svg [lucideIcon]="typeIcon(a.type)" [size]="18"></svg></div>
-            <div class="acct-id">
-              <div class="acct-name">{{ a.label }}</div>
-              <div class="acct-meta">
-                @if (a.broker) { <span class="tag firm">{{ a.broker }}</span> }
-                <span class="tag {{ typeTagClass(a.type) }}">{{ typeLabel(a.type) }}</span>
-                <span class="acct-status" [attr.data-testid]="'account-status-' + a.id">
-                  <span class="dot" [style.background]="dotColor(a)"></span> {{ statusLabel(a.status) }}
-                </span>
-              </div>
-            </div>
-            <div class="acct-menu-wrap">
-              <button class="acct-menu" (click)="toggleMenu(a.id)" [attr.data-testid]="'account-menu-' + a.id"><svg [lucideIcon]="MoreHorizontalIcon" [size]="18"></svg></button>
-              @if (menuOpenId() === a.id) {
-                <div class="menu-pop">
-                  <button class="menu-item" (click)="openEdit(a)"><svg [lucideIcon]="PencilIcon" [size]="13"></svg> Modifier</button>
-                  <!-- Désactivé quand l'échec est CERTAIN (dernier compte actif avec
-                       trades) : éviter l'erreur vaut mieux que l'afficher. Les cas
-                       incertains partent quand même et `deleteError` les explique. -->
-                  <button class="menu-item danger" (click)="confirmDelete(a)"
-                    [disabled]="suppressionBloquee(a)"
-                    [attr.title]="suppressionBloquee(a)
-                      ? 'Garde au moins un compte actif. Crée-en un autre avant d\'archiver celui-ci.'
-                      : null"
-                    [attr.data-testid]="'account-delete-' + a.id">
-                    <svg [lucideIcon]="TrashIcon" [size]="13"></svg> Supprimer
-                  </button>
+        <!-- ── Connexion Tradovate de CE compte (un compte = une connexion) ── -->
+        @let conn = tv.byAccount().get(a.id);
+        @let busy = tv.busy()[a.id];
+        @let fb = tv.feedback()[a.id];
+
+        <div class="acct-block"
+             [class.is-archived]="a.status === 'ARCHIVED'"
+             [class.is-open]="expandedId() === a.id"
+             [attr.data-testid]="'tradovate-row-' + a.id">
+
+          <div class="acct-line" [style.--ac]="accentVar(a)"
+               [attr.data-testid]="'account-card-' + a.id">
+
+            <!-- 1 · Compte : icône, nom, badges, statut -->
+            <div class="cell cell-acct">
+              <!-- Dépli : seul chemin vers les colonnes masquées en mobile. Inerte (et
+                   masqué) en desktop, où tout est déjà à l'écran. -->
+              <button class="acct-expand" type="button" (click)="toggleExpand(a.id)"
+                      [attr.aria-expanded]="expandedId() === a.id"
+                      [attr.aria-label]="'Détails de ' + a.label"
+                      [attr.data-testid]="'account-expand-' + a.id">
+                <svg [lucideIcon]="ChevronDownIcon" [size]="15"></svg>
+              </button>
+              <div class="acct-ic"><svg [lucideIcon]="typeIcon(a.type)" [size]="16"></svg></div>
+              <div class="acct-id">
+                <div class="acct-name">{{ a.label }}</div>
+                <div class="acct-meta">
+                  @if (a.broker) { <span class="tag firm">{{ a.broker }}</span> }
+                  <span class="tag {{ typeTagClass(a.type) }}">{{ typeLabel(a.type) }}</span>
+                  <span class="acct-status" [attr.data-testid]="'account-status-' + a.id">
+                    <span class="dot" [style.background]="dotColor(a)"></span> {{ statusLabel(a.status) }}
+                  </span>
                 </div>
-              }
-            </div>
-          </div>
-
-          <div class="acct-stats">
-            <div class="mini">
-              <div class="mini-v" [class.text-green]="a.metrics.realizedPnl >= 0" [class.text-red]="a.metrics.realizedPnl < 0">
-                {{ money(a.metrics.realizedPnl, a.currency, true) }}
               </div>
-              <div class="mini-l">P&amp;L</div>
             </div>
-            <div class="mini">
-              <div class="mini-v">{{ money(a.metrics.currentBalance, a.currency) }}</div>
-              <div class="mini-l">Solde</div>
-            </div>
-            <div class="mini">
-              <div class="mini-v">{{ a.metrics.tradesCount }}</div>
-              <div class="mini-l">Trades</div>
-            </div>
-            <div class="mini">
-              <div class="mini-v">{{ money(a.metrics.startingBalance, a.currency) }}</div>
-              <div class="mini-l">Départ</div>
-            </div>
-          </div>
 
-          @if (a.metrics.objective || a.metrics.drawdown) {
-            <div class="rules-head"><svg [lucideIcon]="ClipboardListIcon" [size]="12"></svg> Règles prop firm <span class="est-pill">estimé</span></div>
+            <!-- 2 · Solde -->
+            <div class="cell num right cell-balance" data-label="Solde">{{ money(a.metrics.currentBalance, a.currency) }}</div>
 
-            @if (a.metrics.objective; as obj) {
-              <div class="obj">
-                <div class="obj-top">
-                  <span class="obj-name">{{ objLabel(a) }}</span>
+            <!-- 3 · P&L -->
+            <div class="cell num right strong cell-pnl" data-label="P&amp;L"
+                 [class.text-green]="a.metrics.realizedPnl >= 0" [class.text-red]="a.metrics.realizedPnl < 0">
+              {{ money(a.metrics.realizedPnl, a.currency, true) }}
+            </div>
+
+            <!-- 4 · Trades -->
+            <div class="cell num right dim cell-trades" data-label="Trades">{{ a.metrics.tradesCount }}</div>
+
+            <!-- 5 · Objectif + mini-jauge (la barre des cartes, en inline) -->
+            <div class="cell cell-gauge cell-obj" data-label="Objectif">
+              @if (a.metrics.objective; as obj) {
+                <div class="gauge-top">
                   @if (objReached(a)) {
-                    <div class="obj-right"><span class="obj-pct done">atteint</span></div>
+                    <span class="gauge-val text-green">atteint</span>
                   } @else {
-                    <div class="obj-right">
-                      <span class="obj-val">{{ obj.current | number:'1.0-0' }} / {{ money(obj.target, a.currency) }}</span>
-                      <span class="obj-pct">{{ objPct(a) }} %</span>
-                    </div>
+                    <span class="gauge-val">{{ obj.current | number:'1.0-0' }} / {{ money(obj.target, a.currency) }}</span>
+                    <span class="gauge-pct">{{ objPct(a) }} %</span>
                   }
                 </div>
-                <div class="bar-track">
+                <div class="bar-track xs">
                   <div class="bar-fill" [style.width.%]="objWidth(a)"
                        [style.background]="objReached(a) ? 'var(--green)' : 'var(--blue)'"></div>
                 </div>
-              </div>
-            }
-
-            @if (a.metrics.drawdown; as dd) {
-              <div class="rule">
-                <div class="rule-top">
-                  <span class="rule-name">Marge avant {{ dd.type === 'TRAILING' ? 'trailing ' : '' }}drawdown</span>
-                  @if (dd.breached) {
-                    <span class="rule-val text-red">dépassé</span>
-                  } @else {
-                    <span class="rule-val" [style.color]="ddColor(a)">{{ money(dd.margin, a.currency) }} restants</span>
-                  }
-                </div>
-                <div class="bar-track sm">
-                  <div class="bar-fill" [style.width.%]="ddWidth(a)" [style.background]="ddColor(a)"></div>
-                </div>
-              </div>
-            }
-          } @else {
-            <div class="rules-head">Activité</div>
-            <div class="perso-grid">
-              <div class="pi">
-                <div class="pi-v text-green">{{ bestDayLabel(a) }}</div>
-                <div class="pi-l">Meilleur jour</div>
-              </div>
-              <div class="pi">
-                <div class="pi-v text-red">{{ worstDayLabel(a) }}</div>
-                <div class="pi-l">Pire jour</div>
-              </div>
-              <div class="pi">
-                <div class="pi-v">{{ winRateLabel(a) }}</div>
-                <div class="pi-l">Win rate</div>
-              </div>
-            </div>
-          }
-
-          <!-- ── Connexion Tradovate de CE compte (un compte = une connexion) ── -->
-          @let conn = tv.byAccount().get(a.id);
-          @let busy = tv.busy()[a.id];
-          @let fb = tv.feedback()[a.id];
-          <div class="tv-row" [attr.data-testid]="'tradovate-row-' + a.id">
-            <div class="tv-head">
-              <span class="tv-label">Synchro <span class="nt-word">Tradovate</span></span>
-              @if (!conn) {
-                <span class="tv-pill off" [attr.data-testid]="'tradovate-status-' + a.id">Non connecté</span>
-              } @else if (conn.status === 'NEEDS_RECONNECT') {
-                <span class="tv-pill warn" [attr.data-testid]="'tradovate-status-' + a.id">À reconnecter</span>
               } @else {
-                <span class="tv-pill on" [attr.data-testid]="'tradovate-status-' + a.id">● Connecté</span>
+                <span class="cell-none" title="Compte sans objectif prop firm">—</span>
               }
             </div>
 
-            @if (!conn) {
-              <div class="tv-line">
-                <span class="tv-text">Connecte ce compte pour synchroniser ses trades automatiquement.</span>
+            <!-- 6 · Marge avant (trailing) drawdown + mini-jauge -->
+            <div class="cell cell-gauge cell-dd" [attr.data-label]="ddLabel(a)">
+              @if (a.metrics.drawdown; as dd) {
+                <div class="gauge-top">
+                  @if (dd.breached) {
+                    <span class="gauge-val text-red">dépassé</span>
+                  } @else {
+                    <span class="gauge-val" [style.color]="ddColor(a)">{{ money(dd.margin, a.currency) }}</span>
+                    <span class="gauge-pct">restants</span>
+                  }
+                </div>
+                <div class="bar-track xs">
+                  <div class="bar-fill" [style.width.%]="ddWidth(a)" [style.background]="ddColor(a)"></div>
+                </div>
+              } @else {
+                <span class="cell-none" title="Compte sans drawdown prop firm">—</span>
+              }
+            </div>
+
+            <!-- 7 · Synchro : pastille d'état + action principale -->
+            <div class="cell cell-sync" data-label="Synchro">
+              @if (!conn) {
+                <span class="tv-pill off" [attr.data-testid]="'tradovate-status-' + a.id">Non connecté</span>
                 @if (a.status !== 'ARCHIVED') {
-                  <button class="tv-btn connect" type="button" (click)="openTradovateConnect(a)"
+                  <button class="tv-btn connect sm" type="button" (click)="openTradovateConnect(a)"
                           [attr.data-testid]="'tradovate-connect-' + a.id">
-                    <svg [lucideIcon]="LinkIcon" [size]="13"></svg> Connecter Tradovate
+                    <svg [lucideIcon]="LinkIcon" [size]="12"></svg> Connecter <span class="nt-word">Tradovate</span>
                   </button>
                 }
-              </div>
-            } @else if (conn.status === 'NEEDS_RECONNECT') {
-              <div class="tv-line">
-                <span class="tv-text">{{ conn.lastSyncError ?? 'Connexion expirée ou révoquée.' }}</span>
-                <button class="tv-btn connect" type="button" (click)="openTradovateConnect(a)"
+              } @else if (conn.status === 'NEEDS_RECONNECT') {
+                <span class="tv-pill warn" [attr.data-testid]="'tradovate-status-' + a.id">À reconnecter</span>
+                <button class="tv-btn connect sm" type="button" (click)="openTradovateConnect(a)"
                         [attr.data-testid]="'tradovate-reconnect-' + a.id">
-                  <svg [lucideIcon]="LinkIcon" [size]="13"></svg> Reconnecter
+                  <svg [lucideIcon]="LinkIcon" [size]="12"></svg> Reconnecter
                 </button>
+              } @else if (confirmDisconnectId() === a.id) {
+                <span class="tv-confirm">Déconnecter ce compte&nbsp;?</span>
+                <button class="tv-btn danger sm" type="button" (click)="confirmDisconnect(a)"
+                        [attr.data-testid]="'tradovate-disconnect-confirm-' + a.id">Oui</button>
+                <button class="tv-btn ghost sm" type="button" (click)="confirmDisconnectId.set(null)">Annuler</button>
+              } @else {
+                <span class="tv-pill on" [attr.data-testid]="'tradovate-status-' + a.id">● Connecté</span>
+                @if (!conn.needsAccountSelection) {
+                  <button class="tv-icon" type="button" (click)="syncTradovate(a)" [disabled]="!!busy"
+                          [attr.title]="busy === 'sync' ? 'Synchronisation…' : 'Synchroniser'"
+                          [attr.data-testid]="'tradovate-sync-' + a.id">
+                    <svg [lucideIcon]="RefreshIcon" [size]="13" [class]="(busy === 'sync') ? 'spin' : ''"></svg>
+                    <span class="tv-icon-lbl">{{ busy === 'sync' ? 'Synchronisation…' : 'Synchroniser' }}</span>
+                  </button>
+                  <button class="tv-icon danger" type="button" (click)="askDisconnect(a)" [disabled]="!!busy"
+                          [attr.title]="busy === 'disconnect' ? 'Déconnexion…' : 'Déconnecter'"
+                          [attr.data-testid]="'tradovate-disconnect-' + a.id">
+                    <svg [lucideIcon]="UnlinkIcon" [size]="13"></svg>
+                    <span class="tv-icon-lbl">{{ busy === 'disconnect' ? 'Déconnexion…' : 'Déconnecter' }}</span>
+                  </button>
+                }
+              }
+            </div>
+
+            <!-- 8 · Menu actions -->
+            <div class="cell cell-menu">
+              <div class="acct-menu-wrap">
+                <button class="acct-menu" (click)="toggleMenu(a.id)" [attr.data-testid]="'account-menu-' + a.id"><svg [lucideIcon]="MoreHorizontalIcon" [size]="16"></svg></button>
+                @if (menuOpenId() === a.id) {
+                  <div class="menu-pop">
+                    <button class="menu-item" (click)="openEdit(a)"><svg [lucideIcon]="PencilIcon" [size]="13"></svg> Modifier</button>
+                    <!-- Désactivé quand l'échec est CERTAIN (dernier compte actif avec
+                         trades) : éviter l'erreur vaut mieux que l'afficher. Les cas
+                         incertains partent quand même et `deleteError` les explique. -->
+                    <button class="menu-item danger" (click)="confirmDelete(a)"
+                      [disabled]="suppressionBloquee(a)"
+                      [attr.title]="suppressionBloquee(a)
+                        ? 'Garde au moins un compte actif. Crée-en un autre avant d\'archiver celui-ci.'
+                        : null"
+                      [attr.data-testid]="'account-delete-' + a.id">
+                      <svg [lucideIcon]="TrashIcon" [size]="13"></svg> Supprimer
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Sous-ligne discrète : détail de synchro, sélecteur de compte broker,
+               résultat du dernier import. Rien d'essentiel à la lecture du tableau. -->
+          @if (conn) {
+            @if (conn.status === 'NEEDS_RECONNECT') {
+              <div class="acct-sub">
+                <span class="tv-text">{{ conn.lastSyncError ?? 'Connexion expirée ou révoquée.' }}</span>
               </div>
             } @else if (conn.needsAccountSelection) {
-              <mtc-tradovate-account-picker
-                [accounts]="conn.availableAccounts"
-                [busy]="busy === 'select' || busy === 'sync'"
-                (picked)="pickTradovateAccount(a, $event)" />
+              <div class="acct-sub">
+                <mtc-tradovate-account-picker
+                  [accounts]="conn.availableAccounts"
+                  [busy]="busy === 'select' || busy === 'sync'"
+                  (picked)="pickTradovateAccount(a, $event)" />
+              </div>
             } @else {
-              <div class="tv-line">
+              <div class="acct-sub">
                 <span class="tv-text" [attr.data-testid]="'tradovate-last-sync-' + a.id">
                   @if (conn.externalAccountName) { <span class="tv-ext">{{ conn.externalAccountName }}</span> · }
                   Dernière synchro : {{ relativeTime(conn.lastSyncAt) }} · {{ conn.tradesImported }} trade{{ conn.tradesImported > 1 ? 's' : '' }} importé{{ conn.tradesImported > 1 ? 's' : '' }}
                 </span>
-                <div class="tv-actions">
-                  @if (confirmDisconnectId() === a.id) {
-                    <span class="tv-confirm">Déconnecter ce compte&nbsp;?</span>
-                    <button class="tv-btn danger" type="button" (click)="confirmDisconnect(a)"
-                            [attr.data-testid]="'tradovate-disconnect-confirm-' + a.id">Oui, déconnecter</button>
-                    <button class="tv-btn ghost" type="button" (click)="confirmDisconnectId.set(null)">Annuler</button>
-                  } @else {
-                    <button class="tv-btn sync" type="button" (click)="syncTradovate(a)" [disabled]="!!busy"
-                            [attr.data-testid]="'tradovate-sync-' + a.id">
-                      <svg [lucideIcon]="RefreshIcon" [size]="13" [class]="(busy === 'sync') ? 'spin' : ''"></svg>
-                      {{ busy === 'sync' ? 'Synchronisation…' : 'Synchroniser' }}
-                    </button>
-                    <button class="tv-btn ghost" type="button" (click)="askDisconnect(a)" [disabled]="!!busy"
-                            [attr.data-testid]="'tradovate-disconnect-' + a.id">
-                      {{ busy === 'disconnect' ? 'Déconnexion…' : 'Déconnecter' }}
-                    </button>
-                  }
-                </div>
               </div>
             }
+          }
 
-            @if (fb) {
-              <div class="tv-feedback" [attr.data-testid]="'tradovate-feedback-' + a.id" role="status">
-                @if (fb.error) {
-                  <div class="tv-fb warn">{{ fb.error }}</div>
-                }
-                @for (l of fb.lines; track $index) {
-                  <div class="tv-fb" [class.warn]="l.warn">{{ l.text }}</div>
-                }
-              </div>
-            }
-          </div>
+          <!-- Compte perso : pas de règles prop firm, mais son activité reste utile.
+               Visible au dépli, pour ne pas alourdir la ligne de tous les autres. -->
+          @if (!a.metrics.objective && !a.metrics.drawdown) {
+            <div class="acct-sub acct-activity">
+              <span class="ai"><b class="text-green">{{ bestDayLabel(a) }}</b> meilleur jour</span>
+              <span class="ai"><b class="text-red">{{ worstDayLabel(a) }}</b> pire jour</span>
+              <span class="ai"><b>{{ winRateLabel(a) }}</b> win rate</span>
+            </div>
+          }
+
+          @if (fb) {
+            <div class="acct-sub tv-feedback" [attr.data-testid]="'tradovate-feedback-' + a.id" role="status">
+              @if (fb.error) {
+                <div class="tv-fb warn">{{ fb.error }}</div>
+              }
+              @for (l of fb.lines; track $index) {
+                <div class="tv-fb" [class.warn]="l.warn">{{ l.text }}</div>
+              }
+            </div>
+          }
         </div>
       }
-
-      <!-- Quota atteint : visible dans TOUTES les vues. C'est le seul chemin vers la
-           modale Premium depuis cette page, et un FREE au quota n'a qu'UN compte : le
-           sélecteur pointe donc sur ce compte, jamais sur « Tous les comptes ». La tuile
-           ne s'affichait jamais pour celui qui en avait le plus besoin.
-           La tuile d'AJOUT, elle, reste réservée à la vue d'ensemble : masquer les
-           actions de création dans une vue filtrée est un choix délibéré (e4eba29). -->
-      @if (atLimit()) {
-        <button class="acct-add is-limit" (click)="showPlanModal.set(true)" data-testid="add-account-limit">
-          <div class="plus"><svg [lucideIcon]="LockIcon" [size]="24"></svg></div>
-          <div>Limite de {{ accountLimit() }} compte(s) atteinte</div>
-          <div class="acct-add-sub">Passe au Premium pour des comptes illimités</div>
-        </button>
-      } @else if (store.selectedAccountId() === 'all') {
-        <button class="acct-add" (click)="openCreate()" data-testid="add-account-tile">
-          <div class="plus"><svg [lucideIcon]="PlusIcon" [size]="24"></svg></div>
-          <div>Ajouter un compte</div>
-          <div class="acct-add-sub">prop firm ou perso</div>
-        </button>
-      }
-
     </div>
+
+    <!-- Quota atteint : visible dans TOUTES les vues. C'est le seul chemin vers la
+         modale Premium depuis cette page, et un FREE au quota n'a qu'UN compte : le
+         sélecteur pointe donc sur ce compte, jamais sur « Tous les comptes ».
+         La grosse tuile vide « Ajouter un compte » a disparu avec les cartes : elle
+         doublonnait le bouton du topbar et trouait la mise en page à 2 comptes. -->
+    @if (atLimit()) {
+      <button class="quota-banner" (click)="showPlanModal.set(true)" data-testid="add-account-limit">
+        <svg [lucideIcon]="LockIcon" [size]="16"></svg>
+        <span><b>Limite de {{ accountLimit() }} compte(s) atteinte</b> · passe au Premium pour des comptes illimités</span>
+      </button>
+    }
 
     <p class="tv-disclaimer" data-testid="tradovate-disclaimer">
       MyTradingCoach est référencé dans l'écosystème NinjaTrader. Synchronisation en lecture seule,

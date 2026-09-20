@@ -255,6 +255,34 @@ envoyées à l'API sont des horodatages ISO complets.
 
 ---
 
+## Tableau de lignes — pattern partagé (Journal · Mes comptes)
+
+Une liste d'objets comparables (trades, comptes) s'affiche en **lignes alignées**, jamais en
+grille de cartes : les cartes ne tiennent pas la montée en charge (6 comptes = un mur) et
+laissent un trou quand le compte est impair. Le pattern, identique dans `journal.component.css`
+et `accounts.component.css` :
+
+- un **en-tête de colonnes** (`.table-header` / `.acct-thead`) et les lignes partagent LE MÊME
+  `grid-template-columns` — deux déclarations à garder synchronisées, sinon l'alignement casse ;
+- libellés d'en-tête en mono 9 px, majuscules, `letter-spacing: .1em`, `color: var(--text-3)` ;
+- pas d'`overflow: hidden` sur le wrapper si une ligne ouvre un menu « … » : il serait coupé ;
+- repli mobile : `.table-header { display: none }`, la ligne repasse en grille de 2-3 colonnes et
+  chaque cellule retrouve son étiquette via `content: attr(data-label)` ;
+- ce qui ne tient pas à l'écran étroit passe derrière un **dépli** (signal `expandedId`, une
+  ligne ouverte à la fois), jamais derrière un scroll horizontal.
+
+⚠️ **Deux pièges de sélecteurs**, tous deux rencontrés en vrai sur « Mes comptes » :
+- `:nth-of-type()` compte les **éléments** (tous les `div`), pas les classes : `.cell.num:nth-of-type(2)`
+  ne désigne pas la 2ᵉ cellule numérique. Donner une classe explicite à chaque colonne
+  (`.cell-balance`, `.cell-pnl`…) ;
+- une règle de repli doit **battre en spécificité** la règle desktop : `.cell.num.right` (3 classes)
+  gagne contre `.cell.num` même placé plus bas dans le fichier → écrire `.acct-line .cell.num.right`.
+
+Les actions attendues par les tests (synchro, déconnexion) restent **dans le DOM sans interaction** :
+les enfermer dans un menu `@if` casse les specs qui les interrogent au rendu.
+
+---
+
 ## Features gated — règles obligatoires
 
 ⚠️ 2 paliers depuis PROMPT-169 : cf. `.claude/agents/plans.md` (source de vérité).

@@ -24,11 +24,11 @@ import {
   LucideList as List,
   LucideEye as Eye,
   LucideLayers as Layers,
-  LucideClipboardList as ClipboardList,
   LucideMoreHorizontal as MoreHorizontal,
   LucideInfo as Info,
-  LucidePlus as Plus,
   LucideLock as Lock,
+  LucideChevronDown as ChevronDown,
+  LucideUnlink as Unlink,
   LucidePencil as Pencil,
   LucideTrash2 as Trash2,
   LucideX as X,
@@ -128,6 +128,12 @@ export class AccountsComponent implements OnInit {
   protected readonly editingId = signal<string | null>(null);
   protected readonly saving = signal(false);
   protected readonly menuOpenId = signal<string | null>(null);
+  /**
+   * Ligne dépliée (mobile) : en desktop les 8 colonnes tiennent à l'écran, en mobile
+   * seules les colonnes vitales restent visibles et le reste s'ouvre ici. Un seul
+   * dépli à la fois, la clé plutôt que l'objet (cf. angular.md).
+   */
+  protected readonly expandedId = signal<string | null>(null);
   protected readonly form = signal<AccountFormState>(emptyForm());
 
   // ── Vue agrégée (source des KPI), scopée par la sélection du topbar ──────
@@ -313,11 +319,11 @@ export class AccountsComponent implements OnInit {
   protected readonly ListIcon = List;
   protected readonly EyeIcon = Eye;
   protected readonly LayersIcon = Layers;
-  protected readonly ClipboardListIcon = ClipboardList;
   protected readonly MoreHorizontalIcon = MoreHorizontal;
   protected readonly InfoIcon = Info;
-  protected readonly PlusIcon = Plus;
   protected readonly LockIcon = Lock;
+  protected readonly ChevronDownIcon = ChevronDown;
+  protected readonly UnlinkIcon = Unlink;
   protected readonly PencilIcon = Pencil;
   protected readonly TrashIcon = Trash2;
   protected readonly XIcon = X;
@@ -429,7 +435,17 @@ export class AccountsComponent implements OnInit {
     return v == null ? '-' : `${this.fmt0(v * 100)} %`;
   }
 
-  // ── Menu carte ──────────────────────────────────────────────────────────
+  /** Libellé de la colonne marge : « trailing » n'est affiché que s'il s'applique. */
+  protected ddLabel(a: TradingAccount): string {
+    return a.metrics.drawdown?.type === 'TRAILING' ? 'Marge trailing drawdown' : 'Marge drawdown';
+  }
+
+  // ── Ligne dépliable (mobile) ────────────────────────────────────────────
+  protected toggleExpand(id: string): void {
+    this.expandedId.update((cur) => (cur === id ? null : id));
+  }
+
+  // ── Menu ligne ──────────────────────────────────────────────────────────
   protected toggleMenu(id: string): void {
     // Une nouvelle interaction efface le message : sinon il traîne indéfiniment sous
     // une liste qui a pu changer entre-temps, et ne décrit plus rien.
