@@ -132,8 +132,8 @@
 .acct-line {
   display: grid;
   grid-template-columns:
-    minmax(210px, 1.7fr) 0.8fr 0.8fr 0.5fr minmax(120px, 1.15fr)
-    minmax(120px, 1.15fr) minmax(150px, 1.3fr) 38px;
+    minmax(190px, 1.5fr) 0.75fr 0.75fr 0.45fr minmax(115px, 1fr)
+    minmax(115px, 1fr) minmax(190px, 1.7fr) 38px;
   gap: 0 14px;
   align-items: center;
 }
@@ -232,8 +232,15 @@
 .bar-track.xs { height: 4px; border-radius: 3px; }
 .bar-fill { height: 100%; border-radius: 5px; transition: width .3s; }
 
-/* 7 · Synchro : pastille + actions compactes */
-.cell-sync { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+/* 7 · Synchro : pastille + actions, puis le détail de la dernière synchro */
+.cell-sync { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.sync-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+/* Visible, jamais en infobulle : c'est la preuve que la synchro a tourné. */
+.sync-detail {
+  font-size: 10px; line-height: 1.45; color: var(--text-3);
+  font-family: var(--font-mono);
+}
+.sync-detail .tv-ext { color: var(--text-2); }
 .tv-icon {
   display: inline-flex; align-items: center; justify-content: center;
   width: 26px; height: 26px; flex-shrink: 0;
@@ -403,6 +410,8 @@
   /* Trades passe au dépli : sur un écran étroit, solde et P&L suffisent à décider. */
   .cell-trades { display: none; }
   .acct-block.is-open .cell-trades { display: block; grid-column: 1; grid-row: 6; }
+  /* Colonne pleine largeur : l'en-tête doit s'étirer pour que le bouton suive. */
+  .cell-sync, .sync-head { width: 100%; }
   .cell-sync .tv-btn { flex: 1 1 auto; justify-content: center; }
 }
 
