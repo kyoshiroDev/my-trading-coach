@@ -89,8 +89,12 @@
         @let busy = tv.busy()[a.id];
         @let fb = tv.feedback()[a.id];
 
+        <!-- `has-detail` : la ligne cache une info que les colonnes n'affichent pas (activité
+             d'un compte perso). Sans elle, le chevron n'a rien à déplier sur desktop, où les
+             8 colonnes sont déjà à l'écran — il n'y sert qu'au repli mobile. -->
         <div class="acct-block"
              [class.is-archived]="a.status === 'ARCHIVED'"
+             [class.has-detail]="!a.metrics.objective && !a.metrics.drawdown"
              [class.is-open]="expandedId() === a.id"
              [attr.data-testid]="'tradovate-row-' + a.id">
 

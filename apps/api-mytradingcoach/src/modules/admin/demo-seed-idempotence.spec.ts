@@ -295,7 +295,13 @@ describe('seedDemo — fraîcheur des données (visible sans changer de filtre)'
     const now = Date.now();
     const ages = created['trade'].map((t) => (now - (t['tradedAt'] as Date).getTime()) / 86_400_000);
     const oldest = Math.max(...ages);
-    expect(oldest, `Trade le plus ancien : ${oldest.toFixed(1)} j`).toBeLessThanOrEqual(DEMO_WINDOW_DAYS);
+    // Fenêtre CALENDAIRE : le jour le plus ancien est J-42, posé à une heure de séance. Son âge
+    // en heures dépasse donc 42 j dès que le test tourne plus tard dans la journée que la séance
+    // — ce qui rendait l'assertion rouge selon l'heure d'exécution, pas selon le seed.
+    expect(
+      Math.floor(oldest),
+      `Trade le plus ancien : ${oldest.toFixed(1)} j`,
+    ).toBeLessThanOrEqual(DEMO_WINDOW_DAYS);
     // La fenêtre « 1M » par défaut du dashboard doit être bien remplie, pas seulement la fin.
     expect(ages.filter((a) => a <= 30).length).toBeGreaterThanOrEqual(45);
   });
