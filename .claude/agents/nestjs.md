@@ -716,14 +716,30 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
   échange en `x-www-form-urlencoded`). Les **données** sont sur 2 hôtes : `live` (comptes réels)
   et `demo` (comptes simulés = comptes de prop firm). `account/list` est interrogé sur les deux,
   l'hôte est mémorisé par compte (`externalEnv`).
-- Le token endpoint renvoie un **`refresh_token`** (non documenté) : renouvellement 5 min avant
-  expiration (≈ 80 min) par `grant_type=refresh_token`, repli `GET /auth/renewaccesstoken`, sinon
-  `NEEDS_RECONNECT` (409 `TRADOVATE_RECONNECT_REQUIRED`). Jamais de consentement toutes les 80 min.
-- **Mesuré en beta** : le grant `refresh_token` fonctionne, et Tradovate **fait tourner** le
-  refresh_token (nouveau à chaque renouvellement, durée ≈ **26 h**, fenêtre glissante). La
-  synchro étant manuelle, `TradovateTokenRefreshCron` maintient les connexions : toutes les 6 h,
-  celles qui expirent sous 18 h (≈ un renouvellement / 12 h, 2 passages manqués couverts).
-  `refreshNow` : refus → `NEEDS_RECONNECT` ; panne / limite → reporté, connexion intacte.
+- Le token endpoint renvoie un **`refresh_token`** (non documenté) : renouvellement par
+  `grant_type=refresh_token`, repli `GET /auth/renewaccesstoken`, sinon `NEEDS_RECONNECT`
+  (409 `TRADOVATE_RECONNECT_REQUIRED`). Jamais de consentement toutes les 80 min.
+- **Cycle de vie du token — règles issues du bug prod du 2026-09-21** (4 comptes d'un ambassadeur
+  passés à tort en « à reconnecter », plusieurs fois par jour) :
+  - **`REFRESH_MARGIN_MS` = 40 min**, pas 5. Le cron de fond passe toutes les **30 min** : une
+    marge plus courte que la cadence n'est quasiment jamais dans la fenêtre, le refresh n'était
+    donc tenté qu'une fois l'access token **déjà mort**. Or `renewaccesstoken` exige un access
+    token vivant : expiré, il n'y a plus de filet. **Règle : marge > cadence du cron de fond.**
+  - **Un refus de refresh ne condamne jamais une connexion.** `refreshWithRetry` réessaie une
+    fois après 2 s, en **relisant la connexion** (un autre worker du cluster a pu renouveler
+    entre-temps : son access token est alors pris tel quel, sans rappeler Tradovate).
+    `NEEDS_RECONNECT` n'est posé que si **deux** refus ET repli renew indisponible ou refusé.
+  - ⚠️ **`refreshTokenExpiresAt` n'est pas une autorité.** Tradovate annonce ≈ 26 h (et non les
+    14 j de sa doc) puis refuse parfois le token bien avant. On tente dès qu'un refresh token
+    existe et c'est **sa réponse** qui tranche.
+  - ⚠️ **`HTTP 200` + `{"error":"invalid_token"}`** : le refus n'est pas un 401, et il est souvent
+    **transitoire** (mesuré : refus d'un token jamais utilisé émis 1 h 50 plus tôt).
+  - `TradovateTokenRefreshCron` (toutes les 6 h, celles qui expirent sous 18 h) n'est PAS ce qui
+    maintient la connexion au quotidien : c'est le cron de fond / la synchro qui rafraîchissent.
+  - Détail cluster : en prod l'API tourne en **4 workers**, seul le worker 0 porte
+    `IS_CRON_WORKER=true` (`main.ts`, `cluster.fork`). `docker exec printenv IS_CRON_WORKER`
+    répond « absent » — il lit l'env du conteneur, pas celui du worker. Vérifier via
+    `/proc/<pid>/environ` avant de conclure qu'aucun cron ne tourne.
 - **Verrou partagé synchro + cron** (`tryLock` / `unlock` du service de connexion, clé
   `tradovate:sync:<id>`) : deux renouvellements concurrents présenteraient un refresh_token
   déjà remplacé et marqueraient à tort la connexion « à reconnecter ».

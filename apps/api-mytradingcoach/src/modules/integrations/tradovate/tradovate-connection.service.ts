@@ -23,8 +23,24 @@ import type {
   TradovateOAuthTokenResponse,
 } from './tradovate.types';
 
-/** Marge avant expiration : on renouvelle l'access token 5 min avant sa fin (≈ 80 min). */
-const REFRESH_MARGIN_MS = 5 * 60 * 1000;
+/**
+ * Marge avant expiration : on renouvelle l'access token (≈ 80 min) bien AVANT sa fin.
+ *
+ * 40 min et non 5 (bug prod du 2026-09-21) : le cron de fond passe toutes les 30 min, donc une
+ * fenêtre de 5 min était presque toujours ratée et le renouvellement n'était tenté qu'une fois
+ * l'access token DÉJÀ MORT. Or le repli `renewAccessToken` exige un access token encore vivant :
+ * une fois expiré, un unique refus de refresh condamnait la connexion. Avec 40 min > 30 min de
+ * cadence, tout passage du cron tombe dans la fenêtre et le filet reste disponible.
+ */
+const REFRESH_MARGIN_MS = 40 * 60 * 1000;
+/**
+ * Un refus de refresh (`HTTP 200 invalid_token`) n'est PAS la preuve d'un token mort : mesuré en
+ * prod, Tradovate refuse parfois un refresh_token jamais utilisé, émis 2 h plus tôt et qu'il
+ * déclare lui-même valide 26 h. On réessaie donc une fois, après ce délai, en relisant la
+ * connexion : si un autre worker (ou une connexion sœur du même login) a renouvelé entre-temps,
+ * la base porte déjà un token frais et le réessai n'a même pas besoin d'appeler Tradovate.
+ */
+const REFRESH_RETRY_DELAY_MS = 2_000;
 /**
  * Verrou par connexion, partagé par la synchro et le cron de renouvellement : Tradovate FAIT
  * TOURNER le refresh_token à chaque renouvellement. Deux renouvellements simultanés = l'un
@@ -353,41 +369,88 @@ export class TradovateConnectionService {
     if (conn.status === BrokerConnectionStatus.NEEDS_RECONNECT) {
       throw new TradovateException('TRADOVATE_RECONNECT_REQUIRED');
     }
-    const key = this.tokenKey();
     const now = Date.now();
-    const current = decryptToken(conn.accessTokenEnc, key);
+    const current = decryptToken(conn.accessTokenEnc, this.tokenKey());
     if (conn.accessTokenExpiresAt.getTime() - REFRESH_MARGIN_MS > now) return current;
 
-    const refreshValid =
-      conn.refreshTokenEnc &&
-      (!conn.refreshTokenExpiresAt || conn.refreshTokenExpiresAt.getTime() > now);
-    if (refreshValid) {
-      try {
-        return await this.refreshWithToken(conn);
-      } catch (err) {
-        if (err instanceof TradovateApiError && err.kind !== 'unauthorized') throw err.toException();
-        this.logger.warn(`refresh_token Tradovate refusé (connexion ${conn.id}), repli renew.`);
-      }
-    }
+    // `refreshTokenExpiresAt` n'est PAS une autorité : Tradovate refuse parfois avant l'échéance
+    // qu'il annonce. On tente donc dès qu'un refresh_token existe, et c'est sa réponse qui tranche.
+    const refreshed = conn.refreshTokenEnc ? await this.refreshWithRetry(conn) : null;
+    if (refreshed) return refreshed;
 
-    if (conn.accessTokenExpiresAt.getTime() > now) {
-      try {
-        const renewed = await this.api.renewAccessToken(current);
-        await this.prisma.brokerConnection.update({
-          where: { id: conn.id },
-          data: {
-            accessTokenEnc: encryptToken(renewed.accessToken, key),
-            accessTokenExpiresAt: new Date(renewed.expirationTime),
-          },
-        });
-        return renewed.accessToken;
-      } catch (err) {
-        if (err instanceof TradovateApiError && err.kind !== 'unauthorized') throw err.toException();
-      }
-    }
+    const renewed = await this.tryRenew(conn, current);
+    if (renewed) return renewed;
 
     await this.markNeedsReconnect(conn.id);
     throw new TradovateException('TRADOVATE_RECONNECT_REQUIRED');
+  }
+
+  /**
+   * Refresh avec UNE seconde tentative espacée : un premier `invalid_token` ne condamne plus la
+   * connexion (bug prod du 2026-09-21, 4 comptes de Val perdus sur un refus unique).
+   *
+   * `null` = Tradovate a refusé deux fois, l'appelant décide de la suite (repli renew). Une panne
+   * réseau ou une limite de débit LÈVE au contraire : on ne dégrade jamais une connexion pour
+   * une indisponibilité.
+   */
+  private async refreshWithRetry(conn: BrokerConnection): Promise<string | null> {
+    try {
+      return await this.refreshWithToken(conn);
+    } catch (err) {
+      if (!(err instanceof TradovateApiError)) throw err;
+      if (err.kind !== 'unauthorized') throw err.toException();
+      this.logger.warn(
+        `refresh_token Tradovate refusé (connexion ${conn.id}) : 2e tentative dans ${REFRESH_RETRY_DELAY_MS} ms.`,
+      );
+    }
+
+    await this.wait(REFRESH_RETRY_DELAY_MS);
+
+    // Relecture : un autre worker du cluster a pu renouveler pendant l'attente. Son access token
+    // est alors déjà en base, et le réessai n'a plus lieu d'être.
+    const fresh = await this.prisma.brokerConnection.findUnique({ where: { id: conn.id } });
+    if (!fresh || fresh.status === BrokerConnectionStatus.NEEDS_RECONNECT) return null;
+    if (fresh.accessTokenExpiresAt.getTime() - REFRESH_MARGIN_MS > Date.now()) {
+      this.logger.log(`Token Tradovate déjà renouvelé ailleurs (connexion ${conn.id}).`);
+      return decryptToken(fresh.accessTokenEnc, this.tokenKey());
+    }
+    if (!fresh.refreshTokenEnc) return null;
+
+    try {
+      return await this.refreshWithToken(fresh);
+    } catch (err) {
+      if (!(err instanceof TradovateApiError)) throw err;
+      if (err.kind !== 'unauthorized') throw err.toException();
+      this.logger.warn(`refresh_token Tradovate refusé 2 fois (connexion ${conn.id}) : repli renew.`);
+      return null;
+    }
+  }
+
+  /**
+   * Repli natif Tradovate : prolonge un access token ENCORE VIVANT. C'est le filet du refresh,
+   * d'où la marge de 40 min — expiré, ce chemin n'existe plus. `null` = pas de filet disponible.
+   */
+  private async tryRenew(conn: BrokerConnection, current: string): Promise<string | null> {
+    if (conn.accessTokenExpiresAt.getTime() <= Date.now()) return null;
+    try {
+      const renewed = await this.api.renewAccessToken(current);
+      await this.prisma.brokerConnection.update({
+        where: { id: conn.id },
+        data: {
+          accessTokenEnc: encryptToken(renewed.accessToken, this.tokenKey()),
+          accessTokenExpiresAt: new Date(renewed.expirationTime),
+        },
+      });
+      return renewed.accessToken;
+    } catch (err) {
+      if (err instanceof TradovateApiError && err.kind !== 'unauthorized') throw err.toException();
+      return null;
+    }
+  }
+
+  /** Point d'attente isolé : les tests le remplacent pour ne pas dormir 2 s. */
+  private wait(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -402,13 +465,13 @@ export class TradovateConnectionService {
       return 'reconnect';
     }
     try {
-      await this.refreshWithToken(conn);
-      return 'refreshed';
+      // Même exigence que la synchro : deux refus ET aucun repli avant de condamner.
+      if (await this.refreshWithRetry(conn)) return 'refreshed';
+      const current = decryptToken(conn.accessTokenEnc, this.tokenKey());
+      if (await this.tryRenew(conn, current)) return 'refreshed';
+      await this.markNeedsReconnect(conn.id);
+      return 'reconnect';
     } catch (err) {
-      if (err instanceof TradovateApiError && err.kind === 'unauthorized') {
-        await this.markNeedsReconnect(conn.id);
-        return 'reconnect';
-      }
       this.logger.warn(`Renouvellement Tradovate reporté (connexion ${conn.id}) : ${(err as Error).message}`);
       return 'retry';
     }
