@@ -16,6 +16,7 @@ import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { Public } from '../../../common/decorators/public.decorator';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateSyncService } from './tradovate-sync.service';
+import { TradovateHistoryService, type HistoryImportResult } from './tradovate-history.service';
 import { SelectTradovateAccountDto } from './dto/select-tradovate-account.dto';
 import { AuthorizeTradovateDto } from './dto/authorize-tradovate.dto';
 import type { FirstSyncSummary } from './tradovate-connection.service';
@@ -38,6 +39,7 @@ export class TradovateController {
   constructor(
     private readonly connections: TradovateConnectionService,
     private readonly syncService: TradovateSyncService,
+    private readonly historyService: TradovateHistoryService,
   ) {}
 
   /** État de connexion de chaque compte du user (jamais de token). */
@@ -90,6 +92,17 @@ export class TradovateController {
     return this.syncService.sync(user.id, accountId);
   }
 
+  /**
+   * Import de l'HISTORIQUE (Reporting API) : les mois passés, que la synchro live ne voit pas.
+   * Idempotent — `importTrades` dédoublonne, y compris contre les trades déjà synchronisés.
+   * Débit serré : c'est une dizaine d'appels Tradovate par exécution.
+   */
+  @Post('accounts/:accountId/history')
+  @Throttle({ default: { ttl: 300_000, limit: 3 } })
+  importHistory(@CurrentUser() user: { id: string }, @Param('accountId') accountId: string) {
+    return this.historyService.importForAccount(user.id, accountId);
+  }
+
   @Delete('accounts/:accountId')
   disconnect(@CurrentUser() user: { id: string }, @Param('accountId') accountId: string) {
     return this.connections.disconnect(user.id, accountId);
@@ -111,6 +124,7 @@ export class TradovateCallbackController {
   constructor(
     private readonly connections: TradovateConnectionService,
     private readonly syncService: TradovateSyncService,
+    private readonly historyService: TradovateHistoryService,
   ) {}
 
   @Public()
@@ -136,6 +150,22 @@ export class TradovateCallbackController {
         this.logger.warn(`Première synchro Tradovate en échec : ${(err as Error).message}`);
         summary = { created: null };
       }
+    }
+
+    // Historique (Reporting API) : lancé DÈS la connexion, car Tradovate archive un compte
+    // inactif au bout de 10 jours et son passé devient alors illisible. Volontairement NON
+    // attendu : une dizaine d'appels ne doivent pas retarder la redirection de l'utilisateur.
+    // Ses trades passés apparaissent quelques secondes plus tard, au rafraîchissement.
+    if (outcome.status === 'connected') {
+      const { userId, accountId } = outcome;
+      void this.historyService
+        .importForAccount(userId, accountId)
+        .then((r: HistoryImportResult) =>
+          this.logger.log(`Historique Tradovate importé : ${r.created} trade(s) créé(s), ${r.duplicates} doublon(s).`),
+        )
+        .catch((err: unknown) =>
+          this.logger.warn(`Import de l'historique Tradovate en échec : ${(err as Error).message}`),
+        );
     }
 
     res.clearCookie(TRADOVATE_STATE_COOKIE, { path: `/${TRADOVATE_CALLBACK_PATH}` });
