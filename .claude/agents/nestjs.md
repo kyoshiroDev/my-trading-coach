@@ -712,6 +712,23 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
   la contrainte d'unicité reste le filet.
 - **Pas de PremiumGuard** : même règle que l'import CSV d'un broker connu (cf. `plans.md`).
 
+**Quand les trades sont-ils récupérés ?** (PROMPT-217)
+
+| Déclencheur | Séance en cours (Trade API) | Mois en cours (Reporting API) |
+|---|---|---|
+| Connexion d'un compte Tradovate | ✅ | ✅ **jusqu'à 6 mois** |
+| Ouverture de l'app (`catchUp`) | ✅ si > 1 min | ✅ **si > 30 min d'absence** |
+| Trade en direct, app ouverte | ✅ ~1,5 s | ❌ |
+| Cron de fond, toutes les 15 min | ✅ si > 12 min | ❌ |
+| Cron de fond, 1er passage de l'heure | ✅ | ✅ |
+| Bouton « Synchroniser » | ✅ | ✅ |
+
+La raison d'être du rattrapage mensuel : **la Trade API ne montre que la séance ouverte et ne
+rejoue JAMAIS une séance passée**. Tout ce qui est tradé pendant que l'API est arrêtée
+(déploiement, panne) serait perdu définitivement. Le rapport mensuel, lui, le contient.
+D'où aussi le seuil des 30 min à l'ouverture : c'est le filet d'auto-réparation après une panne
+du worker cron — il suffit qu'un utilisateur ouvre l'app pour que son mois soit rattrapé.
+
 **Spécificités Tradovate (vérifiées)**
 - OAuth **toujours sur Live** (`trader.tradovate.com/oauth`, `live.tradovateapi.com/auth/oauthtoken`,
   échange en `x-www-form-urlencoded`). Les **données** sont sur 2 hôtes : `live` (comptes réels)

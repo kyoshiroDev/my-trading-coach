@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   CATCH_UP_FRESH_MS,
+  CATCH_UP_HISTORY_AFTER_MS,
   LIVE_EVENT_DEBOUNCE_MS,
   LIVE_LEASE_RENEW_MS,
   TradovateLiveService,
@@ -90,7 +91,8 @@ describe('Tradovate live — présence dans l’app', () => {
     const { service, sync, sockets } = setup();
     await service.attach('u1', 'tab-1');
     await settle();
-    expect(sync.sync).toHaveBeenCalledWith('u1', 'acc-1');
+    // Jamais synchronisée → absence : le rattrapage retire aussi le mois en cours.
+    expect(sync.sync).toHaveBeenCalledWith('u1', 'acc-1', { history: true });
     expect(sockets).toHaveLength(1);
     expect(sockets[0].url).toBe('wss://demo.tradovateapi.com/v1/websocket');
     expect(service.openConnectionCount()).toBe(1);
@@ -146,6 +148,27 @@ describe('Tradovate live — présence dans l’app', () => {
     await service.onModuleDestroy();
   });
 
+  it('retour après une courte pause → séance seule, pas de rapport mensuel', async () => {
+    // 5 min d'absence : le cron de fond a forcément fait le travail, inutile de tirer un rapport.
+    const { service, sync } = setup({ conns: [conn({ lastSyncAt: new Date(Date.now() - 5 * 60_000) })] });
+    await service.attach('u1', 'tab-1');
+    await settle();
+    expect(sync.sync).toHaveBeenCalledWith('u1', 'acc-1', { history: false });
+    await service.onModuleDestroy();
+  });
+
+  it('retour du lendemain → le mois est retiré, même si le cron n’a jamais tourné', async () => {
+    // LE scénario : il a tradé hier app fermée, l'API était arrêtée, le cron n'a rien capté.
+    // La Trade API ne rejoue jamais une séance passée — seul le rapport mensuel les contient.
+    const { service, sync } = setup({
+      conns: [conn({ lastSyncAt: new Date(Date.now() - CATCH_UP_HISTORY_AFTER_MS - 1) })],
+    });
+    await service.attach('u1', 'tab-1');
+    await settle();
+    expect(sync.sync).toHaveBeenCalledWith('u1', 'acc-1', { history: true });
+    await service.onModuleDestroy();
+  });
+
   it('synchro récente (< 60 s) → rattrapage sauté, le WebSocket s’ouvre quand même', async () => {
     const { service, sync, sockets } = setup({
       conns: [conn({ lastSyncAt: new Date(Date.now() - CATCH_UP_FRESH_MS / 2) })],
@@ -184,7 +207,8 @@ describe('Tradovate live — événements → synchro existante', () => {
     expect(sync.sync).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(1);
     expect(sync.sync).toHaveBeenCalledTimes(1);
-    expect(sync.sync).toHaveBeenCalledWith('u1', 'acc-1');
+    // Trade en direct : la séance suffit, pas de rapport mensuel à chaque fill.
+    expect(sync.sync).toHaveBeenCalledWith('u1', 'acc-1', {});
     expect(emitted).toEqual([
       { userId: 'u1', event: 'tradovate:trades', payload: { accountId: 'acc-1', created: 1, duplicates: 0, total: 1, source: 'live' } },
     ]);
