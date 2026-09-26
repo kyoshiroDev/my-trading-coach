@@ -92,7 +92,9 @@ export class TradovateSyncService {
 
     try {
       const result = await this.run(userId, conn);
-      if (options.history) result.created += await this.topUpCurrentMonth(userId, conn);
+      // Le rattrapage incrémente lui-même `tradesImported` : on ne l'ajoute donc PAS ici, sous
+      // peine de compter ses trades deux fois. Il n'entre que dans le total rendu à l'appelant.
+      const rattrapage = options.history ? await this.topUpCurrentMonth(userId, conn) : 0;
       await this.prisma.brokerConnection.update({
         where: { id: conn.id },
         data: {
@@ -101,7 +103,7 @@ export class TradovateSyncService {
           tradesImported: { increment: result.created },
         },
       });
-      return result;
+      return { ...result, created: result.created + rattrapage };
     } catch (err) {
       const exception =
         err instanceof TradovateException

@@ -67,11 +67,12 @@ function setup(csvByReport: Record<string, string | Error> = {}) {
       return Promise.resolve({ created: dtos.length, duplicates: 0, failed: 0, total: dtos.length });
     }),
   };
+  const prisma = { brokerConnection: { update: vi.fn().mockResolvedValue({}) } };
   const service = new TradovateHistoryService(
-    api as never, connections as never, reporting as never, setups as never, trades as never,
+    prisma as never, api as never, connections as never, reporting as never, setups as never, trades as never,
   );
   vi.spyOn(service as unknown as { wait: (ms: number) => Promise<void> }, 'wait').mockResolvedValue(undefined);
-  return { service, api, connections, reporting, setups, trades, persiste };
+  return { service, prisma, api, connections, reporting, setups, trades, persiste };
 }
 
 describe('TradovateHistoryService — import de l’historique', () => {
@@ -103,6 +104,21 @@ describe('TradovateHistoryService — import de l’historique', () => {
     const { service, trades } = setup({ Performance: PERFORMANCE_CSV, Fills: FILLS_CSV });
     await service.importHistory('u1', conn(), { months: 1 });
     expect(trades.importTrades.mock.calls[0][2]).toBe('BROKER_HISTORY');
+  });
+
+  it('incrémente le compteur de la connexion : 294 trades importés ≠ « 0 trade importé »', async () => {
+    const { service, prisma } = setup({ Performance: PERFORMANCE_CSV, Fills: FILLS_CSV });
+    await service.importHistory('u1', conn(), { months: 1 });
+    expect(prisma.brokerConnection.update).toHaveBeenCalledWith({
+      where: { id: 'c1' },
+      data: { tradesImported: { increment: 2 } },
+    });
+  });
+
+  it('aucun trade créé → aucune écriture du compteur', async () => {
+    const { service, prisma } = setup({ Performance: '' });
+    await service.importHistory('u1', conn(), { months: 1 });
+    expect(prisma.brokerConnection.update).not.toHaveBeenCalled();
   });
 
   it('interroge Tradovate avec le nom RELU du compte, pas celui stocké en base', async () => {

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BrokerConnection, TradeSource } from '@prisma/client';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { TradesService } from '../../trades/trades.service';
 import { SetupsService } from '../../setups/setups.service';
 import { preprocessCsv, mapNormalizedCsvToDto, type ImportDto } from '../../trades/csv-parsers';
@@ -63,6 +64,7 @@ export class TradovateHistoryService {
   private readonly logger = new Logger(TradovateHistoryService.name);
 
   constructor(
+    private readonly prisma: PrismaService,
     private readonly api: TradovateApiClient,
     private readonly connections: TradovateConnectionService,
     private readonly reporting: TradovateReportingClient,
@@ -118,6 +120,16 @@ export class TradovateHistoryService {
         );
       }
       await this.wait(PAUSE_BETWEEN_WINDOWS_MS);
+    }
+
+    // Compteur de la connexion : l'import historique compte autant que la synchro live, sinon
+    // l'écran Mes comptes affiche « 0 trade importé » sur une connexion qui vient d'en ramener
+    // des centaines (constaté en beta : 294 trades, compteur à 0).
+    if (result.created > 0) {
+      await this.prisma.brokerConnection.update({
+        where: { id: conn.id },
+        data: { tradesImported: { increment: result.created } },
+      });
     }
 
     this.logger.log(
