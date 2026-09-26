@@ -301,6 +301,7 @@
   font-size: 11px; color: var(--text-3); line-height: 1.5;
 }
 .acct-sub .tv-text { min-width: 0; }
+.acct-sub .tv-reselect { flex-basis: 100%; }
 .acct-sub .tv-ext { font-family: var(--font-mono); color: var(--text-2); }
 
 /* Compte perso : pas de règles prop firm, mais son activité reste utile — au dépli. */

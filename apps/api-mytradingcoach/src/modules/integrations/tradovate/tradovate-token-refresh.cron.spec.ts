@@ -14,8 +14,15 @@ describe('TradovateTokenRefreshCron', () => {
     outcomes?: Record<string, 'refreshed' | 'reconnect' | 'retry'>;
     locked?: string[];
     configured?: boolean;
+    condemned?: { id: string }[];
+    revivable?: string[];
   } = {}) {
-    const prisma = { brokerConnection: { findMany: vi.fn().mockResolvedValue(opts.due ?? []) } };
+    // 1er findMany : connexions à renouveler · 2e : connexions « à reconnecter » à retenter.
+    const prisma = {
+      brokerConnection: {
+        findMany: vi.fn().mockResolvedValueOnce(opts.due ?? []).mockResolvedValueOnce(opts.condemned ?? []),
+      },
+    };
     const connections = {
       assertConfigured: vi.fn(() => {
         if (opts.configured === false) throw new TradovateException('TRADOVATE_NOT_CONFIGURED');
@@ -23,6 +30,7 @@ describe('TradovateTokenRefreshCron', () => {
       tryLock: vi.fn(async (id: string) => !(opts.locked ?? []).includes(id)),
       unlock: vi.fn(),
       refreshNow: vi.fn(async (c: { id: string }) => opts.outcomes?.[c.id] ?? 'refreshed'),
+      tryRevive: vi.fn(async (c: { id: string }) => (opts.revivable ?? []).includes(c.id)),
     };
     const cron = new TradovateTokenRefreshCron(prisma as never, connections as never);
     return { cron, prisma, connections };
@@ -44,10 +52,10 @@ describe('TradovateTokenRefreshCron', () => {
     ]);
   });
 
-  it('fenêtre de 18 h : un token de 26 h est renouvelé ~8 h après, deux passages manqués restent couverts', () => {
+  it('fenêtre de 18 h, cron horaire : 15 passages ratés (panne) restent couverts', () => {
     expect(REFRESH_WINDOW_MS).toBe(18 * 3600_000);
-    // Cron toutes les 6 h : même en ratant 2 passages (12 h), il reste 6 h avant l'échéance.
-    expect(REFRESH_WINDOW_MS - 2 * 6 * 3600_000).toBeGreaterThan(0);
+    // Cron toutes les heures : même en ratant 15 passages, il reste 3 h avant l'échéance.
+    expect(REFRESH_WINDOW_MS - 15 * 3600_000).toBeGreaterThan(0);
   });
 
   it('renouvelle chaque connexion sous verrou, et compte les issues', async () => {
@@ -56,7 +64,7 @@ describe('TradovateTokenRefreshCron', () => {
       outcomes: { a: 'refreshed', b: 'reconnect', c: 'retry' },
     });
     const r = await cron.refreshExpiring(now);
-    expect(r).toEqual({ refreshed: 1, reconnect: 1, retry: 1, locked: 0 });
+    expect(r).toEqual({ refreshed: 1, reconnect: 1, retry: 1, locked: 0, revived: 0 });
     expect(connections.unlock).toHaveBeenCalledTimes(3);
   });
 
@@ -72,14 +80,37 @@ describe('TradovateTokenRefreshCron', () => {
     const { cron, connections } = setup({ due: [{ id: 'a' }, { id: 'b' }] });
     connections.refreshNow.mockRejectedValueOnce(new Error('boom'));
     const r = await cron.refreshExpiring(now);
-    expect(r).toEqual({ refreshed: 1, reconnect: 0, retry: 1, locked: 0 });
+    expect(r).toEqual({ refreshed: 1, reconnect: 0, retry: 1, locked: 0, revived: 0 });
     expect(connections.unlock).toHaveBeenCalledWith('a');
     expect(connections.refreshNow).toHaveBeenCalledTimes(2);
   });
 
   it('intégration non configurée sur cet environnement : ne fait rien', async () => {
     const { cron, prisma } = setup({ configured: false });
-    expect(await cron.refreshExpiring(now)).toEqual({ refreshed: 0, reconnect: 0, retry: 0, locked: 0 });
+    expect(await cron.refreshExpiring(now)).toEqual({ refreshed: 0, reconnect: 0, retry: 0, locked: 0, revived: 0 });
     expect(prisma.brokerConnection.findMany).not.toHaveBeenCalled();
+  });
+
+  // ── Seconde chance (bug prod 2026-09-26 : connexions condamnées sur un refus passager) ──
+  it('retente les connexions « à reconnecter » dont le refresh_token est encore annoncé valide', async () => {
+    const { cron, prisma, connections } = setup({ condemned: [{ id: 'x' }, { id: 'y' }], revivable: ['x'] });
+    const r = await cron.refreshExpiring(now);
+    const where = prisma.brokerConnection.findMany.mock.calls[1][0].where;
+    expect(where).toMatchObject({
+      status: 'NEEDS_RECONNECT',
+      refreshTokenEnc: { not: null },
+      refreshTokenExpiresAt: { gt: now },
+      user: { isDemo: false },
+    });
+    expect(r.revived).toBe(1);
+    expect(connections.tryRevive).toHaveBeenCalledTimes(2);
+    expect(connections.unlock).toHaveBeenCalledWith('x');
+    expect(connections.unlock).toHaveBeenCalledWith('y');
+  });
+
+  it('seconde chance : jamais en parallèle d’une synchro de la même connexion', async () => {
+    const { cron, connections } = setup({ condemned: [{ id: 'x' }], locked: ['x'] });
+    await cron.refreshExpiring(now);
+    expect(connections.tryRevive).not.toHaveBeenCalled();
   });
 });

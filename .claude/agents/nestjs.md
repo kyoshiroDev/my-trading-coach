@@ -562,7 +562,7 @@ Toujours passer `{ userId, feature }` dans les options. Features valides :
 | `DailyRecapCron` | `30 17 * * 1-5` Paris | Génère recap + envoie email aux users actifs du jour |
 | `EcoCalendarCron` | `0 7 * * 1-5` Paris | Pré-génère le calendrier pour tous les users Premium |
 | `DemoSeedCron` | `20 3 * * *` Paris | Re-seed le compte démo (dates relatives recalculées) |
-| `TradovateTokenRefreshCron` | `17 */6 * * *` Paris | Renouvelle les tokens Tradovate qui expirent sous 18 h (aucun import de trades, hors démo) |
+| `TradovateTokenRefreshCron` | `17 * * * *` Paris | Renouvelle les tokens Tradovate qui expirent sous 18 h + seconde chance des « à reconnecter » encore promises (aucun import de trades, hors démo) |
 | `TradovateBackgroundRefreshCron` | `*/15 * * * *` Paris | Synchro de fond des connexions sans synchro depuis 12 min (hors démo, hors app ouverte). **Au 1er passage de chaque heure seulement** (minute < 15), ajoute le rattrapage du mois par la Reporting API |
 
 ### Compte démo : le seed doit rester récurrent (PROMPT-192)
@@ -730,13 +730,24 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
     fois après 2 s, en **relisant la connexion** (un autre worker du cluster a pu renouveler
     entre-temps : son access token est alors pris tel quel, sans rappeler Tradovate).
     `NEEDS_RECONNECT` n'est posé que si **deux** refus ET repli renew indisponible ou refusé.
-  - ⚠️ **`refreshTokenExpiresAt` n'est pas une autorité.** Tradovate annonce ≈ 26 h (et non les
-    14 j de sa doc) puis refuse parfois le token bien avant. On tente dès qu'un refresh token
-    existe et c'est **sa réponse** qui tranche.
+  - ⚠️ **`refreshTokenExpiresAt` n'est pas une autorité pour TENTER.** Tradovate annonce ≈ 25 h
+    (et non les 14 j de sa doc) puis refuse parfois le token bien avant. On tente dès qu'un refresh
+    token existe.
+  - **Mais c'est elle qui décide de CONDAMNER** (correctif du 2026-09-26, objectif produit : « connecté
+    tant que l'utilisateur ne clique pas sur Déconnecter »). Refus + repli impossible alors que
+    `refreshTokenExpiresAt` est dans le futur → `TRADOVATE_REFRESH_DEFERRED` (503, connexion gardée
+    `CONNECTED`, retentée à chaque passage) ; `NEEDS_RECONNECT` seulement une fois l'échéance
+    passée (ou inconnue). Une vraie révocation est donc constatée au plus ~25 h après.
+  - Un **401 sur une lecture de données** (token pourtant frais) ne condamne plus : `lastSyncError`
+    + 503. Seul `getAccessToken` décide de `NEEDS_RECONNECT`, et `markNeedsReconnect(id, cause)`
+    **journalise la cause** (warn « → À RECONNECTER (…) »).
   - ⚠️ **`HTTP 200` + `{"error":"invalid_token"}`** : le refus n'est pas un 401, et il est souvent
     **transitoire** (mesuré : refus d'un token jamais utilisé émis 1 h 50 plus tôt).
-  - `TradovateTokenRefreshCron` (toutes les 6 h, celles qui expirent sous 18 h) n'est PAS ce qui
-    maintient la connexion au quotidien : c'est le cron de fond / la synchro qui rafraîchissent.
+  - `TradovateTokenRefreshCron` (**toutes les heures** depuis le 2026-09-26, celles qui expirent
+    sous 18 h) est le **seul** entretien d'un utilisateur dont l'app reste ouverte : le cron de fond
+    le saute (`isLive`) et le WebSocket ne redemande un token qu'à sa réouverture. Il ne regarde
+    jamais la présence. Il fait aussi la **seconde chance** : `NEEDS_RECONNECT` + refresh_token
+    encore promis → `tryRevive` (refresh sous verrou de login ; accepté → `CONNECTED`).
   - **Portée LOGIN, pas connexion** (correctif du 2026-09-26). Tradovate fait tourner le
     refresh_token par **login** (`userId` Tradovate) ; un login porte souvent plusieurs comptes,
     donc plusieurs `BrokerConnection`, chacune avec SA copie des tokens. La première qui renouvelle
@@ -784,8 +795,19 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
   41 → 404). À 100 par lot, la synchro d'un compte actif échouait entièrement. Un fill
   introuvable n'ignore que sa paire (`skipped`), jamais toute la synchro.
 - **Un 404 de lecture n'est pas « compte introuvable »** : `TradovateApiError('not_found')`
-  → `TRADOVATE_UNAVAILABLE`. Seule l'absence du compte dans `account/list` (synchro, choix du
-  compte) lève `TRADOVATE_ACCOUNT_NOT_FOUND`, qui invite à reconnecter.
+  → `TRADOVATE_UNAVAILABLE`.
+- **Compte absent de `account/list` ≠ déconnexion** (bug prod du 2026-09-26 : un compte prop firm
+  de Val a disparu de son login pendant la maintenance du week-end, le token marchait toujours,
+  l'app lui disait « reconnecte-toi »). `handleMissingAccount` :
+  - présent sur l'**autre hôte** → `externalEnv` corrigé, la synchro continue ;
+  - absent depuis moins de `ACCOUNT_GONE_GRACE_MS` (2 h sans synchro réussie) →
+    `TRADOVATE_ACCOUNT_TEMPORARILY_MISSING` (503), rien de détaché ;
+  - absent durablement → connexion **détachée** (`externalAccountId/Env/Name = null`, reste
+    `CONNECTED`), `availableAccounts` relu sur les 2 hôtes, `TRADOVATE_ACCOUNT_NOT_FOUND` (« choisis
+    le compte à synchroniser »). Le front affiche le sélecteur : `needsAccountSelection` vaut
+    désormais `!externalAccountId && available.length >= 1` (même avec un seul compte restant :
+    on ne verse jamais les trades d'un autre compte broker sans le demander). `selectAccount`
+    efface `lastSyncError`.
 - P&L = **brut** `(vente − achat) × qty × valuePerPoint`, frais dans `commission` (comme le CSV).
   `tradedAt` tronqué à la seconde (granularité de l'export).
 - **Rapprochement CSV ↔ API** : l'export Performance est en heure LOCALE sans fuseau, parsée
