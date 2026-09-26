@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BrokerConnection } from '@prisma/client';
+import { BrokerConnection, BrokerConnectionStatus } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { TradeSource } from '@prisma/client';
 import { TradesService } from '../../trades/trades.service';
@@ -138,7 +138,13 @@ export class TradovateSyncService {
    */
   private async topUpCurrentMonth(userId: string, conn: BrokerConnection): Promise<number> {
     try {
-      const r = await this.history.importHistory(userId, conn, { months: 1 });
+      // RELECTURE obligatoire : la synchro qu'on vient de faire a pu renouveler les tokens, et
+      // l'objet `conn` en mémoire porte encore l'ancienne échéance. Le lui repasser tel quel
+      // ferait croire à un token expiré et déclencherait une SECONDE rotation dans la foulée —
+      // rotation inutile, et occasion supplémentaire de se faire refuser par Tradovate.
+      const frais = await this.prisma.brokerConnection.findUnique({ where: { id: conn.id } });
+      if (!frais || frais.status !== BrokerConnectionStatus.CONNECTED) return 0;
+      const r = await this.history.importHistory(userId, frais, { months: 1 });
       if (r.created > 0) {
         this.logger.log(`Rattrapage mensuel Tradovate : ${r.created} trade(s) que la séance n'exposait pas.`);
       }
