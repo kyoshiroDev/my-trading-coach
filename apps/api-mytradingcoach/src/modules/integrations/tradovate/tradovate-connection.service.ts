@@ -64,6 +64,13 @@ const LOGIN_LOCK_TTL_S = 30;
  * week-end). Le cron passe toutes les 15 min : un trou passager de la liste ne détache rien.
  */
 export const ACCOUNT_GONE_GRACE_MS = 2 * 60 * 60 * 1000;
+/**
+ * Après un refus « passager » (refresh_token encore promis), on ne rappelle PAS Tradovate avant ce
+ * délai, quel que soit l'appelant. Sans ça, le WebSocket (backoff plafonné à 60 s) redemandait un
+ * refresh deux fois par minute pendant des heures — constaté en beta le 2026-09-26 : de quoi se
+ * faire limiter, voire signaler, par Tradovate. Les crons (15 min, 1 h) retentent au-delà.
+ */
+export const REFUSAL_COOLDOWN_S = 10 * 60;
 const ENVS: TradovateEnv[] = ['live', 'demo'];
 
 /**
@@ -394,6 +401,11 @@ export class TradovateConnectionService {
     const current = decryptToken(conn.accessTokenEnc, this.tokenKey());
     if (conn.accessTokenExpiresAt.getTime() - REFRESH_MARGIN_MS > now) return current;
 
+    // Refus tout récent et toujours promis : on n'insiste pas auprès de Tradovate (cf. REFUSAL_COOLDOWN_S).
+    if (this.refreshStillPromised(conn) && (await this.inRefusalCooldown(conn))) {
+      throw new TradovateException('TRADOVATE_REFRESH_DEFERRED');
+    }
+
     // `refreshTokenExpiresAt` n'est PAS une autorité : Tradovate refuse parfois avant l'échéance
     // qu'il annonce. On tente donc dès qu'un refresh_token existe, et c'est sa réponse qui tranche.
     const refreshed = conn.refreshTokenEnc ? await this.refreshWithRetry(conn) : null;
@@ -405,8 +417,9 @@ export class TradovateConnectionService {
     if (this.refreshStillPromised(conn)) {
       this.logger.warn(
         `Tradovate refuse le renouvellement (connexion ${conn.id}) alors que son refresh_token vit jusqu'au ` +
-          `${conn.refreshTokenExpiresAt?.toISOString()} : connexion gardée, nouvel essai au prochain passage.`,
+          `${conn.refreshTokenExpiresAt?.toISOString()} : connexion gardée, nouvel essai dans ${REFUSAL_COOLDOWN_S / 60} min.`,
       );
+      await this.startRefusalCooldown(conn);
       throw new TradovateException('TRADOVATE_REFRESH_DEFERRED');
     }
     await this.markNeedsReconnect(conn.id, 'refresh refusé deux fois, renew impossible, refresh_token échu ou de durée inconnue');
@@ -519,6 +532,7 @@ export class TradovateConnectionService {
       await this.markNeedsReconnect(conn.id, 'aucun refresh_token stocké');
       return 'reconnect';
     }
+    if (this.refreshStillPromised(conn) && (await this.inRefusalCooldown(conn))) return 'retry';
     try {
       // Même exigence que la synchro : deux refus ET aucun repli avant de condamner.
       if (await this.refreshWithRetry(conn)) return 'refreshed';
@@ -526,6 +540,7 @@ export class TradovateConnectionService {
       if (await this.tryRenew(conn, current)) return 'refreshed';
       if (this.refreshStillPromised(conn)) {
         this.logger.warn(`Renouvellement Tradovate refusé mais refresh_token encore valide (connexion ${conn.id}) : reporté.`);
+        await this.startRefusalCooldown(conn);
         return 'retry';
       }
       await this.markNeedsReconnect(conn.id, 'cron : refresh refusé deux fois, refresh_token échu ou de durée inconnue');
@@ -619,6 +634,7 @@ export class TradovateConnectionService {
     const tokens = await this.api.refresh(decryptToken(conn.refreshTokenEnc as string, this.tokenKey()));
     const columns = this.tokenColumns(tokens, conn);
     await this.prisma.brokerConnection.update({ where: { id: conn.id }, data: columns });
+    await this.clearRefusalCooldown(conn);
     await this.propagateToSiblings(conn, columns);
     return tokens.access_token as string;
   }
@@ -726,6 +742,35 @@ export class TradovateConnectionService {
       return decryptToken(fresh.accessTokenEnc, this.tokenKey());
     }
     return null;
+  }
+
+  private refusalKey(conn: BrokerConnection): string {
+    return `tradovate:refresh-refused:${conn.id}`;
+  }
+
+  /** Redis indisponible → pas de pause : on retombe sur le comportement sans garde-fou. */
+  private async inRefusalCooldown(conn: BrokerConnection): Promise<boolean> {
+    try {
+      return (await this.redis.client.exists(this.refusalKey(conn))) === 1;
+    } catch {
+      return false;
+    }
+  }
+
+  private async startRefusalCooldown(conn: BrokerConnection): Promise<void> {
+    try {
+      await this.redis.client.set(this.refusalKey(conn), '1', 'EX', REFUSAL_COOLDOWN_S);
+    } catch {
+      // sans Redis, pas de pause : les appelants retentent à leur rythme
+    }
+  }
+
+  private async clearRefusalCooldown(conn: BrokerConnection): Promise<void> {
+    try {
+      await this.redis.client.del(this.refusalKey(conn));
+    } catch {
+      // expirera seul (TTL)
+    }
   }
 
   /** Verrou de la connexion (cf. LOCK_TTL_S). Redis indisponible → on laisse passer. */

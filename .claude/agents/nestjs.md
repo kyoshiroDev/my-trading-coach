@@ -738,6 +738,15 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
     `refreshTokenExpiresAt` est dans le futur → `TRADOVATE_REFRESH_DEFERRED` (503, connexion gardée
     `CONNECTED`, retentée à chaque passage) ; `NEEDS_RECONNECT` seulement une fois l'échéance
     passée (ou inconnue). Une vraie révocation est donc constatée au plus ~25 h après.
+  - ⚠️ **Pause de 10 min après un refus passager** (`REFUSAL_COOLDOWN_S`, clé Redis
+    `tradovate:refresh-refused:<id>`) : pendant la pause, `getAccessToken` lève `REFRESH_DEFERRED`
+    et `refreshNow` rend `retry` **sans appeler Tradovate**. Sans elle, le WebSocket (backoff
+    plafonné à 60 s) redemandait un refresh deux fois par minute pendant des heures (beta,
+    2026-09-26). Levée par tout renouvellement réussi ; ne masque jamais un refresh_token échu.
+  - ⚠️ **Deux comptes MTC sur le MÊME login Tradovate** (vu en beta avec les comptes de test) :
+    la propagation se limite au même user MTC, donc leurs copies s'invalident mutuellement quand
+    l'une renouvelle. Cas marginal chez de vrais users ; ne pas étendre la propagation entre users
+    sans décision explicite (ce serait partager des tokens entre comptes MTC).
   - Un **401 sur une lecture de données** (token pourtant frais) ne condamne plus : `lastSyncError`
     + 503. Seul `getAccessToken` décide de `NEEDS_RECONNECT`, et `markNeedsReconnect(id, cause)`
     **journalise la cause** (warn « → À RECONNECTER (…) »).
