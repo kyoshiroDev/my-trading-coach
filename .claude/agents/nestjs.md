@@ -720,7 +720,7 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
 | Ouverture de l'app (`catchUp`) | ✅ si > 1 min | ✅ **si > 30 min d'absence** |
 | Trade en direct, app ouverte | ✅ ~1,5 s | ❌ |
 | Cron de fond, toutes les 15 min | ✅ si > 12 min | ❌ |
-| Cron de fond, 1er passage de l'heure | ✅ | ✅ |
+| Cron de fond, 1er passage de l'heure | ✅ (sauf app ouverte) | ✅ **y compris app ouverte** |
 | Bouton « Synchroniser » | ✅ | ✅ |
 
 La raison d'être du rattrapage mensuel : **la Trade API ne montre que la séance ouverte et ne
@@ -728,6 +728,13 @@ rejoue JAMAIS une séance passée**. Tout ce qui est tradé pendant que l'API es
 (déploiement, panne) serait perdu définitivement. Le rapport mensuel, lui, le contient.
 D'où aussi le seuil des 30 min à l'ouverture : c'est le filet d'auto-réparation après une panne
 du worker cron — il suffit qu'un utilisateur ouvre l'app pour que son mois soit rattrapé.
+
+⚠️ **Le cron saute la SÉANCE d'un utilisateur en direct, jamais son rattrapage mensuel.** Le
+WebSocket ne fait que la séance, et le filtre de fraîcheur exclurait toujours un utilisateur
+actif : sans traitement particulier, celui qui laisse l'app ouverte toute la journée serait le
+SEUL à ne jamais recevoir le filet. Au 1er passage de l'heure, le cron interroge donc TOUTES les
+connexions (aucun filtre de fraîcheur) et appelle directement `importForAccount` pour celles qui
+sont en direct.
 
 **Spécificités Tradovate (vérifiées)**
 - OAuth **toujours sur Live** (`trader.tradovate.com/oauth`, `live.tradovateapi.com/auth/oauthtoken`,

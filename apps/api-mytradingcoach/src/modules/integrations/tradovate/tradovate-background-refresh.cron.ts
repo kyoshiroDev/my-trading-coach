@@ -5,6 +5,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateLiveService } from './tradovate-live.service';
 import { TradovateSyncService } from './tradovate-sync.service';
+import { TradovateHistoryService } from './tradovate-history.service';
 
 /** Connexion « à rafraîchir » : aucune synchro depuis 12 min (cron toutes les 15 min). */
 export const BACKGROUND_STALE_MS = 12 * 60 * 1000;
@@ -33,6 +34,7 @@ export class TradovateBackgroundRefreshCron {
     private readonly prisma: PrismaService,
     private readonly connections: TradovateConnectionService,
     private readonly sync: TradovateSyncService,
+    private readonly history: TradovateHistoryService,
     private readonly live: TradovateLiveService,
   ) {}
 
@@ -63,20 +65,35 @@ export class TradovateBackgroundRefreshCron {
         externalAccountId: { not: null },
         externalEnv: { not: null },
         user: { isDemo: false },
-        OR: [{ lastSyncAt: null }, { lastSyncAt: { lt: new Date(now.getTime() - BACKGROUND_STALE_MS) } }],
+        // Hors passage horaire : seulement les connexions en retard. AU passage horaire :
+        // toutes, car le rattrapage mensuel doit aussi atteindre les utilisateurs en direct —
+        // leur synchro étant permanente, le filtre de fraîcheur les exclurait toujours.
+        ...(avecHistorique
+          ? {}
+          : { OR: [{ lastSyncAt: null }, { lastSyncAt: { lt: new Date(now.getTime() - BACKGROUND_STALE_MS) } }] }),
       },
       select: { id: true, userId: true, accountId: true },
     });
 
     for (const c of due) {
-      if (await this.live.isLive(c.userId)) {
-        result.live++; // app ouverte : le WebSocket s'en occupe déjà
+      const enDirect = await this.live.isLive(c.userId);
+      // App ouverte HORS passage horaire : le WebSocket fait déjà la séance, rien à faire.
+      if (enDirect && !avecHistorique) {
+        result.live++;
         continue;
       }
       try {
-        const r = await this.sync.sync(c.userId, c.accountId, { history: avecHistorique });
-        result.synced++;
-        result.created += r.created;
+        if (enDirect) {
+          // App ouverte AU passage horaire : on ne refait pas la séance (le WebSocket s'en
+          // charge) mais on tire le rapport du mois. Sans ça, un utilisateur qui laisse l'app
+          // ouverte toute la journée serait le SEUL à ne jamais bénéficier du filet mensuel.
+          result.live++;
+          result.created += (await this.history.importForAccount(c.userId, c.accountId, { months: 1 })).created;
+        } else {
+          const r = await this.sync.sync(c.userId, c.accountId, { history: avecHistorique });
+          result.synced++;
+          result.created += r.created;
+        }
       } catch (err) {
         // Une connexion en échec ne prive pas les suivantes (état déjà noté par la synchro).
         result.failed++;

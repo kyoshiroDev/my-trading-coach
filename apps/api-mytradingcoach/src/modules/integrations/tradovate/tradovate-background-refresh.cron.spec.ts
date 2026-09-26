@@ -9,9 +9,12 @@ function setup(conns: { id: string; userId: string; accountId: string }[], liveU
   const prisma = { brokerConnection: { findMany: vi.fn(async () => conns) } };
   const connections = { assertConfigured: vi.fn() };
   const sync = { sync: vi.fn(async () => ({ created: 2, duplicates: 0, failed: 0, total: 2 })) };
+  const history = { importForAccount: vi.fn(async () => ({ created: 5 })) };
   const live = { isLive: vi.fn(async (userId: string) => liveUsers.includes(userId)) };
-  const cron = new TradovateBackgroundRefreshCron(prisma as never, connections as never, sync as never, live as never);
-  return { cron, prisma, connections, sync, live };
+  const cron = new TradovateBackgroundRefreshCron(
+    prisma as never, connections as never, sync as never, history as never, live as never,
+  );
+  return { cron, prisma, connections, sync, history, live };
 }
 
 describe('Tradovate — rafraîchissement de fond (15 min)', () => {
@@ -23,6 +26,26 @@ describe('Tradovate — rafraîchissement de fond (15 min)', () => {
     expect(await cron.refreshStale()).toEqual({ synced: 1, created: 2, live: 1, failed: 0 });
     expect(sync.sync).toHaveBeenCalledTimes(1);
     expect(sync.sync).toHaveBeenCalledWith('u1', 'a1', { history: expect.any(Boolean) });
+  });
+
+  it('app ouverte AU passage horaire → le mois est retiré quand même, sans refaire la séance', async () => {
+    // Le trou reparé : un utilisateur qui laisse l'app ouverte toute la journée etait saute par
+    // le cron, et le WebSocket ne fait que la seance — il n'avait donc JAMAIS le filet mensuel.
+    const { cron, sync, history } = setup([{ id: 'c1', userId: 'u1', accountId: 'a1' }], ['u1']);
+
+    const r = await cron.refreshStale(new Date('2026-09-26T10:07:00Z'));
+
+    expect(history.importForAccount).toHaveBeenCalledWith('u1', 'a1', { months: 1 });
+    expect(sync.sync).not.toHaveBeenCalled(); // la séance reste au WebSocket
+    expect(r).toMatchObject({ live: 1, created: 5, synced: 0 });
+  });
+
+  it('app ouverte HORS passage horaire → rien du tout', async () => {
+    const { cron, sync, history } = setup([{ id: 'c1', userId: 'u1', accountId: 'a1' }], ['u1']);
+    const r = await cron.refreshStale(new Date('2026-09-26T10:37:00Z'));
+    expect(history.importForAccount).not.toHaveBeenCalled();
+    expect(sync.sync).not.toHaveBeenCalled();
+    expect(r.live).toBe(1);
   });
 
   it('le rattrapage mensuel ne tourne qu’au PREMIER passage de chaque heure', async () => {
@@ -41,7 +64,8 @@ describe('Tradovate — rafraîchissement de fond (15 min)', () => {
 
   it('ne cible que les connexions actives, choisies, hors démo, sans synchro depuis 12 min', async () => {
     const { cron, prisma } = setup([]);
-    const now = new Date('2026-09-12T12:00:00Z');
+    // Hors passage horaire : le filtre de fraîcheur s'applique.
+    const now = new Date('2026-09-12T12:22:00Z');
     await cron.refreshStale(now);
     const where = (prisma.brokerConnection.findMany.mock.calls[0] as unknown as [{ where: Record<string, unknown> }])[0].where;
     expect(where).toMatchObject({
@@ -55,6 +79,15 @@ describe('Tradovate — rafraîchissement de fond (15 min)', () => {
       { lastSyncAt: null },
       { lastSyncAt: { lt: new Date(now.getTime() - BACKGROUND_STALE_MS) } },
     ]);
+  });
+
+  it('au passage horaire, AUCUN filtre de fraîcheur : le mois doit atteindre tout le monde', async () => {
+    // Un utilisateur en direct a toujours une synchro récente ; le filtre l'exclurait donc
+    // systématiquement du rattrapage mensuel, qui est précisément son seul filet.
+    const { cron, prisma } = setup([]);
+    await cron.refreshStale(new Date('2026-09-12T12:00:00Z'));
+    const where = (prisma.brokerConnection.findMany.mock.calls[0] as unknown as [{ where: Record<string, unknown> }])[0].where;
+    expect(where['OR']).toBeUndefined();
   });
 
   it('un échec n’arrête pas les suivantes', async () => {
