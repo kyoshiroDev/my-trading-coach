@@ -1,12 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BrokerConnection } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { TradeSource } from '@prisma/client';
 import { TradesService } from '../../trades/trades.service';
 import { SetupsService } from '../../setups/setups.service';
 import type { CreateTradeDto } from '../../trades/dto/create-trade.dto';
 import type { FeesReport } from '../../trades/csv-import.service';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateConnectionService } from './tradovate-connection.service';
+import { TradovateHistoryService } from './tradovate-history.service';
 import { TradovateApiError, TradovateException } from './tradovate.errors';
 import { mapTradovatePairs } from './tradovate-trade.mapper';
 import { describeTradovateSnapshot } from './tradovate-sync-diagnostics';
@@ -62,12 +64,23 @@ export class TradovateSyncService {
     private readonly prisma: PrismaService,
     private readonly api: TradovateApiClient,
     private readonly connections: TradovateConnectionService,
+    private readonly history: TradovateHistoryService,
     private readonly trades: TradesService,
     private readonly setups: SetupsService,
   ) {}
 
-  async sync(userId: string, accountId: string): Promise<TradovateSyncResult> {
-    this.connections.assertConfigured();
+  async sync(
+    userId: string,
+    accountId: string,
+    /**
+     * `history: true` → la séance est complétée par un rattrapage du MOIS EN COURS via la
+     * Reporting API. La Trade API ne montre que la séance ouverte : sans ça, tout ce qui a été
+     * tradé pendant que l'API était arrêtée (déploiement, panne réseau) serait perdu pour
+     * toujours, Tradovate ne réexposant jamais une séance passée.
+     */
+    options: { history?: boolean } = {},
+  ): Promise<TradovateSyncResult> {
+        this.connections.assertConfigured();
     const conn = await this.connections.getConnection(userId, accountId);
     if (!conn.externalAccountId || !conn.externalEnv) {
       throw new TradovateException('TRADOVATE_ACCOUNT_SELECTION_REQUIRED');
@@ -79,6 +92,7 @@ export class TradovateSyncService {
 
     try {
       const result = await this.run(userId, conn);
+      if (options.history) result.created += await this.topUpCurrentMonth(userId, conn);
       await this.prisma.brokerConnection.update({
         where: { id: conn.id },
         data: {
@@ -95,8 +109,15 @@ export class TradovateSyncService {
           : err instanceof TradovateApiError
             ? err.toException()
             : null;
-      if (exception?.code === 'TRADOVATE_RECONNECT_REQUIRED') {
-        await this.connections.markNeedsReconnect(conn.id);
+      // getAccessToken a déjà condamné (ou non) la connexion en connaissance de cause. Ici ne passe
+      // plus qu'un 401 sur une lecture de données, token pourtant frais : pas une preuve de mort.
+      if (exception?.code === 'TRADOVATE_RECONNECT_REQUIRED' && !(err instanceof TradovateException)) {
+        await this.prisma.brokerConnection.update({
+          where: { id: conn.id },
+          data: { lastSyncError: 'Tradovate a refusé une lecture. On réessaie automatiquement.' },
+        });
+        this.logger.warn(`Synchro Tradovate : 401 sur une lecture (connexion ${conn.id}), connexion gardée.`);
+        throw new TradovateException('TRADOVATE_UNAVAILABLE');
       } else if (exception) {
         await this.prisma.brokerConnection.update({
           where: { id: conn.id },
@@ -110,17 +131,46 @@ export class TradovateSyncService {
     }
   }
 
-  private async run(userId: string, conn: BrokerConnection): Promise<TradovateSyncResult> {
+  /**
+   * Rattrapage du mois en cours par la Reporting API. Jamais bloquant : un rapport indisponible
+   * ne doit pas faire échouer une synchro qui, elle, a réussi. Les doublons avec la séance qu'on
+   * vient de lire sont écartés par `importTrades` (dédup inter-sources, fuseau compris).
+   */
+  private async topUpCurrentMonth(userId: string, conn: BrokerConnection): Promise<number> {
+    try {
+      const r = await this.history.importHistory(userId, conn, { months: 1 });
+      if (r.created > 0) {
+        this.logger.log(`Rattrapage mensuel Tradovate : ${r.created} trade(s) que la séance n'exposait pas.`);
+      }
+      return r.created;
+    } catch (err) {
+      this.logger.warn(`Rattrapage mensuel Tradovate ignoré (${(err as Error).message}).`);
+      return 0;
+    }
+  }
+
+  private async run(userId: string, conn: BrokerConnection, relinked = false): Promise<TradovateSyncResult> {
     const env = conn.externalEnv as TradovateEnv;
     const externalId = Number(conn.externalAccountId);
     const token = await this.connections.getAccessToken(conn);
     const get = <T>(path: string, query?: Record<string, string>) =>
       this.api.get<T>(env, path, token, query);
 
-    // Le compte doit toujours être accessible avec cette connexion.
+    // Le compte doit toujours être accessible avec cette connexion. Absent : jamais « reconnecte-toi »
+    // (le token marche) — changé d'hôte, trou passager ou compte clôturé (cf. handleMissingAccount).
     const accounts = await get<TradovateAccount[]>('/account/list');
     const account = accounts.find((a) => a.id === externalId);
-    if (!account) throw new TradovateException('TRADOVATE_ACCOUNT_NOT_FOUND');
+    if (!account) {
+      if (relinked) throw new TradovateException('TRADOVATE_ACCOUNT_TEMPORARILY_MISSING');
+      return this.run(userId, await this.connections.handleMissingAccount(conn, token), true);
+    }
+    // Au passage : rattache le login aux connexions d'avant la correction (verrou + propagation),
+    // y compris les sœurs mortes, que ce `/account/list` révèle comme appartenant au même login.
+    await this.connections.rememberLogin(
+      conn,
+      account.userId,
+      accounts.filter((a) => a.userId === account.userId).map((a) => String(a.id)),
+    );
 
     const [positions, allPairs] = await Promise.all([
       get<TradovatePosition[]>('/position/list'),
@@ -159,7 +209,7 @@ export class TradovateSyncService {
       return dto;
     });
 
-    const imported = await this.trades.importTrades(userId, dtos);
+    const imported = await this.trades.importTrades(userId, dtos, TradeSource.BROKER_SYNC);
     // Ce que Tradovate a renvoyé, pas seulement ce qui a été créé (PROMPT-212) : distingue
     // « rien renvoyé » de « données écartées » (autre compte du login, paire orpheline).
     this.logger.log(

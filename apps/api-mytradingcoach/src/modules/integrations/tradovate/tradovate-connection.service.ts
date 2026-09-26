@@ -48,6 +48,22 @@ const REFRESH_RETRY_DELAY_MS = 2_000;
  * « à reconnecter ».
  */
 const LOCK_TTL_S = 120;
+/**
+ * Verrou du LOGIN, plus étroit que celui de la connexion et posé autour du seul renouvellement.
+ *
+ * Tradovate fait tourner le refresh_token par LOGIN (son `userId`), pas par compte. Or un login
+ * peut porter plusieurs comptes, donc plusieurs connexions MTC, chacune avec sa copie des tokens :
+ * dès que l'une renouvelle, les copies des autres sont mortes. Le verrou par connexion ne les
+ * sérialisait pas — c'est ce qui a tué 2 des 5 connexions d'un ambassadeur (prod, 21-23/09).
+ * TTL court : un renouvellement, c'est un aller-retour HTTP, pas une synchro.
+ */
+const LOGIN_LOCK_TTL_S = 30;
+/**
+ * Un compte absent de `/account/list` n'est déclaré disparu qu'après ce délai sans synchro réussie
+ * (bug prod du 2026-09-26 : un compte de Val a disparu du login pendant la maintenance Tradovate du
+ * week-end). Le cron passe toutes les 15 min : un trou passager de la liste ne détache rien.
+ */
+export const ACCOUNT_GONE_GRACE_MS = 2 * 60 * 60 * 1000;
 const ENVS: TradovateEnv[] = ['live', 'demo'];
 
 /**
@@ -189,7 +205,7 @@ export class TradovateConnectionService {
         const list = await this.api.get<TradovateAccount[]>(env, '/account/list', accessToken);
         for (const a of Array.isArray(list) ? list : []) {
           if (a.closed) continue; // compte fermé : plus rien à synchroniser
-          found.push({ id: String(a.id), name: a.name, env });
+          found.push({ id: String(a.id), name: a.name, env, userId: a.userId != null ? String(a.userId) : undefined });
         }
       } catch (err) {
         // Un hôte peut refuser le token (ex. aucun compte simulé) : l'autre suffit.
@@ -222,6 +238,8 @@ export class TradovateConnectionService {
       externalAccountId: chosen?.id ?? null,
       externalAccountName: chosen?.name ?? null,
       externalEnv: chosen?.env ?? null,
+      // Le login : il sert à sérialiser les renouvellements entre connexions sœurs.
+      externalUserId: chosen?.userId ?? null,
       availableAccounts: available as unknown as Prisma.InputJsonValue,
       lastSyncError: null,
     };
@@ -264,6 +282,9 @@ export class TradovateConnectionService {
         externalAccountId: target.id,
         externalAccountName: target.name,
         externalEnv: target.env,
+        externalUserId: target.userId ?? null,
+        // Efface la raison d'un rechoix (« ce compte n'existe plus… ») : le nouveau compte est posé.
+        lastSyncError: null,
       },
     });
     // La devise du compte suit le broker, lue chez lui (cf. resolveAccountCurrency).
@@ -381,8 +402,26 @@ export class TradovateConnectionService {
     const renewed = await this.tryRenew(conn, current);
     if (renewed) return renewed;
 
-    await this.markNeedsReconnect(conn.id);
+    if (this.refreshStillPromised(conn)) {
+      this.logger.warn(
+        `Tradovate refuse le renouvellement (connexion ${conn.id}) alors que son refresh_token vit jusqu'au ` +
+          `${conn.refreshTokenExpiresAt?.toISOString()} : connexion gardée, nouvel essai au prochain passage.`,
+      );
+      throw new TradovateException('TRADOVATE_REFRESH_DEFERRED');
+    }
+    await this.markNeedsReconnect(conn.id, 'refresh refusé deux fois, renew impossible, refresh_token échu ou de durée inconnue');
     throw new TradovateException('TRADOVATE_RECONNECT_REQUIRED');
+  }
+
+  /**
+   * Un refus n'est une preuve de mort QUE si Tradovate ne promet plus rien : tant que le
+   * refresh_token est annoncé valide, un refus est traité comme passager (mesuré en prod : refus
+   * d'un token frais, accepté plus tard). La connexion n'est donc condamnée qu'à l'échéance
+   * annoncée, soit au pire ~25 h après le dernier renouvellement réussi. Échéance inconnue
+   * (`null`) → on ne peut rien promettre, le refus tranche.
+   */
+  private refreshStillPromised(conn: BrokerConnection): boolean {
+    return !!conn.refreshTokenEnc && !!conn.refreshTokenExpiresAt && conn.refreshTokenExpiresAt.getTime() > Date.now();
   }
 
   /**
@@ -394,6 +433,22 @@ export class TradovateConnectionService {
    * une indisponibilité.
    */
   private async refreshWithRetry(conn: BrokerConnection): Promise<string | null> {
+    // Sérialisé PAR LOGIN : deux connexions sœurs qui renouvellent en même temps s'invalident.
+    const held = await this.tryLoginLock(conn);
+    if (!held) {
+      const partage = await this.awaitSiblingRefresh(conn);
+      if (partage) return partage;
+      // La sœur n'a rien donné (échec de son côté, ou login inconnu) : on tente quand même,
+      // comme avant. Mieux vaut un refus possible qu'une connexion bloquée par un verrou.
+    }
+    try {
+      return await this.refreshWithRetryLocked(conn);
+    } finally {
+      if (held) await this.unlockLogin(conn);
+    }
+  }
+
+  private async refreshWithRetryLocked(conn: BrokerConnection): Promise<string | null> {
     try {
       return await this.refreshWithToken(conn);
     } catch (err) {
@@ -461,7 +516,7 @@ export class TradovateConnectionService {
    */
   async refreshNow(conn: BrokerConnection): Promise<'refreshed' | 'reconnect' | 'retry'> {
     if (!conn.refreshTokenEnc) {
-      await this.markNeedsReconnect(conn.id);
+      await this.markNeedsReconnect(conn.id, 'aucun refresh_token stocké');
       return 'reconnect';
     }
     try {
@@ -469,7 +524,11 @@ export class TradovateConnectionService {
       if (await this.refreshWithRetry(conn)) return 'refreshed';
       const current = decryptToken(conn.accessTokenEnc, this.tokenKey());
       if (await this.tryRenew(conn, current)) return 'refreshed';
-      await this.markNeedsReconnect(conn.id);
+      if (this.refreshStillPromised(conn)) {
+        this.logger.warn(`Renouvellement Tradovate refusé mais refresh_token encore valide (connexion ${conn.id}) : reporté.`);
+        return 'retry';
+      }
+      await this.markNeedsReconnect(conn.id, 'cron : refresh refusé deux fois, refresh_token échu ou de durée inconnue');
       return 'reconnect';
     } catch (err) {
       this.logger.warn(`Renouvellement Tradovate reporté (connexion ${conn.id}) : ${(err as Error).message}`);
@@ -477,14 +536,196 @@ export class TradovateConnectionService {
     }
   }
 
-  /** Échange le refresh_token (rotation incluse) et persiste les nouveaux tokens chiffrés. */
-  private async refreshWithToken(conn: BrokerConnection): Promise<string> {
-    const tokens = await this.api.refresh(decryptToken(conn.refreshTokenEnc as string, this.tokenKey()));
+  /**
+   * Seconde chance d'une connexion « à reconnecter » dont le refresh_token est encore annoncé
+   * valide : condamnée à tort (refus passager, rotation d'une sœur avant le verrou par login).
+   * Un renouvellement réussi la remet CONNECTED sans rien demander à l'utilisateur.
+   */
+  async tryRevive(conn: BrokerConnection): Promise<boolean> {
+    if (conn.status !== BrokerConnectionStatus.NEEDS_RECONNECT || !this.refreshStillPromised(conn)) return false;
+    try {
+      const held = await this.tryLoginLock(conn);
+      try {
+        await this.refreshWithToken(conn);
+      } finally {
+        if (held) await this.unlockLogin(conn);
+      }
+    } catch (err) {
+      this.logger.warn(`Connexion Tradovate ${conn.id} toujours refusée : ${(err as Error).message}`);
+      return false;
+    }
     await this.prisma.brokerConnection.update({
       where: { id: conn.id },
-      data: this.tokenColumns(tokens, conn),
+      data: { status: BrokerConnectionStatus.CONNECTED, lastSyncError: null },
     });
+    this.logger.log(`Connexion Tradovate ${conn.id} ressuscitée : le login a de nouveau accepté le refresh.`);
+    return true;
+  }
+
+  /**
+   * Le compte choisi n'apparaît plus dans `/account/list` de son hôte. Trois issues, jamais une
+   * reconnexion (le token, lui, fonctionne) :
+   * - il est sur l'AUTRE hôte → on corrige `externalEnv` et la synchro continue ;
+   * - absent depuis moins de `ACCOUNT_GONE_GRACE_MS` → trou passager, on réessaiera ;
+   * - absent durablement (clôturé ou remplacé par la prop firm) → la connexion est détachée du
+   *   compte, la liste des comptes du login est relue : l'utilisateur choisit le suivant, sans
+   *   refaire le consentement.
+   */
+  async handleMissingAccount(conn: BrokerConnection, accessToken: string): Promise<BrokerConnection> {
+    const available = await this.discoverAccounts(accessToken);
+    const moved = available.find((a) => a.id === conn.externalAccountId);
+    if (moved) {
+      this.logger.warn(
+        `Compte Tradovate ${conn.externalAccountId} passé de ${conn.externalEnv} à ${moved.env} (connexion ${conn.id}).`,
+      );
+      return this.prisma.brokerConnection.update({
+        where: { id: conn.id },
+        data: { externalEnv: moved.env, availableAccounts: available as unknown as Prisma.InputJsonValue },
+      });
+    }
+
+    const lastOk = conn.lastSyncAt?.getTime() ?? 0;
+    if (Date.now() - lastOk < ACCOUNT_GONE_GRACE_MS) {
+      this.logger.warn(
+        `Compte Tradovate ${conn.externalAccountId} absent de la liste du login (connexion ${conn.id}) : ` +
+          `on patiente (${available.map((a) => `${a.id}@${a.env}`).join(', ') || 'liste vide'}).`,
+      );
+      throw new TradovateException('TRADOVATE_ACCOUNT_TEMPORARILY_MISSING');
+    }
+
+    this.logger.warn(
+      `Compte Tradovate ${conn.externalAccountName} (${conn.externalAccountId}) disparu du login depuis plus de ` +
+        `${ACCOUNT_GONE_GRACE_MS / 3_600_000} h (connexion ${conn.id}) : détaché, choix du compte redemandé ` +
+        `parmi ${available.map((a) => a.name).join(', ') || 'aucun'}.`,
+    );
+    await this.prisma.brokerConnection.update({
+      where: { id: conn.id },
+      data: {
+        externalAccountId: null,
+        externalAccountName: null,
+        externalEnv: null,
+        availableAccounts: available as unknown as Prisma.InputJsonValue,
+      },
+    });
+    throw new TradovateException('TRADOVATE_ACCOUNT_NOT_FOUND');
+  }
+
+  /**
+   * Échange le refresh_token (rotation incluse), persiste les nouveaux tokens chiffrés, puis les
+   * PROPAGE aux connexions sœurs du même login : elles détiennent la même autorisation OAuth, et
+   * sans ça leur copie vient d'être invalidée par cette rotation.
+   */
+  private async refreshWithToken(conn: BrokerConnection): Promise<string> {
+    const tokens = await this.api.refresh(decryptToken(conn.refreshTokenEnc as string, this.tokenKey()));
+    const columns = this.tokenColumns(tokens, conn);
+    await this.prisma.brokerConnection.update({ where: { id: conn.id }, data: columns });
+    await this.propagateToSiblings(conn, columns);
     return tokens.access_token as string;
+  }
+
+  /**
+   * Diffuse les tokens fraîchement obtenus à toutes les connexions du MÊME login (même user MTC,
+   * même `externalUserId`). Une sœur passée « à reconnecter » par une rotation concurrente l'a été
+   * à tort : le login vient de répondre, donc elle repart CONNECTED.
+   *
+   * Sans `externalUserId` (connexions d'avant cette correction), on ne sait pas qui est sœur de qui :
+   * on ne propage rien plutôt que de deviner.
+   */
+  private async propagateToSiblings(
+    conn: BrokerConnection,
+    columns: ReturnType<TradovateConnectionService['tokenColumns']>,
+  ): Promise<number> {
+    if (!conn.externalUserId) return 0;
+    const { count } = await this.prisma.brokerConnection.updateMany({
+      where: {
+        id: { not: conn.id },
+        userId: conn.userId,
+        provider: BrokerProvider.TRADOVATE,
+        externalUserId: conn.externalUserId,
+      },
+      data: { ...columns, status: BrokerConnectionStatus.CONNECTED, lastSyncError: null },
+    });
+    if (count > 0) {
+      this.logger.log(`Token Tradovate propagé à ${count} connexion(s) sœur(s) du login ${conn.externalUserId}.`);
+    }
+    return count;
+  }
+
+  /**
+   * Rattrapage du login pour les connexions créées avant cette correction : leur `externalUserId`
+   * est vide, donc elles ne sont sœurs de personne et ne bénéficient ni du verrou partagé ni de la
+   * propagation. La synchro lit déjà `/account/list`, qui porte le `userId` : on le pose au passage,
+   * une seule fois, sans appel réseau supplémentaire.
+   */
+  async rememberLogin(
+    conn: BrokerConnection,
+    externalUserId: number | undefined,
+    accountIdsOfLogin: string[] = [],
+  ): Promise<number> {
+    if (externalUserId == null) return 0;
+    const login = String(externalUserId);
+    // Tous les comptes que CE login expose : c'est ce qui permet de rattacher aussi les connexions
+    // sœurs DÉJÀ MORTES. Elles ne se synchronisent plus (le cron ignore NEEDS_RECONNECT), donc
+    // elles ne passeraient jamais ici d'elles-mêmes et resteraient orphelines — donc jamais
+    // ressuscitées par la propagation.
+    const ids = accountIdsOfLogin.length
+      ? accountIdsOfLogin
+      : conn.externalAccountId
+        ? [conn.externalAccountId]
+        : [];
+    if (ids.length === 0) return 0;
+    const { count } = await this.prisma.brokerConnection.updateMany({
+      where: {
+        userId: conn.userId,
+        provider: BrokerProvider.TRADOVATE,
+        externalUserId: null,
+        externalAccountId: { in: ids },
+      },
+      data: { externalUserId: login },
+    });
+    if (count > 0) {
+      this.logger.log(`Login Tradovate ${login} rattaché à ${count} connexion(s).`);
+    }
+    return count;
+  }
+
+  /** Clé du verrou de renouvellement : le login s'il est connu, sinon la connexion seule. */
+  private loginLockKey(conn: BrokerConnection): string {
+    return conn.externalUserId ? `tradovate:login:${conn.externalUserId}` : `tradovate:refresh:${conn.id}`;
+  }
+
+  /** Verrou de renouvellement. Redis indisponible → on laisse passer (comme `tryLock`). */
+  private async tryLoginLock(conn: BrokerConnection): Promise<boolean> {
+    try {
+      return (await this.redis.client.set(this.loginLockKey(conn), '1', 'EX', LOGIN_LOCK_TTL_S, 'NX')) === 'OK';
+    } catch (err) {
+      this.logger.warn(`Verrou de login Tradovate indisponible (${(err as Error).message}), on continue.`);
+      return true;
+    }
+  }
+
+  private async unlockLogin(conn: BrokerConnection): Promise<void> {
+    try {
+      await this.redis.client.del(this.loginLockKey(conn));
+    } catch {
+      // expirera seul (TTL)
+    }
+  }
+
+  /**
+   * Une connexion sœur renouvelle en ce moment : plutôt que de présenter un refresh_token qu'elle
+   * est en train de remplacer, on attend puis on relit. Si elle a propagé, son access token est
+   * déjà en base et il n'y a plus rien à demander à Tradovate.
+   */
+  private async awaitSiblingRefresh(conn: BrokerConnection): Promise<string | null> {
+    await this.wait(REFRESH_RETRY_DELAY_MS);
+    const fresh = await this.prisma.brokerConnection.findUnique({ where: { id: conn.id } });
+    if (!fresh || fresh.status === BrokerConnectionStatus.NEEDS_RECONNECT) return null;
+    if (fresh.accessTokenExpiresAt.getTime() - REFRESH_MARGIN_MS > Date.now()) {
+      this.logger.log(`Token Tradovate repris d'une connexion sœur (connexion ${conn.id}).`);
+      return decryptToken(fresh.accessTokenEnc, this.tokenKey());
+    }
+    return null;
   }
 
   /** Verrou de la connexion (cf. LOCK_TTL_S). Redis indisponible → on laisse passer. */
@@ -505,7 +746,9 @@ export class TradovateConnectionService {
     }
   }
 
-  async markNeedsReconnect(connectionId: string): Promise<void> {
+  /** `cause` est journalisée : chaque condamnation doit pouvoir s'expliquer après coup. */
+  async markNeedsReconnect(connectionId: string, cause: string): Promise<void> {
+    this.logger.warn(`Connexion Tradovate ${connectionId} → À RECONNECTER (${cause}).`);
     await this.prisma.brokerConnection.update({
       where: { id: connectionId },
       data: {
@@ -567,7 +810,10 @@ export class TradovateConnectionService {
       externalAccountName: conn.externalAccountName,
       externalEnv: conn.externalEnv,
       availableAccounts,
-      needsAccountSelection: !conn.externalAccountId && availableAccounts.length > 1,
+      // ≥ 1 et non > 1 : au consentement, un compte unique est choisi d'office (jamais ici) ; mais
+      // un compte disparu détache la connexion, et le suivant doit être choisi explicitement même
+      // s'il est seul — on ne verse pas les trades d'un autre compte broker sans le demander.
+      needsAccountSelection: !conn.externalAccountId && availableAccounts.length >= 1,
       lastSyncAt: conn.lastSyncAt,
       lastSyncError: conn.lastSyncError,
       tradesImported: conn.tradesImported,

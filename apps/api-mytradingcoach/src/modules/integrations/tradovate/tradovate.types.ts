@@ -112,4 +112,11 @@ export interface ExternalAccountRef {
   id: string;
   name: string;
   env: TradovateEnv;
+  /**
+   * `userId` Tradovate du compte = LE LOGIN. Plusieurs comptes (donc plusieurs connexions MTC)
+   * peuvent le partager, et Tradovate fait tourner le refresh_token par login, pas par compte :
+   * c'est la clé qui permet de sérialiser les renouvellements et de propager le token aux
+   * connexions sœurs. Optionnel : les connexions d'avant PROMPT-216 ne l'ont pas.
+   */
+  userId?: string;
 }

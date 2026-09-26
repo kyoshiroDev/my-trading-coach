@@ -260,6 +260,10 @@
               </div>
             } @else if (conn.needsAccountSelection) {
               <div class="acct-sub">
+                <!-- Compte disparu chez Tradovate : la connexion reste active, seul le compte est à rechoisir. -->
+                @if (conn.lastSyncError) {
+                  <span class="tv-text tv-reselect" [attr.data-testid]="'tradovate-reselect-reason-' + a.id">{{ conn.lastSyncError }}</span>
+                }
                 <mtc-tradovate-account-picker
                   [accounts]="conn.availableAccounts"
                   [busy]="busy === 'select' || busy === 'sync'"

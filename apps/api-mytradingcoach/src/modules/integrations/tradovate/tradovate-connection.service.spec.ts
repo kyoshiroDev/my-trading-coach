@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { BrokerConnection, BrokerConnectionStatus, BrokerProvider } from '@prisma/client';
 import { encryptToken } from '../../../common/utils/token-cipher.util';
-import { TradovateConnectionService } from './tradovate-connection.service';
+import { ACCOUNT_GONE_GRACE_MS, TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateApiError, TradovateException } from './tradovate.errors';
 
 /**
@@ -40,9 +40,11 @@ describe('TradovateConnectionService.getAccessToken', () => {
         update: vi.fn().mockResolvedValue({}),
         // Le réessai relit la connexion : par défaut, rien n'a bougé en base.
         findUnique: vi.fn().mockResolvedValue(conn),
+        // Propagation aux connexions sœurs du même login.
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
       },
     };
-    const api = { refresh: vi.fn(), renewAccessToken: vi.fn() };
+    const api = { refresh: vi.fn(), renewAccessToken: vi.fn(), get: vi.fn() };
     const redis = { client: { set: vi.fn().mockResolvedValue('OK'), del: vi.fn() } };
     const service = new TradovateConnectionService(prisma as never, api as never, config as never, redis as never);
     // Le délai entre les deux tentatives est réel en prod (2 s) ; inutile de le subir ici.
@@ -156,6 +158,105 @@ describe('TradovateConnectionService.getAccessToken', () => {
     });
   });
 
+  // ── Connexions sœurs d'un même login Tradovate (bug prod 21-23/09) ─────────────────────
+  // Tradovate fait tourner le refresh_token par LOGIN. Un login = plusieurs comptes = plusieurs
+  // connexions MTC, chacune avec sa copie : la première qui renouvelle invalide celle des autres.
+  describe('portée login', () => {
+    it('le renouvellement propage les nouveaux tokens aux connexions sœurs et les ressuscite', async () => {
+      const { service, prisma, api, conn } = setup({
+        externalUserId: '699523',
+        accessTokenExpiresAt: new Date(Date.now() - 1000),
+      });
+      prisma.brokerConnection.updateMany.mockResolvedValue({ count: 2 });
+      api.refresh.mockResolvedValue({ access_token: 'AT-2', expires_in: 4800, refresh_token: 'RT-2' });
+
+      await expect(service.getAccessToken(conn)).resolves.toBe('AT-2');
+
+      const [args] = prisma.brokerConnection.updateMany.mock.calls[0];
+      expect(args.where).toMatchObject({ externalUserId: '699523', userId: 'u1', id: { not: 'c1' } });
+      // Une sœur condamnée par une rotation concurrente l'avait été à tort : le login répond.
+      expect(args.data.status).toBe('CONNECTED');
+      expect(args.data.lastSyncError).toBeNull();
+      expect(args.data.accessTokenEnc).not.toContain('AT-2'); // toujours chiffré
+    });
+
+    it('sans login connu, aucune propagation : on ne devine pas qui est sœur de qui', async () => {
+      const { service, prisma, api, conn } = setup({
+        externalUserId: null,
+        accessTokenExpiresAt: new Date(Date.now() - 1000),
+      });
+      api.refresh.mockResolvedValue({ access_token: 'AT-2', expires_in: 4800 });
+
+      await service.getAccessToken(conn);
+      expect(prisma.brokerConnection.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('verrou pris par une sœur → on attend son token au lieu de rejouer le refresh', async () => {
+      const { service, prisma, api, conn, key } = setup({
+        externalUserId: '699523',
+        accessTokenExpiresAt: new Date(Date.now() - 1000),
+      });
+      const redis = (service as unknown as { redis: { client: { set: ReturnType<typeof vi.fn> } } }).redis;
+      redis.client.set.mockResolvedValue(null); // verrou déjà détenu par la connexion sœur
+      prisma.brokerConnection.findUnique.mockResolvedValue(
+        makeConn({
+          accessTokenEnc: encryptToken('AT-SOEUR', key),
+          accessTokenExpiresAt: new Date(Date.now() + 75 * 60_000),
+        }),
+      );
+
+      await expect(service.getAccessToken(conn)).resolves.toBe('AT-SOEUR');
+      expect(api.refresh).not.toHaveBeenCalled(); // aucun appel à Tradovate : inutile
+    });
+
+    it('verrou pris mais la sœur n’a rien donné → on tente quand même, jamais bloqué', async () => {
+      const { service, prisma, api, conn } = setup({
+        externalUserId: '699523',
+        accessTokenExpiresAt: new Date(Date.now() - 1000),
+      });
+      const redis = (service as unknown as { redis: { client: { set: ReturnType<typeof vi.fn> } } }).redis;
+      redis.client.set.mockResolvedValue(null);
+      prisma.brokerConnection.findUnique.mockResolvedValue(makeConn({ accessTokenExpiresAt: new Date(Date.now() - 1000) }));
+      api.refresh.mockResolvedValue({ access_token: 'AT-2', expires_in: 4800 });
+
+      await expect(service.getAccessToken(conn)).resolves.toBe('AT-2');
+      expect(api.refresh).toHaveBeenCalled();
+    });
+
+    it('rattrapage : atteint AUSSI les connexions sœurs déjà mortes', async () => {
+      // Elles ne se synchronisent plus (le cron ignore NEEDS_RECONNECT) : sans ce rattrapage par
+      // liste de comptes du login, elles resteraient orphelines et jamais ressuscitées.
+      const { service, prisma, conn } = setup({ externalUserId: null, externalAccountId: '40517838' });
+      prisma.brokerConnection.updateMany.mockResolvedValue({ count: 2 });
+
+      await service.rememberLogin(conn, 699523, ['40517838', '40570856']);
+
+      const [args] = prisma.brokerConnection.updateMany.mock.calls[0];
+      expect(args.where).toMatchObject({
+        userId: 'u1',
+        externalUserId: null,
+        externalAccountId: { in: ['40517838', '40570856'] },
+      });
+      expect(args.data).toEqual({ externalUserId: '699523' });
+    });
+
+    it('rattrapage : ne touche que les connexions sans login (les autres gardent le leur)', async () => {
+      const { service, prisma, conn } = setup({ externalUserId: '699523' });
+      await service.rememberLogin(conn, 699523, ['40517838']);
+      // Le filtre `externalUserId: null` protège les connexions déjà rattachées.
+      expect(prisma.brokerConnection.updateMany.mock.calls[0][0].where.externalUserId).toBeNull();
+    });
+
+    it('le verrou porte sur le LOGIN, pas sur la connexion', async () => {
+      const { service, api, conn } = setup({ externalUserId: '699523', accessTokenExpiresAt: new Date(Date.now() - 1000) });
+      const redis = (service as unknown as { redis: { client: { set: ReturnType<typeof vi.fn> } } }).redis;
+      api.refresh.mockResolvedValue({ access_token: 'AT-2', expires_in: 4800 });
+
+      await service.getAccessToken(conn);
+      expect(redis.client.set).toHaveBeenCalledWith('tradovate:login:699523', '1', 'EX', 30, 'NX');
+    });
+  });
+
   it('Tradovate injoignable pendant le refresh → erreur « injoignable », connexion PAS invalidée', async () => {
     const { service, api, prisma, conn } = setup({ accessTokenExpiresAt: new Date(Date.now() - 1000) });
     api.refresh.mockRejectedValue(new TradovateApiError('unavailable', 503, 'oauthtoken'));
@@ -203,5 +304,132 @@ describe('TradovateConnectionService.getAccessToken', () => {
   it('connexion déjà à reconnecter → erreur immédiate', async () => {
     const { service, conn } = setup({ status: BrokerConnectionStatus.NEEDS_RECONNECT });
     await expect(service.getAccessToken(conn)).rejects.toBeInstanceOf(TradovateException);
+  });
+
+  // ── « Connecté tant qu'il ne clique pas sur Déconnecter » (bug prod 2026-09-26) ──────────
+  describe('refus passager : la connexion n’est condamnée qu’à l’échéance annoncée', () => {
+    const vivantJusquA = () => new Date(Date.now() + 10 * 3600_000);
+
+    it('refusé deux fois, renew impossible, refresh_token encore annoncé valide → gardée, erreur passagère', async () => {
+      const { service, api, prisma, conn } = setup({
+        accessTokenExpiresAt: new Date(Date.now() - 1000),
+        refreshTokenExpiresAt: vivantJusquA(),
+      });
+      api.refresh.mockRejectedValue(refusé());
+
+      await expect(service.getAccessToken(conn)).rejects.toMatchObject({ code: 'TRADOVATE_REFRESH_DEFERRED' });
+      const statuts = prisma.brokerConnection.update.mock.calls.map((c) => c[0].data.status);
+      expect(statuts).not.toContain('NEEDS_RECONNECT');
+    });
+
+    it('cron : même cas → « retry », jamais « reconnect »', async () => {
+      const { service, api, prisma, conn } = setup({
+        accessTokenExpiresAt: new Date(Date.now() - 1000),
+        refreshTokenExpiresAt: vivantJusquA(),
+      });
+      api.refresh.mockRejectedValue(refusé());
+      await expect(service.refreshNow(conn)).resolves.toBe('retry');
+      expect(prisma.brokerConnection.update).not.toHaveBeenCalled();
+    });
+
+    it('refresh_token échu et refusé → là seulement, à reconnecter', async () => {
+      const { service, api, prisma, conn } = setup({
+        accessTokenExpiresAt: new Date(Date.now() - 1000),
+        refreshTokenExpiresAt: new Date(Date.now() - 1000),
+      });
+      api.refresh.mockRejectedValue(refusé());
+      await expect(service.getAccessToken(conn)).rejects.toMatchObject({ code: 'TRADOVATE_RECONNECT_REQUIRED' });
+      expect(prisma.brokerConnection.update.mock.calls[0][0].data.status).toBe('NEEDS_RECONNECT');
+    });
+  });
+
+  describe('tryRevive (seconde chance du cron)', () => {
+    it('connexion condamnée à tort, Tradovate accepte → CONNECTED, erreur effacée', async () => {
+      const { service, api, prisma, conn } = setup({
+        status: BrokerConnectionStatus.NEEDS_RECONNECT,
+        refreshTokenExpiresAt: new Date(Date.now() + 3600_000),
+      });
+      api.refresh.mockResolvedValue({ access_token: 'AT-2', expires_in: 4800, refresh_token: 'RT-2' });
+
+      await expect(service.tryRevive(conn)).resolves.toBe(true);
+      const last = prisma.brokerConnection.update.mock.calls.at(-1)?.[0].data;
+      expect(last).toEqual({ status: 'CONNECTED', lastSyncError: null });
+    });
+
+    it('toujours refusée → reste à reconnecter, sans lever', async () => {
+      const { service, api, prisma, conn } = setup({
+        status: BrokerConnectionStatus.NEEDS_RECONNECT,
+        refreshTokenExpiresAt: new Date(Date.now() + 3600_000),
+      });
+      api.refresh.mockRejectedValue(refusé());
+      await expect(service.tryRevive(conn)).resolves.toBe(false);
+      expect(prisma.brokerConnection.update).not.toHaveBeenCalled();
+    });
+
+    it('refresh_token échu → on ne tente même pas', async () => {
+      const { service, api, conn } = setup({
+        status: BrokerConnectionStatus.NEEDS_RECONNECT,
+        refreshTokenExpiresAt: new Date(Date.now() - 1000),
+      });
+      await expect(service.tryRevive(conn)).resolves.toBe(false);
+      expect(api.refresh).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('handleMissingAccount (compte absent de /account/list)', () => {
+    const compte = (id: number, name: string) => ({ id, name, userId: 42, closed: false });
+
+    function listes(api: { get: ReturnType<typeof vi.fn> }, live: unknown[], demo: unknown[]) {
+      api.get.mockImplementation(async (env: string) => (env === 'live' ? live : demo));
+    }
+
+    it('compte passé sur l’autre hôte → externalEnv corrigé, pas d’erreur', async () => {
+      const { service, api, prisma, conn } = setup({ externalAccountId: '66948823', externalEnv: 'demo' });
+      listes(api, [compte(66948823, 'FTD')], []);
+      prisma.brokerConnection.update.mockResolvedValue(makeConn({ externalEnv: 'live' }));
+
+      await expect(service.handleMissingAccount(conn, 'AT')).resolves.toMatchObject({ externalEnv: 'live' });
+      expect(prisma.brokerConnection.update.mock.calls[0][0].data.externalEnv).toBe('live');
+    });
+
+    it('absent depuis peu → trou passager, rien de détaché', async () => {
+      const { service, api, prisma, conn } = setup({
+        externalAccountId: '66948823',
+        externalEnv: 'demo',
+        lastSyncAt: new Date(Date.now() - 30 * 60_000),
+      });
+      listes(api, [], [compte(66430016, 'PTLOP')]);
+
+      await expect(service.handleMissingAccount(conn, 'AT')).rejects.toMatchObject({
+        code: 'TRADOVATE_ACCOUNT_TEMPORARILY_MISSING',
+      });
+      expect(prisma.brokerConnection.update).not.toHaveBeenCalled();
+    });
+
+    it('absent durablement → détaché, comptes du login relus, statut CONNECTED conservé', async () => {
+      const { service, api, prisma, conn } = setup({
+        externalAccountId: '66948823',
+        externalAccountName: 'FTD',
+        externalEnv: 'demo',
+        lastSyncAt: new Date(Date.now() - ACCOUNT_GONE_GRACE_MS - 60_000),
+      });
+      listes(api, [], [compte(66430016, 'PTLOP')]);
+
+      await expect(service.handleMissingAccount(conn, 'AT')).rejects.toMatchObject({
+        code: 'TRADOVATE_ACCOUNT_NOT_FOUND',
+      });
+      const data = prisma.brokerConnection.update.mock.calls[0][0].data;
+      expect(data).toMatchObject({ externalAccountId: null, externalEnv: null });
+      expect(data.availableAccounts).toEqual([{ id: '66430016', name: 'PTLOP', env: 'demo', userId: '42' }]);
+      expect(data.status).toBeUndefined(); // jamais « à reconnecter » : le token marche
+    });
+
+    it('détachée avec un seul compte restant → le choix est quand même demandé', () => {
+      const { service } = setup();
+      const view = (service as unknown as { toView: (c: BrokerConnection) => { needsAccountSelection: boolean } }).toView(
+        makeConn({ externalAccountId: null, availableAccounts: [{ id: '1', name: 'X', env: 'demo' }] as never }),
+      );
+      expect(view.needsAccountSelection).toBe(true);
+    });
   });
 });

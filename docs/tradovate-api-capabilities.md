@@ -162,6 +162,11 @@ ces endpoints n'accepte `startDate` / `endDate` : leurs seuls paramètres sont `
 
 ## 4. Historique et reporting
 
+> ✅ **RÉSOLU (2026-09-26).** Le support NinjaTrader a confirmé le 23/09 que la Reporting API
+> s'utilise avec notre jeton OAuth lecture seule. Vérifié sur comptes réels, prop firm compris, et
+> **implémenté** (`TradovateReportingClient` + `TradovateHistoryService`). Le schéma exact, les
+> pièges et les mesures sont en fin de section.
+
 ### Les serveurs `rpt-*` : non documentés
 
 - **Aucune occurrence** de `rpt-live`, `rpt-demo`, `fill_history`, `position_history` ou
@@ -445,3 +450,67 @@ bon libellé et la bonne devise (`currencyId` résolu via `/currency/item`).
 4. **Courbe d'equity maison à partir de `netLiq`** — remplace les règles prop firm refusées.
 5. **Frais, resets et payouts** — seulement en accumulation continue.
 6. **Graphique du trade** — bloqué tant que les cotations sont refusées.
+
+
+---
+
+## 10. Reporting API — schéma réel et import de l'historique
+
+Reconstitué le 2026-09-26 en lisant les messages d'erreur du serveur : **rien n'est documenté**.
+
+```http
+POST https://rpt-{demo|live}.tradovateapi.com/v1/reports/requestReport
+{
+  "name": "Performance",
+  "representationType": "csv",
+  "timezone": 0,
+  "params": [
+    { "name": "startDate", "value": "9/1/2026" },
+    { "name": "endDate",   "value": "9/26/2026" },
+    { "name": "account",   "value": "APEX4280470000012" }
+  ]
+}
+```
+
+**Quatre pièges**, chacun silencieux ou trompeur :
+
+| Piège | Symptôme |
+|---|---|
+| `timezone` doit être un **nombre** | `Invalid JSON: illegal number` |
+| dates en **`M/D/YYYY`** | l'ISO `2026-09-26` renvoie **HTTP 500** |
+| `params` est un **tableau** de `{name, value}` | `expected '[' or null` |
+| `account` = le **NOM** du compte | `account is not found (ID:0)` avec l'id |
+
+**Et une règle de performance** : toujours passer `account`. Sans lui, Position History met 43 s,
+Account Balance History 60 s, Cash History dépasse 120 s et expire. Avec lui : **150 à 270 ms**.
+
+- **Synchrone** : la réponse porte `{ "data": "<csv>" }`. Ni identifiant de tâche, ni attente.
+- **Fenêtre maximale** : 63 jours passent, 92 sont refusés (`Too long range`) → découpage mensuel.
+- **Authentification réelle** : jeton bidon → `401 Access is denied`. Un jeton expiré donne
+  `Expired Access Token` — message différent, à ne pas confondre.
+- **CSV avec guillemets** : `"123,714.00"` — un `split(',')` naïf découpe faux.
+
+### ⚠️ Les frais viennent de `Fills`, pas de `Cash History`
+
+L'import CSV manuel relie une commission à son fill par la convention **`txnId − 1 = fillId`**.
+**Elle ne tient pas.** Mesuré le 2026-09-26 sur un compte réel : **0 correspondance sur 291**, avec
+un décalage variable d'une ligne à l'autre (−2 n'en rattrapait que 117). Un import qui s'y fierait
+produirait un P&L **brut** en silence — la fusion « réussit » en n'attribuant rien.
+
+Le rapport **`Fills`** porte le `Fill ID` **et** sa `commission` : jointure exacte, vérifiée
+**291/291 et au centime** (266,40 $). C'est lui que l'import historique utilise.
+
+### Pourquoi l'import a tenu en si peu de code
+
+Le CSV de `Performance` est **byte-compatible** avec l'export que l'import CSV sait déjà lire :
+même en-tête (`buyFillId` / `sellFillId` déclenchent la détection `tradovate`), mêmes index de
+colonnes, même P&L comptable `$(8.50)` déjà géré par `parseTradovatePnl`. Et `Cash History`
+correspond au fichier de frais attendu (`Transaction ID` / `Delta` / `Cash Change Type`), avec les
+mêmes libellés `Commission` et `Trade Paired`, et la même convention `txnId − 1 = fillId`.
+
+L'import ne réécrit donc **aucun mapping** : il passe par `CsvImportService` puis
+`TradesService.importTrades` — même dédup, y compris inter-sources (CSV sans fuseau ↔ API en UTC),
+donc aucun doublon avec les trades déjà remontés par la synchro live.
+
+⏳ **Importer tôt** : Tradovate archive un compte inactif ou en échec au bout de 10 jours, et son
+historique devient alors illisible. D'où le déclenchement dès la connexion, sans attendre.

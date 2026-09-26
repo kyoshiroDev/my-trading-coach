@@ -14,7 +14,7 @@ function setup(conns: { id: string; userId: string; accountId: string }[], liveU
   return { cron, prisma, connections, sync, live };
 }
 
-describe('Tradovate — rafraîchissement de fond (30 min)', () => {
+describe('Tradovate — rafraîchissement de fond (15 min)', () => {
   it('synchronise les connexions en retard, saute celles dont l’app est ouverte', async () => {
     const { cron, sync } = setup(
       [{ id: 'c1', userId: 'u1', accountId: 'a1' }, { id: 'c2', userId: 'u2', accountId: 'a2' }],
@@ -22,10 +22,24 @@ describe('Tradovate — rafraîchissement de fond (30 min)', () => {
     );
     expect(await cron.refreshStale()).toEqual({ synced: 1, created: 2, live: 1, failed: 0 });
     expect(sync.sync).toHaveBeenCalledTimes(1);
-    expect(sync.sync).toHaveBeenCalledWith('u1', 'a1');
+    expect(sync.sync).toHaveBeenCalledWith('u1', 'a1', { history: expect.any(Boolean) });
   });
 
-  it('ne cible que les connexions actives, choisies, hors démo, sans synchro depuis 25 min', async () => {
+  it('le rattrapage mensuel ne tourne qu’au PREMIER passage de chaque heure', async () => {
+    // Deux appels Reporting par connexion et par heure suffisent : ce rattrapage ne comble que
+    // ce que la séance n'expose pas. Les 3 autres passages de l'heure restent en synchro seule.
+    const { cron, sync } = setup([{ id: 'c1', userId: 'u1', accountId: 'a1' }]);
+    await cron.refreshStale(new Date('2026-09-26T10:07:00Z'));
+    expect(sync.sync).toHaveBeenLastCalledWith('u1', 'a1', { history: true });
+
+    sync.sync.mockClear();
+    for (const minute of ['10:22', '10:37', '10:52']) {
+      await cron.refreshStale(new Date(`2026-09-26T${minute}:00Z`));
+      expect(sync.sync).toHaveBeenLastCalledWith('u1', 'a1', { history: false });
+    }
+  });
+
+  it('ne cible que les connexions actives, choisies, hors démo, sans synchro depuis 12 min', async () => {
     const { cron, prisma } = setup([]);
     const now = new Date('2026-09-12T12:00:00Z');
     await cron.refreshStale(now);
