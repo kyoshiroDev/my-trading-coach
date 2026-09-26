@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BrokerConnection } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { TradeSource } from '@prisma/client';
 import { TradesService } from '../../trades/trades.service';
 import { SetupsService } from '../../setups/setups.service';
 import type { CreateTradeDto } from '../../trades/dto/create-trade.dto';
@@ -208,7 +209,7 @@ export class TradovateSyncService {
       return dto;
     });
 
-    const imported = await this.trades.importTrades(userId, dtos);
+    const imported = await this.trades.importTrades(userId, dtos, TradeSource.BROKER_SYNC);
     // Ce que Tradovate a renvoyé, pas seulement ce qui a été créé (PROMPT-212) : distingue
     // « rien renvoyé » de « données écartées » (autre compte du login, paire orpheline).
     this.logger.log(

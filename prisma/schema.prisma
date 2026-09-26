@@ -136,6 +136,20 @@ model ReferralReward {
   @@index([parrainId])
 }
 
+/// Provenance d'un trade — d'ou vient la ligne, pas ce qu'elle vaut (PROMPT-217).
+/// Sert a l'affichage (badge) et au diagnostic : un ecart de frais ou de P&L se lit
+/// differemment selon qu'il vient d'une saisie, d'un CSV ou du broker.
+enum TradeSource {
+  /// Saisi a la main dans l'app.
+  MANUAL
+  /// Import d'un fichier CSV/Excel par l'utilisateur.
+  CSV_IMPORT
+  /// Synchro live du broker (Trade API) : la seance en cours.
+  BROKER_SYNC
+  /// Import de l'historique du broker (Reporting API) : les mois passes.
+  BROKER_HISTORY
+}
+
 model Trade {
   id             String          @id @default(cuid())
   userId         String
@@ -174,6 +188,9 @@ model Trade {
   account        TradingAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
   tradedAt       DateTime        @default(now())
   createdAt      DateTime        @default(now())
+  /// Provenance de la ligne. `MANUAL` par défaut : c'est le cas des trades existants,
+  /// et celui d'une saisie. Les imports la posent explicitement.
+  source         TradeSource     @default(MANUAL)
   /// Empreinte d'un trade IMPORTÉ (asset+side+tradedAt+entry+exit+pnl), posée par
   /// `importTrades`. `null` pour les trades saisis à la main : en Postgres, plusieurs
   /// NULL ne violent pas une contrainte d'unique, donc la saisie manuelle n'est pas

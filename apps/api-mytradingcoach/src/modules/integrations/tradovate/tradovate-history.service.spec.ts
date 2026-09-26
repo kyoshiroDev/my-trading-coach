@@ -81,7 +81,8 @@ describe('TradovateHistoryService — import de l’historique', () => {
     const r = await service.importHistory('u1', conn(), { months: 1 });
 
     expect(r.created).toBe(2);
-    expect(trades.importTrades).toHaveBeenCalledWith('u1', expect.any(Array));
+    // La provenance est posée : ces trades viennent de l'historique broker, pas d'un CSV.
+    expect(trades.importTrades).toHaveBeenCalledWith('u1', expect.any(Array), 'BROKER_HISTORY');
     const [gagnant, perdant] = persiste[0];
     expect(gagnant.asset).toBe('MNQ');
     expect(gagnant.pnl).toBe(22);
@@ -94,6 +95,14 @@ describe('TradovateHistoryService — import de l’historique', () => {
     expect(gagnant.setupId).toBe('setup-import');
     // Métadonnées de rapprochement : jamais persistées.
     expect(gagnant).not.toHaveProperty('_buyFillId');
+  });
+
+  it('la provenance distingue historique et synchro live', async () => {
+    // Deux chemins, deux sources : un écart de frais ou de P&L ne se lit pas pareil selon
+    // qu'il vient de la séance (Trade API) ou d'un rapport mensuel (Reporting API).
+    const { service, trades } = setup({ Performance: PERFORMANCE_CSV, Fills: FILLS_CSV });
+    await service.importHistory('u1', conn(), { months: 1 });
+    expect(trades.importTrades.mock.calls[0][2]).toBe('BROKER_HISTORY');
   });
 
   it('interroge Tradovate avec le nom RELU du compte, pas celui stocké en base', async () => {

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BrokerConnection } from '@prisma/client';
+import { BrokerConnection, TradeSource } from '@prisma/client';
 import { TradesService } from '../../trades/trades.service';
 import { SetupsService } from '../../setups/setups.service';
 import { preprocessCsv, mapNormalizedCsvToDto, type ImportDto } from '../../trades/csv-parsers';
@@ -175,7 +175,7 @@ export class TradovateHistoryService {
     // Les ids de fill sont des métadonnées de rapprochement : jamais persistées.
     const clean = dtos.map(({ _buyFillId: _b, _sellFillId: _s, ...rest }) => rest);
 
-    const imported = await this.trades.importTrades(userId, clean);
+    const imported = await this.trades.importTrades(userId, clean, TradeSource.BROKER_HISTORY);
     result.created += imported.created;
     result.duplicates += imported.duplicates;
     result.failed += imported.failed;
