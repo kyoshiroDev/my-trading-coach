@@ -438,13 +438,42 @@ describe('Tradovate — synchro', () => {
     expect(conn.accessTokenExpiresAt.getTime()).toBeGreaterThan(Date.now());
   });
 
-  it('refresh refusé et token expiré → 409 TRADOVATE_RECONNECT_REQUIRED, connexion à reconnecter', async () => {
+  // Objectif produit (2026-09-26) : connecté tant que l'utilisateur ne clique pas sur Déconnecter.
+  // Un refus alors que Tradovate annonce le refresh_token valide est passager : on garde la connexion.
+  it('refresh refusé, refresh_token encore annoncé valide → 503 TRADOVATE_REFRESH_DEFERRED, connexion gardée', async () => {
     const { id: userId, token } = await registerUser();
     const account = await createAccount(userId, 'Compte');
     await connect(token, account.id);
     await prisma.brokerConnection.updateMany({
       where: { accountId: account.id },
-      data: { accessTokenExpiresAt: new Date(Date.now() - 60_000) },
+      data: {
+        accessTokenExpiresAt: new Date(Date.now() - 60_000),
+        refreshTokenExpiresAt: new Date(Date.now() + 10 * 3600_000),
+      },
+    });
+    refreshMode = 'refused';
+
+    const res = await api(token, `/accounts/${account.id}/sync`, 'POST');
+    expect(res.status).toBe(503);
+    const body = (await res.json()) as { code: string };
+    expect(body.code).toBe('TRADOVATE_REFRESH_DEFERRED');
+
+    const conn = await prisma.brokerConnection.findFirstOrThrow({ where: { accountId: account.id } });
+    expect(conn.status).toBe(BrokerConnectionStatus.CONNECTED);
+    expect(conn.lastSyncError).toMatch(/réessaie automatiquement/);
+  });
+
+  it('refresh refusé et refresh_token échu → 409 TRADOVATE_RECONNECT_REQUIRED, connexion à reconnecter', async () => {
+    const { id: userId, token } = await registerUser();
+    const account = await createAccount(userId, 'Compte');
+    await connect(token, account.id);
+    await prisma.brokerConnection.updateMany({
+      where: { accountId: account.id },
+      data: {
+        accessTokenExpiresAt: new Date(Date.now() - 60_000),
+        // Seul cas de condamnation : Tradovate ne promet plus rien.
+        refreshTokenExpiresAt: new Date(Date.now() - 60_000),
+      },
     });
     refreshMode = 'refused';
 
