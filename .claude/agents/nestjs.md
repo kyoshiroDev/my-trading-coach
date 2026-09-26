@@ -736,6 +736,22 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
     **transitoire** (mesuré : refus d'un token jamais utilisé émis 1 h 50 plus tôt).
   - `TradovateTokenRefreshCron` (toutes les 6 h, celles qui expirent sous 18 h) n'est PAS ce qui
     maintient la connexion au quotidien : c'est le cron de fond / la synchro qui rafraîchissent.
+  - **Portée LOGIN, pas connexion** (correctif du 2026-09-26). Tradovate fait tourner le
+    refresh_token par **login** (`userId` Tradovate) ; un login porte souvent plusieurs comptes,
+    donc plusieurs `BrokerConnection`, chacune avec SA copie des tokens. La première qui renouvelle
+    invalide celle des autres — c'est ce qui tuait 2 des 5 connexions d'un ambassadeur.
+    - `externalUserId` (colonne qui existait mais n'était **jamais écrite**) est posé au
+      consentement et au choix du compte, et **rattrapé** par la synchro via `rememberLogin`
+      (le `/account/list` qu'elle fait déjà porte le `userId`) pour les connexions antérieures.
+    - Verrou `tradovate:login:<externalUserId>` (TTL 30 s) autour du SEUL renouvellement — distinct
+      du verrou de synchro `tradovate:sync:<id>` (TTL 120 s), pour que deux comptes d'un même login
+      puissent continuer à se synchroniser en parallèle.
+    - Verrou déjà pris → on attend puis on relit : la sœur a propagé, son access token est en base.
+      Si elle n'a rien donné, on tente quand même (jamais bloqué par un verrou).
+    - Après un renouvellement réussi, `propagateToSiblings` écrit les nouveaux tokens sur toutes les
+      connexions du même login **et les repasse `CONNECTED`** : une sœur condamnée par une rotation
+      concurrente l'avait été à tort, le login vient de répondre.
+    - Sans `externalUserId`, aucune propagation : on ne devine pas les liens de parenté.
   - Détail cluster : en prod l'API tourne en **4 workers**, seul le worker 0 porte
     `IS_CRON_WORKER=true` (`main.ts`, `cluster.fork`). `docker exec printenv IS_CRON_WORKER`
     répond « absent » — il lit l'env du conteneur, pas celui du worker. Vérifier via

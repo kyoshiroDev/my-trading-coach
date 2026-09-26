@@ -121,6 +121,13 @@ export class TradovateSyncService {
     const accounts = await get<TradovateAccount[]>('/account/list');
     const account = accounts.find((a) => a.id === externalId);
     if (!account) throw new TradovateException('TRADOVATE_ACCOUNT_NOT_FOUND');
+    // Au passage : rattache le login aux connexions d'avant la correction (verrou + propagation),
+    // y compris les sœurs mortes, que ce `/account/list` révèle comme appartenant au même login.
+    await this.connections.rememberLogin(
+      conn,
+      account.userId,
+      accounts.filter((a) => a.userId === account.userId).map((a) => String(a.id)),
+    );
 
     const [positions, allPairs] = await Promise.all([
       get<TradovatePosition[]>('/position/list'),
