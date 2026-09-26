@@ -85,11 +85,15 @@ export class TradovateController {
     return this.connections.selectAccount(user.id, accountId, dto.externalAccountId);
   }
 
-  /** Synchro manuelle (bouton « Synchroniser »). Pas de cron en V1. */
+  /**
+   * Bouton « Synchroniser » : séance en cours (Trade API) ET rattrapage du mois via la
+   * Reporting API. Un seul geste pour l'utilisateur — il demande « récupère mes trades »,
+   * pas « récupère la séance ouverte ». Le découpage entre les deux API est notre problème.
+   */
   @Post('accounts/:accountId/sync')
   @Throttle({ default: { ttl: 60_000, limit: 6 } })
   sync(@CurrentUser() user: { id: string }, @Param('accountId') accountId: string) {
-    return this.syncService.sync(user.id, accountId);
+    return this.syncService.sync(user.id, accountId, { history: true });
   }
 
   /**

@@ -6,8 +6,8 @@ import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateLiveService } from './tradovate-live.service';
 import { TradovateSyncService } from './tradovate-sync.service';
 
-/** Connexion « à rafraîchir » : aucune synchro depuis 25 min (cron toutes les 30 min). */
-export const BACKGROUND_STALE_MS = 25 * 60 * 1000;
+/** Connexion « à rafraîchir » : aucune synchro depuis 12 min (cron toutes les 15 min). */
+export const BACKGROUND_STALE_MS = 12 * 60 * 1000;
 
 /**
  * Filet de fond (PROMPT-210 live) — PAS du temps réel.
@@ -18,7 +18,10 @@ export const BACKGROUND_STALE_MS = 25 * 60 * 1000;
  * des jours.
  *
  * - Ne duplique jamais le WebSocket : un user dont l'app est ouverte (bail live) est sauté.
- * - Synchros récentes (< 25 min) sautées ; comptes démo exclus (règle CLAUDE.md).
+ * - Synchros récentes (< 12 min) sautées ; comptes démo exclus (règle CLAUDE.md).
+ * - Le rattrapage du mois par la Reporting API ne tourne qu'au PREMIER passage de chaque heure :
+ *   il ne sert qu'à combler ce que la séance n'expose pas (API arrêtée pendant un trade), deux
+ *   appels par heure et par connexion suffisent. Pas d'état en base : la minute décide.
  * - Même chemin et même verrou que le bouton : dédup `importHash`, aucune logique en double.
  * - Séquentiel, sur le seul worker cron du cluster (ScheduleModule conditionnel, app.module).
  */
@@ -33,7 +36,7 @@ export class TradovateBackgroundRefreshCron {
     private readonly live: TradovateLiveService,
   ) {}
 
-  @Cron('7,37 * * * *', { timeZone: 'Europe/Paris' })
+  @Cron('*/15 * * * *', { timeZone: 'Europe/Paris' })
   async scheduledRefresh(): Promise<void> {
     await this.refreshStale();
   }
@@ -45,6 +48,8 @@ export class TradovateBackgroundRefreshCron {
     failed: number;
   }> {
     const result = { synced: 0, created: 0, live: 0, failed: 0 };
+    // Premier passage de l'heure (minute < 15) : on y ajoute le rattrapage mensuel.
+    const avecHistorique = now.getMinutes() < 15;
     try {
       this.connections.assertConfigured();
     } catch {
@@ -69,7 +74,7 @@ export class TradovateBackgroundRefreshCron {
         continue;
       }
       try {
-        const r = await this.sync.sync(c.userId, c.accountId);
+        const r = await this.sync.sync(c.userId, c.accountId, { history: avecHistorique });
         result.synced++;
         result.created += r.created;
       } catch (err) {
@@ -81,8 +86,9 @@ export class TradovateBackgroundRefreshCron {
 
     if (due.length > 0) {
       this.logger.log(
-        `Tradovate (fond) : ${result.synced} synchronisée(s), ${result.created} trade(s) créé(s), ` +
-          `${result.live} en direct, ${result.failed} en échec (sur ${due.length}).`,
+        `Tradovate (fond${avecHistorique ? ' + historique' : ''}) : ${result.synced} synchronisée(s), ` +
+          `${result.created} trade(s) créé(s), ${result.live} en direct, ${result.failed} en échec ` +
+          `(sur ${due.length}).`,
       );
     }
     return result;

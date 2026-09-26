@@ -563,6 +563,7 @@ Toujours passer `{ userId, feature }` dans les options. Features valides :
 | `EcoCalendarCron` | `0 7 * * 1-5` Paris | Pré-génère le calendrier pour tous les users Premium |
 | `DemoSeedCron` | `20 3 * * *` Paris | Re-seed le compte démo (dates relatives recalculées) |
 | `TradovateTokenRefreshCron` | `17 */6 * * *` Paris | Renouvelle les tokens Tradovate qui expirent sous 18 h (aucun import de trades, hors démo) |
+| `TradovateBackgroundRefreshCron` | `*/15 * * * *` Paris | Synchro de fond des connexions sans synchro depuis 12 min (hors démo, hors app ouverte). **Au 1er passage de chaque heure seulement** (minute < 15), ajoute le rattrapage du mois par la Reporting API |
 
 ### Compte démo : le seed doit rester récurrent (PROMPT-192)
 

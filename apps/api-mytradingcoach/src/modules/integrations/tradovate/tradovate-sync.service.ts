@@ -7,6 +7,7 @@ import type { CreateTradeDto } from '../../trades/dto/create-trade.dto';
 import type { FeesReport } from '../../trades/csv-import.service';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateConnectionService } from './tradovate-connection.service';
+import { TradovateHistoryService } from './tradovate-history.service';
 import { TradovateApiError, TradovateException } from './tradovate.errors';
 import { mapTradovatePairs } from './tradovate-trade.mapper';
 import { describeTradovateSnapshot } from './tradovate-sync-diagnostics';
@@ -62,12 +63,23 @@ export class TradovateSyncService {
     private readonly prisma: PrismaService,
     private readonly api: TradovateApiClient,
     private readonly connections: TradovateConnectionService,
+    private readonly history: TradovateHistoryService,
     private readonly trades: TradesService,
     private readonly setups: SetupsService,
   ) {}
 
-  async sync(userId: string, accountId: string): Promise<TradovateSyncResult> {
-    this.connections.assertConfigured();
+  async sync(
+    userId: string,
+    accountId: string,
+    /**
+     * `history: true` → la séance est complétée par un rattrapage du MOIS EN COURS via la
+     * Reporting API. La Trade API ne montre que la séance ouverte : sans ça, tout ce qui a été
+     * tradé pendant que l'API était arrêtée (déploiement, panne réseau) serait perdu pour
+     * toujours, Tradovate ne réexposant jamais une séance passée.
+     */
+    options: { history?: boolean } = {},
+  ): Promise<TradovateSyncResult> {
+        this.connections.assertConfigured();
     const conn = await this.connections.getConnection(userId, accountId);
     if (!conn.externalAccountId || !conn.externalEnv) {
       throw new TradovateException('TRADOVATE_ACCOUNT_SELECTION_REQUIRED');
@@ -79,6 +91,7 @@ export class TradovateSyncService {
 
     try {
       const result = await this.run(userId, conn);
+      if (options.history) result.created += await this.topUpCurrentMonth(userId, conn);
       await this.prisma.brokerConnection.update({
         where: { id: conn.id },
         data: {
@@ -107,6 +120,24 @@ export class TradovateSyncService {
       throw exception ?? err;
     } finally {
       await this.connections.unlock(conn.id);
+    }
+  }
+
+  /**
+   * Rattrapage du mois en cours par la Reporting API. Jamais bloquant : un rapport indisponible
+   * ne doit pas faire échouer une synchro qui, elle, a réussi. Les doublons avec la séance qu'on
+   * vient de lire sont écartés par `importTrades` (dédup inter-sources, fuseau compris).
+   */
+  private async topUpCurrentMonth(userId: string, conn: BrokerConnection): Promise<number> {
+    try {
+      const r = await this.history.importHistory(userId, conn, { months: 1 });
+      if (r.created > 0) {
+        this.logger.log(`Rattrapage mensuel Tradovate : ${r.created} trade(s) que la séance n'exposait pas.`);
+      }
+      return r.created;
+    } catch (err) {
+      this.logger.warn(`Rattrapage mensuel Tradovate ignoré (${(err as Error).message}).`);
+      return 0;
     }
   }
 
