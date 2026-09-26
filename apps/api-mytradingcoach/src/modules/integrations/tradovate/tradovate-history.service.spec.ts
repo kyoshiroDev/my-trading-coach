@@ -311,17 +311,18 @@ describe('TradovateHistoryService — profondeur de l’import', () => {
   });
 
   /**
-   * Ce qui rend la profondeur réellement atteignable. Sans cette règle, une connexion existante
-   * ne remonterait jamais son passé : le bouton comme le cron ne demandent que le mois en cours,
-   * et l'import complet ne tourne qu'à la connexion — donc jamais pour qui est déjà connecté.
+   * La profondeur demandée est un contrat, jamais « corrigée » pour bien faire. L'appelant qui ne
+   * demande qu'un mois, c'est le plus souvent le bouton « Synchroniser » : quelqu'un attend devant
+   * son écran. Remonter deux ans à sa place ferait d'un clic de 2 s un clic de 30 s. Le rattrapage
+   * du passé complet appartient au cron (cf. `tradovate-background-refresh.cron`).
    */
-  it('connexion jamais importée → remonte toute la vie du compte même si on ne demande qu’un mois', async () => {
+  it('connexion jamais importée + un seul mois demandé → un seul mois, personne n’attend 24 fenêtres', async () => {
     const { service, api } = setup({ Performance: '' });
-    api.get.mockResolvedValue(compte('2026-02-12T14:11:13Z'));
+    api.get.mockResolvedValue(compte('2024-01-01T00:00:00Z')); // compte de presque 3 ans
 
     const r = await service.importHistory('u1', conn({ historyImportedAt: null }), { months: 1 });
 
-    expect(r.windows).toBe(8); // février → septembre, et non le seul mois demandé
+    expect(r.windows).toBe(1);
   });
 
   it('import complet réussi → marqueur posé, les synchros suivantes s’en tiennent au mois demandé', async () => {
@@ -346,6 +347,20 @@ describe('TradovateHistoryService — profondeur de l’import', () => {
 
     expect(r.failed).toBeGreaterThan(0);
     expect(prisma.brokerConnection.update).not.toHaveBeenCalled();
+  });
+
+  it('un mois demandé ne pose jamais le marqueur : le passé n’a pas été remonté', async () => {
+    // Poser le marqueur ici condamnerait tout le passé du compte : plus aucun rattrapage n'y
+    // toucherait, alors qu'un seul mois a été lu.
+    const { service, api, prisma } = setup({ Performance: PERFORMANCE_CSV, Fills: FILLS_CSV });
+    api.get.mockResolvedValue(compte('2026-02-12T14:11:13Z'));
+
+    await service.importHistory('u1', conn({ historyImportedAt: null }), { months: 1 });
+
+    expect(prisma.brokerConnection.update).toHaveBeenCalledWith({
+      where: { id: 'c1' },
+      data: { tradesImported: { increment: 2 } }, // et RIEN d'autre
+    });
   });
 
   it('marqueur déjà posé → aucune réécriture, et le mois demandé est respecté', async () => {

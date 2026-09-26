@@ -109,18 +109,17 @@ export class TradovateHistoryService {
     const accountName = account.name;
 
     /**
-     * Une connexion qui n'a jamais eu son import complet remonte TOUJOURS toute la vie du compte,
-     * même quand l'appelant ne demande que le mois en cours.
+     * Une profondeur demandée est TOUJOURS respectée, même sur une connexion qui n'a jamais eu son
+     * import complet. Surtout ne pas la détourner « pour bien faire » : l'appelant qui ne demande
+     * qu'un mois est souvent le bouton « Synchroniser », donc quelqu'un qui attend devant son
+     * écran. Remonter deux ans de rapports à sa place transformerait un clic de 2 s en 30 s.
      *
-     * C'est ce qui rend la profondeur atteignable : sinon elle ne servirait qu'aux connexions
-     * créées après cette feature. Là, une connexion plus ancienne — ou dont l'import initial a
-     * échoué — récupère son passé au premier passage du cron, sans clic ni reconnexion.
-     * Une seule fois par connexion : ensuite `historyImportedAt` est posé et le mois en cours
-     * demandé est respecté.
+     * L'import complet est déclenché ailleurs, là où personne n'attend : à la connexion du compte
+     * (non attendu, cf. `tradovate.controller`) et par le cron de fond, qui rattrape les
+     * connexions dont `historyImportedAt` est resté vide.
      */
-    const premierImport = !conn.historyImportedAt;
     const { months, stopOnEmpty } =
-      options.months !== undefined && !premierImport
+      options.months !== undefined
         ? { months: Math.max(1, options.months), stopOnEmpty: true }
         : this.depthFromCreation(account, new Date());
     const result: HistoryImportResult = {
@@ -155,9 +154,10 @@ export class TradovateHistoryService {
     // l'écran Mes comptes affiche « 0 trade importé » sur une connexion qui vient d'en ramener
     // des centaines (constaté en beta : 294 trades, compteur à 0).
     if (result.created > 0) data.tradesImported = { increment: result.created };
-    // Marqueur posé seulement si TOUTES les fenêtres ont abouti : une seule en échec laisse un
-    // trou dans le passé du compte, et la prochaine synchro doit avoir le droit de le combler.
-    if (premierImport && result.failed === 0) data.historyImportedAt = new Date();
+    // Marqueur du passé complet : posé seulement par un import de profondeur pleine, et seulement
+    // si TOUTES les fenêtres ont abouti — une seule en échec laisse un trou dans l'histoire du
+    // compte, et le cron doit garder le droit de le combler.
+    if (options.months === undefined && result.failed === 0) data.historyImportedAt = new Date();
     if (Object.keys(data).length > 0) {
       await this.prisma.brokerConnection.update({ where: { id: conn.id }, data });
     }

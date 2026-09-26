@@ -563,7 +563,7 @@ Toujours passer `{ userId, feature }` dans les options. Features valides :
 | `EcoCalendarCron` | `0 7 * * 1-5` Paris | Pré-génère le calendrier pour tous les users Premium |
 | `DemoSeedCron` | `20 3 * * *` Paris | Re-seed le compte démo (dates relatives recalculées) |
 | `TradovateTokenRefreshCron` | `17 * * * *` Paris | Renouvelle les tokens Tradovate qui expirent sous 18 h + seconde chance des « à reconnecter » encore promises (aucun import de trades, hors démo) |
-| `TradovateBackgroundRefreshCron` | `*/15 * * * *` Paris | Synchro de fond des connexions sans synchro depuis 12 min (hors démo, hors app ouverte). **Au 1er passage de chaque heure seulement** (minute < 15), ajoute le rattrapage du mois par la Reporting API |
+| `TradovateBackgroundRefreshCron` | `*/15 * * * *` Paris | Synchro de fond des connexions sans synchro depuis 12 min (hors démo, hors app ouverte). **Au 1er passage de chaque heure seulement** (minute < 15), ajoute le rattrapage du mois par la Reporting API, et remonte tout le passé (≤ 2 par passage) des connexions dont `historyImportedAt` est vide |
 
 ### Compte démo : le seed doit rester récurrent (PROMPT-192)
 
@@ -722,7 +722,7 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
 | Cron de fond, toutes les 15 min | ✅ si > 12 min | ❌ |
 | Cron de fond, 1er passage de l'heure | ✅ (sauf app ouverte) | ✅ **y compris app ouverte** |
 | Bouton « Synchroniser » | ✅ | ✅ |
-| N'importe lequel, si `historyImportedAt` est `null` | — | ✅ **toute la vie du compte** |
+| Cron, 1er passage de l'heure, `historyImportedAt` vide | — | ✅ **toute la vie du compte**, ≤ 2 par passage |
 
 **Profondeur de l'historique = la vie du compte, jamais une constante.** Tradovate date le compte
 (`timestamp` sur `/account/list`, servi aussi par `/account/item` — non documenté, vérifié le
@@ -736,12 +736,17 @@ Conséquences à connaître :
 - Sans date exploitable (champ absent, ou postérieure à maintenant) → repli `HISTORY_FALLBACK_MONTHS`
   (6) **et** arrêt aux mois vides : c'est alors la seule borne disponible.
 - `HISTORY_MAX_MONTHS` (60) est un garde-fou contre une date aberrante, pas une politique.
-- **`historyImportedAt` rend la profondeur atteignable** : tant qu'il est `null`, tout import —
-  même un rattrapage qui ne demande qu'un mois — remonte toute la vie du compte, puis pose le
-  marqueur. Sans ça, la profondeur ne servirait qu'aux connexions créées après la feature :
-  le bouton et le cron ne demandent que le mois en cours, et l'import complet ne tourne qu'à la
-  connexion. Le marqueur n'est posé que si **aucune fenêtre n'a échoué** — sinon le mois perdu ne
-  serait plus jamais redemandé.
+- **Une profondeur demandée est un contrat, jamais « corrigée ».** `{ months: 1 }` reste un mois,
+  même sur une connexion qui n'a jamais eu son passé : cet appelant, c'est le bouton
+  « Synchroniser », donc quelqu'un qui attend. 24 fenêtres = 11 s d'appels mesurés + l'écriture en
+  base : un clic de 2 s deviendrait un clic de 30 s. **Une profondeur pleine ne se tire que là où
+  personne n'attend** : à la connexion d'un compte (non attendu, `void` dans le callback OAuth) et
+  dans le cron de fond.
+- **`historyImportedAt` est l'état de ce rattrapage** : vide = le passé n'a jamais été remonté
+  entièrement. Le cron (1er passage de l'heure) en traite au plus `FULL_BACKFILLS_PER_PASS` (2),
+  ce qui étale un déploiement trouvant N connexions au lieu d'empiler N imports dans un passage et
+  de chevaucher le suivant. Le marqueur n'est posé que par un import de profondeur pleine **et**
+  si aucune fenêtre n'a échoué — sinon le trou ne serait plus jamais comblé.
 - Un mois vide ne coûte qu'**un** appel (pas de rapport `Fills`), donc remonter loin est bon marché.
 
 La raison d'être du rattrapage mensuel : **la Trade API ne montre que la séance ouverte et ne
