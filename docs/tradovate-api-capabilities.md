@@ -490,6 +490,16 @@ Account Balance History 60 s, Cash History dépasse 120 s et expire. Avec lui : 
   `Expired Access Token` — message différent, à ne pas confondre.
 - **CSV avec guillemets** : `"123,714.00"` — un `split(',')` naïf découpe faux.
 
+### ⚠️ Les frais viennent de `Fills`, pas de `Cash History`
+
+L'import CSV manuel relie une commission à son fill par la convention **`txnId − 1 = fillId`**.
+**Elle ne tient pas.** Mesuré le 2026-09-26 sur un compte réel : **0 correspondance sur 291**, avec
+un décalage variable d'une ligne à l'autre (−2 n'en rattrapait que 117). Un import qui s'y fierait
+produirait un P&L **brut** en silence — la fusion « réussit » en n'attribuant rien.
+
+Le rapport **`Fills`** porte le `Fill ID` **et** sa `commission` : jointure exacte, vérifiée
+**291/291 et au centime** (266,40 $). C'est lui que l'import historique utilise.
+
 ### Pourquoi l'import a tenu en si peu de code
 
 Le CSV de `Performance` est **byte-compatible** avec l'export que l'import CSV sait déjà lire :

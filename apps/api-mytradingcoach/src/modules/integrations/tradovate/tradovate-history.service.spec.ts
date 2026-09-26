@@ -16,9 +16,17 @@ const PERFORMANCE_CSV = [
   'MNQZ6,-2,0,0.25,671418950045,671418950051,2,30924.75,30932.25,$(30.00),09/23/2026 13:36:07,09/23/2026 13:36:12,4sec',
 ].join('\n');
 
-const CASH_CSV = [
-  'Account,Transaction ID,Timestamp,Date,Delta,Amount,Cash Change Type,Currency,Contract',
-  'APEX4280470000012,671418950024,09/23/2026 13:34:57,2026-09-23,-1.04,"49,998.96", Commission,USD,MNQZ6',
+/**
+ * Les frais viennent du rapport `Fills` : il porte le `Fill ID` ET sa `commission`, donc la
+ * jointure est exacte. Le `Cash History` de l'import CSV manuel relie la commission au fill par
+ * `txnId − 1`, convention qui NE TIENT PAS sur les comptes testés (0/291 le 2026-09-26).
+ */
+const FILLS_CSV = [
+  '_id,_orderId,Fill ID,Order ID,Timestamp,Account,B/S,Quantity,Price,Contract,Product,commission',
+  '671418950023,671418950004,671418950023,671418950004,09/23/2026 13:34:57,APEX,Buy,2,30928.50,MNQZ6,MNQ,1.04',
+  '671418950030,671418950027,671418950030,671418950027,09/23/2026 13:35:05,APEX,Sell,2,30934.00,MNQZ6,MNQ,1.04',
+  '671418950045,671418950040,671418950045,671418950040,09/23/2026 13:36:07,APEX,Buy,2,30924.75,MNQZ6,MNQ,1.04',
+  '671418950051,671418950048,671418950051,671418950048,09/23/2026 13:36:12,APEX,Sell,2,30932.25,MNQZ6,MNQ,1.04',
 ].join('\n');
 
 function conn(overrides: Partial<BrokerConnection> = {}): BrokerConnection {
@@ -51,38 +59,41 @@ function setup(csvByReport: Record<string, string | Error> = {}) {
       return Promise.resolve(v ?? '');
     }),
   };
-  const csvImport = {
-    parseCSV: vi.fn().mockResolvedValue([{ asset: 'MNQ', side: 'LONG' }, { asset: 'MNQ', side: 'SHORT' }]),
-  };
+  const setups = { getImportSetupId: vi.fn().mockResolvedValue('setup-import') };
+  const persiste: Record<string, unknown>[][] = [];
   const trades = {
-    importTrades: vi.fn().mockResolvedValue({ created: 2, duplicates: 0, failed: 0, total: 2 }),
+    importTrades: vi.fn().mockImplementation((_u: string, dtos: Record<string, unknown>[]) => {
+      persiste.push(dtos);
+      return Promise.resolve({ created: dtos.length, duplicates: 0, failed: 0, total: dtos.length });
+    }),
   };
   const service = new TradovateHistoryService(
-    api as never, connections as never, reporting as never, csvImport as never, trades as never,
+    api as never, connections as never, reporting as never, setups as never, trades as never,
   );
   vi.spyOn(service as unknown as { wait: (ms: number) => Promise<void> }, 'wait').mockResolvedValue(undefined);
-  return { service, api, connections, reporting, csvImport, trades };
+  return { service, api, connections, reporting, setups, trades, persiste };
 }
 
 describe('TradovateHistoryService — import de l’historique', () => {
-  it('importe une fenêtre : Performance + frais passent par le chemin CSV existant', async () => {
-    const { service, reporting, csvImport, trades } = setup({
-      Performance: PERFORMANCE_CSV,
-      'Cash History': CASH_CSV,
-    });
+  it('importe une fenêtre : trades mappés, frais joints par fill, défauts posés', async () => {
+    const { service, trades, persiste } = setup({ Performance: PERFORMANCE_CSV, Fills: FILLS_CSV });
 
     const r = await service.importHistory('u1', conn(), { months: 1 });
 
     expect(r.created).toBe(2);
     expect(trades.importTrades).toHaveBeenCalledWith('u1', expect.any(Array));
-    // Le CSV de l'API est donné TEL QUEL au parseur d'import : aucun format intermédiaire.
-    const [buffer, filename, userId, , , defaults, feesFile] = csvImport.parseCSV.mock.calls[0];
-    expect(buffer.toString()).toBe(PERFORMANCE_CSV);
-    expect(filename).toContain('tradovate');
-    expect(userId).toBe('u1');
-    expect(defaults).toEqual({ accountId: 'compte-mtc-1' });
-    expect(feesFile.buffer.toString()).toBe(CASH_CSV);
-    expect(reporting.fetchCsv).toHaveBeenCalledTimes(2);
+    const [gagnant, perdant] = persiste[0];
+    expect(gagnant.asset).toBe('MNQ');
+    expect(gagnant.pnl).toBe(22);
+    expect(perdant.pnl).toBe(-30); // `$(30.00)` = négatif
+    // 2 fills × 1,04 par trade, attribués une seule fois chacun.
+    expect(gagnant.commission).toBe(2.08);
+    expect(r.feesAssigned).toBe(4.16);
+    expect(r.feesExpected).toBe(4.16);
+    expect(gagnant.accountId).toBe('compte-mtc-1');
+    expect(gagnant.setupId).toBe('setup-import');
+    // Métadonnées de rapprochement : jamais persistées.
+    expect(gagnant).not.toHaveProperty('_buyFillId');
   });
 
   it('interroge Tradovate avec le nom RELU du compte, pas celui stocké en base', async () => {
@@ -117,26 +128,27 @@ describe('TradovateHistoryService — import de l’historique', () => {
 
     expect(r.windows).toBe(2);
     expect(r.empty).toBe(2);
-    expect(reporting.fetchCsv).toHaveBeenCalledTimes(2); // pas de Cash History sur un mois vide
+    expect(reporting.fetchCsv).toHaveBeenCalledTimes(2); // pas de rapport Fills sur un mois vide
   });
 
   it('frais indisponibles → import quand même, en P&L brut', async () => {
-    const { service, csvImport } = setup({
+    const { service, persiste } = setup({
       Performance: PERFORMANCE_CSV,
-      'Cash History': new TradovateApiError('unavailable', 500, 'Cash History'),
+      Fills: new TradovateApiError('unavailable', 500, 'Fills'),
     });
 
     const r = await service.importHistory('u1', conn(), { months: 1 });
 
     expect(r.created).toBe(2);
-    expect(csvImport.parseCSV.mock.calls[0][6]).toBeUndefined(); // aucun fichier de frais
+    expect(r.feesAssigned).toBe(0);
+    expect(persiste[0][0].commission).toBeUndefined();
   });
 
   it('une fenêtre en échec n’annule pas les autres mois', async () => {
     const { service, reporting } = setup();
     let appel = 0;
     reporting.fetchCsv.mockImplementation((_e: string, _t: string, name: string) => {
-      if (name === 'Cash History') return Promise.resolve(CASH_CSV);
+      if (name === 'Fills') return Promise.resolve(FILLS_CSV);
       appel++;
       if (appel === 1) return Promise.reject(new TradovateApiError('unavailable', 500, 'Performance'));
       return Promise.resolve(PERFORMANCE_CSV);
@@ -167,7 +179,7 @@ describe('TradovateHistoryService — import de l’historique', () => {
   });
 
   it('rejouable : la dédup d’importTrades fait que rien n’est recréé', async () => {
-    const { service, trades } = setup({ Performance: PERFORMANCE_CSV, 'Cash History': CASH_CSV });
+    const { service, trades } = setup({ Performance: PERFORMANCE_CSV, Fills: FILLS_CSV });
     trades.importTrades.mockResolvedValue({ created: 0, duplicates: 2, failed: 0, total: 2 });
 
     const r = await service.importHistory('u1', conn(), { months: 1 });

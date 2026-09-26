@@ -15,6 +15,6 @@ import { MarketNewsCron } from './market-news.cron';
   imports: [HttpModule, PrismaModule, AnalyticsModule, AccountsModule, SetupsModule],
   controllers: [TradesController],
   providers: [TradesService, CoinGeckoService, CsvImportService, MarketDataService, MarketNewsCron],
-  exports: [TradesService, MarketDataService, CsvImportService],
+  exports: [TradesService, MarketDataService],
 })
 export class TradesModule {}

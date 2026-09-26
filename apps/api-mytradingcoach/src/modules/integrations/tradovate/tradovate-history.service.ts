@@ -1,7 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BrokerConnection } from '@prisma/client';
 import { TradesService } from '../../trades/trades.service';
-import { CsvImportService, type FeesReport } from '../../trades/csv-import.service';
+import { SetupsService } from '../../setups/setups.service';
+import { preprocessCsv, mapNormalizedCsvToDto, type ImportDto } from '../../trades/csv-parsers';
+import { assignFeesOncePerFill } from '../../trades/tradovate-pair.util';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateReportingClient, type ReportWindow } from './tradovate-reporting.client';
@@ -30,8 +32,10 @@ export interface HistoryImportResult {
   windows: number;
   /** Fenêtres sans aucun trade. */
   empty: number;
-  /** Rapprochement des frais, cumulé sur les fenêtres (null si aucun frais lu). */
-  fees: FeesReport | null;
+  /** Commissions réellement attribuées aux trades, cumulées sur les fenêtres. */
+  feesAssigned: number;
+  /** Σ des commissions vues dans le rapport Fills (checksum attendu). */
+  feesExpected: number;
 }
 
 /**
@@ -41,13 +45,15 @@ export interface HistoryImportResult {
  * un mardi perd tout son passé. La Reporting API, elle, sert des fenêtres mensuelles — c'est le
  * seul chemin vers l'historique confirmé par le support NinjaTrader (2026-09-23).
  *
- * **Rien n'est réécrit ici** : le CSV renvoyé par l'API est byte-compatible avec l'export
+ * **Aucun mapping n'est réécrit** : le CSV renvoyé par l'API est byte-compatible avec l'export
  * « Performance » que l'import CSV sait déjà lire (même en-tête `buyFillId`/`sellFillId`, mêmes
- * colonnes, même P&L comptable `$(8.50)`), et le Cash History avec le fichier de frais attendu
- * (`Transaction ID` / `Delta` / `Cash Change Type`, lignes `Commission`). On passe donc par
- * `CsvImportService` puis `TradesService.importTrades` : même mapping, même dédup, mêmes setups
- * que l'import manuel — y compris la dédup inter-sources (CSV sans fuseau ↔ API en UTC), qui
- * évite les doublons avec les trades déjà remontés par la synchro live.
+ * colonnes, même P&L comptable `$(8.50)`). On réutilise donc ses parseurs purs
+ * (`preprocessCsv` + `mapNormalizedCsvToDto`) puis `TradesService.importTrades` : même dédup que
+ * l'import manuel — y compris la dédup inter-sources (CSV sans fuseau ↔ API en UTC), qui évite
+ * les doublons avec les trades déjà remontés par la synchro live.
+ *
+ * Seule différence assumée avec l'import CSV : les **frais viennent du rapport `Fills`**, pas du
+ * `Cash History` (cf. `importWindow`).
  *
  * ⏳ **Importer TÔT** : Tradovate archive un compte inactif ou en échec au bout de 10 jours, et
  * son historique devient alors illisible. D'où le déclenchement dès la connexion.
@@ -60,7 +66,7 @@ export class TradovateHistoryService {
     private readonly api: TradovateApiClient,
     private readonly connections: TradovateConnectionService,
     private readonly reporting: TradovateReportingClient,
-    private readonly csvImport: CsvImportService,
+    private readonly setups: SetupsService,
     private readonly trades: TradesService,
   ) {}
 
@@ -88,15 +94,17 @@ export class TradovateHistoryService {
 
     const months = Math.max(1, options.months ?? HISTORY_DEFAULT_MONTHS);
     const result: HistoryImportResult = {
-      created: 0, duplicates: 0, failed: 0, windows: 0, empty: 0, fees: null,
+      created: 0, duplicates: 0, failed: 0, windows: 0, empty: 0, feesAssigned: 0, feesExpected: 0,
     };
+    // Setup « Sans setup » : créé une fois pour tout l'import, comme le fait l'import CSV.
+    const setupId = await this.setups.getImportSetupId(userId);
     let consecutiveEmpty = 0;
 
     for (const window of this.monthlyWindows(months, accountName)) {
       if (consecutiveEmpty >= EMPTY_WINDOWS_BEFORE_STOP) break;
       result.windows++;
       try {
-        const imported = await this.importWindow(userId, conn, env, token, window, result);
+        const imported = await this.importWindow(userId, conn, env, token, window, setupId, result);
         consecutiveEmpty = imported ? 0 : consecutiveEmpty + 1;
         if (!imported) result.empty++;
       } catch (err) {
@@ -119,46 +127,94 @@ export class TradovateHistoryService {
     return result;
   }
 
-  /** Une fenêtre : Performance (les trades) + Cash History (les frais). */
+  /**
+   * Une fenêtre : `Performance` (les trades appariés) + `Fills` (les commissions).
+   *
+   * Les frais viennent de `Fills` et NON de `Cash History`, malgré ce que fait l'import CSV
+   * manuel : celui-ci relie une commission à son fill par la convention `txnId − 1 = fillId`,
+   * qui **ne tient pas** sur les comptes testés (0 correspondance sur 291 le 2026-09-26, avec un
+   * décalage variable d'une ligne à l'autre). `Fills` porte le `Fill ID` ET sa `commission` :
+   * la jointure est exacte, vérifiée à 291/291 et au centime (266,40 $).
+   */
   private async importWindow(
     userId: string,
     conn: BrokerConnection,
     env: TradovateEnv,
     token: string,
     window: ReportWindow,
+    setupId: string | null,
     result: HistoryImportResult,
   ): Promise<boolean> {
     const performance = await this.reporting.fetchCsv(env, token, 'Performance', window);
     // Un mois sans trade renvoie un CSV vide : ce n'est pas une erreur.
-    if (!performance || performance.split(/\r?\n/).filter((l) => l.trim()).length < 2) return false;
+    if (!performance) return false;
+
+    const { broker, csv } = preprocessCsv(performance);
+    if (broker !== 'tradovate') {
+      throw new Error(`rapport Performance non reconnu (détecté « ${broker} »)`);
+    }
+    const dtos = mapNormalizedCsvToDto(csv);
+    if (dtos.length === 0) return false;
 
     // Les frais sont un bonus : leur absence donne un P&L brut, jamais un import raté.
-    let cash = '';
     try {
-      cash = await this.reporting.fetchCsv(env, token, 'Cash History', window);
+      result.feesExpected += await this.applyFees(env, token, window, dtos);
     } catch (err) {
       this.logger.warn(`Frais indisponibles sur la fenêtre (${(err as Error).message}) : P&L brut.`);
     }
+    result.feesAssigned = +(
+      result.feesAssigned + dtos.reduce((sum, d) => sum + (d.commission ?? 0), 0)
+    ).toFixed(2);
 
-    const report: { fees?: FeesReport } = {};
-    const dtos = await this.csvImport.parseCSV(
-      Buffer.from(performance, 'utf8'),
-      'tradovate-performance.csv',
-      userId,
-      undefined,
-      undefined,
-      { accountId: conn.accountId },
-      cash ? { buffer: Buffer.from(cash, 'utf8'), filename: 'tradovate-cash-history.csv' } : undefined,
-      report,
-    );
-    if (dtos.length === 0) return false;
+    // Mêmes défauts que l'import CSV : compte cible, setup d'import, émotion non renseignée.
+    for (const d of dtos) {
+      d.accountId = conn.accountId;
+      d.emotion = null;
+      if (setupId) d.setupId = setupId;
+    }
+    // Les ids de fill sont des métadonnées de rapprochement : jamais persistées.
+    const clean = dtos.map(({ _buyFillId: _b, _sellFillId: _s, ...rest }) => rest);
 
-    const imported = await this.trades.importTrades(userId, dtos);
+    const imported = await this.trades.importTrades(userId, clean);
     result.created += imported.created;
     result.duplicates += imported.duplicates;
     result.failed += imported.failed;
-    if (report.fees) result.fees = this.mergeFees(result.fees, report.fees);
     return true;
+  }
+
+  /** Commissions du rapport `Fills`, attribuées une seule fois par fill. Renvoie le total attendu. */
+  private async applyFees(
+    env: TradovateEnv,
+    token: string,
+    window: ReportWindow,
+    dtos: ImportDto[],
+  ): Promise<number> {
+    const csv = await this.reporting.fetchCsv(env, token, 'Fills', window);
+    if (!csv) return 0;
+    const lines = csv.split(/\r?\n/).filter((l) => l.trim());
+    const header = lines[0].split(',').map((h) => h.trim().toLowerCase());
+    const iId = header.indexOf('fill id');
+    const iFee = header.indexOf('commission');
+    if (iId < 0 || iFee < 0) {
+      this.logger.warn('Rapport Fills sans colonne « Fill ID » ou « commission » : P&L brut.');
+      return 0;
+    }
+    const feeByFill = new Map<string, number>();
+    let expected = 0;
+    for (const line of lines.slice(1)) {
+      const cols = line.split(',');
+      const id = (cols[iId] ?? '').trim();
+      const fee = Math.abs(parseFloat((cols[iFee] ?? '').trim()) || 0);
+      if (!id || fee <= 0) continue;
+      feeByFill.set(id, fee);
+      expected += fee;
+    }
+    const { assigned, consumed } = assignFeesOncePerFill(dtos, feeByFill);
+    this.logger.log(
+      `Frais de la fenêtre : ${assigned} attribué(s) sur ${+expected.toFixed(2)} attendu(s) ` +
+        `(${feeByFill.size} fills, ${consumed} consommés).`,
+    );
+    return +expected.toFixed(2);
   }
 
   /**
@@ -190,19 +246,6 @@ export class TradovateHistoryService {
       windows.push({ from, to: to > now ? now : to, accountName });
     }
     return windows;
-  }
-
-  private mergeFees(a: FeesReport | null, b: FeesReport): FeesReport {
-    if (!a) return b;
-    const assigned = +(a.assigned + b.assigned).toFixed(2);
-    const expected = +(a.expected + b.expected).toFixed(2);
-    return {
-      assigned,
-      expected,
-      reconciled: a.reconciled && b.reconciled,
-      merged: a.merged !== false && b.merged !== false,
-      count: a.count + b.count,
-    };
   }
 
   /** Isolé pour que les tests n'attendent pas réellement. */
