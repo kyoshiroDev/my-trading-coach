@@ -161,7 +161,7 @@ export class TradovateHistoryService {
     // Un mois sans trade renvoie un CSV vide : ce n'est pas une erreur.
     if (!performance) return false;
 
-    const { broker, csv } = preprocessCsv(performance);
+    const { broker, csv } = preprocessCsv(this.horodatagesEnUtc(performance));
     if (broker !== 'tradovate') {
       throw new Error(`rapport Performance non reconnu (détecté « ${broker} »)`);
     }
@@ -192,6 +192,45 @@ export class TradovateHistoryService {
     result.duplicates += imported.duplicates;
     result.failed += imported.failed;
     return true;
+  }
+
+  /**
+   * Réécrit `boughtTimestamp` / `soldTimestamp` en ISO UTC (`…Z`) AVANT de passer au parseur.
+   *
+   * Sans ça, les trades importés sont décalés de l'offset du serveur (mesuré en prod : 2 h
+   * d'avance, conteneur en Europe/Paris). Le parseur partagé fait `new Date("07/27/2026
+   * 14:26:44")` : sans fuseau dans la chaîne, Node l'interprète en heure LOCALE. C'est une
+   * approximation acceptable pour l'import CSV manuel — l'export de l'interface Tradovate est
+   * rendu dans l'heure de l'utilisateur — mais pas ici : nous demandons explicitement le rapport
+   * en UTC (`timezone: 0`), donc ses heures SONT de l'UTC et doivent être lues comme telles.
+   *
+   * Corrigé ici plutôt que dans le parseur, pour ne rien changer au chemin d'import manuel.
+   */
+  private horodatagesEnUtc(csv: string): string {
+    const lignes = csv.split(/\r?\n/);
+    if (lignes.length < 2) return csv;
+    const entete = lignes[0].split(',').map((h) => h.trim().toLowerCase());
+    const colonnes = ['boughttimestamp', 'soldtimestamp']
+      .map((n) => entete.indexOf(n))
+      .filter((i) => i >= 0);
+    if (colonnes.length === 0) return csv;
+
+    const enIso = (v: string): string => {
+      // `MM/DD/YYYY HH:MM:SS` → `YYYY-MM-DDTHH:MM:SSZ`
+      const m = /^\s*(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{2}:\d{2}:\d{2})\s*$/.exec(v);
+      if (!m) return v;
+      const [, mois, jour, annee, heure] = m;
+      return `${annee}-${mois.padStart(2, '0')}-${jour.padStart(2, '0')}T${heure}Z`;
+    };
+
+    return lignes
+      .map((ligne, i) => {
+        if (i === 0 || !ligne.trim()) return ligne;
+        const cols = ligne.split(',');
+        for (const c of colonnes) if (cols[c] != null) cols[c] = enIso(cols[c]);
+        return cols.join(',');
+      })
+      .join('\n');
   }
 
   /** Commissions du rapport `Fills`, attribuées une seule fois par fill. Renvoie le total attendu. */

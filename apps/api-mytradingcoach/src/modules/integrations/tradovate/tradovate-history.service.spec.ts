@@ -121,6 +121,18 @@ describe('TradovateHistoryService — import de l’historique', () => {
     expect(prisma.brokerConnection.update).not.toHaveBeenCalled();
   });
 
+  it('les horodatages du rapport sont lus en UTC, pas en heure du serveur', async () => {
+    // Bug trouvé en prod : 294 trades importés avec 2 h d'avance. Le rapport est demandé en
+    // `timezone: 0`, mais `new Date("09/23/2026 13:34:57")` sans fuseau est lu en heure LOCALE
+    // (conteneur en Europe/Paris) — d'où le décalage. Ce test échoue si la conversion saute.
+    const { service, persiste } = setup({ Performance: PERFORMANCE_CSV, Fills: FILLS_CSV });
+
+    await service.importHistory('u1', conn(), { months: 1 });
+
+    // Le CSV dit « 09/23/2026 13:35:05 » pour la vente : c'est de l'UTC, donc 13:35:05Z.
+    expect(new Date(persiste[0][0].tradedAt as string).toISOString()).toBe('2026-09-23T13:35:05.000Z');
+  });
+
   it('interroge Tradovate avec le nom RELU du compte, pas celui stocké en base', async () => {
     const { service, reporting } = setup({ Performance: PERFORMANCE_CSV });
 
