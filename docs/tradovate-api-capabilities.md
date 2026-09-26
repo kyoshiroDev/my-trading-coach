@@ -514,3 +514,29 @@ donc aucun doublon avec les trades déjà remontés par la synchro live.
 
 ⏳ **Importer tôt** : Tradovate archive un compte inactif ou en échec au bout de 10 jours, et son
 historique devient alors illisible. D'où le déclenchement dès la connexion, sans attendre.
+
+### Jusqu'où remonte l'historique ? (mesuré le 2026-09-26)
+
+La question posée était « on ne peut pas récupérer plus de 6 mois ? ». Réponse : **les 6 mois
+étaient notre constante, pas une limite de Tradovate**. La seule contrainte de l'API est la
+*largeur* d'une fenêtre (au-delà de ~63 jours : `Too long range`) — et on interroge mois par mois.
+
+Sonde en lecture seule sur un compte prop firm réel, 24 fenêtres mensuelles :
+
+```
+2026-09 :  33 trades     2026-06 → 2026-01 : 0
+2026-08 : 244 trades     (rien avant le premier trade réel)
+2026-07 :  17 trades
+```
+
+**`/account/list` et `/account/item` portent un champ `timestamp` = date de création du compte**
+(non documenté). Sur les 3 comptes du login testé : `2026-02-12T14:11:13Z`, `2026-02-12T17:18:52Z`,
+`2026-08-31T13:55:56Z`. C'est la borne basse de l'import : plus besoin de deviner une profondeur.
+
+Le piège que ça révèle : ce compte a été **créé en février et n'a tradé qu'en juillet**, soit cinq
+mois vides consécutifs. L'ancien arrêt « 2 mois vides d'affilée » aurait tronqué l'historique à mai
+*en annonçant l'avoir tout remonté*. Il n'est donc conservé qu'en repli, quand la date de création
+est absente.
+
+Restent non mesurés, faute de compte assez ancien : la rétention réelle de Tradovate au-delà de
+3 mois de données, et l'archivage à 10 jours d'un compte inactif (documenté, jamais vérifié).

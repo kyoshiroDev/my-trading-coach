@@ -99,7 +99,8 @@ export class TradovateController {
   /**
    * Import de l'HISTORIQUE (Reporting API) : les mois passés, que la synchro live ne voit pas.
    * Idempotent — `importTrades` dédoublonne, y compris contre les trades déjà synchronisés.
-   * Débit serré : c'est une dizaine d'appels Tradovate par exécution.
+   * Débit serré : un ou deux appels Tradovate par mois de vie du compte (la profondeur suit sa
+   * date de création), donc de quelques appels à quelques dizaines sur un compte ancien.
    */
   @Post('accounts/:accountId/history')
   @Throttle({ default: { ttl: 300_000, limit: 3 } })
@@ -158,7 +159,7 @@ export class TradovateCallbackController {
 
     // Historique (Reporting API) : lancé DÈS la connexion, car Tradovate archive un compte
     // inactif au bout de 10 jours et son passé devient alors illisible. Volontairement NON
-    // attendu : une dizaine d'appels ne doivent pas retarder la redirection de l'utilisateur.
+    // attendu : remonter toute la vie du compte ne doit pas retarder la redirection de l'utilisateur.
     // Ses trades passés apparaissent quelques secondes plus tard, au rafraîchissement.
     if (outcome.status === 'connected') {
       const { userId, accountId } = outcome;

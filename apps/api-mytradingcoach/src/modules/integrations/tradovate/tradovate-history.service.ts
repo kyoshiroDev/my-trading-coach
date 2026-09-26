@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BrokerConnection, TradeSource } from '@prisma/client';
+import { BrokerConnection, Prisma, TradeSource } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { TradesService } from '../../trades/trades.service';
 import { SetupsService } from '../../setups/setups.service';
@@ -12,14 +12,27 @@ import { TradovateApiError, TradovateException } from './tradovate.errors';
 import type { TradovateAccount, TradovateEnv } from './tradovate.types';
 
 /**
- * Profondeur par défaut. Chaque mois = 2 appels (Performance + Cash History), soit ~1 s pour
- * 6 mois : on peut se permettre de remonter large, d'autant que la plupart des comptes n'ont
- * pas d'historique au-delà.
+ * Profondeur de l'import : **toute la vie du compte**, jusqu'à sa création.
+ *
+ * Tradovate date le compte (`timestamp` sur `/account/list`, appel que l'import fait déjà pour
+ * relire le nom — donc zéro requête de plus). On remonte jusqu'à ce mois-là au lieu de deviner
+ * une profondeur : un compte ouvert il y a trois mois coûte trois fenêtres, un compte de deux ans
+ * les remonte toutes. Un mois vide ne coûte qu'un seul appel (pas de rapport `Fills`), remonter
+ * loin est donc bon marché.
+ *
+ * Garde-fou, pas une politique : borne le nombre de fenêtres si la date de création est aberrante
+ * ou le compte très ancien. La vraie borne, c'est la création.
  */
-export const HISTORY_DEFAULT_MONTHS = 6;
+export const HISTORY_MAX_MONTHS = 60;
+/** Profondeur retenue quand Tradovate ne date pas le compte (champ absent, compte archivé). */
+export const HISTORY_FALLBACK_MONTHS = 6;
 /**
- * Deux mois vides d'affilée = on s'arrête. Un mois creux arrive (vacances, compte en pause) ;
- * deux de suite signifient qu'on a dépassé le début du compte. Évite de tirer 6 rapports vides.
+ * Deux mois vides d'affilée = on s'arrête — **uniquement** faute de date de création, où la fin
+ * apparente de l'historique est la seule borne disponible.
+ *
+ * Avec une date, cet arrêt est désactivé, et ce n'est pas un détail : mesuré le 2026-09-26 sur un
+ * compte prop firm, création le 2026-02-12 et premier trade en juillet, soit **cinq mois vides
+ * entre les deux**. L'arrêt aurait tronqué l'historique à mai en annonçant l'avoir tout remonté.
  */
 const EMPTY_WINDOWS_BEFORE_STOP = 2;
 /** Petite pause entre fenêtres : la limite documentée est de 5 000 requêtes/h, on en fait 12. */
@@ -92,9 +105,24 @@ export class TradovateHistoryService {
     }
     const env = conn.externalEnv as TradovateEnv;
     const token = await this.connections.getAccessToken(conn);
-    const accountName = await this.resolveAccountName(env, token, conn);
+    const account = await this.resolveAccount(env, token, conn);
+    const accountName = account.name;
 
-    const months = Math.max(1, options.months ?? HISTORY_DEFAULT_MONTHS);
+    /**
+     * Une connexion qui n'a jamais eu son import complet remonte TOUJOURS toute la vie du compte,
+     * même quand l'appelant ne demande que le mois en cours.
+     *
+     * C'est ce qui rend la profondeur atteignable : sinon elle ne servirait qu'aux connexions
+     * créées après cette feature. Là, une connexion plus ancienne — ou dont l'import initial a
+     * échoué — récupère son passé au premier passage du cron, sans clic ni reconnexion.
+     * Une seule fois par connexion : ensuite `historyImportedAt` est posé et le mois en cours
+     * demandé est respecté.
+     */
+    const premierImport = !conn.historyImportedAt;
+    const { months, stopOnEmpty } =
+      options.months !== undefined && !premierImport
+        ? { months: Math.max(1, options.months), stopOnEmpty: true }
+        : this.depthFromCreation(account, new Date());
     const result: HistoryImportResult = {
       created: 0, duplicates: 0, failed: 0, windows: 0, empty: 0, feesAssigned: 0, feesExpected: 0,
     };
@@ -103,7 +131,7 @@ export class TradovateHistoryService {
     let consecutiveEmpty = 0;
 
     for (const window of this.monthlyWindows(months, accountName)) {
-      if (consecutiveEmpty >= EMPTY_WINDOWS_BEFORE_STOP) break;
+      if (stopOnEmpty && consecutiveEmpty >= EMPTY_WINDOWS_BEFORE_STOP) break;
       result.windows++;
       try {
         const imported = await this.importWindow(userId, conn, env, token, window, setupId, result);
@@ -122,18 +150,23 @@ export class TradovateHistoryService {
       await this.wait(PAUSE_BETWEEN_WINDOWS_MS);
     }
 
+    const data: Prisma.BrokerConnectionUpdateInput = {};
     // Compteur de la connexion : l'import historique compte autant que la synchro live, sinon
     // l'écran Mes comptes affiche « 0 trade importé » sur une connexion qui vient d'en ramener
     // des centaines (constaté en beta : 294 trades, compteur à 0).
-    if (result.created > 0) {
-      await this.prisma.brokerConnection.update({
-        where: { id: conn.id },
-        data: { tradesImported: { increment: result.created } },
-      });
+    if (result.created > 0) data.tradesImported = { increment: result.created };
+    // Marqueur posé seulement si TOUTES les fenêtres ont abouti : une seule en échec laisse un
+    // trou dans le passé du compte, et la prochaine synchro doit avoir le droit de le combler.
+    if (premierImport && result.failed === 0) data.historyImportedAt = new Date();
+    if (Object.keys(data).length > 0) {
+      await this.prisma.brokerConnection.update({ where: { id: conn.id }, data });
     }
 
+    const profondeur = stopOnEmpty
+      ? `${months} mois`
+      : `${months} mois, depuis la création du compte (${account.timestamp?.slice(0, 10)})`;
     this.logger.log(
-      `Import historique Tradovate (compte ${accountName}) : ${result.created} créé(s), ` +
+      `Import historique Tradovate (compte ${accountName}, ${profondeur}) : ${result.created} créé(s), ` +
         `${result.duplicates} doublon(s), ${result.failed} échec(s) sur ${result.windows} fenêtre(s).`,
     );
     return result;
@@ -273,17 +306,39 @@ export class TradovateHistoryService {
    * (constaté en prod le 2026-09-26, une connexion portait un nom que le login n'expose plus), et
    * la Reporting API filtre par nom — un nom périmé donne « account is not found ».
    */
-  private async resolveAccountName(
+  private async resolveAccount(
     env: TradovateEnv,
     token: string,
     conn: BrokerConnection,
-  ): Promise<string> {
+  ): Promise<TradovateAccount> {
     const accounts = await this.api.get<TradovateAccount[]>(env, '/account/list', token);
     const account = (Array.isArray(accounts) ? accounts : []).find(
       (a) => String(a.id) === conn.externalAccountId,
     );
     if (!account) throw new TradovateException('TRADOVATE_ACCOUNT_NOT_FOUND');
-    return account.name;
+    return account;
+  }
+
+  /**
+   * Combien de fenêtres mensuelles pour couvrir toute la vie du compte, mois de création inclus.
+   *
+   * Sans date exploitable (champ absent, ou postérieure à maintenant — donnée à ne pas croire),
+   * on retombe sur une profondeur fixe ET sur l'arrêt aux mois vides : c'est alors la seule façon
+   * de savoir qu'on a dépassé le début du compte.
+   */
+  private depthFromCreation(
+    account: TradovateAccount,
+    now: Date,
+  ): { months: number; stopOnEmpty: boolean } {
+    const created = account.timestamp ? new Date(account.timestamp) : null;
+    if (!created || Number.isNaN(created.getTime()) || created.getTime() > now.getTime()) {
+      return { months: HISTORY_FALLBACK_MONTHS, stopOnEmpty: true };
+    }
+    const months =
+      (now.getUTCFullYear() - created.getUTCFullYear()) * 12 +
+      (now.getUTCMonth() - created.getUTCMonth()) +
+      1;
+    return { months: Math.min(Math.max(1, months), HISTORY_MAX_MONTHS), stopOnEmpty: false };
   }
 
   /** Fenêtres mensuelles, de la plus récente à la plus ancienne (bornes inclusives). */

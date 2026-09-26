@@ -716,12 +716,33 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
 
 | Déclencheur | Séance en cours (Trade API) | Mois en cours (Reporting API) |
 |---|---|---|
-| Connexion d'un compte Tradovate | ✅ | ✅ **jusqu'à 6 mois** |
+| Connexion d'un compte Tradovate | ✅ | ✅ **toute la vie du compte** |
 | Ouverture de l'app (`catchUp`) | ✅ si > 1 min | ✅ **si > 30 min d'absence** |
 | Trade en direct, app ouverte | ✅ ~1,5 s | ❌ |
 | Cron de fond, toutes les 15 min | ✅ si > 12 min | ❌ |
 | Cron de fond, 1er passage de l'heure | ✅ (sauf app ouverte) | ✅ **y compris app ouverte** |
 | Bouton « Synchroniser » | ✅ | ✅ |
+| N'importe lequel, si `historyImportedAt` est `null` | — | ✅ **toute la vie du compte** |
+
+**Profondeur de l'historique = la vie du compte, jamais une constante.** Tradovate date le compte
+(`timestamp` sur `/account/list`, servi aussi par `/account/item` — non documenté, vérifié le
+2026-09-26 sur 3 comptes prop firm). `depthFromCreation` en déduit le nombre de fenêtres
+mensuelles ; l'appel existait déjà pour relire le nom du compte, donc zéro requête de plus.
+Conséquences à connaître :
+
+- L'arrêt « 2 mois vides d'affilée » ne s'applique **que** faute de date de création. Avec une
+  date, il est désactivé — et ce n'est pas cosmétique : compte mesuré créé le 2026-02-12, premier
+  trade en juillet, soit **5 mois vides entre les deux** que l'arrêt rendait inatteignables.
+- Sans date exploitable (champ absent, ou postérieure à maintenant) → repli `HISTORY_FALLBACK_MONTHS`
+  (6) **et** arrêt aux mois vides : c'est alors la seule borne disponible.
+- `HISTORY_MAX_MONTHS` (60) est un garde-fou contre une date aberrante, pas une politique.
+- **`historyImportedAt` rend la profondeur atteignable** : tant qu'il est `null`, tout import —
+  même un rattrapage qui ne demande qu'un mois — remonte toute la vie du compte, puis pose le
+  marqueur. Sans ça, la profondeur ne servirait qu'aux connexions créées après la feature :
+  le bouton et le cron ne demandent que le mois en cours, et l'import complet ne tourne qu'à la
+  connexion. Le marqueur n'est posé que si **aucune fenêtre n'a échoué** — sinon le mois perdu ne
+  serait plus jamais redemandé.
+- Un mois vide ne coûte qu'**un** appel (pas de rapport `Fills`), donc remonter loin est bon marché.
 
 La raison d'être du rattrapage mensuel : **la Trade API ne montre que la séance ouverte et ne
 rejoue JAMAIS une séance passée**. Tout ce qui est tradé pendant que l'API est arrêtée
@@ -850,7 +871,12 @@ sont en direct.
   CSV importé avant la synchro, ou après (avant le 14/09/2026, seul le premier sens était
   couvert : un CSV importé après la synchro recréait les trades en double si le Tradovate de
   l'utilisateur n'affichait pas l'heure du serveur).
-- ⚠ **Profondeur d'historique non garantie** : l'API REST pourrait ne renvoyer que les
+- ✅ **Profondeur d'historique : résolue** par la Reporting API, bornée par la date de création du
+  compte (cf. plus haut). Mesuré le 2026-09-26 : la sonde remonte jusqu'à 24 mois et ne renvoie
+  rien avant le premier trade réel — la profondeur servie est donc tout ce que le compte contient.
+  Reste non testé : un compte de plus de 3 mois d'ancienneté de données, et l'archivage à 10 jours
+  d'un compte inactif (documenté, jamais vérifié) après quoi l'historique devient illisible.
+- ⚠ **Profondeur d'historique non garantie (Trade API)** : l'API REST pourrait ne renvoyer que les
   positions / paires récentes. À mesurer en beta sur un vrai compte ; si c'est le cas, un
   import CSV reste nécessaire pour le passé et la synchro sert au fil de l'eau.
   (Vérifié : la synchro n'envoie AUCUNE borne de date — `position/list` et `fillPair/list` n'ont
