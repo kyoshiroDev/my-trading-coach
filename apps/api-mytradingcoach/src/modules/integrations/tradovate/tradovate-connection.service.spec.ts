@@ -45,7 +45,7 @@ describe('TradovateConnectionService.getAccessToken', () => {
       },
     };
     const api = { refresh: vi.fn(), renewAccessToken: vi.fn(), get: vi.fn() };
-    const redis = { client: { set: vi.fn().mockResolvedValue('OK'), del: vi.fn() } };
+    const redis = { client: { set: vi.fn().mockResolvedValue('OK'), del: vi.fn(), exists: vi.fn().mockResolvedValue(0) } };
     const service = new TradovateConnectionService(prisma as never, api as never, config as never, redis as never);
     // Le délai entre les deux tentatives est réel en prod (2 s) ; inutile de le subir ici.
     vi.spyOn(service as unknown as { wait: (ms: number) => Promise<void> }, 'wait')
@@ -340,6 +340,49 @@ describe('TradovateConnectionService.getAccessToken', () => {
       api.refresh.mockRejectedValue(refusé());
       await expect(service.getAccessToken(conn)).rejects.toMatchObject({ code: 'TRADOVATE_RECONNECT_REQUIRED' });
       expect(prisma.brokerConnection.update.mock.calls[0][0].data.status).toBe('NEEDS_RECONNECT');
+    });
+  });
+
+  describe('pause après un refus passager (boucle du WebSocket, beta 2026-09-26)', () => {
+    const redisOf = (service: TradovateConnectionService) =>
+      (service as unknown as { redis: { client: Record<string, ReturnType<typeof vi.fn>> } }).redis.client;
+
+    it('un refus passager pose une pause de 10 min', async () => {
+      const { service, api, conn } = setup({
+        accessTokenExpiresAt: new Date(Date.now() - 1000),
+        refreshTokenExpiresAt: new Date(Date.now() + 3600_000),
+      });
+      api.refresh.mockRejectedValue(refusé());
+      await expect(service.getAccessToken(conn)).rejects.toMatchObject({ code: 'TRADOVATE_REFRESH_DEFERRED' });
+      expect(redisOf(service).set).toHaveBeenCalledWith('tradovate:refresh-refused:c1', '1', 'EX', 600);
+    });
+
+    it('pendant la pause : aucun appel à Tradovate, ni synchro/WebSocket ni cron', async () => {
+      const { service, api, conn } = setup({
+        accessTokenExpiresAt: new Date(Date.now() - 1000),
+        refreshTokenExpiresAt: new Date(Date.now() + 3600_000),
+      });
+      redisOf(service).exists.mockResolvedValue(1);
+      await expect(service.getAccessToken(conn)).rejects.toMatchObject({ code: 'TRADOVATE_REFRESH_DEFERRED' });
+      await expect(service.refreshNow(conn)).resolves.toBe('retry');
+      expect(api.refresh).not.toHaveBeenCalled();
+    });
+
+    it('refresh_token échu : la pause ne masque jamais la condamnation', async () => {
+      const { service, api, conn } = setup({
+        accessTokenExpiresAt: new Date(Date.now() - 1000),
+        refreshTokenExpiresAt: new Date(Date.now() - 1000),
+      });
+      redisOf(service).exists.mockResolvedValue(1);
+      api.refresh.mockRejectedValue(refusé());
+      await expect(service.getAccessToken(conn)).rejects.toMatchObject({ code: 'TRADOVATE_RECONNECT_REQUIRED' });
+    });
+
+    it('un renouvellement réussi lève la pause', async () => {
+      const { service, api, conn } = setup({ accessTokenExpiresAt: new Date(Date.now() - 1000) });
+      api.refresh.mockResolvedValue({ access_token: 'AT-2', expires_in: 4800 });
+      await service.getAccessToken(conn);
+      expect(redisOf(service).del).toHaveBeenCalledWith('tradovate:refresh-refused:c1');
     });
   });
 
