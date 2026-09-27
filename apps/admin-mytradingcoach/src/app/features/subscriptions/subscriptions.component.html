@@ -9,7 +9,7 @@
   } @else if (data(); as d) {
     <div class="kpi-strip cols-4">
       <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Stripe actifs</div><div class="kpi-value teal">{{ d.stripeUsers.length }}</div><div class="kpi-sub">payants</div></div>
-      <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">En essai</div><div class="kpi-value blue">{{ stats()?.trials ?? 0 }}</div><div class="kpi-sub">trial 7j</div></div>
+      <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">En essai</div><div class="kpi-value blue">{{ stats()?.trials ?? 0 }}</div><div class="kpi-sub">essai 30 j</div></div>
       <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Accès manuels</div><div class="kpi-value purple">{{ d.betaTesters.length }}</div><div class="kpi-sub">bêta / ambassadeur</div></div>
       <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">MRR Stripe</div><div class="kpi-value amber">{{ stats()?.mrr ?? 0 }}€</div><div class="kpi-sub">réel</div></div>
     </div>
@@ -27,7 +27,7 @@
               <td data-label="Intervalle" class="td-mono">{{ u.stripeInterval === 'month' ? 'Mensuel' : 'Annuel' }}</td>
               <td data-label="Statut"><span class="badge b-ok">actif</span></td>
               <td data-label="Renouvellement" class="td-mono muted">{{ u.stripeCurrentPeriodEnd ? (u.stripeCurrentPeriodEnd | date:'dd/MM/yyyy') : '-' }}</td>
-              <td data-label="Montant" class="td-mono num">-</td>
+              <td data-label="Montant" class="td-mono num">{{ amount(u) }}</td>
             </tr>
           } @empty {
             <tr><td><div class="u-cell"><div class="u-av muted-av">-</div><div><div class="u-name muted">Aucun abonnement Stripe actif</div><div class="u-mail">les accès Premium actuels sont manuels</div></div></div></td><td></td><td></td><td></td><td></td><td></td></tr>

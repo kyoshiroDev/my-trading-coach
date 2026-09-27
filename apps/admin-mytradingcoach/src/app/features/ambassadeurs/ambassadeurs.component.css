@@ -52,3 +52,4 @@
 @media (max-width: 768px) {
   .code-cell { flex-direction: column; }
 }
+.pay-err { padding: 10px 16px 0; }

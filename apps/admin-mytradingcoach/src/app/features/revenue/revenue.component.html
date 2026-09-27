@@ -32,6 +32,12 @@
         <div class="info-row"><span class="ov-label">Churn ce mois</span><span class="info-v red">{{ s.churnedThisMonth }}</span></div>
       </div>
     </div>
+  } @else if (statsError()) {
+    <div class="card" role="alert">
+      <div class="empty">Revenus indisponibles : l’API n’a pas répondu.<br />
+        <button type="button" class="btn" style="margin-top:12px" (click)="loadStats()">Réessayer</button>
+      </div>
+    </div>
   } @else {
     <div class="card"><div class="empty">Chargement…</div></div>
   }

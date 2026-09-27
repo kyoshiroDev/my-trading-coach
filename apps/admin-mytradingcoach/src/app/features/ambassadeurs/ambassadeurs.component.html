@@ -13,6 +13,7 @@
 
   <div class="card">
     <div class="card-head"><span class="card-label">Ambassadeurs</span><button type="button" class="card-action" data-testid="add-ambassador-btn" (click)="openAdd()">+ Ajouter un ambassadeur</button></div>
+    @if (payError(); as msg) { <p class="err-text pay-err" role="alert" data-testid="pay-error">{{ msg }}</p> }
     @if (loading()) {
       <div class="empty">Chargement…</div>
     } @else if (ambassadors().length === 0) {

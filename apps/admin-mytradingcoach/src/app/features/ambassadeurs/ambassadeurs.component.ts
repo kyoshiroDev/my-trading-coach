@@ -37,6 +37,8 @@ export class AmbassadeursComponent implements OnInit {
   protected readonly addCode = signal('');
   protected readonly adding = signal(false);
   protected readonly addError = signal<string | null>(null);
+  /** Échec du « marquer comme payé » : affiché au-dessus du tableau (avant : silencieux). */
+  protected readonly payError = signal<string | null>(null);
   protected readonly addResult = signal<AdminAmbassadorPromoteResult | null>(null);
   protected readonly linkCopied = signal(false);
 
@@ -149,9 +151,13 @@ export class AmbassadeursComponent implements OnInit {
     });
     if (!confirmed) return;
     this.paying.set(true);
+    this.payError.set(null);
     this.api.markAmbassadorPaid(amb.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => { this.paying.set(false); this.loadAmbassadors(); },
-      error: () => this.paying.set(false),
+      error: (err) => {
+        this.paying.set(false);
+        this.payError.set(apiErrorMessage(err, `Le paiement de ${amount} n’a pas été enregistré. Réessaie.`));
+      },
     });
   }
   protected paySelected(): void {

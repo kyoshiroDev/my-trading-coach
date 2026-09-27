@@ -19,6 +19,8 @@ export class RevenueComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly stats = signal<AdminStats | null>(null);
+  /** Les KPIs n'ont pas pu être chargés (sinon « Chargement… » restait affiché pour toujours). */
+  protected readonly statsError = signal(false);
   protected readonly history = signal<MetricsHistoryPoint[]>([]);
   protected readonly reconcileData = signal<StripeReconcileData | null>(null);
   protected readonly reconciling = signal(false);
@@ -49,8 +51,16 @@ export class RevenueComponent {
   });
 
   constructor() {
-    this.adminApi.stats().pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef)).subscribe((r) => { if (r) this.stats.set(r.data); });
+    this.loadStats();
     this.adminApi.metricsHistory(180).pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef)).subscribe((r) => { if (r) this.history.set(r.data); });
+  }
+
+  protected loadStats(): void {
+    this.statsError.set(false);
+    this.adminApi.stats().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (r) => this.stats.set(r.data),
+      error: () => this.statsError.set(true),
+    });
   }
 
   protected reconcile(): void {
