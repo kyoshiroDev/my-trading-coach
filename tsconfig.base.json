@@ -20,6 +20,9 @@
     "noUncheckedSideEffectImports": false,
     "types": ["*"],
     "esModuleInterop": false,
-    "ignoreDeprecations": "6.0"
+    "ignoreDeprecations": "6.0",
+    "paths": {
+      "@mtc/shared": ["./libs/shared/src/index.ts"]
+    }
   }
 }

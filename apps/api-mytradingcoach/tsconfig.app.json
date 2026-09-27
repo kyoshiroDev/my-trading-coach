@@ -11,9 +11,6 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "target": "es2021",
-    "paths": {
-      "@mtc/shared": ["../../libs/shared/src/index.ts"]
-    },
     "ignoreDeprecations": "6.0"
   },
   "include": ["src/**/*.ts", "../../libs/shared/src/**/*.ts"],
