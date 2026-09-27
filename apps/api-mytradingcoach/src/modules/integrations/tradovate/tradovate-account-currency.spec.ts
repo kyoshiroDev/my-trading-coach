@@ -41,6 +41,8 @@ describe('TradovateConnectionService — devise lue chez le broker', () => {
     const prisma = {
       brokerConnection: {
         findFirst: vi.fn().mockResolvedValue(conn),
+        // Garde-fou « déjà relié ailleurs » : personne d'autre sur ce compte ici.
+        findMany: vi.fn().mockResolvedValue([]),
         update: vi.fn().mockResolvedValue({ ...conn, externalAccountId: '64992914', externalEnv: 'demo' }),
       },
       tradingAccount: { update: vi.fn().mockResolvedValue({}) },

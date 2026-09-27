@@ -187,9 +187,15 @@ export class TradovateConnectionService {
       this.assertConfigured();
       const tokens = await this.api.exchangeCode(query.code);
       const available = await this.discoverAccounts(tokens.access_token as string);
-      const login = await this.discoverLogin(tokens.access_token as string, available);
-      const conn = await this.saveConnection(userId, accountId, tokens, available, login);
+      // Garde-fou : on ne propose JAMAIS un compte déjà relié par un autre utilisateur MTC.
+      // Filtré avant le choix, donc ni choisi automatiquement, ni offert à l'écran de sélection.
+      const libres = await this.dropAlreadyLinked(userId, available);
       if (available.length === 0) return { status: 'error', reason: 'no_account', accountId, origin };
+      if (libres.length === 0) {
+        return { status: 'error', reason: 'account_already_linked', accountId, origin };
+      }
+      const login = await this.discoverLogin(tokens.access_token as string, libres);
+      const conn = await this.saveConnection(userId, accountId, tokens, libres, login);
       return conn.externalAccountId
         ? { status: 'connected', accountId, userId, origin }
         : { status: 'select_account', accountId, userId, origin };
@@ -224,6 +230,40 @@ export class TradovateConnectionService {
     }
     if (found.length === 0 && lastError) throw lastError;
     return found;
+  }
+
+  /**
+   * Écarte les comptes déjà reliés par un AUTRE utilisateur MTC.
+   *
+   * Deux connexions sur le même compte broker se volent leur jeton : Tradovate invalide la copie de
+   * l'autre à chaque renouvellement, et `propagateToSiblings` est scopé au `userId` MTC — il ne peut
+   * donc rien y faire. Résultat vu en vrai le 2026-09-27 : un compte relié par deux comptes MTC,
+   * l'un vivant, l'autre définitivement « à reconnecter ».
+   *
+   * Volontairement sans filtre de statut : une connexion « à reconnecter » garde son refresh_token
+   * et le cron peut la ressusciter, donc elle reste un voleur en sommeil. Le prix de ce choix est
+   * qu'un compte abandonné par un autre utilisateur doit être délié chez lui — c'est ce que dit le
+   * message d'erreur.
+   */
+  private async dropAlreadyLinked(
+    userId: string,
+    accounts: ExternalAccountRef[],
+  ): Promise<ExternalAccountRef[]> {
+    if (accounts.length === 0) return accounts;
+    const pris = await this.prisma.brokerConnection.findMany({
+      where: {
+        provider: BrokerProvider.TRADOVATE,
+        userId: { not: userId },
+        externalAccountId: { in: accounts.map((a) => a.id) },
+      },
+      select: { externalAccountId: true },
+    });
+    if (pris.length === 0) return accounts;
+    const interdits = new Set(pris.map((p) => p.externalAccountId));
+    this.logger.warn(
+      `Comptes Tradovate écartés (déjà reliés par un autre utilisateur) : ${[...interdits].join(', ')}.`,
+    );
+    return accounts.filter((a) => !interdits.has(a.id));
   }
 
   /**
@@ -316,6 +356,11 @@ export class TradovateConnectionService {
     const conn = await this.getConnection(userId, accountId);
     const target = this.available(conn).find((a) => a.id === externalAccountId);
     if (!target) throw new TradovateException('TRADOVATE_ACCOUNT_NOT_FOUND');
+    // Même garde-fou qu'au consentement, mais avec un message explicite : ici l'utilisateur a
+    // désigné CE compte, il doit savoir pourquoi on le refuse plutôt que de le voir disparaître.
+    if ((await this.dropAlreadyLinked(userId, [target])).length === 0) {
+      throw new TradovateException('TRADOVATE_ACCOUNT_ALREADY_LINKED');
+    }
     const updated = await this.prisma.brokerConnection.update({
       where: { id: conn.id },
       data: {

@@ -15,6 +15,7 @@ export type TradovateErrorCode =
   | 'TRADOVATE_ACCOUNT_SELECTION_REQUIRED'
   | 'TRADOVATE_ACCOUNT_NOT_FOUND'
   | 'TRADOVATE_ACCOUNT_TEMPORARILY_MISSING'
+  | 'TRADOVATE_ACCOUNT_ALREADY_LINKED'
   | 'TRADOVATE_REFRESH_DEFERRED'
   | 'TRADOVATE_ACCOUNT_SUSPENDED'
   | 'TRADOVATE_RATE_LIMITED'
@@ -43,6 +44,13 @@ const MESSAGES: Record<TradovateErrorCode, [HttpStatus, string]> = {
   TRADOVATE_ACCOUNT_NOT_FOUND: [
     HttpStatus.NOT_FOUND,
     "Ce compte n'existe plus chez Tradovate (clôturé ou remplacé par ta prop firm). Choisis le compte à synchroniser.",
+  ],
+  // Deux connexions sur UN MÊME compte broker se volent leur jeton : chez Tradovate, renouveler
+  // invalide la copie de l'autre, et la propagation ne franchit pas la frontière entre
+  // utilisateurs MTC. Constaté en vrai (2026-09-27) sur un compte lié par deux comptes MTC.
+  TRADOVATE_ACCOUNT_ALREADY_LINKED: [
+    HttpStatus.CONFLICT,
+    'Ce compte Tradovate est déjà relié à un autre compte MyTradingCoach. Délie-le là-bas avant de le relier ici : deux liaisons simultanées se déconnecteraient mutuellement.',
   ],
   TRADOVATE_ACCOUNT_TEMPORARILY_MISSING: [
     HttpStatus.SERVICE_UNAVAILABLE,
