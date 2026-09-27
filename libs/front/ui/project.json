@@ -1,0 +1,8 @@
+{
+  "name": "front-ui",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/front/ui/src",
+  "projectType": "library",
+  "tags": ["type:lib", "scope:front"],
+  "targets": {}
+}

@@ -13,6 +13,11 @@
   --blue: #3b82f6;
   --blue-bright: #60a5fa;
   --blue-glow: rgba(59, 130, 246, 0.15);
+  /* Fonds de boutons et d'éléments pleins portant du texte blanc : contraste AA garanti
+     (blanc sur --primary = 5,2:1, sur --primary-hover = 6,7:1). --blue reste la couleur
+     d'accent pour le texte, les icônes et les graphiques (trop clair sous du texte blanc). */
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
 
   /* ─── Semantic colors ─── */
   --green: #10b981;
@@ -35,7 +40,7 @@
   --text: #e2eaf5;
   --text-2: #8fa3bf;
   --text-3: #8398b5;
-  --text-faint: #6c84a6; /* libellés discrets (axes, jours non tradés) — flagship dashboard */
+  --text-faint: #7890b0; /* libellés discrets (axes, jours non tradés) : ≥ 5:1 sur les cartes */
 
   /* ─── Brand gradient — logo mark + avatars uniquement ─── */
   --grad-brand: linear-gradient(135deg, #3b82f6, #8b5cf6);
@@ -62,7 +67,7 @@
   --badge-premium-border: rgba(59, 130, 246, 0.25);
 
   --badge-free-bg:        rgba(255, 255, 255, 0.04);
-  --badge-free-color:     #4a6080;
+  --badge-free-color:     #7a92b3; /* ≥ 5:1 sur fond sombre (était 2,6:1) */
   --badge-free-border:    rgba(255, 255, 255, 0.08);
 
   --badge-beta-bg:        rgba(167, 139, 250, 0.12);

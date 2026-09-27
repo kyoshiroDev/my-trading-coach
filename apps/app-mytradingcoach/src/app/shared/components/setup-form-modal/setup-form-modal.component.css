@@ -89,7 +89,7 @@ textarea.stp-inp { resize: vertical; min-height: 76px; line-height: 1.5; font-si
   font-family: var(--font-body);
 }
 .stp-bs {
-  background: var(--blue); border: none; color: #fff;
+  background: var(--primary); border: none; color: #fff;
   border-radius: 9px; padding: 10px 20px; font-size: 13px; font-weight: 600;
   cursor: pointer; font-family: var(--font-body);
 }

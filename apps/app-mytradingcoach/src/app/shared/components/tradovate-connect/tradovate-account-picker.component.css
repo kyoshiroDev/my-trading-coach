@@ -12,7 +12,7 @@
 .tvp-env { font-size: 11px; color: var(--text-3); }
 .tvp-btn {
   align-self: flex-start;
-  background: var(--blue); color: #fff; border: none; border-radius: 8px;
+  background: var(--primary); color: #fff; border: none; border-radius: 8px;
   padding: 8px 14px; font-size: 12px; font-weight: 600; font-family: var(--font-body); cursor: pointer;
 }
 .tvp-btn:disabled { opacity: 0.55; cursor: default; }

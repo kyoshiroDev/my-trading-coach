@@ -145,7 +145,7 @@
 
 .btn-inline-save {
   padding: 6px 14px;
-  background: var(--blue);
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: 7px;
@@ -317,7 +317,7 @@
 }
 .settings-toggle input:checked + .toggle-track::before {
   transform: translateX(18px);
-  background: var(--blue-bright);
+  background: var(--primary-hover);
 }
 .settings-toggle input:disabled + .toggle-track {
   opacity: 0.4;
@@ -343,12 +343,12 @@
   text-align: center;
 }
 .btn-primary {
-  background: var(--blue);
+  background: var(--primary);
   color: #fff;
   box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
 }
 .btn-primary:hover:not(:disabled) {
-  background: var(--blue-bright);
+  background: var(--primary-hover);
   transform: translateY(-1px);
   box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
 }
@@ -662,7 +662,7 @@ textarea.stp-inp { resize: vertical; min-height: 76px; line-height: 1.5; font-si
 .stp-mf { padding: 16px 22px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .stp-fr { display: flex; gap: 9px; }
 .stp-bc { background: var(--bg-2); border: 1px solid var(--border); color: var(--text-2); border-radius: 9px; padding: 10px 18px; font-size: 13px; cursor: pointer; font-family: var(--font-body); }
-.stp-bs { background: var(--blue); border: none; color: #fff; border-radius: 9px; padding: 10px 20px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font-body); }
+.stp-bs { background: var(--primary); border: none; color: #fff; border-radius: 9px; padding: 10px 20px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font-body); }
 .stp-bs:disabled { opacity: .4; cursor: not-allowed; }
 
 /* ── Mes setups : lignes de liste (proto .stp-row) ── */

@@ -4,6 +4,10 @@
    Mobile-first : base = mobile, enrichi vers le haut en min-width.
    ═══════════════════════════════════════════════════════════════════ */
 
+/* Fondations partagées avec l'app (échelles, focus clavier, mouvement réduit). */
+@import url('../../../libs/front/ui/src/styles/foundations.css');
+
+
 :root {
   --bg:        #070809;
   --bg2:       #0c0e10;
@@ -16,6 +20,7 @@
   --text2:     #9aa3af;
   --text3:     #4a5568;
   --teal:      #00d4aa;
+  --focus-ring-color: #00d4aa;
   --teal-dim:  rgba(0,212,170,0.08);
   --teal-glow: rgba(0,212,170,0.15);
   --blue:      #4a9eff;

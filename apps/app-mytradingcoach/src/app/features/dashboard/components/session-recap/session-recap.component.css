@@ -192,7 +192,7 @@
 .recap-btn-secondary:hover { border-color: var(--border-hover); color: var(--text); }
 
 .recap-btn-primary {
-  background: var(--blue);
+  background: var(--primary);
   color: white;
   border: none;
   border-radius: 8px;
@@ -203,7 +203,7 @@
   font-family: var(--font-body);
   transition: background .15s;
 }
-.recap-btn-primary:hover { background: var(--blue-bright); }
+.recap-btn-primary:hover { background: var(--primary-hover); }
 
 @media (max-width: 640px) {
   .recap-stats { grid-template-columns: repeat(2, 1fr); }

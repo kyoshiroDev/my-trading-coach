@@ -93,7 +93,7 @@
 /* ─── CTA ─── */
 .plan-modal-cta {
   width: 100%;
-  background: var(--blue);
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: 10px;
@@ -112,7 +112,7 @@
 }
 
 .plan-modal-cta:hover:not(:disabled) {
-  background: var(--blue-bright);
+  background: var(--primary-hover);
   transform: translateY(-1px);
 }
 
@@ -197,7 +197,7 @@
   gap: 6px;
 }
 .interval-opt.active {
-  background: var(--blue-bright);
+  background: var(--primary-hover);
   color: #fff;
   font-weight: 600;
   box-shadow: 0 2px 8px rgba(59,130,246,.35);

@@ -126,7 +126,7 @@
 }
 .close-input:focus { border-color: var(--blue); }
 .close-btn-ok {
-  background: var(--blue);
+  background: var(--primary);
   color: white;
   border: none;
   border-radius: 7px;

@@ -177,7 +177,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--blue);
+  background: var(--primary);
   border: none;
   flex-shrink: 0;
   font-size: 0;
@@ -230,7 +230,7 @@
   cursor: pointer;
 }
 .obj-note-save {
-  background: var(--blue);
+  background: var(--primary);
   border: none;
   color: white;
   border-radius: 6px;

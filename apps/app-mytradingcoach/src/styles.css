@@ -1,4 +1,7 @@
-/* ===== Design Tokens ===== */
+/* ===== Fondations partagées (échelles, focus clavier, mouvement réduit) ===== */
+@import url('../../../libs/front/ui/src/styles/foundations.css');
+
+/* ===== Design Tokens (couleurs de l'app) ===== */
 @import url('./styles/theme.css');
 
 /* ===== Reset ===== */

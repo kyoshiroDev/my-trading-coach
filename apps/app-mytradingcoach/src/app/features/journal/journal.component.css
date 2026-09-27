@@ -437,11 +437,11 @@
 .empty-state-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--text); }
 .empty-state-desc  { font-size: 13px; color: var(--text-3); max-width: 320px; line-height: 1.6; }
 .btn-primary {
-  background: var(--blue); color: white; border: none; border-radius: 8px;
+  background: var(--primary); color: white; border: none; border-radius: 8px;
   padding: 9px 18px; font-size: 13px; font-weight: 500; cursor: pointer;
   box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); transition: all 0.15s;
 }
-.btn-primary:hover { background: var(--blue-bright); transform: translateY(-1px); }
+.btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
 
 /* ── Mobile ── */
 @media (max-width: 768px) {
