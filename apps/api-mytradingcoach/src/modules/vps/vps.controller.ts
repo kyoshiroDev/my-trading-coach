@@ -6,7 +6,8 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { VpsService } from './vps.service';
 import { DockerService } from './docker.service';
-import { BackupService, BackupTarget } from './backup.service';
+import { BackupService } from './backup.service';
+import { CreateBackupDto } from './dto/create-backup.dto';
 
 @UseGuards(JwtAuthGuard, AdminGuard)
 @Controller()
@@ -53,7 +54,7 @@ export class VpsController {
   }
 
   @Post('vps/backups')
-  async createBackup(@Body() body: { target?: BackupTarget }) {
+  async createBackup(@Body() body: CreateBackupDto) {
     return await this.backup.createBackup(body?.target);
   }
 

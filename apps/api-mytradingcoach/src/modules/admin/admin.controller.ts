@@ -12,6 +12,7 @@ import { DemoSeedService } from './demo-seed.service';
 import { UsersService } from '../users/users.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { DiscordService } from '../discord/discord.service';
+import { CampaignContentDto, SendCampaignDto } from './dto/campaign.dto';
 
 @UseGuards(JwtAuthGuard, AdminGuard)
 @Controller('admin')
@@ -128,7 +129,7 @@ export class AdminController {
   @Post('campaigns/:type/preview')
   previewCampaign(
     @Param('type') type: CampaignType,
-    @Body() body: { subject?: string; content?: string },
+    @Body() body: CampaignContentDto,
   ) {
     return this.emailCampaign.preview(type, body.subject, body.content);
   }
@@ -136,7 +137,7 @@ export class AdminController {
   @Post('campaigns/:type/send')
   sendCampaign(
     @Param('type') type: CampaignType,
-    @Body() body: { subject?: string; content?: string; force?: boolean },
+    @Body() body: SendCampaignDto,
     @CurrentUser() user: { id: string },
   ) {
     return this.emailCampaign.send(type, user.id, body.subject, body.content, body.force === true);

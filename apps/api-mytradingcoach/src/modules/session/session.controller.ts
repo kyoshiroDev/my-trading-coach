@@ -14,6 +14,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { SessionService } from './session.service';
 import { CreateSessionDto } from './dto/create-session.dto';
+import { UpdateSessionDto } from './dto/update-session.dto';
 import { CloseSessionDto } from './dto/close-session.dto';
 import { AccountsService } from '../accounts/accounts.service';
 
@@ -57,7 +58,7 @@ export class SessionController {
   update(
     @CurrentUser() user: { id: string },
     @Param('id') id: string,
-    @Body() body: { planNote?: string; marketContext?: string; notes?: string; reflectionNote?: string; moodEnd?: string },
+    @Body() body: UpdateSessionDto,
   ) {
     return this.sessionService.updateSession(user.id, id, body);
   }

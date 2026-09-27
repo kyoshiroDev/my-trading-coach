@@ -22,6 +22,9 @@ import { CsvImportService, type FeesReport } from './csv-import.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
+import { ImportTradesBodyDto } from './dto/import-trades.dto';
+import { ReassignTradesDto } from './dto/reassign-trades.dto';
+import { SaveUserAssetsDto, SetFavoriteAssetDto } from './dto/user-assets.dto';
 import { INSTRUMENTS } from './instruments.const';
 import { MarketDataService } from './market-data.service';
 import { AccountsService } from '../accounts/accounts.service';
@@ -95,7 +98,7 @@ export class TradesController {
     @CurrentUser() user: { id: string; plan: Plan; role: Role; trialEndsAt?: Date | null },
     @UploadedFiles()
     files: { file?: Express.Multer.File[]; fees?: Express.Multer.File[] },
-    @Body() body: { totalFees?: string; accountId?: string; emotion?: string; setupId?: string },
+    @Body() body: ImportTradesBodyDto,
   ) {
     const file = files?.file?.[0];
     if (!file) throw new BadRequestException('Fichier manquant');
@@ -171,7 +174,7 @@ export class TradesController {
   @Patch('user-assets')
   async saveUserAssets(
     @CurrentUser() user: { id: string },
-    @Body() body: { assets: string[]; favoriteAsset?: string | null },
+    @Body() body: SaveUserAssetsDto,
   ) {
     await this.tradesService.saveUserAssets(user.id, body.assets ?? [], body.favoriteAsset);
     return { saved: true };
@@ -180,9 +183,9 @@ export class TradesController {
   @Patch('favorite-asset')
   setFavoriteAsset(
     @CurrentUser() user: { id: string },
-    @Body('asset') asset: string | null,
+    @Body() body: SetFavoriteAssetDto,
   ) {
-    return this.tradesService.setFavoriteAsset(user.id, asset ?? null);
+    return this.tradesService.setFavoriteAsset(user.id, body.asset ?? null);
   }
 
   @Get('instruments/search')
@@ -221,7 +224,7 @@ export class TradesController {
   @Patch('reassign')
   async reassign(
     @CurrentUser() user: { id: string },
-    @Body() body: { tradeIds: string[]; accountId: string },
+    @Body() body: ReassignTradesDto,
   ) {
     if (!Array.isArray(body?.tradeIds) || body.tradeIds.length === 0) {
       throw new BadRequestException('Aucun trade à déplacer.');

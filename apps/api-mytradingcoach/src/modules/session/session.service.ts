@@ -1,6 +1,5 @@
 import {
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { MoodState, Prisma, SessionStatus } from '@prisma/client';
@@ -31,7 +30,6 @@ export interface SessionHistoryItem {
 
 @Injectable()
 export class SessionService {
-  private readonly logger = new Logger(SessionService.name);
 
   constructor(
     private readonly prisma: PrismaService,
@@ -156,9 +154,12 @@ export class SessionService {
     sessionId: string,
     data: { planNote?: string; marketContext?: string; notes?: string; reflectionNote?: string; moodEnd?: MoodState },
   ) {
+    // Champs recopiés un par un : même si l'appelant passe un objet plus large,
+    // seules ces colonnes peuvent être écrites.
+    const { planNote, marketContext, notes, reflectionNote, moodEnd } = data;
     return this.prisma.tradeSession.update({
       where: { id: sessionId, userId },
-      data,
+      data: { planNote, marketContext, notes, reflectionNote, moodEnd },
     });
   }
 
