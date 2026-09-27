@@ -25,6 +25,7 @@ import MockupDebrief from './mockup/MockupDebrief.astro';
       <button class="stab" data-tab="ai" role="tab" aria-selected="false" aria-controls="tab-ai" id="stab-ai">IA Insights</button>
       <button class="stab" data-tab="debrief" role="tab" aria-selected="false" aria-controls="tab-debrief" id="stab-debrief">Weekly Debrief</button>
     </div>
+    <p class="showcase-note">Données fictives, à titre d'illustration : aucun résultat réel ni garanti.</p>
 
     <div class="showcase-panel active reveal" id="tab-dash" role="tabpanel" aria-labelledby="stab-dash">
       <MockupShell url="app.mytradingcoach.app : Dashboard" active="dashboard">
@@ -180,6 +181,14 @@ import MockupDebrief from './mockup/MockupDebrief.astro';
 </section>
 
 <style>
+  .showcase-note {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--txt3);
+    margin: -8px 0 20px;
+  }
+
   .showcase {
     background: var(--bg2);
     border-top: 1px solid var(--b);

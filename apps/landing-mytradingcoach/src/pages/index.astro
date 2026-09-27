@@ -4,7 +4,7 @@ import Base from '../layouts/Base.astro';
 import Nav from '../components/Nav.astro';
 import Hero from '../components/Hero.astro';
 import Moments from '../components/Moments.astro';
-import Problem from '../components/Problem.astro';
+import Showcase from '../components/Showcase.astro';
 import DayTimeline from '../components/DayTimeline.astro';
 import Features from '../components/Features.astro';
 import MultiComptes from '../components/MultiComptes.astro';
@@ -62,8 +62,9 @@ try {
 >
   <Nav />
   <Hero traders={traders} />
+  <!-- Le produit se voit dès le 2e écran ; Problem retiré, il redisait Moments (audit UX 2026-09-27). -->
+  <Showcase />
   <Moments />
-  <Problem />
   <DayTimeline />
   <Features />
   {FEATURES.multiAccounts && <MultiComptes />}
