@@ -22,6 +22,7 @@ import {
 import { AdminApi, AdminUser, AdminStats } from '../../core/api/admin.api';
 import { TableSort } from '../../shared/tables/table-sort';
 import { PRICING_EUR } from '../../core/constants/pricing.const';
+import type { Plan } from '@mtc/shared';
 
 @Component({
   selector: 'mtc-admin-users',
@@ -217,7 +218,7 @@ export class UsersComponent implements OnInit {
   protected readonly sortedUsers = this.sort.connect(this.users);
 
   protected editName = '';
-  protected editPlan: 'FREE' | 'PREMIUM' = 'FREE';
+  protected editPlan: Plan = 'FREE';
   protected editRole: 'USER' | 'BETA_TESTER' | 'AMBASSADOR' = 'USER';
 
   ngOnInit() {

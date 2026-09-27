@@ -1,10 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import type { Plan, Role } from '@mtc/shared';
 
 export interface AdminUser {
   id: string; email: string; name: string | null;
-  plan: 'FREE' | 'PREMIUM'; role: 'ADMIN' | 'USER' | 'BETA_TESTER' | 'AMBASSADOR';
+  plan: Plan; role: Role;
   trialEndsAt: string | null; stripeInterval: 'month' | 'year' | null;
   stripeCurrentPeriodEnd: string | null;
   lastSeenAt: string | null; lastLoginAt: string | null; createdAt: string;
@@ -27,7 +28,7 @@ export interface AdminStats {
 
 export interface AdminOnlineUser {
   id: string; email: string; name: string | null;
-  plan: 'FREE' | 'PREMIUM'; role: 'ADMIN' | 'USER' | 'BETA_TESTER' | 'AMBASSADOR';
+  plan: Plan; role: Role;
   lastSeenAt: string; lastLoginAt: string | null;
 }
 
@@ -117,7 +118,7 @@ export interface AdminAmbassador {
 export interface AdminAmbassadorPromoteResult {
   email: string;
   name: string | null;
-  role: 'ADMIN' | 'USER' | 'BETA_TESTER' | 'AMBASSADOR';
+  role: Role;
   referralCode: string;
   referralLink: string;
 }
@@ -128,7 +129,7 @@ export interface AdminAmbassadorDetail {
     id: string;
     name: string | null;
     email: string;
-    plan: 'FREE' | 'PREMIUM';
+    plan: Plan;
     createdAt: string;
     isActive: boolean;
   }>;
@@ -162,7 +163,7 @@ export interface DeletedAccount {
   signedUpAt: string;
   deletedAt: string;
   lifetimeDays: number;
-  plan: 'FREE' | 'PREMIUM';
+  plan: Plan;
   hadTraded: boolean;
   tradesCount: number;
   referredBy: string | null;
@@ -205,8 +206,8 @@ export interface UserDetailData {
     id: string;
     name: string | null;
     email: string;
-    plan: 'FREE' | 'PREMIUM';
-    role: 'ADMIN' | 'USER' | 'BETA_TESTER' | 'AMBASSADOR';
+    plan: Plan;
+    role: Role;
     subscriptionStatus: string | null;
     ambassadorRefCode: string | null;
     createdAt: string;
@@ -274,7 +275,7 @@ export class AdminApi {
     return this.http.get<{ data: { users: AdminUser[]; total: number } }>(this.base, { params });
   }
   detail(id: string)    { return this.http.get<{ data: AdminUserDetail }>(`${this.base}/${id}/detail`); }
-  update(id: string, dto: { name?: string; plan?: 'FREE' | 'PREMIUM'; role?: 'USER' | 'BETA_TESTER' | 'AMBASSADOR' }) {
+  update(id: string, dto: { name?: string; plan?: Plan; role?: 'USER' | 'BETA_TESTER' | 'AMBASSADOR' }) {
     return this.http.patch<{ data: AdminUser }>(`${this.base}/${id}`, dto);
   }
   delete(id: string)    { return this.http.delete<void>(`${this.base}/${id}`); }

@@ -1,8 +1,7 @@
 /**
  * Normalise une clé event `name:currency` en retirant le suffixe de période
- * variable ("(May)", "(Q1 2026)"…). DOIT rester identique au backend
- * (eco-calendar.service.ts → normalizeEventKey) pour que le matching front/back
- * soit cohérent : un favori épinglé en mai matche le même event en juin.
+ * variable ("(May)", "(Q1 2026)"…). Implémentation UNIQUE, utilisée par le front et l'API :
+ * un favori épinglé en mai matche le même event en juin.
  */
 export function normalizeEventKey(key: string): string {
   const colonIdx = key.lastIndexOf(':');

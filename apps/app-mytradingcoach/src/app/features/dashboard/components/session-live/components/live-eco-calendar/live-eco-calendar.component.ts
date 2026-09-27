@@ -20,7 +20,7 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent, EcoResultAnalysis } from '../../../../../../core/api/eco-calendar.api';
 import { TradingSession } from '../../../../../../core/api/session.api';
 import { translateEcoEvent } from '../../../../../../core/data/eco-event-translations';
-import { normalizeEventKey, eventKey } from '../../../../../../core/data/eco-event-key';
+
 import { EcoSocketService } from '../../../../../../core/services/eco-socket.service';
 import { UserStore } from '../../../../../../core/stores/user.store';
 import {
@@ -29,6 +29,7 @@ import {
   ECO_FLAGS,
   currencyToInstruments,
 } from './live-eco-calendar.data';
+import { eventKey, normalizeEventKey } from '@mtc/shared';
 
 /**
  * Calendrier économique de la session live : événements de la fenêtre de session,

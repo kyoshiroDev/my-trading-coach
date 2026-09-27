@@ -22,7 +22,7 @@
  */
 import { Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { parisDayRange } from '../common/utils/paris-date';
+import { parisDayRange } from '@mtc/shared';
 
 async function main(): Promise<void> {
   const dryRun = process.argv.includes('--dry-run');

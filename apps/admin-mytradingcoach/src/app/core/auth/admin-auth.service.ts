@@ -3,10 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import type { Plan, Role } from '@mtc/shared';
 
 export interface AdminAuthUser {
   id: string; email: string; name?: string;
-  plan: 'FREE' | 'PREMIUM'; role: 'ADMIN' | 'USER' | 'BETA_TESTER';
+  plan: Plan; role: Role;
 }
 
 @Injectable({ providedIn: 'root' })

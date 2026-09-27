@@ -13,10 +13,10 @@ import { DailyRecapApi, DailyRecap } from '../api/daily-recap.api';
 import { DebriefApi, DebriefObjective } from '../api/debrief.api';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent } from '../api/eco-calendar.api';
 import { UserStore } from './user.store';
-import { todayParis, toParisDateStr } from '../utils/paris-date';
 import { POLLING_MS } from '../constants/polling.const';
 import { ToastService } from '../services/toast.service';
 import { apiErrorMessage } from '../utils/api-error';
+import { toParisDateStr, todayParis } from '@mtc/shared';
 
 @Injectable({ providedIn: 'root' })
 export class SessionStore {

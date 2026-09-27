@@ -13,7 +13,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { EcoCalendarService } from './eco-calendar.service';
-import { todayParis } from '../../common/utils/paris-date';
+import { todayParis } from '@mtc/shared';
 
 // Calendrier économique = IA mutualisée (coût O(actifs), pas O(users)) → FREE (PROMPT-169).
 // Affichage ET analyse IA (bull/bear) accessibles à tous les utilisateurs connectés.

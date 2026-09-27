@@ -19,6 +19,7 @@ import { ToastService } from '../../../../../../core/services/toast.service';
 import { parseDecimal } from '../../../../../../core/utils/parse-decimal';
 import { NumericInputDirective } from '../../../../../../core/directives/numeric-input.directive';
 import { POLLING_MS } from '../../../../../../core/constants/polling.const';
+import type { EmotionState, TradeSide } from '@mtc/shared';
 
 const EMOTIONS = [
   { value: 'CONFIDENT', emoji: '😎', title: 'Confiant' },
@@ -61,8 +62,8 @@ export class QuickTradeComponent {
   protected readonly customAssetQuery   = signal('');
   protected readonly customAssetResults = signal<InstrumentSearchResult[]>([]);
   private readonly customAssetSearch$   = new Subject<string>();
-  protected readonly qtSide = signal<'LONG' | 'SHORT'>('LONG');
-  protected readonly qtEmotion = signal<'CONFIDENT' | 'STRESSED' | 'REVENGE' | 'FEAR' | 'FOCUSED' | 'NEUTRAL'>('CONFIDENT');
+  protected readonly qtSide = signal<TradeSide>('LONG');
+  protected readonly qtEmotion = signal<EmotionState>('CONFIDENT');
   protected readonly qtSetup = signal<string>('');
   protected readonly qtTimeframe = signal<string>('5m');
   protected readonly qtQty = signal('1');

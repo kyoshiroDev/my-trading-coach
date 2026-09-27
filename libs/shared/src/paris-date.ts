@@ -1,3 +1,4 @@
+/** Dates calendaires à l'heure de Paris (fuseau de référence du produit), front + back. */
 export function todayParis(): string {
   return new Date().toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
 }

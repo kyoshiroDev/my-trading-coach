@@ -15,13 +15,13 @@ import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
-import { computeTradeStats, formatMoney, netPnl } from '@mtc/shared';
+import { computeTradeStats, formatMoney, netPnl, todayParis } from '@mtc/shared';
 import { userAmountsCurrency } from '../../common/utils/user-currency.util';
 // import type only (aucune dépendance runtime → pas de cycle avec eco-calendar.service)
 import type { EcoAnalysis, EcoResultAnalysis } from '../eco-calendar/eco-calendar.service';
 import { AnthropicClientService } from '../shared/anthropic-client.service';
 import { buildUserTradingContext, UserTradingProfile } from './user-context.builder';
-import { todayParis } from '../../common/utils/paris-date';
+
 import { AI_MODELS } from '../shared/ai-pricing.const';
 
 const MODEL = AI_MODELS.analysis;

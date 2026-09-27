@@ -1,4 +1,4 @@
-import { eventKey } from '../../../../core/data/eco-event-key';
+import { eventKey } from '@mtc/shared';
 
 export interface MorningEventLike {
   name: string;

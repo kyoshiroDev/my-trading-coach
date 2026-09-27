@@ -3,9 +3,10 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 import { AnthropicClientService } from '../shared/anthropic-client.service';
 import { AiService } from '../ai/ai.service';
-import { todayParis, toParisDateStr } from '../../common/utils/paris-date';
+
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 import { AI_MODELS } from '../shared/ai-pricing.const';
+import { normalizeEventKey, toParisDateStr, todayParis } from '@mtc/shared';
 
 export interface EcoEvent {
   date?: string;
@@ -280,7 +281,7 @@ export class EcoCalendarService {
     const prevSet = new Set(
       before
         .filter((e) => e.isReleased)
-        .map((e) => this.normalizeEventKey(`${e.name}:${e.currency}`)),
+        .map((e) => normalizeEventKey(`${e.name}:${e.currency}`)),
     );
 
     // Fetch + upsert (met aussi à jour nameFr en prod)
@@ -292,7 +293,7 @@ export class EcoCalendarService {
     const brandNew = after.filter(
       (e) =>
         e.isReleased &&
-        !prevSet.has(this.normalizeEventKey(`${e.name}:${e.currency}`)),
+        !prevSet.has(normalizeEventKey(`${e.name}:${e.currency}`)),
     );
 
     return { hasNew: brandNew.length > 0, newEvents: brandNew };
@@ -642,15 +643,6 @@ export class EcoCalendarService {
       .filter((e): e is EcoEvent => !!e)
       .map((e) => ({ ...e, date: today }))
       .sort((a, b) => (a.time ?? '').localeCompare(b.time ?? ''));
-  }
-
-  // Retire le suffixe de période "(May)", "(Q1 2026)", "(Apr)" d'une clé nom:devise
-  private normalizeEventKey(key: string): string {
-    const colonIdx = key.lastIndexOf(':');
-    if (colonIdx === -1) return key;
-    const name     = key.substring(0, colonIdx).replace(/\s*\([^)]*\)\s*$/, '').trim();
-    const currency = key.substring(colonIdx + 1);
-    return `${name}:${currency}`;
   }
 
   async getUserTopAssets(userId: string): Promise<string[]> {

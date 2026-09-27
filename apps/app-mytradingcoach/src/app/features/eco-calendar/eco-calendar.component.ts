@@ -12,9 +12,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { EcoCalendarApi, EcoEvent, EcoResultAnalysis } from '../../core/api/eco-calendar.api';
 import { translateEcoEvent } from '../../core/data/eco-event-translations';
-import { todayParis, toParisDateStr } from '../../core/utils/paris-date';
+
 import { UserStore } from '../../core/stores/user.store';
 import { ToastService } from '../../core/services/toast.service';
+import { toParisDateStr, todayParis } from '@mtc/shared';
 
 type EcoSession = 'asia' | 'europe' | 'us';
 interface SessionGroup { asia: EcoEvent[]; europe: EcoEvent[]; us: EcoEvent[]; }
@@ -48,7 +49,6 @@ export class EcoCalendarComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);
   private readonly userStore = inject(UserStore);
-
 
   protected readonly currentWeekStart = signal(this.getMonday(new Date()));
   protected readonly isLoading = signal(false);

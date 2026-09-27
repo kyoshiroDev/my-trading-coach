@@ -7,14 +7,16 @@ import { environment } from '../../../environments/environment';
 import { SelectedAccountStore } from '../stores/selected-account.store';
 import { TradesStore } from '../stores/trades.store';
 import { SetupsStore } from '../stores/setups.store';
+import type { Plan, Role } from '@mtc/shared';
 
-export type UserRole = 'ADMIN' | 'USER' | 'BETA_TESTER' | 'AMBASSADOR';
+/** Rôle d'un utilisateur : alias du contrat partagé, gardé pour les importeurs existants. */
+export type UserRole = Role;
 
 export interface AuthUser {
   id: string;
   email: string;
   name?: string;
-  plan: 'FREE' | 'PREMIUM';
+  plan: Plan;
   role?: UserRole;
   trialEndsAt?: string | null;
   stripeCurrentPeriodEnd?: string | null;

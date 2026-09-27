@@ -5,7 +5,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { VpsService } from '../vps/vps.service';
 import { RedisService } from '../shared/redis.service';
-import { parisDayRange, todayParis, yesterdayParis } from '../../common/utils/paris-date';
+import { parisDayRange, todayParis, yesterdayParis } from '@mtc/shared';
 
 const HEALTH_PREFIX = 'health:'; // health:YYYY-MM-DD -> 'ok' | 'incident'
 const HEALTH_TTL = 100 * 86_400; // 100 jours (couvre l'affichage 90j)

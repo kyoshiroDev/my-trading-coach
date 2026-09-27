@@ -11,3 +11,5 @@ export * from './currency';
 export * from './pricing';
 export * from './trade-stats';
 export * from './contracts';
+export * from './eco-event-key';
+export * from './paris-date';

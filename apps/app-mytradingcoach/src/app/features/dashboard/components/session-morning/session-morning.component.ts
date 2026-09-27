@@ -18,7 +18,7 @@ import {
   LucideTriangleAlert as TriangleAlert,
 } from '@lucide/angular';
 import { translateEcoEvent } from '../../../../core/data/eco-event-translations';
-import { normalizeEventKey, eventKey } from '../../../../core/data/eco-event-key';
+
 import { filterMorningEvents } from './session-morning.util';
 import { DailyRecap } from '../../../../core/api/daily-recap.api';
 import { EcoCalendarApi, EcoCalendarData, EcoEvent } from '../../../../core/api/eco-calendar.api';
@@ -28,6 +28,7 @@ import { UserStore } from '../../../../core/stores/user.store';
 import { ToastService } from '../../../../core/services/toast.service';
 import { PremiumLockComponent } from '../../../../shared/components/premium-lock/premium-lock.component';
 import { MoneyPipe } from '../../../../shared/pipes';
+import { eventKey, normalizeEventKey } from '@mtc/shared';
 
 const MOODS: { value: MoodState; label: string; emoji: string }[] = [
   { value: 'CONFIDENT', label: 'Confiant', emoji: '😎' },

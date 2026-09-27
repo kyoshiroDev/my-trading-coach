@@ -27,6 +27,7 @@ import {
 import { CreateTradeSchema } from '../../core/schemas/trade.schema';
 import { SetupsStore } from '../../core/stores/setups.store';
 import { PnlFormatPipe } from '../../shared/pipes';
+import type { TradeSide } from '@mtc/shared';
 
 const EMOTIONS: NonNullable<Trade['emotion']>[] = [
   'CONFIDENT',
@@ -252,7 +253,7 @@ export class TradeFormComponent {
     }
   }
 
-  protected setSide(side: 'LONG' | 'SHORT'): void {
+  protected setSide(side: TradeSide): void {
     this.form.update((f) => ({ ...f, side }));
     this.recalculate();
   }

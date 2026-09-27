@@ -32,10 +32,11 @@ import { MoneyService } from '../../core/services/money.service';
 import { ToastService } from '../../core/services/toast.service';
 import { TradovateLiveSocketService } from '../../core/services/tradovate-live-socket.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
+import type { ExecutionGrade, TradeSide } from '@mtc/shared';
 
-type FilterSide = 'ALL' | 'LONG' | 'SHORT';
+type FilterSide = 'ALL' | TradeSide;
 type FilterResult = 'ALL' | 'WIN' | 'LOSS' | 'BREAKEVEN';
-type FilterExecution = 'ALL' | 'EXCELLENT' | 'BON' | 'MOYEN' | 'MAUVAIS' | 'NONE';
+type FilterExecution = 'ALL' | ExecutionGrade | 'NONE';
 type FilterEmotion =
   | 'ALL' | 'CONFIDENT' | 'FOCUSED' | 'NEUTRAL' | 'STRESSED'
   | 'REVENGE' | 'FEAR' | 'TIRED' | 'NONE';
