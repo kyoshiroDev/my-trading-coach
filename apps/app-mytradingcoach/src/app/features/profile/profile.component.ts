@@ -46,6 +46,7 @@ import {
   EditableSetup,
 } from '../../shared/components/setup-form-modal/setup-form-modal.component';
 import { DialogDirective } from '@mtc/front-ui';
+import { searchLocalInstruments, sessionLabel, styleEmoji, styleLabel, withAsset, withoutAsset } from './profile.helpers';
 
 type ProfileTab = 'trader' | 'params';
 
@@ -476,54 +477,19 @@ export class ProfileComponent implements OnInit {
           this.assetSearchLoading.set(false);
         },
         error: () => {
-          this.assetSearchResults.set(this.searchLocalFallback(query));
+          this.assetSearchResults.set(searchLocalInstruments(query));
           this.assetSearchLoading.set(false);
         },
       });
     }, 400);
   }
 
-  private searchLocalFallback(query: string): InstrumentSearchResult[] {
-    const QUICK_LIST: InstrumentSearchResult[] = [
-      { symbol: 'NQ',  label: 'E-mini Nasdaq (NQ)',              category: 'FUTURES' },
-      { symbol: 'MNQ', label: 'Micro E-mini Nasdaq (MNQ)',       category: 'FUTURES' },
-      { symbol: 'ES',  label: 'E-mini S&P 500 (ES)',             category: 'FUTURES' },
-      { symbol: 'MES', label: 'Micro E-mini S&P 500 (MES)',      category: 'FUTURES' },
-      { symbol: 'YM',  label: 'E-mini Dow Jones (YM)',           category: 'FUTURES' },
-      { symbol: 'RTY', label: 'E-mini Russell 2000 (RTY)',       category: 'FUTURES' },
-      { symbol: 'GC',  label: 'Gold Futures (GC)',               category: 'FUTURES' },
-      { symbol: 'CL',  label: 'Crude Oil Futures (CL)',          category: 'FUTURES' },
-      { symbol: 'MBT', label: 'Micro Bitcoin CME (MBT)',         category: 'FUTURES' },
-      { symbol: 'BTC', label: 'Bitcoin Futures CME (BTC)',       category: 'FUTURES' },
-      { symbol: 'MET', label: 'Micro Ether CME (MET)',           category: 'FUTURES' },
-      { symbol: 'ETH', label: 'Ether Futures CME (ETH)',         category: 'FUTURES' },
-      { symbol: 'BTC/USDT', label: 'Bitcoin Spot (BTC/USDT)',   category: 'CRYPTO' },
-      { symbol: 'ETH/USDT', label: 'Ethereum Spot (ETH/USDT)', category: 'CRYPTO' },
-      { symbol: 'EUR/USD',  label: 'Euro / Dollar (EUR/USD)',   category: 'FOREX' },
-      { symbol: 'GBP/USD',  label: 'Livre / Dollar (GBP/USD)', category: 'FOREX' },
-    ];
-    const q = query.toLowerCase();
-    return QUICK_LIST.filter(
-      (i) => i.symbol.toLowerCase().includes(q) || i.label.toLowerCase().includes(q),
-    ).slice(0, 8);
-  }
-
   protected addAsset(result: InstrumentSearchResult): void {
     if (this.assetsSaving()) return;
-    const symbol = result.symbol.toUpperCase().trim();
-    if (this.tradingAssets().some((a) => a.symbol === symbol)) return;
     const prev = this.tradingAssets();
-    const isFirst = prev.length === 0;
-    const newAsset: UserAssetItem = {
-      symbol,
-      label: result.label,
-      category: result.category,
-      isFavorite: isFirst,
-      tradeCount: 0,
-      lastEntry: null,
-      lastQty: null,
-    };
-    this.tradingAssets.set([...prev, newAsset]);
+    const next = withAsset(prev, result);
+    if (!next) return;
+    this.tradingAssets.set(next);
     this.assetSearchQuery.set('');
     this.assetSearchResults.set([]);
     this.persistAssets(prev);
@@ -532,13 +498,7 @@ export class ProfileComponent implements OnInit {
   protected removeAsset(symbol: string): void {
     if (this.assetsSaving()) return;
     const prev = this.tradingAssets();
-    const wasFav = prev.find((a) => a.symbol === symbol)?.isFavorite ?? false;
-    let next = prev.filter((a) => a.symbol !== symbol);
-    // Si on retire le favori, promouvoir le premier restant (un seul favori).
-    if (wasFav && next.length) {
-      next = next.map((a, i) => ({ ...a, isFavorite: i === 0 }));
-    }
-    this.tradingAssets.set(next);
+    this.tradingAssets.set(withoutAsset(prev, symbol));
     this.persistAssets(prev);
   }
 
@@ -622,25 +582,7 @@ export class ProfileComponent implements OnInit {
       });
   }
 
-  protected styleEmoji(style: string | null): string {
-    const map: Record<string, string> = {
-      SCALPING: '⚡', DAY_TRADING: '📅', SWING: '🌊', POSITION: '🏔️',
-    };
-    return style ? (map[style] ?? '📈') : '📈';
-  }
-
-  protected styleLabel(style: string | null): string {
-    const map: Record<string, string> = {
-      SCALPING: 'Scalping', DAY_TRADING: 'Day Trading',
-      SWING: 'Swing Trading', POSITION: 'Long terme',
-    };
-    return style ? (map[style] ?? style) : '';
-  }
-
-  protected sessionLabel(s: string): string {
-    const map: Record<string, string> = {
-      LONDON: 'Londres', NEW_YORK: 'New York', ASIAN: 'Asie',
-    };
-    return map[s] ?? s;
-  }
+  protected readonly styleEmoji = styleEmoji;
+  protected readonly styleLabel = styleLabel;
+  protected readonly sessionLabel = sessionLabel;
 }
