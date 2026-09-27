@@ -139,7 +139,7 @@
    ≤1100 : zone de travail 1 colonne · ≤820 : feed/calendrier empilés + stats 2 col ·
    ≤520 : stats 1 col (les rangées du Trade rapide s'empilent dans son composant). La grille
    marché (.ctx-grid) est gérée dans market-context-bar.component.css. */
-@container (max-width: 1100px) {
+@container (max-width: 1024px) {
   .live-layout { grid-template-columns: 1fr; }
 }
 @container (max-width: 820px) {

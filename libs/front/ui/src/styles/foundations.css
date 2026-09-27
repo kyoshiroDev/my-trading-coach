@@ -47,6 +47,8 @@
   /*
    * Points de rupture (les variables CSS ne marchent pas dans @media : valeurs à recopier) :
    *   sm 480px (petit mobile) · md 768px (tablette / drawer) · lg 1024px (desktop) · xl 1280px
+   * `@media` n'utilise QUE ces 4 valeurs (min-width : valeur + 1 si une règle max-width la
+   * complète, ex. 769px). Les `@container` (largeur du composant) restent libres.
    */
 }
 

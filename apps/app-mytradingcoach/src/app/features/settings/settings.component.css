@@ -454,7 +454,7 @@
 @media (max-width: 768px) {
   .settings-content { padding: 16px 12px 60px; }
 }
-@media (max-width: 600px) {
+@media (max-width: 480px) {
   .settings-input { width: 140px; }
   .inline-edit { flex-direction: column; align-items: flex-start; }
 }
@@ -603,7 +603,7 @@
 .profile-grid-trader { display: grid; grid-template-columns: 5fr 7fr; gap: 24px; align-items: start; }
 .profile-grid-2 { display: grid; grid-template-columns: 1.05fr 1fr; gap: 24px; align-items: start; }
 .pcol { display: flex; flex-direction: column; }
-@media (max-width: 1000px) {
+@media (max-width: 1024px) {
   .profile-grid-trader, .profile-grid-2 { grid-template-columns: 1fr; }
 }
 

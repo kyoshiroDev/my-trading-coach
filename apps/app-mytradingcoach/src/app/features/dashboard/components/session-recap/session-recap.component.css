@@ -205,7 +205,7 @@
 }
 .recap-btn-primary:hover { background: var(--primary-hover); }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .recap-stats { grid-template-columns: repeat(2, 1fr); }
   .recap-actions { flex-direction: column; }
 }

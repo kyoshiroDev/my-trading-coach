@@ -45,7 +45,7 @@
   }
 }
 
-@media (min-width: 600px) {
+@media (min-width: 481px) {
   .overlay {
     align-items: center;
   }
@@ -678,7 +678,7 @@ input[type='date'] {
 }
 
 /* ─── Mobile ─── */
-@media (max-width: 599px) {
+@media (max-width: 480px) {
   /* Asset + Direction côte à côte */
   .row-asset-side {
     flex-direction: row;

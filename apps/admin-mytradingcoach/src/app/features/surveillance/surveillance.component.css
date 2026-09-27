@@ -58,7 +58,7 @@
 .drawer-acts { display: flex; align-items: center; gap: 8px; }
 .drawer .log-terminal { flex: 1; min-height: 0; height: auto; }
 
-@media (max-width: 767px) {
+@media (max-width: 768px) {
   .ct-meta { font-size: var(--fs-2xs); gap: 8px; }
   .ct-acts .pill { padding: 4px 9px; }
   .ub { width: 4px; height: 22px; }

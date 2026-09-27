@@ -19,18 +19,18 @@
 .comm-txt { font-size: 13.5px; color: var(--text-2); line-height: 1.55; }
 .comm-txt b { color: var(--text); font-weight: 600; }
 .comm-pill { display: inline-block; margin-top: 11px; font-family: var(--font-mono); font-size: var(--fs-2xs); letter-spacing: .4px; color: var(--green); background: var(--green-dim); padding: 4px 9px; border-radius: 6px; }
-@media (max-width: 560px) { .comm { flex-direction: column; align-items: flex-start; gap: 12px; } }
+@media (max-width: 480px) { .comm { flex-direction: column; align-items: flex-start; gap: 12px; } }
 
 /* ── conditions (pleine largeur, items en 2 colonnes) ── */
 .elig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; }
-@media (max-width: 680px) { .elig-grid { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { .elig-grid { grid-template-columns: 1fr; } }
 .elig { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--text-2); }
 .elig-ic { width: 20px; height: 20px; border-radius: 6px; background: var(--green-dim); color: var(--green); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
 .elig b { color: var(--text); font-weight: 600; }
 
 /* ── zone 2 colonnes : 1 carte par colonne → hauteurs égales ── */
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-@media (max-width: 880px) { .grid { grid-template-columns: 1fr; } }
+@media (max-width: 1024px) { .grid { grid-template-columns: 1fr; } }
 .grid .card { margin-bottom: 0; }
 
 /* comment ça marche (vertical) */

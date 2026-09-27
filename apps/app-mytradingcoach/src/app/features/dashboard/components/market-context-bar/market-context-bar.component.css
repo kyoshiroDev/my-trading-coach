@@ -56,13 +56,13 @@
 /* ─── Responsive ─── */
 /* Container-queries — répondent à la largeur du conteneur .session-page (source §6).
    ≤1100 : 4 colonnes · ≤680 : 2 colonnes. */
-@container (max-width: 1100px) {
+@container (max-width: 1024px) {
   .ctx-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
-@container (max-width: 680px) {
+@container (max-width: 768px) {
   .ctx-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@media (max-width: 600px) {
+@media (max-width: 480px) {
   .ctx-grid {
     grid-template-columns: none;
     grid-auto-flow: column;

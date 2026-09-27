@@ -3,7 +3,7 @@
 /* Parrains (table 8 col, un peu plus large) | Filleuls récents, côte à côte. */
 .ref-cols { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: start; }
 .ref-cols .card { min-width: 0; overflow-x: auto; }
-@media (max-width: 1100px) { .ref-cols { grid-template-columns: 1fr; } }
+@media (max-width: 1024px) { .ref-cols { grid-template-columns: 1fr; } }
 
 .card-action { font-family: var(--mono); font-size: 11px; color: var(--text3); }
 .ud-static { cursor: default; }

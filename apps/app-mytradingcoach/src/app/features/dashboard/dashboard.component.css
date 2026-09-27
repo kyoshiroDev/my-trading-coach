@@ -255,8 +255,8 @@
 /* Grille principale = 3 colonnes (fidèle au design : équité|top|P&L jour,
    puis AI coach|stratégies|émotions). Responsive 3 → 2 → 1. */
 .mtc-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
-@media (max-width: 1200px) { .mtc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 760px) { .mtc-grid { grid-template-columns: 1fr; } }
+@media (max-width: 1280px) { .mtc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 768px) { .mtc-grid { grid-template-columns: 1fr; } }
 
 .mtc-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; min-width: 0; margin-top: 16px; }
 .mtc-grid > .mtc-panel { margin-top: 0; }

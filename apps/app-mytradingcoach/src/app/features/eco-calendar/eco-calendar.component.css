@@ -273,10 +273,10 @@ table.cal { width: 100%; border-collapse: collapse; font-size: 13px; }
 
 /* ── Responsive ── */
 /* Tablette : masque Prév./Précédent pour garder le tableau lisible */
-@media (max-width: 1100px) { .hide-sm { display: none; } }
+@media (max-width: 1024px) { .hide-sm { display: none; } }
 
 /* Stack : 1 colonne, Ma sélection au-dessus, onglets scrollables */
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   :host, .eco-page { display: block; min-height: 0; }
   .eco-layout { grid-template-columns: 1fr; flex: none; overflow: visible; }
   .eco-selection-col { order: -1; margin-bottom: 10px; }
@@ -286,7 +286,7 @@ table.cal { width: 100%; border-collapse: collapse; font-size: 13px; }
 }
 
 /* Mobile : le tableau devient des cartes empilées (label : valeur) */
-@media (max-width: 700px) {
+@media (max-width: 768px) {
   .cal thead { display: none; }
   .cal, .cal tbody { display: block; width: 100%; }
   .eco-table-wrap { border: none; background: transparent; }

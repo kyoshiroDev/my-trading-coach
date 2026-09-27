@@ -226,7 +226,7 @@
 }
 
 /* Mobile : le trigger prend la largeur dispo, le menu s'adapte. */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .acct-trigger {
     min-width: 0;
     flex: 1;

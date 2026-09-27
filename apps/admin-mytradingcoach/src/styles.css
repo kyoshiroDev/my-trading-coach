@@ -292,7 +292,7 @@ router-outlet { display: none; }
 .dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; display: inline-block; }
 .reconcile { font-family: var(--mono); font-size: var(--fs-2xs); color: var(--text3); padding: 10px 18px; border-top: 1px dashed var(--border); line-height: 1.5; }
 .reconcile b { color: var(--text2); }
-@media (max-width: 900px) { .hero-strip { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 1024px) { .hero-strip { grid-template-columns: 1fr 1fr; } }
 .feat-pct { font-family: var(--mono); font-size: 11px; color: var(--text2); text-align: right; }
 .feat-cost { font-family: var(--mono); font-size: 11px; color: var(--amber); text-align: right; }
 
@@ -396,7 +396,7 @@ router-outlet { display: none; }
 /* ───────────────────────── TÉLÉPHONE (<768px) : tables → cartes ─────────────────────────
    Mixin réutilisable. Appliquer aux tables Utilisateurs / Sauvegardes / Comptes supprimés.
    Breakpoint < 768px (cf. règle responsive : pas de table dense sous la tablette). */
-@media (max-width: 767px) {
+@media (max-width: 768px) {
   .ret-stat { border-left: none !important; }
   .gauges3 { flex-direction: column; }
 

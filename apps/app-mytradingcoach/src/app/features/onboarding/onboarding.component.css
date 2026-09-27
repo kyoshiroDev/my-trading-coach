@@ -379,13 +379,13 @@
 .asset-remove:hover { color: var(--red, #ef4444); }
 
 /* ─── Responsive — petits téléphones ─── */
-@media (max-width: 380px) {
+@media (max-width: 480px) {
   .choice-grid { grid-template-columns: 1fr; }
 }
 
 /* Etape trade : 3 options equivalentes (CSV / manuel / zero) */
 .choice-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
-@media (max-width: 640px) { .choice-grid-3 { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { .choice-grid-3 { grid-template-columns: 1fr; } }
 
 /* ── Étape 3 : perso / prop firm ─────────────────────────────────────────────── */
 /* Segmented control, meme graphie que le toggle de devise juste en dessous. */
@@ -417,7 +417,7 @@
 .prop-row { display: flex; gap: 12px; }
 .prop-col { flex: 1; min-width: 0; }
 
-@media (max-width: 460px) {
+@media (max-width: 480px) {
   .prop-row { flex-direction: column; gap: 0; }
 }
 
@@ -446,7 +446,7 @@
    3 options secondaires (CSV, manuel, zéro) sur une ligne. */
 .choice-grid-4 { grid-template-columns: repeat(3, 1fr); }
 .choice-featured { grid-column: 1 / -1; }
-@media (max-width: 640px) { .choice-grid-4 { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { .choice-grid-4 { grid-template-columns: 1fr; } }
 .choice-tradovate { position: relative; border-color: rgba(255, 90, 31, 0.45); background: var(--nt-dim); }
 .choice-tradovate:hover { border-color: var(--nt); background: rgba(255, 90, 31, 0.18); }
 .choice-tag.nt {

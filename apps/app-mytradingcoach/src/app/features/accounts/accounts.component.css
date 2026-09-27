@@ -67,7 +67,7 @@
   gap: 16px;
   margin-bottom: 22px;
 }
-@media (max-width: 1200px) { .stats-row { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 1280px) { .stats-row { grid-template-columns: repeat(3, 1fr); } }
 .stat-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -372,7 +372,7 @@
 }
 
 /* ── Repli tablette : 8 colonnes ne tiennent plus, les jauges passent au dépli ── */
-@media (max-width: 1100px) {
+@media (max-width: 1024px) {
   .acct-thead { display: none; }
   /* En repli, chaque ligne cache des colonnes : le chevron redevient utile partout. */
   .acct-expand { visibility: visible; }
@@ -411,7 +411,7 @@
   .acct-sub { padding-left: 14px; }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   .stats-row { grid-template-columns: repeat(2, 1fr); }
   .fld-row { flex-wrap: wrap; }
   .acct-line { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
@@ -479,7 +479,7 @@
   margin: 14px 0 0; width: 100%;
 }
 
-@media (max-width: 560px) {
+@media (max-width: 480px) {
   /* Ligne étroite : la pastille garde sa place, le bouton de connexion prend le reste. */
   .cell-sync { gap: 5px; }
   .cell-sync .tv-btn.connect { flex: 1 1 100%; justify-content: center; }
