@@ -19,15 +19,15 @@ import MockupDebrief from './mockup/MockupDebrief.astro';
     </div>
 
     <div class="showcase-tabs reveal" role="tablist" aria-label="Aperçu de l'application">
-      <button class="stab active" data-tab="dash" role="tab" aria-selected="true" aria-controls="tab-dash" id="stab-dash">Dashboard</button>
+      <button class="stab active" data-tab="dash" role="tab" aria-selected="true" aria-controls="tab-dash" id="stab-dash">Tableau de bord</button>
       <button class="stab" data-tab="journal" role="tab" aria-selected="false" aria-controls="tab-journal" id="stab-journal">Journal</button>
-      <button class="stab" data-tab="analytics" role="tab" aria-selected="false" aria-controls="tab-analytics" id="stab-analytics">Analytics</button>
-      <button class="stab" data-tab="ai" role="tab" aria-selected="false" aria-controls="tab-ai" id="stab-ai">IA Insights</button>
-      <button class="stab" data-tab="debrief" role="tab" aria-selected="false" aria-controls="tab-debrief" id="stab-debrief">Weekly Debrief</button>
+      <button class="stab" data-tab="analytics" role="tab" aria-selected="false" aria-controls="tab-analytics" id="stab-analytics">Statistiques</button>
+      <button class="stab" data-tab="ai" role="tab" aria-selected="false" aria-controls="tab-ai" id="stab-ai">Insights IA</button>
+      <button class="stab" data-tab="debrief" role="tab" aria-selected="false" aria-controls="tab-debrief" id="stab-debrief">Débrief hebdo</button>
     </div>
 
     <div class="showcase-panel active reveal" id="tab-dash" role="tabpanel" aria-labelledby="stab-dash">
-      <MockupShell url="app.mytradingcoach.app : Dashboard" active="dashboard">
+      <MockupShell url="app.mytradingcoach.app : Tableau de bord" active="dashboard">
         <MockupDashboard />
       </MockupShell>
       <div class="mobile-mockup">
@@ -35,7 +35,7 @@ import MockupDebrief from './mockup/MockupDebrief.astro';
           <div class="phone-bar"><div class="phone-notch"></div></div>
           <div class="phone-content">
             <div class="phone-topbar">
-              <span class="phone-title">Dashboard</span>
+              <span class="phone-title">Tableau de bord</span>
               <button class="phone-cta">+ Ajouter trade</button>
             </div>
             <div class="phone-stats">
@@ -94,14 +94,14 @@ import MockupDebrief from './mockup/MockupDebrief.astro';
     </div>
 
     <div class="showcase-panel" id="tab-analytics" role="tabpanel" aria-labelledby="stab-analytics">
-      <MockupShell url="app.mytradingcoach.app : Analytics" active="analytics">
+      <MockupShell url="app.mytradingcoach.app : Statistiques" active="analytics">
         <MockupAnalytics />
       </MockupShell>
       <div class="mobile-mockup">
         <div class="phone-frame">
           <div class="phone-bar"><div class="phone-notch"></div></div>
           <div class="phone-content">
-            <div class="phone-topbar"><span class="phone-title">Analytics</span></div>
+            <div class="phone-topbar"><span class="phone-title">Statistiques</span></div>
             <div class="phone-stats">
               <div class="phone-stat"><div class="phone-stat-label">WIN RATE</div><div class="phone-stat-value text-g">67.4%</div></div>
               <div class="phone-stat"><div class="phone-stat-label">RR MOYEN</div><div class="phone-stat-value">2.1</div></div>
@@ -120,14 +120,14 @@ import MockupDebrief from './mockup/MockupDebrief.astro';
     </div>
 
     <div class="showcase-panel" id="tab-ai" role="tabpanel" aria-labelledby="stab-ai">
-      <MockupShell url="app.mytradingcoach.app : IA Insights" active="ai">
+      <MockupShell url="app.mytradingcoach.app : Insights IA" active="ai">
         <MockupAiInsights />
       </MockupShell>
       <div class="mobile-mockup">
         <div class="phone-frame">
           <div class="phone-bar"><div class="phone-notch"></div></div>
           <div class="phone-content">
-            <div class="phone-topbar"><span class="phone-title">IA Insights</span></div>
+            <div class="phone-topbar"><span class="phone-title">Insights IA</span></div>
             <div class="phone-trades" style="gap:8px">
               <div style="background:var(--card);border:1px solid var(--b);border-radius:9px;padding:12px">
                 <div style="font-size:9px;color:#ef4444;font-family:var(--mono);margin-bottom:6px">⚠ CRITIQUE</div>
@@ -148,14 +148,14 @@ import MockupDebrief from './mockup/MockupDebrief.astro';
     </div>
 
     <div class="showcase-panel" id="tab-debrief" role="tabpanel" aria-labelledby="stab-debrief">
-      <MockupShell url="app.mytradingcoach.app : Weekly Debrief" active="debrief">
+      <MockupShell url="app.mytradingcoach.app : Débrief hebdo" active="debrief">
         <MockupDebrief />
       </MockupShell>
       <div class="mobile-mockup">
         <div class="phone-frame">
           <div class="phone-bar"><div class="phone-notch"></div></div>
           <div class="phone-content">
-            <div class="phone-topbar"><span class="phone-title">Weekly Debrief</span></div>
+            <div class="phone-topbar"><span class="phone-title">Débrief hebdo</span></div>
             <div class="phone-stats">
               <div class="phone-stat"><div class="phone-stat-label">P&amp;L SEMAINE</div><div class="phone-stat-value text-g">+$2,140</div></div>
               <div class="phone-stat"><div class="phone-stat-label">TRADES</div><div class="phone-stat-value">18</div></div>

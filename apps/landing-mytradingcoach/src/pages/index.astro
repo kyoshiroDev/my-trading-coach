@@ -7,6 +7,9 @@ import Moments from '../components/Moments.astro';
 import Problem from '../components/Problem.astro';
 import DayTimeline from '../components/DayTimeline.astro';
 import Features from '../components/Features.astro';
+import Showcase from '../components/Showcase.astro';
+import CoachIA from '../components/CoachIA.astro';
+import Debrief from '../components/Debrief.astro';
 import MultiComptes from '../components/MultiComptes.astro';
 import Compare from '../components/Compare.astro';
 import Pricing from '../components/Pricing.astro';
@@ -68,6 +71,10 @@ try {
   <Problem />
   <DayTimeline />
   <Features />
+  <!-- L'app en vrai (maquettes produit), puis le coach IA et le débrief : décision D2 de l'audit. -->
+  <Showcase />
+  <CoachIA />
+  <Debrief />
   {FEATURES.multiAccounts && <MultiComptes />}
   <Compare />
   <Pricing />
