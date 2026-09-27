@@ -4,6 +4,7 @@ import { TradesController } from './trades.controller';
 import { MarketController } from './market.controller';
 import { InstrumentsController } from './instruments.controller';
 import { InstrumentsService } from './instruments.service';
+import { UserAssetsService } from './user-assets.service';
 import { TradesService } from './trades.service';
 import { CoinGeckoService } from './coingecko.service';
 import { CsvImportService } from './csv-import.service';
@@ -18,7 +19,7 @@ import { MarketNewsCron } from './market-news.cron';
   imports: [HttpModule, PrismaModule, AnalyticsModule, AccountsModule, SetupsModule],
   // trades = les trades ; market = données de marché mutualisées ; instruments = catalogue + actifs suivis.
   controllers: [MarketController, InstrumentsController, TradesController],
-  providers: [TradesService, InstrumentsService, CoinGeckoService, CsvImportService, MarketDataService, MarketNewsCron],
+  providers: [TradesService, InstrumentsService, UserAssetsService, CoinGeckoService, CsvImportService, MarketDataService, MarketNewsCron],
   exports: [TradesService, MarketDataService],
 })
 export class TradesModule {}

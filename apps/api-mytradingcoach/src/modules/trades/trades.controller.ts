@@ -25,6 +25,7 @@ import { ImportTradesBodyDto } from './dto/import-trades.dto';
 import { ReassignTradesDto } from './dto/reassign-trades.dto';
 import { SaveUserAssetsDto, SetFavoriteAssetDto } from './dto/user-assets.dto';
 import { InstrumentsService } from './instruments.service';
+import { UserAssetsService } from './user-assets.service';
 import { MarketDataService } from './market-data.service';
 import { DeprecatedRoute } from '../../common/decorators/deprecated-route.decorator';
 import { AccountsService } from '../accounts/accounts.service';
@@ -39,6 +40,7 @@ export class TradesController {
     private readonly accounts: AccountsService,
     private readonly setups: SetupsService,
     private readonly instruments: InstrumentsService,
+    private readonly userAssets: UserAssetsService,
     private readonly marketData: MarketDataService, // anciennes routes /trades/market-* uniquement
   ) {}
 
@@ -163,19 +165,19 @@ export class TradesController {
 
   @Get('user-assets')
   @DeprecatedRoute('GET /instruments/user-assets')
-  getUserAssets(@CurrentUser() user: { id: string }) { return this.tradesService.getUserAssets(user.id); }
+  getUserAssets(@CurrentUser() user: { id: string }) { return this.userAssets.getUserAssets(user.id); }
 
   @Patch('user-assets')
   @DeprecatedRoute('PATCH /instruments/user-assets')
   async saveUserAssets(@CurrentUser() user: { id: string }, @Body() body: SaveUserAssetsDto) {
-    await this.tradesService.saveUserAssets(user.id, body.assets ?? [], body.favoriteAsset);
+    await this.userAssets.saveUserAssets(user.id, body.assets ?? [], body.favoriteAsset);
     return { saved: true };
   }
 
   @Patch('favorite-asset')
   @DeprecatedRoute('PATCH /instruments/favorite-asset')
   setFavoriteAsset(@CurrentUser() user: { id: string }, @Body() body: SetFavoriteAssetDto) {
-    return this.tradesService.setFavoriteAsset(user.id, body.asset ?? null);
+    return this.userAssets.setFavoriteAsset(user.id, body.asset ?? null);
   }
 
   @Get('instruments/search')
