@@ -24,9 +24,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.6.0
+      - uses: pnpm/action-setup@v4 # version lue dans package.json (packageManager)
 
       - uses: actions/setup-node@v4
         with:
@@ -50,9 +48,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.6.0
+      - uses: pnpm/action-setup@v4 # version lue dans package.json (packageManager)
 
       - uses: actions/setup-node@v4
         with:
@@ -81,9 +77,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.6.0
+      - uses: pnpm/action-setup@v4 # version lue dans package.json (packageManager)
 
       - uses: actions/setup-node@v4
         with:
@@ -94,6 +88,11 @@ jobs:
 
       - name: Prisma generate
         run: pnpm exec prisma generate --config=./prisma/prisma.config.ts
+
+      - name: typecheck nx affected
+        run: |
+          pnpm nx affected --target=typecheck --base=origin/main --head=HEAD --parallel=3 \
+          || pnpm nx run-many --target=typecheck --all --parallel=3
 
       - name: build nx affected
         run: |
@@ -113,9 +112,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.6.0
+      - uses: pnpm/action-setup@v4 # version lue dans package.json (packageManager)
 
       - uses: actions/setup-node@v4
         with:
@@ -148,9 +145,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.6.0
+      - uses: pnpm/action-setup@v4 # version lue dans package.json (packageManager)
 
       - uses: actions/setup-node@v4
         with:
@@ -159,8 +154,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: test angular
-        run: pnpm nx test app-mytradingcoach --parallel=2
+      - name: test angular (app + admin)
+        run: pnpm nx run-many --target=test --projects=app-mytradingcoach,admin-mytradingcoach --parallel=2
 
   # ── Tests API (NestJS + Prisma + services) ────────────────────────────────
   test-api:
@@ -208,9 +203,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.6.0
+      - uses: pnpm/action-setup@v4 # version lue dans package.json (packageManager)
 
       - uses: actions/setup-node@v4
         with:
@@ -302,9 +295,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.6.0
+      - uses: pnpm/action-setup@v4 # version lue dans package.json (packageManager)
 
       - uses: actions/setup-node@v4
         with:
@@ -378,9 +369,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.6.0
+      - uses: pnpm/action-setup@v4 # version lue dans package.json (packageManager)
 
       - uses: actions/setup-node@v4
         with:
@@ -418,9 +407,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.6.0
+      - uses: pnpm/action-setup@v4 # version lue dans package.json (packageManager)
 
       - uses: actions/setup-node@v4
         with:
