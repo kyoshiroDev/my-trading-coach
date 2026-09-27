@@ -15,8 +15,9 @@ import {
 import {
   assignFeesOncePerFill,
 } from './tradovate-pair.util';
+import { AI_MODELS } from '../shared/ai-pricing.const';
 
-const MODEL = 'claude-sonnet-4-6';
+const MODEL = AI_MODELS.analysis;
 
 
 // Limites différenciées : un broker connu est parsé localement (sans IA),

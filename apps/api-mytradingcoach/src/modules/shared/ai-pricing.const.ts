@@ -1,14 +1,23 @@
-// Tarifs API Anthropic en USD par million de tokens.
-// ⚠️ À VÉRIFIER / METTRE À JOUR depuis https://www.anthropic.com/pricing (source de vérité).
-// Sonnet 4.6 = valeurs déjà utilisées dans l'ancien logger. Haiku 4.5 = à confirmer.
+/**
+ * Modèles Claude utilisés par l'API, par usage. Changer de modèle se fait ICI uniquement
+ * (et son tarif dans MODEL_PRICING ci-dessous, vérifié par ai-pricing.const.spec.ts).
+ */
+export const AI_MODELS = {
+  /** Analyses personnelles : coach, débrief, patterns, insights, import CSV inconnu. */
+  analysis: 'claude-sonnet-4-6',
+  /** Tâches courtes et fréquentes : traductions, contexte marché, calendrier éco. */
+  fast: 'claude-haiku-4-5-20251001',
+} as const;
+
+// Tarifs API Anthropic en USD par million de tokens (source : https://www.anthropic.com/pricing).
 export interface ModelRate {
   input: number;
   output: number;
 }
 
 export const MODEL_PRICING: Record<string, ModelRate> = {
-  'claude-sonnet-4-6': { input: 3, output: 15 },
-  'claude-haiku-4-5-20251001': { input: 1, output: 5 }, // ⚠️ confirmer le tarif courant
+  [AI_MODELS.analysis]: { input: 3, output: 15 },
+  [AI_MODELS.fast]: { input: 1, output: 5 },
 };
 
 // Fallback prudent (le plus cher) si un modèle inconnu apparaît, pour ne jamais sous-estimer.

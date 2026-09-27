@@ -22,8 +22,9 @@ import type { EcoAnalysis, EcoResultAnalysis } from '../eco-calendar/eco-calenda
 import { AnthropicClientService } from '../shared/anthropic-client.service';
 import { buildUserTradingContext, UserTradingProfile } from './user-context.builder';
 import { todayParis } from '../../common/utils/paris-date';
+import { AI_MODELS } from '../shared/ai-pricing.const';
 
-const MODEL = 'claude-sonnet-4-6';
+const MODEL = AI_MODELS.analysis;
 const AI_MONTHLY_QUOTA = 100;
 
 // Contenu IA figé pour le compte démo : AUCUN appel modèle (coût zéro).

@@ -5,6 +5,7 @@ import { AnthropicClientService } from '../shared/anthropic-client.service';
 import { AiService } from '../ai/ai.service';
 import { todayParis, toParisDateStr } from '../../common/utils/paris-date';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
+import { AI_MODELS } from '../shared/ai-pricing.const';
 
 export interface EcoEvent {
   date?: string;
@@ -206,7 +207,7 @@ export class EcoCalendarService {
 
       const msg = await this.anthropicClient.create(
         {
-          model: 'claude-haiku-4-5-20251001',
+          model: AI_MODELS.fast,
           max_tokens: 300,
           messages: [{ role: 'user', content:
             `Traduis en français ces libellés d'événements économiques. Réponds UNIQUEMENT avec un objet JSON { "<libellé EN>": "<libellé FR>" }, sans texte autour.\n\n${JSON.stringify(missing)}` }],

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { costUsd, MODEL_PRICING, FALLBACK_RATE } from './ai-pricing.const';
+import { AI_MODELS, costUsd, MODEL_PRICING, FALLBACK_RATE } from './ai-pricing.const';
 
 describe('ai-pricing — costUsd', () => {
   it('Haiku coûte moins cher que Sonnet pour le même volume', () => {
@@ -23,5 +23,11 @@ describe('ai-pricing — costUsd', () => {
       (500_000 * 3 + 100_000 * 15) / 1_000_000,
       6,
     );
+  });
+
+  it('chaque modèle utilisé a son tarif (sinon le coût IA affiché serait faux)', () => {
+    for (const model of Object.values(AI_MODELS)) {
+      expect(MODEL_PRICING[model], model).toBeDefined();
+    }
   });
 });

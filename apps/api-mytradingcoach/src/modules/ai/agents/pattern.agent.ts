@@ -4,6 +4,7 @@ import { parseAnthropicJson } from './parse-json.util';
 import { handleAnthropicError } from './anthropic-errors.util';
 import { AnthropicClientService } from '../../shared/anthropic-client.service';
 import { NO_EM_DASH_RULE } from '../prompts/style.prompt';
+import { AI_MODELS } from '../../shared/ai-pricing.const';
 
 export type InsightType = 'strength' | 'weakness' | 'pattern';
 
@@ -43,7 +44,7 @@ export class PatternAgent {
     try {
       response = await this.anthropicClient.create(
         {
-          model: 'claude-sonnet-4-6',
+          model: AI_MODELS.analysis,
           max_tokens: 1024,
           system: [
             {

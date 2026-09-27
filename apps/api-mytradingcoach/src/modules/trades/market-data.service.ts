@@ -6,6 +6,7 @@ import { AnthropicClientService } from '../shared/anthropic-client.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 import { INSTRUMENTS } from './instruments.const';
 import { NO_EM_DASH_RULE } from '../ai/prompts/style.prompt';
+import { AI_MODELS } from '../shared/ai-pricing.const';
 
 export interface MarketContextItem { value: number | null; changePct: number | null; source: 'fmp' | 'yahoo' | 'binance'; }
 export interface TreasuryRates {
@@ -145,7 +146,7 @@ export class MarketDataService {
     const titles = pending.map(p => p.title);
     try {
       const msg = await this.anthropicClient.create({
-        model: 'claude-haiku-4-5-20251001',
+        model: AI_MODELS.fast,
         max_tokens: 800,
         messages: [{ role: 'user', content:
           `Traduis en français ces titres de news financières. ${NO_EM_DASH_RULE} Réponds UNIQUEMENT avec un tableau JSON d'objets {title} dans le même ordre, sans texte autour.\n\n${JSON.stringify(titles)}` }],
@@ -182,7 +183,7 @@ export class MarketDataService {
 
     try {
       const msg = await this.anthropicClient.create({
-        model: 'claude-haiku-4-5-20251001',
+        model: AI_MODELS.fast,
         max_tokens: 700,
         messages: [{ role: 'user', content:
           `Traduis en français ce texte de news financière. ${NO_EM_DASH_RULE} Réponds UNIQUEMENT avec la traduction, sans préambule ni guillemets.\n\n${news.text}` }],
