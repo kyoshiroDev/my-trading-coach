@@ -1013,3 +1013,18 @@ sont en direct.
   optional + format). Nouvelle variable → l'y ajouter ET dans `.env.example`.
 - **Redis** : `RedisService` se connecte à l'init (`onModuleInit`) ; sans ça, la 1re commande de
   chaque worker échouait (`lazyConnect` + `enableOfflineQueue: false`).
+
+## Contrat front ↔ API (`libs/shared/src/contracts`, audit du 27/09/2026)
+
+- **Source unique des formes JSON échangées** : enums (copie des enums Prisma), trades, sessions,
+  débrief, calendrier éco, fiche utilisateur admin, stats VPS. Import : `from '@mtc/shared'`.
+- Les dates y sont des `string` ISO (ce que le front reçoit). Côté API, les DTO de requête
+  `implements` le contrat (`CreateTradeDto implements CreateTradeRequest`) : un champ ajouté d'un
+  seul côté casse la compilation.
+- Enums : `EmotionState.FOCUSED` (valeur) / `EmotionState` (type). Le test API
+  `common/contracts-sync.spec.ts` compare chaque enum à Prisma : après une migration qui touche un
+  enum, mettre à jour `contracts/enums.ts`.
+- Jamais de nouvelle interface d'échange recopiée dans `core/api/*.api.ts` : l'ajouter au contrat,
+  puis la ré-exporter (`export type { X }`) si des importeurs existants passent par l'API front.
+- Aussi partagés : `todayParis` / `parisDayRange` (dates Paris), `normalizeEventKey` / `eventKey`,
+  `renderEmailMarkdown` (rendu des campagnes, envoi + aperçu admin).
