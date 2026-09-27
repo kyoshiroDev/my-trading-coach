@@ -34,6 +34,9 @@ import { PresenceInterceptor } from '../common/interceptors/presence.interceptor
 import { ActivityTrackingInterceptor } from '../common/interceptors/activity-tracking.interceptor';
 import { AppController } from './app.controller';
 
+import { RedisThrottlerStorage } from '../common/throttler/redis-throttler.storage';
+import { RedisService } from '../modules/shared/redis.service';
+
 @Module({
   controllers: [AppController],
   imports: [
@@ -44,7 +47,16 @@ import { AppController } from './app.controller';
           ? '.env.development'
           : '.env.local',
     }),
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }]),
+    // Limite par défaut : 60 requêtes / minute / IP (IP réelle : `trust proxy` dans main.ts).
+    // Compteurs dans Redis pour être communs aux workers du cluster.
+    ThrottlerModule.forRootAsync({
+      imports: [SharedModule],
+      inject: [RedisService],
+      useFactory: (redis: RedisService) => ({
+        throttlers: [{ ttl: 60_000, limit: 60 }],
+        storage: new RedisThrottlerStorage(redis),
+      }),
+    }),
     BullModule.forRoot({
       connection: {
         host: process.env['REDIS_HOST'] ?? 'localhost',
