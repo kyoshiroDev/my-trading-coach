@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { LucideDynamicIcon, LucideListOrdered as ListOrdered } from '@lucide/angular';
-import { SessionTrade } from '../../../../../../core/api/session.api';
-import { NumericInputDirective } from '../../../../../../core/directives/numeric-input.directive';
-import { parseDecimal } from '../../../../../../core/utils/parse-decimal';
-import { EmotionEmojiPipe } from '../../../../../../shared/pipes/emotion-emoji.pipe';
-import { MoneyPipe } from '../../../../../../shared/pipes/money.pipe';
+import { SessionTrade } from '@app/core/api/session.api';
+import { NumericInputDirective } from '@app/core/directives/numeric-input.directive';
+import { parseDecimal } from '@app/core/utils/parse-decimal';
+import { EmotionEmojiPipe } from '@app/shared/pipes/emotion-emoji.pipe';
+import { MoneyPipe } from '@app/shared/pipes/money.pipe';
 import { netPnl } from '@mtc/shared';
 
 /**

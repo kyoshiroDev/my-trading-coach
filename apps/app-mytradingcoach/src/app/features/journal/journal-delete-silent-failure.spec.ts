@@ -34,7 +34,7 @@ import { SetupsStore } from '../../core/stores/setups.store';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { TradesApi } from '../../core/api/trades.api';
 import { ToastService } from '../../core/services/toast.service';
-import { environment } from '../../../environments/environment';
+import { environment } from '@app/environments/environment';
 
 const JOUR = '2026-07-10T16:41:00.000Z';
 

@@ -6,8 +6,8 @@ import {
   input,
   output,
 } from '@angular/core';
-import { MonthlyActivitySummary, DailyActivity } from '../../../core/api/analytics.api';
-import { MoneyService } from '../../../core/services/money.service';
+import { MonthlyActivitySummary, DailyActivity } from '@app/core/api/analytics.api';
+import { MoneyService } from '@app/core/services/money.service';
 
 export interface CalendarCell {
   date: string;

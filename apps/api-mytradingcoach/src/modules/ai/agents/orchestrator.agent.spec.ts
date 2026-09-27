@@ -4,7 +4,7 @@ import { OrchestratorAgent } from './orchestrator.agent';
 import { DataAgent } from './data.agent';
 import { PatternAgent } from './pattern.agent';
 import { CoachAgent } from './coach.agent';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '@api/prisma/prisma.service';
 
 const mockTrades = [
   {

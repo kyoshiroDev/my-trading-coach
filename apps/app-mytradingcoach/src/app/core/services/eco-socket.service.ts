@@ -1,7 +1,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { Subject } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { environment } from '@app/environments/environment';
 import type { EcoEvent } from '@mtc/shared';
 
 @Injectable({ providedIn: 'root' })

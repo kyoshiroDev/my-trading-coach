@@ -14,6 +14,9 @@ export default [
         'error',
         {
           enforceBuildableLibDependency: true,
+          // Alias internes d'une app (@app/*, @admin/*, @api/*, tsconfig.base.json) : évitent les
+          // imports ../../../ ; une app qui s'importe via son propre alias est donc autorisée.
+          allowCircularSelfDependency: true,
           allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$'],
           // Qui peut importer qui (tags posés dans chaque project.json / package.json) :
           // une app n'importe jamais une autre app, le code partagé ne dépend de rien d'autre,

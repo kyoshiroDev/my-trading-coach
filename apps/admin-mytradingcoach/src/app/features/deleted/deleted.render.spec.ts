@@ -17,7 +17,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { DeletedComponent } from './deleted.component';
 import { DeletedAccountsData } from '../../core/api/admin.api';
-import { environment } from '../../../environments/environment';
+import { environment } from '@admin/environments/environment';
 
 const MOIS = ['Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août'];
 

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { PlBucket } from '../../dashboard-charts.util';
-import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { MoneyPipe } from '@app/shared/pipes/money.pipe';
 
 /** Barres P&L divergentes depuis la ligne médiane (jour, semaine ou mois selon la période). */
 @Component({

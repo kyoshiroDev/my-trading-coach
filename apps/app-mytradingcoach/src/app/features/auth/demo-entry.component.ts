@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal 
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../core/auth/auth.service';
-import { environment } from '../../../environments/environment';
+import { environment } from '@app/environments/environment';
 
 /**
  * Point d'entrée de la démo : connecte automatiquement le visiteur au compte

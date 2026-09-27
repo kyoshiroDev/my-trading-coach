@@ -1,7 +1,7 @@
 import { Injectable, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TradesApi, MarketContext, NewsItem } from '../../../core/api/trades.api';
-import { POLLING_MS } from '../../../core/constants/polling.const';
+import { TradesApi, MarketContext, NewsItem } from '@app/core/api/trades.api';
+import { POLLING_MS } from '@app/core/constants/polling.const';
 
 @Injectable()
 export class SessionDataService {

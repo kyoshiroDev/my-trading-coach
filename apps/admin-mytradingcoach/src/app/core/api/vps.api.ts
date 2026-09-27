@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
+import { environment } from '@admin/environments/environment';
 import type { VpsStats } from '@mtc/shared';
 export type { VpsStats };
 

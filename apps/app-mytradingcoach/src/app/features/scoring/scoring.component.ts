@@ -13,7 +13,7 @@ import {
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { UserStore } from '../../core/stores/user.store';
-import { environment } from '../../../environments/environment';
+import { environment } from '@app/environments/environment';
 import { computeTradeStats } from '@mtc/shared';
 import type { Trade as ApiTrade } from '@mtc/shared';
 import { ErrorStateComponent } from '@mtc/front-ui';

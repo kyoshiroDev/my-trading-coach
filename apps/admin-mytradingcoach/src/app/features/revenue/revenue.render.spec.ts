@@ -8,7 +8,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { RevenueComponent } from './revenue.component';
 import { AdminStats } from '../../core/api/admin.api';
-import { environment } from '../../../environments/environment';
+import { environment } from '@admin/environments/environment';
 
 const STATS = {
   mrr: 1470, arr: 17640, totalUsers: 120, totalPremium: 32, premiumMonthly: 30, premiumAnnual: 2,

@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 import { RouterModule, RouterLink, RouterLinkActive } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TradovateLiveSocketService } from '../../../core/services/tradovate-live-socket.service';
+import { TradovateLiveSocketService } from '@app/core/services/tradovate-live-socket.service';
 import {
   LucideDynamicIcon,
   LucideChevronLeft as ChevronLeft,
@@ -33,14 +33,14 @@ import {
   LucideLogOut as LogOut,
   LucideLock as Lock,
 } from '@lucide/angular';
-import { UserStore } from '../../../core/stores/user.store';
-import { AuthService } from '../../../core/auth/auth.service';
-import { UsersApi } from '../../../core/api/users.api';
-import { AmbassadorNotifService } from '../../../core/services/ambassador-notif.service';
-import { LiveModeService } from '../../../core/services/live-mode.service';
-import { DemoService } from '../../../core/services/demo.service';
-import { OnboardingComponent } from '../../../features/onboarding/onboarding.component';
-import { environment } from '../../../../environments/environment';
+import { UserStore } from '@app/core/stores/user.store';
+import { AuthService } from '@app/core/auth/auth.service';
+import { UsersApi } from '@app/core/api/users.api';
+import { AmbassadorNotifService } from '@app/core/services/ambassador-notif.service';
+import { LiveModeService } from '@app/core/services/live-mode.service';
+import { DemoService } from '@app/core/services/demo.service';
+import { OnboardingComponent } from '@app/features/onboarding/onboarding.component';
+import { environment } from '@app/environments/environment';
 import { DialogDirective, ScrollMemoryDirective } from '@mtc/front-ui';
 
 @Component({

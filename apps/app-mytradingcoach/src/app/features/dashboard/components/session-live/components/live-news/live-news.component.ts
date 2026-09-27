@@ -8,8 +8,8 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LucideDynamicIcon, LucideNewspaper as Newspaper } from '@lucide/angular';
-import { NewsItem, TradesApi } from '../../../../../../core/api/trades.api';
-import { UserStore } from '../../../../../../core/stores/user.store';
+import { NewsItem, TradesApi } from '@app/core/api/trades.api';
+import { UserStore } from '@app/core/stores/user.store';
 import { DialogDirective } from '@mtc/front-ui';
 
 /**

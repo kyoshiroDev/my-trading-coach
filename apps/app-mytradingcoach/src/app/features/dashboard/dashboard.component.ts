@@ -40,7 +40,7 @@ import {
   EmotionStat,
   TopAsset,
 } from '../../core/api/analytics.api';
-import { environment } from '../../../environments/environment';
+import { environment } from '@app/environments/environment';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { ToastService } from '../../core/services/toast.service';
 import { TradovateLiveSocketService } from '../../core/services/tradovate-live-socket.service';

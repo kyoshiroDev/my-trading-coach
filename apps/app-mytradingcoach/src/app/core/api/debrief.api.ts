@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { environment } from '@app/environments/environment';
 import type { DebriefBadgeItem as DebriefItem, DebriefInsights, DebriefObjective, ObjectiveCheck, WeeklyDebrief } from '@mtc/shared';
 export type { DebriefItem, DebriefInsights, DebriefObjective, ObjectiveCheck, WeeklyDebrief };
 

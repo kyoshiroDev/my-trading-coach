@@ -1,4 +1,4 @@
-import { EcoResultAnalysis } from '../../../../../../core/api/eco-calendar.api';
+import { EcoResultAnalysis } from '@app/core/api/eco-calendar.api';
 import type { EcoEvent } from '@mtc/shared';
 
 // Calendrier éco d'exemple pour la session live démo (affiché si rien de réel

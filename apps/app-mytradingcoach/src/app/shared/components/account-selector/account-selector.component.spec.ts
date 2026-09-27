@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
 import { AccountSelectorComponent } from './account-selector.component';
-import { SelectedAccountStore } from '../../../core/stores/selected-account.store';
-import { TradingAccount } from '../../../core/api/accounts.api';
+import { SelectedAccountStore } from '@app/core/stores/selected-account.store';
+import { TradingAccount } from '@app/core/api/accounts.api';
 
 const acc = (over: Partial<TradingAccount>): TradingAccount => over as TradingAccount;
 

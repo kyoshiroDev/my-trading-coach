@@ -7,7 +7,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import type { Server, Socket } from 'socket.io';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '@api/prisma/prisma.service';
 import type { JwtPayload } from '../../auth/jwt.strategy';
 import { TradovateLiveService } from './tradovate-live.service';
 

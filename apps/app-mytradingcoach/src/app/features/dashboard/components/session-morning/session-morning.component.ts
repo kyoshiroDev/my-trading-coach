@@ -17,17 +17,17 @@ import {
   LucideCalendarDays as CalendarDays,
   LucideTriangleAlert as TriangleAlert,
 } from '@lucide/angular';
-import { translateEcoEvent } from '../../../../core/data/eco-event-translations';
+import { translateEcoEvent } from '@app/core/data/eco-event-translations';
 
 import { filterMorningEvents } from './session-morning.util';
-import { DailyRecap } from '../../../../core/api/daily-recap.api';
-import { EcoCalendarApi, EcoCalendarData } from '../../../../core/api/eco-calendar.api';
-import { MoodState } from '../../../../core/api/session.api';
-import { DebriefApi, DebriefObjective } from '../../../../core/api/debrief.api';
-import { UserStore } from '../../../../core/stores/user.store';
-import { ToastService } from '../../../../core/services/toast.service';
-import { PremiumLockComponent } from '../../../../shared/components/premium-lock/premium-lock.component';
-import { MoneyPipe } from '../../../../shared/pipes';
+import { DailyRecap } from '@app/core/api/daily-recap.api';
+import { EcoCalendarApi, EcoCalendarData } from '@app/core/api/eco-calendar.api';
+import { MoodState } from '@app/core/api/session.api';
+import { DebriefApi, DebriefObjective } from '@app/core/api/debrief.api';
+import { UserStore } from '@app/core/stores/user.store';
+import { ToastService } from '@app/core/services/toast.service';
+import { PremiumLockComponent } from '@app/shared/components/premium-lock/premium-lock.component';
+import { MoneyPipe } from '@app/shared/pipes';
 import { eventKey, normalizeEventKey } from '@mtc/shared';
 import type { EcoEvent } from '@mtc/shared';
 

@@ -6,7 +6,7 @@ import { ActivatedRoute, convertToParamMap, ParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { UserDetailComponent } from './user-detail.component';
 import { UserDetailData } from '../../core/api/admin.api';
-import { environment } from '../../../environments/environment';
+import { environment } from '@admin/environments/environment';
 
 function makeData(over: Partial<UserDetailData> = {}): UserDetailData {
   return {

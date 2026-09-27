@@ -5,7 +5,9 @@
     "emitDeclarationOnly": true,
     "importHelpers": true,
     "isolatedModules": true,
-    "lib": ["es2022"],
+    "lib": [
+      "es2022"
+    ],
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "noEmitOnError": true,
@@ -16,15 +18,40 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "es2022",
-    "customConditions": ["@org/source"],
+    "customConditions": [
+      "@org/source"
+    ],
     "noUncheckedSideEffectImports": false,
-    "types": ["*"],
+    "types": [
+      "*"
+    ],
     "esModuleInterop": false,
     "ignoreDeprecations": "6.0",
     "paths": {
-      "@mtc/shared": ["./libs/shared/src/index.ts"],
-      "@mtc/front-ui": ["./libs/front/ui/src/index.ts"],
-      "@mtc/front-auth": ["./libs/front/auth/src/index.ts"]
+      "@mtc/shared": [
+        "./libs/shared/src/index.ts"
+      ],
+      "@mtc/front-ui": [
+        "./libs/front/ui/src/index.ts"
+      ],
+      "@mtc/front-auth": [
+        "./libs/front/auth/src/index.ts"
+      ],
+      "@app/environments/*": [
+        "./apps/app-mytradingcoach/src/environments/*"
+      ],
+      "@app/*": [
+        "./apps/app-mytradingcoach/src/app/*"
+      ],
+      "@admin/environments/*": [
+        "./apps/admin-mytradingcoach/src/environments/*"
+      ],
+      "@admin/*": [
+        "./apps/admin-mytradingcoach/src/app/*"
+      ],
+      "@api/*": [
+        "./apps/api-mytradingcoach/src/*"
+      ]
     }
   }
 }

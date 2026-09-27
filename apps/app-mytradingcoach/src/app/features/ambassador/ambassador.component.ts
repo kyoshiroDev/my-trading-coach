@@ -22,7 +22,7 @@ import { ReferralApi } from '../../core/api/referral.api';
 import { AmbassadorNotifService } from '../../core/services/ambassador-notif.service';
 import { ToastService } from '../../core/services/toast.service';
 import { PRICING } from '../../core/constants/pricing.const';
-import { environment } from '../../../environments/environment';
+import { environment } from '@app/environments/environment';
 import { ErrorStateComponent } from '@mtc/front-ui';
 
 // Commission mensuelle estimée par filleul payant (20% de la mensualité du plan).

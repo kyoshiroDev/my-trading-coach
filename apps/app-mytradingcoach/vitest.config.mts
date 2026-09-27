@@ -8,6 +8,9 @@ export default defineConfig({
       '@mtc/shared': resolve(import.meta.dirname, '../../libs/shared/src/index.ts'),
       '@mtc/front-ui': resolve(import.meta.dirname, '../../libs/front/ui/src/index.ts'),
       '@mtc/front-auth': resolve(import.meta.dirname, '../../libs/front/auth/src/index.ts'),
+      // Alias internes de l'app (tsconfig.base.json) ; le plus précis d'abord.
+      '@app/environments': resolve(import.meta.dirname, 'src/environments'),
+      '@app': resolve(import.meta.dirname, 'src/app'),
     },
   },
   // Décorateurs Angular (legacy) aussi pour les fichiers importés de libs/front/ui : le

@@ -8,7 +8,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ConfirmService } from '@mtc/front-ui';
 import { AmbassadorsComponent } from './ambassadors.component';
-import { environment } from '../../../environments/environment';
+import { environment } from '@admin/environments/environment';
 
 const AMB = {
   id: 'amb1', name: 'Alice', email: 'alice@example.com', referralCode: 'ALICE',

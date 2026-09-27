@@ -12,8 +12,8 @@ import {
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
-import { CurrentUser } from '../../../common/decorators/current-user.decorator';
-import { Public } from '../../../common/decorators/public.decorator';
+import { CurrentUser } from '@api/common/decorators/current-user.decorator';
+import { Public } from '@api/common/decorators/public.decorator';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateSyncService } from './tradovate-sync.service';
 import { TradovateHistoryService, type HistoryImportResult } from './tradovate-history.service';

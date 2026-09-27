@@ -13,12 +13,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LucideDynamicIcon, LucideZap as Zap } from '@lucide/angular';
 import { Subject, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
-import { CreateTradeDto, InstrumentSearchResult, TradesApi, UserAssetItem } from '../../../../../../core/api/trades.api';
-import { SetupsStore } from '../../../../../../core/stores/setups.store';
-import { ToastService } from '../../../../../../core/services/toast.service';
-import { parseDecimal } from '../../../../../../core/utils/parse-decimal';
-import { NumericInputDirective } from '../../../../../../core/directives/numeric-input.directive';
-import { POLLING_MS } from '../../../../../../core/constants/polling.const';
+import { CreateTradeDto, InstrumentSearchResult, TradesApi, UserAssetItem } from '@app/core/api/trades.api';
+import { SetupsStore } from '@app/core/stores/setups.store';
+import { ToastService } from '@app/core/services/toast.service';
+import { parseDecimal } from '@app/core/utils/parse-decimal';
+import { NumericInputDirective } from '@app/core/directives/numeric-input.directive';
+import { POLLING_MS } from '@app/core/constants/polling.const';
 import type { EmotionState, TradeSide } from '@mtc/shared';
 
 const EMOTIONS = [

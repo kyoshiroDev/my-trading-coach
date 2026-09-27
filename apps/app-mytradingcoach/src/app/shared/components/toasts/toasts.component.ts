@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { ToastService, ToastType } from '../../../core/services/toast.service';
+import { ToastService, ToastType } from '@app/core/services/toast.service';
 
 /** Distance minimale de glisser pour fermer (px), ou 35 % de la largeur si plus grand. */
 export const SWIPE_MIN_PX = 80;

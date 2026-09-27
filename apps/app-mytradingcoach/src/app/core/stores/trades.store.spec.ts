@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TradesStore } from './trades.store';
-import { environment } from '../../../environments/environment';
+import { environment } from '@app/environments/environment';
 
 const PAGE = { data: { data: [], nextCursor: 'CUR1', hasNextPage: true } };
 

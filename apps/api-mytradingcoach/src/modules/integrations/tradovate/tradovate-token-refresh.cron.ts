@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { BrokerConnectionStatus, BrokerProvider } from '@prisma/client';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '@api/prisma/prisma.service';
 import { TradovateConnectionService } from './tradovate-connection.service';
 
 /** Fenêtre de renouvellement : refresh_token qui expire dans moins de 18 h. */

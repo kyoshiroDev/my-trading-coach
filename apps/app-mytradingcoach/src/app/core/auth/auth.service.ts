@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { EMPTY, fromEvent, interval } from 'rxjs';
 import { catchError, filter, switchMap, tap } from 'rxjs/operators';
-import { environment } from '../../../environments/environment';
+import { environment } from '@app/environments/environment';
 import { SelectedAccountStore } from '../stores/selected-account.store';
 import { TradesStore } from '../stores/trades.store';
 import { SetupsStore } from '../stores/setups.store';

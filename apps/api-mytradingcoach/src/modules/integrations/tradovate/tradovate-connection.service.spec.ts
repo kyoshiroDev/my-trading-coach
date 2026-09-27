@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { BrokerConnection, BrokerConnectionStatus, BrokerProvider } from '@prisma/client';
-import { encryptToken } from '../../../common/utils/token-cipher.util';
+import { encryptToken } from '@api/common/utils/token-cipher.util';
 import { ACCOUNT_GONE_GRACE_MS, TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateApiError, TradovateException } from './tradovate.errors';
 

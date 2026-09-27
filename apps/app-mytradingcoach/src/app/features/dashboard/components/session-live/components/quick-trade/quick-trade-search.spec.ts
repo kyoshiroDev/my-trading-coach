@@ -9,8 +9,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 import { QuickTradeComponent } from './quick-trade.component';
-import { SetupsStore } from '../../../../../../core/stores/setups.store';
-import { TradesApi } from '../../../../../../core/api/trades.api';
+import { SetupsStore } from '@app/core/stores/setups.store';
+import { TradesApi } from '@app/core/api/trades.api';
 
 function mount(searchInstruments: ReturnType<typeof vi.fn>) {
   TestBed.configureTestingModule({

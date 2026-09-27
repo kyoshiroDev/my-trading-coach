@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { environment } from '@app/environments/environment';
 
 /** Écran de départ du consentement : le retour OAuth y ramène l'utilisateur. */
 export type TradovateOrigin = 'wizard' | 'settings';

@@ -17,12 +17,12 @@ import {
 } from '@lucide/angular';
 import { forkJoin, of, timer } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
-import { EcoCalendarApi, EcoCalendarData, EcoResultAnalysis } from '../../../../../../core/api/eco-calendar.api';
-import { TradingSession } from '../../../../../../core/api/session.api';
-import { translateEcoEvent } from '../../../../../../core/data/eco-event-translations';
+import { EcoCalendarApi, EcoCalendarData, EcoResultAnalysis } from '@app/core/api/eco-calendar.api';
+import { TradingSession } from '@app/core/api/session.api';
+import { translateEcoEvent } from '@app/core/data/eco-event-translations';
 
-import { EcoSocketService } from '../../../../../../core/services/eco-socket.service';
-import { UserStore } from '../../../../../../core/stores/user.store';
+import { EcoSocketService } from '@app/core/services/eco-socket.service';
+import { UserStore } from '@app/core/stores/user.store';
 import {
   DEMO_ECO_ANALYSIS,
   DEMO_LIVE_ECO_EVENTS,

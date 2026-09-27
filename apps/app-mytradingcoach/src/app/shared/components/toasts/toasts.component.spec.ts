@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ToastsComponent } from './toasts.component';
-import { ToastService, TOAST_DURATIONS } from '../../../core/services/toast.service';
+import { ToastService, TOAST_DURATIONS } from '@app/core/services/toast.service';
 import TEMPLATE from './toasts.component.html?raw';
 
 /** Conteneur racine : VRAI template (import `?raw`), icônes Lucide neutralisées (JIT). */

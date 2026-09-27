@@ -11,8 +11,8 @@ import {
   LucideX as X,
   LucideZap as Zap,
 } from '@lucide/angular';
-import { PRICING } from '../../../core/constants/pricing.const';
-import { BillingService } from '../../../core/services/billing.service';
+import { PRICING } from '@app/core/constants/pricing.const';
+import { BillingService } from '@app/core/services/billing.service';
 import { DialogDirective } from '@mtc/front-ui';
 
 type Interval = 'monthly' | 'yearly';

@@ -6,9 +6,9 @@ import {
   BrokerProvider,
   Prisma,
 } from '@prisma/client';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '@api/prisma/prisma.service';
 import { RedisService } from '../../infra/redis.service';
-import { decryptToken, encryptToken, loadTokenKey } from '../../../common/utils/token-cipher.util';
+import { decryptToken, encryptToken, loadTokenKey } from '@api/common/utils/token-cipher.util';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateApiError, TradovateException } from './tradovate.errors';
 import { OAuthOrigin, signOAuthState, verifyOAuthState } from './oauth-state.util';

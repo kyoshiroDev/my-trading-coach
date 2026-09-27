@@ -8,7 +8,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { PREMIUM_PRICE_EUR } from '@mtc/shared';
 import { SubscriptionsComponent } from './subscriptions.component';
-import { environment } from '../../../environments/environment';
+import { environment } from '@admin/environments/environment';
 
 const user = (id: string, stripeInterval: 'month' | 'year' | null) => ({
   id, email: `${id}@example.com`, name: null, plan: 'PREMIUM', role: 'USER', trialEndsAt: null,

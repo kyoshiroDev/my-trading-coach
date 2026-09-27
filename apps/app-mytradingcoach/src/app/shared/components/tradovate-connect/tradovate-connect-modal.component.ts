@@ -5,9 +5,9 @@ import {
   LucideLock as Lock,
   LucideX as X,
 } from '@lucide/angular';
-import { TradovateStore } from '../../../core/stores/tradovate.store';
-import type { TradovateOrigin } from '../../../core/api/tradovate.api';
-import { apiErrorMessage } from '../../../core/utils/api-error';
+import { TradovateStore } from '@app/core/stores/tradovate.store';
+import type { TradovateOrigin } from '@app/core/api/tradovate.api';
+import { apiErrorMessage } from '@app/core/utils/api-error';
 import { DialogDirective } from '@mtc/front-ui';
 
 /**

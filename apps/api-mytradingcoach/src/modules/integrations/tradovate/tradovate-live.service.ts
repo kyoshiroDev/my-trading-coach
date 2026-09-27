@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger, OnModuleDestroy, Optional } from '@nestjs/common';
 import { BrokerConnection, BrokerConnectionStatus, BrokerProvider } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '@api/prisma/prisma.service';
 import { RedisService } from '../../infra/redis.service';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateSyncService } from './tradovate-sync.service';
