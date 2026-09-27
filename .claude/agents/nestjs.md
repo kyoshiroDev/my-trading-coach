@@ -1010,7 +1010,7 @@ sont en direct.
 - **Santé** : `GET /api/health` = liveness (process vivant, healthcheck Docker) ;
   `GET /api/health/ready` = readiness (ping Postgres + Redis, 503 en nommant le composant).
 - **Environnement** : `src/config/env.ts` est la liste de référence (required / production /
-  optional + format). Nouvelle variable → l'y ajouter ET dans `.env.example`.
+  optional + format). Nouvelle variable → l'y ajouter ET dans `apps/api-mytradingcoach/.env.example`.
 - **Redis** : `RedisService` se connecte à l'init (`onModuleInit`) ; sans ça, la 1re commande de
   chaque worker échouait (`lazyConnect` + `enableOfflineQueue: false`).
 

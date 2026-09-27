@@ -23,7 +23,7 @@
     "db:deploy": "prisma migrate deploy --config=./prisma/prisma.config.ts",
     "db:reset": "prisma migrate reset --config=./prisma/prisma.config.ts",
     "db:studio": "prisma studio --config=./prisma/prisma.config.ts",
-    "seed:demo": "tsx --env-file-if-exists=.env apps/api-mytradingcoach/scripts/seed-demo-account.ts"
+    "seed:demo": "tsx --env-file-if-exists=apps/api-mytradingcoach/.env apps/api-mytradingcoach/scripts/seed-demo-account.ts"
   },
   "private": true,
   "packageManager": "pnpm@11.6.0",

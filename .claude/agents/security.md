@@ -147,7 +147,7 @@ CORS_ORIGINS=https://app.mytradingcoach.app,https://mytradingcoach.app
 ### Stockage sécurisé
 - **Bitwarden** : notes sécurisées "MTC — Production" et "MTC — Dev"
 - **GitHub Secrets** : environnements `production` et `development`
-- `.env.example` versionné avec des valeurs vides — jamais les vraies valeurs
+- `apps/api-mytradingcoach/.env.example` versionné avec des valeurs vides — jamais les vraies valeurs
 
 ---
 

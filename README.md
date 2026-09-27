@@ -30,7 +30,7 @@ Base de données : PostgreSQL (`prisma/schema.prisma`). Cache et files de jobs :
 ```sh
 corepack enable            # une seule fois par machine
 pnpm install
-cp .env.example .env       # valeurs de dev : fonctionnent telles quelles pour démarrer
+cp apps/api-mytradingcoach/.env.example apps/api-mytradingcoach/.env   # valeurs de dev prêtes à l'emploi
 pnpm db:up                 # PostgreSQL :5432 + Redis :6379 (docker compose)
 pnpm db:deploy             # applique les migrations
 pnpm db:generate           # génère le client Prisma
@@ -39,6 +39,9 @@ pnpm seed:demo             # optionnel : compte démo demo@mytradingcoach.app
 pnpm dev:api               # API → http://localhost:3001/api (santé : /api/health)
 pnpm dev                   # App → http://localhost:4200
 ```
+
+> Ancienne installation avec un `.env` à la racine : déplace-le dans `apps/api-mytradingcoach/.env`.
+> À la racine, Nx l'injecte dans toutes les tâches et son `PORT` détourne le serveur de l'app.
 
 Autres apps : `pnpm dev:admin` (http://localhost:4300) et `pnpm dev:landing` (http://localhost:4321).
 

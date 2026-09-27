@@ -1,6 +1,6 @@
 /**
  * Variables d'environnement de l'API : LA liste de référence, vérifiée au démarrage (main.ts).
- * Documentation et valeurs d'exemple : `.env.example` à la racine du dépôt.
+ * Documentation et valeurs d'exemple : `apps/api-mytradingcoach/.env.example`.
  *
  * - `required`   : l'API refuse de démarrer si elle manque.
  * - `production` : indispensable en prod (sinon fonctionnement dégradé) → avertissement au démarrage.
