@@ -4,6 +4,9 @@ WORKDIR /app
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
 COPY apps/api-mytradingcoach/package.json ./apps/api-mytradingcoach/
 COPY prisma ./prisma
+# `xlsx` est vendorisé (SheetJS ne publie plus sur npm) : l'archive doit être présente AVANT
+# l'installation, sinon `file:../../vendor/…` ne résout pas. Les DEUX étages installent.
+COPY vendor ./vendor
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN pnpm install --frozen-lockfile
 COPY . .
@@ -18,6 +21,9 @@ WORKDIR /app
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
 COPY apps/api-mytradingcoach/package.json ./apps/api-mytradingcoach/
 COPY prisma ./prisma
+# `xlsx` est vendorisé (SheetJS ne publie plus sur npm) : l'archive doit être présente AVANT
+# l'installation, sinon `file:../../vendor/…` ne résout pas. Les DEUX étages installent.
+COPY vendor ./vendor
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN pnpm install --frozen-lockfile
 RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" DATABASE_DIRECT_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm exec prisma generate --config=./prisma/prisma.config.ts

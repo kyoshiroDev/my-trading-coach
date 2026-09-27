@@ -129,7 +129,7 @@
     "socket.io": "^4.8.3",
     "stripe": "^22.6.2",
     "tslib": "^2.3.0",
-    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+    "xlsx": "file:../../vendor/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "@nestjs/testing": "11.2.3",
