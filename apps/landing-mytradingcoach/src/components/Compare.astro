@@ -11,6 +11,17 @@ interface Row {
   isNew?: boolean;
   pulse?: boolean;  // coche MTC en couleur accent
   hl?: boolean;     // ligne mise en avant
+  /**
+   * Reserve au Premium par le CONTROLE D'ACCES REEL, pas par le marketing. Verifie le
+   * 2026-09-28 dans les guards de l'API, seule source qui fasse foi :
+   *  - Analytics avances  -> analytics.controller, PremiumGuard sur by-setup et by-hour
+   *  - Coach IA           -> ai.controller, PremiumGuard sur tout le controller
+   *  - Weekly Debrief     -> debrief.controller (PremiumGuard) + cron getEligibleUsers()
+   *  - Recap 17h30        -> daily-recap.cron, where { plan: 'PREMIUM' }
+   * Concorde avec .claude/agents/plans.md et avec les listes de Pricing.astro.
+   * Une coche nue sans ce drapeau = vraiment inclus dans le Gratuit.
+   */
+  premium?: boolean;
   mtc: Val;
   rivals: [Val, Val, Val];  // TraderSync · TradesViz · Edgely
   othersLabel?: string;     // fusion explicite quand les valeurs ne sont pas booleennes
@@ -18,14 +29,14 @@ interface Row {
 
 const rows: Row[] = [
   { label: 'Journal de trading', mtc: true, rivals: [true, true, true] },
-  { label: 'Analytics avancés', mtc: true, rivals: [true, true, true] },
+  { label: 'Analytics avancés', mtc: true, rivals: [true, true, true] , premium: true },
   { label: 'Tracking émotionnel', mtc: true, rivals: [false, false, false] },
-  { label: 'Coach IA conversationnel', mtc: true, rivals: [false, false, false] },
-  { label: 'Weekly Debrief IA automatique', mtc: true, rivals: [false, false, false], pulse: true, hl: true },
+  { label: 'Coach IA conversationnel', mtc: true, rivals: [false, false, false] , premium: true },
+  { label: 'Weekly Debrief IA automatique', mtc: true, rivals: [false, false, false], pulse: true, hl: true , premium: true },
   { label: 'Pré-session matin', isNew: true, mtc: true, rivals: [false, false, false], pulse: true },
   { label: 'Session live + trade rapide', isNew: true, mtc: true, rivals: [false, false, false], pulse: true },
   { label: 'Calendrier éco IA filtré', isNew: true, mtc: true, rivals: [false, false, false], pulse: true },
-  { label: 'Recap journalier email 17h30', isNew: true, mtc: true, rivals: [false, false, false], pulse: true },
+  { label: 'Recap journalier email 17h30', isNew: true, mtc: true, rivals: [false, false, false], pulse: true , premium: true },
   { label: 'Import CSV universel (broker-agnostic)', mtc: true, rivals: [true, true, false] },
   { label: 'Hébergé en France 🇫🇷', mtc: true, rivals: [false, false, false] },
     // Les deux paliers : « dès 0 € » seul laissait croire que toutes les coches MTC
@@ -88,7 +99,7 @@ const merge = (row: Row): Cell => {
                     {mtc.text.split(' · ').map((part, i) => (
                       <>{i > 0 && <span class="comp-price-sep"> · </span>}<span class="comp-price-part">{part}</span></>
                     ))}
-                  </span></td>
+                  </span>{row.premium && <span class="comp-premium" title="Inclus dans le plan Premium">PREMIUM</span>}</td>
                   {row.rivals.map((v) => {
                     const c = cell(v);
                     return <td class="c-rival"><span class={c.cls}>{c.text}</span></td>;
@@ -100,6 +111,10 @@ const merge = (row: Row): Cell => {
           </tbody>
         </table>
       </div>
+      <p class="comp-note">
+        <span class="comp-premium legend-badge">PREMIUM</span> = inclus dans le plan Premium · une coche seule
+        est incluse dans le Gratuit
+      </p>
       <p class="comp-note">Données basées sur les fonctionnalités publiquement documentées · Mise à jour mai 2026</p>
     </div>
   </div>
@@ -185,6 +200,23 @@ const merge = (row: Row): Cell => {
     font-weight: 700;
   }
 
+  /* Meme structure que .comp-new, couleur du badge « Recommande » de Pricing : dans toute la
+     landing, le jaune signale une nouveaute et le bleu/indigo signale le palier Premium. */
+  .comp-premium {
+    margin-left: 6px;
+    white-space: nowrap;
+    font-size: 9px;
+    background: rgba(99,102,241,.12);
+    color: var(--blue2);
+    border: 1px solid rgba(99,102,241,.3);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-weight: 700;
+    letter-spacing: .4px;
+  }
+  .legend-badge { margin-left: 0; }
+
   .comp-note {
     font-size: 11px;
     color: var(--txt3);
@@ -207,5 +239,9 @@ const merge = (row: Row): Cell => {
 
     .comp-table th:first-child, .comp-table td:first-child { width: 52%; }
     .comp-table th:not(:first-child), .comp-table td:not(:first-child) { width: 24%; }
+
+    /* 24 % de large : « PREMIUM » ne tient pas a cote de la coche, il passe dessous. */
+    .comp-premium { display: block; width: fit-content; margin: 4px auto 0; }
+    .legend-badge { display: inline-block; margin: 0; }
   }
 </style>
