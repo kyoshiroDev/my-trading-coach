@@ -8,7 +8,7 @@ vi.mock('@anthropic-ai/sdk', () => ({
   }),
 }));
 
-import { AnthropicClientService } from './anthropic-client.service';
+import { AnthropicClientService, requestTimeoutMs } from './anthropic-client.service';
 import { AiLoggerService } from './ai-logger.service';
 
 describe('AnthropicClientService', () => {
@@ -65,5 +65,20 @@ describe('AnthropicClientService', () => {
         costUsd: (100 * 1 + 50 * 5) / 1_000_000,
       },
     });
+  });
+
+  it('passe un délai max proportionnel à max_tokens (60 s minimum)', async () => {
+    process.env['AI_ENABLED'] = 'true';
+    mockCreate.mockResolvedValueOnce({ content: [], usage: { input_tokens: 1, output_tokens: 1 } });
+    await svc.create(PARAMS as never, { feature: 'chat', userId: 'u1' });
+    expect(mockCreate).toHaveBeenCalledWith(expect.anything(), { timeout: 60_000 });
+    expect(requestTimeoutMs(8192)).toBe(245_760);
+  });
+
+  it("échec du SDK : relancé tel quel, rien n'est facturé dans le journal d'usage", async () => {
+    process.env['AI_ENABLED'] = 'true';
+    mockCreate.mockRejectedValueOnce(Object.assign(new Error('overloaded'), { status: 529 }));
+    await expect(svc.create(PARAMS as never, { feature: 'chat', userId: 'u1' })).rejects.toThrow('overloaded');
+    expect(prismaCreate).not.toHaveBeenCalled();
   });
 });
