@@ -231,7 +231,7 @@ Non traité (hors périmètre) : liens `register` en dur dans 5 articles `.md` d
 Redis potentiellement partagées dev/prod (ex. santé des métriques admin).
 
 Bugs de l'app repérés en prenant les captures (non corrigés, hors périmètre landing) :
-- Journal : % de P&L aberrants sur les trades EUR/USD du compte démo (+2764,98 %, +23103,23 %, −11364,69 %).
+- ~~Journal : % de P&L aberrants sur les trades EUR/USD (+2764,98 %, +23103,23 %, −11364,69 %)~~ → corrigé (`72c7d34`) : le % était `pnl / entry`, c'est désormais la variation du prix.
 - Dashboard : à 1440 px, les sparklines des cartes KPI chevauchent les montants.
 - IA Insights : bouton « Disponible dans 3h 60min » (arrondi minutes → devrait être 4h 00).
 - Analytics (démo) : courbes vides sur la période par défaut « 1 mois », le seed s'arrête en juin.
