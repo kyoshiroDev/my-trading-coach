@@ -15,22 +15,22 @@
     <div style="font-family:var(--disp);font-size:12px;font-weight:600;margin-bottom:10px">🎯 Insights personnalisés</div>
     <div class="insight-row">
       <div class="i-ico" style="background:rgba(239,68,68,.1)">🔴</div>
-      <div style="flex:1"><div class="i-t">Pattern : Revenge Trading détecté</div><div class="i-d">Après 2 pertes consécutives, ton taux de perte grimpe à 78%.</div></div>
+      <div class="grow"><div class="i-t">Pattern : Revenge Trading détecté</div><div class="i-d">Après 2 pertes consécutives, ton taux de perte grimpe à 78%.</div></div>
       <span class="i-tag" style="background:rgba(239,68,68,.1);color:var(--red)">CRITIQUE</span>
     </div>
     <div class="insight-row">
       <div class="i-ico" style="background:rgba(245,158,11,.1)">⚠️</div>
-      <div style="flex:1"><div class="i-t">Soirée : performances dégradées</div><div class="i-d">Entre 20h et 23h, win rate = 38%. Tes meilleurs trades sont avant 16h.</div></div>
+      <div class="grow"><div class="i-t">Soirée : performances dégradées</div><div class="i-d">Entre 20h et 23h, win rate = 38%. Tes meilleurs trades sont avant 16h.</div></div>
       <span class="i-tag" style="background:rgba(245,158,11,.1);color:var(--yel)">TIMING</span>
     </div>
     <div class="insight-row">
       <div class="i-ico" style="background:rgba(16,185,129,.1)">✅</div>
-      <div style="flex:1"><div class="i-t">Setup Breakout : ton point fort</div><div class="i-d">74% win rate sur les breakouts avec confirmation volume.</div></div>
+      <div class="grow"><div class="i-t">Setup Breakout : ton point fort</div><div class="i-d">74% win rate sur les breakouts avec confirmation volume.</div></div>
       <span class="i-tag" style="background:rgba(16,185,129,.1);color:var(--green)">FORCE</span>
     </div>
     <div class="insight-row">
       <div class="i-ico" style="background:rgba(59,130,246,.1)">💡</div>
-      <div style="flex:1"><div class="i-t">Taille de position inconstante</div><div class="i-d">Tu augmentes ton risk après une série positive. Overconfidence détectée.</div></div>
+      <div class="grow"><div class="i-t">Taille de position inconstante</div><div class="i-d">Tu augmentes ton risk après une série positive. Overconfidence détectée.</div></div>
       <span class="i-tag" style="background:rgba(59,130,246,.1);color:var(--blue2)">RISQUE</span>
     </div>
   </div>
@@ -64,4 +64,10 @@
   .i-t { font-size:12px; font-weight:500; margin-bottom:2px; }
   .i-d { font-size:11px; color:var(--txt3); line-height:1.5; }
   .i-tag { font-size:9px; font-family:var(--mono); padding:2px 6px; border-radius:3px; align-self:flex-start; margin-top:1px; flex-shrink:0; }
+</style>
+
+<style>
+  /* Utilitaires de la maquette (ex-styles en ligne répétés) : !important = même priorité
+     que le style en ligne qu'ils remplacent. */
+  .grow { flex: 1 !important; }
 </style>

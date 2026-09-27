@@ -23,21 +23,21 @@
 
 <div class="fgrid2">
   <div>
-    <div style="font-size:11px;font-family:var(--mono);color:var(--txt3);letter-spacing:.7px;text-transform:uppercase;margin-bottom:8px">✅ Points forts</div>
-    <div class="pts-row"><span class="dbadge-g">Force</span><div class="pts-txt" style="margin-left:8px">Stops respectés sur <strong style="color:var(--txt)">100%</strong> des 28 trades.</div></div>
-    <div class="pts-row"><span class="dbadge-g">Force</span><div class="pts-txt" style="margin-left:8px">Breakouts BTC avec RR moyen de <strong style="color:var(--txt)">2.4</strong>.</div></div>
-    <div class="pts-row"><span class="dbadge-g">Force</span><div class="pts-txt" style="margin-left:8px">Session London : <strong style="color:var(--txt)">78% win rate</strong> cette semaine.</div></div>
+    <div class="sect-label">✅ Points forts</div>
+    <div class="pts-row"><span class="dbadge-g">Force</span><div class="pts-txt ml-8">Stops respectés sur <strong class="strong-txt">100%</strong> des 28 trades.</div></div>
+    <div class="pts-row"><span class="dbadge-g">Force</span><div class="pts-txt ml-8">Breakouts BTC avec RR moyen de <strong class="strong-txt">2.4</strong>.</div></div>
+    <div class="pts-row"><span class="dbadge-g">Force</span><div class="pts-txt ml-8">Session London : <strong class="strong-txt">78% win rate</strong> cette semaine.</div></div>
   </div>
   <div>
-    <div style="font-size:11px;font-family:var(--mono);color:var(--txt3);letter-spacing:.7px;text-transform:uppercase;margin-bottom:8px">⚠️ Points faibles</div>
-    <div class="pts-row"><span class="dbadge-r">Critique</span><div class="pts-txt" style="margin-left:8px">Jeudi 15h-17h : <strong style="color:var(--txt)">1W / 4L</strong>. Fatigue fin de session.</div></div>
-    <div class="pts-row"><span class="dbadge-y">Attention</span><div class="pts-txt" style="margin-left:8px">Vendredi matin : overtrading : <strong style="color:var(--txt)">3 trades inutiles</strong>.</div></div>
-    <div class="pts-row"><span class="dbadge-y">Attention</span><div class="pts-txt" style="margin-left:8px">GBP/USD : 3ème semaine en perte. <strong style="color:var(--txt)">À éviter</strong>.</div></div>
+    <div class="sect-label">⚠️ Points faibles</div>
+    <div class="pts-row"><span class="dbadge-r">Critique</span><div class="pts-txt ml-8">Jeudi 15h-17h : <strong class="strong-txt">1W / 4L</strong>. Fatigue fin de session.</div></div>
+    <div class="pts-row"><span class="dbadge-y">Attention</span><div class="pts-txt ml-8">Vendredi matin : overtrading : <strong class="strong-txt">3 trades inutiles</strong>.</div></div>
+    <div class="pts-row"><span class="dbadge-y">Attention</span><div class="pts-txt ml-8">GBP/USD : 3ème semaine en perte. <strong class="strong-txt">À éviter</strong>.</div></div>
   </div>
 </div>
 
 <div style="margin-top:12px">
-  <div style="font-size:11px;font-family:var(--mono);color:var(--txt3);letter-spacing:.7px;text-transform:uppercase;margin-bottom:8px">🎯 Objectifs semaine 13 : générés par IA</div>
+  <div class="sect-label">🎯 Objectifs semaine 13 : générés par IA</div>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
     <div class="obj-box"><div class="obj-circle">○</div><div><div class="obj-title">Stopper après 15h le jeudi</div><div class="obj-meta">Pattern 1W/4L détecté 3 semaines.</div></div></div>
     <div class="obj-box"><div class="obj-circle">○</div><div><div class="obj-title">Max 4 trades le vendredi matin</div><div class="obj-meta">Prévenir l'overtrading post-gain.</div></div></div>
@@ -65,4 +65,12 @@
   .pts-row { display:flex; gap:8px; padding:9px 0; border-bottom:1px solid rgba(99,155,255,.05); align-items:flex-start; }
   .pts-row:last-child { border:none; }
   .pts-txt { font-size:11px; color:var(--txt2); line-height:1.5; flex:1; }
+</style>
+
+<style>
+  /* Utilitaires de la maquette (ex-styles en ligne répétés) : !important = même priorité
+     que le style en ligne qu'ils remplacent. */
+  .ml-8 { margin-left: 8px !important; }
+  .strong-txt { color: var(--txt) !important; }
+  .sect-label { font-size: 11px !important; font-family: var(--mono) !important; color: var(--txt3) !important; letter-spacing: .7px !important; text-transform: uppercase !important; margin-bottom: 8px !important; }
 </style>

@@ -18,9 +18,9 @@ const heatData: number[][] = [
 <div class="fan-content">
 <div class="fstats" style="margin-bottom:12px">
   <div class="fstat"><div class="fstat-lbl">WIN RATE GLOBAL</div><div class="fstat-val text-g">67.4%</div><div class="fstat-sub">142 trades</div></div>
-  <div class="fstat"><div class="fstat-lbl">P&L TOTAL</div><div class="fstat-val text-g" style="font-size:18px">+$9 829</div><div class="fstat-sub">P&L cumulé</div></div>
+  <div class="fstat"><div class="fstat-lbl">P&L TOTAL</div><div class="fstat-val text-g fs-18">+$9 829</div><div class="fstat-sub">P&L cumulé</div></div>
   <div class="fstat"><div class="fstat-lbl">TOP SESSION</div><div class="fstat-val text-b" style="font-size:15px">London</div><div class="fstat-sub">74% win rate</div></div>
-  <div class="fstat"><div class="fstat-lbl">HEURE TOP</div><div class="fstat-val text-b" style="font-size:18px">09:30</div><div class="fstat-sub">ouverture NY</div></div>
+  <div class="fstat"><div class="fstat-lbl">HEURE TOP</div><div class="fstat-val text-b fs-18">09:30</div><div class="fstat-sub">ouverture NY</div></div>
 </div>
 
 <div class="an-sep">
@@ -54,30 +54,30 @@ const heatData: number[][] = [
 </div>
 
 <div class="fgrid2">
-  <div class="fcard" style="margin:0">
+  <div class="fcard m-0">
     <div class="fcard-h"><div class="fcard-t">Top actifs</div></div>
     <table class="ftable">
       <thead><tr><th>#</th><th>ASSET</th><th>W%</th><th>P&L</th></tr></thead>
       <tbody>
-        <tr><td style="color:var(--txt3);font-family:var(--mono)">#1</td><td style="font-family:var(--mono);color:var(--blue2)">NQ</td><td style="color:var(--green);font-family:var(--mono)">69%</td><td style="font-family:var(--mono);color:var(--green)">+$2 598</td></tr>
-        <tr><td style="color:var(--txt3);font-family:var(--mono)">#2</td><td style="font-family:var(--mono);color:var(--blue2)">ETH/USDT</td><td style="color:var(--green);font-family:var(--mono)">73%</td><td style="font-family:var(--mono);color:var(--green)">+$2 203</td></tr>
-        <tr><td style="color:var(--txt3);font-family:var(--mono)">#3</td><td style="font-family:var(--mono);color:var(--blue2)">BTC/USDT</td><td style="color:var(--green);font-family:var(--mono)">100%</td><td style="font-family:var(--mono);color:var(--green)">+$2 000</td></tr>
-        <tr><td style="color:var(--txt3);font-family:var(--mono)">#4</td><td style="font-family:var(--mono);color:var(--blue2)">ES</td><td style="color:var(--green);font-family:var(--mono)">69%</td><td style="font-family:var(--mono);color:var(--green)">+$1 934</td></tr>
-        <tr><td style="color:var(--txt3);font-family:var(--mono)">#5</td><td style="font-family:var(--mono);color:var(--blue2)">SOL/USDT</td><td style="color:var(--yel);font-family:var(--mono)">53%</td><td style="font-family:var(--mono);color:var(--green)">+$1 696</td></tr>
+        <tr><td class="num-muted">#1</td><td class="num-blue">NQ</td><td class="num-green">69%</td><td class="num-green">+$2 598</td></tr>
+        <tr><td class="num-muted">#2</td><td class="num-blue">ETH/USDT</td><td class="num-green">73%</td><td class="num-green">+$2 203</td></tr>
+        <tr><td class="num-muted">#3</td><td class="num-blue">BTC/USDT</td><td class="num-green">100%</td><td class="num-green">+$2 000</td></tr>
+        <tr><td class="num-muted">#4</td><td class="num-blue">ES</td><td class="num-green">69%</td><td class="num-green">+$1 934</td></tr>
+        <tr><td class="num-muted">#5</td><td class="num-blue">SOL/USDT</td><td class="num-yellow">53%</td><td class="num-green">+$1 696</td></tr>
       </tbody>
     </table>
   </div>
-  <div class="fcard" style="margin:0">
+  <div class="fcard m-0">
     <div class="fcard-h"><div class="fcard-t">Performance par setup</div></div>
     <table class="ftable">
       <thead><tr><th>SETUP</th><th>W%</th><th>P&L</th></tr></thead>
       <tbody>
-        <tr><td style="font-weight:600">BREAKOUT</td><td style="color:var(--yel);font-family:var(--mono)">48%</td><td style="font-family:var(--mono);color:var(--green)">+$544</td></tr>
-        <tr><td style="font-weight:600">PULLBACK</td><td style="color:var(--green);font-family:var(--mono)">80%</td><td style="font-family:var(--mono);color:var(--green)">+$3 389</td></tr>
-        <tr><td style="font-weight:600">REVERSAL</td><td style="color:var(--green);font-family:var(--mono)">65%</td><td style="font-family:var(--mono);color:var(--green)">+$2 595</td></tr>
-        <tr><td style="font-weight:600">SCALPING</td><td style="color:var(--green);font-family:var(--mono)">70%</td><td style="font-family:var(--mono);color:var(--green)">+$3 937</td></tr>
-        <tr><td style="font-weight:600">RANGE</td><td style="color:var(--yel);font-family:var(--mono)">56%</td><td style="font-family:var(--mono);color:var(--green)">+$1 741</td></tr>
-        <tr><td style="font-weight:600">NEWS</td><td style="color:var(--red);font-family:var(--mono)">20%</td><td style="font-family:var(--mono);color:var(--red)">-$2 379</td></tr>
+        <tr><td class="bold">BREAKOUT</td><td class="num-yellow">48%</td><td class="num-green">+$544</td></tr>
+        <tr><td class="bold">PULLBACK</td><td class="num-green">80%</td><td class="num-green">+$3 389</td></tr>
+        <tr><td class="bold">REVERSAL</td><td class="num-green">65%</td><td class="num-green">+$2 595</td></tr>
+        <tr><td class="bold">SCALPING</td><td class="num-green">70%</td><td class="num-green">+$3 937</td></tr>
+        <tr><td class="bold">RANGE</td><td class="num-yellow">56%</td><td class="num-green">+$1 741</td></tr>
+        <tr><td class="bold">NEWS</td><td style="color:var(--red);font-family:var(--mono)">20%</td><td style="font-family:var(--mono);color:var(--red)">-$2 379</td></tr>
       </tbody>
     </table>
   </div>
@@ -102,4 +102,16 @@ const heatData: number[][] = [
   .ftable th { font-family:var(--mono); font-size:9px; color:var(--txt3); text-transform:uppercase; letter-spacing:.6px; padding-bottom:7px; text-align:left; border-bottom:1px solid var(--b); }
   .ftable td { padding:7px 0; color:var(--txt2); border-bottom:1px solid rgba(99,155,255,.04); text-align:left; }
   .ftable tr:last-child td { border:none; }
+</style>
+
+<style>
+  /* Utilitaires de la maquette (ex-styles en ligne répétés) : !important = même priorité
+     que le style en ligne qu'ils remplacent. */
+  .num-green { font-family: var(--mono) !important; color: var(--green) !important; }
+  .bold { font-weight: 600 !important; }
+  .num-muted { font-family: var(--mono) !important; color: var(--txt3) !important; }
+  .num-blue { font-family: var(--mono) !important; color: var(--blue2) !important; }
+  .num-yellow { font-family: var(--mono) !important; color: var(--yel) !important; }
+  .fs-18 { font-size: 18px !important; }
+  .m-0 { margin: 0 !important; }
 </style>

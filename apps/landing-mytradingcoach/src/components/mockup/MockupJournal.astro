@@ -52,16 +52,16 @@
     </div>
     <div class="jnl-period-stat">
       <span class="jnl-period-label">P&L NET</span>
-      <span class="jnl-period-value" style="color:var(--app-green)">+$1 420</span>
+      <span class="jnl-period-value pos">+$1 420</span>
       <span class="jnl-period-sub">brut $1 480 · frais $60</span>
     </div>
     <div class="jnl-period-stat">
       <span class="jnl-period-label">MEILLEUR</span>
-      <span class="jnl-period-value" style="color:var(--app-green)">+$620</span>
+      <span class="jnl-period-value pos">+$620</span>
     </div>
     <div class="jnl-period-stat">
       <span class="jnl-period-label">PIRE</span>
-      <span class="jnl-period-value" style="color:var(--app-red)">-$280</span>
+      <span class="jnl-period-value neg">-$280</span>
     </div>
   </div>
 
@@ -86,7 +86,7 @@
     <div class="jnl-day-group">
       <div class="jnl-day-header">
         <div class="jnl-accent" style="background:var(--app-green)"></div>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color:var(--app-txt3);flex-shrink:0"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg class="muted-fixed" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
         <div class="jnl-day-label">Mercredi 14 mai 2025</div>
         <div class="jnl-day-stats">
           <span class="jnl-day-count">3 trades</span>
@@ -107,7 +107,7 @@
           <span class="jnl-td"><span class="jnl-side long">LONG</span></span>
           <span class="jnl-td jnl-mono">42 150</span>
           <span class="jnl-td jnl-mono">42 580</span>
-          <span class="jnl-td jnl-mono" style="color:var(--app-green)">+$400</span>
+          <span class="jnl-td jnl-mono pos">+$400</span>
           <span class="jnl-td jnl-mono">0.1</span>
           <span class="jnl-td jnl-mono">2.1</span>
           <span class="jnl-td"><span class="jnl-emo-cell">😌 <span class="jnl-emo-txt">CONFIDENT</span></span></span>
@@ -123,7 +123,7 @@
           <span class="jnl-td"><span class="jnl-side short">SHORT</span></span>
           <span class="jnl-td jnl-mono">1.0842</span>
           <span class="jnl-td jnl-mono">1.0814</span>
-          <span class="jnl-td jnl-mono" style="color:var(--app-green)">+$280</span>
+          <span class="jnl-td jnl-mono pos">+$280</span>
           <span class="jnl-td jnl-mono">1</span>
           <span class="jnl-td jnl-mono">1.8</span>
           <span class="jnl-td"><span class="jnl-emo-cell">🎯 <span class="jnl-emo-txt">FOCUSED</span></span></span>
@@ -139,7 +139,7 @@
           <span class="jnl-td"><span class="jnl-side long">LONG</span></span>
           <span class="jnl-td jnl-mono">17 840</span>
           <span class="jnl-td jnl-mono">17 790</span>
-          <span class="jnl-td jnl-mono" style="color:var(--app-red)">-$280</span>
+          <span class="jnl-td jnl-mono neg">-$280</span>
           <span class="jnl-td jnl-mono">1</span>
           <span class="jnl-td jnl-mono"> : </span>
           <span class="jnl-td"><span class="jnl-emo-cell">😤 <span class="jnl-emo-txt">REVENGE</span></span></span>
@@ -156,7 +156,7 @@
     <div class="jnl-day-group">
       <div class="jnl-day-header">
         <div class="jnl-accent" style="background:var(--app-red)"></div>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color:var(--app-txt3);flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+        <svg class="muted-fixed" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
         <div class="jnl-day-label">Mardi 13 mai 2025</div>
         <div class="jnl-day-stats">
           <span class="jnl-day-count">2 trades</span>
@@ -377,4 +377,12 @@
   }
   .jnl-btn-edit:hover { background: rgba(59,130,246,.08); color: var(--app-blue-br); }
   .jnl-btn-del:hover  { background: rgba(239,68,68,.08); color: var(--app-red); }
+</style>
+
+<style>
+  /* Utilitaires de la maquette (ex-styles en ligne répétés) : !important = même priorité
+     que le style en ligne qu'ils remplacent. */
+  .pos { color: var(--app-green) !important; }
+  .neg { color: var(--app-red) !important; }
+  .muted-fixed { color: var(--app-txt3) !important; flex-shrink: 0 !important; }
 </style>

@@ -25,13 +25,13 @@
   <div class="dash-stats-row">
     <div class="dash-stat-card">
       <div class="dash-stat-label">CAPITAL</div>
-      <div class="dash-stat-value" style="color:var(--app-green)">$51 240</div>
+      <div class="dash-stat-value pos">$51 240</div>
       <div class="dash-stat-sub"><span class="dash-change up">▲ +2.4%</span></div>
       <div class="dash-stat-bg-icon">💼</div>
     </div>
     <div class="dash-stat-card">
       <div class="dash-stat-label">P&amp;L TOTAL</div>
-      <div class="dash-stat-value" style="color:var(--app-green)">+$1 240</div>
+      <div class="dash-stat-value pos">+$1 240</div>
       <div class="dash-stat-sub"><span class="dash-change up">▲ ce mois</span></div>
       <div class="dash-stat-bg-icon">💰</div>
     </div>
@@ -105,7 +105,7 @@
           </div>
           <div class="dash-trade-bot">
             <span class="dash-trade-setup">Breakout</span>
-            <span style="color:var(--app-green);font-family:var(--mono);font-size:12px;font-weight:600">+$400</span>
+            <span class="pnl-pos">+$400</span>
           </div>
         </div>
         <div class="dash-trade-row">
@@ -127,7 +127,7 @@
           </div>
           <div class="dash-trade-bot">
             <span class="dash-trade-setup">Scalping</span>
-            <span style="color:var(--app-green);font-family:var(--mono);font-size:12px;font-weight:600">+$620</span>
+            <span class="pnl-pos">+$620</span>
           </div>
         </div>
         <div class="dash-trade-row" style="border:none">
@@ -138,7 +138,7 @@
           </div>
           <div class="dash-trade-bot">
             <span class="dash-trade-setup">Breakout</span>
-            <span style="color:var(--app-green);font-family:var(--mono);font-size:12px;font-weight:600">+$280</span>
+            <span class="pnl-pos">+$280</span>
           </div>
         </div>
       </div>
@@ -379,4 +379,11 @@
   }
   .dash-emo-lbl span:last-child { font-family: var(--mono); font-size: 10px; color: var(--app-txt3); }
   .dash-emo-track { height: 4px; background: rgba(255,255,255,.06); border-radius: 3px; }
+</style>
+
+<style>
+  /* Utilitaires de la maquette (ex-styles en ligne répétés) : !important = même priorité
+     que le style en ligne qu'ils remplacent. */
+  .pnl-pos { color: var(--app-green) !important; font-family: var(--mono) !important; font-size: 12px !important; font-weight: 600 !important; }
+  .pos { color: var(--app-green) !important; }
 </style>
