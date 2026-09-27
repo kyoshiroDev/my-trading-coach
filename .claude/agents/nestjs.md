@@ -233,6 +233,8 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
 - `/api/analytics/summary` : PAS de PremiumGuard (FREE y accède)
 - `ValidationPipe` global : `whitelist: true, forbidNonWhitelisted: true`
 - Ne jamais appeler Prisma dans les controllers
+- Imports profonds : alias `@api/…` (= `src/`, ex. `@api/common/guards/jwt-auth.guard`), déclaré dans
+  `tsconfig.base.json`, `webpack.config.js` et les deux `vitest*.config.mts`
 - Ne jamais `console.log` → Logger NestJS
 - Argon2 pour les mots de passe (jamais Bcrypt)
 - JWT : access_token 15min, refresh_token 7j httpOnly cookie

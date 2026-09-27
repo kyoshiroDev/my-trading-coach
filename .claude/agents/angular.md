@@ -74,6 +74,12 @@ src/app/
 └── app.routes.ts
 ```
 
+### Imports
+
+Au-delà de 2 niveaux de `../`, utiliser l'alias : `@app/core/…`, `@app/shared/…`, `@app/features/…`,
+`@app/environments/environment` (admin : `@admin/…`). Déclarés dans `tsconfig.base.json` et dans
+`resolve.alias` de `vitest.config.mts` (le plus précis en premier).
+
 ### URL → dossier
 
 Les URLs restent en français (liens des emails, favoris) ; les dossiers sont en anglais.

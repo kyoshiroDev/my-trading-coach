@@ -32,6 +32,8 @@ de libs ; le front n'importe jamais le back (et inversement) ; tout le monde peu
 ## Conventions
 
 - **Code en anglais** (noms de fichiers, variables, fonctions) ; **interface en français, au tutoiement**.
+- Imports : relatif au plus à 2 niveaux (`../../x`) ; au-delà, l'alias de l'app : `@app/core/…`,
+  `@app/environments/environment`, `@admin/…`, `@api/common/…` (déclarés dans `tsconfig.base.json`).
 - Angular : composants standalone, `OnPush`, signals, `@if` / `@for`, template et CSS dans leurs fichiers.
 - Nest : pas de Prisma dans les contrôleurs (passer par un service), `Logger` plutôt que `console.log`,
   une route admin vit sous `/admin` dans un contrôleur gardé au niveau de la classe.
