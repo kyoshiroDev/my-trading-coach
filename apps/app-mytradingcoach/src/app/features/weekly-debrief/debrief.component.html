@@ -1,5 +1,5 @@
 <mtc-topbar
-  title="Weekly Debrief"
+  title="Débrief hebdo"
   [globalScopeNote]="true"
   [showAddButton]="userStore.isPremium()"
   [addLabel]="isGenerating() ? 'Analyse en cours...' : 'Générer le débrief'"
@@ -14,7 +14,7 @@
       <div class="paywall-icon"><svg [lucideIcon]="CalendarDaysIcon" [size]="40"></svg></div>
       <h3 class="paywall-title">Fonctionnalité Premium</h3>
       <p class="paywall-desc">
-        Le Weekly Debrief est disponible avec le plan Premium.<br />Reçois
+        Le Débrief hebdo est disponible avec le plan Premium.<br />Reçois
         chaque dimanche un rapport IA complet de ta semaine.
       </p>
       <button class="paywall-cta" (click)="showPlanModal.set(true)">

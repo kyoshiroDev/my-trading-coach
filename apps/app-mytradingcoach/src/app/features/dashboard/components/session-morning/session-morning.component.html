@@ -107,7 +107,7 @@
         }
       </div>
       @if (objectivesView().length === 0) {
-        <div class="empty-state">Objectifs générés après ton Weekly Debrief</div>
+        <div class="empty-state">Objectifs générés après ton Débrief hebdo</div>
       } @else {
         @for (obj of objectivesView(); track $index; let i = $index) {
           @if (!userStore.isPremium() && i >= 1) {
@@ -168,7 +168,7 @@
             }
           }
         }
-        <div class="obj-footer">Générés par l'IA · Weekly Debrief</div>
+        <div class="obj-footer">Générés par l'IA · Débrief hebdo</div>
       }
     </div>
   </div>

@@ -396,7 +396,7 @@
                   <div class="plan-badge-dot"></div>
                   PREMIUM
                 </div>
-                <p class="plan-desc">Accès à tout : IA Insights, Chat coach IA, Weekly Debrief, analytics avancés, comptes illimités.</p>
+                <p class="plan-desc">Accès à tout : Insights IA, Chat coach IA, Débrief hebdo, analytics avancés, comptes illimités.</p>
                 @if (isInTrial()) {
                   <div class="trial-status">
                     <p class="trial-status-title">🎁 Essai gratuit : il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
@@ -420,7 +420,7 @@
                 <div class="plan-badge free">GRATUIT</div>
                 <p class="plan-desc">Trades illimités · Journal complet · Import · Historique illimité · IA mutualisée (contexte marché, calendrier éco, news).</p>
                 <p class="plan-upgrade-hint">
-                  Passe à Premium pour l'IA personnelle : Weekly Debrief, Chat coach, IA Insights, analytics avancés &amp; comptes illimités.
+                  Passe à Premium pour l'IA personnelle : Débrief hebdo, Chat coach, Insights IA, analytics avancés &amp; comptes illimités.
                 </p>
                 <div class="plan-actions">
                   <button class="btn btn-primary" (click)="showPlanModal.set(true)">
@@ -453,7 +453,7 @@
             <!-- Weekly debrief -->
             <div class="settings-row">
               <div class="settings-row-left">
-                <span class="settings-row-label">Weekly Debrief automatique</span>
+                <span class="settings-row-label">Débrief hebdo automatique</span>
                 <span class="settings-row-hint">Génération automatique chaque dimanche. Premium uniquement.</span>
               </div>
               <label class="settings-toggle">

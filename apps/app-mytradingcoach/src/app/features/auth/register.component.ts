@@ -83,7 +83,7 @@ export class RegisterComponent {
     if (!this.submitted() && !this.emailTouched()) return null;
     if (!this.email()) return "L'adresse email est requise";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email()))
-      return 'Veuillez saisir une adresse email valide';
+      return 'Saisis une adresse email valide';
     return null;
   });
 
@@ -101,7 +101,7 @@ export class RegisterComponent {
 
   protected readonly confirmError = computed(() => {
     if (!this.submitted() && !this.confirmTouched()) return null;
-    if (!this.confirmPassword()) return 'Veuillez confirmer votre mot de passe';
+    if (!this.confirmPassword()) return 'Confirme ton mot de passe';
     if (this.password() !== this.confirmPassword())
       return 'Les mots de passe ne correspondent pas';
     return null;
@@ -141,7 +141,7 @@ export class RegisterComponent {
           const status = err.status;
           if (status === 409)
             this.apiError.set('Un compte existe déjà avec cette adresse email');
-          else this.apiError.set('Une erreur est survenue, veuillez réessayer');
+          else this.apiError.set('Une erreur est survenue, réessaie dans un instant');
           this.isLoading.set(false);
         },
       });
