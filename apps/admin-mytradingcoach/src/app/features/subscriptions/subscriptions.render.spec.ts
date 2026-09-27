@@ -28,10 +28,10 @@ describe('SubscriptionsComponent', () => {
   async function render(subs: 'error' | object) {
     const fixture = TestBed.createComponent(SubscriptionsComponent);
     fixture.detectChanges();
-    const req = http.expectOne(`${environment.apiUrl}/users/admin/subscriptions`);
+    const req = http.expectOne(`${environment.apiUrl}/admin/users/subscriptions`);
     if (subs === 'error') req.flush({}, { status: 500, statusText: 'Server Error' });
     else req.flush({ data: subs });
-    http.expectOne(`${environment.apiUrl}/users/admin/stats`).flush({ data: { trials: 4, mrr: 98 } });
+    http.expectOne(`${environment.apiUrl}/admin/users/stats`).flush({ data: { trials: 4, mrr: 98 } });
     await fixture.whenStable();
     fixture.detectChanges();
     return fixture.nativeElement as HTMLElement;

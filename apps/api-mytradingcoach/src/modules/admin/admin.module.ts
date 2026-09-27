@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AdminController } from './admin.controller';
+import { AdminUsersController } from './admin-users.controller';
+import { AdminAmbassadorsController } from './admin-ambassadors.controller';
 import { AdminService } from './admin.service';
 import { AnthropicCostService } from './anthropic-cost.service';
 import { EmailCampaignService } from './email-campaign.service';
@@ -14,10 +16,13 @@ import { PrismaModule } from '../../prisma/prisma.module';
 import { DiscordModule } from '../discord/discord.module';
 import { StripeModule } from '../stripe/stripe.module';
 import { VpsModule } from '../vps/vps.module';
+import { AmbassadorModule } from '../ambassador/ambassador.module';
+import { ReferralModule } from '../referral/referral.module';
 
 @Module({
-  imports: [ResendModule, UsersModule, PrismaModule, DiscordModule, StripeModule, VpsModule],
-  controllers: [AdminController],
+  imports: [ResendModule, UsersModule, PrismaModule, DiscordModule, StripeModule, VpsModule, AmbassadorModule, ReferralModule],
+  // Toutes les routes admin vivent sous /admin (guard au niveau de chaque classe).
+  controllers: [AdminController, AdminUsersController, AdminAmbassadorsController],
   providers: [AdminService, AnthropicCostService, EmailCampaignService, MetricsSnapshotCron, DeletedAccountService, UserDetailService, DemoSeedService, DemoSeedCron],
 })
 export class AdminModule {}

@@ -10,9 +10,6 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { IsEnum, IsOptional, IsString, Min } from 'class-validator';
-import { Type } from 'class-transformer';
-import { Plan, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -20,23 +17,8 @@ import { UsersService } from './users.service';
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
-
-class SetRoleDto {
-  @IsEnum(Role)
-  role!: Role;
-}
-
-class AdminUpdateUserDto {
-  @IsOptional() @IsString() name?: string;
-  @IsOptional() @IsEnum(Plan) plan?: Plan;
-  @IsOptional() @IsEnum(Role) role?: Role;
-}
-
-class AdminListQueryDto {
-  @IsOptional() @IsString() search?: string;
-  @IsOptional() @Type(() => Number) @Min(1) page?: number;
-  @IsOptional() @Type(() => Number) @Min(1) limit?: number;
-}
+import { AdminListQueryDto, AdminUpdateUserDto, SetRoleDto } from './dto/admin-user.dto';
+import { DeprecatedRoute } from '../../common/decorators/deprecated-route.decorator';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -85,22 +67,26 @@ export class UsersController {
     await this.usersService.deleteMe(user.id, body?.reason);
   }
 
-  // ── Admin routes ──────────────────────────────────────────────────────────
+  // ── Anciennes routes admin : remplacées par /admin/users/* (AdminUsersController) ──
+  // Gardées une version (déploiement front/back non simultané), puis à supprimer.
 
   // IMPORTANT : routes /admin/<literal> DOIVENT être avant /admin/:id
   @UseGuards(AdminGuard)
+  @DeprecatedRoute('GET /admin/users/stats')
   @Get('admin/stats')
   adminStats() {
     return this.usersService.adminStats();
   }
 
   @UseGuards(AdminGuard)
+  @DeprecatedRoute('GET /admin/users/online')
   @Get('admin/online')
   adminOnline() {
     return this.usersService.getOnlineUsers();
   }
 
   @UseGuards(AdminGuard)
+  @DeprecatedRoute('GET /admin/users')
   @Get('admin')
   adminList(@Query() query: AdminListQueryDto) {
     return this.usersService.adminFindAll(
@@ -111,12 +97,14 @@ export class UsersController {
   }
 
   @UseGuards(AdminGuard)
+  @DeprecatedRoute('PATCH /admin/users/:id')
   @Patch('admin/:id')
   adminUpdate(@Param('id') id: string, @Body() dto: AdminUpdateUserDto) {
     return this.usersService.adminUpdate(id, dto);
   }
 
   @UseGuards(AdminGuard)
+  @DeprecatedRoute('PATCH /admin/users/:id/role')
   @Patch('admin/:id/role')
   @HttpCode(HttpStatus.NO_CONTENT)
   async setRole(@Param('id') id: string, @Body() dto: SetRoleDto) {
@@ -124,6 +112,7 @@ export class UsersController {
   }
 
   @UseGuards(AdminGuard)
+  @DeprecatedRoute('DELETE /admin/users/:id')
   @Delete('admin/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async adminDelete(@Param('id') id: string) {
@@ -131,12 +120,14 @@ export class UsersController {
   }
 
   @UseGuards(AdminGuard)
+  @DeprecatedRoute('GET /admin/users/subscriptions')
   @Get('admin/subscriptions')
   adminSubscriptions(@Query() query: AdminListQueryDto) {
     return this.usersService.adminSubscriptions(query.page, query.limit);
   }
 
   @UseGuards(AdminGuard)
+  @DeprecatedRoute('GET /admin/users/:id')
   @Get('admin/:id/detail')
   adminDetail(@Param('id') id: string) {
     return this.usersService.adminDetail(id);

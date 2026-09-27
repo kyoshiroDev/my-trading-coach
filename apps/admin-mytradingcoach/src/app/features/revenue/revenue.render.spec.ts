@@ -29,7 +29,7 @@ describe('RevenueComponent', () => {
   async function render(stats: AdminStats | 'error') {
     const fixture = TestBed.createComponent(RevenueComponent);
     fixture.detectChanges();
-    const req = http.expectOne(`${environment.apiUrl}/users/admin/stats`);
+    const req = http.expectOne(`${environment.apiUrl}/admin/users/stats`);
     if (stats === 'error') req.flush({}, { status: 500, statusText: 'Server Error' });
     else req.flush({ data: stats });
     http.expectOne((r) => r.url === `${environment.apiUrl}/admin/metrics/history`).flush({ data: [] });
@@ -53,7 +53,7 @@ describe('RevenueComponent', () => {
     expect(el.textContent).not.toContain('Chargement…');
 
     el.querySelector<HTMLButtonElement>('[role="alert"] button')!.click();
-    http.expectOne(`${environment.apiUrl}/users/admin/stats`).flush({ data: STATS });
+    http.expectOne(`${environment.apiUrl}/admin/users/stats`).flush({ data: STATS });
     await fixture.whenStable();
     fixture.detectChanges();
     expect(el.querySelector('.kpi-value')?.textContent?.trim()).toBe('€1,470');

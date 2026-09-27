@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { AdminService } from './admin.service';
@@ -7,9 +7,7 @@ import { EmailCampaignService } from './email-campaign.service';
 import type { CampaignType } from './email-campaign.service';
 import { MetricsSnapshotCron } from './metrics-snapshot.cron';
 import { DeletedAccountService } from './deleted-account.service';
-import { UserDetailService } from './user-detail.service';
 import { DemoSeedService } from './demo-seed.service';
-import { UsersService } from '../users/users.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { DiscordService } from '../discord/discord.service';
 import { CampaignContentDto, SendCampaignDto } from './dto/campaign.dto';
@@ -21,19 +19,11 @@ export class AdminController {
     private readonly adminService: AdminService,
     private readonly anthropicCost: AnthropicCostService,
     private readonly emailCampaign: EmailCampaignService,
-    private readonly usersService: UsersService,
     private readonly discordService: DiscordService,
     private readonly metrics: MetricsSnapshotCron,
     private readonly deletedAccounts: DeletedAccountService,
-    private readonly userDetail: UserDetailService,
     private readonly demoSeed: DemoSeedService,
   ) {}
-
-  /** Fiche utilisateur détaillée (faits bruts agrégés) : admin only. */
-  @Get('users/:id')
-  getUserDetail(@Param('id') id: string) {
-    return this.userDetail.getUserDetail(id);
-  }
 
   /** Comptes supprimés (trace analytique RGPD) : liste récente + agrégats. */
   @Get('deleted-accounts')
@@ -86,17 +76,6 @@ export class AdminController {
     return { linked: users.length, resynced: ok };
   }
 
-  @Post('users/:id/beta')
-  async assignBetaRole(@Param('id') id: string) {
-    await this.usersService.setRole(id, 'BETA_TESTER');
-    return { id, role: 'BETA_TESTER' };
-  }
-
-  @Delete('users/:id/beta')
-  async removeBetaRole(@Param('id') id: string) {
-    await this.usersService.setRole(id, 'USER');
-    return { id, role: 'USER' };
-  }
 
   // Usage IA 30j : coût réel (Cost API) + attribution estimée (logs) + réconciliation.
   @Get('ai-cost')

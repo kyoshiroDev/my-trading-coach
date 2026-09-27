@@ -33,40 +33,6 @@ export interface AdminOnlineUser {
   lastSeenAt: string; lastLoginAt: string | null;
 }
 
-export interface AdminUserProfile {
-  tradingStyle?: string | null;
-  tradingStrategy?: string[];
-  tradingSessions?: string[];
-  tradesPerDayMin?: number | null;
-  tradesPerDayMax?: number | null;
-  strategyDescription?: string | null;
-  market?: string | null;
-  goal?: string | null;
-  startingCapital?: number;
-}
-
-export interface AdminUserDetailStats {
-  totalTrades: number;
-  tradesThisMonth: number;
-  totalPnl: number;
-  winRate: number;
-  totalAiCalls: number;
-  totalTokens: number;
-  totalCostUsd: number;
-  byFeature: Record<string, number>;
-  monthlyLimit: number | null;
-  monthlyPercent: number | null;
-}
-
-export interface AdminTopAsset { asset: string; count: number; }
-
-export interface AdminUserDetail {
-  user: AdminUser & AdminUserProfile;
-  stats: AdminUserDetailStats;
-  topAssets: AdminTopAsset[];
-  timeline: { action: string; detail: string; type: 'auth' | 'ai' | 'trade'; createdAt: string }[];
-}
-
 /** Usage IA 30j : coût RÉEL (Cost API) + attribution ESTIMÉE (logs) + réconciliation. */
 export interface AiCostData {
   billed: {
@@ -224,24 +190,24 @@ export interface StripeReconcileData {
 @Injectable({ providedIn: 'root' })
 export class AdminApi {
   private readonly http = inject(HttpClient);
-  private readonly base = `${environment.apiUrl}/users/admin`;
+  /** Toutes les routes admin de l'API vivent sous /admin (guard admin au niveau du contrôleur). */
   private readonly adminBase = `${environment.apiUrl}/admin`;
+  private readonly usersBase = `${this.adminBase}/users`;
 
   list(page = 1, limit = 20, search?: string) {
     let params = new HttpParams().set('page', page).set('limit', limit);
     if (search) params = params.set('search', search);
-    return this.http.get<{ data: { users: AdminUser[]; total: number } }>(this.base, { params });
+    return this.http.get<{ data: { users: AdminUser[]; total: number } }>(this.usersBase, { params });
   }
-  detail(id: string)    { return this.http.get<{ data: AdminUserDetail }>(`${this.base}/${id}/detail`); }
   update(id: string, dto: { name?: string; plan?: Plan; role?: 'USER' | 'BETA_TESTER' | 'AMBASSADOR' }) {
-    return this.http.patch<{ data: AdminUser }>(`${this.base}/${id}`, dto);
+    return this.http.patch<{ data: AdminUser }>(`${this.usersBase}/${id}`, dto);
   }
-  delete(id: string)    { return this.http.delete<void>(`${this.base}/${id}`); }
-  stats()               { return this.http.get<{ data: AdminStats }>(`${this.base}/stats`); }
-  online()              { return this.http.get<{ data: AdminOnlineUser[] }>(`${this.base}/online`); }
-  subscriptions()       { return this.http.get<{ data: SubscriptionsData }>(`${this.base}/subscriptions`); }
-  aiCost()              { return this.http.get<{ data: AiCostData }>(`${environment.apiUrl}/admin/ai-cost`); }
-  refreshAiCost()       { return this.http.post<{ data: { ok: boolean; rows: number; total30d: number } }>(`${environment.apiUrl}/admin/ai-cost/refresh`, {}); }
+  delete(id: string)    { return this.http.delete<void>(`${this.usersBase}/${id}`); }
+  stats()               { return this.http.get<{ data: AdminStats }>(`${this.usersBase}/stats`); }
+  online()              { return this.http.get<{ data: AdminOnlineUser[] }>(`${this.usersBase}/online`); }
+  subscriptions()       { return this.http.get<{ data: SubscriptionsData }>(`${this.usersBase}/subscriptions`); }
+  aiCost()              { return this.http.get<{ data: AiCostData }>(`${this.adminBase}/ai-cost`); }
+  refreshAiCost()       { return this.http.post<{ data: { ok: boolean; rows: number; total30d: number } }>(`${this.adminBase}/ai-cost/refresh`, {}); }
   retention()           { return this.http.get<{ data: RetentionData }>(`${this.adminBase}/retention`); }
   metricsHistory(days = 30) {
     return this.http.get<{ data: MetricsHistoryPoint[] }>(
@@ -252,7 +218,7 @@ export class AdminApi {
     return this.http.get<{ data: DeletedAccountsData }>(`${this.adminBase}/deleted-accounts`);
   }
   stripeReconcile()     { return this.http.get<{ data: StripeReconcileData }>(`${this.adminBase}/stripe/reconcile`); }
-  referralOverview()    { return this.http.get<{ data: ReferralAdminOverview }>(`${environment.apiUrl}/referral/admin/overview`); }
+  referralOverview()    { return this.http.get<{ data: ReferralAdminOverview }>(`${this.adminBase}/referral/overview`); }
 
   listCampaigns() {
     return this.http.get<{ data: CampaignMeta[] }>(`${this.adminBase}/campaigns`);
@@ -269,35 +235,27 @@ export class AdminApi {
   }
 
   getAmbassadors() {
-    return this.http.get<{ data: AdminAmbassador[] }>(
-      `${environment.apiUrl}/ambassador/list`,
-    );
+    return this.http.get<{ data: AdminAmbassador[] }>(`${this.adminBase}/ambassadors`);
   }
 
   getAmbassadorDetail(userId: string) {
-    return this.http.get<{ data: AdminAmbassadorDetail }>(
-      `${environment.apiUrl}/ambassador/stats`,
-      { params: { userId } },
-    );
+    return this.http.get<{ data: AdminAmbassadorDetail }>(`${this.adminBase}/ambassadors/${userId}/stats`);
   }
 
   markAmbassadorPaid(ambassadorId: string) {
-    return this.http.patch<{ data: { success: boolean } }>(
-      `${environment.apiUrl}/ambassador/pay-all/${ambassadorId}`,
-      {},
-    );
+    return this.http.patch<{ data: { success: boolean } }>(`${this.adminBase}/ambassadors/${ambassadorId}/pay-all`, {});
   }
 
   promoteAmbassador(email: string, referralCode?: string) {
     return this.http.post<{ data: AdminAmbassadorPromoteResult }>(
-      `${environment.apiUrl}/ambassador/admin/promote`,
+      `${this.adminBase}/ambassadors/promote`,
       referralCode ? { email, referralCode } : { email },
     );
   }
 
   revokeAmbassador(email: string) {
     return this.http.post<{ data: { email: string; name: string | null; role: string } }>(
-      `${environment.apiUrl}/ambassador/admin/revoke`,
+      `${this.adminBase}/ambassadors/revoke`,
       { email },
     );
   }

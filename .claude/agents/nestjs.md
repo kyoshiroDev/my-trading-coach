@@ -98,9 +98,18 @@ DELETE /api/docker/containers/:id      ADMIN
 GET    /api/vps/backups                ADMIN
 POST   /api/vps/backups                ADMIN → pg_dump via SSH
 GET    /api/vps/logs/:container        ADMIN → SSE stream docker logs
-GET    /api/admin/ai-usage             ADMIN → stats tokens/coût
-GET    /api/users/admin/:id/detail     ADMIN → fiche utilisateur complète
-GET    /api/users/admin/subscriptions  ADMIN → liste abonnements Premium
+GET    /api/admin/ai-cost              ADMIN → coût IA 30 j (réel + estimé)
+GET    /api/admin/users                ADMIN → liste (?page&limit&search)   ┐
+GET    /api/admin/users/stats          ADMIN → KPIs (MRR, inscrits, essais) │ AdminUsersController
+GET    /api/admin/users/online         ADMIN                                │ (littéraux AVANT :id)
+GET    /api/admin/users/subscriptions  ADMIN → abonnements                  │
+GET    /api/admin/users/:id            ADMIN → fiche utilisateur complète   │
+PATCH  /api/admin/users/:id(/role)     ADMIN · DELETE /api/admin/users/:id  ┘
+GET    /api/admin/ambassadors          ADMIN → liste                        ┐
+GET    /api/admin/ambassadors/:id/stats ADMIN                               │ AdminAmbassadorsController
+PATCH  /api/admin/ambassadors/:id/pay-all ADMIN                             │
+POST   /api/admin/ambassadors/promote|revoke ADMIN                          │
+GET    /api/admin/referral/overview    ADMIN                                ┘
 
 GET    /api/integrations/tradovate/connections                 JWT → état de connexion par compte (jamais de token)
 POST   /api/integrations/tradovate/accounts/:accountId/authorize  JWT → { url } + cookie httpOnly de state · body { origin?: 'wizard'|'settings' }
@@ -202,6 +211,12 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
 - `@UseGuards(JwtAuthGuard)` sur toutes les routes protégées
 - `@UseGuards(PremiumGuard)` sur routes IA et analytics avancés
 - `@UseGuards(JwtAuthGuard, AdminGuard)` sur TOUTES les routes `/vps/*`, `/docker/*`, `/admin/*`
+- **Route admin = sous `/admin`**, dans un contrôleur gardé AU NIVEAU DE LA CLASSE (`AdminController`,
+  `AdminUsersController`, `AdminAmbassadorsController`) : jamais de `@UseGuards(AdminGuard)` route par route
+  dans un contrôleur utilisateur. Test : `modules/admin/admin-routes.spec.ts`.
+- Déplacer une route : garder l'ancienne une version avec `@DeprecatedRoute('GET /nouvelle')`
+  (`common/decorators`) qui journalise un `warn` à chaque appel ; la supprimer quand les logs sont muets.
+  En cours : `/users/admin/*`, `/ambassador/list|admin/*|pay-all/*`, `/referral/admin/overview`.
 - `@UseGuards(JwtAuthGuard, BetaGuard)` sur routes V2 session mode (BETA_TESTER + ADMIN)
 - `/api/analytics/summary` : PAS de PremiumGuard (FREE y accède)
 - `ValidationPipe` global : `whitelist: true, forbidNonWhitelisted: true`

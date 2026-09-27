@@ -8,6 +8,7 @@ import { ReferralService } from './referral.service';
 @Module({
   imports: [PrismaModule, ResendModule, StripeModule],
   controllers: [ReferralController],
+  exports: [ReferralService],
   providers: [ReferralService],
 })
 export class ReferralModule {}

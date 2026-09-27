@@ -36,8 +36,8 @@ describe('AmbassadeursComponent', () => {
   async function render() {
     const fixture = TestBed.createComponent(AmbassadeursComponent);
     fixture.detectChanges();
-    http.expectOne(`${environment.apiUrl}/ambassador/list`).flush({ data: [AMB] });
-    http.expectOne((r) => r.url === `${environment.apiUrl}/ambassador/stats`).flush({ data: DETAIL });
+    http.expectOne(`${environment.apiUrl}/admin/ambassadors`).flush({ data: [AMB] });
+    http.expectOne(`${environment.apiUrl}/admin/ambassadors/amb1/stats`).flush({ data: DETAIL });
     await fixture.whenStable();
     fixture.detectChanges();
     return { fixture, el: fixture.nativeElement as HTMLElement };
@@ -58,12 +58,12 @@ describe('AmbassadeursComponent', () => {
     expect(opts.title).toMatch(/19,60\s€/);
     expect(opts.message).toContain('Alice');
     expect(opts.danger).toBe(true);
-    const req = http.expectOne(`${environment.apiUrl}/ambassador/pay-all/amb1`);
+    const req = http.expectOne(`${environment.apiUrl}/admin/ambassadors/amb1/pay-all`);
     expect(req.request.method).toBe('PATCH');
     req.flush({ data: { success: true } });
     // Rechargement de la liste après paiement.
-    http.expectOne(`${environment.apiUrl}/ambassador/list`).flush({ data: [{ ...AMB, pendingPayout: 0 }] });
-    http.expectOne((r) => r.url === `${environment.apiUrl}/ambassador/stats`).flush({ data: { ...DETAIL, pendingPayout: 0 } });
+    http.expectOne(`${environment.apiUrl}/admin/ambassadors`).flush({ data: [{ ...AMB, pendingPayout: 0 }] });
+    http.expectOne(`${environment.apiUrl}/admin/ambassadors/amb1/stats`).flush({ data: { ...DETAIL, pendingPayout: 0 } });
   });
 
   it('confirmation refusée : aucun appel de paiement', async () => {
@@ -71,14 +71,14 @@ describe('AmbassadeursComponent', () => {
     const { el } = await render();
     el.querySelector<HTMLButtonElement>('.pay-btn')!.click();
     await tick();
-    http.expectNone(`${environment.apiUrl}/ambassador/pay-all/amb1`);
+    http.expectNone(`${environment.apiUrl}/admin/ambassadors/amb1/pay-all`);
   });
 
   it('échec du paiement : message affiché (plus silencieux)', async () => {
     const { el, fixture } = await render();
     el.querySelector<HTMLButtonElement>('.pay-btn')!.click();
     await tick();
-    http.expectOne(`${environment.apiUrl}/ambassador/pay-all/amb1`).flush({}, { status: 500, statusText: 'Server Error' });
+    http.expectOne(`${environment.apiUrl}/admin/ambassadors/amb1/pay-all`).flush({}, { status: 500, statusText: 'Server Error' });
     await fixture.whenStable();
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="pay-error"]')?.textContent).toMatch(/19,60\s€/);
