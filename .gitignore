@@ -78,7 +78,6 @@ playwright/.cache
 .env.*
 .env.
 !.env.example
-!.env.local.example
 SECRETS.md
 
 .nx/self-healing
