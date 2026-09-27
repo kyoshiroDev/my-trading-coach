@@ -83,7 +83,11 @@
           }
         }
       }
-    }
+    },
+    "tags": [
+      "type:app",
+      "scope:back"
+    ]
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",

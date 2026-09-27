@@ -11,5 +11,9 @@
         "cwd": "scripts/discord-bot"
       }
     }
-  }
+  },
+  "tags": [
+    "type:app",
+    "scope:bot"
+  ]
 }

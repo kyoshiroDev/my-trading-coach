@@ -15,11 +15,18 @@ export default [
         {
           enforceBuildableLibDependency: true,
           allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$'],
+          // Qui peut importer qui (tags posés dans chaque project.json / package.json) :
+          // une app n'importe jamais une autre app, le code partagé ne dépend de rien d'autre,
+          // et le front (app, admin) n'importe jamais le back (API), ni l'inverse.
           depConstraints: [
-            {
-              sourceTag: '*',
-              onlyDependOnLibsWithTags: ['*'],
-            },
+            { sourceTag: 'type:app', onlyDependOnLibsWithTags: ['type:lib'] },
+            { sourceTag: 'type:lib', onlyDependOnLibsWithTags: ['type:lib'] },
+            { sourceTag: 'type:e2e', onlyDependOnLibsWithTags: ['type:app', 'type:lib'] },
+            { sourceTag: 'scope:shared', onlyDependOnLibsWithTags: ['scope:shared'] },
+            { sourceTag: 'scope:front', onlyDependOnLibsWithTags: ['scope:front', 'scope:shared'] },
+            { sourceTag: 'scope:back', onlyDependOnLibsWithTags: ['scope:back', 'scope:shared'] },
+            { sourceTag: 'scope:landing', onlyDependOnLibsWithTags: ['scope:landing', 'scope:shared'] },
+            { sourceTag: 'scope:bot', onlyDependOnLibsWithTags: ['scope:bot', 'scope:shared'] },
           ],
         },
       ],
