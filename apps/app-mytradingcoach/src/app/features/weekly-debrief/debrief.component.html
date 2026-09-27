@@ -36,6 +36,8 @@
       </div>
     } @else if (isLoading()) {
       <div class="loading">Chargement du débrief...</div>
+    } @else if (loadError()) {
+      <mtc-error-state message="Ton débrief n’a pas pu être chargé. Vérifie ta connexion puis réessaie." (retry)="reload()" />
     } @else if (!debrief()) {
       <div class="empty-state">
         <svg

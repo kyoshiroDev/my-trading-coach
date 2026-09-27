@@ -35,7 +35,7 @@ import { DebriefObjective } from '../../core/api/debrief.api';
 import { evaluateObjectiveCheck } from './objective-check.util';
 import { EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe } from '../../shared/pipes';
 import { ToastService } from '../../core/services/toast.service';
-import { DialogDirective } from '@mtc/front-ui';
+import { DialogDirective, ErrorStateComponent } from '@mtc/front-ui';
 
 const MOODS: { value: MoodState; label: string; emoji: string }[] = [
   { value: 'CONFIDENT', label: 'Confiant', emoji: '😎' },
@@ -55,7 +55,7 @@ const EMOTION_COLORS: Record<string, string> = {
 
 @Component({
   selector: 'mtc-session-day',
-  imports: [DialogDirective, DatePipe, LucideDynamicIcon, SessionMorningComponent, SessionLiveComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
+  imports: [DialogDirective, ErrorStateComponent, DatePipe, LucideDynamicIcon, SessionMorningComponent, SessionLiveComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-day.component.css',
   templateUrl: './session-day.component.html',

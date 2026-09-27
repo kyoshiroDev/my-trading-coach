@@ -93,7 +93,9 @@
     </div>
   }
 
-  @if (!isLoading()) {
+  @if (loadError()) {
+    <mtc-error-state message="Le calendrier économique n’a pas pu être chargé. Vérifie ta connexion puis réessaie." (retry)="reload()" />
+  } @else if (!isLoading()) {
 
     <!-- Semaine sans événements -->
     @if (filteredDayGroups().length === 0) {

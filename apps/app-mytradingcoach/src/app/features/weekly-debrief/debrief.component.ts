@@ -24,6 +24,7 @@ import { timer } from 'rxjs';
 import { switchMap, map, takeWhile } from 'rxjs/operators';
 import { DebriefApi } from '../../core/api/debrief.api';
 import type { DebriefAccountSection as AccountSection, DebriefBadgeItem as DebriefItem, WeeklyDebrief } from '@mtc/shared';
+import { ErrorStateComponent } from '@mtc/front-ui';
 
 const TAB_KEY = 'mtc.debriefTab';
 
@@ -47,6 +48,7 @@ function typeBadge(type: string): { label: string; cls: string } | null {
 @Component({
   selector: 'mtc-debrief',
   imports: [
+    ErrorStateComponent,
     DatePipe,
     DecimalPipe,
     LucideDynamicIcon,
@@ -71,6 +73,7 @@ export class DebriefComponent {
 
   protected readonly debrief = signal<WeeklyDebrief | null>(null);
   protected readonly isLoading = signal(true);
+  protected readonly loadError = signal(false);
   protected readonly isGenerating = signal(false);
   protected readonly exportLoading = signal(false);
 
@@ -101,6 +104,17 @@ export class DebriefComponent {
       this.isLoading.set(false);
       return;
     }
+    this.pollCurrent();
+  }
+
+  protected reload(): void {
+    this.isLoading.set(true);
+    this.pollCurrent();
+  }
+
+  /** Charge le débrief courant et interroge l'API toutes les 15 s tant qu'il est en génération. */
+  private pollCurrent(): void {
+    this.loadError.set(false);
     timer(0, 15_000)
       .pipe(
         switchMap(() =>
@@ -116,10 +130,9 @@ export class DebriefComponent {
           this.debrief.set(data);
           this.isLoading.set(false);
         },
-        // AVANT : échec muet, la page restait vide sans explication.
-        error: (err) => {
+        error: () => {
           this.isLoading.set(false);
-          this.toast.error(apiErrorMessage(err, 'Ton débrief n’a pas pu être chargé. Réessaie dans un instant.'));
+          this.loadError.set(true);
         },
       });
   }

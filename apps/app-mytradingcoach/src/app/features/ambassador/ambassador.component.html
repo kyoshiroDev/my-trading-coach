@@ -7,6 +7,8 @@
 
   @if (isLoading()) {
     <div class="state-box">Chargement…</div>
+  } @else if (loadError()) {
+    <mtc-error-state message="Tes statistiques ambassadeur n’ont pas pu être chargées. Vérifie ta connexion puis réessaie." (retry)="load()" />
   } @else if (stats(); as s) {
 
     <!-- HÉRO : lien + 20% -->

@@ -22,7 +22,7 @@
   <header class="mtc-sess-header">
     <div class="mtc-sess-h-left">
       <div class="mtc-sess-titles">
-        <h1 class="mtc-sess-h1">Ma session</h1>
+        <h1 class="mtc-sess-h1">Session du jour</h1>
         <div class="mtc-sess-sub">{{ headerSub() }}</div>
       </div>
     </div>
@@ -75,6 +75,10 @@
       }
     </div>
   </header>
+
+  @if (store.sessionLoadError()) {
+    <mtc-error-state message="Ta session du jour n’a pas pu être chargée. Vérifie ta connexion puis réessaie." (retry)="store.loadSessionData()" />
+  }
 
   @if (activeTab() === 'debrief' && store.activeSession()?.status === 'CLOSED') {
     <div class="session-tabs-row">

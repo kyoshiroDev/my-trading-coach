@@ -60,6 +60,9 @@ export class SessionStore {
     };
   });
 
+  /** La session du jour n'a pas pu être chargée. */
+  readonly sessionLoadError = signal(false);
+
   readonly hasActiveSession = computed(() => this.activeSession()?.status === 'ACTIVE');
 
   // ── Session timer ─────────────────────────────────────────────────────────
@@ -126,6 +129,7 @@ export class SessionStore {
   // ── Public API ────────────────────────────────────────────────────────────
 
   loadSessionData(): void {
+    this.sessionLoadError.set(false);
     this.sessionApi
       .getActiveSession()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -134,6 +138,8 @@ export class SessionStore {
           this.activeSession.set(res.data ?? null);
           if (res.data?.status === 'ACTIVE') this.refreshLiveStats();
         },
+        // Sans ce drapeau, une panne ressemblerait à « aucune session en cours ».
+        error: () => this.sessionLoadError.set(true),
       });
 
     this.dailyRecapApi

@@ -19,13 +19,14 @@ import {
 } from '@lucide/angular';
 import { ReferralApi, MyReferral, FilleulStatus } from '../../core/api/referral.api';
 import { ToastService } from '../../core/services/toast.service';
+import { ErrorStateComponent } from '@mtc/front-ui';
 
 const GOAL = 12; // 12 filleuls payants = 1 an offert
 
 @Component({
   selector: 'mtc-referral',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, DecimalPipe, RouterLink, LucideDynamicIcon],
+  imports: [ErrorStateComponent, DatePipe, DecimalPipe, RouterLink, LucideDynamicIcon],
   styleUrl: './referral.component.css',
   template: `
     <div class="content">
@@ -37,7 +38,7 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
       @if (isLoading()) {
         <div class="state-box">Chargement…</div>
       } @else if (error()) {
-        <div class="state-box error">Impossible de charger ton parrainage. Réessaie plus tard.</div>
+        <mtc-error-state message="Ton parrainage n’a pas pu être chargé. Vérifie ta connexion puis réessaie." (retry)="load()" />
       } @else if (data(); as d) {
 
         <!-- HÉRO : lien (action) + objectif -->
@@ -185,6 +186,12 @@ export class ReferralComponent implements OnInit {
   );
 
   ngOnInit(): void {
+    this.load();
+  }
+
+  protected load(): void {
+    this.isLoading.set(true);
+    this.error.set(false);
     this.api.getMyReferral()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
