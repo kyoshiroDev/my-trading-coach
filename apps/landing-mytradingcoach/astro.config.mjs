@@ -1,5 +1,20 @@
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
+import { readdirSync, readFileSync } from 'node:fs';
+
+// lastmod du sitemap : date réelle de l'article (updatedDate, sinon publishDate), lue dans le
+// frontmatter de src/content/blog. Les autres pages n'en ont pas : une date de build changeant
+// à chaque déploiement faisait croire à Google que tout le site était modifié.
+const BLOG_DIR = new URL('./src/content/blog/', import.meta.url);
+const ARTICLE_DATES = Object.fromEntries(
+  readdirSync(BLOG_DIR)
+    .filter((f) => f.endsWith('.md'))
+    .map((f) => {
+      const fm = readFileSync(new URL(f, BLOG_DIR), 'utf8').split('---')[1] ?? '';
+      const date = (key) => fm.match(new RegExp(`^${key}:\\s*(\\S+)`, 'm'))?.[1];
+      return [f.replace(/\.md$/, ''), date('updatedDate') ?? date('publishDate')];
+    }),
+);
 
 // Mêmes flags que src/config.ts, lus au build (process.env.PUBLIC_*). Une page
 // gatée ne doit JAMAIS être listée dans le sitemap tant que sa feature est OFF
@@ -17,7 +32,6 @@ export default defineConfig({
     sitemap({
       changefreq: 'weekly',
       priority: 0.7,
-      lastmod: new Date(),
       filter: (page) => {
         if (page.includes('/404') || page.includes('/confidentialite')) return false;
         if (!MULTI_ACCOUNTS && page.includes('/journal-trading-prop-firm')) return false;
@@ -40,7 +54,8 @@ export default defineConfig({
         }
         // Articles de blog
         if (item.url.includes('/blog/')) {
-          return { ...item, priority: 0.8, changefreq: 'monthly' };
+          const date = ARTICLE_DATES[item.url.split('/blog/')[1]];
+          return { ...item, priority: 0.8, changefreq: 'monthly', ...(date && { lastmod: new Date(date).toISOString() }) };
         }
         // Pages légales — basse priorité
         if (
