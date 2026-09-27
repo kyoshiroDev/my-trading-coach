@@ -9,15 +9,14 @@ export default defineConfig({
       '@mtc/front-ui': resolve(import.meta.dirname, '../../libs/front/ui/src/index.ts'),
     },
   },
-  // Décorateurs Angular (legacy) aussi pour les fichiers hors de l'app (libs/front/ui) : le
+  // Décorateurs Angular (legacy) aussi pour les fichiers importés de libs/front/ui : le
   // tsconfig racine est « solution » (files: []) et n'applique aucune option à ces fichiers.
   oxc: { decorator: { legacy: true } },
   test: {
     globals: true,
     environment: 'jsdom',
     root: resolve(import.meta.dirname),
-    // Les specs de libs/front/ui tournent avec celles de l'app (même environnement Angular).
-    include: ['src/**/*.spec.ts', '../../libs/front/ui/src/**/*.spec.ts'],
+    include: ['src/**/*.spec.ts'],
     setupFiles: ['src/test-setup.ts'],
     coverage: {
       provider: 'v8',

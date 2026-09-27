@@ -3,6 +3,22 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/front/ui/src",
   "projectType": "library",
-  "tags": ["type:lib", "scope:front"],
-  "targets": {}
+  "tags": [
+    "type:lib",
+    "scope:front"
+  ],
+  "targets": {
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "default",
+        "^default"
+      ],
+      "options": {
+        "command": "vitest run --config vitest.config.mts",
+        "cwd": "libs/front/ui"
+      }
+    }
+  }
 }

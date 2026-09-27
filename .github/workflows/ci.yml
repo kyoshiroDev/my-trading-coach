@@ -155,7 +155,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: test front + shared (app, admin, libs/shared)
-        run: pnpm nx run-many --target=test --projects=app-mytradingcoach,admin-mytradingcoach,shared --parallel=2
+        run: pnpm nx run-many --target=test --projects=app-mytradingcoach,admin-mytradingcoach,shared,front-ui --parallel=2
 
   # ── Tests API (NestJS + Prisma + services) ────────────────────────────────
   test-api:
