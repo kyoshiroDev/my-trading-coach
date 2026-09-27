@@ -23,13 +23,13 @@ interface ConfirmState { id: string; name: string; action: DockerAction; }
 const GB = 1_073_741_824;
 
 @Component({
-  selector: 'mtc-admin-surveillance',
+  selector: 'mtc-admin-monitoring',
   imports: [DialogDirective, DecimalPipe, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  styleUrl: './surveillance.component.css',
-  templateUrl: './surveillance.component.html',
+  styleUrl: './monitoring.component.css',
+  templateUrl: './monitoring.component.html',
 })
-export class SurveillanceComponent implements OnDestroy {
+export class MonitoringComponent implements OnDestroy {
   private readonly vpsApi = inject(VpsApi);
   private readonly auth = inject(AdminAuthService);
   private readonly destroyRef = inject(DestroyRef);

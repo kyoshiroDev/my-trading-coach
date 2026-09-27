@@ -17,7 +17,7 @@ import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
-import { SettingsComponent } from './settings.component';
+import { ProfileComponent } from './profile.component';
 import { UserStore } from '../../core/stores/user.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { BillingApi } from '../../core/api/billing.api';
@@ -54,13 +54,13 @@ function mount(deleteMeImpl: () => unknown) {
       { provide: AnalyticsApi, useValue: { getBySetup: vi.fn(() => of({ data: [] })) } },
     ],
   });
-  TestBed.overrideComponent(SettingsComponent, {
+  TestBed.overrideComponent(ProfileComponent, {
     set: {
       template: '<div></div>', imports: [], styleUrls: [],
       styleUrl: undefined as unknown as string, schemas: [NO_ERRORS_SCHEMA],
     },
   });
-  const fixture = TestBed.createComponent(SettingsComponent);
+  const fixture = TestBed.createComponent(ProfileComponent);
   fixture.detectChanges();
   return { cmp: fixture.componentInstance as any, auth, usersApi };
 }

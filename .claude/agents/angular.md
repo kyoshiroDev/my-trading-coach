@@ -62,7 +62,8 @@ src/app/
 │   ├── ai-insights/        ai-insights.component · insight-card.component
 │   ├── weekly-debrief/     debrief.component · debrief-objectives · debrief-emotions
 │   ├── scoring/            scoring.component
-│   ├── settings/           settings.component
+│   ├── profile/            profile.component (route /profil)
+│   ├── today-session/      today-session.component (route /session)
 │   └── auth/               login.component · register.component
 ├── shared/
 │   ├── components/  sidebar/ · topbar/ · stat-card/ · badge/ · locked-feature/
@@ -73,9 +74,31 @@ src/app/
 └── app.routes.ts
 ```
 
+### URL → dossier
+
+Les URLs restent en français (liens des emails, favoris) ; les dossiers sont en anglais.
+
+| App — URL | Dossier `features/` | Admin — URL | Dossier `features/` |
+|---|---|---|---|
+| `/dashboard` | `dashboard` | `/dashboard` | `dashboard` |
+| `/session` | `today-session` | `/users`, `/users/:id` | `users`, `user-detail` |
+| `/journal` | `journal` | `/subscriptions` | `subscriptions` |
+| `/sessions` | `sessions` | `/revenue` | `revenue` |
+| `/accounts` | `accounts` | `/deleted` | `deleted` |
+| `/analytics` | `analytics` | `/surveillance` | `monitoring` |
+| `/ai-insights` | `ai-insights` | `/backups` | `backups` |
+| `/debrief` | `weekly-debrief` | `/ai-usage` | `ai-usage` |
+| `/scoring` | `scoring` | `/emails` | `emails` |
+| `/eco-calendar` | `eco-calendar` | `/ambassadeurs` | `ambassadors` |
+| `/profil` | `profile` | `/parrainage` | `referral` |
+| `/ambassador` | `ambassador` | | |
+| `/parrainage` | `referral` | | |
+| `/devenir-ambassadeur` | `become-ambassador` | | |
+| `/login`, `/register`, `/demo`… | `auth` | | |
+
 ### « Ma session » — route `/session` (générale, tous plans)
 
-`session-day.component.ts` (features/session-day/) : shell à 3 onglets aligné sur
+`today-session.component.ts` (features/today-session/) : shell à 3 onglets aligné sur
 la maquette design (« The Terminal »).
 
 ```typescript

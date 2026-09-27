@@ -54,13 +54,13 @@ const EMOTION_COLORS: Record<string, string> = {
 };
 
 @Component({
-  selector: 'mtc-session-day',
+  selector: 'mtc-today-session',
   imports: [DialogDirective, ErrorStateComponent, DatePipe, LucideDynamicIcon, SessionMorningComponent, SessionLiveComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  styleUrl: './session-day.component.css',
-  templateUrl: './session-day.component.html',
+  styleUrl: './today-session.component.css',
+  templateUrl: './today-session.component.html',
 })
-export class SessionDayComponent implements OnInit, OnDestroy {
+export class TodaySessionComponent implements OnInit, OnDestroy {
   protected readonly store          = inject(SessionStore);
   protected readonly selectedAccount = inject(SelectedAccountStore);
   protected readonly userStore      = inject(UserStore);

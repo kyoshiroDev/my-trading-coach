@@ -13,7 +13,7 @@ import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Observable, of, throwError } from 'rxjs';
-import { SettingsComponent } from './settings.component';
+import { ProfileComponent } from './profile.component';
 import { UserStore } from '../../core/stores/user.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { BillingApi } from '../../core/api/billing.api';
@@ -45,18 +45,18 @@ function mount(bySetup: Observable<unknown>) {
       { provide: AnalyticsApi, useValue: { getBySetup: vi.fn(() => bySetup) } },
     ],
   });
-  TestBed.overrideComponent(SettingsComponent, {
+  TestBed.overrideComponent(ProfileComponent, {
     set: {
       template: '<div></div>', imports: [], styleUrls: [],
       styleUrl: undefined as unknown as string, schemas: [NO_ERRORS_SCHEMA],
     },
   });
-  const fixture = TestBed.createComponent(SettingsComponent);
+  const fixture = TestBed.createComponent(ProfileComponent);
   fixture.detectChanges(); // déclenche ngOnInit → appel by-setup
   return fixture;
 }
 
-describe('SettingsComponent — by-setup (endpoint Premium) en compte FREE', () => {
+describe('ProfileComponent — by-setup (endpoint Premium) en compte FREE', () => {
   let consoleError: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {

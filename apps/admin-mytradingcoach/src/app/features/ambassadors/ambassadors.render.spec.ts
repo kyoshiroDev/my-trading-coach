@@ -7,7 +7,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ConfirmService } from '@mtc/front-ui';
-import { AmbassadeursComponent } from './ambassadeurs.component';
+import { AmbassadorsComponent } from './ambassadors.component';
 import { environment } from '../../../environments/environment';
 
 const AMB = {
@@ -20,7 +20,7 @@ const DETAIL = {
 };
 const tick = () => new Promise((r) => setTimeout(r));
 
-describe('AmbassadeursComponent', () => {
+describe('AmbassadorsComponent', () => {
   let http: HttpTestingController;
   let ask: ReturnType<typeof vi.fn>;
 
@@ -34,7 +34,7 @@ describe('AmbassadeursComponent', () => {
   afterEach(() => http.verify());
 
   async function render() {
-    const fixture = TestBed.createComponent(AmbassadeursComponent);
+    const fixture = TestBed.createComponent(AmbassadorsComponent);
     fixture.detectChanges();
     http.expectOne(`${environment.apiUrl}/admin/ambassadors`).flush({ data: [AMB] });
     http.expectOne(`${environment.apiUrl}/admin/ambassadors/amb1/stats`).flush({ data: DETAIL });

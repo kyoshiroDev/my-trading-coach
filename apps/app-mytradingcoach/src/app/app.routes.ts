@@ -67,8 +67,8 @@ export const appRoutes: Routes = [
         path: 'session',
         data: { seo: { title: 'Session du jour', noindex: true } },
         loadComponent: () =>
-          import('./features/session-day/session-day.component').then(
-            (m) => m.SessionDayComponent,
+          import('./features/today-session/today-session.component').then(
+            (m) => m.TodaySessionComponent,
           ),
       },
       {
@@ -158,8 +158,8 @@ export const appRoutes: Routes = [
         path: 'profil',
         data: { seo: { title: 'Profil', noindex: true } },
         loadComponent: () =>
-          import('./features/settings/settings.component').then(
-            (m) => m.SettingsComponent,
+          import('./features/profile/profile.component').then(
+            (m) => m.ProfileComponent,
           ),
       },
       // Compat : anciens liens /settings (bookmarks, emails, retours Stripe ?checkout=…).

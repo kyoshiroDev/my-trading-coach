@@ -12,13 +12,13 @@ import { apiErrorMessage } from '@mtc/shared';
 import { ConfirmService, DialogDirective } from '@mtc/front-ui';
 
 @Component({
-  selector: 'mtc-admin-ambassadeurs',
+  selector: 'mtc-admin-ambassadors',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [DialogDirective, DatePipe, DecimalPipe, ChartCanvasComponent],
-  styleUrl: './ambassadeurs.component.css',
-  templateUrl: './ambassadeurs.component.html',
+  styleUrl: './ambassadors.component.css',
+  templateUrl: './ambassadors.component.html',
 })
-export class AmbassadeursComponent implements OnInit {
+export class AmbassadorsComponent implements OnInit {
   private readonly api = inject(AdminApi);
   private readonly confirm = inject(ConfirmService);
   private readonly destroyRef = inject(DestroyRef);

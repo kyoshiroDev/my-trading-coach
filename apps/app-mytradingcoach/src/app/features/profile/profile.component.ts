@@ -50,13 +50,13 @@ import { DialogDirective } from '@mtc/front-ui';
 type ProfileTab = 'trader' | 'params';
 
 @Component({
-  selector: 'mtc-settings',
+  selector: 'mtc-profile',
   imports: [DialogDirective, TopbarComponent, DatePipe, DecimalPipe, PlanModalComponent, SetupFormModalComponent, LucideDynamicIcon],
-  templateUrl: './settings.component.html',
-  styleUrl: './settings.component.css',
+  templateUrl: './profile.component.html',
+  styleUrl: './profile.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SettingsComponent implements OnInit {
+export class ProfileComponent implements OnInit {
   protected readonly userStore = inject(UserStore);
   private readonly auth = inject(AuthService);
   private readonly billingApi = inject(BillingApi);
