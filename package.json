@@ -11,6 +11,11 @@
     "seed:demo": "tsx apps/api-mytradingcoach/scripts/seed-demo-account.ts"
   },
   "private": true,
+  "packageManager": "pnpm@11.6.0",
+  "engines": {
+    "node": ">=22.22.3",
+    "pnpm": ">=11.6.0"
+  },
   "devDependencies": {
     "@analogjs/vite-plugin-angular": "2.6.4",
     "@angular-devkit/core": "22.1.8",

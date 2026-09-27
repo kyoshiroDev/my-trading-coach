@@ -8,6 +8,9 @@ packages:
 # qui doivent être hoistées à la racine de node_modules.
 shamefullyHoist: true
 
+# Refuse l'installation si Node ou pnpm ne respectent pas `engines` (package.json racine).
+engineStrict: true
+
 # Réglages migrés depuis le champ "pnpm" de package.json : pnpm >= 11 ne lit plus
 # ce champ et attend ces clés ici. Valeurs identiques à celles ayant généré le
 # lockfile (sinon mismatch / dé-pinning NestJS — cf. note "NestJS version pinning").
