@@ -330,8 +330,11 @@ describe('StripeReferralService —processReferral relance ses erreurs', () => {
 
     // Deux appels, mais même clé d'unicité → la 2e écriture met à jour, ne duplique pas.
     const keys = prisma.referralCommission.upsert.mock.calls.map(
-      (c: [{ where: { subscriptionId_period: { subscriptionId: string; period: string } } }]) =>
-        `${c[0].where.subscriptionId_period.subscriptionId}|${c[0].where.subscriptionId_period.period}`,
+      (c: unknown[]) =>
+        {
+          const { where } = c[0] as { where: { subscriptionId_period: { subscriptionId: string; period: string } } };
+          return `${where.subscriptionId_period.subscriptionId}|${where.subscriptionId_period.period}`;
+        },
     );
     expect(keys[0]).toBe(keys[1]);
   });

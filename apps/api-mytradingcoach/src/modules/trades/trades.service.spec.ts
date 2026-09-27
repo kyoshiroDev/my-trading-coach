@@ -550,7 +550,7 @@ describe('TradesService', () => {
       emotion: EmotionState.NEUTRAL, setupId: 'setup-1',
       session: TradingSession.LONDON, timeframe: '1h', tradedAt: tradedAt.toISOString(),
     });
-    const hashes = () => mockPrisma.trade.create.mock.calls.map((c: [{ data: { importHash: string } }]) => c[0].data.importHash);
+    const hashes = () => mockPrisma.trade.create.mock.calls.map((c: unknown[]) => (c[0] as { data: { importHash: string } }).data.importHash);
 
     it('skip les trades déjà en base ; deux lignes identiques du lot sont deux trades', async () => {
       // Une ligne répétée dans une même source n'est pas un doublon : un trade à plusieurs
@@ -754,7 +754,17 @@ describe('TradesService', () => {
   // ── Recalcul comportemental par lot (PROMPT-168) ──────────────────────────
   describe('recomputeBehavioralGrades', () => {
     // Fabrique N trades sans stop, même jour, espacés de 20 min, tous perdants (-100, qty 1).
-    const buildTrades = (n: number) =>
+    type GradedTradeFixture = {
+      id: string;
+      pnl: number;
+      quantity: number;
+      tradedAt: Date;
+      stopLoss: number | null;
+      executionScore: number | null;
+      executionGrade: string | null;
+      executionMethod: string | null;
+    };
+    const buildTrades = (n: number): GradedTradeFixture[] =>
       Array.from({ length: n }, (_, i) => ({
         id: `t${i}`,
         pnl: -100,

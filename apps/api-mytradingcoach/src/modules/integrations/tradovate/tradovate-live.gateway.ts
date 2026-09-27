@@ -1,4 +1,3 @@
-import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
   OnGatewayConnection,
@@ -29,10 +28,9 @@ export const userRoom = (userId: string) => `user:${userId}`;
   cors: { origin: process.env['FRONTEND_URL'] ?? 'http://localhost:4200' },
 })
 export class TradovateLiveGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
-  private readonly logger = new Logger(TradovateLiveGateway.name);
 
   @WebSocketServer()
-  server: Server;
+  server!: Server;
 
   constructor(
     private readonly jwt: JwtService,

@@ -7,7 +7,7 @@ export class RedisService implements OnModuleDestroy {
   private readonly logger = new Logger(RedisService.name);
   readonly client: Redis;
 
-  constructor(private readonly config: ConfigService) {
+  constructor(config: ConfigService) {
     this.client = new Redis({
       host:                 config.get('REDIS_HOST') ?? 'localhost',
       port:                 parseInt(config.get('REDIS_PORT') ?? '6379'),

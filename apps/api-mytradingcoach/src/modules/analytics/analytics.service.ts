@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
@@ -19,7 +19,6 @@ export interface EquityPoint {
 
 @Injectable()
 export class AnalyticsService {
-  private readonly logger = new Logger(AnalyticsService.name);
 
   constructor(
     private prisma: PrismaService,

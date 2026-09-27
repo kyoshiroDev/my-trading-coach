@@ -16,11 +16,11 @@ export enum Goal {
 export class CompleteOnboardingDto {
   @IsEnum(Market)
   @IsOptional()
-  market?: Market;
+  market?: Market | null;
 
   @IsEnum(Goal)
   @IsOptional()
-  goal?: Goal;
+  goal?: Goal | null;
 
   @IsNumber()
   @Min(0)

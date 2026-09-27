@@ -112,13 +112,13 @@ describe('PatternAgent', () => {
   it('analyze() throw 503 si overloaded_error', async () => {
     const { APIError } = await import('@anthropic-ai/sdk');
     mockMessagesCreate.mockRejectedValueOnce(
-      new APIError(529, { error: { type: 'overloaded_error' } }, 'overloaded'),
+      new APIError(529, { error: { type: 'overloaded_error' } }, 'overloaded', new Headers()),
     );
 
     await expect(agent.analyze('résumé...')).rejects.toThrow(HttpException);
 
     mockMessagesCreate.mockRejectedValueOnce(
-      new APIError(529, { error: { type: 'overloaded_error' } }, 'overloaded'),
+      new APIError(529, { error: { type: 'overloaded_error' } }, 'overloaded', new Headers()),
     );
     try {
       await agent.analyze('résumé...');

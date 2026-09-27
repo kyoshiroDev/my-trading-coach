@@ -1,5 +1,5 @@
 import { Injectable, ForbiddenException, NotFoundException, Logger } from '@nestjs/common';
-import { Plan, Role, WeeklyDebrief } from '@prisma/client';
+import { Plan, Prisma, Role, WeeklyDebrief } from '@prisma/client';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
 import { computeTradeStats, netPnl } from '@mtc/shared';
 import { userAmountsCurrency } from '../../common/utils/user-currency.util';
@@ -229,6 +229,8 @@ export class DebriefService {
     }, userId)) as DebriefAiResult;
 
     const normalizedObjectives = this.normalizeObjectives(aiResult.objectives);
+    // Colonne JSON Prisma : nos interfaces n'ont pas de signature d'index, d'où le cast explicite.
+    const objectivesJson = normalizedObjectives as unknown as Prisma.InputJsonArray;
 
     // Vue d'ensemble (rétrocompat : ancien `summary` à plat si pas d'overview).
     const overviewSummary = aiResult.overview?.summary ?? aiResult.summary ?? '';
@@ -277,13 +279,13 @@ export class DebriefService {
         endDate,
         aiSummary: overviewSummary,
         insights: JSON.parse(JSON.stringify(structuredInsights)),
-        objectives: normalizedObjectives,
+        objectives: objectivesJson,
         stats,
       },
       update: {
         aiSummary: overviewSummary,
         insights: JSON.parse(JSON.stringify(structuredInsights)),
-        objectives: normalizedObjectives,
+        objectives: objectivesJson,
         stats,
         generatedAt: new Date(),
       },

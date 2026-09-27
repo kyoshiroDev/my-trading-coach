@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { UsersService } from './users.service';
+import { Goal, Market } from './dto/onboarding.dto';
 import { AmbassadorService } from '../ambassador/ambassador.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
@@ -78,8 +79,8 @@ describe('UsersService', () => {
       });
 
       await service.saveOnboardingProfile('user-1', {
-        market: 'CRYPTO',
-        goal: 'DISCIPLINE',
+        market: Market.CRYPTO,
+        goal: Goal.DISCIPLINE,
       });
 
       const call = mockPrisma.user.update.mock.calls[0][0];

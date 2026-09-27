@@ -499,20 +499,6 @@ export class EcoCalendarService {
     }
   }
 
-  private toParisTime(utcDateStr: string): string {
-    try {
-      const d = new Date(utcDateStr.replace(' ', 'T') + 'Z');
-      return d.toLocaleString('fr-FR', {
-        timeZone: 'Europe/Paris',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      });
-    } catch {
-      return utcDateStr.slice(11, 16);
-    }
-  }
-
   getNextTradingDay(from: Date = new Date()): Date {
     const d = new Date(from);
     d.setDate(d.getDate() + 1);

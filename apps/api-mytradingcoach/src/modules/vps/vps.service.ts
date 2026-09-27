@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { NodeSSH } from 'node-ssh';
 
 export interface VpsStats {
@@ -16,7 +16,6 @@ export interface VpsStats {
 
 @Injectable()
 export class VpsService implements OnModuleDestroy {
-  private readonly logger = new Logger(VpsService.name);
   private ssh: NodeSSH | null = null;
 
   async getConnection(): Promise<NodeSSH> {
