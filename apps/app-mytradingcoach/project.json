@@ -4,16 +4,12 @@
   "projectType": "application",
   "prefix": "mtc",
   "sourceRoot": "apps/app-mytradingcoach/src",
-  "tags": [
-    "type:app",
-    "scope:front"
-  ],
+  "tags": ["type:app", "scope:front"],
   "targets": {
     "build": {
       "executor": "@angular/build:application",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "development",
       "options": {
         "outputPath": "dist/apps/app-mytradingcoach",
         "browser": "apps/app-mytradingcoach/src/main.ts",
@@ -24,9 +20,7 @@
             "input": "apps/app-mytradingcoach/public"
           }
         ],
-        "styles": [
-          "apps/app-mytradingcoach/src/styles.css"
-        ]
+        "styles": ["apps/app-mytradingcoach/src/styles.css"]
       },
       "configurations": {
         "local": {
@@ -104,12 +98,12 @@
             "fonts": false
           }
         }
-      },
-      "defaultConfiguration": "development"
+      }
     },
     "serve": {
       "continuous": true,
       "executor": "@angular/build:dev-server",
+      "defaultConfiguration": "local",
       "options": {
         "buildTarget": "app-mytradingcoach:build:local"
       },
@@ -123,11 +117,7 @@
         "development": {
           "buildTarget": "app-mytradingcoach:build:development"
         }
-      },
-      "defaultConfiguration": "local"
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint"
+      }
     },
     "typecheck": {
       "executor": "nx:run-commands",
@@ -142,9 +132,8 @@
       }
     },
     "test": {
-      "executor": "@nx/vitest:test",
       "options": {
-        "configFile": "apps/app-mytradingcoach/vitest.config.mts"
+        "config": "./vitest.config.mts"
       }
     },
     "serve-static": {

@@ -47,6 +47,14 @@
         "watchDepsTargetName": "watch-deps",
         "serveStaticTargetName": "serve-static"
       }
+    },
+    {
+      "plugin": "@nx/vitest",
+      "options": {
+        "testMode": "run",
+        "testTargetName": "test"
+      },
+      "include": ["apps/app-mytradingcoach/**/*"]
     }
   ],
   "packageManager": "pnpm",
