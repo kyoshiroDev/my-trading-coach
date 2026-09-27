@@ -22,12 +22,8 @@ import {
   AccountCurrency,
   DEFAULT_ACCOUNT_CURRENCY,
   formatMoney,
-  isAccountCurrency,
 } from '@mtc/shared';
-import {
-  LucideDynamicIcon,
-  LucideBitcoin as Bitcoin,
-} from '@lucide/angular';
+import { LucideDynamicIcon } from '@lucide/angular';
 import { TradeFormComponent } from '../journal/trade-form.component';
 import { CsvImportComponent, ImportResult } from '../journal/csv-import.component';
 import { SetupsStore } from '../../core/stores/setups.store';
@@ -56,77 +52,20 @@ import {
   TradingSession,
 } from './onboarding.constants';
 import { apiErrorMessage } from '../../core/utils/api-error';
-
-type Market = 'CRYPTO' | 'FOREX' | 'ACTIONS' | 'MULTI';
-type Goal   = 'DISCIPLINE' | 'PERFORMANCE' | 'PSYCHOLOGIE';
-type Step   = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
-
-type MarketOption = {
-  value: Market;
-  label: string;
-  emoji?: string;
-  icon?: typeof Bitcoin;
-  iconColor?: string;
-  desc: string;
-};
-
-const MARKETS: MarketOption[] = [
-  { value: 'CRYPTO',  label: 'Crypto',          icon: Bitcoin, iconColor: '#F7931A', desc: 'Bitcoin, Ethereum, altcoins' },
-  { value: 'FOREX',   label: 'Forex',            emoji: '💱',                        desc: 'EUR/USD, paires de devises' },
-  { value: 'ACTIONS', label: 'Actions',          emoji: '📈',                        desc: 'Actions, ETF, indices' },
-  { value: 'MULTI',   label: 'Multi-marchés',    emoji: '🌐',                        desc: 'Je trade plusieurs marchés' },
-];
-
-const GOALS: { value: Goal; label: string; emoji: string; desc: string }[] = [
-  { value: 'DISCIPLINE',  label: 'Travailler ma discipline',  emoji: '🎯', desc: 'Respecter mon plan et éviter les trades impulsifs' },
-  { value: 'PSYCHOLOGIE', label: 'Maîtriser ma psychologie',  emoji: '🧠', desc: 'Gérer mes émotions, éviter FOMO et revenge trades' },
-  { value: 'PERFORMANCE', label: 'Améliorer ma performance',  emoji: '📈', desc: 'Optimiser mon win rate et ma rentabilité globale' },
-];
-
-const DISCORD_URL = 'https://discord.gg/TDK2npvkSN';
-
-/**
- * Progression du wizard, conservée localement.
- *
- * Le wizard bloque toutes les routes tant qu'il n'est pas terminé — c'est voulu —
- * mais un simple rechargement repartait à l'étape 1 : marché, objectif et capital
- * étaient à ressaisir, puisque rien n'est persisté côté serveur avant l'étape 5.
- * Un débutant interrompu (onglet fermé, réseau, curiosité) payait plein pot.
- */
-const PROGRESS_KEY = 'mtc.onboarding.progress';
-
-type AccountMode = 'PERSO' | 'PROPFIRM';
-
-/** `null` si vide ou illisible — distingue « non renseigne » de « zero ». */
-function parseNumber(raw: string): number | null {
-  const v = parseFloat(raw.replace(',', '.'));
-  return isNaN(v) ? null : v;
-}
-
-/** Filtre la saisie sur place (chiffres, point, virgule) et renvoie la valeur nettoyee. */
-function numericOnly(input: HTMLInputElement): string {
-  input.value = input.value.replace(/[^\d.,]/g, '');
-  return input.value;
-}
-
-interface OnboardingProgress {
-  step: Step;
-  market: Market | null;
-  goal: Goal | null;
-  /** Devise DU COMPTE créé à l'étape 3, plus une préférence globale. */
-  currency: AccountCurrency;
-  capital: string;
-  accountMode: AccountMode;
-  broker: string;
-  profitTarget: string;
-  maxDrawdown: string;
-  drawdownType: DrawdownType;
-  style: TradingStyle | null;
-  strategy: string;
-  sessions: TradingSession[];
-  assets: string[];
-  favorite: string | null;
-}
+import {
+  DISCORD_URL,
+  GOALS,
+  MARKETS,
+  accountPayload,
+  numericOnly,
+  parseCapital,
+  type AccountMode,
+  type Goal,
+  type Market,
+  type OnboardingProgress,
+  type Step,
+} from './onboarding.model';
+import { clearProgress, loadProgress, saveProgress } from './onboarding-progress';
 
 @Component({
   selector: 'mtc-onboarding',
@@ -289,9 +228,7 @@ export class OnboardingComponent {
         assets: this.selectedAssets(),
         favorite: this.favoriteAsset(),
       };
-      try {
-        localStorage.setItem(PROGRESS_KEY, JSON.stringify(snapshot));
-      } catch { /* stockage indispo (mode privé) : on dégrade sans bruit */ }
+      saveProgress(snapshot);
     });
     this.assetSearch$
       .pipe(
@@ -316,32 +253,26 @@ export class OnboardingComponent {
 
   /** Reprend là où l'utilisateur s'était arrêté. Toute anomalie → repart proprement à 1. */
   private restoreProgress(): void {
-    let raw: string | null = null;
-    try { raw = localStorage.getItem(PROGRESS_KEY); } catch { return; }
-    if (!raw) return;
-    try {
-      const p = JSON.parse(raw) as Partial<OnboardingProgress>;
-      const step = p.step;
-      if (typeof step !== 'number' || step < 1 || step > 9) return;
-      this.selectedMarket.set(p.market ?? null);
-      this.selectedGoal.set(p.goal ?? null);
-      this.selectedCurrency.set(isAccountCurrency(p.currency) ? p.currency : DEFAULT_ACCOUNT_CURRENCY);
-      this.capitalInput.set(typeof p.capital === 'string' ? p.capital : '');
-      this.accountMode.set(p.accountMode === 'PROPFIRM' ? 'PROPFIRM' : 'PERSO');
-      this.broker.set(typeof p.broker === 'string' ? p.broker : '');
-      this.profitTarget.set(typeof p.profitTarget === 'string' ? p.profitTarget : '');
-      this.maxDrawdown.set(typeof p.maxDrawdown === 'string' ? p.maxDrawdown : '');
-      this.drawdownType.set(p.drawdownType === 'STATIC' ? 'STATIC' : 'TRAILING');
-      this.selectedStyle.set(p.style ?? null);
-      this.strategyDescription.set(typeof p.strategy === 'string' ? p.strategy : '');
-      this.selectedSessions.set(Array.isArray(p.sessions) ? p.sessions : []);
-      this.selectedAssets.set(Array.isArray(p.assets) ? p.assets : []);
-      this.favoriteAsset.set(p.favorite ?? null);
-      // L'étape 8 se rouvre sur le CHOIX du premier trade : rouvrir d'autorité une
-      // modale de saisie ou d'import après un rechargement serait déroutant.
-      this.step.set(step as Step);
-      this.tradeChoice.set('choice');
-    } catch { /* snapshot illisible : on ignore, l'utilisateur repart de l'étape 1 */ }
+    const p = loadProgress();
+    if (!p) return;
+    this.selectedMarket.set(p.market);
+    this.selectedGoal.set(p.goal);
+    this.selectedCurrency.set(p.currency);
+    this.capitalInput.set(p.capital);
+    this.accountMode.set(p.accountMode);
+    this.broker.set(p.broker);
+    this.profitTarget.set(p.profitTarget);
+    this.maxDrawdown.set(p.maxDrawdown);
+    this.drawdownType.set(p.drawdownType);
+    this.selectedStyle.set(p.style);
+    this.strategyDescription.set(p.strategy);
+    this.selectedSessions.set(p.sessions);
+    this.selectedAssets.set(p.assets);
+    this.favoriteAsset.set(p.favorite);
+    // L'étape 8 se rouvre sur le CHOIX du premier trade : rouvrir d'autorité une
+    // modale de saisie ou d'import après un rechargement serait déroutant.
+    this.step.set(p.step);
+    this.tradeChoice.set('choice');
   }
 
   /**
@@ -377,13 +308,9 @@ export class OnboardingComponent {
     this.router.navigate([], { queryParams: cleared, queryParamsHandling: 'merge', replaceUrl: true });
   }
 
-  private clearProgress(): void {
-    try { localStorage.removeItem(PROGRESS_KEY); } catch { /* rien à nettoyer */ }
-  }
-
   /** Fin de l'onboarding : la progression n'a plus lieu d'être conservée. */
   protected finish(): void {
-    this.clearProgress();
+    clearProgress();
     this.completed.emit();
   }
 
@@ -664,28 +591,15 @@ export class OnboardingComponent {
    * « Mes comptes » au lieu de masquer la carte de regles.
    */
   protected buildAccountPayload(): CreateAccountPayload {
-    const prop = this.accountMode() === 'PROPFIRM';
-    const size = this.parseCapital() || null;
-    const brokerName = this.broker().trim();
-
-    const payload: CreateAccountPayload = {
-      label: prop && brokerName ? `${brokerName} #1` : 'Compte principal',
-      type: prop ? 'EVALUATION' : 'PERSONAL',
-      accountSize: size,
-      startingBalance: size,
+    return accountPayload({
+      mode: this.accountMode(),
+      capital: this.capitalInput(),
+      broker: this.broker(),
+      profitTarget: this.profitTarget(),
+      maxDrawdown: this.maxDrawdown(),
+      drawdownType: this.drawdownType(),
       currency: this.selectedCurrency(),
-    };
-    if (!prop) return payload;
-
-    if (brokerName) payload.broker = brokerName;
-    const target = parseNumber(this.profitTarget());
-    if (target != null && target > 0) payload.profitTarget = target;
-    const dd = parseNumber(this.maxDrawdown());
-    if (dd != null && dd > 0) {
-      payload.maxDrawdown = dd;
-      payload.drawdownType = this.drawdownType();
-    }
-    return payload;
+    });
   }
 
   // Étape Actifs (6) → persiste actifs + favori puis va au premier trade (7)
@@ -768,8 +682,6 @@ export class OnboardingComponent {
   protected setDrawdownType(t: DrawdownType) { this.drawdownType.set(t); }
 
   private parseCapital(): number {
-    const raw = this.capitalInput().replace(',', '.');
-    const parsed = parseFloat(raw);
-    return isNaN(parsed) || parsed < 0 ? 0 : parsed;
+    return parseCapital(this.capitalInput());
   }
 }
