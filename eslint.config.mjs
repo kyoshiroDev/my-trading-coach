@@ -1,4 +1,5 @@
 import nx from '@nx/eslint-plugin';
+import astro from 'eslint-plugin-astro';
 
 export default [
   ...nx.configs['flat/base'],
@@ -7,6 +8,9 @@ export default [
   {
     ignores: ['**/dist', '**/out-tsc', '**/test-output'],
   },
+  // Les 35 fichiers `.astro` de la landing n'étaient PAS lintés : sans ce parseur, eslint ne sait
+  // pas les lire et les ignore en silence — un lint vert ne disait donc rien d'eux.
+  ...astro.configs.recommended,
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
     rules: {
