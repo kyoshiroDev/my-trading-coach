@@ -46,10 +46,35 @@ describe('PnlFormatPipe — compte en USD', () => {
     expect(pipe.transform(undefined)).toBe('-');
   });
 
-  it('avec entry → affiche le pourcentage', () => {
-    const result = makePipe().transform(-340, 4080);
-    expect(result).toContain('-$340.00');
-    expect(result).toContain('%');
+});
+
+describe('PnlFormatPipe — pourcentage = variation du prix, pas P&L / prix', () => {
+  it('forex EUR/USD : +0.03 %, pas +2764.98 % (bug du compte démo)', () => {
+    const result = makePipe().transform(30, { side: 'LONG', entry: 1.085, exit: 1.0853 });
+    expect(result).toBe('+$30.00 (+0.03%)');
+  });
+
+  it('futures MNQ : variation du prix, indépendante du montant', () => {
+    expect(makePipe().transform(160, { side: 'LONG', entry: 18600, exit: 18640 }))
+      .toBe('+$160.00 (+0.22%)');
+  });
+
+  it('SHORT gagnant : prix en baisse → pourcentage positif', () => {
+    expect(makePipe().transform(273, { side: 'SHORT', entry: 5218.25, exit: 5190.95 }))
+      .toBe('+$273.00 (+0.52%)');
+  });
+
+  it('SHORT perdant : prix en hausse → pourcentage négatif', () => {
+    expect(makePipe().transform(-165, { side: 'SHORT', entry: 63997.4, exit: 64162.4 }))
+      .toBe('-$165.00 (-0.26%)');
+  });
+
+  it('trade ouvert (pas de sortie) → pas de pourcentage', () => {
+    expect(makePipe().transform(0, { side: 'LONG', entry: 1.085, exit: null })).toBe('+$0.00');
+  });
+
+  it('entrée nulle ou négative → pas de pourcentage (pas de /0)', () => {
+    expect(makePipe().transform(10, { side: 'LONG', entry: 0, exit: 5 })).toBe('+$10.00');
   });
 });
 
