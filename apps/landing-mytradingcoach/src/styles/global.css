@@ -198,3 +198,9 @@ h2 em {
     justify-content: center;
   }
 }
+
+/* Conteneur centré des sections (1100px) — remplace le style en ligne répété. */
+.wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+}

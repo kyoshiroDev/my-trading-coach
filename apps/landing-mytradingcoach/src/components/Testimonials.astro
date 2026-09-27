@@ -4,7 +4,7 @@ const { traders = 14 } = Astro.props;
 ---
 
 <section class="social-proof" id="temoignages">
-  <div class="reveal" style="text-align:center;max-width:560px;margin:0 auto">
+  <div class="reveal head">
     <span class="sec-label">Depuis le lancement</span>
     <h2>Les premiers traders <em>construisent MTC avec nous</em></h2>
     <p class="sec-sub">
@@ -18,6 +18,7 @@ const { traders = 14 } = Astro.props;
 </section>
 
 <style>
+  .head { text-align: center; max-width: 560px; margin: 0 auto; }
   .social-proof { padding: 80px 5%; }
 
   .join-cta {

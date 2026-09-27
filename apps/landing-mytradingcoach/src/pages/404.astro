@@ -13,45 +13,41 @@ import { APP_URL } from '../config';
   <Nav />
 
   <main
-    style="max-width:42rem;margin:0 auto;padding:6rem 1.5rem 7rem;text-align:center;min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center;"
+    class="page"
   >
     <span
-      style="font-family:var(--mono);font-size:13px;color:var(--pulse);letter-spacing:3px;text-transform:uppercase;margin-bottom:18px;"
+      class="code"
     >
       Erreur 404
     </span>
 
     <h1
-      style="font-family:var(--disp);font-size:clamp(64px,16vw,120px);font-weight:700;letter-spacing:-3px;line-height:1;margin:0;background:linear-gradient(135deg,var(--txt),var(--blue2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;"
+      class="big"
     >
       404
     </h1>
 
     <h2
-      style="font-family:var(--disp);font-size:clamp(20px,4vw,28px);font-weight:700;color:var(--txt);margin:24px 0 12px;"
+      class="title"
     >
       Cette page n'existe pas
     </h2>
 
-    <p style="font-size:16px;color:var(--txt2);line-height:1.7;font-weight:300;max-width:34rem;margin:0 0 36px;">
+    <p class="lead">
       La page que tu cherches a peut-être été déplacée ou n'a jamais existé.
       Pas de panique : reprends ta session là où tout se passe.
     </p>
 
-    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;">
+    <div class="actions">
       <a
         href="/"
-        style="display:inline-flex;align-items:center;gap:8px;background:var(--blue2);color:#fff;font-size:14px;font-weight:600;padding:13px 26px;border-radius:12px;text-decoration:none;transition:opacity .2s;"
-        onmouseover="this.style.opacity='.88'"
-        onmouseout="this.style.opacity='1'"
+        class="btn-primary"
       >
         ← Retour à l'accueil
       </a>
       <a
         href={`${APP_URL}/login`}
-        style="display:inline-flex;align-items:center;gap:8px;background:var(--card);color:var(--txt);font-size:14px;font-weight:600;padding:13px 26px;border-radius:12px;text-decoration:none;border:1px solid var(--b);transition:border-color .2s;"
-        onmouseover="this.style.borderColor='rgba(99,155,255,.4)'"
-        onmouseout="this.style.borderColor='var(--b)'"
+        class="btn-ghost"
       >
         Ouvrir l'app
       </a>
@@ -60,3 +56,79 @@ import { APP_URL } from '../config';
 
   <Footer />
 </Base>
+
+<style>
+  .page {
+    max-width:42rem;
+    margin:0 auto;
+    padding:6rem 1.5rem 7rem;
+    text-align:center;
+    min-height:60vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+  }
+  .code {
+    font-family:var(--mono);
+    font-size:13px;
+    color:var(--pulse);
+    letter-spacing:3px;
+    text-transform:uppercase;
+    margin-bottom:18px;
+  }
+  .big {
+    font-family:var(--disp);
+    font-size:clamp(64px,16vw,120px);
+    font-weight:700;
+    letter-spacing:-3px;
+    line-height:1;
+    margin:0;
+    background:linear-gradient(135deg,var(--txt),var(--blue2));
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
+  .title {
+    font-family:var(--disp);
+    font-size:clamp(20px,4vw,28px);
+    font-weight:700;
+    color:var(--txt);
+    margin:24px 0 12px;
+  }
+  .btn-primary {
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:var(--blue2);
+    color:#fff;
+    font-size:14px;
+    font-weight:600;
+    padding:13px 26px;
+    border-radius:12px;
+    text-decoration:none;
+    transition:opacity .2s;
+  }
+  .btn-primary:hover {
+    opacity: .88;
+  }
+  .btn-ghost {
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:var(--card);
+    color:var(--txt);
+    font-size:14px;
+    font-weight:600;
+    padding:13px 26px;
+    border-radius:12px;
+    text-decoration:none;
+    border:1px solid var(--b);
+    transition:border-color .2s;
+  }
+  .lead { font-size: 16px; color: var(--txt2); line-height: 1.7; font-weight: 300; max-width: 34rem; margin: 0 0 36px; }
+  .actions { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .btn-ghost:hover {
+    border-color: rgba(99,155,255,.4);
+  }
+</style>
