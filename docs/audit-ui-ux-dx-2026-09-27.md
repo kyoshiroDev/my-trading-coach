@@ -1,8 +1,8 @@
-# Audit UI/UX + DX — MyTradingCoach (app, admin, API, landing, outillage)
+# Audit UI/UX + DX — MyTradingCoach (app, admin, API, landing, Nx, outillage)
 
 - **Date** : 27/09/2026 · branche `claude/audit-ui-ux-dx-rnr1wi` (base `5fa7d9b`)
-- **Périmètre** : `app-mytradingcoach` (Angular), `admin-mytradingcoach`, `api-mytradingcoach` (§ 8), `landing-mytradingcoach` côté code (§ 9), monorepo, CI/CD, documentation.
-  L'UX/UI de la landing en ligne a déjà son audit (`docs/audit-ux-ui-landing-2026-09-27.md`). La § 9 le complète côté code, SEO technique et build, sans le répéter.
+- **Périmètre** : `app-mytradingcoach` (Angular), `admin-mytradingcoach`, `api-mytradingcoach` (§ 7), `landing-mytradingcoach` côté code (§ 8), Nx et lisibilité (§ 9), monorepo, CI/CD, documentation.
+  L'UX/UI de la landing en ligne a déjà son audit (`docs/audit-ux-ui-landing-2026-09-27.md`). La § 8 le complète côté code, SEO technique et build, sans le répéter.
 - **Méthode** : lecture du code, scans statiques (grep), calcul des contrastes WCAG sur `styles/theme.css`, puis exécution réelle de `lint`, `test` et `build` pour l'app et l'admin.
   Pas de session navigateur : les constats UI viennent du code, pas de captures.
 - **Mesures exécutées**
@@ -23,7 +23,7 @@ Légende : 🔴 à traiter vite (bloque des utilisateurs ou des développeurs) �
 
 ---
 
-## Synthèse — top 12 (A = API, L = landing)
+## Synthèse — top 13 (A = API, L = landing, N = Nx)
 
 | # | Sév. | Constat | Où |
 |---|---|---|---|
@@ -37,6 +37,7 @@ Légende : 🔴 à traiter vite (bloque des utilisateurs ou des développeurs) �
 | 8 | 🟠 | **30 % des tailles de police sont < 12 px** (279 sur 918), dont 166 à 9-10 px. | tous les `.css` |
 | 9 | 🟠 | Les contrats front/back sont recopiés à la main (interfaces TS côté front, DTO class-validator côté back, schémas zod côté front). Pas d'OpenAPI ni de client généré. | `core/api/*.api.ts`, `core/schemas/trade.schema.ts` |
 | A | 🔴 | **API derrière Traefik sans `trust proxy`** : le rate limiting (`ThrottlerGuard`, 60 req/min) compte probablement toutes les requêtes sous l'IP du proxy, donc un seul quota pour tous les utilisateurs. Et aucune limite dédiée sur `login`, `register` et `forgot-password`. | `main.ts`, `app.module.ts:47`, `auth.controller.ts` |
+| N | 🔴 | **Nx ne voit pas `libs/shared`** : l'app et l'admin n'en dépendent pas dans le graphe. Si `pricing.ts` change, la CI (`affected`) et le CD ne rebuildent et ne redéploient que l'API, et l'app garde l'ancien prix. | `libs/shared`, `cd.yml`, § 9.2 |
 | L | 🔴 | **Note 4,8/5 sur 24 avis codée en dur** dans le JSON-LD de toutes les pages de la landing, alors que la prod compte 4 traders. Risque d'action manuelle Google et de pratique commerciale trompeuse. | `landing/src/layouts/Base.astro:83` |
 | 10 | 🟠 | Hook `pre-commit` vide. Les checks locaux reposent sur la CI seule. `commit-msg` utilise `npx` alors que la règle du projet l'interdit. | `.husky/` |
 
@@ -226,15 +227,15 @@ pnpm dev       # :4200
 
 ---
 
-## 8. API (`api-mytradingcoach`)
+## 7. API (`api-mytradingcoach`)
 
-### 8.1 Ce qui tient bien
+### 7.1 Ce qui tient bien
 - Architecture NestJS propre : guards globaux (`Throttler` → `JwtAuth` → `DemoReadOnly`), `ValidationPipe` strict (`whitelist` + `forbidNonWhitelisted` + `transform`), enveloppe `{ data }` uniforme, `helmet` avec CSP verrouillée.
 - Liste des trades en **pagination par curseur** (`take: limit + 1`, `@Max(100)`), `select` ciblés dans l'analytics, cache Redis sur les agrégats.
 - Point d'entrée IA unique (`AnthropicClientService`) avec interrupteur `AI_ENABLED` et journalisation du coût. Crons en opt-in (`IS_CRON_WORKER`).
 - Tests unitaires rapides (691 tests en 19 s) et lint propre.
 
-### 8.2 Sécurité et robustesse
+### 7.2 Sécurité et robustesse
 
 | Sév. | Constat | Où | Recommandation |
 |---|---|---|---|
@@ -249,7 +250,7 @@ pnpm dev       # :4200
 | 🟡 | Pas d'`enableShutdownHooks()` : un `docker compose up --force-recreate` coupe les jobs BullMQ et les connexions Prisma et socket.io en cours. | `main.ts` | `app.enableShutdownHooks()` et fermeture propre des queues. |
 | 🟡 | `/api/health` renvoie toujours `ok` sans tester Postgres ni Redis. Le healthcheck Docker reste vert quand la base est down. `@nestjs/terminus` est installé mais **inutilisé**. | `app/app.controller.ts:8` | `HealthCheckService` avec `PrismaHealthIndicator` et un ping Redis, ou retirer la dépendance. |
 
-### 8.3 Conception de l'API (DX côté front)
+### 7.3 Conception de l'API (DX côté front)
 - 🟠 **Routes admin dispersées** : `/admin/*` d'un côté, `/users/admin/*` de l'autre (`stats`, `online`, `:id/role`, `subscriptions`…). Un seul préfixe `/admin` protégé par un seul guard serait plus lisible et plus sûr : aujourd'hui, chaque route de `UsersController` doit penser à son `@UseGuards(AdminGuard)`.
 - 🟠 **`TradesController` fourre-tout** (256 lignes) : `news`, `news/:id/text`, `market-context`, `live-price`, `instruments`, `user-assets` et `favorite-asset` ne sont pas des trades. Les ranger dans `market` et `instruments` clarifierait l'API et les droits.
 - 🟡 **Validation de l'environnement partielle** : `validateEnv()` vérifie 9 variables, mais `REDIS_HOST` (déclarée obligatoire en prod dans `.env.example`), `CORS_ORIGINS` et `SENTRY_DSN` ne le sont pas. Trois mécanismes de chargement se superposent :
@@ -263,15 +264,15 @@ pnpm dev       # :4200
 
 ---
 
-## 9. Landing — code, SEO technique et build (`landing-mytradingcoach`)
+## 8. Landing — code, SEO technique et build (`landing-mytradingcoach`)
 
-### 9.1 Ce qui tient bien
+### 8.1 Ce qui tient bien
 - Build statique très léger : 21 pages en 2 s, 872 kB en tout, 57 kB de HTML pour la home.
 - `astro check` sans erreur. `trailingSlash: 'never'` et canonical cohérents. Sitemap filtré par les flags de feature.
 - Un seul `<h1>` par page, `alt` sur toutes les images, meta description sur toutes les pages indexables, JSON-LD `Article` + `BreadcrumbList` sur les articles.
 - Menu mobile et FAQ accessibles (`aria-expanded` mis à jour).
 
-### 9.2 Constats
+### 8.2 Constats
 
 | Sév. | Constat | Où | Recommandation |
 |---|---|---|---|
@@ -290,9 +291,120 @@ pnpm dev       # :4200
 
 ---
 
+## 9. Nx, duplication et lisibilité pour un développeur junior
+
+### 9.1 Mesures
+
+| Mesure | Résultat |
+|---|---|
+| Projets Nx | 9 : 4 apps, 3 e2e, `mtc-discord-bot` et **une seule lib** (`libs/shared`, 239 lignes) |
+| Arêtes du graphe `app → shared`, `admin → shared` | **aucune**, alors que les deux importent `@mtc/shared` |
+| `nx show projects --affected --files=libs/shared/src/pricing.ts` | `shared`, `api-mytradingcoach`, `api-mytradingcoach-e2e`. **Ni l'app ni l'admin.** |
+| Copier-coller détecté (jscpd, ≥ 8 lignes) | 0,93 % (623 lignes sur 67 165). Code TS 0,5 %, CSS 2,3 %. **8 clones entre projets**, tous API ↔ front. |
+| Fichiers de plus de 400 lignes (hors tests) | **25**, dont 8 au-dessus de 600 (`tradovate-connection.service.ts` : 978) |
+| Références `PROMPT-xxx` dans le code | **213 dans 108 fichiers**, sans index consultable |
+| Imports relatifs à 3 niveaux ou plus (`../../../`) | 113, dont 48 à 4 niveaux |
+
+Le copier-coller brut est faible : le code n'est pas « dupliqué partout ». Le vrai problème, c'est la **duplication de sens**, que l'outil ne voit pas : les mêmes types, règles et algorithmes réécrits différemment dans plusieurs projets. Et Nx ne sait pas que les apps dépendent de `shared`.
+
+### 9.2 🔴 Nx ne voit pas `libs/shared` : risque de déploiement incohérent
+
+La lib est branchée **à la main, à 6 endroits** :
+- `paths` dans `apps/app/tsconfig.json`, `apps/admin/tsconfig.json` et `apps/api/tsconfig.app.json` ;
+- `resolve.alias` dans les deux `vitest.config.ts` ;
+- l'alias webpack de l'API.
+
+Pas de `package.json` dans la lib, pas de `paths` dans `tsconfig.base.json`. Nx ne détecte donc pas la dépendance (sauf pour l'API, via son `include`). Conséquences concrètes :
+1. **CI** : `nx affected --target=build/lint` ne rebuild pas l'app ni l'admin quand `shared` change.
+2. **CD** : `cd.yml` ne déploie l'app et l'admin que si un fichier de `apps/app-mytradingcoach/` ou `apps/admin-mytradingcoach/` change. Si le prix change dans `libs/shared/src/pricing.ts`, **seule l'API est redéployée**, et l'app continue d'afficher l'ancien prix.
+3. **Cache Nx** : un build de l'app en cache peut être réutilisé alors que `shared` a changé.
+4. **Junior** : ajouter une lib demande de connaître 6 fichiers de config que rien ne documente en un seul endroit.
+
+**Correctif** (le workspace est déjà en mode « TS solution », avec `composite` et `customConditions: ["@org/source"]`) :
+```jsonc
+// libs/shared/package.json
+{ "name": "@mtc/shared", "private": true, "type": "module",
+  "exports": { ".": { "@org/source": "./src/index.ts", "default": "./src/index.ts" } } }
+// apps/*/package.json (en créer un pour app et admin) → "dependencies": { "@mtc/shared": "workspace:*" }
+```
+Ensuite :
+- supprimer les 6 alias manuels ;
+- faire détecter les apps impactées au CD avec `nx show projects --affected` au lieu du `grep` sur les chemins ;
+- ajouter à `shared` des cibles `test` et `typecheck`. Ses tests vivent aujourd'hui dans l'API (`common/utils/trade-stats.util.spec.ts`, `currency.util.spec.ts`), ce qui est trompeur.
+
+### 9.3 🟠 Frontières de modules non définies
+
+`eslint.config.mjs` a bien `@nx/enforce-module-boundaries`, mais avec `sourceTag: '*' → onlyDependOnLibsWithTags: ['*']`, c'est-à-dire **aucune règle**. Les apps n'ont pas de tags (`app` et `admin` : `[]`).
+→ Poser `type:app | type:feature | type:data-access | type:ui | type:util` et `scope:front | scope:back | scope:shared`, avec des contraintes du type « une lib `scope:front` ne peut pas importer `scope:back` » et « `scope:shared` n'importe que `scope:shared` ». Un junior est alors arrêté par le lint au lieu d'une revue.
+
+### 9.4 🟠 Duplication de sens à factoriser
+
+| Dupliqué | Où | Cible proposée |
+|---|---|---|
+| **Types du contrat API** : `Trade` défini **3 fois dans l'app seule** (`trades.api.ts`, `trades.store.ts`, `scoring.component.ts`), `WeeklyDebrief` 2 fois. 62 interfaces dans `app/core/api`, 26 dans `admin/core/api`, et des clones exacts avec les services Nest (`eco-calendar`, `session`, `debrief`, `vps`, `user-detail`). | app, admin, API | `libs/contracts` (types de requêtes et réponses et enums), importé par les trois |
+| **Enums Prisma** (15 enums : `EmotionState`, `TradeSide`, `ExecutionGrade`…) réécrits en unions de chaînes côté front | `trades.api.ts`, `trade.schema.ts`, `session.store.ts`, `quick-trade`… | Exporter les enums depuis `libs/contracts`, sans dépendance à Prisma : un simple `as const` synchronisé par un test |
+| **Validation** : zod côté front (`trade.schema.ts`) et class-validator côté back | app, API | Schéma zod unique dans `libs/contracts`, avec un `ZodValidationPipe` côté Nest |
+| **`normalizeEventKey`** : même algorithme copié. Le commentaire front dit « DOIT rester identique au backend ». | `app/core/data/eco-event-key.ts`, `api/eco-calendar.service.ts:661` | `libs/shared` : un commentaire ne garantit rien, un import si |
+| **Dates Paris** (`todayParis`, `toParisDateStr`) | `app/core/utils/paris-date.ts`, `api/common/utils/paris-date.ts` | `libs/shared/date` |
+| **Intercepteur JWT avec refresh** : même algorithme réécrit (file d'attente `BehaviorSubject` pendant le refresh) | `app/core/auth/auth.interceptor.ts`, `admin/core/auth/admin-auth.interceptor.ts` | `libs/front/auth` (lib Angular), paramétrée par le service d'auth |
+| **Design tokens** (29 variables dans l'admin, 60+ dans l'app) et configuration Chart.js (`chart.service.ts` contre `chart-canvas` et `chart-theme.ts`) | app, admin | `libs/front/ui` : `tokens.css`, thème chart, `ConfirmDialog`, `ErrorState`, toasts |
+| **Checkout Stripe** (4 copies, § 2.1) et **confirmations** (`confirm()` natif) | app, admin | `BillingService` et `ConfirmDialog` dans `libs/front/ui` |
+| **Seeds démo** : `admin/demo-seed.ts` (762 l.), `scripts/seed-demo.ts`, `scripts/seed-demo-account.ts`, plus 3 seeds `.mjs` à la racine (dont 2 personnels) | API, racine | Un seul module de seed, avec des points d'entrée fins |
+| **Prix** en dur dans la landing (§ 8.2) | landing | `@mtc/shared` : Astro peut l'importer via Vite |
+
+Structure cible, simple à expliquer à un junior :
+```
+libs/
+├── shared/          ← TS pur, sans framework : prix, devises, dates, stats, eventKey (déjà là)
+├── contracts/       ← types + enums + schémas zod de l'API (front ET back)
+└── front/
+    ├── ui/          ← tokens.css, ConfirmDialog, ErrorState, Toasts, thème Chart.js
+    └── auth/        ← intercepteur JWT + refresh, guards génériques
+```
+Règle d'or à écrire dans CLAUDE.md : « si le code est utilisé par deux projets, il va dans `libs/`, et Nx le vérifie ».
+
+### 9.5 🟠 Lisibilité pour un développeur junior
+
+1. **Références `PROMPT-xxx`** : 213 occurrences dans 108 fichiers (« corrigé PROMPT-213 », « PROMPT-169 »…). Pour quelqu'un qui arrive, ce sont des identifiants de sessions de travail introuvables : ni tracker ni index.
+   → Remplacer par le **pourquoi** en une phrase. Si une trace est utile, pointer vers une issue ou une PR GitHub (`#228`), qu'on peut consulter.
+2. **Fichiers trop longs** : 25 fichiers de plus de 400 lignes. Un junior doit lire 700 à 1 000 lignes pour comprendre un écran ou un service. Découpages proposés :
+   - `tradovate-connection.service.ts` (978) → `oauth`, `token-refresh`, `sync`, `mapping` ;
+   - `trades.service.ts` (857) → CRUD, calculs (R/R, grade), doublons, import ;
+   - `onboarding.component.ts` (766) + `.html` (545) → un sous-composant par étape ;
+   - `settings.component.*` (657 + 597 + 712 CSS) → un composant par onglet (profil, abonnement, préférences, danger) ;
+   - `journal.component.ts` (615) → liste, filtres, modales.
+
+   Repère : viser moins de 300 lignes par composant ou service. Le lint peut l'imposer (`max-lines` en `warn` à 400).
+3. **Trois sens du mot « shared »** : `libs/shared` (lib Nx), `apps/api/src/modules/shared` (module Nest : Redis, Anthropic, logger IA) et `apps/app/src/app/shared` (composants UI). Renommer le module Nest en `modules/infra` ou `core`.
+4. **Noms incohérents entre route, dossier et libellé** :
+
+   | Route | Dossier | Libellé du menu |
+   |---|---|---|
+   | `/profil` | `features/settings` | Profil |
+   | `/parrainage` | `features/referral` | Parrainage |
+   | `/session` | `features/session-day` | Ma session |
+   | `/sessions` | `features/sessions` | Mes sessions |
+
+   L'admin mélange `ambassadeurs` et `surveillance` (FR) avec `users` et `subscriptions` (EN). Code et dossiers devraient être **toujours en anglais** et l'UI en français : un junior doit pouvoir deviner le dossier depuis l'URL.
+5. **Imports relatifs profonds** : 113 à 3 niveaux ou plus, par exemple `../../../../core/api/trades.api`. Des alias par app (`@app/core/*`, `@app/shared/*`) ou les libs ci-dessus les suppriment.
+6. **Deux styles de templates** : inline dans 12 composants admin et 4 composants d'auth de l'app, `templateUrl` ailleurs. Choisir `templateUrl` partout, sauf pour les composants de moins de 30 lignes.
+7. **Scripts dispersés** (§ DX-4) et **README générique** (§ DX-2) : ce sont les deux premiers fichiers qu'ouvre un nouvel arrivant.
+8. **Un bon point à garder** : les commentaires expliquent souvent le *pourquoi*, pas le *quoi* (ex. `http-exception.filter.ts`, `pnpm-workspace.yaml`). C'est la bonne pratique. Il faut seulement retirer les références `PROMPT` qui les rendent opaques.
+
+### 9.6 Ordre de mise en œuvre conseillé
+1. **Brancher `libs/shared` proprement** (`package.json` + `workspace:*`) et passer le CD sur `nx affected`. C'est court, et ça supprime le risque de déploiement incohérent.
+2. Créer `libs/contracts`. Y migrer `Trade`, les enums et le schéma zod des trades, puis les autres modules au fil de l'eau.
+3. Définir tags et contraintes `enforce-module-boundaries`.
+4. `libs/front/ui` (tokens, ConfirmDialog, ErrorState) et `libs/front/auth`.
+5. Découper les 8 fichiers de plus de 600 lignes, et remplacer les `PROMPT-xxx` quand on touche un fichier (règle « boy scout »).
+6. Documenter tout ça dans un `CONTRIBUTING.md` d'une page : où mettre quoi, comment ajouter une lib (`nx g @nx/js:lib libs/xxx`), conventions de nommage.
+
+---
+
 ## 10. Plan d'action proposé
 
 **Sprint 1 — bloquants (≈ 2-3 j)**
+0. Nx : `libs/shared` en paquet workspace (`workspace:*`) et CD basé sur `nx affected` (§ 9.2).
 1. `errorInterceptor` global, composant `<mtc-error-state>` branché sur `httpResource.error()` (Analytics, Scoring, Dashboard), `BillingService.startCheckout` unique.
 2. Contrastes : bouton primaire en `#2563eb`, badge FREE, règle `:focus-visible` globale.
 3. DX : vendoriser `xlsx`, `packageManager`/`engines`, corriger `.env.example` (port 5432) et réécrire le README.
@@ -308,6 +420,7 @@ pnpm dev       # :4200
 7. `lint-staged` en pre-commit, scripts racine, rangement des scripts.
 
 **Sprint 3 — fond (continu)**
+- Nx : `libs/contracts`, `libs/front/ui`, `libs/front/auth`, tags et frontières de modules. Découper les fichiers de plus de 600 lignes, remplacer les `PROMPT-xxx`, écrire `CONTRIBUTING.md` (§ 9.3 à 9.6).
 8. Contrats partagés (`libs/shared/contracts` + zod partagé, ou OpenAPI).
 9. Smoke E2E en CI, seuil de couverture API, accélération de Vitest.
 10. Images Docker construites en CI (GHCR), détection `nx affected` dans le CD, migration des executors Nx.
