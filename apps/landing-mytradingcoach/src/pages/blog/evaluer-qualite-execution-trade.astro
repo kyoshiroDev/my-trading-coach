@@ -1,4 +1,5 @@
 ---
+import { APP_URL } from '../../config';
 import BlogPost from '../../layouts/BlogPost.astro';
 ---
 
@@ -70,6 +71,6 @@ import BlogPost from '../../layouts/BlogPost.astro';
   </p>
 
   <p>
-    Si tu es en prop firm, où la discipline d'exécution pèse plus lourd que quelques trades chanceux, cette lecture devient presque le cœur du travail. J'en parle dans l'article sur le <a href="/blog/meilleur-journal-trading-prop-firm">journal en prop firm</a>. Et si tu veux voir la note sur tes propres trades, tu peux <a href="https://app.mytradingcoach.app/register">commencer gratuitement</a> : elle apparaît dès que tu logges ou importes tes trades.
+    Si tu es en prop firm, où la discipline d'exécution pèse plus lourd que quelques trades chanceux, cette lecture devient presque le cœur du travail. J'en parle dans l'article sur le <a href="/blog/meilleur-journal-trading-prop-firm">journal en prop firm</a>. Et si tu veux voir la note sur tes propres trades, tu peux <a href={`${APP_URL}/register`}>commencer gratuitement</a> : elle apparaît dès que tu logges ou importes tes trades.
   </p>
 </BlogPost>

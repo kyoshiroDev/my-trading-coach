@@ -1,4 +1,5 @@
 ---
+import { APP_URL } from '../../config';
 import BlogPost from '../../layouts/BlogPost.astro';
 ---
 
@@ -39,6 +40,6 @@ import BlogPost from '../../layouts/BlogPost.astro';
     Le meilleur journal gratuit, c'est celui que tu vas réellement remplir. Donc choisis simple, rapide à alimenter, et sans mur au bout d'un mois. J'ai construit MyTradingCoach exactement dans cet esprit : le plan gratuit donne les trades illimités, le journal, l'historique, l'import, et même un compagnon de session complet. Tu ne paies que si tu veux le coaching IA personnel et les analytics avancés.
   </p>
   <p>
-    Aucune carte demandée pour le gratuit, hébergement en France, interface en français. Tu peux <a href="https://app.mytradingcoach.app/register">créer ton journal en deux minutes</a> et importer ta première session tout de suite. Si tu débutes vraiment, mon article sur <a href="/blog/journal-trading-debutant">comment tenir un journal quand on commence</a> te donnera le bon point de départ.
+    Aucune carte demandée pour le gratuit, hébergement en France, interface en français. Tu peux <a href={`${APP_URL}/register`}>créer ton journal en deux minutes</a> et importer ta première session tout de suite. Si tu débutes vraiment, mon article sur <a href="/blog/journal-trading-debutant">comment tenir un journal quand on commence</a> te donnera le bon point de départ.
   </p>
 </BlogPost>

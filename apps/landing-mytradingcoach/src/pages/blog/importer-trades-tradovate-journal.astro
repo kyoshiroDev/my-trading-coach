@@ -1,4 +1,5 @@
 ---
+import { APP_URL } from '../../config';
 import BlogPost from '../../layouts/BlogPost.astro';
 ---
 
@@ -59,6 +60,6 @@ import BlogPost from '../../layouts/BlogPost.astro';
     J'ai construit l'import Tradovate autour de ce constat : les frais doivent être exacts, pas devinés. Tu déposes ton fichier Performance, tu ajoutes ton Cash history, et le calcul se fait tout seul. Zéro saisie manuelle, même sur des centaines de trades. Le reste de l'app (journal, historique par semaine, note d'exécution) tourne ensuite sur ces données propres.
   </p>
   <p>
-    C'est gratuit, sans limite de trades, et tu peux <a href="https://app.mytradingcoach.app/register">tester avec ton propre export</a> en deux minutes. Si tu veux comprendre pourquoi un journal fiable change ta lecture des chiffres, jette un œil à mon article sur <a href="/blog/win-rate-trading">le win rate et ce qu'il cache</a>.
+    C'est gratuit, sans limite de trades, et tu peux <a href={`${APP_URL}/register`}>tester avec ton propre export</a> en deux minutes. Si tu veux comprendre pourquoi un journal fiable change ta lecture des chiffres, jette un œil à mon article sur <a href="/blog/win-rate-trading">le win rate et ce qu'il cache</a>.
   </p>
 </BlogPost>

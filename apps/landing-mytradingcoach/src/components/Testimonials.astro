@@ -1,4 +1,5 @@
 ---
+import { APP_URL } from '../config';
 const { traders = 14 } = Astro.props;
 ---
 
@@ -10,7 +11,7 @@ const { traders = 14 } = Astro.props;
       Depuis son lancement, MyTradingCoach réunit déjà <span data-traders-count>{traders}</span> traders. Leurs retours
       façonnent le produit chaque semaine. Rejoins-les.
     </p>
-    <a href="https://app.mytradingcoach.app/register" class="join-cta">
+    <a href={`${APP_URL}/register`} class="join-cta">
       Rejoindre gratuitement →
     </a>
   </div>

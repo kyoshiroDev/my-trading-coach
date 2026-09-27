@@ -2,6 +2,8 @@
 // Une seule source de verite pour les lignes : le tableau desktop (5 colonnes) et
 // la version mobile (2 colonnes) sont rendus depuis les memes donnees, donc ils ne
 // peuvent pas diverger. En mobile, les 3 concurrents sont fusionnes en « Les autres ».
+import { PREMIUM_PRICE_EUR } from '@mtc/shared';
+
 type Val = boolean | string;
 
 interface Row {
@@ -26,7 +28,7 @@ const rows: Row[] = [
   { label: 'Recap journalier email 17h30', isNew: true, mtc: true, rivals: [false, false, false], pulse: true },
   { label: 'Import CSV universel (broker-agnostic)', mtc: true, rivals: [true, true, false] },
   { label: 'Hébergé en France 🇫🇷', mtc: true, rivals: [false, false, false] },
-  { label: 'Prix mensuel', mtc: 'dès 49 €/mois', rivals: ['30-80 $', '10-29 $', '~€15'], othersLabel: '10-80 $' },
+  { label: 'Prix mensuel', mtc: `dès ${PREMIUM_PRICE_EUR.monthly} €/mois`, rivals: ['30-80 $', '10-29 $', '~€15'], othersLabel: '10-80 $' },
 ];
 
 type Cell = { cls: string; text: string; accent?: boolean };

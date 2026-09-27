@@ -1,4 +1,5 @@
 ---
+import { APP_URL } from '../config';
 ---
 <div class="nav-bar">
   <a href="/" class="nav-logo">
@@ -10,8 +11,8 @@
     <a href="/#features">Fonctionnalités</a>
     <a href="/#pricing">Tarifs</a>
     <a href="/#faq">FAQ</a>
-    <a href="https://app.mytradingcoach.app/login" class="nav-login-link">Connexion</a>
-    <a href="https://app.mytradingcoach.app/register" class="nav-cta">Essayer gratuitement →</a>
+    <a href={`${APP_URL}/login`} class="nav-login-link">Connexion</a>
+    <a href={`${APP_URL}/register`} class="nav-cta">Essayer gratuitement →</a>
   </nav>
 
   <button
@@ -26,7 +27,7 @@
   </button>
 </div>
 
-<a href="https://app.mytradingcoach.app/register" class="nav-sticky-cta">
+<a href={`${APP_URL}/register`} class="nav-sticky-cta">
   Essayer gratuitement →
 </a>
 

@@ -1,4 +1,5 @@
 ---
+import { APP_URL } from '../../config';
 import BlogPost from '../../layouts/BlogPost.astro';
 ---
 
@@ -38,6 +39,6 @@ import BlogPost from '../../layouts/BlogPost.astro';
     J'ai construit MyTradingCoach en partant de ces contraintes, avec l'aide de traders prop firm qui l'utilisent au quotidien. Comptes illimités, import Tradovate avec frais au centime, note d'exécution qui repère les dérapages, et un compagnon de session qui te fait relire ton plan avant de trader. Le plan gratuit couvre déjà l'essentiel : trades illimités, journal, session complète.
   </p>
   <p>
-    Tu peux <a href="https://app.mytradingcoach.app/register">créer un compte gratuit</a> et brancher ton premier compte de challenge en quelques minutes. Aucune promesse de gain là-dedans, juste un outil pour tenir la discipline que la firme exige de toi.
+    Tu peux <a href={`${APP_URL}/register`}>créer un compte gratuit</a> et brancher ton premier compte de challenge en quelques minutes. Aucune promesse de gain là-dedans, juste un outil pour tenir la discipline que la firme exige de toi.
   </p>
 </BlogPost>

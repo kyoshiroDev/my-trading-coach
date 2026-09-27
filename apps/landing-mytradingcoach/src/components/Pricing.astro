@@ -1,5 +1,7 @@
 ---
-import { FEATURES } from '../config';
+import { FEATURES, APP_URL } from '../config';
+// Prix : source unique @mtc/shared (cf. .claude/agents/plans.md).
+import { PREMIUM_ANNUAL_SAVINGS_EUR, PREMIUM_PRICE_EUR } from '@mtc/shared';
 ---
 
 <section id="pricing" style="padding:80px 5%">
@@ -37,7 +39,7 @@ import { FEATURES } from '../config';
           <li>Stats de base : win rate, P&amp;L · Historique illimité</li>
           <li>Import CSV universel · Futures, Crypto, Forex</li>
         </ul>
-        <a href="https://app.mytradingcoach.app/register" class="price-cta ghost">Commencer gratuitement</a>
+        <a href={`${APP_URL}/register`} class="price-cta ghost">Commencer gratuitement</a>
       </div>
 
       <!-- PREMIUM -->
@@ -45,11 +47,11 @@ import { FEATURES } from '../config';
         <div class="price-pop">⭐ Recommandé</div>
         <div class="price-name">Premium</div>
         <div class="price-amt">
-          <span class="price-amt-num">49</span>
+          <span class="price-amt-num">{PREMIUM_PRICE_EUR.monthly}</span>
           <span class="price-amt-cur">€</span>
           <span class="price-amt-per">/mois</span>
         </div>
-        <div class="price-period">ou 490 €/an, tu économises 98 €</div>
+        <div class="price-period">ou {PREMIUM_PRICE_EUR.annual} €/an, tu économises {PREMIUM_ANNUAL_SAVINGS_EUR} €</div>
         {FEATURES.multiAccounts && (
           <div class="price-accts">
             <span class="acct-n">∞</span>
@@ -67,7 +69,7 @@ import { FEATURES } from '../config';
           <li>📄 Export PDF rapport mensuel</li>
           <li>🌙 Recap journalier email 17h30</li>
         </ul>
-        <a href="https://app.mytradingcoach.app/register?plan=premium" class="price-cta prim">
+        <a href={`${APP_URL}/register?plan=premium`} class="price-cta prim">
           <span class="cta-main">Essayer Premium · 1 mois offert →</span>
           <span class="cta-sub-text">🔥 Carte requise · annulable en un clic</span>
         </a>
