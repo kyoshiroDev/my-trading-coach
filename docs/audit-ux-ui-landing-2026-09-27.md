@@ -222,10 +222,17 @@ sont celles de l'audit ci-dessus.
 | B · Tradovate | carte 07 + FAQ : synchro en direct dès la connexion, historique passé via export CSV | texte vérifié | `desktop-06-features` → `apres/desktop-features` |
 | B · Compare | « 0 € (Gratuit) · dès 49 € (Premium) » : « dès 0 € » seul laissait croire que les fonctions Premium cochées étaient gratuites | texte vérifié, 1 palier par ligne en mobile, sans chevauchement | `desktop-08-compare` → `apres/desktop-compare-prix`, `apres/mobile-compare-prix` |
 | B · Timeline | « (exemple illustratif) » après +$620 / 72 % WR ; « Demain tu seras meilleur » → « tu sais sur quoi travailler demain » | texte vérifié | `desktop-05-journee` → `apres/desktop-journee` |
-| C · Produit visible | `Showcase` sous le Hero (mention « Données fictives »), `Problem` retiré | Showcase à 995 px desktop / 893 px mobile (contre 5 377 / 8 690) | `apres/desktop-showcase`, `apres/mobile-showcase` |
+| C · Produit visible | `Showcase` réécrit avec 2 **vraies captures** du compte démo DEV (Dashboard, IA Insights), maquettes `components/mockup/` supprimées, mention « données d'exemple » ; placé sous le Hero ; `Problem` retiré | Showcase à 995 px desktop / 893 px mobile (contre 5 377 / 8 690) | `apres/desktop-showcase`, `apres/mobile-showcase` |
 | D · Sticky mobile | masquée si CTA hero visible, menu ouvert, `/disclaimer` | hero : masquée · milieu de page : visible · menu : masquée · disclaimer : absente | `mobile-00-above-the-fold` → `apres/mobile-hero-above-the-fold`, `apres/mobile-nav-open`, `apres/mobile-disclaimer` |
 | D · « Dimanche » | « Dim. » sous 480 px | libellé entier dans le viewport | `mobile-05-journee` → `apres/mobile-journee` |
 | D · Badge hero | « multi-marché » insécable | coupure avant le mot | `apres/mobile-hero-badge` |
 
 Non traité (hors périmètre) : liens `register` en dur dans 5 articles `.md` du blog ; autres clés
 Redis potentiellement partagées dev/prod (ex. santé des métriques admin).
+
+Bugs de l'app repérés en prenant les captures (non corrigés, hors périmètre landing) :
+- Journal : % de P&L aberrants sur les trades EUR/USD du compte démo (+2764,98 %, +23103,23 %, −11364,69 %).
+- Dashboard : à 1440 px, les sparklines des cartes KPI chevauchent les montants.
+- IA Insights : bouton « Disponible dans 3h 60min » (arrondi minutes → devrait être 4h 00).
+- Analytics (démo) : courbes vides sur la période par défaut « 1 mois », le seed s'arrête en juin.
+- Dashboard (démo) : sélecteur « Tous les comptes » affiche « $0 » alors que le capital est de $14 326.

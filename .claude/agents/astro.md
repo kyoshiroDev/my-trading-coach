@@ -211,9 +211,21 @@ CTA en fin de chaque article :
   premiers traders » sans chiffre. Le script live de `index.astro` retire `[data-traders-proof]`
   si l'API repasse sous le seuil. Côté API, la clé Redis est suffixée par l'hôte de `FRONTEND_URL`
   (dev et prod partagent Redis db0).
-- **Chiffres de performance** (P&L, WR) dans une narration ou un mockup : toujours accompagnés de
-  « exemple illustratif » / « données fictives » (`.day-illus` dans DayTimeline,
+- **Chiffres de performance** (P&L, WR) dans une narration ou une capture : toujours accompagnés de
+  « exemple illustratif » / « données d'exemple » (`.day-illus` dans DayTimeline,
   `.showcase-note` dans Showcase). Pas de promesse de progression (« tu seras meilleur »).
+- **Showcase = vraies captures, jamais de maquette** : `public/showcase/app-dashboard.webp` et
+  `app-ai.webp`, prises sur le compte démo DEV (`https://dev.app.mytradingcoach.app/demo`, Lucas
+  Mercier). Les anciens mockups (`components/mockup/`, données inventées) ont été supprimés : ils
+  dérivaient à chaque refonte de l'app. **Rafraîchir** après une refonte visible de ces écrans :
+  - Dashboard : viewport **1680×1000**, DPR 1.5, rogner le bandeau « Mode démo » (44 px en haut).
+    À 1440 px, les sparklines des cartes KPI chevauchent les montants (bug app) : ne pas descendre.
+  - IA Insights : 1440×900, DPR 2, rogné sur le contenu (sans l'en-tête, dont le bouton affiche
+    « Disponible dans 3h 60min », bug d'arrondi de l'app).
+  - PNG → WebP qualité 82 (`convert x.png -quality 82 -define webp:method=6 x.webp`, ~90-110 Ko),
+    puis mettre à jour `width`/`height` des `<img>` (zéro CLS).
+  - Journal et Analytics écartés (sept. 2026) : pourcentages P&L forex aberrants sur les EUR/USD du
+    seed démo (+2764 %), graphiques Analytics vides sur la période par défaut.
 - **Ordre de la home** : Hero → **Showcase** → Moments → DayTimeline → Features → … `Problem.astro`
   n'est plus rendu (il redisait Moments). `CoachIA` et `Debrief` restent non rendus.
 - **Compare** : le prix MTC affiche **les deux paliers** « 0 € (Gratuit) · dès 49 € (Premium) ».
