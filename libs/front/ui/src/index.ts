@@ -7,3 +7,6 @@ export * from './lib/confirm-dialog/confirm-dialog.component';
 export * from './lib/error-state/error-state.component';
 export * from './lib/dialog/dialog.directive';
 export * from './lib/scroll-memory/scroll-memory.directive';
+export * from './lib/http/error.interceptor';
+export * from './lib/http/error-notifier';
+export * from './lib/http/silent-errors';
