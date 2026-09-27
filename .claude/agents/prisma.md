@@ -266,6 +266,25 @@ const trades = await prisma.trade.findMany({
 
 ---
 
+## `Trade.source` — provenance d'une ligne (PROMPT-217)
+
+`enum TradeSource { MANUAL · CSV_IMPORT · BROKER_SYNC · BROKER_HISTORY }`, colonne
+`source @default(MANUAL)`. Posée au SEUL point de création (`TradesService.create`, via
+`opts.source`) ; `importTrades(userId, dtos, source)` la propage au lot. Les trois appelants
+la passent explicitement : import CSV → `CSV_IMPORT` (défaut du paramètre), synchro Tradovate
+→ `BROKER_SYNC`, import historique → `BROKER_HISTORY`.
+
+À quoi ça sert : un écart de frais ou de P&L ne se diagnostique pas pareil selon qu'il vient
+d'une saisie, d'un fichier de l'utilisateur, de la séance broker ou d'un rapport mensuel.
+⚠️ Elle ne remplace pas `importHash` : celui-ci reste la clé de dédup et distingue déjà
+« importé » de « saisi à la main ». `source` dit **lequel** des imports.
+
+Migration `20260926120000_trade_source` : purement additive, colonne avec DÉFAUT donc aucune
+réécriture de table ni verrou long. L'existant devient `MANUAL` — on ne sait pas
+rétroactivement d'où vient une ligne, et c'est la valeur la moins mensongère.
+
+---
+
 ## Migrations — bonnes pratiques
 
 - Toujours nommer clairement : `add_stripe_customer_id`, `add_trade_tags`
@@ -290,3 +309,11 @@ const trades = await prisma.trade.findMany({
 > vus au consentement. Cascade explicite sur `User` ET `TradingAccount` (migration
 > `20260910182250_broker_connection`). Le seed démo en crée une (placeholder de token, jamais
 > déchiffré : le compte démo ne peut pas synchroniser).
+>
+> `historyImportedAt` (migration `20260926230000_broker_history_imported_at`, nullable, ajout
+> additif) = date du premier import RÉUSSI de tout l'historique du compte, remonté jusqu'à sa
+> création. Vide = le passé n'a jamais été remonté entièrement : le **cron de fond** le rattrape
+> (≤ 2 par passage), jamais le bouton « Synchroniser » — 24 fenêtres coûtent 11 s d'appels et
+> personne ne doit attendre ça devant son écran. Ne jamais le poser après un import d'un seul mois
+> ni quand une fenêtre a échoué : le trou ne serait plus jamais comblé. Cf. `nestjs.md`,
+> profondeur de l'historique.

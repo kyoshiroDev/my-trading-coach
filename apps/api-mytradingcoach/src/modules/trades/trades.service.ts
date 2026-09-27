@@ -10,6 +10,7 @@ import {
   MoodState,
   ExecutionGrade,
   ExecutionMethod,
+  TradeSource,
 } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
@@ -83,7 +84,7 @@ export class TradesService {
   async create(
     userId: string,
     dto: CreateTradeDto,
-    opts: { deferBehavioral?: boolean; importHash?: string } = {},
+    opts: { deferBehavioral?: boolean; importHash?: string; source?: TradeSource } = {},
   ) {
     // Le setup doit appartenir au user et être actif (sinon 400). Validation
     // STRICTE conservée pour la création manuelle : `setupId` y est obligatoire
@@ -130,6 +131,8 @@ export class TradesService {
     const trade = await this.prisma.trade.create({
       data: {
         ...dto,
+        // Provenance : MANUAL par défaut, les imports la passent explicitement.
+        source: opts.source ?? TradeSource.MANUAL,
         entry: dto.entry ?? 0,
         pnl: dto.pnl ?? pnl,
         riskReward: rr,
@@ -199,6 +202,8 @@ export class TradesService {
   async importTrades(
     userId: string,
     dtos: Partial<CreateTradeDto>[],
+    /** D'où vient ce lot : fichier de l'utilisateur, séance du broker, ou son historique. */
+    source: TradeSource = TradeSource.CSV_IMPORT,
   ): Promise<{
     created: number;
     duplicates: number;
@@ -248,6 +253,7 @@ export class TradesService {
         const t = await this.create(userId, dto as CreateTradeDto, {
           deferBehavioral: true,
           importHash: hash,
+          source,
         });
         if (t.accountId) affectedAccounts.add(t.accountId);
         created++;

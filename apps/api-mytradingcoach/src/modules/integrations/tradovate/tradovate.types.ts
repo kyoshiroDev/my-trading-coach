@@ -14,6 +14,13 @@ export interface TradovateAccount {
   active?: boolean;
   closed?: boolean;
   restricted?: boolean;
+  /**
+   * Date de CRÉATION du compte, en ISO UTC (`2026-02-12T14:11:13Z`). Non documentée mais servie
+   * par `/account/list` comme par `/account/item` (vérifié le 2026-09-26 sur trois comptes prop
+   * firm). C'est la borne basse de l'import d'historique : inutile de demander des rapports
+   * antérieurs à l'existence du compte, et surtout on n'a plus à deviner une profondeur.
+   */
+  timestamp?: string;
 }
 
 export interface TradovatePosition {
@@ -112,4 +119,11 @@ export interface ExternalAccountRef {
   id: string;
   name: string;
   env: TradovateEnv;
+  /**
+   * `userId` Tradovate du compte = LE LOGIN. Plusieurs comptes (donc plusieurs connexions MTC)
+   * peuvent le partager, et Tradovate fait tourner le refresh_token par login, pas par compte :
+   * c'est la clé qui permet de sérialiser les renouvellements et de propager le token aux
+   * connexions sœurs. Optionnel : les connexions d'avant PROMPT-216 ne l'ont pas.
+   */
+  userId?: string;
 }

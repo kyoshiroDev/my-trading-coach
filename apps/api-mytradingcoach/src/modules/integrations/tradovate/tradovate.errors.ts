@@ -14,6 +14,8 @@ export type TradovateErrorCode =
   | 'TRADOVATE_RECONNECT_REQUIRED'
   | 'TRADOVATE_ACCOUNT_SELECTION_REQUIRED'
   | 'TRADOVATE_ACCOUNT_NOT_FOUND'
+  | 'TRADOVATE_ACCOUNT_TEMPORARILY_MISSING'
+  | 'TRADOVATE_REFRESH_DEFERRED'
   | 'TRADOVATE_ACCOUNT_SUSPENDED'
   | 'TRADOVATE_RATE_LIMITED'
   | 'TRADOVATE_SYNC_IN_PROGRESS'
@@ -36,9 +38,21 @@ const MESSAGES: Record<TradovateErrorCode, [HttpStatus, string]> = {
     HttpStatus.CONFLICT,
     'Plusieurs comptes Tradovate sont disponibles : choisis celui à synchroniser avec ce compte.',
   ],
+  // Le token fonctionne : c'est le COMPTE qui n'existe plus chez Tradovate. Se reconnecter n'y
+  // changerait rien (bug prod du 2026-09-26) — on propose le choix d'un autre compte du login.
   TRADOVATE_ACCOUNT_NOT_FOUND: [
     HttpStatus.NOT_FOUND,
-    "Le compte Tradovate choisi n'est plus accessible avec cette connexion. Reconnecte ton compte.",
+    "Ce compte n'existe plus chez Tradovate (clôturé ou remplacé par ta prop firm). Choisis le compte à synchroniser.",
+  ],
+  TRADOVATE_ACCOUNT_TEMPORARILY_MISSING: [
+    HttpStatus.SERVICE_UNAVAILABLE,
+    "Ce compte n'apparaît momentanément plus chez Tradovate. On réessaie automatiquement, rien à faire de ton côté.",
+  ],
+  // Tradovate refuse un renouvellement alors qu'il annonce le refresh_token encore valide : refus
+  // passager (mesuré), la connexion est gardée et retentée à chaque passage des crons.
+  TRADOVATE_REFRESH_DEFERRED: [
+    HttpStatus.SERVICE_UNAVAILABLE,
+    'Tradovate refuse temporairement le renouvellement de ta connexion. On réessaie automatiquement, rien à faire de ton côté.',
   ],
   TRADOVATE_ACCOUNT_SUSPENDED: [
     HttpStatus.FORBIDDEN,

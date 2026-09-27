@@ -562,7 +562,8 @@ Toujours passer `{ userId, feature }` dans les options. Features valides :
 | `DailyRecapCron` | `30 17 * * 1-5` Paris | Génère recap + envoie email aux users actifs du jour |
 | `EcoCalendarCron` | `0 7 * * 1-5` Paris | Pré-génère le calendrier pour tous les users Premium |
 | `DemoSeedCron` | `20 3 * * *` Paris | Re-seed le compte démo (dates relatives recalculées) |
-| `TradovateTokenRefreshCron` | `17 */6 * * *` Paris | Renouvelle les tokens Tradovate qui expirent sous 18 h (aucun import de trades, hors démo) |
+| `TradovateTokenRefreshCron` | `17 * * * *` Paris | Renouvelle les tokens Tradovate qui expirent sous 18 h + seconde chance des « à reconnecter » encore promises (aucun import de trades, hors démo) |
+| `TradovateBackgroundRefreshCron` | `*/15 * * * *` Paris | Synchro de fond des connexions sans synchro depuis 12 min (hors démo, hors app ouverte). **Au 1er passage de chaque heure seulement** (minute < 15), ajoute le rattrapage du mois par la Reporting API, et remonte tout le passé (≤ 2 par passage) des connexions dont `historyImportedAt` est vide |
 
 ### Compte démo : le seed doit rester récurrent (PROMPT-192)
 
@@ -711,6 +712,56 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
   la contrainte d'unicité reste le filet.
 - **Pas de PremiumGuard** : même règle que l'import CSV d'un broker connu (cf. `plans.md`).
 
+**Quand les trades sont-ils récupérés ?** (PROMPT-217)
+
+| Déclencheur | Séance en cours (Trade API) | Mois en cours (Reporting API) |
+|---|---|---|
+| Connexion d'un compte Tradovate | ✅ | ✅ **toute la vie du compte** |
+| Ouverture de l'app (`catchUp`) | ✅ si > 1 min | ✅ **si > 30 min d'absence** |
+| Trade en direct, app ouverte | ✅ ~1,5 s | ❌ |
+| Cron de fond, toutes les 15 min | ✅ si > 12 min | ❌ |
+| Cron de fond, 1er passage de l'heure | ✅ (sauf app ouverte) | ✅ **y compris app ouverte** |
+| Bouton « Synchroniser » | ✅ | ✅ |
+| Cron, 1er passage de l'heure, `historyImportedAt` vide | — | ✅ **toute la vie du compte**, ≤ 2 par passage |
+
+**Profondeur de l'historique = la vie du compte, jamais une constante.** Tradovate date le compte
+(`timestamp` sur `/account/list`, servi aussi par `/account/item` — non documenté, vérifié le
+2026-09-26 sur 3 comptes prop firm). `depthFromCreation` en déduit le nombre de fenêtres
+mensuelles ; l'appel existait déjà pour relire le nom du compte, donc zéro requête de plus.
+Conséquences à connaître :
+
+- L'arrêt « 2 mois vides d'affilée » ne s'applique **que** faute de date de création. Avec une
+  date, il est désactivé — et ce n'est pas cosmétique : compte mesuré créé le 2026-02-12, premier
+  trade en juillet, soit **5 mois vides entre les deux** que l'arrêt rendait inatteignables.
+- Sans date exploitable (champ absent, ou postérieure à maintenant) → repli `HISTORY_FALLBACK_MONTHS`
+  (6) **et** arrêt aux mois vides : c'est alors la seule borne disponible.
+- `HISTORY_MAX_MONTHS` (60) est un garde-fou contre une date aberrante, pas une politique.
+- **Une profondeur demandée est un contrat, jamais « corrigée ».** `{ months: 1 }` reste un mois,
+  même sur une connexion qui n'a jamais eu son passé : cet appelant, c'est le bouton
+  « Synchroniser », donc quelqu'un qui attend. 24 fenêtres = 11 s d'appels mesurés + l'écriture en
+  base : un clic de 2 s deviendrait un clic de 30 s. **Une profondeur pleine ne se tire que là où
+  personne n'attend** : à la connexion d'un compte (non attendu, `void` dans le callback OAuth) et
+  dans le cron de fond.
+- **`historyImportedAt` est l'état de ce rattrapage** : vide = le passé n'a jamais été remonté
+  entièrement. Le cron (1er passage de l'heure) en traite au plus `FULL_BACKFILLS_PER_PASS` (2),
+  ce qui étale un déploiement trouvant N connexions au lieu d'empiler N imports dans un passage et
+  de chevaucher le suivant. Le marqueur n'est posé que par un import de profondeur pleine **et**
+  si aucune fenêtre n'a échoué — sinon le trou ne serait plus jamais comblé.
+- Un mois vide ne coûte qu'**un** appel (pas de rapport `Fills`), donc remonter loin est bon marché.
+
+La raison d'être du rattrapage mensuel : **la Trade API ne montre que la séance ouverte et ne
+rejoue JAMAIS une séance passée**. Tout ce qui est tradé pendant que l'API est arrêtée
+(déploiement, panne) serait perdu définitivement. Le rapport mensuel, lui, le contient.
+D'où aussi le seuil des 30 min à l'ouverture : c'est le filet d'auto-réparation après une panne
+du worker cron — il suffit qu'un utilisateur ouvre l'app pour que son mois soit rattrapé.
+
+⚠️ **Le cron saute la SÉANCE d'un utilisateur en direct, jamais son rattrapage mensuel.** Le
+WebSocket ne fait que la séance, et le filtre de fraîcheur exclurait toujours un utilisateur
+actif : sans traitement particulier, celui qui laisse l'app ouverte toute la journée serait le
+SEUL à ne jamais recevoir le filet. Au 1er passage de l'heure, le cron interroge donc TOUTES les
+connexions (aucun filtre de fraîcheur) et appelle directement `importForAccount` pour celles qui
+sont en direct.
+
 **Spécificités Tradovate (vérifiées)**
 - OAuth **toujours sur Live** (`trader.tradovate.com/oauth`, `live.tradovateapi.com/auth/oauthtoken`,
   échange en `x-www-form-urlencoded`). Les **données** sont sur 2 hôtes : `live` (comptes réels)
@@ -729,13 +780,49 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
     fois après 2 s, en **relisant la connexion** (un autre worker du cluster a pu renouveler
     entre-temps : son access token est alors pris tel quel, sans rappeler Tradovate).
     `NEEDS_RECONNECT` n'est posé que si **deux** refus ET repli renew indisponible ou refusé.
-  - ⚠️ **`refreshTokenExpiresAt` n'est pas une autorité.** Tradovate annonce ≈ 26 h (et non les
-    14 j de sa doc) puis refuse parfois le token bien avant. On tente dès qu'un refresh token
-    existe et c'est **sa réponse** qui tranche.
+  - ⚠️ **`refreshTokenExpiresAt` n'est pas une autorité pour TENTER.** Tradovate annonce ≈ 25 h
+    (et non les 14 j de sa doc) puis refuse parfois le token bien avant. On tente dès qu'un refresh
+    token existe.
+  - **Mais c'est elle qui décide de CONDAMNER** (correctif du 2026-09-26, objectif produit : « connecté
+    tant que l'utilisateur ne clique pas sur Déconnecter »). Refus + repli impossible alors que
+    `refreshTokenExpiresAt` est dans le futur → `TRADOVATE_REFRESH_DEFERRED` (503, connexion gardée
+    `CONNECTED`, retentée à chaque passage) ; `NEEDS_RECONNECT` seulement une fois l'échéance
+    passée (ou inconnue). Une vraie révocation est donc constatée au plus ~25 h après.
+  - ⚠️ **Pause de 10 min après un refus passager** (`REFUSAL_COOLDOWN_S`, clé Redis
+    `tradovate:refresh-refused:<id>`) : pendant la pause, `getAccessToken` lève `REFRESH_DEFERRED`
+    et `refreshNow` rend `retry` **sans appeler Tradovate**. Sans elle, le WebSocket (backoff
+    plafonné à 60 s) redemandait un refresh deux fois par minute pendant des heures (beta,
+    2026-09-26). Levée par tout renouvellement réussi ; ne masque jamais un refresh_token échu.
+  - ⚠️ **Deux comptes MTC sur le MÊME login Tradovate** (vu en beta avec les comptes de test) :
+    la propagation se limite au même user MTC, donc leurs copies s'invalident mutuellement quand
+    l'une renouvelle. Cas marginal chez de vrais users ; ne pas étendre la propagation entre users
+    sans décision explicite (ce serait partager des tokens entre comptes MTC).
+  - Un **401 sur une lecture de données** (token pourtant frais) ne condamne plus : `lastSyncError`
+    + 503. Seul `getAccessToken` décide de `NEEDS_RECONNECT`, et `markNeedsReconnect(id, cause)`
+    **journalise la cause** (warn « → À RECONNECTER (…) »).
   - ⚠️ **`HTTP 200` + `{"error":"invalid_token"}`** : le refus n'est pas un 401, et il est souvent
     **transitoire** (mesuré : refus d'un token jamais utilisé émis 1 h 50 plus tôt).
-  - `TradovateTokenRefreshCron` (toutes les 6 h, celles qui expirent sous 18 h) n'est PAS ce qui
-    maintient la connexion au quotidien : c'est le cron de fond / la synchro qui rafraîchissent.
+  - `TradovateTokenRefreshCron` (**toutes les heures** depuis le 2026-09-26, celles qui expirent
+    sous 18 h) est le **seul** entretien d'un utilisateur dont l'app reste ouverte : le cron de fond
+    le saute (`isLive`) et le WebSocket ne redemande un token qu'à sa réouverture. Il ne regarde
+    jamais la présence. Il fait aussi la **seconde chance** : `NEEDS_RECONNECT` + refresh_token
+    encore promis → `tryRevive` (refresh sous verrou de login ; accepté → `CONNECTED`).
+  - **Portée LOGIN, pas connexion** (correctif du 2026-09-26). Tradovate fait tourner le
+    refresh_token par **login** (`userId` Tradovate) ; un login porte souvent plusieurs comptes,
+    donc plusieurs `BrokerConnection`, chacune avec SA copie des tokens. La première qui renouvelle
+    invalide celle des autres — c'est ce qui tuait 2 des 5 connexions d'un ambassadeur.
+    - `externalUserId` (colonne qui existait mais n'était **jamais écrite**) est posé au
+      consentement et au choix du compte, et **rattrapé** par la synchro via `rememberLogin`
+      (le `/account/list` qu'elle fait déjà porte le `userId`) pour les connexions antérieures.
+    - Verrou `tradovate:login:<externalUserId>` (TTL 30 s) autour du SEUL renouvellement — distinct
+      du verrou de synchro `tradovate:sync:<id>` (TTL 120 s), pour que deux comptes d'un même login
+      puissent continuer à se synchroniser en parallèle.
+    - Verrou déjà pris → on attend puis on relit : la sœur a propagé, son access token est en base.
+      Si elle n'a rien donné, on tente quand même (jamais bloqué par un verrou).
+    - Après un renouvellement réussi, `propagateToSiblings` écrit les nouveaux tokens sur toutes les
+      connexions du même login **et les repasse `CONNECTED`** : une sœur condamnée par une rotation
+      concurrente l'avait été à tort, le login vient de répondre.
+    - Sans `externalUserId`, aucune propagation : on ne devine pas les liens de parenté.
   - Détail cluster : en prod l'API tourne en **4 workers**, seul le worker 0 porte
     `IS_CRON_WORKER=true` (`main.ts`, `cluster.fork`). `docker exec printenv IS_CRON_WORKER`
     répond « absent » — il lit l'env du conteneur, pas celui du worker. Vérifier via
@@ -767,8 +854,19 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
   41 → 404). À 100 par lot, la synchro d'un compte actif échouait entièrement. Un fill
   introuvable n'ignore que sa paire (`skipped`), jamais toute la synchro.
 - **Un 404 de lecture n'est pas « compte introuvable »** : `TradovateApiError('not_found')`
-  → `TRADOVATE_UNAVAILABLE`. Seule l'absence du compte dans `account/list` (synchro, choix du
-  compte) lève `TRADOVATE_ACCOUNT_NOT_FOUND`, qui invite à reconnecter.
+  → `TRADOVATE_UNAVAILABLE`.
+- **Compte absent de `account/list` ≠ déconnexion** (bug prod du 2026-09-26 : un compte prop firm
+  de Val a disparu de son login pendant la maintenance du week-end, le token marchait toujours,
+  l'app lui disait « reconnecte-toi »). `handleMissingAccount` :
+  - présent sur l'**autre hôte** → `externalEnv` corrigé, la synchro continue ;
+  - absent depuis moins de `ACCOUNT_GONE_GRACE_MS` (2 h sans synchro réussie) →
+    `TRADOVATE_ACCOUNT_TEMPORARILY_MISSING` (503), rien de détaché ;
+  - absent durablement → connexion **détachée** (`externalAccountId/Env/Name = null`, reste
+    `CONNECTED`), `availableAccounts` relu sur les 2 hôtes, `TRADOVATE_ACCOUNT_NOT_FOUND` (« choisis
+    le compte à synchroniser »). Le front affiche le sélecteur : `needsAccountSelection` vaut
+    désormais `!externalAccountId && available.length >= 1` (même avec un seul compte restant :
+    on ne verse jamais les trades d'un autre compte broker sans le demander). `selectAccount`
+    efface `lastSyncError`.
 - P&L = **brut** `(vente − achat) × qty × valuePerPoint`, frais dans `commission` (comme le CSV).
   `tradedAt` tronqué à la seconde (granularité de l'export).
 - **Rapprochement CSV ↔ API** : l'export Performance est en heure LOCALE sans fuseau, parsée
@@ -778,7 +876,12 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
   CSV importé avant la synchro, ou après (avant le 14/09/2026, seul le premier sens était
   couvert : un CSV importé après la synchro recréait les trades en double si le Tradovate de
   l'utilisateur n'affichait pas l'heure du serveur).
-- ⚠ **Profondeur d'historique non garantie** : l'API REST pourrait ne renvoyer que les
+- ✅ **Profondeur d'historique : résolue** par la Reporting API, bornée par la date de création du
+  compte (cf. plus haut). Mesuré le 2026-09-26 : la sonde remonte jusqu'à 24 mois et ne renvoie
+  rien avant le premier trade réel — la profondeur servie est donc tout ce que le compte contient.
+  Reste non testé : un compte de plus de 3 mois d'ancienneté de données, et l'archivage à 10 jours
+  d'un compte inactif (documenté, jamais vérifié) après quoi l'historique devient illisible.
+- ⚠ **Profondeur d'historique non garantie (Trade API)** : l'API REST pourrait ne renvoyer que les
   positions / paires récentes. À mesurer en beta sur un vrai compte ; si c'est le cas, un
   import CSV reste nécessaire pour le passé et la synchro sert au fil de l'eau.
   (Vérifié : la synchro n'envoie AUCUNE borne de date — `position/list` et `fillPair/list` n'ont

@@ -6,6 +6,8 @@ import { AuthModule } from '../../auth/auth.module';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateSyncService } from './tradovate-sync.service';
+import { TradovateReportingClient } from './tradovate-reporting.client';
+import { TradovateHistoryService } from './tradovate-history.service';
 import { TradovateTokenRefreshCron } from './tradovate-token-refresh.cron';
 import { TradovateBackgroundRefreshCron } from './tradovate-background-refresh.cron';
 import { LIVE_SOCKET_FACTORY, TradovateLiveService } from './tradovate-live.service';
@@ -27,6 +29,9 @@ import { TradovateCallbackController, TradovateController } from './tradovate.co
     TradovateApiClient,
     TradovateConnectionService,
     TradovateSyncService,
+    // Historique par la Reporting API (PROMPT-217) : la Trade API ne voit que la séance.
+    TradovateReportingClient,
+    TradovateHistoryService,
     TradovateTokenRefreshCron,
     // Temps réel (PROMPT-210 live) : WebSocket Tradovate calé sur la présence dans l'app.
     TradovateLiveService,

@@ -21,6 +21,20 @@ export const LIVE_LEASE_RENEW_MS = 10_000;
 export const LIVE_EVENT_DEBOUNCE_MS = 1_500;
 /** Rattrapage inutile si une synchro vient d'avoir lieu (autre onglet, retour OAuth). */
 export const CATCH_UP_FRESH_MS = 60_000;
+/**
+ * Au-delà de cette absence, le rattrapage d'ouverture retire AUSSI le mois en cours par la
+ * Reporting API, pas seulement la séance.
+ *
+ * Pourquoi : la Trade API ne montre que la séance ouverte et ne rejoue JAMAIS une séance
+ * passée. Si le cron de fond n'a pas tourné pendant que l'utilisateur tradait — API arrêtée,
+ * déploiement, panne —, ses trades de la veille sont introuvables par ce chemin. Le mois, lui,
+ * les contient. Ouvrir l'app après une absence répare donc le trou, sans attendre le passage
+ * horaire : c'est le filet d'auto-réparation après n'importe quelle panne du worker cron.
+ *
+ * 30 min : assez long pour qu'un simple aller-retour entre onglets ne déclenche rien, assez
+ * court pour couvrir toute vraie absence.
+ */
+export const CATCH_UP_HISTORY_AFTER_MS = 30 * 60_000;
 const BUSY_RETRY_MS = 3_000;
 const BUSY_RETRIES = 3;
 
@@ -141,8 +155,13 @@ export class TradovateLiveService implements OnModuleDestroy {
 
   private async catchUp(userId: string, conns: BrokerConnection[]): Promise<void> {
     for (const c of conns) {
-      if (c.lastSyncAt && Date.now() - c.lastSyncAt.getTime() < CATCH_UP_FRESH_MS) continue;
-      await this.syncAndNotify(userId, c.accountId, 'catch-up');
+      const depuis = c.lastSyncAt ? Date.now() - c.lastSyncAt.getTime() : Infinity;
+      if (depuis < CATCH_UP_FRESH_MS) continue;
+      // Retour après une vraie absence : on retire aussi le mois, au cas où le cron n'aurait
+      // pas tourné pendant qu'il tradait (cf. CATCH_UP_HISTORY_AFTER_MS).
+      await this.syncAndNotify(userId, c.accountId, 'catch-up', 0, {
+        history: depuis >= CATCH_UP_HISTORY_AFTER_MS,
+      });
     }
   }
 
@@ -151,9 +170,10 @@ export class TradovateLiveService implements OnModuleDestroy {
     accountId: string,
     source: LiveTradesEvent['source'],
     attempt = 0,
+    options: { history?: boolean } = {},
   ): Promise<void> {
     try {
-      const r = await this.sync.sync(userId, accountId);
+      const r = await this.sync.sync(userId, accountId, options);
       if (r.created > 0) {
         this.emitter(userId, 'tradovate:trades', {
           accountId, created: r.created, duplicates: r.duplicates, total: r.total, source,
@@ -165,7 +185,7 @@ export class TradovateLiveService implements OnModuleDestroy {
         // Une autre synchro tient le verrou (onglet, bouton, cron) : on repasse juste après.
         const t = setTimeout(() => {
           this.pending.delete(t);
-          void this.syncAndNotify(userId, accountId, source, attempt + 1);
+          void this.syncAndNotify(userId, accountId, source, attempt + 1, options);
         }, BUSY_RETRY_MS);
         this.pending.add(t);
       } else if (code === 'TRADOVATE_RECONNECT_REQUIRED') {
