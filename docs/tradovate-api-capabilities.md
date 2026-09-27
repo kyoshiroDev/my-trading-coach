@@ -540,3 +540,82 @@ est absente.
 
 Restent non mesurés, faute de compte assez ancien : la rétention réelle de Tradovate au-delà de
 3 mois de données, et l'archivage à 10 jours d'un compte inactif (documenté, jamais vérifié).
+
+## 11. SL / TP / RR : possible en direct, impossible dans l'historique
+
+Deux constats semblaient se contredire (« récupérables via `Stop Price` / `Limit Price` » vs
+« aucun lien OCO »). Ils regardaient deux APIs différentes. Voici la mesure, faite le 2026-09-27.
+
+### Le rapport `Orders` existe, mais sans lien entre les jambes
+
+`Orders` est un nom de rapport valide de la Reporting API (`Order`, `OrderHistory`, `Trades`,
+`Statement` répondent « Unknown report »). Ses **32 colonnes** :
+
+```
+orderId · Account · Order ID · B/S · Contract · Product · Product Description · avgPrice
+filledQty · Fill Time · lastCommandId · Status · _priceFormat · _priceFormatType · _tickSize
+spreadDefinitionId · Version ID · Timestamp · Date · Quantity · Text · Type · Limit Price
+Stop Price · decimalLimit · decimalStop · Filled Qty · Avg Fill Price · decimalFillAvg
+Venue · Notional Value · Currency
+```
+
+Il porte donc bien `Stop Price` et `Limit Price` — mais **aucun champ de liaison** : pas d'`ocoId`,
+pas de `parentId`. `lastCommandId` est unique par ordre (726 ordres → 726 valeurs distinctes) et
+`spreadDefinitionId` est vide. Rattacher un stop à son trade depuis l'historique exigerait une
+heuristique de proximité (même contrat, même quantité, sens opposé, annulé à la seconde près de la
+sortie). **Non retenu** : une association fausse n'affiche pas une case vide, elle affiche un SL, un
+TP et un RR faux présentés comme des faits.
+
+### La liaison existe côté Trade API
+
+Le spec OpenAPI (embarqué dans le bundle de `api.tradovate.com`) donne deux entités distinctes :
+
+```
+Order        : id · accountId · contractId · spreadDefinitionId · timestamp · action (Buy|Sell)
+               ordStatus (Canceled|Filled|Working|…) · executionProviderId
+               ocoId · parentId · linkedId · admin
+OrderVersion : id · orderId · orderQty
+               orderType (Limit|MIT|Market|QTS|Stop|StopLimit|TrailingStop|TrailingStopLimit)
+               price · stopPrice · maxShow · pegDifference · timeInForce · expireTime · text
+PlaceOcoResult : failureReason · failureText · orderId · ocoId
+```
+
+À retenir : **`Order` porte le lien, `OrderVersion` porte les prix et le type.** Il faut les deux.
+Et `parentId` compte plus qu'`ocoId` : `ocoId` lie les deux protections entre elles, `parentId` les
+lie à l'ordre d'entrée — le seul qu'on connaisse par le fill.
+
+Mais la Trade API est bornée à la séance : `/order/item?id=<ordre d'août>` → **404**,
+`/order/list` et `/orderVersion/list` → `200 []`. Donc lisible en direct, jamais a posteriori.
+
+### Et personne ne pose de bracket
+
+| Compte | Stop | Limit | Market | Brackets |
+|---|---|---|---|---|
+| Apex d'un ambassadeur (août) | **1** | 716 | 9 | aucun |
+| Apex d'un autre trader (sept.) | **0** | 110 | 0 | aucun |
+
+L'unique ordre stop est **isolé** : aucun autre ordre à ±5 s, le suivant 52 minutes plus tard. Ce
+n'était pas une jambe de bracket. Les deux traders gèrent leur risque à la main, en posant et
+annulant des ordres limites (434 annulations sur 726 ; 52 sur 110).
+
+**Conclusion.** Pour les trades `BROKER_HISTORY`, l'absence de SL/TP/RR est une **limite définitive
+de l'API**, pas un bug à corriger. Pour `BROKER_SYNC`, la reconstitution est possible via
+`Order.parentId` + `Order.ocoId` + `OrderVersion`, mais reste **non validée sur données réelles**
+faute de bracket existant — et ne servirait aucun utilisateur connu aujourd'hui.
+
+## 12. `account.userId` n'est pas le trader
+
+Piège coûteux, mesuré le 2026-09-27. L'entité compte porte un `userId` qu'il est tentant de prendre
+pour le login. C'est le **propriétaire du compte chez le broker**, et sur un compte prop firm c'est
+la **firme** :
+
+```
+jeton du trader A → /user/list : {id: 5751613, name: "APEX_13679",  organizationId: 20}
+jeton du trader B → /user/list : {id: 5976756, name: "APEX_428047", organizationId: 20}
+comptes des deux → account.userId = 699523      (le même)
+/user/item?id=699523 → 404                       (ce n'est pas un trader)
+```
+
+Deux traders Apex sans aucun lien partagent donc ce `userId`. **Le login, c'est `/user/list`**, qui
+rend l'utilisateur authentifié par le jeton (un seul élément). Utiliser `account.userId` mettait
+tous les traders d'une même prop firm derrière un unique verrou de renouvellement.
