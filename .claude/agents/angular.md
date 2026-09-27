@@ -717,11 +717,16 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
 
 | Lib | Import | Contenu |
 |---|---|---|
-| `libs/front/ui` | `@mtc/front-ui` | `foundations.css` (échelles, focus clavier, mouvement réduit, `.sr-only`), `ConfirmService` + `<mtc-confirm-dialog>`, `<mtc-error-state>` |
+| `libs/front/ui` | `@mtc/front-ui` | `foundations.css` (échelles, focus clavier, mouvement réduit, `.sr-only`), `ConfirmService` + `<mtc-confirm-dialog>`, `<mtc-error-state>`, directive `mtcDialog` |
 | `libs/front/auth` | `@mtc/front-auth` | `jwtRefreshInterceptor` + jeton `AUTH_TOKEN_SOURCE` |
 
 - **Jamais `window.confirm()`** : `await inject(ConfirmService).ask({ title, message, danger })`.
   Le dialogue est monté une fois dans la racine (app et admin).
+- **Toute modale** porte `role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="fermer()"` sur
+  la boîte (pas sur le fond) : focus envoyé dedans, Tab piégé, Échap ferme, focus rendu à la
+  fermeture. Titre relié par `aria-labelledby`. Ne pas recoder ce comportement à la main.
+- Dans les libs, sorties en `@Output() … = new EventEmitter()` : leurs tests tournent en JIT, qui
+  ne voit pas `output()`.
 - **Toute donnée chargée affiche son échec** : `@if (loadError()) { <mtc-error-state (retry)="reload()" /> }`
   avec `loadError = computed(() => !!resource.error())` (Dashboard, Analytics, Scoring en exemple).
 - **Paiement** : `inject(BillingService).startCheckout(plan)` (`core/services/billing.service.ts`),

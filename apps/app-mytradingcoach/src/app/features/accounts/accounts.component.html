@@ -327,10 +327,10 @@
 @if (formOpen()) {
   <div class="modal-overlay" role="button" tabindex="-1"
        (click)="closeForm()" (keydown.escape)="closeForm()">
-    <div class="modal" role="dialog"
+    <div class="modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="closeForm()" aria-labelledby="account-form-title"
          (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
       <div class="modal-head">
-        <h3 class="modal-title">{{ editingId() ? 'Modifier le compte' : 'Nouveau compte' }}</h3>
+        <h3 id="account-form-title" class="modal-title">{{ editingId() ? 'Modifier le compte' : 'Nouveau compte' }}</h3>
         <button class="modal-x" (click)="closeForm()"><svg [lucideIcon]="XIcon" [size]="16"></svg></button>
       </div>
 

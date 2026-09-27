@@ -8,6 +8,7 @@ import {
 import { TradovateStore } from '../../../core/stores/tradovate.store';
 import type { TradovateOrigin } from '../../../core/api/tradovate.api';
 import { apiErrorMessage } from '../../../core/utils/api-error';
+import { DialogDirective } from '@mtc/front-ui';
 
 /**
  * Écran de réassurance AVANT de quitter l'app pour Tradovate (PROMPT-208, écran 2).
@@ -19,7 +20,7 @@ import { apiErrorMessage } from '../../../core/utils/api-error';
  */
 @Component({
   selector: 'mtc-tradovate-connect-modal',
-  imports: [LucideDynamicIcon],
+  imports: [DialogDirective, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tradovate-connect-modal.component.html',
   styleUrl: './tradovate-connect-modal.component.css',

@@ -28,6 +28,7 @@ import { CreateTradeSchema } from '../../core/schemas/trade.schema';
 import { SetupsStore } from '../../core/stores/setups.store';
 import { PnlFormatPipe } from '../../shared/pipes';
 import type { TradeSide } from '@mtc/shared';
+import { DialogDirective } from '@mtc/front-ui';
 
 const EMOTIONS: NonNullable<Trade['emotion']>[] = [
   'CONFIDENT',
@@ -60,7 +61,7 @@ type NumericField =
 
 @Component({
   selector: 'mtc-trade-form',
-  imports: [FormsModule, TitleCasePipe, DecimalPipe, LucideDynamicIcon, PnlFormatPipe],
+  imports: [DialogDirective, FormsModule, TitleCasePipe, DecimalPipe, LucideDynamicIcon, PnlFormatPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './trade-form.component.html',
   styleUrl: './trade-form.component.css',

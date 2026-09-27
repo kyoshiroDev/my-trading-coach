@@ -288,10 +288,10 @@
 @if (demo.showSignupPrompt()) {
   <div class="demo-modal-overlay" role="button" tabindex="-1"
        (click)="demo.dismiss()" (keydown.escape)="demo.dismiss()">
-    <div class="demo-modal" role="dialog"
+    <div class="demo-modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="demo.dismiss()" aria-labelledby="demo-modal-title"
          (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
       <div class="demo-modal-emoji">🚀</div>
-      <h2 class="demo-modal-title">Crée ton compte pour aller plus loin</h2>
+      <h2 id="demo-modal-title" class="demo-modal-title">Crée ton compte pour aller plus loin</h2>
       <p class="demo-modal-text">
         En mode démo, les données sont en lecture seule. Crée ton compte gratuit
         pour logger tes vrais trades et débloquer ton coaching personnalisé.

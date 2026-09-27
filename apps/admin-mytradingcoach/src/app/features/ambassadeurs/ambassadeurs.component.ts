@@ -9,12 +9,12 @@ import { ChartCanvasComponent } from '../../shared/components/chart-canvas/chart
 import { CHART_COLORS, gridAxis, noLegend } from '../../shared/charts/chart-theme';
 import { PRICING_EUR } from '../../core/constants/pricing.const';
 import { apiErrorMessage } from '@mtc/shared';
-import { ConfirmService } from '@mtc/front-ui';
+import { ConfirmService, DialogDirective } from '@mtc/front-ui';
 
 @Component({
   selector: 'mtc-admin-ambassadeurs',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, DecimalPipe, ChartCanvasComponent],
+  imports: [DialogDirective, DatePipe, DecimalPipe, ChartCanvasComponent],
   styleUrl: './ambassadeurs.component.css',
   template: `
     <div class="screen">
@@ -107,7 +107,7 @@ import { ConfirmService } from '@mtc/front-ui';
 
       @if (showAdd()) {
         <div class="modal-overlay" role="button" tabindex="-1" (click)="closeAdd()" (keydown.escape)="closeAdd()">
-          <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+          <div class="modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="closeAdd()" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
             <div class="modal-head"><h3 class="modal-title">Ajouter un ambassadeur</h3><button class="modal-x" (click)="closeAdd()">✕</button></div>
             @if (addResult(); as r) {
               <div class="modal-body">
@@ -142,7 +142,7 @@ import { ConfirmService } from '@mtc/front-ui';
 
       @if (revokeTarget(); as target) {
         <div class="modal-overlay" role="button" tabindex="-1" (click)="cancelRevoke()" (keydown.escape)="cancelRevoke()">
-          <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+          <div class="modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="cancelRevoke()" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
             <div class="modal-head"><h3 class="modal-title">Retirer l'ambassadeur</h3><button class="modal-x" (click)="cancelRevoke()">✕</button></div>
             <div class="modal-body">
               <p class="confirm-text">Retirer le statut ambassadeur de <strong>{{ target.name ?? target.email }}</strong> ? Son rôle repasse à <strong>USER</strong> et son code <strong>{{ target.referralCode }}</strong> est libéré. Les commissions déjà enregistrées sont conservées.</p>

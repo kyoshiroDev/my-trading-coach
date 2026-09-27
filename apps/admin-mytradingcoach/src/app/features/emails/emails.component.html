@@ -34,7 +34,7 @@
 @if (previewCampaign()) {
   <div class="modal-overlay" role="button" tabindex="0" aria-label="Fermer"
     (click)="previewCampaign.set(null)" (keydown.escape)="previewCampaign.set(null)">
-    <div class="modal modal-preview" role="dialog" aria-modal="true"
+    <div class="modal modal-preview" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="previewCampaign.set(null)"
       (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
       <div class="modal-header">
         <h2 class="modal-title">{{ previewCampaign()!.emoji }} Aperçu · {{ previewCampaign()!.label }}</h2>
@@ -89,7 +89,7 @@
 @if (sendCampaignModal()) {
   <div class="modal-overlay" role="button" tabindex="0" aria-label="Fermer"
     (click)="sendCampaignModal.set(null)" (keydown.escape)="sendCampaignModal.set(null)">
-    <div class="modal modal-send" role="dialog" aria-modal="true"
+    <div class="modal modal-send" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="sendCampaignModal.set(null)"
       (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
       <div class="modal-header">
         <h2 class="modal-title">{{ sendCampaignModal()!.emoji }} {{ sendCampaignModal()!.label }}</h2>

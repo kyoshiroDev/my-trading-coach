@@ -33,6 +33,7 @@ import { TradovateConnectModalComponent } from '../../shared/components/tradovat
 import { apiErrorMessage } from '../../core/utils/api-error';
 import { TradesApi } from '../../core/api/trades.api';
 import { formatMoney } from '@mtc/shared';
+import { DialogDirective } from '@mtc/front-ui';
 
 export interface ImportResult {
   created: number;
@@ -58,7 +59,7 @@ const EMOTION_EMOJIS: Record<string, string> = {
 
 @Component({
   selector: 'mtc-csv-import',
-  imports: [LucideDynamicIcon, TradovateConnectModalComponent],
+  imports: [DialogDirective, LucideDynamicIcon, TradovateConnectModalComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './csv-import.component.css',
   templateUrl: './csv-import.component.html',

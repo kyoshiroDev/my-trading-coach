@@ -3,10 +3,10 @@
   <div class="confirm-overlay" role="button" tabindex="0"
        (click)="confirmCloseOpen.set(false)"
        (keyup.escape)="confirmCloseOpen.set(false)">
-    <div class="confirm-modal" role="dialog" aria-modal="true"
+    <div class="confirm-modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="confirmCloseOpen.set(false)" aria-labelledby="close-session-title"
          (click)="$event.stopPropagation()"
          (keydown)="$event.stopPropagation()">
-      <div class="cm-title">Clôturer la session ?</div>
+      <div id="close-session-title" class="cm-title">Clôturer la session ?</div>
       <div class="cm-sub">Tu pourras compléter ton débrief juste après.</div>
       <div class="cm-actions">
         <button class="cm-cancel" (click)="confirmCloseOpen.set(false)">Annuler</button>

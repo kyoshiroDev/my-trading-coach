@@ -376,7 +376,7 @@
 @if (confirmDeleteDay(); as day) {
   <div class="modal-overlay" role="button" tabindex="0" aria-label="Annuler"
     (click)="confirmDeleteDayKey.set(null)" (keydown.escape)="confirmDeleteDayKey.set(null)">
-    <div class="confirm-modal" role="dialog" aria-modal="true"
+    <div class="confirm-modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="confirmDeleteDayKey.set(null)"
       (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
       <div class="confirm-modal-header">
         <span class="confirm-modal-ic">🗑️</span>
@@ -413,7 +413,7 @@
 @if (reassignDay(); as day) {
   <div class="modal-overlay" role="button" tabindex="0" aria-label="Annuler"
     (click)="reassignDayKey.set(null)" (keydown.escape)="reassignDayKey.set(null)">
-    <div class="confirm-modal" role="dialog" aria-modal="true"
+    <div class="confirm-modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="reassignDayKey.set(null)"
       (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
       <div class="confirm-modal-header">
         <span class="confirm-modal-ic">↔️</span>

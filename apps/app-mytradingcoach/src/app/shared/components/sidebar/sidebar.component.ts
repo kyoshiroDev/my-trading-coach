@@ -41,10 +41,12 @@ import { LiveModeService } from '../../../core/services/live-mode.service';
 import { DemoService } from '../../../core/services/demo.service';
 import { OnboardingComponent } from '../../../features/onboarding/onboarding.component';
 import { environment } from '../../../../environments/environment';
+import { DialogDirective } from '@mtc/front-ui';
 
 @Component({
   selector: 'mtc-sidebar',
   imports: [
+    DialogDirective,
     RouterModule,
     RouterLink,
     RouterLinkActive,

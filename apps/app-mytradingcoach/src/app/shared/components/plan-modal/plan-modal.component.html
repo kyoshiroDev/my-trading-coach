@@ -7,10 +7,10 @@
   (keydown.enter)="close()"
   (keydown.escape)="close()"
 >
-  <div class="plan-modal-card" role="dialog" aria-modal="true">
+  <div class="plan-modal-card" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="close()" aria-labelledby="plan-modal-title">
     <!-- Header -->
     <div class="plan-modal-header">
-      <h2>Passer à Premium <svg [lucideIcon]="ZapIcon" [size]="19"></svg></h2>
+      <h2 id="plan-modal-title">Passer à Premium <svg [lucideIcon]="ZapIcon" [size]="19"></svg></h2>
       <p>1 mois offert · carte requise · annulable en un clic</p>
       <button class="plan-modal-close" (click)="close()" aria-label="Fermer">
         <svg [lucideIcon]="XIcon" [size]="13"></svg>

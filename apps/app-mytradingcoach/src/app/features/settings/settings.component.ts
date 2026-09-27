@@ -45,12 +45,13 @@ import {
   SetupFormValue,
   EditableSetup,
 } from '../../shared/components/setup-form-modal/setup-form-modal.component';
+import { DialogDirective } from '@mtc/front-ui';
 
 type ProfileTab = 'trader' | 'params';
 
 @Component({
   selector: 'mtc-settings',
-  imports: [TopbarComponent, DatePipe, DecimalPipe, PlanModalComponent, SetupFormModalComponent, LucideDynamicIcon],
+  imports: [DialogDirective, TopbarComponent, DatePipe, DecimalPipe, PlanModalComponent, SetupFormModalComponent, LucideDynamicIcon],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

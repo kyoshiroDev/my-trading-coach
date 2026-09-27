@@ -33,6 +33,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { TradovateLiveSocketService } from '../../core/services/tradovate-live-socket.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
 import type { ExecutionGrade, TradeSide } from '@mtc/shared';
+import { DialogDirective } from '@mtc/front-ui';
 
 type FilterSide = 'ALL' | TradeSide;
 type FilterResult = 'ALL' | 'WIN' | 'LOSS' | 'BREAKEVEN';
@@ -67,6 +68,7 @@ interface WeekGroup {
 @Component({
   selector: 'mtc-journal',
   imports: [
+    DialogDirective,
     DatePipe, DecimalPipe, TitleCasePipe, LucideDynamicIcon,
     TopbarComponent, TradeFormComponent, CsvImportComponent,
     PnlColorPipe, PnlFormatPipe, MoneyPipe, EmotionEmojiPipe, InfoTooltipComponent,

@@ -65,7 +65,7 @@ import {
   TradingAccount,
   AccountsApi,
 } from '../../core/api/accounts.api';
-import { ConfirmService } from '@mtc/front-ui';
+import { ConfirmService, DialogDirective } from '@mtc/front-ui';
 
 interface AccountFormState {
   label: string;
@@ -101,6 +101,7 @@ function emptyForm(): AccountFormState {
   selector: 'mtc-accounts',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    DialogDirective,
     DecimalPipe, FormsModule, LucideDynamicIcon, TopbarComponent, PlanModalComponent,
     TradovateConnectModalComponent, TradovateAccountPickerComponent,
   ],

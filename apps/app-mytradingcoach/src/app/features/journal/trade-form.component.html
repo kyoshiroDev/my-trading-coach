@@ -7,8 +7,8 @@
   >
     <div
       class="sheet"
-      role="dialog"
-      aria-modal="true"
+      role="dialog" aria-modal="true" mtcDialog
+      (mtcDialogClose)="dismissed.emit()"
       data-testid="trade-modal"
     >
       <div class="sheet-handle"></div>

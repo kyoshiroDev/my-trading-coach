@@ -13,13 +13,14 @@ import {
 } from '@lucide/angular';
 import { PRICING } from '../../../core/constants/pricing.const';
 import { BillingService } from '../../../core/services/billing.service';
+import { DialogDirective } from '@mtc/front-ui';
 
 type Interval = 'monthly' | 'yearly';
 type PlanId = `premium_${Interval}`;
 
 @Component({
   selector: 'mtc-plan-modal',
-  imports: [LucideDynamicIcon],
+  imports: [DialogDirective, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './plan-modal.component.html',
   styleUrl: './plan-modal.component.css',

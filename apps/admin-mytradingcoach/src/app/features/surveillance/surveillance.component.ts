@@ -14,6 +14,7 @@ import {
 } from '@lucide/angular';
 import { VpsApi, VpsStats, DockerContainer, HealthPoint } from '../../core/api/vps.api';
 import { AdminAuthService } from '../../core/auth/admin-auth.service';
+import { DialogDirective } from '@mtc/front-ui';
 
 type DockerAction = 'start' | 'stop' | 'restart';
 interface CtAction { icon: string; label: string; action: DockerAction; danger?: boolean; }
@@ -23,7 +24,7 @@ const GB = 1_073_741_824;
 
 @Component({
   selector: 'mtc-admin-surveillance',
-  imports: [DecimalPipe, LucideDynamicIcon],
+  imports: [DialogDirective, DecimalPipe, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './surveillance.component.css',
   template: `
@@ -127,7 +128,7 @@ const GB = 1_073_741_824;
     <!-- ── Modale de confirmation (actions PROD) ── -->
     @if (confirmState(); as cf) {
       <div class="modal-overlay" role="button" tabindex="-1" (click)="confirmState.set(null)" (keydown.escape)="confirmState.set(null)">
-        <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+        <div class="modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="confirmState.set(null)" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
           <div class="modal-head"><h3 class="modal-title">⚠️ Action en PRODUCTION</h3><button class="modal-x" (click)="confirmState.set(null)">✕</button></div>
           <div class="modal-body">
             <p class="confirm-text">Tu vas <strong>{{ actionLabel(cf.action) }}</strong> le container <strong>{{ cf.name }}</strong> en <strong class="text-red">PRODUCTION</strong>. Confirmer ?</p>
@@ -143,7 +144,7 @@ const GB = 1_073_741_824;
     <!-- ── Drawer logs (lecture seule) ── -->
     @if (logsContainer(); as lc) {
       <div class="drawer-overlay" role="button" tabindex="-1" (click)="closeLogs()" (keydown.escape)="closeLogs()">
-        <div class="drawer" role="dialog" aria-modal="true" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+        <div class="drawer" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="closeLogs()" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
           <div class="drawer-head">
             <span class="card-label">Logs · {{ lc }}</span>
             <div class="drawer-acts">

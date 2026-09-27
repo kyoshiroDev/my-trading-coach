@@ -15,10 +15,11 @@ import {
 } from '@lucide/angular';
 import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
 import { renderEmailMarkdown } from '@mtc/shared';
+import { DialogDirective } from '@mtc/front-ui';
 
 @Component({
   selector: 'mtc-admin-emails',
-  imports: [FormsModule, DatePipe, LucideDynamicIcon],
+  imports: [DialogDirective, FormsModule, DatePipe, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './emails.component.css',
   templateUrl: './emails.component.html',

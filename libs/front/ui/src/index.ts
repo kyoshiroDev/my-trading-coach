@@ -5,3 +5,4 @@
 export * from './lib/confirm-dialog/confirm.service';
 export * from './lib/confirm-dialog/confirm-dialog.component';
 export * from './lib/error-state/error-state.component';
+export * from './lib/dialog/dialog.directive';

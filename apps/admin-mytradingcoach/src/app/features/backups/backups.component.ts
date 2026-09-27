@@ -14,6 +14,7 @@ import {
   LucideAlertTriangle as AlertTriangle,
 } from '@lucide/angular';
 import { VpsApi, Backup } from '../../core/api/vps.api';
+import { DialogDirective } from '@mtc/front-ui';
 
 type BackupTarget = 'bdd_prod' | 'bdd_dev' | 'bdd_beta' | 'api_prod' | 'api_dev';
 
@@ -27,7 +28,7 @@ const TARGET_CONFIG: Record<BackupTarget, { label: string; color: string; icon: 
 
 @Component({
   selector: 'mtc-admin-backups',
-  imports: [DatePipe, LucideDynamicIcon],
+  imports: [DialogDirective, DatePipe, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './backups.component.css',
   template: `
@@ -112,7 +113,7 @@ const TARGET_CONFIG: Record<BackupTarget, { label: string; color: string; icon: 
       <!-- Modal Nouveau backup -->
       @if (showModal()) {
         <div class="modal-overlay" role="button" tabindex="0" (click)="showModal.set(false)" (keydown.escape)="showModal.set(false)">
-          <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+          <div class="modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="showModal.set(false)" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
             <div class="modal-header"><h2 class="modal-title">Nouveau backup manuel</h2>
               <button class="icon-btn" (click)="showModal.set(false)" aria-label="Fermer"><svg [lucideIcon]="XIcon" [size]="16"></svg></button></div>
             <div class="modal-body">
@@ -139,7 +140,7 @@ const TARGET_CONFIG: Record<BackupTarget, { label: string; color: string; icon: 
       <!-- Modal Restauration -->
       @if (restoreTarget()) {
         <div class="modal-overlay" role="button" tabindex="0" (click)="restoreTarget.set(null)" (keydown.escape)="restoreTarget.set(null)">
-          <div class="modal modal-sm" role="dialog" aria-modal="true" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+          <div class="modal modal-sm" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="restoreTarget.set(null)" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
             <div class="modal-header"><h2 class="modal-title danger-title">⚠️ Confirmer la restauration</h2>
               <button class="icon-btn" (click)="restoreTarget.set(null)" aria-label="Fermer"><svg [lucideIcon]="XIcon" [size]="16"></svg></button></div>
             <div class="modal-body">
@@ -160,7 +161,7 @@ const TARGET_CONFIG: Record<BackupTarget, { label: string; color: string; icon: 
       <!-- Modal Suppression -->
       @if (deleteTarget()) {
         <div class="modal-overlay" role="button" tabindex="0" (click)="deleteTarget.set(null)" (keydown.escape)="deleteTarget.set(null)">
-          <div class="modal modal-sm" role="dialog" aria-modal="true" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+          <div class="modal modal-sm" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="deleteTarget.set(null)" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
             <div class="modal-header"><h2 class="modal-title danger-title">Supprimer ce backup ?</h2>
               <button class="icon-btn" (click)="deleteTarget.set(null)" aria-label="Fermer"><svg [lucideIcon]="XIcon" [size]="16"></svg></button></div>
             <div class="modal-body"><p class="modal-desc">Supprimer définitivement :<br /><strong>{{ deleteTarget()!.filename }}</strong></p></div>

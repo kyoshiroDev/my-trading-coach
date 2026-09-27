@@ -23,10 +23,11 @@ import { AdminApi, AdminUser, AdminStats } from '../../core/api/admin.api';
 import { TableSort } from '../../shared/tables/table-sort';
 import { PRICING_EUR } from '../../core/constants/pricing.const';
 import type { Plan } from '@mtc/shared';
+import { DialogDirective } from '@mtc/front-ui';
 
 @Component({
   selector: 'mtc-admin-users',
-  imports: [DatePipe, FormsModule, LucideDynamicIcon],
+  imports: [DialogDirective, DatePipe, FormsModule, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './users.component.css',
   template: `
@@ -119,7 +120,7 @@ import type { Plan } from '@mtc/shared';
       @if (editUser()) {
         <div class="modal-overlay" role="button" tabindex="0" aria-label="Fermer"
           (click)="closeIfBackdrop($event, 'edit')" (keydown.escape)="closeEdit()">
-          <div class="modal" role="dialog" aria-modal="true">
+          <div class="modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="closeEdit()">
             <div class="modal-header">
               <h2 class="modal-title">Modifier l'utilisateur</h2>
               <button class="btn-icon" (click)="closeEdit()" aria-label="Fermer"><svg [lucideIcon]="XIcon" [size]="14"></svg></button>
@@ -158,7 +159,7 @@ import type { Plan } from '@mtc/shared';
       @if (deleteModal()) {
         <div class="modal-overlay" role="button" tabindex="0" aria-label="Fermer"
           (click)="closeIfBackdrop($event, 'delete')" (keydown.escape)="closeDeleteModal()">
-          <div class="modal modal-sm" role="dialog" aria-modal="true">
+          <div class="modal modal-sm" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="closeDeleteModal()">
             <div class="modal-header">
               <h2 class="modal-title danger-title">Supprimer l'utilisateur</h2>
               <button class="btn-icon" (click)="closeDeleteModal()" aria-label="Fermer"><svg [lucideIcon]="XIcon" [size]="14"></svg></button>

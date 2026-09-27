@@ -6,10 +6,10 @@
     (click)="onOverlayClick($event)"
     (keydown.escape)="dismissed.emit()"
   >
-    <div class="modal" data-testid="csv-import-modal">
+    <div class="modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="dismissed.emit()" aria-labelledby="csv-import-title" data-testid="csv-import-modal">
       <div class="modal-header">
-        <span class="modal-title">Importer CSV</span>
-        <button class="close-btn" (click)="dismissed.emit()">
+        <span id="csv-import-title" class="modal-title">Importer CSV</span>
+        <button class="close-btn" type="button" aria-label="Fermer" (click)="dismissed.emit()">
           <svg [lucideIcon]="XIcon" [size]="16"></svg>
         </button>
       </div>
