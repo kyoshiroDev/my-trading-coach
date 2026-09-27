@@ -8,7 +8,7 @@ git pull origin main
 
 # Build Angular (output → dist/apps/app-mytradingcoach/browser/)
 echo "📦 Build Angular..."
-NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm exec nx build app-mytradingcoach --configuration=production
+pnpm exec nx build app-mytradingcoach --configuration=production
 
 # Build image Docker NestJS
 echo "🐳 Build Docker API..."

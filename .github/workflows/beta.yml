@@ -37,7 +37,7 @@ jobs:
         run: pnpm nx run-many --target=typecheck --projects=app-mytradingcoach,api-mytradingcoach,admin-mytradingcoach,landing-mytradingcoach --parallel=3
       - name: Build (app beta + api)
         run: |
-          NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=beta --skip-nx-cache
+          pnpm nx build app-mytradingcoach --configuration=beta --skip-nx-cache
           pnpm nx build api-mytradingcoach --configuration=production --skip-nx-cache
 
   # ── Tests API ──────────────────────────────────────────────────────────────
@@ -161,7 +161,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Build Angular (beta)
-        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=beta --skip-nx-cache
+        run: pnpm nx build app-mytradingcoach --configuration=beta --skip-nx-cache
       - name: Verify build output
         run: |
           if [ ! -f "dist/apps/app-mytradingcoach/browser/index.html" ]; then

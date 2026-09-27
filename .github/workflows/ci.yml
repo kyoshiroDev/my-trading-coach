@@ -379,7 +379,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build Angular (dev)
-        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=development --skip-nx-cache
+        run: pnpm nx build app-mytradingcoach --configuration=development --skip-nx-cache
 
       - name: Setup SSH
         run: |

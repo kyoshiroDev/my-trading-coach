@@ -87,7 +87,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build Angular
-        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=production --skip-nx-cache
+        run: pnpm nx build app-mytradingcoach --configuration=production --skip-nx-cache
 
       - name: Verify build output
         run: |
@@ -132,7 +132,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build Admin
-        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build admin-mytradingcoach --configuration=production --skip-nx-cache
+        run: pnpm nx build admin-mytradingcoach --configuration=production --skip-nx-cache
 
       - name: Verify build output
         run: |
