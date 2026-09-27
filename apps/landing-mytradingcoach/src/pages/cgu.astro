@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import '../styles/legal.css';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import { PREMIUM_PRICE_EUR } from '@mtc/shared';
@@ -15,36 +16,36 @@ const annualPerMonth = Math.round(PREMIUM_PRICE_EUR.annual / 12);
 >
   <Nav />
 
-  <main style="max-width:48rem; margin:0 auto; padding:4rem 1.5rem;">
-    <a href="/" style="display:inline-flex;align-items:center;gap:6px;color:var(--txt3);font-size:13px;text-decoration:none;margin-bottom:2rem;">
+  <main class="legal">
+    <a class="legal-back" href="/">
       ← Retour à l'accueil
     </a>
 
-    <h1 style="font-size:2rem; font-weight:800; color:var(--text); margin:0 0 0.5rem;">Conditions générales d'utilisation</h1>
-    <p style="font-size:0.875rem; color:var(--txt3); margin:0 0 2rem;">
+    <h1>Conditions générales d'utilisation</h1>
+    <p class="legal-lead">
       Dernière mise à jour : Avril 2026 &nbsp;·&nbsp;
-      Éditeur : Grégory Tahir (My Trading Coach) :       <a href="mailto:hello@mytradingcoach.app" style="color:var(--blue2);">hello@mytradingcoach.app</a>
+      Éditeur : Grégory Tahir (My Trading Coach) :       <a href="mailto:hello@mytradingcoach.app">hello@mytradingcoach.app</a>
     </p>
 
-    <div style="color:var(--text2); line-height:1.8; font-size:1rem;">
+    <div class="legal-body">
 
-      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">1. Objet et acceptation</h2>
+      <h2>1. Objet et acceptation</h2>
       <p>
         Les présentes CGU définissent les conditions d'accès et d'utilisation de l'application
         MyTradingCoach accessible à l'adresse <strong>app.mytradingcoach.app</strong>.
         En créant un compte, l'utilisateur accepte sans réserve les présentes CGU.
       </p>
 
-      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">2. Description du service</h2>
+      <h2>2. Description du service</h2>
       <p>MyTradingCoach est une application SaaS de journal de trading et d'analyse comportementale. Elle permet à l'utilisateur de :</p>
-      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+      <ul>
         <li>Enregistrer manuellement ses propres trades</li>
         <li>Visualiser des statistiques calculées à partir de ses propres données</li>
         <li>Recevoir des analyses comportementales générées par intelligence artificielle</li>
         <li>Améliorer sa discipline et sa gestion émotionnelle</li>
       </ul>
       <p>MyTradingCoach n'est <strong>PAS</strong> :</p>
-      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+      <ul>
         <li>Un conseiller en investissement financier</li>
         <li>Un service de gestion de portefeuille</li>
         <li>Un prestataire de services d'investissement (PSI)</li>
@@ -52,27 +53,27 @@ const annualPerMonth = Math.round(PREMIUM_PRICE_EUR.annual / 12);
         <li>Un service de copy trading</li>
       </ul>
 
-      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">3. Absence de conseil financier (clause essentielle)</h2>
+      <h2>3. Absence de conseil financier (clause essentielle)</h2>
       <p>L'utilisateur reconnaît expressément et irrévocablement que :</p>
-      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+      <ul>
         <li>MyTradingCoach ne fournit aucun conseil en investissement au sens de la directive MiFID II (2014/65/UE).</li>
         <li>Les analyses générées par l'IA sont exclusivement basées sur les données saisies par l'utilisateur lui-même et ne constituent pas des recommandations d'investissement.</li>
         <li>L'utilisateur est seul responsable de ses décisions de trading.</li>
         <li>L'utilisation de MyTradingCoach comme base de décision d'investissement est expressément interdite et contraire à l'objet du service.</li>
       </ul>
 
-      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">4. Création de compte et accès</h2>
-      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+      <h2>4. Création de compte et accès</h2>
+      <ul>
         <li>L'utilisateur doit être majeur (18 ans minimum)</li>
         <li>Un compte par personne physique</li>
         <li>L'utilisateur est responsable de la confidentialité de ses identifiants</li>
         <li>Grégory Tahir (My Trading Coach) se réserve le droit de suspendre tout compte en cas de violation des présentes CGU</li>
       </ul>
 
-      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">5. Plans et facturation</h2>
+      <h2>5. Plans et facturation</h2>
 
-      <h3 style="color:var(--text); font-size:1.0625rem; font-weight:600; margin:1.5rem 0 0.5rem;">Plan gratuit (FREE)</h3>
-      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+      <h3>Plan gratuit (FREE)</h3>
+      <ul>
         <li>Trades illimités</li>
         <li>Historique illimité</li>
         <li>Statistiques de base (win rate, P&L, sessions)</li>
@@ -81,8 +82,8 @@ const annualPerMonth = Math.round(PREMIUM_PRICE_EUR.annual / 12);
         <li>Sans engagement, sans carte bancaire</li>
       </ul>
 
-      <h3 style="color:var(--text); font-size:1.0625rem; font-weight:600; margin:1.5rem 0 0.5rem;">Plan Premium</h3>
-      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+      <h3>Plan Premium</h3>
+      <ul>
         <li>Trades illimités</li>
         <li>Analytics avancés (par setup, émotion, heure, actif)</li>
         <li>IA Insights &amp; Chat Coach (powered by Claude)</li>
@@ -91,8 +92,8 @@ const annualPerMonth = Math.round(PREMIUM_PRICE_EUR.annual / 12);
         <li>Essai gratuit de <strong>30 jours</strong> sur l'abonnement mensuel uniquement, carte bancaire requise, annulable en un clic (aucun prélèvement si annulation avant la fin de l'essai). L'abonnement annuel est facturé immédiatement, sans période d'essai.</li>
       </ul>
 
-      <h3 style="color:var(--text); font-size:1.0625rem; font-weight:600; margin:1.5rem 0 0.5rem;">Tarification</h3>
-      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+      <h3>Tarification</h3>
+      <ul>
         <li>Mensuel : {PREMIUM_PRICE_EUR.monthly} € TTC/mois</li>
         <li>Annuel : {PREMIUM_PRICE_EUR.annual} € TTC/an (soit ~{annualPerMonth} €/mois)</li>
       </ul>
@@ -102,14 +103,14 @@ const annualPerMonth = Math.round(PREMIUM_PRICE_EUR.annual / 12);
         <strong>Droit de rétractation</strong> (Art. L221-18 Code de la consommation) : l'utilisateur dispose d'un délai de 14 jours à compter de la souscription pour exercer son droit de rétractation, sauf si le service a été pleinement exécuté avant la fin du délai avec accord préalable.
       </p>
 
-      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">6. Données utilisateur</h2>
+      <h2>6. Données utilisateur</h2>
       <p>
         L'utilisateur conserve la propriété de toutes les données qu'il saisit dans MyTradingCoach.
         Il peut à tout moment exporter ses données au format CSV ou supprimer son compte et toutes ses données.
         Grégory Tahir (My Trading Coach) ne vend pas les données utilisateur à des tiers.
       </p>
 
-      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">7. Propriété intellectuelle</h2>
+      <h2>7. Propriété intellectuelle</h2>
       <p>
         Le code source, le design, les algorithmes d'analyse comportementale et tous les éléments
         constitutifs de MyTradingCoach sont la propriété exclusive de Grégory Tahir (My Trading Coach)
@@ -117,18 +118,18 @@ const annualPerMonth = Math.round(PREMIUM_PRICE_EUR.annual / 12);
         non exclusif et non transférable de l'application.
       </p>
 
-      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">8. Règles d'utilisation</h2>
+      <h2>8. Règles d'utilisation</h2>
       <p>Il est interdit d'utiliser MyTradingCoach pour :</p>
-      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+      <ul>
         <li>Contourner les limites techniques du service</li>
         <li>Partager ses identifiants avec des tiers</li>
         <li>Introduire des contenus illicites ou malveillants</li>
         <li>Tenter de reverse-engineering ou d'accès non autorisé au code source</li>
       </ul>
 
-      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">9. Limitations de responsabilité</h2>
+      <h2>9. Limitations de responsabilité</h2>
       <p>Grégory Tahir (My Trading Coach) ne saurait être tenu responsable :</p>
-      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+      <ul>
         <li>Des pertes financières liées à l'utilisation du service</li>
         <li>Des interruptions temporaires du service pour maintenance</li>
         <li>Des pertes de données dues à des cas de force majeure</li>
@@ -136,38 +137,38 @@ const annualPerMonth = Math.round(PREMIUM_PRICE_EUR.annual / 12);
       </ul>
       <p>La responsabilité de Grégory Tahir (My Trading Coach) est limitée au montant des sommes effectivement versées par l'utilisateur au cours des 12 derniers mois.</p>
 
-      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">10. Résiliation</h2>
+      <h2>10. Résiliation</h2>
       <p>
         L'utilisateur peut résilier son compte à tout moment depuis Paramètres → Gérer mon abonnement.
         Grégory Tahir (My Trading Coach) peut suspendre ou résilier un compte en cas de violation des CGU, non-paiement ou usage frauduleux.
       </p>
 
-      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">11. Modification des CGU</h2>
+      <h2>11. Modification des CGU</h2>
       <p>
         Grégory Tahir (My Trading Coach) se réserve le droit de modifier les présentes CGU. L'utilisateur sera
         informé par email 30 jours avant toute modification substantielle. La poursuite de l'utilisation
         du service vaut acceptation des nouvelles CGU.
       </p>
 
-      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">12. Droit applicable et litiges</h2>
+      <h2>12. Droit applicable et litiges</h2>
       <p>Les présentes CGU sont soumises au droit français.</p>
       <p>
         En cas de litige, l'utilisateur peut recourir gratuitement à un médiateur de la consommation
         (Art. L612-1 Code de la consommation) :
       </p>
-      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+      <ul>
         <li><strong>La Médiation du Numérique</strong></li>
-        <li><a href="https://www.mediateur-du-numerique.fr" target="_blank" rel="noopener" style="color:var(--blue2);">www.mediateur-du-numerique.fr</a></li>
-        <li>Formulaire en ligne : <a href="https://www.mediateur-du-numerique.fr/saisir-le-mediateur" target="_blank" rel="noopener" style="color:var(--blue2);">Saisir le médiateur</a></li>
+        <li><a href="https://www.mediateur-du-numerique.fr" target="_blank" rel="noopener">www.mediateur-du-numerique.fr</a></li>
+        <li>Formulaire en ligne : <a href="https://www.mediateur-du-numerique.fr/saisir-le-mediateur" target="_blank" rel="noopener">Saisir le médiateur</a></li>
       </ul>
       <p>
         À défaut de résolution amiable, les tribunaux de Saint-Michel-sur-Orge seront seuls compétents.
       </p>
       <p>
-        Contact : <a href="mailto:hello@mytradingcoach.app" style="color:var(--blue2);">hello@mytradingcoach.app</a>
+        Contact : <a href="mailto:hello@mytradingcoach.app">hello@mytradingcoach.app</a>
       </p>
 
-      <p style="margin-top:3rem; font-size:0.875rem; color:var(--txt3);">
+      <p class="legal-updated">
         Dernière mise à jour : Avril 2026
       </p>
     </div>
