@@ -71,7 +71,7 @@ Pour l'app **admin**, la maquette `admin-mytradingcoach.html` (racine) reste LA 
 
 ```
 Production
-├── mytradingcoach.app           ← Landing (VPS/Nginx derrière Traefik)
+├── www.mytradingcoach.app       ← Landing (VPS/Nginx derrière Traefik ; l'apex redirige en 301 vers www)
 ├── app.mytradingcoach.app       ← App Angular (VPS/Nginx derrière Traefik)
 └── api.mytradingcoach.app       ← NestJS (VPS OVH Docker)
 

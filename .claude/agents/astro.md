@@ -1,7 +1,8 @@
 # Agent Astro — landing-mytradingcoach
 
 ## Stack
-Astro 7 · Tailwind 4 · Static output · servi sur le VPS (conteneur nginx:alpine derrière Traefik,
+Astro 7 · CSS propre aux composants (Tailwind installé mais **inutilisé** : à retirer dès que le
+réseau permet de régénérer le lockfile) · Static output · servi sur le VPS (conteneur nginx:alpine derrière Traefik,
 rsync depuis GitHub Actions vers `/opt/static/landing-prod`). Plus de Vercel.
 
 ---
@@ -20,28 +21,36 @@ rsync depuis GitHub Actions vers `/opt/static/landing-prod`). Plus de Vercel.
 
 ```
 src/
+├── config.ts                    ← APP_URL, API_URL, FEATURES (flags de publication)
+├── data/
+│   ├── faq.ts                   ← FAQ de la home : texte affiché ET JSON-LD FAQPage
+│   └── schema.ts                ← JSON-LD (home : SoftwareApplication + FAQPage ; autres : Organization + WebSite)
+├── content/blog/<slug>.md       ← UN fichier par article (le slug = nom du fichier)
+├── content.config.ts            ← schéma du frontmatter blog
 ├── pages/
-│   ├── index.astro              ← landing principale
-│   ├── mentions-legales.astro
-│   ├── confidentialite.astro
-│   └── cgu.astro
-├── content/
-│   └── blog/                   ← articles Markdown SEO
-│       ├── journal-trading-debutant.md
-│       ├── psychologie-trading.md
-│       ├── revenge-trading.md
-│       ├── win-rate-trading.md
-│       └── journal-trading-crypto.md
-├── components/
-│   ├── Hero.astro
-│   ├── Features.astro
-│   ├── Pricing.astro
-│   ├── FAQ.astro
-│   ├── Testimonials.astro
-│   └── Footer.astro
-└── layouts/
-    └── Layout.astro             ← meta SEO, fonts, analytics
+│   ├── index.astro              ← home
+│   ├── blog/index.astro         ← liste générée depuis la collection (tri par publishDate)
+│   ├── blog/[slug].astro        ← rendu d'un article
+│   └── cgu, mentions-legales, politique-confidentialite, disclaimer, 404, ambassadeur…
+├── components/                  ← sections de la home + mockup/ (maquettes produit de Showcase)
+├── layouts/Base.astro           ← meta SEO, JSON-LD, fontes · BlogPost.astro ← gabarit article
+└── styles/global.css, legal.css ← variables, utilitaires (.wrap), pages légales (.legal)
 ```
+
+## Règles de contenu (audit du 27/09/2026)
+
+- **Prix** : toujours `PREMIUM_PRICE_EUR` / `PREMIUM_ANNUAL_SAVINGS_EUR` de `@mtc/shared` (alias dans
+  `tsconfig.json`), jamais un nombre en dur : Hero, Pricing, Compare, CGU, FAQ et JSON-LD en dépendent.
+- **Liens vers l'app** : `${APP_URL}/register` (jamais `https://app.mytradingcoach.app` en dur) ;
+  dans un article Markdown, écrire `href="{APP_URL}/register"` (remplacé au rendu par `[slug].astro`).
+- **JSON-LD** : jamais d'`aggregateRating` sans avis vérifiables (règles Google + pratiques
+  commerciales trompeuses). FAQ modifiée = `src/data/faq.ts` uniquement (affichage + JSON-LD suivent).
+- **Nouvel article** : créer `src/content/blog/<slug>.md` avec le frontmatter ci-dessous. Rien d'autre :
+  la page, la liste du blog et le sitemap (lastmod = updatedDate ?? publishDate) suivent.
+- **Styles** : pas de `style="…"` ; classes dans le `<style>` du composant (scopé) ou utilitaire global
+  (`.wrap` = conteneur 1100 px). Exception tolérée : valeurs uniques de dessin dans `components/mockup/`
+  (positions, largeurs de barres). Survol : `:hover` en CSS, jamais `onmouseover`.
+- Aucun composant orphelin : un composant non rendu est branché ou supprimé.
 
 ---
 
@@ -125,24 +134,27 @@ Formulation : jamais "limité à", toujours "jusqu'à" ou entre parenthèses en 
 
 ```markdown
 ---
-title: "Titre avec mot-clé principal"
+title: "Titre affiché avec mot-clé principal"
+seoTitle: "Titre de l'onglet / Google (optionnel)"
 description: "Description 155 caractères max avec mot-clé"
 publishDate: 2026-04-01
+updatedDate: 2026-05-01   # optionnel, alimente lastmod du sitemap
 tags: ["trading", "journal", "psychologie"]
-draft: false
 ---
 ```
 
+Le corps peut être du Markdown ou du HTML (les articles migrés gardent leur HTML d'origine).
+
 CTA en fin de chaque article :
 ```markdown
-**Essaie MyTradingCoach gratuitement →** [Commencer maintenant](https://app.mytradingcoach.app/register)
+<a href="{APP_URL}/register">Commencer gratuitement</a>
 ```
 
 ---
 
 ## Articles blog SEO cibles
 
-| Fichier | Mot-clé principal |
+| Fichier (`src/content/blog/`) | Mot-clé principal |
 |---|---|
 | `journal-trading-debutant.md` | journal de trading débutant |
 | `psychologie-trading.md` | psychologie trading biais cognitifs |
@@ -154,20 +166,10 @@ CTA en fin de chaque article :
 
 ## Package.json landing
 
-```json
-{
-  "dependencies": {
-    "@astrojs/sitemap": "^3.7.4",
-    "astro": "^7.3.2",
-    "tailwindcss": "^4.3.3"
-  },
-  "devDependencies": {
-    "@astrojs/check": "0.9.10",
-    "@tailwindcss/vite": "^4.3.3",
-    "typescript": "^5.9.2"
-  }
-}
-```
+Voir `apps/landing-mytradingcoach/package.json`. À faire quand le réseau le permet (lockfile) :
+retirer `tailwindcss` et `@tailwindcss/vite`, aligner TypeScript sur la racine (6.x), ajouter
+`eslint-plugin-astro` + `prettier-plugin-astro` (cible `lint` = eslint + `astro check`), et
+auto-héberger les fontes (`@fontsource/*`, fin du hack `media="print" onload`).
 
 ---
 
