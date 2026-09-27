@@ -16,8 +16,19 @@ Vitest (Angular + NestJS) · Playwright (E2E) · Jamais Jest
 pnpm nx test app-mytradingcoach        # Vitest Angular
 pnpm nx test api-mytradingcoach        # Vitest NestJS
 pnpm nx e2e app-mytradingcoach-e2e     # Playwright E2E
-pnpm nx test api-mytradingcoach --coverage
+pnpm nx test api-mytradingcoach -c ci  # + couverture et seuils (ce que lance la CI)
 ```
+
+### En CI (`.github/workflows/checks.yml`, appelé par `ci.yml` et `beta.yml`)
+
+- Un seul workflow réutilisable (`workflow_call`) : lint · typecheck · build, tests front + libs,
+  tests API avec couverture, smoke E2E. Modifier les vérifications = modifier `checks.yml` seulement.
+- **Seuils de couverture API** (`vitest.config.mts`) : lignes ≥ 60 % sur `modules/trades`,
+  `analytics`, `stripe`, `auth`. Sous le seuil, `-c ci` échoue. Plus de `passWithNoTests`.
+- **Smoke E2E** (`apps/app-mytradingcoach-e2e/src/smoke.spec.ts`) : `/demo` → dashboard → journal →
+  analytics sur une base Postgres éphémère (migrations + `pnpm seed:demo`), API et app lancées dans
+  le job. Échoue sur toute réponse API 5xx ou erreur console. **Non bloquant**
+  (`continue-on-error`) : le rendre bloquant après deux semaines sans flake.
 
 ---
 
@@ -108,7 +119,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['src/**/*.spec.ts'],
-    coverage: { provider: 'v8', reporter: ['text', 'lcov'] },
+    coverage: { provider: 'v8', thresholds: { 'src/modules/trades/**': { lines: 60 } /* … */ } },
   },
 });
 ```
@@ -282,23 +293,17 @@ export async function createTestTrade(page: Page) {
 }
 ```
 
-### Specs E2E
+### Specs E2E (`apps/app-mytradingcoach-e2e/src/`)
 
 ```
-e2e/
-├── 01-auth.spec.ts              → register → login → dashboard
-├── 02-journal.spec.ts           → ajouter trade, voir liste, supprimer
-├── 03-analytics-free.spec.ts    → FREE : stats visibles + blocs verrouillés
-├── 04-analytics-premium.spec.ts → PREMIUM : tout visible, heatmap présente
-├── 05-ai-insights.spec.ts       → FREE : paywall / PREMIUM : insights (mock)
-├── 06-weekly-debrief.spec.ts    → FREE : paywall / PREMIUM : rapport (mock)
-├── 07-navigation.spec.ts        → sidebar, routes, 404, mobile burger
-├── 08-session-mode.spec.ts      ← V2 : vue morning, démarrer session, vue live, quick trade
-├── 09-eco-calendar.spec.ts      ← V2 : events, analyse IA, bull/bear, dim hors session
+├── smoke.spec.ts                   ← parcours démo, lancé en CI (non bloquant)
+├── critical-paths.spec.ts          → auth, routes protégées, journal, paywalls FREE/PREMIUM
+├── 08-session-mode.spec.ts         → vue morning, démarrer session, vue live, quick trade
+├── 09-eco-calendar.spec.ts         → events, analyse IA, bull/bear, dim hors session
 ├── 10-activity-calendar.spec.ts
-├── 11-referral-ambassador.spec.ts  ← parrainage : lien, paiement Stripe test, commission 20 %
-├── 12-activation.spec.ts           ← funnel n°1 : inscription → wizard → premier trade
-└── 13-import-tradovate.spec.ts     ← onboarding puis import CSV (trades + frais)
+├── 11-referral-ambassador.spec.ts  → parrainage : lien, paiement Stripe test, commission 20 %
+├── 12-activation.spec.ts           → funnel n°1 : inscription → wizard → premier trade
+└── 13-import-tradovate.spec.ts     → onboarding puis import CSV (trades + frais)
 ```
 
 ### `12-activation` — le wizard d'onboarding

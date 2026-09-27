@@ -10,118 +10,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ── Lint + Build ───────────────────────────────────────────────────────────
-  build:
-    name: Lint · Build
-    runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      NX_NO_CLOUD: true
-      DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
-      DATABASE_DIRECT_URL: postgresql://dummy:dummy@localhost:5432/dummy
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: pnpm/action-setup@v4 # version lue dans package.json (packageManager)
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Prisma generate
-        run: pnpm exec prisma generate --config=./prisma/prisma.config.ts
-      - name: Lint
-        run: pnpm nx run-many --target=lint --projects=app-mytradingcoach,api-mytradingcoach,admin-mytradingcoach,landing-mytradingcoach --parallel=3
-      - name: Typecheck
-        run: pnpm nx run-many --target=typecheck --projects=app-mytradingcoach,api-mytradingcoach,admin-mytradingcoach,landing-mytradingcoach --parallel=3
-      - name: Build (app beta + api)
-        run: |
-          pnpm nx build app-mytradingcoach --configuration=beta --skip-nx-cache
-          pnpm nx build api-mytradingcoach --configuration=production --skip-nx-cache
-
-  # ── Tests API ──────────────────────────────────────────────────────────────
-  test-api:
-    name: Test API
-    runs-on: ubuntu-latest
-    needs: build
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      NX_NO_CLOUD: true
-      DATABASE_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_test
-      DATABASE_DIRECT_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_test
-      REDIS_HOST: localhost
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: testpassword
-      JWT_SECRET: test-jwt-secret-64-chars-minimum-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-      JWT_REFRESH_SECRET: test-refresh-secret-64-chars-minimum-xxxxxxxxxxxxxxxxxxxxxxxxx
-      ANTHROPIC_API_KEY: sk-ant-test
-    services:
-      postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_DB: mytradingcoach_test
-          POSTGRES_USER: mtc_user
-          POSTGRES_PASSWORD: devpassword
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-      redis:
-        image: redis:7.4-alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 3
-        ports:
-          - 6379:6379
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: pnpm/action-setup@v4 # version lue dans package.json (packageManager)
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Prisma generate
-        run: pnpm exec prisma generate --config=./prisma/prisma.config.ts
-      - name: Prisma migrate (test DB)
-        run: pnpm exec prisma migrate deploy --config=./prisma/prisma.config.ts
-      - name: Test API
-        run: pnpm nx test api-mytradingcoach --parallel=2
-
-  # ── Test Angular ───────────────────────────────────────────────────────────
-  test-angular:
-    name: Test Angular
-    runs-on: ubuntu-latest
-    needs: build
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      NX_NO_CLOUD: true
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: pnpm/action-setup@v4 # version lue dans package.json (packageManager)
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Test front + shared (app, admin, libs/shared)
-        run: pnpm nx run-many --target=test --projects=app-mytradingcoach,admin-mytradingcoach,shared,front-ui,front-auth --parallel=2
+  # ── Lint, typecheck, build, tests, smoke E2E (définition commune : checks.yml) ─
+  checks:
+    uses: ./.github/workflows/checks.yml
+    with:
+      affected: false
 
   # ── Deploy API beta → VPS (beta.api.mytradingcoach.app) ────────────────────
   deploy-api-beta:
     name: Deploy API beta to VPS
     runs-on: ubuntu-latest
-    needs: [test-api, test-angular]
+    needs: checks
     environment: production
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -147,7 +46,7 @@ jobs:
   deploy-app-beta:
     name: Deploy Angular beta to VPS
     runs-on: ubuntu-latest
-    needs: [test-api, test-angular]
+    needs: checks
     environment: production
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

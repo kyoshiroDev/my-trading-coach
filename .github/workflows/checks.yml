@@ -1,0 +1,200 @@
+name: Checks
+
+# Vérifications communes (lint, typecheck, build, tests, smoke E2E), appelées par
+# ci.yml et beta.yml. Une seule définition : modifier ici modifie les deux pipelines.
+on:
+  workflow_call:
+    inputs:
+      affected:
+        description: "true = seulement les projets touchés depuis origin/main ; false = tout"
+        type: boolean
+        default: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NX_NO_CLOUD: true
+
+jobs:
+  # ── Lint · typecheck · build ────────────────────────────────────────────────
+  build:
+    name: Lint · Typecheck · Build
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
+      DATABASE_DIRECT_URL: postgresql://dummy:dummy@localhost:5432/dummy
+      # `affected` retombe sur `run-many --all` si le calcul échoue (ex. base introuvable).
+      NX_SCOPE: ${{ inputs.affected && 'affected --base=origin/main --head=HEAD' || 'run-many --all' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4 # version lue dans package.json (packageManager)
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Prisma generate
+        run: pnpm exec prisma generate --config=./prisma/prisma.config.ts
+      - name: Lint
+        run: pnpm nx $NX_SCOPE --target=lint --parallel=3 || pnpm nx run-many --target=lint --all --parallel=3
+      - name: Typecheck
+        run: pnpm nx $NX_SCOPE --target=typecheck --parallel=3 || pnpm nx run-many --target=typecheck --all --parallel=3
+      - name: Build
+        run: pnpm nx $NX_SCOPE --target=build --parallel=3 || pnpm nx run-many --target=build --all --parallel=3
+
+  # ── Tests front + libs ──────────────────────────────────────────────────────
+  test-front:
+    name: Tests front et libs
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Tests (app, admin, libs)
+        run: pnpm nx run-many --target=test --projects=app-mytradingcoach,admin-mytradingcoach,shared,front-ui,front-auth --parallel=2
+
+  # ── Tests API + seuils de couverture ────────────────────────────────────────
+  test-api:
+    name: Tests API (couverture)
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      DATABASE_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_test
+      DATABASE_DIRECT_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_test
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: testpassword
+      JWT_SECRET: test-jwt-secret-64-chars-minimum-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      JWT_REFRESH_SECRET: test-refresh-secret-64-chars-minimum-xxxxxxxxxxxxxxxxxxxxxxxxx
+      ANTHROPIC_API_KEY: sk-ant-test
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: mytradingcoach_test
+          POSTGRES_USER: mtc_user
+          POSTGRES_PASSWORD: devpassword
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7.4-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Prisma generate
+        run: pnpm exec prisma generate --config=./prisma/prisma.config.ts
+      - name: Prisma migrate (test DB)
+        run: pnpm exec prisma migrate deploy --config=./prisma/prisma.config.ts
+      # `-c ci` active la couverture : échoue si trades, analytics, stripe ou auth passe sous 60 %.
+      - name: Tests API
+        run: pnpm nx test api-mytradingcoach -c ci
+
+  # ── Smoke E2E : parcours démo sur une base éphémère ─────────────────────────
+  # Non bloquant (continue-on-error) tant qu'il n'a pas tenu deux semaines sans flake ;
+  # ensuite, retirer `continue-on-error`.
+  smoke-e2e:
+    name: Smoke E2E (non bloquant)
+    runs-on: ubuntu-latest
+    needs: build
+    continue-on-error: true
+    env:
+      DATABASE_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_e2e
+      DATABASE_DIRECT_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_e2e
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      PORT: 3001
+      CORS_ORIGINS: http://localhost:4200
+      JWT_SECRET: test-jwt-secret-64-chars-minimum-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      JWT_REFRESH_SECRET: test-refresh-secret-64-chars-minimum-xxxxxxxxxxxxxxxxxxxxxxxxx
+      ANTHROPIC_API_KEY: sk-ant-test
+      AI_ENABLED: 'false'
+      # Valeurs factices : seul le boot les exige, le parcours démo n'appelle ni Stripe ni Resend.
+      STRIPE_SECRET_KEY: sk_test_placeholder
+      STRIPE_WEBHOOK_SECRET: whsec_placeholder
+      STRIPE_PREMIUM_PRICE_MONTHLY_V2: price_placeholder_monthly
+      STRIPE_PREMIUM_PRICE_YEARLY_V2: price_placeholder_yearly
+      RESEND_API_KEY: re_placeholder
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: mytradingcoach_e2e
+          POSTGRES_USER: mtc_user
+          POSTGRES_PASSWORD: devpassword
+        options: >-
+          --health-cmd "pg_isready -U mtc_user -d mytradingcoach_e2e"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7.4-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Navigateur Playwright
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Base éphémère (migrations + compte démo)
+        run: |
+          pnpm exec prisma generate --config=./prisma/prisma.config.ts
+          pnpm exec prisma migrate deploy --config=./prisma/prisma.config.ts
+          pnpm seed:demo
+      - name: Démarrer l'API et l'app
+        run: |
+          pnpm nx build api-mytradingcoach --configuration=development
+          nohup node apps/api-mytradingcoach/dist/main.js > api.log 2>&1 &
+          nohup pnpm nx serve app-mytradingcoach > app.log 2>&1 &
+          for i in $(seq 1 90); do
+            curl -sf localhost:3001/api/health > /dev/null && curl -sf localhost:4200 > /dev/null && exit 0
+            sleep 2
+          done
+          echo "::error::API ou app non démarrée"; tail -50 api.log app.log; exit 1
+      - name: Smoke démo (dashboard, journal, analytics)
+        run: pnpm exec playwright test smoke
+        working-directory: apps/app-mytradingcoach-e2e
+      - name: Rapport en cas d'échec
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-e2e
+          path: |
+            apps/app-mytradingcoach-e2e/test-results
+            api.log
+            app.log
+          retention-days: 7
