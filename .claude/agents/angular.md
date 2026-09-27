@@ -728,6 +728,9 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
 - **Routeur** : `withPreloading(PreloadAllModules)` + `withInMemoryScrolling` (app et admin). Le shell
   connecté défile dans un conteneur (`<main>` / `.content`), pas la fenêtre : `mtcScrollMemory` sur ce
   conteneur remet en haut à chaque page et restaure la position au bouton « Précédent ».
+- **Bundle initial < 500 kB (budget bloquant)** : `@lucide/angular` est un seul module ; si un
+  composant chargé au démarrage (racine, toasts, dialogues globaux) l'importe, TOUTES les icônes de
+  l'app partent dans le bundle initial (+226 kB). Au démarrage : SVG en ligne (cf. `toasts`).
 - Dans les libs, sorties en `@Output() … = new EventEmitter()` : leurs tests tournent en JIT, qui
   ne voit pas `output()`.
 - **Toute donnée chargée affiche son échec** : `@if (loadError()) { <mtc-error-state (retry)="reload()" /> }`

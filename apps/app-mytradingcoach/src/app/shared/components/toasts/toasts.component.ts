@@ -1,12 +1,4 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import {
-  LucideDynamicIcon,
-  LucideCheckCircle2 as CheckCircle2,
-  LucideAlertCircle as AlertCircle,
-  LucideInfo as Info,
-  LucideAlertTriangle as AlertTriangle,
-  LucideX as X,
-} from '@lucide/angular';
 import { ToastService, ToastType } from '../../../core/services/toast.service';
 
 /** Distance minimale de glisser pour fermer (px), ou 35 % de la largeur si plus grand. */
@@ -31,25 +23,17 @@ interface Drag {
  */
 @Component({
   selector: 'mtc-toasts',
-  imports: [LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './toasts.component.html',
   styleUrl: './toasts.component.css',
 })
 export class ToastsComponent {
   protected readonly toasts = inject(ToastService);
-  protected readonly XIcon = X;
-
-  private readonly ICONS = { success: CheckCircle2, error: AlertCircle, info: Info, warning: AlertTriangle };
 
   /** Glisser en cours (un seul toast à la fois). */
   protected readonly drag = signal<Drag | null>(null);
   /** Toasts chassés vers la gauche : leur sortie part de ce côté. */
   private readonly leftExits = signal<ReadonlySet<number>>(new Set());
-
-  protected icon(type: ToastType) {
-    return this.ICONS[type];
-  }
 
   /** Erreur : annoncée immédiatement ; le reste attend la fin de la phrase en cours. */
   protected live(type: ToastType): 'assertive' | 'polite' {
