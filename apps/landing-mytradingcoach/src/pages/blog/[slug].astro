@@ -1,0 +1,20 @@
+---
+import { getCollection } from 'astro:content';
+import BlogPost from '../../layouts/BlogPost.astro';
+import { APP_URL } from '../../config';
+
+// Une page par fichier de src/content/blog : l'URL reste /blog/<nom-du-fichier>.
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const { title, seoTitle, description, publishDate, updatedDate, tags } = post.data;
+// Markdown ne sait pas lire une variable : les liens vers l'app s'écrivent `{APP_URL}/…`.
+const html = (post.rendered?.html ?? '').replaceAll('{APP_URL}', APP_URL);
+---
+
+<BlogPost title={title} seoTitle={seoTitle} description={description} publishDate={publishDate} updatedDate={updatedDate} tags={tags}>
+  <Fragment set:html={html} />
+</BlogPost>
