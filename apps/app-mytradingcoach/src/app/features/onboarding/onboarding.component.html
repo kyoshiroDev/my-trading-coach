@@ -314,6 +314,10 @@
                 </button>
               }
             </div>
+          } @else if (assetSearchStatus() === 'none') {
+            <p class="asset-search-hint" role="status">Aucun instrument trouvé : « Ajouter » le garde tel que tu l’as saisi.</p>
+          } @else if (assetSearchStatus() === 'unavailable') {
+            <p class="asset-search-hint warn" role="status">Recherche indisponible pour le moment : saisis le symbole puis « Ajouter ».</p>
           }
 
           @if (selectedAssets().length > 0) {

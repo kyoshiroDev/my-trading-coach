@@ -61,6 +61,8 @@ export class QuickTradeComponent {
   protected readonly customAssetMode    = signal(false);
   protected readonly customAssetQuery   = signal('');
   protected readonly customAssetResults = signal<InstrumentSearchResult[]>([]);
+  /** Issue de la dernière recherche (≥ 2 caractères) : `null` tant qu'aucune n'a abouti. */
+  protected readonly customAssetSearchStatus = signal<'found' | 'none' | 'unavailable' | null>(null);
   private readonly customAssetSearch$   = new Subject<string>();
   protected readonly qtSide = signal<TradeSide>('LONG');
   protected readonly qtEmotion = signal<EmotionState>('CONFIDENT');
@@ -114,12 +116,18 @@ export class QuickTradeComponent {
         distinctUntilChanged(),
         switchMap((q) =>
           q.length < 2
-            ? of({ data: [] as InstrumentSearchResult[] })
-            : this.tradesApi.searchInstruments(q).pipe(catchError(() => of({ data: [] as InstrumentSearchResult[] }))),
+            ? of(null)
+            : this.tradesApi.searchInstruments(q).pipe(
+                map((res) => res.data ?? []),
+                catchError(() => of('unavailable' as const)),
+              ),
         ),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe((res) => this.customAssetResults.set(res.data ?? []));
+      .subscribe((res) => {
+        this.customAssetResults.set(Array.isArray(res) ? res : []);
+        this.customAssetSearchStatus.set(res === null ? null : res === 'unavailable' ? 'unavailable' : res.length ? 'found' : 'none');
+      });
 
     // Arrêter le polling prix au destroy
     this.destroyRef.onDestroy(() => this.stopLivePricePolling());
@@ -151,6 +159,7 @@ export class QuickTradeComponent {
       this.customAssetMode.set(true);
       this.customAssetQuery.set('');
       this.customAssetResults.set([]);
+      this.customAssetSearchStatus.set(null);
       return;
     }
     const asset = this.userAssets().find((a) => a.symbol === symbol) ?? null;
@@ -173,6 +182,7 @@ export class QuickTradeComponent {
     this.customAssetMode.set(false);
     this.customAssetQuery.set('');
     this.customAssetResults.set([]);
+    this.customAssetSearchStatus.set(null);
   }
 
   /** Ajoute un actif saisi librement : local immédiat + persistance, sélectionné pour le trade. */

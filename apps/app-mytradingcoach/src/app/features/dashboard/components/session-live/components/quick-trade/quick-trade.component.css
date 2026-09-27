@@ -301,3 +301,7 @@
     animation: none !important;
   }
 }
+
+/* Recherche d'instrument : aucun résultat / service indisponible (APP-03) */
+.qt-search-hint { margin: 6px 0 0; font-size: var(--fs-xs); color: var(--text-3); }
+.qt-search-hint.warn { color: var(--yellow); }

@@ -255,6 +255,8 @@ export class OnboardingComponent {
   protected readonly favoriteAsset  = signal<string | null>(null);
   protected readonly assetQuery     = signal('');
   protected readonly assetResults   = signal<InstrumentSearchResult[]>([]);
+  /** Issue de la dernière recherche (≥ 2 caractères) : `null` tant qu'aucune n'a abouti. */
+  protected readonly assetSearchStatus = signal<'found' | 'none' | 'unavailable' | null>(null);
   private readonly assetSearch$     = new Subject<string>();
   protected readonly assetSuggestions = computed(
     () => ASSET_SUGGESTIONS[this.selectedMarket() ?? 'MULTI'] ?? ASSET_SUGGESTIONS['MULTI'],
@@ -298,12 +300,18 @@ export class OnboardingComponent {
         distinctUntilChanged(),
         switchMap((q) =>
           q.length < 2
-            ? of({ data: [] as InstrumentSearchResult[] })
-            : this.tradesApi.searchInstruments(q).pipe(catchError(() => of({ data: [] as InstrumentSearchResult[] }))),
+            ? of(null)
+            : this.tradesApi.searchInstruments(q).pipe(
+                map((res) => res.data ?? []),
+                catchError(() => of('unavailable' as const)),
+              ),
         ),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe((res) => this.assetResults.set(res.data ?? []));
+      .subscribe((res) => {
+        this.assetResults.set(Array.isArray(res) ? res : []);
+        this.assetSearchStatus.set(res === null ? null : res === 'unavailable' ? 'unavailable' : res.length ? 'found' : 'none');
+      });
   }
 
   /** Reprend là où l'utilisateur s'était arrêté. Toute anomalie → repart proprement à 1. */
@@ -417,6 +425,7 @@ export class OnboardingComponent {
     }
     this.assetQuery.set('');
     this.assetResults.set([]);
+    this.assetSearchStatus.set(null);
   }
   protected removeAsset(symbol: string): void {
     this.selectedAssets.update((list) => list.filter((s) => s !== symbol));
