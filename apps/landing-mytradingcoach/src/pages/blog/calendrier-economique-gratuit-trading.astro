@@ -1,4 +1,5 @@
 ---
+import { APP_URL } from '../../config';
 import BlogPost from '../../layouts/BlogPost.astro';
 ---
 
@@ -59,6 +60,6 @@ import BlogPost from '../../layouts/BlogPost.astro';
   </p>
 
   <p>
-    Tu peux <a href="https://app.mytradingcoach.app/register">créer un compte gratuit</a> pour avoir le calendrier filtré sur tes actifs, sans carte bancaire. L'objectif n'est pas de te faire trader plus. C'est de t'éviter les pertes que tu n'avais pas vues venir.
+    Tu peux <a href={`${APP_URL}/register`}>créer un compte gratuit</a> pour avoir le calendrier filtré sur tes actifs, sans carte bancaire. L'objectif n'est pas de te faire trader plus. C'est de t'éviter les pertes que tu n'avais pas vues venir.
   </p>
 </BlogPost>

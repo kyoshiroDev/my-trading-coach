@@ -1,4 +1,5 @@
 ---
+import { APP_URL } from '../../config';
 import BlogPost from '../../layouts/BlogPost.astro';
 ---
 
@@ -45,6 +46,6 @@ import BlogPost from '../../layouts/BlogPost.astro';
     Ouvre ton journal actuel. Prends une période où tu sais que tu as eu des trades à l'équilibre. Recalcule le win rate à la main avec la bonne formule, et compare à ce que l'outil affiche. Si les deux collent, ton journal fait les choses bien. Sinon, tu sais maintenant pourquoi tes chiffres te paraissaient un peu tristes.
   </p>
   <p>
-    Dans MyTradingCoach, les break-even sont comptés à part et exclus du win rate, partout : journal, analytics, calendrier. C'est un choix assumé, parce qu'un chiffre faux vaut moins que pas de chiffre du tout. Si tu veux creuser ce que le win rate ne dit pas à lui seul, j'en parle plus en détail dans <a href="/blog/win-rate-trading">cet article sur le win rate</a>. Et tu peux <a href="https://app.mytradingcoach.app/register">tester tes propres stats gratuitement</a>.
+    Dans MyTradingCoach, les break-even sont comptés à part et exclus du win rate, partout : journal, analytics, calendrier. C'est un choix assumé, parce qu'un chiffre faux vaut moins que pas de chiffre du tout. Si tu veux creuser ce que le win rate ne dit pas à lui seul, j'en parle plus en détail dans <a href="/blog/win-rate-trading">cet article sur le win rate</a>. Et tu peux <a href={`${APP_URL}/register`}>tester tes propres stats gratuitement</a>.
   </p>
 </BlogPost>

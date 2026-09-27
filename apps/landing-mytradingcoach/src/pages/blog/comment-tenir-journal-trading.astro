@@ -1,4 +1,5 @@
 ---
+import { APP_URL } from '../../config';
 import BlogPost from '../../layouts/BlogPost.astro';
 ---
 
@@ -75,6 +76,6 @@ import BlogPost from '../../layouts/BlogPost.astro';
     Si tu débutes, commence encore plus léger que ce que je viens de décrire. Trois champs : le résultat, l'émotion, une phrase. Tiens ça deux semaines sans exception, même les jours sans trade (tu notes "pas tradé", ça compte comme une entrée). Une fois que ça tourne sans effort, tu ajoutes le setup, puis le stop. L'idée est d'empiler des couches sur une base solide, pas de tout charger le premier jour.
   </p>
   <p>
-    Le guide <a href="/blog/journal-trading-debutant">journal de trading pour débutants</a> détaille cette progression si tu veux un point de départ pas à pas. Et si tu veux juste t'y mettre sans monter un fichier, tu peux <a href="https://app.mytradingcoach.app/register">ouvrir un compte gratuit</a> et logger ton premier trade en deux minutes. Le plus dur, ce n'est pas l'outil. C'est d'ouvrir le journal le onzième jour.
+    Le guide <a href="/blog/journal-trading-debutant">journal de trading pour débutants</a> détaille cette progression si tu veux un point de départ pas à pas. Et si tu veux juste t'y mettre sans monter un fichier, tu peux <a href={`${APP_URL}/register`}>ouvrir un compte gratuit</a> et logger ton premier trade en deux minutes. Le plus dur, ce n'est pas l'outil. C'est d'ouvrir le journal le onzième jour.
   </p>
 </BlogPost>

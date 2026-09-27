@@ -1,5 +1,5 @@
 ---
-import { FEATURES } from '../config';
+import { APP_URL, FEATURES } from '../config';
 ---
 
 <section id="pricing" style="padding:80px 5%">
@@ -37,7 +37,7 @@ import { FEATURES } from '../config';
           <li>Stats de base : win rate, P&amp;L · Historique illimité</li>
           <li>Import CSV universel · Futures, Crypto, Forex</li>
         </ul>
-        <a href="https://app.mytradingcoach.app/register" class="price-cta ghost">Commencer gratuitement</a>
+        <a href={`${APP_URL}/register`} class="price-cta ghost">Commencer gratuitement</a>
       </div>
 
       <!-- PREMIUM -->
@@ -67,7 +67,7 @@ import { FEATURES } from '../config';
           <li>📄 Export PDF rapport mensuel</li>
           <li>🌙 Recap journalier email 17h30</li>
         </ul>
-        <a href="https://app.mytradingcoach.app/register?plan=premium" class="price-cta prim">
+        <a href={`${APP_URL}/register?plan=premium`} class="price-cta prim">
           <span class="cta-main">Essayer Premium · 1 mois offert →</span>
           <span class="cta-sub-text">🔥 Carte requise · annulable en un clic</span>
         </a>
