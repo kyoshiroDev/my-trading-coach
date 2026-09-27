@@ -1,8 +1,8 @@
-# Audit UI/UX + DX — MyTradingCoach (app, admin, API, outillage)
+# Audit UI/UX + DX — MyTradingCoach (app, admin, API, landing, outillage)
 
 - **Date** : 27/09/2026 · branche `claude/audit-ui-ux-dx-rnr1wi` (base `5fa7d9b`)
-- **Périmètre** : `app-mytradingcoach` (Angular), `admin-mytradingcoach`, `api-mytradingcoach` (côté contrat et DX), monorepo, CI/CD, documentation.
-  La landing a déjà son propre audit : `docs/audit-ux-ui-landing-2026-09-27.md`. Il n'est pas repris ici.
+- **Périmètre** : `app-mytradingcoach` (Angular), `admin-mytradingcoach`, `api-mytradingcoach` (§ 8), `landing-mytradingcoach` côté code (§ 9), monorepo, CI/CD, documentation.
+  L'UX/UI de la landing en ligne a déjà son audit (`docs/audit-ux-ui-landing-2026-09-27.md`). La § 9 le complète côté code, SEO technique et build, sans le répéter.
 - **Méthode** : lecture du code, scans statiques (grep), calcul des contrastes WCAG sur `styles/theme.css`, puis exécution réelle de `lint`, `test` et `build` pour l'app et l'admin.
   Pas de session navigateur : les constats UI viennent du code, pas de captures.
 - **Mesures exécutées**
@@ -13,12 +13,17 @@
 | `nx lint app-mytradingcoach` / `admin-mytradingcoach` | ✅ 0 erreur |
 | `nx test app-mytradingcoach` | ✅ vert, mais **3 min 27 s** pour 59 fichiers de spec |
 | `nx build app-mytradingcoach -c production` | ⚠️ **budget initial dépassé** : 592,7 kB pour un budget de 500 kB (transfert ≈ 111 kB) |
+| `nx lint api-mytradingcoach` | ✅ 0 erreur |
+| `vitest run` (API, unitaires) | ✅ 69 fichiers, 691 tests, **19 s** (après remplacement local temporaire de `xlsx` par la 0.18.5, non commité). Tests d'intégration (`*.int-spec.ts`, 9 fichiers) non lancés : ils demandent Postgres + Redis. |
+| `nx build api-mytradingcoach -c production` | ✅ 9 s, `main.js` de 974 kB |
+| `astro check` (landing) | ✅ 0 erreur, 0 warning, 1 hint |
+| `astro build` (landing) | ✅ 21 pages en 2 s, `dist` de 872 kB |
 
 Légende : 🔴 à traiter vite (bloque des utilisateurs ou des développeurs) · 🟠 important · 🟡 amélioration.
 
 ---
 
-## Synthèse — top 10
+## Synthèse — top 12 (A = API, L = landing)
 
 | # | Sév. | Constat | Où |
 |---|---|---|---|
@@ -31,6 +36,8 @@ Légende : 🔴 à traiter vite (bloque des utilisateurs ou des développeurs) �
 | 7 | 🟠 | Navigation FR/EN mélangée, et « Ma session » côtoie « Mes sessions ». « Scoring » est rangé sous « ACCOUNT ». | `sidebar.component.html` |
 | 8 | 🟠 | **30 % des tailles de police sont < 12 px** (279 sur 918), dont 166 à 9-10 px. | tous les `.css` |
 | 9 | 🟠 | Les contrats front/back sont recopiés à la main (interfaces TS côté front, DTO class-validator côté back, schémas zod côté front). Pas d'OpenAPI ni de client généré. | `core/api/*.api.ts`, `core/schemas/trade.schema.ts` |
+| A | 🔴 | **API derrière Traefik sans `trust proxy`** : le rate limiting (`ThrottlerGuard`, 60 req/min) compte probablement toutes les requêtes sous l'IP du proxy, donc un seul quota pour tous les utilisateurs. Et aucune limite dédiée sur `login`, `register` et `forgot-password`. | `main.ts`, `app.module.ts:47`, `auth.controller.ts` |
+| L | 🔴 | **Note 4,8/5 sur 24 avis codée en dur** dans le JSON-LD de toutes les pages de la landing, alors que la prod compte 4 traders. Risque d'action manuelle Google et de pratique commerciale trompeuse. | `landing/src/layouts/Base.astro:83` |
 | 10 | 🟠 | Hook `pre-commit` vide. Les checks locaux reposent sur la CI seule. `commit-msg` utilise `npx` alors que la règle du projet l'interdit. | `.husky/` |
 
 ---
@@ -219,14 +226,82 @@ pnpm dev       # :4200
 
 ---
 
-## 7. Plan d'action proposé
+## 8. API (`api-mytradingcoach`)
+
+### 8.1 Ce qui tient bien
+- Architecture NestJS propre : guards globaux (`Throttler` → `JwtAuth` → `DemoReadOnly`), `ValidationPipe` strict (`whitelist` + `forbidNonWhitelisted` + `transform`), enveloppe `{ data }` uniforme, `helmet` avec CSP verrouillée.
+- Liste des trades en **pagination par curseur** (`take: limit + 1`, `@Max(100)`), `select` ciblés dans l'analytics, cache Redis sur les agrégats.
+- Point d'entrée IA unique (`AnthropicClientService`) avec interrupteur `AI_ENABLED` et journalisation du coût. Crons en opt-in (`IS_CRON_WORKER`).
+- Tests unitaires rapides (691 tests en 19 s) et lint propre.
+
+### 8.2 Sécurité et robustesse
+
+| Sév. | Constat | Où | Recommandation |
+|---|---|---|---|
+| 🔴 | **Pas de `trust proxy`**. L'API est derrière Traefik (`docker-compose.prod.yml`), donc `req.ip` vaut l'IP du proxy. Le `ThrottlerGuard` global (60 req/min) regroupe alors tous les utilisateurs dans le même compteur : soit des 429 injustifiés en charge, soit aucune protection réelle par client. À confirmer dans les logs de prod (fréquence des 429). | `main.ts` | `app.getHttpAdapter().getInstance().set('trust proxy', 1)` (un seul saut : Traefik). |
+| 🔴 | **Pas de limite dédiée sur l'authentification** : `login`, `register`, `forgot-password` et `reset-password` n'ont pas de `@Throttle`. Le brute-force et l'envoi massif d'emails de réinitialisation (coût Resend, spam) ne sont freinés que par le quota global. | `auth.controller.ts:40-97` | `@Throttle({ default: { ttl: 60_000, limit: 5 } })` sur `login` et `forgot-password`, et une clé IP + email. |
+| 🟠 | Le stockage du throttler est **en mémoire, par worker**. En prod, `main.ts` lance un worker par cœur, donc la limite réelle vaut N × 60. | `app.module.ts:47` | Stockage Redis (`@nest-lab/throttler-storage-redis`), Redis étant déjà là. |
+| 🟠 | Le filtre d'exception ne capte que `HttpException`. Les erreurs Prisma (`P2002` unique, `P2025` introuvable) et les exceptions inattendues passent par le filtre Nest par défaut. Le client reçoit alors un 500 **au format différent** (sans `code`, `timestamp`, `path`). Or le front s'appuie sur `code` (`apiErrorMessage`). | `common/filters/http-exception.filter.ts` | Filtre `@Catch()` global : mapper `P2002` → 409 et `P2025` → 404, et tout le reste en 500 au même format. |
+| 🟠 | **Sentry installé mais pas initialisé** : `@sentry/nestjs` ne sert qu'à un `captureMessage` dans le webhook Stripe. Les 500 en prod ne sont remontés nulle part hors logs. | `stripe-webhook.service.ts:155` | `Sentry.init` dans un `instrument.ts` importé en premier, plus `SentryModule` et `SentryGlobalFilter`. |
+| 🟠 | **Client Anthropic sans `timeout` ni `maxRetries` explicites** : par défaut, le SDK attend jusqu'à 10 min et retente 2 fois. Les endpoints synchrones `POST /ai/chat` et `/ai/insights` peuvent donc bloquer une requête HTTP et un worker très longtemps. Les appels en échec ne sont pas journalisés (seul le succès passe par `aiLogger`). | `modules/shared/anthropic-client.service.ts:7` | `new Anthropic({ timeout: 60_000, maxRetries: 1 })`, un `try/catch` qui journalise l'échec (feature, durée, statut), et un `AbortSignal` lié à la fermeture de la requête. |
+| 🟡 | Le modèle est codé en dur dans 9 fichiers (`'claude-sonnet-4-6'` dans chaque agent). Changer de modèle oblige à tous les modifier, et le tarif dans `ai-pricing.const.ts` peut diverger. | `modules/ai/agents/*` | Une constante `AI_MODELS.coach / .debrief / .translation` à côté de la table de prix. |
+| 🟡 | Le cluster relance un worker mort **immédiatement et sans limite**. Si un bug fait planter le démarrage, la boucle tourne indéfiniment et sature les logs et le CPU. | `main.ts:104-110` | Délai croissant et compteur (ex. 5 redémarrages par minute, puis `process.exit(1)` pour laisser Docker redémarrer le conteneur). |
+| 🟡 | Pas d'`enableShutdownHooks()` : un `docker compose up --force-recreate` coupe les jobs BullMQ et les connexions Prisma et socket.io en cours. | `main.ts` | `app.enableShutdownHooks()` et fermeture propre des queues. |
+| 🟡 | `/api/health` renvoie toujours `ok` sans tester Postgres ni Redis. Le healthcheck Docker reste vert quand la base est down. `@nestjs/terminus` est installé mais **inutilisé**. | `app/app.controller.ts:8` | `HealthCheckService` avec `PrismaHealthIndicator` et un ping Redis, ou retirer la dépendance. |
+
+### 8.3 Conception de l'API (DX côté front)
+- 🟠 **Routes admin dispersées** : `/admin/*` d'un côté, `/users/admin/*` de l'autre (`stats`, `online`, `:id/role`, `subscriptions`…). Un seul préfixe `/admin` protégé par un seul guard serait plus lisible et plus sûr : aujourd'hui, chaque route de `UsersController` doit penser à son `@UseGuards(AdminGuard)`.
+- 🟠 **`TradesController` fourre-tout** (256 lignes) : `news`, `news/:id/text`, `market-context`, `live-price`, `instruments`, `user-assets` et `favorite-asset` ne sont pas des trades. Les ranger dans `market` et `instruments` clarifierait l'API et les droits.
+- 🟡 **Validation de l'environnement partielle** : `validateEnv()` vérifie 9 variables, mais `REDIS_HOST` (déclarée obligatoire en prod dans `.env.example`), `CORS_ORIGINS` et `SENTRY_DSN` ne le sont pas. Trois mécanismes de chargement se superposent :
+  - Nx charge `.env` ;
+  - `ConfigModule` lit `.env.development` ou `.env.local` ;
+  - `prisma.config.ts` fait `dotenv/config`.
+
+  → Un seul schéma (zod ou Joi) dans `ConfigModule.forRoot({ validate })`, et un seul fichier documenté par environnement.
+- 🟡 **Agrégats analytics calculés en JS** : l'API charge tous les trades de l'utilisateur, puis calcule en mémoire. C'est acceptable aujourd'hui grâce au cache et aux `select`. Au-delà de quelques milliers de trades par utilisateur, il faudra passer à `groupBy` ou à des vues SQL.
+- 🟡 `path: request.url` dans les réponses d'erreur renvoie la query string. Vérifier qu'aucun token ne passe en query (lien de réinitialisation, OAuth Tradovate).
+
+---
+
+## 9. Landing — code, SEO technique et build (`landing-mytradingcoach`)
+
+### 9.1 Ce qui tient bien
+- Build statique très léger : 21 pages en 2 s, 872 kB en tout, 57 kB de HTML pour la home.
+- `astro check` sans erreur. `trailingSlash: 'never'` et canonical cohérents. Sitemap filtré par les flags de feature.
+- Un seul `<h1>` par page, `alt` sur toutes les images, meta description sur toutes les pages indexables, JSON-LD `Article` + `BreadcrumbList` sur les articles.
+- Menu mobile et FAQ accessibles (`aria-expanded` mis à jour).
+
+### 9.2 Constats
+
+| Sév. | Constat | Où | Recommandation |
+|---|---|---|---|
+| 🔴 | **`aggregateRating` inventé** : `ratingValue 4.8`, `ratingCount 24`, codé en dur dans le JSON-LD par défaut. Il est donc injecté sur la home **et sur toutes les pages sans `schema` propre** : 404, CGU, mentions légales, disclaimer, confidentialité. Aucun système d'avis ne l'alimente, et l'API publique renvoie 4 traders. Cela enfreint les règles Google sur les données structurées (action manuelle possible, perte des rich results). En France, de faux avis relèvent aussi des pratiques commerciales trompeuses. | `layouts/Base.astro:83` | Supprimer `aggregateRating` tant qu'il n'y a pas de vrais avis vérifiables. |
+| 🟠 | **FAQPage JSON-LD injecté sur toutes les pages**, pages légales comprises, et **recopié à la main** depuis `FAQ.astro`. Les deux textes vont diverger (réponse sur les prix, etc.). Google n'affiche plus les rich results FAQ pour les sites commerciaux depuis 2023. | `Base.astro:113`, `components/FAQ.astro` | Ne l'émettre que sur la home, généré depuis un tableau commun à `FAQ.astro`, ou le retirer. |
+| 🟠 | **Prix codés en dur à 5 endroits** (`Pricing`, `FAQ`, `Compare`, JSON-LD `Offer`, JSON-LD FAQ), alors que `@mtc/shared` exporte `PREMIUM_PRICE_EUR`. C'est contraire à la règle « valeurs en dur → `pricing.const.ts` » de CLAUDE.md, et `plans.md` exige la cohérence landing, front, guard et cron. | `components/Pricing.astro:48-52`, etc. | Importer `@mtc/shared` (alias Vite) et interpoler. |
+| 🟠 | **Collection de contenu morte** : `content.config.ts` déclare une collection `blog` (5 `.md`), mais **aucune page n'appelle `getCollection`**. Les 5 articles `.md` existent aussi en `.astro` sous `pages/blog/`, avec un texte qui a déjà divergé. L'index du blog liste les articles **à la main** (`const posts = [...]`). Publier un article demande donc 2 fichiers à synchroniser. | `src/content/blog/*`, `pages/blog/*.astro`, `pages/blog/index.astro:6` | Tout passer en collection Markdown/MDX, avec un `[slug].astro` et un index généré, ou supprimer la collection. |
+| 🟠 | **2 270 lignes de composants jamais rendus** : `CoachIA`, `Debrief`, `Showcase` et les 6 `mockup/*` (déjà relevé par l'audit UX : aucune capture produit sur la home). Soit on les branche (ils répondent justement au manque de visuels produit), soit on les supprime. | `components/` | Décision produit, puis intégration ou suppression. |
+| 🟠 | **23 liens `https://app.mytradingcoach.app/register` codés en dur** alors que `APP_URL` existe. Sur DEV, les inscriptions partent en prod (déjà relevé dans l'audit UX). | `Pricing`, `Nav`, `CtaFinal`, `Testimonials`, `BlogPost` | `${APP_URL}/register` partout. |
+| 🟡 | **`lastmod` du sitemap = date du build** pour toutes les URLs : chaque déploiement annonce que tout a changé. Google finit par ignorer ce signal. | `astro.config.mjs` (`lastmod: new Date()`) | Utiliser `publishDate` / `updatedDate` des articles, ou omettre `lastmod`. |
+| 🟡 | **Tailwind installé mais inutilisé** : `tailwindcss` et `@tailwindcss/vite` sont dans `package.json`, mais le plugin n'est pas branché et aucun import n'existe. En parallèle, **326 attributs `style="…"` inline**. | `package.json`, `src/**` | Retirer Tailwind, et sortir les styles inline dans les `<style>` des composants. |
+| 🟡 | TypeScript `^5.9.2` sur la landing contre `6.0.3` à la racine. Pas d'ESLint ni de Prettier sur les `.astro` : la cible `lint` n'est qu'un `astro check` (typecheck). | `package.json`, `project.json` | Aligner TypeScript, ajouter `eslint-plugin-astro` et `prettier-plugin-astro`. |
+| 🟡 | Google Fonts chargé depuis le CDN (même remarque RGPD et performance que l'app, § 1.3). `astro check` signale aussi le hack `media="print" onload` (hint `ts(6133)`). | `layouts/Base.astro:150-153` | Auto-héberger les fontes (`@fontsource`, ou le support `fonts` d'Astro). |
+| 🟡 | Pages gatées (`/ambassadeur`, `/journal-trading-prop-firm`) générées comme redirections `meta refresh` à 2 s quand le flag est OFF. Elles sont bien exclues du sitemap et en `noindex`, donc c'est acceptable. Une redirection 301 côté Nginx serait plus propre. | `pages/*.astro` | Optionnel. |
+| 🟡 | CLAUDE.md annonce `mytradingcoach.app`, mais `site` et les canonicals utilisent `www.mytradingcoach.app`. Vérifier que Nginx redirige bien l'apex vers `www` en 301, puis corriger la doc. | `astro.config.mjs`, `CLAUDE.md` | — |
+
+---
+
+## 10. Plan d'action proposé
 
 **Sprint 1 — bloquants (≈ 2-3 j)**
 1. `errorInterceptor` global, composant `<mtc-error-state>` branché sur `httpResource.error()` (Analytics, Scoring, Dashboard), `BillingService.startCheckout` unique.
 2. Contrastes : bouton primaire en `#2563eb`, badge FREE, règle `:focus-visible` globale.
 3. DX : vendoriser `xlsx`, `packageManager`/`engines`, corriger `.env.example` (port 5432) et réécrire le README.
+4. API : `trust proxy`, `@Throttle` sur l'auth, stockage du throttler dans Redis.
+5. Landing : retirer `aggregateRating`, remplacer les URLs `register` en dur par `APP_URL`.
 
 **Sprint 2 — cohérence (≈ 3-4 j)**
+- API : filtre d'exception global (Prisma → 409/404), `Sentry.init`, `timeout` Anthropic, health check réel, routes admin sous un seul préfixe.
+- Landing : prix depuis `@mtc/shared`, FAQ JSON-LD générée depuis une source unique, blog en collection, choix sur les composants morts.
 4. Renommer la navigation (langue unique, « Session du jour » / « Historique », Scoring dans Analyse).
 5. `ConfirmDialog` partagé (CDK Dialog avec piège de focus) pour remplacer les `confirm()` et unifier les 16 modales. Burger avec `aria-expanded` et fermeture par Échap.
 6. Tokens : échelles de taille, d'espacement et de rayon ; 4 breakpoints ; plancher de 12 px ; tokens partagés app/admin.
