@@ -26,7 +26,7 @@
         "default"
       ],
       "options": {
-        "command": "tsc -p tsconfig.json",
+        "command": "tsc -p tsconfig.check.json",
         "cwd": "libs/shared"
       }
     }
