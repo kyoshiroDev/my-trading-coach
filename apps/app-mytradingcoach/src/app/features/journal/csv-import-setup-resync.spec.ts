@@ -1,5 +1,5 @@
 /**
- * PROMPT-182 — le setup sélectionné du wizard CSV se recale quand la liste change.
+ * le setup sélectionné du wizard CSV se recale quand la liste change.
  *
  * Bug d'origine (Val) : `setupId` était fixé UNE fois au premier setup actif, avec
  * un garde `!this.setupId()` qui empêchait toute correction ultérieure. Supprimer

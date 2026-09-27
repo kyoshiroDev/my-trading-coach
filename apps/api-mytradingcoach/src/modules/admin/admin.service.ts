@@ -244,7 +244,7 @@ export class AdminService {
   /**
    * Stats de parrainage agrégées par ambassadeur.
    * Filtre sur le RÔLE : `referralCode` est partagé avec le parrainage grand public,
-   * donc sa présence ne fait pas d'un utilisateur un ambassadeur (PROMPT-176).
+   * donc sa présence ne fait pas d'un utilisateur un ambassadeur.
    */
   async getReferralStats() {
     const ambassadors = await this.prisma.user.findMany({

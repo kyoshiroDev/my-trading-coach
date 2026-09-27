@@ -28,7 +28,7 @@ export class CompleteOnboardingDto {
   startingCapital?: number;
 
   /**
-   * @deprecated PROMPT-214 : IGNORÉ. La devise se choisit sur le compte créé à l'onboarding
+   * @deprecated IGNORÉ. La devise se choisit sur le compte créé à l'onboarding
    * (`TradingAccount.currency`), plus sur le profil. Encore accepté pour ne pas rejeter un front
    * resté en cache ; à retirer avec les colonnes `User.currency` / `currencyRate`.
    */

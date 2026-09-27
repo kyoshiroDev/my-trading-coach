@@ -5,7 +5,7 @@
  * partir d'ici : un changement de prix se fait en UN endroit (+ la landing `Pricing.astro`).
  *
  * Les montants réellement facturés restent pilotés par les variables `STRIPE_*_PRICE_*`.
- * 2 paliers depuis PROMPT-169 : FREE (0 €) et PREMIUM (49 €/mois · 490 €/an).
+ * 2 paliers : FREE (0 €) et PREMIUM (49 €/mois · 490 €/an).
  * Règles de plan : `.claude/agents/plans.md`.
  */
 
@@ -16,7 +16,7 @@ export const PREMIUM_PRICE_EUR = { monthly: 49, annual: 490 } as const;
 export const PREMIUM_ANNUAL_SAVINGS_EUR = PREMIUM_PRICE_EUR.monthly * 12 - PREMIUM_PRICE_EUR.annual;
 
 /**
- * Essai gratuit : 30 jours, MENSUEL uniquement (PROMPT-169). L'annuel est facturé immédiatement
+ * Essai gratuit : 30 jours, MENSUEL uniquement. L'annuel est facturé immédiatement
  * (un essai suivi d'un prélèvement de 490 € génère contestations et remboursements).
  */
 export const TRIAL_PERIOD_DAYS = 30;

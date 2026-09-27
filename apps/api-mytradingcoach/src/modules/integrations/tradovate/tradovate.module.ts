@@ -16,7 +16,7 @@ import { TradovateLiveGateway } from './tradovate-live.gateway';
 import { TradovateCallbackController, TradovateController } from './tradovate.controller';
 
 /**
- * Intégration Tradovate / NinjaTrader (PROMPT-207) — synchro API en LECTURE SEULE.
+ * Intégration Tradovate / NinjaTrader — synchro API en LECTURE SEULE.
  * Premier broker « par API » : le pattern (connexion par TradingAccount, secrets chiffrés,
  * mapper pur → `TradesService.importTrades`) est documenté dans `.claude/agents/nestjs.md`
  * pour les suivants (Binance, Bybit).
@@ -29,11 +29,11 @@ import { TradovateCallbackController, TradovateController } from './tradovate.co
     TradovateApiClient,
     TradovateConnectionService,
     TradovateSyncService,
-    // Historique par la Reporting API (PROMPT-217) : la Trade API ne voit que la séance.
+    // Historique par la Reporting API : la Trade API ne voit que la séance.
     TradovateReportingClient,
     TradovateHistoryService,
     TradovateTokenRefreshCron,
-    // Temps réel (PROMPT-210 live) : WebSocket Tradovate calé sur la présence dans l'app.
+    // Temps réel : WebSocket Tradovate calé sur la présence dans l'app.
     TradovateLiveService,
     // WebSocket natif (Node ≥ 22) ; remplacé par un faux serveur Tradovate en test.
     { provide: LIVE_SOCKET_FACTORY, useValue: nativeSocketFactory },

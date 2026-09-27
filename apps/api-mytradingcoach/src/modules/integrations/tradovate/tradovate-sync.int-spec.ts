@@ -1,5 +1,5 @@
 /**
- * PROMPT-207 — flux complet Tradovate : consentement → callback → synchro → dédup.
+ * flux complet Tradovate : consentement → callback → synchro → dédup.
  *
  * Vraie stack (Postgres, Redis, HTTP, guards, filtre d'erreurs) ; seul Tradovate est simulé,
  * par un `fetch` intercepté qui laisse passer tout le reste. On prouve ici ce qu'un double ne
@@ -263,7 +263,7 @@ describe('Tradovate — consentement', () => {
     expect(location.origin + location.pathname).toBe('https://app.test/accounts');
     expect(location.searchParams.get('tradovate')).toBe('connected');
     expect(location.searchParams.get('accountId')).toBe(account.id);
-    // Première synchro faite au retour (PROMPT-208) : l'utilisateur revient avec ses trades.
+    // Première synchro faite au retour : l'utilisateur revient avec ses trades.
     expect(location.searchParams.get('trades')).toBe('3');
     expect(location.searchParams.get('fees')).toBe('ok');
     expect(location.searchParams.get('from')).toBeNull();

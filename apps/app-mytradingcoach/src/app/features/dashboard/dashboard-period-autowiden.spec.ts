@@ -1,7 +1,7 @@
 /**
- * PROMPT-186 #2 — la fenêtre par défaut du dashboard doit être consciente des données.
+ * la fenêtre par défaut du dashboard doit être consciente des données.
  *
- * Constat navigateur (PROMPT-184) : après un import Tradovate réussi (20 trades),
+ * Constat navigateur : après un import Tradovate réussi (20 trades),
  * le dashboard affichait « Aucune donnée / 0 trade / P&L $0.00 » — les trades
  * dataient de plus de 30 jours, hors de la fenêtre 1M par défaut — pendant que la
  * carte « Top actifs », non scopée, montrait les mêmes trades. L'import réussi

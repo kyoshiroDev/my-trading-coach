@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { AccountsService } from './accounts.service';
 
-// Le AccountsController n'est gardé que par JwtAuthGuard (PROMPT-169) : le multi-comptes
+// Le AccountsController n'est gardé que par JwtAuthGuard : le multi-comptes
 // est ouvert à FREE (1 compte) comme à PREMIUM (illimité) ; le plafond vit dans le service.
 
 function makePrisma() {
@@ -131,7 +131,7 @@ describe('AccountsService', () => {
     });
 
     it('inscrit du jour (0 compte) → son 1er compte prop firm passe avec ses règles', async () => {
-      // Cas de l'onboarding (PROMPT-199) : le wizard crée le compte au checkpoint de
+      // Cas de l'onboarding : le wizard crée le compte au checkpoint de
       // l'étape Stratégie. Un FREE fraîchement inscrit est à 0 compte, donc sous le
       // quota — vérifié plutôt que supposé, et les règles doivent traverser jusqu'à
       // Prisma (le ValidationPipe global est en forbidNonWhitelisted : un champ hors

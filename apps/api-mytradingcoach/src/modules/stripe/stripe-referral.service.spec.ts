@@ -140,7 +140,7 @@ describe('StripeReferralService —processReferral (coexistence)', () => {
 });
 
 /**
- * PROMPT-185 #7 — un mois offert non chiffrable ne doit plus rester bloqué.
+ * un mois offert non chiffrable ne doit plus rester bloqué.
  *
  * La ligne `ReferralReward` est créée avant le chiffrage (ancre d'idempotence).
  * Avant, si `resolveFreeMonthCents` renvoyait 0, elle restait PENDING et la
@@ -270,7 +270,7 @@ describe('StripeReferralService —mois offert : rejeu des PENDING', () => {
 });
 
 /**
- * PROMPT-185 #4 — une panne transitoire doit déclencher le retry, pas être avalée.
+ * une panne transitoire doit déclencher le retry, pas être avalée.
  *
  * Le `catch` se contentait de logger : le job BullMQ finissait en succès, aucune
  * des 5 tentatives n'était utilisée, et l'event étant déjà marqué traité, la
@@ -341,7 +341,7 @@ describe('StripeReferralService —processReferral relance ses erreurs', () => {
 });
 
 /**
- * PROMPT-185 #3 — le mois de rattachement vient de la FACTURE, pas de l'horloge.
+ * le mois de rattachement vient de la FACTURE, pas de l'horloge.
  *
  * La clé d'unicité est `(subscriptionId, period)`. Quand `period` venait de
  * `Date.now()`, une facture de janvier traitée en février (retry BullMQ,

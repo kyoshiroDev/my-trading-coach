@@ -157,7 +157,7 @@
    padding-top 16 + header 57 + margin 14 + padding-bottom 16 ; .session-page colle au haut du
    viewport → 100vh est la réf.
    --demo-banner-h (0 hors démo) retranche le bandeau « Mode démo », qui s'intercale
-   au-dessus de la vue : sans lui, la démo débordait de 52 px et scrollait (PROMPT-192).
+   au-dessus de la vue : sans lui, la démo débordait de 52 px et scrollait.
    Sous 980px (tablette/mobile) : pas de hauteur imposée → contenu naturel + scroll page normal. */
 @container (min-width: 981px) {
   [data-testid="session-live-view"] {

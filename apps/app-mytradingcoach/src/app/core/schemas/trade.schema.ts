@@ -16,7 +16,7 @@ export const CreateTradeSchema = z.object({
   takeProfit: optPositive,
   pnl: optNumber,
   riskReward: optNumber,
-  // Émotion = override optionnel (PROMPT-163) : nullable, absente = hérite de l'humeur de session.
+  // Émotion = override optionnel : nullable, absente = hérite de l'humeur de session.
   emotion: z
     .enum(['CONFIDENT', 'STRESSED', 'REVENGE', 'FEAR', 'FOCUSED', 'NEUTRAL'])
     .nullish(),

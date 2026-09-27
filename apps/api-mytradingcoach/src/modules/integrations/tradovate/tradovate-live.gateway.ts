@@ -14,7 +14,7 @@ import { TradovateLiveService } from './tradovate-live.service';
 export const userRoom = (userId: string) => `user:${userId}`;
 
 /**
- * Canal applicatif du temps réel Tradovate (PROMPT-210 live) — même pattern que `/eco`,
+ * Canal applicatif du temps réel Tradovate — même pattern que `/eco`,
  * mais AUTHENTIFIÉ : les événements portent des trades, ils ne partent qu'au bon user.
  *
  * - Handshake : `auth.token` = access_token de l'app (JWT). Invalide, ou compte démo

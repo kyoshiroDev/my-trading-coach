@@ -200,7 +200,7 @@ export class ReferralComponent implements OnInit {
       });
   }
 
-  /** Feedback transitoire → toast (PROMPT-210). L'échec du presse-papiers était muet. */
+  /** Feedback transitoire → toast. L'échec du presse-papiers était muet. */
   protected copy(link: string): void {
     navigator.clipboard.writeText(link).then(
       () => this.toast.success('Lien copié'),

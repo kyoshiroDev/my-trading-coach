@@ -1,5 +1,5 @@
 /**
- * PROMPT-209 — aucun test d'intégration n'envoie de vrai email.
+ * aucun test d'intégration n'envoie de vrai email.
  *
  * Les `*.int-spec.ts` démarraient `AppModule` tel quel ; en local ils lisaient le `.env` du
  * développeur (vraie clé Resend) et chaque run envoyait de vrais emails. Trois verrous :

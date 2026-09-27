@@ -1,5 +1,5 @@
 /**
- * PROMPT-181 — Parcours 1 : Activation (inscription → premier trade).
+ * Parcours 1 : Activation (inscription → premier trade).
  *
  * Le funnel n°1 du produit : un bug ici tue l'acquisition en silence, sans
  * qu'aucune métrique ne le signale directement (juste un taux d'activation qui
@@ -10,7 +10,7 @@
  *     setups) → premier trade saisi manuellement → visible dans le journal.
  *   - skip : inscription → « Je commence à zéro » → dashboard fonctionnel,
  *     sans trade, sans écran cassé.
- *   - prop firm (PROMPT-199) : l'étape 4 déclare un compte d'évaluation avec ses
+ *   - prop firm : l'étape 4 déclare un compte d'évaluation avec ses
  *     règles, créé au checkpoint de l'étape 5. Cette branche n'était pas couverte :
  *     les deux parcours ci-dessus ne traversent l'étape 4 qu'en mode PERSO, donc
  *     ni le bloc de règles, ni le payload EVALUATION, ni la garde anti-doublon.
@@ -90,7 +90,7 @@ test.describe('Activation : inscription → premier trade', () => {
 });
 
 /**
- * PROMPT-199 — étape 4 en mode prop firm.
+ * étape 4 en mode prop firm.
  *
  * Avant ce checkpoint, le compte n'était créé qu'au premier trade par
  * `ensureDefaultAccountId` : toujours PERSONAL, libellé « Compte principal », sans

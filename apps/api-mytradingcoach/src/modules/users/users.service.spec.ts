@@ -62,7 +62,7 @@ describe('UsersService', () => {
         UsersService,
         { provide: PrismaService, useValue: mockPrisma },
         // setRole délègue à AmbassadorService pour garantir le referralCode
-        // d'un AMBASSADOR (PROMPT-176) ; non sollicité par ces tests.
+        // d'un AMBASSADOR ; non sollicité par ces tests.
         { provide: AmbassadorService, useValue: { promote: vi.fn(), revoke: vi.fn() } },
       ],
     }).compile();
@@ -129,7 +129,7 @@ describe('UsersService', () => {
   });
 
   describe('updatePreferences', () => {
-    it('ignore une devise globale envoyée : ni currency ni taux écrits, aucun appel réseau (PROMPT-214)', async () => {
+    it('ignore une devise globale envoyée : ni currency ni taux écrits, aucun appel réseau', async () => {
       const fetchSpy = vi.fn();
       vi.stubGlobal('fetch', fetchSpy);
       mockPrisma.user.update.mockResolvedValue({ ...mockUser, notificationsEmail: false });

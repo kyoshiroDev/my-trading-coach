@@ -30,7 +30,7 @@ const AI_MONTHLY_QUOTA = 100;
 
 // Contenu IA figé pour le compte démo : AUCUN appel modèle (coût zéro).
 const DEMO_INSIGHTS = {
-  // Aligné sur le seed démo (PROMPT-215) : qualitatif, sans pourcentage figé (les chiffres du
+  // Aligné sur le seed démo : qualitatif, sans pourcentage figé (les chiffres du
   // seed varient légèrement selon le jour du run).
   topPattern:
     "Ton edge est net sur les breakouts MNQ/MES à l'ouverture : c'est ton setup le plus rentable. Tes Reversals, eux, te coûtent de l'argent semaine après semaine.",
@@ -94,7 +94,7 @@ export class AiService {
         asset: true,
         side: true,
         pnl: true,
-        commission: true, // stats sur le net (PROMPT-213)
+        commission: true, // stats sur le net
         emotion: true,
         tradeSession: { select: { moodStart: true } },
         setup: { select: { title: true, description: true } },
@@ -126,7 +126,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
     if (recentTrades.length === 0) {
       contextSummary = "Ce trader n'a encore enregistré aucun trade.";
     } else {
-      // Stats via le helper unique (BE exclus du win rate, PROMPT-160).
+      // Stats via le helper unique (BE exclus du win rate).
       const s = computeTradeStats(recentTrades);
       const winRate = Math.round(s.winRate);
       const totalPnl = s.totalPnl;
@@ -161,7 +161,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
             .join('\n')}`
         : '';
 
-      // Devise des comptes, sans conversion (PROMPT-214) ; null si elles diffèrent.
+      // Devise des comptes, sans conversion ; null si elles diffèrent.
       const currency = await userAmountsCurrency(this.prisma, userId);
       contextSummary = `Données trader (${recentTrades.length} trades récents) :
 - Win rate : ${winRate}%
@@ -247,7 +247,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
     winRate: number;
     dominantEmotion: string | null;
     date: Date;
-    /** Devise des comptes (PROMPT-214) ; null si elles diffèrent. */
+    /** Devise des comptes ; null si elles diffèrent. */
     currency?: string | null;
     userProfile?: UserTradingProfile;
     patterns7d?: {

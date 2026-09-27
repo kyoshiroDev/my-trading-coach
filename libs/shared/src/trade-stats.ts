@@ -1,5 +1,5 @@
 /**
- * Statistiques de trades : SOURCE UNIQUE front + back (PROMPT-160, centralisée à l'étape 3 de
+ * Statistiques de trades : SOURCE UNIQUE front + back (centralisée à l'étape 3 de
  * l'audit du 2026-09-13 — il y avait deux copies « miroir », identiques en logique).
  *
  * Un trade clôturé est classé en 3 résultats :
@@ -33,7 +33,7 @@ export interface TradeStatInput {
 /**
  * P&L NET d'un trade = pnl (brut) − frais. `null` si le trade est ouvert (pnl non renseigné).
  *
- * CONVENTION UNIQUE (PROMPT-213) : `pnl` est stocké BRUT, `commission` à part, et TOUT montant
+ * CONVENTION UNIQUE : `pnl` est stocké BRUT, `commission` à part, et TOUT montant
  * affiché comme tout classement gagnant/perdant passe par ce net. Un trade à +1 $ brut avec
  * 1,90 $ de frais est une perte. Un appelant qui ne fournit pas `commission` obtient le brut :
  * toujours sélectionner `commission` avec `pnl`.

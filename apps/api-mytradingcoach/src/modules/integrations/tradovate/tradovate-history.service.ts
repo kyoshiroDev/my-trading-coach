@@ -53,7 +53,7 @@ export interface HistoryImportResult {
 }
 
 /**
- * Import de l'HISTORIQUE d'un compte Tradovate via la Reporting API (PROMPT-217).
+ * Import de l'HISTORIQUE d'un compte Tradovate via la Reporting API.
  *
  * La synchro live (Trade API) ne voit que la séance en cours : un trader qui connecte son compte
  * un mardi perd tout son passé. La Reporting API, elle, sert des fenêtres mensuelles — c'est le

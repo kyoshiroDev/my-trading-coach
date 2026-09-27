@@ -118,7 +118,7 @@ export class DebriefService {
           asset: true,
           side: true,
           pnl: true,
-          commission: true, // stats sur le net (PROMPT-213)
+          commission: true, // stats sur le net
           emotion: true,
           tradeSession: { select: { moodStart: true } },
           setup: { select: { title: true } },
@@ -265,7 +265,7 @@ export class DebriefService {
 
   /** Stats déterministes d'un compte sur la semaine (jamais l'IA pour les chiffres). */
   private accountStats(trades: { pnl: number | null; commission?: number | null }[]) {
-    // Helper unique : BE exclus du win rate (PROMPT-160).
+    // Helper unique : BE exclus du win rate.
     const stats = computeTradeStats(trades);
     return {
       totalTrades: stats.total,
@@ -309,7 +309,7 @@ export class DebriefService {
   /**
    * Éligibles au débrief auto : non-démo, opt-in, accès Premium.
    * Doit matcher le PremiumGuard du controller ET la promesse landing/front :
-   * le Weekly Debrief automatique est une feature Premium (PROMPT-169).
+   * le Weekly Debrief automatique est une feature Premium.
    * → plan PREMIUM, rôle ADMIN/BETA_TESTER, ou essai (trial) en cours.
    */
   getEligibleUsers() {
@@ -377,11 +377,11 @@ export class DebriefService {
       orderBy: { pnl: 'desc' },
     });
 
-    // Montants en NET (frais déduits), comme le win rate (PROMPT-213). Tri par net décroissant
+    // Montants en NET (frais déduits), comme le win rate. Tri par net décroissant
     // pour le top 5 (l'orderBy SQL trie sur le brut).
     trades.sort((a, b) => (netPnl(b) ?? 0) - (netPnl(a) ?? 0));
     const pnlValues = trades.map((t) => netPnl(t) ?? 0);
-    // Win rate via le helper unique (BE exclus du dénominateur, PROMPT-160).
+    // Win rate via le helper unique (BE exclus du dénominateur).
     const pdfStats = computeTradeStats(trades);
 
     const storedInsights = debrief.insights as {

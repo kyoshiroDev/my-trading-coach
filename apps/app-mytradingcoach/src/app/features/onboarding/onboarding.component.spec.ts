@@ -79,7 +79,7 @@ const MINIMAL_TEMPLATE = `
 describe('OnboardingComponent', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
-    // Le wizard persiste sa progression (PROMPT-186 #8) : sans purge, un test
+    // Le wizard persiste sa progression : sans purge, un test
     // reprendrait l'étape laissée par le précédent.
     localStorage.clear();
 
@@ -252,7 +252,7 @@ describe('OnboardingComponent', () => {
     };
 
     // Wizard 9 écrans, 7 étapes annoncées : la barre suit le libellé, pas le nombre
-    // d'écrans (PROMPT-198). L'assertion porte sur l'intention, pas sur la formule.
+    // d'écrans. L'assertion porte sur l'intention, pas sur la formule.
     c.step.set(7);
     expect(c.stepLabel).toBe('Étape 6 sur 7');
     expect(c.progress).toBe(Math.round((6 / 7) * 100));
@@ -281,7 +281,7 @@ describe('OnboardingComponent', () => {
     expect(mockSetupsStore.remove).toHaveBeenCalledWith('s1', expect.any(Function));
   });
 
-  it("après sauvegarde des actifs, le store est à jour → pas de faux « Complète ton profil » (PROMPT-089)", () => {
+  it("après sauvegarde des actifs, le store est à jour → pas de faux « Complète ton profil »", () => {
     // Profil complet SAUF les actifs (état avant l'étape 6)
     authUser.set({ tradingStyle: 'SCALPING', tradingStrategy: ['BREAKOUT'], tradingAssets: [], favoriteAsset: null });
     const userStore = TestBed.inject(UserStore);
@@ -305,7 +305,7 @@ describe('OnboardingComponent', () => {
     expect(userStore.profileIncomplete()).toBe(false);
   });
 
-  // PROMPT-186 #4 — la modale d'import se ferme aussitôt (step 9) : sans récapitulatif,
+  // la modale d'import se ferme aussitôt (step 9) : sans récapitulatif,
   // l'utilisateur terminait l'onboarding sans savoir si son historique était arrivé.
   describe("confirmation d'import à l'écran final", () => {
     function importer(result: unknown) {
@@ -327,7 +327,7 @@ describe('OnboardingComponent', () => {
       expect(fixture.nativeElement.querySelector('[data-testid="onboarding-import-fees-warning"]')).toBeFalsy();
     });
 
-    it('relaie l\'avertissement « frais non rapprochés » (PROMPT-185 #8)', () => {
+    it('relaie l\'avertissement « frais non rapprochés »', () => {
       const fixture = importer({ created: 20, duplicates: 0, failed: 0, total: 20,
         feesImported: { assigned: 0, expected: 0, reconciled: false, merged: false, count: 20 } });
 
@@ -354,7 +354,7 @@ describe('OnboardingComponent', () => {
   });
 });
 
-// PROMPT-186 #8 — un rechargement au milieu du wizard ne doit plus tout reperdre.
+// un rechargement au milieu du wizard ne doit plus tout reperdre.
 // Constat navigateur : reload après l'étape Capital → retour à l'étape 1, marché,
 // objectif et capital à ressaisir (rien n'est persisté côté serveur avant l'étape 5).
 describe('OnboardingComponent — reprise après rechargement', () => {

@@ -4,7 +4,7 @@
  * traductions de news).
  *
  * Le tiret cadratin (U+2014) est perçu comme une marque de texte généré par IA
- * (PROMPT-174) : il a été retiré de toute l'interface, donc les textes produits
+ * : il a été retiré de toute l'interface, donc les textes produits
  * par le modèle ne doivent pas le réintroduire.
  *
  * À concaténer au prompt système quand il y en a un, sinon au prompt user.

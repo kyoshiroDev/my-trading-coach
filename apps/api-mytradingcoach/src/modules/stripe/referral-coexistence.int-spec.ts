@@ -1,5 +1,5 @@
 /**
- * PROMPT-176 — règle de coexistence du parrainage, testée de bout en bout
+ * règle de coexistence du parrainage, testée de bout en bout
  * sur la vraie stack : HTTP + signature Stripe + BullMQ + Postgres.
  *
  *   parrain AMBASSADOR → commission cash 20 %, JAMAIS de mois offert
@@ -74,7 +74,7 @@ async function postSignedInvoicePaid(args: {
   stripeCustomerId: string;
   subscriptionId: string;
   amountPaidCents: number;
-  /** Époque (s) de la période facturée : sert à dater la commission (PROMPT-185 #3). */
+  /** Époque (s) de la période facturée : sert à dater la commission. */
   periodStart?: number;
   /** Rejouer le MÊME id d'event : c'est la redélivrance que Stripe pratique. */
   eventId?: string;
@@ -150,7 +150,7 @@ async function waitFor<T>(
 const settle = () => new Promise((r) => setTimeout(r, 6_000));
 
 beforeAll(async () => {
-  // Bootstrap partagé : ResendService neutralisé (PROMPT-209), aucun vrai email envoyé.
+  // Bootstrap partagé : ResendService neutralisé, aucun vrai email envoyé.
   ({ app, baseUrl } = await createIntegrationApp());
   prisma = app.get(PrismaService);
 }, 120_000);
@@ -275,13 +275,13 @@ describe('Coexistence parrainage : le rôle du parrain décide de la récompense
 });
 
 /**
- * PROMPT-190 — garanties de niveau BASE sur le tunnel argent.
+ * garanties de niveau BASE sur le tunnel argent.
  *
  * Ces deux règles étaient déjà couvertes en unitaire, mais avec Prisma mocké : le
  * test vérifiait l'appel, pas ce qui atterrit vraiment en base. Ici, vraie base,
  * vraie contrainte d'unicité, vraie colonne.
  *
- * Non couvert volontairement : la compensation d'un enqueue raté (PROMPT-185 #1).
+ * Non couvert volontairement : la compensation d'un enqueue raté.
  * Elle suppose de rendre Redis indisponible en plein test, ce qui casserait la
  * file partagée du job CI ; elle reste vérifiée en unitaire.
  */
@@ -331,7 +331,7 @@ describe('Webhook Stripe — garanties en base', () => {
     ).toBe(first.id);
   });
 
-  it('commission datée de la FACTURE, même traitée un autre mois (PROMPT-185 #3)', async () => {
+  it('commission datée de la FACTURE, même traitée un autre mois', async () => {
     const s = uid();
     const code = `INTPER${s}`.toUpperCase();
     const customerId = `cus_int_per_${s}`;

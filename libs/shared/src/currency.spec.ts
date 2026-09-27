@@ -8,7 +8,7 @@ import {
   normalizeCurrencyCode,
 } from './currency';
 
-/** Devise = propriété du compte, jamais de conversion (PROMPT-214). Source unique front + back. */
+/** Devise = propriété du compte, jamais de conversion. Source unique front + back. */
 describe('devises de compte (@mtc/shared)', () => {
   it('liste unique USD / USDT / EUR, USD par défaut', () => {
     expect(ACCOUNT_CURRENCIES).toEqual(['USD', 'USDT', 'EUR']);

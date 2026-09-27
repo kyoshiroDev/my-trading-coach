@@ -37,7 +37,7 @@ export class PlanModalComponent {
   protected readonly ZapIcon = Zap;
   protected readonly CheckIcon = Check;
 
-  // Palier payant unique (Premium) depuis PROMPT-169 : seul l'intervalle est réglable.
+  // Palier payant unique (Premium) : seul l'intervalle est réglable.
   // L'essai 30j n'est accordé qu'au mensuel (l'annuel est facturé immédiatement).
   protected interval = signal<Interval>('monthly');
   private readonly billing = inject(BillingService);

@@ -70,7 +70,7 @@ export class CreateTradeDto implements CreateTradeRequest {
   @IsOptional()
   capitalEngaged?: number;
 
-  // Émotion = override optionnel (PROMPT-163). Absente/null → héritera de l'humeur de session
+  // Émotion = override optionnel. Absente/null → héritera de l'humeur de session
   // (TradeSession.moodStart) au moment de la lecture (émotion effective). Plus de NEUTRAL forcé.
   @IsEnum(EmotionState)
   @IsOptional()

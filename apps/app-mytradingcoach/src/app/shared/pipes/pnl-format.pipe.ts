@@ -4,7 +4,7 @@ import { MoneyService } from '../../core/services/money.service';
 /**
  * Montant signé dans la devise NATIVE du compte, sans conversion ; `%` optionnel.
  * `{{ total | pnlFormat }}` → devise de l'écran ; `{{ t.pnl | pnlFormat : t.entry : t.accountId }}`
- * → devise du compte du trade (lignes de trades, cf. PROMPT-214).
+ * → devise du compte du trade (lignes de trades).
  */
 @Pipe({ name: 'pnlFormat', pure: false })
 export class PnlFormatPipe implements PipeTransform {

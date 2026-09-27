@@ -1,5 +1,5 @@
 /**
- * PROMPT-210 live — séquence complète, sur la VRAIE app (createIntegrationApp : Resend neutralisé) :
+ * Temps réel Tradovate — séquence complète, sur la VRAIE app (createIntegrationApp : Resend neutralisé) :
  * app ouverte → rattrapage REST → événement WebSocket Tradovate → trade créé et relayé →
  * app fermée → WebSocket Tradovate fermé proprement.
  *

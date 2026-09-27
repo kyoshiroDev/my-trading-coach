@@ -444,7 +444,7 @@
 /* Suppression impossible : l'option reste lisible mais inerte, avec son title. */
 .menu-item.danger:disabled { opacity: 0.45; cursor: not-allowed; }
 
-/* ── Connexion Tradovate par compte (PROMPT-208, maquette proto-connexion-tradovate.html) ── */
+/* ── Connexion Tradovate par compte (maquette proto-connexion-tradovate.html) ── */
 .nt-word { color: var(--nt); font-weight: 700; }
 
 .tv-pill { font-size: var(--fs-2xs); padding: 3px 9px; border-radius: 20px; font-family: var(--font-mono); white-space: nowrap; }

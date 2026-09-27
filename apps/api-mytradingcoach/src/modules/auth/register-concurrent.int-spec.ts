@@ -1,7 +1,7 @@
 /**
- * PROMPT-186 #3 — deux inscriptions concurrentes : 409, jamais 500.
+ * deux inscriptions concurrentes : 409, jamais 500.
  *
- * Constat navigateur (PROMPT-184) : un double-clic sur « S'inscrire » renvoyait
+ * Constat navigateur : un double-clic sur « S'inscrire » renvoyait
  * `500 Internal server error` sur le tout premier geste du nouvel utilisateur.
  * `register` faisait `findUnique` puis `create` : les deux requêtes passaient le
  * test d'existence, et la seconde violait `User_email_key` → P2002 non rattrapé.
@@ -32,7 +32,7 @@ function register(email: string) {
 }
 
 beforeAll(async () => {
-  // Bootstrap partagé : ResendService neutralisé (PROMPT-209), aucun vrai email envoyé.
+  // Bootstrap partagé : ResendService neutralisé, aucun vrai email envoyé.
   ({ app, baseUrl } = await createIntegrationApp());
   prisma = app.get(PrismaService);
 }, 120_000);

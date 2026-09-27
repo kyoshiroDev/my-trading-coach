@@ -75,7 +75,7 @@ export const REFUSAL_COOLDOWN_S = 10 * 60;
 const ENVS: TradovateEnv[] = ['live', 'demo'];
 
 /**
- * Devise posée sur le TradingAccount lié à un compte Tradovate (PROMPT-214) : la devise d'un compte
+ * Devise posée sur le TradingAccount lié à un compte Tradovate : la devise d'un compte
  * synchronisé vient du broker et n'est plus modifiable par l'utilisateur (AccountsService.update).
  *
  * Elle est désormais LUE chez le broker, plus supposée : `cashBalance.currencyId` du compte, puis
@@ -122,7 +122,7 @@ export interface FirstSyncSummary {
 }
 
 /**
- * Cycle de vie d'une connexion Tradovate PAR TradingAccount (PROMPT-207) : consentement OAuth,
+ * Cycle de vie d'une connexion Tradovate PAR TradingAccount : consentement OAuth,
  * échange du code côté serveur, stockage chiffré des tokens, renouvellement sans nouveau
  * consentement, choix du compte broker, déconnexion.
  *

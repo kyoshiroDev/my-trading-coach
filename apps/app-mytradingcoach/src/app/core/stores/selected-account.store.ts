@@ -30,7 +30,7 @@ export class SelectedAccountStore {
   });
 
   /**
-   * Devise NATIVE des montants affichés (PROMPT-213) : celle du compte sélectionné ; en « Tous
+   * Devise NATIVE des montants affichés : celle du compte sélectionné ; en « Tous
    * les comptes », leur devise commune ; `null` si elles diffèrent (on n'additionne pas des USD
    * et des EUR sous un symbole). Aucune conversion : jamais de `User.currencyRate`. Sans compte
    * chargé → USD, la devise par défaut d'un `TradingAccount`.
@@ -88,7 +88,7 @@ export class SelectedAccountStore {
    * Réinitialise le store (appelé au logout). Sans ça, se connecter à un AUTRE compte dans
    * le même onglet (navigation SPA, sans reload) laissait la liste des comptes + le compte
    * sélectionné du user précédent → import qui envoie un accountId d'un compte inaccessible
-   * (« Compte introuvable »). On purge aussi la clé persistée. PROMPT-175.
+   * (« Compte introuvable »). On purge aussi la clé persistée.
    */
   reset(): void {
     this.accounts.set([]);

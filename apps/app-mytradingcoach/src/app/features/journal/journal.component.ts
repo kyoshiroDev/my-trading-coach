@@ -96,7 +96,7 @@ export class JournalComponent {
     // → stables, indépendants de « Charger plus ».
     effect(() => this.refreshJournal());
 
-    // Trades Tradovate poussés en direct (PROMPT-210 live) : le journal ouvert se met à jour.
+    // Trades Tradovate poussés en direct : le journal ouvert se met à jour.
     this.tradovateLive.imported$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.refreshJournal());
@@ -211,12 +211,12 @@ export class JournalComponent {
   protected readonly TrashIcon        = Trash2;
   protected readonly ReassignIcon     = ArrowRightLeft;
 
-  /** Libellé FR de la note d'exécution calculée (PROMPT-161) ; '-' si non évaluée. */
+  /** Libellé FR de la note d'exécution calculée ; '-' si non évaluée. */
   protected gradeLabel(g: string | null | undefined): string {
     return { EXCELLENT: 'Excellent', BON: 'Bon', MOYEN: 'Moyen', MAUVAIS: 'Mauvais' }[g ?? ''] ?? '-';
   }
 
-  /** Explication de la note selon le barème utilisé (PROMPT-168). */
+  /** Explication de la note selon le barème utilisé. */
   protected gradeTooltip(t: Trade): string {
     const base = `Note calculée : ${t.executionScore}/100. `;
     return t.executionMethod === 'BEHAVIORAL'
@@ -326,7 +326,7 @@ export class JournalComponent {
           weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
         });
         const totalCommission = dayTrades.reduce((s, t) => s + Math.abs(t.commission ?? 0), 0);
-        // Stats du jour via le helper unique (BE exclus du win rate, PROMPT-160).
+        // Stats du jour via le helper unique (BE exclus du win rate).
         const st              = computeTradeStats(dayTrades);
         const totalPnl        = st.totalPnl;
         const totalPnlNet     = totalPnl - totalCommission;
@@ -508,7 +508,7 @@ export class JournalComponent {
         next: () => { this.forgetTrade(id); this.toast.success('Trade supprimé'); },
         // AVANT : aucun handler `error`. Un refus partait dans le vide et la ligne
         // restait affichee — l'utilisateur cliquait sans rien voir se passer.
-        // Feedback transitoire d'une action ponctuelle → toast (PROMPT-210).
+        // Feedback transitoire d'une action ponctuelle → toast.
         error: (err: HttpErrorResponse) => {
           // 404 : le trade n'est deja plus la (autre onglet, suppression precedente).
           // L'objectif est atteint : on retire la ligne au lieu de crier a l'erreur.
@@ -601,7 +601,7 @@ export class JournalComponent {
           const n = ids.length > 1 ? `${ids.length} trades déplacés` : 'Trade déplacé';
           this.toast.success(cible ? `${n} vers ${cible}` : n);
         },
-        // Modale laissée ouverte pour réessayer ; le message est un toast (PROMPT-210).
+        // Modale laissée ouverte pour réessayer ; le message est un toast.
         error: (err: HttpErrorResponse) => {
           this.isReassigning.set(false);
           this.toast.error(apiErrorMessage(err, 'Erreur lors du déplacement.'));

@@ -4,7 +4,7 @@ import { MarketDataService } from './market-data.service';
 
 /**
  * Données de marché mutualisées : `/market/*`. Toutes FREE (IA mutualisée, coût O(1),
- * PROMPT-169) : elles alimentent le compagnon de session, accessible à tous.
+ * plan FREE compris) : elles alimentent le compagnon de session, accessible à tous.
  */
 @UseGuards(JwtAuthGuard)
 @Controller('market')

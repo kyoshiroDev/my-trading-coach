@@ -1,10 +1,10 @@
 /**
- * PROMPT-185 #6 — dernier vestige du pattern « état figé non revalidé » (bug Val).
+ * dernier vestige du pattern « état figé non revalidé » (bug Val).
  *
  * Le compagnon de session vit des heures. `qtSetup` était fixé une seule fois au
  * premier setup actif, avec le garde `!this.qtSetup()` : un setup supprimé ou
  * archivé entre-temps laissait un id fantôme, et chaque trade rapide loggé partait
- * en 400. Même défaut que l'import CSV corrigé au PROMPT-182.
+ * en 400. Même défaut que l'import CSV corrigé.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';

@@ -371,7 +371,7 @@
             <input class="inp" type="number" [ngModel]="form().startingBalance"
                    (ngModelChange)="patch({ startingBalance: $event })" placeholder="50000" />
           </label>
-          <!-- Devise DU COMPTE (PROMPT-214) : ses montants s'affichent dans cette devise, sans
+          <!-- Devise DU COMPTE : ses montants s'affichent dans cette devise, sans
                conversion. Compte synchronisé : imposée par le broker, non modifiable. -->
           <label class="fld fld-sm">
             <span class="fld-lbl">Devise</span>

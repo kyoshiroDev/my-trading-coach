@@ -1,5 +1,5 @@
 /**
- * PROMPT-204bis — la suppression de compte utilisateur échouait en silence.
+ * Régression — la suppression de compte utilisateur échouait en silence.
  *
  * `confirmDelete()` relâchait seulement le spinner sur erreur :
  *

@@ -1,7 +1,7 @@
 /**
- * PROMPT-186 #5 — le capital déclaré à l'onboarding ne doit pas disparaître.
+ * le capital déclaré à l'onboarding ne doit pas disparaître.
  *
- * Constat navigateur (PROMPT-184, parcours « je commence à zéro ») : capital 5000
+ * Constat navigateur (parcours « je commence à zéro ») : capital 5000
  * saisi à l'étape 4, puis dashboard affichant `CAPITAL $0.00`. Le compte de trading
  * n'est créé qu'au PREMIER trade ; sans compte, la somme des `startingBalance`
  * valait 0 et écrasait le capital du profil. Le backend, lui, fait explicitement

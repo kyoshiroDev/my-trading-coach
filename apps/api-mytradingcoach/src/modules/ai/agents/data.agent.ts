@@ -5,7 +5,7 @@ export type TradeSummaryInput = {
   asset: string;
   side: string;
   pnl: number | null;
-  /** Frais : tous les montants et le classement W/L sont en net (PROMPT-213). */
+  /** Frais : tous les montants et le classement W/L sont en net. */
   commission?: number | null;
   emotion: string;
   setup: string;
@@ -23,7 +23,7 @@ export type TradeSummaryInput = {
  */
 @Injectable()
 export class DataAgent {
-  /** `currency` : devise des comptes (PROMPT-214), `null` si elles diffèrent (montants sans symbole). */
+  /** `currency` : devise des comptes, `null` si elles diffèrent (montants sans symbole). */
   buildTradesSummary(rawTrades: TradeSummaryInput[], currency: string | null = null): string {
     // Montants en NET (frais déduits) pour tout le résumé : `pnl` devient le net, `commission`
     // retombe à 0 pour que computeTradeStats ne déduise pas les frais une seconde fois.
@@ -31,7 +31,7 @@ export class DataAgent {
     const closed = trades.filter(
       (t): t is TradeSummaryInput & { pnl: number } => t.pnl !== null,
     );
-    // Stats via le helper unique (BE exclus du win rate, PROMPT-160).
+    // Stats via le helper unique (BE exclus du win rate).
     const stats = computeTradeStats(trades);
     const winRate = stats.winRate.toFixed(1);
     const totalPnl = formatMoney(stats.totalPnl, currency);

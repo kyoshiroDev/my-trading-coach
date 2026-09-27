@@ -13,7 +13,7 @@ import { TradeSide } from '@prisma/client';
 import type { TradeFilters } from '@mtc/shared';
 
 /**
- * Valeurs acceptées par le filtre « émotion effective » (PROMPT-166).
+ * Valeurs acceptées par le filtre « émotion effective ».
  * Combine EmotionState (override du trade) et MoodState (humeur de session) :
  * `TIRED` n'existe que dans MoodState, `REVENGE`/`FEAR` que dans EmotionState.
  * `NONE` = émotion non renseignée.

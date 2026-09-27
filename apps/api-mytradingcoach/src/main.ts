@@ -64,7 +64,7 @@ async function bootstrap() {
   // pas sous /api → exclu du préfixe global. `health` reste sous /api/health (ne pas casser le
   // health check existant).
   // Le callback OAuth Tradovate aussi : son redirect_uri est enregistré chez Tradovate SANS
-  // `/api` (`https://api.mytradingcoach.app/integrations/tradovate/callback`, PROMPT-207).
+  // `/api` (`https://api.mytradingcoach.app/integrations/tradovate/callback`).
   app.setGlobalPrefix('api', {
     exclude: ['robots.txt', { path: 'integrations/tradovate/callback', method: RequestMethod.GET }],
   });

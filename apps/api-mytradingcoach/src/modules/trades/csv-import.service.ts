@@ -128,7 +128,7 @@ export class CsvImportService {
       //     hors sujet (image renommée .csv, tableur quelconque) renvoyait le message
       //     « broker non reconnu → passe Premium » : on vendait un upgrade qui n'aurait
       //     rien résolu, et un débutant qui se trompe de fichier comprenait « il faut
-      //     payer » (PROMPT-186 #6). Message neutre, aucun upsell, quel que soit le plan.
+      //     payer ». Message neutre, aucun upsell, quel que soit le plan.
       if (!this.looksLikeTradeExport(normalizedLines[0] ?? '', content)) {
         throw new BadRequestException(
           "Ce fichier ne ressemble pas à un export de trades. " +
@@ -198,10 +198,10 @@ export class CsvImportService {
     // Defaults appliqués à TOUT le lot : compte cible, émotion, setup.
     // - accountId : le compte choisi (validé en amont) → create() le résout ; sinon
     //   fallback backend existant (session active / compte par défaut).
-    // - emotion : override OPTIONNEL (PROMPT-163). Si le lot choisit une émotion, on l'applique
+    // - emotion : override OPTIONNEL. Si le lot choisit une émotion, on l'applique
     //   à tous les trades ; sinon `null` (non renseignée) → héritera de l'humeur de session à la
     //   lecture. Plus jamais de NEUTRAL forcé à l'import.
-    // - setupId : choix unique, sinon « Sans setup » (créé à la volée, PROMPT-213).
+    // - setupId : choix unique, sinon « Sans setup » (créé à la volée).
     const batchEmotion = this.normalizeEmotion(defaults?.emotion);
     const setupId =
       defaults?.setupId ?? (userId ? await this.setups.getImportSetupId(userId) : null);
@@ -361,7 +361,7 @@ export class CsvImportService {
    * Le chemin IA d'import (broker inconnu → Anthropic) n'est autorisé que :
    * - en production (garde NODE_ENV : zéro dépense IA hors prod), ET
    * - pour un accès Premium strict (PREMIUM / ADMIN / BETA_TESTER / trial actif).
-   * Aligné sur PremiumGuard : l'import IA (broker inconnu) est une IA personnelle → PREMIUM (PROMPT-169).
+   * Aligné sur PremiumGuard : l'import IA (broker inconnu) est une IA personnelle → PREMIUM.
    */
   private aiImportAllowed(access?: AiImportAccess): boolean {
     if (process.env['NODE_ENV'] !== 'production') return false;
@@ -559,7 +559,7 @@ ${csv}`;
         pnl: t.pnl,
         commission: t.commission ?? undefined,
         emotion: null, // override optionnel : réassigné par le lot (ou null) dans parseCSV
-        // setupId affecté en aval (parseCSV) : setup par défaut du user, ou fourni par l'import (PROMPT-138).
+        // setupId affecté en aval (parseCSV) : setup par défaut du user, ou fourni par l'import.
         session: detectSession(t.tradedAt),
         timeframe: '1h',
         tradedAt: t.tradedAt,

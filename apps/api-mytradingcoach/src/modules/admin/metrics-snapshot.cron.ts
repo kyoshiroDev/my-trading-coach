@@ -41,7 +41,7 @@ export class MetricsSnapshotCron {
    * La ligne est datée du jour qu'elle DÉCRIT, pas du jour où le cron tourne.
    * Avant, à 00h05 le 08/08, on comptait les inscrits des dernières 24 h (donc
    * ceux du 07/08) et on rangeait le tout sous « 08/08 » : le graphe admin
-   * décalait tout d'un jour (PROMPT-177).
+   * décalait tout d'un jour.
    */
   @Cron('5 0 * * *', { timeZone: 'Europe/Paris' })
   async snapshotDaily(): Promise<void> {
@@ -127,7 +127,7 @@ export class MetricsSnapshotCron {
       arr: stats.arr,
       totalUsers: stats.totalUsers,
       freeUsers: stats.freeUsers,
-      starterUsers: 0, // palier STARTER supprimé (PROMPT-169) ; colonne conservée pour l'historique
+      starterUsers: 0, // palier STARTER supprimé ; colonne conservée pour l'historique
       premiumUsers: stats.totalPremium,
       trials: stats.trials,
       newThisDay,

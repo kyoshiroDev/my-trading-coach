@@ -16,7 +16,7 @@ export class SessionDataService {
   private newsInterval?: ReturnType<typeof setInterval>;
 
   startPolling(getTradeSymbols: () => string[]): void {
-    // Contexte marché + news = IA mutualisée → FREE (PROMPT-169), accessible à tous.
+    // Contexte marché + news = IA mutualisée → FREE, accessible à tous.
     this.fetchMarketContext();
     this.fetchNewsItems(getTradeSymbols());
     this.marketCtxInterval = setInterval(() => this.fetchMarketContext(), POLLING_MS.MARKET_CONTEXT);

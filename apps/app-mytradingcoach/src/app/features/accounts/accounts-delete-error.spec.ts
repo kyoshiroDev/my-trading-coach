@@ -1,5 +1,5 @@
 /**
- * PROMPT-204 — la suppression de compte échouait en silence (retour Val, Discord).
+ * la suppression de compte échouait en silence (retour Val, Discord).
  *
  * Le back refuse d'archiver le DERNIER compte actif porteur d'historique — règle
  * correcte, elle évite un utilisateur sans compte où rattacher ses prochains trades.

@@ -86,7 +86,7 @@ const GOALS: { value: Goal; label: string; emoji: string; desc: string }[] = [
 const DISCORD_URL = 'https://discord.gg/TDK2npvkSN';
 
 /**
- * Progression du wizard, conservée localement (PROMPT-186 #8).
+ * Progression du wizard, conservée localement.
  *
  * Le wizard bloque toutes les routes tant qu'il n'est pas terminé — c'est voulu —
  * mais un simple rechargement repartait à l'étape 1 : marché, objectif et capital
@@ -113,7 +113,7 @@ interface OnboardingProgress {
   step: Step;
   market: Market | null;
   goal: Goal | null;
-  /** Devise DU COMPTE créé à l'étape 3 (PROMPT-214), plus une préférence globale. */
+  /** Devise DU COMPTE créé à l'étape 3, plus une préférence globale. */
   currency: AccountCurrency;
   capital: string;
   accountMode: AccountMode;
@@ -152,7 +152,7 @@ export class OnboardingComponent {
   private readonly router      = inject(Router);
   protected readonly tvStore   = inject(TradovateStore);
 
-  // ── Connexion Tradovate depuis l'étape 8 (PROMPT-208) ────────────────────────
+  // ── Connexion Tradovate depuis l'étape 8 ────────────────────────
   /** Compte cible de l'écran de réassurance (ouvert = non null). */
   protected readonly tvTarget = signal<{ id: string; label: string } | null>(null);
   /** Recherche / création du compte cible avant d'ouvrir l'écran de réassurance. */
@@ -207,7 +207,7 @@ export class OnboardingComponent {
   protected readonly feesLabel = (n: number) =>
     formatMoney(n, this.selectedCurrency(), { sign: false });
   /**
-   * Pré-rempli : l'étape ne bloque plus (PROMPT-198). Laisser le champ vide aurait
+   * Pré-rempli : l'étape ne bloque plus. Laisser le champ vide aurait
    * cascadé en « CAPITAL $0.00 » — `User.startingCapital` vaut 0 par défaut, le compte
    * créé au premier trade hérite alors d'un `startingBalance` null, et le dashboard
    * comme « Mes comptes » affichent 0. Une valeur ronde ajustable vaut mieux qu'un mur
@@ -242,7 +242,7 @@ export class OnboardingComponent {
   protected readonly selectedSessions     = signal<TradingSession[]>([]);
   /**
    * Style + au moins une session. La description libre reste envoyée au contexte IA
-   * mais n'est plus exigée (PROMPT-198) : c'était la seule étape demandant de RÉDIGER,
+   * mais n'est plus exigée : c'était la seule étape demandant de RÉDIGER,
    * et le minimum de 15 caractères en faisait le décrochage le plus probable du wizard.
    * Les tags d'approche ont été retirés (redondants avec les setups + la description).
    */
@@ -577,7 +577,7 @@ export class OnboardingComponent {
         // 0 (champ vidé) → on n'envoie rien : le back ne réécrit que si non-null, donc
         // la valeur déjà en base est préservée au lieu d'être écrasée par un 0.
         startingCapital: this.parseCapital() || undefined,
-        // Plus de devise au profil (PROMPT-214) : elle part sur le compte créé (payload compte).
+        // Plus de devise au profil : elle part sur le compte créé (payload compte).
         tradingStyle: this.selectedStyle() ?? undefined,
         strategyDescription: this.strategyDescription().trim() || undefined,
         tradingSessions: this.selectedSessions(),
@@ -737,8 +737,8 @@ export class OnboardingComponent {
   // CSV importé → étape Discord. On CONSERVE le résultat : la modale se ferme
   // aussitôt, donc son écran « N trade(s) importé(s) » n'était jamais lu. Sans
   // récapitulatif, l'utilisateur terminait l'onboarding sans la moindre preuve que
-  // son import avait fonctionné (PROMPT-186 #4) — et l'avertissement sur les frais
-  // non rapprochés (PROMPT-185 #8) restait invisible dans ce chemin.
+  // son import avait fonctionné — et l'avertissement sur les frais
+  // non rapprochés restait invisible dans ce chemin.
   protected onCsvImported(result: ImportResult): void {
     this.importSummary.set(result);
     this.csvOpen.set(false);

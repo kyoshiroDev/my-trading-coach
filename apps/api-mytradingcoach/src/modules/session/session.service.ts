@@ -93,13 +93,13 @@ export class SessionService {
     });
 
     const closed = trades.filter((t) => t.pnl !== null);
-    // Stats via le helper unique (BE exclus du win rate, PROMPT-160).
+    // Stats via le helper unique (BE exclus du win rate).
     const { totalPnl, winRate } = computeTradeStats(trades);
 
     // Drawdown max
     let peak = 0, maxDrawdown = 0, cumPnl = 0;
     for (const t of closed) {
-      cumPnl += netPnl(t) ?? 0; // net des frais, comme le total (PROMPT-213)
+      cumPnl += netPnl(t) ?? 0; // net des frais, comme le total
       if (cumPnl > peak) peak = cumPnl;
       const dd = cumPnl - peak;
       if (dd < maxDrawdown) maxDrawdown = dd;
@@ -272,7 +272,7 @@ export class SessionService {
 
   async getLiveStats(userId: string) {
     const todayTrades = await this.getTodayTrades(userId);
-    // Stats via le helper unique (BE exclus du win rate, PROMPT-160).
+    // Stats via le helper unique (BE exclus du win rate).
     const stats = computeTradeStats(todayTrades);
 
     return {

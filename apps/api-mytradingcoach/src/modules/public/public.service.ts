@@ -22,7 +22,7 @@ export class PublicService {
 
   /**
    * Candidature ambassadeur depuis la landing (sans compte) → email à l'équipe.
-   * Réutilise le mail de candidature ambassadeur (PROMPT 100/101) en agrégeant
+   * Réutilise le mail de candidature ambassadeur en agrégeant
    * l'audience multi-sélection + les liens dans le champ « réseaux ».
    */
   async applyAmbassador(dto: PublicAmbassadorApplyDto): Promise<{ success: boolean }> {

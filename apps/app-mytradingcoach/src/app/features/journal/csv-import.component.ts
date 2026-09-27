@@ -81,7 +81,7 @@ export class CsvImportComponent {
   protected readonly tv = inject(TradovateStore);
   protected readonly LinkIcon = Link2;
 
-  // ── Tradovate : synchro API en option principale, CSV en repli (PROMPT-211) ──
+  // ── Tradovate : synchro API en option principale, CSV en repli ──
   /** L'utilisateur a choisi le repli « importer un fichier CSV Tradovate ». */
   protected readonly tvCsvOpen = signal(false);
   /** Compte pour lequel l'écran de réassurance Tradovate est ouvert. */
@@ -95,7 +95,7 @@ export class CsvImportComponent {
     const a = this.accountStore.activeAccounts().find((x) => x.id === this.accountId());
     return a ? { id: a.id, label: a.label } : null;
   });
-  /** Frais importés dans la devise du compte cible, sans conversion (PROMPT-214). */
+  /** Frais importés dans la devise du compte cible, sans conversion. */
   protected readonly feesLabel = (n: number) =>
     formatMoney(
       n,
@@ -154,12 +154,12 @@ export class CsvImportComponent {
   private feesConfirmed = false;
   /** Bouton « Choisir un fichier » du champ frais, pour y renvoyer le focus. */
   private readonly feesChooseBtn = viewChild<ElementRef<HTMLButtonElement>>('feesChooseBtn');
-  // Source d'import sélectionnée (PROMPT-164) : Tradovate (2 fichiers) présélectionné, ou autre broker (dropzone).
+  // Source d'import sélectionnée : Tradovate (2 fichiers) présélectionné, ou autre broker (dropzone).
   protected readonly source = signal<'tradovate' | 'other'>('tradovate');
 
   // Defaults appliqués à tout le lot.
   protected readonly accountId = signal<string>('');
-  // Émotion de lot optionnelle (PROMPT-163) : '' = non renseignée (rien envoyé → héritera de la session).
+  // Émotion de lot optionnelle : '' = non renseignée (rien envoyé → héritera de la session).
   protected readonly emotion = signal<string>('');
   protected readonly setupId = signal<string>('');
   // Setups actifs du user (store partagé, liste dynamique).
@@ -168,7 +168,7 @@ export class CsvImportComponent {
   /**
    * Import Tradovate abouti SANS aucun frais : ni Cash history, ni total saisi.
    * Un hint existait avant l'import, plus rien après — l'écart (21,84 $ sur nos
-   * fixtures) passait inaperçu et le P&L affiché paraissait net (PROMPT-186 #7).
+   * fixtures) passait inaperçu et le P&L affiché paraissait net.
    * Restreint à Tradovate : chez les autres brokers, les frais sont dans le CSV.
    */
   protected readonly feesReminder = computed(() => {
@@ -241,7 +241,7 @@ export class CsvImportComponent {
     });
   }
 
-  /** Sélecteur de source (PROMPT-164). Passer à « Autre » retire le fichier de frais (Tradovate-only). */
+  /** Sélecteur de source. Passer à « Autre » retire le fichier de frais (Tradovate-only). */
   protected setSource(s: 'tradovate' | 'other'): void {
     this.source.set(s);
     this.error.set(null);
@@ -418,7 +418,7 @@ export class CsvImportComponent {
     if (!file || !this.canImport()) return;
     // Verrou SYNCHRONE, posé avant tout await : `[disabled]="isLoading()"` ne protège
     // pas d'un double-clic natif, dont les deux événements partent avant le re-render
-    // Angular — d'où deux imports concurrents et un historique dupliqué (PROMPT-186 #1).
+    // Angular — d'où deux imports concurrents et un historique dupliqué.
     // La contrainte d'unicité en base reste le filet définitif ; ceci évite l'aller-retour.
     if (this.uploading) return;
     this.uploading = true;
@@ -454,14 +454,14 @@ export class CsvImportComponent {
           this.result.set(res.data);
           this.isLoading.set(false);
           this.uploading = false;
-          // Refresh coordonné des stores globalement périmés par l'import (PROMPT-175) :
+          // Refresh coordonné des stores globalement périmés par l'import :
           // - comptes : l'import a pu créer le compte par défaut → sinon dashboard « 0 compte / $0 ».
           // - setups : le `tradeCount` par setup change → sinon « jamais utilisé » sur le Profil.
           // Les trades/summary sont rechargés par le parent (journal) ou l'effet du dashboard.
           this.accountStore.load();
           this.setupsStore.load(true);
           // Bref signal transitoire ; le récap détaillé (trades, frais, avertissements) reste
-          // un bloc à relire — il n'est PAS remplacé par ce toast (PROMPT-210).
+          // un bloc à relire — il n'est PAS remplacé par ce toast.
           const n = res.data.created;
           this.toast.success(n > 0 ? `Import terminé · ${n} trade${n > 1 ? 's' : ''} importé${n > 1 ? 's' : ''}` : 'Import terminé');
           this.imported.emit(res.data);

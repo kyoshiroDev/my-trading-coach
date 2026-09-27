@@ -92,7 +92,7 @@ export class SetupsService {
    * Setup des trades IMPORTÉS sans setup choisi (synchro broker, import CSV) : « Sans setup »,
    * créé à la volée s'il n'existe pas (ou désarchivé). Avant, ils tombaient sur le premier setup
    * du user (souvent « Breakout ») : les stats par setup attribuaient à une stratégie des trades
-   * que le trader n'y avait jamais rangés (PROMPT-213). Le trader les reclasse ensuite.
+   * que le trader n'y avait jamais rangés. Le trader les reclasse ensuite.
    */
   async getImportSetupId(userId: string): Promise<string> {
     const existing = await this.prisma.setup.findFirst({

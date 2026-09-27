@@ -1,6 +1,6 @@
 /**
  * Backfill one-shot, idempotent : garantit un `referralCode` à tout utilisateur
- * `role === AMBASSADOR` qui n'en a pas (PROMPT-176, cas VAL).
+ * `role === AMBASSADOR` qui n'en a pas (cas VAL).
  *
  * Un ambassadeur sans code produit un lien `?ref=` invalide, et la liste admin
  * l'affiche avec un code vide (`a.referralCode!`). Le rôle a pu être posé sans

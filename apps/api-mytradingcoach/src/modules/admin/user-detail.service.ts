@@ -105,7 +105,7 @@ export class UserDetailService {
         take: 3,
       }),
     ]);
-    // Stats via le helper unique (BE exclus du win rate, PROMPT-160).
+    // Stats via le helper unique (BE exclus du win rate).
     const uStats = computeTradeStats(pnlRows);
     const totalPnl = uStats.totalPnl;
     const winRate = Math.round(uStats.winRate);

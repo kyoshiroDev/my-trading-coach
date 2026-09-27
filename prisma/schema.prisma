@@ -136,7 +136,7 @@ model ReferralReward {
   @@index([parrainId])
 }
 
-/// Provenance d'un trade — d'ou vient la ligne, pas ce qu'elle vaut (PROMPT-217).
+/// Provenance d'un trade — d'ou vient la ligne, pas ce qu'elle vaut.
 /// Sert a l'affichage (badge) et au diagnostic : un ecart de frais ou de P&L se lit
 /// differemment selon qu'il vient d'une saisie, d'un CSV ou du broker.
 enum TradeSource {
@@ -165,11 +165,11 @@ model Trade {
   riskReward     Float?
   quantity       Float?
   capitalEngaged Float?
-  // Note d'exécution CALCULÉE (PROMPT-161) — déterministe, zéro IA, indépendante du P&L.
+  // Note d'exécution CALCULÉE — déterministe, zéro IA, indépendante du P&L.
   // Non saisie par l'utilisateur. Dérivée de stop/RR/émotion effective/risque (voir execution-grade.util).
   executionScore Int?             // 0-100, null si < 2 critères applicables (« Non évalué »)
   executionGrade ExecutionGrade?  // dérivé du score (EXCELLENT/BON/MOYEN/MAUVAIS)
-  executionMethod ExecutionMethod? // barème ayant produit la note (STOP_BASED / BEHAVIORAL), null si non notée (PROMPT-168)
+  executionMethod ExecutionMethod? // barème ayant produit la note (STOP_BASED / BEHAVIORAL), null si non notée
   // Override optionnel de l'émotion du trade (surtout REVENGE/FEAR dans l'instant).
   // Émotion effective = emotion ?? tradeSession.moodStart ?? null (voir effective-emotion.util).
   emotion        EmotionState?
@@ -319,7 +319,7 @@ model TradingAccount {
   @@index([userId, status])
 }
 
-/// Connexion API d'un broker, portée par UN `TradingAccount` (PROMPT-207).
+/// Connexion API d'un broker, portée par UN `TradingAccount`.
 /// Un compte = une connexion : chaque prop firm fournit ses propres identifiants
 /// Tradovate, un user Apex + Lucid fait donc deux connexions distinctes. Jamais au
 /// niveau `User`, jamais partagée entre comptes.
@@ -472,7 +472,7 @@ enum EmotionState {
   NEUTRAL
 }
 
-/// Note d'exécution calculée d'un trade (PROMPT-161) — dérivée du score 0-100, jamais saisie.
+/// Note d'exécution calculée d'un trade — dérivée du score 0-100, jamais saisie.
 enum ExecutionGrade {
   EXCELLENT
   BON
@@ -480,7 +480,7 @@ enum ExecutionGrade {
   MAUVAIS
 }
 
-/// Barème ayant produit la note (PROMPT-168). STOP_BASED = trade avec stop (4 critères intrinsèques) ;
+/// Barème ayant produit la note. STOP_BASED = trade avec stop (4 critères intrinsèques) ;
 /// BEHAVIORAL = trade sans stop (3 critères comportementaux, relatifs à l'historique). Non comparables.
 enum ExecutionMethod {
   STOP_BASED

@@ -3,7 +3,7 @@ import puppeteer from 'puppeteer';
 import { formatMoney } from '@mtc/shared';
 
 export interface DebriefPdfData {
-  /** Devise des comptes du débrief (PROMPT-214) ; null si elles diffèrent (montants sans symbole). */
+  /** Devise des comptes du débrief ; null si elles diffèrent (montants sans symbole). */
   currency: string | null;
   weekNumber: number;
   year: number;

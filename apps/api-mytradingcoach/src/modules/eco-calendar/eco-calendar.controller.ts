@@ -15,7 +15,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { EcoCalendarService } from './eco-calendar.service';
 import { todayParis } from '@mtc/shared';
 
-// Calendrier économique = IA mutualisée (coût O(actifs), pas O(users)) → FREE (PROMPT-169).
+// Calendrier économique = IA mutualisée (coût O(actifs), pas O(users)) → FREE.
 // Affichage ET analyse IA (bull/bear) accessibles à tous les utilisateurs connectés.
 @Controller('eco-calendar')
 @UseGuards(JwtAuthGuard)

@@ -1,7 +1,7 @@
 /**
- * PROMPT-186 #9 — le 403 attendu du paywall ne doit plus remonter en erreur non gérée.
+ * le 403 attendu du paywall ne doit plus remonter en erreur non gérée.
  *
- * Constat navigateur (PROMPT-184) : en FREE, l'écran Profil appelle
+ * Constat navigateur : en FREE, l'écran Profil appelle
  * `GET /analytics/by-setup` (endpoint Premium) ; sans gestionnaire d'erreur, RxJS
  * remontait un `ERROR HttpErrorResponse` en console. Invisible pour l'utilisateur,
  * mais ça noie les vraies erreurs au diagnostic.

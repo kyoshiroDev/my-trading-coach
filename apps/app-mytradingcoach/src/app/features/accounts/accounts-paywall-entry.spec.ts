@@ -1,5 +1,5 @@
 /**
- * PROMPT-201 — un FREE au quota n'avait AUCUN chemin vers la modale Premium.
+ * un FREE au quota n'avait AUCUN chemin vers la modale Premium.
  *
  * Deux masquages indépendants fermaient le seul mécanisme d'upsell de la page :
  *

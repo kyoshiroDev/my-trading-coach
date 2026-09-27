@@ -5,7 +5,7 @@ import { ACCOUNT_GONE_GRACE_MS, TradovateConnectionService } from './tradovate-c
 import { TradovateApiError, TradovateException } from './tradovate.errors';
 
 /**
- * Renouvellement du token SANS nouveau consentement (PROMPT-207). Le flux nominal
+ * Renouvellement du token SANS nouveau consentement. Le flux nominal
  * (refresh_token) et l'échec total sont couverts par `tradovate-sync.int-spec.ts` ; ici les
  * branches fines : token encore valide, repli `renewAccessToken`, erreur non-auth remontée telle
  * quelle (sans invalider la connexion).

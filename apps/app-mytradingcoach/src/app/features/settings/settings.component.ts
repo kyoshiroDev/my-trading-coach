@@ -76,7 +76,7 @@ export class SettingsComponent implements OnInit {
   // Onglets Profil trader / Paramètres (deep-link ?tab=params)
   protected readonly activeProfileTab = signal<ProfileTab>('trader');
 
-  // Statut d'essai (PROMPT-169 §5.2) : N calculé depuis trialEndsAt Stripe, pas l'inscription.
+  // Statut d'essai : N calculé depuis trialEndsAt Stripe, pas l'inscription.
   protected readonly isInTrial = computed(() => {
     const end = this.userStore.user()?.trialEndsAt;
     return !!end && new Date(end).getTime() > Date.now();
@@ -103,7 +103,7 @@ export class SettingsComponent implements OnInit {
   // Compte : mot de passe
   protected readonly passwordResetSent = signal(false);
 
-  // Préférences (plus de devise : elle est portée par chaque compte, PROMPT-214)
+  // Préférences (plus de devise : elle est portée par chaque compte)
   protected readonly prefNotifications = signal(true);
   protected readonly prefDebrief = signal(true);
   protected readonly prefMarketing = signal(false);
@@ -206,7 +206,7 @@ export class SettingsComponent implements OnInit {
         // `by-setup` est un endpoint Premium : en FREE, le 403 est ATTENDU (le win
         // rate par setup est un bonus, la liste des setups s'affiche sans lui). Sans
         // gestionnaire d'erreur, RxJS le remontait en `ERROR HttpErrorResponse` dans
-        // la console — bruit qui masque les vrais problèmes (PROMPT-186 #9).
+        // la console — bruit qui masque les vrais problèmes.
         // Toute AUTRE erreur reste visible : on ne filtre que le cas paywall connu.
         error: (err: { status?: number }) => {
           if (err?.status !== 403) {

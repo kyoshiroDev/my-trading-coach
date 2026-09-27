@@ -143,7 +143,7 @@
   to { transform: rotate(360deg); }
 }
 
-/* Palier unique depuis PROMPT-169 (STARTER supprime). Le CSS avait garde la grille
+/* Palier unique (STARTER supprime). Le CSS avait garde la grille
    deux colonnes et la largeur 620px : la seule colonne restante se retrouvait collee a
    gauche avec un grand vide a droite. Le wrapper .plan-cols est supprime du HTML, la
    marge basse qu'il portait passe sur .plan-col. */

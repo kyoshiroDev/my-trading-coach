@@ -15,9 +15,9 @@ const flag = (v: string | undefined): boolean => v === 'true' || v === '1';
 
 export const FEATURES = {
   // Section multi-comptes (home) + encart limites pricing + page /journal-trading-prop-firm.
-  // Publier UNIQUEMENT quand le multi-comptes est validé en prod (PROMPT 104-107).
+  // Publier UNIQUEMENT quand le multi-comptes est validé en prod.
   multiAccounts: flag(import.meta.env.PUBLIC_FEATURE_MULTI_ACCOUNTS),
   // Section parrainage (home) + page /ambassadeur.
-  // Publier UNIQUEMENT quand le système parrainage est shippé (PROMPT 100-101).
+  // Publier UNIQUEMENT quand le système parrainage est shippé.
   referral: flag(import.meta.env.PUBLIC_FEATURE_REFERRAL),
 } as const;

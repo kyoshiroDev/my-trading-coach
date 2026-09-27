@@ -96,7 +96,7 @@ export class QuickTradeComponent {
     // chaque changement de la liste active, jamais figé : le compagnon de session
     // vit des heures, et un setup supprimé/archivé entre-temps laissait sinon
     // `qtSetup` sur un id fantôme → 400 sur chaque trade rapide loggé (même défaut
-    // que l'import CSV, PROMPT-182). Écriture dans `untracked` pour ne pas boucler.
+    // que l'import CSV). Écriture dans `untracked` pour ne pas boucler.
     this.setupsStore.load();
     effect(() => {
       const active = this.setupsStore.active();

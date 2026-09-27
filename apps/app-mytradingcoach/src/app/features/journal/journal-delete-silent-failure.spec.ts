@@ -16,7 +16,7 @@
  *    la branche d'erreur l'emportait alors que 20 suppressions avaient réussi — et
  *    cette branche ne retirait aucune ligne. L'écran mentait sur l'état du serveur.
  * 3. Cette branche ne faisait que relâcher le spinner : `error: () => this.isDeletingDay.set(false)`.
- *    Aucun message. Même classe de bug que PROMPT-204, sur l'écran voisin.
+ *    Aucun message. Même classe de bug que la suppression de compte muette, sur l'écran voisin.
  *
  * `deleteTrade` (la croix de chaque ligne) n'avait, lui, aucun handler `error` du tout.
  */

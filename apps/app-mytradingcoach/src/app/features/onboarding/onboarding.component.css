@@ -440,9 +440,9 @@
    l'action principale de l'etape. */
 .save-error-retry { padding: 8px 18px; font-size: 13px; box-shadow: none; }
 
-/* ── Étape 8 : 4 options (CSV · Tradovate · manuel · zéro), PROMPT-208 ─────────── */
+/* ── Étape 8 : 4 options (CSV · Tradovate · manuel · zéro) ─────────────────── */
 /* 2 × 2 : la carte Tradovate s'ajoute sans remplacer le CSV (maquette validée). */
-/* Hiérarchie (PROMPT-211) : Tradovate en tête sur toute la largeur, accent --nt ; puis les
+/* Hiérarchie : Tradovate en tête sur toute la largeur, accent --nt ; puis les
    3 options secondaires (CSV, manuel, zéro) sur une ligne. */
 .choice-grid-4 { grid-template-columns: repeat(3, 1fr); }
 .choice-featured { grid-column: 1 / -1; }

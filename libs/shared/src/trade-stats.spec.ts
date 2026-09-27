@@ -68,7 +68,7 @@ describe('computeTradeStats', () => {
     expect(BREAKEVEN_EPSILON).toBe(0);
   });
 
-  it('classe et somme sur le NET : +1 brut avec 1,90 de frais est une perte (PROMPT-213)', () => {
+  it('classe et somme sur le NET : +1 brut avec 1,90 de frais est une perte', () => {
     const s = computeTradeStats([
       { pnl: 1, commission: 1.9 },
       { pnl: 100, commission: 2 },

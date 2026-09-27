@@ -70,7 +70,7 @@ describe('DashboardComponent — graphe évolution', () => {
   });
 
   it('un inscrit du vendredi est étiqueté au vendredi, pas au lundi de sa semaine', () => {
-    // Le cas qui a motivé PROMPT-177 : 07/08 est un vendredi, son lundi est le 03/08.
+    // Le cas réel qui a révélé le bug : 07/08 est un vendredi, son lundi est le 03/08.
     const cmp = setup(makeStats(), [pt('2026-08-07', 1, 0)]);
     const d = cmp.daily();
 

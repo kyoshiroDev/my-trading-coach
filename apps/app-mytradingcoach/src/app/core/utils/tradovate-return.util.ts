@@ -1,7 +1,7 @@
 import type { TradovateSyncResult } from '../api/tradovate.api';
 
 /**
- * Retour du consentement Tradovate (PROMPT-208). Le flux OAuth SORT de l'app ; l'API le
+ * Retour du consentement Tradovate. Le flux OAuth SORT de l'app ; l'API le
  * ramène sur `/dashboard?from=wizard` (onboarding) ou `/accounts` (réglages) avec le résultat
  * en query params. Tout ce qui se lit / s'affiche au retour vit ici, pur et testable, pour que
  * le wizard et « Mes comptes » tiennent exactement le même discours.

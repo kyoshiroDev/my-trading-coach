@@ -60,7 +60,7 @@ describe('ResendService', () => {
       expect(call.to).toBe('trader@test.com');
       expect(call.subject).toContain('17');
       expect(call.html).toContain('65.5');
-      // Devise du compte, sans conversion (PROMPT-214).
+      // Devise du compte, sans conversion.
       expect(call.html).toContain('+$235');
     });
 

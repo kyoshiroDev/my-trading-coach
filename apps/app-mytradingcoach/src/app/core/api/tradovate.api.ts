@@ -46,7 +46,7 @@ export interface TradovateSyncResult {
 }
 
 /**
- * Connexion Tradovate PAR compte de trading (PROMPT-207/208). Lecture seule : aucune route
+ * Connexion Tradovate PAR compte de trading. Lecture seule : aucune route
  * ici ne passe d'ordre. Le consentement se fait chez Tradovate ; l'app ne voit jamais le mot
  * de passe, seulement l'URL de redirection renvoyée par l'API.
  */

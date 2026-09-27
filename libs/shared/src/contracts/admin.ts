@@ -35,7 +35,7 @@ export interface AdminUserDetail {
     tradesPerDayMin: number | null;
     tradesPerDayMax: number | null;
     strategyDescription: string | null;
-    /** Capital déclaré au profil, sans devise : la devise est celle de chaque compte (PROMPT-214). */
+    /** Capital déclaré au profil, sans devise : la devise est celle de chaque compte. */
     startingCapital: number;
   };
   // Usage réel (trades) : est-ce qu'il utilise vraiment l'app.

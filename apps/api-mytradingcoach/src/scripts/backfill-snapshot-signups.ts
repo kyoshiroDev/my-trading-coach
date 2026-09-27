@@ -1,6 +1,6 @@
 /**
  * Backfill idempotent : recalcule `MetricsSnapshot.newThisDay` pour toutes les
- * lignes existantes, à partir de la date d'inscription réelle (PROMPT-177).
+ * lignes existantes, à partir de la date d'inscription réelle.
  *
  * Pourquoi : jusqu'ici le cron de 00h05 comptait les inscrits des 24 h glissantes
  * et rangeait le résultat sous le jour où il tournait. Une inscription du 07/08 à

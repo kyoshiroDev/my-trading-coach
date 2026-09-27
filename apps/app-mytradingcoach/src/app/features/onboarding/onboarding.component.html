@@ -133,7 +133,7 @@
             {{ accountMode() === 'PROPFIRM' ? 'Taille du compte' : 'Capital de départ' }}
           </div>
           <div class="capital-field">
-            <!-- Devise DU COMPTE créé (PROMPT-214) : ses montants s'afficheront dans cette devise. -->
+            <!-- Devise DU COMPTE créé : ses montants s'afficheront dans cette devise. -->
             <div class="currency-toggle" role="group" aria-label="Devise du compte" title="Devise du compte">
               @for (c of accountCurrencies; track c) {
                 <button type="button" class="currency-btn" [class.on]="selectedCurrency() === c"
@@ -219,7 +219,7 @@
             }
           </div>
 
-          <!-- Optionnel (PROMPT-198) : le placeholder-exemple complet posait implicitement
+          <!-- Optionnel : le placeholder-exemple complet posait implicitement
                une barre à deux phrases sur la seule étape qui demande de rédiger. -->
           <div class="field-label">Décris ta stratégie <span class="field-opt">· optionnel</span></div>
           <textarea
@@ -348,7 +348,7 @@
           <div class="step-label">{{ stepLabel }}</div>
           <h2 class="step-title">Tes setups</h2>
           <!-- Une phrase suffit : l'étape est déjà valide sans rien toucher, trois lignes
-               d'explication la faisaient passer pour du travail à faire (PROMPT-198). -->
+               d'explication la faisaient passer pour du travail à faire. -->
           <p class="step-desc">
             Tes patterns d'entrée, pour grouper tes stats. On a préparé les classiques :
             continue, ou ajuste la liste.
@@ -409,7 +409,7 @@
           }
 
           <div class="choice-grid choice-grid-4">
-            <!-- PROMPT-211 : Tradovate EN TÊTE (pleine largeur, accent --nt) ; le CSV reste pour
+            <!-- Tradovate EN TÊTE (pleine largeur, accent --nt) ; le CSV reste pour
                  les autres brokers, mais au second plan avec le manuel et « zéro ». -->
             <button type="button" class="choice-card choice-action choice-tradovate choice-featured" (click)="chooseTradovate()"
                     [attr.aria-busy]="tvPreparing()" data-testid="onboarding-choice-tradovate">

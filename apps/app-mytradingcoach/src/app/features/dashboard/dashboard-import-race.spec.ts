@@ -1,5 +1,5 @@
 /**
- * PROMPT-196 — après un import réussi, le dashboard ne doit ni annoncer un compte vide
+ * après un import réussi, le dashboard ne doit ni annoncer un compte vide
  * ni rester sur une fenêtre sans données.
  *
  * Constat en conditions réelles : import CSV de 20 trades du 10/07 (visibles dans le

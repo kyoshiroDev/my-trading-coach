@@ -11,7 +11,7 @@ import { apiErrorMessage } from '../../../core/utils/api-error';
 import { DialogDirective } from '@mtc/front-ui';
 
 /**
- * Écran de réassurance AVANT de quitter l'app pour Tradovate (PROMPT-208, écran 2).
+ * Écran de réassurance AVANT de quitter l'app pour Tradovate (écran 2).
  * Réutilisé par le wizard (étape 8) et « Mes comptes ». Insiste sur la lecture seule :
  * jamais le mot de passe, aucun ordre, révocable.
  *

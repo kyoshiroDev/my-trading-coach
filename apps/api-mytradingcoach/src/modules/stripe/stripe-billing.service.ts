@@ -128,7 +128,7 @@ export class StripeBillingService {
     const customerId = await this.customers.ensureStripeCustomer(userId, userEmail);
 
     // ── Créer la session ───────────────────────────────────────────────────────
-    // Essai 30j MENSUEL uniquement : accordé si jamais utilisé ET prix mensuel (PROMPT-169).
+    // Essai 30j MENSUEL uniquement : accordé si jamais utilisé ET prix mensuel.
     // L'annuel est facturé immédiatement (pas d'essai → évite contestations sur 490€).
     const trialGranted = !user.trialUsed && this.isMonthlyPrice(priceId);
     const subscriptionData = trialGranted

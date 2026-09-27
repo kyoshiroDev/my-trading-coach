@@ -1,7 +1,7 @@
 /**
  * Admin « Comptes supprimés » — état vide de la carte « Motifs de départ ».
  *
- * Constaté en prod après avoir vidé la table `DeletedAccount` (PROMPT-207) : la liste
+ * Constaté en prod après avoir vidé la table `DeletedAccount` : la liste
  * affichait bien « Aucun compte supprimé », mais la carte des motifs restait
  * entièrement blanche — Chart.js dessine un donut sans secteur, donc rien du tout.
  * Résultat : un bloc qui se lit comme cassé, là où les autres zones annoncent

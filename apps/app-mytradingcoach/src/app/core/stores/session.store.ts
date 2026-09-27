@@ -109,7 +109,7 @@ export class SessionStore {
       });
 
     // Polling market context + news : session active (contexte marché + news = IA
-    // mutualisée → FREE depuis PROMPT-169, accessible à tous les utilisateurs connectés).
+    // mutualisée → FREE, accessible à tous les utilisateurs connectés).
     toObservable(this.activeSession)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((session) => {
@@ -240,7 +240,7 @@ export class SessionStore {
       });
   }
 
-  /** Retour d'action live → toast global (PROMPT-210 ; remplace le toast local de session-live). */
+  /** Retour d'action live → toast global (remplace le toast local de session-live). */
   private flashFeedback(type: 'success' | 'error', text: string): void {
     this.toast[type](text);
   }
@@ -269,7 +269,7 @@ export class SessionStore {
     return map[mood ?? ''] ?? '😐';
   }
 
-  /** Stats + Live feed rechargés (trade Tradovate poussé en direct, PROMPT-210 live). */
+  /** Stats + Live feed rechargés (trade Tradovate poussé en direct). */
   refreshLive(): void {
     this.refreshLiveStats();
   }

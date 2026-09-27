@@ -174,7 +174,7 @@ export class SidebarComponent {
       }
     });
 
-    // Temps réel Tradovate (PROMPT-210 live) : ouvert tant que l'app l'est (le shell vit sur
+    // Temps réel Tradovate : ouvert tant que l'app l'est (le shell vit sur
     // toutes les pages connectées), fermé au logout / à la fermeture de l'onglet. Démo exclue.
     effect(() => {
       const on = this.auth.isAuthenticated() && !this.userStore.isDemo();

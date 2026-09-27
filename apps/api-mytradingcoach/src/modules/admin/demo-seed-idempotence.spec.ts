@@ -1,5 +1,5 @@
 /**
- * PROMPT-192 — le compte démo doit rester peuplé ET récent.
+ * le compte démo doit rester peuplé ET récent.
  *
  * Constat prod (2026-08-28) : la démo affichait « P&L +0$ · Win Rate 0% · 0 trade loggé »
  * avec une session active depuis 1978 h. Le seed avait tourné une seule fois, le
@@ -348,7 +348,7 @@ describe('seedDemo — sobriété AMF (montrer la fonctionnalité, pas une perfo
     const { prisma, created } = fakePrisma(calls);
     await seedDemo(prisma);
 
-    // P&L NET (frais déduits), comme partout dans l'app (PROMPT-213).
+    // P&L NET (frais déduits), comme partout dans l'app.
     const pnl = created['trade'].reduce(
       (s, t) => s + (t['pnl'] as number) - (t['commission'] as number),
       0,
@@ -381,7 +381,7 @@ describe('seedDemo — sobriété AMF (montrer la fonctionnalité, pas une perfo
   });
 });
 
-describe('seedDemo — connexion Tradovate démo (PROMPT-207)', () => {
+describe('seedDemo — connexion Tradovate démo', () => {
   it('le compte prop firm apparaît connecté, sans aucun vrai token, et une seule connexion par run', async () => {
     const calls: Call[] = [];
     const { prisma, created } = fakePrisma(calls);
@@ -400,7 +400,7 @@ describe('seedDemo — connexion Tradovate démo (PROMPT-207)', () => {
   });
 });
 
-describe('seedDemo — réalisme validé (PROMPT-215) : un trader crédible, pas un gagnant parfait', () => {
+describe('seedDemo — réalisme validé : un trader crédible, pas un gagnant parfait', () => {
   const net = (t: Record<string, unknown>) => (t['pnl'] as number) - (t['commission'] as number);
   const dayKey = (t: Record<string, unknown>) => (t['tradedAt'] as Date).toDateString();
 

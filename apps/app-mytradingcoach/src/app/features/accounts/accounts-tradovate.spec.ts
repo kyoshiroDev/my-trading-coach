@@ -16,7 +16,7 @@ import { ToastService } from '../../core/services/toast.service';
 import TEMPLATE from './accounts.component.html?raw';
 
 /**
- * PROMPT-208, écran 3 : connexion / synchro / déconnexion Tradovate PAR compte.
+ * Écran « Mes comptes » : connexion / synchro / déconnexion Tradovate PAR compte.
  * VRAI template (import `?raw`) ; seuls les composants enfants et les icônes Lucide sont
  * neutralisés (NO_ERRORS_SCHEMA), car ils ne compilent pas en JIT sous vitest.
  */

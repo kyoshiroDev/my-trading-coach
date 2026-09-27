@@ -32,7 +32,7 @@ describe('parisDayRange — bornes d\'une journée calendaire Paris', () => {
   });
 
   it('une inscription à 20h51 le 07/08 tombe bien dans la journée du 07/08', () => {
-    // Le cas réel qui a motivé PROMPT-177.
+    // Le cas réel qui a révélé le bug de semaine.
     const signup = new Date('2026-08-07T18:51:00.000Z'); // 20h51 Paris
     const { start, end } = parisDayRange('2026-08-07');
 

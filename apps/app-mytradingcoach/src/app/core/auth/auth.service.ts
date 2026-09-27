@@ -119,7 +119,7 @@ export class AuthService {
     this.currentUser.set(null);
     this.isAuthenticated.set(false);
     // Purge les stores user-scoped : sans ça, un login sur un AUTRE compte dans le même onglet
-    // (navigation SPA sans reload) héritait des comptes/setups/trades du user précédent. PROMPT-175.
+    // (navigation SPA sans reload) héritait des comptes/setups/trades du user précédent.
     this.accountStore.reset();
     this.tradesStore.reset();
     this.setupsStore.reset();

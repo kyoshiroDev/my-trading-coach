@@ -70,7 +70,7 @@ export class AnalyticsComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly chartService = inject(ChartService);
   private readonly selectedAccount = inject(SelectedAccountStore);
-  /** Devises mêlées en « Tous les comptes » → pas de totaux (PROMPT-214). */
+  /** Devises mêlées en « Tous les comptes » → pas de totaux. */
   protected readonly money = inject(MoneyService);
 
   // Suffixe query du compte sélectionné (multi-comptes). « Tous » → '' (agrégé). Lu dans les
@@ -97,7 +97,7 @@ export class AnalyticsComponent {
     else if (this.equityPeriod() === '3m') from.setMonth(from.getMonth() - 3);
     else from.setMonth(from.getMonth() - 6);
     // Horodatages complets : une date seule en `to` valait minuit et excluait les trades du
-    // jour même (courbe vide pour un compte qui n'avait tradé qu'aujourd'hui, PROMPT-213).
+    // jour même (courbe vide pour un compte qui n'avait tradé qu'aujourd'hui).
     return { from: from.toISOString(), to: now.toISOString() };
   });
   protected readonly equityData = signal<{ points: EquityPoint[]; startingCapital: number | null } | null>(null);

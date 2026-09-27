@@ -20,7 +20,7 @@ export interface TradovateFeedback {
 }
 
 /**
- * État des connexions Tradovate, PAR compte de trading (PROMPT-208). Partagé par le wizard et
+ * État des connexions Tradovate, PAR compte de trading. Partagé par le wizard et
  * « Mes comptes ». Chaque action (synchro, choix du compte, déconnexion) est suivie compte par
  * compte : deux comptes (Apex + Lucid) vivent indépendamment.
  */
@@ -62,7 +62,7 @@ export class TradovateStore {
       next: (res) => {
         this.setBusy(accountId, undefined);
         // « 34 trades synchronisés » = transitoire → toast. Frais non rapprochés, position
-        // ouverte, trades écartés = à relire → restent dans la carte du compte (PROMPT-210).
+        // ouverte, trades écartés = à relire → restent dans la carte du compte.
         const [main, ...durables] = syncResultLines(res.data);
         this.toast.success(main.text);
         this.setFeedback(accountId, durables.length ? { lines: durables, error: null } : undefined);

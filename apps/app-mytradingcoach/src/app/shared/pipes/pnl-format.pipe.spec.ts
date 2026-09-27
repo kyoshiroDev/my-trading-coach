@@ -6,7 +6,7 @@ import { MoneyService } from '../../core/services/money.service';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 
 /**
- * La devise vient du COMPTE (SelectedAccountStore), jamais d'un taux (PROMPT-213/214).
+ * La devise vient du COMPTE (SelectedAccountStore), jamais d'un taux.
  * `accounts` : devise par id de compte, pour les lignes de trades.
  */
 function makePipe(currency: string | null = 'USD', accounts: Record<string, string> = {}): PnlFormatPipe {

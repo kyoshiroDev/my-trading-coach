@@ -47,7 +47,7 @@ export interface TradovateSyncResult {
 }
 
 /**
- * Synchro manuelle d'un compte Tradovate vers SON TradingAccount (PROMPT-207). Lecture seule.
+ * Synchro manuelle d'un compte Tradovate vers SON TradingAccount. Lecture seule.
  *
  * Chaîne : position (le seul lien fill → compte) → fillPair (paires appariées par Tradovate,
  * = lignes de l'export Performance) → fill (horodatage, contrat) → fillFee (frais exacts)
@@ -230,7 +230,7 @@ export class TradovateSyncService {
     });
 
     const imported = await this.trades.importTrades(userId, dtos, TradeSource.BROKER_SYNC);
-    // Ce que Tradovate a renvoyé, pas seulement ce qui a été créé (PROMPT-212) : distingue
+    // Ce que Tradovate a renvoyé, pas seulement ce qui a été créé : distingue
     // « rien renvoyé » de « données écartées » (autre compte du login, paire orpheline).
     this.logger.log(
       `Synchro Tradovate ${conn.id} : ${imported.created} créés, ` +

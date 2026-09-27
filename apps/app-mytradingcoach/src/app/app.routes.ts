@@ -141,7 +141,7 @@ export const appRoutes: Routes = [
       },
       {
         path: 'eco-calendar',
-        // Calendrier économique (affichage + analyse IA) = IA mutualisée → FREE (PROMPT-169).
+        // Calendrier économique (affichage + analyse IA) = IA mutualisée → FREE.
         data: {
           seo: {
             title: 'Calendrier économique',

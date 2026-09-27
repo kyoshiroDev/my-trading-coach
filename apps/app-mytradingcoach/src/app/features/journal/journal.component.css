@@ -388,7 +388,7 @@
 .emotion-cell { display: inline-flex; align-items: center; gap: 5px; }
 .emotion-text { font-size: var(--fs-2xs); color: var(--text-3); font-family: var(--font-mono); }
 
-/* Note d'exécution calculée (PROMPT-161) — badge coloré, « — » si non évaluée. */
+/* Note d'exécution calculée — badge coloré, « — » si non évaluée. */
 .grade-badge {
   display: inline-flex; align-items: center;
   font-size: var(--fs-2xs); font-weight: 600; line-height: 1;
@@ -399,7 +399,7 @@
 .grade-badge[data-grade='BON']       { background: var(--blue-glow); color: var(--blue-bright); border-color: rgba(59,130,246,.25); }
 .grade-badge[data-grade='MOYEN']     { background: rgba(245,158,11,.14); color: var(--amber, #f59e0b); border-color: rgba(245,158,11,.28); }
 .grade-badge[data-grade='MAUVAIS']   { background: var(--red-dim); color: var(--red); border-color: rgba(239,68,68,.25); }
-/* État vide de la note d'exécution : discret (text-3), jamais un badge coloré (PROMPT-167). */
+/* État vide de la note d'exécution : discret (text-3), jamais un badge coloré. */
 .exec-none { color: var(--text-3); font-family: var(--font-mono); font-size: var(--fs-2xs); }
 .td-exec { display: inline-flex; align-items: center; }
 

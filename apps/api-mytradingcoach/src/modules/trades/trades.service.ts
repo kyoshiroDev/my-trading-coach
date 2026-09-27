@@ -111,9 +111,9 @@ export class TradesService {
     if (!accountId) accountId = await this.accounts.ensureDefaultAccountId(userId);
 
     const rr = dto.riskReward ?? riskReward;
-    // Barème A (stop présent) : intrinsèque, calculé ici (PROMPT-161). Trade SANS stop → barème B
+    // Barème A (stop présent) : intrinsèque, calculé ici. Trade SANS stop → barème B
     // comportemental, dépendant de l'historique → laissé null ici, renseigné par le recalcul par lot
-    // (PROMPT-168). On ne mélange jamais les deux : stop absent ⇒ jamais de note STOP_BASED.
+    //. On ne mélange jamais les deux : stop absent ⇒ jamais de note STOP_BASED.
     let executionScore: number | null = null;
     let executionGrade: ExecutionGrade | null = null;
     let executionMethod: ExecutionMethod | null = null;
@@ -189,7 +189,7 @@ export class TradesService {
    *  2. contrainte d'unicité `@@unique([userId, importHash])` en base, qui tranche les
    *     accès CONCURRENTS. Le niveau 1 seul laissait un double-clic sur « Importer »
    *     créer l'historique deux fois : les deux requêtes lisaient le même état vide
-   *     avant d'insérer (PROMPT-186 #1).
+   *     avant d'insérer.
    *
    * Un conflit d'unicité n'est donc pas une erreur : c'est un doublon, on le compte
    * comme tel — un ré-import du même fichier ne recrée toujours rien.
@@ -230,7 +230,7 @@ export class TradesService {
     let created = 0;
     let duplicates = 0;
     let failed = 0;
-    // Comptes touchés → un seul recalcul comportemental par compte à la fin (pas de N+1, PROMPT-168).
+    // Comptes touchés → un seul recalcul comportemental par compte à la fin (pas de N+1).
     const affectedAccounts = new Set<string>();
     // Rang de chaque clé DANS la source : deux lignes identiques sont deux trades (cf. occurrenceHash).
     const inSource = new Map<string, number>();
@@ -418,7 +418,7 @@ export class TradesService {
       return { totalTrades: 0, winRate: 0, pnlBrut: 0, fees: 0, pnlNet: 0, bestTrade: 0, worstTrade: 0 };
     }
 
-    // Win rate via le helper unique (BE exclus du dénominateur, PROMPT-160).
+    // Win rate via le helper unique (BE exclus du dénominateur).
     const { winRate } = computeTradeStats(trades);
 
     let pnlBrut = 0;
@@ -506,7 +506,7 @@ export class TradesService {
     const newPnl = priceFieldsChanged ? this.calculatePnl(merged) : undefined;
     const newRR = priceFieldsChanged ? this.calculateRiskReward(merged) : undefined;
 
-    // Recalcul de la note d'exécution si un champ concerné change (PROMPT-161).
+    // Recalcul de la note d'exécution si un champ concerné change.
     const execRelevant =
       priceFieldsChanged ||
       dto.stopLoss !== undefined ||
@@ -585,14 +585,14 @@ export class TradesService {
     const existing = await this.findOne(userId, id);
     await this.prisma.trade.delete({ where: { id } });
     await this.analyticsService.invalidateUserCache(userId);
-    // La suppression modifie les médianes du compte → recalcul comportemental (PROMPT-168).
+    // La suppression modifie les médianes du compte → recalcul comportemental.
     if (existing.accountId) await this.recomputeBehavioralGrades(existing.accountId);
   }
 
   /**
    * Réaffecte un lot de trades à un autre compte. Le `userId` dans le `where`
    * garantit qu'on ne touche que les trades du user (anti-IDOR). Le déplacement change
-   * les médianes des comptes source ET cible → recalcul comportemental des deux côtés (PROMPT-168).
+   * les médianes des comptes source ET cible → recalcul comportemental des deux côtés.
    */
   async reassignAccount(userId: string, tradeIds: string[], accountId: string) {
     // Comptes source (avant déplacement) pour recalculer leur barème comportemental.
@@ -707,7 +707,7 @@ export class TradesService {
   }
 
   /**
-   * Note d'exécution CALCULÉE (PROMPT-161) : récupère le capital du compte cible et délègue
+   * Note d'exécution CALCULÉE : récupère le capital du compte cible et délègue
    * au util déterministe. Aucune IA. Retourne { score, grade } (null si < 2 critères applicables).
    */
   private async computeExecution(
@@ -724,7 +724,7 @@ export class TradesService {
   }
 
   /**
-   * Recalcul par lot du barème comportemental (PROMPT-168) d'un compte, EN UNE SEULE PASSE.
+   * Recalcul par lot du barème comportemental d'un compte, EN UNE SEULE PASSE.
    * Ne touche QUE les trades sans stop (ceux avec stop gardent leur barème A intrinsèque). Contextuel :
    * les 3 critères dépendent des médianes du compte → la note d'un trade évolue quand l'historique
    * s'étoffe (attendu). Charge les trades clôturés triés une fois, calcule les médianes une fois,
@@ -806,7 +806,7 @@ export class TradesService {
 
   /**
    * P&L BRUT du trade (résultat des prix). Les frais restent dans `commission` : le net est
-   * calculé à la lecture par `netPnl` (@mtc/shared), CONVENTION UNIQUE depuis PROMPT-213. Avant,
+   * calculé à la lecture par `netPnl` (@mtc/shared), CONVENTION UNIQUE. Avant,
    * ce calcul retirait déjà les frais alors que les écrans les retiraient encore : frais
    * comptés deux fois sur les trades saisis ou édités.
    */

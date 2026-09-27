@@ -1,4 +1,4 @@
-/* Toasts globaux (PROMPT-210) — discrets, tokens theme.css. Palier z-index 10000
+/* Toasts globaux — discrets, tokens theme.css. Palier z-index 10000
    (au-dessus des modales 1000 et de l'overlay d'onboarding 300).
    Comportement usuel : entrée depuis le bord, pile qui se décale en douceur, compte à
    rebours en haut, sortie vers le bord puis repli de la pile, glisser pour fermer. */

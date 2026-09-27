@@ -1,5 +1,5 @@
 /**
- * PROMPT-176 — l'édition de rôle admin doit préserver l'invariant
+ * l'édition de rôle admin doit préserver l'invariant
  * « un AMBASSADOR a toujours un referralCode ».
  *
  * Avant : `setRole` écrivait le rôle en direct, donc un utilisateur promu par ce

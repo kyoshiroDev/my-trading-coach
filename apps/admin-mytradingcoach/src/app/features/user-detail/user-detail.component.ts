@@ -167,7 +167,7 @@ export class UserDetailComponent {
     const p = this.profile();
     if (!p || !p.startingCapital) return '-';
     // Capital déclaré au profil, sans symbole : il n'existe plus de devise globale, la devise
-    // est celle de chaque compte de trading (PROMPT-214).
+    // est celle de chaque compte de trading.
     return p.startingCapital.toLocaleString('en-US');
   });
   protected readonly frequencyLabel = computed<string | null>(() => {

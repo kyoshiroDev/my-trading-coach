@@ -61,7 +61,7 @@ export class DashboardComponent {
   // ── Configs graphes ───────────────────────────────────────────────────────
 
   /**
-   * Snapshots quotidiens tracés tels quels : une barre par JOUR réel (PROMPT-177).
+   * Snapshots quotidiens tracés tels quels : une barre par JOUR réel.
    *
    * L'agrégation hebdomadaire d'avant étiquetait chaque barre par le lundi de la
    * semaine, si bien qu'un inscrit du vendredi 07/08 apparaissait sur « 03/08 ».

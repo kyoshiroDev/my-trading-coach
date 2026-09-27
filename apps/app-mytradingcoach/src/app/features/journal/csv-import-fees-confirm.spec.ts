@@ -1,5 +1,5 @@
 /**
- * PROMPT-197 — inciter fortement au Cash history, SANS jamais le rendre obligatoire.
+ * inciter fortement au Cash history, SANS jamais le rendre obligatoire.
  *
  * Le Cash history Tradovate donne les frais exacts ; sans lui le P&L reste brut, donc
  * optimiste. Le tag « optionnel » banalisait l'enjeu. On requalifie et on interpose une

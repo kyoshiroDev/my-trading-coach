@@ -8,7 +8,7 @@ import { TradovateStore } from '../../../core/stores/tradovate.store';
 import TEMPLATE from './tradovate-connect-modal.component.html?raw';
 
 /**
- * Écran de réassurance (PROMPT-208, écran 2) : on rend le VRAI template (import `?raw`),
+ * Écran de réassurance (écran 2) : on rend le VRAI template (import `?raw`),
  * seules les icônes Lucide sont neutralisées (elles ne compilent pas en JIT sous vitest).
  */
 

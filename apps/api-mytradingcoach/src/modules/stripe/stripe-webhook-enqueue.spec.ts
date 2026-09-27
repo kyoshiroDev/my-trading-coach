@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { StripeWebhookService } from './stripe-webhook.service';
 
 /**
- * PROMPT-185 #1 — la marque d'idempotence ne doit jamais survivre à un enqueue raté.
+ * la marque d'idempotence ne doit jamais survivre à un enqueue raté.
  *
  * `handleWebhook` pose la marque (insert unique = verrou anti-course) AVANT
  * d'enfiler le job. Si l'enqueue échoue (Redis indisponible), la marque doit être

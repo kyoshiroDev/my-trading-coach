@@ -85,7 +85,7 @@ describe('CsvImportService — MEXC (parser dédié, sans IA)', () => {
     expect(lines).toHaveLength(2); // header + 1 trade fermé seulement
   });
 
-  it("parse correctement même avec l'UID en dernière colonne (régression PROMPT-087)", async () => {
+  it("parse correctement même avec l'UID en dernière colonne (régression : colonne UID déplacée)", async () => {
     const csv = [MEXC_HEADER, MEXC_ROW].join('\r\n');
     const dtos = await svc.parseCSV(Buffer.from(csv), 'mexc.csv');
     expect(dtos).toHaveLength(1);
@@ -244,7 +244,7 @@ describe('CsvImportService — defaults du lot (compte / émotion / setup)', () 
     expect(dtos[0].setupId).toBe('setup-default');
   });
 
-  it('sans choix d\'émotion → null (PROMPT-163, héritera de l\'humeur de session)', async () => {
+  it('sans choix d\'émotion → null (héritera de l\'humeur de session)', async () => {
     const svc = makeService();
     const dtos = await svc.parseCSV(Buffer.from(csv()), 'mexc.csv', 'user-1');
     expect(dtos[0].emotion).toBeNull();
@@ -342,7 +342,7 @@ describe('CsvImportService — Fusion Tradovate (Performance + Cash history)', (
     expect(dtos.every((d) => d.commission == null)).toBe(true);
   });
 
-  // PROMPT-185 #8 — un fichier de frais inexploitable ne doit plus passer en silence.
+  // un fichier de frais inexploitable ne doit plus passer en silence.
   // Avant, l'import réussissait sans aucun frais et sans le dire : le P&L net affiché
   // était surestimé (21,84 $ manquants sur ces fixtures) à l'insu de l'utilisateur.
   it('fichier de frais non-Cash-history → import poursuivi MAIS frais signalés non rapprochés', async () => {
@@ -390,7 +390,7 @@ describe('CsvImportService — Fusion Tradovate (Performance + Cash history)', (
   });
 });
 
-// PROMPT-186 #6 — un fichier hors sujet ne doit pas déclencher l'upsell Premium.
+// un fichier hors sujet ne doit pas déclencher l'upsell Premium.
 // Constat navigateur : un CSV quelconque ou une image renommée .csv renvoyaient
 // « … L'import intelligent par IA est réservé au plan Premium », alors que Premium
 // n'aurait rien résolu — un débutant qui se trompe de fichier comprenait « il faut payer ».
@@ -437,7 +437,7 @@ describe('CsvImportService — fichier non reconnu vs broker inconnu', () => {
     expect(msg).toContain('Fichier vide');
   });
 
-  // PROMPT-187 — garde-fou acquisition : le jour où NinjaTrader nous envoie du trafic,
+  // garde-fou acquisition : le jour où NinjaTrader nous envoie du trafic,
   // leurs exports ne doivent SURTOUT pas tomber dans « format invalide ». Ils sont
   // encore non supportés, donc leur place est la branche « broker non reconnu → IA
   // Premium », qui elle a du sens. Ce test fige ce classement.

@@ -51,7 +51,7 @@ describe('MetricsSnapshotCron', () => {
   });
 
   /**
-   * PROMPT-177 : la ligne doit être datée du jour qu'elle DÉCRIT. Avant, le cron de
+   * la ligne doit être datée du jour qu'elle DÉCRIT. Avant, le cron de
    * 00h05 comptait 24 h glissantes (donc la veille) et rangeait sous le jour courant,
    * décalant tout le graphe d'un jour.
    */

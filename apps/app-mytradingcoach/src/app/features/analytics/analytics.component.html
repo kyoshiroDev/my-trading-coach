@@ -4,7 +4,7 @@
   @if (loadError()) {
     <mtc-error-state (retry)="reload()" />
   }
-  <!-- Devises mêlées en « Tous les comptes » : totaux sans objet (PROMPT-214). -->
+  <!-- Devises mêlées en « Tous les comptes » : totaux sans objet. -->
   @if (money.mixed()) {
     <mtc-mixed-currency-notice />
   } @else {

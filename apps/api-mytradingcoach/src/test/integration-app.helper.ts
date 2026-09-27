@@ -5,7 +5,7 @@ import { AppModule } from '../app/app.module';
 import { ResendService } from '../modules/resend/resend.service';
 
 /**
- * Bootstrap UNIQUE des tests d'intégration (PROMPT-209). Tout `*.int-spec.ts` qui démarre
+ * Bootstrap UNIQUE des tests d'intégration. Tout `*.int-spec.ts` qui démarre
  * `AppModule` passe par ici, jamais par un `Test.createTestingModule({ imports: [AppModule] })`
  * direct (règle `.claude/agents/tests.md`).
  *

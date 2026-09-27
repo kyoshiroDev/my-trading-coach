@@ -182,7 +182,7 @@ export class TradeFormComponent {
     // ne plus exister à l'enregistrement.
     // ÉDITION : volontairement laissée intacte. `setupOptions` conserve le setup
     // archivé du trade, et le back tolère désormais un `setupId` inchangé
-    // (PROMPT-185 #2) : recaler ici changerait en douce le setup d'un vieux trade
+    // : recaler ici changerait en douce le setup d'un vieux trade
     // qu'on ouvre juste pour corriger une note.
     effect(() => {
       const active = this.setupsStore.active();
@@ -423,7 +423,7 @@ export class TradeFormComponent {
     this.form.update((f) => ({
       ...f,
       // P&L BRUT : les frais partent dans `commission` et le net est calculé à la lecture.
-      // Envoyer le net ici faisait déduire les frais deux fois (PROMPT-213).
+      // Envoyer le net ici faisait déduire les frais deux fois.
       pnl: this.form().pnl ?? this.autoPnl(),
       riskReward: this.autoRR(),
       tradedAt: tradedAtIso,
@@ -445,7 +445,7 @@ export class TradeFormComponent {
   private emptyForm(): Partial<CreateTradeDto> {
     return {
       side: 'LONG' as const,
-      // Émotion optionnelle (PROMPT-163) : défaut non renseignée → hérite de l'humeur de session.
+      // Émotion optionnelle : défaut non renseignée → hérite de l'humeur de session.
       emotion: null,
       setupId: this.setupsStore.active()[0]?.id ?? '',
       session: 'LONDON' as const,

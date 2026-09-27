@@ -19,7 +19,7 @@ import {
  * Seed du compte DÉMO vitrine (landing + formateurs) : source de vérité unique, utilisée par
  * l'endpoint admin, le cron quotidien (DemoSeedCron) et le script standalone.
  *
- * Objectif (PROMPT-215) : un trader RÉALISTE, pas un gagnant parfait. Deux comptes prop firm en
+ * Objectif : un trader RÉALISTE, pas un gagnant parfait. Deux comptes prop firm en
  * USD, futures d'indices US uniquement (MES / MNQ / ES / NQ), jours ouvrés, frais réels qui
  * pèsent sur le net, ~40 % de journées rouges, une journée de revenge trading, des setups aux
  * résultats contrastés (dont un Scalping positif en brut mais NÉGATIF en net).
@@ -126,7 +126,7 @@ export interface DemoTrade {
   takeProfit: number | null;
   riskReward: number | null;
   quantity: number;
-  /** P&L BRUT (convention PROMPT-213 : les frais sont dans `commission`). */
+  /** P&L BRUT (convention : les frais sont dans `commission`). */
   pnl: number;
   commission: number;
   emotion: EmotionState | null;
@@ -197,7 +197,7 @@ function statsOf(days: DemoDay[]): DemoStats {
   };
 }
 
-/** Contraintes de crédibilité validées avec Greg (PROMPT-215). */
+/** Contraintes de crédibilité validées avec Greg. */
 export function meetsTargets(s: DemoStats): boolean {
   const red = s.redDays / s.tradingDays;
   const setups = s.bySetup;
@@ -422,7 +422,7 @@ function generate(now: Date, seed: number): DemoDay[] {
 }
 
 /**
- * Garde-fou (PROMPT-215) : la démo montre un trader de futures d'indices US. Aucun trade un
+ * Garde-fou : la démo montre un trader de futures d'indices US. Aucun trade un
  * samedi ou un dimanche, aucun actif hors MES / MNQ / ES / NQ. Appelé avant TOUTE écriture :
  * une régression fait échouer le seed au lieu d'afficher une démo incohérente.
  */
@@ -737,7 +737,7 @@ export async function seedDemo(prisma: PrismaClient, now: Date = new Date()): Pr
     data: { pinnedEcoEvents: ['Inflation CPI (US):USD', 'Discours BCE:EUR'] },
   });
 
-  // Compte Apex « Connecté » à Tradovate (vitrine PROMPT-207) : aucun vrai token, le compte démo
+  // Compte Apex « Connecté » à Tradovate (vitrine de la connexion broker) : aucun vrai token, le compte démo
   // ne peut ni synchroniser ni connecter (DemoReadOnlyGuard bloque les POST).
   const apexId = accountIdByKey.get('apex')!;
   const demoTradovateAccount = { id: '0', name: 'APEX-DEMO-01', env: 'demo' };

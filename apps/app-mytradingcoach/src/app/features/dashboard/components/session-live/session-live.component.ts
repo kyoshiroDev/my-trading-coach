@@ -50,7 +50,7 @@ export class SessionLiveComponent {
 
   private readonly ecoSocket = inject(EcoSocketService);
 
-  // News live + contexte marché = IA mutualisée → FREE (PROMPT-169), accessible à tous.
+  // News live + contexte marché = IA mutualisée → FREE, accessible à tous.
 
   constructor() {
     // triggerCloseModal → naviguer vers l'onglet Débrief
