@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { InfraModule } from '../modules/infra/infra.module';
 import { HealthModule } from '../modules/health/health.module';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { BullModule } from '@nestjs/bullmq';
 import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
@@ -36,6 +36,7 @@ import { ActivityTrackingInterceptor } from '../common/interceptors/activity-tra
 import { AppController } from './app.controller';
 
 import { RedisThrottlerStorage } from '../common/throttler/redis-throttler.storage';
+import { EmailAwareThrottlerGuard } from '../common/throttler/email-aware-throttler.guard';
 import { RedisService } from '../modules/infra/redis.service';
 
 @Module({
@@ -96,7 +97,9 @@ import { RedisService } from '../modules/infra/redis.service';
     TradovateModule,
   ],
   providers: [
-    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    // Compte par IP ET par compte visé : l'IP seule bloque les voisins d'un même NAT et laisse
+    // passer une attaque distribuée sur un seul compte.
+    { provide: APP_GUARD, useClass: EmailAwareThrottlerGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     // Après JwtAuthGuard (besoin de request.user) : bloque les écritures du compte démo.
     { provide: APP_GUARD, useClass: DemoReadOnlyGuard },
