@@ -1,5 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModuleBuilder } from '@nestjs/testing';
+import { getStorageToken } from '@nestjs/throttler';
 import { vi, type Mock } from 'vitest';
 import { AppModule } from '../app/app.module';
 import { ResendService } from '../modules/resend/resend.service';
@@ -34,7 +35,18 @@ export function createResendMock(): ResendMock {
   return mock as ResendMock;
 }
 
+/**
+ * Compteur du rate limiting qui ne bloque jamais. Les limites réelles (ex. 5 inscriptions / min
+ * / IP) sont voulues en prod, mais ici toutes les requêtes viennent de la même IP : sans ça,
+ * une suite qui crée plusieurs comptes reçoit des 429.
+ */
+export const unlimitedThrottlerStorage = {
+  increment: async () => ({ totalHits: 1, timeToExpire: 60, isBlocked: false, timeToBlockExpire: 0 }),
+};
+
 export interface IntegrationAppOptions {
+  /** `true` : garde le vrai rate limiting (pour tester un 429). Défaut : neutralisé. */
+  throttle?: boolean;
   /** Surcharges supplémentaires du module de test (ex. stockage du throttler). */
   configure?: (builder: TestingModuleBuilder) => TestingModuleBuilder;
   /**
@@ -57,6 +69,7 @@ export async function createIntegrationApp(opts: IntegrationAppOptions = {}): Pr
   let builder = Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(ResendService)
     .useValue(resend);
+  if (!opts.throttle) builder = builder.overrideProvider(getStorageToken()).useValue(unlimitedThrottlerStorage);
   if (opts.configure) builder = opts.configure(builder);
 
   const moduleRef = await builder.compile();

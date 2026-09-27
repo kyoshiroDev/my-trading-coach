@@ -9,14 +9,13 @@
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { INestApplication, RequestMethod, ValidationPipe } from '@nestjs/common';
-import { getStorageToken } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { BrokerConnectionStatus } from '@prisma/client';
-import { createIntegrationApp } from '../../../test/integration-app.helper';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { createIntegrationApp } from '@api/test/integration-app.helper';
+import { PrismaService } from '@api/prisma/prisma.service';
 import { TradovateTokenRefreshCron } from './tradovate-token-refresh.cron';
 
 const PREFIX = 'int-tradovate-';
@@ -166,13 +165,8 @@ beforeAll(async () => {
     if (/^https:\/\/(live|demo)\.tradovateapi\.com\//.test(url)) return Promise.resolve(tradovate(url, init));
     return realFetch(input, init);
   });
-  // Le @Throttle réel (10 authorize / min / IP) est voulu en prod ; ici toutes les requêtes
-  // viennent de la même IP, on neutralise donc le compteur (pas la logique testée).
+  // Rate limiting neutralisé par createIntegrationApp (toutes les requêtes viennent de la même IP).
   ({ app, baseUrl } = await createIntegrationApp({
-    configure: (b) =>
-      b.overrideProvider(getStorageToken()).useValue({
-        increment: async () => ({ totalHits: 1, timeToExpire: 60, isBlocked: false, timeToBlockExpire: 0 }),
-      }),
     setup: (a) => {
       a.use(cookieParser());
       // Même préfixe que main.ts, callback exclu (redirect_uri enregistré sans /api).
