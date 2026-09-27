@@ -6,7 +6,7 @@ import {
   formatMoney,
   isAccountCurrency,
   normalizeCurrencyCode,
-} from '@mtc/shared';
+} from './currency';
 
 /** Devise = propriété du compte, jamais de conversion (PROMPT-214). Source unique front + back. */
 describe('devises de compte (@mtc/shared)', () => {
