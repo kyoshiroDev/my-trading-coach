@@ -25,6 +25,13 @@ interface NormalizedError {
   message: string | string[];
 }
 
+/** Réponse 503 de /api/health/ready (terminus) : nomme les composants en panne. */
+function failedHealthChecks(res: unknown): string | undefined {
+  const failed = (res as { error?: Record<string, unknown> } | null)?.error;
+  if (!failed || typeof failed !== 'object' || Object.keys(failed).length === 0) return undefined;
+  return `Indisponible : ${Object.keys(failed).join(', ')}`;
+}
+
 /**
  * Filtre GLOBAL : toute erreur (HttpException, Prisma, exception inattendue) sort au même
  * format. Avant, seules les HttpException passaient ici ; les autres tombaient dans le filtre
@@ -66,7 +73,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       const message =
         typeof res === 'object' && 'message' in res
           ? (res as { message: string | string[] }).message
-          : exception.message;
+          : failedHealthChecks(res) ?? exception.message;
       // Code machine optionnel (ex. TRADOVATE_RECONNECT_REQUIRED) : le front choisit l'état
       // d'écran sans parser le message, qui reste destiné à l'utilisateur.
       const code =

@@ -77,3 +77,22 @@ describe('HttpExceptionFilter', () => {
     expect(Sentry.captureException).toHaveBeenCalledWith(boom, expect.anything());
   });
 });
+
+describe('HttpExceptionFilter — health check', () => {
+  it('503 de readiness : nomme le composant en panne', () => {
+    const json = vi.fn();
+    const host = {
+      getType: () => 'http',
+      switchToHttp: () => ({
+        getResponse: () => ({ status: () => ({ json }) }),
+        getRequest: () => ({ method: 'GET', path: '/api/health/ready' }),
+      }),
+    } as unknown as ArgumentsHost;
+    vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    new HttpExceptionFilter().catch(
+      new HttpException({ status: 'error', error: { redis: { status: 'down' } } }, 503),
+      host,
+    );
+    expect(json).toHaveBeenCalledWith(expect.objectContaining({ message: 'Indisponible : redis' }));
+  });
+});

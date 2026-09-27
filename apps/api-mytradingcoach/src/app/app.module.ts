@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { SharedModule } from '../modules/shared/shared.module';
+import { HealthModule } from '../modules/health/health.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { BullModule } from '@nestjs/bullmq';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -72,6 +73,7 @@ import { RedisService } from '../modules/shared/redis.service';
       : []),
     SharedModule,
     PrismaModule,
+    HealthModule,
     AuthModule,
     TradesModule,
     AnalyticsModule,
