@@ -100,7 +100,7 @@
               <div class="assets-list">
                 @for (asset of tradingAssets(); track asset.symbol) {
                   <div class="asset-row">
-                    <button
+                    <button [attr.aria-label]="asset.isFavorite ? 'Favori, pré-sélectionné en saisie rapide' : 'Définir comme favori'"
                       class="asset-fav"
                       [class.active]="asset.isFavorite"
                       [disabled]="assetsSaving()"
@@ -112,7 +112,7 @@
                       <span class="asset-sym">{{ asset.symbol }}</span>
                       <span class="asset-lbl">{{ asset.label }}</span>
                     </div>
-                    <button class="asset-del" [disabled]="assetsSaving()"
+                    <button aria-label="Supprimer" class="asset-del" [disabled]="assetsSaving()"
                       (click)="removeAsset(asset.symbol)" title="Supprimer">×</button>
                   </div>
                 }
@@ -160,15 +160,15 @@
                   </div>
                 </div>
                 <div class="stp-acts">
-                  <button class="stp-ico" type="button" title="Modifier" (click)="openEditSetup(s)">
+                  <button aria-label="Modifier" class="stp-ico" type="button" title="Modifier" (click)="openEditSetup(s)">
                     <svg [lucideIcon]="PencilIcon" [size]="15"></svg>
                   </button>
                   @if (s.tradeCount > 0) {
-                    <button class="stp-ico" type="button" title="Archiver" (click)="archiveSetup(s.id)">
+                    <button aria-label="Archiver" class="stp-ico" type="button" title="Archiver" (click)="archiveSetup(s.id)">
                       <svg [lucideIcon]="ArchiveIcon" [size]="15"></svg>
                     </button>
                   } @else {
-                    <button class="stp-ico dg" type="button" title="Supprimer" (click)="deleteSetup(s.id)">
+                    <button aria-label="Supprimer" class="stp-ico dg" type="button" title="Supprimer" (click)="deleteSetup(s.id)">
                       <svg [lucideIcon]="TrashIcon" [size]="15"></svg>
                     </button>
                   }
@@ -202,7 +202,7 @@
                       <div class="stp-acts">
                         <button class="stp-mini" type="button" (click)="restoreSetup(s.id)">Restaurer</button>
                         @if (s.tradeCount === 0) {
-                          <button class="stp-ico dg" type="button" title="Supprimer" (click)="deleteSetup(s.id)">
+                          <button aria-label="Supprimer" class="stp-ico dg" type="button" title="Supprimer" (click)="deleteSetup(s.id)">
                             <svg [lucideIcon]="TrashIcon" [size]="15"></svg>
                           </button>
                         }

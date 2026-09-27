@@ -81,7 +81,7 @@ import { netPnl } from '@mtc/shared';
                       />
                     </div>
                     <button class="close-btn-ok" (click)="submitClose()">OK →</button>
-                    <button class="close-btn-cancel" (click)="cancelClose()">✕</button>
+                    <button aria-label="Annuler" class="close-btn-cancel" (click)="cancelClose()">✕</button>
                   </div>
                   @if (exitPriceInput()) {
                     <div data-testid="trade-close-type" style="margin-top:6px;font-size:10px;color:var(--text-3);font-family:var(--font-mono);">

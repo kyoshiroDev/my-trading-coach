@@ -74,6 +74,8 @@ import { apiErrorMessage } from '../../core/utils/api-error';
                   <button
                     type="button"
                     class="eye-btn"
+                    [attr.aria-label]="showPassword() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+                    [attr.aria-pressed]="showPassword()"
                     (click)="showPassword.set(!showPassword())"
                   >
                     <svg

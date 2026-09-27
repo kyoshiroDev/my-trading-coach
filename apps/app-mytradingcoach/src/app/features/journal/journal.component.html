@@ -274,14 +274,14 @@
               }
             </div>
             @if (canReassign()) {
-              <button class="day-reassign-btn"
+              <button aria-label="Déplacer tous les trades de ce jour vers un autre compte" class="day-reassign-btn"
                 title="Déplacer tous les trades de ce jour vers un autre compte"
                 (click)="$event.stopPropagation(); openReassign(day)"
                 (keydown.enter)="$event.stopPropagation(); openReassign(day)">
                 <svg [lucideIcon]="ReassignIcon" [size]="12"></svg>
               </button>
             }
-            <button class="day-delete-btn"
+            <button aria-label="Supprimer tous les trades de ce jour" class="day-delete-btn"
               title="Supprimer tous les trades de ce jour"
               (click)="$event.stopPropagation(); confirmDeleteDayKey.set(day.key)"
               (keydown.enter)="$event.stopPropagation(); confirmDeleteDayKey.set(day.key)">
@@ -334,10 +334,10 @@
                   </span>
                   <span class="td-setup"><span class="setup-badge"><span class="setup-badge-dot" [style.background]="trade.setup.color"></span>{{ trade.setup.title }}</span></span>
                   <span class="td-actions">
-                    <button class="btn-edit" (click)="openEditModal(trade)" title="Modifier">
+                    <button aria-label="Modifier" class="btn-edit" (click)="openEditModal(trade)" title="Modifier">
                       <svg [lucideIcon]="PencilIcon" [size]="12"></svg>
                     </button>
-                    <button class="btn-delete" data-testid="trade-delete" (click)="deleteTrade(trade.id)" title="Supprimer">
+                    <button aria-label="Supprimer" class="btn-delete" data-testid="trade-delete" (click)="deleteTrade(trade.id)" title="Supprimer">
                       <svg [lucideIcon]="XIcon" [size]="12"></svg>
                     </button>
                   </span>

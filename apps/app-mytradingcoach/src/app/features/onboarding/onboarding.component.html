@@ -321,9 +321,9 @@
             <div class="asset-selected">
               @for (a of selectedAssets(); track a) {
                 <div class="asset-pill" [class.fav]="favoriteAsset() === a">
-                  <button class="asset-star" type="button" [class.on]="favoriteAsset() === a" title="Favori" (click)="setFavoriteAsset(a)">★</button>
+                  <button aria-label="Favori" class="asset-star" type="button" [class.on]="favoriteAsset() === a" title="Favori" (click)="setFavoriteAsset(a)">★</button>
                   <span class="asset-pill-sym">{{ a }}</span>
-                  <button class="asset-remove" type="button" title="Retirer" (click)="removeAsset(a)">✕</button>
+                  <button aria-label="Retirer" class="asset-remove" type="button" title="Retirer" (click)="removeAsset(a)">✕</button>
                 </div>
               }
             </div>
@@ -358,7 +358,7 @@
                   <div class="ob-setup-name">{{ s.title }}</div>
                   <div class="ob-setup-desc">{{ s.description || 'Pas de description' }}</div>
                 </div>
-                <button class="ob-setup-rm" type="button" title="Retirer"
+                <button aria-label="Retirer" class="ob-setup-rm" type="button" title="Retirer"
                         [disabled]="setupsStore.active().length <= 1"
                         (click)="removeSetup(s.id)">✕</button>
               </div>

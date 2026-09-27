@@ -108,7 +108,7 @@ import { ConfirmService, DialogDirective } from '@mtc/front-ui';
       @if (showAdd()) {
         <div class="modal-overlay" role="button" tabindex="-1" (click)="closeAdd()" (keydown.escape)="closeAdd()">
           <div class="modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="closeAdd()" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
-            <div class="modal-head"><h3 class="modal-title">Ajouter un ambassadeur</h3><button class="modal-x" (click)="closeAdd()">✕</button></div>
+            <div class="modal-head"><h3 class="modal-title">Ajouter un ambassadeur</h3><button aria-label="Fermer" class="modal-x" (click)="closeAdd()">✕</button></div>
             @if (addResult(); as r) {
               <div class="modal-body">
                 <p class="ok-text">✓ <strong>{{ r.name ?? r.email }}</strong> est désormais ambassadeur.</p>
@@ -143,7 +143,7 @@ import { ConfirmService, DialogDirective } from '@mtc/front-ui';
       @if (revokeTarget(); as target) {
         <div class="modal-overlay" role="button" tabindex="-1" (click)="cancelRevoke()" (keydown.escape)="cancelRevoke()">
           <div class="modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="cancelRevoke()" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
-            <div class="modal-head"><h3 class="modal-title">Retirer l'ambassadeur</h3><button class="modal-x" (click)="cancelRevoke()">✕</button></div>
+            <div class="modal-head"><h3 class="modal-title">Retirer l'ambassadeur</h3><button aria-label="Fermer" class="modal-x" (click)="cancelRevoke()">✕</button></div>
             <div class="modal-body">
               <p class="confirm-text">Retirer le statut ambassadeur de <strong>{{ target.name ?? target.email }}</strong> ? Son rôle repasse à <strong>USER</strong> et son code <strong>{{ target.referralCode }}</strong> est libéré. Les commissions déjà enregistrées sont conservées.</p>
             </div>

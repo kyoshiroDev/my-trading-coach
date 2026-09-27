@@ -36,7 +36,7 @@ const TARGET_CONFIG: Record<BackupTarget, { label: string; color: string; icon: 
       <div class="page-head">
         <div class="page-title">Sauvegardes</div>
         <div class="head-actions">
-          <button class="icon-btn" title="Rafraîchir" (click)="load()" [disabled]="loading()"><svg [lucideIcon]="RefreshIcon" [size]="14"></svg></button>
+          <button aria-label="Rafraîchir" class="icon-btn" title="Rafraîchir" (click)="load()" [disabled]="loading()"><svg [lucideIcon]="RefreshIcon" [size]="14"></svg></button>
           <button class="btn btn-primary" (click)="showModal.set(true)"><svg [lucideIcon]="PlusIcon" [size]="13"></svg> Nouveau backup</button>
         </div>
       </div>
@@ -78,8 +78,8 @@ const TARGET_CONFIG: Record<BackupTarget, { label: string; color: string; icon: 
                     <td data-label="Taille" class="td-mono">{{ b.sizeMb }} Mo</td>
                     <td data-label="Créée" class="td-mono muted">{{ b.createdAt | date:'dd/MM HH:mm' }}</td>
                     <td data-label="Actions"><div class="row-actions">
-                      <button class="icon-btn" title="Restaurer" (click)="confirmRestore(b)" [disabled]="restoring() === b.filename"><svg [lucideIcon]="RestoreIcon" [size]="12"></svg></button>
-                      <button class="icon-btn danger" title="Supprimer" (click)="confirmDeleteB(b)"><svg [lucideIcon]="TrashIcon" [size]="12"></svg></button>
+                      <button aria-label="Restaurer" class="icon-btn" title="Restaurer" (click)="confirmRestore(b)" [disabled]="restoring() === b.filename"><svg [lucideIcon]="RestoreIcon" [size]="12"></svg></button>
+                      <button aria-label="Supprimer" class="icon-btn danger" title="Supprimer" (click)="confirmDeleteB(b)"><svg [lucideIcon]="TrashIcon" [size]="12"></svg></button>
                     </div></td>
                   </tr>
                 } @empty { <tr><td colspan="5" class="empty">Aucune sauvegarde prod</td></tr> }
@@ -99,8 +99,8 @@ const TARGET_CONFIG: Record<BackupTarget, { label: string; color: string; icon: 
                     <td data-label="Taille" class="td-mono">{{ b.sizeMb }} Mo</td>
                     <td data-label="Créée" class="td-mono muted">{{ b.createdAt | date:'dd/MM HH:mm' }}</td>
                     <td data-label="Actions"><div class="row-actions">
-                      <button class="icon-btn" title="Restaurer" (click)="confirmRestore(b)" [disabled]="restoring() === b.filename"><svg [lucideIcon]="RestoreIcon" [size]="12"></svg></button>
-                      <button class="icon-btn danger" title="Supprimer" (click)="confirmDeleteB(b)"><svg [lucideIcon]="TrashIcon" [size]="12"></svg></button>
+                      <button aria-label="Restaurer" class="icon-btn" title="Restaurer" (click)="confirmRestore(b)" [disabled]="restoring() === b.filename"><svg [lucideIcon]="RestoreIcon" [size]="12"></svg></button>
+                      <button aria-label="Supprimer" class="icon-btn danger" title="Supprimer" (click)="confirmDeleteB(b)"><svg [lucideIcon]="TrashIcon" [size]="12"></svg></button>
                     </div></td>
                   </tr>
                 } @empty { <tr><td colspan="5" class="empty">Aucune sauvegarde dev</td></tr> }

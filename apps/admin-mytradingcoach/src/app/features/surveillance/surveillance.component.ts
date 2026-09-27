@@ -76,7 +76,7 @@ const GB = 1_073_741_824;
                     }
                   </span>
                   <span class="ct-acts">
-                    <button class="pill" title="Voir les logs" (click)="openLogs(c.name)">📋</button>
+                    <button aria-label="Voir les logs" class="pill" title="Voir les logs" (click)="openLogs(c.name)">📋</button>
                     @for (a of actionsFor(c); track a.action) {
                       <button class="pill" [class.danger]="a.danger" [title]="a.label" (click)="askConfirm(c, a.action)">{{ a.icon }}</button>
                     }
@@ -129,7 +129,7 @@ const GB = 1_073_741_824;
     @if (confirmState(); as cf) {
       <div class="modal-overlay" role="button" tabindex="-1" (click)="confirmState.set(null)" (keydown.escape)="confirmState.set(null)">
         <div class="modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="confirmState.set(null)" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
-          <div class="modal-head"><h3 class="modal-title">⚠️ Action en PRODUCTION</h3><button class="modal-x" (click)="confirmState.set(null)">✕</button></div>
+          <div class="modal-head"><h3 class="modal-title">⚠️ Action en PRODUCTION</h3><button aria-label="Fermer" class="modal-x" (click)="confirmState.set(null)">✕</button></div>
           <div class="modal-body">
             <p class="confirm-text">Tu vas <strong>{{ actionLabel(cf.action) }}</strong> le container <strong>{{ cf.name }}</strong> en <strong class="text-red">PRODUCTION</strong>. Confirmer ?</p>
           </div>
@@ -148,9 +148,9 @@ const GB = 1_073_741_824;
           <div class="drawer-head">
             <span class="card-label">Logs · {{ lc }}</span>
             <div class="drawer-acts">
-              <button class="icon-btn" (click)="togglePause()" [title]="paused() ? 'Reprendre' : 'Pause'"><svg [lucideIcon]="paused() ? PlayIcon : PauseIcon" [size]="12"></svg></button>
-              <button class="icon-btn" (click)="clearLines()" title="Vider"><svg [lucideIcon]="TrashIcon" [size]="12"></svg></button>
-              <button class="modal-x" (click)="closeLogs()">✕</button>
+              <button [attr.aria-label]="paused() ? 'Reprendre' : 'Pause'" class="icon-btn" (click)="togglePause()" [title]="paused() ? 'Reprendre' : 'Pause'"><svg [lucideIcon]="paused() ? PlayIcon : PauseIcon" [size]="12"></svg></button>
+              <button aria-label="Vider" class="icon-btn" (click)="clearLines()" title="Vider"><svg [lucideIcon]="TrashIcon" [size]="12"></svg></button>
+              <button aria-label="Fermer" class="modal-x" (click)="closeLogs()">✕</button>
             </div>
           </div>
           <div class="log-terminal" #terminal>

@@ -91,7 +91,7 @@ import { AdminAuthService } from '../../core/auth/admin-auth.service';
               <div class="avatar-name">{{ auth.currentUser()?.name ?? auth.currentUser()?.email }}</div>
               <div class="avatar-role">super admin</div>
             </div>
-            <button class="logout-btn" (click)="auth.logout()" title="Déconnexion">
+            <button aria-label="Déconnexion" class="logout-btn" (click)="auth.logout()" title="Déconnexion">
               <svg [lucideIcon]="LogOutIcon" [size]="12"></svg>
             </button>
           </div>
