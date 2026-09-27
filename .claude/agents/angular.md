@@ -712,3 +712,24 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
   puis la ré-exporter (`export type { X }`) si des importeurs existants passent par l'API front.
 - Aussi partagés : `todayParis` / `parisDayRange` (dates Paris), `normalizeEventKey` / `eventKey`,
   `renderEmailMarkdown` (rendu des campagnes, envoi + aperçu admin).
+
+## Libs front partagées (`libs/front/*`, audit du 27/09/2026)
+
+| Lib | Import | Contenu |
+|---|---|---|
+| `libs/front/ui` | `@mtc/front-ui` | `foundations.css` (échelles, focus clavier, mouvement réduit, `.sr-only`), `ConfirmService` + `<mtc-confirm-dialog>`, `<mtc-error-state>` |
+| `libs/front/auth` | `@mtc/front-auth` | `jwtRefreshInterceptor` + jeton `AUTH_TOKEN_SOURCE` |
+
+- **Jamais `window.confirm()`** : `await inject(ConfirmService).ask({ title, message, danger })`.
+  Le dialogue est monté une fois dans la racine (app et admin).
+- **Toute donnée chargée affiche son échec** : `@if (loadError()) { <mtc-error-state (retry)="reload()" /> }`
+  avec `loadError = computed(() => !!resource.error())` (Dashboard, Analytics, Scoring en exemple).
+- **Paiement** : `inject(BillingService).startCheckout(plan)` (`core/services/billing.service.ts`),
+  jamais `BillingApi.checkout` directement.
+- **Contrastes** : texte blanc sur un fond plein → `background: var(--primary)` (survol
+  `--primary-hover`), jamais `var(--blue)` / `var(--blue-bright)` (trop clairs sous du blanc).
+- Les couleurs restent propres à chaque app : l'admin suit sa maquette (teal, Geist), seules la
+  structure et l'accessibilité sont partagées.
+- Tests : `pnpm nx test front-ui` / `pnpm nx test front-auth` (config Vitest propre à chaque lib :
+  l'exécuteur de l'app refuse les specs hors de sa racine). Une lib importée par l'app doit aussi
+  être déclarée dans `resolve.alias` de `apps/app-mytradingcoach/vitest.config.mts`.
