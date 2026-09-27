@@ -114,8 +114,8 @@ jobs:
           node-version-file: '.nvmrc'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Test Angular (app + admin)
-        run: pnpm nx run-many --target=test --projects=app-mytradingcoach,admin-mytradingcoach --parallel=2
+      - name: Test front + shared (app, admin, libs/shared)
+        run: pnpm nx run-many --target=test --projects=app-mytradingcoach,admin-mytradingcoach,shared --parallel=2
 
   # ── Deploy API beta → VPS (beta.api.mytradingcoach.app) ────────────────────
   deploy-api-beta:
