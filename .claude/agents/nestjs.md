@@ -955,16 +955,29 @@ sont en direct.
   de bord). Aujourd'hui : `computeTradeStats` / `classifyTrade` (règle du win rate) et les valeurs
   tarifaires (`PREMIUM_PRICE_EUR`, `TRIAL_PERIOD_DAYS`, `ACCOUNT_LIMITS`,
   `PREMIUM_ANNUAL_SAVINGS_EUR`). Import : `from '@mtc/shared'`.
-- Branchement côté API (3 endroits, tous nécessaires) :
-  - `tsconfig.app.json` : `paths` + la lib dans `include` (projet `composite`) + `rootDir: ../..` ;
+- Branchement (tous nécessaires) :
+  - `tsconfig.base.json` : **seul** `paths` `@mtc/shared`, hérité par l'API, l'app, l'admin et
+    `tsx` (seed). C'est aussi ce que Nx lit pour le graphe : sans lui, `nx affected` ne voyait
+    pas que les apps dépendent de la lib. Ne jamais redéclarer `paths` dans un tsconfig d'app
+    (il remplacerait celui de la base) ;
+  - `tsconfig.app.json` de l'API : la lib dans `include` (projet `composite`) + `rootDir: ../..` ;
   - `webpack.config.js` : alias posé dans le hook `NodeModulesExternalsPlugin` (le plugin paths de
     Nx ne lit pas nos `paths`) ET `@mtc/*` exclu des externals — sinon `require('@mtc/shared')`
     au démarrage, introuvable dans node_modules ;
-  - `vitest.config.ts` et `vitest.integration.config.ts` : `resolve.alias`.
+  - `vitest.config.mts` et `vitest.integration.config.mts` : `resolve.alias` (vitest ignore `paths`).
+- Tests de la lib : dans `libs/shared/src/*.spec.ts`, lancés par `pnpm nx test shared`
+  (plus dans l'API). Typecheck : `pnpm nx typecheck shared`.
+- Frontières (`eslint.config.mjs`, `@nx/enforce-module-boundaries`) : tags `type:*` / `scope:*`
+  sur chaque projet ; `libs/shared` (`scope:shared`) n'importe que lui-même, une app n'importe
+  jamais une autre app, le front n'importe jamais l'API. Un import interdit casse le lint.
+- Créer une nouvelle lib : `pnpm nx g @nx/js:lib libs/<nom> --bundler=none`, lui donner ses tags,
+  puis déclarer son alias dans `tsconfig.base.json` (et dans les alias vitest / webpack si une
+  app de test ou l'API l'importe).
 - Ré-exporter une valeur de la lib : `export { X } from '@mtc/shared'` — jamais un import suivi de
   `export { X }`, effacé par la transpilation fichier par fichier (webpack : « export not found »).
-- Pas de `tsconfig` dans `libs/shared` (volontaire) : le plugin TS de Nx y ajouterait des cibles et
-  `nx sync` (lancé dans le Dockerfile) réécrirait les références TS.
+- Pas de `tsconfig.json` dans `libs/shared` (volontaire) : le plugin TS de Nx y ajouterait des
+  cibles et `nx sync` (lancé dans le Dockerfile) ajouterait aux apps des références vers une lib
+  non composite, ce qui casse le build. Le typecheck de la lib lit `tsconfig.check.json`.
 - Types d'API front/back (27 noms en double) : PAS encore partagés — les dates y sont `Date` côté
   API et `string` côté front (JSON) ; à traiter avec un type de transport dédié.
 

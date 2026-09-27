@@ -625,9 +625,12 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
 
 - Import `from '@mtc/shared'` (stats de trades, valeurs tarifaires) — source unique avec l'API.
   Détails et règles de la lib : `nestjs.md` § « Librairie partagée ».
-- Branchement : `paths` dans `tsconfig.json` de l'app et de l'admin (lu par esbuild et par le
-  builder de tests de l'admin), la lib dans l'`include` de `tsconfig.spec.json` de l'app
-  (projet `composite`), et `resolve.alias` dans `apps/app-mytradingcoach/vitest.config.ts`.
+- Branchement (voir `nestjs.md` § « Librairie partagée » pour la liste complète) : l'alias
+  `@mtc/shared` est déclaré **une seule fois**, dans `tsconfig.base.json` (hérité par l'app et
+  l'admin, et lu par Nx pour le graphe : une modif de la lib rebuild et redéploie les apps).
+  Ne PAS redéclarer `paths` dans le tsconfig d'une app : cela écrase celui de la base.
+  Vitest ne lit pas les `paths` : `resolve.alias` dans `apps/app-mytradingcoach/vitest.config.mts`.
+  La lib reste dans l'`include` de `tsconfig.spec.json` de l'app (projet `composite`).
 - `core/constants/pricing.const.ts` garde ses exports (`PRICING`, `ACCOUNT_LIMITS`,
   `yearlyPerMonth`) mais lit ses VALEURS dans `@mtc/shared` : un prix ne se change plus que dans
   `libs/shared/src/pricing.ts` (+ la landing `Pricing.astro`, non branchée à la lib).
