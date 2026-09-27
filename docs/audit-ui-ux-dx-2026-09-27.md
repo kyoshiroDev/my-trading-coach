@@ -1,0 +1,249 @@
+# Audit UI/UX + DX — MyTradingCoach (app, admin, API, outillage)
+
+- **Date** : 27/09/2026 · branche `claude/audit-ui-ux-dx-rnr1wi` (base `5fa7d9b`)
+- **Périmètre** : `app-mytradingcoach` (Angular), `admin-mytradingcoach`, `api-mytradingcoach` (côté contrat et DX), monorepo, CI/CD, documentation.
+  La landing a déjà son propre audit : `docs/audit-ux-ui-landing-2026-09-27.md`. Il n'est pas repris ici.
+- **Méthode** : lecture du code, scans statiques (grep), calcul des contrastes WCAG sur `styles/theme.css`, puis exécution réelle de `lint`, `test` et `build` pour l'app et l'admin.
+  Pas de session navigateur : les constats UI viennent du code, pas de captures.
+- **Mesures exécutées**
+
+| Commande | Résultat |
+|---|---|
+| `pnpm install --frozen-lockfile` | ❌ échec : `xlsx` est téléchargé depuis `cdn.sheetjs.com` (§ DX-1) |
+| `nx lint app-mytradingcoach` / `admin-mytradingcoach` | ✅ 0 erreur |
+| `nx test app-mytradingcoach` | ✅ vert, mais **3 min 27 s** pour 59 fichiers de spec |
+| `nx build app-mytradingcoach -c production` | ⚠️ **budget initial dépassé** : 592,7 kB pour un budget de 500 kB (transfert ≈ 111 kB) |
+
+Légende : 🔴 à traiter vite (bloque des utilisateurs ou des développeurs) · 🟠 important · 🟡 amélioration.
+
+---
+
+## Synthèse — top 10
+
+| # | Sév. | Constat | Où |
+|---|---|---|---|
+| 1 | 🔴 | Les erreurs API sont **silencieuses** sur Analytics, Scoring et Dashboard (`httpResource.error()` n'est jamais lu). Une panne ressemble à « aucune donnée ». | `analytics.component.ts:107`, `scoring`, `dashboard` |
+| 2 | 🔴 | Le clic « Démarrer l'essai » depuis Analytics **ne fait rien** si Stripe échoue : l'erreur est avalée. | `analytics.component.ts:282` |
+| 3 | 🔴 | Texte blanc sur `--blue` (#3b82f6) = **3,68:1** : les boutons primaires échouent au niveau AA. Badge FREE = **2,65:1**. | `styles/theme.css` |
+| 4 | 🔴 | Un nouveau dev ne peut pas démarrer : `.env.example` pointe vers pgbouncer sur `:6432` et vers un `docker-compose.local.yml` qui **n'existent pas**. | `.env.example:9-12`, `docker-compose.yml` |
+| 5 | 🔴 | `pnpm install` dépend d'un tarball hors registre (`cdn.sheetjs.com`). L'installation échoue dès que ce CDN est inaccessible (proxy, panne). | `apps/api-mytradingcoach/package.json:123` |
+| 6 | 🟠 | Pas de style de focus global. 21 feuilles CSS font `outline: none`, dont 1 sans aucun `:focus` de remplacement et 10 avec un seul. | `eco-calendar.component.css` et autres |
+| 7 | 🟠 | Navigation FR/EN mélangée, et « Ma session » côtoie « Mes sessions ». « Scoring » est rangé sous « ACCOUNT ». | `sidebar.component.html` |
+| 8 | 🟠 | **30 % des tailles de police sont < 12 px** (279 sur 918), dont 166 à 9-10 px. | tous les `.css` |
+| 9 | 🟠 | Les contrats front/back sont recopiés à la main (interfaces TS côté front, DTO class-validator côté back, schémas zod côté front). Pas d'OpenAPI ni de client généré. | `core/api/*.api.ts`, `core/schemas/trade.schema.ts` |
+| 10 | 🟠 | Hook `pre-commit` vide. Les checks locaux reposent sur la CI seule. `commit-msg` utilise `npx` alors que la règle du projet l'interdit. | `.husky/` |
+
+---
+
+## 1. UI — système visuel
+
+### 1.1 Contraste (WCAG 2.2, calculé sur les tokens)
+
+| Token | sur `--bg` #080c14 | sur `--bg-card` #101d2e | Verdict |
+|---|---|---|---|
+| `--text` #e2eaf5 | 16,1 | 14,0 | ✅ |
+| `--text-2` #8fa3bf | 7,6 | 6,6 | ✅ |
+| `--text-3` #8398b5 | 6,6 | 5,8 | ✅ |
+| `--text-faint` #6c84a6 | 5,1 | 4,4 | ⚠️ < 4,5 sur les cartes |
+| `--badge-free-color` #4a6080 | **3,05** | **2,65** | ❌ |
+| blanc sur `--blue` #3b82f6 (boutons) | — | **3,68** | ❌ en dessous de 14 px gras |
+| `--red` #ef4444 | 5,2 | 4,5 | limite |
+
+**Recommandations**
+- 🔴 Assombrir le fond des boutons primaires (`#2563eb` donne ≈ 5,2:1 avec du blanc) ou utiliser un texte foncé.
+- 🔴 Remonter `--badge-free-color` à au moins `#6c84a6`.
+- 🟡 `--text-2` et `--text-3` ne diffèrent que de 1:1,1 : l'œil ne perçoit pas la hiérarchie. Il faut les écarter nettement, ou fusionner les deux tokens.
+
+### 1.2 Tokens incomplets
+
+- `theme.css` définit des couleurs et des polices, mais **aucune échelle** d'espacement, de rayon, de taille de texte, d'ombre ou de z-index. On trouve 2 241 `var(--…)`, mais les tailles restent en dur : 918 déclarations `font-size` en px, avec des valeurs comme 11.5px, 9.5px, etc.
+- 🟠 **15 breakpoints différents** (480, 560, 600, 640, 700, 720, 760, 768, 769, 880, 900, 1100, 1200…). Il faut en choisir 3 ou 4 et les documenter dans `design.md`.
+- 🟡 Des alias hérités (`--text2`, `--color-profit`, `--bg-primary`…) coexistent avec les noms actuels. Il faut les supprimer après un codemod.
+- 🟡 L'admin a **son propre jeu de 29 tokens** (`admin/src/styles.css`). Aucune source commune avec l'app, donc les deux dérivent. Piste : `libs/shared/styles/tokens.css`, importé par les deux.
+
+### 1.3 Typographie
+
+- 🟠 279 tailles de police < 12 px sur 918, dont 166 entre 9 et 10 px (badges, axes, libellés mono). Sur mobile (DPR 2), c'est illisible pour une partie des utilisateurs. Le minimum conseillé est 12 px, et 11 px pour les capitales mono espacées.
+- 🟡 Trois familles Google Fonts avec 11 graisses : Space Grotesk 500-700, Inter 400-800, JetBrains Mono 400-600.
+  - **RGPD** : charger `fonts.googleapis.com` transmet l'IP du visiteur à Google. En Europe, c'est un risque juridique connu (jurisprudence allemande de 2022, position de la CNIL). Il vaut mieux auto-héberger les fontes (`@fontsource/*`).
+  - **Performance** : ramener à environ 6 graisses.
+
+---
+
+## 2. UX — parcours et états
+
+### 2.1 États d'erreur (🔴 priorité n°1)
+
+- **`httpResource`** sert à Analytics, Scoring et Dashboard, mais **aucun `.error()` n'est lu nulle part** (vérifié par grep). Quand l'API tombe, la page affiche des zéros ou un état vide. L'utilisateur croit que ses trades ont disparu.
+  → Ajouter un composant `<mtc-error-state (retry)>` partagé et le brancher sur `resource.error()`.
+- **Pas d'intercepteur d'erreur global.** `authInterceptor` gère le 401 et `demoInterceptor` le 403 démo. Les 5xx, 429 et erreurs réseau remontent au composant, qui souvent ne fait rien. Les features sans affichage d'erreur détecté sont : analytics, eco-calendar, sessions, scoring, weekly-debrief (liste), referral, ambassador.
+  → Ajouter un `errorInterceptor` qui envoie un toast générique pour les 5xx et les erreurs réseau (`status 0`), sauf si la requête porte un `HttpContext` qui le désactive.
+- **Checkout Stripe avalé** (`analytics.component.ts:282`, commentaire `/* billing error : user stays on page */`). C'est le moment de conversion le plus important, et l'échec y est muet.
+- **Checkout recopié 4 fois** : `plan-modal`, `register`, `settings`, `analytics`, chacun avec sa propre gestion d'erreur. Il faut le centraliser dans un `BillingService.startCheckout(plan)` (toast, loading, redirection).
+- 🟡 Les recherches d'instruments font `catchError(() => of([]))` (trade-form, onboarding, quick-trade) : « API en panne » et « aucun résultat » s'affichent pareil.
+
+### 2.2 Navigation et architecture de l'information
+
+Libellés actuels de la sidebar :
+
+```
+OVERVIEW       Dashboard · Ma session · Mes comptes · Journal · Mes sessions · Analytics
+ANALYSE & IA   IA Insights · Weekly Debrief · Calendrier éco · Ambassadeur · Parrainage
+ACCOUNT        Scoring · Profil
+```
+
+- 🟠 **Langue mélangée** : OVERVIEW, ACCOUNT, Dashboard, Analytics et Weekly Debrief sont en anglais ; Mes comptes, Profil, Calendrier éco en français. Le produit est francophone : il faut choisir une langue et s'y tenir.
+- 🟠 **« Ma session » et « Mes sessions »** sont deux entrées presque homonymes pour deux concepts différents (la session du jour et l'historique). Proposition : « Session du jour » et « Historique des sessions ».
+- 🟠 **Scoring est classé sous ACCOUNT**, alors que c'est une analyse. **Ambassadeur et Parrainage sont sous ANALYSE & IA**, alors que ce sont des fonctions de compte ou de croissance.
+- 🟡 Le tutoiement domine (476 occurrences), mais les métadonnées SEO et la page 404 vouvoient (`app.routes.ts:19`, `not-found.component.html:6`). Il faut unifier.
+
+### 2.3 Formulaires
+
+- Login (`login.component.ts`) :
+  - Le bouton œil (l. 73) **n'a pas de libellé accessible**. Il faut `aria-label="Afficher le mot de passe"` et `aria-pressed`.
+  - Les erreurs de champ ne sont pas reliées à l'input (`aria-invalid` et `aria-describedby` absents).
+  - L'erreur API (l. 107) n'a pas `role="alert"` : un lecteur d'écran ne l'annonce pas.
+- La validation est faite deux fois : zod côté front (`CreateTradeSchema`) et class-validator côté back. Les deux règles peuvent diverger. Voir DX-5.
+- 🟡 Emoji dans le titre de connexion (« Bon retour 👋 ») : c'est un choix de ton, mais cela entre en conflit avec l'audit landing, qui relève l'usage d'emojis comme marqueur « template ».
+
+### 2.4 Confirmations destructives
+
+- 🟠 `confirm()` natif pour supprimer un compte de trading (`accounts.component.ts:540`) et pour **marquer un versement ambassadeur comme payé** (admin, `ambassadeurs.component.ts:280`). Une action financière irréversible passe par une boîte système non stylée et facile à valider par réflexe.
+  L'app a déjà une `confirm-modal` (journal) : il faut l'extraire dans `shared/` et l'utiliser partout.
+
+### 2.5 Données de trading
+
+- 🟠 La heatmap Analytics (`cellClass`, l. 256) code le win rate **uniquement en vert, orange et rouge**, ce qui pose problème aux daltoniens. Environ 8 % des hommes le sont, et c'est la cible majoritaire. Il faut ajouter la valeur en texte ou au survol, ou une palette sûre (bleu / orange).
+- 🟡 Même remarque pour P&L positif et négatif : doubler la couleur par un signe (+/−) ou une flèche. C'est probablement déjà fait par `pnl-format` : à vérifier écran par écran.
+- 🟡 49 `toFixed()` dans les templates et le TS, alors que des pipes `money` et `pnl-format` existent. `toFixed` n'est pas localisé (`1234.5` au lieu de `1 234,50`) : il faut passer par les pipes.
+
+---
+
+## 3. Accessibilité (clavier et lecteurs d'écran)
+
+| Point | Constat |
+|---|---|
+| Focus visible | 🟠 Aucun `:focus-visible` global dans `styles.css`. 21 CSS font `outline: none`. `eco-calendar.component.css` n'a **aucun** style de focus. → Ajouter une règle globale `:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }`. |
+| Menu mobile | 🟠 Le burger (`sidebar.component.html:5`) n'a ni `aria-expanded` ni `aria-controls`. Le tiroir ne se ferme pas avec Échap, et le focus n'est ni piégé ni rendu au burger. |
+| Modales | 🟠 16 templates contiennent une modale ou un overlay, mais seulement 10 `role="dialog"` / `aria-modal`. Pas de piège de focus commun. → Utiliser un `Dialog` CDK (`@angular/cdk/dialog`) ou une directive maison. |
+| Cartes cliquables | 🟡 Les cartes de choix de l'onboarding (`onboarding.component.html:410-429`) sont des `div role="button"` qui réagissent à `Enter` mais **pas à `Espace`**. Mieux vaut de vrais `<button>`. |
+| Annonces | 🟡 Les toasts ont bien un `aria-live`. Seuls 9 messages d'erreur ou de statut portent `role="alert"` ou `role="status"`. |
+| Densité ARIA | 55 attributs `aria-*` pour 56 composants : c'est faible, pour une app riche en icônes seules (sidebar repliée, boutons d'action). |
+| Mouvement | ✅ `prefers-reduced-motion` est géré dans 8 feuilles. À généraliser aux animations du dashboard live. |
+
+---
+
+## 4. Admin
+
+- 🟠 **12 composants sur 15** ont leur template inline (`template:`) et 3 un `templateUrl`. C'est incohérent entre eux et avec l'app, où seuls les écrans d'auth (login, forgot, reset, demo-entry) sont inline. De gros templates inline se relisent mal en revue.
+- 🟠 14 `<table>` et **aucun** `scope` ni `<caption>`. Pour un back-office dense en tableaux, il faut au minimum `scope="col"` sur les en-têtes.
+- 🟠 Voir 2.4 : `confirm()` natif sur « marquer comme payé ».
+- 🟡 7 attributs `aria-*` au total.
+- 🟡 Seulement 7 fichiers de spec. Rien ne vérifie les écrans financiers (revenue, subscriptions, ambassadeurs).
+
+---
+
+## 5. Performance front
+
+- 🟠 **Budget initial dépassé de 92,7 kB** (592,7 kB bruts, ≈ 111 kB transférés). La CI tolère l'avertissement, il est donc devenu invisible. Il faut soit ramener le bundle sous 500 kB, soit relever le budget explicitement. Un budget ignoré ne protège de rien.
+  - `main` pèse 258 kB bruts. Il faut identifier ce qui est chargé en eager (`pnpm nx build … --stats-json` puis `esbuild analyze`).
+  - Le plus gros chunk lazy (379 kB, sans nom) est probablement chart.js : vérifier qu'il n'est pas tiré par la sidebar ou le dashboard hors graphique.
+- 🟡 Pas de `withPreloading` sur le routeur. Analytics (193 kB) et Session (160 kB) se téléchargent au clic. `PreloadAllModules` ou une stratégie ciblée améliorerait la réactivité perçue.
+- 🟡 Pas de `withInMemoryScrolling({ scrollPositionRestoration: 'enabled' })`. Le retour arrière depuis un trade peut perdre la position de scroll du journal.
+- ✅ Zoneless, `OnPush` partout (57 composants), lazy loading de toutes les routes, signaux et `takeUntilDestroyed` (189 usages) : la base est saine.
+
+---
+
+## 6. DX — expérience développeur
+
+### DX-1 🔴 Installation fragile
+`"xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"` : c'est la seule dépendance hors registre npm. Pendant cet audit, `pnpm install --frozen-lockfile` a échoué après 3 tentatives (`fetch failed`). Même risque en CI si le CDN tombe.
+→ Vendoriser le tarball (`vendor/xlsx-0.20.3.tgz` + `"xlsx": "file:vendor/…"`), ou remplacer la lib par `exceljs` / `read-excel-file` si seule la lecture sert.
+
+### DX-2 🔴 Démarrage local cassé tel que documenté
+- `.env.example` mentionne `docker-compose.local.yml` (introuvable) et un pgbouncer sur `:6432`. Or `docker-compose.yml` ne lance que `postgres`, `redis` et `discord-bot`.
+  → Soit ajouter pgbouncer au compose local, soit mettre par défaut `DATABASE_URL=…@localhost:5432/…` dans `.env.example`.
+- `.env.local.example` renvoie lui aussi à `docker-compose.local.yml`.
+- **Le README est le README par défaut de Nx** (« Your new, shiny Nx workspace… »). Il n'explique ni l'installation, ni le seed, ni les ports, ni les apps. Il faut le remplacer par un vrai « Getting started » en 10 lignes :
+
+```sh
+corepack enable              # pnpm épinglé via packageManager
+pnpm install
+cp .env.example .env
+docker compose up -d postgres redis
+pnpm db:migrate && pnpm seed:demo
+pnpm dev:api   # :3000
+pnpm dev       # :4200
+```
+
+### DX-3 🟠 Versions d'outillage non épinglées localement
+- `package.json` n'a **pas de champ `packageManager`**. La CI épingle pnpm 11.6.0, mais en local chacun utilise sa version. Ici, pnpm 10 était installé alors que le lockfile et `pnpm-workspace.yaml` exigent la 11 (`allowBuilds`…), et Nx a même téléchargé pnpm 12.6.0 pendant l'exécution.
+  → Ajouter `"packageManager": "pnpm@11.6.0"` et `"engines": { "node": ">=22.23" }`.
+- `.nvmrc` indique 22.23.2, mais rien ne le fait respecter (`engine-strict` absent).
+
+### DX-4 🟠 Hooks git et scripts
+- `.husky/pre-commit` ne contient qu'un commentaire. Il faut `lint-staged` (prettier + eslint --fix sur les fichiers indexés) pour ne pas découvrir en CI ce qui prend 5 s en local.
+- `.husky/commit-msg` : `npx --no -- commitlint`, alors que CLAUDE.md impose `pnpm dlx` / `pnpm exec`. Il faut `pnpm exec commitlint --edit $1`.
+- Les scripts racine se limitent à `dev`, `dev:api`, `seed:demo`. Il manque des raccourcis : `lint`, `test`, `build`, `typecheck`, `db:migrate`, `db:studio`, `db:reset`, `e2e`.
+- Les scripts one-shot sont répartis entre trois dossiers : `scripts/*.mjs`, `apps/api/scripts/`, `apps/api/src/scripts/`. Certains ont un nom personnel (`seed-gregory.mjs`, `seed-greg-june.mjs`). Il faut regrouper dans `tools/scripts/{seed,backfill,ops}/` et documenter chaque script en une ligne.
+
+### DX-5 🟠 Contrat API recopié à la main
+- `Trade` est défini dans `app/core/api/trades.api.ts:22`, alors que le back a ses DTO et que Prisma génère ses types. Pas de `@nestjs/swagger` ni d'OpenAPI.
+- `libs/shared` (`@mtc/shared`) existe mais ne contient que stats, devises, prix et `api-error`.
+- → Option légère : déplacer les types de réponse (`TradeDto`, `AnalyticsSummary`…) dans `libs/shared/contracts`, et partager les schémas zod entre le front et un `ZodValidationPipe` côté Nest.
+  → Option complète : `@nestjs/swagger` avec génération du client (`openapi-typescript`) en CI.
+- `zod` est une **dépendance fantôme** : le front l'importe (`trade.schema.ts`) sans la déclarer. Elle n'arrive que par transitivité et fonctionne grâce à `shamefullyHoist: true` (le commentaire de `pnpm-workspace.yaml` le reconnaît). Il faut la déclarer, puis viser à retirer `shamefullyHoist`.
+
+### DX-6 🟠 Tests
+- **App : 3 min 27 s** pour 59 fichiers, en jsdom et sans parallélisation fine. C'est trop lent pour tourner à chaque sauvegarde.
+  → Essayer `pool: 'threads'` et `isolate: false` pour les specs purs (pipes, stores), ou `happy-dom`. Mesurer avant et après.
+- Avertissements Vite à chaque exécution : `vitest.config.ts` en ESM chargé comme CJS, options `esbuild` et `oxc` en conflit. Renommer en `vitest.config.mts` et retirer `esbuild.target`.
+- **E2E** : 13 specs Playwright (app et admin) ne tournent **jamais en CI** (`ci.yml:238`, « trop lent et trop fragile »). `api-mytradingcoach-e2e` est un résidu du générateur Nx sous Jest (`GET /api → 'Hello API'`) : à supprimer ou à écrire pour de vrai.
+  → Commencer par un smoke Playwright de 3 scénarios (login démo → dashboard → journal) sur un build statique avec API mockée, en job non bloquant puis bloquant.
+- API : `passWithNoTests: true` et aucun seuil de couverture. Il faut en ajouter un minimal (lignes ≥ 60 % sur `trades`, `analytics`, `stripe`) pour éviter les régressions sur le calcul du P&L.
+
+### DX-7 🟡 CI/CD
+- Les executors `@nx/eslint:lint` et `@nx/vitest:test` sont **dépréciés** (retirés dans Nx 24). Lancer `nx g @nx/eslint:convert-to-inferred` et `@nx/vitest:convert-to-inferred`.
+- `NX_IGNORE_UNSUPPORTED_TS_SETUP=true` est nécessaire pour builder l'app : c'est un signal que la config TS (références de projets et `customConditions`) n'est pas alignée avec ce qu'attend Nx.
+- `cd.yml` détecte les changements avec `git diff HEAD~1 HEAD`. Avec un merge commit, `HEAD~1` est le premier parent, donc tout est couvert. Mais un push direct de plusieurs commits sur `main` (ou un fast-forward) **peut sauter un déploiement**, car seul le dernier commit est comparé. Utiliser `nx affected --base=<sha déployé>` ou comparer à `github.event.workflow_run.head_sha^1` du merge.
+- Le déploiement API fait `git reset --hard` puis `docker compose build` **sur le VPS de prod**. Construire l'image en CI et la pousser dans un registre (GHCR) rendrait les rollbacks triviaux (`docker compose pull` sur le tag N-1) et libérerait le CPU de prod.
+- `beta.yml` recopie presque tout `ci.yml`. Un workflow réutilisable (`workflow_call`) éviterait la dérive.
+
+### DX-8 🟡 Documentation et configuration des agents IA
+- **`.claude/agents/*.md` n'a pas de frontmatter** (`name`, `description`). Claude Code traite ce dossier comme des définitions de sous-agents : ces fichiers ne sont donc pas de vrais agents invocables, seulement des documents lus « à la main ». Deux options :
+  - les déplacer vers `docs/conventions/` (ou `.claude/rules/`) et les référencer depuis CLAUDE.md ;
+  - leur ajouter un frontmatter pour en faire de vrais sous-agents.
+- Trois configurations d'agents IA coexistent (`.claude/`, `.github/agents|prompts|skills`, `.opencode/`), avec des skills Nx en double. Choisir un outil principal.
+- Racine encombrée de documents ponctuels (`VERIF-PRE-PROD.md`, `SMOKE-PROD.md`) : les ranger dans `docs/`.
+- `docs/audit-ux-ui-landing-2026-09-27.zip` recopie le dossier de captures déjà versionné. C'est un binaire inutile dans git : à supprimer.
+
+---
+
+## 7. Plan d'action proposé
+
+**Sprint 1 — bloquants (≈ 2-3 j)**
+1. `errorInterceptor` global, composant `<mtc-error-state>` branché sur `httpResource.error()` (Analytics, Scoring, Dashboard), `BillingService.startCheckout` unique.
+2. Contrastes : bouton primaire en `#2563eb`, badge FREE, règle `:focus-visible` globale.
+3. DX : vendoriser `xlsx`, `packageManager`/`engines`, corriger `.env.example` (port 5432) et réécrire le README.
+
+**Sprint 2 — cohérence (≈ 3-4 j)**
+4. Renommer la navigation (langue unique, « Session du jour » / « Historique », Scoring dans Analyse).
+5. `ConfirmDialog` partagé (CDK Dialog avec piège de focus) pour remplacer les `confirm()` et unifier les 16 modales. Burger avec `aria-expanded` et fermeture par Échap.
+6. Tokens : échelles de taille, d'espacement et de rayon ; 4 breakpoints ; plancher de 12 px ; tokens partagés app/admin.
+7. `lint-staged` en pre-commit, scripts racine, rangement des scripts.
+
+**Sprint 3 — fond (continu)**
+8. Contrats partagés (`libs/shared/contracts` + zod partagé, ou OpenAPI).
+9. Smoke E2E en CI, seuil de couverture API, accélération de Vitest.
+10. Images Docker construites en CI (GHCR), détection `nx affected` dans le CD, migration des executors Nx.
+11. Auto-hébergement des fontes, bundle initial sous 500 kB.
+
+---
+
+## Ce qui est déjà bien
+
+- Architecture Angular moderne et homogène : zoneless, `OnPush` partout, `@if`/`@for` (aucun `*ngIf`), aucun style inline dans les `.ts`, toutes les routes en lazy loading.
+- Lint propre sur l'app et l'admin, tests verts.
+- Sécurité par défaut (`DemoReadOnlyGuard`, variables d'env critiques vérifiées au démarrage, `helmet`, `ValidationPipe`), overrides de sécurité pnpm documentés.
+- Documentation interne riche et tenue à jour (`.claude/agents/*`, ~4 100 lignes), commits conventionnels imposés en CI.
+- `prefers-reduced-motion` pris en compte, toasts `aria-live`, `data-testid` systématiques.
