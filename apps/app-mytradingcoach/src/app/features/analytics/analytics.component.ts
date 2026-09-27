@@ -280,8 +280,9 @@ export class AnalyticsComponent {
     return this.heatmapMap().get(`${day}:${hour}`) ?? null;
   }
 
+  /** Seuils identiques à la légende. La couleur est doublée d'un motif (lisible en niveaux de gris). */
   protected cellClass(winRate: number): string {
-    if (winRate >= 66) return 'heatmap-cell cell-green';
+    if (winRate >= 65) return 'heatmap-cell cell-green';
     if (winRate >= 50) return 'heatmap-cell cell-orange';
     return 'heatmap-cell cell-red';
   }

@@ -152,23 +152,24 @@
             <span class="legend-dot dot-orange"></span
             ><span class="legend-txt">50-65%</span>
             <span class="legend-dot dot-green"></span
-            ><span class="legend-txt">&gt;65%</span>
+            ><span class="legend-txt">≥65%</span>
           </div>
         </div>
         <div class="heatmap-wrapper" data-testid="heatmap">
           <table class="heatmap-table">
+            <caption class="sr-only">Win rate par jour et par heure (nombre de trades entre parenthèses)</caption>
             <thead>
               <tr>
-                <th class="heatmap-corner"></th>
+                <th class="heatmap-corner" scope="col"><span class="sr-only">Jour</span></th>
                 @for (hour of hours; track hour) {
-                  <th class="heatmap-hour-th">{{ hour }}h</th>
+                  <th class="heatmap-hour-th" scope="col">{{ hour }}h</th>
                 }
               </tr>
             </thead>
             <tbody>
               @for (day of days; track day) {
                 <tr>
-                  <td class="heatmap-day-td">{{ day }}</td>
+                  <th class="heatmap-day-td" scope="row">{{ day }}</th>
                   @for (hour of hours; track hour) {
                     @let cell = getHeatmapCell(day, hour);
                     <td
