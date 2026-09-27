@@ -1,0 +1,15 @@
+{
+  "name": "tools-scripts",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "tools/scripts",
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p tools/scripts/tsconfig.check.json"
+      }
+    }
+  },
+  "tags": ["type:tool"]
+}

@@ -1,8 +1,13 @@
 // Génère des trades réalistes MNQ (+ MNT/USDT) du 01 au 15 juin 2026 (lun-ven)
-// pour tahir.gregory.dev@gmail.com. Sort du SQL sur stdout.
+// pour un compte de dev (userId en argument). Sort du SQL sur stdout.
 import { randomUUID } from 'node:crypto';
 
-const USER_ID = 'cmot4b03n000001kjsrjsy8w7';
+// Utilisateur cible : premier argument (id en base), jamais un compte en dur dans le dépôt.
+const USER_ID = process.argv[2];
+if (!USER_ID) {
+  console.error('Usage : node tools/scripts/seed/dev-trades-june.mjs <userId> > seed.sql');
+  process.exit(1);
+}
 const PV = 2; // MNQ : 2 $/point/contrat
 const cid = () => 'c' + randomUUID().replace(/-/g, '').slice(0, 24);
 

@@ -2,12 +2,12 @@
  * Seed du compte DÉMO vitrine en standalone (sans démarrer NestJS).
  * Réutilise la même logique que l'endpoint admin (POST /admin/seed-demo).
  *
- * Lancement : DATABASE_URL=... pnpm tsx apps/api-mytradingcoach/scripts/seed-demo-account.ts
+ * Lancement : `pnpm seed:demo` (lit apps/api-mytradingcoach/.env).
  */
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
-import { seedDemo } from '../src/modules/admin/demo-seed';
+import { seedDemo } from '@api/modules/admin/demo-seed';
 
 const pool = new Pool({ connectionString: process.env['DATABASE_URL'] });
 const adapter = new PrismaPg(pool);

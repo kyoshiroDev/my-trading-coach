@@ -5,7 +5,14 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const envPath = resolve(__dirname, '../.env');
+// Destinataire : premier argument (jamais une adresse en dur dans le dépôt).
+const to = process.argv[2];
+if (!to) {
+  console.error('Usage : node tools/scripts/ops/send-debrief-email.mjs <email-destinataire>');
+  process.exit(1);
+}
+
+const envPath = resolve(__dirname, '../../../apps/api-mytradingcoach/.env');
 const envContent = readFileSync(envPath, 'utf-8');
 const env = Object.fromEntries(
   envContent
@@ -77,7 +84,7 @@ const html = `
 
 const { data, error } = await resend.emails.send({
   from: `MyTradingCoach <${env.MAIL_FROM || 'noreply@mytradingcoach.app'}>`,
-  to: 'tahir.gregory@gmail.com',
+  to,
   subject: `Ton débrief semaine ${weekNumber} est prêt 📅`,
   html,
   replyTo: env.MAIL_SAV || 'support@mytradingcoach.app',

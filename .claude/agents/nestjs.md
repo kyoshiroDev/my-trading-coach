@@ -203,7 +203,7 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   la liste admin). Corollaire : un `AMBASSADOR` doit **toujours** avoir un code — les
   changements de rôle passent par `AmbassadorService.promote()` / `revoke()`, jamais par
   un `user.update({ data: { role } })` direct. `UsersService.setRole` y délègue.
-  Backfill : `scripts/backfill-ambassador-codes.ts` (idempotent).
+  Backfill : `tools/scripts/backfill/ambassador-codes.ts` (idempotent).
 - **Règle de coexistence du parrainage** : c'est le **rôle du parrain** qui décide, dans
   `processReferral` (`stripe-referral.service.ts`). Parrain `AMBASSADOR` → commission cash 20 %
   (`ReferralCommission`), **jamais** de mois offert. Parrain `USER` → mois offert

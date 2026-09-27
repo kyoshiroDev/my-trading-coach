@@ -1,4 +1,4 @@
-// Seed "Mes comptes" pour tahir.gregory.dev@gmail.com (VPS dev) — prop firms RÉELLES
+// Seed "Mes comptes" pour un compte de dev (userId en argument) (VPS dev) — prop firms RÉELLES
 // avec leurs VRAIES règles (sources vérifiées juin 2026), + trades réalistes par compte.
 // Génère du SQL sur stdout. Résumé (compte → trades, P&L, % objectif) sur stderr.
 //
@@ -13,7 +13,12 @@
 //      help.myfundedfutures.com/en/articles/13134709-rapid-plan-50k-a-comprehensive-look
 import { randomUUID } from 'node:crypto';
 
-const USER_ID = 'cmot4b03n000001kjsrjsy8w7';
+// Utilisateur cible : premier argument (id en base), jamais un compte en dur dans le dépôt.
+const USER_ID = process.argv[2];
+if (!USER_ID) {
+  console.error('Usage : node tools/scripts/seed/dev-propfirms.mjs <userId> > seed.sql');
+  process.exit(1);
+}
 const LUCIDE_ID = 'cmqmn117x000101my5jnelxjn'; // placeholder à retirer (0 trade)
 const cid = () => 'c' + randomUUID().replace(/-/g, '').slice(0, 24);
 const r2 = (n) => Math.round(n * 100) / 100;

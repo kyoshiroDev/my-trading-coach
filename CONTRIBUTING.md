@@ -15,6 +15,7 @@ Règles détaillées par domaine : [`.claude/agents/`](.claude/agents) (seule so
 | Une brique d'interface pour l'app ET l'admin | `libs/front/ui/` (`@mtc/front-ui`) | `type:lib` `scope:front` |
 | De l'auth front commune à l'app et l'admin | `libs/front/auth/` (`@mtc/front-auth`) | `type:lib` `scope:front` |
 | Le schéma de base de données | `prisma/schema.prisma` + une migration | — |
+| Un script ponctuel (seed, backfill, envoi) | `tools/scripts/{seed,backfill,ops}/` (voir son README) | `type:tool` |
 
 Les frontières sont vérifiées par ESLint (`@nx/enforce-module-boundaries`) : une app ne dépend que
 de libs ; le front n'importe jamais le back (et inversement) ; tout le monde peut importer `scope:shared`.

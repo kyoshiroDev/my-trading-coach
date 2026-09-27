@@ -73,4 +73,13 @@ export default [
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },
+  {
+    // Scripts ponctuels (seed, backfill, ops) : ils agissent SUR l'API et en importent les
+    // services (@api/…) par nature. L'exception est limitée à ce dossier : le front ne peut
+    // toujours pas importer le back.
+    files: ['tools/scripts/**/*.ts'],
+    rules: {
+      '@nx/enforce-module-boundaries': 'off',
+    },
+  },
 ];

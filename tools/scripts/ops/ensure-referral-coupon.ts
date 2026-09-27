@@ -11,11 +11,10 @@
  *
  * Usage : charger l'env (STRIPE_SECRET_KEY) puis (le --tsconfig est requis car
  * StripeCouponService utilise un décorateur de paramètre @Inject) :
- *   node_modules/.bin/tsx --tsconfig apps/api-mytradingcoach/tsconfig.app.json \
- *     apps/api-mytradingcoach/src/scripts/ensure-referral-coupon.ts
+ *   pnpm exec tsx --tsconfig tools/scripts/tsconfig.check.json tools/scripts/ops/ensure-referral-coupon.ts
  */
-import { createStripeClient } from '../modules/stripe/stripe.client';
-import { StripeCouponService } from '../modules/stripe/stripe-coupon.service';
+import { createStripeClient } from '@api/modules/stripe/stripe.client';
+import { StripeCouponService } from '@api/modules/stripe/stripe-coupon.service';
 
 const KINDS = ['annual', 'monthly'] as const;
 

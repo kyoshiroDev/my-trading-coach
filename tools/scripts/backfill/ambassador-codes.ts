@@ -11,11 +11,11 @@
  * présent). Sûr en prod (ajout seul), relançable sans effet.
  *
  * Usage : charger l'env (DATABASE_URL) puis
- *   node_modules/.bin/tsx apps/api-mytradingcoach/src/scripts/backfill-ambassador-codes.ts
+ *   pnpm exec tsx --tsconfig tools/scripts/tsconfig.check.json tools/scripts/backfill/ambassador-codes.ts
  */
 import { Role } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
-import { AmbassadorService } from '../modules/ambassador/ambassador.service';
+import { PrismaService } from '@api/prisma/prisma.service';
+import { AmbassadorService } from '@api/modules/ambassador/ambassador.service';
 
 async function main(): Promise<void> {
   const url = process.env['DATABASE_URL'] ?? '';

@@ -5,10 +5,10 @@
  * retourne le code present sans regenerer). Sur en prod (ajout seul). Relancable sans effet.
  *
  * Usage : charger l'env (DATABASE_URL) puis :
- *   node_modules/.bin/tsx apps/api-mytradingcoach/src/scripts/backfill-referral-codes.ts
+ *   pnpm exec tsx --tsconfig tools/scripts/tsconfig.check.json tools/scripts/backfill/referral-codes.ts
  */
-import { PrismaService } from '../prisma/prisma.service';
-import { ReferralService } from '../modules/referral/referral.service';
+import { PrismaService } from '@api/prisma/prisma.service';
+import { ReferralService } from '@api/modules/referral/referral.service';
 
 async function main(): Promise<void> {
   const url = process.env['DATABASE_URL'] ?? '';

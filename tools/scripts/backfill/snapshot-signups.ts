@@ -18,10 +18,10 @@
  * supprimés en pratique), mais à savoir.
  *
  * Usage : charger l'env (DATABASE_URL) puis
- *   node_modules/.bin/tsx apps/api-mytradingcoach/src/scripts/backfill-snapshot-signups.ts [--dry-run]
+ *   pnpm exec tsx --tsconfig tools/scripts/tsconfig.check.json tools/scripts/backfill/snapshot-signups.ts [--dry-run]
  */
 import { Role } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '@api/prisma/prisma.service';
 import { parisDayRange } from '@mtc/shared';
 
 async function main(): Promise<void> {

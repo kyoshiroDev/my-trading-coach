@@ -2,9 +2,9 @@
 /**
  * send-discord-invite.mjs
  * Usage :
- *   node scripts/send-discord-invite.mjs              → dry-run
- *   node scripts/send-discord-invite.mjs --send       → envoi réel
- *   node scripts/send-discord-invite.mjs --send --to=email@test.com
+ *   node tools/scripts/ops/send-discord-invite.mjs              → dry-run
+ *   node tools/scripts/ops/send-discord-invite.mjs --send       → envoi réel
+ *   node tools/scripts/ops/send-discord-invite.mjs --send --to=email@test.com
  */
 
 import { Resend } from 'resend';
@@ -19,7 +19,7 @@ const DRY_RUN   = !args.includes('--send');
 const TEST_TO   = args.find(a => a.startsWith('--to='))?.split('=')[1];
 
 // Charger .env
-const envContent = readFileSync(resolve(__dirname, '../.env'), 'utf-8');
+const envContent = readFileSync(resolve(__dirname, '../../../apps/api-mytradingcoach/.env'), 'utf-8');
 const env = Object.fromEntries(
   envContent.split('\n')
     .filter(l => l && !l.startsWith('#') && l.includes('='))
@@ -49,7 +49,7 @@ console.log(`\n📊 Users sans Discord : ${users.length}`);
 if (DRY_RUN) {
   console.log('\n⚠️  DRY RUN — aucun email envoyé. Utilise --send pour envoyer.\n');
   users.forEach((u, i) => console.log(`  ${i+1}. ${u.email} — ${u.name ?? '(sans nom)'}`));
-  console.log(`\nPour envoyer : node scripts/send-discord-invite.mjs --send\n`);
+  console.log(`\nPour envoyer : node tools/scripts/ops/send-discord-invite.mjs --send\n`);
   process.exit(0);
 }
 
