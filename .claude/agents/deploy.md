@@ -258,8 +258,9 @@ manuelle.
 ## Vérifications post-deploy
 
 ```bash
-# Santé API prod
+# Santé API prod : process (liveness) puis dépendances Postgres + Redis (readiness)
 curl https://api.mytradingcoach.app/api/health
+curl https://api.mytradingcoach.app/api/health/ready
 
 # Logs en temps réel
 docker logs mtc_api_prod -f

@@ -112,8 +112,8 @@ async function bootstrap() {
     transform: true,
   }));
 
-  app.useGlobalFilters(new HttpExceptionFilter());
-  app.useGlobalInterceptors(new ResponseInterceptor());
+  // Filtre et intercepteur réels : enregistrés en APP_FILTER / APP_INTERCEPTOR (app.module.ts).
+  // `app.set('trust proxy', 1)` : l'API est derrière Traefik (voir Rate Limiting).
 
   await app.listen(process.env.PORT ?? 3000);
 }
@@ -207,22 +207,24 @@ const user = await prisma.user.findUnique({
 
 ## Rate Limiting
 
-```typescript
-// @nestjs/throttler v6+
-ThrottlerModule.forRoot([{
-  name: 'global',
-  ttl: 60000,    // 1 minute
-  limit: 60,     // 60 req/min par IP
-}, {
-  name: 'ai',
-  ttl: 60000,
-  limit: 20,     // 20 req/min sur routes IA
-}])
+- **Défaut** : 60 requêtes / minute / IP (`ThrottlerModule.forRootAsync` dans `app.module.ts`,
+  `ThrottlerGuard` en APP_GUARD). Surcharge par route : `@Throttle({ default: { ttl, limit } })`.
+- **IP réelle** : `app.set('trust proxy', 1)` dans `main.ts` (un seul saut : Traefik). Sans lui,
+  `req.ip` = IP du proxy → tous les users dans le même compteur. Ne jamais monter à `true`
+  (le client pourrait forger `X-Forwarded-For`).
+- **Compteurs dans Redis** (`common/throttler/redis-throttler.storage.ts`, script Lua atomique) :
+  communs aux workers du cluster. Repli automatique en mémoire si Redis tombe (jamais bloquant).
+- **Limites dédiées** : auth (login 10, register 5, forgot-password 3, reset-password 5,
+  demo-login 20 / min), IA (insights, chat : 20 / min), Tradovate et routes publiques.
+  Toute nouvelle route qui envoie un email ou coûte un appel IA reçoit son `@Throttle`.
 
-// Sur les controllers IA
-@UseGuards(ThrottlerGuard)
-@Throttle({ ai: { limit: 20, ttl: 60000 } })
-```
+## Validation des entrées
+
+- **Tout `@Body()` est une classe DTO** (class-validator). Un type inline
+  (`@Body() body: { … }`) n'est PAS validé par le ValidationPipe : `whitelist` et
+  `forbidNonWhitelisted` ne s'appliquent pas, et le corps arrive tel quel. C'est ce qui
+  permettait d'écrire n'importe quelle colonne via `PATCH /session/:id` (corrigé).
+- Ne jamais passer un DTO entier à `prisma.*.update({ data })` : recopier les champs autorisés.
 
 ---
 

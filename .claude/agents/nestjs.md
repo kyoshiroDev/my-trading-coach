@@ -280,7 +280,7 @@ Format : { "patterns": [{ "type": string, "title": string, "description": string
 
 async analyze(summary: string): Promise<Pattern[]> {
   const res = await this.anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: AI_MODELS.analysis, // jamais un identifiant en dur : modules/shared/ai-pricing.const.ts
     max_tokens: 1024,
     system: [{ type: 'text', text: PATTERN_SYSTEM, cache_control: { type: 'ephemeral' } }],
     messages: [{ role: 'user', content: summary }]
@@ -388,7 +388,7 @@ pas les exports inutilisés). Le relire donnait l'illusion de modifier le chat.
 
 ```typescript
 const response = await this.anthropic.messages.create({
-  model: 'claude-sonnet-4-6',
+  model: AI_MODELS.analysis,
   max_tokens: 1024,
   system: [{
     type: 'text',
@@ -510,11 +510,15 @@ async scheduledDebriefs() {
 
 - Clustering activé uniquement en `NODE_ENV=production`. Nombre de workers = `availableParallelism()` (cœurs CPU dispo ; 8 sur le VPS actuel) — pas une valeur fixe
 - `IS_CRON_WORKER=true` sur 1 seul worker → seul lui exécute `@Cron`
-- `ScheduleModule.forRoot()` conditionnel dans `app.module.ts` :
+- `ScheduleModule.forRoot()` conditionnel dans `app.module.ts`, en **opt-in** :
   ```typescript
-  ...(process.env['IS_CRON_WORKER'] !== 'false' ? [ScheduleModule.forRoot()] : [])
+  ...(process.env['IS_CRON_WORKER'] === 'true' ? [ScheduleModule.forRoot()] : [])
   ```
-- En dev : process unique, pas de clustering, IS_CRON_WORKER non défini → crons actifs normalement
+- En dev : process unique, pas de clustering. Crons INACTIFS sauf `IS_CRON_WORKER=true` dans `.env`
+- Worker mort : relancé avec un délai croissant (1 s → 30 s) ; au-delà de 5 morts en une minute,
+  le process principal sort en erreur et Docker redémarre le conteneur (pas de boucle infinie).
+- SIGTERM (docker stop) : le principal le transmet aux workers sans les relancer ;
+  `app.enableShutdownHooks()` ferme proprement Redis, Prisma et BullMQ.
 - **WebSocket en cluster** : broadcast cross-worker via `@socket.io/redis-adapter` (`RedisIoAdapter` branché au bootstrap dans `main.ts`) — obligatoire en cluster, sinon les emits n'atteignent que les clients connectés au même worker
 
 ---
@@ -991,3 +995,21 @@ sont en direct.
   formats inconnus via Claude, fusion des frais Tradovate, persistance.
 - Nouveau broker = une fonction `parseXxx(lines)` dans `csv-parsers.ts` + un cas dans
   `detectBroker` / `preprocessCsv` — pas de nouvelle méthode dans le service.
+
+## Robustesse de l'API (audit du 27/09/2026)
+
+- **Erreurs** : `HttpExceptionFilter` est global (`@Catch()`), toute erreur sort au format
+  `{ statusCode, code?, message, timestamp, path }`. Prisma non rattrapé : P2002 → 409
+  `CONFLICT`, P2025 → 404 `NOT_FOUND` ; le reste → 500 `INTERNAL` sans détail (pile dans les
+  logs + Sentry). `path` et les logs n'incluent jamais la query string.
+- **Sentry** : `src/instrument.ts`, premier import de `main.ts`, actif seulement si `SENTRY_DSN`.
+  Les 5xx sont remontées par le filtre global ; ne pas ajouter de `captureException` ailleurs.
+- **IA** : modèles dans `AI_MODELS` (`modules/shared/ai-pricing.const.ts`), jamais en dur ; un
+  test vérifie que chaque modèle a son tarif. Délai par appel = `max(60 s, 30 ms × max_tokens)`,
+  une seule relance, chaque échec tracé (sans le contenu envoyé).
+- **Santé** : `GET /api/health` = liveness (process vivant, healthcheck Docker) ;
+  `GET /api/health/ready` = readiness (ping Postgres + Redis, 503 en nommant le composant).
+- **Environnement** : `src/config/env.ts` est la liste de référence (required / production /
+  optional + format). Nouvelle variable → l'y ajouter ET dans `.env.example`.
+- **Redis** : `RedisService` se connecte à l'init (`onModuleInit`) ; sans ça, la 1re commande de
+  chaque worker échouait (`lazyConnect` + `enableOfflineQueue: false`).
