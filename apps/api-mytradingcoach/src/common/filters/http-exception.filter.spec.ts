@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ArgumentsHost, BadRequestException, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import * as Sentry from '@sentry/nestjs';
 import { HttpExceptionFilter } from './http-exception.filter';
+
+vi.mock('@sentry/nestjs', () => ({ captureException: vi.fn() }));
 
 function httpHost() {
   const json = vi.fn();
@@ -63,5 +66,14 @@ describe('HttpExceptionFilter', () => {
     const { host, json } = httpHost();
     filter.catch(new BadRequestException('x'), host);
     expect(json).toHaveBeenCalledWith(expect.objectContaining({ path: '/api/trades' }));
+  });
+
+  it('remonte les 5xx à Sentry, pas les 4xx', () => {
+    vi.mocked(Sentry.captureException).mockClear();
+    filter.catch(new BadRequestException('x'), httpHost().host);
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    const boom = new Error('boom');
+    filter.catch(boom, httpHost().host);
+    expect(Sentry.captureException).toHaveBeenCalledWith(boom, expect.anything());
   });
 });

@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import * as Sentry from '@sentry/nestjs';
 import type { Request, Response } from 'express';
 
 /** Réponse d'erreur unique de l'API : le front lit `code` pour choisir l'écran, `message` pour l'afficher. */
@@ -38,6 +39,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     // pas de réponse HTTP à écrire. On se contente alors de tracer l'erreur.
     if (host.getType() !== 'http') {
       this.logger.error(`Erreur ${host.getType()}`, exception instanceof Error ? exception.stack : String(exception));
+      Sentry.captureException(exception);
       return;
     }
     const ctx = host.switchToHttp();
@@ -114,6 +116,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
       const stack = exception instanceof Error ? exception.stack : String(exception);
       this.logger.error(line, stack);
+      // Sans effet si Sentry n'est pas initialisé (pas de SENTRY_DSN).
+      Sentry.captureException(exception, {
+        tags: { method: request.method, path: request.path },
+        user: userId ? { id: userId } : undefined,
+      });
     } else {
       this.logger.warn(line);
     }

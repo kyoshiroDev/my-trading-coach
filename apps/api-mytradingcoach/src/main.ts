@@ -1,3 +1,5 @@
+// Doit rester le premier import : Sentry s'initialise avant tout le reste.
+import './instrument';
 import cluster from 'node:cluster';
 import { availableParallelism } from 'node:os';
 import { ConsoleLogger, Logger, RequestMethod, ValidationPipe } from '@nestjs/common';
