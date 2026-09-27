@@ -1,6 +1,9 @@
 <mtc-topbar title="Analytics" [showAccountSelector]="true" />
 
 <div class="content">
+  @if (loadError()) {
+    <mtc-error-state (retry)="reload()" />
+  }
   <!-- Devises mêlées en « Tous les comptes » : totaux sans objet (PROMPT-214). -->
   @if (money.mixed()) {
     <mtc-mixed-currency-notice />

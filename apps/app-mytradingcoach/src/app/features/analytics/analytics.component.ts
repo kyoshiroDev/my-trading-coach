@@ -34,6 +34,7 @@ import { environment } from '../../../environments/environment';
 import { ChartService } from '../../core/services/chart.service';
 import { MoneyService } from '../../core/services/money.service';
 import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
+import { ErrorStateComponent } from '@mtc/front-ui';
 
 const MOCK_HEATMAP_CELLS = [
   0.75, 0.45, 0.8, 0.3, 0.65, 0.55, 0.2, 0.6, 0.7, 0.35, 0.85, 0.5, 0.4, 0.72,
@@ -53,6 +54,7 @@ const MOCK_SETUP_BARS = [88, 72, 65, 54, 38] as const;
     ActivityCalendarComponent,
     InfoTooltipComponent,
     MixedCurrencyNoticeComponent,
+    ErrorStateComponent,
   ],
   templateUrl: './analytics.component.html',
   styleUrl: './analytics.component.css',
@@ -142,6 +144,31 @@ export class AnalyticsComponent {
     () => this.setupResource.value()?.data ?? [],
   );
 
+  private readonly equityError = signal(false);
+
+  /**
+   * Une des données de la page n'a pas pu être chargée. Sans ce signal, une panne de l'API
+   * s'affichait comme « aucune donnée » (zéros, graphiques vides).
+   */
+  protected readonly loadError = computed(
+    () =>
+      !!(
+        this.summaryResource.error() ||
+        this.heatmapResource.error() ||
+        this.topAssetsResource.error() ||
+        this.setupResource.error()
+      ) || this.equityError(),
+  );
+
+  /** Relance tous les chargements de la page (bouton « Réessayer »). */
+  protected reload(): void {
+    this.summaryResource.reload();
+    this.heatmapResource.reload();
+    this.topAssetsResource.reload();
+    this.setupResource.reload();
+    this.loadEquityCurve();
+  }
+
   protected readonly isLoading = computed(
     () =>
       this.summaryResource.isLoading() ||
@@ -210,6 +237,7 @@ export class AnalyticsComponent {
   protected loadEquityCurve(): void {
     if (!this.userStore.isPremium()) return;
     this.equityLoading.set(true);
+    this.equityError.set(false);
     const { from, to } = this.equityDateRange();
     const accountId = this.selectedAccount.accountParam();
     this.analyticsApi
@@ -218,8 +246,9 @@ export class AnalyticsComponent {
         finalize(() => this.equityLoading.set(false)),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe((res) => {
-        this.equityData.set(res.data);
+      .subscribe({
+        next: (res) => this.equityData.set(res.data),
+        error: () => this.equityError.set(true),
       });
   }
 

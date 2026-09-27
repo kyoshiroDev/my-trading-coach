@@ -68,6 +68,7 @@ import { DonutChartComponent } from './panels/donut-chart/donut-chart.component'
 import { RecentTradesTableComponent } from './panels/recent-trades-table/recent-trades-table.component';
 import { MoneyPipe } from '../../shared/pipes';
 import { netPnl } from '@mtc/shared';
+import { ErrorStateComponent } from '@mtc/front-ui';
 
 /**
  * Dashboard : état (période, compte, resources analytics), cadre des panneaux et états
@@ -77,6 +78,7 @@ import { netPnl } from '@mtc/shared';
 @Component({
   selector: 'mtc-dashboard',
   imports: [
+    ErrorStateComponent,
     RouterLink,
     TopbarComponent,
     TradeFormComponent,
@@ -218,6 +220,35 @@ export class DashboardComponent {
   private readonly topAssetsResource = httpResource<{ data: TopAsset[] }>(() =>
     `${environment.apiUrl}/analytics/top-assets${this.accQuery()}`,
   );
+
+  /**
+   * Une donnée du dashboard n'a pas pu être chargée. Sans ce signal, une panne de l'API
+   * s'affichait comme un compte vide (KPI à zéro, graphiques vides).
+   */
+  protected readonly loadError = computed(
+    () =>
+      !!(
+        this.summaryResource.error() ||
+        this.equityCurveResource.error() ||
+        this.activityResource.error() ||
+        this.bySetupResource.error() ||
+        this.byEmotionResource.error() ||
+        this.topAssetsResource.error()
+      ),
+  );
+
+  protected reload(): void {
+    for (const resource of [
+      this.summaryResource,
+      this.equityCurveResource,
+      this.activityResource,
+      this.bySetupResource,
+      this.byEmotionResource,
+      this.topAssetsResource,
+    ]) {
+      resource.reload();
+    }
+  }
 
   protected readonly summary = computed(() => this.summaryResource.value()?.data ?? null);
 

@@ -18,6 +18,9 @@
 </mtc-topbar>
 
 <div class="content">
+  @if (loadError()) {
+    <mtc-error-state (retry)="reload()" />
+  }
   @if (accountReallyEmpty()) {
     <div class="firstrun-hero">
       <div class="firstrun-text">

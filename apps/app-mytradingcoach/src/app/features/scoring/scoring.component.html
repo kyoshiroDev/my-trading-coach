@@ -20,7 +20,9 @@
       <mtc-plan-modal (closed)="showPlanModal.set(false)" />
     }
   } @else {
-    @if (isLoading()) {
+    @if (loadError()) {
+      <mtc-error-state (retry)="reload()" />
+    } @else if (isLoading()) {
       <div class="loading">Calcul du score...</div>
     } @else {
       <div class="grid-2">
