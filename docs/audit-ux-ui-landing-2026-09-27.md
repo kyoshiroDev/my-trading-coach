@@ -205,3 +205,27 @@ Captures : `desktop-page_disclaimer.png`, `mobile-page_disclaimer.png`
 - Le disclaimer AMF / MiFID, la mention affilié NinjaTrader et le SIRET : c'est exactement le niveau de conformité qu'il recherche, mais caché en 11 px dans le footer.
 - Le multi-comptes prop firm et le P&L au tick près : c'est la preuve de maîtrise technique qui compte pour son audience futures.
 - Le ton de l'article Tradovate (expert, concret, honnête sur les limites) : c'est ce qui crée la confiance d'un pair, et il n'apparaît nulle part sur la home.
+
+---
+
+## Suivi des corrections (27/09/2026, branche `beta`)
+
+Vérifiées sur un build local avec les variables DEV (`PUBLIC_APP_URL=https://dev.app…`), Chrome
+via Playwright, 1440 px et 375 px. **DEV n'est pas encore redéployé** : il se construit depuis
+`dev`. Captures « après » : `docs/audit-ux-ui-landing-2026-09-27/apres/`. Les captures « avant »
+sont celles de l'audit ci-dessus.
+
+| Point | Correction | Vérif | Avant → Après |
+|---|---|---|---|
+| A · CTA vers la prod | 15 fichiers `.astro` passés sur `APP_URL` | liens rendus : `dev.app…/register`, `/login`, `/demo` uniquement | — |
+| B · « 4 traders » | cause : clé Redis `public:traders-count` partagée dev/prod (db0 sans préfixe) → suffixée par l'hôte `FRONTEND_URL` ; affichage masqué sous 100 | aucun chiffre rendu, Testimonials retitrée | `desktop-02-hero` / `desktop-11-temoignages` → `apres/desktop-hero-above-the-fold`, `apres/desktop-temoignages` |
+| B · Tradovate | carte 07 + FAQ : synchro en direct dès la connexion, historique passé via export CSV | texte vérifié | `desktop-06-features` → `apres/desktop-features` |
+| B · Compare | « dès 0 €/mois » | texte vérifié | `desktop-08-compare` → `apres/desktop-compare` |
+| B · Timeline | « (exemple illustratif) » après +$620 / 72 % WR ; « Demain tu seras meilleur » → « tu sais sur quoi travailler demain » | texte vérifié | `desktop-05-journee` → `apres/desktop-journee` |
+| C · Produit visible | `Showcase` sous le Hero (mention « Données fictives »), `Problem` retiré | Showcase à 995 px desktop / 893 px mobile (contre 5 377 / 8 690) | `apres/desktop-showcase`, `apres/mobile-showcase` |
+| D · Sticky mobile | masquée si CTA hero visible, menu ouvert, `/disclaimer` | hero : masquée · milieu de page : visible · menu : masquée · disclaimer : absente | `mobile-00-above-the-fold` → `apres/mobile-hero-above-the-fold`, `apres/mobile-nav-open`, `apres/mobile-disclaimer` |
+| D · « Dimanche » | « Dim. » sous 480 px | libellé entier dans le viewport | `mobile-05-journee` → `apres/mobile-journee` |
+| D · Badge hero | « multi-marché » insécable | coupure avant le mot | `apres/mobile-hero-badge` |
+
+Non traité (hors périmètre) : liens `register` en dur dans 5 articles `.md` du blog ; autres clés
+Redis potentiellement partagées dev/prod (ex. santé des métriques admin).

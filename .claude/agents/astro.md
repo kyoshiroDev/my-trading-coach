@@ -80,9 +80,11 @@ Règles :
 
 ### Annonce de la synchro Tradovate (PROMPT-211)
 
-- `Features.astro` (carte 07 « Synchro Tradovate & import CSV ») et `FAQ.astro` (« Quels brokers
-  sont compatibles ? ») présentent la **connexion Tradovate** (synchro auto des trades + frais, en
-  lecture seule) comme voie principale, l'import CSV pour les autres brokers et en repli.
+- `Features.astro` (carte 07 « Synchro Tradovate & import CSV ») et `FAQ.astro` (« Puis-je importer
+  mon historique ? ») présentent la **connexion Tradovate** comme voie principale : **dès la
+  connexion, les nouveaux trades + frais remontent en direct**, en lecture seule. Ne jamais écrire
+  que la synchro « rattrape » l'historique : le passé s'importe à part (export CSV Tradovate).
+  L'import CSV couvre aussi les autres brokers (audit UX 2026-09-27).
 - **Formulation factuelle uniquement (clause 17)** : jamais « Partenaire officiel de NinjaTrader »,
   « Recommandé / Approuvé par NinjaTrader » ni aucune caution. Le logo NinjaTrader reste **au seul
   footer**. Aucune promesse de gain (AMF) : on décrit ce que fait la synchro, pas un résultat.
@@ -198,3 +200,23 @@ CTA en fin de chaque article :
   navigateur (accueil, un article, /ambassadeur ; bureau 2 398 px et mobile 400 px) : identique.
   La CSS générée change de forme (identifiants `data-astro-cid-*`, media queries en syntaxe
   d'intervalle `(width>=1200px)`), sans effet sur le rendu.
+
+## Règles issues de l'audit UX (2026-09-27)
+
+- **URLs de l'app** : jamais `https://app.mytradingcoach.app/...` en dur dans un `.astro`, toujours
+  `` href={`${APP_URL}/register`} `` (`src/config.ts`). Sinon la landing DEV inscrit en prod.
+  Seuls les `.md` de `content/blog/` gardent l'URL prod en dur (pas d'import possible).
+- **Compteur de traders** : n'affiche **aucun chiffre** sous `TRADERS_PUBLIC_THRESHOLD` (100,
+  `config.ts`). Hero : bloc `.hero-proof` non rendu. Testimonials : titre « Construit avec les
+  premiers traders » sans chiffre. Le script live de `index.astro` retire `[data-traders-proof]`
+  si l'API repasse sous le seuil. Côté API, la clé Redis est suffixée par l'hôte de `FRONTEND_URL`
+  (dev et prod partagent Redis db0).
+- **Chiffres de performance** (P&L, WR) dans une narration ou un mockup : toujours accompagnés de
+  « exemple illustratif » / « données fictives » (`.day-illus` dans DayTimeline,
+  `.showcase-note` dans Showcase). Pas de promesse de progression (« tu seras meilleur »).
+- **Ordre de la home** : Hero → **Showcase** → Moments → DayTimeline → Features → … `Problem.astro`
+  n'est plus rendu (il redisait Moments). `CoachIA` et `Debrief` restent non rendus.
+- **Compare** : le prix MTC affiché est « dès 0 €/mois » (plan Gratuit), jamais le prix Premium seul.
+- **Barre sticky mobile** (`Nav.astro`, `.nav-sticky-cta`) : masquée quand `.hero-cta-main` est à
+  l'écran (IntersectionObserver), quand le menu est ouvert (`body.nav-open`), et absente des pages
+  qui passent `<Nav stickyCta={false} />` (`/disclaimer`).
