@@ -9,7 +9,7 @@ Monorepo [Nx](https://nx.dev) géré avec **pnpm**.
 |---|---|---|---|
 | App (utilisateurs) | Angular 22 | `apps/app-mytradingcoach` | 4200 |
 | Admin (back-office) | Angular 22 | `apps/admin-mytradingcoach` | 4300 |
-| API | NestJS 11 + Prisma 7 | `apps/api-mytradingcoach` | 3000 |
+| API | NestJS 11 + Prisma 7 | `apps/api-mytradingcoach` | 3001 |
 | Landing (site public) | Astro 7 | `apps/landing-mytradingcoach` | 4321 |
 | Code partagé | TypeScript pur | `libs/shared` (`@mtc/shared`) | — |
 
@@ -36,7 +36,7 @@ pnpm db:deploy             # applique les migrations
 pnpm db:generate           # génère le client Prisma
 pnpm seed:demo             # optionnel : compte démo demo@mytradingcoach.app
 
-pnpm dev:api               # API → http://localhost:3000/api (santé : /api/health)
+pnpm dev:api               # API → http://localhost:3001/api (santé : /api/health)
 pnpm dev                   # App → http://localhost:4200
 ```
 
