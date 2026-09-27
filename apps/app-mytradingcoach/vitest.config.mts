@@ -1,6 +1,10 @@
 import { defineConfig } from 'vitest/config';
 import { resolve } from 'path';
 
+// Specs qui remplacent un module avec `vi.mock` : elles ont besoin d'un registre de modules
+// neuf, donc restent isolées. Toute nouvelle spec avec `vi.mock` doit être ajoutée ici.
+const NEEDS_ISOLATION = ['src/app/core/services/tradovate-live-socket.service.spec.ts'];
+
 export default defineConfig({
   resolve: {
     // Librairie partagée front/back (tsconfig `paths` non lu par vitest).
@@ -20,8 +24,19 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     root: resolve(import.meta.dirname),
-    include: ['src/**/*.spec.ts'],
     setupFiles: ['src/test-setup.ts'],
+    // Sans isolation, les modules (Angular, lucide…) sont importés une fois par worker et non
+    // une fois par spec : 240 s → 40 s. Le TestBed est réinitialisé par test-setup.ts.
+    projects: [
+      {
+        extends: true,
+        test: { name: 'app', include: ['src/**/*.spec.ts'], exclude: NEEDS_ISOLATION, isolate: false },
+      },
+      {
+        extends: true,
+        test: { name: 'app-isolated', include: NEEDS_ISOLATION },
+      },
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],

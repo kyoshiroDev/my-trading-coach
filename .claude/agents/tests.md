@@ -19,6 +19,17 @@ pnpm nx e2e app-mytradingcoach-e2e     # Playwright E2E
 pnpm nx test api-mytradingcoach -c ci  # + couverture et seuils (ce que lance la CI)
 ```
 
+### Vitest de l'app : specs non isolées
+
+- `apps/app-mytradingcoach/vitest.config.mts` lance les specs **sans isolation** (`isolate: false`) :
+  Angular et les libs sont importés une fois par worker, 240 s → 40 s. `src/test-setup.ts`
+  initialise le TestBed une seule fois et le réinitialise avant/après chaque test.
+- Une spec qui remplace un module avec **`vi.mock`** doit être ajoutée à `NEEDS_ISOLATION` dans ce
+  fichier (projet Vitest `app-isolated`) : sinon le mock ne s'applique pas si un autre fichier a déjà
+  chargé le module, et la spec casse selon l'ordre d'exécution.
+- Cibles Nx inférées (`@nx/vitest`, `@nx/eslint/plugin`) : pas de `test` ni de `lint` à déclarer
+  dans `project.json`.
+
 ### En CI (`.github/workflows/checks.yml`, appelé par `ci.yml` et `beta.yml`)
 
 - Un seul workflow réutilisable (`workflow_call`) : lint · typecheck · build, tests front + libs,
