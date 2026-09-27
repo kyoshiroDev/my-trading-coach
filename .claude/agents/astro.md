@@ -216,7 +216,10 @@ CTA en fin de chaque article :
   `.showcase-note` dans Showcase). Pas de promesse de progression (« tu seras meilleur »).
 - **Ordre de la home** : Hero → **Showcase** → Moments → DayTimeline → Features → … `Problem.astro`
   n'est plus rendu (il redisait Moments). `CoachIA` et `Debrief` restent non rendus.
-- **Compare** : le prix MTC affiché est « dès 0 €/mois » (plan Gratuit), jamais le prix Premium seul.
+- **Compare** : le prix MTC affiche **les deux paliers** « 0 € (Gratuit) · dès 49 € (Premium) ».
+  Jamais le Premium seul (MTC paraît le plus cher), jamais « dès 0 € » seul (laisse croire que
+  toutes les coches MTC, dont Coach IA / Weekly Debrief / recap 17h30, sont gratuites). En mobile,
+  un palier par ligne, sans le « · » (`.comp-price-part` / `.comp-price-sep`).
 - **Barre sticky mobile** (`Nav.astro`, `.nav-sticky-cta`) : masquée quand `.hero-cta-main` est à
   l'écran (IntersectionObserver), quand le menu est ouvert (`body.nav-open`), et absente des pages
   qui passent `<Nav stickyCta={false} />` (`/disclaimer`).

@@ -220,7 +220,7 @@ sont celles de l'audit ci-dessus.
 | A · CTA vers la prod | 15 fichiers `.astro` passés sur `APP_URL` | liens rendus : `dev.app…/register`, `/login`, `/demo` uniquement | — |
 | B · « 4 traders » | cause : clé Redis `public:traders-count` partagée dev/prod (db0 sans préfixe) → suffixée par l'hôte `FRONTEND_URL` ; affichage masqué sous 100 | aucun chiffre rendu, Testimonials retitrée | `desktop-02-hero` / `desktop-11-temoignages` → `apres/desktop-hero-above-the-fold`, `apres/desktop-temoignages` |
 | B · Tradovate | carte 07 + FAQ : synchro en direct dès la connexion, historique passé via export CSV | texte vérifié | `desktop-06-features` → `apres/desktop-features` |
-| B · Compare | « dès 0 €/mois » | texte vérifié | `desktop-08-compare` → `apres/desktop-compare` |
+| B · Compare | « 0 € (Gratuit) · dès 49 € (Premium) » : « dès 0 € » seul laissait croire que les fonctions Premium cochées étaient gratuites | texte vérifié, 1 palier par ligne en mobile, sans chevauchement | `desktop-08-compare` → `apres/desktop-compare-prix`, `apres/mobile-compare-prix` |
 | B · Timeline | « (exemple illustratif) » après +$620 / 72 % WR ; « Demain tu seras meilleur » → « tu sais sur quoi travailler demain » | texte vérifié | `desktop-05-journee` → `apres/desktop-journee` |
 | C · Produit visible | `Showcase` sous le Hero (mention « Données fictives »), `Problem` retiré | Showcase à 995 px desktop / 893 px mobile (contre 5 377 / 8 690) | `apres/desktop-showcase`, `apres/mobile-showcase` |
 | D · Sticky mobile | masquée si CTA hero visible, menu ouvert, `/disclaimer` | hero : masquée · milieu de page : visible · menu : masquée · disclaimer : absente | `mobile-00-above-the-fold` → `apres/mobile-hero-above-the-fold`, `apres/mobile-nav-open`, `apres/mobile-disclaimer` |
