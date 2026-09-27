@@ -407,30 +407,30 @@
           <div class="choice-grid choice-grid-4">
             <!-- PROMPT-211 : Tradovate EN TÊTE (pleine largeur, accent --nt) ; le CSV reste pour
                  les autres brokers, mais au second plan avec le manuel et « zéro ». -->
-            <div class="choice-card choice-action choice-tradovate choice-featured" (click)="chooseTradovate()" role="button" tabindex="0"
-                 (keydown.enter)="chooseTradovate()" [attr.aria-busy]="tvPreparing()" data-testid="onboarding-choice-tradovate">
-              <div class="choice-tag nt">Le plus complet</div>
-              <div class="choice-ic nt">🔗</div>
+            <button type="button" class="choice-card choice-action choice-tradovate choice-featured" (click)="chooseTradovate()"
+                    [attr.aria-busy]="tvPreparing()" data-testid="onboarding-choice-tradovate">
+              <span class="choice-tag nt">Le plus complet</span>
+              <span class="choice-ic nt">🔗</span>
               <span class="choice-label">Connecter mon compte <span class="nt-word">Tradovate</span></span>
               <span class="choice-desc">
                 {{ tvPreparing() ? 'Préparation de ton compte…' : 'Apex, Lucid Trading, TopStep… tes trades arrivent tout seuls, sans exporter de fichier.' }}
               </span>
-            </div>
-            <div class="choice-card choice-action" (click)="chooseCsv()" role="button" tabindex="0" (keydown.enter)="chooseCsv()" data-testid="onboarding-choice-csv">
-              <div class="choice-ic blue">📥</div>
+            </button>
+            <button type="button" class="choice-card choice-action" (click)="chooseCsv()" data-testid="onboarding-choice-csv">
+              <span class="choice-ic blue">📥</span>
               <span class="choice-label">Importer mon historique (CSV)</span>
               <span class="choice-desc">Tu viens d'un autre broker ou journal ? Importe ton historique pour démarrer avec tes vraies données.</span>
-            </div>
-            <div class="choice-card choice-action" (click)="chooseManual()" role="button" tabindex="0" (keydown.enter)="chooseManual()" data-testid="onboarding-choice-manual">
-              <div class="choice-ic blue">✏️</div>
+            </button>
+            <button type="button" class="choice-card choice-action" (click)="chooseManual()" data-testid="onboarding-choice-manual">
+              <span class="choice-ic blue">✏️</span>
               <span class="choice-label">Saisir un trade manuellement</span>
               <span class="choice-desc">Un exemple pré-rempli pour tester en quelques secondes.</span>
-            </div>
-            <div class="choice-card choice-action" (click)="finishAndGoDiscord()" role="button" tabindex="0" (keydown.enter)="finishAndGoDiscord()" data-testid="onboarding-choice-skip">
-              <div class="choice-ic">🌱</div>
+            </button>
+            <button type="button" class="choice-card choice-action" (click)="finishAndGoDiscord()" data-testid="onboarding-choice-skip">
+              <span class="choice-ic">🌱</span>
               <span class="choice-label">Je commence à zéro</span>
               <span class="choice-desc">Pas encore de trade ? Tu rempliras ton journal au fil de tes sessions.</span>
-            </div>
+            </button>
           </div>
 
           <div class="wizard-footer footer-step5">
