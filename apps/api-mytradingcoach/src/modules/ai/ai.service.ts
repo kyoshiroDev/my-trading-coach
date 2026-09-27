@@ -13,16 +13,16 @@ import { buildDebriefPrompt } from './prompts/debrief.prompt';
 import { NO_EM_DASH_RULE } from './prompts/style.prompt';
 import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
+import { RedisService } from '../infra/redis.service';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
 import { computeTradeStats, formatMoney, netPnl, todayParis } from '@mtc/shared';
 import { userAmountsCurrency } from '../../common/utils/user-currency.util';
 // import type only (aucune dépendance runtime → pas de cycle avec eco-calendar.service)
 import type { EcoResultAnalysis } from '../eco-calendar/eco-calendar.service';
-import { AnthropicClientService } from '../shared/anthropic-client.service';
+import { AnthropicClientService } from '../infra/anthropic-client.service';
 import { buildUserTradingContext, UserTradingProfile } from './user-context.builder';
 
-import { AI_MODELS } from '../shared/ai-pricing.const';
+import { AI_MODELS } from '../infra/ai-pricing.const';
 import type { EcoAnalysis } from '@mtc/shared';
 
 const MODEL = AI_MODELS.analysis;

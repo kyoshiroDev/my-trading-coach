@@ -7,7 +7,7 @@ import {
   Prisma,
 } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { RedisService } from '../../shared/redis.service';
+import { RedisService } from '../../infra/redis.service';
 import { decryptToken, encryptToken, loadTokenKey } from '../../../common/utils/token-cipher.util';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateApiError, TradovateException } from './tradovate.errors';

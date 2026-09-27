@@ -4,7 +4,7 @@ import { UsersService } from './users.service';
 import { Goal, Market } from './dto/onboarding.dto';
 import { AmbassadorService } from '../ambassador/ambassador.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
+import { RedisService } from '../infra/redis.service';
 
 const mockUser = {
   id: 'user-1',

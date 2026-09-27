@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { HttpException } from '@nestjs/common';
 import { PatternAgent } from './pattern.agent';
-import { AnthropicClientService } from '../../shared/anthropic-client.service';
+import { AnthropicClientService } from '../../infra/anthropic-client.service';
 
 const mockMessagesCreate = vi.hoisted(() =>
   vi.fn().mockResolvedValue({

@@ -4,7 +4,7 @@ import { ForbiddenException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AmbassadorService } from '../ambassador/ambassador.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
+import { RedisService } from '../infra/redis.service';
 
 const baseUser = {
   role: 'USER',

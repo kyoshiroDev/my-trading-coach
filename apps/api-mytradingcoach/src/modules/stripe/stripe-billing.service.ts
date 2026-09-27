@@ -10,7 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { Role } from '@prisma/client';
 import Stripe from 'stripe';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
+import { RedisService } from '../infra/redis.service';
 import { TRIAL_PERIOD_DAYS } from '../../common/constants/pricing.const';
 import { STRIPE_CLIENT } from './stripe.client';
 import {

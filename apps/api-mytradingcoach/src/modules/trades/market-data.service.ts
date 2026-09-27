@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
-import { AnthropicClientService } from '../shared/anthropic-client.service';
+import { RedisService } from '../infra/redis.service';
+import { AnthropicClientService } from '../infra/anthropic-client.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 import { INSTRUMENTS } from './instruments.const';
 import { NO_EM_DASH_RULE } from '../ai/prompts/style.prompt';
-import { AI_MODELS } from '../shared/ai-pricing.const';
+import { AI_MODELS } from '../infra/ai-pricing.const';
 
 export interface MarketContextItem { value: number | null; changePct: number | null; source: 'fmp' | 'yahoo' | 'binance'; }
 export interface TreasuryRates {

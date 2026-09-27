@@ -14,7 +14,7 @@ import { TradesService } from './trades.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
-import { RedisService } from '../shared/redis.service';
+import { RedisService } from '../infra/redis.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { SetupsService } from '../setups/setups.service';
 import { netPnl } from '@mtc/shared';

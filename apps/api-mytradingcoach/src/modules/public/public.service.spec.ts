@@ -3,7 +3,7 @@ import { Test } from '@nestjs/testing';
 import { Role } from '@prisma/client';
 import { PublicService } from './public.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
+import { RedisService } from '../infra/redis.service';
 import { ResendService } from '../resend/resend.service';
 
 const mockPrisma = { user: { count: vi.fn() } };

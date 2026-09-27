@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ThrottlerStorage, ThrottlerStorageService } from '@nestjs/throttler';
-import { RedisService } from '../../modules/shared/redis.service';
+import { RedisService } from '../../modules/infra/redis.service';
 
 /**
  * Compteur atomique d'un throttler (un appel = une requête comptée).

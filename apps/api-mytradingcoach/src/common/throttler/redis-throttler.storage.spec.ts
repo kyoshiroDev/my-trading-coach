@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { RedisThrottlerStorage } from './redis-throttler.storage';
-import type { RedisService } from '../../modules/shared/redis.service';
+import type { RedisService } from '../../modules/infra/redis.service';
 
 const storageWith = (evalImpl: (...args: unknown[]) => Promise<unknown>) =>
   new RedisThrottlerStorage({ client: { eval: vi.fn(evalImpl) } } as unknown as RedisService);

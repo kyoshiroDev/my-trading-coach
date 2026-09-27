@@ -6,8 +6,8 @@ import { AiService } from './ai.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OrchestratorAgent } from './agents/orchestrator.agent';
 import { DebriefAgent } from './agents/debrief.agent';
-import { AnthropicClientService } from '../shared/anthropic-client.service';
-import { RedisService } from '../shared/redis.service';
+import { AnthropicClientService } from '../infra/anthropic-client.service';
+import { RedisService } from '../infra/redis.service';
 
 const mockMessagesCreate = vi.hoisted(() =>
   vi.fn().mockResolvedValue({

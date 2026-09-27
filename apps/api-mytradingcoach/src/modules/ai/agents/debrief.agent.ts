@@ -6,8 +6,8 @@ import {
   buildDebriefPrompt,
   DEBRIEF_SYSTEM_PROMPT,
 } from '../prompts/debrief.prompt';
-import { AnthropicClientService } from '../../shared/anthropic-client.service';
-import { AI_MODELS } from '../../shared/ai-pricing.const';
+import { AnthropicClientService } from '../../infra/anthropic-client.service';
+import { AI_MODELS } from '../../infra/ai-pricing.const';
 
 @Injectable()
 export class DebriefAgent {

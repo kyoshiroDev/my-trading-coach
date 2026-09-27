@@ -8,7 +8,7 @@ import {
 } from '@nestjs/terminus';
 import { Public } from '../../common/decorators/public.decorator';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
+import { RedisService } from '../infra/redis.service';
 
 /**
  * Readiness : l'API est-elle capable de servir des requêtes ? Vérifie Postgres et Redis.

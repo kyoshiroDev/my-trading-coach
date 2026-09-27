@@ -4,7 +4,7 @@ import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { VpsService } from '../vps/vps.service';
-import { RedisService } from '../shared/redis.service';
+import { RedisService } from '../infra/redis.service';
 import { parisDayRange, todayParis, yesterdayParis } from '@mtc/shared';
 
 const HEALTH_PREFIX = 'health:'; // health:YYYY-MM-DD -> 'ok' | 'incident'

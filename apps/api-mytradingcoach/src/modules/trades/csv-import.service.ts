@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { Plan, Role, EmotionState } from '@prisma/client';
 import * as XLSX from 'xlsx';
 import type { CreateTradeDto } from './dto/create-trade.dto';
-import { AnthropicClientService } from '../shared/anthropic-client.service';
+import { AnthropicClientService } from '../infra/anthropic-client.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SetupsService } from '../setups/setups.service';
 import {
@@ -15,7 +15,7 @@ import {
 import {
   assignFeesOncePerFill,
 } from './tradovate-pair.util';
-import { AI_MODELS } from '../shared/ai-pricing.const';
+import { AI_MODELS } from '../infra/ai-pricing.const';
 
 const MODEL = AI_MODELS.analysis;
 

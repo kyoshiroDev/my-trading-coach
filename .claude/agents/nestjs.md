@@ -307,7 +307,7 @@ Format : { "patterns": [{ "type": string, "title": string, "description": string
 
 async analyze(summary: string): Promise<Pattern[]> {
   const res = await this.anthropic.messages.create({
-    model: AI_MODELS.analysis, // jamais un identifiant en dur : modules/shared/ai-pricing.const.ts
+    model: AI_MODELS.analysis, // jamais un identifiant en dur : modules/infra/ai-pricing.const.ts
     max_tokens: 1024,
     system: [{ type: 'text', text: PATTERN_SYSTEM, cache_control: { type: 'ephemeral' } }],
     messages: [{ role: 'user', content: summary }]
@@ -1031,7 +1031,7 @@ sont en direct.
   logs + Sentry). `path` et les logs n'incluent jamais la query string.
 - **Sentry** : `src/instrument.ts`, premier import de `main.ts`, actif seulement si `SENTRY_DSN`.
   Les 5xx sont remontées par le filtre global ; ne pas ajouter de `captureException` ailleurs.
-- **IA** : modèles dans `AI_MODELS` (`modules/shared/ai-pricing.const.ts`), jamais en dur ; un
+- **IA** : modèles dans `AI_MODELS` (`modules/infra/ai-pricing.const.ts`), jamais en dur ; un
   test vérifie que chaque modèle a son tarif. Délai par appel = `max(60 s, 30 ms × max_tokens)`,
   une seule relance, chaque échec tracé (sans le contenu envoyé).
 - **Santé** : `GET /api/health` = liveness (process vivant, healthcheck Docker) ;

@@ -3,8 +3,8 @@ import { Test } from '@nestjs/testing';
 import { EcoCalendarService } from './eco-calendar.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
-import { RedisService } from '../shared/redis.service';
-import { AnthropicClientService } from '../shared/anthropic-client.service';
+import { RedisService } from '../infra/redis.service';
+import { AnthropicClientService } from '../infra/anthropic-client.service';
 import { todayParis } from '@mtc/shared';
 
 const mockPrisma = {

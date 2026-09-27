@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Plan } from '@prisma/client';
 import Stripe from 'stripe';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
+import { RedisService } from '../infra/redis.service';
 import { STRIPE_CLIENT } from './stripe.client';
 import { ACTIVE_STATUSES, billingCacheKey, extractId } from './stripe.helpers';
 

@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
-import { AnthropicClientService } from '../shared/anthropic-client.service';
+import { RedisService } from '../infra/redis.service';
+import { AnthropicClientService } from '../infra/anthropic-client.service';
 import { AiService } from '../ai/ai.service';
 
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
-import { AI_MODELS } from '../shared/ai-pricing.const';
+import { AI_MODELS } from '../infra/ai-pricing.const';
 import { normalizeEventKey, toParisDateStr, todayParis } from '@mtc/shared';
 import type { EcoAnalysis, EcoEvent } from '@mtc/shared';
 

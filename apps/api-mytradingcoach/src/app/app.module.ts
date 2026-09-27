@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { SharedModule } from '../modules/shared/shared.module';
+import { InfraModule } from '../modules/infra/infra.module';
 import { HealthModule } from '../modules/health/health.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { BullModule } from '@nestjs/bullmq';
@@ -36,7 +36,7 @@ import { ActivityTrackingInterceptor } from '../common/interceptors/activity-tra
 import { AppController } from './app.controller';
 
 import { RedisThrottlerStorage } from '../common/throttler/redis-throttler.storage';
-import { RedisService } from '../modules/shared/redis.service';
+import { RedisService } from '../modules/infra/redis.service';
 
 @Module({
   controllers: [AppController],
@@ -51,7 +51,7 @@ import { RedisService } from '../modules/shared/redis.service';
     // Limite par défaut : 60 requêtes / minute / IP (IP réelle : `trust proxy` dans main.ts).
     // Compteurs dans Redis pour être communs aux workers du cluster.
     ThrottlerModule.forRootAsync({
-      imports: [SharedModule],
+      imports: [InfraModule],
       inject: [RedisService],
       useFactory: (redis: RedisService) => ({
         throttlers: [{ ttl: 60_000, limit: 60 }],
@@ -71,7 +71,7 @@ import { RedisService } from '../modules/shared/redis.service';
     ...(process.env['IS_CRON_WORKER'] === 'true'
       ? [ScheduleModule.forRoot()]
       : []),
-    SharedModule,
+    InfraModule,
     PrismaModule,
     HealthModule,
     AuthModule,

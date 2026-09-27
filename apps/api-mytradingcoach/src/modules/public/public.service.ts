@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
+import { RedisService } from '../infra/redis.service';
 import { ResendService } from '../resend/resend.service';
 import { PublicAmbassadorApplyDto } from './dto/ambassador-apply.dto';
 

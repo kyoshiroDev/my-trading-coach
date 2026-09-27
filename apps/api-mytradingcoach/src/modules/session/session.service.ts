@@ -4,7 +4,7 @@ import {
 } from '@nestjs/common';
 import { MoodState, Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
+import { RedisService } from '../infra/redis.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { computeTradeStats, netPnl, toParisDateStr } from '@mtc/shared';
 import type { SessionHistoryItem } from '@mtc/shared';
