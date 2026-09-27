@@ -14,6 +14,13 @@ export interface TradovateAccount {
   active?: boolean;
   closed?: boolean;
   restricted?: boolean;
+  /**
+   * Date de CRÉATION du compte, en ISO UTC (`2026-02-12T14:11:13Z`). Non documentée mais servie
+   * par `/account/list` comme par `/account/item` (vérifié le 2026-09-26 sur trois comptes prop
+   * firm). C'est la borne basse de l'import d'historique : inutile de demander des rapports
+   * antérieurs à l'existence du compte, et surtout on n'a plus à deviner une profondeur.
+   */
+  timestamp?: string;
 }
 
 export interface TradovatePosition {

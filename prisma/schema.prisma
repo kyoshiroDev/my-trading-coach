@@ -352,6 +352,11 @@ model BrokerConnection {
   lastSyncError         String?
   /// Cumul des trades créés par la synchro (hors doublons).
   tradesImported        Int                    @default(0)
+  /// Date du premier import RÉUSSI de tout l'historique du compte (Reporting API), remonté
+  /// jusqu'à sa création. Tant que c'est `null`, la prochaine synchro le tente — y compris celle
+  /// du cron : une connexion créée avant cette feature, ou dont l'import initial a échoué,
+  /// récupère donc son passé sans que l'utilisateur ait quoi que ce soit à faire.
+  historyImportedAt     DateTime?
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 

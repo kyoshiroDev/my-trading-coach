@@ -309,3 +309,11 @@ rétroactivement d'où vient une ligne, et c'est la valeur la moins mensongère.
 > vus au consentement. Cascade explicite sur `User` ET `TradingAccount` (migration
 > `20260910182250_broker_connection`). Le seed démo en crée une (placeholder de token, jamais
 > déchiffré : le compte démo ne peut pas synchroniser).
+>
+> `historyImportedAt` (migration `20260926230000_broker_history_imported_at`, nullable, ajout
+> additif) = date du premier import RÉUSSI de tout l'historique du compte, remonté jusqu'à sa
+> création. Vide = le passé n'a jamais été remonté entièrement : le **cron de fond** le rattrape
+> (≤ 2 par passage), jamais le bouton « Synchroniser » — 24 fenêtres coûtent 11 s d'appels et
+> personne ne doit attendre ça devant son écran. Ne jamais le poser après un import d'un seul mois
+> ni quand une fenêtre a échoué : le trou ne serait plus jamais comblé. Cf. `nestjs.md`,
+> profondeur de l'historique.

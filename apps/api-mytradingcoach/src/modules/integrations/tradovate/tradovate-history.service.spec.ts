@@ -1,5 +1,5 @@
 import { BrokerConnection, BrokerConnectionStatus, BrokerProvider } from '@prisma/client';
-import { TradovateHistoryService } from './tradovate-history.service';
+import { HISTORY_MAX_MONTHS, TradovateHistoryService } from './tradovate-history.service';
 import { TradovateApiError } from './tradovate.errors';
 import { toReportDate } from './tradovate-reporting.client';
 import { preprocessCsv, mapNormalizedCsvToDto } from '../../trades/csv-parsers';
@@ -39,6 +39,9 @@ function conn(overrides: Partial<BrokerConnection> = {}): BrokerConnection {
     externalAccountId: '66880224',
     externalAccountName: 'NOM-PERIME',
     externalEnv: 'demo',
+    // Par défaut : connexion dont l'historique complet a DÉJÀ été importé, donc une profondeur
+    // demandée est respectée. Le cas contraire (`null`) remonte toute la vie du compte.
+    historyImportedAt: new Date('2026-09-01T00:00:00Z'),
     ...overrides,
   } as BrokerConnection;
 }
@@ -67,11 +70,12 @@ function setup(csvByReport: Record<string, string | Error> = {}) {
       return Promise.resolve({ created: dtos.length, duplicates: 0, failed: 0, total: dtos.length });
     }),
   };
+  const prisma = { brokerConnection: { update: vi.fn().mockResolvedValue({}) } };
   const service = new TradovateHistoryService(
-    api as never, connections as never, reporting as never, setups as never, trades as never,
+    prisma as never, api as never, connections as never, reporting as never, setups as never, trades as never,
   );
   vi.spyOn(service as unknown as { wait: (ms: number) => Promise<void> }, 'wait').mockResolvedValue(undefined);
-  return { service, api, connections, reporting, setups, trades, persiste };
+  return { service, prisma, api, connections, reporting, setups, trades, persiste };
 }
 
 describe('TradovateHistoryService — import de l’historique', () => {
@@ -103,6 +107,33 @@ describe('TradovateHistoryService — import de l’historique', () => {
     const { service, trades } = setup({ Performance: PERFORMANCE_CSV, Fills: FILLS_CSV });
     await service.importHistory('u1', conn(), { months: 1 });
     expect(trades.importTrades.mock.calls[0][2]).toBe('BROKER_HISTORY');
+  });
+
+  it('incrémente le compteur de la connexion : 294 trades importés ≠ « 0 trade importé »', async () => {
+    const { service, prisma } = setup({ Performance: PERFORMANCE_CSV, Fills: FILLS_CSV });
+    await service.importHistory('u1', conn(), { months: 1 });
+    expect(prisma.brokerConnection.update).toHaveBeenCalledWith({
+      where: { id: 'c1' },
+      data: { tradesImported: { increment: 2 } },
+    });
+  });
+
+  it('aucun trade créé → aucune écriture du compteur', async () => {
+    const { service, prisma } = setup({ Performance: '' });
+    await service.importHistory('u1', conn(), { months: 1 });
+    expect(prisma.brokerConnection.update).not.toHaveBeenCalled();
+  });
+
+  it('les horodatages du rapport sont lus en UTC, pas en heure du serveur', async () => {
+    // Bug trouvé en prod : 294 trades importés avec 2 h d'avance. Le rapport est demandé en
+    // `timezone: 0`, mais `new Date("09/23/2026 13:34:57")` sans fuseau est lu en heure LOCALE
+    // (conteneur en Europe/Paris) — d'où le décalage. Ce test échoue si la conversion saute.
+    const { service, persiste } = setup({ Performance: PERFORMANCE_CSV, Fills: FILLS_CSV });
+
+    await service.importHistory('u1', conn(), { months: 1 });
+
+    // Le CSV dit « 09/23/2026 13:35:05 » pour la vente : c'est de l'UTC, donc 13:35:05Z.
+    expect(new Date(persiste[0][0].tradedAt as string).toISOString()).toBe('2026-09-23T13:35:05.000Z');
   });
 
   it('interroge Tradovate avec le nom RELU du compte, pas celui stocké en base', async () => {
@@ -195,6 +226,151 @@ describe('TradovateHistoryService — import de l’historique', () => {
 
     expect(r.created).toBe(0);
     expect(r.duplicates).toBe(2);
+  });
+});
+
+/**
+ * Profondeur de l'import : toute la vie du compte, jusqu'à sa création.
+ *
+ * Tradovate date le compte (`timestamp` sur `/account/list`) : c'est la borne basse, et elle
+ * remplace la profondeur devinée de 6 mois. Le cas qui a motivé le changement est vérifié en vrai :
+ * compte créé le 2026-02-12, premier trade en juillet — cinq mois vides entre les deux, que
+ * l'ancien arrêt « deux mois vides d'affilée » rendait définitivement inatteignables.
+ */
+describe('TradovateHistoryService — profondeur de l’import', () => {
+  beforeEach(() => vi.useFakeTimers({ now: new Date('2026-09-26T12:00:00Z') }));
+  afterEach(() => vi.useRealTimers());
+
+  /** Ce que `/account/list` renvoie réellement, `timestamp` compris (relevé le 2026-09-26). */
+  const compte = (timestamp?: string) => [
+    { id: 66880224, name: 'APEX4280470000012', userId: 699523, timestamp },
+  ];
+
+  const moisDemandes = (reporting: { fetchCsv: { mock: { calls: unknown[][] } } }) =>
+    reporting.fetchCsv.mock.calls
+      .filter((c) => c[2] === 'Performance')
+      .map((c) => toReportDate((c[3] as { from: Date }).from));
+
+  it('sans profondeur demandée → remonte jusqu’au mois de création, celui-ci inclus', async () => {
+    const { service, api, reporting } = setup({ Performance: '' });
+    api.get.mockResolvedValue(compte('2026-02-12T14:11:13Z'));
+
+    const r = await service.importHistory('u1', conn());
+
+    // Février → septembre = 8 fenêtres, tirées malgré 8 mois vides d'affilée.
+    const mois = moisDemandes(reporting);
+    expect(mois).toHaveLength(8);
+    expect(mois[0]).toBe('9/1/2026');
+    expect(mois.at(-1)).toBe('2/1/2026');
+    expect(r.windows).toBe(8);
+  });
+
+  it('cinq mois vides entre la création et le premier trade ne tronquent pas l’historique', async () => {
+    const { service, api, reporting } = setup();
+    api.get.mockResolvedValue(compte('2026-02-12T14:11:13Z'));
+    reporting.fetchCsv.mockImplementation(
+      (_e: string, _t: string, name: string, w: { from: Date }) =>
+        Promise.resolve(
+          name === 'Fills' ? FILLS_CSV : w.from.getUTCMonth() === 6 ? PERFORMANCE_CSV : '',
+        ),
+    );
+
+    const r = await service.importHistory('u1', conn());
+
+    expect(r.windows).toBe(8);
+    expect(r.created).toBe(2); // juillet atteint, cinq mois vides plus tôt
+  });
+
+  it('compte non daté par Tradovate → repli 6 mois, et l’arrêt aux mois vides reprend son rôle', async () => {
+    // Sans borne basse, la fin apparente de l'historique est la seule information disponible.
+    const { service, api } = setup({ Performance: '' });
+    api.get.mockResolvedValue(compte(undefined));
+
+    expect((await service.importHistory('u1', conn())).windows).toBe(2);
+  });
+
+  it('date de création dans le futur → donnée non crue, repli sur le comportement prudent', async () => {
+    const { service, api } = setup({ Performance: '' });
+    api.get.mockResolvedValue(compte('2027-01-01T00:00:00Z'));
+
+    expect((await service.importHistory('u1', conn())).windows).toBe(2);
+  });
+
+  it('compte très ancien → borné par le garde-fou, jamais de boucle sans fin', async () => {
+    const { service, api } = setup({ Performance: PERFORMANCE_CSV, Fills: FILLS_CSV });
+    api.get.mockResolvedValue(compte('2015-01-01T00:00:00Z'));
+
+    expect((await service.importHistory('u1', conn())).windows).toBe(HISTORY_MAX_MONTHS);
+  });
+
+  it('profondeur explicite (rattrapage horaire du cron) → un seul mois, la création est ignorée', async () => {
+    const { service, api } = setup({ Performance: '' });
+    api.get.mockResolvedValue(compte('2015-01-01T00:00:00Z'));
+
+    expect((await service.importHistory('u1', conn(), { months: 1 })).windows).toBe(1);
+  });
+
+  /**
+   * La profondeur demandée est un contrat, jamais « corrigée » pour bien faire. L'appelant qui ne
+   * demande qu'un mois, c'est le plus souvent le bouton « Synchroniser » : quelqu'un attend devant
+   * son écran. Remonter deux ans à sa place ferait d'un clic de 2 s un clic de 30 s. Le rattrapage
+   * du passé complet appartient au cron (cf. `tradovate-background-refresh.cron`).
+   */
+  it('connexion jamais importée + un seul mois demandé → un seul mois, personne n’attend 24 fenêtres', async () => {
+    const { service, api } = setup({ Performance: '' });
+    api.get.mockResolvedValue(compte('2024-01-01T00:00:00Z')); // compte de presque 3 ans
+
+    const r = await service.importHistory('u1', conn({ historyImportedAt: null }), { months: 1 });
+
+    expect(r.windows).toBe(1);
+  });
+
+  it('import complet réussi → marqueur posé, les synchros suivantes s’en tiennent au mois demandé', async () => {
+    const { service, api, prisma } = setup({ Performance: '' });
+    api.get.mockResolvedValue(compte('2026-08-01T00:00:00Z'));
+
+    await service.importHistory('u1', conn({ historyImportedAt: null }));
+
+    expect(prisma.brokerConnection.update).toHaveBeenCalledWith({
+      where: { id: 'c1' },
+      data: { historyImportedAt: new Date('2026-09-26T12:00:00Z') },
+    });
+  });
+
+  it('une fenêtre en échec → marqueur laissé vide, le passé manquant sera retenté', async () => {
+    // Poser le marqueur ici condamnerait le mois perdu : plus aucune synchro ne le redemanderait.
+    const { service, api, reporting, prisma } = setup();
+    api.get.mockResolvedValue(compte('2026-08-01T00:00:00Z'));
+    reporting.fetchCsv.mockRejectedValue(new TradovateApiError('unavailable', 500, 'Performance'));
+
+    const r = await service.importHistory('u1', conn({ historyImportedAt: null }));
+
+    expect(r.failed).toBeGreaterThan(0);
+    expect(prisma.brokerConnection.update).not.toHaveBeenCalled();
+  });
+
+  it('un mois demandé ne pose jamais le marqueur : le passé n’a pas été remonté', async () => {
+    // Poser le marqueur ici condamnerait tout le passé du compte : plus aucun rattrapage n'y
+    // toucherait, alors qu'un seul mois a été lu.
+    const { service, api, prisma } = setup({ Performance: PERFORMANCE_CSV, Fills: FILLS_CSV });
+    api.get.mockResolvedValue(compte('2026-02-12T14:11:13Z'));
+
+    await service.importHistory('u1', conn({ historyImportedAt: null }), { months: 1 });
+
+    expect(prisma.brokerConnection.update).toHaveBeenCalledWith({
+      where: { id: 'c1' },
+      data: { tradesImported: { increment: 2 } }, // et RIEN d'autre
+    });
+  });
+
+  it('marqueur déjà posé → aucune réécriture, et le mois demandé est respecté', async () => {
+    const { service, api, prisma } = setup({ Performance: '' });
+    api.get.mockResolvedValue(compte('2026-02-12T14:11:13Z'));
+
+    const r = await service.importHistory('u1', conn(), { months: 1 });
+
+    expect(r.windows).toBe(1);
+    expect(prisma.brokerConnection.update).not.toHaveBeenCalled();
   });
 });
 
