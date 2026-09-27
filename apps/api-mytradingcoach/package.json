@@ -8,7 +8,7 @@
       "test": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "vitest run --config=vitest.config.ts",
+          "command": "vitest run --config=vitest.config.mts",
           "cwd": "apps/api-mytradingcoach"
         }
       },

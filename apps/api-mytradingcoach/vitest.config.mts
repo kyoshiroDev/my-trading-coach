@@ -5,7 +5,7 @@ import { resolve } from 'path';
 export default defineConfig({
   resolve: {
     // Librairie partagée front/back (tsconfig `paths` non lu par vitest).
-    alias: { '@mtc/shared': resolve(__dirname, '../../libs/shared/src/index.ts') },
+    alias: { '@mtc/shared': resolve(import.meta.dirname, '../../libs/shared/src/index.ts') },
   },
   test: {
     globals: true,

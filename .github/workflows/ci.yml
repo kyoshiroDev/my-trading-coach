@@ -324,7 +324,7 @@ jobs:
         run: pnpm exec prisma migrate deploy --config=./prisma/prisma.config.ts
 
       - name: Intégration parrainage
-        run: pnpm exec vitest run --config vitest.integration.config.ts
+        run: pnpm exec vitest run --config vitest.integration.config.mts
         working-directory: apps/api-mytradingcoach
 
   # ── Deploy API dev → VPS (port 3001 via traefik) ──────────────────────────

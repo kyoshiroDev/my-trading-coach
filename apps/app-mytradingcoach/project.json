@@ -131,7 +131,7 @@
     "test": {
       "executor": "@nx/vitest:test",
       "options": {
-        "configFile": "apps/app-mytradingcoach/vitest.config.ts"
+        "configFile": "apps/app-mytradingcoach/vitest.config.mts"
       }
     },
     "serve-static": {
