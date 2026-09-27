@@ -66,6 +66,16 @@ export default [
     },
   },
   {
+    // Au-delà de 400 lignes, un fichier se lit mal : c'est le signal pour en sortir la logique
+    // pure (helpers, types) ou un sous-composant. Avertissement seulement, pour ne pas bloquer
+    // les fichiers encore au-dessus (liste dans CONTRIBUTING.md).
+    files: ['**/*.ts'],
+    ignores: ['**/*.spec.ts', '**/*.int-spec.ts', '**/*.e2e-spec.ts', 'tools/**', 'e2e/**'],
+    rules: {
+      'max-lines': ['warn', { max: 400, skipBlankLines: true, skipComments: true }],
+    },
+  },
+  {
     // Fichiers de test : `any` (mocks, casts de fixtures) et assertions de fixtures
     // connues sont legitimes. On relache uniquement le typage strict cote tests.
     files: ['**/*.spec.ts', '**/*.spec.tsx', '**/*.test.ts'],

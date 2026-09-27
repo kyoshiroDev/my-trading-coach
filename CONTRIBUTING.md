@@ -44,6 +44,17 @@ de libs ; le front n'importe jamais le back (et inversement) ; tout le monde peu
   pense à enrichir le seed démo quand tu ajoutes des données.
 - `pnpm` / `pnpm dlx` uniquement, jamais `npm` / `npx`.
 
+## Taille des fichiers
+
+ESLint avertit (`max-lines`, sans bloquer) au-delà de 400 lignes de code : c'est le signal pour sortir
+la logique pure dans un fichier voisin (`*.helpers.ts`, `*.util.ts`, `*.model.ts`, testé à part) ou
+un sous-composant. Fichiers encore au-dessus, à découper quand on y retouche :
+
+- API : `ai/ai.service.ts`, `analytics/analytics.service.ts`, `eco-calendar/eco-calendar.service.ts`,
+  `trades/csv-import.service.ts`, `trades/csv-parsers.ts`, `users/users.service.ts`
+- App : `accounts/accounts.component.ts`, `eco-calendar/eco-calendar.component.ts`,
+  `onboarding/onboarding.component.ts`, `profile/profile.component.ts`
+
 ## Commits
 
 Conventionnels, sujet en **minuscules** (vérifié par commitlint) :
