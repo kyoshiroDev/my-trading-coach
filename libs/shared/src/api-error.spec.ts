@@ -12,7 +12,7 @@ describe('apiErrorMessage', () => {
     expect(apiErrorMessage({ status: 400, error: { message: ['a', 'b'] } }, 'repli')).toBe('a · b');
   });
 
-  it("affiche le repli de l'écran pour une erreur serveur, quel que soit le message", () => {
+  it("affiche le repli de l'écran pour une erreur 500, quel que soit le message", () => {
     expect(apiErrorMessage({ status: 500, error: { message: 'Internal server error' } }, 'Débrief indisponible.')).toBe(
       'Débrief indisponible.',
     );
@@ -20,5 +20,11 @@ describe('apiErrorMessage', () => {
 
   it('affiche le repli sans corps exploitable (réseau coupé, status 0)', () => {
     expect(apiErrorMessage({ status: 0, error: null }, 'repli')).toBe('repli');
+  });
+
+  it('garde le message du back pour un 503 (service volontairement indisponible)', () => {
+    expect(apiErrorMessage({ status: 503, error: { message: "Tradovate n'est pas encore disponible." } }, 'repli')).toBe(
+      "Tradovate n'est pas encore disponible.",
+    );
   });
 });

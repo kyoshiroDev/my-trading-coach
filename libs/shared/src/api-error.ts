@@ -1,16 +1,17 @@
 /**
  * Message lisible d'une erreur d'API pour l'utilisateur : le message du back s'il en envoie un
  * (il est déjà rédigé pour l'utilisateur), sinon un repli clair — jamais `undefined`, jamais
- * « Internal server error » (toute erreur 5xx renvoie le repli). Gère `message: string | string[]` (ValidationPipe renvoie un tableau).
+ * « Internal server error » (une erreur 500 renvoie le repli). Gère `message: string | string[]` (ValidationPipe renvoie un tableau).
  *
  * PUR : lit seulement `err.error.message`, présent sur un `HttpErrorResponse` Angular comme sur
  * tout objet de même forme — utilisable par l'app ET l'admin sans importer Angular.
  */
 export function apiErrorMessage(err: unknown, fallback: string): string {
-  // Erreur serveur (5xx) : le message du back est générique, le repli de l'écran dit mieux
-  // ce qui a échoué (« Ton débrief n'a pas pu être chargé… »).
+  // Erreur inattendue (500) : le message du back est générique, le repli de l'écran dit mieux
+  // ce qui a échoué (« Ton débrief n'a pas pu être chargé… »). Les 503 gardent le message du
+  // back, rédigé pour l'utilisateur (« La connexion Tradovate n'est pas encore disponible »).
   const status = (err as { status?: unknown } | null | undefined)?.status;
-  if (typeof status === 'number' && status >= 500) return fallback;
+  if (status === 500) return fallback;
 
   const body = (err as { error?: unknown } | null | undefined)?.error;
   const msg = (body as { message?: unknown } | null | undefined)?.message;
