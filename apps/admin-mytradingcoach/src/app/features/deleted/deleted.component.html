@@ -1,0 +1,67 @@
+<div class="screen">
+  <div class="page-head">
+    <div class="page-title">Comptes supprimés</div>
+    <span class="page-meta">infos conservées 90j puis anonymisées</span>
+  </div>
+
+  @if (data(); as d) {
+    <div class="del-body">
+      <div class="del-left">
+        <div class="kpi-strip cols-2">
+          <div class="kpi"><div class="kpi-top red"></div><div class="kpi-label">Supprimés ce mois</div><div class="kpi-value red">{{ d.stats.thisMonth }}</div><div class="kpi-sub">{{ monthLabel }}</div></div>
+          <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Total supprimés</div><div class="kpi-value amber">{{ d.stats.total }}</div><div class="kpi-sub">depuis le lancement</div></div>
+          <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Durée de vie médiane</div><div class="kpi-value blue">{{ d.stats.medianLifetimeDays }}j</div><div class="kpi-sub">inscription → suppression</div></div>
+          <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Partis sans trade</div><div class="kpi-value purple">{{ d.stats.noTradePct }}%</div><div class="kpi-sub">{{ d.stats.noTradeCount }} / {{ d.stats.total }} jamais tradé</div></div>
+        </div>
+        <div class="card grow">
+          <div class="card-head"><span class="card-label">Suppressions par mois</span></div>
+          <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="monthConfig()" /></div></div>
+        </div>
+        <div class="card grow">
+          <div class="card-head"><span class="card-label">Motifs de départ</span><span class="card-label muted">si renseigné</span></div>
+          <!-- Sans suppression, le donut ne dessinait rien : la carte se lisait comme
+               un bloc casse plutot que comme une absence de donnees. byReason n'est
+               vide QUE si la table l'est (un motif nul devient « Non renseigne », qui
+               reste une entree) — d'ou le meme libelle que la liste voisine. -->
+          <div class="card-body">
+            @if (d.byReason.length) {
+              <div class="chart-box"><mtc-admin-chart [config]="reasonConfig()" /></div>
+            } @else {
+              <div class="empty" data-testid="reason-empty">Aucun compte supprimé</div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="del-right">
+        <div class="card fill">
+          <div class="card-head"><span class="card-label">Historique des suppressions</span><span class="card-label muted">anonymisation auto après 90j</span></div>
+          <table class="tbl">
+            <thead><tr><th>Utilisateur</th><th>Inscrit le</th><th>Supprimé le</th><th>Durée de vie</th><th>Plan</th><th>A tradé</th><th>Parrainé par</th><th>Par</th><th>Motif</th></tr></thead>
+            <tbody>
+              @for (a of d.accounts; track a.id) {
+                <tr>
+                  <td data-label="Utilisateur"><div class="u-cell"><div class="u-av del-av">{{ initials(a) }}</div><div><div class="u-name">{{ a.name ?? 'anonymisé' }}</div><div class="u-mail">{{ a.email ?? '-' }}</div></div></div></td>
+                  <td data-label="Inscrit le" class="td-mono muted">{{ a.signedUpAt | date:'dd/MM/yyyy' }}</td>
+                  <td data-label="Supprimé le" class="td-mono" [style.color]="isDeletedToday(a.deletedAt) ? 'var(--red)' : null">{{ a.deletedAt | date:'dd/MM/yyyy' }}</td>
+                  <td data-label="Durée de vie" class="td-mono">{{ lifetime(a.lifetimeDays) }}</td>
+                  <td data-label="Plan"><span class="badge" [class.b-premium]="a.plan==='PREMIUM'" [class.b-free]="a.plan==='FREE'">{{ a.plan }}</span></td>
+                  <td data-label="A tradé">@if (a.hadTraded) { <span class="badge b-ok">oui</span> } @else { <span class="badge b-free">jamais</span> }</td>
+                  <td data-label="Parrainé par" class="td-mono" [class.muted]="!a.referredBy" [class.ref]="a.referredBy">{{ a.referredBy ?? '-' }}</td>
+                  <td data-label="Par"><span class="role-tag">{{ a.deletedBy === 'self' ? 'utilisateur' : 'admin' }}</span></td>
+                  <td data-label="Motif" class="td-mono" [class.muted]="!a.reason">{{ a.reason ?? '-' }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="9" class="empty">Aucun compte supprimé</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  } @else if (error()) {
+    <div class="card"><div class="empty">⚠ {{ error() }}</div></div>
+  } @else {
+    <div class="card"><div class="empty">Chargement…</div></div>
+  }
+</div>

@@ -15,65 +15,7 @@ import { AuthService } from '../../core/auth/auth.service';
   imports: [FormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './login.component.css',
-  template: `
-    <div class="auth-page">
-      <div class="bg-glow"></div>
-
-      <div class="auth-card">
-        <div class="auth-logo">
-          <img src="icon/logo-navbar.svg" alt="MyTradingCoach" />
-        </div>
-
-        <h1 class="auth-title">Mot de passe oublié ?</h1>
-        <p class="auth-subtitle">
-          Saisis ton email : on t'envoie un lien de réinitialisation
-        </p>
-
-        @if (success()) {
-          <div class="success-msg">
-            Si un compte existe pour cet email, un lien t'a été envoyé. Vérifie
-            ta boîte mail (et les spams).
-          </div>
-        }
-
-        @if (error()) {
-          <div class="error-msg">{{ error() }}</div>
-        }
-
-        @if (!success()) {
-          <form (ngSubmit)="onSubmit()" #form="ngForm">
-            <div class="form-group">
-              <label for="email">Email</label>
-              <input
-                id="email"
-                type="email"
-                [(ngModel)]="email"
-                name="email"
-                required
-                placeholder="trader@email.com"
-                autocomplete="email"
-              />
-            </div>
-            <button
-              type="submit"
-              [disabled]="isLoading() || !email"
-              class="btn-submit"
-            >
-              @if (isLoading()) {
-                <span class="spinner"></span> Envoi...
-              } @else {
-                Envoyer le lien
-              }
-            </button>
-          </form>
-        }
-
-        <p class="auth-link">
-          <a routerLink="/login">← Retour à la connexion</a>
-        </p>
-      </div>
-    </div>
-  `,
+  templateUrl: './forgot-password.component.html',
 })
 export class ForgotPasswordComponent {
   private readonly auth = inject(AuthService);
