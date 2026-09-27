@@ -127,7 +127,7 @@
   margin-bottom: 6px;
 }
 .badge-label {
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   color: var(--text-3);
 }
 

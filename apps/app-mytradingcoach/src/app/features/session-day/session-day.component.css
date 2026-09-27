@@ -14,7 +14,7 @@
 }
 .sd-acct-lbl {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--fs-2xs);
   font-weight: 600;
   letter-spacing: .6px;
   text-transform: uppercase;
@@ -131,9 +131,9 @@
 }
 .mtc-ap-left { display: flex; align-items: center; gap: 8px; }
 .mtc-ap-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: mtc-blink 1.6s ease infinite; flex-shrink: 0; }
-.mtc-ap-lbl { font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; color: var(--green); letter-spacing: .5px; }
+.mtc-ap-lbl { font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 600; color: var(--green); letter-spacing: .5px; }
 .mtc-ap-timer { font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: .5px; font-variant-numeric: tabular-nums; }
-.mtc-pill-acct { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); }
+.mtc-pill-acct { font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3); }
 .mtc-ap-close {
   display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 9px;
   cursor: pointer; border: 1px solid var(--border); background: var(--bg-2); color: var(--text);
@@ -184,9 +184,9 @@
 }
 .cb-ic { font-size: 13px; color: var(--green); }
 .cb-t  { font-size: 11px; font-weight: 600; color: var(--green); }
-.cb-d  { font-size: 10px; color: var(--text-3); font-family: var(--font-mono); }
+.cb-d  { font-size: var(--fs-2xs); color: var(--text-3); font-family: var(--font-mono); }
 .saved-pill {
-  font-size: 10px; font-family: var(--font-mono); color: var(--green);
+  font-size: var(--fs-2xs); font-family: var(--font-mono); color: var(--green);
   background: rgba(16,185,129,.1); border-radius: 6px; padding: 2px 8px;
 }
 
@@ -299,7 +299,7 @@
   display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
 .score-val { font-family: var(--font-mono); font-size: 21px; font-weight: 700; color: var(--text); line-height: 1; }
-.score-unit { font-size: 10px; color: var(--text-3); font-family: var(--font-mono); }
+.score-unit { font-size: var(--fs-2xs); color: var(--text-3); font-family: var(--font-mono); }
 .score-label-wrap { min-width: 0; }
 .score-label { font-family: var(--font-display); font-size: 16px; font-weight: 700; }
 .score-desc { font-size: 12px; color: var(--text-3); margin-top: 2px; line-height: 1.3; }
@@ -316,7 +316,7 @@
 .dtc-icon { font-size: 16px; }
 .dtc-title { font-family: var(--font-display); font-size: 13px; font-weight: 600; color: var(--text); }
 .dtc-asset { font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; gap: 9px; }
-.dtc-side { font-family: var(--font-mono); font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 6px; }
+.dtc-side { font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 600; padding: 2px 7px; border-radius: 6px; }
 .dtc-side.long { background: var(--green-dim); color: var(--green); }
 .dtc-side.short { background: var(--red-dim); color: var(--red); }
 .dtc-row { display: flex; align-items: center; gap: 14px; font-family: var(--font-mono); font-size: 12px; }
@@ -354,7 +354,7 @@
 .obj-check-manual { width: 16px; height: 16px; flex-shrink: 0; accent-color: var(--blue); cursor: pointer; }
 .obj-body { flex: 1; min-width: 0; }
 .obj-title { font-size: 12.5px; color: var(--text-2); display: block; }
-.obj-detail { font-size: 10px; color: var(--red); font-family: var(--font-mono); display: block; margin-top: 2px; }
+.obj-detail { font-size: var(--fs-2xs); color: var(--red); font-family: var(--font-mono); display: block; margin-top: 2px; }
 
 /* Journal de session pleine hauteur */
 .session-journal {

@@ -204,7 +204,7 @@
 }
 .interval-opt.active .interval-save { background: rgba(255,255,255,.22); color: #fff; }
 .interval-save {
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   font-weight: 700;
   color: var(--green);
   background: rgba(16,185,129,.12);

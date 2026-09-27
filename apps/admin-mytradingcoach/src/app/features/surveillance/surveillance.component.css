@@ -1,7 +1,7 @@
 /* Surveillance — layout (surv-main, gauges, ct-*, kpi, card, pill, icon-btn,
    log-*) hérité du design system global. Ici : le spécifique de l'écran. */
 
-.refresh-btn { background: none; border: none; cursor: pointer; color: var(--text3); font-family: var(--mono); font-size: 10px; display: inline-flex; align-items: center; gap: 6px; }
+.refresh-btn { background: none; border: none; cursor: pointer; color: var(--text3); font-family: var(--mono); font-size: var(--fs-2xs); display: inline-flex; align-items: center; gap: 6px; }
 .refresh-btn:disabled { opacity: .5; cursor: default; }
 
 .kpi-strip { margin-bottom: 20px; }
@@ -59,7 +59,7 @@
 .drawer .log-terminal { flex: 1; min-height: 0; height: auto; }
 
 @media (max-width: 767px) {
-  .ct-meta { font-size: 9px; gap: 8px; }
+  .ct-meta { font-size: var(--fs-2xs); gap: 8px; }
   .ct-acts .pill { padding: 4px 9px; }
   .ub { width: 4px; height: 22px; }
 }

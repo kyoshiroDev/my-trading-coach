@@ -86,7 +86,7 @@
   gap: 10px;
 }
 .tb-quota-lab {
-  font-size: 10.5px;
+  font-size: var(--fs-2xs);
   color: var(--text-3);
 }
 .tb-quota-count {

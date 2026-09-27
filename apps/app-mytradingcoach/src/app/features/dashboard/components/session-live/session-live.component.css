@@ -90,7 +90,7 @@
 .mini-stat-val.green { color: var(--green); text-shadow: 0 0 18px rgba(16,185,129,.33); }
 .mini-stat-val.red { color: var(--red); text-shadow: 0 0 18px rgba(239,68,68,.33); }
 .mini-stat-val.blue { color: var(--blue-bright); }
-.mini-stat-lbl { font-size: 10.5px; color: var(--text-3); margin-top: 2px; }
+.mini-stat-lbl { font-size: var(--fs-2xs); color: var(--text-3); margin-top: 2px; }
 
 /* ─── Live layout ─── */
 /* 2 colonnes : zone gauche (stats + calendrier + live feed) | Trade rapide pleine hauteur */

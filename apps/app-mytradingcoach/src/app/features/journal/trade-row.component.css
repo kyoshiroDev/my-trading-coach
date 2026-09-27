@@ -10,7 +10,7 @@
       }
 
       .side-badge {
-        font-size: 10px;
+        font-size: var(--fs-2xs);
         font-family: var(--font-mono);
         font-weight: 600;
         padding: 2px 8px;
@@ -53,7 +53,7 @@
         display: inline-flex;
         align-items: center;
         gap: 5px;
-        font-size: 10px;
+        font-size: var(--fs-2xs);
         font-family: var(--font-mono);
         background: var(--bg-3);
         color: var(--text-2);

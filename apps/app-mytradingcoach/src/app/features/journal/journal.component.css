@@ -135,7 +135,7 @@
 }
 .import-btn:hover { background: rgba(59, 130, 246, 0.08); border-color: var(--blue); }
 .import-locked { opacity: 0.6; }
-.lock-badge { font-size: 10px; }
+.lock-badge { font-size: var(--fs-2xs); }
 
 /* ── Résumé période ── */
 .period-summary {
@@ -156,7 +156,7 @@
   border-right: 1px solid var(--border);
 }
 .period-stat:last-child { border-right: none; }
-.period-label     { font-size: 9px; font-family: var(--font-mono); color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; }
+.period-label     { font-size: var(--fs-2xs); font-family: var(--font-mono); color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; }
 .period-value     { font-size: 14px; font-weight: 600; font-family: var(--font-mono); color: var(--text); }
 
 /* ── Wrapper journal ── */
@@ -177,7 +177,7 @@
   gap: 0;
 }
 .table-header > span {
-  font-size: 9px;
+  font-size: var(--fs-2xs);
   font-family: var(--font-mono);
   font-weight: 600;
   color: var(--text-3);
@@ -235,12 +235,12 @@
 .day-count      { color: var(--text-3); }
 .day-dot        { color: var(--text-3); opacity: 0.4; }
 .day-winrate    { color: var(--text-2); }
-.day-commission { color: var(--red); font-size: 10px; }
+.day-commission { color: var(--red); font-size: var(--fs-2xs); }
 .day-pnl        { font-weight: 700; font-size: 12px; }
 .day-pnl.positive { color: var(--green); }
 .day-pnl.negative { color: var(--red); }
 .day-fees {
-  font-size: 10px; font-family: var(--font-mono);
+  font-size: var(--fs-2xs); font-family: var(--font-mono);
   color: var(--red); opacity: 0.7; cursor: help;
 }
 
@@ -371,7 +371,7 @@
 }
 .trade-row:hover { background: var(--bg-2); }
 
-.td-time { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); white-space: nowrap; }
+.td-time { font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3); white-space: nowrap; }
 .td-asset { font-weight: 600; font-family: var(--font-mono); font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .td-price, .td-qty, .td-rr { font-family: var(--font-mono); font-size: 12px; color: var(--text-2); }
 .td-pnl { font-family: var(--font-mono); font-size: 12px; font-weight: 600; }
@@ -380,18 +380,18 @@
 .trade-side {
   display: inline-flex; align-items: center; justify-content: center;
   width: 46px; height: 20px; border-radius: 4px;
-  font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
+  font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 600; letter-spacing: 0.5px;
 }
 .trade-side.long  { background: var(--green-dim); color: var(--green); }
 .trade-side.short { background: var(--red-dim);   color: var(--red); }
 
 .emotion-cell { display: inline-flex; align-items: center; gap: 5px; }
-.emotion-text { font-size: 10px; color: var(--text-3); font-family: var(--font-mono); }
+.emotion-text { font-size: var(--fs-2xs); color: var(--text-3); font-family: var(--font-mono); }
 
 /* Note d'exécution calculée (PROMPT-161) — badge coloré, « — » si non évaluée. */
 .grade-badge {
   display: inline-flex; align-items: center;
-  font-size: 10.5px; font-weight: 600; line-height: 1;
+  font-size: var(--fs-2xs); font-weight: 600; line-height: 1;
   padding: 3px 8px; border-radius: 6px; white-space: nowrap;
   border: 1px solid transparent; cursor: default;
 }
@@ -400,12 +400,12 @@
 .grade-badge[data-grade='MOYEN']     { background: rgba(245,158,11,.14); color: var(--amber, #f59e0b); border-color: rgba(245,158,11,.28); }
 .grade-badge[data-grade='MAUVAIS']   { background: var(--red-dim); color: var(--red); border-color: rgba(239,68,68,.25); }
 /* État vide de la note d'exécution : discret (text-3), jamais un badge coloré (PROMPT-167). */
-.exec-none { color: var(--text-3); font-family: var(--font-mono); font-size: 10.5px; }
+.exec-none { color: var(--text-3); font-family: var(--font-mono); font-size: var(--fs-2xs); }
 .td-exec { display: inline-flex; align-items: center; }
 
 .setup-badge {
   display: inline-flex; align-items: center; gap: 5px;
-  font-size: 10px; font-family: var(--font-mono);
+  font-size: var(--fs-2xs); font-family: var(--font-mono);
   background: var(--bg-3); border: 1px solid var(--border);
   padding: 2px 6px; border-radius: 4px; color: var(--text-2);
   text-transform: uppercase;
@@ -462,6 +462,6 @@
   .td-pnl    { grid-column: 3; grid-row: 2; font-size: 12px; }
   .td-actions { grid-column: 4; grid-row: 1 / 3; }
   .day-label { font-size: 12px; }
-  .day-stats { font-size: 10px; gap: 5px; }
+  .day-stats { font-size: var(--fs-2xs); gap: 5px; }
   .day-winrate, .day-commission { display: none; }
 }

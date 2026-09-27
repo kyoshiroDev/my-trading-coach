@@ -142,7 +142,7 @@
 }
 .recap-stat-val.green { color: var(--green); }
 .recap-stat-val.red { color: var(--red); }
-.recap-stat-lbl { font-size: 10.5px; color: var(--text-3); margin-top: 3px; }
+.recap-stat-lbl { font-size: var(--fs-2xs); color: var(--text-3); margin-top: 3px; }
 
 /* Encart IA « one-liner » */
 .ai-oneliner {
@@ -193,7 +193,7 @@
 }
 .obj-text.striked { text-decoration: line-through; color: var(--text-3); }
 .obj-note-preview { font-size: 11px; color: var(--text-3); font-style: italic; margin-top: 3px; }
-.obj-note-icon { font-size: 10px; color: var(--text-3); flex-shrink: 0; cursor: pointer; padding: 2px 4px; }
+.obj-note-icon { font-size: var(--fs-2xs); color: var(--text-3); flex-shrink: 0; cursor: pointer; padding: 2px 4px; }
 
 .obj-note-panel {
   background: var(--bg-2);
@@ -243,7 +243,7 @@
 .obj-note-save:disabled { opacity: .5; cursor: not-allowed; }
 .obj-bdg {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-2xs);
   letter-spacing: .4px;
   color: var(--text-3);
   padding: 2px 7px;
@@ -254,7 +254,7 @@
 }
 .obj-footer {
   margin-top: 10px;
-  font-size: 10.5px;
+  font-size: var(--fs-2xs);
   color: var(--text-faint);
   font-style: italic;
 }
@@ -286,7 +286,7 @@
 
 .ai-badge {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-2xs);
   font-weight: 600;
   padding: 2px 7px;
   border-radius: 6px;
@@ -408,14 +408,14 @@
 .eco-flag { font-size: 14px; line-height: 1; flex-shrink: 0; }
 .eco-event-body { flex: 1; min-width: 0; }
 .eco-event-name { font-size: 12.5px; color: var(--text); font-weight: 500; }
-.eco-event-detail { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-3); margin-top: 1px; }
+.eco-event-detail { font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3); margin-top: 1px; }
 .eco-actual { font-weight: 700; }
 .eco-actual.beat { color: var(--green); }
 .eco-actual.miss { color: var(--red); }
 .eco-sep { color: var(--text-3); opacity: .5; margin: 0 2px; }
 .eco-asset-tag {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   color: var(--text-3);
   padding: 2px 7px;
   border-radius: 6px;
@@ -424,7 +424,7 @@
 }
 .eco-tag {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--fs-2xs);
   font-weight: 600;
   padding: 2px 7px;
   border-radius: 6px;
@@ -434,7 +434,7 @@
 .eco-tag.medium { background: var(--yellow-dim); color: var(--yellow); }
 .eco-released-badge {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   font-weight: 700;
   color: var(--green);
   background: var(--green-dim);
@@ -443,7 +443,7 @@
   flex-shrink: 0;
 }
 .eco-unpin-btn {
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   line-height: 1;
   color: var(--text-3);
   background: var(--bg-3);
@@ -464,7 +464,7 @@
   justify-content: space-between;
   margin-top: auto;
   padding-top: 14px;
-  font-size: 10.5px;
+  font-size: var(--fs-2xs);
   color: var(--text-faint);
 }
 

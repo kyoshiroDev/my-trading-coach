@@ -19,7 +19,7 @@
   gap: 6px;
   flex-shrink: 0;
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--fs-2xs);
   font-weight: 600;
   letter-spacing: .5px;
   text-transform: uppercase;
@@ -62,7 +62,7 @@
 }
 .news-tick-tag {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-2xs);
   font-weight: 600;
   color: var(--blue-bright);
   background: var(--blue-glow);
@@ -73,7 +73,7 @@
 }
 .news-tick-title { font-size: 12px; color: var(--text-2); transition: color .15s; }
 .news-tick:hover .news-tick-title { color: var(--text); }
-.news-tick-time { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); flex-shrink: 0; }
+.news-tick-time { font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3); flex-shrink: 0; }
 .news-tick-sep { color: var(--text-3); opacity: .5; flex-shrink: 0; }
 .news-tick-sep:last-child { display: none; }
 
@@ -109,20 +109,20 @@
 }
 .nm-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .news-asset-tag {
-  font-size: 8px; font-family: var(--font-mono);
+  font-size: var(--fs-2xs); font-family: var(--font-mono);
   background: var(--blue-glow); color: var(--blue-bright);
   border: 1px solid rgba(59,130,246,.18); padding: 1px 5px;
   border-radius: 3px; flex-shrink: 0;
 }
-.news-sentiment { font-size: 8px; font-family: var(--font-mono); padding: 1px 5px; border-radius: 3px; flex-shrink: 0; }
+.news-sentiment { font-size: var(--fs-2xs); font-family: var(--font-mono); padding: 1px 5px; border-radius: 3px; flex-shrink: 0; }
 .news-sentiment.bull    { background: var(--green-dim); color: var(--green); }
 .news-sentiment.bear    { background: var(--red-dim);   color: var(--red);   }
 .news-sentiment.neutral { background: var(--bg-3);      color: var(--text-3); }
 .nm-source {
-  font-family: var(--font-mono); font-size: 9px; color: var(--text-3);
+  font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3);
   background: var(--bg-3); padding: 1px 6px; border-radius: 3px;
 }
-.nm-date { font-size: 9px; font-family: var(--font-mono); color: var(--text-3); }
+.nm-date { font-size: var(--fs-2xs); font-family: var(--font-mono); color: var(--text-3); }
 .nm-close {
   background: none; border: none; color: var(--text-3); cursor: pointer;
   font-size: 14px; padding: 2px 6px; border-radius: 4px;

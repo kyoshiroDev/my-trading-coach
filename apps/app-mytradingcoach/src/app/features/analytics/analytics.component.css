@@ -37,7 +37,7 @@
 }
 
 .stat-label {
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   font-family: var(--font-mono);
   font-weight: 400;
   color: var(--text-3);
@@ -78,7 +78,7 @@
 }
 
 .separator-label {
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   font-family: var(--font-mono);
   color: var(--text-3);
   letter-spacing: 1px;
@@ -222,7 +222,7 @@
 }
 
 .legend-txt {
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   font-family: var(--font-mono);
   color: var(--text-3);
   margin-right: 6px;
@@ -244,7 +244,7 @@
 }
 
 .heatmap-hour-th {
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   color: var(--text-3);
   font-family: var(--font-mono);
   text-align: center;
@@ -255,7 +255,7 @@
 .heatmap-day-td {
   font-weight: 400;
   text-align: left;
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   color: var(--text-3);
   font-family: var(--font-mono);
   padding: 3px 8px 3px 0;
@@ -267,7 +267,7 @@
   border-radius: 6px;
   padding: 0;
   text-align: center;
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   font-family: var(--font-mono);
   font-weight: 700;
   white-space: nowrap;
@@ -315,7 +315,7 @@
 }
 
 .perf-table th {
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   font-family: var(--font-mono);
   font-weight: 500;
   color: var(--text-3);

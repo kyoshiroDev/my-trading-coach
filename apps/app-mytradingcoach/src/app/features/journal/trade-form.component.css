@@ -135,7 +135,7 @@
 
 /* ─── Labels ─── */
 .section-label {
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   font-family: var(--font-mono);
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -163,7 +163,7 @@
 }
 
 .optional {
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   color: var(--text-3);
   font-weight: 400;
 }
@@ -464,7 +464,7 @@ input[type='date'] {
 }
 
 .pnl-label {
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   font-family: var(--font-mono);
   color: var(--text-3);
   text-transform: uppercase;
@@ -521,7 +521,7 @@ input[type='date'] {
 }
 
 .rr-label {
-  font-size: 9px;
+  font-size: var(--fs-2xs);
   font-family: var(--font-mono);
   color: var(--text-3);
   text-transform: uppercase;

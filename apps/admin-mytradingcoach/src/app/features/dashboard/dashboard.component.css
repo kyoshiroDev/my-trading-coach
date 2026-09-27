@@ -31,7 +31,7 @@
 
 .st.down { background: var(--red); }
 
-.status-dot.live { font-size: 9px; letter-spacing: .1em; }
+.status-dot.live { font-size: var(--fs-2xs); letter-spacing: .1em; }
 
 .rail-body { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 

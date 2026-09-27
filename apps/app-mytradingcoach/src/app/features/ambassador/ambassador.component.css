@@ -19,7 +19,7 @@
 @media (max-width: 880px) { .hero { grid-template-columns: 1fr; } }
 
 .link-card { background: linear-gradient(135deg, #3b82f618, #8b5cf610); border: 1px solid var(--border-hover); border-radius: 14px; padding: 22px 24px; box-shadow: 0 22px 50px -28px rgba(59, 130, 246, .4); }
-.link-lbl { font-family: var(--font-mono); font-size: 10px; color: var(--blue-bright); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 12px; }
+.link-lbl { font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--blue-bright); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 12px; }
 .link-row { display: flex; gap: 9px; }
 .link-input { flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--border-hover); border-radius: 9px; padding: 13px 15px; font-family: var(--font-mono); font-size: 13.5px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .btn { border: none; border-radius: 9px; font-family: var(--font-body); font-weight: 700; font-size: 13.5px; cursor: pointer; padding: 13px 20px; }
@@ -32,13 +32,13 @@
 .comm-pct { font-family: var(--font-display); font-size: 44px; font-weight: 800; background: linear-gradient(90deg, var(--blue-bright), var(--violet)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; line-height: 1; }
 .comm-txt { font-size: 13px; color: var(--text-2); margin-top: 8px; }
 .comm-txt b { color: var(--text); font-weight: 600; }
-.comm-pill { display: inline-block; margin-top: 12px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .4px; color: var(--green); background: var(--green-dim); padding: 4px 9px; border-radius: 6px; align-self: flex-start; }
+.comm-pill { display: inline-block; margin-top: 12px; font-family: var(--font-mono); font-size: var(--fs-2xs); letter-spacing: .4px; color: var(--green); background: var(--green-dim); padding: 4px 9px; border-radius: 6px; align-self: flex-start; }
 
 /* ── STATS ── */
 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 18px; }
 .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 13px; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
 .stat-text { min-width: 0; }
-.stat-lbl { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: .6px; }
+.stat-lbl { font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3); text-transform: uppercase; letter-spacing: .6px; }
 .stat-v { font-family: var(--font-display); font-size: 26px; font-weight: 700; margin: 7px 0 2px; }
 .stat-foot { font-size: 11px; color: var(--text-3); }
 .stat-ic { flex-shrink: 0; width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, currentColor 13%, transparent); }
@@ -85,8 +85,8 @@
 .f-mid { flex: 1; min-width: 0; }
 .f-name { font-size: 13.5px; font-weight: 600; color: var(--text); display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 .f-date { font-size: 11.5px; color: var(--text-3); font-family: var(--font-mono); margin-top: 2px; }
-.f-plan { font-family: var(--font-mono); font-size: 10px; padding: 3px 8px; border-radius: 5px; background: var(--bg-3); border: 1px solid var(--border); color: var(--text-2); }
-.f-status { font-family: var(--font-mono); font-size: 10px; padding: 3px 9px; border-radius: 5px; letter-spacing: .4px; }
+.f-plan { font-family: var(--font-mono); font-size: var(--fs-2xs); padding: 3px 8px; border-radius: 5px; background: var(--bg-3); border: 1px solid var(--border); color: var(--text-2); }
+.f-status { font-family: var(--font-mono); font-size: var(--fs-2xs); padding: 3px 9px; border-radius: 5px; letter-spacing: .4px; }
 .st-paid { background: var(--green-dim); color: var(--green); }
 .st-signed { background: var(--blue-glow); color: var(--blue-bright); }
 .f-comm { font-family: var(--font-mono); font-size: 13px; min-width: 100px; text-align: right; font-weight: 500; white-space: nowrap; }

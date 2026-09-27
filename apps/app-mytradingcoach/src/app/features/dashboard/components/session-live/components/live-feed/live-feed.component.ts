@@ -84,7 +84,7 @@ import { netPnl } from '@mtc/shared';
                     <button aria-label="Annuler" class="close-btn-cancel" (click)="cancelClose()">✕</button>
                   </div>
                   @if (exitPriceInput()) {
-                    <div data-testid="trade-close-type" style="margin-top:6px;font-size:10px;color:var(--text-3);font-family:var(--font-mono);">
+                    <div data-testid="trade-close-type" style="margin-top:6px;font-size:var(--fs-2xs);color:var(--text-3);font-family:var(--font-mono);">
                       → {{ detectCloseType(trade, exitPriceInput()) }}
                     </div>
                   }

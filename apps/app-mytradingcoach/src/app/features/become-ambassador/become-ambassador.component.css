@@ -18,7 +18,7 @@
 .comm-body { min-width: 0; }
 .comm-txt { font-size: 13.5px; color: var(--text-2); line-height: 1.55; }
 .comm-txt b { color: var(--text); font-weight: 600; }
-.comm-pill { display: inline-block; margin-top: 11px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .4px; color: var(--green); background: var(--green-dim); padding: 4px 9px; border-radius: 6px; }
+.comm-pill { display: inline-block; margin-top: 11px; font-family: var(--font-mono); font-size: var(--fs-2xs); letter-spacing: .4px; color: var(--green); background: var(--green-dim); padding: 4px 9px; border-radius: 6px; }
 @media (max-width: 560px) { .comm { flex-direction: column; align-items: flex-start; gap: 12px; } }
 
 /* ── conditions (pleine largeur, items en 2 colonnes) ── */
@@ -42,8 +42,8 @@
 
 /* formulaire */
 .field-lbl { display: block; font-size: 12.5px; color: var(--text-2); margin: 0 0 7px; }
-.req { font-family: var(--font-mono); font-size: 10px; color: var(--blue-bright); margin-left: 5px; }
-.opt { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); margin-left: 5px; }
+.req { font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--blue-bright); margin-left: 5px; }
+.opt { font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3); margin-left: 5px; }
 .field { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 9px; padding: 11px 13px; color: var(--text); font-family: var(--font-body); font-size: 13.5px; resize: vertical; }
 .field:focus { outline: none; border-color: var(--blue); }
 .field::placeholder { color: var(--text-3); }

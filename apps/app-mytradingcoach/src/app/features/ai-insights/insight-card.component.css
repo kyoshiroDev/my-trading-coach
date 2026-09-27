@@ -49,7 +49,7 @@
       }
 
       .insight-tag {
-        font-size: 10px;
+        font-size: var(--fs-2xs);
         font-family: var(--font-mono);
         padding: 2px 8px;
         border-radius: 4px;
