@@ -98,6 +98,10 @@ async function bootstrap() {
   await redisIoAdapter.connectToRedis();
   app.useWebSocketAdapter(redisIoAdapter);
 
+  // SIGTERM (arrêt du conteneur) : Nest appelle les onModuleDestroy (Redis, Prisma, BullMQ…)
+  // au lieu de couper les connexions et les jobs en plein milieu.
+  app.enableShutdownHooks();
+
   const port = process.env['PORT'] ?? 3000;
   await app.listen(port);
   logger.log(`Worker ${process.pid} running on: http://localhost:${port}/api`);
@@ -108,15 +112,43 @@ if (cluster.isPrimary && process.env['NODE_ENV'] === 'production') {
   const numWorkers = availableParallelism();
   logger.log(`Primary ${process.pid} starting ${numWorkers} workers...`);
 
+  // Garde-fou contre une boucle de plantages (ex. bug au démarrage) : relance avec un délai
+  // croissant, et abandon au-delà de MAX_RESTARTS en une minute. Le process principal sort
+  // alors en erreur et Docker (restart: unless-stopped) redémarre le conteneur proprement.
+  const MAX_RESTARTS = 5;
+  const RESTART_WINDOW_MS = 60_000;
+  const recentRestarts: number[] = [];
+  let shuttingDown = false;
+
   function forkWorker(isCronWorker: boolean) {
     const worker = cluster.fork({ IS_CRON_WORKER: String(isCronWorker) });
     worker.on('exit', (code) => {
-      logger.warn(
-        `Worker ${worker.process.pid} died (code ${code}). Restarting...`,
-      );
-      forkWorker(isCronWorker);
+      if (shuttingDown) return;
+      const now = Date.now();
+      while (recentRestarts.length && now - recentRestarts[0] > RESTART_WINDOW_MS) recentRestarts.shift();
+      recentRestarts.push(now);
+      if (recentRestarts.length > MAX_RESTARTS) {
+        logger.error(`${recentRestarts.length} workers morts en moins d'une minute : arrêt du process principal.`);
+        process.exit(1);
+      }
+      const delayMs = Math.min(30_000, 1_000 * 2 ** (recentRestarts.length - 1));
+      logger.warn(`Worker ${worker.process.pid} died (code ${code}). Restart in ${delayMs} ms...`);
+      setTimeout(() => forkWorker(isCronWorker), delayMs);
     });
   }
+
+  // Arrêt du conteneur (docker stop → SIGTERM) : on transmet aux workers, qui ferment
+  // proprement leurs connexions (enableShutdownHooks), sans les relancer.
+  const shutdown = (signal: NodeJS.Signals) => {
+    shuttingDown = true;
+    logger.log(`${signal} reçu : arrêt des workers...`);
+    for (const worker of Object.values(cluster.workers ?? {})) worker?.kill(signal);
+    cluster.on('exit', () => {
+      if (Object.keys(cluster.workers ?? {}).length === 0) process.exit(0);
+    });
+  };
+  process.once('SIGTERM', shutdown);
+  process.once('SIGINT', shutdown);
 
   // 1 seul worker gère les crons pour éviter les doublons
   forkWorker(true);
