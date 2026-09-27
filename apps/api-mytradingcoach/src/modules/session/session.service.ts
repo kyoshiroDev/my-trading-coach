@@ -6,27 +6,11 @@ import { MoodState, Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../shared/redis.service';
 import { AccountsService } from '../accounts/accounts.service';
-import { computeTradeStats, netPnl } from '@mtc/shared';
+import { computeTradeStats, netPnl, toParisDateStr } from '@mtc/shared';
+import type { SessionHistoryItem } from '@mtc/shared';
 
-export interface SessionHistoryItem {
-  id: string;
-  startedAt: string;
-  endedAt?: string;
-  moodStart?: MoodState | null;
-  moodEnd?: MoodState | null;
-  totalPnl?: number | null;
-  totalTrades: number;
-  winRate?: number | null;
-  notes?: string | null;
-  reflectionNote?: string | null;
-  reflectionQuestion?: string | null;
-  planNote?: string | null;
-  marketContext?: string | null;
-  maxDrawdown?: number | null;
-  bestTradePnl?: number | null;
-  bestTradeAsset?: string | null;
-  topAssets: string[];
-}
+// Forme de GET /session/history : contrat partagé avec le front (@mtc/shared).
+export type { SessionHistoryItem };
 
 @Injectable()
 export class SessionService {
@@ -211,6 +195,8 @@ export class SessionService {
       },
     });
 
+    const oneLiners = await this.oneLinersByParisDay(userId, rows.map((row) => row.startedAt));
+
     return rows.map((row) => {
       const assetCount = new Map<string, number>();
       for (const t of row.trades) {
@@ -239,8 +225,28 @@ export class SessionService {
         bestTradePnl: row.bestTradePnl,
         bestTradeAsset: row.bestTradeAsset,
         topAssets,
+        aiOneLiner: oneLiners.get(toParisDateStr(row.startedAt)) ?? null,
       };
     });
+  }
+
+  /**
+   * Résumés IA des récaps quotidiens couvrant ces sessions, par jour Paris (YYYY-MM-DD).
+   * Une seule requête pour toute la page (pas de requête par session).
+   */
+  private async oneLinersByParisDay(userId: string, startedAts: Date[]): Promise<Map<string, string>> {
+    if (startedAts.length === 0) return new Map();
+    const times = startedAts.map((d) => d.getTime());
+    const DAY_MS = 86_400_000;
+    const recaps = await this.prisma.dailyRecap.findMany({
+      where: {
+        userId,
+        aiOneLiner: { not: null },
+        date: { gte: new Date(Math.min(...times) - DAY_MS), lte: new Date(Math.max(...times) + DAY_MS) },
+      },
+      select: { date: true, aiOneLiner: true },
+    });
+    return new Map(recaps.map((r) => [toParisDateStr(r.date), r.aiOneLiner as string]));
   }
 
   async getSessionDetail(userId: string, sessionId: string) {
