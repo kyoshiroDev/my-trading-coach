@@ -180,7 +180,7 @@
         <span class="th-price">Exit</span>
         <span class="th-pnl">P&L
           <mtc-info-tooltip label="Comment le P&L est calculé"
-            text="Résultat net du trade, commissions et frais déduits." />
+            text="Résultat net du trade, commissions et frais déduits. Entre parenthèses : variation du prix entre l'entrée et la sortie, dans le sens du trade." />
         </span>
         <span class="th-qty">Qté</span>
         <span class="th-rr">R/R
@@ -301,7 +301,7 @@
                   <span class="td-price mono">{{ trade.entry }}</span>
                   <span class="td-price mono">{{ trade.exit ?? '-' }}</span>
                   <span class="td-pnl mono" data-testid="trade-pnl" [style.color]="trade.pnl | pnlColor">
-                    {{ trade.pnl | pnlFormat: trade.entry : trade.accountId }}
+                    {{ trade.pnl | pnlFormat: trade : trade.accountId }}
                   </span>
                   <span class="td-qty mono">{{ trade.quantity ?? 1 }}</span>
                   <span class="td-rr mono">

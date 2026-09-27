@@ -1,7 +1,10 @@
 ---
-import { APP_URL } from '../config';
+import { APP_URL, TRADERS_PUBLIC_THRESHOLD } from '../config';
 import { PREMIUM_PRICE_EUR } from '@mtc/shared';
-const { traders = 14 } = Astro.props;
+// Sous le seuil, on n'affiche pas le compteur : « 14 traders » est une preuve sociale qui
+// dessert plus qu'elle ne sert, et le prix vient de la lib partagée (aucune valeur en dur).
+const { traders = 0 } = Astro.props;
+const showTraders = traders >= TRADERS_PUBLIC_THRESHOLD;
 ---
 
 <!-- BANNER -->
@@ -16,12 +19,14 @@ const { traders = 14 } = Astro.props;
 
   <div class="hero-badge">
     <div class="bdot"></div>
-    Le premier compagnon de trading IA : multi-marché
+    <span>Le premier compagnon de trading IA : <span class="nowrap">multi-marché</span></span>
   </div>
 
-  <div class="hero-proof">
-    <span class="hero-proof-text"><strong data-traders-count>{traders}</strong> traders depuis le lancement</span>
-  </div>
+  {showTraders && (
+    <div class="hero-proof" data-traders-proof>
+      <span class="hero-proof-text"><strong data-traders-count>{traders}</strong> traders depuis le lancement</span>
+    </div>
+  )}
 
   <h1>
     Tu trades seul.<br />
@@ -103,6 +108,9 @@ const { traders = 14 } = Astro.props;
   .pulse-ring:nth-child(2) { width:500px; height:500px; }
   .pulse-ring:nth-child(3) { width:800px; height:800px; animation-delay:1.3s; border-color:rgba(34,211,238,.03); }
   .pulse-ring:nth-child(4) { width:1100px; height:1100px; animation-delay:2.6s; border-color:rgba(34,211,238,.02); }
+
+  /* Le tiret de « multi-marché » était un point de coupure sur 375 px. */
+  .nowrap { white-space: nowrap; }
 
   .hero-badge {
     display: inline-flex;

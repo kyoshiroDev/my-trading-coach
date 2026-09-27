@@ -14,7 +14,13 @@ import { describe, it, expect, vi } from 'vitest';
 
 // Chaque test lance le seed complet (hash du mot de passe + recherche du tirage) : sous la
 // charge de la suite complète, deux runs dépassent les 5 s par défaut.
-vi.setConfig({ testTimeout: 20_000 });
+//
+// 60 s et pas 20 : le test des jours ouvrés enchaîne SEPT seeds dans une seule assertion, et il
+// a été mesuré à 20,1 s — donc en échec — pendant un run de la suite entière sur une machine
+// chargée, alors qu'il tient en 30 s pour le fichier complet au repos. Un runner CI partagé est
+// plus lent qu'un poste de dev : à 20 s la marge était nulle, et l'échec ressemblait à une
+// régression de code alors que c'était l'horloge. Même valeur que `vitest.integration.config.mts`.
+vi.setConfig({ testTimeout: 60_000 });
 import { PrismaClient } from '@prisma/client';
 import { seedDemo, assertDemoCalendar, DEMO_EMAIL, DEMO_WINDOW_DAYS } from './demo-seed';
 

@@ -43,6 +43,27 @@ export function netPnl(t: TradeStatInput): number | null {
   return +(t.pnl - Math.abs(t.commission ?? 0)).toFixed(2);
 }
 
+/** Forme minimale d'un trade pour la variation de prix. */
+export interface PriceMoveInput {
+  side: 'LONG' | 'SHORT';
+  entry: number | null | undefined;
+  exit: number | null | undefined;
+}
+
+/**
+ * Variation du prix entre entrée et sortie, dans le sens du trade, en POURCENTAGE
+ * (un SHORT qui baisse est positif). `null` si le trade est ouvert ou l'entrée invalide.
+ *
+ * C'est le seul pourcentage qui a un sens pour tous les instruments. L'ancien calcul
+ * `pnl / entry` divisait des dollars par un prix : sur EUR/USD (entrée ≈ 1,08) il
+ * affichait +2764 % pour +30 $, et sur MNQ un chiffre plausible mais tout aussi faux.
+ */
+export function priceMovePct(t: PriceMoveInput): number | null {
+  if (t.entry == null || t.exit == null || !(t.entry > 0)) return null;
+  const move = (t.exit - t.entry) / t.entry;
+  return (t.side === 'SHORT' ? -move : move) * 100;
+}
+
 export interface TradeStats {
   /** Tous les trades fournis (ouverts inclus). */
   total: number;

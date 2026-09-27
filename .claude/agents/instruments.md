@@ -65,6 +65,13 @@ On ne recalcule (points × tickValue × qty) que si AUCUN pnl n'est fourni.
 taille du contrat (×10000 sur BTC). D'où la priorité au pnl réalisé du fichier. Ne jamais réintroduire
 un recalcul qui écrase un pnl réalisé fourni.
 
+## Pourcentage affiché à côté d'un P&L — variation du prix, jamais P&L / prix
+Le `%` des lignes du journal est `priceMovePct` (`@mtc/shared`) : `(exit − entry) / entry × 100`,
+signe inversé pour un SHORT. Jamais `pnl / entry` : c'est diviser des dollars par un prix, résultat
+sans unité et faux partout (EUR/USD, entrée ≈ 1,08 : +30 $ affichait **+2764 %** ; MNQ affichait
+un chiffre plausible mais tout aussi faux). Le pipe `pnlFormat` prend le trade
+(`{{ t.pnl | pnlFormat : t : t.accountId }}`), pas le prix d'entrée.
+
 ---
 
 ## Modes de calcul — `calculationMode`

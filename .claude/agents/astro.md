@@ -94,9 +94,11 @@ Règles :
 
 ### Annonce de la synchro Tradovate (PROMPT-211)
 
-- `Features.astro` (carte 07 « Synchro Tradovate & import CSV ») et `FAQ.astro` (« Quels brokers
-  sont compatibles ? ») présentent la **connexion Tradovate** (synchro auto des trades + frais, en
-  lecture seule) comme voie principale, l'import CSV pour les autres brokers et en repli.
+- `Features.astro` (carte 07 « Synchro Tradovate & import CSV ») et `FAQ.astro` (« Puis-je importer
+  mon historique ? ») présentent la **connexion Tradovate** comme voie principale : **dès la
+  connexion, les nouveaux trades + frais remontent en direct**, en lecture seule. Ne jamais écrire
+  que la synchro « rattrape » l'historique : le passé s'importe à part (export CSV Tradovate).
+  L'import CSV couvre aussi les autres brokers (audit UX 2026-09-27).
 - **Formulation factuelle uniquement (clause 17)** : jamais « Partenaire officiel de NinjaTrader »,
   « Recommandé / Approuvé par NinjaTrader » ni aucune caution. Le logo NinjaTrader reste **au seul
   footer**. Aucune promesse de gain (AMF) : on décrit ce que fait la synchro, pas un résultat.
@@ -205,3 +207,38 @@ auto-héberger les fontes (`@fontsource/*`, fin du hack `media="print" onload`).
   navigateur (accueil, un article, /ambassadeur ; bureau 2 398 px et mobile 400 px) : identique.
   La CSS générée change de forme (identifiants `data-astro-cid-*`, media queries en syntaxe
   d'intervalle `(width>=1200px)`), sans effet sur le rendu.
+
+## Règles issues de l'audit UX (2026-09-27)
+
+- **URLs de l'app** : jamais `https://app.mytradingcoach.app/...` en dur dans un `.astro`, toujours
+  `` href={`${APP_URL}/register`} `` (`src/config.ts`). Sinon la landing DEV inscrit en prod.
+  Seuls les `.md` de `content/blog/` gardent l'URL prod en dur (pas d'import possible).
+- **Compteur de traders** : n'affiche **aucun chiffre** sous `TRADERS_PUBLIC_THRESHOLD` (100,
+  `config.ts`). Hero : bloc `.hero-proof` non rendu. Testimonials : titre « Construit avec les
+  premiers traders » sans chiffre. Le script live de `index.astro` retire `[data-traders-proof]`
+  si l'API repasse sous le seuil. Côté API, la clé Redis est suffixée par l'hôte de `FRONTEND_URL`
+  (dev et prod partagent Redis db0).
+- **Chiffres de performance** (P&L, WR) dans une narration ou une capture : toujours accompagnés de
+  « exemple illustratif » / « données d'exemple » (`.day-illus` dans DayTimeline,
+  `.showcase-note` dans Showcase). Pas de promesse de progression (« tu seras meilleur »).
+- **Showcase = vraies captures, jamais de maquette** : `public/showcase/app-dashboard.webp` et
+  `app-ai.webp`, prises sur le compte démo DEV (`https://dev.app.mytradingcoach.app/demo`, Lucas
+  Mercier). Les anciens mockups (`components/mockup/`, données inventées) ont été supprimés : ils
+  dérivaient à chaque refonte de l'app. **Rafraîchir** après une refonte visible de ces écrans :
+  - Dashboard : viewport **1680×1000**, DPR 1.5, rogner le bandeau « Mode démo » (44 px en haut).
+    À 1440 px, les sparklines des cartes KPI chevauchent les montants (bug app) : ne pas descendre.
+  - IA Insights : 1440×900, DPR 2, rogné sur le contenu (sans l'en-tête, dont le bouton affiche
+    « Disponible dans 3h 60min », bug d'arrondi de l'app).
+  - PNG → WebP qualité 82 (`convert x.png -quality 82 -define webp:method=6 x.webp`, ~90-110 Ko),
+    puis mettre à jour `width`/`height` des `<img>` (zéro CLS).
+  - Journal et Analytics écartés (sept. 2026) : pourcentages P&L forex aberrants sur les EUR/USD du
+    seed démo (+2764 %), graphiques Analytics vides sur la période par défaut.
+- **Ordre de la home** : Hero → **Showcase** → Moments → DayTimeline → Features → … `Problem.astro`
+  n'est plus rendu (il redisait Moments). `CoachIA` et `Debrief` restent non rendus.
+- **Compare** : le prix MTC affiche **les deux paliers** « 0 € (Gratuit) · dès 49 € (Premium) ».
+  Jamais le Premium seul (MTC paraît le plus cher), jamais « dès 0 € » seul (laisse croire que
+  toutes les coches MTC, dont Coach IA / Weekly Debrief / recap 17h30, sont gratuites). En mobile,
+  un palier par ligne, sans le « · » (`.comp-price-part` / `.comp-price-sep`).
+- **Barre sticky mobile** (`Nav.astro`, `.nav-sticky-cta`) : masquée quand `.hero-cta-main` est à
+  l'écran (IntersectionObserver), quand le menu est ouvert (`body.nav-open`), et absente des pages
+  qui passent `<Nav stickyCta={false} />` (`/disclaimer`).

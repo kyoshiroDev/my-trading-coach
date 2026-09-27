@@ -28,7 +28,10 @@ const rows: Row[] = [
   { label: 'Recap journalier email 17h30', isNew: true, mtc: true, rivals: [false, false, false], pulse: true },
   { label: 'Import CSV universel (broker-agnostic)', mtc: true, rivals: [true, true, false] },
   { label: 'Hébergé en France 🇫🇷', mtc: true, rivals: [false, false, false] },
-  { label: 'Prix mensuel', mtc: `dès ${PREMIUM_PRICE_EUR.monthly} €/mois`, rivals: ['30-80 $', '10-29 $', '~€15'], othersLabel: '10-80 $' },
+    // Les deux paliers : « dès 0 € » seul laissait croire que toutes les coches MTC
+    // (Coach IA, débrief hebdo, récap 17h30…) sont gratuites alors qu'une partie est Premium.
+    // Prix tiré de @mtc/shared : aucune valeur en dur sur la landing.
+    { label: 'Prix mensuel', mtc: `0 € (Gratuit) · dès ${PREMIUM_PRICE_EUR.monthly} € (Premium)`, rivals: ['30-80 $', '10-29 $', '~€15'], othersLabel: '10-80 $' },
 ];
 
 type Cell = { cls: string; text: string; accent?: boolean };
@@ -81,7 +84,11 @@ const merge = (row: Row): Cell => {
                   <td class={row.hl ? 'cell-hl' : undefined}>
                     {row.label}{row.isNew && <span class="comp-new">NEW</span>}
                   </td>
-                  <td><span class={mtc.cls} style={mtc.accent ? 'color:var(--pulse)' : undefined}>{mtc.text}</span></td>
+                  <td><span class={mtc.cls} style={mtc.accent ? 'color:var(--pulse)' : undefined}>
+                    {mtc.text.split(' · ').map((part, i) => (
+                      <>{i > 0 && <span class="comp-price-sep"> · </span>}<span class="comp-price-part">{part}</span></>
+                    ))}
+                  </span></td>
                   {row.rivals.map((v) => {
                     const c = cell(v);
                     return <td class="c-rival"><span class={c.cls}>{c.text}</span></td>;
@@ -157,6 +164,13 @@ const merge = (row: Row): Cell => {
   /* Fusion mixte : au moins un concurrent propose la fonctionnalite. */
   .comp-partial { color: var(--txt3); font-family: var(--mono); font-size: 11px; }
   .comp-price { font-family: var(--mono); font-size: 12px; }
+  /* Chaque palier reste sur une ligne ; la coupure ne peut tomber qu'après le « · ». */
+  .comp-price-part { white-space: nowrap; }
+  @media (max-width: 767px) {
+    /* Colonne étroite : un palier par ligne, sans « · » orphelin entre les deux. */
+    .comp-price-sep { display: none; }
+    .comp-price-part { display: block; white-space: normal; font-size: 12px; }
+  }
   .comp-price-hl { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--pulse); }
   .comp-new {
     margin-left: 6px;

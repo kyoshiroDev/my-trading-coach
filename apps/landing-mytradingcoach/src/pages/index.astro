@@ -4,10 +4,9 @@ import Base from '../layouts/Base.astro';
 import Nav from '../components/Nav.astro';
 import Hero from '../components/Hero.astro';
 import Moments from '../components/Moments.astro';
-import Problem from '../components/Problem.astro';
+import Showcase from '../components/Showcase.astro';
 import DayTimeline from '../components/DayTimeline.astro';
 import Features from '../components/Features.astro';
-import Showcase from '../components/Showcase.astro';
 import CoachIA from '../components/CoachIA.astro';
 import Debrief from '../components/Debrief.astro';
 import MultiComptes from '../components/MultiComptes.astro';
@@ -45,7 +44,7 @@ const ARTICLES = [
 ];
 
 // Compteur de traders : fetch au build (SEO + valeur initiale), fallback si API down.
-const FALLBACK_TRADERS = 14;
+const FALLBACK_TRADERS = 0; // sous le seuil public → aucun chiffre affiché
 let traders = FALLBACK_TRADERS;
 try {
   const res = await fetch(`${API_URL}/public/stats`);
@@ -67,12 +66,12 @@ try {
 >
   <Nav />
   <Hero traders={traders} />
+  <!-- Le produit se voit dès le 2e écran ; Problem retiré, il redisait Moments (audit UX 2026-09-27). -->
+  <Showcase />
   <Moments />
-  <Problem />
   <DayTimeline />
   <Features />
   <!-- L'app en vrai (maquettes produit), puis le coach IA et le débrief : décision D2 de l'audit. -->
-  <Showcase />
   <CoachIA />
   <Debrief />
   {FEATURES.multiAccounts && <MultiComptes />}
@@ -125,16 +124,21 @@ try {
 
   <!-- Rafraîchit le compteur de traders en live (la valeur du build sert de fallback). -->
   <script>
+    import { TRADERS_PUBLIC_THRESHOLD } from '../config';
     const API = import.meta.env.PUBLIC_API_URL ?? 'https://api.mytradingcoach.app/api';
     fetch(`${API}/public/stats`)
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
         const n = j?.data?.traders;
-        if (typeof n === 'number') {
-          document
-            .querySelectorAll('[data-traders-count]')
-            .forEach((el) => { el.textContent = String(n); });
+        if (typeof n !== 'number') return;
+        // Repassé sous le seuil depuis le build → on retire le chiffre plutôt que d'afficher un petit nombre.
+        if (n < TRADERS_PUBLIC_THRESHOLD) {
+          document.querySelectorAll('[data-traders-proof]').forEach((el) => el.remove());
+          return;
         }
+        document
+          .querySelectorAll('[data-traders-count]')
+          .forEach((el) => { el.textContent = String(n); });
       })
       .catch(() => { /* API down → on garde la valeur du build */ });
   </script>
