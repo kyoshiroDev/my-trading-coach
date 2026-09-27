@@ -68,11 +68,12 @@ Stripe, Resend, Tradovate et Discord n'ont besoin de vraies clés que pour teste
 
 | Besoin | Où regarder |
 |---|---|
+| Où mettre quoi, conventions, commits, checklist de PR | `CONTRIBUTING.md` |
 | Règles globales du projet | `CLAUDE.md` |
 | Conventions détaillées par domaine (Angular, NestJS, Prisma, plans et prix, design, sécurité, tests, déploiement) | `.claude/agents/*.md` |
 | Plans, prix, fonctionnalités par plan | `.claude/agents/plans.md` et `libs/shared/src/pricing.ts` |
 | Référence visuelle de l'admin | `admin-mytradingcoach.html` |
-| Audits et plans de correction | `docs/` |
+| Audits, plans de correction, checklists de mise en prod | `docs/` (`docs/ops/`) |
 
 ## Branches et workflow
 

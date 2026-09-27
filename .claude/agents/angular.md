@@ -1,3 +1,8 @@
+---
+name: angular
+description: "Conventions de l'app et de l'admin Angular (signals, zoneless, libs front partagées, modales, erreurs, routes). À lire avant tout travail dans apps/app-mytradingcoach ou apps/admin-mytradingcoach."
+---
+
 # Agent Angular — app-mytradingcoach
 
 ## Stack

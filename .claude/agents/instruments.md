@@ -1,3 +1,8 @@
+---
+name: instruments
+description: "Calcul du P&L par instrument (futures, forex, crypto) : ticks, multiplicateurs, frais. À lire avant de toucher aux calculs de trades ou aux instruments."
+---
+
 # Agent Instruments — Calcul P&L Futures, Forex, Crypto
 
 ## Source de vérité

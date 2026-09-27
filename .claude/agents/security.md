@@ -1,3 +1,8 @@
+---
+name: security
+description: "Sécurité : authentification, JWT, guards, variables d'environnement, rate limiting. À lire avant de toucher à l'auth, aux permissions ou aux secrets."
+---
+
 # Agent Security — Auth, Guards, JWT, Variables d'env
 
 ## Stack sécurité

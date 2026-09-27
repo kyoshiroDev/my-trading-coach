@@ -1,3 +1,8 @@
+---
+name: deploy
+description: "Déploiement et infra : VPS, Docker, Traefik, nginx statique, GitHub Actions, commandes Nx. À lire avant de toucher aux workflows, docker-compose ou à la mise en production."
+---
+
 # Agent Deploy — VPS, Docker, CI/CD, Nx
 
 ## Infrastructure

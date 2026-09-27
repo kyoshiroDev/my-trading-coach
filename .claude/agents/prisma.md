@@ -1,3 +1,8 @@
+---
+name: prisma
+description: "Schéma Prisma et migrations : conventions, index, compte démo. À lire avant de modifier prisma/schema.prisma ou d'écrire une migration."
+---
+
 # Agent Prisma — Schéma & Migrations
 
 ## Commandes

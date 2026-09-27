@@ -1,3 +1,8 @@
+---
+name: astro
+description: "Conventions de la landing Astro (structure, blog en collection, JSON-LD, prix et liens partagés, conformité NinjaTrader). À lire avant tout travail dans apps/landing-mytradingcoach."
+---
+
 # Agent Astro — landing-mytradingcoach
 
 ## Stack

@@ -136,7 +136,7 @@ slot ACTIVE-only, débrief onglets, Stripe up/down) : **logique couverte par les
 `debrief-tabs.spec`/`debrief.service.spec`, `stripe-webhook.service.spec`). Le parcours
 **UI navigateur complet** exige la stack de test lancée avec users FREE/PREMIUM seedés
 (non disponible ici sans DB de test isolée) → couvert au niveau logique, à rejouer en UI
-via l'infra E2E (W3) + la checklist `SMOKE-PROD.md` post-déploiement.
+via l'infra E2E (W3) + la checklist `docs/ops/SMOKE-PROD.md` post-déploiement.
 
 ---
 
@@ -153,7 +153,7 @@ via l'infra E2E (W3) + la checklist `SMOKE-PROD.md` post-déploiement.
 
 Aucun FAIL bloquant : **OK pour déployer** sous réserve de l'action déploiement W2
 (`IS_CRON_WORKER=true` sur un seul process cron en topologie multi-conteneurs) et de la
-checklist `SMOKE-PROD.md` passée juste après le deploy.
+checklist `docs/ops/SMOKE-PROD.md` passée juste après le deploy.
 
 ## Rappel post-déploiement
 Après merge, vérifier en prod que le **recap 17h30 ne part qu'UNE fois** (un seul process

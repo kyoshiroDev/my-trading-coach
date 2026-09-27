@@ -1,6 +1,7 @@
 # MyTradingCoach — CLAUDE.md
 
 > Fichier de contexte global. Les règles techniques détaillées sont dans `.claude/agents/`.
+> Pour les humains : `CONTRIBUTING.md` (où mettre quoi, conventions, checklist de PR).
 > Claude Code lit ce fichier + les agents pertinents à chaque session.
 
 ---

@@ -1,3 +1,8 @@
+---
+name: tests
+description: "Tests Vitest et Playwright : où les écrire, comment les lancer, pièges connus. À lire avant d'ajouter ou de corriger des tests."
+---
+
 # Agent Tests — Vitest + Playwright
 
 ## Stack

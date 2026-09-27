@@ -1,3 +1,8 @@
+---
+name: plans
+description: "Source de vérité des plans FREE/PREMIUM : prix, essai, features gatées, coût IA. À lire pour toute tâche touchant prix, accès par plan ou quotas (landing, front, guard, cron)."
+---
+
 # Agent Plans — Tarification, paliers & gating
 
 ## Rôle

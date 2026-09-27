@@ -1,3 +1,8 @@
+---
+name: nestjs
+description: "Conventions de l'API NestJS : modules, routes, guards, DTO, erreurs, IA, crons. À lire avant tout travail dans apps/api-mytradingcoach."
+---
+
 # Agent NestJS — api-mytradingcoach
 
 ## Stack
