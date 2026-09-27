@@ -1,3 +1,21 @@
+/* ===== Fontes auto-hébergées (plus aucune requête vers Google) =====
+ * Graisses strictement identiques à ce que demandait le lien Google : migrer le mode de
+ * livraison ne doit pas changer le rendu. Les fichiers complets (et non `latin-*.css`) portent
+ * les `unicode-range` par sous-ensemble : le navigateur ne télécharge que le latin, comme avant,
+ * et aucun glyphe ne peut manquer (œ, ’, €…).
+ */
+@import '@fontsource/space-grotesk/500.css';
+@import '@fontsource/space-grotesk/600.css';
+@import '@fontsource/space-grotesk/700.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/inter/800.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/600.css';
+
 /* ===== Fondations partagées (échelles, focus clavier, mouvement réduit) ===== */
 @import url('../../../libs/front/ui/src/styles/foundations.css');
 
