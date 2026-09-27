@@ -101,3 +101,10 @@ export interface JournalStats {
   bestTrade: number;
   worstTrade: number;
 }
+
+/** Résultat de `GET /instruments/search` (fournisseur de marché, liste statique ou crypto). */
+export interface InstrumentSearchResult {
+  symbol: string;
+  label: string;
+  category: string;
+}

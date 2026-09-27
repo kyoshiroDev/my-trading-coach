@@ -22,8 +22,9 @@ import type {
   TradeSetup,
   TradesPage,
   UpdateTradeRequest as UpdateTradeDto,
+  InstrumentSearchResult,
 } from '@mtc/shared';
-export type { CreateTradeDto, JournalStats, Trade, TradeFilters, TradeSetup, TradesPage, UpdateTradeDto };
+export type { CreateTradeDto, InstrumentSearchResult, JournalStats, Trade, TradeFilters, TradeSetup, TradesPage, UpdateTradeDto };
 
 export interface UserAssetItem {
   symbol: string;
@@ -33,12 +34,6 @@ export interface UserAssetItem {
   lastEntry: number | null;
   lastQty: number | null;
   isFavorite: boolean;
-}
-
-export interface InstrumentSearchResult {
-  symbol: string;
-  label: string;
-  category: string;
 }
 
 export interface MarketContextItem { value: number | null; changePct: number | null; source: string; }
@@ -72,6 +67,9 @@ export interface NewsItem {
 export class TradesApi {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/trades`;
+  // Instruments et données de marché ont leurs propres routes (API-21), hors /trades.
+  private readonly instrumentsBase = `${environment.apiUrl}/instruments`;
+  private readonly marketBase = `${environment.apiUrl}/market`;
 
   /** Une page de trades ; `cursor` = `nextCursor` de la page précédente. */
   getAll(filters: TradeFilters | Record<string, string> = {}): Observable<{ data: TradesPage }> {
@@ -130,46 +128,46 @@ export class TradesApi {
   }
 
   getInstruments(): Observable<{ data: InstrumentDto[] }> {
-    return this.http.get<{ data: InstrumentDto[] }>(`${this.base}/instruments`);
+    return this.http.get<{ data: InstrumentDto[] }>(`${this.instrumentsBase}`);
   }
 
   getUserAssets(): Observable<{ data: UserAssetItem[] }> {
-    return this.http.get<{ data: UserAssetItem[] }>(`${this.base}/user-assets`);
+    return this.http.get<{ data: UserAssetItem[] }>(`${this.instrumentsBase}/user-assets`);
   }
 
   saveUserAssets(assets: string[], favoriteAsset?: string | null): Observable<{ saved: boolean }> {
-    return this.http.patch<{ saved: boolean }>(`${this.base}/user-assets`, { assets, favoriteAsset });
+    return this.http.patch<{ saved: boolean }>(`${this.instrumentsBase}/user-assets`, { assets, favoriteAsset });
   }
 
   setFavoriteAsset(asset: string | null): Observable<void> {
-    return this.http.patch<void>(`${this.base}/favorite-asset`, { asset });
+    return this.http.patch<void>(`${this.instrumentsBase}/favorite-asset`, { asset });
   }
 
   getLivePrice(symbol: string): Observable<{ data: { price: number | null; symbol: string; cached: boolean } }> {
     return this.http.get<{ data: { price: number | null; symbol: string; cached: boolean } }>(
-      `${this.base}/live-price`,
+      `${this.marketBase}/live-price`,
       { params: { symbol } },
     );
   }
 
   searchInstruments(query: string): Observable<{ data: InstrumentSearchResult[] }> {
     const params = new HttpParams().set('q', query);
-    return this.http.get<{ data: InstrumentSearchResult[] }>(`${this.base}/instruments/search`, { params });
+    return this.http.get<{ data: InstrumentSearchResult[] }>(`${this.instrumentsBase}/search`, { params });
   }
 
   getMarketContext(): Observable<{ data: MarketContext }> {
-    return this.http.get<{ data: MarketContext }>(`${this.base}/market-context`);
+    return this.http.get<{ data: MarketContext }>(`${this.marketBase}/context`);
   }
 
   getNews(symbols: string[]): Observable<{ data: NewsItem[] }> {
     return this.http.get<{ data: NewsItem[] }>(
-      `${this.base}/news`,
+      `${this.marketBase}/news`,
       { params: { symbols: symbols.join(',') } },
     );
   }
 
   // Traduction paresseuse du corps d'une news, déclenchée à l'ouverture de la modale.
   newsText(id: string): Observable<{ data: { text: string | null } }> {
-    return this.http.get<{ data: { text: string | null } }>(`${this.base}/news/${id}/text`);
+    return this.http.get<{ data: { text: string | null } }>(`${this.marketBase}/news/${id}/text`);
   }
 }

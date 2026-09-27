@@ -81,7 +81,13 @@ POST   /api/ai/insights                PREMIUM → cooldown 4h par user
 POST   /api/ai/chat                    PREMIUM → 50 messages/jour par user
 
 POST   /api/trades/import              PREMIUM → CSV parsing via Claude SDK
-GET    /api/analytics/instruments      instruments avec tickSize/tickValue
+GET    /api/instruments                JWT → futures CME + crypto (InstrumentsController)
+GET    /api/instruments/search?q=      JWT → FMP, puis liste statique, puis crypto (10 max)
+GET|PATCH /api/instruments/user-assets JWT · PATCH /api/instruments/favorite-asset
+GET    /api/market/context             JWT (FREE, IA mutualisée) → DXY, taux, indices (MarketController)
+GET    /api/market/news?symbols=       JWT (FREE) · GET /api/market/news/:id/text (traduction paresseuse)
+GET    /api/market/live-price?symbol=  JWT (FREE) → trade rapide
+  (TradesController ne gère que les trades ; ses anciennes routes market/instruments sont @DeprecatedRoute)
 
 GET    /api/debrief/current            PREMIUM
 GET    /api/debrief/:year/:week        PREMIUM
@@ -216,7 +222,8 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   dans un contrôleur utilisateur. Test : `modules/admin/admin-routes.spec.ts`.
 - Déplacer une route : garder l'ancienne une version avec `@DeprecatedRoute('GET /nouvelle')`
   (`common/decorators`) qui journalise un `warn` à chaque appel ; la supprimer quand les logs sont muets.
-  En cours : `/users/admin/*`, `/ambassador/list|admin/*|pay-all/*`, `/referral/admin/overview`.
+  En cours : `/users/admin/*`, `/ambassador/list|admin/*|pay-all/*`, `/referral/admin/overview`,
+  `/trades/{market-context,news,live-price,instruments,user-assets,favorite-asset}`.
 - `@UseGuards(JwtAuthGuard, BetaGuard)` sur routes V2 session mode (BETA_TESTER + ADMIN)
 - `/api/analytics/summary` : PAS de PremiumGuard (FREE y accède)
 - `ValidationPipe` global : `whitelist: true, forbidNonWhitelisted: true`
