@@ -691,6 +691,26 @@ Deux pièges d'ordonnancement :
 
 ## Validation DTOs (Zod via class-validator)
 
+> ⚠ **Ne PAS remplacer `CreateTradeDto` par le schéma zod du front** (CT-04 laissée ouverte,
+> analyse du 2026-09-27). Le schéma de `app/core/schemas/trade.schema.ts` est écrit pour un
+> formulaire, pas pour une API, et il diverge du DTO :
+>
+> | Champ | DTO | Schéma front |
+> |---|---|---|
+> | `entry` | optionnel, ≥ 0 | **obligatoire, > 0** |
+> | `commission` | présent | **absent** |
+> | `accountId` | présent | **absent** |
+> | `exit` · `stopLoss` · `takeProfit` | ≥ 0 | > 0 |
+> | `asset` · `notes` · `tags` | bornés (40 · 2000 · 20×30) | non bornés |
+> | `tradedAt` | `IsDateString` | `string` libre |
+>
+> `commission` et `accountId` sont écrits par la **synchro broker** et l'**import CSV**. Le
+> `ValidationPipe` global tourne en `whitelist: true, forbidNonWhitelisted: true` : un schéma
+> incomplet ne les ignorerait pas, il ferait **échouer la requête**. Pour finir CT-04 : partir du
+> DTO (plus complet), créer une lib dédiée — `libs/shared` s'interdit toute dépendance externe,
+> donc pas de zod dedans — et tester un trade venant de la synchro et un venant d'un CSV.
+
+
 ```typescript
 export class CreateTradeDto {
   @IsString() @IsNotEmpty() asset: string;
