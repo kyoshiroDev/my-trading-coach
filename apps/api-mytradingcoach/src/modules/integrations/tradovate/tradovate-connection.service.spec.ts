@@ -161,10 +161,14 @@ describe('TradovateConnectionService.getAccessToken', () => {
   // ── Connexions sœurs d'un même login Tradovate (bug prod 21-23/09) ─────────────────────
   // Tradovate fait tourner le refresh_token par LOGIN. Un login = plusieurs comptes = plusieurs
   // connexions MTC, chacune avec sa copie : la première qui renouvelle invalide celle des autres.
+  //
+  // « Login » = l'utilisateur Tradovate AUTHENTIFIÉ (`/user/list`), d'où les ids de trader ci-dessous.
+  // Jamais `account.userId`, qui est le propriétaire du compte — la firme sur un compte prop firm,
+  // donc partagé par tous ses traders : cf. `tradovate-login-identity.spec.ts`.
   describe('portée login', () => {
     it('le renouvellement propage les nouveaux tokens aux connexions sœurs et les ressuscite', async () => {
       const { service, prisma, api, conn } = setup({
-        externalUserId: '699523',
+        externalUserId: '5751613',
         accessTokenExpiresAt: new Date(Date.now() - 1000),
       });
       prisma.brokerConnection.updateMany.mockResolvedValue({ count: 2 });
@@ -173,7 +177,7 @@ describe('TradovateConnectionService.getAccessToken', () => {
       await expect(service.getAccessToken(conn)).resolves.toBe('AT-2');
 
       const [args] = prisma.brokerConnection.updateMany.mock.calls[0];
-      expect(args.where).toMatchObject({ externalUserId: '699523', userId: 'u1', id: { not: 'c1' } });
+      expect(args.where).toMatchObject({ externalUserId: '5751613', userId: 'u1', id: { not: 'c1' } });
       // Une sœur condamnée par une rotation concurrente l'avait été à tort : le login répond.
       expect(args.data.status).toBe('CONNECTED');
       expect(args.data.lastSyncError).toBeNull();
@@ -193,7 +197,7 @@ describe('TradovateConnectionService.getAccessToken', () => {
 
     it('verrou pris par une sœur → on attend son token au lieu de rejouer le refresh', async () => {
       const { service, prisma, api, conn, key } = setup({
-        externalUserId: '699523',
+        externalUserId: '5751613',
         accessTokenExpiresAt: new Date(Date.now() - 1000),
       });
       const redis = (service as unknown as { redis: { client: { set: ReturnType<typeof vi.fn> } } }).redis;
@@ -211,7 +215,7 @@ describe('TradovateConnectionService.getAccessToken', () => {
 
     it('verrou pris mais la sœur n’a rien donné → on tente quand même, jamais bloqué', async () => {
       const { service, prisma, api, conn } = setup({
-        externalUserId: '699523',
+        externalUserId: '5751613',
         accessTokenExpiresAt: new Date(Date.now() - 1000),
       });
       const redis = (service as unknown as { redis: { client: { set: ReturnType<typeof vi.fn> } } }).redis;
@@ -229,7 +233,7 @@ describe('TradovateConnectionService.getAccessToken', () => {
       const { service, prisma, conn } = setup({ externalUserId: null, externalAccountId: '40517838' });
       prisma.brokerConnection.updateMany.mockResolvedValue({ count: 2 });
 
-      await service.rememberLogin(conn, 699523, ['40517838', '40570856']);
+      await service.rememberLogin(conn, 5751613, ['40517838', '40570856']);
 
       const [args] = prisma.brokerConnection.updateMany.mock.calls[0];
       expect(args.where).toMatchObject({
@@ -237,23 +241,23 @@ describe('TradovateConnectionService.getAccessToken', () => {
         externalUserId: null,
         externalAccountId: { in: ['40517838', '40570856'] },
       });
-      expect(args.data).toEqual({ externalUserId: '699523' });
+      expect(args.data).toEqual({ externalUserId: '5751613' });
     });
 
     it('rattrapage : ne touche que les connexions sans login (les autres gardent le leur)', async () => {
-      const { service, prisma, conn } = setup({ externalUserId: '699523' });
-      await service.rememberLogin(conn, 699523, ['40517838']);
+      const { service, prisma, conn } = setup({ externalUserId: '5751613' });
+      await service.rememberLogin(conn, 5751613, ['40517838']);
       // Le filtre `externalUserId: null` protège les connexions déjà rattachées.
       expect(prisma.brokerConnection.updateMany.mock.calls[0][0].where.externalUserId).toBeNull();
     });
 
     it('le verrou porte sur le LOGIN, pas sur la connexion', async () => {
-      const { service, api, conn } = setup({ externalUserId: '699523', accessTokenExpiresAt: new Date(Date.now() - 1000) });
+      const { service, api, conn } = setup({ externalUserId: '5751613', accessTokenExpiresAt: new Date(Date.now() - 1000) });
       const redis = (service as unknown as { redis: { client: { set: ReturnType<typeof vi.fn> } } }).redis;
       api.refresh.mockResolvedValue({ access_token: 'AT-2', expires_in: 4800 });
 
       await service.getAccessToken(conn);
-      expect(redis.client.set).toHaveBeenCalledWith('tradovate:login:699523', '1', 'EX', 30, 'NX');
+      expect(redis.client.set).toHaveBeenCalledWith('tradovate:login:5751613', '1', 'EX', 30, 'NX');
     });
   });
 

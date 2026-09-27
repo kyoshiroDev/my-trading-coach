@@ -22,6 +22,7 @@ import type {
   TradovateFillPair,
   TradovatePosition,
   TradovateProduct,
+  TradovateUser,
 } from './tradovate.types';
 
 /**
@@ -172,13 +173,24 @@ export class TradovateSyncService {
       if (relinked) throw new TradovateException('TRADOVATE_ACCOUNT_TEMPORARILY_MISSING');
       return this.run(userId, await this.connections.handleMissingAccount(conn, token), true);
     }
-    // Au passage : rattache le login aux connexions d'avant la correction (verrou + propagation),
-    // y compris les sœurs mortes, que ce `/account/list` révèle comme appartenant au même login.
-    await this.connections.rememberLogin(
-      conn,
-      account.userId,
-      accounts.filter((a) => a.userId === account.userId).map((a) => String(a.id)),
-    );
+    // Rattrapage du login pour les connexions d'avant la correction (verrou + propagation).
+    //
+    // Le login est l'utilisateur AUTHENTIFIÉ (`/user/list`), jamais `account.userId` : ce dernier
+    // est le propriétaire du compte, donc la FIRME sur un compte prop firm — mesuré le 2026-09-27,
+    // deux traders Apex sans lien portaient tous deux `699523`. S'en servir mettait tous les
+    // traders d'une même firme derrière un seul verrou de renouvellement.
+    //
+    // Toutes les lignes de ce `/account/list` appartiennent par construction à l'utilisateur de ce
+    // jeton : c'est exactement l'ensemble des sœurs, y compris celles déjà mortes qui ne passent
+    // plus jamais par ici d'elles-mêmes. Un appel de plus, et seulement quand le login manque.
+    if (!conn.externalUserId) {
+      const users = await get<TradovateUser[]>('/user/list').catch(() => [] as TradovateUser[]);
+      await this.connections.rememberLogin(
+        conn,
+        (Array.isArray(users) ? users : [])[0]?.id,
+        accounts.map((a) => String(a.id)),
+      );
+    }
 
     const [positions, allPairs] = await Promise.all([
       get<TradovatePosition[]>('/position/list'),

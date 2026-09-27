@@ -120,10 +120,25 @@ export interface ExternalAccountRef {
   name: string;
   env: TradovateEnv;
   /**
-   * `userId` Tradovate du compte = LE LOGIN. Plusieurs comptes (donc plusieurs connexions MTC)
-   * peuvent le partager, et Tradovate fait tourner le refresh_token par login, pas par compte :
-   * c'est la clé qui permet de sérialiser les renouvellements et de propager le token aux
-   * connexions sœurs. Optionnel : les connexions d'avant PROMPT-216 ne l'ont pas.
+   * `userId` de l'entité compte = son **propriétaire chez le broker**, et surtout PAS le trader
+   * connecté. Sur un compte prop firm c'est l'identifiant de la FIRME : mesuré le 2026-09-27,
+   * deux traders Apex sans aucun lien (`APEX_13679` et `APEX_428047`) portent tous les deux
+   * `userId: 699523`, et `/user/item?id=699523` répond 404 — ce n'est pas un trader.
+   *
+   * Conservé pour le diagnostic seulement. Le login, c'est `/user/list` (cf. `TradovateUser`).
    */
   userId?: string;
+}
+
+/**
+ * L'utilisateur Tradovate AUTHENTIFIÉ par le jeton, rendu par `/user/list` (un seul élément).
+ * C'est LUI le login : Tradovate fait tourner le `refresh_token` par utilisateur, et c'est donc
+ * la seule clé correcte pour sérialiser les renouvellements et propager le jeton aux connexions
+ * sœurs. Ne jamais confondre avec `ExternalAccountRef.userId`, qui est le propriétaire du compte.
+ */
+export interface TradovateUser {
+  id: number;
+  name?: string;
+  email?: string;
+  organizationId?: number;
 }
