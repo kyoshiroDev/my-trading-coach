@@ -1,6 +1,7 @@
 ---
-import { APP_URL } from '../config';
-const { traders = 14 } = Astro.props;
+import { APP_URL, TRADERS_PUBLIC_THRESHOLD } from '../config';
+const { traders = 0 } = Astro.props;
+const showTraders = traders >= TRADERS_PUBLIC_THRESHOLD;
 ---
 
 <!-- BANNER -->
@@ -18,9 +19,11 @@ const { traders = 14 } = Astro.props;
     Le premier compagnon de trading IA : multi-marché
   </div>
 
-  <div class="hero-proof">
-    <span class="hero-proof-text"><strong data-traders-count>{traders}</strong> traders depuis le lancement</span>
-  </div>
+  {showTraders && (
+    <div class="hero-proof" data-traders-proof>
+      <span class="hero-proof-text"><strong data-traders-count>{traders}</strong> traders depuis le lancement</span>
+    </div>
+  )}
 
   <h1>
     Tu trades seul.<br />

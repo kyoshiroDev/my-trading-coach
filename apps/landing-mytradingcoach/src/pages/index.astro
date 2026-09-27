@@ -41,7 +41,7 @@ const ARTICLES = [
 ];
 
 // Compteur de traders : fetch au build (SEO + valeur initiale), fallback si API down.
-const FALLBACK_TRADERS = 14;
+const FALLBACK_TRADERS = 0; // sous le seuil public → aucun chiffre affiché
 let traders = FALLBACK_TRADERS;
 try {
   const res = await fetch(`${API_URL}/public/stats`);
@@ -119,16 +119,21 @@ try {
 
   <!-- Rafraîchit le compteur de traders en live (la valeur du build sert de fallback). -->
   <script>
+    import { TRADERS_PUBLIC_THRESHOLD } from '../config';
     const API = import.meta.env.PUBLIC_API_URL ?? 'https://api.mytradingcoach.app/api';
     fetch(`${API}/public/stats`)
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
         const n = j?.data?.traders;
-        if (typeof n === 'number') {
-          document
-            .querySelectorAll('[data-traders-count]')
-            .forEach((el) => { el.textContent = String(n); });
+        if (typeof n !== 'number') return;
+        // Repassé sous le seuil depuis le build → on retire le chiffre plutôt que d'afficher un petit nombre.
+        if (n < TRADERS_PUBLIC_THRESHOLD) {
+          document.querySelectorAll('[data-traders-proof]').forEach((el) => el.remove());
+          return;
         }
+        document
+          .querySelectorAll('[data-traders-count]')
+          .forEach((el) => { el.textContent = String(n); });
       })
       .catch(() => { /* API down → on garde la valeur du build */ });
   </script>

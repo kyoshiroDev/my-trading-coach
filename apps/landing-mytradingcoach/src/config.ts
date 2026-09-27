@@ -7,6 +7,11 @@ export const APP_URL =
 export const API_URL =
   import.meta.env.PUBLIC_API_URL ?? 'https://api.mytradingcoach.app/api';
 
+// Seuil sous lequel on n'affiche AUCUN nombre de traders : un petit chiffre est
+// une anti-preuve sociale (audit UX 2026-09-27). Hero et Testimonials basculent
+// sur un libellé sans chiffre tant que le compteur réel reste en dessous.
+export const TRADERS_PUBLIC_THRESHOLD = 100;
+
 // ── Publication gatée par feature (HARD) ──────────────────────────────────────
 // On code tout, mais on ne publie une section/page que lorsque la feature derrière
 // est en PROD. Sinon un visiteur voit une promesse sans rien derrière.
