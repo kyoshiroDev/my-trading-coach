@@ -12,110 +12,18 @@ export interface InstrumentDto {
   pipDecimals?: number;
 }
 
-/** Setup tel que renvoyé par l'API sur un trade (relation). */
-export interface TradeSetup {
-  id: string;
-  title: string;
-  color: string;
-}
-
-export interface Trade {
-  id: string;
-  userId: string;
-  asset: string;
-  side: 'LONG' | 'SHORT';
-  entry: number;
-  exit: number | null;
-  stopLoss: number | null;
-  takeProfit: number | null;
-  pnl: number | null;
-  commission: number | null;
-  riskReward: number | null;
-  quantity: number | null;
-  capitalEngaged: number | null;
-  // Override optionnel (PROMPT-163) : null = non renseignée (héritera de l'humeur de session).
-  emotion:
-    | 'CONFIDENT'
-    | 'STRESSED'
-    | 'REVENGE'
-    | 'FEAR'
-    | 'FOCUSED'
-    | 'NEUTRAL'
-    | null;
-  // Émotion EFFECTIVE calculée côté API (override sinon humeur de session sinon null) : à afficher.
-  effectiveEmotion?: string | null;
-  // Note d'exécution CALCULÉE (PROMPT-161) : déterministe, jamais saisie. null = « Non évalué ».
-  executionScore?: number | null;
-  executionGrade?: 'EXCELLENT' | 'BON' | 'MOYEN' | 'MAUVAIS' | null;
-  // Barème ayant produit la note (PROMPT-168) : stop-based ou comportemental.
-  executionMethod?: 'STOP_BASED' | 'BEHAVIORAL' | null;
-  setupId: string;
-  setup: TradeSetup;
-  /** Compte du trade : sa devise est celle de ce compte (PROMPT-214). */
-  accountId?: string | null;
-  session: 'LONDON' | 'NEW_YORK' | 'ASIAN';
-  timeframe: string;
-  notes: string | null;
-  tags: string[];
-  tradedAt: string;
-  createdAt: string;
-}
-
-export interface CreateTradeDto {
-  asset: string;
-  side: Trade['side'];
-  entry?: number;
-  exit?: number;
-  stopLoss?: number;
-  takeProfit?: number;
-  pnl?: number;
-  commission?: number;
-  riskReward?: number;
-  quantity?: number;
-  capitalEngaged?: number;
-  emotion?: Trade['emotion']; // optionnel (override) : absent/null = hérite de l'humeur de session
-  setupId: string;
-  session: Trade['session'];
-  timeframe: string;
-  notes?: string;
-  tags?: string[];
-  tradedAt?: string;
-  accountId?: string;
-}
-
-export type UpdateTradeDto = Partial<CreateTradeDto>;
-
-/** Filtres de GET /trades (query string) : miroir de `TradeFiltersDto` côté API. */
-export interface TradeFilters {
-  cursor?: string;
-  limit?: number | string;
-  side?: Trade['side'];
-  setupId?: string;
-  emotion?: string;
-  result?: 'WIN' | 'LOSS' | 'BREAKEVEN';
-  executionGrade?: string;
-  dateFrom?: string;
-  dateTo?: string;
-  accountId?: string;
-}
-
-/** Page de GET /trades (pagination par curseur, `trades.service.findAll`). */
-export interface TradesPage {
-  data: Trade[];
-  nextCursor: string | null;
-  hasNextPage: boolean;
-}
-
-/** KPIs du journal agrégés en base sur tout l'ensemble filtré (hors pagination). */
-export interface JournalStats {
-  totalTrades: number;
-  winRate: number;
-  pnlBrut: number;
-  fees: number;
-  pnlNet: number;
-  bestTrade: number;
-  worstTrade: number;
-}
+// Types d'échange avec l'API : source unique dans le contrat partagé (@mtc/shared),
+// ré-exportés ici pour les importeurs existants (`from '../core/api/trades.api'`).
+import type {
+  CreateTradeRequest as CreateTradeDto,
+  JournalStats,
+  Trade,
+  TradeFilters,
+  TradeSetup,
+  TradesPage,
+  UpdateTradeRequest as UpdateTradeDto,
+} from '@mtc/shared';
+export type { CreateTradeDto, JournalStats, Trade, TradeFilters, TradeSetup, TradesPage, UpdateTradeDto };
 
 export interface UserAssetItem {
   symbol: string;

@@ -10,6 +10,7 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { TradeSide } from '@prisma/client';
+import type { TradeFilters } from '@mtc/shared';
 
 /**
  * Valeurs acceptées par le filtre « émotion effective » (PROMPT-166).
@@ -28,7 +29,7 @@ export const EFFECTIVE_EMOTION_FILTER_VALUES = [
   'NONE',
 ] as const;
 
-export class TradeFiltersDto {
+export class TradeFiltersDto implements TradeFilters {
   @IsString()
   @IsOptional()
   cursor?: string;

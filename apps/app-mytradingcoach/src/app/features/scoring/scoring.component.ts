@@ -15,14 +15,10 @@ import { PlanModalComponent } from '../../shared/components/plan-modal/plan-moda
 import { UserStore } from '../../core/stores/user.store';
 import { environment } from '../../../environments/environment';
 import { computeTradeStats } from '@mtc/shared';
+import type { Trade as ApiTrade } from '@mtc/shared';
 
-interface Trade {
-  pnl: number | null;
-  riskReward: number | null;
-  emotion: string;
-  setupId: string;
-  tradedAt: string;
-}
+/** Champs du trade utilisés par le calcul du score. */
+type Trade = Pick<ApiTrade, 'pnl' | 'riskReward' | 'emotion' | 'effectiveEmotion' | 'setupId' | 'tradedAt'>;
 
 interface ScoreBar {
   name: string;
@@ -30,14 +26,14 @@ interface ScoreBar {
   color: string;
 }
 
-function computeScore(trades: Trade[]): ScoreBar[] {
+export function computeScore(trades: Trade[]): ScoreBar[] {
   if (!trades.length) return defaultBars(0);
 
   const closed = trades.filter((t) => t.pnl !== null);
   // Win rate via le helper unique (BE exclus du dénominateur, PROMPT-160).
   const winRate = computeTradeStats(trades).winRate;
 
-  const revengeCount = trades.filter((t) => t.emotion === 'REVENGE').length;
+  const revengeCount = trades.filter((t) => (t.effectiveEmotion ?? t.emotion) === 'REVENGE').length;
   const disciplineScore = Math.min(
     100,
     Math.max(0, 100 - (revengeCount / trades.length) * 200),
@@ -46,9 +42,11 @@ function computeScore(trades: Trade[]): ScoreBar[] {
   const perfScore = Math.min(100, winRate * 1.4);
 
   const badEmotions = ['REVENGE', 'FEAR', 'STRESSED'];
-  const badLosses = trades.filter(
-    (t) => badEmotions.includes(t.emotion) && (t.pnl ?? 0) < 0,
-  );
+  // Émotion effective (saisie, sinon humeur de session) : même règle que le dashboard.
+  const badLosses = trades.filter((t) => {
+    const emotion = t.effectiveEmotion ?? t.emotion;
+    return emotion != null && badEmotions.includes(emotion) && (t.pnl ?? 0) < 0;
+  });
   const psychScore = Math.max(
     0,
     100 - (badLosses.length / trades.length) * 300,
