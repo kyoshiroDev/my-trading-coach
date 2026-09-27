@@ -1,1 +1,4 @@
-# pre-commit hook
+# Lint des seuls projets Nx touchés par les fichiers indexés (quelques secondes).
+files=$(git diff --cached --name-only --diff-filter=ACMR | paste -sd, -)
+[ -z "$files" ] && exit 0
+pnpm exec nx affected -t lint --files="$files" --output-style=static
