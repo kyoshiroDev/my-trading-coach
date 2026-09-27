@@ -2,6 +2,7 @@ import cluster from 'node:cluster';
 import { availableParallelism } from 'node:os';
 import { ConsoleLogger, Logger, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
 import * as compression from 'compression';
@@ -33,13 +34,18 @@ function validateEnv() {
 
 async function bootstrap() {
   validateEnv();
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     rawBody: true,
     logger:
       process.env['NODE_ENV'] === 'production'
         ? new ConsoleLogger({ json: true })
         : new ConsoleLogger(),
   });
+
+  // L'API est derrière UN reverse proxy (Traefik). Sans ce réglage, `req.ip` vaut l'IP du proxy
+  // pour toutes les requêtes : le rate limiting mettait alors tous les utilisateurs dans le même
+  // compteur. `1` = on fait confiance au dernier saut seulement (pas d'IP forgée par le client).
+  app.set('trust proxy', 1);
 
   // API JSON pure : aucune ressource n'est servie au navigateur pour rendu.
   // CSP verrouillée + interdiction d'iframing + HSTS 1 an.
