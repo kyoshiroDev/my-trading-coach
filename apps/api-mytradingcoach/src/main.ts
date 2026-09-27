@@ -9,27 +9,17 @@ import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
 import * as compression from 'compression';
 import { AppModule } from './app/app.module';
+import { checkEnv } from './config/env';
 import { RedisIoAdapter } from './common/adapters/redis-io.adapter';
 
-const REQUIRED_ENV_VARS = [
-  'JWT_SECRET',
-  'JWT_REFRESH_SECRET',
-  'ANTHROPIC_API_KEY',
-  'DATABASE_URL',
-  'STRIPE_SECRET_KEY',
-  'STRIPE_WEBHOOK_SECRET',
-  'STRIPE_PREMIUM_PRICE_MONTHLY_V2',
-  'STRIPE_PREMIUM_PRICE_YEARLY_V2',
-  'RESEND_API_KEY',
-];
 const logger = new Logger('Bootstrap');
 
+/** Vérifie l'environnement (liste et règles : src/config/env.ts). Arrête le process si bloquant. */
 function validateEnv() {
-  const missing = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
-  if (missing.length > 0) {
-    logger.error(
-      `Variables d'environnement manquantes : ${missing.join(', ')}`,
-    );
+  const { errors, warnings } = checkEnv(process.env, process.env['NODE_ENV'] === 'production');
+  for (const warning of warnings) logger.warn(`Environnement : ${warning}`);
+  if (errors.length > 0) {
+    logger.error(`Environnement invalide, démarrage annulé : ${errors.join(', ')}`);
     process.exit(1);
   }
 }
