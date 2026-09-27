@@ -12,6 +12,7 @@
   "include": [
     "src/**/*.ts",
     "src/**/*.d.ts",
-    "../../libs/shared/src/**/*.ts"
+    "../../libs/shared/src/**/*.ts",
+    "../../libs/front/ui/src/**/*.ts"
   ]
 }

@@ -9,6 +9,7 @@ import { ChartCanvasComponent } from '../../shared/components/chart-canvas/chart
 import { CHART_COLORS, gridAxis, noLegend } from '../../shared/charts/chart-theme';
 import { PRICING_EUR } from '../../core/constants/pricing.const';
 import { apiErrorMessage } from '@mtc/shared';
+import { ConfirmService } from '@mtc/front-ui';
 
 @Component({
   selector: 'mtc-admin-ambassadeurs',
@@ -158,6 +159,7 @@ import { apiErrorMessage } from '@mtc/shared';
 })
 export class AmbassadeursComponent implements OnInit {
   private readonly api = inject(AdminApi);
+  private readonly confirm = inject(ConfirmService);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly ambassadors = signal<AdminAmbassador[]>([]);
@@ -275,9 +277,16 @@ export class AmbassadeursComponent implements OnInit {
     });
   }
 
-  protected payAmbassador(amb: AdminAmbassador): void {
+  protected async payAmbassador(amb: AdminAmbassador): Promise<void> {
     if (amb.pendingPayout === 0) return;
-    if (!confirm(`Marquer ${amb.pendingPayout.toFixed(2)}€ comme payé à ${amb.name ?? amb.email} ?`)) return;
+    const amount = amb.pendingPayout.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+    const confirmed = await this.confirm.ask({
+      title: `Marquer ${amount} comme payé ?`,
+      message: `Versement à ${amb.name ?? amb.email}. À faire uniquement une fois le virement envoyé : l'opération n'est pas annulable ici.`,
+      confirmLabel: 'Marquer comme payé',
+      danger: true,
+    });
+    if (!confirmed) return;
     this.paying.set(true);
     this.api.markAmbassadorPaid(amb.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => { this.paying.set(false); this.loadAmbassadors(); },

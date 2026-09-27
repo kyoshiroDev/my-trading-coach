@@ -22,7 +22,8 @@
     "esModuleInterop": false,
     "ignoreDeprecations": "6.0",
     "paths": {
-      "@mtc/shared": ["./libs/shared/src/index.ts"]
+      "@mtc/shared": ["./libs/shared/src/index.ts"],
+      "@mtc/front-ui": ["./libs/front/ui/src/index.ts"]
     }
   }
 }
