@@ -115,7 +115,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Test front + shared (app, admin, libs/shared)
-        run: pnpm nx run-many --target=test --projects=app-mytradingcoach,admin-mytradingcoach,shared,front-ui --parallel=2
+        run: pnpm nx run-many --target=test --projects=app-mytradingcoach,admin-mytradingcoach,shared,front-ui,front-auth --parallel=2
 
   # ── Deploy API beta → VPS (beta.api.mytradingcoach.app) ────────────────────
   deploy-api-beta:

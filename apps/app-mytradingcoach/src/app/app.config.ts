@@ -13,7 +13,8 @@ import {
 import { registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
 import { appRoutes } from './app.routes';
-import { authInterceptor } from './core/auth/auth.interceptor';
+import { AUTH_TOKEN_SOURCE, jwtRefreshInterceptor } from '@mtc/front-auth';
+import { AuthService } from './core/auth/auth.service';
 import { demoInterceptor } from './core/auth/demo.interceptor';
 
 // Locale française pour tous les DatePipe/DecimalPipe (dates en français)
@@ -24,7 +25,9 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
     provideRouter(appRoutes),
-    provideHttpClient(withFetch(), withInterceptors([authInterceptor, demoInterceptor])),
+    provideHttpClient(withFetch(), withInterceptors([jwtRefreshInterceptor, demoInterceptor])),
+    // Source du JWT pour l'intercepteur partagé (@mtc/front-auth).
+    { provide: AUTH_TOKEN_SOURCE, useExisting: AuthService },
     { provide: LOCALE_ID, useValue: 'fr-FR' },
   ],
 };

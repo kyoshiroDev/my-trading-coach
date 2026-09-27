@@ -23,7 +23,8 @@
     "ignoreDeprecations": "6.0",
     "paths": {
       "@mtc/shared": ["./libs/shared/src/index.ts"],
-      "@mtc/front-ui": ["./libs/front/ui/src/index.ts"]
+      "@mtc/front-ui": ["./libs/front/ui/src/index.ts"],
+      "@mtc/front-auth": ["./libs/front/auth/src/index.ts"]
     }
   }
 }
