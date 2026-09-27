@@ -53,6 +53,8 @@ const REASONS: Record<string, string> = {
   not_configured: "La connexion Tradovate n'est pas encore disponible.",
   no_account: 'Aucun compte Tradovate actif trouvé avec ces identifiants.',
   account_not_found: "Ce compte n'existe plus dans MyTradingCoach.",
+  account_already_linked:
+    'Ce compte est déjà relié à un autre compte MyTradingCoach. Délie-le là-bas avant de le relier ici : deux liaisons se déconnecteraient mutuellement.',
 };
 
 /** Message d'échec du retour, toujours non bloquant et avec une porte de sortie. */

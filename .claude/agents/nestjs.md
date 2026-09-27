@@ -823,6 +823,15 @@ sont en direct.
       `tradovate:login:699523`** (goulot latent), et « sœur » voulait dire « compte chez la même
       firme ». `discoverLogin` lit donc `/user/list` (un seul élément, son `id`) ; échec ou réponse
       vide → login `null`, verrou par connexion, aucune propagation : dégradé, jamais bloquant.
+    - **Un compte broker ne se relie qu'à UN seul compte MTC.** `dropAlreadyLinked` écarte, au
+      consentement, tout compte déjà relié par un **autre utilisateur** MTC : il n'est ni choisi
+      automatiquement ni offert à l'écran de sélection, et si c'était le seul, le retour est
+      `reason=account_already_linked`. `selectAccount` refuse explicitement
+      (`TRADOVATE_ACCOUNT_ALREADY_LINKED`) — l'utilisateur a désigné ce compte, il doit savoir
+      pourquoi. Sans filtre de statut : une connexion « à reconnecter » garde son refresh_token et
+      le cron peut la ressusciter, donc elle reste un voleur en sommeil. Contrepartie assumée : un
+      compte abandonné par un autre utilisateur doit être délié chez lui, ce que dit le message.
+      Le même utilisateur qui se reconnecte n'est jamais bloqué (`userId: { not: userId }`).
     - `selectAccount` **ne retouche pas** `externalUserId` : changer de compte ne change pas
       l'utilisateur authentifié, et y écrire `target.userId` réintroduirait l'identifiant de firme.
     - `rememberLogin` reçoit désormais **tous** les comptes du `/account/list` comme fratrie (ils

@@ -61,6 +61,12 @@ describe('messages', () => {
     expect(tradovateErrorMessage('denied', false)).not.toContain('CSV');
   });
 
+  it('compte déjà relié ailleurs → on dit quoi faire, pas seulement que ça a échoué', () => {
+    const msg = tradovateErrorMessage('account_already_linked', false);
+    expect(msg).toContain('déjà relié');
+    expect(msg).toContain('Délie-le'); // la porte de sortie est nommée
+  });
+
   it('erreur inconnue → message générique lisible, jamais « undefined »', () => {
     expect(tradovateErrorMessage('xyz', false)).toBe('La connexion Tradovate a échoué.');
     expect(tradovateErrorMessage(null, true)).toContain('La connexion Tradovate a échoué.');
@@ -68,7 +74,7 @@ describe('messages', () => {
 
   it('aucun broker concurrent nommé dans les messages du flux (clause 2.ii)', () => {
     const reasons = ['denied', 'session_expired', 'state_mismatch', 'missing_code', 'exchange_failed',
-      'rate_limited', 'not_configured', 'no_account', 'account_not_found', null];
+      'rate_limited', 'not_configured', 'no_account', 'account_not_found', 'account_already_linked', null];
     const all = [
       ...reasons.flatMap((r) => [tradovateErrorMessage(r, true), tradovateErrorMessage(r, false)]),
       ...syncResultLines(result({ created: 3, duplicates: 1, openPositions: 1, skipped: 1,
