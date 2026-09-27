@@ -95,10 +95,10 @@ describe('AccountSelectorComponent', () => {
     const { cmp, fixture } = setup();
     cmp.toggle();
     // Cible interne (le host lui-même) → reste ouvert.
-    cmp.onDocClick({ target: fixture.nativeElement } as MouseEvent);
+    cmp.onDocClick({ target: fixture.nativeElement } as unknown as MouseEvent);
     expect(cmp.open()).toBe(true);
     // Cible externe (le body, qui n'est pas contenu dans le host) → ferme.
-    cmp.onDocClick({ target: document.body } as MouseEvent);
+    cmp.onDocClick({ target: document.body } as unknown as MouseEvent);
     expect(cmp.open()).toBe(false);
   });
 });

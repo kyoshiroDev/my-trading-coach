@@ -30,7 +30,7 @@ function makeData(over: Partial<UserDetailData> = {}): UserDetailData {
       market: 'CRYPTO', goal: 'PERFORMANCE', tradingStyle: 'SWING',
       tradingStrategy: ['Price Action', 'ICT'], tradingSessions: ['LONDON', 'NEW_YORK'],
       tradesPerDayMin: null, tradesPerDayMax: null,
-      strategyDescription: null, startingCapital: 5000, currency: 'USD',
+      strategyDescription: null, startingCapital: 5000,
     },
     usage: { totalTrades: 1, tradesThisMonth: 1, totalPnl: 0, winRate: 0 },
     topAssets: [{ asset: 'ZEC/USDT', count: 1 }],

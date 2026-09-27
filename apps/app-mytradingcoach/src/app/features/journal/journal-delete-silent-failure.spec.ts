@@ -307,7 +307,7 @@ describe('Journal — la modale de déplacement suit elle aussi les trades', () 
     c.reassignTo(c.reassignDay(), 'compte-2');
 
     expect(
-      tradesApi.reassign.mock.calls[0][0].sort(),
+      ((tradesApi.reassign.mock.calls[0] as unknown[])[0] as string[]).sort(),
       'Le trade « a » est déplacé alors qu\'il n\'existe plus',
     ).toEqual(['b', 'c']);
   });

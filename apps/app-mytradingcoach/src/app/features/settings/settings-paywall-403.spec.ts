@@ -12,7 +12,7 @@ import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { of, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { SettingsComponent } from './settings.component';
 import { UserStore } from '../../core/stores/user.store';
 import { AuthService } from '../../core/auth/auth.service';
@@ -23,7 +23,7 @@ import { SetupsStore } from '../../core/stores/setups.store';
 import { AnalyticsApi } from '../../core/api/analytics.api';
 
 /** Monte le vrai écran Profil, avec un `by-setup` qui échoue comme en FREE. */
-function mount(bySetup: ReturnType<typeof of> | ReturnType<typeof throwError>) {
+function mount(bySetup: Observable<unknown>) {
   TestBed.configureTestingModule({
     providers: [
       provideRouter([]),

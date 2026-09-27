@@ -15,6 +15,7 @@ function acct(id: string, label: string): TradingAccount {
     createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z',
     metrics: {
       startingBalance: 50000, realizedPnl: 0, currentBalance: 50000, tradesCount: 0,
+      winRate: null, bestDay: null, worstDay: null,
       objective: null, drawdown: null, estimated: true, disclaimer: 'estimé',
     },
   };

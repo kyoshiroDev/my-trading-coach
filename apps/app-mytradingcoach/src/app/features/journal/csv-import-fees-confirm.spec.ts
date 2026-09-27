@@ -72,7 +72,7 @@ describe('Import CSV — le Cash history incite, il ne bloque jamais', () => {
     cmp.selectedFile.set(csv());
 
     cmp.upload();                       // 1er clic → confirmation, pas d'appel réseau
-    http.expectNone(/trades\/import/);
+    http.expectNone((req) => /trades\/import/.test(req.url));
     expect(cmp.showFeesConfirm()).toBe(true);
 
     cmp.importAnyway();                 // l'utilisateur passe outre en connaissance de cause
@@ -113,7 +113,7 @@ describe('Import CSV — le Cash history incite, il ne bloque jamais', () => {
 
     cmp.addFeesFromConfirm();
     expect(cmp.showFeesConfirm()).toBe(false);
-    http.expectNone(/trades\/import/);
+    http.expectNone((req) => /trades\/import/.test(req.url));
     http.verify();
   });
 });

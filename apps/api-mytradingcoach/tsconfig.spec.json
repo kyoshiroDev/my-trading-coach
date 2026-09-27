@@ -3,15 +3,8 @@
   "compilerOptions": {
     "outDir": "dist/spec",
     "tsBuildInfoFile": "dist/tsconfig.spec.tsbuildinfo",
-    "types": [
-      "node",
-      "multer",
-      "vitest/globals"
-    ]
+    "types": ["node", "multer", "vitest/globals"]
   },
-  "include": [
-    "src/**/*.ts",
-    "../../libs/shared/src/**/*.ts"
-  ],
+  "include": ["src/**/*.ts", "../../libs/shared/src/**/*.ts"],
   "exclude": []
 }

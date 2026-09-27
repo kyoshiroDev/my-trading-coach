@@ -22,7 +22,8 @@
           "buildDepsName": "build-deps",
           "watchDepsName": "watch-deps"
         }
-      }
+      },
+      "exclude": ["apps/landing-mytradingcoach/**"]
     },
     {
       "plugin": "@nx/playwright/plugin",
