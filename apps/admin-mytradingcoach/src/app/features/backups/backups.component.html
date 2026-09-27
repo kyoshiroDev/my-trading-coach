@@ -35,7 +35,8 @@
       <div class="card fill">
         <div class="card-head"><span class="card-label">Production</span><span class="badge b-ok">prod · {{ prodBackups().length }}</span></div>
         <table class="tbl">
-          <thead><tr><th>Fichier</th><th>Type</th><th>Taille</th><th>Créée</th><th class="actions-col">Actions</th></tr></thead>
+          <caption class="sr-only">Sauvegardes de production</caption>
+          <thead><tr><th scope="col">Fichier</th><th scope="col">Type</th><th scope="col">Taille</th><th scope="col">Créée</th><th scope="col" class="actions-col">Actions</th></tr></thead>
           <tbody>
             @for (b of prodBackups(); track b.filename) {
               <tr>
@@ -56,7 +57,8 @@
       <div class="card fill">
         <div class="card-head"><span class="card-label">Développement</span><span class="badge b-beta">dev · {{ devBackups().length }}</span></div>
         <table class="tbl">
-          <thead><tr><th>Fichier</th><th>Type</th><th>Taille</th><th>Créée</th><th class="actions-col">Actions</th></tr></thead>
+          <caption class="sr-only">Sauvegardes de développement</caption>
+          <thead><tr><th scope="col">Fichier</th><th scope="col">Type</th><th scope="col">Taille</th><th scope="col">Créée</th><th scope="col" class="actions-col">Actions</th></tr></thead>
           <tbody>
             @for (b of devBackups(); track b.filename) {
               <tr>

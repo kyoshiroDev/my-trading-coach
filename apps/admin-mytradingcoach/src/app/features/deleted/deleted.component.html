@@ -37,7 +37,8 @@
         <div class="card fill">
           <div class="card-head"><span class="card-label">Historique des suppressions</span><span class="card-label muted">anonymisation auto après 90j</span></div>
           <table class="tbl">
-            <thead><tr><th>Utilisateur</th><th>Inscrit le</th><th>Supprimé le</th><th>Durée de vie</th><th>Plan</th><th>A tradé</th><th>Parrainé par</th><th>Par</th><th>Motif</th></tr></thead>
+            <caption class="sr-only">Historique des suppressions</caption>
+            <thead><tr><th scope="col">Utilisateur</th><th scope="col">Inscrit le</th><th scope="col">Supprimé le</th><th scope="col">Durée de vie</th><th scope="col">Plan</th><th scope="col">A tradé</th><th scope="col">Parrainé par</th><th scope="col">Par</th><th scope="col">Motif</th></tr></thead>
             <tbody>
               @for (a of d.accounts; track a.id) {
                 <tr>

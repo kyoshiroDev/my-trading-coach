@@ -30,9 +30,10 @@
         <div class="empty">Aucun parrain actif pour le moment.</div>
       } @else {
         <table class="tbl">
+          <caption class="sr-only">Parrains</caption>
           <thead><tr>
-            <th>Parrain</th><th>Code</th><th class="num">Invités</th><th class="num">Payants</th>
-            <th class="num">Conv.</th><th class="num">Mois gagnés</th><th class="num">Mois appliqués</th><th>Statut</th>
+            <th scope="col">Parrain</th><th scope="col">Code</th><th scope="col" class="num">Invités</th><th scope="col" class="num">Payants</th>
+            <th scope="col" class="num">Conv.</th><th scope="col" class="num">Mois gagnés</th><th scope="col" class="num">Mois appliqués</th><th scope="col">Statut</th>
           </tr></thead>
           <tbody>
             @for (p of d.parrains; track p.referralCode) {
@@ -68,8 +69,9 @@
         <div class="empty">Aucun filleul récent.</div>
       } @else {
         <table class="tbl">
+          <caption class="sr-only">Filleuls récents</caption>
           <thead><tr>
-            <th>Filleul</th><th>Parrain</th><th>Statut</th><th class="num">Inscrit</th><th class="num">Récompense parrain</th>
+            <th scope="col">Filleul</th><th scope="col">Parrain</th><th scope="col">Statut</th><th scope="col" class="num">Inscrit</th><th scope="col" class="num">Récompense parrain</th>
           </tr></thead>
           <tbody>
             @for (f of d.filleulsRecents; track f.pseudo + f.date) {

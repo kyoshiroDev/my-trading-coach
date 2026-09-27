@@ -19,7 +19,8 @@
       <div class="empty">Aucun ambassadeur configuré</div>
     } @else {
       <table class="tbl">
-        <thead><tr><th>Ambassadeur</th><th>Code / Lien</th><th>Taux</th><th>Référés</th><th>Premium</th><th class="num">Dû</th><th class="num">Total payé</th><th class="actions-col">Actions</th></tr></thead>
+        <caption class="sr-only">Ambassadeurs</caption>
+        <thead><tr><th scope="col">Ambassadeur</th><th scope="col">Code / Lien</th><th scope="col">Taux</th><th scope="col">Référés</th><th scope="col">Premium</th><th scope="col" class="num">Dû</th><th scope="col" class="num">Total payé</th><th scope="col" class="actions-col">Actions</th></tr></thead>
         <tbody>
           @for (amb of ambassadors(); track amb.id) {
             <tr [class.row-selected]="selectedId() === amb.id" (click)="selectAmbassador(amb)">
@@ -62,7 +63,8 @@
               <div class="empty">Aucun référé encore</div>
             } @else {
               <table class="tbl ref-tbl">
-                <thead><tr><th>Email</th><th>Plan</th><th>Actif</th><th>Inscrit</th></tr></thead>
+                <caption class="sr-only">Référés de l’ambassadeur</caption>
+                <thead><tr><th scope="col">Email</th><th scope="col">Plan</th><th scope="col">Actif</th><th scope="col">Inscrit</th></tr></thead>
                 <tbody>
                   @for (ref of detail.referrals; track ref.id) {
                     <tr>

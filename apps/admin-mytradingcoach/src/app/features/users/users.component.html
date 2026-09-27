@@ -34,16 +34,17 @@
   } @else {
     <div class="card fill">
       <table class="tbl">
+        <caption class="sr-only">Utilisateurs</caption>
         <thead>
           <tr>
-            <th class="sortable" [class.active]="sort.isActive('n')" (click)="sort.toggle('n')">Utilisateur <span class="caret">{{ sort.caret('n') }}</span></th>
-            <th class="sortable" [class.active]="sort.isActive('role')" (click)="sort.toggle('role')">Rôle <span class="caret">{{ sort.caret('role') }}</span></th>
-            <th class="sortable" [class.active]="sort.isActive('plan')" (click)="sort.toggle('plan')">Plan <span class="caret">{{ sort.caret('plan') }}</span></th>
-            <th>Abonnement</th>
-            <th class="sortable" [class.active]="sort.isActive('act')" (click)="sort.toggle('act')">Activité <span class="caret">{{ sort.caret('act') }}</span></th>
-            <th class="sortable" [class.active]="sort.isActive('ses')" (click)="sort.toggle('ses')">Session <span class="caret">{{ sort.caret('ses') }}</span></th>
-            <th class="sortable" [class.active]="sort.isActive('reg')" (click)="sort.toggle('reg')">Inscrit <span class="caret">{{ sort.caret('reg') }}</span></th>
-            <th class="actions-col">Actions</th>
+            <th scope="col" class="sortable" [class.active]="sort.isActive('n')" [attr.aria-sort]="sort.ariaSort('n')"><button type="button" class="sort-btn" (click)="sort.toggle('n')">Utilisateur <span class="caret" aria-hidden="true">{{ sort.caret('n') }}</span></button></th>
+            <th scope="col" class="sortable" [class.active]="sort.isActive('role')" [attr.aria-sort]="sort.ariaSort('role')"><button type="button" class="sort-btn" (click)="sort.toggle('role')">Rôle <span class="caret" aria-hidden="true">{{ sort.caret('role') }}</span></button></th>
+            <th scope="col" class="sortable" [class.active]="sort.isActive('plan')" [attr.aria-sort]="sort.ariaSort('plan')"><button type="button" class="sort-btn" (click)="sort.toggle('plan')">Plan <span class="caret" aria-hidden="true">{{ sort.caret('plan') }}</span></button></th>
+            <th scope="col">Abonnement</th>
+            <th scope="col" class="sortable" [class.active]="sort.isActive('act')" [attr.aria-sort]="sort.ariaSort('act')"><button type="button" class="sort-btn" (click)="sort.toggle('act')">Activité <span class="caret" aria-hidden="true">{{ sort.caret('act') }}</span></button></th>
+            <th scope="col" class="sortable" [class.active]="sort.isActive('ses')" [attr.aria-sort]="sort.ariaSort('ses')"><button type="button" class="sort-btn" (click)="sort.toggle('ses')">Session <span class="caret" aria-hidden="true">{{ sort.caret('ses') }}</span></button></th>
+            <th scope="col" class="sortable" [class.active]="sort.isActive('reg')" [attr.aria-sort]="sort.ariaSort('reg')"><button type="button" class="sort-btn" (click)="sort.toggle('reg')">Inscrit <span class="caret" aria-hidden="true">{{ sort.caret('reg') }}</span></button></th>
+            <th scope="col" class="actions-col">Actions</th>
           </tr>
         </thead>
         <tbody>

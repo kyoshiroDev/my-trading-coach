@@ -17,7 +17,8 @@
     <div class="card">
       <div class="card-head"><span class="card-label">Abonnements Stripe</span></div>
       <table class="tbl">
-        <thead><tr><th>Utilisateur</th><th>Plan</th><th>Intervalle</th><th>Statut</th><th>Renouvellement</th><th class="num">Montant</th></tr></thead>
+        <caption class="sr-only">Abonnements Stripe</caption>
+        <thead><tr><th scope="col">Utilisateur</th><th scope="col">Plan</th><th scope="col">Intervalle</th><th scope="col">Statut</th><th scope="col">Renouvellement</th><th scope="col" class="num">Montant</th></tr></thead>
         <tbody>
           @for (u of d.stripeUsers; track u.id) {
             <tr>
@@ -38,7 +39,8 @@
     <div class="card fill">
       <div class="card-head"><span class="card-label">Accès manuels (bêta &amp; ambassadeur)</span><span class="card-label muted">{{ d.betaTesters.length }}</span></div>
       <table class="tbl">
-        <thead><tr><th>Utilisateur</th><th>Rôle</th><th>Plan accordé</th><th>Depuis</th></tr></thead>
+        <caption class="sr-only">Accès manuels (bêta &amp; ambassadeur)</caption>
+        <thead><tr><th scope="col">Utilisateur</th><th scope="col">Rôle</th><th scope="col">Plan accordé</th><th scope="col">Depuis</th></tr></thead>
         <tbody>
           @for (u of d.betaTesters; track u.id) {
             <tr>
