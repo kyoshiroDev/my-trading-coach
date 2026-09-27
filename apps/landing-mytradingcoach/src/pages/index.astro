@@ -15,6 +15,7 @@ import Testimonials from '../components/Testimonials.astro';
 import FAQ from '../components/FAQ.astro';
 import CtaFinal from '../components/CtaFinal.astro';
 import Footer from '../components/Footer.astro';
+import { HOME_SCHEMA } from '../data/schema';
 
 const ARTICLES = [
   {
@@ -59,6 +60,7 @@ try {
   description="Journal de trading IA : il te prépare avant ta session, t'accompagne en live et débrieffe ta journée. Crypto, Futures, Forex. Gratuit sans CB."
   canonical="https://www.mytradingcoach.app/"
   ogUrl="https://www.mytradingcoach.app/"
+  schema={HOME_SCHEMA}
 >
   <Nav />
   <Hero traders={traders} />

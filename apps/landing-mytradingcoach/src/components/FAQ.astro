@@ -1,4 +1,6 @@
 ---
+// Texte : src/data/faq.ts (même source que le JSON-LD FAQPage de la home).
+import { FAQ } from '../data/faq';
 ---
 
 <section class="faq-section" id="faq">
@@ -8,63 +10,15 @@
       <h2>Tout ce que tu veux <em>savoir</em></h2>
     </div>
     <div class="faq-list reveal">
-
-      <div class="faq-item open">
-        <button class="faq-q" aria-expanded="true">
-          Quelle est la différence avec un journal de trading classique ?
-          <span class="faq-arrow">▼</span>
-        </button>
-        <div class="faq-a">Un journal de trading classique, tu l'ouvres après avoir perdu pour analyser ce qui s'est passé. MTC est un compagnon : il est là avant (il te prépare), pendant (il surveille en temps réel) et après (il débrieffe). C'est le premier outil de trading qui couvre les 3 moments : grâce à l'IA qui connaît ton profil, tes actifs et tes patterns.</div>
-      </div>
-
-      <div class="faq-item">
-        <button class="faq-q" aria-expanded="false">
-          Quels marchés sont supportés ?
-          <span class="faq-arrow">▼</span>
-        </button>
-        <div class="faq-a">Tous les marchés : Futures CME (NQ, ES, MES, MNQ, 6E, 6B, Gold, Crude Oil : P&amp;L en ticks avec multiplicateurs officiels), Crypto spot et levier (Binance, Bybit, Coinbase…), Forex (toutes paires), Indices CFD, Actions. Un seul journal pour tout, multi-marché natif.</div>
-      </div>
-
-      <div class="faq-item">
-        <button class="faq-q" aria-expanded="false">
-          Comment fonctionne le calendrier économique IA ?
-          <span class="faq-arrow">▼</span>
-        </button>
-        <div class="faq-a">Chaque matin, MTC récupère les événements économiques du jour (NFP, PMI, décisions Fed, etc.) et les filtre pour tes actifs spécifiques. Tu vois uniquement ce qui te concerne : NQ, BTC/USDT, EUR/USD. Quand un résultat tombe en cours de session, l'IA analyse immédiatement la surprise et t'indique l'impact probable sur chacun de tes actifs (bull/bear/neutre).</div>
-      </div>
-
-      <div class="faq-item">
-        <button class="faq-q" aria-expanded="false">
-          Puis-je importer mon historique de trades ?
-          <span class="faq-arrow">▼</span>
-        </button>
-        <div class="faq-a">Oui. Si tu trades sur Tradovate, tu peux connecter ton compte directement : tes trades et leurs frais se synchronisent automatiquement, en lecture seule (MyTradingCoach ne voit jamais ton mot de passe et ne peut passer aucun ordre). Pour les autres brokers (Binance, Bybit, MetaTrader 4/5, IBKR…), l'import CSV fonctionne avec tout broker qui exporte ses trades : il détecte automatiquement le format et structure ton historique. L'import CSV reste aussi disponible pour Tradovate.</div>
-      </div>
-
-      <div class="faq-item">
-        <button class="faq-q" aria-expanded="false">
-          Comment fonctionne le trial ?
-          <span class="faq-arrow">▼</span>
-        </button>
-        <div class="faq-a">L'abonnement Premium mensuel offre 1 mois d'essai (carte requise, aucun prélèvement avant la fin). Tu peux annuler en un clic depuis les paramètres, sans frais : si tu annules pendant l'essai, tu reviens au plan Gratuit à la fin du mois. L'abonnement annuel est facturé immédiatement, sans période d'essai.</div>
-      </div>
-
-      <div class="faq-item">
-        <button class="faq-q" aria-expanded="false">
-          Quelle est la différence entre Gratuit et Premium ?
-          <span class="faq-arrow">▼</span>
-        </button>
-        <div class="faq-a">Le plan Gratuit couvre tout le quotidien : journal illimité, trades illimités, pré-session matin, session live avec trade rapide, débrief de session, et l'IA mutualisée (calendrier éco avec analyse IA, news live et contexte marché en temps réel : DXY, taux US, indices). Le plan Premium (49€/mois ou 490€/an) ajoute l'IA personnelle et la profondeur : IA Insights, Chat coach personnalisé, Weekly Debrief automatique, score trader, analytics avancés, comptes illimités et règles prop firm.</div>
-      </div>
-
-      <div class="faq-item">
-        <button class="faq-q" aria-expanded="false">
-          Où sont hébergées mes données ?
-          <span class="faq-arrow">▼</span>
-        </button>
-        <div class="faq-a">Tes données sont hébergées en France sur des serveurs OVH (Roubaix). Elles ne sont jamais vendues ni partagées avec des tiers. L'IA utilisée est Claude d'Anthropic : tes données ne sont pas utilisées pour entraîner leurs modèles.</div>
-      </div>
-
+      {FAQ.map((item, i) => (
+        <div class={i === 0 ? 'faq-item open' : 'faq-item'}>
+          <button class="faq-q" aria-expanded={i === 0 ? 'true' : 'false'}>
+            {item.question}
+            <span class="faq-arrow">▼</span>
+          </button>
+          <div class="faq-a">{item.answer}</div>
+        </div>
+      ))}
     </div>
   </div>
 </section>
