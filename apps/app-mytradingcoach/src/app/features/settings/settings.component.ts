@@ -293,18 +293,6 @@ export class SettingsComponent implements OnInit {
     });
   }
 
-  protected startTrial(plan: 'premium_monthly' | 'premium_yearly' = 'premium_monthly') {
-    this.billingApi
-      .checkout(plan)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => {
-          window.location.href = res.data.url;
-        },
-        error: (err) => this.toast.error(apiErrorMessage(err, 'Le paiement n’a pas pu démarrer. Réessaie dans un instant.')),
-      });
-  }
-
   protected openPortal() {
     this.billingApi
       .portal()

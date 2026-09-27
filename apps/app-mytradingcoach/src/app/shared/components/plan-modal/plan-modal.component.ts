@@ -1,22 +1,18 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  DestroyRef,
   inject,
   output,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   LucideDynamicIcon,
   LucideCheck as Check,
   LucideX as X,
   LucideZap as Zap,
 } from '@lucide/angular';
-import { BillingApi } from '../../../core/api/billing.api';
 import { PRICING } from '../../../core/constants/pricing.const';
-import { ToastService } from '../../../core/services/toast.service';
-import { apiErrorMessage } from '../../../core/utils/api-error';
+import { BillingService } from '../../../core/services/billing.service';
 
 type Interval = 'monthly' | 'yearly';
 type PlanId = `premium_${Interval}`;
@@ -31,9 +27,6 @@ type PlanId = `premium_${Interval}`;
 export class PlanModalComponent {
   closed = output<void>();
 
-  private readonly billingApi = inject(BillingApi);
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly toast = inject(ToastService);
 
   protected readonly PRICING = PRICING;
 
@@ -46,7 +39,8 @@ export class PlanModalComponent {
   // Palier payant unique (Premium) depuis PROMPT-169 : seul l'intervalle est réglable.
   // L'essai 30j n'est accordé qu'au mensuel (l'annuel est facturé immédiatement).
   protected interval = signal<Interval>('monthly');
-  protected isLoading = signal(false);
+  private readonly billing = inject(BillingService);
+  protected readonly isLoading = this.billing.starting;
 
   protected setInterval(value: Interval) {
     this.interval.set(value);
@@ -80,16 +74,7 @@ export class PlanModalComponent {
   }
 
   protected confirmPlan() {
-    this.isLoading.set(true);
-    this.billingApi.checkout(this.planId())
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => { window.location.href = res.data.url; },
-        // AVANT : échec muet, le bouton se réactivait sans explication.
-        error: (err) => {
-          this.isLoading.set(false);
-          this.toast.error(apiErrorMessage(err, 'Le paiement n’a pas pu démarrer. Réessaie dans un instant.'));
-        },
-      });
+    this.billing.startCheckout(this.planId());
   }
+
 }

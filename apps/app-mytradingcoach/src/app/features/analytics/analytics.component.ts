@@ -27,7 +27,6 @@ import {
   SetupStat,
   TopAsset,
 } from '../../core/api/analytics.api';
-import { BillingApi } from '../../core/api/billing.api';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { ActivityCalendarComponent } from '../../shared/components/activity-calendar/activity-calendar.component';
 import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
@@ -65,7 +64,6 @@ export class AnalyticsComponent {
   drawdownCanvasRef?: ElementRef<HTMLCanvasElement>;
 
   protected readonly userStore = inject(UserStore);
-  private readonly billingApi = inject(BillingApi);
   private readonly analyticsApi = inject(AnalyticsApi);
   private readonly destroyRef = inject(DestroyRef);
   private readonly chartService = inject(ChartService);
@@ -269,20 +267,6 @@ export class AnalyticsComponent {
     if (pnl > 0) return 'var(--green)';
     if (pnl < 0) return 'var(--red)';
     return 'var(--text-2)';
-  }
-
-  protected startTrial(plan: 'premium_monthly' | 'premium_yearly' = 'premium_monthly'): void {
-    this.billingApi
-      .checkout(plan)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => {
-          window.location.href = res.data.url;
-        },
-        error: () => {
-          /* billing error : user stays on page */
-        },
-      });
   }
 
 }

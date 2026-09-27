@@ -68,6 +68,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
   }
 
   private normalize(exception: unknown): NormalizedError {
+    // Rate limiting : le message de @nestjs/throttler est en anglais (« ThrottlerException… »).
+    if (exception instanceof HttpException && exception.getStatus() === HttpStatus.TOO_MANY_REQUESTS) {
+      return {
+        status: HttpStatus.TOO_MANY_REQUESTS,
+        code: 'TOO_MANY_REQUESTS',
+        message: 'Trop de requêtes. Réessaie dans une minute.',
+      };
+    }
+
     if (exception instanceof HttpException) {
       const res = exception.getResponse();
       const message =

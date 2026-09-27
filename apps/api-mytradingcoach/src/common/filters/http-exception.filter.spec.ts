@@ -40,6 +40,14 @@ describe('HttpExceptionFilter', () => {
     expect(json).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 400, message: ['email must be an email'] }));
   });
 
+  it('429 du rate limiting → message en français', () => {
+    const { host, json } = httpHost();
+    filter.catch(new HttpException('ThrottlerException: Too Many Requests', 429), host);
+    expect(json).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'TOO_MANY_REQUESTS', message: 'Trop de requêtes. Réessaie dans une minute.' }),
+    );
+  });
+
   it('Prisma P2002 → 409 CONFLICT', () => {
     const { host, status, json } = httpHost();
     filter.catch(prismaError('P2002'), host);
