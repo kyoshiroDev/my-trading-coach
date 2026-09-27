@@ -2,11 +2,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
   computed,
   effect,
   inject,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { RouterModule, RouterLink, RouterLinkActive } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -52,6 +54,7 @@ import { environment } from '../../../../environments/environment';
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './sidebar.component.css',
   templateUrl: './sidebar.component.html',
+  host: { '(document:keydown.escape)': 'onEscape()' },
 })
 export class SidebarComponent {
   protected readonly userStore = inject(UserStore);
@@ -99,8 +102,22 @@ export class SidebarComponent {
     }
   }
 
+  private readonly burger = viewChild<ElementRef<HTMLButtonElement>>('burger');
+  private readonly drawer = viewChild<ElementRef<HTMLElement>>('drawer');
+
+  /** Menu mobile : à l'ouverture, le focus clavier entre dans le menu (1er lien). */
   protected toggleSidebar(): void {
     this.sidebarOpen.update((v) => !v);
+    if (this.sidebarOpen()) {
+      setTimeout(() => this.drawer()?.nativeElement.querySelector<HTMLElement>('.nav-item')?.focus());
+    }
+  }
+
+  /** Échap ferme le menu mobile ouvert et rend le focus au bouton qui l'a ouvert. */
+  protected onEscape(): void {
+    if (!this.sidebarOpen()) return;
+    this.sidebarOpen.set(false);
+    this.burger()?.nativeElement.focus();
   }
   protected closeSidebar(): void {
     this.sidebarOpen.set(false);
