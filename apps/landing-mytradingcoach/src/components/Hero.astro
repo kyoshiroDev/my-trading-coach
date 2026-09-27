@@ -16,7 +16,7 @@ const showTraders = traders >= TRADERS_PUBLIC_THRESHOLD;
 
   <div class="hero-badge">
     <div class="bdot"></div>
-    Le premier compagnon de trading IA : multi-marché
+    <span>Le premier compagnon de trading IA : <span class="nowrap">multi-marché</span></span>
   </div>
 
   {showTraders && (
@@ -105,6 +105,9 @@ const showTraders = traders >= TRADERS_PUBLIC_THRESHOLD;
   .pulse-ring:nth-child(2) { width:500px; height:500px; }
   .pulse-ring:nth-child(3) { width:800px; height:800px; animation-delay:1.3s; border-color:rgba(34,211,238,.03); }
   .pulse-ring:nth-child(4) { width:1100px; height:1100px; animation-delay:2.6s; border-color:rgba(34,211,238,.02); }
+
+  /* Le tiret de « multi-marché » était un point de coupure sur 375 px. */
+  .nowrap { white-space: nowrap; }
 
   .hero-badge {
     display: inline-flex;
