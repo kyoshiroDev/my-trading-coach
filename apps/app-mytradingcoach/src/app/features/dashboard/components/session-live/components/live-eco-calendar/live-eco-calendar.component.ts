@@ -17,7 +17,7 @@ import {
 } from '@lucide/angular';
 import { forkJoin, of, timer } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
-import { EcoCalendarApi, EcoCalendarData, EcoEvent, EcoResultAnalysis } from '../../../../../../core/api/eco-calendar.api';
+import { EcoCalendarApi, EcoCalendarData, EcoResultAnalysis } from '../../../../../../core/api/eco-calendar.api';
 import { TradingSession } from '../../../../../../core/api/session.api';
 import { translateEcoEvent } from '../../../../../../core/data/eco-event-translations';
 
@@ -30,6 +30,7 @@ import {
   currencyToInstruments,
 } from './live-eco-calendar.data';
 import { eventKey, normalizeEventKey } from '@mtc/shared';
+import type { EcoEvent } from '@mtc/shared';
 
 /**
  * Calendrier économique de la session live : événements de la fenêtre de session,

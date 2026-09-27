@@ -23,55 +23,7 @@ import { apiErrorMessage } from '../../core/utils/api-error';
 import { timer } from 'rxjs';
 import { switchMap, map, takeWhile } from 'rxjs/operators';
 import { DebriefApi } from '../../core/api/debrief.api';
-
-interface DebriefItem {
-  badge: string;
-  text: string;
-}
-interface Objective {
-  title: string;
-  reason: string;
-}
-interface AccountSection {
-  accountId: string;
-  name: string;
-  type: string;
-  status: string;
-  stats: { totalTrades: number; winRate: number; totalPnl: number };
-  rules: {
-    startingBalance: number | null;
-    profitTarget: number | null;
-    maxDrawdown: number | null;
-    drawdownType: string | null;
-  } | null;
-  summary: string;
-  strengths: DebriefItem[];
-  weaknesses: DebriefItem[];
-  objectives: Objective[];
-  propNote: string | null;
-}
-interface DebriefInsights {
-  // Nouveau format (par compte)
-  overview?: { summary: string };
-  accounts?: AccountSection[];
-  // Ancien format à plat (rétrocompat)
-  summary?: string;
-  strengths?: DebriefItem[];
-  weaknesses?: DebriefItem[];
-  emotionInsight?: string;
-}
-interface WeeklyDebrief {
-  id: string;
-  weekNumber: number;
-  year: number;
-  startDate: string;
-  endDate: string;
-  aiSummary: string;
-  insights: DebriefInsights;
-  objectives: Objective[];
-  stats: { winRate: number; totalPnl: number; totalTrades: number };
-  generatedAt: string;
-}
+import type { DebriefAccountSection as AccountSection, DebriefBadgeItem as DebriefItem, WeeklyDebrief } from '@mtc/shared';
 
 const TAB_KEY = 'mtc.debriefTab';
 

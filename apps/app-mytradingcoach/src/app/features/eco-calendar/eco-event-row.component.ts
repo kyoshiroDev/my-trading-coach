@@ -5,7 +5,7 @@ import {
   input,
   output,
 } from '@angular/core';
-import { EcoEvent } from '../../core/api/eco-calendar.api';
+import type { EcoEvent } from '@mtc/shared';
 
 @Component({
   selector: 'mtc-eco-event-row',

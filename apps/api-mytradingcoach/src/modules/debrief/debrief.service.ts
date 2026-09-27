@@ -6,19 +6,6 @@ import { userAmountsCurrency } from '../../common/utils/user-currency.util';
 import { DebriefPdfData } from '../pdf/pdf.service';
 import { OBJECTIVE_CHECK_TYPES, DebriefAccountInput } from '../ai/prompts/debrief.prompt';
 
-interface ObjectiveCheck {
-  type: string;
-  params?: Record<string, unknown>;
-}
-interface DebriefObjective {
-  title: string;
-  reason: string;
-  check?: ObjectiveCheck | null;
-}
-interface DebriefBadgeItem {
-  badge: string;
-  text: string;
-}
 /** Analyse qualitative IA d'un compte (avant fusion avec les stats backend). */
 interface DebriefAccountAi {
   accountId: string;
@@ -28,25 +15,7 @@ interface DebriefAccountAi {
   objectives?: { title: string; reason: string }[];
   propNote?: string | null;
 }
-/** Section compte stockée (stats + règles backend + analyse IA). */
-interface DebriefAccountSection {
-  accountId: string;
-  name: string;
-  type: string;
-  status: string;
-  stats: { totalTrades: number; winRate: number; totalPnl: number };
-  rules: {
-    startingBalance: number | null;
-    profitTarget: number | null;
-    maxDrawdown: number | null;
-    drawdownType: string | null;
-  } | null;
-  summary: string;
-  strengths: DebriefBadgeItem[];
-  weaknesses: DebriefBadgeItem[];
-  objectives: { title: string; reason: string }[];
-  propNote: string | null;
-}
+
 interface DebriefAiResult {
   summary?: string;
   overview?: { summary: string };
@@ -58,6 +27,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { SessionService } from '../session/session.service';
+import type { DebriefAccountSection, DebriefBadgeItem, DebriefObjective } from '@mtc/shared';
 
 @Injectable()
 export class DebriefService {

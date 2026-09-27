@@ -7,7 +7,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
-import { EcoEvent } from './eco-calendar.service';
+import type { EcoEvent } from '@mtc/shared';
 
 @WebSocketGateway({
   namespace: '/eco',

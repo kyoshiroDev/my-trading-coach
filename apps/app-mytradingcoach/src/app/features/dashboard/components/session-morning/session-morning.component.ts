@@ -21,7 +21,7 @@ import { translateEcoEvent } from '../../../../core/data/eco-event-translations'
 
 import { filterMorningEvents } from './session-morning.util';
 import { DailyRecap } from '../../../../core/api/daily-recap.api';
-import { EcoCalendarApi, EcoCalendarData, EcoEvent } from '../../../../core/api/eco-calendar.api';
+import { EcoCalendarApi, EcoCalendarData } from '../../../../core/api/eco-calendar.api';
 import { MoodState } from '../../../../core/api/session.api';
 import { DebriefApi, DebriefObjective } from '../../../../core/api/debrief.api';
 import { UserStore } from '../../../../core/stores/user.store';
@@ -29,6 +29,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { PremiumLockComponent } from '../../../../shared/components/premium-lock/premium-lock.component';
 import { MoneyPipe } from '../../../../shared/pipes';
 import { eventKey, normalizeEventKey } from '@mtc/shared';
+import type { EcoEvent } from '@mtc/shared';
 
 const MOODS: { value: MoodState; label: string; emoji: string }[] = [
   { value: 'CONFIDENT', label: 'Confiant', emoji: '😎' },

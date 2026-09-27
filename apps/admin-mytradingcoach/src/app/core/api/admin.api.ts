@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import type { Plan, Role } from '@mtc/shared';
+import type { AdminUserDetail as UserDetailData, Plan, Role } from '@mtc/shared';
+export type { UserDetailData };
 
 export interface AdminUser {
   id: string; email: string; name: string | null;
@@ -199,49 +200,6 @@ export interface ReferralAdminOverview {
   moisAAppliquer: number;
   parrains: ReferralAdminParrain[];
   filleulsRecents: ReferralAdminFilleul[];
-}
-
-export interface UserDetailData {
-  identity: {
-    id: string;
-    name: string | null;
-    email: string;
-    plan: Plan;
-    role: Role;
-    subscriptionStatus: string | null;
-    ambassadorRefCode: string | null;
-    createdAt: string;
-    lastActivityAt: string | null;
-  };
-  kpis: {
-    daysSinceSignup: number;
-    lastConnection: string | null;
-    activeDays: number;
-    totalDays: number;
-    sessionTimeMinutes: number | null;
-    ai: { usd: number; tokens: number };
-  };
-  activeDates: string[];
-  aiByFeature: { feature: string; tokens: number; costUsd: number }[];
-  profile: {
-    market: string | null;
-    goal: string | null;
-    tradingStyle: string | null;
-    tradingStrategy: string[];
-    tradingSessions: string[];
-    tradesPerDayMin: number | null;
-    tradesPerDayMax: number | null;
-    strategyDescription: string | null;
-    startingCapital: number;
-  };
-  usage: {
-    totalTrades: number;
-    tradesThisMonth: number;
-    totalPnl: number;
-    winRate: number;
-  };
-  topAssets: { asset: string; count: number }[];
-  sessions: { date: string; trades: number; pnl: number; winRate: number; emotion: string | null; durationMinutes: number | null }[];
 }
 
 export interface DeletedAccountsData {

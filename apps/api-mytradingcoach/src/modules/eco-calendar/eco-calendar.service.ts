@@ -7,26 +7,7 @@ import { AiService } from '../ai/ai.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 import { AI_MODELS } from '../shared/ai-pricing.const';
 import { normalizeEventKey, toParisDateStr, todayParis } from '@mtc/shared';
-
-export interface EcoEvent {
-  date?: string;
-  time: string;
-  name: string;
-  impact: 'high' | 'medium';
-  country: string;
-  currency: string;
-  actual: number | null;
-  estimate: number | null;
-  previous: number | null;
-  isReleased: boolean;
-  unit?: string | null;
-}
-
-export interface EcoAnalysis {
-  summary: string;
-  recommendation: string;
-  assetImpacts: { asset: string; sentiment: 'bull' | 'bear' | 'neutral'; reason: string }[];
-}
+import type { EcoAnalysis, EcoEvent } from '@mtc/shared';
 
 export interface EcoResultAnalysis {
   interpretation: string;

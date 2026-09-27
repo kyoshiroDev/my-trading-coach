@@ -1,4 +1,5 @@
-import { EcoEvent, EcoResultAnalysis } from '../../../../../../core/api/eco-calendar.api';
+import { EcoResultAnalysis } from '../../../../../../core/api/eco-calendar.api';
+import type { EcoEvent } from '@mtc/shared';
 
 // Calendrier éco d'exemple pour la session live démo (affiché si rien de réel
 // dans la fenêtre de session). Released → bloc d'analyse IA figé (DEMO_ECO_ANALYSIS).

@@ -10,12 +10,13 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
-import { EcoCalendarApi, EcoEvent, EcoResultAnalysis } from '../../core/api/eco-calendar.api';
+import { EcoCalendarApi, EcoResultAnalysis } from '../../core/api/eco-calendar.api';
 import { translateEcoEvent } from '../../core/data/eco-event-translations';
 
 import { UserStore } from '../../core/stores/user.store';
 import { ToastService } from '../../core/services/toast.service';
 import { toParisDateStr, todayParis } from '@mtc/shared';
+import type { EcoEvent } from '@mtc/shared';
 
 type EcoSession = 'asia' | 'europe' | 'us';
 interface SessionGroup { asia: EcoEvent[]; europe: EcoEvent[]; us: EcoEvent[]; }

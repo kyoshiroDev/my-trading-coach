@@ -2,7 +2,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { Subject } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import type { EcoEvent } from '../api/eco-calendar.api';
+import type { EcoEvent } from '@mtc/shared';
 
 @Injectable({ providedIn: 'root' })
 export class EcoSocketService implements OnDestroy {

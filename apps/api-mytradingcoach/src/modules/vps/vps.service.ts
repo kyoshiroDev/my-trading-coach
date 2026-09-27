@@ -1,18 +1,7 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { NodeSSH } from 'node-ssh';
-
-export interface VpsStats {
-  cpu: number;
-  ram: { used: number; total: number };
-  disk: { used: number; total: number };
-  network: { up: number; down: number };
-  uptime: number;
-  os: string;
-  kernel: string;
-  node: string;
-  docker: string;
-  ip: string;
-}
+import type { VpsStats } from '@mtc/shared';
+export type { VpsStats };
 
 @Injectable()
 export class VpsService implements OnModuleDestroy {

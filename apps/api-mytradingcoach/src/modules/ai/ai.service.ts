@@ -18,11 +18,12 @@ import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
 import { computeTradeStats, formatMoney, netPnl, todayParis } from '@mtc/shared';
 import { userAmountsCurrency } from '../../common/utils/user-currency.util';
 // import type only (aucune dépendance runtime → pas de cycle avec eco-calendar.service)
-import type { EcoAnalysis, EcoResultAnalysis } from '../eco-calendar/eco-calendar.service';
+import type { EcoResultAnalysis } from '../eco-calendar/eco-calendar.service';
 import { AnthropicClientService } from '../shared/anthropic-client.service';
 import { buildUserTradingContext, UserTradingProfile } from './user-context.builder';
 
 import { AI_MODELS } from '../shared/ai-pricing.const';
+import type { EcoAnalysis } from '@mtc/shared';
 
 const MODEL = AI_MODELS.analysis;
 const AI_MONTHLY_QUOTA = 100;
