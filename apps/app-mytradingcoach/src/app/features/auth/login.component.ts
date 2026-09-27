@@ -40,6 +40,8 @@ import { AuthService } from '../../core/auth/auth.service';
             <label for="email">Email</label>
             <input
               id="email"
+              [attr.aria-invalid]="!!emailError()"
+              [attr.aria-describedby]="emailError() ? 'email-error' : null"
               type="email"
               data-testid="login-email"
               [ngModel]="email()"
@@ -50,7 +52,7 @@ import { AuthService } from '../../core/auth/auth.service';
               (blur)="emailTouched.set(true)"
             />
             @if (emailError()) {
-              <span class="field-error">{{ emailError() }}</span>
+              <span class="field-error" id="email-error">{{ emailError() }}</span>
             }
           </div>
 
@@ -59,6 +61,8 @@ import { AuthService } from '../../core/auth/auth.service';
             <div class="input-wrapper">
               <input
                 id="password"
+                [attr.aria-invalid]="!!passwordError()"
+                [attr.aria-describedby]="passwordError() ? 'password-error' : null"
                 data-testid="login-password"
                 [type]="showPassword() ? 'text' : 'password'"
                 [ngModel]="password()"
@@ -71,6 +75,8 @@ import { AuthService } from '../../core/auth/auth.service';
               <button
                 type="button"
                 class="eye-btn"
+                [attr.aria-label]="showPassword() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+                [attr.aria-pressed]="showPassword()"
                 (click)="showPassword.set(!showPassword())"
               >
                 <svg
@@ -80,7 +86,7 @@ import { AuthService } from '../../core/auth/auth.service';
               </button>
             </div>
             @if (passwordError()) {
-              <span class="field-error">{{ passwordError() }}</span>
+              <span class="field-error" id="password-error">{{ passwordError() }}</span>
             }
           </div>
 
@@ -104,7 +110,7 @@ import { AuthService } from '../../core/auth/auth.service';
           </button>
 
           @if (apiError()) {
-            <div class="error-msg" data-testid="error-message">
+            <div class="error-msg" role="alert" data-testid="error-message">
               {{ apiError() }}
             </div>
           }
@@ -139,7 +145,7 @@ export class LoginComponent {
     if (!this.submitted() && !this.emailTouched()) return null;
     if (!this.email()) return "L'adresse email est requise";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email()))
-      return 'Veuillez saisir une adresse email valide';
+      return 'Saisis une adresse email valide';
     return null;
   });
 
@@ -167,7 +173,7 @@ export class LoginComponent {
             this.apiError.set('Email ou mot de passe incorrect');
           else if (status === 404)
             this.apiError.set('Aucun compte trouvé avec cette adresse email');
-          else this.apiError.set('Une erreur est survenue, veuillez réessayer');
+          else this.apiError.set('Une erreur est survenue, réessaie dans un instant');
           this.isLoading.set(false);
         },
       });
