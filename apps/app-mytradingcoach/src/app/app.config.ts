@@ -4,7 +4,7 @@ import {
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
 } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { PreloadAllModules, provideRouter, withInMemoryScrolling, withPreloading } from '@angular/router';
 import {
   provideHttpClient,
   withFetch,
@@ -24,7 +24,14 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
-    provideRouter(appRoutes),
+    // Préchargement des pages en tâche de fond après le 1er affichage : navigation instantanée.
+    // Défilement : effectif pour la fenêtre (pages publiques) ; le shell connecté défile dans
+    // <main>, géré par ScrollMemoryDirective.
+    provideRouter(
+      appRoutes,
+      withPreloading(PreloadAllModules),
+      withInMemoryScrolling({ scrollPositionRestoration: 'enabled', anchorScrolling: 'enabled' }),
+    ),
     provideHttpClient(withFetch(), withInterceptors([jwtRefreshInterceptor, demoInterceptor])),
     // Source du JWT pour l'intercepteur partagé (@mtc/front-auth).
     { provide: AUTH_TOKEN_SOURCE, useExisting: AuthService },

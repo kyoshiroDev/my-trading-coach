@@ -717,7 +717,7 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
 
 | Lib | Import | Contenu |
 |---|---|---|
-| `libs/front/ui` | `@mtc/front-ui` | `foundations.css` (échelles, focus clavier, mouvement réduit, `.sr-only`), `ConfirmService` + `<mtc-confirm-dialog>`, `<mtc-error-state>`, directive `mtcDialog` |
+| `libs/front/ui` | `@mtc/front-ui` | `foundations.css` (échelles, focus clavier, mouvement réduit, `.sr-only`), `ConfirmService` + `<mtc-confirm-dialog>`, `<mtc-error-state>`, directives `mtcDialog` et `mtcScrollMemory` |
 | `libs/front/auth` | `@mtc/front-auth` | `jwtRefreshInterceptor` + jeton `AUTH_TOKEN_SOURCE` |
 
 - **Jamais `window.confirm()`** : `await inject(ConfirmService).ask({ title, message, danger })`.
@@ -725,6 +725,9 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
 - **Toute modale** porte `role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="fermer()"` sur
   la boîte (pas sur le fond) : focus envoyé dedans, Tab piégé, Échap ferme, focus rendu à la
   fermeture. Titre relié par `aria-labelledby`. Ne pas recoder ce comportement à la main.
+- **Routeur** : `withPreloading(PreloadAllModules)` + `withInMemoryScrolling` (app et admin). Le shell
+  connecté défile dans un conteneur (`<main>` / `.content`), pas la fenêtre : `mtcScrollMemory` sur ce
+  conteneur remet en haut à chaque page et restaure la position au bouton « Précédent ».
 - Dans les libs, sorties en `@Output() … = new EventEmitter()` : leurs tests tournent en JIT, qui
   ne voit pas `output()`.
 - **Toute donnée chargée affiche son échec** : `@if (loadError()) { <mtc-error-state (retry)="reload()" /> }`

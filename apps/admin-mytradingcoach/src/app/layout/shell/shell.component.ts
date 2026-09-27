@@ -17,10 +17,11 @@ import {
   LucideGift as Gift,
 } from '@lucide/angular';
 import { AdminAuthService } from '../../core/auth/admin-auth.service';
+import { ScrollMemoryDirective } from '@mtc/front-ui';
 
 @Component({
   selector: 'mtc-admin-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, LucideDynamicIcon],
+  imports: [ScrollMemoryDirective, RouterOutlet, RouterLink, RouterLinkActive, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './shell.component.css',
   template: `
@@ -109,7 +110,7 @@ import { AdminAuthService } from '../../core/auth/admin-auth.service';
             <svg [lucideIcon]="MenuIcon" [size]="18"></svg>
           </button>
         </div>
-        <div class="content">
+        <div class="content" mtcScrollMemory>
           <router-outlet />
         </div>
       </div>
