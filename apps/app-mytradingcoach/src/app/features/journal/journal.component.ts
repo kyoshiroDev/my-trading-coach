@@ -4,7 +4,6 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
-import { computeTradeStats } from '@mtc/shared';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, of, map, catchError } from 'rxjs';
 import {
@@ -32,38 +31,12 @@ import { MoneyService } from '../../core/services/money.service';
 import { ToastService } from '../../core/services/toast.service';
 import { TradovateLiveSocketService } from '../../core/services/tradovate-live-socket.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
-import type { ExecutionGrade, TradeSide } from '@mtc/shared';
 import { DialogDirective } from '@mtc/front-ui';
+import {
+  DatePreset, DayGroup, FilterEmotion, FilterExecution, FilterResult, FilterSide,
+  gradeLabel, gradeTooltip, groupByDay, groupByWeek, presetRange,
+} from './journal.grouping';
 
-type FilterSide = 'ALL' | TradeSide;
-type FilterResult = 'ALL' | 'WIN' | 'LOSS' | 'BREAKEVEN';
-type FilterExecution = 'ALL' | ExecutionGrade | 'NONE';
-type FilterEmotion =
-  | 'ALL' | 'CONFIDENT' | 'FOCUSED' | 'NEUTRAL' | 'STRESSED'
-  | 'REVENGE' | 'FEAR' | 'TIRED' | 'NONE';
-type DatePreset = 'today' | 'week' | 'month' | 'custom' | 'all';
-
-interface DayGroup {
-  key: string;
-  label: string;
-  trades: Trade[];
-  totalPnl: number;
-  totalPnlNet: number;
-  totalCommission: number;
-  count: number;
-  winCount: number;
-}
-
-interface WeekGroup {
-  key: string;        // clé stable = lundi ISO de la semaine (ex. 'week-2026-07-06')
-  label: string;      // 'Semaine du 06/07/2026 au 12/07/2026'
-  days: DayGroup[];   // jours de la semaine, du plus récent au plus ancien
-  count: number;
-  winCount: number;
-  totalPnl: number;
-  totalPnlNet: number;
-  totalCommission: number;
-}
 
 @Component({
   selector: 'mtc-journal',
@@ -162,32 +135,10 @@ export class JournalComponent {
     return f;
   });
 
-  /** Range ISO dérivé du preset (même logique que l'ancien filtrage client). */
-  private readonly dateRange = computed<{ dateFrom?: string; dateTo?: string }>(() => {
-    const preset = this.datePreset();
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    if (preset === 'today') return { dateFrom: today.toISOString(), dateTo: now.toISOString() };
-    if (preset === 'week') {
-      const weekStart = new Date(today);
-      weekStart.setDate(today.getDate() - today.getDay()); // dimanche, comme avant
-      return { dateFrom: weekStart.toISOString(), dateTo: now.toISOString() };
-    }
-    if (preset === 'month') {
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      return { dateFrom: monthStart.toISOString(), dateTo: now.toISOString() };
-    }
-    if (preset === 'custom') {
-      const from = this.dateFrom();
-      if (!from) return {};
-      const to = this.dateTo();
-      return {
-        dateFrom: new Date(from).toISOString(),
-        dateTo: to ? new Date(to + 'T23:59:59').toISOString() : now.toISOString(),
-      };
-    }
-    return {}; // 'all' → pas de borne
-  });
+  /** Range ISO dérivé du preset (voir `presetRange`). */
+  private readonly dateRange = computed(() =>
+    presetRange(this.datePreset(), this.dateFrom(), this.dateTo()),
+  );
 
   /** Reset + recharge liste et KPIs avec les filtres courants. */
   private refreshJournal(): void {
@@ -211,20 +162,8 @@ export class JournalComponent {
   protected readonly TrashIcon        = Trash2;
   protected readonly ReassignIcon     = ArrowRightLeft;
 
-  /** Libellé FR de la note d'exécution calculée ; '-' si non évaluée. */
-  protected gradeLabel(g: string | null | undefined): string {
-    return { EXCELLENT: 'Excellent', BON: 'Bon', MOYEN: 'Moyen', MAUVAIS: 'Mauvais' }[g ?? ''] ?? '-';
-  }
-
-  /** Explication de la note selon le barème utilisé. */
-  protected gradeTooltip(t: Trade): string {
-    const base = `Note calculée : ${t.executionScore}/100. `;
-    return t.executionMethod === 'BEHAVIORAL'
-      ? base +
-          'Note comportementale (aucun stop loss sur ce trade) : perte contenue, absence de revenge trading, régularité de la taille de position.'
-      : base +
-          "Barème standard : stop respecté, R:R, émotion effective et risque engagé.";
-  }
+  protected readonly gradeLabel = gradeLabel;
+  protected readonly gradeTooltip = gradeTooltip;
 
   protected readonly showModal        = signal(false);
   protected readonly showImport       = signal(false);
@@ -304,87 +243,14 @@ export class JournalComponent {
   // simplement les trades renvoyés. « Charger plus » révèle des jours plus anciens
   // dans le même filtre, sans changer les KPIs (qui viennent de l'agrégat backend).
 
-  protected readonly tradesByDay = computed((): DayGroup[] => {
-    const trades = this.tradesStore.trades();
-    if (!trades.length) return [];
-
-    const groups = new Map<string, Trade[]>();
-    for (const trade of trades) {
-      const d   = new Date(trade.tradedAt);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      const arr = groups.get(key) ?? [];
-      arr.push(trade);
-      groups.set(key, arr);
-    }
-
-    return Array.from(groups.entries())
-      .filter(([, dayTrades]) => dayTrades.length > 0)
-      .sort(([a], [b]) => b.localeCompare(a))
-      .map(([key, dayTrades]) => {
-        const d     = new Date(key + 'T12:00:00');
-        const label = d.toLocaleDateString('fr-FR', {
-          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-        });
-        const totalCommission = dayTrades.reduce((s, t) => s + Math.abs(t.commission ?? 0), 0);
-        // Stats du jour via le helper unique (BE exclus du win rate).
-        const st              = computeTradeStats(dayTrades);
-        const totalPnl        = st.totalPnl;
-        const totalPnlNet     = totalPnl - totalCommission;
-        return {
-          key, label,
-          trades: dayTrades.sort((a, b) => new Date(b.tradedAt).getTime() - new Date(a.tradedAt).getTime()),
-          totalPnl, totalPnlNet, totalCommission,
-          count: dayTrades.length, winCount: st.wins,
-          lossCount: st.losses, breakeven: st.breakeven, winRate: st.winRate,
-        };
-      });
-  });
+  protected readonly tradesByDay = computed(() => groupByDay(this.tradesStore.trades()));
 
   // ── Vue par semaine (niveau au-dessus des jours) ────────────────────────────
   // Regroupe les DayGroup en semaines ISO (lundi → dimanche). Les agrégats sont
   // recalculés sur TOUS les trades de la semaine (win rate juste, pas une moyenne
   // de moyennes ; BE exclus via computeTradeStats). Même base de date que les jours.
 
-  protected readonly tradesByWeek = computed((): WeekGroup[] => {
-    const days = this.tradesByDay();
-    if (!days.length) return [];
-
-    const map = new Map<string, { days: DayGroup[]; label: string }>();
-    for (const day of days) {
-      const { key, label } = this.isoWeek(day.key);
-      const bucket = map.get(key) ?? { days: [], label };
-      bucket.days.push(day);
-      map.set(key, bucket);
-    }
-
-    return Array.from(map.entries())
-      .sort(([a], [b]) => b.localeCompare(a)) // semaines du plus récent au plus ancien
-      .map(([key, { days: weekDays, label }]) => {
-        const allTrades = weekDays.flatMap((d) => d.trades);
-        const st = computeTradeStats(allTrades);
-        const totalCommission = weekDays.reduce((s, d) => s + d.totalCommission, 0);
-        const totalPnl = st.totalPnl;
-        return {
-          key, label, days: weekDays,
-          count: st.total, winCount: st.wins,
-          totalPnl, totalPnlNet: totalPnl - totalCommission, totalCommission,
-        };
-      });
-  });
-
-  /** Semaine ISO (lundi → dimanche) d'une clé jour 'YYYY-MM-DD'. Clé = lundi, libellé = plage. */
-  private isoWeek(dayKey: string): { key: string; label: string } {
-    const date = new Date(dayKey + 'T12:00:00'); // midi → insensible au fuseau/DST
-    const dow = (date.getDay() + 6) % 7;          // lundi = 0 … dimanche = 6
-    const monday = new Date(date);
-    monday.setDate(date.getDate() - dow);
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-    const pad = (n: number) => String(n).padStart(2, '0');
-    const iso = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-    const fr = (d: Date) => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
-    return { key: `week-${iso(monday)}`, label: `Semaine du ${fr(monday)} au ${fr(sunday)}` };
-  }
+  protected readonly tradesByWeek = computed(() => groupByWeek(this.tradesByDay()));
 
   // ── Stats période ─────────────────────────────────────────────────────────
   // KPIs issus de l'agrégat backend (ensemble filtré complet, hors pagination).
