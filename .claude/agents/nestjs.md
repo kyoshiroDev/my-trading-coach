@@ -812,8 +812,22 @@ sont en direct.
     donc plusieurs `BrokerConnection`, chacune avec SA copie des tokens. La première qui renouvelle
     invalide celle des autres — c'est ce qui tuait 2 des 5 connexions d'un ambassadeur.
     - `externalUserId` (colonne qui existait mais n'était **jamais écrite**) est posé au
-      consentement et au choix du compte, et **rattrapé** par la synchro via `rememberLogin`
-      (le `/account/list` qu'elle fait déjà porte le `userId`) pour les connexions antérieures.
+      consentement, et **rattrapé** par la synchro via `rememberLogin` pour les connexions
+      antérieures.
+    - ⚠ **Le login, c'est `/user/list`, JAMAIS `account.userId`** (corrigé le 2026-09-27).
+      `account.userId` est le **propriétaire du compte chez le broker** : sur un compte prop firm,
+      c'est l'identifiant de la **firme**. Mesuré en prod : deux traders Apex sans aucun lien
+      (`APEX_13679` et `APEX_428047`, e-mails différents) portaient tous deux `userId: 699523`, et
+      `/user/item?id=699523` répondait **404** — ce n'est pas un trader. Tant qu'on écrivait cette
+      valeur, **tous les traders Apex de la plateforme partageaient le verrou
+      `tradovate:login:699523`** (goulot latent), et « sœur » voulait dire « compte chez la même
+      firme ». `discoverLogin` lit donc `/user/list` (un seul élément, son `id`) ; échec ou réponse
+      vide → login `null`, verrou par connexion, aucune propagation : dégradé, jamais bloquant.
+    - `selectAccount` **ne retouche pas** `externalUserId` : changer de compte ne change pas
+      l'utilisateur authentifié, et y écrire `target.userId` réintroduirait l'identifiant de firme.
+    - `rememberLogin` reçoit désormais **tous** les comptes du `/account/list` comme fratrie (ils
+      appartiennent par construction à l'utilisateur de ce jeton), au lieu de les filtrer sur
+      `account.userId`. La synchro n'appelle `/user/list` que si le login manque encore.
     - Verrou `tradovate:login:<externalUserId>` (TTL 30 s) autour du SEUL renouvellement — distinct
       du verrou de synchro `tradovate:sync:<id>` (TTL 120 s), pour que deux comptes d'un même login
       puissent continuer à se synchroniser en parallèle.

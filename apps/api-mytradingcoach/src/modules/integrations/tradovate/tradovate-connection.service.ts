@@ -21,6 +21,7 @@ import type {
   TradovateCurrency,
   TradovateEnv,
   TradovateOAuthTokenResponse,
+  TradovateUser,
 } from './tradovate.types';
 
 /**
@@ -186,7 +187,8 @@ export class TradovateConnectionService {
       this.assertConfigured();
       const tokens = await this.api.exchangeCode(query.code);
       const available = await this.discoverAccounts(tokens.access_token as string);
-      const conn = await this.saveConnection(userId, accountId, tokens, available);
+      const login = await this.discoverLogin(tokens.access_token as string, available);
+      const conn = await this.saveConnection(userId, accountId, tokens, available, login);
       if (available.length === 0) return { status: 'error', reason: 'no_account', accountId, origin };
       return conn.externalAccountId
         ? { status: 'connected', accountId, userId, origin }
@@ -224,11 +226,41 @@ export class TradovateConnectionService {
     return found;
   }
 
+  /**
+   * Le login = l'utilisateur Tradovate authentifié par ce jeton (`/user/list`, un seul élément).
+   *
+   * Surtout pas `account.userId` : sur un compte prop firm c'est l'identifiant de la FIRME, donc
+   * le même pour tous ses traders. Mesuré le 2026-09-27 : deux traders Apex étrangers l'un à
+   * l'autre portaient `699523`, ce qui faisait partager à toute la plateforme Apex un unique
+   * verrou de renouvellement `tradovate:login:699523`.
+   *
+   * Jamais bloquant : sans login on retombe sur un verrou par connexion et aucune propagation,
+   * ce qui dégrade mais ne casse rien. Une connexion ne doit pas échouer pour ça.
+   */
+  private async discoverLogin(
+    accessToken: string,
+    available: ExternalAccountRef[],
+  ): Promise<string | null> {
+    // Les hôtes où ce jeton a effectivement répondu, sinon les deux.
+    const envs = available.length ? [...new Set(available.map((a) => a.env))] : [...ENVS];
+    for (const env of envs) {
+      try {
+        const users = await this.api.get<TradovateUser[]>(env, '/user/list', accessToken);
+        const id = (Array.isArray(users) ? users : [])[0]?.id;
+        if (id != null) return String(id);
+      } catch (err) {
+        this.logger.warn(`user/list ${env} indisponible : ${(err as Error).message}`);
+      }
+    }
+    return null;
+  }
+
   private async saveConnection(
     userId: string,
     accountId: string,
     tokens: TradovateOAuthTokenResponse,
     available: ExternalAccountRef[],
+    login: string | null,
   ): Promise<BrokerConnection> {
     const where = { accountId_provider: { accountId, provider: BrokerProvider.TRADOVATE } };
     const previous = await this.prisma.brokerConnection.findUnique({ where });
@@ -245,8 +277,9 @@ export class TradovateConnectionService {
       externalAccountId: chosen?.id ?? null,
       externalAccountName: chosen?.name ?? null,
       externalEnv: chosen?.env ?? null,
-      // Le login : il sert à sérialiser les renouvellements entre connexions sœurs.
-      externalUserId: chosen?.userId ?? null,
+      // Le login : l'utilisateur AUTHENTIFIÉ, pas le propriétaire du compte (cf. discoverLogin).
+      // Il sert à sérialiser les renouvellements et à propager le jeton aux connexions sœurs.
+      externalUserId: login,
       availableAccounts: available as unknown as Prisma.InputJsonValue,
       lastSyncError: null,
     };
@@ -289,7 +322,9 @@ export class TradovateConnectionService {
         externalAccountId: target.id,
         externalAccountName: target.name,
         externalEnv: target.env,
-        externalUserId: target.userId ?? null,
+        // `externalUserId` n'est PAS retouché ici : changer de compte ne change pas l'utilisateur
+        // authentifié, et `target.userId` est le propriétaire du compte (la firme sur un compte
+        // prop firm), donc l'écrire ici écraserait le bon login par un identifiant partagé.
         // Efface la raison d'un rechoix (« ce compte n'existe plus… ») : le nouveau compte est posé.
         lastSyncError: null,
       },

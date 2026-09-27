@@ -310,6 +310,11 @@ rétroactivement d'où vient une ligne, et c'est la valeur la moins mensongère.
 > `20260910182250_broker_connection`). Le seed démo en crée une (placeholder de token, jamais
 > déchiffré : le compte démo ne peut pas synchroniser).
 >
+> `externalUserId` = l'utilisateur Tradovate **authentifié** (`/user/list`), jamais
+> `account.userId` (= le propriétaire du compte, donc la **firme** sur un compte prop firm : deux
+> traders Apex étrangers portaient `699523`). C'est la clé du verrou de renouvellement et de la
+> propagation aux connexions sœurs — une valeur partagée entre traders sérialise tout le monde.
+>
 > `historyImportedAt` (migration `20260926230000_broker_history_imported_at`, nullable, ajout
 > additif) = date du premier import RÉUSSI de tout l'historique du compte, remonté jusqu'à sa
 > création. Vide = le passé n'a jamais été remonté entièrement : le **cron de fond** le rattrape
