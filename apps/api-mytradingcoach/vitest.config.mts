@@ -15,10 +15,17 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['src/**/*.spec.ts'],
-    passWithNoTests: true,
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'lcov'],
+      reporter: ['text-summary', 'lcov'],
+      // Seuils sur les domaines critiques (argent, accès, stats). Vérifiés en CI par
+      // `nx test api-mytradingcoach -c ci` : la CI échoue si l'un d'eux passe sous 60 %.
+      thresholds: {
+        'src/modules/trades/**': { lines: 60 },
+        'src/modules/analytics/**': { lines: 60 },
+        'src/modules/stripe/**': { lines: 60 },
+        'src/modules/auth/**': { lines: 60 },
+      },
     },
   },
   plugins: [

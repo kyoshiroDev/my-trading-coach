@@ -10,6 +10,11 @@
         "options": {
           "command": "vitest run --config=vitest.config.mts",
           "cwd": "apps/api-mytradingcoach"
+        },
+        "configurations": {
+          "ci": {
+            "command": "vitest run --config=vitest.config.mts --coverage"
+          }
         }
       },
       "build": {
