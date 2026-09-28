@@ -78,6 +78,33 @@ export class BrokerMappingsComponent {
     return { ton: 'ok', texte: `Sens confirmé sur ${pct} % des lignes testables.` };
   });
 
+  /**
+   * Les frais additionnés au P&L : le seul champ que le code ne peut pas vérifier. Mesuré le
+   * 2026-09-28 : sur le même fichier, le modèle a répondu « commission déjà incluse » puis
+   * « commission à additionner » à l'essai suivant, ce qui comptait les frais deux fois.
+   * On n'empêche pas d'enregistrer, on met l'admin devant le fait.
+   */
+  protected readonly avertissementFrais = computed<string | null>(() => {
+    const a = this.analyse();
+    if (!a?.fraisAdditionnes?.length) return null;
+    const noms = a.fraisAdditionnes.map((i) => this.colonnes()[i] ?? `colonne ${i}`).join(', ');
+    return `Le P&L additionne : ${noms}. Le code ne peut pas vérifier si ces frais sont déjà `
+      + "déduits du P&L. Regarde l'aperçu : si la colonne de P&L s'appelle « net », ils y sont "
+      + 'déjà et il faut les retirer.';
+  });
+
+  protected setDateFormat(v: string): void {
+    this.majMapping((m) => ({
+      ...m,
+      dateFormat: v === 'dmy' ? 'dmy' : v === 'mdy' ? 'mdy' : 'iso',
+    }));
+  }
+
+  /** Retire toutes les colonnes de frais additionnees au P&L. */
+  protected viderFrais(): void {
+    this.majMapping((m) => ({ ...m, pnlExtraColumns: [] }));
+  }
+
   protected readonly enregistrable = computed(() => {
     const v = this.verdict();
     const a = this.analyse();

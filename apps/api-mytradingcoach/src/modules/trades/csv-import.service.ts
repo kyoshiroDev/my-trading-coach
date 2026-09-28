@@ -20,7 +20,6 @@ import {
   MAPPING_MIN_PARSED_RATIO,
   MAPPING_MIN_PNL_RATIO,
   MAPPING_SAMPLE_ROWS,
-  inverseSide,
   validateMappingShape,
   type CsvMapping,
 } from './csv-mapping';
@@ -506,12 +505,41 @@ export class CsvImportService {
     flipped: boolean;
     skipped: number;
     rowsRead: number;
+    fraisAdditionnes: number[];
   } | null> {
-    const lignes = sample.split('\n').map((l) => l.replace(/\r$/, '')).filter((l) => l.trim());
+    const lignes = this.normaliserEchantillon(sample);
     if (lignes.length < 2) return null;
 
     const mapping = await this.inferMapping(lignes);
     return { ...this.previewForAdmin(lignes, mapping), header: lignes[0] };
+  }
+
+  /**
+   * L'echantillon colle par l'admin, passe par LA MEME normalisation que le chemin d'import.
+   *
+   * Indispensable, et decouvert en testant de bout en bout : un export en point-virgule avec
+   * des decimales a la virgule (« 29657,50;1,24 USD ») est converti par `preprocessCsv` en
+   * virgule/point avant d'atteindre le registre. Si l'admin deduisait la fiche sur le texte
+   * BRUT, elle porterait `delimiter: ';'` et une signature calculee sur des point-virgules,
+   * alors que l'import cherche une signature calculee sur des virgules : la fiche ne
+   * matcherait jamais. Passer par la meme fonction garantit l'accord par construction.
+   */
+  /** Meme normalisation, exposee au controleur admin pour que preview et save concordent. */
+  normaliserEchantillonPublic(sample: string): string[] {
+    return this.normaliserEchantillon(sample);
+  }
+
+  private normaliserEchantillon(sample: string): string[] {
+    return preprocessCsv(sample)
+      .csv.split('\n')
+      .map((l) => l.replace(/\r$/, ''))
+      .filter((l) => l.trim());
+  }
+
+  /** Broker deja reconnu nativement : une fiche serait inutile. */
+  brokerDejaSupporte(sample: string): string | null {
+    const { broker } = preprocessCsv(sample);
+    return broker === 'unknown' ? null : broker;
   }
 
   /**
@@ -529,21 +557,26 @@ export class CsvImportService {
     flipped: boolean;
     skipped: number;
     rowsRead: number;
+    fraisAdditionnes: number[];
   } {
     const donnees = lignes.slice(1);
     if (!mapping) {
-      return { mapping: null, preview: [], pnlRatio: null, flipped: false, skipped: donnees.length, rowsRead: donnees.length };
+      return {
+        mapping: null, preview: [], pnlRatio: null, flipped: false,
+        skipped: donnees.length, rowsRead: donnees.length, fraisAdditionnes: [],
+      };
     }
     const out = applyMappingWithPnlCheck(donnees, mapping);
     return {
-      // La fiche rendue est celle REELLEMENT retenue : si le controle du P&L a inverse le
-      // sens, l'admin doit enregistrer la version corrigee, pas celle qu'il a envoyee.
-      mapping: out.flipped ? inverseSide(mapping) : mapping,
+      // La fiche rendue est celle REELLEMENT appliquee : sens redresse et ordre jour/mois
+      // corrige. L'admin doit enregistrer celle-la, pas celle qu'il a envoyee.
+      mapping: out.mapping,
       preview: this.mapToDto(out.rows),
       pnlRatio: out.pnlRatio,
       flipped: out.flipped,
       skipped: out.skipped,
       rowsRead: donnees.length,
+      fraisAdditionnes: out.fraisAdditionnes,
     };
   }
 
@@ -668,6 +701,7 @@ Reponds UNIQUEMENT avec ce JSON, sans texte autour :
 {
   "delimiter": "<le separateur de colonnes, un seul caractere>",
   "decimalSeparator": "." ou ",",
+  "dateFormat": "dmy" si les dates sont jour/mois/annee, "mdy" si mois/jour/annee, "iso" si annee en premier,
   "columns": {
     "symbol": <index>, "entry": <index ou null si le fichier ne donne pas le prix d'entree>,
     "exit": <index>, "quantity": <index>, "pnl": <index>,

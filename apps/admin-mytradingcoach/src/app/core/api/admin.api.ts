@@ -323,6 +323,8 @@ export interface BrokerMappingSide {
 export interface BrokerMapping {
   delimiter: string;
   decimalSeparator: '.' | ',';
+  /** Ordre jour/mois des dates : « 01/06 » vaut le 1er juin en dmy, le 6 janvier en mdy. */
+  dateFormat: 'iso' | 'dmy' | 'mdy';
   columns: BrokerMappingColumns;
   side: BrokerMappingSide;
   pnlExtraColumns: number[];
@@ -350,6 +352,12 @@ export interface BrokerMappingAnalysis {
   flipped: boolean;
   skipped: number;
   rowsRead: number;
+  /**
+   * Colonnes additionnées au P&L. Non vérifiable par le code : il faudrait la valeur du point
+   * de l'instrument. C'est à l'admin de dire si c'est un complément légitime (MT5 éclate le
+   * résultat) ou un double comptage (une colonne « net » inclut déjà les frais).
+   */
+  fraisAdditionnes: number[];
 }
 
 export interface BrokerMappingRow {

@@ -10,6 +10,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   applyMapping,
+  detectDateFormat,
+  parseBrokerDate,
   applyMappingWithPnlCheck,
   parseBrokerNumber,
   pnlCoherence,
@@ -26,6 +28,7 @@ const TRADOVATE = readFileSync(
 const MAPPING_TRADOVATE: CsvMapping = {
   delimiter: ',',
   decimalSeparator: '.',
+  dateFormat: 'mdy',
   columns: { symbol: 0, entry: 7, exit: 8, quantity: 6, pnl: 9, tradedAt: 11 },
   side: {
     mode: 'derived_from_timestamps',
@@ -202,5 +205,74 @@ describe('applyMappingWithPnlCheck — le garde-fou sur le sens', () => {
     const ligne = '100001,2026-06-01 08:00:00,buy,1,EURUSD,1.08000,0,0,2026-06-01 16:00:00,1.08500,-3.00,-0.45,500.00';
     const { rows } = applyMapping([ligne], mt5);
     expect(rows[0].pnl).toBeCloseTo(500 - 3 - 0.45, 2);
+  });
+});
+
+describe('parseBrokerDate — l ordre jour/mois ne se devine pas', () => {
+  it('lit la meme chaine differemment selon la fiche', () => {
+    // Le piege qui a decale tous les trades d un export europeen : « 01/06/2026 » vaut le
+    // 1er juin chez un broker francais et le 6 janvier chez un americain.
+    expect(parseBrokerDate('01/06/2026 09:30:00', 'dmy').toISOString()).toBe('2026-06-01T09:30:00.000Z');
+    expect(parseBrokerDate('01/06/2026 09:30:00', 'mdy').toISOString()).toBe('2026-01-06T09:30:00.000Z');
+  });
+
+  it('reconnait l ISO quel que soit le format declare', () => {
+    expect(parseBrokerDate('2026-06-01 09:30:00', 'dmy').toISOString()).toBe('2026-06-01T09:30:00.000Z');
+    expect(parseBrokerDate('2026-06-01 09:30:00', 'mdy').toISOString()).toBe('2026-06-01T09:30:00.000Z');
+  });
+
+  it('refuse une date impossible plutot que de la faire deborder', () => {
+    // « 31/02 » lu a l envers donnerait le 2 mars en silence.
+    expect(parseBrokerDate('31/02/2026', 'mdy').getTime()).toBeNaN();
+    expect(parseBrokerDate('13/13/2026', 'dmy').getTime()).toBeNaN();
+  });
+
+  it('une date sans ordre etabli garde le comportement du moteur JS', () => {
+    // Aucune regression pour les brokers deja supportes : « iso » sur une date en barres
+    // rend exactement ce que `new Date()` rendait avant l existence de ce champ.
+    expect(parseBrokerDate('07/10/2026 15:34:00', 'iso').getTime())
+      .toBe(new Date('07/10/2026 15:34:00').getTime());
+  });
+});
+
+describe('detectDateFormat — prouver l ordre par les donnees', () => {
+  it('une composante superieure a 12 tranche a elle seule', () => {
+    expect(detectDateFormat(['01/06/2026', '25/06/2026'])).toBe('dmy');
+    expect(detectDateFormat(['06/01/2026', '06/25/2026'])).toBe('mdy');
+  });
+
+  it('rend null quand les deux lectures tiennent', () => {
+    // Indecidable : on ne devine pas, on garde ce que dit la fiche.
+    expect(detectDateFormat(['01/06/2026', '02/07/2026'])).toBeNull();
+  });
+
+  it('reconnait l ISO', () => {
+    expect(detectDateFormat(['2026-06-01 09:30:00'])).toBe('iso');
+  });
+});
+
+describe('applyMappingWithPnlCheck — l ordre jour/mois est corrige par les donnees', () => {
+  it('redresse une fiche qui annonce le mauvais ordre', () => {
+    const m: CsvMapping = {
+      delimiter: ',', decimalSeparator: '.',
+      dateFormat: 'mdy',   // faux : ces dates sont en jj/mm
+      columns: { symbol: 0, entry: 1, exit: 2, quantity: 3, pnl: 4, tradedAt: 5 },
+      side: {
+        mode: 'column', index: 6,
+        longValues: ['Long'], shortValues: ['Short'],
+        buyTimeIndex: null, sellTimeIndex: null,
+      },
+      pnlExtraColumns: [],
+    };
+    const lignes = [
+      'MNQ,29900,29950,1,50,01/06/2026 10:00:00,Long',
+      'MNQ,29900,29800,1,100,25/06/2026 10:00:00,Short',   // 25 > 12 : l ordre est prouve
+    ];
+
+    const out = applyMappingWithPnlCheck(lignes, m);
+
+    expect(out.mapping.dateFormat).toBe('dmy');
+    expect(out.rows[0].tradedAt).toBe('2026-06-01T10:00:00.000Z');
+    expect(out.rows[1].tradedAt).toBe('2026-06-25T10:00:00.000Z');
   });
 });

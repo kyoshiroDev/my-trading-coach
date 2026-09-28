@@ -54,6 +54,13 @@ export class AdminBrokerMappingsController {
 
   @Post('analyse')
   async analyse(@Body() dto: AnalyseSampleDto) {
+    const deja = this.imports.brokerDejaSupporte(dto.sample);
+    if (deja) {
+      throw new BadRequestException(
+        `Ce format est déjà reconnu nativement (${deja}) : une fiche serait inutile. ` +
+        "Si l'import échoue quand même pour cet utilisateur, le problème est ailleurs.",
+      );
+    }
     const res = await this.imports.analyseSampleForAdmin(dto.sample);
     if (!res) {
       throw new BadRequestException(
@@ -129,10 +136,9 @@ export class AdminBrokerMappingsController {
    * dans l'interface ne doit pas pouvoir designer une colonne qui n'existe pas.
    */
   private relire(dto: PreviewMappingDto): { lignes: string[]; mapping: CsvMapping } {
-    const lignes = dto.sample
-      .split('\n')
-      .map((l) => l.replace(/\r$/, ''))
-      .filter((l) => l.trim());
+    // MEME normalisation que le chemin d'import (separateur europeen, decimales, BOM) :
+    // sans elle, la fiche validee ici ne matcherait jamais la signature calculee a l'import.
+    const lignes = this.imports.normaliserEchantillonPublic(dto.sample);
     if (lignes.length < 2) {
       throw new BadRequestException(
         "Échantillon trop court : il faut l'en-tête et au moins une ligne de trade.",

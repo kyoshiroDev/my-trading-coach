@@ -27,7 +27,14 @@
  *    ambiguite dans l'export) mais il n'est pas nul ;
  *  - un trade dont les frais depassent le gain brut a un P&L de signe « faux » sans que
  *    rien ne soit casse. C'est pourquoi le seuil est une PART de lignes coherentes
- *    (MAPPING_MIN_PNL_RATIO) et non la perfection.
+ *    (MAPPING_MIN_PNL_RATIO) et non la perfection ;
+ *  - `pnlExtraColumns` n'est PAS verifiable. Savoir si une colonne de frais est deja
+ *    deduite du P&L demanderait la valeur du point de l'instrument, qu'on n'a pas. Mesure du
+ *    2026-09-28 : sur le MEME fichier, le modele a repondu « commission deja incluse » a un
+ *    essai et « commission a additionner » au suivant, ce qui comptait les frais deux fois.
+ *    D'ou `fraisAdditionnes` dans le resultat : le code ne tranche pas, il previent, et c'est
+ *    l'admin qui regarde l'apercu. Un nom de colonne contenant « net » est un indice fort que
+ *    les frais y sont deja.
  */
 
 import { createHash } from 'node:crypto';
@@ -64,9 +71,18 @@ export function headerSignature(header: string): string {
 
 export type SideMode = 'column' | 'derived_from_timestamps';
 
+export type DateFormat = 'iso' | 'dmy' | 'mdy';
+
 export interface CsvMapping {
   delimiter: string;
   decimalSeparator: '.' | ',';
+  /**
+   * Ordre jour/mois des dates. « 01/06/2026 » vaut le 1er juin chez un broker europeen et
+   * le 6 janvier chez un americain : `new Date()` tranche toujours a l'americaine, ce qui
+   * decalait silencieusement tous les trades d'un export en jj/mm. Comme pour le sens, la
+   * valeur proposee par le modele est VERIFIEE sur l'echantillon quand c'est possible.
+   */
+  dateFormat: DateFormat;
   columns: {
     symbol: number;
     entry: number | null;
@@ -127,6 +143,60 @@ export function parseBrokerNumber(raw: string, decimalSeparator: '.' | ','): num
   return negatifParParentheses ? -n : n;
 }
 
+/**
+ * Date d'un broker. Gere l'ISO, et les formats a composantes separees par / . ou - en
+ * choisissant l'ordre jour/mois indique par la fiche plutot que celui devine par le moteur JS.
+ */
+export function parseBrokerDate(raw: string, format: DateFormat): Date {
+  const brut = (raw ?? '').trim();
+  if (!brut) return new Date(NaN);
+
+  const m = brut.match(
+    /^(\d{1,4})[/.-](\d{1,2})[/.-](\d{2,4})(?:[ T]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/,
+  );
+  if (!m) return new Date(brut); // ISO ou variante que le moteur sait lire
+
+  const [, a, b, c, hh = '0', mm = '0', ss = '0'] = m;
+  // Une premiere composante a 4 chiffres ne peut etre qu'une annee : c'est de l'ISO.
+  const iso = a.length === 4;
+
+  // Date a composantes SANS ordre etabli : la fiche dit « iso » alors que la date n'en est
+  // pas. On rend la main au moteur JS, c'est-a-dire la lecture mois/jour d'avant ce champ :
+  // aucune regression pour les brokers deja supportes, et `detectDateFormat` corrige des que
+  // l'echantillon le prouve. Deviner ici serait pire que ne rien changer.
+  if (!iso && format === 'iso') return new Date(brut);
+  const annee = Number(iso ? a : c);
+  const jour = iso ? Number(c) : Number(format === 'mdy' ? b : a);
+  const mois = iso ? Number(b) : Number(format === 'mdy' ? a : b);
+
+  const d = new Date(Date.UTC(
+    annee < 100 ? 2000 + annee : annee,
+    mois - 1, jour, Number(hh), Number(mm), Number(ss),
+  ));
+  // Un mois 13 ou un 31 fevrier debordent : la fiche se trompe d'ordre.
+  return d.getUTCMonth() + 1 === mois && d.getUTCDate() === jour ? d : new Date(NaN);
+}
+
+/**
+ * Ordre jour/mois reellement compatible avec les dates de l'echantillon, ou null si les deux
+ * lectures tiennent. Une composante superieure a 12 leve l'ambiguite a elle seule : sur vingt
+ * lignes etalees dans le temps, il y en a presque toujours une.
+ */
+export function detectDateFormat(dates: string[]): DateFormat | null {
+  let premierGrand = false;
+  let secondGrand = false;
+  for (const brut of dates) {
+    const m = (brut ?? '').trim().match(/^(\d{1,4})[/.-](\d{1,2})[/.-](\d{2,4})/);
+    if (!m) continue;
+    if (m[1].length === 4) return 'iso';
+    if (Number(m[1]) > 12) premierGrand = true;
+    if (Number(m[2]) > 12) secondGrand = true;
+  }
+  if (premierGrand && !secondGrand) return 'dmy';
+  if (secondGrand && !premierGrand) return 'mdy';
+  return null; // indecidable sur cet echantillon : on garde ce que dit la fiche
+}
+
 function estIndex(v: unknown, max: number): v is number {
   return typeof v === 'number' && Number.isInteger(v) && v >= 0 && v < max;
 }
@@ -147,6 +217,8 @@ export function validateMappingShape(raw: unknown, columnCount: number): CsvMapp
   if (!delimiter) return null;
 
   const dec = o['decimalSeparator'] === ',' ? ',' : '.';
+  const df: DateFormat =
+    o['dateFormat'] === 'dmy' ? 'dmy' : o['dateFormat'] === 'mdy' ? 'mdy' : 'iso';
 
   if (!estIndex(cols['symbol'], columnCount)) return null;
   if (!estIndex(cols['exit'], columnCount)) return null;
@@ -173,6 +245,7 @@ export function validateMappingShape(raw: unknown, columnCount: number): CsvMapp
   return {
     delimiter,
     decimalSeparator: dec,
+    dateFormat: df,
     columns: {
       symbol: cols['symbol'] as number,
       entry,
@@ -218,8 +291,8 @@ function paireDepuisHorodatages(
   const buyPrice = m.columns.entry != null
     ? parseBrokerNumber(cols[m.columns.entry] ?? '', m.decimalSeparator) : NaN;
   const sellPrice = parseBrokerNumber(cols[m.columns.exit] ?? '', m.decimalSeparator);
-  const boughtAt = new Date((cols[m.side.buyTimeIndex as number] ?? '').trim());
-  const soldAt = new Date((cols[m.side.sellTimeIndex as number] ?? '').trim());
+  const boughtAt = parseBrokerDate(cols[m.side.buyTimeIndex as number] ?? '', m.dateFormat);
+  const soldAt = parseBrokerDate(cols[m.side.sellTimeIndex as number] ?? '', m.dateFormat);
   if (!isFinite(buyPrice) || !isFinite(sellPrice)) return null;
   if (isNaN(boughtAt.getTime()) || isNaN(soldAt.getTime())) return null;
   return resolvePairDirection({ buyPrice, sellPrice, boughtAt, soldAt });
@@ -257,7 +330,9 @@ export function applyMapping(
       const extra = parseBrokerNumber(cols[i] ?? '', m.decimalSeparator);
       if (isFinite(extra)) pnl += extra;
     }
-    const date = paire ? paire.tradedAt : new Date((cols[m.columns.tradedAt] ?? '').trim());
+    const date = paire
+      ? paire.tradedAt
+      : parseBrokerDate(cols[m.columns.tradedAt] ?? '', m.dateFormat);
 
     if (!asset || !side || !isFinite(exit) || !isFinite(pnl) || isNaN(date.getTime())) {
       skipped++;
@@ -298,10 +373,22 @@ export function pnlCoherence(rows: MappedRow[]): { ok: number; testables: number
 export interface MappingOutcome {
   rows: MappedRow[];
   skipped: number;
+  /**
+   * La fiche REELLEMENT appliquee, apres les corrections deterministes (sens inverse, ordre
+   * jour/mois prouve par l'echantillon). C'est celle-la qu'un admin doit enregistrer : sauver
+   * la version proposee par le modele ferait rejouer l'erreur a chaque import.
+   */
+  mapping: CsvMapping;
   /** Le sens indique par le modele a du etre inverse pour coller aux chiffres. */
   flipped: boolean;
   /** Part des lignes testables dont le signe du P&L confirme le sens (null = non testable). */
   pnlRatio: number | null;
+  /**
+   * La fiche additionne une ou plusieurs colonnes au P&L. Non verifiable par le code : a
+   * signaler a l'admin, qui seul peut dire si c'est un complement legitime (MT5 eclate le
+   * resultat) ou un double comptage (une colonne « net » inclut deja les frais).
+   */
+  fraisAdditionnes: number[];
 }
 
 /**
@@ -325,23 +412,34 @@ export function inverseSide(m: CsvMapping): CsvMapping {
  * `pnlRatio` vaut null et l'appelant decide s'il accepte ce risque.
  */
 export function applyMappingWithPnlCheck(dataLines: string[], m: CsvMapping): MappingOutcome {
+  // Ordre jour/mois : on ne croit pas le modele sur parole non plus. Quand l'echantillon
+  // contient une composante superieure a 12, l'ordre est prouve et on corrige la fiche.
+  const colonneDate = m.side.mode === 'derived_from_timestamps'
+    ? (m.side.sellTimeIndex ?? m.columns.tradedAt)
+    : m.columns.tradedAt;
+  const prouve = detectDateFormat(
+    dataLines.map((l) => splitCsvLine(l, m.delimiter)[colonneDate] ?? ''),
+  );
+  if (prouve && prouve !== m.dateFormat) m = { ...m, dateFormat: prouve };
+
   const direct = applyMapping(dataLines, m);
   const cDirect = pnlCoherence(direct.rows);
 
   if (cDirect.testables === 0) {
-    return { ...direct, flipped: false, pnlRatio: null };
+    return { ...direct, mapping: m, flipped: false, pnlRatio: null, fraisAdditionnes: m.pnlExtraColumns };
   }
 
   const ratioDirect = cDirect.ok / cDirect.testables;
   if (ratioDirect >= MAPPING_MIN_PNL_RATIO) {
-    return { ...direct, flipped: false, pnlRatio: ratioDirect };
+    return { ...direct, mapping: m, flipped: false, pnlRatio: ratioDirect, fraisAdditionnes: m.pnlExtraColumns };
   }
 
-  const retourne = applyMapping(dataLines, inverseSide(m));
+  const inverse = inverseSide(m);
+  const retourne = applyMapping(dataLines, inverse);
   const cInverse = pnlCoherence(retourne.rows);
   const ratioInverse = cInverse.testables ? cInverse.ok / cInverse.testables : 0;
 
   return ratioInverse > ratioDirect
-    ? { ...retourne, flipped: true, pnlRatio: ratioInverse }
-    : { ...direct, flipped: false, pnlRatio: ratioDirect };
+    ? { ...retourne, mapping: inverse, flipped: true, pnlRatio: ratioInverse, fraisAdditionnes: inverse.pnlExtraColumns }
+    : { ...direct, mapping: m, flipped: false, pnlRatio: ratioDirect, fraisAdditionnes: m.pnlExtraColumns };
 }

@@ -50,6 +50,15 @@
         </div>
       }
 
+      @if (avertissementFrais(); as w) {
+        <div class="card">
+          <div class="alert alerte">{{ w }}</div>
+          <div class="row">
+            <button class="btn" (click)="viderFrais(); revoir()">Ne pas additionner les frais</button>
+          </div>
+        </div>
+      }
+
       <!-- ÉTAPE 2 : corriger -->
       <div class="card">
         <div class="card-title">2 · Vérifier et corriger</div>
@@ -62,6 +71,14 @@
           <label class="field">
             <span>Séparateur</span>
             <input [value]="m.delimiter" maxlength="1" (change)="setDelimiter($any($event.target).value)" />
+          </label>
+          <label class="field">
+            <span>Format des dates</span>
+            <select [value]="m.dateFormat" (change)="setDateFormat($any($event.target).value)">
+              <option value="dmy">jour/mois/année (01/06 = 1er juin)</option>
+              <option value="mdy">mois/jour/année (01/06 = 6 janvier)</option>
+              <option value="iso">année en premier (2026-06-01)</option>
+            </select>
           </label>
           <label class="field">
             <span>Décimale</span>
