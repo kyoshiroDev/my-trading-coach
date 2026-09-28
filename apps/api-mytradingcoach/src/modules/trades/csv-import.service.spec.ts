@@ -179,7 +179,7 @@ describe('CsvImportService — chemin IA par lots', () => {
     svc = makeService();
   });
 
-  it('traite un fichier inconnu de 600 lignes en 3 appels (lots de 250)', async () => {
+  it('traite un fichier inconnu de 600 lignes en 5 appels (lots de 120)', async () => {
     const trade = {
       asset: 'BTC/USDT',
       side: 'LONG',
@@ -213,8 +213,38 @@ describe('CsvImportService — chemin IA par lots', () => {
         PREMIUM_ACCESS,
       );
 
-      expect(create).toHaveBeenCalledTimes(3); // 250 + 250 + 100
-      expect(dtos).toHaveLength(3); // un trade agrégé par lot
+      expect(create).toHaveBeenCalledTimes(5); // 120 × 5 = 600
+      expect(dtos).toHaveLength(5); // un trade agrégé par lot
+    } finally {
+      process.env['NODE_ENV'] = oldEnv;
+    }
+  });
+
+  /**
+   * Chaque trade rendu pese ~40 jetons de JSON contre 8192 de `max_tokens` : un lot trop
+   * gros faisait tronquer la reponse, et l'utilisateur lisait « verifie que c'est un export
+   * de trades fermes » pour un fichier parfaitement valide — apres avoir paye l'appel. Le
+   * message doit parler de la TAILLE, jamais mettre en cause le fichier.
+   */
+  it('reponse tronquee par max_tokens : le message ne met pas en cause le fichier', async () => {
+    const create = vi.fn().mockResolvedValue({
+      // JSON volontairement coupe : c'est ce que rend une reponse plafonnee.
+      content: [{ type: 'text', text: '{"broker":"x","trades":[{"asset":"BTC/US' }],
+      stop_reason: 'max_tokens',
+      usage: { input_tokens: 1, output_tokens: 8192 },
+    });
+    (svc as any).anthropicClient.create = create;
+
+    const oldEnv = process.env['NODE_ENV'];
+    process.env['NODE_ENV'] = 'production';
+    try {
+      const rows = Array.from({ length: 10 }, (_, i) => `AAPL,BUY,1,${100 + i},2026-01-05`);
+      const csv = ['symbol,side,quantity,price,date', ...rows].join('\n');
+      const appel = () =>
+        svc.parseCSV(Buffer.from(csv), 'unknown.csv', undefined, PREMIUM_ACCESS);
+
+      await expect(appel()).rejects.toThrow(/coupant en deux/i);
+      await expect(appel()).rejects.not.toThrow(/trades ferm/i);
     } finally {
       process.env['NODE_ENV'] = oldEnv;
     }

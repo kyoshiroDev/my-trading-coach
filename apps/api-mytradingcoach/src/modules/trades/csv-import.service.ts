@@ -28,7 +28,18 @@ const MAX_KNOWN_ROWS = 10_000;
 // on désactive la saisie d'un total des frais (front) et on l'ignore (back).
 const FEES_INPUT_MAX_TRADES = 5000;
 const MAX_AI_ROWS = 2000;
-const AI_BATCH = 250;
+/**
+ * Lignes par appel Claude. Ce n'est PAS un reglage de cout mais une contrainte de
+ * sortie : chaque trade rendu pese ~40 jetons de JSON, et `max_tokens` vaut 8192,
+ * donc au-dela de ~205 trades la reponse est tronquee, `JSON.parse` echoue et
+ * l'utilisateur recoit « verifie que c'est un export de trades fermes » alors que
+ * son fichier etait bon — apres avoir paye l'appel. A 120 la marge tient meme
+ * quand le champ `notes` est rempli sur chaque ligne.
+ *
+ * Baisser ce lot ne coute quasiment rien : la sortie est proportionnelle au nombre
+ * de trades, et seule l'entete de prompt (~246 jetons) est repetee par appel.
+ */
+const AI_BATCH = 120;
 
 /** Accès requis pour le chemin IA d'import (broker inconnu) : Premium strict. */
 interface AiImportAccess {
@@ -465,6 +476,19 @@ export class CsvImportService {
       },
       { feature: 'csv_import', userId: userId ?? null },
     );
+
+    // Reponse coupee par max_tokens : le JSON est incomplet, donc `JSON.parse` va
+    // echouer sur un fichier parfaitement valide. Sans ce test, le message affiche
+    // accuse le fichier de l'utilisateur au lieu de dire la verite.
+    if (response.stop_reason === 'max_tokens') {
+      this.logger.error(
+        `Reponse Claude tronquee (max_tokens) pour "${filename}" : lot de ${AI_BATCH} lignes trop gros.`,
+      );
+      throw new BadRequestException(
+        "Ce fichier contient trop d'informations par ligne pour etre importe d'un bloc. " +
+        'Reessaie en le coupant en deux moities.',
+      );
+    }
 
     const text =
       response.content[0].type === 'text' ? response.content[0].text : '';
