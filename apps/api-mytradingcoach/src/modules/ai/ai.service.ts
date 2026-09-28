@@ -10,7 +10,7 @@ import { Role } from '@prisma/client';
 import { OrchestratorAgent } from './agents/orchestrator.agent';
 import { DebriefAgent } from './agents/debrief.agent';
 import { buildDebriefPrompt } from './prompts/debrief.prompt';
-import { NO_EM_DASH_RULE } from './prompts/style.prompt';
+import { FRENCH_RULE, NO_EM_DASH_RULE } from './prompts/style.prompt';
 import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
@@ -427,6 +427,7 @@ Réponds UNIQUEMENT avec la phrase coaching, sans guillemets, sans préambule.`,
 Actifs du trader : ${data.userAssets.join(', ')}.
 Événements économiques du jour : ${JSON.stringify(data.events, null, 2)}.
 ${NO_EM_DASH_RULE}
+${FRENCH_RULE}
 Génère un JSON strict (pas de markdown, pas de texte autour) :
 {
   "summary": "1-2 phrases sur les risques du jour pour ce trader précis",
@@ -466,6 +467,7 @@ Résultat : ${actual} | Prévu : ${estimate} | Précédent : ${data.event.previo
 Surprise : ${surprise >= 0 ? '+' : ''}${surprise.toFixed(2)}.
 Actifs tradés : ${data.userAssets.join(', ')}.
 ${NO_EM_DASH_RULE}
+${FRENCH_RULE}
 Génère un JSON strict (pas de markdown, pas de texte autour) :
 {
   "interpretation": "phrase courte expliquant la surprise",
