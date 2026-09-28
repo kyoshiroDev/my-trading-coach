@@ -1,0 +1,234 @@
+<div class="screen">
+  <div class="page-head">
+    <div>
+      <div class="page-title">Registre des brokers</div>
+      <div class="page-note">
+        Débloquer un export CSV que l'app ne reconnaît pas. Une fiche validée sert
+        <b>tous les utilisateurs</b>, gratuits compris, sans appel IA ni déploiement.
+      </div>
+    </div>
+    <span class="page-note">Analyser ≈ 0,003 $ · aperçu et corrections gratuits</span>
+  </div>
+
+  <!-- ÉTAPE 1 : l'échantillon -->
+  <div class="card">
+    <div class="card-title">1 · Coller l'échantillon</div>
+    <p class="page-note">
+      L'en-tête et une vingtaine de lignes suffisent. Colle directement ce que l'utilisateur
+      t'a envoyé, pas besoin de télécharger le fichier.
+    </p>
+    <textarea
+      class="sample"
+      rows="6"
+      placeholder="Close Time,Contracts,Direction,Avg Entry Price,…&#10;2026-06-01 14:30:00,BTCUSDT,Buy,60000,60500,1,500"
+      [ngModel]="sample()"
+      (ngModelChange)="sample.set($event)"
+    ></textarea>
+    <div class="row">
+      <button class="btn btn-primary" [disabled]="enCours() || !sample().trim()" (click)="analyser()">
+        {{ enCours() ? 'Analyse…' : 'Analyser' }}
+      </button>
+      @if (colonnes().length) {
+        <span class="page-note">{{ colonnes().length }} colonnes détectées</span>
+      }
+    </div>
+  </div>
+
+  @if (erreur()) {
+    <div class="card"><div class="alert bloque">{{ erreur() }}</div></div>
+  }
+  @if (message()) {
+    <div class="card"><div class="alert ok">{{ message() }}</div></div>
+  }
+
+  @if (analyse(); as a) {
+    @if (a.mapping; as m) {
+      <!-- LE VERDICT : c'est l'arithmétique qui parle, pas le modèle -->
+      @if (verdict(); as v) {
+        <div class="card">
+          <div class="alert" [class]="v.ton">{{ v.texte }}</div>
+        </div>
+      }
+
+      <!-- ÉTAPE 2 : corriger -->
+      <div class="card">
+        <div class="card-title">2 · Vérifier et corriger</div>
+        <p class="page-note">
+          Chaque champ est modifiable. Corriger puis revoir l'aperçu ne coûte rien, autant de
+          fois que nécessaire.
+        </p>
+
+        <div class="grid">
+          <label class="field">
+            <span>Séparateur</span>
+            <input [value]="m.delimiter" maxlength="1" (change)="setDelimiter($any($event.target).value)" />
+          </label>
+          <label class="field">
+            <span>Décimale</span>
+            <select [value]="m.decimalSeparator" (change)="setDecimal($any($event.target).value)">
+              <option value=".">point (1234.56)</option>
+              <option value=",">virgule (1234,56)</option>
+            </select>
+          </label>
+
+          @for (champ of champsColonnes; track champ.cle) {
+            <label class="field">
+              <span>{{ champ.libelle }}</span>
+              <select
+                [value]="colonneDe(m, champ.cle)"
+                (change)="setColonne(champ.cle, $any($event.target).value)"
+              >
+                @if (champ.cle === 'entry') {
+                  <option value="">— absent du fichier —</option>
+                }
+                @for (c of colonnes(); track $index) {
+                  <option [value]="$index">{{ c }}</option>
+                }
+              </select>
+            </label>
+          }
+
+          <label class="field">
+            <span>Sens · méthode</span>
+            <select [value]="m.side.mode" (change)="setSideMode($any($event.target).value)">
+              <option value="column">lu dans une colonne</option>
+              <option value="derived_from_timestamps">déduit des horodatages</option>
+            </select>
+          </label>
+
+          @if (m.side.mode === 'column') {
+            <label class="field">
+              <span>Sens · colonne</span>
+              <select [value]="m.side.index ?? ''" (change)="setSideChamp('index', $any($event.target).value)">
+                @for (c of colonnes(); track $index) {
+                  <option [value]="$index">{{ c }}</option>
+                }
+              </select>
+            </label>
+            <label class="field">
+              <span>Valeurs LONG</span>
+              <input [value]="m.side.longValues.join(', ')" (change)="setSideValeurs('longValues', $any($event.target).value)" />
+            </label>
+            <label class="field">
+              <span>Valeurs SHORT</span>
+              <input [value]="m.side.shortValues.join(', ')" (change)="setSideValeurs('shortValues', $any($event.target).value)" />
+            </label>
+          } @else {
+            <label class="field">
+              <span>Horodatage d'achat</span>
+              <select [value]="m.side.buyTimeIndex ?? ''" (change)="setSideChamp('buyTimeIndex', $any($event.target).value)">
+                @for (c of colonnes(); track $index) {
+                  <option [value]="$index">{{ c }}</option>
+                }
+              </select>
+            </label>
+            <label class="field">
+              <span>Horodatage de vente</span>
+              <select [value]="m.side.sellTimeIndex ?? ''" (change)="setSideChamp('sellTimeIndex', $any($event.target).value)">
+                @for (c of colonnes(); track $index) {
+                  <option [value]="$index">{{ c }}</option>
+                }
+              </select>
+            </label>
+          }
+        </div>
+
+        @if (m.notes) {
+          <p class="page-note notes">Remarque du modèle : {{ m.notes }}</p>
+        }
+
+        <div class="row">
+          <button class="btn" [disabled]="enCours()" (click)="revoir()">Revoir l'aperçu (gratuit)</button>
+          <span class="page-note">
+            {{ a.preview.length }} trade(s) lus sur {{ a.rowsRead }} ligne(s)
+            @if (a.skipped) { · {{ a.skipped }} écartée(s) }
+          </span>
+        </div>
+      </div>
+
+      <!-- L'APERÇU : ce que l'admin valide réellement -->
+      <div class="card">
+        <div class="card-title">Aperçu des trades</div>
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Actif</th><th>Sens</th><th>Entrée</th><th>Sortie</th><th>Qté</th><th>P&amp;L</th><th>Date</th></tr>
+            </thead>
+            <tbody>
+              @for (t of a.preview.slice(0, 12); track $index) {
+                <tr>
+                  <td>{{ t.asset }}</td>
+                  <td><span class="tag" [class.short]="t.side === 'SHORT'">{{ t.side }}</span></td>
+                  <td>{{ t.entry }}</td>
+                  <td>{{ t.exit }}</td>
+                  <td>{{ t.quantity }}</td>
+                  <td [class.neg]="(t.pnl ?? 0) < 0">{{ t.pnl | number:'1.0-2' }}</td>
+                  <td class="date">{{ t.tradedAt | date:'dd/MM/yy HH:mm' }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="7" class="empty">Aucun trade lu avec cette correspondance.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ÉTAPE 3 : enregistrer -->
+      <div class="card">
+        <div class="card-title">3 · Enregistrer la fiche</div>
+        <div class="row">
+          <label class="field grow">
+            <span>Nom du broker</span>
+            <input
+              placeholder="NinjaTrader 8, Quantower…"
+              [ngModel]="brokerName()"
+              (ngModelChange)="brokerName.set($event)"
+            />
+          </label>
+          <button class="btn btn-primary" [disabled]="enCours() || !enregistrable()" (click)="enregistrer()">
+            Enregistrer
+          </button>
+        </div>
+        @if (!enregistrable() && brokerName().trim().length < 2) {
+          <p class="page-note">Donne un nom au broker pour pouvoir enregistrer.</p>
+        }
+      </div>
+    }
+  }
+
+  <!-- LES FICHES EXISTANTES -->
+  <div class="card">
+    <div class="card-title">Brokers reconnus par fiche</div>
+    @if (chargement()) {
+      <div class="empty">Chargement…</div>
+    } @else if (!fiches().length) {
+      <div class="empty">Aucune fiche pour l'instant. Les 7 brokers historiques restent gérés dans le code.</div>
+    } @else {
+      <div class="table-wrap">
+        <table class="tbl">
+          <thead>
+            <tr><th>Broker</th><th>Sens confirmé</th><th>Imports</th><th>Ajoutée</th><th></th></tr>
+          </thead>
+          <tbody>
+            @for (f of fiches(); track f.id) {
+              <tr [class.off]="!f.enabled">
+                <td>
+                  {{ f.brokerName }}
+                  <div class="page-note ellipsis">{{ f.headerSample }}</div>
+                </td>
+                <td>{{ f.pnlConfidence * 100 | number:'1.0-0' }} %</td>
+                <td>{{ f.usageCount }}</td>
+                <td class="date">{{ f.createdAt | date:'dd/MM/yy' }}</td>
+                <td>
+                  <button class="btn small" (click)="basculer(f)">
+                    {{ f.enabled ? 'Désactiver' : 'Réactiver' }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>

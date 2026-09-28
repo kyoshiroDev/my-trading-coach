@@ -1,0 +1,123 @@
+/* Classes propres a cet ecran. Le reste (.card, .btn, .tbl, .tag, .page-*) vient de styles.css. */
+
+.sample {
+  width: 100%;
+  margin: 10px 0;
+  padding: 10px 12px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: inherit;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+  resize: vertical;
+  /* Un export a des lignes longues : on ne les replie pas, on les fait defiler. */
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+/* Une colonne par champ, mais jamais plus etroit que lisible : sur un telephone les
+   listes deroulantes passent naturellement a une seule colonne. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 14px 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.field.grow { flex: 1 1 220px; }
+
+.field > span {
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: inherit;
+  font-size: 13px;
+  /* 16px minimum eviterait le zoom iOS, mais casse la densite ; le champ reste tapable. */
+  min-height: 38px;
+}
+
+.field input:focus-visible,
+.field select:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 1px;
+}
+
+/* Le verdict du controle arithmetique : c'est l'element que l'admin doit lire avant de
+   valider, donc il ne ressemble pas a du texte d'accompagnement. */
+.alert {
+  padding: 11px 13px;
+  border-radius: 8px;
+  border-left: 3px solid;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.alert.ok {
+  border-color: var(--green);
+  background: color-mix(in srgb, var(--green) 10%, transparent);
+}
+
+.alert.alerte {
+  border-color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 12%, transparent);
+}
+
+.alert.bloque {
+  border-color: var(--red);
+  background: color-mix(in srgb, var(--red) 12%, transparent);
+}
+
+.notes { margin-top: 4px; font-style: italic; }
+
+.tag.short { background: color-mix(in srgb, var(--red) 18%, transparent); }
+
+.neg { color: var(--red); }
+
+.date { font-family: var(--mono); font-size: 12px; white-space: nowrap; }
+
+.btn.small { padding: 5px 10px; font-size: 12px; }
+
+tr.off { opacity: 0.45; }
+
+/* L'en-tete brut d'un export est tres long : il informe sans devoir tenir en entier. */
+.ellipsis {
+  display: block;
+  max-width: 340px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  /* Ecran de telephone : une seule colonne de champs, et l'en-tete brut ne mange pas la
+     largeur du tableau. */
+  .grid { grid-template-columns: 1fr; }
+  .ellipsis { max-width: 180px; }
+  .row > .btn { width: 100%; }
+}

@@ -253,10 +253,111 @@ export class AdminApi {
     );
   }
 
+  // ── Registre des brokers ──────────────────────────────────────────────────
+  // `analyse` est le SEUL appel qui coûte de l'IA (~0,003 $). `preview` rejoue une fiche
+  // corrigée à la main, gratuitement : l'admin peut ajuster autant qu'il veut.
+
+  brokerMappings() {
+    return this.http.get<{ data: BrokerMappingRow[] }>(`${this.adminBase}/broker-mappings`);
+  }
+
+  analyseBrokerSample(sample: string) {
+    return this.http.post<{ data: BrokerMappingAnalysis }>(
+      `${this.adminBase}/broker-mappings/analyse`,
+      { sample },
+    );
+  }
+
+  previewBrokerMapping(sample: string, mapping: BrokerMapping) {
+    return this.http.post<{ data: BrokerMappingAnalysis }>(
+      `${this.adminBase}/broker-mappings/preview`,
+      { sample, mapping },
+    );
+  }
+
+  saveBrokerMapping(sample: string, mapping: BrokerMapping, brokerName: string) {
+    return this.http.post<{ data: { id: string } }>(
+      `${this.adminBase}/broker-mappings`,
+      { sample, mapping, brokerName },
+    );
+  }
+
+  setBrokerMappingEnabled(id: string, enabled: boolean) {
+    return this.http.patch<{ data: { id: string; enabled: boolean } }>(
+      `${this.adminBase}/broker-mappings/${id}/enabled`,
+      { enabled },
+    );
+  }
+
   revokeAmbassador(email: string) {
     return this.http.post<{ data: { email: string; name: string | null; role: string } }>(
       `${this.adminBase}/ambassadors/revoke`,
       { email },
     );
   }
+}
+
+/**
+ * Registre des brokers : fiche de correspondance des colonnes d'un export CSV.
+ * Le modèle la déduit d'un échantillon, un admin la corrige et la valide, puis elle sert
+ * à tous les utilisateurs — donc les index doivent être lisibles et modifiables à la main.
+ */
+export interface BrokerMappingColumns {
+  symbol: number;
+  entry: number | null;
+  exit: number;
+  quantity: number;
+  pnl: number;
+  tradedAt: number;
+}
+
+export interface BrokerMappingSide {
+  mode: 'column' | 'derived_from_timestamps';
+  index: number | null;
+  longValues: string[];
+  shortValues: string[];
+  buyTimeIndex: number | null;
+  sellTimeIndex: number | null;
+}
+
+export interface BrokerMapping {
+  delimiter: string;
+  decimalSeparator: '.' | ',';
+  columns: BrokerMappingColumns;
+  side: BrokerMappingSide;
+  pnlExtraColumns: number[];
+  notes?: string;
+}
+
+/** Trade tel qu'il serait importé : c'est l'aperçu que l'admin valide, pas le JSON. */
+export interface BrokerMappingPreviewRow {
+  asset?: string;
+  side?: string;
+  entry?: number;
+  exit?: number;
+  quantity?: number;
+  pnl?: number;
+  tradedAt?: string;
+}
+
+export interface BrokerMappingAnalysis {
+  header: string;
+  mapping: BrokerMapping | null;
+  preview: BrokerMappingPreviewRow[];
+  /** Part des lignes testables dont le signe du P&L confirme le sens. null = non vérifiable. */
+  pnlRatio: number | null;
+  /** Le sens proposé a été redressé par le contrôle arithmétique. */
+  flipped: boolean;
+  skipped: number;
+  rowsRead: number;
+}
+
+export interface BrokerMappingRow {
+  id: string;
+  brokerName: string;
+  headerSample: string;
+  pnlConfidence: number;
+  enabled: boolean;
+  usageCount: number;
+  createdAt: string;
 }

@@ -9,6 +9,7 @@ import {
   LucideDatabase as Database,
   LucideTrendingUp as TrendingUp,
   LucideBrain as Brain,
+  LucideFileSpreadsheet as FileSpreadsheet,
   LucideMail as Mail,
   LucideLogOut as LogOut,
   LucideHandshake as Handshake,
@@ -39,6 +40,7 @@ export class ShellComponent {
   protected readonly DatabaseIcon = Database;
   protected readonly TrendingUpIcon = TrendingUp;
   protected readonly BrainIcon = Brain;
+  protected readonly FileSpreadsheetIcon = FileSpreadsheet;
   protected readonly MailIcon      = Mail;
   protected readonly LogOutIcon    = LogOut;
   protected readonly HandshakeIcon = Handshake;

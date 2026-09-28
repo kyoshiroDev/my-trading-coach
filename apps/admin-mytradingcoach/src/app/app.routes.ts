@@ -24,6 +24,7 @@ export const appRoutes: Routes = [
       { path: 'backups',       loadComponent: () => import('./features/backups/backups.component').then(m => m.BackupsComponent) },
       { path: 'revenue',       loadComponent: () => import('./features/revenue/revenue.component').then(m => m.RevenueComponent) },
       { path: 'ai-usage',      loadComponent: () => import('./features/ai-usage/ai-usage.component').then(m => m.AiUsageComponent) },
+      { path: 'brokers',       loadComponent: () => import('./features/broker-mappings/broker-mappings.component').then(m => m.BrokerMappingsComponent) },
       { path: 'emails',          loadComponent: () => import('./features/emails/emails.component').then(m => m.EmailsComponent) },
       { path: 'ambassadeurs',   loadComponent: () => import('./features/ambassadors/ambassadors.component').then(m => m.AmbassadorsComponent) },
       { path: 'parrainage',     loadComponent: () => import('./features/referral/referral.component').then(m => m.ReferralComponent) },
