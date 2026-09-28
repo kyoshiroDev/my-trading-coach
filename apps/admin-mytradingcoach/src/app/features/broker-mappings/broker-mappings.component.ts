@@ -216,6 +216,15 @@ export class BrokerMappingsComponent {
     { cle: 'tradedAt', libelle: 'Date de clôture' },
   ] as const satisfies ReadonlyArray<{ cle: keyof ChampsColonnes; libelle: string }>;
 
+  /**
+   * Les options portent un index NUMERIQUE et ngModel compare a l'identique : une valeur liee
+   * en nombre face a des options rendues en chaine ne selectionne rien, et la liste affiche
+   * alors la premiere colonne au lieu de la bonne. Tout passe donc par des chaines.
+   */
+  protected str(v: number | null | undefined): string {
+    return v == null ? '' : String(v);
+  }
+
   protected colonneDe(m: BrokerMapping, cle: keyof ChampsColonnes): string {
     const v = m.columns[cle];
     return v == null ? '' : String(v);

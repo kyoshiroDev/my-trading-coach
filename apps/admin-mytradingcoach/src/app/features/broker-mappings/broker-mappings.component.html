@@ -70,11 +70,11 @@
         <div class="grid">
           <label class="field">
             <span>Séparateur</span>
-            <input [value]="m.delimiter" maxlength="1" (change)="setDelimiter($any($event.target).value)" />
+            <input [ngModel]="m.delimiter" [ngModelOptions]="{standalone: true}" maxlength="1" (ngModelChange)="setDelimiter($event)" />
           </label>
           <label class="field">
             <span>Format des dates</span>
-            <select [value]="m.dateFormat" (change)="setDateFormat($any($event.target).value)">
+            <select [ngModel]="m.dateFormat" [ngModelOptions]="{standalone: true}" (ngModelChange)="setDateFormat($event)">
               <option value="dmy">jour/mois/année (01/06 = 1er juin)</option>
               <option value="mdy">mois/jour/année (01/06 = 6 janvier)</option>
               <option value="iso">année en premier (2026-06-01)</option>
@@ -82,7 +82,7 @@
           </label>
           <label class="field">
             <span>Décimale</span>
-            <select [value]="m.decimalSeparator" (change)="setDecimal($any($event.target).value)">
+            <select [ngModel]="m.decimalSeparator" [ngModelOptions]="{standalone: true}" (ngModelChange)="setDecimal($event)">
               <option value=".">point (1234.56)</option>
               <option value=",">virgule (1234,56)</option>
             </select>
@@ -92,14 +92,15 @@
             <label class="field">
               <span>{{ champ.libelle }}</span>
               <select
-                [value]="colonneDe(m, champ.cle)"
-                (change)="setColonne(champ.cle, $any($event.target).value)"
+                [ngModel]="colonneDe(m, champ.cle)"
+                [ngModelOptions]="{standalone: true}"
+                (ngModelChange)="setColonne(champ.cle, $event)"
               >
                 @if (champ.cle === 'entry') {
                   <option value="">— absent du fichier —</option>
                 }
                 @for (c of colonnes(); track $index) {
-                  <option [value]="$index">{{ c }}</option>
+                  <option [value]="str($index)">{{ c }}</option>
                 }
               </select>
             </label>
@@ -107,7 +108,7 @@
 
           <label class="field">
             <span>Sens · méthode</span>
-            <select [value]="m.side.mode" (change)="setSideMode($any($event.target).value)">
+            <select [ngModel]="m.side.mode" [ngModelOptions]="{standalone: true}" (ngModelChange)="setSideMode($event)">
               <option value="column">lu dans une colonne</option>
               <option value="derived_from_timestamps">déduit des horodatages</option>
             </select>
@@ -116,34 +117,34 @@
           @if (m.side.mode === 'column') {
             <label class="field">
               <span>Sens · colonne</span>
-              <select [value]="m.side.index ?? ''" (change)="setSideChamp('index', $any($event.target).value)">
+              <select [ngModel]="str(m.side.index)" [ngModelOptions]="{standalone: true}" (ngModelChange)="setSideChamp('index', $event)">
                 @for (c of colonnes(); track $index) {
-                  <option [value]="$index">{{ c }}</option>
+                  <option [value]="str($index)">{{ c }}</option>
                 }
               </select>
             </label>
             <label class="field">
               <span>Valeurs LONG</span>
-              <input [value]="m.side.longValues.join(', ')" (change)="setSideValeurs('longValues', $any($event.target).value)" />
+              <input [ngModel]="m.side.longValues.join(', ')" [ngModelOptions]="{standalone: true}" (ngModelChange)="setSideValeurs('longValues', $event)" />
             </label>
             <label class="field">
               <span>Valeurs SHORT</span>
-              <input [value]="m.side.shortValues.join(', ')" (change)="setSideValeurs('shortValues', $any($event.target).value)" />
+              <input [ngModel]="m.side.shortValues.join(', ')" [ngModelOptions]="{standalone: true}" (ngModelChange)="setSideValeurs('shortValues', $event)" />
             </label>
           } @else {
             <label class="field">
               <span>Horodatage d'achat</span>
-              <select [value]="m.side.buyTimeIndex ?? ''" (change)="setSideChamp('buyTimeIndex', $any($event.target).value)">
+              <select [ngModel]="str(m.side.buyTimeIndex)" [ngModelOptions]="{standalone: true}" (ngModelChange)="setSideChamp('buyTimeIndex', $event)">
                 @for (c of colonnes(); track $index) {
-                  <option [value]="$index">{{ c }}</option>
+                  <option [value]="str($index)">{{ c }}</option>
                 }
               </select>
             </label>
             <label class="field">
               <span>Horodatage de vente</span>
-              <select [value]="m.side.sellTimeIndex ?? ''" (change)="setSideChamp('sellTimeIndex', $any($event.target).value)">
+              <select [ngModel]="str(m.side.sellTimeIndex)" [ngModelOptions]="{standalone: true}" (ngModelChange)="setSideChamp('sellTimeIndex', $event)">
                 @for (c of colonnes(); track $index) {
-                  <option [value]="$index">{{ c }}</option>
+                  <option [value]="str($index)">{{ c }}</option>
                 }
               </select>
             </label>
