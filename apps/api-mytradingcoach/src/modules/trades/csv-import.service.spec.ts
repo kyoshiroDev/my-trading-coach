@@ -179,7 +179,7 @@ describe('CsvImportService — chemin IA par lots', () => {
     svc = makeService();
   });
 
-  it('traite un fichier inconnu de 600 lignes en 5 appels (lots de 120)', async () => {
+  it('repli : 1 tentative de mapping refusee, puis 600 lignes en 5 lots de 120', async () => {
     const trade = {
       asset: 'BTC/USDT',
       side: 'LONG',
@@ -213,7 +213,10 @@ describe('CsvImportService — chemin IA par lots', () => {
         PREMIUM_ACCESS,
       );
 
-      expect(create).toHaveBeenCalledTimes(5); // 120 × 5 = 600
+      // 1 appel de deduction du mapping + 5 lots de 120. Le mock rend une reponse de
+      // trades, pas un mapping : la validation de forme la refuse, donc on retombe sur le
+      // chemin ligne par ligne. C'est le comportement voulu — un mapping douteux ne passe pas.
+      expect(create).toHaveBeenCalledTimes(6);
       expect(dtos).toHaveLength(5); // un trade agrégé par lot
     } finally {
       process.env['NODE_ENV'] = oldEnv;

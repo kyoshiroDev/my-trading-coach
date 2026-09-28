@@ -15,6 +15,13 @@ import {
 import {
   assignFeesOncePerFill,
 } from './tradovate-pair.util';
+import {
+  applyMappingWithPnlCheck,
+  MAPPING_MIN_PARSED_RATIO,
+  MAPPING_SAMPLE_ROWS,
+  validateMappingShape,
+  type CsvMapping,
+} from './csv-mapping';
 import { AI_MODELS } from '../infra/ai-pricing.const';
 
 const MODEL = AI_MODELS.analysis;
@@ -412,6 +419,13 @@ export class CsvImportService {
     userId?: string,
   ): Promise<Partial<CreateTradeDto>[]> {
     const dataLines = normalizedLines.slice(1);
+
+    // Chemin prefere : UN appel pour deduire les colonnes, puis parsing local. Il est tente
+    // AVANT le plafond de MAX_AI_ROWS, parce que son cout ne depend pas de la taille du
+    // fichier : un export de 10 000 lignes coute le meme appel qu'un de 50.
+    const parMapping = await this.tryMappingPath(normalizedLines, dataLines, filename, userId);
+    if (parMapping) return parMapping;
+
     if (dataLines.length > MAX_AI_ROWS) {
       throw new BadRequestException(
         `${dataLines.length} lignes détectées. Maximum ${MAX_AI_ROWS} pour un import automatique. ` +
@@ -451,6 +465,138 @@ export class CsvImportService {
     }
 
     return this.mapToDto(allTrades);
+  }
+
+  /**
+   * Chemin mapping : un appel pour deduire les colonnes, puis parsing local du fichier entier.
+   *
+   * Rend `null` des que quelque chose ne tient pas, et l'appelant retombe sur le chemin ligne
+   * par ligne. On prefere un import cher a un import faux : une inversion du sens transformerait
+   * tous les longs en shorts sans qu'aucune erreur ne remonte.
+   *
+   * Trois raisons de renoncer :
+   *  - le modele n'a pas rendu un mapping exploitable ;
+   *  - trop de lignes inexploitables (seuil MAPPING_MIN_PARSED_RATIO) ;
+   *  - le sens n'est pas VERIFIABLE par le signe du P&L. C'est le cas d'un export sans prix
+   *    d'entree (type Binance Futures), et c'est precisement le format sur lequel les deux
+   *    modeles se sont trompes de sens a la mesure du 2026-09-28. Sans controle arithmetique,
+   *    on ne prend pas le risque.
+   */
+  private async tryMappingPath(
+    normalizedLines: string[],
+    dataLines: string[],
+    filename: string,
+    userId?: string,
+  ): Promise<Partial<CreateTradeDto>[] | null> {
+    if (!dataLines.length) return null;
+
+    let mapping: CsvMapping | null;
+    try {
+      mapping = await this.inferMapping(normalizedLines, userId);
+    } catch (err) {
+      this.logger.warn(`Mapping non deduit pour "${filename}" : ${(err as Error).message}`);
+      return null;
+    }
+    if (!mapping) return null;
+
+    const out = applyMappingWithPnlCheck(dataLines, mapping);
+
+    const ratioParse = out.rows.length / dataLines.length;
+    if (ratioParse < MAPPING_MIN_PARSED_RATIO) {
+      this.logger.warn(
+        `Mapping ecarte pour "${filename}" : ${out.rows.length}/${dataLines.length} lignes ` +
+        `exploitables (seuil ${MAPPING_MIN_PARSED_RATIO}).`,
+      );
+      return null;
+    }
+
+    if (out.pnlRatio == null) {
+      this.logger.warn(
+        `Mapping ecarte pour "${filename}" : le sens n'est pas verifiable par le signe du P&L ` +
+        `(pas de prix d'entree exploitable). Repli sur l'analyse ligne par ligne.`,
+      );
+      return null;
+    }
+
+    this.logger.log(
+      `Import par mapping pour "${filename}" : ${out.rows.length} trade(s), ` +
+      `sens confirme sur ${Math.round(out.pnlRatio * 100)} % des lignes testables` +
+      `${out.flipped ? ' (sens INVERSE par rapport au mapping deduit)' : ''}. Un seul appel IA.`,
+    );
+
+    return this.mapToDto(out.rows);
+  }
+
+  /**
+   * L'unique appel IA du chemin mapping : l'echantillon suffit, le fichier entier n'est jamais
+   * envoye. Le modele rapide fait l'affaire (mesure : colonnes justes 29/30 contre 30/30 pour
+   * le modele d'analyse, a un tiers du prix) et le sens, la ou il se trompe, est de toute facon
+   * retranche par le controle arithmetique.
+   */
+  private async inferMapping(
+    normalizedLines: string[],
+    userId?: string,
+  ): Promise<CsvMapping | null> {
+    const echantillon = normalizedLines.slice(0, MAPPING_SAMPLE_ROWS + 1).join('\n');
+
+    const prompt = `Voici les premieres lignes d'un export de trades d'un broker inconnu.
+Deduis la correspondance des colonnes pour parser le fichier ENTIER sans le relire.
+Les index commencent a 0. Certains brokers exportent la ligne de CLOTURE d'une position :
+la colonne de sens designe alors l'ordre de sortie.
+
+Reponds UNIQUEMENT avec ce JSON, sans texte autour :
+{
+  "delimiter": "<le separateur de colonnes, un seul caractere>",
+  "decimalSeparator": "." ou ",",
+  "columns": {
+    "symbol": <index>, "entry": <index ou null si le fichier ne donne pas le prix d'entree>,
+    "exit": <index>, "quantity": <index>, "pnl": <index>,
+    "tradedAt": <index de la date de CLOTURE>
+  },
+  "side": {
+    "mode": "column" si le sens est dans une colonne, sinon "derived_from_timestamps",
+    "index": <index de la colonne de sens, ou null>,
+    "longValues": [<valeurs signifiant LONG>], "shortValues": [<valeurs signifiant SHORT>],
+    "buyTimeIndex": <index ou null>, "sellTimeIndex": <index ou null>
+  },
+  "pnlExtraColumns": [<index a ADDITIONNER au pnl, par exemple commission et swap, sinon vide>],
+  "notes": "<pieges de format rencontres>"
+}
+
+FICHIER :
+${echantillon}`;
+
+    const response = await this.anthropicClient.create(
+      {
+        model: AI_MODELS.fast,
+        max_tokens: 1500,
+        messages: [{ role: 'user', content: prompt }],
+      },
+      { feature: 'csv_mapping', userId: userId ?? null },
+    );
+
+    if (response.stop_reason === 'max_tokens') return null;
+
+    const brut = response.content[0]?.type === 'text' ? response.content[0].text : '';
+    // Le modele peut preceder le JSON d'une explication : on prend le bloc, sinon les accolades.
+    const bloc = brut.match(/```(?:json)?\s*([\s\S]*?)```/);
+    const candidat = bloc
+      ? bloc[1]
+      : brut.slice(brut.indexOf('{'), brut.lastIndexOf('}') + 1);
+
+    try {
+      const propose = JSON.parse(candidat.trim()) as { delimiter?: unknown };
+      // Le nombre de colonnes se compte avec LE separateur que le modele a reconnu, pas avec
+      // la virgule par defaut : un export en point-virgule (MEXC) ne fait qu'une colonne vu
+      // a la virgule, et tous les index seraient alors juges hors limites.
+      const sep = typeof propose.delimiter === 'string' && propose.delimiter.length === 1
+        ? propose.delimiter
+        : ',';
+      const nbColonnes = splitCsvLine(normalizedLines[0] ?? '', sep).length;
+      return validateMappingShape(propose, nbColonnes);
+    } catch {
+      return null;
+    }
   }
 
   /** Un appel Claude pour un lot de lignes : extrait pour le batch des gros fichiers. */
