@@ -140,6 +140,13 @@ On tiér par **structure de coût**, PAS par « IA vs pas d'IA ».
   ≈ 1430 $ par l'ancien chemin. Le taux de repli pilote la facture : un repli coûte 186 fois
   un mapping réussi. Ne pas ouvrir l'import IA au FREE sans surveiller ce taux, ni sans quota
   (il n'en existe aucun sur l'import à ce jour, le quota IA mensuel ne couvre que chat/insights).
+  **Depuis le 2026-09-28, un broker debloque une fois ne coute plus rien** : sa fiche est
+  enregistree au registre (`BrokerCsvMapping`), consultee AVANT le verrou Premium, et sert
+  donc tous les plans en parsing local. On paie **par broker** (~0,003 $ une fois, a la
+  validation par un admin dans `/brokers`), plus par utilisateur. C'est cette bascule qui
+  rendra l'ouverture de l'import aux comptes FREE tenable : le catalogue se remplit a partir
+  des fichiers que les utilisateurs envoient, au lieu de couter a chaque import.
+  Prealable toujours valable avant d'ouvrir aux FREE : il n'existe **aucun quota sur l'import**.
 
 **Modèle par appel** — `AI_MODELS.fast` (Haiku) pour les tâches courtes et fréquentes : traductions news,
 contexte marché, **et les deux appels du calendrier éco** (`ECO_MODEL` dans `ai.service.ts`, depuis le

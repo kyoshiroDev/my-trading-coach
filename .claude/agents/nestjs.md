@@ -1040,10 +1040,46 @@ sont en direct.
   futures/spot, Bybit, IBKR, MEXC, MT4/MT5), séparateur européen, `splitCsvLine`,
   `mapNormalizedCsvToDto`, `detectSession`, et les types `BrokerType` / `ImportDto`. Fonctions
   PURES : aucun service injecté, testables directement (`csv-import.service.spec.ts` les importe).
-- `CsvImportService` (≈ 570 lignes au lieu de 1 120) garde l'orchestration : plan / accès IA,
-  formats inconnus via Claude, fusion des frais Tradovate, persistance.
-- Nouveau broker = une fonction `parseXxx(lines)` dans `csv-parsers.ts` + un cas dans
-  `detectBroker` / `preprocessCsv` — pas de nouvelle méthode dans le service.
+- `CsvImportService` garde l'orchestration : plan / accès IA, formats inconnus, fusion des
+  frais Tradovate, persistance.
+- **Nouveau broker : passer par le REGISTRE, pas par du code** (2026-09-28). Écrire un
+  `parseXxx` reste possible mais n'est plus la voie normale : un admin colle un échantillon
+  dans `/brokers` (admin), le modèle déduit la fiche, l'admin la corrige et l'enregistre, et
+  le broker est reconnu **pour tous les plans** sans build ni déploiement. Les 7 parseurs en
+  dur restent en place pour les brokers historiques.
+
+## Registre des brokers (2026-09-28)
+
+Ordre de résolution d'un import, à ne pas réarranger :
+
+1. `detectBroker` reconnaît l'en-tête → parseur en dur, local, gratuit.
+2. **Registre** (`BrokerMappingService.findByHeader`) → fiche en base, local, gratuit, **tous
+   les plans**. Placé AVANT le verrou Premium : c'est toute la raison d'être du registre.
+3. Le fichier ressemble-t-il à un export de trades ? Sinon message neutre, sans upsell.
+4. Chemin IA (`PremiumGuard` + `AI_ENABLED`) : d'abord un **mapping** (un appel, ~0,003 $,
+   coût indépendant de la taille), et seulement s'il échoue le repli ligne par ligne
+   (`AI_BATCH` = 120, ~1,43 $ pour 2000 lignes).
+
+Fichiers : `trades/csv-mapping.ts` (types, validation de forme, application, contrôle du P&L,
+`headerSignature`), `trades/broker-mapping.service.ts` (lecture/écriture des fiches),
+`admin/admin-broker-mappings.controller.ts` (`analyse` payant, `preview` gratuit, `POST`).
+
+**Le sens (long/short) ne se prend jamais sur parole.** Mesuré le 2026-09-28 sur 5 formats :
+les modèles identifient les colonnes de façon fiable (30/30 critères) mais se trompent de sens
+2 fois sur 5, et une inversion transforme tous les longs en shorts sans qu'aucune erreur ne
+remonte. Le sens est donc tranché par le **signe du P&L** (`applyMappingWithPnlCheck`) :
+un long gagne quand la sortie dépasse l'entrée. Si le mapping contredit les chiffres, il est
+inversé ; si le contrôle est impossible (pas de prix d'entrée, type Binance Futures) ou sous
+80 %, on **renonce** et on retombe sur le parcours « broker inconnu ». Un import cher vaut
+mieux qu'un import faux.
+
+Ce contrôle est rejoué **à chaque import**, pas seulement à la validation : la fiche a été
+validée sur 20 lignes d'un utilisateur, elle s'applique au fichier entier d'un autre.
+
+Deux limites connues, documentées dans `csv-mapping.ts` : en mode horodatages, permuter les
+colonnes de temps inverse le sens ET l'entrée/sortie, donc le P&L ne tranche pas ; un trade
+dont les frais dépassent le gain brut a un signe « faux » sans rien de cassé, d'où un seuil en
+part de lignes et non la perfection.
 
 ## Robustesse de l'API (audit du 27/09/2026)
 
