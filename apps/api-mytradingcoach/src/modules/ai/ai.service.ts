@@ -26,6 +26,19 @@ import { AI_MODELS } from '../infra/ai-pricing.const';
 import type { EcoAnalysis } from '@mtc/shared';
 
 const MODEL = AI_MODELS.analysis;
+/**
+ * Calendrier eco : seule IA qu'un compte FREE peut declencher, donc la seule dont le cout
+ * suit l'audience. `ai-pricing.const.ts` la range depuis le debut dans les « taches courtes
+ * et frequentes » du modele rapide, mais les deux appels partaient sur `analysis` — trois
+ * fois le prix pour un JSON court (sentiment bull/bear par actif, une recommandation).
+ *
+ * Le cout ne suit pas le nombre d'users mais le nombre de signatures d'actifs distinctes
+ * (cache partage par (date, actifs)). Mesure 2026-09-28 : ~0,006 $ l'appel en analysis
+ * contre ~0,002 $ en fast, soit -67 % sur ce poste.
+ *
+ * Le chat et le recap quotidien restent sur `MODEL` : ils sont PREMIUM et valent l'analyse.
+ */
+const ECO_MODEL = AI_MODELS.fast;
 const AI_MONTHLY_QUOTA = 100;
 
 // Contenu IA figé pour le compte démo : AUCUN appel modèle (coût zéro).
@@ -423,7 +436,7 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
 
     const response = await this.anthropicClient.create(
       {
-        model: MODEL,
+        model: ECO_MODEL,
         max_tokens: 1024,
         messages: [{ role: 'user', content: prompt }],
       },
@@ -461,7 +474,7 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
 
     const response = await this.anthropicClient.create(
       {
-        model: MODEL,
+        model: ECO_MODEL,
         max_tokens: 700,
         messages: [{ role: 'user', content: prompt }],
       },
