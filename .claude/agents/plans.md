@@ -136,6 +136,14 @@ On tiér par **structure de coût**, PAS par « IA vs pas d'IA ».
   la réponse était tronquée et l'import échouait en accusant le fichier de l'utilisateur.
   Ne pas remonter ce lot sans recalculer cette borne.
 
+**Modèle par appel** — `AI_MODELS.fast` (Haiku) pour les tâches courtes et fréquentes : traductions news,
+contexte marché, **et les deux appels du calendrier éco** (`ECO_MODEL` dans `ai.service.ts`, depuis le
+2026-09-28). Le calendrier éco est la **seule IA qu'un compte FREE peut déclencher**, donc la seule dont
+le coût suit l'audience : il n'a rien à faire sur `analysis`. Son coût ne suit pas le nombre d'users mais
+le nombre de **signatures d'actifs distinctes** (cache partagé par `(date, assetsKey)`, top 5 actifs du
+trader) — ≈ 0,002 $ l'appel. `analysis` (Sonnet) reste pour le chat, le recap quotidien, le débrief, les
+insights et l'import CSV inconnu, tous PREMIUM.
+
 **Coût IA réel constaté** (admin, 30 j) : ≈ **4,60 USD total**. Le coût IA n'est PAS un sujet ; ne pas sur-optimiser. Autoritatif = Anthropic Cost Report API.
 
 ---
