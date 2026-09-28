@@ -14,12 +14,17 @@ import { AccountsModule } from '../accounts/accounts.module';
 import { SetupsModule } from '../setups/setups.module';
 import { MarketDataService } from './market-data.service';
 import { MarketNewsCron } from './market-news.cron';
+import { BrokerMappingService } from './broker-mapping.service';
 
 @Module({
   imports: [HttpModule, PrismaModule, AnalyticsModule, AccountsModule, SetupsModule],
   // trades = les trades ; market = données de marché mutualisées ; instruments = catalogue + actifs suivis.
   controllers: [MarketController, InstrumentsController, TradesController],
-  providers: [TradesService, InstrumentsService, UserAssetsService, CoinGeckoService, CsvImportService, MarketDataService, MarketNewsCron],
-  exports: [TradesService, MarketDataService],
+  providers: [TradesService, InstrumentsService, UserAssetsService, CoinGeckoService, CsvImportService, MarketDataService, MarketNewsCron, BrokerMappingService],
+  // BrokerMappingService est expose : le module admin pilote le registre (deduction, apercu,
+  // validation) sans reimplementer la lecture des fiches.
+  // CsvImportService est expose pour l'admin : le registre des brokers y deduit une fiche
+  // depuis un echantillon (seul endroit du code qui parle a Anthropic pour l'import).
+  exports: [TradesService, MarketDataService, BrokerMappingService, CsvImportService],
 })
 export class TradesModule {}

@@ -28,7 +28,14 @@ function makeService() {
   const prisma = { user: { findUnique: vi.fn().mockResolvedValue(null) } } as any;
   // SetupsService : setup par défaut du user (fallback import).
   const setups = { getImportSetupId: vi.fn().mockResolvedValue('setup-default') } as any;
-  return new CsvImportService(anthropicClient, prisma, setups);
+  // Registre vide par defaut : aucun broker n'a de fiche, donc on exerce bien le parcours
+  // « broker inconnu ». Les tests qui veulent une fiche la posent eux-memes.
+  const brokerMappings = {
+    findByHeader: vi.fn(async () => null),
+    noteUsage: vi.fn(async () => undefined),
+    apply: vi.fn(),
+  } as any;
+  return new CsvImportService(anthropicClient, prisma, setups, brokerMappings);
 }
 
 describe('CsvImportService — MEXC (parser dédié, sans IA)', () => {

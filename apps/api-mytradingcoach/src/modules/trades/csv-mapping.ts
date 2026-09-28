@@ -30,6 +30,7 @@
  *    (MAPPING_MIN_PNL_RATIO) et non la perfection.
  */
 
+import { createHash } from 'node:crypto';
 import { splitCsvLine } from './csv-parsers';
 import { resolvePairDirection } from './tradovate-pair.util';
 
@@ -39,6 +40,27 @@ export const MAPPING_MIN_PARSED_RATIO = 0.8;
 export const MAPPING_MIN_PNL_RATIO = 0.8;
 /** Lignes envoyees au modele pour qu'il deduise le mapping. */
 export const MAPPING_SAMPLE_ROWS = 20;
+
+/**
+ * Cle de reconnaissance d'un broker enregistre au registre.
+ *
+ * Normalise juste ce qu'il faut pour absorber le bruit d'un export (casse, espaces, BOM,
+ * retour chariot, guillemets) sans jamais absorber une DIFFERENCE DE STRUCTURE : l'ordre et
+ * le nombre de colonnes font partie de la signature. Si le broker ajoute une colonne, la
+ * signature change, la fiche ne correspond plus et l'import retombe sur « inconnu ». C'est
+ * voulu : une fiche appliquee a un en-tete decale lirait chaque colonne a cote, et produirait
+ * des trades faux sans qu'aucune erreur ne remonte.
+ */
+export function headerSignature(header: string): string {
+  const normalise = (header ?? '')
+    .replace(/^\uFEFF/, '')
+    .replace(/\r/g, '')
+    .replace(/"/g, '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+  return createHash('sha256').update(normalise).digest('hex').slice(0, 32);
+}
 
 export type SideMode = 'column' | 'derived_from_timestamps';
 
@@ -282,7 +304,12 @@ export interface MappingOutcome {
   pnlRatio: number | null;
 }
 
-function inverse(m: CsvMapping): CsvMapping {
+/**
+ * Fiche dont le sens est inverse. Exportee pour l'admin : quand le controle du P&L redresse
+ * le sens, c'est la version CORRIGEE qui doit etre enregistree, pas celle que le modele a
+ * proposee — sinon la fiche du registre rejouerait l'erreur a chaque import.
+ */
+export function inverseSide(m: CsvMapping): CsvMapping {
   return m.side.mode === 'column'
     ? { ...m, side: { ...m.side, longValues: m.side.shortValues, shortValues: m.side.longValues } }
     : { ...m, side: { ...m.side, buyTimeIndex: m.side.sellTimeIndex, sellTimeIndex: m.side.buyTimeIndex } };
@@ -310,7 +337,7 @@ export function applyMappingWithPnlCheck(dataLines: string[], m: CsvMapping): Ma
     return { ...direct, flipped: false, pnlRatio: ratioDirect };
   }
 
-  const retourne = applyMapping(dataLines, inverse(m));
+  const retourne = applyMapping(dataLines, inverseSide(m));
   const cInverse = pnlCoherence(retourne.rows);
   const ratioInverse = cInverse.testables ? cInverse.ok / cInverse.testables : 0;
 

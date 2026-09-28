@@ -18,10 +18,13 @@ import {
 import {
   applyMappingWithPnlCheck,
   MAPPING_MIN_PARSED_RATIO,
+  MAPPING_MIN_PNL_RATIO,
   MAPPING_SAMPLE_ROWS,
+  inverseSide,
   validateMappingShape,
   type CsvMapping,
 } from './csv-mapping';
+import { BrokerMappingService } from './broker-mapping.service';
 import { AI_MODELS } from '../infra/ai-pricing.const';
 
 const MODEL = AI_MODELS.analysis;
@@ -102,6 +105,7 @@ export class CsvImportService {
     private readonly anthropicClient: AnthropicClientService,
     private readonly prisma: PrismaService,
     private readonly setups: SetupsService,
+    private readonly brokerMappings: BrokerMappingService,
   ) {}
 
   async parseCSV(
@@ -142,6 +146,22 @@ export class CsvImportService {
       dtos = mapNormalizedCsvToDto(csv);
       this.logger.log(`CSV "${filename}" [${broker}] → ${dtos.length} trades (local, sans IA)`);
     } else {
+      // 3bis. Fiche du registre pour cet en-tete ? Alors c'est un broker connu comme les
+      //       autres : parsing local, gratuit, ACCESSIBLE A TOUS LES PLANS. C'est le but du
+      //       registre — un broker debloque une fois profite ensuite a chaque utilisateur,
+      //       sans appel IA et sans deploiement. Passe donc avant le verrou Premium.
+      const fiche = await this.brokerMappings.findByHeader(normalizedLines[0] ?? '');
+      const parFiche = fiche
+        ? this.parseAvecFiche(normalizedLines.slice(1), fiche, filename)
+        : null;
+
+      if (parFiche && fiche) {
+        void this.brokerMappings.noteUsage(fiche.id);
+        dtos = parFiche;
+      } else {
+      // Aucune fiche, ou fiche devenue inapplicable (le broker a change son format) : la
+      // suite reprend exactement le parcours d'un broker inconnu.
+
       // 4a. Le fichier ressemble-t-il seulement à un export de trades ? Un fichier
       //     hors sujet (image renommée .csv, tableur quelconque) renvoyait le message
       //     « broker non reconnu → passe Premium » : on vendait un upgrade qui n'aurait
@@ -167,6 +187,7 @@ export class CsvImportService {
         );
       }
       dtos = await this.parseUnknownWithAi(normalizedLines, filename, userId);
+      }
     }
 
     if (!dtos.length) throw new BadRequestException(this.emptyMessage());
@@ -465,6 +486,105 @@ export class CsvImportService {
     }
 
     return this.mapToDto(allTrades);
+  }
+
+  // ── Registre des brokers : entrees publiques pour l'admin ────────────────────
+
+  /**
+   * Deduit une fiche depuis un echantillon colle ou televerse dans l'admin. UN appel IA.
+   *
+   * Pas de garde `NODE_ENV` ici, contrairement au chemin d'import : c'est une action
+   * deliberee d'un admin, et le client Anthropic refuse deja tout appel quand `AI_ENABLED`
+   * n'est pas vrai. C'est donc cette variable qui autorise ou non la depense, par
+   * environnement, sans qu'on ait besoin de reserver la fonction a la production.
+   */
+  async analyseSampleForAdmin(sample: string): Promise<{
+    header: string;
+    mapping: CsvMapping | null;
+    preview: ReturnType<CsvImportService['mapToDto']>;
+    pnlRatio: number | null;
+    flipped: boolean;
+    skipped: number;
+    rowsRead: number;
+  } | null> {
+    const lignes = sample.split('\n').map((l) => l.replace(/\r$/, '')).filter((l) => l.trim());
+    if (lignes.length < 2) return null;
+
+    const mapping = await this.inferMapping(lignes);
+    return { ...this.previewForAdmin(lignes, mapping), header: lignes[0] };
+  }
+
+  /**
+   * Rejoue une fiche, corrigee a la main ou non, sur l'echantillon. AUCUN appel IA : c'est ce
+   * qui permet a un admin d'ajuster une colonne et de revoir l'apercu autant de fois qu'il
+   * veut sans que cela coute quoi que ce soit.
+   */
+  previewForAdmin(
+    lignes: string[],
+    mapping: CsvMapping | null,
+  ): {
+    mapping: CsvMapping | null;
+    preview: ReturnType<CsvImportService['mapToDto']>;
+    pnlRatio: number | null;
+    flipped: boolean;
+    skipped: number;
+    rowsRead: number;
+  } {
+    const donnees = lignes.slice(1);
+    if (!mapping) {
+      return { mapping: null, preview: [], pnlRatio: null, flipped: false, skipped: donnees.length, rowsRead: donnees.length };
+    }
+    const out = applyMappingWithPnlCheck(donnees, mapping);
+    return {
+      // La fiche rendue est celle REELLEMENT retenue : si le controle du P&L a inverse le
+      // sens, l'admin doit enregistrer la version corrigee, pas celle qu'il a envoyee.
+      mapping: out.flipped ? inverseSide(mapping) : mapping,
+      preview: this.mapToDto(out.rows),
+      pnlRatio: out.pnlRatio,
+      flipped: out.flipped,
+      skipped: out.skipped,
+      rowsRead: donnees.length,
+    };
+  }
+
+  /**
+   * Applique une fiche du registre. Rend null si elle ne tient plus, et l'import repart alors
+   * sur le parcours « broker inconnu » : un broker qui change son format ne doit pas produire
+   * des trades faux, il doit redevenir inconnu le temps qu'on refasse sa fiche.
+   *
+   * Le meme controle qu'a la validation est rejoue A CHAQUE import, et ce n'est pas
+   * redondant : la fiche a ete validee sur 20 lignes d'UN utilisateur, elle s'applique ici
+   * au fichier entier d'un AUTRE. Si le sens ne colle plus aux chiffres, on renonce.
+   */
+  private parseAvecFiche(
+    dataLines: string[],
+    fiche: { id: string; mapping: CsvMapping },
+    filename: string,
+  ): ReturnType<CsvImportService['mapToDto']> | null {
+    if (!dataLines.length) return null;
+    const out = this.brokerMappings.apply(dataLines, fiche.mapping);
+
+    const ratioParse = out.rows.length / dataLines.length;
+    if (ratioParse < MAPPING_MIN_PARSED_RATIO) {
+      this.logger.warn(
+        `Fiche ${fiche.id} ecartee pour "${filename}" : ${out.rows.length}/${dataLines.length} ` +
+        `lignes exploitables. Le format du broker a probablement change.`,
+      );
+      return null;
+    }
+    if (out.pnlRatio != null && out.pnlRatio < MAPPING_MIN_PNL_RATIO) {
+      this.logger.warn(
+        `Fiche ${fiche.id} ecartee pour "${filename}" : sens confirme sur seulement ` +
+        `${Math.round(out.pnlRatio * 100)} % des lignes testables.`,
+      );
+      return null;
+    }
+
+    this.logger.log(
+      `CSV "${filename}" [fiche ${fiche.id}] -> ${out.rows.length} trades (local, sans IA)` +
+      `${out.flipped ? ', sens redresse par le controle du P&L' : ''}.`,
+    );
+    return this.mapToDto(out.rows);
   }
 
   /**
