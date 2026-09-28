@@ -6,6 +6,8 @@ import * as XLSX from 'xlsx';
 import { CsvImportService, type FeesReport } from './csv-import.service';
 // Parseurs extraits en fonctions pures (étape 4 de l'audit) : testés directement.
 import { detectBroker, normalizeMexcSymbol, normalizeSeparator, parseMexc } from './csv-parsers';
+// Le vrai calcul du mapping : le test du registre doit exercer le code, pas un faux.
+import { applyMappingWithPnlCheck } from './csv-mapping';
 
 // Anthropic SDK lit la clé à la construction → fournir une valeur factice en test
 process.env['ANTHROPIC_API_KEY'] = 'test-key';
@@ -161,6 +163,91 @@ describe('CsvImportService — chemin IA réservé Premium', () => {
   let svc: CsvImportService;
   beforeEach(() => {
     svc = makeService();
+  });
+
+  /**
+   * La promesse centrale du registre : une fiche validee une fois profite a TOUS les plans.
+   * Si ce test casse, le registre ne sert plus a rien, les gratuits repasseraient par
+   * l'upsell alors qu'un admin a deja debloque leur broker.
+   */
+  it('broker inconnu MAIS fiche au registre : un compte GRATUIT importe, 0 appel IA', async () => {
+    const svc2 = makeService();
+    const create = vi.fn();
+    (svc2 as any).anthropicClient.create = create;
+
+    const csv = [
+      'Date de sortie,Instrument,Sens,Prix achat,Prix vente,Lots,Gain net',
+      '2026-06-01 15:30:00,MNQ,Achat,29900,29950,1,50',
+      '2026-06-02 15:30:00,MNQ,Vente,29900,29800,1,100',
+    ].join('\n');
+
+    const fiche = {
+      id: 'fiche-nt8',
+      mapping: {
+        delimiter: ',', decimalSeparator: '.' as const,
+        columns: { symbol: 1, entry: 3, exit: 4, quantity: 5, pnl: 6, tradedAt: 0 },
+        side: {
+          mode: 'column' as const, index: 2,
+          longValues: ['Achat'], shortValues: ['Vente'],
+          buyTimeIndex: null, sellTimeIndex: null,
+        },
+        pnlExtraColumns: [],
+      },
+    };
+    (svc2 as any).brokerMappings.findByHeader = vi.fn(async () => fiche);
+    (svc2 as any).brokerMappings.apply = vi.fn((lignes: string[], m: unknown) =>
+      applyMappingWithPnlCheck(lignes, m as never),
+    );
+    const noteUsage = vi.fn(async () => undefined);
+    (svc2 as any).brokerMappings.noteUsage = noteUsage;
+
+    const dtos = await svc2.parseCSV(Buffer.from(csv), 'ninjatrader.csv', undefined, {
+      plan: Plan.FREE, role: Role.USER, trialEndsAt: null,
+    });
+
+    expect(dtos).toHaveLength(2);
+    expect(dtos[0].asset).toBe('MNQ');
+    expect(dtos.map((d) => d.side)).toEqual(['LONG', 'SHORT']);
+    // Aucune depense : c'est tout l'interet du registre.
+    expect(create).not.toHaveBeenCalled();
+    expect(noteUsage).toHaveBeenCalledWith('fiche-nt8');
+  });
+
+  it('fiche devenue inapplicable : on retombe sur broker inconnu, pas sur des trades faux', async () => {
+    // Le broker a change son format. La fiche matche encore l'en-tete mais ne produit plus
+    // rien d'exploitable : l'import doit redevenir inconnu plutot que d'inventer.
+    const svc2 = makeService();
+    const create = vi.fn();
+    (svc2 as any).anthropicClient.create = create;
+    const csv = [
+      'Date de sortie,Instrument,Sens,Prix achat,Prix vente,Lots,Gain net',
+      '2026-06-01 15:30:00,MNQ,Achat,29900,29950,1,50',
+    ].join('\n');
+
+    (svc2 as any).brokerMappings.findByHeader = vi.fn(async () => ({
+      id: 'fiche-cassee',
+      mapping: {
+        delimiter: ',', decimalSeparator: '.' as const,
+        // Colonnes qui ne contiennent rien de numerique : aucune ligne exploitable.
+        columns: { symbol: 0, entry: 2, exit: 2, quantity: 2, pnl: 2, tradedAt: 1 },
+        side: {
+          mode: 'column' as const, index: 2,
+          longValues: ['Achat'], shortValues: ['Vente'],
+          buyTimeIndex: null, sellTimeIndex: null,
+        },
+        pnlExtraColumns: [],
+      },
+    }));
+    (svc2 as any).brokerMappings.apply = vi.fn((lignes: string[], m: unknown) =>
+      applyMappingWithPnlCheck(lignes, m as never),
+    );
+
+    await expect(
+      svc2.parseCSV(Buffer.from(csv), 'ninjatrader.csv', undefined, {
+        plan: Plan.FREE, role: Role.USER, trialEndsAt: null,
+      }),
+    ).rejects.toThrow(/Premium|pas encore reconnu/);
+    expect(create).not.toHaveBeenCalled();
   });
 
   it('refuse le broker inconnu sans Premium (message clair, 0 appel Anthropic)', async () => {
