@@ -1,4 +1,5 @@
 ---
+import { APP_URL } from '../config';
 ---
 
 <section class="features" id="features">
@@ -71,6 +72,17 @@
         <p>Futures CME (NQ, ES, MES, Gold, 6E), Crypto spot/levier, Forex, Indices CFD. P&amp;L exact en ticks avec multiplicateurs officiels.</p>
         <span class="feat-tag tag-free">✓ Gratuit</span>
       </div>
+    </div>
+
+    {/*
+      Relais de conversion au milieu du parcours. Les boutons etaient a 7 % puis plus rien
+      jusqu'a 58 % : 7 000 px, six ecrans, sans aucun moyen de s'inscrire. Un visiteur
+      convaincu ici devait scroller la moitie de la page pour agir. Mesure du 2026-09-28.
+    */}
+    <div class="feat-cta reveal">
+      <p>Tout ce que tu viens de lire est utilisable aujourd'hui.</p>
+      <a href={`${APP_URL}/register`} class="btn-p">Commencer gratuitement</a>
+      <span class="feat-cta-note">Gratuit, trades illimités, sans carte bancaire</span>
     </div>
   </div>
 </section>
@@ -151,6 +163,24 @@
   .tag-free    { background: rgba(16,185,129,.1);  color: var(--green); border: 1px solid rgba(16,185,129,.2); }
   .tag-prem    { background: rgba(59,130,246,.1);  color: var(--blue2); border: 1px solid rgba(59,130,246,.2); }
   .tag-new  { background: rgba(245,158,11,.1);  color: var(--yel);   border: 1px solid rgba(245,158,11,.2); }
+
+  .feat-cta {
+    margin-top: 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .feat-cta p { margin: 0; font-size: 16px; color: var(--txt2); }
+
+  .feat-cta-note { font-family: var(--mono); font-size: 12px; color: var(--txt3); }
+
+  @media (max-width: 480px) {
+    /* Pleine largeur au pouce : le bouton ne doit pas etre une cible etroite. */
+    .feat-cta .btn-p { width: 100%; text-align: center; }
+  }
 
   @media (max-width: 1024px) and (min-width: 769px) {
     .feat-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }

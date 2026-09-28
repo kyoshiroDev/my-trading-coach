@@ -15,7 +15,7 @@ const { stickyCta = true } = Astro.props;
     <a href="/#pricing">Tarifs</a>
     <a href="/#faq">FAQ</a>
     <a href={`${APP_URL}/login`} class="nav-login-link">Connexion</a>
-    <a href={`${APP_URL}/register`} class="nav-cta">Essayer gratuitement →</a>
+    <a href={`${APP_URL}/register`} class="nav-cta">Commencer gratuitement →</a>
   </nav>
 
   <button
@@ -32,7 +32,7 @@ const { stickyCta = true } = Astro.props;
 
 {stickyCta && (
   <a href={`${APP_URL}/register`} class="nav-sticky-cta">
-    Essayer gratuitement →
+    Commencer gratuitement →
   </a>
 )}
 
