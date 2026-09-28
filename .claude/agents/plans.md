@@ -126,6 +126,15 @@ On tiér par **structure de coût**, PAS par « IA vs pas d'IA ».
 - **SCALE AVEC L'USAGE** — O(users × engagement) → **PREMIUM** :
   - Chat coach, IA Insights à la demande, recap quotidien.
 - L'import IA (broker inconnu → Anthropic, gardé `NODE_ENV=production`) est une IA **personnelle** → **PREMIUM**.
+  **Coût mesuré** (2026-09-28, `claude-sonnet-4-6` à 3 $/M entrée · 15 $/M sortie, sur une vraie ligne
+  de broker de 119 caractères — fixture `tradovate-performance.csv`) : **≈ 0,015 $ pour 20 trades ·
+  0,07 $ pour 100 · 0,15 $ pour 250 · 1,21 $ au plafond de `MAX_AI_ROWS` (2000)**. C'est l'appel IA le
+  plus cher à l'unité du produit, mais il est rare et borné — il ne change pas la conclusion
+  « le coût IA n'est pas un sujet » ci-dessous.
+  `AI_BATCH` vaut **120** lignes et non 250 : ce n'est PAS un réglage de coût mais la borne de
+  sortie (~40 jetons de JSON par trade contre `max_tokens: 8192`). Au-delà de ~205 trades par lot
+  la réponse était tronquée et l'import échouait en accusant le fichier de l'utilisateur.
+  Ne pas remonter ce lot sans recalculer cette borne.
 
 **Coût IA réel constaté** (admin, 30 j) : ≈ **4,60 USD total**. Le coût IA n'est PAS un sujet ; ne pas sur-optimiser. Autoritatif = Anthropic Cost Report API.
 
