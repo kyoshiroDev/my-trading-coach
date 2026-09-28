@@ -3,7 +3,6 @@ import { API_URL, FEATURES } from '../config';
 import Base from '../layouts/Base.astro';
 import Nav from '../components/Nav.astro';
 import Hero from '../components/Hero.astro';
-import Moments from '../components/Moments.astro';
 import Showcase from '../components/Showcase.astro';
 import DayTimeline from '../components/DayTimeline.astro';
 import Features from '../components/Features.astro';
@@ -68,7 +67,12 @@ try {
   <Hero traders={traders} />
   <!-- Le produit se voit dès le 2e écran ; Problem retiré, il redisait Moments (audit UX 2026-09-27). -->
   <Showcase />
-  <Moments />
+  {/*
+    `Moments` retire (audit UX 2026-09-28) : il racontait la MEME histoire avant/pendant/apres
+    que `DayTimeline`, avec 49 % de vocabulaire commun et 2 423 px a eux deux. La timeline est
+    la meilleure des deux, parce qu'elle est horodatee et incarnee : on voit un trader a 08h15,
+    pas une liste de fonctionnalites. Le composant reste dans le depot si tu veux revenir.
+  */}
   <DayTimeline />
   <Features />
   <!-- L'app en vrai (maquettes produit), puis le coach IA et le débrief : décision D2 de l'audit. -->
