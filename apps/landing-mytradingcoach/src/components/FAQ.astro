@@ -12,11 +12,13 @@ import { FAQ } from '../data/faq';
     <div class="faq-list reveal">
       {FAQ.map((item, i) => (
         <div class={i === 0 ? 'faq-item open' : 'faq-item'}>
-          <button class="faq-q" aria-expanded={i === 0 ? 'true' : 'false'}>
+          {/* `aria-controls` lie la question a sa reponse : sans lui, un lecteur d'ecran
+              annonce « developpe » sans dire ce qui s'ouvre, ni ou aller le lire. */}
+          <button class="faq-q" aria-expanded={i === 0 ? 'true' : 'false'} aria-controls={`faq-a-${i}`}>
             {item.question}
-            <span class="faq-arrow">▼</span>
+            <span class="faq-arrow" aria-hidden="true">▼</span>
           </button>
-          <div class="faq-a">{item.answer}</div>
+          <div class="faq-a" id={`faq-a-${i}`} role="region">{item.answer}</div>
         </div>
       ))}
     </div>
