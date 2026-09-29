@@ -1,29 +1,23 @@
 ---
 // Vraies captures de l'app (compte démo, env DEV), pas une maquette : une maquette
 // dérive à chaque refonte de l'app. Pour les rafraîchir, voir .claude/agents/astro.md.
+//
+// Le dashboard a été retiré d'ici le 2026-09-29 : il est désormais dans le hero, donc la même
+// capture apparaissait deux fois à deux écrans d'écart, pour 663 px. Cette section ne garde
+// que ce que le hero NE montre pas — l'IA qui lit les patterns. Un tableau de bord, tous les
+// concurrents en ont un ; l'analyse, non, et c'est elle qui justifie le Premium.
 ---
 
 <section class="showcase" id="showcase">
   <div class="showcase-inner">
     <div class="reveal showcase-head">
       <span class="sec-label">L'app en vrai</span>
-      <h2>Voilà ce que tu vas utiliser.</h2>
+      <h2>Ce que l'IA voit dans tes trades.</h2>
       <p class="sec-sub">
-        Pas une maquette : des captures de l'application, prises sur le compte de démonstration.
+        Tes chiffres, tu les as déjà vus plus haut. Voilà ce qu'un journal ne fait pas :
+        nommer tes patterns, et te laisser lui poser des questions.
       </p>
     </div>
-
-    <figure class="shot reveal">
-      <img
-        src="/showcase/app-dashboard.webp"
-        width="2520"
-        height="1434"
-        loading="lazy"
-        decoding="async"
-        alt="Dashboard MyTradingCoach : capital, P&L net, win rate, courbe d'équité, P&L par actif et par mois, feedback du coach IA, répartition des setups et des états émotionnels."
-      />
-      <figcaption><strong>Dashboard</strong> : tes chiffres, tes setups et tes émotions sur un seul écran.</figcaption>
-    </figure>
 
     <figure class="shot reveal">
       <img
