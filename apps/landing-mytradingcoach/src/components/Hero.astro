@@ -17,13 +17,13 @@ const showTraders = traders >= TRADERS_PUBLIC_THRESHOLD;
   <div class="pulse-ring"></div>
   <div class="pulse-ring"></div>
 
-  <div class="hero-grid">
-  <div class="hero-col">
-
-  <div class="hero-badge">
+  <div class="hero-badge hero-badge-top">
     <div class="bdot"></div>
     <span>Le premier compagnon de trading IA : <span class="nowrap">multi-marché</span></span>
   </div>
+
+  <div class="hero-grid">
+  <div class="hero-col">
 
   {showTraders && (
     <div class="hero-proof" data-traders-proof>
@@ -51,15 +51,6 @@ const showTraders = traders >= TRADERS_PUBLIC_THRESHOLD;
     <div class="hero-moment apres">🌙 Après, il débrieffe</div>
   </div>
 
-  <div class="hero-actions">
-    <a href={`${APP_URL}/register`} class="btn-p hero-cta-main">
-      Commencer gratuitement
-    </a>
-    <a href={`${APP_URL}/demo`} class="btn-demo hero-cta-demo">
-      🔍 Tester la démo
-    </a>
-  </div>
-  <p class="hero-cta-sub">Gratuit, trades illimités, sans CB · Premium {PREMIUM_PRICE_EUR.monthly}€/mois, 1 mois offert avec carte · Données en France 🇫🇷</p>
 
   </div>
 
@@ -70,36 +61,36 @@ const showTraders = traders >= TRADERS_PUBLIC_THRESHOLD;
     ligne de flottaison (91 ko).
   */}
   {/*
-    Deux recadrages, et ce n'est pas du zele : une capture doit se LIRE, sinon elle ne dit
-    rien. Le dashboard entier (1919 px) affiche a 579 px sur bureau, soit 30 % : un texte de
-    13 px y tombe a 3,9 px, donc plus un chiffre n'est dechiffrable. Mesure du 2026-09-29.
-    Recadre a 830 px, il passe a 70 % et les montants redeviennent lisibles.
+    Capture complete du dashboard (compte de demonstration), des le premier ecran.
 
-    Le mobile a son propre recadrage parce qu'il est plus etroit encore : les memes 830 px y
-    tomberaient a 47 %. La version 547 px montre deux indicateurs et la courbe entiere, a
-    71 %. C'est le cas qui compte le plus : une newsletter se lit au telephone.
+    A savoir, mesure le 2026-09-29 : affichee en entier elle tombe autour de 35 % de sa taille
+    native, taille a laquelle les libelles ne se lisent plus. C'est un choix assume : elle
+    montre la densite et la realite du produit plutot qu'un detail. Si un jour tu veux des
+    chiffres lisibles ICI, il faut un recadrage, pas une image plus grande.
   */}
   <div class="hero-shot">
-    <picture>
-      <source
-        media="(max-width: 700px)"
-        srcset="/showcase/app-hero-dashboard-mobile.webp"
-        width="547"
-        height="452"
-      />
-      <img
-        src="/showcase/app-hero-dashboard.webp"
-        width="830"
-        height="457"
-        loading="eager"
-        fetchpriority="high"
-        decoding="async"
-        alt="Dashboard MyTradingCoach : capital 101 057,73 $, P&L net +1 057,73 $ sur 30 jours, win rate 55,6 % sur 63 trades, courbe d'équité et P&L par instrument (MNQ, MES, NQ, ES)."
-      />
-    </picture>
+    <img
+      src="/showcase/app-hero-dashboard.webp"
+      width="1919"
+      height="959"
+      loading="eager"
+      fetchpriority="high"
+      decoding="async"
+      alt="Dashboard MyTradingCoach : capital 101 057,73 $, P&L net +1 057,73 $ sur 30 jours, win rate 55,6 %, profit factor 1,29, courbe d'équité, P&L par instrument et par jour, feedback du coach IA, répartition des setups et des états émotionnels."
+    />
     <span class="hero-shot-note">Capture réelle · compte de démonstration</span>
   </div>
   </div>
+
+  <div class="hero-actions">
+    <a href={`${APP_URL}/register`} class="btn-p hero-cta-main">
+      Commencer gratuitement
+    </a>
+    <a href={`${APP_URL}/demo`} class="btn-demo hero-cta-demo">
+      🔍 Tester la démo
+    </a>
+  </div>
+  <p class="hero-cta-sub">Gratuit, trades illimités, sans CB · Premium {PREMIUM_PRICE_EUR.monthly}€/mois, 1 mois offert avec carte · Données en France 🇫🇷</p>
 </section>
 
 <style>
@@ -160,6 +151,13 @@ const showTraders = traders >= TRADERS_PUBLIC_THRESHOLD;
    * le bouton tombait a 785 px sur mobile, soit 112 px plus bas qu'avant la refonte. Le gap
    * ne doit separer que la colonne et la capture.
    */
+  /* Le badge coiffe le hero : centre, sur toute la largeur, hors de la grille. */
+  .hero-badge-top { margin-left: auto; margin-right: auto; }
+
+  /* Boutons et ligne de reassurance : sous la grille, centres sur toute la largeur. */
+  .hero-actions { margin-left: auto; margin-right: auto; justify-content: center; }
+  .hero-cta-sub { margin-left: auto; margin-right: auto; text-align: center; }
+
   .hero-col {
     display: flex;
     flex-direction: column;
@@ -384,6 +382,25 @@ const showTraders = traders >= TRADERS_PUBLIC_THRESHOLD;
    * haut dans la feuille, ce bloc etait ecrase par `.hero h1` et le titre restait a 88 px,
    * ce qui repoussait le bouton a 950 px. Ne pas le remonter.
    */
+  /*
+   * Sous 980 px, tout s'empile et la capture se glisserait ENTRE le texte et les boutons :
+   * mesure du 2026-09-29, le bouton tombait alors a 864 px, donc hors ecran sur un telephone
+   * (~660 px utiles). L'ordre visuel voulu — boutons sous le bloc de texte, centres — est
+   * conserve ; seule la capture passe apres eux, puisqu'elle illustre et ne convertit pas.
+   *
+   * `display: contents` sur la grille fait de la colonne et de la capture des enfants directs
+   * du hero, ce qui rend `order` utilisable. Aucun `gap` a craindre ici : c'est le hero qui
+   * gouverne l'espacement, et il n'en a pas.
+   */
+  @media (max-width: 979px) {
+    .hero-grid { display: contents; }
+    .hero-badge-top { order: 1; }
+    .hero-col { order: 2; }
+    .hero-actions { order: 3; }
+    .hero-cta-sub { order: 4; }
+    .hero-shot { order: 5; margin-top: 28px; }
+  }
+
   @media (min-width: 980px) {
     .hero { text-align: left; }
     .hero-grid { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 48px; align-items: center; }
@@ -400,8 +417,11 @@ const showTraders = traders >= TRADERS_PUBLIC_THRESHOLD;
     /* `display: contents` replierait la colonne : au-dela du seuil elle redevient une vraie
        boite, sinon chaque enfant du hero deviendrait une cellule de la grille. */
     .hero-col { align-items: flex-start; }
-    .hero-badge, .hero-proof, .hero-moments, .hero-actions { margin-left: 0; margin-right: 0; }
-    .hero-sub, .hero-cta-sub { margin-left: 0; margin-right: 0; }
+    .hero-proof, .hero-moments, .hero-sub { margin-left: 0; margin-right: 0; }
+    /* Le badge et le bloc d'action encadrent la grille, ils n'en font pas partie : sans ces
+       `auto` ils se colleraient au bord gauche avec le reste du texte. */
+    .hero-badge-top, .hero-actions, .hero-cta-sub { margin-left: auto; margin-right: auto; }
+    .hero-cta-sub { text-align: center; }
   }
 
   @media (max-width: 768px) {

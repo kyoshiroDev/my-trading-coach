@@ -2,9 +2,12 @@
 ---
 
 <section class="deb-section" id="debrief">
+  {/* Le libelle coiffe la section, centre : dans la grille a deux colonnes il se retrouvait
+      colle en haut a gauche, alors que partout ailleurs sur la page il surplombe le bloc. */}
+  <div class="deb-eyebrow reveal"><span class="sec-label">La feature principale</span></div>
+
   <div class="deb-layout">
     <div class="reveal">
-      <span class="sec-label">La feature principale</span>
       <h2>Ton coach <em>personnel</em> chaque dimanche soir</h2>
       <p class="sec-sub">Chaque dimanche, l'IA analyse ta semaine <strong>en connaissant ta stratégie</strong>. Scalper ICT ? Swing SMC ? Les objectifs qu'elle te fixe sont adaptés à ton style, pas à un trader fictif. C'est la différence entre un rapport généré et un vrai coaching.</p>
       <div class="deb-points">
@@ -60,6 +63,8 @@
     background: var(--bg2);
     border-top: 1px solid var(--b);
   }
+
+  .deb-eyebrow { text-align: center; margin-bottom: 18px; }
 
   .deb-layout {
     display: grid;

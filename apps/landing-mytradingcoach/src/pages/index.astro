@@ -93,9 +93,12 @@ try {
   <!-- Section blog : liens internes pour le SEO -->
   <section class="blog-teaser">
     <div class="wrap">
+      {/* Meme traitement que les autres libelles de section : centre au-dessus du bloc,
+          au lieu d'etre coince a gauche dans la rangee qui porte aussi le lien de droite. */}
+      <div class="blog-eyebrow"><span class="blog-label">Blog</span></div>
+
       <div class="blog-head">
         <div>
-          <span class="blog-label">Blog</span>
           <h2 class="blog-title">
             Ressources pour <em>mieux trader</em>
           </h2>
@@ -154,6 +157,8 @@ try {
 
 <style>
 .blog-teaser { padding: 80px 5%; background: var(--bg2); border-top: 1px solid var(--b); }
+.blog-eyebrow { text-align: center; margin-bottom: 14px; }
+
 .blog-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; }
 .blog-label {
   font-size: 11px; font-family: var(--mono); color: var(--pulse); letter-spacing: 2px;
