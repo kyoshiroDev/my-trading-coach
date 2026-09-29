@@ -3,7 +3,6 @@ import { API_URL, FEATURES } from '../config';
 import Base from '../layouts/Base.astro';
 import Nav from '../components/Nav.astro';
 import Hero from '../components/Hero.astro';
-import Showcase from '../components/Showcase.astro';
 import DayTimeline from '../components/DayTimeline.astro';
 import Features from '../components/Features.astro';
 import CoachIA from '../components/CoachIA.astro';
@@ -66,7 +65,12 @@ try {
   <Nav />
   <Hero traders={traders} />
   <!-- Le produit se voit dès le 2e écran ; Problem retiré, il redisait Moments (audit UX 2026-09-27). -->
-  <Showcase />
+  {/*
+    « L'app en vrai » retiree le 2026-09-29 : le hero porte desormais une vraie capture avec
+    sa mention « capture reelle », donc l'objection « c'est une maquette ? » est traitee des
+    le premier ecran. Sa capture IA Insights a rejoint la section Coach IA, ou elle sert
+    d'appui a l'argument plutot que de section concurrente. Le composant reste dans le depot.
+  */}
   {/*
     `Moments` retire (audit UX 2026-09-28) : il racontait la MEME histoire avant/pendant/apres
     que `DayTimeline`, avec 49 % de vocabulaire commun et 2 423 px a eux deux. La timeline est

@@ -163,6 +163,28 @@ import { APP_URL } from '../config';
     </div>
 
 
+    {/*
+      La vraie capture, deplacee ici depuis la section « L'app en vrai » le 2026-09-29.
+      L'argument generique-vs-personnalise s'appuyait sur deux encarts illustres ; il se
+      termine desormais sur l'ecran reel. La preuve arrive la ou l'argument se fait, au lieu
+      d'occuper une section a part qui entrait en concurrence avec celle-ci et avec le
+      Weekly Debrief : trois blocs parlaient d'IA a la suite, pour 29 % de la page.
+    */}
+    <figure class="coach-shot reveal">
+      <img
+        src="/showcase/app-ai.webp"
+        width="2424"
+        height="1284"
+        loading="lazy"
+        decoding="async"
+        alt="IA Insights : analyse des patterns (edge sur les breakouts, scalping mangé par les frais, revenge trading après une perte) et chat avec le coach IA."
+      />
+      <figcaption>
+        <strong>IA Insights</strong> (Premium) : l'écran réel, sur le compte de démonstration.
+        Données d'exemple, pas des résultats réels ni garantis.
+      </figcaption>
+    </figure>
+
     <!-- CTA -->
     <div class="coach-cta reveal">
       <a href={`${APP_URL}/register`} class="btn-p">
@@ -179,6 +201,33 @@ import { APP_URL } from '../config';
 </section>
 
 <style>
+  /*
+   * 820 px et non 1 000 : ici la capture APPUIE l'argument, elle n'est pas le sujet de la
+   * section. A pleine largeur elle ajoutait ~1 300 px et faisait de Coach IA le plus gros
+   * bloc de la page. L'ecran reste parfaitement lisible a cette taille.
+   */
+  .coach-shot {
+    margin: 40px auto 0;
+    max-width: 820px;
+    border: 1px solid var(--b2);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--card);
+  }
+
+  .coach-shot img { display: block; width: 100%; height: auto; }
+
+  .coach-shot figcaption {
+    padding: 12px 16px;
+    border-top: 1px solid var(--b);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--txt2);
+    text-align: left;
+  }
+
+  .coach-shot figcaption strong { color: var(--txt); }
+
   .intro { max-width: 540px; margin: 0 auto; }
   .head { text-align: center; margin-bottom: 56px; }
   .coach-section {
