@@ -164,6 +164,21 @@ import { APP_URL } from '../config';
   .tag-prem    { background: rgba(59,130,246,.1);  color: var(--blue2); border: 1px solid rgba(59,130,246,.2); }
   .tag-new  { background: rgba(245,158,11,.1);  color: var(--yel);   border: 1px solid rgba(245,158,11,.2); }
 
+  /*
+   * `.btn-p` est redefini dans CHAQUE composant qui l'utilise (Hero, CoachIA, CtaFinal) :
+   * Astro isole les styles par composant, donc une classe definie ailleurs ne s'applique pas
+   * ici. Sans cette copie, le bouton du relais s'affichait en lien bleu souligne par defaut,
+   * sans fond ni arrondi — il ne ressemblait a aucun autre bouton de la page.
+   */
+  .btn-p {
+    background: var(--blue); color: #fff; padding: 14px 28px;
+    border-radius: 10px; font-size: 15px; font-weight: 600;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+    box-shadow: 0 0 32px rgba(59,130,246,.4);
+    transition: background .2s, transform .2s, box-shadow .2s; font-family: var(--disp);
+  }
+  .btn-p:hover { background: var(--blue2); transform: translateY(-2px); }
+
   .feat-cta {
     margin-top: 44px;
     display: flex;
