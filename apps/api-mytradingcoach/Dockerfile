@@ -9,8 +9,11 @@ COPY prisma ./prisma
 COPY vendor ./vendor
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN pnpm install --frozen-lockfile
-COPY . .
+# `prisma generate` AVANT `COPY . .` : il ne depend que de `prisma/`, deja copie plus haut.
+# Place apres, il se rejouait a chaque changement de code alors que le schema n'avait pas
+# bouge. Sa sortie vit dans node_modules, que `COPY . .` n'ecrase pas (.dockerignore).
 RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" DATABASE_DIRECT_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm exec prisma generate --config=./prisma/prisma.config.ts
+COPY . .
 RUN NX_DAEMON=false NX_NO_CLOUD=true pnpm nx sync --yes 2>/dev/null || true
 RUN NX_DAEMON=false NX_NO_CLOUD=true pnpm nx build api-mytradingcoach --configuration=production --skip-nx-cache
 
