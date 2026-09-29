@@ -63,45 +63,14 @@ jobs:
       - name: Build
         run: pnpm nx $NX_SCOPE --target=build --parallel=3 || pnpm nx run-many --target=build --all --parallel=3
 
-  # ── Tests front + libs ──────────────────────────────────────────────────────
-  test-front:
-    name: Tests front et libs
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: pnpm
-      - name: Cache Nx (rempli par le job build)
-        uses: actions/cache/restore@v4
-        with:
-          path: .nx/cache
-          key: nx-${{ github.sha }}
-          restore-keys: |
-            nx-
-      # node_modules en cache, pas seulement le store pnpm : `cache: pnpm` sur setup-node
-      # evite le TELECHARGEMENT mais pas le lien des paquets, qui coute 25 s par job.
-      # Mesure du 2026-09-29 : 127 s cumulees sur les cinq jobs du pipeline.
-      # La cle suit le lockfile : toute modification de dependance invalide le cache, et
-      # `pnpm install` reste la pour rattraper un cache partiel ou absent.
-      - name: Cache node_modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            apps/*/node_modules
-            libs/*/node_modules
-          key: modules-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm install --frozen-lockfile
-      - name: Tests (app, admin, libs)
-        run: pnpm nx run-many --target=test --projects=app-mytradingcoach,admin-mytradingcoach,shared,front-ui,front-auth --parallel=2
-
-  # ── Tests API + seuils de couverture ────────────────────────────────────────
+  # ── Tests API (couverture) + tests front et libs ────────────────────────────
+  # Les deux suites vivaient dans deux jobs separes. Chaque job paie ~45 s d'amorcage
+  # (checkout, setup-node, restauration des caches, install) avant de travailler, et
+  # GitHub facture a la minute superieure : le job front consommait 2 minutes pour
+  # 55 s de tests. Fusionnes, ils partagent un seul amorcage.
+  # Les services postgres et redis ne servent qu'a l'API ; les tests front les ignorent.
   test-api:
-    name: Tests API (couverture)
+    name: Tests API, front et libs
     runs-on: ubuntu-latest
     needs: build
     env:
@@ -171,6 +140,11 @@ jobs:
       # `-c ci` active la couverture : échoue si trades, analytics, stripe ou auth passe sous 60 %.
       - name: Tests API
         run: pnpm nx test api-mytradingcoach -c ci
+      # `always()` : une API en echec ne doit pas masquer l'etat du front. Les deux
+      # resultats remontent dans le meme passage, au lieu d'exiger un second run.
+      - name: Tests front et libs
+        if: always()
+        run: pnpm nx run-many --target=test --projects=app-mytradingcoach,admin-mytradingcoach,shared,front-ui,front-auth --parallel=2
 
   # ── Smoke E2E : parcours démo sur une base éphémère ─────────────────────────
   # Non bloquant (continue-on-error) tant qu'il n'a pas tenu deux semaines sans flake ;
