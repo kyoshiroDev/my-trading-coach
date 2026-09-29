@@ -69,16 +69,34 @@ const showTraders = traders >= TRADERS_PUBLIC_THRESHOLD;
     capture que la section Showcase, en `eager` puisqu'elle est desormais au-dessus de la
     ligne de flottaison (91 ko).
   */}
+  {/*
+    Deux recadrages, et ce n'est pas du zele : une capture doit se LIRE, sinon elle ne dit
+    rien. Le dashboard entier (1919 px) affiche a 579 px sur bureau, soit 30 % : un texte de
+    13 px y tombe a 3,9 px, donc plus un chiffre n'est dechiffrable. Mesure du 2026-09-29.
+    Recadre a 830 px, il passe a 70 % et les montants redeviennent lisibles.
+
+    Le mobile a son propre recadrage parce qu'il est plus etroit encore : les memes 830 px y
+    tomberaient a 47 %. La version 547 px montre deux indicateurs et la courbe entiere, a
+    71 %. C'est le cas qui compte le plus : une newsletter se lit au telephone.
+  */}
   <div class="hero-shot">
-    <img
-      src="/showcase/app-dashboard.webp"
-      width="2520"
-      height="1434"
-      loading="eager"
-      fetchpriority="high"
-      decoding="async"
-      alt="Dashboard MyTradingCoach : capital, P&L net, win rate, courbe d'équité, P&L par actif et par mois, feedback du coach IA, répartition des setups et des états émotionnels."
-    />
+    <picture>
+      <source
+        media="(max-width: 700px)"
+        srcset="/showcase/app-hero-dashboard-mobile.webp"
+        width="547"
+        height="452"
+      />
+      <img
+        src="/showcase/app-hero-dashboard.webp"
+        width="830"
+        height="457"
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+        alt="Dashboard MyTradingCoach : capital 101 057,73 $, P&L net +1 057,73 $ sur 30 jours, win rate 55,6 % sur 63 trades, courbe d'équité et P&L par instrument (MNQ, MES, NQ, ES)."
+      />
+    </picture>
     <span class="hero-shot-note">Capture réelle · compte de démonstration</span>
   </div>
   </div>
@@ -160,7 +178,7 @@ const showTraders = traders >= TRADERS_PUBLIC_THRESHOLD;
     box-shadow: 0 24px 60px rgba(0, 0, 0, .55);
   }
 
-  .hero-shot img { display: block; width: 100%; height: auto; }
+  .hero-shot picture, .hero-shot img { display: block; width: 100%; height: auto; }
 
   .hero-shot-note {
     display: block;
@@ -389,9 +407,7 @@ const showTraders = traders >= TRADERS_PUBLIC_THRESHOLD;
   @media (max-width: 768px) {
     .hero { padding: 32px 16px 48px; }
     .hero-grid { gap: 28px; }
-    /* La capture reste visible mais compacte : elle illustre, elle ne doit pas repousser
-       la suite de la page d'un ecran entier sur un telephone. */
-    .hero-shot img { max-height: 210px; object-fit: cover; object-position: top left; }
+    /* Plus de rognage CSS : l'image EST deja le recadrage utile, elle s'affiche entiere. */
     .hero h1 { font-size: clamp(36px,9vw,52px); letter-spacing: -1px; }
     .hero-sub { font-size: 15px; max-width: 100%; }
     .hero-moments { gap: 4px; }
