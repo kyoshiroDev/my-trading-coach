@@ -48,7 +48,7 @@ pnpm nx test api-mytradingcoach -c ci  # + couverture et seuils (ce que lance la
 | Suite | Fichiers | Config | Services | Où |
 |---|---|---|---|---|
 | Unitaire | `src/**/*.spec.ts` | `vitest.config.ts` | aucun (mocks) | `pnpm nx test api-mytradingcoach` |
-| Intégration | `src/**/*.int-spec.ts` | `vitest.integration.config.ts` | Postgres + Redis | job CI `integration-referral` |
+| Intégration | `src/**/*.int-spec.ts` | `vitest.integration.config.mts` | Postgres + Redis | job CI `integration-referral` |
 
 `*.int-spec.ts` **ne matche pas** `*.spec.ts` : les deux suites ne se mélangent jamais.
 
@@ -103,8 +103,19 @@ seul, puis le champ calculé seul).
 # intégration, en local (charge le .env de la racine)
 cd apps/api-mytradingcoach
 env $(grep -vE '^#|^$' ../../.env | xargs -d '\n') \
-  pnpm exec vitest run --config vitest.integration.config.ts
+  ../../node_modules/.bin/vitest run --config $PWD/vitest.integration.config.mts
 ```
+
+> `pnpm exec` s'exécute depuis la racine du dépôt (l'API n'est pas un paquet du workspace) : un
+> chemin de config relatif y est introuvable (`UNRESOLVED_ENTRY`). D'où le binaire direct et le
+> chemin absolu.
+
+> ⚠️ **Un compte broker simulé partagé entre tests.** `tradovate-sync.int-spec.ts` relie chaque
+> user de test au même compte Tradovate simulé (`EXT_ACCOUNT`). Depuis la règle « un compte broker
+> ne se relie qu'à un seul user » (`dropAlreadyLinked`), le `beforeEach` supprime les connexions des
+> users de test, et un test qui relie **plusieurs** users au compte doit le libérer entre deux
+> (`releaseExtAccount`). Sans ça, tout test après le premier reçoit `account_already_linked`
+> (14 échecs, CI rouge du 27 au 29/09).
 
 > ⚠️ **Schéma local souvent périmé.** Le volume `postgres_local_data` survit aux
 > `docker compose down` : une base démarrée après une pause a des migrations de retard,
