@@ -11,6 +11,7 @@ import { headerSignature, type CsvMapping } from './csv-mapping';
 const MAPPING: CsvMapping = {
   delimiter: ',',
   decimalSeparator: '.',
+  dateFormat: 'iso',
   columns: { symbol: 1, entry: 3, exit: 4, quantity: 5, pnl: 6, tradedAt: 0 },
   side: {
     mode: 'column', index: 2,
@@ -108,12 +109,14 @@ describe('BrokerMappingService — enregistrement', () => {
       header: HEADER, brokerName: 'Bybit', mapping: MAPPING,
       pnlConfidence: 1, validatedById: 'admin-1',
     });
-    const appel = prisma.brokerCsvMapping.upsert.mock.calls[0][0] as {
-      where: { headerHash: string }; create: Record<string, unknown>;
-    };
-    expect(appel.where.headerHash).toBe(headerSignature(HEADER));
-    expect(appel.create['validatedById']).toBe('admin-1');
-    expect(appel.create['headerSample']).toBe(HEADER);
+    // `mock.calls` est type comme un tableau de tuples vides : on passe par `unknown`
+    // plutot que de forcer un cast que TypeScript refuse a juste titre.
+    const appel = prisma.brokerCsvMapping.upsert.mock.calls[0] as unknown as [
+      { where: { headerHash: string }; create: Record<string, unknown> },
+    ];
+    expect(appel[0].where.headerHash).toBe(headerSignature(HEADER));
+    expect(appel[0].create['validatedById']).toBe('admin-1');
+    expect(appel[0].create['headerSample']).toBe(HEADER);
   });
 
   it('le compteur d usage n interrompt jamais un import', async () => {

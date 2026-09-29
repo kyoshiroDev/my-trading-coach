@@ -36,7 +36,7 @@ describe('errorInterceptor', () => {
   afterEach(() => backend.verify());
 
   /** Déclenche une requête en avalant l'erreur : c'est l'intercepteur qu'on observe, pas l'appelant. */
-  const echec = (status: number, body: unknown = {}) => {
+  const echec = (status: number, body: Record<string, unknown> = {}) => {
     http.get('/api/trades').subscribe({ error: () => undefined });
     backend.expectOne('/api/trades').flush(body, { status, statusText: `HTTP ${status}` });
   };

@@ -48,7 +48,7 @@ describe('parseBrokerNumber — les nombres tels que les brokers les ecrivent', 
     ['$(1,250.00)', '.' as const, -1250, 'le $ hors parenthese, avec milliers'],
     ['1.234,56', ',' as const, 1234.56, 'format europeen'],
     ['-6.5727459USDT', '.' as const, -6.5727459, 'negatif avec devise'],
-  ])('%s (%s) -> %s : %s', (brut, sep, attendu) => {
+  ])('%s (%s) -> %s : %s', (brut, sep, attendu, _libelle) => {
     expect(parseBrokerNumber(brut, sep)).toBeCloseTo(attendu, 6);
   });
 
@@ -126,7 +126,7 @@ describe('applyMappingWithPnlCheck — le garde-fou sur le sens', () => {
       'BTCUSDT,Sell,63000,62500,1,500,2026-06-04 10:00:00',
     ];
     const aLEnvers: CsvMapping = {
-      delimiter: ',', decimalSeparator: '.',
+      delimiter: ',', decimalSeparator: '.', dateFormat: 'iso',
       columns: { symbol: 0, entry: 2, exit: 3, quantity: 4, pnl: 5, tradedAt: 6 },
       side: {
         mode: 'column', index: 1,
@@ -172,7 +172,7 @@ describe('applyMappingWithPnlCheck — le garde-fou sur le sens', () => {
     // Cas type Binance Futures. C est precisement le format ou les deux modeles se sont
     // trompes de sens : l appelant doit renoncer au mapping plutot que deviner.
     const sansEntree: CsvMapping = {
-      delimiter: ',', decimalSeparator: '.',
+      delimiter: ',', decimalSeparator: '.', dateFormat: 'iso',
       columns: { symbol: 0, entry: null, exit: 2, quantity: 3, pnl: 4, tradedAt: 5 },
       side: {
         mode: 'column', index: 1,
@@ -193,7 +193,7 @@ describe('applyMappingWithPnlCheck — le garde-fou sur le sens', () => {
   it('additionne les colonnes de P&L eclatees (profit + commission + swap)', () => {
     // MT5 n expose pas le net : sans pnlExtraColumns, les frais disparaissent du resultat.
     const mt5: CsvMapping = {
-      delimiter: ',', decimalSeparator: '.',
+      delimiter: ',', decimalSeparator: '.', dateFormat: 'iso',
       columns: { symbol: 4, entry: 5, exit: 9, quantity: 3, pnl: 12, tradedAt: 8 },
       side: {
         mode: 'column', index: 2,
@@ -255,7 +255,7 @@ describe('applyMappingWithPnlCheck — l ordre jour/mois est corrige par les don
   it('redresse une fiche qui annonce le mauvais ordre', () => {
     const m: CsvMapping = {
       delimiter: ',', decimalSeparator: '.',
-      dateFormat: 'mdy',   // faux : ces dates sont en jj/mm
+      dateFormat: 'mdy',   // faux a dessein : ces dates sont en jj/mm
       columns: { symbol: 0, entry: 1, exit: 2, quantity: 3, pnl: 4, tradedAt: 5 },
       side: {
         mode: 'column', index: 6,
