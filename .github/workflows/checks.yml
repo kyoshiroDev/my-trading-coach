@@ -33,6 +33,13 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: pnpm
+      - name: Cache Nx
+        uses: actions/cache@v4
+        with:
+          path: .nx/cache
+          key: nx-${{ github.sha }}
+          restore-keys: |
+            nx-
       - run: pnpm install --frozen-lockfile
       - name: Prisma generate
         run: pnpm exec prisma generate --config=./prisma/prisma.config.ts
@@ -55,6 +62,13 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: pnpm
+      - name: Cache Nx (rempli par le job build)
+        uses: actions/cache/restore@v4
+        with:
+          path: .nx/cache
+          key: nx-${{ github.sha }}
+          restore-keys: |
+            nx-
       - run: pnpm install --frozen-lockfile
       - name: Tests (app, admin, libs)
         run: pnpm nx run-many --target=test --projects=app-mytradingcoach,admin-mytradingcoach,shared,front-ui,front-auth --parallel=2
@@ -103,6 +117,13 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: pnpm
+      - name: Cache Nx (rempli par le job build)
+        uses: actions/cache/restore@v4
+        with:
+          path: .nx/cache
+          key: nx-${{ github.sha }}
+          restore-keys: |
+            nx-
       - run: pnpm install --frozen-lockfile
       - name: Prisma generate
         run: pnpm exec prisma generate --config=./prisma/prisma.config.ts
@@ -167,6 +188,13 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: pnpm
+      - name: Cache Nx (rempli par le job build)
+        uses: actions/cache/restore@v4
+        with:
+          path: .nx/cache
+          key: nx-${{ github.sha }}
+          restore-keys: |
+            nx-
       - run: pnpm install --frozen-lockfile
       - name: Navigateur Playwright
         run: pnpm exec playwright install --with-deps chromium
@@ -175,16 +203,31 @@ jobs:
           pnpm exec prisma generate --config=./prisma/prisma.config.ts
           pnpm exec prisma migrate deploy --config=./prisma/prisma.config.ts
           pnpm seed:demo
-      - name: Démarrer l'API et l'app
+      # `serve-static` et non `serve` : le serveur de developpement Angular demarre a froid
+      # en CI et depassait les 180 s d'attente, ce qui faisait echouer ce job a CHAQUE fois
+      # sans jamais lancer un seul test, pour 6 minutes facturees. `serve-static` sert l'app
+      # compilee (repli SPA inclus) : plus rapide et deterministe.
+      #
+      # Les deux services sont attendus SEPAREMENT : « API ou app non demarree » ne disait
+      # pas laquelle, et le `tail -50` echouait (« option used in invalid context »), donc
+      # aucun journal ne remontait. On ne pouvait pas diagnostiquer.
+      - name: Démarrer l'API
         run: |
           pnpm nx build api-mytradingcoach --configuration=development
           nohup node apps/api-mytradingcoach/dist/main.js > api.log 2>&1 &
-          nohup pnpm nx serve app-mytradingcoach > app.log 2>&1 &
-          for i in $(seq 1 90); do
-            curl -sf localhost:3001/api/health > /dev/null && curl -sf localhost:4200 > /dev/null && exit 0
+          for i in $(seq 1 60); do
+            curl -sf localhost:3001/api/health > /dev/null && exit 0
             sleep 2
           done
-          echo "::error::API ou app non démarrée"; tail -50 api.log app.log; exit 1
+          echo "::error::API non démarrée après 120 s"; tail -n 80 api.log; exit 1
+      - name: Démarrer l'app (compilée)
+        run: |
+          nohup pnpm nx serve-static app-mytradingcoach > app.log 2>&1 &
+          for i in $(seq 1 120); do
+            curl -sf localhost:4200 > /dev/null && exit 0
+            sleep 2
+          done
+          echo "::error::App non démarrée après 240 s"; tail -n 80 app.log; exit 1
       - name: Smoke démo (dashboard, journal, analytics)
         run: pnpm exec playwright test smoke
         working-directory: apps/app-mytradingcoach-e2e
