@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Plan } from '@prisma/client';
 import Stripe from 'stripe';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
+import { RedisService } from '../infra/redis.service';
 import { STRIPE_CLIENT } from './stripe.client';
 import { ACTIVE_STATUSES, billingCacheKey, extractId } from './stripe.helpers';
 
@@ -71,12 +71,12 @@ export class StripeSubscriptionService {
       ? new Date(firstItem.current_period_end * 1000)
       : null;
 
-    // 2 paliers (PROMPT-169) : tout abonnement actif → PREMIUM ; sinon FREE.
+    // 2 paliers : tout abonnement actif → PREMIUM ; sinon FREE.
     const newPlan = isActive ? Plan.PREMIUM : Plan.FREE;
 
     // Ne marquer l'essai « consommé » QUE si un essai a réellement été accordé
     // (trial_end présent). Sinon un abonné annuel direct, jamais en trial, perdrait
-    // à tort son droit à l'essai (bug PROMPT-169). trial_end reste renseigné après
+    // à tort son droit à l'essai (bug corrigé). trial_end reste renseigné après
     // conversion, donc le flag reste vrai une fois posé.
     const trialGranted = subscription.trial_end != null;
 

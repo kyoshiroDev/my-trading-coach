@@ -96,7 +96,7 @@ describe('UserDetailService', () => {
       tradingStrategy: ['ICT', 'SMC'], tradingSessions: ['NEW_YORK'],
       startingCapital: 5000,
     });
-    // Plus de devise globale au profil (PROMPT-214) : la devise est celle de chaque compte.
+    // Plus de devise globale au profil : la devise est celle de chaque compte.
     expect(r.profile).not.toHaveProperty('currency');
     expect(r.identity.ambassadorRefCode).toBe('VAL');
     expect(r.sessions[0]).toMatchObject({ trades: 3, pnl: 120, winRate: 66, emotion: 'CONFIDENT', durationMinutes: 90 });

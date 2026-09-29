@@ -16,6 +16,7 @@ import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
 import { AccountSelectorComponent } from '../../shared/components/account-selector/account-selector.component';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { UserStore } from '../../core/stores/user.store';
+import { ErrorStateComponent } from '@mtc/front-ui';
 
 interface WeekGroup {
   weekNumber: number;
@@ -30,7 +31,7 @@ interface WeekGroup {
   selector: 'mtc-sessions',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './sessions.component.css',
-  imports: [DatePipe, DecimalPipe, PnlFormatPipe, EmotionEmojiPipe, RouterLink, AccountSelectorComponent],
+  imports: [ErrorStateComponent, DatePipe, DecimalPipe, PnlFormatPipe, EmotionEmojiPipe, RouterLink, AccountSelectorComponent],
   templateUrl: './sessions.component.html',
 })
 export class SessionsComponent {
@@ -41,6 +42,7 @@ export class SessionsComponent {
 
   protected readonly sessions = signal<SessionHistoryItem[]>([]);
   protected readonly isLoading = signal(true);
+  protected readonly loadError = signal(false);
   protected readonly expandedId = signal<string | null>(null);
 
   protected readonly selectedMonth = signal(
@@ -118,8 +120,14 @@ export class SessionsComponent {
     this.selectedMonth.set(value); // l'effect ci-dessus déclenche le rechargement
   }
 
+  protected reload(): void {
+    const [year, month] = this.selectedMonth().split('-').map(Number);
+    this.loadSessions(year, month, this.selectedAccount.accountParam());
+  }
+
   private loadSessions(year: number, month: number, accountId?: string): void {
     this.isLoading.set(true);
+    this.loadError.set(false);
     this.sessionApi.getSessionsByMonth(year, month, accountId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -127,7 +135,10 @@ export class SessionsComponent {
           this.sessions.set(res.data ?? []);
           this.isLoading.set(false);
         },
-        error: () => this.isLoading.set(false),
+        error: () => {
+          this.loadError.set(true);
+          this.isLoading.set(false);
+        },
       });
   }
 

@@ -1,12 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
+import { RedisService } from '../infra/redis.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
 import { computeTradeStats, netPnl } from '@mtc/shared';
 
 /**
- * P&L NET d'un trade (frais déduits), 0 pour un trade ouvert. CONVENTION UNIQUE (PROMPT-213) :
+ * P&L NET d'un trade (frais déduits), 0 pour un trade ouvert. CONVENTION UNIQUE :
  * chaque agrégat ci-dessous (KPI, courbe, drawdown, calendrier, top actifs, setups, heatmap)
  * lit ce même net, et sélectionne donc toujours `commission` avec `pnl`.
  */
@@ -19,7 +19,6 @@ export interface EquityPoint {
 
 @Injectable()
 export class AnalyticsService {
-  private readonly logger = new Logger(AnalyticsService.name);
 
   constructor(
     private prisma: PrismaService,
@@ -116,8 +115,8 @@ export class AnalyticsService {
     }
 
     const totalTrades = trades.length;
-    // Win rate et P&L via le helper unique, sur le NET (frais déduits, PROMPT-213) ; BE exclus du
-    // dénominateur (PROMPT-160). Toutes les mesures ci-dessous lisent ce même net.
+    // Win rate et P&L via le helper unique, sur le NET (frais déduits) ; BE exclus du
+    // dénominateur. Toutes les mesures ci-dessous lisent ce même net.
     const stats = computeTradeStats(trades);
     const winRate = stats.winRate;
     const totalPnl = stats.totalPnl;
@@ -494,7 +493,7 @@ export class AnalyticsService {
     for (const t of trades) {
       const g = grouped.get(t.asset) ?? { pnl: 0, count: 0, wins: 0, losses: 0 };
       g.count++;
-      // P&L NET par instrument, classé gagnant/perdant sur ce même net (PROMPT-213).
+      // P&L NET par instrument, classé gagnant/perdant sur ce même net.
       g.pnl += net(t);
       if (net(t) > 0) g.wins++; else if (net(t) < 0) g.losses++;
       grouped.set(t.asset, g);

@@ -1,5 +1,5 @@
 /**
- * PROMPT-211 — pour Tradovate, la synchro API est l'option PRINCIPALE, le CSV un repli.
+ * pour Tradovate, la synchro API est l'option PRINCIPALE, le CSV un repli.
  *
  * Verrouille la LOGIQUE (le placement dans le template est couvert par
  * csv-import-tradovate-order.spec.ts) :

@@ -1,3 +1,8 @@
+---
+name: deploy
+description: "Déploiement et infra : VPS, Docker, Traefik, nginx statique, GitHub Actions, commandes Nx. À lire avant de toucher aux workflows, docker-compose ou à la mise en production."
+---
+
 # Agent Deploy — VPS, Docker, CI/CD, Nx
 
 ## Infrastructure
@@ -206,6 +211,22 @@ dépôt (le `nginx/nginx.conf` du dépôt est un vestige mort). Compose infra : 
 La landing exige `PUBLIC_FEATURE_MULTI_ACCOUNTS=true` + `PUBLIC_FEATURE_REFERRAL=true` au build
 (sinon `/journal-trading-prop-firm` et `/ambassadeur` redirigent vers `/`) — déjà dans cd.yml/ci.yml.
 
+**Pages gatées flag OFF → 301 Nginx (recommandé).** Astro ne sait faire qu'une redirection
+`<meta http-equiv="refresh">` (page HTML servie en 200, puis redirection à 2 s) : acceptable
+(page en `noindex`, hors sitemap), mais une 301 est plus propre pour Google et plus rapide.
+Quand un flag est OFF sur un environnement, ajouter dans la conf nginx de la landing
+(`/opt/infra/static/nginx/`, bloc `server` de la landing), puis recharger son conteneur nginx
+(nom dans `/opt/infra/static/docker-compose.yml`) avec `nginx -s reload` :
+
+```nginx
+# Flag PUBLIC_FEATURE_REFERRAL=false
+location = /ambassadeur { return 301 /; }
+# Flag PUBLIC_FEATURE_MULTI_ACCOUNTS=false
+location = /journal-trading-prop-firm { return 301 /; }
+```
+
+Retirer la ligne le jour où le flag passe à `true`, sinon la page publiée reste inaccessible.
+
 ---
 
 ## Backups & Monitoring
@@ -258,8 +279,9 @@ manuelle.
 ## Vérifications post-deploy
 
 ```bash
-# Santé API prod
+# Santé API prod : process (liveness) puis dépendances Postgres + Redis (readiness)
 curl https://api.mytradingcoach.app/api/health
+curl https://api.mytradingcoach.app/api/health/ready
 
 # Logs en temps réel
 docker logs mtc_api_prod -f

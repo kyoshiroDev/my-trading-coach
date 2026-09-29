@@ -22,7 +22,7 @@ export class TradesStore {
    * Une première page a-t-elle abouti ? Sans cet état, `totalTrades() === 0` est
    * ambigu : il vaut 0 avant tout chargement, PENDANT un rechargement (reset + load),
    * et pour un compte réellement vide. Le dashboard lisait ce 0 comme « compte vide »
-   * et affichait « Fais ton premier pas » juste après un import réussi (PROMPT-196).
+   * et affichait « Fais ton premier pas » juste après un import réussi.
    * Mis à `true` uniquement sur une réponse reçue : une erreur réseau laisse
    * « on ne sait pas », jamais « il n'a rien ». Miroir de `SelectedAccountStore.loaded`.
    */
@@ -40,7 +40,7 @@ export class TradesStore {
   /** Derniers filtres de loadTrades (ex. accountId) : réappliqués par loadMore. */
   private lastFilters: Record<string, string> = {};
 
-  // Stats locales via le helper unique (BE exclus du win rate, PROMPT-160).
+  // Stats locales via le helper unique (BE exclus du win rate).
   private readonly localStats = computed(() => computeTradeStats(this.trades()));
   readonly totalTrades = computed(() => this.localStats().total);
   readonly winningTrades = computed(() => this.localStats().wins);

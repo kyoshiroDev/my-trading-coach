@@ -1,7 +1,7 @@
 import type { TradovateEnv } from './tradovate.types';
 
 /**
- * Protocole du WebSocket Tradovate « données utilisateur » (PROMPT-210 live) — fonctions PURES.
+ * Protocole du WebSocket Tradovate « données utilisateur » (temps réel) — fonctions PURES.
  * Ce n'est PAS la Market Data (refusée par NinjaTrader) : seulement les entités du compte.
  *
  * Trames serveur : `o` (ouverte), `h` (heartbeat), `c` (fermeture), `a[...]` (messages JSON).
@@ -64,7 +64,7 @@ export function buildRequest(endpoint: string, id: number, body?: unknown): stri
   return `${endpoint}\n${id}\n\n${body === undefined ? '' : JSON.stringify(body)}`;
 }
 
-/** Même `access_token` que le REST (renouvelé par le cron de PROMPT-208). Id 0 réservé. */
+/** Même `access_token` que le REST (renouvelé par TradovateTokenRefreshCron). Id 0 réservé. */
 export function authorizeMessage(accessToken: string): string {
   return `authorize\n0\n\n${accessToken}`;
 }

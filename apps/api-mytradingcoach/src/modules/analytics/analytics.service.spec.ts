@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AnalyticsService } from './analytics.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
+import { RedisService } from '../infra/redis.service';
 import {
   EmotionState,
   TradingSession,
@@ -105,7 +105,7 @@ describe('AnalyticsService', () => {
       expect(result.profitFactor).toBeCloseTo(3.75);
     });
 
-    // PROMPT-190 — trous de couverture des KPIs « argent » du dashboard.
+    // trous de couverture des KPIs « argent » du dashboard.
     // `maxDrawdown` n'était vérifié que sur le cas « aucun trade » (donc 0) : la
     // formule elle-même — plus forte baisse du P&L CUMULÉ depuis son plus haut —
     // n'était figée nulle part. Idem pour le profit factor sans aucune perte.
@@ -196,7 +196,7 @@ describe('AnalyticsService', () => {
       expect(result.totalPnl).toBe(295); // 300 brut − 5 de frais
     });
 
-    it('classe gagnant/perdant sur le NET : +1 brut avec 1,90 de frais est une perte (PROMPT-213)', async () => {
+    it('classe gagnant/perdant sur le NET : +1 brut avec 1,90 de frais est une perte', async () => {
       mockPrisma.trade.findMany.mockResolvedValue([
         { ...makeTrade(1), commission: 1.9 },
         { ...makeTrade(100), commission: 2 },
@@ -334,7 +334,7 @@ describe('AnalyticsService', () => {
       expect(result.points[0].cumulativePnl).toBe(250);
     });
 
-    it('cumule le P&L NET (frais déduits), comme les KPIs (PROMPT-213)', async () => {
+    it('cumule le P&L NET (frais déduits), comme les KPIs', async () => {
       const day = new Date('2026-09-14T15:00:00Z');
       mockPrisma.trade.findMany.mockResolvedValue([
         { tradedAt: day, pnl: 23.5, commission: 64.6 },

@@ -7,10 +7,10 @@
   (keydown.enter)="close()"
   (keydown.escape)="close()"
 >
-  <div class="plan-modal-card" role="dialog" aria-modal="true">
+  <div class="plan-modal-card" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="close()" aria-labelledby="plan-modal-title">
     <!-- Header -->
     <div class="plan-modal-header">
-      <h2>Passer à Premium <svg [lucideIcon]="ZapIcon" [size]="19"></svg></h2>
+      <h2 id="plan-modal-title">Passer à Premium <svg [lucideIcon]="ZapIcon" [size]="19"></svg></h2>
       <p>1 mois offert · carte requise · annulable en un clic</p>
       <button class="plan-modal-close" (click)="close()" aria-label="Fermer">
         <svg [lucideIcon]="XIcon" [size]="13"></svg>
@@ -34,7 +34,7 @@
       </button>
     </div>
 
-    <!-- Palier unique (PROMPT-169) : plus de wrapper grille, la colonne EST le bloc. -->
+    <!-- Palier unique : plus de wrapper grille, la colonne EST le bloc. -->
     <div class="plan-col premium-col selected-col">
       <div class="plan-col-badge">Premium</div>
       <div class="plan-col-name">Premium</div>
@@ -49,8 +49,8 @@
       </div>
       <ul class="plan-col-feats">
         <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Tout le plan Gratuit inclus</li>
-        <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Weekly Debrief IA</li>
-        <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> IA Insights &amp; Chat coach</li>
+        <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Débrief hebdo IA</li>
+        <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Insights IA &amp; Chat coach</li>
         <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Analytics avancés</li>
         <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Score trader /100</li>
         <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Comptes illimités</li>

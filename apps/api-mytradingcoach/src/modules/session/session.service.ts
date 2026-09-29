@@ -1,37 +1,19 @@
 import {
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { MoodState, Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
+import { RedisService } from '../infra/redis.service';
 import { AccountsService } from '../accounts/accounts.service';
-import { computeTradeStats, netPnl } from '@mtc/shared';
+import { computeTradeStats, netPnl, toParisDateStr } from '@mtc/shared';
+import type { SessionHistoryItem } from '@mtc/shared';
 
-export interface SessionHistoryItem {
-  id: string;
-  startedAt: string;
-  endedAt?: string;
-  moodStart?: MoodState | null;
-  moodEnd?: MoodState | null;
-  totalPnl?: number | null;
-  totalTrades: number;
-  winRate?: number | null;
-  notes?: string | null;
-  reflectionNote?: string | null;
-  reflectionQuestion?: string | null;
-  planNote?: string | null;
-  marketContext?: string | null;
-  maxDrawdown?: number | null;
-  bestTradePnl?: number | null;
-  bestTradeAsset?: string | null;
-  topAssets: string[];
-}
+// Forme de GET /session/history : contrat partagé avec le front (@mtc/shared).
+export type { SessionHistoryItem };
 
 @Injectable()
 export class SessionService {
-  private readonly logger = new Logger(SessionService.name);
 
   constructor(
     private readonly prisma: PrismaService,
@@ -111,13 +93,13 @@ export class SessionService {
     });
 
     const closed = trades.filter((t) => t.pnl !== null);
-    // Stats via le helper unique (BE exclus du win rate, PROMPT-160).
+    // Stats via le helper unique (BE exclus du win rate).
     const { totalPnl, winRate } = computeTradeStats(trades);
 
     // Drawdown max
     let peak = 0, maxDrawdown = 0, cumPnl = 0;
     for (const t of closed) {
-      cumPnl += netPnl(t) ?? 0; // net des frais, comme le total (PROMPT-213)
+      cumPnl += netPnl(t) ?? 0; // net des frais, comme le total
       if (cumPnl > peak) peak = cumPnl;
       const dd = cumPnl - peak;
       if (dd < maxDrawdown) maxDrawdown = dd;
@@ -156,9 +138,12 @@ export class SessionService {
     sessionId: string,
     data: { planNote?: string; marketContext?: string; notes?: string; reflectionNote?: string; moodEnd?: MoodState },
   ) {
+    // Champs recopiés un par un : même si l'appelant passe un objet plus large,
+    // seules ces colonnes peuvent être écrites.
+    const { planNote, marketContext, notes, reflectionNote, moodEnd } = data;
     return this.prisma.tradeSession.update({
       where: { id: sessionId, userId },
-      data,
+      data: { planNote, marketContext, notes, reflectionNote, moodEnd },
     });
   }
 
@@ -210,6 +195,8 @@ export class SessionService {
       },
     });
 
+    const oneLiners = await this.oneLinersByParisDay(userId, rows.map((row) => row.startedAt));
+
     return rows.map((row) => {
       const assetCount = new Map<string, number>();
       for (const t of row.trades) {
@@ -238,8 +225,28 @@ export class SessionService {
         bestTradePnl: row.bestTradePnl,
         bestTradeAsset: row.bestTradeAsset,
         topAssets,
+        aiOneLiner: oneLiners.get(toParisDateStr(row.startedAt)) ?? null,
       };
     });
+  }
+
+  /**
+   * Résumés IA des récaps quotidiens couvrant ces sessions, par jour Paris (YYYY-MM-DD).
+   * Une seule requête pour toute la page (pas de requête par session).
+   */
+  private async oneLinersByParisDay(userId: string, startedAts: Date[]): Promise<Map<string, string>> {
+    if (startedAts.length === 0) return new Map();
+    const times = startedAts.map((d) => d.getTime());
+    const DAY_MS = 86_400_000;
+    const recaps = await this.prisma.dailyRecap.findMany({
+      where: {
+        userId,
+        aiOneLiner: { not: null },
+        date: { gte: new Date(Math.min(...times) - DAY_MS), lte: new Date(Math.max(...times) + DAY_MS) },
+      },
+      select: { date: true, aiOneLiner: true },
+    });
+    return new Map(recaps.map((r) => [toParisDateStr(r.date), r.aiOneLiner as string]));
   }
 
   async getSessionDetail(userId: string, sessionId: string) {
@@ -265,7 +272,7 @@ export class SessionService {
 
   async getLiveStats(userId: string) {
     const todayTrades = await this.getTodayTrades(userId);
-    // Stats via le helper unique (BE exclus du win rate, PROMPT-160).
+    // Stats via le helper unique (BE exclus du win rate).
     const stats = computeTradeStats(todayTrades);
 
     return {

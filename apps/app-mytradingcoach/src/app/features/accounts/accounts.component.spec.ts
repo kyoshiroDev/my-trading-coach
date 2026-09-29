@@ -3,11 +3,14 @@ import { TestBed } from '@angular/core/testing';
 import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
 import { of } from 'rxjs';
 import { AccountsComponent } from './accounts.component';
-import { AccountsApi, TradingAccount } from '../../core/api/accounts.api';
+import { AccountRuleMetrics, AccountsApi, TradingAccount } from '../../core/api/accounts.api';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { UserStore } from '../../core/stores/user.store';
 
-function acct(p: Partial<TradingAccount> & { id: string }): TradingAccount {
+// `metrics` partiel : chaque test ne précise que les métriques qu'il vérifie.
+function acct(
+  p: Partial<Omit<TradingAccount, 'metrics'>> & { id: string; metrics?: Partial<AccountRuleMetrics> },
+): TradingAccount {
   return {
     id: p.id,
     label: p.label ?? 'Compte',
@@ -27,6 +30,9 @@ function acct(p: Partial<TradingAccount> & { id: string }): TradingAccount {
       realizedPnl: 0,
       currentBalance: 50000,
       tradesCount: 0,
+      winRate: null,
+      bestDay: null,
+      worstDay: null,
       objective: null,
       drawdown: null,
       estimated: true,
@@ -158,7 +164,7 @@ describe('AccountsComponent — logique', () => {
     (c['patch'] as (p: unknown) => void)({ label: 'Perso Binance', type: 'PERSONAL', broker: 'doit disparaître', profitTarget: 3000, maxDrawdown: 2500 });
     (c['submitForm'] as () => void)();
     expect(api.create).toHaveBeenCalledTimes(1);
-    const payload = api.create.mock.calls[0][0] as Record<string, unknown>;
+    const payload = (api.create.mock.calls[0] as unknown[])[0] as Record<string, unknown>;
     expect(payload['label']).toBe('Perso Binance');
     expect(payload['broker']).toBeNull();
     expect(payload['profitTarget']).toBeNull();

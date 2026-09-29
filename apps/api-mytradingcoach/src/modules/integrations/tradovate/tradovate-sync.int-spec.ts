@@ -1,5 +1,5 @@
 /**
- * PROMPT-207 — flux complet Tradovate : consentement → callback → synchro → dédup.
+ * flux complet Tradovate : consentement → callback → synchro → dédup.
  *
  * Vraie stack (Postgres, Redis, HTTP, guards, filtre d'erreurs) ; seul Tradovate est simulé,
  * par un `fetch` intercepté qui laisse passer tout le reste. On prouve ici ce qu'un double ne
@@ -9,14 +9,13 @@
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { INestApplication, RequestMethod, ValidationPipe } from '@nestjs/common';
-import { getStorageToken } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { BrokerConnectionStatus } from '@prisma/client';
-import { createIntegrationApp } from '../../../test/integration-app.helper';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { createIntegrationApp } from '@api/test/integration-app.helper';
+import { PrismaService } from '@api/prisma/prisma.service';
 import { TradovateTokenRefreshCron } from './tradovate-token-refresh.cron';
 
 const PREFIX = 'int-tradovate-';
@@ -166,13 +165,8 @@ beforeAll(async () => {
     if (/^https:\/\/(live|demo)\.tradovateapi\.com\//.test(url)) return Promise.resolve(tradovate(url, init));
     return realFetch(input, init);
   });
-  // Le @Throttle réel (10 authorize / min / IP) est voulu en prod ; ici toutes les requêtes
-  // viennent de la même IP, on neutralise donc le compteur (pas la logique testée).
+  // Rate limiting neutralisé par createIntegrationApp (toutes les requêtes viennent de la même IP).
   ({ app, baseUrl } = await createIntegrationApp({
-    configure: (b) =>
-      b.overrideProvider(getStorageToken()).useValue({
-        increment: async () => ({ totalHits: 1, timeToExpire: 60, isBlocked: false, timeToBlockExpire: 0 }),
-      }),
     setup: (a) => {
       a.use(cookieParser());
       // Même préfixe que main.ts, callback exclu (redirect_uri enregistré sans /api).
@@ -263,7 +257,7 @@ describe('Tradovate — consentement', () => {
     expect(location.origin + location.pathname).toBe('https://app.test/accounts');
     expect(location.searchParams.get('tradovate')).toBe('connected');
     expect(location.searchParams.get('accountId')).toBe(account.id);
-    // Première synchro faite au retour (PROMPT-208) : l'utilisateur revient avec ses trades.
+    // Première synchro faite au retour : l'utilisateur revient avec ses trades.
     expect(location.searchParams.get('trades')).toBe('3');
     expect(location.searchParams.get('fees')).toBe('ok');
     expect(location.searchParams.get('from')).toBeNull();

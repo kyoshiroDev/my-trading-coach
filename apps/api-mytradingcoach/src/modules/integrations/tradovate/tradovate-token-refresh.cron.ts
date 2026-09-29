@@ -1,14 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { BrokerConnectionStatus, BrokerProvider } from '@prisma/client';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '@api/prisma/prisma.service';
 import { TradovateConnectionService } from './tradovate-connection.service';
 
 /** Fenêtre de renouvellement : refresh_token qui expire dans moins de 18 h. */
 export const REFRESH_WINDOW_MS = 18 * 60 * 60 * 1000;
 
 /**
- * Maintien des connexions Tradovate (PROMPT-208) — renouvelle les TOKENS, n'importe AUCUN trade.
+ * Maintien des connexions Tradovate — renouvelle les TOKENS, n'importe AUCUN trade.
  *
  * Mesuré en beta : le refresh_token Tradovate vit ≈ 26 h, et chaque renouvellement en émet un
  * nouveau (fenêtre glissante). Sans ce cron, la synchro étant manuelle, un utilisateur qui
@@ -26,7 +26,7 @@ export const REFRESH_WINDOW_MS = 18 * 60 * 60 * 1000;
  * Seconde chance : une connexion « à reconnecter » dont le refresh_token est encore annoncé
  * valide est retentée (`tryRevive`) ; si Tradovate accepte, elle repart sans action de l'utilisateur.
  *
- * - Pas un cron de synchro (hors scope PROMPT-207) : aucune lecture de trades.
+ * - Pas un cron de synchro (la synchro est déclenchée par l'utilisateur) : aucune lecture de trades.
  * - Comptes démo exclus (règle CLAUDE.md : tout cron ciblant des users → `isDemo: false`) ;
  *   leur connexion seedée n'a d'ailleurs aucun vrai token.
  * - Même verrou que la synchro : Tradovate fait tourner le refresh_token, deux

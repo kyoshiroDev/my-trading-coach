@@ -87,6 +87,8 @@ model User {
   tradingAccounts TradingAccount[]
   dailyRecaps     DailyRecap[]
   dailyActivity   UserDailyActivity[]
+  /// Fiches de parsing de broker que cet admin a validees.
+  brokerCsvMappings BrokerCsvMapping[]
   emailSends      EmailSend[]
   referrals       ReferralCommission[] @relation("AmbassadorCommissions")
   parrainRewards  ReferralReward[]     @relation("ParrainRewards")
@@ -136,7 +138,7 @@ model ReferralReward {
   @@index([parrainId])
 }
 
-/// Provenance d'un trade — d'ou vient la ligne, pas ce qu'elle vaut (PROMPT-217).
+/// Provenance d'un trade — d'ou vient la ligne, pas ce qu'elle vaut.
 /// Sert a l'affichage (badge) et au diagnostic : un ecart de frais ou de P&L se lit
 /// differemment selon qu'il vient d'une saisie, d'un CSV ou du broker.
 enum TradeSource {
@@ -165,11 +167,11 @@ model Trade {
   riskReward     Float?
   quantity       Float?
   capitalEngaged Float?
-  // Note d'exécution CALCULÉE (PROMPT-161) — déterministe, zéro IA, indépendante du P&L.
+  // Note d'exécution CALCULÉE — déterministe, zéro IA, indépendante du P&L.
   // Non saisie par l'utilisateur. Dérivée de stop/RR/émotion effective/risque (voir execution-grade.util).
   executionScore Int?             // 0-100, null si < 2 critères applicables (« Non évalué »)
   executionGrade ExecutionGrade?  // dérivé du score (EXCELLENT/BON/MOYEN/MAUVAIS)
-  executionMethod ExecutionMethod? // barème ayant produit la note (STOP_BASED / BEHAVIORAL), null si non notée (PROMPT-168)
+  executionMethod ExecutionMethod? // barème ayant produit la note (STOP_BASED / BEHAVIORAL), null si non notée
   // Override optionnel de l'émotion du trade (surtout REVENGE/FEAR dans l'instant).
   // Émotion effective = emotion ?? tradeSession.moodStart ?? null (voir effective-emotion.util).
   emotion        EmotionState?
@@ -319,7 +321,7 @@ model TradingAccount {
   @@index([userId, status])
 }
 
-/// Connexion API d'un broker, portée par UN `TradingAccount` (PROMPT-207).
+/// Connexion API d'un broker, portée par UN `TradingAccount`.
 /// Un compte = une connexion : chaque prop firm fournit ses propres identifiants
 /// Tradovate, un user Apex + Lucid fait donc deux connexions distinctes. Jamais au
 /// niveau `User`, jamais partagée entre comptes.
@@ -393,6 +395,51 @@ model EcoCalendarCache {
 
 /// Analyse IA du calendrier éco mutualisée par (date, signature d'actifs).
 /// 1 appel IA par signature partagé entre tous les users → coût O(actifs) au lieu de O(users).
+/// Fiche de parsing d'un broker, deduite une fois puis reutilisee pour tous les users.
+///
+/// Remplace l'ecriture d'un parseur TypeScript par broker : le modele deduit la
+/// correspondance des colonnes sur 20 lignes, un admin la valide sur un apercu, et elle vit
+/// ICI plutot que dans le code. Consequence voulue : ajouter un broker ne demande plus de
+/// build ni de deploiement, donc peut se faire depuis un telephone quand un utilisateur
+/// signale que son export ne passe pas.
+///
+/// Ne contient AUCUNE donnee d'utilisateur : uniquement des index de colonnes et des regles
+/// de format. L'echantillon qui a servi a deduire la fiche n'est pas conserve.
+model BrokerCsvMapping {
+  id String @id @default(cuid())
+
+  /// Empreinte de l'en-tete normalise (minuscules, espaces reduits) : c'est la cle de
+  /// reconnaissance. Exacte a dessein — si le broker ajoute une colonne, la fiche ne
+  /// correspond plus et l'import retombe sur « inconnu ». Mieux vaut ne pas reconnaitre
+  /// que reconnaitre de travers et decaler toutes les colonnes.
+  headerHash String @unique
+
+  /// Nom lisible donne par l'admin (« NinjaTrader 8 », « Quantower »...).
+  brokerName String
+  /// En-tete tel quel, pour diagnostiquer une fiche qui ne matche plus.
+  headerSample String @db.Text
+  /// La fiche elle-meme, au format de `CsvMapping` (csv-mapping.ts).
+  mappingJson String @db.Text
+
+  /// Part des lignes de l'echantillon dont le signe du P&L confirmait le sens, au moment de
+  /// la validation. Trace de la confiance accordee, pour pouvoir re-examiner plus tard.
+  pnlConfidence Float
+  /// Admin qui a valide : une fiche fausse corrompt les trades de tous les users du broker.
+  validatedById String
+  validatedBy   User   @relation(fields: [validatedById], references: [id], onDelete: Restrict)
+
+  /// Desactivable sans suppression : on garde la trace si une fiche s'avere mauvaise.
+  enabled Boolean @default(true)
+  /// Compteur d'usage : sert a reperer les fiches qui portent le plus d'imports.
+  usageCount Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([enabled])
+  @@index([validatedById])
+}
+
 model EcoAnalysisCache {
   id           String   @id @default(cuid())
   date         String // YYYY-MM-DD Paris
@@ -472,7 +519,7 @@ enum EmotionState {
   NEUTRAL
 }
 
-/// Note d'exécution calculée d'un trade (PROMPT-161) — dérivée du score 0-100, jamais saisie.
+/// Note d'exécution calculée d'un trade — dérivée du score 0-100, jamais saisie.
 enum ExecutionGrade {
   EXCELLENT
   BON
@@ -480,7 +527,7 @@ enum ExecutionGrade {
   MAUVAIS
 }
 
-/// Barème ayant produit la note (PROMPT-168). STOP_BASED = trade avec stop (4 critères intrinsèques) ;
+/// Barème ayant produit la note. STOP_BASED = trade avec stop (4 critères intrinsèques) ;
 /// BEHAVIORAL = trade sans stop (3 critères comportementaux, relatifs à l'historique). Non comparables.
 enum ExecutionMethod {
   STOP_BASED

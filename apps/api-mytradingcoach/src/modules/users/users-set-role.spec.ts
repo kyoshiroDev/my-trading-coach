@@ -1,5 +1,5 @@
 /**
- * PROMPT-176 — l'édition de rôle admin doit préserver l'invariant
+ * l'édition de rôle admin doit préserver l'invariant
  * « un AMBASSADOR a toujours un referralCode ».
  *
  * Avant : `setRole` écrivait le rôle en direct, donc un utilisateur promu par ce
@@ -11,7 +11,7 @@ import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AmbassadorService } from '../ambassador/ambassador.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
+import { RedisService } from '../infra/redis.service';
 
 describe('UsersService.setRole — invariant code ambassadeur', () => {
   let service: UsersService;

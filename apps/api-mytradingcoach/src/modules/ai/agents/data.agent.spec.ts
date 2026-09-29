@@ -70,7 +70,7 @@ describe('DataAgent.buildTradesSummary', () => {
     expect(out).toContain('RÉSUMÉ TRADES');
     expect(out).toContain('R:R moyen: n/a');
     expect(out).toContain('Par timeframe: n/a');
-    // Montant dans la devise des comptes, sans conversion (PROMPT-214).
+    // Montant dans la devise des comptes, sans conversion.
     expect(out).toMatch(
       /Top 5 trades significatifs:\nNQ LONG BREAKOUT CONFIDENT \+\$100\.00/,
     );

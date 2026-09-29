@@ -1,4 +1,4 @@
-/* Toasts globaux (PROMPT-210) — discrets, tokens theme.css. Palier z-index 10000
+/* Toasts globaux — discrets, tokens theme.css. Palier z-index 10000
    (au-dessus des modales 1000 et de l'overlay d'onboarding 300).
    Comportement usuel : entrée depuis le bord, pile qui se décale en douceur, compte à
    rebours en haut, sortie vers le bord puis repli de la pile, glisser pour fermer. */
@@ -21,7 +21,7 @@
   width: 100%;
   display: grid;
   grid-template-rows: 1fr;
-  animation: toast-slot-in 0.28s cubic-bezier(0.21, 1.02, 0.73, 1);
+  animation: toast-slot-in 0.34s cubic-bezier(0.21, 1.02, 0.73, 1);
 }
 .toast-clip {
   min-height: 0;
@@ -48,7 +48,9 @@
   font-family: var(--font-body);
   touch-action: pan-y; /* glisser horizontal = fermer ; le défilement vertical reste possible */
   user-select: none;
-  animation: toast-in 0.28s cubic-bezier(0.21, 1.02, 0.73, 1);
+  /* `backwards` : le toast reste invisible pendant que la case s'ouvre, sinon il
+     apparaitrait a sa place finale avant de glisser. */
+  animation: toast-in 0.2s cubic-bezier(0.21, 1.02, 0.73, 1) 0.14s backwards;
   transition: transform 0.2s ease, opacity 0.2s ease; /* retour en place après un glisser court */
 }
 .toast.dragging { transition: none; cursor: grabbing; }
@@ -109,10 +111,16 @@
   border: 1px solid var(--border);
 }
 
-/* ── Entrée : la case s'ouvre, le toast glisse depuis le bord droit ── */
+/* ── Entrée : MIROIR de la sortie, et c'est tout l'enjeu.
+   La sortie est SEQUENTIELLE : le toast part, PUIS la case se replie, pour que la pile ne
+   saute pas tant qu'un toast est encore visible. L'entree, elle, etait SIMULTANEE — la case
+   s'ouvrait pendant que le toast glissait — et sur 0,28 s contre 0,34 s. Les deux mouvements
+   ne se repondaient donc pas.
+   Desormais la case fait d'abord la place (0 -> 50 %), puis le toast entre (a partir de
+   0,14 s), sur la meme duree totale de 0,34 s que la sortie. ── */
 @keyframes toast-slot-in {
-  from { grid-template-rows: 0fr; }
-  to   { grid-template-rows: 1fr; }
+  from    { grid-template-rows: 0fr; }
+  50%, to { grid-template-rows: 1fr; }
 }
 @keyframes toast-in {
   from { opacity: 0; transform: translateX(calc(100% + 24px)); }

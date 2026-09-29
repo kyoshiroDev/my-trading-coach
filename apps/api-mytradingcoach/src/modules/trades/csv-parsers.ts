@@ -550,7 +550,7 @@ export function mapNormalizedCsvToDto(csv: string): ImportDto[] {
       pnl: isFinite(pnl) ? pnl : 0,
       commission: isFinite(commission) ? Math.abs(commission) : undefined,
       emotion: null, // override optionnel : réassigné par le lot (ou null) dans parseCSV
-      // setupId affecté en aval (parseCSV) : setup par défaut du user, ou fourni par l'import (PROMPT-138).
+      // setupId affecté en aval (parseCSV) : setup par défaut du user, ou fourni par l'import.
       session: detectSession(tradedAt),
       timeframe: '1h',
       tradedAt: tradedAt || new Date().toISOString(),

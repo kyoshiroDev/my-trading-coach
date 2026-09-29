@@ -4,9 +4,9 @@ import {
   computed,
   input,
 } from '@angular/core';
-import { PnlFormatPipe } from '../../../../shared/pipes/pnl-format.pipe';
-import { EmotionEmojiPipe } from '../../../../shared/pipes/emotion-emoji.pipe';
-import { LiveStats, TradingSession } from '../../../../core/api/session.api';
+import { PnlFormatPipe } from '@app/shared/pipes/pnl-format.pipe';
+import { EmotionEmojiPipe } from '@app/shared/pipes/emotion-emoji.pipe';
+import { LiveStats, TradingSession } from '@app/core/api/session.api';
 
 @Component({
   selector: 'mtc-session-recap',

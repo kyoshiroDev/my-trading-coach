@@ -109,7 +109,7 @@ describe('computeExecutionGrade — indépendance au P&L', () => {
     expect(EXECUTION_GRADE_WEIGHTS).toEqual({ stop: 35, rr: 25, emotion: 20, risk: 20 });
   });
 });
-// ── Barème B — comportemental (PROMPT-168) ──────────────────────────────────
+// ── Barème B — comportemental ──────────────────────────────────
 import {
   computeBehavioralGrade,
   scoreFromCriteria,

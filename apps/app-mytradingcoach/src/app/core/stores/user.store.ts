@@ -22,7 +22,7 @@ export class UserStore {
 
   /**
    * Quota de comptes de trading du plan courant : `null` = illimité.
-   * Premium / trial / admin → illimité · Free → 1. Aligné backend (PROMPT-169).
+   * Premium / trial / admin → illimité · Free → 1. Aligné backend.
    */
   readonly maxAccounts = computed<number | null>(() => {
     if (this.isPremium()) return ACCOUNT_LIMITS.premium; // null (illimité)

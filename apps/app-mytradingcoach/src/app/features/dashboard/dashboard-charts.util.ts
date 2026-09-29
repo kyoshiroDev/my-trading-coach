@@ -180,7 +180,7 @@ export function plTooltipFor(g: PlGranularity): string {
   }
 }
 
-// Helpers de dates (front) : semaine ISO alignée sur le journal (PROMPT-170), pas de getDay() brut.
+// Helpers de dates (front) : semaine ISO alignée sur le journal, pas de getDay() brut.
 function parseDay(dateStr: string): Date { return new Date(dateStr + 'T12:00:00'); }
 function atNoon(d: Date): Date { const c = new Date(d); c.setHours(12, 0, 0, 0); return c; }
 function isoDate(d: Date): string {

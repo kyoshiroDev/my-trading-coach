@@ -2,7 +2,7 @@ import { BrokerConnection, BrokerConnectionStatus, BrokerProvider } from '@prism
 import { TradovateSyncService } from './tradovate-sync.service';
 
 /**
- * Rattrapage du mois en cours, greffé à la fin de la synchro (PROMPT-217).
+ * Rattrapage du mois en cours, greffé à la fin de la synchro.
  *
  * Le point sensible : la synchro qui vient de tourner a pu RENOUVELER les tokens, et l'objet
  * `conn` chargé en début de méthode porte encore l'ancienne échéance. Le repasser tel quel au

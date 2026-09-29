@@ -1,31 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
-
-export interface EcoEvent {
-  date?: string;
-  time: string;
-  name: string;
-  impact: 'high' | 'medium';
-  country: string;
-  currency: string;
-  actual: number | null;
-  estimate: number | null;
-  previous: number | null;
-  isReleased: boolean;
-  unit?: string | null;
-}
-
-export interface EcoAnalysis {
-  summary: string;
-  recommendation: string;
-  assetImpacts: {
-    asset: string;
-    sentiment: 'bull' | 'bear' | 'neutral';
-    reason: string;
-  }[];
-}
+import { environment } from '@app/environments/environment';
+import type { EcoAnalysis, EcoEvent } from '@mtc/shared';
+export type { EcoEvent, EcoAnalysis };
 
 export interface EcoCalendarData {
   events: EcoEvent[];

@@ -1,3 +1,8 @@
+---
+name: tests
+description: "Tests Vitest et Playwright : où les écrire, comment les lancer, pièges connus. À lire avant d'ajouter ou de corriger des tests."
+---
+
 # Agent Tests — Vitest + Playwright
 
 ## Stack
@@ -11,8 +16,30 @@ Vitest (Angular + NestJS) · Playwright (E2E) · Jamais Jest
 pnpm nx test app-mytradingcoach        # Vitest Angular
 pnpm nx test api-mytradingcoach        # Vitest NestJS
 pnpm nx e2e app-mytradingcoach-e2e     # Playwright E2E
-pnpm nx test api-mytradingcoach --coverage
+pnpm nx test api-mytradingcoach -c ci  # + couverture et seuils (ce que lance la CI)
 ```
+
+### Vitest de l'app : specs non isolées
+
+- `apps/app-mytradingcoach/vitest.config.mts` lance les specs **sans isolation** (`isolate: false`) :
+  Angular et les libs sont importés une fois par worker, 240 s → 40 s. `src/test-setup.ts`
+  initialise le TestBed une seule fois et le réinitialise avant/après chaque test.
+- Une spec qui remplace un module avec **`vi.mock`** doit être ajoutée à `NEEDS_ISOLATION` dans ce
+  fichier (projet Vitest `app-isolated`) : sinon le mock ne s'applique pas si un autre fichier a déjà
+  chargé le module, et la spec casse selon l'ordre d'exécution.
+- Cibles Nx inférées (`@nx/vitest`, `@nx/eslint/plugin`) : pas de `test` ni de `lint` à déclarer
+  dans `project.json`.
+
+### En CI (`.github/workflows/checks.yml`, appelé par `ci.yml` et `beta.yml`)
+
+- Un seul workflow réutilisable (`workflow_call`) : lint · typecheck · build, tests front + libs,
+  tests API avec couverture, smoke E2E. Modifier les vérifications = modifier `checks.yml` seulement.
+- **Seuils de couverture API** (`vitest.config.mts`) : lignes ≥ 60 % sur `modules/trades`,
+  `analytics`, `stripe`, `auth`. Sous le seuil, `-c ci` échoue. Plus de `passWithNoTests`.
+- **Smoke E2E** (`apps/app-mytradingcoach-e2e/src/smoke.spec.ts`) : `/demo` → dashboard → journal →
+  analytics sur une base Postgres éphémère (migrations + `pnpm seed:demo`), API et app lancées dans
+  le job. Échoue sur toute réponse API 5xx ou erreur console. **Non bloquant**
+  (`continue-on-error`) : le rendre bloquant après deux semaines sans flake.
 
 ---
 
@@ -103,7 +130,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['src/**/*.spec.ts'],
-    coverage: { provider: 'v8', reporter: ['text', 'lcov'] },
+    coverage: { provider: 'v8', thresholds: { 'src/modules/trades/**': { lines: 60 } /* … */ } },
   },
 });
 ```
@@ -277,23 +304,17 @@ export async function createTestTrade(page: Page) {
 }
 ```
 
-### Specs E2E
+### Specs E2E (`apps/app-mytradingcoach-e2e/src/`)
 
 ```
-e2e/
-├── 01-auth.spec.ts              → register → login → dashboard
-├── 02-journal.spec.ts           → ajouter trade, voir liste, supprimer
-├── 03-analytics-free.spec.ts    → FREE : stats visibles + blocs verrouillés
-├── 04-analytics-premium.spec.ts → PREMIUM : tout visible, heatmap présente
-├── 05-ai-insights.spec.ts       → FREE : paywall / PREMIUM : insights (mock)
-├── 06-weekly-debrief.spec.ts    → FREE : paywall / PREMIUM : rapport (mock)
-├── 07-navigation.spec.ts        → sidebar, routes, 404, mobile burger
-├── 08-session-mode.spec.ts      ← V2 : vue morning, démarrer session, vue live, quick trade
-├── 09-eco-calendar.spec.ts      ← V2 : events, analyse IA, bull/bear, dim hors session
+├── smoke.spec.ts                   ← parcours démo, lancé en CI (non bloquant)
+├── critical-paths.spec.ts          → auth, routes protégées, journal, paywalls FREE/PREMIUM
+├── 08-session-mode.spec.ts         → vue morning, démarrer session, vue live, quick trade
+├── 09-eco-calendar.spec.ts         → events, analyse IA, bull/bear, dim hors session
 ├── 10-activity-calendar.spec.ts
-├── 11-referral-ambassador.spec.ts  ← parrainage : lien, paiement Stripe test, commission 20 %
-├── 12-activation.spec.ts           ← funnel n°1 : inscription → wizard → premier trade
-└── 13-import-tradovate.spec.ts     ← onboarding puis import CSV (trades + frais)
+├── 11-referral-ambassador.spec.ts  → parrainage : lien, paiement Stripe test, commission 20 %
+├── 12-activation.spec.ts           → funnel n°1 : inscription → wizard → premier trade
+└── 13-import-tradovate.spec.ts     → onboarding puis import CSV (trades + frais)
 ```
 
 ### `12-activation` — le wizard d'onboarding

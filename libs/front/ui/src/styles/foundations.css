@@ -1,0 +1,88 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Fondations UI partagées par l'app et l'admin (@mtc/front-ui).
+   Uniquement la STRUCTURE : échelles, focus clavier, mouvement réduit.
+   Les couleurs restent propres à chaque app (identités visuelles distinctes :
+   app = apps/app-mytradingcoach/src/styles/theme.css, admin = sa maquette).
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Taille de texte : plancher 12 px (11 px toléré pour les capitales mono espacées). */
+  --fs-2xs: 11px;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 20px;
+  --fs-2xl: 24px;
+  --fs-3xl: 32px;
+
+  /* Espacements (multiples de 4 px). */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Rayons. */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 999px;
+
+  /* Empilement : une seule échelle pour éviter les z-index à 99999. */
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-overlay: 900;
+  --z-modal: 1000;
+  --z-toast: 1100;
+  --z-tooltip: 10000;
+
+  /* Anneau de focus clavier (surchargeable par app via --focus-ring-color). */
+  --focus-ring-color: #60a5fa;
+
+  /*
+   * Points de rupture (les variables CSS ne marchent pas dans @media : valeurs à recopier) :
+   *   sm 480px (petit mobile) · md 768px (tablette / drawer) · lg 1024px (desktop) · xl 1280px
+   * `@media` n'utilise QUE ces 4 valeurs (min-width : valeur + 1 si une règle max-width la
+   * complète, ex. 769px). Les `@container` (largeur du composant) restent libres.
+   */
+}
+
+/*
+ * Focus clavier TOUJOURS visible. `!important` volontaire : plusieurs composants retirent
+ * l'outline (`outline: none`) sans alternative ; ceci ne s'applique qu'au focus clavier
+ * (:focus-visible), jamais au clic souris sur un bouton.
+ */
+:focus-visible {
+  outline: 2px solid var(--focus-ring-color) !important;
+  outline-offset: 2px !important;
+}
+
+/* Réduit les animations pour les personnes qui l'ont demandé au système. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Texte réservé aux lecteurs d'écran (libellés d'icônes, légendes de tableaux). */
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

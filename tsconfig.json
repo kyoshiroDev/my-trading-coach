@@ -7,9 +7,6 @@
       "path": "./apps/app-mytradingcoach-e2e"
     },
     {
-      "path": "./apps/api-mytradingcoach-e2e"
-    },
-    {
       "path": "./apps/api-mytradingcoach"
     },
     {

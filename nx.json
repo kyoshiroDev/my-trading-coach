@@ -22,7 +22,8 @@
           "buildDepsName": "build-deps",
           "watchDepsName": "watch-deps"
         }
-      }
+      },
+      "exclude": ["apps/landing-mytradingcoach/**"]
     },
     {
       "plugin": "@nx/playwright/plugin",
@@ -46,6 +47,14 @@
         "watchDepsTargetName": "watch-deps",
         "serveStaticTargetName": "serve-static"
       }
+    },
+    {
+      "plugin": "@nx/vitest",
+      "options": {
+        "testMode": "run",
+        "testTargetName": "test"
+      },
+      "include": ["apps/app-mytradingcoach/**/*"]
     }
   ],
   "packageManager": "pnpm",

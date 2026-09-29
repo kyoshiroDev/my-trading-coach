@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
-import type { TradovateExternalAccount } from '../../../core/api/tradovate.api';
+import type { TradovateExternalAccount } from '@app/core/api/tradovate.api';
 
 /**
  * Choix du compte Tradovate à synchroniser quand un même login en porte plusieurs (cas réel

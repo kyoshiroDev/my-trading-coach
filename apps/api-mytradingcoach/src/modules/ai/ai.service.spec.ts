@@ -6,8 +6,8 @@ import { AiService } from './ai.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OrchestratorAgent } from './agents/orchestrator.agent';
 import { DebriefAgent } from './agents/debrief.agent';
-import { AnthropicClientService } from '../shared/anthropic-client.service';
-import { RedisService } from '../shared/redis.service';
+import { AnthropicClientService } from '../infra/anthropic-client.service';
+import { RedisService } from '../infra/redis.service';
 
 const mockMessagesCreate = vi.hoisted(() =>
   vi.fn().mockResolvedValue({
@@ -81,7 +81,7 @@ const mockInsightsResult = {
 const mockPrisma = {
   trade: { findMany: vi.fn().mockResolvedValue(mockTrades) },
   user: { findUnique: vi.fn().mockResolvedValue(null) },
-  // Devise des montants du prompt = celle des comptes (PROMPT-214).
+  // Devise des montants du prompt = celle des comptes.
   tradingAccount: { findMany: vi.fn().mockResolvedValue([{ currency: 'USD' }]) },
 };
 

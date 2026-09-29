@@ -7,6 +7,7 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { DialogDirective } from '@mtc/front-ui';
 
 export interface SetupFormValue {
   title: string;
@@ -33,12 +34,13 @@ export const SETUP_PALETTE = [
  */
 @Component({
   selector: 'mtc-setup-form-modal',
+  imports: [DialogDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './setup-form-modal.component.css',
   template: `
     <div class="stp-ov open" role="button" tabindex="0"
       (click)="cancelled.emit()" (keyup.escape)="cancelled.emit()">
-      <div class="stp-modal" role="dialog" aria-modal="true"
+      <div class="stp-modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="cancelled.emit()"
         [attr.aria-label]="isEdit() ? 'Modifier le setup' : 'Nouveau setup'"
         (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
         <div class="stp-mh">

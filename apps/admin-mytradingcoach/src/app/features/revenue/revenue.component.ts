@@ -12,72 +12,15 @@ import { CHART_COLORS, fade, gridAxis, noLegend } from '../../shared/charts/char
   imports: [DecimalPipe, ChartCanvasComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './revenue.component.css',
-  template: `
-    <div class="screen">
-      <div class="page-head">
-        <div class="page-title">Revenus</div>
-        <button class="btn btn-primary" (click)="reconcile()" [disabled]="reconciling()">{{ reconciling() ? 'Vérification…' : 'Vérifier avec Stripe' }}</button>
-      </div>
-
-      @if (stats(); as s) {
-        <div class="kpi-strip cols-4">
-          <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">MRR</div><div class="kpi-value teal">€{{ s.mrr | number:'1.0-0' }}</div><div class="kpi-sub">mensuel récurrent</div></div>
-          <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">ARR</div><div class="kpi-value blue">€{{ s.arr | number:'1.0-0' }}</div><div class="kpi-sub">annuel récurrent</div></div>
-          <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Mensuels</div><div class="kpi-value amber">{{ s.monthly }}</div><div class="kpi-sub">abonnements</div></div>
-          <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Annuels</div><div class="kpi-value purple">{{ s.annual }}</div><div class="kpi-sub">abonnements</div></div>
-        </div>
-
-        <div class="grid-2">
-          <div class="card">
-            <div class="card-head"><span class="card-label">Évolution du MRR (6 mois)</span></div>
-            <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="mrrConfig()" /></div></div>
-          </div>
-          <div class="card">
-            <div class="card-head"><span class="card-label">Répartition des abonnements</span></div>
-            <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="splitConfig()" /></div></div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-head"><span class="card-label">Aperçu</span></div>
-          <div class="card-body slim">
-            <div class="info-row"><span class="ov-label">Total Premium</span><span class="info-v">{{ s.totalPremium }}</span></div>
-            <div class="info-row"><span class="ov-label">En essai gratuit</span><span class="info-v">{{ s.trials }}</span></div>
-            <div class="info-row"><span class="ov-label">Nouveaux ce mois</span><span class="info-v green">+{{ s.newThisMonth }}</span></div>
-            <div class="info-row"><span class="ov-label">Churn ce mois</span><span class="info-v red">{{ s.churnedThisMonth }}</span></div>
-          </div>
-        </div>
-      } @else {
-        <div class="card"><div class="empty">Chargement…</div></div>
-      }
-
-      <div class="card">
-        <div class="card-head"><span class="card-label">Réconciliation Stripe</span><button type="button" class="card-action" (click)="reconcile()">Vérifier avec Stripe →</button></div>
-        <div class="card-body">
-          @if (reconcileError()) { <div class="empty">{{ reconcileError() }}</div> }
-          <div class="mini-stats">
-            <div class="mini"><span class="mini-v teal">€{{ (reconcileData()?.mrrDb ?? stats()?.mrr ?? 0) | number:'1.0-0' }}</span><span class="mini-l">MRR base DB</span></div>
-            <div class="mini"><span class="mini-v blue">€{{ (reconcileData()?.mrrStripe ?? 0) | number:'1.0-0' }}</span><span class="mini-l">MRR Stripe</span></div>
-            <div class="mini"><span class="mini-v" [class.red]="(reconcileData()?.gap ?? 0) !== 0">€{{ (reconcileData()?.gap ?? 0) | number:'1.0-0' }}</span><span class="mini-l">Écart</span></div>
-            <div class="mini"><span class="mini-v">{{ reconcileData()?.dbActiveCount ?? 0 }} / {{ reconcileData()?.stripeActiveCount ?? 0 }}</span><span class="mini-l">DB / Stripe actifs</span></div>
-          </div>
-          @if (reconcileData(); as r) {
-            @if (r.divergences.inDbNotStripe.length === 0 && r.divergences.inStripeNotDb.length === 0) {
-              <div class="reconcile-ok">✓ Aucune divergence : DB et Stripe cohérents.</div>
-            }
-            @for (d of r.divergences.inDbNotStripe; track d.userId) { <div class="diverge-row red">DB sans Stripe · {{ d.email }} · {{ d.plan }} · {{ d.status }}</div> }
-            @for (d of r.divergences.inStripeNotDb; track d.subscriptionId) { <div class="diverge-row amber">Stripe sans DB · {{ d.subscriptionId }} · {{ d.status }} · €{{ d.monthly }}/mois</div> }
-          }
-        </div>
-      </div>
-    </div>
-  `,
+  templateUrl: './revenue.component.html',
 })
 export class RevenueComponent {
   private readonly adminApi = inject(AdminApi);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly stats = signal<AdminStats | null>(null);
+  /** Les KPIs n'ont pas pu être chargés (sinon « Chargement… » restait affiché pour toujours). */
+  protected readonly statsError = signal(false);
   protected readonly history = signal<MetricsHistoryPoint[]>([]);
   protected readonly reconcileData = signal<StripeReconcileData | null>(null);
   protected readonly reconciling = signal(false);
@@ -108,8 +51,16 @@ export class RevenueComponent {
   });
 
   constructor() {
-    this.adminApi.stats().pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef)).subscribe((r) => { if (r) this.stats.set(r.data); });
+    this.loadStats();
     this.adminApi.metricsHistory(180).pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef)).subscribe((r) => { if (r) this.history.set(r.data); });
+  }
+
+  protected loadStats(): void {
+    this.statsError.set(false);
+    this.adminApi.stats().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (r) => this.stats.set(r.data),
+      error: () => this.statsError.set(true),
+    });
   }
 
   protected reconcile(): void {

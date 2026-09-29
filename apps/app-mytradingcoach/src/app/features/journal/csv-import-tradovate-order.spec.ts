@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * PROMPT-211 — hiérarchie du panneau Tradovate, verrouillée sur la SOURCE du template inline
+ * hiérarchie du panneau Tradovate, verrouillée sur la SOURCE du template inline
  * (le composant se monte sans template en JIT, cf. les autres specs csv-import-*).
  *
  * Environnement `node` + `node:fs` : même procédé que toasts-animation.spec.ts.

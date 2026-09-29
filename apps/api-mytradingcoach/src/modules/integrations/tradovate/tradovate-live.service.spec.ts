@@ -11,7 +11,7 @@ import type { LiveSocket } from './tradovate-live.connection';
 import { TradovateException } from './tradovate.errors';
 
 /**
- * Présence → WebSocket Tradovate (PROMPT-210 live). Verrouille le contrat de portée :
+ * Présence → WebSocket Tradovate (temps réel). Verrouille le contrat de portée :
  * app ouverte = connexion + rattrapage ; app fermée = plus rien ; un seul WebSocket par
  * user même avec plusieurs onglets / workers ; les trades passent par la synchro existante.
  */

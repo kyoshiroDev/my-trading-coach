@@ -1,49 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
-
-export interface DebriefItem {
-  badge: string;
-  text: string;
-}
-
-export interface ObjectiveCheck {
-  type: string;
-  params?: Record<string, unknown>;
-}
-
-export interface DebriefObjective {
-  title: string;
-  reason: string;
-  note?: string;
-  check?: ObjectiveCheck | null;
-}
-
-export interface DebriefInsights {
-  summary: string;
-  strengths: DebriefItem[];
-  weaknesses: DebriefItem[];
-  emotionInsight: string;
-  objectives: DebriefObjective[];
-}
-
-export interface WeeklyDebrief {
-  id: string;
-  weekNumber: number;
-  year: number;
-  startDate: string;
-  endDate: string;
-  aiSummary: string;
-  insights: DebriefInsights;
-  objectives: DebriefObjective[];
-  stats: {
-    winRate: number;
-    totalPnl: number;
-    totalTrades: number;
-  };
-  generatedAt: string;
-}
+import { environment } from '@app/environments/environment';
+import type { DebriefBadgeItem as DebriefItem, DebriefInsights, DebriefObjective, ObjectiveCheck, WeeklyDebrief } from '@mtc/shared';
+export type { DebriefItem, DebriefInsights, DebriefObjective, ObjectiveCheck, WeeklyDebrief };
 
 @Injectable({ providedIn: 'root' })
 export class DebriefApi {

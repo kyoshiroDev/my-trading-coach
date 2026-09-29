@@ -30,7 +30,7 @@
           <option value="__custom__">➕ Autre actif…</option>
         </select>
         @if (qtSelectedAsset()) {
-          <button
+          <button aria-label="Marquer comme favori"
             class="qt-fav-btn"
             [class.active]="qtSelectedAsset()!.isFavorite"
             title="Marquer comme favori"
@@ -53,7 +53,7 @@
               style="font-size:12px;"
             />
             <button class="qt-custom-add" type="button" [disabled]="!customAssetQuery().trim()" (click)="submitCustomAsset()">OK</button>
-            <button class="qt-custom-cancel" type="button" (click)="cancelCustomAsset()">✕</button>
+            <button aria-label="Annuler" class="qt-custom-cancel" type="button" (click)="cancelCustomAsset()">✕</button>
           </div>
           @if (customAssetResults().length > 0) {
             <div class="qt-custom-results">
@@ -64,6 +64,10 @@
                 </button>
               }
             </div>
+          } @else if (customAssetSearchStatus() === 'none') {
+            <p class="qt-search-hint" role="status">Aucun instrument trouvé : « OK » le garde tel que tu l’as saisi.</p>
+          } @else if (customAssetSearchStatus() === 'unavailable') {
+            <p class="qt-search-hint warn" role="status">Recherche indisponible pour le moment : saisis le symbole puis « OK ».</p>
           }
         </div>
       }

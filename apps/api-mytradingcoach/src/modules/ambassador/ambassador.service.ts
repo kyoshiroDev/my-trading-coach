@@ -166,7 +166,7 @@ export class AmbassadorService {
   }[]> {
     // Le SEUL critère d'ambassadeur est le rôle. `referralCode` est partagé avec le
     // parrainage grand public : un USER qui génère son code en a un sans être
-    // ambassadeur, et l'ancien `OR` le faisait apparaître ici (PROMPT-176).
+    // ambassadeur, et l'ancien `OR` le faisait apparaître ici.
     const ambassadors = await this.prisma.user.findMany({
       where: { role: Role.AMBASSADOR },
       select: {

@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { BrokerConnectionStatus, BrokerProvider } from '@prisma/client';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '@api/prisma/prisma.service';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateLiveService } from './tradovate-live.service';
 import { TradovateSyncService } from './tradovate-sync.service';
@@ -22,7 +22,7 @@ export const BACKGROUND_STALE_MS = 12 * 60 * 1000;
 export const FULL_BACKFILLS_PER_PASS = 2;
 
 /**
- * Filet de fond (PROMPT-210 live) — PAS du temps réel.
+ * Filet de fond du temps réel — PAS du temps réel lui-même.
  *
  * Le temps réel est couvert par le WebSocket (app ouverte) et le rattrapage à l'ouverture.
  * Ce cron sert les features qui tournent SANS l'app ouverte (récap journalier, Weekly Debrief) :

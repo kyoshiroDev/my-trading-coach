@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nestjs';
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectQueue } from '@nestjs/bullmq';
@@ -153,7 +154,6 @@ export class StripeWebhookService {
         `[MONITORING] Subscription ${subscription.id} | status: ${subscription.status}, customer: ${customerId ?? 'unknown'}`,
       );
       if (process.env['SENTRY_DSN']) {
-        const Sentry = await import('@sentry/nestjs');
         Sentry.captureMessage(
           `Subscription ${subscription.status}: ${subscription.id}`,
           {

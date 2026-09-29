@@ -29,12 +29,12 @@
       }
 
       .cell-hour {
-        font-size: 9px;
+        font-size: var(--fs-2xs);
         color: var(--text-3);
         font-family: var(--font-mono);
       }
       .cell-val {
-        font-size: 10px;
+        font-size: var(--fs-2xs);
         color: var(--text);
         font-family: var(--font-mono);
         font-weight: 600;

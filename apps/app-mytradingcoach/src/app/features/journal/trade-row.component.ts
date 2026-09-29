@@ -65,14 +65,14 @@ import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
     </td>
     <td class="td-date">{{ trade().tradedAt | date: 'd MMM HH:mm' }}</td>
     <td class="td-actions">
-      <button
+      <button aria-label="Modifier"
         class="action-btn edit-btn"
         title="Modifier"
         (click)="edit.emit(trade())"
       >
         <svg [lucideIcon]="Edit2Icon" [size]="13"></svg>
       </button>
-      <button
+      <button aria-label="Supprimer"
         class="action-btn del-btn"
         title="Supprimer"
         (click)="delete.emit(trade().id)"

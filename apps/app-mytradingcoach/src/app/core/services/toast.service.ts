@@ -1,7 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core';
 
 /**
- * Feedback transitoire unifié (PROMPT-210) : « quelque chose vient de se passer, tu peux
+ * Feedback transitoire unifié : « quelque chose vient de se passer, tu peux
  * continuer ». Un seul service, un seul conteneur monté à la racine (`mtc-toasts`).
  *
  * Ce qui N'EST PAS un toast (règle `.claude/agents/angular.md`) :

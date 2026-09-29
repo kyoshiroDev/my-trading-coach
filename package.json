@@ -8,9 +8,29 @@
     "clean": "rm -rf .angular/cache .nx/cache",
     "dev": "rm -rf .angular/cache && nx serve app-mytradingcoach",
     "dev:api": "NODE_ENV=development nx serve api-mytradingcoach",
-    "seed:demo": "tsx apps/api-mytradingcoach/scripts/seed-demo-account.ts"
+    "dev:admin": "nx serve admin-mytradingcoach",
+    "dev:landing": "nx dev landing-mytradingcoach",
+    "lint": "nx run-many -t lint",
+    "typecheck": "nx run-many -t typecheck",
+    "test": "nx run-many -t test",
+    "build": "nx run-many -t build",
+    "e2e": "nx run-many -t e2e",
+    "affected": "nx affected -t lint typecheck test build",
+    "db:up": "docker compose up -d postgres redis",
+    "db:down": "docker compose down",
+    "db:generate": "prisma generate --config=./prisma/prisma.config.ts",
+    "db:migrate": "prisma migrate dev --config=./prisma/prisma.config.ts",
+    "db:deploy": "prisma migrate deploy --config=./prisma/prisma.config.ts",
+    "db:reset": "prisma migrate reset --config=./prisma/prisma.config.ts",
+    "db:studio": "prisma studio --config=./prisma/prisma.config.ts",
+    "seed:demo": "tsx --env-file-if-exists=apps/api-mytradingcoach/.env --tsconfig tools/scripts/tsconfig.check.json tools/scripts/seed/demo-account.ts"
   },
   "private": true,
+  "packageManager": "pnpm@11.6.0",
+  "engines": {
+    "node": ">=22.22.3",
+    "pnpm": ">=11.6.0"
+  },
   "devDependencies": {
     "@analogjs/vite-plugin-angular": "2.6.4",
     "@angular-devkit/core": "22.1.8",
@@ -46,22 +66,25 @@
     "@types/node": "25.8.0",
     "@typescript-eslint/utils": "^8.59.3",
     "angular-eslint": "22.5.0",
+    "astro-eslint-parser": "^3.2.0",
     "eslint": "^9.8.0",
     "eslint-config-prettier": "^10.0.0",
+    "eslint-plugin-astro": "^3.2.1",
     "eslint-plugin-playwright": "^1.6.2",
     "husky": "^9.1.7",
     "jsdom": "^27.1.0",
     "nx": "23.2.1",
     "prettier": "^3.8.1",
+    "prettier-plugin-astro": "^1.1.0",
     "prisma": "^7.10.0",
     "tslib": "^2.3.0",
     "tsx": "^4.21.0",
     "typescript": "6.0.3",
     "typescript-eslint": "^8.59.3",
     "vitest": "^4.1.6",
+    "webpack": "5.110.3",
     "webpack-cli": "7.2.3",
-    "webpack-dev-server": "5.2.6",
-    "webpack": "5.110.3"
+    "webpack-dev-server": "5.2.6"
   },
   "dependencies": {
     "@angular/common": "22.1.6",
@@ -70,6 +93,9 @@
     "@angular/forms": "22.1.6",
     "@angular/platform-browser": "22.1.6",
     "@angular/router": "22.1.6",
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@fontsource/space-grotesk": "^5.3.0",
     "@lucide/angular": "^1.45.0",
     "@nestjs/axios": "^4.0.1",
     "@nestjs/common": "11.2.3",
@@ -86,6 +112,7 @@
     "puppeteer": "^24.43.1",
     "reflect-metadata": "^0.1.13",
     "rxjs": "~7.8.2",
-    "socket.io-client": "^4.8.3"
+    "socket.io-client": "^4.8.3",
+    "zod": "^4.6.2"
   }
 }

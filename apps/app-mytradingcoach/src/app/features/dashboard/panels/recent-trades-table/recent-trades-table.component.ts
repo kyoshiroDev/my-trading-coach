@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
-import { PnlFormatPipe } from '../../../../shared/pipes';
+import { PnlFormatPipe } from '@app/shared/pipes';
 import { DashboardTradeRow } from '../../dashboard-charts.util';
 
 /** Tableau « historique des trades » du dashboard (derniers trades, P&L % sur le capital). */

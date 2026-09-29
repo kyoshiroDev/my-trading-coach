@@ -1,0 +1,389 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Compte de la session (projeté dans la carte « Prépare ta session ») ── */
+.sd-acct-row {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+.sd-acct-lbl {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.sd-acct-select {
+  width: 100%;
+  max-width: 360px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 34px 9px 12px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238398b5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition: border-color .15s;
+}
+.sd-acct-select:hover { border-color: var(--border-hover); }
+.sd-acct-select:focus { border-color: var(--blue); }
+.sd-acct-select option { background: var(--bg-card); color: var(--text); }
+.sd-acct-hint {
+  font-size: 12px;
+  color: var(--red);
+}
+
+/* ── Page « Ma session » — conteneur + header propre à la page ──
+   Source : 06-session-page.jsx + 00-DESIGN-SYSTEM.css (transcription pixel). */
+.session-page {
+  padding: 16px 18px;
+  /* display:block (et non flex-column) : un conteneur flex-column clippe un enfant plus haut
+     que lui sans scroller (scrollHeight figé). En bloc, overflow-y:auto scrolle de façon fiable
+     — la page est le SEUL conteneur de scroll pour les 3 onglets. L'espacement header/contenu
+     (ex-gap:14px) est repris via .mtc-sess-header { margin-bottom }. */
+  display: block;
+  box-sizing: border-box;
+  container-type: inline-size;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+/* La page est le SEUL conteneur de scroll, y compris en mode live : les panneaux
+   de l'onglet live se dimensionnent à leur contenu (fin du terminal à hauteur fixe). */
+
+/* Header : titre (gauche) · onglets (centre) · pill/Start (droite) — grille 1fr auto 1fr */
+.mtc-sess-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+  margin-bottom: 14px; /* reprend l'ancien gap:14px de .session-page (passée en display:block) */
+}
+.mtc-sess-h-left { justify-self: start; display: flex; align-items: center; gap: 12px; }
+.mtc-sess-h-center { justify-self: center; }
+.mtc-sess-pill { justify-self: end; }
+
+.mtc-burger {
+  display: none; align-items: center; justify-content: center;
+  width: 38px; height: 38px; flex-shrink: 0; border-radius: 9px; cursor: pointer;
+  background: var(--bg-2); border: 1px solid var(--border); color: var(--text-2);
+}
+.mtc-sess-h1 { font-family: var(--font-display); font-size: 21px; font-weight: 700; letter-spacing: -.4px; color: var(--text); margin: 0; }
+.mtc-sess-sub { font-size: 12.5px; color: var(--text-3); margin-top: 3px; }
+
+/* Segmented control d'onglets */
+.mtc-sess-tabs {
+  display: inline-flex; gap: 4px; padding: 4px; border-radius: 11px;
+  background: var(--bg-2); border: 1px solid var(--border);
+}
+.mtc-sess-tab {
+  display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px;
+  border-radius: 8px; border: none; cursor: pointer; white-space: nowrap;
+  background: transparent; color: var(--text-3); font-size: 12.5px; font-weight: 500;
+  font-family: var(--font-body); transition: all .15s;
+}
+.mtc-tab-ic { display: inline-flex; color: currentColor; }
+.mtc-sess-tab.active {
+  background: var(--bg-card); color: var(--text); font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0,0,0,.3);
+}
+.mtc-sess-tab.active .mtc-tab-ic { color: var(--blue-bright); }
+
+/* Start button — repos vert-dim → hover vert plein */
+.mtc-start-btn {
+  display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px;
+  border-radius: 11px; cursor: pointer; flex-shrink: 0; white-space: nowrap;
+  background: var(--green-dim); color: var(--green);
+  font-size: 14px; font-weight: 700; font-family: var(--font-display);
+  border: 1px solid rgba(16,185,129,.3); transition: all .15s;
+}
+.mtc-start-btn svg.lucide { display: inline-flex; }
+.mtc-start-btn:hover:not(:disabled) {
+  background: var(--green); color: #06281c; border-color: var(--green);
+  box-shadow: 0 0 22px rgba(16,185,129,.35);
+}
+.mtc-start-btn:disabled {
+  opacity: .4; cursor: not-allowed;
+  background: var(--bg-2); color: var(--text-faint); border-color: var(--border);
+  box-shadow: none;
+}
+
+/* SESSION ACTIVE pill — gradient + point clignotant + timer mono + compte + Clôturer */
+.mtc-active-pill {
+  display: inline-flex; align-items: center; gap: 13px; padding: 8px 8px 8px 14px;
+  border-radius: 12px; background: linear-gradient(135deg, var(--green-dim), var(--bg-card));
+  border: 1px solid rgba(16,185,129,.3);
+}
+.mtc-ap-left { display: flex; align-items: center; gap: 8px; }
+.mtc-ap-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: mtc-blink 1.6s ease infinite; flex-shrink: 0; }
+.mtc-ap-lbl { font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 600; color: var(--green); letter-spacing: .5px; }
+.mtc-ap-timer { font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: .5px; font-variant-numeric: tabular-nums; }
+.mtc-pill-acct { font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3); }
+.mtc-ap-close {
+  display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 9px;
+  cursor: pointer; border: 1px solid var(--border); background: var(--bg-2); color: var(--text);
+  font-size: 12px; font-weight: 600; font-family: var(--font-body); white-space: nowrap; transition: all .15s;
+}
+.mtc-ap-close:hover { border-color: var(--border-hover); background: var(--bg-3); }
+.mtc-ap-close-ic { display: inline-flex; color: var(--text-2); }
+
+@keyframes mtc-blink { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+
+/* Badge « session clôturée » (débrief) — conteneur simple */
+.session-tabs-row { display: flex; justify-content: center; flex-shrink: 0; }
+
+/* Container-queries header (source 00-DESIGN-SYSTEM.css) */
+@container (max-width: 980px) {
+  .mtc-sess-header { grid-template-columns: 1fr; justify-items: center; gap: 12px; }
+  .mtc-sess-header > div { justify-self: center; }
+  .mtc-sess-h-left { text-align: center; }
+}
+@container (max-width: 768px) {
+  .mtc-tab-label { display: none; }
+}
+@container (max-width: 480px) {
+  .mtc-pill-acct { display: none; }
+}
+
+/* ── Onglet Débrief — reproduction de SessionDebriefTab (05-tab-live-and-debrief.jsx) ── */
+.session-debrief { display: flex; flex-direction: column; gap: 16px; flex: 1; min-height: 0; }
+
+/* 4 cards tout en haut (LiveStat4 : card padding 16, valeur 24px, label 11px) */
+.debrief-cards-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr)); gap: 14px; }
+.card4 { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; text-align: center; }
+.card4-v { font-family: var(--font-mono); font-size: 24px; font-weight: 700; color: var(--text); line-height: 1; font-variant-numeric: tabular-nums; }
+.card4-v.green { color: var(--green); }
+.card4-v.red   { color: var(--red); }
+.card4-emoji   { font-family: var(--font-body); font-size: 26px; }
+.card4-l { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+
+/* Bloc 2×2 : mood · score (rangée 1) · meilleur · pire (rangée 2) — une seule grille */
+.debrief-2x2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: stretch; }
+
+/* Tabs + badge clôture sur la même ligne */
+.tabs-and-badge { display: flex; align-items: center; gap: 14px; flex: 1; justify-content: center; }
+.closed-badge {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(16,185,129,.06); border: 1px solid rgba(16,185,129,.2);
+  border-radius: 9px; padding: 7px 13px; flex-shrink: 0;
+}
+.cb-ic { font-size: 13px; color: var(--green); }
+.cb-t  { font-size: 11px; font-weight: 600; color: var(--green); }
+.cb-d  { font-size: var(--fs-2xs); color: var(--text-3); font-family: var(--font-mono); }
+.saved-pill {
+  font-size: var(--fs-2xs); font-family: var(--font-mono); color: var(--green);
+  background: rgba(16,185,129,.1); border-radius: 6px; padding: 2px 8px;
+}
+
+/* Confirmation modale clôture */
+.confirm-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+}
+.confirm-modal {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 24px; max-width: 360px; width: 90%;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.cm-title { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--text); }
+.cm-sub   { font-size: 13px; color: var(--text-3); }
+.cm-actions { display: flex; gap: 8px; margin-top: 6px; }
+.cm-cancel { flex: 1; background: var(--bg-3); border: 1px solid var(--border); color: var(--text-2); border-radius: 9px; padding: 10px; font-size: 13px; cursor: pointer; transition: all .15s; }
+.cm-cancel:hover { border-color: var(--border-hover); }
+.cm-confirm { flex: 1; background: var(--purple-bright); border: none; color: #fff; border-radius: 9px; padding: 10px; font-size: 13px; font-weight: 700; cursor: pointer; transition: opacity .15s; }
+.cm-confirm:hover { opacity: .85; }
+
+/* Corps du débrief : analyse (gauche) | journal pleine hauteur (droite) */
+.debrief-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: stretch; }
+.debrief-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.debrief-side { display: flex; min-width: 0; }
+.journal-card { flex: 1; display: flex; flex-direction: column; height: 100%; }
+.journal-card .sj-textarea { flex: 1; resize: vertical; min-height: 120px; }
+
+/* Icônes Lucide (headers meilleur/pire trade + journal) */
+.dtc-ic { display: inline-flex; flex-shrink: 0; }
+.dtc-ic.best  { color: var(--green); }
+.dtc-ic.worst { color: var(--red); }
+.sj-ic { display: inline-flex; color: var(--blue-bright); flex-shrink: 0; margin-top: 1px; }
+
+/* Container-queries — répondent à la largeur du conteneur .session-page (source §6). */
+/* Desktop (≥981px = header compact) : l'onglet Débrief tient dans l'écran. Le contenu
+   est plafonné à la hauteur visible ; le trop-plein scrolle À L'INTÉRIEUR du débrief au
+   lieu d'allonger la page. Offset 103 identique aux autres onglets. Sous 980px : scroll page.
+   --demo-banner-h (0 hors démo) retranche le bandeau « Mode démo » posé au-dessus. */
+@container (min-width: 981px) {
+  .session-debrief {
+    max-height: calc(100vh - 103px - var(--demo-banner-h, 0px));
+    overflow-y: auto;
+    min-height: 0;
+  }
+}
+@container (max-width: 1024px) {
+  .debrief-grid { grid-template-columns: 1fr; }
+}
+@container (max-width: 820px) {
+  .debrief-2x2 { grid-template-columns: 1fr; }
+  .tabs-and-badge { flex-direction: column; gap: 8px; }
+  .closed-badge { order: -1; }
+}
+
+/* Bandeau 0 trade */
+.debrief-zero-banner {
+  display: flex; align-items: center; gap: 14px;
+  background: linear-gradient(135deg, var(--green-dim), transparent);
+  border: 1px solid rgba(16,185,129,.25); border-radius: 13px; padding: 16px;
+}
+.dzb-icon { font-size: 28px; flex-shrink: 0; }
+.dzb-title { font-family: var(--font-display); font-weight: 700; font-size: 14px; color: var(--green); }
+.dzb-sub { font-size: 12.5px; color: var(--text-2); margin-top: 3px; line-height: 1.5; }
+
+.debrief-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 18px;
+}
+.debrief-section-title {
+  font-family: var(--font-display); font-size: 13.5px; font-weight: 600;
+  color: var(--text); margin-bottom: 12px;
+}
+
+/* Émotion fin de session — mood row en grille 2 colonnes, sélection bleue */
+.debrief-mood-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 18px;
+}
+.debrief-mood-title {
+  font-family: var(--font-display); font-size: 13.5px; font-weight: 600;
+  color: var(--text); margin-bottom: 12px;
+}
+.mood-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.mood-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 8px 10px; border-radius: 10px; background: transparent;
+  border: 1px solid var(--border); cursor: pointer; font-size: 13px;
+  color: var(--text-2); font-family: var(--font-body); white-space: nowrap; transition: all .15s;
+}
+.mood-btn .mood-emo { font-size: 15px; line-height: 1; }
+.mood-btn:hover { border-color: var(--border-hover); }
+.mood-btn.sel {
+  border-color: var(--blue-bright);
+  background: var(--blue-glow);
+  color: var(--text);
+}
+
+/* Score discipline — anneau 84/64, label 16px */
+.debrief-score-card { padding: 16px; display: flex; align-items: center; justify-content: center; gap: 14px; }
+.score-ring-wrap { display: flex; align-items: center; gap: 14px; }
+.score-ring {
+  width: 84px; height: 84px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  transition: background 0.4s;
+}
+.score-ring-inner {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: var(--bg-card);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.score-val { font-family: var(--font-mono); font-size: 21px; font-weight: 700; color: var(--text); line-height: 1; }
+.score-unit { font-size: var(--fs-2xs); color: var(--text-3); font-family: var(--font-mono); }
+.score-label-wrap { min-width: 0; }
+.score-label { font-family: var(--font-display); font-size: 16px; font-weight: 700; }
+.score-desc { font-size: 12px; color: var(--text-3); margin-top: 2px; line-height: 1.3; }
+.score-hint { font-size: 11px; color: var(--text-3); margin-top: 6px; line-height: 1.4; }
+
+/* Meilleur / pire trade (TradeHighlight) */
+.debrief-two-col { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.debrief-trade-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 18px;
+  display: flex; flex-direction: column; justify-content: center;
+}
+.dtc-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.dtc-icon { font-size: 16px; }
+.dtc-title { font-family: var(--font-display); font-size: 13px; font-weight: 600; color: var(--text); }
+.dtc-asset { font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; gap: 9px; }
+.dtc-side { font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 600; padding: 2px 7px; border-radius: 6px; }
+.dtc-side.long { background: var(--green-dim); color: var(--green); }
+.dtc-side.short { background: var(--red-dim); color: var(--red); }
+.dtc-row { display: flex; align-items: center; gap: 14px; font-family: var(--font-mono); font-size: 12px; }
+.dtc-time { color: var(--text-3); }
+.dtc-pnl { margin-left: auto; font-family: var(--font-mono); font-size: 16px; font-weight: 700; }
+.dtc-empty { font-size: 12px; color: var(--text-3); font-style: italic; padding: 8px 0; }
+
+/* Émotions — barres h8 */
+.emo-list { display: flex; flex-direction: column; gap: 10px; }
+.emo-row { display: flex; align-items: center; gap: 10px; }
+.emo-emoji { font-size: 16px; flex-shrink: 0; width: 22px; text-align: center; }
+.emo-bar-wrap { flex: 1; height: 8px; background: var(--bg-3); border-radius: 4px; overflow: hidden; }
+.emo-bar { height: 100%; border-radius: 4px; transition: width .4s; min-width: 4px; }
+.emo-stat { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); white-space: nowrap; width: 58px; text-align: right; }
+
+/* Fallback émotions sans trade */
+.emo-session-fallback { display: flex; flex-direction: column; gap: 10px; }
+.esf-item { display: flex; align-items: center; justify-content: space-between; }
+.esf-lbl { font-size: 12px; color: var(--text-2); }
+.esf-emo { font-size: 20px; }
+.esf-note { font-size: 11px; color: var(--text-3); margin-top: 6px; line-height: 1.4; }
+
+/* Objectifs du matin — lignes en cartes bg-2 (check ✓/✗ ou case à cocher) */
+.obj-list { display: flex; flex-direction: column; gap: 8px; }
+.obj-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--bg-2); border-radius: 9px; border: 1px solid var(--border); }
+.obj-row.obj-ok { border-color: rgba(16,185,129,.2); }
+.obj-row.obj-ko { border-color: rgba(239,68,68,.2); }
+.obj-check-auto {
+  width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+}
+.obj-row.obj-ok .obj-check-auto { background: var(--green-dim); color: var(--green); }
+.obj-row.obj-ko .obj-check-auto { background: var(--red-dim); color: var(--red); }
+.obj-check-manual { width: 16px; height: 16px; flex-shrink: 0; accent-color: var(--blue); cursor: pointer; }
+.obj-body { flex: 1; min-width: 0; }
+.obj-title { font-size: 12.5px; color: var(--text-2); display: block; }
+.obj-detail { font-size: var(--fs-2xs); color: var(--red); font-family: var(--font-mono); display: block; margin-top: 2px; }
+
+/* Journal de session pleine hauteur */
+.session-journal {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 18px;
+}
+.sj-header { display: flex; gap: 10px; margin-bottom: 12px; align-items: flex-start; }
+.sj-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+.sj-title { font-family: var(--font-display); font-weight: 600; font-size: 13.5px; color: var(--text); }
+.sj-sub { font-size: 11.5px; color: var(--text-3); margin-top: 2px; line-height: 1.4; }
+.sj-textarea {
+  width: 100%; background: var(--bg-2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px; color: var(--text);
+  font-family: var(--font-body); font-size: 13px; line-height: 1.55;
+  resize: vertical; box-sizing: border-box; transition: border-color .15s;
+}
+.sj-textarea:focus { outline: none; border-color: var(--blue); }
+.sj-textarea::placeholder { color: var(--text-3); }
+.sj-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+.sj-count { font-size: 11px; color: var(--text-faint); font-family: var(--font-mono); }
+.sj-saved  { font-size: 11px; color: var(--green); font-family: var(--font-mono); }
+.sj-saving { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
+
+/* Vide */
+.debrief-empty { text-align: center; padding: 60px 20px; color: var(--text-3); }
+.debrief-empty-icon { font-size: 42px; margin-bottom: 14px; }
+.debrief-empty p { font-size: 14px; margin-bottom: 4px; }
+.debrief-empty-sub { font-size: 12.5px; color: var(--text-3); margin-top: 8px; }
+
+@container (max-width: 480px) {
+  .score-ring-wrap { flex-direction: column; text-align: center; }
+}

@@ -11,7 +11,6 @@ const service = new AdminService(
   mockPrisma,
   {} as never, // UsersService — non utilisé par getAiCost
   {} as never, // StripeSubscriptionService
-  {} as never, // AnthropicCostService
 );
 
 const today = new Date().toISOString().slice(0, 10);

@@ -1,11 +1,11 @@
 import { randomBytes } from 'node:crypto';
 import { BrokerConnection, BrokerConnectionStatus, BrokerProvider } from '@prisma/client';
-import { encryptToken } from '../../../common/utils/token-cipher.util';
+import { encryptToken } from '@api/common/utils/token-cipher.util';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateApiError } from './tradovate.errors';
 
 /**
- * Devise d'un compte synchronisé (PROMPT-214, corrigé après cartographie de l'API) : elle est LUE
+ * Devise d'un compte synchronisé (corrigé après cartographie de l'API) : elle est LUE
  * chez le broker, jamais devinée. Le piège couvert ici : `cashBalance.currencyId` est un identifiant
  * INTERNE Tradovate (1 = USD, 2 = EUR…), pas un code ISO — seul `/currency/item` donne le code.
  * Et la lecture est best-effort : elle ne doit jamais faire échouer le choix du compte.

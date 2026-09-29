@@ -17,18 +17,20 @@ import {
 } from '@lucide/angular';
 import { forkJoin, of, timer } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
-import { EcoCalendarApi, EcoCalendarData, EcoEvent, EcoResultAnalysis } from '../../../../../../core/api/eco-calendar.api';
-import { TradingSession } from '../../../../../../core/api/session.api';
-import { translateEcoEvent } from '../../../../../../core/data/eco-event-translations';
-import { normalizeEventKey, eventKey } from '../../../../../../core/data/eco-event-key';
-import { EcoSocketService } from '../../../../../../core/services/eco-socket.service';
-import { UserStore } from '../../../../../../core/stores/user.store';
+import { EcoCalendarApi, EcoCalendarData, EcoResultAnalysis } from '@app/core/api/eco-calendar.api';
+import { TradingSession } from '@app/core/api/session.api';
+import { translateEcoEvent } from '@app/core/data/eco-event-translations';
+
+import { EcoSocketService } from '@app/core/services/eco-socket.service';
+import { UserStore } from '@app/core/stores/user.store';
 import {
   DEMO_ECO_ANALYSIS,
   DEMO_LIVE_ECO_EVENTS,
   ECO_FLAGS,
   currencyToInstruments,
 } from './live-eco-calendar.data';
+import { eventKey, normalizeEventKey } from '@mtc/shared';
+import type { EcoEvent } from '@mtc/shared';
 
 /**
  * Calendrier économique de la session live : événements de la fenêtre de session,

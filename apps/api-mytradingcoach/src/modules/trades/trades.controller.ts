@@ -17,13 +17,17 @@ import { Plan, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { TradesService } from './trades.service';
-import { CoinGeckoService } from './coingecko.service';
 import { CsvImportService, type FeesReport } from './csv-import.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
-import { INSTRUMENTS } from './instruments.const';
+import { ImportTradesBodyDto } from './dto/import-trades.dto';
+import { ReassignTradesDto } from './dto/reassign-trades.dto';
+import { SaveUserAssetsDto, SetFavoriteAssetDto } from './dto/user-assets.dto';
+import { InstrumentsService } from './instruments.service';
+import { UserAssetsService } from './user-assets.service';
 import { MarketDataService } from './market-data.service';
+import { DeprecatedRoute } from '../../common/decorators/deprecated-route.decorator';
 import { AccountsService } from '../accounts/accounts.service';
 import { SetupsService } from '../setups/setups.service';
 
@@ -32,43 +36,39 @@ import { SetupsService } from '../setups/setups.service';
 export class TradesController {
   constructor(
     private tradesService: TradesService,
-    private coinGeckoService: CoinGeckoService,
     private csvImportService: CsvImportService,
-    private readonly marketData: MarketDataService,
     private readonly accounts: AccountsService,
     private readonly setups: SetupsService,
+    private readonly instruments: InstrumentsService,
+    private readonly userAssets: UserAssetsService,
+    private readonly marketData: MarketDataService, // anciennes routes /trades/market-* uniquement
   ) {}
 
-  // Contexte marché (DXY / taux US / indices) = IA mutualisée (coût O(1)) → FREE (PROMPT-169).
+  // ── Anciennes routes : déplacées vers /market/* et /instruments/* (API-21) ──
+  // Gardées une version (déploiement front/back non simultané), puis à supprimer.
+
   @Get('market-context')
+  @DeprecatedRoute('GET /market/context')
   getMarketContext() { return this.marketData.getMarketContext(); }
 
-  // News filtrées sur tes actifs = IA mutualisée → FREE (PROMPT-169).
   @Get('news')
-  getMarketNews(@Query('symbols') symbols: string) {
-    return this.marketData.getNews(symbols ?? '');
-  }
+  @DeprecatedRoute('GET /market/news')
+  getMarketNews(@Query('symbols') symbols: string) { return this.marketData.getNews(symbols ?? ''); }
 
-  // Traduction paresseuse du corps d'une news (Haiku, 1×/article, cachée, mutualisée) = FREE.
   @Get('news/:id/text')
-  async getNewsText(@Param('id') id: string): Promise<{ text: string | null }> {
-    return { text: await this.marketData.ensureNewsTextFr(id) };
-  }
+  @DeprecatedRoute('GET /market/news/:id/text')
+  async getNewsText(@Param('id') id: string) { return { text: await this.marketData.ensureNewsTextFr(id) }; }
 
-  // live-price reste FREE : il alimente la saisie « trade rapide » du compagnon de session (FREE).
   @Get('live-price')
-  async getLivePrice(@Query('symbol') symbol: string): Promise<{ price: number | null; symbol: string; cached: boolean }> {
+  @DeprecatedRoute('GET /market/live-price')
+  async getLivePrice(@Query('symbol') symbol: string) {
     if (!symbol?.trim()) return { price: null, symbol: '', cached: false };
     return { ...(await this.marketData.getLivePrice(symbol.trim())), symbol };
   }
 
   @Get('instruments')
-  async getInstruments() {
-    const cryptoInstruments = await this.coinGeckoService.getCryptoInstruments();
-    // Retourner uniquement les futures CME (ceux avec tickValue utile)
-    const futuresOnly = INSTRUMENTS.filter((i) => i.category === 'FUTURES_US');
-    return [...futuresOnly, ...cryptoInstruments];
-  }
+  @DeprecatedRoute('GET /instruments')
+  getInstruments() { return this.instruments.list(); }
 
   @Post('import')
   @UseInterceptors(
@@ -95,7 +95,7 @@ export class TradesController {
     @CurrentUser() user: { id: string; plan: Plan; role: Role; trialEndsAt?: Date | null },
     @UploadedFiles()
     files: { file?: Express.Multer.File[]; fees?: Express.Multer.File[] },
-    @Body() body: { totalFees?: string; accountId?: string; emotion?: string; setupId?: string },
+    @Body() body: ImportTradesBodyDto,
   ) {
     const file = files?.file?.[0];
     if (!file) throw new BadRequestException('Fichier manquant');
@@ -164,47 +164,25 @@ export class TradesController {
   }
 
   @Get('user-assets')
-  getUserAssets(@CurrentUser() user: { id: string }) {
-    return this.tradesService.getUserAssets(user.id);
-  }
+  @DeprecatedRoute('GET /instruments/user-assets')
+  getUserAssets(@CurrentUser() user: { id: string }) { return this.userAssets.getUserAssets(user.id); }
 
   @Patch('user-assets')
-  async saveUserAssets(
-    @CurrentUser() user: { id: string },
-    @Body() body: { assets: string[]; favoriteAsset?: string | null },
-  ) {
-    await this.tradesService.saveUserAssets(user.id, body.assets ?? [], body.favoriteAsset);
+  @DeprecatedRoute('PATCH /instruments/user-assets')
+  async saveUserAssets(@CurrentUser() user: { id: string }, @Body() body: SaveUserAssetsDto) {
+    await this.userAssets.saveUserAssets(user.id, body.assets ?? [], body.favoriteAsset);
     return { saved: true };
   }
 
   @Patch('favorite-asset')
-  setFavoriteAsset(
-    @CurrentUser() user: { id: string },
-    @Body('asset') asset: string | null,
-  ) {
-    return this.tradesService.setFavoriteAsset(user.id, asset ?? null);
+  @DeprecatedRoute('PATCH /instruments/favorite-asset')
+  setFavoriteAsset(@CurrentUser() user: { id: string }, @Body() body: SetFavoriteAssetDto) {
+    return this.userAssets.setFavoriteAsset(user.id, body.asset ?? null);
   }
 
   @Get('instruments/search')
-  async searchInstruments(@Query('q') q: string) {
-    const query = (q ?? '').trim();
-    if (!query) return [];
-    const fmpResults = await this.marketData.searchSymbols(query);
-    if (fmpResults.length > 0) return fmpResults;
-    const lq = query.toLowerCase();
-    const staticMatches = INSTRUMENTS
-      .filter(i => i.symbol.toLowerCase().includes(lq) || i.label.toLowerCase().includes(lq))
-      .slice(0, 10)
-      .map(i => ({ symbol: i.symbol, label: i.label, category: i.category }));
-    if (staticMatches.length >= 5) return staticMatches;
-    try {
-      const crypto = (await this.coinGeckoService.getCryptoInstruments())
-        .filter(i => i.symbol.toLowerCase().includes(lq) || i.label.toLowerCase().includes(lq))
-        .slice(0, 5).map(i => ({ symbol: i.symbol, label: i.label, category: i.category }));
-      const seen = new Set(staticMatches.map(i => i.symbol));
-      return [...staticMatches, ...crypto.filter(i => !seen.has(i.symbol))].slice(0, 10);
-    } catch { return staticMatches; }
-  }
+  @DeprecatedRoute('GET /instruments/search')
+  searchInstruments(@Query('q') q: string) { return this.instruments.search(q); }
 
   // ⚠️ Déclarés avant les routes ':id' pour ne pas être capturés par @Get/@Delete(':id').
   @Get('duplicates')
@@ -221,7 +199,7 @@ export class TradesController {
   @Patch('reassign')
   async reassign(
     @CurrentUser() user: { id: string },
-    @Body() body: { tradeIds: string[]; accountId: string },
+    @Body() body: ReassignTradesDto,
   ) {
     if (!Array.isArray(body?.tradeIds) || body.tradeIds.length === 0) {
       throw new BadRequestException('Aucun trade à déplacer.');

@@ -10,25 +10,40 @@ import { Role } from '@prisma/client';
 import { OrchestratorAgent } from './agents/orchestrator.agent';
 import { DebriefAgent } from './agents/debrief.agent';
 import { buildDebriefPrompt } from './prompts/debrief.prompt';
-import { NO_EM_DASH_RULE } from './prompts/style.prompt';
+import { FRENCH_RULE, NO_EM_DASH_RULE } from './prompts/style.prompt';
 import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
+import { RedisService } from '../infra/redis.service';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
-import { computeTradeStats, formatMoney, netPnl } from '@mtc/shared';
+import { computeTradeStats, formatMoney, netPnl, todayParis } from '@mtc/shared';
 import { userAmountsCurrency } from '../../common/utils/user-currency.util';
 // import type only (aucune dépendance runtime → pas de cycle avec eco-calendar.service)
-import type { EcoAnalysis, EcoResultAnalysis } from '../eco-calendar/eco-calendar.service';
-import { AnthropicClientService } from '../shared/anthropic-client.service';
+import type { EcoResultAnalysis } from '../eco-calendar/eco-calendar.service';
+import { AnthropicClientService } from '../infra/anthropic-client.service';
 import { buildUserTradingContext, UserTradingProfile } from './user-context.builder';
-import { todayParis } from '../../common/utils/paris-date';
 
-const MODEL = 'claude-sonnet-4-6';
+import { AI_MODELS } from '../infra/ai-pricing.const';
+import type { EcoAnalysis } from '@mtc/shared';
+
+const MODEL = AI_MODELS.analysis;
+/**
+ * Calendrier eco : seule IA qu'un compte FREE peut declencher, donc la seule dont le cout
+ * suit l'audience. `ai-pricing.const.ts` la range depuis le debut dans les « taches courtes
+ * et frequentes » du modele rapide, mais les deux appels partaient sur `analysis` — trois
+ * fois le prix pour un JSON court (sentiment bull/bear par actif, une recommandation).
+ *
+ * Le cout ne suit pas le nombre d'users mais le nombre de signatures d'actifs distinctes
+ * (cache partage par (date, actifs)). Mesure 2026-09-28 : ~0,006 $ l'appel en analysis
+ * contre ~0,002 $ en fast, soit -67 % sur ce poste.
+ *
+ * Le chat et le recap quotidien restent sur `MODEL` : ils sont PREMIUM et valent l'analyse.
+ */
+const ECO_MODEL = AI_MODELS.fast;
 const AI_MONTHLY_QUOTA = 100;
 
 // Contenu IA figé pour le compte démo : AUCUN appel modèle (coût zéro).
 const DEMO_INSIGHTS = {
-  // Aligné sur le seed démo (PROMPT-215) : qualitatif, sans pourcentage figé (les chiffres du
+  // Aligné sur le seed démo : qualitatif, sans pourcentage figé (les chiffres du
   // seed varient légèrement selon le jour du run).
   topPattern:
     "Ton edge est net sur les breakouts MNQ/MES à l'ouverture : c'est ton setup le plus rentable. Tes Reversals, eux, te coûtent de l'argent semaine après semaine.",
@@ -92,7 +107,7 @@ export class AiService {
         asset: true,
         side: true,
         pnl: true,
-        commission: true, // stats sur le net (PROMPT-213)
+        commission: true, // stats sur le net
         emotion: true,
         tradeSession: { select: { moodStart: true } },
         setup: { select: { title: true, description: true } },
@@ -124,7 +139,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
     if (recentTrades.length === 0) {
       contextSummary = "Ce trader n'a encore enregistré aucun trade.";
     } else {
-      // Stats via le helper unique (BE exclus du win rate, PROMPT-160).
+      // Stats via le helper unique (BE exclus du win rate).
       const s = computeTradeStats(recentTrades);
       const winRate = Math.round(s.winRate);
       const totalPnl = s.totalPnl;
@@ -159,7 +174,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
             .join('\n')}`
         : '';
 
-      // Devise des comptes, sans conversion (PROMPT-214) ; null si elles diffèrent.
+      // Devise des comptes, sans conversion ; null si elles diffèrent.
       const currency = await userAmountsCurrency(this.prisma, userId);
       contextSummary = `Données trader (${recentTrades.length} trades récents) :
 - Win rate : ${winRate}%
@@ -245,7 +260,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
     winRate: number;
     dominantEmotion: string | null;
     date: Date;
-    /** Devise des comptes (PROMPT-214) ; null si elles diffèrent. */
+    /** Devise des comptes ; null si elles diffèrent. */
     currency?: string | null;
     userProfile?: UserTradingProfile;
     patterns7d?: {
@@ -412,6 +427,7 @@ Réponds UNIQUEMENT avec la phrase coaching, sans guillemets, sans préambule.`,
 Actifs du trader : ${data.userAssets.join(', ')}.
 Événements économiques du jour : ${JSON.stringify(data.events, null, 2)}.
 ${NO_EM_DASH_RULE}
+${FRENCH_RULE}
 Génère un JSON strict (pas de markdown, pas de texte autour) :
 {
   "summary": "1-2 phrases sur les risques du jour pour ce trader précis",
@@ -421,7 +437,7 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
 
     const response = await this.anthropicClient.create(
       {
-        model: MODEL,
+        model: ECO_MODEL,
         max_tokens: 1024,
         messages: [{ role: 'user', content: prompt }],
       },
@@ -451,6 +467,7 @@ Résultat : ${actual} | Prévu : ${estimate} | Précédent : ${data.event.previo
 Surprise : ${surprise >= 0 ? '+' : ''}${surprise.toFixed(2)}.
 Actifs tradés : ${data.userAssets.join(', ')}.
 ${NO_EM_DASH_RULE}
+${FRENCH_RULE}
 Génère un JSON strict (pas de markdown, pas de texte autour) :
 {
   "interpretation": "phrase courte expliquant la surprise",
@@ -459,7 +476,7 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
 
     const response = await this.anthropicClient.create(
       {
-        model: MODEL,
+        model: ECO_MODEL,
         max_tokens: 700,
         messages: [{ role: 'user', content: prompt }],
       },

@@ -1,11 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { environment } from '@app/environments/environment';
+import type { AccountStatus, AccountType, DrawdownType } from '@mtc/shared';
 
-export type AccountType = 'EVALUATION' | 'FUNDED' | 'PERSONAL' | 'DEMO';
-export type AccountStatus = 'ACTIVE' | 'PASSED' | 'FAILED' | 'ARCHIVED';
-export type DrawdownType = 'STATIC' | 'TRAILING';
+export type { AccountStatus, AccountType, DrawdownType };
 
 /** Métriques « règles prop firm » ESTIMÉES d'après les trades loggés (renvoyées par 089). */
 export interface AccountRuleMetrics {

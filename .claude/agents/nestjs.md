@@ -1,3 +1,8 @@
+---
+name: nestjs
+description: "Conventions de l'API NestJS : modules, routes, guards, DTO, erreurs, IA, crons. À lire avant tout travail dans apps/api-mytradingcoach."
+---
+
 # Agent NestJS — api-mytradingcoach
 
 ## Stack
@@ -81,7 +86,13 @@ POST   /api/ai/insights                PREMIUM → cooldown 4h par user
 POST   /api/ai/chat                    PREMIUM → 50 messages/jour par user
 
 POST   /api/trades/import              PREMIUM → CSV parsing via Claude SDK
-GET    /api/analytics/instruments      instruments avec tickSize/tickValue
+GET    /api/instruments                JWT → futures CME + crypto (InstrumentsController)
+GET    /api/instruments/search?q=      JWT → FMP, puis liste statique, puis crypto (10 max)
+GET|PATCH /api/instruments/user-assets JWT · PATCH /api/instruments/favorite-asset
+GET    /api/market/context             JWT (FREE, IA mutualisée) → DXY, taux, indices (MarketController)
+GET    /api/market/news?symbols=       JWT (FREE) · GET /api/market/news/:id/text (traduction paresseuse)
+GET    /api/market/live-price?symbol=  JWT (FREE) → trade rapide
+  (TradesController ne gère que les trades ; ses anciennes routes market/instruments sont @DeprecatedRoute)
 
 GET    /api/debrief/current            PREMIUM
 GET    /api/debrief/:year/:week        PREMIUM
@@ -98,9 +109,18 @@ DELETE /api/docker/containers/:id      ADMIN
 GET    /api/vps/backups                ADMIN
 POST   /api/vps/backups                ADMIN → pg_dump via SSH
 GET    /api/vps/logs/:container        ADMIN → SSE stream docker logs
-GET    /api/admin/ai-usage             ADMIN → stats tokens/coût
-GET    /api/users/admin/:id/detail     ADMIN → fiche utilisateur complète
-GET    /api/users/admin/subscriptions  ADMIN → liste abonnements Premium
+GET    /api/admin/ai-cost              ADMIN → coût IA 30 j (réel + estimé)
+GET    /api/admin/users                ADMIN → liste (?page&limit&search)   ┐
+GET    /api/admin/users/stats          ADMIN → KPIs (MRR, inscrits, essais) │ AdminUsersController
+GET    /api/admin/users/online         ADMIN                                │ (littéraux AVANT :id)
+GET    /api/admin/users/subscriptions  ADMIN → abonnements                  │
+GET    /api/admin/users/:id            ADMIN → fiche utilisateur complète   │
+PATCH  /api/admin/users/:id(/role)     ADMIN · DELETE /api/admin/users/:id  ┘
+GET    /api/admin/ambassadors          ADMIN → liste                        ┐
+GET    /api/admin/ambassadors/:id/stats ADMIN                               │ AdminAmbassadorsController
+PATCH  /api/admin/ambassadors/:id/pay-all ADMIN                             │
+POST   /api/admin/ambassadors/promote|revoke ADMIN                          │
+GET    /api/admin/referral/overview    ADMIN                                ┘
 
 GET    /api/integrations/tradovate/connections                 JWT → état de connexion par compte (jamais de token)
 POST   /api/integrations/tradovate/accounts/:accountId/authorize  JWT → { url } + cookie httpOnly de state · body { origin?: 'wizard'|'settings' }
@@ -183,7 +203,7 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   la liste admin). Corollaire : un `AMBASSADOR` doit **toujours** avoir un code — les
   changements de rôle passent par `AmbassadorService.promote()` / `revoke()`, jamais par
   un `user.update({ data: { role } })` direct. `UsersService.setRole` y délègue.
-  Backfill : `scripts/backfill-ambassador-codes.ts` (idempotent).
+  Backfill : `tools/scripts/backfill/ambassador-codes.ts` (idempotent).
 - **Règle de coexistence du parrainage** : c'est le **rôle du parrain** qui décide, dans
   `processReferral` (`stripe-referral.service.ts`). Parrain `AMBASSADOR` → commission cash 20 %
   (`ReferralCommission`), **jamais** de mois offert. Parrain `USER` → mois offert
@@ -202,10 +222,19 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
 - `@UseGuards(JwtAuthGuard)` sur toutes les routes protégées
 - `@UseGuards(PremiumGuard)` sur routes IA et analytics avancés
 - `@UseGuards(JwtAuthGuard, AdminGuard)` sur TOUTES les routes `/vps/*`, `/docker/*`, `/admin/*`
+- **Route admin = sous `/admin`**, dans un contrôleur gardé AU NIVEAU DE LA CLASSE (`AdminController`,
+  `AdminUsersController`, `AdminAmbassadorsController`) : jamais de `@UseGuards(AdminGuard)` route par route
+  dans un contrôleur utilisateur. Test : `modules/admin/admin-routes.spec.ts`.
+- Déplacer une route : garder l'ancienne une version avec `@DeprecatedRoute('GET /nouvelle')`
+  (`common/decorators`) qui journalise un `warn` à chaque appel ; la supprimer quand les logs sont muets.
+  En cours : `/users/admin/*`, `/ambassador/list|admin/*|pay-all/*`, `/referral/admin/overview`,
+  `/trades/{market-context,news,live-price,instruments,user-assets,favorite-asset}`.
 - `@UseGuards(JwtAuthGuard, BetaGuard)` sur routes V2 session mode (BETA_TESTER + ADMIN)
 - `/api/analytics/summary` : PAS de PremiumGuard (FREE y accède)
 - `ValidationPipe` global : `whitelist: true, forbidNonWhitelisted: true`
 - Ne jamais appeler Prisma dans les controllers
+- Imports profonds : alias `@api/…` (= `src/`, ex. `@api/common/guards/jwt-auth.guard`), déclaré dans
+  `tsconfig.base.json`, `webpack.config.js` et les deux `vitest*.config.mts`
 - Ne jamais `console.log` → Logger NestJS
 - Argon2 pour les mots de passe (jamais Bcrypt)
 - JWT : access_token 15min, refresh_token 7j httpOnly cookie
@@ -280,7 +309,7 @@ Format : { "patterns": [{ "type": string, "title": string, "description": string
 
 async analyze(summary: string): Promise<Pattern[]> {
   const res = await this.anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: AI_MODELS.analysis, // jamais un identifiant en dur : modules/infra/ai-pricing.const.ts
     max_tokens: 1024,
     system: [{ type: 'text', text: PATTERN_SYSTEM, cache_control: { type: 'ephemeral' } }],
     messages: [{ role: 'user', content: summary }]
@@ -388,7 +417,7 @@ pas les exports inutilisés). Le relire donnait l'illusion de modifier le chat.
 
 ```typescript
 const response = await this.anthropic.messages.create({
-  model: 'claude-sonnet-4-6',
+  model: AI_MODELS.analysis,
   max_tokens: 1024,
   system: [{
     type: 'text',
@@ -510,11 +539,15 @@ async scheduledDebriefs() {
 
 - Clustering activé uniquement en `NODE_ENV=production`. Nombre de workers = `availableParallelism()` (cœurs CPU dispo ; 8 sur le VPS actuel) — pas une valeur fixe
 - `IS_CRON_WORKER=true` sur 1 seul worker → seul lui exécute `@Cron`
-- `ScheduleModule.forRoot()` conditionnel dans `app.module.ts` :
+- `ScheduleModule.forRoot()` conditionnel dans `app.module.ts`, en **opt-in** :
   ```typescript
-  ...(process.env['IS_CRON_WORKER'] !== 'false' ? [ScheduleModule.forRoot()] : [])
+  ...(process.env['IS_CRON_WORKER'] === 'true' ? [ScheduleModule.forRoot()] : [])
   ```
-- En dev : process unique, pas de clustering, IS_CRON_WORKER non défini → crons actifs normalement
+- En dev : process unique, pas de clustering. Crons INACTIFS sauf `IS_CRON_WORKER=true` dans `.env`
+- Worker mort : relancé avec un délai croissant (1 s → 30 s) ; au-delà de 5 morts en une minute,
+  le process principal sort en erreur et Docker redémarre le conteneur (pas de boucle infinie).
+- SIGTERM (docker stop) : le principal le transmet aux workers sans les relancer ;
+  `app.enableShutdownHooks()` ferme proprement Redis, Prisma et BullMQ.
 - **WebSocket en cluster** : broadcast cross-worker via `@socket.io/redis-adapter` (`RedisIoAdapter` branché au bootstrap dans `main.ts`) — obligatoire en cluster, sinon les emits n'atteignent que les clients connectés au même worker
 
 ---
@@ -657,6 +690,26 @@ Deux pièges d'ordonnancement :
 ---
 
 ## Validation DTOs (Zod via class-validator)
+
+> ⚠ **Ne PAS remplacer `CreateTradeDto` par le schéma zod du front** (CT-04 laissée ouverte,
+> analyse du 2026-09-27). Le schéma de `app/core/schemas/trade.schema.ts` est écrit pour un
+> formulaire, pas pour une API, et il diverge du DTO :
+>
+> | Champ | DTO | Schéma front |
+> |---|---|---|
+> | `entry` | optionnel, ≥ 0 | **obligatoire, > 0** |
+> | `commission` | présent | **absent** |
+> | `accountId` | présent | **absent** |
+> | `exit` · `stopLoss` · `takeProfit` | ≥ 0 | > 0 |
+> | `asset` · `notes` · `tags` | bornés (40 · 2000 · 20×30) | non bornés |
+> | `tradedAt` | `IsDateString` | `string` libre |
+>
+> `commission` et `accountId` sont écrits par la **synchro broker** et l'**import CSV**. Le
+> `ValidationPipe` global tourne en `whitelist: true, forbidNonWhitelisted: true` : un schéma
+> incomplet ne les ignorerait pas, il ferait **échouer la requête**. Pour finir CT-04 : partir du
+> DTO (plus complet), créer une lib dédiée — `libs/shared` s'interdit toute dépendance externe,
+> donc pas de zod dedans — et tester un trade venant de la synchro et un venant d'un CSV.
+
 
 ```typescript
 export class CreateTradeDto {
@@ -955,16 +1008,29 @@ sont en direct.
   de bord). Aujourd'hui : `computeTradeStats` / `classifyTrade` (règle du win rate) et les valeurs
   tarifaires (`PREMIUM_PRICE_EUR`, `TRIAL_PERIOD_DAYS`, `ACCOUNT_LIMITS`,
   `PREMIUM_ANNUAL_SAVINGS_EUR`). Import : `from '@mtc/shared'`.
-- Branchement côté API (3 endroits, tous nécessaires) :
-  - `tsconfig.app.json` : `paths` + la lib dans `include` (projet `composite`) + `rootDir: ../..` ;
+- Branchement (tous nécessaires) :
+  - `tsconfig.base.json` : **seul** `paths` `@mtc/shared`, hérité par l'API, l'app, l'admin et
+    `tsx` (seed). C'est aussi ce que Nx lit pour le graphe : sans lui, `nx affected` ne voyait
+    pas que les apps dépendent de la lib. Ne jamais redéclarer `paths` dans un tsconfig d'app
+    (il remplacerait celui de la base) ;
+  - `tsconfig.app.json` de l'API : la lib dans `include` (projet `composite`) + `rootDir: ../..` ;
   - `webpack.config.js` : alias posé dans le hook `NodeModulesExternalsPlugin` (le plugin paths de
     Nx ne lit pas nos `paths`) ET `@mtc/*` exclu des externals — sinon `require('@mtc/shared')`
     au démarrage, introuvable dans node_modules ;
-  - `vitest.config.ts` et `vitest.integration.config.ts` : `resolve.alias`.
+  - `vitest.config.mts` et `vitest.integration.config.mts` : `resolve.alias` (vitest ignore `paths`).
+- Tests de la lib : dans `libs/shared/src/*.spec.ts`, lancés par `pnpm nx test shared`
+  (plus dans l'API). Typecheck : `pnpm nx typecheck shared`.
+- Frontières (`eslint.config.mjs`, `@nx/enforce-module-boundaries`) : tags `type:*` / `scope:*`
+  sur chaque projet ; `libs/shared` (`scope:shared`) n'importe que lui-même, une app n'importe
+  jamais une autre app, le front n'importe jamais l'API. Un import interdit casse le lint.
+- Créer une nouvelle lib : `pnpm nx g @nx/js:lib libs/<nom> --bundler=none`, lui donner ses tags,
+  puis déclarer son alias dans `tsconfig.base.json` (et dans les alias vitest / webpack si une
+  app de test ou l'API l'importe).
 - Ré-exporter une valeur de la lib : `export { X } from '@mtc/shared'` — jamais un import suivi de
   `export { X }`, effacé par la transpilation fichier par fichier (webpack : « export not found »).
-- Pas de `tsconfig` dans `libs/shared` (volontaire) : le plugin TS de Nx y ajouterait des cibles et
-  `nx sync` (lancé dans le Dockerfile) réécrirait les références TS.
+- Pas de `tsconfig.json` dans `libs/shared` (volontaire) : le plugin TS de Nx y ajouterait des
+  cibles et `nx sync` (lancé dans le Dockerfile) ajouterait aux apps des références vers une lib
+  non composite, ce qui casse le build. Le typecheck de la lib lit `tsconfig.check.json`.
 - Types d'API front/back (27 noms en double) : PAS encore partagés — les dates y sont `Date` côté
   API et `string` côté front (JSON) ; à traiter avec un type de transport dédié.
 
@@ -974,7 +1040,76 @@ sont en direct.
   futures/spot, Bybit, IBKR, MEXC, MT4/MT5), séparateur européen, `splitCsvLine`,
   `mapNormalizedCsvToDto`, `detectSession`, et les types `BrokerType` / `ImportDto`. Fonctions
   PURES : aucun service injecté, testables directement (`csv-import.service.spec.ts` les importe).
-- `CsvImportService` (≈ 570 lignes au lieu de 1 120) garde l'orchestration : plan / accès IA,
-  formats inconnus via Claude, fusion des frais Tradovate, persistance.
-- Nouveau broker = une fonction `parseXxx(lines)` dans `csv-parsers.ts` + un cas dans
-  `detectBroker` / `preprocessCsv` — pas de nouvelle méthode dans le service.
+- `CsvImportService` garde l'orchestration : plan / accès IA, formats inconnus, fusion des
+  frais Tradovate, persistance.
+- **Nouveau broker : passer par le REGISTRE, pas par du code** (2026-09-28). Écrire un
+  `parseXxx` reste possible mais n'est plus la voie normale : un admin colle un échantillon
+  dans `/brokers` (admin), le modèle déduit la fiche, l'admin la corrige et l'enregistre, et
+  le broker est reconnu **pour tous les plans** sans build ni déploiement. Les 7 parseurs en
+  dur restent en place pour les brokers historiques.
+
+## Registre des brokers (2026-09-28)
+
+Ordre de résolution d'un import, à ne pas réarranger :
+
+1. `detectBroker` reconnaît l'en-tête → parseur en dur, local, gratuit.
+2. **Registre** (`BrokerMappingService.findByHeader`) → fiche en base, local, gratuit, **tous
+   les plans**. Placé AVANT le verrou Premium : c'est toute la raison d'être du registre.
+3. Le fichier ressemble-t-il à un export de trades ? Sinon message neutre, sans upsell.
+4. Chemin IA (`PremiumGuard` + `AI_ENABLED`) : d'abord un **mapping** (un appel, ~0,003 $,
+   coût indépendant de la taille), et seulement s'il échoue le repli ligne par ligne
+   (`AI_BATCH` = 120, ~1,43 $ pour 2000 lignes).
+
+Fichiers : `trades/csv-mapping.ts` (types, validation de forme, application, contrôle du P&L,
+`headerSignature`), `trades/broker-mapping.service.ts` (lecture/écriture des fiches),
+`admin/admin-broker-mappings.controller.ts` (`analyse` payant, `preview` gratuit, `POST`).
+
+**Le sens (long/short) ne se prend jamais sur parole.** Mesuré le 2026-09-28 sur 5 formats :
+les modèles identifient les colonnes de façon fiable (30/30 critères) mais se trompent de sens
+2 fois sur 5, et une inversion transforme tous les longs en shorts sans qu'aucune erreur ne
+remonte. Le sens est donc tranché par le **signe du P&L** (`applyMappingWithPnlCheck`) :
+un long gagne quand la sortie dépasse l'entrée. Si le mapping contredit les chiffres, il est
+inversé ; si le contrôle est impossible (pas de prix d'entrée, type Binance Futures) ou sous
+80 %, on **renonce** et on retombe sur le parcours « broker inconnu ». Un import cher vaut
+mieux qu'un import faux.
+
+Ce contrôle est rejoué **à chaque import**, pas seulement à la validation : la fiche a été
+validée sur 20 lignes d'un utilisateur, elle s'applique au fichier entier d'un autre.
+
+Deux limites connues, documentées dans `csv-mapping.ts` : en mode horodatages, permuter les
+colonnes de temps inverse le sens ET l'entrée/sortie, donc le P&L ne tranche pas ; un trade
+dont les frais dépassent le gain brut a un signe « faux » sans rien de cassé, d'où un seuil en
+part de lignes et non la perfection.
+
+## Robustesse de l'API (audit du 27/09/2026)
+
+- **Erreurs** : `HttpExceptionFilter` est global (`@Catch()`), toute erreur sort au format
+  `{ statusCode, code?, message, timestamp, path }`. Prisma non rattrapé : P2002 → 409
+  `CONFLICT`, P2025 → 404 `NOT_FOUND` ; le reste → 500 `INTERNAL` sans détail (pile dans les
+  logs + Sentry). `path` et les logs n'incluent jamais la query string.
+- **Sentry** : `src/instrument.ts`, premier import de `main.ts`, actif seulement si `SENTRY_DSN`.
+  Les 5xx sont remontées par le filtre global ; ne pas ajouter de `captureException` ailleurs.
+- **IA** : modèles dans `AI_MODELS` (`modules/infra/ai-pricing.const.ts`), jamais en dur ; un
+  test vérifie que chaque modèle a son tarif. Délai par appel = `max(60 s, 30 ms × max_tokens)`,
+  une seule relance, chaque échec tracé (sans le contenu envoyé).
+- **Santé** : `GET /api/health` = liveness (process vivant, healthcheck Docker) ;
+  `GET /api/health/ready` = readiness (ping Postgres + Redis, 503 en nommant le composant).
+- **Environnement** : `src/config/env.ts` est la liste de référence (required / production /
+  optional + format). Nouvelle variable → l'y ajouter ET dans `apps/api-mytradingcoach/.env.example`.
+- **Redis** : `RedisService` se connecte à l'init (`onModuleInit`) ; sans ça, la 1re commande de
+  chaque worker échouait (`lazyConnect` + `enableOfflineQueue: false`).
+
+## Contrat front ↔ API (`libs/shared/src/contracts`, audit du 27/09/2026)
+
+- **Source unique des formes JSON échangées** : enums (copie des enums Prisma), trades, sessions,
+  débrief, calendrier éco, fiche utilisateur admin, stats VPS. Import : `from '@mtc/shared'`.
+- Les dates y sont des `string` ISO (ce que le front reçoit). Côté API, les DTO de requête
+  `implements` le contrat (`CreateTradeDto implements CreateTradeRequest`) : un champ ajouté d'un
+  seul côté casse la compilation.
+- Enums : `EmotionState.FOCUSED` (valeur) / `EmotionState` (type). Le test API
+  `common/contracts-sync.spec.ts` compare chaque enum à Prisma : après une migration qui touche un
+  enum, mettre à jour `contracts/enums.ts`.
+- Jamais de nouvelle interface d'échange recopiée dans `core/api/*.api.ts` : l'ajouter au contrat,
+  puis la ré-exporter (`export type { X }`) si des importeurs existants passent par l'API front.
+- Aussi partagés : `todayParis` / `parisDayRange` (dates Paris), `normalizeEventKey` / `eventKey`,
+  `renderEmailMarkdown` (rendu des campagnes, envoi + aperçu admin).

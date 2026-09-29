@@ -13,3 +13,17 @@ apps/app-mytradingcoach
 apps/app-mytradingcoach-e2e
 apps/landing-mytradingcoach
 project.json
+
+# Documentation et references : aucun impact sur l'image, mais chaque modification
+# invalidait `COPY . .` et relancait un build complet de l'API (257 s mesurees le
+# 2026-09-29). `docs/` pese a lui seul 20 Mo, essentiellement des captures d'audit.
+docs
+maquettes
+.claude
+# Back-office : l'image de l'API n'en a pas besoin, au meme titre que les trois autres
+# applications front deja exclues ci-dessus.
+apps/admin-mytradingcoach
+# Son projet e2e le declare en dependance implicite : exclure l'un sans l'autre casse le
+# graphe Nx (« implicitDependencies point to non-existent project »). Meme raison que pour
+# app-mytradingcoach et son e2e plus haut.
+apps/admin-mytradingcoach-e2e

@@ -14,4 +14,4 @@
 .mtc-coach-s, .mtc-lock-s { font-size: 12px; color: var(--text-3); max-width: 240px; line-height: 1.5; }
 .mtc-coach-btn { margin-top: 4px; display: inline-flex; align-items: center; gap: 8px; padding: 9px 18px; border-radius: 9px; border: 1px solid rgba(34, 211, 238, .25); background: rgba(34, 211, 238, .06); color: var(--cyan); font-family: var(--font-display); font-size: 13px; font-weight: 600; cursor: pointer; }
 .mtc-lock-ic { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--badge-premium-color); background: var(--badge-premium-bg); border: 1px solid var(--badge-premium-border); }
-.mtc-lock-cta { margin-top: 4px; padding: 9px 18px; border-radius: 9px; border: none; background: var(--blue); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 0 18px rgba(59, 130, 246, .4); }
+.mtc-lock-cta { margin-top: 4px; padding: 9px 18px; border-radius: 9px; border: none; background: var(--primary); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 0 18px rgba(59, 130, 246, .4); }

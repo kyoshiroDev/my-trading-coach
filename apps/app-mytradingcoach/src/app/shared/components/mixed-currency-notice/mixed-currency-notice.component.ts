@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { LucideDynamicIcon, LucideCoins as Coins } from '@lucide/angular';
 
 /**
- * « Tous les comptes » avec des devises différentes (PROMPT-214) : à la place des totaux (KPI,
+ * « Tous les comptes » avec des devises différentes : à la place des totaux (KPI,
  * courbes, calendrier), qui additionneraient des USD et des EUR. Les lignes de trades, elles,
  * restent affichées, chacune dans la devise de son compte.
  */

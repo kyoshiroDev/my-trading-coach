@@ -15,7 +15,7 @@ const day = (p: TradovatePosition): string | null =>
     : null;
 
 /**
- * Ce que Tradovate a RENVOYÉ lors d'une synchro, en une phrase de log (PROMPT-212).
+ * Ce que Tradovate a RENVOYÉ lors d'une synchro, en une phrase de log.
  *
  * Pourquoi : « 0 trade importé » ne disait pas si Tradovate n'avait rien renvoyé (compte vide,
  * historique non exposé hors séance) ou si des données avaient été écartées (mauvais compte

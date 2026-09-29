@@ -147,7 +147,8 @@
         <div class="card-head"><span class="card-label">Dernières sessions</span><span class="card-action ud-static">lecture seule</span></div>
         <div class="card-body">
           <table class="tbl">
-            <thead><tr><th>Date</th><th>Trades</th><th>P&amp;L</th><th>Win rate</th><th>Humeur</th><th>Durée</th></tr></thead>
+            <caption class="sr-only">Dernières sessions</caption>
+            <thead><tr><th scope="col">Date</th><th scope="col">Trades</th><th scope="col">P&amp;L</th><th scope="col">Win rate</th><th scope="col">Humeur</th><th scope="col">Durée</th></tr></thead>
             <tbody>
               @for (s of d.sessions; track s.date) {
                 <tr>

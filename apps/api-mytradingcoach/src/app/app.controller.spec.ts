@@ -5,9 +5,9 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { ResponseInterceptor } from '../common/interceptors/response.interceptor';
 
-// Verrouille le contrat de routing SEO (PROMPT-172) : robots.txt à la RACINE du sous-domaine,
+// Verrouille le contrat de routing SEO : robots.txt à la RACINE du sous-domaine,
 // health conservé sous /api. On enregistre le ResponseInterceptor GLOBAL (comme en prod) pour
-// prouver que robots.txt sort en texte BRUT (et non emballé { data: ... }, bug PROMPT-173).
+// prouver que robots.txt sort en texte BRUT (et non emballé { data: ... }, bug déjà rencontré).
 describe('AppController — routing SEO (robots.txt / health)', () => {
   let app: INestApplication;
   let base: string;

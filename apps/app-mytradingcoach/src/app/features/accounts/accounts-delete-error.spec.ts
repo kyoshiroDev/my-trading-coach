@@ -1,5 +1,5 @@
 /**
- * PROMPT-204 — la suppression de compte échouait en silence (retour Val, Discord).
+ * la suppression de compte échouait en silence (retour Val, Discord).
  *
  * Le back refuse d'archiver le DERNIER compte actif porteur d'historique — règle
  * correcte, elle évite un utilisateur sans compte où rattacher ses prochains trades.
@@ -17,6 +17,7 @@ import { AccountsComponent } from './accounts.component';
 import { AccountsApi, TradingAccount } from '../../core/api/accounts.api';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { UserStore } from '../../core/stores/user.store';
+import { ConfirmService } from '@mtc/front-ui';
 
 const MESSAGE_BACK =
   "Garde au moins un compte actif. Crée-en un autre avant d'archiver celui-ci.";
@@ -48,6 +49,8 @@ function setup(comptes: TradingAccount[], removeImpl: () => unknown) {
       { provide: AccountsApi, useValue: api },
       { provide: SelectedAccountStore, useValue: store },
       { provide: UserStore, useValue: { isPremium: () => true, maxAccounts: signal(null) } },
+      // L'utilisateur confirme la suppression dans le dialogue.
+      { provide: ConfirmService, useValue: { ask: vi.fn(() => Promise.resolve(true)) } },
     ],
   });
   TestBed.overrideComponent(AccountsComponent, {
@@ -61,20 +64,18 @@ function setup(comptes: TradingAccount[], removeImpl: () => unknown) {
   return { cmp: fixture.componentInstance as any, api, store, fixture };
 }
 
-/** `confirmDelete` passe par `confirm()` natif : on l'accepte pour atteindre l'appel. */
 beforeEach(() => {
   TestBed.resetTestingModule();
-  vi.stubGlobal('confirm', () => true);
 });
 
 describe('Comptes — un refus de suppression est désormais expliqué', () => {
-  it('400 du back → le message est affiché tel quel', () => {
+  it('400 du back → le message est affiché tel quel', async () => {
     const { cmp, store } = setup(
       [acct('a', 12)],
       () => throwError(() => ({ error: { message: MESSAGE_BACK } })),
     );
 
-    cmp.confirmDelete(acct('a', 12));
+    await cmp.confirmDelete(acct('a', 12));
 
     expect(
       cmp.deleteError(),
@@ -83,29 +84,29 @@ describe('Comptes — un refus de suppression est désormais expliqué', () => {
     expect(store.load, 'Rien à recharger, la suppression a échoué').not.toHaveBeenCalled();
   });
 
-  it('erreur sans message serveur → repli lisible, jamais « undefined »', () => {
+  it('erreur sans message serveur → repli lisible, jamais « undefined »', async () => {
     const { cmp } = setup([acct('a', 12)], () => throwError(() => new Error('net')));
 
-    cmp.confirmDelete(acct('a', 12));
+    await cmp.confirmDelete(acct('a', 12));
 
     expect(cmp.deleteError()).toBe('Suppression impossible.');
   });
 
-  it('succès → aucun message, liste rechargée (non-régression)', () => {
+  it('succès → aucun message, liste rechargée (non-régression)', async () => {
     const { cmp, store } = setup(
       [acct('a', 0), acct('b', 5)],
       () => of({ data: { deleted: true } }),
     );
 
-    cmp.confirmDelete(acct('a', 0));
+    await cmp.confirmDelete(acct('a', 0));
 
     expect(cmp.deleteError()).toBeNull();
     expect(store.load).toHaveBeenCalled();
   });
 
-  it('rouvrir un menu efface le message précédent', () => {
+  it('rouvrir un menu efface le message précédent', async () => {
     const { cmp } = setup([acct('a', 12)], () => throwError(() => new Error('net')));
-    cmp.confirmDelete(acct('a', 12));
+    await cmp.confirmDelete(acct('a', 12));
     expect(cmp.deleteError()).not.toBeNull();
 
     cmp.toggleMenu('a');
@@ -113,9 +114,9 @@ describe('Comptes — un refus de suppression est désormais expliqué', () => {
     expect(cmp.deleteError(), 'Message obsolète laissé sous une liste qui a changé').toBeNull();
   });
 
-  it('changer de vue efface le message', () => {
+  it('changer de vue efface le message', async () => {
     const { cmp, store, fixture } = setup([acct('a', 12)], () => throwError(() => new Error('net')));
-    cmp.confirmDelete(acct('a', 12));
+    await cmp.confirmDelete(acct('a', 12));
     expect(cmp.deleteError()).not.toBeNull();
 
     store.selectedAccountId.set('a');
@@ -126,12 +127,12 @@ describe('Comptes — un refus de suppression est désormais expliqué', () => {
 });
 
 describe('Comptes — l\'option Supprimer est inerte quand l\'échec est certain', () => {
-  it('dernier compte actif AVEC trades → bloqué en amont', () => {
+  it('dernier compte actif AVEC trades → bloqué en amont', async () => {
     const { cmp } = setup([acct('a', 12)], () => of({ data: {} }));
     expect(cmp.suppressionBloquee(acct('a', 12))).toBe(true);
   });
 
-  it('dernier compte actif SANS trade → autorisé (le back le supprime)', () => {
+  it('dernier compte actif SANS trade → autorisé (le back le supprime)', async () => {
     // Sur-bloquer serait pire que le bug : le back supprime volontiers un compte vide,
     // même s'il est le dernier.
     const { cmp } = setup([acct('a', 0)], () => of({ data: {} }));

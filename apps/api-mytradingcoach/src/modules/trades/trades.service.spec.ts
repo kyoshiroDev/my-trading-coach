@@ -14,7 +14,7 @@ import { TradesService } from './trades.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
-import { RedisService } from '../shared/redis.service';
+import { RedisService } from '../infra/redis.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { SetupsService } from '../setups/setups.service';
 import { netPnl } from '@mtc/shared';
@@ -62,11 +62,11 @@ const mockPrisma = {
     deleteMany: vi.fn(),
     count: vi.fn(),
   },
-  // Recalcul comportemental par lot (PROMPT-168) : transaction des updates.
+  // Recalcul comportemental par lot : transaction des updates.
   $transaction: vi.fn((ops) => Promise.resolve(Array.isArray(ops) ? ops : [])),
   tradeSession: {
     findFirst: vi.fn().mockResolvedValue(null),
-    findUnique: vi.fn().mockResolvedValue(null), // moodStart (note d'exécution, PROMPT-161)
+    findUnique: vi.fn().mockResolvedValue(null), // moodStart (note d'exécution)
   },
   // Compte cible pour la note d'exécution (capital) — null par défaut (critère risque ignoré).
   tradingAccount: {
@@ -125,7 +125,7 @@ describe('TradesService', () => {
   });
 
   describe('create', () => {
-    describe('Trades illimités (fin du quota FREE — PROMPT-169)', () => {
+    describe('Trades illimités (plus de quota de trades en FREE)', () => {
       it('crée sans limite quel que soit le nombre de trades existants', async () => {
         mockPrisma.trade.count.mockResolvedValue(9999);
         mockPrisma.trade.create.mockResolvedValue(mockTrade);
@@ -272,7 +272,7 @@ describe('TradesService', () => {
       });
 
       // NQ: 10 ticks × $20 = $200 BRUT stocké ; les $5 de frais restent dans `commission`
-      // (net $195 calculé à la lecture par netPnl, PROMPT-213).
+      // (net $195 calculé à la lecture par netPnl).
       expect(result.pnl).toBe(200);
       expect(result.commission).toBe(5);
     });
@@ -451,7 +451,7 @@ describe('TradesService', () => {
       expect(result.pnl).toBe(100);
     });
 
-    it('garde le P&L BRUT quand une commission est ajoutée (frais à part, PROMPT-213)', async () => {
+    it('garde le P&L BRUT quand une commission est ajoutée (frais à part)', async () => {
       const existingTrade = {
         ...mockTrade,
         asset: 'NQ',
@@ -491,7 +491,7 @@ describe('TradesService', () => {
     });
   });
 
-  // PROMPT-185 #2 — un setup archivé ne doit plus geler les trades qui l'utilisent.
+  // un setup archivé ne doit plus geler les trades qui l'utilisent.
   // Le front renvoie le DTO complet à chaque édition : revalider un `setupId`
   // inchangé rendait tout trade historique non modifiable dès que son setup était
   // archivé (« Setup invalide » en corrigeant une simple note).
@@ -550,7 +550,7 @@ describe('TradesService', () => {
       emotion: EmotionState.NEUTRAL, setupId: 'setup-1',
       session: TradingSession.LONDON, timeframe: '1h', tradedAt: tradedAt.toISOString(),
     });
-    const hashes = () => mockPrisma.trade.create.mock.calls.map((c: [{ data: { importHash: string } }]) => c[0].data.importHash);
+    const hashes = () => mockPrisma.trade.create.mock.calls.map((c: unknown[]) => (c[0] as { data: { importHash: string } }).data.importHash);
 
     it('skip les trades déjà en base ; deux lignes identiques du lot sont deux trades', async () => {
       // Une ligne répétée dans une même source n'est pas un doublon : un trade à plusieurs
@@ -751,10 +751,20 @@ describe('TradesService', () => {
     });
   });
 
-  // ── Recalcul comportemental par lot (PROMPT-168) ──────────────────────────
+  // ── Recalcul comportemental par lot ──────────────────────────
   describe('recomputeBehavioralGrades', () => {
     // Fabrique N trades sans stop, même jour, espacés de 20 min, tous perdants (-100, qty 1).
-    const buildTrades = (n: number) =>
+    type GradedTradeFixture = {
+      id: string;
+      pnl: number;
+      quantity: number;
+      tradedAt: Date;
+      stopLoss: number | null;
+      executionScore: number | null;
+      executionGrade: string | null;
+      executionMethod: string | null;
+    };
+    const buildTrades = (n: number): GradedTradeFixture[] =>
       Array.from({ length: n }, (_, i) => ({
         id: `t${i}`,
         pnl: -100,
@@ -800,7 +810,7 @@ describe('TradesService', () => {
   });
 
   /**
-   * PROMPT-200 — `create()` et `update()` doivent renvoyer `effectiveEmotion`.
+   * `create()` et `update()` doivent renvoyer `effectiveEmotion`.
    *
    * Retour de Nath (Discord) : apres un changement d'emotion, l'UI affichait
    * « non renseignee » jusqu'a F5. `findAll()` calculait bien le champ, pas les deux

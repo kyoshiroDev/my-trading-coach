@@ -134,7 +134,7 @@ export class ResendService {
     winRate: number;
     totalPnl: number;
     totalTrades: number;
-    /** Devise des comptes (PROMPT-214) ; null si elles diffèrent. */
+    /** Devise des comptes ; null si elles diffèrent. */
     currency: string | null;
   }): Promise<void> {
     const { subject, html } = debriefReadyTemplate({
@@ -161,7 +161,7 @@ export class ResendService {
   async sendDailyRecap(
     user: { email: string; name: string | null },
     recap: { date: Date; pnl: number; winRate: number; tradesCount: number; aiOneLiner: string | null },
-    /** Devise des comptes (PROMPT-214) ; null si elles diffèrent. */
+    /** Devise des comptes ; null si elles diffèrent. */
     currency: string | null,
   ): Promise<void> {
     const { subject, html } = dailyRecapTemplate({

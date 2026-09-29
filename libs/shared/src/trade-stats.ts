@@ -1,5 +1,5 @@
 /**
- * Statistiques de trades : SOURCE UNIQUE front + back (PROMPT-160, centralisée à l'étape 3 de
+ * Statistiques de trades : SOURCE UNIQUE front + back (centralisée à l'étape 3 de
  * l'audit du 2026-09-13 — il y avait deux copies « miroir », identiques en logique).
  *
  * Un trade clôturé est classé en 3 résultats :
@@ -33,7 +33,7 @@ export interface TradeStatInput {
 /**
  * P&L NET d'un trade = pnl (brut) − frais. `null` si le trade est ouvert (pnl non renseigné).
  *
- * CONVENTION UNIQUE (PROMPT-213) : `pnl` est stocké BRUT, `commission` à part, et TOUT montant
+ * CONVENTION UNIQUE : `pnl` est stocké BRUT, `commission` à part, et TOUT montant
  * affiché comme tout classement gagnant/perdant passe par ce net. Un trade à +1 $ brut avec
  * 1,90 $ de frais est une perte. Un appelant qui ne fournit pas `commission` obtient le brut :
  * toujours sélectionner `commission` avec `pnl`.
@@ -41,6 +41,27 @@ export interface TradeStatInput {
 export function netPnl(t: TradeStatInput): number | null {
   if (t.pnl == null) return null;
   return +(t.pnl - Math.abs(t.commission ?? 0)).toFixed(2);
+}
+
+/** Forme minimale d'un trade pour la variation de prix. */
+export interface PriceMoveInput {
+  side: 'LONG' | 'SHORT';
+  entry: number | null | undefined;
+  exit: number | null | undefined;
+}
+
+/**
+ * Variation du prix entre entrée et sortie, dans le sens du trade, en POURCENTAGE
+ * (un SHORT qui baisse est positif). `null` si le trade est ouvert ou l'entrée invalide.
+ *
+ * C'est le seul pourcentage qui a un sens pour tous les instruments. L'ancien calcul
+ * `pnl / entry` divisait des dollars par un prix : sur EUR/USD (entrée ≈ 1,08) il
+ * affichait +2764 % pour +30 $, et sur MNQ un chiffre plausible mais tout aussi faux.
+ */
+export function priceMovePct(t: PriceMoveInput): number | null {
+  if (t.entry == null || t.exit == null || !(t.entry > 0)) return null;
+  const move = (t.exit - t.entry) / t.entry;
+  return (t.side === 'SHORT' ? -move : move) * 100;
 }
 
 export interface TradeStats {

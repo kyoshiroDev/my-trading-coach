@@ -1,3 +1,8 @@
+---
+name: angular
+description: "Conventions de l'app et de l'admin Angular (signals, zoneless, libs front partagées, modales, erreurs, routes). À lire avant tout travail dans apps/app-mytradingcoach ou apps/admin-mytradingcoach."
+---
+
 # Agent Angular — app-mytradingcoach
 
 ## Stack
@@ -57,7 +62,8 @@ src/app/
 │   ├── ai-insights/        ai-insights.component · insight-card.component
 │   ├── weekly-debrief/     debrief.component · debrief-objectives · debrief-emotions
 │   ├── scoring/            scoring.component
-│   ├── settings/           settings.component
+│   ├── profile/            profile.component (route /profil)
+│   ├── today-session/      today-session.component (route /session)
 │   └── auth/               login.component · register.component
 ├── shared/
 │   ├── components/  sidebar/ · topbar/ · stat-card/ · badge/ · locked-feature/
@@ -68,9 +74,37 @@ src/app/
 └── app.routes.ts
 ```
 
+### Imports
+
+Au-delà de 2 niveaux de `../`, utiliser l'alias : `@app/core/…`, `@app/shared/…`, `@app/features/…`,
+`@app/environments/environment` (admin : `@admin/…`). Déclarés dans `tsconfig.base.json` et dans
+`resolve.alias` de `vitest.config.mts` (le plus précis en premier).
+
+### URL → dossier
+
+Les URLs restent en français (liens des emails, favoris) ; les dossiers sont en anglais.
+
+| App — URL | Dossier `features/` | Admin — URL | Dossier `features/` |
+|---|---|---|---|
+| `/dashboard` | `dashboard` | `/dashboard` | `dashboard` |
+| `/session` | `today-session` | `/users`, `/users/:id` | `users`, `user-detail` |
+| `/journal` | `journal` | `/subscriptions` | `subscriptions` |
+| `/sessions` | `sessions` | `/revenue` | `revenue` |
+| `/accounts` | `accounts` | `/deleted` | `deleted` |
+| `/analytics` | `analytics` | `/surveillance` | `monitoring` |
+| `/ai-insights` | `ai-insights` | `/backups` | `backups` |
+| `/debrief` | `weekly-debrief` | `/ai-usage` | `ai-usage` |
+| `/scoring` | `scoring` | `/emails` | `emails` |
+| `/eco-calendar` | `eco-calendar` | `/ambassadeurs` | `ambassadors` |
+| `/profil` | `profile` | `/parrainage` | `referral` |
+| `/ambassador` | `ambassador` | | |
+| `/parrainage` | `referral` | | |
+| `/devenir-ambassadeur` | `become-ambassador` | | |
+| `/login`, `/register`, `/demo`… | `auth` | | |
+
 ### « Ma session » — route `/session` (générale, tous plans)
 
-`session-day.component.ts` (features/session-day/) : shell à 3 onglets aligné sur
+`today-session.component.ts` (features/today-session/) : shell à 3 onglets aligné sur
 la maquette design (« The Terminal »).
 
 ```typescript
@@ -625,9 +659,12 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
 
 - Import `from '@mtc/shared'` (stats de trades, valeurs tarifaires) — source unique avec l'API.
   Détails et règles de la lib : `nestjs.md` § « Librairie partagée ».
-- Branchement : `paths` dans `tsconfig.json` de l'app et de l'admin (lu par esbuild et par le
-  builder de tests de l'admin), la lib dans l'`include` de `tsconfig.spec.json` de l'app
-  (projet `composite`), et `resolve.alias` dans `apps/app-mytradingcoach/vitest.config.ts`.
+- Branchement (voir `nestjs.md` § « Librairie partagée » pour la liste complète) : l'alias
+  `@mtc/shared` est déclaré **une seule fois**, dans `tsconfig.base.json` (hérité par l'app et
+  l'admin, et lu par Nx pour le graphe : une modif de la lib rebuild et redéploie les apps).
+  Ne PAS redéclarer `paths` dans le tsconfig d'une app : cela écrase celui de la base.
+  Vitest ne lit pas les `paths` : `resolve.alias` dans `apps/app-mytradingcoach/vitest.config.mts`.
+  La lib reste dans l'`include` de `tsconfig.spec.json` de l'app (projet `composite`).
 - `core/constants/pricing.const.ts` garde ses exports (`PRICING`, `ACCOUNT_LIMITS`,
   `yearlyPerMonth`) mais lit ses VALEURS dans `@mtc/shared` : un prix ne se change plus que dans
   `libs/shared/src/pricing.ts` (+ la landing `Pricing.astro`, non branchée à la lib).
@@ -694,3 +731,50 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
   `noUncheckedSideEffectImports: false` pour garder le comportement de TS 5 (TS 6 change ces défauts).
   Chaque tsconfig a un `rootDir` explicite : `../..` pour l'app, l'admin et leurs specs (ils incluent
   `libs/shared`), sinon `@mtc/shared` sort de la racine et TypeScript refuse le fichier.
+
+## Contrat front ↔ API (`libs/shared/src/contracts`, audit du 27/09/2026)
+
+- **Source unique des formes JSON échangées** : enums (copie des enums Prisma), trades, sessions,
+  débrief, calendrier éco, fiche utilisateur admin, stats VPS. Import : `from '@mtc/shared'`.
+- Les dates y sont des `string` ISO (ce que le front reçoit). Côté API, les DTO de requête
+  `implements` le contrat (`CreateTradeDto implements CreateTradeRequest`) : un champ ajouté d'un
+  seul côté casse la compilation.
+- Enums : `EmotionState.FOCUSED` (valeur) / `EmotionState` (type). Le test API
+  `common/contracts-sync.spec.ts` compare chaque enum à Prisma : après une migration qui touche un
+  enum, mettre à jour `contracts/enums.ts`.
+- Jamais de nouvelle interface d'échange recopiée dans `core/api/*.api.ts` : l'ajouter au contrat,
+  puis la ré-exporter (`export type { X }`) si des importeurs existants passent par l'API front.
+- Aussi partagés : `todayParis` / `parisDayRange` (dates Paris), `normalizeEventKey` / `eventKey`,
+  `renderEmailMarkdown` (rendu des campagnes, envoi + aperçu admin).
+
+## Libs front partagées (`libs/front/*`, audit du 27/09/2026)
+
+| Lib | Import | Contenu |
+|---|---|---|
+| `libs/front/ui` | `@mtc/front-ui` | `foundations.css` (échelles, focus clavier, mouvement réduit, `.sr-only`), `ConfirmService` + `<mtc-confirm-dialog>`, `<mtc-error-state>`, directives `mtcDialog` et `mtcScrollMemory` |
+| `libs/front/auth` | `@mtc/front-auth` | `jwtRefreshInterceptor` + jeton `AUTH_TOKEN_SOURCE` |
+
+- **Jamais `window.confirm()`** : `await inject(ConfirmService).ask({ title, message, danger })`.
+  Le dialogue est monté une fois dans la racine (app et admin).
+- **Toute modale** porte `role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="fermer()"` sur
+  la boîte (pas sur le fond) : focus envoyé dedans, Tab piégé, Échap ferme, focus rendu à la
+  fermeture. Titre relié par `aria-labelledby`. Ne pas recoder ce comportement à la main.
+- **Routeur** : `withPreloading(PreloadAllModules)` + `withInMemoryScrolling` (app et admin). Le shell
+  connecté défile dans un conteneur (`<main>` / `.content`), pas la fenêtre : `mtcScrollMemory` sur ce
+  conteneur remet en haut à chaque page et restaure la position au bouton « Précédent ».
+- **Bundle initial < 500 kB (budget bloquant)** : `@lucide/angular` est un seul module ; si un
+  composant chargé au démarrage (racine, toasts, dialogues globaux) l'importe, TOUTES les icônes de
+  l'app partent dans le bundle initial (+226 kB). Au démarrage : SVG en ligne (cf. `toasts`).
+- Dans les libs, sorties en `@Output() … = new EventEmitter()` : leurs tests tournent en JIT, qui
+  ne voit pas `output()`.
+- **Toute donnée chargée affiche son échec** : `@if (loadError()) { <mtc-error-state (retry)="reload()" /> }`
+  avec `loadError = computed(() => !!resource.error())` (Dashboard, Analytics, Scoring en exemple).
+- **Paiement** : `inject(BillingService).startCheckout(plan)` (`core/services/billing.service.ts`),
+  jamais `BillingApi.checkout` directement.
+- **Contrastes** : texte blanc sur un fond plein → `background: var(--primary)` (survol
+  `--primary-hover`), jamais `var(--blue)` / `var(--blue-bright)` (trop clairs sous du blanc).
+- Les couleurs restent propres à chaque app : l'admin suit sa maquette (teal, Geist), seules la
+  structure et l'accessibilité sont partagées.
+- Tests : `pnpm nx test front-ui` / `pnpm nx test front-auth` (config Vitest propre à chaque lib :
+  l'exécuteur de l'app refuse les specs hors de sa racine). Une lib importée par l'app doit aussi
+  être déclarée dans `resolve.alias` de `apps/app-mytradingcoach/vitest.config.mts`.

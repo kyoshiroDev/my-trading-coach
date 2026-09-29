@@ -13,12 +13,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LucideDynamicIcon, LucideZap as Zap } from '@lucide/angular';
 import { Subject, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
-import { CreateTradeDto, InstrumentSearchResult, TradesApi, UserAssetItem } from '../../../../../../core/api/trades.api';
-import { SetupsStore } from '../../../../../../core/stores/setups.store';
-import { ToastService } from '../../../../../../core/services/toast.service';
-import { parseDecimal } from '../../../../../../core/utils/parse-decimal';
-import { NumericInputDirective } from '../../../../../../core/directives/numeric-input.directive';
-import { POLLING_MS } from '../../../../../../core/constants/polling.const';
+import { CreateTradeDto, InstrumentSearchResult, TradesApi, UserAssetItem } from '@app/core/api/trades.api';
+import { SetupsStore } from '@app/core/stores/setups.store';
+import { ToastService } from '@app/core/services/toast.service';
+import { parseDecimal } from '@app/core/utils/parse-decimal';
+import { NumericInputDirective } from '@app/core/directives/numeric-input.directive';
+import { POLLING_MS } from '@app/core/constants/polling.const';
+import type { EmotionState, TradeSide } from '@mtc/shared';
 
 const EMOTIONS = [
   { value: 'CONFIDENT', emoji: '😎', title: 'Confiant' },
@@ -60,9 +61,11 @@ export class QuickTradeComponent {
   protected readonly customAssetMode    = signal(false);
   protected readonly customAssetQuery   = signal('');
   protected readonly customAssetResults = signal<InstrumentSearchResult[]>([]);
+  /** Issue de la dernière recherche (≥ 2 caractères) : `null` tant qu'aucune n'a abouti. */
+  protected readonly customAssetSearchStatus = signal<'found' | 'none' | 'unavailable' | null>(null);
   private readonly customAssetSearch$   = new Subject<string>();
-  protected readonly qtSide = signal<'LONG' | 'SHORT'>('LONG');
-  protected readonly qtEmotion = signal<'CONFIDENT' | 'STRESSED' | 'REVENGE' | 'FEAR' | 'FOCUSED' | 'NEUTRAL'>('CONFIDENT');
+  protected readonly qtSide = signal<TradeSide>('LONG');
+  protected readonly qtEmotion = signal<EmotionState>('CONFIDENT');
   protected readonly qtSetup = signal<string>('');
   protected readonly qtTimeframe = signal<string>('5m');
   protected readonly qtQty = signal('1');
@@ -93,7 +96,7 @@ export class QuickTradeComponent {
     // chaque changement de la liste active, jamais figé : le compagnon de session
     // vit des heures, et un setup supprimé/archivé entre-temps laissait sinon
     // `qtSetup` sur un id fantôme → 400 sur chaque trade rapide loggé (même défaut
-    // que l'import CSV, PROMPT-182). Écriture dans `untracked` pour ne pas boucler.
+    // que l'import CSV). Écriture dans `untracked` pour ne pas boucler.
     this.setupsStore.load();
     effect(() => {
       const active = this.setupsStore.active();
@@ -113,12 +116,18 @@ export class QuickTradeComponent {
         distinctUntilChanged(),
         switchMap((q) =>
           q.length < 2
-            ? of({ data: [] as InstrumentSearchResult[] })
-            : this.tradesApi.searchInstruments(q).pipe(catchError(() => of({ data: [] as InstrumentSearchResult[] }))),
+            ? of(null)
+            : this.tradesApi.searchInstruments(q).pipe(
+                map((res) => res.data ?? []),
+                catchError(() => of('unavailable' as const)),
+              ),
         ),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe((res) => this.customAssetResults.set(res.data ?? []));
+      .subscribe((res) => {
+        this.customAssetResults.set(Array.isArray(res) ? res : []);
+        this.customAssetSearchStatus.set(res === null ? null : res === 'unavailable' ? 'unavailable' : res.length ? 'found' : 'none');
+      });
 
     // Arrêter le polling prix au destroy
     this.destroyRef.onDestroy(() => this.stopLivePricePolling());
@@ -150,6 +159,7 @@ export class QuickTradeComponent {
       this.customAssetMode.set(true);
       this.customAssetQuery.set('');
       this.customAssetResults.set([]);
+      this.customAssetSearchStatus.set(null);
       return;
     }
     const asset = this.userAssets().find((a) => a.symbol === symbol) ?? null;
@@ -172,6 +182,7 @@ export class QuickTradeComponent {
     this.customAssetMode.set(false);
     this.customAssetQuery.set('');
     this.customAssetResults.set([]);
+    this.customAssetSearchStatus.set(null);
   }
 
   /** Ajoute un actif saisi librement : local immédiat + persistance, sélectionné pour le trade. */

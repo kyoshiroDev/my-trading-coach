@@ -3,7 +3,7 @@ import { MoodState } from '@prisma/client';
 
 export class CloseSessionDto {
   @IsEnum(MoodState)
-  mood: MoodState;
+  mood!: MoodState;
 
   @IsOptional()
   @IsString()

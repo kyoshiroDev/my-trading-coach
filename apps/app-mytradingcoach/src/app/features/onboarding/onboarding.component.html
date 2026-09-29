@@ -133,7 +133,7 @@
             {{ accountMode() === 'PROPFIRM' ? 'Taille du compte' : 'Capital de départ' }}
           </div>
           <div class="capital-field">
-            <!-- Devise DU COMPTE créé (PROMPT-214) : ses montants s'afficheront dans cette devise. -->
+            <!-- Devise DU COMPTE créé : ses montants s'afficheront dans cette devise. -->
             <div class="currency-toggle" role="group" aria-label="Devise du compte" title="Devise du compte">
               @for (c of accountCurrencies; track c) {
                 <button type="button" class="currency-btn" [class.on]="selectedCurrency() === c"
@@ -219,7 +219,7 @@
             }
           </div>
 
-          <!-- Optionnel (PROMPT-198) : le placeholder-exemple complet posait implicitement
+          <!-- Optionnel : le placeholder-exemple complet posait implicitement
                une barre à deux phrases sur la seule étape qui demande de rédiger. -->
           <div class="field-label">Décris ta stratégie <span class="field-opt">· optionnel</span></div>
           <textarea
@@ -314,6 +314,10 @@
                 </button>
               }
             </div>
+          } @else if (assetSearchStatus() === 'none') {
+            <p class="asset-search-hint" role="status">Aucun instrument trouvé : « Ajouter » le garde tel que tu l’as saisi.</p>
+          } @else if (assetSearchStatus() === 'unavailable') {
+            <p class="asset-search-hint warn" role="status">Recherche indisponible pour le moment : saisis le symbole puis « Ajouter ».</p>
           }
 
           @if (selectedAssets().length > 0) {
@@ -321,9 +325,9 @@
             <div class="asset-selected">
               @for (a of selectedAssets(); track a) {
                 <div class="asset-pill" [class.fav]="favoriteAsset() === a">
-                  <button class="asset-star" type="button" [class.on]="favoriteAsset() === a" title="Favori" (click)="setFavoriteAsset(a)">★</button>
+                  <button aria-label="Favori" class="asset-star" type="button" [class.on]="favoriteAsset() === a" title="Favori" (click)="setFavoriteAsset(a)">★</button>
                   <span class="asset-pill-sym">{{ a }}</span>
-                  <button class="asset-remove" type="button" title="Retirer" (click)="removeAsset(a)">✕</button>
+                  <button aria-label="Retirer" class="asset-remove" type="button" title="Retirer" (click)="removeAsset(a)">✕</button>
                 </div>
               }
             </div>
@@ -344,7 +348,7 @@
           <div class="step-label">{{ stepLabel }}</div>
           <h2 class="step-title">Tes setups</h2>
           <!-- Une phrase suffit : l'étape est déjà valide sans rien toucher, trois lignes
-               d'explication la faisaient passer pour du travail à faire (PROMPT-198). -->
+               d'explication la faisaient passer pour du travail à faire. -->
           <p class="step-desc">
             Tes patterns d'entrée, pour grouper tes stats. On a préparé les classiques :
             continue, ou ajuste la liste.
@@ -358,7 +362,7 @@
                   <div class="ob-setup-name">{{ s.title }}</div>
                   <div class="ob-setup-desc">{{ s.description || 'Pas de description' }}</div>
                 </div>
-                <button class="ob-setup-rm" type="button" title="Retirer"
+                <button aria-label="Retirer" class="ob-setup-rm" type="button" title="Retirer"
                         [disabled]="setupsStore.active().length <= 1"
                         (click)="removeSetup(s.id)">✕</button>
               </div>
@@ -405,32 +409,32 @@
           }
 
           <div class="choice-grid choice-grid-4">
-            <!-- PROMPT-211 : Tradovate EN TÊTE (pleine largeur, accent --nt) ; le CSV reste pour
+            <!-- Tradovate EN TÊTE (pleine largeur, accent --nt) ; le CSV reste pour
                  les autres brokers, mais au second plan avec le manuel et « zéro ». -->
-            <div class="choice-card choice-action choice-tradovate choice-featured" (click)="chooseTradovate()" role="button" tabindex="0"
-                 (keydown.enter)="chooseTradovate()" [attr.aria-busy]="tvPreparing()" data-testid="onboarding-choice-tradovate">
-              <div class="choice-tag nt">Le plus complet</div>
-              <div class="choice-ic nt">🔗</div>
+            <button type="button" class="choice-card choice-action choice-tradovate choice-featured" (click)="chooseTradovate()"
+                    [attr.aria-busy]="tvPreparing()" data-testid="onboarding-choice-tradovate">
+              <span class="choice-tag nt">Le plus complet</span>
+              <span class="choice-ic nt">🔗</span>
               <span class="choice-label">Connecter mon compte <span class="nt-word">Tradovate</span></span>
               <span class="choice-desc">
                 {{ tvPreparing() ? 'Préparation de ton compte…' : 'Apex, Lucid Trading, TopStep… tes trades arrivent tout seuls, sans exporter de fichier.' }}
               </span>
-            </div>
-            <div class="choice-card choice-action" (click)="chooseCsv()" role="button" tabindex="0" (keydown.enter)="chooseCsv()" data-testid="onboarding-choice-csv">
-              <div class="choice-ic blue">📥</div>
+            </button>
+            <button type="button" class="choice-card choice-action" (click)="chooseCsv()" data-testid="onboarding-choice-csv">
+              <span class="choice-ic blue">📥</span>
               <span class="choice-label">Importer mon historique (CSV)</span>
               <span class="choice-desc">Tu viens d'un autre broker ou journal ? Importe ton historique pour démarrer avec tes vraies données.</span>
-            </div>
-            <div class="choice-card choice-action" (click)="chooseManual()" role="button" tabindex="0" (keydown.enter)="chooseManual()" data-testid="onboarding-choice-manual">
-              <div class="choice-ic blue">✏️</div>
+            </button>
+            <button type="button" class="choice-card choice-action" (click)="chooseManual()" data-testid="onboarding-choice-manual">
+              <span class="choice-ic blue">✏️</span>
               <span class="choice-label">Saisir un trade manuellement</span>
               <span class="choice-desc">Un exemple pré-rempli pour tester en quelques secondes.</span>
-            </div>
-            <div class="choice-card choice-action" (click)="finishAndGoDiscord()" role="button" tabindex="0" (keydown.enter)="finishAndGoDiscord()" data-testid="onboarding-choice-skip">
-              <div class="choice-ic">🌱</div>
+            </button>
+            <button type="button" class="choice-card choice-action" (click)="finishAndGoDiscord()" data-testid="onboarding-choice-skip">
+              <span class="choice-ic">🌱</span>
               <span class="choice-label">Je commence à zéro</span>
               <span class="choice-desc">Pas encore de trade ? Tu rempliras ton journal au fil de tes sessions.</span>
-            </div>
+            </button>
           </div>
 
           <div class="wizard-footer footer-step5">

@@ -279,7 +279,7 @@ export class UsersService {
       this.prisma.deletedAccount.count(),
     ]);
 
-    // MRR/ARR sur le palier payant unique Premium (49€/mois · 490€/an, PROMPT-169).
+    // MRR/ARR sur le palier payant unique Premium (49€/mois · 490€/an).
     const mrr = premiumMonthly * PRICING_EUR.PREMIUM.monthly
       + Math.round((premiumAnnual * PRICING_EUR.PREMIUM.annual) / 12);
     const arr = mrr * 12;
@@ -309,7 +309,7 @@ export class UsersService {
    * `?ref=` de l'ambassadeur est cassé et la liste admin affiche une ligne vide.
    * On délègue donc à `AmbassadorService.promote()` / `revoke()` au lieu d'écrire
    * le rôle à la main, seul moyen de garantir l'invariant quel que soit le chemin
-   * de promotion (PROMPT-176 : VAL avait le rôle sans code).
+   * de promotion (VAL avait le rôle sans code).
    */
   async setRole(targetUserId: string, role: Role): Promise<void> {
     if (role === Role.ADMIN) {
@@ -380,7 +380,7 @@ export class UsersService {
    * disparaît dès la stratégie et les étapes Actifs/Premier trade sont sautées.
    */
   async saveOnboardingProfile(userId: string, dto: CompleteOnboardingDto) {
-    // `dto.currency` est ignoré (PROMPT-214) : la devise est celle du compte créé à l'onboarding.
+    // `dto.currency` est ignoré : la devise est celle du compte créé à l'onboarding.
     return this.prisma.user.update({
       where: { id: userId },
       data: {
@@ -416,7 +416,7 @@ export class UsersService {
   }
 
   async updatePreferences(userId: string, dto: UpdatePreferencesDto) {
-    // Plus de devise globale ni de taux (PROMPT-214) : `currency` est ignoré s'il arrive encore.
+    // Plus de devise globale ni de taux : `currency` est ignoré s'il arrive encore.
     const prefs = { ...dto };
     delete prefs.currency;
     // Horodate le consentement marketing quand il change (preuve RGPD).
@@ -521,7 +521,7 @@ export class UsersService {
         }),
       ]);
 
-    // Stats via le helper unique (BE exclus du win rate, PROMPT-160).
+    // Stats via le helper unique (BE exclus du win rate).
     const stats         = computeTradeStats(pnlData);
     const totalPnl      = stats.totalPnl;
     const winRate       = Math.round(stats.winRate);

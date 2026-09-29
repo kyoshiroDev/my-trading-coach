@@ -1,81 +1,102 @@
 ---
+import { APP_URL } from '../config';
 ---
 
-<section id="features" style="padding:80px 5%">
-  <div style="max-width:1100px;margin:0 auto">
-    <div class="reveal" style="text-align:center;max-width:600px;margin:0 auto 0">
+<section class="features" id="features">
+  <div class="wrap">
+    <div class="reveal head">
       <span class="sec-label">Fonctionnalités</span>
       <h2>Tout ce dont un trader <em>sérieux</em> a besoin</h2>
     </div>
     <div class="feat-grid rstag">
       <div class="feat-card featured">
         <span class="feat-num">01</span>
-        <div class="feat-ico" style="background:rgba(16,185,129,.09)">☀️</div>
+        <div class="feat-ico ic-green">☀️</div>
         <h3>Pré-session matin</h3>
         <p>Mood check, recap de la veille, objectifs de la semaine rappelés avant de trader.</p>
         <span class="feat-tag tag-free">✓ Gratuit</span>
       </div>
       <div class="feat-card featured">
         <span class="feat-num">02</span>
-        <div class="feat-ico" style="background:rgba(59,130,246,.09)">⚡</div>
+        <div class="feat-ico ic-blue">⚡</div>
         <h3>Session live</h3>
         <p>Live feed de tes trades en temps réel. Logger un trade en 3 secondes. Clôture avec détection SL/TP/Manuel automatique.</p>
         <span class="feat-tag tag-free">✓ Gratuit</span>
       </div>
       <div class="feat-card featured">
         <span class="feat-num">03</span>
-        <div class="feat-ico" style="background:rgba(139,92,246,.09)">📅</div>
+        <div class="feat-ico ic-purple">📅</div>
         <h3>Calendrier éco IA</h3>
         <p>Events économiques filtrés pour tes actifs. Quand un résultat tombe, l'IA analyse immédiatement : bull ou bear pour NQ, BTC, EUR/USD.</p>
         <span class="feat-tag tag-free">✓ Gratuit</span>
       </div>
       <div class="feat-card">
         <span class="feat-num">04</span>
-        <div class="feat-ico" style="background:rgba(139,92,246,.09)">🌙</div>
+        <div class="feat-ico ic-purple">🌙</div>
         <h3>Recap journalier 17h30</h3>
         <p>Email automatique à la clôture des marchés : P&amp;L, win rate, émotion dominante, phrase coaching IA personnalisée.</p>
         <span class="feat-tag tag-prem">★ Premium</span>
       </div>
       <div class="feat-card">
         <span class="feat-num">05</span>
-        <div class="feat-ico" style="background:rgba(34,211,238,.09)">💬</div>
+        <div class="feat-ico ic-cyan">💬</div>
         <h3>Coach IA qui te connaît</h3>
         <p>Tu définis ton profil une fois : scalper ICT, day trader SMC, swing trader Price Action. L'IA intègre ce contexte dans chaque analyse.</p>
         <span class="feat-tag tag-prem">★ Premium</span>
       </div>
       <div class="feat-card">
         <span class="feat-num">06</span>
-        <div class="feat-ico" style="background:rgba(59,130,246,.09)">📊</div>
+        <div class="feat-ico ic-blue">📊</div>
         <h3>Analytics avancés</h3>
         <p>Heatmap horaire, equity curve, drawdown max, top actifs, performance par setup. Tout ce qu'un prop trader professionnel suit.</p>
         <span class="feat-tag tag-prem">★ Premium</span>
       </div>
       <div class="feat-card">
         <span class="feat-num">07</span>
-        <div class="feat-ico" style="background:rgba(99,155,255,.09)">🔗</div>
+        <div class="feat-ico ic-sky">🔗</div>
         <h3>Synchro Tradovate &amp; import CSV</h3>
-        <p>Connecte ton compte Tradovate : tes trades et leurs frais se synchronisent automatiquement, en lecture seule. Pour Binance, MetaTrader, Bybit, IBKR ou tout autre broker, l'import CSV détecte et structure ton historique.</p>
+        <p>Connecte ton compte Tradovate : dès la connexion, tes nouveaux trades et leurs frais remontent en direct, en lecture seule. Ton historique passé ne vient pas avec la synchro : il s'importe à part, depuis l'export CSV de Tradovate. Pour Binance, MetaTrader, Bybit, IBKR ou tout autre broker, l'import CSV détecte et structure ton historique.</p>
         <span class="feat-tag tag-free">✓ Gratuit</span>
       </div>
       <div class="feat-card">
         <span class="feat-num">08</span>
-        <div class="feat-ico" style="background:rgba(245,166,35,.09)">🏆</div>
+        <div class="feat-ico ic-amber">🏆</div>
         <h3>Score trader /100</h3>
         <p>Score hebdomadaire sur 5 axes : discipline, risque, consistance, émotions, performance. Suis ta progression réelle.</p>
         <span class="feat-tag tag-prem">★ Premium</span>
       </div>
       <div class="feat-card">
         <span class="feat-num">09</span>
-        <div class="feat-ico" style="background:rgba(16,185,129,.09)">⚙️</div>
+        <div class="feat-ico ic-green">⚙️</div>
         <h3>Multi-marché natif</h3>
         <p>Futures CME (NQ, ES, MES, Gold, 6E), Crypto spot/levier, Forex, Indices CFD. P&amp;L exact en ticks avec multiplicateurs officiels.</p>
         <span class="feat-tag tag-free">✓ Gratuit</span>
       </div>
     </div>
+
+    {/*
+      Relais de conversion au milieu du parcours. Les boutons etaient a 7 % puis plus rien
+      jusqu'a 58 % : 7 000 px, six ecrans, sans aucun moyen de s'inscrire. Un visiteur
+      convaincu ici devait scroller la moitie de la page pour agir. Mesure du 2026-09-28.
+    */}
+    <div class="feat-cta reveal">
+      <p>Tout ce que tu viens de lire est utilisable aujourd'hui.</p>
+      <a href={`${APP_URL}/register`} class="btn-p">Commencer gratuitement</a>
+      <span class="feat-cta-note">Gratuit, trades illimités, sans carte bancaire</span>
+    </div>
   </div>
 </section>
 
 <style>
+  .features { padding: 80px 5%; }
+  .head { text-align: center; max-width: 600px; margin: 0 auto; }
+  /* Fond de l'icône de chaque carte */
+  .ic-blue { background: rgba(59,130,246,.09); }
+  .ic-green { background: rgba(16,185,129,.09); }
+  .ic-purple { background: rgba(139,92,246,.09); }
+  .ic-sky { background: rgba(99,155,255,.09); }
+  .ic-cyan { background: rgba(34,211,238,.09); }
+  .ic-amber { background: rgba(245,166,35,.09); }
   .feat-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -142,6 +163,39 @@
   .tag-free    { background: rgba(16,185,129,.1);  color: var(--green); border: 1px solid rgba(16,185,129,.2); }
   .tag-prem    { background: rgba(59,130,246,.1);  color: var(--blue2); border: 1px solid rgba(59,130,246,.2); }
   .tag-new  { background: rgba(245,158,11,.1);  color: var(--yel);   border: 1px solid rgba(245,158,11,.2); }
+
+  /*
+   * `.btn-p` est redefini dans CHAQUE composant qui l'utilise (Hero, CoachIA, CtaFinal) :
+   * Astro isole les styles par composant, donc une classe definie ailleurs ne s'applique pas
+   * ici. Sans cette copie, le bouton du relais s'affichait en lien bleu souligne par defaut,
+   * sans fond ni arrondi — il ne ressemblait a aucun autre bouton de la page.
+   */
+  .btn-p {
+    background: var(--blue); color: #fff; padding: 14px 28px;
+    border-radius: 10px; font-size: 15px; font-weight: 600;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+    box-shadow: 0 0 32px rgba(59,130,246,.4);
+    transition: background .2s, transform .2s, box-shadow .2s; font-family: var(--disp);
+  }
+  .btn-p:hover { background: var(--blue2); transform: translateY(-2px); }
+
+  .feat-cta {
+    margin-top: 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .feat-cta p { margin: 0; font-size: 16px; color: var(--txt2); }
+
+  .feat-cta-note { font-family: var(--mono); font-size: 12px; color: var(--txt3); }
+
+  @media (max-width: 480px) {
+    /* Pleine largeur au pouce : le bouton ne doit pas etre une cible etroite. */
+    .feat-cta .btn-p { width: 100%; text-align: center; }
+  }
 
   @media (max-width: 1024px) and (min-width: 769px) {
     .feat-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }

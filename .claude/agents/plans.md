@@ -1,3 +1,8 @@
+---
+name: plans
+description: "Source de vérité des plans FREE/PREMIUM : prix, essai, features gatées, coût IA. À lire pour toute tâche touchant prix, accès par plan ou quotas (landing, front, guard, cron)."
+---
+
 # Agent Plans — Tarification, paliers & gating
 
 ## Rôle
@@ -121,6 +126,35 @@ On tiér par **structure de coût**, PAS par « IA vs pas d'IA ».
 - **SCALE AVEC L'USAGE** — O(users × engagement) → **PREMIUM** :
   - Chat coach, IA Insights à la demande, recap quotidien.
 - L'import IA (broker inconnu → Anthropic, gardé `NODE_ENV=production`) est une IA **personnelle** → **PREMIUM**.
+  **Coût mesuré** (2026-09-28) : l'import passe d'abord par un chemin **mapping** où le modèle
+  déduit la correspondance des colonnes sur 20 lignes (`csv-mapping.ts`), puis le code parse le
+  fichier entier. **Un seul appel, ≈ 0,003 $ en modèle rapide, indépendant de la taille du
+  fichier** — contre ≈ 1,43 $ pour 2000 lignes quand le modèle rédigeait chaque trade. Le chemin
+  mapping est donc tenté AVANT le plafond `MAX_AI_ROWS`.
+  Le sens (long/short) n'est **jamais** pris sur parole : mesuré 3/5 seulement pour les deux
+  modèles, il est tranché par le signe du P&L. Si la forme ne tient pas, si trop de lignes sont
+  inexploitables, ou si le sens n'est pas vérifiable (export sans prix d'entrée, type Binance
+  Futures), on **retombe sur l'ancien chemin ligne par ligne** — `AI_BATCH` = 120 lignes, borne
+  de sortie et non de coût (~40 jetons de JSON par trade contre `max_tokens: 8192`).
+  Ordre de grandeur : 1000 imports gratuits de 2000 lignes ≈ **3 $** par mapping, contre
+  ≈ 1430 $ par l'ancien chemin. Le taux de repli pilote la facture : un repli coûte 186 fois
+  un mapping réussi. Ne pas ouvrir l'import IA au FREE sans surveiller ce taux, ni sans quota
+  (il n'en existe aucun sur l'import à ce jour, le quota IA mensuel ne couvre que chat/insights).
+  **Depuis le 2026-09-28, un broker debloque une fois ne coute plus rien** : sa fiche est
+  enregistree au registre (`BrokerCsvMapping`), consultee AVANT le verrou Premium, et sert
+  donc tous les plans en parsing local. On paie **par broker** (~0,003 $ une fois, a la
+  validation par un admin dans `/brokers`), plus par utilisateur. C'est cette bascule qui
+  rendra l'ouverture de l'import aux comptes FREE tenable : le catalogue se remplit a partir
+  des fichiers que les utilisateurs envoient, au lieu de couter a chaque import.
+  Prealable toujours valable avant d'ouvrir aux FREE : il n'existe **aucun quota sur l'import**.
+
+**Modèle par appel** — `AI_MODELS.fast` (Haiku) pour les tâches courtes et fréquentes : traductions news,
+contexte marché, **et les deux appels du calendrier éco** (`ECO_MODEL` dans `ai.service.ts`, depuis le
+2026-09-28). Le calendrier éco est la **seule IA qu'un compte FREE peut déclencher**, donc la seule dont
+le coût suit l'audience : il n'a rien à faire sur `analysis`. Son coût ne suit pas le nombre d'users mais
+le nombre de **signatures d'actifs distinctes** (cache partagé par `(date, assetsKey)`, top 5 actifs du
+trader) — ≈ 0,002 $ l'appel. `analysis` (Sonnet) reste pour le chat, le recap quotidien, le débrief, les
+insights et l'import CSV inconnu, tous PREMIUM.
 
 **Coût IA réel constaté** (admin, 30 j) : ≈ **4,60 USD total**. Le coût IA n'est PAS un sujet ; ne pas sur-optimiser. Autoritatif = Anthropic Cost Report API.
 

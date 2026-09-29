@@ -2,15 +2,17 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
   computed,
   effect,
   inject,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { RouterModule, RouterLink, RouterLinkActive } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TradovateLiveSocketService } from '../../../core/services/tradovate-live-socket.service';
+import { TradovateLiveSocketService } from '@app/core/services/tradovate-live-socket.service';
 import {
   LucideDynamicIcon,
   LucideChevronLeft as ChevronLeft,
@@ -31,18 +33,21 @@ import {
   LucideLogOut as LogOut,
   LucideLock as Lock,
 } from '@lucide/angular';
-import { UserStore } from '../../../core/stores/user.store';
-import { AuthService } from '../../../core/auth/auth.service';
-import { UsersApi } from '../../../core/api/users.api';
-import { AmbassadorNotifService } from '../../../core/services/ambassador-notif.service';
-import { LiveModeService } from '../../../core/services/live-mode.service';
-import { DemoService } from '../../../core/services/demo.service';
-import { OnboardingComponent } from '../../../features/onboarding/onboarding.component';
-import { environment } from '../../../../environments/environment';
+import { UserStore } from '@app/core/stores/user.store';
+import { AuthService } from '@app/core/auth/auth.service';
+import { UsersApi } from '@app/core/api/users.api';
+import { AmbassadorNotifService } from '@app/core/services/ambassador-notif.service';
+import { LiveModeService } from '@app/core/services/live-mode.service';
+import { DemoService } from '@app/core/services/demo.service';
+import { OnboardingComponent } from '@app/features/onboarding/onboarding.component';
+import { environment } from '@app/environments/environment';
+import { DialogDirective, ScrollMemoryDirective } from '@mtc/front-ui';
 
 @Component({
   selector: 'mtc-sidebar',
   imports: [
+    ScrollMemoryDirective,
+    DialogDirective,
     RouterModule,
     RouterLink,
     RouterLinkActive,
@@ -52,6 +57,7 @@ import { environment } from '../../../../environments/environment';
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './sidebar.component.css',
   templateUrl: './sidebar.component.html',
+  host: { '(document:keydown.escape)': 'onEscape()' },
 })
 export class SidebarComponent {
   protected readonly userStore = inject(UserStore);
@@ -99,8 +105,22 @@ export class SidebarComponent {
     }
   }
 
+  private readonly burger = viewChild<ElementRef<HTMLButtonElement>>('burger');
+  private readonly drawer = viewChild<ElementRef<HTMLElement>>('drawer');
+
+  /** Menu mobile : à l'ouverture, le focus clavier entre dans le menu (1er lien). */
   protected toggleSidebar(): void {
     this.sidebarOpen.update((v) => !v);
+    if (this.sidebarOpen()) {
+      setTimeout(() => this.drawer()?.nativeElement.querySelector<HTMLElement>('.nav-item')?.focus());
+    }
+  }
+
+  /** Échap ferme le menu mobile ouvert et rend le focus au bouton qui l'a ouvert. */
+  protected onEscape(): void {
+    if (!this.sidebarOpen()) return;
+    this.sidebarOpen.set(false);
+    this.burger()?.nativeElement.focus();
   }
   protected closeSidebar(): void {
     this.sidebarOpen.set(false);
@@ -154,7 +174,7 @@ export class SidebarComponent {
       }
     });
 
-    // Temps réel Tradovate (PROMPT-210 live) : ouvert tant que l'app l'est (le shell vit sur
+    // Temps réel Tradovate : ouvert tant que l'app l'est (le shell vit sur
     // toutes les pages connectées), fermé au logout / à la fermeture de l'onglet. Démo exclue.
     effect(() => {
       const on = this.auth.isAuthenticated() && !this.userStore.isDemo();

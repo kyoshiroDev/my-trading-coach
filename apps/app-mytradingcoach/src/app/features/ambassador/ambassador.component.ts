@@ -22,7 +22,8 @@ import { ReferralApi } from '../../core/api/referral.api';
 import { AmbassadorNotifService } from '../../core/services/ambassador-notif.service';
 import { ToastService } from '../../core/services/toast.service';
 import { PRICING } from '../../core/constants/pricing.const';
-import { environment } from '../../../environments/environment';
+import { environment } from '@app/environments/environment';
+import { ErrorStateComponent } from '@mtc/front-ui';
 
 // Commission mensuelle estimée par filleul payant (20% de la mensualité du plan).
 const COMMISSION_RATE = 0.2;
@@ -30,7 +31,7 @@ const COMMISSION_RATE = 0.2;
 @Component({
   selector: 'mtc-ambassador',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, DecimalPipe, TitleCasePipe, LucideDynamicIcon],
+  imports: [ErrorStateComponent, DatePipe, DecimalPipe, TitleCasePipe, LucideDynamicIcon],
   templateUrl: './ambassador.component.html',
   styleUrl: './ambassador.component.css',
 })
@@ -49,6 +50,7 @@ export class AmbassadorComponent implements OnInit {
 
   protected readonly stats = signal<AmbassadorStats | null>(null);
   protected readonly isLoading = signal(true);
+  protected readonly loadError = signal(false);
 
   protected readonly statementLoading = signal(false);
 
@@ -78,7 +80,12 @@ export class AmbassadorComponent implements OnInit {
 
   ngOnInit() {
     this.notif.markSeen();
+    this.load();
+  }
 
+  protected load(): void {
+    this.isLoading.set(true);
+    this.loadError.set(false);
     this.api.getStats()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -86,12 +93,15 @@ export class AmbassadorComponent implements OnInit {
           this.stats.set(res.data);
           this.isLoading.set(false);
         },
-        error: () => this.isLoading.set(false),
+        error: () => {
+          this.loadError.set(true);
+          this.isLoading.set(false);
+        },
       });
   }
 
   protected copyLink(): void {
-    // Feedback transitoire → toast (PROMPT-210). L'échec du presse-papiers était muet.
+    // Feedback transitoire → toast. L'échec du presse-papiers était muet.
     navigator.clipboard.writeText(this.referralLink()).then(
       () => this.toast.success('Lien copié'),
       () => this.toast.error('Copie impossible : sélectionne le lien et copie-le à la main.'),

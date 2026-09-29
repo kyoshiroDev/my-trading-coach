@@ -4,7 +4,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PremiumGuard } from '../../common/guards/premium.guard';
 
 /**
- * PROMPT-185 #5 — verrouille le contrat de gating des analytics.
+ * verrouille le contrat de gating des analytics.
  *
  * L'activité (calendrier) = les données propres de l'utilisateur → FREE. Le guard
  * posé sur `activity/:year/:month` était de surcroît fantôme : `activity/range`

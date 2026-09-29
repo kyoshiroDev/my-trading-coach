@@ -1,5 +1,5 @@
 /**
- * PROMPT-198 — réduire les frictions qui bloquent l'activation.
+ * réduire les frictions qui bloquent l'activation.
  *
  * Le wizard imposait 6 écrans obligatoires avant tout accès au produit, dont deux murs
  * coûteux : le capital de départ (info d'argent, exigée en 3ᵉ position à quelqu'un qui
@@ -234,7 +234,7 @@ describe('Onboarding — barre de progression alignée sur le libellé', () => {
 });
 
 /**
- * PROMPT-199 tâche 2 — le compte de trading est déclaré à l'étape 3.
+ * Le compte de trading est déclaré à l'étape 3.
  *
  * Avant, le compte n'existait qu'au premier trade, créé par `ensureDefaultAccountId` :
  * toujours PERSONAL, libellé « Compte principal », sans broker ni règles. Un trader
@@ -387,7 +387,7 @@ describe('Onboarding — le compte n\'est jamais créé deux fois', () => {
 });
 
 /**
- * PROMPT-199 suite — l'échec d'enregistrement du profil ne doit plus être silencieux.
+ * L'échec d'enregistrement du profil ne doit plus être silencieux.
  *
  * Constaté sur dev : après une traversée complète du wizard, `market`, `goal` et
  * `tradingStyle` étaient nuls en base et `startingCapital` à 0. La branche `error` de

@@ -107,7 +107,7 @@
         }
       </div>
       @if (objectivesView().length === 0) {
-        <div class="empty-state">Objectifs générés après ton Weekly Debrief</div>
+        <div class="empty-state">Objectifs générés après ton Débrief hebdo</div>
       } @else {
         @for (obj of objectivesView(); track $index; let i = $index) {
           @if (!userStore.isPremium() && i >= 1) {
@@ -168,7 +168,7 @@
             }
           }
         }
-        <div class="obj-footer">Générés par l'IA · Weekly Debrief</div>
+        <div class="obj-footer">Générés par l'IA · Débrief hebdo</div>
       }
     </div>
   </div>
@@ -181,7 +181,7 @@
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
         <span class="ai-badge">AI</span>
-        <span style="font-size:10.5px;color:var(--text-3);">Filtré pour ton profil</span>
+        <span style="font-size:var(--fs-2xs);color:var(--text-3);">Filtré pour ton profil</span>
       </div>
     </div>
 
@@ -312,7 +312,7 @@
               <span class="eco-released-badge">✓</span>
             }
             @if (isEventPinned(event)) {
-              <button
+              <button aria-label="Retirer des épinglés"
                 type="button"
                 class="eco-unpin-btn"
                 title="Retirer des épinglés"

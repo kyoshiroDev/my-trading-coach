@@ -16,7 +16,7 @@
           <span class="era-title">
             🔔 {{ newReleases().length === 1 ? 'Résultat publié' : newReleases().length + ' résultats publiés' }}
           </span>
-          <button class="era-close" (click)="showReleaseAlert.set(false)">×</button>
+          <button aria-label="Fermer l'alerte" class="era-close" (click)="showReleaseAlert.set(false)">×</button>
         </div>
         @for (ev of newReleases(); track ev.name) {
           <div class="era-event">

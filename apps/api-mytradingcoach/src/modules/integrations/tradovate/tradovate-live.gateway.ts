@@ -1,4 +1,3 @@
-import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
   OnGatewayConnection,
@@ -8,14 +7,14 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import type { Server, Socket } from 'socket.io';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '@api/prisma/prisma.service';
 import type { JwtPayload } from '../../auth/jwt.strategy';
 import { TradovateLiveService } from './tradovate-live.service';
 
 export const userRoom = (userId: string) => `user:${userId}`;
 
 /**
- * Canal applicatif du temps réel Tradovate (PROMPT-210 live) — même pattern que `/eco`,
+ * Canal applicatif du temps réel Tradovate — même pattern que `/eco`,
  * mais AUTHENTIFIÉ : les événements portent des trades, ils ne partent qu'au bon user.
  *
  * - Handshake : `auth.token` = access_token de l'app (JWT). Invalide, ou compte démo
@@ -29,10 +28,9 @@ export const userRoom = (userId: string) => `user:${userId}`;
   cors: { origin: process.env['FRONTEND_URL'] ?? 'http://localhost:4200' },
 })
 export class TradovateLiveGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
-  private readonly logger = new Logger(TradovateLiveGateway.name);
 
   @WebSocketServer()
-  server: Server;
+  server!: Server;
 
   constructor(
     private readonly jwt: JwtService,

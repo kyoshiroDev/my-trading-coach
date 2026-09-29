@@ -21,141 +21,7 @@ import { CHART_COLORS, gridAxis, noLegend, type ChartTone } from '../../shared/c
   imports: [DatePipe, DecimalPipe, RouterLink, ChartCanvasComponent, RadialGaugeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './dashboard.component.css',
-  template: `
-    <div class="screen">
-      <div class="page-head">
-        <div class="page-title">Dashboard</div>
-        <div class="page-meta">{{ now | date:'d MMMM yyyy · HH:mm' }}</div>
-      </div>
-
-      <div class="dash-grid">
-
-        <!-- KPIs : 2 premières colonnes seulement. La 3e (rail « connectés »)
-             démarre à cette hauteur et descend jusqu'en bas de Docker. -->
-        @if (stats(); as s) {
-        <div class="kpi-strip dash-kpis">
-          <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">MRR</div>
-            <div class="kpi-value teal">€{{ s.mrr | number:'1.0-0' }}</div>
-            <div class="kpi-sub">{{ s.mrr === 0 ? 'bêta' : 'ARR €' + (s.arr | number:'1.0-0') }}</div></div>
-          <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Utilisateurs</div>
-            <div class="kpi-value">{{ totalUsers() }}</div>
-            <div class="kpi-sub">+{{ s.newThisMonth }} ce mois</div></div>
-          <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Premium</div>
-            <div class="kpi-value blue">{{ s.totalPremium }}</div>
-            <div class="kpi-sub">{{ s.premiumMonthly }}m · {{ s.premiumAnnual }}an · {{ s.trials }} essai</div></div>
-          <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Ambassadeurs</div>
-            <div class="kpi-value purple">{{ s.ambassadors }}</div>
-            <div class="kpi-sub">+{{ s.betaTesters }} bêta</div></div>
-          <div class="kpi"><div class="kpi-top red"></div><div class="kpi-label">Churn</div>
-            <div class="kpi-value" [class.red]="s.churnedThisMonth > 0">{{ s.churnedThisMonth }}</div>
-            <div class="kpi-sub">résiliations</div></div>
-          <div class="kpi kpi-link" routerLink="/deleted" role="link" tabindex="0">
-            <div class="kpi-top slate"></div><div class="kpi-label">Comptes supprimés</div>
-            <div class="kpi-value">{{ s.comptesSupprimesMois }}</div>
-            <div class="kpi-sub">{{ s.comptesSupprimesTotal }} au total · ce mois</div></div>
-        </div>
-        }
-
-        <!-- Gauche : Évolution + Entonnoir -->
-        <div class="area-left dcol">
-          <div class="card grow-chart">
-            <div class="card-head"><span class="card-label">Évolution · inscrits par jour{{ showMrrLine() ? ' + MRR' : '' }}</span><span class="card-label muted">snapshots</span></div>
-            <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="trendConfig()" /></div></div>
-          </div>
-          <div class="card">
-            <div class="card-head"><span class="card-label">Entonnoir d'activation</span><span class="card-label muted">inscrits → 1ᵉʳ trade</span></div>
-            <div class="card-body"><div class="chart-box funnel-box"><mtc-admin-chart [config]="funnelConfig()" /></div></div>
-          </div>
-        </div>
-
-        <!-- Milieu : Système + Docker -->
-        <div class="area-middle dcol">
-          <div class="card">
-            <div class="card-head"><span class="card-label">Système · VPS OVH Paris</span>
-              <span class="card-action" routerLink="/surveillance">Surveillance →</span></div>
-            <div class="card-body sys-body">
-              @if (vpsStats(); as v) {
-                <div class="gauges3">
-                  <mtc-admin-radial-gauge [value]="v.cpu" [tone]="cpuTone()" label="CPU" sub="charge" />
-                  <mtc-admin-radial-gauge [value]="ramPct()" [tone]="ramTone()" label="RAM" [sub]="ramSub()" />
-                  <mtc-admin-radial-gauge [value]="diskPct()" [tone]="diskTone()" label="Disque" [sub]="diskSub()" />
-                </div>
-              } @else {
-                <div class="empty">VPS non connecté</div>
-              }
-            </div>
-          </div>
-          <div class="card grow-list">
-            <div class="card-head"><span class="card-label">Containers Docker</span>
-              <span class="badge b-ok">{{ runningCount() }} / {{ containers().length }} running</span></div>
-            <div class="card-body">
-              @if (containers().length === 0) {
-                <div class="empty">Module Docker non déployé</div>
-              } @else {
-                <div class="grid-3 ct-cols">
-                  @for (group of containerGroups(); track group.label) {
-                    @if (group.containers.length) {
-                      <div class="ct-group">
-                        <div class="ct-group-label"><span class="ct-dot" [class]="group.tone"></span>{{ group.label }} · {{ group.containers.length }}</div>
-                        @for (c of group.containers; track c.id) {
-                          <div class="ct-row"><span class="st" [class.down]="c.status !== 'running'"></span><span class="ct-name">{{ c.name }}</span></div>
-                        }
-                      </div>
-                    }
-                  }
-                </div>
-              }
-            </div>
-          </div>
-        </div>
-
-        <!-- Rail : Utilisateurs connectés -->
-        <div class="area-rail">
-          <div class="card rail-grow">
-            <div class="card-head"><span class="card-label">Utilisateurs connectés <span class="online-count">{{ onlineUsers().length }}</span></span>
-              <span class="status-dot live">LIVE</span></div>
-            <div class="card-body rail-body">
-              @if (onlineUsers().length === 0) {
-                <div class="empty">Aucun utilisateur actif</div>
-              } @else {
-                <div class="online-list">
-                  @for (u of onlineUsers(); track u.id) {
-                    <div class="online-user">
-                      <div class="u-av">{{ (u.name ?? u.email).slice(0,2).toUpperCase() }}</div>
-                      <div><div class="u-name">{{ u.name ?? u.email }}</div>
-                        @if (u.name) { <div class="u-mail">{{ u.email }}</div> }</div>
-                      <div class="meta">
-                        <span class="badge" [class.b-premium]="u.plan==='PREMIUM'" [class.b-free]="u.plan==='FREE'">{{ u.plan }}</span>
-                        <span class="timer">⏱ {{ sessionDuration(u) }}</span>
-                      </div>
-                    </div>
-                  }
-                </div>
-              }
-              <div class="online-foot"><span class="ct-dot green"></span>Mis à jour en temps réel · fenêtre 5 min</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bandeau Fidélisation & activation -->
-        <div class="card act-strip area-strip">
-          <div class="card-head"><span class="card-label">Fidélisation &amp; activation</span><span class="card-label danger">priorité produit</span></div>
-          @if (retention(); as r) {
-            <div class="card-body ret-grid funnel">
-              <div class="ret-stat"><span class="kpi-label">Activation (ont tradé)</span><span class="v teal">{{ r.activation.rate }}%</span><span class="kpi-sub">{{ r.activation.activated }} / {{ r.activation.total }} · ≥1 trade</span></div>
-              <div class="ret-stat"><span class="kpi-label">Traders actifs 7j</span><span class="v blue">{{ stats()?.tradersActifs7d ?? 0 }}</span><span class="kpi-sub">≥1 trade sur 7 jours</span></div>
-              <div class="ret-stat"><span class="kpi-label">Traders actifs 30j</span><span class="v green">{{ stats()?.tradersActifs30d ?? 0 }}</span><span class="kpi-sub">≥1 trade sur 30 jours</span></div>
-              <div class="ret-stat"><span class="kpi-label">Reviennent à J+7</span><span class="v">{{ r.retentionD7.rate }}%</span><span class="kpi-sub">{{ r.retentionD7.retained }} / {{ r.retentionD7.eligible }} cohorte</span></div>
-              <div class="ret-stat"><span class="kpi-label">Inscrits sans trade</span><span class="v red">{{ r.ghostUsers }}</span><span class="kpi-sub">fantômes (onboarding)</span></div>
-            </div>
-          } @else {
-            <div class="card-body"><div class="empty">Données de fidélisation indisponibles</div></div>
-          }
-        </div>
-
-      </div>
-    </div>
-  `,
+  templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent {
   private readonly adminApi = inject(AdminApi);
@@ -195,7 +61,7 @@ export class DashboardComponent {
   // ── Configs graphes ───────────────────────────────────────────────────────
 
   /**
-   * Snapshots quotidiens tracés tels quels : une barre par JOUR réel (PROMPT-177).
+   * Snapshots quotidiens tracés tels quels : une barre par JOUR réel.
    *
    * L'agrégation hebdomadaire d'avant étiquetait chaque barre par le lundi de la
    * semaine, si bien qu'un inscrit du vendredi 07/08 apparaissait sur « 03/08 ».

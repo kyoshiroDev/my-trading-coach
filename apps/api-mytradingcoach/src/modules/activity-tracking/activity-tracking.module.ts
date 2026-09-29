@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { ActivityTrackingService } from './activity-tracking.service';
 
-/** Tracking des jours d'activité (RedisService est global via SharedModule). */
+/** Tracking des jours d'activité (RedisService est global via InfraModule). */
 @Module({
   imports: [PrismaModule],
   providers: [ActivityTrackingService],

@@ -5,7 +5,7 @@ import { toReportDate } from './tradovate-reporting.client';
 import { preprocessCsv, mapNormalizedCsvToDto } from '../../trades/csv-parsers';
 
 /**
- * Import de l'historique par la Reporting API (PROMPT-217).
+ * Import de l'historique par la Reporting API.
  *
  * Les CSV ci-dessous sont des extraits RÉELS, relevés le 2026-09-26 sur le compte prop firm
  * d'un ambassadeur : c'est ce que l'API renvoie, virgules et P&L comptable compris.

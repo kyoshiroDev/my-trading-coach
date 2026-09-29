@@ -1,14 +1,15 @@
 ---
+import { APP_URL } from '../config';
 ---
 
 <section class="coach-section" id="coach">
   <div class="coach-wrap">
 
     <!-- Header -->
-    <div class="reveal" style="text-align:center;margin-bottom:56px">
+    <div class="reveal head">
       <span class="sec-label">Coach IA Personnalisé</span>
       <h2>Une IA qui te connaît.<br /><em>Vraiment.</em></h2>
-      <p class="sec-sub" style="max-width:540px;margin:0 auto">
+      <p class="sec-sub intro">
         Tous les journaux de trading analysent tes stats.
         MyTradingCoach est le seul à analyser tes stats
         <strong>en connaissant ta stratégie</strong>.
@@ -162,10 +163,32 @@
     </div>
 
 
+    {/*
+      La vraie capture, deplacee ici depuis la section « L'app en vrai » le 2026-09-29.
+      L'argument generique-vs-personnalise s'appuyait sur deux encarts illustres ; il se
+      termine desormais sur l'ecran reel. La preuve arrive la ou l'argument se fait, au lieu
+      d'occuper une section a part qui entrait en concurrence avec celle-ci et avec le
+      Weekly Debrief : trois blocs parlaient d'IA a la suite, pour 29 % de la page.
+    */}
+    <figure class="coach-shot reveal">
+      <img
+        src="/showcase/app-ai.webp"
+        width="2424"
+        height="1284"
+        loading="lazy"
+        decoding="async"
+        alt="IA Insights : analyse des patterns (edge sur les breakouts, scalping mangé par les frais, revenge trading après une perte) et chat avec le coach IA."
+      />
+      <figcaption>
+        <strong>IA Insights</strong> (Premium) : l'écran réel, sur le compte de démonstration.
+        Données d'exemple, pas des résultats réels ni garantis.
+      </figcaption>
+    </figure>
+
     <!-- CTA -->
     <div class="coach-cta reveal">
-      <a href="https://app.mytradingcoach.app/register" class="btn-p">
-        Créer mon profil trader gratuitement
+      <a href={`${APP_URL}/register`} class="btn-p">
+        Commencer gratuitement
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5">
           <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -178,6 +201,35 @@
 </section>
 
 <style>
+  /*
+   * 820 px et non 1 000 : ici la capture APPUIE l'argument, elle n'est pas le sujet de la
+   * section. A pleine largeur elle ajoutait ~1 300 px et faisait de Coach IA le plus gros
+   * bloc de la page. L'ecran reste parfaitement lisible a cette taille.
+   */
+  .coach-shot {
+    margin: 40px auto 0;
+    max-width: 820px;
+    border: 1px solid var(--b2);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--card);
+  }
+
+  .coach-shot img { display: block; width: 100%; height: auto; }
+
+  .coach-shot figcaption {
+    padding: 12px 16px;
+    border-top: 1px solid var(--b);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--txt2);
+    text-align: left;
+  }
+
+  .coach-shot figcaption strong { color: var(--txt); }
+
+  .intro { max-width: 540px; margin: 0 auto; }
+  .head { text-align: center; margin-bottom: 56px; }
   .coach-section {
     padding: 100px 5%;
     position: relative;
@@ -340,7 +392,8 @@
 
 
   /* CTA */
-  .coach-cta { text-align: center; }
+  /* La capture se terminait AU CONTACT du bouton : 0 px entre les deux. */
+  .coach-cta { text-align: center; margin-top: 36px; }
 
   .btn-p {
     background: var(--blue); color: #fff; padding: 14px 28px;

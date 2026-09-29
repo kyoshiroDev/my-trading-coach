@@ -1,61 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { computeTradeStats } from '@mtc/shared';
+import type { AdminUserDetail as AdminUserDetailDto } from '@mtc/shared';
 
 const DAY_MS = 86_400_000;
-
-export interface AdminUserDetailDto {
-  identity: {
-    id: string;
-    name: string | null;
-    email: string;
-    plan: string;
-    role: string;
-    subscriptionStatus: string | null;
-    ambassadorRefCode: string | null;
-    createdAt: string;
-    lastActivityAt: string | null;
-  };
-  kpis: {
-    daysSinceSignup: number;
-    lastConnection: string | null;
-    activeDays: number;
-    totalDays: number;
-    sessionTimeMinutes: number | null;
-    ai: { usd: number; tokens: number };
-  };
-  activeDates: string[];
-  aiByFeature: { feature: string; tokens: number; costUsd: number }[];
-  // Profil trader (saisi à l'onboarding) : qui est ce trader.
-  profile: {
-    market: string | null;
-    goal: string | null;
-    tradingStyle: string | null;
-    tradingStrategy: string[];
-    tradingSessions: string[];
-    tradesPerDayMin: number | null;
-    tradesPerDayMax: number | null;
-    strategyDescription: string | null;
-    /** Capital déclaré au profil, sans devise : la devise est celle de chaque compte (PROMPT-214). */
-    startingCapital: number;
-  };
-  // Usage réel (trades) : est-ce qu'il utilise vraiment l'app.
-  usage: {
-    totalTrades: number;
-    tradesThisMonth: number;
-    totalPnl: number;
-    winRate: number;
-  };
-  topAssets: { asset: string; count: number }[];
-  sessions: {
-    date: string;
-    trades: number;
-    pnl: number;
-    winRate: number;
-    emotion: string | null;
-    durationMinutes: number | null;
-  }[];
-}
 
 /**
  * Agrégation « faits bruts » pour la fiche utilisateur admin (les signaux sont
@@ -157,7 +105,7 @@ export class UserDetailService {
         take: 3,
       }),
     ]);
-    // Stats via le helper unique (BE exclus du win rate, PROMPT-160).
+    // Stats via le helper unique (BE exclus du win rate).
     const uStats = computeTradeStats(pnlRows);
     const totalPnl = uStats.totalPnl;
     const winRate = Math.round(uStats.winRate);

@@ -14,8 +14,13 @@ import {
   TradeSide,
   TradingSession,
 } from '@prisma/client';
+import type { CreateTradeRequest } from '@mtc/shared';
 
-export class CreateTradeDto {
+/**
+ * Corps de POST /trades. `implements CreateTradeRequest` : le contrat partagé avec le front
+ * (@mtc/shared) ; un champ ajouté ou retypé d'un seul côté casse la compilation.
+ */
+export class CreateTradeDto implements CreateTradeRequest {
   @IsString()
   @MaxLength(40)
   asset!: string;
@@ -65,7 +70,7 @@ export class CreateTradeDto {
   @IsOptional()
   capitalEngaged?: number;
 
-  // Émotion = override optionnel (PROMPT-163). Absente/null → héritera de l'humeur de session
+  // Émotion = override optionnel. Absente/null → héritera de l'humeur de session
   // (TradeSession.moodStart) au moment de la lecture (émotion effective). Plus de NEUTRAL forcé.
   @IsEnum(EmotionState)
   @IsOptional()

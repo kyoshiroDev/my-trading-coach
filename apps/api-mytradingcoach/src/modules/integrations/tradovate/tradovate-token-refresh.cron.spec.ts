@@ -2,7 +2,7 @@ import { REFRESH_WINDOW_MS, TradovateTokenRefreshCron } from './tradovate-token-
 import { TradovateException } from './tradovate.errors';
 
 /**
- * Cron de maintien des tokens (PROMPT-208). Le vrai renouvellement (grant refresh_token,
+ * Cron de maintien des tokens. Le vrai renouvellement (grant refresh_token,
  * rotation, chiffrement) est prouvé par tradovate-sync.int-spec.ts et
  * tradovate-connection.service.spec.ts ; ici : QUI est ciblé, et ce qui se passe pour chacun.
  */

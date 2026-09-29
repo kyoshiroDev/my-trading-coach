@@ -107,7 +107,8 @@
         <span class="card-hint">coût attribué</span>
       </div>
       <table class="tbl">
-        <thead><tr><th>Utilisateur</th><th class="num">Appels</th><th class="num">Tokens</th><th class="num">Coût estimé</th></tr></thead>
+        <caption class="sr-only">Top utilisateurs (30j)</caption>
+        <thead><tr><th scope="col">Utilisateur</th><th scope="col" class="num">Appels</th><th scope="col" class="num">Tokens</th><th scope="col" class="num">Coût estimé</th></tr></thead>
         <tbody>
           @for (u of d.attributed.topUsers; track u.userId) {
             <tr>

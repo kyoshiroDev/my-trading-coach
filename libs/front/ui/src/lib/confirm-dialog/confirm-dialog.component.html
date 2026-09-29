@@ -1,0 +1,30 @@
+@if (confirm.pending(); as request) {
+  <div class="cd-backdrop" (click)="answer(false)" aria-hidden="true"></div>
+  <div
+    #dialog
+    class="cd-dialog"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="cd-title"
+    aria-describedby="cd-message"
+    (keydown)="trapFocus($event)"
+    data-testid="confirm-dialog"
+  >
+    <h2 id="cd-title" class="cd-title">{{ request.title }}</h2>
+    <p id="cd-message" class="cd-message">{{ request.message }}</p>
+    <div class="cd-actions">
+      <button #cancelButton type="button" class="cd-btn cd-cancel" (click)="answer(false)" data-testid="confirm-cancel">
+        {{ request.cancelLabel ?? 'Annuler' }}
+      </button>
+      <button
+        type="button"
+        class="cd-btn cd-confirm"
+        [class.cd-danger]="request.danger"
+        (click)="answer(true)"
+        data-testid="confirm-ok"
+      >
+        {{ request.confirmLabel ?? 'Confirmer' }}
+      </button>
+    </div>
+  </div>
+}

@@ -27,14 +27,14 @@ import {
   SetupStat,
   TopAsset,
 } from '../../core/api/analytics.api';
-import { BillingApi } from '../../core/api/billing.api';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { ActivityCalendarComponent } from '../../shared/components/activity-calendar/activity-calendar.component';
 import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
-import { environment } from '../../../environments/environment';
+import { environment } from '@app/environments/environment';
 import { ChartService } from '../../core/services/chart.service';
 import { MoneyService } from '../../core/services/money.service';
 import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
+import { ErrorStateComponent } from '@mtc/front-ui';
 
 const MOCK_HEATMAP_CELLS = [
   0.75, 0.45, 0.8, 0.3, 0.65, 0.55, 0.2, 0.6, 0.7, 0.35, 0.85, 0.5, 0.4, 0.72,
@@ -54,6 +54,7 @@ const MOCK_SETUP_BARS = [88, 72, 65, 54, 38] as const;
     ActivityCalendarComponent,
     InfoTooltipComponent,
     MixedCurrencyNoticeComponent,
+    ErrorStateComponent,
   ],
   templateUrl: './analytics.component.html',
   styleUrl: './analytics.component.css',
@@ -65,12 +66,11 @@ export class AnalyticsComponent {
   drawdownCanvasRef?: ElementRef<HTMLCanvasElement>;
 
   protected readonly userStore = inject(UserStore);
-  private readonly billingApi = inject(BillingApi);
   private readonly analyticsApi = inject(AnalyticsApi);
   private readonly destroyRef = inject(DestroyRef);
   private readonly chartService = inject(ChartService);
   private readonly selectedAccount = inject(SelectedAccountStore);
-  /** Devises mêlées en « Tous les comptes » → pas de totaux (PROMPT-214). */
+  /** Devises mêlées en « Tous les comptes » → pas de totaux. */
   protected readonly money = inject(MoneyService);
 
   // Suffixe query du compte sélectionné (multi-comptes). « Tous » → '' (agrégé). Lu dans les
@@ -97,7 +97,7 @@ export class AnalyticsComponent {
     else if (this.equityPeriod() === '3m') from.setMonth(from.getMonth() - 3);
     else from.setMonth(from.getMonth() - 6);
     // Horodatages complets : une date seule en `to` valait minuit et excluait les trades du
-    // jour même (courbe vide pour un compte qui n'avait tradé qu'aujourd'hui, PROMPT-213).
+    // jour même (courbe vide pour un compte qui n'avait tradé qu'aujourd'hui).
     return { from: from.toISOString(), to: now.toISOString() };
   });
   protected readonly equityData = signal<{ points: EquityPoint[]; startingCapital: number | null } | null>(null);
@@ -143,6 +143,31 @@ export class AnalyticsComponent {
   protected readonly setupData = computed(
     () => this.setupResource.value()?.data ?? [],
   );
+
+  private readonly equityError = signal(false);
+
+  /**
+   * Une des données de la page n'a pas pu être chargée. Sans ce signal, une panne de l'API
+   * s'affichait comme « aucune donnée » (zéros, graphiques vides).
+   */
+  protected readonly loadError = computed(
+    () =>
+      !!(
+        this.summaryResource.error() ||
+        this.heatmapResource.error() ||
+        this.topAssetsResource.error() ||
+        this.setupResource.error()
+      ) || this.equityError(),
+  );
+
+  /** Relance tous les chargements de la page (bouton « Réessayer »). */
+  protected reload(): void {
+    this.summaryResource.reload();
+    this.heatmapResource.reload();
+    this.topAssetsResource.reload();
+    this.setupResource.reload();
+    this.loadEquityCurve();
+  }
 
   protected readonly isLoading = computed(
     () =>
@@ -212,6 +237,7 @@ export class AnalyticsComponent {
   protected loadEquityCurve(): void {
     if (!this.userStore.isPremium()) return;
     this.equityLoading.set(true);
+    this.equityError.set(false);
     const { from, to } = this.equityDateRange();
     const accountId = this.selectedAccount.accountParam();
     this.analyticsApi
@@ -220,8 +246,9 @@ export class AnalyticsComponent {
         finalize(() => this.equityLoading.set(false)),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe((res) => {
-        this.equityData.set(res.data);
+      .subscribe({
+        next: (res) => this.equityData.set(res.data),
+        error: () => this.equityError.set(true),
       });
   }
 
@@ -253,8 +280,9 @@ export class AnalyticsComponent {
     return this.heatmapMap().get(`${day}:${hour}`) ?? null;
   }
 
+  /** Seuils identiques à la légende. La couleur est doublée d'un motif (lisible en niveaux de gris). */
   protected cellClass(winRate: number): string {
-    if (winRate >= 66) return 'heatmap-cell cell-green';
+    if (winRate >= 65) return 'heatmap-cell cell-green';
     if (winRate >= 50) return 'heatmap-cell cell-orange';
     return 'heatmap-cell cell-red';
   }
@@ -269,20 +297,6 @@ export class AnalyticsComponent {
     if (pnl > 0) return 'var(--green)';
     if (pnl < 0) return 'var(--red)';
     return 'var(--text-2)';
-  }
-
-  protected startTrial(plan: 'premium_monthly' | 'premium_yearly' = 'premium_monthly'): void {
-    this.billingApi
-      .checkout(plan)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => {
-          window.location.href = res.data.url;
-        },
-        error: () => {
-          /* billing error : user stays on page */
-        },
-      });
   }
 
 }

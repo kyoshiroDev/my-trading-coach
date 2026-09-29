@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { filterMorningEvents, MorningEventLike } from './session-morning.util';
-import { eventKey } from '../../../../core/data/eco-event-key';
+import { eventKey } from '@mtc/shared';
 
 const EV = (name: string, currency: string, impact: string, time: string): MorningEventLike => ({ name, currency, impact, time });
 

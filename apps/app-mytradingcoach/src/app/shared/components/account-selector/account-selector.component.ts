@@ -16,8 +16,8 @@ import {
   LucideCheck as Check,
   LucideChevronDown as ChevronDown,
 } from '@lucide/angular';
-import { SelectedAccountStore } from '../../../core/stores/selected-account.store';
-import { AccountType, TradingAccount } from '../../../core/api/accounts.api';
+import { SelectedAccountStore } from '@app/core/stores/selected-account.store';
+import { AccountType, TradingAccount } from '@app/core/api/accounts.api';
 import { formatMoney } from '@mtc/shared';
 
 // Sélecteur de compte réutilisable (dashboard, etc.) : trigger compact affichant le compte

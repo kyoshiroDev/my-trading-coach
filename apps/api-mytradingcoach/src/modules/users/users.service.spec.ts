@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { UsersService } from './users.service';
+import { Goal, Market } from './dto/onboarding.dto';
 import { AmbassadorService } from '../ambassador/ambassador.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
+import { RedisService } from '../infra/redis.service';
 
 const mockUser = {
   id: 'user-1',
@@ -61,7 +62,7 @@ describe('UsersService', () => {
         UsersService,
         { provide: PrismaService, useValue: mockPrisma },
         // setRole délègue à AmbassadorService pour garantir le referralCode
-        // d'un AMBASSADOR (PROMPT-176) ; non sollicité par ces tests.
+        // d'un AMBASSADOR ; non sollicité par ces tests.
         { provide: AmbassadorService, useValue: { promote: vi.fn(), revoke: vi.fn() } },
       ],
     }).compile();
@@ -78,8 +79,8 @@ describe('UsersService', () => {
       });
 
       await service.saveOnboardingProfile('user-1', {
-        market: 'CRYPTO',
-        goal: 'DISCIPLINE',
+        market: Market.CRYPTO,
+        goal: Goal.DISCIPLINE,
       });
 
       const call = mockPrisma.user.update.mock.calls[0][0];
@@ -128,7 +129,7 @@ describe('UsersService', () => {
   });
 
   describe('updatePreferences', () => {
-    it('ignore une devise globale envoyée : ni currency ni taux écrits, aucun appel réseau (PROMPT-214)', async () => {
+    it('ignore une devise globale envoyée : ni currency ni taux écrits, aucun appel réseau', async () => {
       const fetchSpy = vi.fn();
       vi.stubGlobal('fetch', fetchSpy);
       mockPrisma.user.update.mockResolvedValue({ ...mockUser, notificationsEmail: false });

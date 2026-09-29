@@ -21,9 +21,9 @@
 
   <!-- Navigation semaine -->
   <div class="eco-nav">
-    <button class="eco-nav-btn" (click)="prevWeek()">←</button>
+    <button aria-label="Semaine précédente" class="eco-nav-btn" (click)="prevWeek()">←</button>
     <div class="eco-week-label">{{ getWeekLabel() }}</div>
-    <button class="eco-nav-btn" (click)="nextWeek()">→</button>
+    <button aria-label="Semaine suivante" class="eco-nav-btn" (click)="nextWeek()">→</button>
     @if (!isThisWeek()) {
       <button class="eco-nav-today" (click)="goToThisWeek()">Cette semaine</button>
     }
@@ -93,7 +93,9 @@
     </div>
   }
 
-  @if (!isLoading()) {
+  @if (loadError()) {
+    <mtc-error-state message="Le calendrier économique n’a pas pu être chargé. Vérifie ta connexion puis réessaie." (retry)="reload()" />
+  } @else if (!isLoading()) {
 
     <!-- Semaine sans événements -->
     @if (filteredDayGroups().length === 0) {
@@ -264,7 +266,7 @@
                   <div class="sel-name">{{ translate(event.name) }}</div>
                 </div>
                 <span class="eco-impact-badge" [class]="event.impact">{{ event.impact === 'high' ? 'Fort' : 'Moy' }}</span>
-                <button class="sel-unpin" (click)="togglePin(event)" title="Désépingler">✕</button>
+                <button aria-label="Désépingler" class="sel-unpin" (click)="togglePin(event)" title="Désépingler">✕</button>
               </div>
             } @empty {
               <div class="eco-empty-sm">Épingle les annonces du jour 📌<br>pour les suivre ici</div>

@@ -97,7 +97,7 @@ export class AuthService {
     // Le `findUnique` ci-dessus donne un message rapide, mais ne protège PAS de la
     // concurrence : sur un double-clic, les deux requêtes le passent et la seconde
     // violait `User_email_key` → P2002 non rattrapé → 500 sur le tout premier geste
-    // du nouvel utilisateur (PROMPT-186 #3). La contrainte de base est la vraie
+    // du nouvel utilisateur. La contrainte de base est la vraie
     // garantie ; on la traduit ici dans le 409 que le front sait déjà afficher.
     let user;
     try {

@@ -1,5 +1,5 @@
 /**
- * PROMPT-210 live — séquence complète, sur la VRAIE app (createIntegrationApp : Resend neutralisé) :
+ * Temps réel Tradovate — séquence complète, sur la VRAIE app (createIntegrationApp : Resend neutralisé) :
  * app ouverte → rattrapage REST → événement WebSocket Tradovate → trade créé et relayé →
  * app fermée → WebSocket Tradovate fermé proprement.
  *
@@ -11,8 +11,8 @@ import { getStorageToken } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { randomBytes } from 'node:crypto';
 import { io, type Socket } from 'socket.io-client';
-import { createIntegrationApp } from '../../../test/integration-app.helper';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { createIntegrationApp } from '@api/test/integration-app.helper';
+import { PrismaService } from '@api/prisma/prisma.service';
 import { LIVE_SOCKET_FACTORY, TradovateLiveService } from './tradovate-live.service';
 import type { LiveSocket } from './tradovate-live.connection';
 

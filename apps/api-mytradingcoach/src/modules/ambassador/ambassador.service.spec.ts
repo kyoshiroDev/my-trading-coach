@@ -1,5 +1,5 @@
 /**
- * PROMPT-176 — le RÔLE est la seule vérité pour « être ambassadeur ».
+ * le RÔLE est la seule vérité pour « être ambassadeur ».
  *
  * `User.referralCode` est partagé entre le parrainage ambassadeur (commission 20 %)
  * et le parrainage grand public (mois offert) : un USER qui génère son code en a un

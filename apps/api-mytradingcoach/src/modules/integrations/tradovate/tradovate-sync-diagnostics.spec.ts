@@ -10,7 +10,7 @@ const pos = (id: number, accountId: number, date?: string, netPos = 0): Tradovat
 const pair = (positionId: number): TradovateFillPair =>
   ({ positionId, buyFillId: 1, sellFillId: 2, qty: 1, buyPrice: 1, sellPrice: 2, active: true });
 
-describe('Diagnostic de synchro Tradovate (PROMPT-212)', () => {
+describe('Diagnostic de synchro Tradovate', () => {
   it('Tradovate ne renvoie RIEN : le log le dit explicitement (≠ données écartées)', () => {
     const line = describeTradovateSnapshot({
       accounts: [acc(1), acc(2), acc(3)], positions: [], pairs: [], externalAccountId: 1, fillsFetched: 0,

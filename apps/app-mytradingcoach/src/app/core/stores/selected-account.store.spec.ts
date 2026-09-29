@@ -9,7 +9,7 @@ const acc = (id: string, over: Partial<TradingAccount> = {}): TradingAccount =>
 
 function setup(opts: { accounts?: TradingAccount[] } = {}) {
   const api = { getAll: vi.fn(() => of({ data: opts.accounts ?? [] })) };
-  // Le store ne gate plus par plan (PROMPT-169) : accessible à tous, quota côté API.
+  // Le store ne gate plus par plan : accessible à tous, quota côté API.
   TestBed.configureTestingModule({
     providers: [
       SelectedAccountStore,

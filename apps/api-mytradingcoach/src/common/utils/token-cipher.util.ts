@@ -2,7 +2,7 @@ import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 
 /**
  * Chiffrement symétrique des secrets de broker stockés en base (tokens OAuth Tradovate,
- * et demain clés API Binance / Bybit) — PROMPT-207.
+ * et demain clés API Binance / Bybit).
  *
  * AES-256-GCM : confidentialité + intégrité (un octet modifié en base fait échouer le
  * déchiffrement au lieu de rendre un token corrompu). IV aléatoire de 12 octets par

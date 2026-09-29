@@ -7,34 +7,41 @@ on:
     branches: [main]
 
 jobs:
-  # ── Détection des apps modifiées ──────────────────────────────────────────
+  # ── Détection des apps à redéployer ───────────────────────────────────────
+  # Nx calcule les projets impactés depuis le DERNIER DÉPLOIEMENT RÉUSSI (tag
+  # `deployed/prod`, déplacé par le job `mark-deployed`). Il suit les dépendances :
+  # une modification de libs/shared redéploie aussi l'app et l'admin, ce que
+  # l'ancien `git diff HEAD~1 | grep apps/...` ratait.
   changes:
     name: Detect changed apps
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    env:
+      NX_NO_CLOUD: true
+      NX_DAEMON: false
     outputs:
-      angular: ${{ steps.diff.outputs.angular }}
-      admin: ${{ steps.diff.outputs.admin }}
+      angular: ${{ steps.affected.outputs.angular }}
+      admin: ${{ steps.affected.outputs.admin }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
-          fetch-depth: 2
-      - id: diff
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4 # version lue dans package.json (packageManager)
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - id: affected
         run: |
-          CHANGED=$(git diff --name-only HEAD~1 HEAD)
-          echo "Files changed:"
-          echo "$CHANGED"
-          if echo "$CHANGED" | grep -q "^apps/app-mytradingcoach/"; then
-            echo "angular=true" >> $GITHUB_OUTPUT
-          else
-            echo "angular=false" >> $GITHUB_OUTPUT
-          fi
-          if echo "$CHANGED" | grep -q "^apps/admin-mytradingcoach/"; then
-            echo "admin=true" >> $GITHUB_OUTPUT
-          else
-            echo "admin=false" >> $GITHUB_OUTPUT
-          fi
+          BASE=$(git rev-parse --verify -q 'refs/tags/deployed/prod^{commit}' || git rev-parse HEAD~1)
+          echo "Base de comparaison : $BASE"
+          PROJECTS=$(pnpm -s nx show projects --affected --base="$BASE" --head=HEAD --json)
+          echo "Projets impactés : $PROJECTS"
+          has() { echo "$PROJECTS" | grep -q "\"$1\""; }
+          if has app-mytradingcoach; then echo "angular=true" >> "$GITHUB_OUTPUT"; else echo "angular=false" >> "$GITHUB_OUTPUT"; fi
+          if has admin-mytradingcoach; then echo "admin=true" >> "$GITHUB_OUTPUT"; else echo "admin=false" >> "$GITHUB_OUTPUT"; fi
 
   # ── Deploy API → OVH VPS (Docker) ────────────────────────────────────────
   deploy-api:
@@ -56,7 +63,7 @@ jobs:
             set -e
             cd /opt/apps/mytradingcoach/prod
             git fetch origin
-            git reset --hard origin/main
+            git reset --hard ${{ github.event.workflow_run.head_sha }}
             docker compose -f docker-compose.prod.yml --env-file .env.production build api
             docker compose -f docker-compose.prod.yml --env-file .env.production up -d --force-recreate api
             docker compose -f docker-compose.discord-bot.yml --env-file .env.production build discord-bot
@@ -76,10 +83,10 @@ jobs:
       NX_NO_CLOUD: true
     steps:
       - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
         with:
-          version: 11.6.0
+          ref: ${{ github.event.workflow_run.head_sha }} # le commit validé par la CI, pas le dernier main
+
+      - uses: pnpm/action-setup@v4 # version lue dans package.json (packageManager)
 
       - uses: actions/setup-node@v4
         with:
@@ -89,7 +96,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build Angular
-        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=production --skip-nx-cache
+        run: pnpm nx build app-mytradingcoach --configuration=production --skip-nx-cache
 
       - name: Verify build output
         run: |
@@ -123,10 +130,10 @@ jobs:
       NX_NO_CLOUD: true
     steps:
       - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
         with:
-          version: 11.6.0
+          ref: ${{ github.event.workflow_run.head_sha }} # le commit validé par la CI, pas le dernier main
+
+      - uses: pnpm/action-setup@v4 # version lue dans package.json (packageManager)
 
       - uses: actions/setup-node@v4
         with:
@@ -136,7 +143,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build Admin
-        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build admin-mytradingcoach --configuration=production --skip-nx-cache
+        run: pnpm nx build admin-mytradingcoach --configuration=production --skip-nx-cache
 
       - name: Verify build output
         run: |
@@ -169,10 +176,10 @@ jobs:
       NX_NO_CLOUD: true
     steps:
       - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
         with:
-          version: 11.6.0
+          ref: ${{ github.event.workflow_run.head_sha }} # le commit validé par la CI, pas le dernier main
+
+      - uses: pnpm/action-setup@v4 # version lue dans package.json (packageManager)
 
       - uses: actions/setup-node@v4
         with:
@@ -200,3 +207,20 @@ jobs:
         run: |
           rsync -az --delete apps/landing-mytradingcoach/dist/ \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/static/landing-prod/
+
+  # ── Marque le commit comme déployé (base du prochain calcul `affected`) ───
+  mark-deployed:
+    name: Tag deployed/prod
+    runs-on: ubuntu-latest
+    needs: [changes, deploy-api, deploy-angular, deploy-admin, deploy-landing]
+    # Les jobs sautés (app non modifiée) ne bloquent pas ; un échec, si.
+    if: ${{ !failure() && !cancelled() && needs.changes.result == 'success' }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - run: |
+          git tag -f deployed/prod
+          git push -f origin refs/tags/deployed/prod

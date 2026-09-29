@@ -1,12 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
-
-export interface VpsStats {
-  cpu: number; ram: { used: number; total: number };
-  disk: { used: number; total: number }; network: { up: number; down: number };
-  uptime: number; os: string; kernel: string; node: string; docker: string; ip: string;
-}
+import { environment } from '@admin/environments/environment';
+import type { VpsStats } from '@mtc/shared';
+export type { VpsStats };
 
 export interface DockerContainer {
   id: string; name: string; image: string;

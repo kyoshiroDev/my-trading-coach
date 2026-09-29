@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
-import { todayParis } from '../../common/utils/paris-date';
+import { RedisService } from '../infra/redis.service';
+import { todayParis } from '@mtc/shared';
 
 /**
  * Enregistre 1 jour d'activité par utilisateur et par jour (heatmap admin).

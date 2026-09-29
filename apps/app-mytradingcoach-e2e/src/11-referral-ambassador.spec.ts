@@ -1,5 +1,5 @@
 /**
- * PROMPT-175 — Parcours de parrainage ambassadeur, de bout en bout.
+ * Parcours de parrainage ambassadeur, de bout en bout.
  *
  * Chaîne testée : inscription du filleul via le code de l'ambassadeur → checkout
  * Stripe → paiement → webhook → commission de 20 % créditée à l'ambassadeur.
@@ -197,7 +197,7 @@ test.describe('Parrainage ambassadeur : lien → paiement → commission 20 %', 
 
     expect(commission.status, 'Une commission fraîche doit être « pending »').toBe('pending');
 
-    // Règle de coexistence (PROMPT-176) : le rôle du parrain décide. Un AMBASSADOR
+    // Règle de coexistence : le rôle du parrain décide. Un AMBASSADOR
     // touche la commission cash et JAMAIS le mois offert du parrainage grand public.
     const reward = await db().referralReward.findFirst({
       where: { parrainId: ambassador.id },

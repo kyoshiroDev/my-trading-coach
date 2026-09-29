@@ -1,0 +1,19 @@
+{
+  "//": "Nom volontairement différent de tsconfig.json : le plugin TypeScript de Nx en déduirait des cibles, et `nx sync` (lancé par le Dockerfile de l'API) ajouterait aux apps des références vers une lib non composite.",
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "composite": false,
+    "declaration": false,
+    "emitDeclarationOnly": false,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": [
+      "node"
+    ],
+    "declarationMap": false
+  },
+  "include": [
+    "src/**/*.ts"
+  ]
+}

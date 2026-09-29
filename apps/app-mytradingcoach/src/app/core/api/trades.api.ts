@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { environment } from '@app/environments/environment';
 
 export interface InstrumentDto {
   symbol: string;
@@ -12,110 +12,19 @@ export interface InstrumentDto {
   pipDecimals?: number;
 }
 
-/** Setup tel que renvoyé par l'API sur un trade (relation). */
-export interface TradeSetup {
-  id: string;
-  title: string;
-  color: string;
-}
-
-export interface Trade {
-  id: string;
-  userId: string;
-  asset: string;
-  side: 'LONG' | 'SHORT';
-  entry: number;
-  exit: number | null;
-  stopLoss: number | null;
-  takeProfit: number | null;
-  pnl: number | null;
-  commission: number | null;
-  riskReward: number | null;
-  quantity: number | null;
-  capitalEngaged: number | null;
-  // Override optionnel (PROMPT-163) : null = non renseignée (héritera de l'humeur de session).
-  emotion:
-    | 'CONFIDENT'
-    | 'STRESSED'
-    | 'REVENGE'
-    | 'FEAR'
-    | 'FOCUSED'
-    | 'NEUTRAL'
-    | null;
-  // Émotion EFFECTIVE calculée côté API (override sinon humeur de session sinon null) : à afficher.
-  effectiveEmotion?: string | null;
-  // Note d'exécution CALCULÉE (PROMPT-161) : déterministe, jamais saisie. null = « Non évalué ».
-  executionScore?: number | null;
-  executionGrade?: 'EXCELLENT' | 'BON' | 'MOYEN' | 'MAUVAIS' | null;
-  // Barème ayant produit la note (PROMPT-168) : stop-based ou comportemental.
-  executionMethod?: 'STOP_BASED' | 'BEHAVIORAL' | null;
-  setupId: string;
-  setup: TradeSetup;
-  /** Compte du trade : sa devise est celle de ce compte (PROMPT-214). */
-  accountId?: string | null;
-  session: 'LONDON' | 'NEW_YORK' | 'ASIAN';
-  timeframe: string;
-  notes: string | null;
-  tags: string[];
-  tradedAt: string;
-  createdAt: string;
-}
-
-export interface CreateTradeDto {
-  asset: string;
-  side: Trade['side'];
-  entry?: number;
-  exit?: number;
-  stopLoss?: number;
-  takeProfit?: number;
-  pnl?: number;
-  commission?: number;
-  riskReward?: number;
-  quantity?: number;
-  capitalEngaged?: number;
-  emotion?: Trade['emotion']; // optionnel (override) : absent/null = hérite de l'humeur de session
-  setupId: string;
-  session: Trade['session'];
-  timeframe: string;
-  notes?: string;
-  tags?: string[];
-  tradedAt?: string;
-  accountId?: string;
-}
-
-export type UpdateTradeDto = Partial<CreateTradeDto>;
-
-/** Filtres de GET /trades (query string) : miroir de `TradeFiltersDto` côté API. */
-export interface TradeFilters {
-  cursor?: string;
-  limit?: number | string;
-  side?: Trade['side'];
-  setupId?: string;
-  emotion?: string;
-  result?: 'WIN' | 'LOSS' | 'BREAKEVEN';
-  executionGrade?: string;
-  dateFrom?: string;
-  dateTo?: string;
-  accountId?: string;
-}
-
-/** Page de GET /trades (pagination par curseur, `trades.service.findAll`). */
-export interface TradesPage {
-  data: Trade[];
-  nextCursor: string | null;
-  hasNextPage: boolean;
-}
-
-/** KPIs du journal agrégés en base sur tout l'ensemble filtré (hors pagination). */
-export interface JournalStats {
-  totalTrades: number;
-  winRate: number;
-  pnlBrut: number;
-  fees: number;
-  pnlNet: number;
-  bestTrade: number;
-  worstTrade: number;
-}
+// Types d'échange avec l'API : source unique dans le contrat partagé (@mtc/shared),
+// ré-exportés ici pour les importeurs existants (`from '../core/api/trades.api'`).
+import type {
+  CreateTradeRequest as CreateTradeDto,
+  JournalStats,
+  Trade,
+  TradeFilters,
+  TradeSetup,
+  TradesPage,
+  UpdateTradeRequest as UpdateTradeDto,
+  InstrumentSearchResult,
+} from '@mtc/shared';
+export type { CreateTradeDto, InstrumentSearchResult, JournalStats, Trade, TradeFilters, TradeSetup, TradesPage, UpdateTradeDto };
 
 export interface UserAssetItem {
   symbol: string;
@@ -125,12 +34,6 @@ export interface UserAssetItem {
   lastEntry: number | null;
   lastQty: number | null;
   isFavorite: boolean;
-}
-
-export interface InstrumentSearchResult {
-  symbol: string;
-  label: string;
-  category: string;
 }
 
 export interface MarketContextItem { value: number | null; changePct: number | null; source: string; }
@@ -164,6 +67,9 @@ export interface NewsItem {
 export class TradesApi {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/trades`;
+  // Instruments et données de marché ont leurs propres routes (API-21), hors /trades.
+  private readonly instrumentsBase = `${environment.apiUrl}/instruments`;
+  private readonly marketBase = `${environment.apiUrl}/market`;
 
   /** Une page de trades ; `cursor` = `nextCursor` de la page précédente. */
   getAll(filters: TradeFilters | Record<string, string> = {}): Observable<{ data: TradesPage }> {
@@ -222,46 +128,46 @@ export class TradesApi {
   }
 
   getInstruments(): Observable<{ data: InstrumentDto[] }> {
-    return this.http.get<{ data: InstrumentDto[] }>(`${this.base}/instruments`);
+    return this.http.get<{ data: InstrumentDto[] }>(`${this.instrumentsBase}`);
   }
 
   getUserAssets(): Observable<{ data: UserAssetItem[] }> {
-    return this.http.get<{ data: UserAssetItem[] }>(`${this.base}/user-assets`);
+    return this.http.get<{ data: UserAssetItem[] }>(`${this.instrumentsBase}/user-assets`);
   }
 
   saveUserAssets(assets: string[], favoriteAsset?: string | null): Observable<{ saved: boolean }> {
-    return this.http.patch<{ saved: boolean }>(`${this.base}/user-assets`, { assets, favoriteAsset });
+    return this.http.patch<{ saved: boolean }>(`${this.instrumentsBase}/user-assets`, { assets, favoriteAsset });
   }
 
   setFavoriteAsset(asset: string | null): Observable<void> {
-    return this.http.patch<void>(`${this.base}/favorite-asset`, { asset });
+    return this.http.patch<void>(`${this.instrumentsBase}/favorite-asset`, { asset });
   }
 
   getLivePrice(symbol: string): Observable<{ data: { price: number | null; symbol: string; cached: boolean } }> {
     return this.http.get<{ data: { price: number | null; symbol: string; cached: boolean } }>(
-      `${this.base}/live-price`,
+      `${this.marketBase}/live-price`,
       { params: { symbol } },
     );
   }
 
   searchInstruments(query: string): Observable<{ data: InstrumentSearchResult[] }> {
     const params = new HttpParams().set('q', query);
-    return this.http.get<{ data: InstrumentSearchResult[] }>(`${this.base}/instruments/search`, { params });
+    return this.http.get<{ data: InstrumentSearchResult[] }>(`${this.instrumentsBase}/search`, { params });
   }
 
   getMarketContext(): Observable<{ data: MarketContext }> {
-    return this.http.get<{ data: MarketContext }>(`${this.base}/market-context`);
+    return this.http.get<{ data: MarketContext }>(`${this.marketBase}/context`);
   }
 
   getNews(symbols: string[]): Observable<{ data: NewsItem[] }> {
     return this.http.get<{ data: NewsItem[] }>(
-      `${this.base}/news`,
+      `${this.marketBase}/news`,
       { params: { symbols: symbols.join(',') } },
     );
   }
 
   // Traduction paresseuse du corps d'une news, déclenchée à l'ouverture de la modale.
   newsText(id: string): Observable<{ data: { text: string | null } }> {
-    return this.http.get<{ data: { text: string | null } }>(`${this.base}/news/${id}/text`);
+    return this.http.get<{ data: { text: string | null } }>(`${this.marketBase}/news/${id}/text`);
   }
 }

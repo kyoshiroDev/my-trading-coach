@@ -1,5 +1,5 @@
 /**
- * PROMPT-181/182 — régression Val : import CSV rejeté par un `setupId` périmé.
+ * régression Val : import CSV rejeté par un `setupId` périmé.
  *
  * Constat terrain (2026-08-18) : le wizard d'onboarding fixait `setupId` sur le
  * PREMIER setup actif au montage du composant CSV import (étape 1) sans jamais
@@ -7,9 +7,9 @@
  * l'utilisateur envoyait un id fantôme à l'étape 8 → 400 sur TOUT le lot, alors
  * qu'il lui restait des setups actifs.
  *
- * Comportement corrigé (PROMPT-182), vérifié ici : un `setupId` invalide
+ * Comportement corrigé, vérifié ici : un `setupId` invalide
  * (archivé ou hors compte) est traité comme absent — l'import retombe sur
- * « Sans setup » (`resolveBatchSetupId` → `getImportSetupId`, PROMPT-213) au
+ * « Sans setup » (`resolveBatchSetupId` → `getImportSetupId`) au
  * lieu de rejeter le lot. Un `setupId` valide reste évidemment respecté.
  *
  * Nécessite une vraie base : c'est `TradesController` (guard + interceptor
@@ -69,7 +69,7 @@ async function importCsv(token: string, setupId: string) {
 }
 
 beforeAll(async () => {
-  // Bootstrap partagé : ResendService neutralisé (PROMPT-209), aucun vrai email envoyé.
+  // Bootstrap partagé : ResendService neutralisé, aucun vrai email envoyé.
   ({ app, baseUrl } = await createIntegrationApp());
   prisma = app.get(PrismaService);
 }, 120_000);
@@ -87,7 +87,7 @@ async function importedSetupTitle(userId: string): Promise<string | undefined> {
   return trade?.setup.title;
 }
 
-describe('Import CSV — setupId périmé (régression Val, PROMPT-181/182)', () => {
+describe('Import CSV — setupId périmé (régression Val)', () => {
   it('setup ARCHIVÉ → import retombe sur « Sans setup » au lieu de rejeter le lot', async () => {
     const s = uid();
     const email = `${PREFIX}archived-${s}@test.local`;
@@ -169,7 +169,7 @@ describe('Import CSV — setupId périmé (régression Val, PROMPT-181/182)', ()
     const setups = await prisma.setup.findMany({ where: { userId } });
     const stale = setups[0].id;
     // Cas dégénéré atteignable via l'API (archivage/suppression sans minimum imposé
-    // côté back) : plus aucun setup actif. Avant PROMPT-213, la FK NOT NULL de
+    // côté back) : plus aucun setup actif. Tant que la FK était NOT NULL, celle de
     // `Trade.setupId` faisait compter le trade en échec ; « Sans setup » est
     // désormais créé à la volée, le trade passe.
     await prisma.setup.updateMany({ where: { userId }, data: { archived: true } });

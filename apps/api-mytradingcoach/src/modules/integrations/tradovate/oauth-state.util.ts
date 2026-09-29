@@ -8,7 +8,7 @@ import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypt
  * une URL tierce (historique, logs du broker) — s'il était signé comme un access token, il
  * pourrait servir de Bearer sur l'API. Ici, format et clé différents : inutilisable ailleurs.
  */
-/** D'où l'utilisateur a lancé la connexion : le retour le ramène exactement là (PROMPT-208). */
+/** D'où l'utilisateur a lancé la connexion : le retour le ramène exactement là. */
 export type OAuthOrigin = 'wizard' | 'settings';
 
 export interface OAuthStatePayload {

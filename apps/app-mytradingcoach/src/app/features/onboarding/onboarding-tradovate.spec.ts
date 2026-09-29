@@ -15,7 +15,7 @@ import type { TradovateConnection, TradovateSyncResult } from '../../core/api/tr
 import TEMPLATE from './onboarding.component.html?raw';
 
 /**
- * PROMPT-208 — carte Tradovate à l'étape 8 et RETOUR après OAuth (écran 2bis).
+ * carte Tradovate à l'étape 8 et RETOUR après OAuth (écran 2bis).
  * VRAI template (import `?raw`) ; seuls les composants enfants et les icônes sont
  * neutralisés (NO_ERRORS_SCHEMA), comme dans les autres specs de ce composant.
  */
@@ -86,7 +86,7 @@ describe('Onboarding — étape 8 : carte « Connecter mon compte Tradovate »',
     saveProgress(8);
   });
 
-  it('4 cartes : Tradovate EN TÊTE et mise en avant, CSV conservé au second plan (PROMPT-211)', () => {
+  it('4 cartes : Tradovate EN TÊTE et mise en avant, CSV conservé au second plan', () => {
     const { el, q } = mount();
     const ids = [...el.querySelectorAll('.choice-grid-4 [data-testid]')].map((n) => n.getAttribute('data-testid'));
     expect(ids).toEqual([

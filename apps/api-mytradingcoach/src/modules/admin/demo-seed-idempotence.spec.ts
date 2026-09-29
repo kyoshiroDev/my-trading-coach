@@ -1,5 +1,5 @@
 /**
- * PROMPT-192 — le compte démo doit rester peuplé ET récent.
+ * le compte démo doit rester peuplé ET récent.
  *
  * Constat prod (2026-08-28) : la démo affichait « P&L +0$ · Win Rate 0% · 0 trade loggé »
  * avec une session active depuis 1978 h. Le seed avait tourné une seule fois, le
@@ -14,7 +14,13 @@ import { describe, it, expect, vi } from 'vitest';
 
 // Chaque test lance le seed complet (hash du mot de passe + recherche du tirage) : sous la
 // charge de la suite complète, deux runs dépassent les 5 s par défaut.
-vi.setConfig({ testTimeout: 20_000 });
+//
+// 60 s et pas 20 : le test des jours ouvrés enchaîne SEPT seeds dans une seule assertion, et il
+// a été mesuré à 20,1 s — donc en échec — pendant un run de la suite entière sur une machine
+// chargée, alors qu'il tient en 30 s pour le fichier complet au repos. Un runner CI partagé est
+// plus lent qu'un poste de dev : à 20 s la marge était nulle, et l'échec ressemblait à une
+// régression de code alors que c'était l'horloge. Même valeur que `vitest.integration.config.mts`.
+vi.setConfig({ testTimeout: 60_000 });
 import { PrismaClient } from '@prisma/client';
 import { seedDemo, assertDemoCalendar, DEMO_EMAIL, DEMO_WINDOW_DAYS } from './demo-seed';
 
@@ -348,7 +354,7 @@ describe('seedDemo — sobriété AMF (montrer la fonctionnalité, pas une perfo
     const { prisma, created } = fakePrisma(calls);
     await seedDemo(prisma);
 
-    // P&L NET (frais déduits), comme partout dans l'app (PROMPT-213).
+    // P&L NET (frais déduits), comme partout dans l'app.
     const pnl = created['trade'].reduce(
       (s, t) => s + (t['pnl'] as number) - (t['commission'] as number),
       0,
@@ -381,7 +387,7 @@ describe('seedDemo — sobriété AMF (montrer la fonctionnalité, pas une perfo
   });
 });
 
-describe('seedDemo — connexion Tradovate démo (PROMPT-207)', () => {
+describe('seedDemo — connexion Tradovate démo', () => {
   it('le compte prop firm apparaît connecté, sans aucun vrai token, et une seule connexion par run', async () => {
     const calls: Call[] = [];
     const { prisma, created } = fakePrisma(calls);
@@ -400,7 +406,7 @@ describe('seedDemo — connexion Tradovate démo (PROMPT-207)', () => {
   });
 });
 
-describe('seedDemo — réalisme validé (PROMPT-215) : un trader crédible, pas un gagnant parfait', () => {
+describe('seedDemo — réalisme validé : un trader crédible, pas un gagnant parfait', () => {
   const net = (t: Record<string, unknown>) => (t['pnl'] as number) - (t['commission'] as number);
   const dayKey = (t: Record<string, unknown>) => (t['tradedAt'] as Date).toDateString();
 

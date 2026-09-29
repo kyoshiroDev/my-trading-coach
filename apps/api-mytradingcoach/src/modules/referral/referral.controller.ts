@@ -12,6 +12,7 @@ import { AdminGuard } from '../../common/guards/admin.guard';
 import { AmbassadorGuard } from '../../common/guards/ambassador.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ReferralService } from './referral.service';
+import { DeprecatedRoute } from '../../common/decorators/deprecated-route.decorator';
 import { ApplyAmbassadorDto } from './dto/apply-ambassador.dto';
 
 @Controller('referral')
@@ -28,6 +29,7 @@ export class ReferralController {
   // Overview admin (parrainage grand public, démo exclus)
   @Get('admin/overview')
   @UseGuards(AdminGuard)
+  @DeprecatedRoute('GET /admin/referral/overview')
   getAdminOverview() {
     return this.service.getAdminOverview();
   }

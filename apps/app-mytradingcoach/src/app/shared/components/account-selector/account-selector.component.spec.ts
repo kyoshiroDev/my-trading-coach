@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
 import { AccountSelectorComponent } from './account-selector.component';
-import { SelectedAccountStore } from '../../../core/stores/selected-account.store';
-import { TradingAccount } from '../../../core/api/accounts.api';
+import { SelectedAccountStore } from '@app/core/stores/selected-account.store';
+import { TradingAccount } from '@app/core/api/accounts.api';
 
 const acc = (over: Partial<TradingAccount>): TradingAccount => over as TradingAccount;
 
@@ -95,10 +95,10 @@ describe('AccountSelectorComponent', () => {
     const { cmp, fixture } = setup();
     cmp.toggle();
     // Cible interne (le host lui-même) → reste ouvert.
-    cmp.onDocClick({ target: fixture.nativeElement } as MouseEvent);
+    cmp.onDocClick({ target: fixture.nativeElement } as unknown as MouseEvent);
     expect(cmp.open()).toBe(true);
     // Cible externe (le body, qui n'est pas contenu dans le host) → ferme.
-    cmp.onDocClick({ target: document.body } as MouseEvent);
+    cmp.onDocClick({ target: document.body } as unknown as MouseEvent);
     expect(cmp.open()).toBe(false);
   });
 });

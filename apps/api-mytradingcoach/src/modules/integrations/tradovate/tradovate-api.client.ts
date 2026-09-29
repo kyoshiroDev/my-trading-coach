@@ -4,7 +4,7 @@ import { TradovateApiError } from './tradovate.errors';
 import type { TradovateEnv, TradovateOAuthTokenResponse } from './tradovate.types';
 
 /**
- * L'OAuth Tradovate passe TOUJOURS par Live (vérifié PROMPT-207-VERIFY : l'inscription
+ * L'OAuth Tradovate passe TOUJOURS par Live (vérifié lors de l'intégration : l'inscription
  * OAuth de MTC n'existe pas en Demo, et l'exemple officiel fait de même). Les DONNÉES, elles,
  * vivent sur deux hôtes : `live` (comptes réels) et `demo` (comptes simulés, dont les comptes
  * de prop firm). D'où deux bases REST, choisies par compte.

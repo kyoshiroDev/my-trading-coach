@@ -4,7 +4,7 @@ import { ForbiddenException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AmbassadorService } from '../ambassador/ambassador.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
+import { RedisService } from '../infra/redis.service';
 
 const baseUser = {
   role: 'USER',
@@ -40,7 +40,7 @@ describe('UsersService — suppression + trace DeletedAccount', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: RedisService, useValue: mockRedis },
         // setRole délègue à AmbassadorService pour garantir le referralCode
-        // d'un AMBASSADOR (PROMPT-176) ; non sollicité par ces tests.
+        // d'un AMBASSADOR ; non sollicité par ces tests.
         { provide: AmbassadorService, useValue: { promote: vi.fn(), revoke: vi.fn() } },
       ],
     }).compile();

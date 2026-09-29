@@ -10,11 +10,14 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
-import { EcoCalendarApi, EcoEvent, EcoResultAnalysis } from '../../core/api/eco-calendar.api';
+import { EcoCalendarApi, EcoResultAnalysis } from '../../core/api/eco-calendar.api';
 import { translateEcoEvent } from '../../core/data/eco-event-translations';
-import { todayParis, toParisDateStr } from '../../core/utils/paris-date';
+
 import { UserStore } from '../../core/stores/user.store';
 import { ToastService } from '../../core/services/toast.service';
+import { toParisDateStr, todayParis } from '@mtc/shared';
+import type { EcoEvent } from '@mtc/shared';
+import { ErrorStateComponent } from '@mtc/front-ui';
 
 type EcoSession = 'asia' | 'europe' | 'us';
 interface SessionGroup { asia: EcoEvent[]; europe: EcoEvent[]; us: EcoEvent[]; }
@@ -39,7 +42,7 @@ interface TableRow {
 @Component({
   selector: 'mtc-eco-calendar-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [],
+  imports: [ErrorStateComponent],
   templateUrl: './eco-calendar.component.html',
   styleUrl: './eco-calendar.component.css',
 })
@@ -49,9 +52,10 @@ export class EcoCalendarComponent implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly userStore = inject(UserStore);
 
-
   protected readonly currentWeekStart = signal(this.getMonday(new Date()));
   protected readonly isLoading = signal(false);
+  /** La semaine n'a pas pu être chargée (sinon : « aucun événement », trompeur). */
+  protected readonly loadError = signal(false);
 
   // ── Onglets de session ──────────────────────────────────────────────────
   protected readonly SESSION_TABS: { k: 'all' | EcoSession; nm: string }[] = [
@@ -369,8 +373,13 @@ export class EcoCalendarComponent implements OnInit {
     this.selectedDate.set(todayInWeek ? today : (days[0]?.date ?? null));
   }
 
+  protected reload(): void {
+    this.loadWeek(this.currentWeekStart());
+  }
+
   private loadWeek(monday: Date): void {
     this.isLoading.set(true);
+    this.loadError.set(false);
     const from = toParisDateStr(monday);
     const friday = new Date(monday);
     friday.setDate(friday.getDate() + 4);
@@ -381,7 +390,7 @@ export class EcoCalendarComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.isLoading.set(false)),
       )
-      .subscribe(res => {
+      .subscribe({ error: () => this.loadError.set(true), next: (res) => {
         const today = todayParis();
 
         this.dayGroups.set(
@@ -397,7 +406,7 @@ export class EcoCalendarComponent implements OnInit {
           }),
         );
         this.setDefaultSelectedDay();
-      });
+      } });
   }
 
   protected togglePin(event: EcoEvent): void {

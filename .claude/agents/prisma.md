@@ -1,3 +1,8 @@
+---
+name: prisma
+description: "Schéma Prisma et migrations : conventions, index, compte démo. À lire avant de modifier prisma/schema.prisma ou d'écrire une migration."
+---
+
 # Agent Prisma — Schéma & Migrations
 
 ## Commandes
@@ -284,6 +289,27 @@ réécriture de table ni verrou long. L'existant devient `MANUAL` — on ne sait
 rétroactivement d'où vient une ligne, et c'est la valeur la moins mensongère.
 
 ---
+
+## `BrokerCsvMapping` — registre des brokers (2026-09-28)
+
+Fiche de parsing d'un export CSV, déduite une fois par un modèle puis réutilisée pour **tous**
+les utilisateurs, gratuits compris. Remplace l'écriture d'un parseur TypeScript par broker :
+les fiches vivant en base, ajouter un broker ne demande ni build ni déploiement.
+
+- `headerHash` (unique) : empreinte de l'en-tête normalisé, clé de reconnaissance. Voulue
+  **exacte** — une colonne ajoutée par le broker change la signature, la fiche ne matche plus et
+  l'import redevient « inconnu ». Mieux vaut ne pas reconnaître que lire chaque colonne à côté.
+- `mappingJson` : la fiche au format `CsvMapping` (`trades/csv-mapping.ts`).
+- `pnlConfidence` : part des lignes dont le signe du P&L confirmait le sens à la validation.
+  Trace de la confiance accordée, pour pouvoir réexaminer une fiche plus tard.
+- `validatedById` en `onDelete: Restrict` : une fiche porte les imports de tous les
+  utilisateurs de ce broker, supprimer l'admin ne doit pas la faire disparaître en cascade.
+- `enabled` : on désactive, on ne supprime pas — on garde la trace d'une fiche qui s'est
+  avérée mauvaise.
+
+**Aucune donnée de trading dans cette table** : uniquement des index de colonnes et des règles
+de format. L'échantillon qui a servi à déduire la fiche n'est pas conservé ; seul l'en-tête brut
+l'est (`headerSample`), pour diagnostiquer une fiche qui ne matche plus.
 
 ## Migrations — bonnes pratiques
 

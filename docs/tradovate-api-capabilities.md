@@ -7,6 +7,9 @@
 >   que la page unique) ;
 > - tutoriel OAuth officiel <https://github.com/tradovate/example-api-oauth>.
 >
+> **Complété le 2026-09-29** par le portail unifié <https://docs.ninjatrader.com/> : voir le **§13**,
+> qui corrige plusieurs conclusions des §4, §5 et §9.
+>
 > Contexte : notre intégration est en **lecture seule** (aucun ordre placé) et vise des comptes
 > **prop firm en évaluation**, qui vivent sur le domaine DEMO.
 >
@@ -169,6 +172,10 @@ ces endpoints n'accepte `startDate` / `endDate` : leurs seuls paramètres sont `
 
 ### Les serveurs `rpt-*` : non documentés
 
+> **Mise à jour 2026-09-29** : leur existence est désormais officielle (`reportingLive` /
+> `reportingDemo`, page *Dynamic API Hosts*). Leur schéma ne l'est toujours pas. Voir §13.1.
+
+
 - **Aucune occurrence** de `rpt-live`, `rpt-demo`, `fill_history`, `position_history` ou
   `cash_history` dans les 464 pages de l'index Partner, ni dans la référence principale.
 - Les hôtes **existent** pourtant : `https://rpt-demo.tradovateapi.com/v1/` et
@@ -217,6 +224,10 @@ Tradovate / NinjaTrader avant toute dépendance.
   <https://partner.tradovate.com/overview/core-concepts/web-sockets/user-syncrequest.md>
   La doc **ne dit pas** quelle profondeur temporelle contient l'instantané initial.
   **[terrain]** C'est ce canal qui déclenche nos synchros live.
+> **Mise à jour 2026-09-29** : le market data s'autorise avec un `mdAccessToken` distinct, sur
+> `md-demo.tradovateapi.com` en demo, avec la permission `Prices:Read`. Le 401 du §9 ne prouvait
+> donc pas un défaut d'abonnement aux données. Voir §13.1.
+
 - **Données de marché** : `md/subscribeQuote`, `md/subscribeDOM`, `md/subscribeHistogram`,
   `md/getChart` (barres Minute/Daily/Tick/Renko…, avec `timeRange`), `md/cancelChart`. Les graphiques
   acceptent une plage historique (`asFarAsTimestamp`, `asMuchAsElements`) — **l'historique existe
@@ -401,6 +412,10 @@ rattrapage. C'est la piste la plus différenciante à moyen terme, et la plus co
 
 #### ❌ Règles prop firm lues chez le broker — refusé
 
+> **Mise à jour 2026-09-29** : refus dû à la permission `Risks:Read` non accordée à notre app, et
+> non à une fermeture de la plateforme. Voir §13.3, piste 5.
+
+
 `userAccountPositionLimit`, `userAccountRiskParameter`, `accountRiskStatus`, `tradingPermission`
 répondent **401**. L'utilisateur continuera donc à saisir son objectif et son drawdown à la main.
 Contournement possible, sans ces endpoints : échantillonner `netLiq` à chaque synchro pour
@@ -408,6 +423,10 @@ reconstituer **notre propre** courbe d'equity et un drawdown suiveur calculé su
 plutôt que sur des trades. C'est déjà nettement mieux que l'estimation actuelle.
 
 #### ❌ Graphique du trade, MAE / MFE — refusé
+
+> **Mise à jour 2026-09-29** : cause corrigée (jeton et hôte market data erronés, `Prices:Read`
+> absente). Voir §13.3, pistes 6 et 7.
+
 
 `md/subscribeQuote` renvoie **401 « Access is denied »** alors que l'`authorize` passe. Sans
 abonnement aux données de marché sur le compte, pas de cotations, donc pas de graphique du trade ni
@@ -619,3 +638,255 @@ comptes des deux → account.userId = 699523      (le même)
 Deux traders Apex sans aucun lien partagent donc ce `userId`. **Le login, c'est `/user/list`**, qui
 rend l'utilisateur authentifié par le jeton (un seul élément). Utiliser `account.userId` mettait
 tous les traders d'une même prop firm derrière un unique verrou de renouvellement.
+
+---
+
+## 13. Ce que docs.ninjatrader.com révèle de nouveau (2026-09-29)
+
+> **Sources.** Le portail <https://docs.ninjatrader.com/> unifie NinjaTrader et Tradovate (« Build on
+> the NinjaTrader and Tradovate platform »). Il publie un index `llms.txt` par section et une
+> version `.md` de chaque page. Lues en entier : les **406 pages** Trade API (361 endpoints),
+> Market Data, MCP et Marketplace, plus la licence d'API. NinjaScript (1 233 entrées d'index) et
+> Web Trader ont été parcourus par index, avec lecture des pages comptes et exécutions.
+>
+> **Ce qui est testé.** Seulement ce qui se lit sans jeton : les métadonnées OAuth publiques
+> (`/.well-known/…`), le 2026-09-29. Aucun appel avec le jeton d'un utilisateur n'a été fait
+> aujourd'hui. Les tests authentifiés qui trancheraient sont listés au §13.5.
+>
+> Certains constats ci-dessous avaient été **mesurés le 2026-09-12** (notes internes du projet)
+> sans jamais être reportés dans ce document. Ils sont signalés comme tels.
+
+### 13.1 Zones floues des §4, §5, §10 et §11 : confirmé ou infirmé
+
+| Sujet | Ce que disait ce document | Ce que dit docs.ninjatrader.com | Verdict |
+|---|---|---|---|
+| **Serveurs `rpt-*`** (§4) | « non documentés, donc non contractuels » | La page [Dynamic API Hosts](https://docs.ninjatrader.com/api/dynamic-api-hosts.md) liste `reportingLive` et `reportingDemo` comme hôtes renvoyés **« Always »** par l'authentification, avec la règle « Demo reporting → `reportingDemo` ». Mesuré le 2026-09-12 : `GET /auth/renewaccesstoken` renvoie bien `rpt-demo.tradovateapi.com` / `rpt-live.tradovateapi.com`. | ✅ **L'existence est désormais officielle.** ⚠️ **Le schéma, lui, ne l'est toujours pas** : `requestReport` n'apparaît dans aucune des 406 pages, et le §10 reste la seule description de la forme des requêtes. |
+| **BigQuery** (§4) | réservé aux partenaires évaluation | **Aucune occurrence** sur le nouveau portail. | Inchangé : ni confirmé ni infirmé. Le Reporting API (§10) l'a rendu sans objet pour nous. |
+| **Cotations refusées** (§5, §9) | 401 « Access is denied » attribué à un **entitlement marché** du compte | Le market data s'autorise avec un **`mdAccessToken`** distinct de l'`accessToken` ([Market Data · Authentication](https://docs.ninjatrader.com/market-data/authentication.md)). L'hôte demo est **`md-demo.tradovateapi.com`**. Et la plateforme exige la permission **`Prices:Read`**. | ❌ **La conclusion du §9 était mal fondée.** Notre test envoyait le jeton OAuth sur `md.tradovateapi.com` (hôte **live**), sans `Prices:Read` (absente de nos permissions, voir la ligne « Scopes »). Le 401 ne prouve rien sur l'abonnement aux données. Le blocage demeure en pratique : la réponse OAuth documentée ne contient **pas** de `mdAccessToken`. |
+| **Rétention de l'historique** (§3, §10) | aucune politique documentée | **Aucune occurrence** de « retention ». Les outils MCP d'historique prennent `startDate`/`endDate` sans limite annoncée. | Inchangé. Notre mesure du §10 (historique jusqu'à la création du compte) reste la seule donnée. |
+| **Scopes OAuth** (§1) | « le tutoriel ne documente aucun nom de scope » | [MCP · Authentication](https://docs.ninjatrader.com/mcp/authentication.md) publie **« the same permission model used across the platform »** : `Users:Read`, `Accounting:Read`, `Positions:Read`, `Orders:Read`/`FullAccess`, `ContractLibrary:Read`, `Prices:Read`, `Risks:Read`/`FullAccess`, `Fees:Read`, `Alerts:Read`/`FullAccess`. | ✅ **Clarifié, et c'est l'explication de nos 401.** L'écran de consentement de notre app (`client_id` 16638, vu le 2026-09-09) n'accorde que Users, ContractLibrary, Orders, Accounting et Positions, en lecture. **Pas de `Risks:Read`, pas de `Prices:Read`.** Ces permissions **ne se demandent pas par paramètre** : les métadonnées de l'autorisation ne déclarent que `scopes_supported: ["openid"]` (testé le 2026-09-29). Elles se règlent sur l'inscription de l'app. |
+| **Durée du refresh token** (§7) | doc : 14 j ; terrain : ≈ 26 h | MCP : « A refresh token, valid for about **26 hours** » et « The refresh window renews on every refresh ». | ✅ **Notre mesure est confirmée par la doc.** Le 14 j de l'exemple Partner était faux. |
+| **OAuth en Demo** (§7, « Wrong client_id ») | Demo impossible | Demo : `trader.devel.ninjatrader.dev/oauth` et `live-api-d.tradovate.com/auth/oauthtoken`. Les métadonnées de `demo.tradovateapi.com` annoncent `web.ninjatrader.com/oauth?env=demo` et une **inscription dynamique de clients** (`/auth/register`). | ✅ **Expliqué** : notre client n'est inscrit que sur Live. Sans conséquence, puisque le jeton Live lit les comptes demo (§7). |
+| **`tradingPermission` refusé** (§9) | 401 avec `masterid=` | La page de l'endpoint précise `masterid` = **User entity ID**, pas l'id de compte. | ⚠️ **Test à refaire** : si l'id passé était celui du compte, le 401 ne vaut rien. |
+| **SL/TP a posteriori** (§11) | Trade API bornée à la séance | Rien de nouveau côté REST. Côté MCP, `order_history` (plage de dates) et `order_details` (« fills, commands, and strategy ») existent. | Inchangé pour nous. On ne sait pas si le backend MCP expose `ocoId`/`parentId` en historique. |
+
+### 13.2 Comptes Tradovate et comptes NinjaTrader : ce que la doc distingue
+
+- **Trade API, Market Data et MCP vivent tous sur l'infrastructure `tradovateapi.com`.** Ils ne voient
+  que les comptes de cette infrastructure : comptes Tradovate, et comptes d'évaluation prop firm
+  côté demo. **La doc ne le dit pas en toutes lettres : c'est une déduction tirée des hôtes.** Un
+  compte NinjaTrader 8 desktop branché sur une autre connexion (Rithmic, CQG…) n'est joignable
+  **que** localement, par NinjaScript (§13.3, piste 8).
+- **« L'hôte demo varie selon l'organisation »** ([Dynamic API Hosts](https://docs.ninjatrader.com/api/dynamic-api-hosts.md)).
+  Une prop firm est une organisation, et certaines tournent sur une infrastructure dédiée.
+- **Nouveaux signaux lisibles**, tous **non mesurés** chez nous :
+  - `Account` porte désormais `evaluationSize`, `closed`, `restricted` et `readonly`. Le 2026-09-12,
+    nous notions qu'« aucun indicateur ne distingue » un compte prop firm : `evaluationSize` est le
+    candidat à vérifier.
+  - `GET /auth/me` (Live uniquement, schéma `OAuthMeResponse`) renvoie `organizationName`,
+    `currentAccountPlan`, `isTrial`, **`currentMDSubs`** (abonnements market data) et `activePlugins`.
+  - La réponse d'authentification par clé API porte `hasLive`, `hasFunded`, `hasSimPlus` et
+    `hasMarketData`. Ces champs sont absents de la réponse OAuth documentée.
+
+### 13.3 Nouvelles pistes, avec leur verdict
+
+Même exigence qu'au §9 : **« accessible » veut dire que la doc l'autorise noir sur blanc ET que
+nos permissions le couvrent**. Rien de ce qui suit n'a été appelé avec un jeton utilisateur.
+
+#### 🔴 Avant toute feature — Les hôtes codés en dur ✅ documenté, risque réel
+
+`tradovate-api.client.ts`, `tradovate-live.protocol.ts` et `tradovate-reporting.client.ts` codent en
+dur `demo.tradovateapi.com`, `wss://demo.tradovateapi.com` et `rpt-demo.tradovateapi.com`. La doc
+est explicite sur ce qui arrive à un utilisateur dont l'organisation passe sur une infrastructure
+dédiée :
+- en **REST** : `HTTP 307` vers le bon hôte, et « many HTTP clients drop the `Authorization`
+  header » au rebond ;
+- en **WebSocket** : refus `421`.
+
+Autrement dit, **toute une prop firm tomberait en panne silencieuse** le jour de sa migration.
+Les hôtes corrects arrivent dans `apiHosts` : ils sont renvoyés par `renewAccessToken` (mesuré le
+2026-09-12), mais **pas** par `oauthtoken` (schéma documenté). Nous appelons déjà
+`renewaccesstoken` en repli.
+
+- **Correctif** : persister `apiHosts` par connexion et router REST, WebSocket et reporting dessus,
+  avec les constantes actuelles en repli.
+- **Effort** : faible à moyen.
+- **Exposition aujourd'hui** : aucune prop firm connue n'est concernée (Apex, TPT et Tradeify
+  répondent sur l'hôte partagé). **Ce n'est pas un chantier pour la semaine de mise en ligne**,
+  mais c'est le premier de la liste ensuite.
+
+#### 🥇 Payouts et frais de challenge, en historique ✅ rapport accessible, contenu à confirmer
+
+Le §9 classait « frais, resets et payouts » en accumulation au fil de l'eau, `cashBalanceLog` étant
+borné à la séance. Deux éléments changent la donne :
+- l'énumération `cashChangeType` contient **`ChallengePayout`**, `LiquidationFee`,
+  `MarketDataSubscription`, `ManualAdjustment`, `EntitlementSubscription`… ;
+- le rapport **`Cash History`** de la Reporting API, **déjà lu en production** par l'import
+  historique (§10), porte cette même colonne sur toute la profondeur du compte.
+
+Ce que ça permet : un encart « Mes comptes » avec le **coût réel de l'évaluation** (frais, resets,
+liquidations) face aux **payouts reçus**, rétroactivement, sans nouvelle permission.
+- **Effort** : faible, le client et le parseur existent.
+- **À confirmer** : que des lignes `ChallengePayout` apparaissent réellement sur un compte ayant
+  touché un payout, et que les resets ne se cachent pas sous `ManualAdjustment`.
+
+#### 🥈 Taille d'évaluation et état du compte ✅ permission acquise, champ à confirmer
+
+`Account.evaluationSize` (plus `closed` et `readonly`) sur `/account/list`, que nous appelons déjà
+(Accounting:Read accordé). Cela complète la piste « comptes proposés automatiquement » du §9 :
+- pré-remplir le **capital de départ** d'un compte d'évaluation (aujourd'hui saisi à la main) ;
+- signaler un compte **fermé** (évaluation échouée) au lieu de continuer à le synchroniser.
+
+Le champ est **optionnel** : il peut être absent sur une prop firm qui ne le renseigne pas.
+
+#### 🥉 Nom de la prop firm et abonnements market data ✅ permission acquise, non testé
+
+`GET /auth/me` sur **Live**, avec la permission Users:Read, accordée. Limite : **10 requêtes/heure en
+échec**.
+- `organizationName` libelle automatiquement la connexion (« Apex », « TPT »…).
+- `currentMDSubs` dit si le trader a un abonnement aux données. C'est la **condition préalable** à
+  toute piste graphique (piste 7) : autant la connaître avant d'écrire une ligne.
+
+#### 4. Frais estimés pour les trades sans frais ⚠️ documenté, non testé, fiabilité douteuse
+
+`POST /contract/getproductfeeparams` : **« Available to: All authenticated users »**, 300 req/h. Il
+renvoie par produit `commission`, `clearingFee`, `exchangeFee`, `nfaFee`, `brokerageFee`,
+`orderRoutingFee` et les marges.
+
+Usage envisagé : estimer les frais d'un trade saisi à la main, ou importé en CSV sans fichier de
+frais, affichés comme **« estimés »**.
+
+Deux réserves :
+- ce sont les paramètres **du produit**, pas ceux négociés par une prop firm pour son compte, qui
+  peuvent différer ;
+- la permission `Fees:Read` (« fee schedules, plans, and cost estimates ») existe, n'est pas accordée
+  chez nous, et on ne sait pas si cet endpoint l'exige.
+
+À ne livrer qu'après comparaison avec les frais réels d'un rapport `Fills`.
+
+#### 5. Règles prop firm lues chez le broker ❌ → ⚠️ bloqué par une permission, pas par la plateforme
+
+Le §9 concluait « refusé » sur 401. La doc montre ce qu'il y a derrière, et pourquoi c'est fermé :
+- **`userAccountAutoLiq`** : `dailyLossAutoLiq`, `weeklyLossAutoLiq`, `dailyProfitAutoLiq`,
+  **`trailingMaxDrawdown`**, **`trailingMaxDrawdownLimit`**, **`trailingMaxDrawdownMode`**
+  (`EOD`, `RealTime`, `SteppedEOD`, `SteppedRealTime`) ;
+- **`accountRiskStatus`** : `adminAction`, `maxNetLiq`, `minNetLiq` ;
+- **`autoLiqTransaction`** : chaque liquidation automatique, avec l'heure, la position liquidée et
+  son prix.
+
+Ces entités sont aussi dans l'instantané initial de **`user/syncrequest`** (`userAccountAutoLiqs`,
+`accountRiskStatuses`), le canal WebSocket que nous utilisons déjà.
+
+Ce que ça permettrait : le **vrai** drawdown suiveur et la perte journalière de la firme, sans
+saisie, et une alerte « tu es à 180 $ de la liquidation ». C'est la valeur la plus forte de cette
+liste.
+
+- **Blocage** : `Risks:Read` n'est pas accordé à notre app. **Action : un mail à NinjaTrader** pour
+  l'ajouter à l'inscription 16638, sans aucun code.
+- **Scepticisme** : rien ne garantit qu'Apex ou TPT appliquent leurs règles **via** l'auto-liq
+  Tradovate plutôt que par leur propre moteur. Ces entités peuvent revenir vides même avec la
+  permission.
+
+#### 6. MAE/MFE et qualité d'entrée/sortie ⚠️ techniquement possible, contractuellement non acquis
+
+Le serveur MCP officiel expose ce que ni la Trade API ni la Reporting API n'offrent :
+- **`timeline_report`** : rapport par jour avec P&L, **MAE/MFE** et qualité d'entrée et de sortie ;
+- **`timeline_details`** : entrée, renforts, allègements et sortie, trade par trade ;
+- **`performance_summary`**, **`daily_balance_history`** et **`position_history`**, avec plage de
+  dates.
+
+La doc prévoit explicitement un client HTTP maison : la section « Refreshing the access token »
+s'adresse à qui « build[s] a client directly against the HTTP API ». L'inscription dynamique est
+ouverte.
+
+**Mais** :
+- tout est marqué **« Beta, pre-release… the tool set… may change before launch »** ;
+- `timeline_*` n'apparaît que « when your account has the timeline feature enabled » ;
+- le serveur est pensé pour des agents IA ;
+- la licence interdit d'utiliser l'API « to build a competitive product » (§3 (vi)).
+
+**Verdict : pas de dépendance sans accord écrit de NinjaTrader.** C'est pourtant la seule voie
+documentée vers le « graphique du trade » du §9.
+
+#### 7. Cotations et graphique du trade via la Trade API ❌ toujours bloqué, cause corrigée
+
+Il faudrait **à la fois** un `mdAccessToken` (absent de la réponse OAuth documentée),
+`Prices:Read` (non accordée) et un abonnement aux données sur le compte (lisible via
+`currentMDSubs`, piste 🥉).
+
+La licence ajoute deux contraintes :
+- les données de marché s'affichent aux clients **via notre application uniquement**, sans
+  redistribution ;
+- tout contenu NinjaTrader mis en cache doit être **supprimé ou rafraîchi sous 24 h** (§3).
+
+Une courbe de prix stockée avec le trade tomberait sous cette règle.
+
+#### 8. Add-on NinjaScript pour NinjaTrader 8 desktop ✅ documenté, chantier lourd
+
+C'est le seul moyen de couvrir les traders **hors infrastructure Tradovate** (Rithmic, CQG…). Un
+add-on s'abonne à `Account.All` et à **`ExecutionUpdate`**, et l'entité `Execution` porte `Price`,
+`Quantity`, `Time`, `MarketPosition`, **`Commission`** et même **`Slippage`** (en ticks).
+
+- **Limite explicite** : « there is not a supported method to retrieve historical executions from
+  the local database ». C'est donc du fil de l'eau uniquement, l'historique restant à l'import CSV.
+- **Coût** : C#, packaging, licences via l'Ecosystem, support Windows. Chantier à part entière,
+  hors de l'API.
+
+#### Écarté
+
+- **Web Trader SDK** : indicateurs et outils de dessin en JavaScript, aucun accès aux comptes.
+- **Sentiment** (`md/subscribeSentiments`, `pulse` en MCP) : schéma d'événement vide, rien
+  d'exploitable pour un journal.
+- **`economic_calendar` MCP** : MTC a déjà son calendrier.
+- **Alertes, `order/dryrun`, écritures de risque** : écriture, hors périmètre.
+
+### 13.4 Le mail « API activé » change-t-il quelque chose pour MTC ?
+
+**Je n'ai pas vu ce mail** : la réponse dépend de ce qu'il a activé. La doc décrit **trois accès
+« API » distincts** :
+
+| Accès | Ce que c'est | Effet sur MTC |
+|---|---|---|
+| **Clé API Trade API** (`cid`/`sec`) | identifiants directs d'un utilisateur, pour agir sur **ses propres** comptes. MTC en a déjà une (cid 16637, depuis le 2026-09-09). | **Aucun** sur les utilisateurs : elle ne voit que les comptes de son titulaire. |
+| **Ecosystem Vendor API** (Marketplace) | « create a Tradovate account… then ask Vendor Support to enable Ecosystem API access for that Tradovate username ». Hôte `ecosystemapi.ninjatrader.com`, jeton `Bearer {userId} {userName} {accessToken}` (90 min), 100 req/min. Sert à gérer produits, **licences** et propriétaires d'add-ons NinjaScript payants. | **Système séparé**, sans lien avec les jetons OAuth ni les données de trades. Utile seulement si MTC vend un jour via des licences Ecosystem (par exemple accorder Premium à l'acheteur d'une licence) ou distribue l'add-on de la piste 8. |
+| **Permissions de l'app OAuth** (client 16638) | ce que l'écran de consentement accorde à MTC sur le compte de chaque utilisateur | **Seul accès qui change ce que MTC lit.** Si NinjaTrader a ajouté `Risks:Read` ou `Prices:Read`, les pistes 5 et 7 se débloquent. |
+
+**Pour trancher sans risque** : ouvrir l'écran de consentement de l'app
+(`https://trader.tradovate.com/oauth?response_type=code&client_id=16638&redirect_uri=…`) et lire la
+liste des permissions affichées, sans valider. Si elle est identique à celle du 2026-09-09, le mail
+concerne un autre système.
+
+### 13.5 Tests à lancer, tous en lecture seule
+
+Aucun n'a pu être lancé ici : les appels avec le jeton d'un utilisateur réel ont été refusés par
+le garde-fou de la session. À exécuter depuis beta, sur une connexion consentante, **hors séance
+de trading** (une nouvelle session peut fermer la plus ancienne, §7).
+
+| # | Appel | Ce qu'on cherche | Tranche |
+|---|---|---|---|
+| 1 | `GET /auth/renewaccesstoken` | `apiHosts.demo` / `reportingDemo` de chaque prop firm connectée | 🔴 hôtes dédiés : quelqu'un est-il déjà concerné ? |
+| 2 | `GET /account/list` | présence et valeur de `evaluationSize`, `closed` | 🥈 |
+| 3 | `GET https://live.tradovateapi.com/v1/auth/me` | `organizationName`, `currentMDSubs` | 🥉 et 7 |
+| 4 | `POST /contract/getproductfeeparams` `{"productIds":[<MNQ>]}` | 200 ou 401 ; commission comparée au rapport `Fills` | 4 |
+| 5 | `GET /userAccountAutoLiq/deps?masterid=<compte>` et WS `user/syncrequest` avec `entityTypes: ["userAccountAutoLiq","accountRiskStatus"]` | 401 confirmé, ou données | 5 |
+| 6 | `GET /tradingPermission/deps?masterid=<id de /user/list>` | 401 avec le bon type d'id ? | §13.1 |
+| 7 | Reporting `Cash History` sur un compte ayant reçu un payout | lignes `ChallengePayout` réelles | 🥇 |
+
+### 13.6 Ordre de priorité révisé
+
+1. **Hôtes dynamiques** (🔴) : de la robustesse, pas une feature. Première chose après la semaine
+   de mise en ligne.
+2. **Demander `Risks:Read` à NinjaTrader** (piste 5) : un mail, zéro code, et la plus forte valeur si
+   la réponse est oui.
+3. **Payouts et frais de challenge en historique** (🥇) : réutilise le client de reporting existant.
+4. **`evaluationSize` + `/auth/me`** (🥈 🥉) : enrichit les comptes proposés automatiquement.
+5. **Frais estimés** (4) : seulement après comparaison aux frais réels.
+6. **Add-on NinjaScript** (8) : décision produit, pas une suite de l'intégration actuelle.
+7. **MCP `timeline_*`** (6) : uniquement avec un accord écrit.
+
+> **Signal stratégique, à connaître sans en conclure trop vite.** Les « skills » officielles du MCP
+> NinjaTrader incluent **`trade-journal`**, **`trade-debrief`** et **`risk-coach`**. Cette dernière
+> détecte revenge trading, séries de pertes, overtrading et dérive de taille à partir des fills.
+> NinjaTrader construit donc lui-même des fonctions qui recouvrent le cœur de MTC. Combiné à la
+> clause « competitive product » de la licence (§3 (vi)), c'est une question à poser à NinjaTrader
+> ou à un juriste : la doc ne la tranche pas.

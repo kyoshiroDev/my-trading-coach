@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 
 /**
- * Setup de la suite d'INTÉGRATION (vitest.integration.config.ts) — PROMPT-209.
+ * Setup de la suite d'INTÉGRATION (vitest.integration.config.mts).
  *
  * Filet structurel : le SDK `resend` est remplacé par une classe qui LÈVE à la construction.
  * Un `*.int-spec.ts` qui démarrerait `AppModule` sans `createIntegrationApp()` instancierait le

@@ -1,5 +1,5 @@
 <mtc-topbar
-  title="Dashboard"
+  title="Tableau de bord"
   [period]="periodLabel()"
   addLabel="⚡ Ajouter trade"
   [showAccountSelector]="true"
@@ -18,6 +18,9 @@
 </mtc-topbar>
 
 <div class="content">
+  @if (loadError()) {
+    <mtc-error-state (retry)="reload()" />
+  }
   @if (accountReallyEmpty()) {
     <div class="firstrun-hero">
       <div class="firstrun-text">
@@ -51,7 +54,7 @@
         <span class="premium-banner-icon">⚡</span>
         <div>
           <div class="premium-banner-title">Passe à Premium</div>
-          <div class="premium-banner-sub">Weekly Debrief, IA Insights, Chat coach, analytics avancés &amp; comptes illimités</div>
+          <div class="premium-banner-sub">Débrief hebdo, Insights IA, Chat coach, analytics avancés &amp; comptes illimités</div>
         </div>
       </div>
       <div class="premium-banner-right">
@@ -65,7 +68,7 @@
     </div>
   }
 
-  <!-- Devises mêlées en « Tous les comptes » : pas de totaux (PROMPT-214), l'historique reste. -->
+  <!-- Devises mêlées en « Tous les comptes » : pas de totaux, l'historique reste. -->
   @if (money.mixed()) {
     <mtc-mixed-currency-notice />
   } @else {
@@ -124,10 +127,10 @@
       </div>
     </div>
 
-    <!-- AI Coach -->
+    <!-- Coach IA -->
     <div class="mtc-panel" [class.mtc-ai]="userStore.isPremium()">
       <div class="mtc-panel-head">
-        <div class="mtc-panel-head-l"><svg [lucideIcon]="CoachIcon" [size]="15" class="mtc-phi"></svg><div><div class="mtc-panel-title">AI Coach · feedback</div></div></div>
+        <div class="mtc-panel-head-l"><svg [lucideIcon]="CoachIcon" [size]="15" class="mtc-phi"></svg><div><div class="mtc-panel-title">Coach IA · retours</div></div></div>
         <!-- Pastille LIVE réservée à la carte réellement active (Premium) : jamais sur un teaser verrouillé. -->
         @if (userStore.isPremium()) {
           <span class="mtc-live"><span class="mtc-live-dot"></span>LIVE</span>

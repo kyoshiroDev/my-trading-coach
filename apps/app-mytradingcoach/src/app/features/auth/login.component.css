@@ -162,7 +162,7 @@ input::placeholder {
 /* ─── Submit button ─── */
 .btn-submit {
   width: 100%;
-  background: var(--blue);
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: 8px;

@@ -3,8 +3,9 @@ import { TestBed } from '@angular/core/testing';
 import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
 import { of } from 'rxjs';
 import { EcoCalendarComponent } from './eco-calendar.component';
-import { EcoCalendarApi, EcoEvent } from '../../core/api/eco-calendar.api';
+import { EcoCalendarApi } from '../../core/api/eco-calendar.api';
 import { UserStore } from '../../core/stores/user.store';
+import type { EcoEvent } from '@mtc/shared';
 
 function ev(partial: Partial<EcoEvent>): EcoEvent {
   return {

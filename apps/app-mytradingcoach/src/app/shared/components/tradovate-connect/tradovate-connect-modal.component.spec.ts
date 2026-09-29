@@ -4,11 +4,11 @@ import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { TradovateConnectModalComponent } from './tradovate-connect-modal.component';
-import { TradovateStore } from '../../../core/stores/tradovate.store';
+import { TradovateStore } from '@app/core/stores/tradovate.store';
 import TEMPLATE from './tradovate-connect-modal.component.html?raw';
 
 /**
- * Écran de réassurance (PROMPT-208, écran 2) : on rend le VRAI template (import `?raw`),
+ * Écran de réassurance (écran 2) : on rend le VRAI template (import `?raw`),
  * seules les icônes Lucide sont neutralisées (elles ne compilent pas en JIT sous vitest).
  */
 

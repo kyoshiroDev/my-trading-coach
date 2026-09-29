@@ -4,11 +4,16 @@
   "projectType": "application",
   "prefix": "app",
   "sourceRoot": "apps/admin-mytradingcoach/src",
-  "tags": [],
+  "tags": [
+    "type:app",
+    "scope:front"
+  ],
   "targets": {
     "build": {
       "executor": "@angular/build:application",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/apps/admin-mytradingcoach",
         "browser": "apps/admin-mytradingcoach/src/main.ts",
@@ -20,7 +25,9 @@
           }
         ],
         "index": "apps/admin-mytradingcoach/src/index.html",
-        "styles": ["apps/admin-mytradingcoach/src/styles.css"]
+        "styles": [
+          "apps/admin-mytradingcoach/src/styles.css"
+        ]
       },
       "configurations": {
         "production": {
@@ -33,8 +40,8 @@
           "budgets": [
             {
               "type": "initial",
-              "maximumWarning": "500kb",
-              "maximumError": "1mb"
+              "maximumWarning": "450kb",
+              "maximumError": "500kb"
             },
             {
               "type": "anyComponentStyle",
@@ -67,9 +74,6 @@
         }
       },
       "defaultConfiguration": "development"
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint"
     },
     "typecheck": {
       "executor": "nx:run-commands",

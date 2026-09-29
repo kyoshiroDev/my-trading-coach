@@ -1,15 +1,17 @@
 ---
-import { FEATURES } from '../config';
+import { FEATURES, APP_URL } from '../config';
+// Prix : source unique @mtc/shared (cf. .claude/agents/plans.md).
+import { PREMIUM_ANNUAL_SAVINGS_EUR, PREMIUM_PRICE_EUR } from '@mtc/shared';
 ---
 
-<section id="pricing" style="padding:80px 5%">
-  <div style="max-width:1200px;margin:0 auto">
-    <div class="reveal" style="text-align:center;max-width:640px;margin:0 auto">
+<section class="pricing" id="pricing">
+  <div class="wrap-wide">
+    <div class="reveal head">
       <span class="sec-label">Tarifs</span>
       <h2>Simple. <em>Transparent.</em></h2>
       <p class="sec-sub">Gratuit pour vivre le compagnon au quotidien, trades illimités inclus. Premium pour la puissance IA personnelle. 1 mois offert sur le mensuel, aucun prélèvement avant la fin.</p>
     </div>
-    <div class="price-grid reveal" style="transition-delay:.1s">
+    <div class="price-grid reveal delay-1">
 
       <!-- FREE -->
       <div class="price-card">
@@ -37,19 +39,19 @@ import { FEATURES } from '../config';
           <li>Stats de base : win rate, P&amp;L · Historique illimité</li>
           <li>Import CSV universel · Futures, Crypto, Forex</li>
         </ul>
-        <a href="https://app.mytradingcoach.app/register" class="price-cta ghost">Commencer gratuitement</a>
+        <a href={`${APP_URL}/register`} class="price-cta ghost">Commencer gratuitement</a>
       </div>
 
       <!-- PREMIUM -->
-      <div class="price-card feat" style="padding-top:44px">
+      <div class="price-card feat with-badge">
         <div class="price-pop">⭐ Recommandé</div>
         <div class="price-name">Premium</div>
         <div class="price-amt">
-          <span class="price-amt-num">49</span>
+          <span class="price-amt-num">{PREMIUM_PRICE_EUR.monthly}</span>
           <span class="price-amt-cur">€</span>
           <span class="price-amt-per">/mois</span>
         </div>
-        <div class="price-period">ou 490 €/an, tu économises 98 €</div>
+        <div class="price-period">ou {PREMIUM_PRICE_EUR.annual} €/an, tu économises {PREMIUM_ANNUAL_SAVINGS_EUR} €</div>
         {FEATURES.multiAccounts && (
           <div class="price-accts">
             <span class="acct-n">∞</span>
@@ -67,7 +69,7 @@ import { FEATURES } from '../config';
           <li>📄 Export PDF rapport mensuel</li>
           <li>🌙 Recap journalier email 17h30</li>
         </ul>
-        <a href="https://app.mytradingcoach.app/register?plan=premium" class="price-cta prim">
+        <a href={`${APP_URL}/register?plan=premium`} class="price-cta prim">
           <span class="cta-main">Essayer Premium · 1 mois offert →</span>
           <span class="cta-sub-text">🔥 Carte requise · annulable en un clic</span>
         </a>
@@ -84,6 +86,12 @@ import { FEATURES } from '../config';
 </section>
 
 <style>
+  .pricing { padding: 80px 5%; }
+  .wrap-wide { max-width: 1200px; margin: 0 auto; }
+  .head { text-align: center; max-width: 640px; margin: 0 auto; }
+  .delay-1 { transition-delay: .1s; }
+  /* Carte recommandée : place pour le badge « Recommandé » */
+  .price-card.with-badge { padding-top: 44px; }
   .price-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);

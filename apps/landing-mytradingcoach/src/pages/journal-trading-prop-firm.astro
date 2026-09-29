@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
-import { FEATURES } from '../config';
+import { FEATURES, APP_URL } from '../config';
 
 // Gating publication : page en ligne seulement quand le multi-comptes est en prod.
 if (!FEATURES.multiAccounts) return Astro.redirect('/');
@@ -63,7 +63,7 @@ const faqSchema = {
         autres firmes.
       </p>
       <div class="pf-cta-row">
-        <a class="pf-btn" href="https://app.mytradingcoach.app/register">Commencer gratuitement</a>
+        <a class="pf-btn" href={`${APP_URL}/register`}>Commencer gratuitement</a>
         <a class="pf-btn ghost" href="/#pricing">Voir les tarifs</a>
       </div>
     </header>
@@ -129,7 +129,7 @@ const faqSchema = {
       <h2>Prêt à suivre tes comptes proprement ?</h2>
       <p>Démarre gratuitement, sans carte bancaire. Passe à Premium quand tu suis plusieurs comptes.</p>
       <div class="pf-cta-row">
-        <a class="pf-btn" href="https://app.mytradingcoach.app/register">Créer mon compte</a>
+        <a class="pf-btn" href={`${APP_URL}/register`}>Créer mon compte</a>
         <a class="pf-btn ghost" href="/#pricing">Comparer les plans</a>
       </div>
       <p class="pf-amf">

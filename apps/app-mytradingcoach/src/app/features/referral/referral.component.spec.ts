@@ -5,6 +5,7 @@ import { of, throwError } from 'rxjs';
 import { provideRouter } from '@angular/router';
 import { ReferralComponent } from './referral.component';
 import { ReferralApi, MyReferral } from '../../core/api/referral.api';
+import { ErrorStateComponent } from '@mtc/front-ui';
 
 function makeData(partial: Partial<MyReferral> = {}): MyReferral {
   return {
@@ -33,6 +34,8 @@ function setup(apiOverride: Partial<Record<'getMyReferral', unknown>> = {}) {
       { provide: ReferralApi, useValue: api },
     ],
   });
+  // Composant de lib : en JIT, son styleUrl doit être neutralisé comme celui du composant testé.
+  TestBed.overrideComponent(ErrorStateComponent, { set: { styleUrls: [], styleUrl: undefined as unknown as string } });
   TestBed.overrideComponent(ReferralComponent, {
     set: { styleUrls: [], styleUrl: undefined as unknown as string, schemas: [NO_ERRORS_SCHEMA] },
   });
@@ -61,9 +64,10 @@ describe('ReferralComponent', () => {
   });
 
   it('affiche un état d’erreur si l’appel échoue', () => {
-    const { cmp } = setup({ getMyReferral: vi.fn(() => throwError(() => new Error('boom'))) });
+    const { cmp, fixture } = setup({ getMyReferral: vi.fn(() => throwError(() => new Error('boom'))) });
     expect(cmp.error()).toBe(true);
     expect(cmp.isLoading()).toBe(false);
+    expect(fixture.nativeElement.querySelector('mtc-error-state')).not.toBeNull();
   });
 
   it('mappe les statuts de filleul vers les bons libellés', () => {

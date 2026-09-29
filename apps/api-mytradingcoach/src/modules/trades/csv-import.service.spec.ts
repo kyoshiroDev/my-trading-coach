@@ -6,6 +6,8 @@ import * as XLSX from 'xlsx';
 import { CsvImportService, type FeesReport } from './csv-import.service';
 // Parseurs extraits en fonctions pures (étape 4 de l'audit) : testés directement.
 import { detectBroker, normalizeMexcSymbol, normalizeSeparator, parseMexc } from './csv-parsers';
+// Le vrai calcul du mapping : le test du registre doit exercer le code, pas un faux.
+import { applyMappingWithPnlCheck } from './csv-mapping';
 
 // Anthropic SDK lit la clé à la construction → fournir une valeur factice en test
 process.env['ANTHROPIC_API_KEY'] = 'test-key';
@@ -28,7 +30,14 @@ function makeService() {
   const prisma = { user: { findUnique: vi.fn().mockResolvedValue(null) } } as any;
   // SetupsService : setup par défaut du user (fallback import).
   const setups = { getImportSetupId: vi.fn().mockResolvedValue('setup-default') } as any;
-  return new CsvImportService(anthropicClient, prisma, setups);
+  // Registre vide par defaut : aucun broker n'a de fiche, donc on exerce bien le parcours
+  // « broker inconnu ». Les tests qui veulent une fiche la posent eux-memes.
+  const brokerMappings = {
+    findByHeader: vi.fn(async () => null),
+    noteUsage: vi.fn(async () => undefined),
+    apply: vi.fn(),
+  } as any;
+  return new CsvImportService(anthropicClient, prisma, setups, brokerMappings);
 }
 
 describe('CsvImportService — MEXC (parser dédié, sans IA)', () => {
@@ -85,7 +94,7 @@ describe('CsvImportService — MEXC (parser dédié, sans IA)', () => {
     expect(lines).toHaveLength(2); // header + 1 trade fermé seulement
   });
 
-  it("parse correctement même avec l'UID en dernière colonne (régression PROMPT-087)", async () => {
+  it("parse correctement même avec l'UID en dernière colonne (régression : colonne UID déplacée)", async () => {
     const csv = [MEXC_HEADER, MEXC_ROW].join('\r\n');
     const dtos = await svc.parseCSV(Buffer.from(csv), 'mexc.csv');
     expect(dtos).toHaveLength(1);
@@ -156,6 +165,91 @@ describe('CsvImportService — chemin IA réservé Premium', () => {
     svc = makeService();
   });
 
+  /**
+   * La promesse centrale du registre : une fiche validee une fois profite a TOUS les plans.
+   * Si ce test casse, le registre ne sert plus a rien, les gratuits repasseraient par
+   * l'upsell alors qu'un admin a deja debloque leur broker.
+   */
+  it('broker inconnu MAIS fiche au registre : un compte GRATUIT importe, 0 appel IA', async () => {
+    const svc2 = makeService();
+    const create = vi.fn();
+    (svc2 as any).anthropicClient.create = create;
+
+    const csv = [
+      'Date de sortie,Instrument,Sens,Prix achat,Prix vente,Lots,Gain net',
+      '2026-06-01 15:30:00,MNQ,Achat,29900,29950,1,50',
+      '2026-06-02 15:30:00,MNQ,Vente,29900,29800,1,100',
+    ].join('\n');
+
+    const fiche = {
+      id: 'fiche-nt8',
+      mapping: {
+        delimiter: ',', decimalSeparator: '.' as const,
+        columns: { symbol: 1, entry: 3, exit: 4, quantity: 5, pnl: 6, tradedAt: 0 },
+        side: {
+          mode: 'column' as const, index: 2,
+          longValues: ['Achat'], shortValues: ['Vente'],
+          buyTimeIndex: null, sellTimeIndex: null,
+        },
+        pnlExtraColumns: [],
+      },
+    };
+    (svc2 as any).brokerMappings.findByHeader = vi.fn(async () => fiche);
+    (svc2 as any).brokerMappings.apply = vi.fn((lignes: string[], m: unknown) =>
+      applyMappingWithPnlCheck(lignes, m as never),
+    );
+    const noteUsage = vi.fn(async () => undefined);
+    (svc2 as any).brokerMappings.noteUsage = noteUsage;
+
+    const dtos = await svc2.parseCSV(Buffer.from(csv), 'ninjatrader.csv', undefined, {
+      plan: Plan.FREE, role: Role.USER, trialEndsAt: null,
+    });
+
+    expect(dtos).toHaveLength(2);
+    expect(dtos[0].asset).toBe('MNQ');
+    expect(dtos.map((d) => d.side)).toEqual(['LONG', 'SHORT']);
+    // Aucune depense : c'est tout l'interet du registre.
+    expect(create).not.toHaveBeenCalled();
+    expect(noteUsage).toHaveBeenCalledWith('fiche-nt8');
+  });
+
+  it('fiche devenue inapplicable : on retombe sur broker inconnu, pas sur des trades faux', async () => {
+    // Le broker a change son format. La fiche matche encore l'en-tete mais ne produit plus
+    // rien d'exploitable : l'import doit redevenir inconnu plutot que d'inventer.
+    const svc2 = makeService();
+    const create = vi.fn();
+    (svc2 as any).anthropicClient.create = create;
+    const csv = [
+      'Date de sortie,Instrument,Sens,Prix achat,Prix vente,Lots,Gain net',
+      '2026-06-01 15:30:00,MNQ,Achat,29900,29950,1,50',
+    ].join('\n');
+
+    (svc2 as any).brokerMappings.findByHeader = vi.fn(async () => ({
+      id: 'fiche-cassee',
+      mapping: {
+        delimiter: ',', decimalSeparator: '.' as const,
+        // Colonnes qui ne contiennent rien de numerique : aucune ligne exploitable.
+        columns: { symbol: 0, entry: 2, exit: 2, quantity: 2, pnl: 2, tradedAt: 1 },
+        side: {
+          mode: 'column' as const, index: 2,
+          longValues: ['Achat'], shortValues: ['Vente'],
+          buyTimeIndex: null, sellTimeIndex: null,
+        },
+        pnlExtraColumns: [],
+      },
+    }));
+    (svc2 as any).brokerMappings.apply = vi.fn((lignes: string[], m: unknown) =>
+      applyMappingWithPnlCheck(lignes, m as never),
+    );
+
+    await expect(
+      svc2.parseCSV(Buffer.from(csv), 'ninjatrader.csv', undefined, {
+        plan: Plan.FREE, role: Role.USER, trialEndsAt: null,
+      }),
+    ).rejects.toThrow(/Premium|pas encore reconnu/);
+    expect(create).not.toHaveBeenCalled();
+  });
+
   it('refuse le broker inconnu sans Premium (message clair, 0 appel Anthropic)', async () => {
     const create = vi.fn();
     (svc as any).anthropicClient.create = create;
@@ -179,7 +273,7 @@ describe('CsvImportService — chemin IA par lots', () => {
     svc = makeService();
   });
 
-  it('traite un fichier inconnu de 600 lignes en 3 appels (lots de 250)', async () => {
+  it('repli : 1 tentative de mapping refusee, puis 600 lignes en 5 lots de 120', async () => {
     const trade = {
       asset: 'BTC/USDT',
       side: 'LONG',
@@ -213,8 +307,41 @@ describe('CsvImportService — chemin IA par lots', () => {
         PREMIUM_ACCESS,
       );
 
-      expect(create).toHaveBeenCalledTimes(3); // 250 + 250 + 100
-      expect(dtos).toHaveLength(3); // un trade agrégé par lot
+      // 1 appel de deduction du mapping + 5 lots de 120. Le mock rend une reponse de
+      // trades, pas un mapping : la validation de forme la refuse, donc on retombe sur le
+      // chemin ligne par ligne. C'est le comportement voulu — un mapping douteux ne passe pas.
+      expect(create).toHaveBeenCalledTimes(6);
+      expect(dtos).toHaveLength(5); // un trade agrégé par lot
+    } finally {
+      process.env['NODE_ENV'] = oldEnv;
+    }
+  });
+
+  /**
+   * Chaque trade rendu pese ~40 jetons de JSON contre 8192 de `max_tokens` : un lot trop
+   * gros faisait tronquer la reponse, et l'utilisateur lisait « verifie que c'est un export
+   * de trades fermes » pour un fichier parfaitement valide — apres avoir paye l'appel. Le
+   * message doit parler de la TAILLE, jamais mettre en cause le fichier.
+   */
+  it('reponse tronquee par max_tokens : le message ne met pas en cause le fichier', async () => {
+    const create = vi.fn().mockResolvedValue({
+      // JSON volontairement coupe : c'est ce que rend une reponse plafonnee.
+      content: [{ type: 'text', text: '{"broker":"x","trades":[{"asset":"BTC/US' }],
+      stop_reason: 'max_tokens',
+      usage: { input_tokens: 1, output_tokens: 8192 },
+    });
+    (svc as any).anthropicClient.create = create;
+
+    const oldEnv = process.env['NODE_ENV'];
+    process.env['NODE_ENV'] = 'production';
+    try {
+      const rows = Array.from({ length: 10 }, (_, i) => `AAPL,BUY,1,${100 + i},2026-01-05`);
+      const csv = ['symbol,side,quantity,price,date', ...rows].join('\n');
+      const appel = () =>
+        svc.parseCSV(Buffer.from(csv), 'unknown.csv', undefined, PREMIUM_ACCESS);
+
+      await expect(appel()).rejects.toThrow(/coupant en deux/i);
+      await expect(appel()).rejects.not.toThrow(/trades ferm/i);
     } finally {
       process.env['NODE_ENV'] = oldEnv;
     }
@@ -244,7 +371,7 @@ describe('CsvImportService — defaults du lot (compte / émotion / setup)', () 
     expect(dtos[0].setupId).toBe('setup-default');
   });
 
-  it('sans choix d\'émotion → null (PROMPT-163, héritera de l\'humeur de session)', async () => {
+  it('sans choix d\'émotion → null (héritera de l\'humeur de session)', async () => {
     const svc = makeService();
     const dtos = await svc.parseCSV(Buffer.from(csv()), 'mexc.csv', 'user-1');
     expect(dtos[0].emotion).toBeNull();
@@ -342,7 +469,7 @@ describe('CsvImportService — Fusion Tradovate (Performance + Cash history)', (
     expect(dtos.every((d) => d.commission == null)).toBe(true);
   });
 
-  // PROMPT-185 #8 — un fichier de frais inexploitable ne doit plus passer en silence.
+  // un fichier de frais inexploitable ne doit plus passer en silence.
   // Avant, l'import réussissait sans aucun frais et sans le dire : le P&L net affiché
   // était surestimé (21,84 $ manquants sur ces fixtures) à l'insu de l'utilisateur.
   it('fichier de frais non-Cash-history → import poursuivi MAIS frais signalés non rapprochés', async () => {
@@ -390,7 +517,7 @@ describe('CsvImportService — Fusion Tradovate (Performance + Cash history)', (
   });
 });
 
-// PROMPT-186 #6 — un fichier hors sujet ne doit pas déclencher l'upsell Premium.
+// un fichier hors sujet ne doit pas déclencher l'upsell Premium.
 // Constat navigateur : un CSV quelconque ou une image renommée .csv renvoyaient
 // « … L'import intelligent par IA est réservé au plan Premium », alors que Premium
 // n'aurait rien résolu — un débutant qui se trompe de fichier comprenait « il faut payer ».
@@ -437,7 +564,7 @@ describe('CsvImportService — fichier non reconnu vs broker inconnu', () => {
     expect(msg).toContain('Fichier vide');
   });
 
-  // PROMPT-187 — garde-fou acquisition : le jour où NinjaTrader nous envoie du trafic,
+  // garde-fou acquisition : le jour où NinjaTrader nous envoie du trafic,
   // leurs exports ne doivent SURTOUT pas tomber dans « format invalide ». Ils sont
   // encore non supportés, donc leur place est la branche « broker non reconnu → IA
   // Premium », qui elle a du sens. Ce test fige ce classement.

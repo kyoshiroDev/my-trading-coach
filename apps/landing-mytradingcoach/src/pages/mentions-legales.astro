@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import '../styles/legal.css';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 ---
@@ -12,19 +13,19 @@ import Footer from '../components/Footer.astro';
 >
   <Nav />
 
-  <main style="max-width:48rem; margin:0 auto; padding:4rem 1.5rem;">
-    <a href="/" style="display:inline-flex;align-items:center;gap:6px;color:var(--txt3);font-size:13px;text-decoration:none;margin-bottom:2rem;">
+  <main class="legal">
+    <a class="legal-back" href="/">
       ← Retour à l'accueil
     </a>
 
-    <h1 style="font-size:2rem; font-weight:800; color:var(--text); margin:0 0 0.5rem;">Mentions légales</h1>
-    <p style="font-size:0.875rem; color:var(--txt3); margin:0 0 2rem;">
+    <h1>Mentions légales</h1>
+    <p class="legal-lead">
       Conformément aux dispositions de la loi n°2004-575 du 21 juin 2004 pour la Confiance en l'Économie Numérique.
     </p>
 
-    <div style="color:var(--text2); line-height:1.8; font-size:1rem;">
+    <div class="legal-body">
 
-      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">1. Éditeur du site</h2>
+      <h2>1. Éditeur du site</h2>
       <p>
         <strong>Grégory Tahir</strong><br />
         Entrepreneur individuel<br />
@@ -32,24 +33,24 @@ import Footer from '../components/Footer.astro';
         SIRET : 512 926 460 00027<br />
         Code NAF : 6201Z : Programmation informatique<br />
         Siège social : 26 rue des Tiphoines, 91240 Saint-Michel-sur-Orge<br />
-        Email : <a href="mailto:hello@mytradingcoach.app" style="color:var(--blue2);">hello@mytradingcoach.app</a><br />
+        Email : <a href="mailto:hello@mytradingcoach.app">hello@mytradingcoach.app</a><br />
         Non assujetti à la TVA : Art. 293B du CGI<br />
         Directeur de la publication : Grégory Tahir
       </p>
 
-      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">2. Hébergement</h2>
+      <h2>2. Hébergement</h2>
       <p><strong>API et base de données :</strong></p>
-      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+      <ul>
         <li>OVH SAS : 2 rue Kellermann, 59100 Roubaix, France</li>
-        <li>Tél. : +33 9 72 10 10 07 : <a href="https://www.ovhcloud.com" target="_blank" rel="noopener" style="color:var(--blue2);">www.ovhcloud.com</a></li>
+        <li>Tél. : +33 9 72 10 10 07 : <a href="https://www.ovhcloud.com" target="_blank" rel="noopener">www.ovhcloud.com</a></li>
       </ul>
       <p><strong>Frontend / Landing :</strong></p>
-      <ul style="padding-left:1.5rem; margin:0.5rem 0;">
+      <ul>
         <li>Vercel Inc. : 340 Pine Street, Suite 701, San Francisco, CA 94104, USA</li>
-        <li><a href="https://www.vercel.com" target="_blank" rel="noopener" style="color:var(--blue2);">www.vercel.com</a></li>
+        <li><a href="https://www.vercel.com" target="_blank" rel="noopener">www.vercel.com</a></li>
       </ul>
 
-      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">3. Propriété intellectuelle</h2>
+      <h2>3. Propriété intellectuelle</h2>
       <p>
         L'ensemble du contenu du site mytradingcoach.app (textes, images, graphiques, logo,
         icônes, sons, logiciels) est la propriété exclusive de Grégory Tahir (My Trading Coach)
@@ -58,28 +59,28 @@ import Footer from '../components/Footer.astro';
         exprès de Grégory Tahir (My Trading Coach).
       </p>
 
-      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">4. Limitation de responsabilité</h2>
+      <h2>4. Limitation de responsabilité</h2>
       <p>
         Grégory Tahir (My Trading Coach) ne saurait être tenu responsable des dommages directs
         ou indirects causés au matériel de l'utilisateur lors de l'accès au site mytradingcoach.app,
         résultant notamment de l'utilisation d'un matériel non adapté, de bugs ou d'incompatibilités.
       </p>
 
-      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">5. Avertissement financier</h2>
+      <h2>5. Avertissement financier</h2>
       <p>
         MyTradingCoach n'est pas un prestataire de services d'investissement (PSI) au sens de la
         directive MiFID II. L'application ne fournit pas de conseil en investissement, d'analyse
         financière, ni de gestion de portefeuille.
-        Voir notre <a href="/disclaimer" style="color:var(--blue2);">Avertissement financier complet</a>.
+        Voir notre <a href="/disclaimer">Avertissement financier complet</a>.
       </p>
 
-      <h2 style="color:var(--text); font-size:1.25rem; font-weight:700; margin:2rem 0 0.75rem;">6. Droit applicable et juridiction</h2>
+      <h2>6. Droit applicable et juridiction</h2>
       <p>
         Les présentes mentions légales sont soumises au droit français. En cas de litige,
         les tribunaux français seront seuls compétents.
       </p>
 
-      <p style="margin-top:3rem; font-size:0.875rem; color:var(--txt3);">
+      <p class="legal-updated">
         Dernière mise à jour : Avril 2026
       </p>
     </div>

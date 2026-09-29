@@ -1,9 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import puppeteer from 'puppeteer';
 import { formatMoney } from '@mtc/shared';
 
 export interface DebriefPdfData {
-  /** Devise des comptes du débrief (PROMPT-214) ; null si elles diffèrent (montants sans symbole). */
+  /** Devise des comptes du débrief ; null si elles diffèrent (montants sans symbole). */
   currency: string | null;
   weekNumber: number;
   year: number;
@@ -38,7 +38,6 @@ export interface DebriefPdfData {
 
 @Injectable()
 export class PdfService {
-  private readonly logger = new Logger(PdfService.name);
 
   async generateDebriefPDF(data: DebriefPdfData): Promise<Buffer> {
     const html = this.buildHTML(data);
@@ -55,7 +54,10 @@ export class PdfService {
         ],
       });
       const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: 'networkidle0' });
+      // Attend aussi que polices et images soient chargées (équivalent de `networkidle0`,
+      // que le typage de setContent n'accepte plus) avant de générer le PDF.
+      await page.setContent(html, { waitUntil: 'load' });
+      await page.waitForNetworkIdle({ idleTime: 500 });
       const pdfBuffer = await page.pdf({
         format: 'A4',
         printBackground: true,

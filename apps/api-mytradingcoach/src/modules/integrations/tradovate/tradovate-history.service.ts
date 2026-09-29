@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BrokerConnection, Prisma, TradeSource } from '@prisma/client';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '@api/prisma/prisma.service';
 import { TradesService } from '../../trades/trades.service';
 import { SetupsService } from '../../setups/setups.service';
 import { preprocessCsv, mapNormalizedCsvToDto, type ImportDto } from '../../trades/csv-parsers';
@@ -53,7 +53,7 @@ export interface HistoryImportResult {
 }
 
 /**
- * Import de l'HISTORIQUE d'un compte Tradovate via la Reporting API (PROMPT-217).
+ * Import de l'HISTORIQUE d'un compte Tradovate via la Reporting API.
  *
  * La synchro live (Trade API) ne voit que la séance en cours : un trader qui connecte son compte
  * un mardi perd tout son passé. La Reporting API, elle, sert des fenêtres mensuelles — c'est le

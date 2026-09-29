@@ -2,27 +2,30 @@
 ---
 
 <section class="deb-section" id="debrief">
+  {/* Le libelle coiffe la section, centre : dans la grille a deux colonnes il se retrouvait
+      colle en haut a gauche, alors que partout ailleurs sur la page il surplombe le bloc. */}
+  <div class="deb-eyebrow reveal"><span class="sec-label">La feature principale</span></div>
+
   <div class="deb-layout">
     <div class="reveal">
-      <span class="sec-label">La feature principale</span>
       <h2>Ton coach <em>personnel</em> chaque dimanche soir</h2>
       <p class="sec-sub">Chaque dimanche, l'IA analyse ta semaine <strong>en connaissant ta stratégie</strong>. Scalper ICT ? Swing SMC ? Les objectifs qu'elle te fixe sont adaptés à ton style, pas à un trader fictif. C'est la différence entre un rapport généré et un vrai coaching.</p>
       <div class="deb-points">
         <div class="deb-pt">
-          <div class="deb-pt-ic" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2)">✓</div>
+          <div class="deb-pt-ic pt-green">✓</div>
           <div><div class="deb-pt-t">Résumé en langage naturel</div><div class="deb-pt-d">Pas des stats brutes : une analyse rédigée qui nomme tes vraies failles.</div></div>
         </div>
         <div class="deb-pt">
-          <div class="deb-pt-ic" style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2)">🎯</div>
+          <div class="deb-pt-ic pt-blue">🎯</div>
           <div><div class="deb-pt-t">3 objectifs personnalisés</div><div class="deb-pt-d">Générés depuis tes propres patterns. Pas des analyses génériques : basé sur tes propres données.</div></div>
         </div>
         <div class="deb-pt">
-          <div class="deb-pt-ic" style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2)">📈</div>
+          <div class="deb-pt-ic pt-purple">📈</div>
           <div><div class="deb-pt-t">Boucle semaine après semaine</div><div class="deb-pt-d">Les objectifs S11 deviennent le bilan de S12. Tu mesures ta progression.</div></div>
         </div>
       </div>
     </div>
-    <div class="reveal" style="transition-delay:.15s">
+    <div class="reveal delay-15">
       <div class="deb-mock deb-mock-doc">
         <div class="deb-doc-header">
           <div class="deb-doc-badge">
@@ -35,7 +38,7 @@
         <div class="dm-stats">
           <div class="dm-stat"><div class="dm-val text-g">+$1 840</div><div class="dm-lbl">P&amp;L net</div></div>
           <div class="dm-stat"><div class="dm-val text-b">67%</div><div class="dm-lbl">Win rate</div></div>
-          <div class="dm-stat"><div class="dm-val">74<span style="font-size:11px;color:var(--txt3)">/100</span></div><div class="dm-lbl">Score</div></div>
+          <div class="dm-stat"><div class="dm-val">74<span class="meta">/100</span></div><div class="dm-lbl">Score</div></div>
         </div>
         <div class="dm-ai">
           <div class="dm-ai-lbl"><div class="ai-dot-anim"></div>Analyse IA</div>
@@ -51,10 +54,17 @@
 </section>
 
 <style>
+  .meta { font-size: 11px; color: var(--txt3); }
+  .delay-15 { transition-delay: .15s; }
+  .pt-blue { background: rgba(59,130,246,.1); border: 1px solid rgba(59,130,246,.2); }
+  .pt-green { background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.2); }
+  .pt-purple { background: rgba(139,92,246,.1); border: 1px solid rgba(139,92,246,.2); }
   .deb-section {
     background: var(--bg2);
     border-top: 1px solid var(--b);
   }
+
+  .deb-eyebrow { text-align: center; margin-bottom: 18px; }
 
   .deb-layout {
     display: grid;

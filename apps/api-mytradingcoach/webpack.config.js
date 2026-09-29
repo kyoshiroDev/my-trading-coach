@@ -12,7 +12,7 @@ class NodeModulesExternalsPlugin {
         // Externalise tout ce qui est un package node_modules
         // Librairies du monorepo (@mtc/*) : code source TS, résolu par les paths du tsconfig et
         // BUNDLÉ — externalisées, elles seraient cherchées dans node_modules au démarrage.
-        if (/^[^./]/.test(request) && !request.startsWith('@mtc/')) {
+        if (/^[^./]/.test(request) && !request.startsWith('@mtc/') && !request.startsWith('@api/')) {
           return callback(null, 'commonjs ' + request);
         }
         callback();
@@ -25,6 +25,8 @@ class NodeModulesExternalsPlugin {
       compiler.options.resolve.alias = {
         ...(compiler.options.resolve.alias ?? {}),
         '@mtc/shared': join(__dirname, '../../libs/shared/src/index.ts'),
+        // Alias interne de l'API (tsconfig.base.json) : @api/common/…, @api/prisma/…
+        '@api': join(__dirname, 'src'),
       };
     });
   }
