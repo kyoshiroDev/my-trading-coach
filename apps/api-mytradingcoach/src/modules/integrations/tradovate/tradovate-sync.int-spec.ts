@@ -186,7 +186,11 @@ afterAll(async () => {
   vi.unstubAllGlobals();
 });
 
-beforeEach(() => {
+beforeEach(async () => {
+  // Chaque test crée son propre user MTC, mais tous se relient au même compte simulé EXT_ACCOUNT.
+  // Un compte broker ne se relie qu'à un seul user (dropAlreadyLinked) : sans ce nettoyage, le
+  // premier test garde le compte et tous les suivants reçoivent `account_already_linked`.
+  await prisma.brokerConnection.deleteMany({ where: { user: { email: { startsWith: PREFIX } } } });
   calls = [];
   refreshMode = 'ok';
   extraPairs = 0;
@@ -195,6 +199,13 @@ beforeEach(() => {
   pairListNotFound = false;
   identicalPairs = 0;
 });
+
+/**
+ * Libère le compte simulé EXT_ACCOUNT pour qu'un AUTRE user puisse s'y relier dans le même test
+ * (un compte broker ne se relie qu'à un seul user). Réservé aux tests qui ne portent pas sur ce partage.
+ */
+const releaseExtAccount = (accountId: string) =>
+  prisma.brokerConnection.updateMany({ where: { accountId }, data: { externalAccountId: `libere-${accountId}` } });
 
 async function registerUser(): Promise<{ id: string; token: string }> {
   const res = await fetch(`${baseUrl}/api/auth/register`, {
@@ -514,6 +525,7 @@ describe('Tradovate — synchro', () => {
 
     // Introuvable même par /fill/items : la synchro aboutit, la paire concernée est ignorée.
     itemsNotFound = true;
+    await releaseExtAccount(accountA.id);
     const b = await registerUser();
     const accountB = await createAccount(b.id, 'Compte B');
     const second = await connect(b.token, accountB.id);
@@ -628,8 +640,11 @@ describe('Tradovate — cron de maintien des tokens (vraie base)', () => {
     const [aSoon, aLater, aDemo] = await Promise.all([
       createAccount(soon.id, 'Bientôt'), createAccount(later.id, 'Plus tard'), createAccount(demo.id, 'Démo'),
     ]);
+    // Le cron ne regarde que l'échéance des jetons : chaque user libère le compte simulé pour le suivant.
     await connect(soon.token, aSoon.id);
+    await releaseExtAccount(aSoon.id);
     await connect(later.token, aLater.id);
+    await releaseExtAccount(aLater.id);
     await connect(demo.token, aDemo.id);
     await prisma.user.update({ where: { id: demo.id }, data: { isDemo: true } });
     const in2h = new Date(Date.now() + 2 * 3600_000);
